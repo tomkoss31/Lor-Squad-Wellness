@@ -32,6 +32,7 @@ import {
   fetchSupabaseClients,
   fetchSupabaseFollowUps,
   fetchSupabaseUsers,
+  importLocalBusinessDataToSupabase,
   loginWithSupabaseCredentials,
   logoutFromSupabase,
   restoreSupabaseSession,
@@ -72,6 +73,7 @@ interface AppContextValue {
   updateUserStatus: (userId: string, active: boolean) => Promise<void>;
   resetAccessData: () => void;
   clearBusinessData: () => void;
+  importLocalBusinessData: () => Promise<{ imported: number; skipped: number }>;
   getClientById: (clientId: string) => Client | undefined;
   canAccessClient: (clientId: string) => boolean;
   createClientWithInitialAssessment: (payload: {
@@ -286,6 +288,24 @@ export function AppProvider({ children }: PropsWithChildren) {
     setFollowUps(cleared.followUps);
   }
 
+  async function importLocalBusinessData() {
+    if (storageMode !== "supabase" || !currentUser) {
+      return { imported: 0, skipped: 0 };
+    }
+
+    const localClients = getStoredClients();
+    const localFollowUps = getStoredFollowUps();
+
+    const result = await importLocalBusinessDataToSupabase({
+      clients: localClients,
+      followUps: localFollowUps,
+      owner: currentUser
+    });
+
+    await refreshRemoteData(currentUser);
+    return result;
+  }
+
   function getClientById(clientId: string) {
     const client = clients.find((item) => item.id === clientId);
     if (!client || !canAccessClient(currentUser, client)) {
@@ -409,6 +429,7 @@ export function AppProvider({ children }: PropsWithChildren) {
       updateUserStatus,
       resetAccessData,
       clearBusinessData,
+      importLocalBusinessData,
       getClientById,
       canAccessClient: canAccessClientById,
       createClientWithInitialAssessment,

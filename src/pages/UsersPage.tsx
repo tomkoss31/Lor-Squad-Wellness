@@ -13,7 +13,8 @@ export function UsersPage() {
     createUserAccess,
     updateUserStatus,
     resetAccessData,
-    clearBusinessData
+    clearBusinessData,
+    importLocalBusinessData
   } = useAppContext();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -22,6 +23,7 @@ export function UsersPage() {
   const [active, setActive] = useState(true);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [importStatus, setImportStatus] = useState("");
 
   const userStats = useMemo(() => {
     const admins = users.filter((user) => user.role === "admin");
@@ -66,6 +68,25 @@ export function UsersPage() {
     resetForm();
   }
 
+  async function handleImportLocalData() {
+    try {
+      const result = await importLocalBusinessData();
+      setImportStatus(
+        result.imported
+          ? `${result.imported} dossier(s) importe(s) dans la base distante.`
+          : result.skipped
+            ? `Aucun nouveau dossier importe. ${result.skipped} deja present(s).`
+            : "Aucune donnee locale a importer."
+      );
+    } catch (importError) {
+      setImportStatus(
+        importError instanceof Error
+          ? importError.message
+          : "Impossible d'importer les dossiers locaux."
+      );
+    }
+  }
+
   return (
     <div className="space-y-6">
       <PageHeading
@@ -90,7 +111,7 @@ export function UsersPage() {
             <h2 className="mt-2 text-3xl">Nouveau compte equipe</h2>
             <p className="mt-3 text-sm leading-7 text-slate-300">
               L&apos;email devient l&apos;identifiant de connexion. Le mot de passe saisi ici sert
-              de mot de passe provisoire pour cette version beta.
+              de mot de passe provisoire pour cette premiere version connectee.
             </p>
           </div>
 
@@ -190,17 +211,15 @@ export function UsersPage() {
             />
           </div>
 
-          <div className="rounded-[24px] border border-white/10 bg-slate-950/35 p-4">
-            <p className="text-sm font-semibold text-white">Mode local actuel</p>
-            <p className="mt-2 text-sm leading-7 text-slate-400">
-              Les acces sont enregistres localement dans le navigateur pour la beta. Plus tard,
-              cette page branchera la vraie base utilisateurs et l&apos;envoi du lien
-              d&apos;activation.
-            </p>
-          </div>
-
           {storageMode === "local" ? (
             <>
+              <div className="rounded-[24px] border border-white/10 bg-slate-950/35 p-4">
+                <p className="text-sm font-semibold text-white">Mode local actuel</p>
+                <p className="mt-2 text-sm leading-7 text-slate-400">
+                  Les acces sont encore enregistres localement dans le navigateur pour la beta.
+                </p>
+              </div>
+
               <div className="rounded-[24px] border border-amber-300/20 bg-amber-400/10 p-4">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
@@ -232,11 +251,31 @@ export function UsersPage() {
               </div>
             </>
           ) : (
-            <div className="rounded-[24px] border border-emerald-300/20 bg-emerald-400/10 p-4">
-              <p className="text-sm font-semibold text-white">Base distante active</p>
-              <p className="mt-2 text-sm leading-7 text-slate-300">
-                Les acces et les dossiers sont maintenant pensés pour une vraie base partagée.
-              </p>
+            <div className="space-y-4">
+              <div className="rounded-[24px] border border-emerald-300/20 bg-emerald-400/10 p-4">
+                <p className="text-sm font-semibold text-white">Base distante active</p>
+                <p className="mt-2 text-sm leading-7 text-slate-300">
+                  Les acces et les dossiers sont maintenant penses pour une vraie base partagee.
+                </p>
+              </div>
+
+              <div className="rounded-[24px] border border-sky-300/20 bg-sky-400/10 p-4">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-semibold text-white">Importer les anciens dossiers</p>
+                    <p className="mt-2 text-sm leading-7 text-slate-300">
+                      Si des clients existaient encore dans l&apos;ancienne beta locale, tu peux
+                      les pousser maintenant dans la base distante.
+                    </p>
+                  </div>
+                  <Button variant="secondary" onClick={() => void handleImportLocalData()}>
+                    Importer la base locale
+                  </Button>
+                </div>
+                {importStatus ? (
+                  <p className="mt-3 text-sm text-white">{importStatus}</p>
+                ) : null}
+              </div>
             </div>
           )}
         </Card>

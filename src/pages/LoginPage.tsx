@@ -57,7 +57,7 @@ export function LoginPage() {
   return (
     <div className="min-h-screen bg-hero-mesh px-4 py-8 md:px-6">
       <div className="mx-auto grid min-h-[calc(100vh-4rem)] max-w-[1500px] gap-6 lg:grid-cols-[1.08fr_0.92fr]">
-        <section className="glass-panel relative flex flex-col justify-between overflow-hidden rounded-[36px] p-6 md:p-8 lg:p-10">
+        <section className="glass-panel order-2 relative flex flex-col justify-between overflow-hidden rounded-[36px] p-6 md:p-8 lg:order-1 lg:p-10">
           <div className="absolute right-[-90px] top-[-70px] h-64 w-64 rounded-full bg-amber-300/10 blur-3xl" />
           <div className="absolute bottom-[-110px] left-[-80px] h-72 w-72 rounded-full bg-rose-400/10 blur-3xl" />
 
@@ -66,13 +66,13 @@ export function LoginPage() {
               <img
                 src={blasonLogo}
                 alt="Lor'Squad Wellness"
-                className="h-20 w-20 rounded-[28px] object-cover ring-1 ring-white/10"
+                className="h-16 w-16 rounded-[24px] object-cover ring-1 ring-white/10 md:h-20 md:w-20 md:rounded-[28px]"
               />
               <div>
-                <p className="font-display text-5xl leading-none md:text-6xl">
+                <p className="font-display text-3xl leading-none sm:text-4xl md:text-6xl">
                   Lor&apos;Squad Wellness
                 </p>
-                <p className="mt-2 text-sm uppercase tracking-[0.32em] text-slate-400">
+                <p className="mt-2 text-[11px] uppercase tracking-[0.28em] text-slate-400 md:text-sm md:tracking-[0.32em]">
                   Plateforme rendez-vous et suivi client
                 </p>
               </div>
@@ -80,10 +80,10 @@ export function LoginPage() {
 
             <div className="space-y-4">
               <StatusBadge label="Connexion" tone="amber" />
-              <h1 className="max-w-2xl text-5xl leading-[0.96] md:text-6xl">
+              <h1 className="max-w-2xl text-3xl leading-[1] sm:text-4xl md:text-6xl">
                 Une entree claire pour lancer la journee et ouvrir les bons dossiers.
               </h1>
-              <p className="max-w-2xl text-base leading-8 text-slate-300">
+              <p className="max-w-2xl text-sm leading-7 text-slate-300 md:text-base md:leading-8">
                 Lor&apos;Squad Wellness centralise le rendez-vous, la lecture client et le suivi
                 dans une interface simple a ouvrir, simple a utiliser et simple a faire evoluer.
               </p>
@@ -95,19 +95,19 @@ export function LoginPage() {
             </div>
           </div>
 
-          <div className="space-y-6 pt-2 md:pt-4">
-            <div className="relative flex min-h-[260px] items-start justify-center md:min-h-[340px]">
+          <div className="space-y-4 pt-1 md:space-y-6 md:pt-4">
+            <div className="relative flex min-h-[140px] items-start justify-center md:min-h-[340px]">
               <img
                 src={lorSquadLogo}
                 alt="Lor'Squad"
-                className="mt-0 max-h-[210px] w-full max-w-[760px] object-contain opacity-[0.98] md:max-h-[300px]"
+                className="mt-0 max-h-[110px] w-full max-w-[760px] object-contain opacity-[0.98] md:max-h-[300px]"
               />
             </div>
             <BrandSignature variant="inline" />
           </div>
         </section>
 
-        <section className="glass-panel rounded-[36px] p-6 md:p-8 lg:p-10">
+        <section className="glass-panel order-1 rounded-[36px] p-6 md:p-8 lg:order-2 lg:p-10">
           <div className="space-y-7">
             <div>
               <p className="text-xs uppercase tracking-[0.35em] text-slate-500">
