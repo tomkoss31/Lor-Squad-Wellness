@@ -268,6 +268,8 @@ export function ClientDetailPage() {
             weight={latestBodyScan.weight}
             hydrationPercent={latestBodyScan.hydration}
             waterIntake={latestQuestionnaire.waterIntake}
+            sex={client.sex}
+            visceralFat={latestBodyScan.visceralFat}
           />
 
           <div className="space-y-4 rounded-[26px] border border-white/10 bg-slate-950/35 p-5">
