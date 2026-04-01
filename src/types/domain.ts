@@ -42,6 +42,9 @@ export interface BodyScanMetrics {
 export interface AssessmentQuestionnaire {
   healthStatus: string;
   healthNotes: string;
+  allergies: string;
+  transitStatus: string;
+  pathologyContext: string;
   wakeUpTime: string;
   bedTime: string;
   sleepHours: number;

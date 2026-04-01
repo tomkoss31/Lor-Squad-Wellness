@@ -13,6 +13,9 @@ function questionnaire(
   return {
     healthStatus: "RAS",
     healthNotes: "",
+    allergies: "Aucune",
+    transitStatus: "Normal",
+    pathologyContext: "Aucun point a signaler",
     wakeUpTime: "06:45",
     bedTime: "23:15",
     sleepHours: 7,

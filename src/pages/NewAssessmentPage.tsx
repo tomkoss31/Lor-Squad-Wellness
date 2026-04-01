@@ -39,6 +39,9 @@ type AssessmentForm = {
   city: string;
   healthStatus: string;
   healthNotes: string;
+  allergies: string;
+  transitStatus: string;
+  pathologyContext: string;
   wakeUpTime: string;
   bedTime: string;
   sleepHours: number;
@@ -103,6 +106,9 @@ const initialForm: AssessmentForm = {
   city: "Nancy",
   healthStatus: "RAS",
   healthNotes: "",
+  allergies: "Aucune",
+  transitStatus: "Normal",
+  pathologyContext: "Aucun point a signaler",
   wakeUpTime: "06:45",
   bedTime: "23:15",
   sleepHours: 7,
@@ -215,9 +221,9 @@ export function NewAssessmentPage() {
           ]
         : currentStep === 3
           ? [
-              "Commencer par la sante et l'objectif pour orienter tout le reste du bilan.",
-              "Le cap doit etre simple a nommer et facile a relier au programme.",
-              "La motivation puis les freins servent a calibrer l'accompagnement."
+              "On affine ici avec les points sante utiles a connaitre sans casser le rythme du rendez-vous.",
+              "Allergies, transit et contexte pathologique servent a poser un cadre simple et securisant.",
+              "Ensuite, on relie l'activite et les freins a l'accompagnement."
             ]
           : currentStep === 4
             ? [
@@ -270,9 +276,11 @@ export function NewAssessmentPage() {
   const rightPanelPoints =
     currentStep === 0
       ? [
-          `Profil : ${form.firstName} ${form.lastName}`,
-          `Sexe : ${form.sex === "male" ? "Homme" : "Femme"}`,
-          "Installer un echange calme et structure"
+          `Objectif : ${form.objectiveFocus}`,
+          `Sante : ${form.healthStatus}`,
+          form.objective === "weight-loss"
+            ? `Poids cible : ${form.targetWeight} kg`
+            : `Delai : ${form.desiredTimeline}`
         ]
       : currentStep === 1
         ? [`Sommeil : ${form.sleepHours} h`, `Petit-dejeuner : ${form.breakfastFrequency}`, `Repas reguliers : ${form.regularMealTimes}`]
@@ -280,11 +288,9 @@ export function NewAssessmentPage() {
           ? [`Eau actuelle : ${form.waterIntake} L`, `Grignotage : ${form.snackingFrequency}`, `Cafe : ${form.drinksCoffee === "Oui" ? `${form.coffeePerDay} / jour` : "Non"}`]
           : currentStep === 3
               ? [
-                  form.objective === "weight-loss"
-                    ? `Poids cible : ${form.targetWeight} kg`
-                    : `Objectif : ${form.objectiveFocus}`,
-                  `Sante : ${form.healthStatus}`,
-                  `Motivation : ${form.motivation}/10`,
+                  `Allergies : ${form.allergies}`,
+                  `Transit : ${form.transitStatus}`,
+                  `Contexte : ${form.pathologyContext}`,
                   `Blocage principal : ${form.mainBlocker}`
                 ]
             : currentStep === 4
@@ -415,23 +421,87 @@ export function NewAssessmentPage() {
           </div>
 
           {currentStep === 0 && (
-            <div className="grid gap-4 md:grid-cols-2">
-              <Field label="Prenom" value={form.firstName} onChange={(v) => update("firstName", v)} />
-              <Field label="Nom" value={form.lastName} onChange={(v) => update("lastName", v)} />
-              <Field label="Telephone" value={form.phone} onChange={(v) => update("phone", v)} />
-              <Field label="Email" value={form.email} onChange={(v) => update("email", v)} />
-              <ChoiceGroup
-                label="Sexe"
-                value={form.sex}
-                options={["female", "male"]}
-                onChange={(v) => update("sex", v as BiologicalSex)}
-                formatOption={(option) => (option === "male" ? "Homme" : "Femme")}
-              />
-              <Field label="Age" type="number" value={form.age} onChange={(v) => update("age", Number(v))} />
-              <Field label="Taille" type="number" value={form.height} onChange={(v) => update("height", Number(v))} />
-              <Field label="Ville" value={form.city} onChange={(v) => update("city", v)} />
-            </div>
-          )}
+              <div className="space-y-4">
+                <div className="grid gap-4 md:grid-cols-2">
+                  <Field label="Prenom" value={form.firstName} onChange={(v) => update("firstName", v)} />
+                  <Field label="Nom" value={form.lastName} onChange={(v) => update("lastName", v)} />
+                  <Field label="Telephone" value={form.phone} onChange={(v) => update("phone", v)} />
+                  <Field label="Email" value={form.email} onChange={(v) => update("email", v)} />
+                  <ChoiceGroup
+                    label="Sexe"
+                    value={form.sex}
+                    options={["female", "male"]}
+                    onChange={(v) => update("sex", v as BiologicalSex)}
+                    formatOption={(option) => (option === "male" ? "Homme" : "Femme")}
+                  />
+                  <Field label="Age" type="number" value={form.age} onChange={(v) => update("age", Number(v))} />
+                  <Field label="Taille" type="number" value={form.height} onChange={(v) => update("height", Number(v))} />
+                  <Field label="Ville" value={form.city} onChange={(v) => update("city", v)} />
+                </div>
+
+                <SectionBlock
+                  title="Bloc 0 - Objectif et antecedents"
+                  description="Poser le cap des le debut et noter tout point sante a respecter."
+                >
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <ChoiceGroup
+                      label="Objectif principal"
+                      value={form.objectiveFocus}
+                      options={["Perte de poids", "Prise de masse", "Energie", "Remise en forme"]}
+                      onChange={updateObjectiveFocus}
+                    />
+                    <ChoiceGroup
+                      label="Delai souhaite"
+                      value={form.desiredTimeline}
+                      options={["1 mois", "3 mois", "6 mois", "9 mois"]}
+                      onChange={(v) => update("desiredTimeline", v)}
+                    />
+                  </div>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <ChoiceGroup
+                      label="Sante / traitement"
+                      value={form.healthStatus}
+                      options={["RAS", "Traitement en cours", "Pathologie connue", "Avis medical a respecter"]}
+                      onChange={(v) => update("healthStatus", v)}
+                    />
+                    <AreaField
+                      label="Antecedents / precision utile"
+                      value={form.healthNotes}
+                      onChange={(v) => update("healthNotes", v)}
+                    />
+                  </div>
+                  {form.objective === "weight-loss" && (
+                    <div className="space-y-4">
+                      <Field
+                        label="Poids cible (kg)"
+                        type="number"
+                        step="0.1"
+                        value={form.targetWeight}
+                        onChange={(v) => update("targetWeight", Number(v))}
+                      />
+                      <WeightGoalInsightCard
+                        currentWeight={form.weight}
+                        targetWeight={form.targetWeight}
+                        timeline={form.desiredTimeline}
+                      />
+                    </div>
+                  )}
+                  <div className="space-y-3 rounded-[24px] border border-white/10 bg-white/[0.03] p-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <label className="text-sm font-medium text-slate-300">Motivation</label>
+                      <span className="text-sm font-semibold text-white">{form.motivation}/10</span>
+                    </div>
+                    <input
+                      type="range"
+                      min={0}
+                      max={10}
+                      value={form.motivation}
+                      onChange={(event) => update("motivation", Number(event.target.value))}
+                    />
+                  </div>
+                </SectionBlock>
+              </div>
+            )}
 
           {currentStep === 1 && (
             <div className="space-y-4">
@@ -501,42 +571,31 @@ export function NewAssessmentPage() {
 
           {currentStep === 3 && (
               <div className="space-y-4">
-              <SectionBlock title="Bloc 7 - Sante, motivation et objectif" description="Commencer par la sante et le cap du client pour guider la suite du bilan.">
+              <SectionBlock title="Bloc 7 - Allergies, transit et contexte pathologique" description="Ajouter seulement les points sante utiles pour cadrer l'accompagnement.">
                 <div className="grid gap-4 md:grid-cols-2">
+                  <Field
+                    label="Allergies / intolerances"
+                    value={form.allergies}
+                    onChange={(v) => update("allergies", v)}
+                  />
                   <ChoiceGroup
-                    label="Sante / traitement"
-                    value={form.healthStatus}
-                    options={["RAS", "Traitement en cours", "Pathologie connue", "Avis medical a respecter"]}
-                    onChange={(v) => update("healthStatus", v)}
+                    label="Niveau du transit"
+                    value={form.transitStatus}
+                    options={["Normal", "Lent", "Irregulier", "Sensible"]}
+                    onChange={(v) => update("transitStatus", v)}
                   />
                   <AreaField
-                    label="Precision utile"
+                    label="Contexte pathologique utile"
+                    value={form.pathologyContext}
+                    onChange={(v) => update("pathologyContext", v)}
+                  />
+                  <AreaField
+                    label="Point sante a surveiller"
                     value={form.healthNotes}
                     onChange={(v) => update("healthNotes", v)}
                   />
                 </div>
-                <div className="grid gap-4 md:grid-cols-2">
-                  <ChoiceGroup label="Objectif principal" value={form.objectiveFocus} options={["Perte de poids", "Prise de masse", "Energie", "Remise en forme"]} onChange={updateObjectiveFocus} />
-                  <ChoiceGroup label="Delai souhaite" value={form.desiredTimeline} options={["1 mois", "3 mois", "6 mois", "9 mois"]} onChange={(v) => update("desiredTimeline", v)} />
-                </div>
-                {form.objective === "weight-loss" && (
-                  <div className="space-y-4">
-                    <Field label="Poids cible (kg)" type="number" step="0.1" value={form.targetWeight} onChange={(v) => update("targetWeight", Number(v))} />
-                    <WeightGoalInsightCard
-                      currentWeight={form.weight}
-                      targetWeight={form.targetWeight}
-                      timeline={form.desiredTimeline}
-                    />
-                  </div>
-                )}
-                <div className="space-y-3 rounded-[24px] border border-white/10 bg-white/[0.03] p-4">
-                  <div className="flex items-center justify-between gap-3">
-                    <label className="text-sm font-medium text-slate-300">Motivation</label>
-                    <span className="text-sm font-semibold text-white">{form.motivation}/10</span>
-                  </div>
-                    <input type="range" min={0} max={10} value={form.motivation} onChange={(event) => update("motivation", Number(event.target.value))} />
-                  </div>
-                </SectionBlock>
+              </SectionBlock>
 
               <SectionBlock title="Bloc 8 - Activite et forme" description="Chercher le niveau reel d'activite et d'energie.">
                 <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
