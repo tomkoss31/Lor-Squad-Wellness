@@ -90,7 +90,7 @@ export function getWeightLossPlan(
   targetWeight?: number | null,
   timeline = "3 mois"
 ): WeightLossPlan {
-  if (targetWeight == null || Number.isNaN(targetWeight)) {
+  if (targetWeight == null || Number.isNaN(targetWeight) || targetWeight <= 0) {
     return {
       targetWeight: null,
       remainingKg: 0,
