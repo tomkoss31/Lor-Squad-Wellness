@@ -397,6 +397,113 @@ export async function addSupabaseFollowUpAssessment(
   }
 }
 
+export async function importLocalBusinessDataToSupabase(payload: {
+  clients: Client[];
+  followUps: FollowUp[];
+  owner: User;
+}) {
+  const client = requireSupabase();
+  let imported = 0;
+  let skipped = 0;
+
+  for (const localClient of payload.clients) {
+    const { data: existingClient } = await client
+      .from("clients")
+      .select("id")
+      .eq("email", localClient.email)
+      .eq("first_name", localClient.firstName)
+      .eq("last_name", localClient.lastName)
+      .maybeSingle<{ id: string }>();
+
+    if (existingClient?.id) {
+      skipped += 1;
+      continue;
+    }
+
+    const { data: insertedClient, error: clientError } = await client
+      .from("clients")
+      .insert({
+        first_name: localClient.firstName,
+        last_name: localClient.lastName,
+        sex: localClient.sex,
+        phone: localClient.phone,
+        email: localClient.email,
+        age: localClient.age,
+        height: localClient.height,
+        job: localClient.job,
+        city: localClient.city ?? null,
+        distributor_id: payload.owner.id,
+        distributor_name: payload.owner.name,
+        status: localClient.status,
+        objective: localClient.objective,
+        current_program: localClient.currentProgram,
+        started: localClient.started,
+        start_date: localClient.startDate ?? null,
+        next_follow_up: localClient.nextFollowUp,
+        notes: localClient.notes
+      })
+      .select("id")
+      .single<{ id: string }>();
+
+    if (clientError || !insertedClient) {
+      throw new Error(
+        `Impossible d'importer le dossier de ${localClient.firstName} ${localClient.lastName}.`
+      );
+    }
+
+    for (const assessment of localClient.assessments) {
+      const { error: assessmentError } = await client.from("assessments").insert({
+        id: assessment.id,
+        client_id: insertedClient.id,
+        date: assessment.date,
+        type: assessment.type,
+        objective: assessment.objective,
+        program_id: assessment.programId ?? null,
+        program_title: assessment.programTitle,
+        summary: assessment.summary,
+        notes: assessment.notes,
+        next_follow_up: assessment.nextFollowUp ?? null,
+        body_scan: assessment.bodyScan,
+        questionnaire: assessment.questionnaire,
+        pedagogical_focus: assessment.pedagogicalFocus
+      });
+
+      if (assessmentError) {
+        throw new Error(
+          `Impossible d'importer un bilan pour ${localClient.firstName} ${localClient.lastName}.`
+        );
+      }
+    }
+
+    const matchingFollowUp = payload.followUps.find(
+      (followUp) => followUp.clientId === localClient.id
+    );
+
+    const { error: followUpError } = await client.from("follow_ups").insert({
+      client_id: insertedClient.id,
+      client_name: `${localClient.firstName} ${localClient.lastName}`,
+      due_date: matchingFollowUp?.dueDate ?? localClient.nextFollowUp,
+      type: matchingFollowUp?.type ?? "Premier suivi",
+      status: matchingFollowUp?.status ?? "scheduled",
+      program_title: matchingFollowUp?.programTitle ?? localClient.currentProgram,
+      last_assessment_date:
+        matchingFollowUp?.lastAssessmentDate ??
+        localClient.assessments[0]?.date ??
+        new Date().toISOString().slice(0, 10)
+    });
+
+    if (followUpError) {
+      throw new Error(
+        `Impossible d'importer le suivi de ${localClient.firstName} ${localClient.lastName}.`
+      );
+    }
+
+    imported += 1;
+  }
+
+  return { imported, skipped };
+}
+
 export async function createSupabaseUserAccess(payload: {
   name: string;
   email: string;
