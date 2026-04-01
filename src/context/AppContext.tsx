@@ -122,17 +122,28 @@ export function AppProvider({ children }: PropsWithChildren) {
 
   useEffect(() => {
     async function initialize() {
+      let nextStorageMode: StorageMode = "local";
+
       try {
-        const nextStorageMode = await resolveStorageMode();
+        nextStorageMode = await resolveStorageMode();
         setStorageMode(nextStorageMode);
 
         if (nextStorageMode === "supabase") {
-          const restored = await restoreSupabaseSession();
-          if (restored) {
-            setCurrentUser(restored.user);
-            setCurrentSession(restored.session);
-            await refreshRemoteData(restored.user);
-          } else {
+          try {
+            const restored = await restoreSupabaseSession();
+            if (restored) {
+              setCurrentUser(restored.user);
+              setCurrentSession(restored.session);
+              await refreshRemoteData(restored.user);
+            } else {
+              setCurrentUser(null);
+              setCurrentSession(null);
+              setUsers([]);
+              setClients([]);
+              setFollowUps([]);
+            }
+          } catch (error) {
+            console.error("Initialisation Supabase impossible.", error);
             setCurrentUser(null);
             setCurrentSession(null);
             setUsers([]);
@@ -140,26 +151,33 @@ export function AppProvider({ children }: PropsWithChildren) {
             setFollowUps([]);
           }
           return;
-        } else {
-          setUsers(getStoredUsers());
-          setClients(getStoredClients());
-          setFollowUps(getStoredFollowUps());
-
-          const restored = restoreSession();
-          if (restored) {
-            setCurrentUser(restored.user);
-            setCurrentSession(restored.session);
-          } else {
-            setCurrentUser(null);
-            setCurrentSession(null);
-          }
         }
-      } catch (error) {
-        console.error("Initialisation de session impossible.", error);
-        setStorageMode("local");
+
         setUsers(getStoredUsers());
         setClients(getStoredClients());
         setFollowUps(getStoredFollowUps());
+
+        const restored = restoreSession();
+        if (restored) {
+          setCurrentUser(restored.user);
+          setCurrentSession(restored.session);
+        } else {
+          setCurrentUser(null);
+          setCurrentSession(null);
+        }
+      } catch (error) {
+        console.error("Initialisation de session impossible.", error);
+        if (nextStorageMode === "supabase") {
+          setStorageMode("supabase");
+          setUsers([]);
+          setClients([]);
+          setFollowUps([]);
+        } else {
+          setStorageMode("local");
+          setUsers(getStoredUsers());
+          setClients(getStoredClients());
+          setFollowUps(getStoredFollowUps());
+        }
         setCurrentUser(null);
         setCurrentSession(null);
       } finally {

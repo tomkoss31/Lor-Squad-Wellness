@@ -14,7 +14,7 @@ async function fetchRuntimeConfig(): Promise<RuntimeSupabaseConfig | null> {
   }
 
   const controller = new AbortController();
-  const timeoutId = window.setTimeout(() => controller.abort(), 4000);
+  const timeoutId = window.setTimeout(() => controller.abort(), 10000);
 
   try {
     const response = await fetch("/api/runtime-config", {
