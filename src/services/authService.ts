@@ -9,7 +9,6 @@ interface StoredSession {
 }
 
 export interface MockLoginPayload {
-  userId: string;
   email: string;
   password: string;
 }
@@ -58,11 +57,11 @@ export function clearPersistedSession() {
 }
 
 export function loginWithMockCredentials({
-  userId,
   email,
   password
 }: MockLoginPayload): AuthResult | null {
-  const user = mockUsers.find((item) => item.id === userId && item.email === email) ?? null;
+  const normalizedEmail = email.trim().toLowerCase();
+  const user = mockUsers.find((item) => item.email.toLowerCase() === normalizedEmail) ?? null;
 
   if (!user || !user.active) {
     return null;

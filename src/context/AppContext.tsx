@@ -39,7 +39,7 @@ interface AppContextValue {
   visibleFollowUps: FollowUp[];
   programs: Program[];
   loginAs: (userId: string) => void;
-  loginWithCredentials: (payload: { userId: string; email: string; password: string }) => boolean;
+  loginWithCredentials: (payload: { email: string; password: string }) => boolean;
   logout: () => void;
   getClientById: (clientId: string) => Client | undefined;
   canAccessClient: (clientId: string) => boolean;
@@ -75,17 +75,12 @@ export function AppProvider({ children }: PropsWithChildren) {
     }
 
     loginWithCredentials({
-      userId: matchedUser.id,
       email: matchedUser.email,
       password: "demo1234"
     });
   }
 
-  function loginWithCredentials(payload: {
-    userId: string;
-    email: string;
-    password: string;
-  }) {
+  function loginWithCredentials(payload: { email: string; password: string }) {
     const result = loginWithMockCredentials(payload);
 
     if (!result) {
