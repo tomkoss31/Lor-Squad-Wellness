@@ -3,6 +3,8 @@ import { createMockSession, SESSION_KEY } from "../lib/auth";
 import type { AuthSession, User } from "../types/domain";
 
 const USERS_KEY = "lor-squad-wellness-users";
+const STORAGE_VERSION_KEY = "lor-squad-wellness-storage-version";
+const CURRENT_STORAGE_VERSION = "2026-04-beta-1";
 
 interface StoredSession {
   userId: string;
@@ -28,7 +30,20 @@ export interface CreateMockUserPayload {
   mockPassword: string;
 }
 
+function ensureStorageVersion() {
+  const currentVersion = window.localStorage.getItem(STORAGE_VERSION_KEY);
+
+  if (currentVersion === CURRENT_STORAGE_VERSION) {
+    return;
+  }
+
+  window.localStorage.setItem(STORAGE_VERSION_KEY, CURRENT_STORAGE_VERSION);
+  window.localStorage.setItem(USERS_KEY, JSON.stringify(mockUsers));
+  window.localStorage.removeItem(SESSION_KEY);
+}
+
 export function getStoredUsers(): User[] {
+  ensureStorageVersion();
   const raw = window.localStorage.getItem(USERS_KEY);
   if (!raw) {
     return mockUsers;
@@ -43,10 +58,12 @@ export function getStoredUsers(): User[] {
 }
 
 export function persistUsers(users: User[]) {
+  ensureStorageVersion();
   window.localStorage.setItem(USERS_KEY, JSON.stringify(users));
 }
 
 export function restoreSession(): AuthResult | null {
+  ensureStorageVersion();
   const raw = window.localStorage.getItem(SESSION_KEY);
   if (!raw) {
     return null;
@@ -71,6 +88,7 @@ export function restoreSession(): AuthResult | null {
 }
 
 export function persistSession(session: AuthSession) {
+  ensureStorageVersion();
   const storedSession: StoredSession = {
     userId: session.userId,
     authMode: session.authMode,
@@ -82,6 +100,13 @@ export function persistSession(session: AuthSession) {
 
 export function clearPersistedSession() {
   window.localStorage.removeItem(SESSION_KEY);
+}
+
+export function resetMockAuthData() {
+  window.localStorage.setItem(STORAGE_VERSION_KEY, CURRENT_STORAGE_VERSION);
+  window.localStorage.setItem(USERS_KEY, JSON.stringify(mockUsers));
+  window.localStorage.removeItem(SESSION_KEY);
+  return mockUsers;
 }
 
 export function loginWithMockCredentials({

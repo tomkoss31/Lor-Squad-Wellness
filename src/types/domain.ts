@@ -23,7 +23,7 @@ export interface User {
 export interface AuthSession {
   userId: string;
   role: UserRole;
-  authMode: "mock";
+  authMode: "mock" | "supabase";
   issuedAt: string;
   accessScope: "all-clients" | "owned-clients";
 }

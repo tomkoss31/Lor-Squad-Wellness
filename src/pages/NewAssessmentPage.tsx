@@ -1,5 +1,6 @@
 ﻿import { useState, type ReactNode } from "react";
 import { StepRail } from "../components/assessment/StepRail";
+import { useNavigate } from "react-router-dom";
 import { BodyFatInsightCard } from "../components/body-scan/BodyFatInsightCard";
 import { MuscleMassInsightCard } from "../components/body-scan/MuscleMassInsightCard";
 import { BreakfastComparison } from "../components/education/BreakfastComparison";
@@ -179,9 +180,11 @@ const steps = [
 ];
 
 export function NewAssessmentPage() {
-  const { programs } = useAppContext();
+  const navigate = useNavigate();
+  const { programs, currentUser, createClientWithInitialAssessment } = useAppContext();
   const [form, setForm] = useState(initialForm);
   const [currentStep, setCurrentStep] = useState(0);
+  const [saveError, setSaveError] = useState("");
 
   const currentPrograms = programs.filter((program) => program.category === form.objective);
   const mainPrograms = currentPrograms.filter((program) => program.kind !== "booster");
@@ -394,6 +397,137 @@ export function NewAssessmentPage() {
     update("objectiveFocus", value);
     update("objective", value === "Prise de masse" ? "sport" : "weight-loss");
     update("selectedProgramId", value === "Prise de masse" ? "p-sport-premium" : "p-premium");
+  }
+
+  function getDefaultNextFollowUp() {
+    const baseDate = new Date();
+    baseDate.setDate(baseDate.getDate() + 14);
+    return baseDate.toISOString().slice(0, 10);
+  }
+
+  function buildQuestionnaire() {
+    return {
+      healthStatus: form.healthStatus,
+      healthNotes: form.healthNotes,
+      allergies: form.allergies,
+      transitStatus: form.transitStatus,
+      pathologyContext: form.pathologyContext,
+      wakeUpTime: form.wakeUpTime,
+      bedTime: form.bedTime,
+      sleepHours: form.sleepHours,
+      sleepQuality: form.sleepQuality,
+      napFrequency: form.napFrequency,
+      breakfastFrequency: form.breakfastFrequency,
+      breakfastTime: form.breakfastTime,
+      breakfastContent: form.breakfastContent,
+      breakfastSatiety: form.breakfastSatiety,
+      firstMealTime: form.firstMealTime,
+      mealsPerDay: form.mealsPerDay,
+      regularMealTimes: form.regularMealTimes,
+      lunchLocation: form.lunchLocation,
+      dinnerTiming: form.dinnerTiming,
+      vegetablesDaily: form.vegetablesDaily,
+      proteinEachMeal: form.proteinEachMeal,
+      sugaryProducts: form.sugaryProducts,
+      snackingFrequency: form.snackingFrequency,
+      snackingMoment: form.snackingMoment,
+      cravingsPreference: form.cravingsPreference,
+      snackingTrigger: form.snackingTrigger,
+      waterIntake: form.waterIntake,
+      drinksCoffee: form.drinksCoffee,
+      coffeePerDay: form.coffeePerDay,
+      sweetDrinks: form.sweetDrinks,
+      alcohol: form.alcohol,
+      lunchExample: form.lunchExample,
+      dinnerExample: form.dinnerExample,
+      physicalActivity: form.physicalActivity,
+      activityType: form.activityType,
+      sessionsPerWeek: form.sessionsPerWeek,
+      energyLevel: form.energyLevel,
+      pastAttempts: form.pastAttempts,
+      hardestPart: form.hardestPart,
+      mainBlocker: form.mainBlocker,
+      objectiveFocus: form.objectiveFocus,
+      targetWeight: form.targetWeight > 0 ? form.targetWeight : undefined,
+      motivation: form.motivation,
+      desiredTimeline: form.desiredTimeline
+    };
+  }
+
+  function handleSaveAssessment() {
+    if (!form.firstName.trim() || !form.lastName.trim()) {
+      setSaveError("Renseigne au minimum le prenom et le nom du client.");
+      setCurrentStep(0);
+      return;
+    }
+
+    if (!form.objectiveFocus.trim()) {
+      setSaveError("Choisis d'abord l'objectif principal du client.");
+      setCurrentStep(0);
+      return;
+    }
+
+    if (!selectedProgram) {
+      setSaveError("Choisis un programme avant d'enregistrer le bilan.");
+      setCurrentStep(9);
+      return;
+    }
+
+    const today = new Date().toISOString().slice(0, 10);
+    const nextFollowUp = form.nextFollowUp || getDefaultNextFollowUp();
+    const assessment = {
+      id: `a-${Date.now()}`,
+      date: today,
+      type: "initial" as const,
+      objective: form.objective,
+      programId: selectedProgram.id,
+      programTitle: selectedProgram.title,
+      summary: `Premier bilan oriente ${form.objectiveFocus.toLowerCase()} avec mise en place du ${selectedProgram.title.toLowerCase()}.`,
+      notes:
+        form.comment.trim() ||
+        "Le client repart avec un cadre simple, un programme clair et un prochain suivi deja pose.",
+      nextFollowUp,
+      bodyScan: {
+        weight: form.weight,
+        bodyFat: form.bodyFat,
+        muscleMass: form.muscleMass,
+        hydration: form.hydration,
+        boneMass: form.boneMass,
+        visceralFat: form.visceralFat,
+        bmr: form.bmr,
+        metabolicAge: form.metabolicAge
+      },
+      questionnaire: buildQuestionnaire(),
+      pedagogicalFocus:
+        form.objective === "sport"
+          ? ["Hydratation", "Routine matin", "Assiette sport"]
+          : ["Hydratation", "Routine matin", "Assiette perte de poids"]
+    };
+
+    const clientId = createClientWithInitialAssessment({
+      client: {
+        firstName: form.firstName.trim(),
+        lastName: form.lastName.trim(),
+        sex: form.sex,
+        phone: form.phone.trim(),
+        email: form.email.trim().toLowerCase(),
+        age: form.age,
+        height: form.height,
+        job: "Non renseigne",
+        city: form.city.trim() || undefined,
+        distributorId: currentUser?.id ?? "u-local-admin",
+        distributorName: currentUser?.name ?? "Lor'Squad Wellness",
+        objective: form.objective
+      },
+      assessment,
+      nextFollowUp,
+      notes:
+        form.comment.trim() ||
+        "Nouveau client cree depuis le bilan initial. La suite est deja fixee."
+    });
+
+    setSaveError("");
+    navigate(`/clients/${clientId}`);
   }
 
   return (
@@ -863,12 +997,19 @@ export function NewAssessmentPage() {
               Etape precedente
             </Button>
             <div className="flex flex-wrap gap-3">
-              <Button variant="secondary">Enregistrer le bilan</Button>
+              <Button variant="secondary" onClick={handleSaveAssessment}>
+                Enregistrer le bilan
+              </Button>
               <Button onClick={() => setCurrentStep((step) => Math.min(step + 1, steps.length - 1))} disabled={currentStep === steps.length - 1}>
                 Etape suivante
               </Button>
             </div>
           </div>
+          {saveError ? (
+            <div className="rounded-[20px] border border-rose-400/20 bg-rose-400/10 px-4 py-3 text-sm text-rose-100">
+              {saveError}
+            </div>
+          ) : null}
         </Card>
 
         <div className="space-y-4 xl:sticky xl:top-5 xl:self-start">

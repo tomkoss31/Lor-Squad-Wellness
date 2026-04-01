@@ -72,82 +72,100 @@ export function ClientsPage() {
       </Card>
 
       <div className="grid gap-4">
-        {visibleClients.map((client) => {
-          const latestAssessment = getLatestAssessment(client);
-          const latestBodyScan = getLatestBodyScan(client);
+        {visibleClients.length ? (
+          visibleClients.map((client) => {
+            const latestAssessment = getLatestAssessment(client);
+            const latestBodyScan = getLatestBodyScan(client);
 
-          return (
-            <Link key={client.id} to={`/clients/${client.id}`}>
-              <Card className="transition hover:border-amber-300/20 hover:bg-white/[0.07]">
-                <div className="grid gap-4 xl:grid-cols-[1.1fr_1.3fr_0.8fr] xl:items-center">
-                  <div className="space-y-3">
-                    <div className="flex flex-wrap items-center gap-3">
-                      <p className="text-2xl font-semibold text-white">
-                        {client.firstName} {client.lastName}
+            return (
+              <Link key={client.id} to={`/clients/${client.id}`}>
+                <Card className="transition hover:border-amber-300/20 hover:bg-white/[0.07]">
+                  <div className="grid gap-4 xl:grid-cols-[1.1fr_1.3fr_0.8fr] xl:items-center">
+                    <div className="space-y-3">
+                      <div className="flex flex-wrap items-center gap-3">
+                        <p className="text-2xl font-semibold text-white">
+                          {client.firstName} {client.lastName}
+                        </p>
+                        <StatusBadge
+                          label={
+                            client.status === "active"
+                              ? "Actif"
+                              : client.status === "pending"
+                                ? "En attente"
+                                : "Suivi"
+                          }
+                          tone={
+                            client.status === "active"
+                              ? "green"
+                              : client.status === "pending"
+                                ? "amber"
+                                : "blue"
+                          }
+                        />
+                      </div>
+                      <p className="text-sm text-slate-400">
+                        {client.job} - {client.city ?? "Ville non renseignee"} - {client.distributorName}
                       </p>
-                      <StatusBadge
-                        label={
-                          client.status === "active"
-                            ? "Actif"
-                            : client.status === "pending"
-                              ? "En attente"
-                              : "Suivi"
-                        }
-                        tone={
-                          client.status === "active"
-                            ? "green"
-                            : client.status === "pending"
-                              ? "amber"
-                              : "blue"
-                        }
-                      />
+                      <p className="text-sm leading-6 text-slate-300">{client.notes}</p>
                     </div>
-                    <p className="text-sm text-slate-400">
-                      {client.job} - {client.city ?? "Ville non renseignee"} - {client.distributorName}
-                    </p>
-                    <p className="text-sm leading-6 text-slate-300">{client.notes}</p>
-                  </div>
 
-                  <div className="grid gap-3 md:grid-cols-3">
-                    <div className="rounded-[22px] border border-white/10 bg-slate-950/40 p-4">
-                      <p className="text-xs uppercase tracking-[0.25em] text-slate-500">Programme</p>
-                      <p className="mt-3 text-lg font-semibold text-white">{client.currentProgram}</p>
-                      <p className="mt-2 text-xs text-slate-400">
-                        {latestAssessment.type === "initial" ? "Bilan initial" : "Dernier suivi"}
-                      </p>
+                    <div className="grid gap-3 md:grid-cols-3">
+                      <div className="rounded-[22px] border border-white/10 bg-slate-950/40 p-4">
+                        <p className="text-xs uppercase tracking-[0.25em] text-slate-500">Programme</p>
+                        <p className="mt-3 text-lg font-semibold text-white">{client.currentProgram}</p>
+                        <p className="mt-2 text-xs text-slate-400">
+                          {latestAssessment.type === "initial" ? "Bilan initial" : "Dernier suivi"}
+                        </p>
+                      </div>
+                      <div className="rounded-[22px] border border-white/10 bg-slate-950/40 p-4">
+                        <p className="text-xs uppercase tracking-[0.25em] text-slate-500">
+                          Hydratation cible
+                        </p>
+                        <p className="mt-3 text-lg font-semibold text-white">
+                          {calculateWaterNeed(latestBodyScan.weight)} L
+                        </p>
+                      </div>
+                      <div className="rounded-[22px] border border-white/10 bg-slate-950/40 p-4">
+                        <p className="text-xs uppercase tracking-[0.25em] text-slate-500">
+                          Repere proteines
+                        </p>
+                        <p className="mt-3 text-lg font-semibold text-white">
+                          {calculateProteinRange(latestBodyScan.weight, client.objective)}
+                        </p>
+                      </div>
                     </div>
-                    <div className="rounded-[22px] border border-white/10 bg-slate-950/40 p-4">
+
+                    <div className="space-y-3 xl:text-right">
                       <p className="text-xs uppercase tracking-[0.25em] text-slate-500">
-                        Hydratation cible
+                        Prochain suivi
                       </p>
-                      <p className="mt-3 text-lg font-semibold text-white">
-                        {calculateWaterNeed(latestBodyScan.weight)} L
-                      </p>
-                    </div>
-                    <div className="rounded-[22px] border border-white/10 bg-slate-950/40 p-4">
-                      <p className="text-xs uppercase tracking-[0.25em] text-slate-500">
-                        Repere proteines
-                      </p>
-                      <p className="mt-3 text-lg font-semibold text-white">
-                        {calculateProteinRange(latestBodyScan.weight, client.objective)}
+                      <p className="text-xl font-semibold text-white">{formatDate(client.nextFollowUp)}</p>
+                      <p className="text-sm text-slate-400">
+                        Dernier bilan {formatDate(latestAssessment.date)}
                       </p>
                     </div>
                   </div>
-
-                  <div className="space-y-3 xl:text-right">
-                    <p className="text-xs uppercase tracking-[0.25em] text-slate-500">
-                      Prochain suivi
-                    </p>
-                    <p className="text-xl font-semibold text-white">{formatDate(client.nextFollowUp)}</p>
-                    <p className="text-sm text-slate-400">
-                      Dernier bilan {formatDate(latestAssessment.date)}
-                    </p>
-                  </div>
-                </div>
-              </Card>
-            </Link>
-          );
-        })}
+                </Card>
+              </Link>
+            );
+          })
+        ) : (
+          <Card className="space-y-3">
+            <p className="text-2xl text-white">Aucun client pour le moment</p>
+            <p className="text-sm leading-6 text-slate-400">
+              Demarre un premier bilan pour creer un dossier client, puis tu retrouveras ici tous
+              les suivis et les fiches.
+            </p>
+            <div>
+              <Link
+                to="/assessments/new"
+                className="inline-flex rounded-full border border-white/10 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/5"
+              >
+                Lancer un premier bilan
+              </Link>
+            </div>
+          </Card>
+        )}
       </div>
     </div>
   );

@@ -6,21 +6,37 @@ import {
   useState,
   type PropsWithChildren
 } from "react";
-import { mockClients, mockFollowUps } from "../data/mockClients";
 import { mockPrograms } from "../data/mockPrograms";
-import {
-  canAccessClient,
-  getVisibleClients,
-  getVisibleFollowUps
-} from "../lib/auth";
+import { canAccessClient, getVisibleClients, getVisibleFollowUps } from "../lib/auth";
 import {
   clearPersistedSession,
   createMockUser,
   getStoredUsers,
   loginWithMockCredentials,
+  resetMockAuthData,
   restoreSession,
   updateMockUserStatus
 } from "../services/authService";
+import {
+  clearStoredAppData,
+  getStoredClients,
+  getStoredFollowUps,
+  persistClients,
+  persistFollowUps
+} from "../services/appDataService";
+import { isSupabaseConfigured } from "../services/supabaseClient";
+import {
+  addSupabaseFollowUpAssessment,
+  createSupabaseClientWithInitialAssessment,
+  createSupabaseUserAccess,
+  fetchSupabaseClients,
+  fetchSupabaseFollowUps,
+  fetchSupabaseUsers,
+  loginWithSupabaseCredentials,
+  logoutFromSupabase,
+  restoreSupabaseSession,
+  updateSupabaseUserStatus
+} from "../services/supabaseService";
 import type {
   AssessmentRecord,
   AuthSession,
@@ -30,8 +46,11 @@ import type {
   User
 } from "../types/domain";
 
+type StorageMode = "local" | "supabase";
+
 interface AppContextValue {
   authReady: boolean;
+  storageMode: StorageMode;
   currentUser: User | null;
   currentSession: AuthSession | null;
   users: User[];
@@ -40,61 +59,138 @@ interface AppContextValue {
   followUps: FollowUp[];
   visibleFollowUps: FollowUp[];
   programs: Program[];
-  loginAs: (userId: string) => void;
-  loginWithCredentials: (payload: { email: string; password: string }) => boolean;
-  logout: () => void;
+  loginAs: (userId: string) => Promise<void>;
+  loginWithCredentials: (payload: { email: string; password: string }) => Promise<boolean>;
+  logout: () => Promise<void>;
   createUserAccess: (payload: {
     name: string;
     email: string;
     role: User["role"];
     active: boolean;
     mockPassword: string;
-  }) => { ok: boolean; error?: string };
-  updateUserStatus: (userId: string, active: boolean) => void;
+  }) => Promise<{ ok: boolean; error?: string }>;
+  updateUserStatus: (userId: string, active: boolean) => Promise<void>;
+  resetAccessData: () => void;
+  clearBusinessData: () => void;
   getClientById: (clientId: string) => Client | undefined;
   canAccessClient: (clientId: string) => boolean;
+  createClientWithInitialAssessment: (payload: {
+    client: Omit<Client, "id" | "status" | "currentProgram" | "started" | "startDate" | "nextFollowUp" | "notes" | "assessments">;
+    assessment: AssessmentRecord;
+    nextFollowUp: string;
+    notes: string;
+  }) => Promise<string>;
   addFollowUpAssessment: (
     clientId: string,
     assessment: AssessmentRecord,
     followUpMeta: Pick<FollowUp, "dueDate" | "type" | "status">
-  ) => void;
+  ) => Promise<void>;
 }
 
 const AppContext = createContext<AppContextValue | undefined>(undefined);
 
 export function AppProvider({ children }: PropsWithChildren) {
+  const storageMode: StorageMode = isSupabaseConfigured() ? "supabase" : "local";
   const [authReady, setAuthReady] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [currentSession, setCurrentSession] = useState<AuthSession | null>(null);
-  const [users, setUsers] = useState<User[]>(() => getStoredUsers());
-  const [clients, setClients] = useState<Client[]>(mockClients);
-  const [followUps, setFollowUps] = useState<FollowUp[]>(mockFollowUps);
+  const [users, setUsers] = useState<User[]>(() =>
+    storageMode === "local" ? getStoredUsers() : []
+  );
+  const [clients, setClients] = useState<Client[]>(() =>
+    storageMode === "local" ? getStoredClients() : []
+  );
+  const [followUps, setFollowUps] = useState<FollowUp[]>(() =>
+    storageMode === "local" ? getStoredFollowUps() : []
+  );
+
+  async function refreshRemoteData(activeUser?: User | null) {
+    const nextUser = activeUser ?? currentUser;
+    const [nextClients, nextFollowUps, nextUsers] = await Promise.all([
+      fetchSupabaseClients(),
+      fetchSupabaseFollowUps(),
+      nextUser ? fetchSupabaseUsers() : Promise.resolve([] as User[])
+    ]);
+
+    setClients(nextClients);
+    setFollowUps(nextFollowUps);
+    setUsers(nextUsers);
+  }
 
   useEffect(() => {
-    setUsers(getStoredUsers());
-    const restored = restoreSession();
-    if (restored) {
-      setCurrentUser(restored.user);
-      setCurrentSession(restored.session);
-    }
-    setAuthReady(true);
-  }, []);
+    async function initialize() {
+      if (storageMode === "supabase") {
+        const restored = await restoreSupabaseSession();
+        if (restored) {
+          setCurrentUser(restored.user);
+          setCurrentSession(restored.session);
+          await refreshRemoteData(restored.user);
+        } else {
+          setUsers([]);
+          setClients([]);
+          setFollowUps([]);
+        }
+        setAuthReady(true);
+        return;
+      }
 
-  function loginAs(userId: string) {
+      setUsers(getStoredUsers());
+      setClients(getStoredClients());
+      setFollowUps(getStoredFollowUps());
+
+      const restored = restoreSession();
+      if (restored) {
+        setCurrentUser(restored.user);
+        setCurrentSession(restored.session);
+      }
+      setAuthReady(true);
+    }
+
+    void initialize();
+  }, [storageMode]);
+
+  useEffect(() => {
+    if (storageMode !== "local") {
+      return;
+    }
+
+    persistClients(clients);
+  }, [clients, storageMode]);
+
+  useEffect(() => {
+    if (storageMode !== "local") {
+      return;
+    }
+
+    persistFollowUps(followUps);
+  }, [followUps, storageMode]);
+
+  async function loginAs(userId: string) {
     const matchedUser = users.find((user) => user.id === userId);
     if (!matchedUser) {
       return;
     }
 
-    loginWithCredentials({
+    await loginWithCredentials({
       email: matchedUser.email,
       password: "demo1234"
     });
   }
 
-  function loginWithCredentials(payload: { email: string; password: string }) {
-    const result = loginWithMockCredentials(payload);
+  async function loginWithCredentials(payload: { email: string; password: string }) {
+    if (storageMode === "supabase") {
+      const result = await loginWithSupabaseCredentials(payload);
+      if (!result) {
+        return false;
+      }
 
+      setCurrentUser(result.user);
+      setCurrentSession(result.session);
+      await refreshRemoteData(result.user);
+      return true;
+    }
+
+    const result = loginWithMockCredentials(payload);
     if (!result) {
       return false;
     }
@@ -104,19 +200,39 @@ export function AppProvider({ children }: PropsWithChildren) {
     return true;
   }
 
-  function logout() {
+  async function logout() {
+    if (storageMode === "supabase") {
+      await logoutFromSupabase();
+      setCurrentUser(null);
+      setCurrentSession(null);
+      setUsers([]);
+      setClients([]);
+      setFollowUps([]);
+      return;
+    }
+
     setCurrentUser(null);
     setCurrentSession(null);
     clearPersistedSession();
   }
 
-  function createUserAccess(payload: {
+  async function createUserAccess(payload: {
     name: string;
     email: string;
     role: User["role"];
     active: boolean;
     mockPassword: string;
   }) {
+    if (storageMode === "supabase") {
+      const result = await createSupabaseUserAccess(payload);
+      if (!result.ok) {
+        return result;
+      }
+
+      await refreshRemoteData(currentUser);
+      return { ok: true };
+    }
+
     const result = createMockUser(payload);
     if (!result.ok || !result.users) {
       return { ok: false, error: result.error };
@@ -126,7 +242,17 @@ export function AppProvider({ children }: PropsWithChildren) {
     return { ok: true };
   }
 
-  function updateUserStatus(userId: string, active: boolean) {
+  async function updateUserStatus(userId: string, active: boolean) {
+    if (storageMode === "supabase") {
+      await updateSupabaseUserStatus(userId, active);
+      await refreshRemoteData(currentUser);
+
+      if (currentUser?.id === userId && !active) {
+        await logout();
+      }
+      return;
+    }
+
     const result = updateMockUserStatus(userId, active);
     if (!result.users) {
       return;
@@ -135,8 +261,29 @@ export function AppProvider({ children }: PropsWithChildren) {
     setUsers(result.users);
 
     if (currentUser?.id === userId && !active) {
-      logout();
+      await logout();
     }
+  }
+
+  function resetAccessData() {
+    if (storageMode === "supabase") {
+      return;
+    }
+
+    const nextUsers = resetMockAuthData();
+    setUsers(nextUsers);
+    setCurrentUser(null);
+    setCurrentSession(null);
+  }
+
+  function clearBusinessData() {
+    if (storageMode === "supabase") {
+      return;
+    }
+
+    const cleared = clearStoredAppData();
+    setClients(cleared.clients);
+    setFollowUps(cleared.followUps);
   }
 
   function getClientById(clientId: string) {
@@ -153,11 +300,64 @@ export function AppProvider({ children }: PropsWithChildren) {
     return client ? canAccessClient(currentUser, client) : false;
   }
 
-  function addFollowUpAssessment(
+  async function createClientWithInitialAssessment(payload: {
+    client: Omit<Client, "id" | "status" | "currentProgram" | "started" | "startDate" | "nextFollowUp" | "notes" | "assessments">;
+    assessment: AssessmentRecord;
+    nextFollowUp: string;
+    notes: string;
+  }) {
+    if (storageMode === "supabase") {
+      const clientId = await createSupabaseClientWithInitialAssessment(payload);
+      await refreshRemoteData(currentUser);
+      return clientId;
+    }
+
+    const clientId = `c-${Date.now()}`;
+    const nextClient: Client = {
+      ...payload.client,
+      id: clientId,
+      status: "active",
+      currentProgram: payload.assessment.programTitle,
+      started: true,
+      startDate: payload.assessment.date,
+      nextFollowUp: payload.nextFollowUp,
+      notes: payload.notes,
+      assessments: [payload.assessment]
+    };
+
+    const nextFollowUpItem: FollowUp = {
+      id: `f-${Date.now()}`,
+      clientId,
+      clientName: `${nextClient.firstName} ${nextClient.lastName}`,
+      dueDate: payload.nextFollowUp,
+      type: "Premier suivi",
+      status: "scheduled",
+      programTitle: payload.assessment.programTitle,
+      lastAssessmentDate: payload.assessment.date
+    };
+
+    setClients((previousClients) => [nextClient, ...previousClients]);
+    setFollowUps((previousFollowUps) => [nextFollowUpItem, ...previousFollowUps]);
+
+    return clientId;
+  }
+
+  async function addFollowUpAssessment(
     clientId: string,
     assessment: AssessmentRecord,
     followUpMeta: Pick<FollowUp, "dueDate" | "type" | "status">
   ) {
+    if (storageMode === "supabase") {
+      await addSupabaseFollowUpAssessment(clientId, assessment, followUpMeta);
+      await refreshRemoteData(currentUser);
+      return;
+    }
+
+    const targetClient = clients.find((client) => client.id === clientId);
+    if (!targetClient) {
+      return;
+    }
+
     setClients((previousClients) =>
       previousClients.map((client) => {
         if (client.id !== clientId) {
@@ -173,11 +373,6 @@ export function AppProvider({ children }: PropsWithChildren) {
         };
       })
     );
-
-    const targetClient = clients.find((client) => client.id === clientId);
-    if (!targetClient) {
-      return;
-    }
 
     setFollowUps((previousFollowUps) => {
       const nextItem: FollowUp = {
@@ -198,6 +393,7 @@ export function AppProvider({ children }: PropsWithChildren) {
   const value = useMemo(
     () => ({
       authReady,
+      storageMode,
       currentUser,
       currentSession,
       users,
@@ -211,11 +407,14 @@ export function AppProvider({ children }: PropsWithChildren) {
       logout,
       createUserAccess,
       updateUserStatus,
+      resetAccessData,
+      clearBusinessData,
       getClientById,
       canAccessClient: canAccessClientById,
+      createClientWithInitialAssessment,
       addFollowUpAssessment
     }),
-    [authReady, clients, currentSession, currentUser, followUps, users]
+    [authReady, clients, currentSession, currentUser, followUps, storageMode, users]
   );
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

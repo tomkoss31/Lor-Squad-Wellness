@@ -7,7 +7,7 @@ import { useAppContext } from "../context/AppContext";
 import { blasonLogo, lorSquadLogo } from "../data/visualContent";
 
 export function LoginPage() {
-  const { authReady, users, loginWithCredentials } = useAppContext();
+  const { authReady, storageMode, users, loginWithCredentials } = useAppContext();
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -34,15 +34,19 @@ export function LoginPage() {
     setError("");
   }
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!authReady) {
       return;
     }
 
-    const success = loginWithCredentials({ email, password });
+    const success = await loginWithCredentials({ email, password });
     if (!success) {
-      setError("Email ou mot de passe non reconnus pour cette version de demonstration.");
+      setError(
+        storageMode === "supabase"
+          ? "Email ou mot de passe invalides pour cet acces."
+          : "Email ou mot de passe non reconnus pour cette version de demonstration."
+      );
       return;
     }
 
@@ -118,9 +122,7 @@ export function LoginPage() {
 
             <form className="space-y-4" onSubmit={handleSubmit}>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-300">
-                  Identifiant
-                </label>
+                <label className="text-sm font-medium text-slate-300">Identifiant</label>
                 <input
                   type="email"
                   placeholder="Email professionnel"
@@ -128,8 +130,8 @@ export function LoginPage() {
                   onChange={(event) => setEmail(event.target.value)}
                 />
                 <p className="text-xs text-slate-500">
-                  Dans la vraie version, l&apos;identifiant sera l&apos;email professionnel du
-                  distributeur ou de l&apos;admin.
+                  L&apos;identifiant de connexion est l&apos;email professionnel du distributeur
+                  ou de l&apos;admin.
                 </p>
               </div>
               <div className="space-y-2">
@@ -153,40 +155,42 @@ export function LoginPage() {
               </Button>
             </form>
 
-            <div className="rounded-[24px] border border-white/10 bg-white/[0.04] p-4">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <p className="text-sm font-semibold text-white">Acces de demonstration</p>
-                  <p className="mt-1 text-xs leading-6 text-slate-400">
-                    Pour tester rapidement l&apos;interface, sans exposer de comptes nominatifs.
-                  </p>
+            {storageMode === "local" ? (
+              <div className="rounded-[24px] border border-white/10 bg-white/[0.04] p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-semibold text-white">Acces de demonstration</p>
+                    <p className="mt-1 text-xs leading-6 text-slate-400">
+                      Pour tester rapidement l&apos;interface, sans exposer de comptes nominatifs.
+                    </p>
+                  </div>
+                  <StatusBadge label="Demo" tone="blue" />
                 </div>
-                <StatusBadge label="Demo" tone="blue" />
+                <div className="mt-4 grid gap-3 md:grid-cols-2">
+                  <button
+                    type="button"
+                    onClick={() => fillDemoAccess("distributor")}
+                    className="rounded-[20px] border border-white/10 bg-slate-950/35 px-4 py-4 text-left transition hover:border-white/20 hover:bg-white/[0.05]"
+                  >
+                    <p className="text-sm font-semibold text-white">Acces distributeur</p>
+                    <p className="mt-1 text-xs leading-6 text-slate-400">
+                      Vue limitee a ses clients, ses bilans et ses suivis.
+                    </p>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => fillDemoAccess("admin")}
+                    className="rounded-[20px] border border-white/10 bg-slate-950/35 px-4 py-4 text-left transition hover:border-white/20 hover:bg-white/[0.05]"
+                  >
+                    <p className="text-sm font-semibold text-white">Acces admin</p>
+                    <p className="mt-1 text-xs leading-6 text-slate-400">
+                      Vue globale sur les clients, l&apos;activite et le pilotage d&apos;equipe.
+                    </p>
+                  </button>
+                </div>
+                <p className="mt-3 text-xs text-slate-500">Mot de passe demo : demo1234</p>
               </div>
-              <div className="mt-4 grid gap-3 md:grid-cols-2">
-                <button
-                  type="button"
-                  onClick={() => fillDemoAccess("distributor")}
-                  className="rounded-[20px] border border-white/10 bg-slate-950/35 px-4 py-4 text-left transition hover:border-white/20 hover:bg-white/[0.05]"
-                >
-                  <p className="text-sm font-semibold text-white">Acces distributeur</p>
-                  <p className="mt-1 text-xs leading-6 text-slate-400">
-                    Vue limitee a ses clients, ses bilans et ses suivis.
-                  </p>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => fillDemoAccess("admin")}
-                  className="rounded-[20px] border border-white/10 bg-slate-950/35 px-4 py-4 text-left transition hover:border-white/20 hover:bg-white/[0.05]"
-                >
-                  <p className="text-sm font-semibold text-white">Acces admin</p>
-                  <p className="mt-1 text-xs leading-6 text-slate-400">
-                    Vue globale sur les clients, l&apos;activite et le pilotage d&apos;equipe.
-                  </p>
-                </button>
-              </div>
-              <p className="mt-3 text-xs text-slate-500">Mot de passe demo : demo1234</p>
-            </div>
+            ) : null}
 
             <div className="rounded-[24px] border border-white/10 bg-slate-950/35 p-4">
               <p className="text-[11px] uppercase tracking-[0.24em] text-slate-500">
@@ -195,7 +199,7 @@ export function LoginPage() {
               <div className="mt-4 space-y-3">
                 <AccessStep
                   index="01"
-                  title="Tu crées le compte depuis l&apos;admin"
+                  title="Tu crees le compte depuis l&apos;admin"
                   text="Tu renseignes le nom, l&apos;email professionnel, le role et l&apos;etat actif du compte."
                 />
                 <AccessStep

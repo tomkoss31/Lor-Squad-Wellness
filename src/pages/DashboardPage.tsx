@@ -107,33 +107,42 @@ export function DashboardPage() {
           </div>
 
           <div className="grid gap-3">
-            {visibleFollowUps.map((followUp) => (
-              <div
-                key={followUp.id}
-                className="rounded-[24px] border border-white/10 bg-slate-950/40 p-4"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="text-lg font-semibold text-white">{followUp.clientName}</p>
-                    <p className="mt-1 text-sm text-slate-400">{followUp.type}</p>
+            {visibleFollowUps.length ? (
+              visibleFollowUps.map((followUp) => (
+                <div
+                  key={followUp.id}
+                  className="rounded-[24px] border border-white/10 bg-slate-950/40 p-4"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-lg font-semibold text-white">{followUp.clientName}</p>
+                      <p className="mt-1 text-sm text-slate-400">{followUp.type}</p>
+                    </div>
+                    <StatusBadge
+                      label={followUp.status === "scheduled" ? "Planifie" : "A valider"}
+                      tone={followUp.status === "scheduled" ? "green" : "amber"}
+                    />
                   </div>
-                  <StatusBadge
-                    label={followUp.status === "scheduled" ? "Planifie" : "A valider"}
-                    tone={followUp.status === "scheduled" ? "green" : "amber"}
-                  />
+                  <p className="mt-4 text-sm text-slate-300">
+                    Rendez-vous prevu le {formatDate(followUp.dueDate)}
+                  </p>
+                  <div className="mt-4 h-2 overflow-hidden rounded-full bg-white/[0.06]">
+                    <div
+                      className={`h-full rounded-full ${
+                        followUp.status === "scheduled" ? "w-4/5 bg-emerald-400" : "w-1/2 bg-amber-400"
+                      }`}
+                    />
+                  </div>
                 </div>
-                <p className="mt-4 text-sm text-slate-300">
-                  Rendez-vous prevu le {formatDate(followUp.dueDate)}
+              ))
+            ) : (
+              <div className="rounded-[24px] border border-dashed border-white/10 bg-white/[0.03] p-6">
+                <p className="text-lg font-semibold text-white">Aucun suivi pour le moment</p>
+                <p className="mt-2 text-sm leading-6 text-slate-400">
+                  Demarre un premier bilan pour creer un dossier, puis le suivi apparaitra ici.
                 </p>
-                <div className="mt-4 h-2 overflow-hidden rounded-full bg-white/[0.06]">
-                  <div
-                    className={`h-full rounded-full ${
-                      followUp.status === "scheduled" ? "w-4/5 bg-emerald-400" : "w-1/2 bg-amber-400"
-                    }`}
-                  />
-                </div>
               </div>
-            ))}
+            )}
           </div>
         </div>
       </Card>
@@ -152,30 +161,39 @@ export function DashboardPage() {
             </Link>
           </div>
           <div className="space-y-3">
-            {visibleClients.slice(0, 3).map((client) => (
-              <Link
-                key={client.id}
-                to={`/clients/${client.id}`}
-                className="rounded-[24px] border border-white/10 bg-white/[0.03] p-4 transition hover:bg-white/[0.06]"
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <p className="text-lg font-semibold text-white">
-                      {client.firstName} {client.lastName}
-                    </p>
-                    <p className="text-sm text-slate-400">{client.currentProgram}</p>
+            {visibleClients.length ? (
+              visibleClients.slice(0, 3).map((client) => (
+                <Link
+                  key={client.id}
+                  to={`/clients/${client.id}`}
+                  className="rounded-[24px] border border-white/10 bg-white/[0.03] p-4 transition hover:bg-white/[0.06]"
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <p className="text-lg font-semibold text-white">
+                        {client.firstName} {client.lastName}
+                      </p>
+                      <p className="text-sm text-slate-400">{client.currentProgram}</p>
+                    </div>
+                    <StatusBadge
+                      label={client.objective === "sport" ? "Sport" : "Perte de poids"}
+                      tone={client.objective === "sport" ? "green" : "blue"}
+                    />
                   </div>
-                  <StatusBadge
-                    label={client.objective === "sport" ? "Sport" : "Perte de poids"}
-                    tone={client.objective === "sport" ? "green" : "blue"}
-                  />
-                </div>
-                <div className="mt-4 grid grid-cols-2 gap-3 text-sm text-slate-400">
-                  <span>Suivi {formatDate(client.nextFollowUp)}</span>
-                  <span className="text-right">{client.distributorName}</span>
-                </div>
-              </Link>
-            ))}
+                  <div className="mt-4 grid grid-cols-2 gap-3 text-sm text-slate-400">
+                    <span>Suivi {formatDate(client.nextFollowUp)}</span>
+                    <span className="text-right">{client.distributorName}</span>
+                  </div>
+                </Link>
+              ))
+            ) : (
+              <div className="rounded-[24px] border border-dashed border-white/10 bg-white/[0.03] p-6">
+                <p className="text-lg font-semibold text-white">Aucun dossier client pour le moment</p>
+                <p className="mt-2 text-sm leading-6 text-slate-400">
+                  Lance un premier bilan pour creer ton premier client et retrouver ses suivis ici.
+                </p>
+              </div>
+            )}
           </div>
         </Card>
       </div>

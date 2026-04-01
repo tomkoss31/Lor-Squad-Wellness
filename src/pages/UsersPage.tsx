@@ -1,13 +1,14 @@
 import { useMemo, useState, type FormEvent } from "react";
-import { Card } from "../components/ui/Card";
 import { Button } from "../components/ui/Button";
+import { Card } from "../components/ui/Card";
 import { PageHeading } from "../components/ui/PageHeading";
 import { StatusBadge } from "../components/ui/StatusBadge";
 import { useAppContext } from "../context/AppContext";
 import { formatDate } from "../lib/calculations";
 
 export function UsersPage() {
-  const { users, createUserAccess, updateUserStatus } = useAppContext();
+  const { users, createUserAccess, updateUserStatus, resetAccessData, clearBusinessData } =
+    useAppContext();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<"admin" | "distributor">("distributor");
@@ -120,7 +121,9 @@ export function UsersPage() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-300">Mot de passe provisoire</label>
+                <label className="text-sm font-medium text-slate-300">
+                  Mot de passe provisoire
+                </label>
                 <input
                   type="password"
                   value={password}
@@ -157,14 +160,16 @@ export function UsersPage() {
 
         <Card className="space-y-5">
           <div>
-            <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Comment cela fonctionnera</p>
+            <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
+              Comment cela fonctionnera
+            </p>
             <h2 className="mt-2 text-3xl">Le parcours futur est deja pose</h2>
           </div>
 
           <div className="space-y-3">
             <StepCard
               index="01"
-              title="Tu crées le compte"
+              title="Tu crees le compte"
               text="Nom, email, role et statut actif suffisent pour ouvrir un acces."
             />
             <StepCard
@@ -186,6 +191,36 @@ export function UsersPage() {
               cette page branchera la vraie base utilisateurs et l&apos;envoi du lien
               d&apos;activation.
             </p>
+          </div>
+
+          <div className="rounded-[24px] border border-amber-300/20 bg-amber-400/10 p-4">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <p className="text-sm font-semibold text-white">Nettoyage beta</p>
+                <p className="mt-2 text-sm leading-7 text-slate-300">
+                  Repars sur les acces par defaut et ferme la session actuelle pour retrouver une
+                  base locale propre.
+                </p>
+              </div>
+              <Button variant="secondary" onClick={resetAccessData}>
+                Reinitialiser les acces
+              </Button>
+            </div>
+          </div>
+
+          <div className="rounded-[24px] border border-rose-300/20 bg-rose-400/10 p-4">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <p className="text-sm font-semibold text-white">Base clients</p>
+                <p className="mt-2 text-sm leading-7 text-slate-300">
+                  Vide les dossiers clients et les suivis en local pour repartir d&apos;une base
+                  propre avec un premier bilan vierge.
+                </p>
+              </div>
+              <Button variant="secondary" onClick={clearBusinessData}>
+                Vider les dossiers
+              </Button>
+            </div>
           </div>
         </Card>
       </div>
@@ -214,7 +249,10 @@ export function UsersPage() {
                     label={user.role === "admin" ? "Admin" : "Distributeur"}
                     tone={user.role === "admin" ? "blue" : "green"}
                   />
-                  <StatusBadge label={user.active ? "Actif" : "Inactif"} tone={user.active ? "green" : "amber"} />
+                  <StatusBadge
+                    label={user.active ? "Actif" : "Inactif"}
+                    tone={user.active ? "green" : "amber"}
+                  />
                 </div>
                 <p className="text-sm text-slate-400">{user.email}</p>
                 <p className="text-xs text-slate-500">
@@ -236,10 +274,7 @@ export function UsersPage() {
               </div>
 
               <div className="flex items-center lg:justify-end">
-                <Button
-                  variant="secondary"
-                  onClick={() => updateUserStatus(user.id, !user.active)}
-                >
+                <Button variant="secondary" onClick={() => updateUserStatus(user.id, !user.active)}>
                   {user.active ? "Desactiver" : "Reactiver"}
                 </Button>
               </div>
