@@ -11,6 +11,7 @@ export function LoginPage() {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
 
   const demoAccounts = useMemo(() => {
@@ -40,7 +41,10 @@ export function LoginPage() {
       return;
     }
 
-    const success = await loginWithCredentials({ email, password });
+    const success = await loginWithCredentials({
+      email: email.trim().toLowerCase(),
+      password: password.trim()
+    });
     if (!success) {
       setError(
         storageMode === "supabase"
@@ -128,6 +132,11 @@ export function LoginPage() {
                   placeholder="Email professionnel"
                   value={email}
                   onChange={(event) => setEmail(event.target.value)}
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  autoComplete="username"
+                  inputMode="email"
+                  spellCheck={false}
                 />
                 <p className="text-xs text-slate-500">
                   L&apos;identifiant de connexion est l&apos;email professionnel du distributeur
@@ -137,11 +146,22 @@ export function LoginPage() {
               <div className="space-y-2">
                 <label className="text-sm font-medium text-slate-300">Mot de passe</label>
                 <input
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   placeholder="Votre mot de passe"
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  autoComplete="current-password"
+                  spellCheck={false}
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((visible) => !visible)}
+                  className="text-xs font-medium text-slate-400 transition hover:text-white"
+                >
+                  {showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+                </button>
               </div>
 
               {error ? (
