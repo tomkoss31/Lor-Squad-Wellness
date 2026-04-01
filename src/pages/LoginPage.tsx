@@ -106,23 +106,31 @@ export function LoginPage() {
         <section className="glass-panel rounded-[36px] p-6 md:p-8 lg:p-10">
           <div className="space-y-7">
             <div>
-              <p className="text-xs uppercase tracking-[0.35em] text-slate-500">Acces a la plateforme</p>
+              <p className="text-xs uppercase tracking-[0.35em] text-slate-500">
+                Acces a la plateforme
+              </p>
               <h2 className="mt-3 text-4xl">Connecte-toi pour ouvrir ton espace de travail</h2>
               <p className="mt-3 max-w-xl text-sm leading-7 text-slate-300">
-                Une connexion simple aujourd&apos;hui, avec une base deja propre pour les futurs
+                Une entree simple aujourd&apos;hui, avec une base deja propre pour les futurs
                 acces admin et distributeur.
               </p>
             </div>
 
             <form className="space-y-4" onSubmit={handleSubmit}>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-300">Email professionnel</label>
+                <label className="text-sm font-medium text-slate-300">
+                  Identifiant
+                </label>
                 <input
                   type="email"
-                  placeholder="exemple@lorsquadwellness.app"
+                  placeholder="Email professionnel"
                   value={email}
                   onChange={(event) => setEmail(event.target.value)}
                 />
+                <p className="text-xs text-slate-500">
+                  Dans la vraie version, l&apos;identifiant sera l&apos;email professionnel du
+                  distributeur ou de l&apos;admin.
+                </p>
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium text-slate-300">Mot de passe</label>
@@ -150,7 +158,7 @@ export function LoginPage() {
                 <div>
                   <p className="text-sm font-semibold text-white">Acces de demonstration</p>
                   <p className="mt-1 text-xs leading-6 text-slate-400">
-                    Pour tester rapidement l&apos;interface, sans afficher de profils nominatifs.
+                    Pour tester rapidement l&apos;interface, sans exposer de comptes nominatifs.
                   </p>
                 </div>
                 <StatusBadge label="Demo" tone="blue" />
@@ -182,23 +190,23 @@ export function LoginPage() {
 
             <div className="rounded-[24px] border border-white/10 bg-slate-950/35 p-4">
               <p className="text-[11px] uppercase tracking-[0.24em] text-slate-500">
-                Creation des acces
+                Comment creer les acces
               </p>
               <div className="mt-4 space-y-3">
                 <AccessStep
                   index="01"
-                  title="L&apos;admin cree le compte"
-                  text="Chaque nouvel acces sera cree depuis l&apos;administration Lor&apos;Squad."
+                  title="Tu crées le compte depuis l&apos;admin"
+                  text="Tu renseignes le nom, l&apos;email professionnel, le role et l&apos;etat actif du compte."
                 />
                 <AccessStep
                   index="02"
-                  title="Le mot de passe sera defini par l&apos;utilisateur"
-                  text="Le nouvel utilisateur recevra un lien d&apos;activation pour choisir son mot de passe."
+                  title="L&apos;email devient l&apos;identifiant"
+                  text="On ne cree pas de pseudo separe. L&apos;identifiant de connexion sera simplement l&apos;email."
                 />
                 <AccessStep
                   index="03"
-                  title="Les droits seront attribues selon le role"
-                  text="Un distributeur verra seulement ses clients. Un admin verra l&apos;ensemble."
+                  title="Le mot de passe sera defini a l&apos;activation"
+                  text="Le nouvel utilisateur recevra un lien pour choisir son mot de passe et acceder directement au bon perimetre."
                 />
               </div>
             </div>

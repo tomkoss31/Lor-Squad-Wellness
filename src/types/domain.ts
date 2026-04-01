@@ -12,6 +12,7 @@ export interface User {
   id: string;
   name: string;
   email: string;
+  mockPassword?: string;
   role: UserRole;
   active: boolean;
   title: string;

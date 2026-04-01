@@ -8,7 +8,6 @@ import {
 } from "react";
 import { mockClients, mockFollowUps } from "../data/mockClients";
 import { mockPrograms } from "../data/mockPrograms";
-import { mockUsers } from "../data/mockUsers";
 import {
   canAccessClient,
   getVisibleClients,
@@ -16,8 +15,11 @@ import {
 } from "../lib/auth";
 import {
   clearPersistedSession,
+  createMockUser,
+  getStoredUsers,
   loginWithMockCredentials,
-  restoreSession
+  restoreSession,
+  updateMockUserStatus
 } from "../services/authService";
 import type {
   AssessmentRecord,
@@ -41,6 +43,14 @@ interface AppContextValue {
   loginAs: (userId: string) => void;
   loginWithCredentials: (payload: { email: string; password: string }) => boolean;
   logout: () => void;
+  createUserAccess: (payload: {
+    name: string;
+    email: string;
+    role: User["role"];
+    active: boolean;
+    mockPassword: string;
+  }) => { ok: boolean; error?: string };
+  updateUserStatus: (userId: string, active: boolean) => void;
   getClientById: (clientId: string) => Client | undefined;
   canAccessClient: (clientId: string) => boolean;
   addFollowUpAssessment: (
@@ -56,10 +66,12 @@ export function AppProvider({ children }: PropsWithChildren) {
   const [authReady, setAuthReady] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [currentSession, setCurrentSession] = useState<AuthSession | null>(null);
+  const [users, setUsers] = useState<User[]>(() => getStoredUsers());
   const [clients, setClients] = useState<Client[]>(mockClients);
   const [followUps, setFollowUps] = useState<FollowUp[]>(mockFollowUps);
 
   useEffect(() => {
+    setUsers(getStoredUsers());
     const restored = restoreSession();
     if (restored) {
       setCurrentUser(restored.user);
@@ -69,7 +81,7 @@ export function AppProvider({ children }: PropsWithChildren) {
   }, []);
 
   function loginAs(userId: string) {
-    const matchedUser = mockUsers.find((user) => user.id === userId);
+    const matchedUser = users.find((user) => user.id === userId);
     if (!matchedUser) {
       return;
     }
@@ -96,6 +108,35 @@ export function AppProvider({ children }: PropsWithChildren) {
     setCurrentUser(null);
     setCurrentSession(null);
     clearPersistedSession();
+  }
+
+  function createUserAccess(payload: {
+    name: string;
+    email: string;
+    role: User["role"];
+    active: boolean;
+    mockPassword: string;
+  }) {
+    const result = createMockUser(payload);
+    if (!result.ok || !result.users) {
+      return { ok: false, error: result.error };
+    }
+
+    setUsers(result.users);
+    return { ok: true };
+  }
+
+  function updateUserStatus(userId: string, active: boolean) {
+    const result = updateMockUserStatus(userId, active);
+    if (!result.users) {
+      return;
+    }
+
+    setUsers(result.users);
+
+    if (currentUser?.id === userId && !active) {
+      logout();
+    }
   }
 
   function getClientById(clientId: string) {
@@ -159,7 +200,7 @@ export function AppProvider({ children }: PropsWithChildren) {
       authReady,
       currentUser,
       currentSession,
-      users: mockUsers,
+      users,
       clients,
       visibleClients: getVisibleClients(currentUser, clients),
       followUps,
@@ -168,11 +209,13 @@ export function AppProvider({ children }: PropsWithChildren) {
       loginAs,
       loginWithCredentials,
       logout,
+      createUserAccess,
+      updateUserStatus,
       getClientById,
       canAccessClient: canAccessClientById,
       addFollowUpAssessment
     }),
-    [authReady, clients, currentSession, currentUser, followUps]
+    [authReady, clients, currentSession, currentUser, followUps, users]
   );
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

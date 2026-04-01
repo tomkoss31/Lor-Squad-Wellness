@@ -6,12 +6,6 @@ import { Button } from "../ui/Button";
 import { StatusBadge } from "../ui/StatusBadge";
 import { getAccessSummary, getRoleLabel } from "../../lib/auth";
 
-const navigation = [
-  { label: "Dashboard", path: "/dashboard" },
-  { label: "Clients", path: "/clients" },
-  { label: "Nouveau bilan", path: "/assessments/new" }
-];
-
 export function AppLayout() {
   const { currentSession, currentUser, logout } = useAppContext();
   const location = useLocation();
@@ -20,6 +14,13 @@ export function AppLayout() {
   if (!currentUser) {
     return null;
   }
+
+  const navigation = [
+    { label: "Dashboard", path: "/dashboard" },
+    { label: "Clients", path: "/clients" },
+    ...(currentUser.role === "admin" ? [{ label: "Utilisateurs", path: "/users" }] : []),
+    { label: "Nouveau bilan", path: "/assessments/new" }
+  ];
 
   function handleLogout() {
     logout();
@@ -136,6 +137,7 @@ export function AppLayout() {
               <p className="mt-2 text-xl font-semibold text-white md:text-[1.9rem]">
                 {location.pathname === "/dashboard" && "Pilotage de l'activite et rendez-vous du moment"}
                 {location.pathname === "/clients" && "Dossiers clients et suivi en cours"}
+                {location.pathname === "/users" && "Creation des acces et gestion simple des roles"}
                 {location.pathname.startsWith("/clients/") && "Lecture detaillee du dossier client"}
                 {location.pathname === "/assessments/new" && "Bilan guide pour conduire le rendez-vous"}
               </p>

@@ -1,5 +1,5 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
-import { ProtectedRoute, PublicRoute } from "./components/auth/RouteGuards";
+import { ProtectedRoute, PublicRoute, RoleRoute } from "./components/auth/RouteGuards";
 import { AppLayout } from "./components/layout/AppLayout";
 import { ClientDetailPage } from "./pages/ClientDetailPage";
 import { ClientsPage } from "./pages/ClientsPage";
@@ -7,6 +7,7 @@ import { DashboardPage } from "./pages/DashboardPage";
 import { LoginPage } from "./pages/LoginPage";
 import { NewAssessmentPage } from "./pages/NewAssessmentPage";
 import { NewFollowUpPage } from "./pages/NewFollowUpPage";
+import { UsersPage } from "./pages/UsersPage";
 
 export default function App() {
   return (
@@ -20,6 +21,9 @@ export default function App() {
             <Route index element={<Navigate to="/dashboard" replace />} />
             <Route path="dashboard" element={<DashboardPage />} />
             <Route path="clients" element={<ClientsPage />} />
+            <Route element={<RoleRoute allowedRoles={["admin"]} />}>
+              <Route path="users" element={<UsersPage />} />
+            </Route>
             <Route path="clients/:clientId" element={<ClientDetailPage />} />
             <Route path="clients/:clientId/follow-up/new" element={<NewFollowUpPage />} />
             <Route path="assessments/new" element={<NewAssessmentPage />} />
