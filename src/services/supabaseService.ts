@@ -1,5 +1,5 @@
 import { createMockSession, getRoleScope } from "../lib/auth";
-import { supabase } from "./supabaseClient";
+import { getSupabaseClient } from "./supabaseClient";
 import type {
   AssessmentRecord,
   AuthSession,
@@ -68,7 +68,9 @@ type FollowUpRow = {
   last_assessment_date: string;
 };
 
-function requireSupabase() {
+async function requireSupabase() {
+  const supabase = await getSupabaseClient();
+
   if (!supabase) {
     throw new Error("Supabase n'est pas configure.");
   }
@@ -145,7 +147,7 @@ function mapFollowUp(row: FollowUpRow): FollowUp {
 }
 
 async function getProfile(userId: string) {
-  const client = requireSupabase();
+  const client = await requireSupabase();
   const { data, error } = await client
     .from("users")
     .select("*")
@@ -169,7 +171,7 @@ function createSupabaseSession(user: User): AuthSession {
 }
 
 export async function restoreSupabaseSession() {
-  const client = requireSupabase();
+  const client = await requireSupabase();
   const {
     data: { session }
   } = await client.auth.getSession();
@@ -194,7 +196,7 @@ export async function loginWithSupabaseCredentials(payload: {
   email: string;
   password: string;
 }) {
-  const client = requireSupabase();
+  const client = await requireSupabase();
   const { data, error } = await client.auth.signInWithPassword(payload);
 
   if (error || !data.user) {
@@ -219,12 +221,12 @@ export async function loginWithSupabaseCredentials(payload: {
 }
 
 export async function logoutFromSupabase() {
-  const client = requireSupabase();
+  const client = await requireSupabase();
   await client.auth.signOut();
 }
 
 export async function fetchSupabaseUsers() {
-  const client = requireSupabase();
+  const client = await requireSupabase();
   const { data, error } = await client
     .from("users")
     .select("*")
@@ -238,7 +240,7 @@ export async function fetchSupabaseUsers() {
 }
 
 export async function fetchSupabaseClients() {
-  const client = requireSupabase();
+  const client = await requireSupabase();
   const { data, error } = await client
     .from("clients")
     .select("*, assessments(*)")
@@ -252,7 +254,7 @@ export async function fetchSupabaseClients() {
 }
 
 export async function fetchSupabaseFollowUps() {
-  const client = requireSupabase();
+  const client = await requireSupabase();
   const { data, error } = await client
     .from("follow_ups")
     .select("*")
@@ -271,7 +273,7 @@ export async function createSupabaseClientWithInitialAssessment(payload: {
   nextFollowUp: string;
   notes: string;
 }) {
-  const client = requireSupabase();
+  const client = await requireSupabase();
   const { data: insertedClient, error: clientError } = await client
     .from("clients")
     .insert({
@@ -345,7 +347,7 @@ export async function addSupabaseFollowUpAssessment(
   assessment: AssessmentRecord,
   followUpMeta: Pick<FollowUp, "dueDate" | "type" | "status">
 ) {
-  const client = requireSupabase();
+  const client = await requireSupabase();
 
   const { error: assessmentError } = await client.from("assessments").insert({
     id: assessment.id,
@@ -402,7 +404,7 @@ export async function importLocalBusinessDataToSupabase(payload: {
   followUps: FollowUp[];
   owner: User;
 }) {
-  const client = requireSupabase();
+  const client = await requireSupabase();
   let imported = 0;
   let skipped = 0;
 
@@ -524,7 +526,7 @@ export async function createSupabaseUserAccess(payload: {
 }
 
 export async function updateSupabaseUserStatus(userId: string, active: boolean) {
-  const client = requireSupabase();
+  const client = await requireSupabase();
   const { error } = await client.from("users").update({ active }).eq("id", userId);
 
   if (error) {

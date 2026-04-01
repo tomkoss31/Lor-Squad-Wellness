@@ -24,7 +24,7 @@ import {
   persistClients,
   persistFollowUps
 } from "../services/appDataService";
-import { isSupabaseConfigured } from "../services/supabaseClient";
+import { resolveStorageMode } from "../services/supabaseClient";
 import {
   addSupabaseFollowUpAssessment,
   createSupabaseClientWithInitialAssessment,
@@ -92,19 +92,13 @@ interface AppContextValue {
 const AppContext = createContext<AppContextValue | undefined>(undefined);
 
 export function AppProvider({ children }: PropsWithChildren) {
-  const storageMode: StorageMode = isSupabaseConfigured() ? "supabase" : "local";
+  const [storageMode, setStorageMode] = useState<StorageMode>("local");
   const [authReady, setAuthReady] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [currentSession, setCurrentSession] = useState<AuthSession | null>(null);
-  const [users, setUsers] = useState<User[]>(() =>
-    storageMode === "local" ? getStoredUsers() : []
-  );
-  const [clients, setClients] = useState<Client[]>(() =>
-    storageMode === "local" ? getStoredClients() : []
-  );
-  const [followUps, setFollowUps] = useState<FollowUp[]>(() =>
-    storageMode === "local" ? getStoredFollowUps() : []
-  );
+  const [users, setUsers] = useState<User[]>([]);
+  const [clients, setClients] = useState<Client[]>([]);
+  const [followUps, setFollowUps] = useState<FollowUp[]>([]);
 
   async function refreshRemoteData(activeUser?: User | null) {
     const nextUser = activeUser ?? currentUser;
@@ -121,7 +115,10 @@ export function AppProvider({ children }: PropsWithChildren) {
 
   useEffect(() => {
     async function initialize() {
-      if (storageMode === "supabase") {
+      const nextStorageMode = await resolveStorageMode();
+      setStorageMode(nextStorageMode);
+
+      if (nextStorageMode === "supabase") {
         const restored = await restoreSupabaseSession();
         if (restored) {
           setCurrentUser(restored.user);
@@ -149,7 +146,7 @@ export function AppProvider({ children }: PropsWithChildren) {
     }
 
     void initialize();
-  }, [storageMode]);
+  }, []);
 
   useEffect(() => {
     if (storageMode !== "local") {
