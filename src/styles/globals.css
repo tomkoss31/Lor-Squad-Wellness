@@ -1,0 +1,65 @@
+@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Outfit:wght@500;600;700;800&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+html {
+  background:
+    radial-gradient(circle at 8% 0%, rgba(245, 199, 106, 0.14), transparent 22%),
+    radial-gradient(circle at 92% 4%, rgba(248, 113, 113, 0.12), transparent 20%),
+    radial-gradient(circle at 50% 100%, rgba(96, 165, 250, 0.12), transparent 30%),
+    radial-gradient(circle at 50% 35%, rgba(255, 255, 255, 0.025), transparent 34%),
+    linear-gradient(180deg, #060811 0%, #09111d 54%, #05070e 100%);
+}
+
+body {
+  @apply min-h-screen bg-ink font-body text-slate-100 antialiased;
+  background-image:
+    radial-gradient(rgba(255, 255, 255, 0.028) 0.7px, transparent 0.7px),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.015), rgba(255, 255, 255, 0));
+  background-size: 20px 20px, auto;
+  text-rendering: optimizeLegibility;
+}
+
+#root {
+  @apply min-h-screen;
+}
+
+::selection {
+  background: rgba(59, 130, 246, 0.4);
+  color: white;
+}
+
+@layer base {
+  h1,
+  h2,
+  h3,
+  h4 {
+    @apply font-display tracking-[-0.035em] text-white;
+  }
+
+  p {
+    @apply text-slate-300;
+  }
+
+  input,
+  select,
+  textarea {
+    @apply w-full rounded-[20px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.03))] px-4 py-3 text-[15px] font-medium text-white outline-none transition placeholder:text-slate-500 focus:border-amber-200/40 focus:bg-white/[0.08] focus:ring-2 focus:ring-amber-200/10;
+  }
+}
+
+@layer components {
+  .glass-panel {
+    @apply border border-white/10 shadow-panel backdrop-blur-xl;
+    background:
+      radial-gradient(circle at top left, rgba(245, 199, 106, 0.05), transparent 24%),
+      radial-gradient(circle at bottom right, rgba(96, 165, 250, 0.06), transparent 28%),
+      linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.03));
+  }
+}
