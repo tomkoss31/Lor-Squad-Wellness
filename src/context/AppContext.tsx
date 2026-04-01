@@ -219,15 +219,20 @@ export function AppProvider({ children }: PropsWithChildren) {
 
   async function loginWithCredentials(payload: { email: string; password: string }) {
     if (storageMode === "supabase") {
-      const result = await loginWithSupabaseCredentials(payload);
-      if (!result) {
+      try {
+        const result = await loginWithSupabaseCredentials(payload);
+        if (!result) {
+          return false;
+        }
+
+        setCurrentUser(result.user);
+        setCurrentSession(result.session);
+        await refreshRemoteData(result.user);
+        return true;
+      } catch (error) {
+        console.error("Connexion Supabase impossible.", error);
         return false;
       }
-
-      setCurrentUser(result.user);
-      setCurrentSession(result.session);
-      await refreshRemoteData(result.user);
-      return true;
     }
 
     const result = loginWithMockCredentials(payload);
@@ -287,13 +292,21 @@ export function AppProvider({ children }: PropsWithChildren) {
     mockPassword: string;
   }) {
     if (storageMode === "supabase") {
-      const result = await createSupabaseUserAccess(payload);
-      if (!result.ok) {
-        return result;
-      }
+      try {
+        const result = await createSupabaseUserAccess(payload);
+        if (!result.ok) {
+          return result;
+        }
 
-      await refreshRemoteData(currentUser);
-      return { ok: true };
+        await refreshRemoteData(currentUser);
+        return { ok: true };
+      } catch (error) {
+        console.error("Creation d'acces Supabase impossible.", error);
+        return {
+          ok: false,
+          error: "La creation du compte a echoue. Verifie la configuration backend."
+        };
+      }
     }
 
     const result = createMockUser(payload);

@@ -41,21 +41,30 @@ export function LoginPage() {
       return;
     }
 
-    const success = await loginWithCredentials({
-      email: email.trim().toLowerCase(),
-      password: password.trim()
-    });
-    if (!success) {
+    try {
+      const success = await loginWithCredentials({
+        email: email.trim().toLowerCase(),
+        password: password.trim()
+      });
+      if (!success) {
+        setError(
+          storageMode === "supabase"
+            ? "Email ou mot de passe invalides pour cet acces."
+            : "Email ou mot de passe non reconnus pour cette version de demonstration."
+        );
+        return;
+      }
+
+      setError("");
+      navigate("/dashboard");
+    } catch (error) {
+      console.error("Soumission du login impossible.", error);
       setError(
         storageMode === "supabase"
-          ? "Email ou mot de passe invalides pour cet acces."
-          : "Email ou mot de passe non reconnus pour cette version de demonstration."
+          ? "La connexion securisee ne repond pas correctement pour le moment."
+          : "La version de demonstration ne repond pas correctement pour le moment."
       );
-      return;
     }
-
-    setError("");
-    navigate("/dashboard");
   }
 
   return (
@@ -170,7 +179,7 @@ export function LoginPage() {
                 </div>
               ) : null}
 
-              <Button className="w-full" disabled={!authReady}>
+              <Button type="submit" className="w-full" disabled={!authReady}>
                 Ouvrir la plateforme
               </Button>
             </form>
