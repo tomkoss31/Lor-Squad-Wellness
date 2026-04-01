@@ -7,8 +7,14 @@ import { useAppContext } from "../context/AppContext";
 import { formatDate } from "../lib/calculations";
 
 export function UsersPage() {
-  const { users, createUserAccess, updateUserStatus, resetAccessData, clearBusinessData } =
-    useAppContext();
+  const {
+    users,
+    storageMode,
+    createUserAccess,
+    updateUserStatus,
+    resetAccessData,
+    clearBusinessData
+  } = useAppContext();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<"admin" | "distributor">("distributor");
@@ -37,9 +43,9 @@ export function UsersPage() {
     setActive(true);
   }
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const result = createUserAccess({
+    const result = await createUserAccess({
       name,
       email,
       role,
@@ -193,35 +199,46 @@ export function UsersPage() {
             </p>
           </div>
 
-          <div className="rounded-[24px] border border-amber-300/20 bg-amber-400/10 p-4">
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div>
-                <p className="text-sm font-semibold text-white">Nettoyage beta</p>
-                <p className="mt-2 text-sm leading-7 text-slate-300">
-                  Repars sur les acces par defaut et ferme la session actuelle pour retrouver une
-                  base locale propre.
-                </p>
+          {storageMode === "local" ? (
+            <>
+              <div className="rounded-[24px] border border-amber-300/20 bg-amber-400/10 p-4">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-semibold text-white">Nettoyage beta</p>
+                    <p className="mt-2 text-sm leading-7 text-slate-300">
+                      Repars sur les acces par defaut et ferme la session actuelle pour retrouver
+                      une base locale propre.
+                    </p>
+                  </div>
+                  <Button variant="secondary" onClick={resetAccessData}>
+                    Reinitialiser les acces
+                  </Button>
+                </div>
               </div>
-              <Button variant="secondary" onClick={resetAccessData}>
-                Reinitialiser les acces
-              </Button>
-            </div>
-          </div>
 
-          <div className="rounded-[24px] border border-rose-300/20 bg-rose-400/10 p-4">
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div>
-                <p className="text-sm font-semibold text-white">Base clients</p>
-                <p className="mt-2 text-sm leading-7 text-slate-300">
-                  Vide les dossiers clients et les suivis en local pour repartir d&apos;une base
-                  propre avec un premier bilan vierge.
-                </p>
+              <div className="rounded-[24px] border border-rose-300/20 bg-rose-400/10 p-4">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-semibold text-white">Base clients</p>
+                    <p className="mt-2 text-sm leading-7 text-slate-300">
+                      Vide les dossiers clients et les suivis en local pour repartir d&apos;une
+                      base propre avec un premier bilan vierge.
+                    </p>
+                  </div>
+                  <Button variant="secondary" onClick={clearBusinessData}>
+                    Vider les dossiers
+                  </Button>
+                </div>
               </div>
-              <Button variant="secondary" onClick={clearBusinessData}>
-                Vider les dossiers
-              </Button>
+            </>
+          ) : (
+            <div className="rounded-[24px] border border-emerald-300/20 bg-emerald-400/10 p-4">
+              <p className="text-sm font-semibold text-white">Base distante active</p>
+              <p className="mt-2 text-sm leading-7 text-slate-300">
+                Les acces et les dossiers sont maintenant pensés pour une vraie base partagée.
+              </p>
             </div>
-          </div>
+          )}
         </Card>
       </div>
 
@@ -274,7 +291,10 @@ export function UsersPage() {
               </div>
 
               <div className="flex items-center lg:justify-end">
-                <Button variant="secondary" onClick={() => updateUserStatus(user.id, !user.active)}>
+                <Button
+                  variant="secondary"
+                  onClick={() => void updateUserStatus(user.id, !user.active)}
+                >
                   {user.active ? "Desactiver" : "Reactiver"}
                 </Button>
               </div>

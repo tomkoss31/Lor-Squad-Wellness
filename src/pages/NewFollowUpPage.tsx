@@ -63,7 +63,7 @@ export function NewFollowUpPage() {
   );
   const weightLossPace = getWeightLossPaceInsight(weightLossPlan);
 
-  function handleSubmit() {
+  async function handleSubmit() {
     const nextQuestionnaire: AssessmentQuestionnaire = {
       ...latest.questionnaire,
       desiredTimeline: latest.questionnaire.desiredTimeline
@@ -83,7 +83,7 @@ export function NewFollowUpPage() {
       pedagogicalFocus: latest.pedagogicalFocus
     };
 
-    addFollowUpAssessment(targetClient.id, assessment, {
+    await addFollowUpAssessment(targetClient.id, assessment, {
       dueDate,
       type: followUpType,
       status: "scheduled"
@@ -250,7 +250,7 @@ export function NewFollowUpPage() {
               <Button variant="secondary" onClick={() => navigate(`/clients/${targetClient.id}`)}>
                 Annuler
               </Button>
-              <Button onClick={handleSubmit}>Valider le suivi</Button>
+              <Button onClick={() => void handleSubmit()}>Valider le suivi</Button>
             </div>
           </Card>
         </div>

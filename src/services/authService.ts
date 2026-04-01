@@ -8,7 +8,7 @@ const CURRENT_STORAGE_VERSION = "2026-04-beta-1";
 
 interface StoredSession {
   userId: string;
-  authMode: "mock";
+  authMode: AuthSession["authMode"];
   issuedAt: string;
 }
 

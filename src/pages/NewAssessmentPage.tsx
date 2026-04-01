@@ -454,7 +454,7 @@ export function NewAssessmentPage() {
     };
   }
 
-  function handleSaveAssessment() {
+  async function handleSaveAssessment() {
     if (!form.firstName.trim() || !form.lastName.trim()) {
       setSaveError("Renseigne au minimum le prenom et le nom du client.");
       setCurrentStep(0);
@@ -504,30 +504,38 @@ export function NewAssessmentPage() {
           : ["Hydratation", "Routine matin", "Assiette perte de poids"]
     };
 
-    const clientId = createClientWithInitialAssessment({
-      client: {
-        firstName: form.firstName.trim(),
-        lastName: form.lastName.trim(),
-        sex: form.sex,
-        phone: form.phone.trim(),
-        email: form.email.trim().toLowerCase(),
-        age: form.age,
-        height: form.height,
-        job: "Non renseigne",
-        city: form.city.trim() || undefined,
-        distributorId: currentUser?.id ?? "u-local-admin",
-        distributorName: currentUser?.name ?? "Lor'Squad Wellness",
-        objective: form.objective
-      },
-      assessment,
-      nextFollowUp,
-      notes:
-        form.comment.trim() ||
-        "Nouveau client cree depuis le bilan initial. La suite est deja fixee."
-    });
+    try {
+      const clientId = await createClientWithInitialAssessment({
+        client: {
+          firstName: form.firstName.trim(),
+          lastName: form.lastName.trim(),
+          sex: form.sex,
+          phone: form.phone.trim(),
+          email: form.email.trim().toLowerCase(),
+          age: form.age,
+          height: form.height,
+          job: "Non renseigne",
+          city: form.city.trim() || undefined,
+          distributorId: currentUser?.id ?? "u-local-admin",
+          distributorName: currentUser?.name ?? "Lor'Squad Wellness",
+          objective: form.objective
+        },
+        assessment,
+        nextFollowUp,
+        notes:
+          form.comment.trim() ||
+          "Nouveau client cree depuis le bilan initial. La suite est deja fixee."
+      });
 
-    setSaveError("");
-    navigate(`/clients/${clientId}`);
+      setSaveError("");
+      navigate(`/clients/${clientId}`);
+    } catch (error) {
+      setSaveError(
+        error instanceof Error
+          ? error.message
+          : "Impossible d'enregistrer le bilan pour le moment."
+      );
+    }
   }
 
   return (
@@ -997,7 +1005,7 @@ export function NewAssessmentPage() {
               Etape precedente
             </Button>
             <div className="flex flex-wrap gap-3">
-              <Button variant="secondary" onClick={handleSaveAssessment}>
+              <Button variant="secondary" onClick={() => void handleSaveAssessment()}>
                 Enregistrer le bilan
               </Button>
               <Button onClick={() => setCurrentStep((step) => Math.min(step + 1, steps.length - 1))} disabled={currentStep === steps.length - 1}>
