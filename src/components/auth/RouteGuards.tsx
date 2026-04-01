@@ -1,4 +1,5 @@
-import { Navigate, Outlet } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Navigate, Outlet, useNavigate } from "react-router-dom";
 import { useAppContext } from "../../context/AppContext";
 import { hasRequiredRole } from "../../lib/auth";
 import type { UserRole } from "../../types/domain";
@@ -50,6 +51,20 @@ export function RoleRoute({ allowedRoles }: { allowedRoles: UserRole[] }) {
 }
 
 function AuthBootSplash() {
+  const { forceResetSession } = useAppContext();
+  const navigate = useNavigate();
+  const [showRecovery, setShowRecovery] = useState(false);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setShowRecovery(true), 5000);
+    return () => window.clearTimeout(timer);
+  }, []);
+
+  async function handleRecovery() {
+    await forceResetSession();
+    navigate("/login", { replace: true });
+  }
+
   return (
     <div className="min-h-screen bg-hero-mesh px-4 py-8">
       <div className="mx-auto flex min-h-[calc(100vh-4rem)] max-w-[720px] items-center justify-center">
@@ -62,6 +77,21 @@ function AuthBootSplash() {
             Verification locale de l&apos;acces en cours pour ouvrir l&apos;outil dans de bonnes
             conditions.
           </p>
+          {showRecovery ? (
+            <div className="mt-6 space-y-3">
+              <p className="text-sm text-slate-400">
+                Si l&apos;ecran reste bloque, tu peux reinitialiser la session et revenir a la
+                connexion.
+              </p>
+              <button
+                type="button"
+                onClick={() => void handleRecovery()}
+                className="rounded-full border border-white/10 bg-white/[0.06] px-5 py-3 text-sm font-medium text-white transition hover:bg-white/[0.1]"
+              >
+                Revenir a la connexion
+              </button>
+            </div>
+          ) : null}
         </div>
       </div>
     </div>

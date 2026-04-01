@@ -63,6 +63,7 @@ interface AppContextValue {
   loginAs: (userId: string) => Promise<void>;
   loginWithCredentials: (payload: { email: string; password: string }) => Promise<boolean>;
   logout: () => Promise<void>;
+  forceResetSession: () => Promise<void>;
   createUserAccess: (payload: {
     name: string;
     email: string;
@@ -253,6 +254,29 @@ export function AppProvider({ children }: PropsWithChildren) {
     setCurrentUser(null);
     setCurrentSession(null);
     clearPersistedSession();
+  }
+
+  async function forceResetSession() {
+    try {
+      await logoutFromSupabase();
+    } catch (error) {
+      console.error("Impossible de fermer la session distante proprement.", error);
+    }
+
+    clearPersistedSession();
+    setCurrentUser(null);
+    setCurrentSession(null);
+
+    if (storageMode === "supabase") {
+      setUsers([]);
+      setClients([]);
+      setFollowUps([]);
+      return;
+    }
+
+    setUsers(getStoredUsers());
+    setClients(getStoredClients());
+    setFollowUps(getStoredFollowUps());
   }
 
   async function createUserAccess(payload: {
@@ -462,6 +486,7 @@ export function AppProvider({ children }: PropsWithChildren) {
       loginAs,
       loginWithCredentials,
       logout,
+      forceResetSession,
       createUserAccess,
       updateUserStatus,
       resetAccessData,
