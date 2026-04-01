@@ -20,7 +20,10 @@ npm run typecheck
 
 ## Deploiement Vercel
 
-Le projet est pret pour un deploiement front-only sur Vercel.
+Le projet est pret pour un deploiement Vercel en 2 modes :
+
+- beta locale simple
+- version backend avec Supabase
 
 ### Pourquoi ca fonctionne
 
@@ -49,12 +52,28 @@ Avant d'ouvrir la beta, verifier surtout :
 - affichage tablette
 - rechargement direct sur une route interne (`/clients/...`, `/assessments/new`)
 
+## Backend Supabase
+
+Le projet contient deja la structure pour passer a une vraie base distante :
+
+- client Supabase navigateur
+- service de donnees distant
+- creation d'utilisateurs via API Vercel
+- schema SQL et policies
+
+Voir :
+
+- [docs/SUPABASE_SETUP.md](C:\Users\tomko\Documents\Lor'Squad Wellness\docs\SUPABASE_SETUP.md)
+- [supabase/schema.sql](C:\Users\tomko\Documents\Lor'Squad Wellness\supabase\schema.sql)
+- [supabase/bootstrap-first-admin.sql](C:\Users\tomko\Documents\Lor'Squad Wellness\supabase\bootstrap-first-admin.sql)
+
 ## Note technique
 
 L'app reste pour l'instant en mode prototype avance :
 
-- auth mock
-- roles prepares
-- aucune vraie base backend branchee
+- frontend stable
+- auth et roles prepares
+- mode local pour la beta
+- mode Supabase deja prepare des que les cles sont ajoutees
 
-Le backend et la vraie securite viendront apres la stabilisation produit.
+La vraie base partagée est donc prete a etre branchee sans refaire le produit.

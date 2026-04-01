@@ -191,7 +191,7 @@ export function UsersPage() {
           </div>
 
           <div className="rounded-[24px] border border-white/10 bg-slate-950/35 p-4">
-            <p className="text-sm font-semibold text-white">Version beta actuelle</p>
+            <p className="text-sm font-semibold text-white">Mode local actuel</p>
             <p className="mt-2 text-sm leading-7 text-slate-400">
               Les acces sont enregistres localement dans le navigateur pour la beta. Plus tard,
               cette page branchera la vraie base utilisateurs et l&apos;envoi du lien
