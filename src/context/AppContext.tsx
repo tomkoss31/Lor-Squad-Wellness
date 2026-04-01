@@ -102,47 +102,69 @@ export function AppProvider({ children }: PropsWithChildren) {
 
   async function refreshRemoteData(activeUser?: User | null) {
     const nextUser = activeUser ?? currentUser;
-    const [nextClients, nextFollowUps, nextUsers] = await Promise.all([
-      fetchSupabaseClients(),
-      fetchSupabaseFollowUps(),
-      nextUser ? fetchSupabaseUsers() : Promise.resolve([] as User[])
-    ]);
+    try {
+      const [nextClients, nextFollowUps, nextUsers] = await Promise.all([
+        fetchSupabaseClients(),
+        fetchSupabaseFollowUps(),
+        nextUser ? fetchSupabaseUsers() : Promise.resolve([] as User[])
+      ]);
 
-    setClients(nextClients);
-    setFollowUps(nextFollowUps);
-    setUsers(nextUsers);
+      setClients(nextClients);
+      setFollowUps(nextFollowUps);
+      setUsers(nextUsers);
+    } catch (error) {
+      console.error("Impossible de recharger les donnees distantes.", error);
+      setClients([]);
+      setFollowUps([]);
+      setUsers(nextUser ? [nextUser] : []);
+    }
   }
 
   useEffect(() => {
     async function initialize() {
-      const nextStorageMode = await resolveStorageMode();
-      setStorageMode(nextStorageMode);
+      try {
+        const nextStorageMode = await resolveStorageMode();
+        setStorageMode(nextStorageMode);
 
-      if (nextStorageMode === "supabase") {
-        const restored = await restoreSupabaseSession();
-        if (restored) {
-          setCurrentUser(restored.user);
-          setCurrentSession(restored.session);
-          await refreshRemoteData(restored.user);
+        if (nextStorageMode === "supabase") {
+          const restored = await restoreSupabaseSession();
+          if (restored) {
+            setCurrentUser(restored.user);
+            setCurrentSession(restored.session);
+            await refreshRemoteData(restored.user);
+          } else {
+            setCurrentUser(null);
+            setCurrentSession(null);
+            setUsers([]);
+            setClients([]);
+            setFollowUps([]);
+          }
+          return;
         } else {
-          setUsers([]);
-          setClients([]);
-          setFollowUps([]);
+          setUsers(getStoredUsers());
+          setClients(getStoredClients());
+          setFollowUps(getStoredFollowUps());
+
+          const restored = restoreSession();
+          if (restored) {
+            setCurrentUser(restored.user);
+            setCurrentSession(restored.session);
+          } else {
+            setCurrentUser(null);
+            setCurrentSession(null);
+          }
         }
+      } catch (error) {
+        console.error("Initialisation de session impossible.", error);
+        setStorageMode("local");
+        setUsers(getStoredUsers());
+        setClients(getStoredClients());
+        setFollowUps(getStoredFollowUps());
+        setCurrentUser(null);
+        setCurrentSession(null);
+      } finally {
         setAuthReady(true);
-        return;
       }
-
-      setUsers(getStoredUsers());
-      setClients(getStoredClients());
-      setFollowUps(getStoredFollowUps());
-
-      const restored = restoreSession();
-      if (restored) {
-        setCurrentUser(restored.user);
-        setCurrentSession(restored.session);
-      }
-      setAuthReady(true);
     }
 
     void initialize();

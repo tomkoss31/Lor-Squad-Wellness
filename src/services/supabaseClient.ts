@@ -13,12 +13,16 @@ async function fetchRuntimeConfig(): Promise<RuntimeSupabaseConfig | null> {
     return null;
   }
 
+  const controller = new AbortController();
+  const timeoutId = window.setTimeout(() => controller.abort(), 4000);
+
   try {
     const response = await fetch("/api/runtime-config", {
       method: "GET",
       headers: {
         "Content-Type": "application/json"
-      }
+      },
+      signal: controller.signal
     });
 
     if (!response.ok) {
@@ -39,6 +43,8 @@ async function fetchRuntimeConfig(): Promise<RuntimeSupabaseConfig | null> {
     };
   } catch {
     return null;
+  } finally {
+    window.clearTimeout(timeoutId);
   }
 }
 
