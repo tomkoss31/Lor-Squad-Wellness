@@ -11,6 +11,8 @@ function questionnaire(
   overrides: Partial<AssessmentQuestionnaire>
 ): AssessmentQuestionnaire {
   return {
+    healthStatus: "RAS",
+    healthNotes: "",
     wakeUpTime: "06:45",
     bedTime: "23:15",
     sleepHours: 7,

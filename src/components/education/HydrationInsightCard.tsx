@@ -1,22 +1,30 @@
 import { Card } from "../ui/Card";
 import { calculateWaterNeed, estimateHydrationKg } from "../../lib/calculations";
+import type { BiologicalSex } from "../../types/domain";
 
 interface HydrationInsightCardProps {
   weight: number;
   hydrationPercent: number;
   waterIntake: number;
+  sex?: BiologicalSex;
+  visceralFat?: number;
 }
 
 export function HydrationInsightCard({
   weight,
   hydrationPercent,
-  waterIntake
+  waterIntake,
+  sex,
+  visceralFat
 }: HydrationInsightCardProps) {
   const targetWater = calculateWaterNeed(weight);
   const hydrationKg = estimateHydrationKg(weight, hydrationPercent);
   const gap = Math.max(Number((targetWater - waterIntake).toFixed(1)), 0);
   const isTargetReached = gap <= 0;
   const progressPercent = Math.min((waterIntake / targetWater) * 100, 100);
+  const hydrationReference = getHydrationReference(sex);
+  const hydrationStatus = getHydrationStatus(hydrationPercent, hydrationReference);
+  const visceralStatus = getVisceralFatStatus(visceralFat);
 
   return (
     <Card className="space-y-6 bg-[linear-gradient(180deg,rgba(15,23,42,0.28),rgba(15,23,42,0.5))]">
@@ -38,12 +46,17 @@ export function HydrationInsightCard({
           waterIntake={waterIntake}
           targetWater={targetWater}
           progressPercent={progressPercent}
+          hydrationPercent={hydrationPercent}
         />
 
         <div className="space-y-4">
           <div className="grid gap-3">
             <HydrationValueCard label="Hydratation actuelle" value={`${hydrationPercent} %`} />
-            <HydrationValueCard label="Objectif eau" value={`${targetWater} L / jour`} accent="green" />
+            <HydrationValueCard
+              label="Objectif eau"
+              value={`${targetWater} L / jour`}
+              accent="green"
+            />
             <HydrationValueCard
               label="Ecart a combler"
               value={isTargetReached ? "Objectif atteint" : `${gap} L / jour`}
@@ -61,17 +74,41 @@ export function HydrationInsightCard({
         </div>
       </div>
 
-      <div className="grid gap-3 md:grid-cols-3">
-        <HydrationPill title="1 L / 30 kg" detail="Un repere simple pour situer le besoin." />
-        <HydrationPill title="Sur la journee" detail="Le plus utile reste la regularite, pas la perfection." />
-        <HydrationPill
-          title="Progression simple"
-          detail={
-            isTargetReached
-              ? "La base est deja bien installee."
-              : "Ajouter un peu d'eau a la fois suffit pour avancer."
-          }
-        />
+      <div className="grid gap-3 xl:grid-cols-[1.15fr_0.85fr]">
+        <div className="rounded-[24px] border border-white/10 bg-white/[0.04] p-4 md:p-5">
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-[11px] uppercase tracking-[0.18em] text-slate-500">
+              Repere hydratation
+            </p>
+            <span className="rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 text-xs font-medium text-white">
+              {hydrationStatus.label}
+            </span>
+          </div>
+          <div className="mt-4 grid gap-3 md:grid-cols-2">
+            <HydrationPill title="Femme" detail="45 a 60 %" highlighted={sex === "female"} />
+            <HydrationPill title="Homme" detail="50 a 65 %" highlighted={sex === "male"} />
+          </div>
+          <p className="mt-4 text-sm leading-6 text-slate-400">{hydrationStatus.description}</p>
+        </div>
+
+        <div className="rounded-[24px] border border-white/10 bg-white/[0.04] p-4 md:p-5">
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-[11px] uppercase tracking-[0.18em] text-slate-500">
+              Graisse viscerale
+            </p>
+            <span className="rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 text-xs font-medium text-white">
+              {visceralStatus.label}
+            </span>
+          </div>
+          <div className="mt-4 grid gap-2">
+            <VisceralRange label="0 - 6" detail="Repere sain" active={visceralStatus.band === "healthy"} />
+            <VisceralRange label="7 - 12" detail="Exces modere" active={visceralStatus.band === "elevated"} />
+            <VisceralRange label="13 - 59" detail="Exces marque" active={visceralStatus.band === "high"} />
+          </div>
+          <p className="mt-4 text-sm leading-6 text-slate-400">
+            Plus ce score monte, plus le risque cardiometabolique merite d&apos;etre surveille.
+          </p>
+        </div>
       </div>
     </Card>
   );
@@ -110,23 +147,16 @@ function HydrationMeta({ label, value }: { label: string; value: string }) {
   );
 }
 
-function HydrationPill({ title, detail }: { title: string; detail: string }) {
-  return (
-    <div className="rounded-[20px] border border-white/10 bg-white/[0.04] px-4 py-3.5">
-      <p className="text-sm font-medium text-white">{title}</p>
-      <p className="mt-1 text-[13px] text-slate-400">{detail}</p>
-    </div>
-  );
-}
-
 function HydrationGaugeScene({
   waterIntake,
   targetWater,
-  progressPercent
+  progressPercent,
+  hydrationPercent
 }: {
   waterIntake: number;
   targetWater: number;
   progressPercent: number;
+  hydrationPercent: number;
 }) {
   return (
     <div className="relative overflow-hidden rounded-[30px] border border-white/10 bg-[radial-gradient(circle_at_top_right,rgba(56,189,248,0.16),transparent_24%),radial-gradient(circle_at_bottom_left,rgba(34,211,238,0.12),transparent_28%),linear-gradient(180deg,rgba(15,23,42,0.18),rgba(15,23,42,0.58))] p-5 md:p-6">
@@ -162,11 +192,111 @@ function HydrationGaugeScene({
               <p className="mt-2 text-lg font-medium text-sky-100">
                 {targetWater.toFixed(1).replace(".", ",")} L
               </p>
+              <p className="mt-4 text-xs text-slate-500">Hydratation balance {hydrationPercent} %</p>
             </div>
           </div>
         </div>
-
       </div>
     </div>
   );
+}
+
+function HydrationPill({
+  title,
+  detail,
+  highlighted = false
+}: {
+  title: string;
+  detail: string;
+  highlighted?: boolean;
+}) {
+  return (
+    <div
+      className={`rounded-[20px] border px-4 py-3.5 ${
+        highlighted
+          ? "border-sky-300/20 bg-sky-400/10"
+          : "border-white/10 bg-white/[0.04]"
+      }`}
+    >
+      <p className="text-sm font-medium text-white">{title}</p>
+      <p className="mt-1 text-[13px] text-slate-400">{detail}</p>
+    </div>
+  );
+}
+
+function VisceralRange({
+  label,
+  detail,
+  active
+}: {
+  label: string;
+  detail: string;
+  active: boolean;
+}) {
+  return (
+    <div
+      className={`flex items-center justify-between gap-3 rounded-[18px] border px-3 py-3 ${
+        active
+          ? "border-amber-300/20 bg-amber-300/10"
+          : "border-white/10 bg-slate-950/35"
+      }`}
+    >
+      <span className="text-sm font-medium text-white">{label}</span>
+      <span className="text-sm text-slate-400">{detail}</span>
+    </div>
+  );
+}
+
+function getHydrationReference(sex?: BiologicalSex) {
+  if (sex === "male") {
+    return { min: 50, max: 65 };
+  }
+
+  if (sex === "female") {
+    return { min: 45, max: 60 };
+  }
+
+  return { min: 45, max: 65 };
+}
+
+function getHydrationStatus(
+  hydrationPercent: number,
+  reference: { min: number; max: number }
+) {
+  if (hydrationPercent < reference.min) {
+    return {
+      label: "Sous la moyenne",
+      description:
+        "En dessous du repere moyen, la fatigue et le manque de confort peuvent vite se faire sentir."
+    };
+  }
+
+  if (hydrationPercent > reference.max) {
+    return {
+      label: "Au-dessus du repere",
+      description:
+        "Au-dessus du repere moyen, la lecture reste simplement a surveiller avec l'ensemble du contexte."
+    };
+  }
+
+  return {
+    label: "Dans la moyenne",
+    description: "La lecture se situe dans la zone moyenne attendue pour ce profil."
+  };
+}
+
+function getVisceralFatStatus(visceralFat?: number) {
+  if (visceralFat == null) {
+    return { label: "A lire", band: "healthy" as const };
+  }
+
+  if (visceralFat <= 6) {
+    return { label: "Repere sain", band: "healthy" as const };
+  }
+
+  if (visceralFat <= 12) {
+    return { label: "Exces modere", band: "elevated" as const };
+  }
+
+  return { label: "Exces marque", band: "high" as const };
 }

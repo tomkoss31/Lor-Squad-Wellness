@@ -37,6 +37,8 @@ type AssessmentForm = {
   age: number;
   height: number;
   city: string;
+  healthStatus: string;
+  healthNotes: string;
   wakeUpTime: string;
   bedTime: string;
   sleepHours: number;
@@ -99,6 +101,8 @@ const initialForm: AssessmentForm = {
   age: 30,
   height: 167,
   city: "Nancy",
+  healthStatus: "RAS",
+  healthNotes: "",
   wakeUpTime: "06:45",
   bedTime: "23:15",
   sleepHours: 7,
@@ -156,7 +160,7 @@ const steps = [
   "Informations client",
   "Habitudes de vie et repas",
   "Qualite alimentaire et boissons",
-  "Activite, freins et objectif",
+  "Sante, objectif, activite et freins",
   "Composition des repas",
   "Body scan",
   "Hydratation",
@@ -211,9 +215,9 @@ export function NewAssessmentPage() {
           ]
         : currentStep === 3
           ? [
-              "Faire ressortir le principal frein avant de proposer une solution.",
-              "L'objectif doit etre simple a nommer et facile a relier au programme.",
-              "La motivation sert a calibrer le niveau d'accompagnement."
+              "Commencer par la sante et l'objectif pour orienter tout le reste du bilan.",
+              "Le cap doit etre simple a nommer et facile a relier au programme.",
+              "La motivation puis les freins servent a calibrer l'accompagnement."
             ]
           : currentStep === 4
             ? [
@@ -275,13 +279,14 @@ export function NewAssessmentPage() {
       : currentStep === 2
           ? [`Eau actuelle : ${form.waterIntake} L`, `Grignotage : ${form.snackingFrequency}`, `Cafe : ${form.drinksCoffee === "Oui" ? `${form.coffeePerDay} / jour` : "Non"}`]
           : currentStep === 3
-            ? [
-                `Activite : ${form.activityType}`,
-                `Blocage principal : ${form.mainBlocker}`,
-                form.objective === "weight-loss"
-                  ? `Poids cible : ${form.targetWeight} kg`
-                  : `Objectif : ${form.objectiveFocus}`
-              ]
+              ? [
+                  form.objective === "weight-loss"
+                    ? `Poids cible : ${form.targetWeight} kg`
+                    : `Objectif : ${form.objectiveFocus}`,
+                  `Sante : ${form.healthStatus}`,
+                  `Motivation : ${form.motivation}/10`,
+                  `Blocage principal : ${form.mainBlocker}`
+                ]
             : currentStep === 4
               ? [
                   form.objective === "sport"
@@ -495,25 +500,21 @@ export function NewAssessmentPage() {
           )}
 
           {currentStep === 3 && (
-            <div className="space-y-4">
-              <SectionBlock title="Bloc 7 - Activite et forme" description="Chercher le niveau reel d'activite et d'energie.">
-                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-                  <ChoiceGroup label="Activite physique" value={form.physicalActivity} options={["Oui", "Non"]} onChange={(v) => update("physicalActivity", v)} />
-                  <Field label="Si oui, laquelle ?" value={form.activityType} onChange={(v) => update("activityType", v)} />
-                  <Field label="Seances / semaine" type="number" value={form.sessionsPerWeek} onChange={(v) => update("sessionsPerWeek", Number(v))} />
-                  <ChoiceGroup label="Niveau d'energie" value={form.energyLevel} options={["Tres bon", "Bon", "Moyen", "Faible"]} onChange={(v) => update("energyLevel", v)} />
-                </div>
-              </SectionBlock>
-
-              <SectionBlock title="Bloc 8 - Historique et blocages" description="Faire apparaitre ce qui a deja ete tente et ce qui bloque aujourd'hui.">
+              <div className="space-y-4">
+              <SectionBlock title="Bloc 7 - Sante, motivation et objectif" description="Commencer par la sante et le cap du client pour guider la suite du bilan.">
                 <div className="grid gap-4 md:grid-cols-2">
-                  <AreaField label="Tentatives passees" value={form.pastAttempts} onChange={(v) => update("pastAttempts", v)} />
-                  <AreaField label="Le plus difficile jusqu'ici" value={form.hardestPart} onChange={(v) => update("hardestPart", v)} />
+                  <ChoiceGroup
+                    label="Sante / traitement"
+                    value={form.healthStatus}
+                    options={["RAS", "Traitement en cours", "Pathologie connue", "Avis medical a respecter"]}
+                    onChange={(v) => update("healthStatus", v)}
+                  />
+                  <AreaField
+                    label="Precision utile"
+                    value={form.healthNotes}
+                    onChange={(v) => update("healthNotes", v)}
+                  />
                 </div>
-                <ChoiceGroup label="Blocage principal" value={form.mainBlocker} options={["Manque de temps", "Motivation", "Organisation", "Grignotage", "Fatigue", "Manque de reperes", "Autre"]} onChange={(v) => update("mainBlocker", v)} />
-              </SectionBlock>
-
-              <SectionBlock title="Bloc 9 - Motivation et objectif" description="Nommer l'objectif principal puis valider le delai et le niveau d'engagement.">
                 <div className="grid gap-4 md:grid-cols-2">
                   <ChoiceGroup label="Objectif principal" value={form.objectiveFocus} options={["Perte de poids", "Prise de masse", "Energie", "Remise en forme"]} onChange={updateObjectiveFocus} />
                   <ChoiceGroup label="Delai souhaite" value={form.desiredTimeline} options={["1 mois", "3 mois", "6 mois", "9 mois"]} onChange={(v) => update("desiredTimeline", v)} />
@@ -533,11 +534,28 @@ export function NewAssessmentPage() {
                     <label className="text-sm font-medium text-slate-300">Motivation</label>
                     <span className="text-sm font-semibold text-white">{form.motivation}/10</span>
                   </div>
-                  <input type="range" min={0} max={10} value={form.motivation} onChange={(event) => update("motivation", Number(event.target.value))} />
+                    <input type="range" min={0} max={10} value={form.motivation} onChange={(event) => update("motivation", Number(event.target.value))} />
+                  </div>
+                </SectionBlock>
+
+              <SectionBlock title="Bloc 8 - Activite et forme" description="Chercher le niveau reel d'activite et d'energie.">
+                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                  <ChoiceGroup label="Activite physique" value={form.physicalActivity} options={["Oui", "Non"]} onChange={(v) => update("physicalActivity", v)} />
+                  <Field label="Si oui, laquelle ?" value={form.activityType} onChange={(v) => update("activityType", v)} />
+                  <Field label="Seances / semaine" type="number" value={form.sessionsPerWeek} onChange={(v) => update("sessionsPerWeek", Number(v))} />
+                  <ChoiceGroup label="Niveau d'energie" value={form.energyLevel} options={["Tres bon", "Bon", "Moyen", "Faible"]} onChange={(v) => update("energyLevel", v)} />
                 </div>
               </SectionBlock>
-            </div>
-          )}
+
+              <SectionBlock title="Bloc 9 - Historique et blocages" description="Faire apparaitre ce qui a deja ete tente et ce qui bloque aujourd'hui.">
+                <div className="grid gap-4 md:grid-cols-2">
+                  <AreaField label="Tentatives passees" value={form.pastAttempts} onChange={(v) => update("pastAttempts", v)} />
+                  <AreaField label="Le plus difficile jusqu'ici" value={form.hardestPart} onChange={(v) => update("hardestPart", v)} />
+                </div>
+                <ChoiceGroup label="Blocage principal" value={form.mainBlocker} options={["Manque de temps", "Motivation", "Organisation", "Grignotage", "Fatigue", "Manque de reperes", "Autre"]} onChange={(v) => update("mainBlocker", v)} />
+              </SectionBlock>
+              </div>
+            )}
 
           {currentStep === 4 && (
             <div className="space-y-4">
@@ -622,6 +640,8 @@ export function NewAssessmentPage() {
               weight={form.weight}
               hydrationPercent={form.hydration}
               waterIntake={form.waterIntake}
+              sex={form.sex}
+              visceralFat={form.visceralFat}
             />
           )}
 

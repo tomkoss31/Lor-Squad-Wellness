@@ -35,6 +35,7 @@ export function BodyFatInsightCard({
   const bodyFatBand = getBodyFatBand(current.percent, targetRange);
   const targetStart = getGaugePosition(targetRange.min);
   const targetEnd = getGaugePosition(targetRange.max);
+  const gaugeRanges = getBodyFatGaugeRanges(sex);
 
   const previousPercentDelta = previous ? round(current.percent - previous.percent) : 0;
   const previousKgDelta = previousKg == null ? 0 : round(currentKg - previousKg);
@@ -98,6 +99,16 @@ export function BodyFatInsightCard({
                 </span>
                 <span>{getTargetHint(sex, objective)}</span>
               </div>
+              <div className="mt-4 grid gap-2 md:grid-cols-2 xl:grid-cols-4">
+                {gaugeRanges.map((range) => (
+                  <GaugeLegendChip
+                    key={range.label}
+                    label={range.label}
+                    value={range.value}
+                    active={current.percent >= range.min && current.percent <= range.max}
+                  />
+                ))}
+              </div>
             </div>
           </div>
           <div className="md:col-span-2 xl:col-span-3 rounded-[24px] border border-white/10 bg-white/[0.04] p-5">
@@ -124,6 +135,29 @@ export function BodyFatInsightCard({
         </>
       }
     />
+  );
+}
+
+function GaugeLegendChip({
+  label,
+  value,
+  active
+}: {
+  label: string;
+  value: string;
+  active: boolean;
+}) {
+  return (
+    <div
+      className={`rounded-[18px] border px-3 py-3 ${
+        active
+          ? "border-amber-300/20 bg-amber-300/10"
+          : "border-white/10 bg-white/[0.03]"
+      }`}
+    >
+      <p className="text-[10px] uppercase tracking-[0.18em] text-slate-500">{label}</p>
+      <p className="mt-2 text-sm font-medium text-white">{value}</p>
+    </div>
   );
 }
 
@@ -199,6 +233,24 @@ function getBodyFatBand(percent: number, targetRange: { min: number; max: number
   }
 
   return "Au-dessus de la cible";
+}
+
+function getBodyFatGaugeRanges(sex?: BiologicalSex) {
+  if (sex === "male") {
+    return [
+      { label: "Maigreur", value: "< 10 %", min: Number.NEGATIVE_INFINITY, max: 9.9 },
+      { label: "Valeur saine", value: "10 - 20 %", min: 10, max: 20 },
+      { label: "Surpoids", value: "20 - 25 %", min: 20.1, max: 25 },
+      { label: "Obesite", value: "> 25 %", min: 25.1, max: Number.POSITIVE_INFINITY }
+    ];
+  }
+
+  return [
+    { label: "Maigreur", value: "< 20 %", min: Number.NEGATIVE_INFINITY, max: 19.9 },
+    { label: "Valeur saine", value: "20 - 30 %", min: 20, max: 30 },
+    { label: "Surpoids", value: "30 - 35 %", min: 30.1, max: 35 },
+    { label: "Obesite", value: "> 35 %", min: 35.1, max: Number.POSITIVE_INFINITY }
+  ];
 }
 
 function getBodyFatTargetRange(sex?: BiologicalSex, objective?: Objective) {
