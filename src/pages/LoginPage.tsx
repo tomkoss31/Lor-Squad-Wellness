@@ -42,15 +42,16 @@ export function LoginPage() {
     }
 
     try {
-      const success = await loginWithCredentials({
+      const result = await loginWithCredentials({
         email: email.trim().toLowerCase(),
         password: password.trim()
       });
-      if (!success) {
+      if (!result.ok) {
         setError(
-          storageMode === "supabase"
-            ? "Email ou mot de passe invalides pour cet acces."
-            : "Email ou mot de passe non reconnus pour cette version de demonstration."
+          result.error ??
+            (storageMode === "supabase"
+              ? "Email ou mot de passe invalides pour cet acces."
+              : "Email ou mot de passe non reconnus pour cette version de demonstration.")
         );
         return;
       }

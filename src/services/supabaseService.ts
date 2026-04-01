@@ -200,13 +200,22 @@ export async function loginWithSupabaseCredentials(payload: {
   const { data, error } = await client.auth.signInWithPassword(payload);
 
   if (error || !data.user) {
-    return null;
+    return {
+      ok: false as const,
+      error:
+        error?.message ??
+        "La connexion Supabase a ete refusee. Verifie l'email, le mot de passe et la confirmation du compte."
+    };
   }
 
   const user = await getProfile(data.user.id);
   if (!user || !user.active) {
     await client.auth.signOut();
-    return null;
+    return {
+      ok: false as const,
+      error:
+        "Le compte existe bien, mais son profil applicatif est absent ou inactif dans la table users."
+    };
   }
 
   await client
@@ -215,6 +224,7 @@ export async function loginWithSupabaseCredentials(payload: {
     .eq("id", user.id);
 
   return {
+    ok: true as const,
     user: { ...user, lastAccessAt: new Date().toISOString() },
     session: createSupabaseSession(user)
   };

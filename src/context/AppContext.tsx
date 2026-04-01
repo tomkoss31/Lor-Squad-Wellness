@@ -61,7 +61,9 @@ interface AppContextValue {
   visibleFollowUps: FollowUp[];
   programs: Program[];
   loginAs: (userId: string) => Promise<void>;
-  loginWithCredentials: (payload: { email: string; password: string }) => Promise<boolean>;
+  loginWithCredentials: (
+    payload: { email: string; password: string }
+  ) => Promise<{ ok: boolean; error?: string }>;
   logout: () => Promise<void>;
   forceResetSession: () => Promise<void>;
   createUserAccess: (payload: {
@@ -221,28 +223,34 @@ export function AppProvider({ children }: PropsWithChildren) {
     if (storageMode === "supabase") {
       try {
         const result = await loginWithSupabaseCredentials(payload);
-        if (!result) {
-          return false;
+        if (!result.ok) {
+          return { ok: false, error: result.error };
         }
 
         setCurrentUser(result.user);
         setCurrentSession(result.session);
         await refreshRemoteData(result.user);
-        return true;
+        return { ok: true };
       } catch (error) {
         console.error("Connexion Supabase impossible.", error);
-        return false;
+        return {
+          ok: false,
+          error: "La connexion Supabase a echoue avant de pouvoir ouvrir la session."
+        };
       }
     }
 
     const result = loginWithMockCredentials(payload);
     if (!result) {
-      return false;
+      return {
+        ok: false,
+        error: "Email ou mot de passe non reconnus pour cette version de demonstration."
+      };
     }
 
     setCurrentUser(result.user);
     setCurrentSession(result.session);
-    return true;
+    return { ok: true };
   }
 
   async function logout() {
