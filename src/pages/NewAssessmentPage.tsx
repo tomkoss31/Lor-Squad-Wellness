@@ -7,14 +7,12 @@ import { useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { BodyFatInsightCard } from "../components/body-scan/BodyFatInsightCard";
 import { MuscleMassInsightCard } from "../components/body-scan/MuscleMassInsightCard";
-import { HydrationInsightCard } from "../components/education/HydrationInsightCard";
 import { PlateGuideCard } from "../components/education/PlateGuideCard";
 import { ProgramBoosterCard } from "../components/programs/ProgramBoosterCard";
 import { WeightGoalInsightCard } from "../components/education/WeightGoalInsightCard";
 import { ProgramCard } from "../components/programs/ProgramCard";
 import { Button } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
-import { MetricTile } from "../components/ui/MetricTile";
 import { PageHeading } from "../components/ui/PageHeading";
 import { StatusBadge } from "../components/ui/StatusBadge";
 import { useAppContext } from "../context/AppContext";
@@ -23,7 +21,6 @@ import {
   calculateWaterNeed,
   estimateBodyFatKg,
   estimateHydrationKg,
-  estimateRelativeMassPercent,
   estimateMuscleMassPercent,
   formatDateTime,
   getWeightLossPaceInsight,
@@ -205,8 +202,8 @@ const steps = [
   "Sante, objectif, activite et freins",
   "Composition des repas",
   "Body scan",
+  "References de suivi",
   "Recommandations",
-  "Hydratation",
   "Petit-dejeuner",
   "Routine matin",
   "Programme propose",
@@ -290,11 +287,9 @@ export function NewAssessmentPage() {
     mainPrograms.find((program) => program.id === form.selectedProgramId) ?? mainPrograms[0];
   const waterNeed = calculateWaterNeed(form.weight);
   const proteinRange = calculateProteinRange(form.weight, form.objective);
-  const waterGap = Math.max(Number((waterNeed - form.waterIntake).toFixed(1)), 0);
   const bodyFatKg = estimateBodyFatKg(form.weight, form.bodyFat);
   const musclePercent = estimateMuscleMassPercent(form.weight, form.muscleMass);
   const hydrationKg = estimateHydrationKg(form.weight, form.hydration);
-  const bonePercent = estimateRelativeMassPercent(form.weight, form.boneMass);
   const weightLossPlan = getWeightLossPlan(form.weight, form.targetWeight, form.desiredTimeline);
   const weightLossPace = getWeightLossPaceInsight(weightLossPlan);
   const bodyScanAttention =
@@ -305,6 +300,103 @@ export function NewAssessmentPage() {
         : form.muscleMass < 28 && form.objective === "sport"
           ? "La masse musculaire sera le point a suivre de pres."
           : "Le suivi pourra surtout s'appuyer sur la regularite du plan.";
+  const bodyFatTarget = getBodyFatTargetRange(form.sex, form.objective);
+  const hydrationReference = getHydrationReference(form.sex);
+  const weightTargetLabel =
+    form.objective === "weight-loss" && form.targetWeight > 0
+      ? `${formatValue(form.targetWeight, "kg")}`
+      : form.objective === "sport"
+        ? "Base a consolider"
+        : "A definir";
+  const weightGapLabel =
+    form.objective === "weight-loss" && form.targetWeight > 0
+      ? form.weight > form.targetWeight
+        ? `${formatSignedValue(form.targetWeight - form.weight, "kg")}`
+        : "Dans la cible"
+      : "Base du jour";
+  const bodyFatTargetLabel = `${bodyFatTarget.min}-${bodyFatTarget.max} %`;
+  const bodyFatGapLabel = getRangeGapLabel(form.bodyFat, bodyFatTarget, "%");
+  const hydrationTargetLabel = `${hydrationReference.min}-${hydrationReference.max} %`;
+  const hydrationGapLabel = getRangeGapLabel(form.hydration, hydrationReference, "%");
+  const visceralTargetLabel = "0-6";
+  const visceralGapLabel =
+    form.visceralFat > 6 ? `+${formatRawNumber(form.visceralFat - 6)}` : "Dans le repere";
+  const comparisonRows = [
+    {
+      label: "Poids",
+      initial: formatValue(form.weight, "kg"),
+      current: formatValue(form.weight, "kg"),
+      target: weightTargetLabel,
+      gap: weightGapLabel,
+      priority:
+        form.objective === "weight-loss" && form.targetWeight > 0
+          ? form.weight > form.targetWeight
+            ? "A reduire progressivement"
+            : "Dans l'objectif"
+          : "Base de reference",
+      tone: "blue" as const
+    },
+    {
+      label: "Masse grasse",
+      initial: `${formatRawNumber(form.bodyFat)} %`,
+      current: `${formatRawNumber(form.bodyFat)} %`,
+      target: bodyFatTargetLabel,
+      gap: bodyFatGapLabel,
+      priority: getBodyFatPriority(form.bodyFat, bodyFatTarget),
+      tone: "red" as const
+    },
+    {
+      label: "Masse musculaire",
+      initial: formatValue(form.muscleMass, "kg"),
+      current: formatValue(form.muscleMass, "kg"),
+      target: form.objective === "sport" ? "A developper" : "A preserver",
+      gap: `${formatRawNumber(musclePercent)} % du poids`,
+      priority:
+        form.objective === "sport" ? "A soutenir dans le suivi" : "A preserver",
+      tone: "green" as const
+    },
+    {
+      label: "Hydratation",
+      initial: `${formatRawNumber(form.hydration)} %`,
+      current: `${formatRawNumber(form.hydration)} %`,
+      target: hydrationTargetLabel,
+      gap: hydrationGapLabel,
+      priority: getHydrationPriority(form.hydration, hydrationReference),
+      tone: "blue" as const
+    },
+    {
+      label: "Graisse viscerale",
+      initial: formatRawNumber(form.visceralFat),
+      current: formatRawNumber(form.visceralFat),
+      target: visceralTargetLabel,
+      gap: visceralGapLabel,
+      priority: getVisceralPriority(form.visceralFat),
+      tone: "amber" as const
+    }
+  ];
+  const supportReferences = [
+    {
+      label: "Objectif eau quotidien",
+      value: `${formatRawNumber(waterNeed)} L / jour`
+    },
+    {
+      label: "Proteines conseillees",
+      value: proteinRange
+    }
+  ];
+  const bodyScanExpressItems = [
+    { label: "Poids", value: formatValue(form.weight, "kg") },
+    { label: "Masse grasse", value: `${formatRawNumber(form.bodyFat)} %` },
+    { label: "Masse musculaire", value: formatValue(form.muscleMass, "kg") },
+    { label: "Hydratation", value: `${formatRawNumber(form.hydration)} %` },
+    { label: "Viscerale", value: formatRawNumber(form.visceralFat) }
+  ];
+  const followUpPriorities = [
+    getHydrationPriority(form.hydration, hydrationReference),
+    form.objective === "sport" ? "Masse musculaire a developper" : "Masse musculaire a preserver",
+    getVisceralPriority(form.visceralFat),
+    getBodyFatPriority(form.bodyFat, bodyFatTarget)
+  ].filter((value, index, values) => values.indexOf(value) === index);
   const recommendationCount = form.recommendations.filter(
     (item) => item.name.trim() || item.contact.trim()
   ).length;
@@ -334,17 +426,23 @@ export function NewAssessmentPage() {
                 "L'assiette doit aider le client a visualiser quoi mettre dans son quotidien.",
                 "Rester simple: volume, proteines, glucides bien places."
               ]
+          : currentStep === 5
+            ? [
+                "Toutes les mesures body scan sont reunies ici sur une seule page.",
+                "On pose un releve de depart clair avant de parler objectif.",
+                "Rester factuel, simple et lisible en rendez-vous."
+              ]
           : currentStep === 6
             ? [
-                "Pendant le smoothie, on ouvre un moment simple autour du cadeau et du partage.",
-                "Le client doit pouvoir lire quelques phrases claires pendant que tu prepares la boisson.",
-                "Le ton reste cool, humain et sans pression."
+                "Cette page sert a transformer les chiffres en reperes de suivi.",
+                "On compare la base du jour, la cible et les priorites sans complexifier.",
+                "L'objectif est de rendre le suivi facile a reformuler."
               ]
           : currentStep === 7
             ? [
-                "L'hydratation doit rester un repere simple, pas un discours trop technique.",
-                "On relie le chiffre du jour a une routine concrete.",
-                "Le visuel sert a faire comprendre plus vite que le texte."
+                "Ouvrir simplement le sujet, puis laisser noter.",
+                "Rester leger et sans pression.",
+                "Aller vite vers la saisie des noms."
               ]
           : currentStep === 8
             ? [
@@ -413,18 +511,25 @@ export function NewAssessmentPage() {
                   "Le client doit repartir avec un repere facile a refaire"
                 ]
               : currentStep === 5
-                ? [`Poids de depart : ${form.weight} kg`, `Objectif eau : ${waterNeed} L / jour`, `Proteines conseillees : ${proteinRange}`, bodyScanAttention]
+                ? [
+                    `Poids de depart : ${formatValue(form.weight, "kg")}`,
+                    `Hydratation : ${formatRawNumber(form.hydration)} %`,
+                    `Graisse viscerale : ${formatRawNumber(form.visceralFat)}`,
+                    `Masse grasse : ${formatRawNumber(form.bodyFat)} %`,
+                    `Masse musculaire : ${formatValue(form.muscleMass, "kg")}`
+                  ]
               : currentStep === 6
                 ? [
-                    `Recommandations notees : ${recommendationCount}`,
-                    "Le client peut noter prenom + numero ou reseau.",
-                    "Le distributeur laisse un temps calme pendant le smoothie."
+                    `Poids cible : ${weightTargetLabel}`,
+                    `Hydratation cible : ${hydrationTargetLabel}`,
+                    `Proteines conseillees : ${proteinRange}`,
+                    followUpPriorities[0] ?? bodyScanAttention
                   ]
               : currentStep === 7
                 ? [
-                    "Valider ce que le client boit vraiment aujourd'hui.",
-                    "Transformer l'objectif eau en routine simple sur la journee.",
-                    "Garder un discours clair et peu charge."
+                    `Recommandations notees : ${recommendationCount}`,
+                    "Ouvrir le sujet puis laisser noter.",
+                    "Rester leger et sans pression."
                   ]
               : currentStep === 8
                     ? ["Comparer un matin improvise a un matin plus structure.", "Faire ressortir ce qui change vraiment.", "Le client doit se reconnaitre tout de suite."]
@@ -446,12 +551,24 @@ export function NewAssessmentPage() {
                             ]
                           : [`Programme retenu : ${selectedProgram?.title ?? "-"}`, `Hydratation cible : ${waterNeed} L`, `Proteines : ${proteinRange}`];
   const panelTitle =
-    currentStep >= 10 ? "Cap du moment" : currentStep >= 5 ? "Lecture du bilan" : "Aide au rendez-vous";
+    currentStep >= 10
+      ? "Cap du moment"
+      : currentStep === 6
+        ? "References de suivi"
+        : currentStep === 5
+          ? "Lecture body scan"
+          : currentStep >= 5
+            ? "Lecture du bilan"
+            : "Aide au rendez-vous";
   const panelIntro =
     currentStep >= 12
       ? "La fin du rendez-vous doit rester simple, claire et facile a reformuler."
       : currentStep >= 10
         ? "Ici, on garde seulement ce qui aide a presenter la proposition."
+        : currentStep === 6
+          ? "Le panneau sert a garder les cibles, les ecarts et les priorites a portee de voix."
+        : currentStep === 5
+          ? "Le panneau sert a relire vite les mesures brutes sans doubler la page."
         : currentStep >= 5
           ? "Le panneau sert a relire vite les chiffres et la logique du bilan."
           : "Le panneau sert a garder le bon fil sans surcharger l'echange.";
@@ -963,7 +1080,21 @@ export function NewAssessmentPage() {
 
           {currentStep === 5 && (
             <div className="space-y-4">
-              <SectionBlock title="Releve body scan" description="Le releve sert de point de depart pour le suivi. Les unites restent visibles pour une lecture simple en rendez-vous.">
+              <Card className="space-y-6">
+                <div className="flex flex-wrap items-start justify-between gap-4">
+                  <div className="max-w-3xl">
+                    <p className="eyebrow-label">Body scan</p>
+                    <h2 className="mt-3 text-3xl text-white md:text-[2.6rem]">
+                      Releve complet des mesures de depart
+                    </h2>
+                    <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-300">
+                      Toutes les mesures body scan sont reunies ici pour construire une base claire
+                      avant le suivi.
+                    </p>
+                  </div>
+                  <StatusBadge label="Reference de depart" tone="blue" />
+                </div>
+
                 <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
                   <Field label="Poids (kg)" type="number" value={form.weight} onChange={(v) => update("weight", Number(v))} />
                   <Field label="Masse grasse (%)" type="number" step="0.1" value={form.bodyFat} onChange={(v) => update("bodyFat", Number(v))} />
@@ -974,61 +1105,87 @@ export function NewAssessmentPage() {
                   <Field label="BMR (kcal)" type="number" value={form.bmr} onChange={(v) => update("bmr", Number(v))} />
                   <Field label="Age metabolique (ans)" type="number" value={form.metabolicAge} onChange={(v) => update("metabolicAge", Number(v))} />
                 </div>
-              </SectionBlock>
+              </Card>
 
-              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-                <MetricTile label="Poids de depart" value={`${form.weight} kg`} hint="Reference du jour pour le suivi" accent="blue" />
-                <MetricTile label="Objectif eau" value={`${waterNeed} L / jour`} hint={`Ecart actuel ${waterGap} L`} accent="green" />
-                <MetricTile label="Proteines conseillees" value={proteinRange} hint={form.objective === "sport" ? "Selon objectif sport" : "Selon objectif accompagnement"} accent="red" />
-              </div>
-
-              <div className="grid gap-4 md:grid-cols-3">
-                <MetricTile label="Masse grasse estimee" value={`${bodyFatKg} kg`} hint={`${form.bodyFat} % du poids actuel`} accent="red" />
-                <MetricTile label="Volume musculaire relatif" value={`${musclePercent} %`} hint={`${form.muscleMass} kg par rapport au poids du corps`} accent="green" />
-                <MetricTile label="Masse osseuse relative" value={`${bonePercent} %`} hint={`${form.boneMass} kg par rapport au poids du corps`} accent="blue" />
-              </div>
-
-              <BodyFatInsightCard
-                current={{ weight: form.weight, percent: form.bodyFat }}
-                objective={form.objective}
-                sex={form.sex}
-              />
-
-              <MuscleMassInsightCard
-                current={{ weight: form.weight, muscleMass: form.muscleMass }}
-              />
-
-              <div className="rounded-[24px] border border-white/10 bg-slate-950/35 p-5">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div>
-                    <p className="text-xs uppercase tracking-[0.25em] text-slate-500">Lecture coach</p>
-                    <p className="mt-2 text-2xl text-white">Ce releve servira de reference pour les prochains suivis</p>
-                  </div>
-                  <StatusBadge label="Reference de depart" tone="blue" />
-                </div>
-                <div className="mt-4 grid gap-3 md:grid-cols-3">
-                  <QuickReadCard label="Volume musculaire" value={`${musclePercent} %`} detail={`${form.muscleMass} kg par rapport au poids du corps`} />
-                  <QuickReadCard label="Masse osseuse" value={`${bonePercent} %`} detail={`${form.boneMass} kg par rapport au poids du corps`} />
-                  <QuickReadCard label="Point d'attention" value={bodyScanAttention} detail="Lecture simple a expliquer au client" />
-                </div>
+              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+                <QuickReadCard label="Poids de depart" value={formatValue(form.weight, "kg")} detail="Base du suivi" />
+                <QuickReadCard label="Masse grasse" value={`${formatRawNumber(form.bodyFat)} %`} detail={`${bodyFatKg} kg estimes`} />
+                <QuickReadCard label="Masse musculaire" value={formatValue(form.muscleMass, "kg")} detail={`${formatRawNumber(musclePercent)} % du poids`} />
+                <QuickReadCard label="Hydratation" value={`${formatRawNumber(form.hydration)} %`} detail={`${hydrationKg} kg estimes`} />
+                <QuickReadCard label="Graisse viscerale" value={formatRawNumber(form.visceralFat)} detail="Repere a surveiller" />
               </div>
             </div>
           )}
 
           {currentStep === 6 && (
-            <RecommendationStepCard
-              recommendations={form.recommendations}
-              onChange={updateRecommendation}
-            />
+            <div className="space-y-4">
+              <Card className="space-y-6">
+                <div className="flex flex-wrap items-start justify-between gap-4">
+                  <div className="max-w-3xl">
+                    <p className="eyebrow-label">References de suivi</p>
+                    <h2 className="mt-3 text-3xl text-white md:text-[2.6rem]">
+                      Lecture simple des valeurs de depart et des priorites
+                    </h2>
+                    <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-300">
+                      On compare la base du jour, la cible et les ecarts utiles pour rendre le suivi
+                      plus simple a expliquer.
+                    </p>
+                  </div>
+                  <StatusBadge label="Lecture comparative" tone="green" />
+                </div>
+
+                <div className="grid gap-3">
+                  {comparisonRows.map((row) => (
+                    <ReferenceComparisonRow
+                      key={row.label}
+                      label={row.label}
+                      initial={row.initial}
+                      current={row.current}
+                      target={row.target}
+                      gap={row.gap}
+                      priority={row.priority}
+                      tone={row.tone}
+                    />
+                  ))}
+                </div>
+
+                <div className="grid gap-4 md:grid-cols-2">
+                  {supportReferences.map((item) => (
+                    <SummaryHighlightCard key={item.label} label={item.label} value={item.value} />
+                  ))}
+                </div>
+              </Card>
+
+              <div className="grid gap-4 xl:grid-cols-[1.08fr_0.92fr]">
+                <Card className="space-y-4">
+                  <div>
+                    <p className="eyebrow-label">Priorites d'accompagnement</p>
+                    <h3 className="mt-3 text-[1.65rem] text-white">Les repères a garder en tete</h3>
+                  </div>
+                  <div className="grid gap-3 md:grid-cols-2">
+                    {followUpPriorities.map((priority) => (
+                      <FocusPanelItem key={priority} text={priority} highlighted={priority === followUpPriorities[0]} />
+                    ))}
+                  </div>
+                </Card>
+
+                <Card className="space-y-4">
+                  <p className="eyebrow-label">Lecture express</p>
+                  <div className="grid gap-3">
+                    <ClosingLine text="On fixe une base claire." />
+                    <ClosingLine text="On suit l'evolution sans complexifier." />
+                    <ClosingLine text="On avance par priorites." />
+                  </div>
+                </Card>
+              </div>
+            </div>
           )}
 
           {currentStep === 7 && (
-            <HydrationInsightCard
-              weight={form.weight}
-              hydrationPercent={form.hydration}
-              waterIntake={form.waterIntake}
-              sex={form.sex}
-              visceralFat={form.visceralFat}
+            <RecommendationStepCard
+              programTitle={selectedProgram?.title ?? "A choisir"}
+              recommendations={form.recommendations}
+              onChange={updateRecommendation}
             />
           )}
 
@@ -1296,10 +1453,33 @@ export function NewAssessmentPage() {
 
           <Card className="space-y-4">
             <p className="eyebrow-label">Lecture express</p>
-            <SummaryMini label="Objectif" value={form.objectiveFocus} />
-            <SummaryMini label="Programme" value={selectedProgram?.title ?? "A choisir"} />
-            <SummaryMini label="Hydratation" value={`${waterNeed} L`} />
-            {form.objective === "weight-loss" ? <SummaryMini label="Rythme" value={weightLossPace.label} /> : <SummaryMini label="Motivation" value={`${form.motivation}/10`} />}
+            {currentStep === 5 ? (
+              <>
+                {bodyScanExpressItems.map((item) => (
+                  <SummaryMini key={item.label} label={item.label} value={item.value} />
+                ))}
+              </>
+            ) : currentStep === 6 ? (
+              <>
+                <SummaryMini label="Poids cible" value={weightTargetLabel} />
+                <SummaryMini label="Hydratation cible" value={hydrationTargetLabel} />
+                <SummaryMini label="Objectif eau" value={`${formatRawNumber(waterNeed)} L`} />
+                <SummaryMini label="Proteines" value={proteinRange} />
+              </>
+            ) : currentStep === 7 ? (
+              <>
+                <SummaryMini label="Objectif" value="Inviter simplement" />
+                <SummaryMini label="Programme" value={selectedProgram?.title ?? "A choisir"} />
+                <SummaryMini label="Recommandations" value={`${recommendationCount}/10`} />
+              </>
+            ) : (
+              <>
+                <SummaryMini label="Objectif" value={form.objectiveFocus} />
+                <SummaryMini label="Programme" value={selectedProgram?.title ?? "A choisir"} />
+                <SummaryMini label="Hydratation" value={`${waterNeed} L`} />
+                {form.objective === "weight-loss" ? <SummaryMini label="Rythme" value={weightLossPace.label} /> : <SummaryMini label="Motivation" value={`${form.motivation}/10`} />}
+              </>
+            )}
           </Card>
         </div>
       </div>
@@ -1320,9 +1500,11 @@ function StepVisualLoadingCard({ label }: { label: string }) {
 }
 
 function RecommendationStepCard({
+  programTitle,
   recommendations,
   onChange
 }: {
+  programTitle: string;
   recommendations: RecommendationLead[];
   onChange: (index: number, field: keyof RecommendationLead, value: string) => void;
 }) {
@@ -1332,69 +1514,49 @@ function RecommendationStepCard({
 
   return (
       <div className="space-y-5">
-        <Card className="space-y-6 bg-[linear-gradient(180deg,rgba(15,23,42,0.24),rgba(15,23,42,0.56))]">
+        <Card className="space-y-5 bg-[linear-gradient(180deg,rgba(15,23,42,0.24),rgba(15,23,42,0.56))]">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="max-w-4xl">
               <p className="eyebrow-label">Moment smoothie & recommandations</p>
               <h2 className="mt-3 max-w-3xl text-2xl leading-tight text-white md:text-[2.5rem]">
                 A qui aimerais-tu offrir ce moment bien-etre et nutrition ?
               </h2>
-              <p className="mt-4 max-w-3xl text-sm leading-7 text-slate-300 md:text-base">
-                Tu peux noter simplement un prenom et un numero ou un reseau pour commencer.
+              <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-300 md:text-base">
+                Laisse la personne noter les noms qu&apos;elle souhaite inviter.
               </p>
             </div>
             <StatusBadge label="Lecture client" tone="green" />
           </div>
 
-          <div className="grid gap-4 lg:grid-cols-[1.15fr_0.85fr]">
+          <div className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
             <div className="rounded-[26px] bg-slate-950/24 p-5">
               <p className="eyebrow-label">Texte a laisser lire</p>
-              <div className="mt-4 space-y-3">
+              <div className="mt-4 space-y-2">
                 <p className="text-lg leading-8 text-white">
-                  Tu peux noter les personnes a qui tu aimerais offrir la meme experience.
+                  Note les personnes a qui tu aimerais offrir cette experience.
                 </p>
                 <p className="text-sm leading-7 text-slate-300">
-                  Famille, amis, collegues... pense simplement aux personnes a qui ce moment pourrait faire du bien.
-                </p>
-                <p className="text-sm leading-7 text-slate-300">
-                  Un prenom et un numero ou un reseau suffisent pour commencer.
+                  Un prenom et un contact suffisent.
                 </p>
               </div>
             </div>
 
-            <div className="space-y-4">
-              <div className="rounded-[26px] bg-white/[0.03] p-5">
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <p className="eyebrow-label">Aide terrain</p>
-                    <p className="mt-2 text-xl text-white">Tu ouvres, tu laisses noter, tu restes leger.</p>
-                  </div>
-                  <StatusBadge label="Sans pression" tone="blue" />
+            <div className="rounded-[26px] bg-white/[0.03] p-5">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="eyebrow-label">Aide terrain</p>
+                  <p className="mt-2 text-xl text-white">Tu ouvres le sujet, tu laisses noter, tu restes leger.</p>
                 </div>
-
-                <div className="mt-4 grid gap-3">
-                  <QuickReadCard
-                    label="Etape 1"
-                    value="Ouvrir simplement"
-                    detail="Tu aimes les cadeaux ? A qui aimerais-tu offrir ce moment ?"
-                  />
-                  <QuickReadCard
-                    label="Etape 2"
-                    value="Laisser noter"
-                    detail="Je prepare le smoothie. Prends ton temps, je reviens juste apres."
-                  />
-                  <QuickReadCard
-                    label="Etape 3"
-                    value="Rester leger"
-                    detail="Le but est d'aider la personne a penser a son entourage, sans pression."
-                  />
-                </div>
+                <StatusBadge label="Sans pression" tone="blue" />
               </div>
 
-              <div className="rounded-[24px] bg-slate-950/24 p-5">
-                <p className="eyebrow-label">Lecture express</p>
-                <div className="mt-4 space-y-3">
-                  <SummaryMini label="Objectif" value="Noter les personnes a inviter" />
+              <div className="mt-4 space-y-3">
+                <p className="text-sm leading-7 text-slate-300">
+                  Laisse un temps calme pendant que la personne note.
+                </p>
+                <div className="grid gap-3">
+                  <SummaryMini label="Objectif" value="Inviter simplement" />
+                  <SummaryMini label="Programme" value={programTitle} />
                   <SummaryMini label="Recommandations" value={`${filledRecommendations}/10`} />
                 </div>
               </div>
@@ -1603,5 +1765,162 @@ function QuickReadCard({ label, value, detail }: { label: string; value: string;
       <p className="mt-2 text-sm leading-6 text-slate-400">{detail}</p>
     </div>
   );
+}
+
+function ReferenceComparisonRow({
+  label,
+  initial,
+  current,
+  target,
+  gap,
+  priority,
+  tone
+}: {
+  label: string;
+  initial: string;
+  current: string;
+  target: string;
+  gap: string;
+  priority: string;
+  tone: "blue" | "green" | "amber" | "red";
+}) {
+  const toneClass =
+    tone === "green"
+      ? "bg-emerald-400/10 text-emerald-100"
+      : tone === "red"
+        ? "bg-rose-400/10 text-rose-100"
+        : tone === "amber"
+          ? "bg-amber-400/10 text-amber-100"
+          : "bg-sky-400/10 text-sky-100";
+
+  return (
+    <div className="grid gap-3 rounded-[24px] border border-white/10 bg-white/[0.03] px-4 py-4 md:grid-cols-[1.1fr_repeat(4,minmax(0,0.8fr))_minmax(0,1fr)] md:items-center">
+      <div>
+        <p className="text-base font-semibold text-white">{label}</p>
+      </div>
+      <ReferenceDatum label="Depart" value={initial} />
+      <ReferenceDatum label="Aujourd'hui" value={current} />
+      <ReferenceDatum label="Cible" value={target} />
+      <ReferenceDatum label="Ecart" value={gap} />
+      <div className="rounded-[18px] bg-slate-950/24 px-3.5 py-3">
+        <p className="text-[11px] font-medium text-slate-500">Priorite</p>
+        <p className={`mt-2 inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${toneClass}`}>
+          {priority}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function ReferenceDatum({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-[18px] bg-slate-950/24 px-3.5 py-3">
+      <p className="text-[11px] font-medium text-slate-500">{label}</p>
+      <p className="mt-2 text-sm font-semibold text-white">{value}</p>
+    </div>
+  );
+}
+
+function getBodyFatTargetRange(sex: BiologicalSex, objective: Objective) {
+  if (sex === "male") {
+    if (objective === "sport") {
+      return { min: 10, max: 15 };
+    }
+
+    if (objective === "weight-loss") {
+      return { min: 14, max: 20 };
+    }
+
+    return { min: 12, max: 20 };
+  }
+
+  if (objective === "sport") {
+    return { min: 18, max: 24 };
+  }
+
+  if (objective === "weight-loss") {
+    return { min: 24, max: 30 };
+  }
+
+  return { min: 22, max: 30 };
+}
+
+function getHydrationReference(sex: BiologicalSex) {
+  if (sex === "male") {
+    return { min: 50, max: 65 };
+  }
+
+  return { min: 45, max: 60 };
+}
+
+function getRangeGapLabel(value: number, range: { min: number; max: number }, unit: string) {
+  if (value < range.min) {
+    return `${formatSignedValue(value - range.min, unit)}`;
+  }
+
+  if (value > range.max) {
+    return `${formatSignedValue(value - range.max, unit)}`;
+  }
+
+  return "Dans la cible";
+}
+
+function getBodyFatPriority(value: number, range: { min: number; max: number }) {
+  if (value > range.max) {
+    return "A reduire progressivement";
+  }
+
+  if (value < range.min) {
+    return "A surveiller";
+  }
+
+  return "Dans la cible";
+}
+
+function getHydrationPriority(value: number, range: { min: number; max: number }) {
+  if (value < range.min) {
+    return "Hydratation a renforcer";
+  }
+
+  if (value > range.max) {
+    return "Lecture a surveiller";
+  }
+
+  return "Hydratation stable";
+}
+
+function getVisceralPriority(value: number) {
+  if (value <= 6) {
+    return "Repere sain";
+  }
+
+  if (value <= 12) {
+    return "A surveiller";
+  }
+
+  return "Priorite de suivi";
+}
+
+function formatRawNumber(value: number) {
+  if (!Number.isFinite(value)) {
+    return "0";
+  }
+
+  const rounded = Number(value.toFixed(1));
+  return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(1);
+}
+
+function formatValue(value: number, unit: string) {
+  return `${formatRawNumber(value)} ${unit}`;
+}
+
+function formatSignedValue(value: number, unit: string) {
+  const rounded = Number(value.toFixed(1));
+  if (Math.abs(rounded) < 0.05) {
+    return `0 ${unit}`;
+  }
+
+  const prefix = rounded > 0 ? "+" : "";
+  return `${prefix}${formatRawNumber(rounded)} ${unit}`;
 }
 
