@@ -29,6 +29,7 @@ import {
   addSupabaseFollowUpAssessment,
   createSupabaseClientWithInitialAssessment,
   createSupabaseUserAccess,
+  deleteSupabaseClient,
   fetchSupabaseClients,
   fetchSupabaseFollowUps,
   fetchSupabaseUsers,
@@ -85,6 +86,7 @@ interface AppContextValue {
     nextFollowUp: string;
     notes: string;
   }) => Promise<string>;
+  deleteClient: (clientId: string) => Promise<void>;
   addFollowUpAssessment: (
     clientId: string,
     assessment: AssessmentRecord,
@@ -492,6 +494,19 @@ export function AppProvider({ children }: PropsWithChildren) {
     });
   }
 
+  async function deleteClient(clientId: string) {
+    if (storageMode === "supabase") {
+      await deleteSupabaseClient(clientId);
+      await refreshRemoteData(currentUser);
+      return;
+    }
+
+    setClients((previousClients) => previousClients.filter((client) => client.id !== clientId));
+    setFollowUps((previousFollowUps) =>
+      previousFollowUps.filter((followUp) => followUp.clientId !== clientId)
+    );
+  }
+
   const value = useMemo(
     () => ({
       authReady,
@@ -516,6 +531,7 @@ export function AppProvider({ children }: PropsWithChildren) {
       getClientById,
       canAccessClient: canAccessClientById,
       createClientWithInitialAssessment,
+      deleteClient,
       addFollowUpAssessment
     }),
     [authReady, clients, currentSession, currentUser, followUps, storageMode, users]

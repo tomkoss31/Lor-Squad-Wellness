@@ -409,6 +409,28 @@ export async function addSupabaseFollowUpAssessment(
   }
 }
 
+export async function deleteSupabaseClient(clientId: string) {
+  const client = await requireSupabase();
+
+  const { error: followUpsError } = await client.from("follow_ups").delete().eq("client_id", clientId);
+  if (followUpsError) {
+    throw new Error("Impossible de supprimer les suivis lies a ce dossier.");
+  }
+
+  const { error: assessmentsError } = await client
+    .from("assessments")
+    .delete()
+    .eq("client_id", clientId);
+  if (assessmentsError) {
+    throw new Error("Impossible de supprimer les bilans lies a ce dossier.");
+  }
+
+  const { error: clientError } = await client.from("clients").delete().eq("id", clientId);
+  if (clientError) {
+    throw new Error("Impossible de supprimer ce dossier client.");
+  }
+}
+
 export async function importLocalBusinessDataToSupabase(payload: {
   clients: Client[];
   followUps: FollowUp[];

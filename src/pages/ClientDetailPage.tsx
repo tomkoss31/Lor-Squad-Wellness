@@ -1,4 +1,4 @@
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   BodyScanComparisonGrid,
   type ComparisonMetricCard
@@ -32,8 +32,9 @@ import {
 } from "../lib/calculations";
 
 export function ClientDetailPage() {
+  const navigate = useNavigate();
   const { clientId } = useParams();
-  const { getClientById } = useAppContext();
+  const { currentUser, deleteClient, getClientById } = useAppContext();
 
   const client = clientId ? getClientById(clientId) : undefined;
 
@@ -44,6 +45,8 @@ export function ClientDetailPage() {
       </Card>
     );
   }
+
+  const currentClient = client;
 
   const latestAssessment = getLatestAssessment(client);
   const previousAssessment = getPreviousAssessment(client);
@@ -74,6 +77,28 @@ export function ClientDetailPage() {
     latestQuestionnaire.targetWeight,
     latestQuestionnaire.desiredTimeline
   );
+  const canDeleteClient = currentUser?.role === "admin";
+
+  async function handleDeleteClient() {
+    const shouldDelete = window.confirm(
+      `Supprimer le dossier de ${currentClient.firstName} ${currentClient.lastName} ? Cette action retire aussi les bilans et les suivis lies a ce client.`
+    );
+
+    if (!shouldDelete) {
+      return;
+    }
+
+    try {
+      await deleteClient(currentClient.id);
+      navigate("/clients");
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Impossible de supprimer ce dossier pour le moment.";
+      window.alert(message);
+    }
+  }
 
   const comparisonItems: ComparisonMetricCard[] = [
     {
@@ -344,6 +369,13 @@ export function ClientDetailPage() {
                 label="Modifier le prochain rendez-vous"
                 hint="Ajuster la date ou le rythme de suivi"
               />
+              {canDeleteClient && (
+                <DangerActionButton
+                  label="Supprimer ce dossier"
+                  hint="Retirer ce client, ses bilans et ses suivis lies"
+                  onClick={handleDeleteClient}
+                />
+              )}
             </div>
           </Card>
 
@@ -423,6 +455,27 @@ function ActionButton({ label, hint }: { label: string; hint: string }) {
     >
       <span className="block text-sm font-medium text-white">{label}</span>
       <span className="mt-1 block text-sm text-slate-400">{hint}</span>
+    </button>
+  );
+}
+
+function DangerActionButton({
+  label,
+  hint,
+  onClick
+}: {
+  label: string;
+  hint: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="rounded-[22px] border border-red-400/25 bg-red-500/10 px-4 py-3 text-left transition hover:bg-red-500/15"
+    >
+      <span className="block text-sm font-medium text-red-100">{label}</span>
+      <span className="mt-1 block text-sm text-red-100/75">{hint}</span>
     </button>
   );
 }
