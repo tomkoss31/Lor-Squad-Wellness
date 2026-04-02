@@ -114,20 +114,17 @@ export function GuidePage() {
     <div className="space-y-6">
       <PageHeading
         eyebrow="Guide rendez-vous"
-        title="Un support terrain pour conduire le bilan avec plus de fluidite"
-        description="Ici, l'idee n'est pas de former lourdement. On garde des rappels simples pour mieux accueillir, mieux expliquer et mieux conclure."
+        title="Guide rendez-vous"
+        description="Des reperes simples pour accueillir, expliquer et conclure."
       />
 
       <Card className="space-y-5 overflow-hidden bg-[linear-gradient(180deg,rgba(15,23,42,0.26),rgba(15,23,42,0.5))]">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="max-w-3xl">
-            <p className="text-xs uppercase tracking-[0.28em] text-slate-500">Support terrain</p>
-            <h2 className="mt-3 text-4xl text-white">
-              Un cadre simple pour garder le bon ton, la bonne structure et le bon rythme.
-            </h2>
-            <p className="mt-3 text-sm leading-7 text-slate-300">
-              Le client doit vivre une experience cool, pro et rassurante. Le guide sert juste
-              a garder les bons reperes pendant le rendez-vous.
+            <p className="eyebrow-label">Support terrain</p>
+            <h2 className="mt-3 text-3xl text-white">Le bon ton, la bonne structure, le bon rythme.</h2>
+            <p className="mt-3 text-sm leading-6 text-slate-300">
+              Un rappel rapide pour garder le rendez-vous fluide.
             </p>
           </div>
           <StatusBadge label="Cool + pro" tone="green" />
@@ -158,8 +155,8 @@ function RendezVousGuide() {
       <Card className="space-y-5">
         <div className="flex items-center justify-between gap-3">
           <div>
-            <p className="text-xs uppercase tracking-[0.25em] text-slate-500">Avant de commencer</p>
-            <h2 className="mt-2 text-3xl text-white">
+            <p className="eyebrow-label">Avant de commencer</p>
+            <h2 className="mt-3 text-3xl text-white">
               Le client doit sentir qu'il est attendu, pas qu'il derange.
             </h2>
           </div>
@@ -211,8 +208,8 @@ function RendezVousGuide() {
         <Card className="space-y-4">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <p className="text-xs uppercase tracking-[0.25em] text-slate-500">Degustation produit</p>
-              <h2 className="mt-2 text-3xl text-white">Faire sentir la valeur sans en faire trop</h2>
+              <p className="eyebrow-label">Degustation produit</p>
+              <h2 className="mt-3 text-3xl text-white">Faire sentir la valeur sans en faire trop</h2>
             </div>
             <StatusBadge label="Formula 1" tone="amber" />
           </div>
@@ -228,8 +225,8 @@ function RendezVousGuide() {
             ))}
           </div>
 
-          <div className="rounded-[22px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.03))] px-5 py-4">
-            <p className="text-xs uppercase tracking-[0.22em] text-slate-500">Phrase utile</p>
+          <div className="surface-soft rounded-[22px] px-5 py-4">
+            <p className="eyebrow-label">Phrase utile</p>
             <p className="mt-3 text-sm leading-7 text-slate-300">
               Ce qui compte, ce n'est pas ou tu es aujourd'hui, c'est ce qu'on va construire dans
               les prochaines semaines.
@@ -240,8 +237,8 @@ function RendezVousGuide() {
         <Card className="space-y-4">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <p className="text-xs uppercase tracking-[0.25em] text-slate-500">Closing clair</p>
-              <h2 className="mt-2 text-3xl text-white">Aider a choisir, pas mettre la pression</h2>
+              <p className="eyebrow-label">Closing clair</p>
+              <h2 className="mt-3 text-3xl text-white">Aider a choisir, pas mettre la pression</h2>
             </div>
             <StatusBadge label="Decision simple" tone="green" />
           </div>
@@ -261,13 +258,13 @@ function RendezVousGuide() {
       </div>
 
       <Card className="space-y-4">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <p className="text-xs uppercase tracking-[0.25em] text-slate-500">Phrases utiles</p>
-            <h2 className="mt-2 text-3xl text-white">Des formulations simples a garder</h2>
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="eyebrow-label">Phrases utiles</p>
+              <h2 className="mt-3 text-3xl text-white">Des formulations simples a garder</h2>
+            </div>
+            <StatusBadge label="A dire naturellement" tone="amber" />
           </div>
-          <StatusBadge label="A dire naturellement" tone="amber" />
-        </div>
 
         <div className="grid gap-3 xl:grid-cols-2">
           {usefulPhrases.map((phrase) => (
@@ -290,8 +287,8 @@ function RecommendationGuide() {
       <Card className="space-y-5">
         <div className="flex items-center justify-between gap-3">
           <div>
-            <p className="text-xs uppercase tracking-[0.25em] text-slate-500">Recommandations</p>
-            <h2 className="mt-2 text-3xl text-white">
+            <p className="eyebrow-label">Recommandations</p>
+            <h2 className="mt-3 text-3xl text-white">
               Un rappel simple pour demander des recos au bon moment, sans faire lourd.
             </h2>
           </div>
@@ -314,8 +311,8 @@ function RecommendationGuide() {
         <Card className="space-y-4">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <p className="text-xs uppercase tracking-[0.25em] text-slate-500">Le bon deroule</p>
-              <h2 className="mt-2 text-3xl text-white">Un script vivant, pas une pression de vente</h2>
+              <p className="eyebrow-label">Le bon deroule</p>
+              <h2 className="mt-3 text-3xl text-white">Un script vivant, pas une pression de vente</h2>
             </div>
             <StatusBadge label="Presentiel" tone="blue" />
           </div>
@@ -332,8 +329,8 @@ function RecommendationGuide() {
             ))}
           </div>
 
-          <div className="rounded-[22px] border border-amber-300/20 bg-amber-300/10 px-5 py-4">
-            <p className="text-xs uppercase tracking-[0.22em] text-amber-100/80">Regle d'or</p>
+          <div className="rounded-[22px] bg-amber-300/10 px-5 py-4">
+            <p className="eyebrow-label text-amber-100/80">Regle d'or</p>
             <p className="mt-3 text-sm leading-7 text-amber-50">
               Tu laisses vraiment le temps a la personne de remplir. Si tu reviens trop vite, tu
               coupes le moment et tu perds des noms.
@@ -344,8 +341,8 @@ function RecommendationGuide() {
         <Card className="space-y-4">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <p className="text-xs uppercase tracking-[0.25em] text-slate-500">A retenir</p>
-              <h2 className="mt-2 text-3xl text-white">Les points a ne pas oublier</h2>
+              <p className="eyebrow-label">A retenir</p>
+              <h2 className="mt-3 text-3xl text-white">Les points a ne pas oublier</h2>
             </div>
             <StatusBadge label="Cadre simple" tone="green" />
           </div>
@@ -361,8 +358,8 @@ function RecommendationGuide() {
             ))}
           </div>
 
-          <div className="rounded-[22px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.03))] px-5 py-4">
-            <p className="text-xs uppercase tracking-[0.22em] text-slate-500">Visio / en ligne</p>
+          <div className="surface-soft rounded-[22px] px-5 py-4">
+            <p className="eyebrow-label">Visio / en ligne</p>
             <div className="mt-3 grid gap-2">
               {visioReminder.map((point) => (
                 <p key={point} className="text-sm leading-7 text-slate-300">
@@ -390,10 +387,10 @@ function TabButton({
     <button
       type="button"
       onClick={onClick}
-      className={`rounded-full border px-4 py-3 text-sm font-semibold transition ${
+      className={`rounded-full px-4 py-3 text-sm font-semibold transition ${
         active
-          ? "border-white/10 bg-white text-slate-950"
-          : "border-white/10 bg-white/[0.04] text-slate-200 hover:bg-white/[0.08]"
+          ? "bg-white text-slate-950"
+          : "bg-white/[0.04] text-slate-200 hover:bg-white/[0.08]"
       }`}
     >
       {label}
@@ -411,14 +408,14 @@ function GuideSectionCard({
   points: string[];
 }) {
   return (
-    <div className="rounded-[26px] border border-white/10 bg-white/[0.03] p-5">
+    <div className="rounded-[26px] bg-white/[0.03] p-5">
       <p className="text-xl font-semibold text-white">{title}</p>
       <p className="mt-2 text-sm leading-6 text-slate-400">{subtitle}</p>
       <div className="mt-4 grid gap-2">
         {points.map((point) => (
           <div
             key={point}
-            className="rounded-[18px] border border-white/8 bg-slate-950/35 px-4 py-3 text-sm leading-6 text-slate-200"
+            className="rounded-[18px] bg-slate-950/24 px-4 py-3 text-sm leading-6 text-slate-200"
           >
             {point}
           </div>

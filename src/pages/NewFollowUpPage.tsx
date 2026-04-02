@@ -126,7 +126,7 @@ export function NewFollowUpPage() {
       <PageHeading
         eyebrow="Nouveau suivi"
         title={`Suivi de ${targetClient.firstName} ${targetClient.lastName}`}
-        description="Cet ecran sert a relire le dernier point, saisir les nouvelles mesures et poser la suite tranquillement."
+        description="Relire le dernier point, saisir les mesures et poser la suite."
       />
 
       <div className="grid gap-4 xl:grid-cols-[1.05fr_0.95fr]">
@@ -145,13 +145,10 @@ export function NewFollowUpPage() {
           <div className="rounded-[24px] border border-emerald-400/20 bg-emerald-400/[0.06] p-5">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
-                <p className="text-xs uppercase tracking-[0.25em] text-emerald-200/70">
-                  Nouveau releve
-                </p>
-                <p className="mt-2 text-2xl text-white">Entrer les nouvelles valeurs du body scan</p>
+                <p className="eyebrow-label text-emerald-200/70">Nouveau releve</p>
+                <p className="mt-3 text-2xl text-white">Nouvelles valeurs body scan</p>
                 <p className="mt-2 text-sm leading-6 text-slate-300">
-                  Commencer ici avec les chiffres du jour, puis lire juste dessous les ecarts et
-                  l'evolution.
+                  Saisir les chiffres du jour puis relire les ecarts.
                 </p>
               </div>
               <StatusBadge label="Saisie rapide" tone="green" />
@@ -237,9 +234,7 @@ export function NewFollowUpPage() {
 
         <div className="space-y-4">
           <Card className="space-y-4">
-            <p className="text-xs uppercase tracking-[0.25em] text-slate-500">
-              Lecture rapide avant validation
-            </p>
+            <p className="eyebrow-label">Lecture rapide avant validation</p>
             <div className="grid gap-3">
               <InfoRow label="Dernier bilan" value={latest.summary} />
               <InfoRow label="Programme en cours" value={targetClient.currentProgram} />
@@ -329,8 +324,8 @@ function MetricField({
 
 function InfoRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-[20px] border border-white/10 bg-white/[0.03] px-4 py-3">
-      <p className="text-xs uppercase tracking-[0.2em] text-slate-500">{label}</p>
+    <div className="rounded-[20px] bg-white/[0.03] px-4 py-3">
+      <p className="text-[11px] font-medium text-slate-500">{label}</p>
       <p className="mt-2 text-sm leading-6 text-slate-200">{value}</p>
     </div>
   );
@@ -379,8 +374,8 @@ function StartingPointWeightCard({
     <Card className="space-y-5 bg-[linear-gradient(180deg,rgba(15,23,42,0.28),rgba(15,23,42,0.5))]">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="text-xs uppercase tracking-[0.25em] text-slate-500">Repere de progression</p>
-          <p className="mt-2 text-2xl text-white">Poids de depart vs poids du jour</p>
+          <p className="eyebrow-label">Repere de progression</p>
+          <p className="mt-3 text-2xl text-white">Depart vs aujourd&apos;hui</p>
           <p className="mt-2 text-sm leading-6 text-slate-300">
             Ce bloc sert a montrer tout de suite le point de depart, le dernier releve et la
             situation aujourd&apos;hui.
@@ -449,11 +444,11 @@ function WeightMilestoneCard({
 
   return (
     <div
-      className={`rounded-[24px] border p-5 ${toneClass} ${
+      className={`rounded-[24px] p-5 ${toneClass} ${
         highlighted ? "shadow-[0_0_30px_rgba(52,211,153,0.08)]" : ""
       }`}
     >
-      <p className="text-[11px] uppercase tracking-[0.2em] text-slate-500">{label}</p>
+      <p className="text-[11px] font-medium text-slate-500">{label}</p>
       <p className="mt-3 text-3xl text-white">{weight} kg</p>
       <p className="mt-2 text-sm text-slate-400">{date}</p>
     </div>

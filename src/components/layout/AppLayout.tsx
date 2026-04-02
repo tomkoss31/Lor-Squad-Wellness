@@ -96,6 +96,9 @@ export function AppLayout() {
                 <p className="mt-3 text-[13px] leading-6 text-slate-500">
                   {getAccessSummary(currentUser)}
                 </p>
+                <Button variant="ghost" className="mt-4 w-full" onClick={() => void handleLogout()}>
+                  Se deconnecter
+                </Button>
               </div>
 
               <nav className="space-y-1.5">
@@ -185,13 +188,6 @@ export function AppLayout() {
                     Installer
                   </Button>
                 ) : null}
-                <Button
-                  variant="ghost"
-                  className="min-h-[42px] px-4 py-2 text-[12px]"
-                  onClick={() => void handleLogout()}
-                >
-                  Se deconnecter
-                </Button>
               </div>
             </div>
 
@@ -205,6 +201,14 @@ export function AppLayout() {
                 tone={currentUser.role === "admin" ? "blue" : "green"}
               />
             </div>
+
+            <Button
+              variant="ghost"
+              className="mt-3 w-full justify-center"
+              onClick={() => void handleLogout()}
+            >
+              Se deconnecter
+            </Button>
 
             <nav className="mt-4 flex gap-2 overflow-x-auto pb-1">
               {navigation.map((item) => {

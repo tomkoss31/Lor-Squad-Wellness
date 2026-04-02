@@ -90,33 +90,33 @@ export function ClientsPage() {
     <div className="space-y-6">
       <PageHeading
         eyebrow="Clients"
-        title="Base client structuree par responsable, par recherche et par mois"
-        description="La page aide a retrouver vite la bonne personne, a filtrer par responsable et a garder une lecture saine meme quand la base client devient tres volumineuse."
+        title="Base clients"
+        description="Recherche, responsables, statuts et arborescence mensuelle."
       />
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <MetricTile
           label="Clients visibles"
           value={filteredClients.length}
-          hint="Resultat du filtre actuel"
+          hint="Resultat du filtre"
           accent="blue"
         />
         <MetricTile
           label="Responsables visibles"
           value={ownerTabs.length}
-          hint="Portefeuilles exploitables"
+          hint="Portefeuilles actifs"
           accent="green"
         />
         <MetricTile
           label="Relances visibles"
           value={visibleRelanceCount}
-          hint="Dossiers a reprendre"
+          hint="A reprendre"
           accent="red"
         />
         <MetricTile
-          label="Capacite cible"
+          label="Capacite active"
           value={globalTarget ? `${Math.round((visibleClients.length / globalTarget) * 100)}%` : "0%"}
-          hint={`${visibleClients.length} / ${globalTarget || 0} dossiers`}
+          hint={`${visibleClients.length} / ${globalTarget || 0}`}
           accent="blue"
         />
       </div>
@@ -149,8 +149,8 @@ export function ClientsPage() {
             </select>
           </div>
 
-          <div className="rounded-[24px] border border-white/10 bg-slate-950/35 px-5 py-4">
-            <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Stockage</p>
+          <div className="surface-soft rounded-[24px] px-5 py-4">
+            <p className="eyebrow-label">Stockage</p>
             <p className="mt-2 text-sm text-white">
               {storageMode === "supabase" ? "Base distante active" : "Mode local demo"}
             </p>
@@ -158,17 +158,15 @@ export function ClientsPage() {
         </div>
 
         <div className="space-y-3">
-          <p className="text-xs uppercase tracking-[0.24em] text-slate-500">
-            Responsables du dossier
-          </p>
+          <p className="eyebrow-label">Responsables du dossier</p>
           <div className="flex flex-wrap gap-3">
             <button
               type="button"
               onClick={() => setOwnerFilter("all")}
-              className={`rounded-[22px] border px-4 py-3 text-left transition ${
+              className={`rounded-[22px] px-4 py-3 text-left transition ${
                 ownerFilter === "all"
-                  ? "border-sky-300/25 bg-sky-400/12 text-white shadow-[0_0_0_1px_rgba(125,211,252,0.12)]"
-                  : "border-white/10 bg-white/[0.03] text-white hover:bg-white/[0.05]"
+                  ? "bg-sky-400/12 text-white shadow-[0_0_0_1px_rgba(125,211,252,0.12)]"
+                  : "bg-white/[0.03] text-white hover:bg-white/[0.05]"
               }`}
             >
               <span className="block text-sm font-semibold">Toute la base</span>
@@ -191,10 +189,10 @@ export function ClientsPage() {
                   key={user.id}
                   type="button"
                   onClick={() => setOwnerFilter(user.id)}
-                  className={`rounded-[22px] border px-4 py-3 text-left transition ${
+                  className={`rounded-[22px] px-4 py-3 text-left transition ${
                     isActive
-                      ? "border-sky-300/25 bg-sky-400/12 text-white shadow-[0_0_0_1px_rgba(125,211,252,0.12)]"
-                      : "border-white/10 bg-white/[0.03] hover:bg-white/[0.05]"
+                      ? "bg-sky-400/12 text-white shadow-[0_0_0_1px_rgba(125,211,252,0.12)]"
+                      : "bg-white/[0.03] hover:bg-white/[0.05]"
                   }`}
                 >
                   <div className="flex items-center gap-3">
@@ -232,9 +230,9 @@ export function ClientsPage() {
             />
             <Link
               to={`/distributors/${selectedOwner.id}`}
-              className="inline-flex rounded-full border border-white/10 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/5"
+              className="inline-flex min-h-[48px] items-center justify-center rounded-[18px] bg-white/[0.04] px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/[0.07]"
             >
-              Ouvrir la page de {selectedOwner.name}
+              Ouvrir le portefeuille
             </Link>
           </div>
           <div className="grid gap-3 md:grid-cols-3">
@@ -258,15 +256,13 @@ export function ClientsPage() {
         {groupedClients.length ? (
           groupedClients.map((group) => (
             <Card key={group.key} className="space-y-4">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <p className="text-xs uppercase tracking-[0.25em] text-slate-500">
-                    Arborescence mensuelle
-                  </p>
-                  <h2 className="mt-2 text-2xl text-white">{group.label}</h2>
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                  <p className="eyebrow-label">Arborescence mensuelle</p>
+                  <h2 className="mt-3 text-2xl text-white">{group.label}</h2>
+                  </div>
+                  <StatusBadge label={`${group.clients.length} clients`} tone="blue" />
                 </div>
-                <StatusBadge label={`${group.clients.length} clients`} tone="blue" />
-              </div>
 
               <div className="grid gap-4">
                 {group.clients.map((client) => {
@@ -278,7 +274,7 @@ export function ClientsPage() {
 
                   return (
                     <Link key={client.id} to={`/clients/${client.id}`}>
-                      <Card className="transition hover:border-amber-300/20 hover:bg-white/[0.07]">
+                      <Card className="transition hover:bg-white/[0.07]">
                         <div className="grid gap-4 xl:grid-cols-[1.2fr_1.15fr_0.85fr] xl:items-center">
                           <div className="space-y-3">
                             <div className="flex flex-wrap items-center gap-3">
@@ -303,7 +299,7 @@ export function ClientsPage() {
                                 Invite par {firstAssessment.questionnaire.referredByName}
                               </p>
                             ) : null}
-                            <p className="text-sm leading-6 text-slate-300">{client.notes}</p>
+                            <p className="text-sm leading-6 text-slate-400">{client.notes}</p>
                           </div>
 
                           <div className="grid gap-3 md:grid-cols-3">
@@ -327,9 +323,7 @@ export function ClientsPage() {
                           </div>
 
                           <div className="space-y-3 xl:text-right">
-                            <p className="text-xs uppercase tracking-[0.25em] text-slate-500">
-                              Prochain suivi
-                            </p>
+                            <p className="eyebrow-label">Prochain suivi</p>
                             <p className="text-xl font-semibold text-white">
                               {formatDateTime(client.nextFollowUp)}
                             </p>
@@ -354,7 +348,7 @@ export function ClientsPage() {
             <div>
               <Link
                 to="/assessments/new"
-                className="inline-flex rounded-full border border-white/10 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/5"
+                className="inline-flex min-h-[48px] items-center justify-center rounded-[18px] bg-white/[0.04] px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/[0.07]"
               >
                 Lancer un premier bilan
               </Link>
@@ -368,8 +362,8 @@ export function ClientsPage() {
 
 function MiniFact({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-[22px] border border-white/10 bg-slate-950/35 px-4 py-4">
-      <p className="text-[10px] uppercase tracking-[0.18em] text-slate-500">{label}</p>
+    <div className="rounded-[22px] bg-slate-950/24 px-4 py-4">
+      <p className="text-[11px] font-medium text-slate-500">{label}</p>
       <p className="mt-3 text-lg font-semibold text-white">{value}</p>
     </div>
   );
@@ -385,8 +379,8 @@ function ClientMetric({
   note?: string;
 }) {
   return (
-    <div className="rounded-[22px] border border-white/10 bg-slate-950/40 p-4">
-      <p className="text-xs uppercase tracking-[0.25em] text-slate-500">{label}</p>
+    <div className="rounded-[22px] bg-slate-950/30 p-4">
+      <p className="text-[11px] font-medium text-slate-500">{label}</p>
       <p className="mt-3 text-lg font-semibold text-white">{value}</p>
       {note ? <p className="mt-2 text-xs text-slate-400">{note}</p> : null}
     </div>

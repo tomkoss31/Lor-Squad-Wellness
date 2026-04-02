@@ -22,10 +22,10 @@ export function HistoryTimeline({ entries }: HistoryTimelineProps) {
             <div className="flex items-center justify-between gap-3">
               <p className="text-base font-semibold text-white">{entry.date}</p>
               <div className="flex flex-wrap gap-2 text-xs text-slate-400">
-                <span className="rounded-full border border-white/10 bg-slate-950/35 px-2.5 py-1">
+                <span className="rounded-full bg-slate-950/24 px-2.5 py-1">
                   {entry.weight} kg
                 </span>
-                <span className="rounded-full border border-white/10 bg-slate-950/35 px-2.5 py-1">
+                <span className="rounded-full bg-slate-950/24 px-2.5 py-1">
                   {entry.hydration} % hydratation
                 </span>
               </div>

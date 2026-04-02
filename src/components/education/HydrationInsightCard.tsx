@@ -29,7 +29,7 @@ export function HydrationInsightCard({
   return (
     <Card className="space-y-6 bg-[linear-gradient(180deg,rgba(15,23,42,0.28),rgba(15,23,42,0.5))]">
       <div className="max-w-3xl">
-        <p className="text-[11px] uppercase tracking-[0.28em] text-slate-500">Repere quotidien</p>
+        <p className="eyebrow-label">Repere quotidien</p>
         <h3 className="mt-2 text-[1.9rem] leading-none text-white md:text-[2.1rem]">
           Hydratation
         </h3>
@@ -64,7 +64,7 @@ export function HydrationInsightCard({
             />
           </div>
 
-          <div className="rounded-[24px] border border-white/10 bg-white/[0.04] p-4 md:p-5">
+          <div className="rounded-[24px] bg-white/[0.04] p-4 md:p-5">
             <div className="grid gap-3 md:grid-cols-3 xl:grid-cols-1">
               <HydrationMeta label="Poids actuel" value={`${weight} kg`} />
               <HydrationMeta label="Masse hydrique estimee" value={`${hydrationKg} kg`} />
@@ -75,9 +75,9 @@ export function HydrationInsightCard({
       </div>
 
       <div className="grid gap-3 xl:grid-cols-[1.15fr_0.85fr]">
-        <div className="rounded-[24px] border border-white/10 bg-white/[0.04] p-4 md:p-5">
+        <div className="rounded-[24px] bg-white/[0.04] p-4 md:p-5">
           <div className="flex items-center justify-between gap-3">
-            <p className="text-[11px] uppercase tracking-[0.18em] text-slate-500">
+            <p className="text-[11px] font-medium text-slate-500">
               Repere hydratation
             </p>
             <span className="rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 text-xs font-medium text-white">
@@ -91,9 +91,9 @@ export function HydrationInsightCard({
           <p className="mt-4 text-sm leading-6 text-slate-400">{hydrationStatus.description}</p>
         </div>
 
-        <div className="rounded-[24px] border border-white/10 bg-white/[0.04] p-4 md:p-5">
+        <div className="rounded-[24px] bg-white/[0.04] p-4 md:p-5">
           <div className="flex items-center justify-between gap-3">
-            <p className="text-[11px] uppercase tracking-[0.18em] text-slate-500">
+            <p className="text-[11px] font-medium text-slate-500">
               Graisse viscerale
             </p>
             <span className="rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 text-xs font-medium text-white">
@@ -124,8 +124,8 @@ function HydrationValueCard({
   accent?: "blue" | "green";
 }) {
   return (
-    <div className="rounded-[24px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.025))] p-4 md:p-5">
-      <p className="text-[10px] uppercase tracking-[0.18em] text-slate-500">{label}</p>
+    <div className="rounded-[24px] bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.025))] p-4 md:p-5">
+      <p className="text-[11px] font-medium text-slate-500">{label}</p>
       <p className="mt-4 text-[1.45rem] font-semibold leading-none text-white md:text-[1.6rem]">
         {value}
       </p>
@@ -140,8 +140,8 @@ function HydrationValueCard({
 
 function HydrationMeta({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-[18px] border border-white/8 bg-slate-950/35 px-4 py-3">
-      <p className="text-[10px] uppercase tracking-[0.18em] text-slate-500">{label}</p>
+    <div className="rounded-[18px] bg-slate-950/24 px-4 py-3">
+      <p className="text-[11px] font-medium text-slate-500">{label}</p>
       <p className="mt-2 text-sm font-medium text-slate-100">{value}</p>
     </div>
   );
@@ -159,13 +159,13 @@ function HydrationGaugeScene({
   hydrationPercent: number;
 }) {
   return (
-    <div className="relative overflow-hidden rounded-[30px] border border-white/10 bg-[radial-gradient(circle_at_top_right,rgba(56,189,248,0.16),transparent_24%),radial-gradient(circle_at_bottom_left,rgba(34,211,238,0.12),transparent_28%),linear-gradient(180deg,rgba(15,23,42,0.18),rgba(15,23,42,0.58))] p-5 md:p-6">
+    <div className="relative overflow-hidden rounded-[30px] bg-[radial-gradient(circle_at_top_right,rgba(56,189,248,0.16),transparent_24%),radial-gradient(circle_at_bottom_left,rgba(34,211,238,0.12),transparent_28%),linear-gradient(180deg,rgba(15,23,42,0.18),rgba(15,23,42,0.58))] p-5 md:p-6">
       <div className="absolute inset-0 opacity-30 [background-image:radial-gradient(rgba(255,255,255,0.08)_1px,transparent_1px)] [background-size:14px_14px]" />
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(125,211,252,0.08),transparent_42%)]" />
 
       <div className="relative space-y-6">
         <div>
-          <p className="text-[10px] uppercase tracking-[0.18em] text-slate-500">Rythme hydratation</p>
+          <p className="text-[11px] font-medium text-slate-500">Rythme hydratation</p>
           <h4 className="mt-2 text-[1.45rem] leading-none text-white md:text-[1.65rem]">
             Jauge de progression
           </h4>
@@ -182,13 +182,13 @@ function HydrationGaugeScene({
           >
             <div className="absolute inset-[16px] rounded-full bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.07),transparent_38%),linear-gradient(180deg,rgba(2,6,23,0.95),rgba(15,23,42,0.92))]" />
             <div className="relative z-10 text-center">
-              <p className="text-[10px] uppercase tracking-[0.18em] text-slate-500">Eau actuelle</p>
+              <p className="text-[11px] font-medium text-slate-500">Eau actuelle</p>
               <p className="mt-3 text-[2.5rem] font-semibold leading-none text-white md:text-[2.9rem]">
                 {waterIntake.toFixed(1).replace(".", ",")}
               </p>
               <p className="mt-1 text-sm text-slate-400">L / jour</p>
               <div className="mx-auto mt-5 h-px w-16 bg-sky-300/25" />
-              <p className="mt-4 text-[10px] uppercase tracking-[0.18em] text-slate-500">Objectif</p>
+              <p className="mt-4 text-[11px] font-medium text-slate-500">Objectif</p>
               <p className="mt-2 text-lg font-medium text-sky-100">
                 {targetWater.toFixed(1).replace(".", ",")} L
               </p>
@@ -212,10 +212,10 @@ function HydrationPill({
 }) {
   return (
     <div
-      className={`rounded-[20px] border px-4 py-3.5 ${
+      className={`rounded-[20px] px-4 py-3.5 ${
         highlighted
-          ? "border-sky-300/20 bg-sky-400/10"
-          : "border-white/10 bg-white/[0.04]"
+          ? "bg-sky-400/10"
+          : "bg-white/[0.04]"
       }`}
     >
       <p className="text-sm font-medium text-white">{title}</p>
@@ -235,10 +235,10 @@ function VisceralRange({
 }) {
   return (
     <div
-      className={`flex items-center justify-between gap-3 rounded-[18px] border px-3 py-3 ${
+      className={`flex items-center justify-between gap-3 rounded-[18px] px-3 py-3 ${
         active
-          ? "border-amber-300/20 bg-amber-300/10"
-          : "border-white/10 bg-slate-950/35"
+          ? "bg-amber-300/10"
+          : "bg-slate-950/24"
       }`}
     >
       <span className="text-sm font-medium text-white">{label}</span>

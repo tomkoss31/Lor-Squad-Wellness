@@ -668,8 +668,8 @@ export function NewAssessmentPage() {
     <div className="space-y-6">
       <PageHeading
         eyebrow="Nouveau bilan"
-        title="Un bilan guide, plus complet mais facile a conduire en rendez-vous"
-        description="Le questionnaire est regroupe en blocs utiles pour garder une conversation fluide, faire ressortir les habitudes cle et terminer avec une proposition claire."
+        title="Bilan guide"
+        description="Un parcours clair pour conduire le rendez-vous, relire les habitudes et poser la suite."
       />
       <div ref={stepRailRef}>
         <StepRail currentStep={currentStep} steps={steps} />
@@ -688,11 +688,11 @@ export function NewAssessmentPage() {
             <FocusPanelItem key={point} text={point} highlighted={index === 0} />
           ))}
         </div>
-        <div className="rounded-[18px] border border-white/10 bg-slate-950/35 px-4 py-3 text-sm leading-6 text-slate-200">
+        <div className="rounded-[18px] bg-slate-950/24 px-4 py-3 text-sm leading-6 text-slate-200">
           {prompts[0]}
         </div>
         {currentStep === 0 ? (
-          <div className="space-y-2 rounded-[18px] border border-white/10 bg-white/[0.03] px-4 py-4">
+          <div className="space-y-2 rounded-[18px] bg-white/[0.03] px-4 py-4">
             <label className="text-sm font-medium text-slate-300">
               Invite par / recommande par
             </label>
@@ -709,10 +709,8 @@ export function NewAssessmentPage() {
         <Card className="space-y-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <p className="text-xs uppercase tracking-[0.25em] text-slate-500">
-                Etape {currentStep + 1} / {steps.length}
-              </p>
-              <h2 className="mt-2 text-3xl md:text-4xl">{steps[currentStep]}</h2>
+              <p className="eyebrow-label">Etape {currentStep + 1} / {steps.length}</p>
+              <h2 className="mt-3 text-3xl md:text-4xl">{steps[currentStep]}</h2>
             </div>
             <StatusBadge
               label={form.objective === "sport" ? "Parcours sport" : "Parcours accompagnement"}
@@ -809,7 +807,7 @@ export function NewAssessmentPage() {
                       />
                     </div>
                   )}
-                  <div className="space-y-3 rounded-[24px] border border-white/10 bg-white/[0.03] p-4">
+                  <div className="space-y-3 rounded-[24px] bg-white/[0.03] p-4">
                     <div className="flex items-center justify-between gap-3">
                       <label className="text-sm font-medium text-slate-300">Motivation</label>
                       <span className="text-sm font-semibold text-white">{form.motivation}/10</span>
@@ -951,8 +949,8 @@ export function NewAssessmentPage() {
                 lipidsNote={plateLipidsNote}
               />
 
-              <div className="rounded-[24px] border border-white/10 bg-slate-950/35 p-5">
-                <p className="text-[11px] uppercase tracking-[0.24em] text-slate-500">
+              <div className="rounded-[24px] bg-slate-950/24 p-5">
+                <p className="eyebrow-label">
                   Aide terrain
                 </p>
                 <div className="mt-4 grid gap-3 md:grid-cols-2">
@@ -1057,7 +1055,7 @@ export function NewAssessmentPage() {
                 <div className="rounded-[24px] border border-white/10 bg-slate-950/35 p-5">
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
-                      <p className="text-[11px] uppercase tracking-[0.24em] text-slate-500">
+                      <p className="eyebrow-label">
                         Options pour booster les resultats
                       </p>
                       <p className="mt-2 text-2xl text-white">
@@ -1106,7 +1104,7 @@ export function NewAssessmentPage() {
               <Card className="space-y-5 bg-[linear-gradient(180deg,rgba(15,23,42,0.32),rgba(15,23,42,0.52))]">
                 <div className="flex flex-wrap items-start justify-between gap-4">
                   <div className="max-w-3xl">
-                    <p className="text-xs uppercase tracking-[0.25em] text-slate-500">Conclusion du rendez-vous</p>
+                    <p className="eyebrow-label">Conclusion du rendez-vous</p>
                     <p className="mt-3 text-4xl text-white">Une proposition claire, un cap simple et une suite deja visible.</p>
                     <p className="mt-3 text-sm leading-7 text-slate-300">
                       Cette synthese aide a reformuler le plan, confirmer le programme et terminer
@@ -1117,22 +1115,22 @@ export function NewAssessmentPage() {
                 </div>
 
                 <div className="grid gap-4 xl:grid-cols-[1.08fr_0.92fr]">
-                  <div className="rounded-[28px] border border-white/10 bg-slate-950/35 p-5">
-                    <p className="text-xs uppercase tracking-[0.25em] text-slate-500">Programme retenu</p>
+                    <div className="rounded-[28px] bg-slate-950/24 p-5">
+                    <p className="eyebrow-label">Programme retenu</p>
                     <div className="mt-4 flex flex-wrap items-start justify-between gap-3">
                       <div>
                         <p className="text-3xl text-white">{selectedProgram.title}</p>
                         <p className="mt-2 text-sm leading-6 text-slate-300">{selectedProgram.summary}</p>
                       </div>
-                      <span className="rounded-full border border-sky-300/20 bg-sky-400/10 px-4 py-2 text-lg font-semibold text-sky-200">
-                        {selectedProgram.price}
-                      </span>
+                        <span className="rounded-full bg-sky-400/10 px-4 py-2 text-lg font-semibold text-sky-200">
+                          {selectedProgram.price}
+                        </span>
                     </div>
                     <div className="mt-5 grid gap-3 md:grid-cols-3">
                       {selectedProgram.benefits.map((benefit) => (
                         <div
                           key={benefit}
-                          className="rounded-[22px] border border-white/10 bg-white/[0.03] px-4 py-4 text-sm leading-6 text-slate-200"
+                          className="rounded-[22px] bg-white/[0.03] px-4 py-4 text-sm leading-6 text-slate-200"
                         >
                           {benefit}
                         </div>
@@ -1164,8 +1162,8 @@ export function NewAssessmentPage() {
                       />
                     </div>
 
-                    <div className="rounded-[24px] border border-white/10 bg-white/[0.03] p-4">
-                      <p className="text-xs uppercase tracking-[0.25em] text-slate-500">Lecture finale</p>
+                    <div className="rounded-[24px] bg-white/[0.03] p-4">
+                      <p className="eyebrow-label">Lecture finale</p>
                       <div className="mt-4 grid gap-3">
                         <SummaryRow label="Masse grasse" value={`${form.bodyFat} % - ${bodyFatKg} kg`} />
                         <SummaryRow label="Masse musculaire" value={`${form.muscleMass} kg - ${musclePercent} %`} />
@@ -1184,8 +1182,8 @@ export function NewAssessmentPage() {
                 </div>
               </Card>
 
-              <div className="rounded-[24px] border border-emerald-400/20 bg-emerald-400/10 p-5">
-                <p className="text-xs uppercase tracking-[0.25em] text-emerald-100/80">Formulation conseillee</p>
+              <div className="rounded-[24px] bg-emerald-400/10 p-5">
+                <p className="eyebrow-label text-emerald-100/80">Formulation conseillee</p>
                 <div className="mt-4 grid gap-2 md:grid-cols-3">
                   <ClosingLine text="On part sur une routine simple, claire et coherente avec ton objectif." />
                   <ClosingLine text="Les reperes du jour servent a rendre le plan plus facile a suivre des maintenant." />
@@ -1257,8 +1255,8 @@ export function NewAssessmentPage() {
           <Card className="space-y-4">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <p className="font-display text-2xl text-white">{panelTitle}</p>
-                <p className="mt-2 text-sm leading-6 text-slate-400">{panelIntro}</p>
+              <p className="font-display text-2xl text-white">{panelTitle}</p>
+              <p className="mt-2 text-sm leading-6 text-slate-400">{panelIntro}</p>
               </div>
               <StatusBadge label="Aide terrain" tone="blue" />
             </div>
@@ -1268,7 +1266,7 @@ export function NewAssessmentPage() {
           ))}
         </div>
         {currentStep === 0 ? (
-          <div className="space-y-2 rounded-[20px] border border-white/10 bg-white/[0.03] px-4 py-4">
+          <div className="space-y-2 rounded-[20px] bg-white/[0.03] px-4 py-4">
             <label className="text-sm font-medium text-slate-300">
               Invite par / recommande par
             </label>
@@ -1286,10 +1284,10 @@ export function NewAssessmentPage() {
       </Card>
 
           <Card className="space-y-4">
-            <p className="text-xs uppercase tracking-[0.25em] text-slate-500">A dire simplement</p>
+            <p className="eyebrow-label">A dire simplement</p>
             <div className="grid gap-2">
               {prompts.slice(0, 2).map((prompt) => (
-                <div key={prompt} className="rounded-[20px] border border-white/10 bg-slate-950/35 px-4 py-3 text-sm text-slate-200">
+                <div key={prompt} className="rounded-[20px] bg-slate-950/24 px-4 py-3 text-sm text-slate-200">
                   {prompt}
                 </div>
               ))}
@@ -1297,7 +1295,7 @@ export function NewAssessmentPage() {
           </Card>
 
           <Card className="space-y-4">
-            <p className="text-xs uppercase tracking-[0.25em] text-slate-500">Lecture express</p>
+            <p className="eyebrow-label">Lecture express</p>
             <SummaryMini label="Objectif" value={form.objectiveFocus} />
             <SummaryMini label="Programme" value={selectedProgram?.title ?? "A choisir"} />
             <SummaryMini label="Hydratation" value={`${waterNeed} L`} />
@@ -1312,8 +1310,8 @@ export function NewAssessmentPage() {
 function StepVisualLoadingCard({ label }: { label: string }) {
   return (
     <Card className="space-y-4">
-      <p className="text-[11px] uppercase tracking-[0.24em] text-slate-500">Chargement</p>
-      <div className="rounded-[28px] border border-white/10 bg-white/[0.03] p-6">
+      <p className="eyebrow-label">Chargement</p>
+      <div className="rounded-[28px] bg-white/[0.03] p-6">
         <div className="h-64 rounded-[22px] bg-[linear-gradient(135deg,rgba(255,255,255,0.06),rgba(255,255,255,0.02))]" />
         <p className="mt-4 text-sm text-slate-300">{label}</p>
       </div>
@@ -1337,7 +1335,7 @@ function RecommendationStepCard({
       <Card className="space-y-6 bg-[linear-gradient(180deg,rgba(15,23,42,0.24),rgba(15,23,42,0.56))]">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="max-w-4xl">
-            <p className="text-xs uppercase tracking-[0.28em] text-slate-500">Moment smoothie & recommandations</p>
+            <p className="eyebrow-label">Moment smoothie & recommandations</p>
             <h2 className="mt-3 max-w-3xl text-4xl leading-tight text-white md:text-5xl">
               Tu aimes les cadeaux ? Tu aimes en recevoir ?
             </h2>
@@ -1354,8 +1352,8 @@ function RecommendationStepCard({
         </div>
 
         <div className="grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
-          <div className="rounded-[26px] border border-white/10 bg-slate-950/35 p-5">
-            <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Texte a laisser lire</p>
+          <div className="rounded-[26px] bg-slate-950/24 p-5">
+            <p className="eyebrow-label">Texte a laisser lire</p>
             <div className="mt-4 space-y-4">
               <p className="text-xl leading-8 text-white">
                 Tu peux noter les personnes a qui tu aimerais offrir la meme experience.
@@ -1370,10 +1368,10 @@ function RecommendationStepCard({
             </div>
           </div>
 
-          <div className="rounded-[26px] border border-white/10 bg-white/[0.03] p-5">
+          <div className="rounded-[26px] bg-white/[0.03] p-5">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <p className="text-xs uppercase tracking-[0.25em] text-slate-500">Repere distributeur</p>
+                <p className="eyebrow-label">Repere distributeur</p>
                 <p className="mt-2 text-2xl text-white">Tu poses le cadre, puis tu laisses un vrai temps.</p>
               </div>
               <StatusBadge label="Sans pression" tone="blue" />
@@ -1403,7 +1401,7 @@ function RecommendationStepCard({
       <Card className="space-y-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <p className="text-xs uppercase tracking-[0.25em] text-slate-500">Liste nominative</p>
+            <p className="eyebrow-label">Liste nominative</p>
             <p className="mt-2 text-3xl text-white">Les personnes a qui offrir l&apos;experience</p>
             <p className="mt-2 max-w-3xl text-sm leading-7 text-slate-300">
               Laisse de l&apos;air dans la page : une ligne par personne, avec plus de place pour
@@ -1414,15 +1412,15 @@ function RecommendationStepCard({
         </div>
 
         <div className="grid gap-3 md:grid-cols-2">
-          <div className="rounded-[22px] border border-amber-300/20 bg-amber-400/[0.08] px-5 py-4">
-            <p className="text-[11px] uppercase tracking-[0.24em] text-amber-100/70">Palier cadeau 1</p>
+          <div className="rounded-[22px] bg-amber-400/[0.08] px-5 py-4">
+            <p className="eyebrow-label text-amber-100/70">Palier cadeau 1</p>
             <p className="mt-2 text-xl text-white">A partir de 5 noms</p>
             <p className="mt-2 text-sm leading-6 text-slate-300">
               Un repere simple pour remercier la personne de faire connaitre l&apos;experience.
             </p>
           </div>
-          <div className="rounded-[22px] border border-sky-300/20 bg-sky-400/[0.08] px-5 py-4">
-            <p className="text-[11px] uppercase tracking-[0.24em] text-sky-100/70">Palier cadeau 2</p>
+          <div className="rounded-[22px] bg-sky-400/[0.08] px-5 py-4">
+            <p className="eyebrow-label text-sky-100/70">Palier cadeau 2</p>
             <p className="mt-2 text-xl text-white">A partir de 10 noms</p>
             <p className="mt-2 text-sm leading-6 text-slate-300">
               Un deuxieme repere pour encourager sans mettre de pression pendant le rendez-vous.
@@ -1435,10 +1433,10 @@ function RecommendationStepCard({
             <div key={`recommendation-${index}`} className="space-y-4">
               {(index === 5 || index === 9) && (
                 <div
-                  className={`rounded-[20px] border px-4 py-3 text-sm ${
+                  className={`rounded-[20px] px-4 py-3 text-sm ${
                     index === 5
-                      ? "border-amber-300/20 bg-amber-400/[0.08] text-amber-50"
-                      : "border-sky-300/20 bg-sky-400/[0.08] text-sky-50"
+                      ? "bg-amber-400/[0.08] text-amber-50"
+                      : "bg-sky-400/[0.08] text-sky-50"
                   }`}
                 >
                   {index === 5
@@ -1446,8 +1444,8 @@ function RecommendationStepCard({
                     : "Cadeau 2 : le deuxieme palier apparait avec 10 lignes completees."}
                 </div>
               )}
-              <div className="grid gap-4 rounded-[26px] border border-white/10 bg-[linear-gradient(180deg,rgba(2,6,23,0.4),rgba(15,23,42,0.28))] p-5 lg:grid-cols-[110px_1.1fr_1.3fr]">
-                <div className="flex min-h-[72px] items-center justify-center rounded-[20px] border border-white/10 bg-white/[0.03] px-4 py-3 text-base font-semibold text-white">
+              <div className="grid gap-4 rounded-[26px] bg-[linear-gradient(180deg,rgba(2,6,23,0.4),rgba(15,23,42,0.28))] p-5 lg:grid-cols-[110px_1.1fr_1.3fr]">
+                <div className="flex min-h-[72px] items-center justify-center rounded-[20px] bg-white/[0.03] px-4 py-3 text-base font-semibold text-white">
                   Reco {index + 1}
                 </div>
                 <RecommendationLineField
@@ -1481,7 +1479,7 @@ function RecommendationLineField({
   return (
     <label className="block space-y-3">
       <span className="text-sm font-medium text-slate-300">{label}</span>
-      <div className="relative rounded-[20px] border border-white/10 bg-white/[0.02] px-4 py-4">
+      <div className="relative rounded-[20px] bg-white/[0.02] px-4 py-4">
         <input
           value={value}
           onChange={(event) => onChange(event.target.value)}
@@ -1553,7 +1551,7 @@ function ChoiceGroup({
 
 function SectionBlock({ title, description, children }: { title: string; description: string; children: ReactNode; }) {
   return (
-    <div className="rounded-[24px] border border-white/10 bg-white/[0.03] p-5">
+    <div className="rounded-[24px] bg-white/[0.03] p-5">
       <div className="space-y-1">
         <p className="text-lg font-semibold text-white">{title}</p>
         <p className="text-sm leading-6 text-slate-400">{description}</p>
@@ -1564,20 +1562,20 @@ function SectionBlock({ title, description, children }: { title: string; descrip
 }
 
 function SummaryRow({ label, value }: { label: string; value: string }) {
-  return <div className="flex items-center justify-between gap-3 rounded-[20px] border border-white/10 bg-slate-950/35 px-4 py-3"><span className="text-sm text-slate-400">{label}</span><span className="text-right text-sm font-semibold text-white">{value}</span></div>;
+  return <div className="flex items-center justify-between gap-3 rounded-[20px] bg-slate-950/24 px-4 py-3"><span className="text-sm text-slate-400">{label}</span><span className="text-right text-sm font-semibold text-white">{value}</span></div>;
 }
 
 function SummaryMini({ label, value }: { label: string; value: string }) {
-  return <div className="flex items-center justify-between gap-3 rounded-[20px] border border-white/10 bg-white/[0.03] px-4 py-3"><span className="text-xs uppercase tracking-[0.2em] text-slate-500">{label}</span><span className="text-sm font-semibold text-white">{value}</span></div>;
+  return <div className="flex items-center justify-between gap-3 rounded-[20px] bg-white/[0.03] px-4 py-3"><span className="text-[11px] font-medium text-slate-500">{label}</span><span className="text-sm font-semibold text-white">{value}</span></div>;
 }
 
 function FocusPanelItem({ text, highlighted = false }: { text: string; highlighted?: boolean }) {
   return (
     <div
-      className={`rounded-[20px] border px-4 py-3 text-sm leading-6 ${
+      className={`rounded-[20px] px-4 py-3 text-sm leading-6 ${
         highlighted
-          ? "border-sky-300/20 bg-sky-400/10 text-white"
-          : "border-white/10 bg-white/[0.03] text-slate-200"
+          ? "bg-sky-400/10 text-white"
+          : "bg-white/[0.03] text-slate-200"
       }`}
     >
       {text}
@@ -1586,13 +1584,13 @@ function FocusPanelItem({ text, highlighted = false }: { text: string; highlight
 }
 
 function ClosingLine({ text }: { text: string }) {
-  return <div className="rounded-2xl border border-white/10 bg-slate-950/25 px-4 py-3 text-sm leading-6 text-white">{text}</div>;
+  return <div className="rounded-2xl bg-slate-950/24 px-4 py-3 text-sm leading-6 text-white">{text}</div>;
 }
 
 function SummaryHighlightCard({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-[22px] border border-white/10 bg-white/[0.03] px-4 py-4">
-      <p className="text-[10px] uppercase tracking-[0.18em] text-slate-500">{label}</p>
+    <div className="rounded-[22px] bg-white/[0.03] px-4 py-4">
+      <p className="text-[11px] font-medium text-slate-500">{label}</p>
       <p className="mt-3 text-lg font-semibold text-white">{value}</p>
     </div>
   );
@@ -1600,8 +1598,8 @@ function SummaryHighlightCard({ label, value }: { label: string; value: string }
 
 function QuickReadCard({ label, value, detail }: { label: string; value: string; detail: string }) {
   return (
-    <div className="rounded-[20px] border border-white/10 bg-white/[0.03] p-4">
-      <p className="text-xs uppercase tracking-[0.18em] text-slate-500">{label}</p>
+    <div className="rounded-[20px] bg-white/[0.03] p-4">
+      <p className="text-[11px] font-medium text-slate-500">{label}</p>
       <p className="mt-3 text-lg font-semibold text-white">{value}</p>
       <p className="mt-2 text-sm leading-6 text-slate-400">{detail}</p>
     </div>

@@ -11,10 +11,10 @@ interface ProgramCardProps {
 export function ProgramCard({ program, selected = false, onSelect }: ProgramCardProps) {
   return (
     <div
-      className={`rounded-[30px] border p-5 transition md:p-6 ${
+      className={`rounded-[30px] p-5 transition md:p-6 ${
         selected
-          ? "border-white/20 bg-[linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.045))] shadow-luxe"
-          : "border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.03))]"
+          ? "bg-[linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.045))] shadow-luxe ring-1 ring-white/12"
+          : "bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.03))]"
       }`}
     >
       <div className="space-y-5">
@@ -32,7 +32,7 @@ export function ProgramCard({ program, selected = false, onSelect }: ProgramCard
           {program.benefits.slice(0, 3).map((benefit) => (
             <div
               key={benefit}
-              className="rounded-[18px] border border-white/8 bg-slate-950/28 px-4 py-3 text-sm text-slate-200"
+              className="rounded-[18px] bg-slate-950/24 px-4 py-3 text-sm text-slate-200"
             >
               {benefit}
             </div>
@@ -48,7 +48,7 @@ export function ProgramCard({ program, selected = false, onSelect }: ProgramCard
               {program.composition.map((item) => (
                 <span
                   key={item}
-                  className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs text-slate-200"
+                  className="rounded-full bg-white/[0.04] px-3 py-1.5 text-xs text-slate-200"
                 >
                   {item}
                 </span>

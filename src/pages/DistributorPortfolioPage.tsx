@@ -91,8 +91,8 @@ export function DistributorPortfolioPage() {
     <div className="space-y-6">
       <PageHeading
         eyebrow="Portefeuille client"
-        title={`${portfolioUser.name} - clients, rendez-vous et relances`}
-        description="La page rassemble les dossiers attribues a cette personne, les rendez-vous deja poses et les relances a reprendre sans melanger les autres portefeuilles."
+        title={portfolioUser.name}
+        description="Clients, rendez-vous, relances et lecture mensuelle du portefeuille."
       />
 
       <div className="grid gap-4 xl:grid-cols-[1.08fr_0.92fr]">
@@ -101,13 +101,11 @@ export function DistributorPortfolioPage() {
             <div className="flex items-center gap-4">
               <DistributorBadge
                 user={portfolioUser}
-                detail={`${identity.label} - cible ${identity.target} clients`}
+                detail={`${portfolioMetrics.clients.length} clients`}
               />
               <div>
-                <p className="text-xs uppercase tracking-[0.26em] text-slate-500">
-                  Responsable
-                </p>
-                <h2 className="mt-2 text-3xl text-white">{portfolioUser.name}</h2>
+                <p className="eyebrow-label">Responsable</p>
+                <h2 className="mt-3 text-3xl text-white">{portfolioUser.name}</h2>
                 <p className="mt-2 text-sm text-slate-400">{portfolioUser.title}</p>
               </div>
             </div>
@@ -128,58 +126,50 @@ export function DistributorPortfolioPage() {
             <MetricTile
               label="Clients suivis"
               value={portfolioMetrics.clients.length}
-              hint="Dossiers deja attribues"
+              hint="Dossiers attribues"
               accent="blue"
             />
             <MetricTile
-              label="Rendez-vous poses"
+              label="Rendez-vous"
               value={portfolioMetrics.scheduledFollowUps.length}
-              hint="Suivis deja planifies"
+              hint="Suivis planifies"
               accent="green"
             />
             <MetricTile
               label="Relances"
               value={portfolioMetrics.relanceFollowUps.length}
-              hint="A reprendre ou confirmer"
+              hint="A reprendre"
               accent="red"
             />
             <MetricTile
-              label="Charge cible"
-              value={`${targetProgress}%`}
-              hint={`${portfolioMetrics.clients.length} / ${identity.target} dossiers`}
+              label="Capacite active"
+              value={`${portfolioMetrics.clients.length} / ${identity.target}`}
+              hint={`${targetProgress}% cible`}
               accent="blue"
             />
           </div>
 
-          <div className="rounded-[24px] border border-white/10 bg-white/[0.03] p-4">
-            <p className="text-xs uppercase tracking-[0.26em] text-slate-500">
-              Lisibilite portefeuille
-            </p>
-            <p className="mt-3 text-sm leading-7 text-slate-300">
-              Les dossiers sont retrouves par recherche et regroupes par mois de demarrage pour
-              rester lisibles quand le volume monte. Cette structure tient deja tres bien pour
-              plusieurs centaines de clients, et la base Supabase est la bonne voie pour passer
-              sereinement le cap des 1000 dossiers.
-            </p>
-            <p className="mt-3 text-sm text-slate-400">
+          <div className="surface-soft rounded-[24px] p-4">
+            <p className="eyebrow-label">Stockage</p>
+            <p className="mt-3 text-sm text-slate-300">
               {storageMode === "supabase"
-                ? "Base distante active : le portefeuille est pret pour un vrai volume equipe."
-                : "Mode local actif : pratique pour la demo, mais il faudra rester sur Supabase pour absorber durablement 1000+ clients."}
+                ? "Base distante active et adaptee au volume equipe."
+                : "Mode demo local. Supabase recommande pour absorber durablement le volume."}
             </p>
           </div>
 
           <div className="flex flex-wrap gap-3">
             <Link
               to="/dashboard"
-              className="inline-flex rounded-full border border-white/10 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/5"
+              className="inline-flex min-h-[48px] items-center justify-center rounded-[18px] bg-white/[0.04] px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/[0.07]"
             >
-              Retour dashboard
+              Retour accueil
             </Link>
             <Link
               to="/clients"
-              className="inline-flex rounded-full border border-white/10 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/5"
+              className="inline-flex min-h-[48px] items-center justify-center rounded-[18px] bg-white/[0.04] px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/[0.07]"
             >
-              Voir toute la base client
+              Voir la base clients
             </Link>
           </div>
         </Card>
@@ -230,8 +220,8 @@ export function DistributorPortfolioPage() {
             </select>
           </div>
 
-          <div className="rounded-[24px] border border-white/10 bg-slate-950/35 px-5 py-4">
-            <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Resultats</p>
+          <div className="surface-soft rounded-[24px] px-5 py-4">
+            <p className="eyebrow-label">Resultats</p>
             <p className="mt-2 text-3xl font-semibold text-white">{filteredClients.length}</p>
           </div>
         </div>
@@ -243,8 +233,8 @@ export function DistributorPortfolioPage() {
             <Card key={group.key} className="space-y-4">
               <div className="flex items-center justify-between gap-3">
                 <div>
-                  <p className="text-xs uppercase tracking-[0.25em] text-slate-500">Arborescence</p>
-                  <h2 className="mt-2 text-2xl text-white">{group.label}</h2>
+                  <p className="eyebrow-label">Arborescence</p>
+                  <h2 className="mt-3 text-2xl text-white">{group.label}</h2>
                 </div>
                 <StatusBadge label={`${group.clients.length} clients`} tone="blue" />
               </div>
@@ -258,7 +248,7 @@ export function DistributorPortfolioPage() {
                     <Link
                       key={client.id}
                       to={`/clients/${client.id}`}
-                      className="rounded-[24px] border border-white/10 bg-white/[0.03] p-4 transition hover:bg-white/[0.05]"
+                      className="rounded-[24px] bg-white/[0.03] p-4 transition hover:bg-white/[0.05]"
                     >
                       <div className="grid gap-4 xl:grid-cols-[1.1fr_1fr_0.85fr] xl:items-center">
                         <div className="space-y-2">
@@ -276,7 +266,7 @@ export function DistributorPortfolioPage() {
                               Invite par {firstAssessment.questionnaire.referredByName}
                             </p>
                           ) : null}
-                          <p className="text-sm leading-6 text-slate-300">{client.notes}</p>
+                          <p className="text-sm leading-6 text-slate-400">{client.notes}</p>
                         </div>
 
                         <div className="grid gap-3 md:grid-cols-2">
@@ -330,13 +320,10 @@ function FollowUpPanel({
     <Card className="space-y-4">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <p className="text-xs uppercase tracking-[0.25em] text-slate-500">Priorites</p>
-          <h2 className="mt-2 text-2xl text-white">{title}</h2>
+          <p className="eyebrow-label">Priorites</p>
+          <h2 className="mt-3 text-2xl text-white">{title}</h2>
         </div>
-        <StatusBadge
-          label={`${items.length} visibles`}
-          tone={tone === "green" ? "green" : "amber"}
-        />
+        <StatusBadge label={`${items.length} visibles`} tone={tone} />
       </div>
 
       <div className="space-y-3">
@@ -345,7 +332,7 @@ function FollowUpPanel({
             <Link
               key={followUp.id}
               to={`/clients/${followUp.clientId}`}
-              className="block rounded-[22px] border border-white/10 bg-white/[0.03] p-4 transition hover:bg-white/[0.05]"
+              className="block rounded-[22px] bg-white/[0.03] p-4 transition hover:bg-white/[0.05]"
             >
               <div className="flex items-start justify-between gap-3">
                 <div>
@@ -363,7 +350,7 @@ function FollowUpPanel({
             </Link>
           ))
         ) : (
-          <div className="rounded-[22px] border border-dashed border-white/10 bg-white/[0.03] p-5 text-sm text-slate-400">
+          <div className="rounded-[22px] bg-white/[0.03] p-5 text-sm text-slate-400">
             {emptyLabel}
           </div>
         )}
@@ -374,8 +361,8 @@ function FollowUpPanel({
 
 function PortfolioFact({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-[20px] border border-white/10 bg-slate-950/35 px-4 py-3">
-      <p className="text-[10px] uppercase tracking-[0.18em] text-slate-500">{label}</p>
+    <div className="rounded-[20px] bg-slate-950/24 px-4 py-3">
+      <p className="text-[11px] font-medium text-slate-500">{label}</p>
       <p className="mt-2 text-sm font-semibold text-white">{value}</p>
     </div>
   );

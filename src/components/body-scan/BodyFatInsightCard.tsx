@@ -64,7 +64,7 @@ export function BodyFatInsightCard({
           <div className="md:col-span-2 xl:col-span-3 rounded-[24px] border border-white/10 bg-slate-950/35 p-5">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <p className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Jauge corporelle</p>
+                <p className="text-[11px] font-medium text-slate-500">Jauge corporelle</p>
                 <p className="mt-2 text-sm text-slate-400">
                   Cible {getSexLabel(sex)} : {targetRange.min}-{targetRange.max} %
                 </p>
@@ -88,13 +88,13 @@ export function BodyFatInsightCard({
                   style={{ left: `calc(${gaugePosition}% - 10px)` }}
                 />
               </div>
-              <div className="mt-2 flex items-center justify-between text-[11px] uppercase tracking-[0.14em] text-slate-500">
+              <div className="mt-2 flex items-center justify-between text-[11px] font-medium text-slate-500">
                 {[10, 20, 30, 40, 50].map((value) => (
                   <span key={value}>{value}</span>
                 ))}
               </div>
               <div className="mt-4 flex flex-wrap items-center gap-2 text-xs text-slate-500">
-                <span className="rounded-full border border-white/10 bg-white/[0.03] px-2.5 py-1">
+                <span className="rounded-full bg-white/[0.03] px-2.5 py-1">
                   Zone cible
                 </span>
                 <span>{getTargetHint(sex, objective)}</span>
@@ -111,10 +111,10 @@ export function BodyFatInsightCard({
               </div>
             </div>
           </div>
-          <div className="md:col-span-2 xl:col-span-3 rounded-[24px] border border-white/10 bg-white/[0.04] p-5">
+          <div className="md:col-span-2 xl:col-span-3 rounded-[24px] bg-white/[0.04] p-5">
             <div className="flex items-center justify-between gap-3">
               <p className="text-sm font-semibold text-white">Ecarts lisibles</p>
-              <p className="text-xs uppercase tracking-[0.18em] text-slate-500">Suivi</p>
+              <p className="text-[11px] font-medium text-slate-500">Suivi</p>
             </div>
 
             <div className="mt-4 grid gap-3 xl:grid-cols-2">
@@ -149,13 +149,13 @@ function GaugeLegendChip({
 }) {
   return (
     <div
-      className={`rounded-[18px] border px-3 py-3 ${
+      className={`rounded-[18px] px-3 py-3 ${
         active
-          ? "border-amber-300/20 bg-amber-300/10"
-          : "border-white/10 bg-white/[0.03]"
+          ? "bg-amber-300/10"
+          : "bg-white/[0.03]"
       }`}
     >
-      <p className="text-[10px] uppercase tracking-[0.18em] text-slate-500">{label}</p>
+      <p className="text-[11px] font-medium text-slate-500">{label}</p>
       <p className="mt-2 text-sm font-medium text-white">{value}</p>
     </div>
   );
@@ -173,8 +173,8 @@ function DeltaPanel({
   enabled: boolean;
 }) {
   return (
-    <div className="rounded-[22px] border border-white/10 bg-slate-950/35 p-4">
-      <p className="text-[11px] uppercase tracking-[0.18em] text-slate-500">{title}</p>
+    <div className="rounded-[22px] bg-slate-950/24 p-4">
+      <p className="text-[11px] font-medium text-slate-500">{title}</p>
       <div className="mt-4 grid gap-3">
         <div className="flex items-center justify-between gap-3">
           <span className="text-sm text-slate-400">Variation en %</span>

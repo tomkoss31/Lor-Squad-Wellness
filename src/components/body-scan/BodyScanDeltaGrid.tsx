@@ -21,8 +21,8 @@ export function BodyScanDeltaGrid({ latest, delta }: BodyScanDeltaGridProps) {
   return (
     <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
       {metrics.map((metric) => (
-        <div key={metric.label} className="rounded-[22px] border border-white/10 bg-white/[0.03] p-4">
-          <p className="text-[11px] uppercase tracking-[0.18em] text-slate-500">{metric.label}</p>
+        <div key={metric.label} className="rounded-[22px] bg-white/[0.03] p-4">
+          <p className="text-[11px] font-medium text-slate-500">{metric.label}</p>
           <div className="mt-3 flex items-center justify-between gap-3">
             <p className="text-xl font-semibold text-white">{metric.value}</p>
             <DeltaBadge

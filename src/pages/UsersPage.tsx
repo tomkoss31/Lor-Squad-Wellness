@@ -97,8 +97,8 @@ export function UsersPage() {
     <div className="space-y-6">
       <PageHeading
         eyebrow="Utilisateurs"
-        title="Creer et gerer les acces distributeurs et admin"
-        description="Cette page pose deja le vrai fonctionnement cible : un email comme identifiant, un role clair et un acces limite au bon perimetre."
+        title="Acces equipe"
+        description="Creer, activer et suivre les acces admin et distributeur."
       />
 
       <div className="grid gap-4 lg:grid-cols-4">
@@ -111,10 +111,8 @@ export function UsersPage() {
       <div className="grid gap-4 xl:grid-cols-[0.95fr_1.05fr]">
         <Card className="space-y-5">
           <div>
-            <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
-              Creer un acces
-            </p>
-            <h2 className="mt-2 text-3xl">Nouveau compte equipe</h2>
+            <p className="eyebrow-label">Creer un acces</p>
+            <h2 className="mt-3 text-3xl">Nouveau compte equipe</h2>
             <p className="mt-3 text-sm leading-7 text-slate-300">
               L&apos;email devient l&apos;identifiant de connexion. Le mot de passe saisi ici sert
               de mot de passe provisoire pour cette premiere version connectee.
@@ -166,7 +164,7 @@ export function UsersPage() {
               </div>
             </div>
 
-            <label className="flex items-center gap-3 rounded-[20px] border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-slate-300">
+            <label className="flex items-center gap-3 rounded-[20px] bg-white/[0.04] px-4 py-3 text-sm text-slate-300">
               <input
                 type="checkbox"
                 checked={active}
@@ -193,10 +191,8 @@ export function UsersPage() {
 
         <Card className="space-y-5">
           <div>
-            <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
-              Comment cela fonctionnera
-            </p>
-            <h2 className="mt-2 text-3xl">Le parcours futur est deja pose</h2>
+            <p className="eyebrow-label">Repere de fonctionnement</p>
+            <h2 className="mt-3 text-3xl">Le parcours est deja pose</h2>
           </div>
 
           <div className="space-y-3">
@@ -219,14 +215,14 @@ export function UsersPage() {
 
           {storageMode === "local" ? (
             <>
-              <div className="rounded-[24px] border border-white/10 bg-slate-950/35 p-4">
+              <div className="surface-soft rounded-[24px] p-4">
                 <p className="text-sm font-semibold text-white">Mode local actuel</p>
                 <p className="mt-2 text-sm leading-7 text-slate-400">
                   Les acces sont encore enregistres localement dans le navigateur pour la beta.
                 </p>
               </div>
 
-              <div className="rounded-[24px] border border-amber-300/20 bg-amber-400/10 p-4">
+              <div className="rounded-[24px] bg-amber-400/10 p-4">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
                     <p className="text-sm font-semibold text-white">Nettoyage beta</p>
@@ -241,7 +237,7 @@ export function UsersPage() {
                 </div>
               </div>
 
-              <div className="rounded-[24px] border border-rose-300/20 bg-rose-400/10 p-4">
+              <div className="rounded-[24px] bg-rose-400/10 p-4">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
                     <p className="text-sm font-semibold text-white">Base clients</p>
@@ -258,14 +254,14 @@ export function UsersPage() {
             </>
           ) : (
             <div className="space-y-4">
-              <div className="rounded-[24px] border border-emerald-300/20 bg-emerald-400/10 p-4">
+              <div className="rounded-[24px] bg-emerald-400/10 p-4">
                 <p className="text-sm font-semibold text-white">Base distante active</p>
                 <p className="mt-2 text-sm leading-7 text-slate-300">
                   Les acces et les dossiers sont maintenant penses pour une vraie base partagee.
                 </p>
               </div>
 
-              <div className="rounded-[24px] border border-sky-300/20 bg-sky-400/10 p-4">
+              <div className="rounded-[24px] bg-sky-400/10 p-4">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
                     <p className="text-sm font-semibold text-white">Importer les anciens dossiers</p>
@@ -290,10 +286,8 @@ export function UsersPage() {
       <Card className="space-y-4">
         <div className="flex items-center justify-between gap-3">
           <div>
-            <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
-              Comptes existants
-            </p>
-            <h2 className="mt-2 text-3xl">Utilisateurs de la plateforme</h2>
+            <p className="eyebrow-label">Comptes existants</p>
+            <h2 className="mt-3 text-3xl">Utilisateurs de la plateforme</h2>
           </div>
           <StatusBadge label={`${users.length} comptes`} tone="blue" />
         </div>
@@ -352,13 +346,13 @@ function UserAccessCard({
       </div>
 
       <div className="grid gap-2 text-sm text-slate-300">
-        <div className="rounded-[18px] border border-white/10 bg-slate-950/35 px-3 py-3">
+        <div className="rounded-[18px] bg-slate-950/24 px-3 py-3">
           <span className="text-slate-500">Portefeuille</span>
           <p className="mt-1 font-medium text-white">
             {metrics.clients.length} clients - {metrics.relanceFollowUps.length} relances
           </p>
         </div>
-        <div className="rounded-[18px] border border-white/10 bg-slate-950/35 px-3 py-3">
+        <div className="rounded-[18px] bg-slate-950/24 px-3 py-3">
           <span className="text-slate-500">Perimetre</span>
           <p className="mt-1 font-medium text-white">
             {user.role === "admin" ? "Tous les clients" : "Clients attribues"}
@@ -369,7 +363,7 @@ function UserAccessCard({
       <div className="flex flex-col items-stretch gap-3 lg:items-end">
         <Link
           to={`/distributors/${user.id}`}
-          className="inline-flex rounded-full border border-white/10 px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/5"
+          className="inline-flex min-h-[46px] items-center justify-center rounded-[18px] bg-white/[0.04] px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/[0.07]"
         >
           Voir portefeuille
         </Link>
@@ -384,7 +378,7 @@ function UserAccessCard({
 function StatCard({ label, value }: { label: string; value: number }) {
   return (
     <Card className="space-y-2 rounded-[24px] p-5">
-      <p className="text-xs uppercase tracking-[0.25em] text-slate-500">{label}</p>
+      <p className="text-[11px] font-medium text-slate-500">{label}</p>
       <p className="text-3xl font-semibold text-white">{value}</p>
     </Card>
   );
@@ -400,8 +394,8 @@ function StepCard({
   text: string;
 }) {
   return (
-    <div className="flex gap-3 rounded-[20px] border border-white/10 bg-white/[0.04] p-4">
-      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/10 bg-slate-950/55 text-xs font-semibold tracking-[0.2em] text-slate-300">
+    <div className="flex gap-3 rounded-[20px] bg-white/[0.04] p-4">
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-950/35 text-xs font-semibold tracking-[0.08em] text-slate-300">
         {index}
       </div>
       <div>

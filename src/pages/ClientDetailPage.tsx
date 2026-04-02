@@ -162,7 +162,7 @@ export function ClientDetailPage() {
       <PageHeading
         eyebrow="Fiche client"
         title={`${client.firstName} ${client.lastName}`}
-        description="Le dossier client rassemble les chiffres utiles, la progression visible, le cap du moment et la prochaine action a mener."
+        description="Chiffres utiles, progression, cap actuel et prochaine action."
       />
 
       <div className="grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
@@ -188,9 +188,9 @@ export function ClientDetailPage() {
             <div className="flex flex-wrap items-center justify-end gap-3">
               <Link
                 to={`/clients/${client.id}/follow-up/new`}
-                className="inline-flex items-center gap-3 rounded-full border border-emerald-400/30 bg-emerald-400/12 px-4 py-3 text-sm font-semibold text-emerald-100 transition hover:bg-emerald-400/18"
+                className="inline-flex items-center gap-3 rounded-[22px] bg-emerald-400/12 px-4 py-3 text-sm font-semibold text-emerald-100 transition hover:bg-emerald-400/18"
               >
-                <span className="flex h-10 w-10 items-center justify-center rounded-full border border-emerald-300/20 bg-emerald-400/18 text-emerald-100">
+                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-400/18 text-emerald-100">
                   <svg
                     aria-hidden="true"
                     viewBox="0 0 24 24"
@@ -210,7 +210,7 @@ export function ClientDetailPage() {
                   </svg>
                 </span>
                 <span className="text-left">
-                  <span className="block text-[11px] uppercase tracking-[0.22em] text-emerald-200/70">
+                  <span className="block text-[11px] font-medium text-emerald-200/70">
                     Action rapide
                   </span>
                   <span className="block">Demarrer le body scan</span>
@@ -254,15 +254,15 @@ export function ClientDetailPage() {
               }
               hint={
                 client.objective === "weight-loss"
-                  ? "Le repere a rejoindre"
-                  : "Le fil conducteur du programme"
+                  ? "Repere cible"
+                  : "Cap actuel"
               }
               accent="red"
             />
             <MetricTile
               label="Prochain rendez-vous"
               value={formatDateTime(client.nextFollowUp)}
-              hint="La suite est deja posee"
+              hint="Suite deja posee"
               accent="blue"
             />
           </div>
@@ -324,13 +324,11 @@ export function ClientDetailPage() {
             visceralFat={latestBodyScan.visceralFat}
           />
 
-          <div className="space-y-4 rounded-[26px] border border-white/10 bg-slate-950/35 p-5">
+          <div className="space-y-4 rounded-[26px] bg-slate-950/28 p-5">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <p className="text-xs uppercase tracking-[0.25em] text-slate-500">
-                  Ecarts et evolution
-                </p>
-                <p className="mt-2 text-2xl text-white">Ce qui a bouge depuis les derniers points</p>
+                <p className="eyebrow-label">Ecarts et evolution</p>
+                <p className="mt-3 text-2xl text-white">Ce qui a bouge</p>
               </div>
               <StatusBadge
                 label={previousAssessment ? "Comparaison active" : "Premier bilan"}
@@ -347,8 +345,8 @@ export function ClientDetailPage() {
           <Card className="space-y-4">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <p className="text-xs uppercase tracking-[0.25em] text-slate-500">Cap du moment</p>
-                <p className="mt-2 text-2xl text-white">Ce qu'il faut relire avant d'avancer</p>
+                <p className="eyebrow-label">Cap du moment</p>
+                <p className="mt-3 text-2xl text-white">Lecture rapide</p>
               </div>
               <StatusBadge label={client.currentProgram} tone="green" />
             </div>
@@ -381,8 +379,8 @@ export function ClientDetailPage() {
 
           <Card className="space-y-4">
             <div>
-              <p className="text-xs uppercase tracking-[0.25em] text-slate-500">Actions rapides</p>
-              <p className="mt-2 text-2xl text-white">Pour avancer tout de suite</p>
+              <p className="eyebrow-label">Actions rapides</p>
+              <p className="mt-3 text-2xl text-white">Pour avancer maintenant</p>
             </div>
             <div className="grid gap-3">
               <LinkButton
@@ -421,8 +419,8 @@ export function ClientDetailPage() {
 
           <Card className="space-y-4">
             <div>
-              <p className="text-xs uppercase tracking-[0.25em] text-slate-500">Reperes du moment</p>
-              <p className="mt-2 text-2xl text-white">Les points les plus utiles a reformuler</p>
+              <p className="eyebrow-label">Reperes du moment</p>
+              <p className="mt-3 text-2xl text-white">A reformuler simplement</p>
             </div>
             <div className="grid gap-2">
               <QuickInfo
@@ -437,9 +435,7 @@ export function ClientDetailPage() {
 
           <Card className="space-y-4">
             <div className="flex items-center justify-between gap-3">
-              <p className="text-xs uppercase tracking-[0.25em] text-slate-500">
-                Historique des bilans
-              </p>
+              <p className="eyebrow-label">Historique des bilans</p>
               <Link to="/assessments/new" className="text-sm font-semibold text-sky-300">
                 Nouveau bilan
               </Link>
@@ -463,7 +459,7 @@ export function ClientDetailPage() {
 
 function SummaryRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex items-center justify-between gap-3 rounded-[22px] border border-white/10 bg-white/[0.03] px-4 py-3">
+    <div className="flex items-center justify-between gap-3 rounded-[22px] bg-white/[0.03] px-4 py-3">
       <span className="text-sm text-slate-400">{label}</span>
       <span className="text-right text-sm font-semibold text-white">{value}</span>
     </div>
@@ -472,7 +468,7 @@ function SummaryRow({ label, value }: { label: string; value: string }) {
 
 function QuickInfo({ text }: { text: string }) {
   return (
-    <div className="rounded-[20px] border border-white/10 bg-slate-950/35 px-4 py-3 text-sm leading-6 text-slate-200">
+    <div className="rounded-[20px] bg-slate-950/24 px-4 py-3 text-sm leading-6 text-slate-200">
       {text}
     </div>
   );
@@ -480,8 +476,8 @@ function QuickInfo({ text }: { text: string }) {
 
 function SummaryFocusCard({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-[22px] border border-white/10 bg-slate-950/35 px-4 py-4">
-      <p className="text-[10px] uppercase tracking-[0.18em] text-slate-500">{label}</p>
+    <div className="rounded-[22px] bg-slate-950/24 px-4 py-4">
+      <p className="text-[11px] font-medium text-slate-500">{label}</p>
       <p className="mt-3 text-lg font-semibold text-white">{value}</p>
     </div>
   );
@@ -518,11 +514,11 @@ function StartingPointOverviewCard({
           : "text-amber-200";
 
   return (
-    <div className="rounded-[28px] border border-white/10 bg-[linear-gradient(180deg,rgba(15,23,42,0.28),rgba(15,23,42,0.52))] p-5">
+    <div className="rounded-[28px] bg-[linear-gradient(180deg,rgba(15,23,42,0.28),rgba(15,23,42,0.52))] p-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="text-xs uppercase tracking-[0.25em] text-slate-500">Repere de depart</p>
-          <p className="mt-2 text-2xl text-white">Le point de depart face au point actuel</p>
+          <p className="eyebrow-label">Repere de depart</p>
+          <p className="mt-3 text-2xl text-white">Depart vs aujourd'hui</p>
           <p className="mt-2 text-sm leading-6 text-slate-300">
             Ce bloc aide a relire tout de suite l&apos;evolution depuis le premier bilan.
           </p>
@@ -571,18 +567,18 @@ function OverviewMetricCard({
 }) {
   const toneClass =
     tone === "green"
-      ? "border-emerald-400/20 bg-emerald-400/[0.07]"
+      ? "bg-emerald-400/[0.07] ring-1 ring-emerald-400/12"
       : tone === "blue"
-        ? "border-sky-400/20 bg-sky-400/[0.07]"
-        : "border-white/10 bg-slate-950/35";
+        ? "bg-sky-400/[0.07] ring-1 ring-sky-400/12"
+        : "bg-slate-950/35 ring-1 ring-white/6";
 
   return (
     <div
-      className={`rounded-[24px] border p-4 ${toneClass} ${
+      className={`rounded-[24px] p-4 ${toneClass} ${
         highlighted ? "shadow-[0_0_30px_rgba(52,211,153,0.08)]" : ""
       }`}
     >
-      <p className="text-[10px] uppercase tracking-[0.18em] text-slate-500">{label}</p>
+      <p className="text-[11px] font-medium text-slate-500">{label}</p>
       <p className="mt-3 text-2xl text-white">{value}</p>
       <p className="mt-2 text-sm text-slate-400">{note}</p>
     </div>
@@ -593,7 +589,7 @@ function ActionButton({ label, hint }: { label: string; hint: string }) {
   return (
     <button
       type="button"
-      className="rounded-[22px] border border-white/10 bg-white/[0.03] px-4 py-3 text-left transition hover:bg-white/[0.06]"
+      className="rounded-[22px] bg-white/[0.03] px-4 py-3 text-left transition hover:bg-white/[0.06]"
     >
       <span className="block text-sm font-medium text-white">{label}</span>
       <span className="mt-1 block text-sm text-slate-400">{hint}</span>
@@ -614,7 +610,7 @@ function DangerActionButton({
     <button
       type="button"
       onClick={onClick}
-      className="rounded-[22px] border border-red-400/25 bg-red-500/10 px-4 py-3 text-left transition hover:bg-red-500/15"
+      className="rounded-[22px] bg-red-500/10 px-4 py-3 text-left transition hover:bg-red-500/15"
     >
       <span className="block text-sm font-medium text-red-100">{label}</span>
       <span className="mt-1 block text-sm text-red-100/75">{hint}</span>
@@ -636,10 +632,10 @@ function LinkButton({
   return (
     <Link
       to={to}
-      className={`rounded-[22px] border px-4 py-3 text-left transition ${
+      className={`rounded-[22px] px-4 py-3 text-left transition ${
         tone === "green"
-          ? "border-emerald-400/30 bg-emerald-400/10 hover:bg-emerald-400/15"
-          : "border-sky-400/30 bg-sky-400/10 hover:bg-sky-400/15"
+          ? "bg-emerald-400/10 hover:bg-emerald-400/15"
+          : "bg-sky-400/10 hover:bg-sky-400/15"
       }`}
     >
       <span className="block text-sm font-medium text-white">{label}</span>

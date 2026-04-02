@@ -54,10 +54,10 @@ export function BodyScanSnapshotCard({
   ];
 
   return (
-    <div className="rounded-[26px] border border-white/10 bg-slate-950/35 p-5">
+    <div className="rounded-[26px] bg-slate-950/28 p-5">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <p className="text-xs uppercase tracking-[0.25em] text-slate-500">{title}</p>
+          <p className="eyebrow-label">{title}</p>
           <p className="mt-2 text-sm text-slate-400">{dateLabel}</p>
         </div>
       </div>
@@ -111,9 +111,9 @@ function SnapshotMetricCard({
           : "from-sky-400/90 via-cyan-300/70 to-transparent";
 
   return (
-    <div className="relative overflow-hidden rounded-[22px] border border-white/10 bg-white/[0.03] p-4">
+    <div className="relative overflow-hidden rounded-[22px] bg-white/[0.03] p-4">
       <div className={`absolute inset-x-0 top-0 h-px bg-gradient-to-r ${accentClass}`} />
-      <p className="text-[11px] uppercase tracking-[0.18em] text-slate-500">{label}</p>
+      <p className="text-[11px] font-medium text-slate-500">{label}</p>
       <p
         className={`mt-3 font-semibold text-white ${
           emphasized ? "text-[1.8rem] leading-none" : "text-[1.35rem] leading-none"

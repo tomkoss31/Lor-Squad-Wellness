@@ -81,49 +81,56 @@ export function LoginPage() {
           <div className="absolute right-[-90px] top-[-70px] h-64 w-64 rounded-full bg-[rgba(239,197,141,0.10)] blur-3xl" />
           <div className="absolute bottom-[-110px] left-[-80px] h-72 w-72 rounded-full bg-[rgba(89,183,255,0.10)] blur-3xl" />
 
-          <div className="space-y-10">
-            <div className="flex items-center gap-4">
-              <img
-                src={blasonLogo}
-                alt="Lor'Squad Wellness"
-                className="h-16 w-16 rounded-[24px] object-cover ring-1 ring-white/10 md:h-20 md:w-20 md:rounded-[28px]"
-              />
+          <div className="relative z-10 flex h-full flex-col justify-between">
+            <div className="space-y-8 md:space-y-10">
               <div>
-                <p className="font-display text-3xl leading-none tracking-[-0.04em] sm:text-4xl md:text-6xl">
-                  Lor&apos;Squad Wellness
-                </p>
-                <p className="mt-2 text-[12px] text-slate-400 md:text-sm">
-                  Accompagnement, rendez-vous et suivi client
-                </p>
+                <StatusBadge label="Connexion" tone="amber" />
+              </div>
+
+              <div className="space-y-7">
+                <div className="flex items-start">
+                  <img
+                    src={lorSquadLogo}
+                    alt="Lor'Squad Wellness"
+                    className="w-full max-w-[240px] object-contain opacity-[0.98] sm:max-w-[270px] lg:max-w-[300px]"
+                  />
+                </div>
+
+                <div className="space-y-5">
+                  <h1 className="max-w-[12ch] text-balance text-[2.55rem] leading-[0.94] tracking-[-0.05em] sm:text-5xl md:text-[4rem]">
+                    Retrouve un espace clair pour piloter les bilans, les rendez-vous et le suivi.
+                  </h1>
+                  <p className="max-w-[38rem] text-base leading-8 text-slate-300/92 md:text-[19px] md:leading-9">
+                    Lor&apos;Squad Wellness rassemble le bilan guide, la lecture client, le suivi
+                    terrain et l&apos;activite de l&apos;equipe dans un seul espace fluide, premium
+                    et simple a rouvrir sur tablette.
+                  </p>
+                  <div className="flex flex-wrap gap-2 pt-1">
+                    <MiniTag label="Bilans" />
+                    <MiniTag label="Rendez-vous" />
+                    <MiniTag label="Suivi client" />
+                    <MiniTag label="Equipe" />
+                  </div>
+                </div>
               </div>
             </div>
 
-            <div className="space-y-5">
-              <StatusBadge label="Connexion" tone="amber" />
-              <h1 className="max-w-[11ch] text-balance text-3xl leading-[0.98] sm:text-4xl md:text-6xl">
-                Une entree plus calme pour retrouver les bons dossiers.
-              </h1>
-              <p className="max-w-2xl text-sm leading-7 text-slate-300/92 md:text-[17px] md:leading-8">
-                Lor&apos;Squad Wellness rassemble le rendez-vous, la lecture client et le suivi
-                dans un espace plus fluide, plus humain et facile a rouvrir sur tablette.
-              </p>
-              <div className="flex flex-wrap gap-2 pt-2">
-                <MiniTag label="Rendez-vous" />
-                <MiniTag label="Nutrition" />
-                <MiniTag label="Suivi" />
+            <div className="space-y-5 pt-8">
+              <div className="flex items-center gap-4 text-slate-500">
+                <img
+                  src={blasonLogo}
+                  alt="Blason Lor'Squad"
+                  className="h-12 w-12 rounded-[18px] object-cover ring-1 ring-white/10"
+                />
+                <div>
+                  <p className="text-sm font-medium text-white">Lor&apos;Squad Wellness</p>
+                  <p className="text-[12px] text-slate-500">
+                    Bilans guides, suivi terrain et lecture d&apos;equipe
+                  </p>
+                </div>
               </div>
+              <BrandSignature variant="inline" />
             </div>
-          </div>
-
-          <div className="space-y-4 pt-2 md:space-y-6 md:pt-4">
-            <div className="relative flex min-h-[140px] items-start justify-center md:min-h-[340px]">
-              <img
-                src={lorSquadLogo}
-                alt="Lor'Squad"
-                className="mt-0 max-h-[110px] w-full max-w-[760px] object-contain opacity-[0.98] md:max-h-[300px]"
-              />
-            </div>
-            <BrandSignature variant="inline" />
           </div>
         </section>
 
@@ -132,11 +139,11 @@ export function LoginPage() {
             <div>
               <p className="eyebrow-label">Acces a la plateforme</p>
               <h2 className="mt-4 max-w-[12ch] text-balance text-4xl">
-                Connecte-toi pour retrouver ton espace.
+                Connecte-toi pour rouvrir ton espace.
               </h2>
               <p className="mt-4 max-w-xl text-sm leading-7 text-slate-300/92">
-                L&apos;entree reste simple, mais l&apos;ambiance gagne en douceur et en clarte pour
-                les usages du quotidien.
+                Retrouve tes bilans, tes rendez-vous et le suivi du moment dans un cadre clair et
+                sobre, pense pour le terrain.
               </p>
             </div>
 
