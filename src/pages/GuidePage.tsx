@@ -6,45 +6,45 @@ import { StatusBadge } from "../components/ui/StatusBadge";
 type GuideTab = "rdv" | "recos";
 
 const preparationPoints = [
-  "Sois a l'heure, idealement un peu en avance.",
-  "Club range, propre et accueillant.",
-  "Balance, fiche bilan et stylo deja prets."
+  "Sois à l'heure, idéalement un peu en avance.",
+  "Club rangé, propre et accueillant.",
+  "Balance, fiche bilan et stylo déjà prêts."
 ];
 
 const accueilPoints = [
-  "Accueille avec le sourire et utilise le prenom.",
-  "Mets la personne a l'aise des les premieres secondes.",
-  "Elle doit sentir qu'on l'attendait pour elle."
+  "Accueille avec le sourire et utilise le prénom.",
+  "Mets la personne à l'aise dès les premières secondes.",
+  "Elle doit sentir qu'on l'attendait vraiment."
 ];
 
 const boissonPoints = [
   "Demande d'abord : chaude ou froide ?",
   "Propose ensuite ta meilleure boisson.",
-  "Prends aussi ta boisson pour creer le moment partage."
+  "Prends aussi ta boisson pour créer un vrai moment partagé."
 ];
 
 const relationPoints = [
-  "Mode coach humain, pas vendeur.",
+  "Mode coach humain, jamais vendeur.",
   "Pose des questions ouvertes et laisse parler.",
-  "Ecoute sans juger, puis reformule calmement."
+  "Écoute sans juger, puis reformule calmement."
 ];
 
 const balancePoints = [
   "Explique toujours ce que tu vas mesurer.",
-  "Presente les chiffres comme une base de depart.",
+  "Présente les chiffres comme une base de départ.",
   "Le ton doit rester positif et constructif."
 ];
 
 const shakePoints = [
-  "Formula 1 = base de repas equilibre.",
-  "Fais gouter un shake tres bon et bien presente.",
-  "Le client doit se dire : je pourrais prendre ca tous les jours."
+  "Formula 1 = base d'un repas équilibré.",
+  "Fais goûter un shake très bon et bien présenté.",
+  "Le client doit se dire : je pourrais prendre ça tous les jours."
 ];
 
 const closingFlow = [
   {
     title: "1. Reformuler",
-    detail: "Si je resume, tu veux surtout X, Y, Z. On valide bien ce cap ensemble."
+    detail: "Si je résume, tu veux surtout X, Y, Z. On valide bien ce cap ensemble."
   },
   {
     title: "2. Proposer",
@@ -56,22 +56,22 @@ const closingFlow = [
   },
   {
     title: "4. Poser la suite",
-    detail: "Programme, reglement, date de demarrage, groupe ou challenge, prochain suivi."
+    detail: "Programme, règlement, date de démarrage, groupe ou challenge, prochain suivi."
   }
 ];
 
 const usefulPhrases = [
   "Bienvenue, installe-toi, tu vas voir, on va passer un bon moment.",
-  "Qu'est-ce qui t'a donne envie de venir aujourd'hui ?",
-  "Ce qui compte, ce n'est pas ou tu es aujourd'hui, c'est ce qu'on va construire ensemble.",
-  "On ne cherche pas la perfection, on cherche un plan simple a tenir."
+  "Qu'est-ce qui t'a donné envie de venir aujourd'hui ?",
+  "Ce qui compte, ce n'est pas où tu es aujourd'hui, mais ce qu'on va construire ensemble.",
+  "On ne cherche pas la perfection, on cherche un plan simple à tenir."
 ];
 
 const recommendationHighlights = [
-  "Ton resultat produit renforce ta confiance.",
-  "Une EBE reussie cherche des recos puis un demarrage.",
+  "Ton résultat produit renforce la confiance.",
+  "Une EBE réussie ouvre les recos puis le démarrage.",
   "Tu vends une experience, pas juste un shake.",
-  "Ton temps, ton ecoute et ton bilan ont une vraie valeur.",
+  "Ton temps, ton écoute et ton bilan ont une vraie valeur.",
   "Le script et l'intonation comptent autant que le fond.",
   "Les recos ne vivent pas seulement le jour du bilan."
 ];
@@ -79,7 +79,7 @@ const recommendationHighlights = [
 const recommendationFlow = [
   {
     title: "Le bon moment",
-    detail: "Juste apres l'explication des valeurs et avant le closing final."
+    detail: "Juste après l'explication des valeurs et avant le closing final."
   },
   {
     title: "Les deux questions",
@@ -87,7 +87,7 @@ const recommendationFlow = [
   },
   {
     title: "La feuille + le crayon",
-    detail: "Tu donnes la feuille, tu expliques l'idee, puis tu t'eloignes vraiment."
+    detail: "Tu donnes la feuille, tu expliques l'idée, puis tu t'éloignes vraiment."
   },
   {
     title: "Le retour",
@@ -96,15 +96,15 @@ const recommendationFlow = [
 ];
 
 const recommendationRules = [
-  "Ne reviens pas tant que le crayon n'est pas pose.",
-  "Laisse un vrai temps seul pour que la personne pense a son entourage.",
-  "Si objection, respire, rassure et guide sans pression."
+  "Ne reviens pas tant que le crayon n'est pas posé.",
+  "Laisse un vrai temps seul pour que la personne pense à son entourage.",
+  "En cas d'objection, respire, rassure et guide sans pression."
 ];
 
 const visioReminder = [
-  "En visio, le principe reste le meme avec feuille blanche + photo.",
+  "En visio, le principe reste le même avec feuille blanche + photo.",
   "Tu peux couper 5 minutes puis reprendre ensuite.",
-  "L'important reste de laisser un vrai temps de reflection."
+  "L'important reste de laisser un vrai temps de réflexion."
 ];
 
 export function GuidePage() {
@@ -115,7 +115,7 @@ export function GuidePage() {
       <PageHeading
         eyebrow="Guide rendez-vous"
         title="Guide rendez-vous"
-        description="Des reperes simples pour accueillir, expliquer et conclure."
+        description="Des repères simples pour accueillir, expliquer et conclure avec justesse."
       />
 
       <Card className="space-y-5 overflow-hidden bg-[linear-gradient(180deg,rgba(15,23,42,0.26),rgba(15,23,42,0.5))]">
@@ -124,10 +124,10 @@ export function GuidePage() {
             <p className="eyebrow-label">Support terrain</p>
             <h2 className="mt-3 text-3xl text-white">Le bon ton, la bonne structure, le bon rythme.</h2>
             <p className="mt-3 text-sm leading-6 text-slate-300">
-              Un rappel rapide pour garder le rendez-vous fluide.
+              Un rappel rapide pour garder le rendez-vous net, fluide et pro.
             </p>
           </div>
-          <StatusBadge label="Cool + pro" tone="green" />
+          <StatusBadge label="Calme + pro" tone="green" />
         </div>
 
         <div className="flex flex-wrap gap-3">
@@ -289,10 +289,10 @@ function RecommendationGuide() {
           <div>
             <p className="eyebrow-label">Recommandations</p>
             <h2 className="mt-3 text-3xl text-white">
-              Un rappel simple pour demander des recos au bon moment, sans faire lourd.
+              Un rappel simple pour demander des recos au bon moment, sans forcer.
             </h2>
           </div>
-          <StatusBadge label="Moment cle" tone="red" />
+          <StatusBadge label="Moment clé" tone="red" />
         </div>
 
         <div className="grid gap-4 xl:grid-cols-3">

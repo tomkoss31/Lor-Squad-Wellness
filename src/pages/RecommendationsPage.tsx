@@ -3,26 +3,26 @@ import { PageHeading } from "../components/ui/PageHeading";
 import { StatusBadge } from "../components/ui/StatusBadge";
 
 const keyMoments = [
-  "Juste apres le body scan, au moment ou la boisson ou le smoothie se prepare.",
-  "Le ton reste cadeau, experience et partage, jamais pression commerciale.",
-  "Le but est d'aider la personne a penser naturellement a qui elle aimerait faire plaisir."
+  "Juste après le body scan, au moment où la boisson ou le smoothie se prépare.",
+  "Le ton reste cadeau, expérience et partage, jamais pression commerciale.",
+  "Le but est d'aider la personne à penser naturellement à qui elle aimerait faire plaisir."
 ];
 
 const clientFacingPrompts = [
   "Tu aimes les cadeaux ?",
   "Tu aimes en recevoir ?",
-  "A qui tu aimerais offrir ce moment bien-etre et nutrition ?"
+  "À qui tu aimerais offrir ce moment bien-être et nutrition ?"
 ];
 
 const coachPrompts = [
-  "Je te laisse noter tranquillement les personnes a qui tu aimerais offrir la meme experience.",
-  "Prends ton telephone, pense a tes amis, ta famille, tes collegues, et note simplement prenom + numero ou reseau.",
-  "Je prepare le smoothie et je reviens juste apres, prends ton temps."
+  "Je te laisse noter tranquillement les personnes à qui tu aimerais offrir la même expérience.",
+  "Prends ton téléphone, pense à tes amis, ta famille, tes collègues, et note simplement prénom + numéro ou réseau.",
+  "Je prépare le smoothie et je reviens juste après, prends ton temps."
 ];
 
 const reminders = [
   "Ne reviens pas trop vite. Le temps calme fait souvent remonter plus de noms.",
-  "Un nom + un numero ou un reseau suffit pour demarrer.",
+  "Un nom + un numéro ou un réseau suffit pour démarrer.",
   "La personne doit sentir qu'elle offre un moment sympa, pas qu'on lui demande un service."
 ];
 
@@ -38,12 +38,12 @@ export function RecommendationsPage() {
       <Card className="space-y-5 bg-[linear-gradient(180deg,rgba(15,23,42,0.26),rgba(15,23,42,0.5))]">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="max-w-3xl">
-            <p className="eyebrow-label">Moment cle</p>
+            <p className="eyebrow-label">Moment clé</p>
             <h2 className="mt-3 text-3xl text-white">
-              Les recommandations se vivent comme un prolongement de l&apos;experience.
+              Les recommandations prolongent l&apos;expérience avec naturel.
             </h2>
             <p className="mt-3 text-sm leading-6 text-slate-300">
-              Un rappel simple pour garder ce moment naturel.
+              Un rappel simple pour garder ce moment fluide.
             </p>
           </div>
           <StatusBadge label="Pendant le smoothie" tone="green" />
@@ -86,7 +86,7 @@ export function RecommendationsPage() {
         <Card className="space-y-4">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <p className="eyebrow-label">Script distributeur</p>
+              <p className="eyebrow-label">Posture terrain</p>
               <h2 className="mt-3 text-3xl text-white">Comment le poser naturellement</h2>
             </div>
             <StatusBadge label="Terrain" tone="amber" />
@@ -98,7 +98,7 @@ export function RecommendationsPage() {
                 key={item}
                 className="rounded-[22px] bg-white/[0.03] px-5 py-4"
               >
-                <p className="text-sm font-semibold text-white">Etape {index + 1}</p>
+                <p className="text-sm font-semibold text-white">Étape {index + 1}</p>
                 <p className="mt-2 text-sm leading-6 text-slate-400">{item}</p>
               </div>
             ))}
@@ -110,7 +110,7 @@ export function RecommendationsPage() {
         <div className="flex items-center justify-between gap-3">
           <div>
             <p className="eyebrow-label">A retenir</p>
-            <h2 className="mt-3 text-3xl text-white">Les trois regles qui changent tout</h2>
+            <h2 className="mt-3 text-3xl text-white">Les trois règles qui changent tout</h2>
           </div>
           <StatusBadge label="Sans pression" tone="green" />
         </div>

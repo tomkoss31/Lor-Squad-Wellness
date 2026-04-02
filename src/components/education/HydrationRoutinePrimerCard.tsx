@@ -5,18 +5,12 @@ export function HydrationRoutinePrimerCard() {
   return (
     <Card className="space-y-6 bg-[linear-gradient(180deg,rgba(15,23,42,0.28),rgba(15,23,42,0.5))]">
       <div className="max-w-3xl">
-        <p className="text-[11px] uppercase tracking-[0.28em] text-slate-500">
-          Repere pedagogique
-        </p>
+        <p className="eyebrow-label">Saveurs</p>
         <h3 className="mt-2 text-[1.9rem] leading-none text-white md:text-[2.1rem]">
           Hydratation &amp; routine du matin
         </h3>
         <p className="mt-3 text-[14px] leading-7 text-slate-300">
-          Comprendre les bases avant de demarrer le programme.
-        </p>
-        <p className="mt-2 text-sm leading-6 text-slate-300">
-          Cette page aide a montrer pourquoi mieux boire et mieux structurer le matin change
-          deja beaucoup de choses.
+          Voici les saveurs. Laquelle te ferait le plus plaisir, par exemple ?
         </p>
       </div>
 

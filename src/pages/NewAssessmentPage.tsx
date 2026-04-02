@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { StepRail } from "../components/assessment/StepRail";
 import { useEffect } from "react";
 import { useRef } from "react";
+import { Component, type ErrorInfo } from "react";
 import { useNavigate } from "react-router-dom";
 import { BodyFatInsightCard } from "../components/body-scan/BodyFatInsightCard";
 import { HydrationVisceralInsightCard } from "../components/body-scan/HydrationVisceralInsightCard";
@@ -99,6 +100,15 @@ type AssessmentForm = {
   recommendations: RecommendationLead[];
 };
 
+interface AssessmentDraftPayload {
+  form: AssessmentForm;
+  currentStep: number;
+  assignedUserId: string;
+  savedAt: string;
+}
+
+const ASSESSMENT_DRAFT_KEY = "lor-squad-wellness-assessment-draft-v1";
+
 function padDatePart(value: number) {
   return String(value).padStart(2, "0");
 }
@@ -124,6 +134,21 @@ function getDefaultNextFollowUpDateTime() {
 
 function createEmptyRecommendations(count = 10): RecommendationLead[] {
   return Array.from({ length: count }, () => ({ name: "", contact: "" }));
+}
+
+function normalizeRecommendations(
+  recommendations: RecommendationLead[] | undefined,
+  count = 10
+) {
+  const base = createEmptyRecommendations(count);
+  if (!recommendations?.length) {
+    return base;
+  }
+
+  return base.map((item, index) => ({
+    ...item,
+    ...(recommendations[index] ?? {})
+  }));
 }
 
 const initialForm: AssessmentForm = {
@@ -196,21 +221,76 @@ const initialForm: AssessmentForm = {
   recommendations: createEmptyRecommendations()
 };
 
+function readAssessmentDraft(): AssessmentDraftPayload | null {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  try {
+    const raw = window.localStorage.getItem(ASSESSMENT_DRAFT_KEY);
+    if (!raw) {
+      return null;
+    }
+
+    const parsed = JSON.parse(raw) as Partial<AssessmentDraftPayload>;
+    if (!parsed.form) {
+      return null;
+    }
+
+    return {
+      form: {
+        ...initialForm,
+        ...parsed.form,
+        recommendations: normalizeRecommendations(parsed.form.recommendations)
+      },
+      currentStep:
+        typeof parsed.currentStep === "number"
+          ? Math.min(Math.max(parsed.currentStep, 0), steps.length - 1)
+          : 0,
+      assignedUserId: parsed.assignedUserId ?? "",
+      savedAt: parsed.savedAt ?? new Date().toISOString()
+    };
+  } catch (error) {
+    console.error("Lecture du brouillon bilan impossible.", error);
+    return null;
+  }
+}
+
+function persistAssessmentDraft(payload: AssessmentDraftPayload) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  try {
+    window.localStorage.setItem(ASSESSMENT_DRAFT_KEY, JSON.stringify(payload));
+  } catch (error) {
+    console.error("Sauvegarde du brouillon bilan impossible.", error);
+  }
+}
+
+function clearAssessmentDraft() {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  window.localStorage.removeItem(ASSESSMENT_DRAFT_KEY);
+}
+
 const steps = [
   "Informations client",
   "Habitudes de vie et repas",
-  "Qualite alimentaire et boissons",
-  "Sante, objectif, activite et freins",
+  "Qualité alimentaire et boissons",
+  "Santé, objectif, activité et freins",
   "Composition des repas",
   "Body scan",
-  "References de suivi",
+  "Références de suivi",
   "Recommandations",
-  "Petit-dejeuner",
+  "Petit-déjeuner",
   "Routine matin",
-  "Programme propose",
+  "Programme proposé",
   "Hydratation & routine du matin",
   "Suite du suivi",
-  "Resume du rendez-vous"
+  "Résumé du rendez-vous"
 ];
 
 const LazyBreakfastComparison = lazy(() =>
@@ -239,6 +319,18 @@ export function NewAssessmentPage() {
   const [currentStep, setCurrentStep] = useState(0);
   const [saveError, setSaveError] = useState("");
   const [assignedUserId, setAssignedUserId] = useState("");
+  const [draftReady, setDraftReady] = useState(false);
+
+  useEffect(() => {
+    const draft = readAssessmentDraft();
+    if (draft) {
+      setForm(draft.form);
+      setCurrentStep(draft.currentStep);
+      setAssignedUserId(draft.assignedUserId);
+    }
+
+    setDraftReady(true);
+  }, []);
 
   const goToStep = (nextStep: number) => {
     setCurrentStep(Math.min(Math.max(nextStep, 0), steps.length - 1));
@@ -270,6 +362,19 @@ export function NewAssessmentPage() {
 
     setAssignedUserId((previous) => previous || currentUser.id);
   }, [currentUser]);
+
+  useEffect(() => {
+    if (!draftReady) {
+      return;
+    }
+
+    persistAssessmentDraft({
+      form,
+      currentStep,
+      assignedUserId,
+      savedAt: new Date().toISOString()
+    });
+  }, [assignedUserId, currentStep, draftReady, form]);
 
   const assignableOwners = users.filter(
     (user) =>
@@ -776,6 +881,7 @@ export function NewAssessmentPage() {
       });
 
       setSaveError("");
+      clearAssessmentDraft();
       navigate(`/clients/${clientId}`);
     } catch (error) {
       setSaveError(
@@ -790,7 +896,7 @@ export function NewAssessmentPage() {
     <div className="space-y-6">
       <PageHeading
         eyebrow="Nouveau bilan"
-        title="Bilan guide"
+        title="Bilan guidé"
         description="Un parcours clair pour conduire le rendez-vous, relire les habitudes et poser la suite."
       />
       <div ref={stepRailRef}>
@@ -803,7 +909,7 @@ export function NewAssessmentPage() {
             <p className="font-display text-xl text-white">{panelTitle}</p>
             <p className="mt-2 text-sm leading-6 text-slate-400">{panelIntro}</p>
           </div>
-          <StatusBadge label={`Etape ${currentStep + 1}`} tone="blue" />
+          <StatusBadge label={`Étape ${currentStep + 1}`} tone="blue" />
         </div>
         <div className="grid gap-3">
           {rightPanelPoints.slice(0, 2).map((point, index) => (
@@ -1203,24 +1309,27 @@ export function NewAssessmentPage() {
             </div>
           )}
 
-          {currentStep === 7 && (
-            <RecommendationStepCard
-              programTitle={selectedProgram?.title ?? "A choisir"}
-              recommendations={form.recommendations}
-              onChange={updateRecommendation}
-            />
-          )}
+            {currentStep === 7 && (
+              <RecommendationStepCard
+                recommendations={form.recommendations}
+                onChange={updateRecommendation}
+              />
+            )}
 
           {currentStep === 8 && (
-            <Suspense fallback={<StepVisualLoadingCard label="Chargement du visuel petit-dejeuner" />}>
-              <LazyBreakfastComparison />
-            </Suspense>
+            <VisualStepBoundary title="Petit-dejeuner">
+              <Suspense fallback={<StepVisualLoadingCard label="Chargement du visuel petit-dejeuner" />}>
+                <LazyBreakfastComparison />
+              </Suspense>
+            </VisualStepBoundary>
           )}
 
           {currentStep === 9 && (
-            <Suspense fallback={<StepVisualLoadingCard label="Chargement de la routine matin" />}>
-              <LazyMorningRoutineCard />
-            </Suspense>
+            <VisualStepBoundary title="Routine matin">
+              <Suspense fallback={<StepVisualLoadingCard label="Chargement de la routine matin" />}>
+                <LazyMorningRoutineCard />
+              </Suspense>
+            </VisualStepBoundary>
           )}
 
           {currentStep === 10 && (
@@ -1254,9 +1363,11 @@ export function NewAssessmentPage() {
           )}
 
           {currentStep === 11 && (
-            <Suspense fallback={<StepVisualLoadingCard label="Chargement du repere hydratation" />}>
-              <LazyHydrationRoutinePrimerCard />
-            </Suspense>
+            <VisualStepBoundary title="Repere hydratation">
+              <Suspense fallback={<StepVisualLoadingCard label="Chargement du repere hydratation" />}>
+                <LazyHydrationRoutinePrimerCard />
+              </Suspense>
+            </VisualStepBoundary>
           )}
 
           {currentStep === 12 && (
@@ -1462,25 +1573,28 @@ export function NewAssessmentPage() {
         ) : null}
       </Card>
 
-          <Card className="space-y-4">
-            <p className="eyebrow-label">A dire simplement</p>
-            <div className="grid gap-2">
-              {prompts.slice(0, 2).map((prompt) => (
-                <div key={prompt} className="rounded-[20px] bg-slate-950/24 px-4 py-3 text-sm text-slate-200">
-                  {prompt}
+            {currentStep !== 7 ? (
+              <Card className="space-y-4">
+                <p className="eyebrow-label">A dire simplement</p>
+                <div className="grid gap-2">
+                  {prompts.slice(0, 2).map((prompt) => (
+                    <div key={prompt} className="rounded-[20px] bg-slate-950/24 px-4 py-3 text-sm text-slate-200">
+                      {prompt}
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          </Card>
+              </Card>
+            ) : null}
 
-          <Card className="space-y-4">
-            <p className="eyebrow-label">Lecture express</p>
-            {currentStep === 5 ? (
-              <>
-                {bodyScanExpressItems.map((item) => (
-                  <SummaryMini key={item.label} label={item.label} value={item.value} />
-                ))}
-              </>
+            {currentStep !== 7 ? (
+              <Card className="space-y-4">
+                <p className="eyebrow-label">Lecture express</p>
+                {currentStep === 5 ? (
+                <>
+                  {bodyScanExpressItems.map((item) => (
+                    <SummaryMini key={item.label} label={item.label} value={item.value} />
+                  ))}
+                </>
             ) : currentStep === 6 ? (
               <>
                 <SummaryMini label="Poids cible" value={weightTargetLabel} />
@@ -1488,26 +1602,21 @@ export function NewAssessmentPage() {
                 <SummaryMini label="Objectif eau" value={`${formatRawNumber(waterNeed)} L`} />
                 <SummaryMini label="Proteines" value={proteinRange} />
               </>
-            ) : currentStep === 7 ? (
-              <>
-                <SummaryMini label="Objectif" value="Inviter simplement" />
-                <SummaryMini label="Programme" value={selectedProgram?.title ?? "A choisir"} />
-                <SummaryMini label="Recommandations" value={`${recommendationCount}/10`} />
-              </>
-            ) : (
-              <>
-                <SummaryMini label="Objectif" value={form.objectiveFocus} />
-                <SummaryMini label="Programme" value={selectedProgram?.title ?? "A choisir"} />
-                <SummaryMini label="Hydratation" value={`${waterNeed} L`} />
-                {form.objective === "weight-loss" ? <SummaryMini label="Rythme" value={weightLossPace.label} /> : <SummaryMini label="Motivation" value={`${form.motivation}/10`} />}
-              </>
-            )}
-          </Card>
+              ) : (
+                <>
+                  <SummaryMini label="Objectif" value={form.objectiveFocus} />
+                  <SummaryMini label="Programme" value={selectedProgram?.title ?? "A choisir"} />
+                  <SummaryMini label="Hydratation" value={`${waterNeed} L`} />
+                  {form.objective === "weight-loss" ? <SummaryMini label="Rythme" value={weightLossPace.label} /> : <SummaryMini label="Motivation" value={`${form.motivation}/10`} />}
+                </>
+                )}
+              </Card>
+            ) : null}
+          </div>
         </div>
       </div>
-    </div>
-  );
-}
+    );
+  }
 
 function StepVisualLoadingCard({ label }: { label: string }) {
   return (
@@ -1521,12 +1630,58 @@ function StepVisualLoadingCard({ label }: { label: string }) {
   );
 }
 
+class VisualStepBoundary extends Component<
+  { title: string; children: ReactNode },
+  { hasError: boolean }
+> {
+  state = { hasError: false };
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: Error, info: ErrorInfo) {
+    console.error(`Visual step failed: ${this.props.title}`, error, info);
+  }
+
+  private handleRetry = () => {
+    this.setState({ hasError: false });
+  };
+
+  render() {
+    if (!this.state.hasError) {
+      return this.props.children;
+    }
+
+    return (
+      <Card className="space-y-4">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <p className="eyebrow-label">Incident de chargement</p>
+            <h3 className="mt-2 text-2xl text-white">{this.props.title}</h3>
+          </div>
+          <StatusBadge label="Brouillon conserve" tone="amber" />
+        </div>
+        <div className="rounded-[24px] bg-white/[0.03] p-5">
+          <p className="text-sm leading-7 text-slate-300">
+            Le visuel n&apos;a pas pu s&apos;afficher correctement. Les valeurs deja saisies sont
+            gardees automatiquement, tu peux reessayer sans perdre le bilan en cours.
+          </p>
+          <div className="mt-4 flex flex-wrap gap-3">
+            <Button type="button" onClick={this.handleRetry}>
+              Recharger le visuel
+            </Button>
+          </div>
+        </div>
+      </Card>
+    );
+  }
+}
+
 function RecommendationStepCard({
-  programTitle,
   recommendations,
   onChange
 }: {
-  programTitle: string;
   recommendations: RecommendationLead[];
   onChange: (index: number, field: keyof RecommendationLead, value: string) => void;
 }) {
@@ -1534,57 +1689,16 @@ function RecommendationStepCard({
     (item) => item.name.trim() || item.contact.trim()
   ).length;
 
-  return (
-      <div className="space-y-5">
-        <Card className="space-y-5 bg-[linear-gradient(180deg,rgba(15,23,42,0.24),rgba(15,23,42,0.56))]">
-          <div className="flex flex-wrap items-start justify-between gap-4">
+    return (
+        <div className="space-y-5">
+          <Card className="space-y-5 bg-[linear-gradient(180deg,rgba(15,23,42,0.24),rgba(15,23,42,0.56))]">
             <div className="max-w-4xl">
               <p className="eyebrow-label">Moment smoothie & recommandations</p>
               <h2 className="mt-3 max-w-3xl text-2xl leading-tight text-white md:text-[2.5rem]">
                 A qui aimerais-tu offrir ce moment bien-etre et nutrition ?
               </h2>
-              <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-300 md:text-base">
-                Laisse la personne noter les noms qu&apos;elle souhaite inviter.
-              </p>
             </div>
-            <StatusBadge label="Lecture client" tone="green" />
-          </div>
-
-          <div className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
-            <div className="rounded-[26px] bg-slate-950/24 p-5">
-              <p className="eyebrow-label">Texte a laisser lire</p>
-              <div className="mt-4 space-y-2">
-                <p className="text-lg leading-8 text-white">
-                  Note les personnes a qui tu aimerais offrir cette experience.
-                </p>
-                <p className="text-sm leading-7 text-slate-300">
-                  Un prenom et un contact suffisent.
-                </p>
-              </div>
-            </div>
-
-            <div className="rounded-[26px] bg-white/[0.03] p-5">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <p className="eyebrow-label">Aide terrain</p>
-                  <p className="mt-2 text-xl text-white">Tu ouvres le sujet, tu laisses noter, tu restes leger.</p>
-                </div>
-                <StatusBadge label="Sans pression" tone="blue" />
-              </div>
-
-              <div className="mt-4 space-y-3">
-                <p className="text-sm leading-7 text-slate-300">
-                  Laisse un temps calme pendant que la personne note.
-                </p>
-                <div className="grid gap-3">
-                  <SummaryMini label="Objectif" value="Inviter simplement" />
-                  <SummaryMini label="Programme" value={programTitle} />
-                  <SummaryMini label="Recommandations" value={`${filledRecommendations}/10`} />
-                </div>
-              </div>
-            </div>
-          </div>
-        </Card>
+          </Card>
 
         <Card className="space-y-5">
           <div className="flex flex-wrap items-center justify-between gap-3">

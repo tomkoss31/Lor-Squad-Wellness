@@ -22,27 +22,27 @@ export function AppLayout() {
     { label: "Guide rendez-vous", path: "/guide" },
     { label: "Recommandations", path: "/recommendations" },
     { label: "Dossiers clients", path: "/clients" },
-    ...(currentUser.role === "admin" ? [{ label: "Equipe", path: "/users" }] : []),
+    ...(currentUser.role === "admin" ? [{ label: "Équipe", path: "/users" }] : []),
     { label: "Nouveau bilan", path: "/assessments/new" }
   ];
 
   const pageTitle =
     location.pathname === "/dashboard"
-      ? "Une lecture claire de l'activite et des rendez-vous du moment"
+      ? "Pilotage clair de la journée"
       : location.pathname === "/guide"
-        ? "Des reperes simples pour mieux conduire le rendez-vous"
+        ? "Repères simples pour conduire le rendez-vous"
         : location.pathname === "/recommendations"
-          ? "Le bon support pour poser les recommandations au bon moment"
+          ? "Le bon ton pour ouvrir les recommandations"
         : location.pathname === "/clients"
-          ? "Les dossiers clients et le suivi en cours"
+          ? "Dossiers clients et suivi en cours"
         : location.pathname.startsWith("/distributors/")
-          ? "Le portefeuille responsable et les relances a suivre"
+          ? "Portefeuille, relances et rythme du suivi"
         : location.pathname === "/users"
-          ? "Les acces de l'equipe et les roles essentiels"
+          ? "Accès équipe et rôles clés"
           : location.pathname.startsWith("/clients/")
-            ? "Le detail du dossier client"
+            ? "Lecture complète du dossier client"
             : location.pathname === "/assessments/new"
-              ? "Le bilan guide pour conduire le rendez-vous"
+              ? "Le bilan guidé pour cadrer le rendez-vous"
               : "Lor'Squad Wellness";
 
   async function handleLogout() {
@@ -97,7 +97,7 @@ export function AppLayout() {
                   {getAccessSummary(currentUser)}
                 </p>
                 <Button variant="ghost" className="mt-4 w-full" onClick={() => void handleLogout()}>
-                  Se deconnecter
+                  Se déconnecter
                 </Button>
               </div>
 
@@ -113,7 +113,7 @@ export function AppLayout() {
                       to={item.path}
                       className={`flex items-center gap-3 rounded-[20px] px-4 py-3.5 text-[15px] font-medium transition ${
                         isActive
-                          ? "bg-sky-400/[0.14] text-white shadow-[0_0_0_1px_rgba(107,194,255,0.16)]"
+                          ? "bg-sky-400/[0.14] text-white shadow-[0_0_0_1px_rgba(107,194,255,0.16),0_10px_24px_rgba(0,0,0,0.12)]"
                           : "text-slate-400 hover:bg-white/[0.035] hover:text-white"
                       }`}
                     >
@@ -136,7 +136,7 @@ export function AppLayout() {
               <div className="rounded-[24px] bg-white/[0.025] p-5">
                 <p className="eyebrow-label">Cap du jour</p>
                 <p className="mt-3 text-[14px] leading-7 text-slate-300">
-                  Un espace plus calme, plus premium et plus fluide pour conduire le rendez-vous.
+                  Une interface plus claire, plus douce et plus nette pour garder le bon rythme en rendez-vous.
                 </p>
               </div>
             </div>
@@ -146,19 +146,19 @@ export function AppLayout() {
               <div>
                 <p className="eyebrow-label">Usage tablette</p>
                 <p className="mt-3 text-[14px] leading-7 text-slate-300">
-                  Tout reste net, respirant et facile a rouvrir pendant l&apos;echange.
+                  Tout reste net, fluide et facile à rouvrir pendant l&apos;échange.
                 </p>
               </div>
               {currentSession ? (
                 <div className="rounded-[18px] bg-slate-950/28 px-4 py-3 text-[12px] text-slate-400">
-                  Session active - acces {currentSession.accessScope}
+                  Session active · accès {currentSession.accessScope}
                 </div>
               ) : null}
               <Button className="w-full" onClick={() => navigate("/assessments/new")}>
                 Nouveau bilan
               </Button>
               <Button variant="ghost" className="w-full" onClick={() => void handleLogout()}>
-                Se deconnecter
+                Se déconnecter
               </Button>
             </div>
           </div>
@@ -207,7 +207,7 @@ export function AppLayout() {
               className="mt-3 w-full justify-center"
               onClick={() => void handleLogout()}
             >
-              Se deconnecter
+              Se déconnecter
             </Button>
 
             <nav className="mt-4 flex gap-2 overflow-x-auto pb-1">
@@ -234,12 +234,12 @@ export function AppLayout() {
 
             {!isStandalone && isIos ? (
               <div className="mt-4 rounded-[18px] bg-white/[0.03] px-4 py-3 text-[13px] leading-6 text-slate-300">
-                Ouvre ce lien dans Safari, puis Partager et Sur l&apos;ecran d&apos;accueil.
+                Ouvre ce lien dans Safari, puis Partager et Sur l&apos;écran d&apos;accueil.
               </div>
             ) : null}
             {!isStandalone && !isIos && isMobile && !canPromptInstall ? (
               <div className="mt-4 rounded-[18px] bg-white/[0.03] px-4 py-3 text-[13px] leading-6 text-slate-300">
-                Ouvre ce lien dans Chrome puis Installe l&apos;app ou Ajoute a l&apos;ecran d&apos;accueil.
+                Ouvre ce lien dans Chrome puis Installe l&apos;app ou Ajoute à l&apos;écran d&apos;accueil.
               </div>
             ) : null}
           </section>
@@ -249,7 +249,7 @@ export function AppLayout() {
             <div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
               <div className="max-w-3xl">
                 <p className="eyebrow-label">Lor&apos;Squad Wellness</p>
-                <p className="mt-4 max-w-[20ch] text-[1.9rem] font-semibold leading-[1.06] tracking-[-0.03em] text-white sm:text-[2.2rem] md:text-[2.55rem]">
+                <p className="mt-4 max-w-[18ch] text-[1.88rem] font-semibold leading-[1.04] tracking-[-0.035em] text-white sm:text-[2.16rem] md:text-[2.5rem]">
                   {pageTitle}
                 </p>
                 <div className="mt-4 hidden md:block">
@@ -264,7 +264,7 @@ export function AppLayout() {
                     </Button>
                   ) : isIos ? (
                     <div className="rounded-full bg-white/[0.03] px-4 py-3 text-[12px] text-slate-300">
-                      Partager puis ecran d&apos;accueil
+                      Partager puis écran d&apos;accueil
                     </div>
                   ) : isMobile ? (
                     <div className="rounded-full bg-white/[0.03] px-4 py-3 text-[12px] text-slate-300">
@@ -273,7 +273,7 @@ export function AppLayout() {
                   ) : null
                 ) : null}
                 <Button variant="ghost" onClick={() => void handleLogout()}>
-                  Se deconnecter
+                  Se déconnecter
                 </Button>
               </div>
               <div className="md:hidden">

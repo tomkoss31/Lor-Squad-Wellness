@@ -43,13 +43,14 @@ body {
   @apply min-h-screen font-body antialiased;
   background-color: var(--background-main);
   background-image:
-    radial-gradient(circle at top, rgba(89, 183, 255, 0.08), transparent 28%),
-    radial-gradient(circle at 18% 16%, rgba(239, 197, 141, 0.05), transparent 16%),
+    radial-gradient(circle at top, rgba(89, 183, 255, 0.09), transparent 30%),
+    radial-gradient(circle at 18% 16%, rgba(239, 197, 141, 0.045), transparent 17%),
+    radial-gradient(circle at 76% 24%, rgba(150, 121, 186, 0.045), transparent 18%),
     linear-gradient(180deg, rgba(255, 255, 255, 0.012), rgba(255, 255, 255, 0));
   color: var(--text-primary);
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
-  font-feature-settings: "ss01" 1, "cv02" 1;
+  font-feature-settings: "ss01" 1, "cv02" 1, "cv11" 1;
 }
 
 #root {
@@ -70,15 +71,15 @@ body {
   }
 
   h1 {
-    @apply text-[3.2rem] font-semibold leading-[1.01] tracking-[-0.045em] md:text-[3.75rem];
+    @apply text-[3.12rem] font-semibold leading-[1] tracking-[-0.05em] md:text-[3.75rem];
   }
 
   h2 {
-    @apply text-[2.2rem] font-semibold leading-[1.04] tracking-[-0.03em];
+    @apply text-[2.08rem] font-semibold leading-[1.05] tracking-[-0.032em];
   }
 
   h3 {
-    @apply text-[1.6rem] font-semibold leading-[1.08] tracking-[-0.02em];
+    @apply text-[1.52rem] font-semibold leading-[1.08] tracking-[-0.022em];
   }
 
   h4 {
@@ -90,8 +91,8 @@ body {
   }
 
   label {
-    @apply text-[12px] font-medium;
-    color: rgba(214, 223, 236, 0.88);
+    @apply text-[12px] font-medium tracking-[0.01em];
+    color: rgba(223, 231, 242, 0.9);
   }
 
   input,
@@ -170,8 +171,8 @@ body {
   .glass-panel {
     @apply backdrop-blur-xl;
     background:
-      radial-gradient(circle at top right, rgba(89, 183, 255, 0.07), transparent 24%),
-      radial-gradient(circle at bottom left, rgba(239, 197, 141, 0.035), transparent 18%),
+      radial-gradient(circle at top right, rgba(89, 183, 255, 0.075), transparent 25%),
+      radial-gradient(circle at bottom left, rgba(239, 197, 141, 0.03), transparent 18%),
       linear-gradient(180deg, var(--surface-elevated), rgba(14, 22, 35, 0.92));
     border: 1px solid var(--border-soft);
     box-shadow: var(--shadow-medium);
@@ -190,12 +191,12 @@ body {
 
   .eyebrow-label {
     @apply text-[11px] font-medium uppercase;
-    letter-spacing: 0.1em;
-    color: var(--text-muted);
+    letter-spacing: 0.09em;
+    color: rgba(183, 194, 211, 0.72);
   }
 
   .section-title {
-    @apply text-[2rem] font-semibold leading-[1.06] tracking-[-0.03em] text-white;
+    @apply text-[1.92rem] font-semibold leading-[1.05] tracking-[-0.034em] text-white;
   }
 
   .soft-divider {

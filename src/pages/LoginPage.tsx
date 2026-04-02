@@ -93,22 +93,22 @@ export function LoginPage() {
                   <img
                     src={lorSquadLogo}
                     alt="Lor'Squad Wellness"
-                    className="w-full max-w-[420px] object-contain opacity-[0.99] drop-shadow-[0_24px_60px_rgba(0,0,0,0.34)] sm:max-w-[500px] lg:max-w-[620px]"
+                    className="w-full max-w-[430px] object-contain opacity-[0.99] drop-shadow-[0_28px_70px_rgba(0,0,0,0.36)] sm:max-w-[520px] lg:max-w-[640px]"
                   />
                 </div>
 
                 <div className="space-y-4 md:space-y-5">
-                  <h1 className="max-w-[10ch] text-balance text-[2.4rem] leading-[0.95] tracking-[-0.055em] sm:text-[3.2rem] md:text-[3.85rem]">
-                    Ton espace Lor&apos;Squad.
+                  <h1 className="max-w-[9ch] text-balance text-[2.4rem] leading-[0.95] tracking-[-0.055em] sm:text-[3.2rem] md:text-[3.85rem]">
+                    Ton espace, prêt à suivre.
                   </h1>
                   <p className="max-w-[34rem] text-base leading-7 text-slate-300/92 md:text-[18px] md:leading-8">
-                    Bilans, rendez-vous, relances et suivi client dans une ouverture simple,
-                    premium et immediate.
+                    Bilans, rendez-vous, relances et suivi client dans une ouverture simple, fluide
+                    et premium.
                   </p>
                   <div className="grid gap-3 pt-2 sm:grid-cols-3">
-                    <MiniTag label="Bilans guides" />
+                    <MiniTag label="Bilans guidés" />
                     <MiniTag label="Suivi terrain" />
-                    <MiniTag label="Lecture equipe" />
+                    <MiniTag label="Lecture équipe" />
                   </div>
                 </div>
               </div>
@@ -124,7 +124,7 @@ export function LoginPage() {
                 <div>
                   <p className="text-sm font-medium text-white">Lor&apos;Squad Wellness</p>
                   <p className="text-[12px] text-slate-500">
-                    Bilans guides, suivi terrain et lecture d&apos;equipe
+                    Bilans guidés, suivi terrain et lecture d&apos;équipe
                   </p>
                 </div>
               </div>
@@ -138,10 +138,10 @@ export function LoginPage() {
             <div>
               <p className="eyebrow-label">Connexion</p>
               <h2 className="mt-4 max-w-[10ch] text-balance text-4xl">
-                Accede a ton espace.
+                Accède à ton espace.
               </h2>
               <p className="mt-4 max-w-md text-sm leading-7 text-slate-300/92">
-                Rouvre tes rendez-vous, tes suivis et tes dossiers en quelques secondes.
+                Retrouve tes rendez-vous, tes suivis et tes dossiers en quelques secondes.
               </p>
             </div>
 
@@ -150,7 +150,7 @@ export function LoginPage() {
                 <label className="text-sm font-medium text-slate-300">Identifiant</label>
                 <input
                   type="email"
-                  placeholder="Email professionnel"
+                  placeholder="E-mail professionnel"
                   value={email}
                   onChange={(event) => setEmail(event.target.value)}
                   autoCapitalize="none"
@@ -160,14 +160,14 @@ export function LoginPage() {
                   spellCheck={false}
                 />
                 <p className="text-xs text-slate-500">
-                  Utilise l&apos;email professionnel associe a ton acces.
+                  Utilise l&apos;e-mail professionnel associé à ton accès.
                 </p>
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium text-slate-300">Mot de passe</label>
                 <input
                   type={showPassword ? "text" : "password"}
-                  placeholder="Votre mot de passe"
+                  placeholder="Mot de passe"
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
                   autoCapitalize="none"
@@ -201,10 +201,10 @@ export function LoginPage() {
                   <div>
                     <p className="eyebrow-label">Installer l&apos;app</p>
                     <p className="mt-3 text-lg font-semibold text-white">
-                      Ajoute Lor&apos;Squad Wellness a ton ecran d&apos;accueil.
+                      Ajoute Lor&apos;Squad Wellness à ton écran d&apos;accueil.
                     </p>
                     <p className="mt-2 text-sm leading-6 text-slate-300">
-                      Plus rapide a rouvrir en rendez-vous, surtout sur tablette et mobile.
+                      Plus rapide à rouvrir en rendez-vous, surtout sur tablette et mobile.
                     </p>
                   </div>
                   <StatusBadge label="Acces direct" tone="green" />
@@ -223,14 +223,14 @@ export function LoginPage() {
                   <div className="mt-4 rounded-[18px] bg-white/[0.03] px-4 py-4 text-sm leading-6 text-slate-300">
                     Sur iPhone / iPad : ouvre ce lien dans <span className="font-semibold text-white">Safari</span>,
                     puis touche <span className="font-semibold text-white">Partager</span> et choisis{" "}
-                    <span className="font-semibold text-white">Sur l&apos;ecran d&apos;accueil</span>.
+                    <span className="font-semibold text-white">Sur l&apos;écran d&apos;accueil</span>.
                   </div>
                 ) : isMobile ? (
                   <div className="mt-4 rounded-[18px] bg-white/[0.03] px-4 py-4 text-sm leading-6 text-slate-300">
                     Sur Android : ouvre ce lien dans <span className="font-semibold text-white">Chrome</span>,
                     puis utilise le menu du navigateur pour{" "}
                     <span className="font-semibold text-white">Installer l&apos;app</span> ou{" "}
-                    <span className="font-semibold text-white">Ajouter a l&apos;ecran d&apos;accueil</span>.
+                    <span className="font-semibold text-white">Ajouter à l&apos;écran d&apos;accueil</span>.
                   </div>
                 ) : (
                   <div className="mt-4 rounded-[18px] bg-white/[0.03] px-4 py-4 text-sm leading-6 text-slate-300">
@@ -260,7 +260,7 @@ export function LoginPage() {
                   >
                     <p className="text-sm font-semibold text-white">Acces distributeur</p>
                     <p className="mt-1 text-xs leading-6 text-slate-400">
-                      Vue limitee a ses clients, ses bilans et ses suivis.
+                      Vue limitée à ses clients, ses bilans et ses suivis.
                     </p>
                   </button>
                   <button
@@ -270,11 +270,11 @@ export function LoginPage() {
                   >
                     <p className="text-sm font-semibold text-white">Acces admin</p>
                     <p className="mt-1 text-xs leading-6 text-slate-400">
-                      Vue globale sur les clients, l&apos;activite et le pilotage d&apos;equipe.
+                      Vue globale sur les clients, l&apos;activité et le pilotage d&apos;équipe.
                     </p>
                   </button>
                 </div>
-                <p className="mt-3 text-xs text-slate-500">Mot de passe demo : demo1234</p>
+                <p className="mt-3 text-xs text-slate-500">Mot de passe démo : demo1234</p>
               </div>
             ) : null}
 

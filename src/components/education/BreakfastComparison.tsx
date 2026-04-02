@@ -14,12 +14,12 @@ export function BreakfastComparison() {
   return (
     <Card className="space-y-6 bg-[linear-gradient(180deg,rgba(15,23,42,0.28),rgba(15,23,42,0.5))]">
       <div className="max-w-3xl">
-        <p className="text-[11px] uppercase tracking-[0.28em] text-slate-500">Repere du matin</p>
+        <p className="eyebrow-label">Repère du matin</p>
         <h3 className="mt-2 text-[1.9rem] leading-none text-white md:text-[2.1rem]">
-          Comparer un matin improvise a une routine plus structuree
+          Comparer un matin improvisé à une routine plus structurée
         </h3>
         <p className="mt-3 text-[14px] leading-7 text-slate-300">
-          Le client doit voir vite ce qui change en apports, en hydratation et en regularite.
+          Le client doit voir vite ce qui change en apports, en hydratation et en régularité.
         </p>
       </div>
 
@@ -38,9 +38,9 @@ export function BreakfastComparison() {
       <div className="rounded-[24px] border border-white/10 bg-slate-950/35 p-4 md:p-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <p className="text-[10px] uppercase tracking-[0.22em] text-slate-500">Lecture utile</p>
+            <p className="eyebrow-label">Lecture utile</p>
             <p className="mt-2 text-sm leading-6 text-slate-300">
-              Repere configurable selon la routine du matin choisie dans l'app.
+              Repère configurable selon la routine du matin choisie dans l&apos;app.
             </p>
           </div>
           <div className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs text-slate-200">
@@ -184,7 +184,7 @@ function ComparisonMetricRow({
   return (
     <div className="grid gap-3 rounded-[18px] border border-white/8 bg-white/[0.03] px-4 py-4 md:grid-cols-[140px_1fr_1fr] md:items-center">
       <div>
-        <p className="text-[10px] uppercase tracking-[0.18em] text-slate-500">{label}</p>
+        <p className="text-[10px] uppercase tracking-[0.12em] text-slate-500">{label}</p>
         <p className="mt-2 text-xs text-slate-400">{helper}</p>
       </div>
 

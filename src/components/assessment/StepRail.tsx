@@ -11,7 +11,7 @@ export function StepRail({ currentStep, steps }: StepRailProps) {
       <div className="flex items-center justify-between gap-3">
         <p className="eyebrow-label">Parcours bilan</p>
         <p className="text-[12px] text-slate-400">
-          Etape {currentStep + 1} / {steps.length}
+          Étape {currentStep + 1} / {steps.length}
         </p>
       </div>
       <div className="mt-4 flex gap-3 overflow-x-auto pb-1">
@@ -43,7 +43,7 @@ export function StepRail({ currentStep, steps }: StepRailProps) {
                 <p className="text-[13px] font-semibold text-white sm:text-sm">{step}</p>
               </div>
               <p className="mt-2 pl-12 text-[12px] text-slate-400">
-                {isActive ? "Etape en cours" : isComplete ? "Etape validee" : "Etape a venir"}
+                {isActive ? "Étape en cours" : isComplete ? "Étape validée" : "Étape à venir"}
               </p>
             </div>
           );

@@ -36,7 +36,7 @@ export function DashboardPage() {
     {
       label: "Mes rendez-vous",
       value: scheduledFollowUps.length,
-      hint: "Suivis planifies",
+      hint: "Suivis planifiés",
       accent: "green" as const
     },
     {
@@ -46,9 +46,9 @@ export function DashboardPage() {
       accent: "red" as const
     },
     {
-      label: "Dossiers a ouvrir",
+      label: "Dossiers à ouvrir",
       value: actionsToOpen.length,
-      hint: "Actions a rouvrir",
+      hint: "Actions à rouvrir",
       accent: "blue" as const
     },
     {
@@ -64,7 +64,7 @@ export function DashboardPage() {
       <PageHeading
         eyebrow="Accueil"
         title="Tableau de bord"
-        description="Mes rendez-vous, mes relances et mes priorites du moment."
+        description="Mes rendez-vous, mes relances et mes priorités du moment."
       />
 
       <Card className="overflow-hidden">
@@ -73,10 +73,10 @@ export function DashboardPage() {
             <div>
               <p className="eyebrow-label">Vue personnelle</p>
               <h2 className="mt-3 text-[1.85rem] leading-[1.04] tracking-[-0.03em] text-white md:text-[2.05rem]">
-                Mes priorites du jour
+                Mes priorités du jour
               </h2>
               <p className="mt-2 text-sm leading-6 text-slate-300/88 md:text-[15px]">
-                Rendez-vous, relances, dossiers a rouvrir et charge immediate.
+                Rendez-vous, relances, dossiers à rouvrir et charge immédiate.
               </p>
             </div>
 
@@ -118,12 +118,12 @@ export function DashboardPage() {
             <PriorityPanel
               title="Mes rendez-vous"
               items={scheduledFollowUps.slice(0, 5)}
-              emptyLabel="Aucun rendez-vous planifie"
-              statusLabel="Planifie"
+              emptyLabel="Aucun rendez-vous planifié"
+              statusLabel="Planifié"
               statusTone="green"
             />
             <PriorityPanel
-              title="Relances a faire"
+              title="Relances à faire"
               items={relanceFollowUps.slice(0, 5)}
               emptyLabel="Aucune relance en attente"
               statusLabel="Relance"
@@ -139,7 +139,7 @@ export function DashboardPage() {
             <div>
               <p className="eyebrow-label">A reprendre</p>
               <h2 className="mt-3 text-[1.7rem] leading-[1.06] text-white md:text-[1.9rem]">
-                Dossiers a ouvrir
+                Dossiers à ouvrir
               </h2>
             </div>
             <Link
@@ -179,6 +179,7 @@ export function DashboardPage() {
             ) : (
               <div className="rounded-[24px] bg-white/[0.03] p-5 text-sm text-slate-400">
                 Aucun dossier a rouvrir pour le moment.
+                
               </div>
             )}
           </div>
@@ -202,14 +203,14 @@ export function DashboardPage() {
           <div className="grid gap-3">
             <GuideTile
               title="Avant"
-              text="Verifier le client, le suivi prevu et les relances."
+              text="Vérifier le client, le suivi prévu et les relances."
             />
             <GuideTile
               title="Pendant"
-              text="Rester sur les points utiles et fixer la suite."
+              text="Rester sur l'essentiel et fixer la suite."
             />
             <GuideTile
-              title="Apres"
+              title="Après"
               text="Si besoin, rouvrir le dossier dans les relances."
             />
           </div>
@@ -244,7 +245,7 @@ function PriorityPanel({
     <Card className="space-y-4">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <p className="eyebrow-label">Priorites</p>
+          <p className="eyebrow-label">Priorités</p>
           <h2 className="mt-3 text-[1.45rem] leading-[1.06] text-white">{title}</h2>
         </div>
         <StatusBadge label={`${items.length} visibles`} tone="blue" />
@@ -300,7 +301,7 @@ function getLoadState(actionsCount: number): {
   if (actionsCount >= 6) {
     return {
       label: "Dense",
-      hint: `${actionsCount} actions a traiter`,
+      hint: `${actionsCount} actions à traiter`,
       accent: "red"
     };
   }
@@ -314,8 +315,8 @@ function getLoadState(actionsCount: number): {
   }
 
   return {
-    label: "Legere",
-    hint: actionsCount ? `${actionsCount} action a ouvrir` : "Aucune action urgente",
+    label: "Légère",
+    hint: actionsCount ? `${actionsCount} action à ouvrir` : "Aucune action urgente",
     accent: "green"
   };
 }

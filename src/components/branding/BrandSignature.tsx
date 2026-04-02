@@ -33,7 +33,7 @@ export function BrandSignature({ variant = "inline" }: BrandSignatureProps) {
           <div>
             <p className="text-lg font-semibold text-white">Lor&apos;Squad Wellness</p>
             <p className="mt-1 text-[12px] text-slate-500">
-              Accompagnement wellbeing
+              Accompagnement premium
             </p>
           </div>
         </div>
@@ -42,7 +42,7 @@ export function BrandSignature({ variant = "inline" }: BrandSignatureProps) {
           <img src={laBaseLogo} alt="La Base" className="h-10 w-10 rounded-xl object-cover" />
           <div>
             <p className="text-sm font-semibold text-white">La Base Shakes &amp; Drinks</p>
-            <p className="text-xs text-slate-400">Presence club et nutrition</p>
+            <p className="text-xs text-slate-400">Présence club et nutrition</p>
           </div>
         </div>
       </div>
