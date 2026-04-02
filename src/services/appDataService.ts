@@ -4,7 +4,7 @@ import type { Client, FollowUp } from "../types/domain";
 const CLIENTS_KEY = "lor-squad-wellness-clients";
 const FOLLOW_UPS_KEY = "lor-squad-wellness-follow-ups";
 const STORAGE_VERSION_KEY = "lor-squad-wellness-app-data-version";
-const CURRENT_STORAGE_VERSION = "2026-04-beta-1";
+const CURRENT_STORAGE_VERSION = "2026-04-beta-2";
 
 function ensureAppDataVersion() {
   const currentVersion = window.localStorage.getItem(STORAGE_VERSION_KEY);

@@ -9,7 +9,6 @@ existing_client as (
   from public.clients
   where first_name = 'Mandy'
     and last_name = 'Da Silva'
-    and phone = '0769409822'
   limit 1
 ),
 inserted_client as (
@@ -84,7 +83,6 @@ with client_ref as (
   from public.clients
   where first_name = 'Mandy'
     and last_name = 'Da Silva'
-    and phone = '0769409822'
   limit 1
 )
 insert into public.assessments (
@@ -474,7 +472,6 @@ with client_ref as (
   from public.clients
   where first_name = 'Mandy'
     and last_name = 'Da Silva'
-    and phone = '0769409822'
   limit 1
 )
 insert into public.follow_ups (

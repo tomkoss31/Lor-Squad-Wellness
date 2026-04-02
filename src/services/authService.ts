@@ -4,7 +4,7 @@ import type { AuthSession, User } from "../types/domain";
 
 const USERS_KEY = "lor-squad-wellness-users";
 const STORAGE_VERSION_KEY = "lor-squad-wellness-storage-version";
-const CURRENT_STORAGE_VERSION = "2026-04-beta-1";
+const CURRENT_STORAGE_VERSION = "2026-04-beta-2";
 
 interface StoredSession {
   userId: string;

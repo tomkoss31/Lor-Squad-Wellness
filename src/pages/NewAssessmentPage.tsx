@@ -233,11 +233,12 @@ const LazyHydrationRoutinePrimerCard = lazy(() =>
 
 export function NewAssessmentPage() {
   const navigate = useNavigate();
-  const { programs, currentUser, createClientWithInitialAssessment } = useAppContext();
+  const { programs, users, currentUser, createClientWithInitialAssessment } = useAppContext();
   const stepRailRef = useRef<HTMLDivElement | null>(null);
   const [form, setForm] = useState(initialForm);
   const [currentStep, setCurrentStep] = useState(0);
   const [saveError, setSaveError] = useState("");
+  const [assignedUserId, setAssignedUserId] = useState("");
 
   const goToStep = (nextStep: number) => {
     setCurrentStep(Math.min(Math.max(nextStep, 0), steps.length - 1));
@@ -261,6 +262,24 @@ export function NewAssessmentPage() {
       behavior: currentStep === 0 ? "auto" : "smooth"
     });
   }, [currentStep]);
+
+  useEffect(() => {
+    if (!currentUser) {
+      return;
+    }
+
+    setAssignedUserId((previous) => previous || currentUser.id);
+  }, [currentUser]);
+
+  const assignableOwners = users.filter(
+    (user) =>
+      user.active &&
+      (user.role === "admin" || user.role === "distributor")
+  );
+  const assignedUser =
+    assignableOwners.find((user) => user.id === assignedUserId) ??
+    currentUser ??
+    null;
 
   const currentPrograms = programs.filter((program) => program.category === form.objective);
   const mainPrograms = currentPrograms.filter((program) => program.kind !== "booster");
@@ -364,6 +383,7 @@ export function NewAssessmentPage() {
   const rightPanelPoints =
     currentStep === 0
       ? [
+          `Responsable : ${assignedUser?.name ?? "-"}`,
           `Objectif : ${form.objectiveFocus}`,
           `Sante : ${form.healthStatus}`,
           form.objective === "weight-loss"
@@ -618,8 +638,8 @@ export function NewAssessmentPage() {
           height: form.height,
           job: "Non renseigne",
           city: form.city.trim() || undefined,
-          distributorId: currentUser?.id ?? "u-local-admin",
-          distributorName: currentUser?.name ?? "Lor'Squad Wellness",
+          distributorId: assignedUser?.id ?? currentUser?.id ?? "u-local-admin",
+          distributorName: assignedUser?.name ?? currentUser?.name ?? "Lor'Squad Wellness",
           objective: form.objective
         },
         assessment,
@@ -697,6 +717,23 @@ export function NewAssessmentPage() {
                     value={form.assessmentDate}
                     onChange={(v) => update("assessmentDate", v)}
                   />
+                  {currentUser?.role === "admin" ? (
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-slate-300">
+                        Responsable du dossier
+                      </label>
+                      <select
+                        value={assignedUserId}
+                        onChange={(event) => setAssignedUserId(event.target.value)}
+                      >
+                        {assignableOwners.map((user) => (
+                          <option key={user.id} value={user.id}>
+                            {user.name} - {user.role === "admin" ? "Admin" : "Distributeur"}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  ) : null}
                   <ChoiceGroup
                     label="Sexe"
                     value={form.sex}

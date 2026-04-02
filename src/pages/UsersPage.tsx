@@ -1,14 +1,20 @@
 import { useMemo, useState, type FormEvent } from "react";
+import { Link } from "react-router-dom";
 import { Button } from "../components/ui/Button";
+import { DistributorBadge } from "../components/client/DistributorBadge";
 import { Card } from "../components/ui/Card";
 import { PageHeading } from "../components/ui/PageHeading";
 import { StatusBadge } from "../components/ui/StatusBadge";
 import { useAppContext } from "../context/AppContext";
 import { formatDate } from "../lib/calculations";
+import { getPortfolioIdentity, getPortfolioMetrics } from "../lib/portfolio";
+import type { Client, FollowUp, User } from "../types/domain";
 
 export function UsersPage() {
   const {
     users,
+    clients,
+    followUps,
     storageMode,
     createUserAccess,
     updateUserStatus,
@@ -294,53 +300,83 @@ export function UsersPage() {
 
         <div className="grid gap-3">
           {users.map((user) => (
-            <div
+            <UserAccessCard
               key={user.id}
-              className="grid gap-4 rounded-[24px] border border-white/10 bg-white/[0.03] p-4 lg:grid-cols-[1.2fr_1fr_auto]"
-            >
-              <div className="space-y-2">
-                <div className="flex flex-wrap items-center gap-3">
-                  <p className="text-lg font-semibold text-white">{user.name}</p>
-                  <StatusBadge
-                    label={user.role === "admin" ? "Admin" : "Distributeur"}
-                    tone={user.role === "admin" ? "blue" : "green"}
-                  />
-                  <StatusBadge
-                    label={user.active ? "Actif" : "Inactif"}
-                    tone={user.active ? "green" : "amber"}
-                  />
-                </div>
-                <p className="text-sm text-slate-400">{user.email}</p>
-                <p className="text-xs text-slate-500">
-                  Cree le {user.createdAt ? formatDate(user.createdAt) : "Date non renseignee"}
-                </p>
-              </div>
-
-              <div className="grid gap-2 text-sm text-slate-300">
-                <div className="rounded-[18px] border border-white/10 bg-slate-950/35 px-3 py-3">
-                  <span className="text-slate-500">Identifiant</span>
-                  <p className="mt-1 font-medium text-white">{user.email}</p>
-                </div>
-                <div className="rounded-[18px] border border-white/10 bg-slate-950/35 px-3 py-3">
-                  <span className="text-slate-500">Perimetre</span>
-                  <p className="mt-1 font-medium text-white">
-                    {user.role === "admin" ? "Tous les clients" : "Clients attribues"}
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-center lg:justify-end">
-                <Button
-                  variant="secondary"
-                  onClick={() => void updateUserStatus(user.id, !user.active)}
-                >
-                  {user.active ? "Desactiver" : "Reactiver"}
-                </Button>
-              </div>
-            </div>
+              user={user}
+              clients={clients}
+              followUps={followUps}
+              onToggleStatus={() => void updateUserStatus(user.id, !user.active)}
+            />
           ))}
         </div>
       </Card>
+    </div>
+  );
+}
+
+function UserAccessCard({
+  user,
+  clients,
+  followUps,
+  onToggleStatus
+}: {
+  user: User;
+  clients: Client[];
+  followUps: FollowUp[];
+  onToggleStatus: () => void;
+}) {
+  const metrics = getPortfolioMetrics(user.id, clients, followUps);
+  const identity = getPortfolioIdentity(user);
+
+  return (
+    <div className="grid gap-4 rounded-[24px] border border-white/10 bg-white/[0.03] p-4 lg:grid-cols-[1.2fr_1fr_auto]">
+      <div className="space-y-3">
+        <div className="flex flex-wrap items-center gap-3">
+          <DistributorBadge
+            user={user}
+            detail={`${metrics.clients.length} clients - cible ${identity.target}`}
+          />
+          <StatusBadge
+            label={user.role === "admin" ? "Admin" : "Distributeur"}
+            tone={user.role === "admin" ? "blue" : "green"}
+          />
+          <StatusBadge
+            label={user.active ? "Actif" : "Inactif"}
+            tone={user.active ? "green" : "amber"}
+          />
+        </div>
+        <p className="text-sm text-slate-400">{user.email}</p>
+        <p className="text-xs text-slate-500">
+          Cree le {user.createdAt ? formatDate(user.createdAt) : "Date non renseignee"}
+        </p>
+      </div>
+
+      <div className="grid gap-2 text-sm text-slate-300">
+        <div className="rounded-[18px] border border-white/10 bg-slate-950/35 px-3 py-3">
+          <span className="text-slate-500">Portefeuille</span>
+          <p className="mt-1 font-medium text-white">
+            {metrics.clients.length} clients - {metrics.relanceFollowUps.length} relances
+          </p>
+        </div>
+        <div className="rounded-[18px] border border-white/10 bg-slate-950/35 px-3 py-3">
+          <span className="text-slate-500">Perimetre</span>
+          <p className="mt-1 font-medium text-white">
+            {user.role === "admin" ? "Tous les clients" : "Clients attribues"}
+          </p>
+        </div>
+      </div>
+
+      <div className="flex flex-col items-stretch gap-3 lg:items-end">
+        <Link
+          to={`/distributors/${user.id}`}
+          className="inline-flex rounded-full border border-white/10 px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/5"
+        >
+          Voir portefeuille
+        </Link>
+        <Button variant="secondary" onClick={onToggleStatus}>
+          {user.active ? "Desactiver" : "Reactiver"}
+        </Button>
+      </div>
     </div>
   );
 }

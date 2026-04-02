@@ -4,6 +4,7 @@ import { AppLayout } from "./components/layout/AppLayout";
 import { ClientDetailPage } from "./pages/ClientDetailPage";
 import { ClientsPage } from "./pages/ClientsPage";
 import { DashboardPage } from "./pages/DashboardPage";
+import { DistributorPortfolioPage } from "./pages/DistributorPortfolioPage";
 import { GuidePage } from "./pages/GuidePage";
 import { LoginPage } from "./pages/LoginPage";
 import { NewAssessmentPage } from "./pages/NewAssessmentPage";
@@ -28,6 +29,7 @@ export default function App() {
             <Route element={<RoleRoute allowedRoles={["admin"]} />}>
               <Route path="users" element={<UsersPage />} />
             </Route>
+            <Route path="distributors/:distributorId" element={<DistributorPortfolioPage />} />
             <Route path="clients/:clientId" element={<ClientDetailPage />} />
             <Route path="clients/:clientId/follow-up/new" element={<NewFollowUpPage />} />
             <Route path="assessments/new" element={<NewAssessmentPage />} />

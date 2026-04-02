@@ -170,7 +170,13 @@ export function ClientDetailPage() {
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
               <p className="text-sm text-slate-400">
-                {client.job} - {client.city ?? "Ville non renseignee"} - {client.distributorName}
+                {client.job} - {client.city ?? "Ville non renseignee"} -{" "}
+                <Link
+                  to={`/distributors/${client.distributorId}`}
+                  className="font-medium text-sky-300 transition hover:text-sky-200"
+                >
+                  {client.distributorName}
+                </Link>
               </p>
               <p className="mt-2 text-4xl">
                 {client.firstName} {client.lastName}
