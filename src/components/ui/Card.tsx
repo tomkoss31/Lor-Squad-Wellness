@@ -9,7 +9,7 @@ export function Card({
   return (
     <div
       className={cn(
-        "glass-panel rounded-[24px] p-4 shadow-luxe sm:rounded-[28px] sm:p-5 md:rounded-[32px] md:p-6",
+        "glass-panel rounded-[24px] p-5 sm:rounded-[28px] sm:p-6 md:p-7",
         className
       )}
       {...props}

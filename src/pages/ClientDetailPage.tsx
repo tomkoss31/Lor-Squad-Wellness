@@ -391,6 +391,11 @@ export function ClientDetailPage() {
                 hint="Relire, mesurer et poser la suite"
               />
               <LinkButton
+                to={`/clients/${client.id}/start-assessment/edit`}
+                label="Modifier le bilan de depart"
+                hint="Corriger la date et les valeurs de reference"
+              />
+              <LinkButton
                 to={`/clients/${client.id}/follow-up/new`}
                 label="Nouveau body scan"
                 hint="Entrer directement les nouvelles valeurs"

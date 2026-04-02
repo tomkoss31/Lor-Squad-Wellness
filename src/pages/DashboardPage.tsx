@@ -68,7 +68,7 @@ export function DashboardPage() {
       accent: "red" as const
     },
     {
-      label: currentUser.role === "admin" ? "Capacite cible" : "Charge cible",
+      label: currentUser.role === "admin" ? "Vision capacite" : "Charge du moment",
       value: currentUser.role === "admin" ? `${coverage}%` : `${visibleClients.length}`,
       hint:
         currentUser.role === "admin"
@@ -79,28 +79,31 @@ export function DashboardPage() {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-7">
       <PageHeading
         eyebrow="Dashboard"
         title={
           currentUser.role === "admin"
-            ? "Pilotage equipe, rendez-vous et relances en lecture directe"
-            : "Mes priorites clients, mes rendez-vous et mes relances"
+            ? "Une lecture plus claire de l'equipe, des rendez-vous et des relances"
+            : "Mes priorites clients, mes rendez-vous et la suite a poser"
         }
-        description="Le dashboard devient un vrai point de pilotage : les priorites se lisent a droite, les portefeuilles se parcourent en un clic et la base client reste exploitable quand elle grandit."
+        description="Le dashboard reste direct et efficace, mais avec une respiration plus premium pour retrouver les priorites, ouvrir les portefeuilles et garder une lecture nette quand la base grandit."
       />
 
       <Card className="overflow-hidden">
         <div className="grid gap-6 xl:grid-cols-[1.08fr_0.92fr]">
-          <div className="space-y-5">
+          <div className="space-y-6">
             <div>
-              <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Vue du jour</p>
-              <h2 className="mt-3 text-4xl text-white">
+              <p className="eyebrow-label">Vue du jour</p>
+              <h2 className="mt-4 max-w-[12ch] text-balance text-4xl text-white">
                 {currentUser.role === "admin"
                   ? "Tu vois tout de suite qui a des rendez-vous, qui doit relancer et ou se situe la charge client."
-                  : "Tu retrouves tout de suite tes clients a revoir, tes rendez-vous et la suite a poser."}
+                  : "Tu retrouves tout de suite les personnes a revoir, les rendez-vous a venir et la suite a poser."}
               </h2>
-              <div className="mt-4">
+              <p className="mt-4 max-w-2xl text-[16px] leading-8 text-slate-300/88">
+                Une vision plus editoriale, plus calme et plus directe pour piloter la journee.
+              </p>
+              <div className="mt-5">
                 <BrandSignature variant="inline" />
               </div>
             </div>
@@ -117,10 +120,8 @@ export function DashboardPage() {
               ))}
             </div>
 
-            <div className="rounded-[24px] border border-white/10 bg-white/[0.04] px-5 py-4">
-              <p className="text-[11px] uppercase tracking-[0.24em] text-slate-500">
-                Cadre de stockage
-              </p>
+            <div className="surface-soft rounded-[26px] px-5 py-5">
+              <p className="eyebrow-label">Cadre de stockage</p>
               <p className="mt-3 text-sm leading-7 text-slate-300">
                 {storageMode === "supabase"
                   ? "Supabase est bien le bon choix pour tenir une base equipe avec plus de 1000 clients, des recherches rapides et des portefeuilles separes."
@@ -132,19 +133,19 @@ export function DashboardPage() {
             <div className="flex flex-wrap gap-3">
               <Link
                 to="/clients"
-                className="inline-flex rounded-full bg-white px-5 py-3 text-sm font-semibold text-slate-950 transition hover:scale-[1.01]"
+                className="inline-flex min-h-[52px] items-center justify-center rounded-[18px] bg-[linear-gradient(180deg,#6AC0FF_0%,#59B7FF_100%)] px-5 py-3 text-sm font-semibold text-slate-950 shadow-soft transition duration-200 hover:brightness-[1.03]"
               >
                 Ouvrir la base client
               </Link>
               <Link
                 to={`/distributors/${currentUser.id}`}
-                className="inline-flex rounded-full border border-white/10 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/5"
+                className="inline-flex min-h-[52px] items-center justify-center rounded-[18px] bg-white/[0.04] px-5 py-3 text-sm font-semibold text-white transition duration-200 hover:bg-white/[0.07]"
               >
                 Voir mon portefeuille
               </Link>
               <Link
                 to="/assessments/new"
-                className="inline-flex rounded-full border border-white/10 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/5"
+                className="inline-flex min-h-[52px] items-center justify-center rounded-[18px] bg-white/[0.04] px-5 py-3 text-sm font-semibold text-white transition duration-200 hover:bg-white/[0.07]"
               >
                 Demarrer un bilan
               </Link>
@@ -172,10 +173,8 @@ export function DashboardPage() {
         <Card className="space-y-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
-                Responsables du dossier
-              </p>
-              <h2 className="mt-2 text-3xl text-white">
+              <p className="eyebrow-label">Responsables du dossier</p>
+              <h2 className="mt-3 max-w-[16ch] text-balance text-3xl text-white">
                 Ouvrir Thomas, Melanie, Mendy ou le reste de l&apos;equipe en un clic
               </h2>
             </div>
@@ -187,7 +186,7 @@ export function DashboardPage() {
               <Link
                 key={summary.user.id}
                 to={`/distributors/${summary.user.id}`}
-                className="rounded-[28px] border border-white/10 bg-white/[0.03] p-5 transition hover:bg-white/[0.05]"
+                className="rounded-[28px] bg-white/[0.03] p-5 transition duration-200 hover:bg-white/[0.05]"
               >
                 <div className="flex flex-wrap items-start justify-between gap-4">
                   <DistributorBadge
@@ -234,10 +233,8 @@ export function DashboardPage() {
         <Card className="space-y-4">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
-                Clients a reprendre
-              </p>
-              <h2 className="mt-2 text-3xl text-white">Les dossiers a ouvrir en premier</h2>
+              <p className="eyebrow-label">Clients a reprendre</p>
+              <h2 className="mt-3 text-3xl text-white">Les dossiers a ouvrir en premier</h2>
             </div>
             <Link className="text-sm font-semibold text-sky-300" to="/clients">
               Voir toute la base
@@ -251,7 +248,7 @@ export function DashboardPage() {
                 <Link
                   key={followUp.id}
                   to={`/clients/${followUp.clientId}`}
-                  className="rounded-[24px] border border-white/10 bg-white/[0.03] p-4 transition hover:bg-white/[0.05]"
+                  className="rounded-[24px] bg-white/[0.03] p-4 transition duration-200 hover:bg-white/[0.05]"
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div>
@@ -274,12 +271,12 @@ export function DashboardPage() {
         <Card className="space-y-4">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Rappel terrain</p>
-              <h2 className="mt-2 text-3xl text-white">Un cadre simple avant chaque bilan</h2>
+              <p className="eyebrow-label">Rappel terrain</p>
+              <h2 className="mt-3 text-3xl text-white">Un cadre simple avant chaque bilan</h2>
             </div>
             <Link
               to="/guide"
-              className="inline-flex rounded-full border border-white/10 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/5"
+              className="inline-flex min-h-[52px] items-center justify-center rounded-[18px] bg-white/[0.04] px-5 py-3 text-sm font-semibold text-white transition duration-200 hover:bg-white/[0.07]"
             >
               Ouvrir le guide
             </Link>
@@ -327,8 +324,8 @@ function PriorityPanel({
     <Card className="space-y-4">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <p className="text-xs uppercase tracking-[0.25em] text-slate-500">Priorites</p>
-          <h2 className="mt-2 text-2xl text-white">{title}</h2>
+          <p className="eyebrow-label">Priorites</p>
+          <h2 className="mt-3 text-2xl text-white">{title}</h2>
         </div>
         <StatusBadge label={`${items.length} visibles`} tone={tone} />
       </div>
@@ -339,7 +336,7 @@ function PriorityPanel({
             <Link
               key={followUp.id}
               to={`/clients/${followUp.clientId}`}
-              className="block rounded-[22px] border border-white/10 bg-white/[0.03] p-4 transition hover:bg-white/[0.05]"
+              className="block rounded-[24px] bg-white/[0.03] p-4 transition duration-200 hover:bg-white/[0.05]"
             >
               <div className="flex items-start justify-between gap-3">
                 <div>
@@ -358,7 +355,7 @@ function PriorityPanel({
             </Link>
           ))
         ) : (
-          <div className="rounded-[22px] border border-dashed border-white/10 bg-white/[0.03] p-5 text-sm text-slate-400">
+          <div className="rounded-[24px] bg-white/[0.03] p-5 text-sm text-slate-400">
             {emptyLabel}
           </div>
         )}
@@ -369,8 +366,8 @@ function PriorityPanel({
 
 function PortfolioKpi({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-[22px] border border-white/10 bg-slate-950/35 px-4 py-4">
-      <p className="text-[10px] uppercase tracking-[0.18em] text-slate-500">{label}</p>
+    <div className="rounded-[22px] bg-slate-950/24 px-4 py-4">
+      <p className="text-[11px] font-medium text-slate-500">{label}</p>
       <p className="mt-3 text-lg font-semibold text-white">{value}</p>
     </div>
   );
@@ -378,7 +375,7 @@ function PortfolioKpi({ label, value }: { label: string; value: string }) {
 
 function GuideTile({ title, text }: { title: string; text: string }) {
   return (
-    <div className="rounded-[22px] border border-white/10 bg-white/[0.03] p-4">
+    <div className="rounded-[24px] bg-white/[0.03] p-4">
       <p className="text-lg font-semibold text-white">{title}</p>
       <p className="mt-2 text-sm leading-6 text-slate-400">{text}</p>
     </div>

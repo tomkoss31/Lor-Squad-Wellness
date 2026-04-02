@@ -76,12 +76,12 @@ export function LoginPage() {
 
   return (
     <div className="min-h-screen bg-hero-mesh px-4 py-8 md:px-6">
-      <div className="mx-auto grid min-h-[calc(100vh-4rem)] max-w-[1500px] gap-6 lg:grid-cols-[1.08fr_0.92fr]">
-        <section className="glass-panel order-2 relative flex flex-col justify-between overflow-hidden rounded-[36px] p-6 md:p-8 lg:order-1 lg:p-10">
-          <div className="absolute right-[-90px] top-[-70px] h-64 w-64 rounded-full bg-amber-300/10 blur-3xl" />
-          <div className="absolute bottom-[-110px] left-[-80px] h-72 w-72 rounded-full bg-rose-400/10 blur-3xl" />
+      <div className="mx-auto grid min-h-[calc(100vh-4rem)] max-w-[1500px] gap-5 lg:grid-cols-[1.08fr_0.92fr]">
+        <section className="glass-panel order-2 relative flex flex-col justify-between overflow-hidden rounded-[38px] p-6 md:p-8 lg:order-1 lg:p-10">
+          <div className="absolute right-[-90px] top-[-70px] h-64 w-64 rounded-full bg-[rgba(239,197,141,0.10)] blur-3xl" />
+          <div className="absolute bottom-[-110px] left-[-80px] h-72 w-72 rounded-full bg-[rgba(89,183,255,0.10)] blur-3xl" />
 
-          <div className="space-y-8">
+          <div className="space-y-10">
             <div className="flex items-center gap-4">
               <img
                 src={blasonLogo}
@@ -89,25 +89,25 @@ export function LoginPage() {
                 className="h-16 w-16 rounded-[24px] object-cover ring-1 ring-white/10 md:h-20 md:w-20 md:rounded-[28px]"
               />
               <div>
-                <p className="font-display text-3xl leading-none sm:text-4xl md:text-6xl">
+                <p className="font-display text-3xl leading-none tracking-[-0.04em] sm:text-4xl md:text-6xl">
                   Lor&apos;Squad Wellness
                 </p>
-                <p className="mt-2 text-[11px] uppercase tracking-[0.28em] text-slate-400 md:text-sm md:tracking-[0.32em]">
-                  Plateforme rendez-vous et suivi client
+                <p className="mt-2 text-[12px] text-slate-400 md:text-sm">
+                  Accompagnement, rendez-vous et suivi client
                 </p>
               </div>
             </div>
 
-            <div className="space-y-4">
+            <div className="space-y-5">
               <StatusBadge label="Connexion" tone="amber" />
-              <h1 className="max-w-2xl text-3xl leading-[1] sm:text-4xl md:text-6xl">
-                Une entree claire pour lancer la journee et ouvrir les bons dossiers.
+              <h1 className="max-w-[11ch] text-balance text-3xl leading-[0.98] sm:text-4xl md:text-6xl">
+                Une entree plus calme pour retrouver les bons dossiers.
               </h1>
-              <p className="max-w-2xl text-sm leading-7 text-slate-300 md:text-base md:leading-8">
-                Lor&apos;Squad Wellness centralise le rendez-vous, la lecture client et le suivi
-                dans une interface simple a ouvrir, simple a utiliser et simple a faire evoluer.
+              <p className="max-w-2xl text-sm leading-7 text-slate-300/92 md:text-[17px] md:leading-8">
+                Lor&apos;Squad Wellness rassemble le rendez-vous, la lecture client et le suivi
+                dans un espace plus fluide, plus humain et facile a rouvrir sur tablette.
               </p>
-              <div className="flex flex-wrap gap-2 pt-1">
+              <div className="flex flex-wrap gap-2 pt-2">
                 <MiniTag label="Rendez-vous" />
                 <MiniTag label="Nutrition" />
                 <MiniTag label="Suivi" />
@@ -115,7 +115,7 @@ export function LoginPage() {
             </div>
           </div>
 
-          <div className="space-y-4 pt-1 md:space-y-6 md:pt-4">
+          <div className="space-y-4 pt-2 md:space-y-6 md:pt-4">
             <div className="relative flex min-h-[140px] items-start justify-center md:min-h-[340px]">
               <img
                 src={lorSquadLogo}
@@ -127,20 +127,20 @@ export function LoginPage() {
           </div>
         </section>
 
-        <section className="glass-panel order-1 rounded-[36px] p-6 md:p-8 lg:order-2 lg:p-10">
-          <div className="space-y-7">
+        <section className="glass-panel order-1 rounded-[38px] p-6 md:p-8 lg:order-2 lg:p-10">
+          <div className="space-y-8">
             <div>
-              <p className="text-xs uppercase tracking-[0.35em] text-slate-500">
-                Acces a la plateforme
-              </p>
-              <h2 className="mt-3 text-4xl">Connecte-toi pour ouvrir ton espace de travail</h2>
-              <p className="mt-3 max-w-xl text-sm leading-7 text-slate-300">
-                Une entree simple aujourd&apos;hui, avec une base deja propre pour les futurs
-                acces admin et distributeur.
+              <p className="eyebrow-label">Acces a la plateforme</p>
+              <h2 className="mt-4 max-w-[12ch] text-balance text-4xl">
+                Connecte-toi pour retrouver ton espace.
+              </h2>
+              <p className="mt-4 max-w-xl text-sm leading-7 text-slate-300/92">
+                L&apos;entree reste simple, mais l&apos;ambiance gagne en douceur et en clarte pour
+                les usages du quotidien.
               </p>
             </div>
 
-            <form className="space-y-4" onSubmit={handleSubmit}>
+            <form className="space-y-5" onSubmit={handleSubmit}>
               <div className="space-y-2">
                 <label className="text-sm font-medium text-slate-300">Identifiant</label>
                 <input
@@ -155,8 +155,7 @@ export function LoginPage() {
                   spellCheck={false}
                 />
                 <p className="text-xs text-slate-500">
-                  L&apos;identifiant de connexion est l&apos;email professionnel du distributeur
-                  ou de l&apos;admin.
+                  Utilise l&apos;email professionnel associe a ton acces.
                 </p>
               </div>
               <div className="space-y-2">
@@ -181,24 +180,22 @@ export function LoginPage() {
               </div>
 
               {error ? (
-                <div className="rounded-[20px] border border-rose-400/20 bg-rose-400/10 px-4 py-3 text-sm text-rose-100">
+                <div className="rounded-[22px] bg-rose-400/10 px-4 py-3 text-sm text-rose-100 shadow-soft">
                   {error}
                 </div>
               ) : null}
 
               <Button type="submit" className="w-full" disabled={!authReady}>
-                Ouvrir la plateforme
+                Ouvrir mon espace
               </Button>
             </form>
 
             {!isStandalone ? (
-              <div className="rounded-[24px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.03))] p-4">
+              <div className="surface-soft rounded-[24px] p-5">
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <p className="text-[11px] uppercase tracking-[0.24em] text-slate-500">
-                      Installer l&apos;app
-                    </p>
-                    <p className="mt-2 text-lg font-semibold text-white">
+                    <p className="eyebrow-label">Installer l&apos;app</p>
+                    <p className="mt-3 text-lg font-semibold text-white">
                       Ajoute Lor&apos;Squad Wellness a ton ecran d&apos;accueil.
                     </p>
                     <p className="mt-2 text-sm leading-6 text-slate-300">
@@ -218,20 +215,20 @@ export function LoginPage() {
                     </Button>
                   </div>
                 ) : isIos ? (
-                  <div className="mt-4 rounded-[18px] border border-white/10 bg-white/[0.03] px-4 py-4 text-sm leading-6 text-slate-300">
+                  <div className="mt-4 rounded-[18px] bg-white/[0.03] px-4 py-4 text-sm leading-6 text-slate-300">
                     Sur iPhone / iPad : ouvre ce lien dans <span className="font-semibold text-white">Safari</span>,
                     puis touche <span className="font-semibold text-white">Partager</span> et choisis{" "}
                     <span className="font-semibold text-white">Sur l&apos;ecran d&apos;accueil</span>.
                   </div>
                 ) : isMobile ? (
-                  <div className="mt-4 rounded-[18px] border border-white/10 bg-white/[0.03] px-4 py-4 text-sm leading-6 text-slate-300">
+                  <div className="mt-4 rounded-[18px] bg-white/[0.03] px-4 py-4 text-sm leading-6 text-slate-300">
                     Sur Android : ouvre ce lien dans <span className="font-semibold text-white">Chrome</span>,
                     puis utilise le menu du navigateur pour{" "}
                     <span className="font-semibold text-white">Installer l&apos;app</span> ou{" "}
                     <span className="font-semibold text-white">Ajouter a l&apos;ecran d&apos;accueil</span>.
                   </div>
                 ) : (
-                  <div className="mt-4 rounded-[18px] border border-white/10 bg-white/[0.03] px-4 py-4 text-sm leading-6 text-slate-300">
+                  <div className="mt-4 rounded-[18px] bg-white/[0.03] px-4 py-4 text-sm leading-6 text-slate-300">
                     Sur ordinateur, utilise l&apos;icone d&apos;installation dans la barre d&apos;adresse
                     de Chrome ou Edge pour ajouter l&apos;app.
                   </div>
@@ -240,7 +237,7 @@ export function LoginPage() {
             ) : null}
 
             {storageMode === "local" ? (
-              <div className="rounded-[24px] border border-white/10 bg-white/[0.04] p-4">
+              <div className="surface-soft rounded-[24px] p-5">
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <p className="text-sm font-semibold text-white">Acces de demonstration</p>
@@ -254,7 +251,7 @@ export function LoginPage() {
                   <button
                     type="button"
                     onClick={() => fillDemoAccess("distributor")}
-                    className="rounded-[20px] border border-white/10 bg-slate-950/35 px-4 py-4 text-left transition hover:border-white/20 hover:bg-white/[0.05]"
+                    className="rounded-[22px] bg-slate-950/26 px-4 py-4 text-left transition hover:bg-white/[0.05]"
                   >
                     <p className="text-sm font-semibold text-white">Acces distributeur</p>
                     <p className="mt-1 text-xs leading-6 text-slate-400">
@@ -264,7 +261,7 @@ export function LoginPage() {
                   <button
                     type="button"
                     onClick={() => fillDemoAccess("admin")}
-                    className="rounded-[20px] border border-white/10 bg-slate-950/35 px-4 py-4 text-left transition hover:border-white/20 hover:bg-white/[0.05]"
+                    className="rounded-[22px] bg-slate-950/26 px-4 py-4 text-left transition hover:bg-white/[0.05]"
                   >
                     <p className="text-sm font-semibold text-white">Acces admin</p>
                     <p className="mt-1 text-xs leading-6 text-slate-400">
@@ -276,10 +273,8 @@ export function LoginPage() {
               </div>
             ) : null}
 
-            <div className="rounded-[24px] border border-white/10 bg-slate-950/35 p-4">
-              <p className="text-[11px] uppercase tracking-[0.24em] text-slate-500">
-                Comment creer les acces
-              </p>
+            <div className="surface-soft rounded-[24px] p-5">
+              <p className="eyebrow-label">Comment creer les acces</p>
               <div className="mt-4 space-y-3">
                 <AccessStep
                   index="01"
@@ -308,7 +303,7 @@ export function LoginPage() {
 
 function MiniTag({ label }: { label: string }) {
   return (
-    <div className="rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-xs uppercase tracking-[0.24em] text-slate-300">
+    <div className="rounded-full bg-white/[0.04] px-4 py-2 text-[11px] font-medium tracking-[0.08em] text-slate-300">
       {label}
     </div>
   );
@@ -324,13 +319,13 @@ function AccessStep({
   text: string;
 }) {
   return (
-    <div className="flex gap-3 rounded-[18px] border border-white/10 bg-white/[0.04] p-3">
-      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/10 bg-slate-950/55 text-xs font-semibold tracking-[0.2em] text-slate-300">
+    <div className="flex gap-3 rounded-[22px] bg-white/[0.03] p-4">
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/[0.06] text-xs font-semibold tracking-[0.08em] text-slate-200">
         {index}
       </div>
       <div>
         <p className="text-sm font-semibold text-white">{title}</p>
-        <p className="mt-1 text-sm leading-6 text-slate-400">{text}</p>
+        <p className="mt-1 text-sm leading-6 text-slate-400/90">{text}</p>
       </div>
     </div>
   );

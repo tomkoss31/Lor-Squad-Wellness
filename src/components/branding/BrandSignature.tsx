@@ -11,13 +11,11 @@ export function BrandSignature({ variant = "inline" }: BrandSignatureProps) {
         <img
           src={blasonLogo}
           alt="Lor'Squad"
-          className="h-11 w-11 rounded-[18px] object-cover ring-1 ring-white/10 shadow-luxe"
+          className="h-11 w-11 rounded-[18px] object-cover shadow-soft"
         />
         <div>
           <p className="text-sm font-semibold text-white">Lor&apos;Squad Wellness</p>
-          <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">
-            Powered by La Base
-          </p>
+          <p className="text-[11px] text-slate-500">Powered by La Base</p>
         </div>
       </div>
     );
@@ -25,22 +23,22 @@ export function BrandSignature({ variant = "inline" }: BrandSignatureProps) {
 
   if (variant === "stacked") {
     return (
-      <div className="space-y-4 rounded-[24px] border border-white/10 bg-white/[0.04] p-4">
+      <div className="space-y-4 rounded-[24px] bg-white/[0.03] p-5">
         <div className="flex items-center gap-4">
           <img
             src={blasonLogo}
             alt="Lor'Squad"
-            className="h-14 w-14 rounded-[20px] object-cover ring-1 ring-white/10"
+            className="h-14 w-14 rounded-[20px] object-cover shadow-soft"
           />
           <div>
             <p className="text-lg font-semibold text-white">Lor&apos;Squad Wellness</p>
-            <p className="mt-1 text-[11px] uppercase tracking-[0.24em] text-slate-500">
-              Outil principal
+            <p className="mt-1 text-[12px] text-slate-500">
+              Accompagnement wellbeing
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-3 rounded-[18px] border border-white/10 bg-slate-950/35 px-3 py-3">
+        <div className="flex items-center gap-3 rounded-[18px] bg-slate-950/30 px-3 py-3">
           <img src={laBaseLogo} alt="La Base" className="h-10 w-10 rounded-xl object-cover" />
           <div>
             <p className="text-sm font-semibold text-white">La Base Shakes &amp; Drinks</p>
@@ -52,13 +50,13 @@ export function BrandSignature({ variant = "inline" }: BrandSignatureProps) {
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-3 text-sm text-slate-400">
-      <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.06),rgba(255,255,255,0.03))] px-3 py-1.5 shadow-luxe">
-        <img src={blasonLogo} alt="Lor'Squad" className="h-5 w-5 rounded-full object-cover" />
+    <div className="flex flex-wrap items-center gap-4 text-sm text-slate-400">
+      <div className="inline-flex items-center gap-2">
+        <img src={blasonLogo} alt="Lor'Squad" className="h-6 w-6 rounded-full object-cover" />
         <span className="font-medium text-white">Lor&apos;Squad Wellness</span>
       </div>
-      <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.025))] px-3 py-1.5">
-        <img src={laBaseLogo} alt="La Base" className="h-5 w-5 rounded-full object-cover" />
+      <div className="inline-flex items-center gap-2 text-slate-500">
+        <img src={laBaseLogo} alt="La Base" className="h-6 w-6 rounded-full object-cover" />
         <span>Powered by La Base</span>
       </div>
     </div>

@@ -18,31 +18,31 @@ export function AppLayout() {
   }
 
   const navigation = [
-    { label: "Dashboard", path: "/dashboard" },
-    { label: "Guide RDV", path: "/guide" },
+    { label: "Accueil", path: "/dashboard" },
+    { label: "Guide rendez-vous", path: "/guide" },
     { label: "Recommandations", path: "/recommendations" },
-    { label: "Clients", path: "/clients" },
-    ...(currentUser.role === "admin" ? [{ label: "Utilisateurs", path: "/users" }] : []),
+    { label: "Dossiers clients", path: "/clients" },
+    ...(currentUser.role === "admin" ? [{ label: "Equipe", path: "/users" }] : []),
     { label: "Nouveau bilan", path: "/assessments/new" }
   ];
 
   const pageTitle =
     location.pathname === "/dashboard"
-      ? "Pilotage de l'activite et rendez-vous du moment"
+      ? "Une lecture claire de l'activite et des rendez-vous du moment"
       : location.pathname === "/guide"
-        ? "Conseils terrain pour mieux conduire le rendez-vous"
+        ? "Des reperes simples pour mieux conduire le rendez-vous"
         : location.pathname === "/recommendations"
-          ? "Support simple pour poser les recommandations au bon moment"
+          ? "Le bon support pour poser les recommandations au bon moment"
         : location.pathname === "/clients"
-          ? "Dossiers clients et suivi en cours"
+          ? "Les dossiers clients et le suivi en cours"
         : location.pathname.startsWith("/distributors/")
-          ? "Lecture portefeuille responsable et relances"
+          ? "Le portefeuille responsable et les relances a suivre"
         : location.pathname === "/users"
-          ? "Creation des acces et gestion simple des roles"
+          ? "Les acces de l'equipe et les roles essentiels"
           : location.pathname.startsWith("/clients/")
-            ? "Lecture detaillee du dossier client"
+            ? "Le detail du dossier client"
             : location.pathname === "/assessments/new"
-              ? "Bilan guide pour conduire le rendez-vous"
+              ? "Le bilan guide pour conduire le rendez-vous"
               : "Lor'Squad Wellness";
 
   function handleLogout() {
@@ -56,49 +56,49 @@ export function AppLayout() {
 
   return (
     <div className="min-h-screen bg-hero-mesh">
-      <div className="mx-auto flex min-h-screen max-w-[1460px] flex-col gap-4 px-3 py-3 md:px-4 xl:grid xl:grid-cols-[230px_minmax(0,1fr)] xl:gap-5 xl:px-5">
-        <aside className="glass-panel relative hidden overflow-hidden rounded-[30px] p-4 xl:sticky xl:top-5 xl:block xl:h-[calc(100vh-2.5rem)]">
-          <div className="absolute -left-10 top-0 h-28 w-28 rounded-full bg-amber-300/8 blur-3xl" />
-          <div className="absolute -right-10 bottom-20 h-28 w-28 rounded-full bg-sky-300/8 blur-3xl" />
+      <div className="mx-auto flex min-h-screen max-w-[1480px] flex-col gap-5 px-3 py-3 md:px-4 xl:grid xl:grid-cols-[252px_minmax(0,1fr)] xl:gap-6 xl:px-5">
+        <aside className="glass-panel relative hidden overflow-hidden rounded-[34px] px-5 py-6 xl:sticky xl:top-5 xl:block xl:h-[calc(100vh-2.5rem)]">
+          <div className="absolute -left-10 top-0 h-28 w-28 rounded-full bg-[rgba(239,197,141,0.10)] blur-3xl" />
+          <div className="absolute -right-10 bottom-20 h-28 w-28 rounded-full bg-[rgba(89,183,255,0.10)] blur-3xl" />
           <div className="flex h-full flex-col justify-between gap-6">
-            <div className="space-y-6">
-              <div className="flex items-center gap-4">
+            <div className="space-y-7">
+              <div className="flex items-center gap-4 pb-1">
                 <img
                   src={blasonLogo}
                   alt="Lor'Squad"
-                  className="h-14 w-14 rounded-[22px] object-cover ring-1 ring-white/10 shadow-luxe"
+                  className="h-14 w-14 rounded-[22px] object-cover shadow-soft"
                 />
                 <div>
-                  <p className="font-display text-[1.45rem] leading-none">Lor'Squad</p>
-                  <p className="text-xs uppercase tracking-[0.28em] text-slate-400">
-                    Wellness
-                  </p>
+                  <p className="font-display text-[1.45rem] leading-none text-white">Lor'Squad</p>
+                  <p className="text-[12px] text-slate-500">Wellness</p>
                 </div>
               </div>
 
-              <div className="flex items-center gap-3 rounded-[22px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.055),rgba(255,255,255,0.03))] px-3 py-3 shadow-luxe">
+              <div className="flex items-center gap-3 rounded-[22px] bg-white/[0.035] px-4 py-3">
                 <img src={laBaseLogo} alt="La Base" className="h-9 w-9 rounded-xl object-cover" />
                 <div>
                   <p className="text-sm font-semibold text-white">La Base</p>
-                  <p className="text-[11px] uppercase tracking-[0.18em] text-slate-500">
-                    Powered by La Base
-                  </p>
+                  <p className="text-[12px] text-slate-500">Powered by La Base</p>
                 </div>
               </div>
 
-              <div className="flex items-center justify-between gap-3 rounded-[24px] border border-white/10 bg-[linear-gradient(180deg,rgba(9,14,24,0.62),rgba(9,14,24,0.44))] px-4 py-3 shadow-luxe">
-                <div>
-                  <p className="text-sm font-semibold text-white">{currentUser.name}</p>
-                  <p className="text-xs text-slate-400">{currentUser.title}</p>
-                  <p className="mt-2 text-[11px] text-slate-500">{getAccessSummary(currentUser)}</p>
+              <div className="rounded-[24px] bg-white/[0.03] px-4 py-4">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-[15px] font-semibold text-white">{currentUser.name}</p>
+                    <p className="mt-1 text-[13px] text-slate-400">{currentUser.title}</p>
+                  </div>
+                  <StatusBadge
+                    label={getRoleLabel(currentUser.role)}
+                    tone={currentUser.role === "admin" ? "blue" : "green"}
+                  />
                 </div>
-                <StatusBadge
-                  label={getRoleLabel(currentUser.role)}
-                  tone={currentUser.role === "admin" ? "blue" : "green"}
-                />
+                <p className="mt-3 text-[13px] leading-6 text-slate-500">
+                  {getAccessSummary(currentUser)}
+                </p>
               </div>
 
-              <nav className="space-y-2">
+              <nav className="space-y-1.5">
                 {navigation.map((item) => {
                   const isActive =
                     location.pathname === item.path ||
@@ -108,88 +108,97 @@ export function AppLayout() {
                     <NavLink
                       key={item.path}
                       to={item.path}
-                      className={`flex items-center justify-between rounded-2xl px-4 py-3 text-sm font-medium transition ${
+                      className={`flex items-center gap-3 rounded-[20px] px-4 py-3.5 text-[15px] font-medium transition ${
                         isActive
-                          ? "border border-white/10 bg-white/95 text-slate-950"
-                          : "border border-transparent text-slate-300 hover:border-white/10 hover:bg-white/5 hover:text-white"
+                          ? "bg-sky-400/[0.14] text-white shadow-[0_0_0_1px_rgba(107,194,255,0.16)]"
+                          : "text-slate-400 hover:bg-white/[0.035] hover:text-white"
                       }`}
                     >
+                      <span
+                        className={`h-1.5 w-1.5 rounded-full ${
+                          isActive ? "bg-sky-200" : "bg-white/15"
+                        }`}
+                      />
                       <span>{item.label}</span>
-                      <span className="text-xs uppercase tracking-[0.25em]">
-                        {isActive ? "Ouvert" : "Voir"}
-                      </span>
+                      {item.path === "/assessments/new" ? (
+                        <span className="ml-auto rounded-full bg-[rgba(239,197,141,0.18)] px-2.5 py-1 text-[11px] font-medium text-[rgba(255,235,214,0.92)]">
+                          Nouveau
+                        </span>
+                      ) : null}
                     </NavLink>
                   );
                 })}
               </nav>
 
-              <div className="rounded-[24px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.025))] p-4 shadow-luxe">
-                <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Cadre</p>
-                <p className="mt-3 text-sm leading-6 text-slate-300">
-                  Un outil simple pour conduire un rendez-vous, expliquer le plan et fixer la
-                  suite sans pression.
+              <div className="rounded-[24px] bg-white/[0.025] p-5">
+                <p className="eyebrow-label">Cap du jour</p>
+                <p className="mt-3 text-[14px] leading-7 text-slate-300">
+                  Un espace plus calme, plus premium et plus fluide pour conduire le rendez-vous.
                 </p>
               </div>
             </div>
 
-            <div className="space-y-3 rounded-[24px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.025))] p-4 shadow-luxe">
+            <div className="space-y-4 rounded-[26px] bg-white/[0.025] p-5">
               <BrandSignature variant="compact" />
               <div>
-                <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
-                  Lecture tablette
-                </p>
-                <p className="mt-2 text-sm text-slate-300">
-                  Peu de friction, blocs utiles et actions visibles pendant le rendez-vous.
+                <p className="eyebrow-label">Usage tablette</p>
+                <p className="mt-3 text-[14px] leading-7 text-slate-300">
+                  Tout reste net, respirant et facile a rouvrir pendant l&apos;echange.
                 </p>
               </div>
               {currentSession ? (
-                <div className="rounded-[18px] border border-white/10 bg-slate-950/35 px-3 py-3 text-xs text-slate-400">
-                  Session locale active - scope {currentSession.accessScope}
+                <div className="rounded-[18px] bg-slate-950/28 px-4 py-3 text-[12px] text-slate-400">
+                  Session active - acces {currentSession.accessScope}
                 </div>
               ) : null}
-              <Button variant="secondary" className="w-full" onClick={handleLogout}>
+              <Button className="w-full" onClick={() => navigate("/assessments/new")}>
+                Nouveau bilan
+              </Button>
+              <Button variant="ghost" className="w-full" onClick={handleLogout}>
                 Se deconnecter
               </Button>
             </div>
           </div>
         </aside>
 
-        <main className="min-w-0 space-y-4 md:space-y-6">
-          <section className="glass-panel overflow-hidden rounded-[24px] p-3 sm:p-4 xl:hidden">
+        <main className="min-w-0 space-y-5 md:space-y-6">
+          <section className="glass-panel overflow-hidden rounded-[28px] p-4 xl:hidden">
             <div className="flex items-center justify-between gap-3">
               <div className="flex min-w-0 items-center gap-3">
                 <img
                   src={blasonLogo}
                   alt="Lor'Squad"
-                  className="h-11 w-11 rounded-[16px] object-cover ring-1 ring-white/10 shadow-luxe"
+                  className="h-11 w-11 rounded-[16px] object-cover shadow-soft"
                 />
                 <div className="min-w-0">
                   <p className="truncate text-base font-semibold text-white">Lor&apos;Squad Wellness</p>
-                  <p className="truncate text-[11px] uppercase tracking-[0.18em] text-slate-500">
-                    Powered by La Base
-                  </p>
+                  <p className="truncate text-[12px] text-slate-500">Powered by La Base</p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
                 {!isStandalone && canPromptInstall ? (
                   <Button
                     variant="secondary"
-                    className="px-4 py-2 text-[11px]"
+                    className="min-h-[42px] px-4 py-2 text-[12px]"
                     onClick={() => void handleInstallClick()}
                   >
                     Installer
                   </Button>
                 ) : null}
-                <Button variant="secondary" className="px-4 py-2 text-[11px]" onClick={handleLogout}>
+                <Button
+                  variant="ghost"
+                  className="min-h-[42px] px-4 py-2 text-[12px]"
+                  onClick={handleLogout}
+                >
                   Quitter
                 </Button>
               </div>
             </div>
 
-            <div className="mt-3 flex items-center justify-between gap-3 rounded-[18px] border border-white/10 bg-white/[0.03] px-3 py-3">
+            <div className="mt-4 flex items-center justify-between gap-3 rounded-[20px] bg-white/[0.03] px-4 py-3">
               <div className="min-w-0">
                 <p className="truncate text-sm font-semibold text-white">{currentUser.name}</p>
-                <p className="truncate text-xs text-slate-400">{pageTitle}</p>
+                <p className="truncate text-[13px] text-slate-400">{pageTitle}</p>
               </div>
               <StatusBadge
                 label={getRoleLabel(currentUser.role)}
@@ -197,7 +206,7 @@ export function AppLayout() {
               />
             </div>
 
-            <nav className="mt-3 flex gap-2 overflow-x-auto pb-1">
+            <nav className="mt-4 flex gap-2 overflow-x-auto pb-1">
               {navigation.map((item) => {
                 const isActive =
                   location.pathname === item.path ||
@@ -207,10 +216,10 @@ export function AppLayout() {
                   <NavLink
                     key={item.path}
                     to={item.path}
-                    className={`whitespace-nowrap rounded-full border px-4 py-2 text-xs font-medium transition ${
+                    className={`whitespace-nowrap rounded-full px-4 py-2.5 text-[13px] font-medium transition ${
                       isActive
-                        ? "border-white/10 bg-white text-slate-950"
-                        : "border-white/10 bg-white/[0.04] text-slate-200"
+                        ? "bg-sky-400/[0.16] text-white"
+                        : "bg-white/[0.03] text-slate-300"
                     }`}
                   >
                     {item.label}
@@ -220,28 +229,26 @@ export function AppLayout() {
             </nav>
 
             {!isStandalone && isIos ? (
-              <div className="mt-3 rounded-[18px] border border-white/10 bg-white/[0.03] px-4 py-3 text-xs leading-6 text-slate-300">
+              <div className="mt-4 rounded-[18px] bg-white/[0.03] px-4 py-3 text-[13px] leading-6 text-slate-300">
                 Ouvre ce lien dans Safari, puis Partager et Sur l&apos;ecran d&apos;accueil.
               </div>
             ) : null}
             {!isStandalone && !isIos && isMobile && !canPromptInstall ? (
-              <div className="mt-3 rounded-[18px] border border-white/10 bg-white/[0.03] px-4 py-3 text-xs leading-6 text-slate-300">
+              <div className="mt-4 rounded-[18px] bg-white/[0.03] px-4 py-3 text-[13px] leading-6 text-slate-300">
                 Ouvre ce lien dans Chrome puis Installe l&apos;app ou Ajoute a l&apos;ecran d&apos;accueil.
               </div>
             ) : null}
           </section>
 
-          <header className="glass-panel relative overflow-hidden rounded-[24px] p-4 sm:rounded-[28px] md:p-5 xl:rounded-[30px]">
-            <div className="absolute right-10 top-0 h-24 w-24 rounded-full bg-amber-300/8 blur-3xl" />
-            <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-              <div>
-                <p className="text-[11px] uppercase tracking-[0.3em] text-slate-500">
-                  Lor&apos;Squad Wellness
-                </p>
-                <p className="mt-2 max-w-3xl text-lg font-semibold text-white sm:text-xl md:text-[1.7rem]">
+          <header className="glass-panel relative overflow-hidden rounded-[30px] px-5 py-6 md:px-7 md:py-7">
+            <div className="absolute right-10 top-0 h-24 w-24 rounded-full bg-[rgba(239,197,141,0.08)] blur-3xl" />
+            <div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
+              <div className="max-w-3xl">
+                <p className="eyebrow-label">Lor&apos;Squad Wellness</p>
+                <p className="mt-4 max-w-[20ch] text-[1.9rem] font-semibold leading-[1.06] tracking-[-0.03em] text-white sm:text-[2.2rem] md:text-[2.55rem]">
                   {pageTitle}
                 </p>
-                <div className="mt-3 hidden md:block">
+                <div className="mt-4 hidden md:block">
                   <BrandSignature variant="inline" />
                 </div>
               </div>
@@ -252,16 +259,16 @@ export function AppLayout() {
                       Installer l&apos;app
                     </Button>
                   ) : isIos ? (
-                    <div className="rounded-full border border-white/10 bg-white/[0.04] px-4 py-3 text-xs text-slate-300">
+                    <div className="rounded-full bg-white/[0.03] px-4 py-3 text-[12px] text-slate-300">
                       Partager puis ecran d&apos;accueil
                     </div>
                   ) : isMobile ? (
-                    <div className="rounded-full border border-white/10 bg-white/[0.04] px-4 py-3 text-xs text-slate-300">
+                    <div className="rounded-full bg-white/[0.03] px-4 py-3 text-[12px] text-slate-300">
                       Installer via Chrome
                     </div>
                   ) : null
                 ) : null}
-                <Button variant="secondary" onClick={handleLogout}>
+                <Button variant="ghost" onClick={handleLogout}>
                   Retour login
                 </Button>
               </div>

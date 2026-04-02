@@ -69,12 +69,10 @@ function AuthBootSplash() {
     <div className="min-h-screen bg-hero-mesh px-4 py-8">
       <div className="mx-auto flex min-h-[calc(100vh-4rem)] max-w-[720px] items-center justify-center">
         <div className="glass-panel w-full rounded-[32px] px-8 py-10 text-center">
-          <p className="text-[11px] uppercase tracking-[0.34em] text-slate-500">
-            Lor&apos;Squad Wellness
-          </p>
+          <p className="eyebrow-label">Lor&apos;Squad Wellness</p>
           <h1 className="mt-4 text-3xl md:text-4xl">Ouverture de la session</h1>
-          <p className="mt-3 text-sm leading-7 text-slate-300">
-            Verification locale de l&apos;acces en cours pour ouvrir l&apos;outil dans de bonnes
+          <p className="mt-4 text-sm leading-7 text-slate-300">
+            On verifie simplement l&apos;acces pour rouvrir l&apos;espace dans de bonnes
             conditions.
           </p>
           {showRecovery ? (
@@ -86,7 +84,7 @@ function AuthBootSplash() {
               <button
                 type="button"
                 onClick={() => void handleRecovery()}
-                className="rounded-full border border-white/10 bg-white/[0.06] px-5 py-3 text-sm font-medium text-white transition hover:bg-white/[0.1]"
+                className="rounded-[18px] bg-white/[0.06] px-5 py-3 text-sm font-medium text-white transition hover:bg-white/[0.1]"
               >
                 Revenir a la connexion
               </button>

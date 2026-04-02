@@ -409,6 +409,31 @@ export async function addSupabaseFollowUpAssessment(
   }
 }
 
+export async function updateSupabaseAssessment(clientId: string, assessment: AssessmentRecord) {
+  const client = await requireSupabase();
+  const {
+    data: { session }
+  } = await client.auth.getSession();
+
+  if (!session?.access_token) {
+    throw new Error("La session est introuvable. Reconnecte-toi puis recommence.");
+  }
+
+  const response = await fetch("/api/update-assessment", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${session.access_token}`
+    },
+    body: JSON.stringify({ clientId, assessment })
+  });
+
+  const result = (await response.json()) as { ok: boolean; error?: string };
+  if (!response.ok || !result.ok) {
+    throw new Error(result.error ?? "Impossible de modifier ce bilan.");
+  }
+}
+
 export async function deleteSupabaseClient(clientId: string) {
   const client = await requireSupabase();
   const {

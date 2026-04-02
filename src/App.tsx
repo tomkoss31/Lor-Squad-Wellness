@@ -38,6 +38,11 @@ const ClientDetailPage = lazy(() =>
     default: module.ClientDetailPage
   }))
 );
+const EditInitialAssessmentPage = lazy(() =>
+  import("./pages/EditInitialAssessmentPage").then((module) => ({
+    default: module.EditInitialAssessmentPage
+  }))
+);
 const NewFollowUpPage = lazy(() =>
   import("./pages/NewFollowUpPage").then((module) => ({
     default: module.NewFollowUpPage
@@ -74,6 +79,7 @@ export default function App() {
               </Route>
               <Route path="distributors/:distributorId" element={<DistributorPortfolioPage />} />
               <Route path="clients/:clientId" element={<ClientDetailPage />} />
+              <Route path="clients/:clientId/start-assessment/edit" element={<EditInitialAssessmentPage />} />
               <Route path="clients/:clientId/follow-up/new" element={<NewFollowUpPage />} />
               <Route path="assessments/new" element={<NewAssessmentPage />} />
             </Route>
@@ -90,11 +96,9 @@ function RouteLoadingScreen() {
     <div className="min-h-screen bg-hero-mesh px-4 py-8">
       <div className="mx-auto flex min-h-[calc(100vh-4rem)] max-w-[760px] items-center justify-center">
         <div className="glass-panel w-full rounded-[32px] px-8 py-10 text-center">
-          <p className="text-[11px] uppercase tracking-[0.34em] text-slate-500">
-            Lor&apos;Squad Wellness
-          </p>
+          <p className="eyebrow-label">Lor&apos;Squad Wellness</p>
           <h1 className="mt-4 text-3xl md:text-4xl">Chargement de la page</h1>
-          <p className="mt-3 text-sm leading-7 text-slate-300">
+          <p className="mt-4 text-sm leading-7 text-slate-300">
             On charge seulement l&apos;ecran utile pour garder l&apos;application plus legere et
             plus fluide.
           </p>

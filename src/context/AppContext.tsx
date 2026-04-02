@@ -37,6 +37,7 @@ import {
   loginWithSupabaseCredentials,
   logoutFromSupabase,
   restoreSupabaseSession,
+  updateSupabaseAssessment,
   updateSupabaseUserStatus
 } from "../services/supabaseService";
 import type {
@@ -92,6 +93,7 @@ interface AppContextValue {
     assessment: AssessmentRecord,
     followUpMeta: Pick<FollowUp, "dueDate" | "type" | "status">
   ) => Promise<void>;
+  updateAssessment: (clientId: string, assessment: AssessmentRecord) => Promise<void>;
 }
 
 const AppContext = createContext<AppContextValue | undefined>(undefined);
@@ -507,6 +509,32 @@ export function AppProvider({ children }: PropsWithChildren) {
     );
   }
 
+  async function updateAssessment(clientId: string, assessment: AssessmentRecord) {
+    if (storageMode === "supabase") {
+      await updateSupabaseAssessment(clientId, assessment);
+      await refreshRemoteData(currentUser);
+      return;
+    }
+
+    setClients((previousClients) =>
+      previousClients.map((client) => {
+        if (client.id !== clientId) {
+          return client;
+        }
+
+        const nextAssessments = client.assessments.map((item) =>
+          item.id === assessment.id ? assessment : item
+        );
+
+        return {
+          ...client,
+          startDate: assessment.type === "initial" ? assessment.date : client.startDate,
+          assessments: nextAssessments
+        };
+      })
+    );
+  }
+
   const value = useMemo(
     () => ({
       authReady,
@@ -532,7 +560,8 @@ export function AppProvider({ children }: PropsWithChildren) {
       canAccessClient: canAccessClientById,
       createClientWithInitialAssessment,
       deleteClient,
-      addFollowUpAssessment
+      addFollowUpAssessment,
+      updateAssessment
     }),
     [authReady, clients, currentSession, currentUser, followUps, storageMode, users]
   );

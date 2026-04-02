@@ -9,11 +9,11 @@ export function StatusBadge({ label, tone = "blue" }: StatusBadgeProps) {
   return (
     <span
       className={cn(
-        "inline-flex rounded-full border px-3.5 py-1.5 text-[10px] font-semibold uppercase tracking-[0.24em] backdrop-blur-md shadow-luxe",
-        tone === "blue" && "border-sky-300/18 bg-sky-400/[0.09] text-sky-50",
-        tone === "green" && "border-emerald-300/18 bg-emerald-400/[0.09] text-emerald-50",
-        tone === "red" && "border-rose-300/18 bg-rose-400/[0.09] text-rose-50",
-        tone === "amber" && "border-amber-300/18 bg-amber-300/[0.09] text-amber-50"
+        "inline-flex items-center rounded-full px-3 py-1.5 text-[11px] font-medium tracking-[0.04em]",
+        tone === "blue" && "bg-sky-400/[0.12] text-sky-100",
+        tone === "green" && "bg-emerald-400/[0.12] text-emerald-100",
+        tone === "red" && "bg-rose-400/[0.12] text-rose-100",
+        tone === "amber" && "bg-[rgba(239,197,141,0.12)] text-[rgba(255,235,214,0.96)]"
       )}
     >
       {label}

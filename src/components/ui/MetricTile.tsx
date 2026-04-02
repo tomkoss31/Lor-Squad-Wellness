@@ -14,20 +14,21 @@ export function MetricTile({
   accent = "blue"
 }: MetricTileProps) {
   return (
-    <div className="relative overflow-hidden rounded-[28px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.055),rgba(255,255,255,0.03))] p-4 shadow-luxe md:p-5">
+    <div className="relative overflow-hidden rounded-[28px] bg-[linear-gradient(180deg,rgba(20,29,44,0.9),rgba(15,22,34,0.96))] p-5 shadow-soft">
+      <div className="absolute inset-x-0 top-0 h-px bg-white/6" />
       <div
         className={cn(
-          "absolute inset-x-0 top-0 h-1",
-          accent === "blue" && "bg-gradient-to-r from-sky-300 via-cyan-200 to-transparent",
-          accent === "green" && "bg-gradient-to-r from-emerald-300 via-lime-200 to-transparent",
-          accent === "red" && "bg-gradient-to-r from-rose-300 via-amber-200 to-transparent"
+          "absolute left-5 top-5 h-2.5 w-2.5 rounded-full",
+          accent === "blue" && "bg-sky-300 shadow-[0_0_0_10px_rgba(89,183,255,0.10)]",
+          accent === "green" && "bg-emerald-300 shadow-[0_0_0_10px_rgba(99,209,166,0.10)]",
+          accent === "red" && "bg-[rgba(239,197,141,0.92)] shadow-[0_0_0_10px_rgba(239,197,141,0.10)]"
         )}
       />
-      <p className="text-[10px] uppercase tracking-[0.24em] text-slate-500">{label}</p>
-      <p className="mt-3 text-[2rem] font-semibold leading-[0.94] text-white md:text-[2.25rem]">
+      <p className="pl-5 text-[12px] font-medium text-slate-400">{label}</p>
+      <p className="mt-5 text-[1.9rem] font-semibold leading-[0.96] tracking-[-0.03em] text-white md:text-[2.15rem]">
         {value}
       </p>
-      <p className="mt-2.5 max-w-[18rem] text-[13px] leading-6 text-slate-400/95">{hint}</p>
+      <p className="mt-3 max-w-[18rem] text-[14px] leading-6 text-slate-400/88">{hint}</p>
     </div>
   );
 }
