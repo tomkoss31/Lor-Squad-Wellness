@@ -226,21 +226,31 @@ export function ClientDetailPage() {
 
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             <MetricTile
-              label="Dernier releve"
-              value={formatDate(latestAssessment.date)}
-              hint="Le point de depart le plus recent"
+              label="Poids de depart"
+              value={`${firstAssessment.bodyScan.weight} kg`}
+              hint={`Depuis le ${formatDate(firstAssessment.date)}`}
               accent="blue"
             />
             <MetricTile
-              label="Hydratation cible"
-              value={`${waterNeed} L`}
-              hint={`Actuel ${latestQuestionnaire.waterIntake} L / jour`}
+              label="Poids du jour"
+              value={`${latestBodyScan.weight} kg`}
+              hint={`Releve du ${formatDate(latestAssessment.date)}`}
               accent="green"
             />
             <MetricTile
-              label="Repere proteines"
-              value={proteinRange}
-              hint="Selon l'objectif du moment"
+              label={client.objective === "weight-loss" ? "Cible" : "Cap du moment"}
+              value={
+                client.objective === "weight-loss"
+                  ? latestQuestionnaire.targetWeight
+                    ? `${latestQuestionnaire.targetWeight} kg`
+                    : "A definir"
+                  : latestQuestionnaire.objectiveFocus || "Prise de masse"
+              }
+              hint={
+                client.objective === "weight-loss"
+                  ? "Le repere a rejoindre"
+                  : "Le fil conducteur du programme"
+              }
               accent="red"
             />
             <MetricTile
@@ -331,18 +341,22 @@ export function ClientDetailPage() {
           <Card className="space-y-4">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <p className="text-xs uppercase tracking-[0.25em] text-slate-500">Suivi actuel</p>
-                <p className="mt-2 text-2xl text-white">Le point client en un coup d'oeil</p>
+                <p className="text-xs uppercase tracking-[0.25em] text-slate-500">Cap du moment</p>
+                <p className="mt-2 text-2xl text-white">Ce qu'il faut relire avant d'avancer</p>
               </div>
               <StatusBadge label={client.currentProgram} tone="green" />
             </div>
-            <div className="grid gap-3 md:grid-cols-3 xl:grid-cols-1">
+            <div className="grid gap-3">
+              <SummaryFocusCard
+                label="Objectif reformule"
+                value={latestQuestionnaire.objectiveFocus || (client.objective === "sport" ? "Prise de masse" : "Perte de poids")}
+              />
               <SummaryFocusCard label="Programme" value={client.currentProgram} />
-              <SummaryFocusCard label="Dernier point" value={formatDate(latestAssessment.date)} />
-              <SummaryFocusCard label="Prochain rendez-vous" value={formatDateTime(client.nextFollowUp)} />
             </div>
             <div className="grid gap-3">
               <SummaryRow label="Statut" value={client.started ? "Routine demarree" : "Mise en place a lancer"} />
+              <SummaryRow label="Repere proteines" value={proteinRange} />
+              <SummaryRow label="Hydratation cible" value={`${waterNeed} L`} />
               <SummaryRow label="Note du moment" value={latestAssessment.notes} />
             </div>
           </Card>
