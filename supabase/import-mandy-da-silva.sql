@@ -1,8 +1,7 @@
-with admin_profile as (
+with distributor_profile as (
   select id, name
   from public.users
-  where email in ('fit2tom.coach@gmail.com', 'tomkoss31@gmail.com')
-  order by case when email = 'fit2tom.coach@gmail.com' then 0 else 1 end
+  where id = 'f5285ea5-9521-4e0d-8e09-523e310c494f'
   limit 1
 ),
 existing_client as (
@@ -44,8 +43,8 @@ inserted_client as (
     159,
     '',
     'Forges-sur-Meuse',
-    admin_profile.id,
-    admin_profile.name,
+    distributor_profile.id,
+    distributor_profile.name,
     'follow-up',
     'weight-loss',
     'Programme Premium',
@@ -53,7 +52,7 @@ inserted_client as (
     date '2026-02-13',
     timestamptz '2026-04-16 10:00:00+02',
     'Cliente importee depuis l''historique manuel. Objectif perte de poids, cible 58 kg pour juillet.'
-  from admin_profile
+  from distributor_profile
   where not exists (select 1 from existing_client)
   returning id
 ),
@@ -69,6 +68,10 @@ set
   height = 159,
   status = 'follow-up',
   objective = 'weight-loss',
+  distributor_id = 'f5285ea5-9521-4e0d-8e09-523e310c494f',
+  distributor_name = (
+    select name from public.users where id = 'f5285ea5-9521-4e0d-8e09-523e310c494f'
+  ),
   current_program = 'Programme Premium',
   started = true,
   start_date = date '2026-02-13',
