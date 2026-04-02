@@ -1417,17 +1417,17 @@ function RecommendationStepCard({
           {recommendations.map((item, index) => (
             <div
               key={`recommendation-${index}`}
-              className="grid gap-4 rounded-[26px] border border-white/10 bg-slate-950/35 p-5 lg:grid-cols-[110px_1.1fr_1.3fr]"
+              className="grid gap-4 rounded-[26px] border border-white/10 bg-[linear-gradient(180deg,rgba(2,6,23,0.4),rgba(15,23,42,0.28))] p-5 lg:grid-cols-[110px_1.1fr_1.3fr]"
             >
-              <div className="flex min-h-[64px] items-center justify-center rounded-[20px] border border-white/10 bg-white/[0.03] px-4 py-3 text-base font-semibold text-white">
+              <div className="flex min-h-[72px] items-center justify-center rounded-[20px] border border-white/10 bg-white/[0.03] px-4 py-3 text-base font-semibold text-white">
                 Reco {index + 1}
               </div>
-              <Field
+              <RecommendationLineField
                 label="Nom / prenom"
                 value={item.name}
                 onChange={(value) => onChange(index, "name", value)}
               />
-              <Field
+              <RecommendationLineField
                 label="Numero de telephone ou reseau"
                 value={item.contact}
                 onChange={(value) => onChange(index, "contact", value)}
@@ -1437,6 +1437,31 @@ function RecommendationStepCard({
         </div>
       </Card>
     </div>
+  );
+}
+
+function RecommendationLineField({
+  label,
+  value,
+  onChange
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <label className="block space-y-3">
+      <span className="text-sm font-medium text-slate-300">{label}</span>
+      <div className="relative rounded-[20px] border border-white/10 bg-white/[0.02] px-4 py-4">
+        <input
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+          className="w-full border-0 bg-transparent px-0 pb-2 text-base text-white placeholder:text-slate-500 focus:outline-none focus:ring-0"
+          placeholder="Noter ici"
+        />
+        <div className="pointer-events-none absolute bottom-3 left-4 right-4 h-px bg-[linear-gradient(90deg,rgba(255,255,255,0.25),rgba(255,255,255,0.06))]" />
+      </div>
+    </label>
   );
 }
 
