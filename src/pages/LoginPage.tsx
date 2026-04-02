@@ -77,39 +77,38 @@ export function LoginPage() {
   return (
     <div className="min-h-screen bg-hero-mesh px-4 py-8 md:px-6">
       <div className="mx-auto grid min-h-[calc(100vh-4rem)] max-w-[1500px] gap-5 lg:grid-cols-[1.08fr_0.92fr]">
-        <section className="glass-panel order-2 relative flex flex-col justify-between overflow-hidden rounded-[38px] p-6 md:p-8 lg:order-1 lg:p-10">
+        <section className="glass-panel order-2 relative flex flex-col justify-between overflow-hidden rounded-[38px] p-6 md:p-8 lg:order-1 lg:p-12">
           <div className="absolute right-[-90px] top-[-70px] h-64 w-64 rounded-full bg-[rgba(239,197,141,0.10)] blur-3xl" />
           <div className="absolute bottom-[-110px] left-[-80px] h-72 w-72 rounded-full bg-[rgba(89,183,255,0.10)] blur-3xl" />
+          <div className="absolute left-1/2 top-[24%] h-[340px] w-[340px] -translate-x-1/2 rounded-full bg-[rgba(89,183,255,0.08)] blur-[120px]" />
 
           <div className="relative z-10 flex h-full flex-col justify-between">
-            <div className="space-y-8 md:space-y-10">
+            <div className="space-y-10 md:space-y-12">
               <div>
-                <StatusBadge label="Connexion" tone="amber" />
+                <StatusBadge label="Lor'Squad Wellness" tone="amber" />
               </div>
 
-              <div className="space-y-8 md:space-y-10">
-                <div className="flex items-start">
+              <div className="space-y-7 md:space-y-9">
+                <div className="flex justify-center lg:justify-start">
                   <img
                     src={lorSquadLogo}
                     alt="Lor'Squad Wellness"
-                    className="w-full max-w-[300px] object-contain opacity-[0.98] sm:max-w-[360px] lg:max-w-[430px] xl:max-w-[470px]"
+                    className="w-full max-w-[420px] object-contain opacity-[0.99] drop-shadow-[0_24px_60px_rgba(0,0,0,0.34)] sm:max-w-[500px] lg:max-w-[620px]"
                   />
                 </div>
 
-                <div className="space-y-5 md:space-y-6">
-                  <h1 className="max-w-[12ch] text-balance text-[2.45rem] leading-[0.94] tracking-[-0.05em] sm:text-[3.35rem] md:text-[4rem]">
-                    Retrouve un espace clair pour piloter les bilans, les rendez-vous et le suivi.
+                <div className="space-y-4 md:space-y-5">
+                  <h1 className="max-w-[10ch] text-balance text-[2.4rem] leading-[0.95] tracking-[-0.055em] sm:text-[3.2rem] md:text-[3.85rem]">
+                    Ton espace Lor&apos;Squad.
                   </h1>
-                  <p className="max-w-[38rem] text-base leading-8 text-slate-300/92 md:text-[19px] md:leading-9">
-                    Lor&apos;Squad Wellness rassemble le bilan guide, la lecture client, le suivi
-                    terrain et l&apos;activite de l&apos;equipe dans un seul espace fluide, premium
-                    et simple a rouvrir sur tablette.
+                  <p className="max-w-[34rem] text-base leading-7 text-slate-300/92 md:text-[18px] md:leading-8">
+                    Bilans, rendez-vous, relances et suivi client dans une ouverture simple,
+                    premium et immediate.
                   </p>
-                  <div className="flex flex-wrap gap-2 pt-1">
-                    <MiniTag label="Bilans" />
-                    <MiniTag label="Rendez-vous" />
-                    <MiniTag label="Suivi client" />
-                    <MiniTag label="Equipe" />
+                  <div className="grid gap-3 pt-2 sm:grid-cols-3">
+                    <MiniTag label="Bilans guides" />
+                    <MiniTag label="Suivi terrain" />
+                    <MiniTag label="Lecture equipe" />
                   </div>
                 </div>
               </div>
@@ -137,13 +136,12 @@ export function LoginPage() {
         <section className="glass-panel order-1 rounded-[38px] p-6 md:p-8 lg:order-2 lg:p-10">
           <div className="space-y-8">
             <div>
-              <p className="eyebrow-label">Acces a la plateforme</p>
-              <h2 className="mt-4 max-w-[12ch] text-balance text-4xl">
-                Connecte-toi pour rouvrir ton espace.
+              <p className="eyebrow-label">Connexion</p>
+              <h2 className="mt-4 max-w-[10ch] text-balance text-4xl">
+                Accede a ton espace.
               </h2>
-              <p className="mt-4 max-w-xl text-sm leading-7 text-slate-300/92">
-                Retrouve tes bilans, tes rendez-vous et le suivi du moment dans un cadre clair et
-                sobre, pense pour le terrain.
+              <p className="mt-4 max-w-md text-sm leading-7 text-slate-300/92">
+                Rouvre tes rendez-vous, tes suivis et tes dossiers en quelques secondes.
               </p>
             </div>
 
@@ -310,7 +308,7 @@ export function LoginPage() {
 
 function MiniTag({ label }: { label: string }) {
   return (
-    <div className="rounded-full bg-white/[0.04] px-4 py-2 text-[11px] font-medium tracking-[0.08em] text-slate-300">
+    <div className="surface-soft rounded-[18px] px-4 py-3 text-sm font-medium text-slate-200 shadow-[0_10px_24px_rgba(0,0,0,0.12)]">
       {label}
     </div>
   );
