@@ -446,9 +446,9 @@ export function NewAssessmentPage() {
               ]
           : currentStep === 8
             ? [
-                "Le petit-dejeuner classique sert de point de comparaison simple.",
-                "Le client doit voir en quelques secondes ce qui change vraiment.",
-                "Le matin se travaille d'abord avec des reperes faciles a refaire."
+                "Comparer un matin improvise a un matin structure.",
+                "Faire ressortir proteines, hydratation et regularite.",
+                "Le client doit se reconnaitre rapidement."
               ]
           : currentStep === 9
             ? [
@@ -532,7 +532,11 @@ export function NewAssessmentPage() {
                     "Rester leger et sans pression."
                   ]
               : currentStep === 8
-                    ? ["Comparer un matin improvise a un matin plus structure.", "Faire ressortir ce qui change vraiment.", "Le client doit se reconnaitre tout de suite."]
+                    ? [
+                        "Comparer un matin improvise a un matin structure.",
+                        "Faire ressortir proteines, hydratation et regularite.",
+                        "Le client doit se reconnaitre rapidement."
+                      ]
                 : currentStep === 9
                       ? ["Montrer la routine comme un ensemble simple.", "Le visuel doit porter l'explication.", "Moins de texte, plus de lisibilite."]
                 : currentStep === 10
@@ -578,17 +582,17 @@ export function NewAssessmentPage() {
     form.objective === "sport"
       ? "Le client doit voir tout de suite comment construire une assiette plus complete pour soutenir l'energie, l'entrainement et la recuperation."
       : "Le client doit comprendre en un coup d'oeil comment remplir son assiette pour avoir plus de volume, plus de satiete et un cadre simple a suivre.";
-  const plateSegments =
-    form.objective === "sport"
-      ? [
-          { label: "Legumes", share: 33, note: "Base de volume et d'equilibre", accent: "green" as const },
-          { label: "Proteines", share: 33, note: "Support musculaire et recuperation", accent: "red" as const },
-          { label: "Glucides", share: 34, note: "Energie utile autour de l'activite", accent: "amber" as const }
+    const plateSegments =
+      form.objective === "sport"
+        ? [
+          { label: "Legumes", share: 33, note: "Base d'equilibre", accent: "green" as const },
+          { label: "Proteines", share: 33, note: "Recuperation musculaire", accent: "red" as const },
+          { label: "Glucides", share: 34, note: "Energie autour du sport", accent: "amber" as const }
         ]
       : [
-          { label: "Legumes", share: 50, note: "Volume, fibres et satiete visuelle", accent: "green" as const },
-          { label: "Proteines", share: 25, note: "Tenue et preservation musculaire", accent: "red" as const },
-          { label: "Glucides", share: 25, note: "Qualite et portion simple a gerer", accent: "amber" as const }
+          { label: "Legumes", share: 50, note: "Volume et satiete", accent: "green" as const },
+          { label: "Proteines", share: 25, note: "Tenue musculaire", accent: "red" as const },
+          { label: "Glucides", share: 25, note: "Portion simple et energie", accent: "amber" as const }
         ];
   const platePortionGuides =
     form.objective === "sport"

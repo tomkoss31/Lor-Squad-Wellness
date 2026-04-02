@@ -165,20 +165,20 @@ export function PlateGuideCard({
             {segments.map((segment) => (
               <div
                 key={segment.label}
-                className="rounded-[24px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.035),rgba(255,255,255,0.02))] px-5 py-4 lg:min-h-[152px]"
+                className="rounded-[24px] border border-white/10 bg-slate-950/30 px-5 py-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] lg:min-h-[148px]"
               >
-                <div className="flex items-center gap-2">
-                  <span className={`h-2.5 w-2.5 rounded-full ${accentClasses[segment.accent].dot}`} />
+                <div className={`h-1.5 w-14 rounded-full ${accentClasses[segment.accent].dot}`} />
+                <div className="mt-4 flex items-start justify-between gap-4">
                   <p className="text-xs uppercase tracking-[0.18em] text-slate-500">
                     {segment.label}
                   </p>
+                  <p
+                    className={`text-[2rem] font-semibold leading-none ${accentClasses[segment.accent].value}`}
+                  >
+                    {segment.share}%
+                  </p>
                 </div>
-                <p
-                  className={`mt-3 text-[2rem] font-semibold leading-none ${accentClasses[segment.accent].value}`}
-                >
-                  {segment.share}%
-                </p>
-                <p className="mt-3 text-sm leading-6 text-slate-400">
+                <p className="mt-4 text-sm leading-6 text-slate-300">
                   {segment.note}
                 </p>
               </div>
