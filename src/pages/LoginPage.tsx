@@ -87,17 +87,17 @@ export function LoginPage() {
                 <StatusBadge label="Connexion" tone="amber" />
               </div>
 
-              <div className="space-y-7">
+              <div className="space-y-8 md:space-y-10">
                 <div className="flex items-start">
                   <img
                     src={lorSquadLogo}
                     alt="Lor'Squad Wellness"
-                    className="w-full max-w-[240px] object-contain opacity-[0.98] sm:max-w-[270px] lg:max-w-[300px]"
+                    className="w-full max-w-[300px] object-contain opacity-[0.98] sm:max-w-[360px] lg:max-w-[430px] xl:max-w-[470px]"
                   />
                 </div>
 
-                <div className="space-y-5">
-                  <h1 className="max-w-[12ch] text-balance text-[2.55rem] leading-[0.94] tracking-[-0.05em] sm:text-5xl md:text-[4rem]">
+                <div className="space-y-5 md:space-y-6">
+                  <h1 className="max-w-[12ch] text-balance text-[2.45rem] leading-[0.94] tracking-[-0.05em] sm:text-[3.35rem] md:text-[4rem]">
                     Retrouve un espace clair pour piloter les bilans, les rendez-vous et le suivi.
                   </h1>
                   <p className="max-w-[38rem] text-base leading-8 text-slate-300/92 md:text-[19px] md:leading-9">
