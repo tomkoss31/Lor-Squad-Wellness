@@ -17,8 +17,22 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    void navigator.serviceWorker.register("/sw.js").catch((error) => {
-      console.error("Service worker non initialise.", error);
+    let hasReloadedForServiceWorker = false;
+
+    navigator.serviceWorker.addEventListener("controllerchange", () => {
+      if (hasReloadedForServiceWorker) {
+        return;
+      }
+
+      hasReloadedForServiceWorker = true;
+      window.location.reload();
     });
+
+    void navigator.serviceWorker
+      .register("/sw.js")
+      .then((registration) => registration.update())
+      .catch((error) => {
+        console.error("Service worker non initialise.", error);
+      });
   });
 }
