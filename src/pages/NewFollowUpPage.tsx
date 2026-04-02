@@ -437,10 +437,10 @@ function WeightMilestoneCard({
 }) {
   const toneClass =
     tone === "green"
-      ? "border-emerald-400/20 bg-emerald-400/[0.07]"
+      ? "bg-emerald-400/[0.07] ring-1 ring-emerald-400/12"
       : tone === "blue"
-        ? "border-sky-400/20 bg-sky-400/[0.07]"
-        : "border-white/10 bg-white/[0.03]";
+        ? "bg-sky-400/[0.07] ring-1 ring-sky-400/12"
+        : "bg-white/[0.03] ring-1 ring-white/6";
 
   return (
     <div
