@@ -203,6 +203,16 @@ export function NewFollowUpPage() {
 
           <BodyScanDeltaGrid latest={bodyScan} delta={delta} />
 
+          <StartingPointWeightCard
+            objective={targetClient.objective}
+            startDate={first.date}
+            startWeight={first.bodyScan.weight}
+            latestDate={latest.date}
+            latestWeight={latest.bodyScan.weight}
+            currentDate={assessmentDate}
+            currentWeight={bodyScan.weight}
+          />
+
           <BodyFatInsightCard
             current={{ weight: bodyScan.weight, percent: bodyScan.bodyFat }}
             objective={targetClient.objective}
@@ -322,6 +332,130 @@ function InfoRow({ label, value }: { label: string; value: string }) {
     <div className="rounded-[20px] border border-white/10 bg-white/[0.03] px-4 py-3">
       <p className="text-xs uppercase tracking-[0.2em] text-slate-500">{label}</p>
       <p className="mt-2 text-sm leading-6 text-slate-200">{value}</p>
+    </div>
+  );
+}
+
+function StartingPointWeightCard({
+  objective,
+  startDate,
+  startWeight,
+  latestDate,
+  latestWeight,
+  currentDate,
+  currentWeight
+}: {
+  objective: "weight-loss" | "sport";
+  startDate: string;
+  startWeight: number;
+  latestDate: string;
+  latestWeight: number;
+  currentDate: string;
+  currentWeight: number;
+}) {
+  const deltaFromStart = Number((currentWeight - startWeight).toFixed(1));
+  const deltaFromLatest = Number((currentWeight - latestWeight).toFixed(1));
+  const isWeightLoss = objective === "weight-loss";
+  const mainTone =
+    deltaFromStart === 0
+      ? "text-slate-200"
+      : isWeightLoss
+        ? deltaFromStart < 0
+          ? "text-emerald-200"
+          : "text-amber-200"
+        : deltaFromStart > 0
+          ? "text-emerald-200"
+          : "text-amber-200";
+  const mainDeltaLabel =
+    deltaFromStart === 0
+      ? "Poids stable depuis le depart"
+      : `${deltaFromStart > 0 ? "+" : ""}${deltaFromStart} kg depuis le depart`;
+  const secondaryDeltaLabel =
+    deltaFromLatest === 0
+      ? "Stable depuis le dernier point"
+      : `${deltaFromLatest > 0 ? "+" : ""}${deltaFromLatest} kg depuis le dernier point`;
+
+  return (
+    <Card className="space-y-5 bg-[linear-gradient(180deg,rgba(15,23,42,0.28),rgba(15,23,42,0.5))]">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <p className="text-xs uppercase tracking-[0.25em] text-slate-500">Repere de progression</p>
+          <p className="mt-2 text-2xl text-white">Poids de depart vs poids du jour</p>
+          <p className="mt-2 text-sm leading-6 text-slate-300">
+            Ce bloc sert a montrer tout de suite le point de depart, le dernier releve et la
+            situation aujourd&apos;hui.
+          </p>
+        </div>
+        <div className="rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-sm font-medium text-white">
+          {currentWeight} kg aujourd&apos;hui
+        </div>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-3">
+        <WeightMilestoneCard label="Depart" date={formatDate(startDate)} weight={startWeight} tone="blue" />
+        <WeightMilestoneCard
+          label="Dernier point"
+          date={formatDate(latestDate)}
+          weight={latestWeight}
+          tone="slate"
+        />
+        <WeightMilestoneCard
+          label="Aujourd'hui"
+          date={formatDate(currentDate)}
+          weight={currentWeight}
+          tone="green"
+          highlighted
+        />
+      </div>
+
+      <div className="rounded-[24px] border border-white/10 bg-slate-950/35 p-5">
+        <div className="flex items-center gap-3">
+          <div className="h-2 flex-1 rounded-full bg-white/10">
+            <div className="flex h-full items-center justify-between px-1">
+              <span className="h-3 w-3 rounded-full bg-sky-300 shadow-[0_0_10px_rgba(125,211,252,0.45)]" />
+              <span className="h-3 w-3 rounded-full bg-slate-300 shadow-[0_0_10px_rgba(226,232,240,0.25)]" />
+              <span className="h-3 w-3 rounded-full bg-emerald-300 shadow-[0_0_10px_rgba(110,231,183,0.45)]" />
+            </div>
+          </div>
+        </div>
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+          <p className={`text-lg font-semibold ${mainTone}`}>{mainDeltaLabel}</p>
+          <p className="text-sm text-slate-400">{secondaryDeltaLabel}</p>
+        </div>
+      </div>
+    </Card>
+  );
+}
+
+function WeightMilestoneCard({
+  label,
+  date,
+  weight,
+  tone,
+  highlighted = false
+}: {
+  label: string;
+  date: string;
+  weight: number;
+  tone: "blue" | "slate" | "green";
+  highlighted?: boolean;
+}) {
+  const toneClass =
+    tone === "green"
+      ? "border-emerald-400/20 bg-emerald-400/[0.07]"
+      : tone === "blue"
+        ? "border-sky-400/20 bg-sky-400/[0.07]"
+        : "border-white/10 bg-white/[0.03]";
+
+  return (
+    <div
+      className={`rounded-[24px] border p-5 ${toneClass} ${
+        highlighted ? "shadow-[0_0_30px_rgba(52,211,153,0.08)]" : ""
+      }`}
+    >
+      <p className="text-[11px] uppercase tracking-[0.2em] text-slate-500">{label}</p>
+      <p className="mt-3 text-3xl text-white">{weight} kg</p>
+      <p className="mt-2 text-sm text-slate-400">{date}</p>
     </div>
   );
 }
