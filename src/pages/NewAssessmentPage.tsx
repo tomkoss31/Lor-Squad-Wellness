@@ -6,6 +6,7 @@ import { useEffect } from "react";
 import { useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { BodyFatInsightCard } from "../components/body-scan/BodyFatInsightCard";
+import { HydrationVisceralInsightCard } from "../components/body-scan/HydrationVisceralInsightCard";
 import { MuscleMassInsightCard } from "../components/body-scan/MuscleMassInsightCard";
 import { PlateGuideCard } from "../components/education/PlateGuideCard";
 import { ProgramBoosterCard } from "../components/programs/ProgramBoosterCard";
@@ -1118,6 +1119,23 @@ export function NewAssessmentPage() {
                 <QuickReadCard label="Hydratation" value={`${formatRawNumber(form.hydration)} %`} detail={`${hydrationKg} kg estimes`} />
                 <QuickReadCard label="Graisse viscerale" value={formatRawNumber(form.visceralFat)} detail="Repere a surveiller" />
               </div>
+
+              <BodyFatInsightCard
+                current={{ weight: form.weight, percent: form.bodyFat }}
+                objective={form.objective}
+                sex={form.sex}
+              />
+
+              <MuscleMassInsightCard
+                current={{ weight: form.weight, muscleMass: form.muscleMass }}
+              />
+
+              <HydrationVisceralInsightCard
+                weight={form.weight}
+                hydrationPercent={form.hydration}
+                visceralFat={form.visceralFat}
+                sex={form.sex}
+              />
             </div>
           )}
 
