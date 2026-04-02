@@ -45,8 +45,8 @@ export function AppLayout() {
               ? "Le bilan guide pour conduire le rendez-vous"
               : "Lor'Squad Wellness";
 
-  function handleLogout() {
-    logout();
+  async function handleLogout() {
+    await logout();
     navigate("/login", { replace: true });
   }
 
@@ -154,7 +154,7 @@ export function AppLayout() {
               <Button className="w-full" onClick={() => navigate("/assessments/new")}>
                 Nouveau bilan
               </Button>
-              <Button variant="ghost" className="w-full" onClick={handleLogout}>
+              <Button variant="ghost" className="w-full" onClick={() => void handleLogout()}>
                 Se deconnecter
               </Button>
             </div>
@@ -188,9 +188,9 @@ export function AppLayout() {
                 <Button
                   variant="ghost"
                   className="min-h-[42px] px-4 py-2 text-[12px]"
-                  onClick={handleLogout}
+                  onClick={() => void handleLogout()}
                 >
-                  Quitter
+                  Se deconnecter
                 </Button>
               </div>
             </div>
@@ -268,8 +268,8 @@ export function AppLayout() {
                     </div>
                   ) : null
                 ) : null}
-                <Button variant="ghost" onClick={handleLogout}>
-                  Retour login
+                <Button variant="ghost" onClick={() => void handleLogout()}>
+                  Se deconnecter
                 </Button>
               </div>
               <div className="md:hidden">

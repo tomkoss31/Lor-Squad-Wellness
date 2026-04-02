@@ -259,7 +259,12 @@ export function AppProvider({ children }: PropsWithChildren) {
 
   async function logout() {
     if (storageMode === "supabase") {
-      await logoutFromSupabase();
+      try {
+        await logoutFromSupabase();
+      } catch (error) {
+        console.error("Fermeture de session Supabase impossible.", error);
+      }
+
       setCurrentUser(null);
       setCurrentSession(null);
       setUsers([]);

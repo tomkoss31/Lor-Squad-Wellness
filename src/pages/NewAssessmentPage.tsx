@@ -1413,25 +1413,54 @@ function RecommendationStepCard({
           <StatusBadge label={`${filledRecommendations}/10`} tone="amber" />
         </div>
 
+        <div className="grid gap-3 md:grid-cols-2">
+          <div className="rounded-[22px] border border-amber-300/20 bg-amber-400/[0.08] px-5 py-4">
+            <p className="text-[11px] uppercase tracking-[0.24em] text-amber-100/70">Palier cadeau 1</p>
+            <p className="mt-2 text-xl text-white">A partir de 5 noms</p>
+            <p className="mt-2 text-sm leading-6 text-slate-300">
+              Un repere simple pour remercier la personne de faire connaitre l&apos;experience.
+            </p>
+          </div>
+          <div className="rounded-[22px] border border-sky-300/20 bg-sky-400/[0.08] px-5 py-4">
+            <p className="text-[11px] uppercase tracking-[0.24em] text-sky-100/70">Palier cadeau 2</p>
+            <p className="mt-2 text-xl text-white">A partir de 10 noms</p>
+            <p className="mt-2 text-sm leading-6 text-slate-300">
+              Un deuxieme repere pour encourager sans mettre de pression pendant le rendez-vous.
+            </p>
+          </div>
+        </div>
+
         <div className="grid gap-4">
           {recommendations.map((item, index) => (
-            <div
-              key={`recommendation-${index}`}
-              className="grid gap-4 rounded-[26px] border border-white/10 bg-[linear-gradient(180deg,rgba(2,6,23,0.4),rgba(15,23,42,0.28))] p-5 lg:grid-cols-[110px_1.1fr_1.3fr]"
-            >
-              <div className="flex min-h-[72px] items-center justify-center rounded-[20px] border border-white/10 bg-white/[0.03] px-4 py-3 text-base font-semibold text-white">
-                Reco {index + 1}
+            <div key={`recommendation-${index}`} className="space-y-4">
+              {(index === 5 || index === 9) && (
+                <div
+                  className={`rounded-[20px] border px-4 py-3 text-sm ${
+                    index === 5
+                      ? "border-amber-300/20 bg-amber-400/[0.08] text-amber-50"
+                      : "border-sky-300/20 bg-sky-400/[0.08] text-sky-50"
+                  }`}
+                >
+                  {index === 5
+                    ? "Cadeau 1 : la personne a deja rempli 5 lignes si elle va jusque-la."
+                    : "Cadeau 2 : le deuxieme palier apparait avec 10 lignes completees."}
+                </div>
+              )}
+              <div className="grid gap-4 rounded-[26px] border border-white/10 bg-[linear-gradient(180deg,rgba(2,6,23,0.4),rgba(15,23,42,0.28))] p-5 lg:grid-cols-[110px_1.1fr_1.3fr]">
+                <div className="flex min-h-[72px] items-center justify-center rounded-[20px] border border-white/10 bg-white/[0.03] px-4 py-3 text-base font-semibold text-white">
+                  Reco {index + 1}
+                </div>
+                <RecommendationLineField
+                  label="Nom / prenom"
+                  value={item.name}
+                  onChange={(value) => onChange(index, "name", value)}
+                />
+                <RecommendationLineField
+                  label="Numero de telephone ou reseau"
+                  value={item.contact}
+                  onChange={(value) => onChange(index, "contact", value)}
+                />
               </div>
-              <RecommendationLineField
-                label="Nom / prenom"
-                value={item.name}
-                onChange={(value) => onChange(index, "name", value)}
-              />
-              <RecommendationLineField
-                label="Numero de telephone ou reseau"
-                value={item.contact}
-                onChange={(value) => onChange(index, "contact", value)}
-              />
             </div>
           ))}
         </div>
