@@ -1331,102 +1331,101 @@ function RecommendationStepCard({
   ).length;
 
   return (
-    <div className="space-y-5">
-      <Card className="space-y-6 bg-[linear-gradient(180deg,rgba(15,23,42,0.24),rgba(15,23,42,0.56))]">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div className="max-w-4xl">
-            <p className="eyebrow-label">Moment smoothie & recommandations</p>
-            <h2 className="mt-3 max-w-3xl text-4xl leading-tight text-white md:text-5xl">
-              Tu aimes les cadeaux ? Tu aimes en recevoir ?
-            </h2>
-            <p className="mt-4 text-2xl leading-tight text-slate-100 md:text-3xl">
-              A qui tu aimerais offrir ce moment bien-etre et nutrition ?
-            </p>
-            <p className="mt-5 max-w-3xl text-base leading-8 text-slate-300">
-              L&apos;experience comprend le bilan bien-etre et nutritionnel, la boisson et le
-              smoothie. Tu peux noter simplement prenom + numero de telephone ou reseau pour les
-              personnes a qui tu aimerais offrir ce moment.
-            </p>
-          </div>
-          <StatusBadge label="Lecture client" tone="green" />
-        </div>
-
-        <div className="grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
-          <div className="rounded-[26px] bg-slate-950/24 p-5">
-            <p className="eyebrow-label">Texte a laisser lire</p>
-            <div className="mt-4 space-y-4">
-              <p className="text-xl leading-8 text-white">
-                Tu peux noter les personnes a qui tu aimerais offrir la meme experience.
-              </p>
-              <p className="text-base leading-7 text-slate-300">
-                Famille, amis, collegues, connaissances... l&apos;idee est simplement de penser aux
-                personnes a qui ce moment pourrait faire du bien.
-              </p>
-              <p className="text-base leading-7 text-slate-300">
-                Un prenom et un numero de telephone ou un reseau suffisent pour commencer.
+      <div className="space-y-5">
+        <Card className="space-y-6 bg-[linear-gradient(180deg,rgba(15,23,42,0.24),rgba(15,23,42,0.56))]">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div className="max-w-4xl">
+              <p className="eyebrow-label">Moment smoothie & recommandations</p>
+              <h2 className="mt-3 max-w-3xl text-2xl leading-tight text-white md:text-[2.5rem]">
+                A qui aimerais-tu offrir ce moment bien-etre et nutrition ?
+              </h2>
+              <p className="mt-4 max-w-3xl text-sm leading-7 text-slate-300 md:text-base">
+                Tu peux noter simplement un prenom et un numero ou un reseau pour commencer.
               </p>
             </div>
+            <StatusBadge label="Lecture client" tone="green" />
           </div>
 
-          <div className="rounded-[26px] bg-white/[0.03] p-5">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <p className="eyebrow-label">Repere distributeur</p>
-                <p className="mt-2 text-2xl text-white">Tu poses le cadre, puis tu laisses un vrai temps.</p>
+          <div className="grid gap-4 lg:grid-cols-[1.15fr_0.85fr]">
+            <div className="rounded-[26px] bg-slate-950/24 p-5">
+              <p className="eyebrow-label">Texte a laisser lire</p>
+              <div className="mt-4 space-y-3">
+                <p className="text-lg leading-8 text-white">
+                  Tu peux noter les personnes a qui tu aimerais offrir la meme experience.
+                </p>
+                <p className="text-sm leading-7 text-slate-300">
+                  Famille, amis, collegues... pense simplement aux personnes a qui ce moment pourrait faire du bien.
+                </p>
+                <p className="text-sm leading-7 text-slate-300">
+                  Un prenom et un numero ou un reseau suffisent pour commencer.
+                </p>
               </div>
-              <StatusBadge label="Sans pression" tone="blue" />
             </div>
 
-            <div className="mt-4 grid gap-3">
-              <QuickReadCard
-                label="Etape 1"
-                value="Ouvrir simplement"
-                detail="Tu aimes les cadeaux ? Tu aimes en recevoir ? A qui tu aimerais offrir ce moment ?"
-              />
-              <QuickReadCard
-                label="Etape 2"
-                value="Laisser faire"
-                detail="Je te laisse noter tranquillement pendant que je prepare le smoothie. Je reviens juste apres."
-              />
-              <QuickReadCard
-                label="Etape 3"
-                value="Rester leger"
-                detail="Le but est d'aider la personne a penser a son entourage, pas de lui mettre une pression commerciale."
-              />
+            <div className="space-y-4">
+              <div className="rounded-[26px] bg-white/[0.03] p-5">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="eyebrow-label">Aide terrain</p>
+                    <p className="mt-2 text-xl text-white">Tu ouvres, tu laisses noter, tu restes leger.</p>
+                  </div>
+                  <StatusBadge label="Sans pression" tone="blue" />
+                </div>
+
+                <div className="mt-4 grid gap-3">
+                  <QuickReadCard
+                    label="Etape 1"
+                    value="Ouvrir simplement"
+                    detail="Tu aimes les cadeaux ? A qui aimerais-tu offrir ce moment ?"
+                  />
+                  <QuickReadCard
+                    label="Etape 2"
+                    value="Laisser noter"
+                    detail="Je prepare le smoothie. Prends ton temps, je reviens juste apres."
+                  />
+                  <QuickReadCard
+                    label="Etape 3"
+                    value="Rester leger"
+                    detail="Le but est d'aider la personne a penser a son entourage, sans pression."
+                  />
+                </div>
+              </div>
+
+              <div className="rounded-[24px] bg-slate-950/24 p-5">
+                <p className="eyebrow-label">Lecture express</p>
+                <div className="mt-4 space-y-3">
+                  <SummaryMini label="Objectif" value="Noter les personnes a inviter" />
+                  <SummaryMini label="Recommandations" value={`${filledRecommendations}/10`} />
+                </div>
+              </div>
             </div>
           </div>
-        </div>
-      </Card>
+        </Card>
 
-      <Card className="space-y-5">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <p className="eyebrow-label">Liste nominative</p>
-            <p className="mt-2 text-3xl text-white">Les personnes a qui offrir l&apos;experience</p>
-            <p className="mt-2 max-w-3xl text-sm leading-7 text-slate-300">
-              Laisse de l&apos;air dans la page : une ligne par personne, avec plus de place pour
-              noter clairement le prenom et le contact.
-            </p>
+        <Card className="space-y-5">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="eyebrow-label">Liste nominative</p>
+              <p className="mt-2 text-3xl text-white">Les personnes a qui offrir l&apos;experience</p>
+              <p className="mt-2 max-w-3xl text-sm leading-7 text-slate-300">
+                Note simplement un prenom et un contact par ligne.
+              </p>
+            </div>
+            <StatusBadge label={`${filledRecommendations}/10`} tone="amber" />
           </div>
-          <StatusBadge label={`${filledRecommendations}/10`} tone="amber" />
-        </div>
 
-        <div className="grid gap-3 md:grid-cols-2">
-          <div className="rounded-[22px] bg-amber-400/[0.08] px-5 py-4">
-            <p className="eyebrow-label text-amber-100/70">Palier cadeau 1</p>
-            <p className="mt-2 text-xl text-white">A partir de 5 noms</p>
-            <p className="mt-2 text-sm leading-6 text-slate-300">
-              Un repere simple pour remercier la personne de faire connaitre l&apos;experience.
-            </p>
+          <div className="grid gap-3 md:grid-cols-2">
+            <div className="rounded-[22px] bg-amber-400/[0.08] px-5 py-4">
+              <p className="eyebrow-label text-amber-100/70">Palier cadeau 1</p>
+              <p className="mt-2 text-xl text-white">A partir de 5 noms</p>
+              <p className="mt-2 text-sm leading-6 text-slate-300">Premier repere cadeau.</p>
+            </div>
+            <div className="rounded-[22px] bg-sky-400/[0.08] px-5 py-4">
+              <p className="eyebrow-label text-sky-100/70">Palier cadeau 2</p>
+              <p className="mt-2 text-xl text-white">A partir de 10 noms</p>
+              <p className="mt-2 text-sm leading-6 text-slate-300">Deuxieme repere cadeau.</p>
+            </div>
           </div>
-          <div className="rounded-[22px] bg-sky-400/[0.08] px-5 py-4">
-            <p className="eyebrow-label text-sky-100/70">Palier cadeau 2</p>
-            <p className="mt-2 text-xl text-white">A partir de 10 noms</p>
-            <p className="mt-2 text-sm leading-6 text-slate-300">
-              Un deuxieme repere pour encourager sans mettre de pression pendant le rendez-vous.
-            </p>
-          </div>
-        </div>
 
         <div className="grid gap-4">
           {recommendations.map((item, index) => (
@@ -1438,12 +1437,12 @@ function RecommendationStepCard({
                       ? "bg-amber-400/[0.08] text-amber-50"
                       : "bg-sky-400/[0.08] text-sky-50"
                   }`}
-                >
-                  {index === 5
-                    ? "Cadeau 1 : la personne a deja rempli 5 lignes si elle va jusque-la."
-                    : "Cadeau 2 : le deuxieme palier apparait avec 10 lignes completees."}
-                </div>
-              )}
+                  >
+                    {index === 5
+                      ? "Palier cadeau 1 atteint."
+                      : "Palier cadeau 2 atteint."}
+                  </div>
+                )}
               <div className="grid gap-4 rounded-[26px] bg-[linear-gradient(180deg,rgba(2,6,23,0.4),rgba(15,23,42,0.28))] p-5 lg:grid-cols-[110px_1.1fr_1.3fr]">
                 <div className="flex min-h-[72px] items-center justify-center rounded-[20px] bg-white/[0.03] px-4 py-3 text-base font-semibold text-white">
                   Reco {index + 1}
