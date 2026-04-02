@@ -11,7 +11,7 @@ import {
   getGroupedClientsByMonth,
   getPortfolioMetrics
 } from "../lib/portfolio";
-import { formatDate, formatDateTime, getFirstAssessment } from "../lib/calculations";
+import { formatDate, formatDateTime, getFirstAssessment, getLatestAssessment } from "../lib/calculations";
 
 const statusLabels = {
   active: { label: "Actif", tone: "green" as const },
@@ -78,6 +78,13 @@ export function DistributorPortfolioPage() {
     return matchesStatus && matchesSearch;
   });
   const groupedClients = getGroupedClientsByMonth(filteredClients);
+  const pendingRecommendationClients = portfolioMetrics.clients.filter((client) => {
+    const latestAssessment = getLatestAssessment(client);
+    return (
+      latestAssessment.questionnaire.recommendations.length > 0 &&
+      !latestAssessment.questionnaire.recommendationsContacted
+    );
+  }).length;
 
   return (
     <div className="space-y-6">
@@ -111,6 +118,12 @@ export function DistributorPortfolioPage() {
                 label={`${portfolioMetrics.relanceFollowUps.length} relances`}
                 tone={portfolioMetrics.relanceFollowUps.length ? "amber" : "green"}
               />
+              {pendingRecommendationClients ? (
+                <StatusBadge
+                  label={`${pendingRecommendationClients} recos a contacter`}
+                  tone="amber"
+                />
+              ) : null}
             </div>
           </div>
 
@@ -219,6 +232,10 @@ export function DistributorPortfolioPage() {
               <div className="grid gap-3">
                 {group.clients.map((client) => {
                   const firstAssessment = getFirstAssessment(client);
+                  const latestAssessment = getLatestAssessment(client);
+                  const recommendationCount = latestAssessment.questionnaire.recommendations.length;
+                  const recommendationsContacted =
+                    latestAssessment.questionnaire.recommendationsContacted ?? false;
                   const status = statusLabels[client.status];
 
                   return (
@@ -234,6 +251,16 @@ export function DistributorPortfolioPage() {
                               {client.firstName} {client.lastName}
                             </p>
                             <StatusBadge label={status.label} tone={status.tone} />
+                            {recommendationCount ? (
+                              <StatusBadge
+                                label={
+                                  recommendationsContacted
+                                    ? "Recommandations contactees"
+                                    : "Recommandations a contacter"
+                                }
+                                tone={recommendationsContacted ? "green" : "amber"}
+                              />
+                            ) : null}
                           </div>
                           <p className="text-sm text-slate-400">
                             {client.city ?? "Ville non renseignee"} - {client.currentProgram}
@@ -254,6 +281,11 @@ export function DistributorPortfolioPage() {
                         <div className="text-sm text-slate-400 xl:text-right">
                           <p>Bilans : {client.assessments.length}</p>
                           <p className="mt-1">Objectif : {client.objective === "sport" ? "Sport" : "Perte de poids"}</p>
+                          {recommendationCount ? (
+                            <p className="mt-1">
+                              Recos : {recommendationCount} - {recommendationsContacted ? "contactees" : "a reprendre"}
+                            </p>
+                          ) : null}
                         </div>
                       </div>
                     </Link>

@@ -98,6 +98,7 @@ type AssessmentForm = {
   nextFollowUp: string;
   comment: string;
   recommendations: RecommendationLead[];
+  recommendationsContacted: boolean;
 };
 
 interface AssessmentDraftPayload {
@@ -218,7 +219,8 @@ const initialForm: AssessmentForm = {
   selectedProgramId: "",
   nextFollowUp: getDefaultNextFollowUpDateTime(),
   comment: "",
-  recommendations: createEmptyRecommendations()
+  recommendations: createEmptyRecommendations(),
+  recommendationsContacted: false
 };
 
 function readAssessmentDraft(): AssessmentDraftPayload | null {
@@ -241,7 +243,8 @@ function readAssessmentDraft(): AssessmentDraftPayload | null {
       form: {
         ...initialForm,
         ...parsed.form,
-        recommendations: normalizeRecommendations(parsed.form.recommendations)
+        recommendations: normalizeRecommendations(parsed.form.recommendations),
+        recommendationsContacted: parsed.form.recommendationsContacted ?? false
       },
       currentStep:
         typeof parsed.currentStep === "number"
@@ -803,7 +806,8 @@ export function NewAssessmentPage() {
       desiredTimeline: form.desiredTimeline,
       recommendations: form.recommendations.filter(
         (item) => item.name.trim() || item.contact.trim()
-      )
+      ),
+      recommendationsContacted: form.recommendationsContacted
     };
   }
 
@@ -1166,27 +1170,15 @@ export function NewAssessmentPage() {
             )}
 
           {currentStep === 4 && (
-            <div className="space-y-4">
-              <PlateGuideCard
-                title={plateTitle}
-                mode={form.objective}
-                subtitle={plateSubtitle}
-                segments={plateSegments}
-                portionGuides={platePortionGuides}
-                foodExamples={plateFoodExamples}
-                lipidsNote={plateLipidsNote}
-              />
-
-              <div className="rounded-[24px] bg-slate-950/24 p-5">
-                <p className="eyebrow-label">
-                  Aide terrain
-                </p>
-                <div className="mt-4 grid gap-3 md:grid-cols-2">
-                  <ClosingLine text="On donne un repere visuel simple a refaire des le prochain repas." />
-                  <ClosingLine text="Le but n'est pas de tout peser, mais de mieux composer l'assiette." />
-                </div>
-              </div>
-            </div>
+            <PlateGuideCard
+              title={plateTitle}
+              mode={form.objective}
+              subtitle={plateSubtitle}
+              segments={plateSegments}
+              portionGuides={platePortionGuides}
+              foodExamples={plateFoodExamples}
+              lipidsNote={plateLipidsNote}
+            />
           )}
 
           {currentStep === 5 && (
@@ -1312,7 +1304,9 @@ export function NewAssessmentPage() {
             {currentStep === 7 && (
               <RecommendationStepCard
                 recommendations={form.recommendations}
+                recommendationsContacted={form.recommendationsContacted}
                 onChange={updateRecommendation}
+                onToggleContacted={(value) => update("recommendationsContacted", value)}
               />
             )}
 
@@ -1680,10 +1674,14 @@ class VisualStepBoundary extends Component<
 
 function RecommendationStepCard({
   recommendations,
-  onChange
+  recommendationsContacted,
+  onChange,
+  onToggleContacted
 }: {
   recommendations: RecommendationLead[];
+  recommendationsContacted: boolean;
   onChange: (index: number, field: keyof RecommendationLead, value: string) => void;
+  onToggleContacted: (value: boolean) => void;
 }) {
   const filledRecommendations = recommendations.filter(
     (item) => item.name.trim() || item.contact.trim()
@@ -1711,6 +1709,21 @@ function RecommendationStepCard({
             </div>
             <StatusBadge label={`${filledRecommendations}/10`} tone="amber" />
           </div>
+
+          <label className="flex items-center justify-between gap-3 rounded-[22px] border border-white/10 bg-white/[0.03] px-4 py-4">
+            <div>
+              <p className="text-sm font-medium text-white">Recommandations contactees</p>
+              <p className="mt-1 text-sm text-slate-400">
+                Coche ici quand les contacts de ce bilan ont deja ete repris.
+              </p>
+            </div>
+            <input
+              type="checkbox"
+              className="h-5 w-5 rounded border-white/15 bg-slate-950/30"
+              checked={recommendationsContacted}
+              onChange={(event) => onToggleContacted(event.target.checked)}
+            />
+          </label>
 
           <div className="grid gap-3 md:grid-cols-2">
             <div className="rounded-[22px] bg-amber-400/[0.08] px-5 py-4">

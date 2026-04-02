@@ -78,6 +78,8 @@ export function ClientDetailPage() {
     latestQuestionnaire.targetWeight,
     latestQuestionnaire.desiredTimeline
   );
+  const recommendationCount = latestQuestionnaire.recommendations.length;
+  const recommendationsContacted = latestQuestionnaire.recommendationsContacted ?? false;
   const canDeleteClient = currentUser?.role === "admin";
 
   async function handleDeleteClient() {
@@ -226,6 +228,16 @@ export function ClientDetailPage() {
                 label={client.objective === "sport" ? "Sport" : "Perte de poids"}
                 tone={client.objective === "sport" ? "green" : "blue"}
               />
+              {recommendationCount ? (
+                <StatusBadge
+                  label={
+                    recommendationsContacted
+                      ? `${recommendationCount} recommendations contactees`
+                      : `${recommendationCount} recommendations a contacter`
+                  }
+                  tone={recommendationsContacted ? "green" : "amber"}
+                />
+              ) : null}
               </div>
             </div>
           </div>
@@ -363,6 +375,16 @@ export function ClientDetailPage() {
             </div>
             <div className="grid gap-3">
               <SummaryRow label="Statut" value={client.started ? "Routine demarree" : "Mise en place a lancer"} />
+              {recommendationCount ? (
+                <SummaryStatusRow
+                  label="Recommandations"
+                  badgeLabel={
+                    recommendationsContacted ? "Contactees" : "A contacter"
+                  }
+                  tone={recommendationsContacted ? "green" : "amber"}
+                  detail={`${recommendationCount} nom${recommendationCount > 1 ? "s" : ""}`}
+                />
+              ) : null}
               <SummaryRow label="Repere proteines" value={proteinRange} />
               <SummaryRow label="Hydratation cible" value={`${waterNeed} L`} />
               <SummaryRow label="Note du moment" value={latestAssessment.notes} />
@@ -462,6 +484,28 @@ function SummaryRow({ label, value }: { label: string; value: string }) {
     <div className="flex items-center justify-between gap-3 rounded-[22px] bg-white/[0.03] px-4 py-3">
       <span className="text-sm text-slate-400">{label}</span>
       <span className="text-right text-sm font-semibold text-white">{value}</span>
+    </div>
+  );
+}
+
+function SummaryStatusRow({
+  label,
+  badgeLabel,
+  tone,
+  detail
+}: {
+  label: string;
+  badgeLabel: string;
+  tone: "green" | "amber";
+  detail: string;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-3 rounded-[22px] bg-white/[0.03] px-4 py-3">
+      <span className="text-sm text-slate-400">{label}</span>
+      <div className="flex items-center gap-3">
+        <span className="text-sm text-slate-400">{detail}</span>
+        <StatusBadge label={badgeLabel} tone={tone} />
+      </div>
     </div>
   );
 }

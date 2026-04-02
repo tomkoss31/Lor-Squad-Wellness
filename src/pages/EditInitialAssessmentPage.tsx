@@ -54,6 +54,9 @@ export function EditInitialAssessmentPage() {
   const [referredByName, setReferredByName] = useState(
     initialAssessment.questionnaire.referredByName ?? ""
   );
+  const [recommendationsContacted, setRecommendationsContacted] = useState(
+    initialAssessment.questionnaire.recommendationsContacted ?? false
+  );
   const [notes, setNotes] = useState(initialAssessment.notes);
   const [error, setError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
@@ -84,7 +87,8 @@ export function EditInitialAssessmentPage() {
         referredByName: referredByName.trim() || undefined,
         objectiveFocus,
         targetWeight: targetWeight > 0 ? targetWeight : undefined,
-        desiredTimeline
+        desiredTimeline,
+        recommendationsContacted
       }
     };
 
@@ -147,6 +151,23 @@ export function EditInitialAssessmentPage() {
             <label className="text-sm font-medium text-slate-300">Note du bilan de depart</label>
             <textarea rows={5} value={notes} onChange={(event) => setNotes(event.target.value)} />
           </div>
+
+          {initialAssessment.questionnaire.recommendations.length ? (
+            <label className="flex items-center justify-between gap-3 rounded-[22px] border border-white/10 bg-white/[0.03] px-4 py-4">
+              <div>
+                <p className="text-sm font-medium text-white">Recommandations contactees</p>
+                <p className="mt-1 text-sm text-slate-400">
+                  A cocher une fois les recommandations de ce bilan reprises.
+                </p>
+              </div>
+              <input
+                type="checkbox"
+                className="h-5 w-5 rounded border-white/15 bg-slate-950/30"
+                checked={recommendationsContacted}
+                onChange={(event) => setRecommendationsContacted(event.target.checked)}
+              />
+            </label>
+          ) : null}
 
           {error ? (
             <div className="rounded-[20px] border border-rose-400/20 bg-rose-400/10 px-4 py-3 text-sm text-rose-100">

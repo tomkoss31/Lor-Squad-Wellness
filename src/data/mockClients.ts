@@ -56,6 +56,7 @@ function questionnaire(
     motivation: 8,
     desiredTimeline: "3 mois",
     recommendations: [],
+    recommendationsContacted: false,
     ...overrides
   };
 }

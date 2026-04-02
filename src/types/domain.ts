@@ -91,6 +91,7 @@ export interface AssessmentQuestionnaire {
   motivation: number;
   desiredTimeline: string;
   recommendations: RecommendationLead[];
+  recommendationsContacted: boolean;
 }
 
 export interface AssessmentRecord {

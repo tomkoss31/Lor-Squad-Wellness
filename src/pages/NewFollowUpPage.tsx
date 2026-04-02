@@ -80,6 +80,9 @@ export function NewFollowUpPage() {
   const [assessmentDate, setAssessmentDate] = useState(toDateInputValue(new Date()));
   const [dueDate, setDueDate] = useState(normalizeDateTimeLocalValue(targetClient.nextFollowUp));
   const [followUpType, setFollowUpType] = useState("Suivi terrain");
+  const [recommendationsContacted, setRecommendationsContacted] = useState(
+    latest.questionnaire.recommendationsContacted ?? false
+  );
 
   const delta = getAssessmentDelta(bodyScan, latest.bodyScan);
   const bodyFatKg = estimateBodyFatKg(bodyScan.weight, bodyScan.bodyFat);
@@ -95,7 +98,8 @@ export function NewFollowUpPage() {
   async function handleSubmit() {
     const nextQuestionnaire: AssessmentQuestionnaire = {
       ...latest.questionnaire,
-      desiredTimeline: latest.questionnaire.desiredTimeline
+      desiredTimeline: latest.questionnaire.desiredTimeline,
+      recommendationsContacted
     };
 
     const assessment: AssessmentRecord = {
@@ -292,6 +296,23 @@ export function NewFollowUpPage() {
                 onChange={(event) => setDueDate(event.target.value)}
               />
             </div>
+            {latest.questionnaire.recommendations.length ? (
+              <label className="flex items-center justify-between gap-3 rounded-[22px] border border-white/10 bg-white/[0.03] px-4 py-4">
+                <div>
+                  <p className="text-sm font-medium text-white">Recommandations contactees</p>
+                  <p className="mt-1 text-sm text-slate-400">
+                    {latest.questionnaire.recommendations.length} contact
+                    {latest.questionnaire.recommendations.length > 1 ? "s" : ""} a reprendre pour ce dossier.
+                  </p>
+                </div>
+                <input
+                  type="checkbox"
+                  className="h-5 w-5 rounded border-white/15 bg-slate-950/30"
+                  checked={recommendationsContacted}
+                  onChange={(event) => setRecommendationsContacted(event.target.checked)}
+                />
+              </label>
+            ) : null}
             <div className="flex justify-end gap-3">
               <Button variant="secondary" onClick={() => navigate(`/clients/${targetClient.id}`)}>
                 Annuler
