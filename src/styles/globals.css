@@ -50,7 +50,7 @@ body {
   input,
   select,
   textarea {
-    @apply w-full rounded-[20px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.03))] px-4 py-3 text-[15px] font-medium text-white outline-none transition placeholder:text-slate-500 focus:border-amber-200/40 focus:bg-white/[0.08] focus:ring-2 focus:ring-amber-200/10;
+    @apply w-full rounded-[18px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.03))] px-4 py-3 text-[15px] font-medium text-white outline-none transition placeholder:text-slate-500 focus:border-amber-200/40 focus:bg-white/[0.08] focus:ring-2 focus:ring-amber-200/10 md:rounded-[20px];
   }
 }
 

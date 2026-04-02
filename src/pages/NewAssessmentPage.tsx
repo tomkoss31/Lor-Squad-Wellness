@@ -1,5 +1,6 @@
 ﻿import { useState, type ReactNode } from "react";
 import { StepRail } from "../components/assessment/StepRail";
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { BodyFatInsightCard } from "../components/body-scan/BodyFatInsightCard";
 import { MuscleMassInsightCard } from "../components/body-scan/MuscleMassInsightCard";
@@ -185,6 +186,13 @@ export function NewAssessmentPage() {
   const [form, setForm] = useState(initialForm);
   const [currentStep, setCurrentStep] = useState(0);
   const [saveError, setSaveError] = useState("");
+
+  useEffect(() => {
+    window.scrollTo({
+      top: 0,
+      behavior: currentStep === 0 ? "auto" : "smooth"
+    });
+  }, [currentStep]);
 
   const currentPrograms = programs.filter((program) => program.category === form.objective);
   const mainPrograms = currentPrograms.filter((program) => program.kind !== "booster");

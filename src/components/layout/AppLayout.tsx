@@ -22,6 +22,19 @@ export function AppLayout() {
     { label: "Nouveau bilan", path: "/assessments/new" }
   ];
 
+  const pageTitle =
+    location.pathname === "/dashboard"
+      ? "Pilotage de l'activite et rendez-vous du moment"
+      : location.pathname === "/clients"
+        ? "Dossiers clients et suivi en cours"
+        : location.pathname === "/users"
+          ? "Creation des acces et gestion simple des roles"
+          : location.pathname.startsWith("/clients/")
+            ? "Lecture detaillee du dossier client"
+            : location.pathname === "/assessments/new"
+              ? "Bilan guide pour conduire le rendez-vous"
+              : "Lor'Squad Wellness";
+
   function handleLogout() {
     logout();
     navigate("/login", { replace: true });
@@ -30,7 +43,7 @@ export function AppLayout() {
   return (
     <div className="min-h-screen bg-hero-mesh">
       <div className="mx-auto flex min-h-screen max-w-[1460px] flex-col gap-4 px-3 py-3 md:px-4 xl:grid xl:grid-cols-[230px_minmax(0,1fr)] xl:gap-5 xl:px-5">
-        <aside className="glass-panel relative overflow-hidden rounded-[30px] p-4 xl:sticky xl:top-5 xl:h-[calc(100vh-2.5rem)]">
+        <aside className="glass-panel relative hidden overflow-hidden rounded-[30px] p-4 xl:sticky xl:top-5 xl:block xl:h-[calc(100vh-2.5rem)]">
           <div className="absolute -left-10 top-0 h-28 w-28 rounded-full bg-amber-300/8 blur-3xl" />
           <div className="absolute -right-10 bottom-20 h-28 w-28 rounded-full bg-sky-300/8 blur-3xl" />
           <div className="flex h-full flex-col justify-between gap-6">
@@ -127,31 +140,83 @@ export function AppLayout() {
           </div>
         </aside>
 
-        <main className="min-w-0 space-y-6">
-          <header className="glass-panel relative overflow-hidden flex flex-col gap-4 rounded-[30px] p-4 md:flex-row md:items-center md:justify-between">
+        <main className="min-w-0 space-y-4 md:space-y-6">
+          <section className="glass-panel overflow-hidden rounded-[24px] p-3 sm:p-4 xl:hidden">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex min-w-0 items-center gap-3">
+                <img
+                  src={blasonLogo}
+                  alt="Lor'Squad"
+                  className="h-11 w-11 rounded-[16px] object-cover ring-1 ring-white/10 shadow-luxe"
+                />
+                <div className="min-w-0">
+                  <p className="truncate text-base font-semibold text-white">Lor&apos;Squad Wellness</p>
+                  <p className="truncate text-[11px] uppercase tracking-[0.18em] text-slate-500">
+                    Powered by La Base
+                  </p>
+                </div>
+              </div>
+              <Button variant="secondary" className="px-4 py-2 text-[11px]" onClick={handleLogout}>
+                Quitter
+              </Button>
+            </div>
+
+            <div className="mt-3 flex items-center justify-between gap-3 rounded-[18px] border border-white/10 bg-white/[0.03] px-3 py-3">
+              <div className="min-w-0">
+                <p className="truncate text-sm font-semibold text-white">{currentUser.name}</p>
+                <p className="truncate text-xs text-slate-400">{pageTitle}</p>
+              </div>
+              <StatusBadge
+                label={getRoleLabel(currentUser.role)}
+                tone={currentUser.role === "admin" ? "blue" : "green"}
+              />
+            </div>
+
+            <nav className="mt-3 flex gap-2 overflow-x-auto pb-1">
+              {navigation.map((item) => {
+                const isActive =
+                  location.pathname === item.path ||
+                  (item.path === "/clients" && location.pathname.startsWith("/clients/"));
+
+                return (
+                  <NavLink
+                    key={item.path}
+                    to={item.path}
+                    className={`whitespace-nowrap rounded-full border px-4 py-2 text-xs font-medium transition ${
+                      isActive
+                        ? "border-white/10 bg-white text-slate-950"
+                        : "border-white/10 bg-white/[0.04] text-slate-200"
+                    }`}
+                  >
+                    {item.label}
+                  </NavLink>
+                );
+              })}
+            </nav>
+          </section>
+
+          <header className="glass-panel relative overflow-hidden rounded-[24px] p-4 sm:rounded-[28px] md:p-5 xl:rounded-[30px]">
             <div className="absolute right-10 top-0 h-24 w-24 rounded-full bg-amber-300/8 blur-3xl" />
-            <div>
-              <p className="text-xs uppercase tracking-[0.35em] text-slate-500">
-                Lor'Squad Wellness
-              </p>
-              <p className="mt-2 text-xl font-semibold text-white md:text-[1.9rem]">
-                {location.pathname === "/dashboard" && "Pilotage de l'activite et rendez-vous du moment"}
-                {location.pathname === "/clients" && "Dossiers clients et suivi en cours"}
-                {location.pathname === "/users" && "Creation des acces et gestion simple des roles"}
-                {location.pathname.startsWith("/clients/") && "Lecture detaillee du dossier client"}
-                {location.pathname === "/assessments/new" && "Bilan guide pour conduire le rendez-vous"}
-              </p>
-              <div className="mt-3">
+            <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+              <div>
+                <p className="text-[11px] uppercase tracking-[0.3em] text-slate-500">
+                  Lor&apos;Squad Wellness
+                </p>
+                <p className="mt-2 max-w-3xl text-lg font-semibold text-white sm:text-xl md:text-[1.7rem]">
+                  {pageTitle}
+                </p>
+                <div className="mt-3 hidden md:block">
+                  <BrandSignature variant="inline" />
+                </div>
+              </div>
+              <div className="hidden flex-wrap gap-2 md:flex md:justify-end">
+                <Button variant="secondary" onClick={handleLogout}>
+                  Retour login
+                </Button>
+              </div>
+              <div className="md:hidden">
                 <BrandSignature variant="inline" />
               </div>
-            </div>
-            <div className="flex flex-wrap gap-2 md:justify-end">
-              <StatusBadge label="Rendez-vous" tone="blue" />
-              <StatusBadge label="Nutrition" tone="green" />
-              <StatusBadge label="Suivi" tone="amber" />
-              <Button variant="secondary" onClick={handleLogout}>
-                Retour login
-              </Button>
             </div>
           </header>
 
