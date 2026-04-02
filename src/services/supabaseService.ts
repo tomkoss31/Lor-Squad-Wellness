@@ -411,23 +411,26 @@ export async function addSupabaseFollowUpAssessment(
 
 export async function deleteSupabaseClient(clientId: string) {
   const client = await requireSupabase();
+  const {
+    data: { session }
+  } = await client.auth.getSession();
 
-  const { error: followUpsError } = await client.from("follow_ups").delete().eq("client_id", clientId);
-  if (followUpsError) {
-    throw new Error("Impossible de supprimer les suivis lies a ce dossier.");
+  if (!session?.access_token) {
+    throw new Error("La session admin est introuvable. Reconnecte-toi puis recommence.");
   }
 
-  const { error: assessmentsError } = await client
-    .from("assessments")
-    .delete()
-    .eq("client_id", clientId);
-  if (assessmentsError) {
-    throw new Error("Impossible de supprimer les bilans lies a ce dossier.");
-  }
+  const response = await fetch("/api/admin-delete-client", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${session.access_token}`
+    },
+    body: JSON.stringify({ clientId })
+  });
 
-  const { error: clientError } = await client.from("clients").delete().eq("id", clientId);
-  if (clientError) {
-    throw new Error("Impossible de supprimer ce dossier client.");
+  const result = (await response.json()) as { ok: boolean; error?: string };
+  if (!response.ok || !result.ok) {
+    throw new Error(result.error ?? "Impossible de supprimer ce dossier client.");
   }
 }
 

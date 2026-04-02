@@ -130,6 +130,12 @@ for update
 using (public.is_active_user() and (public.is_admin() or distributor_id = auth.uid()))
 with check (public.is_active_user() and (public.is_admin() or distributor_id = auth.uid()));
 
+drop policy if exists "clients delete own or admin" on public.clients;
+create policy "clients delete own or admin"
+on public.clients
+for delete
+using (public.is_active_user() and (public.is_admin() or distributor_id = auth.uid()));
+
 drop policy if exists "assessments select via client" on public.assessments;
 create policy "assessments select via client"
 on public.assessments
@@ -200,6 +206,34 @@ using (
   )
 )
 with check (
+  public.is_active_user()
+  and exists (
+    select 1
+    from public.clients
+    where public.clients.id = follow_ups.client_id
+      and (public.is_admin() or public.clients.distributor_id = auth.uid())
+  )
+);
+
+drop policy if exists "assessments delete via client" on public.assessments;
+create policy "assessments delete via client"
+on public.assessments
+for delete
+using (
+  public.is_active_user()
+  and exists (
+    select 1
+    from public.clients
+    where public.clients.id = assessments.client_id
+      and (public.is_admin() or public.clients.distributor_id = auth.uid())
+  )
+);
+
+drop policy if exists "follow_ups delete via client" on public.follow_ups;
+create policy "follow_ups delete via client"
+on public.follow_ups
+for delete
+using (
   public.is_active_user()
   and exists (
     select 1
