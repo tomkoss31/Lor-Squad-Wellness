@@ -1328,89 +1328,114 @@ function RecommendationStepCard({
   recommendations: RecommendationLead[];
   onChange: (index: number, field: keyof RecommendationLead, value: string) => void;
 }) {
+  const filledRecommendations = recommendations.filter(
+    (item) => item.name.trim() || item.contact.trim()
+  ).length;
+
   return (
-    <div className="space-y-4">
-      <Card className="space-y-5 bg-[linear-gradient(180deg,rgba(15,23,42,0.24),rgba(15,23,42,0.52))]">
+    <div className="space-y-5">
+      <Card className="space-y-6 bg-[linear-gradient(180deg,rgba(15,23,42,0.24),rgba(15,23,42,0.56))]">
         <div className="flex flex-wrap items-start justify-between gap-4">
-          <div className="max-w-3xl">
+          <div className="max-w-4xl">
             <p className="text-xs uppercase tracking-[0.28em] text-slate-500">Moment smoothie & recommandations</p>
-            <h2 className="mt-3 text-4xl text-white">
+            <h2 className="mt-3 max-w-3xl text-4xl leading-tight text-white md:text-5xl">
               Tu aimes les cadeaux ? Tu aimes en recevoir ?
             </h2>
-            <p className="mt-3 text-lg leading-8 text-slate-200">
+            <p className="mt-4 text-2xl leading-tight text-slate-100 md:text-3xl">
               A qui tu aimerais offrir ce moment bien-etre et nutrition ?
             </p>
-            <p className="mt-4 text-sm leading-7 text-slate-300">
+            <p className="mt-5 max-w-3xl text-base leading-8 text-slate-300">
               L&apos;experience comprend le bilan bien-etre et nutritionnel, la boisson et le
-              smoothie. Tu peux noter simplement prenom + numero de telephone ou reseau.
+              smoothie. Tu peux noter simplement prenom + numero de telephone ou reseau pour les
+              personnes a qui tu aimerais offrir ce moment.
             </p>
           </div>
           <StatusBadge label="Lecture client" tone="green" />
         </div>
+
+        <div className="grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
+          <div className="rounded-[26px] border border-white/10 bg-slate-950/35 p-5">
+            <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Texte a laisser lire</p>
+            <div className="mt-4 space-y-4">
+              <p className="text-xl leading-8 text-white">
+                Tu peux noter les personnes a qui tu aimerais offrir la meme experience.
+              </p>
+              <p className="text-base leading-7 text-slate-300">
+                Famille, amis, collegues, connaissances... l&apos;idee est simplement de penser aux
+                personnes a qui ce moment pourrait faire du bien.
+              </p>
+              <p className="text-base leading-7 text-slate-300">
+                Un prenom et un numero de telephone ou un reseau suffisent pour commencer.
+              </p>
+            </div>
+          </div>
+
+          <div className="rounded-[26px] border border-white/10 bg-white/[0.03] p-5">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-xs uppercase tracking-[0.25em] text-slate-500">Repere distributeur</p>
+                <p className="mt-2 text-2xl text-white">Tu poses le cadre, puis tu laisses un vrai temps.</p>
+              </div>
+              <StatusBadge label="Sans pression" tone="blue" />
+            </div>
+
+            <div className="mt-4 grid gap-3">
+              <QuickReadCard
+                label="Etape 1"
+                value="Ouvrir simplement"
+                detail="Tu aimes les cadeaux ? Tu aimes en recevoir ? A qui tu aimerais offrir ce moment ?"
+              />
+              <QuickReadCard
+                label="Etape 2"
+                value="Laisser faire"
+                detail="Je te laisse noter tranquillement pendant que je prepare le smoothie. Je reviens juste apres."
+              />
+              <QuickReadCard
+                label="Etape 3"
+                value="Rester leger"
+                detail="Le but est d'aider la personne a penser a son entourage, pas de lui mettre une pression commerciale."
+              />
+            </div>
+          </div>
+        </div>
       </Card>
 
-      <div className="grid gap-4 xl:grid-cols-[1.02fr_0.98fr]">
-        <Card className="space-y-4">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <p className="text-xs uppercase tracking-[0.25em] text-slate-500">Repere terrain</p>
-              <p className="mt-2 text-2xl text-white">Le distributeur pose le cadre, puis laisse un vrai temps.</p>
-            </div>
-            <StatusBadge label="Sans pression" tone="blue" />
+      <Card className="space-y-5">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p className="text-xs uppercase tracking-[0.25em] text-slate-500">Liste nominative</p>
+            <p className="mt-2 text-3xl text-white">Les personnes a qui offrir l&apos;experience</p>
+            <p className="mt-2 max-w-3xl text-sm leading-7 text-slate-300">
+              Laisse de l&apos;air dans la page : une ligne par personne, avec plus de place pour
+              noter clairement le prenom et le contact.
+            </p>
           </div>
+          <StatusBadge label={`${filledRecommendations}/10`} tone="amber" />
+        </div>
 
-          <div className="grid gap-3">
-            <QuickReadCard
-              label="Etape 1"
-              value="Ouvrir simplement"
-              detail="Tu aimes les cadeaux ? Tu aimes en recevoir ? A qui tu aimerais offrir ce moment ?"
-            />
-            <QuickReadCard
-              label="Etape 2"
-              value="Laisser faire"
-              detail="Je te laisse noter tranquillement les personnes a qui tu aimerais faire plaisir pendant que je prepare le smoothie."
-            />
-            <QuickReadCard
-              label="Etape 3"
-              value="Ne pas surcharger"
-              detail="Un prenom et un numero ou un reseau suffisent. Le but est de garder ce moment naturel."
-            />
-          </div>
-        </Card>
-
-        <Card className="space-y-4">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <p className="text-xs uppercase tracking-[0.25em] text-slate-500">Liste nominative</p>
-              <p className="mt-2 text-2xl text-white">Les personnes a qui offrir l&apos;experience</p>
-            </div>
-            <StatusBadge label={`${recommendations.filter((item) => item.name.trim() || item.contact.trim()).length}/10`} tone="amber" />
-          </div>
-
-          <div className="grid gap-3">
-            {recommendations.map((item, index) => (
-              <div
-                key={`recommendation-${index}`}
-                className="grid gap-3 rounded-[22px] border border-white/10 bg-slate-950/35 p-4 md:grid-cols-[96px_1fr_1fr]"
-              >
-                <div className="flex items-center rounded-[18px] border border-white/10 bg-white/[0.03] px-4 py-3 text-sm font-semibold text-white">
-                  Reco {index + 1}
-                </div>
-                <Field
-                  label="Nom / prenom"
-                  value={item.name}
-                  onChange={(value) => onChange(index, "name", value)}
-                />
-                <Field
-                  label="Numero ou reseau"
-                  value={item.contact}
-                  onChange={(value) => onChange(index, "contact", value)}
-                />
+        <div className="grid gap-4">
+          {recommendations.map((item, index) => (
+            <div
+              key={`recommendation-${index}`}
+              className="grid gap-4 rounded-[26px] border border-white/10 bg-slate-950/35 p-5 lg:grid-cols-[110px_1.1fr_1.3fr]"
+            >
+              <div className="flex min-h-[64px] items-center justify-center rounded-[20px] border border-white/10 bg-white/[0.03] px-4 py-3 text-base font-semibold text-white">
+                Reco {index + 1}
               </div>
-            ))}
-          </div>
-        </Card>
-      </div>
+              <Field
+                label="Nom / prenom"
+                value={item.name}
+                onChange={(value) => onChange(index, "name", value)}
+              />
+              <Field
+                label="Numero de telephone ou reseau"
+                value={item.contact}
+                onChange={(value) => onChange(index, "contact", value)}
+              />
+            </div>
+          ))}
+        </div>
+      </Card>
     </div>
   );
 }

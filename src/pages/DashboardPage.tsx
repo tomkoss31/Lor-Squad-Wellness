@@ -1,5 +1,4 @@
 import { Link } from "react-router-dom";
-import { BrandSignature } from "../components/branding/BrandSignature";
 import { DistributorBadge } from "../components/client/DistributorBadge";
 import { Card } from "../components/ui/Card";
 import { MetricTile } from "../components/ui/MetricTile";
@@ -50,62 +49,58 @@ export function DashboardPage() {
 
   const statCards = [
     {
-      label: currentUser.role === "admin" ? "Base client visible" : "Mes clients",
+      label: currentUser.role === "admin" ? "Clients visibles" : "Mes clients",
       value: visibleClients.length,
-      hint: "Lecture immediate du portefeuille",
+      hint: "Portefeuille visible",
       accent: "blue" as const
     },
     {
-      label: currentUser.role === "admin" ? "Rendez-vous poses" : "Mes rendez-vous",
+      label: currentUser.role === "admin" ? "Rendez-vous" : "Mes rendez-vous",
       value: scheduledFollowUps.length,
-      hint: "Suivis deja cales",
+      hint: "Suivis planifies",
       accent: "green" as const
     },
     {
-      label: currentUser.role === "admin" ? "Relances equipe" : "Mes relances",
+      label: currentUser.role === "admin" ? "Relances" : "Mes relances",
       value: relanceFollowUps.length,
-      hint: "Contacts a reprendre vite",
+      hint: "Relances urgentes",
       accent: "red" as const
     },
     {
-      label: currentUser.role === "admin" ? "Vision capacite" : "Charge du moment",
-      value: currentUser.role === "admin" ? `${coverage}%` : `${visibleClients.length}`,
+      label: currentUser.role === "admin" ? "Capacite active" : "Charge active",
+      value:
+        currentUser.role === "admin"
+          ? `${visibleClients.length} / ${teamTarget || 0}`
+          : `${visibleClients.length}`,
       hint:
         currentUser.role === "admin"
-          ? `${visibleClients.length} / ${teamTarget || 0} dossiers cibles`
-          : "Dossiers visibles a l'ecran",
+          ? `${coverage}% cible`
+          : "Dossiers visibles",
       accent: "blue" as const
     }
   ];
 
   return (
-    <div className="space-y-7">
+    <div className="space-y-6">
       <PageHeading
         eyebrow="Dashboard"
-        title={
-          currentUser.role === "admin"
-            ? "Une lecture plus claire de l'equipe, des rendez-vous et des relances"
-            : "Mes priorites clients, mes rendez-vous et la suite a poser"
-        }
-        description="Le dashboard reste direct et efficace, mais avec une respiration plus premium pour retrouver les priorites, ouvrir les portefeuilles et garder une lecture nette quand la base grandit."
+        title="Tableau de bord"
+        description="Rendez-vous, relances, charge et suivi d'equipe en un coup d'oeil."
       />
 
       <Card className="overflow-hidden">
         <div className="grid gap-6 xl:grid-cols-[1.08fr_0.92fr]">
-          <div className="space-y-6">
+          <div className="space-y-5">
             <div>
-              <p className="eyebrow-label">Vue du jour</p>
-              <h2 className="mt-4 max-w-[12ch] text-balance text-4xl text-white">
-                {currentUser.role === "admin"
-                  ? "Tu vois tout de suite qui a des rendez-vous, qui doit relancer et ou se situe la charge client."
-                  : "Tu retrouves tout de suite les personnes a revoir, les rendez-vous a venir et la suite a poser."}
+              <p className="eyebrow-label">Priorites du jour</p>
+              <h2 className="mt-3 text-[1.85rem] leading-[1.04] tracking-[-0.03em] text-white md:text-[2.05rem]">
+                {currentUser.role === "admin" ? "Vue d'ensemble de l'activite" : "Mes actions a ouvrir"}
               </h2>
-              <p className="mt-4 max-w-2xl text-[16px] leading-8 text-slate-300/88">
-                Une vision plus editoriale, plus calme et plus directe pour piloter la journee.
+              <p className="mt-2 text-sm leading-6 text-slate-300/88 md:text-[15px]">
+                {currentUser.role === "admin"
+                  ? "Rendez-vous, relances et charge equipe."
+                  : "Clients a revoir, rendez-vous et relances."}
               </p>
-              <div className="mt-5">
-                <BrandSignature variant="inline" />
-              </div>
             </div>
 
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -120,34 +115,38 @@ export function DashboardPage() {
               ))}
             </div>
 
-            <div className="surface-soft rounded-[26px] px-5 py-5">
-              <p className="eyebrow-label">Cadre de stockage</p>
-              <p className="mt-3 text-sm leading-7 text-slate-300">
-                {storageMode === "supabase"
-                  ? "Supabase est bien le bon choix pour tenir une base equipe avec plus de 1000 clients, des recherches rapides et des portefeuilles separes."
-                  : "Le mode local reste utile pour la demo, mais il ne faut pas le considerer comme la cible pour 1000+ clients. La base distante Supabase est la bonne trajectoire."}
-              </p>
-              <p className="mt-3 text-sm text-slate-400">{getAccessSummary(currentUser)}</p>
+            <div className="surface-soft rounded-[24px] px-4 py-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p className="eyebrow-label">Stockage</p>
+                  <p className="mt-2 text-sm text-slate-300">
+                    {storageMode === "supabase"
+                      ? "Supabase adapte a 1000+ clients."
+                      : "Mode demo local. Supabase recommande pour 1000+ clients."}
+                  </p>
+                </div>
+                <p className="text-xs text-slate-400">{getAccessSummary(currentUser)}</p>
+              </div>
             </div>
 
             <div className="flex flex-wrap gap-3">
               <Link
                 to="/clients"
-                className="inline-flex min-h-[52px] items-center justify-center rounded-[18px] bg-[linear-gradient(180deg,#6AC0FF_0%,#59B7FF_100%)] px-5 py-3 text-sm font-semibold text-slate-950 shadow-soft transition duration-200 hover:brightness-[1.03]"
+                className="inline-flex min-h-[50px] items-center justify-center rounded-[18px] bg-[linear-gradient(180deg,#6AC0FF_0%,#59B7FF_100%)] px-5 py-3 text-sm font-semibold text-slate-950 shadow-soft transition duration-200 hover:brightness-[1.03]"
               >
-                Ouvrir la base client
+                Base clients
               </Link>
               <Link
                 to={`/distributors/${currentUser.id}`}
-                className="inline-flex min-h-[52px] items-center justify-center rounded-[18px] bg-white/[0.04] px-5 py-3 text-sm font-semibold text-white transition duration-200 hover:bg-white/[0.07]"
+                className="inline-flex min-h-[50px] items-center justify-center rounded-[18px] bg-white/[0.04] px-5 py-3 text-sm font-semibold text-white transition duration-200 hover:bg-white/[0.07]"
               >
-                Voir mon portefeuille
+                Mon portefeuille
               </Link>
               <Link
                 to="/assessments/new"
-                className="inline-flex min-h-[52px] items-center justify-center rounded-[18px] bg-white/[0.04] px-5 py-3 text-sm font-semibold text-white transition duration-200 hover:bg-white/[0.07]"
+                className="inline-flex min-h-[50px] items-center justify-center rounded-[18px] bg-white/[0.04] px-5 py-3 text-sm font-semibold text-white transition duration-200 hover:bg-white/[0.07]"
               >
-                Demarrer un bilan
+                Nouveau bilan
               </Link>
             </div>
           </div>
@@ -155,76 +154,79 @@ export function DashboardPage() {
           <div className="grid gap-4">
             <PriorityPanel
               title="Rendez-vous a venir"
-              tone="green"
               items={scheduledFollowUps.slice(0, 5)}
-              emptyLabel="Aucun rendez-vous planifie pour le moment"
+              emptyLabel="Aucun rendez-vous planifie"
+              statusLabel="Planifie"
+              statusTone="green"
             />
             <PriorityPanel
               title="Relances a faire"
-              tone="amber"
               items={relanceFollowUps.slice(0, 5)}
               emptyLabel="Aucune relance en attente"
+              statusLabel="Relance"
+              statusTone="amber"
             />
           </div>
         </div>
       </Card>
 
       {currentUser.role === "admin" ? (
-        <Card className="space-y-5">
+        <Card className="space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <p className="eyebrow-label">Responsables du dossier</p>
-              <h2 className="mt-3 max-w-[16ch] text-balance text-3xl text-white">
-                Ouvrir Thomas, Melanie, Mendy ou le reste de l&apos;equipe en un clic
+              <p className="eyebrow-label">Equipe</p>
+              <h2 className="mt-3 text-[1.7rem] leading-[1.06] text-white md:text-[1.9rem]">
+                Portefeuilles responsables
               </h2>
             </div>
             <StatusBadge label={`${portfolioSummaries.length} portefeuilles`} tone="blue" />
           </div>
 
           <div className="grid gap-4 xl:grid-cols-2">
-            {portfolioSummaries.map((summary) => (
-              <Link
-                key={summary.user.id}
-                to={`/distributors/${summary.user.id}`}
-                className="rounded-[28px] bg-white/[0.03] p-5 transition duration-200 hover:bg-white/[0.05]"
-              >
-                <div className="flex flex-wrap items-start justify-between gap-4">
-                  <DistributorBadge
-                    user={summary.user}
-                    detail={`${summary.metrics.clients.length} clients - cible ${summary.identity.target}`}
-                  />
-                  <StatusBadge
-                    label={`${summary.metrics.relanceFollowUps.length} relances`}
-                    tone={
-                      summary.metrics.relanceFollowUps.length ? "amber" : "green"
-                    }
-                  />
-                </div>
+            {portfolioSummaries.map((summary) => {
+              const load = Math.round(
+                (summary.metrics.clients.length / Math.max(summary.identity.target, 1)) * 100
+              );
 
-                <div className="mt-5 grid gap-3 md:grid-cols-3">
-                  <PortfolioKpi
-                    label="Clients"
-                    value={String(summary.metrics.clients.length)}
-                  />
-                  <PortfolioKpi
-                    label="RDV"
-                    value={String(summary.metrics.scheduledFollowUps.length)}
-                  />
-                  <PortfolioKpi
-                    label="Charge"
-                    value={`${Math.round(
-                      (summary.metrics.clients.length / Math.max(summary.identity.target, 1)) *
-                        100
-                    )}%`}
-                  />
-                </div>
+              return (
+                <Link
+                  key={summary.user.id}
+                  to={`/distributors/${summary.user.id}`}
+                  className="rounded-[28px] bg-white/[0.03] p-5 transition duration-200 hover:bg-white/[0.05]"
+                >
+                  <div className="flex flex-wrap items-start justify-between gap-4">
+                    <DistributorBadge
+                      user={summary.user}
+                      detail={`${summary.metrics.clients.length} clients`}
+                    />
+                    <StatusBadge
+                      label={
+                        summary.metrics.relanceFollowUps.length
+                          ? `${summary.metrics.relanceFollowUps.length} relances`
+                          : "0 relance"
+                      }
+                      tone={summary.metrics.relanceFollowUps.length ? "amber" : "green"}
+                    />
+                  </div>
 
-                <p className="mt-4 text-sm leading-6 text-slate-400">
-                  {summary.identity.label}. Ouvre la page pour retrouver les dossiers par mois, les
-                  personnes a relancer et les rendez-vous deja poses.
-                </p>
-              </Link>
-            ))}
+                  <div className="mt-5 grid gap-3 md:grid-cols-4">
+                    <PortfolioKpi label="Clients" value={String(summary.metrics.clients.length)} />
+                    <PortfolioKpi
+                      label="RDV"
+                      value={String(summary.metrics.scheduledFollowUps.length)}
+                    />
+                    <PortfolioKpi
+                      label="Charge"
+                      value={`${load}%`}
+                    />
+                    <PortfolioKpi
+                      label="Cible"
+                      value={String(summary.identity.target)}
+                    />
+                  </div>
+                </Link>
+              );
+            })}
           </div>
         </Card>
       ) : null}
@@ -233,11 +235,16 @@ export function DashboardPage() {
         <Card className="space-y-4">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <p className="eyebrow-label">Clients a reprendre</p>
-              <h2 className="mt-3 text-3xl text-white">Les dossiers a ouvrir en premier</h2>
+              <p className="eyebrow-label">A reprendre</p>
+              <h2 className="mt-3 text-[1.7rem] leading-[1.06] text-white md:text-[1.9rem]">
+                Dossiers a ouvrir
+              </h2>
             </div>
-            <Link className="text-sm font-semibold text-sky-300" to="/clients">
-              Voir toute la base
+            <Link
+              className="text-sm font-medium text-slate-400 transition hover:text-sky-200"
+              to="/clients"
+            >
+              Ouvrir la base
             </Link>
           </div>
 
@@ -251,18 +258,21 @@ export function DashboardPage() {
                   className="rounded-[24px] bg-white/[0.03] p-4 transition duration-200 hover:bg-white/[0.05]"
                 >
                   <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="text-lg font-semibold text-white">{followUp.clientName}</p>
-                      <p className="mt-1 text-sm text-slate-400">{followUp.type}</p>
+                    <div className="min-w-0">
+                      <p className="truncate text-[1.05rem] font-semibold text-white">
+                        {followUp.clientName}
+                      </p>
+                      <p className="mt-1 text-sm text-slate-300">{followUp.type}</p>
                     </div>
                     <StatusBadge
                       label={followUp.status === "scheduled" ? "RDV" : "Relance"}
                       tone={followUp.status === "scheduled" ? "green" : "amber"}
                     />
                   </div>
-                  <p className="mt-4 text-sm text-slate-300">
-                    Echeance {formatDateTime(followUp.dueDate)}
-                  </p>
+                  <div className="mt-3 flex flex-wrap items-center justify-between gap-3 text-sm">
+                    <span className="text-slate-300">{formatDateTime(followUp.dueDate)}</span>
+                    <span className="text-slate-500">{followUp.programTitle}</span>
+                  </div>
                 </Link>
               ))}
           </div>
@@ -271,28 +281,30 @@ export function DashboardPage() {
         <Card className="space-y-4">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <p className="eyebrow-label">Rappel terrain</p>
-              <h2 className="mt-3 text-3xl text-white">Un cadre simple avant chaque bilan</h2>
+              <p className="eyebrow-label">Guide express</p>
+              <h2 className="mt-3 text-[1.7rem] leading-[1.06] text-white md:text-[1.9rem]">
+                Rappel terrain
+              </h2>
             </div>
             <Link
               to="/guide"
-              className="inline-flex min-h-[52px] items-center justify-center rounded-[18px] bg-white/[0.04] px-5 py-3 text-sm font-semibold text-white transition duration-200 hover:bg-white/[0.07]"
+              className="inline-flex min-h-[46px] items-center justify-center rounded-[18px] bg-white/[0.04] px-4 py-2.5 text-sm font-semibold text-white transition duration-200 hover:bg-white/[0.07]"
             >
               Ouvrir le guide
             </Link>
           </div>
           <div className="grid gap-3">
             <GuideTile
-              title="Avant le rendez-vous"
-              text="Verifier le client, le suivi prevu et les relances a faire dans la meme zone."
+              title="Avant"
+              text="Verifier le client, le suivi prevu et les relances."
             />
             <GuideTile
-              title="Pendant le rendez-vous"
-              text="Rester sur les reperes utiles, poser le prochain point et garder une fiche propre."
+              title="Pendant"
+              text="Rester sur les points utiles et fixer la suite."
             />
             <GuideTile
-              title="Apres le rendez-vous"
-              text="Si un doute reste ouvert, le dossier doit remonter naturellement dans les relances."
+              title="Apres"
+              text="Si besoin, rouvrir le dossier dans les relances."
             />
           </div>
         </Card>
@@ -303,12 +315,12 @@ export function DashboardPage() {
 
 function PriorityPanel({
   title,
-  tone,
   items,
-  emptyLabel
+  emptyLabel,
+  statusLabel,
+  statusTone
 }: {
   title: string;
-  tone: "green" | "amber";
   items: Array<{
     id: string;
     clientId: string;
@@ -319,15 +331,17 @@ function PriorityPanel({
     programTitle: string;
   }>;
   emptyLabel: string;
+  statusLabel: string;
+  statusTone: "green" | "amber";
 }) {
   return (
     <Card className="space-y-4">
       <div className="flex items-center justify-between gap-3">
         <div>
           <p className="eyebrow-label">Priorites</p>
-          <h2 className="mt-3 text-2xl text-white">{title}</h2>
+          <h2 className="mt-3 text-[1.45rem] leading-[1.06] text-white">{title}</h2>
         </div>
-        <StatusBadge label={`${items.length} visibles`} tone={tone} />
+        <StatusBadge label={`${items.length} visibles`} tone="blue" />
       </div>
 
       <div className="space-y-3">
@@ -339,18 +353,17 @@ function PriorityPanel({
               className="block rounded-[24px] bg-white/[0.03] p-4 transition duration-200 hover:bg-white/[0.05]"
             >
               <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="text-lg font-semibold text-white">{followUp.clientName}</p>
-                  <p className="mt-1 text-sm text-slate-400">{followUp.type}</p>
+                <div className="min-w-0">
+                  <p className="truncate text-[1.05rem] font-semibold text-white">
+                    {followUp.clientName}
+                  </p>
+                  <p className="mt-1 text-sm text-slate-300">{followUp.type}</p>
                 </div>
-                <StatusBadge
-                  label={followUp.status === "scheduled" ? "Planifie" : "Relance"}
-                  tone={followUp.status === "scheduled" ? "green" : "amber"}
-                />
+                <StatusBadge label={statusLabel} tone={statusTone} />
               </div>
-              <div className="mt-4 grid grid-cols-2 gap-3 text-sm text-slate-400">
-                <span>{formatDateTime(followUp.dueDate)}</span>
-                <span className="text-right">{followUp.programTitle}</span>
+              <div className="mt-3 flex flex-wrap items-center justify-between gap-3 text-sm">
+                <span className="text-slate-300">{formatDateTime(followUp.dueDate)}</span>
+                <span className="text-slate-500">{followUp.programTitle}</span>
               </div>
             </Link>
           ))
@@ -376,7 +389,7 @@ function PortfolioKpi({ label, value }: { label: string; value: string }) {
 function GuideTile({ title, text }: { title: string; text: string }) {
   return (
     <div className="rounded-[24px] bg-white/[0.03] p-4">
-      <p className="text-lg font-semibold text-white">{title}</p>
+      <p className="text-base font-semibold text-white">{title}</p>
       <p className="mt-2 text-sm leading-6 text-slate-400">{text}</p>
     </div>
   );
