@@ -23,6 +23,8 @@ export function RoutineProductScene() {
       <img
         src={routineMorningVisual}
         alt="Routine matin Lor'Squad"
+        loading="lazy"
+        decoding="async"
         className="absolute inset-0 h-full w-full object-cover"
         style={{ objectPosition: "center center" }}
       />

@@ -69,7 +69,13 @@ function ImageScenarioCard({
   return (
     <div className="overflow-hidden rounded-[28px] border border-white/10 bg-white/[0.03]">
       <div className="relative min-h-[320px] bg-slate-950">
-        <img src={image} alt={imageAlt} className="absolute inset-0 h-full w-full object-cover" />
+        <img
+          src={image}
+          alt={imageAlt}
+          loading="lazy"
+          decoding="async"
+          className="absolute inset-0 h-full w-full object-cover"
+        />
         <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(2,6,23,0.04),rgba(2,6,23,0.14)_45%,rgba(2,6,23,0.58)_100%)]" />
       </div>
 
@@ -100,6 +106,8 @@ function SupportVisualCard() {
         <img
           src={breakfastSupportVisual}
           alt="Visuel pedagogique petit-dejeuner Lor'Squad"
+          loading="lazy"
+          decoding="async"
           className="absolute inset-0 h-full w-full object-cover"
         />
         <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(2,6,23,0.03),rgba(2,6,23,0.08)_40%,rgba(2,6,23,0.52)_100%)]" />

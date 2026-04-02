@@ -19,6 +19,8 @@ export function MorningRoutineCard() {
           <img
             src={routineMorningVisual}
             alt="Routine matin Lor'Squad"
+            loading="lazy"
+            decoding="async"
             className="absolute inset-0 h-full w-full object-cover"
           />
           <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(2,6,23,0.02),rgba(2,6,23,0.08)_44%,rgba(2,6,23,0.46)_100%)]" />

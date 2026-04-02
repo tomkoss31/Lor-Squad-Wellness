@@ -1,14 +1,13 @@
 ﻿import { useState, type ReactNode } from "react";
+import { lazy } from "react";
+import { Suspense } from "react";
 import { StepRail } from "../components/assessment/StepRail";
 import { useEffect } from "react";
 import { useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { BodyFatInsightCard } from "../components/body-scan/BodyFatInsightCard";
 import { MuscleMassInsightCard } from "../components/body-scan/MuscleMassInsightCard";
-import { BreakfastComparison } from "../components/education/BreakfastComparison";
 import { HydrationInsightCard } from "../components/education/HydrationInsightCard";
-import { HydrationRoutinePrimerCard } from "../components/education/HydrationRoutinePrimerCard";
-import { MorningRoutineCard } from "../components/education/MorningRoutineCard";
 import { PlateGuideCard } from "../components/education/PlateGuideCard";
 import { ProgramBoosterCard } from "../components/programs/ProgramBoosterCard";
 import { WeightGoalInsightCard } from "../components/education/WeightGoalInsightCard";
@@ -181,6 +180,24 @@ const steps = [
   "Resume du rendez-vous"
 ];
 
+const LazyBreakfastComparison = lazy(() =>
+  import("../components/education/BreakfastComparison").then((module) => ({
+    default: module.BreakfastComparison
+  }))
+);
+
+const LazyMorningRoutineCard = lazy(() =>
+  import("../components/education/MorningRoutineCard").then((module) => ({
+    default: module.MorningRoutineCard
+  }))
+);
+
+const LazyHydrationRoutinePrimerCard = lazy(() =>
+  import("../components/education/HydrationRoutinePrimerCard").then((module) => ({
+    default: module.HydrationRoutinePrimerCard
+  }))
+);
+
 export function NewAssessmentPage() {
   const navigate = useNavigate();
   const { programs, currentUser, createClientWithInitialAssessment } = useAppContext();
@@ -188,6 +205,18 @@ export function NewAssessmentPage() {
   const [form, setForm] = useState(initialForm);
   const [currentStep, setCurrentStep] = useState(0);
   const [saveError, setSaveError] = useState("");
+
+  const goToStep = (nextStep: number) => {
+    setCurrentStep(Math.min(Math.max(nextStep, 0), steps.length - 1));
+  };
+
+  const goToPreviousStep = () => {
+    goToStep(currentStep - 1);
+  };
+
+  const goToNextStep = () => {
+    goToStep(currentStep + 1);
+  };
 
   useEffect(() => {
     const stepRailTop = stepRailRef.current
@@ -471,19 +500,19 @@ export function NewAssessmentPage() {
   async function handleSaveAssessment() {
     if (!form.firstName.trim() || !form.lastName.trim()) {
       setSaveError("Renseigne au minimum le prenom et le nom du client.");
-      setCurrentStep(0);
+      goToStep(0);
       return;
     }
 
     if (!form.objectiveFocus.trim()) {
       setSaveError("Choisis d'abord l'objectif principal du client.");
-      setCurrentStep(0);
+      goToStep(0);
       return;
     }
 
     if (!selectedProgram) {
       setSaveError("Choisis un programme avant d'enregistrer le bilan.");
-      setCurrentStep(9);
+      goToStep(9);
       return;
     }
 
@@ -881,11 +910,15 @@ export function NewAssessmentPage() {
           )}
 
           {currentStep === 7 && (
-            <BreakfastComparison />
+            <Suspense fallback={<StepVisualLoadingCard label="Chargement du visuel petit-dejeuner" />}>
+              <LazyBreakfastComparison />
+            </Suspense>
           )}
 
           {currentStep === 8 && (
-            <MorningRoutineCard />
+            <Suspense fallback={<StepVisualLoadingCard label="Chargement de la routine matin" />}>
+              <LazyMorningRoutineCard />
+            </Suspense>
           )}
 
           {currentStep === 9 && (
@@ -918,7 +951,11 @@ export function NewAssessmentPage() {
             </div>
           )}
 
-          {currentStep === 10 && <HydrationRoutinePrimerCard />}
+          {currentStep === 10 && (
+            <Suspense fallback={<StepVisualLoadingCard label="Chargement du repere hydratation" />}>
+              <LazyHydrationRoutinePrimerCard />
+            </Suspense>
+          )}
 
           {currentStep === 11 && (
             <div className="space-y-4">
@@ -1035,14 +1072,14 @@ export function NewAssessmentPage() {
           )}
 
           <div className="hidden items-center justify-between gap-3 border-t border-white/10 pt-4 md:flex">
-            <Button variant="ghost" onClick={() => setCurrentStep((step) => Math.max(step - 1, 0))} disabled={currentStep === 0}>
+            <Button variant="ghost" onClick={goToPreviousStep} disabled={currentStep === 0}>
               Etape precedente
             </Button>
             <div className="flex flex-wrap gap-3">
               <Button variant="secondary" onClick={() => void handleSaveAssessment()}>
                 Enregistrer le bilan
               </Button>
-              <Button onClick={() => setCurrentStep((step) => Math.min(step + 1, steps.length - 1))} disabled={currentStep === steps.length - 1}>
+              <Button onClick={goToNextStep} disabled={currentStep === steps.length - 1}>
                 Etape suivante
               </Button>
             </div>
@@ -1058,14 +1095,14 @@ export function NewAssessmentPage() {
               <Button
                 variant="ghost"
                 className="w-full justify-center"
-                onClick={() => setCurrentStep((step) => Math.max(step - 1, 0))}
+                onClick={goToPreviousStep}
                 disabled={currentStep === 0}
               >
                 Precedente
               </Button>
               <Button
                 className="w-full justify-center"
-                onClick={() => setCurrentStep((step) => Math.min(step + 1, steps.length - 1))}
+                onClick={goToNextStep}
                 disabled={currentStep === steps.length - 1}
               >
                 Suivante
@@ -1119,6 +1156,18 @@ export function NewAssessmentPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+function StepVisualLoadingCard({ label }: { label: string }) {
+  return (
+    <Card className="space-y-4">
+      <p className="text-[11px] uppercase tracking-[0.24em] text-slate-500">Chargement</p>
+      <div className="rounded-[28px] border border-white/10 bg-white/[0.03] p-6">
+        <div className="h-64 rounded-[22px] bg-[linear-gradient(135deg,rgba(255,255,255,0.06),rgba(255,255,255,0.02))]" />
+        <p className="mt-4 text-sm text-slate-300">{label}</p>
+      </div>
+    </Card>
   );
 }
 

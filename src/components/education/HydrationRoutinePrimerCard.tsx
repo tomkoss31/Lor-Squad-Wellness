@@ -25,6 +25,8 @@ export function HydrationRoutinePrimerCard() {
           <img
             src={hydrationRoutineVisual}
             alt="Hydratation et routine du matin"
+            loading="lazy"
+            decoding="async"
             className="absolute inset-0 h-full w-full object-cover"
           />
           <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(2,6,23,0.03),rgba(2,6,23,0.12)_48%,rgba(2,6,23,0.4)_100%)]" />
