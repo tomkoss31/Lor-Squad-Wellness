@@ -251,6 +251,16 @@ export function ClientDetailPage() {
             />
           </div>
 
+          <StartingPointOverviewCard
+            objective={client.objective}
+            startDate={firstAssessment.date}
+            startWeight={firstAssessment.bodyScan.weight}
+            currentDate={latestAssessment.date}
+            currentWeight={latestBodyScan.weight}
+            currentBodyFat={latestBodyScan.bodyFat}
+            startBodyFat={firstAssessment.bodyScan.bodyFat}
+          />
+
           <BodyScanSnapshotCard
             title="Dernier body scan"
             dateLabel={`Releve du ${formatDate(latestAssessment.date)}`}
@@ -444,6 +454,108 @@ function SummaryFocusCard({ label, value }: { label: string; value: string }) {
     <div className="rounded-[22px] border border-white/10 bg-slate-950/35 px-4 py-4">
       <p className="text-[10px] uppercase tracking-[0.18em] text-slate-500">{label}</p>
       <p className="mt-3 text-lg font-semibold text-white">{value}</p>
+    </div>
+  );
+}
+
+function StartingPointOverviewCard({
+  objective,
+  startDate,
+  startWeight,
+  currentDate,
+  currentWeight,
+  startBodyFat,
+  currentBodyFat
+}: {
+  objective: "weight-loss" | "sport";
+  startDate: string;
+  startWeight: number;
+  currentDate: string;
+  currentWeight: number;
+  startBodyFat: number;
+  currentBodyFat: number;
+}) {
+  const weightDelta = Number((currentWeight - startWeight).toFixed(1));
+  const bodyFatDelta = Number((currentBodyFat - startBodyFat).toFixed(1));
+  const weightTone =
+    weightDelta === 0
+      ? "text-slate-200"
+      : objective === "weight-loss"
+        ? weightDelta < 0
+          ? "text-emerald-200"
+          : "text-amber-200"
+        : weightDelta > 0
+          ? "text-emerald-200"
+          : "text-amber-200";
+
+  return (
+    <div className="rounded-[28px] border border-white/10 bg-[linear-gradient(180deg,rgba(15,23,42,0.28),rgba(15,23,42,0.52))] p-5">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <p className="text-xs uppercase tracking-[0.25em] text-slate-500">Repere de depart</p>
+          <p className="mt-2 text-2xl text-white">Le point de depart face au point actuel</p>
+          <p className="mt-2 text-sm leading-6 text-slate-300">
+            Ce bloc aide a relire tout de suite l&apos;evolution depuis le premier bilan.
+          </p>
+        </div>
+        <div className={`rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-sm font-medium ${weightTone}`}>
+          {weightDelta === 0 ? "Poids stable" : `${weightDelta > 0 ? "+" : ""}${weightDelta} kg depuis le depart`}
+        </div>
+      </div>
+
+      <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <OverviewMetricCard label="Depart" value={`${startWeight} kg`} note={formatDate(startDate)} tone="blue" />
+        <OverviewMetricCard label="Aujourd'hui" value={`${currentWeight} kg`} note={formatDate(currentDate)} tone="green" highlighted />
+        <OverviewMetricCard
+          label="Graisse de depart"
+          value={`${startBodyFat} %`}
+          note="Premier body scan"
+          tone="slate"
+        />
+        <OverviewMetricCard
+          label="Graisse actuelle"
+          value={`${currentBodyFat} %`}
+          note={
+            bodyFatDelta === 0
+              ? "Stable"
+              : `${bodyFatDelta > 0 ? "+" : ""}${bodyFatDelta} pt depuis le depart`
+          }
+          tone="slate"
+        />
+      </div>
+    </div>
+  );
+}
+
+function OverviewMetricCard({
+  label,
+  value,
+  note,
+  tone,
+  highlighted = false
+}: {
+  label: string;
+  value: string;
+  note: string;
+  tone: "blue" | "green" | "slate";
+  highlighted?: boolean;
+}) {
+  const toneClass =
+    tone === "green"
+      ? "border-emerald-400/20 bg-emerald-400/[0.07]"
+      : tone === "blue"
+        ? "border-sky-400/20 bg-sky-400/[0.07]"
+        : "border-white/10 bg-slate-950/35";
+
+  return (
+    <div
+      className={`rounded-[24px] border p-4 ${toneClass} ${
+        highlighted ? "shadow-[0_0_30px_rgba(52,211,153,0.08)]" : ""
+      }`}
+    >
+      <p className="text-[10px] uppercase tracking-[0.18em] text-slate-500">{label}</p>
+      <p className="mt-3 text-2xl text-white">{value}</p>
+      <p className="mt-2 text-sm text-slate-400">{note}</p>
     </div>
   );
 }
