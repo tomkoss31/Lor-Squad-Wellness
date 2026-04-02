@@ -9,7 +9,6 @@ import { useAppContext } from "../context/AppContext";
 import {
   getActivePortfolioUsers,
   getGroupedClientsByMonth,
-  getPortfolioIdentity,
   getPortfolioMetrics
 } from "../lib/portfolio";
 import { formatDate, formatDateTime, getFirstAssessment } from "../lib/calculations";
@@ -26,8 +25,7 @@ export function DistributorPortfolioPage() {
     currentUser,
     users,
     visibleClients,
-    visibleFollowUps,
-    storageMode
+    visibleFollowUps
   } = useAppContext();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "pending" | "follow-up">(
@@ -81,12 +79,6 @@ export function DistributorPortfolioPage() {
   });
   const groupedClients = getGroupedClientsByMonth(filteredClients);
 
-  const identity = getPortfolioIdentity(portfolioUser);
-  const targetProgress = Math.min(
-    999,
-    Math.round((portfolioMetrics.clients.length / Math.max(identity.target, 1)) * 100)
-  );
-
   return (
     <div className="space-y-6">
       <PageHeading
@@ -122,7 +114,7 @@ export function DistributorPortfolioPage() {
             </div>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-4">
+          <div className="grid gap-4 md:grid-cols-3">
             <MetricTile
               label="Clients suivis"
               value={portfolioMetrics.clients.length}
@@ -141,21 +133,6 @@ export function DistributorPortfolioPage() {
               hint="A reprendre"
               accent="red"
             />
-            <MetricTile
-              label="Capacite active"
-              value={`${portfolioMetrics.clients.length} / ${identity.target}`}
-              hint={`${targetProgress}% cible`}
-              accent="blue"
-            />
-          </div>
-
-          <div className="surface-soft rounded-[24px] p-4">
-            <p className="eyebrow-label">Stockage</p>
-            <p className="mt-3 text-sm text-slate-300">
-              {storageMode === "supabase"
-                ? "Base distante active et adaptee au volume equipe."
-                : "Mode demo local. Supabase recommande pour absorber durablement le volume."}
-            </p>
           </div>
 
           <div className="flex flex-wrap gap-3">

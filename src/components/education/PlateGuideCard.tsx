@@ -99,18 +99,18 @@ export function PlateGuideCard({
         <p className="mt-3 text-sm leading-6 text-slate-300">{subtitle}</p>
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-[360px_minmax(0,1fr)] xl:items-start">
-        <div className="space-y-4">
-          <div className="flex justify-center">
-            <div className="relative flex h-80 w-80 items-center justify-center rounded-full border border-white/10 bg-slate-900/70 p-5 shadow-[0_24px_90px_rgba(15,23,42,0.45)]">
+      <div className="grid gap-7 xl:grid-cols-[330px_minmax(0,1fr)] xl:items-start 2xl:grid-cols-[350px_minmax(0,1fr)]">
+        <div className="space-y-5 xl:pt-2">
+          <div className="flex justify-center xl:justify-start">
+            <div className="relative flex h-[19.5rem] w-[19.5rem] items-center justify-center rounded-full border border-white/10 bg-slate-900/70 p-6 shadow-[0_24px_90px_rgba(15,23,42,0.45)] 2xl:h-[20.5rem] 2xl:w-[20.5rem]">
               <div
                 className="absolute inset-4 rounded-full opacity-90"
                 style={{ background: gradient }}
               />
-              <div className="absolute inset-10 rounded-full border border-white/10 bg-slate-950/82" />
-              <div className="relative z-10 max-w-[10rem] text-center">
-                <p className="text-xs uppercase tracking-[0.28em] text-slate-500">Assiette simple</p>
-                <p className="mt-3 text-xl font-semibold text-white">
+              <div className="absolute inset-11 rounded-full border border-white/10 bg-slate-950/82" />
+              <div className="relative z-10 max-w-[11rem] px-2 text-center">
+                <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Assiette simple</p>
+                <p className="mt-4 text-xl font-semibold leading-7 text-white">
                   {mode === "sport"
                     ? "Equilibre, energie, recuperation"
                     : "Volume, satiete, regularite"}
@@ -118,19 +118,14 @@ export function PlateGuideCard({
               </div>
             </div>
           </div>
-
-          <div className="rounded-full border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-slate-200">
-            <span className="font-semibold text-white">{lipidsNote}</span>
-            {lipidExamples.length ? ` - ${lipidExamples.join(", ")}` : ""}
-          </div>
         </div>
 
-        <div className="space-y-4">
-          <div className="grid gap-3 md:grid-cols-3">
+        <div className="space-y-5">
+          <div className="grid gap-4 md:grid-cols-3">
             {segments.map((segment) => (
               <div
                 key={segment.label}
-                className="rounded-[24px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.035),rgba(255,255,255,0.02))] p-4"
+                className="rounded-[24px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.035),rgba(255,255,255,0.02))] p-5 md:min-h-[188px]"
               >
                 <div className="flex items-center gap-2">
                   <span className={`h-2.5 w-2.5 rounded-full ${accentClasses[segment.accent].dot}`} />
@@ -143,38 +138,76 @@ export function PlateGuideCard({
                 >
                   {segment.share}%
                 </p>
-                <p className="mt-2 text-sm leading-6 text-slate-400">{segment.note}</p>
+                <p className="mt-3 max-w-[22ch] text-sm leading-6 text-slate-400">
+                  {segment.note}
+                </p>
               </div>
             ))}
           </div>
 
-          <div className="rounded-[22px] border border-white/10 bg-slate-950/35 px-4 py-4">
-            <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Repere portions main</p>
-            <div className="mt-3 flex flex-wrap gap-2">
-              {portionGuides.slice(0, 3).map((guide) => (
-                <span
-                  key={guide.label}
-                  className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-slate-200"
-                >
-                  <span className="font-semibold text-white">{guide.label}</span> : {guide.value}
-                </span>
-              ))}
-            </div>
-          </div>
+          <div className="grid gap-4 lg:grid-cols-[minmax(0,0.88fr)_minmax(0,1.12fr)]">
+            <div className="grid gap-4">
+              <div className="rounded-[22px] border border-white/10 bg-white/[0.04] px-5 py-4">
+                <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
+                  Bons lipides
+                </p>
+                <p className="mt-3 text-sm leading-6 text-slate-200">
+                  <span className="font-semibold text-white">{lipidsNote}</span>
+                </p>
+                {lipidExamples.length ? (
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    {lipidExamples.map((item) => (
+                      <span
+                        key={`lipid-${item}`}
+                        className={`rounded-full border px-3 py-1.5 text-sm ${accentClasses.blue.chip}`}
+                      >
+                        {item}
+                      </span>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
 
-          <div className="rounded-[22px] border border-white/10 bg-white/[0.03] px-4 py-4">
-            <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Exemples simples</p>
-            <div className="mt-3 flex flex-wrap gap-2">
-              {mainExamples.flatMap((group) =>
-                group.items.map((item) => (
-                  <span
-                    key={`${group.label}-${item}`}
-                    className={`rounded-full border px-3 py-1.5 text-sm ${accentClasses[group.accent].chip}`}
+              <div className="rounded-[22px] border border-white/10 bg-slate-950/35 px-5 py-4">
+                <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
+                  Repere portions main
+                </p>
+                <div className="mt-4 grid gap-2">
+                  {portionGuides.map((guide) => (
+                    <div
+                      key={guide.label}
+                      className="flex items-center justify-between gap-3 rounded-[18px] bg-white/[0.04] px-3.5 py-3 text-sm text-slate-200"
+                    >
+                      <span className="font-semibold text-white">{guide.label}</span>
+                      <span className="text-right text-slate-300">{guide.value}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-[22px] border border-white/10 bg-white/[0.03] px-5 py-4">
+              <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Exemples simples</p>
+              <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                {mainExamples.map((group) => (
+                  <div
+                    key={group.label}
+                    className="rounded-[18px] bg-slate-950/24 px-4 py-4"
                   >
-                    {item}
-                  </span>
-                ))
-              )}
+                    <p className="text-sm font-semibold text-white">{group.label}</p>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {group.items.map((item) => (
+                        <span
+                          key={`${group.label}-${item}`}
+                          className={`rounded-full border px-3 py-1.5 text-sm ${accentClasses[group.accent].chip}`}
+                        >
+                          {item}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>

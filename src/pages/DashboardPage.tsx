@@ -1,109 +1,86 @@
 import { Link } from "react-router-dom";
-import { DistributorBadge } from "../components/client/DistributorBadge";
 import { Card } from "../components/ui/Card";
 import { MetricTile } from "../components/ui/MetricTile";
 import { PageHeading } from "../components/ui/PageHeading";
 import { StatusBadge } from "../components/ui/StatusBadge";
 import { useAppContext } from "../context/AppContext";
-import { getAccessSummary } from "../lib/auth";
-import {
-  getActivePortfolioUsers,
-  getPortfolioIdentity,
-  getPortfolioMetrics,
-  isRelanceFollowUp
-} from "../lib/portfolio";
+import { getPortfolioMetrics } from "../lib/portfolio";
 import { formatDateTime } from "../lib/calculations";
 
 export function DashboardPage() {
-  const {
-    currentUser,
-    visibleClients,
-    visibleFollowUps,
-    users,
-    storageMode
-  } = useAppContext();
+  const { currentUser, clients, followUps } = useAppContext();
 
   if (!currentUser) {
     return null;
   }
 
-  const portfolioUsers = getActivePortfolioUsers(users, visibleClients);
-  const portfolioSummaries = portfolioUsers.map((user) => ({
-    user,
-    identity: getPortfolioIdentity(user),
-    metrics: getPortfolioMetrics(user.id, visibleClients, visibleFollowUps)
-  }));
-  const scheduledFollowUps = [...visibleFollowUps]
-    .filter((followUp) => !isRelanceFollowUp(followUp))
-    .sort((left, right) => new Date(left.dueDate).getTime() - new Date(right.dueDate).getTime());
-  const relanceFollowUps = [...visibleFollowUps]
-    .filter((followUp) => isRelanceFollowUp(followUp))
-    .sort((left, right) => new Date(left.dueDate).getTime() - new Date(right.dueDate).getTime());
-  const teamTarget = portfolioSummaries.reduce(
-    (total, summary) => total + summary.identity.target,
-    0
-  );
-  const coverage = teamTarget
-    ? Math.round((visibleClients.length / teamTarget) * 100)
-    : 0;
+  const personalMetrics = getPortfolioMetrics(currentUser.id, clients, followUps);
+  const scheduledFollowUps = personalMetrics.scheduledFollowUps;
+  const relanceFollowUps = personalMetrics.relanceFollowUps;
+  const actionsToOpen = [...relanceFollowUps, ...scheduledFollowUps].sort((left, right) => {
+    if (left.status !== right.status) {
+      return left.status === "pending" ? -1 : 1;
+    }
+
+    return new Date(left.dueDate).getTime() - new Date(right.dueDate).getTime();
+  });
+  const activeLoad = getLoadState(actionsToOpen.length);
 
   const statCards = [
     {
-      label: currentUser.role === "admin" ? "Clients visibles" : "Mes clients",
-      value: visibleClients.length,
+      label: "Mes clients",
+      value: personalMetrics.clients.length,
       hint: "Portefeuille visible",
       accent: "blue" as const
     },
     {
-      label: currentUser.role === "admin" ? "Rendez-vous" : "Mes rendez-vous",
+      label: "Mes rendez-vous",
       value: scheduledFollowUps.length,
       hint: "Suivis planifies",
       accent: "green" as const
     },
     {
-      label: currentUser.role === "admin" ? "Relances" : "Mes relances",
+      label: "Mes relances",
       value: relanceFollowUps.length,
       hint: "Relances urgentes",
       accent: "red" as const
     },
     {
-      label: currentUser.role === "admin" ? "Capacite active" : "Charge active",
-      value:
-        currentUser.role === "admin"
-          ? `${visibleClients.length} / ${teamTarget || 0}`
-          : `${visibleClients.length}`,
-      hint:
-        currentUser.role === "admin"
-          ? `${coverage}% cible`
-          : "Dossiers visibles",
+      label: "Dossiers a ouvrir",
+      value: actionsToOpen.length,
+      hint: "Actions a rouvrir",
       accent: "blue" as const
+    },
+    {
+      label: "Ma charge",
+      value: activeLoad.label,
+      hint: activeLoad.hint,
+      accent: activeLoad.accent
     }
   ];
 
   return (
     <div className="space-y-6">
       <PageHeading
-        eyebrow="Dashboard"
+        eyebrow="Accueil"
         title="Tableau de bord"
-        description="Rendez-vous, relances, charge et suivi d'equipe en un coup d'oeil."
+        description="Mes rendez-vous, mes relances et mes priorites du moment."
       />
 
       <Card className="overflow-hidden">
         <div className="grid gap-6 xl:grid-cols-[1.08fr_0.92fr]">
           <div className="space-y-5">
             <div>
-              <p className="eyebrow-label">Priorites du jour</p>
+              <p className="eyebrow-label">Vue personnelle</p>
               <h2 className="mt-3 text-[1.85rem] leading-[1.04] tracking-[-0.03em] text-white md:text-[2.05rem]">
-                {currentUser.role === "admin" ? "Vue d'ensemble de l'activite" : "Mes actions a ouvrir"}
+                Mes priorites du jour
               </h2>
               <p className="mt-2 text-sm leading-6 text-slate-300/88 md:text-[15px]">
-                {currentUser.role === "admin"
-                  ? "Rendez-vous, relances et charge equipe."
-                  : "Clients a revoir, rendez-vous et relances."}
+                Rendez-vous, relances, dossiers a rouvrir et charge immediate.
               </p>
             </div>
 
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
               {statCards.map((stat) => (
                 <MetricTile
                   key={stat.label}
@@ -113,20 +90,6 @@ export function DashboardPage() {
                   accent={stat.accent}
                 />
               ))}
-            </div>
-
-            <div className="surface-soft rounded-[24px] px-4 py-4">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <p className="eyebrow-label">Stockage</p>
-                  <p className="mt-2 text-sm text-slate-300">
-                    {storageMode === "supabase"
-                      ? "Supabase adapte a 1000+ clients."
-                      : "Mode demo local. Supabase recommande pour 1000+ clients."}
-                  </p>
-                </div>
-                <p className="text-xs text-slate-400">{getAccessSummary(currentUser)}</p>
-              </div>
             </div>
 
             <div className="flex flex-wrap gap-3">
@@ -153,7 +116,7 @@ export function DashboardPage() {
 
           <div className="grid gap-4">
             <PriorityPanel
-              title="Rendez-vous a venir"
+              title="Mes rendez-vous"
               items={scheduledFollowUps.slice(0, 5)}
               emptyLabel="Aucun rendez-vous planifie"
               statusLabel="Planifie"
@@ -170,67 +133,6 @@ export function DashboardPage() {
         </div>
       </Card>
 
-      {currentUser.role === "admin" ? (
-        <Card className="space-y-4">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <p className="eyebrow-label">Equipe</p>
-              <h2 className="mt-3 text-[1.7rem] leading-[1.06] text-white md:text-[1.9rem]">
-                Portefeuilles responsables
-              </h2>
-            </div>
-            <StatusBadge label={`${portfolioSummaries.length} portefeuilles`} tone="blue" />
-          </div>
-
-          <div className="grid gap-4 xl:grid-cols-2">
-            {portfolioSummaries.map((summary) => {
-              const load = Math.round(
-                (summary.metrics.clients.length / Math.max(summary.identity.target, 1)) * 100
-              );
-
-              return (
-                <Link
-                  key={summary.user.id}
-                  to={`/distributors/${summary.user.id}`}
-                  className="rounded-[28px] bg-white/[0.03] p-5 transition duration-200 hover:bg-white/[0.05]"
-                >
-                  <div className="flex flex-wrap items-start justify-between gap-4">
-                    <DistributorBadge
-                      user={summary.user}
-                      detail={`${summary.metrics.clients.length} clients`}
-                    />
-                    <StatusBadge
-                      label={
-                        summary.metrics.relanceFollowUps.length
-                          ? `${summary.metrics.relanceFollowUps.length} relances`
-                          : "0 relance"
-                      }
-                      tone={summary.metrics.relanceFollowUps.length ? "amber" : "green"}
-                    />
-                  </div>
-
-                  <div className="mt-5 grid gap-3 md:grid-cols-4">
-                    <PortfolioKpi label="Clients" value={String(summary.metrics.clients.length)} />
-                    <PortfolioKpi
-                      label="RDV"
-                      value={String(summary.metrics.scheduledFollowUps.length)}
-                    />
-                    <PortfolioKpi
-                      label="Charge"
-                      value={`${load}%`}
-                    />
-                    <PortfolioKpi
-                      label="Cible"
-                      value={String(summary.identity.target)}
-                    />
-                  </div>
-                </Link>
-              );
-            })}
-          </div>
-        </Card>
-      ) : null}
-
       <div className="grid gap-4 xl:grid-cols-[1fr_1fr]">
         <Card className="space-y-4">
           <div className="flex items-center justify-between gap-3">
@@ -242,16 +144,15 @@ export function DashboardPage() {
             </div>
             <Link
               className="text-sm font-medium text-slate-400 transition hover:text-sky-200"
-              to="/clients"
+              to={`/distributors/${currentUser.id}`}
             >
-              Ouvrir la base
+              Mon portefeuille
             </Link>
           </div>
 
           <div className="space-y-3">
-            {(relanceFollowUps.length ? relanceFollowUps : scheduledFollowUps)
-              .slice(0, 4)
-              .map((followUp) => (
+            {actionsToOpen.length ? (
+              actionsToOpen.slice(0, 4).map((followUp) => (
                 <Link
                   key={followUp.id}
                   to={`/clients/${followUp.clientId}`}
@@ -274,7 +175,12 @@ export function DashboardPage() {
                     <span className="text-slate-500">{followUp.programTitle}</span>
                   </div>
                 </Link>
-              ))}
+              ))
+            ) : (
+              <div className="rounded-[24px] bg-white/[0.03] p-5 text-sm text-slate-400">
+                Aucun dossier a rouvrir pour le moment.
+              </div>
+            )}
           </div>
         </Card>
 
@@ -377,15 +283,6 @@ function PriorityPanel({
   );
 }
 
-function PortfolioKpi({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-[22px] bg-slate-950/24 px-4 py-4">
-      <p className="text-[11px] font-medium text-slate-500">{label}</p>
-      <p className="mt-3 text-lg font-semibold text-white">{value}</p>
-    </div>
-  );
-}
-
 function GuideTile({ title, text }: { title: string; text: string }) {
   return (
     <div className="rounded-[24px] bg-white/[0.03] p-4">
@@ -393,4 +290,32 @@ function GuideTile({ title, text }: { title: string; text: string }) {
       <p className="mt-2 text-sm leading-6 text-slate-400">{text}</p>
     </div>
   );
+}
+
+function getLoadState(actionsCount: number): {
+  label: string;
+  hint: string;
+  accent: "blue" | "green" | "red";
+} {
+  if (actionsCount >= 6) {
+    return {
+      label: "Dense",
+      hint: `${actionsCount} actions a traiter`,
+      accent: "red"
+    };
+  }
+
+  if (actionsCount >= 3) {
+    return {
+      label: "Stable",
+      hint: `${actionsCount} actions en cours`,
+      accent: "blue"
+    };
+  }
+
+  return {
+    label: "Legere",
+    hint: actionsCount ? `${actionsCount} action a ouvrir` : "Aucune action urgente",
+    accent: "green"
+  };
 }
