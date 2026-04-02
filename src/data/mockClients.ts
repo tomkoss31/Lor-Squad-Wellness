@@ -55,6 +55,7 @@ function questionnaire(
     targetWeight: 65,
     motivation: 8,
     desiredTimeline: "3 mois",
+    recommendations: [],
     ...overrides
   };
 }

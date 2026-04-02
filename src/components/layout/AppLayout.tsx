@@ -20,6 +20,7 @@ export function AppLayout() {
   const navigation = [
     { label: "Dashboard", path: "/dashboard" },
     { label: "Guide RDV", path: "/guide" },
+    { label: "Recommandations", path: "/recommendations" },
     { label: "Clients", path: "/clients" },
     ...(currentUser.role === "admin" ? [{ label: "Utilisateurs", path: "/users" }] : []),
     { label: "Nouveau bilan", path: "/assessments/new" }
@@ -30,8 +31,10 @@ export function AppLayout() {
       ? "Pilotage de l'activite et rendez-vous du moment"
       : location.pathname === "/guide"
         ? "Conseils terrain pour mieux conduire le rendez-vous"
-      : location.pathname === "/clients"
-        ? "Dossiers clients et suivi en cours"
+        : location.pathname === "/recommendations"
+          ? "Support simple pour poser les recommandations au bon moment"
+        : location.pathname === "/clients"
+          ? "Dossiers clients et suivi en cours"
         : location.pathname === "/users"
           ? "Creation des acces et gestion simple des roles"
           : location.pathname.startsWith("/clients/")

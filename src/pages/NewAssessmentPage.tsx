@@ -29,7 +29,7 @@ import {
   getWeightLossPaceInsight,
   getWeightLossPlan
 } from "../lib/calculations";
-import type { BiologicalSex, Objective } from "../types/domain";
+import type { BiologicalSex, Objective, RecommendationLead } from "../types/domain";
 
 type AssessmentForm = {
   assessmentDate: string;
@@ -97,6 +97,7 @@ type AssessmentForm = {
   selectedProgramId: string;
   nextFollowUp: string;
   comment: string;
+  recommendations: RecommendationLead[];
 };
 
 function padDatePart(value: number) {
@@ -120,6 +121,10 @@ function getDefaultNextFollowUpDateTime() {
   baseDate.setDate(baseDate.getDate() + 14);
   baseDate.setHours(10, 0, 0, 0);
   return toDateTimeLocalValue(baseDate);
+}
+
+function createEmptyRecommendations(count = 10): RecommendationLead[] {
+  return Array.from({ length: count }, () => ({ name: "", contact: "" }));
 }
 
 const initialForm: AssessmentForm = {
@@ -187,7 +192,8 @@ const initialForm: AssessmentForm = {
   objective: "weight-loss",
   selectedProgramId: "",
   nextFollowUp: getDefaultNextFollowUpDateTime(),
-  comment: ""
+  comment: "",
+  recommendations: createEmptyRecommendations()
 };
 
 const steps = [
@@ -197,6 +203,7 @@ const steps = [
   "Sante, objectif, activite et freins",
   "Composition des repas",
   "Body scan",
+  "Recommandations",
   "Hydratation",
   "Petit-dejeuner",
   "Routine matin",
@@ -277,6 +284,9 @@ export function NewAssessmentPage() {
         : form.muscleMass < 28 && form.objective === "sport"
           ? "La masse musculaire sera le point a suivre de pres."
           : "Le suivi pourra surtout s'appuyer sur la regularite du plan.";
+  const recommendationCount = form.recommendations.filter(
+    (item) => item.name.trim() || item.contact.trim()
+  ).length;
 
   const prompts =
     currentStep === 1
@@ -305,35 +315,41 @@ export function NewAssessmentPage() {
               ]
           : currentStep === 6
             ? [
+                "Pendant le smoothie, on ouvre un moment simple autour du cadeau et du partage.",
+                "Le client doit pouvoir lire quelques phrases claires pendant que tu prepares la boisson.",
+                "Le ton reste cool, humain et sans pression."
+              ]
+          : currentStep === 7
+            ? [
                 "L'hydratation doit rester un repere simple, pas un discours trop technique.",
                 "On relie le chiffre du jour a une routine concrete.",
                 "Le visuel sert a faire comprendre plus vite que le texte."
               ]
-          : currentStep === 7
+          : currentStep === 8
             ? [
                 "Le petit-dejeuner classique sert de point de comparaison simple.",
                 "Le client doit voir en quelques secondes ce qui change vraiment.",
                 "Le matin se travaille d'abord avec des reperes faciles a refaire."
               ]
-          : currentStep === 8
+          : currentStep === 9
             ? [
                 "La routine matin doit paraitre simple, premium et facile a expliquer.",
                 "On montre peu d'elements, mais bien choisis.",
                 "Le visuel principal doit faire une grande partie du travail."
               ]
-          : currentStep === 9
+          : currentStep === 10
             ? [
                 "Presenter le programme comme une reponse simple au besoin du client.",
                 "Relier le choix du programme aux habitudes observees pendant le bilan.",
                 "Rester dans une logique d'accompagnement, pas de pression."
               ]
-          : currentStep === 10
+          : currentStep === 11
             ? [
                 "Cette page sert de synthese pedagogique avant le demarrage.",
                 "On ancre les bases du matin et de l'hydratation dans l'esprit du client.",
                 "Le but est de rassurer, pas d'ajouter une couche de complexite."
               ]
-            : currentStep >= 11
+            : currentStep >= 12
               ? [
                   "Toujours finir avec une suite claire et un rendez-vous deja pose.",
                   "Le client doit repartir avec des reperes simples a retenir.",
@@ -377,23 +393,29 @@ export function NewAssessmentPage() {
                 ? [`Poids de depart : ${form.weight} kg`, `Objectif eau : ${waterNeed} L / jour`, `Proteines conseillees : ${proteinRange}`, bodyScanAttention]
               : currentStep === 6
                 ? [
+                    `Recommandations notees : ${recommendationCount}`,
+                    "Le client peut noter prenom + numero ou reseau.",
+                    "Le distributeur laisse un temps calme pendant le smoothie."
+                  ]
+              : currentStep === 7
+                ? [
                     "Valider ce que le client boit vraiment aujourd'hui.",
                     "Transformer l'objectif eau en routine simple sur la journee.",
                     "Garder un discours clair et peu charge."
                   ]
-              : currentStep === 7
+              : currentStep === 8
                     ? ["Comparer un matin improvise a un matin plus structure.", "Faire ressortir ce qui change vraiment.", "Le client doit se reconnaitre tout de suite."]
-                : currentStep === 8
-                      ? ["Montrer la routine comme un ensemble simple.", "Le visuel doit porter l'explication.", "Moins de texte, plus de lisibilite."]
                 : currentStep === 9
+                      ? ["Montrer la routine comme un ensemble simple.", "Le visuel doit porter l'explication.", "Moins de texte, plus de lisibilite."]
+                : currentStep === 10
                       ? [
                           `Programme : ${selectedProgram?.title ?? "A choisir"}`,
                           `Prix : ${selectedProgram?.price ?? "-"}`,
                           selectedProgram?.benefits[0] ?? "Faire ressortir le benefice principal"
                         ]
-                : currentStep === 10
+                : currentStep === 11
                         ? ["Ancrer les bases avant le demarrage.", "Hydratation et matin doivent paraitre evidents.", "Pas de surcharge autour du visuel."]
-                        : currentStep === 11
+                        : currentStep === 12
                           ? [
                               `Prochain suivi : ${form.nextFollowUp ? formatDateTime(form.nextFollowUp) : "-"}`,
                               "Fixer la suite avant de terminer le rendez-vous",
@@ -401,11 +423,11 @@ export function NewAssessmentPage() {
                             ]
                           : [`Programme retenu : ${selectedProgram?.title ?? "-"}`, `Hydratation cible : ${waterNeed} L`, `Proteines : ${proteinRange}`];
   const panelTitle =
-    currentStep >= 9 ? "Cap du moment" : currentStep >= 5 ? "Lecture du bilan" : "Aide au rendez-vous";
+    currentStep >= 10 ? "Cap du moment" : currentStep >= 5 ? "Lecture du bilan" : "Aide au rendez-vous";
   const panelIntro =
-    currentStep >= 11
+    currentStep >= 12
       ? "La fin du rendez-vous doit rester simple, claire et facile a reformuler."
-      : currentStep >= 9
+      : currentStep >= 10
         ? "Ici, on garde seulement ce qui aide a presenter la proposition."
         : currentStep >= 5
           ? "Le panneau sert a relire vite les chiffres et la logique du bilan."
@@ -466,6 +488,16 @@ export function NewAssessmentPage() {
     setForm((prev) => ({ ...prev, [key]: value }));
   }
 
+  function updateRecommendation(index: number, field: keyof RecommendationLead, value: string) {
+    setForm((prev) => ({
+      ...prev,
+      recommendations: prev.recommendations.map((item, itemIndex) =>
+        itemIndex === index ? { ...item, [field]: value } : item
+      )
+    }));
+  }
+
+
   function updateObjectiveFocus(value: string) {
     update("objectiveFocus", value);
     update("objective", value === "Prise de masse" ? "sport" : "weight-loss");
@@ -517,7 +549,10 @@ export function NewAssessmentPage() {
       objectiveFocus: form.objectiveFocus,
       targetWeight: form.targetWeight > 0 ? form.targetWeight : undefined,
       motivation: form.motivation,
-      desiredTimeline: form.desiredTimeline
+      desiredTimeline: form.desiredTimeline,
+      recommendations: form.recommendations.filter(
+        (item) => item.name.trim() || item.contact.trim()
+      )
     };
   }
 
@@ -536,7 +571,7 @@ export function NewAssessmentPage() {
 
     if (!selectedProgram) {
       setSaveError("Choisis un programme avant d'enregistrer le bilan.");
-      goToStep(9);
+      goToStep(10);
       return;
     }
 
@@ -930,6 +965,13 @@ export function NewAssessmentPage() {
           )}
 
           {currentStep === 6 && (
+            <RecommendationStepCard
+              recommendations={form.recommendations}
+              onChange={updateRecommendation}
+            />
+          )}
+
+          {currentStep === 7 && (
             <HydrationInsightCard
               weight={form.weight}
               hydrationPercent={form.hydration}
@@ -939,19 +981,19 @@ export function NewAssessmentPage() {
             />
           )}
 
-          {currentStep === 7 && (
+          {currentStep === 8 && (
             <Suspense fallback={<StepVisualLoadingCard label="Chargement du visuel petit-dejeuner" />}>
               <LazyBreakfastComparison />
             </Suspense>
           )}
 
-          {currentStep === 8 && (
+          {currentStep === 9 && (
             <Suspense fallback={<StepVisualLoadingCard label="Chargement de la routine matin" />}>
               <LazyMorningRoutineCard />
             </Suspense>
           )}
 
-          {currentStep === 9 && (
+          {currentStep === 10 && (
             <div className="space-y-4">
               <div className="grid gap-4 lg:grid-cols-2">
                 {mainPrograms.map((program) => (
@@ -981,13 +1023,13 @@ export function NewAssessmentPage() {
             </div>
           )}
 
-          {currentStep === 10 && (
+          {currentStep === 11 && (
             <Suspense fallback={<StepVisualLoadingCard label="Chargement du repere hydratation" />}>
               <LazyHydrationRoutinePrimerCard />
             </Suspense>
           )}
 
-          {currentStep === 11 && (
+          {currentStep === 12 && (
             <div className="space-y-4">
               <div className="grid gap-4 md:grid-cols-3">
                 <ChoiceGroup label="Decision client" value={form.comment.includes("partant") ? "Partant" : form.comment.includes("interesse") ? "A confirmer" : "A rassurer"} options={["Partant", "A rassurer", "A confirmer"]} onChange={(v) => update("comment", v === "Partant" ? "Client partant, rassure par la simplicite du plan." : v === "A confirmer" ? "Client interesse, souhaite valider rapidement." : "Client interesse mais a besoin d'etre rassure sur la mise en place.")} />
@@ -1006,7 +1048,7 @@ export function NewAssessmentPage() {
             </div>
           )}
 
-          {currentStep === 12 && selectedProgram && (
+          {currentStep === 13 && selectedProgram && (
             <div className="space-y-4">
               <Card className="space-y-5 bg-[linear-gradient(180deg,rgba(15,23,42,0.32),rgba(15,23,42,0.52))]">
                 <div className="flex flex-wrap items-start justify-between gap-4">
@@ -1075,6 +1117,7 @@ export function NewAssessmentPage() {
                         <SummaryRow label="Masse grasse" value={`${form.bodyFat} % - ${bodyFatKg} kg`} />
                         <SummaryRow label="Masse musculaire" value={`${form.muscleMass} kg - ${musclePercent} %`} />
                         <SummaryRow label="Masse hydrique estimee" value={`${form.hydration} % - ${hydrationKg} kg`} />
+                        <SummaryRow label="Recommandations notees" value={`${recommendationCount}`} />
                         {form.objective === "weight-loss" && (
                           <SummaryRow label="Lecture du rythme" value={weightLossPace.label} />
                         )}
@@ -1206,6 +1249,100 @@ function StepVisualLoadingCard({ label }: { label: string }) {
         <p className="mt-4 text-sm text-slate-300">{label}</p>
       </div>
     </Card>
+  );
+}
+
+function RecommendationStepCard({
+  recommendations,
+  onChange
+}: {
+  recommendations: RecommendationLead[];
+  onChange: (index: number, field: keyof RecommendationLead, value: string) => void;
+}) {
+  return (
+    <div className="space-y-4">
+      <Card className="space-y-5 bg-[linear-gradient(180deg,rgba(15,23,42,0.24),rgba(15,23,42,0.52))]">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="max-w-3xl">
+            <p className="text-xs uppercase tracking-[0.28em] text-slate-500">Moment smoothie & recommandations</p>
+            <h2 className="mt-3 text-4xl text-white">
+              Tu aimes les cadeaux ? Tu aimes en recevoir ?
+            </h2>
+            <p className="mt-3 text-lg leading-8 text-slate-200">
+              A qui tu aimerais offrir ce moment bien-etre et nutrition ?
+            </p>
+            <p className="mt-4 text-sm leading-7 text-slate-300">
+              L&apos;experience comprend le bilan bien-etre et nutritionnel, la boisson et le
+              smoothie. Tu peux noter simplement prenom + numero de telephone ou reseau.
+            </p>
+          </div>
+          <StatusBadge label="Lecture client" tone="green" />
+        </div>
+      </Card>
+
+      <div className="grid gap-4 xl:grid-cols-[1.02fr_0.98fr]">
+        <Card className="space-y-4">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-xs uppercase tracking-[0.25em] text-slate-500">Repere terrain</p>
+              <p className="mt-2 text-2xl text-white">Le distributeur pose le cadre, puis laisse un vrai temps.</p>
+            </div>
+            <StatusBadge label="Sans pression" tone="blue" />
+          </div>
+
+          <div className="grid gap-3">
+            <QuickReadCard
+              label="Etape 1"
+              value="Ouvrir simplement"
+              detail="Tu aimes les cadeaux ? Tu aimes en recevoir ? A qui tu aimerais offrir ce moment ?"
+            />
+            <QuickReadCard
+              label="Etape 2"
+              value="Laisser faire"
+              detail="Je te laisse noter tranquillement les personnes a qui tu aimerais faire plaisir pendant que je prepare le smoothie."
+            />
+            <QuickReadCard
+              label="Etape 3"
+              value="Ne pas surcharger"
+              detail="Un prenom et un numero ou un reseau suffisent. Le but est de garder ce moment naturel."
+            />
+          </div>
+        </Card>
+
+        <Card className="space-y-4">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-xs uppercase tracking-[0.25em] text-slate-500">Liste nominative</p>
+              <p className="mt-2 text-2xl text-white">Les personnes a qui offrir l&apos;experience</p>
+            </div>
+            <StatusBadge label={`${recommendations.filter((item) => item.name.trim() || item.contact.trim()).length}/10`} tone="amber" />
+          </div>
+
+          <div className="grid gap-3">
+            {recommendations.map((item, index) => (
+              <div
+                key={`recommendation-${index}`}
+                className="grid gap-3 rounded-[22px] border border-white/10 bg-slate-950/35 p-4 md:grid-cols-[96px_1fr_1fr]"
+              >
+                <div className="flex items-center rounded-[18px] border border-white/10 bg-white/[0.03] px-4 py-3 text-sm font-semibold text-white">
+                  Reco {index + 1}
+                </div>
+                <Field
+                  label="Nom / prenom"
+                  value={item.name}
+                  onChange={(value) => onChange(index, "name", value)}
+                />
+                <Field
+                  label="Numero ou reseau"
+                  value={item.contact}
+                  onChange={(value) => onChange(index, "contact", value)}
+                />
+              </div>
+            ))}
+          </div>
+        </Card>
+      </div>
+    </div>
   );
 }
 

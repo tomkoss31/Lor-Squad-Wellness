@@ -8,6 +8,11 @@ export type AssessmentType = "initial" | "follow-up";
 
 export type BiologicalSex = "female" | "male";
 
+export interface RecommendationLead {
+  name: string;
+  contact: string;
+}
+
 export interface User {
   id: string;
   name: string;
@@ -84,6 +89,7 @@ export interface AssessmentQuestionnaire {
   targetWeight?: number;
   motivation: number;
   desiredTimeline: string;
+  recommendations: RecommendationLead[];
 }
 
 export interface AssessmentRecord {

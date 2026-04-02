@@ -8,6 +8,7 @@ import { GuidePage } from "./pages/GuidePage";
 import { LoginPage } from "./pages/LoginPage";
 import { NewAssessmentPage } from "./pages/NewAssessmentPage";
 import { NewFollowUpPage } from "./pages/NewFollowUpPage";
+import { RecommendationsPage } from "./pages/RecommendationsPage";
 import { UsersPage } from "./pages/UsersPage";
 
 export default function App() {
@@ -22,6 +23,7 @@ export default function App() {
             <Route index element={<Navigate to="/dashboard" replace />} />
             <Route path="dashboard" element={<DashboardPage />} />
             <Route path="guide" element={<GuidePage />} />
+            <Route path="recommendations" element={<RecommendationsPage />} />
             <Route path="clients" element={<ClientsPage />} />
             <Route element={<RoleRoute allowedRoles={["admin"]} />}>
               <Route path="users" element={<UsersPage />} />
