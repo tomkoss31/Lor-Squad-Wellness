@@ -1,4 +1,4 @@
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 type RuntimeSupabaseConfig = {
   supabaseUrl: string;
@@ -83,6 +83,8 @@ export async function getSupabaseClient() {
   if (!config) {
     return null;
   }
+
+  const { createClient } = await import("@supabase/supabase-js");
 
   cachedClient = createClient(config.supabaseUrl, config.supabaseAnonKey, {
     auth: {
