@@ -4,6 +4,7 @@ import { AppLayout } from "./components/layout/AppLayout";
 import { ClientDetailPage } from "./pages/ClientDetailPage";
 import { ClientsPage } from "./pages/ClientsPage";
 import { DashboardPage } from "./pages/DashboardPage";
+import { GuidePage } from "./pages/GuidePage";
 import { LoginPage } from "./pages/LoginPage";
 import { NewAssessmentPage } from "./pages/NewAssessmentPage";
 import { NewFollowUpPage } from "./pages/NewFollowUpPage";
@@ -20,6 +21,7 @@ export default function App() {
           <Route path="/" element={<AppLayout />}>
             <Route index element={<Navigate to="/dashboard" replace />} />
             <Route path="dashboard" element={<DashboardPage />} />
+            <Route path="guide" element={<GuidePage />} />
             <Route path="clients" element={<ClientsPage />} />
             <Route element={<RoleRoute allowedRoles={["admin"]} />}>
               <Route path="users" element={<UsersPage />} />

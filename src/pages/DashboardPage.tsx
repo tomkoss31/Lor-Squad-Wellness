@@ -199,6 +199,43 @@ export function DashboardPage() {
       </div>
 
       <Card className="space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Guide rendez-vous</p>
+            <h2 className="mt-2 text-3xl text-white">
+              Un repere simple pour garder le bon ton avant et pendant le bilan
+            </h2>
+          </div>
+          <Link
+            to="/guide"
+            className="inline-flex rounded-full border border-white/10 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/5"
+          >
+            Ouvrir le guide
+          </Link>
+        </div>
+        <div className="grid gap-4 md:grid-cols-3">
+          <div className="rounded-[24px] border border-white/10 bg-white/[0.03] p-5">
+            <p className="text-lg font-semibold text-white">Preparation</p>
+            <p className="mt-2 text-sm leading-6 text-slate-400">
+              Club pret, materiel pret, bonne energie avant l&apos;arrivee.
+            </p>
+          </div>
+          <div className="rounded-[24px] border border-white/10 bg-white/[0.03] p-5">
+            <p className="text-lg font-semibold text-white">Accueil</p>
+            <p className="mt-2 text-sm leading-6 text-slate-400">
+              Sourire, prenom, ambiance cool et pro des la premiere minute.
+            </p>
+          </div>
+          <div className="rounded-[24px] border border-white/10 bg-white/[0.03] p-5">
+            <p className="text-lg font-semibold text-white">Cadre du rendez-vous</p>
+            <p className="mt-2 text-sm leading-6 text-slate-400">
+              Comprendre, expliquer, proposer puis fixer la suite simplement.
+            </p>
+          </div>
+        </div>
+      </Card>
+
+      <Card className="space-y-4">
         <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
           En pratique
         </p>
