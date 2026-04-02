@@ -169,10 +169,25 @@ export function PlateGuideCard({
             ))}
           </div>
 
-          <div className="grid gap-4 xl:grid-cols-[minmax(0,1.08fr)_minmax(280px,0.92fr)]">
+          <div className="grid gap-4">
+            <div className="rounded-[22px] border border-white/10 bg-slate-950/35 px-5 py-4">
+              <p className="eyebrow-label">Repère portions main</p>
+              <div className="mt-4 grid gap-2">
+                {portionGuides.map((guide) => (
+                  <div
+                    key={guide.label}
+                    className="flex items-center justify-between gap-3 rounded-[18px] bg-white/[0.04] px-4 py-3.5 text-sm text-slate-200"
+                  >
+                    <span className="text-base font-semibold text-white">{guide.label}</span>
+                    <span className="text-right text-base text-slate-300">{guide.value}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
             <div className="rounded-[22px] border border-white/10 bg-white/[0.03] px-5 py-4">
-              <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Exemples simples</p>
-              <div className="mt-4 grid gap-4 sm:grid-cols-2">
+              <p className="eyebrow-label">Exemples simples</p>
+              <div className="mt-4 grid gap-3">
                 {mainExamples.map((group) => (
                   <div
                     key={group.label}
@@ -189,23 +204,6 @@ export function PlateGuideCard({
                         </span>
                       ))}
                     </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="rounded-[22px] border border-white/10 bg-slate-950/35 px-5 py-4">
-              <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
-                Repere portions main
-              </p>
-              <div className="mt-4 grid gap-2">
-                {portionGuides.map((guide) => (
-                  <div
-                    key={guide.label}
-                    className="flex items-center justify-between gap-3 rounded-[18px] bg-white/[0.04] px-3.5 py-3 text-sm text-slate-200"
-                  >
-                    <span className="font-semibold text-white">{guide.label}</span>
-                    <span className="text-right text-slate-300">{guide.value}</span>
                   </div>
                 ))}
               </div>
