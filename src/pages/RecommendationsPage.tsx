@@ -22,8 +22,8 @@ export function RecommendationsPage() {
 
   const recommendationClients: RecommendationClientItem[] = visibleClients
     .flatMap((client) =>
-      client.assessments
-        .filter((assessment) => assessment.questionnaire.recommendations.length > 0)
+      (client.assessments ?? [])
+        .filter((assessment) => (assessment.questionnaire?.recommendations?.length ?? 0) > 0)
         .map((assessment) => ({
           id: client.id,
           assessmentId: assessment.id,
@@ -31,7 +31,7 @@ export function RecommendationsPage() {
           distributorName: client.distributorName,
           programTitle: assessment.programTitle,
           assessmentDate: assessment.date,
-          recommendationCount: assessment.questionnaire.recommendations.length,
+          recommendationCount: assessment.questionnaire?.recommendations?.length ?? 0,
           recommendationsContacted: assessment.questionnaire.recommendationsContacted ?? false,
           objectiveFocus:
             assessment.questionnaire.objectiveFocus ||

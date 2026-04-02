@@ -78,7 +78,7 @@ export function ClientDetailPage() {
     latestQuestionnaire.targetWeight,
     latestQuestionnaire.desiredTimeline
   );
-  const recommendationCount = latestQuestionnaire.recommendations.length;
+  const recommendationCount = latestQuestionnaire.recommendations?.length ?? 0;
   const recommendationsContacted = latestQuestionnaire.recommendationsContacted ?? false;
   const canDeleteClient = currentUser?.role === "admin";
 

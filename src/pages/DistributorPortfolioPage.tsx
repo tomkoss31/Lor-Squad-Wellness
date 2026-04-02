@@ -81,7 +81,7 @@ export function DistributorPortfolioPage() {
   const pendingRecommendationClients = portfolioMetrics.clients.filter((client) => {
     const latestAssessment = getLatestAssessment(client);
     return (
-      latestAssessment.questionnaire.recommendations.length > 0 &&
+      (latestAssessment.questionnaire.recommendations?.length ?? 0) > 0 &&
       !latestAssessment.questionnaire.recommendationsContacted
     );
   }).length;
@@ -233,7 +233,8 @@ export function DistributorPortfolioPage() {
                 {group.clients.map((client) => {
                   const firstAssessment = getFirstAssessment(client);
                   const latestAssessment = getLatestAssessment(client);
-                  const recommendationCount = latestAssessment.questionnaire.recommendations.length;
+                  const recommendationCount =
+                    latestAssessment.questionnaire.recommendations?.length ?? 0;
                   const recommendationsContacted =
                     latestAssessment.questionnaire.recommendationsContacted ?? false;
                   const status = statusLabels[client.status];
