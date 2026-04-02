@@ -1,6 +1,7 @@
 ﻿import { useState, type ReactNode } from "react";
 import { StepRail } from "../components/assessment/StepRail";
 import { useEffect } from "react";
+import { useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { BodyFatInsightCard } from "../components/body-scan/BodyFatInsightCard";
 import { MuscleMassInsightCard } from "../components/body-scan/MuscleMassInsightCard";
@@ -183,13 +184,18 @@ const steps = [
 export function NewAssessmentPage() {
   const navigate = useNavigate();
   const { programs, currentUser, createClientWithInitialAssessment } = useAppContext();
+  const stepRailRef = useRef<HTMLDivElement | null>(null);
   const [form, setForm] = useState(initialForm);
   const [currentStep, setCurrentStep] = useState(0);
   const [saveError, setSaveError] = useState("");
 
   useEffect(() => {
+    const stepRailTop = stepRailRef.current
+      ? stepRailRef.current.getBoundingClientRect().top + window.scrollY - 12
+      : 0;
+
     window.scrollTo({
-      top: 0,
+      top: Math.max(stepRailTop, 0),
       behavior: currentStep === 0 ? "auto" : "smooth"
     });
   }, [currentStep]);
@@ -553,7 +559,27 @@ export function NewAssessmentPage() {
         title="Un bilan guide, plus complet mais facile a conduire en rendez-vous"
         description="Le questionnaire est regroupe en blocs utiles pour garder une conversation fluide, faire ressortir les habitudes cle et terminer avec une proposition claire."
       />
-      <StepRail currentStep={currentStep} steps={steps} />
+      <div ref={stepRailRef}>
+        <StepRail currentStep={currentStep} steps={steps} />
+      </div>
+
+      <Card className="space-y-4 xl:hidden">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <p className="font-display text-xl text-white">{panelTitle}</p>
+            <p className="mt-2 text-sm leading-6 text-slate-400">{panelIntro}</p>
+          </div>
+          <StatusBadge label={`Etape ${currentStep + 1}`} tone="blue" />
+        </div>
+        <div className="grid gap-3">
+          {rightPanelPoints.slice(0, 2).map((point, index) => (
+            <FocusPanelItem key={point} text={point} highlighted={index === 0} />
+          ))}
+        </div>
+        <div className="rounded-[18px] border border-white/10 bg-slate-950/35 px-4 py-3 text-sm leading-6 text-slate-200">
+          {prompts[0]}
+        </div>
+      </Card>
 
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1.2fr)_340px]">
         <Card className="space-y-5">
@@ -1008,7 +1034,7 @@ export function NewAssessmentPage() {
             </div>
           )}
 
-          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/10 pt-4">
+          <div className="hidden items-center justify-between gap-3 border-t border-white/10 pt-4 md:flex">
             <Button variant="ghost" onClick={() => setCurrentStep((step) => Math.max(step - 1, 0))} disabled={currentStep === 0}>
               Etape precedente
             </Button>
@@ -1021,6 +1047,34 @@ export function NewAssessmentPage() {
               </Button>
             </div>
           </div>
+          <div className="sticky bottom-3 z-20 -mx-1 mt-2 rounded-[24px] border border-white/10 bg-[linear-gradient(180deg,rgba(8,12,22,0.92),rgba(8,12,22,0.82))] p-3 shadow-luxe backdrop-blur-xl md:hidden">
+            <div className="mb-3 flex items-center justify-between gap-3 px-1">
+              <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">
+                Etape {currentStep + 1} / {steps.length}
+              </p>
+              <p className="text-xs text-slate-400">{steps[currentStep]}</p>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <Button
+                variant="ghost"
+                className="w-full justify-center"
+                onClick={() => setCurrentStep((step) => Math.max(step - 1, 0))}
+                disabled={currentStep === 0}
+              >
+                Precedente
+              </Button>
+              <Button
+                className="w-full justify-center"
+                onClick={() => setCurrentStep((step) => Math.min(step + 1, steps.length - 1))}
+                disabled={currentStep === steps.length - 1}
+              >
+                Suivante
+              </Button>
+            </div>
+            <Button variant="secondary" className="mt-2 w-full justify-center" onClick={() => void handleSaveAssessment()}>
+              Enregistrer le bilan
+            </Button>
+          </div>
           {saveError ? (
             <div className="rounded-[20px] border border-rose-400/20 bg-rose-400/10 px-4 py-3 text-sm text-rose-100">
               {saveError}
@@ -1028,7 +1082,7 @@ export function NewAssessmentPage() {
           ) : null}
         </Card>
 
-        <div className="space-y-4 xl:sticky xl:top-5 xl:self-start">
+        <div className="hidden space-y-4 xl:sticky xl:top-5 xl:block xl:self-start">
           <Card className="space-y-4">
             <div className="flex items-start justify-between gap-3">
               <div>
