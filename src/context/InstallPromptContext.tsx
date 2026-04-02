@@ -15,6 +15,7 @@ interface BeforeInstallPromptEvent extends Event {
 interface InstallPromptContextValue {
   canPromptInstall: boolean;
   isIos: boolean;
+  isMobile: boolean;
   isStandalone: boolean;
   promptInstall: () => Promise<boolean>;
 }
@@ -46,10 +47,19 @@ function detectStandalone() {
   return window.matchMedia("(display-mode: standalone)").matches || iosStandalone;
 }
 
+function detectMobile() {
+  if (typeof navigator === "undefined") {
+    return false;
+  }
+
+  return /android|iphone|ipad|ipod|mobile/i.test(navigator.userAgent);
+}
+
 export function InstallPromptProvider({ children }: PropsWithChildren) {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isStandalone, setIsStandalone] = useState(false);
   const isIos = detectIos();
+  const isMobile = detectMobile();
 
   useEffect(() => {
     setIsStandalone(detectStandalone());
@@ -98,10 +108,11 @@ export function InstallPromptProvider({ children }: PropsWithChildren) {
     () => ({
       canPromptInstall: Boolean(deferredPrompt) && !isStandalone,
       isIos,
+      isMobile,
       isStandalone,
       promptInstall
     }),
-    [deferredPrompt, isIos, isStandalone]
+    [deferredPrompt, isIos, isMobile, isStandalone]
   );
 
   return <InstallPromptContext.Provider value={value}>{children}</InstallPromptContext.Provider>;

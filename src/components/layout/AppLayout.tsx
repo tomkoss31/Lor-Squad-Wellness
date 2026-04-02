@@ -9,7 +9,7 @@ import { getAccessSummary, getRoleLabel } from "../../lib/auth";
 
 export function AppLayout() {
   const { currentSession, currentUser, logout } = useAppContext();
-  const { canPromptInstall, isIos, isStandalone, promptInstall } = useInstallPrompt();
+  const { canPromptInstall, isIos, isMobile, isStandalone, promptInstall } = useInstallPrompt();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -213,7 +213,12 @@ export function AppLayout() {
 
             {!isStandalone && isIos ? (
               <div className="mt-3 rounded-[18px] border border-white/10 bg-white/[0.03] px-4 py-3 text-xs leading-6 text-slate-300">
-                Sur iPhone / iPad : menu Partager puis Sur l&apos;ecran d&apos;accueil.
+                Ouvre ce lien dans Safari, puis Partager et Sur l&apos;ecran d&apos;accueil.
+              </div>
+            ) : null}
+            {!isStandalone && !isIos && isMobile && !canPromptInstall ? (
+              <div className="mt-3 rounded-[18px] border border-white/10 bg-white/[0.03] px-4 py-3 text-xs leading-6 text-slate-300">
+                Ouvre ce lien dans Chrome puis Installe l&apos;app ou Ajoute a l&apos;ecran d&apos;accueil.
               </div>
             ) : null}
           </section>
@@ -241,6 +246,10 @@ export function AppLayout() {
                   ) : isIos ? (
                     <div className="rounded-full border border-white/10 bg-white/[0.04] px-4 py-3 text-xs text-slate-300">
                       Partager puis ecran d&apos;accueil
+                    </div>
+                  ) : isMobile ? (
+                    <div className="rounded-full border border-white/10 bg-white/[0.04] px-4 py-3 text-xs text-slate-300">
+                      Installer via Chrome
                     </div>
                   ) : null
                 ) : null}
