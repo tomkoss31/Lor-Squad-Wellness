@@ -1,0 +1,24 @@
+{
+  "name": "Lor'Squad Wellness",
+  "short_name": "Lor'Squad",
+  "description": "Bilan, suivi client et routines wellness Lor'Squad.",
+  "start_url": "/login",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#090d18",
+  "theme_color": "#090d18",
+  "icons": [
+    {
+      "src": "/icons/lor-squad-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/lor-squad-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

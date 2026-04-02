@@ -4,10 +4,12 @@ import { BrandSignature } from "../components/branding/BrandSignature";
 import { Button } from "../components/ui/Button";
 import { StatusBadge } from "../components/ui/StatusBadge";
 import { useAppContext } from "../context/AppContext";
+import { useInstallPrompt } from "../context/InstallPromptContext";
 import { blasonLogo, lorSquadLogo } from "../data/visualContent";
 
 export function LoginPage() {
   const { authReady, storageMode, users, loginWithCredentials } = useAppContext();
+  const { canPromptInstall, isIos, isStandalone, promptInstall } = useInstallPrompt();
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -66,6 +68,10 @@ export function LoginPage() {
           : "La version de demonstration ne repond pas correctement pour le moment."
       );
     }
+  }
+
+  async function handleInstallClick() {
+    await promptInstall();
   }
 
   return (
@@ -244,6 +250,46 @@ export function LoginPage() {
                 />
               </div>
             </div>
+
+            {!isStandalone ? (
+              <div className="rounded-[24px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.03))] p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-[11px] uppercase tracking-[0.24em] text-slate-500">
+                      Installer l&apos;app
+                    </p>
+                    <p className="mt-2 text-lg font-semibold text-white">
+                      Garde Lor&apos;Squad Wellness directement sur ton ecran.
+                    </p>
+                    <p className="mt-2 text-sm leading-6 text-slate-300">
+                      Plus simple a rouvrir en rendez-vous, sur iPhone, tablette ou ordinateur.
+                    </p>
+                  </div>
+                  <StatusBadge label="Raccourci rapide" tone="green" />
+                </div>
+
+                {canPromptInstall ? (
+                  <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+                    <p className="text-sm text-slate-300">
+                      Lance l&apos;installation directe depuis ce navigateur.
+                    </p>
+                    <Button variant="secondary" onClick={() => void handleInstallClick()}>
+                      Installer l&apos;app
+                    </Button>
+                  </div>
+                ) : isIos ? (
+                  <div className="mt-4 rounded-[18px] border border-white/10 bg-white/[0.03] px-4 py-4 text-sm leading-6 text-slate-300">
+                    Sur iPhone ou iPad : ouvre le menu <span className="font-semibold text-white">Partager</span>,
+                    puis choisis <span className="font-semibold text-white">Sur l&apos;ecran d&apos;accueil</span>.
+                  </div>
+                ) : (
+                  <div className="mt-4 rounded-[18px] border border-white/10 bg-white/[0.03] px-4 py-4 text-sm leading-6 text-slate-300">
+                    Sur ordinateur, utilise l&apos;icone d&apos;installation dans la barre d&apos;adresse
+                    de Chrome ou Edge pour ajouter l&apos;app.
+                  </div>
+                )}
+              </div>
+            ) : null}
           </div>
         </section>
       </div>

@@ -1,6 +1,7 @@
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { BrandSignature } from "../branding/BrandSignature";
 import { useAppContext } from "../../context/AppContext";
+import { useInstallPrompt } from "../../context/InstallPromptContext";
 import { blasonLogo, laBaseLogo } from "../../data/visualContent";
 import { Button } from "../ui/Button";
 import { StatusBadge } from "../ui/StatusBadge";
@@ -8,6 +9,7 @@ import { getAccessSummary, getRoleLabel } from "../../lib/auth";
 
 export function AppLayout() {
   const { currentSession, currentUser, logout } = useAppContext();
+  const { canPromptInstall, isIos, isStandalone, promptInstall } = useInstallPrompt();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -38,6 +40,10 @@ export function AppLayout() {
   function handleLogout() {
     logout();
     navigate("/login", { replace: true });
+  }
+
+  async function handleInstallClick() {
+    await promptInstall();
   }
 
   return (
@@ -156,9 +162,20 @@ export function AppLayout() {
                   </p>
                 </div>
               </div>
-              <Button variant="secondary" className="px-4 py-2 text-[11px]" onClick={handleLogout}>
-                Quitter
-              </Button>
+              <div className="flex items-center gap-2">
+                {!isStandalone && canPromptInstall ? (
+                  <Button
+                    variant="secondary"
+                    className="px-4 py-2 text-[11px]"
+                    onClick={() => void handleInstallClick()}
+                  >
+                    Installer
+                  </Button>
+                ) : null}
+                <Button variant="secondary" className="px-4 py-2 text-[11px]" onClick={handleLogout}>
+                  Quitter
+                </Button>
+              </div>
             </div>
 
             <div className="mt-3 flex items-center justify-between gap-3 rounded-[18px] border border-white/10 bg-white/[0.03] px-3 py-3">
@@ -193,6 +210,12 @@ export function AppLayout() {
                 );
               })}
             </nav>
+
+            {!isStandalone && isIos ? (
+              <div className="mt-3 rounded-[18px] border border-white/10 bg-white/[0.03] px-4 py-3 text-xs leading-6 text-slate-300">
+                Sur iPhone / iPad : menu Partager puis Sur l&apos;ecran d&apos;accueil.
+              </div>
+            ) : null}
           </section>
 
           <header className="glass-panel relative overflow-hidden rounded-[24px] p-4 sm:rounded-[28px] md:p-5 xl:rounded-[30px]">
@@ -210,6 +233,17 @@ export function AppLayout() {
                 </div>
               </div>
               <div className="hidden flex-wrap gap-2 md:flex md:justify-end">
+                {!isStandalone ? (
+                  canPromptInstall ? (
+                    <Button variant="secondary" onClick={() => void handleInstallClick()}>
+                      Installer l&apos;app
+                    </Button>
+                  ) : isIos ? (
+                    <div className="rounded-full border border-white/10 bg-white/[0.04] px-4 py-3 text-xs text-slate-300">
+                      Partager puis ecran d&apos;accueil
+                    </div>
+                  ) : null
+                ) : null}
                 <Button variant="secondary" onClick={handleLogout}>
                   Retour login
                 </Button>
