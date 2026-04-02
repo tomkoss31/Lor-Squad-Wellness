@@ -1,5 +1,5 @@
 import { Card } from "../ui/Card";
-import routineMorningVisual from "../../assets/pedagogical/visuels-petit-dejeuner.png";
+import routineMorningVisual from "../../assets/pedagogical/visuels-petit-dejeuner-optimized.jpg";
 
 export function MorningRoutineCard() {
   return (

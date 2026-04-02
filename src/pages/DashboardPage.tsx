@@ -173,7 +173,7 @@ export function DashboardPage() {
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
-                Portefeuilles distributeurs
+                Responsables du dossier
               </p>
               <h2 className="mt-2 text-3xl text-white">
                 Ouvrir Thomas, Melanie, Mendy ou le reste de l&apos;equipe en un clic

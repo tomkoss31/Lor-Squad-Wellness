@@ -33,6 +33,7 @@ import type { BiologicalSex, Objective, RecommendationLead } from "../types/doma
 
 type AssessmentForm = {
   assessmentDate: string;
+  referredByName: string;
   firstName: string;
   lastName: string;
   phone: string;
@@ -129,6 +130,7 @@ function createEmptyRecommendations(count = 10): RecommendationLead[] {
 
 const initialForm: AssessmentForm = {
   assessmentDate: getTodayDateValue(),
+  referredByName: "",
   firstName: "",
   lastName: "",
   phone: "",
@@ -384,6 +386,7 @@ export function NewAssessmentPage() {
     currentStep === 0
       ? [
           `Responsable : ${assignedUser?.name ?? "-"}`,
+          `Invite par : ${form.referredByName || "Non renseigne"}`,
           `Objectif : ${form.objectiveFocus}`,
           `Sante : ${form.healthStatus}`,
           form.objective === "weight-loss"
@@ -526,6 +529,7 @@ export function NewAssessmentPage() {
 
   function buildQuestionnaire() {
     return {
+      referredByName: form.referredByName.trim() || undefined,
       healthStatus: form.healthStatus,
       healthNotes: form.healthNotes,
       allergies: form.allergies,
@@ -687,6 +691,18 @@ export function NewAssessmentPage() {
         <div className="rounded-[18px] border border-white/10 bg-slate-950/35 px-4 py-3 text-sm leading-6 text-slate-200">
           {prompts[0]}
         </div>
+        {currentStep === 0 ? (
+          <div className="space-y-2 rounded-[18px] border border-white/10 bg-white/[0.03] px-4 py-4">
+            <label className="text-sm font-medium text-slate-300">
+              Invite par / recommande par
+            </label>
+            <input
+              value={form.referredByName}
+              onChange={(event) => update("referredByName", event.target.value)}
+              placeholder="Exemple : Sylvie"
+            />
+          </div>
+        ) : null}
       </Card>
 
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1.2fr)_340px]">
@@ -1246,12 +1262,28 @@ export function NewAssessmentPage() {
               </div>
               <StatusBadge label="Aide terrain" tone="blue" />
             </div>
-            <div className="grid gap-3">
-              {rightPanelPoints.map((point, index) => (
-                <FocusPanelItem key={point} text={point} highlighted={index === 0} />
-              ))}
-            </div>
-          </Card>
+        <div className="grid gap-3">
+          {rightPanelPoints.map((point, index) => (
+            <FocusPanelItem key={point} text={point} highlighted={index === 0} />
+          ))}
+        </div>
+        {currentStep === 0 ? (
+          <div className="space-y-2 rounded-[20px] border border-white/10 bg-white/[0.03] px-4 py-4">
+            <label className="text-sm font-medium text-slate-300">
+              Invite par / recommande par
+            </label>
+            <input
+              value={form.referredByName}
+              onChange={(event) => update("referredByName", event.target.value)}
+              placeholder="Exemple : Sylvie"
+            />
+            <p className="text-xs leading-6 text-slate-400">
+              Note ici la personne qui a amene ce client pour garder le lien de recommandation sans
+              surcharger l&apos;ecran principal.
+            </p>
+          </div>
+        ) : null}
+      </Card>
 
           <Card className="space-y-4">
             <p className="text-xs uppercase tracking-[0.25em] text-slate-500">A dire simplement</p>

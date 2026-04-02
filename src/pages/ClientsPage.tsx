@@ -18,6 +18,7 @@ import {
   calculateWaterNeed,
   formatDate,
   formatDateTime,
+  getFirstAssessment,
   getLatestAssessment,
   getLatestBodyScan
 } from "../lib/calculations";
@@ -54,11 +55,12 @@ export function ClientsPage() {
   const normalizedSearch = deferredSearch.trim().toLowerCase();
   const filteredClients = useMemo(() => {
     return visibleClients.filter((client) => {
+      const firstAssessment = getFirstAssessment(client);
       const matchesOwner = ownerFilter === "all" || client.distributorId === ownerFilter;
       const matchesStatus = statusFilter === "all" || client.status === statusFilter;
       const matchesSearch =
         !normalizedSearch ||
-        `${client.firstName} ${client.lastName} ${client.city ?? ""} ${client.currentProgram}`
+        `${client.firstName} ${client.lastName} ${client.city ?? ""} ${client.currentProgram} ${firstAssessment.questionnaire.referredByName ?? ""}`
           .toLowerCase()
           .includes(normalizedSearch);
 
@@ -89,7 +91,7 @@ export function ClientsPage() {
       <PageHeading
         eyebrow="Clients"
         title="Base client structuree par responsable, par recherche et par mois"
-        description="La page aide a retrouver vite la bonne personne, a filtrer par distributeur et a garder une lecture saine meme quand la base client devient tres volumineuse."
+        description="La page aide a retrouver vite la bonne personne, a filtrer par responsable et a garder une lecture saine meme quand la base client devient tres volumineuse."
       />
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -157,7 +159,7 @@ export function ClientsPage() {
 
         <div className="space-y-3">
           <p className="text-xs uppercase tracking-[0.24em] text-slate-500">
-            Portefeuilles distributeurs
+            Responsables du dossier
           </p>
           <div className="flex flex-wrap gap-3">
             <button
@@ -165,14 +167,14 @@ export function ClientsPage() {
               onClick={() => setOwnerFilter("all")}
               className={`rounded-[22px] border px-4 py-3 text-left transition ${
                 ownerFilter === "all"
-                  ? "border-white/10 bg-white text-slate-950"
+                  ? "border-sky-300/25 bg-sky-400/12 text-white shadow-[0_0_0_1px_rgba(125,211,252,0.12)]"
                   : "border-white/10 bg-white/[0.03] text-white hover:bg-white/[0.05]"
               }`}
             >
               <span className="block text-sm font-semibold">Toute la base</span>
               <span
                 className={`mt-1 block text-xs ${
-                  ownerFilter === "all" ? "text-slate-600" : "text-slate-400"
+                  ownerFilter === "all" ? "text-sky-100/75" : "text-slate-400"
                 }`}
               >
                 {visibleClients.length} dossiers visibles
@@ -191,7 +193,7 @@ export function ClientsPage() {
                   onClick={() => setOwnerFilter(user.id)}
                   className={`rounded-[22px] border px-4 py-3 text-left transition ${
                     isActive
-                      ? "border-white/10 bg-white/[0.96]"
+                      ? "border-sky-300/25 bg-sky-400/12 text-white shadow-[0_0_0_1px_rgba(125,211,252,0.12)]"
                       : "border-white/10 bg-white/[0.03] hover:bg-white/[0.05]"
                   }`}
                 >
@@ -200,14 +202,14 @@ export function ClientsPage() {
                     <div>
                       <span
                         className={`block text-sm font-semibold ${
-                          isActive ? "text-slate-950" : "text-white"
+                          isActive ? "text-white" : "text-white"
                         }`}
                       >
                         {user.name}
                       </span>
                       <span
                         className={`mt-1 block text-xs ${
-                          isActive ? "text-slate-600" : "text-slate-400"
+                          isActive ? "text-sky-100/75" : "text-slate-400"
                         }`}
                       >
                         {metrics.clients.length} clients - cible {identity.target}
@@ -269,6 +271,7 @@ export function ClientsPage() {
               <div className="grid gap-4">
                 {group.clients.map((client) => {
                   const latestAssessment = getLatestAssessment(client);
+                  const firstAssessment = getFirstAssessment(client);
                   const latestBodyScan = getLatestBodyScan(client);
                   const status = statusLabels[client.status];
                   const owner = ownerTabs.find((user) => user.id === client.distributorId);
@@ -294,6 +297,11 @@ export function ClientsPage() {
                                   detail={`Portefeuille ${owner.name}`}
                                 />
                               </div>
+                            ) : null}
+                            {firstAssessment.questionnaire.referredByName ? (
+                              <p className="text-sm text-sky-100/80">
+                                Invite par {firstAssessment.questionnaire.referredByName}
+                              </p>
                             ) : null}
                             <p className="text-sm leading-6 text-slate-300">{client.notes}</p>
                           </div>

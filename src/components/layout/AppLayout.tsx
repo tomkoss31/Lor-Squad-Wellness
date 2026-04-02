@@ -36,7 +36,7 @@ export function AppLayout() {
         : location.pathname === "/clients"
           ? "Dossiers clients et suivi en cours"
         : location.pathname.startsWith("/distributors/")
-          ? "Lecture portefeuille distributeur et relances"
+          ? "Lecture portefeuille responsable et relances"
         : location.pathname === "/users"
           ? "Creation des acces et gestion simple des roles"
           : location.pathname.startsWith("/clients/")

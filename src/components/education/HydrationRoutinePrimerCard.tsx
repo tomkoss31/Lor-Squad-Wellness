@@ -1,5 +1,5 @@
 import { Card } from "../ui/Card";
-import hydrationRoutineVisual from "../../assets/pedagogical/visuels-hydratation.png";
+import hydrationRoutineVisual from "../../assets/pedagogical/visuels-hydratation-optimized.jpg";
 
 export function HydrationRoutinePrimerCard() {
   return (

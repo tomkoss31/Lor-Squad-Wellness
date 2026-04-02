@@ -358,6 +358,10 @@ export function ClientDetailPage() {
                 value={latestQuestionnaire.objectiveFocus || (client.objective === "sport" ? "Prise de masse" : "Perte de poids")}
               />
               <SummaryFocusCard label="Programme" value={client.currentProgram} />
+              <SummaryFocusCard
+                label="Invite par"
+                value={firstAssessment.questionnaire.referredByName || "Non renseigne"}
+              />
             </div>
             <div className="grid gap-3">
               <SummaryRow label="Statut" value={client.started ? "Routine demarree" : "Mise en place a lancer"} />

@@ -1,4 +1,4 @@
-import routineMorningVisual from "../../assets/pedagogical/routine-matin.png";
+import routineMorningVisual from "../../assets/pedagogical/routine-matin-optimized.jpg";
 
 export function ClassicBreakfastScene() {
   return (

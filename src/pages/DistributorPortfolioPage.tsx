@@ -12,7 +12,7 @@ import {
   getPortfolioIdentity,
   getPortfolioMetrics
 } from "../lib/portfolio";
-import { formatDate, formatDateTime } from "../lib/calculations";
+import { formatDate, formatDateTime, getFirstAssessment } from "../lib/calculations";
 
 const statusLabels = {
   active: { label: "Actif", tone: "green" as const },
@@ -69,12 +69,13 @@ export function DistributorPortfolioPage() {
   );
   const normalizedSearch = deferredSearch.trim().toLowerCase();
   const filteredClients = portfolioMetrics.clients.filter((client) => {
+    const firstAssessment = getFirstAssessment(client);
     const matchesStatus = statusFilter === "all" || client.status === statusFilter;
     const matchesSearch =
       !normalizedSearch ||
-      `${client.firstName} ${client.lastName} ${client.city ?? ""} ${client.currentProgram}`
-        .toLowerCase()
-        .includes(normalizedSearch);
+        `${client.firstName} ${client.lastName} ${client.city ?? ""} ${client.currentProgram} ${firstAssessment.questionnaire.referredByName ?? ""}`
+          .toLowerCase()
+          .includes(normalizedSearch);
 
     return matchesStatus && matchesSearch;
   });
@@ -250,6 +251,7 @@ export function DistributorPortfolioPage() {
 
               <div className="grid gap-3">
                 {group.clients.map((client) => {
+                  const firstAssessment = getFirstAssessment(client);
                   const status = statusLabels[client.status];
 
                   return (
@@ -269,6 +271,11 @@ export function DistributorPortfolioPage() {
                           <p className="text-sm text-slate-400">
                             {client.city ?? "Ville non renseignee"} - {client.currentProgram}
                           </p>
+                          {firstAssessment.questionnaire.referredByName ? (
+                            <p className="text-sm text-sky-100/80">
+                              Invite par {firstAssessment.questionnaire.referredByName}
+                            </p>
+                          ) : null}
                           <p className="text-sm leading-6 text-slate-300">{client.notes}</p>
                         </div>
 

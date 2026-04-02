@@ -1,6 +1,6 @@
 import { Card } from "../ui/Card";
-import classicBreakfastVisual from "../../../assets/visuels-pedagogiques/petit-dejeuner-francais.png";
-import breakfastSupportVisual from "../../../assets/visuels-pedagogiques/routine-matin.png";
+import classicBreakfastVisual from "../../../assets/visuels-pedagogiques/petit-dejeuner-francais-optimized.jpg";
+import breakfastSupportVisual from "../../../assets/visuels-pedagogiques/routine-matin-optimized.jpg";
 
 const comparisonRows = [
   { label: "Proteines", classic: "Faible", structured: "Plus elevees" },
