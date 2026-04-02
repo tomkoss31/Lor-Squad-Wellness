@@ -22,6 +22,7 @@ import {
   estimateRelativeMassPercent,
   estimateMuscleMassPercent,
   formatDate,
+  formatDateTime,
   getAssessmentDelta,
   getFirstAssessment,
   getLatestAssessment,
@@ -244,7 +245,7 @@ export function ClientDetailPage() {
             />
             <MetricTile
               label="Prochain rendez-vous"
-              value={formatDate(client.nextFollowUp)}
+              value={formatDateTime(client.nextFollowUp)}
               hint="La suite est deja posee"
               accent="blue"
             />
@@ -328,7 +329,7 @@ export function ClientDetailPage() {
             <div className="grid gap-3 md:grid-cols-3 xl:grid-cols-1">
               <SummaryFocusCard label="Programme" value={client.currentProgram} />
               <SummaryFocusCard label="Dernier point" value={formatDate(latestAssessment.date)} />
-              <SummaryFocusCard label="Prochain rendez-vous" value={formatDate(client.nextFollowUp)} />
+              <SummaryFocusCard label="Prochain rendez-vous" value={formatDateTime(client.nextFollowUp)} />
             </div>
             <div className="grid gap-3">
               <SummaryRow label="Statut" value={client.started ? "Routine demarree" : "Mise en place a lancer"} />

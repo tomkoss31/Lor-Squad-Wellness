@@ -38,6 +38,27 @@ export function formatDate(input: string): string {
   }).format(new Date(input));
 }
 
+export function formatDateTime(input: string): string {
+  const date = new Date(input);
+  if (Number.isNaN(date.getTime())) {
+    return input;
+  }
+
+  const hasTime = /T\d{2}:\d{2}/.test(input);
+
+  return new Intl.DateTimeFormat("fr-FR", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    ...(hasTime
+      ? {
+          hour: "2-digit" as const,
+          minute: "2-digit" as const
+        }
+      : {})
+  }).format(date);
+}
+
 export function estimateBodyFatKg(weight: number, bodyFatPercent: number): number {
   return roundMetric(weight * (bodyFatPercent / 100));
 }

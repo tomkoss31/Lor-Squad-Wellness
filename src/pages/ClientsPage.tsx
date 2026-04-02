@@ -8,6 +8,7 @@ import {
   calculateProteinRange,
   calculateWaterNeed,
   formatDate,
+  formatDateTime,
   getLatestAssessment,
   getLatestBodyScan
 } from "../lib/calculations";
@@ -139,7 +140,7 @@ export function ClientsPage() {
                       <p className="text-xs uppercase tracking-[0.25em] text-slate-500">
                         Prochain suivi
                       </p>
-                      <p className="text-xl font-semibold text-white">{formatDate(client.nextFollowUp)}</p>
+                      <p className="text-xl font-semibold text-white">{formatDateTime(client.nextFollowUp)}</p>
                       <p className="text-sm text-slate-400">
                         Dernier bilan {formatDate(latestAssessment.date)}
                       </p>

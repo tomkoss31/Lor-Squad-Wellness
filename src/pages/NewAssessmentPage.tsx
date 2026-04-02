@@ -25,12 +25,14 @@ import {
   estimateHydrationKg,
   estimateRelativeMassPercent,
   estimateMuscleMassPercent,
+  formatDateTime,
   getWeightLossPaceInsight,
   getWeightLossPlan
 } from "../lib/calculations";
 import type { BiologicalSex, Objective } from "../types/domain";
 
 type AssessmentForm = {
+  assessmentDate: string;
   firstName: string;
   lastName: string;
   phone: string;
@@ -97,7 +99,31 @@ type AssessmentForm = {
   comment: string;
 };
 
+function padDatePart(value: number) {
+  return String(value).padStart(2, "0");
+}
+
+function toDateInputValue(date: Date) {
+  return `${date.getFullYear()}-${padDatePart(date.getMonth() + 1)}-${padDatePart(date.getDate())}`;
+}
+
+function toDateTimeLocalValue(date: Date) {
+  return `${toDateInputValue(date)}T${padDatePart(date.getHours())}:${padDatePart(date.getMinutes())}`;
+}
+
+function getTodayDateValue() {
+  return toDateInputValue(new Date());
+}
+
+function getDefaultNextFollowUpDateTime() {
+  const baseDate = new Date();
+  baseDate.setDate(baseDate.getDate() + 14);
+  baseDate.setHours(10, 0, 0, 0);
+  return toDateTimeLocalValue(baseDate);
+}
+
 const initialForm: AssessmentForm = {
+  assessmentDate: getTodayDateValue(),
   firstName: "",
   lastName: "",
   phone: "",
@@ -160,7 +186,7 @@ const initialForm: AssessmentForm = {
   metabolicAge: 0,
   objective: "weight-loss",
   selectedProgramId: "",
-  nextFollowUp: "",
+  nextFollowUp: getDefaultNextFollowUpDateTime(),
   comment: ""
 };
 
@@ -368,7 +394,11 @@ export function NewAssessmentPage() {
                 : currentStep === 10
                         ? ["Ancrer les bases avant le demarrage.", "Hydratation et matin doivent paraitre evidents.", "Pas de surcharge autour du visuel."]
                         : currentStep === 11
-                          ? [`Prochain suivi : ${form.nextFollowUp}`, "Fixer la suite avant de terminer le rendez-vous", "Le client repart avec un cap clair"]
+                          ? [
+                              `Prochain suivi : ${form.nextFollowUp ? formatDateTime(form.nextFollowUp) : "-"}`,
+                              "Fixer la suite avant de terminer le rendez-vous",
+                              "Le client repart avec un cap clair"
+                            ]
                           : [`Programme retenu : ${selectedProgram?.title ?? "-"}`, `Hydratation cible : ${waterNeed} L`, `Proteines : ${proteinRange}`];
   const panelTitle =
     currentStep >= 9 ? "Cap du moment" : currentStep >= 5 ? "Lecture du bilan" : "Aide au rendez-vous";
@@ -442,12 +472,6 @@ export function NewAssessmentPage() {
     update("selectedProgramId", value === "Prise de masse" ? "p-sport-premium" : "p-premium");
   }
 
-  function getDefaultNextFollowUp() {
-    const baseDate = new Date();
-    baseDate.setDate(baseDate.getDate() + 14);
-    return baseDate.toISOString().slice(0, 10);
-  }
-
   function buildQuestionnaire() {
     return {
       healthStatus: form.healthStatus,
@@ -516,11 +540,11 @@ export function NewAssessmentPage() {
       return;
     }
 
-    const today = new Date().toISOString().slice(0, 10);
-    const nextFollowUp = form.nextFollowUp || getDefaultNextFollowUp();
+    const assessmentDate = form.assessmentDate || getTodayDateValue();
+    const nextFollowUp = form.nextFollowUp || getDefaultNextFollowUpDateTime();
     const assessment = {
       id: `a-${Date.now()}`,
-      date: today,
+      date: assessmentDate,
       type: "initial" as const,
       objective: form.objective,
       programId: selectedProgram.id,
@@ -632,6 +656,12 @@ export function NewAssessmentPage() {
                   <Field label="Nom" value={form.lastName} onChange={(v) => update("lastName", v)} />
                   <Field label="Telephone" value={form.phone} onChange={(v) => update("phone", v)} />
                   <Field label="Email" value={form.email} onChange={(v) => update("email", v)} />
+                  <Field
+                    label="Date du bilan initial"
+                    type="date"
+                    value={form.assessmentDate}
+                    onChange={(v) => update("assessmentDate", v)}
+                  />
                   <ChoiceGroup
                     label="Sexe"
                     value={form.sex}
@@ -965,7 +995,12 @@ export function NewAssessmentPage() {
                 <ChoiceGroup label="Message a laisser" value={form.comment.includes("cadre clair") ? "Cadre clair" : "Simple"} options={["Simple", "Progressif", "Cadre clair"]} onChange={(v) => update("comment", v === "Cadre clair" ? "Le client repart avec un cadre clair et un prochain pas precis." : v === "Progressif" ? "Le client repart avec un demarrage progressif et rassurant." : "Le client repart avec une solution simple a mettre en place.")} />
               </div>
               <div className="grid gap-4 md:grid-cols-2">
-                <Field label="Prochain rendez-vous" type="date" value={form.nextFollowUp} onChange={(v) => update("nextFollowUp", v)} />
+                <Field
+                  label="Prochain rendez-vous"
+                  type="datetime-local"
+                  value={form.nextFollowUp}
+                  onChange={(v) => update("nextFollowUp", v)}
+                />
                 <AreaField label="Commentaire de fin de rendez-vous" value={form.comment} onChange={(v) => update("comment", v)} />
               </div>
             </div>
@@ -1043,7 +1078,10 @@ export function NewAssessmentPage() {
                         {form.objective === "weight-loss" && (
                           <SummaryRow label="Lecture du rythme" value={weightLossPace.label} />
                         )}
-                        <SummaryRow label="Prochain suivi" value={form.nextFollowUp} />
+                        <SummaryRow
+                          label="Prochain suivi"
+                          value={form.nextFollowUp ? formatDateTime(form.nextFollowUp) : "-"}
+                        />
                       </div>
                     </div>
                   </div>

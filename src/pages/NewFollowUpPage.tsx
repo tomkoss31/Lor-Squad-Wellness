@@ -14,6 +14,7 @@ import {
   estimateHydrationKg,
   estimateMuscleMassPercent,
   formatDate,
+  formatDateTime,
   getAssessmentDelta,
   getFirstAssessment,
   getLatestAssessment,
@@ -22,6 +23,33 @@ import {
   getWeightLossPlan
 } from "../lib/calculations";
 import type { AssessmentQuestionnaire, AssessmentRecord, BodyScanMetrics } from "../types/domain";
+
+function padDatePart(value: number) {
+  return String(value).padStart(2, "0");
+}
+
+function toDateInputValue(date: Date) {
+  return `${date.getFullYear()}-${padDatePart(date.getMonth() + 1)}-${padDatePart(date.getDate())}`;
+}
+
+function toDateTimeLocalValue(date: Date) {
+  return `${toDateInputValue(date)}T${padDatePart(date.getHours())}:${padDatePart(date.getMinutes())}`;
+}
+
+function normalizeDateTimeLocalValue(value: string | undefined) {
+  if (!value) {
+    const fallback = new Date();
+    fallback.setDate(fallback.getDate() + 14);
+    fallback.setHours(10, 0, 0, 0);
+    return toDateTimeLocalValue(fallback);
+  }
+
+  if (value.includes("T")) {
+    return value.slice(0, 16);
+  }
+
+  return `${value}T10:00`;
+}
 
 export function NewFollowUpPage() {
   const { clientId } = useParams();
@@ -49,7 +77,8 @@ export function NewFollowUpPage() {
   const [notes, setNotes] = useState(
     "Le client repart avec des reperes simples et une suite deja fixee."
   );
-  const [dueDate, setDueDate] = useState(targetClient.nextFollowUp);
+  const [assessmentDate, setAssessmentDate] = useState(toDateInputValue(new Date()));
+  const [dueDate, setDueDate] = useState(normalizeDateTimeLocalValue(targetClient.nextFollowUp));
   const [followUpType, setFollowUpType] = useState("Suivi terrain");
 
   const delta = getAssessmentDelta(bodyScan, latest.bodyScan);
@@ -71,7 +100,7 @@ export function NewFollowUpPage() {
 
     const assessment: AssessmentRecord = {
       id: `a-${targetClient.id}-${Date.now()}`,
-      date: new Date().toISOString().slice(0, 10),
+      date: assessmentDate,
       type: "follow-up",
       objective: targetClient.objective,
       programTitle: targetClient.currentProgram,
@@ -206,7 +235,7 @@ export function NewFollowUpPage() {
               <InfoRow label="Programme en cours" value={targetClient.currentProgram} />
               <InfoRow
                 label="Prochain rendez-vous actuel"
-                value={formatDate(targetClient.nextFollowUp)}
+                value={formatDateTime(targetClient.nextFollowUp)}
               />
               <InfoRow label="Masse grasse" value={`${bodyScan.bodyFat} % - ${bodyFatKg} kg`} />
               <InfoRow label="Masse musculaire" value={`${bodyScan.muscleMass} kg - ${musclePercent} %`} />
@@ -243,8 +272,20 @@ export function NewFollowUpPage() {
               <textarea rows={4} value={notes} onChange={(event) => setNotes(event.target.value)} />
             </div>
             <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-300">Date du suivi</label>
+              <input
+                type="date"
+                value={assessmentDate}
+                onChange={(event) => setAssessmentDate(event.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
               <label className="text-sm font-medium text-slate-300">Prochain rendez-vous</label>
-              <input type="date" value={dueDate} onChange={(event) => setDueDate(event.target.value)} />
+              <input
+                type="datetime-local"
+                value={dueDate}
+                onChange={(event) => setDueDate(event.target.value)}
+              />
             </div>
             <div className="flex justify-end gap-3">
               <Button variant="secondary" onClick={() => navigate(`/clients/${targetClient.id}`)}>

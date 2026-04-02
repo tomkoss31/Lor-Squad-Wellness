@@ -7,7 +7,7 @@ import { StatusBadge } from "../components/ui/StatusBadge";
 import { Button } from "../components/ui/Button";
 import { useAppContext } from "../context/AppContext";
 import { getAccessSummary } from "../lib/auth";
-import { formatDate } from "../lib/calculations";
+import { formatDateTime } from "../lib/calculations";
 
 export function DashboardPage() {
   const { currentUser, logout, visibleClients, visibleFollowUps, users } = useAppContext();
@@ -124,7 +124,7 @@ export function DashboardPage() {
                     />
                   </div>
                   <p className="mt-4 text-sm text-slate-300">
-                    Rendez-vous prevu le {formatDate(followUp.dueDate)}
+                    Rendez-vous prevu le {formatDateTime(followUp.dueDate)}
                   </p>
                   <div className="mt-4 h-2 overflow-hidden rounded-full bg-white/[0.06]">
                     <div
@@ -181,7 +181,7 @@ export function DashboardPage() {
                     />
                   </div>
                   <div className="mt-4 grid grid-cols-2 gap-3 text-sm text-slate-400">
-                    <span>Suivi {formatDate(client.nextFollowUp)}</span>
+                    <span>Suivi {formatDateTime(client.nextFollowUp)}</span>
                     <span className="text-right">{client.distributorName}</span>
                   </div>
                 </Link>

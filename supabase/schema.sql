@@ -29,7 +29,7 @@ create table if not exists public.clients (
   current_program text not null default '',
   started boolean not null default false,
   start_date date,
-  next_follow_up date not null,
+  next_follow_up timestamptz not null,
   notes text not null default '',
   created_at timestamptz not null default now()
 );
@@ -44,7 +44,7 @@ create table if not exists public.assessments (
   program_title text not null,
   summary text not null default '',
   notes text not null default '',
-  next_follow_up date,
+  next_follow_up timestamptz,
   body_scan jsonb not null,
   questionnaire jsonb not null,
   pedagogical_focus jsonb not null default '[]'::jsonb,
@@ -55,7 +55,7 @@ create table if not exists public.follow_ups (
   id uuid primary key default gen_random_uuid(),
   client_id uuid not null unique references public.clients (id) on delete cascade,
   client_name text,
-  due_date date not null,
+  due_date timestamptz not null,
   type text not null,
   status text not null check (status in ('scheduled', 'pending')),
   program_title text not null,
