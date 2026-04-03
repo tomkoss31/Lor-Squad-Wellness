@@ -250,6 +250,19 @@ export function NewFollowUpPage() {
               objective={targetClient.objective}
               previous={{ weight: latest.bodyScan.weight, percent: latest.bodyScan.bodyFat }}
               initial={{ weight: first.bodyScan.weight, percent: first.bodyScan.bodyFat }}
+              history={[
+                ...targetClient.assessments.map((assessment) => ({
+                  date: assessment.date,
+                  weight: assessment.bodyScan.weight,
+                  percent: assessment.bodyScan.bodyFat
+                })),
+                {
+                  date: assessmentDate,
+                  weight: bodyScan.weight,
+                  percent: bodyScan.bodyFat,
+                  label: "Aujourd'hui"
+                }
+              ]}
             />
 
             <MuscleMassInsightCard

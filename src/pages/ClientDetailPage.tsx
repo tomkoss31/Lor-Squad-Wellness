@@ -312,6 +312,11 @@ export function ClientDetailPage() {
               weight: firstAssessment.bodyScan.weight,
               percent: firstAssessment.bodyScan.bodyFat
             }}
+            history={client.assessments.map((assessment) => ({
+              date: assessment.date,
+              weight: assessment.bodyScan.weight,
+              percent: assessment.bodyScan.bodyFat
+            }))}
           />
 
           <MuscleMassInsightCard

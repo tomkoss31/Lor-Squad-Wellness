@@ -1,5 +1,4 @@
-import { estimateBodyFatKg } from "../../lib/calculations";
-import { DeltaBadge } from "./DeltaBadge";
+import { estimateBodyFatKg, formatDate } from "../../lib/calculations";
 import {
   PedagogicalMetricCard,
   PedagogicalSection
@@ -11,12 +10,18 @@ interface BodyFatReference {
   percent: number;
 }
 
+interface BodyFatHistoryPoint extends BodyFatReference {
+  date: string;
+  label?: string;
+}
+
 interface BodyFatInsightCardProps {
   current: BodyFatReference;
   previous?: BodyFatReference | null;
   initial?: BodyFatReference | null;
   objective?: Objective;
   sex?: BiologicalSex;
+  history?: BodyFatHistoryPoint[];
 }
 
 export function BodyFatInsightCard({
@@ -24,7 +29,8 @@ export function BodyFatInsightCard({
   previous = null,
   initial = null,
   objective,
-  sex
+  sex,
+  history = []
 }: BodyFatInsightCardProps) {
   const currentKg = estimateBodyFatKg(current.weight, current.percent);
   const previousKg = previous ? estimateBodyFatKg(previous.weight, previous.percent) : null;
@@ -41,6 +47,11 @@ export function BodyFatInsightCard({
   const previousKgDelta = previousKg == null ? 0 : round(currentKg - previousKg);
   const initialPercentDelta = initial ? round(current.percent - initial.percent) : 0;
   const initialKgDelta = initialKg == null ? 0 : round(currentKg - initialKg);
+
+  const recentHistory = history.slice(-3).map((entry) => ({
+    ...entry,
+    kg: estimateBodyFatKg(entry.weight, entry.percent)
+  }));
 
   return (
     <PedagogicalSection
@@ -94,9 +105,7 @@ export function BodyFatInsightCard({
                 ))}
               </div>
               <div className="mt-4 flex flex-wrap items-center gap-2 text-xs text-slate-500">
-                <span className="rounded-full bg-white/[0.03] px-2.5 py-1">
-                  Zone cible
-                </span>
+                <span className="rounded-full bg-white/[0.03] px-2.5 py-1">Zone cible</span>
                 <span>{getTargetHint(sex, objective)}</span>
               </div>
               <div className="mt-4 grid gap-2 md:grid-cols-2 xl:grid-cols-4">
@@ -114,24 +123,46 @@ export function BodyFatInsightCard({
           </div>
           <div className="md:col-span-2 xl:col-span-3 rounded-[24px] bg-white/[0.04] p-5">
             <div className="flex items-center justify-between gap-3">
-              <p className="text-sm font-semibold text-white">Écarts lisibles</p>
-              <p className="text-[11px] font-medium text-slate-500">Suivi</p>
+              <div>
+                <p className="text-sm font-semibold text-white">3 derniers releves</p>
+                <p className="mt-1 text-xs text-slate-400">
+                  Une lecture plus concrete a montrer a la cliente avant le detail.
+                </p>
+              </div>
+              <p className="text-[11px] font-medium text-slate-500">Progression</p>
             </div>
 
-            <div className="mt-4 grid gap-3 xl:grid-cols-2">
-            <DeltaPanel
-              title="Vs bilan precedent"
-              percentDelta={previousPercentDelta}
-              kgDelta={previousKgDelta}
-              enabled={previous != null}
-            />
-            <DeltaPanel
-              title="Vs premier bilan"
-              percentDelta={initialPercentDelta}
-              kgDelta={initialKgDelta}
-              enabled={initial != null}
-            />
-            </div>
+            {recentHistory.length >= 2 ? <BodyFatProgressChart points={recentHistory} /> : null}
+
+            {recentHistory.length ? (
+              <div className="mt-4 grid gap-3 md:grid-cols-3">
+                {recentHistory.map((entry, index) => (
+                  <HistoryReadingCard
+                    key={`${entry.date}-${entry.percent}-${index}`}
+                    label={entry.label ?? formatDate(entry.date)}
+                    dateLabel={entry.label ? formatDate(entry.date) : undefined}
+                    percent={entry.percent}
+                    kg={entry.kg}
+                    emphasized={index === recentHistory.length - 1}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="mt-4 grid gap-3 xl:grid-cols-2">
+                <DeltaPanel
+                  title="Vs bilan precedent"
+                  percentDelta={previousPercentDelta}
+                  kgDelta={previousKgDelta}
+                  enabled={previous != null}
+                />
+                <DeltaPanel
+                  title="Vs premier bilan"
+                  percentDelta={initialPercentDelta}
+                  kgDelta={initialKgDelta}
+                  enabled={initial != null}
+                />
+              </div>
+            )}
           </div>
         </>
       }
@@ -154,39 +185,150 @@ function GaugeLegendChip({
     tone === "green"
       ? {
           base: "bg-emerald-400/[0.08] ring-1 ring-emerald-300/12",
-          active: "bg-emerald-400/[0.18] ring-1 ring-emerald-300/30 shadow-[0_0_0_1px_rgba(110,231,183,0.12),0_12px_28px_rgba(16,185,129,0.12)]",
+          active:
+            "bg-emerald-400/[0.18] ring-1 ring-emerald-300/30 shadow-[0_0_0_1px_rgba(110,231,183,0.12),0_12px_28px_rgba(16,185,129,0.12)]",
           label: "text-emerald-100/90"
         }
       : tone === "blue"
         ? {
             base: "bg-sky-400/[0.08] ring-1 ring-sky-300/12",
-            active: "bg-sky-400/[0.18] ring-1 ring-sky-300/30 shadow-[0_0_0_1px_rgba(125,211,252,0.12),0_12px_28px_rgba(14,165,233,0.12)]",
+            active:
+              "bg-sky-400/[0.18] ring-1 ring-sky-300/30 shadow-[0_0_0_1px_rgba(125,211,252,0.12),0_12px_28px_rgba(14,165,233,0.12)]",
             label: "text-sky-100/90"
           }
         : tone === "amber"
           ? {
               base: "bg-amber-300/[0.08] ring-1 ring-amber-200/12",
-              active: "bg-amber-300/[0.18] ring-1 ring-amber-200/28 shadow-[0_0_0_1px_rgba(252,211,77,0.12),0_12px_28px_rgba(245,158,11,0.12)]",
+              active:
+                "bg-amber-300/[0.18] ring-1 ring-amber-200/28 shadow-[0_0_0_1px_rgba(252,211,77,0.12),0_12px_28px_rgba(245,158,11,0.12)]",
               label: "text-amber-50/90"
             }
           : {
               base: "bg-rose-400/[0.08] ring-1 ring-rose-300/12",
-              active: "bg-rose-400/[0.18] ring-1 ring-rose-300/28 shadow-[0_0_0_1px_rgba(251,113,133,0.12),0_12px_28px_rgba(244,63,94,0.12)]",
+              active:
+                "bg-rose-400/[0.18] ring-1 ring-rose-300/28 shadow-[0_0_0_1px_rgba(251,113,133,0.12),0_12px_28px_rgba(244,63,94,0.12)]",
               label: "text-rose-50/90"
             };
 
   return (
     <div
       className={`rounded-[18px] px-3 py-3 ${
-        active
-          ? palette.active
-          : palette.base
+        active ? palette.active : palette.base
       }`}
     >
-      <p className={`text-[11px] font-medium tracking-[0.02em] ${active ? palette.label : "text-slate-400"}`}>
+      <p
+        className={`text-[11px] font-medium tracking-[0.02em] ${
+          active ? palette.label : "text-slate-400"
+        }`}
+      >
         {label}
       </p>
       <p className="mt-2 text-sm font-medium text-white">{value}</p>
+    </div>
+  );
+}
+
+function BodyFatProgressChart({
+  points
+}: {
+  points: Array<{ date: string; label?: string; percent: number; kg: number }>;
+}) {
+  const max = Math.max(...points.map((point) => point.percent), 1);
+  const min = Math.min(...points.map((point) => point.percent), max);
+  const range = Math.max(max - min, 1);
+  const width = 320;
+  const height = 116;
+  const paddingX = 16;
+  const paddingY = 16;
+
+  const coordinates = points.map((point, index) => {
+    const x =
+      points.length === 1
+        ? width / 2
+        : paddingX + (index * (width - paddingX * 2)) / (points.length - 1);
+    const y =
+      height -
+      paddingY -
+      ((point.percent - min) / range) * (height - paddingY * 2);
+
+    return { ...point, x, y };
+  });
+
+  const path = coordinates
+    .map((point, index) => `${index === 0 ? "M" : "L"} ${point.x} ${point.y}`)
+    .join(" ");
+
+  return (
+    <div className="mt-4 rounded-[22px] border border-white/8 bg-slate-950/28 p-4">
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-xs font-medium uppercase tracking-[0.16em] text-slate-500">
+          Courbe recente
+        </p>
+        <p className="text-xs text-slate-400">Masse grasse en %</p>
+      </div>
+
+      <div className="mt-4">
+        <svg viewBox={`0 0 ${width} ${height}`} className="h-28 w-full overflow-visible">
+          <defs>
+            <linearGradient id="body-fat-line" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="#fb7185" />
+              <stop offset="100%" stopColor="#fdba74" />
+            </linearGradient>
+          </defs>
+          <path
+            d={path}
+            fill="none"
+            stroke="url(#body-fat-line)"
+            strokeWidth="3"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          {coordinates.map((point, index) => (
+            <circle
+              key={`${point.date}-${index}`}
+              cx={point.x}
+              cy={point.y}
+              r="5"
+              fill="#0f172a"
+              stroke="#ffffff"
+              strokeWidth="2"
+            />
+          ))}
+        </svg>
+      </div>
+    </div>
+  );
+}
+
+function HistoryReadingCard({
+  label,
+  dateLabel,
+  percent,
+  kg,
+  emphasized
+}: {
+  label: string;
+  dateLabel?: string;
+  percent: number;
+  kg: number;
+  emphasized?: boolean;
+}) {
+  return (
+    <div
+      className={`rounded-[20px] border px-4 py-4 ${
+        emphasized
+          ? "border-rose-300/18 bg-rose-400/[0.08] shadow-[0_10px_30px_rgba(251,113,133,0.08)]"
+          : "border-white/8 bg-slate-950/24"
+      }`}
+    >
+      <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-slate-500">
+        {label}
+      </p>
+      {dateLabel ? <p className="mt-1 text-xs text-slate-400">{dateLabel}</p> : null}
+      <div className="mt-4">
+        <p className="text-[2rem] font-semibold tracking-[-0.04em] text-white">{percent} %</p>
+        <p className="mt-1 text-sm text-slate-400">{kg} kg estimes</p>
+      </div>
     </div>
   );
 }
@@ -208,14 +350,44 @@ function DeltaPanel({
       <div className="mt-4 grid gap-3">
         <div className="flex items-center justify-between gap-3">
           <span className="text-sm text-slate-400">Variation en %</span>
-          <DeltaBadge value={enabled ? percentDelta : 0} suffix=" %" inverseGood />
+          <DeltaValue value={enabled ? percentDelta : 0} suffix=" %" inverseGood />
         </div>
         <div className="flex items-center justify-between gap-3">
           <span className="text-sm text-slate-400">Variation en kg</span>
-          <DeltaBadge value={enabled ? kgDelta : 0} suffix=" kg" inverseGood />
+          <DeltaValue value={enabled ? kgDelta : 0} suffix=" kg" inverseGood />
         </div>
       </div>
     </div>
+  );
+}
+
+function DeltaValue({
+  value,
+  suffix,
+  inverseGood = false
+}: {
+  value: number;
+  suffix: string;
+  inverseGood?: boolean;
+}) {
+  const sign = value > 0 ? "+" : "";
+  const tone =
+    value === 0
+      ? "bg-white/[0.05] text-slate-200"
+      : inverseGood
+        ? value < 0
+          ? "bg-emerald-400/[0.12] text-emerald-200"
+          : "bg-rose-400/[0.12] text-rose-200"
+        : value > 0
+          ? "bg-emerald-400/[0.12] text-emerald-200"
+          : "bg-rose-400/[0.12] text-rose-200";
+
+  return (
+    <span className={`rounded-full px-3 py-1 text-sm font-semibold ${tone}`}>
+      {sign}
+      {value}
+      {suffix}
+    </span>
   );
 }
 
@@ -321,20 +493,20 @@ function getSexLabel(sex?: BiologicalSex) {
 
 function getTargetHint(sex?: BiologicalSex, objective?: Objective) {
   if (sex === "male" && objective === "sport") {
-    return "Repère sport homme";
+    return "Repere sport homme";
   }
 
   if (sex === "male" && objective === "weight-loss") {
-    return "Repère progression homme";
+    return "Repere progression homme";
   }
 
   if (sex === "female" && objective === "sport") {
-    return "Repère sport femme";
+    return "Repere sport femme";
   }
 
   if (sex === "female" && objective === "weight-loss") {
-    return "Repère progression femme";
+    return "Repere progression femme";
   }
 
-  return "Repère corporel général";
+  return "Repere corporel general";
 }
