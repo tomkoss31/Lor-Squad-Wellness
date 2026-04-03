@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { BodyFatInsightCard } from "../components/body-scan/BodyFatInsightCard";
 import { BodyScanDeltaGrid } from "../components/body-scan/BodyScanDeltaGrid";
@@ -22,6 +22,76 @@ import {
   serializeDateTimeForStorage
 } from "../lib/calculations";
 import type { AssessmentQuestionnaire, AssessmentRecord, BodyScanMetrics } from "../types/domain";
+
+interface FollowUpDraftPayload {
+  clientId: string;
+  bodyScan: BodyScanMetrics;
+  assessmentDate: string;
+  dueDate: string;
+  followUpType: string;
+  energyCheck: string;
+  hungerCheck: string;
+  quantityCheck: string;
+  digestionCheck: string;
+  bloatingCheck: string;
+  mealPrepCheck: string;
+  mealRoutineCheck: string;
+  hydrationCheck: string;
+  easyWin: string;
+  attentionPoint: string;
+  coachNote: string;
+  optionalProductsToggle: string;
+  optionalProductsUsed: string;
+  recommendationsContacted: boolean;
+}
+
+const FOLLOW_UP_DRAFT_PREFIX = "lor-squad-wellness-follow-up-draft-v1";
+
+function getFollowUpDraftKey(clientId: string) {
+  return `${FOLLOW_UP_DRAFT_PREFIX}-${clientId}`;
+}
+
+function readFollowUpDraft(clientId: string): FollowUpDraftPayload | null {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  try {
+    const raw = window.localStorage.getItem(getFollowUpDraftKey(clientId));
+    if (!raw) {
+      return null;
+    }
+
+    const parsed = JSON.parse(raw) as Partial<FollowUpDraftPayload>;
+    if (!parsed.clientId || parsed.clientId !== clientId || !parsed.bodyScan) {
+      return null;
+    }
+
+    return parsed as FollowUpDraftPayload;
+  } catch {
+    return null;
+  }
+}
+
+function persistFollowUpDraft(payload: FollowUpDraftPayload) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  try {
+    window.localStorage.setItem(getFollowUpDraftKey(payload.clientId), JSON.stringify(payload));
+  } catch (error) {
+    console.error("Sauvegarde du brouillon suivi impossible.", error);
+  }
+}
+
+function clearFollowUpDraft(clientId: string) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  window.localStorage.removeItem(getFollowUpDraftKey(clientId));
+}
 
 export function NewFollowUpPage() {
   const { clientId } = useParams();
@@ -70,6 +140,82 @@ export function NewFollowUpPage() {
   const [recommendationsContacted, setRecommendationsContacted] = useState(
     latest.questionnaire.recommendationsContacted ?? false
   );
+  const [draftReady, setDraftReady] = useState(false);
+
+  useEffect(() => {
+    const draft = readFollowUpDraft(targetClient.id);
+    if (draft) {
+      setBodyScan(draft.bodyScan);
+      setAssessmentDate(draft.assessmentDate);
+      setDueDate(draft.dueDate);
+      setFollowUpType(draft.followUpType);
+      setEnergyCheck(draft.energyCheck);
+      setHungerCheck(draft.hungerCheck);
+      setQuantityCheck(draft.quantityCheck);
+      setDigestionCheck(draft.digestionCheck);
+      setBloatingCheck(draft.bloatingCheck);
+      setMealPrepCheck(draft.mealPrepCheck);
+      setMealRoutineCheck(draft.mealRoutineCheck);
+      setHydrationCheck(draft.hydrationCheck);
+      setEasyWin(draft.easyWin);
+      setAttentionPoint(draft.attentionPoint);
+      setCoachNote(draft.coachNote);
+      setOptionalProductsToggle(draft.optionalProductsToggle);
+      setOptionalProductsUsed(draft.optionalProductsUsed);
+      setRecommendationsContacted(draft.recommendationsContacted);
+    }
+
+    setDraftReady(true);
+  }, [targetClient.id]);
+
+  useEffect(() => {
+    if (!draftReady) {
+      return;
+    }
+
+    persistFollowUpDraft({
+      clientId: targetClient.id,
+      bodyScan,
+      assessmentDate,
+      dueDate,
+      followUpType,
+      energyCheck,
+      hungerCheck,
+      quantityCheck,
+      digestionCheck,
+      bloatingCheck,
+      mealPrepCheck,
+      mealRoutineCheck,
+      hydrationCheck,
+      easyWin,
+      attentionPoint,
+      coachNote,
+      optionalProductsToggle,
+      optionalProductsUsed,
+      recommendationsContacted
+    });
+  }, [
+    assessmentDate,
+    attentionPoint,
+    bloatingCheck,
+    bodyScan,
+    coachNote,
+    digestionCheck,
+    draftReady,
+    dueDate,
+    easyWin,
+    energyCheck,
+    followUpType,
+    hungerCheck,
+    hydrationCheck,
+    mealPrepCheck,
+    mealRoutineCheck,
+    optionalProductsToggle,
+    optionalProductsUsed,
+    quantityCheck,
+    recommendationsContacted,
+    targetClient.id
+  ]);
 
   const delta = getAssessmentDelta(bodyScan, latest.bodyScan);
   const pvRecord = useMemo(
@@ -139,6 +285,7 @@ export function NewFollowUpPage() {
       status: "scheduled"
     });
 
+    clearFollowUpDraft(targetClient.id);
     navigate(`/clients/${targetClient.id}`);
   }
 

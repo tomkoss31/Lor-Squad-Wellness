@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
@@ -7,6 +7,75 @@ import { StatusBadge } from "../components/ui/StatusBadge";
 import { useAppContext } from "../context/AppContext";
 import { getFirstAssessment, normalizeDateTimeLocalInputValue } from "../lib/calculations";
 import type { AssessmentQuestionnaire, AssessmentRecord } from "../types/domain";
+
+interface EditInitialAssessmentDraftPayload {
+  clientId: string;
+  assessmentDate: string;
+  programTitle: string;
+  summary: string;
+  weight: number;
+  bodyFat: number;
+  muscleMass: number;
+  hydration: number;
+  boneMass: number;
+  visceralFat: number;
+  bmr: number;
+  metabolicAge: number;
+  questionnaire: AssessmentQuestionnaire;
+  notes: string;
+}
+
+const EDIT_INITIAL_ASSESSMENT_DRAFT_PREFIX =
+  "lor-squad-wellness-edit-initial-assessment-draft-v1";
+
+function getEditInitialAssessmentDraftKey(clientId: string) {
+  return `${EDIT_INITIAL_ASSESSMENT_DRAFT_PREFIX}-${clientId}`;
+}
+
+function readEditInitialAssessmentDraft(clientId: string) {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  try {
+    const raw = window.localStorage.getItem(getEditInitialAssessmentDraftKey(clientId));
+    if (!raw) {
+      return null;
+    }
+
+    const parsed = JSON.parse(raw) as Partial<EditInitialAssessmentDraftPayload>;
+    if (!parsed.clientId || parsed.clientId !== clientId || !parsed.questionnaire) {
+      return null;
+    }
+
+    return parsed as EditInitialAssessmentDraftPayload;
+  } catch {
+    return null;
+  }
+}
+
+function persistEditInitialAssessmentDraft(payload: EditInitialAssessmentDraftPayload) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  try {
+    window.localStorage.setItem(
+      getEditInitialAssessmentDraftKey(payload.clientId),
+      JSON.stringify(payload)
+    );
+  } catch (error) {
+    console.error("Sauvegarde du brouillon du bilan initial impossible.", error);
+  }
+}
+
+function clearEditInitialAssessmentDraft(clientId: string) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  window.localStorage.removeItem(getEditInitialAssessmentDraftKey(clientId));
+}
 
 function buildEditableQuestionnaire(questionnaire: AssessmentQuestionnaire): AssessmentQuestionnaire {
   return {
@@ -96,6 +165,67 @@ export function EditInitialAssessmentPage() {
   const [notes, setNotes] = useState(initialAssessment.notes);
   const [error, setError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [draftReady, setDraftReady] = useState(false);
+
+  useEffect(() => {
+    const draft = readEditInitialAssessmentDraft(targetClient.id);
+    if (draft) {
+      setAssessmentDate(draft.assessmentDate);
+      setProgramTitle(draft.programTitle);
+      setSummary(draft.summary);
+      setWeight(draft.weight);
+      setBodyFat(draft.bodyFat);
+      setMuscleMass(draft.muscleMass);
+      setHydration(draft.hydration);
+      setBoneMass(draft.boneMass);
+      setVisceralFat(draft.visceralFat);
+      setBmr(draft.bmr);
+      setMetabolicAge(draft.metabolicAge);
+      setQuestionnaire(draft.questionnaire);
+      setNotes(draft.notes);
+    }
+
+    setDraftReady(true);
+  }, [targetClient.id]);
+
+  useEffect(() => {
+    if (!draftReady) {
+      return;
+    }
+
+    persistEditInitialAssessmentDraft({
+      clientId: targetClient.id,
+      assessmentDate,
+      programTitle,
+      summary,
+      weight,
+      bodyFat,
+      muscleMass,
+      hydration,
+      boneMass,
+      visceralFat,
+      bmr,
+      metabolicAge,
+      questionnaire,
+      notes
+    });
+  }, [
+    assessmentDate,
+    bmr,
+    bodyFat,
+    boneMass,
+    draftReady,
+    hydration,
+    metabolicAge,
+    muscleMass,
+    notes,
+    programTitle,
+    questionnaire,
+    summary,
+    targetClient.id,
+    visceralFat,
+    weight
+  ]);
 
   function updateQuestionnaire<K extends keyof AssessmentQuestionnaire>(
     key: K,
@@ -140,6 +270,7 @@ export function EditInitialAssessmentPage() {
 
     try {
       await updateAssessment(targetClient.id, updatedAssessment);
+      clearEditInitialAssessmentDraft(targetClient.id);
       navigate(`/clients/${targetClient.id}`);
     } catch (saveError) {
       setError(

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
@@ -11,6 +11,64 @@ import {
   serializeDateTimeForStorage
 } from "../lib/calculations";
 import { getClientActiveFollowUp } from "../lib/portfolio";
+
+interface EditClientScheduleDraftPayload {
+  clientId: string;
+  nextFollowUp: string;
+  followUpType: string;
+}
+
+const EDIT_CLIENT_SCHEDULE_DRAFT_PREFIX =
+  "lor-squad-wellness-edit-client-schedule-draft-v1";
+
+function getEditClientScheduleDraftKey(clientId: string) {
+  return `${EDIT_CLIENT_SCHEDULE_DRAFT_PREFIX}-${clientId}`;
+}
+
+function readEditClientScheduleDraft(clientId: string) {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  try {
+    const raw = window.localStorage.getItem(getEditClientScheduleDraftKey(clientId));
+    if (!raw) {
+      return null;
+    }
+
+    const parsed = JSON.parse(raw) as Partial<EditClientScheduleDraftPayload>;
+    if (!parsed.clientId || parsed.clientId !== clientId) {
+      return null;
+    }
+
+    return parsed as EditClientScheduleDraftPayload;
+  } catch {
+    return null;
+  }
+}
+
+function persistEditClientScheduleDraft(payload: EditClientScheduleDraftPayload) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  try {
+    window.localStorage.setItem(
+      getEditClientScheduleDraftKey(payload.clientId),
+      JSON.stringify(payload)
+    );
+  } catch (error) {
+    console.error("Sauvegarde du brouillon planning impossible.", error);
+  }
+}
+
+function clearEditClientScheduleDraft(clientId: string) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  window.localStorage.removeItem(getEditClientScheduleDraftKey(clientId));
+}
 
 export function EditClientSchedulePage() {
   const { clientId } = useParams();
@@ -39,6 +97,29 @@ export function EditClientSchedulePage() {
   const [followUpType, setFollowUpType] = useState(currentFollowUp?.type ?? "Suivi terrain");
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState("");
+  const [draftReady, setDraftReady] = useState(false);
+
+  useEffect(() => {
+    const draft = readEditClientScheduleDraft(targetClient.id);
+    if (draft) {
+      setNextFollowUp(draft.nextFollowUp);
+      setFollowUpType(draft.followUpType);
+    }
+
+    setDraftReady(true);
+  }, [targetClient.id]);
+
+  useEffect(() => {
+    if (!draftReady) {
+      return;
+    }
+
+    persistEditClientScheduleDraft({
+      clientId: targetClient.id,
+      nextFollowUp,
+      followUpType
+    });
+  }, [draftReady, followUpType, nextFollowUp, targetClient.id]);
 
   async function handleSave() {
     setError("");
@@ -50,6 +131,7 @@ export function EditClientSchedulePage() {
         followUpType,
         followUpStatus: currentFollowUp?.status ?? "scheduled"
       });
+      clearEditClientScheduleDraft(targetClient.id);
       navigate(`/clients/${targetClient.id}`);
     } catch (saveError) {
       setError(
