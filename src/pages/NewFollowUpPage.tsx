@@ -49,9 +49,9 @@ export function NewFollowUpPage() {
     normalizeDateTimeLocalInputValue(targetClient.nextFollowUp)
   );
   const [followUpType, setFollowUpType] = useState("Suivi terrain");
-  const [energyCheck, setEnergyCheck] = useState("Bonne dynamique");
-  const [routineCheck, setRoutineCheck] = useState("Plutot reguliere");
-  const [engagementCheck, setEngagementCheck] = useState("Partant pour la suite");
+  const [energyCheck, setEnergyCheck] = useState("Ca roule bien");
+  const [routineCheck, setRoutineCheck] = useState("Plutot cale");
+  const [engagementCheck, setEngagementCheck] = useState("Prete pour la suite");
   const [easyWin, setEasyWin] = useState("");
   const [attentionPoint, setAttentionPoint] = useState("");
   const [recommendationsContacted, setRecommendationsContacted] = useState(
@@ -111,7 +111,7 @@ export function NewFollowUpPage() {
       <PageHeading
         eyebrow="Nouveau suivi"
         title={`Suivi de ${targetClient.firstName} ${targetClient.lastName}`}
-        description="On pose le check-in, on relit les reperes, puis on passe a la balance."
+        description="On prend la temperature du moment, on refait le point, puis on passe a la balance."
       />
 
       <div className="grid gap-4 xl:grid-cols-[1.05fr_0.95fr]">
@@ -122,7 +122,7 @@ export function NewFollowUpPage() {
                 <p className="eyebrow-label">Check-in suivi</p>
                 <p className="mt-3 text-3xl text-white">Avant de passer a la balance</p>
                 <p className="mt-2 text-sm leading-6 text-slate-300">
-                  Quelques reperes simples pour lancer la conversation, puis on prend les nouvelles valeurs.
+                  Quelques questions simples pour sentir ou en est la personne avant de reprendre les mesures.
                 </p>
               </div>
               <StatusBadge label="Suivi" tone="blue" />
@@ -130,36 +130,36 @@ export function NewFollowUpPage() {
 
             <div className="grid gap-6">
               <FollowUpChoiceGroup
-                label="Comment se sent la personne depuis le dernier point ?"
+                label="Depuis le dernier rendez-vous, comment elle se sent ?"
                 value={energyCheck}
-                options={["Bonne dynamique", "Plutot stable", "En dents de scie", "Besoin de relancer"]}
+                options={["Ca roule bien", "Plutot bien", "Un peu en dents de scie", "On relance doucement"]}
                 onChange={setEnergyCheck}
               />
               <FollowUpChoiceGroup
-                label="Comment a tenu le cadre depuis le dernier releve ?"
+                label="Dans la vraie vie, comment le cadre a tenu ?"
                 value={routineCheck}
-                options={["Plutot reguliere", "Par moments", "Trop irreguliere", "A reprendre doucement"]}
+                options={["Plutot cale", "Ca va par moments", "Trop irregulier", "On reprend simple"]}
                 onChange={setRoutineCheck}
               />
               <FollowUpChoiceGroup
-                label="Comment sent-on la suite du suivi aujourd'hui ?"
+                label="Et aujourd'hui, comment tu sens la suite ?"
                 value={engagementCheck}
-                options={["Partant pour la suite", "A rassurer", "A recadrer", "A remotiver"]}
+                options={["Prete pour la suite", "A rassurer", "A recadrer", "A remotiver"]}
                 onChange={setEngagementCheck}
               />
 
               <div className="grid gap-4 md:grid-cols-2">
                 <FollowUpTextField
-                  label="Ce qui a ete le plus facile"
+                  label="Ce qui a ete le plus simple"
                   value={easyWin}
                   onChange={setEasyWin}
-                  placeholder="Une habitude, une sensation, un point positif..."
+                  placeholder="Une habitude qui a bien pris, une sensation positive..."
                 />
                 <FollowUpTextField
-                  label="Ce qui reste a travailler"
+                  label="Ce qui bloque encore"
                   value={attentionPoint}
                   onChange={setAttentionPoint}
-                  placeholder="Le point a surveiller ou a relancer..."
+                  placeholder="Le point a surveiller, relancer ou simplifier..."
                 />
               </div>
             </div>
