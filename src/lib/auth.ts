@@ -121,8 +121,7 @@ export function getAccessibleOwnerIds(
 
 export function canAccessPortfolioUser(
   viewer: User | null | undefined,
-  targetUser: User | null | undefined,
-  users: User[]
+  targetUser: User | null | undefined
 ) {
   if (!viewer || !targetUser) {
     return false;
