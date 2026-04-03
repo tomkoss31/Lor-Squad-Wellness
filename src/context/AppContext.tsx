@@ -177,7 +177,10 @@ export function AppProvider({ children }: PropsWithChildren) {
         nextUser ? fetchSupabaseUsers() : Promise.resolve([] as User[]),
         fetchSupabasePvTransactions(),
         fetchSupabasePvClientProducts(),
-        fetchSupabaseActivityLogs()
+        fetchSupabaseActivityLogs().catch((error) => {
+          console.error("Historique d'activite indisponible pour l'instant.", error);
+          return [] as ActivityLog[];
+        })
       ]);
 
       setClients(nextClients);

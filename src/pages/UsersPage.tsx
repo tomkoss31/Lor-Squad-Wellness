@@ -11,15 +11,16 @@ import {
   getRoleLabel,
   isAdmin
 } from "../lib/auth";
-import { formatDate } from "../lib/calculations";
+import { formatDate, formatDateTime } from "../lib/calculations";
 import { getPortfolioIdentity, getPortfolioMetrics } from "../lib/portfolio";
-import type { Client, FollowUp, User } from "../types/domain";
+import type { ActivityLog, Client, FollowUp, User } from "../types/domain";
 
 export function UsersPage() {
   const {
     users,
     clients,
     followUps,
+    activityLogs,
     storageMode,
     createUserAccess,
     updateUserAccess,
@@ -50,6 +51,24 @@ export function UsersPage() {
       referents: users.filter((user) => user.role === "referent").length,
       distributors: users.filter((user) => user.role === "distributor").length,
       active: users.filter((user) => user.active).length
+    };
+  }, [users]);
+
+  const teamGroups = useMemo(() => {
+    const activeUsers = users.filter((user) => user.active);
+    const admins = activeUsers.filter((user) => user.role === "admin");
+    const referents = activeUsers.filter((user) => user.role === "referent");
+    const distributors = activeUsers.filter((user) => user.role === "distributor");
+
+    return {
+      admins,
+      referents,
+      distributors,
+      orphanDistributors: distributors.filter((user) => !user.sponsorId),
+      referentGroups: referents.map((referent) => ({
+        referent,
+        distributors: distributors.filter((user) => user.sponsorId === referent.id)
+      }))
     };
   }, [users]);
 
@@ -316,6 +335,81 @@ export function UsersPage() {
         </Card>
       </div>
 
+      <div className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
+        <Card className="space-y-4">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="eyebrow-label">Organisation equipe</p>
+              <h2 className="mt-3 text-3xl">Lecture de la structure</h2>
+              <p className="mt-3 text-sm leading-7 text-slate-300">
+                Les admins gardent la vue globale. Les referents suivent leur equipe directe.
+              </p>
+            </div>
+            <StatusBadge
+              label={`${teamGroups.referentGroups.length} equipe${teamGroups.referentGroups.length > 1 ? "s" : ""}`}
+              tone="amber"
+            />
+          </div>
+
+          <div className="grid gap-3">
+            {teamGroups.admins.length ? (
+              <OrganizationBand
+                title="Pilotage admin"
+                users={teamGroups.admins}
+                usersIndex={users}
+                clients={clients}
+                followUps={followUps}
+                tone="blue"
+              />
+            ) : null}
+
+            {teamGroups.referentGroups.map((group) => (
+              <OrganizationCluster
+                key={group.referent.id}
+                referent={group.referent}
+                distributors={group.distributors}
+                users={users}
+                clients={clients}
+                followUps={followUps}
+              />
+            ))}
+
+            {teamGroups.orphanDistributors.length ? (
+              <OrganizationBand
+                title="Distributeurs sans sponsor"
+                users={teamGroups.orphanDistributors}
+                usersIndex={users}
+                clients={clients}
+                followUps={followUps}
+                tone="green"
+              />
+            ) : null}
+          </div>
+        </Card>
+
+        <Card className="space-y-4">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="eyebrow-label">Activite recente</p>
+              <h2 className="mt-3 text-3xl">Ce qui a bouge</h2>
+            </div>
+            <StatusBadge label={`${Math.min(activityLogs.length, 8)} visibles`} tone="blue" />
+          </div>
+
+          <div className="space-y-3">
+            {activityLogs.slice(0, 8).map((entry) => (
+              <ActivityRow key={entry.id} entry={entry} />
+            ))}
+
+            {!activityLogs.length ? (
+              <div className="rounded-[22px] bg-white/[0.03] px-4 py-4 text-sm text-slate-400">
+                Les prochaines creations, transferts et changements d'acces apparaitront ici.
+              </div>
+            ) : null}
+          </div>
+        </Card>
+      </div>
+
       <Card className="space-y-4">
         <div className="flex items-center justify-between gap-3">
           <div>
@@ -534,6 +628,172 @@ function StepCard({
         <p className="text-sm font-semibold text-white">{title}</p>
         <p className="mt-1 text-sm leading-6 text-slate-400">{text}</p>
       </div>
+    </div>
+  );
+}
+
+function OrganizationBand({
+  title,
+  users,
+  usersIndex,
+  clients,
+  followUps,
+  tone
+}: {
+  title: string;
+  users: User[];
+  usersIndex: User[];
+  clients: Client[];
+  followUps: FollowUp[];
+  tone: "blue" | "green";
+}) {
+  return (
+    <div className="rounded-[24px] bg-white/[0.03] p-4">
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-sm font-semibold text-white">{title}</p>
+        <StatusBadge label={`${users.length} compte${users.length > 1 ? "s" : ""}`} tone={tone} />
+      </div>
+      <div className="mt-4 grid gap-3 md:grid-cols-2">
+        {users.map((user) => (
+          <OrganizationUserCard
+            key={user.id}
+            user={user}
+            users={usersIndex}
+            clients={clients}
+            followUps={followUps}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function OrganizationCluster({
+  referent,
+  distributors,
+  users,
+  clients,
+  followUps
+}: {
+  referent: User;
+  distributors: User[];
+  users: User[];
+  clients: Client[];
+  followUps: FollowUp[];
+}) {
+  return (
+    <div className="rounded-[24px] border border-white/8 bg-white/[0.03] p-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <p className="text-sm font-semibold text-white">{referent.name}</p>
+          <p className="mt-1 text-sm text-slate-400">Referent d'equipe</p>
+        </div>
+        <StatusBadge
+          label={`${distributors.length} distributeur${distributors.length > 1 ? "s" : ""}`}
+          tone="amber"
+        />
+      </div>
+
+      <div className="mt-4 grid gap-3 xl:grid-cols-[0.95fr_1.05fr]">
+        <OrganizationUserCard
+          user={referent}
+          users={users}
+          clients={clients}
+          followUps={followUps}
+          highlighted
+        />
+
+        <div className="grid gap-3 md:grid-cols-2">
+          {distributors.length ? (
+            distributors.map((user) => (
+              <OrganizationUserCard
+                key={user.id}
+                user={user}
+                users={users}
+                clients={clients}
+                followUps={followUps}
+              />
+            ))
+          ) : (
+            <div className="rounded-[22px] bg-slate-950/24 px-4 py-4 text-sm text-slate-400">
+              Aucun distributeur rattache pour l'instant.
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function OrganizationUserCard({
+  user,
+  users,
+  clients,
+  followUps,
+  highlighted = false
+}: {
+  user: User;
+  users: User[];
+  clients: Client[];
+  followUps: FollowUp[];
+  highlighted?: boolean;
+}) {
+  const metrics = getPortfolioMetrics(
+    user,
+    clients,
+    followUps,
+    users,
+    user.role === "referent" ? "network" : "personal"
+  );
+
+  return (
+    <div
+      className={`rounded-[22px] px-4 py-4 ${
+        highlighted ? "bg-amber-400/[0.08] ring-1 ring-amber-400/12" : "bg-slate-950/24"
+      }`}
+    >
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <p className="text-sm font-semibold text-white">{user.name}</p>
+          <p className="mt-1 text-sm text-slate-400">{getRoleLabel(user.role)}</p>
+        </div>
+        <StatusBadge label={`${metrics.clients.length} clients`} tone={user.role === "referent" ? "amber" : "blue"} />
+      </div>
+      <div className="mt-4 grid grid-cols-3 gap-2 text-sm">
+        <MiniMetric label="RDV" value={metrics.scheduledFollowUps.length} />
+        <MiniMetric label="Relances" value={metrics.relanceFollowUps.length} />
+        <MiniMetric label="Charge" value={metrics.clients.length} />
+      </div>
+    </div>
+  );
+}
+
+function MiniMetric({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="rounded-[18px] bg-white/[0.03] px-3 py-3 text-center">
+      <p className="text-[11px] font-medium text-slate-500">{label}</p>
+      <p className="mt-2 text-lg font-semibold text-white">{value}</p>
+    </div>
+  );
+}
+
+function ActivityRow({ entry }: { entry: ActivityLog }) {
+  return (
+    <div className="rounded-[22px] bg-white/[0.03] px-4 py-4">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-sm font-semibold text-white">{entry.summary}</p>
+          {entry.detail ? (
+            <p className="mt-1 text-sm leading-6 text-slate-400">{entry.detail}</p>
+          ) : null}
+        </div>
+        <p className="text-xs text-slate-500">{formatDateTime(entry.createdAt)}</p>
+      </div>
+      <p className="mt-3 text-xs text-slate-500">
+        {entry.actorName}
+        {entry.targetUserName ? ` - ${entry.targetUserName}` : ""}
+        {entry.clientName ? ` - ${entry.clientName}` : ""}
+      </p>
     </div>
   );
 }

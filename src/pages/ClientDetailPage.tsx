@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   BodyScanComparisonGrid,
@@ -10,12 +11,14 @@ import { HydrationVisceralInsightCard } from "../components/body-scan/HydrationV
 import { WeightGoalInsightCard } from "../components/education/WeightGoalInsightCard";
 import { EvolutionChart } from "../components/body-scan/EvolutionChart";
 import { HistoryTimeline } from "../components/client/HistoryTimeline";
+import { Button } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
 import { MetricTile } from "../components/ui/MetricTile";
 import { PageHeading } from "../components/ui/PageHeading";
 import { StatusBadge } from "../components/ui/StatusBadge";
 import { useAppContext } from "../context/AppContext";
 import { buildPvTrackingRecords } from "../data/mockPvModule";
+import { getAccessibleOwnerIds, isAdmin, isReferent } from "../lib/auth";
 import { getClientActiveFollowUp } from "../lib/portfolio";
 import {
   calculateProteinRange,
@@ -37,8 +40,17 @@ import {
 export function ClientDetailPage() {
   const navigate = useNavigate();
   const { clientId } = useParams();
-  const { currentUser, deleteClient, getClientById, followUps, pvTransactions, pvClientProducts } =
-    useAppContext();
+  const {
+    currentUser,
+    users,
+    activityLogs,
+    deleteClient,
+    getClientById,
+    followUps,
+    pvTransactions,
+    pvClientProducts,
+    reassignClientOwner
+  } = useAppContext();
 
   const client = clientId ? getClientById(clientId) : undefined;
 
@@ -51,7 +63,21 @@ export function ClientDetailPage() {
   }
 
   const currentClient = client;
+  const [nextOwnerId, setNextOwnerId] = useState(client.distributorId);
+  const [transferFeedback, setTransferFeedback] = useState("");
   const activeFollowUp = getClientActiveFollowUp(currentClient, followUps);
+  const canReassignClient = isAdmin(currentUser) || isReferent(currentUser);
+  const assignableOwnerIds = getAccessibleOwnerIds(currentUser, users);
+  const assignableOwners = users.filter(
+    (user) => user.active && assignableOwnerIds.has(user.id)
+  );
+  const clientActivity = activityLogs
+    .filter((entry) => entry.clientId === currentClient.id)
+    .slice(0, 6);
+
+  useEffect(() => {
+    setNextOwnerId(currentClient.distributorId);
+  }, [currentClient.distributorId]);
 
   const latestAssessment = getLatestAssessment(client);
   const previousAssessment = getPreviousAssessment(client);
@@ -108,6 +134,28 @@ export function ClientDetailPage() {
           ? error.message
           : "Impossible de supprimer ce dossier pour le moment.";
       window.alert(message);
+    }
+  }
+
+  async function handleTransferClient() {
+    if (!canReassignClient || nextOwnerId === currentClient.distributorId) {
+      return;
+    }
+
+    try {
+      await reassignClientOwner(currentClient.id, { distributorId: nextOwnerId });
+      const nextOwner = users.find((user) => user.id === nextOwnerId);
+      setTransferFeedback(
+        nextOwner
+          ? `Le dossier est maintenant rattache a ${nextOwner.name}.`
+          : "Le dossier a bien change de responsable."
+      );
+    } catch (error) {
+      setTransferFeedback(
+        error instanceof Error
+          ? error.message
+          : "Impossible de reattribuer ce dossier pour le moment."
+      );
     }
   }
 
@@ -483,6 +531,46 @@ export function ClientDetailPage() {
             </div>
           </Card>
 
+          {canReassignClient ? (
+            <Card className="space-y-4">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="eyebrow-label">Transfert de portefeuille</p>
+                  <p className="mt-3 text-2xl text-white">Changer le responsable</p>
+                </div>
+                <StatusBadge label={currentClient.distributorName} tone="amber" />
+              </div>
+              <div className="space-y-3">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-slate-300">
+                    Nouveau responsable du dossier
+                  </label>
+                  <select
+                    value={nextOwnerId}
+                    onChange={(event) => setNextOwnerId(event.target.value)}
+                  >
+                    {assignableOwners.map((user) => (
+                      <option key={user.id} value={user.id}>
+                        {user.name} - {user.role === "referent" ? "Referent" : user.role === "admin" ? "Admin" : "Distributeur"}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <Button
+                  variant="secondary"
+                  onClick={() => void handleTransferClient()}
+                  disabled={nextOwnerId === currentClient.distributorId}
+                >
+                  Enregistrer le transfert
+                </Button>
+                <p className="text-sm leading-6 text-slate-400">
+                  {transferFeedback ||
+                    "Le dossier, le responsable affiche et le suivi produits actifs seront realignes ensemble."}
+                </p>
+              </div>
+            </Card>
+          ) : null}
+
           <Card className="space-y-4">
             <div>
               <p className="eyebrow-label">Repères du moment</p>
@@ -516,6 +604,34 @@ export function ClientDetailPage() {
                   hydration: entry.bodyScan.hydration
                 }))}
             />
+          </Card>
+
+          <Card className="space-y-4">
+            <div className="flex items-center justify-between gap-3">
+              <p className="eyebrow-label">Activite dossier</p>
+              <StatusBadge
+                label={`${clientActivity.length} visible${clientActivity.length > 1 ? "s" : ""}`}
+                tone="blue"
+              />
+            </div>
+            <div className="space-y-3">
+              {clientActivity.map((entry) => (
+                <div key={entry.id} className="rounded-[20px] bg-white/[0.03] px-4 py-4">
+                  <p className="text-sm font-semibold text-white">{entry.summary}</p>
+                  {entry.detail ? (
+                    <p className="mt-1 text-sm leading-6 text-slate-400">{entry.detail}</p>
+                  ) : null}
+                  <p className="mt-3 text-xs text-slate-500">
+                    {entry.actorName} - {formatDateTime(entry.createdAt)}
+                  </p>
+                </div>
+              ))}
+              {!clientActivity.length ? (
+                <div className="rounded-[20px] bg-white/[0.03] px-4 py-4 text-sm text-slate-400">
+                  Les changements de responsable, de rendez-vous et de bilans apparaitront ici.
+                </div>
+              ) : null}
+            </div>
           </Card>
         </div>
       </div>
