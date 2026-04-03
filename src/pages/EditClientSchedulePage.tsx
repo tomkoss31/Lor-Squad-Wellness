@@ -6,6 +6,7 @@ import { PageHeading } from "../components/ui/PageHeading";
 import { StatusBadge } from "../components/ui/StatusBadge";
 import { useAppContext } from "../context/AppContext";
 import { formatDateTime } from "../lib/calculations";
+import { getClientActiveFollowUp } from "../lib/portfolio";
 
 function padDatePart(value: number) {
   return String(value).padStart(2, "0");
@@ -51,10 +52,7 @@ export function EditClientSchedulePage() {
   const targetClient = client;
 
   const currentFollowUp = useMemo(
-    () =>
-      [...followUps]
-        .filter((item) => item.clientId === targetClient.id)
-        .sort((left, right) => new Date(left.dueDate).getTime() - new Date(right.dueDate).getTime())[0],
+    () => getClientActiveFollowUp(targetClient, followUps),
     [followUps, targetClient.id]
   );
 
@@ -72,7 +70,6 @@ export function EditClientSchedulePage() {
     try {
       await updateClientSchedule(targetClient.id, {
         nextFollowUp,
-        followUpId: currentFollowUp?.id,
         followUpType,
         followUpStatus: currentFollowUp?.status ?? "scheduled"
       });

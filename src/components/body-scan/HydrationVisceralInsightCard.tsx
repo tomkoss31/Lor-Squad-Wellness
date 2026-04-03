@@ -122,16 +122,19 @@ export function HydrationVisceralInsightCard({
               <VisceralRangeChip
                 label="0 - 6"
                 detail="Repere sain"
+                tone="green"
                 active={visceralStatus.band === "healthy"}
               />
               <VisceralRangeChip
                 label="7 - 12"
                 detail="Exces modere"
+                tone="amber"
                 active={visceralStatus.band === "elevated"}
               />
               <VisceralRangeChip
                 label="13+"
                 detail="Vigilance renforcee"
+                tone="red"
                 active={visceralStatus.band === "high"}
               />
             </div>
@@ -162,20 +165,44 @@ function HydrationRangeChip({
 function VisceralRangeChip({
   label,
   detail,
+  tone,
   active
 }: {
   label: string;
   detail: string;
+  tone: "green" | "amber" | "red";
   active: boolean;
 }) {
+  const palette =
+    tone === "green"
+      ? {
+          base: "bg-emerald-400/[0.08] ring-1 ring-emerald-300/12",
+          active:
+            "bg-emerald-400/[0.18] ring-1 ring-emerald-300/30 shadow-[0_0_0_1px_rgba(110,231,183,0.12),0_12px_28px_rgba(16,185,129,0.12)]",
+          label: "text-emerald-100/90"
+        }
+      : tone === "amber"
+        ? {
+            base: "bg-amber-300/[0.08] ring-1 ring-amber-200/12",
+            active:
+              "bg-amber-300/[0.18] ring-1 ring-amber-200/28 shadow-[0_0_0_1px_rgba(252,211,77,0.12),0_12px_28px_rgba(245,158,11,0.12)]",
+            label: "text-amber-50/90"
+          }
+        : {
+            base: "bg-rose-400/[0.08] ring-1 ring-rose-300/12",
+            active:
+              "bg-rose-400/[0.18] ring-1 ring-rose-300/28 shadow-[0_0_0_1px_rgba(251,113,133,0.12),0_12px_28px_rgba(244,63,94,0.12)]",
+            label: "text-rose-50/90"
+          };
+
   return (
     <div
       className={`flex items-center justify-between gap-3 rounded-[18px] px-3 py-3 ${
-        active ? "bg-amber-300/10" : "bg-white/[0.03]"
+        active ? palette.active : palette.base
       }`}
     >
       <span className="text-sm font-medium text-white">{label}</span>
-      <span className="text-sm text-slate-400">{detail}</span>
+      <span className={`text-sm ${active ? palette.label : "text-slate-400"}`}>{detail}</span>
     </div>
   );
 }

@@ -105,6 +105,7 @@ export function BodyFatInsightCard({
                     key={range.label}
                     label={range.label}
                     value={range.value}
+                    tone={range.tone}
                     active={current.percent >= range.min && current.percent <= range.max}
                   />
                 ))}
@@ -141,21 +142,50 @@ export function BodyFatInsightCard({
 function GaugeLegendChip({
   label,
   value,
+  tone,
   active
 }: {
   label: string;
   value: string;
+  tone: "blue" | "green" | "amber" | "red";
   active: boolean;
 }) {
+  const palette =
+    tone === "green"
+      ? {
+          base: "bg-emerald-400/[0.08] ring-1 ring-emerald-300/12",
+          active: "bg-emerald-400/[0.18] ring-1 ring-emerald-300/30 shadow-[0_0_0_1px_rgba(110,231,183,0.12),0_12px_28px_rgba(16,185,129,0.12)]",
+          label: "text-emerald-100/90"
+        }
+      : tone === "blue"
+        ? {
+            base: "bg-sky-400/[0.08] ring-1 ring-sky-300/12",
+            active: "bg-sky-400/[0.18] ring-1 ring-sky-300/30 shadow-[0_0_0_1px_rgba(125,211,252,0.12),0_12px_28px_rgba(14,165,233,0.12)]",
+            label: "text-sky-100/90"
+          }
+        : tone === "amber"
+          ? {
+              base: "bg-amber-300/[0.08] ring-1 ring-amber-200/12",
+              active: "bg-amber-300/[0.18] ring-1 ring-amber-200/28 shadow-[0_0_0_1px_rgba(252,211,77,0.12),0_12px_28px_rgba(245,158,11,0.12)]",
+              label: "text-amber-50/90"
+            }
+          : {
+              base: "bg-rose-400/[0.08] ring-1 ring-rose-300/12",
+              active: "bg-rose-400/[0.18] ring-1 ring-rose-300/28 shadow-[0_0_0_1px_rgba(251,113,133,0.12),0_12px_28px_rgba(244,63,94,0.12)]",
+              label: "text-rose-50/90"
+            };
+
   return (
     <div
       className={`rounded-[18px] px-3 py-3 ${
         active
-          ? "bg-amber-300/10"
-          : "bg-white/[0.03]"
+          ? palette.active
+          : palette.base
       }`}
     >
-      <p className="text-[11px] font-medium text-slate-500">{label}</p>
+      <p className={`text-[11px] font-medium tracking-[0.02em] ${active ? palette.label : "text-slate-400"}`}>
+        {label}
+      </p>
       <p className="mt-2 text-sm font-medium text-white">{value}</p>
     </div>
   );
@@ -238,18 +268,18 @@ function getBodyFatBand(percent: number, targetRange: { min: number; max: number
 function getBodyFatGaugeRanges(sex?: BiologicalSex) {
   if (sex === "male") {
     return [
-      { label: "Maigreur", value: "< 10 %", min: Number.NEGATIVE_INFINITY, max: 9.9 },
-      { label: "Valeur saine", value: "10 - 20 %", min: 10, max: 20 },
-      { label: "Surpoids", value: "20 - 25 %", min: 20.1, max: 25 },
-      { label: "Obesite", value: "> 25 %", min: 25.1, max: Number.POSITIVE_INFINITY }
+      { label: "Sous-poids", value: "< 10 %", min: Number.NEGATIVE_INFINITY, max: 9.9, tone: "blue" as const },
+      { label: "Sain", value: "10 - 20 %", min: 10, max: 20, tone: "green" as const },
+      { label: "Surpoids", value: "20 - 25 %", min: 20.1, max: 25, tone: "amber" as const },
+      { label: "Obesite", value: "> 25 %", min: 25.1, max: Number.POSITIVE_INFINITY, tone: "red" as const }
     ];
   }
 
   return [
-    { label: "Maigreur", value: "< 20 %", min: Number.NEGATIVE_INFINITY, max: 19.9 },
-    { label: "Valeur saine", value: "20 - 30 %", min: 20, max: 30 },
-    { label: "Surpoids", value: "30 - 35 %", min: 30.1, max: 35 },
-    { label: "Obesite", value: "> 35 %", min: 35.1, max: Number.POSITIVE_INFINITY }
+    { label: "Sous-poids", value: "< 20 %", min: Number.NEGATIVE_INFINITY, max: 19.9, tone: "blue" as const },
+    { label: "Sain", value: "20 - 30 %", min: 20, max: 30, tone: "green" as const },
+    { label: "Surpoids", value: "30 - 35 %", min: 30.1, max: 35, tone: "amber" as const },
+    { label: "Obesite", value: "> 35 %", min: 35.1, max: Number.POSITIVE_INFINITY, tone: "red" as const }
   ];
 }
 

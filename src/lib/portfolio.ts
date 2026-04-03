@@ -98,7 +98,54 @@ function getClientReferenceDate(client: Client) {
 }
 
 function compareByDateAsc(left: string, right: string) {
-  return new Date(left).getTime() - new Date(right).getTime();
+  return getScheduleTimestamp(left) - getScheduleTimestamp(right);
+}
+
+export function normalizeScheduleDateTime(input: string) {
+  return /T\d{2}:\d{2}/.test(input) ? input : `${input}T09:00`;
+}
+
+function getScheduleTimestamp(input: string) {
+  return new Date(normalizeScheduleDateTime(input)).getTime();
+}
+
+function getClientFallbackLastAssessmentDate(client: Client) {
+  return [...client.assessments]
+    .sort((left, right) => getScheduleTimestamp(right.date) - getScheduleTimestamp(left.date))[0]
+    ?.date ?? client.startDate ?? client.nextFollowUp;
+}
+
+export function getClientActiveFollowUp(client: Client, followUps: FollowUp[]) {
+  const clientFollowUps = followUps
+    .filter((followUp) => followUp.clientId === client.id)
+    .sort((left, right) => compareByDateAsc(left.dueDate, right.dueDate));
+  const normalizedClientDueDate = normalizeScheduleDateTime(client.nextFollowUp);
+
+  const exactMatch = clientFollowUps.find(
+    (followUp) => normalizeScheduleDateTime(followUp.dueDate) === normalizedClientDueDate
+  );
+  const nextUpcoming = clientFollowUps.find(
+    (followUp) => getScheduleTimestamp(followUp.dueDate) >= Date.now()
+  );
+  const fallbackMatch = exactMatch ?? nextUpcoming ?? clientFollowUps[clientFollowUps.length - 1];
+
+  if (fallbackMatch) {
+    return {
+      ...fallbackMatch,
+      dueDate: client.nextFollowUp
+    };
+  }
+
+  return {
+    id: `client-schedule-${client.id}`,
+    clientId: client.id,
+    clientName: `${client.firstName} ${client.lastName}`,
+    dueDate: client.nextFollowUp,
+    type: "Suivi terrain",
+    status: "scheduled" as const,
+    programTitle: client.currentProgram,
+    lastAssessmentDate: getClientFallbackLastAssessmentDate(client)
+  };
 }
 
 export function getPortfolioIdentity(user: User): PortfolioIdentity {
@@ -150,8 +197,9 @@ export function getPortfolioMetrics(
     .filter((client) => client.distributorId === userId)
     .sort((left, right) => compareByDateAsc(left.nextFollowUp, right.nextFollowUp));
   const clientIds = new Set(scopedClients.map((client) => client.id));
-  const scopedFollowUps = followUps
-    .filter((followUp) => clientIds.has(followUp.clientId))
+  const scopedFollowUpPool = followUps.filter((followUp) => clientIds.has(followUp.clientId));
+  const scopedFollowUps = scopedClients
+    .map((client) => getClientActiveFollowUp(client, scopedFollowUpPool))
     .sort((left, right) => compareByDateAsc(left.dueDate, right.dueDate));
   const relanceFollowUps = scopedFollowUps.filter((followUp) => isRelanceFollowUp(followUp));
   const overdueFollowUps = scopedFollowUps.filter((followUp) => isOverdueFollowUp(followUp));
