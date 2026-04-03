@@ -4,6 +4,7 @@ import type {
   PvClientTrackingRecord,
   PvClientTransaction,
   PvProductCatalogItem,
+  PvProductStatus,
   PvProductUsage,
   PvProgramOption,
   PvStatus,
@@ -15,23 +16,50 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 export const pvProgramOptions: PvProgramOption[] = [
   {
     id: "starter",
-    title: "Starter",
-    summary: "Base simple a suivre avec peu de produits et une lecture claire."
+    title: "Programme Starter",
+    alias: ["Programme Decouverte", "Programme Starter", "Decouverte", "Starter"],
+    summary: "Base simple pour suivre le demarrage et le renouvellement des produits principaux.",
+    pricePublic: 159,
+    includedProductIds: ["aloe-vera", "the-51g", "formula-1"],
+    mainReferenceDurationDays: 21,
+    active: true
   },
   {
     id: "premium",
-    title: "Premium",
-    summary: "Routine plus complete avec lecture volume et reapproche plus fine."
+    title: "Programme Premium",
+    summary: "Routine plus complete avec proteines en plus pour tenir dans le temps.",
+    pricePublic: 234,
+    includedProductIds: ["aloe-vera", "the-51g", "formula-1", "pdm"],
+    mainReferenceDurationDays: 42,
+    active: true
   },
   {
-    id: "discovery",
-    title: "Decouverte",
-    summary: "Version douce pour demarrer et reprendre les bases."
+    id: "booster-1",
+    title: "Programme Booster 1",
+    summary: "Version plus structuree avec fibres et lecture volume plus precise.",
+    pricePublic: 277,
+    includedProductIds: ["aloe-vera", "the-51g", "formula-1", "pdm", "multifibres"],
+    mainReferenceDurationDays: 42,
+    active: true
+  },
+  {
+    id: "booster-2",
+    title: "Programme Booster 2",
+    summary: "Cadre plus complet avec produit metabolique en plus.",
+    pricePublic: 324,
+    includedProductIds: ["aloe-vera", "the-51g", "formula-1", "pdm", "phyto-brule-graisse"],
+    mainReferenceDurationDays: 42,
+    active: true
   },
   {
     id: "custom",
     title: "Suivi personnalise",
-    summary: "Cadre adapte au client avec conso plus variable."
+    alias: ["Suivi personnalise", "Suivi personnalisé"],
+    summary: "Programme libre pour les cas terrain qui ne rentrent pas pile dans une formule.",
+    pricePublic: 0,
+    includedProductIds: ["formula-1"],
+    mainReferenceDurationDays: 21,
+    active: true
   }
 ];
 
@@ -39,69 +67,78 @@ export const pvProductCatalog: PvProductCatalogItem[] = [
   {
     id: "formula-1",
     name: "Formula 1",
-    category: "Repas",
-    pv: 23.1,
-    price: 44.9,
-    estimatedDurationDays: 21,
-    recommendedProgram: "Starter"
+    category: "shake / repas",
+    pricePublic: 63.5,
+    pv: 23.95,
+    quantiteLabel: "21 doses",
+    dureeReferenceJours: 21,
+    noteMetier: "En pratique, 1 pot = 21 jours de reference dans le suivi.",
+    recommendedProgram: "Programme Starter",
+    active: true
   },
   {
     id: "pdm",
-    name: "PDM",
-    category: "Proteines",
-    pv: 18.4,
-    price: 39.9,
-    estimatedDurationDays: 24,
-    recommendedProgram: "Premium"
+    name: "Melange pour boisson proteinee",
+    category: "proteine",
+    pricePublic: 75,
+    pv: 33,
+    quantiteLabel: "42 doses",
+    dureeReferenceJours: 42,
+    noteMetier: "Reference simple de 1 dose / jour sur 42 jours.",
+    recommendedProgram: "Programme Premium",
+    active: true
   },
   {
-    id: "aloe",
-    name: "Aloe",
-    category: "Hydratation",
-    pv: 12.5,
-    price: 31.9,
-    estimatedDurationDays: 30,
-    recommendedProgram: "Decouverte"
+    id: "phyto-brule-graisse",
+    name: "Phytocomplete brule-graisse",
+    category: "gelules",
+    pricePublic: 90,
+    pv: 38,
+    quantiteLabel: "60 gelules",
+    dureeReferenceJours: 30,
+    noteMetier: "Reference simple de 30 jours.",
+    recommendedProgram: "Programme Booster 2",
+    active: true
   },
   {
-    id: "the",
-    name: "The",
-    category: "Boisson",
-    pv: 16.2,
-    price: 37.5,
-    estimatedDurationDays: 26,
-    recommendedProgram: "Starter"
+    id: "aloe-vera",
+    name: "Boisson Aloe Vera",
+    category: "hydratation",
+    pricePublic: 54.5,
+    pv: 24.95,
+    quantiteLabel: "473 ml",
+    dureeReferenceJours: 21,
+    noteMetier:
+      "Dans le suivi, au-dela de 21 jours on considere l'hydratation comme mal tenue.",
+    recommendedProgram: "Programme Starter",
+    active: true
+  },
+  {
+    id: "the-51g",
+    name: "Boisson instantanee a base de the 51 g",
+    category: "hydratation / routine",
+    pricePublic: 41,
+    pv: 19.95,
+    quantiteLabel: "51 g",
+    dureeReferenceJours: 21,
+    noteMetier:
+      "Meme logique terrain que l'aloe : au-dela de 21 jours, la routine n'a pas ete tenue.",
+    recommendedProgram: "Programme Starter",
+    active: true
+  },
+  {
+    id: "multifibres",
+    name: "Boisson multifibres",
+    category: "fibres",
+    pricePublic: 43.5,
+    pv: 22.95,
+    quantiteLabel: "30 doses",
+    dureeReferenceJours: 30,
+    noteMetier: "Reference simple de 30 jours.",
+    recommendedProgram: "Programme Booster 1",
+    active: true
   }
 ];
-
-const programRecipes: Record<string, Array<{ productId: string; quantity: number }>> = {
-  starter: [
-    { productId: "formula-1", quantity: 1 },
-    { productId: "the", quantity: 1 }
-  ],
-  premium: [
-    { productId: "formula-1", quantity: 1 },
-    { productId: "pdm", quantity: 1 },
-    { productId: "aloe", quantity: 1 },
-    { productId: "the", quantity: 1 }
-  ],
-  discovery: [
-    { productId: "formula-1", quantity: 1 },
-    { productId: "aloe", quantity: 1 }
-  ],
-  custom: [
-    { productId: "formula-1", quantity: 1 },
-    { productId: "pdm", quantity: 1 }
-  ]
-};
-
-function normalize(value: string) {
-  return value
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .trim()
-    .toLowerCase();
-}
 
 function addDays(input: string, days: number) {
   const date = new Date(input);
@@ -123,181 +160,184 @@ function isSameMonth(input: string, reference = new Date()) {
   );
 }
 
-function resolveProgramKey(programTitle: string) {
+function normalize(value: string) {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim()
+    .toLowerCase();
+}
+
+export function resolvePvProgram(programTitle: string) {
   const normalized = normalize(programTitle);
-  if (normalized.includes("premium")) {
-    return "premium";
-  }
-  if (normalized.includes("decouverte")) {
-    return "discovery";
-  }
-  if (normalized.includes("starter")) {
-    return "starter";
-  }
-  if (normalized.includes("personnal")) {
-    return "custom";
-  }
-  return "starter";
-}
-
-function resolveProgramTitle(programTitle: string) {
-  const key = resolveProgramKey(programTitle);
-  const match = pvProgramOptions.find((item) => item.id === key);
-  return match?.title ?? programTitle;
-}
-
-function getRecipe(programTitle: string) {
-  return programRecipes[resolveProgramKey(programTitle)] ?? programRecipes.starter;
-}
-
-function getStatus(
-  estimatedRemainingDays: number,
-  nextFollowUp: string,
-  lastOrderDate: string,
-  daysSinceStart: number
-): PvStatus {
-  const daysUntilFollowUp = Math.ceil(
-    (new Date(nextFollowUp).getTime() - Date.now()) / DAY_MS
+  return (
+    pvProgramOptions.find((program) => {
+      const aliases = [program.title, ...(program.alias ?? [])];
+      return aliases.some((alias) => normalize(alias) === normalized);
+    }) ??
+    pvProgramOptions.find((program) => normalized.includes(normalize(program.title.replace("Programme ", "")))) ??
+    pvProgramOptions[0]
   );
-  const daysSinceLastOrder = diffDays(lastOrderDate);
+}
 
-  if (estimatedRemainingDays <= 5) {
+function getProduct(productId: string) {
+  return pvProductCatalog.find((product) => product.id === productId) ?? null;
+}
+
+function buildBaseTransactions(clients: Client[]) {
+  return clients.flatMap((client) => {
+    const firstAssessment = getFirstAssessment(client);
+    const startDate = client.startDate ?? firstAssessment.date;
+    const program = resolvePvProgram(client.currentProgram);
+
+    return program.includedProductIds.flatMap((productId, index) => {
+      const product = getProduct(productId);
+      if (!product) {
+        return [];
+      }
+
+      return [
+        {
+          id: `pv-base-${client.id}-${product.id}`,
+          date: addDays(startDate, index),
+          clientId: client.id,
+          clientName: `${client.firstName} ${client.lastName}`,
+          responsibleId: client.distributorId,
+          responsibleName: client.distributorName,
+          productId: product.id,
+          productName: product.name,
+          quantity: 1,
+          pv: product.pv,
+          price: product.pricePublic,
+          type: "commande" as PvTransactionType,
+          note: `Demarrage ${program.title}`
+        }
+      ];
+    });
+  });
+}
+
+function getProductStatus(daysSinceStart: number, daysRemaining: number): PvProductStatus {
+  if (daysRemaining <= 7) {
     return "restock";
   }
 
-  if (daysUntilFollowUp <= 0 || daysSinceLastOrder >= 28) {
-    return "follow-up";
-  }
-
-  if (estimatedRemainingDays >= 18 && daysSinceStart >= 40) {
+  if (daysRemaining < -7) {
     return "inconsistent";
   }
 
-  if (estimatedRemainingDays <= 10 || daysUntilFollowUp <= 4) {
+  if (daysSinceStart > 0 && daysRemaining <= 0) {
     return "watch";
   }
 
   return "ok";
 }
 
-function buildTransactions(
-  client: Client,
-  startDate: string,
-  recipe: Array<{ productId: string; quantity: number }>
-) {
-  const transactions: PvClientTransaction[] = [];
-  const daysSinceStart = diffDays(startDate);
+function getClientStatus(
+  productStatuses: PvProductStatus[],
+  nextFollowUp: string
+): PvStatus {
+  const daysUntilFollowUp = Math.ceil(
+    (new Date(nextFollowUp).getTime() - Date.now()) / DAY_MS
+  );
 
-  recipe.forEach((entry, index) => {
-    const product = pvProductCatalog.find((item) => item.id === entry.productId);
-    if (!product) {
-      return;
-    }
+  if (daysUntilFollowUp <= 0) {
+    return "follow-up";
+  }
 
-    const initialDate = addDays(startDate, index);
-    transactions.push({
-      id: `${client.id}-${product.id}-commande-initiale`,
-      date: initialDate,
-      clientId: client.id,
-      clientName: `${client.firstName} ${client.lastName}`,
-      responsibleId: client.distributorId,
-      responsibleName: client.distributorName,
-      productId: product.id,
-      productName: product.name,
-      quantity: entry.quantity,
-      pv: Number((product.pv * entry.quantity).toFixed(1)),
-      price: Number((product.price * entry.quantity).toFixed(2)),
-      type: "commande",
-      note: "Demarrage du programme"
-    });
+  if (productStatuses.includes("inconsistent")) {
+    return "inconsistent";
+  }
 
-    if (daysSinceStart >= 12 && index % 2 === 0) {
-      transactions.push({
-        id: `${client.id}-${product.id}-reprise-1`,
-        date: addDays(startDate, 12 + index * 2),
-        clientId: client.id,
-        clientName: `${client.firstName} ${client.lastName}`,
-        responsibleId: client.distributorId,
-        responsibleName: client.distributorName,
-        productId: product.id,
-        productName: product.name,
-        quantity: 1,
-        pv: Number(product.pv.toFixed(1)),
-        price: Number(product.price.toFixed(2)),
-        type: "reprise-sur-place",
-        note: "Reprise sur place"
-      });
-    }
+  if (productStatuses.includes("restock")) {
+    return "restock";
+  }
 
-    if (daysSinceStart >= product.estimatedDurationDays + 3) {
-      transactions.push({
-        id: `${client.id}-${product.id}-commande-2`,
-        date: addDays(startDate, product.estimatedDurationDays + 3 + index),
-        clientId: client.id,
-        clientName: `${client.firstName} ${client.lastName}`,
-        responsibleId: client.distributorId,
-        responsibleName: client.distributorName,
-        productId: product.id,
-        productName: product.name,
-        quantity: 1,
-        pv: Number(product.pv.toFixed(1)),
-        price: Number(product.price.toFixed(2)),
-        type: "commande",
-        note: "Renouvellement probable"
-      });
-    }
-  });
+  if (productStatuses.includes("watch") || daysUntilFollowUp <= 7) {
+    return "watch";
+  }
 
-  return transactions.sort((left, right) => new Date(right.date).getTime() - new Date(left.date).getTime());
+  return "ok";
 }
 
-export function buildPvTrackingRecords(clients: Client[]): PvClientTrackingRecord[] {
+function getActiveProducts(
+  client: Client,
+  transactions: PvClientTransaction[]
+): PvProductUsage[] {
+  const groupedByProduct = new Map<string, PvClientTransaction>();
+
+  transactions
+    .filter((transaction) => transaction.clientId === client.id)
+    .sort((left, right) => new Date(right.date).getTime() - new Date(left.date).getTime())
+    .forEach((transaction) => {
+      if (!groupedByProduct.has(transaction.productId)) {
+        groupedByProduct.set(transaction.productId, transaction);
+      }
+    });
+
+  const usages = [...groupedByProduct.values()].reduce<PvProductUsage[]>(
+    (collection, transaction) => {
+      const product = getProduct(transaction.productId);
+      if (!product) {
+        return collection;
+      }
+
+      const daysSinceStart = diffDays(transaction.date);
+      const estimatedRemainingDays = product.dureeReferenceJours - daysSinceStart;
+      const status = getProductStatus(daysSinceStart, estimatedRemainingDays);
+
+      collection.push({
+        id: `${client.id}-${product.id}`,
+        productId: product.id,
+        productName: product.name,
+        quantityStart: transaction.quantity,
+        startDate: transaction.date,
+        durationReferenceDays: product.dureeReferenceJours,
+        estimatedRemainingDays,
+        nextProbableOrderDate: addDays(transaction.date, product.dureeReferenceJours),
+        pvPerUnit: product.pv,
+        pricePublicPerUnit: product.pricePublic,
+        quantiteLabel: product.quantiteLabel,
+        noteMetier: product.noteMetier,
+        status
+      });
+
+      return collection;
+    },
+    []
+  );
+
+  return usages.sort((left, right) => left.estimatedRemainingDays - right.estimatedRemainingDays);
+}
+
+export function buildPvTrackingRecords(
+  clients: Client[],
+  extraTransactions: PvClientTransaction[] = []
+): PvClientTrackingRecord[] {
+  const allTransactions = [...extraTransactions, ...buildBaseTransactions(clients)];
+
   return clients.map((client) => {
-    const firstAssessment = getFirstAssessment(client);
     const latestAssessment = getLatestAssessment(client);
-    const startDate = client.startDate ?? firstAssessment.date;
+    const startDate = client.startDate ?? getFirstAssessment(client).date;
+    const program = resolvePvProgram(client.currentProgram);
+    const clientTransactions = allTransactions
+      .filter((transaction) => transaction.clientId === client.id)
+      .sort((left, right) => new Date(right.date).getTime() - new Date(left.date).getTime());
+    const activeProducts = getActiveProducts(client, clientTransactions);
     const daysSinceStart = diffDays(startDate);
-    const program = resolveProgramTitle(client.currentProgram);
-    const recipe = getRecipe(program);
-    const activeProducts = recipe
-      .map((entry, index) => {
-        const product = pvProductCatalog.find((item) => item.id === entry.productId);
-        if (!product) {
-          return null;
-        }
-
-        const estimatedDurationDays = product.estimatedDurationDays + index * 2;
-        const elapsedForProduct = Math.max(0, daysSinceStart - index * 2);
-        const estimatedRemainingDays = Math.max(0, estimatedDurationDays - elapsedForProduct);
-
-        return {
-          id: `${client.id}-${product.id}`,
-          productId: product.id,
-          productName: product.name,
-          quantityStart: entry.quantity,
-          startDate: addDays(startDate, index),
-          estimatedDurationDays,
-          estimatedRemainingDays,
-          nextProbableOrderDate: addDays(startDate, estimatedDurationDays + index),
-          pvPerUnit: product.pv,
-          pricePerUnit: product.price
-        };
-      })
-      .filter((item): item is PvProductUsage => item !== null);
-
-    const transactions = buildTransactions(client, startDate, recipe);
-    const lastOrderDate = transactions[0]?.date ?? startDate;
     const estimatedRemainingDays =
-      activeProducts.reduce((lowest, item) => Math.min(lowest, item.estimatedRemainingDays), 999) ||
-      0;
-    const monthlyPv = Number(
-      transactions
-        .filter((item) => isSameMonth(item.date))
-        .reduce((total, item) => total + item.pv, 0)
-        .toFixed(1)
-    );
+      activeProducts[0]?.estimatedRemainingDays ?? program.mainReferenceDurationDays - daysSinceStart;
+    const lastOrderDate = clientTransactions[0]?.date ?? startDate;
+    const nextProbableOrderDate =
+      activeProducts[0]?.nextProbableOrderDate ?? addDays(startDate, program.mainReferenceDurationDays);
     const pvCumulative = Number(
-      transactions.reduce((total, item) => total + item.pv, 0).toFixed(1)
+      clientTransactions.reduce((total, transaction) => total + transaction.pv, 0).toFixed(2)
+    );
+    const monthlyPv = Number(
+      clientTransactions
+        .filter((transaction) => isSameMonth(transaction.date))
+        .reduce((total, transaction) => total + transaction.pv, 0)
+        .toFixed(2)
     );
 
     return {
@@ -305,24 +345,18 @@ export function buildPvTrackingRecords(clients: Client[]): PvClientTrackingRecor
       clientName: `${client.firstName} ${client.lastName}`,
       responsibleId: client.distributorId,
       responsibleName: client.distributorName,
-      program,
-      status: getStatus(estimatedRemainingDays, client.nextFollowUp, lastOrderDate, daysSinceStart),
+      program: program.title,
+      status: getClientStatus(activeProducts.map((product) => product.status), client.nextFollowUp),
       startDate,
       lastFollowUpDate: latestAssessment.date,
       lastOrderDate,
       daysSinceStart,
       estimatedRemainingDays,
-      nextProbableOrderDate:
-        activeProducts
-          .sort(
-            (left, right) =>
-              new Date(left.nextProbableOrderDate).getTime() -
-              new Date(right.nextProbableOrderDate).getTime()
-          )[0]?.nextProbableOrderDate ?? client.nextFollowUp,
+      nextProbableOrderDate,
       pvCumulative,
       monthlyPv,
       activeProducts,
-      transactions
+      transactions: clientTransactions
     };
   });
 }
@@ -347,6 +381,19 @@ export function getPvStatusMeta(status: PvStatus) {
     return { label: "Incoherence conso", tone: "red" as const };
   }
   return { label: "A relancer", tone: "amber" as const };
+}
+
+export function getPvProductStatusMeta(status: PvProductStatus) {
+  if (status === "ok") {
+    return { label: "OK", tone: "green" as const };
+  }
+  if (status === "restock") {
+    return { label: "Reassort", tone: "blue" as const };
+  }
+  if (status === "watch") {
+    return { label: "A surveiller", tone: "amber" as const };
+  }
+  return { label: "Incoherence", tone: "red" as const };
 }
 
 export function getPvTypeLabel(type: PvTransactionType) {

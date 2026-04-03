@@ -1,8 +1,10 @@
 import { mockClients, mockFollowUps } from "../data/mockClients";
 import type { Client, FollowUp } from "../types/domain";
+import type { PvClientTransaction } from "../types/pv";
 
 const CLIENTS_KEY = "lor-squad-wellness-clients";
 const FOLLOW_UPS_KEY = "lor-squad-wellness-follow-ups";
+const PV_TRANSACTIONS_KEY = "lor-squad-wellness-pv-transactions";
 const STORAGE_VERSION_KEY = "lor-squad-wellness-app-data-version";
 const CURRENT_STORAGE_VERSION = "2026-04-beta-2";
 
@@ -60,6 +62,27 @@ export function persistFollowUps(followUps: FollowUp[]) {
   window.localStorage.setItem(FOLLOW_UPS_KEY, JSON.stringify(followUps));
 }
 
+export function getStoredPvTransactions(): PvClientTransaction[] {
+  ensureAppDataVersion();
+  const raw = window.localStorage.getItem(PV_TRANSACTIONS_KEY);
+
+  if (!raw) {
+    return [];
+  }
+
+  try {
+    const parsed = JSON.parse(raw) as PvClientTransaction[];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+export function persistPvTransactions(transactions: PvClientTransaction[]) {
+  ensureAppDataVersion();
+  window.localStorage.setItem(PV_TRANSACTIONS_KEY, JSON.stringify(transactions));
+}
+
 export function resetStoredAppData() {
   window.localStorage.setItem(STORAGE_VERSION_KEY, CURRENT_STORAGE_VERSION);
   window.localStorage.setItem(CLIENTS_KEY, JSON.stringify(mockClients));
@@ -75,6 +98,7 @@ export function clearStoredAppData() {
   window.localStorage.setItem(STORAGE_VERSION_KEY, CURRENT_STORAGE_VERSION);
   window.localStorage.setItem(CLIENTS_KEY, JSON.stringify([]));
   window.localStorage.setItem(FOLLOW_UPS_KEY, JSON.stringify([]));
+  window.localStorage.setItem(PV_TRANSACTIONS_KEY, JSON.stringify([]));
 
   return {
     clients: [] as Client[],

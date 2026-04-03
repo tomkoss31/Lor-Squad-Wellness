@@ -8,7 +8,7 @@ import { PvStatusBadge } from "../components/pv/PvStatusBadge";
 import { useAppContext } from "../context/AppContext";
 
 export function PvClientsPage() {
-  const { currentUser, clients, visibleClients } = useAppContext();
+  const { currentUser, clients, visibleClients, pvTransactions } = useAppContext();
   const [search, setSearch] = useState("");
   const [programFilter, setProgramFilter] = useState("all");
   const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
@@ -18,7 +18,10 @@ export function PvClientsPage() {
   }
 
   const sourceClients = currentUser.role === "admin" ? clients : visibleClients;
-  const records = useMemo(() => buildPvTrackingRecords(sourceClients), [sourceClients]);
+  const records = useMemo(
+    () => buildPvTrackingRecords(sourceClients, pvTransactions),
+    [pvTransactions, sourceClients]
+  );
   const programOptions = useMemo(
     () => [...new Set(records.map((record) => record.program))].sort((left, right) => left.localeCompare(right, "fr")),
     [records]

@@ -13,14 +13,19 @@ import { useAppContext } from "../context/AppContext";
 import type { PvClientTransaction, PvTransactionType } from "../types/pv";
 
 export function PvOrdersPage() {
-  const { currentUser, clients, visibleClients } = useAppContext();
+  const { currentUser, clients, visibleClients, pvTransactions, addPvTransaction } = useAppContext();
   const sourceClients = currentUser?.role === "admin" ? clients : visibleClients;
-  const records = useMemo(() => buildPvTrackingRecords(sourceClients), [sourceClients]);
-  const [localTransactions, setLocalTransactions] = useState<PvClientTransaction[]>([]);
+  const records = useMemo(
+    () => buildPvTrackingRecords(sourceClients, pvTransactions),
+    [pvTransactions, sourceClients]
+  );
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [clientId, setClientId] = useState(records[0]?.clientId ?? "");
-  const [productId, setProductId] = useState(pvProductCatalog[0]?.id ?? "formula-1");
+  const initialProduct = pvProductCatalog[0];
+  const [productId, setProductId] = useState(initialProduct?.id ?? "formula-1");
   const [quantity, setQuantity] = useState("1");
+  const [pv, setPv] = useState(initialProduct ? String(initialProduct.pv) : "0");
+  const [price, setPrice] = useState(initialProduct ? String(initialProduct.pricePublic) : "0");
   const [type, setType] = useState<PvTransactionType>("reprise-sur-place");
   const [note, setNote] = useState("");
 
@@ -28,10 +33,7 @@ export function PvOrdersPage() {
     return null;
   }
 
-  const transactions = useMemo(
-    () => [...localTransactions, ...flattenPvTransactions(records)].sort((left, right) => new Date(right.date).getTime() - new Date(left.date).getTime()),
-    [localTransactions, records]
-  );
+  const transactions = useMemo(() => flattenPvTransactions(records), [records]);
   const monthPv = transactions
     .filter((transaction) => {
       const current = new Date();
@@ -48,8 +50,17 @@ export function PvOrdersPage() {
     const selectedClient = records.find((record) => record.clientId === clientId);
     const selectedProduct = pvProductCatalog.find((product) => product.id === productId);
     const parsedQuantity = Number(quantity);
+    const parsedPv = Number(pv);
+    const parsedPrice = Number(price);
 
-    if (!selectedClient || !selectedProduct || Number.isNaN(parsedQuantity) || parsedQuantity <= 0) {
+    if (
+      !selectedClient ||
+      !selectedProduct ||
+      Number.isNaN(parsedQuantity) ||
+      parsedQuantity <= 0 ||
+      Number.isNaN(parsedPv) ||
+      Number.isNaN(parsedPrice)
+    ) {
       return;
     }
 
@@ -63,15 +74,26 @@ export function PvOrdersPage() {
       productId: selectedProduct.id,
       productName: selectedProduct.name,
       quantity: parsedQuantity,
-      pv: Number((selectedProduct.pv * parsedQuantity).toFixed(1)),
-      price: Number((selectedProduct.price * parsedQuantity).toFixed(2)),
+      pv: Number((parsedPv * parsedQuantity).toFixed(2)),
+      price: Number((parsedPrice * parsedQuantity).toFixed(2)),
       type,
       note: note || (type === "commande" ? "Commande ajoutee dans le module PV" : "Reprise sur place ajoutee dans le module PV")
     };
 
-    setLocalTransactions((previous) => [nextTransaction, ...previous]);
+    addPvTransaction(nextTransaction);
     setQuantity("1");
     setNote("");
+  }
+
+  function handleProductChange(nextProductId: string) {
+    setProductId(nextProductId);
+    const selectedProduct = pvProductCatalog.find((product) => product.id === nextProductId);
+    if (!selectedProduct) {
+      return;
+    }
+
+    setPv(String(selectedProduct.pv));
+    setPrice(String(selectedProduct.pricePublic));
   }
 
   return (
@@ -122,7 +144,7 @@ export function PvOrdersPage() {
               </select>
             </Field>
             <Field label="Produit">
-              <select value={productId} onChange={(event) => setProductId(event.target.value)}>
+              <select value={productId} onChange={(event) => handleProductChange(event.target.value)}>
                 {pvProductCatalog.map((product) => (
                   <option key={product.id} value={product.id}>
                     {product.name}
@@ -132,6 +154,12 @@ export function PvOrdersPage() {
             </Field>
             <Field label="Quantite">
               <input value={quantity} onChange={(event) => setQuantity(event.target.value)} />
+            </Field>
+            <Field label="PV">
+              <input value={pv} onChange={(event) => setPv(event.target.value)} />
+            </Field>
+            <Field label="Prix">
+              <input value={price} onChange={(event) => setPrice(event.target.value)} />
             </Field>
             <Field label="Type">
               <select value={type} onChange={(event) => setType(event.target.value as PvTransactionType)}>

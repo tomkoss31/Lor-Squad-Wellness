@@ -7,13 +7,16 @@ import { PvStatusBadge } from "../components/pv/PvStatusBadge";
 import { useAppContext } from "../context/AppContext";
 
 export function PvTeamPage() {
-  const { currentUser, clients } = useAppContext();
+  const { currentUser, clients, pvTransactions } = useAppContext();
 
   if (!currentUser || currentUser.role !== "admin") {
     return null;
   }
 
-  const records = useMemo(() => buildPvTrackingRecords(clients), [clients]);
+  const records = useMemo(
+    () => buildPvTrackingRecords(clients, pvTransactions),
+    [clients, pvTransactions]
+  );
   const pvByDistributor = useMemo(
     () =>
       [...new Map(records.map((record) => [record.responsibleId, { name: record.responsibleName, pv: 0, clients: 0 }])).entries()].map(

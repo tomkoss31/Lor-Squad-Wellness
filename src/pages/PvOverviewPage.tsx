@@ -10,7 +10,7 @@ import { useAppContext } from "../context/AppContext";
 import type { PvStatus } from "../types/pv";
 
 export function PvOverviewPage() {
-  const { currentUser, clients, visibleClients } = useAppContext();
+  const { currentUser, clients, visibleClients, pvTransactions } = useAppContext();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | PvStatus>("all");
   const [responsibleFilter, setResponsibleFilter] = useState("all");
@@ -23,7 +23,10 @@ export function PvOverviewPage() {
   }
 
   const sourceClients = currentUser.role === "admin" ? clients : visibleClients;
-  const records = useMemo(() => buildPvTrackingRecords(sourceClients), [sourceClients]);
+  const records = useMemo(
+    () => buildPvTrackingRecords(sourceClients, pvTransactions),
+    [pvTransactions, sourceClients]
+  );
   const responsibleOptions = useMemo(
     () =>
       [...new Map(records.map((record) => [record.responsibleId, record.responsibleName])).entries()].map(

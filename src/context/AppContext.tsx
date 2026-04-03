@@ -21,8 +21,10 @@ import {
   clearStoredAppData,
   getStoredClients,
   getStoredFollowUps,
+  getStoredPvTransactions,
   persistClients,
-  persistFollowUps
+  persistFollowUps,
+  persistPvTransactions
 } from "../services/appDataService";
 import { resolveStorageMode } from "../services/supabaseClient";
 import {
@@ -49,6 +51,7 @@ import type {
   Program,
   User
 } from "../types/domain";
+import type { PvClientTransaction } from "../types/pv";
 
 type StorageMode = "local" | "supabase";
 
@@ -62,6 +65,7 @@ interface AppContextValue {
   visibleClients: Client[];
   followUps: FollowUp[];
   visibleFollowUps: FollowUp[];
+  pvTransactions: PvClientTransaction[];
   programs: Program[];
   loginAs: (userId: string) => Promise<void>;
   loginWithCredentials: (
@@ -104,6 +108,7 @@ interface AppContextValue {
       followUpStatus?: FollowUp["status"];
     }
   ) => Promise<void>;
+  addPvTransaction: (transaction: PvClientTransaction) => void;
 }
 
 const AppContext = createContext<AppContextValue | undefined>(undefined);
@@ -116,6 +121,7 @@ export function AppProvider({ children }: PropsWithChildren) {
   const [users, setUsers] = useState<User[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
   const [followUps, setFollowUps] = useState<FollowUp[]>([]);
+  const [pvTransactions, setPvTransactions] = useState<PvClientTransaction[]>([]);
 
   async function refreshRemoteData(activeUser?: User | null) {
     const nextUser = activeUser ?? currentUser;
@@ -146,6 +152,7 @@ export function AppProvider({ children }: PropsWithChildren) {
         setStorageMode(nextStorageMode);
 
         if (nextStorageMode === "supabase") {
+          setPvTransactions(getStoredPvTransactions());
           try {
             const restored = await restoreSupabaseSession();
             if (restored) {
@@ -173,6 +180,7 @@ export function AppProvider({ children }: PropsWithChildren) {
         setUsers(getStoredUsers());
         setClients(getStoredClients());
         setFollowUps(getStoredFollowUps());
+        setPvTransactions(getStoredPvTransactions());
 
         const restored = restoreSession();
         if (restored) {
@@ -189,11 +197,13 @@ export function AppProvider({ children }: PropsWithChildren) {
           setUsers([]);
           setClients([]);
           setFollowUps([]);
+          setPvTransactions(getStoredPvTransactions());
         } else {
           setStorageMode("local");
           setUsers(getStoredUsers());
           setClients(getStoredClients());
           setFollowUps(getStoredFollowUps());
+          setPvTransactions(getStoredPvTransactions());
         }
         setCurrentUser(null);
         setCurrentSession(null);
@@ -214,12 +224,14 @@ export function AppProvider({ children }: PropsWithChildren) {
   }, [clients, storageMode]);
 
   useEffect(() => {
-    if (storageMode !== "local") {
-      return;
+    if (storageMode === "local") {
+      persistFollowUps(followUps);
     }
-
-    persistFollowUps(followUps);
   }, [followUps, storageMode]);
+
+  useEffect(() => {
+    persistPvTransactions(pvTransactions);
+  }, [pvTransactions]);
 
   async function loginAs(userId: string) {
     const matchedUser = users.find((user) => user.id === userId);
@@ -303,12 +315,14 @@ export function AppProvider({ children }: PropsWithChildren) {
       setUsers([]);
       setClients([]);
       setFollowUps([]);
+      setPvTransactions(getStoredPvTransactions());
       return;
     }
 
     setUsers(getStoredUsers());
     setClients(getStoredClients());
     setFollowUps(getStoredFollowUps());
+    setPvTransactions(getStoredPvTransactions());
   }
 
   async function createUserAccess(payload: {
@@ -387,6 +401,7 @@ export function AppProvider({ children }: PropsWithChildren) {
     const cleared = clearStoredAppData();
     setClients(cleared.clients);
     setFollowUps(cleared.followUps);
+    setPvTransactions([]);
   }
 
   async function importLocalBusinessData() {
@@ -595,6 +610,10 @@ export function AppProvider({ children }: PropsWithChildren) {
     );
   }
 
+  function addPvTransaction(transaction: PvClientTransaction) {
+    setPvTransactions((previousTransactions) => [transaction, ...previousTransactions]);
+  }
+
   const value = useMemo(
     () => ({
       authReady,
@@ -606,6 +625,7 @@ export function AppProvider({ children }: PropsWithChildren) {
       visibleClients: getVisibleClients(currentUser, clients),
       followUps,
       visibleFollowUps: getVisibleFollowUps(currentUser, followUps, clients),
+      pvTransactions,
       programs: mockPrograms,
       loginAs,
       loginWithCredentials,
@@ -622,9 +642,10 @@ export function AppProvider({ children }: PropsWithChildren) {
       deleteClient,
       addFollowUpAssessment,
       updateAssessment,
-      updateClientSchedule
+      updateClientSchedule,
+      addPvTransaction
     }),
-    [authReady, clients, currentSession, currentUser, followUps, storageMode, users]
+    [authReady, clients, currentSession, currentUser, followUps, pvTransactions, storageMode, users]
   );
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

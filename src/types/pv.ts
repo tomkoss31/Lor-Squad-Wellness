@@ -7,20 +7,30 @@ export type PvStatus =
 
 export type PvTransactionType = "commande" | "reprise-sur-place";
 
+export type PvProductStatus = "ok" | "watch" | "restock" | "inconsistent";
+
 export interface PvProgramOption {
   id: string;
   title: string;
+  alias?: string[];
   summary: string;
+  pricePublic: number;
+  includedProductIds: string[];
+  mainReferenceDurationDays: number;
+  active: boolean;
 }
 
 export interface PvProductCatalogItem {
   id: string;
   name: string;
   category: string;
+  pricePublic: number;
   pv: number;
-  price: number;
-  estimatedDurationDays: number;
+  quantiteLabel: string;
+  dureeReferenceJours: number;
+  noteMetier?: string;
   recommendedProgram: string;
+  active: boolean;
 }
 
 export interface PvProductUsage {
@@ -29,11 +39,14 @@ export interface PvProductUsage {
   productName: string;
   quantityStart: number;
   startDate: string;
-  estimatedDurationDays: number;
+  durationReferenceDays: number;
   estimatedRemainingDays: number;
   nextProbableOrderDate: string;
   pvPerUnit: number;
-  pricePerUnit: number;
+  pricePublicPerUnit: number;
+  quantiteLabel: string;
+  noteMetier?: string;
+  status: PvProductStatus;
 }
 
 export interface PvClientTransaction {

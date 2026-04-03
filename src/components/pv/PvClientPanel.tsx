@@ -1,4 +1,4 @@
-import { getPvTypeLabel } from "../../data/mockPvModule";
+import { getPvProductStatusMeta, getPvTypeLabel } from "../../data/mockPvModule";
 import { formatDate, formatDateTime } from "../../lib/calculations";
 import type { PvClientTrackingRecord } from "../../types/pv";
 import { Card } from "../ui/Card";
@@ -58,23 +58,28 @@ export function PvClientPanel({
                 <div>
                   <p className="text-base font-semibold text-white">{product.productName}</p>
                   <p className="mt-1 text-sm text-slate-400">
-                    Quantite de depart {product.quantityStart}
+                    Quantite de depart {product.quantityStart} - {product.quantiteLabel}
                   </p>
                 </div>
                 <StatusBadge
-                  label={`${product.estimatedRemainingDays} j restants`}
-                  tone={product.estimatedRemainingDays <= 5 ? "amber" : "blue"}
+                  label={getPvProductStatusMeta(product.status).label}
+                  tone={getPvProductStatusMeta(product.status).tone}
                 />
               </div>
               <div className="mt-4 grid gap-3 md:grid-cols-2">
                 <PanelFact label="Date debut" value={formatDate(product.startDate)} />
-                <PanelFact label="Duree estimee" value={`${product.estimatedDurationDays} jours`} />
+                <PanelFact label="Duree reference" value={`${product.durationReferenceDays} jours`} />
                 <PanelFact label="Reste estime" value={`${product.estimatedRemainingDays} jours`} />
                 <PanelFact
                   label="Prochaine commande probable"
                   value={formatDate(product.nextProbableOrderDate)}
                 />
+                <PanelFact label="Prix public" value={`${product.pricePublicPerUnit.toFixed(2)} EUR`} />
+                <PanelFact label="PV" value={`${product.pvPerUnit} PV`} />
               </div>
+              {product.noteMetier ? (
+                <p className="mt-3 text-xs leading-6 text-slate-500">{product.noteMetier}</p>
+              ) : null}
             </div>
           ))}
         </div>
@@ -86,7 +91,7 @@ export function PvClientPanel({
           {record.transactions.slice(0, 6).map((transaction) => (
             <div
               key={transaction.id}
-              className="grid gap-2 rounded-[18px] bg-slate-950/28 px-4 py-3 md:grid-cols-[110px_1fr_90px_90px]"
+              className="grid gap-2 rounded-[18px] bg-slate-950/28 px-4 py-3 md:grid-cols-[110px_1fr_90px_90px_90px]"
             >
               <div className="text-sm text-slate-300">{formatDate(transaction.date)}</div>
               <div>
@@ -97,6 +102,7 @@ export function PvClientPanel({
               </div>
               <div className="text-sm text-slate-300">{transaction.quantity} un.</div>
               <div className="text-sm font-semibold text-white">{transaction.pv} PV</div>
+              <div className="text-sm text-slate-300">{transaction.price.toFixed(2)} EUR</div>
             </div>
           ))}
         </div>
