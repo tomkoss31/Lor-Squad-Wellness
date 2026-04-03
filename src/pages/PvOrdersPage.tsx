@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   buildPvTrackingRecords,
   flattenPvTransactions,
@@ -13,11 +13,11 @@ import { useAppContext } from "../context/AppContext";
 import type { PvClientTransaction, PvTransactionType } from "../types/pv";
 
 export function PvOrdersPage() {
-  const { currentUser, clients, visibleClients, pvTransactions, addPvTransaction } = useAppContext();
+  const { currentUser, clients, visibleClients, pvTransactions, pvClientProducts, addPvTransaction } = useAppContext();
   const sourceClients = currentUser?.role === "admin" ? clients : visibleClients;
   const records = useMemo(
-    () => buildPvTrackingRecords(sourceClients, pvTransactions),
-    [pvTransactions, sourceClients]
+    () => buildPvTrackingRecords(sourceClients, pvTransactions, pvClientProducts),
+    [pvClientProducts, pvTransactions, sourceClients]
   );
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [clientId, setClientId] = useState(records[0]?.clientId ?? "");
@@ -28,6 +28,12 @@ export function PvOrdersPage() {
   const [price, setPrice] = useState(initialProduct ? String(initialProduct.pricePublic) : "0");
   const [type, setType] = useState<PvTransactionType>("reprise-sur-place");
   const [note, setNote] = useState("");
+
+  useEffect(() => {
+    if (!clientId && records[0]?.clientId) {
+      setClientId(records[0].clientId);
+    }
+  }, [clientId, records]);
 
   if (!currentUser) {
     return null;
@@ -46,7 +52,7 @@ export function PvOrdersPage() {
     .reduce((total, transaction) => total + transaction.pv, 0)
     .toFixed(1);
 
-  function handleAddTransaction() {
+  async function handleAddTransaction() {
     const selectedClient = records.find((record) => record.clientId === clientId);
     const selectedProduct = pvProductCatalog.find((product) => product.id === productId);
     const parsedQuantity = Number(quantity);
@@ -80,7 +86,7 @@ export function PvOrdersPage() {
       note: note || (type === "commande" ? "Commande ajoutee dans le module PV" : "Reprise sur place ajoutee dans le module PV")
     };
 
-    addPvTransaction(nextTransaction);
+    await addPvTransaction(nextTransaction);
     setQuantity("1");
     setNote("");
   }
@@ -174,7 +180,7 @@ export function PvOrdersPage() {
 
           <button
             type="button"
-            onClick={handleAddTransaction}
+            onClick={() => void handleAddTransaction()}
             className="inline-flex min-h-[48px] items-center justify-center rounded-[18px] bg-sky-400/[0.16] px-5 py-3 text-sm font-semibold text-white transition hover:bg-sky-400/[0.2]"
           >
             Ajouter une reprise produit

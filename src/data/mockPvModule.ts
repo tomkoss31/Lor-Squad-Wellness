@@ -1,6 +1,7 @@
 import { getFirstAssessment, getLatestAssessment } from "../lib/calculations";
 import type { Client } from "../types/domain";
 import type {
+  PvClientProductRecord,
   PvClientTrackingRecord,
   PvClientTransaction,
   PvProductCatalogItem,
@@ -168,14 +169,29 @@ function normalize(value: string) {
     .toLowerCase();
 }
 
-export function resolvePvProgram(programTitle: string) {
-  const normalized = normalize(programTitle);
+export function getPvProgramById(programId: string | null | undefined) {
+  if (!programId) {
+    return null;
+  }
+
+  return pvProgramOptions.find((program) => program.id === programId) ?? null;
+}
+
+export function resolvePvProgram(programTitleOrId: string | null | undefined) {
+  const byId = getPvProgramById(programTitleOrId);
+  if (byId) {
+    return byId;
+  }
+
+  const normalized = normalize(programTitleOrId ?? "");
   return (
     pvProgramOptions.find((program) => {
       const aliases = [program.title, ...(program.alias ?? [])];
       return aliases.some((alias) => normalize(alias) === normalized);
     }) ??
-    pvProgramOptions.find((program) => normalized.includes(normalize(program.title.replace("Programme ", "")))) ??
+    pvProgramOptions.find((program) =>
+      normalized.includes(normalize(program.title.replace("Programme ", "")))
+    ) ??
     pvProgramOptions[0]
   );
 }
@@ -184,11 +200,44 @@ function getProduct(productId: string) {
   return pvProductCatalog.find((product) => product.id === productId) ?? null;
 }
 
+export function buildSeedPvClientProductsForClient(client: Client): PvClientProductRecord[] {
+  const firstAssessment = getFirstAssessment(client);
+  const startDate = client.startDate ?? firstAssessment.date;
+  const program = resolvePvProgram(client.pvProgramId ?? client.currentProgram);
+
+  return program.includedProductIds.flatMap((productId) => {
+    const product = getProduct(productId);
+    if (!product) {
+      return [];
+    }
+
+    return [
+      {
+        id: `pv-seed-${client.id}-${product.id}`,
+        clientId: client.id,
+        responsibleId: client.distributorId,
+        responsibleName: client.distributorName,
+        programId: program.id,
+        productId: product.id,
+        productName: product.name,
+        quantityStart: 1,
+        startDate,
+        durationReferenceDays: product.dureeReferenceJours,
+        pvPerUnit: product.pv,
+        pricePublicPerUnit: product.pricePublic,
+        quantiteLabel: product.quantiteLabel,
+        noteMetier: product.noteMetier,
+        active: true
+      }
+    ];
+  });
+}
+
 function buildBaseTransactions(clients: Client[]) {
   return clients.flatMap((client) => {
     const firstAssessment = getFirstAssessment(client);
     const startDate = client.startDate ?? firstAssessment.date;
-    const program = resolvePvProgram(client.currentProgram);
+    const program = resolvePvProgram(client.pvProgramId ?? client.currentProgram);
 
     return program.includedProductIds.flatMap((productId, index) => {
       const product = getProduct(productId);
@@ -215,6 +264,25 @@ function buildBaseTransactions(clients: Client[]) {
       ];
     });
   });
+}
+
+function mergeClientProducts(
+  clients: Client[],
+  persistedProducts: PvClientProductRecord[]
+) {
+  const merged = new Map<string, PvClientProductRecord>();
+
+  clients.forEach((client) => {
+    buildSeedPvClientProductsForClient(client).forEach((product) => {
+      merged.set(`${product.clientId}:${product.productId}`, product);
+    });
+  });
+
+  persistedProducts.forEach((product) => {
+    merged.set(`${product.clientId}:${product.productId}`, product);
+  });
+
+  return [...merged.values()].filter((product) => product.active);
 }
 
 function getProductStatus(daysSinceStart: number, daysRemaining: number): PvProductStatus {
@@ -262,74 +330,60 @@ function getClientStatus(
 
 function getActiveProducts(
   client: Client,
-  transactions: PvClientTransaction[]
+  clientProducts: PvClientProductRecord[]
 ): PvProductUsage[] {
-  const groupedByProduct = new Map<string, PvClientTransaction>();
-
-  transactions
-    .filter((transaction) => transaction.clientId === client.id)
-    .sort((left, right) => new Date(right.date).getTime() - new Date(left.date).getTime())
-    .forEach((transaction) => {
-      if (!groupedByProduct.has(transaction.productId)) {
-        groupedByProduct.set(transaction.productId, transaction);
-      }
-    });
-
-  const usages = [...groupedByProduct.values()].reduce<PvProductUsage[]>(
-    (collection, transaction) => {
-      const product = getProduct(transaction.productId);
-      if (!product) {
-        return collection;
-      }
-
-      const daysSinceStart = diffDays(transaction.date);
-      const estimatedRemainingDays = product.dureeReferenceJours - daysSinceStart;
+  return clientProducts
+    .filter((product) => product.clientId === client.id && product.active)
+    .map((product) => {
+      const daysSinceStart = diffDays(product.startDate);
+      const estimatedRemainingDays = product.durationReferenceDays - daysSinceStart;
       const status = getProductStatus(daysSinceStart, estimatedRemainingDays);
 
-      collection.push({
-        id: `${client.id}-${product.id}`,
-        productId: product.id,
-        productName: product.name,
-        quantityStart: transaction.quantity,
-        startDate: transaction.date,
-        durationReferenceDays: product.dureeReferenceJours,
+      return {
+        id: `${client.id}-${product.productId}`,
+        recordId: product.id,
+        programId: product.programId,
+        productId: product.productId,
+        productName: product.productName,
+        quantityStart: product.quantityStart,
+        startDate: product.startDate,
+        durationReferenceDays: product.durationReferenceDays,
         estimatedRemainingDays,
-        nextProbableOrderDate: addDays(transaction.date, product.dureeReferenceJours),
-        pvPerUnit: product.pv,
-        pricePublicPerUnit: product.pricePublic,
+        nextProbableOrderDate: addDays(product.startDate, product.durationReferenceDays),
+        pvPerUnit: product.pvPerUnit,
+        pricePublicPerUnit: product.pricePublicPerUnit,
         quantiteLabel: product.quantiteLabel,
         noteMetier: product.noteMetier,
         status
-      });
-
-      return collection;
-    },
-    []
-  );
-
-  return usages.sort((left, right) => left.estimatedRemainingDays - right.estimatedRemainingDays);
+      };
+    })
+    .sort((left, right) => left.estimatedRemainingDays - right.estimatedRemainingDays);
 }
 
 export function buildPvTrackingRecords(
   clients: Client[],
-  extraTransactions: PvClientTransaction[] = []
+  extraTransactions: PvClientTransaction[] = [],
+  persistedProducts: PvClientProductRecord[] = []
 ): PvClientTrackingRecord[] {
   const allTransactions = [...extraTransactions, ...buildBaseTransactions(clients)];
+  const allClientProducts = mergeClientProducts(clients, persistedProducts);
 
   return clients.map((client) => {
     const latestAssessment = getLatestAssessment(client);
     const startDate = client.startDate ?? getFirstAssessment(client).date;
-    const program = resolvePvProgram(client.currentProgram);
+    const program = resolvePvProgram(client.pvProgramId ?? client.currentProgram);
     const clientTransactions = allTransactions
       .filter((transaction) => transaction.clientId === client.id)
       .sort((left, right) => new Date(right.date).getTime() - new Date(left.date).getTime());
-    const activeProducts = getActiveProducts(client, clientTransactions);
+    const activeProducts = getActiveProducts(client, allClientProducts);
     const daysSinceStart = diffDays(startDate);
     const estimatedRemainingDays =
-      activeProducts[0]?.estimatedRemainingDays ?? program.mainReferenceDurationDays - daysSinceStart;
+      activeProducts[0]?.estimatedRemainingDays ??
+      program.mainReferenceDurationDays - daysSinceStart;
     const lastOrderDate = clientTransactions[0]?.date ?? startDate;
     const nextProbableOrderDate =
-      activeProducts[0]?.nextProbableOrderDate ?? addDays(startDate, program.mainReferenceDurationDays);
+      activeProducts[0]?.nextProbableOrderDate ??
+      addDays(startDate, program.mainReferenceDurationDays);
     const pvCumulative = Number(
       clientTransactions.reduce((total, transaction) => total + transaction.pv, 0).toFixed(2)
     );
@@ -345,8 +399,12 @@ export function buildPvTrackingRecords(
       clientName: `${client.firstName} ${client.lastName}`,
       responsibleId: client.distributorId,
       responsibleName: client.distributorName,
+      programId: program.id,
       program: program.title,
-      status: getClientStatus(activeProducts.map((product) => product.status), client.nextFollowUp),
+      status: getClientStatus(
+        activeProducts.map((product) => product.status),
+        client.nextFollowUp
+      ),
       startDate,
       lastFollowUpDate: latestAssessment.date,
       lastOrderDate,

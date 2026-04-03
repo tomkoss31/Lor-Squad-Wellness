@@ -126,6 +126,7 @@ export interface Client {
   status: "active" | "pending" | "follow-up";
   objective: Objective;
   currentProgram: string;
+  pvProgramId?: string;
   started: boolean;
   startDate?: string;
   nextFollowUp: string;

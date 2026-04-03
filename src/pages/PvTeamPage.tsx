@@ -7,15 +7,15 @@ import { PvStatusBadge } from "../components/pv/PvStatusBadge";
 import { useAppContext } from "../context/AppContext";
 
 export function PvTeamPage() {
-  const { currentUser, clients, pvTransactions } = useAppContext();
+  const { currentUser, clients, pvTransactions, pvClientProducts } = useAppContext();
 
   if (!currentUser || currentUser.role !== "admin") {
     return null;
   }
 
   const records = useMemo(
-    () => buildPvTrackingRecords(clients, pvTransactions),
-    [clients, pvTransactions]
+    () => buildPvTrackingRecords(clients, pvTransactions, pvClientProducts),
+    [clients, pvClientProducts, pvTransactions]
   );
   const pvByDistributor = useMemo(
     () =>

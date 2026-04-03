@@ -1,9 +1,11 @@
+import { useState, type ReactNode } from "react";
 import { getPvProductStatusMeta, getPvTypeLabel } from "../../data/mockPvModule";
 import { formatDate, formatDateTime } from "../../lib/calculations";
-import type { PvClientTrackingRecord } from "../../types/pv";
+import type { PvClientTrackingRecord, PvProductUsage } from "../../types/pv";
 import { Card } from "../ui/Card";
 import { StatusBadge } from "../ui/StatusBadge";
 import { PvStatusBadge } from "./PvStatusBadge";
+import { useAppContext } from "../../context/AppContext";
 
 export function PvClientPanel({
   record,
@@ -12,6 +14,65 @@ export function PvClientPanel({
   record: PvClientTrackingRecord | null;
   title?: string;
 }) {
+  const { savePvClientProduct } = useAppContext();
+  const [editingProductId, setEditingProductId] = useState<string | null>(null);
+  const [draftStartDate, setDraftStartDate] = useState("");
+  const [draftQuantity, setDraftQuantity] = useState("1");
+  const [draftDuration, setDraftDuration] = useState("21");
+  const [saveError, setSaveError] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+
+  function startEditing(product: PvProductUsage) {
+    setEditingProductId(product.recordId);
+    setDraftStartDate(product.startDate.slice(0, 10));
+    setDraftQuantity(String(product.quantityStart));
+    setDraftDuration(String(product.durationReferenceDays));
+    setSaveError("");
+  }
+
+  function cancelEditing() {
+    setEditingProductId(null);
+    setSaveError("");
+  }
+
+  async function handleSaveProduct(product: PvProductUsage) {
+    if (!record) {
+      return;
+    }
+
+    setSaveError("");
+    setIsSaving(true);
+
+    try {
+      await savePvClientProduct({
+        id: product.recordId,
+        clientId: record.clientId,
+        responsibleId: record.responsibleId,
+        responsibleName: record.responsibleName,
+        programId: product.programId,
+        productId: product.productId,
+        productName: product.productName,
+        quantityStart: Math.max(1, Number(draftQuantity) || 1),
+        startDate: draftStartDate || product.startDate.slice(0, 10),
+        durationReferenceDays: Math.max(1, Number(draftDuration) || product.durationReferenceDays),
+        pvPerUnit: product.pvPerUnit,
+        pricePublicPerUnit: product.pricePublicPerUnit,
+        quantiteLabel: product.quantiteLabel,
+        noteMetier: product.noteMetier,
+        active: true
+      });
+      setEditingProductId(null);
+    } catch (error) {
+      setSaveError(
+        error instanceof Error
+          ? error.message
+          : "Impossible de mettre a jour ce produit actif."
+      );
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
   if (!record) {
     return (
       <Card className="space-y-3">
@@ -47,41 +108,110 @@ export function PvClientPanel({
       </section>
 
       <section className="space-y-3">
-        <p className="eyebrow-label">Produits actifs</p>
+        <div className="flex items-center justify-between gap-3">
+          <p className="eyebrow-label">Produits actifs</p>
+          <p className="text-xs text-slate-500">
+            Tu peux ajuster la date, la quantite et la duree de reference.
+          </p>
+        </div>
+
         <div className="space-y-3">
-          {record.activeProducts.map((product) => (
-            <div
-              key={product.id}
-              className="rounded-[22px] border border-white/8 bg-white/[0.03] px-4 py-4"
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="text-base font-semibold text-white">{product.productName}</p>
-                  <p className="mt-1 text-sm text-slate-400">
-                    Quantite de depart {product.quantityStart} - {product.quantiteLabel}
-                  </p>
+          {record.activeProducts.map((product) => {
+            const statusMeta = getPvProductStatusMeta(product.status);
+            const isEditing = editingProductId === product.recordId;
+
+            return (
+              <div
+                key={product.id}
+                className="rounded-[22px] border border-white/8 bg-white/[0.03] px-4 py-4"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-base font-semibold text-white">{product.productName}</p>
+                    <p className="mt-1 text-sm text-slate-400">
+                      Quantite de depart {product.quantityStart} - {product.quantiteLabel}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <StatusBadge label={statusMeta.label} tone={statusMeta.tone} />
+                    <button
+                      type="button"
+                      onClick={() => (isEditing ? cancelEditing() : startEditing(product))}
+                      className="inline-flex min-h-[38px] items-center justify-center rounded-full bg-white/[0.04] px-4 py-2 text-xs font-semibold text-white transition hover:bg-white/[0.08]"
+                    >
+                      {isEditing ? "Fermer" : "Modifier"}
+                    </button>
+                  </div>
                 </div>
-                <StatusBadge
-                  label={getPvProductStatusMeta(product.status).label}
-                  tone={getPvProductStatusMeta(product.status).tone}
-                />
+
+                <div className="mt-4 grid gap-3 md:grid-cols-2">
+                  <PanelFact label="Date debut" value={formatDate(product.startDate)} />
+                  <PanelFact label="Duree reference" value={`${product.durationReferenceDays} jours`} />
+                  <PanelFact label="Reste estime" value={`${product.estimatedRemainingDays} jours`} />
+                  <PanelFact
+                    label="Prochaine commande probable"
+                    value={formatDate(product.nextProbableOrderDate)}
+                  />
+                  <PanelFact label="Prix public" value={`${product.pricePublicPerUnit.toFixed(2)} EUR`} />
+                  <PanelFact label="PV" value={`${product.pvPerUnit} PV`} />
+                </div>
+
+                {isEditing ? (
+                  <div className="mt-4 space-y-4 rounded-[20px] border border-sky-300/12 bg-sky-400/[0.05] p-4">
+                    <div className="grid gap-3 md:grid-cols-3">
+                      <EditorField label="Date debut">
+                        <input
+                          type="date"
+                          value={draftStartDate}
+                          onChange={(event) => setDraftStartDate(event.target.value)}
+                        />
+                      </EditorField>
+                      <EditorField label="Quantite de depart">
+                        <input
+                          value={draftQuantity}
+                          onChange={(event) => setDraftQuantity(event.target.value)}
+                        />
+                      </EditorField>
+                      <EditorField label="Duree reference">
+                        <input
+                          value={draftDuration}
+                          onChange={(event) => setDraftDuration(event.target.value)}
+                        />
+                      </EditorField>
+                    </div>
+
+                    {saveError ? (
+                      <div className="rounded-[18px] border border-rose-400/20 bg-rose-400/10 px-4 py-3 text-sm text-rose-100">
+                        {saveError}
+                      </div>
+                    ) : null}
+
+                    <div className="flex justify-end gap-3">
+                      <button
+                        type="button"
+                        onClick={cancelEditing}
+                        className="inline-flex min-h-[42px] items-center justify-center rounded-full border border-white/10 px-4 py-2 text-sm font-semibold text-slate-200 transition hover:bg-white/[0.04]"
+                      >
+                        Annuler
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => void handleSaveProduct(product)}
+                        disabled={isSaving}
+                        className="inline-flex min-h-[42px] items-center justify-center rounded-full bg-sky-400/[0.18] px-4 py-2 text-sm font-semibold text-white transition hover:bg-sky-400/[0.24] disabled:opacity-70"
+                      >
+                        {isSaving ? "Enregistrement..." : "Enregistrer"}
+                      </button>
+                    </div>
+                  </div>
+                ) : null}
+
+                {product.noteMetier ? (
+                  <p className="mt-3 text-xs leading-6 text-slate-500">{product.noteMetier}</p>
+                ) : null}
               </div>
-              <div className="mt-4 grid gap-3 md:grid-cols-2">
-                <PanelFact label="Date debut" value={formatDate(product.startDate)} />
-                <PanelFact label="Duree reference" value={`${product.durationReferenceDays} jours`} />
-                <PanelFact label="Reste estime" value={`${product.estimatedRemainingDays} jours`} />
-                <PanelFact
-                  label="Prochaine commande probable"
-                  value={formatDate(product.nextProbableOrderDate)}
-                />
-                <PanelFact label="Prix public" value={`${product.pricePublicPerUnit.toFixed(2)} EUR`} />
-                <PanelFact label="PV" value={`${product.pvPerUnit} PV`} />
-              </div>
-              {product.noteMetier ? (
-                <p className="mt-3 text-xs leading-6 text-slate-500">{product.noteMetier}</p>
-              ) : null}
-            </div>
-          ))}
+            );
+          })}
         </div>
       </section>
 
@@ -126,6 +256,21 @@ function PanelFact({ label, value }: { label: string; value: string }) {
     <div className="rounded-[18px] bg-slate-950/24 px-4 py-3">
       <p className="text-[11px] font-medium text-slate-500">{label}</p>
       <p className="mt-2 text-sm font-semibold text-white">{value}</p>
+    </div>
+  );
+}
+
+function EditorField({
+  label,
+  children
+}: {
+  label: string;
+  children: ReactNode;
+}) {
+  return (
+    <div className="space-y-2">
+      <label className="text-sm font-medium text-slate-300">{label}</label>
+      {children}
     </div>
   );
 }

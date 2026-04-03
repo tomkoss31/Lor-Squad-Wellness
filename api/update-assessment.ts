@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import { resolvePvProgram } from "../src/data/mockPvModule";
 
 export default async function handler(req: any, res: any) {
   if (req.method !== "POST") {
@@ -111,12 +112,25 @@ export default async function handler(req: any, res: any) {
   }
 
   if (assessment.type === "initial") {
-    const { error: clientUpdateError } = await admin
+    const pvProgram = resolvePvProgram(assessment.programTitle);
+    let { error: clientUpdateError } = await admin
       .from("clients")
       .update({
-        start_date: assessment.date
+        start_date: assessment.date,
+        current_program: assessment.programTitle,
+        pv_program_id: pvProgram.id
       })
       .eq("id", clientId);
+
+    if (clientUpdateError?.message?.toLowerCase().includes("pv_program_id")) {
+      ({ error: clientUpdateError } = await admin
+        .from("clients")
+        .update({
+          start_date: assessment.date,
+          current_program: assessment.programTitle
+        })
+        .eq("id", clientId));
+    }
 
     if (clientUpdateError) {
       res.status(400).json({

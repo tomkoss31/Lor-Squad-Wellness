@@ -33,8 +33,28 @@ export interface PvProductCatalogItem {
   active: boolean;
 }
 
+export interface PvClientProductRecord {
+  id: string;
+  clientId: string;
+  responsibleId: string;
+  responsibleName: string;
+  programId: string;
+  productId: string;
+  productName: string;
+  quantityStart: number;
+  startDate: string;
+  durationReferenceDays: number;
+  pvPerUnit: number;
+  pricePublicPerUnit: number;
+  quantiteLabel: string;
+  noteMetier?: string;
+  active: boolean;
+}
+
 export interface PvProductUsage {
   id: string;
+  recordId: string;
+  programId: string;
   productId: string;
   productName: string;
   quantityStart: number;
@@ -70,6 +90,7 @@ export interface PvClientTrackingRecord {
   clientName: string;
   responsibleId: string;
   responsibleName: string;
+  programId: string;
   program: string;
   status: PvStatus;
   startDate: string;

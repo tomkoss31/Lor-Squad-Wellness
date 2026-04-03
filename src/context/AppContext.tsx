@@ -6,6 +6,7 @@ import {
   useState,
   type PropsWithChildren
 } from "react";
+import { buildSeedPvClientProductsForClient, resolvePvProgram } from "../data/mockPvModule";
 import { mockPrograms } from "../data/mockPrograms";
 import { canAccessClient, getVisibleClients, getVisibleFollowUps } from "../lib/auth";
 import {
@@ -21,9 +22,11 @@ import {
   clearStoredAppData,
   getStoredClients,
   getStoredFollowUps,
+  getStoredPvClientProducts,
   getStoredPvTransactions,
   persistClients,
   persistFollowUps,
+  persistPvClientProducts,
   persistPvTransactions
 } from "../services/appDataService";
 import { resolveStorageMode } from "../services/supabaseClient";
@@ -34,11 +37,15 @@ import {
   deleteSupabaseClient,
   fetchSupabaseClients,
   fetchSupabaseFollowUps,
+  fetchSupabasePvClientProducts,
+  fetchSupabasePvTransactions,
   fetchSupabaseUsers,
   importLocalBusinessDataToSupabase,
   loginWithSupabaseCredentials,
   logoutFromSupabase,
   restoreSupabaseSession,
+  addSupabasePvTransaction,
+  upsertSupabasePvClientProduct,
   updateSupabaseAssessment,
   updateSupabaseClientSchedule,
   updateSupabaseUserStatus
@@ -51,7 +58,7 @@ import type {
   Program,
   User
 } from "../types/domain";
-import type { PvClientTransaction } from "../types/pv";
+import type { PvClientProductRecord, PvClientTransaction } from "../types/pv";
 
 type StorageMode = "local" | "supabase";
 
@@ -65,6 +72,7 @@ interface AppContextValue {
   visibleClients: Client[];
   followUps: FollowUp[];
   visibleFollowUps: FollowUp[];
+  pvClientProducts: PvClientProductRecord[];
   pvTransactions: PvClientTransaction[];
   programs: Program[];
   loginAs: (userId: string) => Promise<void>;
@@ -108,7 +116,8 @@ interface AppContextValue {
       followUpStatus?: FollowUp["status"];
     }
   ) => Promise<void>;
-  addPvTransaction: (transaction: PvClientTransaction) => void;
+  addPvTransaction: (transaction: PvClientTransaction) => Promise<void>;
+  savePvClientProduct: (product: PvClientProductRecord) => Promise<void>;
 }
 
 const AppContext = createContext<AppContextValue | undefined>(undefined);
@@ -121,25 +130,32 @@ export function AppProvider({ children }: PropsWithChildren) {
   const [users, setUsers] = useState<User[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
   const [followUps, setFollowUps] = useState<FollowUp[]>([]);
+  const [pvClientProducts, setPvClientProducts] = useState<PvClientProductRecord[]>([]);
   const [pvTransactions, setPvTransactions] = useState<PvClientTransaction[]>([]);
 
   async function refreshRemoteData(activeUser?: User | null) {
     const nextUser = activeUser ?? currentUser;
     try {
-      const [nextClients, nextFollowUps, nextUsers] = await Promise.all([
+      const [nextClients, nextFollowUps, nextUsers, nextPvTransactions, nextPvClientProducts] = await Promise.all([
         fetchSupabaseClients(),
         fetchSupabaseFollowUps(),
-        nextUser ? fetchSupabaseUsers() : Promise.resolve([] as User[])
+        nextUser ? fetchSupabaseUsers() : Promise.resolve([] as User[]),
+        fetchSupabasePvTransactions(),
+        fetchSupabasePvClientProducts()
       ]);
 
       setClients(nextClients);
       setFollowUps(nextFollowUps);
       setUsers(nextUsers);
+      setPvTransactions(nextPvTransactions);
+      setPvClientProducts(nextPvClientProducts);
     } catch (error) {
       console.error("Impossible de recharger les donnees distantes.", error);
       setClients([]);
       setFollowUps([]);
       setUsers(nextUser ? [nextUser] : []);
+      setPvTransactions([]);
+      setPvClientProducts([]);
     }
   }
 
@@ -152,6 +168,7 @@ export function AppProvider({ children }: PropsWithChildren) {
         setStorageMode(nextStorageMode);
 
         if (nextStorageMode === "supabase") {
+          setPvClientProducts(getStoredPvClientProducts());
           setPvTransactions(getStoredPvTransactions());
           try {
             const restored = await restoreSupabaseSession();
@@ -165,6 +182,8 @@ export function AppProvider({ children }: PropsWithChildren) {
               setUsers([]);
               setClients([]);
               setFollowUps([]);
+              setPvClientProducts([]);
+              setPvTransactions([]);
             }
           } catch (error) {
             console.error("Initialisation Supabase impossible.", error);
@@ -173,6 +192,8 @@ export function AppProvider({ children }: PropsWithChildren) {
             setUsers([]);
             setClients([]);
             setFollowUps([]);
+            setPvClientProducts([]);
+            setPvTransactions([]);
           }
           return;
         }
@@ -180,6 +201,7 @@ export function AppProvider({ children }: PropsWithChildren) {
         setUsers(getStoredUsers());
         setClients(getStoredClients());
         setFollowUps(getStoredFollowUps());
+        setPvClientProducts(getStoredPvClientProducts());
         setPvTransactions(getStoredPvTransactions());
 
         const restored = restoreSession();
@@ -197,12 +219,14 @@ export function AppProvider({ children }: PropsWithChildren) {
           setUsers([]);
           setClients([]);
           setFollowUps([]);
+          setPvClientProducts(getStoredPvClientProducts());
           setPvTransactions(getStoredPvTransactions());
         } else {
           setStorageMode("local");
           setUsers(getStoredUsers());
           setClients(getStoredClients());
           setFollowUps(getStoredFollowUps());
+          setPvClientProducts(getStoredPvClientProducts());
           setPvTransactions(getStoredPvTransactions());
         }
         setCurrentUser(null);
@@ -228,6 +252,10 @@ export function AppProvider({ children }: PropsWithChildren) {
       persistFollowUps(followUps);
     }
   }, [followUps, storageMode]);
+
+  useEffect(() => {
+    persistPvClientProducts(pvClientProducts);
+  }, [pvClientProducts]);
 
   useEffect(() => {
     persistPvTransactions(pvTransactions);
@@ -292,6 +320,8 @@ export function AppProvider({ children }: PropsWithChildren) {
       setUsers([]);
       setClients([]);
       setFollowUps([]);
+      setPvClientProducts([]);
+      setPvTransactions([]);
       return;
     }
 
@@ -315,6 +345,7 @@ export function AppProvider({ children }: PropsWithChildren) {
       setUsers([]);
       setClients([]);
       setFollowUps([]);
+      setPvClientProducts(getStoredPvClientProducts());
       setPvTransactions(getStoredPvTransactions());
       return;
     }
@@ -322,6 +353,7 @@ export function AppProvider({ children }: PropsWithChildren) {
     setUsers(getStoredUsers());
     setClients(getStoredClients());
     setFollowUps(getStoredFollowUps());
+    setPvClientProducts(getStoredPvClientProducts());
     setPvTransactions(getStoredPvTransactions());
   }
 
@@ -401,6 +433,7 @@ export function AppProvider({ children }: PropsWithChildren) {
     const cleared = clearStoredAppData();
     setClients(cleared.clients);
     setFollowUps(cleared.followUps);
+    setPvClientProducts([]);
     setPvTransactions([]);
   }
 
@@ -436,6 +469,55 @@ export function AppProvider({ children }: PropsWithChildren) {
     return client ? canAccessClient(currentUser, client) : false;
   }
 
+  function upsertLocalPvClientProduct(product: PvClientProductRecord) {
+    setPvClientProducts((previousProducts) => {
+      const existingIndex = previousProducts.findIndex(
+        (item) => item.clientId === product.clientId && item.productId === product.productId
+      );
+
+      if (existingIndex === -1) {
+        const nextProduct = product.id.startsWith("pv-seed-")
+          ? { ...product, id: `pv-local-${Date.now()}-${product.productId}` }
+          : product;
+        return [nextProduct, ...previousProducts];
+      }
+
+      return previousProducts.map((item, index) =>
+        index === existingIndex ? { ...item, ...product } : item
+      );
+    });
+  }
+
+  function syncLocalPvProductFromTransaction(transaction: PvClientTransaction) {
+    const targetClient = clients.find((client) => client.id === transaction.clientId);
+    const baseProgram = resolvePvProgram(targetClient?.pvProgramId ?? targetClient?.currentProgram);
+    const existingProduct = pvClientProducts.find(
+      (item) => item.clientId === transaction.clientId && item.productId === transaction.productId
+    );
+
+    upsertLocalPvClientProduct({
+      id: existingProduct?.id ?? `pv-local-${Date.now()}-${transaction.productId}`,
+      clientId: transaction.clientId,
+      responsibleId: transaction.responsibleId,
+      responsibleName: transaction.responsibleName,
+      programId: existingProduct?.programId ?? baseProgram.id,
+      productId: transaction.productId,
+      productName: transaction.productName,
+      quantityStart: transaction.quantity,
+      startDate: transaction.date,
+      durationReferenceDays: existingProduct?.durationReferenceDays ?? 21,
+      pvPerUnit:
+        transaction.quantity > 0 ? Number((transaction.pv / transaction.quantity).toFixed(2)) : transaction.pv,
+      pricePublicPerUnit:
+        transaction.quantity > 0
+          ? Number((transaction.price / transaction.quantity).toFixed(2))
+          : transaction.price,
+      quantiteLabel: existingProduct?.quantiteLabel ?? "1 unite",
+      noteMetier: existingProduct?.noteMetier,
+      active: true
+    });
+  }
+
   async function createClientWithInitialAssessment(payload: {
     client: Omit<Client, "id" | "status" | "currentProgram" | "started" | "startDate" | "nextFollowUp" | "notes" | "assessments">;
     assessment: AssessmentRecord;
@@ -449,11 +531,13 @@ export function AppProvider({ children }: PropsWithChildren) {
     }
 
     const clientId = `c-${Date.now()}`;
+    const pvProgram = resolvePvProgram(payload.assessment.programTitle);
     const nextClient: Client = {
       ...payload.client,
       id: clientId,
       status: "active",
       currentProgram: payload.assessment.programTitle,
+      pvProgramId: pvProgram.id,
       started: true,
       startDate: payload.assessment.date,
       nextFollowUp: payload.nextFollowUp,
@@ -474,6 +558,10 @@ export function AppProvider({ children }: PropsWithChildren) {
 
     setClients((previousClients) => [nextClient, ...previousClients]);
     setFollowUps((previousFollowUps) => [nextFollowUpItem, ...previousFollowUps]);
+    setPvClientProducts((previousProducts) => [
+      ...buildSeedPvClientProductsForClient(nextClient),
+      ...previousProducts
+    ]);
 
     return clientId;
   }
@@ -503,6 +591,7 @@ export function AppProvider({ children }: PropsWithChildren) {
         return {
           ...client,
           currentProgram: assessment.programTitle,
+          pvProgramId: resolvePvProgram(assessment.programTitle).id,
           nextFollowUp: followUpMeta.dueDate,
           status: "follow-up",
           assessments: [assessment, ...client.assessments]
@@ -537,6 +626,12 @@ export function AppProvider({ children }: PropsWithChildren) {
     setFollowUps((previousFollowUps) =>
       previousFollowUps.filter((followUp) => followUp.clientId !== clientId)
     );
+    setPvClientProducts((previousProducts) =>
+      previousProducts.filter((product) => product.clientId !== clientId)
+    );
+    setPvTransactions((previousTransactions) =>
+      previousTransactions.filter((transaction) => transaction.clientId !== clientId)
+    );
   }
 
   async function updateAssessment(clientId: string, assessment: AssessmentRecord) {
@@ -558,11 +653,32 @@ export function AppProvider({ children }: PropsWithChildren) {
 
         return {
           ...client,
+          currentProgram: assessment.type === "initial" ? assessment.programTitle : client.currentProgram,
+          pvProgramId:
+            assessment.type === "initial"
+              ? resolvePvProgram(assessment.programTitle).id
+              : client.pvProgramId,
           startDate: assessment.type === "initial" ? assessment.date : client.startDate,
           assessments: nextAssessments
         };
       })
     );
+
+    if (assessment.type === "initial") {
+      const targetClient = clients.find((client) => client.id === clientId);
+      if (targetClient && !pvClientProducts.some((item) => item.clientId === clientId)) {
+        const seededClient: Client = {
+          ...targetClient,
+          currentProgram: assessment.programTitle,
+          pvProgramId: resolvePvProgram(assessment.programTitle).id,
+          startDate: assessment.date
+        };
+        setPvClientProducts((previousProducts) => [
+          ...buildSeedPvClientProductsForClient(seededClient),
+          ...previousProducts
+        ]);
+      }
+    }
   }
 
   async function updateClientSchedule(
@@ -610,8 +726,25 @@ export function AppProvider({ children }: PropsWithChildren) {
     );
   }
 
-  function addPvTransaction(transaction: PvClientTransaction) {
+  async function addPvTransaction(transaction: PvClientTransaction) {
+    if (storageMode === "supabase") {
+      await addSupabasePvTransaction(transaction);
+      await refreshRemoteData(currentUser);
+      return;
+    }
+
     setPvTransactions((previousTransactions) => [transaction, ...previousTransactions]);
+    syncLocalPvProductFromTransaction(transaction);
+  }
+
+  async function savePvClientProduct(product: PvClientProductRecord) {
+    if (storageMode === "supabase") {
+      await upsertSupabasePvClientProduct(product);
+      await refreshRemoteData(currentUser);
+      return;
+    }
+
+    upsertLocalPvClientProduct(product);
   }
 
   const value = useMemo(
@@ -625,6 +758,7 @@ export function AppProvider({ children }: PropsWithChildren) {
       visibleClients: getVisibleClients(currentUser, clients),
       followUps,
       visibleFollowUps: getVisibleFollowUps(currentUser, followUps, clients),
+      pvClientProducts,
       pvTransactions,
       programs: mockPrograms,
       loginAs,
@@ -643,9 +777,20 @@ export function AppProvider({ children }: PropsWithChildren) {
       addFollowUpAssessment,
       updateAssessment,
       updateClientSchedule,
-      addPvTransaction
+      addPvTransaction,
+      savePvClientProduct
     }),
-    [authReady, clients, currentSession, currentUser, followUps, pvTransactions, storageMode, users]
+    [
+      authReady,
+      clients,
+      currentSession,
+      currentUser,
+      followUps,
+      pvClientProducts,
+      pvTransactions,
+      storageMode,
+      users
+    ]
   );
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
