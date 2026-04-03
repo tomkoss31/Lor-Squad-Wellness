@@ -8,6 +8,7 @@ import { StatusBadge } from "../components/ui/StatusBadge";
 import { useAppContext } from "../context/AppContext";
 import {
   getActivePortfolioUsers,
+  getClientActiveFollowUp,
   getGroupedClientsByMonth,
   getPortfolioMetrics
 } from "../lib/portfolio";
@@ -233,6 +234,7 @@ export function DistributorPortfolioPage() {
                 {group.clients.map((client) => {
                   const firstAssessment = getFirstAssessment(client);
                   const latestAssessment = getLatestAssessment(client);
+                  const activeFollowUp = getClientActiveFollowUp(client, visibleFollowUps);
                   const recommendationCount =
                     latestAssessment.questionnaire.recommendations?.length ?? 0;
                   const recommendationsContacted =
@@ -276,7 +278,7 @@ export function DistributorPortfolioPage() {
 
                         <div className="grid gap-3 md:grid-cols-2">
                           <PortfolioFact label="Demarrage" value={client.startDate ? formatDate(client.startDate) : "En cours de lancement"} />
-                          <PortfolioFact label="Prochain suivi" value={formatDateTime(client.nextFollowUp)} />
+                          <PortfolioFact label="Prochain suivi" value={formatDateTime(activeFollowUp.dueDate)} />
                         </div>
 
                         <div className="text-sm text-slate-400 xl:text-right">

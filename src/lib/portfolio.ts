@@ -105,6 +105,14 @@ export function normalizeScheduleDateTime(input: string) {
   return /(?:T|\s)\d{2}:\d{2}/.test(input) ? input : `${input}T09:00`;
 }
 
+function hasExplicitTime(input: string) {
+  return /(?:T|\s)\d{2}:\d{2}/.test(input);
+}
+
+function getDateKey(input: string) {
+  return input.slice(0, 10);
+}
+
 function getScheduleTimestamp(input: string) {
   return new Date(normalizeScheduleDateTime(input)).getTime();
 }
@@ -120,19 +128,32 @@ export function getClientActiveFollowUp(client: Client, followUps: FollowUp[]) {
     .filter((followUp) => followUp.clientId === client.id)
     .sort((left, right) => compareByDateAsc(left.dueDate, right.dueDate));
   const normalizedClientDueDate = normalizeScheduleDateTime(client.nextFollowUp);
+  const clientDateKey = getDateKey(normalizedClientDueDate);
 
   const exactMatch = clientFollowUps.find(
     (followUp) => normalizeScheduleDateTime(followUp.dueDate) === normalizedClientDueDate
   );
+  const sameDayMatch = clientFollowUps.find(
+    (followUp) => getDateKey(normalizeScheduleDateTime(followUp.dueDate)) === clientDateKey
+  );
   const nextUpcoming = clientFollowUps.find(
     (followUp) => getScheduleTimestamp(followUp.dueDate) >= Date.now()
   );
-  const fallbackMatch = exactMatch ?? nextUpcoming ?? clientFollowUps[clientFollowUps.length - 1];
+  const fallbackMatch =
+    exactMatch ?? sameDayMatch ?? nextUpcoming ?? clientFollowUps[clientFollowUps.length - 1];
 
   if (fallbackMatch) {
+    const normalizedFollowUpDueDate = normalizeScheduleDateTime(fallbackMatch.dueDate);
+    const preferredDueDate =
+      hasExplicitTime(client.nextFollowUp)
+        ? client.nextFollowUp
+        : hasExplicitTime(normalizedFollowUpDueDate)
+          ? fallbackMatch.dueDate
+          : client.nextFollowUp;
+
     return {
       ...fallbackMatch,
-      dueDate: client.nextFollowUp
+      dueDate: preferredDueDate
     };
   }
 

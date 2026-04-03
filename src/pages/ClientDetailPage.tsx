@@ -15,6 +15,7 @@ import { MetricTile } from "../components/ui/MetricTile";
 import { PageHeading } from "../components/ui/PageHeading";
 import { StatusBadge } from "../components/ui/StatusBadge";
 import { useAppContext } from "../context/AppContext";
+import { getClientActiveFollowUp } from "../lib/portfolio";
 import {
   calculateProteinRange,
   calculateWaterNeed,
@@ -35,7 +36,7 @@ import {
 export function ClientDetailPage() {
   const navigate = useNavigate();
   const { clientId } = useParams();
-  const { currentUser, deleteClient, getClientById } = useAppContext();
+  const { currentUser, deleteClient, getClientById, followUps } = useAppContext();
 
   const client = clientId ? getClientById(clientId) : undefined;
 
@@ -48,6 +49,7 @@ export function ClientDetailPage() {
   }
 
   const currentClient = client;
+  const activeFollowUp = getClientActiveFollowUp(currentClient, followUps);
 
   const latestAssessment = getLatestAssessment(client);
   const previousAssessment = getPreviousAssessment(client);
@@ -273,7 +275,7 @@ export function ClientDetailPage() {
             />
             <MetricTile
               label="Prochain rendez-vous"
-              value={formatDateTime(client.nextFollowUp)}
+              value={formatDateTime(activeFollowUp.dueDate)}
               hint="Suite deja posee"
               accent="blue"
             />
@@ -367,11 +369,8 @@ export function ClientDetailPage() {
                 label="Objectif reformule"
                 value={latestQuestionnaire.objectiveFocus || (client.objective === "sport" ? "Prise de masse" : "Perte de poids")}
               />
-              <SummaryFocusCard label="Programme" value={client.currentProgram} />
-              <SummaryFocusCard
-                label="Invite par"
-                value={firstAssessment.questionnaire.referredByName || "Non renseigne"}
-              />
+              <SummaryFocusCard label="Age" value={`${client.age} ans`} />
+              <SummaryFocusCard label="Taille" value={`${client.height} cm`} />
             </div>
             <div className="grid gap-3">
               <SummaryRow label="Statut" value={client.started ? "Routine demarree" : "Mise en place a lancer"} />
