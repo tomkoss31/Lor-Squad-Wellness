@@ -242,11 +242,11 @@ export function ClientsPage() {
             />
             <MiniFact
               label="Rendez-vous"
-              value={`${selectedOwnerMetrics?.scheduledFollowUps.length ?? 0} planifies`}
+              value={`${selectedOwnerMetrics?.scheduledFollowUps.length ?? 0} planifiés`}
             />
             <MiniFact
               label="Relances"
-              value={`${selectedOwnerMetrics?.relanceFollowUps.length ?? 0} a reprendre`}
+              value={`${selectedOwnerMetrics?.relanceFollowUps.length ?? 0} à reprendre`}
             />
           </div>
         </Card>
@@ -317,7 +317,7 @@ export function ClientsPage() {
                               value={`${calculateWaterNeed(latestBodyScan.weight)} L`}
                             />
                             <ClientMetric
-                              label="Repere proteines"
+                              label="Repère protéines"
                               value={calculateProteinRange(latestBodyScan.weight, client.objective)}
                             />
                           </div>

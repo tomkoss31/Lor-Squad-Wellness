@@ -420,7 +420,7 @@ export function NewAssessmentPage() {
       ? `${formatValue(form.targetWeight, "kg")}`
       : form.objective === "sport"
         ? "Base a consolider"
-        : "A definir";
+        : "À définir";
   const weightGapLabel =
     form.objective === "weight-loss" && form.targetWeight > 0
       ? form.weight > form.targetWeight
@@ -446,7 +446,7 @@ export function NewAssessmentPage() {
           ? form.weight > form.targetWeight
             ? "A reduire progressivement"
             : "Dans l'objectif"
-          : "Base de reference",
+          : "Base de référence",
       tone: "blue" as const
     },
     {
@@ -478,7 +478,7 @@ export function NewAssessmentPage() {
       tone: "blue" as const
     },
     {
-      label: "Graisse viscerale",
+      label: "Graisse viscérale",
       initial: formatRawNumber(form.visceralFat),
       current: formatRawNumber(form.visceralFat),
       target: visceralTargetLabel,
@@ -493,7 +493,7 @@ export function NewAssessmentPage() {
       value: `${formatRawNumber(waterNeed)} L / jour`
     },
     {
-      label: "Proteines conseillees",
+      label: "Protéines conseillées",
       value: proteinRange
     }
   ];
@@ -502,7 +502,7 @@ export function NewAssessmentPage() {
     { label: "Masse grasse", value: `${formatRawNumber(form.bodyFat)} %` },
     { label: "Masse musculaire", value: formatValue(form.muscleMass, "kg") },
     { label: "Hydratation", value: `${formatRawNumber(form.hydration)} %` },
-    { label: "Viscerale", value: formatRawNumber(form.visceralFat) }
+    { label: "Viscérale", value: formatRawNumber(form.visceralFat) }
   ];
   const followUpPriorities = [
     getHydrationPriority(form.hydration, hydrationReference),
@@ -524,7 +524,7 @@ export function NewAssessmentPage() {
       : currentStep === 2
         ? [
             "Faire decrire simplement le midi, le soir et les moments de grignotage.",
-            "Repere utile: eau, cafe, boissons sucrees et alcool changent souvent la lecture.",
+            "Repère utile : eau, café, boissons sucrées et alcool changent souvent la lecture.",
             "Ne pas multiplier les details, rester sur les habitudes qui reviennent."
           ]
         : currentStep === 3
@@ -535,20 +535,20 @@ export function NewAssessmentPage() {
             ]
           : currentStep === 4
             ? [
-                "Avant le body scan, donner deja un repere concret sur la composition des repas.",
+                "Avant le body scan, donner déjà un repère concret sur la composition des repas.",
                 "L'assiette doit aider le client a visualiser quoi mettre dans son quotidien.",
                 "Rester simple: volume, proteines, glucides bien places."
               ]
           : currentStep === 5
             ? [
                 "Toutes les mesures body scan sont reunies ici sur une seule page.",
-                "On pose un releve de depart clair avant de parler objectif.",
+                "On pose un relevé de départ clair avant de parler objectif.",
                 "Rester factuel, simple et lisible en rendez-vous."
               ]
           : currentStep === 6
             ? [
-                "Cette page sert a transformer les chiffres en reperes de suivi.",
-                "On compare la base du jour, la cible et les priorites sans complexifier.",
+                "Cette page sert à transformer les chiffres en repères de suivi.",
+                "On compare la base du jour, la cible et les priorités sans complexifier.",
                 "L'objectif est de rendre le suivi facile a reformuler."
               ]
           : currentStep === 7
@@ -583,14 +583,14 @@ export function NewAssessmentPage() {
               ]
             : currentStep >= 12
               ? [
-                  "Toujours finir avec une suite claire et un rendez-vous deja pose.",
-                  "Le client doit repartir avec des reperes simples a retenir.",
+                  "Toujours finir avec une suite claire et un rendez-vous déjà posé.",
+                  "Le client doit repartir avec des repères simples à retenir.",
                   "La conclusion doit rassurer et donner envie d'avancer."
                 ]
               : [
                   "Faire simple, humain et progressif.",
                   "Relier chaque explication au quotidien du client.",
-                  "Utiliser les chiffres comme des reperes et non comme une pression."
+                  "Utiliser les chiffres comme des repères et non comme une pression."
                 ];
 
   const rightPanelPoints =
@@ -625,9 +625,9 @@ export function NewAssessmentPage() {
                 ]
               : currentStep === 5
                 ? [
-                    `Poids de depart : ${formatValue(form.weight, "kg")}`,
+                    `Poids de départ : ${formatValue(form.weight, "kg")}`,
                     `Hydratation : ${formatRawNumber(form.hydration)} %`,
-                    `Graisse viscerale : ${formatRawNumber(form.visceralFat)}`,
+                    `Graisse viscérale : ${formatRawNumber(form.visceralFat)}`,
                     `Masse grasse : ${formatRawNumber(form.bodyFat)} %`,
                     `Masse musculaire : ${formatValue(form.muscleMass, "kg")}`
                   ]
@@ -635,7 +635,7 @@ export function NewAssessmentPage() {
                 ? [
                     `Poids cible : ${weightTargetLabel}`,
                     `Hydratation cible : ${hydrationTargetLabel}`,
-                    `Proteines conseillees : ${proteinRange}`,
+                    `Protéines conseillées : ${proteinRange}`,
                     followUpPriorities[0] ?? bodyScanAttention
                   ]
               : currentStep === 7
@@ -666,12 +666,12 @@ export function NewAssessmentPage() {
                               "Fixer la suite avant de terminer le rendez-vous",
                               "Le client repart avec un cap clair"
                             ]
-                          : [`Programme retenu : ${selectedProgram?.title ?? "-"}`, `Hydratation cible : ${waterNeed} L`, `Proteines : ${proteinRange}`];
+                          : [`Programme retenu : ${selectedProgram?.title ?? "-"}`, `Hydratation cible : ${waterNeed} L`, `Protéines : ${proteinRange}`];
   const panelTitle =
     currentStep >= 10
       ? "Cap du moment"
       : currentStep === 6
-        ? "References de suivi"
+        ? "Références de suivi"
         : currentStep === 5
           ? "Lecture body scan"
           : currentStep >= 5
@@ -683,7 +683,7 @@ export function NewAssessmentPage() {
       : currentStep >= 10
         ? "Ici, on garde seulement ce qui aide a presenter la proposition."
         : currentStep === 6
-          ? "Le panneau sert a garder les cibles, les ecarts et les priorites a portee de voix."
+          ? "Le panneau sert à garder les cibles, les écarts et les priorités à portée de voix."
         : currentStep === 5
           ? "Le panneau sert a relire vite les mesures brutes sans doubler la page."
         : currentStep >= 5
@@ -693,37 +693,37 @@ export function NewAssessmentPage() {
   const plateTitle = form.objective === "sport" ? "Assiette sport / prise de masse" : "Assiette perte de poids";
   const plateSubtitle =
     form.objective === "sport"
-      ? "Le client doit voir tout de suite comment construire une assiette plus complete pour soutenir l'energie, l'entrainement et la recuperation."
+      ? "Le client doit voir tout de suite comment construire une assiette plus complète pour soutenir l'énergie, l'entraînement et la récupération."
       : "Le client doit comprendre en un coup d'oeil comment remplir son assiette pour avoir plus de volume, plus de satiete et un cadre simple a suivre.";
     const plateSegments =
       form.objective === "sport"
         ? [
           { label: "Legumes", share: 33, note: "Base d'equilibre", accent: "green" as const },
-          { label: "Proteines", share: 33, note: "Recuperation musculaire", accent: "red" as const },
-          { label: "Glucides", share: 34, note: "Energie autour du sport", accent: "amber" as const }
+          { label: "Protéines", share: 33, note: "Récupération musculaire", accent: "red" as const },
+          { label: "Glucides", share: 34, note: "Énergie autour du sport", accent: "amber" as const }
         ]
       : [
           { label: "Legumes", share: 50, note: "Volume et satiete", accent: "green" as const },
-          { label: "Proteines", share: 25, note: "Tenue musculaire", accent: "red" as const },
-          { label: "Glucides", share: 25, note: "Portion simple et energie", accent: "amber" as const }
+          { label: "Protéines", share: 25, note: "Tenue musculaire", accent: "red" as const },
+          { label: "Glucides", share: 25, note: "Portion simple et énergie", accent: "amber" as const }
         ];
   const platePortionGuides =
     form.objective === "sport"
       ? [
           { label: "Legumes", value: "1 a 2 poings" },
-          { label: "Proteines", value: "1 a 1,5 paume" },
+          { label: "Protéines", value: "1 à 1,5 paume" },
           { label: "Glucides", value: "1 a 2 poings" },
           { label: "Lipides", value: "1 pouce" }
         ]
       : [
           { label: "Legumes", value: "2 poings" },
-          { label: "Proteines", value: "1 paume" },
+          { label: "Protéines", value: "1 paume" },
           { label: "Glucides", value: "1 poing" },
           { label: "Lipides", value: "1 pouce" }
         ];
   const plateFoodExamples = [
     {
-      label: "Proteines",
+      label: "Protéines",
       accent: "red" as const,
       items: ["poulet", "oeufs", "poisson", "tofu"]
     },
@@ -849,7 +849,7 @@ export function NewAssessmentPage() {
       summary: `Premier bilan oriente ${form.objectiveFocus.toLowerCase()} avec mise en place du ${selectedProgram.title.toLowerCase()}.`,
       notes:
         form.comment.trim() ||
-        "Le client repart avec un cadre simple, un programme clair et un prochain suivi deja pose.",
+        "Le client repart avec un cadre simple, un programme clair et un prochain suivi déjà posé.",
       nextFollowUp,
       bodyScan: {
         weight: form.weight,
@@ -888,7 +888,7 @@ export function NewAssessmentPage() {
         nextFollowUp,
         notes:
           form.comment.trim() ||
-          "Nouveau client cree depuis le bilan initial. La suite est deja fixee."
+          "Nouveau client créé depuis le bilan initial. La suite est déjà fixée."
       });
 
       setSaveError("");
@@ -1070,7 +1070,7 @@ export function NewAssessmentPage() {
                   <Field label="Heure de lever" type="time" value={form.wakeUpTime} onChange={(v) => update("wakeUpTime", v)} />
                   <Field label="Heure de coucher" type="time" value={form.bedTime} onChange={(v) => update("bedTime", v)} />
                   <Field label="Heures de sommeil" type="number" step="0.5" value={form.sleepHours} onChange={(v) => update("sleepHours", Number(v))} />
-                  <ChoiceGroup label="Qualite du sommeil" value={form.sleepQuality} options={["Tres bonne", "Bonne", "Moyenne", "Mauvaise"]} onChange={(v) => update("sleepQuality", v)} />
+                  <ChoiceGroup label="Qualité du sommeil" value={form.sleepQuality} options={["Très bonne", "Bonne", "Moyenne", "Mauvaise"]} onChange={(v) => update("sleepQuality", v)} />
                 </div>
                 <ChoiceGroup label="Sieste en journee" value={form.napFrequency} options={["Jamais", "Parfois", "Souvent"]} onChange={(v) => update("napFrequency", v)} />
               </SectionBlock>
@@ -1088,7 +1088,7 @@ export function NewAssessmentPage() {
                 <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
                   <ChoiceGroup label="Repas par jour" value={String(form.mealsPerDay)} options={["1", "2", "3", "4 ou plus"]} onChange={(v) => update("mealsPerDay", v === "4 ou plus" ? 4 : Number(v))} />
                   <Field label="Premier vrai repas" type="time" value={form.firstMealTime} onChange={(v) => update("firstMealTime", v)} />
-                  <ChoiceGroup label="Heures regulieres" value={form.regularMealTimes} options={["Oui", "Non", "Pas toujours"]} onChange={(v) => update("regularMealTimes", v)} />
+                  <ChoiceGroup label="Heures régulières" value={form.regularMealTimes} options={["Oui", "Non", "Pas toujours"]} onChange={(v) => update("regularMealTimes", v)} />
                   <ChoiceGroup label="Midi" value={form.lunchLocation} options={["A la maison", "Au travail", "Au restaurant", "Sur le pouce"]} onChange={(v) => update("lunchLocation", v)} />
                 </div>
                 <ChoiceGroup label="Le soir" value={form.dinnerTiming} options={["Tot", "Normalement", "Tard"]} onChange={(v) => update("dinnerTiming", v)} />
@@ -1103,7 +1103,7 @@ export function NewAssessmentPage() {
                   <AreaField label="Repas type du midi" value={form.lunchExample} onChange={(v) => update("lunchExample", v)} />
                   <AreaField label="Repas type du soir" value={form.dinnerExample} onChange={(v) => update("dinnerExample", v)} />
                   <ChoiceGroup label="Legumes chaque jour" value={form.vegetablesDaily} options={["Oui", "Non", "Pas assez"]} onChange={(v) => update("vegetablesDaily", v)} />
-                  <ChoiceGroup label="Proteines a chaque repas" value={form.proteinEachMeal} options={["Oui", "Non", "Pas toujours"]} onChange={(v) => update("proteinEachMeal", v)} />
+                  <ChoiceGroup label="Protéines à chaque repas" value={form.proteinEachMeal} options={["Oui", "Non", "Pas toujours"]} onChange={(v) => update("proteinEachMeal", v)} />
                 </div>
                 <ChoiceGroup label="Produits sucres ou industriels" value={form.sugaryProducts} options={["Rarement", "Parfois", "Souvent", "Tres souvent"]} onChange={(v) => update("sugaryProducts", v)} />
               </SectionBlock>
@@ -1112,7 +1112,7 @@ export function NewAssessmentPage() {
                 <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
                   <ChoiceGroup label="Grignotage" value={form.snackingFrequency} options={["Jamais", "Parfois", "Souvent"]} onChange={(v) => update("snackingFrequency", v)} />
                   <ChoiceGroup label="Moment" value={form.snackingMoment} options={["Matin", "Apres-midi", "Soir", "Nuit"]} onChange={(v) => update("snackingMoment", v)} />
-                  <ChoiceGroup label="Attirance" value={form.cravingsPreference} options={["Sucre", "Sale", "Les deux"]} onChange={(v) => update("cravingsPreference", v)} />
+                  <ChoiceGroup label="Attirance" value={form.cravingsPreference} options={["Sucré", "Salé", "Les deux"]} onChange={(v) => update("cravingsPreference", v)} />
                   <ChoiceGroup label="Cause frequente" value={form.snackingTrigger} options={["Faim", "Stress", "Habitude", "Fatigue", "Ennui", "Emotions"]} onChange={(v) => update("snackingTrigger", v)} />
                 </div>
               </SectionBlock>
@@ -1157,21 +1157,21 @@ export function NewAssessmentPage() {
                 </div>
               </SectionBlock>
 
-              <SectionBlock title="Bloc 8 - Activite et forme" description="Chercher le niveau reel d'activite et d'energie.">
+              <SectionBlock title="Bloc 8 - Activité et forme" description="Chercher le niveau réel d'activité et d'énergie.">
                 <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-                  <ChoiceGroup label="Activite physique" value={form.physicalActivity} options={["Oui", "Non"]} onChange={(v) => update("physicalActivity", v)} />
+                  <ChoiceGroup label="Activité physique" value={form.physicalActivity} options={["Oui", "Non"]} onChange={(v) => update("physicalActivity", v)} />
                   <Field label="Si oui, laquelle ?" value={form.activityType} onChange={(v) => update("activityType", v)} />
                   <Field label="Seances / semaine" type="number" value={form.sessionsPerWeek} onChange={(v) => update("sessionsPerWeek", Number(v))} />
-                  <ChoiceGroup label="Niveau d'energie" value={form.energyLevel} options={["Tres bon", "Bon", "Moyen", "Faible"]} onChange={(v) => update("energyLevel", v)} />
+                  <ChoiceGroup label="Niveau d'énergie" value={form.energyLevel} options={["Très bon", "Bon", "Moyen", "Faible"]} onChange={(v) => update("energyLevel", v)} />
                 </div>
               </SectionBlock>
 
-              <SectionBlock title="Bloc 9 - Historique et blocages" description="Faire apparaitre ce qui a deja ete tente et ce qui bloque aujourd'hui.">
+              <SectionBlock title="Bloc 9 - Historique et blocages" description="Faire apparaître ce qui a déjà été tenté et ce qui bloque aujourd'hui.">
                 <div className="grid gap-4 md:grid-cols-2">
                   <AreaField label="Tentatives passees" value={form.pastAttempts} onChange={(v) => update("pastAttempts", v)} />
                   <AreaField label="Le plus difficile jusqu'ici" value={form.hardestPart} onChange={(v) => update("hardestPart", v)} />
                 </div>
-                <ChoiceGroup label="Blocage principal" value={form.mainBlocker} options={["Manque de temps", "Motivation", "Organisation", "Grignotage", "Fatigue", "Manque de reperes", "Autre"]} onChange={(v) => update("mainBlocker", v)} />
+                <ChoiceGroup label="Blocage principal" value={form.mainBlocker} options={["Manque de temps", "Motivation", "Organisation", "Grignotage", "Fatigue", "Manque de repères", "Autre"]} onChange={(v) => update("mainBlocker", v)} />
               </SectionBlock>
               </div>
             )}
@@ -1195,14 +1195,14 @@ export function NewAssessmentPage() {
                   <div className="max-w-3xl">
                     <p className="eyebrow-label">Body scan</p>
                     <h2 className="mt-3 text-3xl text-white md:text-[2.6rem]">
-                      Releve complet des mesures de depart
+                      Relevé complet des mesures de départ
                     </h2>
                     <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-300">
                       Toutes les mesures body scan sont reunies ici pour construire une base claire
                       avant le suivi.
                     </p>
                   </div>
-                  <StatusBadge label="Reference de depart" tone="blue" />
+                  <StatusBadge label="Référence de départ" tone="blue" />
                 </div>
 
                 <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -1211,18 +1211,18 @@ export function NewAssessmentPage() {
                   <Field label="Masse musculaire (kg)" type="number" step="0.1" value={form.muscleMass} onChange={(v) => update("muscleMass", Number(v))} />
                   <Field label="Hydratation (%)" type="number" step="0.1" value={form.hydration} onChange={(v) => update("hydration", Number(v))} />
                   <Field label="Masse osseuse (kg)" type="number" step="0.1" value={form.boneMass} onChange={(v) => update("boneMass", Number(v))} />
-                  <Field label="Graisse viscerale" type="number" value={form.visceralFat} onChange={(v) => update("visceralFat", Number(v))} />
+                  <Field label="Graisse viscérale" type="number" value={form.visceralFat} onChange={(v) => update("visceralFat", Number(v))} />
                   <Field label="BMR (kcal)" type="number" value={form.bmr} onChange={(v) => update("bmr", Number(v))} />
-                  <Field label="Age metabolique (ans)" type="number" value={form.metabolicAge} onChange={(v) => update("metabolicAge", Number(v))} />
+                  <Field label="Âge métabolique (ans)" type="number" value={form.metabolicAge} onChange={(v) => update("metabolicAge", Number(v))} />
                 </div>
               </Card>
 
               <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
-                <QuickReadCard label="Poids de depart" value={formatValue(form.weight, "kg")} detail="Base du suivi" />
+                <QuickReadCard label="Poids de départ" value={formatValue(form.weight, "kg")} detail="Base du suivi" />
                 <QuickReadCard label="Masse grasse" value={`${formatRawNumber(form.bodyFat)} %`} detail={`${bodyFatKg} kg estimes`} />
                 <QuickReadCard label="Masse musculaire" value={formatValue(form.muscleMass, "kg")} detail={`${formatRawNumber(musclePercent)} % du poids`} />
                 <QuickReadCard label="Hydratation" value={`${formatRawNumber(form.hydration)} %`} detail={`${hydrationKg} kg estimes`} />
-                <QuickReadCard label="Graisse viscerale" value={formatRawNumber(form.visceralFat)} detail="Repere a surveiller" />
+                <QuickReadCard label="Graisse viscérale" value={formatRawNumber(form.visceralFat)} detail="Repère à surveiller" />
               </div>
 
               <BodyFatInsightCard
@@ -1249,9 +1249,9 @@ export function NewAssessmentPage() {
               <Card className="space-y-6">
                 <div className="flex flex-wrap items-start justify-between gap-4">
                   <div className="max-w-3xl">
-                    <p className="eyebrow-label">References de suivi</p>
+                    <p className="eyebrow-label">Références de suivi</p>
                     <h2 className="mt-3 text-3xl text-white md:text-[2.6rem]">
-                      Lecture simple des valeurs de depart et des priorites
+                      Lecture simple des valeurs de départ et des priorités
                     </h2>
                     <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-300">
                       On compare la base du jour, la cible et les ecarts utiles pour rendre le suivi
@@ -1301,7 +1301,7 @@ export function NewAssessmentPage() {
                   <div className="grid gap-3">
                     <ClosingLine text="On fixe une base claire." />
                     <ClosingLine text="On suit l'evolution sans complexifier." />
-                    <ClosingLine text="On avance par priorites." />
+                    <ClosingLine text="On avance par priorités." />
                   </div>
                 </Card>
               </div>
@@ -1364,8 +1364,8 @@ export function NewAssessmentPage() {
           )}
 
           {currentStep === 11 && (
-            <VisualStepBoundary title="Repere hydratation">
-              <Suspense fallback={<StepVisualLoadingCard label="Chargement du repere hydratation" />}>
+            <VisualStepBoundary title="Repère hydratation">
+              <Suspense fallback={<StepVisualLoadingCard label="Chargement du repère hydratation" />}>
                 <LazyHydrationRoutinePrimerCard />
               </Suspense>
             </VisualStepBoundary>
@@ -1396,7 +1396,7 @@ export function NewAssessmentPage() {
                 <div className="flex flex-wrap items-start justify-between gap-4">
                   <div className="max-w-3xl">
                     <p className="eyebrow-label">Conclusion du rendez-vous</p>
-                    <p className="mt-3 text-4xl text-white">Une proposition claire, un cap simple et une suite deja visible.</p>
+                    <p className="mt-3 text-4xl text-white">Une proposition claire, un cap simple et une suite déjà visible.</p>
                     <p className="mt-3 text-sm leading-7 text-slate-300">
                       Cette synthese aide a reformuler le plan, confirmer le programme et terminer
                       le rendez-vous avec une direction nette.
@@ -1442,7 +1442,7 @@ export function NewAssessmentPage() {
                         <SummaryHighlightCard label="Motivation" value={`${form.motivation}/10`} />
                       )}
                       <SummaryHighlightCard
-                        label={form.objective === "weight-loss" ? "Rythme moyen" : "Proteines"}
+                        label={form.objective === "weight-loss" ? "Rythme moyen" : "Protéines"}
                         value={
                           form.objective === "weight-loss"
                             ? weightLossPlan.isAchieved
@@ -1458,7 +1458,7 @@ export function NewAssessmentPage() {
                       <div className="mt-4 grid gap-3">
                         <SummaryRow label="Masse grasse" value={`${form.bodyFat} % - ${bodyFatKg} kg`} />
                         <SummaryRow label="Masse musculaire" value={`${form.muscleMass} kg - ${musclePercent} %`} />
-                        <SummaryRow label="Masse hydrique estimee" value={`${form.hydration} % - ${hydrationKg} kg`} />
+                        <SummaryRow label="Masse hydrique estimée" value={`${form.hydration} % - ${hydrationKg} kg`} />
                         <SummaryRow label="Recommandations notees" value={`${recommendationCount}`} />
                         {form.objective === "weight-loss" && (
                           <SummaryRow label="Lecture du rythme" value={weightLossPace.label} />
@@ -1477,7 +1477,7 @@ export function NewAssessmentPage() {
                 <p className="eyebrow-label text-emerald-100/80">Formulation conseillee</p>
                 <div className="mt-4 grid gap-2 md:grid-cols-3">
                   <ClosingLine text="On part sur une routine simple, claire et coherente avec ton objectif." />
-                  <ClosingLine text="Les reperes du jour servent a rendre le plan plus facile a suivre des maintenant." />
+                  <ClosingLine text="Les repères du jour servent à rendre le plan plus facile à suivre dès maintenant." />
                   <ClosingLine text="On se revoit au prochain rendez-vous pour relire les premiers effets et ajuster si besoin." />
                 </div>
               </div>
@@ -1601,7 +1601,7 @@ export function NewAssessmentPage() {
                 <SummaryMini label="Poids cible" value={weightTargetLabel} />
                 <SummaryMini label="Hydratation cible" value={hydrationTargetLabel} />
                 <SummaryMini label="Objectif eau" value={`${formatRawNumber(waterNeed)} L`} />
-                <SummaryMini label="Proteines" value={proteinRange} />
+                <SummaryMini label="Protéines" value={proteinRange} />
               </>
               ) : (
                 <>
@@ -1665,7 +1665,7 @@ class VisualStepBoundary extends Component<
         </div>
         <div className="rounded-[24px] bg-white/[0.03] p-5">
           <p className="text-sm leading-7 text-slate-300">
-            Le visuel n&apos;a pas pu s&apos;afficher correctement. Les valeurs deja saisies sont
+            Le visuel n&apos;a pas pu s&apos;afficher correctement. Les valeurs déjà saisies sont
             gardees automatiquement, tu peux reessayer sans perdre le bilan en cours.
           </p>
           <div className="mt-4 flex flex-wrap gap-3">
@@ -1719,9 +1719,9 @@ function RecommendationStepCard({
 
           <label className="flex items-center justify-between gap-3 rounded-[22px] border border-white/10 bg-white/[0.03] px-4 py-4">
             <div>
-              <p className="text-sm font-medium text-white">Recommandations contactees</p>
+              <p className="text-sm font-medium text-white">Recommandations contactées</p>
               <p className="mt-1 text-sm text-slate-400">
-                Coche ici quand les contacts de ce bilan ont deja ete repris.
+                Coche ici quand les contacts de ce bilan ont déjà été repris.
               </p>
             </div>
             <input
@@ -2047,7 +2047,7 @@ function getHydrationPriority(value: number, range: { min: number; max: number }
 
 function getVisceralPriority(value: number) {
   if (value <= 6) {
-    return "Repere sain";
+    return "Repère sain";
   }
 
   if (value <= 12) {

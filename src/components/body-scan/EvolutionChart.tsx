@@ -27,7 +27,7 @@ export function EvolutionChart({ assessments }: EvolutionChartProps) {
     <div className="rounded-[24px] border border-white/10 bg-white/[0.03] p-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <p className="text-sm font-semibold text-white">Evolution des mesures clees</p>
+          <p className="text-sm font-semibold text-white">Évolution des mesures clés</p>
           <p className="text-xs text-slate-400">Poids, masse grasse et masse musculaire</p>
         </div>
         <div className="flex flex-wrap gap-2">

@@ -21,7 +21,7 @@ export function EditClientSchedulePage() {
   if (!client) {
     return (
       <Card>
-        <p className="text-lg text-white">Client introuvable ou acces indisponible.</p>
+        <p className="text-lg text-white">Client introuvable ou accès indisponible.</p>
       </Card>
     );
   }
@@ -77,7 +77,7 @@ export function EditClientSchedulePage() {
               <p className="eyebrow-label">Rendez-vous client</p>
               <p className="mt-3 text-2xl text-white">Le prochain créneau à corriger</p>
             </div>
-            <StatusBadge label={currentFollowUp?.status === "pending" ? "Relance" : "Planifie"} tone={currentFollowUp?.status === "pending" ? "amber" : "green"} />
+            <StatusBadge label={currentFollowUp?.status === "pending" ? "Relance" : "Planifié"} tone={currentFollowUp?.status === "pending" ? "amber" : "green"} />
           </div>
 
           <div className="grid gap-4 md:grid-cols-2">

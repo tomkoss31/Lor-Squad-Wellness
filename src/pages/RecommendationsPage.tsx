@@ -63,43 +63,43 @@ export function RecommendationsPage() {
       <PageHeading
         eyebrow="Recommandations"
         title="Recommandations"
-        description="Les dossiers a reprendre, par coach et par bilan, sans texte inutile."
+        description="Les dossiers à reprendre, par coach et par bilan, sans texte inutile."
       />
 
       <div className="grid gap-4 xl:grid-cols-[1.15fr_0.85fr]">
         <Card className="space-y-5 bg-[linear-gradient(180deg,rgba(15,23,42,0.26),rgba(15,23,42,0.52))]">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="max-w-3xl">
-              <p className="eyebrow-label">A traiter aujourd&apos;hui</p>
+              <p className="eyebrow-label">À traiter aujourd&apos;hui</p>
               <h2 className="mt-3 text-3xl text-white">
                 {pendingCount
-                  ? `${pendingCount} recommandation${pendingCount > 1 ? "s" : ""} restent a contacter.`
-                  : "Toutes les recommandations visibles sont deja reprises."}
+                  ? `${pendingCount} recommandation${pendingCount > 1 ? "s" : ""} restent à contacter.`
+                  : "Toutes les recommandations visibles sont déjà reprises."}
               </h2>
               <p className="mt-3 text-sm leading-6 text-slate-300">
-                L&apos;utile ici : voir vite quels dossiers ont deja ete repris et lesquels restent a relancer.
+                L&apos;utile ici : voir vite quels dossiers ont déjà été repris et lesquels restent à relancer.
               </p>
             </div>
-            <StatusBadge label={pendingCount ? "A reprendre" : "A jour"} tone={pendingCount ? "amber" : "green"} />
+            <StatusBadge label={pendingCount ? "À reprendre" : "À jour"} tone={pendingCount ? "amber" : "green"} />
           </div>
 
           <div className="grid gap-4 md:grid-cols-3">
             <RecommendationMetricCard
               label="Dossiers avec recos"
               value={recommendationClients.length}
-              hint="Bilans concernes"
+              hint="Bilans concernés"
               tone="blue"
             />
             <RecommendationMetricCard
               label="A contacter"
               value={pendingCount}
-              hint="Contacts encore a reprendre"
+              hint="Contacts encore à reprendre"
               tone="amber"
             />
             <RecommendationMetricCard
-              label="Contactees"
+              label="Contactées"
               value={contactedCount}
-              hint="Contacts deja relus"
+              hint="Contacts déjà relus"
               tone="green"
             />
           </div>
@@ -113,11 +113,11 @@ export function RecommendationsPage() {
           <div className="grid gap-3">
             <CompactReminder
               title="Ouvrir simplement"
-              text="Le sujet est deja pose pendant le smoothie. Ici, tu reprends juste ce qui a ete note."
+              text="Le sujet est déjà posé pendant le smoothie. Ici, tu reprends juste ce qui a été noté."
             />
             <CompactReminder
               title="Noter puis rappeler"
-              text="Un prenom et un contact suffisent. La page sert surtout a voir ce qui a deja ete repris."
+              text="Un prénom et un contact suffisent. La page sert surtout à voir ce qui a déjà été repris."
             />
             <CompactReminder
               title="Sans pression"
@@ -142,7 +142,7 @@ export function RecommendationsPage() {
                   <div className="flex flex-wrap gap-2">
                     <StatusBadge label={`${items.length} dossier${items.length > 1 ? "s" : ""}`} tone="blue" />
                     <StatusBadge
-                      label={`${coachPending.length} a reprendre`}
+                      label={`${coachPending.length} à reprendre`}
                       tone={coachPending.length ? "amber" : "green"}
                     />
                   </div>
@@ -162,8 +162,8 @@ export function RecommendationsPage() {
                             <StatusBadge
                               label={
                                 item.recommendationsContacted
-                                  ? "Recommandations contactees"
-                                  : "Recommandations a contacter"
+                                  ? "Recommandations contactées"
+                                  : "Recommandations à contacter"
                               }
                               tone={item.recommendationsContacted ? "green" : "amber"}
                             />
@@ -180,7 +180,7 @@ export function RecommendationsPage() {
                           />
                           <RecommendationFact
                             label="Recommandations"
-                            value={`${item.recommendationCount} notee${item.recommendationCount > 1 ? "s" : ""}`}
+                            value={`${item.recommendationCount} notée${item.recommendationCount > 1 ? "s" : ""}`}
                           />
                         </div>
 
@@ -202,7 +202,7 @@ export function RecommendationsPage() {
         <Card className="space-y-3">
           <p className="text-2xl text-white">Aucune recommandation visible</p>
           <p className="text-sm leading-6 text-slate-400">
-            Les recommandations notees dans les bilans apparaitront ici, par coach et par dossier.
+            Les recommandations notées dans les bilans apparaîtront ici, par coach et par dossier.
           </p>
         </Card>
       )}

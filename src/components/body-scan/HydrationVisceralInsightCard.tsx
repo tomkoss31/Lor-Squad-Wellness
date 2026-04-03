@@ -23,8 +23,8 @@ export function HydrationVisceralInsightCard({
   return (
     <PedagogicalSection
       eyebrow="Lecture body scan"
-      title="Hydratation & graisse viscerale"
-      subtitle="Lecture directe de l'hydratation corporelle et du niveau de vigilance viscerale."
+      title="Hydratation & graisse viscérale"
+      subtitle="Lecture directe de l'hydratation corporelle et du niveau de vigilance viscérale."
       statusLabel={`${hydrationPercent} %`}
       statusTone={hydrationStatus.tone}
       metrics={
@@ -36,7 +36,7 @@ export function HydrationVisceralInsightCard({
             accent="blue"
           />
           <PedagogicalMetricCard
-            label="Graisse viscerale"
+            label="Graisse viscérale"
             value={formatRawNumber(visceralFat)}
             note={visceralStatus.label}
             accent="red"
@@ -44,7 +44,7 @@ export function HydrationVisceralInsightCard({
           <div className="md:col-span-2 xl:col-span-3 rounded-[24px] bg-white/[0.04] p-5">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <p className="text-[11px] font-medium text-slate-500">Repere hydratation</p>
+                <p className="text-[11px] font-medium text-slate-500">Repère hydratation</p>
                 <p className="mt-2 text-sm text-slate-400">
                   Zone moyenne {hydrationReference.min}-{hydrationReference.max} %
                 </p>
@@ -108,9 +108,9 @@ export function HydrationVisceralInsightCard({
           <div className="md:col-span-2 xl:col-span-3 rounded-[24px] border border-white/10 bg-slate-950/35 p-5">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <p className="text-[11px] font-medium text-slate-500">Repere visceral</p>
+                <p className="text-[11px] font-medium text-slate-500">Repère viscéral</p>
                 <p className="mt-2 text-sm text-slate-400">
-                  La graisse viscerale merite un repere de vigilance tres simple.
+                  La graisse viscérale mérite un repère de vigilance très simple.
                 </p>
               </div>
               <span className="rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 text-sm font-semibold text-white">
@@ -121,13 +121,13 @@ export function HydrationVisceralInsightCard({
             <div className="mt-4 grid gap-2 md:grid-cols-3">
               <VisceralRangeChip
                 label="0 - 6"
-                detail="Repere sain"
+                detail="Repère sain"
                 tone="green"
                 active={visceralStatus.band === "healthy"}
               />
               <VisceralRangeChip
                 label="7 - 12"
-                detail="Exces modere"
+                detail="Excès modéré"
                 tone="amber"
                 active={visceralStatus.band === "elevated"}
               />
@@ -233,7 +233,7 @@ function getHydrationStatus(
 
   if (hydrationPercent > reference.max) {
     return {
-      label: "Au-dessus du repere",
+      label: "Au-dessus du repère",
       description: "Lecture a relier au contexte global du rendez-vous.",
       tone: "blue" as const
     };
@@ -248,11 +248,11 @@ function getHydrationStatus(
 
 function getVisceralFatStatus(visceralFat: number) {
   if (visceralFat <= 6) {
-    return { label: "Repere sain", band: "healthy" as const };
+    return { label: "Repère sain", band: "healthy" as const };
   }
 
   if (visceralFat <= 12) {
-    return { label: "Exces modere", band: "elevated" as const };
+    return { label: "Excès modéré", band: "elevated" as const };
   }
 
   return { label: "Vigilance renforcee", band: "high" as const };

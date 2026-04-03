@@ -62,7 +62,7 @@ export function MuscleMassInsightCard({
 
           <div className="md:col-span-2 xl:col-span-3 rounded-[24px] border border-white/10 bg-white/[0.03] p-4">
             <div className="flex items-center justify-between gap-3">
-              <p className="text-sm font-semibold text-white">Ecarts lisibles</p>
+              <p className="text-sm font-semibold text-white">Écarts lisibles</p>
               <p className="text-xs uppercase tracking-[0.18em] text-slate-500">Suivi</p>
             </div>
 

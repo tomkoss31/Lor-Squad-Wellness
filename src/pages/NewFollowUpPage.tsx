@@ -31,7 +31,7 @@ export function NewFollowUpPage() {
   if (!client) {
     return (
       <Card>
-        <p className="text-white">Client introuvable ou acces indisponible.</p>
+        <p className="text-white">Client introuvable ou accès indisponible.</p>
       </Card>
     );
   }
@@ -71,7 +71,7 @@ export function NewFollowUpPage() {
     `Check-in : ${energyCheck}, ${routineCheck}, ${engagementCheck}.`,
     easyWin.trim() ? `Point positif : ${easyWin.trim()}.` : "",
     attentionPoint.trim() ? `Point a travailler : ${attentionPoint.trim()}.` : "",
-    "Le client repart avec des reperes simples et une suite deja fixee."
+    "Le client repart avec des repères simples et une suite déjà fixée."
   ]
     .filter(Boolean)
     .join(" ");
@@ -216,7 +216,7 @@ export function NewFollowUpPage() {
                   onChange={(value) => setBodyScan({ ...bodyScan, boneMass: Number(value) })}
                 />
                 <MetricField
-                  label="Graisse viscerale"
+                  label="Graisse viscérale"
                   value={bodyScan.visceralFat}
                   onChange={(value) => setBodyScan({ ...bodyScan, visceralFat: Number(value) })}
                 />
@@ -226,7 +226,7 @@ export function NewFollowUpPage() {
                   onChange={(value) => setBodyScan({ ...bodyScan, bmr: Number(value) })}
                 />
                 <MetricField
-                  label="Age metabolique (ans)"
+                  label="Âge métabolique (ans)"
                   value={bodyScan.metabolicAge}
                   onChange={(value) => setBodyScan({ ...bodyScan, metabolicAge: Number(value) })}
                 />
@@ -273,13 +273,13 @@ export function NewFollowUpPage() {
             <div className="flex items-center justify-between gap-3">
               <div>
                 <p className="eyebrow-label">Suivi</p>
-                <p className="mt-3 text-2xl text-white">Reperes du suivi</p>
+                <p className="mt-3 text-2xl text-white">Repères du suivi</p>
               </div>
               <StatusBadge label="Poids" tone="blue" />
             </div>
 
             <div className="grid gap-4">
-              <CompactWeightPanel label="Poids de depart" value={`${first.bodyScan.weight} kg`} />
+              <CompactWeightPanel label="Poids de départ" value={`${first.bodyScan.weight} kg`} />
               <CompactWeightPanel label="Dernier releve" value={`${latest.bodyScan.weight} kg`} />
               <div className="rounded-[22px] border border-white/10 bg-white/[0.03] px-5 py-4">
                 <p className="text-[12px] font-medium text-slate-400">Ecart depuis depart</p>
@@ -321,10 +321,10 @@ export function NewFollowUpPage() {
             {latest.questionnaire.recommendations.length ? (
               <label className="flex items-center justify-between gap-3 rounded-[22px] border border-white/10 bg-white/[0.03] px-4 py-4">
                 <div>
-                  <p className="text-sm font-medium text-white">Recommandations contactees</p>
+                  <p className="text-sm font-medium text-white">Recommandations contactées</p>
                   <p className="mt-1 text-sm text-slate-400">
                     {latest.questionnaire.recommendations.length} contact
-                    {latest.questionnaire.recommendations.length > 1 ? "s" : ""} a reprendre pour ce dossier.
+                    {latest.questionnaire.recommendations.length > 1 ? "s" : ""} à reprendre pour ce dossier.
                   </p>
                 </div>
                 <input
@@ -477,8 +477,8 @@ function StartingPointWeightCard({
           : "text-amber-200";
   const mainDeltaLabel =
     deltaFromStart === 0
-      ? "Poids stable depuis le depart"
-      : `${deltaFromStart > 0 ? "+" : ""}${deltaFromStart} kg depuis le depart`;
+      ? "Poids stable depuis le départ"
+      : `${deltaFromStart > 0 ? "+" : ""}${deltaFromStart} kg depuis le départ`;
   const secondaryDeltaLabel =
     deltaFromLatest === 0
       ? "Stable depuis le dernier point"
@@ -488,10 +488,10 @@ function StartingPointWeightCard({
     <Card className="space-y-5 bg-[linear-gradient(180deg,rgba(15,23,42,0.28),rgba(15,23,42,0.5))]">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="eyebrow-label">Repere de progression</p>
-          <p className="mt-3 text-2xl text-white">Depart vs aujourd&apos;hui</p>
+          <p className="eyebrow-label">Repère de progression</p>
+          <p className="mt-3 text-2xl text-white">Départ vs aujourd&apos;hui</p>
           <p className="mt-2 text-sm leading-6 text-slate-300">
-            Ce bloc sert a montrer tout de suite le point de depart, le dernier releve et la situation aujourd&apos;hui.
+            Ce bloc sert à montrer tout de suite le point de départ, le dernier relevé et la situation aujourd&apos;hui.
           </p>
         </div>
         <div className="rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-sm font-medium text-white">
@@ -500,7 +500,7 @@ function StartingPointWeightCard({
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">
-        <WeightMilestoneCard label="Depart" date={formatDate(startDate)} weight={startWeight} tone="blue" />
+        <WeightMilestoneCard label="Départ" date={formatDate(startDate)} weight={startWeight} tone="blue" />
         <WeightMilestoneCard label="Dernier point" date={formatDate(latestDate)} weight={latestWeight} tone="slate" />
         <WeightMilestoneCard label="Aujourd'hui" date={formatDate(currentDate)} weight={currentWeight} tone="green" highlighted />
       </div>

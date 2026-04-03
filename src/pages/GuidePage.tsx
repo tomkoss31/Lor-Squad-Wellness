@@ -166,12 +166,12 @@ function RendezVousGuide() {
         <div className="grid gap-4 xl:grid-cols-3">
           <GuideSectionCard
             title="Preparation"
-            subtitle="Tout doit etre deja pret avant l'arrivee."
+            subtitle="Tout doit être déjà prêt avant l'arrivée."
             points={preparationPoints}
           />
           <GuideSectionCard
             title="Accueil"
-            subtitle="Le sourire et le prenom changent deja la tonalite."
+            subtitle="Le sourire et le prénom change déjà la tonalité."
             points={accueilPoints}
           />
           <GuideSectionCard

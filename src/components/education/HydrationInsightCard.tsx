@@ -29,15 +29,15 @@ export function HydrationInsightCard({
   return (
     <Card className="space-y-6 bg-[linear-gradient(180deg,rgba(15,23,42,0.28),rgba(15,23,42,0.5))]">
       <div className="max-w-3xl">
-        <p className="eyebrow-label">Repere quotidien</p>
+        <p className="eyebrow-label">Repère quotidien</p>
         <h3 className="mt-2 text-[1.9rem] leading-none text-white md:text-[2.1rem]">
           Hydratation
         </h3>
         <p className="mt-3 text-[14px] leading-7 text-slate-300">
-          Le corps fonctionne mieux quand l&apos;hydratation est reguliere et adaptee au poids.
+          Le corps fonctionne mieux quand l&apos;hydratation est régulière et adaptée au poids.
         </p>
         <p className="mt-2 text-sm leading-6 text-slate-300">
-          Une bonne hydratation aide souvent a ameliorer l&apos;energie, le confort et la regularite.
+          Une bonne hydratation aide souvent à améliorer l&apos;énergie, le confort et la régularité.
         </p>
       </div>
 
@@ -58,7 +58,7 @@ export function HydrationInsightCard({
               accent="green"
             />
             <HydrationValueCard
-              label="Ecart a combler"
+              label="Écart à combler"
               value={isTargetReached ? "Objectif atteint" : `${gap} L / jour`}
               accent="green"
             />
@@ -67,7 +67,7 @@ export function HydrationInsightCard({
           <div className="rounded-[24px] bg-white/[0.04] p-4 md:p-5">
             <div className="grid gap-3 md:grid-cols-3 xl:grid-cols-1">
               <HydrationMeta label="Poids actuel" value={`${weight} kg`} />
-              <HydrationMeta label="Masse hydrique estimee" value={`${hydrationKg} kg`} />
+              <HydrationMeta label="Masse hydrique estimée" value={`${hydrationKg} kg`} />
               <HydrationMeta label="Eau actuelle" value={`${waterIntake} L / jour`} />
             </div>
           </div>
@@ -78,7 +78,7 @@ export function HydrationInsightCard({
         <div className="rounded-[24px] bg-white/[0.04] p-4 md:p-5">
           <div className="flex items-center justify-between gap-3">
             <p className="text-[11px] font-medium text-slate-500">
-              Repere hydratation
+              Repère hydratation
             </p>
             <span className="rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 text-xs font-medium text-white">
               {hydrationStatus.label}
@@ -94,19 +94,19 @@ export function HydrationInsightCard({
         <div className="rounded-[24px] bg-white/[0.04] p-4 md:p-5">
           <div className="flex items-center justify-between gap-3">
             <p className="text-[11px] font-medium text-slate-500">
-              Graisse viscerale
+              Graisse viscérale
             </p>
             <span className="rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 text-xs font-medium text-white">
               {visceralStatus.label}
             </span>
           </div>
           <div className="mt-4 grid gap-2">
-            <VisceralRange label="0 - 6" detail="Repere sain" active={visceralStatus.band === "healthy"} />
-            <VisceralRange label="7 - 12" detail="Exces modere" active={visceralStatus.band === "elevated"} />
-            <VisceralRange label="13 - 59" detail="Exces marque" active={visceralStatus.band === "high"} />
+            <VisceralRange label="0 - 6" detail="Repère sain" active={visceralStatus.band === "healthy"} />
+            <VisceralRange label="7 - 12" detail="Excès modéré" active={visceralStatus.band === "elevated"} />
+            <VisceralRange label="13 - 59" detail="Excès marqué" active={visceralStatus.band === "high"} />
           </div>
           <p className="mt-4 text-sm leading-6 text-slate-400">
-            Plus ce score monte, plus le risque cardiometabolique merite d&apos;etre surveille.
+            Plus ce score monte, plus le risque cardiométabolique mérite d&apos;être surveillé.
           </p>
         </div>
       </div>
@@ -267,15 +267,15 @@ function getHydrationStatus(
     return {
       label: "Sous la moyenne",
       description:
-        "En dessous du repere moyen, la fatigue et le manque de confort peuvent vite se faire sentir."
+        "En dessous du repère moyen, la fatigue et le manque de confort peuvent vite se faire sentir."
     };
   }
 
   if (hydrationPercent > reference.max) {
     return {
-      label: "Au-dessus du repere",
+      label: "Au-dessus du repère",
       description:
-        "Au-dessus du repere moyen, la lecture reste simplement a surveiller avec l'ensemble du contexte."
+        "Au-dessus du repère moyen, la lecture reste simplement à surveiller avec l'ensemble du contexte."
     };
   }
 
@@ -287,16 +287,16 @@ function getHydrationStatus(
 
 function getVisceralFatStatus(visceralFat?: number) {
   if (visceralFat == null) {
-    return { label: "A lire", band: "healthy" as const };
+    return { label: "À lire", band: "healthy" as const };
   }
 
   if (visceralFat <= 6) {
-    return { label: "Repere sain", band: "healthy" as const };
+    return { label: "Repère sain", band: "healthy" as const };
   }
 
   if (visceralFat <= 12) {
-    return { label: "Exces modere", band: "elevated" as const };
+    return { label: "Excès modéré", band: "elevated" as const };
   }
 
-  return { label: "Exces marque", band: "high" as const };
+  return { label: "Excès marqué", band: "high" as const };
 }

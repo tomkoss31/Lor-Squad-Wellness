@@ -13,9 +13,9 @@ export function BodyScanDeltaGrid({ latest, delta }: BodyScanDeltaGridProps) {
     { label: "Masse musculaire", value: `${latest.muscleMass} kg`, delta: delta.muscleMass, suffix: " kg" },
     { label: "Hydratation", value: `${latest.hydration} %`, delta: delta.hydration, suffix: " %" },
     { label: "Masse osseuse", value: `${latest.boneMass} kg`, delta: delta.boneMass, suffix: " kg" },
-    { label: "Graisse viscerale", value: `${latest.visceralFat}`, delta: delta.visceralFat, inverseGood: true },
+    { label: "Graisse viscérale", value: `${latest.visceralFat}`, delta: delta.visceralFat, inverseGood: true },
     { label: "BMR", value: `${latest.bmr} kcal`, delta: delta.bmr, suffix: " kcal" },
-    { label: "Age metabolique", value: `${latest.metabolicAge} ans`, delta: delta.metabolicAge, suffix: " ans", inverseGood: true }
+    { label: "Âge métabolique", value: `${latest.metabolicAge} ans`, delta: delta.metabolicAge, suffix: " ans", inverseGood: true }
   ];
 
   return (

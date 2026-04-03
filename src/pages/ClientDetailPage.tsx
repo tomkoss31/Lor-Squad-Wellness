@@ -43,7 +43,7 @@ export function ClientDetailPage() {
   if (!client) {
     return (
       <Card>
-        <p className="text-lg text-white">Client introuvable ou acces indisponible.</p>
+        <p className="text-lg text-white">Client introuvable ou accès indisponible.</p>
       </Card>
     );
   }
@@ -86,7 +86,7 @@ export function ClientDetailPage() {
 
   async function handleDeleteClient() {
     const shouldDelete = window.confirm(
-      `Supprimer le dossier de ${currentClient.firstName} ${currentClient.lastName} ? Cette action retire aussi les bilans et les suivis lies a ce client.`
+      `Supprimer le dossier de ${currentClient.firstName} ${currentClient.lastName} ? Cette action retire aussi les bilans et les suivis liés à ce client.`
     );
 
     if (!shouldDelete) {
@@ -135,14 +135,14 @@ export function ClientDetailPage() {
           ? weightLossPlan.isAchieved
             ? `Cible ${latestQuestionnaire.targetWeight} kg atteinte`
             : `${weightLossPlan.remainingKg} kg restants`
-          : "Repere de suivi",
+          : "Repère de suivi",
       previousDelta: previousDelta.weight,
       initialDelta: Number((latestBodyScan.weight - firstAssessment.bodyScan.weight).toFixed(1)),
       suffix: " kg",
       inverseGood: true
     },
     {
-      label: "Graisse viscerale",
+      label: "Graisse viscérale",
       primary: `${latestBodyScan.visceralFat}`,
       secondary: "Indice actuel",
       previousDelta: previousDelta.visceralFat,
@@ -151,7 +151,7 @@ export function ClientDetailPage() {
       inverseGood: true
     },
     {
-      label: "Age metabolique",
+      label: "Âge métabolique",
       primary: `${latestBodyScan.metabolicAge} ans`,
       secondary: `Age reel ${client.age} ans`,
       previousDelta: previousDelta.metabolicAge,
@@ -217,13 +217,13 @@ export function ClientDetailPage() {
                   <span className="block text-[11px] font-medium text-emerald-200/70">
                     Action rapide
                   </span>
-                  <span className="block">Demarrer le body scan</span>
+                  <span className="block">Démarrer le body scan</span>
                 </span>
               </Link>
 
               <div className="flex flex-wrap gap-2">
               <StatusBadge
-                label={client.started ? "Programme demarre" : "A demarrer"}
+                label={client.started ? "Programme démarré" : "À démarrer"}
                 tone={client.started ? "green" : "amber"}
               />
               <StatusBadge
@@ -234,8 +234,8 @@ export function ClientDetailPage() {
                 <StatusBadge
                   label={
                     recommendationsContacted
-                      ? `${recommendationCount} recommendations contactees`
-                      : `${recommendationCount} recommendations a contacter`
+                      ? `${recommendationCount} recommandations contactées`
+                      : `${recommendationCount} recommandations à contacter`
                   }
                   tone={recommendationsContacted ? "green" : "amber"}
                 />
@@ -246,7 +246,7 @@ export function ClientDetailPage() {
 
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             <MetricTile
-              label="Poids de depart"
+              label="Poids de départ"
               value={`${firstAssessment.bodyScan.weight} kg`}
               hint={`Depuis le ${formatDate(firstAssessment.date)}`}
               accent="blue"
@@ -254,7 +254,7 @@ export function ClientDetailPage() {
             <MetricTile
               label="Poids du jour"
               value={`${latestBodyScan.weight} kg`}
-              hint={`Releve du ${formatDate(latestAssessment.date)}`}
+              hint={`Relevé du ${formatDate(latestAssessment.date)}`}
               accent="green"
             />
             <MetricTile
@@ -263,12 +263,12 @@ export function ClientDetailPage() {
                 client.objective === "weight-loss"
                   ? latestQuestionnaire.targetWeight
                     ? `${latestQuestionnaire.targetWeight} kg`
-                    : "A definir"
+                    : "À définir"
                   : latestQuestionnaire.objectiveFocus || "Prise de masse"
               }
               hint={
                 client.objective === "weight-loss"
-                  ? "Repere cible"
+                  ? "Repère cible"
                   : "Cap actuel"
               }
               accent="red"
@@ -276,7 +276,7 @@ export function ClientDetailPage() {
             <MetricTile
               label="Prochain rendez-vous"
               value={formatDateTime(activeFollowUp.dueDate)}
-              hint="Suite deja posee"
+              hint="Suite déjà posée"
               accent="blue"
             />
           </div>
@@ -293,7 +293,7 @@ export function ClientDetailPage() {
 
           <BodyScanSnapshotCard
             title="Dernier body scan"
-            dateLabel={`Releve du ${formatDate(latestAssessment.date)}`}
+            dateLabel={`Relevé du ${formatDate(latestAssessment.date)}`}
             metrics={latestBodyScan}
           />
 
@@ -341,8 +341,8 @@ export function ClientDetailPage() {
           <div className="space-y-4 rounded-[26px] bg-slate-950/28 p-5">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <p className="eyebrow-label">Ecarts et evolution</p>
-                <p className="mt-3 text-2xl text-white">Ce qui a bouge</p>
+                <p className="eyebrow-label">Écarts et évolution</p>
+                <p className="mt-3 text-2xl text-white">Ce qui a bougé</p>
               </div>
               <StatusBadge
                 label={previousAssessment ? "Comparaison active" : "Premier bilan"}
@@ -366,25 +366,25 @@ export function ClientDetailPage() {
             </div>
             <div className="grid gap-3">
               <SummaryFocusCard
-                label="Objectif reformule"
+                label="Objectif reformulé"
                 value={latestQuestionnaire.objectiveFocus || (client.objective === "sport" ? "Prise de masse" : "Perte de poids")}
               />
-              <SummaryFocusCard label="Age" value={`${client.age} ans`} />
+              <SummaryFocusCard label="Âge" value={`${client.age} ans`} />
               <SummaryFocusCard label="Taille" value={`${client.height} cm`} />
             </div>
             <div className="grid gap-3">
-              <SummaryRow label="Statut" value={client.started ? "Routine demarree" : "Mise en place a lancer"} />
+              <SummaryRow label="Statut" value={client.started ? "Routine démarrée" : "Mise en place à lancer"} />
               {recommendationCount ? (
                 <SummaryStatusRow
                   label="Recommandations"
                   badgeLabel={
-                    recommendationsContacted ? "Contactees" : "A contacter"
+                    recommendationsContacted ? "Contactées" : "À contacter"
                   }
                   tone={recommendationsContacted ? "green" : "amber"}
                   detail={`${recommendationCount} nom${recommendationCount > 1 ? "s" : ""}`}
                 />
               ) : null}
-              <SummaryRow label="Repere proteines" value={proteinRange} />
+              <SummaryRow label="Repère protéines" value={proteinRange} />
               <SummaryRow label="Hydratation cible" value={`${waterNeed} L`} />
               <SummaryRow label="Note du moment" value={latestAssessment.notes} />
             </div>
@@ -411,7 +411,7 @@ export function ClientDetailPage() {
               />
               <LinkButton
                 to={`/clients/${client.id}/start-assessment/edit`}
-                label="Modifier le bilan de depart"
+                label="Modifier le bilan de départ"
                 hint="Corriger la date et les valeurs de reference"
               />
               <LinkButton
@@ -432,7 +432,7 @@ export function ClientDetailPage() {
               {canDeleteClient && (
                 <DangerActionButton
                   label="Supprimer ce dossier"
-                  hint="Retirer ce client, ses bilans et ses suivis lies"
+                  hint="Retirer ce client, ses bilans et ses suivis liés"
                   onClick={handleDeleteClient}
                 />
               )}
@@ -441,15 +441,15 @@ export function ClientDetailPage() {
 
           <Card className="space-y-4">
             <div>
-              <p className="eyebrow-label">Reperes du moment</p>
-              <p className="mt-3 text-2xl text-white">A reformuler simplement</p>
+              <p className="eyebrow-label">Repères du moment</p>
+              <p className="mt-3 text-2xl text-white">À reformuler simplement</p>
             </div>
             <div className="grid gap-2">
               <QuickInfo
-                text={`Petit-dejeuner : ${latestQuestionnaire.breakfastFrequency} - ${latestQuestionnaire.breakfastContent}`}
+                text={`Petit-déjeuner : ${latestQuestionnaire.breakfastFrequency} - ${latestQuestionnaire.breakfastContent}`}
               />
-              <QuickInfo text={`Proteines : ${latestQuestionnaire.proteinEachMeal} - repere actuel ${proteinRange}`} />
-              <QuickInfo text={`Hydratation : ${latestQuestionnaire.waterIntake} L / jour pour un besoin estime a ${waterNeed} L`} />
+              <QuickInfo text={`Protéines : ${latestQuestionnaire.proteinEachMeal} - repère actuel ${proteinRange}`} />
+              <QuickInfo text={`Hydratation : ${latestQuestionnaire.waterIntake} L / jour pour un besoin estimé à ${waterNeed} L`} />
               <QuickInfo text={`Lecture corporelle : ${latestMusclePercent} % de masse musculaire et ${latestBonePercent} % de masse osseuse`} />
               <QuickInfo text={`Motivation : ${latestQuestionnaire.motivation}/10`} />
             </div>
@@ -561,22 +561,22 @@ function StartingPointOverviewCard({
     <div className="rounded-[28px] bg-[linear-gradient(180deg,rgba(15,23,42,0.28),rgba(15,23,42,0.52))] p-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="eyebrow-label">Repere de depart</p>
-          <p className="mt-3 text-2xl text-white">Depart vs aujourd'hui</p>
+          <p className="eyebrow-label">Repère de départ</p>
+          <p className="mt-3 text-2xl text-white">Départ vs aujourd'hui</p>
           <p className="mt-2 text-sm leading-6 text-slate-300">
-            Ce bloc aide a relire tout de suite l&apos;evolution depuis le premier bilan.
+            Ce bloc aide à relire tout de suite l&apos;évolution depuis le premier bilan.
           </p>
         </div>
         <div className={`rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-sm font-medium ${weightTone}`}>
-          {weightDelta === 0 ? "Poids stable" : `${weightDelta > 0 ? "+" : ""}${weightDelta} kg depuis le depart`}
+          {weightDelta === 0 ? "Poids stable" : `${weightDelta > 0 ? "+" : ""}${weightDelta} kg depuis le départ`}
         </div>
       </div>
 
       <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <OverviewMetricCard label="Depart" value={`${startWeight} kg`} note={formatDate(startDate)} tone="blue" />
+        <OverviewMetricCard label="Départ" value={`${startWeight} kg`} note={formatDate(startDate)} tone="blue" />
         <OverviewMetricCard label="Aujourd'hui" value={`${currentWeight} kg`} note={formatDate(currentDate)} tone="green" highlighted />
         <OverviewMetricCard
-          label="Graisse de depart"
+          label="Graisse de départ"
           value={`${startBodyFat} %`}
           note="Premier body scan"
           tone="slate"
@@ -587,7 +587,7 @@ function StartingPointOverviewCard({
           note={
             bodyFatDelta === 0
               ? "Stable"
-              : `${bodyFatDelta > 0 ? "+" : ""}${bodyFatDelta} pt depuis le depart`
+              : `${bodyFatDelta > 0 ? "+" : ""}${bodyFatDelta} pt depuis le départ`
           }
           tone="slate"
         />

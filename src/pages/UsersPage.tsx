@@ -69,7 +69,7 @@ export function UsersPage() {
 
     setError("");
     setSuccess(
-      `Acces cree pour ${name.trim()} avec l'identifiant ${email.trim().toLowerCase()}.`
+      `Accès créé pour ${name.trim()} avec l'identifiant ${email.trim().toLowerCase()}.`
     );
     resetForm();
   }
@@ -79,10 +79,10 @@ export function UsersPage() {
       const result = await importLocalBusinessData();
       setImportStatus(
         result.imported
-          ? `${result.imported} dossier(s) importe(s) dans la base distante.`
+          ? `${result.imported} dossier(s) importé(s) dans la base distante.`
           : result.skipped
-            ? `Aucun nouveau dossier importe. ${result.skipped} deja present(s).`
-            : "Aucune donnee locale a importer."
+            ? `Aucun nouveau dossier importé. ${result.skipped} déjà présent(s).`
+            : "Aucune donnée locale à importer."
       );
     } catch (importError) {
       setImportStatus(
@@ -97,12 +97,12 @@ export function UsersPage() {
     <div className="space-y-6">
       <PageHeading
         eyebrow="Utilisateurs"
-        title="Acces equipe"
-        description="Creer, activer et suivre les acces admin et distributeur."
+        title="Accès équipe"
+        description="Créer, activer et suivre les accès admin et distributeur."
       />
 
       <div className="grid gap-4 lg:grid-cols-4">
-        <StatCard label="Acces actifs" value={userStats.active} />
+        <StatCard label="Accès actifs" value={userStats.active} />
         <StatCard label="Total comptes" value={userStats.total} />
         <StatCard label="Admins" value={userStats.admins} />
         <StatCard label="Distributeurs" value={userStats.distributors} />
@@ -111,17 +111,17 @@ export function UsersPage() {
       <div className="grid gap-4 xl:grid-cols-[0.95fr_1.05fr]">
         <Card className="space-y-5">
           <div>
-            <p className="eyebrow-label">Creer un acces</p>
-            <h2 className="mt-3 text-3xl">Nouveau compte equipe</h2>
+            <p className="eyebrow-label">Créer un accès</p>
+            <h2 className="mt-3 text-3xl">Nouveau compte équipe</h2>
             <p className="mt-3 text-sm leading-7 text-slate-300">
               L&apos;email devient l&apos;identifiant de connexion. Le mot de passe saisi ici sert
-              de mot de passe provisoire pour cette premiere version connectee.
+              de mot de passe provisoire pour cette première version connectée.
             </p>
           </div>
 
           <form className="space-y-4" onSubmit={handleSubmit}>
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-300">Nom affiche</label>
+              <label className="text-sm font-medium text-slate-300">Nom affiché</label>
               <input
                 value={name}
                 onChange={(event) => setName(event.target.value)}
@@ -141,7 +141,7 @@ export function UsersPage() {
 
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-300">Role</label>
+                <label className="text-sm font-medium text-slate-300">Rôle</label>
                 <select
                   value={role}
                   onChange={(event) => setRole(event.target.value as "admin" | "distributor")}
@@ -171,7 +171,7 @@ export function UsersPage() {
                 onChange={(event) => setActive(event.target.checked)}
                 className="h-4 w-4"
               />
-              Compte actif des sa creation
+              Compte actif dès sa création
             </label>
 
             {error ? (
@@ -185,30 +185,30 @@ export function UsersPage() {
               </div>
             ) : null}
 
-            <Button className="w-full">Creer cet acces</Button>
+            <Button className="w-full">Créer cet accès</Button>
           </form>
         </Card>
 
         <Card className="space-y-5">
           <div>
-            <p className="eyebrow-label">Repere de fonctionnement</p>
-            <h2 className="mt-3 text-3xl">Le parcours est deja pose</h2>
+            <p className="eyebrow-label">Repère de fonctionnement</p>
+            <h2 className="mt-3 text-3xl">Le parcours est déjà posé</h2>
           </div>
 
           <div className="space-y-3">
             <StepCard
               index="01"
-              title="Tu crees le compte"
-              text="Nom, email, role et statut actif suffisent pour ouvrir un acces."
+              title="Tu crées le compte"
+              text="Nom, email, rôle et statut actif suffisent pour ouvrir un accès."
             />
             <StepCard
               index="02"
               title="L'email devient l'identifiant"
-              text="On garde une logique simple : pas de pseudo separe, seulement un email pro."
+              text="On garde une logique simple : pas de pseudo séparé, seulement un email pro."
             />
             <StepCard
               index="03"
-              title="Le role definit le perimetre"
+              title="Le rôle définit le périmètre"
               text="Un distributeur ne voit que ses clients. Un admin voit l'ensemble."
             />
           </div>
@@ -218,7 +218,7 @@ export function UsersPage() {
               <div className="surface-soft rounded-[24px] p-4">
                 <p className="text-sm font-semibold text-white">Mode local actuel</p>
                 <p className="mt-2 text-sm leading-7 text-slate-400">
-                  Les acces sont encore enregistres localement dans le navigateur pour la beta.
+                  Les accès sont encore enregistrés localement dans le navigateur pour la bêta.
                 </p>
               </div>
 
@@ -227,12 +227,12 @@ export function UsersPage() {
                   <div>
                     <p className="text-sm font-semibold text-white">Nettoyage beta</p>
                     <p className="mt-2 text-sm leading-7 text-slate-300">
-                      Repars sur les acces par defaut et ferme la session actuelle pour retrouver
+                      Repars sur les accès par défaut et ferme la session actuelle pour retrouver
                       une base locale propre.
                     </p>
                   </div>
                   <Button variant="secondary" onClick={resetAccessData}>
-                    Reinitialiser les acces
+                    Réinitialiser les accès
                   </Button>
                 </div>
               </div>
@@ -257,7 +257,7 @@ export function UsersPage() {
               <div className="rounded-[24px] bg-emerald-400/10 p-4">
                 <p className="text-sm font-semibold text-white">Base distante active</p>
                 <p className="mt-2 text-sm leading-7 text-slate-300">
-                  Les acces et les dossiers sont maintenant penses pour une vraie base partagee.
+                  Les accès et les dossiers sont maintenant pensés pour une vraie base partagée.
                 </p>
               </div>
 
@@ -341,7 +341,7 @@ function UserAccessCard({
         </div>
         <p className="text-sm text-slate-400">{user.email}</p>
         <p className="text-xs text-slate-500">
-          Cree le {user.createdAt ? formatDate(user.createdAt) : "Date non renseignee"}
+          Créé le {user.createdAt ? formatDate(user.createdAt) : "Date non renseignée"}
         </p>
       </div>
 
@@ -353,9 +353,9 @@ function UserAccessCard({
           </p>
         </div>
         <div className="rounded-[18px] bg-slate-950/24 px-3 py-3">
-          <span className="text-slate-500">Perimetre</span>
+          <span className="text-slate-500">Périmètre</span>
           <p className="mt-1 font-medium text-white">
-            {user.role === "admin" ? "Tous les clients" : "Clients attribues"}
+            {user.role === "admin" ? "Tous les clients" : "Clients attribués"}
           </p>
         </div>
       </div>
@@ -368,7 +368,7 @@ function UserAccessCard({
           Voir portefeuille
         </Link>
         <Button variant="secondary" onClick={onToggleStatus}>
-          {user.active ? "Desactiver" : "Reactiver"}
+          {user.active ? "Désactiver" : "Réactiver"}
         </Button>
       </div>
     </div>

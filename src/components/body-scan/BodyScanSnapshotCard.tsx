@@ -48,9 +48,9 @@ export function BodyScanSnapshotCard({
       secondary: `${bonePercent} % du poids`,
       tone: "blue" as const
     },
-    { label: "Graisse viscerale", primary: `${metrics.visceralFat}`, tone: "red" as const },
+    { label: "Graisse viscérale", primary: `${metrics.visceralFat}`, tone: "red" as const },
     { label: "BMR", primary: `${metrics.bmr} kcal`, tone: "green" as const },
-    { label: "Age metabolique", primary: `${metrics.metabolicAge} ans`, tone: "amber" as const }
+    { label: "Âge métabolique", primary: `${metrics.metabolicAge} ans`, tone: "amber" as const }
   ];
 
   return (

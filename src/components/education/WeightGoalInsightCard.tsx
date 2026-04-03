@@ -34,7 +34,7 @@ export function WeightGoalInsightCard({
           />
           <PedagogicalMetricCard
             label="Poids cible"
-            value={plan.targetWeight == null ? "A definir" : `${plan.targetWeight} kg`}
+            value={plan.targetWeight == null ? "À définir" : `${plan.targetWeight} kg`}
             accent="green"
           />
           <PedagogicalMetricCard

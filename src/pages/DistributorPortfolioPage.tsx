@@ -43,7 +43,7 @@ export function DistributorPortfolioPage() {
   if (!isAuthorized) {
     return (
       <Card>
-        <p className="text-lg text-white">Ce portefeuille n&apos;est pas accessible avec cet acces.</p>
+        <p className="text-lg text-white">Ce portefeuille n&apos;est pas accessible avec cet accès.</p>
       </Card>
     );
   }
@@ -121,7 +121,7 @@ export function DistributorPortfolioPage() {
               />
               {pendingRecommendationClients ? (
                 <StatusBadge
-                  label={`${pendingRecommendationClients} recos a contacter`}
+                  label={`${pendingRecommendationClients} recos à contacter`}
                   tone="amber"
                 />
               ) : null}
@@ -132,19 +132,19 @@ export function DistributorPortfolioPage() {
             <MetricTile
               label="Clients suivis"
               value={portfolioMetrics.clients.length}
-              hint="Dossiers attribues"
+              hint="Dossiers attribués"
               accent="blue"
             />
             <MetricTile
               label="Rendez-vous"
               value={portfolioMetrics.scheduledFollowUps.length}
-              hint="Suivis planifies"
+              hint="Suivis planifiés"
               accent="green"
             />
             <MetricTile
               label="Relances"
               value={portfolioMetrics.relanceFollowUps.length}
-              hint="A reprendre"
+              hint="À reprendre"
               accent="red"
             />
           </div>
@@ -167,13 +167,13 @@ export function DistributorPortfolioPage() {
 
         <div className="grid gap-4">
           <FollowUpPanel
-            title="Rendez-vous a venir"
+            title="Rendez-vous à venir"
             tone="green"
-            emptyLabel="Aucun rendez-vous planifie pour le moment"
+            emptyLabel="Aucun rendez-vous planifié pour le moment"
             items={portfolioMetrics.scheduledFollowUps.slice(0, 5)}
           />
           <FollowUpPanel
-            title="Relances a reprendre"
+            title="Relances à reprendre"
             tone="amber"
             emptyLabel="Aucune relance en attente"
             items={portfolioMetrics.relanceFollowUps.slice(0, 5)}
@@ -212,7 +212,7 @@ export function DistributorPortfolioPage() {
           </div>
 
           <div className="surface-soft rounded-[24px] px-5 py-4">
-            <p className="eyebrow-label">Resultats</p>
+            <p className="eyebrow-label">Résultats</p>
             <p className="mt-2 text-3xl font-semibold text-white">{filteredClients.length}</p>
           </div>
         </div>
@@ -258,26 +258,26 @@ export function DistributorPortfolioPage() {
                               <StatusBadge
                                 label={
                                   recommendationsContacted
-                                    ? "Recommandations contactees"
-                                    : "Recommandations a contacter"
+                                    ? "Recommandations contactées"
+                                    : "Recommandations à contacter"
                                 }
                                 tone={recommendationsContacted ? "green" : "amber"}
                               />
                             ) : null}
                           </div>
                           <p className="text-sm text-slate-400">
-                            {client.city ?? "Ville non renseignee"} - {client.currentProgram}
+                            {client.city ?? "Ville non renseignée"} - {client.currentProgram}
                           </p>
                           {firstAssessment.questionnaire.referredByName ? (
                             <p className="text-sm text-sky-100/80">
-                              Invite par {firstAssessment.questionnaire.referredByName}
+                              Invité par {firstAssessment.questionnaire.referredByName}
                             </p>
                           ) : null}
                           <p className="text-sm leading-6 text-slate-400">{client.notes}</p>
                         </div>
 
                         <div className="grid gap-3 md:grid-cols-2">
-                          <PortfolioFact label="Demarrage" value={client.startDate ? formatDate(client.startDate) : "En cours de lancement"} />
+                          <PortfolioFact label="Démarrage" value={client.startDate ? formatDate(client.startDate) : "En cours de lancement"} />
                           <PortfolioFact label="Prochain suivi" value={formatDateTime(activeFollowUp.dueDate)} />
                         </div>
 
@@ -286,7 +286,7 @@ export function DistributorPortfolioPage() {
                           <p className="mt-1">Objectif : {client.objective === "sport" ? "Sport" : "Perte de poids"}</p>
                           {recommendationCount ? (
                             <p className="mt-1">
-                              Recos : {recommendationCount} - {recommendationsContacted ? "contactees" : "a reprendre"}
+                              Recos : {recommendationCount} - {recommendationsContacted ? "contactées" : "à reprendre"}
                             </p>
                           ) : null}
                         </div>
@@ -332,7 +332,7 @@ function FollowUpPanel({
     <Card className="space-y-4">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <p className="eyebrow-label">Priorites</p>
+          <p className="eyebrow-label">Priorités</p>
           <h2 className="mt-3 text-2xl text-white">{title}</h2>
         </div>
         <StatusBadge label={`${items.length} visibles`} tone={tone} />
@@ -352,12 +352,12 @@ function FollowUpPanel({
                   <p className="mt-1 text-sm text-slate-400">{followUp.type}</p>
                 </div>
                 <StatusBadge
-                  label={followUp.status === "scheduled" ? "Planifie" : "Relance"}
+                  label={followUp.status === "scheduled" ? "Planifié" : "Relance"}
                   tone={followUp.status === "scheduled" ? "green" : "amber"}
                 />
               </div>
               <p className="mt-4 text-sm text-slate-300">
-                Echeance {formatDateTime(followUp.dueDate)}
+                Échéance {formatDateTime(followUp.dueDate)}
               </p>
             </Link>
           ))

@@ -17,7 +17,7 @@ export function EditInitialAssessmentPage() {
   if (!client) {
     return (
       <Card>
-        <p className="text-lg text-white">Client introuvable ou acces indisponible.</p>
+        <p className="text-lg text-white">Client introuvable ou accès indisponible.</p>
       </Card>
     );
   }
@@ -65,7 +65,7 @@ export function EditInitialAssessmentPage() {
       notes,
       summary:
         initialAssessment.summary ||
-        "Bilan de depart ajuste pour garder un point de reference propre.",
+        "Bilan de départ ajusté pour garder un point de référence propre.",
       bodyScan: {
         weight,
         bodyFat,
@@ -93,7 +93,7 @@ export function EditInitialAssessmentPage() {
       setError(
         saveError instanceof Error
           ? saveError.message
-          : "Impossible de modifier le bilan de depart."
+          : "Impossible de modifier le bilan de départ."
       );
     } finally {
       setIsSaving(false);
@@ -103,9 +103,9 @@ export function EditInitialAssessmentPage() {
   return (
     <div className="space-y-6">
       <PageHeading
-        eyebrow="Bilan de depart"
-        title={`Modifier le point de depart de ${targetClient.firstName} ${targetClient.lastName}`}
-        description="Ici, tu corriges le bilan initial pour garder un vrai repere de progression propre dans le dossier client."
+        eyebrow="Bilan de départ"
+        title={`Modifier le point de départ de ${targetClient.firstName} ${targetClient.lastName}`}
+        description="Ici, tu corriges le bilan initial pour garder un vrai repère de progression propre dans le dossier client."
       />
 
       <div className="grid gap-4 xl:grid-cols-[1.05fr_0.95fr]">
@@ -113,45 +113,45 @@ export function EditInitialAssessmentPage() {
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <p className="text-xs uppercase tracking-[0.25em] text-slate-500">Base historique</p>
-              <p className="mt-2 text-2xl text-white">Les valeurs de depart qui servent de reference</p>
+              <p className="mt-2 text-2xl text-white">Les valeurs de départ qui servent de référence</p>
             </div>
             <StatusBadge label={targetClient.currentProgram} tone="blue" />
           </div>
 
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-            <MetricField label="Date et heure du bilan de depart" type="datetime-local" value={assessmentDate} onChange={setAssessmentDate} />
+            <MetricField label="Date et heure du bilan de départ" type="datetime-local" value={assessmentDate} onChange={setAssessmentDate} />
             <MetricField label="Poids (kg)" value={weight} onChange={(value) => setWeight(Number(value))} />
             <MetricField label="Masse grasse (%)" value={bodyFat} onChange={(value) => setBodyFat(Number(value))} />
             <MetricField label="Masse musculaire (kg)" value={muscleMass} onChange={(value) => setMuscleMass(Number(value))} />
             <MetricField label="Hydratation (%)" value={hydration} onChange={(value) => setHydration(Number(value))} />
             <MetricField label="Masse osseuse (kg)" value={boneMass} onChange={(value) => setBoneMass(Number(value))} />
-            <MetricField label="Graisse viscerale" value={visceralFat} onChange={(value) => setVisceralFat(Number(value))} />
+            <MetricField label="Graisse viscérale" value={visceralFat} onChange={(value) => setVisceralFat(Number(value))} />
             <MetricField label="BMR (kcal)" value={bmr} onChange={(value) => setBmr(Number(value))} />
-            <MetricField label="Age metabolique" value={metabolicAge} onChange={(value) => setMetabolicAge(Number(value))} />
+            <MetricField label="Âge métabolique" value={metabolicAge} onChange={(value) => setMetabolicAge(Number(value))} />
           </div>
 
           <div className="grid gap-4 md:grid-cols-2">
-            <TextField label="Objectif reformule" value={objectiveFocus} onChange={setObjectiveFocus} />
-            <TextField label="Invite par" value={referredByName} onChange={setReferredByName} />
+            <TextField label="Objectif reformulé" value={objectiveFocus} onChange={setObjectiveFocus} />
+            <TextField label="Invité par" value={referredByName} onChange={setReferredByName} />
             <MetricField
               label="Poids cible (kg)"
               value={targetWeight}
               onChange={(value) => setTargetWeight(Number(value))}
             />
-            <TextField label="Horizon / delai" value={desiredTimeline} onChange={setDesiredTimeline} />
+            <TextField label="Horizon / délai" value={desiredTimeline} onChange={setDesiredTimeline} />
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium text-slate-300">Note du bilan de depart</label>
+            <label className="text-sm font-medium text-slate-300">Note du bilan de départ</label>
             <textarea rows={5} value={notes} onChange={(event) => setNotes(event.target.value)} />
           </div>
 
           {initialAssessment.questionnaire.recommendations.length ? (
             <label className="flex items-center justify-between gap-3 rounded-[22px] border border-white/10 bg-white/[0.03] px-4 py-4">
               <div>
-                <p className="text-sm font-medium text-white">Recommandations contactees</p>
+                <p className="text-sm font-medium text-white">Recommandations contactées</p>
                 <p className="mt-1 text-sm text-slate-400">
-                  A cocher une fois les recommandations de ce bilan reprises.
+                  À cocher une fois les recommandations de ce bilan reprises.
                 </p>
               </div>
               <input
@@ -174,24 +174,24 @@ export function EditInitialAssessmentPage() {
               Annuler
             </Button>
             <Button onClick={() => void handleSave()} disabled={isSaving}>
-              {isSaving ? "Enregistrement..." : "Enregistrer le bilan de depart"}
+              {isSaving ? "Enregistrement..." : "Enregistrer le bilan de départ"}
             </Button>
           </div>
         </Card>
 
         <Card className="space-y-4">
-          <p className="text-xs uppercase tracking-[0.25em] text-slate-500">A retenir</p>
+          <p className="text-xs uppercase tracking-[0.25em] text-slate-500">À retenir</p>
           <InfoCard
             title="Ce que tu modifies ici"
-            text="Ce formulaire sert a corriger le point de depart : date, body scan, cible et note initiale."
+            text="Ce formulaire sert à corriger le point de départ : date, body scan, cible et note initiale."
           />
           <InfoCard
             title="Ce que cela change"
-            text="La fiche client relira ensuite correctement le poids de depart, la graisse de depart et les evolutions."
+            text="La fiche client relira ensuite correctement le poids de départ, la graisse de départ et les évolutions."
           />
           <InfoCard
             title="Ce que cela ne touche pas"
-            text="Les suivis deja saisis restent en place. On corrige seulement la base de reference."
+            text="Les suivis déjà saisis restent en place. On corrige seulement la base de référence."
           />
         </Card>
       </div>
