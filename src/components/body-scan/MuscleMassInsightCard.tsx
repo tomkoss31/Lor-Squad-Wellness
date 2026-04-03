@@ -2,11 +2,11 @@ import {
   estimateMuscleMassKg,
   estimateMuscleMassPercent
 } from "../../lib/calculations";
-import { DeltaBadge } from "./DeltaBadge";
 import {
   PedagogicalMetricCard,
   PedagogicalSection
 } from "../education/PedagogicalSection";
+import { MetricTrendPanel } from "./MetricTrendPanel";
 
 type MuscleUnit = "kg" | "percent";
 
@@ -20,12 +20,14 @@ interface MuscleMassInsightCardProps {
   current: MuscleMassReference;
   previous?: MuscleMassReference | null;
   initial?: MuscleMassReference | null;
+  history?: Array<(MuscleMassReference & { date: string; label?: string })>;
 }
 
 export function MuscleMassInsightCard({
   current,
   previous = null,
-  initial = null
+  initial = null,
+  history = []
 }: MuscleMassInsightCardProps) {
   const currentMetrics = normalizeMuscleMass(current);
   const previousMetrics = previous ? normalizeMuscleMass(previous) : null;
@@ -40,11 +42,21 @@ export function MuscleMassInsightCard({
   const initialPercentDelta =
     initialMetrics == null ? 0 : round(currentMetrics.percent - initialMetrics.percent);
 
+  const trendPoints = history.slice(-3).map((entry) => {
+    const normalized = normalizeMuscleMass(entry);
+    return {
+      date: entry.date,
+      label: entry.label,
+      value: normalized.percent,
+      secondary: `${normalized.kg} kg de masse musculaire`
+    };
+  });
+
   return (
     <PedagogicalSection
       eyebrow="Lecture body scan"
       title="Masse musculaire"
-      subtitle="Lecture musculaire en kilos et en pourcentage du poids actuel."
+      subtitle="Lecture musculaire plus concrete pour voir si la base tient dans le temps."
       statusLabel={`${currentMetrics.kg} kg`}
       statusTone="green"
       metrics={
@@ -60,27 +72,41 @@ export function MuscleMassInsightCard({
             accent="green"
           />
 
-          <div className="md:col-span-2 xl:col-span-3 rounded-[24px] border border-white/10 bg-white/[0.03] p-4">
-            <div className="flex items-center justify-between gap-3">
-              <p className="text-sm font-semibold text-white">Écarts lisibles</p>
-              <p className="text-xs uppercase tracking-[0.18em] text-slate-500">Suivi</p>
-            </div>
+          {trendPoints.length ? (
+            <MetricTrendPanel
+              title="3 derniers releves"
+              subtitle="Masse musculaire recente, pour montrer si la tenue reste bonne."
+              unitLabel="Masse musculaire en %"
+              points={trendPoints}
+              gradientId="muscle-mass-line"
+              gradientFrom="#34d399"
+              gradientTo="#bef264"
+              accentClass="border-emerald-300/18 bg-emerald-400/[0.08]"
+              valueSuffix="%"
+            />
+          ) : (
+            <div className="md:col-span-2 xl:col-span-3 rounded-[24px] border border-white/10 bg-white/[0.03] p-4">
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-sm font-semibold text-white">Ecarts lisibles</p>
+                <p className="text-xs uppercase tracking-[0.18em] text-slate-500">Suivi</p>
+              </div>
 
-            <div className="mt-4 grid gap-3 xl:grid-cols-2">
-              <DeltaPanel
-                title="Vs bilan precedent"
-                kgDelta={previousKgDelta}
-                percentDelta={previousPercentDelta}
-                enabled={previousMetrics != null}
-              />
-              <DeltaPanel
-                title="Vs premier bilan"
-                kgDelta={initialKgDelta}
-                percentDelta={initialPercentDelta}
-                enabled={initialMetrics != null}
-              />
+              <div className="mt-4 grid gap-3 xl:grid-cols-2">
+                <DeltaPanel
+                  title="Vs bilan precedent"
+                  kgDelta={previousKgDelta}
+                  percentDelta={previousPercentDelta}
+                  enabled={previousMetrics != null}
+                />
+                <DeltaPanel
+                  title="Vs premier bilan"
+                  kgDelta={initialKgDelta}
+                  percentDelta={initialPercentDelta}
+                  enabled={initialMetrics != null}
+                />
+              </div>
             </div>
-          </div>
+          )}
         </>
       }
     />
@@ -104,14 +130,32 @@ function DeltaPanel({
       <div className="mt-4 grid gap-3">
         <div className="flex items-center justify-between gap-3">
           <span className="text-sm text-slate-400">Variation en kg</span>
-          <DeltaBadge value={enabled ? kgDelta : 0} suffix=" kg" />
+          <DeltaValue value={enabled ? kgDelta : 0} suffix=" kg" />
         </div>
         <div className="flex items-center justify-between gap-3">
           <span className="text-sm text-slate-400">Variation en %</span>
-          <DeltaBadge value={enabled ? percentDelta : 0} suffix=" %" />
+          <DeltaValue value={enabled ? percentDelta : 0} suffix=" %" />
         </div>
       </div>
     </div>
+  );
+}
+
+function DeltaValue({ value, suffix }: { value: number; suffix: string }) {
+  const sign = value > 0 ? "+" : "";
+  const tone =
+    value === 0
+      ? "bg-white/[0.05] text-slate-200"
+      : value > 0
+        ? "bg-emerald-400/[0.12] text-emerald-200"
+        : "bg-rose-400/[0.12] text-rose-200";
+
+  return (
+    <span className={`rounded-full px-3 py-1 text-sm font-semibold ${tone}`}>
+      {sign}
+      {value}
+      {suffix}
+    </span>
   );
 }
 

@@ -49,9 +49,14 @@ export function NewFollowUpPage() {
     normalizeDateTimeLocalInputValue(targetClient.nextFollowUp)
   );
   const [followUpType, setFollowUpType] = useState("Suivi terrain");
-  const [energyCheck, setEnergyCheck] = useState("Ca roule bien");
-  const [routineCheck, setRoutineCheck] = useState("Plutot cale");
-  const [engagementCheck, setEngagementCheck] = useState("Prete pour la suite");
+  const [energyCheck, setEnergyCheck] = useState("Correct");
+  const [hungerCheck, setHungerCheck] = useState("Plus régulière");
+  const [quantityCheck, setQuantityCheck] = useState("Un peu mieux");
+  const [digestionCheck, setDigestionCheck] = useState("Plutôt correct");
+  const [bloatingCheck, setBloatingCheck] = useState("Un peu parfois");
+  const [mealPrepCheck, setMealPrepCheck] = useState("Plutôt gérable");
+  const [mealRoutineCheck, setMealRoutineCheck] = useState("Un peu");
+  const [hydrationCheck, setHydrationCheck] = useState("Correcte");
   const [easyWin, setEasyWin] = useState("");
   const [attentionPoint, setAttentionPoint] = useState("");
   const [recommendationsContacted, setRecommendationsContacted] = useState(
@@ -66,11 +71,18 @@ export function NewFollowUpPage() {
   );
   const weightLossPace = getWeightLossPaceInsight(weightLossPlan);
   const weightDeltaFromStart = Number((bodyScan.weight - first.bodyScan.weight).toFixed(1));
-  const followUpSummary = `${energyCheck} • ${routineCheck} • ${engagementCheck}`;
+  const followUpSummary = `${energyCheck} • ${hungerCheck} • ${digestionCheck}`;
   const followUpNotes = [
-    `Check-in : ${energyCheck}, ${routineCheck}, ${engagementCheck}.`,
-    easyWin.trim() ? `Point positif : ${easyWin.trim()}.` : "",
-    attentionPoint.trim() ? `Point a travailler : ${attentionPoint.trim()}.` : "",
+    `Énergie : ${energyCheck}.`,
+    `Faim et satiété : ${hungerCheck}.`,
+    `Gestion des quantités : ${quantityCheck}.`,
+    `Digestion : ${digestionCheck}.`,
+    `Ballonnements : ${bloatingCheck}.`,
+    `Préparation des repas : ${mealPrepCheck}.`,
+    `Gestion des repas : ${mealRoutineCheck}.`,
+    `Hydratation : ${hydrationCheck}.`,
+    easyWin.trim() ? `Point simple : ${easyWin.trim()}.` : "",
+    attentionPoint.trim() ? `Point à relancer : ${attentionPoint.trim()}.` : "",
     "Le client repart avec des repères simples et une suite déjà fixée."
   ]
     .filter(Boolean)
@@ -111,7 +123,7 @@ export function NewFollowUpPage() {
       <PageHeading
         eyebrow="Nouveau suivi"
         title={`Suivi de ${targetClient.firstName} ${targetClient.lastName}`}
-        description="On prend la temperature du moment, on refait le point, puis on passe a la balance."
+        description="On ouvre d'abord un check-in concret sur le quotidien, puis on passe à la balance."
       />
 
       <div className="grid gap-4 xl:grid-cols-[1.05fr_0.95fr]">
@@ -119,10 +131,10 @@ export function NewFollowUpPage() {
           <Card className="space-y-5">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
-                <p className="eyebrow-label">Check-in suivi</p>
-                <p className="mt-3 text-3xl text-white">Avant de passer a la balance</p>
+                <p className="eyebrow-label">Check-in bien-être & nutrition</p>
+                <p className="mt-3 text-3xl text-white">Avant la balance</p>
                 <p className="mt-2 text-sm leading-6 text-slate-300">
-                  Quelques questions simples pour sentir ou en est la personne avant de reprendre les mesures.
+                  Avant la balance, on fait un point rapide sur l&apos;énergie, la faim, la digestion et la gestion des repas depuis le dernier rendez-vous.
                 </p>
               </div>
               <StatusBadge label="Suivi" tone="blue" />
@@ -130,36 +142,66 @@ export function NewFollowUpPage() {
 
             <div className="grid gap-6">
               <FollowUpChoiceGroup
-                label="Depuis le dernier rendez-vous, comment elle se sent ?"
+                label="Niveau d’énergie depuis le dernier point ?"
                 value={energyCheck}
-                options={["Ca roule bien", "Plutot bien", "Un peu en dents de scie", "On relance doucement"]}
+                options={["Plus stable", "Correct", "En dents de scie", "Plus faible"]}
                 onChange={setEnergyCheck}
               />
               <FollowUpChoiceGroup
-                label="Dans la vraie vie, comment le cadre a tenu ?"
-                value={routineCheck}
-                options={["Plutot cale", "Ca va par moments", "Trop irregulier", "On reprend simple"]}
-                onChange={setRoutineCheck}
+                label="Côté faim, tu te sens comment ?"
+                value={hungerCheck}
+                options={["Mieux calée", "Plus régulière", "Encore des fringales", "Faim difficile à gérer"]}
+                onChange={setHungerCheck}
               />
               <FollowUpChoiceGroup
-                label="Et aujourd'hui, comment tu sens la suite ?"
-                value={engagementCheck}
-                options={["Prete pour la suite", "A rassurer", "A recadrer", "A remotiver"]}
-                onChange={setEngagementCheck}
+                label="Tu as l’impression de mieux gérer les quantités ?"
+                value={quantityCheck}
+                options={["Oui clairement", "Un peu mieux", "Pas de vrai changement", "Toujours difficile"]}
+                onChange={setQuantityCheck}
+              />
+              <FollowUpChoiceGroup
+                label="Côté digestion, ça se passe comment ?"
+                value={digestionCheck}
+                options={["Bien", "Plutôt correct", "Quelques gênes", "Plus compliqué"]}
+                onChange={setDigestionCheck}
+              />
+              <FollowUpChoiceGroup
+                label="Tu as eu des ballonnements ou un inconfort digestif ?"
+                value={bloatingCheck}
+                options={["Non", "Un peu parfois", "Assez souvent", "Oui régulièrement"]}
+                onChange={setBloatingCheck}
+              />
+              <FollowUpChoiceGroup
+                label="La préparation des repas, ça a été comment ?"
+                value={mealPrepCheck}
+                options={["Facile à tenir", "Plutôt gérable", "Par moments compliqué", "Trop difficile à suivre"]}
+                onChange={setMealPrepCheck}
+              />
+              <FollowUpChoiceGroup
+                label="Tu trouves que tu gères mieux tes repas qu’au début ?"
+                value={mealRoutineCheck}
+                options={["Oui", "Un peu", "Pas encore", "C’est encore irrégulier"]}
+                onChange={setMealRoutineCheck}
+              />
+              <FollowUpChoiceGroup
+                label="L’hydratation sur la journée, ça a donné quoi ?"
+                value={hydrationCheck}
+                options={["Plus régulière", "Correcte", "À relancer", "Très irrégulière"]}
+                onChange={setHydrationCheck}
               />
 
               <div className="grid gap-4 md:grid-cols-2">
                 <FollowUpTextField
-                  label="Ce qui a ete le plus simple"
+                  label="Ce qui a été le plus simple"
                   value={easyWin}
                   onChange={setEasyWin}
-                  placeholder="Une habitude qui a bien pris, une sensation positive..."
+                  placeholder="Une habitude qui a bien pris, une sensation positive, un point encourageant…"
                 />
                 <FollowUpTextField
                   label="Ce qui bloque encore"
                   value={attentionPoint}
                   onChange={setAttentionPoint}
-                  placeholder="Le point a surveiller, relancer ou simplifier..."
+                  placeholder="Le point à surveiller, relancer ou simplifier…"
                 />
               </div>
             </div>
@@ -170,7 +212,7 @@ export function NewFollowUpPage() {
               <div>
                 <p className="text-sm text-slate-400">
                   Dernier bilan {formatDate(latest.date)}
-                  {previous && ` - precedent ${formatDate(previous.date)}`}
+                  {previous && ` - précédent ${formatDate(previous.date)}`}
                 </p>
                 <p className="mt-2 text-3xl text-white">{targetClient.currentProgram}</p>
               </div>
@@ -180,10 +222,10 @@ export function NewFollowUpPage() {
             <div className="rounded-[24px] border border-emerald-400/20 bg-emerald-400/[0.06] p-5">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
-                  <p className="eyebrow-label text-emerald-200/70">Nouveau releve</p>
+                  <p className="eyebrow-label text-emerald-200/70">Nouveau relevé</p>
                   <p className="mt-3 text-2xl text-white">Nouvelles valeurs body scan</p>
                   <p className="mt-2 text-sm leading-6 text-slate-300">
-                    Saisir les chiffres du jour puis relire les ecarts.
+                    Saisir les chiffres du jour puis relire les écarts.
                   </p>
                 </div>
                 <StatusBadge label="Saisie rapide" tone="green" />
@@ -269,6 +311,19 @@ export function NewFollowUpPage() {
               current={{ weight: bodyScan.weight, muscleMass: bodyScan.muscleMass }}
               previous={{ weight: latest.bodyScan.weight, muscleMass: latest.bodyScan.muscleMass }}
               initial={{ weight: first.bodyScan.weight, muscleMass: first.bodyScan.muscleMass }}
+              history={[
+                ...targetClient.assessments.map((assessment) => ({
+                  date: assessment.date,
+                  weight: assessment.bodyScan.weight,
+                  muscleMass: assessment.bodyScan.muscleMass
+                })),
+                {
+                  date: assessmentDate,
+                  weight: bodyScan.weight,
+                  muscleMass: bodyScan.muscleMass,
+                  label: "Aujourd'hui"
+                }
+              ]}
             />
 
             {targetClient.objective === "weight-loss" ? (
@@ -276,6 +331,17 @@ export function NewFollowUpPage() {
                 currentWeight={bodyScan.weight}
                 targetWeight={latest.questionnaire.targetWeight}
                 timeline={latest.questionnaire.desiredTimeline}
+                history={[
+                  ...targetClient.assessments.map((assessment) => ({
+                    date: assessment.date,
+                    weight: assessment.bodyScan.weight
+                  })),
+                  {
+                    date: assessmentDate,
+                    weight: bodyScan.weight,
+                    label: "Aujourd'hui"
+                  }
+                ]}
               />
             ) : null}
           </Card>
@@ -293,18 +359,31 @@ export function NewFollowUpPage() {
 
             <div className="grid gap-4">
               <CompactWeightPanel label="Poids de départ" value={`${first.bodyScan.weight} kg`} />
-              <CompactWeightPanel label="Dernier releve" value={`${latest.bodyScan.weight} kg`} />
+              <CompactWeightPanel label="Dernier relevé" value={`${latest.bodyScan.weight} kg`} />
               <div className="rounded-[22px] border border-white/10 bg-white/[0.03] px-5 py-4">
-                <p className="text-[12px] font-medium text-slate-400">Ecart depuis depart</p>
+                <p className="text-[12px] font-medium text-slate-400">Écart depuis départ</p>
                 <div className="mt-3 flex items-center justify-between gap-3">
                   <p className="text-[2rem] font-semibold tracking-[-0.04em] text-white">
                     {weightDeltaFromStart > 0 ? "+" : ""}
                     {weightDeltaFromStart} kg
                   </p>
                   <StatusBadge
-                    label={weightDeltaFromStart <= 0 ? "Lecture positive" : "A recadrer"}
+                    label={weightDeltaFromStart <= 0 ? "Lecture positive" : "À recadrer"}
                     tone={weightDeltaFromStart <= 0 ? "green" : "amber"}
                   />
+                </div>
+              </div>
+              <div className="rounded-[22px] border border-white/10 bg-white/[0.03] px-5 py-4">
+                <p className="text-[12px] font-medium text-slate-400">À repérer avant la balance</p>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {["Énergie", "Faim", "Digestion", "Régularité repas"].map((item) => (
+                    <span
+                      key={item}
+                      className="inline-flex min-h-[38px] items-center rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-[13px] font-medium text-slate-200"
+                    >
+                      {item}
+                    </span>
+                  ))}
                 </div>
               </div>
             </div>
@@ -350,7 +429,7 @@ export function NewFollowUpPage() {
             ) : null}
             <div className="rounded-[22px] bg-white/[0.03] px-4 py-4">
               <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-slate-500">
-                Synthese automatique
+                Synthèse automatique
               </p>
               <p className="mt-3 text-sm leading-6 text-slate-200">{followUpSummary}</p>
               {targetClient.objective === "weight-loss" ? (

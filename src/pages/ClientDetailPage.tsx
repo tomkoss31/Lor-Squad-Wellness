@@ -6,7 +6,7 @@ import {
 import { BodyFatInsightCard } from "../components/body-scan/BodyFatInsightCard";
 import { MuscleMassInsightCard } from "../components/body-scan/MuscleMassInsightCard";
 import { BodyScanSnapshotCard } from "../components/body-scan/BodyScanSnapshotCard";
-import { HydrationInsightCard } from "../components/education/HydrationInsightCard";
+import { HydrationVisceralInsightCard } from "../components/body-scan/HydrationVisceralInsightCard";
 import { WeightGoalInsightCard } from "../components/education/WeightGoalInsightCard";
 import { EvolutionChart } from "../components/body-scan/EvolutionChart";
 import { HistoryTimeline } from "../components/client/HistoryTimeline";
@@ -333,12 +333,16 @@ export function ClientDetailPage() {
               weight: firstAssessment.bodyScan.weight,
               muscleMass: firstAssessment.bodyScan.muscleMass
             }}
+            history={client.assessments.map((assessment) => ({
+              date: assessment.date,
+              weight: assessment.bodyScan.weight,
+              muscleMass: assessment.bodyScan.muscleMass
+            }))}
           />
 
-          <HydrationInsightCard
+          <HydrationVisceralInsightCard
             weight={latestBodyScan.weight}
             hydrationPercent={latestBodyScan.hydration}
-            waterIntake={latestQuestionnaire.waterIntake}
             sex={client.sex}
             visceralFat={latestBodyScan.visceralFat}
           />
@@ -400,6 +404,10 @@ export function ClientDetailPage() {
               currentWeight={latestBodyScan.weight}
               targetWeight={latestQuestionnaire.targetWeight}
               timeline={latestQuestionnaire.desiredTimeline}
+              history={client.assessments.map((assessment) => ({
+                date: assessment.date,
+                weight: assessment.bodyScan.weight
+              }))}
             />
           )}
 

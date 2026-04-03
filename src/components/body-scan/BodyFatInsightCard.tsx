@@ -233,8 +233,8 @@ function BodyFatProgressChart({
 }: {
   points: Array<{ date: string; label?: string; percent: number; kg: number }>;
 }) {
-  const max = Math.max(...points.map((point) => point.percent), 1);
-  const min = Math.min(...points.map((point) => point.percent), max);
+  const max = Math.max(...points.map((point) => point.kg), 1);
+  const min = Math.min(...points.map((point) => point.kg), max);
   const range = Math.max(max - min, 1);
   const width = 320;
   const height = 116;
@@ -249,7 +249,7 @@ function BodyFatProgressChart({
     const y =
       height -
       paddingY -
-      ((point.percent - min) / range) * (height - paddingY * 2);
+      ((point.kg - min) / range) * (height - paddingY * 2);
 
     return { ...point, x, y };
   });
@@ -257,6 +257,7 @@ function BodyFatProgressChart({
   const path = coordinates
     .map((point, index) => `${index === 0 ? "M" : "L"} ${point.x} ${point.y}`)
     .join(" ");
+  const guideValues = [max, round(min + range / 2), min];
 
   return (
     <div className="mt-4 rounded-[22px] border border-white/8 bg-slate-950/28 p-4">
@@ -264,7 +265,7 @@ function BodyFatProgressChart({
         <p className="text-xs font-medium uppercase tracking-[0.16em] text-slate-500">
           Courbe recente
         </p>
-        <p className="text-xs text-slate-400">Masse grasse en %</p>
+        <p className="text-xs text-slate-400">Masse grasse en kg</p>
       </div>
 
       <div className="mt-4">
@@ -275,6 +276,32 @@ function BodyFatProgressChart({
               <stop offset="100%" stopColor="#fdba74" />
             </linearGradient>
           </defs>
+          {guideValues.map((value, index) => {
+            const y =
+              height - paddingY - ((value - min) / range) * (height - paddingY * 2);
+
+            return (
+              <g key={`guide-${value}-${index}`}>
+                <line
+                  x1={paddingX}
+                  x2={width - paddingX}
+                  y1={y}
+                  y2={y}
+                  stroke="rgba(148,163,184,0.18)"
+                  strokeDasharray="4 6"
+                />
+                <text
+                  x={4}
+                  y={y + 4}
+                  fill="rgba(148,163,184,0.7)"
+                  fontSize="10"
+                  fontWeight="500"
+                >
+                  {value} kg
+                </text>
+              </g>
+            );
+          })}
           <path
             d={path}
             fill="none"
@@ -284,15 +311,26 @@ function BodyFatProgressChart({
             strokeLinejoin="round"
           />
           {coordinates.map((point, index) => (
-            <circle
-              key={`${point.date}-${index}`}
-              cx={point.x}
-              cy={point.y}
-              r="5"
-              fill="#0f172a"
-              stroke="#ffffff"
-              strokeWidth="2"
-            />
+            <g key={`${point.date}-${index}`}>
+              <circle
+                cx={point.x}
+                cy={point.y}
+                r="5"
+                fill="#0f172a"
+                stroke="#ffffff"
+                strokeWidth="2"
+              />
+              <text
+                x={point.x}
+                y={point.y - 10}
+                textAnchor="middle"
+                fill="rgba(255,255,255,0.92)"
+                fontSize="10"
+                fontWeight="600"
+              >
+                {point.kg} kg
+              </text>
+            </g>
           ))}
         </svg>
       </div>
@@ -326,8 +364,8 @@ function HistoryReadingCard({
       </p>
       {dateLabel ? <p className="mt-1 text-xs text-slate-400">{dateLabel}</p> : null}
       <div className="mt-4">
-        <p className="text-[2rem] font-semibold tracking-[-0.04em] text-white">{percent} %</p>
-        <p className="mt-1 text-sm text-slate-400">{kg} kg estimes</p>
+        <p className="text-[2rem] font-semibold tracking-[-0.04em] text-white">{kg} kg</p>
+        <p className="mt-1 text-sm text-slate-400">{percent} % de masse grasse</p>
       </div>
     </div>
   );
