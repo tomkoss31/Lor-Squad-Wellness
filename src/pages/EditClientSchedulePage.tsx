@@ -5,35 +5,12 @@ import { Card } from "../components/ui/Card";
 import { PageHeading } from "../components/ui/PageHeading";
 import { StatusBadge } from "../components/ui/StatusBadge";
 import { useAppContext } from "../context/AppContext";
-import { formatDateTime } from "../lib/calculations";
+import {
+  formatDateTime,
+  normalizeDateTimeLocalInputValue,
+  serializeDateTimeForStorage
+} from "../lib/calculations";
 import { getClientActiveFollowUp } from "../lib/portfolio";
-
-function padDatePart(value: number) {
-  return String(value).padStart(2, "0");
-}
-
-function toDateInputValue(date: Date) {
-  return `${date.getFullYear()}-${padDatePart(date.getMonth() + 1)}-${padDatePart(date.getDate())}`;
-}
-
-function toDateTimeLocalValue(date: Date) {
-  return `${toDateInputValue(date)}T${padDatePart(date.getHours())}:${padDatePart(date.getMinutes())}`;
-}
-
-function normalizeDateTimeLocalValue(value: string | undefined) {
-  if (!value) {
-    const fallback = new Date();
-    fallback.setDate(fallback.getDate() + 7);
-    fallback.setHours(10, 0, 0, 0);
-    return toDateTimeLocalValue(fallback);
-  }
-
-  if (value.includes("T")) {
-    return value.slice(0, 16);
-  }
-
-  return `${value}T10:00`;
-}
 
 export function EditClientSchedulePage() {
   const { clientId } = useParams();
@@ -57,7 +34,7 @@ export function EditClientSchedulePage() {
   );
 
   const [nextFollowUp, setNextFollowUp] = useState(
-    normalizeDateTimeLocalValue(currentFollowUp?.dueDate ?? targetClient.nextFollowUp)
+    normalizeDateTimeLocalInputValue(currentFollowUp?.dueDate ?? targetClient.nextFollowUp)
   );
   const [followUpType, setFollowUpType] = useState(currentFollowUp?.type ?? "Suivi terrain");
   const [isSaving, setIsSaving] = useState(false);
@@ -69,7 +46,7 @@ export function EditClientSchedulePage() {
 
     try {
       await updateClientSchedule(targetClient.id, {
-        nextFollowUp,
+        nextFollowUp: serializeDateTimeForStorage(nextFollowUp),
         followUpType,
         followUpStatus: currentFollowUp?.status ?? "scheduled"
       });

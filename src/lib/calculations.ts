@@ -8,6 +8,16 @@ import type {
   WeightLossPlan
 } from "../types/domain";
 
+const timePattern = /(?:T|\s)\d{2}:\d{2}/;
+
+function padDatePart(value: number) {
+  return String(value).padStart(2, "0");
+}
+
+function toLocalDateTimeInputValue(date: Date) {
+  return `${date.getFullYear()}-${padDatePart(date.getMonth() + 1)}-${padDatePart(date.getDate())}T${padDatePart(date.getHours())}:${padDatePart(date.getMinutes())}`;
+}
+
 export function calculateWaterNeed(weight: number): number {
   if (!weight || weight <= 0) {
     return 0;
@@ -44,7 +54,7 @@ export function formatDateTime(input: string): string {
     return input;
   }
 
-  const hasTime = /T\d{2}:\d{2}/.test(input);
+  const hasTime = timePattern.test(input);
 
   return new Intl.DateTimeFormat("fr-FR", {
     day: "2-digit",
@@ -57,6 +67,44 @@ export function formatDateTime(input: string): string {
         }
       : {})
   }).format(date);
+}
+
+export function normalizeDateTimeLocalInputValue(
+  value: string | undefined,
+  fallbackDate?: Date
+) {
+  if (!value) {
+    return toLocalDateTimeInputValue(fallbackDate ?? new Date());
+  }
+
+  const parsed = new Date(value);
+  if (!Number.isNaN(parsed.getTime()) && timePattern.test(value)) {
+    return toLocalDateTimeInputValue(parsed);
+  }
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return `${value}T09:00`;
+  }
+
+  return value.includes("T") ? value.slice(0, 16) : value;
+}
+
+export function serializeDateTimeForStorage(value: string, fallbackHour = 9) {
+  if (!value) {
+    return value;
+  }
+
+  if (/([zZ]|[+-]\d{2}:\d{2})$/.test(value)) {
+    return value;
+  }
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    const parsed = new Date(`${value}T${String(fallbackHour).padStart(2, "0")}:00`);
+    return Number.isNaN(parsed.getTime()) ? value : parsed.toISOString();
+  }
+
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? value : parsed.toISOString();
 }
 
 export function estimateBodyFatKg(weight: number, bodyFatPercent: number): number {

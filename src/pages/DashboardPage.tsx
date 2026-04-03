@@ -328,5 +328,5 @@ function formatDashboardDateTime(input: string) {
 }
 
 function normalizeFollowUpDateTime(input: string) {
-  return /T\d{2}:\d{2}/.test(input) ? input : `${input}T09:00`;
+  return /(?:T|\s)\d{2}:\d{2}/.test(input) ? input : `${input}T09:00`;
 }

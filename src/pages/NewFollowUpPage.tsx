@@ -19,37 +19,12 @@ import {
   getFirstAssessment,
   getLatestAssessment,
   getPreviousAssessment,
+  normalizeDateTimeLocalInputValue,
+  serializeDateTimeForStorage,
   getWeightLossPaceInsight,
   getWeightLossPlan
 } from "../lib/calculations";
 import type { AssessmentQuestionnaire, AssessmentRecord, BodyScanMetrics } from "../types/domain";
-
-function padDatePart(value: number) {
-  return String(value).padStart(2, "0");
-}
-
-function toDateInputValue(date: Date) {
-  return `${date.getFullYear()}-${padDatePart(date.getMonth() + 1)}-${padDatePart(date.getDate())}`;
-}
-
-function toDateTimeLocalValue(date: Date) {
-  return `${toDateInputValue(date)}T${padDatePart(date.getHours())}:${padDatePart(date.getMinutes())}`;
-}
-
-function normalizeDateTimeLocalValue(value: string | undefined) {
-  if (!value) {
-    const fallback = new Date();
-    fallback.setDate(fallback.getDate() + 14);
-    fallback.setHours(10, 0, 0, 0);
-    return toDateTimeLocalValue(fallback);
-  }
-
-  if (value.includes("T")) {
-    return value.slice(0, 16);
-  }
-
-  return `${value}T10:00`;
-}
 
 export function NewFollowUpPage() {
   const { clientId } = useParams();
@@ -77,8 +52,10 @@ export function NewFollowUpPage() {
   const [notes, setNotes] = useState(
     "Le client repart avec des reperes simples et une suite deja fixee."
   );
-  const [assessmentDate, setAssessmentDate] = useState(toDateTimeLocalValue(new Date()));
-  const [dueDate, setDueDate] = useState(normalizeDateTimeLocalValue(targetClient.nextFollowUp));
+  const [assessmentDate, setAssessmentDate] = useState(
+    normalizeDateTimeLocalInputValue(new Date().toISOString())
+  );
+  const [dueDate, setDueDate] = useState(normalizeDateTimeLocalInputValue(targetClient.nextFollowUp));
   const [followUpType, setFollowUpType] = useState("Suivi terrain");
   const [recommendationsContacted, setRecommendationsContacted] = useState(
     latest.questionnaire.recommendationsContacted ?? false
@@ -110,14 +87,14 @@ export function NewFollowUpPage() {
       programTitle: targetClient.currentProgram,
       summary,
       notes,
-      nextFollowUp: dueDate,
+      nextFollowUp: serializeDateTimeForStorage(dueDate),
       bodyScan,
       questionnaire: nextQuestionnaire,
       pedagogicalFocus: latest.pedagogicalFocus
     };
 
     await addFollowUpAssessment(targetClient.id, assessment, {
-      dueDate,
+      dueDate: serializeDateTimeForStorage(dueDate),
       type: followUpType,
       status: "scheduled"
     });

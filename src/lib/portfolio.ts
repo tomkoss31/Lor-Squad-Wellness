@@ -102,7 +102,7 @@ function compareByDateAsc(left: string, right: string) {
 }
 
 export function normalizeScheduleDateTime(input: string) {
-  return /T\d{2}:\d{2}/.test(input) ? input : `${input}T09:00`;
+  return /(?:T|\s)\d{2}:\d{2}/.test(input) ? input : `${input}T09:00`;
 }
 
 function getScheduleTimestamp(input: string) {

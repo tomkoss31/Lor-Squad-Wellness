@@ -5,32 +5,8 @@ import { Card } from "../components/ui/Card";
 import { PageHeading } from "../components/ui/PageHeading";
 import { StatusBadge } from "../components/ui/StatusBadge";
 import { useAppContext } from "../context/AppContext";
-import { getFirstAssessment } from "../lib/calculations";
+import { getFirstAssessment, normalizeDateTimeLocalInputValue } from "../lib/calculations";
 import type { AssessmentRecord } from "../types/domain";
-
-function padDatePart(value: number) {
-  return String(value).padStart(2, "0");
-}
-
-function toDateInputValue(date: Date) {
-  return `${date.getFullYear()}-${padDatePart(date.getMonth() + 1)}-${padDatePart(date.getDate())}`;
-}
-
-function toDateTimeLocalValue(date: Date) {
-  return `${toDateInputValue(date)}T${padDatePart(date.getHours())}:${padDatePart(date.getMinutes())}`;
-}
-
-function normalizeDateTimeLocalValue(value: string | undefined) {
-  if (!value) {
-    return toDateTimeLocalValue(new Date());
-  }
-
-  if (value.includes("T")) {
-    return value.slice(0, 16);
-  }
-
-  return `${value}T09:00`;
-}
 
 export function EditInitialAssessmentPage() {
   const { clientId } = useParams();
@@ -50,7 +26,7 @@ export function EditInitialAssessmentPage() {
   const initialAssessment = getFirstAssessment(targetClient);
 
   const [assessmentDate, setAssessmentDate] = useState(
-    normalizeDateTimeLocalValue(initialAssessment.date)
+    normalizeDateTimeLocalInputValue(initialAssessment.date)
   );
   const [weight, setWeight] = useState(initialAssessment.bodyScan.weight);
   const [bodyFat, setBodyFat] = useState(initialAssessment.bodyScan.bodyFat);
@@ -85,7 +61,7 @@ export function EditInitialAssessmentPage() {
 
     const updatedAssessment: AssessmentRecord = {
       ...initialAssessment,
-      date: assessmentDate || toDateTimeLocalValue(new Date()),
+      date: assessmentDate || normalizeDateTimeLocalInputValue(new Date().toISOString()),
       notes,
       summary:
         initialAssessment.summary ||

@@ -25,6 +25,8 @@ import {
   estimateHydrationKg,
   estimateMuscleMassPercent,
   formatDateTime,
+  normalizeDateTimeLocalInputValue,
+  serializeDateTimeForStorage,
   getWeightLossPaceInsight,
   getWeightLossPlan
 } from "../lib/calculations";
@@ -243,9 +245,8 @@ function readAssessmentDraft(): AssessmentDraftPayload | null {
       form: {
         ...initialForm,
         ...parsed.form,
-        assessmentDate: parsed.form.assessmentDate?.includes("T")
-          ? parsed.form.assessmentDate
-          : `${parsed.form.assessmentDate ?? initialForm.assessmentDate.slice(0, 10)}T09:00`,
+        assessmentDate: normalizeDateTimeLocalInputValue(parsed.form.assessmentDate),
+        nextFollowUp: normalizeDateTimeLocalInputValue(parsed.form.nextFollowUp ?? initialForm.nextFollowUp),
         recommendations: normalizeRecommendations(parsed.form.recommendations),
         recommendationsContacted: parsed.form.recommendationsContacted ?? false
       },
@@ -834,7 +835,10 @@ export function NewAssessmentPage() {
     }
 
     const assessmentDate = form.assessmentDate || getCurrentDateTimeValue();
-    const nextFollowUp = form.nextFollowUp || getDefaultNextFollowUpDateTime();
+    const nextFollowUp = serializeDateTimeForStorage(
+      form.nextFollowUp || getDefaultNextFollowUpDateTime(),
+      10
+    );
     const assessment = {
       id: `a-${Date.now()}`,
       date: assessmentDate,
