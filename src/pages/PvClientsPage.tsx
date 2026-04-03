@@ -39,6 +39,19 @@ export function PvClientsPage() {
       ),
     [records]
   );
+  const defaultResponsibleFilter = useMemo(() => {
+    if (!isAdmin) {
+      return "all";
+    }
+
+    const queryResponsible = searchParams.get("responsable");
+    if (queryResponsible) {
+      return queryResponsible;
+    }
+
+    const hasOwnClients = records.some((record) => record.responsibleId === currentUser.id);
+    return hasOwnClients ? currentUser.id : "all";
+  }, [currentUser.id, isAdmin, records, searchParams]);
   const filteredRecords = useMemo(() => {
     const normalizedSearch = search.trim().toLowerCase();
 
@@ -76,11 +89,27 @@ export function PvClientsPage() {
       left.responsibleName.localeCompare(right.responsibleName, "fr")
     );
   }, [filteredRecords]);
+  const visibleGroups = useMemo(() => {
+    if (!isAdmin || responsibleFilter === "all") {
+      return groupedRecords;
+    }
+
+    return groupedRecords.filter((group) => group.responsibleId === responsibleFilter);
+  }, [groupedRecords, isAdmin, responsibleFilter]);
 
   const selectedRecord =
     filteredRecords.find((record) => record.clientId === selectedClientId) ??
     filteredRecords[0] ??
     null;
+
+  useEffect(() => {
+    if (isAdmin && responsibleFilter === "all" && defaultResponsibleFilter !== "all") {
+      setResponsibleFilter(defaultResponsibleFilter);
+      const nextParams = new URLSearchParams(searchParams);
+      nextParams.set("responsable", defaultResponsibleFilter);
+      setSearchParams(nextParams, { replace: true });
+    }
+  }, [defaultResponsibleFilter, isAdmin, responsibleFilter, searchParams, setSearchParams]);
 
   useEffect(() => {
     const queryClientId = searchParams.get("client");
@@ -156,26 +185,37 @@ export function PvClientsPage() {
 
         {isAdmin ? (
           <div className="space-y-3">
-            <p className="text-sm font-medium text-slate-300">Par distributeur</p>
+            <p className="text-sm font-medium text-slate-300">Portefeuilles</p>
             <div className="flex flex-wrap gap-2">
-              <ResponsibleFilterChip
-                label="Tous"
-                count={records.length}
-                active={responsibleFilter === "all"}
-                onClick={() => handleResponsibleChange("all")}
-              />
+              {records.some((record) => record.responsibleId === currentUser.id) ? (
+                <ResponsibleFilterChip
+                  label="Mon portefeuille"
+                  count={records.filter((record) => record.responsibleId === currentUser.id).length}
+                  active={responsibleFilter === currentUser.id}
+                  onClick={() => handleResponsibleChange(currentUser.id)}
+                />
+              ) : null}
               {responsibleOptions.map((option) => {
+                if (option.id === currentUser.id) {
+                  return null;
+                }
                 const count = records.filter((record) => record.responsibleId === option.id).length;
                 return (
                   <ResponsibleFilterChip
                     key={option.id}
-                    label={option.name}
+                    label={formatPortfolioTabLabel(option.name)}
                     count={count}
                     active={responsibleFilter === option.id}
                     onClick={() => handleResponsibleChange(option.id)}
                   />
                 );
               })}
+              <ResponsibleFilterChip
+                label="Tous"
+                count={records.length}
+                active={responsibleFilter === "all"}
+                onClick={() => handleResponsibleChange("all")}
+              />
             </div>
           </div>
         ) : (
@@ -190,7 +230,7 @@ export function PvClientsPage() {
 
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1.05fr)_400px]">
         <div className="space-y-4">
-          {groupedRecords.map((group) => (
+          {visibleGroups.map((group) => (
             <section key={group.responsibleId} className="space-y-3">
               <div className="flex flex-wrap items-center justify-between gap-3 rounded-[22px] border border-white/8 bg-white/[0.03] px-5 py-4">
                 <div>
@@ -210,14 +250,16 @@ export function PvClientsPage() {
                   key={record.clientId}
                   onClick={() => handleSelectClient(record.clientId, group.responsibleId)}
                   className={`w-full rounded-[28px] text-left transition ${
-                    selectedRecord?.clientId === record.clientId ? "opacity-100" : "opacity-95 hover:opacity-100"
+                    selectedRecord?.clientId === record.clientId
+                      ? "opacity-100"
+                      : "opacity-95 hover:opacity-100"
                   }`}
                 >
                   <Card
                     className={`space-y-4 ${
                       selectedRecord?.clientId === record.clientId
-                        ? "border border-sky-300/18 bg-sky-400/[0.05]"
-                        : ""
+                        ? "border border-white/30 bg-white/[0.1] shadow-[0_0_0_1px_rgba(255,255,255,0.12),0_20px_55px_rgba(10,18,32,0.42)]"
+                        : "border border-white/8 bg-white/[0.03] hover:border-white/14 hover:bg-white/[0.055] hover:shadow-[0_0_0_1px_rgba(255,255,255,0.04),0_18px_40px_rgba(7,12,22,0.28)]"
                     }`}
                   >
                     <div className="flex flex-wrap items-start justify-between gap-3">
@@ -292,4 +334,9 @@ function ClientFact({ label, value }: { label: string; value: string }) {
       <p className="mt-2 text-sm font-semibold text-white">{value}</p>
     </div>
   );
+}
+
+function formatPortfolioTabLabel(name: string) {
+  const firstWord = name.trim().split(/\s+/)[0] ?? name;
+  return firstWord.length > 14 ? `${firstWord.slice(0, 14)}…` : firstWord;
 }

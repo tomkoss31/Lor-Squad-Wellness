@@ -147,6 +147,32 @@ export interface FollowUp {
   lastAssessmentDate: string;
 }
 
+export type ActivityLogAction =
+  | "user-created"
+  | "user-updated"
+  | "user-status-updated"
+  | "client-created"
+  | "client-reassigned"
+  | "client-deleted"
+  | "assessment-created"
+  | "assessment-updated"
+  | "schedule-updated";
+
+export interface ActivityLog {
+  id: string;
+  createdAt: string;
+  action: ActivityLogAction;
+  actorId: string;
+  actorName: string;
+  ownerUserId?: string;
+  clientId?: string;
+  clientName?: string;
+  targetUserId?: string;
+  targetUserName?: string;
+  summary: string;
+  detail?: string;
+}
+
 export interface Program {
   id: string;
   title: string;

@@ -371,23 +371,25 @@ export function ClientDetailPage() {
         </Card>
 
         <div className="space-y-4">
-          <Card className="space-y-4">
+          <Card className="space-y-3">
             <div className="flex items-center justify-between gap-3">
               <div>
                 <p className="eyebrow-label">Cap du moment</p>
-                <p className="mt-3 text-2xl text-white">Lecture rapide</p>
+                <p className="mt-2 text-xl text-white">Lecture rapide</p>
               </div>
               <StatusBadge label={client.currentProgram} tone="green" />
             </div>
-            <div className="grid gap-3">
+            <div className="grid gap-2.5 md:grid-cols-2">
+              <div className="md:col-span-2">
               <SummaryFocusCard
                 label="Objectif reformulé"
                 value={latestQuestionnaire.objectiveFocus || (client.objective === "sport" ? "Prise de masse" : "Perte de poids")}
               />
+              </div>
               <SummaryFocusCard label="Âge" value={`${client.age} ans`} />
               <SummaryFocusCard label="Taille" value={`${client.height} cm`} />
             </div>
-              <div className="grid gap-3">
+              <div className="grid gap-2.5">
                 <SummaryRow label="Statut" value={client.started ? "Routine démarrée" : "Mise en place à lancer"} />
                 {recommendationCount ? (
                   <SummaryStatusRow
@@ -410,6 +412,13 @@ export function ClientDetailPage() {
                     label="Point volume"
                     to={`/pv/clients?client=${client.id}`}
                     value="Ouvrir la fiche PV"
+                  />
+                ) : null}
+                {pvRecord ? (
+                  <SummaryLinkRow
+                    label="Commande / reassort"
+                    to={`/pv/orders?client=${client.id}&type=commande`}
+                    value="Ajouter un produit"
                   />
                 ) : null}
                 <SummaryRow label="Note du moment" value={latestAssessment.notes} />
@@ -573,11 +582,17 @@ function QuickInfo({ text }: { text: string }) {
   );
 }
 
-function SummaryFocusCard({ label, value }: { label: string; value: string }) {
+function SummaryFocusCard({
+  label,
+  value
+}: {
+  label: string;
+  value: string;
+}) {
   return (
-    <div className="rounded-[22px] bg-slate-950/24 px-4 py-4">
+    <div className="rounded-[20px] bg-slate-950/24 px-4 py-3.5">
       <p className="text-[11px] font-medium text-slate-500">{label}</p>
-      <p className="mt-3 text-lg font-semibold text-white">{value}</p>
+      <p className="mt-2.5 text-base font-semibold text-white">{value}</p>
     </div>
   );
 }

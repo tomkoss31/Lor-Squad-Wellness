@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { buildPvTrackingRecords, getPvStatusMeta } from "../data/mockPvModule";
 import { formatDate } from "../lib/calculations";
 import { Card } from "../components/ui/Card";
@@ -22,7 +22,8 @@ export function PvOverviewPage() {
     return null;
   }
 
-  const sourceClients = currentUser.role === "admin" ? clients : visibleClients;
+  const isAdmin = currentUser.role === "admin";
+  const sourceClients = isAdmin ? clients : visibleClients;
   const records = useMemo(
     () => buildPvTrackingRecords(sourceClients, pvTransactions, pvClientProducts),
     [pvClientProducts, pvTransactions, sourceClients]
@@ -34,6 +35,14 @@ export function PvOverviewPage() {
       ),
     [records]
   );
+  const defaultResponsibleFilter = useMemo(() => {
+    if (!isAdmin) {
+      return "all";
+    }
+
+    const hasOwnClients = records.some((record) => record.responsibleId === currentUser.id);
+    return hasOwnClients ? currentUser.id : "all";
+  }, [currentUser.id, isAdmin, records]);
   const programOptions = useMemo(
     () => [...new Set(records.map((record) => record.program))].sort((left, right) => left.localeCompare(right, "fr")),
     [records]
@@ -48,7 +57,7 @@ export function PvOverviewPage() {
         `${record.clientName} ${record.program} ${record.responsibleName}`.toLowerCase().includes(normalizedSearch);
       const matchesStatus = statusFilter === "all" || record.status === statusFilter;
       const matchesResponsible =
-        currentUser.role !== "admin" ||
+        !isAdmin ||
         responsibleFilter === "all" ||
         record.responsibleId === responsibleFilter;
       const matchesProgram = programFilter === "all" || record.program === programFilter;
@@ -62,7 +71,13 @@ export function PvOverviewPage() {
 
       return matchesSearch && matchesStatus && matchesResponsible && matchesProgram && matchesPeriod;
     });
-  }, [currentUser.role, periodFilter, programFilter, records, responsibleFilter, search, statusFilter]);
+  }, [isAdmin, periodFilter, programFilter, records, responsibleFilter, search, statusFilter]);
+
+  useEffect(() => {
+    if (isAdmin && responsibleFilter === "all" && defaultResponsibleFilter !== "all") {
+      setResponsibleFilter(defaultResponsibleFilter);
+    }
+  }, [defaultResponsibleFilter, isAdmin, responsibleFilter]);
 
   const selectedRecord =
     filteredRecords.find((record) => record.clientId === selectedClientId) ??
@@ -122,7 +137,7 @@ export function PvOverviewPage() {
             ]}
           />
 
-          {currentUser.role === "admin" ? (
+          {isAdmin ? (
             <ToolbarSelect
               label="Responsable"
               value={responsibleFilter}
@@ -158,6 +173,51 @@ export function PvOverviewPage() {
             />
           </div>
         </div>
+
+        {isAdmin ? (
+          <div className="space-y-3">
+            <p className="text-sm font-medium text-slate-300">Portefeuilles</p>
+            <div className="flex flex-wrap gap-2">
+              {records.some((record) => record.responsibleId === currentUser.id) ? (
+                <ResponsibleFilterChip
+                  label="Mon portefeuille"
+                  count={records.filter((record) => record.responsibleId === currentUser.id).length}
+                  active={responsibleFilter === currentUser.id}
+                  onClick={() => setResponsibleFilter(currentUser.id)}
+                />
+              ) : null}
+              {responsibleOptions.map((option) => {
+                if (option.id === currentUser.id) {
+                  return null;
+                }
+
+                const count = records.filter((record) => record.responsibleId === option.id).length;
+                return (
+                  <ResponsibleFilterChip
+                    key={option.id}
+                    label={formatPortfolioTabLabel(option.name)}
+                    count={count}
+                    active={responsibleFilter === option.id}
+                    onClick={() => setResponsibleFilter(option.id)}
+                  />
+                );
+              })}
+              <ResponsibleFilterChip
+                label="Tous"
+                count={records.length}
+                active={responsibleFilter === "all"}
+                onClick={() => setResponsibleFilter("all")}
+              />
+            </div>
+          </div>
+        ) : (
+          <div className="rounded-[22px] border border-white/8 bg-white/[0.03] px-5 py-4">
+            <p className="eyebrow-label">Vue personnelle</p>
+            <p className="mt-2 text-sm leading-6 text-slate-300">
+              Cette vue ne montre que les clients du distributeur connecte.
+            </p>
+          </div>
+        )}
       </Card>
 
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1.2fr)_380px]">
@@ -196,8 +256,8 @@ export function PvOverviewPage() {
                     key={record.clientId}
                     className={`grid grid-cols-[1.4fr_1fr_1fr_1fr_0.8fr_0.9fr_0.9fr_0.9fr_1fr_0.7fr] gap-3 rounded-[22px] border px-3 py-4 transition ${
                       isActive
-                        ? "border-sky-300/20 bg-sky-400/[0.06]"
-                        : "border-white/8 bg-white/[0.03]"
+                        ? "border-white/18 bg-white/[0.07] shadow-[0_0_0_1px_rgba(255,255,255,0.08),0_18px_45px_rgba(8,15,28,0.34)]"
+                        : "border-white/8 bg-white/[0.03] hover:border-white/12 hover:bg-white/[0.05] hover:shadow-[0_0_0_1px_rgba(255,255,255,0.03),0_16px_36px_rgba(7,12,22,0.26)]"
                     }`}
                   >
                     <div>
@@ -271,4 +331,36 @@ function ToolbarInfo({ label, value }: { label: string; value: string }) {
       </div>
     </div>
   );
+}
+
+function ResponsibleFilterChip({
+  label,
+  count,
+  active,
+  onClick
+}: {
+  label: string;
+  count: number;
+  active: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`inline-flex min-h-[40px] items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition ${
+        active
+          ? "border-sky-300/18 bg-sky-400/[0.14] text-white"
+          : "border-white/10 bg-white/[0.03] text-slate-300 hover:bg-white/[0.06]"
+      }`}
+    >
+      <span>{label}</span>
+      <span className="rounded-full bg-black/20 px-2 py-0.5 text-[11px]">{count}</span>
+    </button>
+  );
+}
+
+function formatPortfolioTabLabel(name: string) {
+  const firstWord = name.trim().split(/\s+/)[0] ?? name;
+  return firstWord.length > 14 ? `${firstWord.slice(0, 14)}…` : firstWord;
 }

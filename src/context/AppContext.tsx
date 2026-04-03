@@ -6,7 +6,11 @@ import {
   useState,
   type PropsWithChildren
 } from "react";
-import { buildSeedPvClientProductsForClient, resolvePvProgram } from "../data/mockPvModule";
+import {
+  buildSeedPvClientProductsForClient,
+  pvProductCatalog,
+  resolvePvProgram
+} from "../data/mockPvModule";
 import { mockPrograms } from "../data/mockPrograms";
 import { canAccessClient, getVisibleClients, getVisibleFollowUps } from "../lib/auth";
 import {
@@ -21,10 +25,12 @@ import {
 } from "../services/authService";
 import {
   clearStoredAppData,
+  getStoredActivityLogs,
   getStoredClients,
   getStoredFollowUps,
   getStoredPvClientProducts,
   getStoredPvTransactions,
+  persistActivityLogs,
   persistClients,
   persistFollowUps,
   persistPvClientProducts,
@@ -34,8 +40,10 @@ import { resolveStorageMode } from "../services/supabaseClient";
 import {
   addSupabaseFollowUpAssessment,
   createSupabaseClientWithInitialAssessment,
+  createSupabaseActivityLog,
   createSupabaseUserAccess,
   deleteSupabaseClient,
+  fetchSupabaseActivityLogs,
   fetchSupabaseClients,
   fetchSupabaseFollowUps,
   fetchSupabasePvClientProducts,
@@ -46,6 +54,7 @@ import {
   logoutFromSupabase,
   restoreSupabaseSession,
   addSupabasePvTransaction,
+  reassignSupabaseClientOwner,
   upsertSupabasePvClientProduct,
   updateSupabaseAssessment,
   updateSupabaseClientSchedule,
@@ -53,6 +62,7 @@ import {
   updateSupabaseUserStatus
 } from "../services/supabaseService";
 import type {
+  ActivityLog,
   AssessmentRecord,
   AuthSession,
   Client,
@@ -74,6 +84,7 @@ interface AppContextValue {
   visibleClients: Client[];
   followUps: FollowUp[];
   visibleFollowUps: FollowUp[];
+  activityLogs: ActivityLog[];
   pvClientProducts: PvClientProductRecord[];
   pvTransactions: PvClientTransaction[];
   programs: Program[];
@@ -126,6 +137,12 @@ interface AppContextValue {
       followUpStatus?: FollowUp["status"];
     }
   ) => Promise<void>;
+  reassignClientOwner: (
+    clientId: string,
+    payload: {
+      distributorId: string;
+    }
+  ) => Promise<void>;
   addPvTransaction: (transaction: PvClientTransaction) => Promise<void>;
   savePvClientProduct: (product: PvClientProductRecord) => Promise<void>;
 }
@@ -140,18 +157,27 @@ export function AppProvider({ children }: PropsWithChildren) {
   const [users, setUsers] = useState<User[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
   const [followUps, setFollowUps] = useState<FollowUp[]>([]);
+  const [activityLogs, setActivityLogs] = useState<ActivityLog[]>([]);
   const [pvClientProducts, setPvClientProducts] = useState<PvClientProductRecord[]>([]);
   const [pvTransactions, setPvTransactions] = useState<PvClientTransaction[]>([]);
 
   async function refreshRemoteData(activeUser?: User | null) {
     const nextUser = activeUser ?? currentUser;
     try {
-      const [nextClients, nextFollowUps, nextUsers, nextPvTransactions, nextPvClientProducts] = await Promise.all([
+      const [
+        nextClients,
+        nextFollowUps,
+        nextUsers,
+        nextPvTransactions,
+        nextPvClientProducts,
+        nextActivityLogs
+      ] = await Promise.all([
         fetchSupabaseClients(),
         fetchSupabaseFollowUps(),
         nextUser ? fetchSupabaseUsers() : Promise.resolve([] as User[]),
         fetchSupabasePvTransactions(),
-        fetchSupabasePvClientProducts()
+        fetchSupabasePvClientProducts(),
+        fetchSupabaseActivityLogs()
       ]);
 
       setClients(nextClients);
@@ -159,6 +185,7 @@ export function AppProvider({ children }: PropsWithChildren) {
       setUsers(nextUsers);
       setPvTransactions(nextPvTransactions);
       setPvClientProducts(nextPvClientProducts);
+      setActivityLogs(nextActivityLogs);
     } catch (error) {
       console.error("Impossible de recharger les donnees distantes.", error);
       setClients([]);
@@ -166,6 +193,7 @@ export function AppProvider({ children }: PropsWithChildren) {
       setUsers(nextUser ? [nextUser] : []);
       setPvTransactions([]);
       setPvClientProducts([]);
+      setActivityLogs([]);
     }
   }
 
@@ -178,6 +206,7 @@ export function AppProvider({ children }: PropsWithChildren) {
         setStorageMode(nextStorageMode);
 
         if (nextStorageMode === "supabase") {
+          setActivityLogs(getStoredActivityLogs());
           setPvClientProducts(getStoredPvClientProducts());
           setPvTransactions(getStoredPvTransactions());
           try {
@@ -192,6 +221,7 @@ export function AppProvider({ children }: PropsWithChildren) {
               setUsers([]);
               setClients([]);
               setFollowUps([]);
+              setActivityLogs([]);
               setPvClientProducts([]);
               setPvTransactions([]);
             }
@@ -202,6 +232,7 @@ export function AppProvider({ children }: PropsWithChildren) {
             setUsers([]);
             setClients([]);
             setFollowUps([]);
+            setActivityLogs([]);
             setPvClientProducts([]);
             setPvTransactions([]);
           }
@@ -211,6 +242,7 @@ export function AppProvider({ children }: PropsWithChildren) {
         setUsers(getStoredUsers());
         setClients(getStoredClients());
         setFollowUps(getStoredFollowUps());
+        setActivityLogs(getStoredActivityLogs());
         setPvClientProducts(getStoredPvClientProducts());
         setPvTransactions(getStoredPvTransactions());
 
@@ -229,6 +261,7 @@ export function AppProvider({ children }: PropsWithChildren) {
           setUsers([]);
           setClients([]);
           setFollowUps([]);
+          setActivityLogs(getStoredActivityLogs());
           setPvClientProducts(getStoredPvClientProducts());
           setPvTransactions(getStoredPvTransactions());
         } else {
@@ -236,6 +269,7 @@ export function AppProvider({ children }: PropsWithChildren) {
           setUsers(getStoredUsers());
           setClients(getStoredClients());
           setFollowUps(getStoredFollowUps());
+          setActivityLogs(getStoredActivityLogs());
           setPvClientProducts(getStoredPvClientProducts());
           setPvTransactions(getStoredPvTransactions());
         }
@@ -264,12 +298,48 @@ export function AppProvider({ children }: PropsWithChildren) {
   }, [followUps, storageMode]);
 
   useEffect(() => {
+    if (storageMode === "local") {
+      persistActivityLogs(activityLogs);
+    }
+  }, [activityLogs, storageMode]);
+
+  useEffect(() => {
     persistPvClientProducts(pvClientProducts);
   }, [pvClientProducts]);
 
   useEffect(() => {
     persistPvTransactions(pvTransactions);
   }, [pvTransactions]);
+
+  async function recordActivity(
+    payload: Omit<ActivityLog, "id" | "createdAt" | "actorId" | "actorName">,
+    actor = currentUser
+  ) {
+    if (!actor) {
+      return;
+    }
+
+    const nextEntry: ActivityLog = {
+      id: `activity-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      createdAt: new Date().toISOString(),
+      actorId: actor.id,
+      actorName: actor.name,
+      ...payload
+    };
+
+    if (storageMode === "supabase") {
+      try {
+        const createdEntry = await createSupabaseActivityLog(nextEntry);
+        setActivityLogs((previousLogs) => [createdEntry, ...previousLogs].slice(0, 120));
+        return;
+      } catch (error) {
+        console.error("Journal d'activite indisponible.", error);
+        return;
+      }
+    }
+
+    setActivityLogs((previousLogs) => [nextEntry, ...previousLogs].slice(0, 120));
+  }
 
   async function loginAs(userId: string) {
     const matchedUser = users.find((user) => user.id === userId);
@@ -363,6 +433,7 @@ export function AppProvider({ children }: PropsWithChildren) {
     setUsers(getStoredUsers());
     setClients(getStoredClients());
     setFollowUps(getStoredFollowUps());
+    setActivityLogs(getStoredActivityLogs());
     setPvClientProducts(getStoredPvClientProducts());
     setPvTransactions(getStoredPvTransactions());
   }
@@ -383,6 +454,12 @@ export function AppProvider({ children }: PropsWithChildren) {
         }
 
         await refreshRemoteData(currentUser);
+        await recordActivity({
+          action: "user-created",
+          targetUserName: payload.name.trim(),
+          summary: `${payload.name.trim()} rejoint l'equipe.`,
+          detail: `${payload.role === "admin" ? "Admin" : payload.role === "referent" ? "Referent" : "Distributeur"} cree depuis la page equipe.`
+        });
         return { ok: true };
       } catch (error) {
         console.error("Creation d'acces Supabase impossible.", error);
@@ -399,6 +476,12 @@ export function AppProvider({ children }: PropsWithChildren) {
     }
 
     setUsers(result.users);
+    await recordActivity({
+      action: "user-created",
+      targetUserName: payload.name.trim(),
+      summary: `${payload.name.trim()} rejoint l'equipe.`,
+      detail: `${payload.role === "admin" ? "Admin" : payload.role === "referent" ? "Referent" : "Distributeur"} cree en mode local.`
+    });
     return { ok: true };
   }
 
@@ -411,8 +494,17 @@ export function AppProvider({ children }: PropsWithChildren) {
   ) {
     if (storageMode === "supabase") {
       try {
+        const targetUser = users.find((user) => user.id === userId);
         await updateSupabaseUserAccess(userId, payload);
         await refreshRemoteData(currentUser);
+        await recordActivity({
+          action: "user-updated",
+          targetUserId: userId,
+          targetUserName: targetUser?.name,
+          ownerUserId: payload.role === "distributor" ? payload.sponsorId : userId,
+          summary: `Acces mis a jour pour ${targetUser?.name ?? "ce compte"}.`,
+          detail: `Role passe sur ${payload.role === "referent" ? "Referent" : payload.role === "admin" ? "Admin" : "Distributeur"}.`
+        });
         return { ok: true };
       } catch (error) {
         console.error("Mise a jour d'acces Supabase impossible.", error);
@@ -432,13 +524,31 @@ export function AppProvider({ children }: PropsWithChildren) {
     }
 
     setUsers(result.users);
+    const targetUser = result.users.find((user) => user.id === userId);
+    await recordActivity({
+      action: "user-updated",
+      targetUserId: userId,
+      targetUserName: targetUser?.name,
+      ownerUserId: payload.role === "distributor" ? payload.sponsorId : userId,
+      summary: `Acces mis a jour pour ${targetUser?.name ?? "ce compte"}.`,
+      detail: `Role passe sur ${payload.role === "referent" ? "Referent" : payload.role === "admin" ? "Admin" : "Distributeur"}.`
+    });
     return { ok: true };
   }
 
   async function updateUserStatus(userId: string, active: boolean) {
+    const targetUser = users.find((user) => user.id === userId);
     if (storageMode === "supabase") {
       await updateSupabaseUserStatus(userId, active);
       await refreshRemoteData(currentUser);
+      await recordActivity({
+        action: "user-status-updated",
+        targetUserId: userId,
+        targetUserName: targetUser?.name,
+        ownerUserId: userId,
+        summary: `${targetUser?.name ?? "Le compte"} est ${active ? "reactive" : "desactive"}.`,
+        detail: active ? "Le compte peut revenir sur la plateforme." : "Le compte n'a plus acces a l'application."
+      });
 
       if (currentUser?.id === userId && !active) {
         await logout();
@@ -452,6 +562,14 @@ export function AppProvider({ children }: PropsWithChildren) {
     }
 
     setUsers(result.users);
+    await recordActivity({
+      action: "user-status-updated",
+      targetUserId: userId,
+      targetUserName: targetUser?.name,
+      ownerUserId: userId,
+      summary: `${targetUser?.name ?? "Le compte"} est ${active ? "reactive" : "desactive"}.`,
+      detail: active ? "Le compte peut revenir sur la plateforme." : "Le compte n'a plus acces a l'application."
+    });
 
     if (currentUser?.id === userId && !active) {
       await logout();
@@ -477,6 +595,7 @@ export function AppProvider({ children }: PropsWithChildren) {
     const cleared = clearStoredAppData();
     setClients(cleared.clients);
     setFollowUps(cleared.followUps);
+    setActivityLogs([]);
     setPvClientProducts([]);
     setPvTransactions([]);
   }
@@ -538,8 +657,9 @@ export function AppProvider({ children }: PropsWithChildren) {
     const existingProduct = pvClientProducts.find(
       (item) => item.clientId === transaction.clientId && item.productId === transaction.productId
     );
+    const catalogProduct = pvProductCatalog.find((item) => item.id === transaction.productId);
 
-    upsertLocalPvClientProduct({
+    const syncedProduct: PvClientProductRecord = {
       id: existingProduct?.id ?? `pv-local-${Date.now()}-${transaction.productId}`,
       clientId: transaction.clientId,
       responsibleId: transaction.responsibleId,
@@ -549,17 +669,21 @@ export function AppProvider({ children }: PropsWithChildren) {
       productName: transaction.productName,
       quantityStart: transaction.quantity,
       startDate: transaction.date,
-      durationReferenceDays: existingProduct?.durationReferenceDays ?? 21,
+      durationReferenceDays:
+        existingProduct?.durationReferenceDays ?? catalogProduct?.dureeReferenceJours ?? 21,
       pvPerUnit:
         transaction.quantity > 0 ? Number((transaction.pv / transaction.quantity).toFixed(2)) : transaction.pv,
       pricePublicPerUnit:
         transaction.quantity > 0
           ? Number((transaction.price / transaction.quantity).toFixed(2))
           : transaction.price,
-      quantiteLabel: existingProduct?.quantiteLabel ?? "1 unite",
-      noteMetier: existingProduct?.noteMetier,
+      quantiteLabel: existingProduct?.quantiteLabel ?? catalogProduct?.quantiteLabel ?? "1 unite",
+      noteMetier: existingProduct?.noteMetier ?? catalogProduct?.noteMetier,
       active: true
-    });
+    };
+
+    upsertLocalPvClientProduct(syncedProduct);
+    return syncedProduct;
   }
 
   async function createClientWithInitialAssessment(payload: {
@@ -571,6 +695,16 @@ export function AppProvider({ children }: PropsWithChildren) {
     if (storageMode === "supabase") {
       const clientId = await createSupabaseClientWithInitialAssessment(payload);
       await refreshRemoteData(currentUser);
+      await recordActivity({
+        action: "client-created",
+        clientId,
+        clientName: `${payload.client.firstName} ${payload.client.lastName}`,
+        ownerUserId: payload.client.distributorId,
+        targetUserId: payload.client.distributorId,
+        targetUserName: payload.client.distributorName,
+        summary: `${payload.client.firstName} ${payload.client.lastName} entre dans la base.`,
+        detail: `Dossier ouvert sur ${payload.assessment.programTitle}.`
+      });
       return clientId;
     }
 
@@ -606,6 +740,16 @@ export function AppProvider({ children }: PropsWithChildren) {
       ...buildSeedPvClientProductsForClient(nextClient),
       ...previousProducts
     ]);
+    await recordActivity({
+      action: "client-created",
+      clientId,
+      clientName: `${nextClient.firstName} ${nextClient.lastName}`,
+      ownerUserId: nextClient.distributorId,
+      targetUserId: nextClient.distributorId,
+      targetUserName: nextClient.distributorName,
+      summary: `${nextClient.firstName} ${nextClient.lastName} entre dans la base.`,
+      detail: `Dossier ouvert sur ${payload.assessment.programTitle}.`
+    });
 
     return clientId;
   }
@@ -618,6 +762,15 @@ export function AppProvider({ children }: PropsWithChildren) {
     if (storageMode === "supabase") {
       await addSupabaseFollowUpAssessment(clientId, assessment, followUpMeta);
       await refreshRemoteData(currentUser);
+      const targetClient = clients.find((client) => client.id === clientId);
+      await recordActivity({
+        action: "assessment-created",
+        clientId,
+        clientName: targetClient ? `${targetClient.firstName} ${targetClient.lastName}` : undefined,
+        ownerUserId: targetClient?.distributorId,
+        summary: `Nouveau suivi enregistre pour ${targetClient?.firstName ?? "ce client"}.`,
+        detail: `${followUpMeta.type} pose au ${followUpMeta.dueDate}.`
+      });
       return;
     }
 
@@ -657,12 +810,31 @@ export function AppProvider({ children }: PropsWithChildren) {
 
       return [nextItem, ...previousFollowUps.filter((item) => item.clientId !== clientId)];
     });
+    await recordActivity({
+      action: "assessment-created",
+      clientId,
+      clientName: `${targetClient.firstName} ${targetClient.lastName}`,
+      ownerUserId: targetClient.distributorId,
+      summary: `Nouveau suivi enregistre pour ${targetClient.firstName}.`,
+      detail: `${followUpMeta.type} pose au ${followUpMeta.dueDate}.`
+    });
   }
 
   async function deleteClient(clientId: string) {
+    const targetClient = clients.find((client) => client.id === clientId);
     if (storageMode === "supabase") {
       await deleteSupabaseClient(clientId);
       await refreshRemoteData(currentUser);
+      if (targetClient) {
+        await recordActivity({
+          action: "client-deleted",
+          clientId,
+          clientName: `${targetClient.firstName} ${targetClient.lastName}`,
+          ownerUserId: targetClient.distributorId,
+          summary: `${targetClient.firstName} ${targetClient.lastName} a ete retire de la base.`,
+          detail: "Le dossier client et ses suivis ont ete supprimes."
+        });
+      }
       return;
     }
 
@@ -676,12 +848,31 @@ export function AppProvider({ children }: PropsWithChildren) {
     setPvTransactions((previousTransactions) =>
       previousTransactions.filter((transaction) => transaction.clientId !== clientId)
     );
+    if (targetClient) {
+      await recordActivity({
+        action: "client-deleted",
+        clientId,
+        clientName: `${targetClient.firstName} ${targetClient.lastName}`,
+        ownerUserId: targetClient.distributorId,
+        summary: `${targetClient.firstName} ${targetClient.lastName} a ete retire de la base.`,
+        detail: "Le dossier client et ses suivis ont ete supprimes."
+      });
+    }
   }
 
   async function updateAssessment(clientId: string, assessment: AssessmentRecord) {
+    const targetClient = clients.find((client) => client.id === clientId);
     if (storageMode === "supabase") {
       await updateSupabaseAssessment(clientId, assessment);
       await refreshRemoteData(currentUser);
+      await recordActivity({
+        action: "assessment-updated",
+        clientId,
+        clientName: targetClient ? `${targetClient.firstName} ${targetClient.lastName}` : undefined,
+        ownerUserId: targetClient?.distributorId,
+        summary: `Le bilan de ${targetClient?.firstName ?? "ce client"} a ete ajuste.`,
+        detail: `Mise a jour du ${assessment.type === "initial" ? "bilan de depart" : "suivi"}.`
+      });
       return;
     }
 
@@ -723,6 +914,14 @@ export function AppProvider({ children }: PropsWithChildren) {
         ]);
       }
     }
+    await recordActivity({
+      action: "assessment-updated",
+      clientId,
+      clientName: targetClient ? `${targetClient.firstName} ${targetClient.lastName}` : undefined,
+      ownerUserId: targetClient?.distributorId,
+      summary: `Le bilan de ${targetClient?.firstName ?? "ce client"} a ete ajuste.`,
+      detail: `Mise a jour du ${assessment.type === "initial" ? "bilan de depart" : "suivi"}.`
+    });
   }
 
   async function updateClientSchedule(
@@ -734,9 +933,18 @@ export function AppProvider({ children }: PropsWithChildren) {
       followUpStatus?: FollowUp["status"];
     }
   ) {
+    const targetClient = clients.find((client) => client.id === clientId);
     if (storageMode === "supabase") {
       await updateSupabaseClientSchedule(clientId, payload);
       await refreshRemoteData(currentUser);
+      await recordActivity({
+        action: "schedule-updated",
+        clientId,
+        clientName: targetClient ? `${targetClient.firstName} ${targetClient.lastName}` : undefined,
+        ownerUserId: targetClient?.distributorId,
+        summary: `Le prochain rendez-vous de ${targetClient?.firstName ?? "ce client"} a change.`,
+        detail: `Nouvelle date : ${payload.nextFollowUp}.`
+      });
       return;
     }
 
@@ -768,11 +976,113 @@ export function AppProvider({ children }: PropsWithChildren) {
         };
       })
     );
+    await recordActivity({
+      action: "schedule-updated",
+      clientId,
+      clientName: targetClient ? `${targetClient.firstName} ${targetClient.lastName}` : undefined,
+      ownerUserId: targetClient?.distributorId,
+      summary: `Le prochain rendez-vous de ${targetClient?.firstName ?? "ce client"} a change.`,
+      detail: `Nouvelle date : ${payload.nextFollowUp}.`
+    });
+  }
+
+  async function reassignClientOwner(
+    clientId: string,
+    payload: {
+      distributorId: string;
+    }
+  ) {
+    const targetClient = clients.find((client) => client.id === clientId);
+    const nextOwner = users.find((user) => user.id === payload.distributorId && user.active);
+
+    if (!targetClient || !nextOwner) {
+      return;
+    }
+
+    if (storageMode === "supabase") {
+      await reassignSupabaseClientOwner(clientId, payload.distributorId);
+      await refreshRemoteData(currentUser);
+      await recordActivity({
+        action: "client-reassigned",
+        clientId,
+        clientName: `${targetClient.firstName} ${targetClient.lastName}`,
+        ownerUserId: nextOwner.id,
+        targetUserId: nextOwner.id,
+        targetUserName: nextOwner.name,
+        summary: `${targetClient.firstName} ${targetClient.lastName} passe chez ${nextOwner.name}.`,
+        detail: `Ancien responsable : ${targetClient.distributorName}.`
+      });
+      return;
+    }
+
+    setClients((previousClients) =>
+      previousClients.map((client) =>
+        client.id === clientId
+          ? {
+              ...client,
+              distributorId: nextOwner.id,
+              distributorName: nextOwner.name
+            }
+          : client
+      )
+    );
+
+    setPvClientProducts((previousProducts) =>
+      previousProducts.map((product) =>
+        product.clientId === clientId
+          ? {
+              ...product,
+              responsibleId: nextOwner.id,
+              responsibleName: nextOwner.name
+            }
+          : product
+      )
+    );
+
+    await recordActivity({
+      action: "client-reassigned",
+      clientId,
+      clientName: `${targetClient.firstName} ${targetClient.lastName}`,
+      ownerUserId: nextOwner.id,
+      targetUserId: nextOwner.id,
+      targetUserName: nextOwner.name,
+      summary: `${targetClient.firstName} ${targetClient.lastName} passe chez ${nextOwner.name}.`,
+      detail: `Ancien responsable : ${targetClient.distributorName}.`
+    });
   }
 
   async function addPvTransaction(transaction: PvClientTransaction) {
     if (storageMode === "supabase") {
       await addSupabasePvTransaction(transaction);
+      const targetClient = clients.find((client) => client.id === transaction.clientId);
+      const baseProgram = resolvePvProgram(targetClient?.pvProgramId ?? targetClient?.currentProgram);
+      const existingProduct = pvClientProducts.find(
+        (item) => item.clientId === transaction.clientId && item.productId === transaction.productId
+      );
+      const catalogProduct = pvProductCatalog.find((item) => item.id === transaction.productId);
+
+      await upsertSupabasePvClientProduct({
+        id: existingProduct?.id ?? `pv-seed-${transaction.clientId}-${transaction.productId}`,
+        clientId: transaction.clientId,
+        responsibleId: transaction.responsibleId,
+        responsibleName: transaction.responsibleName,
+        programId: existingProduct?.programId ?? baseProgram.id,
+        productId: transaction.productId,
+        productName: transaction.productName,
+        quantityStart: transaction.quantity,
+        startDate: transaction.date,
+        durationReferenceDays:
+          existingProduct?.durationReferenceDays ?? catalogProduct?.dureeReferenceJours ?? 21,
+        pvPerUnit:
+          transaction.quantity > 0 ? Number((transaction.pv / transaction.quantity).toFixed(2)) : transaction.pv,
+        pricePublicPerUnit:
+          transaction.quantity > 0
+            ? Number((transaction.price / transaction.quantity).toFixed(2))
+            : transaction.price,
+        quantiteLabel: existingProduct?.quantiteLabel ?? catalogProduct?.quantiteLabel ?? "1 unite",
+        noteMetier: existingProduct?.noteMetier ?? catalogProduct?.noteMetier,
+        active: true
+      });
       await refreshRemoteData(currentUser);
       return;
     }
@@ -802,6 +1112,7 @@ export function AppProvider({ children }: PropsWithChildren) {
       visibleClients: getVisibleClients(currentUser, clients, users),
       followUps,
       visibleFollowUps: getVisibleFollowUps(currentUser, followUps, clients, users),
+      activityLogs,
       pvClientProducts,
       pvTransactions,
       programs: mockPrograms,
@@ -822,11 +1133,13 @@ export function AppProvider({ children }: PropsWithChildren) {
       addFollowUpAssessment,
       updateAssessment,
       updateClientSchedule,
+      reassignClientOwner,
       addPvTransaction,
       savePvClientProduct
     }),
     [
       authReady,
+      activityLogs,
       clients,
       currentSession,
       currentUser,

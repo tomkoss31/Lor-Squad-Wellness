@@ -2,6 +2,7 @@ import { createMockSession, getDefaultUserTitle, getRoleScope } from "../lib/aut
 import { getSupabaseClient } from "./supabaseClient";
 import { pvProductCatalog, resolvePvProgram } from "../data/mockPvModule";
 import type {
+  ActivityLog,
   AssessmentRecord,
   AuthSession,
   Client,
@@ -105,6 +106,21 @@ type PvTransactionRow = {
   price: number;
   type: PvClientTransaction["type"];
   note: string;
+};
+
+type ActivityLogRow = {
+  id: string;
+  created_at: string;
+  action: ActivityLog["action"];
+  actor_id: string;
+  actor_name: string;
+  owner_user_id?: string | null;
+  client_id?: string | null;
+  client_name?: string | null;
+  target_user_id?: string | null;
+  target_user_name?: string | null;
+  summary: string;
+  detail?: string | null;
 };
 
 function hasStoredTime(value: string | null | undefined) {
@@ -274,6 +290,23 @@ function mapPvTransaction(row: PvTransactionRow): PvClientTransaction {
   };
 }
 
+function mapActivityLog(row: ActivityLogRow): ActivityLog {
+  return {
+    id: row.id,
+    createdAt: row.created_at,
+    action: row.action,
+    actorId: row.actor_id,
+    actorName: row.actor_name,
+    ownerUserId: row.owner_user_id ?? undefined,
+    clientId: row.client_id ?? undefined,
+    clientName: row.client_name ?? undefined,
+    targetUserId: row.target_user_id ?? undefined,
+    targetUserName: row.target_user_name ?? undefined,
+    summary: row.summary,
+    detail: row.detail ?? undefined
+  };
+}
+
 async function getProfile(userId: string) {
   const client = await requireSupabase();
   const { data, error } = await client
@@ -432,6 +465,25 @@ export async function fetchSupabasePvTransactions() {
   }
 
   return (data as PvTransactionRow[]).map(mapPvTransaction);
+}
+
+export async function fetchSupabaseActivityLogs() {
+  const client = await requireSupabase();
+  const { data, error } = await client
+    .from("activity_logs")
+    .select("*")
+    .order("created_at", { ascending: false })
+    .limit(120);
+
+  if (error) {
+    if (isMissingTableError(error, "activity_logs")) {
+      return [] as ActivityLog[];
+    }
+
+    throw error;
+  }
+
+  return (data as ActivityLogRow[] | null)?.map(mapActivityLog) ?? [];
 }
 
 export async function createSupabaseClientWithInitialAssessment(payload: {
@@ -790,6 +842,63 @@ export async function updateSupabaseClientSchedule(
         directFollowUpError?.message ??
         "Impossible de modifier ce rendez-vous."
     );
+  }
+}
+
+export async function createSupabaseActivityLog(log: ActivityLog) {
+  const client = await requireSupabase();
+  const { data, error } = await client
+    .from("activity_logs")
+    .insert({
+      action: log.action,
+      actor_id: log.actorId,
+      actor_name: log.actorName,
+      owner_user_id: log.ownerUserId ?? null,
+      client_id: log.clientId ?? null,
+      client_name: log.clientName ?? null,
+      target_user_id: log.targetUserId ?? null,
+      target_user_name: log.targetUserName ?? null,
+      summary: log.summary,
+      detail: log.detail ?? null
+    })
+    .select("*")
+    .single<ActivityLogRow>();
+
+  if (error || !data) {
+    if (isMissingTableError(error, "activity_logs")) {
+      throw new Error(
+        "La table activity_logs n'existe pas encore sur Supabase. Lance la migration equipe pour activer l'historique."
+      );
+    }
+
+    throw new Error(error?.message ?? "Impossible d'enregistrer cette action.");
+  }
+
+  return mapActivityLog(data);
+}
+
+export async function reassignSupabaseClientOwner(clientId: string, distributorId: string) {
+  const client = await requireSupabase();
+  const {
+    data: { session }
+  } = await client.auth.getSession();
+
+  if (!session?.access_token) {
+    throw new Error("La session est introuvable. Reconnecte-toi puis recommence.");
+  }
+
+  const response = await fetch("/api/reassign-client-owner", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${session.access_token}`
+    },
+    body: JSON.stringify({ clientId, distributorId })
+  });
+
+  const result = (await response.json()) as { ok: boolean; error?: string };
+  if (!response.ok || !result.ok) {
+    throw new Error(result.error ?? "Impossible de reattribuer ce dossier.");
   }
 }
 

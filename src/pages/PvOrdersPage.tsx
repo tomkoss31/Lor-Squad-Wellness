@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
   buildPvTrackingRecords,
   flattenPvTransactions,
@@ -14,6 +15,7 @@ import type { PvClientTransaction, PvTransactionType } from "../types/pv";
 
 export function PvOrdersPage() {
   const { currentUser, clients, visibleClients, pvTransactions, pvClientProducts, addPvTransaction } = useAppContext();
+  const [searchParams] = useSearchParams();
   const sourceClients = currentUser?.role === "admin" ? clients : visibleClients;
   const records = useMemo(
     () => buildPvTrackingRecords(sourceClients, pvTransactions, pvClientProducts),
@@ -34,6 +36,24 @@ export function PvOrdersPage() {
       setClientId(records[0].clientId);
     }
   }, [clientId, records]);
+
+  useEffect(() => {
+    const queryClientId = searchParams.get("client");
+    const queryProductId = searchParams.get("product");
+    const queryType = searchParams.get("type");
+
+    if (queryClientId && records.some((record) => record.clientId === queryClientId)) {
+      setClientId(queryClientId);
+    }
+
+    if (queryProductId && pvProductCatalog.some((product) => product.id === queryProductId)) {
+      handleProductChange(queryProductId);
+    }
+
+    if (queryType === "commande" || queryType === "reprise-sur-place") {
+      setType(queryType);
+    }
+  }, [records, searchParams]);
 
   if (!currentUser) {
     return null;
@@ -132,7 +152,7 @@ export function PvOrdersPage() {
             <p className="eyebrow-label">Saisie rapide</p>
             <h2 className="mt-3 text-2xl text-white">Ajouter une reprise produit</h2>
             <p className="mt-2 text-sm leading-6 text-slate-400">
-              La logique finale viendra plus tard. Ici, on pose deja la structure de saisie.
+              Choisis le client, le produit et la quantite. Les PV et le prix se prechargent automatiquement.
             </p>
           </div>
 

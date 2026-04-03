@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from "react";
+import { Link } from "react-router-dom";
 import { getPvProductStatusMeta, getPvTypeLabel } from "../../data/mockPvModule";
 import { formatDate, formatDateTime } from "../../lib/calculations";
 import type { PvClientTrackingRecord, PvProductUsage } from "../../types/pv";
@@ -94,7 +95,15 @@ export function PvClientPanel({
           <h2 className="mt-3 text-2xl text-white">{record.clientName}</h2>
           <p className="mt-2 text-sm text-slate-400">{record.responsibleName}</p>
         </div>
-        <PvStatusBadge status={record.status} />
+        <div className="flex flex-wrap items-center gap-2">
+          <Link
+            to={`/clients/${record.clientId}`}
+            className="inline-flex min-h-[38px] items-center justify-center rounded-full bg-white/[0.04] px-4 py-2 text-xs font-semibold text-white transition hover:bg-white/[0.08]"
+          >
+            Ouvrir dossier client
+          </Link>
+          <PvStatusBadge status={record.status} />
+        </div>
       </div>
 
       <section className="space-y-3">
@@ -109,10 +118,18 @@ export function PvClientPanel({
 
       <section className="space-y-3">
         <div className="flex items-center justify-between gap-3">
-          <p className="eyebrow-label">Produits actifs</p>
-          <p className="text-xs text-slate-500">
-            Tu peux ajuster la date, la quantite et la duree de reference.
-          </p>
+          <div>
+            <p className="eyebrow-label">Produits actifs</p>
+            <p className="mt-1 text-xs text-slate-500">
+              Modifier le produit actif ou declarer un reassort en 1 clic.
+            </p>
+          </div>
+          <Link
+            to={`/pv/orders?client=${record.clientId}&type=commande`}
+            className="inline-flex min-h-[38px] items-center justify-center rounded-full bg-sky-400/[0.14] px-4 py-2 text-xs font-semibold text-white transition hover:bg-sky-400/[0.22]"
+          >
+            Ajouter une commande
+          </Link>
         </div>
 
         <div className="space-y-3">
@@ -134,6 +151,12 @@ export function PvClientPanel({
                   </div>
                   <div className="flex items-center gap-2">
                     <StatusBadge label={statusMeta.label} tone={statusMeta.tone} />
+                    <Link
+                      to={`/pv/orders?client=${record.clientId}&product=${product.productId}&type=commande`}
+                      className="inline-flex min-h-[38px] items-center justify-center rounded-full bg-sky-400/[0.1] px-4 py-2 text-xs font-semibold text-white transition hover:bg-sky-400/[0.16]"
+                    >
+                      Reassort
+                    </Link>
                     <button
                       type="button"
                       onClick={() => (isEditing ? cancelEditing() : startEditing(product))}
