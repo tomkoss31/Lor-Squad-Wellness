@@ -444,12 +444,44 @@ export async function updateSupabaseClientSchedule(
   }
 ) {
   const client = await requireSupabase();
+  const clientUpdatePayload = { next_follow_up: payload.nextFollowUp };
+  const followUpUpdatePayload = {
+    due_date: payload.nextFollowUp,
+    ...(payload.followUpType ? { type: payload.followUpType } : {}),
+    ...(payload.followUpStatus ? { status: payload.followUpStatus } : {})
+  };
+
+  const { error: directClientError } = await client
+    .from("clients")
+    .update(clientUpdatePayload)
+    .eq("id", clientId);
+
+  let directFollowUpError = null as { message?: string } | null;
+
+  if (!directClientError) {
+    let followUpQuery = client.from("follow_ups").update(followUpUpdatePayload);
+    followUpQuery = payload.followUpId
+      ? followUpQuery.eq("id", payload.followUpId)
+      : followUpQuery.eq("client_id", clientId);
+
+    const { error } = await followUpQuery;
+    directFollowUpError = error;
+  }
+
+  if (!directClientError && !directFollowUpError) {
+    return;
+  }
+
   const {
     data: { session }
   } = await client.auth.getSession();
 
   if (!session?.access_token) {
-    throw new Error("La session est introuvable. Reconnecte-toi puis recommence.");
+    throw new Error(
+      directClientError?.message ??
+        directFollowUpError?.message ??
+        "La session est introuvable. Reconnecte-toi puis recommence."
+    );
   }
 
   const response = await fetch("/api/update-client-schedule", {
@@ -463,7 +495,12 @@ export async function updateSupabaseClientSchedule(
 
   const result = (await response.json()) as { ok: boolean; error?: string };
   if (!response.ok || !result.ok) {
-    throw new Error(result.error ?? "Impossible de modifier ce rendez-vous.");
+    throw new Error(
+      result.error ??
+        directClientError?.message ??
+        directFollowUpError?.message ??
+        "Impossible de modifier ce rendez-vous."
+    );
   }
 }
 

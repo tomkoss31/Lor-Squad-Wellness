@@ -1,28 +1,24 @@
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { BodyFatInsightCard } from "../components/body-scan/BodyFatInsightCard";
-import { MuscleMassInsightCard } from "../components/body-scan/MuscleMassInsightCard";
 import { BodyScanDeltaGrid } from "../components/body-scan/BodyScanDeltaGrid";
-import { Card } from "../components/ui/Card";
-import { Button } from "../components/ui/Button";
+import { MuscleMassInsightCard } from "../components/body-scan/MuscleMassInsightCard";
 import { WeightGoalInsightCard } from "../components/education/WeightGoalInsightCard";
+import { Button } from "../components/ui/Button";
+import { Card } from "../components/ui/Card";
 import { PageHeading } from "../components/ui/PageHeading";
 import { StatusBadge } from "../components/ui/StatusBadge";
 import { useAppContext } from "../context/AppContext";
 import {
-  estimateBodyFatKg,
-  estimateHydrationKg,
-  estimateMuscleMassPercent,
   formatDate,
-  formatDateTime,
   getAssessmentDelta,
   getFirstAssessment,
   getLatestAssessment,
   getPreviousAssessment,
-  normalizeDateTimeLocalInputValue,
-  serializeDateTimeForStorage,
   getWeightLossPaceInsight,
-  getWeightLossPlan
+  getWeightLossPlan,
+  normalizeDateTimeLocalInputValue,
+  serializeDateTimeForStorage
 } from "../lib/calculations";
 import type { AssessmentQuestionnaire, AssessmentRecord, BodyScanMetrics } from "../types/domain";
 
@@ -46,31 +42,39 @@ export function NewFollowUpPage() {
   const first = getFirstAssessment(targetClient);
 
   const [bodyScan, setBodyScan] = useState<BodyScanMetrics>({ ...latest.bodyScan });
-  const [summary, setSummary] = useState(
-    "Suivi simple avec ajustements clairs et progression facile a relire."
-  );
-  const [notes, setNotes] = useState(
-    "Le client repart avec des reperes simples et une suite deja fixee."
-  );
   const [assessmentDate, setAssessmentDate] = useState(
     normalizeDateTimeLocalInputValue(new Date().toISOString())
   );
-  const [dueDate, setDueDate] = useState(normalizeDateTimeLocalInputValue(targetClient.nextFollowUp));
+  const [dueDate, setDueDate] = useState(
+    normalizeDateTimeLocalInputValue(targetClient.nextFollowUp)
+  );
   const [followUpType, setFollowUpType] = useState("Suivi terrain");
+  const [energyCheck, setEnergyCheck] = useState("Bonne dynamique");
+  const [routineCheck, setRoutineCheck] = useState("Plutot reguliere");
+  const [engagementCheck, setEngagementCheck] = useState("Partant pour la suite");
+  const [easyWin, setEasyWin] = useState("");
+  const [attentionPoint, setAttentionPoint] = useState("");
   const [recommendationsContacted, setRecommendationsContacted] = useState(
     latest.questionnaire.recommendationsContacted ?? false
   );
 
   const delta = getAssessmentDelta(bodyScan, latest.bodyScan);
-  const bodyFatKg = estimateBodyFatKg(bodyScan.weight, bodyScan.bodyFat);
-  const musclePercent = estimateMuscleMassPercent(bodyScan.weight, bodyScan.muscleMass);
-  const hydrationKg = estimateHydrationKg(bodyScan.weight, bodyScan.hydration);
   const weightLossPlan = getWeightLossPlan(
     bodyScan.weight,
     latest.questionnaire.targetWeight,
     latest.questionnaire.desiredTimeline
   );
   const weightLossPace = getWeightLossPaceInsight(weightLossPlan);
+  const weightDeltaFromStart = Number((bodyScan.weight - first.bodyScan.weight).toFixed(1));
+  const followUpSummary = `${energyCheck} • ${routineCheck} • ${engagementCheck}`;
+  const followUpNotes = [
+    `Check-in : ${energyCheck}, ${routineCheck}, ${engagementCheck}.`,
+    easyWin.trim() ? `Point positif : ${easyWin.trim()}.` : "",
+    attentionPoint.trim() ? `Point a travailler : ${attentionPoint.trim()}.` : "",
+    "Le client repart avec des reperes simples et une suite deja fixee."
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   async function handleSubmit() {
     const nextQuestionnaire: AssessmentQuestionnaire = {
@@ -85,8 +89,8 @@ export function NewFollowUpPage() {
       type: "follow-up",
       objective: targetClient.objective,
       programTitle: targetClient.currentProgram,
-      summary,
-      notes,
+      summary: followUpSummary,
+      notes: followUpNotes,
       nextFollowUp: serializeDateTimeForStorage(dueDate),
       bodyScan,
       questionnaire: nextQuestionnaire,
@@ -107,140 +111,189 @@ export function NewFollowUpPage() {
       <PageHeading
         eyebrow="Nouveau suivi"
         title={`Suivi de ${targetClient.firstName} ${targetClient.lastName}`}
-        description="Relire le dernier point, saisir les mesures et poser la suite."
+        description="On pose le check-in, on relit les reperes, puis on passe a la balance."
       />
 
       <div className="grid gap-4 xl:grid-cols-[1.05fr_0.95fr]">
-        <Card className="space-y-5">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <p className="text-sm text-slate-400">
-                Dernier bilan {formatDate(latest.date)}
-                {previous && ` - precedent ${formatDate(previous.date)}`}
-              </p>
-              <p className="mt-2 text-3xl text-white">{targetClient.currentProgram}</p>
-            </div>
-            <StatusBadge label="Suivi terrain" tone="green" />
-          </div>
-
-          <div className="rounded-[24px] border border-emerald-400/20 bg-emerald-400/[0.06] p-5">
+        <div className="space-y-4">
+          <Card className="space-y-5">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
-                <p className="eyebrow-label text-emerald-200/70">Nouveau releve</p>
-                <p className="mt-3 text-2xl text-white">Nouvelles valeurs body scan</p>
+                <p className="eyebrow-label">Check-in suivi</p>
+                <p className="mt-3 text-3xl text-white">Avant de passer a la balance</p>
                 <p className="mt-2 text-sm leading-6 text-slate-300">
-                  Saisir les chiffres du jour puis relire les ecarts.
+                  Quelques reperes simples pour lancer la conversation, puis on prend les nouvelles valeurs.
                 </p>
               </div>
-              <StatusBadge label="Saisie rapide" tone="green" />
+              <StatusBadge label="Suivi" tone="blue" />
             </div>
 
-            <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-              <MetricField
-                label="Poids (kg)"
-                value={bodyScan.weight}
-                onChange={(value) => setBodyScan({ ...bodyScan, weight: Number(value) })}
+            <div className="grid gap-6">
+              <FollowUpChoiceGroup
+                label="Comment se sent la personne depuis le dernier point ?"
+                value={energyCheck}
+                options={["Bonne dynamique", "Plutot stable", "En dents de scie", "Besoin de relancer"]}
+                onChange={setEnergyCheck}
               />
-              <MetricField
-                label="Masse grasse (%)"
-                value={bodyScan.bodyFat}
-                onChange={(value) => setBodyScan({ ...bodyScan, bodyFat: Number(value) })}
+              <FollowUpChoiceGroup
+                label="Comment a tenu le cadre depuis le dernier releve ?"
+                value={routineCheck}
+                options={["Plutot reguliere", "Par moments", "Trop irreguliere", "A reprendre doucement"]}
+                onChange={setRoutineCheck}
               />
-              <MetricField
-                label="Masse musculaire (kg)"
-                value={bodyScan.muscleMass}
-                onChange={(value) => setBodyScan({ ...bodyScan, muscleMass: Number(value) })}
+              <FollowUpChoiceGroup
+                label="Comment sent-on la suite du suivi aujourd'hui ?"
+                value={engagementCheck}
+                options={["Partant pour la suite", "A rassurer", "A recadrer", "A remotiver"]}
+                onChange={setEngagementCheck}
               />
-              <MetricField
-                label="Hydratation (%)"
-                value={bodyScan.hydration}
-                onChange={(value) => setBodyScan({ ...bodyScan, hydration: Number(value) })}
-              />
-              <MetricField
-                label="Masse osseuse (kg)"
-                value={bodyScan.boneMass}
-                onChange={(value) => setBodyScan({ ...bodyScan, boneMass: Number(value) })}
-              />
-              <MetricField
-                label="Graisse viscerale"
-                value={bodyScan.visceralFat}
-                onChange={(value) => setBodyScan({ ...bodyScan, visceralFat: Number(value) })}
-              />
-              <MetricField
-                label="BMR (kcal)"
-                value={bodyScan.bmr}
-                onChange={(value) => setBodyScan({ ...bodyScan, bmr: Number(value) })}
-              />
-              <MetricField
-                label="Age metabolique (ans)"
-                value={bodyScan.metabolicAge}
-                onChange={(value) => setBodyScan({ ...bodyScan, metabolicAge: Number(value) })}
-              />
+
+              <div className="grid gap-4 md:grid-cols-2">
+                <FollowUpTextField
+                  label="Ce qui a ete le plus facile"
+                  value={easyWin}
+                  onChange={setEasyWin}
+                  placeholder="Une habitude, une sensation, un point positif..."
+                />
+                <FollowUpTextField
+                  label="Ce qui reste a travailler"
+                  value={attentionPoint}
+                  onChange={setAttentionPoint}
+                  placeholder="Le point a surveiller ou a relancer..."
+                />
+              </div>
             </div>
-          </div>
+          </Card>
 
-          <BodyScanDeltaGrid latest={bodyScan} delta={delta} />
+          <Card className="space-y-5">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p className="text-sm text-slate-400">
+                  Dernier bilan {formatDate(latest.date)}
+                  {previous && ` - precedent ${formatDate(previous.date)}`}
+                </p>
+                <p className="mt-2 text-3xl text-white">{targetClient.currentProgram}</p>
+              </div>
+              <StatusBadge label="Suivi terrain" tone="green" />
+            </div>
 
-          <StartingPointWeightCard
-            objective={targetClient.objective}
-            startDate={first.date}
-            startWeight={first.bodyScan.weight}
-            latestDate={latest.date}
-            latestWeight={latest.bodyScan.weight}
-            currentDate={assessmentDate}
-            currentWeight={bodyScan.weight}
-          />
+            <div className="rounded-[24px] border border-emerald-400/20 bg-emerald-400/[0.06] p-5">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <p className="eyebrow-label text-emerald-200/70">Nouveau releve</p>
+                  <p className="mt-3 text-2xl text-white">Nouvelles valeurs body scan</p>
+                  <p className="mt-2 text-sm leading-6 text-slate-300">
+                    Saisir les chiffres du jour puis relire les ecarts.
+                  </p>
+                </div>
+                <StatusBadge label="Saisie rapide" tone="green" />
+              </div>
 
-          <BodyFatInsightCard
-            current={{ weight: bodyScan.weight, percent: bodyScan.bodyFat }}
-            objective={targetClient.objective}
-            previous={{ weight: latest.bodyScan.weight, percent: latest.bodyScan.bodyFat }}
-            initial={{ weight: first.bodyScan.weight, percent: first.bodyScan.bodyFat }}
-          />
+              <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                <MetricField
+                  label="Poids (kg)"
+                  value={bodyScan.weight}
+                  onChange={(value) => setBodyScan({ ...bodyScan, weight: Number(value) })}
+                />
+                <MetricField
+                  label="Masse grasse (%)"
+                  value={bodyScan.bodyFat}
+                  onChange={(value) => setBodyScan({ ...bodyScan, bodyFat: Number(value) })}
+                />
+                <MetricField
+                  label="Masse musculaire (kg)"
+                  value={bodyScan.muscleMass}
+                  onChange={(value) => setBodyScan({ ...bodyScan, muscleMass: Number(value) })}
+                />
+                <MetricField
+                  label="Hydratation (%)"
+                  value={bodyScan.hydration}
+                  onChange={(value) => setBodyScan({ ...bodyScan, hydration: Number(value) })}
+                />
+                <MetricField
+                  label="Masse osseuse (kg)"
+                  value={bodyScan.boneMass}
+                  onChange={(value) => setBodyScan({ ...bodyScan, boneMass: Number(value) })}
+                />
+                <MetricField
+                  label="Graisse viscerale"
+                  value={bodyScan.visceralFat}
+                  onChange={(value) => setBodyScan({ ...bodyScan, visceralFat: Number(value) })}
+                />
+                <MetricField
+                  label="BMR (kcal)"
+                  value={bodyScan.bmr}
+                  onChange={(value) => setBodyScan({ ...bodyScan, bmr: Number(value) })}
+                />
+                <MetricField
+                  label="Age metabolique (ans)"
+                  value={bodyScan.metabolicAge}
+                  onChange={(value) => setBodyScan({ ...bodyScan, metabolicAge: Number(value) })}
+                />
+              </div>
+            </div>
 
-          <MuscleMassInsightCard
-            current={{ weight: bodyScan.weight, muscleMass: bodyScan.muscleMass }}
-            previous={{ weight: latest.bodyScan.weight, muscleMass: latest.bodyScan.muscleMass }}
-            initial={{ weight: first.bodyScan.weight, muscleMass: first.bodyScan.muscleMass }}
-          />
+            <BodyScanDeltaGrid latest={bodyScan} delta={delta} />
 
-          {targetClient.objective === "weight-loss" && (
-            <WeightGoalInsightCard
+            <StartingPointWeightCard
+              objective={targetClient.objective}
+              startDate={first.date}
+              startWeight={first.bodyScan.weight}
+              latestDate={latest.date}
+              latestWeight={latest.bodyScan.weight}
+              currentDate={assessmentDate}
               currentWeight={bodyScan.weight}
-              targetWeight={latest.questionnaire.targetWeight}
-              timeline={latest.questionnaire.desiredTimeline}
             />
-          )}
-        </Card>
+
+            <BodyFatInsightCard
+              current={{ weight: bodyScan.weight, percent: bodyScan.bodyFat }}
+              objective={targetClient.objective}
+              previous={{ weight: latest.bodyScan.weight, percent: latest.bodyScan.bodyFat }}
+              initial={{ weight: first.bodyScan.weight, percent: first.bodyScan.bodyFat }}
+            />
+
+            <MuscleMassInsightCard
+              current={{ weight: bodyScan.weight, muscleMass: bodyScan.muscleMass }}
+              previous={{ weight: latest.bodyScan.weight, muscleMass: latest.bodyScan.muscleMass }}
+              initial={{ weight: first.bodyScan.weight, muscleMass: first.bodyScan.muscleMass }}
+            />
+
+            {targetClient.objective === "weight-loss" ? (
+              <WeightGoalInsightCard
+                currentWeight={bodyScan.weight}
+                targetWeight={latest.questionnaire.targetWeight}
+                timeline={latest.questionnaire.desiredTimeline}
+              />
+            ) : null}
+          </Card>
+        </div>
 
         <div className="space-y-4">
-          <Card className="space-y-4">
-            <p className="eyebrow-label">Lecture rapide avant validation</p>
-            <div className="grid gap-3">
-              <InfoRow label="Dernier bilan" value={latest.summary} />
-              <InfoRow label="Programme en cours" value={targetClient.currentProgram} />
-              <InfoRow
-                label="Prochain rendez-vous actuel"
-                value={formatDateTime(targetClient.nextFollowUp)}
-              />
-              <InfoRow label="Masse grasse" value={`${bodyScan.bodyFat} % - ${bodyFatKg} kg`} />
-              <InfoRow label="Masse musculaire" value={`${bodyScan.muscleMass} kg - ${musclePercent} %`} />
-              <InfoRow label="Masse hydrique estimee" value={`${bodyScan.hydration} % - ${hydrationKg} kg`} />
-              {targetClient.objective === "weight-loss" && (
-                <InfoRow
-                  label="Cap perte de poids"
-                  value={
-                    weightLossPlan.targetWeight == null
-                      ? "Poids cible non defini"
-                      : weightLossPlan.isAchieved
-                        ? "Objectif de poids deja atteint"
-                        : `${weightLossPlan.remainingKg} kg restants - ${weightLossPlan.dailyGrams} g / jour`
-                  }
-                />
-              )}
-              {targetClient.objective === "weight-loss" && (
-                <InfoRow label="Lecture du rythme" value={weightLossPace.label} />
-              )}
+          <Card className="space-y-5 bg-[linear-gradient(180deg,rgba(16,24,38,0.78),rgba(12,18,30,0.92))] shadow-[0_10px_30px_rgba(0,0,0,0.22)]">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="eyebrow-label">Suivi</p>
+                <p className="mt-3 text-2xl text-white">Reperes du suivi</p>
+              </div>
+              <StatusBadge label="Poids" tone="blue" />
+            </div>
+
+            <div className="grid gap-4">
+              <CompactWeightPanel label="Poids de depart" value={`${first.bodyScan.weight} kg`} />
+              <CompactWeightPanel label="Dernier releve" value={`${latest.bodyScan.weight} kg`} />
+              <div className="rounded-[22px] border border-white/10 bg-white/[0.03] px-5 py-4">
+                <p className="text-[12px] font-medium text-slate-400">Ecart depuis depart</p>
+                <div className="mt-3 flex items-center justify-between gap-3">
+                  <p className="text-[2rem] font-semibold tracking-[-0.04em] text-white">
+                    {weightDeltaFromStart > 0 ? "+" : ""}
+                    {weightDeltaFromStart} kg
+                  </p>
+                  <StatusBadge
+                    label={weightDeltaFromStart <= 0 ? "Lecture positive" : "A recadrer"}
+                    tone={weightDeltaFromStart <= 0 ? "green" : "amber"}
+                  />
+                </div>
+              </div>
             </div>
           </Card>
 
@@ -248,14 +301,6 @@ export function NewFollowUpPage() {
             <div className="space-y-2">
               <label className="text-sm font-medium text-slate-300">Type de suivi</label>
               <input value={followUpType} onChange={(event) => setFollowUpType(event.target.value)} />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-300">Resume du suivi</label>
-              <textarea rows={4} value={summary} onChange={(event) => setSummary(event.target.value)} />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-300">Notes utiles</label>
-              <textarea rows={4} value={notes} onChange={(event) => setNotes(event.target.value)} />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium text-slate-300">Date et heure du suivi</label>
@@ -290,6 +335,15 @@ export function NewFollowUpPage() {
                 />
               </label>
             ) : null}
+            <div className="rounded-[22px] bg-white/[0.03] px-4 py-4">
+              <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-slate-500">
+                Synthese automatique
+              </p>
+              <p className="mt-3 text-sm leading-6 text-slate-200">{followUpSummary}</p>
+              {targetClient.objective === "weight-loss" ? (
+                <p className="mt-2 text-sm text-slate-400">{weightLossPace.label}</p>
+              ) : null}
+            </div>
             <div className="flex justify-end gap-3">
               <Button variant="secondary" onClick={() => navigate(`/clients/${targetClient.id}`)}>
                 Annuler
@@ -320,11 +374,73 @@ function MetricField({
   );
 }
 
-function InfoRow({ label, value }: { label: string; value: string }) {
+function FollowUpChoiceGroup({
+  label,
+  value,
+  options,
+  onChange
+}: {
+  label: string;
+  value: string;
+  options: string[];
+  onChange: (value: string) => void;
+}) {
   return (
-    <div className="rounded-[20px] bg-white/[0.03] px-4 py-3">
-      <p className="text-[11px] font-medium text-slate-500">{label}</p>
-      <p className="mt-2 text-sm leading-6 text-slate-200">{value}</p>
+    <div className="space-y-3">
+      <p className="text-sm font-medium text-slate-200">{label}</p>
+      <div className="flex flex-wrap gap-3">
+        {options.map((option) => {
+          const isActive = option === value;
+
+          return (
+            <button
+              key={option}
+              type="button"
+              onClick={() => onChange(option)}
+              className={`inline-flex min-h-[44px] items-center rounded-full border px-5 py-2.5 text-[14px] font-semibold transition duration-200 ${
+                isActive
+                  ? "border-white/20 bg-[linear-gradient(135deg,#59B7FF_0%,#3A9BE8_100%)] text-[#07111F] shadow-[0_8px_24px_rgba(89,183,255,0.22)]"
+                  : "border-white/10 bg-white/[0.04] text-[#C8D2E1] hover:-translate-y-[1px] hover:border-white/14 hover:bg-white/[0.07] hover:shadow-[0_10px_22px_rgba(0,0,0,0.14)]"
+              }`}
+            >
+              {option}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function FollowUpTextField({
+  label,
+  value,
+  onChange,
+  placeholder
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  placeholder: string;
+}) {
+  return (
+    <div className="space-y-2">
+      <label className="text-sm font-medium text-slate-300">{label}</label>
+      <textarea
+        rows={4}
+        value={value}
+        placeholder={placeholder}
+        onChange={(event) => onChange(event.target.value)}
+      />
+    </div>
+  );
+}
+
+function CompactWeightPanel({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-[22px] border border-white/8 bg-white/[0.03] px-5 py-4">
+      <p className="text-[12px] font-medium text-slate-400">{label}</p>
+      <p className="mt-3 text-[2rem] font-semibold tracking-[-0.04em] text-white">{value}</p>
     </div>
   );
 }
@@ -375,8 +491,7 @@ function StartingPointWeightCard({
           <p className="eyebrow-label">Repere de progression</p>
           <p className="mt-3 text-2xl text-white">Depart vs aujourd&apos;hui</p>
           <p className="mt-2 text-sm leading-6 text-slate-300">
-            Ce bloc sert a montrer tout de suite le point de depart, le dernier releve et la
-            situation aujourd&apos;hui.
+            Ce bloc sert a montrer tout de suite le point de depart, le dernier releve et la situation aujourd&apos;hui.
           </p>
         </div>
         <div className="rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-sm font-medium text-white">
@@ -386,19 +501,8 @@ function StartingPointWeightCard({
 
       <div className="grid gap-4 md:grid-cols-3">
         <WeightMilestoneCard label="Depart" date={formatDate(startDate)} weight={startWeight} tone="blue" />
-        <WeightMilestoneCard
-          label="Dernier point"
-          date={formatDate(latestDate)}
-          weight={latestWeight}
-          tone="slate"
-        />
-        <WeightMilestoneCard
-          label="Aujourd'hui"
-          date={formatDate(currentDate)}
-          weight={currentWeight}
-          tone="green"
-          highlighted
-        />
+        <WeightMilestoneCard label="Dernier point" date={formatDate(latestDate)} weight={latestWeight} tone="slate" />
+        <WeightMilestoneCard label="Aujourd'hui" date={formatDate(currentDate)} weight={currentWeight} tone="green" highlighted />
       </div>
 
       <div className="rounded-[24px] border border-white/10 bg-slate-950/35 p-5">
