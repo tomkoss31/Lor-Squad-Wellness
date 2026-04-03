@@ -59,6 +59,13 @@ export function NewFollowUpPage() {
   const [hydrationCheck, setHydrationCheck] = useState("Correcte");
   const [easyWin, setEasyWin] = useState("");
   const [attentionPoint, setAttentionPoint] = useState("");
+  const [coachNote, setCoachNote] = useState("");
+  const [optionalProductsToggle, setOptionalProductsToggle] = useState(
+    latest.questionnaire.optionalProductsUsed?.trim() ? "Oui" : "Non"
+  );
+  const [optionalProductsUsed, setOptionalProductsUsed] = useState(
+    latest.questionnaire.optionalProductsUsed ?? ""
+  );
   const [recommendationsContacted, setRecommendationsContacted] = useState(
     latest.questionnaire.recommendationsContacted ?? false
   );
@@ -92,8 +99,20 @@ export function NewFollowUpPage() {
     const nextQuestionnaire: AssessmentQuestionnaire = {
       ...latest.questionnaire,
       desiredTimeline: latest.questionnaire.desiredTimeline,
-      recommendationsContacted
+      recommendationsContacted,
+      optionalProductsUsed:
+        optionalProductsToggle === "Oui" ? optionalProductsUsed.trim() || "Oui" : ""
     };
+
+    const finalNotes = [
+      followUpNotes,
+      optionalProductsToggle === "Oui"
+        ? `Produits optionnels : ${optionalProductsUsed.trim() || "Oui"}.`
+        : "Produits optionnels : non pris.",
+      coachNote.trim() ? `Note coach : ${coachNote.trim()}.` : ""
+    ]
+      .filter(Boolean)
+      .join(" ");
 
     const assessment: AssessmentRecord = {
       id: `a-${targetClient.id}-${Date.now()}`,
@@ -102,7 +121,7 @@ export function NewFollowUpPage() {
       objective: targetClient.objective,
       programTitle: targetClient.currentProgram,
       summary: followUpSummary,
-      notes: followUpNotes,
+      notes: finalNotes,
       nextFollowUp: serializeDateTimeForStorage(dueDate),
       bodyScan,
       questionnaire: nextQuestionnaire,
@@ -408,6 +427,31 @@ export function NewFollowUpPage() {
                 type="datetime-local"
                 value={dueDate}
                 onChange={(event) => setDueDate(event.target.value)}
+              />
+            </div>
+            <FollowUpChoiceGroup
+              label="Produits optionnels pris depuis le dernier point ?"
+              value={optionalProductsToggle}
+              options={["Oui", "Non"]}
+              onChange={setOptionalProductsToggle}
+            />
+            {optionalProductsToggle === "Oui" ? (
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-slate-300">Lesquels ?</label>
+                <input
+                  value={optionalProductsUsed}
+                  onChange={(event) => setOptionalProductsUsed(event.target.value)}
+                  placeholder="Ex : aloe, boisson, booster..."
+                />
+              </div>
+            ) : null}
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-300">Note du suivi</label>
+              <textarea
+                rows={4}
+                value={coachNote}
+                onChange={(event) => setCoachNote(event.target.value)}
+                placeholder="Ce que tu veux garder visible dans la fiche client."
               />
             </div>
             {latest.questionnaire.recommendations.length ? (

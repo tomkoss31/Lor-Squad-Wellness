@@ -82,6 +82,9 @@ export function ClientDetailPage() {
   );
   const recommendationCount = latestQuestionnaire.recommendations?.length ?? 0;
   const recommendationsContacted = latestQuestionnaire.recommendationsContacted ?? false;
+  const optionalProductsLabel = latestQuestionnaire.optionalProductsUsed?.trim()
+    ? latestQuestionnaire.optionalProductsUsed
+    : "Non renseigné";
   const canDeleteClient = currentUser?.role === "admin";
 
   async function handleDeleteClient() {
@@ -381,22 +384,23 @@ export function ClientDetailPage() {
               <SummaryFocusCard label="Âge" value={`${client.age} ans`} />
               <SummaryFocusCard label="Taille" value={`${client.height} cm`} />
             </div>
-            <div className="grid gap-3">
-              <SummaryRow label="Statut" value={client.started ? "Routine démarrée" : "Mise en place à lancer"} />
-              {recommendationCount ? (
-                <SummaryStatusRow
-                  label="Recommandations"
+              <div className="grid gap-3">
+                <SummaryRow label="Statut" value={client.started ? "Routine démarrée" : "Mise en place à lancer"} />
+                {recommendationCount ? (
+                  <SummaryStatusRow
+                    label="Recommandations"
                   badgeLabel={
                     recommendationsContacted ? "Contactées" : "À contacter"
                   }
                   tone={recommendationsContacted ? "green" : "amber"}
                   detail={`${recommendationCount} nom${recommendationCount > 1 ? "s" : ""}`}
                 />
-              ) : null}
-              <SummaryRow label="Repère protéines" value={proteinRange} />
-              <SummaryRow label="Hydratation cible" value={`${waterNeed} L`} />
-              <SummaryRow label="Note du moment" value={latestAssessment.notes} />
-            </div>
+                ) : null}
+                <SummaryRow label="Repère protéines" value={proteinRange} />
+                <SummaryRow label="Hydratation cible" value={`${waterNeed} L`} />
+                <SummaryRow label="Produits optionnels" value={optionalProductsLabel} />
+                <SummaryRow label="Note du moment" value={latestAssessment.notes} />
+              </div>
           </Card>
 
           {client.objective === "weight-loss" && (

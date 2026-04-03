@@ -46,6 +46,7 @@ export interface BodyScanMetrics {
 
 export interface AssessmentQuestionnaire {
   referredByName?: string;
+  optionalProductsUsed?: string;
   healthStatus: string;
   healthNotes: string;
   allergies: string;
