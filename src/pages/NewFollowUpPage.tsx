@@ -77,7 +77,7 @@ export function NewFollowUpPage() {
   const [notes, setNotes] = useState(
     "Le client repart avec des reperes simples et une suite deja fixee."
   );
-  const [assessmentDate, setAssessmentDate] = useState(toDateInputValue(new Date()));
+  const [assessmentDate, setAssessmentDate] = useState(toDateTimeLocalValue(new Date()));
   const [dueDate, setDueDate] = useState(normalizeDateTimeLocalValue(targetClient.nextFollowUp));
   const [followUpType, setFollowUpType] = useState("Suivi terrain");
   const [recommendationsContacted, setRecommendationsContacted] = useState(
@@ -281,9 +281,9 @@ export function NewFollowUpPage() {
               <textarea rows={4} value={notes} onChange={(event) => setNotes(event.target.value)} />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-300">Date du suivi</label>
+              <label className="text-sm font-medium text-slate-300">Date et heure du suivi</label>
               <input
-                type="date"
+                type="datetime-local"
                 value={assessmentDate}
                 onChange={(event) => setAssessmentDate(event.target.value)}
               />

@@ -38,6 +38,7 @@ import {
   logoutFromSupabase,
   restoreSupabaseSession,
   updateSupabaseAssessment,
+  updateSupabaseClientSchedule,
   updateSupabaseUserStatus
 } from "../services/supabaseService";
 import type {
@@ -94,6 +95,15 @@ interface AppContextValue {
     followUpMeta: Pick<FollowUp, "dueDate" | "type" | "status">
   ) => Promise<void>;
   updateAssessment: (clientId: string, assessment: AssessmentRecord) => Promise<void>;
+  updateClientSchedule: (
+    clientId: string,
+    payload: {
+      nextFollowUp: string;
+      followUpId?: string;
+      followUpType?: string;
+      followUpStatus?: FollowUp["status"];
+    }
+  ) => Promise<void>;
 }
 
 const AppContext = createContext<AppContextValue | undefined>(undefined);
@@ -540,6 +550,51 @@ export function AppProvider({ children }: PropsWithChildren) {
     );
   }
 
+  async function updateClientSchedule(
+    clientId: string,
+    payload: {
+      nextFollowUp: string;
+      followUpId?: string;
+      followUpType?: string;
+      followUpStatus?: FollowUp["status"];
+    }
+  ) {
+    if (storageMode === "supabase") {
+      await updateSupabaseClientSchedule(clientId, payload);
+      await refreshRemoteData(currentUser);
+      return;
+    }
+
+    setClients((previousClients) =>
+      previousClients.map((client) =>
+        client.id === clientId
+          ? {
+              ...client,
+              nextFollowUp: payload.nextFollowUp
+            }
+          : client
+      )
+    );
+
+    setFollowUps((previousFollowUps) =>
+      previousFollowUps.map((followUp) => {
+        const matchesById = payload.followUpId ? followUp.id === payload.followUpId : false;
+        const matchesByClient = !payload.followUpId && followUp.clientId === clientId;
+
+        if (!matchesById && !matchesByClient) {
+          return followUp;
+        }
+
+        return {
+          ...followUp,
+          dueDate: payload.nextFollowUp,
+          type: payload.followUpType ?? followUp.type,
+          status: payload.followUpStatus ?? followUp.status
+        };
+      })
+    );
+  }
+
   const value = useMemo(
     () => ({
       authReady,
@@ -566,7 +621,8 @@ export function AppProvider({ children }: PropsWithChildren) {
       createClientWithInitialAssessment,
       deleteClient,
       addFollowUpAssessment,
-      updateAssessment
+      updateAssessment,
+      updateClientSchedule
     }),
     [authReady, clients, currentSession, currentUser, followUps, storageMode, users]
   );

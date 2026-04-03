@@ -122,8 +122,8 @@ function toDateTimeLocalValue(date: Date) {
   return `${toDateInputValue(date)}T${padDatePart(date.getHours())}:${padDatePart(date.getMinutes())}`;
 }
 
-function getTodayDateValue() {
-  return toDateInputValue(new Date());
+function getCurrentDateTimeValue() {
+  return toDateTimeLocalValue(new Date());
 }
 
 function getDefaultNextFollowUpDateTime() {
@@ -153,7 +153,7 @@ function normalizeRecommendations(
 }
 
 const initialForm: AssessmentForm = {
-  assessmentDate: getTodayDateValue(),
+  assessmentDate: getCurrentDateTimeValue(),
   referredByName: "",
   firstName: "",
   lastName: "",
@@ -243,6 +243,9 @@ function readAssessmentDraft(): AssessmentDraftPayload | null {
       form: {
         ...initialForm,
         ...parsed.form,
+        assessmentDate: parsed.form.assessmentDate?.includes("T")
+          ? parsed.form.assessmentDate
+          : `${parsed.form.assessmentDate ?? initialForm.assessmentDate.slice(0, 10)}T09:00`,
         recommendations: normalizeRecommendations(parsed.form.recommendations),
         recommendationsContacted: parsed.form.recommendationsContacted ?? false
       },
@@ -830,7 +833,7 @@ export function NewAssessmentPage() {
       return;
     }
 
-    const assessmentDate = form.assessmentDate || getTodayDateValue();
+    const assessmentDate = form.assessmentDate || getCurrentDateTimeValue();
     const nextFollowUp = form.nextFollowUp || getDefaultNextFollowUpDateTime();
     const assessment = {
       id: `a-${Date.now()}`,
@@ -958,8 +961,8 @@ export function NewAssessmentPage() {
                   <Field label="Telephone" value={form.phone} onChange={(v) => update("phone", v)} />
                   <Field label="Email" value={form.email} onChange={(v) => update("email", v)} />
                   <Field
-                    label="Date du bilan initial"
-                    type="date"
+                    label="Date et heure du bilan initial"
+                    type="datetime-local"
                     value={form.assessmentDate}
                     onChange={(v) => update("assessmentDate", v)}
                   />

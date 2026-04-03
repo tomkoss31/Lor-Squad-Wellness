@@ -425,9 +425,10 @@ export function ClientDetailPage() {
                 label="Ajouter une note"
                 hint="Garder un point simple apres l'echange"
               />
-              <ActionButton
+              <LinkButton
+                to={`/clients/${client.id}/schedule/edit`}
                 label="Modifier le prochain rendez-vous"
-                hint="Ajuster la date ou le rythme de suivi"
+                hint="Ajuster la date, l'heure ou le type de suivi"
               />
               {canDeleteClient && (
                 <DangerActionButton

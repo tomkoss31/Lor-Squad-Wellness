@@ -48,6 +48,11 @@ const NewFollowUpPage = lazy(() =>
     default: module.NewFollowUpPage
   }))
 );
+const EditClientSchedulePage = lazy(() =>
+  import("./pages/EditClientSchedulePage").then((module) => ({
+    default: module.EditClientSchedulePage
+  }))
+);
 const NewAssessmentPage = lazy(() =>
   import("./pages/NewAssessmentPage").then((module) => ({
     default: module.NewAssessmentPage
@@ -81,6 +86,7 @@ export default function App() {
               <Route path="clients/:clientId" element={<ClientDetailPage />} />
               <Route path="clients/:clientId/start-assessment/edit" element={<EditInitialAssessmentPage />} />
               <Route path="clients/:clientId/follow-up/new" element={<NewFollowUpPage />} />
+              <Route path="clients/:clientId/schedule/edit" element={<EditClientSchedulePage />} />
               <Route path="assessments/new" element={<NewAssessmentPage />} />
             </Route>
           </Route>

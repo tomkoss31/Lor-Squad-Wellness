@@ -434,6 +434,39 @@ export async function updateSupabaseAssessment(clientId: string, assessment: Ass
   }
 }
 
+export async function updateSupabaseClientSchedule(
+  clientId: string,
+  payload: {
+    nextFollowUp: string;
+    followUpId?: string;
+    followUpType?: string;
+    followUpStatus?: FollowUp["status"];
+  }
+) {
+  const client = await requireSupabase();
+  const {
+    data: { session }
+  } = await client.auth.getSession();
+
+  if (!session?.access_token) {
+    throw new Error("La session est introuvable. Reconnecte-toi puis recommence.");
+  }
+
+  const response = await fetch("/api/update-client-schedule", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${session.access_token}`
+    },
+    body: JSON.stringify({ clientId, ...payload })
+  });
+
+  const result = (await response.json()) as { ok: boolean; error?: string };
+  if (!response.ok || !result.ok) {
+    throw new Error(result.error ?? "Impossible de modifier ce rendez-vous.");
+  }
+}
+
 export async function deleteSupabaseClient(clientId: string) {
   const client = await requireSupabase();
   const {

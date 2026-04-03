@@ -16,6 +16,22 @@ function toDateInputValue(date: Date) {
   return `${date.getFullYear()}-${padDatePart(date.getMonth() + 1)}-${padDatePart(date.getDate())}`;
 }
 
+function toDateTimeLocalValue(date: Date) {
+  return `${toDateInputValue(date)}T${padDatePart(date.getHours())}:${padDatePart(date.getMinutes())}`;
+}
+
+function normalizeDateTimeLocalValue(value: string | undefined) {
+  if (!value) {
+    return toDateTimeLocalValue(new Date());
+  }
+
+  if (value.includes("T")) {
+    return value.slice(0, 16);
+  }
+
+  return `${value}T09:00`;
+}
+
 export function EditInitialAssessmentPage() {
   const { clientId } = useParams();
   const navigate = useNavigate();
@@ -33,7 +49,9 @@ export function EditInitialAssessmentPage() {
   const targetClient = client;
   const initialAssessment = getFirstAssessment(targetClient);
 
-  const [assessmentDate, setAssessmentDate] = useState(initialAssessment.date);
+  const [assessmentDate, setAssessmentDate] = useState(
+    normalizeDateTimeLocalValue(initialAssessment.date)
+  );
   const [weight, setWeight] = useState(initialAssessment.bodyScan.weight);
   const [bodyFat, setBodyFat] = useState(initialAssessment.bodyScan.bodyFat);
   const [muscleMass, setMuscleMass] = useState(initialAssessment.bodyScan.muscleMass);
@@ -67,7 +85,7 @@ export function EditInitialAssessmentPage() {
 
     const updatedAssessment: AssessmentRecord = {
       ...initialAssessment,
-      date: assessmentDate || toDateInputValue(new Date()),
+      date: assessmentDate || toDateTimeLocalValue(new Date()),
       notes,
       summary:
         initialAssessment.summary ||
@@ -125,7 +143,7 @@ export function EditInitialAssessmentPage() {
           </div>
 
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-            <MetricField label="Date du bilan de depart" type="date" value={assessmentDate} onChange={setAssessmentDate} />
+            <MetricField label="Date et heure du bilan de depart" type="datetime-local" value={assessmentDate} onChange={setAssessmentDate} />
             <MetricField label="Poids (kg)" value={weight} onChange={(value) => setWeight(Number(value))} />
             <MetricField label="Masse grasse (%)" value={bodyFat} onChange={(value) => setBodyFat(Number(value))} />
             <MetricField label="Masse musculaire (kg)" value={muscleMass} onChange={(value) => setMuscleMass(Number(value))} />
