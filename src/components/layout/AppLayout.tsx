@@ -21,6 +21,7 @@ export function AppLayout() {
     { label: "Accueil", path: "/dashboard" },
     { label: "Guide rendez-vous", path: "/guide" },
     { label: "Recommandations", path: "/recommendations" },
+    { label: "Suivi PV", path: "/pv" },
     { label: "Dossiers clients", path: "/clients" },
     ...(currentUser.role === "admin" ? [{ label: "Équipe", path: "/users" }] : []),
     { label: "Nouveau bilan", path: "/assessments/new" }
@@ -33,8 +34,10 @@ export function AppLayout() {
         ? "Repères simples pour conduire le rendez-vous"
         : location.pathname === "/recommendations"
           ? "Le bon ton pour ouvrir les recommandations"
-        : location.pathname === "/clients"
-          ? "Dossiers clients et suivi en cours"
+          : location.pathname.startsWith("/pv")
+            ? "Pilotage simple des clients, commandes et points volume"
+          : location.pathname === "/clients"
+            ? "Dossiers clients et suivi en cours"
         : location.pathname.startsWith("/distributors/")
           ? "Portefeuille, relances et rythme du suivi"
         : location.pathname === "/users"
@@ -105,7 +108,8 @@ export function AppLayout() {
                 {navigation.map((item) => {
                   const isActive =
                     location.pathname === item.path ||
-                    (item.path === "/clients" && location.pathname.startsWith("/clients/"));
+                    (item.path === "/clients" && location.pathname.startsWith("/clients/")) ||
+                    (item.path === "/pv" && location.pathname.startsWith("/pv"));
 
                   return (
                     <NavLink
@@ -214,7 +218,8 @@ export function AppLayout() {
               {navigation.map((item) => {
                 const isActive =
                   location.pathname === item.path ||
-                  (item.path === "/clients" && location.pathname.startsWith("/clients/"));
+                  (item.path === "/clients" && location.pathname.startsWith("/clients/")) ||
+                  (item.path === "/pv" && location.pathname.startsWith("/pv"));
 
                 return (
                   <NavLink
