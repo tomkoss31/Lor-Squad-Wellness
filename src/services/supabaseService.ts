@@ -68,6 +68,10 @@ type FollowUpRow = {
   last_assessment_date: string;
 };
 
+function hasStoredTime(value: string | null | undefined) {
+  return typeof value === "string" && /(?:T|\s)\d{2}:\d{2}/.test(value);
+}
+
 async function requireSupabase() {
   const supabase = await getSupabaseClient();
 
@@ -469,6 +473,30 @@ export async function updateSupabaseClientSchedule(
   }
 
   if (!directClientError && !directFollowUpError) {
+    const [{ data: clientRow }, { data: followUpRow }] = await Promise.all([
+      client
+        .from("clients")
+        .select("next_follow_up")
+        .eq("id", clientId)
+        .maybeSingle<{ next_follow_up: string }>(),
+      client
+        .from("follow_ups")
+        .select("due_date")
+        .eq("client_id", clientId)
+        .maybeSingle<{ due_date: string }>()
+    ]);
+
+    const persistedClientDate = clientRow?.next_follow_up;
+    const persistedFollowUpDate = followUpRow?.due_date;
+    const schedulePreserved =
+      hasStoredTime(persistedClientDate) || hasStoredTime(persistedFollowUpDate);
+
+    if (!schedulePreserved) {
+      throw new Error(
+        "La base enregistre encore le rendez-vous sans heure. Il faut appliquer la migration Supabase des colonnes de planning en timestamptz."
+      );
+    }
+
     return;
   }
 
