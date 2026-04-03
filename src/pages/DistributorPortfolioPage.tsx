@@ -40,7 +40,7 @@ export function DistributorPortfolioPage() {
   }
 
   const targetUser = users.find((user) => user.id === distributorId) ?? null;
-  const isAuthorized = canAccessPortfolioUser(currentUser, targetUser, users);
+  const isAuthorized = canAccessPortfolioUser(currentUser, targetUser);
 
   if (!isAuthorized) {
     return (

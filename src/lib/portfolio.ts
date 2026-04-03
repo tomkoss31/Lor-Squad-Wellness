@@ -258,7 +258,7 @@ export function getActivePortfolioUsers(
     .filter((user) => user.active)
     .filter((user) => user.role === "admin" || user.role === "referent" || user.role === "distributor")
     .filter((user) => hasPortfolioActivity(user, users, clients) || clientOwnerIds.has(user.id))
-    .filter((user) => (viewer ? canAccessPortfolioUser(viewer, user, users) : true))
+    .filter((user) => (viewer ? canAccessPortfolioUser(viewer, user) : true))
     .sort((left, right) => {
       const targetDelta = getPortfolioIdentity(right).target - getPortfolioIdentity(left).target;
       if (targetDelta !== 0) {
