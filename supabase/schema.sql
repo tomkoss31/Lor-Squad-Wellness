@@ -71,6 +71,21 @@ create table if not exists public.follow_ups (
   created_at timestamptz not null default now()
 );
 
+create table if not exists public.activity_logs (
+  id uuid primary key default gen_random_uuid(),
+  created_at timestamptz not null default now(),
+  action text not null,
+  actor_id uuid not null,
+  actor_name text not null,
+  owner_user_id uuid,
+  client_id uuid,
+  client_name text,
+  target_user_id uuid,
+  target_user_name text,
+  summary text not null,
+  detail text
+);
+
 create table if not exists public.pv_programs (
   id text primary key,
   name text not null,
@@ -263,6 +278,7 @@ alter table public.users enable row level security;
 alter table public.clients enable row level security;
 alter table public.assessments enable row level security;
 alter table public.follow_ups enable row level security;
+alter table public.activity_logs enable row level security;
 alter table public.pv_programs enable row level security;
 alter table public.pv_products enable row level security;
 alter table public.pv_program_products enable row level security;
@@ -413,6 +429,35 @@ using (
       and public.can_access_owner(public.clients.distributor_id)
   )
 );
+
+drop policy if exists "activity_logs select visible activity" on public.activity_logs;
+create policy "activity_logs select visible activity"
+on public.activity_logs
+for select
+using (
+  public.is_active_user()
+  and (
+    public.is_admin()
+    or actor_id = auth.uid()
+    or target_user_id = auth.uid()
+    or (owner_user_id is not null and public.can_access_owner(owner_user_id))
+    or (
+      client_id is not null
+      and exists (
+        select 1
+        from public.clients
+        where public.clients.id = activity_logs.client_id
+          and public.can_access_owner(public.clients.distributor_id)
+      )
+    )
+  )
+);
+
+drop policy if exists "activity_logs insert own" on public.activity_logs;
+create policy "activity_logs insert own"
+on public.activity_logs
+for insert
+with check (public.is_active_user() and actor_id = auth.uid());
 
 drop policy if exists "pv_programs select active users" on public.pv_programs;
 create policy "pv_programs select active users"
