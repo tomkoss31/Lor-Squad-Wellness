@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useMemo, useState } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { BodyFatInsightCard } from "../components/body-scan/BodyFatInsightCard";
 import { BodyScanDeltaGrid } from "../components/body-scan/BodyScanDeltaGrid";
 import { MuscleMassInsightCard } from "../components/body-scan/MuscleMassInsightCard";
@@ -9,6 +9,7 @@ import { Card } from "../components/ui/Card";
 import { PageHeading } from "../components/ui/PageHeading";
 import { StatusBadge } from "../components/ui/StatusBadge";
 import { useAppContext } from "../context/AppContext";
+import { buildPvTrackingRecords, getPvProductStatusMeta } from "../data/mockPvModule";
 import {
   formatDate,
   getAssessmentDelta,
@@ -25,7 +26,7 @@ import type { AssessmentQuestionnaire, AssessmentRecord, BodyScanMetrics } from 
 export function NewFollowUpPage() {
   const { clientId } = useParams();
   const navigate = useNavigate();
-  const { getClientById, addFollowUpAssessment } = useAppContext();
+  const { getClientById, addFollowUpAssessment, pvTransactions, pvClientProducts } = useAppContext();
   const client = clientId ? getClientById(clientId) : undefined;
 
   if (!client) {
@@ -71,6 +72,10 @@ export function NewFollowUpPage() {
   );
 
   const delta = getAssessmentDelta(bodyScan, latest.bodyScan);
+  const pvRecord = useMemo(
+    () => buildPvTrackingRecords([targetClient], pvTransactions, pvClientProducts)[0] ?? null,
+    [pvClientProducts, pvTransactions, targetClient]
+  );
   const weightLossPlan = getWeightLossPlan(
     bodyScan.weight,
     latest.questionnaire.targetWeight,
@@ -408,6 +413,74 @@ export function NewFollowUpPage() {
             </div>
           </Card>
 
+          <Card className="space-y-5">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="eyebrow-label">Point volume</p>
+                <p className="mt-3 text-2xl text-white">Commande et reste estime</p>
+                <p className="mt-2 text-sm leading-6 text-slate-300">
+                  Un coup d&apos;oeil pour voir ou en est la commande avant de relancer le prochain pas.
+                </p>
+              </div>
+              {pvRecord ? <StatusBadge label="PV" tone="blue" /> : null}
+            </div>
+
+            {pvRecord ? (
+              <>
+                <div className="grid gap-3 md:grid-cols-2">
+                  <CompactWeightPanel
+                    label="Derniere commande"
+                    value={formatDate(pvRecord.lastOrderDate)}
+                  />
+                  <CompactWeightPanel
+                    label="Reste estime"
+                    value={`${pvRecord.estimatedRemainingDays} jours`}
+                  />
+                  <CompactWeightPanel
+                    label="PV cumules"
+                    value={`${pvRecord.pvCumulative} PV`}
+                  />
+                  <div className="rounded-[22px] border border-white/10 bg-white/[0.03] px-5 py-4">
+                    <p className="text-[12px] font-medium text-slate-400">Statut actuel</p>
+                    <div className="mt-3">
+                      <PvFollowUpStatusLabel status={pvRecord.status} />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="rounded-[22px] border border-white/10 bg-white/[0.03] px-5 py-4">
+                  <p className="text-[12px] font-medium text-slate-400">Produits a suivre</p>
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    {pvRecord.activeProducts.map((product) => {
+                      const meta = getPvProductStatusMeta(product.status);
+                      return (
+                        <span
+                          key={product.id}
+                          className="inline-flex min-h-[38px] items-center rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-[13px] font-medium text-slate-100"
+                        >
+                          {product.productName} - {product.estimatedRemainingDays} j - {meta.label}
+                        </span>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <Link
+                  to={`/pv/clients?client=${targetClient.id}`}
+                  className="inline-flex min-h-[44px] items-center justify-center rounded-full bg-sky-400/[0.16] px-5 py-3 text-sm font-semibold text-white transition hover:bg-sky-400/[0.24]"
+                >
+                  Ouvrir sa fiche point volume
+                </Link>
+              </>
+            ) : (
+              <div className="rounded-[22px] border border-white/10 bg-white/[0.03] px-5 py-4">
+                <p className="text-sm leading-6 text-slate-300">
+                  Aucun suivi PV n&apos;est encore visible pour ce dossier.
+                </p>
+              </div>
+            )}
+          </Card>
+
           <Card className="space-y-4">
             <div className="space-y-2">
               <label className="text-sm font-medium text-slate-300">Type de suivi</label>
@@ -490,6 +563,37 @@ export function NewFollowUpPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+function PvFollowUpStatusLabel({
+  status
+}: {
+  status: "ok" | "watch" | "restock" | "inconsistent" | "follow-up";
+}) {
+  const toneClass =
+    status === "ok"
+      ? "bg-emerald-400/12 text-emerald-100"
+      : status === "restock"
+        ? "bg-sky-400/12 text-sky-100"
+        : status === "inconsistent"
+          ? "bg-rose-400/12 text-rose-100"
+          : "bg-amber-400/12 text-amber-100";
+  const label =
+    status === "ok"
+      ? "RAS"
+      : status === "watch"
+        ? "A surveiller"
+        : status === "restock"
+          ? "Reassort probable"
+          : status === "inconsistent"
+            ? "Incoherence conso"
+            : "A relancer";
+
+  return (
+    <span className={`inline-flex rounded-full px-4 py-2 text-sm font-semibold ${toneClass}`}>
+      {label}
+    </span>
   );
 }
 

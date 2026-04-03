@@ -15,6 +15,7 @@ import { MetricTile } from "../components/ui/MetricTile";
 import { PageHeading } from "../components/ui/PageHeading";
 import { StatusBadge } from "../components/ui/StatusBadge";
 import { useAppContext } from "../context/AppContext";
+import { buildPvTrackingRecords } from "../data/mockPvModule";
 import { getClientActiveFollowUp } from "../lib/portfolio";
 import {
   calculateProteinRange,
@@ -36,7 +37,8 @@ import {
 export function ClientDetailPage() {
   const navigate = useNavigate();
   const { clientId } = useParams();
-  const { currentUser, deleteClient, getClientById, followUps } = useAppContext();
+  const { currentUser, deleteClient, getClientById, followUps, pvTransactions, pvClientProducts } =
+    useAppContext();
 
   const client = clientId ? getClientById(clientId) : undefined;
 
@@ -86,6 +88,7 @@ export function ClientDetailPage() {
     ? latestQuestionnaire.optionalProductsUsed
     : "Non renseigné";
   const canDeleteClient = currentUser?.role === "admin";
+  const pvRecord = buildPvTrackingRecords([currentClient], pvTransactions, pvClientProducts)[0] ?? null;
 
   async function handleDeleteClient() {
     const shouldDelete = window.confirm(
@@ -398,7 +401,17 @@ export function ClientDetailPage() {
                 ) : null}
                 <SummaryRow label="Repère protéines" value={proteinRange} />
                 <SummaryRow label="Hydratation cible" value={`${waterNeed} L`} />
+                {pvRecord ? (
+                  <SummaryRow label="Derniere commande PV" value={formatDate(pvRecord.lastOrderDate)} />
+                ) : null}
                 <SummaryRow label="Produits optionnels" value={optionalProductsLabel} />
+                {pvRecord ? (
+                  <SummaryLinkRow
+                    label="Point volume"
+                    to={`/pv/clients?client=${client.id}`}
+                    value="Ouvrir la fiche PV"
+                  />
+                ) : null}
                 <SummaryRow label="Note du moment" value={latestAssessment.notes} />
               </div>
           </Card>
@@ -430,6 +443,11 @@ export function ClientDetailPage() {
                 to={`/clients/${client.id}/start-assessment/edit`}
                 label="Modifier le bilan de départ"
                 hint="Corriger la date et les valeurs de reference"
+              />
+              <LinkButton
+                to={`/pv/clients?client=${client.id}`}
+                label="Ouvrir la fiche point volume"
+                hint="Voir la commande, le reste estime et les alertes produits"
               />
               <LinkButton
                 to={`/clients/${client.id}/follow-up/new`}
@@ -524,6 +542,26 @@ function SummaryStatusRow({
         <StatusBadge label={badgeLabel} tone={tone} />
       </div>
     </div>
+  );
+}
+
+function SummaryLinkRow({
+  label,
+  value,
+  to
+}: {
+  label: string;
+  value: string;
+  to: string;
+}) {
+  return (
+    <Link
+      to={to}
+      className="flex items-center justify-between gap-3 rounded-[22px] bg-sky-400/[0.08] px-4 py-3 transition hover:bg-sky-400/[0.14]"
+    >
+      <span className="text-sm text-slate-300">{label}</span>
+      <span className="text-right text-sm font-semibold text-white">{value}</span>
+    </Link>
   );
 }
 

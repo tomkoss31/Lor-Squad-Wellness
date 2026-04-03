@@ -6,6 +6,7 @@ import { MetricTile } from "../components/ui/MetricTile";
 import { PageHeading } from "../components/ui/PageHeading";
 import { StatusBadge } from "../components/ui/StatusBadge";
 import { useAppContext } from "../context/AppContext";
+import { canAccessPortfolioUser } from "../lib/auth";
 import {
   getActivePortfolioUsers,
   getClientActiveFollowUp,
@@ -38,7 +39,8 @@ export function DistributorPortfolioPage() {
     return null;
   }
 
-  const isAuthorized = currentUser.role === "admin" || currentUser.id === distributorId;
+  const targetUser = users.find((user) => user.id === distributorId) ?? null;
+  const isAuthorized = canAccessPortfolioUser(currentUser, targetUser, users);
 
   if (!isAuthorized) {
     return (
@@ -48,7 +50,7 @@ export function DistributorPortfolioPage() {
     );
   }
 
-  const portfolioUsers = getActivePortfolioUsers(users, visibleClients);
+  const portfolioUsers = getActivePortfolioUsers(users, visibleClients, currentUser);
   const portfolioUser =
     portfolioUsers.find((user) => user.id === distributorId) ??
     (currentUser.id === distributorId ? currentUser : null);
@@ -62,9 +64,11 @@ export function DistributorPortfolioPage() {
   }
 
   const portfolioMetrics = getPortfolioMetrics(
-    portfolioUser.id,
+    portfolioUser,
     visibleClients,
-    visibleFollowUps
+    visibleFollowUps,
+    users,
+    portfolioUser.role === "referent" ? "network" : "personal"
   );
   const normalizedSearch = deferredSearch.trim().toLowerCase();
   const filteredClients = portfolioMetrics.clients.filter((client) => {

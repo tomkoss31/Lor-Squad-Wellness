@@ -82,7 +82,18 @@ export default async function handler(req: any, res: any) {
     return;
   }
 
-  const canEdit = profile.role === "admin" || clientRecord.distributor_id === profile.id;
+  let canEdit = profile.role === "admin" || clientRecord.distributor_id === profile.id;
+
+  if (!canEdit && profile.role === "referent") {
+    const { data: ownerProfile } = await admin
+      .from("users")
+      .select("sponsor_id")
+      .eq("id", clientRecord.distributor_id)
+      .single<{ sponsor_id?: string | null }>();
+
+    canEdit = ownerProfile?.sponsor_id === profile.id;
+  }
+
   if (!canEdit) {
     res.status(403).json({
       ok: false,

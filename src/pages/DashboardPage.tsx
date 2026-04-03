@@ -18,13 +18,13 @@ type DashboardFollowUp = {
 };
 
 export function DashboardPage() {
-  const { currentUser, clients, followUps } = useAppContext();
+  const { currentUser, users, clients, followUps } = useAppContext();
 
   if (!currentUser) {
     return null;
   }
 
-  const personalMetrics = getPortfolioMetrics(currentUser.id, clients, followUps);
+  const personalMetrics = getPortfolioMetrics(currentUser, clients, followUps, users, "personal");
   const scheduledFollowUps = [...personalMetrics.scheduledFollowUps].sort(compareFollowUpsByDueDate);
   const relanceFollowUps = [...personalMetrics.relanceFollowUps].sort(compareFollowUpsByDueDate);
   const actionsToOpen = [...relanceFollowUps, ...scheduledFollowUps].sort((left, right) => {

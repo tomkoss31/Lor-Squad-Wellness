@@ -1,4 +1,4 @@
-export type UserRole = "admin" | "distributor";
+export type UserRole = "admin" | "referent" | "distributor";
 
 export type Objective = "weight-loss" | "sport";
 
@@ -19,6 +19,8 @@ export interface User {
   email: string;
   mockPassword?: string;
   role: UserRole;
+  sponsorId?: string;
+  sponsorName?: string;
   active: boolean;
   title: string;
   createdAt?: string;
@@ -30,7 +32,7 @@ export interface AuthSession {
   role: UserRole;
   authMode: "mock" | "supabase";
   issuedAt: string;
-  accessScope: "all-clients" | "owned-clients";
+  accessScope: "all-clients" | "team-clients" | "owned-clients";
 }
 
 export interface BodyScanMetrics {

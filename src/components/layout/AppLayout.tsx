@@ -17,6 +17,19 @@ export function AppLayout() {
     return null;
   }
 
+  const roleTone =
+    currentUser.role === "admin"
+      ? "blue"
+      : currentUser.role === "referent"
+        ? "amber"
+        : "green";
+  const accessScopeLabel =
+    currentSession?.accessScope === "all-clients"
+      ? "global"
+      : currentSession?.accessScope === "team-clients"
+        ? "equipe"
+        : "personnel";
+
   const navigation = [
     { label: "Accueil", path: "/dashboard" },
     { label: "Guide rendez-vous", path: "/guide" },
@@ -93,7 +106,7 @@ export function AppLayout() {
                   </div>
                   <StatusBadge
                     label={getRoleLabel(currentUser.role)}
-                    tone={currentUser.role === "admin" ? "blue" : "green"}
+                    tone={roleTone}
                   />
                 </div>
                 <p className="mt-3 text-[13px] leading-6 text-slate-500">
@@ -155,7 +168,7 @@ export function AppLayout() {
               </div>
               {currentSession ? (
                 <div className="rounded-[18px] bg-slate-950/28 px-4 py-3 text-[12px] text-slate-400">
-                  Session active · accès {currentSession.accessScope}
+                  Session active · acces {accessScopeLabel}
                 </div>
               ) : null}
               <Button className="w-full" onClick={() => navigate("/assessments/new")}>
@@ -202,7 +215,7 @@ export function AppLayout() {
               </div>
               <StatusBadge
                 label={getRoleLabel(currentUser.role)}
-                tone={currentUser.role === "admin" ? "blue" : "green"}
+                tone={roleTone}
               />
             </div>
 

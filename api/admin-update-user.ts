@@ -24,20 +24,16 @@ export default async function handler(req: any, res: any) {
     return;
   }
 
-  const payload = req.body ?? {};
-  const name = String(payload.name ?? "").trim();
-  const email = String(payload.email ?? "").trim().toLowerCase();
+  const userId = String(req.body?.userId ?? "").trim();
   const role =
-    payload.role === "admin" || payload.role === "referent" ? payload.role : "distributor";
-  const sponsorId = String(payload.sponsorId ?? "").trim();
-  const active = Boolean(payload.active);
-  const password = String(payload.mockPassword ?? "").trim();
+    req.body?.role === "admin" || req.body?.role === "referent"
+      ? req.body.role
+      : "distributor";
+  const sponsorId = String(req.body?.sponsorId ?? "").trim();
+  const title = String(req.body?.title ?? "").trim();
 
-  if (!name || !email || !password) {
-    res.status(400).json({
-      ok: false,
-      error: "Nom, email et mot de passe provisoire sont obligatoires."
-    });
+  if (!userId) {
+    res.status(400).json({ ok: false, error: "Le compte a modifier est introuvable." });
     return;
   }
 
@@ -70,7 +66,26 @@ export default async function handler(req: any, res: any) {
   if (profileError || !profile || profile.role !== "admin" || !profile.active) {
     res.status(403).json({
       ok: false,
-      error: "Seul un admin actif peut creer un nouvel acces."
+      error: "Seul un admin actif peut modifier un acces."
+    });
+    return;
+  }
+
+  const { data: targetUser, error: targetError } = await admin
+    .from("users")
+    .select("id, role")
+    .eq("id", userId)
+    .single<{ id: string; role: string }>();
+
+  if (targetError || !targetUser) {
+    res.status(404).json({ ok: false, error: "Le compte cible est introuvable." });
+    return;
+  }
+
+  if (targetUser.role === "admin" && role !== "admin") {
+    res.status(400).json({
+      ok: false,
+      error: "Un compte admin ne peut pas etre degrade ici."
     });
     return;
   }
@@ -83,7 +98,7 @@ export default async function handler(req: any, res: any) {
       .eq("id", sponsorId)
       .single<{ id: string; name: string; role: string; active: boolean }>();
 
-    if (!sponsor || !sponsor.active || !["admin", "referent"].includes(sponsor.role)) {
+    if (!sponsor || sponsor.id === userId || !sponsor.active || !["admin", "referent"].includes(sponsor.role)) {
       res.status(400).json({
         ok: false,
         error: "Le sponsor d'equipe selectionne est introuvable."
@@ -94,51 +109,30 @@ export default async function handler(req: any, res: any) {
     sponsorName = sponsor.name;
   }
 
-  const { data: createdUser, error: createError } = await admin.auth.admin.createUser({
-    email,
-    password,
-    email_confirm: true,
+  const { error: updateError } = await admin
+    .from("users")
+    .update({
+      role,
+      sponsor_id: role === "distributor" ? sponsorId || null : null,
+      sponsor_name: role === "distributor" ? sponsorName : null,
+      title: title || null
+    })
+    .eq("id", userId);
+
+  if (updateError) {
+    res.status(400).json({
+      ok: false,
+      error: updateError.message || "Impossible de mettre a jour cet acces."
+    });
+    return;
+  }
+
+  await admin.auth.admin.updateUserById(userId, {
     user_metadata: {
-      name,
       role,
       sponsor_id: role === "distributor" ? sponsorId || null : null
     }
   });
-
-  if (createError || !createdUser.user) {
-    res.status(400).json({
-      ok: false,
-      error: createError?.message ?? "Impossible de creer cet utilisateur."
-    });
-    return;
-  }
-
-  const title =
-    role === "admin"
-      ? "Pilotage global"
-      : role === "referent"
-        ? "Referent d'equipe"
-        : "Portefeuille terrain";
-
-  const { error: profileInsertError } = await admin.from("users").upsert({
-    id: createdUser.user.id,
-    name,
-    email,
-    role,
-    sponsor_id: role === "distributor" ? sponsorId || null : null,
-    sponsor_name: role === "distributor" ? sponsorName : null,
-    active,
-    title,
-    created_at: new Date().toISOString()
-  });
-
-  if (profileInsertError) {
-    res.status(400).json({
-      ok: false,
-      error: profileInsertError.message
-    });
-    return;
-  }
 
   res.status(200).json({ ok: true });
 }

@@ -18,6 +18,7 @@ import { Card } from "../components/ui/Card";
 import { PageHeading } from "../components/ui/PageHeading";
 import { StatusBadge } from "../components/ui/StatusBadge";
 import { useAppContext } from "../context/AppContext";
+import { getAccessibleOwnerIds, getRoleLabel, isAdmin } from "../lib/auth";
 import {
   calculateProteinRange,
   calculateWaterNeed,
@@ -383,10 +384,11 @@ export function NewAssessmentPage() {
     });
   }, [assignedUserId, currentStep, draftReady, form]);
 
+  const assignableOwnerIds = currentUser
+    ? getAccessibleOwnerIds(currentUser, users)
+    : new Set<string>();
   const assignableOwners = users.filter(
-    (user) =>
-      user.active &&
-      (user.role === "admin" || user.role === "distributor")
+    (user) => user.active && assignableOwnerIds.has(user.id)
   );
   const assignedUser =
     assignableOwners.find((user) => user.id === assignedUserId) ??
@@ -981,10 +983,15 @@ export function NewAssessmentPage() {
                       >
                         {assignableOwners.map((user) => (
                           <option key={user.id} value={user.id}>
-                            {user.name} - {user.role === "admin" ? "Admin" : "Distributeur"}
+                            {user.name} - {getRoleLabel(user.role)}
                           </option>
                         ))}
                       </select>
+                      {!isAdmin(currentUser) ? (
+                        <p className="text-xs leading-6 text-slate-400">
+                          Tu peux attribuer le dossier a toi-meme ou a un distributeur de ton equipe.
+                        </p>
+                      ) : null}
                     </div>
                   ) : null}
                   <ChoiceGroup

@@ -6,10 +6,12 @@ import { MetricTile } from "../components/ui/MetricTile";
 import { PageHeading } from "../components/ui/PageHeading";
 import { StatusBadge } from "../components/ui/StatusBadge";
 import { useAppContext } from "../context/AppContext";
+import { getAccessibleOwnerIds } from "../lib/auth";
 import {
   getActivePortfolioUsers,
   getGroupedClientsByMonth,
   getPortfolioIdentity,
+  getPortfolioOwnerIds,
   getPortfolioMetrics,
   isRelanceFollowUp
 } from "../lib/portfolio";
@@ -45,18 +47,30 @@ export function ClientsPage() {
   const deferredSearch = useDeferredValue(search);
 
   const portfolioUsers = useMemo(
-    () => getActivePortfolioUsers(users, visibleClients),
-    [users, visibleClients]
+    () => getActivePortfolioUsers(users, visibleClients, currentUser),
+    [currentUser, users, visibleClients]
   );
-  const ownerTabs =
-    currentUser?.role === "admin"
-      ? portfolioUsers
-      : portfolioUsers.filter((user) => user.id === currentUser?.id);
+  const ownerTabs = currentUser
+    ? portfolioUsers.filter((user) => getAccessibleOwnerIds(currentUser, users).has(user.id))
+    : [];
+  const selectedOwner =
+    ownerFilter === "all"
+      ? null
+      : ownerTabs.find((user) => user.id === ownerFilter) ?? null;
+  const selectedOwnerIds =
+    selectedOwner && currentUser
+      ? getPortfolioOwnerIds(
+          selectedOwner,
+          users,
+          selectedOwner.role === "referent" ? "network" : "personal"
+        )
+      : null;
   const normalizedSearch = deferredSearch.trim().toLowerCase();
   const filteredClients = useMemo(() => {
     return visibleClients.filter((client) => {
       const firstAssessment = getFirstAssessment(client);
-      const matchesOwner = ownerFilter === "all" || client.distributorId === ownerFilter;
+      const matchesOwner =
+        ownerFilter === "all" || (selectedOwnerIds ? selectedOwnerIds.has(client.distributorId) : false);
       const matchesStatus = statusFilter === "all" || client.status === statusFilter;
       const matchesSearch =
         !normalizedSearch ||
@@ -66,17 +80,19 @@ export function ClientsPage() {
 
       return matchesOwner && matchesStatus && matchesSearch;
     });
-  }, [normalizedSearch, ownerFilter, statusFilter, visibleClients]);
+  }, [normalizedSearch, ownerFilter, selectedOwnerIds, statusFilter, visibleClients]);
   const groupedClients = useMemo(
     () => getGroupedClientsByMonth(filteredClients),
     [filteredClients]
   );
-  const selectedOwner =
-    ownerFilter === "all"
-      ? null
-      : ownerTabs.find((user) => user.id === ownerFilter) ?? null;
   const selectedOwnerMetrics = selectedOwner
-    ? getPortfolioMetrics(selectedOwner.id, visibleClients, visibleFollowUps)
+    ? getPortfolioMetrics(
+        selectedOwner,
+        visibleClients,
+        visibleFollowUps,
+        users,
+        selectedOwner.role === "referent" ? "network" : "personal"
+      )
     : null;
   const globalTarget = ownerTabs.reduce(
     (total, user) => total + getPortfolioIdentity(user).target,
@@ -181,7 +197,13 @@ export function ClientsPage() {
 
             {ownerTabs.map((user) => {
               const identity = getPortfolioIdentity(user);
-              const metrics = getPortfolioMetrics(user.id, visibleClients, visibleFollowUps);
+              const metrics = getPortfolioMetrics(
+                user,
+                visibleClients,
+                visibleFollowUps,
+                users,
+                user.role === "referent" ? "network" : "personal"
+              );
               const isActive = ownerFilter === user.id;
 
               return (
@@ -212,6 +234,9 @@ export function ClientsPage() {
                       >
                         {metrics.clients.length} clients - cible {identity.target}
                       </span>
+                      {user.role === "referent" ? (
+                        <span className="mt-1 block text-[11px] text-slate-500">Vue equipe</span>
+                      ) : null}
                     </div>
                   </div>
                 </button>

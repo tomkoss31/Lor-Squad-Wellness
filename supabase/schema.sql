@@ -4,7 +4,9 @@ create table if not exists public.users (
   id uuid primary key references auth.users (id) on delete cascade,
   name text not null,
   email text not null unique,
-  role text not null check (role in ('admin', 'distributor')),
+  role text not null check (role in ('admin', 'referent', 'distributor')),
+  sponsor_id uuid references public.users (id) on delete set null,
+  sponsor_name text,
   active boolean not null default true,
   title text not null default 'Acces distributeur',
   created_at timestamptz not null default now(),
@@ -34,6 +36,9 @@ create table if not exists public.clients (
   notes text not null default '',
   created_at timestamptz not null default now()
 );
+
+alter table public.users add column if not exists sponsor_id uuid references public.users (id) on delete set null;
+alter table public.users add column if not exists sponsor_name text;
 
 alter table public.clients add column if not exists pv_program_id text;
 
@@ -231,6 +236,29 @@ as $$
   select coalesce((select active from public.users where id = auth.uid()), false)
 $$;
 
+create or replace function public.can_access_owner(target_owner_id uuid)
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select coalesce(
+    public.is_admin()
+    or auth.uid() = target_owner_id
+    or (
+      public.current_role() = 'referent'
+      and exists (
+        select 1
+        from public.users
+        where id = target_owner_id
+          and sponsor_id = auth.uid()
+      )
+    ),
+    false
+  )
+$$;
+
 alter table public.users enable row level security;
 alter table public.clients enable row level security;
 alter table public.assessments enable row level security;
@@ -245,7 +273,7 @@ drop policy if exists "users select self or admin" on public.users;
 create policy "users select self or admin"
 on public.users
 for select
-using (auth.uid() = id or public.is_admin());
+using (auth.uid() = id or public.is_admin() or sponsor_id = auth.uid());
 
 drop policy if exists "users update admin" on public.users;
 create policy "users update admin"
@@ -258,26 +286,26 @@ drop policy if exists "clients select own or admin" on public.clients;
 create policy "clients select own or admin"
 on public.clients
 for select
-using (public.is_active_user() and (public.is_admin() or distributor_id = auth.uid()));
+using (public.is_active_user() and public.can_access_owner(distributor_id));
 
 drop policy if exists "clients insert own or admin" on public.clients;
 create policy "clients insert own or admin"
 on public.clients
 for insert
-with check (public.is_active_user() and (public.is_admin() or distributor_id = auth.uid()));
+with check (public.is_active_user() and public.can_access_owner(distributor_id));
 
 drop policy if exists "clients update own or admin" on public.clients;
 create policy "clients update own or admin"
 on public.clients
 for update
-using (public.is_active_user() and (public.is_admin() or distributor_id = auth.uid()))
-with check (public.is_active_user() and (public.is_admin() or distributor_id = auth.uid()));
+using (public.is_active_user() and public.can_access_owner(distributor_id))
+with check (public.is_active_user() and public.can_access_owner(distributor_id));
 
 drop policy if exists "clients delete own or admin" on public.clients;
 create policy "clients delete own or admin"
 on public.clients
 for delete
-using (public.is_active_user() and (public.is_admin() or distributor_id = auth.uid()));
+using (public.is_active_user() and public.can_access_owner(distributor_id));
 
 drop policy if exists "assessments select via client" on public.assessments;
 create policy "assessments select via client"
@@ -289,7 +317,7 @@ using (
     select 1
     from public.clients
     where public.clients.id = assessments.client_id
-      and (public.is_admin() or public.clients.distributor_id = auth.uid())
+      and public.can_access_owner(public.clients.distributor_id)
   )
 );
 
@@ -303,7 +331,7 @@ with check (
     select 1
     from public.clients
     where public.clients.id = assessments.client_id
-      and (public.is_admin() or public.clients.distributor_id = auth.uid())
+      and public.can_access_owner(public.clients.distributor_id)
   )
 );
 
@@ -317,7 +345,7 @@ using (
     select 1
     from public.clients
     where public.clients.id = follow_ups.client_id
-      and (public.is_admin() or public.clients.distributor_id = auth.uid())
+      and public.can_access_owner(public.clients.distributor_id)
   )
 );
 
@@ -331,7 +359,7 @@ with check (
     select 1
     from public.clients
     where public.clients.id = follow_ups.client_id
-      and (public.is_admin() or public.clients.distributor_id = auth.uid())
+      and public.can_access_owner(public.clients.distributor_id)
   )
 );
 
@@ -345,7 +373,7 @@ using (
     select 1
     from public.clients
     where public.clients.id = follow_ups.client_id
-      and (public.is_admin() or public.clients.distributor_id = auth.uid())
+      and public.can_access_owner(public.clients.distributor_id)
   )
 )
 with check (
@@ -354,7 +382,7 @@ with check (
     select 1
     from public.clients
     where public.clients.id = follow_ups.client_id
-      and (public.is_admin() or public.clients.distributor_id = auth.uid())
+      and public.can_access_owner(public.clients.distributor_id)
   )
 );
 
@@ -368,7 +396,7 @@ using (
     select 1
     from public.clients
     where public.clients.id = assessments.client_id
-      and (public.is_admin() or public.clients.distributor_id = auth.uid())
+      and public.can_access_owner(public.clients.distributor_id)
   )
 );
 
@@ -382,7 +410,7 @@ using (
     select 1
     from public.clients
     where public.clients.id = follow_ups.client_id
-      and (public.is_admin() or public.clients.distributor_id = auth.uid())
+      and public.can_access_owner(public.clients.distributor_id)
   )
 );
 
@@ -414,7 +442,7 @@ using (
     select 1
     from public.clients
     where public.clients.id = pv_client_products.client_id
-      and (public.is_admin() or public.clients.distributor_id = auth.uid())
+      and public.can_access_owner(public.clients.distributor_id)
   )
 );
 
@@ -428,7 +456,7 @@ with check (
     select 1
     from public.clients
     where public.clients.id = pv_client_products.client_id
-      and (public.is_admin() or public.clients.distributor_id = auth.uid())
+      and public.can_access_owner(public.clients.distributor_id)
   )
 );
 
@@ -442,7 +470,7 @@ using (
     select 1
     from public.clients
     where public.clients.id = pv_client_products.client_id
-      and (public.is_admin() or public.clients.distributor_id = auth.uid())
+      and public.can_access_owner(public.clients.distributor_id)
   )
 )
 with check (
@@ -451,7 +479,7 @@ with check (
     select 1
     from public.clients
     where public.clients.id = pv_client_products.client_id
-      and (public.is_admin() or public.clients.distributor_id = auth.uid())
+      and public.can_access_owner(public.clients.distributor_id)
   )
 );
 
@@ -465,7 +493,7 @@ using (
     select 1
     from public.clients
     where public.clients.id = pv_client_products.client_id
-      and (public.is_admin() or public.clients.distributor_id = auth.uid())
+      and public.can_access_owner(public.clients.distributor_id)
   )
 );
 
@@ -479,7 +507,7 @@ using (
     select 1
     from public.clients
     where public.clients.id = pv_transactions.client_id
-      and (public.is_admin() or public.clients.distributor_id = auth.uid())
+      and public.can_access_owner(public.clients.distributor_id)
   )
 );
 
@@ -493,7 +521,7 @@ with check (
     select 1
     from public.clients
     where public.clients.id = pv_transactions.client_id
-      and (public.is_admin() or public.clients.distributor_id = auth.uid())
+      and public.can_access_owner(public.clients.distributor_id)
   )
 );
 
@@ -507,7 +535,7 @@ using (
     select 1
     from public.clients
     where public.clients.id = pv_transactions.client_id
-      and (public.is_admin() or public.clients.distributor_id = auth.uid())
+      and public.can_access_owner(public.clients.distributor_id)
   )
 )
 with check (
@@ -516,7 +544,7 @@ with check (
     select 1
     from public.clients
     where public.clients.id = pv_transactions.client_id
-      and (public.is_admin() or public.clients.distributor_id = auth.uid())
+      and public.can_access_owner(public.clients.distributor_id)
   )
 );
 
@@ -530,6 +558,6 @@ using (
     select 1
     from public.clients
     where public.clients.id = pv_transactions.client_id
-      and (public.is_admin() or public.clients.distributor_id = auth.uid())
+      and public.can_access_owner(public.clients.distributor_id)
   )
 );

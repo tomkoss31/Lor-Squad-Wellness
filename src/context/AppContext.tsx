@@ -16,6 +16,7 @@ import {
   loginWithMockCredentials,
   resetMockAuthData,
   restoreSession,
+  updateMockUserAccess,
   updateMockUserStatus
 } from "../services/authService";
 import {
@@ -48,6 +49,7 @@ import {
   upsertSupabasePvClientProduct,
   updateSupabaseAssessment,
   updateSupabaseClientSchedule,
+  updateSupabaseUserAccess,
   updateSupabaseUserStatus
 } from "../services/supabaseService";
 import type {
@@ -85,9 +87,17 @@ interface AppContextValue {
     name: string;
     email: string;
     role: User["role"];
+    sponsorId?: string;
     active: boolean;
     mockPassword: string;
   }) => Promise<{ ok: boolean; error?: string }>;
+  updateUserAccess: (
+    userId: string,
+    payload: {
+      role: User["role"];
+      sponsorId?: string;
+    }
+  ) => Promise<{ ok: boolean; error?: string }>;
   updateUserStatus: (userId: string, active: boolean) => Promise<void>;
   resetAccessData: () => void;
   clearBusinessData: () => void;
@@ -361,6 +371,7 @@ export function AppProvider({ children }: PropsWithChildren) {
     name: string;
     email: string;
     role: User["role"];
+    sponsorId?: string;
     active: boolean;
     mockPassword: string;
   }) {
@@ -383,6 +394,39 @@ export function AppProvider({ children }: PropsWithChildren) {
     }
 
     const result = createMockUser(payload);
+    if (!result.ok || !result.users) {
+      return { ok: false, error: result.error };
+    }
+
+    setUsers(result.users);
+    return { ok: true };
+  }
+
+  async function updateUserAccess(
+    userId: string,
+    payload: {
+      role: User["role"];
+      sponsorId?: string;
+    }
+  ) {
+    if (storageMode === "supabase") {
+      try {
+        await updateSupabaseUserAccess(userId, payload);
+        await refreshRemoteData(currentUser);
+        return { ok: true };
+      } catch (error) {
+        console.error("Mise a jour d'acces Supabase impossible.", error);
+        return {
+          ok: false,
+          error:
+            error instanceof Error
+              ? error.message
+              : "La mise a jour de cet acces a echoue."
+        };
+      }
+    }
+
+    const result = updateMockUserAccess(userId, payload);
     if (!result.ok || !result.users) {
       return { ok: false, error: result.error };
     }
@@ -457,7 +501,7 @@ export function AppProvider({ children }: PropsWithChildren) {
 
   function getClientById(clientId: string) {
     const client = clients.find((item) => item.id === clientId);
-    if (!client || !canAccessClient(currentUser, client)) {
+    if (!client || !canAccessClient(currentUser, client, users)) {
       return undefined;
     }
 
@@ -466,7 +510,7 @@ export function AppProvider({ children }: PropsWithChildren) {
 
   function canAccessClientById(clientId: string) {
     const client = clients.find((item) => item.id === clientId);
-    return client ? canAccessClient(currentUser, client) : false;
+    return client ? canAccessClient(currentUser, client, users) : false;
   }
 
   function upsertLocalPvClientProduct(product: PvClientProductRecord) {
@@ -755,9 +799,9 @@ export function AppProvider({ children }: PropsWithChildren) {
       currentSession,
       users,
       clients,
-      visibleClients: getVisibleClients(currentUser, clients),
+      visibleClients: getVisibleClients(currentUser, clients, users),
       followUps,
-      visibleFollowUps: getVisibleFollowUps(currentUser, followUps, clients),
+      visibleFollowUps: getVisibleFollowUps(currentUser, followUps, clients, users),
       pvClientProducts,
       pvTransactions,
       programs: mockPrograms,
@@ -766,6 +810,7 @@ export function AppProvider({ children }: PropsWithChildren) {
       logout,
       forceResetSession,
       createUserAccess,
+      updateUserAccess,
       updateUserStatus,
       resetAccessData,
       clearBusinessData,

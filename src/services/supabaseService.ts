@@ -1,4 +1,4 @@
-import { createMockSession, getRoleScope } from "../lib/auth";
+import { createMockSession, getDefaultUserTitle, getRoleScope } from "../lib/auth";
 import { getSupabaseClient } from "./supabaseClient";
 import { pvProductCatalog, resolvePvProgram } from "../data/mockPvModule";
 import type {
@@ -15,6 +15,8 @@ type UserRow = {
   name: string;
   email: string;
   role: User["role"];
+  sponsor_id?: string | null;
+  sponsor_name?: string | null;
   active: boolean;
   title: string;
   created_at?: string | null;
@@ -169,6 +171,8 @@ function mapUser(row: UserRow): User {
     name: row.name,
     email: row.email,
     role: row.role,
+    sponsorId: row.sponsor_id ?? undefined,
+    sponsorName: row.sponsor_name ?? undefined,
     active: row.active,
     title: row.title,
     createdAt: row.created_at ?? undefined,
@@ -959,19 +963,69 @@ export async function createSupabaseUserAccess(payload: {
   name: string;
   email: string;
   role: User["role"];
+  sponsorId?: string;
   active: boolean;
   mockPassword: string;
 }) {
+  const client = await requireSupabase();
+  const {
+    data: { session }
+  } = await client.auth.getSession();
+
+  if (!session?.access_token) {
+    return {
+      ok: false as const,
+      error: "La session admin est introuvable. Reconnecte-toi puis recommence."
+    };
+  }
+
   const response = await fetch("/api/admin-create-user", {
     method: "POST",
     headers: {
-      "Content-Type": "application/json"
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${session.access_token}`
     },
     body: JSON.stringify(payload)
   });
 
   const result = (await response.json()) as { ok: boolean; error?: string };
   return result;
+}
+
+export async function updateSupabaseUserAccess(
+  userId: string,
+  payload: {
+    role: User["role"];
+    sponsorId?: string;
+  }
+) {
+  const client = await requireSupabase();
+  const {
+    data: { session }
+  } = await client.auth.getSession();
+
+  if (!session?.access_token) {
+    throw new Error("La session admin est introuvable. Reconnecte-toi puis recommence.");
+  }
+
+  const response = await fetch("/api/admin-update-user", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${session.access_token}`
+    },
+    body: JSON.stringify({
+      userId,
+      role: payload.role,
+      sponsorId: payload.role === "distributor" ? payload.sponsorId ?? null : null,
+      title: getDefaultUserTitle(payload.role)
+    })
+  });
+
+  const result = (await response.json()) as { ok: boolean; error?: string };
+  if (!response.ok || !result.ok) {
+    throw new Error(result.error ?? "Impossible de mettre a jour cet acces.");
+  }
 }
 
 export async function updateSupabaseUserStatus(userId: string, active: boolean) {

@@ -1,10 +1,10 @@
 import { mockUsers } from "../data/mockUsers";
-import { createMockSession, SESSION_KEY } from "../lib/auth";
+import { createMockSession, getDefaultUserTitle, SESSION_KEY } from "../lib/auth";
 import type { AuthSession, User } from "../types/domain";
 
 const USERS_KEY = "lor-squad-wellness-users";
 const STORAGE_VERSION_KEY = "lor-squad-wellness-storage-version";
-const CURRENT_STORAGE_VERSION = "2026-04-beta-2";
+const CURRENT_STORAGE_VERSION = "2026-04-beta-3";
 
 interface StoredSession {
   userId: string;
@@ -26,6 +26,7 @@ export interface CreateMockUserPayload {
   name: string;
   email: string;
   role: User["role"];
+  sponsorId?: string;
   active: boolean;
   mockPassword: string;
 }
@@ -134,6 +135,7 @@ export function createMockUser({
   name,
   email,
   role,
+  sponsorId,
   active,
   mockPassword
 }: CreateMockUserPayload): { ok: boolean; error?: string; users?: User[] } {
@@ -146,8 +148,16 @@ export function createMockUser({
   }
 
   const users = getStoredUsers();
+  const sponsor =
+    sponsorId && role === "distributor"
+      ? users.find((user) => user.id === sponsorId && user.active)
+      : null;
   if (users.some((user) => user.email.toLowerCase() === nextEmail)) {
     return { ok: false, error: "Un acces existe deja avec cet email." };
+  }
+
+  if (role === "distributor" && sponsorId && !sponsor) {
+    return { ok: false, error: "Le sponsor selectionne est introuvable." };
   }
 
   const newUser: User = {
@@ -156,12 +166,65 @@ export function createMockUser({
     email: nextEmail,
     mockPassword: nextPassword,
     role,
+    sponsorId: sponsor?.id,
+    sponsorName: sponsor?.name,
     active,
-    title: role === "admin" ? "Administration" : "Acces distributeur",
+    title: getDefaultUserTitle(role),
     createdAt: new Date().toISOString().slice(0, 10)
   };
 
   const nextUsers = [newUser, ...users];
+  persistUsers(nextUsers);
+  return { ok: true, users: nextUsers };
+}
+
+export function updateMockUserAccess(
+  userId: string,
+  payload: {
+    role: User["role"];
+    sponsorId?: string;
+  }
+): { ok: boolean; error?: string; users?: User[] } {
+  const users = getStoredUsers();
+  const targetUser = users.find((user) => user.id === userId);
+
+  if (!targetUser) {
+    return { ok: false, error: "Cet acces est introuvable." };
+  }
+
+  if (targetUser.role === "admin" && payload.role !== "admin") {
+    return { ok: false, error: "Un compte admin ne peut pas etre degrade ici." };
+  }
+
+  const sponsor =
+    payload.role === "distributor" && payload.sponsorId
+      ? users.find(
+          (user) =>
+            user.id === payload.sponsorId &&
+            user.id !== userId &&
+            user.active &&
+            (user.role === "admin" || user.role === "referent")
+        )
+      : null;
+
+  if (payload.role === "distributor" && payload.sponsorId && !sponsor) {
+    return { ok: false, error: "Le sponsor selectionne est introuvable." };
+  }
+
+  const nextUsers = users.map((user) => {
+    if (user.id !== userId) {
+      return user;
+    }
+
+    return {
+      ...user,
+      role: payload.role,
+      sponsorId: payload.role === "distributor" ? sponsor?.id : undefined,
+      sponsorName: payload.role === "distributor" ? sponsor?.name : undefined,
+      title: getDefaultUserTitle(payload.role)
+    };
+  });
+
   persistUsers(nextUsers);
   return { ok: true, users: nextUsers };
 }

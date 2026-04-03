@@ -1,3 +1,4 @@
+import { canAccessPortfolioUser, getAccessibleOwnerIds } from "./auth";
 import type { Client, FollowUp, User } from "../types/domain";
 
 export type PortfolioAccent = "blue" | "green" | "amber" | "rose";
@@ -57,6 +58,13 @@ const presetByKeyword: Array<{
     glyph: "pulse",
     target: 20,
     label: "Relances ciblees"
+  },
+  {
+    keyword: "camille",
+    accent: "amber",
+    glyph: "orbit",
+    target: 35,
+    label: "Equipe en relais"
   }
 ];
 
@@ -185,20 +193,72 @@ export function getPortfolioIdentity(user: User): PortfolioIdentity {
 
   return {
     initials: toInitials(user.name),
-    accent: user.role === "admin" ? "rose" : "blue",
-    glyph: user.role === "admin" ? "orbit" : "crest",
-    target: user.role === "admin" ? 60 : 40,
-    label: user.role === "admin" ? "Pilotage equipe" : "Portefeuille suivi"
+    accent:
+      user.role === "admin"
+        ? "rose"
+        : user.role === "referent"
+          ? "amber"
+          : "blue",
+    glyph:
+      user.role === "admin"
+        ? "orbit"
+        : user.role === "referent"
+          ? "spark"
+          : "crest",
+    target:
+      user.role === "admin"
+        ? 60
+        : user.role === "referent"
+          ? 45
+          : 40,
+    label:
+      user.role === "admin"
+        ? "Pilotage global"
+        : user.role === "referent"
+          ? "Equipe en relais"
+          : "Portefeuille suivi"
   };
 }
 
-export function getActivePortfolioUsers(users: User[], clients: Client[]) {
+export function getPortfolioOwnerIds(
+  user: User,
+  users: User[],
+  scope: "personal" | "network" = "personal"
+) {
+  return getAccessibleOwnerIds(user, users, scope === "network" ? "team" : "personal");
+}
+
+function hasPortfolioActivity(user: User, users: User[], clients: Client[]) {
+  const directActivity = clients.some((client) => client.distributorId === user.id);
+
+  if (directActivity) {
+    return true;
+  }
+
+  if (user.role === "referent") {
+    return users.some(
+      (item) =>
+        item.active &&
+        item.sponsorId === user.id &&
+        clients.some((client) => client.distributorId === item.id)
+    );
+  }
+
+  return user.role === "admin";
+}
+
+export function getActivePortfolioUsers(
+  users: User[],
+  clients: Client[],
+  viewer?: User | null
+) {
   const clientOwnerIds = new Set(clients.map((client) => client.distributorId));
 
   return users
     .filter((user) => user.active)
-    .filter((user) => user.role === "admin" || user.role === "distributor")
-    .filter((user) => clientOwnerIds.has(user.id) || user.role === "admin")
+    .filter((user) => user.role === "admin" || user.role === "referent" || user.role === "distributor")
+    .filter((user) => hasPortfolioActivity(user, users, clients) || clientOwnerIds.has(user.id))
+    .filter((user) => (viewer ? canAccessPortfolioUser(viewer, user, users) : true))
     .sort((left, right) => {
       const targetDelta = getPortfolioIdentity(right).target - getPortfolioIdentity(left).target;
       if (targetDelta !== 0) {
@@ -210,12 +270,18 @@ export function getActivePortfolioUsers(users: User[], clients: Client[]) {
 }
 
 export function getPortfolioMetrics(
-  userId: string,
+  subject: string | User,
   clients: Client[],
-  followUps: FollowUp[]
+  followUps: FollowUp[],
+  users: User[] = [],
+  scope: "personal" | "network" = "personal"
 ): PortfolioMetrics {
+  const ownerIds =
+    typeof subject === "string"
+      ? new Set([subject])
+      : getPortfolioOwnerIds(subject, users, scope);
   const scopedClients = clients
-    .filter((client) => client.distributorId === userId)
+    .filter((client) => ownerIds.has(client.distributorId))
     .sort((left, right) => compareByDateAsc(left.nextFollowUp, right.nextFollowUp));
   const clientIds = new Set(scopedClients.map((client) => client.id));
   const scopedFollowUpPool = followUps.filter((followUp) => clientIds.has(followUp.clientId));
