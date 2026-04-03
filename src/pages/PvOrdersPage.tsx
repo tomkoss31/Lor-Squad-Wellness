@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import {
   buildPvTrackingRecords,
   flattenPvTransactions,
@@ -14,6 +14,7 @@ import { useAppContext } from "../context/AppContext";
 import type { PvClientTransaction, PvTransactionType } from "../types/pv";
 
 export function PvOrdersPage() {
+  const navigate = useNavigate();
   const { currentUser, clients, visibleClients, pvTransactions, pvClientProducts, addPvTransaction } = useAppContext();
   const [searchParams] = useSearchParams();
   const sourceClients = currentUser?.role === "admin" ? clients : visibleClients;
@@ -21,15 +22,17 @@ export function PvOrdersPage() {
     () => buildPvTrackingRecords(sourceClients, pvTransactions, pvClientProducts),
     [pvClientProducts, pvTransactions, sourceClients]
   );
+  const initialProduct = pvProductCatalog[0];
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [clientId, setClientId] = useState(records[0]?.clientId ?? "");
-  const initialProduct = pvProductCatalog[0];
   const [productId, setProductId] = useState(initialProduct?.id ?? "formula-1");
   const [quantity, setQuantity] = useState("1");
   const [pv, setPv] = useState(initialProduct ? String(initialProduct.pv) : "0");
   const [price, setPrice] = useState(initialProduct ? String(initialProduct.pricePublic) : "0");
-  const [type, setType] = useState<PvTransactionType>("reprise-sur-place");
+  const [type, setType] = useState<PvTransactionType>("commande");
   const [note, setNote] = useState("");
+  const [feedback, setFeedback] = useState<{ tone: "success" | "error"; message: string } | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (!clientId && records[0]?.clientId) {
@@ -47,13 +50,16 @@ export function PvOrdersPage() {
     }
 
     if (queryProductId && pvProductCatalog.some((product) => product.id === queryProductId)) {
-      handleProductChange(queryProductId);
+      applyProductPreset(queryProductId);
     }
 
     if (queryType === "commande" || queryType === "reprise-sur-place") {
       setType(queryType);
     }
   }, [records, searchParams]);
+
+  const selectedClient = records.find((record) => record.clientId === clientId) ?? null;
+  const selectedProduct = pvProductCatalog.find((product) => product.id === productId) ?? null;
 
   if (!currentUser) {
     return null;
@@ -72,21 +78,41 @@ export function PvOrdersPage() {
     .reduce((total, transaction) => total + transaction.pv, 0)
     .toFixed(1);
 
+  const entryLabel = type === "commande" ? "commande" : "reprise sur place";
+  const title = type === "commande" ? "Ajouter un produit / commande" : "Ajouter une reprise produit";
+  const submitLabel = type === "commande" ? "Enregistrer la commande" : "Enregistrer la reprise";
+  const totalPv = Number((Number(pv || 0) * Number(quantity || 0)).toFixed(2));
+  const totalPrice = Number((Number(price || 0) * Number(quantity || 0)).toFixed(2));
+  const canSubmit =
+    Boolean(selectedClient) &&
+    Boolean(selectedProduct) &&
+    Number(quantity) > 0 &&
+    Number.isFinite(Number(pv)) &&
+    Number.isFinite(Number(price));
+
   async function handleAddTransaction() {
-    const selectedClient = records.find((record) => record.clientId === clientId);
-    const selectedProduct = pvProductCatalog.find((product) => product.id === productId);
+    if (!selectedClient || !selectedProduct) {
+      setFeedback({
+        tone: "error",
+        message: "Choisis d'abord un client et un produit pour enregistrer le mouvement."
+      });
+      return;
+    }
+
     const parsedQuantity = Number(quantity);
     const parsedPv = Number(pv);
     const parsedPrice = Number(price);
 
     if (
-      !selectedClient ||
-      !selectedProduct ||
       Number.isNaN(parsedQuantity) ||
       parsedQuantity <= 0 ||
       Number.isNaN(parsedPv) ||
       Number.isNaN(parsedPrice)
     ) {
+      setFeedback({
+        tone: "error",
+        message: "Quantite, PV et prix doivent contenir des valeurs valides."
+      });
       return;
     }
 
@@ -103,23 +129,43 @@ export function PvOrdersPage() {
       pv: Number((parsedPv * parsedQuantity).toFixed(2)),
       price: Number((parsedPrice * parsedQuantity).toFixed(2)),
       type,
-      note: note || (type === "commande" ? "Commande ajoutee dans le module PV" : "Reprise sur place ajoutee dans le module PV")
+      note:
+        note ||
+        (type === "commande"
+          ? "Commande ajoutee dans le module PV"
+          : "Reprise sur place ajoutee dans le module PV")
     };
 
-    await addPvTransaction(nextTransaction);
-    setQuantity("1");
-    setNote("");
+    try {
+      setIsSubmitting(true);
+      setFeedback(null);
+      await addPvTransaction(nextTransaction);
+      setQuantity("1");
+      setNote("");
+      setFeedback({
+        tone: "success",
+        message: `${selectedProduct.name} a bien ete ajoute en ${entryLabel} pour ${selectedClient.clientName}.`
+      });
+    } catch (error) {
+      setFeedback({
+        tone: "error",
+        message:
+          error instanceof Error ? error.message : "Impossible d'enregistrer ce mouvement pour le moment."
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
-  function handleProductChange(nextProductId: string) {
+  function applyProductPreset(nextProductId: string) {
     setProductId(nextProductId);
-    const selectedProduct = pvProductCatalog.find((product) => product.id === nextProductId);
-    if (!selectedProduct) {
+    const nextProduct = pvProductCatalog.find((product) => product.id === nextProductId);
+    if (!nextProduct) {
       return;
     }
 
-    setPv(String(selectedProduct.pv));
-    setPrice(String(selectedProduct.pricePublic));
+    setPv(String(nextProduct.pv));
+    setPrice(String(nextProduct.pricePublic));
   }
 
   return (
@@ -127,7 +173,7 @@ export function PvOrdersPage() {
       <PvModuleHeader
         currentUser={currentUser}
         title="Reprises / commandes"
-        description="Saisie simple des mouvements produits, avec historique lisible et placeholders deja relies aux clients."
+        description="Saisie simple des mouvements produits, reliee aux clients et au reste estime du module PV."
       />
 
       <div className="grid gap-4 md:grid-cols-3">
@@ -146,13 +192,14 @@ export function PvOrdersPage() {
         />
       </div>
 
-      <div className="grid gap-4 xl:grid-cols-[0.9fr_1.1fr]">
+      <div className="grid gap-4 xl:grid-cols-[0.92fr_1.08fr]">
         <Card className="space-y-5">
           <div>
             <p className="eyebrow-label">Saisie rapide</p>
-            <h2 className="mt-3 text-2xl text-white">Ajouter une reprise produit</h2>
+            <h2 className="mt-3 text-2xl text-white">{title}</h2>
             <p className="mt-2 text-sm leading-6 text-slate-400">
-              Choisis le client, le produit et la quantite. Les PV et le prix se prechargent automatiquement.
+              Choisis le client, le produit et la quantite. Les PV et le prix se prechargent automatiquement et le
+              suivi produit se met a jour ensuite.
             </p>
           </div>
 
@@ -170,7 +217,7 @@ export function PvOrdersPage() {
               </select>
             </Field>
             <Field label="Produit">
-              <select value={productId} onChange={(event) => handleProductChange(event.target.value)}>
+              <select value={productId} onChange={(event) => applyProductPreset(event.target.value)}>
                 {pvProductCatalog.map((product) => (
                   <option key={product.id} value={product.id}>
                     {product.name}
@@ -181,10 +228,10 @@ export function PvOrdersPage() {
             <Field label="Quantite">
               <input value={quantity} onChange={(event) => setQuantity(event.target.value)} />
             </Field>
-            <Field label="PV">
+            <Field label="PV unitaire">
               <input value={pv} onChange={(event) => setPv(event.target.value)} />
             </Field>
-            <Field label="Prix">
+            <Field label="Prix unitaire">
               <input value={price} onChange={(event) => setPrice(event.target.value)} />
             </Field>
             <Field label="Type">
@@ -198,13 +245,62 @@ export function PvOrdersPage() {
             </Field>
           </div>
 
-          <button
-            type="button"
-            onClick={() => void handleAddTransaction()}
-            className="inline-flex min-h-[48px] items-center justify-center rounded-[18px] bg-sky-400/[0.16] px-5 py-3 text-sm font-semibold text-white transition hover:bg-sky-400/[0.2]"
-          >
-            Ajouter une reprise produit
-          </button>
+          <div className="grid gap-3 md:grid-cols-2">
+            <QuickSummaryCard
+              label="Client relie"
+              value={selectedClient?.clientName ?? "Aucun client"}
+              hint={selectedClient ? selectedClient.program : "Choisis le bon dossier"}
+            />
+            <QuickSummaryCard
+              label="Produit relie"
+              value={selectedProduct?.name ?? "Aucun produit"}
+              hint={selectedProduct ? `${selectedProduct.dureeReferenceJours} jours de reference` : "Choisis le produit"}
+            />
+            <QuickSummaryCard label="PV total" value={`${totalPv || 0} PV`} hint={`${Number(quantity || 0) || 0} unite(s)`} />
+            <QuickSummaryCard label="Prix total" value={`${totalPrice || 0} EUR`} hint={getPvTypeLabel(type)} />
+          </div>
+
+          {feedback ? (
+            <div
+              className={`rounded-[18px] px-4 py-3 text-sm ${
+                feedback.tone === "success"
+                  ? "border border-emerald-400/18 bg-emerald-400/10 text-emerald-100"
+                  : "border border-rose-400/18 bg-rose-400/10 text-rose-100"
+              }`}
+            >
+              {feedback.message}
+            </div>
+          ) : null}
+
+          <div className="flex flex-wrap gap-3">
+            <button
+              type="button"
+              onClick={() => void handleAddTransaction()}
+              disabled={!canSubmit || isSubmitting}
+              className="inline-flex min-h-[48px] items-center justify-center rounded-[18px] bg-sky-400/[0.16] px-5 py-3 text-sm font-semibold text-white transition hover:bg-sky-400/[0.2] disabled:opacity-60"
+            >
+              {isSubmitting ? "Enregistrement..." : submitLabel}
+            </button>
+            {selectedClient ? (
+              <Link
+                to={`/pv/clients?responsable=${selectedClient.responsibleId}&client=${selectedClient.clientId}`}
+                className="inline-flex min-h-[48px] items-center justify-center rounded-[18px] border border-white/10 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/[0.04]"
+              >
+                Revenir a sa fiche PV
+              </Link>
+            ) : null}
+            {selectedClient ? (
+              <button
+                type="button"
+                onClick={() =>
+                  navigate(`/pv/clients?responsable=${selectedClient.responsibleId}&client=${selectedClient.clientId}`)
+                }
+                className="inline-flex min-h-[48px] items-center justify-center rounded-[18px] border border-white/10 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/[0.04]"
+              >
+                Ouvrir le detail client
+              </button>
+            ) : null}
+          </div>
         </Card>
 
         <Card className="space-y-4 overflow-hidden">
@@ -224,7 +320,7 @@ export function PvOrdersPage() {
                 <span>Date</span>
                 <span>Client</span>
                 <span>Produit</span>
-                <span>Qté</span>
+                <span>Qte</span>
                 <span>PV</span>
                 <span>Type</span>
                 <span>Note</span>
@@ -266,6 +362,24 @@ function Field({
     <div className="space-y-2">
       <label className="text-sm font-medium text-slate-300">{label}</label>
       {children}
+    </div>
+  );
+}
+
+function QuickSummaryCard({
+  label,
+  value,
+  hint
+}: {
+  label: string;
+  value: string;
+  hint: string;
+}) {
+  return (
+    <div className="rounded-[20px] bg-slate-950/24 px-4 py-3">
+      <p className="text-[11px] font-medium text-slate-500">{label}</p>
+      <p className="mt-2 text-sm font-semibold text-white">{value}</p>
+      <p className="mt-1 text-xs text-slate-400">{hint}</p>
     </div>
   );
 }

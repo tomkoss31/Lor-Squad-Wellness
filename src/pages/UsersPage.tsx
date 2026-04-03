@@ -24,6 +24,7 @@ export function UsersPage() {
     storageMode,
     createUserAccess,
     updateUserAccess,
+    updateUserPassword,
     updateUserStatus,
     resetAccessData,
     clearBusinessData,
@@ -99,7 +100,9 @@ export function UsersPage() {
     }
 
     setError("");
-    setSuccess(`Acces cree pour ${name.trim()} avec l'identifiant ${email.trim().toLowerCase()}.`);
+    setSuccess(
+      `Acces cree pour ${name.trim()} avec l'identifiant ${email.trim().toLowerCase()}. Le mot de passe defini ici doit etre transmis a la personne.`
+    );
     resetForm();
   }
 
@@ -198,6 +201,9 @@ export function UsersPage() {
                   onChange={(event) => setPassword(event.target.value)}
                   placeholder="Choisir un mot de passe"
                 />
+                <p className="text-xs leading-6 text-slate-500">
+                  Ce mot de passe n'est pas envoye automatiquement. Il sert de mot de passe initial.
+                </p>
               </div>
             </div>
 
@@ -428,6 +434,7 @@ export function UsersPage() {
               clients={clients}
               followUps={followUps}
               onSaveAccess={(payload) => updateUserAccess(user.id, payload)}
+              onResetPassword={(password) => updateUserPassword(user.id, password)}
               onToggleStatus={() => void updateUserStatus(user.id, !user.active)}
             />
           ))}
@@ -443,6 +450,7 @@ function UserAccessCard({
   clients,
   followUps,
   onSaveAccess,
+  onResetPassword,
   onToggleStatus
 }: {
   user: User;
@@ -453,6 +461,7 @@ function UserAccessCard({
     role: User["role"];
     sponsorId?: string;
   }) => Promise<{ ok: boolean; error?: string }>;
+  onResetPassword: (password: string) => Promise<{ ok: boolean; error?: string }>;
   onToggleStatus: () => void;
 }) {
   const metrics = getPortfolioMetrics(
@@ -468,6 +477,7 @@ function UserAccessCard({
   );
   const [selectedRole, setSelectedRole] = useState<User["role"]>(user.role);
   const [selectedSponsorId, setSelectedSponsorId] = useState(user.sponsorId ?? "");
+  const [nextPassword, setNextPassword] = useState("");
   const [feedback, setFeedback] = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -503,6 +513,25 @@ function UserAccessCard({
     }
 
     setFeedback("Acces mis a jour.");
+  }
+
+  async function handleResetPassword() {
+    if (!nextPassword.trim()) {
+      setFeedback("Saisis d'abord un nouveau mot de passe.");
+      return;
+    }
+
+    setSaving(true);
+    const result = await onResetPassword(nextPassword);
+    setSaving(false);
+
+    if (!result.ok) {
+      setFeedback(result.error ?? "Impossible de redefinir ce mot de passe.");
+      return;
+    }
+
+    setNextPassword("");
+    setFeedback("Mot de passe redefini.");
   }
 
   return (
@@ -574,6 +603,16 @@ function UserAccessCard({
             ) : null}
           </div>
         ) : null}
+
+        <div className="grid gap-2 rounded-[18px] bg-slate-950/24 px-3 py-3">
+          <label className="text-xs font-medium text-slate-500">Redefinir le mot de passe</label>
+          <input
+            type="password"
+            value={nextPassword}
+            onChange={(event) => setNextPassword(event.target.value)}
+            placeholder="Nouveau mot de passe"
+          />
+        </div>
       </div>
 
       <div className="flex flex-col items-stretch gap-3 xl:items-end">
@@ -592,6 +631,13 @@ function UserAccessCard({
             {saving ? "Mise a jour..." : "Enregistrer le role"}
           </Button>
         ) : null}
+        <Button
+          variant="secondary"
+          onClick={() => void handleResetPassword()}
+          disabled={!nextPassword.trim() || saving}
+        >
+          {saving ? "Mise a jour..." : "Redefinir le mot de passe"}
+        </Button>
         <Button variant="secondary" onClick={onToggleStatus}>
           {user.active ? "Desactiver" : "Reactiver"}
         </Button>

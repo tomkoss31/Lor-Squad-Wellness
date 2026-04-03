@@ -1145,3 +1145,28 @@ export async function updateSupabaseUserStatus(userId: string, active: boolean) 
     throw new Error("Impossible de modifier le statut de cet acces.");
   }
 }
+
+export async function updateSupabaseUserPassword(userId: string, password: string) {
+  const client = await requireSupabase();
+  const {
+    data: { session }
+  } = await client.auth.getSession();
+
+  if (!session?.access_token) {
+    throw new Error("La session admin est introuvable. Reconnecte-toi puis recommence.");
+  }
+
+  const response = await fetch("/api/admin-update-user-password", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${session.access_token}`
+    },
+    body: JSON.stringify({ userId, password })
+  });
+
+  const result = (await response.json()) as { ok: boolean; error?: string };
+  if (!response.ok || !result.ok) {
+    throw new Error(result.error ?? "Impossible de redefinir ce mot de passe.");
+  }
+}

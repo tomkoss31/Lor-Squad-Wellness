@@ -293,8 +293,8 @@ export function LoginPage() {
                 />
                 <AccessStep
                   index="03"
-                  title="Le mot de passe sera defini a l&apos;activation"
-                  text="Le nouvel utilisateur recevra un lien pour choisir son mot de passe et acceder directement au bon perimetre."
+                  title="Le mot de passe est defini par l&apos;admin"
+                  text="Le mot de passe saisi a la creation devient le mot de passe initial. Il peut ensuite etre redefini depuis la page equipe."
                 />
               </div>
             </div>

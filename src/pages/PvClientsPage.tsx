@@ -52,21 +52,18 @@ export function PvClientsPage() {
     const hasOwnClients = records.some((record) => record.responsibleId === currentUser.id);
     return hasOwnClients ? currentUser.id : "all";
   }, [currentUser.id, isAdmin, records, searchParams]);
-  const filteredRecords = useMemo(() => {
-    const normalizedSearch = search.trim().toLowerCase();
-
-    return records.filter((record) => {
-      const matchesSearch =
-        !normalizedSearch ||
-        `${record.clientName} ${record.program} ${record.responsibleName}`.toLowerCase().includes(normalizedSearch);
-      const matchesProgram = programFilter === "all" || record.program === programFilter;
-      const matchesResponsible =
-        !isAdmin ||
-        responsibleFilter === "all" ||
-        record.responsibleId === responsibleFilter;
-      return matchesSearch && matchesProgram && matchesResponsible;
-    });
-  }, [isAdmin, programFilter, records, responsibleFilter, search]);
+  const filteredRecords = useMemo(
+    () =>
+      records.filter((record) =>
+        matchesPvClientFilters(record, {
+          search,
+          programFilter,
+          responsibleFilter,
+          isAdmin
+        })
+      ),
+    [isAdmin, programFilter, records, responsibleFilter, search]
+  );
 
   const groupedRecords = useMemo(() => {
     const groups = new Map<string, { responsibleId: string; responsibleName: string; records: typeof filteredRecords }>();
@@ -104,12 +101,35 @@ export function PvClientsPage() {
 
   useEffect(() => {
     if (isAdmin && responsibleFilter === "all" && defaultResponsibleFilter !== "all") {
-      setResponsibleFilter(defaultResponsibleFilter);
       const nextParams = new URLSearchParams(searchParams);
       nextParams.set("responsable", defaultResponsibleFilter);
+
+      const nextVisibleRecords = records.filter((record) =>
+        matchesPvClientFilters(record, {
+          search,
+          programFilter,
+          responsibleFilter: defaultResponsibleFilter,
+          isAdmin
+        })
+      );
+
+      setResponsibleFilter(defaultResponsibleFilter);
+      setSelectedClientId(nextVisibleRecords[0]?.clientId ?? null);
+      if (nextVisibleRecords[0]?.clientId) {
+        nextParams.set("client", nextVisibleRecords[0].clientId);
+      }
       setSearchParams(nextParams, { replace: true });
     }
-  }, [defaultResponsibleFilter, isAdmin, responsibleFilter, searchParams, setSearchParams]);
+  }, [
+    defaultResponsibleFilter,
+    isAdmin,
+    programFilter,
+    records,
+    responsibleFilter,
+    search,
+    searchParams,
+    setSearchParams
+  ]);
 
   useEffect(() => {
     const queryClientId = searchParams.get("client");
@@ -119,19 +139,47 @@ export function PvClientsPage() {
     }
 
     if (!selectedClientId || !filteredRecords.some((record) => record.clientId === selectedClientId)) {
-      setSelectedClientId(filteredRecords[0]?.clientId ?? null);
+      const fallbackClientId = filteredRecords[0]?.clientId ?? null;
+      setSelectedClientId(fallbackClientId);
+
+      const nextParams = new URLSearchParams(searchParams);
+      if (fallbackClientId) {
+        nextParams.set("client", fallbackClientId);
+      } else {
+        nextParams.delete("client");
+      }
+      setSearchParams(nextParams, { replace: true });
     }
-  }, [filteredRecords, searchParams, selectedClientId]);
+  }, [filteredRecords, searchParams, selectedClientId, setSearchParams]);
 
   function handleResponsibleChange(value: string) {
     setResponsibleFilter(value);
 
+    const nextVisibleRecords = records.filter((record) =>
+      matchesPvClientFilters(record, {
+        search,
+        programFilter,
+        responsibleFilter: value,
+        isAdmin
+      })
+    );
+    const nextSelectedClientId = nextVisibleRecords[0]?.clientId ?? null;
     const nextParams = new URLSearchParams(searchParams);
+
     if (value === "all") {
       nextParams.delete("responsable");
     } else {
       nextParams.set("responsable", value);
     }
+
+    if (nextSelectedClientId) {
+      setSelectedClientId(nextSelectedClientId);
+      nextParams.set("client", nextSelectedClientId);
+    } else {
+      setSelectedClientId(null);
+      nextParams.delete("client");
+    }
+
     setSearchParams(nextParams, { replace: true });
   }
 
@@ -199,12 +247,12 @@ export function PvClientsPage() {
                 if (option.id === currentUser.id) {
                   return null;
                 }
-                const count = records.filter((record) => record.responsibleId === option.id).length;
+
                 return (
                   <ResponsibleFilterChip
                     key={option.id}
                     label={formatPortfolioTabLabel(option.name)}
-                    count={count}
+                    count={records.filter((record) => record.responsibleId === option.id).length}
                     active={responsibleFilter === option.id}
                     onClick={() => handleResponsibleChange(option.id)}
                   />
@@ -234,9 +282,7 @@ export function PvClientsPage() {
             <section key={group.responsibleId} className="space-y-3">
               <div className="flex flex-wrap items-center justify-between gap-3 rounded-[22px] border border-white/8 bg-white/[0.03] px-5 py-4">
                 <div>
-                  <p className="eyebrow-label">
-                    {isAdmin ? "Distributeur" : "Mes clients"}
-                  </p>
+                  <p className="eyebrow-label">{isAdmin ? "Distributeur" : "Mes clients"}</p>
                   <p className="mt-2 text-xl text-white">{group.responsibleName}</p>
                 </div>
                 <div className="rounded-full bg-white/[0.04] px-4 py-2 text-sm font-medium text-slate-200">
@@ -248,6 +294,7 @@ export function PvClientsPage() {
                 <button
                   type="button"
                   key={record.clientId}
+                  aria-pressed={selectedRecord?.clientId === record.clientId}
                   onClick={() => handleSelectClient(record.clientId, group.responsibleId)}
                   className={`w-full rounded-[28px] text-left transition ${
                     selectedRecord?.clientId === record.clientId
@@ -258,7 +305,7 @@ export function PvClientsPage() {
                   <Card
                     className={`space-y-4 ${
                       selectedRecord?.clientId === record.clientId
-                        ? "border border-white/30 bg-white/[0.1] shadow-[0_0_0_1px_rgba(255,255,255,0.12),0_20px_55px_rgba(10,18,32,0.42)]"
+                        ? "border border-white/34 bg-white/[0.12] shadow-[0_0_0_1px_rgba(255,255,255,0.14),0_22px_60px_rgba(10,18,32,0.46)]"
                         : "border border-white/8 bg-white/[0.03] hover:border-white/14 hover:bg-white/[0.055] hover:shadow-[0_0_0_1px_rgba(255,255,255,0.04),0_18px_40px_rgba(7,12,22,0.28)]"
                     }`}
                   >
@@ -267,7 +314,14 @@ export function PvClientsPage() {
                         <p className="text-2xl font-semibold text-white">{record.clientName}</p>
                         <p className="mt-2 text-sm text-slate-400">{record.responsibleName}</p>
                       </div>
-                      <PvStatusBadge status={record.status} />
+                      <div className="flex items-center gap-2">
+                        {selectedRecord?.clientId === record.clientId ? (
+                          <span className="inline-flex items-center rounded-full border border-white/18 bg-white/[0.12] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-white">
+                            Ouvert
+                          </span>
+                        ) : null}
+                        <PvStatusBadge status={record.status} />
+                      </div>
                     </div>
 
                     <div className="grid gap-3 md:grid-cols-4">
@@ -336,7 +390,37 @@ function ClientFact({ label, value }: { label: string; value: string }) {
   );
 }
 
+function matchesPvClientFilters(
+  record: {
+    clientName: string;
+    program: string;
+    responsibleName: string;
+    responsibleId: string;
+  },
+  {
+    search,
+    programFilter,
+    responsibleFilter,
+    isAdmin
+  }: {
+    search: string;
+    programFilter: string;
+    responsibleFilter: string;
+    isAdmin: boolean;
+  }
+) {
+  const normalizedSearch = search.trim().toLowerCase();
+  const matchesSearch =
+    !normalizedSearch ||
+    `${record.clientName} ${record.program} ${record.responsibleName}`.toLowerCase().includes(normalizedSearch);
+  const matchesProgram = programFilter === "all" || record.program === programFilter;
+  const matchesResponsible =
+    !isAdmin || responsibleFilter === "all" || record.responsibleId === responsibleFilter;
+
+  return matchesSearch && matchesProgram && matchesResponsible;
+}
+
 function formatPortfolioTabLabel(name: string) {
   const firstWord = name.trim().split(/\s+/)[0] ?? name;
-  return firstWord.length > 14 ? `${firstWord.slice(0, 14)}…` : firstWord;
+  return firstWord.length > 14 ? `${firstWord.slice(0, 14)}...` : firstWord;
 }

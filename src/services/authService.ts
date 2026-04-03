@@ -239,3 +239,26 @@ export function updateMockUserStatus(
   persistUsers(nextUsers);
   return { ok: true, users: nextUsers };
 }
+
+export function updateMockUserPassword(
+  userId: string,
+  password: string
+): { ok: boolean; error?: string; users?: User[] } {
+  const nextPassword = password.trim();
+  if (!nextPassword) {
+    return { ok: false, error: "Le mot de passe ne peut pas etre vide." };
+  }
+
+  const users = getStoredUsers();
+  const targetUser = users.find((user) => user.id === userId);
+
+  if (!targetUser) {
+    return { ok: false, error: "Cet acces est introuvable." };
+  }
+
+  const nextUsers = users.map((user) =>
+    user.id === userId ? { ...user, mockPassword: nextPassword } : user
+  );
+  persistUsers(nextUsers);
+  return { ok: true, users: nextUsers };
+}

@@ -419,58 +419,59 @@ export function ClientDetailPage() {
         </Card>
 
         <div className="space-y-4">
-          <Card className="space-y-3">
+          <Card className="space-y-2.5">
             <div className="flex items-center justify-between gap-3">
               <div>
                 <p className="eyebrow-label">Cap du moment</p>
-                <p className="mt-2 text-xl text-white">Lecture rapide</p>
+                <p className="mt-1.5 text-xl text-white">Lecture rapide</p>
               </div>
               <StatusBadge label={client.currentProgram} tone="green" />
             </div>
-            <div className="grid gap-2.5 md:grid-cols-2">
+            <div className="grid gap-2 md:grid-cols-2">
               <div className="md:col-span-2">
-              <SummaryFocusCard
-                label="Objectif reformulé"
-                value={latestQuestionnaire.objectiveFocus || (client.objective === "sport" ? "Prise de masse" : "Perte de poids")}
-              />
+                <SummaryFocusCard
+                  label="Objectif reformulé"
+                  value={
+                    latestQuestionnaire.objectiveFocus ||
+                    (client.objective === "sport" ? "Prise de masse" : "Perte de poids")
+                  }
+                />
               </div>
               <SummaryFocusCard label="Âge" value={`${client.age} ans`} />
               <SummaryFocusCard label="Taille" value={`${client.height} cm`} />
             </div>
-              <div className="grid gap-2.5">
-                <SummaryRow label="Statut" value={client.started ? "Routine démarrée" : "Mise en place à lancer"} />
-                {recommendationCount ? (
-                  <SummaryStatusRow
-                    label="Recommandations"
-                  badgeLabel={
-                    recommendationsContacted ? "Contactées" : "À contacter"
-                  }
+            <div className="grid gap-2">
+              <SummaryRow label="Statut" value={client.started ? "Routine démarrée" : "Mise en place à lancer"} />
+              {recommendationCount ? (
+                <SummaryStatusRow
+                  label="Recommandations"
+                  badgeLabel={recommendationsContacted ? "Contactées" : "À contacter"}
                   tone={recommendationsContacted ? "green" : "amber"}
                   detail={`${recommendationCount} nom${recommendationCount > 1 ? "s" : ""}`}
                 />
-                ) : null}
-                <SummaryRow label="Repère protéines" value={proteinRange} />
-                <SummaryRow label="Hydratation cible" value={`${waterNeed} L`} />
-                {pvRecord ? (
-                  <SummaryRow label="Derniere commande PV" value={formatDate(pvRecord.lastOrderDate)} />
-                ) : null}
-                <SummaryRow label="Produits optionnels" value={optionalProductsLabel} />
-                {pvRecord ? (
-                  <SummaryLinkRow
-                    label="Point volume"
-                    to={`/pv/clients?client=${client.id}`}
-                    value="Ouvrir la fiche PV"
-                  />
-                ) : null}
-                {pvRecord ? (
-                  <SummaryLinkRow
-                    label="Commande / reassort"
-                    to={`/pv/orders?client=${client.id}&type=commande`}
-                    value="Ajouter un produit"
-                  />
-                ) : null}
-                <SummaryRow label="Note du moment" value={latestAssessment.notes} />
-              </div>
+              ) : null}
+              <SummaryRow label="Repère protéines" value={proteinRange} />
+              <SummaryRow label="Hydratation cible" value={`${waterNeed} L`} />
+              {pvRecord ? (
+                <SummaryRow label="Dernière commande PV" value={formatDate(pvRecord.lastOrderDate)} />
+              ) : null}
+              <SummaryRow label="Produits optionnels" value={optionalProductsLabel} />
+              {pvRecord ? (
+                <SummaryLinkRow
+                  label="Point volume"
+                  to={`/pv/clients?responsable=${pvRecord.responsibleId}&client=${client.id}`}
+                  value="Ouvrir la fiche PV"
+                />
+              ) : null}
+              {pvRecord ? (
+                <SummaryLinkRow
+                  label="Commande / réassort"
+                  to={`/pv/orders?client=${client.id}&product=${pvRecord.activeProducts[0]?.productId ?? "formula-1"}&type=commande`}
+                  value="Ajouter un produit"
+                />
+              ) : null}
+              <SummaryRow label="Note du moment" value={latestAssessment.notes} />
+            </div>
           </Card>
 
           {client.objective === "weight-loss" && (
@@ -502,7 +503,7 @@ export function ClientDetailPage() {
                 hint="Corriger la date et les valeurs de reference"
               />
               <LinkButton
-                to={`/pv/clients?client=${client.id}`}
+                to={`/pv/clients?responsable=${client.distributorId}&client=${client.id}`}
                 label="Ouvrir la fiche point volume"
                 hint="Voir la commande, le reste estime et les alertes produits"
               />

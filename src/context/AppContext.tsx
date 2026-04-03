@@ -21,6 +21,7 @@ import {
   resetMockAuthData,
   restoreSession,
   updateMockUserAccess,
+  updateMockUserPassword,
   updateMockUserStatus
 } from "../services/authService";
 import {
@@ -59,6 +60,7 @@ import {
   updateSupabaseAssessment,
   updateSupabaseClientSchedule,
   updateSupabaseUserAccess,
+  updateSupabaseUserPassword,
   updateSupabaseUserStatus
 } from "../services/supabaseService";
 import type {
@@ -108,6 +110,10 @@ interface AppContextValue {
       role: User["role"];
       sponsorId?: string;
     }
+  ) => Promise<{ ok: boolean; error?: string }>;
+  updateUserPassword: (
+    userId: string,
+    password: string
   ) => Promise<{ ok: boolean; error?: string }>;
   updateUserStatus: (userId: string, active: boolean) => Promise<void>;
   resetAccessData: () => void;
@@ -577,6 +583,49 @@ export function AppProvider({ children }: PropsWithChildren) {
     if (currentUser?.id === userId && !active) {
       await logout();
     }
+  }
+
+  async function updateUserPassword(userId: string, password: string) {
+    if (storageMode === "supabase") {
+      try {
+        const targetUser = users.find((user) => user.id === userId);
+        await updateSupabaseUserPassword(userId, password);
+        await recordActivity({
+          action: "user-updated",
+          targetUserId: userId,
+          targetUserName: targetUser?.name,
+          ownerUserId: userId,
+          summary: `Mot de passe redefini pour ${targetUser?.name ?? "ce compte"}.`,
+          detail: "Le nouvel acces peut etre communique directement a la personne."
+        });
+        return { ok: true };
+      } catch (error) {
+        return {
+          ok: false,
+          error:
+            error instanceof Error
+              ? error.message
+              : "Impossible de redefinir ce mot de passe."
+        };
+      }
+    }
+
+    const result = updateMockUserPassword(userId, password);
+    if (!result.ok || !result.users) {
+      return { ok: false, error: result.error };
+    }
+
+    setUsers(result.users);
+    const targetUser = result.users.find((user) => user.id === userId);
+    await recordActivity({
+      action: "user-updated",
+      targetUserId: userId,
+      targetUserName: targetUser?.name,
+      ownerUserId: userId,
+      summary: `Mot de passe redefini pour ${targetUser?.name ?? "ce compte"}.`,
+      detail: "Le nouvel acces peut etre communique directement a la personne."
+    });
+    return { ok: true };
   }
 
   function resetAccessData() {
@@ -1125,6 +1174,7 @@ export function AppProvider({ children }: PropsWithChildren) {
       forceResetSession,
       createUserAccess,
       updateUserAccess,
+      updateUserPassword,
       updateUserStatus,
       resetAccessData,
       clearBusinessData,
