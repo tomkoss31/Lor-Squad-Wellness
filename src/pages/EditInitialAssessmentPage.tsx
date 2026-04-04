@@ -8,6 +8,16 @@ import { useAppContext } from "../context/AppContext";
 import { getFirstAssessment, normalizeDateTimeLocalInputValue } from "../lib/calculations";
 import type { AssessmentQuestionnaire, AssessmentRecord } from "../types/domain";
 
+const timelineOptions = [
+  "1 mois",
+  "2 mois",
+  "3 mois",
+  "4 mois",
+  "5 mois",
+  "6 mois",
+  "9 mois"
+];
+
 interface EditAssessmentDraftPayload {
   clientId: string;
   assessmentId: string;
@@ -459,7 +469,34 @@ export function EditInitialAssessmentPage() {
               <TextField label="Objectif reformule" value={questionnaire.objectiveFocus} onChange={(value) => updateQuestionnaire("objectiveFocus", value)} />
               <MetricField label="Poids cible (kg)" value={questionnaire.targetWeight ?? 0} onChange={(value) => updateQuestionnaire("targetWeight", Number(value))} />
               <MetricField label="Motivation / 10" value={questionnaire.motivation} onChange={(value) => updateQuestionnaire("motivation", Number(value))} />
-              <TextField label="Horizon / delai" value={questionnaire.desiredTimeline} onChange={(value) => updateQuestionnaire("desiredTimeline", value)} />
+              <div className="space-y-2 md:col-span-2">
+                <label className="text-sm font-medium text-slate-300">Horizon / delai</label>
+                <div className="flex flex-wrap gap-2">
+                  {timelineOptions.map((option) => (
+                    <button
+                      key={option}
+                      type="button"
+                      onClick={() => updateQuestionnaire("desiredTimeline", option)}
+                      className={`rounded-full px-4 py-2 text-sm font-medium transition ${
+                        questionnaire.desiredTimeline === option
+                          ? "bg-white text-slate-950"
+                          : "border border-white/10 bg-white/[0.03] text-slate-200"
+                      }`}
+                    >
+                      {option}
+                    </button>
+                  ))}
+                </div>
+                <input
+                  value={timelineOptions.includes(questionnaire.desiredTimeline) ? "" : questionnaire.desiredTimeline}
+                  onChange={(event) => updateQuestionnaire("desiredTimeline", event.target.value)}
+                  placeholder="Ex : 2 mois, 4 mois, 5 mois"
+                />
+                <p className="text-xs leading-6 text-slate-400">
+                  Tu peux garder un délai simple ou écrire un cap libre si le client a formulé son
+                  objectif autrement.
+                </p>
+              </div>
             </div>
             <div className="grid gap-4 md:grid-cols-2">
               <AreaField label="Tentatives passees" value={questionnaire.pastAttempts} onChange={(value) => updateQuestionnaire("pastAttempts", value)} rows={3} />

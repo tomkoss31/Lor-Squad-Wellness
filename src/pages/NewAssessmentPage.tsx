@@ -29,7 +29,8 @@ import {
   normalizeDateTimeLocalInputValue,
   serializeDateTimeForStorage,
   getWeightLossPaceInsight,
-  getWeightLossPlan
+  getWeightLossPlan,
+  normalizeTimelineLabel
 } from "../lib/calculations";
 import type { BiologicalSex, Objective, RecommendationLead } from "../types/domain";
 
@@ -210,7 +211,7 @@ const initialForm: AssessmentForm = {
   objectiveFocus: "",
   targetWeight: 0,
   motivation: 0,
-  desiredTimeline: "",
+  desiredTimeline: "3 mois",
   weight: 0,
   bodyFat: 0,
   muscleMass: 0,
@@ -301,6 +302,16 @@ const steps = [
   "Hydratation & routine du matin",
   "Suite du suivi",
   "Résumé du rendez-vous"
+];
+
+const timelineOptions = [
+  "1 mois",
+  "2 mois",
+  "3 mois",
+  "4 mois",
+  "5 mois",
+  "6 mois",
+  "9 mois"
 ];
 
 const LazyBreakfastComparison = lazy(() =>
@@ -404,12 +415,20 @@ export function NewAssessmentPage() {
     mainPrograms.find((program) => program.id === form.selectedProgramId) ?? null;
   const startsImmediately = form.afterAssessmentAction === "started";
   const waterNeed = calculateWaterNeed(form.weight);
-  const proteinRange = calculateProteinRange(form.weight, form.objective);
+  const timelineLabel = normalizeTimelineLabel(form.desiredTimeline);
+  const proteinRange = calculateProteinRange(form.weight, form.objective, form.desiredTimeline);
   const bodyFatKg = estimateBodyFatKg(form.weight, form.bodyFat);
   const musclePercent = estimateMuscleMassPercent(form.weight, form.muscleMass);
   const hydrationKg = estimateHydrationKg(form.weight, form.hydration);
   const weightLossPlan = getWeightLossPlan(form.weight, form.targetWeight, form.desiredTimeline);
   const weightLossPace = getWeightLossPaceInsight(weightLossPlan);
+  const weeklyWeightTarget =
+    form.objective === "weight-loss" &&
+    !weightLossPlan.isAchieved &&
+    weightLossPlan.targetWeight != null &&
+    weightLossPlan.days > 0
+      ? Number(((weightLossPlan.remainingKg / weightLossPlan.days) * 7).toFixed(1))
+      : 0;
   const bodyScanAttention =
     form.hydration < 50
       ? "Hydratation a renforcer en priorite."
@@ -500,6 +519,10 @@ export function NewAssessmentPage() {
     {
       label: "Protéines conseillées",
       value: proteinRange
+    },
+    {
+      label: "Délai retenu",
+      value: timelineLabel
     }
   ];
   const bodyScanExpressItems = [
@@ -607,7 +630,7 @@ export function NewAssessmentPage() {
           `Sante : ${form.healthStatus}`,
           form.objective === "weight-loss"
             ? `Poids cible : ${form.targetWeight} kg`
-            : `Delai : ${form.desiredTimeline}`
+            : `Delai : ${timelineLabel}`
         ]
       : currentStep === 1
         ? [`Sommeil : ${form.sleepHours} h`, `Petit-dejeuner : ${form.breakfastFrequency}`, `Repas reguliers : ${form.regularMealTimes}`]
@@ -1037,10 +1060,10 @@ export function NewAssessmentPage() {
                       options={["Perte de poids", "Prise de masse", "Energie", "Remise en forme"]}
                       onChange={updateObjectiveFocus}
                     />
-                    <ChoiceGroup
+                    <TimelineChoiceField
                       label="Delai souhaite"
                       value={form.desiredTimeline}
-                      options={["1 mois", "3 mois", "6 mois", "9 mois"]}
+                      options={timelineOptions}
                       onChange={(v) => update("desiredTimeline", v)}
                     />
                   </div>
@@ -1071,6 +1094,26 @@ export function NewAssessmentPage() {
                         targetWeight={form.targetWeight}
                         timeline={form.desiredTimeline}
                       />
+                      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                        <SummaryHighlightCard label="Délai choisi" value={timelineLabel} />
+                        <SummaryHighlightCard
+                          label="Repère / semaine"
+                          value={
+                            weightLossPlan.isAchieved || !weeklyWeightTarget
+                              ? "Cap atteint"
+                              : `${weeklyWeightTarget} kg / semaine`
+                          }
+                        />
+                        <SummaryHighlightCard label="Protéines auto" value={proteinRange} />
+                        <SummaryHighlightCard
+                          label="Lecture du cap"
+                          value={weightLossPace.label}
+                        />
+                      </div>
+                      <div className="rounded-[22px] bg-white/[0.03] px-4 py-4 text-sm leading-6 text-slate-300">
+                        En fonction du délai choisi, l&apos;app ajuste automatiquement le rythme moyen
+                        à tenir et le repère protéines pour garder un cadre simple à expliquer.
+                      </div>
                     </div>
                   )}
                   <div className="space-y-3 rounded-[24px] bg-white/[0.03] p-4">
@@ -1530,6 +1573,9 @@ export function NewAssessmentPage() {
                         {form.objective === "weight-loss" && (
                           <SummaryRow label="Lecture du rythme" value={weightLossPace.label} />
                         )}
+                        {form.objective === "weight-loss" ? (
+                          <SummaryRow label="Délai retenu" value={timelineLabel} />
+                        ) : null}
                         <SummaryRow
                           label="Prochain suivi"
                           value={form.nextFollowUp ? formatDateTime(form.nextFollowUp) : "-"}
@@ -1669,8 +1715,9 @@ export function NewAssessmentPage() {
                 <SummaryMini label="Hydratation cible" value={hydrationTargetLabel} />
                 <SummaryMini label="Objectif eau" value={`${formatRawNumber(waterNeed)} L`} />
                 <SummaryMini label="Protéines" value={proteinRange} />
+                <SummaryMini label="Délai" value={timelineLabel} />
               </>
-              ) : (
+            ) : (
                 <>
                   <SummaryMini label="Objectif" value={form.objectiveFocus} />
                   <SummaryMini label="Programme" value={selectedProgram?.title ?? "A choisir"} />
@@ -1929,6 +1976,66 @@ function ChoiceGroup({
           </button>
         ))}
       </div>
+    </div>
+  );
+}
+
+function TimelineChoiceField({
+  label,
+  value,
+  options,
+  onChange
+}: {
+  label: string;
+  value: string;
+  options: string[];
+  onChange: (value: string) => void;
+}) {
+  const isCustom = Boolean(value && !options.includes(value));
+
+  return (
+    <div className="space-y-3">
+      <label className="text-sm font-medium text-slate-300">{label}</label>
+      <div className="flex flex-wrap gap-2">
+        {options.map((option) => (
+          <button
+            key={option}
+            type="button"
+            onClick={() => onChange(option)}
+            className={`rounded-full px-4 py-2 text-sm font-medium transition ${
+              value === option
+                ? "bg-white text-slate-950"
+                : "border border-white/10 bg-white/[0.03] text-slate-200"
+            }`}
+          >
+            {option}
+          </button>
+        ))}
+        <button
+          type="button"
+          onClick={() => {
+            if (!isCustom) {
+              onChange("");
+            }
+          }}
+          className={`rounded-full px-4 py-2 text-sm font-medium transition ${
+            isCustom
+              ? "bg-white text-slate-950"
+              : "border border-dashed border-white/10 bg-white/[0.03] text-slate-200"
+          }`}
+        >
+          Choix libre
+        </button>
+      </div>
+      <input
+        value={isCustom ? value : ""}
+        onChange={(event) => onChange(event.target.value)}
+        placeholder="Ex : 2 mois, 4 mois, 5 mois"
+      />
+      <p className="text-xs leading-6 text-slate-400">
+        Tu peux choisir un délai rapide ou écrire librement un cap simple comme 2 mois, 4 mois ou
+        5 mois.
+      </p>
     </div>
   );
 }

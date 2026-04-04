@@ -28,14 +28,17 @@ export function calculateWaterNeed(weight: number): number {
 
 export function calculateProteinRange(
   weight: number,
-  objective: Objective
+  objective: Objective,
+  timeline?: string
 ): string {
   if (!weight || weight <= 0) {
     return "0 - 0 g";
   }
 
   const multiplier =
-    objective === "sport" ? { min: 1.6, max: 2 } : { min: 1.2, max: 1.5 };
+    objective === "sport"
+      ? { min: 1.6, max: 2 }
+      : getWeightLossProteinMultiplier(resolveTimelineDays(timeline ?? "3 mois"));
 
   return `${Math.round(weight * multiplier.min)} - ${Math.round(weight * multiplier.max)} g`;
 }
@@ -136,22 +139,11 @@ export function estimateRelativeMassPercent(weight: number, massKg: number): num
 }
 
 export function resolveTimelineDays(timeline: string): number {
-  const normalized = timeline.toLowerCase();
+  return parseTimelineInput(timeline).days;
+}
 
-  if (normalized.includes("1 mois")) {
-    return 30;
-  }
-  if (normalized.includes("3 mois")) {
-    return 90;
-  }
-  if (normalized.includes("6 mois")) {
-    return 180;
-  }
-  if (normalized.includes("9 mois")) {
-    return 270;
-  }
-
-  return 90;
+export function normalizeTimelineLabel(timeline: string): string {
+  return parseTimelineInput(timeline).label;
 }
 
 export function getWeightLossPlan(
@@ -302,4 +294,117 @@ function roundDelta(value: number) {
 
 function roundMetric(value: number) {
   return Number(value.toFixed(1));
+}
+
+function parseTimelineInput(timeline: string) {
+  const normalized = timeline.trim().toLowerCase().replace(",", ".");
+
+  if (!normalized) {
+    return {
+      days: 90,
+      label: "3 mois"
+    };
+  }
+
+  const monthsMatch = normalized.match(/(\d+(?:\.\d+)?)\s*mois/);
+  if (monthsMatch) {
+    const months = Number(monthsMatch[1]);
+    if (Number.isFinite(months) && months > 0) {
+      return {
+        days: clampTimelineDays(Math.round(months * 30)),
+        label: `${formatDurationNumber(months)} mois`
+      };
+    }
+  }
+
+  const weeksMatch = normalized.match(/(\d+(?:\.\d+)?)\s*(?:semaines?|sem)/);
+  if (weeksMatch) {
+    const weeks = Number(weeksMatch[1]);
+    if (Number.isFinite(weeks) && weeks > 0) {
+      return {
+        days: clampTimelineDays(Math.round(weeks * 7)),
+        label: `${formatDurationNumber(weeks)} semaine${weeks > 1 ? "s" : ""}`
+      };
+    }
+  }
+
+  const daysMatch = normalized.match(/(\d+(?:\.\d+)?)\s*(?:jours?|j)/);
+  if (daysMatch) {
+    const days = Number(daysMatch[1]);
+    if (Number.isFinite(days) && days > 0) {
+      return {
+        days: clampTimelineDays(Math.round(days)),
+        label: `${formatDurationNumber(days)} jour${days > 1 ? "s" : ""}`
+      };
+    }
+  }
+
+  const bareNumberMatch = normalized.match(/^(\d+(?:\.\d+)?)$/);
+  if (bareNumberMatch) {
+    const rawValue = Number(bareNumberMatch[1]);
+    if (Number.isFinite(rawValue) && rawValue > 0) {
+      if (rawValue <= 12) {
+        return {
+          days: clampTimelineDays(Math.round(rawValue * 30)),
+          label: `${formatDurationNumber(rawValue)} mois`
+        };
+      }
+
+      return {
+        days: clampTimelineDays(Math.round(rawValue)),
+        label: `${formatDurationNumber(rawValue)} jours`
+      };
+    }
+  }
+
+  if (normalized.includes("1 mois")) {
+    return { days: 30, label: "1 mois" };
+  }
+  if (normalized.includes("2 mois")) {
+    return { days: 60, label: "2 mois" };
+  }
+  if (normalized.includes("3 mois")) {
+    return { days: 90, label: "3 mois" };
+  }
+  if (normalized.includes("4 mois")) {
+    return { days: 120, label: "4 mois" };
+  }
+  if (normalized.includes("5 mois")) {
+    return { days: 150, label: "5 mois" };
+  }
+  if (normalized.includes("6 mois")) {
+    return { days: 180, label: "6 mois" };
+  }
+  if (normalized.includes("9 mois")) {
+    return { days: 270, label: "9 mois" };
+  }
+
+  return {
+    days: 90,
+    label: timeline.trim() || "3 mois"
+  };
+}
+
+function getWeightLossProteinMultiplier(days: number) {
+  if (days <= 60) {
+    return { min: 1.5, max: 1.8 };
+  }
+
+  if (days <= 120) {
+    return { min: 1.4, max: 1.7 };
+  }
+
+  if (days <= 180) {
+    return { min: 1.3, max: 1.6 };
+  }
+
+  return { min: 1.2, max: 1.5 };
+}
+
+function clampTimelineDays(days: number) {
+  return Math.min(Math.max(days, 14), 365);
+}
+
+function formatDurationNumber(value: number) {
+  return Number.isInteger(value) ? String(value) : value.toFixed(1);
 }
