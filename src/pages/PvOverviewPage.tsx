@@ -10,7 +10,7 @@ import { useAppContext } from "../context/AppContext";
 import type { PvStatus } from "../types/pv";
 
 export function PvOverviewPage() {
-  const { currentUser, clients, visibleClients, pvTransactions, pvClientProducts } = useAppContext();
+  const { currentUser, clients, visibleClients, pvTransactions, pvClientProducts, storageMode } = useAppContext();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | PvStatus>("all");
   const [responsibleFilter, setResponsibleFilter] = useState("all");
@@ -260,6 +260,13 @@ export function PvOverviewPage() {
           </div>
 
           <div className="overflow-x-auto">
+            {storageMode === "supabase" && records.length === 0 ? (
+              <div className="mb-4 rounded-[22px] border border-amber-300/18 bg-amber-400/[0.08] px-4 py-4 text-sm leading-6 text-amber-50">
+                Le module Suivi PV n&apos;a pas encore ses tables sur Supabase. Lance
+                <span className="mx-1 font-semibold">supabase/pv-module-migration.sql</span>
+                dans SQL Editor, puis recharge l&apos;application.
+              </div>
+            ) : null}
             <div className="min-w-[1120px] space-y-2">
               <div className="grid grid-cols-[1.4fr_1fr_1fr_1fr_0.8fr_0.9fr_0.9fr_0.9fr_1fr_0.7fr] gap-3 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">
                 <span>Client</span>

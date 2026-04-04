@@ -15,7 +15,7 @@ import type { PvClientTransaction, PvTransactionType } from "../types/pv";
 
 export function PvOrdersPage() {
   const navigate = useNavigate();
-  const { currentUser, clients, visibleClients, pvTransactions, pvClientProducts, addPvTransaction } = useAppContext();
+  const { currentUser, clients, visibleClients, pvTransactions, pvClientProducts, addPvTransaction, storageMode } = useAppContext();
   const [searchParams] = useSearchParams();
   const sourceClients = currentUser?.role === "admin" ? clients : visibleClients;
   const records = useMemo(
@@ -259,6 +259,14 @@ export function PvOrdersPage() {
             <QuickSummaryCard label="PV total" value={`${totalPv || 0} PV`} hint={`${Number(quantity || 0) || 0} unite(s)`} />
             <QuickSummaryCard label="Prix total" value={`${totalPrice || 0} EUR`} hint={getPvTypeLabel(type)} />
           </div>
+
+          {storageMode === "supabase" && records.length === 0 ? (
+            <div className="rounded-[22px] border border-amber-300/18 bg-amber-400/[0.08] px-4 py-4 text-sm leading-6 text-amber-50">
+              Le module Suivi PV n&apos;a pas encore de base active sur Supabase. Lance le fichier
+              <span className="mx-1 font-semibold">supabase/pv-module-migration.sql</span>
+              dans SQL Editor, puis recharge l&apos;application.
+            </div>
+          ) : null}
 
           {feedback ? (
             <div

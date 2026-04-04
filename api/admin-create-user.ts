@@ -36,7 +36,7 @@ export default async function handler(req: any, res: any) {
   if (!name || !email || !password) {
     res.status(400).json({
       ok: false,
-      error: "Nom, email et mot de passe provisoire sont obligatoires."
+      error: "Nom, email et mot de passe initial sont obligatoires."
     });
     return;
   }

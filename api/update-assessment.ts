@@ -123,13 +123,16 @@ export default async function handler(req: any, res: any) {
   }
 
   if (assessment.type === "initial") {
-    const pvProgram = resolvePvProgram(assessment.programTitle);
+    const hasStartedProgram = Boolean(assessment.programId && String(assessment.programTitle ?? "").trim());
+    const pvProgram = hasStartedProgram ? resolvePvProgram(assessment.programTitle) : null;
     let { error: clientUpdateError } = await admin
       .from("clients")
       .update({
-        start_date: assessment.date,
-        current_program: assessment.programTitle,
-        pv_program_id: pvProgram.id
+        start_date: hasStartedProgram ? assessment.date : null,
+        current_program: hasStartedProgram ? assessment.programTitle : "",
+        pv_program_id: hasStartedProgram ? pvProgram?.id ?? null : null,
+        started: hasStartedProgram,
+        status: hasStartedProgram ? "active" : "pending"
       })
       .eq("id", clientId);
 
@@ -137,8 +140,10 @@ export default async function handler(req: any, res: any) {
       ({ error: clientUpdateError } = await admin
         .from("clients")
         .update({
-          start_date: assessment.date,
-          current_program: assessment.programTitle
+          start_date: hasStartedProgram ? assessment.date : null,
+          current_program: hasStartedProgram ? assessment.programTitle : "",
+          started: hasStartedProgram,
+          status: hasStartedProgram ? "active" : "pending"
         })
         .eq("id", clientId));
     }

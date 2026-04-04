@@ -145,6 +145,17 @@ function isMissingTableError(error: { message?: string } | null | undefined, tab
   return Boolean(error?.message?.toLowerCase().includes(table.toLowerCase()));
 }
 
+function getPvModuleSetupError(error: { message?: string } | null | undefined) {
+  const pvTables = ["pv_client_products", "pv_transactions", "pv_products", "pv_programs"];
+  const missingPvTable = pvTables.find((table) => isMissingTableError(error, table));
+
+  if (!missingPvTable) {
+    return null;
+  }
+
+  return "Le module Suivi PV n'est pas encore installe sur cette base Supabase. Lance d'abord le fichier supabase/pv-module-migration.sql dans SQL Editor, puis recharge l'application.";
+}
+
 function buildSeedPvProducts(payload: {
   clientId: string;
   distributorId: string;
@@ -447,6 +458,10 @@ export async function fetchSupabasePvClientProducts() {
     .order("start_date", { ascending: false });
 
   if (error || !data) {
+    if (getPvModuleSetupError(error)) {
+      return [] as PvClientProductRecord[];
+    }
+
     return [] as PvClientProductRecord[];
   }
 
@@ -461,6 +476,10 @@ export async function fetchSupabasePvTransactions() {
     .order("date", { ascending: false });
 
   if (error || !data) {
+    if (getPvModuleSetupError(error)) {
+      return [] as PvClientTransaction[];
+    }
+
     return [] as PvClientTransaction[];
   }
 
@@ -489,11 +508,16 @@ export async function fetchSupabaseActivityLogs() {
 export async function createSupabaseClientWithInitialAssessment(payload: {
   client: Omit<Client, "id" | "status" | "currentProgram" | "started" | "startDate" | "nextFollowUp" | "notes" | "assessments">;
   assessment: AssessmentRecord;
+  clientStatus: Client["status"];
+  currentProgram: string;
+  pvProgramId?: string;
+  started: boolean;
   nextFollowUp: string;
+  followUpType: string;
+  followUpStatus: FollowUp["status"];
   notes: string;
 }) {
   const client = await requireSupabase();
-  const pvProgram = resolvePvProgram(payload.assessment.programTitle);
   const clientInsertPayload = {
       first_name: payload.client.firstName,
       last_name: payload.client.lastName,
@@ -506,12 +530,12 @@ export async function createSupabaseClientWithInitialAssessment(payload: {
       city: payload.client.city ?? null,
       distributor_id: payload.client.distributorId,
       distributor_name: payload.client.distributorName,
-      status: "active",
+      status: payload.clientStatus,
       objective: payload.client.objective,
-      current_program: payload.assessment.programTitle,
-      pv_program_id: pvProgram.id,
-      started: true,
-      start_date: payload.assessment.date,
+      current_program: payload.currentProgram,
+      pv_program_id: payload.pvProgramId ?? null,
+      started: payload.started,
+      start_date: payload.started ? payload.assessment.date : null,
       next_follow_up: payload.nextFollowUp,
       notes: payload.notes
     };
@@ -562,9 +586,9 @@ export async function createSupabaseClientWithInitialAssessment(payload: {
     client_id: clientId,
     client_name: `${payload.client.firstName} ${payload.client.lastName}`,
     due_date: payload.nextFollowUp,
-    type: "Premier suivi",
-    status: "scheduled",
-    program_title: payload.assessment.programTitle,
+    type: payload.followUpType,
+    status: payload.followUpStatus,
+    program_title: payload.currentProgram || payload.assessment.programTitle,
     last_assessment_date: payload.assessment.date
   });
 
@@ -572,13 +596,15 @@ export async function createSupabaseClientWithInitialAssessment(payload: {
     throw new Error("Impossible de creer le premier suivi.");
   }
 
-  const seedProducts = buildSeedPvProducts({
-    clientId,
-    distributorId: payload.client.distributorId,
-    distributorName: payload.client.distributorName,
-    programTitle: payload.assessment.programTitle,
-    startDate: payload.assessment.date
-  });
+  const seedProducts = payload.started && payload.currentProgram
+    ? buildSeedPvProducts({
+        clientId,
+        distributorId: payload.client.distributorId,
+        distributorName: payload.client.distributorName,
+        programTitle: payload.currentProgram,
+        startDate: payload.assessment.date
+      })
+    : [];
 
   if (seedProducts.length) {
     const { error: pvSeedError } = await client.from("pv_client_products").insert(seedProducts);
@@ -686,6 +712,11 @@ export async function upsertSupabasePvClientProduct(product: PvClientProductReco
     .single<PvClientProductRow>();
 
   if (error || !data) {
+    const pvSetupError = getPvModuleSetupError(error);
+    if (pvSetupError) {
+      throw new Error(pvSetupError);
+    }
+
     throw new Error(
       error?.message ??
         "Impossible de mettre a jour ce produit actif dans le suivi PV."
@@ -717,6 +748,11 @@ export async function addSupabasePvTransaction(transaction: PvClientTransaction)
     .single<PvTransactionRow>();
 
   if (error || !data) {
+    const pvSetupError = getPvModuleSetupError(error);
+    if (pvSetupError) {
+      throw new Error(pvSetupError);
+    }
+
     throw new Error(
       error?.message ?? "Impossible d'ajouter ce mouvement produit."
     );

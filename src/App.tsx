@@ -109,6 +109,10 @@ export default function App() {
               <Route path="distributors/:distributorId" element={<DistributorPortfolioPage />} />
               <Route path="clients/:clientId" element={<ClientDetailPage />} />
               <Route path="clients/:clientId/start-assessment/edit" element={<EditInitialAssessmentPage />} />
+              <Route
+                path="clients/:clientId/assessments/:assessmentId/edit"
+                element={<EditInitialAssessmentPage />}
+              />
               <Route path="clients/:clientId/follow-up/new" element={<NewFollowUpPage />} />
               <Route path="clients/:clientId/schedule/edit" element={<EditClientSchedulePage />} />
               <Route path="assessments/new" element={<NewAssessmentPage />} />

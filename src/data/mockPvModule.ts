@@ -201,6 +201,10 @@ function getProduct(productId: string) {
 }
 
 export function buildSeedPvClientProductsForClient(client: Client): PvClientProductRecord[] {
+  if (!client.started || !client.pvProgramId || !client.currentProgram.trim()) {
+    return [];
+  }
+
   const firstAssessment = getFirstAssessment(client);
   const startDate = client.startDate ?? firstAssessment.date;
   const program = resolvePvProgram(client.pvProgramId ?? client.currentProgram);
@@ -235,6 +239,10 @@ export function buildSeedPvClientProductsForClient(client: Client): PvClientProd
 
 function buildBaseTransactions(clients: Client[]) {
   return clients.flatMap((client) => {
+    if (!client.started || !client.pvProgramId || !client.currentProgram.trim()) {
+      return [];
+    }
+
     const firstAssessment = getFirstAssessment(client);
     const startDate = client.startDate ?? firstAssessment.date;
     const program = resolvePvProgram(client.pvProgramId ?? client.currentProgram);
@@ -365,10 +373,13 @@ export function buildPvTrackingRecords(
   extraTransactions: PvClientTransaction[] = [],
   persistedProducts: PvClientProductRecord[] = []
 ): PvClientTrackingRecord[] {
-  const allTransactions = [...extraTransactions, ...buildBaseTransactions(clients)];
-  const allClientProducts = mergeClientProducts(clients, persistedProducts);
+  const eligibleClients = clients.filter(
+    (client) => client.started && Boolean(client.pvProgramId) && Boolean(client.currentProgram.trim())
+  );
+  const allTransactions = [...extraTransactions, ...buildBaseTransactions(eligibleClients)];
+  const allClientProducts = mergeClientProducts(eligibleClients, persistedProducts);
 
-  return clients.map((client) => {
+  return eligibleClients.map((client) => {
     const latestAssessment = getLatestAssessment(client);
     const startDate = client.startDate ?? getFirstAssessment(client).date;
     const program = resolvePvProgram(client.pvProgramId ?? client.currentProgram);

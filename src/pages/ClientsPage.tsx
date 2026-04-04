@@ -330,7 +330,7 @@ export function ClientsPage() {
                           <div className="grid gap-3 md:grid-cols-3">
                             <ClientMetric
                               label="Programme"
-                              value={client.currentProgram}
+                              value={client.currentProgram || "Programme a confirmer"}
                               note={
                                 latestAssessment.type === "initial"
                                   ? "Bilan initial"

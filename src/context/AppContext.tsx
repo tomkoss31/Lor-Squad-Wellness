@@ -124,7 +124,13 @@ interface AppContextValue {
   createClientWithInitialAssessment: (payload: {
     client: Omit<Client, "id" | "status" | "currentProgram" | "started" | "startDate" | "nextFollowUp" | "notes" | "assessments">;
     assessment: AssessmentRecord;
+    clientStatus: Client["status"];
+    currentProgram: string;
+    pvProgramId?: string;
+    started: boolean;
     nextFollowUp: string;
+    followUpType: string;
+    followUpStatus: FollowUp["status"];
     notes: string;
   }) => Promise<string>;
   deleteClient: (clientId: string) => Promise<void>;
@@ -741,7 +747,13 @@ export function AppProvider({ children }: PropsWithChildren) {
   async function createClientWithInitialAssessment(payload: {
     client: Omit<Client, "id" | "status" | "currentProgram" | "started" | "startDate" | "nextFollowUp" | "notes" | "assessments">;
     assessment: AssessmentRecord;
+    clientStatus: Client["status"];
+    currentProgram: string;
+    pvProgramId?: string;
+    started: boolean;
     nextFollowUp: string;
+    followUpType: string;
+    followUpStatus: FollowUp["status"];
     notes: string;
   }) {
     if (storageMode === "supabase") {
@@ -761,15 +773,14 @@ export function AppProvider({ children }: PropsWithChildren) {
     }
 
     const clientId = `c-${Date.now()}`;
-    const pvProgram = resolvePvProgram(payload.assessment.programTitle);
     const nextClient: Client = {
       ...payload.client,
       id: clientId,
-      status: "active",
-      currentProgram: payload.assessment.programTitle,
-      pvProgramId: pvProgram.id,
-      started: true,
-      startDate: payload.assessment.date,
+      status: payload.clientStatus,
+      currentProgram: payload.currentProgram,
+      pvProgramId: payload.pvProgramId,
+      started: payload.started,
+      startDate: payload.started ? payload.assessment.date : undefined,
       nextFollowUp: payload.nextFollowUp,
       notes: payload.notes,
       assessments: [payload.assessment]
@@ -780,18 +791,20 @@ export function AppProvider({ children }: PropsWithChildren) {
       clientId,
       clientName: `${nextClient.firstName} ${nextClient.lastName}`,
       dueDate: payload.nextFollowUp,
-      type: "Premier suivi",
-      status: "scheduled",
-      programTitle: payload.assessment.programTitle,
+      type: payload.followUpType,
+      status: payload.followUpStatus,
+      programTitle: payload.currentProgram || payload.assessment.programTitle,
       lastAssessmentDate: payload.assessment.date
     };
 
     setClients((previousClients) => [nextClient, ...previousClients]);
     setFollowUps((previousFollowUps) => [nextFollowUpItem, ...previousFollowUps]);
-    setPvClientProducts((previousProducts) => [
-      ...buildSeedPvClientProductsForClient(nextClient),
-      ...previousProducts
-    ]);
+    if (nextClient.started) {
+      setPvClientProducts((previousProducts) => [
+        ...buildSeedPvClientProductsForClient(nextClient),
+        ...previousProducts
+      ]);
+    }
     await recordActivity({
       action: "client-created",
       clientId,
@@ -800,7 +813,9 @@ export function AppProvider({ children }: PropsWithChildren) {
       targetUserId: nextClient.distributorId,
       targetUserName: nextClient.distributorName,
       summary: `${nextClient.firstName} ${nextClient.lastName} entre dans la base.`,
-      detail: `Dossier ouvert sur ${payload.assessment.programTitle}.`
+      detail: nextClient.started
+        ? `Dossier ouvert sur ${payload.currentProgram}.`
+        : "Bilan enregistre sans demarrage, relance a prevoir."
     });
 
     return clientId;
@@ -940,12 +955,32 @@ export function AppProvider({ children }: PropsWithChildren) {
 
         return {
           ...client,
-          currentProgram: assessment.type === "initial" ? assessment.programTitle : client.currentProgram,
+          currentProgram:
+            assessment.type === "initial" && assessment.programId
+              ? assessment.programTitle
+              : assessment.type === "initial"
+                ? ""
+                : client.currentProgram,
           pvProgramId:
             assessment.type === "initial"
-              ? resolvePvProgram(assessment.programTitle).id
+              ? assessment.programId
+                ? resolvePvProgram(assessment.programTitle).id
+                : undefined
               : client.pvProgramId,
-          startDate: assessment.type === "initial" ? assessment.date : client.startDate,
+          started:
+            assessment.type === "initial" ? Boolean(assessment.programId) : client.started,
+          status:
+            assessment.type === "initial"
+              ? assessment.programId
+                ? "active"
+                : "pending"
+              : client.status,
+          startDate:
+            assessment.type === "initial"
+              ? assessment.programId
+                ? assessment.date
+                : undefined
+              : client.startDate,
           assessments: nextAssessments
         };
       })
@@ -953,17 +988,28 @@ export function AppProvider({ children }: PropsWithChildren) {
 
     if (assessment.type === "initial") {
       const targetClient = clients.find((client) => client.id === clientId);
-      if (targetClient && !pvClientProducts.some((item) => item.clientId === clientId)) {
+      if (
+        targetClient &&
+        assessment.programId &&
+        !pvClientProducts.some((item) => item.clientId === clientId)
+      ) {
         const seededClient: Client = {
           ...targetClient,
           currentProgram: assessment.programTitle,
           pvProgramId: resolvePvProgram(assessment.programTitle).id,
+          started: true,
           startDate: assessment.date
         };
         setPvClientProducts((previousProducts) => [
           ...buildSeedPvClientProductsForClient(seededClient),
           ...previousProducts
         ]);
+      }
+
+      if (!assessment.programId) {
+        setPvClientProducts((previousProducts) =>
+          previousProducts.filter((item) => item.clientId !== clientId)
+        );
       }
     }
     await recordActivity({

@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Card } from "../components/ui/Card";
 import { MetricTile } from "../components/ui/MetricTile";
@@ -19,10 +20,21 @@ type DashboardFollowUp = {
 
 export function DashboardPage() {
   const { currentUser, users, clients, followUps } = useAppContext();
+  const [showPasswordNotice, setShowPasswordNotice] = useState(false);
 
   if (!currentUser) {
     return null;
   }
+
+  useEffect(() => {
+    if (currentUser.role === "admin" || typeof window === "undefined") {
+      setShowPasswordNotice(false);
+      return;
+    }
+
+    const key = `lor-squad-password-notice-dismissed-${currentUser.id}`;
+    setShowPasswordNotice(window.localStorage.getItem(key) !== "true");
+  }, [currentUser.id, currentUser.role]);
 
   const personalMetrics = getPortfolioMetrics(currentUser, clients, followUps, users, "personal");
   const scheduledFollowUps = [...personalMetrics.scheduledFollowUps].sort(compareFollowUpsByDueDate);
@@ -76,6 +88,32 @@ export function DashboardPage() {
         title="Tableau de bord"
         description="Mes rendez-vous, mes relances et mes priorités du moment."
       />
+
+      {showPasswordNotice ? (
+        <Card className="surface-soft">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div className="max-w-3xl">
+              <p className="eyebrow-label">Premier acces</p>
+              <p className="mt-3 text-2xl text-white">Mot de passe et acces equipe</p>
+              <p className="mt-2 text-sm leading-6 text-slate-300">
+                Ton mot de passe initial a ete defini par un admin lors de la creation du compte.
+                Si tu veux le modifier ou si tu ne l'as pas recu, contacte ton sponsor admin.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                const key = `lor-squad-password-notice-dismissed-${currentUser.id}`;
+                window.localStorage.setItem(key, "true");
+                setShowPasswordNotice(false);
+              }}
+              className="inline-flex min-h-[46px] items-center justify-center rounded-[18px] bg-white/[0.04] px-4 py-2.5 text-sm font-semibold text-white transition duration-200 hover:bg-white/[0.07]"
+            >
+              Compris
+            </button>
+          </div>
+        </Card>
+      ) : null}
 
       <Card className="overflow-hidden">
         <div className="grid gap-6 xl:grid-cols-[1.08fr_0.92fr]">

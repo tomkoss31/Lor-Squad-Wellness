@@ -9,7 +9,7 @@ import { PvStatusBadge } from "../components/pv/PvStatusBadge";
 import { useAppContext } from "../context/AppContext";
 
 export function PvClientsPage() {
-  const { currentUser, clients, visibleClients, pvTransactions, pvClientProducts } = useAppContext();
+  const { currentUser, clients, visibleClients, pvTransactions, pvClientProducts, storageMode } = useAppContext();
   const [searchParams, setSearchParams] = useSearchParams();
   const [search, setSearch] = useState("");
   const [programFilter, setProgramFilter] = useState("all");
@@ -278,6 +278,13 @@ export function PvClientsPage() {
 
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1.05fr)_400px]">
         <div className="space-y-4">
+          {storageMode === "supabase" && records.length === 0 ? (
+            <div className="rounded-[22px] border border-amber-300/18 bg-amber-400/[0.08] px-4 py-4 text-sm leading-6 text-amber-50">
+              Le module Suivi PV n&apos;a pas encore ses tables sur Supabase. Lance
+              <span className="mx-1 font-semibold">supabase/pv-module-migration.sql</span>
+              dans SQL Editor, puis recharge l&apos;application.
+            </div>
+          ) : null}
           {visibleGroups.map((group) => (
             <section key={group.responsibleId} className="space-y-3">
               <div className="flex flex-wrap items-center justify-between gap-3 rounded-[22px] border border-white/8 bg-white/[0.03] px-5 py-4">

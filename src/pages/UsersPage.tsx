@@ -193,7 +193,7 @@ export function UsersPage() {
 
               <div className="space-y-2">
                 <label className="text-sm font-medium text-slate-300">
-                  Mot de passe provisoire
+                  Mot de passe initial
                 </label>
                 <input
                   type="password"

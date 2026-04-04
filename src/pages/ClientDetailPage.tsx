@@ -240,7 +240,7 @@ export function ClientDetailPage() {
                 {client.firstName} {client.lastName}
               </p>
               <p className="mt-2 text-sm text-slate-400">
-                Programme en cours : {client.currentProgram}
+                Programme en cours : {client.currentProgram || "Programme a confirmer"}
               </p>
             </div>
             <div className="flex flex-wrap items-center justify-end gap-3">
@@ -425,7 +425,7 @@ export function ClientDetailPage() {
                 <p className="eyebrow-label">Cap du moment</p>
                 <p className="mt-1.5 text-xl text-white">Lecture rapide</p>
               </div>
-              <StatusBadge label={client.currentProgram} tone="green" />
+              <StatusBadge label={client.currentProgram || "Programme a confirmer"} tone={client.started ? "green" : "amber"} />
             </div>
             <div className="grid gap-2 md:grid-cols-2">
               <div className="md:col-span-2">
@@ -513,9 +513,10 @@ export function ClientDetailPage() {
                 hint="Entrer directement les nouvelles valeurs"
                 tone="green"
               />
-              <ActionButton
-                label="Ajouter une note"
-                hint="Garder un point simple apres l'echange"
+              <LinkButton
+                to={`/clients/${client.id}/assessments/${latestAssessment.id}/edit`}
+                label="Modifier le dernier bilan"
+                hint="Completer une section oubliee ou corriger les valeurs"
               />
               <LinkButton
                 to={`/clients/${client.id}/schedule/edit`}
@@ -599,10 +600,13 @@ export function ClientDetailPage() {
               entries={[...client.assessments]
                 .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
                 .map((entry) => ({
+                  id: entry.id,
                   date: formatDate(entry.date),
                   summary: entry.summary,
                   weight: entry.bodyScan.weight,
-                  hydration: entry.bodyScan.hydration
+                  hydration: entry.bodyScan.hydration,
+                  typeLabel: entry.type === "initial" ? "Depart" : "Suivi",
+                  editTo: `/clients/${client.id}/assessments/${entry.id}/edit`
                 }))}
             />
           </Card>
@@ -813,18 +817,6 @@ function OverviewMetricCard({
       <p className="mt-3 text-2xl text-white">{value}</p>
       <p className="mt-2 text-sm text-slate-400">{note}</p>
     </div>
-  );
-}
-
-function ActionButton({ label, hint }: { label: string; hint: string }) {
-  return (
-    <button
-      type="button"
-      className="rounded-[22px] bg-white/[0.03] px-4 py-3 text-left transition hover:bg-white/[0.06]"
-    >
-      <span className="block text-sm font-medium text-white">{label}</span>
-      <span className="mt-1 block text-sm text-slate-400">{hint}</span>
-    </button>
   );
 }
 

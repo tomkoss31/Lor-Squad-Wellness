@@ -98,6 +98,7 @@ type AssessmentForm = {
   metabolicAge: number;
   objective: Objective;
   selectedProgramId: string;
+  afterAssessmentAction: "started" | "pending";
   nextFollowUp: string;
   comment: string;
   recommendations: RecommendationLead[];
@@ -220,6 +221,7 @@ const initialForm: AssessmentForm = {
   metabolicAge: 0,
   objective: "weight-loss",
   selectedProgramId: "",
+  afterAssessmentAction: "started",
   nextFollowUp: getDefaultNextFollowUpDateTime(),
   comment: "",
   recommendations: createEmptyRecommendations(),
@@ -399,7 +401,8 @@ export function NewAssessmentPage() {
   const mainPrograms = currentPrograms.filter((program) => program.kind !== "booster");
   const boosterPrograms = currentPrograms.filter((program) => program.kind === "booster");
   const selectedProgram =
-    mainPrograms.find((program) => program.id === form.selectedProgramId) ?? mainPrograms[0];
+    mainPrograms.find((program) => program.id === form.selectedProgramId) ?? null;
+  const startsImmediately = form.afterAssessmentAction === "started";
   const waterNeed = calculateWaterNeed(form.weight);
   const proteinRange = calculateProteinRange(form.weight, form.objective);
   const bodyFatKg = estimateBodyFatKg(form.weight, form.bodyFat);
@@ -760,7 +763,7 @@ export function NewAssessmentPage() {
   function updateObjectiveFocus(value: string) {
     update("objectiveFocus", value);
     update("objective", value === "Prise de masse" ? "sport" : "weight-loss");
-    update("selectedProgramId", value === "Prise de masse" ? "p-sport-premium" : "p-premium");
+    update("selectedProgramId", "");
   }
 
   function buildQuestionnaire() {
@@ -830,7 +833,7 @@ export function NewAssessmentPage() {
       return;
     }
 
-    if (!selectedProgram) {
+    if (startsImmediately && !selectedProgram) {
       setSaveError("Choisis un programme avant d'enregistrer le bilan.");
       goToStep(10);
       return;
@@ -841,17 +844,26 @@ export function NewAssessmentPage() {
       form.nextFollowUp || getDefaultNextFollowUpDateTime(),
       10
     );
+    const programTitle = selectedProgram?.title ?? "Programme a confirmer";
+    const programId = startsImmediately ? selectedProgram?.id : undefined;
+    const clientStatus = startsImmediately ? "active" : "pending";
+    const followUpType = startsImmediately ? "Premier suivi" : "Relance après bilan";
+    const followUpStatus = startsImmediately ? "scheduled" : "pending";
     const assessment = {
       id: `a-${Date.now()}`,
       date: assessmentDate,
       type: "initial" as const,
       objective: form.objective,
-      programId: selectedProgram.id,
-      programTitle: selectedProgram.title,
-      summary: `Premier bilan oriente ${form.objectiveFocus.toLowerCase()} avec mise en place du ${selectedProgram.title.toLowerCase()}.`,
+      programId,
+      programTitle,
+      summary: startsImmediately
+        ? `Premier bilan oriente ${form.objectiveFocus.toLowerCase()} avec mise en place du ${programTitle.toLowerCase()}.`
+        : `Premier bilan oriente ${form.objectiveFocus.toLowerCase()} sans demarrage immediat, relance a prevoir.`,
       notes:
         form.comment.trim() ||
-        "Le client repart avec un cadre simple, un programme clair et un prochain suivi déjà posé.",
+        (startsImmediately
+          ? "Le client repart avec un cadre simple, un programme clair et un prochain suivi deja pose."
+          : "Le client repart avec un bilan clair, sans demarrage immediat, et une relance deja prevue."),
       nextFollowUp,
       bodyScan: {
         weight: form.weight,
@@ -887,10 +899,18 @@ export function NewAssessmentPage() {
           objective: form.objective
         },
         assessment,
+        clientStatus,
+        currentProgram: startsImmediately ? programTitle : "",
+        pvProgramId: startsImmediately ? selectedProgram?.id : undefined,
+        started: startsImmediately,
         nextFollowUp,
+        followUpType,
+        followUpStatus,
         notes:
           form.comment.trim() ||
-          "Nouveau client créé depuis le bilan initial. La suite est déjà fixée."
+          (startsImmediately
+            ? "Nouveau client cree depuis le bilan initial. La suite est deja fixee."
+            : "Bilan enregistre sans demarrage. Une relance est a prevoir.")
       });
 
       setSaveError("");
@@ -1342,6 +1362,36 @@ export function NewAssessmentPage() {
 
           {currentStep === 10 && (
             <div className="space-y-4">
+              <Card className="space-y-4">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <p className="eyebrow-label">Suite après le bilan</p>
+                    <p className="mt-2 text-2xl text-white">La personne démarre maintenant ou revient plus tard ?</p>
+                  </div>
+                  <StatusBadge
+                    label={startsImmediately ? "Demarrage maintenant" : "Bilan sans demarrage"}
+                    tone={startsImmediately ? "green" : "amber"}
+                  />
+                </div>
+                <ChoiceGroup
+                  label="Décision du jour"
+                  value={form.afterAssessmentAction}
+                  options={["Demarrage maintenant", "A relancer / ne demarre pas aujourd'hui"]}
+                  onChange={(value) =>
+                    update(
+                      "afterAssessmentAction",
+                      value === "Demarrage maintenant" ? "started" : "pending"
+                    )
+                  }
+                />
+                {!startsImmediately ? (
+                  <p className="text-sm leading-6 text-slate-300">
+                    Le bilan sera enregistre, la personne apparaitra en attente dans les dossiers,
+                    et elle ne comptera pas dans le module PV tant qu&apos;aucun programme n&apos;est demarre.
+                  </p>
+                ) : null}
+              </Card>
+
               <div className="grid gap-4 lg:grid-cols-2">
                 {mainPrograms.map((program) => (
                   <ProgramCard key={program.id} program={program} selected={form.selectedProgramId === program.id} onSelect={() => update("selectedProgramId", program.id)} />
@@ -1397,7 +1447,7 @@ export function NewAssessmentPage() {
             </div>
           )}
 
-          {currentStep === 13 && selectedProgram && (
+          {currentStep === 13 && (
             <div className="space-y-4">
               <Card className="space-y-5 bg-[linear-gradient(180deg,rgba(15,23,42,0.32),rgba(15,23,42,0.52))]">
                 <div className="flex flex-wrap items-start justify-between gap-4">
@@ -1409,7 +1459,10 @@ export function NewAssessmentPage() {
                       le rendez-vous avec une direction nette.
                     </p>
                   </div>
-                  <StatusBadge label="Pret a presenter" tone="green" />
+                  <StatusBadge
+                    label={startsImmediately ? "Pret a presenter" : "Pret a relancer"}
+                    tone={startsImmediately ? "green" : "amber"}
+                  />
                 </div>
 
                 <div className="grid gap-4 xl:grid-cols-[1.08fr_0.92fr]">
@@ -1417,15 +1470,22 @@ export function NewAssessmentPage() {
                     <p className="eyebrow-label">Programme retenu</p>
                     <div className="mt-4 flex flex-wrap items-start justify-between gap-3">
                       <div>
-                        <p className="text-3xl text-white">{selectedProgram.title}</p>
-                        <p className="mt-2 text-sm leading-6 text-slate-300">{selectedProgram.summary}</p>
+                        <p className="text-3xl text-white">{selectedProgram?.title ?? "Programme a confirmer"}</p>
+                        <p className="mt-2 text-sm leading-6 text-slate-300">
+                          {selectedProgram?.summary ??
+                            "Le bilan est bien enregistre, mais le programme sera confirme au moment de la relance."}
+                        </p>
                       </div>
                         <span className="rounded-full bg-sky-400/10 px-4 py-2 text-lg font-semibold text-sky-200">
-                          {selectedProgram.price}
+                          {selectedProgram?.price ?? "Relance"}
                         </span>
                     </div>
                     <div className="mt-5 grid gap-3 md:grid-cols-3">
-                      {selectedProgram.benefits.map((benefit) => (
+                      {(selectedProgram?.benefits ?? [
+                        "Bilan complet enregistre",
+                        "Relance deja posee",
+                        "Programme a confirmer au prochain contact"
+                      ]).map((benefit) => (
                         <div
                           key={benefit}
                           className="rounded-[22px] bg-white/[0.03] px-4 py-4 text-sm leading-6 text-slate-200"
