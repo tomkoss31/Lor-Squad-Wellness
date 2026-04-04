@@ -25,11 +25,11 @@ export function MetricTile({
           accent === "red" && "bg-[rgba(239,197,141,0.92)] shadow-[0_0_0_10px_rgba(239,197,141,0.10)]"
         )}
       />
-      <p className="pl-5 text-[12px] font-medium tracking-[0.01em] text-slate-400">{label}</p>
-      <p className="mt-5 text-[1.95rem] font-semibold leading-[0.94] tracking-[-0.04em] text-white md:text-[2.2rem]">
+      <p className="pl-5 text-[11px] font-medium uppercase tracking-[0.12em] text-slate-500">{label}</p>
+      <p className="mt-4 text-[1.9rem] font-semibold leading-[0.94] tracking-[-0.04em] text-white md:text-[2.1rem]">
         {value}
       </p>
-      <p className="mt-3 max-w-[18rem] text-[13px] leading-6 text-slate-400/88">{hint}</p>
+      <p className="mt-2.5 max-w-[18rem] text-[13px] leading-6 text-slate-400/82">{hint}</p>
     </div>
   );
 }

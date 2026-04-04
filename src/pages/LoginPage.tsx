@@ -20,10 +20,7 @@ export function LoginPage() {
     const admin = users.find((user) => user.role === "admin");
     const distributor = users.find((user) => user.role === "distributor");
 
-    return {
-      admin,
-      distributor
-    };
+    return { admin, distributor };
   }, [users]);
 
   function fillDemoAccess(role: "admin" | "distributor") {
@@ -52,20 +49,20 @@ export function LoginPage() {
         setError(
           result.error ??
             (storageMode === "supabase"
-              ? "Email ou mot de passe invalides pour cet acces."
-              : "Email ou mot de passe non reconnus pour cette version de demonstration.")
+              ? "Email ou mot de passe invalides pour cet accès."
+              : "Email ou mot de passe non reconnus pour cette version de démonstration.")
         );
         return;
       }
 
       setError("");
       navigate("/dashboard");
-    } catch (error) {
-      console.error("Soumission du login impossible.", error);
+    } catch (submitError) {
+      console.error("Soumission du login impossible.", submitError);
       setError(
         storageMode === "supabase"
-          ? "La connexion securisee ne repond pas correctement pour le moment."
-          : "La version de demonstration ne repond pas correctement pour le moment."
+          ? "La connexion sécurisée ne répond pas correctement pour le moment."
+          : "La version de démonstration ne répond pas correctement pour le moment."
       );
     }
   }
@@ -85,30 +82,31 @@ export function LoginPage() {
           <div className="relative z-10 flex h-full flex-col justify-between">
             <div className="space-y-10 md:space-y-12">
               <div>
-                <StatusBadge label="Lor'Squad Wellness" tone="amber" />
+                <StatusBadge label="Connexion" tone="amber" />
               </div>
 
-              <div className="space-y-7 md:space-y-9">
+              <div className="space-y-7 md:space-y-8">
                 <div className="flex justify-center lg:justify-start">
                   <img
                     src={lorSquadLogo}
                     alt="Lor'Squad Wellness"
-                    className="w-full max-w-[430px] object-contain opacity-[0.99] drop-shadow-[0_28px_70px_rgba(0,0,0,0.36)] sm:max-w-[520px] lg:max-w-[640px]"
+                    className="w-full max-w-[440px] object-contain opacity-[0.99] drop-shadow-[0_28px_70px_rgba(0,0,0,0.36)] sm:max-w-[540px] lg:max-w-[700px]"
                   />
                 </div>
 
-                <div className="space-y-4 md:space-y-5">
-                  <h1 className="max-w-[9ch] text-balance text-[2.4rem] leading-[0.95] tracking-[-0.055em] sm:text-[3.2rem] md:text-[3.85rem]">
-                    Ton espace, prêt à suivre.
+                <div className="space-y-4">
+                  <h1 className="max-w-[10ch] text-balance text-[2.5rem] leading-[0.95] tracking-[-0.055em] sm:text-[3.3rem] md:text-[4rem]">
+                    Retrouve un espace clair pour piloter les bilans, les rendez-vous et le suivi.
                   </h1>
-                  <p className="max-w-[34rem] text-base leading-7 text-slate-300/92 md:text-[18px] md:leading-8">
-                    Bilans, rendez-vous, relances et suivi client dans une ouverture simple, fluide
-                    et premium.
+                  <p className="max-w-[36rem] text-base leading-7 text-slate-300/92 md:text-[18px] md:leading-8">
+                    Lor&apos;Squad Wellness rassemble le bilan guidé, la lecture client, le suivi terrain et
+                    l&apos;activité de l&apos;équipe dans un seul espace fluide, premium et simple à rouvrir sur tablette.
                   </p>
-                  <div className="grid gap-3 pt-2 sm:grid-cols-3">
-                    <MiniTag label="Bilans guidés" />
-                    <MiniTag label="Suivi terrain" />
-                    <MiniTag label="Lecture équipe" />
+                  <div className="grid gap-3 pt-2 sm:grid-cols-4">
+                    <MiniTag label="Bilans" />
+                    <MiniTag label="Rendez-vous" />
+                    <MiniTag label="Suivi client" />
+                    <MiniTag label="Équipe" />
                   </div>
                 </div>
               </div>
@@ -123,9 +121,7 @@ export function LoginPage() {
                 />
                 <div>
                   <p className="text-sm font-medium text-white">Lor&apos;Squad Wellness</p>
-                  <p className="text-[12px] text-slate-500">
-                    Bilans guidés, suivi terrain et lecture d&apos;équipe
-                  </p>
+                  <p className="text-[12px] text-slate-500">Bilans guidés, suivi terrain et lecture d&apos;équipe</p>
                 </div>
               </div>
               <BrandSignature variant="inline" />
@@ -137,9 +133,7 @@ export function LoginPage() {
           <div className="space-y-8">
             <div>
               <p className="eyebrow-label">Connexion</p>
-              <h2 className="mt-4 max-w-[10ch] text-balance text-4xl">
-                Accède à ton espace.
-              </h2>
+              <h2 className="mt-4 max-w-[10ch] text-balance text-4xl">Accède à ton espace.</h2>
               <p className="mt-4 max-w-md text-sm leading-7 text-slate-300/92">
                 Retrouve tes rendez-vous, tes suivis et tes dossiers en quelques secondes.
               </p>
@@ -159,10 +153,9 @@ export function LoginPage() {
                   inputMode="email"
                   spellCheck={false}
                 />
-                <p className="text-xs text-slate-500">
-                  Utilise l&apos;e-mail professionnel associé à ton accès.
-                </p>
+                <p className="text-xs text-slate-500">Utilise l&apos;e-mail professionnel associé à ton accès.</p>
               </div>
+
               <div className="space-y-2">
                 <label className="text-sm font-medium text-slate-300">Mot de passe</label>
                 <input
@@ -200,42 +193,37 @@ export function LoginPage() {
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="eyebrow-label">Installer l&apos;app</p>
-                    <p className="mt-3 text-lg font-semibold text-white">
-                      Ajoute Lor&apos;Squad Wellness à ton écran d&apos;accueil.
-                    </p>
+                    <p className="mt-3 text-lg font-semibold text-white">Ajoute Lor&apos;Squad Wellness à ton écran d&apos;accueil.</p>
                     <p className="mt-2 text-sm leading-6 text-slate-300">
                       Plus rapide à rouvrir en rendez-vous, surtout sur tablette et mobile.
                     </p>
                   </div>
-                  <StatusBadge label="Acces direct" tone="green" />
+                  <StatusBadge label="Accès direct" tone="green" />
                 </div>
 
                 {canPromptInstall ? (
                   <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-                    <p className="text-sm text-slate-300">
-                      L&apos;installation directe est disponible sur ce navigateur.
-                    </p>
+                    <p className="text-sm text-slate-300">L&apos;installation directe est disponible sur ce navigateur.</p>
                     <Button variant="secondary" onClick={() => void handleInstallClick()}>
                       Installer l&apos;app
                     </Button>
                   </div>
                 ) : isIos ? (
                   <div className="mt-4 rounded-[18px] bg-white/[0.03] px-4 py-4 text-sm leading-6 text-slate-300">
-                    Sur iPhone / iPad : ouvre ce lien dans <span className="font-semibold text-white">Safari</span>,
-                    puis touche <span className="font-semibold text-white">Partager</span> et choisis{" "}
+                    Sur iPhone / iPad : ouvre ce lien dans <span className="font-semibold text-white">Safari</span>, puis
+                    touche <span className="font-semibold text-white">Partager</span> et choisis{" "}
                     <span className="font-semibold text-white">Sur l&apos;écran d&apos;accueil</span>.
                   </div>
                 ) : isMobile ? (
                   <div className="mt-4 rounded-[18px] bg-white/[0.03] px-4 py-4 text-sm leading-6 text-slate-300">
-                    Sur Android : ouvre ce lien dans <span className="font-semibold text-white">Chrome</span>,
-                    puis utilise le menu du navigateur pour{" "}
-                    <span className="font-semibold text-white">Installer l&apos;app</span> ou{" "}
+                    Sur Android : ouvre ce lien dans <span className="font-semibold text-white">Chrome</span>, puis utilise
+                    le menu du navigateur pour <span className="font-semibold text-white">Installer l&apos;app</span> ou{" "}
                     <span className="font-semibold text-white">Ajouter à l&apos;écran d&apos;accueil</span>.
                   </div>
                 ) : (
                   <div className="mt-4 rounded-[18px] bg-white/[0.03] px-4 py-4 text-sm leading-6 text-slate-300">
-                    Sur ordinateur, utilise l&apos;icone d&apos;installation dans la barre d&apos;adresse
-                    de Chrome ou Edge pour ajouter l&apos;app.
+                    Sur ordinateur, utilise l&apos;icône d&apos;installation dans la barre d&apos;adresse de Chrome ou Edge
+                    pour ajouter l&apos;app.
                   </div>
                 )}
               </div>
@@ -245,12 +233,12 @@ export function LoginPage() {
               <div className="surface-soft rounded-[24px] p-5">
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <p className="text-sm font-semibold text-white">Acces de demonstration</p>
+                    <p className="text-sm font-semibold text-white">Accès de démonstration</p>
                     <p className="mt-1 text-xs leading-6 text-slate-400">
                       Pour tester rapidement l&apos;interface, sans exposer de comptes nominatifs.
                     </p>
                   </div>
-                  <StatusBadge label="Demo" tone="blue" />
+                  <StatusBadge label="Démo" tone="blue" />
                 </div>
                 <div className="mt-4 grid gap-3 md:grid-cols-2">
                   <button
@@ -258,20 +246,16 @@ export function LoginPage() {
                     onClick={() => fillDemoAccess("distributor")}
                     className="rounded-[22px] bg-slate-950/26 px-4 py-4 text-left transition hover:bg-white/[0.05]"
                   >
-                    <p className="text-sm font-semibold text-white">Acces distributeur</p>
-                    <p className="mt-1 text-xs leading-6 text-slate-400">
-                      Vue limitée à ses clients, ses bilans et ses suivis.
-                    </p>
+                    <p className="text-sm font-semibold text-white">Accès distributeur</p>
+                    <p className="mt-1 text-xs leading-6 text-slate-400">Vue limitée à ses clients, ses bilans et ses suivis.</p>
                   </button>
                   <button
                     type="button"
                     onClick={() => fillDemoAccess("admin")}
                     className="rounded-[22px] bg-slate-950/26 px-4 py-4 text-left transition hover:bg-white/[0.05]"
                   >
-                    <p className="text-sm font-semibold text-white">Acces admin</p>
-                    <p className="mt-1 text-xs leading-6 text-slate-400">
-                      Vue globale sur les clients, l&apos;activité et le pilotage d&apos;équipe.
-                    </p>
+                    <p className="text-sm font-semibold text-white">Accès admin</p>
+                    <p className="mt-1 text-xs leading-6 text-slate-400">Vue globale sur les clients, l&apos;activité et le pilotage d&apos;équipe.</p>
                   </button>
                 </div>
                 <p className="mt-3 text-xs text-slate-500">Mot de passe démo : demo1234</p>
@@ -279,26 +263,25 @@ export function LoginPage() {
             ) : null}
 
             <div className="surface-soft rounded-[24px] p-5">
-              <p className="eyebrow-label">Comment creer les acces</p>
+              <p className="eyebrow-label">Comment créer les accès</p>
               <div className="mt-4 space-y-3">
                 <AccessStep
                   index="01"
-                  title="Tu crees le compte depuis l&apos;admin"
-                  text="Tu renseignes le nom, l&apos;email professionnel, le role et l&apos;etat actif du compte."
+                  title="Tu crées le compte depuis l&apos;admin"
+                  text="Tu renseignes le nom, l&apos;email professionnel, le rôle et l&apos;état actif du compte."
                 />
                 <AccessStep
                   index="02"
                   title="L&apos;email devient l&apos;identifiant"
-                  text="On ne cree pas de pseudo separe. L&apos;identifiant de connexion sera simplement l&apos;email."
+                  text="On ne crée pas de pseudo séparé. L&apos;identifiant de connexion sera simplement l&apos;email."
                 />
                 <AccessStep
                   index="03"
-                  title="Le mot de passe est defini par l&apos;admin"
-                  text="Le mot de passe saisi a la creation devient le mot de passe initial. Il peut ensuite etre redefini depuis la page equipe."
+                  title="Le mot de passe est défini par l&apos;admin"
+                  text="Le mot de passe saisi à la création devient le mot de passe initial. Il peut ensuite être redéfini depuis la page équipe."
                 />
               </div>
             </div>
-
           </div>
         </section>
       </div>

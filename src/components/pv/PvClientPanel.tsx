@@ -121,14 +121,14 @@ export function PvClientPanel({
           <div>
             <p className="eyebrow-label">Produits actifs</p>
             <p className="mt-1 text-xs text-slate-500">
-              Modifier le produit actif ou declarer un reassort en 1 clic.
+              Modifier un produit actif, declarer un reassort ou ajouter un nouveau produit au dossier.
             </p>
           </div>
           <Link
             to={`/pv/orders?client=${record.clientId}&type=commande`}
             className="inline-flex min-h-[38px] items-center justify-center rounded-full bg-sky-400/[0.14] px-4 py-2 text-xs font-semibold text-white transition hover:bg-sky-400/[0.22]"
           >
-            Ajouter une commande
+            Ajouter un produit
           </Link>
         </div>
 

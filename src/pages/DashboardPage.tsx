@@ -92,13 +92,7 @@ export function DashboardPage() {
 
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
               {statCards.map((stat) => (
-                <MetricTile
-                  key={stat.label}
-                  label={stat.label}
-                  value={stat.value}
-                  hint={stat.hint}
-                  accent={stat.accent}
-                />
+                <MetricTile key={stat.label} label={stat.label} value={stat.value} hint={stat.hint} accent={stat.accent} />
               ))}
             </div>
 
@@ -147,15 +141,10 @@ export function DashboardPage() {
         <Card className="space-y-4">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <p className="eyebrow-label">A reprendre</p>
-              <h2 className="mt-3 text-[1.7rem] leading-[1.06] text-white md:text-[1.9rem]">
-                Dossiers à ouvrir
-              </h2>
+              <p className="eyebrow-label">À reprendre</p>
+              <h2 className="mt-3 text-[1.7rem] leading-[1.06] text-white md:text-[1.9rem]">Dossiers à ouvrir</h2>
             </div>
-            <Link
-              className="text-sm font-medium text-slate-400 transition hover:text-sky-200"
-              to={`/distributors/${currentUser.id}`}
-            >
+            <Link className="text-sm font-medium text-slate-400 transition hover:text-sky-200" to={`/distributors/${currentUser.id}`}>
               Mon portefeuille
             </Link>
           </div>
@@ -170,20 +159,13 @@ export function DashboardPage() {
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <p className="truncate text-[1.05rem] font-semibold text-white">
-                        {followUp.clientName}
-                      </p>
+                      <p className="truncate text-[1.05rem] font-semibold text-white">{followUp.clientName}</p>
                       <p className="mt-1 text-sm text-slate-300">{followUp.type}</p>
                     </div>
-                    <StatusBadge
-                      label={followUp.status === "scheduled" ? "RDV" : "Relance"}
-                      tone={followUp.status === "scheduled" ? "green" : "amber"}
-                    />
+                    <StatusBadge label={followUp.status === "scheduled" ? "RDV" : "Relance"} tone={followUp.status === "scheduled" ? "green" : "amber"} />
                   </div>
                   <div className="mt-3 flex flex-wrap items-center justify-between gap-3 text-sm">
-                    <span className="text-slate-300">
-                      {formatDashboardDateTime(followUp.dueDate)}
-                    </span>
+                    <span className="text-slate-300">{formatDashboardDateTime(followUp.dueDate)}</span>
                     <span className="text-slate-500">{followUp.programTitle}</span>
                   </div>
                 </Link>
@@ -200,9 +182,7 @@ export function DashboardPage() {
           <div className="flex items-center justify-between gap-3">
             <div>
               <p className="eyebrow-label">Guide express</p>
-              <h2 className="mt-3 text-[1.7rem] leading-[1.06] text-white md:text-[1.9rem]">
-                Rappel terrain
-              </h2>
+              <h2 className="mt-3 text-[1.7rem] leading-[1.06] text-white md:text-[1.9rem]">Rappel terrain</h2>
             </div>
             <Link
               to="/guide"
@@ -212,9 +192,9 @@ export function DashboardPage() {
             </Link>
           </div>
           <div className="grid gap-3">
-            <GuideTile title="Avant" text="Vérifier le client, le suivi prévu et les relances." />
-            <GuideTile title="Pendant" text="Rester sur l'essentiel et fixer la suite." />
-            <GuideTile title="Après" text="Si besoin, rouvrir le dossier dans les relances." />
+            <GuideTile title="Avant" text="Vérifier le client, le suivi prévu et les relances du moment." />
+            <GuideTile title="Pendant" text="Rester clair, simple et poser la suite sans surcharger l’échange." />
+            <GuideTile title="Après" text="Rouvrir le dossier si besoin et laisser une trace utile pour la suite." />
           </div>
         </Card>
       </div>
@@ -255,9 +235,7 @@ function PriorityPanel({
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="truncate text-[1.05rem] font-semibold text-white">
-                    {followUp.clientName}
-                  </p>
+                  <p className="truncate text-[1.05rem] font-semibold text-white">{followUp.clientName}</p>
                   <p className="mt-1 text-sm text-slate-300">{followUp.type}</p>
                 </div>
                 <StatusBadge label={statusLabel} tone={statusTone} />
@@ -269,9 +247,7 @@ function PriorityPanel({
             </Link>
           ))
         ) : (
-          <div className="rounded-[24px] bg-white/[0.03] p-5 text-sm text-slate-400">
-            {emptyLabel}
-          </div>
+          <div className="rounded-[24px] bg-white/[0.03] p-5 text-sm text-slate-400">{emptyLabel}</div>
         )}
       </div>
     </Card>

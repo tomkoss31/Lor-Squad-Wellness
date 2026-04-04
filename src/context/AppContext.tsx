@@ -1105,7 +1105,6 @@ export function AppProvider({ children }: PropsWithChildren) {
 
   async function addPvTransaction(transaction: PvClientTransaction) {
     if (storageMode === "supabase") {
-      await addSupabasePvTransaction(transaction);
       const targetClient = clients.find((client) => client.id === transaction.clientId);
       const baseProgram = resolvePvProgram(targetClient?.pvProgramId ?? targetClient?.currentProgram);
       const existingProduct = pvClientProducts.find(
@@ -1135,6 +1134,7 @@ export function AppProvider({ children }: PropsWithChildren) {
         noteMetier: existingProduct?.noteMetier ?? catalogProduct?.noteMetier,
         active: true
       });
+      await addSupabasePvTransaction(transaction);
       await refreshRemoteData(currentUser);
       return;
     }

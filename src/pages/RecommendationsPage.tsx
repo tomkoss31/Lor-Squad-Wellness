@@ -45,84 +45,55 @@ export function RecommendationsPage() {
   const pendingCount = pendingClients.reduce((sum, item) => sum + item.recommendationCount, 0);
   const contactedCount = contactedClients.reduce((sum, item) => sum + item.recommendationCount, 0);
 
-  const groupedByCoach = recommendationClients.reduce<Record<string, RecommendationClientItem[]>>(
-    (groups, item) => {
-      const key = currentUser?.role === "admin" ? item.distributorName : "Mes dossiers";
-      groups[key] = [...(groups[key] ?? []), item];
-      return groups;
-    },
-    {}
-  );
+  const groupedByCoach = recommendationClients.reduce<Record<string, RecommendationClientItem[]>>((groups, item) => {
+    const key = currentUser?.role === "admin" ? item.distributorName : "Mes dossiers";
+    groups[key] = [...(groups[key] ?? []), item];
+    return groups;
+  }, {});
 
-  const coachEntries = Object.entries(groupedByCoach).sort(([first], [second]) =>
-    first.localeCompare(second, "fr")
-  );
+  const coachEntries = Object.entries(groupedByCoach).sort(([first], [second]) => first.localeCompare(second, "fr"));
 
   return (
     <div className="space-y-6">
       <PageHeading
         eyebrow="Recommandations"
         title="Recommandations"
-        description="Les dossiers à reprendre, par coach et par bilan, sans texte inutile."
+        description="Les dossiers à reprendre, les noms à relancer et l’état du suivi, sans surcharger l’écran."
       />
 
-      <div className="grid gap-4 xl:grid-cols-[1.15fr_0.85fr]">
+      <div className="grid gap-4 xl:grid-cols-[1.18fr_0.82fr]">
         <Card className="space-y-5 bg-[linear-gradient(180deg,rgba(15,23,42,0.26),rgba(15,23,42,0.52))]">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="max-w-3xl">
-              <p className="eyebrow-label">À traiter aujourd&apos;hui</p>
+              <p className="eyebrow-label">À traiter aujourd’hui</p>
               <h2 className="mt-3 text-3xl text-white">
                 {pendingCount
-                  ? `${pendingCount} recommandation${pendingCount > 1 ? "s" : ""} restent à contacter.`
-                  : "Toutes les recommandations visibles sont déjà reprises."}
+                  ? `${pendingCount} recommandation${pendingCount > 1 ? "s" : ""} restent à reprendre.`
+                  : "Les recommandations visibles sont déjà reprises."}
               </h2>
-              <p className="mt-3 text-sm leading-6 text-slate-300">
-                L&apos;utile ici : voir vite quels dossiers ont déjà été repris et lesquels restent à relancer.
+              <p className="mt-2 text-sm leading-6 text-slate-300">
+                Tu ouvres le dossier, tu vois ce qui reste à faire, puis tu repars sur l’action.
               </p>
             </div>
             <StatusBadge label={pendingCount ? "À reprendre" : "À jour"} tone={pendingCount ? "amber" : "green"} />
           </div>
 
           <div className="grid gap-4 md:grid-cols-3">
-            <RecommendationMetricCard
-              label="Dossiers avec recos"
-              value={recommendationClients.length}
-              hint="Bilans concernés"
-              tone="blue"
-            />
-            <RecommendationMetricCard
-              label="A contacter"
-              value={pendingCount}
-              hint="Contacts encore à reprendre"
-              tone="amber"
-            />
-            <RecommendationMetricCard
-              label="Contactées"
-              value={contactedCount}
-              hint="Contacts déjà relus"
-              tone="green"
-            />
+            <RecommendationMetricCard label="Dossiers avec recos" value={recommendationClients.length} hint="Bilans concernés" tone="blue" />
+            <RecommendationMetricCard label="À contacter" value={pendingCount} hint="Contacts encore à reprendre" tone="amber" />
+            <RecommendationMetricCard label="Contactées" value={contactedCount} hint="Contacts déjà relus" tone="green" />
           </div>
         </Card>
 
         <Card className="space-y-4">
           <div>
             <p className="eyebrow-label">Aide terrain</p>
-            <h2 className="mt-3 text-2xl text-white">Rester simple</h2>
+            <h2 className="mt-3 text-2xl text-white">Garder le bon ton</h2>
           </div>
           <div className="grid gap-3">
-            <CompactReminder
-              title="Ouvrir simplement"
-              text="Le sujet est déjà posé pendant le smoothie. Ici, tu reprends juste ce qui a été noté."
-            />
-            <CompactReminder
-              title="Noter puis rappeler"
-              text="Un prénom et un contact suffisent. La page sert surtout à voir ce qui a déjà été repris."
-            />
-            <CompactReminder
-              title="Sans pression"
-              text="Le bon geste est de relancer proprement, pas d&apos;empiler des consignes."
-            />
+            <CompactReminder title="Ouvrir simplement" text="Tu relis le dossier, puis tu reprends le contact sans en faire trop." />
+            <CompactReminder title="Relancer proprement" text="Un prénom, un contact, une suite claire. L’écran sert surtout à ne rien laisser dormir." />
+            <CompactReminder title="Rester léger" text="Le but est d’avancer, pas de rajouter des couches de consignes." />
           </div>
         </Card>
       </div>
@@ -141,10 +112,7 @@ export function RecommendationsPage() {
                   </div>
                   <div className="flex flex-wrap gap-2">
                     <StatusBadge label={`${items.length} dossier${items.length > 1 ? "s" : ""}`} tone="blue" />
-                    <StatusBadge
-                      label={`${coachPending.length} à reprendre`}
-                      tone={coachPending.length ? "amber" : "green"}
-                    />
+                    <StatusBadge label={`${coachPending.length} à reprendre`} tone={coachPending.length ? "amber" : "green"} />
                   </div>
                 </div>
 
@@ -160,24 +128,17 @@ export function RecommendationsPage() {
                           <div className="flex flex-wrap items-center gap-3">
                             <p className="text-xl font-semibold text-white">{item.clientName}</p>
                             <StatusBadge
-                              label={
-                                item.recommendationsContacted
-                                  ? "Recommandations contactées"
-                                  : "Recommandations à contacter"
-                              }
+                              label={item.recommendationsContacted ? "Recommandations contactées" : "Recommandations à contacter"}
                               tone={item.recommendationsContacted ? "green" : "amber"}
                             />
                           </div>
                           <p className="text-sm text-slate-400">
-                            {item.programTitle} - {item.objectiveFocus}
+                            {item.programTitle} · {item.objectiveFocus}
                           </p>
                         </div>
 
                         <div className="grid gap-3 md:grid-cols-2">
-                          <RecommendationFact
-                            label="Bilan"
-                            value={formatDate(item.assessmentDate)}
-                          />
+                          <RecommendationFact label="Bilan" value={formatDate(item.assessmentDate)} />
                           <RecommendationFact
                             label="Recommandations"
                             value={`${item.recommendationCount} notée${item.recommendationCount > 1 ? "s" : ""}`}
@@ -227,7 +188,7 @@ function RecommendationMetricCard({
         <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-slate-500">{label}</p>
         <StatusBadge label={String(value)} tone={tone} />
       </div>
-      <p className="mt-4 text-sm leading-6 text-slate-300">{hint}</p>
+      <p className="mt-3 text-sm leading-6 text-slate-300">{hint}</p>
     </div>
   );
 }

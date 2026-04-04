@@ -48,36 +48,63 @@ export function PvOverviewPage() {
     [records]
   );
 
-  const filteredRecords = useMemo(() => {
-    const normalizedSearch = search.trim().toLowerCase();
+  const filteredRecords = useMemo(
+    () =>
+      records.filter((record) =>
+        matchesPvOverviewFilters(record, {
+          search,
+          statusFilter,
+          responsibleFilter,
+          programFilter,
+          periodFilter,
+          isAdmin
+        })
+      ),
+    [isAdmin, periodFilter, programFilter, records, responsibleFilter, search, statusFilter]
+  );
 
-    return records.filter((record) => {
-      const matchesSearch =
-        !normalizedSearch ||
-        `${record.clientName} ${record.program} ${record.responsibleName}`.toLowerCase().includes(normalizedSearch);
-      const matchesStatus = statusFilter === "all" || record.status === statusFilter;
-      const matchesResponsible =
-        !isAdmin ||
-        responsibleFilter === "all" ||
-        record.responsibleId === responsibleFilter;
-      const matchesProgram = programFilter === "all" || record.program === programFilter;
-      const daysSinceOrder = Math.floor(
-        (Date.now() - new Date(record.lastOrderDate).getTime()) / (24 * 60 * 60 * 1000)
-      );
-      const matchesPeriod =
-        periodFilter === "all" ||
-        (periodFilter === "30" && daysSinceOrder <= 30) ||
-        (periodFilter === "90" && daysSinceOrder <= 90);
+  function handleResponsibleChange(nextResponsibleId: string) {
+    setResponsibleFilter(nextResponsibleId);
+    const nextVisibleRecords = records.filter((record) =>
+      matchesPvOverviewFilters(record, {
+        search,
+        statusFilter,
+        responsibleFilter: nextResponsibleId,
+        programFilter,
+        periodFilter,
+        isAdmin
+      })
+    );
+    setSelectedClientId(nextVisibleRecords[0]?.clientId ?? null);
+  }
 
-      return matchesSearch && matchesStatus && matchesResponsible && matchesProgram && matchesPeriod;
-    });
-  }, [isAdmin, periodFilter, programFilter, records, responsibleFilter, search, statusFilter]);
+  function handleSelectClient(clientId: string) {
+    setSelectedClientId(clientId);
+  }
 
   useEffect(() => {
     if (isAdmin && responsibleFilter === "all" && defaultResponsibleFilter !== "all") {
+      const nextVisibleRecords = records.filter((record) =>
+        matchesPvOverviewFilters(record, {
+          search,
+          statusFilter,
+          responsibleFilter: defaultResponsibleFilter,
+          programFilter,
+          periodFilter,
+          isAdmin
+        })
+      );
+
       setResponsibleFilter(defaultResponsibleFilter);
+      setSelectedClientId(nextVisibleRecords[0]?.clientId ?? null);
     }
-  }, [defaultResponsibleFilter, isAdmin, responsibleFilter]);
+  }, [defaultResponsibleFilter, isAdmin, periodFilter, programFilter, records, responsibleFilter, search, statusFilter]);
+
+  useEffect(() => {
+    if (!selectedClientId || !filteredRecords.some((record) => record.clientId === selectedClientId)) {
+      setSelectedClientId(filteredRecords[0]?.clientId ?? null);
+    }
+  }, [filteredRecords, selectedClientId]);
 
   const selectedRecord =
     filteredRecords.find((record) => record.clientId === selectedClientId) ??
@@ -102,13 +129,13 @@ export function PvOverviewPage() {
       <PvModuleHeader
         currentUser={currentUser}
         title="Suivi PV"
-        description="Vue simple des clients, des points volume, des demarrages et des besoins de suivi."
+        description="Vue simple des clients, des points volume, des démarrages et des besoins de suivi."
       />
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <MetricTile label="PV du mois" value={`${monthPv} PV`} hint="Lecture du mois en cours" accent="blue" />
         <MetricTile label="Clients actifs" value={filteredRecords.length} hint="Portefeuille visible" accent="green" />
-        <MetricTile label="Reassorts probables" value={restockCount} hint="Produits bientot a renouveler" accent="red" />
+        <MetricTile label="Réassorts probables" value={restockCount} hint="Produits bientôt à renouveler" accent="red" />
         <MetricTile label="Reprises sur place" value={repriseCount} hint="Mouvements du mois" accent="blue" />
       </div>
 
@@ -130,10 +157,10 @@ export function PvOverviewPage() {
             options={[
               { value: "all", label: "Tous les statuts" },
               { value: "ok", label: "RAS" },
-              { value: "watch", label: "A surveiller" },
-              { value: "restock", label: "Reassort probable" },
-              { value: "inconsistent", label: "Incoherence conso" },
-              { value: "follow-up", label: "A relancer" }
+              { value: "watch", label: "À surveiller" },
+              { value: "restock", label: "Réassort probable" },
+              { value: "inconsistent", label: "Incohérence conso" },
+              { value: "follow-up", label: "À relancer" }
             ]}
           />
 
@@ -162,11 +189,11 @@ export function PvOverviewPage() {
               ]}
             />
             <ToolbarSelect
-              label="Periode"
+              label="Période"
               value={periodFilter}
               onChange={setPeriodFilter}
               options={[
-                { value: "all", label: "Toutes les periodes" },
+                { value: "all", label: "Toutes les périodes" },
                 { value: "30", label: "30 derniers jours" },
                 { value: "90", label: "90 derniers jours" }
               ]}
@@ -183,7 +210,7 @@ export function PvOverviewPage() {
                   label="Mon portefeuille"
                   count={records.filter((record) => record.responsibleId === currentUser.id).length}
                   active={responsibleFilter === currentUser.id}
-                  onClick={() => setResponsibleFilter(currentUser.id)}
+                  onClick={() => handleResponsibleChange(currentUser.id)}
                 />
               ) : null}
               {responsibleOptions.map((option) => {
@@ -198,7 +225,7 @@ export function PvOverviewPage() {
                     label={formatPortfolioTabLabel(option.name)}
                     count={count}
                     active={responsibleFilter === option.id}
-                    onClick={() => setResponsibleFilter(option.id)}
+                    onClick={() => handleResponsibleChange(option.id)}
                   />
                 );
               })}
@@ -206,7 +233,7 @@ export function PvOverviewPage() {
                 label="Tous"
                 count={records.length}
                 active={responsibleFilter === "all"}
-                onClick={() => setResponsibleFilter("all")}
+                onClick={() => handleResponsibleChange("all")}
               />
             </div>
           </div>
@@ -214,7 +241,7 @@ export function PvOverviewPage() {
           <div className="rounded-[22px] border border-white/8 bg-white/[0.03] px-5 py-4">
             <p className="eyebrow-label">Vue personnelle</p>
             <p className="mt-2 text-sm leading-6 text-slate-300">
-              Cette vue ne montre que les clients du distributeur connecte.
+              Cette vue ne montre que les clients du distributeur connecté.
             </p>
           </div>
         )}
@@ -225,7 +252,7 @@ export function PvOverviewPage() {
           <div className="flex items-center justify-between gap-3">
             <div>
               <p className="eyebrow-label">Vue globale</p>
-              <h2 className="mt-3 text-2xl text-white">Clients, demarrage et conso estimee</h2>
+              <h2 className="mt-3 text-2xl text-white">Clients, démarrage et conso estimée</h2>
             </div>
             <div className="rounded-[18px] bg-white/[0.03] px-4 py-3 text-sm text-slate-300">
               {filteredRecords.length} dossiers
@@ -237,11 +264,11 @@ export function PvOverviewPage() {
               <div className="grid grid-cols-[1.4fr_1fr_1fr_1fr_0.8fr_0.9fr_0.9fr_0.9fr_1fr_0.7fr] gap-3 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">
                 <span>Client</span>
                 <span>Programme</span>
-                <span>Date demarrage</span>
-                <span>Derniere commande</span>
-                <span>PV cumules</span>
-                <span>Jours depuis demarrage</span>
-                <span>Reste estime</span>
+                <span>Date démarrage</span>
+                <span>Dernière commande</span>
+                <span>PV cumulés</span>
+                <span>Jours depuis démarrage</span>
+                <span>Reste estimé</span>
                 <span>Statut</span>
                 <span>Responsable</span>
                 <span>Action</span>
@@ -252,12 +279,15 @@ export function PvOverviewPage() {
                 const isActive = selectedRecord?.clientId === record.clientId;
 
                 return (
-                  <div
+                  <button
                     key={record.clientId}
-                    className={`grid grid-cols-[1.4fr_1fr_1fr_1fr_0.8fr_0.9fr_0.9fr_0.9fr_1fr_0.7fr] gap-3 rounded-[22px] border px-3 py-4 transition ${
+                    type="button"
+                    aria-pressed={isActive}
+                    onClick={() => handleSelectClient(record.clientId)}
+                    className={`grid w-full grid-cols-[1.4fr_1fr_1fr_1fr_0.8fr_0.9fr_0.9fr_0.9fr_1fr_0.7fr] gap-3 rounded-[22px] border px-3 py-4 text-left transition ${
                       isActive
-                        ? "border-white/18 bg-white/[0.07] shadow-[0_0_0_1px_rgba(255,255,255,0.08),0_18px_45px_rgba(8,15,28,0.34)]"
-                        : "border-white/8 bg-white/[0.03] hover:border-white/12 hover:bg-white/[0.05] hover:shadow-[0_0_0_1px_rgba(255,255,255,0.03),0_16px_36px_rgba(7,12,22,0.26)]"
+                        ? "border-white/28 bg-white/[0.1] shadow-[0_0_0_1px_rgba(255,255,255,0.12),0_22px_54px_rgba(8,15,28,0.4)]"
+                        : "border-white/8 bg-white/[0.03] hover:border-white/16 hover:bg-white/[0.055] hover:shadow-[0_0_0_1px_rgba(255,255,255,0.05),0_18px_40px_rgba(7,12,22,0.3)]"
                     }`}
                   >
                     <div>
@@ -276,15 +306,17 @@ export function PvOverviewPage() {
                     </div>
                     <div className="text-sm text-slate-300">{record.responsibleName}</div>
                     <div>
-                      <button
-                        type="button"
-                        onClick={() => setSelectedClientId(record.clientId)}
-                        className="inline-flex min-h-[40px] items-center justify-center rounded-full bg-white/[0.04] px-4 py-2 text-xs font-semibold text-white transition hover:bg-white/[0.08]"
+                      <span
+                        className={`inline-flex min-h-[40px] items-center justify-center rounded-full px-4 py-2 text-xs font-semibold transition ${
+                          isActive
+                            ? "border border-white/18 bg-white/[0.14] text-white"
+                            : "bg-white/[0.04] text-white"
+                        }`}
                       >
-                        Ouvrir
-                      </button>
+                        {isActive ? "Ouvert" : "Ouvrir"}
+                      </span>
                     </div>
-                  </div>
+                  </button>
                 );
               })}
             </div>
@@ -362,5 +394,46 @@ function ResponsibleFilterChip({
 
 function formatPortfolioTabLabel(name: string) {
   const firstWord = name.trim().split(/\s+/)[0] ?? name;
-  return firstWord.length > 14 ? `${firstWord.slice(0, 14)}…` : firstWord;
+  return firstWord.length > 14 ? `${firstWord.slice(0, 14)}...` : firstWord;
+}
+
+function matchesPvOverviewFilters(
+  record: {
+    clientName: string;
+    program: string;
+    responsibleName: string;
+    responsibleId: string;
+    status: PvStatus;
+    lastOrderDate: string;
+  },
+  {
+    search,
+    statusFilter,
+    responsibleFilter,
+    programFilter,
+    periodFilter,
+    isAdmin
+  }: {
+    search: string;
+    statusFilter: "all" | PvStatus;
+    responsibleFilter: string;
+    programFilter: string;
+    periodFilter: string;
+    isAdmin: boolean;
+  }
+) {
+  const normalizedSearch = search.trim().toLowerCase();
+  const matchesSearch =
+    !normalizedSearch ||
+    `${record.clientName} ${record.program} ${record.responsibleName}`.toLowerCase().includes(normalizedSearch);
+  const matchesStatus = statusFilter === "all" || record.status === statusFilter;
+  const matchesResponsible = !isAdmin || responsibleFilter === "all" || record.responsibleId === responsibleFilter;
+  const matchesProgram = programFilter === "all" || record.program === programFilter;
+  const daysSinceOrder = Math.floor((Date.now() - new Date(record.lastOrderDate).getTime()) / (24 * 60 * 60 * 1000));
+  const matchesPeriod =
+    periodFilter === "all" ||
+    (periodFilter === "30" && daysSinceOrder <= 30) ||
+    (periodFilter === "90" && daysSinceOrder <= 90);
+
+  return matchesSearch && matchesStatus && matchesResponsible && matchesProgram && matchesPeriod;
 }

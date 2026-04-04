@@ -679,20 +679,17 @@ export async function upsertSupabasePvClientProduct(product: PvClientProductReco
     active: product.active
   };
 
-  const isSeedRecord = !product.id || product.id.startsWith("pv-seed-");
-  const query = isSeedRecord
-    ? client.from("pv_client_products").insert(payload).select("*").single<PvClientProductRow>()
-    : client
-        .from("pv_client_products")
-        .update(payload)
-        .eq("id", product.id)
-        .select("*")
-        .single<PvClientProductRow>();
-
-  const { data, error } = await query;
+  const { data, error } = await client
+    .from("pv_client_products")
+    .upsert(payload, { onConflict: "client_id,product_id" })
+    .select("*")
+    .single<PvClientProductRow>();
 
   if (error || !data) {
-    throw new Error("Impossible de mettre a jour ce produit actif.");
+    throw new Error(
+      error?.message ??
+        "Impossible de mettre a jour ce produit actif dans le suivi PV."
+    );
   }
 
   return mapPvClientProduct(data);
@@ -720,7 +717,9 @@ export async function addSupabasePvTransaction(transaction: PvClientTransaction)
     .single<PvTransactionRow>();
 
   if (error || !data) {
-    throw new Error("Impossible d'ajouter ce mouvement produit.");
+    throw new Error(
+      error?.message ?? "Impossible d'ajouter ce mouvement produit."
+    );
   }
 
   return mapPvTransaction(data);
