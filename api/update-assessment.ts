@@ -1,5 +1,62 @@
 import { createClient } from "@supabase/supabase-js";
-import { resolvePvProgram } from "../src/data/mockPvModule";
+
+const pvPrograms = [
+  {
+    id: "starter",
+    title: "Programme Starter",
+    alias: ["Programme Decouverte", "Programme Starter", "Decouverte", "Starter"]
+  },
+  {
+    id: "premium",
+    title: "Programme Premium",
+    alias: ["Programme Premium", "Premium"]
+  },
+  {
+    id: "booster-1",
+    title: "Programme Booster 1",
+    alias: ["Programme Booster 1", "Booster 1"]
+  },
+  {
+    id: "booster-2",
+    title: "Programme Booster 2",
+    alias: ["Programme Booster 2", "Booster 2"]
+  },
+  {
+    id: "custom",
+    title: "Suivi personnalise",
+    alias: ["Suivi personnalise", "Suivi personnalisé", "Personnalise", "Personnalisé"]
+  }
+];
+
+function normalizeProgramLabel(value: string | null | undefined) {
+  return String(value ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim()
+    .toLowerCase();
+}
+
+function resolvePvProgramId(programTitleOrId: string | null | undefined) {
+  const normalized = normalizeProgramLabel(programTitleOrId);
+
+  const exact =
+    pvPrograms.find((program) => normalizeProgramLabel(program.id) === normalized) ??
+    pvPrograms.find((program) =>
+      [program.title, ...program.alias].some(
+        (candidate) => normalizeProgramLabel(candidate) === normalized
+      )
+    );
+
+  if (exact) {
+    return exact.id;
+  }
+
+  return (
+    pvPrograms.find((program) =>
+      normalized.includes(normalizeProgramLabel(program.title.replace("Programme ", "")))
+    )?.id ?? "starter"
+  );
+}
 
 export default async function handler(req: any, res: any) {
   try {
@@ -125,13 +182,13 @@ export default async function handler(req: any, res: any) {
 
     if (assessment.type === "initial") {
       const hasStartedProgram = Boolean(assessment.programId && String(assessment.programTitle ?? "").trim());
-      const pvProgram = hasStartedProgram ? resolvePvProgram(assessment.programTitle) : null;
+      const pvProgramId = hasStartedProgram ? resolvePvProgramId(assessment.programTitle) : null;
       let { error: clientUpdateError } = await admin
         .from("clients")
         .update({
           start_date: hasStartedProgram ? assessment.date : null,
           current_program: hasStartedProgram ? assessment.programTitle : "",
-          pv_program_id: hasStartedProgram ? pvProgram?.id ?? null : null,
+          pv_program_id: hasStartedProgram ? pvProgramId : null,
           started: hasStartedProgram,
           status: hasStartedProgram ? "active" : "pending"
         })
