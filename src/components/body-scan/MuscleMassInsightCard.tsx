@@ -42,7 +42,7 @@ export function MuscleMassInsightCard({
   const initialPercentDelta =
     initialMetrics == null ? 0 : round(currentMetrics.percent - initialMetrics.percent);
 
-  const trendPoints = history.slice(-3).map((entry) => {
+  const trendPoints = history.map((entry) => {
     const normalized = normalizeMuscleMass(entry);
     return {
       date: entry.date,
@@ -51,6 +51,9 @@ export function MuscleMassInsightCard({
       secondary: `${normalized.kg} kg de masse musculaire`
     };
   });
+
+  const shouldShowComparisonPanel =
+    trendPoints.length > 0 || previousMetrics != null || initialMetrics != null;
 
   return (
     <PedagogicalSection
@@ -74,8 +77,8 @@ export function MuscleMassInsightCard({
 
           {trendPoints.length ? (
             <MetricTrendPanel
-              title="3 derniers releves"
-              subtitle="Masse musculaire recente, pour montrer si la tenue reste bonne."
+              title="Historique balance"
+              subtitle="Toute la progression musculaire reste visible, avec les 3 derniers points en repere."
               unitLabel="Masse musculaire en %"
               points={trendPoints}
               gradientId="muscle-mass-line"
@@ -84,7 +87,7 @@ export function MuscleMassInsightCard({
               accentClass="border-emerald-300/18 bg-emerald-400/[0.08]"
               valueSuffix="%"
             />
-          ) : (
+          ) : shouldShowComparisonPanel ? (
             <div className="md:col-span-2 xl:col-span-3 rounded-[24px] border border-white/10 bg-white/[0.03] p-4">
               <div className="flex items-center justify-between gap-3">
                 <p className="text-sm font-semibold text-white">Ecarts lisibles</p>
@@ -106,7 +109,7 @@ export function MuscleMassInsightCard({
                 />
               </div>
             </div>
-          )}
+          ) : null}
         </>
       }
     />

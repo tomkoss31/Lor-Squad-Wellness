@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { BodyFatInsightCard } from "../components/body-scan/BodyFatInsightCard";
 import { BodyScanDeltaGrid } from "../components/body-scan/BodyScanDeltaGrid";
+import { HydrationVisceralInsightCard } from "../components/body-scan/HydrationVisceralInsightCard";
 import { MuscleMassInsightCard } from "../components/body-scan/MuscleMassInsightCard";
 import { WeightGoalInsightCard } from "../components/education/WeightGoalInsightCard";
 import { Button } from "../components/ui/Button";
@@ -517,6 +518,28 @@ export function NewFollowUpPage() {
                   date: assessmentDate,
                   weight: bodyScan.weight,
                   muscleMass: bodyScan.muscleMass,
+                  label: "Aujourd'hui"
+                }
+              ]}
+            />
+
+            <HydrationVisceralInsightCard
+              weight={bodyScan.weight}
+              hydrationPercent={bodyScan.hydration}
+              visceralFat={bodyScan.visceralFat}
+              sex={targetClient.sex}
+              history={[
+                ...targetClient.assessments.map((assessment) => ({
+                  date: assessment.date,
+                  weight: assessment.bodyScan.weight,
+                  hydrationPercent: assessment.bodyScan.hydration,
+                  visceralFat: assessment.bodyScan.visceralFat
+                })),
+                {
+                  date: assessmentDate,
+                  weight: bodyScan.weight,
+                  hydrationPercent: bodyScan.hydration,
+                  visceralFat: bodyScan.visceralFat,
                   label: "Aujourd'hui"
                 }
               ]}

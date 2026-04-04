@@ -48,12 +48,13 @@ export function BodyFatInsightCard({
   const initialPercentDelta = initial ? round(current.percent - initial.percent) : 0;
   const initialKgDelta = initialKg == null ? 0 : round(currentKg - initialKg);
 
-  const recentHistory = history.slice(-3).map((entry) => ({
+  const trendHistory = history.map((entry) => ({
     ...entry,
     kg: estimateBodyFatKg(entry.weight, entry.percent)
   }));
+  const recentHistory = trendHistory.slice(-3);
   const shouldShowHistoryPanel =
-    recentHistory.length >= 2 || previous != null || initial != null;
+    trendHistory.length >= 2 || previous != null || initial != null;
 
   return (
     <PedagogicalSection
@@ -127,15 +128,15 @@ export function BodyFatInsightCard({
             <div className="md:col-span-2 xl:col-span-3 rounded-[24px] bg-white/[0.04] p-5">
               <div className="flex items-center justify-between gap-3">
                 <div>
-                  <p className="text-sm font-semibold text-white">3 derniers releves</p>
+                  <p className="text-sm font-semibold text-white">Historique balance</p>
                   <p className="mt-1 text-xs text-slate-400">
-                    Une lecture plus concrete a montrer a la cliente avant le detail.
+                    Toute la progression reste visible, avec les 3 derniers points en repere.
                   </p>
                 </div>
                 <p className="text-[11px] font-medium text-slate-500">Progression</p>
               </div>
 
-              {recentHistory.length >= 2 ? <BodyFatProgressChart points={recentHistory} /> : null}
+              {trendHistory.length >= 2 ? <BodyFatProgressChart points={trendHistory} /> : null}
 
               {recentHistory.length ? (
                 <div className="mt-4 grid gap-3 md:grid-cols-3">

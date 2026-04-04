@@ -34,20 +34,21 @@ export function MetricTrendPanel({
     return null;
   }
 
+  const chartPoints = points;
   const recentPoints = points.slice(-3);
-  const max = Math.max(...recentPoints.map((point) => point.value), 1);
-  const min = Math.min(...recentPoints.map((point) => point.value), max);
+  const max = Math.max(...chartPoints.map((point) => point.value), 1);
+  const min = Math.min(...chartPoints.map((point) => point.value), max);
   const range = Math.max(max - min, 1);
   const width = 320;
   const height = 116;
   const paddingX = 16;
   const paddingY = 16;
 
-  const coordinates = recentPoints.map((point, index) => {
+  const coordinates = chartPoints.map((point, index) => {
     const x =
-      recentPoints.length === 1
+      chartPoints.length === 1
         ? width / 2
-        : paddingX + (index * (width - paddingX * 2)) / (recentPoints.length - 1);
+        : paddingX + (index * (width - paddingX * 2)) / (chartPoints.length - 1);
     const y =
       height -
       paddingY -
@@ -74,7 +75,7 @@ export function MetricTrendPanel({
       <div className="mt-4 rounded-[22px] border border-white/8 bg-slate-950/28 p-4">
         <div className="flex items-center justify-between gap-3">
           <p className="text-xs font-medium uppercase tracking-[0.16em] text-slate-500">
-            Courbe recente
+            Courbe complete
           </p>
           <p className="text-xs text-slate-400">{unitLabel}</p>
         </div>

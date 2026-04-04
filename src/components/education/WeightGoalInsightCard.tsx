@@ -29,7 +29,7 @@ export function WeightGoalInsightCard({
       : plan.isAchieved
         ? "Objectif atteint"
         : `${plan.remainingKg} kg a ajuster`;
-  const trendPoints: MetricTrendPoint[] = history.slice(-3).map((entry) => ({
+  const trendPoints: MetricTrendPoint[] = history.map((entry) => ({
     date: entry.date,
     label: entry.label,
     value: entry.weight,
@@ -60,8 +60,8 @@ export function WeightGoalInsightCard({
           />
           {trendPoints.length ? (
             <MetricTrendPanel
-              title="3 derniers releves"
-              subtitle="La lecture poids devient plus parlante avec les derniers points visibles."
+              title="Historique balance"
+              subtitle="Toute l'evolution du poids reste visible, avec les 3 derniers points en repere."
               unitLabel="Poids en kg"
               points={trendPoints}
               gradientId="weight-line"

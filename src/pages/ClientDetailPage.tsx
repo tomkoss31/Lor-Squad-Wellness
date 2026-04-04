@@ -400,6 +400,12 @@ export function ClientDetailPage() {
             hydrationPercent={latestBodyScan.hydration}
             sex={client.sex}
             visceralFat={latestBodyScan.visceralFat}
+            history={client.assessments.map((assessment) => ({
+              date: assessment.date,
+              weight: assessment.bodyScan.weight,
+              hydrationPercent: assessment.bodyScan.hydration,
+              visceralFat: assessment.bodyScan.visceralFat
+            }))}
           />
 
           <div className="space-y-4 rounded-[26px] bg-slate-950/28 p-5">

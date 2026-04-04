@@ -33,7 +33,6 @@ const statusLabels = {
 export function ClientsPage() {
   const {
     currentUser,
-    storageMode,
     users,
     visibleClients,
     visibleFollowUps
@@ -105,7 +104,7 @@ export function ClientsPage() {
         description="Recherche, responsables, statuts et arborescence mensuelle."
       />
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         <MetricTile
           label="Clients visibles"
           value={filteredClients.length}
@@ -124,16 +123,10 @@ export function ClientsPage() {
           hint="A reprendre"
           accent="red"
         />
-        <MetricTile
-          label="Base visible"
-          value={visibleClients.length}
-          hint="Dossiers actuellement affiches"
-          accent="blue"
-        />
       </div>
 
       <Card className="space-y-5">
-        <div className="grid gap-4 lg:grid-cols-[1.4fr_0.9fr_auto] lg:items-end">
+        <div className="grid gap-4 lg:grid-cols-[1.4fr_0.9fr] lg:items-end">
           <div className="space-y-2">
             <label className="text-sm font-medium text-slate-300">Rechercher un client</label>
             <input
@@ -158,13 +151,6 @@ export function ClientsPage() {
               <option value="pending">En attente</option>
               <option value="follow-up">Suivi prioritaire</option>
             </select>
-          </div>
-
-          <div className="surface-soft rounded-[24px] px-5 py-4">
-            <p className="eyebrow-label">Vue</p>
-            <p className="mt-2 text-sm text-white">
-              {storageMode === "supabase" ? "Base distante active" : "Mode local demo"}
-            </p>
           </div>
         </div>
 

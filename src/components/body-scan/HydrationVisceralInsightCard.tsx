@@ -1,5 +1,6 @@
 import { estimateHydrationKg } from "../../lib/calculations";
 import { PedagogicalMetricCard, PedagogicalPoint, PedagogicalSection } from "../education/PedagogicalSection";
+import { MetricTrendPanel } from "./MetricTrendPanel";
 import type { BiologicalSex } from "../../types/domain";
 
 interface HydrationVisceralInsightCardProps {
@@ -7,18 +8,38 @@ interface HydrationVisceralInsightCardProps {
   hydrationPercent: number;
   visceralFat: number;
   sex?: BiologicalSex;
+  history?: Array<{
+    date: string;
+    weight: number;
+    hydrationPercent: number;
+    visceralFat: number;
+    label?: string;
+  }>;
 }
 
 export function HydrationVisceralInsightCard({
   weight,
   hydrationPercent,
   visceralFat,
-  sex
+  sex,
+  history = []
 }: HydrationVisceralInsightCardProps) {
   const hydrationKg = estimateHydrationKg(weight, hydrationPercent);
   const hydrationReference = getHydrationReference(sex);
   const hydrationStatus = getHydrationStatus(hydrationPercent, hydrationReference);
   const visceralStatus = getVisceralFatStatus(visceralFat);
+  const hydrationTrendPoints = history.map((entry) => ({
+    date: entry.date,
+    label: entry.label,
+    value: Number(entry.hydrationPercent.toFixed(1)),
+    secondary: `${formatRawNumber(estimateHydrationKg(entry.weight, entry.hydrationPercent))} kg estimes`
+  }));
+  const visceralTrendPoints = history.map((entry) => ({
+    date: entry.date,
+    label: entry.label,
+    value: Number(entry.visceralFat.toFixed(1)),
+    secondary: `Score visceral ${formatRawNumber(entry.visceralFat)}`
+  }));
 
   return (
     <PedagogicalSection
@@ -139,6 +160,33 @@ export function HydrationVisceralInsightCard({
               />
             </div>
           </div>
+
+          {hydrationTrendPoints.length ? (
+            <MetricTrendPanel
+              title="Historique balance"
+              subtitle="Toute l'evolution de l'hydratation reste visible, avec les 3 derniers points en repere."
+              unitLabel="Hydratation en %"
+              points={hydrationTrendPoints}
+              gradientId="hydration-balance-line"
+              gradientFrom="#38bdf8"
+              gradientTo="#67e8f9"
+              accentClass="border-sky-300/18 bg-sky-400/[0.08]"
+              valueSuffix="%"
+            />
+          ) : null}
+
+          {visceralTrendPoints.length ? (
+            <MetricTrendPanel
+              title="Historique graisse viscerale"
+              subtitle="Tous les points balance restent visibles pour suivre la vigilance dans le temps."
+              unitLabel="Graisse viscerale"
+              points={visceralTrendPoints}
+              gradientId="visceral-balance-line"
+              gradientFrom="#fb7185"
+              gradientTo="#fdba74"
+              accentClass="border-rose-300/18 bg-rose-400/[0.08]"
+            />
+          ) : null}
         </>
       }
     />
