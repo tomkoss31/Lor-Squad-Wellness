@@ -156,6 +156,30 @@ function getPvModuleSetupError(error: { message?: string } | null | undefined) {
   return "Le module Suivi PV n'est pas encore installe sur cette base Supabase. Lance d'abord le fichier supabase/pv-module-migration.sql dans SQL Editor, puis recharge l'application.";
 }
 
+async function readApiResult<T extends { ok?: boolean; error?: string }>(response: Response) {
+  const raw = await response.text();
+
+  if (!raw) {
+    return { ok: response.ok } as T;
+  }
+
+  try {
+    return JSON.parse(raw) as T;
+  } catch {
+    const cleanedMessage = raw
+      .replace(/<[^>]+>/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+
+    return {
+      ok: false,
+      error:
+        cleanedMessage ||
+        "Le serveur a renvoye une reponse invalide. Recharge l'application puis recommence."
+    } as T;
+  }
+}
+
 function buildSeedPvProducts(payload: {
   clientId: string;
   distributorId: string;
@@ -780,7 +804,7 @@ export async function updateSupabaseAssessment(clientId: string, assessment: Ass
     body: JSON.stringify({ clientId, assessment })
   });
 
-  const result = (await response.json()) as { ok: boolean; error?: string };
+  const result = await readApiResult<{ ok: boolean; error?: string }>(response);
   if (!response.ok || !result.ok) {
     throw new Error(result.error ?? "Impossible de modifier ce bilan.");
   }
