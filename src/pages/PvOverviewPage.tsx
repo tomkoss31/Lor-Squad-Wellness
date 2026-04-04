@@ -261,10 +261,8 @@ export function PvOverviewPage() {
 
           <div className="overflow-x-auto">
             {storageMode === "supabase" && records.length === 0 ? (
-              <div className="mb-4 rounded-[22px] border border-amber-300/18 bg-amber-400/[0.08] px-4 py-4 text-sm leading-6 text-amber-50">
-                Le module Suivi PV n&apos;a pas encore ses tables sur Supabase. Lance
-                <span className="mx-1 font-semibold">supabase/pv-module-migration.sql</span>
-                dans SQL Editor, puis recharge l&apos;application.
+              <div className="mb-4 rounded-[22px] border border-white/10 bg-white/[0.03] px-4 py-4 text-sm leading-6 text-slate-300">
+                Aucun dossier PV actif n&apos;est encore visible avec les filtres en cours.
               </div>
             ) : null}
             <div className="min-w-[1120px] space-y-2">
@@ -330,7 +328,7 @@ export function PvOverviewPage() {
           </div>
         </Card>
 
-        <PvClientPanel record={selectedRecord} />
+        <PvClientPanel key={selectedRecord?.clientId ?? "empty"} record={selectedRecord} />
       </div>
     </div>
   );

@@ -278,11 +278,9 @@ export function PvClientsPage() {
 
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1.05fr)_400px]">
         <div className="space-y-4">
-          {storageMode === "supabase" && records.length === 0 ? (
-            <div className="rounded-[22px] border border-amber-300/18 bg-amber-400/[0.08] px-4 py-4 text-sm leading-6 text-amber-50">
-              Le module Suivi PV n&apos;a pas encore ses tables sur Supabase. Lance
-              <span className="mx-1 font-semibold">supabase/pv-module-migration.sql</span>
-              dans SQL Editor, puis recharge l&apos;application.
+          {storageMode === "supabase" && filteredRecords.length === 0 ? (
+            <div className="rounded-[22px] border border-white/10 bg-white/[0.03] px-4 py-4 text-sm leading-6 text-slate-300">
+              Aucun dossier PV n&apos;est visible avec les filtres en cours. Essaie un autre portefeuille ou un autre programme.
             </div>
           ) : null}
           {visibleGroups.map((group) => (
@@ -355,7 +353,11 @@ export function PvClientsPage() {
           ))}
         </div>
 
-        <PvClientPanel record={selectedRecord} title="Fiche client detaillee" />
+        <PvClientPanel
+          key={selectedRecord?.clientId ?? "empty"}
+          record={selectedRecord}
+          title="Fiche client detaillee"
+        />
       </div>
     </div>
   );

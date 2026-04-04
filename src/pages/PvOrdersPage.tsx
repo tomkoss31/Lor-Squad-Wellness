@@ -23,8 +23,20 @@ export function PvOrdersPage() {
     [pvClientProducts, pvTransactions, sourceClients]
   );
   const initialProduct = pvProductCatalog[0];
+  const clientOptions = useMemo(
+    () =>
+      sourceClients
+        .filter((client) => client.started || client.currentProgram.trim() || client.assessments.length > 0)
+        .sort((left, right) =>
+          `${left.firstName} ${left.lastName}`.localeCompare(
+            `${right.firstName} ${right.lastName}`,
+            "fr"
+          )
+        ),
+    [sourceClients]
+  );
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
-  const [clientId, setClientId] = useState(records[0]?.clientId ?? "");
+  const [clientId, setClientId] = useState(clientOptions[0]?.id ?? records[0]?.clientId ?? "");
   const [productId, setProductId] = useState(initialProduct?.id ?? "formula-1");
   const [quantity, setQuantity] = useState("1");
   const [pv, setPv] = useState(initialProduct ? String(initialProduct.pv) : "0");
@@ -35,17 +47,17 @@ export function PvOrdersPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    if (!clientId && records[0]?.clientId) {
-      setClientId(records[0].clientId);
+    if (!clientId && clientOptions[0]?.id) {
+      setClientId(clientOptions[0].id);
     }
-  }, [clientId, records]);
+  }, [clientId, clientOptions]);
 
   useEffect(() => {
     const queryClientId = searchParams.get("client");
     const queryProductId = searchParams.get("product");
     const queryType = searchParams.get("type");
 
-    if (queryClientId && records.some((record) => record.clientId === queryClientId)) {
+    if (queryClientId && clientOptions.some((client) => client.id === queryClientId)) {
       setClientId(queryClientId);
     }
 
@@ -56,9 +68,10 @@ export function PvOrdersPage() {
     if (queryType === "commande" || queryType === "reprise-sur-place") {
       setType(queryType);
     }
-  }, [records, searchParams]);
+  }, [clientOptions, searchParams]);
 
   const selectedClient = records.find((record) => record.clientId === clientId) ?? null;
+  const selectedClientBase = clientOptions.find((client) => client.id === clientId) ?? null;
   const selectedProduct = pvProductCatalog.find((product) => product.id === productId) ?? null;
 
   if (!currentUser) {
@@ -84,14 +97,14 @@ export function PvOrdersPage() {
   const totalPv = Number((Number(pv || 0) * Number(quantity || 0)).toFixed(2));
   const totalPrice = Number((Number(price || 0) * Number(quantity || 0)).toFixed(2));
   const canSubmit =
-    Boolean(selectedClient) &&
+    Boolean(selectedClientBase) &&
     Boolean(selectedProduct) &&
     Number(quantity) > 0 &&
     Number.isFinite(Number(pv)) &&
     Number.isFinite(Number(price));
 
   async function handleAddTransaction() {
-    if (!selectedClient || !selectedProduct) {
+    if (!selectedClientBase || !selectedProduct) {
       setFeedback({
         tone: "error",
         message: "Choisis d'abord un client et un produit pour enregistrer le mouvement."
@@ -119,10 +132,10 @@ export function PvOrdersPage() {
     const nextTransaction: PvClientTransaction = {
       id: `local-${Date.now()}`,
       date,
-      clientId: selectedClient.clientId,
-      clientName: selectedClient.clientName,
-      responsibleId: selectedClient.responsibleId,
-      responsibleName: selectedClient.responsibleName,
+      clientId: selectedClientBase.id,
+      clientName: `${selectedClientBase.firstName} ${selectedClientBase.lastName}`,
+      responsibleId: selectedClientBase.distributorId,
+      responsibleName: selectedClientBase.distributorName,
       productId: selectedProduct.id,
       productName: selectedProduct.name,
       quantity: parsedQuantity,
@@ -144,7 +157,7 @@ export function PvOrdersPage() {
       setNote("");
       setFeedback({
         tone: "success",
-        message: `${selectedProduct.name} a bien ete ajoute en ${entryLabel} pour ${selectedClient.clientName}.`
+        message: `${selectedProduct.name} a bien ete ajoute en ${entryLabel} pour ${selectedClientBase.firstName} ${selectedClientBase.lastName}.`
       });
     } catch (error) {
       setFeedback({
@@ -197,10 +210,9 @@ export function PvOrdersPage() {
           <div>
             <p className="eyebrow-label">Saisie rapide</p>
             <h2 className="mt-3 text-2xl text-white">{title}</h2>
-            <p className="mt-2 text-sm leading-6 text-slate-400">
-              Choisis le client, le produit et la quantite. Les PV et le prix se prechargent automatiquement et le
-              suivi produit se met a jour ensuite.
-            </p>
+          <p className="mt-2 text-sm leading-6 text-slate-400">
+            Choisis le client, le produit et la quantite. Les PV et le prix se prechargent automatiquement et le suivi produit se met a jour ensuite.
+          </p>
           </div>
 
           <div className="grid gap-4 md:grid-cols-2">
@@ -209,9 +221,9 @@ export function PvOrdersPage() {
             </Field>
             <Field label="Client">
               <select value={clientId} onChange={(event) => setClientId(event.target.value)}>
-                {records.map((record) => (
-                  <option key={record.clientId} value={record.clientId}>
-                    {record.clientName}
+                {clientOptions.map((client) => (
+                  <option key={client.id} value={client.id}>
+                    {client.firstName} {client.lastName}
                   </option>
                 ))}
               </select>
@@ -248,8 +260,16 @@ export function PvOrdersPage() {
           <div className="grid gap-3 md:grid-cols-2">
             <QuickSummaryCard
               label="Client relie"
-              value={selectedClient?.clientName ?? "Aucun client"}
-              hint={selectedClient ? selectedClient.program : "Choisis le bon dossier"}
+              value={
+                selectedClientBase
+                  ? `${selectedClientBase.firstName} ${selectedClientBase.lastName}`
+                  : "Aucun client"
+              }
+              hint={
+                selectedClient?.program ??
+                selectedClientBase?.currentProgram ??
+                "Choisis le bon dossier"
+              }
             />
             <QuickSummaryCard
               label="Produit relie"
@@ -260,11 +280,9 @@ export function PvOrdersPage() {
             <QuickSummaryCard label="Prix total" value={`${totalPrice || 0} EUR`} hint={getPvTypeLabel(type)} />
           </div>
 
-          {storageMode === "supabase" && records.length === 0 ? (
-            <div className="rounded-[22px] border border-amber-300/18 bg-amber-400/[0.08] px-4 py-4 text-sm leading-6 text-amber-50">
-              Le module Suivi PV n&apos;a pas encore de base active sur Supabase. Lance le fichier
-              <span className="mx-1 font-semibold">supabase/pv-module-migration.sql</span>
-              dans SQL Editor, puis recharge l&apos;application.
+          {storageMode === "supabase" && !clientOptions.length ? (
+            <div className="rounded-[22px] border border-white/10 bg-white/[0.03] px-4 py-4 text-sm leading-6 text-slate-300">
+              Aucun client exploitable n&apos;est encore visible dans le module PV. Il faut au moins un dossier client accessible pour enregistrer une commande ou un reassort.
             </div>
           ) : null}
 
@@ -289,19 +307,19 @@ export function PvOrdersPage() {
             >
               {isSubmitting ? "Enregistrement..." : submitLabel}
             </button>
-            {selectedClient ? (
+            {selectedClientBase ? (
               <Link
-                to={`/pv/clients?responsable=${selectedClient.responsibleId}&client=${selectedClient.clientId}`}
+                to={`/pv/clients?responsable=${selectedClientBase.distributorId}&client=${selectedClientBase.id}`}
                 className="inline-flex min-h-[48px] items-center justify-center rounded-[18px] border border-white/10 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/[0.04]"
               >
                 Revenir a sa fiche PV
               </Link>
             ) : null}
-            {selectedClient ? (
+            {selectedClientBase ? (
               <button
                 type="button"
                 onClick={() =>
-                  navigate(`/pv/clients?responsable=${selectedClient.responsibleId}&client=${selectedClient.clientId}`)
+                  navigate(`/pv/clients?responsable=${selectedClientBase.distributorId}&client=${selectedClientBase.id}`)
                 }
                 className="inline-flex min-h-[48px] items-center justify-center rounded-[18px] border border-white/10 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/[0.04]"
               >

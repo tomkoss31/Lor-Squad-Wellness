@@ -201,7 +201,7 @@ function getProduct(productId: string) {
 }
 
 export function buildSeedPvClientProductsForClient(client: Client): PvClientProductRecord[] {
-  if (!client.started || !client.pvProgramId || !client.currentProgram.trim()) {
+  if (!client.started || !client.currentProgram.trim()) {
     return [];
   }
 
@@ -239,7 +239,7 @@ export function buildSeedPvClientProductsForClient(client: Client): PvClientProd
 
 function buildBaseTransactions(clients: Client[]) {
   return clients.flatMap((client) => {
-    if (!client.started || !client.pvProgramId || !client.currentProgram.trim()) {
+    if (!client.started || !client.currentProgram.trim()) {
       return [];
     }
 
@@ -374,7 +374,7 @@ export function buildPvTrackingRecords(
   persistedProducts: PvClientProductRecord[] = []
 ): PvClientTrackingRecord[] {
   const eligibleClients = clients.filter(
-    (client) => client.started && Boolean(client.pvProgramId) && Boolean(client.currentProgram.trim())
+    (client) => client.started && Boolean(client.currentProgram.trim())
   );
   const allTransactions = [...extraTransactions, ...buildBaseTransactions(eligibleClients)];
   const allClientProducts = mergeClientProducts(eligibleClients, persistedProducts);
