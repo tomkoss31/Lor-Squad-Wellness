@@ -121,7 +121,7 @@ export function PvClientPanel({
           <div>
             <p className="eyebrow-label">Produits actifs</p>
             <p className="mt-1 text-xs text-slate-500">
-              Modifier un produit actif, declarer un reassort ou ajouter un nouveau produit au dossier.
+              Modifier un produit actif, declarer un reassort ou ajouter un nouveau produit.
             </p>
           </div>
           <Link
@@ -140,34 +140,40 @@ export function PvClientPanel({
             return (
               <div
                 key={product.id}
-                className="rounded-[22px] border border-white/8 bg-white/[0.03] px-4 py-4"
+                className="rounded-[22px] border border-white/8 bg-white/[0.03] px-4 py-3.5"
               >
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="text-base font-semibold text-white">{product.productName}</p>
-                    <p className="mt-1 text-sm text-slate-400">
+                <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                  <div className="min-w-0 md:max-w-[52%]">
+                    <p className="text-[1.02rem] font-semibold leading-[1.22] text-white">
+                      {product.productName}
+                    </p>
+                    <p className="mt-1 text-sm leading-6 text-slate-400">
                       Quantite de depart {product.quantityStart} - {product.quantiteLabel}
                     </p>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <StatusBadge label={statusMeta.label} tone={statusMeta.tone} />
-                    <Link
-                      to={`/pv/orders?client=${record.clientId}&product=${product.productId}&type=commande`}
-                      className="inline-flex min-h-[38px] items-center justify-center rounded-full bg-sky-400/[0.1] px-4 py-2 text-xs font-semibold text-white transition hover:bg-sky-400/[0.16]"
-                    >
-                      Reassort
-                    </Link>
-                    <button
-                      type="button"
-                      onClick={() => (isEditing ? cancelEditing() : startEditing(product))}
-                      className="inline-flex min-h-[38px] items-center justify-center rounded-full bg-white/[0.04] px-4 py-2 text-xs font-semibold text-white transition hover:bg-white/[0.08]"
-                    >
-                      {isEditing ? "Fermer" : "Modifier"}
-                    </button>
+                  <div className="flex flex-col items-start gap-2 md:items-end">
+                    <div className="flex flex-wrap items-center gap-2 md:justify-end">
+                      <Link
+                        to={`/pv/orders?client=${record.clientId}&product=${product.productId}&type=commande`}
+                        className="inline-flex min-h-[36px] items-center justify-center rounded-full bg-sky-400/[0.1] px-3.5 py-2 text-xs font-semibold text-white transition hover:bg-sky-400/[0.16]"
+                      >
+                        Reassort
+                      </Link>
+                      <button
+                        type="button"
+                        onClick={() => (isEditing ? cancelEditing() : startEditing(product))}
+                        className="inline-flex min-h-[36px] items-center justify-center rounded-full bg-white/[0.04] px-3.5 py-2 text-xs font-semibold text-white transition hover:bg-white/[0.08]"
+                      >
+                        {isEditing ? "Fermer" : "Modifier"}
+                      </button>
+                    </div>
+                    <div className="md:pr-1">
+                      <StatusBadge label={statusMeta.label} tone={statusMeta.tone} />
+                    </div>
                   </div>
                 </div>
 
-                <div className="mt-4 grid gap-3 md:grid-cols-2">
+                <div className="mt-3.5 grid gap-3 md:grid-cols-2">
                   <PanelFact label="Date debut" value={formatDate(product.startDate)} />
                   <PanelFact label="Duree reference" value={`${product.durationReferenceDays} jours`} />
                   <PanelFact label="Reste estime" value={`${product.estimatedRemainingDays} jours`} />
@@ -230,7 +236,7 @@ export function PvClientPanel({
                 ) : null}
 
                 {product.noteMetier ? (
-                  <p className="mt-3 text-xs leading-6 text-slate-500">{product.noteMetier}</p>
+                  <p className="mt-2.5 text-xs leading-6 text-slate-500">{product.noteMetier}</p>
                 ) : null}
               </div>
             );
@@ -244,18 +250,18 @@ export function PvClientPanel({
           {record.transactions.slice(0, 6).map((transaction) => (
             <div
               key={transaction.id}
-              className="grid gap-2 rounded-[18px] bg-slate-950/28 px-4 py-3 md:grid-cols-[110px_1fr_90px_90px_90px]"
+              className="grid gap-2 rounded-[18px] bg-slate-950/28 px-4 py-2.5 md:grid-cols-[100px_1fr_80px_84px_84px]"
             >
-              <div className="text-sm text-slate-300">{formatDate(transaction.date)}</div>
+              <div className="text-[13px] text-slate-300">{formatDate(transaction.date)}</div>
               <div>
-                <p className="text-sm font-semibold text-white">
+                <p className="text-[13px] font-semibold text-white">
                   {getPvTypeLabel(transaction.type)} - {transaction.productName}
                 </p>
-                <p className="mt-1 text-xs text-slate-400">{transaction.note}</p>
+                <p className="mt-0.5 text-[11px] text-slate-400">{transaction.note}</p>
               </div>
-              <div className="text-sm text-slate-300">{transaction.quantity} un.</div>
-              <div className="text-sm font-semibold text-white">{transaction.pv} PV</div>
-              <div className="text-sm text-slate-300">{transaction.price.toFixed(2)} EUR</div>
+              <div className="text-[13px] text-slate-300">{transaction.quantity} un.</div>
+              <div className="text-[13px] font-semibold text-white">{transaction.pv} PV</div>
+              <div className="text-[13px] text-slate-300">{transaction.price.toFixed(2)} EUR</div>
             </div>
           ))}
         </div>
