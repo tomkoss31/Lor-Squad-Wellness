@@ -164,7 +164,6 @@ export function AppLayout() {
             </div>
 
             <div className="space-y-4 rounded-[26px] bg-white/[0.025] p-5">
-              <BrandSignature variant="compact" />
               <div>
                 <p className="eyebrow-label">Usage tablette</p>
                 <p className="mt-3 text-[14px] leading-7 text-slate-300">

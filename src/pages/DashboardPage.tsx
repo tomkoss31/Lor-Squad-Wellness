@@ -109,21 +109,6 @@ export function DashboardPage() {
       ) : null}
 
       <Card className="relative overflow-hidden">
-        <div className="absolute -right-10 -top-8 hidden h-44 w-44 rounded-full bg-[rgba(89,183,255,0.10)] blur-3xl xl:block" />
-        <div className="absolute right-8 top-7 hidden xl:block">
-          <div className="relative flex h-[132px] w-[268px] items-center justify-center overflow-hidden rounded-[28px] border border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.015))]">
-            <img
-              src={lorSquadLogo}
-              alt="Lor'Squad Wellness"
-              className="w-[186px] object-contain opacity-[0.22] saturate-[0.92]"
-            />
-            <img
-              src={blasonLogo}
-              alt=""
-              className="pointer-events-none absolute -right-4 -bottom-6 h-24 w-24 rounded-[28px] object-cover opacity-[0.14]"
-            />
-          </div>
-        </div>
         <div className="grid gap-6 xl:grid-cols-[1.08fr_0.92fr]">
           <div className="space-y-5">
             <div>
@@ -172,6 +157,21 @@ export function DashboardPage() {
               >
                 Nouveau bilan
               </Link>
+            </div>
+
+            <div className="relative hidden min-h-[340px] overflow-hidden rounded-[34px] border border-white/6 bg-[linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.008))] xl:flex xl:items-center xl:justify-center">
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(89,183,255,0.08),transparent_58%)]" />
+              <div className="absolute -left-8 bottom-0 h-28 w-28 rounded-full bg-[rgba(239,197,141,0.08)] blur-3xl" />
+              <img
+                src={lorSquadLogo}
+                alt="Lor'Squad Wellness"
+                className="relative z-10 w-[380px] object-contain opacity-[0.22]"
+              />
+              <img
+                src={blasonLogo}
+                alt=""
+                className="pointer-events-none absolute right-10 top-8 h-24 w-24 rounded-[28px] object-cover opacity-[0.14]"
+              />
             </div>
           </div>
 
