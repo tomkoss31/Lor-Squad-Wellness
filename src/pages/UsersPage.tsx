@@ -8,7 +8,7 @@ import { StatusBadge } from "../components/ui/StatusBadge";
 import { useAppContext } from "../context/AppContext";
 import { canSponsorDistributors, getRoleLabel, isAdmin } from "../lib/auth";
 import { formatDate, formatDateTime } from "../lib/calculations";
-import { getPortfolioIdentity, getPortfolioMetrics } from "../lib/portfolio";
+import { getPortfolioMetrics } from "../lib/portfolio";
 import type { ActivityLog, Client, FollowUp, User } from "../types/domain";
 
 type TeamViewMode = "tree" | "all" | "admins" | "referents" | "distributors";
@@ -673,7 +673,7 @@ function OrganizationUserCard({
       <div className="mt-4 grid grid-cols-3 gap-2 text-sm">
         <MiniMetric label="RDV" value={metrics.scheduledFollowUps.length} />
         <MiniMetric label="Relances" value={metrics.relanceFollowUps.length} />
-        <MiniMetric label="Charge" value={metrics.clients.length} />
+        <MiniMetric label="Clients" value={metrics.clients.length} />
       </div>
     </div>
   );
@@ -715,7 +715,6 @@ function UserAccessCard({
     users,
     user.role === "referent" ? "network" : "personal"
   );
-  const identity = getPortfolioIdentity(user);
   const sponsorOptions = users.filter(
     (item) => item.active && item.id !== user.id && canSponsorDistributors(item)
   );
@@ -786,7 +785,7 @@ function UserAccessCard({
         <div className="flex flex-wrap items-center gap-3">
           <DistributorBadge
             user={user}
-            detail={`${metrics.clients.length} clients - repere ${identity.target}`}
+            detail={`${metrics.clients.length} clients - ${metrics.relanceFollowUps.length} relances`}
           />
           <StatusBadge label={getRoleLabel(user.role)} tone={roleTone} />
           <StatusBadge label={user.active ? "Actif" : "Inactif"} tone={user.active ? "green" : "amber"} />

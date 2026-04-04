@@ -354,6 +354,7 @@ export function ClientDetailPage() {
           <BodyFatInsightCard
             current={{ weight: latestBodyScan.weight, percent: latestBodyScan.bodyFat }}
             objective={client.objective}
+            sex={client.sex}
             previous={
               previousAssessment
                 ? {

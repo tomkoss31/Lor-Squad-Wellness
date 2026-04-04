@@ -10,7 +10,6 @@ import { getAccessibleOwnerIds } from "../lib/auth";
 import {
   getActivePortfolioUsers,
   getGroupedClientsByMonth,
-  getPortfolioIdentity,
   getPortfolioOwnerIds,
   getPortfolioMetrics,
   isRelanceFollowUp
@@ -94,10 +93,6 @@ export function ClientsPage() {
         selectedOwner.role === "referent" ? "network" : "personal"
       )
     : null;
-  const globalTarget = ownerTabs.reduce(
-    (total, user) => total + getPortfolioIdentity(user).target,
-    0
-  );
   const visibleRelanceCount = selectedOwnerMetrics
     ? selectedOwnerMetrics.relanceFollowUps.length
     : visibleFollowUps.filter((followUp) => isRelanceFollowUp(followUp)).length;
@@ -130,9 +125,9 @@ export function ClientsPage() {
           accent="red"
         />
         <MetricTile
-          label="Capacite active"
-          value={globalTarget ? `${Math.round((visibleClients.length / globalTarget) * 100)}%` : "0%"}
-          hint={`${visibleClients.length} / ${globalTarget || 0}`}
+          label="Base visible"
+          value={visibleClients.length}
+          hint="Dossiers actuellement affiches"
           accent="blue"
         />
       </div>
@@ -166,7 +161,7 @@ export function ClientsPage() {
           </div>
 
           <div className="surface-soft rounded-[24px] px-5 py-4">
-            <p className="eyebrow-label">Stockage</p>
+            <p className="eyebrow-label">Vue</p>
             <p className="mt-2 text-sm text-white">
               {storageMode === "supabase" ? "Base distante active" : "Mode local demo"}
             </p>
@@ -196,7 +191,6 @@ export function ClientsPage() {
             </button>
 
             {ownerTabs.map((user) => {
-              const identity = getPortfolioIdentity(user);
               const metrics = getPortfolioMetrics(
                 user,
                 visibleClients,
@@ -232,7 +226,7 @@ export function ClientsPage() {
                           isActive ? "text-sky-100/75" : "text-slate-400"
                         }`}
                       >
-                        {metrics.clients.length} clients - cible {identity.target}
+                        {metrics.clients.length} clients - {metrics.relanceFollowUps.length} relances
                       </span>
                       {user.role === "referent" ? (
                         <span className="mt-1 block text-[11px] text-slate-500">Vue equipe</span>
@@ -262,7 +256,7 @@ export function ClientsPage() {
           </div>
           <div className="grid gap-3 md:grid-cols-3">
             <MiniFact
-              label="Charge"
+              label="Clients"
               value={`${selectedOwnerMetrics?.clients.length ?? 0} dossiers`}
             />
             <MiniFact

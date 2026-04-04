@@ -46,8 +46,6 @@ export function DashboardPage() {
 
     return compareFollowUpsByDueDate(left, right);
   });
-  const activeLoad = getLoadState(actionsToOpen.length);
-
   const statCards = [
     {
       label: "Mes clients",
@@ -72,12 +70,6 @@ export function DashboardPage() {
       value: actionsToOpen.length,
       hint: "Actions à rouvrir",
       accent: "blue" as const
-    },
-    {
-      label: "Ma charge",
-      value: activeLoad.label,
-      hint: activeLoad.hint,
-      accent: activeLoad.accent
     }
   ];
 
@@ -128,7 +120,7 @@ export function DashboardPage() {
               </p>
             </div>
 
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
               {statCards.map((stat) => (
                 <MetricTile key={stat.label} label={stat.label} value={stat.value} hint={stat.hint} accent={stat.accent} />
               ))}
@@ -328,6 +320,8 @@ function getLoadState(actionsCount: number): {
     accent: "green"
   };
 }
+
+void getLoadState;
 
 function compareFollowUpsByDueDate(left: DashboardFollowUp, right: DashboardFollowUp) {
   return getFollowUpTimestamp(left.dueDate) - getFollowUpTimestamp(right.dueDate);

@@ -52,6 +52,8 @@ export function BodyFatInsightCard({
     ...entry,
     kg: estimateBodyFatKg(entry.weight, entry.percent)
   }));
+  const shouldShowHistoryPanel =
+    recentHistory.length >= 2 || previous != null || initial != null;
 
   return (
     <PedagogicalSection
@@ -121,49 +123,51 @@ export function BodyFatInsightCard({
               </div>
             </div>
           </div>
-          <div className="md:col-span-2 xl:col-span-3 rounded-[24px] bg-white/[0.04] p-5">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <p className="text-sm font-semibold text-white">3 derniers releves</p>
-                <p className="mt-1 text-xs text-slate-400">
-                  Une lecture plus concrete a montrer a la cliente avant le detail.
-                </p>
+          {shouldShowHistoryPanel ? (
+            <div className="md:col-span-2 xl:col-span-3 rounded-[24px] bg-white/[0.04] p-5">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-sm font-semibold text-white">3 derniers releves</p>
+                  <p className="mt-1 text-xs text-slate-400">
+                    Une lecture plus concrete a montrer a la cliente avant le detail.
+                  </p>
+                </div>
+                <p className="text-[11px] font-medium text-slate-500">Progression</p>
               </div>
-              <p className="text-[11px] font-medium text-slate-500">Progression</p>
-            </div>
 
-            {recentHistory.length >= 2 ? <BodyFatProgressChart points={recentHistory} /> : null}
+              {recentHistory.length >= 2 ? <BodyFatProgressChart points={recentHistory} /> : null}
 
-            {recentHistory.length ? (
-              <div className="mt-4 grid gap-3 md:grid-cols-3">
-                {recentHistory.map((entry, index) => (
-                  <HistoryReadingCard
-                    key={`${entry.date}-${entry.percent}-${index}`}
-                    label={entry.label ?? formatDate(entry.date)}
-                    dateLabel={entry.label ? formatDate(entry.date) : undefined}
-                    percent={entry.percent}
-                    kg={entry.kg}
-                    emphasized={index === recentHistory.length - 1}
+              {recentHistory.length ? (
+                <div className="mt-4 grid gap-3 md:grid-cols-3">
+                  {recentHistory.map((entry, index) => (
+                    <HistoryReadingCard
+                      key={`${entry.date}-${entry.percent}-${index}`}
+                      label={entry.label ?? formatDate(entry.date)}
+                      dateLabel={entry.label ? formatDate(entry.date) : undefined}
+                      percent={entry.percent}
+                      kg={entry.kg}
+                      emphasized={index === recentHistory.length - 1}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="mt-4 grid gap-3 xl:grid-cols-2">
+                  <DeltaPanel
+                    title="Vs bilan precedent"
+                    percentDelta={previousPercentDelta}
+                    kgDelta={previousKgDelta}
+                    enabled={previous != null}
                   />
-                ))}
-              </div>
-            ) : (
-              <div className="mt-4 grid gap-3 xl:grid-cols-2">
-                <DeltaPanel
-                  title="Vs bilan precedent"
-                  percentDelta={previousPercentDelta}
-                  kgDelta={previousKgDelta}
-                  enabled={previous != null}
-                />
-                <DeltaPanel
-                  title="Vs premier bilan"
-                  percentDelta={initialPercentDelta}
-                  kgDelta={initialKgDelta}
-                  enabled={initial != null}
-                />
-              </div>
-            )}
-          </div>
+                  <DeltaPanel
+                    title="Vs premier bilan"
+                    percentDelta={initialPercentDelta}
+                    kgDelta={initialKgDelta}
+                    enabled={initial != null}
+                  />
+                </div>
+              )}
+            </div>
+          ) : null}
         </>
       }
     />

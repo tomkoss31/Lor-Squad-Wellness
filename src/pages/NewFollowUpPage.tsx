@@ -485,6 +485,7 @@ export function NewFollowUpPage() {
             <BodyFatInsightCard
               current={{ weight: bodyScan.weight, percent: bodyScan.bodyFat }}
               objective={targetClient.objective}
+              sex={targetClient.sex}
               previous={{ weight: latest.bodyScan.weight, percent: latest.bodyScan.bodyFat }}
               initial={{ weight: first.bodyScan.weight, percent: first.bodyScan.bodyFat }}
               history={[
