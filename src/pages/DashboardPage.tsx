@@ -5,7 +5,7 @@ import { MetricTile } from "../components/ui/MetricTile";
 import { PageHeading } from "../components/ui/PageHeading";
 import { StatusBadge } from "../components/ui/StatusBadge";
 import { useAppContext } from "../context/AppContext";
-import { blasonLogo } from "../data/visualContent";
+import { lorSquadLogo } from "../data/visualContent";
 import { formatDateTime } from "../lib/calculations";
 import { getPortfolioMetrics } from "../lib/portfolio";
 
@@ -159,11 +159,11 @@ export function DashboardPage() {
               </Link>
             </div>
 
-            <div className="relative hidden min-h-[420px] overflow-hidden xl:flex xl:items-center xl:justify-center">
+            <div className="relative hidden min-h-[500px] overflow-hidden xl:flex xl:items-center xl:justify-center">
               <img
-                src={blasonLogo}
+                src={lorSquadLogo}
                 alt="Lor'Squad Wellness"
-                className="w-[552px] max-w-[92%] translate-y-[30px] object-contain"
+                className="mx-auto w-[720px] max-w-[96%] translate-y-[72px] object-contain"
               />
             </div>
           </div>
