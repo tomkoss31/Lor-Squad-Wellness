@@ -5,7 +5,7 @@ import { MetricTile } from "../components/ui/MetricTile";
 import { PageHeading } from "../components/ui/PageHeading";
 import { StatusBadge } from "../components/ui/StatusBadge";
 import { useAppContext } from "../context/AppContext";
-import { blasonLogo, lorSquadLogo } from "../data/visualContent";
+import { lorSquadLogo } from "../data/visualContent";
 import { formatDateTime } from "../lib/calculations";
 import { getPortfolioMetrics } from "../lib/portfolio";
 
@@ -159,18 +159,11 @@ export function DashboardPage() {
               </Link>
             </div>
 
-            <div className="relative hidden min-h-[340px] overflow-hidden rounded-[34px] border border-white/6 bg-[linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.008))] xl:flex xl:items-center xl:justify-center">
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(89,183,255,0.08),transparent_58%)]" />
-              <div className="absolute -left-8 bottom-0 h-28 w-28 rounded-full bg-[rgba(239,197,141,0.08)] blur-3xl" />
+            <div className="relative hidden min-h-[340px] overflow-hidden xl:flex xl:items-center xl:justify-center">
               <img
                 src={lorSquadLogo}
                 alt="Lor'Squad Wellness"
-                className="relative z-10 w-[380px] object-contain opacity-[0.22]"
-              />
-              <img
-                src={blasonLogo}
-                alt=""
-                className="pointer-events-none absolute right-10 top-8 h-24 w-24 rounded-[28px] object-cover opacity-[0.14]"
+                className="w-[460px] object-contain"
               />
             </div>
           </div>
