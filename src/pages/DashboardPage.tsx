@@ -5,6 +5,7 @@ import { MetricTile } from "../components/ui/MetricTile";
 import { PageHeading } from "../components/ui/PageHeading";
 import { StatusBadge } from "../components/ui/StatusBadge";
 import { useAppContext } from "../context/AppContext";
+import { blasonLogo, lorSquadLogo } from "../data/visualContent";
 import { formatDateTime } from "../lib/calculations";
 import { getPortfolioMetrics } from "../lib/portfolio";
 
@@ -107,7 +108,22 @@ export function DashboardPage() {
         </Card>
       ) : null}
 
-      <Card className="overflow-hidden">
+      <Card className="relative overflow-hidden">
+        <div className="absolute -right-10 -top-8 hidden h-44 w-44 rounded-full bg-[rgba(89,183,255,0.10)] blur-3xl xl:block" />
+        <div className="absolute right-8 top-7 hidden xl:block">
+          <div className="relative flex h-[132px] w-[268px] items-center justify-center overflow-hidden rounded-[28px] border border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.015))]">
+            <img
+              src={lorSquadLogo}
+              alt="Lor'Squad Wellness"
+              className="w-[186px] object-contain opacity-[0.22] saturate-[0.92]"
+            />
+            <img
+              src={blasonLogo}
+              alt=""
+              className="pointer-events-none absolute -right-4 -bottom-6 h-24 w-24 rounded-[28px] object-cover opacity-[0.14]"
+            />
+          </div>
+        </div>
         <div className="grid gap-6 xl:grid-cols-[1.08fr_0.92fr]">
           <div className="space-y-5">
             <div>
@@ -120,7 +136,18 @@ export function DashboardPage() {
               </p>
             </div>
 
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <div className="mt-4 flex flex-wrap gap-2">
+              {["Bilans", "Rendez-vous", "Relances"].map((item) => (
+                <span
+                  key={item}
+                  className="rounded-full border border-white/8 bg-white/[0.03] px-3 py-1.5 text-[12px] font-medium text-slate-200"
+                >
+                  {item}
+                </span>
+              ))}
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4 xl:pr-28">
               {statCards.map((stat) => (
                 <MetricTile key={stat.label} label={stat.label} value={stat.value} hint={stat.hint} accent={stat.accent} />
               ))}
@@ -148,7 +175,7 @@ export function DashboardPage() {
             </div>
           </div>
 
-          <div className="grid gap-4">
+          <div className="grid gap-4 xl:pt-24">
             <PriorityPanel
               title="Mes rendez-vous"
               items={scheduledFollowUps.slice(0, 5)}
@@ -185,7 +212,7 @@ export function DashboardPage() {
                 <Link
                   key={followUp.id}
                   to={`/clients/${followUp.clientId}`}
-                  className="rounded-[24px] bg-white/[0.03] p-4 transition duration-200 hover:bg-white/[0.05]"
+                  className="rounded-[24px] border border-white/6 bg-white/[0.03] p-4 transition duration-200 hover:border-sky-300/14 hover:bg-white/[0.05]"
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
@@ -286,7 +313,7 @@ function PriorityPanel({
 
 function GuideTile({ title, text }: { title: string; text: string }) {
   return (
-    <div className="rounded-[24px] bg-white/[0.03] p-4">
+    <div className="rounded-[24px] border border-white/6 bg-white/[0.03] p-4">
       <p className="text-base font-semibold text-white">{title}</p>
       <p className="mt-2 text-sm leading-6 text-slate-400">{text}</p>
     </div>

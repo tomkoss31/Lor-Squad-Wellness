@@ -2,7 +2,7 @@ import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { BrandSignature } from "../branding/BrandSignature";
 import { useAppContext } from "../../context/AppContext";
 import { useInstallPrompt } from "../../context/InstallPromptContext";
-import { blasonLogo, laBaseLogo } from "../../data/visualContent";
+import { blasonLogo, laBaseLogo, lorSquadLogo } from "../../data/visualContent";
 import { Button } from "../ui/Button";
 import { StatusBadge } from "../ui/StatusBadge";
 import { getAccessSummary, getRoleLabel } from "../../lib/auth";
@@ -135,6 +135,11 @@ export function AppLayout() {
                       }`}
                     >
                       <span
+                        className={`h-9 w-1 rounded-full transition ${
+                          isActive ? "bg-sky-300/80 shadow-[0_0_14px_rgba(125,211,252,0.24)]" : "bg-transparent"
+                        }`}
+                      />
+                      <span
                         className={`h-1.5 w-1.5 rounded-full ${
                           isActive ? "bg-sky-200" : "bg-white/15"
                         }`}
@@ -264,6 +269,14 @@ export function AppLayout() {
 
           <header className="glass-panel relative overflow-hidden rounded-[30px] px-5 py-6 md:px-7 md:py-7">
             <div className="absolute right-10 top-0 h-24 w-24 rounded-full bg-[rgba(239,197,141,0.08)] blur-3xl" />
+            <div className="absolute -right-6 top-4 hidden h-32 w-32 rounded-full bg-[rgba(89,183,255,0.08)] blur-3xl lg:block" />
+            <div className="pointer-events-none absolute right-6 top-5 hidden rounded-[26px] border border-white/6 bg-white/[0.02] px-5 py-4 lg:block">
+              <img
+                src={lorSquadLogo}
+                alt=""
+                className="w-[132px] object-contain opacity-[0.16]"
+              />
+            </div>
             <div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
               <div className="max-w-3xl">
                 <p className="eyebrow-label">Lor&apos;Squad Wellness</p>
