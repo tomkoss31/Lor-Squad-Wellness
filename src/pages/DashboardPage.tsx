@@ -5,7 +5,7 @@ import { MetricTile } from "../components/ui/MetricTile";
 import { PageHeading } from "../components/ui/PageHeading";
 import { StatusBadge } from "../components/ui/StatusBadge";
 import { useAppContext } from "../context/AppContext";
-import { lorSquadLogo } from "../data/visualContent";
+import { blasonLogo } from "../data/visualContent";
 import { formatDateTime } from "../lib/calculations";
 import { getPortfolioMetrics } from "../lib/portfolio";
 
@@ -159,11 +159,11 @@ export function DashboardPage() {
               </Link>
             </div>
 
-            <div className="relative hidden min-h-[340px] overflow-hidden xl:flex xl:items-center xl:justify-center">
+            <div className="relative hidden min-h-[420px] overflow-hidden xl:flex xl:items-center xl:justify-center">
               <img
-                src={lorSquadLogo}
+                src={blasonLogo}
                 alt="Lor'Squad Wellness"
-                className="w-[460px] object-contain"
+                className="w-[552px] max-w-[92%] translate-y-[30px] object-contain"
               />
             </div>
           </div>
@@ -205,7 +205,7 @@ export function DashboardPage() {
                 <Link
                   key={followUp.id}
                   to={`/clients/${followUp.clientId}`}
-                  className="rounded-[24px] border border-white/6 bg-white/[0.03] p-4 transition duration-200 hover:border-sky-300/14 hover:bg-white/[0.05]"
+                  className="block w-full rounded-[24px] border border-white/6 bg-white/[0.03] p-4 transition duration-200 hover:border-sky-300/14 hover:bg-white/[0.05]"
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
