@@ -55,6 +55,7 @@ import {
   logoutFromSupabase,
   restoreSupabaseSession,
   addSupabasePvTransaction,
+  repairSupabaseUserAccess,
   reassignSupabaseClientOwner,
   upsertSupabasePvClientProduct,
   updateSupabaseAssessment,
@@ -103,6 +104,14 @@ interface AppContextValue {
     sponsorId?: string;
     active: boolean;
     mockPassword: string;
+  }) => Promise<{ ok: boolean; error?: string }>;
+  repairUserAccess: (payload: {
+    userId?: string;
+    email: string;
+    name?: string;
+    role: User["role"];
+    sponsorId?: string;
+    active: boolean;
   }) => Promise<{ ok: boolean; error?: string }>;
   updateUserAccess: (
     userId: string,
@@ -549,6 +558,49 @@ export function AppProvider({ children }: PropsWithChildren) {
       detail: `Role passe sur ${payload.role === "referent" ? "Referent" : payload.role === "admin" ? "Admin" : "Distributeur"}.`
     });
     return { ok: true };
+  }
+
+  async function repairUserAccess(payload: {
+    userId?: string;
+    email: string;
+    name?: string;
+    role: User["role"];
+    sponsorId?: string;
+    active: boolean;
+  }) {
+    if (storageMode !== "supabase") {
+      return {
+        ok: false,
+        error: "La reparation d'un compte Auth est disponible uniquement avec Supabase."
+      };
+    }
+
+    try {
+      const result = await repairSupabaseUserAccess(payload);
+      if (!result.ok) {
+        return result;
+      }
+
+      await refreshRemoteData(currentUser);
+      await recordActivity({
+        action: "user-updated",
+        targetUserId: payload.userId,
+        targetUserName: payload.name?.trim() || payload.email.trim().toLowerCase(),
+        ownerUserId: payload.role === "distributor" ? payload.sponsorId : payload.userId,
+        summary: `Profil applicatif recree pour ${payload.name?.trim() || payload.email.trim().toLowerCase()}.`,
+        detail: `${payload.role === "admin" ? "Admin" : payload.role === "referent" ? "Referent" : "Distributeur"} repare depuis la page equipe.`
+      });
+      return { ok: true };
+    } catch (error) {
+      console.error("Reparation d'acces Supabase impossible.", error);
+      return {
+        ok: false,
+        error:
+          error instanceof Error
+            ? error.message
+            : "Impossible de reparer ce profil applicatif."
+      };
+    }
   }
 
   async function updateUserStatus(userId: string, active: boolean) {
@@ -1219,6 +1271,7 @@ export function AppProvider({ children }: PropsWithChildren) {
       logout,
       forceResetSession,
       createUserAccess,
+      repairUserAccess,
       updateUserAccess,
       updateUserPassword,
       updateUserStatus,

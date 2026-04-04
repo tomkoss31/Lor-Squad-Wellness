@@ -1172,6 +1172,39 @@ export async function updateSupabaseUserAccess(
   }
 }
 
+export async function repairSupabaseUserAccess(payload: {
+  userId?: string;
+  email: string;
+  name?: string;
+  role: User["role"];
+  sponsorId?: string;
+  active: boolean;
+}) {
+  const client = await requireSupabase();
+  const {
+    data: { session }
+  } = await client.auth.getSession();
+
+  if (!session?.access_token) {
+    return {
+      ok: false as const,
+      error: "La session admin est introuvable. Reconnecte-toi puis recommence."
+    };
+  }
+
+  const response = await fetch("/api/admin-repair-user", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${session.access_token}`
+    },
+    body: JSON.stringify(payload)
+  });
+
+  const result = (await response.json()) as { ok: boolean; error?: string };
+  return result;
+}
+
 export async function updateSupabaseUserStatus(userId: string, active: boolean) {
   const client = await requireSupabase();
   const { error } = await client.from("users").update({ active }).eq("id", userId);

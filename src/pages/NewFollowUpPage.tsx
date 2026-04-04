@@ -402,6 +402,30 @@ export function NewFollowUpPage() {
                 <StatusBadge label="Saisie rapide" tone="green" />
               </div>
 
+              <div className="mt-5 grid gap-3 md:grid-cols-3">
+                <div className="rounded-[20px] border border-white/10 bg-slate-950/26 px-4 py-4">
+                  <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-emerald-200/70">
+                    Age
+                  </p>
+                  <p className="mt-3 text-2xl font-semibold text-white">{targetClient.age} ans</p>
+                  <p className="mt-2 text-sm text-slate-400">Visible au moment de la balance</p>
+                </div>
+                <div className="rounded-[20px] border border-white/10 bg-slate-950/26 px-4 py-4">
+                  <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-emerald-200/70">
+                    Taille
+                  </p>
+                  <p className="mt-3 text-2xl font-semibold text-white">{targetClient.height} cm</p>
+                  <p className="mt-2 text-sm text-slate-400">Sans revenir sur la fiche client</p>
+                </div>
+                <div className="rounded-[20px] border border-white/10 bg-slate-950/26 px-4 py-4">
+                  <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-emerald-200/70">
+                    Dernier point
+                  </p>
+                  <p className="mt-3 text-2xl font-semibold text-white">{formatDate(latest.date)}</p>
+                  <p className="mt-2 text-sm text-slate-400">Repere rapide avant la saisie</p>
+                </div>
+              </div>
+
               <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
                 <MetricField
                   label="Poids (kg)"
