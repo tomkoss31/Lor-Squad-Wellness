@@ -525,23 +525,68 @@ export function buildAssessmentRecommendationPlan(
 ): AssessmentRecommendationPlan {
   const detectedNeeds = detectNeeds(source).slice(0, 4);
   const usedProductIds = new Set<string>();
-  let visibleProductCount = 0;
+  const visibleProductLimit = 6;
+  const allocatedProducts = new Map<
+    AssessmentNeedId,
+    Array<
+      SuggestedProduct & {
+        reasonLabel: string;
+      }
+    >
+  >();
+
+  detectedNeeds.forEach((need) => {
+    allocatedProducts.set(need.id, []);
+  });
+
+  // First pass: give each visible need one product when possible.
+  detectedNeeds.forEach((need) => {
+    if (usedProductIds.size >= visibleProductLimit) {
+      return;
+    }
+
+    const firstProduct = PRODUCT_CATALOG.find(
+      (product) => product.tags.includes(need.id) && !usedProductIds.has(product.id)
+    );
+
+    if (!firstProduct) {
+      return;
+    }
+
+    usedProductIds.add(firstProduct.id);
+    allocatedProducts.get(need.id)?.push({
+      ...firstProduct,
+      reasonLabel: getReasonForProduct(need.id, firstProduct.name)
+    });
+  });
+
+  // Second pass: fill the optional second product while respecting the global cap.
+  detectedNeeds.forEach((need) => {
+    if (usedProductIds.size >= visibleProductLimit) {
+      return;
+    }
+
+    const currentProducts = allocatedProducts.get(need.id) ?? [];
+    if (currentProducts.length >= 2) {
+      return;
+    }
+
+    const extraProducts = PRODUCT_CATALOG.filter(
+      (product) => product.tags.includes(need.id) && !usedProductIds.has(product.id)
+    ).slice(0, Math.min(2 - currentProducts.length, visibleProductLimit - usedProductIds.size));
+
+    extraProducts.forEach((product) => {
+      usedProductIds.add(product.id);
+      currentProducts.push({
+        ...product,
+        reasonLabel: getReasonForProduct(need.id, product.name)
+      });
+    });
+  });
 
   const needs = detectedNeeds.map((need) => {
     const definition = NEED_DEFINITIONS[need.id];
-    const products = PRODUCT_CATALOG.filter((product) => product.tags.includes(need.id))
-      .filter((product) => !usedProductIds.has(product.id))
-      .slice(0, 2)
-      .slice(0, Math.max(0, 6 - visibleProductCount))
-      .map((product) => {
-        usedProductIds.add(product.id);
-        visibleProductCount += 1;
-
-        return {
-          ...product,
-          reasonLabel: getReasonForProduct(need.id, product.name)
-        };
-      });
+    const products = allocatedProducts.get(need.id) ?? [];
 
     return {
       id: need.id,

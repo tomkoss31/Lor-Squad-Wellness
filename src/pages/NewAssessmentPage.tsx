@@ -602,6 +602,7 @@ export function NewAssessmentPage() {
       (selectedRecommendationProducts.length ? selectedProductsTotalPrice : 0)
     ).toFixed(2)
   );
+  const shouldHideStepSidebar = currentStep === 10 || currentStep === 13;
 
   useEffect(() => {
     if (currentStep !== 10) {
@@ -1036,6 +1037,118 @@ export function NewAssessmentPage() {
     }
   }
 
+  const mobileHelperPanel = !shouldHideStepSidebar ? (
+    <Card className="space-y-4 xl:hidden">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="font-display text-xl text-white">{panelTitle}</p>
+          <p className="mt-2 text-sm leading-6 text-slate-400">{panelIntro}</p>
+        </div>
+        <StatusBadge label={`Étape ${currentStep + 1}`} tone="blue" />
+      </div>
+      <div className="grid gap-3">
+        {rightPanelPoints.slice(0, 2).map((point, index) => (
+          <FocusPanelItem key={point} text={point} highlighted={index === 0} />
+        ))}
+      </div>
+      <div className="rounded-[18px] bg-slate-950/24 px-4 py-3 text-sm leading-6 text-slate-200">
+        {prompts[0]}
+      </div>
+      {currentStep === 0 ? (
+        <div className="space-y-2 rounded-[18px] bg-white/[0.03] px-4 py-4">
+          <label className="text-sm font-medium text-slate-300">
+            Invite par / recommande par
+          </label>
+          <input
+            value={form.referredByName}
+            onChange={(event) => update("referredByName", event.target.value)}
+            placeholder="Exemple : Sylvie"
+          />
+        </div>
+      ) : null}
+    </Card>
+  ) : null;
+
+  const desktopHelperPanel = !shouldHideStepSidebar ? (
+    <div className="hidden space-y-4 xl:sticky xl:top-5 xl:block xl:self-start">
+      <Card className="space-y-4">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <p className="font-display text-2xl text-white">{panelTitle}</p>
+            <p className="mt-2 text-sm leading-6 text-slate-400">{panelIntro}</p>
+          </div>
+          <StatusBadge label="Aide terrain" tone="blue" />
+        </div>
+        <div className="grid gap-3">
+          {rightPanelPoints.map((point, index) => (
+            <FocusPanelItem key={point} text={point} highlighted={index === 0} />
+          ))}
+        </div>
+        {currentStep === 0 ? (
+          <div className="space-y-2 rounded-[20px] bg-white/[0.03] px-4 py-4">
+            <label className="text-sm font-medium text-slate-300">
+              Invite par / recommande par
+            </label>
+            <input
+              value={form.referredByName}
+              onChange={(event) => update("referredByName", event.target.value)}
+              placeholder="Exemple : Sylvie"
+            />
+            <p className="text-xs leading-6 text-slate-400">
+              Note ici la personne qui a amene ce client pour garder le lien de recommandation sans
+              surcharger l&apos;ecran principal.
+            </p>
+          </div>
+        ) : null}
+      </Card>
+
+      {currentStep !== 7 ? (
+        <Card className="space-y-4">
+          <p className="eyebrow-label">A dire simplement</p>
+          <div className="grid gap-2">
+            {prompts.slice(0, 2).map((prompt) => (
+              <div key={prompt} className="rounded-[20px] bg-slate-950/24 px-4 py-3 text-sm text-slate-200">
+                {prompt}
+              </div>
+            ))}
+          </div>
+        </Card>
+      ) : null}
+
+      {currentStep !== 7 ? (
+        <Card className="space-y-4">
+          <p className="eyebrow-label">Lecture express</p>
+          {currentStep === 5 ? (
+            <>
+              {bodyScanExpressItems.map((item) => (
+                <SummaryMini key={item.label} label={item.label} value={item.value} />
+              ))}
+            </>
+          ) : currentStep === 6 ? (
+            <>
+              <SummaryMini label="Poids cible" value={weightTargetLabel} />
+              <SummaryMini label="Hydratation cible" value={hydrationTargetLabel} />
+              <SummaryMini label="Objectif eau" value={`${formatRawNumber(waterNeed)} L`} />
+              <SummaryMini label="Protéines" value={proteinRange} />
+              <SummaryMini label="Délai" value={timelineLabel} />
+            </>
+          ) : (
+            <>
+              <SummaryMini label="Objectif" value={form.objectiveFocus} />
+              <SummaryMini label="Programme" value={selectedProgram?.title ?? "A choisir"} />
+              <SummaryMini label="Hydratation" value={`${waterNeed} L`} />
+              {form.objective === "weight-loss" ? (
+                <SummaryMini label="Rythme" value={weightLossPace.label} />
+              ) : (
+                <SummaryMini label="Motivation" value={`${form.motivation}/10`} />
+              )}
+            </>
+          )}
+        </Card>
+      ) : null}
+    </div>
+  ) : null;
+
   return (
     <div className="space-y-6">
       <PageHeading
@@ -1047,37 +1160,9 @@ export function NewAssessmentPage() {
         <StepRail currentStep={currentStep} steps={steps} />
       </div>
 
-      <Card className="space-y-4 xl:hidden">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <p className="font-display text-xl text-white">{panelTitle}</p>
-            <p className="mt-2 text-sm leading-6 text-slate-400">{panelIntro}</p>
-          </div>
-          <StatusBadge label={`Étape ${currentStep + 1}`} tone="blue" />
-        </div>
-        <div className="grid gap-3">
-          {rightPanelPoints.slice(0, 2).map((point, index) => (
-            <FocusPanelItem key={point} text={point} highlighted={index === 0} />
-          ))}
-        </div>
-        <div className="rounded-[18px] bg-slate-950/24 px-4 py-3 text-sm leading-6 text-slate-200">
-          {prompts[0]}
-        </div>
-        {currentStep === 0 ? (
-          <div className="space-y-2 rounded-[18px] bg-white/[0.03] px-4 py-4">
-            <label className="text-sm font-medium text-slate-300">
-              Invite par / recommande par
-            </label>
-            <input
-              value={form.referredByName}
-              onChange={(event) => update("referredByName", event.target.value)}
-              placeholder="Exemple : Sylvie"
-            />
-          </div>
-        ) : null}
-      </Card>
+      {mobileHelperPanel}
 
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.2fr)_340px]">
+      <div className={`grid gap-4 ${shouldHideStepSidebar ? "" : "xl:grid-cols-[minmax(0,1.2fr)_340px]"}`}>
         <Card className="space-y-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
@@ -1546,74 +1631,28 @@ export function NewAssessmentPage() {
                         productReasonLabel={topPriorityProduct?.reasonLabel}
                       />
                     ) : null}
-                    <div className="grid gap-4 xl:grid-cols-[0.92fr_1.08fr]">
-                    <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-1">
-                      {recommendationPlan.needs.map((need) => (
-                        <DetectedNeedCard
-                          key={need.id}
-                          label={need.label}
-                          summary={need.summary}
-                          reasonLabel={need.reasonLabel}
-                        />
-                      ))}
-                    </div>
-
-                    <div className="space-y-4">
-                      <div className="grid gap-3 md:grid-cols-3">
-                        <SummaryHighlightCard
-                          label="Produits retenus"
-                          value={`${selectedRecommendationProducts.length}`}
-                        />
-                        <SummaryHighlightCard
-                          label="Prix total estime"
-                          value={selectedRecommendationProducts.length ? formatPriceEuro(selectedProductsTotalPrice) : "A definir"}
-                        />
-                        <SummaryHighlightCard
-                          label="PV total estime"
-                          value={selectedRecommendationProducts.length ? formatPv(selectedProductsTotalPv) : "A definir"}
-                        />
+                    <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_340px]">
+                      <div className="space-y-4">
+                        {recommendationPlan.needs.map((need) => (
+                          <NeedProductGroup
+                            key={`products-${need.id}`}
+                            title={need.label}
+                            summary={need.summary}
+                            reasonLabel={need.reasonLabel}
+                            products={need.products}
+                            selectedProductIds={effectiveSelectedProductIds}
+                            onToggleProduct={toggleSelectedProduct}
+                          />
+                        ))}
                       </div>
-
-                      <div className="rounded-[24px] bg-white/[0.03] p-4">
-                        <div className="flex flex-wrap items-center justify-between gap-3">
-                          <div>
-                            <p className="eyebrow-label">Produits suggeres</p>
-                            <p className="mt-2 text-lg text-white">
-                              Une proposition simple, basee sur les besoins detectes. Tu peux retenir ce qui sera vraiment mis en place.
-                            </p>
-                          </div>
-                          <StatusBadge label="V1 accompagnee" tone="blue" />
-                        </div>
-                        <div className="mt-4 grid gap-3">
-                          {recommendationPlan.needs.map((need) => (
-                            <NeedProductGroup
-                              key={`products-${need.id}`}
-                              title={need.label}
-                              products={need.products}
-                              selectedProductIds={effectiveSelectedProductIds}
-                              onToggleProduct={toggleSelectedProduct}
-                            />
-                          ))}
-                        </div>
-                      </div>
-
-                      <div className="rounded-[24px] bg-emerald-400/10 p-4">
-                        <p className="eyebrow-label text-emerald-100/80">Programme conseille</p>
-                        <div className="mt-3 flex flex-wrap items-start justify-between gap-3">
-                          <div>
-                            <p className="text-xl text-white">
-                              {recommendedProgram?.title ?? "Base a confirmer"}
-                            </p>
-                            <p className="mt-2 text-sm leading-6 text-slate-200">
-                              {recommendationPlan.recommendedProgramReason}
-                            </p>
-                          </div>
-                          <span className="rounded-full bg-emerald-400/12 px-4 py-2 text-sm font-semibold text-emerald-100">
-                            {recommendedProgram?.price ?? "A ajuster"}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
+                      <ClientTotalCalculatorCard
+                        selectedProductCount={selectedRecommendationProducts.length}
+                        selectedProductsTotalPrice={selectedProductsTotalPrice}
+                        selectedProductsTotalPv={selectedProductsTotalPv}
+                        displayedProgramPrice={recommendedProgram?.price ?? displayedProgramPrice}
+                        displayedProgramPriceValue={displayedProgramPriceValue}
+                        estimatedClientTotal={estimatedClientTotal}
+                      />
                     </div>
                   </div>
                 ) : (
@@ -1623,6 +1662,23 @@ export function NewAssessmentPage() {
                   </div>
                 )}
               </Card>
+
+              <div className="rounded-[24px] bg-emerald-400/10 p-4">
+                <p className="eyebrow-label text-emerald-100/80">Programme conseille</p>
+                <div className="mt-3 flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <p className="text-xl text-white">
+                      {recommendedProgram?.title ?? "Base a confirmer"}
+                    </p>
+                    <p className="mt-2 text-sm leading-6 text-slate-200">
+                      {recommendationPlan.recommendedProgramReason}
+                    </p>
+                  </div>
+                  <span className="rounded-full bg-emerald-400/12 px-4 py-2 text-sm font-semibold text-emerald-100">
+                    {recommendedProgram?.price ?? "A ajuster"}
+                  </span>
+                </div>
+              </div>
 
               <div className="grid gap-4 lg:grid-cols-2">
                 {mainPrograms.map((program) => (
@@ -1697,7 +1753,7 @@ export function NewAssessmentPage() {
                   />
                 </div>
 
-                  <div className="grid gap-4 xl:grid-cols-[1.04fr_0.96fr]">
+                  <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_340px]">
                     <div className="space-y-4">
                     <div className="rounded-[28px] bg-slate-950/24 p-5">
                       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -1724,48 +1780,17 @@ export function NewAssessmentPage() {
                               productReasonLabel={topPriorityProduct?.reasonLabel}
                             />
                           ) : null}
-                          <div className="grid gap-3 md:grid-cols-2">
-                            {recommendationPlan.needs.map((need) => (
-                              <DetectedNeedCard
-                                key={`summary-${need.id}`}
-                                label={need.label}
-                                summary={need.summary}
-                                reasonLabel={need.reasonLabel}
-                              />
-                            ))}
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="mt-5 rounded-[22px] bg-white/[0.03] px-4 py-4 text-sm leading-6 text-slate-200">
-                          Aucune priorite forte n'apparait pour l'instant. On peut rester sur une base
-                          simple et personnaliser ensuite.
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="rounded-[28px] bg-slate-950/24 p-5">
-                      <div className="flex flex-wrap items-start justify-between gap-3">
-                        <div>
-                          <p className="eyebrow-label">Produits suggeres</p>
-                          <p className="mt-3 text-2xl text-white">
-                            La proposition la plus simple a presenter aujourd'hui
-                          </p>
-                        </div>
-                        <StatusBadge label="Base besoins -> produits" tone="blue" />
-                      </div>
-                      {recommendationPlan.needs.length ? (
-                        <div className="mt-5 space-y-4">
-                          <div className="grid gap-4">
                           {recommendationPlan.needs.map((need) => (
                             <NeedProductGroup
                               key={`summary-products-${need.id}`}
                               title={need.label}
+                              summary={need.summary}
+                              reasonLabel={need.reasonLabel}
                               products={need.products}
                               selectedProductIds={effectiveSelectedProductIds}
                               onToggleProduct={toggleSelectedProduct}
                             />
                           ))}
-                          </div>
                         </div>
                       ) : (
                         <div className="mt-5 rounded-[22px] bg-white/[0.03] px-4 py-4 text-sm leading-6 text-slate-200">
@@ -1807,21 +1832,6 @@ export function NewAssessmentPage() {
                         ))}
                       </div>
                     </div>
-
-                    {selectedRecommendationProducts.length ? (
-                      <div className="rounded-[28px] bg-slate-950/24 p-5">
-                        <p className="eyebrow-label">Composition retenue</p>
-                        <div className="mt-4 grid gap-3 md:grid-cols-2">
-                          {selectedRecommendationProducts.map((product) => (
-                            <SummaryRow
-                              key={`retained-${product.id}`}
-                              label={product.name}
-                              value={`${formatPriceEuro(product.prixPublic)} - ${formatPv(product.pv)}`}
-                            />
-                          ))}
-                        </div>
-                      </div>
-                    ) : null}
                   </div>
 
                   <div className="grid gap-4">
@@ -1833,48 +1843,6 @@ export function NewAssessmentPage() {
                       displayedProgramPriceValue={displayedProgramPriceValue}
                       estimatedClientTotal={estimatedClientTotal}
                     />
-                    <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-2">
-                      <SummaryHighlightCard label="Objectif" value={form.objectiveFocus} />
-                      <SummaryHighlightCard label="Hydratation cible" value={`${waterNeed} L / jour`} />
-                      {form.objective === "weight-loss" ? (
-                        <SummaryHighlightCard
-                          label="Kilos restants"
-                          value={weightLossPlan.isAchieved ? "Objectif atteint" : `${weightLossPlan.remainingKg} kg`}
-                        />
-                      ) : (
-                        <SummaryHighlightCard label="Motivation" value={`${form.motivation}/10`} />
-                      )}
-                      <SummaryHighlightCard
-                        label={form.objective === "weight-loss" ? "Rythme moyen" : "Protéines"}
-                        value={
-                          form.objective === "weight-loss"
-                            ? weightLossPlan.isAchieved
-                              ? "0 g / jour"
-                              : `${weightLossPlan.dailyGrams} g / jour`
-                            : proteinRange
-                        }
-                      />
-                    </div>
-
-                    <div className="rounded-[24px] bg-white/[0.03] p-4">
-                      <p className="eyebrow-label">Lecture finale</p>
-                      <div className="mt-4 grid gap-3">
-                        <SummaryRow label="Masse grasse" value={`${form.bodyFat} % - ${bodyFatKg} kg`} />
-                        <SummaryRow label="Masse musculaire" value={`${form.muscleMass} kg - ${musclePercent} %`} />
-                        <SummaryRow label="Masse hydrique estimée" value={`${form.hydration} % - ${hydrationKg} kg`} />
-                        <SummaryRow label="Recommandations notees" value={`${recommendationCount}`} />
-                        {form.objective === "weight-loss" && (
-                          <SummaryRow label="Lecture du rythme" value={weightLossPace.label} />
-                        )}
-                        {form.objective === "weight-loss" ? (
-                          <SummaryRow label="Délai retenu" value={timelineLabel} />
-                        ) : null}
-                        <SummaryRow
-                          label="Prochain suivi"
-                          value={form.nextFollowUp ? formatDateTime(form.nextFollowUp) : "-"}
-                        />
-                      </div>
-                    </div>
                   </div>
                 </div>
               </Card>
@@ -1948,81 +1916,9 @@ export function NewAssessmentPage() {
           ) : null}
         </Card>
 
-        <div className="hidden space-y-4 xl:sticky xl:top-5 xl:block xl:self-start">
-          <Card className="space-y-4">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-              <p className="font-display text-2xl text-white">{panelTitle}</p>
-              <p className="mt-2 text-sm leading-6 text-slate-400">{panelIntro}</p>
-              </div>
-              <StatusBadge label="Aide terrain" tone="blue" />
-            </div>
-        <div className="grid gap-3">
-          {rightPanelPoints.map((point, index) => (
-            <FocusPanelItem key={point} text={point} highlighted={index === 0} />
-          ))}
-        </div>
-        {currentStep === 0 ? (
-          <div className="space-y-2 rounded-[20px] bg-white/[0.03] px-4 py-4">
-            <label className="text-sm font-medium text-slate-300">
-              Invite par / recommande par
-            </label>
-            <input
-              value={form.referredByName}
-              onChange={(event) => update("referredByName", event.target.value)}
-              placeholder="Exemple : Sylvie"
-            />
-            <p className="text-xs leading-6 text-slate-400">
-              Note ici la personne qui a amene ce client pour garder le lien de recommandation sans
-              surcharger l&apos;ecran principal.
-            </p>
-          </div>
-        ) : null}
-      </Card>
-
-            {currentStep !== 7 ? (
-              <Card className="space-y-4">
-                <p className="eyebrow-label">A dire simplement</p>
-                <div className="grid gap-2">
-                  {prompts.slice(0, 2).map((prompt) => (
-                    <div key={prompt} className="rounded-[20px] bg-slate-950/24 px-4 py-3 text-sm text-slate-200">
-                      {prompt}
-                    </div>
-                  ))}
-                </div>
-              </Card>
-            ) : null}
-
-            {currentStep !== 7 ? (
-              <Card className="space-y-4">
-                <p className="eyebrow-label">Lecture express</p>
-                {currentStep === 5 ? (
-                <>
-                  {bodyScanExpressItems.map((item) => (
-                    <SummaryMini key={item.label} label={item.label} value={item.value} />
-                  ))}
-                </>
-            ) : currentStep === 6 ? (
-              <>
-                <SummaryMini label="Poids cible" value={weightTargetLabel} />
-                <SummaryMini label="Hydratation cible" value={hydrationTargetLabel} />
-                <SummaryMini label="Objectif eau" value={`${formatRawNumber(waterNeed)} L`} />
-                <SummaryMini label="Protéines" value={proteinRange} />
-                <SummaryMini label="Délai" value={timelineLabel} />
-              </>
-            ) : (
-                <>
-                  <SummaryMini label="Objectif" value={form.objectiveFocus} />
-                  <SummaryMini label="Programme" value={selectedProgram?.title ?? "A choisir"} />
-                  <SummaryMini label="Hydratation" value={`${waterNeed} L`} />
-                  {form.objective === "weight-loss" ? <SummaryMini label="Rythme" value={weightLossPace.label} /> : <SummaryMini label="Motivation" value={`${form.motivation}/10`} />}
-                </>
-                )}
-              </Card>
-            ) : null}
-          </div>
-        </div>
+        {desktopHelperPanel}
       </div>
+    </div>
     );
   }
 
@@ -2336,27 +2232,6 @@ function ChoiceGroup({
   );
 }
 
-function DetectedNeedCard({
-  label,
-  summary,
-  reasonLabel
-}: {
-  label: string;
-  summary: string;
-  reasonLabel: string;
-}) {
-  return (
-    <div className="rounded-[22px] border border-white/10 bg-white/[0.03] p-4">
-      <p className="eyebrow-label">Besoin detecte</p>
-      <p className="mt-2 text-xl text-white">{label}</p>
-      <p className="mt-2 text-sm leading-6 text-slate-300">{summary}</p>
-      <div className="mt-4 rounded-[18px] bg-slate-950/28 px-4 py-3 text-sm leading-6 text-slate-200">
-        {reasonLabel}
-      </div>
-    </div>
-  );
-}
-
 function PriorityNeedSpotlight({
   label,
   summary,
@@ -2402,11 +2277,15 @@ function PriorityNeedSpotlight({
 
 function NeedProductGroup({
   title,
+  summary,
+  reasonLabel,
   products,
   selectedProductIds,
   onToggleProduct
 }: {
   title: string;
+  summary: string;
+  reasonLabel: string;
   products: Array<{
     id: string;
     name: string;
@@ -2423,26 +2302,34 @@ function NeedProductGroup({
   }
 
   return (
-    <div className="space-y-3 rounded-[22px] border border-white/10 bg-white/[0.02] p-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-sm font-semibold uppercase tracking-[0.22em] text-slate-400">
-          {title}
-        </p>
-        <StatusBadge label={`${products.length} repere${products.length > 1 ? "s" : ""}`} tone="blue" />
-      </div>
-      <div className="grid gap-3 xl:grid-cols-2">
-        {products.map((product) => (
-          <SuggestedProductCard
-            key={product.id}
-            name={product.name}
-            shortBenefit={product.shortBenefit}
-            pv={product.pv}
-            prixPublic={product.prixPublic}
-            reasonLabel={product.reasonLabel}
-            selected={selectedProductIds.includes(product.id)}
-            onToggle={() => onToggleProduct(product.id)}
-          />
-        ))}
+    <div className="rounded-[22px] border border-white/10 bg-white/[0.02] p-4">
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] xl:items-start">
+        <div className="space-y-3">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p className="text-sm font-semibold uppercase tracking-[0.22em] text-slate-400">
+              {title}
+            </p>
+            <StatusBadge label={`${products.length} repere${products.length > 1 ? "s" : ""}`} tone="blue" />
+          </div>
+          <p className="text-base font-medium text-white">{summary}</p>
+          <div className="rounded-[18px] bg-slate-950/24 px-4 py-3 text-sm leading-6 text-slate-200">
+            {reasonLabel}
+          </div>
+        </div>
+        <div className="grid gap-3 md:grid-cols-2">
+          {products.map((product) => (
+            <SuggestedProductCard
+              key={product.id}
+              name={product.name}
+              shortBenefit={product.shortBenefit}
+              pv={product.pv}
+              prixPublic={product.prixPublic}
+              reasonLabel={product.reasonLabel}
+              selected={selectedProductIds.includes(product.id)}
+              onToggle={() => onToggleProduct(product.id)}
+            />
+          ))}
+        </div>
       </div>
     </div>
   );
@@ -2473,8 +2360,8 @@ function SuggestedProductCard({
           : "bg-slate-950/26"
       }`}
     >
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0 flex-1">
+      <div className="space-y-3">
+        <div className="min-w-0">
           <p className="text-base font-semibold text-white">{name}</p>
           <p className="mt-1.5 text-sm leading-6 text-slate-300">{shortBenefit}</p>
         </div>
@@ -2575,10 +2462,6 @@ function SectionBlock({ title, description, children }: { title: string; descrip
       <div className="mt-4 space-y-4">{children}</div>
     </div>
   );
-}
-
-function SummaryRow({ label, value }: { label: string; value: string }) {
-  return <div className="flex items-center justify-between gap-3 rounded-[20px] bg-slate-950/24 px-4 py-3"><span className="text-sm text-slate-400">{label}</span><span className="text-right text-sm font-semibold text-white">{value}</span></div>;
 }
 
 function SummaryMini({ label, value }: { label: string; value: string }) {
