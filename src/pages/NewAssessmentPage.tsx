@@ -594,8 +594,6 @@ export function NewAssessmentPage() {
     mainPrograms.find((program) => program.id === recommendationPlan.recommendedProgramId) ??
     null;
   const activeProgram = selectedProgram ?? recommendedProgram;
-  const topPriorityNeed = recommendationPlan.needs[0] ?? null;
-  const topPriorityProduct = topPriorityNeed?.products[0] ?? null;
   const displayedProgramPrice = selectedProgram?.price ?? recommendedProgram?.price ?? "";
   const displayedProgramPriceValue = parsePriceValue(displayedProgramPrice);
   const includedProgramProductIds = activeProgram
@@ -1636,18 +1634,9 @@ export function NewAssessmentPage() {
 
                 {recommendationPlan.needs.length ? (
                   <div className="space-y-4">
-                    {topPriorityNeed ? (
-                      <PriorityNeedSpotlight
-                        label={topPriorityNeed.label}
-                        summary={topPriorityNeed.summary}
-                        reasonLabel={topPriorityNeed.reasonLabel}
-                        productName={topPriorityProduct?.name}
-                        productReasonLabel={topPriorityProduct?.reasonLabel}
-                      />
-                    ) : null}
-                    <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_340px]">
-                      <div className="space-y-4">
-                        {recommendationPlan.needs.map((need) => (
+                      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_340px]">
+                        <div className="space-y-4">
+                          {recommendationPlan.needs.map((need) => (
                           <NeedProductGroup
                             key={`products-${need.id}`}
                             title={need.label}
@@ -1786,18 +1775,9 @@ export function NewAssessmentPage() {
 
                       {recommendationPlan.needs.length ? (
                         <div className="mt-5 space-y-4">
-                          {topPriorityNeed ? (
-                            <PriorityNeedSpotlight
-                              label={topPriorityNeed.label}
-                              summary={topPriorityNeed.summary}
-                              reasonLabel={topPriorityNeed.reasonLabel}
-                              productName={topPriorityProduct?.name}
-                              productReasonLabel={topPriorityProduct?.reasonLabel}
-                            />
-                          ) : null}
-                          {recommendationPlan.needs.map((need) => (
-                            <NeedProductGroup
-                              key={`summary-products-${need.id}`}
+                            {recommendationPlan.needs.map((need) => (
+                              <NeedProductGroup
+                                key={`summary-products-${need.id}`}
                               title={need.label}
                               summary={need.summary}
                               reasonLabel={need.reasonLabel}
@@ -2248,49 +2228,6 @@ function ChoiceGroup({
   );
 }
 
-function PriorityNeedSpotlight({
-  label,
-  summary,
-  reasonLabel,
-  productName,
-  productReasonLabel
-}: {
-  label: string;
-  summary: string;
-  reasonLabel: string;
-  productName?: string;
-  productReasonLabel?: string;
-}) {
-  return (
-    <div className="rounded-[26px] border border-emerald-300/18 bg-gradient-to-r from-emerald-400/14 via-sky-400/10 to-white/[0.04] p-5">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <p className="eyebrow-label text-emerald-100/80">Priorite n°1</p>
-          <p className="mt-2 text-2xl text-white">{label}</p>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-200">{summary}</p>
-        </div>
-        <StatusBadge label="Besoin principal" tone="green" />
-      </div>
-      <div className="mt-4 grid gap-3 md:grid-cols-[1.05fr_0.95fr]">
-        <div className="rounded-[20px] bg-slate-950/28 px-4 py-4 text-sm leading-6 text-slate-100">
-          {reasonLabel}
-        </div>
-        <div className="rounded-[20px] bg-white/[0.05] px-4 py-4">
-          <p className="text-[11px] font-medium uppercase tracking-[0.24em] text-slate-400">
-            Produit repere
-          </p>
-          <p className="mt-2 text-base font-semibold text-white">
-            {productName ?? "A confirmer"}
-          </p>
-          <p className="mt-2 text-sm leading-6 text-slate-300">
-            {productReasonLabel ?? "La proposition se precise selon le reste du bilan."}
-          </p>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function NeedProductGroup({
   title,
   summary,
@@ -2320,35 +2257,35 @@ function NeedProductGroup({
   }
 
   return (
-      <div className="rounded-[22px] border border-white/10 bg-white/[0.02] p-4">
-        <div className="grid gap-4 xl:grid-cols-[minmax(0,0.82fr)_minmax(0,1.18fr)] xl:items-start">
-          <div className="space-y-3">
-            <div className="flex flex-wrap items-center justify-between gap-3">
+    <div className="rounded-[22px] border border-white/10 bg-white/[0.02] p-4">
+      <div className="space-y-4">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="max-w-3xl space-y-2">
+            <div className="flex flex-wrap items-center gap-3">
               <p className="text-sm font-semibold uppercase tracking-[0.22em] text-slate-400">
                 {title}
               </p>
               <StatusBadge label={`${products.length} repere${products.length > 1 ? "s" : ""}`} tone="blue" />
             </div>
-            <p className="text-base font-medium text-white">{summary}</p>
-            <div className="rounded-[18px] bg-slate-950/24 px-4 py-3 text-sm leading-6 text-slate-200">
-              {reasonLabel}
-            </div>
+            <p className="text-lg font-medium text-white">{summary}</p>
+            <p className="text-sm leading-6 text-slate-300">{reasonLabel}</p>
           </div>
-          <div className="grid gap-3 lg:grid-cols-2">
-            {products.map((product) => (
-              <SuggestedProductCard
-                key={product.id}
-                name={product.name}
-                shortBenefit={product.shortBenefit}
-                pv={product.pv}
-                prixPublic={product.prixPublic}
-                dureeReferenceJours={product.dureeReferenceJours}
-                quantityLabel={product.quantityLabel}
-                selected={selectedProductIds.includes(product.id)}
-                onToggle={() => onToggleProduct(product.id)}
-              />
-            ))}
-          </div>
+        </div>
+        <div className="grid gap-3 xl:grid-cols-2">
+          {products.map((product) => (
+            <SuggestedProductCard
+              key={product.id}
+              name={product.name}
+              shortBenefit={product.shortBenefit}
+              pv={product.pv}
+              prixPublic={product.prixPublic}
+              dureeReferenceJours={product.dureeReferenceJours}
+              quantityLabel={product.quantityLabel}
+              selected={selectedProductIds.includes(product.id)}
+              onToggle={() => onToggleProduct(product.id)}
+            />
+          ))}
+        </div>
       </div>
     </div>
   );
@@ -2381,11 +2318,11 @@ function SuggestedProductCard({
           : "bg-slate-950/26"
       }`}
     >
-      <div className="space-y-3">
+      <div className="flex h-full flex-col gap-3">
         <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <p className="text-base font-semibold text-white">{name}</p>
-            <p className="mt-1.5 text-sm leading-6 text-slate-300">{shortBenefit}</p>
+          <div className="min-w-0 space-y-1.5">
+            <p className="text-lg font-semibold text-white">{name}</p>
+            <p className="text-sm leading-6 text-slate-300">{shortBenefit}</p>
           </div>
           <button
             type="button"
@@ -2399,7 +2336,7 @@ function SuggestedProductCard({
             {selected ? "Retenu" : "Retenir"}
           </button>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="mt-auto flex flex-wrap items-center gap-2">
           {quantityLabel ? (
             <span className="rounded-full bg-white/[0.05] px-3 py-1 text-sm font-medium text-slate-200">
               {quantityLabel}
