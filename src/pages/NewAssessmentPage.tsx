@@ -2298,54 +2298,57 @@ function NeedProductGroup({
   products,
   selectedProductIds,
   onToggleProduct
-}: {
-  title: string;
-  summary: string;
-  reasonLabel: string;
-  products: Array<{
-    id: string;
-    name: string;
-    shortBenefit: string;
-    pv: number;
-    prixPublic: number;
+  }: {
+    title: string;
+    summary: string;
     reasonLabel: string;
-  }>;
-  selectedProductIds: string[];
-  onToggleProduct: (productId: string) => void;
+    products: Array<{
+      id: string;
+      name: string;
+      shortBenefit: string;
+      pv: number;
+      prixPublic: number;
+      dureeReferenceJours: number;
+      quantityLabel?: string;
+      reasonLabel: string;
+    }>;
+    selectedProductIds: string[];
+    onToggleProduct: (productId: string) => void;
 }) {
   if (!products.length) {
     return null;
   }
 
   return (
-    <div className="rounded-[22px] border border-white/10 bg-white/[0.02] p-4">
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] xl:items-start">
-        <div className="space-y-3">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <p className="text-sm font-semibold uppercase tracking-[0.22em] text-slate-400">
-              {title}
-            </p>
-            <StatusBadge label={`${products.length} repere${products.length > 1 ? "s" : ""}`} tone="blue" />
+      <div className="rounded-[22px] border border-white/10 bg-white/[0.02] p-4">
+        <div className="grid gap-4 xl:grid-cols-[minmax(0,0.82fr)_minmax(0,1.18fr)] xl:items-start">
+          <div className="space-y-3">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <p className="text-sm font-semibold uppercase tracking-[0.22em] text-slate-400">
+                {title}
+              </p>
+              <StatusBadge label={`${products.length} repere${products.length > 1 ? "s" : ""}`} tone="blue" />
+            </div>
+            <p className="text-base font-medium text-white">{summary}</p>
+            <div className="rounded-[18px] bg-slate-950/24 px-4 py-3 text-sm leading-6 text-slate-200">
+              {reasonLabel}
+            </div>
           </div>
-          <p className="text-base font-medium text-white">{summary}</p>
-          <div className="rounded-[18px] bg-slate-950/24 px-4 py-3 text-sm leading-6 text-slate-200">
-            {reasonLabel}
+          <div className="grid gap-3 lg:grid-cols-2">
+            {products.map((product) => (
+              <SuggestedProductCard
+                key={product.id}
+                name={product.name}
+                shortBenefit={product.shortBenefit}
+                pv={product.pv}
+                prixPublic={product.prixPublic}
+                dureeReferenceJours={product.dureeReferenceJours}
+                quantityLabel={product.quantityLabel}
+                selected={selectedProductIds.includes(product.id)}
+                onToggle={() => onToggleProduct(product.id)}
+              />
+            ))}
           </div>
-        </div>
-        <div className="grid gap-3 md:grid-cols-2">
-          {products.map((product) => (
-            <SuggestedProductCard
-              key={product.id}
-              name={product.name}
-              shortBenefit={product.shortBenefit}
-              pv={product.pv}
-              prixPublic={product.prixPublic}
-              reasonLabel={product.reasonLabel}
-              selected={selectedProductIds.includes(product.id)}
-              onToggle={() => onToggleProduct(product.id)}
-            />
-          ))}
-        </div>
       </div>
     </div>
   );
@@ -2356,7 +2359,8 @@ function SuggestedProductCard({
   shortBenefit,
   pv,
   prixPublic,
-  reasonLabel,
+  dureeReferenceJours,
+  quantityLabel,
   selected,
   onToggle
 }: {
@@ -2364,7 +2368,8 @@ function SuggestedProductCard({
   shortBenefit: string;
   pv: number;
   prixPublic: number;
-  reasonLabel: string;
+  dureeReferenceJours: number;
+  quantityLabel?: string;
   selected: boolean;
   onToggle: () => void;
 }) {
@@ -2377,21 +2382,15 @@ function SuggestedProductCard({
       }`}
     >
       <div className="space-y-3">
-        <div className="min-w-0">
-          <p className="text-base font-semibold text-white">{name}</p>
-          <p className="mt-1.5 text-sm leading-6 text-slate-300">{shortBenefit}</p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="rounded-full bg-sky-400/10 px-3 py-1 text-sm font-semibold text-sky-200">
-            {formatPriceEuro(prixPublic)}
-          </span>
-          <span className="rounded-full bg-emerald-400/10 px-3 py-1 text-sm font-semibold text-emerald-100">
-            {formatPv(pv)}
-          </span>
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-base font-semibold text-white">{name}</p>
+            <p className="mt-1.5 text-sm leading-6 text-slate-300">{shortBenefit}</p>
+          </div>
           <button
             type="button"
             onClick={onToggle}
-            className={`inline-flex min-h-[34px] items-center justify-center rounded-full px-3.5 py-1.5 text-sm font-semibold transition ${
+            className={`inline-flex min-h-[34px] shrink-0 items-center justify-center rounded-full px-3.5 py-1.5 text-sm font-semibold transition ${
               selected
                 ? "bg-white text-slate-950"
                 : "border border-white/10 bg-white/[0.03] text-white hover:bg-white/[0.08]"
@@ -2400,9 +2399,22 @@ function SuggestedProductCard({
             {selected ? "Retenu" : "Retenir"}
           </button>
         </div>
-      </div>
-      <div className="mt-3 rounded-[16px] bg-white/[0.03] px-4 py-3 text-sm leading-6 text-slate-200">
-        {reasonLabel}
+        <div className="flex flex-wrap items-center gap-2">
+          {quantityLabel ? (
+            <span className="rounded-full bg-white/[0.05] px-3 py-1 text-sm font-medium text-slate-200">
+              {quantityLabel}
+            </span>
+          ) : null}
+          <span className="rounded-full bg-white/[0.05] px-3 py-1 text-sm font-medium text-slate-200">
+            {dureeReferenceJours} jours
+          </span>
+          <span className="rounded-full bg-sky-400/10 px-3 py-1 text-sm font-semibold text-sky-200">
+            {formatPriceEuro(prixPublic)}
+          </span>
+          <span className="rounded-full bg-emerald-400/10 px-3 py-1 text-sm font-semibold text-emerald-100">
+            {formatPv(pv)}
+          </span>
+        </div>
       </div>
     </div>
   );
@@ -2570,19 +2582,19 @@ function ClientTotalCalculatorCard({
           </div>
           {addOnProducts.length ? (
             <div className="mt-3 space-y-2">
-              {addOnProducts.map((product) => (
-                <div
-                  key={product.id}
-                  className="flex items-center justify-between gap-3 rounded-[16px] bg-slate-950/24 px-3.5 py-3"
-                >
-                  <div>
-                    <p className="text-sm font-semibold text-white">{product.name}</p>
-                    <p className="mt-1 text-xs text-slate-400">{formatPv(product.pv)}</p>
+                {addOnProducts.map((product) => (
+                  <div
+                    key={product.id}
+                    className="flex items-center justify-between gap-3 rounded-[16px] bg-slate-950/24 px-3.5 py-3"
+                  >
+                    <div>
+                      <p className="text-sm font-semibold text-white">{product.name}</p>
+                      <p className="mt-1 text-xs text-slate-400">{formatPv(product.pv)}</p>
+                    </div>
+                    <p className="text-sm font-semibold text-sky-100">+ {formatPriceEuro(product.prixPublic)}</p>
                   </div>
-                  <p className="text-sm font-semibold text-sky-100">{formatPriceEuro(product.prixPublic)}</p>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
           ) : (
             <p className="mt-3 text-sm leading-6 text-slate-300">
               Aucun supplément ajouté pour l&apos;instant.

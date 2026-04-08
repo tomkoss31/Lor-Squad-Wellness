@@ -42,6 +42,7 @@ export interface SuggestedProduct {
   pv: number;
   prixPublic: number;
   dureeReferenceJours: number;
+  quantityLabel?: string;
   tags: AssessmentNeedId[];
 }
 
@@ -150,118 +151,131 @@ const PRODUCT_CATALOG: ProductDefinition[] = [
   {
     id: "formula-1",
     name: "Formula 1",
-    shortBenefit: "Aide a structurer un matin simple et plus cale.",
+    shortBenefit: "Repas malin pour un matin plus cale et plus simple a tenir.",
     pv: 23.95,
     prixPublic: 63.5,
     dureeReferenceJours: 21,
+    quantityLabel: "21 repas",
     tags: ["breakfast_structure", "protein_muscle"]
   },
   {
     id: "pdm",
     name: "Melange pour boisson proteinee",
-    shortBenefit: "Ajoute un repere proteine facile dans la routine.",
+    shortBenefit: "Repere proteine facile pour soutenir la routine et le muscle.",
     pv: 33,
     prixPublic: 75,
     dureeReferenceJours: 42,
+    quantityLabel: "42 doses",
     tags: ["breakfast_structure", "protein_muscle"]
   },
   {
     id: "the-51g",
     name: "Boisson instantanee a base de the 51 g",
-    shortBenefit: "Soutient l'hydratation du matin et l'elan de la routine.",
+    shortBenefit: "Aide a lancer le matin avec plus d'elan et une meilleure routine eau.",
     pv: 19.95,
     prixPublic: 41,
     dureeReferenceJours: 21,
+    quantityLabel: "51 g",
     tags: ["hydration", "energy"]
   },
   {
     id: "aloe-vera",
     name: "Boisson Aloe Vera",
-    shortBenefit: "Pose un repere hydratation simple a reprendre chaque jour.",
+    shortBenefit: "Pose un repere eau simple et agreable a reprendre chaque jour.",
     pv: 24.95,
     prixPublic: 54.5,
     dureeReferenceJours: 21,
+    quantityLabel: "473 ml",
     tags: ["hydration"]
   },
   {
     id: "multifibres",
     name: "Boisson multi-fibres",
-    shortBenefit: "Aide a remettre des fibres et du confort digestif dans la routine.",
+    shortBenefit: "Ajoute fibres et confort digestif dans la routine du quotidien.",
     pv: 22.95,
     prixPublic: 43.5,
     dureeReferenceJours: 30,
+    quantityLabel: "30 doses",
     tags: ["digestive_support"]
   },
   {
     id: "phyto-brule-graisse",
     name: "Phyto Complete",
-    shortBenefit: "Ajoute un soutien plus cadre quand la priorite est viscerale.",
+    shortBenefit: "Ajoute un soutien de fond quand la priorite est silhouette et cadre global.",
     pv: 38.15,
     prixPublic: 90,
     dureeReferenceJours: 30,
+    quantityLabel: "30 jours",
     tags: ["visceral_fat"]
   },
   {
     id: "microbiotic-max",
     name: "Microbiotic Max",
-    shortBenefit: "Soutient une routine plus stable quand le confort digestif compte.",
+    shortBenefit: "Soutient l'equilibre digestif quand le ventre a besoin de plus de douceur.",
     pv: 27.1,
     prixPublic: 64.5,
     dureeReferenceJours: 30,
+    quantityLabel: "30 jours",
     tags: ["digestive_support"]
   },
   {
     id: "night-mode",
     name: "Night Mode",
-    shortBenefit: "Aide a installer une fin de journee plus calme.",
+    shortBenefit: "Aide a poser une routine du soir plus calme et plus reguliere.",
     pv: 31.25,
     prixPublic: 69,
     dureeReferenceJours: 30,
+    quantityLabel: "30 jours",
     tags: ["sleep"]
   },
   {
     id: "xtra-cal",
     name: "Xtra-Cal",
-    shortBenefit: "Ajoute un repere simple autour du calcium et de la base osseuse.",
+    shortBenefit: "Ajoute un repere calcium simple quand la base osseuse demande du soutien.",
     pv: 10.25,
     prixPublic: 24.5,
     dureeReferenceJours: 30,
+    quantityLabel: "30 jours",
     tags: ["bone_support"]
   },
   {
     id: "beta-heart",
     name: "Beta Heart",
-    shortBenefit: "Accompagne un travail de fond quand la lecture viscerale est haute.",
+    shortBenefit: "Apporte un repere fibres d'avoine quand la lecture viscerale ressort fort.",
     pv: 25.95,
     prixPublic: 57.5,
     dureeReferenceJours: 30,
+    quantityLabel: "30 jours",
     tags: ["visceral_fat"]
   },
   {
     id: "protein-bars",
     name: "Barres aux proteines",
-    shortBenefit: "Donne un encas plus cadre quand les envies debordent.",
+    shortBenefit: "Donne un encas plus cadre quand les envies arrivent trop vite.",
     pv: 13.22,
     prixPublic: 31.5,
     dureeReferenceJours: 14,
+    quantityLabel: "14 jours",
     tags: ["snacking_control"]
   },
   {
     id: "liftoff",
     name: "LiftOff",
-    shortBenefit: "Apporte un petit coup d'elan quand l'energie manque.",
+    shortBenefit: "Apporte un petit coup d'elan quand l'energie ou le focus baissent.",
     pv: 15.95,
     prixPublic: 39.5,
     dureeReferenceJours: 10,
+    quantityLabel: "10 jours",
     tags: ["energy"]
   },
   {
     id: "h24-hydrate",
     name: "Herbalife24 Hydrate",
-    shortBenefit: "Soutient l'hydratation quand le besoin est plus marque.",
+    shortBenefit: "Soutient l'hydratation quand le besoin est plus marque ou plus actif.",
     pv: 17.2,
     prixPublic: 47.5,
     dureeReferenceJours: 20,
+    quantityLabel: "20 jours",
     tags: ["hydration"]
   }
 ];
