@@ -483,7 +483,7 @@ function getBodyFatBand(percent: number, targetRange: { min: number; max: number
 function getBodyFatGaugeRanges(sex?: BiologicalSex) {
   if (sex === "male") {
     return [
-      { label: "Sous-poids", value: "< 10 %", min: Number.NEGATIVE_INFINITY, max: 9.9, tone: "blue" as const },
+      { label: "Sec", value: "< 10 %", min: Number.NEGATIVE_INFINITY, max: 9.9, tone: "blue" as const },
       { label: "Sain", value: "10 - 20 %", min: 10, max: 20, tone: "green" as const },
       { label: "Surpoids", value: "20 - 25 %", min: 20.1, max: 25, tone: "amber" as const },
       { label: "Obesite", value: "> 25 %", min: 25.1, max: Number.POSITIVE_INFINITY, tone: "red" as const }
@@ -491,7 +491,7 @@ function getBodyFatGaugeRanges(sex?: BiologicalSex) {
   }
 
   return [
-    { label: "Sous-poids", value: "< 20 %", min: Number.NEGATIVE_INFINITY, max: 19.9, tone: "blue" as const },
+    { label: "Sec", value: "< 20 %", min: Number.NEGATIVE_INFINITY, max: 19.9, tone: "blue" as const },
     { label: "Sain", value: "20 - 30 %", min: 20, max: 30, tone: "green" as const },
     { label: "Surpoids", value: "30 - 35 %", min: 30.1, max: 35, tone: "amber" as const },
     { label: "Obesite", value: "> 35 %", min: 35.1, max: Number.POSITIVE_INFINITY, tone: "red" as const }

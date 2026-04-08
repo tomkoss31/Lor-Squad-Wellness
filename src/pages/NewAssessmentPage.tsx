@@ -1939,8 +1939,71 @@ function Field({
   return (
     <div className="space-y-2">
       <label className="text-sm font-medium text-slate-300">{label}</label>
-      <input type={type} step={step} value={value} onChange={(event) => onChange(event.target.value)} />
+      {type === "number" ? (
+        <DecimalInput value={Number(value) || 0} onChange={onChange} step={step} />
+      ) : (
+        <input type={type} step={step} value={value} onChange={(event) => onChange(event.target.value)} />
+      )}
     </div>
+  );
+}
+
+function DecimalInput({
+  value,
+  onChange,
+  step
+}: {
+  value: number;
+  onChange: (value: string) => void;
+  step?: string;
+}) {
+  const [draft, setDraft] = useState(formatEditableNumber(value));
+
+  useEffect(() => {
+    setDraft(formatEditableNumber(value));
+  }, [value]);
+
+  return (
+    <input
+      type="text"
+      inputMode="decimal"
+      pattern="[0-9]*[.,]?[0-9]*"
+      value={draft}
+      onChange={(event) => {
+        const nextValue = event.target.value.replace(/\s+/g, "");
+        if (!/^\d*([.,]\d*)?$/.test(nextValue)) {
+          return;
+        }
+
+        setDraft(nextValue);
+        const normalized = nextValue.replace(",", ".");
+        if (normalized === "" || normalized === ".") {
+          return;
+        }
+
+        onChange(normalized);
+      }}
+      onBlur={() => {
+        const normalized = draft.replace(",", ".");
+        if (normalized === "" || normalized === ".") {
+          const fallback = formatEditableNumber(value);
+          setDraft(fallback);
+          onChange(fallback);
+          return;
+        }
+
+        const parsed = Number(normalized);
+        if (Number.isNaN(parsed)) {
+          setDraft(formatEditableNumber(value));
+          return;
+        }
+
+        const formatted = formatEditableNumber(parsed);
+        setDraft(formatted);
+        onChange(formatted);
+      }}
+      step={step}
+    />
   );
 }
 
@@ -2238,6 +2301,15 @@ function formatRawNumber(value: number) {
 
   const rounded = Number(value.toFixed(1));
   return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(1);
+}
+
+function formatEditableNumber(value: number) {
+  if (!Number.isFinite(value)) {
+    return "0";
+  }
+
+  const asString = String(value);
+  return asString.endsWith(".0") ? asString.slice(0, -2) : asString;
 }
 
 function formatValue(value: number, unit: string) {

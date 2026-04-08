@@ -804,8 +804,64 @@ function MetricField({
   return (
     <div className="space-y-2">
       <label className="text-sm font-medium text-slate-300">{label}</label>
-      <input type="number" step="0.1" value={value} onChange={(event) => onChange(event.target.value)} />
+      <DecimalMetricInput value={value} onChange={onChange} />
     </div>
+  );
+}
+
+function DecimalMetricInput({
+  value,
+  onChange
+}: {
+  value: number;
+  onChange: (value: string) => void;
+}) {
+  const [draft, setDraft] = useState(formatEditableMetric(value));
+
+  useEffect(() => {
+    setDraft(formatEditableMetric(value));
+  }, [value]);
+
+  return (
+    <input
+      type="text"
+      inputMode="decimal"
+      pattern="[0-9]*[.,]?[0-9]*"
+      value={draft}
+      onChange={(event) => {
+        const nextValue = event.target.value.replace(/\s+/g, "");
+        if (!/^\d*([.,]\d*)?$/.test(nextValue)) {
+          return;
+        }
+
+        setDraft(nextValue);
+        const normalized = nextValue.replace(",", ".");
+        if (normalized === "" || normalized === ".") {
+          return;
+        }
+
+        onChange(normalized);
+      }}
+      onBlur={() => {
+        const normalized = draft.replace(",", ".");
+        if (normalized === "" || normalized === ".") {
+          const fallback = formatEditableMetric(value);
+          setDraft(fallback);
+          onChange(fallback);
+          return;
+        }
+
+        const parsed = Number(normalized);
+        if (Number.isNaN(parsed)) {
+          setDraft(formatEditableMetric(value));
+          return;
+        }
+
+        const formatted = formatEditableMetric(parsed);
+        setDraft(formatted);
+        onChange(formatted);
+      }}
+    />
   );
 }
 
@@ -878,6 +934,15 @@ function CompactWeightPanel({ label, value }: { label: string; value: string }) 
       <p className="mt-3 text-[2rem] font-semibold tracking-[-0.04em] text-white">{value}</p>
     </div>
   );
+}
+
+function formatEditableMetric(value: number) {
+  if (!Number.isFinite(value)) {
+    return "0";
+  }
+
+  const asString = String(value);
+  return asString.endsWith(".0") ? asString.slice(0, -2) : asString;
 }
 
 function StartingPointWeightCard({
