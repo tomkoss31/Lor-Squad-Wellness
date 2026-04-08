@@ -2271,7 +2271,7 @@ function NeedProductGroup({
             <p className="text-sm leading-6 text-slate-300">{reasonLabel}</p>
           </div>
         </div>
-        <div className="grid gap-3 xl:grid-cols-2">
+        <div className="grid gap-3">
           {products.map((product) => (
             <SuggestedProductCard
               key={product.id}

@@ -151,7 +151,7 @@ const PRODUCT_CATALOG: ProductDefinition[] = [
   {
     id: "formula-1",
     name: "Formula 1",
-    shortBenefit: "Repas malin pour un matin plus cale et plus simple a tenir.",
+    shortBenefit: "Matin plus cale et plus simple.",
     pv: 23.95,
     prixPublic: 63.5,
     dureeReferenceJours: 21,
@@ -161,7 +161,7 @@ const PRODUCT_CATALOG: ProductDefinition[] = [
   {
     id: "pdm",
     name: "Melange pour boisson proteinee",
-    shortBenefit: "Repere proteine facile pour soutenir la routine et le muscle.",
+    shortBenefit: "Repere proteine simple au quotidien.",
     pv: 33,
     prixPublic: 75,
     dureeReferenceJours: 42,
@@ -171,7 +171,7 @@ const PRODUCT_CATALOG: ProductDefinition[] = [
   {
     id: "the-51g",
     name: "Boisson instantanee a base de the 51 g",
-    shortBenefit: "Aide a lancer le matin avec plus d'elan et une meilleure routine eau.",
+    shortBenefit: "Elan du matin + routine eau.",
     pv: 19.95,
     prixPublic: 41,
     dureeReferenceJours: 21,
@@ -181,7 +181,7 @@ const PRODUCT_CATALOG: ProductDefinition[] = [
   {
     id: "aloe-vera",
     name: "Boisson Aloe Vera",
-    shortBenefit: "Pose un repere eau simple et agreable a reprendre chaque jour.",
+    shortBenefit: "Repere eau simple au quotidien.",
     pv: 24.95,
     prixPublic: 54.5,
     dureeReferenceJours: 21,
@@ -191,7 +191,7 @@ const PRODUCT_CATALOG: ProductDefinition[] = [
   {
     id: "multifibres",
     name: "Boisson multi-fibres",
-    shortBenefit: "Ajoute fibres et confort digestif dans la routine du quotidien.",
+    shortBenefit: "Fibres et confort digestif.",
     pv: 22.95,
     prixPublic: 43.5,
     dureeReferenceJours: 30,
@@ -201,7 +201,7 @@ const PRODUCT_CATALOG: ProductDefinition[] = [
   {
     id: "phyto-brule-graisse",
     name: "Phyto Complete",
-    shortBenefit: "Ajoute un soutien de fond quand la priorite est silhouette et cadre global.",
+    shortBenefit: "Soutien silhouette et cadre global.",
     pv: 38.15,
     prixPublic: 90,
     dureeReferenceJours: 30,
@@ -211,7 +211,7 @@ const PRODUCT_CATALOG: ProductDefinition[] = [
   {
     id: "microbiotic-max",
     name: "Microbiotic Max",
-    shortBenefit: "Soutient l'equilibre digestif quand le ventre a besoin de plus de douceur.",
+    shortBenefit: "Equilibre digestif plus stable.",
     pv: 27.1,
     prixPublic: 64.5,
     dureeReferenceJours: 30,
@@ -221,7 +221,7 @@ const PRODUCT_CATALOG: ProductDefinition[] = [
   {
     id: "night-mode",
     name: "Night Mode",
-    shortBenefit: "Aide a poser une routine du soir plus calme et plus reguliere.",
+    shortBenefit: "Routine du soir plus calme.",
     pv: 31.25,
     prixPublic: 69,
     dureeReferenceJours: 30,
@@ -231,7 +231,7 @@ const PRODUCT_CATALOG: ProductDefinition[] = [
   {
     id: "xtra-cal",
     name: "Xtra-Cal",
-    shortBenefit: "Ajoute un repere calcium simple quand la base osseuse demande du soutien.",
+    shortBenefit: "Repere calcium simple.",
     pv: 10.25,
     prixPublic: 24.5,
     dureeReferenceJours: 30,
@@ -241,7 +241,7 @@ const PRODUCT_CATALOG: ProductDefinition[] = [
   {
     id: "beta-heart",
     name: "Beta Heart",
-    shortBenefit: "Apporte un repere fibres d'avoine quand la lecture viscerale ressort fort.",
+    shortBenefit: "Repere fibres d'avoine ciblé.",
     pv: 25.95,
     prixPublic: 57.5,
     dureeReferenceJours: 30,
@@ -251,7 +251,7 @@ const PRODUCT_CATALOG: ProductDefinition[] = [
   {
     id: "protein-bars",
     name: "Barres aux proteines",
-    shortBenefit: "Donne un encas plus cadre quand les envies arrivent trop vite.",
+    shortBenefit: "Encas plus cadre.",
     pv: 13.22,
     prixPublic: 31.5,
     dureeReferenceJours: 14,
@@ -261,7 +261,7 @@ const PRODUCT_CATALOG: ProductDefinition[] = [
   {
     id: "liftoff",
     name: "LiftOff",
-    shortBenefit: "Apporte un petit coup d'elan quand l'energie ou le focus baissent.",
+    shortBenefit: "Coup d'elan rapide.",
     pv: 15.95,
     prixPublic: 39.5,
     dureeReferenceJours: 10,
@@ -271,7 +271,7 @@ const PRODUCT_CATALOG: ProductDefinition[] = [
   {
     id: "h24-hydrate",
     name: "Herbalife24 Hydrate",
-    shortBenefit: "Soutient l'hydratation quand le besoin est plus marque ou plus actif.",
+    shortBenefit: "Hydratation plus soutenue.",
     pv: 17.2,
     prixPublic: 47.5,
     dureeReferenceJours: 20,
