@@ -319,6 +319,13 @@ const timelineOptions = [
   "9 mois"
 ];
 
+const PROGRAM_INCLUDED_PRODUCT_IDS: Record<string, string[]> = {
+  "p-discovery": ["aloe-vera", "the-51g", "formula-1"],
+  "p-premium": ["aloe-vera", "the-51g", "formula-1", "pdm"],
+  "p-booster-1": ["aloe-vera", "the-51g", "formula-1", "pdm", "multifibres"],
+  "p-booster-2": ["aloe-vera", "the-51g", "formula-1", "pdm", "phyto-brule-graisse"]
+};
+
 const LazyBreakfastComparison = lazy(() =>
   import("../components/education/BreakfastComparison").then((module) => ({
     default: module.BreakfastComparison
@@ -583,23 +590,30 @@ export function NewAssessmentPage() {
         effectiveSelectedProductIds.includes(product.id) &&
         array.findIndex((item) => item.id === product.id) === index
     );
-  const selectedProductsTotalPrice = Number(
-    selectedRecommendationProducts.reduce((total, product) => total + product.prixPublic, 0).toFixed(2)
-  );
-  const selectedProductsTotalPv = Number(
-    selectedRecommendationProducts.reduce((total, product) => total + product.pv, 0).toFixed(2)
-  );
   const recommendedProgram =
     mainPrograms.find((program) => program.id === recommendationPlan.recommendedProgramId) ??
     null;
+  const activeProgram = selectedProgram ?? recommendedProgram;
   const topPriorityNeed = recommendationPlan.needs[0] ?? null;
   const topPriorityProduct = topPriorityNeed?.products[0] ?? null;
   const displayedProgramPrice = selectedProgram?.price ?? recommendedProgram?.price ?? "";
   const displayedProgramPriceValue = parsePriceValue(displayedProgramPrice);
+  const includedProgramProductIds = activeProgram
+    ? new Set(PROGRAM_INCLUDED_PRODUCT_IDS[activeProgram.id] ?? [])
+    : new Set<string>();
+  const addOnProducts = selectedRecommendationProducts.filter(
+    (product) => !includedProgramProductIds.has(product.id)
+  );
+  const addOnProductsTotalPrice = Number(
+    addOnProducts.reduce((total, product) => total + product.prixPublic, 0).toFixed(2)
+  );
+  const addOnProductsTotalPv = Number(
+    addOnProducts.reduce((total, product) => total + product.pv, 0).toFixed(2)
+  );
   const estimatedClientTotal = Number(
     (
       displayedProgramPriceValue +
-      (selectedRecommendationProducts.length ? selectedProductsTotalPrice : 0)
+      (addOnProducts.length ? addOnProductsTotalPrice : 0)
     ).toFixed(2)
   );
   const shouldHideStepSidebar = currentStep === 10 || currentStep === 13;
@@ -1646,11 +1660,12 @@ export function NewAssessmentPage() {
                         ))}
                       </div>
                       <ClientTotalCalculatorCard
-                        selectedProductCount={selectedRecommendationProducts.length}
-                        selectedProductsTotalPrice={selectedProductsTotalPrice}
-                        selectedProductsTotalPv={selectedProductsTotalPv}
-                        displayedProgramPrice={recommendedProgram?.price ?? displayedProgramPrice}
-                        displayedProgramPriceValue={displayedProgramPriceValue}
+                        programTitle={activeProgram?.title ?? "Programme a confirmer"}
+                        displayedProgramPrice={displayedProgramPrice}
+                        includedComposition={activeProgram?.composition ?? []}
+                        addOnProducts={addOnProducts}
+                        addOnProductsTotalPrice={addOnProductsTotalPrice}
+                        addOnProductsTotalPv={addOnProductsTotalPv}
                         estimatedClientTotal={estimatedClientTotal}
                       />
                     </div>
@@ -1836,11 +1851,12 @@ export function NewAssessmentPage() {
 
                   <div className="grid gap-4">
                     <ClientTotalCalculatorCard
-                      selectedProductCount={selectedRecommendationProducts.length}
-                      selectedProductsTotalPrice={selectedProductsTotalPrice}
-                      selectedProductsTotalPv={selectedProductsTotalPv}
+                      programTitle={activeProgram?.title ?? "Programme a confirmer"}
                       displayedProgramPrice={displayedProgramPrice}
-                      displayedProgramPriceValue={displayedProgramPriceValue}
+                      includedComposition={activeProgram?.composition ?? []}
+                      addOnProducts={addOnProducts}
+                      addOnProductsTotalPrice={addOnProductsTotalPrice}
+                      addOnProductsTotalPv={addOnProductsTotalPv}
                       estimatedClientTotal={estimatedClientTotal}
                     />
                   </div>
@@ -2496,53 +2512,99 @@ function SummaryHighlightCard({ label, value }: { label: string; value: string }
 }
 
 function ClientTotalCalculatorCard({
-  selectedProductCount,
-  selectedProductsTotalPrice,
-  selectedProductsTotalPv,
+  programTitle,
   displayedProgramPrice,
-  displayedProgramPriceValue,
+  includedComposition,
+  addOnProducts,
+  addOnProductsTotalPrice,
+  addOnProductsTotalPv,
   estimatedClientTotal
 }: {
-  selectedProductCount: number;
-  selectedProductsTotalPrice: number;
-  selectedProductsTotalPv: number;
+  programTitle: string;
   displayedProgramPrice: string;
-  displayedProgramPriceValue: number;
+  includedComposition: string[];
+  addOnProducts: Array<{
+    id: string;
+    name: string;
+    prixPublic: number;
+    pv: number;
+  }>;
+  addOnProductsTotalPrice: number;
+  addOnProductsTotalPv: number;
   estimatedClientTotal: number;
 }) {
   return (
-    <div className="rounded-[28px] border border-sky-300/16 bg-gradient-to-br from-sky-400/[0.12] via-slate-950/24 to-emerald-400/[0.06] p-5">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <p className="eyebrow-label text-sky-100/80">Calculette client</p>
-          <p className="mt-2 text-2xl text-white">Total a presenter</p>
+      <div className="rounded-[28px] border border-sky-300/16 bg-gradient-to-br from-sky-400/[0.12] via-slate-950/24 to-emerald-400/[0.06] p-5">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <p className="eyebrow-label text-sky-100/80">Lecture simple</p>
+            <p className="mt-2 text-2xl text-white">Ticket du jour</p>
+          </div>
+          <StatusBadge label={addOnProducts.length ? "Programme + ajouts" : "Programme seul"} tone="blue" />
         </div>
-        <StatusBadge label={selectedProductCount ? "Composition retenue" : "Base programme"} tone="blue" />
-      </div>
 
-      <div className="mt-5 grid gap-3 md:grid-cols-2">
-        <SummaryHighlightCard
-          label="Base seule"
-          value={displayedProgramPrice || "A confirmer"}
-        />
-        <SummaryHighlightCard
-          label="Base + produits retenus"
-          value={estimatedClientTotal > 0 ? formatPriceEuro(estimatedClientTotal) : "A definir"}
-        />
-        <SummaryHighlightCard
-          label="PV total estime"
-          value={
-            displayedProgramPriceValue > 0 || selectedProductCount
-              ? formatPv(selectedProductsTotalPv)
-              : "A definir"
-          }
-        />
-        <SummaryMini label="Produits retenus" value={`${selectedProductCount}`} />
-        <SummaryMini
-          label="Total produits"
-          value={selectedProductCount ? formatPriceEuro(selectedProductsTotalPrice) : "A definir"}
-        />
-        <SummaryMini label="Lecture" value={selectedProductCount ? "Selection terrain" : "Programme seul"} />
+      <div className="mt-5 space-y-3">
+        <div className="rounded-[22px] bg-white/[0.04] px-4 py-4">
+          <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-slate-500">Base choisie</p>
+            <div className="mt-3 flex items-start justify-between gap-3">
+              <div>
+                <p className="text-lg font-semibold text-white">{programTitle}</p>
+                <p className="mt-2 text-sm leading-6 text-slate-300">
+                  {includedComposition.length ? includedComposition.join(" • ") : "Composition a confirmer"}
+                </p>
+              </div>
+              <span className="rounded-full bg-white/[0.06] px-3 py-1.5 text-sm font-semibold text-white">
+                {displayedProgramPrice || "A confirmer"}
+              </span>
+            </div>
+            <div className="mt-3 flex items-center justify-between gap-3 rounded-[16px] bg-slate-950/22 px-3.5 py-2.5">
+              <p className="text-sm text-slate-300">Base choisie</p>
+              <p className="text-sm font-semibold text-white">{displayedProgramPrice || "A confirmer"}</p>
+            </div>
+          </div>
+
+        <div className="rounded-[22px] bg-white/[0.03] px-4 py-4">
+          <div className="flex items-center justify-between gap-3">
+              <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-slate-500">Ajouts</p>
+            <span className="text-sm font-semibold text-white">{addOnProducts.length}</span>
+          </div>
+          {addOnProducts.length ? (
+            <div className="mt-3 space-y-2">
+              {addOnProducts.map((product) => (
+                <div
+                  key={product.id}
+                  className="flex items-center justify-between gap-3 rounded-[16px] bg-slate-950/24 px-3.5 py-3"
+                >
+                  <div>
+                    <p className="text-sm font-semibold text-white">{product.name}</p>
+                    <p className="mt-1 text-xs text-slate-400">{formatPv(product.pv)}</p>
+                  </div>
+                  <p className="text-sm font-semibold text-sky-100">{formatPriceEuro(product.prixPublic)}</p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="mt-3 text-sm leading-6 text-slate-300">
+              Aucun supplément ajouté pour l&apos;instant.
+            </p>
+          )}
+        </div>
+
+          <div className="grid gap-3 md:grid-cols-3">
+            <SummaryHighlightCard label="Base choisie" value={displayedProgramPrice || "A confirmer"} />
+            <SummaryHighlightCard label="Total ajouts" value={addOnProducts.length ? formatPriceEuro(addOnProductsTotalPrice) : "0.00 EUR"} />
+            <SummaryHighlightCard label="PV ajouts" value={addOnProducts.length ? formatPv(addOnProductsTotalPv) : "0.00 PV"} />
+          </div>
+
+          <div className="rounded-[22px] border border-emerald-300/18 bg-emerald-400/10 px-4 py-4">
+            <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-emerald-100/70">Total a prevoir aujourd&apos;hui</p>
+            <div className="mt-3 flex items-center justify-between gap-3">
+              <p className="text-base text-emerald-50">Base choisie + ajouts</p>
+              <p className="text-2xl font-semibold text-white">
+                {estimatedClientTotal > 0 ? formatPriceEuro(estimatedClientTotal) : "A definir"}
+              </p>
+          </div>
+        </div>
       </div>
     </div>
   );
