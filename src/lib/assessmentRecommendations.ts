@@ -61,6 +61,7 @@ export interface SuggestedNeedGroup {
 
 export interface AssessmentRecommendationPlan {
   needs: SuggestedNeedGroup[];
+  optionalUpsells: SuggestedProduct[];
   recommendedProgramId: string | null;
   recommendedProgramReason: string;
 }
@@ -205,7 +206,6 @@ const PRODUCT_CATALOG: ProductDefinition[] = [
     pv: 38.15,
     prixPublic: 90,
     dureeReferenceJours: 30,
-    quantityLabel: "30 jours",
     tags: ["visceral_fat"]
   },
   {
@@ -215,7 +215,6 @@ const PRODUCT_CATALOG: ProductDefinition[] = [
     pv: 27.1,
     prixPublic: 64.5,
     dureeReferenceJours: 30,
-    quantityLabel: "30 jours",
     tags: ["digestive_support"]
   },
   {
@@ -225,7 +224,6 @@ const PRODUCT_CATALOG: ProductDefinition[] = [
     pv: 31.25,
     prixPublic: 69,
     dureeReferenceJours: 30,
-    quantityLabel: "30 jours",
     tags: ["sleep"]
   },
   {
@@ -235,7 +233,6 @@ const PRODUCT_CATALOG: ProductDefinition[] = [
     pv: 10.25,
     prixPublic: 24.5,
     dureeReferenceJours: 30,
-    quantityLabel: "30 jours",
     tags: ["bone_support"]
   },
   {
@@ -255,7 +252,6 @@ const PRODUCT_CATALOG: ProductDefinition[] = [
     pv: 13.22,
     prixPublic: 31.5,
     dureeReferenceJours: 14,
-    quantityLabel: "14 jours",
     tags: ["snacking_control"]
   },
   {
@@ -265,7 +261,6 @@ const PRODUCT_CATALOG: ProductDefinition[] = [
     pv: 15.95,
     prixPublic: 39.5,
     dureeReferenceJours: 10,
-    quantityLabel: "10 jours",
     tags: ["energy"]
   },
   {
@@ -275,10 +270,19 @@ const PRODUCT_CATALOG: ProductDefinition[] = [
     pv: 17.2,
     prixPublic: 47.5,
     dureeReferenceJours: 20,
-    quantityLabel: "20 jours",
     tags: ["hydration"]
   }
 ];
+
+const UPSELL_PRODUCT_BY_NEED: Partial<Record<AssessmentNeedId, string>> = {
+  hydration: "h24-hydrate",
+  energy: "liftoff",
+  sleep: "night-mode",
+  digestive_support: "microbiotic-max",
+  visceral_fat: "beta-heart",
+  bone_support: "xtra-cal",
+  snacking_control: "protein-bars"
+};
 
 function normalizeText(value: string) {
   return value.toLowerCase();
@@ -537,7 +541,8 @@ function getProgramReason(programId: string, needs: DetectedNeed[]) {
 export function buildAssessmentRecommendationPlan(
   source: AssessmentRecommendationSource
 ): AssessmentRecommendationPlan {
-  const detectedNeeds = detectNeeds(source).slice(0, 4);
+  const allDetectedNeeds = detectNeeds(source);
+  const detectedNeeds = allDetectedNeeds.slice(0, 4);
   const usedProductIds = new Set<string>();
   const visibleProductLimit = 6;
   const allocatedProducts = new Map<
@@ -612,10 +617,22 @@ export function buildAssessmentRecommendationPlan(
     };
   });
 
+  const optionalUpsells = allDetectedNeeds
+    .map((need) => UPSELL_PRODUCT_BY_NEED[need.id])
+    .filter(
+      (productId, index, array): productId is string =>
+        Boolean(productId) && array.indexOf(productId) === index
+    )
+    .map((productId) => PRODUCT_CATALOG.find((product) => product.id === productId) ?? null)
+    .filter((product): product is SuggestedProduct => product !== null)
+    .filter((product) => !usedProductIds.has(product.id))
+    .slice(0, 3);
+
   const recommendedProgramId = getRecommendedProgramId(source.objective, detectedNeeds);
 
   return {
     needs,
+    optionalUpsells,
     recommendedProgramId,
     recommendedProgramReason: getProgramReason(recommendedProgramId, detectedNeeds)
   };

@@ -1689,8 +1689,8 @@ export function NewAssessmentPage() {
                   <ProgramCard key={program.id} program={program} selected={form.selectedProgramId === program.id} onSelect={() => update("selectedProgramId", program.id)} />
                 ))}
               </div>
-              {boosterPrograms.length ? (
-                <div className="rounded-[24px] border border-white/10 bg-slate-950/35 p-5">
+                {boosterPrograms.length ? (
+                  <div className="rounded-[24px] border border-white/10 bg-slate-950/35 p-5">
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
                       <p className="eyebrow-label">
@@ -1707,10 +1707,36 @@ export function NewAssessmentPage() {
                       <ProgramBoosterCard key={program.id} program={program} />
                     ))}
                   </div>
-                </div>
-              ) : null}
-            </div>
-          )}
+                  </div>
+                ) : null}
+                {recommendationPlan.optionalUpsells.length ? (
+                  <Card className="space-y-4">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div>
+                        <p className="eyebrow-label">Options en plus si besoin</p>
+                        <p className="mt-2 text-2xl text-white">Quelques ajouts utiles sans alourdir la base</p>
+                      </div>
+                      <StatusBadge label={`${recommendationPlan.optionalUpsells.length} option${recommendationPlan.optionalUpsells.length > 1 ? "s" : ""}`} tone="blue" />
+                    </div>
+                    <div className="grid gap-3">
+                      {recommendationPlan.optionalUpsells.map((product) => (
+                        <SuggestedProductCard
+                          key={`upsell-${product.id}`}
+                          name={product.name}
+                          shortBenefit={product.shortBenefit}
+                          pv={product.pv}
+                          prixPublic={product.prixPublic}
+                          dureeReferenceJours={product.dureeReferenceJours}
+                          quantityLabel={product.quantityLabel}
+                          selected={effectiveSelectedProductIds.includes(product.id)}
+                          onToggle={() => toggleSelectedProduct(product.id)}
+                        />
+                      ))}
+                    </div>
+                  </Card>
+                ) : null}
+              </div>
+            )}
 
           {currentStep === 11 && (
             <VisualStepBoundary title="Repère hydratation">
@@ -1829,19 +1855,45 @@ export function NewAssessmentPage() {
                     </div>
                   </div>
 
-                  <div className="grid gap-4">
-                    <ClientTotalCalculatorCard
-                      programTitle={activeProgram?.title ?? "Programme a confirmer"}
+                    <div className="grid gap-4">
+                      <ClientTotalCalculatorCard
+                        programTitle={activeProgram?.title ?? "Programme a confirmer"}
                       displayedProgramPrice={displayedProgramPrice}
                       includedComposition={activeProgram?.composition ?? []}
                       addOnProducts={addOnProducts}
                       addOnProductsTotalPrice={addOnProductsTotalPrice}
                       addOnProductsTotalPv={addOnProductsTotalPv}
-                      estimatedClientTotal={estimatedClientTotal}
-                    />
+                        estimatedClientTotal={estimatedClientTotal}
+                      />
+                      {recommendationPlan.optionalUpsells.length ? (
+                        <Card className="space-y-4">
+                          <div className="flex flex-wrap items-center justify-between gap-3">
+                            <div>
+                              <p className="eyebrow-label">Options en plus si besoin</p>
+                              <p className="mt-2 text-xl text-white">Ajouts légers a proposer seulement si ca colle</p>
+                            </div>
+                            <StatusBadge label={`${recommendationPlan.optionalUpsells.length} option${recommendationPlan.optionalUpsells.length > 1 ? "s" : ""}`} tone="blue" />
+                          </div>
+                          <div className="grid gap-3">
+                            {recommendationPlan.optionalUpsells.map((product) => (
+                              <SuggestedProductCard
+                                key={`summary-upsell-${product.id}`}
+                                name={product.name}
+                                shortBenefit={product.shortBenefit}
+                                pv={product.pv}
+                                prixPublic={product.prixPublic}
+                                dureeReferenceJours={product.dureeReferenceJours}
+                                quantityLabel={product.quantityLabel}
+                                selected={effectiveSelectedProductIds.includes(product.id)}
+                                onToggle={() => toggleSelectedProduct(product.id)}
+                              />
+                            ))}
+                          </div>
+                        </Card>
+                      ) : null}
+                    </div>
                   </div>
-                </div>
-              </Card>
+                </Card>
 
               <div className="rounded-[24px] bg-emerald-400/10 p-5">
                 <p className="eyebrow-label text-emerald-100/80">Formulation conseillee</p>
