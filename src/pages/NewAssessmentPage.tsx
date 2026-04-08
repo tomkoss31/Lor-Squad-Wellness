@@ -596,9 +596,12 @@ export function NewAssessmentPage() {
   const topPriorityProduct = topPriorityNeed?.products[0] ?? null;
   const displayedProgramPrice = selectedProgram?.price ?? recommendedProgram?.price ?? "";
   const displayedProgramPriceValue = parsePriceValue(displayedProgramPrice);
-  const estimatedClientTotal = selectedRecommendationProducts.length
-    ? selectedProductsTotalPrice
-    : displayedProgramPriceValue;
+  const estimatedClientTotal = Number(
+    (
+      displayedProgramPriceValue +
+      (selectedRecommendationProducts.length ? selectedProductsTotalPrice : 0)
+    ).toFixed(2)
+  );
 
   useEffect(() => {
     if (currentStep !== 10) {
@@ -1827,6 +1830,7 @@ export function NewAssessmentPage() {
                       selectedProductsTotalPrice={selectedProductsTotalPrice}
                       selectedProductsTotalPv={selectedProductsTotalPv}
                       displayedProgramPrice={displayedProgramPrice}
+                      displayedProgramPriceValue={displayedProgramPriceValue}
                       estimatedClientTotal={estimatedClientTotal}
                     />
                     <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-2">
@@ -2613,12 +2617,14 @@ function ClientTotalCalculatorCard({
   selectedProductsTotalPrice,
   selectedProductsTotalPv,
   displayedProgramPrice,
+  displayedProgramPriceValue,
   estimatedClientTotal
 }: {
   selectedProductCount: number;
   selectedProductsTotalPrice: number;
   selectedProductsTotalPv: number;
   displayedProgramPrice: string;
+  displayedProgramPriceValue: number;
   estimatedClientTotal: number;
 }) {
   return (
@@ -2633,14 +2639,21 @@ function ClientTotalCalculatorCard({
 
       <div className="mt-5 grid gap-3 md:grid-cols-2">
         <SummaryHighlightCard
-          label="Total client estime"
+          label="Base seule"
+          value={displayedProgramPrice || "A confirmer"}
+        />
+        <SummaryHighlightCard
+          label="Base + produits retenus"
           value={estimatedClientTotal > 0 ? formatPriceEuro(estimatedClientTotal) : "A definir"}
         />
         <SummaryHighlightCard
           label="PV total estime"
-          value={selectedProductCount ? formatPv(selectedProductsTotalPv) : "A definir"}
+          value={
+            displayedProgramPriceValue > 0 || selectedProductCount
+              ? formatPv(selectedProductsTotalPv)
+              : "A definir"
+          }
         />
-        <SummaryMini label="Base programme" value={displayedProgramPrice || "A confirmer"} />
         <SummaryMini label="Produits retenus" value={`${selectedProductCount}`} />
         <SummaryMini
           label="Total produits"
