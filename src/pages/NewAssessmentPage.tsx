@@ -594,6 +594,11 @@ export function NewAssessmentPage() {
     null;
   const topPriorityNeed = recommendationPlan.needs[0] ?? null;
   const topPriorityProduct = topPriorityNeed?.products[0] ?? null;
+  const displayedProgramPrice = selectedProgram?.price ?? recommendedProgram?.price ?? "";
+  const displayedProgramPriceValue = parsePriceValue(displayedProgramPrice);
+  const estimatedClientTotal = selectedRecommendationProducts.length
+    ? selectedProductsTotalPrice
+    : displayedProgramPriceValue;
 
   useEffect(() => {
     if (currentStep !== 10) {
@@ -1689,7 +1694,7 @@ export function NewAssessmentPage() {
                   />
                 </div>
 
-                <div className="grid gap-4 xl:grid-cols-[1.08fr_0.92fr]">
+                  <div className="grid gap-4 xl:grid-cols-[1.04fr_0.96fr]">
                     <div className="space-y-4">
                     <div className="rounded-[28px] bg-slate-950/24 p-5">
                       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -1747,28 +1752,6 @@ export function NewAssessmentPage() {
                       </div>
                       {recommendationPlan.needs.length ? (
                         <div className="mt-5 space-y-4">
-                          <div className="grid gap-3 md:grid-cols-3">
-                            <SummaryHighlightCard
-                              label="Produits retenus"
-                              value={`${selectedRecommendationProducts.length}`}
-                            />
-                            <SummaryHighlightCard
-                              label="Prix total"
-                              value={
-                                selectedRecommendationProducts.length
-                                  ? formatPriceEuro(selectedProductsTotalPrice)
-                                  : "A definir"
-                              }
-                            />
-                            <SummaryHighlightCard
-                              label="PV total"
-                              value={
-                                selectedRecommendationProducts.length
-                                  ? formatPv(selectedProductsTotalPv)
-                                  : "A definir"
-                              }
-                            />
-                          </div>
                           <div className="grid gap-4">
                           {recommendationPlan.needs.map((need) => (
                             <NeedProductGroup
@@ -1839,6 +1822,13 @@ export function NewAssessmentPage() {
                   </div>
 
                   <div className="grid gap-4">
+                    <ClientTotalCalculatorCard
+                      selectedProductCount={selectedRecommendationProducts.length}
+                      selectedProductsTotalPrice={selectedProductsTotalPrice}
+                      selectedProductsTotalPv={selectedProductsTotalPv}
+                      displayedProgramPrice={displayedProgramPrice}
+                      estimatedClientTotal={estimatedClientTotal}
+                    />
                     <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-2">
                       <SummaryHighlightCard label="Objectif" value={form.objectiveFocus} />
                       <SummaryHighlightCard label="Hydratation cible" value={`${waterNeed} L / jour`} />
@@ -2436,7 +2426,7 @@ function NeedProductGroup({
         </p>
         <StatusBadge label={`${products.length} repere${products.length > 1 ? "s" : ""}`} tone="blue" />
       </div>
-      <div className="grid gap-3">
+      <div className="grid gap-3 xl:grid-cols-2">
         {products.map((product) => (
           <SuggestedProductCard
             key={product.id}
@@ -2473,16 +2463,16 @@ function SuggestedProductCard({
 }) {
   return (
     <div
-      className={`rounded-[20px] p-4 transition ${
+      className={`rounded-[20px] p-3.5 transition ${
         selected
           ? "border border-sky-300/25 bg-sky-400/[0.09]"
           : "bg-slate-950/26"
       }`}
     >
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="max-w-xl">
-          <p className="text-lg font-semibold text-white">{name}</p>
-          <p className="mt-2 text-sm leading-6 text-slate-300">{shortBenefit}</p>
+        <div className="min-w-0 flex-1">
+          <p className="text-base font-semibold text-white">{name}</p>
+          <p className="mt-1.5 text-sm leading-6 text-slate-300">{shortBenefit}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <span className="rounded-full bg-sky-400/10 px-3 py-1 text-sm font-semibold text-sky-200">
@@ -2504,7 +2494,7 @@ function SuggestedProductCard({
           </button>
         </div>
       </div>
-      <div className="mt-4 rounded-[16px] bg-white/[0.03] px-4 py-3 text-sm leading-6 text-slate-200">
+      <div className="mt-3 rounded-[16px] bg-white/[0.03] px-4 py-3 text-sm leading-6 text-slate-200">
         {reasonLabel}
       </div>
     </div>
@@ -2614,6 +2604,50 @@ function SummaryHighlightCard({ label, value }: { label: string; value: string }
     <div className="rounded-[22px] bg-white/[0.03] px-4 py-4">
       <p className="text-[11px] font-medium text-slate-500">{label}</p>
       <p className="mt-3 text-lg font-semibold text-white">{value}</p>
+    </div>
+  );
+}
+
+function ClientTotalCalculatorCard({
+  selectedProductCount,
+  selectedProductsTotalPrice,
+  selectedProductsTotalPv,
+  displayedProgramPrice,
+  estimatedClientTotal
+}: {
+  selectedProductCount: number;
+  selectedProductsTotalPrice: number;
+  selectedProductsTotalPv: number;
+  displayedProgramPrice: string;
+  estimatedClientTotal: number;
+}) {
+  return (
+    <div className="rounded-[28px] border border-sky-300/16 bg-gradient-to-br from-sky-400/[0.12] via-slate-950/24 to-emerald-400/[0.06] p-5">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <p className="eyebrow-label text-sky-100/80">Calculette client</p>
+          <p className="mt-2 text-2xl text-white">Total a presenter</p>
+        </div>
+        <StatusBadge label={selectedProductCount ? "Composition retenue" : "Base programme"} tone="blue" />
+      </div>
+
+      <div className="mt-5 grid gap-3 md:grid-cols-2">
+        <SummaryHighlightCard
+          label="Total client estime"
+          value={estimatedClientTotal > 0 ? formatPriceEuro(estimatedClientTotal) : "A definir"}
+        />
+        <SummaryHighlightCard
+          label="PV total estime"
+          value={selectedProductCount ? formatPv(selectedProductsTotalPv) : "A definir"}
+        />
+        <SummaryMini label="Base programme" value={displayedProgramPrice || "A confirmer"} />
+        <SummaryMini label="Produits retenus" value={`${selectedProductCount}`} />
+        <SummaryMini
+          label="Total produits"
+          value={selectedProductCount ? formatPriceEuro(selectedProductsTotalPrice) : "A definir"}
+        />
+        <SummaryMini label="Lecture" value={selectedProductCount ? "Selection terrain" : "Programme seul"} />
+      </div>
     </div>
   );
 }
@@ -2786,6 +2820,21 @@ function formatPriceEuro(value: number) {
 
 function formatPv(value: number) {
   return `${value.toFixed(2)} PV`;
+}
+
+function parsePriceValue(value: string) {
+  const normalized = String(value)
+    .replace(",", ".")
+    .match(/-?\d+(?:\.\d+)?/g);
+
+  if (!normalized?.length) {
+    return 0;
+  }
+
+  return normalized
+    .map((part) => Number(part))
+    .filter((part) => Number.isFinite(part))
+    .reduce((total, part) => total + part, 0);
 }
 
 function formatValue(value: number, unit: string) {
