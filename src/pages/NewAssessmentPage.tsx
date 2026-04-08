@@ -32,6 +32,7 @@ import {
   getWeightLossPlan,
   normalizeTimelineLabel
 } from "../lib/calculations";
+import { buildAssessmentRecommendationPlan } from "../lib/assessmentRecommendations";
 import type { BiologicalSex, Objective, RecommendationLead } from "../types/domain";
 
 type AssessmentForm = {
@@ -541,6 +542,34 @@ export function NewAssessmentPage() {
   const recommendationCount = form.recommendations.filter(
     (item) => item.name.trim() || item.contact.trim()
   ).length;
+  const recommendationPlan = buildAssessmentRecommendationPlan({
+    sex: form.sex,
+    objective: form.objective,
+    sleepHours: form.sleepHours,
+    sleepQuality: form.sleepQuality,
+    breakfastFrequency: form.breakfastFrequency,
+    breakfastSatiety: form.breakfastSatiety,
+    regularMealTimes: form.regularMealTimes,
+    proteinEachMeal: form.proteinEachMeal,
+    sugaryProducts: form.sugaryProducts,
+    snackingFrequency: form.snackingFrequency,
+    snackingMoment: form.snackingMoment,
+    cravingsPreference: form.cravingsPreference,
+    snackingTrigger: form.snackingTrigger,
+    waterIntake: form.waterIntake,
+    energyLevel: form.energyLevel,
+    transitStatus: form.transitStatus,
+    healthNotes: form.healthNotes,
+    pathologyContext: form.pathologyContext,
+    weight: form.weight,
+    muscleMass: form.muscleMass,
+    hydration: form.hydration,
+    boneMass: form.boneMass,
+    visceralFat: form.visceralFat
+  });
+  const recommendedProgram =
+    mainPrograms.find((program) => program.id === recommendationPlan.recommendedProgramId) ??
+    null;
 
   const prompts =
     currentStep === 1
@@ -682,9 +711,9 @@ export function NewAssessmentPage() {
                       ? ["Montrer la routine comme un ensemble simple.", "Le visuel doit porter l'explication.", "Moins de texte, plus de lisibilite."]
                 : currentStep === 10
                       ? [
-                          `Programme : ${selectedProgram?.title ?? "A choisir"}`,
-                          `Prix : ${selectedProgram?.price ?? "-"}`,
-                          selectedProgram?.benefits[0] ?? "Faire ressortir le benefice principal"
+                          `Besoin prioritaire : ${recommendationPlan.needs[0]?.label ?? "A preciser"}`,
+                          `Produit repere : ${recommendationPlan.needs[0]?.products[0]?.name ?? "A proposer"}`,
+                          `Programme conseille : ${recommendedProgram?.title ?? "Base a confirmer"}`
                         ]
                 : currentStep === 11
                         ? ["Ancrer les bases avant le demarrage.", "Hydratation et matin doivent paraitre evidents.", "Pas de surcharge autour du visuel."]
@@ -1435,6 +1464,79 @@ export function NewAssessmentPage() {
                 ) : null}
               </Card>
 
+              <Card className="space-y-5">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <p className="eyebrow-label">Lecture besoins</p>
+                    <p className="mt-2 text-2xl text-white">Ce que le bilan fait ressortir en priorite</p>
+                  </div>
+                  <StatusBadge
+                    label={`${recommendationPlan.needs.length} besoin${recommendationPlan.needs.length > 1 ? "s" : ""}`}
+                    tone={recommendationPlan.needs.length ? "green" : "blue"}
+                  />
+                </div>
+
+                {recommendationPlan.needs.length ? (
+                  <div className="grid gap-4 xl:grid-cols-[0.92fr_1.08fr]">
+                    <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-1">
+                      {recommendationPlan.needs.map((need) => (
+                        <DetectedNeedCard
+                          key={need.id}
+                          label={need.label}
+                          summary={need.summary}
+                          reasonLabel={need.reasonLabel}
+                        />
+                      ))}
+                    </div>
+
+                    <div className="space-y-4">
+                      <div className="rounded-[24px] bg-white/[0.03] p-4">
+                        <div className="flex flex-wrap items-center justify-between gap-3">
+                          <div>
+                            <p className="eyebrow-label">Produits suggeres</p>
+                            <p className="mt-2 text-lg text-white">
+                              Une proposition simple, basee sur les besoins detectes.
+                            </p>
+                          </div>
+                          <StatusBadge label="V1 accompagnee" tone="blue" />
+                        </div>
+                        <div className="mt-4 grid gap-3">
+                          {recommendationPlan.needs.map((need) => (
+                            <NeedProductGroup
+                              key={`products-${need.id}`}
+                              title={need.label}
+                              products={need.products}
+                            />
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="rounded-[24px] bg-emerald-400/10 p-4">
+                        <p className="eyebrow-label text-emerald-100/80">Programme conseille</p>
+                        <div className="mt-3 flex flex-wrap items-start justify-between gap-3">
+                          <div>
+                            <p className="text-xl text-white">
+                              {recommendedProgram?.title ?? "Base a confirmer"}
+                            </p>
+                            <p className="mt-2 text-sm leading-6 text-slate-200">
+                              {recommendationPlan.recommendedProgramReason}
+                            </p>
+                          </div>
+                          <span className="rounded-full bg-emerald-400/12 px-4 py-2 text-sm font-semibold text-emerald-100">
+                            {recommendedProgram?.price ?? "A ajuster"}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="rounded-[24px] bg-white/[0.03] p-5 text-sm leading-7 text-slate-300">
+                    Le bilan ne fait pas encore ressortir une priorite forte. On peut partir sur une
+                    base simple, puis personnaliser au premier suivi.
+                  </div>
+                )}
+              </Card>
+
               <div className="grid gap-4 lg:grid-cols-2">
                 {mainPrograms.map((program) => (
                   <ProgramCard key={program.id} program={program} selected={form.selectedProgramId === program.id} onSelect={() => update("selectedProgramId", program.id)} />
@@ -1509,33 +1611,99 @@ export function NewAssessmentPage() {
                 </div>
 
                 <div className="grid gap-4 xl:grid-cols-[1.08fr_0.92fr]">
+                    <div className="space-y-4">
                     <div className="rounded-[28px] bg-slate-950/24 p-5">
-                    <p className="eyebrow-label">Programme retenu</p>
-                    <div className="mt-4 flex flex-wrap items-start justify-between gap-3">
-                      <div>
-                        <p className="text-3xl text-white">{selectedProgram?.title ?? "Programme a confirmer"}</p>
-                        <p className="mt-2 text-sm leading-6 text-slate-300">
-                          {selectedProgram?.summary ??
-                            "Le bilan est bien enregistre, mais le programme sera confirme au moment de la relance."}
-                        </p>
-                      </div>
-                        <span className="rounded-full bg-sky-400/10 px-4 py-2 text-lg font-semibold text-sky-200">
-                          {selectedProgram?.price ?? "Relance"}
-                        </span>
-                    </div>
-                    <div className="mt-5 grid gap-3 md:grid-cols-3">
-                      {(selectedProgram?.benefits ?? [
-                        "Bilan complet enregistre",
-                        "Relance deja posee",
-                        "Programme a confirmer au prochain contact"
-                      ]).map((benefit) => (
-                        <div
-                          key={benefit}
-                          className="rounded-[22px] bg-white/[0.03] px-4 py-4 text-sm leading-6 text-slate-200"
-                        >
-                          {benefit}
+                      <div className="flex flex-wrap items-center justify-between gap-3">
+                        <div>
+                          <p className="eyebrow-label">Besoins detectes</p>
+                          <p className="mt-3 text-3xl text-white">
+                            Ce qui ressort du bilan pour lancer la routine
+                          </p>
                         </div>
-                      ))}
+                        <StatusBadge
+                          label={`${recommendationPlan.needs.length} priorite${recommendationPlan.needs.length > 1 ? "s" : ""}`}
+                          tone={recommendationPlan.needs.length ? "green" : "blue"}
+                        />
+                      </div>
+
+                      {recommendationPlan.needs.length ? (
+                        <div className="mt-5 grid gap-3 md:grid-cols-2">
+                          {recommendationPlan.needs.map((need) => (
+                            <DetectedNeedCard
+                              key={`summary-${need.id}`}
+                              label={need.label}
+                              summary={need.summary}
+                              reasonLabel={need.reasonLabel}
+                            />
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="mt-5 rounded-[22px] bg-white/[0.03] px-4 py-4 text-sm leading-6 text-slate-200">
+                          Aucune priorite forte n'apparait pour l'instant. On peut rester sur une base
+                          simple et personnaliser ensuite.
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="rounded-[28px] bg-slate-950/24 p-5">
+                      <div className="flex flex-wrap items-start justify-between gap-3">
+                        <div>
+                          <p className="eyebrow-label">Produits suggeres</p>
+                          <p className="mt-3 text-2xl text-white">
+                            La proposition la plus simple a presenter aujourd'hui
+                          </p>
+                        </div>
+                        <StatusBadge label="Base besoins -> produits" tone="blue" />
+                      </div>
+                      {recommendationPlan.needs.length ? (
+                        <div className="mt-5 grid gap-4">
+                          {recommendationPlan.needs.map((need) => (
+                            <NeedProductGroup
+                              key={`summary-products-${need.id}`}
+                              title={need.label}
+                              products={need.products}
+                            />
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="mt-5 rounded-[22px] bg-white/[0.03] px-4 py-4 text-sm leading-6 text-slate-200">
+                          Une base simple suffit pour le moment. Les produits se personaliseront
+                          au besoin dans le suivi.
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="rounded-[28px] bg-slate-950/24 p-5">
+                      <p className="eyebrow-label">Programme conseille</p>
+                      <div className="mt-4 flex flex-wrap items-start justify-between gap-3">
+                        <div>
+                          <p className="text-3xl text-white">
+                            {selectedProgram?.title ?? recommendedProgram?.title ?? "Programme a confirmer"}
+                          </p>
+                          <p className="mt-2 text-sm leading-6 text-slate-300">
+                            {selectedProgram?.summary ??
+                              recommendationPlan.recommendedProgramReason}
+                          </p>
+                        </div>
+                        <span className="rounded-full bg-sky-400/10 px-4 py-2 text-lg font-semibold text-sky-200">
+                          {selectedProgram?.price ?? recommendedProgram?.price ?? "Relance"}
+                        </span>
+                      </div>
+                      <div className="mt-5 grid gap-3 md:grid-cols-3">
+                        {(selectedProgram?.benefits ??
+                          recommendedProgram?.benefits ?? [
+                            "Base simple a demarrer",
+                            "Routine facile a expliquer",
+                            "Personnalisation possible ensuite"
+                          ]).map((benefit) => (
+                          <div
+                            key={benefit}
+                            className="rounded-[22px] bg-white/[0.03] px-4 py-4 text-sm leading-6 text-slate-200"
+                          >
+                            {benefit}
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   </div>
 
@@ -2043,6 +2211,105 @@ function ChoiceGroup({
   );
 }
 
+function DetectedNeedCard({
+  label,
+  summary,
+  reasonLabel
+}: {
+  label: string;
+  summary: string;
+  reasonLabel: string;
+}) {
+  return (
+    <div className="rounded-[22px] border border-white/10 bg-white/[0.03] p-4">
+      <p className="eyebrow-label">Besoin detecte</p>
+      <p className="mt-2 text-xl text-white">{label}</p>
+      <p className="mt-2 text-sm leading-6 text-slate-300">{summary}</p>
+      <div className="mt-4 rounded-[18px] bg-slate-950/28 px-4 py-3 text-sm leading-6 text-slate-200">
+        {reasonLabel}
+      </div>
+    </div>
+  );
+}
+
+function NeedProductGroup({
+  title,
+  products
+}: {
+  title: string;
+  products: Array<{
+    id: string;
+    name: string;
+    shortBenefit: string;
+    pv: number;
+    prixPublic: number;
+    reasonLabel: string;
+  }>;
+}) {
+  if (!products.length) {
+    return null;
+  }
+
+  return (
+    <div className="space-y-3 rounded-[22px] border border-white/10 bg-white/[0.02] p-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="text-sm font-semibold uppercase tracking-[0.22em] text-slate-400">
+          {title}
+        </p>
+        <StatusBadge label={`${products.length} repere${products.length > 1 ? "s" : ""}`} tone="blue" />
+      </div>
+      <div className="grid gap-3">
+        {products.map((product) => (
+          <SuggestedProductCard
+            key={product.id}
+            name={product.name}
+            shortBenefit={product.shortBenefit}
+            pv={product.pv}
+            prixPublic={product.prixPublic}
+            reasonLabel={product.reasonLabel}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function SuggestedProductCard({
+  name,
+  shortBenefit,
+  pv,
+  prixPublic,
+  reasonLabel
+}: {
+  name: string;
+  shortBenefit: string;
+  pv: number;
+  prixPublic: number;
+  reasonLabel: string;
+}) {
+  return (
+    <div className="rounded-[20px] bg-slate-950/26 p-4">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="max-w-xl">
+          <p className="text-lg font-semibold text-white">{name}</p>
+          <p className="mt-2 text-sm leading-6 text-slate-300">{shortBenefit}</p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <span className="rounded-full bg-sky-400/10 px-3 py-1 text-sm font-semibold text-sky-200">
+            {formatPriceEuro(prixPublic)}
+          </span>
+          <span className="rounded-full bg-emerald-400/10 px-3 py-1 text-sm font-semibold text-emerald-100">
+            {formatPv(pv)}
+          </span>
+        </div>
+      </div>
+      <div className="mt-4 rounded-[16px] bg-white/[0.03] px-4 py-3 text-sm leading-6 text-slate-200">
+        {reasonLabel}
+      </div>
+    </div>
+  );
+}
+
 function TimelineChoiceField({
   label,
   value,
@@ -2310,6 +2577,14 @@ function formatEditableNumber(value: number) {
 
   const asString = String(value);
   return asString.endsWith(".0") ? asString.slice(0, -2) : asString;
+}
+
+function formatPriceEuro(value: number) {
+  return `${value.toFixed(2)} EUR`;
+}
+
+function formatPv(value: number) {
+  return `${value.toFixed(2)} PV`;
 }
 
 function formatValue(value: number, unit: string) {
