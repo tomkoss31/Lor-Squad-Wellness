@@ -95,6 +95,8 @@ function buildEditableQuestionnaire(questionnaire: AssessmentQuestionnaire): Ass
   return {
     referredByName: questionnaire.referredByName ?? "",
     optionalProductsUsed: questionnaire.optionalProductsUsed ?? "",
+    detectedNeedIds: questionnaire.detectedNeedIds ?? [],
+    selectedProductIds: questionnaire.selectedProductIds ?? [],
     healthStatus: questionnaire.healthStatus ?? "",
     healthNotes: questionnaire.healthNotes ?? "",
     allergies: questionnaire.allergies ?? "",

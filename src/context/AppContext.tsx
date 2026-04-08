@@ -981,6 +981,9 @@ export function AppProvider({ children }: PropsWithChildren) {
 
   async function updateAssessment(clientId: string, assessment: AssessmentRecord) {
     const targetClient = clients.find((client) => client.id === clientId);
+    const nextAssessments = targetClient?.assessments.map((item) =>
+      item.id === assessment.id ? assessment : item
+    );
     if (storageMode === "supabase") {
       await updateSupabaseAssessment(clientId, assessment);
       await refreshRemoteData(currentUser);
@@ -1039,26 +1042,21 @@ export function AppProvider({ children }: PropsWithChildren) {
     );
 
     if (assessment.type === "initial") {
-      const targetClient = clients.find((client) => client.id === clientId);
-      if (
-        targetClient &&
-        assessment.programId &&
-        !pvClientProducts.some((item) => item.clientId === clientId)
-      ) {
+      if (targetClient && assessment.programId) {
         const seededClient: Client = {
           ...targetClient,
           currentProgram: assessment.programTitle,
           pvProgramId: resolvePvProgram(assessment.programTitle).id,
           started: true,
-          startDate: assessment.date
+          status: "active",
+          startDate: assessment.date,
+          assessments: nextAssessments ?? targetClient.assessments
         };
         setPvClientProducts((previousProducts) => [
           ...buildSeedPvClientProductsForClient(seededClient),
-          ...previousProducts
+          ...previousProducts.filter((item) => item.clientId !== clientId)
         ]);
-      }
-
-      if (!assessment.programId) {
+      } else {
         setPvClientProducts((previousProducts) =>
           previousProducts.filter((item) => item.clientId !== clientId)
         );

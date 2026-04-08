@@ -91,10 +91,10 @@ export const pvProductCatalog: PvProductCatalogItem[] = [
   },
   {
     id: "phyto-brule-graisse",
-    name: "Phytocomplete brule-graisse",
+    name: "Phyto Complete",
     category: "gelules",
     pricePublic: 90,
-    pv: 38,
+    pv: 38.15,
     quantiteLabel: "60 gelules",
     dureeReferenceJours: 30,
     noteMetier: "Reference simple de 30 jours.",
@@ -137,6 +137,90 @@ export const pvProductCatalog: PvProductCatalogItem[] = [
     dureeReferenceJours: 30,
     noteMetier: "Reference simple de 30 jours.",
     recommendedProgram: "Programme Booster 1",
+    active: true
+  },
+  {
+    id: "microbiotic-max",
+    name: "Microbiotic Max",
+    category: "digestif",
+    pricePublic: 64.5,
+    pv: 27.1,
+    quantiteLabel: "30 jours",
+    dureeReferenceJours: 30,
+    noteMetier: "Soutien digestif simple sur 30 jours.",
+    recommendedProgram: "Suivi personnalise",
+    active: true
+  },
+  {
+    id: "night-mode",
+    name: "Night Mode",
+    category: "sommeil",
+    pricePublic: 69,
+    pv: 31.25,
+    quantiteLabel: "30 jours",
+    dureeReferenceJours: 30,
+    noteMetier: "Repere routine du soir sur 30 jours.",
+    recommendedProgram: "Suivi personnalise",
+    active: true
+  },
+  {
+    id: "xtra-cal",
+    name: "Xtra-Cal",
+    category: "calcium",
+    pricePublic: 24.5,
+    pv: 10.25,
+    quantiteLabel: "30 jours",
+    dureeReferenceJours: 30,
+    noteMetier: "Repere simple autour du calcium.",
+    recommendedProgram: "Suivi personnalise",
+    active: true
+  },
+  {
+    id: "beta-heart",
+    name: "Beta Heart",
+    category: "visceral / routine",
+    pricePublic: 57.5,
+    pv: 25.95,
+    quantiteLabel: "30 jours",
+    dureeReferenceJours: 30,
+    noteMetier: "Repere complementaire quand la lecture viscerale ressort.",
+    recommendedProgram: "Suivi personnalise",
+    active: true
+  },
+  {
+    id: "protein-bars",
+    name: "Barres aux proteines",
+    category: "encas",
+    pricePublic: 31.5,
+    pv: 13.22,
+    quantiteLabel: "14 jours",
+    dureeReferenceJours: 14,
+    noteMetier: "Encas cadre pour les fringales et les deplacements.",
+    recommendedProgram: "Suivi personnalise",
+    active: true
+  },
+  {
+    id: "liftoff",
+    name: "LiftOff",
+    category: "energie",
+    pricePublic: 39.5,
+    pv: 15.95,
+    quantiteLabel: "10 jours",
+    dureeReferenceJours: 10,
+    noteMetier: "Impulsion simple quand l'energie manque.",
+    recommendedProgram: "Suivi personnalise",
+    active: true
+  },
+  {
+    id: "h24-hydrate",
+    name: "Herbalife24 Hydrate",
+    category: "hydratation",
+    pricePublic: 47.5,
+    pv: 17.2,
+    quantiteLabel: "20 jours",
+    dureeReferenceJours: 20,
+    noteMetier: "Repere hydratation plus marque en soutien.",
+    recommendedProgram: "Suivi personnalise",
     active: true
   }
 ];
@@ -200,6 +284,17 @@ function getProduct(productId: string) {
   return pvProductCatalog.find((product) => product.id === productId) ?? null;
 }
 
+function getClientPvProductIds(client: Client) {
+  const firstAssessment = getFirstAssessment(client);
+  const selectedProductIds = firstAssessment.questionnaire.selectedProductIds ?? [];
+  const validSelectedProductIds = selectedProductIds.filter((productId, index, array) =>
+    array.indexOf(productId) === index && Boolean(getProduct(productId))
+  );
+  const program = resolvePvProgram(client.pvProgramId ?? client.currentProgram);
+
+  return validSelectedProductIds.length ? validSelectedProductIds : program.includedProductIds;
+}
+
 export function buildSeedPvClientProductsForClient(client: Client): PvClientProductRecord[] {
   if (!client.started || !client.currentProgram.trim()) {
     return [];
@@ -208,8 +303,9 @@ export function buildSeedPvClientProductsForClient(client: Client): PvClientProd
   const firstAssessment = getFirstAssessment(client);
   const startDate = client.startDate ?? firstAssessment.date;
   const program = resolvePvProgram(client.pvProgramId ?? client.currentProgram);
+  const productIds = getClientPvProductIds(client);
 
-  return program.includedProductIds.flatMap((productId) => {
+  return productIds.flatMap((productId) => {
     const product = getProduct(productId);
     if (!product) {
       return [];
@@ -246,8 +342,9 @@ function buildBaseTransactions(clients: Client[]) {
     const firstAssessment = getFirstAssessment(client);
     const startDate = client.startDate ?? firstAssessment.date;
     const program = resolvePvProgram(client.pvProgramId ?? client.currentProgram);
+    const productIds = getClientPvProductIds(client);
 
-    return program.includedProductIds.flatMap((productId, index) => {
+    return productIds.flatMap((productId, index) => {
       const product = getProduct(productId);
       if (!product) {
         return [];

@@ -105,6 +105,8 @@ type AssessmentForm = {
   comment: string;
   recommendations: RecommendationLead[];
   recommendationsContacted: boolean;
+  detectedNeedIds: string[];
+  selectedProductIds: string[];
 };
 
 interface AssessmentDraftPayload {
@@ -227,7 +229,9 @@ const initialForm: AssessmentForm = {
   nextFollowUp: getDefaultNextFollowUpDateTime(),
   comment: "",
   recommendations: createEmptyRecommendations(),
-  recommendationsContacted: false
+  recommendationsContacted: false,
+  detectedNeedIds: [],
+  selectedProductIds: []
 };
 
 function readAssessmentDraft(): AssessmentDraftPayload | null {
@@ -567,9 +571,41 @@ export function NewAssessmentPage() {
     boneMass: form.boneMass,
     visceralFat: form.visceralFat
   });
+  const defaultSuggestedProductIds = recommendationPlan.needs
+    .flatMap((need) => need.products.slice(0, 1).map((product) => product.id))
+    .filter((productId, index, array) => array.indexOf(productId) === index);
+  const effectiveSelectedProductIds =
+    form.selectedProductIds.length > 0 ? form.selectedProductIds : defaultSuggestedProductIds;
+  const selectedRecommendationProducts = recommendationPlan.needs
+    .flatMap((need) => need.products)
+    .filter(
+      (product, index, array) =>
+        effectiveSelectedProductIds.includes(product.id) &&
+        array.findIndex((item) => item.id === product.id) === index
+    );
+  const selectedProductsTotalPrice = Number(
+    selectedRecommendationProducts.reduce((total, product) => total + product.prixPublic, 0).toFixed(2)
+  );
+  const selectedProductsTotalPv = Number(
+    selectedRecommendationProducts.reduce((total, product) => total + product.pv, 0).toFixed(2)
+  );
   const recommendedProgram =
     mainPrograms.find((program) => program.id === recommendationPlan.recommendedProgramId) ??
     null;
+  const topPriorityNeed = recommendationPlan.needs[0] ?? null;
+  const topPriorityProduct = topPriorityNeed?.products[0] ?? null;
+
+  useEffect(() => {
+    if (currentStep !== 10) {
+      return;
+    }
+
+    if (form.selectedProductIds.length || !defaultSuggestedProductIds.length) {
+      return;
+    }
+
+    update("selectedProductIds", defaultSuggestedProductIds);
+  }, [currentStep, defaultSuggestedProductIds, form.selectedProductIds.length]);
 
   const prompts =
     currentStep === 1
@@ -811,6 +847,19 @@ export function NewAssessmentPage() {
     }));
   }
 
+  function toggleSelectedProduct(productId: string) {
+    setForm((previous) => {
+      const nextSelected = previous.selectedProductIds.includes(productId)
+        ? previous.selectedProductIds.filter((id) => id !== productId)
+        : [...previous.selectedProductIds, productId];
+
+      return {
+        ...previous,
+        selectedProductIds: nextSelected
+      };
+    });
+  }
+
 
   function updateObjectiveFocus(value: string) {
     update("objectiveFocus", value);
@@ -821,6 +870,8 @@ export function NewAssessmentPage() {
   function buildQuestionnaire() {
     return {
       referredByName: form.referredByName.trim() || undefined,
+      detectedNeedIds: recommendationPlan.needs.map((need) => need.id),
+      selectedProductIds: effectiveSelectedProductIds,
       healthStatus: form.healthStatus,
       healthNotes: form.healthNotes,
       allergies: form.allergies,
@@ -1477,7 +1528,17 @@ export function NewAssessmentPage() {
                 </div>
 
                 {recommendationPlan.needs.length ? (
-                  <div className="grid gap-4 xl:grid-cols-[0.92fr_1.08fr]">
+                  <div className="space-y-4">
+                    {topPriorityNeed ? (
+                      <PriorityNeedSpotlight
+                        label={topPriorityNeed.label}
+                        summary={topPriorityNeed.summary}
+                        reasonLabel={topPriorityNeed.reasonLabel}
+                        productName={topPriorityProduct?.name}
+                        productReasonLabel={topPriorityProduct?.reasonLabel}
+                      />
+                    ) : null}
+                    <div className="grid gap-4 xl:grid-cols-[0.92fr_1.08fr]">
                     <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-1">
                       {recommendationPlan.needs.map((need) => (
                         <DetectedNeedCard
@@ -1490,12 +1551,27 @@ export function NewAssessmentPage() {
                     </div>
 
                     <div className="space-y-4">
+                      <div className="grid gap-3 md:grid-cols-3">
+                        <SummaryHighlightCard
+                          label="Produits retenus"
+                          value={`${selectedRecommendationProducts.length}`}
+                        />
+                        <SummaryHighlightCard
+                          label="Prix total estime"
+                          value={selectedRecommendationProducts.length ? formatPriceEuro(selectedProductsTotalPrice) : "A definir"}
+                        />
+                        <SummaryHighlightCard
+                          label="PV total estime"
+                          value={selectedRecommendationProducts.length ? formatPv(selectedProductsTotalPv) : "A definir"}
+                        />
+                      </div>
+
                       <div className="rounded-[24px] bg-white/[0.03] p-4">
                         <div className="flex flex-wrap items-center justify-between gap-3">
                           <div>
                             <p className="eyebrow-label">Produits suggeres</p>
                             <p className="mt-2 text-lg text-white">
-                              Une proposition simple, basee sur les besoins detectes.
+                              Une proposition simple, basee sur les besoins detectes. Tu peux retenir ce qui sera vraiment mis en place.
                             </p>
                           </div>
                           <StatusBadge label="V1 accompagnee" tone="blue" />
@@ -1506,6 +1582,8 @@ export function NewAssessmentPage() {
                               key={`products-${need.id}`}
                               title={need.label}
                               products={need.products}
+                              selectedProductIds={effectiveSelectedProductIds}
+                              onToggleProduct={toggleSelectedProduct}
                             />
                           ))}
                         </div>
@@ -1527,6 +1605,7 @@ export function NewAssessmentPage() {
                           </span>
                         </div>
                       </div>
+                    </div>
                     </div>
                   </div>
                 ) : (
@@ -1627,15 +1706,26 @@ export function NewAssessmentPage() {
                       </div>
 
                       {recommendationPlan.needs.length ? (
-                        <div className="mt-5 grid gap-3 md:grid-cols-2">
-                          {recommendationPlan.needs.map((need) => (
-                            <DetectedNeedCard
-                              key={`summary-${need.id}`}
-                              label={need.label}
-                              summary={need.summary}
-                              reasonLabel={need.reasonLabel}
+                        <div className="mt-5 space-y-4">
+                          {topPriorityNeed ? (
+                            <PriorityNeedSpotlight
+                              label={topPriorityNeed.label}
+                              summary={topPriorityNeed.summary}
+                              reasonLabel={topPriorityNeed.reasonLabel}
+                              productName={topPriorityProduct?.name}
+                              productReasonLabel={topPriorityProduct?.reasonLabel}
                             />
-                          ))}
+                          ) : null}
+                          <div className="grid gap-3 md:grid-cols-2">
+                            {recommendationPlan.needs.map((need) => (
+                              <DetectedNeedCard
+                                key={`summary-${need.id}`}
+                                label={need.label}
+                                summary={need.summary}
+                                reasonLabel={need.reasonLabel}
+                              />
+                            ))}
+                          </div>
                         </div>
                       ) : (
                         <div className="mt-5 rounded-[22px] bg-white/[0.03] px-4 py-4 text-sm leading-6 text-slate-200">
@@ -1656,14 +1746,40 @@ export function NewAssessmentPage() {
                         <StatusBadge label="Base besoins -> produits" tone="blue" />
                       </div>
                       {recommendationPlan.needs.length ? (
-                        <div className="mt-5 grid gap-4">
+                        <div className="mt-5 space-y-4">
+                          <div className="grid gap-3 md:grid-cols-3">
+                            <SummaryHighlightCard
+                              label="Produits retenus"
+                              value={`${selectedRecommendationProducts.length}`}
+                            />
+                            <SummaryHighlightCard
+                              label="Prix total"
+                              value={
+                                selectedRecommendationProducts.length
+                                  ? formatPriceEuro(selectedProductsTotalPrice)
+                                  : "A definir"
+                              }
+                            />
+                            <SummaryHighlightCard
+                              label="PV total"
+                              value={
+                                selectedRecommendationProducts.length
+                                  ? formatPv(selectedProductsTotalPv)
+                                  : "A definir"
+                              }
+                            />
+                          </div>
+                          <div className="grid gap-4">
                           {recommendationPlan.needs.map((need) => (
                             <NeedProductGroup
                               key={`summary-products-${need.id}`}
                               title={need.label}
                               products={need.products}
+                              selectedProductIds={effectiveSelectedProductIds}
+                              onToggleProduct={toggleSelectedProduct}
                             />
                           ))}
+                          </div>
                         </div>
                       ) : (
                         <div className="mt-5 rounded-[22px] bg-white/[0.03] px-4 py-4 text-sm leading-6 text-slate-200">
@@ -1705,6 +1821,21 @@ export function NewAssessmentPage() {
                         ))}
                       </div>
                     </div>
+
+                    {selectedRecommendationProducts.length ? (
+                      <div className="rounded-[28px] bg-slate-950/24 p-5">
+                        <p className="eyebrow-label">Composition retenue</p>
+                        <div className="mt-4 grid gap-3 md:grid-cols-2">
+                          {selectedRecommendationProducts.map((product) => (
+                            <SummaryRow
+                              key={`retained-${product.id}`}
+                              label={product.name}
+                              value={`${formatPriceEuro(product.prixPublic)} - ${formatPv(product.pv)}`}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    ) : null}
                   </div>
 
                   <div className="grid gap-4">
@@ -2232,9 +2363,54 @@ function DetectedNeedCard({
   );
 }
 
+function PriorityNeedSpotlight({
+  label,
+  summary,
+  reasonLabel,
+  productName,
+  productReasonLabel
+}: {
+  label: string;
+  summary: string;
+  reasonLabel: string;
+  productName?: string;
+  productReasonLabel?: string;
+}) {
+  return (
+    <div className="rounded-[26px] border border-emerald-300/18 bg-gradient-to-r from-emerald-400/14 via-sky-400/10 to-white/[0.04] p-5">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <p className="eyebrow-label text-emerald-100/80">Priorite n°1</p>
+          <p className="mt-2 text-2xl text-white">{label}</p>
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-200">{summary}</p>
+        </div>
+        <StatusBadge label="Besoin principal" tone="green" />
+      </div>
+      <div className="mt-4 grid gap-3 md:grid-cols-[1.05fr_0.95fr]">
+        <div className="rounded-[20px] bg-slate-950/28 px-4 py-4 text-sm leading-6 text-slate-100">
+          {reasonLabel}
+        </div>
+        <div className="rounded-[20px] bg-white/[0.05] px-4 py-4">
+          <p className="text-[11px] font-medium uppercase tracking-[0.24em] text-slate-400">
+            Produit repere
+          </p>
+          <p className="mt-2 text-base font-semibold text-white">
+            {productName ?? "A confirmer"}
+          </p>
+          <p className="mt-2 text-sm leading-6 text-slate-300">
+            {productReasonLabel ?? "La proposition se precise selon le reste du bilan."}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function NeedProductGroup({
   title,
-  products
+  products,
+  selectedProductIds,
+  onToggleProduct
 }: {
   title: string;
   products: Array<{
@@ -2245,6 +2421,8 @@ function NeedProductGroup({
     prixPublic: number;
     reasonLabel: string;
   }>;
+  selectedProductIds: string[];
+  onToggleProduct: (productId: string) => void;
 }) {
   if (!products.length) {
     return null;
@@ -2267,6 +2445,8 @@ function NeedProductGroup({
             pv={product.pv}
             prixPublic={product.prixPublic}
             reasonLabel={product.reasonLabel}
+            selected={selectedProductIds.includes(product.id)}
+            onToggle={() => onToggleProduct(product.id)}
           />
         ))}
       </div>
@@ -2279,28 +2459,49 @@ function SuggestedProductCard({
   shortBenefit,
   pv,
   prixPublic,
-  reasonLabel
+  reasonLabel,
+  selected,
+  onToggle
 }: {
   name: string;
   shortBenefit: string;
   pv: number;
   prixPublic: number;
   reasonLabel: string;
+  selected: boolean;
+  onToggle: () => void;
 }) {
   return (
-    <div className="rounded-[20px] bg-slate-950/26 p-4">
+    <div
+      className={`rounded-[20px] p-4 transition ${
+        selected
+          ? "border border-sky-300/25 bg-sky-400/[0.09]"
+          : "bg-slate-950/26"
+      }`}
+    >
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="max-w-xl">
           <p className="text-lg font-semibold text-white">{name}</p>
           <p className="mt-2 text-sm leading-6 text-slate-300">{shortBenefit}</p>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <span className="rounded-full bg-sky-400/10 px-3 py-1 text-sm font-semibold text-sky-200">
             {formatPriceEuro(prixPublic)}
           </span>
           <span className="rounded-full bg-emerald-400/10 px-3 py-1 text-sm font-semibold text-emerald-100">
             {formatPv(pv)}
           </span>
+          <button
+            type="button"
+            onClick={onToggle}
+            className={`inline-flex min-h-[34px] items-center justify-center rounded-full px-3.5 py-1.5 text-sm font-semibold transition ${
+              selected
+                ? "bg-white text-slate-950"
+                : "border border-white/10 bg-white/[0.03] text-white hover:bg-white/[0.08]"
+            }`}
+          >
+            {selected ? "Retenu" : "Retenir"}
+          </button>
         </div>
       </div>
       <div className="mt-4 rounded-[16px] bg-white/[0.03] px-4 py-3 text-sm leading-6 text-slate-200">

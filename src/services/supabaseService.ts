@@ -186,10 +186,17 @@ function buildSeedPvProducts(payload: {
   distributorName: string;
   programTitle: string;
   startDate: string;
+  selectedProductIds?: string[];
 }) {
   const program = resolvePvProgram(payload.programTitle);
+  const selectedProductIds = (payload.selectedProductIds ?? []).filter(
+    (productId, index, array) =>
+      array.indexOf(productId) === index &&
+      pvProductCatalog.some((item) => item.id === productId)
+  );
+  const productIds = selectedProductIds.length ? selectedProductIds : program.includedProductIds;
 
-  return program.includedProductIds.flatMap((productId) => {
+  return productIds.flatMap((productId) => {
     const product = pvProductCatalog.find((item) => item.id === productId);
     if (!product) {
       return [];
@@ -626,7 +633,8 @@ export async function createSupabaseClientWithInitialAssessment(payload: {
         distributorId: payload.client.distributorId,
         distributorName: payload.client.distributorName,
         programTitle: payload.currentProgram,
-        startDate: payload.assessment.date
+        startDate: payload.assessment.date,
+        selectedProductIds: payload.assessment.questionnaire.selectedProductIds
       })
     : [];
 
@@ -1109,7 +1117,8 @@ export async function importLocalBusinessDataToSupabase(payload: {
       startDate:
         localClient.startDate ??
         localClient.assessments[0]?.date ??
-        new Date().toISOString().slice(0, 10)
+        new Date().toISOString().slice(0, 10),
+      selectedProductIds: localClient.assessments[0]?.questionnaire.selectedProductIds
     });
 
     if (seedProducts.length) {

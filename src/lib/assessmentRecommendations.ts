@@ -77,6 +77,36 @@ type DetectedNeed = {
   reasonLabel: string;
 };
 
+const NEED_PRIORITY_ORDER: AssessmentNeedId[] = [
+  "visceral_fat",
+  "bone_support",
+  "hydration",
+  "protein_muscle",
+  "sleep",
+  "digestive_support",
+  "breakfast_structure",
+  "snacking_control",
+  "energy"
+];
+
+const NEED_PRIORITY_RANK = NEED_PRIORITY_ORDER.reduce<Record<AssessmentNeedId, number>>(
+  (accumulator, needId, index) => {
+    accumulator[needId] = NEED_PRIORITY_ORDER.length - index;
+    return accumulator;
+  },
+  {
+    hydration: 0,
+    energy: 0,
+    sleep: 0,
+    breakfast_structure: 0,
+    protein_muscle: 0,
+    digestive_support: 0,
+    visceral_fat: 0,
+    bone_support: 0,
+    snacking_control: 0
+  }
+);
+
 const NEED_DEFINITIONS: Record<AssessmentNeedId, NeedDefinition> = {
   hydration: {
     label: "Hydratation",
@@ -127,7 +157,7 @@ const PRODUCT_CATALOG: ProductDefinition[] = [
     tags: ["breakfast_structure", "protein_muscle"]
   },
   {
-    id: "protein-drink-mix",
+    id: "pdm",
     name: "Melange pour boisson proteinee",
     shortBenefit: "Ajoute un repere proteine facile dans la routine.",
     pv: 33,
@@ -136,7 +166,7 @@ const PRODUCT_CATALOG: ProductDefinition[] = [
     tags: ["breakfast_structure", "protein_muscle"]
   },
   {
-    id: "instant-herbal-beverage",
+    id: "the-51g",
     name: "Boisson instantanee a base de the 51 g",
     shortBenefit: "Soutient l'hydratation du matin et l'elan de la routine.",
     pv: 19.95,
@@ -146,7 +176,7 @@ const PRODUCT_CATALOG: ProductDefinition[] = [
   },
   {
     id: "aloe-vera",
-    name: "Boisson concentree a l'Aloe Vera 473 ml",
+    name: "Boisson Aloe Vera",
     shortBenefit: "Pose un repere hydratation simple a reprendre chaque jour.",
     pv: 24.95,
     prixPublic: 54.5,
@@ -154,7 +184,7 @@ const PRODUCT_CATALOG: ProductDefinition[] = [
     tags: ["hydration"]
   },
   {
-    id: "multi-fibres",
+    id: "multifibres",
     name: "Boisson multi-fibres",
     shortBenefit: "Aide a remettre des fibres et du confort digestif dans la routine.",
     pv: 22.95,
@@ -163,7 +193,7 @@ const PRODUCT_CATALOG: ProductDefinition[] = [
     tags: ["digestive_support"]
   },
   {
-    id: "phyto-complete",
+    id: "phyto-brule-graisse",
     name: "Phyto Complete",
     shortBenefit: "Ajoute un soutien plus cadre quand la priorite est viscerale.",
     pv: 38.15,
@@ -397,8 +427,15 @@ function detectNeeds(source: AssessmentRecommendationSource): DetectedNeed[] {
   }
 
   return needs
-    .sort((a, b) => b.priority - a.priority)
-    .filter((need, index, array) => array.findIndex((item) => item.id === need.id) === index);
+    .filter((need, index, array) => array.findIndex((item) => item.id === need.id) === index)
+    .sort((a, b) => {
+      const priorityDelta = NEED_PRIORITY_RANK[b.id] - NEED_PRIORITY_RANK[a.id];
+      if (priorityDelta !== 0) {
+        return priorityDelta;
+      }
+
+      return b.priority - a.priority;
+    })
 }
 
 function getReasonForProduct(needId: AssessmentNeedId, productName: string) {
@@ -487,15 +524,24 @@ export function buildAssessmentRecommendationPlan(
   source: AssessmentRecommendationSource
 ): AssessmentRecommendationPlan {
   const detectedNeeds = detectNeeds(source).slice(0, 4);
+  const usedProductIds = new Set<string>();
+  let visibleProductCount = 0;
 
   const needs = detectedNeeds.map((need) => {
     const definition = NEED_DEFINITIONS[need.id];
     const products = PRODUCT_CATALOG.filter((product) => product.tags.includes(need.id))
+      .filter((product) => !usedProductIds.has(product.id))
       .slice(0, 2)
-      .map((product) => ({
-        ...product,
-        reasonLabel: getReasonForProduct(need.id, product.name)
-      }));
+      .slice(0, Math.max(0, 6 - visibleProductCount))
+      .map((product) => {
+        usedProductIds.add(product.id);
+        visibleProductCount += 1;
+
+        return {
+          ...product,
+          reasonLabel: getReasonForProduct(need.id, product.name)
+        };
+      });
 
     return {
       id: need.id,

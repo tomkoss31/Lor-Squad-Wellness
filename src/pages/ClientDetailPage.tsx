@@ -17,7 +17,7 @@ import { MetricTile } from "../components/ui/MetricTile";
 import { PageHeading } from "../components/ui/PageHeading";
 import { StatusBadge } from "../components/ui/StatusBadge";
 import { useAppContext } from "../context/AppContext";
-import { buildPvTrackingRecords } from "../data/mockPvModule";
+import { buildPvTrackingRecords, pvProductCatalog } from "../data/mockPvModule";
 import { getAccessibleOwnerIds, isAdmin, isReferent } from "../lib/auth";
 import { getClientActiveFollowUp } from "../lib/portfolio";
 import {
@@ -115,6 +115,25 @@ export function ClientDetailPage() {
     : "Non renseigné";
   const canDeleteClient = currentUser?.role === "admin";
   const pvRecord = buildPvTrackingRecords([currentClient], pvTransactions, pvClientProducts)[0] ?? null;
+  const retainedProductIds = (
+    firstAssessment.questionnaire.selectedProductIds?.length
+      ? firstAssessment.questionnaire.selectedProductIds
+      : latestQuestionnaire.selectedProductIds ?? []
+  ).filter((productId, index, array) => array.indexOf(productId) === index);
+  const retainedProducts = retainedProductIds
+    .map((productId) => pvProductCatalog.find((product) => product.id === productId) ?? null)
+    .filter((product): product is NonNullable<typeof product> => product != null);
+  const retainedProductsLabel = retainedProducts.length
+    ? retainedProducts.length <= 2
+      ? retainedProducts.map((product) => product.name).join(" + ")
+      : `${retainedProducts.length} produits retenus`
+    : "Base programme";
+  const retainedProductsTotalPrice = Number(
+    retainedProducts.reduce((total, product) => total + product.pricePublic, 0).toFixed(2)
+  );
+  const retainedProductsTotalPv = Number(
+    retainedProducts.reduce((total, product) => total + product.pv, 0).toFixed(2)
+  );
 
   async function handleDeleteClient() {
     const shouldDelete = window.confirm(
@@ -459,6 +478,18 @@ export function ClientDetailPage() {
               ) : null}
               <SummaryRow label="Repère protéines" value={proteinRange} />
               <SummaryRow label="Hydratation cible" value={`${waterNeed} L`} />
+              {retainedProducts.length ? (
+                <SummaryRow label="Composition retenue" value={retainedProductsLabel} />
+              ) : null}
+              {retainedProducts.length ? (
+                <SummaryRow
+                  label="Prix routine estime"
+                  value={formatPriceEuro(retainedProductsTotalPrice)}
+                />
+              ) : null}
+              {retainedProducts.length ? (
+                <SummaryRow label="PV routine estime" value={formatPv(retainedProductsTotalPv)} />
+              ) : null}
               {pvRecord ? (
                 <SummaryRow label="Dernière commande PV" value={formatDate(pvRecord.lastOrderDate)} />
               ) : null}
@@ -593,6 +624,13 @@ export function ClientDetailPage() {
               <QuickInfo text={`Hydratation : ${latestQuestionnaire.waterIntake} L / jour pour un besoin estimé à ${waterNeed} L`} />
               <QuickInfo text={`Lecture corporelle : ${latestMusclePercent} % de masse musculaire et ${latestBonePercent} % de masse osseuse`} />
               <QuickInfo text={`Motivation : ${latestQuestionnaire.motivation}/10`} />
+              {retainedProducts.length ? (
+                <QuickInfo
+                  text={`Routine retenue : ${retainedProducts
+                    .map((product) => product.name)
+                    .join(", ")}`}
+                />
+              ) : null}
             </div>
           </Card>
 
@@ -708,6 +746,14 @@ function QuickInfo({ text }: { text: string }) {
       {text}
     </div>
   );
+}
+
+function formatPriceEuro(value: number) {
+  return `${value.toFixed(2)} EUR`;
+}
+
+function formatPv(value: number) {
+  return `${value.toFixed(2)} PV`;
 }
 
 function SummaryFocusCard({
