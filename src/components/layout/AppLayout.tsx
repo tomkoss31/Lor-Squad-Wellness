@@ -36,30 +36,30 @@ export function AppLayout() {
     { label: "Recommandations", path: "/recommendations" },
     { label: "Suivi PV", path: "/pv" },
     { label: "Dossiers clients", path: "/clients" },
-    ...(currentUser.role === "admin" ? [{ label: "Équipe", path: "/users" }] : []),
+    ...(currentUser.role === "admin" ? [{ label: "Equipe", path: "/users" }] : []),
     { label: "Nouveau bilan", path: "/assessments/new" }
   ];
 
   const pageTitle =
     location.pathname === "/dashboard"
-      ? "Pilotage clair de la journée"
+      ? "Pilotage clair de la journee"
       : location.pathname === "/guide"
-        ? "Repères simples pour conduire le rendez-vous"
+        ? "Reperes simples pour conduire le rendez-vous"
         : location.pathname === "/recommendations"
           ? "Le bon ton pour ouvrir les recommandations"
           : location.pathname.startsWith("/pv")
             ? "Pilotage simple des clients, commandes et points volume"
-          : location.pathname === "/clients"
-            ? "Dossiers clients et suivi en cours"
-        : location.pathname.startsWith("/distributors/")
-          ? "Portefeuille, relances et rythme du suivi"
-        : location.pathname === "/users"
-          ? "Accès équipe et rôles clés"
-          : location.pathname.startsWith("/clients/")
-            ? "Lecture complète du dossier client"
-            : location.pathname === "/assessments/new"
-              ? "Le bilan guidé pour cadrer le rendez-vous"
-              : "Lor'Squad Wellness";
+            : location.pathname === "/clients"
+              ? "Dossiers clients et suivi en cours"
+              : location.pathname.startsWith("/distributors/")
+                ? "Portefeuille, relances et rythme du suivi"
+                : location.pathname === "/users"
+                  ? "Acces equipe et roles cles"
+                  : location.pathname.startsWith("/clients/")
+                    ? "Lecture complete du dossier client"
+                    : location.pathname === "/assessments/new"
+                      ? "Le bilan guide pour cadrer le rendez-vous"
+                      : "Lor'Squad Wellness";
 
   async function handleLogout() {
     await logout();
@@ -104,16 +104,11 @@ export function AppLayout() {
                     <p className="text-[15px] font-semibold text-white">{currentUser.name}</p>
                     <p className="mt-1 text-[13px] text-slate-400">{currentUser.title}</p>
                   </div>
-                  <StatusBadge
-                    label={getRoleLabel(currentUser.role)}
-                    tone={roleTone}
-                  />
+                  <StatusBadge label={getRoleLabel(currentUser.role)} tone={roleTone} />
                 </div>
-                <p className="mt-3 text-[13px] leading-6 text-slate-500">
-                  {getAccessSummary(currentUser)}
-                </p>
+                <p className="mt-3 text-[13px] leading-6 text-slate-500">{getAccessSummary(currentUser)}</p>
                 <Button variant="ghost" className="mt-4 w-full" onClick={() => void handleLogout()}>
-                  Se déconnecter
+                  Se deconnecter
                 </Button>
               </div>
 
@@ -154,20 +149,13 @@ export function AppLayout() {
                   );
                 })}
               </nav>
-
-              <div className="rounded-[24px] bg-white/[0.025] p-5">
-                <p className="eyebrow-label">Cap du jour</p>
-                <p className="mt-3 text-[14px] leading-7 text-slate-300">
-                  Une interface plus claire, plus douce et plus nette pour garder le bon rythme en rendez-vous.
-                </p>
-              </div>
             </div>
 
             <div className="space-y-4 rounded-[26px] bg-white/[0.025] p-5">
               <div>
-                <p className="eyebrow-label">Usage tablette</p>
+                <p className="eyebrow-label">Session</p>
                 <p className="mt-3 text-[14px] leading-7 text-slate-300">
-                  Tout reste net, fluide et facile à rouvrir pendant l&apos;échange.
+                  Une navigation simple a rouvrir pendant le rendez-vous, sur ordi comme sur tablette.
                 </p>
               </div>
               {currentSession ? (
@@ -177,9 +165,6 @@ export function AppLayout() {
               ) : null}
               <Button className="w-full" onClick={() => navigate("/assessments/new")}>
                 Nouveau bilan
-              </Button>
-              <Button variant="ghost" className="w-full" onClick={() => void handleLogout()}>
-                Se déconnecter
               </Button>
             </div>
           </div>
@@ -217,10 +202,7 @@ export function AppLayout() {
                 <p className="truncate text-sm font-semibold text-white">{currentUser.name}</p>
                 <p className="truncate text-[13px] text-slate-400">{pageTitle}</p>
               </div>
-              <StatusBadge
-                label={getRoleLabel(currentUser.role)}
-                tone={roleTone}
-              />
+              <StatusBadge label={getRoleLabel(currentUser.role)} tone={roleTone} />
             </div>
 
             <Button
@@ -228,7 +210,7 @@ export function AppLayout() {
               className="mt-3 w-full justify-center"
               onClick={() => void handleLogout()}
             >
-              Se déconnecter
+              Se deconnecter
             </Button>
 
             <nav className="mt-4 flex gap-2 overflow-x-auto pb-1">
@@ -256,12 +238,12 @@ export function AppLayout() {
 
             {!isStandalone && isIos ? (
               <div className="mt-4 rounded-[18px] bg-white/[0.03] px-4 py-3 text-[13px] leading-6 text-slate-300">
-                Ouvre ce lien dans Safari, puis Partager et Sur l&apos;écran d&apos;accueil.
+                Ouvre ce lien dans Safari, puis Partager et Sur l'ecran d'accueil.
               </div>
             ) : null}
             {!isStandalone && !isIos && isMobile && !canPromptInstall ? (
               <div className="mt-4 rounded-[18px] bg-white/[0.03] px-4 py-3 text-[13px] leading-6 text-slate-300">
-                Ouvre ce lien dans Chrome puis Installe l&apos;app ou Ajoute à l&apos;écran d&apos;accueil.
+                Ouvre ce lien dans Chrome puis installe l'app ou ajoute-la a l'ecran d'accueil.
               </div>
             ) : null}
           </section>
@@ -269,7 +251,7 @@ export function AppLayout() {
           <header className="glass-panel relative overflow-hidden rounded-[30px] px-5 py-6 md:px-7 md:py-7">
             <div className="absolute right-10 top-0 h-24 w-24 rounded-full bg-[rgba(239,197,141,0.08)] blur-3xl" />
             <div className="absolute -right-6 top-4 hidden h-32 w-32 rounded-full bg-[rgba(89,183,255,0.08)] blur-3xl lg:block" />
-            <div className="pointer-events-none absolute right-6 top-5 hidden rounded-[26px] border border-white/6 bg-white/[0.02] px-5 py-4 lg:block">
+            <div className="pointer-events-none absolute right-6 top-5 hidden lg:block">
               <img
                 src={lorSquadLogo}
                 alt=""
@@ -294,7 +276,7 @@ export function AppLayout() {
                     </Button>
                   ) : isIos ? (
                     <div className="rounded-full bg-white/[0.03] px-4 py-3 text-[12px] text-slate-300">
-                      Partager puis écran d&apos;accueil
+                      Partager puis ecran d&apos;accueil
                     </div>
                   ) : isMobile ? (
                     <div className="rounded-full bg-white/[0.03] px-4 py-3 text-[12px] text-slate-300">
@@ -303,7 +285,7 @@ export function AppLayout() {
                   ) : null
                 ) : null}
                 <Button variant="ghost" onClick={() => void handleLogout()}>
-                  Se déconnecter
+                  Se deconnecter
                 </Button>
               </div>
               <div className="md:hidden">

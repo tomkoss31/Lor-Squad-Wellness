@@ -47,6 +47,7 @@ export function DashboardPage() {
 
     return compareFollowUpsByDueDate(left, right);
   });
+
   const statCards = [
     {
       label: "Mes clients",
@@ -57,7 +58,7 @@ export function DashboardPage() {
     {
       label: "Mes rendez-vous",
       value: scheduledFollowUps.length,
-      hint: "Suivis planifiés",
+      hint: "Suivis planifies",
       accent: "green" as const
     },
     {
@@ -67,9 +68,9 @@ export function DashboardPage() {
       accent: "red" as const
     },
     {
-      label: "Dossiers à ouvrir",
+      label: "Dossiers a ouvrir",
       value: actionsToOpen.length,
-      hint: "Actions à rouvrir",
+      hint: "Actions a rouvrir",
       accent: "blue" as const
     }
   ];
@@ -79,7 +80,7 @@ export function DashboardPage() {
       <PageHeading
         eyebrow="Accueil"
         title="Tableau de bord"
-        description="Mes rendez-vous, mes relances et mes priorités du moment."
+        description="Mes rendez-vous, mes relances et mes priorites du moment."
       />
 
       {showPasswordNotice ? (
@@ -90,7 +91,7 @@ export function DashboardPage() {
               <p className="mt-3 text-2xl text-white">Mot de passe et acces equipe</p>
               <p className="mt-2 text-sm leading-6 text-slate-300">
                 Ton mot de passe initial a ete defini par un admin lors de la creation du compte.
-                Si tu veux le modifier ou si tu ne l'as pas recu, contacte ton sponsor admin.
+                Si tu veux le modifier ou si tu ne l&apos;as pas recu, contacte ton sponsor admin.
               </p>
             </div>
             <button
@@ -114,10 +115,10 @@ export function DashboardPage() {
             <div>
               <p className="eyebrow-label">Vue personnelle</p>
               <h2 className="mt-3 text-[1.85rem] leading-[1.04] tracking-[-0.03em] text-white md:text-[2.05rem]">
-                Mes priorités du jour
+                Mes priorites du jour
               </h2>
               <p className="mt-2 text-sm leading-6 text-slate-300/88 md:text-[15px]">
-                Rendez-vous, relances, dossiers à rouvrir et charge immédiate.
+                Rendez-vous, relances et dossiers a rouvrir.
               </p>
             </div>
 
@@ -172,12 +173,12 @@ export function DashboardPage() {
             <PriorityPanel
               title="Mes rendez-vous"
               items={scheduledFollowUps.slice(0, 5)}
-              emptyLabel="Aucun rendez-vous planifié"
-              statusLabel="Planifié"
+              emptyLabel="Aucun rendez-vous planifie"
+              statusLabel="Planifie"
               statusTone="green"
             />
             <PriorityPanel
-              title="Relances à faire"
+              title="Relances a faire"
               items={relanceFollowUps.slice(0, 5)}
               emptyLabel="Aucune relance en attente"
               statusLabel="Relance"
@@ -191,8 +192,8 @@ export function DashboardPage() {
         <Card className="space-y-4">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <p className="eyebrow-label">À reprendre</p>
-              <h2 className="mt-3 text-[1.7rem] leading-[1.06] text-white md:text-[1.9rem]">Dossiers à ouvrir</h2>
+              <p className="eyebrow-label">A reprendre</p>
+              <h2 className="mt-3 text-[1.7rem] leading-[1.06] text-white md:text-[1.9rem]">Dossiers a ouvrir</h2>
             </div>
             <Link className="text-sm font-medium text-slate-400 transition hover:text-sky-200" to={`/distributors/${currentUser.id}`}>
               Mon portefeuille
@@ -212,7 +213,10 @@ export function DashboardPage() {
                       <p className="truncate text-[1.05rem] font-semibold text-white">{followUp.clientName}</p>
                       <p className="mt-1 text-sm text-slate-300">{followUp.type}</p>
                     </div>
-                    <StatusBadge label={followUp.status === "scheduled" ? "RDV" : "Relance"} tone={followUp.status === "scheduled" ? "green" : "amber"} />
+                    <StatusBadge
+                      label={followUp.status === "scheduled" ? "RDV" : "Relance"}
+                      tone={followUp.status === "scheduled" ? "green" : "amber"}
+                    />
                   </div>
                   <div className="mt-3 flex flex-wrap items-center justify-between gap-3 text-sm">
                     <span className="text-slate-300">{formatDashboardDateTime(followUp.dueDate)}</span>
@@ -222,7 +226,7 @@ export function DashboardPage() {
               ))
             ) : (
               <div className="rounded-[24px] bg-white/[0.03] p-5 text-sm text-slate-400">
-                Aucun dossier à rouvrir pour le moment.
+                Aucun dossier a rouvrir pour le moment.
               </div>
             )}
           </div>
@@ -242,9 +246,9 @@ export function DashboardPage() {
             </Link>
           </div>
           <div className="grid gap-3">
-            <GuideTile title="Avant" text="Vérifier le client, le suivi prévu et les relances du moment." />
-            <GuideTile title="Pendant" text="Rester clair, simple et poser la suite sans surcharger l’échange." />
-            <GuideTile title="Après" text="Rouvrir le dossier si besoin et laisser une trace utile pour la suite." />
+            <GuideTile title="Avant" text="Verifier le client, le suivi prevu et les relances du moment." />
+            <GuideTile title="Pendant" text="Rester clair, simple et poser la suite sans surcharger l'echange." />
+            <GuideTile title="Apres" text="Rouvrir le dossier si besoin et laisser une trace utile pour la suite." />
           </div>
         </Card>
       </div>
@@ -269,7 +273,7 @@ function PriorityPanel({
     <Card className="space-y-4">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <p className="eyebrow-label">Priorités</p>
+          <p className="eyebrow-label">Priorites</p>
           <h2 className="mt-3 text-[1.45rem] leading-[1.06] text-white">{title}</h2>
         </div>
         <StatusBadge label={`${items.length} visibles`} tone="blue" />
@@ -312,36 +316,6 @@ function GuideTile({ title, text }: { title: string; text: string }) {
     </div>
   );
 }
-
-function getLoadState(actionsCount: number): {
-  label: string;
-  hint: string;
-  accent: "blue" | "green" | "red";
-} {
-  if (actionsCount >= 6) {
-    return {
-      label: "Dense",
-      hint: `${actionsCount} actions à traiter`,
-      accent: "red"
-    };
-  }
-
-  if (actionsCount >= 3) {
-    return {
-      label: "Stable",
-      hint: `${actionsCount} actions en cours`,
-      accent: "blue"
-    };
-  }
-
-  return {
-    label: "Légère",
-    hint: actionsCount ? `${actionsCount} action à ouvrir` : "Aucune action urgente",
-    accent: "green"
-  };
-}
-
-void getLoadState;
 
 function compareFollowUpsByDueDate(left: DashboardFollowUp, right: DashboardFollowUp) {
   return getFollowUpTimestamp(left.dueDate) - getFollowUpTimestamp(right.dueDate);
