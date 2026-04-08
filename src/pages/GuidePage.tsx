@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { Card } from "../components/ui/Card";
+import { PageHeading } from "../components/ui/PageHeading";
 import { StatusBadge } from "../components/ui/StatusBadge";
 
 type GuideTab = "rdv" | "recos";
@@ -109,51 +111,40 @@ export function GuidePage() {
   const [activeTab, setActiveTab] = useState<GuideTab>("rdv");
 
   return (
-    <div className="space-y-6 rounded-[30px] bg-[linear-gradient(180deg,#F6F8FB_0%,#EEF3F9_100%)] p-4 shadow-[0_20px_60px_rgba(0,0,0,0.08)] md:p-6 xl:p-7">
-      <GuideHero activeTab={activeTab} onTabChange={setActiveTab} />
-      {activeTab === "rdv" ? <RendezVousGuide /> : <RecommendationGuide />}
-    </div>
-  );
-}
+    <div className="space-y-6">
+      <PageHeading
+        eyebrow="Guide rendez-vous"
+        title="Guide rendez-vous"
+        description="Des reperes simples pour accueillir, expliquer et conclure avec justesse."
+      />
 
-function GuideHero({
-  activeTab,
-  onTabChange
-}: {
-  activeTab: GuideTab;
-  onTabChange: (tab: GuideTab) => void;
-}) {
-  return (
-    <div className="rounded-[30px] border border-slate-200/80 bg-[linear-gradient(180deg,#FFFFFF_0%,#F8FBFE_100%)] p-6 shadow-[0_18px_40px_rgba(15,23,42,0.06)] md:p-7">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div className="max-w-3xl">
-          <div className="inline-flex items-center gap-3 rounded-full bg-[#EEF4FA] px-3.5 py-2">
-            <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#708096]">
-              Guide rendez-vous
-            </span>
+      <Card className="space-y-5 overflow-hidden bg-[linear-gradient(180deg,rgba(15,23,42,0.26),rgba(15,23,42,0.5))]">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="max-w-3xl">
+            <p className="eyebrow-label">Support terrain</p>
+            <h2 className="mt-3 text-3xl text-white">Le bon ton, la bonne structure, le bon rythme.</h2>
+            <p className="mt-3 text-sm leading-6 text-slate-300">
+              Un rappel rapide pour garder le rendez-vous net, fluide et pro.
+            </p>
           </div>
-          <h1 className="mt-4 text-balance text-[2.2rem] font-semibold leading-[1.02] tracking-[-0.04em] text-[#182230] md:text-[3rem]">
-            Guide rendez-vous
-          </h1>
-          <p className="mt-3 max-w-[52rem] text-[15px] leading-7 text-[#526072] md:text-[16px]">
-            Des reperes simples pour accueillir, expliquer et conclure avec justesse.
-          </p>
+          <StatusBadge label="Calme + pro" tone="green" />
         </div>
-        <StatusBadge label="Calme + pro" tone="green" />
-      </div>
 
-      <div className="mt-6 flex flex-wrap gap-3">
-        <GuideTabButton
-          active={activeTab === "rdv"}
-          label="Conduite du rendez-vous"
-          onClick={() => onTabChange("rdv")}
-        />
-        <GuideTabButton
-          active={activeTab === "recos"}
-          label="Recommandations"
-          onClick={() => onTabChange("recos")}
-        />
-      </div>
+        <div className="flex flex-wrap gap-3">
+          <TabButton
+            active={activeTab === "rdv"}
+            label="Conduite du rendez-vous"
+            onClick={() => setActiveTab("rdv")}
+          />
+          <TabButton
+            active={activeTab === "recos"}
+            label="Recommandations"
+            onClick={() => setActiveTab("recos")}
+          />
+        </div>
+      </Card>
+
+      {activeTab === "rdv" ? <RendezVousGuide /> : <RecommendationGuide />}
     </div>
   );
 }
@@ -161,12 +152,12 @@ function GuideHero({
 function RendezVousGuide() {
   return (
     <div className="space-y-6">
-      <GuidePanel>
+      <Card className="space-y-5">
         <div className="flex items-center justify-between gap-3">
           <div>
-            <p className="guide-eyebrow">Avant de commencer</p>
-            <h2 className="mt-3 text-balance text-[2rem] leading-[1.05] text-[#182230]">
-              Le client doit sentir qu&apos;il est attendu, pas qu&apos;il derange.
+            <p className="eyebrow-label">Avant de commencer</p>
+            <h2 className="mt-3 text-3xl text-white">
+              Le client doit sentir qu'il est attendu, pas qu'il derange.
             </h2>
           </div>
           <StatusBadge label="Premiere impression" tone="blue" />
@@ -180,7 +171,7 @@ function RendezVousGuide() {
           />
           <GuideSectionCard
             title="Accueil"
-            subtitle="Le sourire et le prenom changent deja la tonalite."
+            subtitle="Le sourire et le prenom change deja la tonalite."
             points={accueilPoints}
           />
           <GuideSectionCard
@@ -189,7 +180,7 @@ function RendezVousGuide() {
             points={boissonPoints}
           />
         </div>
-      </GuidePanel>
+      </Card>
 
       <div className="grid gap-4 xl:grid-cols-3">
         <GuideSectionCard
@@ -214,68 +205,78 @@ function RendezVousGuide() {
       </div>
 
       <div className="grid gap-4 xl:grid-cols-[1.05fr_0.95fr]">
-        <GuidePanel>
+        <Card className="space-y-4">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <p className="guide-eyebrow">Degustation produit</p>
-              <h2 className="mt-3 text-balance text-[2rem] leading-[1.05] text-[#182230]">
-                Faire sentir la valeur sans en faire trop
-              </h2>
+              <p className="eyebrow-label">Degustation produit</p>
+              <h2 className="mt-3 text-3xl text-white">Faire sentir la valeur sans en faire trop</h2>
             </div>
             <StatusBadge label="Formula 1" tone="amber" />
           </div>
 
           <div className="grid gap-3">
             {shakePoints.map((point) => (
-              <GuidePointCard key={point}>{point}</GuidePointCard>
+              <div
+                key={point}
+                className="rounded-[22px] border border-white/10 bg-slate-950/35 px-5 py-4 text-sm leading-7 text-slate-200"
+              >
+                {point}
+              </div>
             ))}
           </div>
 
-          <div className="rounded-[24px] border border-[#DCE6F0] bg-[#EEF4FA] px-5 py-4">
-            <p className="guide-eyebrow">Phrase utile</p>
-            <p className="mt-3 text-sm leading-7 text-[#526072]">
-              Ce qui compte, ce n&apos;est pas ou tu es aujourd&apos;hui, c&apos;est ce qu&apos;on va construire dans
+          <div className="surface-soft rounded-[22px] px-5 py-4">
+            <p className="eyebrow-label">Phrase utile</p>
+            <p className="mt-3 text-sm leading-7 text-slate-300">
+              Ce qui compte, ce n'est pas ou tu es aujourd'hui, c'est ce qu'on va construire dans
               les prochaines semaines.
             </p>
           </div>
-        </GuidePanel>
+        </Card>
 
-        <GuidePanel>
+        <Card className="space-y-4">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <p className="guide-eyebrow">Closing clair</p>
-              <h2 className="mt-3 text-balance text-[2rem] leading-[1.05] text-[#182230]">
-                Aider a choisir, pas mettre la pression
-              </h2>
+              <p className="eyebrow-label">Closing clair</p>
+              <h2 className="mt-3 text-3xl text-white">Aider a choisir, pas mettre la pression</h2>
             </div>
             <StatusBadge label="Decision simple" tone="green" />
           </div>
 
           <div className="grid gap-3">
             {closingFlow.map((item) => (
-              <GuideInfoCard key={item.title} title={item.title} detail={item.detail} />
+              <div
+                key={item.title}
+                className="rounded-[22px] border border-white/10 bg-white/[0.03] px-5 py-4"
+              >
+                <p className="text-lg font-semibold text-white">{item.title}</p>
+                <p className="mt-2 text-sm leading-6 text-slate-400">{item.detail}</p>
+              </div>
             ))}
           </div>
-        </GuidePanel>
+        </Card>
       </div>
 
-      <GuidePanel>
+      <Card className="space-y-4">
         <div className="flex items-center justify-between gap-3">
           <div>
-            <p className="guide-eyebrow">Phrases utiles</p>
-            <h2 className="mt-3 text-balance text-[2rem] leading-[1.05] text-[#182230]">
-              Des formulations simples a garder
-            </h2>
+            <p className="eyebrow-label">Phrases utiles</p>
+            <h2 className="mt-3 text-3xl text-white">Des formulations simples a garder</h2>
           </div>
           <StatusBadge label="A dire naturellement" tone="amber" />
         </div>
 
         <div className="grid gap-3 xl:grid-cols-2">
           {usefulPhrases.map((phrase) => (
-            <GuidePointCard key={phrase}>{phrase}</GuidePointCard>
+            <div
+              key={phrase}
+              className="rounded-[22px] border border-white/10 bg-slate-950/35 px-5 py-4 text-sm leading-7 text-slate-200"
+            >
+              {phrase}
+            </div>
           ))}
         </div>
-      </GuidePanel>
+      </Card>
     </div>
   );
 }
@@ -283,11 +284,11 @@ function RendezVousGuide() {
 function RecommendationGuide() {
   return (
     <div className="space-y-6">
-      <GuidePanel>
+      <Card className="space-y-5">
         <div className="flex items-center justify-between gap-3">
           <div>
-            <p className="guide-eyebrow">Recommandations</p>
-            <h2 className="mt-3 text-balance text-[2rem] leading-[1.05] text-[#182230]">
+            <p className="eyebrow-label">Recommandations</p>
+            <h2 className="mt-3 text-3xl text-white">
               Un rappel simple pour demander des recos au bon moment, sans forcer.
             </h2>
           </div>
@@ -296,72 +297,84 @@ function RecommendationGuide() {
 
         <div className="grid gap-4 xl:grid-cols-3">
           {recommendationHighlights.map((point) => (
-            <GuidePointCard key={point}>{point}</GuidePointCard>
+            <div
+              key={point}
+              className="rounded-[22px] border border-white/10 bg-white/[0.03] px-5 py-4 text-sm leading-7 text-slate-200"
+            >
+              {point}
+            </div>
           ))}
         </div>
-      </GuidePanel>
+      </Card>
 
       <div className="grid gap-4 xl:grid-cols-[1.02fr_0.98fr]">
-        <GuidePanel>
+        <Card className="space-y-4">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <p className="guide-eyebrow">Le bon deroule</p>
-              <h2 className="mt-3 text-balance text-[2rem] leading-[1.05] text-[#182230]">
-                Un script vivant, pas une pression de vente
-              </h2>
+              <p className="eyebrow-label">Le bon deroule</p>
+              <h2 className="mt-3 text-3xl text-white">Un script vivant, pas une pression de vente</h2>
             </div>
             <StatusBadge label="Presentiel" tone="blue" />
           </div>
 
           <div className="grid gap-3">
             {recommendationFlow.map((item) => (
-              <GuideInfoCard key={item.title} title={item.title} detail={item.detail} />
+              <div
+                key={item.title}
+                className="rounded-[22px] border border-white/10 bg-white/[0.03] px-5 py-4"
+              >
+                <p className="text-lg font-semibold text-white">{item.title}</p>
+                <p className="mt-2 text-sm leading-6 text-slate-400">{item.detail}</p>
+              </div>
             ))}
           </div>
 
-          <div className="rounded-[24px] border border-[#F2D7A5] bg-[rgba(239,197,141,0.16)] px-5 py-4">
-            <p className="guide-eyebrow text-[#9D6F1B]">Regle d&apos;or</p>
-            <p className="mt-3 text-sm leading-7 text-[#5F4B20]">
+          <div className="rounded-[22px] bg-amber-300/10 px-5 py-4">
+            <p className="eyebrow-label text-amber-100/80">Regle d'or</p>
+            <p className="mt-3 text-sm leading-7 text-amber-50">
               Tu laisses vraiment le temps a la personne de remplir. Si tu reviens trop vite, tu
               coupes le moment et tu perds des noms.
             </p>
           </div>
-        </GuidePanel>
+        </Card>
 
-        <GuidePanel>
+        <Card className="space-y-4">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <p className="guide-eyebrow">A retenir</p>
-              <h2 className="mt-3 text-balance text-[2rem] leading-[1.05] text-[#182230]">
-                Les points a ne pas oublier
-              </h2>
+              <p className="eyebrow-label">A retenir</p>
+              <h2 className="mt-3 text-3xl text-white">Les points a ne pas oublier</h2>
             </div>
             <StatusBadge label="Cadre simple" tone="green" />
           </div>
 
           <div className="grid gap-3">
             {recommendationRules.map((rule) => (
-              <GuidePointCard key={rule}>{rule}</GuidePointCard>
+              <div
+                key={rule}
+                className="rounded-[22px] border border-white/10 bg-slate-950/35 px-5 py-4 text-sm leading-7 text-slate-200"
+              >
+                {rule}
+              </div>
             ))}
           </div>
 
-          <div className="rounded-[24px] border border-[#DCE6F0] bg-[#EEF4FA] px-5 py-4">
-            <p className="guide-eyebrow">Visio / en ligne</p>
+          <div className="surface-soft rounded-[22px] px-5 py-4">
+            <p className="eyebrow-label">Visio / en ligne</p>
             <div className="mt-3 grid gap-2">
               {visioReminder.map((point) => (
-                <p key={point} className="text-sm leading-7 text-[#526072]">
+                <p key={point} className="text-sm leading-7 text-slate-300">
                   {point}
                 </p>
               ))}
             </div>
           </div>
-        </GuidePanel>
+        </Card>
       </div>
     </div>
   );
 }
 
-function GuideTabButton({
+function TabButton({
   active,
   label,
   onClick
@@ -376,20 +389,12 @@ function GuideTabButton({
       onClick={onClick}
       className={`rounded-full px-4 py-3 text-sm font-semibold transition ${
         active
-          ? "bg-[linear-gradient(180deg,#72C5FF_0%,#59B7FF_100%)] text-[#07111F] shadow-[0_10px_24px_rgba(89,183,255,0.18)]"
-          : "border border-[#D7E2ED] bg-white text-[#526072] hover:bg-[#F4F8FC]"
+          ? "bg-white text-slate-950"
+          : "bg-white/[0.04] text-slate-200 hover:bg-white/[0.08]"
       }`}
     >
       {label}
     </button>
-  );
-}
-
-function GuidePanel({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="space-y-5 rounded-[30px] border border-slate-200/80 bg-[linear-gradient(180deg,#FFFFFF_0%,#FBFDFE_100%)] p-5 shadow-[0_18px_38px_rgba(15,23,42,0.05)] md:p-6">
-      {children}
-    </div>
   );
 }
 
@@ -403,31 +408,19 @@ function GuideSectionCard({
   points: string[];
 }) {
   return (
-    <div className="rounded-[28px] border border-[#E0E8F1] bg-[#FCFDFE] p-5 shadow-[0_12px_28px_rgba(15,23,42,0.04)]">
-      <p className="text-xl font-semibold text-[#182230]">{title}</p>
-      <p className="mt-2 text-sm leading-6 text-[#526072]">{subtitle}</p>
-      <div className="mt-4 grid gap-2.5">
+    <div className="rounded-[26px] bg-white/[0.03] p-5">
+      <p className="text-xl font-semibold text-white">{title}</p>
+      <p className="mt-2 text-sm leading-6 text-slate-400">{subtitle}</p>
+      <div className="mt-4 grid gap-2">
         {points.map((point) => (
-          <GuidePointCard key={point}>{point}</GuidePointCard>
+          <div
+            key={point}
+            className="rounded-[18px] bg-slate-950/24 px-4 py-3 text-sm leading-6 text-slate-200"
+          >
+            {point}
+          </div>
         ))}
       </div>
-    </div>
-  );
-}
-
-function GuideInfoCard({ title, detail }: { title: string; detail: string }) {
-  return (
-    <div className="rounded-[24px] border border-[#E0E8F1] bg-[#FCFDFE] px-5 py-4">
-      <p className="text-lg font-semibold text-[#182230]">{title}</p>
-      <p className="mt-2 text-sm leading-6 text-[#526072]">{detail}</p>
-    </div>
-  );
-}
-
-function GuidePointCard({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="rounded-[20px] border border-[#E2EBF3] bg-[#F7FAFD] px-4 py-3 text-sm leading-6 text-[#314154]">
-      {children}
     </div>
   );
 }
