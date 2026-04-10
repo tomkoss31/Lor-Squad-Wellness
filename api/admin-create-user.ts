@@ -1,5 +1,18 @@
 import { createClient } from "@supabase/supabase-js";
-import { getTeamHierarchySetupError } from "./_supabaseErrors";
+
+function getTeamHierarchySetupError(error: { message?: string } | null | undefined) {
+  const message = String(error?.message ?? "").toLowerCase();
+
+  if (!message) {
+    return null;
+  }
+
+  if (message.includes("sponsor_id") || message.includes("sponsor_name")) {
+    return "Le rattachement d'equipe n'est pas encore active sur cette base Supabase. Lance le fichier supabase/fix-team-hierarchy.sql dans SQL Editor, puis recharge l'application.";
+  }
+
+  return null;
+}
 
 export default async function handler(req: any, res: any) {
   if (req.method !== "POST") {
