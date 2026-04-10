@@ -76,8 +76,8 @@ export function AppLayout() {
         <aside className="glass-panel relative hidden overflow-hidden rounded-[34px] px-5 py-6 xl:sticky xl:top-5 xl:block xl:h-[calc(100vh-2.5rem)]">
           <div className="absolute -left-10 top-0 h-28 w-28 rounded-full bg-[rgba(239,197,141,0.10)] blur-3xl" />
           <div className="absolute -right-10 bottom-20 h-28 w-28 rounded-full bg-[rgba(89,183,255,0.10)] blur-3xl" />
-          <div className="flex h-full flex-col justify-between gap-6">
-            <div className="space-y-7">
+          <div className="flex h-full min-h-0 flex-col gap-6">
+            <div className="min-h-0 flex-1 space-y-7 overflow-y-auto pr-1">
               <div className="flex items-center gap-4 pb-1">
                 <img
                   src={blasonLogo}
@@ -151,7 +151,7 @@ export function AppLayout() {
               </nav>
             </div>
 
-            <div className="space-y-4 rounded-[26px] bg-white/[0.025] p-5">
+            <div className="shrink-0 space-y-4 rounded-[26px] bg-white/[0.025] p-5">
               <div>
                 <p className="eyebrow-label">Session</p>
                 <p className="mt-3 text-[14px] leading-7 text-slate-300">
