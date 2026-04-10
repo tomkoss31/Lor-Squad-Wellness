@@ -156,6 +156,22 @@ function getPvModuleSetupError(error: { message?: string } | null | undefined) {
   return "Le module Suivi PV n'est pas encore installe sur cette base Supabase. Lance d'abord le fichier supabase/pv-module-migration.sql dans SQL Editor, puis recharge l'application.";
 }
 
+function getTeamHierarchySetupError(
+  error: { message?: string; error?: string } | null | undefined
+) {
+  const message = String(error?.message ?? error?.error ?? "").toLowerCase();
+
+  if (!message) {
+    return null;
+  }
+
+  if (message.includes("sponsor_id") || message.includes("sponsor_name")) {
+    return "Le rattachement d'equipe n'est pas encore active sur cette base Supabase. Lance le fichier supabase/fix-team-hierarchy.sql dans SQL Editor, puis recharge l'application.";
+  }
+
+  return null;
+}
+
 async function readApiResult<T extends { ok?: boolean; error?: string }>(response: Response) {
   const raw = await response.text();
 
@@ -1165,7 +1181,13 @@ export async function createSupabaseUserAccess(payload: {
     body: JSON.stringify(payload)
   });
 
-  const result = (await response.json()) as { ok: boolean; error?: string };
+  const result = await readApiResult<{ ok: boolean; error?: string }>(response);
+  const teamHierarchyError = getTeamHierarchySetupError(result);
+
+  if (teamHierarchyError) {
+    return { ok: false as const, error: teamHierarchyError };
+  }
+
   return result;
 }
 
@@ -1199,7 +1221,13 @@ export async function updateSupabaseUserAccess(
     })
   });
 
-  const result = (await response.json()) as { ok: boolean; error?: string };
+  const result = await readApiResult<{ ok: boolean; error?: string }>(response);
+  const teamHierarchyError = getTeamHierarchySetupError(result);
+
+  if (teamHierarchyError) {
+    throw new Error(teamHierarchyError);
+  }
+
   if (!response.ok || !result.ok) {
     throw new Error(result.error ?? "Impossible de mettre a jour cet acces.");
   }
@@ -1234,7 +1262,13 @@ export async function repairSupabaseUserAccess(payload: {
     body: JSON.stringify(payload)
   });
 
-  const result = (await response.json()) as { ok: boolean; error?: string };
+  const result = await readApiResult<{ ok: boolean; error?: string }>(response);
+  const teamHierarchyError = getTeamHierarchySetupError(result);
+
+  if (teamHierarchyError) {
+    return { ok: false as const, error: teamHierarchyError };
+  }
+
   return result;
 }
 

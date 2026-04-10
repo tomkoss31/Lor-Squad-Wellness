@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import { getTeamHierarchySetupError } from "./_supabaseErrors";
 
 function deriveNameFromEmail(email: string) {
   const localPart = email.split("@")[0] ?? "";
@@ -158,7 +159,10 @@ export default async function handler(req: any, res: any) {
   if (upsertError) {
     res.status(400).json({
       ok: false,
-      error: upsertError.message || "Impossible de recreer le profil applicatif."
+      error:
+        getTeamHierarchySetupError(upsertError) ||
+        upsertError.message ||
+        "Impossible de recreer le profil applicatif."
     });
     return;
   }

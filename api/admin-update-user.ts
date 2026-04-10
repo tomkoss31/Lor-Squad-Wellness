@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import { getTeamHierarchySetupError } from "./_supabaseErrors";
 
 export default async function handler(req: any, res: any) {
   if (req.method !== "POST") {
@@ -122,7 +123,10 @@ export default async function handler(req: any, res: any) {
   if (updateError) {
     res.status(400).json({
       ok: false,
-      error: updateError.message || "Impossible de mettre a jour cet acces."
+      error:
+        getTeamHierarchySetupError(updateError) ||
+        updateError.message ||
+        "Impossible de mettre a jour cet acces."
     });
     return;
   }

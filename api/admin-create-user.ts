@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import { getTeamHierarchySetupError } from "./_supabaseErrors";
 
 export default async function handler(req: any, res: any) {
   if (req.method !== "POST") {
@@ -135,7 +136,9 @@ export default async function handler(req: any, res: any) {
   if (profileInsertError) {
     res.status(400).json({
       ok: false,
-      error: profileInsertError.message
+      error:
+        getTeamHierarchySetupError(profileInsertError) ||
+        profileInsertError.message
     });
     return;
   }

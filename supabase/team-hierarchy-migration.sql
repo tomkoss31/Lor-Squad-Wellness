@@ -11,6 +11,8 @@ add column if not exists sponsor_id uuid references public.users (id) on delete 
 alter table public.users
 add column if not exists sponsor_name text;
 
+select pg_notify('pgrst', 'reload schema');
+
 create table if not exists public.activity_logs (
   id uuid primary key default gen_random_uuid(),
   created_at timestamptz not null default now(),

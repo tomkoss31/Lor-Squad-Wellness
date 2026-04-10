@@ -39,6 +39,7 @@ create table if not exists public.clients (
 
 alter table public.users add column if not exists sponsor_id uuid references public.users (id) on delete set null;
 alter table public.users add column if not exists sponsor_name text;
+select pg_notify('pgrst', 'reload schema');
 
 alter table public.clients add column if not exists pv_program_id text;
 
