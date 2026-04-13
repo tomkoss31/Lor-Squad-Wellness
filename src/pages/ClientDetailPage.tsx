@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
+import { EditScheduleModal } from "../components/client/EditScheduleModal";
 import {
   BodyScanComparisonGrid,
   type ComparisonMetricCard
@@ -65,6 +66,7 @@ export function ClientDetailPage() {
   const currentClient = client;
   const [nextOwnerId, setNextOwnerId] = useState(client.distributorId);
   const [transferFeedback, setTransferFeedback] = useState("");
+  const [showScheduleModal, setShowScheduleModal] = useState(false);
   const activeFollowUp = getClientActiveFollowUp(currentClient, followUps);
   const canReassignClient = isAdmin(currentUser) || isReferent(currentUser);
   const assignableOwnerIds = getAccessibleOwnerIds(currentUser, users);
@@ -556,11 +558,14 @@ export function ClientDetailPage() {
                 label="Modifier le dernier bilan"
                 hint="Completer une section oubliee ou corriger les valeurs"
               />
-              <LinkButton
-                to={`/clients/${client.id}/schedule/edit`}
-                label="Modifier le prochain rendez-vous"
-                hint="Ajuster la date, l'heure ou le type de suivi"
-              />
+              <button
+                type="button"
+                onClick={() => setShowScheduleModal(true)}
+                className="w-full rounded-[22px] bg-white/[0.03] p-4 text-left transition hover:bg-white/[0.05]"
+              >
+                <p className="text-sm font-semibold text-white">Modifier le prochain rendez-vous</p>
+                <p className="mt-1 text-sm leading-6 text-[#7A8099]">Ajuster la date, l'heure ou le type de suivi</p>
+              </button>
               {canDeleteClient && (
                 <DangerActionButton
                   label="Supprimer ce dossier"
@@ -685,6 +690,15 @@ export function ClientDetailPage() {
           </Card>
         </div>
       </div>
+
+      {/* Schedule Modal */}
+      {showScheduleModal && (
+        <EditScheduleModal
+          client={currentClient}
+          onClose={() => setShowScheduleModal(false)}
+          onSaved={() => setShowScheduleModal(false)}
+        />
+      )}
     </div>
   );
 }
