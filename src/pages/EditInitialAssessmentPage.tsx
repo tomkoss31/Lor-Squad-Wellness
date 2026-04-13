@@ -349,7 +349,7 @@ export function EditInitialAssessmentPage() {
         <Card className="space-y-5">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <p className="text-xs uppercase tracking-[0.25em] text-slate-500">Base historique</p>
+              <p className="text-xs uppercase tracking-[0.25em] text-[#4A5068]">Base historique</p>
               <p className="mt-2 text-2xl text-white">
                 {isInitialAssessment
                   ? "Revenir sur toutes les infos du bilan initial"
@@ -472,7 +472,7 @@ export function EditInitialAssessmentPage() {
               <MetricField label="Poids cible (kg)" value={questionnaire.targetWeight ?? 0} onChange={(value) => updateQuestionnaire("targetWeight", Number(value))} />
               <MetricField label="Motivation / 10" value={questionnaire.motivation} onChange={(value) => updateQuestionnaire("motivation", Number(value))} />
               <div className="space-y-2 md:col-span-2">
-                <label className="text-sm font-medium text-slate-300">Horizon / delai</label>
+                <label className="text-sm font-medium text-[#B0B4C4]">Horizon / delai</label>
                 <div className="flex flex-wrap gap-2">
                   {timelineOptions.map((option) => (
                     <button
@@ -481,8 +481,8 @@ export function EditInitialAssessmentPage() {
                       onClick={() => updateQuestionnaire("desiredTimeline", option)}
                       className={`rounded-full px-4 py-2 text-sm font-medium transition ${
                         questionnaire.desiredTimeline === option
-                          ? "bg-white text-slate-950"
-                          : "border border-white/10 bg-white/[0.03] text-slate-200"
+                          ? "bg-white text-[#0B0D11]"
+                          : "border border-white/10 bg-white/[0.03] text-[#F0EDE8]"
                       }`}
                     >
                       {option}
@@ -494,7 +494,7 @@ export function EditInitialAssessmentPage() {
                   onChange={(event) => updateQuestionnaire("desiredTimeline", event.target.value)}
                   placeholder="Ex : 2 mois, 4 mois, 5 mois"
                 />
-                <p className="text-xs leading-6 text-slate-400">
+                <p className="text-xs leading-6 text-[#7A8099]">
                   Tu peux garder un délai simple ou écrire un cap libre si le client a formulé son
                   objectif autrement.
                 </p>
@@ -509,7 +509,7 @@ export function EditInitialAssessmentPage() {
           </SectionCard>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium text-slate-300">Note du bilan</label>
+            <label className="text-sm font-medium text-[#B0B4C4]">Note du bilan</label>
             <textarea rows={6} value={notes} onChange={(event) => setNotes(event.target.value)} />
           </div>
 
@@ -517,7 +517,7 @@ export function EditInitialAssessmentPage() {
             <label className="flex items-center justify-between gap-3 rounded-[22px] border border-white/10 bg-white/[0.03] px-4 py-4">
               <div>
                 <p className="text-sm font-medium text-white">Recommandations contactées</p>
-                <p className="mt-1 text-sm text-slate-400">
+                <p className="mt-1 text-sm text-[#7A8099]">
                   A cocher une fois les recommandations de ce bilan reprises.
                 </p>
               </div>
@@ -549,7 +549,7 @@ export function EditInitialAssessmentPage() {
         </Card>
 
         <Card className="space-y-4">
-          <p className="text-xs uppercase tracking-[0.25em] text-slate-500">A retenir</p>
+          <p className="text-xs uppercase tracking-[0.25em] text-[#4A5068]">A retenir</p>
           <InfoCard
             title="Ce que tu peux corriger ici"
             text={
@@ -593,7 +593,7 @@ function SectionCard({
     <div className="space-y-4 rounded-[24px] border border-white/10 bg-white/[0.03] p-5">
       <div>
         <p className="text-lg font-semibold text-white">{title}</p>
-        <p className="mt-2 text-sm leading-6 text-slate-400">{description}</p>
+        <p className="mt-2 text-sm leading-6 text-[#7A8099]">{description}</p>
       </div>
       {children}
     </div>
@@ -613,7 +613,7 @@ function MetricField({
 }) {
   return (
     <div className="space-y-2">
-      <label className="text-sm font-medium text-slate-300">{label}</label>
+      <label className="text-sm font-medium text-[#B0B4C4]">{label}</label>
       <input
         type={type}
         step={type === "number" ? "0.1" : undefined}
@@ -635,7 +635,7 @@ function TextField({
 }) {
   return (
     <div className="space-y-2">
-      <label className="text-sm font-medium text-slate-300">{label}</label>
+      <label className="text-sm font-medium text-[#B0B4C4]">{label}</label>
       <input value={value} onChange={(event) => onChange(event.target.value)} />
     </div>
   );
@@ -654,7 +654,7 @@ function AreaField({
 }) {
   return (
     <div className="space-y-2">
-      <label className="text-sm font-medium text-slate-300">{label}</label>
+      <label className="text-sm font-medium text-[#B0B4C4]">{label}</label>
       <textarea rows={rows} value={value} onChange={(event) => onChange(event.target.value)} />
     </div>
   );
@@ -664,7 +664,7 @@ function InfoCard({ title, text }: { title: string; text: string }) {
   return (
     <div className="rounded-[22px] border border-white/10 bg-white/[0.03] px-4 py-4">
       <p className="text-sm font-semibold text-white">{title}</p>
-      <p className="mt-2 text-sm leading-6 text-slate-400">{text}</p>
+      <p className="mt-2 text-sm leading-6 text-[#7A8099]">{text}</p>
     </div>
   );
 }

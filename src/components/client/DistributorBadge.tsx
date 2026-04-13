@@ -16,9 +16,9 @@ const accentClasses: Record<
   }
 > = {
   blue: {
-    shell: "border-sky-300/20 bg-sky-400/12 text-sky-100",
-    glyph: "text-sky-200",
-    detail: "text-sky-100/70"
+    shell: "border-sky-300/20 bg-[rgba(45,212,191,0.12)] text-[#2DD4BF]",
+    glyph: "text-[#2DD4BF]",
+    detail: "text-[#2DD4BF]/70"
   },
   green: {
     shell: "border-emerald-300/20 bg-emerald-400/12 text-emerald-100",

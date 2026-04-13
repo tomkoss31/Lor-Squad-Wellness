@@ -305,7 +305,7 @@ export function NewFollowUpPage() {
               <div>
                 <p className="eyebrow-label">Check-in bien-être & nutrition</p>
                 <p className="mt-3 text-3xl text-white">Avant la balance</p>
-                <p className="mt-2 text-sm leading-6 text-slate-300">
+                <p className="mt-2 text-sm leading-6 text-[#B0B4C4]">
                   Avant la balance, on fait un point rapide sur l&apos;énergie, la faim, la digestion et la gestion des repas depuis le dernier rendez-vous.
                 </p>
               </div>
@@ -382,7 +382,7 @@ export function NewFollowUpPage() {
           <Card className="space-y-5">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <p className="text-sm text-slate-400">
+                <p className="text-sm text-[#7A8099]">
                   Dernier bilan {formatDate(latest.date)}
                   {previous && ` - précédent ${formatDate(previous.date)}`}
                 </p>
@@ -396,7 +396,7 @@ export function NewFollowUpPage() {
                 <div>
                   <p className="eyebrow-label text-emerald-200/70">Nouveau relevé</p>
                   <p className="mt-3 text-2xl text-white">Nouvelles valeurs body scan</p>
-                  <p className="mt-2 text-sm leading-6 text-slate-300">
+                  <p className="mt-2 text-sm leading-6 text-[#B0B4C4]">
                     Saisir les chiffres du jour puis relire les écarts.
                   </p>
                 </div>
@@ -404,26 +404,26 @@ export function NewFollowUpPage() {
               </div>
 
               <div className="mt-5 grid gap-3 md:grid-cols-3">
-                <div className="rounded-[20px] border border-white/10 bg-slate-950/26 px-4 py-4">
+                <div className="rounded-[20px] border border-white/10 bg-[#1A1E27] px-4 py-4">
                   <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-emerald-200/70">
                     Age
                   </p>
                   <p className="mt-3 text-2xl font-semibold text-white">{targetClient.age} ans</p>
-                  <p className="mt-2 text-sm text-slate-400">Visible au moment de la balance</p>
+                  <p className="mt-2 text-sm text-[#7A8099]">Visible au moment de la balance</p>
                 </div>
-                <div className="rounded-[20px] border border-white/10 bg-slate-950/26 px-4 py-4">
+                <div className="rounded-[20px] border border-white/10 bg-[#1A1E27] px-4 py-4">
                   <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-emerald-200/70">
                     Taille
                   </p>
                   <p className="mt-3 text-2xl font-semibold text-white">{targetClient.height} cm</p>
-                  <p className="mt-2 text-sm text-slate-400">Sans revenir sur la fiche client</p>
+                  <p className="mt-2 text-sm text-[#7A8099]">Sans revenir sur la fiche client</p>
                 </div>
-                <div className="rounded-[20px] border border-white/10 bg-slate-950/26 px-4 py-4">
+                <div className="rounded-[20px] border border-white/10 bg-[#1A1E27] px-4 py-4">
                   <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-emerald-200/70">
                     Dernier point
                   </p>
                   <p className="mt-3 text-2xl font-semibold text-white">{formatDate(latest.date)}</p>
-                  <p className="mt-2 text-sm text-slate-400">Repere rapide avant la saisie</p>
+                  <p className="mt-2 text-sm text-[#7A8099]">Repere rapide avant la saisie</p>
                 </div>
               </div>
 
@@ -580,7 +580,7 @@ export function NewFollowUpPage() {
               <CompactWeightPanel label="Poids de départ" value={`${first.bodyScan.weight} kg`} />
               <CompactWeightPanel label="Dernier relevé" value={`${latest.bodyScan.weight} kg`} />
               <div className="rounded-[22px] border border-white/10 bg-white/[0.03] px-5 py-4">
-                <p className="text-[12px] font-medium text-slate-400">Écart depuis départ</p>
+                <p className="text-[12px] font-medium text-[#7A8099]">Écart depuis départ</p>
                 <div className="mt-3 flex items-center justify-between gap-3">
                   <p className="text-[2rem] font-semibold tracking-[-0.04em] text-white">
                     {weightDeltaFromStart > 0 ? "+" : ""}
@@ -593,12 +593,12 @@ export function NewFollowUpPage() {
                 </div>
               </div>
               <div className="rounded-[22px] border border-white/10 bg-white/[0.03] px-5 py-4">
-                <p className="text-[12px] font-medium text-slate-400">À repérer avant la balance</p>
+                <p className="text-[12px] font-medium text-[#7A8099]">À repérer avant la balance</p>
                 <div className="mt-4 flex flex-wrap gap-2">
                   {["Énergie", "Faim", "Digestion", "Régularité repas"].map((item) => (
                     <span
                       key={item}
-                      className="inline-flex min-h-[38px] items-center rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-[13px] font-medium text-slate-200"
+                      className="inline-flex min-h-[38px] items-center rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-[13px] font-medium text-[#F0EDE8]"
                     >
                       {item}
                     </span>
@@ -613,7 +613,7 @@ export function NewFollowUpPage() {
               <div>
                 <p className="eyebrow-label">Point volume</p>
                 <p className="mt-3 text-2xl text-white">Commande et reste estime</p>
-                <p className="mt-2 text-sm leading-6 text-slate-300">
+                <p className="mt-2 text-sm leading-6 text-[#B0B4C4]">
                   Un coup d&apos;oeil pour voir ou en est la commande avant de relancer le prochain pas.
                 </p>
               </div>
@@ -636,7 +636,7 @@ export function NewFollowUpPage() {
                     value={`${pvRecord.pvCumulative} PV`}
                   />
                   <div className="rounded-[22px] border border-white/10 bg-white/[0.03] px-5 py-4">
-                    <p className="text-[12px] font-medium text-slate-400">Statut actuel</p>
+                    <p className="text-[12px] font-medium text-[#7A8099]">Statut actuel</p>
                     <div className="mt-3">
                       <PvFollowUpStatusLabel status={pvRecord.status} />
                     </div>
@@ -644,7 +644,7 @@ export function NewFollowUpPage() {
                 </div>
 
                 <div className="rounded-[22px] border border-white/10 bg-white/[0.03] px-5 py-4">
-                  <p className="text-[12px] font-medium text-slate-400">Produits a suivre</p>
+                  <p className="text-[12px] font-medium text-[#7A8099]">Produits a suivre</p>
                   <div className="mt-4 flex flex-wrap gap-2">
                     {pvRecord.activeProducts.map((product) => {
                       const meta = getPvProductStatusMeta(product.status);
@@ -669,7 +669,7 @@ export function NewFollowUpPage() {
               </>
             ) : (
               <div className="rounded-[22px] border border-white/10 bg-white/[0.03] px-5 py-4">
-                <p className="text-sm leading-6 text-slate-300">
+                <p className="text-sm leading-6 text-[#B0B4C4]">
                   Aucun suivi PV n&apos;est encore visible pour ce dossier.
                 </p>
               </div>
@@ -678,11 +678,11 @@ export function NewFollowUpPage() {
 
           <Card className="space-y-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-300">Type de suivi</label>
+              <label className="text-sm font-medium text-[#B0B4C4]">Type de suivi</label>
               <input value={followUpType} onChange={(event) => setFollowUpType(event.target.value)} />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-300">Date et heure du suivi</label>
+              <label className="text-sm font-medium text-[#B0B4C4]">Date et heure du suivi</label>
               <input
                 type="datetime-local"
                 value={assessmentDate}
@@ -690,7 +690,7 @@ export function NewFollowUpPage() {
               />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-300">Prochain rendez-vous</label>
+              <label className="text-sm font-medium text-[#B0B4C4]">Prochain rendez-vous</label>
               <input
                 type="datetime-local"
                 value={dueDate}
@@ -705,7 +705,7 @@ export function NewFollowUpPage() {
             />
             {optionalProductsToggle === "Oui" ? (
               <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-300">Lesquels ?</label>
+                <label className="text-sm font-medium text-[#B0B4C4]">Lesquels ?</label>
                 <input
                   value={optionalProductsUsed}
                   onChange={(event) => setOptionalProductsUsed(event.target.value)}
@@ -714,7 +714,7 @@ export function NewFollowUpPage() {
               </div>
             ) : null}
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-300">Note du suivi</label>
+              <label className="text-sm font-medium text-[#B0B4C4]">Note du suivi</label>
               <textarea
                 rows={4}
                 value={coachNote}
@@ -726,7 +726,7 @@ export function NewFollowUpPage() {
               <label className="flex items-center justify-between gap-3 rounded-[22px] border border-white/10 bg-white/[0.03] px-4 py-4">
                 <div>
                   <p className="text-sm font-medium text-white">Recommandations contactées</p>
-                  <p className="mt-1 text-sm text-slate-400">
+                  <p className="mt-1 text-sm text-[#7A8099]">
                     {latest.questionnaire.recommendations.length} contact
                     {latest.questionnaire.recommendations.length > 1 ? "s" : ""} à reprendre pour ce dossier.
                   </p>
@@ -740,12 +740,12 @@ export function NewFollowUpPage() {
               </label>
             ) : null}
             <div className="rounded-[22px] bg-white/[0.03] px-4 py-4">
-              <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-slate-500">
+              <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-[#4A5068]">
                 Synthèse automatique
               </p>
-              <p className="mt-3 text-sm leading-6 text-slate-200">{followUpSummary}</p>
+              <p className="mt-3 text-sm leading-6 text-[#F0EDE8]">{followUpSummary}</p>
               {targetClient.objective === "weight-loss" ? (
-                <p className="mt-2 text-sm text-slate-400">{weightLossPace.label}</p>
+                <p className="mt-2 text-sm text-[#7A8099]">{weightLossPace.label}</p>
               ) : null}
             </div>
             <div className="flex justify-end gap-3">
@@ -770,7 +770,7 @@ function PvFollowUpStatusLabel({
     status === "ok"
       ? "bg-emerald-400/12 text-emerald-100"
       : status === "restock"
-        ? "bg-sky-400/12 text-sky-100"
+        ? "bg-[rgba(45,212,191,0.12)] text-[#2DD4BF]"
         : status === "inconsistent"
           ? "bg-rose-400/12 text-rose-100"
           : "bg-amber-400/12 text-amber-100";
@@ -803,7 +803,7 @@ function MetricField({
 }) {
   return (
     <div className="space-y-2">
-      <label className="text-sm font-medium text-slate-300">{label}</label>
+      <label className="text-sm font-medium text-[#B0B4C4]">{label}</label>
       <DecimalMetricInput value={value} onChange={onChange} />
     </div>
   );
@@ -878,7 +878,7 @@ function FollowUpChoiceGroup({
 }) {
   return (
     <div className="space-y-3">
-      <p className="text-sm font-medium text-slate-200">{label}</p>
+      <p className="text-sm font-medium text-[#F0EDE8]">{label}</p>
       <div className="flex flex-wrap gap-3">
         {options.map((option) => {
           const isActive = option === value;
@@ -890,7 +890,7 @@ function FollowUpChoiceGroup({
               onClick={() => onChange(option)}
               className={`inline-flex min-h-[44px] items-center rounded-full border px-5 py-2.5 text-[14px] font-semibold transition duration-200 ${
                 isActive
-                  ? "border-white/20 bg-[linear-gradient(135deg,#59B7FF_0%,#3A9BE8_100%)] text-[#07111F] shadow-[0_8px_24px_rgba(89,183,255,0.22)]"
+                  ? "border-white/20 bg-[linear-gradient(135deg,#59B7FF_0%,#3A9BE8_100%)] text-[#07111F] shadow-[0_8px_24px_rgba(45,212,191,0.22)]"
                   : "border-white/10 bg-white/[0.04] text-[#C8D2E1] hover:-translate-y-[1px] hover:border-white/14 hover:bg-white/[0.07] hover:shadow-[0_10px_22px_rgba(0,0,0,0.14)]"
               }`}
             >
@@ -916,7 +916,7 @@ function FollowUpTextField({
 }) {
   return (
     <div className="space-y-2">
-      <label className="text-sm font-medium text-slate-300">{label}</label>
+      <label className="text-sm font-medium text-[#B0B4C4]">{label}</label>
       <textarea
         rows={4}
         value={value}
@@ -930,7 +930,7 @@ function FollowUpTextField({
 function CompactWeightPanel({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-[22px] border border-white/8 bg-white/[0.03] px-5 py-4">
-      <p className="text-[12px] font-medium text-slate-400">{label}</p>
+      <p className="text-[12px] font-medium text-[#7A8099]">{label}</p>
       <p className="mt-3 text-[2rem] font-semibold tracking-[-0.04em] text-white">{value}</p>
     </div>
   );
@@ -967,7 +967,7 @@ function StartingPointWeightCard({
   const isWeightLoss = objective === "weight-loss";
   const mainTone =
     deltaFromStart === 0
-      ? "text-slate-200"
+      ? "text-[#F0EDE8]"
       : isWeightLoss
         ? deltaFromStart < 0
           ? "text-emerald-200"
@@ -990,7 +990,7 @@ function StartingPointWeightCard({
         <div>
           <p className="eyebrow-label">Repère de progression</p>
           <p className="mt-3 text-2xl text-white">Départ vs aujourd&apos;hui</p>
-          <p className="mt-2 text-sm leading-6 text-slate-300">
+          <p className="mt-2 text-sm leading-6 text-[#B0B4C4]">
             Ce bloc sert à montrer tout de suite le point de départ, le dernier relevé et la situation aujourd&apos;hui.
           </p>
         </div>
@@ -1005,7 +1005,7 @@ function StartingPointWeightCard({
         <WeightMilestoneCard label="Aujourd'hui" date={formatDate(currentDate)} weight={currentWeight} tone="green" highlighted />
       </div>
 
-      <div className="rounded-[24px] border border-white/10 bg-slate-950/35 p-5">
+      <div className="rounded-[24px] border border-white/10 bg-[#0B0D11]/80 p-5">
         <div className="flex items-center gap-3">
           <div className="h-2 flex-1 rounded-full bg-white/10">
             <div className="flex h-full items-center justify-between px-1">
@@ -1017,7 +1017,7 @@ function StartingPointWeightCard({
         </div>
         <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
           <p className={`text-lg font-semibold ${mainTone}`}>{mainDeltaLabel}</p>
-          <p className="text-sm text-slate-400">{secondaryDeltaLabel}</p>
+          <p className="text-sm text-[#7A8099]">{secondaryDeltaLabel}</p>
         </div>
       </div>
     </Card>
@@ -1050,9 +1050,9 @@ function WeightMilestoneCard({
         highlighted ? "shadow-[0_0_30px_rgba(52,211,153,0.08)]" : ""
       }`}
     >
-      <p className="text-[11px] font-medium text-slate-500">{label}</p>
+      <p className="text-[11px] font-medium text-[#4A5068]">{label}</p>
       <p className="mt-3 text-3xl text-white">{weight} kg</p>
-      <p className="mt-2 text-sm text-slate-400">{date}</p>
+      <p className="mt-2 text-sm text-[#7A8099]">{date}</p>
     </div>
   );
 }

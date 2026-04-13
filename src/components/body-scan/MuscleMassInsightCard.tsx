@@ -91,7 +91,7 @@ export function MuscleMassInsightCard({
             <div className="md:col-span-2 xl:col-span-3 rounded-[24px] border border-white/10 bg-white/[0.03] p-4">
               <div className="flex items-center justify-between gap-3">
                 <p className="text-sm font-semibold text-white">Ecarts lisibles</p>
-                <p className="text-xs uppercase tracking-[0.18em] text-slate-500">Suivi</p>
+                <p className="text-xs uppercase tracking-[0.18em] text-[#4A5068]">Suivi</p>
               </div>
 
               <div className="mt-4 grid gap-3 xl:grid-cols-2">
@@ -128,15 +128,15 @@ function DeltaPanel({
   enabled: boolean;
 }) {
   return (
-    <div className="rounded-[20px] border border-white/10 bg-slate-950/35 p-4">
-      <p className="text-xs uppercase tracking-[0.18em] text-slate-500">{title}</p>
+    <div className="rounded-[20px] border border-white/10 bg-[#0B0D11]/80 p-4">
+      <p className="text-xs uppercase tracking-[0.18em] text-[#4A5068]">{title}</p>
       <div className="mt-4 grid gap-3">
         <div className="flex items-center justify-between gap-3">
-          <span className="text-sm text-slate-400">Variation en kg</span>
+          <span className="text-sm text-[#7A8099]">Variation en kg</span>
           <DeltaValue value={enabled ? kgDelta : 0} suffix=" kg" />
         </div>
         <div className="flex items-center justify-between gap-3">
-          <span className="text-sm text-slate-400">Variation en %</span>
+          <span className="text-sm text-[#7A8099]">Variation en %</span>
           <DeltaValue value={enabled ? percentDelta : 0} suffix=" %" />
         </div>
       </div>
@@ -148,7 +148,7 @@ function DeltaValue({ value, suffix }: { value: number; suffix: string }) {
   const sign = value > 0 ? "+" : "";
   const tone =
     value === 0
-      ? "bg-white/[0.05] text-slate-200"
+      ? "bg-white/[0.05] text-[#F0EDE8]"
       : value > 0
         ? "bg-emerald-400/[0.12] text-emerald-200"
         : "bg-rose-400/[0.12] text-rose-200";

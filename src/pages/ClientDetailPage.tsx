@@ -1,312 +1,921 @@
-import { useState, useEffect } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
-import { supabase } from '../lib/supabase'
+import { useEffect, useState } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import {
+  BodyScanComparisonGrid,
+  type ComparisonMetricCard
+} from "../components/body-scan/BodyScanComparisonGrid";
+import { BodyFatInsightCard } from "../components/body-scan/BodyFatInsightCard";
+import { MuscleMassInsightCard } from "../components/body-scan/MuscleMassInsightCard";
+import { BodyScanSnapshotCard } from "../components/body-scan/BodyScanSnapshotCard";
+import { HydrationVisceralInsightCard } from "../components/body-scan/HydrationVisceralInsightCard";
+import { WeightGoalInsightCard } from "../components/education/WeightGoalInsightCard";
+import { EvolutionChart } from "../components/body-scan/EvolutionChart";
+import { HistoryTimeline } from "../components/client/HistoryTimeline";
+import { Button } from "../components/ui/Button";
+import { Card } from "../components/ui/Card";
+import { MetricTile } from "../components/ui/MetricTile";
+import { PageHeading } from "../components/ui/PageHeading";
+import { StatusBadge } from "../components/ui/StatusBadge";
+import { useAppContext } from "../context/AppContext";
+import { buildPvTrackingRecords, pvProductCatalog } from "../data/mockPvModule";
+import { getAccessibleOwnerIds, isAdmin, isReferent } from "../lib/auth";
+import { getClientActiveFollowUp } from "../lib/portfolio";
+import {
+  calculateProteinRange,
+  calculateWaterNeed,
+  estimateHydrationKg,
+  estimateRelativeMassPercent,
+  estimateMuscleMassPercent,
+  formatDate,
+  formatDateTime,
+  getAssessmentDelta,
+  getFirstAssessment,
+  getLatestAssessment,
+  getLatestBodyScan,
+  getLatestQuestionnaire,
+  getPreviousAssessment,
+  getWeightLossPlan
+} from "../lib/calculations";
 
-interface Client {
-  id: string; first_name: string; last_name: string; email?: string
-  phone?: string; objective?: string; status: string; height_cm?: number
-  gender?: string; notes?: string; created_at: string
-}
+export function ClientDetailPage() {
+  const navigate = useNavigate();
+  const { clientId } = useParams();
+  const {
+    currentUser,
+    users,
+    activityLogs,
+    deleteClient,
+    getClientById,
+    followUps,
+    pvTransactions,
+    pvClientProducts,
+    reassignClientOwner
+  } = useAppContext();
 
-interface Bilan {
-  id: string; date: string; energy_level?: number
-  sleep_quality?: number; water_liters?: number; main_objective?: string
-  recommendations?: { category: string; priority: string; product?: string; reason: string }[]
-}
+  const client = clientId ? getClientById(clientId) : undefined;
 
-interface BodyScan {
-  id: string; date: string; weight_kg?: number; fat_mass_percent?: number
-  muscle_mass_kg?: number; water_percent?: number; visceral_fat_level?: number
-  bmr?: number; metabolic_age?: number; bmi?: number
-  waist_cm?: number; hip_cm?: number; chest_cm?: number; notes?: string
-}
+  if (!client) {
+    return (
+      <Card>
+        <p className="text-lg text-white">Client introuvable ou accès indisponible.</p>
+      </Card>
+    );
+  }
 
-interface Suivi {
-  id: string; date: string; week_number?: number
-  energy_level?: number; hunger_level?: number; sleep_quality?: number
-  digestion_quality?: number; bloating?: number; water_liters?: number
-  meals_respected?: boolean; small_victories?: string; remaining_blockers?: string; notes?: string
-}
+  const currentClient = client;
+  const [nextOwnerId, setNextOwnerId] = useState(client.distributorId);
+  const [transferFeedback, setTransferFeedback] = useState("");
+  const activeFollowUp = getClientActiveFollowUp(currentClient, followUps);
+  const canReassignClient = isAdmin(currentUser) || isReferent(currentUser);
+  const assignableOwnerIds = getAccessibleOwnerIds(currentUser, users);
+  const assignableOwners = users.filter(
+    (user) => user.active && assignableOwnerIds.has(user.id)
+  );
+  const clientActivity = activityLogs
+    .filter((entry) => entry.clientId === currentClient.id)
+    .slice(0, 6);
 
-const TABS = ['Profil', 'Bilans', 'Body Scan', 'Suivis']
-const AVATAR_COLORS = ['#C9A84C','#2DD4BF','#A78BFA','#FB7185']
+  useEffect(() => {
+    setNextOwnerId(currentClient.distributorId);
+  }, [currentClient.distributorId]);
 
-export default function ClientDetailPage() {
-  const { id } = useParams<{ id: string }>()
-  const navigate = useNavigate()
-  const [client, setClient] = useState<Client | null>(null)
-  const [bilans, setBilans] = useState<Bilan[]>([])
-  const [bodyScans, setBodyScans] = useState<BodyScan[]>([])
-  const [suivis, setSuivis] = useState<Suivi[]>([])
-  const [tab, setTab] = useState(0)
-  const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
-  const [editForm, setEditForm] = useState<Partial<Client>>({})
+  const latestAssessment = getLatestAssessment(client);
+  const previousAssessment = getPreviousAssessment(client);
+  const firstAssessment = getFirstAssessment(client);
+  const latestBodyScan = getLatestBodyScan(client);
+  const latestQuestionnaire = getLatestQuestionnaire(client);
+  const previousDelta = getAssessmentDelta(latestBodyScan, previousAssessment?.bodyScan ?? null);
+  const waterNeed = calculateWaterNeed(latestBodyScan.weight);
+  const proteinRange = calculateProteinRange(latestBodyScan.weight, client.objective);
+  const latestMusclePercent = estimateMuscleMassPercent(
+    latestBodyScan.weight,
+    latestBodyScan.muscleMass
+  );
+  const latestBonePercent = estimateRelativeMassPercent(
+    latestBodyScan.weight,
+    latestBodyScan.boneMass
+  );
+  const latestHydrationKg = estimateHydrationKg(latestBodyScan.weight, latestBodyScan.hydration);
+  const previousHydrationKg = previousAssessment
+    ? estimateHydrationKg(previousAssessment.bodyScan.weight, previousAssessment.bodyScan.hydration)
+    : null;
+  const firstHydrationKg = estimateHydrationKg(
+    firstAssessment.bodyScan.weight,
+    firstAssessment.bodyScan.hydration
+  );
+  const weightLossPlan = getWeightLossPlan(
+    latestBodyScan.weight,
+    latestQuestionnaire.targetWeight,
+    latestQuestionnaire.desiredTimeline
+  );
+  const recommendationCount = latestQuestionnaire.recommendations?.length ?? 0;
+  const recommendationsContacted = latestQuestionnaire.recommendationsContacted ?? false;
+  const optionalProductsLabel = latestQuestionnaire.optionalProductsUsed?.trim()
+    ? latestQuestionnaire.optionalProductsUsed
+    : "Non renseigné";
+  const canDeleteClient = currentUser?.role === "admin";
+  const pvRecord = buildPvTrackingRecords([currentClient], pvTransactions, pvClientProducts)[0] ?? null;
+  const retainedProductIds = (
+    firstAssessment.questionnaire.selectedProductIds?.length
+      ? firstAssessment.questionnaire.selectedProductIds
+      : latestQuestionnaire.selectedProductIds ?? []
+  ).filter((productId, index, array) => array.indexOf(productId) === index);
+  const retainedProducts = retainedProductIds
+    .map((productId) => pvProductCatalog.find((product) => product.id === productId) ?? null)
+    .filter((product): product is NonNullable<typeof product> => product != null);
+  const retainedProductsLabel = retainedProducts.length
+    ? retainedProducts.length <= 2
+      ? retainedProducts.map((product) => product.name).join(" + ")
+      : `${retainedProducts.length} produits retenus`
+    : "Base programme";
+  const retainedProductsTotalPrice = Number(
+    retainedProducts.reduce((total, product) => total + product.pricePublic, 0).toFixed(2)
+  );
+  const retainedProductsTotalPv = Number(
+    retainedProducts.reduce((total, product) => total + product.pv, 0).toFixed(2)
+  );
 
-  useEffect(() => { fetchClient() }, [id])
+  async function handleDeleteClient() {
+    const shouldDelete = window.confirm(
+      `Supprimer le dossier de ${currentClient.firstName} ${currentClient.lastName} ? Cette action retire aussi les bilans et les suivis liés à ce client.`
+    );
 
-  const fetchClient = async () => {
+    if (!shouldDelete) {
+      return;
+    }
+
     try {
-      setLoading(true)
-      const [clientRes, bilansRes, scansRes, suivisRes] = await Promise.all([
-        supabase.from('clients').select('*').eq('id', id).single(),
-        supabase.from('bilans').select('*').eq('client_id', id).order('date', { ascending: false }),
-        supabase.from('body_scans').select('*').eq('client_id', id).order('date', { ascending: false }),
-        supabase.from('suivis').select('*').eq('client_id', id).order('date', { ascending: false }),
-      ])
-      if (clientRes.error) throw clientRes.error
-      setClient(clientRes.data)
-      setEditForm(clientRes.data)
-      setBilans(bilansRes.data || [])
-      setBodyScans(scansRes.data || [])
-      setSuivis(suivisRes.data || [])
-    } catch (err) {
-      console.error(err)
-    } finally {
-      setLoading(false)
+      await deleteClient(currentClient.id);
+      navigate("/clients");
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Impossible de supprimer ce dossier pour le moment.";
+      window.alert(message);
     }
   }
 
-  const handleSave = async () => {
+  async function handleTransferClient() {
+    if (!canReassignClient || nextOwnerId === currentClient.distributorId) {
+      return;
+    }
+
     try {
-      setSaving(true)
-      const { error } = await supabase.from('clients').update(editForm).eq('id', id)
-      if (error) throw error
-      await fetchClient()
-    } catch (err) {
-      console.error(err)
-    } finally {
-      setSaving(false)
+      await reassignClientOwner(currentClient.id, { distributorId: nextOwnerId });
+      const nextOwner = users.find((user) => user.id === nextOwnerId);
+      setTransferFeedback(
+        nextOwner
+          ? `Le dossier est maintenant rattache a ${nextOwner.name}.`
+          : "Le dossier a bien change de responsable."
+      );
+    } catch (error) {
+      setTransferFeedback(
+        error instanceof Error
+          ? error.message
+          : "Impossible de reattribuer ce dossier pour le moment."
+      );
     }
   }
 
-  if (loading) return (
-    <div style={{ padding:32, display:'flex', justifyContent:'center', paddingTop:80 }}>
-      <div style={{ width:32, height:32, border:'2px solid rgba(201,168,76,0.2)', borderTop:'2px solid #C9A84C', borderRadius:'50%', animation:'spin 0.7s linear infinite' }} />
-      <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
-    </div>
-  )
-
-  if (!client) return <div style={{ padding:32, textAlign:'center', color:'#7A8099' }}>Client introuvable</div>
-
-  const initials = `${client.first_name[0]}${client.last_name[0]}`.toUpperCase()
-  const avatarColor = AVATAR_COLORS[0]
-  const inputStyle: React.CSSProperties = { width:'100%', background:'#1A1E27', border:'1px solid rgba(255,255,255,0.08)', borderRadius:10, padding:'11px 14px', fontSize:14, color:'#F0EDE8', fontFamily:'DM Sans,sans-serif', outline:'none' }
-  const labelStyle: React.CSSProperties = { fontSize:11, color:'#7A8099', letterSpacing:'1px', textTransform:'uppercase', display:'block', marginBottom:6 }
+  const comparisonItems: ComparisonMetricCard[] = [
+    {
+      label: "Masse musculaire",
+      primary: `${latestBodyScan.muscleMass} kg`,
+      secondary: `${latestMusclePercent} %`,
+      previousDelta: previousAssessment == null ? 0 : previousDelta.muscleMass,
+      initialDelta: Number(
+        (latestBodyScan.muscleMass - firstAssessment.bodyScan.muscleMass).toFixed(1)
+      ),
+      suffix: " kg"
+    },
+    {
+      label: "Hydratation",
+      primary: `${latestBodyScan.hydration} %`,
+      secondary: `${latestHydrationKg} kg estimes`,
+      previousDelta:
+        previousHydrationKg == null
+          ? 0
+          : Number((latestHydrationKg - previousHydrationKg).toFixed(1)),
+      initialDelta: Number((latestHydrationKg - firstHydrationKg).toFixed(1)),
+      suffix: " kg"
+    },
+    {
+      label: "Poids",
+      primary: `${latestBodyScan.weight} kg`,
+      secondary:
+        client.objective === "weight-loss"
+          ? weightLossPlan.isAchieved
+            ? `Cible ${latestQuestionnaire.targetWeight} kg atteinte`
+            : `${weightLossPlan.remainingKg} kg restants`
+          : "Repère de suivi",
+      previousDelta: previousDelta.weight,
+      initialDelta: Number((latestBodyScan.weight - firstAssessment.bodyScan.weight).toFixed(1)),
+      suffix: " kg",
+      inverseGood: true
+    },
+    {
+      label: "Graisse viscérale",
+      primary: `${latestBodyScan.visceralFat}`,
+      secondary: "Indice actuel",
+      previousDelta: previousDelta.visceralFat,
+      initialDelta: Number((latestBodyScan.visceralFat - firstAssessment.bodyScan.visceralFat).toFixed(1)),
+      suffix: "",
+      inverseGood: true
+    },
+    {
+      label: "Âge métabolique",
+      primary: `${latestBodyScan.metabolicAge} ans`,
+      secondary: `Age reel ${client.age} ans`,
+      previousDelta: previousDelta.metabolicAge,
+      initialDelta: Number((latestBodyScan.metabolicAge - firstAssessment.bodyScan.metabolicAge).toFixed(1)),
+      suffix: " ans",
+      inverseGood: true
+    }
+  ];
 
   return (
-    <div className="page-enter" style={{ padding:32, maxWidth:900, margin:'0 auto' }}>
-      <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+    <div className="space-y-6">
+      <PageHeading
+        eyebrow="Fiche client"
+        title={`${client.firstName} ${client.lastName}`}
+        description="Chiffres utiles, progression, cap actuel et prochaine action."
+      />
 
-      <button onClick={() => navigate('/clients')} style={{ display:'flex', alignItems:'center', gap:8, background:'none', border:'none', color:'#7A8099', cursor:'pointer', fontFamily:'DM Sans,sans-serif', fontSize:13, marginBottom:24, padding:0 }}>
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><polyline points="15 18 9 12 15 6"/></svg>
-        Retour aux clients
-      </button>
-
-      {/* Header */}
-      <div style={{ display:'flex', alignItems:'center', gap:20, marginBottom:28, background:'#13161C', border:'1px solid rgba(255,255,255,0.07)', borderRadius:14, padding:24 }}>
-        <div style={{ width:60, height:60, borderRadius:'50%', background:`${avatarColor}20`, color:avatarColor, border:`2px solid ${avatarColor}40`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:20, fontFamily:'Syne,sans-serif', fontWeight:700, flexShrink:0 }}>{initials}</div>
-        <div style={{ flex:1 }}>
-          <h1 style={{ fontFamily:'Syne,sans-serif', fontSize:22, fontWeight:800, color:'#F0EDE8', margin:'0 0 4px' }}>{client.first_name} {client.last_name}</h1>
-          <p style={{ fontSize:13, color:'#7A8099', margin:0 }}>{client.objective || 'Objectif non défini'}</p>
-        </div>
-        <button onClick={() => navigate(`/clients/${id}/bilan/new`)} style={{ background:'#C9A84C', color:'#0B0D11', border:'none', borderRadius:10, padding:'11px 20px', fontFamily:'Syne,sans-serif', fontSize:13, fontWeight:700, cursor:'pointer', display:'flex', alignItems:'center', gap:8, whiteSpace:'nowrap' }}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          Nouveau bilan
-        </button>
-      </div>
-
-      {/* Onglets */}
-      <div style={{ display:'flex', gap:4, marginBottom:24, background:'#13161C', border:'1px solid rgba(255,255,255,0.07)', borderRadius:12, padding:4 }}>
-        {TABS.map((t, i) => (
-          <button key={t} onClick={() => setTab(i)} style={{ flex:1, padding:'9px', borderRadius:9, border:'none', cursor:'pointer', fontSize:13, fontFamily:'DM Sans,sans-serif', fontWeight: tab === i ? 500 : 400, transition:'all .15s', background: tab === i ? '#1A1E27' : 'transparent', color: tab === i ? '#F0EDE8' : '#7A8099' }}>{t}</button>
-        ))}
-      </div>
-
-      {/* PROFIL */}
-      {tab === 0 && (
-        <div style={{ background:'#13161C', border:'1px solid rgba(255,255,255,0.07)', borderRadius:14, padding:28 }}>
-          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16, marginBottom:16 }}>
-            <div><label style={labelStyle}>Prénom</label><input style={inputStyle} value={editForm.first_name || ''} onChange={e => setEditForm(f => ({...f, first_name: e.target.value}))} /></div>
-            <div><label style={labelStyle}>Nom</label><input style={inputStyle} value={editForm.last_name || ''} onChange={e => setEditForm(f => ({...f, last_name: e.target.value}))} /></div>
-            <div><label style={labelStyle}>Email</label><input style={inputStyle} value={editForm.email || ''} onChange={e => setEditForm(f => ({...f, email: e.target.value}))} /></div>
-            <div><label style={labelStyle}>Téléphone</label><input style={inputStyle} value={editForm.phone || ''} onChange={e => setEditForm(f => ({...f, phone: e.target.value}))} /></div>
-            <div><label style={labelStyle}>Taille (cm)</label><input style={inputStyle} type="number" value={editForm.height_cm || ''} onChange={e => setEditForm(f => ({...f, height_cm: parseFloat(e.target.value)}))} /></div>
-            <div><label style={labelStyle}>Statut</label><select style={{...inputStyle, appearance:'none' as const}} value={editForm.status || 'actif'} onChange={e => setEditForm(f => ({...f, status: e.target.value}))}><option value="actif">Actif</option><option value="pause">En pause</option><option value="inactif">Inactif</option></select></div>
-          </div>
-          <div style={{ marginBottom:16 }}><label style={labelStyle}>Notes coach</label><textarea style={{...inputStyle, resize:'vertical' as const}} rows={3} value={editForm.notes || ''} onChange={e => setEditForm(f => ({...f, notes: e.target.value}))} placeholder="Observations importantes..." /></div>
-          <button onClick={handleSave} disabled={saving} style={{ background:'#C9A84C', color:'#0B0D11', border:'none', borderRadius:10, padding:'12px 24px', fontFamily:'Syne,sans-serif', fontSize:14, fontWeight:700, cursor:'pointer', opacity: saving ? 0.7 : 1 }}>{saving ? 'Sauvegarde...' : 'Sauvegarder'}</button>
-        </div>
-      )}
-
-      {/* BILANS */}
-      {tab === 1 && (
-        <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
-          {bilans.length === 0 ? (
-            <div style={{ textAlign:'center', padding:'48px 0', background:'#13161C', border:'1px solid rgba(255,255,255,0.07)', borderRadius:14, color:'#4A5068' }}>
-              <div style={{ fontSize:32, marginBottom:12 }}>📋</div>
-              <div style={{ fontSize:14, marginBottom:4 }}>Aucun bilan enregistré</div>
-              <button onClick={() => navigate(`/clients/${id}/bilan/new`)} style={{ marginTop:12, background:'#C9A84C', color:'#0B0D11', border:'none', borderRadius:8, padding:'10px 20px', fontFamily:'Syne,sans-serif', fontWeight:700, cursor:'pointer', fontSize:13 }}>Créer le premier bilan</button>
+      <div className="grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
+        <Card className="space-y-5">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <p className="text-sm text-[#7A8099]">
+                {client.job} - {client.city ?? "Ville non renseignee"} -{" "}
+                <Link
+                  to={`/distributors/${client.distributorId}`}
+                  className="font-medium text-sky-300 transition hover:text-[#2DD4BF]"
+                >
+                  {client.distributorName}
+                </Link>
+              </p>
+              <p className="mt-2 text-4xl">
+                {client.firstName} {client.lastName}
+              </p>
+              <p className="mt-2 text-sm text-[#7A8099]">
+                Programme en cours : {client.currentProgram || "Programme a confirmer"}
+              </p>
             </div>
-          ) : bilans.map(bilan => (
-            <div key={bilan.id} style={{ background:'#13161C', border:'1px solid rgba(255,255,255,0.07)', borderRadius:12, padding:20 }}>
-              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:14 }}>
-                <div style={{ fontFamily:'Syne,sans-serif', fontSize:14, fontWeight:700, color:'#F0EDE8' }}>Bilan du {new Date(bilan.date).toLocaleDateString('fr-FR', { day:'numeric', month:'long', year:'numeric' })}</div>
-                <span style={{ fontSize:11, padding:'3px 10px', borderRadius:20, background:'rgba(45,212,191,0.1)', color:'#2DD4BF' }}>Complété</span>
-              </div>
-              <div style={{ display:'flex', gap:20 }}>
-                {bilan.energy_level !== undefined && bilan.energy_level > 0 && <div style={{ fontSize:12, color:'#7A8099' }}>Énergie : <span style={{ color:'#C9A84C' }}>{'★'.repeat(bilan.energy_level)}</span></div>}
-                {bilan.sleep_quality !== undefined && bilan.sleep_quality > 0 && <div style={{ fontSize:12, color:'#7A8099' }}>Sommeil : <span style={{ color:'#A78BFA' }}>{'★'.repeat(bilan.sleep_quality)}</span></div>}
-                {bilan.water_liters !== undefined && <div style={{ fontSize:12, color:'#7A8099' }}>Eau : <span style={{ color:'#2DD4BF' }}>{bilan.water_liters}L/j</span></div>}
-              </div>
-              {bilan.recommendations && bilan.recommendations.length > 0 && (
-                <div style={{ marginTop:14, paddingTop:14, borderTop:'1px solid rgba(255,255,255,0.06)' }}>
-                  <div style={{ fontSize:11, color:'#7A8099', marginBottom:8, letterSpacing:'1px', textTransform:'uppercase' }}>Recommandations</div>
-                  <div style={{ display:'flex', flexWrap:'wrap', gap:8 }}>
-                    {bilan.recommendations.map((r, i) => (
-                      <span key={i} style={{ fontSize:11, padding:'4px 12px', borderRadius:20, background: r.priority === 'haute' ? 'rgba(251,113,133,0.1)' : 'rgba(201,168,76,0.1)', color: r.priority === 'haute' ? '#FB7185' : '#C9A84C' }}>{r.category} {r.product ? `— ${r.product}` : ''}</span>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
+            <div className="flex flex-wrap items-center justify-end gap-3">
+              <Link
+                to={`/clients/${client.id}/follow-up/new`}
+                className="inline-flex items-center gap-3 rounded-[22px] bg-emerald-400/12 px-4 py-3 text-sm font-semibold text-emerald-100 transition hover:bg-emerald-400/18"
+              >
+                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-400/18 text-emerald-100">
+                  <svg
+                    aria-hidden="true"
+                    viewBox="0 0 24 24"
+                    className="h-5 w-5"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M4 7.5h4" />
+                    <path d="M4 12h7" />
+                    <path d="M4 16.5h4" />
+                    <path d="M15.5 4v5" />
+                    <path d="M13 6.5h5" />
+                    <rect x="11" y="10" width="9" height="9" rx="2" />
+                  </svg>
+                </span>
+                <span className="text-left">
+                  <span className="block text-[11px] font-medium text-emerald-200/70">
+                    Action rapide
+                  </span>
+                  <span className="block">Démarrer le body scan</span>
+                </span>
+              </Link>
 
-      {/* BODY SCAN */}
-      {tab === 2 && (
-        <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
-          <div style={{ display:'flex', justifyContent:'flex-end' }}>
-            <button onClick={() => navigate(`/clients/${id}/scan/new`)} style={{ background:'#C9A84C', color:'#0B0D11', border:'none', borderRadius:10, padding:'10px 18px', fontFamily:'Syne,sans-serif', fontSize:13, fontWeight:700, cursor:'pointer', display:'flex', alignItems:'center', gap:8 }}>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-              Nouveau scan
-            </button>
+              <div className="flex flex-wrap gap-2">
+              <StatusBadge
+                label={client.started ? "Programme démarré" : "À démarrer"}
+                tone={client.started ? "green" : "amber"}
+              />
+              <StatusBadge
+                label={client.objective === "sport" ? "Sport" : "Perte de poids"}
+                tone={client.objective === "sport" ? "green" : "blue"}
+              />
+              {recommendationCount ? (
+                <StatusBadge
+                  label={
+                    recommendationsContacted
+                      ? `${recommendationCount} recommandations contactées`
+                      : `${recommendationCount} recommandations à contacter`
+                  }
+                  tone={recommendationsContacted ? "green" : "amber"}
+                />
+              ) : null}
+              </div>
+            </div>
           </div>
 
-          {bodyScans.length === 0 ? (
-            <div style={{ textAlign:'center', padding:'48px 0', background:'#13161C', border:'1px solid rgba(255,255,255,0.07)', borderRadius:14, color:'#4A5068' }}>
-              <div style={{ fontSize:32, marginBottom:12 }}>⚖️</div>
-              <div style={{ fontSize:14, color:'#7A8099', marginBottom:4 }}>Aucun body scan enregistré</div>
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <MetricTile
+              label="Poids de départ"
+              value={`${firstAssessment.bodyScan.weight} kg`}
+              hint={`Depuis le ${formatDate(firstAssessment.date)}`}
+              accent="blue"
+            />
+            <MetricTile
+              label="Poids du jour"
+              value={`${latestBodyScan.weight} kg`}
+              hint={`Relevé du ${formatDate(latestAssessment.date)}`}
+              accent="green"
+            />
+            <MetricTile
+              label={client.objective === "weight-loss" ? "Cible" : "Cap du moment"}
+              value={
+                client.objective === "weight-loss"
+                  ? latestQuestionnaire.targetWeight
+                    ? `${latestQuestionnaire.targetWeight} kg`
+                    : "À définir"
+                  : latestQuestionnaire.objectiveFocus || "Prise de masse"
+              }
+              hint={
+                client.objective === "weight-loss"
+                  ? "Repère cible"
+                  : "Cap actuel"
+              }
+              accent="red"
+            />
+            <MetricTile
+              label="Prochain rendez-vous"
+              value={formatDateTime(activeFollowUp.dueDate)}
+              hint="Suite déjà posée"
+              accent="blue"
+            />
+          </div>
+
+          <StartingPointOverviewCard
+            objective={client.objective}
+            startDate={firstAssessment.date}
+            startWeight={firstAssessment.bodyScan.weight}
+            currentDate={latestAssessment.date}
+            currentWeight={latestBodyScan.weight}
+            currentBodyFat={latestBodyScan.bodyFat}
+            startBodyFat={firstAssessment.bodyScan.bodyFat}
+          />
+
+          <BodyScanSnapshotCard
+            title="Dernier body scan"
+            dateLabel={`Relevé du ${formatDate(latestAssessment.date)}`}
+            metrics={latestBodyScan}
+          />
+
+          <BodyFatInsightCard
+            current={{ weight: latestBodyScan.weight, percent: latestBodyScan.bodyFat }}
+            objective={client.objective}
+            sex={client.sex}
+            previous={
+              previousAssessment
+                ? {
+                    weight: previousAssessment.bodyScan.weight,
+                    percent: previousAssessment.bodyScan.bodyFat
+                  }
+                : null
+            }
+            initial={{
+              weight: firstAssessment.bodyScan.weight,
+              percent: firstAssessment.bodyScan.bodyFat
+            }}
+            history={client.assessments.map((assessment) => ({
+              date: assessment.date,
+              weight: assessment.bodyScan.weight,
+              percent: assessment.bodyScan.bodyFat
+            }))}
+          />
+
+          <MuscleMassInsightCard
+            current={{ weight: latestBodyScan.weight, muscleMass: latestBodyScan.muscleMass }}
+            previous={
+              previousAssessment
+                ? {
+                    weight: previousAssessment.bodyScan.weight,
+                    muscleMass: previousAssessment.bodyScan.muscleMass
+                  }
+                : null
+            }
+            initial={{
+              weight: firstAssessment.bodyScan.weight,
+              muscleMass: firstAssessment.bodyScan.muscleMass
+            }}
+            history={client.assessments.map((assessment) => ({
+              date: assessment.date,
+              weight: assessment.bodyScan.weight,
+              muscleMass: assessment.bodyScan.muscleMass
+            }))}
+          />
+
+          <HydrationVisceralInsightCard
+            weight={latestBodyScan.weight}
+            hydrationPercent={latestBodyScan.hydration}
+            sex={client.sex}
+            visceralFat={latestBodyScan.visceralFat}
+            history={client.assessments.map((assessment) => ({
+              date: assessment.date,
+              weight: assessment.bodyScan.weight,
+              hydrationPercent: assessment.bodyScan.hydration,
+              visceralFat: assessment.bodyScan.visceralFat
+            }))}
+          />
+
+          <div className="space-y-4 rounded-[26px] bg-[#1A1E27] p-5">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="eyebrow-label">Écarts et évolution</p>
+                <p className="mt-3 text-2xl text-white">Ce qui a bougé</p>
+              </div>
+              <StatusBadge
+                label={previousAssessment ? "Comparaison active" : "Premier bilan"}
+                tone="blue"
+              />
             </div>
-          ) : (
-            <>
-              {(() => {
-                const scan = bodyScans[0]
-                const metrics = [
-                  { label: 'Masse grasse', value: scan.fat_mass_percent, unit: '%', max: 50, color: '#FB7185' },
-                  { label: 'Masse musculaire', value: scan.muscle_mass_kg, unit: ' kg', max: 80, color: '#2DD4BF' },
-                  { label: 'Hydratation', value: scan.water_percent, unit: '%', max: 100, color: '#A78BFA' },
-                  { label: 'Graisse viscérale', value: scan.visceral_fat_level, unit: '', max: 30, color: '#C9A84C' },
-                ]
-                return (
-                  <div style={{ background:'#13161C', border:'1px solid rgba(255,255,255,0.07)', borderRadius:14, padding:24 }}>
-                    <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:20 }}>
-                      <div style={{ fontFamily:'Syne,sans-serif', fontSize:15, fontWeight:700, color:'#F0EDE8' }}>Dernier scan</div>
-                      <span style={{ fontSize:12, color:'#7A8099' }}>{new Date(scan.date).toLocaleDateString('fr-FR', { day:'numeric', month:'long', year:'numeric' })}</span>
-                    </div>
-                    <div style={{ display:'flex', gap:16, marginBottom:24 }}>
-                      {scan.weight_kg && <div style={{ flex:1, background:'#1A1E27', borderRadius:12, padding:'16px', textAlign:'center' }}><div style={{ fontSize:36, fontFamily:'Syne,sans-serif', fontWeight:800, color:'#C9A84C', lineHeight:1 }}>{scan.weight_kg}</div><div style={{ fontSize:12, color:'#7A8099', marginTop:4 }}>kg</div></div>}
-                      {scan.bmi && <div style={{ flex:1, background:'#1A1E27', borderRadius:12, padding:'16px', textAlign:'center' }}><div style={{ fontSize:36, fontFamily:'Syne,sans-serif', fontWeight:800, color: scan.bmi < 18.5 || scan.bmi > 25 ? '#FB7185' : '#2DD4BF', lineHeight:1 }}>{scan.bmi}</div><div style={{ fontSize:12, color:'#7A8099', marginTop:4 }}>IMC</div></div>}
-                      {scan.metabolic_age && <div style={{ flex:1, background:'#1A1E27', borderRadius:12, padding:'16px', textAlign:'center' }}><div style={{ fontSize:36, fontFamily:'Syne,sans-serif', fontWeight:800, color:'#A78BFA', lineHeight:1 }}>{scan.metabolic_age}</div><div style={{ fontSize:12, color:'#7A8099', marginTop:4 }}>Âge méta.</div></div>}
-                      {scan.bmr && <div style={{ flex:1, background:'#1A1E27', borderRadius:12, padding:'16px', textAlign:'center' }}><div style={{ fontSize:28, fontFamily:'Syne,sans-serif', fontWeight:800, color:'#F0C96A', lineHeight:1 }}>{scan.bmr}</div><div style={{ fontSize:12, color:'#7A8099', marginTop:4 }}>kcal/j</div></div>}
-                    </div>
-                    {metrics.map(m => m.value !== undefined && m.value !== null && (
-                      <div key={m.label} style={{ marginBottom:14 }}>
-                        <div style={{ display:'flex', justifyContent:'space-between', marginBottom:6 }}>
-                          <span style={{ fontSize:13, color:'#7A8099' }}>{m.label}</span>
-                          <span style={{ fontSize:14, fontFamily:'Syne,sans-serif', fontWeight:700, color:'#F0EDE8' }}>{m.value}{m.unit}</span>
-                        </div>
-                        <div style={{ height:5, background:'#1A1E27', borderRadius:3, overflow:'hidden' }}>
-                          <div style={{ width:`${Math.min(100, Math.round((m.value / m.max) * 100))}%`, height:'100%', background:m.color, borderRadius:3 }} />
-                        </div>
-                      </div>
-                    ))}
-                    {(scan.waist_cm || scan.hip_cm || scan.chest_cm) && (
-                      <div style={{ marginTop:16, paddingTop:16, borderTop:'1px solid rgba(255,255,255,0.06)', display:'flex', gap:12 }}>
-                        {scan.waist_cm && <div style={{ flex:1, textAlign:'center' }}><div style={{ fontSize:16, fontFamily:'Syne,sans-serif', fontWeight:700, color:'#F0EDE8' }}>{scan.waist_cm} cm</div><div style={{ fontSize:11, color:'#4A5068' }}>Tour de taille</div></div>}
-                        {scan.hip_cm && <div style={{ flex:1, textAlign:'center' }}><div style={{ fontSize:16, fontFamily:'Syne,sans-serif', fontWeight:700, color:'#F0EDE8' }}>{scan.hip_cm} cm</div><div style={{ fontSize:11, color:'#4A5068' }}>Tour de hanches</div></div>}
-                        {scan.chest_cm && <div style={{ flex:1, textAlign:'center' }}><div style={{ fontSize:16, fontFamily:'Syne,sans-serif', fontWeight:700, color:'#F0EDE8' }}>{scan.chest_cm} cm</div><div style={{ fontSize:11, color:'#4A5068' }}>Tour de poitrine</div></div>}
-                      </div>
-                    )}
-                  </div>
-                )
-              })()}
-              {bodyScans.length > 1 && (
-                <div style={{ background:'#13161C', border:'1px solid rgba(255,255,255,0.07)', borderRadius:14, padding:20 }}>
-                  <div style={{ fontFamily:'Syne,sans-serif', fontSize:13, fontWeight:700, color:'#F0EDE8', marginBottom:14 }}>Historique</div>
-                  {bodyScans.slice(1).map(scan => (
-                    <div key={scan.id} style={{ display:'flex', justifyContent:'space-between', padding:'10px 0', borderBottom:'1px solid rgba(255,255,255,0.05)', fontSize:13 }}>
-                      <span style={{ color:'#7A8099' }}>{new Date(scan.date).toLocaleDateString('fr-FR')}</span>
-                      {scan.weight_kg && <span style={{ color:'#C9A84C', fontWeight:600 }}>{scan.weight_kg} kg</span>}
-                      {scan.fat_mass_percent && <span style={{ color:'#FB7185' }}>MG {scan.fat_mass_percent}%</span>}
-                      {scan.muscle_mass_kg && <span style={{ color:'#2DD4BF' }}>MM {scan.muscle_mass_kg} kg</span>}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </>
+            <BodyScanComparisonGrid items={comparisonItems} />
+          </div>
+
+          <EvolutionChart assessments={client.assessments} />
+        </Card>
+
+        <div className="space-y-4">
+          <Card className="space-y-2.5">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="eyebrow-label">Cap du moment</p>
+                <p className="mt-1.5 text-xl text-white">Lecture rapide</p>
+              </div>
+              <StatusBadge label={client.currentProgram || "Programme a confirmer"} tone={client.started ? "green" : "amber"} />
+            </div>
+            <div className="grid gap-2 md:grid-cols-2">
+              <div className="md:col-span-2">
+                <SummaryFocusCard
+                  label="Objectif reformulé"
+                  value={
+                    latestQuestionnaire.objectiveFocus ||
+                    (client.objective === "sport" ? "Prise de masse" : "Perte de poids")
+                  }
+                />
+              </div>
+              <SummaryFocusCard label="Âge" value={`${client.age} ans`} />
+              <SummaryFocusCard label="Taille" value={`${client.height} cm`} />
+            </div>
+            <div className="grid gap-2">
+              <SummaryRow label="Statut" value={client.started ? "Routine démarrée" : "Mise en place à lancer"} />
+              {recommendationCount ? (
+                <SummaryStatusRow
+                  label="Recommandations"
+                  badgeLabel={recommendationsContacted ? "Contactées" : "À contacter"}
+                  tone={recommendationsContacted ? "green" : "amber"}
+                  detail={`${recommendationCount} nom${recommendationCount > 1 ? "s" : ""}`}
+                />
+              ) : null}
+              <SummaryRow label="Repère protéines" value={proteinRange} />
+              <SummaryRow label="Hydratation cible" value={`${waterNeed} L`} />
+              {retainedProducts.length ? (
+                <SummaryRow label="Composition retenue" value={retainedProductsLabel} />
+              ) : null}
+              {retainedProducts.length ? (
+                <SummaryRow
+                  label="Prix routine estime"
+                  value={formatPriceEuro(retainedProductsTotalPrice)}
+                />
+              ) : null}
+              {retainedProducts.length ? (
+                <SummaryRow label="PV routine estime" value={formatPv(retainedProductsTotalPv)} />
+              ) : null}
+              {pvRecord ? (
+                <SummaryRow label="Dernière commande PV" value={formatDate(pvRecord.lastOrderDate)} />
+              ) : null}
+              <SummaryRow label="Produits optionnels" value={optionalProductsLabel} />
+              {pvRecord ? (
+                <SummaryLinkRow
+                  label="Point volume"
+                  to={`/pv/clients?responsable=${pvRecord.responsibleId}&client=${client.id}`}
+                  value="Ouvrir la fiche PV"
+                />
+              ) : null}
+              {pvRecord ? (
+                <SummaryLinkRow
+                  label="Commande / réassort"
+                  to={`/pv/orders?client=${client.id}&product=${pvRecord.activeProducts[0]?.productId ?? "formula-1"}&type=commande`}
+                  value="Ajouter un produit"
+                />
+              ) : null}
+              <SummaryRow label="Note du moment" value={latestAssessment.notes} />
+            </div>
+          </Card>
+
+          {client.objective === "weight-loss" && (
+            <WeightGoalInsightCard
+              currentWeight={latestBodyScan.weight}
+              targetWeight={latestQuestionnaire.targetWeight}
+              timeline={latestQuestionnaire.desiredTimeline}
+              history={client.assessments.map((assessment) => ({
+                date: assessment.date,
+                weight: assessment.bodyScan.weight
+              }))}
+            />
           )}
-        </div>
-      )}
 
-      {/* SUIVIS */}
-      {tab === 3 && (
-        <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
-          <div style={{ display:'flex', justifyContent:'flex-end' }}>
-            <button onClick={() => navigate(`/clients/${id}/suivi/new`)} style={{ background:'#C9A84C', color:'#0B0D11', border:'none', borderRadius:10, padding:'10px 18px', fontFamily:'Syne,sans-serif', fontSize:13, fontWeight:700, cursor:'pointer', display:'flex', alignItems:'center', gap:8 }}>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-              Nouveau suivi
-            </button>
-          </div>
-          {suivis.length === 0 ? (
-            <div style={{ textAlign:'center', padding:'48px 0', background:'#13161C', border:'1px solid rgba(255,255,255,0.07)', borderRadius:14, color:'#4A5068' }}>
-              <div style={{ fontSize:32, marginBottom:12 }}>📈</div>
-              <div style={{ fontSize:14, color:'#7A8099', marginBottom:4 }}>Aucun suivi enregistré</div>
+          <Card className="space-y-4">
+            <div>
+              <p className="eyebrow-label">Actions rapides</p>
+              <p className="mt-3 text-2xl text-white">Pour avancer maintenant</p>
             </div>
-          ) : suivis.map(suivi => (
-            <div key={suivi.id} style={{ background:'#13161C', border:'1px solid rgba(255,255,255,0.07)', borderRadius:12, padding:20 }}>
-              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:14 }}>
-                <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-                  <span style={{ fontFamily:'Syne,sans-serif', fontSize:14, fontWeight:700, color:'#F0EDE8' }}>Suivi semaine {suivi.week_number || '—'}</span>
-                  {suivi.meals_respected !== null && suivi.meals_respected !== undefined && (
-                    <span style={{ fontSize:11, padding:'2px 10px', borderRadius:20, background: suivi.meals_respected ? 'rgba(45,212,191,0.1)' : 'rgba(251,113,133,0.1)', color: suivi.meals_respected ? '#2DD4BF' : '#FB7185' }}>
-                      Repas {suivi.meals_respected ? 'respectés' : 'non respectés'}
-                    </span>
-                  )}
-                </div>
-                <span style={{ fontSize:12, color:'#7A8099' }}>{new Date(suivi.date).toLocaleDateString('fr-FR', { day:'numeric', month:'long' })}</span>
-              </div>
-              <div style={{ display:'flex', flexWrap:'wrap', gap:16, marginBottom:12 }}>
-                {[
-                  { label:'Énergie', value:suivi.energy_level, color:'#C9A84C' },
-                  { label:'Sommeil', value:suivi.sleep_quality, color:'#A78BFA' },
-                  { label:'Digestion', value:suivi.digestion_quality, color:'#2DD4BF' },
-                  { label:'Faim', value:suivi.hunger_level, color:'#F0C96A' },
-                ].filter(m => m.value && m.value > 0).map(m => (
-                  <div key={m.label} style={{ display:'flex', alignItems:'center', gap:6 }}>
-                    <span style={{ fontSize:11, color:'#4A5068' }}>{m.label}</span>
-                    <span style={{ color:m.color, fontSize:13 }}>{'★'.repeat(m.value || 0)}{'☆'.repeat(5 - (m.value || 0))}</span>
-                  </div>
-                ))}
-                {suivi.water_liters && <div style={{ display:'flex', alignItems:'center', gap:6 }}><span style={{ fontSize:11, color:'#4A5068' }}>Eau</span><span style={{ fontSize:13, color:'#2DD4BF', fontWeight:600 }}>{suivi.water_liters}L</span></div>}
-              </div>
-              {suivi.small_victories && (
-                <div style={{ background:'rgba(201,168,76,0.06)', border:'1px solid rgba(201,168,76,0.15)', borderRadius:8, padding:'10px 14px', marginBottom:8 }}>
-                  <div style={{ fontSize:10, color:'#C9A84C', letterSpacing:'1px', textTransform:'uppercase', marginBottom:4 }}>Victoires</div>
-                  <div style={{ fontSize:13, color:'#F0EDE8' }}>{suivi.small_victories}</div>
-                </div>
-              )}
-              {suivi.remaining_blockers && (
-                <div style={{ background:'rgba(251,113,133,0.06)', border:'1px solid rgba(251,113,133,0.15)', borderRadius:8, padding:'10px 14px' }}>
-                  <div style={{ fontSize:10, color:'#FB7185', letterSpacing:'1px', textTransform:'uppercase', marginBottom:4 }}>Points bloquants</div>
-                  <div style={{ fontSize:13, color:'#F0EDE8' }}>{suivi.remaining_blockers}</div>
-                </div>
+            <div className="grid gap-3">
+              <LinkButton
+                to={`/clients/${client.id}/follow-up/new`}
+                label="Nouveau suivi"
+                hint="Relire, mesurer et poser la suite"
+              />
+              <LinkButton
+                to={`/clients/${client.id}/start-assessment/edit`}
+                label="Modifier le bilan de départ"
+                hint="Corriger la date et les valeurs de reference"
+              />
+              <LinkButton
+                to={`/pv/clients?responsable=${client.distributorId}&client=${client.id}`}
+                label="Ouvrir la fiche point volume"
+                hint="Voir la commande, le reste estime et les alertes produits"
+              />
+              <LinkButton
+                to={`/clients/${client.id}/follow-up/new`}
+                label="Nouveau body scan"
+                hint="Entrer directement les nouvelles valeurs"
+                tone="green"
+              />
+              <LinkButton
+                to={`/clients/${client.id}/assessments/${latestAssessment.id}/edit`}
+                label="Modifier le dernier bilan"
+                hint="Completer une section oubliee ou corriger les valeurs"
+              />
+              <LinkButton
+                to={`/clients/${client.id}/schedule/edit`}
+                label="Modifier le prochain rendez-vous"
+                hint="Ajuster la date, l'heure ou le type de suivi"
+              />
+              {canDeleteClient && (
+                <DangerActionButton
+                  label="Supprimer ce dossier"
+                  hint="Retirer ce client, ses bilans et ses suivis liés"
+                  onClick={handleDeleteClient}
+                />
               )}
             </div>
-          ))}
+          </Card>
+
+          {canReassignClient ? (
+            <Card className="space-y-4">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="eyebrow-label">Transfert de portefeuille</p>
+                  <p className="mt-3 text-2xl text-white">Changer le responsable</p>
+                </div>
+                <StatusBadge label={currentClient.distributorName} tone="amber" />
+              </div>
+              <div className="space-y-3">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-[#B0B4C4]">
+                    Nouveau responsable du dossier
+                  </label>
+                  <select
+                    value={nextOwnerId}
+                    onChange={(event) => setNextOwnerId(event.target.value)}
+                  >
+                    {assignableOwners.map((user) => (
+                      <option key={user.id} value={user.id}>
+                        {user.name} - {user.role === "referent" ? "Referent" : user.role === "admin" ? "Admin" : "Distributeur"}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <Button
+                  variant="secondary"
+                  onClick={() => void handleTransferClient()}
+                  disabled={nextOwnerId === currentClient.distributorId}
+                >
+                  Enregistrer le transfert
+                </Button>
+                <p className="text-sm leading-6 text-[#7A8099]">
+                  {transferFeedback ||
+                    "Le dossier, le responsable affiche et le suivi produits actifs seront realignes ensemble."}
+                </p>
+              </div>
+            </Card>
+          ) : null}
+
+          <Card className="space-y-4">
+            <div>
+              <p className="eyebrow-label">Repères du moment</p>
+              <p className="mt-3 text-2xl text-white">À reformuler simplement</p>
+            </div>
+            <div className="grid gap-2">
+              <QuickInfo
+                text={`Petit-déjeuner : ${latestQuestionnaire.breakfastFrequency} - ${latestQuestionnaire.breakfastContent}`}
+              />
+              <QuickInfo text={`Protéines : ${latestQuestionnaire.proteinEachMeal} - repère actuel ${proteinRange}`} />
+              <QuickInfo text={`Hydratation : ${latestQuestionnaire.waterIntake} L / jour pour un besoin estimé à ${waterNeed} L`} />
+              <QuickInfo text={`Lecture corporelle : ${latestMusclePercent} % de masse musculaire et ${latestBonePercent} % de masse osseuse`} />
+              <QuickInfo text={`Motivation : ${latestQuestionnaire.motivation}/10`} />
+              {retainedProducts.length ? (
+                <QuickInfo
+                  text={`Routine retenue : ${retainedProducts
+                    .map((product) => product.name)
+                    .join(", ")}`}
+                />
+              ) : null}
+            </div>
+          </Card>
+
+          <Card className="space-y-4">
+            <div className="flex items-center justify-between gap-3">
+              <p className="eyebrow-label">Historique des bilans</p>
+              <Link to="/assessments/new" className="text-sm font-semibold text-sky-300">
+                Nouveau bilan
+              </Link>
+            </div>
+            <HistoryTimeline
+              entries={[...client.assessments]
+                .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                .map((entry) => ({
+                  id: entry.id,
+                  date: formatDate(entry.date),
+                  summary: entry.summary,
+                  weight: entry.bodyScan.weight,
+                  hydration: entry.bodyScan.hydration,
+                  typeLabel: entry.type === "initial" ? "Depart" : "Suivi",
+                  editTo: `/clients/${client.id}/assessments/${entry.id}/edit`
+                }))}
+            />
+          </Card>
+
+          <Card className="space-y-4">
+            <div className="flex items-center justify-between gap-3">
+              <p className="eyebrow-label">Activite dossier</p>
+              <StatusBadge
+                label={`${clientActivity.length} visible${clientActivity.length > 1 ? "s" : ""}`}
+                tone="blue"
+              />
+            </div>
+            <div className="space-y-3">
+              {clientActivity.map((entry) => (
+                <div key={entry.id} className="rounded-[20px] bg-white/[0.03] px-4 py-4">
+                  <p className="text-sm font-semibold text-white">{entry.summary}</p>
+                  {entry.detail ? (
+                    <p className="mt-1 text-sm leading-6 text-[#7A8099]">{entry.detail}</p>
+                  ) : null}
+                  <p className="mt-3 text-xs text-[#4A5068]">
+                    {entry.actorName} - {formatDateTime(entry.createdAt)}
+                  </p>
+                </div>
+              ))}
+              {!clientActivity.length ? (
+                <div className="rounded-[20px] bg-white/[0.03] px-4 py-4 text-sm text-[#7A8099]">
+                  Les changements de responsable, de rendez-vous et de bilans apparaitront ici.
+                </div>
+              ) : null}
+            </div>
+          </Card>
         </div>
-      )}
+      </div>
     </div>
-  )
+  );
+}
+
+function SummaryRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-center justify-between gap-3 rounded-[22px] bg-white/[0.03] px-4 py-3">
+      <span className="text-sm text-[#7A8099]">{label}</span>
+      <span className="text-right text-sm font-semibold text-white">{value}</span>
+    </div>
+  );
+}
+
+function SummaryStatusRow({
+  label,
+  badgeLabel,
+  tone,
+  detail
+}: {
+  label: string;
+  badgeLabel: string;
+  tone: "green" | "amber";
+  detail: string;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-3 rounded-[22px] bg-white/[0.03] px-4 py-3">
+      <span className="text-sm text-[#7A8099]">{label}</span>
+      <div className="flex items-center gap-3">
+        <span className="text-sm text-[#7A8099]">{detail}</span>
+        <StatusBadge label={badgeLabel} tone={tone} />
+      </div>
+    </div>
+  );
+}
+
+function SummaryLinkRow({
+  label,
+  value,
+  to
+}: {
+  label: string;
+  value: string;
+  to: string;
+}) {
+  return (
+    <Link
+      to={to}
+      className="flex items-center justify-between gap-3 rounded-[22px] bg-sky-400/[0.08] px-4 py-3 transition hover:bg-[rgba(45,212,191,0.14)]"
+    >
+      <span className="text-sm text-[#B0B4C4]">{label}</span>
+      <span className="text-right text-sm font-semibold text-white">{value}</span>
+    </Link>
+  );
+}
+
+function QuickInfo({ text }: { text: string }) {
+  return (
+    <div className="rounded-[20px] bg-[#0B0D11]/60 px-4 py-3 text-sm leading-6 text-[#F0EDE8]">
+      {text}
+    </div>
+  );
+}
+
+function formatPriceEuro(value: number) {
+  return `${value.toFixed(2)} EUR`;
+}
+
+function formatPv(value: number) {
+  return `${value.toFixed(2)} PV`;
+}
+
+function SummaryFocusCard({
+  label,
+  value
+}: {
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="rounded-[20px] bg-[#0B0D11]/60 px-4 py-3.5">
+      <p className="text-[11px] font-medium text-[#4A5068]">{label}</p>
+      <p className="mt-2.5 text-base font-semibold text-white">{value}</p>
+    </div>
+  );
+}
+
+function StartingPointOverviewCard({
+  objective,
+  startDate,
+  startWeight,
+  currentDate,
+  currentWeight,
+  startBodyFat,
+  currentBodyFat
+}: {
+  objective: "weight-loss" | "sport";
+  startDate: string;
+  startWeight: number;
+  currentDate: string;
+  currentWeight: number;
+  startBodyFat: number;
+  currentBodyFat: number;
+}) {
+  const weightDelta = Number((currentWeight - startWeight).toFixed(1));
+  const bodyFatDelta = Number((currentBodyFat - startBodyFat).toFixed(1));
+  const weightTone =
+    weightDelta === 0
+      ? "text-[#F0EDE8]"
+      : objective === "weight-loss"
+        ? weightDelta < 0
+          ? "text-emerald-200"
+          : "text-amber-200"
+        : weightDelta > 0
+          ? "text-emerald-200"
+          : "text-amber-200";
+
+  return (
+    <div className="rounded-[28px] bg-[linear-gradient(180deg,rgba(15,23,42,0.28),rgba(15,23,42,0.52))] p-5">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <p className="eyebrow-label">Repère de départ</p>
+          <p className="mt-3 text-2xl text-white">Départ vs aujourd'hui</p>
+          <p className="mt-2 text-sm leading-6 text-[#B0B4C4]">
+            Ce bloc aide à relire tout de suite l&apos;évolution depuis le premier bilan.
+          </p>
+        </div>
+        <div className={`rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-sm font-medium ${weightTone}`}>
+          {weightDelta === 0 ? "Poids stable" : `${weightDelta > 0 ? "+" : ""}${weightDelta} kg depuis le départ`}
+        </div>
+      </div>
+
+      <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <OverviewMetricCard label="Départ" value={`${startWeight} kg`} note={formatDate(startDate)} tone="blue" />
+        <OverviewMetricCard label="Aujourd'hui" value={`${currentWeight} kg`} note={formatDate(currentDate)} tone="green" highlighted />
+        <OverviewMetricCard
+          label="Graisse de départ"
+          value={`${startBodyFat} %`}
+          note="Premier body scan"
+          tone="slate"
+        />
+        <OverviewMetricCard
+          label="Graisse actuelle"
+          value={`${currentBodyFat} %`}
+          note={
+            bodyFatDelta === 0
+              ? "Stable"
+              : `${bodyFatDelta > 0 ? "+" : ""}${bodyFatDelta} pt depuis le départ`
+          }
+          tone="slate"
+        />
+      </div>
+    </div>
+  );
+}
+
+function OverviewMetricCard({
+  label,
+  value,
+  note,
+  tone,
+  highlighted = false
+}: {
+  label: string;
+  value: string;
+  note: string;
+  tone: "blue" | "green" | "slate";
+  highlighted?: boolean;
+}) {
+  const toneClass =
+    tone === "green"
+      ? "bg-emerald-400/[0.07] ring-1 ring-emerald-400/12"
+      : tone === "blue"
+        ? "bg-sky-400/[0.07] ring-1 ring-sky-400/12"
+        : "bg-[#0B0D11]/80 ring-1 ring-white/6";
+
+  return (
+    <div
+      className={`rounded-[24px] p-4 ${toneClass} ${
+        highlighted ? "shadow-[0_0_30px_rgba(52,211,153,0.08)]" : ""
+      }`}
+    >
+      <p className="text-[11px] font-medium text-[#4A5068]">{label}</p>
+      <p className="mt-3 text-2xl text-white">{value}</p>
+      <p className="mt-2 text-sm text-[#7A8099]">{note}</p>
+    </div>
+  );
+}
+
+function DangerActionButton({
+  label,
+  hint,
+  onClick
+}: {
+  label: string;
+  hint: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="rounded-[22px] bg-red-500/10 px-4 py-3 text-left transition hover:bg-red-500/15"
+    >
+      <span className="block text-sm font-medium text-red-100">{label}</span>
+      <span className="mt-1 block text-sm text-red-100/75">{hint}</span>
+    </button>
+  );
+}
+
+function LinkButton({
+  to,
+  label,
+  hint,
+  tone = "blue"
+}: {
+  to: string;
+  label: string;
+  hint: string;
+  tone?: "blue" | "green";
+}) {
+  return (
+    <Link
+      to={to}
+      className={`rounded-[22px] px-4 py-3 text-left transition ${
+        tone === "green"
+          ? "bg-emerald-400/10 hover:bg-emerald-400/15"
+          : "bg-[rgba(45,212,191,0.1)] hover:bg-sky-400/15"
+      }`}
+    >
+      <span className="block text-sm font-medium text-white">{label}</span>
+      <span className="mt-1 block text-sm text-[#F0EDE8]/85">{hint}</span>
+    </Link>
+  );
 }

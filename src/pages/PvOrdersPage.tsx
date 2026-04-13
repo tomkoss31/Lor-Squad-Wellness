@@ -210,7 +210,7 @@ export function PvOrdersPage() {
           <div>
             <p className="eyebrow-label">Saisie rapide</p>
             <h2 className="mt-3 text-2xl text-white">{title}</h2>
-          <p className="mt-2 text-sm leading-6 text-slate-400">
+          <p className="mt-2 text-sm leading-6 text-[#7A8099]">
             Choisis le client, le produit et la quantite. Les PV et le prix se prechargent automatiquement et le suivi produit se met a jour ensuite.
           </p>
           </div>
@@ -281,7 +281,7 @@ export function PvOrdersPage() {
           </div>
 
           {storageMode === "supabase" && !clientOptions.length ? (
-            <div className="rounded-[22px] border border-white/10 bg-white/[0.03] px-4 py-4 text-sm leading-6 text-slate-300">
+            <div className="rounded-[22px] border border-white/10 bg-white/[0.03] px-4 py-4 text-sm leading-6 text-[#B0B4C4]">
               Aucun client exploitable n&apos;est encore visible dans le module PV. Il faut au moins un dossier client accessible pour enregistrer une commande ou un reassort.
             </div>
           ) : null}
@@ -335,14 +335,14 @@ export function PvOrdersPage() {
               <p className="eyebrow-label">Historique</p>
               <h2 className="mt-3 text-2xl text-white">Commandes et reprises</h2>
             </div>
-            <div className="rounded-[18px] bg-white/[0.03] px-4 py-3 text-sm text-slate-300">
+            <div className="rounded-[18px] bg-white/[0.03] px-4 py-3 text-sm text-[#B0B4C4]">
               {transactions.length} lignes
             </div>
           </div>
 
           <div className="overflow-x-auto">
             <div className="min-w-[860px] space-y-2">
-              <div className="grid grid-cols-[110px_1.2fr_1fr_70px_80px_90px_1.2fr] gap-3 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">
+              <div className="grid grid-cols-[110px_1.2fr_1fr_70px_80px_90px_1.2fr] gap-3 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#4A5068]">
                 <span>Date</span>
                 <span>Client</span>
                 <span>Produit</span>
@@ -357,16 +357,16 @@ export function PvOrdersPage() {
                   key={transaction.id}
                   className="grid grid-cols-[110px_1.2fr_1fr_70px_80px_90px_1.2fr] gap-3 rounded-[20px] border border-white/8 bg-white/[0.03] px-3 py-4"
                 >
-                  <div className="text-sm text-slate-300">{formatDate(transaction.date)}</div>
+                  <div className="text-sm text-[#B0B4C4]">{formatDate(transaction.date)}</div>
                   <div>
                     <p className="text-sm font-semibold text-white">{transaction.clientName}</p>
-                    <p className="mt-1 text-xs text-slate-400">{transaction.responsibleName}</p>
+                    <p className="mt-1 text-xs text-[#7A8099]">{transaction.responsibleName}</p>
                   </div>
-                  <div className="text-sm text-slate-300">{transaction.productName}</div>
-                  <div className="text-sm text-slate-300">{transaction.quantity}</div>
+                  <div className="text-sm text-[#B0B4C4]">{transaction.productName}</div>
+                  <div className="text-sm text-[#B0B4C4]">{transaction.quantity}</div>
                   <div className="text-sm font-semibold text-white">{transaction.pv}</div>
-                  <div className="text-sm text-slate-300">{getPvTypeLabel(transaction.type)}</div>
-                  <div className="text-sm text-slate-400">{transaction.note}</div>
+                  <div className="text-sm text-[#B0B4C4]">{getPvTypeLabel(transaction.type)}</div>
+                  <div className="text-sm text-[#7A8099]">{transaction.note}</div>
                 </div>
               ))}
             </div>
@@ -386,7 +386,7 @@ function Field({
 }) {
   return (
     <div className="space-y-2">
-      <label className="text-sm font-medium text-slate-300">{label}</label>
+      <label className="text-sm font-medium text-[#B0B4C4]">{label}</label>
       {children}
     </div>
   );
@@ -402,10 +402,10 @@ function QuickSummaryCard({
   hint: string;
 }) {
   return (
-    <div className="rounded-[20px] bg-slate-950/24 px-4 py-3">
-      <p className="text-[11px] font-medium text-slate-500">{label}</p>
+    <div className="rounded-[20px] bg-[#0B0D11]/60 px-4 py-3">
+      <p className="text-[11px] font-medium text-[#4A5068]">{label}</p>
       <p className="mt-2 text-sm font-semibold text-white">{value}</p>
-      <p className="mt-1 text-xs text-slate-400">{hint}</p>
+      <p className="mt-1 text-xs text-[#7A8099]">{hint}</p>
     </div>
   );
 }

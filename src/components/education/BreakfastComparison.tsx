@@ -18,7 +18,7 @@ export function BreakfastComparison() {
         <h3 className="mt-2 text-[1.9rem] leading-none text-white md:text-[2.1rem]">
           Comparer un matin improvisé à une routine plus structurée
         </h3>
-        <p className="mt-3 text-[14px] leading-7 text-slate-300">
+        <p className="mt-3 text-[14px] leading-7 text-[#B0B4C4]">
           Le client doit voir vite ce qui change en apports, en hydratation et en régularité.
         </p>
       </div>
@@ -35,15 +35,15 @@ export function BreakfastComparison() {
         <SupportVisualCard />
       </div>
 
-      <div className="rounded-[24px] border border-white/10 bg-slate-950/35 p-4 md:p-5">
+      <div className="rounded-[24px] border border-white/10 bg-[#0B0D11]/80 p-4 md:p-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <p className="eyebrow-label">Lecture utile</p>
-            <p className="mt-2 text-sm leading-6 text-slate-300">
+            <p className="mt-2 text-sm leading-6 text-[#B0B4C4]">
               Repère configurable selon la routine du matin choisie dans l&apos;app.
             </p>
           </div>
-          <div className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs text-slate-200">
+          <div className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs text-[#F0EDE8]">
             Comparatif simple
           </div>
         </div>
@@ -97,13 +97,13 @@ function ImageScenarioCard({
       <div className="space-y-4 p-5">
         <div>
           <h4 className="text-[1.5rem] leading-none text-white">{title}</h4>
-          <p className="mt-3 text-sm leading-6 text-slate-300">{subtitle}</p>
+          <p className="mt-3 text-sm leading-6 text-[#B0B4C4]">{subtitle}</p>
         </div>
         <div className="grid gap-2">
           {points.map((point) => (
             <div
               key={point}
-              className="rounded-[18px] border border-white/8 bg-slate-950/35 px-4 py-3 text-sm text-slate-200"
+              className="rounded-[18px] border border-white/8 bg-[#0B0D11]/80 px-4 py-3 text-sm text-[#F0EDE8]"
             >
               {point}
             </div>
@@ -133,7 +133,7 @@ function SupportVisualCard() {
           <h4 className="text-[1.5rem] leading-none text-white">
             {breakfastProfiles.structured.title}
           </h4>
-          <p className="mt-3 text-sm leading-6 text-slate-300">
+          <p className="mt-3 text-sm leading-6 text-[#B0B4C4]">
             {breakfastProfiles.structured.subtitle}
           </p>
         </div>
@@ -141,7 +141,7 @@ function SupportVisualCard() {
           {breakfastProfiles.structured.chips.map((point) => (
             <div
               key={point}
-              className="rounded-[18px] border border-white/8 bg-slate-950/35 px-4 py-3 text-sm text-slate-200"
+              className="rounded-[18px] border border-white/8 bg-[#0B0D11]/80 px-4 py-3 text-sm text-[#F0EDE8]"
             >
               {point}
             </div>
@@ -149,9 +149,9 @@ function SupportVisualCard() {
         </div>
         <div className="grid gap-3 md:grid-cols-2">
           {breakfastFacts.map((fact) => (
-            <div key={fact.title} className="rounded-[20px] bg-slate-950/24 px-4 py-4">
+            <div key={fact.title} className="rounded-[20px] bg-[#0B0D11]/60 px-4 py-4">
               <p className="text-sm font-semibold text-white">{fact.title}</p>
-              <p className="mt-2 text-sm leading-6 text-slate-300">{fact.detail}</p>
+              <p className="mt-2 text-sm leading-6 text-[#B0B4C4]">{fact.detail}</p>
             </div>
           ))}
         </div>
@@ -179,13 +179,13 @@ function ComparisonMetricRow({
   const classicTone =
     metricKey === "fastSugar" ? "bg-amber-300/85" : metricKey === "hydration" ? "bg-slate-500/75" : "bg-white/70";
   const structuredTone =
-    metricKey === "fastSugar" ? "bg-sky-300/80" : metricKey === "hydration" ? "bg-sky-300/90" : "bg-emerald-300/85";
+    metricKey === "fastSugar" ? "bg-[#2DD4BF]/80" : metricKey === "hydration" ? "bg-[#2DD4BF]" : "bg-emerald-300/85";
 
   return (
     <div className="grid gap-3 rounded-[18px] border border-white/8 bg-white/[0.03] px-4 py-4 md:grid-cols-[140px_1fr_1fr] md:items-center">
       <div>
-        <p className="text-[10px] uppercase tracking-[0.12em] text-slate-500">{label}</p>
-        <p className="mt-2 text-xs text-slate-400">{helper}</p>
+        <p className="text-[10px] uppercase tracking-[0.12em] text-[#4A5068]">{label}</p>
+        <p className="mt-2 text-xs text-[#7A8099]">{helper}</p>
       </div>
 
       <ComparisonSide
@@ -224,17 +224,17 @@ function ComparisonSide({
   emphasized?: boolean;
 }) {
   return (
-    <div className="rounded-[18px] bg-slate-950/24 px-3.5 py-3">
+    <div className="rounded-[18px] bg-[#0B0D11]/60 px-3.5 py-3">
       <div className="flex items-center justify-between gap-3">
-        <p className="text-[11px] font-medium text-slate-500">{title}</p>
-        <p className={`text-sm font-semibold ${emphasized ? "text-white" : "text-slate-200"}`}>
+        <p className="text-[11px] font-medium text-[#4A5068]">{title}</p>
+        <p className={`text-sm font-semibold ${emphasized ? "text-white" : "text-[#F0EDE8]"}`}>
           {value}
         </p>
       </div>
       <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/[0.06]">
         <div className={`h-full rounded-full ${toneClass}`} style={{ width }} />
       </div>
-      <p className="mt-2 text-xs text-slate-400">{helper}</p>
+      <p className="mt-2 text-xs text-[#7A8099]">{helper}</p>
     </div>
   );
 }

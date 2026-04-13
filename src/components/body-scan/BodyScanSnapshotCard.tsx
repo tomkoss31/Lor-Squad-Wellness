@@ -54,11 +54,11 @@ export function BodyScanSnapshotCard({
   ];
 
   return (
-    <div className="rounded-[26px] bg-slate-950/28 p-5">
+    <div className="rounded-[26px] bg-[#1A1E27] p-5">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <p className="eyebrow-label">{title}</p>
-          <p className="mt-2 text-sm text-slate-400">{dateLabel}</p>
+          <p className="mt-2 text-sm text-[#7A8099]">{dateLabel}</p>
         </div>
       </div>
       <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
@@ -113,7 +113,7 @@ function SnapshotMetricCard({
   return (
     <div className="relative overflow-hidden rounded-[22px] bg-white/[0.03] p-4">
       <div className={`absolute inset-x-0 top-0 h-px bg-gradient-to-r ${accentClass}`} />
-      <p className="text-[11px] font-medium text-slate-500">{label}</p>
+      <p className="text-[11px] font-medium text-[#4A5068]">{label}</p>
       <p
         className={`mt-3 font-semibold text-white ${
           emphasized ? "text-[1.8rem] leading-none" : "text-[1.35rem] leading-none"
@@ -121,7 +121,7 @@ function SnapshotMetricCard({
       >
         {primary}
       </p>
-      {secondary ? <p className="mt-2 text-sm text-slate-400">{secondary}</p> : null}
+      {secondary ? <p className="mt-2 text-sm text-[#7A8099]">{secondary}</p> : null}
     </div>
   );
 }

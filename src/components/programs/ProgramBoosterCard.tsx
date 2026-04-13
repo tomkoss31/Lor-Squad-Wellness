@@ -12,14 +12,14 @@ export function ProgramBoosterCard({ program }: { program: Program }) {
 
         <div>
           <p className="text-lg font-semibold leading-tight text-white">{program.title}</p>
-          <p className="mt-2 text-sm leading-6 text-slate-300">{program.summary}</p>
+          <p className="mt-2 text-sm leading-6 text-[#B0B4C4]">{program.summary}</p>
         </div>
 
         <div className="flex flex-wrap gap-2">
           {program.benefits.slice(0, 2).map((benefit) => (
             <span
               key={benefit}
-              className="rounded-full border border-white/10 bg-slate-950/30 px-3 py-1.5 text-xs text-slate-200"
+              className="rounded-full border border-white/10 bg-slate-950/30 px-3 py-1.5 text-xs text-[#F0EDE8]"
             >
               {benefit}
             </span>

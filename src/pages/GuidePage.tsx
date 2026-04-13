@@ -123,7 +123,7 @@ export function GuidePage() {
           <div className="max-w-3xl">
             <p className="eyebrow-label">Support terrain</p>
             <h2 className="mt-3 text-3xl text-white">Le bon ton, la bonne structure, le bon rythme.</h2>
-            <p className="mt-3 text-sm leading-6 text-slate-300">
+            <p className="mt-3 text-sm leading-6 text-[#B0B4C4]">
               Un rappel rapide pour garder le rendez-vous net, fluide et pro.
             </p>
           </div>
@@ -218,7 +218,7 @@ function RendezVousGuide() {
             {shakePoints.map((point) => (
               <div
                 key={point}
-                className="rounded-[22px] border border-white/10 bg-slate-950/35 px-5 py-4 text-sm leading-7 text-slate-200"
+                className="rounded-[22px] border border-white/10 bg-[#0B0D11]/80 px-5 py-4 text-sm leading-7 text-[#F0EDE8]"
               >
                 {point}
               </div>
@@ -227,7 +227,7 @@ function RendezVousGuide() {
 
           <div className="surface-soft rounded-[22px] px-5 py-4">
             <p className="eyebrow-label">Phrase utile</p>
-            <p className="mt-3 text-sm leading-7 text-slate-300">
+            <p className="mt-3 text-sm leading-7 text-[#B0B4C4]">
               Ce qui compte, ce n'est pas ou tu es aujourd'hui, c'est ce qu'on va construire dans
               les prochaines semaines.
             </p>
@@ -250,7 +250,7 @@ function RendezVousGuide() {
                 className="rounded-[22px] border border-white/10 bg-white/[0.03] px-5 py-4"
               >
                 <p className="text-lg font-semibold text-white">{item.title}</p>
-                <p className="mt-2 text-sm leading-6 text-slate-400">{item.detail}</p>
+                <p className="mt-2 text-sm leading-6 text-[#7A8099]">{item.detail}</p>
               </div>
             ))}
           </div>
@@ -270,7 +270,7 @@ function RendezVousGuide() {
           {usefulPhrases.map((phrase) => (
             <div
               key={phrase}
-              className="rounded-[22px] border border-white/10 bg-slate-950/35 px-5 py-4 text-sm leading-7 text-slate-200"
+              className="rounded-[22px] border border-white/10 bg-[#0B0D11]/80 px-5 py-4 text-sm leading-7 text-[#F0EDE8]"
             >
               {phrase}
             </div>
@@ -299,7 +299,7 @@ function RecommendationGuide() {
           {recommendationHighlights.map((point) => (
             <div
               key={point}
-              className="rounded-[22px] border border-white/10 bg-white/[0.03] px-5 py-4 text-sm leading-7 text-slate-200"
+              className="rounded-[22px] border border-white/10 bg-white/[0.03] px-5 py-4 text-sm leading-7 text-[#F0EDE8]"
             >
               {point}
             </div>
@@ -324,7 +324,7 @@ function RecommendationGuide() {
                 className="rounded-[22px] border border-white/10 bg-white/[0.03] px-5 py-4"
               >
                 <p className="text-lg font-semibold text-white">{item.title}</p>
-                <p className="mt-2 text-sm leading-6 text-slate-400">{item.detail}</p>
+                <p className="mt-2 text-sm leading-6 text-[#7A8099]">{item.detail}</p>
               </div>
             ))}
           </div>
@@ -351,7 +351,7 @@ function RecommendationGuide() {
             {recommendationRules.map((rule) => (
               <div
                 key={rule}
-                className="rounded-[22px] border border-white/10 bg-slate-950/35 px-5 py-4 text-sm leading-7 text-slate-200"
+                className="rounded-[22px] border border-white/10 bg-[#0B0D11]/80 px-5 py-4 text-sm leading-7 text-[#F0EDE8]"
               >
                 {rule}
               </div>
@@ -362,7 +362,7 @@ function RecommendationGuide() {
             <p className="eyebrow-label">Visio / en ligne</p>
             <div className="mt-3 grid gap-2">
               {visioReminder.map((point) => (
-                <p key={point} className="text-sm leading-7 text-slate-300">
+                <p key={point} className="text-sm leading-7 text-[#B0B4C4]">
                   {point}
                 </p>
               ))}
@@ -389,8 +389,8 @@ function TabButton({
       onClick={onClick}
       className={`rounded-full px-4 py-3 text-sm font-semibold transition ${
         active
-          ? "bg-white text-slate-950"
-          : "bg-white/[0.04] text-slate-200 hover:bg-white/[0.08]"
+          ? "bg-white text-[#0B0D11]"
+          : "bg-white/[0.04] text-[#F0EDE8] hover:bg-white/[0.08]"
       }`}
     >
       {label}
@@ -410,12 +410,12 @@ function GuideSectionCard({
   return (
     <div className="rounded-[26px] bg-white/[0.03] p-5">
       <p className="text-xl font-semibold text-white">{title}</p>
-      <p className="mt-2 text-sm leading-6 text-slate-400">{subtitle}</p>
+      <p className="mt-2 text-sm leading-6 text-[#7A8099]">{subtitle}</p>
       <div className="mt-4 grid gap-2">
         {points.map((point) => (
           <div
             key={point}
-            className="rounded-[18px] bg-slate-950/24 px-4 py-3 text-sm leading-6 text-slate-200"
+            className="rounded-[18px] bg-[#0B0D11]/60 px-4 py-3 text-sm leading-6 text-[#F0EDE8]"
           >
             {point}
           </div>

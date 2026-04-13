@@ -75,11 +75,11 @@ export function BodyFatInsightCard({
             value={`${currentKg} kg`}
             accent="red"
           />
-          <div className="md:col-span-2 xl:col-span-3 rounded-[24px] border border-white/10 bg-slate-950/35 p-5">
+          <div className="md:col-span-2 xl:col-span-3 rounded-[24px] border border-white/10 bg-[#0B0D11]/80 p-5">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <p className="text-[11px] font-medium text-slate-500">Jauge corporelle</p>
-                <p className="mt-2 text-sm text-slate-400">
+                <p className="text-[11px] font-medium text-[#4A5068]">Jauge corporelle</p>
+                <p className="mt-2 text-sm text-[#7A8099]">
                   Cible {getSexLabel(sex)} : {targetRange.min}-{targetRange.max} %
                 </p>
               </div>
@@ -102,12 +102,12 @@ export function BodyFatInsightCard({
                   style={{ left: `calc(${gaugePosition}% - 10px)` }}
                 />
               </div>
-              <div className="mt-2 flex items-center justify-between text-[11px] font-medium text-slate-500">
+              <div className="mt-2 flex items-center justify-between text-[11px] font-medium text-[#4A5068]">
                 {[10, 20, 30, 40, 50].map((value) => (
                   <span key={value}>{value}</span>
                 ))}
               </div>
-              <div className="mt-4 flex flex-wrap items-center gap-2 text-xs text-slate-500">
+              <div className="mt-4 flex flex-wrap items-center gap-2 text-xs text-[#4A5068]">
                 <span className="rounded-full bg-white/[0.03] px-2.5 py-1">Zone cible</span>
                 <span>{getTargetHint(sex, objective)}</span>
               </div>
@@ -129,11 +129,11 @@ export function BodyFatInsightCard({
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <p className="text-sm font-semibold text-white">Historique balance</p>
-                  <p className="mt-1 text-xs text-slate-400">
+                  <p className="mt-1 text-xs text-[#7A8099]">
                     Toute la progression reste visible, avec les 3 derniers points en repere.
                   </p>
                 </div>
-                <p className="text-[11px] font-medium text-slate-500">Progression</p>
+                <p className="text-[11px] font-medium text-[#4A5068]">Progression</p>
               </div>
 
               {trendHistory.length >= 2 ? <BodyFatProgressChart points={trendHistory} /> : null}
@@ -199,7 +199,7 @@ function GaugeLegendChip({
             base: "bg-sky-400/[0.08] ring-1 ring-sky-300/12",
             active:
               "bg-sky-400/[0.18] ring-1 ring-sky-300/30 shadow-[0_0_0_1px_rgba(125,211,252,0.12),0_12px_28px_rgba(14,165,233,0.12)]",
-            label: "text-sky-100/90"
+            label: "text-[#2DD4BF]/90"
           }
         : tone === "amber"
           ? {
@@ -223,7 +223,7 @@ function GaugeLegendChip({
     >
       <p
         className={`text-[11px] font-medium tracking-[0.02em] ${
-          active ? palette.label : "text-slate-400"
+          active ? palette.label : "text-[#7A8099]"
         }`}
       >
         {label}
@@ -265,12 +265,12 @@ function BodyFatProgressChart({
   const guideValues = [max, round(min + range / 2), min];
 
   return (
-    <div className="mt-4 rounded-[22px] border border-white/8 bg-slate-950/28 p-4">
+    <div className="mt-4 rounded-[22px] border border-white/8 bg-[#1A1E27] p-4">
       <div className="flex items-center justify-between gap-3">
-        <p className="text-xs font-medium uppercase tracking-[0.16em] text-slate-500">
+        <p className="text-xs font-medium uppercase tracking-[0.16em] text-[#4A5068]">
           Courbe recente
         </p>
-        <p className="text-xs text-slate-400">Masse grasse en kg</p>
+        <p className="text-xs text-[#7A8099]">Masse grasse en kg</p>
       </div>
 
       <div className="mt-4">
@@ -361,16 +361,16 @@ function HistoryReadingCard({
       className={`rounded-[20px] border px-4 py-4 ${
         emphasized
           ? "border-rose-300/18 bg-rose-400/[0.08] shadow-[0_10px_30px_rgba(251,113,133,0.08)]"
-          : "border-white/8 bg-slate-950/24"
+          : "border-white/8 bg-[#0B0D11]/60"
       }`}
     >
-      <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-slate-500">
+      <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-[#4A5068]">
         {label}
       </p>
-      {dateLabel ? <p className="mt-1 text-xs text-slate-400">{dateLabel}</p> : null}
+      {dateLabel ? <p className="mt-1 text-xs text-[#7A8099]">{dateLabel}</p> : null}
       <div className="mt-4">
         <p className="text-[2rem] font-semibold tracking-[-0.04em] text-white">{kg} kg</p>
-        <p className="mt-1 text-sm text-slate-400">{percent} % de masse grasse</p>
+        <p className="mt-1 text-sm text-[#7A8099]">{percent} % de masse grasse</p>
       </div>
     </div>
   );
@@ -388,15 +388,15 @@ function DeltaPanel({
   enabled: boolean;
 }) {
   return (
-    <div className="rounded-[22px] bg-slate-950/24 p-4">
-      <p className="text-[11px] font-medium text-slate-500">{title}</p>
+    <div className="rounded-[22px] bg-[#0B0D11]/60 p-4">
+      <p className="text-[11px] font-medium text-[#4A5068]">{title}</p>
       <div className="mt-4 grid gap-3">
         <div className="flex items-center justify-between gap-3">
-          <span className="text-sm text-slate-400">Variation en %</span>
+          <span className="text-sm text-[#7A8099]">Variation en %</span>
           <DeltaValue value={enabled ? percentDelta : 0} suffix=" %" inverseGood />
         </div>
         <div className="flex items-center justify-between gap-3">
-          <span className="text-sm text-slate-400">Variation en kg</span>
+          <span className="text-sm text-[#7A8099]">Variation en kg</span>
           <DeltaValue value={enabled ? kgDelta : 0} suffix=" kg" inverseGood />
         </div>
       </div>
@@ -416,7 +416,7 @@ function DeltaValue({
   const sign = value > 0 ? "+" : "";
   const tone =
     value === 0
-      ? "bg-white/[0.05] text-slate-200"
+      ? "bg-white/[0.05] text-[#F0EDE8]"
       : inverseGood
         ? value < 0
           ? "bg-emerald-400/[0.12] text-emerald-200"

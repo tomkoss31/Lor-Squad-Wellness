@@ -110,7 +110,7 @@ export function DistributorPortfolioPage() {
               <div>
                 <p className="eyebrow-label">Responsable</p>
                 <h2 className="mt-3 text-3xl text-white">{portfolioUser.name}</h2>
-                <p className="mt-2 text-sm text-slate-400">{portfolioUser.title}</p>
+                <p className="mt-2 text-sm text-[#7A8099]">{portfolioUser.title}</p>
               </div>
             </div>
 
@@ -188,7 +188,7 @@ export function DistributorPortfolioPage() {
       <Card className="space-y-5">
         <div className="grid gap-4 lg:grid-cols-[1.2fr_0.9fr_auto] lg:items-end">
           <div className="space-y-2">
-            <label className="text-sm font-medium text-slate-300">
+            <label className="text-sm font-medium text-[#B0B4C4]">
               Rechercher dans le portefeuille
             </label>
             <input
@@ -199,7 +199,7 @@ export function DistributorPortfolioPage() {
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium text-slate-300">Filtrer par statut</label>
+            <label className="text-sm font-medium text-[#B0B4C4]">Filtrer par statut</label>
             <select
               value={statusFilter}
               onChange={(event) =>
@@ -269,15 +269,15 @@ export function DistributorPortfolioPage() {
                               />
                             ) : null}
                           </div>
-                          <p className="text-sm text-slate-400">
+                          <p className="text-sm text-[#7A8099]">
                             {client.city ?? "Ville non renseignée"} - {client.currentProgram}
                           </p>
                           {firstAssessment.questionnaire.referredByName ? (
-                            <p className="text-sm text-sky-100/80">
+                            <p className="text-sm text-[#2DD4BF]/80">
                               Invité par {firstAssessment.questionnaire.referredByName}
                             </p>
                           ) : null}
-                          <p className="text-sm leading-6 text-slate-400">{client.notes}</p>
+                          <p className="text-sm leading-6 text-[#7A8099]">{client.notes}</p>
                         </div>
 
                         <div className="grid gap-3 md:grid-cols-2">
@@ -285,7 +285,7 @@ export function DistributorPortfolioPage() {
                           <PortfolioFact label="Prochain suivi" value={formatDateTime(activeFollowUp.dueDate)} />
                         </div>
 
-                        <div className="text-sm text-slate-400 xl:text-right">
+                        <div className="text-sm text-[#7A8099] xl:text-right">
                           <p>Bilans : {client.assessments.length}</p>
                           <p className="mt-1">Objectif : {client.objective === "sport" ? "Sport" : "Perte de poids"}</p>
                           {recommendationCount ? (
@@ -304,7 +304,7 @@ export function DistributorPortfolioPage() {
         ) : (
           <Card className="space-y-3">
             <p className="text-2xl text-white">Aucun dossier sur ce filtre</p>
-            <p className="text-sm leading-6 text-slate-400">
+            <p className="text-sm leading-6 text-[#7A8099]">
               Ajuste la recherche ou le statut pour retrouver un dossier plus vite.
             </p>
           </Card>
@@ -353,20 +353,20 @@ function FollowUpPanel({
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="text-lg font-semibold text-white">{followUp.clientName}</p>
-                  <p className="mt-1 text-sm text-slate-400">{followUp.type}</p>
+                  <p className="mt-1 text-sm text-[#7A8099]">{followUp.type}</p>
                 </div>
                 <StatusBadge
                   label={followUp.status === "scheduled" ? "Planifié" : "Relance"}
                   tone={followUp.status === "scheduled" ? "green" : "amber"}
                 />
               </div>
-              <p className="mt-4 text-sm text-slate-300">
+              <p className="mt-4 text-sm text-[#B0B4C4]">
                 Échéance {formatDateTime(followUp.dueDate)}
               </p>
             </Link>
           ))
         ) : (
-          <div className="rounded-[22px] bg-white/[0.03] p-5 text-sm text-slate-400">
+          <div className="rounded-[22px] bg-white/[0.03] p-5 text-sm text-[#7A8099]">
             {emptyLabel}
           </div>
         )}
@@ -377,8 +377,8 @@ function FollowUpPanel({
 
 function PortfolioFact({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-[20px] bg-slate-950/24 px-4 py-3">
-      <p className="text-[11px] font-medium text-slate-500">{label}</p>
+    <div className="rounded-[20px] bg-[#0B0D11]/60 px-4 py-3">
+      <p className="text-[11px] font-medium text-[#4A5068]">{label}</p>
       <p className="mt-2 text-sm font-semibold text-white">{value}</p>
     </div>
   );

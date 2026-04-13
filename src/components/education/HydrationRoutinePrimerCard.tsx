@@ -9,7 +9,7 @@ export function HydrationRoutinePrimerCard() {
         <h3 className="mt-2 text-[1.9rem] leading-none text-white md:text-[2.1rem]">
           Hydratation &amp; routine du matin
         </h3>
-        <p className="mt-3 text-[14px] leading-7 text-slate-300">
+        <p className="mt-3 text-[14px] leading-7 text-[#B0B4C4]">
           Voici les saveurs. Laquelle te ferait le plus plaisir, par exemple ?
         </p>
       </div>

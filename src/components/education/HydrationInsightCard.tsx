@@ -42,7 +42,7 @@ export function HydrationInsightCard({
         <h3 className="mt-2 text-[1.9rem] leading-none text-white md:text-[2.1rem]">
           Hydratation
         </h3>
-        <p className="mt-3 text-[14px] leading-7 text-slate-300">
+        <p className="mt-3 text-[14px] leading-7 text-[#B0B4C4]">
           Une lecture simple pour voir si le corps tient mieux, plus regulierement, dans la vraie vie.
         </p>
       </div>
@@ -101,7 +101,7 @@ export function HydrationInsightCard({
       <div className="grid gap-3 xl:grid-cols-[1.15fr_0.85fr]">
         <div className="rounded-[24px] bg-white/[0.04] p-4 md:p-5">
           <div className="flex items-center justify-between gap-3">
-            <p className="text-[11px] font-medium text-slate-500">Repere hydratation</p>
+            <p className="text-[11px] font-medium text-[#4A5068]">Repere hydratation</p>
             <span className="rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 text-xs font-medium text-white">
               {hydrationStatus.label}
             </span>
@@ -110,12 +110,12 @@ export function HydrationInsightCard({
             <HydrationPill title="Femme" detail="45 a 60 %" highlighted={sex === "female"} />
             <HydrationPill title="Homme" detail="50 a 65 %" highlighted={sex === "male"} />
           </div>
-          <p className="mt-4 text-sm leading-6 text-slate-400">{hydrationStatus.description}</p>
+          <p className="mt-4 text-sm leading-6 text-[#7A8099]">{hydrationStatus.description}</p>
         </div>
 
         <div className="rounded-[24px] bg-white/[0.04] p-4 md:p-5">
           <div className="flex items-center justify-between gap-3">
-            <p className="text-[11px] font-medium text-slate-500">Graisse viscerale</p>
+            <p className="text-[11px] font-medium text-[#4A5068]">Graisse viscerale</p>
             <span className="rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 text-xs font-medium text-white">
               {visceralStatus.label}
             </span>
@@ -125,7 +125,7 @@ export function HydrationInsightCard({
             <VisceralRange label="7 - 12" detail="Excès modere" active={visceralStatus.band === "elevated"} tone="amber" />
             <VisceralRange label="13 - 59" detail="Excès marque" active={visceralStatus.band === "high"} tone="red" />
           </div>
-          <p className="mt-4 text-sm leading-6 text-slate-400">
+          <p className="mt-4 text-sm leading-6 text-[#7A8099]">
             Plus ce score monte, plus la vigilance metabolique merite un vrai repere simple.
           </p>
         </div>
@@ -145,7 +145,7 @@ function HydrationValueCard({
 }) {
   return (
     <div className="rounded-[24px] bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.025))] p-4 md:p-5">
-      <p className="text-[11px] font-medium text-slate-500">{label}</p>
+      <p className="text-[11px] font-medium text-[#4A5068]">{label}</p>
       <p className="mt-4 text-[1.45rem] font-semibold leading-none text-white md:text-[1.6rem]">
         {value}
       </p>
@@ -160,8 +160,8 @@ function HydrationValueCard({
 
 function HydrationMeta({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-[18px] bg-slate-950/24 px-4 py-3">
-      <p className="text-[11px] font-medium text-slate-500">{label}</p>
+    <div className="rounded-[18px] bg-[#0B0D11]/60 px-4 py-3">
+      <p className="text-[11px] font-medium text-[#4A5068]">{label}</p>
       <p className="mt-2 text-sm font-medium text-slate-100">{value}</p>
     </div>
   );
@@ -185,7 +185,7 @@ function HydrationGaugeScene({
 
       <div className="relative space-y-6">
         <div>
-          <p className="text-[11px] font-medium text-slate-500">Rythme hydratation</p>
+          <p className="text-[11px] font-medium text-[#4A5068]">Rythme hydratation</p>
           <h4 className="mt-2 text-[1.45rem] leading-none text-white md:text-[1.65rem]">
             Jauge de progression
           </h4>
@@ -202,17 +202,17 @@ function HydrationGaugeScene({
           >
             <div className="absolute inset-[16px] rounded-full bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.07),transparent_38%),linear-gradient(180deg,rgba(2,6,23,0.95),rgba(15,23,42,0.92))]" />
             <div className="relative z-10 text-center">
-              <p className="text-[11px] font-medium text-slate-500">Eau actuelle</p>
+              <p className="text-[11px] font-medium text-[#4A5068]">Eau actuelle</p>
               <p className="mt-3 text-[2.5rem] font-semibold leading-none text-white md:text-[2.9rem]">
                 {waterIntake.toFixed(1).replace(".", ",")}
               </p>
-              <p className="mt-1 text-sm text-slate-400">L / jour</p>
+              <p className="mt-1 text-sm text-[#7A8099]">L / jour</p>
               <div className="mx-auto mt-5 h-px w-16 bg-sky-300/25" />
-              <p className="mt-4 text-[11px] font-medium text-slate-500">Objectif</p>
-              <p className="mt-2 text-lg font-medium text-sky-100">
+              <p className="mt-4 text-[11px] font-medium text-[#4A5068]">Objectif</p>
+              <p className="mt-2 text-lg font-medium text-[#2DD4BF]">
                 {targetWater.toFixed(1).replace(".", ",")} L
               </p>
-              <p className="mt-4 text-xs text-slate-500">Hydratation balance {hydrationPercent} %</p>
+              <p className="mt-4 text-xs text-[#4A5068]">Hydratation balance {hydrationPercent} %</p>
             </div>
           </div>
         </div>
@@ -233,11 +233,11 @@ function HydrationPill({
   return (
     <div
       className={`rounded-[20px] px-4 py-3.5 ${
-        highlighted ? "bg-sky-400/10 ring-1 ring-sky-300/20" : "bg-white/[0.04]"
+        highlighted ? "bg-[rgba(45,212,191,0.1)] ring-1 ring-sky-300/20" : "bg-white/[0.04]"
       }`}
     >
       <p className="text-sm font-medium text-white">{title}</p>
-      <p className="mt-1 text-[13px] text-slate-400">{detail}</p>
+      <p className="mt-1 text-[13px] text-[#7A8099]">{detail}</p>
     </div>
   );
 }
@@ -263,11 +263,11 @@ function VisceralRange({
   return (
     <div
       className={`flex items-center justify-between gap-3 rounded-[18px] px-3 py-3 ${
-        active ? activeClass : "bg-slate-950/24"
+        active ? activeClass : "bg-[#0B0D11]/60"
       }`}
     >
       <span className="text-sm font-medium text-white">{label}</span>
-      <span className="text-sm text-slate-400">{detail}</span>
+      <span className="text-sm text-[#7A8099]">{detail}</span>
     </div>
   );
 }

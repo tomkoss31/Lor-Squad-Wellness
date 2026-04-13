@@ -79,7 +79,7 @@ export function PvClientPanel({
       <Card className="space-y-3">
         <p className="eyebrow-label">Detail client</p>
         <h2 className="text-2xl text-white">Choisis un client</h2>
-        <p className="text-sm leading-6 text-slate-400">
+        <p className="text-sm leading-6 text-[#7A8099]">
           Ouvre un dossier pour voir les produits actifs, l&apos;historique des commandes et la
           lecture rapide du suivi PV.
         </p>
@@ -93,7 +93,7 @@ export function PvClientPanel({
         <div>
           <p className="eyebrow-label">{title}</p>
           <h2 className="mt-3 text-2xl text-white">{record.clientName}</h2>
-          <p className="mt-2 text-sm text-slate-400">{record.responsibleName}</p>
+          <p className="mt-2 text-sm text-[#7A8099]">{record.responsibleName}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Link
@@ -120,13 +120,13 @@ export function PvClientPanel({
         <div className="flex items-center justify-between gap-3">
           <div>
             <p className="eyebrow-label">Produits actifs</p>
-            <p className="mt-1 text-xs text-slate-500">
+            <p className="mt-1 text-xs text-[#4A5068]">
               Modifier un produit actif, declarer un reassort ou ajouter un nouveau produit.
             </p>
           </div>
           <Link
             to={`/pv/orders?client=${record.clientId}&type=commande`}
-            className="inline-flex min-h-[38px] items-center justify-center rounded-full bg-sky-400/[0.14] px-4 py-2 text-xs font-semibold text-white transition hover:bg-sky-400/[0.22]"
+            className="inline-flex min-h-[38px] items-center justify-center rounded-full bg-[rgba(45,212,191,0.14)] px-4 py-2 text-xs font-semibold text-white transition hover:bg-sky-400/[0.22]"
           >
             Ajouter un produit
           </Link>
@@ -147,7 +147,7 @@ export function PvClientPanel({
                     <p className="text-[1.02rem] font-semibold leading-[1.22] text-white">
                       {product.productName}
                     </p>
-                    <p className="mt-1 text-sm leading-6 text-slate-400">
+                    <p className="mt-1 text-sm leading-6 text-[#7A8099]">
                       Quantite de depart {product.quantityStart} - {product.quantiteLabel}
                     </p>
                   </div>
@@ -219,7 +219,7 @@ export function PvClientPanel({
                       <button
                         type="button"
                         onClick={cancelEditing}
-                        className="inline-flex min-h-[42px] items-center justify-center rounded-full border border-white/10 px-4 py-2 text-sm font-semibold text-slate-200 transition hover:bg-white/[0.04]"
+                        className="inline-flex min-h-[42px] items-center justify-center rounded-full border border-white/10 px-4 py-2 text-sm font-semibold text-[#F0EDE8] transition hover:bg-white/[0.04]"
                       >
                         Annuler
                       </button>
@@ -236,7 +236,7 @@ export function PvClientPanel({
                 ) : null}
 
                 {product.noteMetier ? (
-                  <p className="mt-2.5 text-xs leading-6 text-slate-500">{product.noteMetier}</p>
+                  <p className="mt-2.5 text-xs leading-6 text-[#4A5068]">{product.noteMetier}</p>
                 ) : null}
               </div>
             );
@@ -250,18 +250,18 @@ export function PvClientPanel({
           {record.transactions.slice(0, 6).map((transaction) => (
             <div
               key={transaction.id}
-              className="grid gap-2 rounded-[18px] bg-slate-950/28 px-4 py-2.5 md:grid-cols-[100px_1fr_80px_84px_84px]"
+              className="grid gap-2 rounded-[18px] bg-[#1A1E27] px-4 py-2.5 md:grid-cols-[100px_1fr_80px_84px_84px]"
             >
-              <div className="text-[13px] text-slate-300">{formatDate(transaction.date)}</div>
+              <div className="text-[13px] text-[#B0B4C4]">{formatDate(transaction.date)}</div>
               <div>
                 <p className="text-[13px] font-semibold text-white">
                   {getPvTypeLabel(transaction.type)} - {transaction.productName}
                 </p>
-                <p className="mt-0.5 text-[11px] text-slate-400">{transaction.note}</p>
+                <p className="mt-0.5 text-[11px] text-[#7A8099]">{transaction.note}</p>
               </div>
-              <div className="text-[13px] text-slate-300">{transaction.quantity} un.</div>
+              <div className="text-[13px] text-[#B0B4C4]">{transaction.quantity} un.</div>
               <div className="text-[13px] font-semibold text-white">{transaction.pv} PV</div>
-              <div className="text-[13px] text-slate-300">{transaction.price.toFixed(2)} EUR</div>
+              <div className="text-[13px] text-[#B0B4C4]">{transaction.price.toFixed(2)} EUR</div>
             </div>
           ))}
         </div>
@@ -282,8 +282,8 @@ export function PvClientPanel({
 
 function PanelFact({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-[18px] bg-slate-950/24 px-4 py-3">
-      <p className="text-[11px] font-medium text-slate-500">{label}</p>
+    <div className="rounded-[18px] bg-[#0B0D11]/60 px-4 py-3">
+      <p className="text-[11px] font-medium text-[#4A5068]">{label}</p>
       <p className="mt-2 text-sm font-semibold text-white">{value}</p>
     </div>
   );
@@ -298,7 +298,7 @@ function EditorField({
 }) {
   return (
     <div className="space-y-2">
-      <label className="text-sm font-medium text-slate-300">{label}</label>
+      <label className="text-sm font-medium text-[#B0B4C4]">{label}</label>
       {children}
     </div>
   );
