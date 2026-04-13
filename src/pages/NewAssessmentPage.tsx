@@ -2028,7 +2028,7 @@ export function NewAssessmentPage() {
               </Button>
             </div>
           </div>
-          <div className="sticky bottom-3 z-20 -mx-1 mt-2 rounded-[24px] border border-white/10 bg-[linear-gradient(180deg,rgba(8,12,22,0.92),rgba(8,12,22,0.82))] p-3 shadow-luxe backdrop-blur-xl md:hidden">
+          <div className="sticky bottom-20 lg:bottom-3 z-20 -mx-1 mt-2 rounded-[24px] border border-white/10 bg-[linear-gradient(180deg,rgba(8,12,22,0.92),rgba(8,12,22,0.82))] p-3 shadow-luxe backdrop-blur-xl md:hidden">
             <div className="mb-3 flex items-center justify-between gap-3 px-1">
               <p className="text-[11px] uppercase tracking-[0.22em] text-[#4A5068]">
                 Etape {currentStep + 1} / {steps.length}

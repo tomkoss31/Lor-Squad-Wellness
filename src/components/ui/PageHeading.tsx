@@ -9,7 +9,7 @@ export function PageHeading({ eyebrow, title, description }: PageHeadingProps) {
     <div className="space-y-2">
       <p className="eyebrow-label">{eyebrow}</p>
       <h1
-        className="text-[2rem] font-bold leading-tight tracking-[-0.03em] text-white md:text-[2.4rem]"
+        className="text-[1.7rem] font-bold leading-tight tracking-[-0.03em] text-white md:text-[2rem] xl:text-[2.4rem]"
         style={{ fontFamily: "Syne, sans-serif" }}
       >
         {title}

@@ -114,7 +114,7 @@ export function DashboardPage() {
           <div className="space-y-5">
             <div>
               <p className="eyebrow-label">Vue personnelle</p>
-              <h2 className="mt-3 text-[1.85rem] leading-[1.04] tracking-[-0.03em] text-white md:text-[2.05rem]">
+              <h2 className="mt-3 text-[1.5rem] leading-[1.08] tracking-[-0.03em] text-white md:text-[1.85rem] xl:text-[2.05rem]">
                 Mes priorites du jour
               </h2>
               <p className="mt-2 text-sm leading-6 text-[#B0B4C4]/88 md:text-[15px]">
@@ -133,7 +133,7 @@ export function DashboardPage() {
               ))}
             </div>
 
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4 xl:pr-28">
+            <div className="grid grid-cols-2 gap-3 md:gap-4 xl:grid-cols-4 xl:pr-28">
               {statCards.map((stat) => (
                 <MetricTile key={stat.label} label={stat.label} value={stat.value} hint={stat.hint} accent={stat.accent} />
               ))}

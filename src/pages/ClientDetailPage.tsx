@@ -419,7 +419,7 @@ export function ClientDetailPage() {
             </div>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 md:gap-4 xl:grid-cols-4">
             <MetricTile
               label="Poids de départ"
               value={`${firstAssessment.bodyScan.weight} kg`}
