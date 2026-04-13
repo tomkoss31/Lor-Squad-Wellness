@@ -387,7 +387,7 @@ function ResponsibleFilterChip({
       onClick={onClick}
       className={`inline-flex min-h-[40px] items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition ${
         active
-          ? "border-sky-300/18 bg-[rgba(45,212,191,0.14)] text-white"
+          ? "border-[rgba(201,168,76,0.18)] bg-[rgba(45,212,191,0.14)] text-white"
           : "border-white/10 bg-white/[0.03] text-[#B0B4C4] hover:bg-white/[0.06]"
       }`}
     >

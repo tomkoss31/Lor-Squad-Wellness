@@ -83,7 +83,7 @@ export function HydrationInsightCard({
               gradientId="hydration-line"
               gradientFrom="#38bdf8"
               gradientTo="#67e8f9"
-              accentClass="border-sky-300/18 bg-sky-400/[0.08]"
+              accentClass="border-[rgba(201,168,76,0.18)] bg-[rgba(201,168,76,0.08)]"
               valueSuffix="%"
             />
           ) : (
@@ -151,7 +151,7 @@ function HydrationValueCard({
       </p>
       <div
         className={`mt-4 h-px w-14 ${
-          accent === "green" ? "bg-emerald-300/50" : "bg-sky-300/50"
+          accent === "green" ? "bg-emerald-300/50" : "bg-[#C9A84C]/50"
         }`}
       />
     </div>
@@ -207,7 +207,7 @@ function HydrationGaugeScene({
                 {waterIntake.toFixed(1).replace(".", ",")}
               </p>
               <p className="mt-1 text-sm text-[#7A8099]">L / jour</p>
-              <div className="mx-auto mt-5 h-px w-16 bg-sky-300/25" />
+              <div className="mx-auto mt-5 h-px w-16 bg-[#C9A84C]/25" />
               <p className="mt-4 text-[11px] font-medium text-[#4A5068]">Objectif</p>
               <p className="mt-2 text-lg font-medium text-[#2DD4BF]">
                 {targetWater.toFixed(1).replace(".", ",")} L
@@ -233,7 +233,7 @@ function HydrationPill({
   return (
     <div
       className={`rounded-[20px] px-4 py-3.5 ${
-        highlighted ? "bg-[rgba(45,212,191,0.1)] ring-1 ring-sky-300/20" : "bg-white/[0.04]"
+        highlighted ? "bg-[rgba(45,212,191,0.1)] ring-1 ring-[rgba(201,168,76,0.2)]" : "bg-white/[0.04]"
       }`}
     >
       <p className="text-sm font-medium text-white">{title}</p>

@@ -3,22 +3,53 @@ interface StepRailProps {
   steps: string[]
 }
 
+const STEP_PHASES = [
+  { label: 'Client',    steps: [0],            color: '#C9A84C' },
+  { label: 'Habitudes', steps: [1, 2, 3, 4],   color: '#2DD4BF' },
+  { label: 'Analyse',   steps: [5, 6, 7, 8, 9], color: '#A78BFA' },
+  { label: 'Clôture',   steps: [10, 11, 12, 13], color: '#F0C96A' },
+]
+
+function getPhaseColor(stepIndex: number): string {
+  for (const phase of STEP_PHASES) {
+    if (phase.steps.includes(stepIndex)) return phase.color
+  }
+  return '#C9A84C'
+}
+
 export function StepRail({ currentStep, steps }: StepRailProps) {
   const progress = steps.length > 1 ? (currentStep / (steps.length - 1)) * 100 : 0
 
   return (
     <div className="rounded-[18px] border border-white/[0.07] bg-[#13161C] p-4 md:p-5">
       {/* Header */}
-      <div className="mb-4 flex items-center justify-between gap-3">
+      <div className="mb-3 flex items-center justify-between gap-3">
         <span className="eyebrow-label">
           Étape {currentStep + 1} sur {steps.length}
         </span>
         <span
-          className="text-sm font-semibold text-[#C9A84C] text-right"
-          style={{ fontFamily: "Syne, sans-serif" }}
+          className="text-sm font-semibold text-right"
+          style={{ fontFamily: "Syne, sans-serif", color: getPhaseColor(currentStep) }}
         >
           {steps[currentStep]}
         </span>
+      </div>
+
+      {/* Phase markers */}
+      <div className="mb-2 flex">
+        {STEP_PHASES.filter(p => p.steps[0] < steps.length).map(phase => (
+          <div key={phase.label} style={{ flex: phase.steps.length }} className="flex flex-col items-start">
+            <span style={{
+              fontSize: 9,
+              color: currentStep >= phase.steps[0] ? phase.color : '#4A5068',
+              fontWeight: 500,
+              letterSpacing: '1px',
+              textTransform: 'uppercase',
+            }}>
+              {phase.label}
+            </span>
+          </div>
+        ))}
       </div>
 
       {/* Barre de progression */}
@@ -27,7 +58,7 @@ export function StepRail({ currentStep, steps }: StepRailProps) {
           className="h-full rounded-full transition-all duration-500 ease-out"
           style={{
             width: `${progress}%`,
-            background: "linear-gradient(90deg, #C9A84C, #F0C96A)",
+            background: `linear-gradient(90deg, #C9A84C, ${getPhaseColor(currentStep)})`,
           }}
         />
       </div>
@@ -37,25 +68,26 @@ export function StepRail({ currentStep, steps }: StepRailProps) {
         {steps.map((step, index) => {
           const isDone = index < currentStep
           const isActive = index === currentStep
+          const color = getPhaseColor(index)
           return (
             <div key={step} className="flex flex-col items-center gap-1.5" style={{ flex: 1 }}>
               <div
                 className="flex h-7 w-7 items-center justify-center rounded-full text-[10px] font-bold transition-all duration-300"
                 style={{
                   background: isDone
-                    ? "#C9A84C"
+                    ? color
                     : isActive
-                      ? "rgba(201,168,76,0.18)"
+                      ? `${color}30`
                       : "rgba(255,255,255,0.04)",
-                  border: `2px solid ${isDone || isActive ? "#C9A84C" : "rgba(255,255,255,0.1)"}`,
-                  color: isDone ? "#0B0D11" : isActive ? "#C9A84C" : "#4A5068",
+                  border: `2px solid ${isDone || isActive ? color : "rgba(255,255,255,0.1)"}`,
+                  color: isDone ? "#0B0D11" : isActive ? color : "#4A5068",
                 }}
               >
                 {isDone ? "✓" : index + 1}
               </div>
               <span
                 className="text-center text-[9px] leading-tight"
-                style={{ color: isActive ? "#C9A84C" : "#4A5068", maxWidth: 56 }}
+                style={{ color: isActive ? color : "#4A5068", maxWidth: 56 }}
               >
                 {step}
               </span>

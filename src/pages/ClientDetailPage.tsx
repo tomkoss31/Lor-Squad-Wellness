@@ -250,7 +250,7 @@ export function ClientDetailPage() {
                 {client.job} - {client.city ?? "Ville non renseignee"} -{" "}
                 <Link
                   to={`/distributors/${client.distributorId}`}
-                  className="font-medium text-sky-300 transition hover:text-[#2DD4BF]"
+                  className="font-medium text-[#C9A84C] transition hover:text-[#2DD4BF]"
                 >
                   {client.distributorName}
                 </Link>
@@ -637,7 +637,7 @@ export function ClientDetailPage() {
           <Card className="space-y-4">
             <div className="flex items-center justify-between gap-3">
               <p className="eyebrow-label">Historique des bilans</p>
-              <Link to="/assessments/new" className="text-sm font-semibold text-sky-300">
+              <Link to="/assessments/new" className="text-sm font-semibold text-[#C9A84C]">
                 Nouveau bilan
               </Link>
             </div>
@@ -732,7 +732,7 @@ function SummaryLinkRow({
   return (
     <Link
       to={to}
-      className="flex items-center justify-between gap-3 rounded-[22px] bg-sky-400/[0.08] px-4 py-3 transition hover:bg-[rgba(45,212,191,0.14)]"
+      className="flex items-center justify-between gap-3 rounded-[22px] bg-[rgba(201,168,76,0.08)] px-4 py-3 transition hover:bg-[rgba(45,212,191,0.14)]"
     >
       <span className="text-sm text-[#B0B4C4]">{label}</span>
       <span className="text-right text-sm font-semibold text-white">{value}</span>
@@ -857,7 +857,7 @@ function OverviewMetricCard({
     tone === "green"
       ? "bg-emerald-400/[0.07] ring-1 ring-emerald-400/12"
       : tone === "blue"
-        ? "bg-sky-400/[0.07] ring-1 ring-sky-400/12"
+        ? "bg-[rgba(201,168,76,0.07)] ring-1 ring-[rgba(201,168,76,0.12)]"
         : "bg-[#0B0D11]/80 ring-1 ring-white/6";
 
   return (
@@ -911,7 +911,7 @@ function LinkButton({
       className={`rounded-[22px] px-4 py-3 text-left transition ${
         tone === "green"
           ? "bg-emerald-400/10 hover:bg-emerald-400/15"
-          : "bg-[rgba(45,212,191,0.1)] hover:bg-sky-400/15"
+          : "bg-[rgba(45,212,191,0.1)] hover:bg-[rgba(201,168,76,0.15)]"
       }`}
     >
       <span className="block text-sm font-medium text-white">{label}</span>

@@ -170,7 +170,7 @@ export function HydrationVisceralInsightCard({
               gradientId="hydration-balance-line"
               gradientFrom="#38bdf8"
               gradientTo="#67e8f9"
-              accentClass="border-sky-300/18 bg-sky-400/[0.08]"
+              accentClass="border-[rgba(201,168,76,0.18)] bg-[rgba(201,168,76,0.08)]"
               valueSuffix="%"
             />
           ) : null}

@@ -662,7 +662,7 @@ export function NewFollowUpPage() {
 
                 <Link
                   to={`/pv/clients?client=${targetClient.id}`}
-                  className="inline-flex min-h-[44px] items-center justify-center rounded-full bg-sky-400/[0.16] px-5 py-3 text-sm font-semibold text-white transition hover:bg-sky-400/[0.24]"
+                  className="inline-flex min-h-[44px] items-center justify-center rounded-full bg-[rgba(201,168,76,0.16)] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[rgba(201,168,76,0.24)]"
                 >
                   Ouvrir sa fiche point volume
                 </Link>
@@ -890,7 +890,7 @@ function FollowUpChoiceGroup({
               onClick={() => onChange(option)}
               className={`inline-flex min-h-[44px] items-center rounded-full border px-5 py-2.5 text-[14px] font-semibold transition duration-200 ${
                 isActive
-                  ? "border-white/20 bg-[linear-gradient(135deg,#59B7FF_0%,#3A9BE8_100%)] text-[#07111F] shadow-[0_8px_24px_rgba(45,212,191,0.22)]"
+                  ? "border-white/20 bg-[#C9A84C] text-[#0B0D11] shadow-[0_8px_24px_rgba(201,168,76,0.22)]"
                   : "border-white/10 bg-white/[0.04] text-[#C8D2E1] hover:-translate-y-[1px] hover:border-white/14 hover:bg-white/[0.07] hover:shadow-[0_10px_22px_rgba(0,0,0,0.14)]"
               }`}
             >
@@ -1009,7 +1009,7 @@ function StartingPointWeightCard({
         <div className="flex items-center gap-3">
           <div className="h-2 flex-1 rounded-full bg-white/10">
             <div className="flex h-full items-center justify-between px-1">
-              <span className="h-3 w-3 rounded-full bg-sky-300 shadow-[0_0_10px_rgba(125,211,252,0.45)]" />
+              <span className="h-3 w-3 rounded-full bg-[#C9A84C] shadow-[0_0_10px_rgba(201,168,76,0.35)]" />
               <span className="h-3 w-3 rounded-full bg-slate-300 shadow-[0_0_10px_rgba(226,232,240,0.25)]" />
               <span className="h-3 w-3 rounded-full bg-emerald-300 shadow-[0_0_10px_rgba(110,231,183,0.45)]" />
             </div>
@@ -1041,7 +1041,7 @@ function WeightMilestoneCard({
     tone === "green"
       ? "bg-emerald-400/[0.07] ring-1 ring-emerald-400/12"
       : tone === "blue"
-        ? "bg-sky-400/[0.07] ring-1 ring-sky-400/12"
+        ? "bg-[rgba(201,168,76,0.07)] ring-1 ring-[rgba(201,168,76,0.12)]"
         : "bg-white/[0.03] ring-1 ring-white/6";
 
   return (

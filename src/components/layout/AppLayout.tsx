@@ -125,18 +125,18 @@ export function AppLayout() {
                       to={item.path}
                       className={`flex items-center gap-3 rounded-[20px] px-4 py-3.5 text-[15px] font-medium transition ${
                         isActive
-                          ? "bg-[rgba(45,212,191,0.14)] text-white shadow-[0_0_0_1px_rgba(201,168,76,0.2),0_10px_24px_rgba(0,0,0,0.12)]"
+                          ? "bg-[rgba(201,168,76,0.1)] text-white shadow-[0_0_0_1px_rgba(201,168,76,0.2),0_10px_24px_rgba(0,0,0,0.12)]"
                           : "text-[#7A8099] hover:bg-white/[0.035] hover:text-white"
                       }`}
                     >
                       <span
                         className={`h-9 w-1 rounded-full transition ${
-                          isActive ? "bg-[#2DD4BF]/80 shadow-[0_0_14px_rgba(201,168,76,0.24)]" : "bg-transparent"
+                          isActive ? "bg-[#C9A84C]/80 shadow-[0_0_14px_rgba(201,168,76,0.24)]" : "bg-transparent"
                         }`}
                       />
                       <span
                         className={`h-1.5 w-1.5 rounded-full ${
-                          isActive ? "bg-[#2DD4BF]" : "bg-white/15"
+                          isActive ? "bg-[#C9A84C]" : "bg-white/15"
                         }`}
                       />
                       <span>{item.label}</span>
@@ -226,7 +226,7 @@ export function AppLayout() {
                     to={item.path}
                     className={`whitespace-nowrap rounded-full px-4 py-2.5 text-[13px] font-medium transition ${
                       isActive
-                        ? "bg-sky-400/[0.16] text-white"
+                        ? "bg-[rgba(201,168,76,0.16)] text-white"
                         : "bg-white/[0.03] text-[#B0B4C4]"
                     }`}
                   >
