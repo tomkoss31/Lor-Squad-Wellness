@@ -58,7 +58,7 @@ export function DashboardPage() {
     {
       label: "Mes rendez-vous",
       value: scheduledFollowUps.length,
-      hint: "Suivis planifies",
+      hint: "Suivis planifiés",
       accent: "green" as const
     },
     {
@@ -68,9 +68,9 @@ export function DashboardPage() {
       accent: "red" as const
     },
     {
-      label: "Dossiers a ouvrir",
+      label: "Dossiers à ouvrir",
       value: actionsToOpen.length,
-      hint: "Actions a rouvrir",
+      hint: "Actions à rouvrir",
       accent: "blue" as const
     }
   ];
@@ -80,7 +80,7 @@ export function DashboardPage() {
       <PageHeading
         eyebrow="Accueil"
         title="Tableau de bord"
-        description="Mes rendez-vous, mes relances et mes priorites du moment."
+        description="Mes rendez-vous, mes relances et mes priorités du moment."
       />
 
       {showPasswordNotice ? (
@@ -88,9 +88,9 @@ export function DashboardPage() {
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="max-w-3xl">
               <p className="eyebrow-label">Premier acces</p>
-              <p className="mt-3 text-2xl text-white">Mot de passe et acces equipe</p>
+              <p className="mt-3 text-2xl text-white">Mot de passe et accès equipe</p>
               <p className="mt-2 text-sm leading-6 text-[#B0B4C4]">
-                Ton mot de passe initial a ete defini par un admin lors de la creation du compte.
+                Ton mot de passe initial a été défini par un admin lors de la création du compte.
                 Si tu veux le modifier ou si tu ne l&apos;as pas recu, contacte ton sponsor admin.
               </p>
             </div>
@@ -114,8 +114,8 @@ export function DashboardPage() {
           <div className="space-y-5">
             <div>
               <p className="eyebrow-label">Vue personnelle</p>
-              <h2 className="mt-3 text-[1.85rem] leading-[1.04] tracking-[-0.03em] text-white md:text-[2.05rem]">
-                Mes priorites du jour
+              <h2 className="mt-3 text-[1.5rem] leading-[1.08] tracking-[-0.03em] text-white md:text-[1.85rem] xl:text-[2.05rem]">
+                Mes priorités du jour
               </h2>
               <p className="mt-2 text-sm leading-6 text-[#B0B4C4]/88 md:text-[15px]">
                 Rendez-vous, relances et dossiers a rouvrir.
@@ -133,7 +133,7 @@ export function DashboardPage() {
               ))}
             </div>
 
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4 xl:pr-28">
+            <div className="grid grid-cols-2 gap-3 md:gap-4 xl:grid-cols-4 xl:pr-28">
               {statCards.map((stat) => (
                 <MetricTile key={stat.label} label={stat.label} value={stat.value} hint={stat.hint} accent={stat.accent} />
               ))}
@@ -239,8 +239,8 @@ export function DashboardPage() {
         <Card className="space-y-4">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <p className="eyebrow-label">A reprendre</p>
-              <h2 className="mt-3 text-[1.7rem] leading-[1.06] text-white md:text-[1.9rem]">Dossiers a ouvrir</h2>
+              <p className="eyebrow-label">À reprendre</p>
+              <h2 className="mt-3 text-[1.7rem] leading-[1.06] text-white md:text-[1.9rem]">Dossiers à ouvrir</h2>
             </div>
             <Link className="text-sm font-medium text-[#7A8099] transition hover:text-[#2DD4BF]" to={`/distributors/${currentUser.id}`}>
               Mon portefeuille

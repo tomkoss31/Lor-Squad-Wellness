@@ -39,8 +39,8 @@ const accentClasses: Record<
   }
 > = {
   green: {
-    dot: "bg-emerald-300/90",
-    chip: "border-emerald-400/20 bg-emerald-400/10 text-emerald-100",
+    dot: "bg-[#2DD4BF]",
+    chip: "border-[rgba(45,212,191,0.2)] bg-[rgba(45,212,191,0.1)] text-[#2DD4BF]",
     value: "text-slate-100"
   },
   red: {

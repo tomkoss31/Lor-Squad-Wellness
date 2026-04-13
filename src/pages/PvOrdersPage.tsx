@@ -290,7 +290,7 @@ export function PvOrdersPage() {
             <div
               className={`rounded-[18px] px-4 py-3 text-sm ${
                 feedback.tone === "success"
-                  ? "border border-emerald-400/18 bg-emerald-400/10 text-emerald-100"
+                  ? "border border-[rgba(45,212,191,0.18)] bg-[rgba(45,212,191,0.1)] text-[#2DD4BF]"
                   : "border border-rose-400/18 bg-rose-400/10 text-rose-100"
               }`}
             >

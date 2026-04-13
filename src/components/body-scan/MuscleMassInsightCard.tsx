@@ -84,7 +84,7 @@ export function MuscleMassInsightCard({
               gradientId="muscle-mass-line"
               gradientFrom="#34d399"
               gradientTo="#bef264"
-              accentClass="border-emerald-300/18 bg-emerald-400/[0.08]"
+              accentClass="border-[rgba(45,212,191,0.18)] bg-[rgba(45,212,191,0.08)]"
               valueSuffix="%"
             />
           ) : shouldShowComparisonPanel ? (
@@ -150,7 +150,7 @@ function DeltaValue({ value, suffix }: { value: number; suffix: string }) {
     value === 0
       ? "bg-white/[0.05] text-[#F0EDE8]"
       : value > 0
-        ? "bg-emerald-400/[0.12] text-emerald-200"
+        ? "bg-[rgba(45,212,191,0.12)] text-[#2DD4BF]"
         : "bg-rose-400/[0.12] text-rose-200";
 
   return (

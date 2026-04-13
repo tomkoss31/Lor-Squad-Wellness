@@ -108,7 +108,7 @@ export function ClientsPage() {
         <MetricTile
           label="Clients visibles"
           value={filteredClients.length}
-          hint="Resultat du filtre"
+          hint="Résultat du filtre"
           accent="blue"
         />
         <MetricTile
@@ -120,7 +120,7 @@ export function ClientsPage() {
         <MetricTile
           label="Relances visibles"
           value={visibleRelanceCount}
-          hint="A reprendre"
+          hint="À reprendre"
           accent="red"
         />
       </div>

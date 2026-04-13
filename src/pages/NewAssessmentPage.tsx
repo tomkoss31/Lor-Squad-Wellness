@@ -1706,8 +1706,8 @@ export function NewAssessmentPage() {
                 )}
               </Card>
 
-              <div className="rounded-[24px] bg-emerald-400/10 p-4">
-                <p className="eyebrow-label text-emerald-100/80">Programme conseille</p>
+              <div className="rounded-[24px] bg-[rgba(45,212,191,0.1)] p-4">
+                <p className="eyebrow-label text-[#2DD4BF]/80">Programme conseille</p>
                 <div className="mt-3 flex flex-wrap items-start justify-between gap-3">
                   <div>
                     <p className="text-xl text-white">
@@ -1717,7 +1717,7 @@ export function NewAssessmentPage() {
                       {recommendationPlan.recommendedProgramReason}
                     </p>
                   </div>
-                  <span className="rounded-full bg-emerald-400/12 px-4 py-2 text-sm font-semibold text-emerald-100">
+                  <span className="rounded-full bg-[rgba(45,212,191,0.12)] px-4 py-2 text-sm font-semibold text-[#2DD4BF]">
                     {recommendedProgram?.price ?? "A ajuster"}
                   </span>
                 </div>
@@ -2028,7 +2028,7 @@ export function NewAssessmentPage() {
               </Button>
             </div>
           </div>
-          <div className="sticky bottom-3 z-20 -mx-1 mt-2 rounded-[24px] border border-white/10 bg-[linear-gradient(180deg,rgba(8,12,22,0.92),rgba(8,12,22,0.82))] p-3 shadow-luxe backdrop-blur-xl md:hidden">
+          <div className="sticky bottom-20 lg:bottom-3 z-20 -mx-1 mt-2 rounded-[24px] border border-white/10 bg-[linear-gradient(180deg,rgba(8,12,22,0.92),rgba(8,12,22,0.82))] p-3 shadow-luxe backdrop-blur-xl md:hidden">
             <div className="mb-3 flex items-center justify-between gap-3 px-1">
               <p className="text-[11px] uppercase tracking-[0.22em] text-[#4A5068]">
                 Etape {currentStep + 1} / {steps.length}
@@ -2499,7 +2499,7 @@ function SuggestedProductCard({
           <span className="rounded-full bg-[rgba(45,212,191,0.1)] px-3 py-1 text-sm font-semibold text-[#2DD4BF]">
             {formatPriceEuro(prixPublic)}
           </span>
-          <span className="rounded-full bg-emerald-400/10 px-3 py-1 text-sm font-semibold text-emerald-100">
+          <span className="rounded-full bg-[rgba(45,212,191,0.1)] px-3 py-1 text-sm font-semibold text-[#2DD4BF]">
             {formatPv(pv)}
           </span>
         </div>
@@ -2696,10 +2696,10 @@ function ClientTotalCalculatorCard({
             <SummaryHighlightCard label="PV ajouts" value={addOnProducts.length ? formatPv(addOnProductsTotalPv) : "0.00 PV"} />
           </div>
 
-          <div className="rounded-[22px] border border-emerald-300/18 bg-emerald-400/10 px-4 py-4">
-            <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-emerald-100/70">Total a prevoir aujourd&apos;hui</p>
+          <div className="rounded-[22px] border border-[rgba(45,212,191,0.18)] bg-[rgba(45,212,191,0.1)] px-4 py-4">
+            <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-[#2DD4BF]/70">Total a prevoir aujourd&apos;hui</p>
             <div className="mt-3 flex items-center justify-between gap-3">
-              <p className="text-base text-emerald-50">Base choisie + ajouts</p>
+              <p className="text-base text-[#2DD4BF]">Base choisie + ajouts</p>
               <p className="text-2xl font-semibold text-white">
                 {estimatedClientTotal > 0 ? formatPriceEuro(estimatedClientTotal) : "A definir"}
               </p>
@@ -2739,7 +2739,7 @@ function ReferenceComparisonRow({
 }) {
   const toneClass =
     tone === "green"
-      ? "bg-emerald-400/10 text-emerald-100"
+      ? "bg-[rgba(45,212,191,0.1)] text-[#2DD4BF]"
       : tone === "red"
         ? "bg-rose-400/10 text-rose-100"
         : tone === "amber"

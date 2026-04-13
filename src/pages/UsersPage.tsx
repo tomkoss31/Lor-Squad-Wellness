@@ -146,7 +146,7 @@ export function UsersPage() {
     });
 
     if (!result.ok) {
-      setError(result.error ?? "Impossible de creer cet acces pour le moment.");
+      setError(result.error ?? "Impossible de creer cet accès pour le moment.");
       setSuccess("");
       return;
     }
@@ -376,7 +376,7 @@ export function UsersPage() {
             </label>
 
             {error ? <div className="rounded-[20px] border border-rose-400/20 bg-rose-400/10 px-4 py-3 text-sm text-rose-100">{error}</div> : null}
-            {success ? <div className="rounded-[20px] border border-emerald-400/20 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-100">{success}</div> : null}
+            {success ? <div className="rounded-[20px] border border-[rgba(45,212,191,0.2)] bg-[rgba(45,212,191,0.1)] px-4 py-3 text-sm text-[#2DD4BF]">{success}</div> : null}
 
             <Button className="w-full">Creer cet acces</Button>
           </form>
@@ -435,7 +435,7 @@ export function UsersPage() {
             </label>
 
             {repairError ? <div className="rounded-[20px] border border-rose-400/20 bg-rose-400/10 px-4 py-3 text-sm text-rose-100">{repairError}</div> : null}
-            {repairSuccess ? <div className="rounded-[20px] border border-emerald-400/20 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-100">{repairSuccess}</div> : null}
+            {repairSuccess ? <div className="rounded-[20px] border border-[rgba(45,212,191,0.2)] bg-[rgba(45,212,191,0.1)] px-4 py-3 text-sm text-[#2DD4BF]">{repairSuccess}</div> : null}
 
             <Button className="w-full">Reparer ce profil</Button>
           </form>
@@ -458,8 +458,8 @@ export function UsersPage() {
           {storageMode === "local" ? (
             <div className="space-y-3">
               <div className="rounded-[22px] bg-amber-400/10 px-4 py-4">
-                <p className="text-sm font-semibold text-white">Reinitialiser les acces beta</p>
-                <p className="mt-2 text-sm leading-7 text-[#B0B4C4]">Repars sur les acces par defaut et ferme la session actuelle.</p>
+                <p className="text-sm font-semibold text-white">Reinitialiser les accès beta</p>
+                <p className="mt-2 text-sm leading-7 text-[#B0B4C4]">Repars sur les accès par defaut et ferme la session actuelle.</p>
                 <Button className="mt-4" variant="secondary" onClick={resetAccessData}>Reinitialiser les acces</Button>
               </div>
               <div className="rounded-[22px] bg-rose-400/10 px-4 py-4">
@@ -470,7 +470,7 @@ export function UsersPage() {
             </div>
           ) : (
             <div className="space-y-3">
-              <div className="rounded-[22px] bg-emerald-400/10 px-4 py-4">
+              <div className="rounded-[22px] bg-[rgba(45,212,191,0.1)] px-4 py-4">
                 <p className="text-sm font-semibold text-white">Base distante active</p>
                 <p className="mt-2 text-sm leading-7 text-[#B0B4C4]">Les comptes et l'arborescence equipe sont lus depuis Supabase.</p>
               </div>
@@ -497,7 +497,7 @@ export function UsersPage() {
             {activityLogs.slice(0, 8).map((entry) => (
               <ActivityRow key={entry.id} entry={entry} />
             ))}
-            {!activityLogs.length ? <EmptyState text="Les prochaines creations, corrections et changements d'acces apparaitront ici." /> : null}
+            {!activityLogs.length ? <EmptyState text="Les prochaines creations, corrections et changements d'accès apparaitront ici." /> : null}
           </div>
         </Card>
       </div>

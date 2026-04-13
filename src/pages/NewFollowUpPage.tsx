@@ -391,10 +391,10 @@ export function NewFollowUpPage() {
               <StatusBadge label="Suivi terrain" tone="green" />
             </div>
 
-            <div className="rounded-[24px] border border-emerald-400/20 bg-emerald-400/[0.06] p-5">
+            <div className="rounded-[24px] border border-[rgba(45,212,191,0.2)] bg-[rgba(45,212,191,0.06)] p-5">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
-                  <p className="eyebrow-label text-emerald-200/70">Nouveau relevé</p>
+                  <p className="eyebrow-label text-[#2DD4BF]/70">Nouveau relevé</p>
                   <p className="mt-3 text-2xl text-white">Nouvelles valeurs body scan</p>
                   <p className="mt-2 text-sm leading-6 text-[#B0B4C4]">
                     Saisir les chiffres du jour puis relire les écarts.
@@ -405,21 +405,21 @@ export function NewFollowUpPage() {
 
               <div className="mt-5 grid gap-3 md:grid-cols-3">
                 <div className="rounded-[20px] border border-white/10 bg-[#1A1E27] px-4 py-4">
-                  <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-emerald-200/70">
+                  <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-[#2DD4BF]/70">
                     Age
                   </p>
                   <p className="mt-3 text-2xl font-semibold text-white">{targetClient.age} ans</p>
                   <p className="mt-2 text-sm text-[#7A8099]">Visible au moment de la balance</p>
                 </div>
                 <div className="rounded-[20px] border border-white/10 bg-[#1A1E27] px-4 py-4">
-                  <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-emerald-200/70">
+                  <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-[#2DD4BF]/70">
                     Taille
                   </p>
                   <p className="mt-3 text-2xl font-semibold text-white">{targetClient.height} cm</p>
                   <p className="mt-2 text-sm text-[#7A8099]">Sans revenir sur la fiche client</p>
                 </div>
                 <div className="rounded-[20px] border border-white/10 bg-[#1A1E27] px-4 py-4">
-                  <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-emerald-200/70">
+                  <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-[#2DD4BF]/70">
                     Dernier point
                   </p>
                   <p className="mt-3 text-2xl font-semibold text-white">{formatDate(latest.date)}</p>
@@ -768,7 +768,7 @@ function PvFollowUpStatusLabel({
 }) {
   const toneClass =
     status === "ok"
-      ? "bg-emerald-400/12 text-emerald-100"
+      ? "bg-[rgba(45,212,191,0.12)] text-[#2DD4BF]"
       : status === "restock"
         ? "bg-[rgba(45,212,191,0.12)] text-[#2DD4BF]"
         : status === "inconsistent"
@@ -970,10 +970,10 @@ function StartingPointWeightCard({
       ? "text-[#F0EDE8]"
       : isWeightLoss
         ? deltaFromStart < 0
-          ? "text-emerald-200"
+          ? "text-[#2DD4BF]"
           : "text-amber-200"
         : deltaFromStart > 0
-          ? "text-emerald-200"
+          ? "text-[#2DD4BF]"
           : "text-amber-200";
   const mainDeltaLabel =
     deltaFromStart === 0
@@ -1011,7 +1011,7 @@ function StartingPointWeightCard({
             <div className="flex h-full items-center justify-between px-1">
               <span className="h-3 w-3 rounded-full bg-[#C9A84C] shadow-[0_0_10px_rgba(201,168,76,0.35)]" />
               <span className="h-3 w-3 rounded-full bg-slate-300 shadow-[0_0_10px_rgba(226,232,240,0.25)]" />
-              <span className="h-3 w-3 rounded-full bg-emerald-300 shadow-[0_0_10px_rgba(110,231,183,0.45)]" />
+              <span className="h-3 w-3 rounded-full bg-[#2DD4BF] shadow-[0_0_10px_rgba(110,231,183,0.45)]" />
             </div>
           </div>
         </div>
@@ -1039,7 +1039,7 @@ function WeightMilestoneCard({
 }) {
   const toneClass =
     tone === "green"
-      ? "bg-emerald-400/[0.07] ring-1 ring-emerald-400/12"
+      ? "bg-[rgba(45,212,191,0.07)] ring-1 ring-[rgba(45,212,191,0.12)]"
       : tone === "blue"
         ? "bg-[rgba(201,168,76,0.07)] ring-1 ring-[rgba(201,168,76,0.12)]"
         : "bg-white/[0.03] ring-1 ring-white/6";

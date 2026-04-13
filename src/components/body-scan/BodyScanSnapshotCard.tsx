@@ -103,7 +103,7 @@ function SnapshotMetricCard({
 }) {
   const accentClass =
     tone === "green"
-      ? "from-emerald-400/90 via-lime-300/70 to-transparent"
+      ? "from-[#2DD4BF]/90 via-[#F0C96A]/70 to-transparent"
       : tone === "red"
         ? "from-rose-400/90 via-orange-300/70 to-transparent"
         : tone === "amber"

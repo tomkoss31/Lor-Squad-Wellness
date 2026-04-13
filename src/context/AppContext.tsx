@@ -486,10 +486,10 @@ export function AppProvider({ children }: PropsWithChildren) {
         });
         return { ok: true };
       } catch (error) {
-        console.error("Creation d'acces Supabase impossible.", error);
+        console.error("Creation d'accès Supabase impossible.", error);
         return {
           ok: false,
-          error: "La creation du compte a echoue. Verifie la configuration backend."
+          error: "La création du compte a echoue. Verifie la configuration backend."
         };
       }
     }
@@ -531,13 +531,13 @@ export function AppProvider({ children }: PropsWithChildren) {
         });
         return { ok: true };
       } catch (error) {
-        console.error("Mise a jour d'acces Supabase impossible.", error);
+        console.error("Mise a jour d'accès Supabase impossible.", error);
         return {
           ok: false,
           error:
             error instanceof Error
               ? error.message
-              : "La mise a jour de cet acces a echoue."
+              : "La mise a jour de cet accès a echoue."
         };
       }
     }
@@ -592,7 +592,7 @@ export function AppProvider({ children }: PropsWithChildren) {
       });
       return { ok: true };
     } catch (error) {
-      console.error("Reparation d'acces Supabase impossible.", error);
+      console.error("Reparation d'accès Supabase impossible.", error);
       return {
         ok: false,
         error:
@@ -614,7 +614,7 @@ export function AppProvider({ children }: PropsWithChildren) {
         targetUserName: targetUser?.name,
         ownerUserId: userId,
         summary: `${targetUser?.name ?? "Le compte"} est ${active ? "reactive" : "desactive"}.`,
-        detail: active ? "Le compte peut revenir sur la plateforme." : "Le compte n'a plus acces a l'application."
+        detail: active ? "Le compte peut revenir sur la plateforme." : "Le compte n'a plus accès a l'application."
       });
 
       if (currentUser?.id === userId && !active) {
@@ -635,7 +635,7 @@ export function AppProvider({ children }: PropsWithChildren) {
       targetUserName: targetUser?.name,
       ownerUserId: userId,
       summary: `${targetUser?.name ?? "Le compte"} est ${active ? "reactive" : "desactive"}.`,
-      detail: active ? "Le compte peut revenir sur la plateforme." : "Le compte n'a plus acces a l'application."
+      detail: active ? "Le compte peut revenir sur la plateforme." : "Le compte n'a plus accès a l'application."
     });
 
     if (currentUser?.id === userId && !active) {
@@ -654,7 +654,7 @@ export function AppProvider({ children }: PropsWithChildren) {
           targetUserName: targetUser?.name,
           ownerUserId: userId,
           summary: `Mot de passe redefini pour ${targetUser?.name ?? "ce compte"}.`,
-          detail: "Le nouvel acces peut etre communique directement a la personne."
+          detail: "Le nouvel accès peut etre communique directement a la personne."
         });
         return { ok: true };
       } catch (error) {
@@ -681,7 +681,7 @@ export function AppProvider({ children }: PropsWithChildren) {
       targetUserName: targetUser?.name,
       ownerUserId: userId,
       summary: `Mot de passe redefini pour ${targetUser?.name ?? "ce compte"}.`,
-      detail: "Le nouvel acces peut etre communique directement a la personne."
+      detail: "Le nouvel accès peut etre communique directement a la personne."
     });
     return { ok: true };
   }

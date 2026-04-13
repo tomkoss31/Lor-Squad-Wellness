@@ -179,7 +179,7 @@ function ComparisonMetricRow({
   const classicTone =
     metricKey === "fastSugar" ? "bg-amber-300/85" : metricKey === "hydration" ? "bg-slate-500/75" : "bg-white/70";
   const structuredTone =
-    metricKey === "fastSugar" ? "bg-[#2DD4BF]/80" : metricKey === "hydration" ? "bg-[#2DD4BF]" : "bg-emerald-300/85";
+    metricKey === "fastSugar" ? "bg-[#2DD4BF]/80" : metricKey === "hydration" ? "bg-[#2DD4BF]" : "bg-[#2DD4BF]/85";
 
   return (
     <div className="grid gap-3 rounded-[18px] border border-white/8 bg-white/[0.03] px-4 py-4 md:grid-cols-[140px_1fr_1fr] md:items-center">

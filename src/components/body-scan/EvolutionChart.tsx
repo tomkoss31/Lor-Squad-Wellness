@@ -10,7 +10,7 @@ interface EvolutionChartProps {
 const metricOptions: Array<{ key: MetricKey; label: string; suffix: string; tone: string }> = [
   { key: "weight", label: "Poids", suffix: "kg", tone: "from-sky-500 to-cyan-300" },
   { key: "bodyFat", label: "Masse grasse", suffix: "%", tone: "from-rose-500 to-orange-300" },
-  { key: "muscleMass", label: "Masse musculaire", suffix: "kg", tone: "from-emerald-500 to-lime-300" }
+  { key: "muscleMass", label: "Masse musculaire", suffix: "kg", tone: "from-[#2DD4BF] to-[#F0C96A]" }
 ];
 
 export function EvolutionChart({ assessments }: EvolutionChartProps) {

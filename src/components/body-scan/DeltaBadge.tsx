@@ -20,7 +20,7 @@ export function DeltaBadge({
         isNeutral
           ? "bg-white/[0.06] text-[#B0B4C4]"
           : isPositive
-            ? "bg-emerald-400/10 text-emerald-200"
+            ? "bg-[rgba(45,212,191,0.1)] text-[#2DD4BF]"
             : "bg-rose-400/10 text-rose-200"
       }`}
     >
