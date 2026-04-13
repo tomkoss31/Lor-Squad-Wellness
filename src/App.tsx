@@ -2,6 +2,29 @@ import { Suspense, lazy } from "react";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { ProtectedRoute, PublicRoute, RoleRoute } from "./components/auth/RouteGuards";
 import { AppLayout } from "./components/layout/AppLayout";
+import { AuthProvider, useAuth } from "./contexts/AuthContext";
+import { ErrorBoundary } from "./components/ErrorBoundary";
+import { LorAppLayout } from "./components/layout/LorAppLayout";
+import { V2LoginPage } from "./pages/v2/V2LoginPage";
+import { V2DashboardPage } from "./pages/v2/V2DashboardPage";
+import { V2ClientsPage } from "./pages/v2/V2ClientsPage";
+import { V2ClientDetailPage } from "./pages/v2/V2ClientDetailPage";
+import { V2NewBilanPage } from "./pages/v2/V2NewBilanPage";
+import { V2BodyScanPage } from "./pages/v2/V2BodyScanPage";
+import { V2SuiviPage } from "./pages/v2/V2SuiviPage";
+import { V2RecommandationsPage } from "./pages/v2/V2RecommandationsPage";
+import { V2SuiviPVPage } from "./pages/v2/V2SuiviPVPage";
+
+function V2ProtectedRoute({ children }: { children: React.ReactNode }) {
+  const { user, loading } = useAuth();
+  if (loading) return (
+    <div style={{ background: '#0B0D11', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ width: 32, height: 32, border: '2px solid rgba(201,168,76,0.3)', borderTop: '2px solid #C9A84C', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
+      <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+    </div>
+  );
+  return user ? <>{children}</> : <Navigate to="/v2/login" replace />;
+}
 
 const DashboardPage = lazy(() =>
   import("./pages/DashboardPage").then((module) => ({
@@ -86,42 +109,67 @@ const LoginPage = lazy(() =>
 
 export default function App() {
   return (
-    <BrowserRouter>
-      <Suspense fallback={<RouteLoadingScreen />}>
-        <Routes>
-          <Route element={<PublicRoute />}>
-            <Route path="/login" element={<LoginPage />} />
-          </Route>
-          <Route element={<ProtectedRoute />}>
-            <Route path="/" element={<AppLayout />}>
-              <Route index element={<Navigate to="/dashboard" replace />} />
-              <Route path="dashboard" element={<DashboardPage />} />
-              <Route path="guide" element={<GuidePage />} />
-              <Route path="recommendations" element={<RecommendationsPage />} />
-              <Route path="pv" element={<PvOverviewPage />} />
-              <Route path="pv/clients" element={<PvClientsPage />} />
-              <Route path="pv/orders" element={<PvOrdersPage />} />
-              <Route path="clients" element={<ClientsPage />} />
-              <Route element={<RoleRoute allowedRoles={["admin"]} />}>
-                <Route path="users" element={<UsersPage />} />
-                <Route path="pv/team" element={<PvTeamPage />} />
-              </Route>
-              <Route path="distributors/:distributorId" element={<DistributorPortfolioPage />} />
-              <Route path="clients/:clientId" element={<ClientDetailPage />} />
-              <Route path="clients/:clientId/start-assessment/edit" element={<EditInitialAssessmentPage />} />
-              <Route
-                path="clients/:clientId/assessments/:assessmentId/edit"
-                element={<EditInitialAssessmentPage />}
-              />
-              <Route path="clients/:clientId/follow-up/new" element={<NewFollowUpPage />} />
-              <Route path="clients/:clientId/schedule/edit" element={<EditClientSchedulePage />} />
-              <Route path="assessments/new" element={<NewAssessmentPage />} />
+    <ErrorBoundary>
+      <BrowserRouter>
+        <Suspense fallback={<RouteLoadingScreen />}>
+          <Routes>
+            {/* ── Routes V1 existantes (inchangées) ── */}
+            <Route element={<PublicRoute />}>
+              <Route path="/login" element={<LoginPage />} />
             </Route>
-          </Route>
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </Suspense>
-    </BrowserRouter>
+            <Route element={<ProtectedRoute />}>
+              <Route path="/" element={<AppLayout />}>
+                <Route index element={<Navigate to="/dashboard" replace />} />
+                <Route path="dashboard" element={<DashboardPage />} />
+                <Route path="guide" element={<GuidePage />} />
+                <Route path="recommendations" element={<RecommendationsPage />} />
+                <Route path="pv" element={<PvOverviewPage />} />
+                <Route path="pv/clients" element={<PvClientsPage />} />
+                <Route path="pv/orders" element={<PvOrdersPage />} />
+                <Route path="clients" element={<ClientsPage />} />
+                <Route element={<RoleRoute allowedRoles={["admin"]} />}>
+                  <Route path="users" element={<UsersPage />} />
+                  <Route path="pv/team" element={<PvTeamPage />} />
+                </Route>
+                <Route path="distributors/:distributorId" element={<DistributorPortfolioPage />} />
+                <Route path="clients/:clientId" element={<ClientDetailPage />} />
+                <Route path="clients/:clientId/start-assessment/edit" element={<EditInitialAssessmentPage />} />
+                <Route path="clients/:clientId/assessments/:assessmentId/edit" element={<EditInitialAssessmentPage />} />
+                <Route path="clients/:clientId/follow-up/new" element={<NewFollowUpPage />} />
+                <Route path="clients/:clientId/schedule/edit" element={<EditClientSchedulePage />} />
+                <Route path="assessments/new" element={<NewAssessmentPage />} />
+              </Route>
+            </Route>
+
+            {/* ── Routes V2 (nouvelle identité graphique) ── */}
+            <Route path="/v2/login" element={
+              <AuthProvider>
+                <V2LoginPage />
+              </AuthProvider>
+            } />
+            <Route path="/v2/*" element={
+              <AuthProvider>
+                <V2ProtectedRoute>
+                  <LorAppLayout />
+                </V2ProtectedRoute>
+              </AuthProvider>
+            }>
+              <Route path="dashboard" element={<V2DashboardPage />} />
+              <Route path="clients" element={<V2ClientsPage />} />
+              <Route path="clients/:id" element={<V2ClientDetailPage />} />
+              <Route path="clients/:id/bilan/new" element={<V2NewBilanPage />} />
+              <Route path="clients/:id/scan/new" element={<V2BodyScanPage />} />
+              <Route path="clients/:id/suivi/new" element={<V2SuiviPage />} />
+              <Route path="recommandations" element={<V2RecommandationsPage />} />
+              <Route path="suivi-pv" element={<V2SuiviPVPage />} />
+              <Route index element={<Navigate to="dashboard" replace />} />
+            </Route>
+
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </Suspense>
+      </BrowserRouter>
+    </ErrorBoundary>
   );
 }
 
