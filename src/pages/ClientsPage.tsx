@@ -1,370 +1,393 @@
-import { useEffect, useMemo, useState, type FormEvent } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
-import Avatar from "../components/ui/Avatar";
-import Badge from "../components/ui/Badge";
-import Button from "../components/ui/Button";
-import Card from "../components/ui/Card";
-import EmptyState from "../components/ui/EmptyState";
-import Input from "../components/ui/Input";
-import { useClients } from "../hooks/useClients";
-import { readBilans } from "../lib/localData";
-import { hasSupabaseEnv, supabase } from "../lib/supabaseClient";
-import type { Bilan, Client } from "../lib/types";
+import { useDeferredValue, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
+import { DistributorBadge } from "../components/client/DistributorBadge";
+import { Card } from "../components/ui/Card";
+import { MetricTile } from "../components/ui/MetricTile";
+import { PageHeading } from "../components/ui/PageHeading";
+import { StatusBadge } from "../components/ui/StatusBadge";
+import { useAppContext } from "../context/AppContext";
+import { getAccessibleOwnerIds } from "../lib/auth";
+import {
+  getActivePortfolioUsers,
+  getGroupedClientsByMonth,
+  getPortfolioOwnerIds,
+  getPortfolioMetrics,
+  isRelanceFollowUp
+} from "../lib/portfolio";
+import {
+  calculateProteinRange,
+  calculateWaterNeed,
+  formatDate,
+  formatDateTime,
+  getFirstAssessment,
+  getLatestAssessment,
+  getLatestBodyScan
+} from "../lib/calculations";
 
-type SortMode = "created_at" | "name" | "last_bilan";
-
-const pageSize = 12;
-const emptyClientForm = {
-  first_name: "",
-  last_name: "",
-  email: "",
-  phone: "",
-  birth_date: "",
-  gender: "",
-  height_cm: "",
-  objective: ""
+const statusLabels = {
+  active: { label: "Actif", tone: "green" as const },
+  pending: { label: "En attente", tone: "amber" as const },
+  "follow-up": { label: "Suivi", tone: "blue" as const }
 };
 
 export function ClientsPage() {
-  const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const { clients, loading, error, createClient } = useClients();
-  const [lastBilans, setLastBilans] = useState<Record<string, string>>({});
+  const {
+    currentUser,
+    users,
+    visibleClients,
+    visibleFollowUps
+  } = useAppContext();
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"all" | Client["status"]>("all");
-  const [sortMode, setSortMode] = useState<SortMode>("created_at");
-  const [page, setPage] = useState(1);
-  const [modalOpen, setModalOpen] = useState(searchParams.get("new") === "1");
-  const [submitting, setSubmitting] = useState(false);
-  const [formError, setFormError] = useState<string | null>(null);
-  const [formState, setFormState] = useState(emptyClientForm);
+  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "pending" | "follow-up">(
+    "all"
+  );
+  const [ownerFilter, setOwnerFilter] = useState("all");
+  const deferredSearch = useDeferredValue(search);
 
-  useEffect(() => {
-    setModalOpen(searchParams.get("new") === "1");
-  }, [searchParams]);
-
-  useEffect(() => {
-    async function fetchBilans() {
-      if (!hasSupabaseEnv) {
-        const map: Record<string, string> = {};
-        readBilans()
-          .sort((left, right) => right.date.localeCompare(left.date))
-          .forEach((bilan) => {
-            if (!map[bilan.client_id]) {
-              map[bilan.client_id] = bilan.date;
-            }
-          });
-        setLastBilans(map);
-        return;
-      }
-
-      const { data, error } = await supabase.from("bilans").select("client_id, date").order("date", { ascending: false });
-      if (error) {
-        console.error(error);
-        return;
-      }
-
-      const map: Record<string, string> = {};
-      ((data ?? []) as Pick<Bilan, "client_id" | "date">[]).forEach((bilan) => {
-        if (!map[bilan.client_id]) {
-          map[bilan.client_id] = bilan.date;
-        }
-      });
-      setLastBilans(map);
-    }
-
-    void fetchBilans();
-  }, []);
-
+  const portfolioUsers = useMemo(
+    () => getActivePortfolioUsers(users, visibleClients, currentUser),
+    [currentUser, users, visibleClients]
+  );
+  const ownerTabs = currentUser
+    ? portfolioUsers.filter((user) => getAccessibleOwnerIds(currentUser, users).has(user.id))
+    : [];
+  const selectedOwner =
+    ownerFilter === "all"
+      ? null
+      : ownerTabs.find((user) => user.id === ownerFilter) ?? null;
+  const selectedOwnerIds =
+    selectedOwner && currentUser
+      ? getPortfolioOwnerIds(
+          selectedOwner,
+          users,
+          selectedOwner.role === "referent" ? "network" : "personal"
+        )
+      : null;
+  const normalizedSearch = deferredSearch.trim().toLowerCase();
   const filteredClients = useMemo(() => {
-    const normalizedSearch = search.trim().toLowerCase();
+    return visibleClients.filter((client) => {
+      const firstAssessment = getFirstAssessment(client);
+      const matchesOwner =
+        ownerFilter === "all" || (selectedOwnerIds ? selectedOwnerIds.has(client.distributorId) : false);
+      const matchesStatus = statusFilter === "all" || client.status === statusFilter;
+      const matchesSearch =
+        !normalizedSearch ||
+        `${client.firstName} ${client.lastName} ${client.city ?? ""} ${client.currentProgram} ${firstAssessment.questionnaire.referredByName ?? ""}`
+          .toLowerCase()
+          .includes(normalizedSearch);
 
-    return clients
-      .filter((client) => {
-        if (statusFilter !== "all" && client.status !== statusFilter) {
-          return false;
-        }
-
-        if (!normalizedSearch) {
-          return true;
-        }
-
-        return `${client.first_name} ${client.last_name}`.toLowerCase().includes(normalizedSearch);
-      })
-      .sort((left, right) => {
-        if (sortMode === "name") {
-          return `${left.first_name} ${left.last_name}`.localeCompare(`${right.first_name} ${right.last_name}`, "fr");
-        }
-
-        if (sortMode === "last_bilan") {
-          return (lastBilans[right.id] ?? "").localeCompare(lastBilans[left.id] ?? "");
-        }
-
-        return right.created_at.localeCompare(left.created_at);
-      });
-  }, [clients, lastBilans, search, sortMode, statusFilter]);
-
-  const paginatedClients = filteredClients.slice((page - 1) * pageSize, page * pageSize);
-  const totalPages = Math.max(1, Math.ceil(filteredClients.length / pageSize));
-
-  useEffect(() => {
-    setPage(1);
-  }, [search, statusFilter, sortMode]);
-
-  function updateSearchParam(open: boolean) {
-    if (open) {
-      setSearchParams({ new: "1" });
-    } else {
-      setSearchParams({});
-    }
-  }
-
-  async function handleCreateClient(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setSubmitting(true);
-    setFormError(null);
-
-    try {
-      const created = await createClient({
-        first_name: formState.first_name.trim(),
-        last_name: formState.last_name.trim(),
-        email: formState.email.trim() || undefined,
-        phone: formState.phone.trim() || undefined,
-        birth_date: formState.birth_date || undefined,
-        gender: (formState.gender || undefined) as Client["gender"],
-        height_cm: formState.height_cm ? Number(formState.height_cm) : undefined,
-        objective: formState.objective.trim() || undefined,
-        status: "actif"
-      });
-
-      setFormState(emptyClientForm);
-      updateSearchParam(false);
-      navigate(`/clients/${created.id}`);
-    } catch (error) {
-      setFormError(error instanceof Error ? error.message : "Création impossible.");
-    } finally {
-      setSubmitting(false);
-    }
-  }
+      return matchesOwner && matchesStatus && matchesSearch;
+    });
+  }, [normalizedSearch, ownerFilter, selectedOwnerIds, statusFilter, visibleClients]);
+  const groupedClients = useMemo(
+    () => getGroupedClientsByMonth(filteredClients),
+    [filteredClients]
+  );
+  const selectedOwnerMetrics = selectedOwner
+    ? getPortfolioMetrics(
+        selectedOwner,
+        visibleClients,
+        visibleFollowUps,
+        users,
+        selectedOwner.role === "referent" ? "network" : "personal"
+      )
+    : null;
+  const visibleRelanceCount = selectedOwnerMetrics
+    ? selectedOwnerMetrics.relanceFollowUps.length
+    : visibleFollowUps.filter((followUp) => isRelanceFollowUp(followUp)).length;
 
   return (
     <div className="space-y-6">
-      <Card className="p-5">
-        <div className="grid gap-4 lg:grid-cols-[1fr_180px_220px_auto]">
-          <Input
-            label="Recherche"
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="Nom ou prénom"
-          />
+      <PageHeading
+        eyebrow="Clients"
+        title="Base clients"
+        description="Recherche, responsables, statuts et arborescence mensuelle."
+      />
 
-          <label className="block">
-            <span className="lor-label">Statut</span>
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <MetricTile
+          label="Clients visibles"
+          value={filteredClients.length}
+          hint="Resultat du filtre"
+          accent="blue"
+        />
+        <MetricTile
+          label="Responsables visibles"
+          value={ownerTabs.length}
+          hint="Portefeuilles actifs"
+          accent="green"
+        />
+        <MetricTile
+          label="Relances visibles"
+          value={visibleRelanceCount}
+          hint="A reprendre"
+          accent="red"
+        />
+      </div>
+
+      <Card className="space-y-5">
+        <div className="grid gap-4 lg:grid-cols-[1.4fr_0.9fr] lg:items-end">
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-slate-300">Rechercher un client</label>
+            <input
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Nom, ville ou programme..."
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-slate-300">Filtrer par statut</label>
             <select
               value={statusFilter}
-              onChange={(event) => setStatusFilter(event.target.value as "all" | Client["status"])}
-              className="lor-select"
+              onChange={(event) =>
+                setStatusFilter(
+                  event.target.value as "all" | "active" | "pending" | "follow-up"
+                )
+              }
             >
-              <option value="all">Tous</option>
-              <option value="actif">Actif</option>
-              <option value="inactif">Inactif</option>
-              <option value="pause">Pause</option>
+              <option value="all">Tous les statuts</option>
+              <option value="active">Actifs</option>
+              <option value="pending">En attente</option>
+              <option value="follow-up">Suivi prioritaire</option>
             </select>
-          </label>
+          </div>
+        </div>
 
-          <label className="block">
-            <span className="lor-label">Tri</span>
-            <select value={sortMode} onChange={(event) => setSortMode(event.target.value as SortMode)} className="lor-select">
-              <option value="created_at">Date de création</option>
-              <option value="name">Nom</option>
-              <option value="last_bilan">Dernier bilan</option>
-            </select>
-          </label>
+        <div className="space-y-3">
+          <p className="eyebrow-label">Responsables du dossier</p>
+          <div className="flex flex-wrap gap-3">
+            <button
+              type="button"
+              onClick={() => setOwnerFilter("all")}
+              className={`rounded-[22px] px-4 py-3 text-left transition ${
+                ownerFilter === "all"
+                  ? "bg-sky-400/12 text-white shadow-[0_0_0_1px_rgba(125,211,252,0.12)]"
+                  : "bg-white/[0.03] text-white hover:bg-white/[0.05]"
+              }`}
+            >
+              <span className="block text-sm font-semibold">Toute la base</span>
+              <span
+                className={`mt-1 block text-xs ${
+                  ownerFilter === "all" ? "text-sky-100/75" : "text-slate-400"
+                }`}
+              >
+                {visibleClients.length} dossiers visibles
+              </span>
+            </button>
 
-          <div className="flex items-end">
-            <Button className="w-full" onClick={() => updateSearchParam(true)}>
-              Nouveau client
-            </Button>
+            {ownerTabs.map((user) => {
+              const metrics = getPortfolioMetrics(
+                user,
+                visibleClients,
+                visibleFollowUps,
+                users,
+                user.role === "referent" ? "network" : "personal"
+              );
+              const isActive = ownerFilter === user.id;
+
+              return (
+                <button
+                  key={user.id}
+                  type="button"
+                  onClick={() => setOwnerFilter(user.id)}
+                  className={`rounded-[22px] px-4 py-3 text-left transition ${
+                    isActive
+                      ? "bg-sky-400/12 text-white shadow-[0_0_0_1px_rgba(125,211,252,0.12)]"
+                      : "bg-white/[0.03] hover:bg-white/[0.05]"
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <DistributorBadge user={user} compact />
+                    <div>
+                      <span
+                        className={`block text-sm font-semibold ${
+                          isActive ? "text-white" : "text-white"
+                        }`}
+                      >
+                        {user.name}
+                      </span>
+                      <span
+                        className={`mt-1 block text-xs ${
+                          isActive ? "text-sky-100/75" : "text-slate-400"
+                        }`}
+                      >
+                        {metrics.clients.length} clients - {metrics.relanceFollowUps.length} relances
+                      </span>
+                      {user.role === "referent" ? (
+                        <span className="mt-1 block text-[11px] text-slate-500">Vue equipe</span>
+                      ) : null}
+                    </div>
+                  </div>
+                </button>
+              );
+            })}
           </div>
         </div>
       </Card>
 
-      {loading ? (
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {Array.from({ length: 6 }).map((_, index) => (
-            <div key={index} className="lor-skeleton h-[210px]" />
-          ))}
-        </div>
-      ) : error ? (
-        <div className="lor-danger-banner rounded-[12px] px-5 py-4 text-sm">{error}</div>
-      ) : paginatedClients.length === 0 ? (
-        <EmptyState
-          icon="🧘"
-          title="Aucun client trouvé"
-          subtitle="Ajuste la recherche ou crée un nouveau dossier client pour démarrer un accompagnement."
-          action={<Button onClick={() => updateSearchParam(true)}>Créer un client</Button>}
-        />
-      ) : (
-        <>
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {paginatedClients.map((client) => (
-              <Card key={client.id} className="p-5">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex items-center gap-3">
-                    <Avatar name={`${client.first_name} ${client.last_name}`} />
-                    <div>
-                      <h3 className="text-lg font-bold">
-                        {client.first_name} {client.last_name}
-                      </h3>
-                      <p className="text-sm text-[var(--lor-muted)]">{client.objective || "Objectif à définir"}</p>
-                    </div>
-                  </div>
-                  <Badge variant={statusToVariant(client.status)}>{client.status}</Badge>
-                </div>
-
-                <div className="mt-5 space-y-2 text-sm text-[var(--lor-muted)]">
-                  <p>Dernier bilan: {lastBilans[client.id] ? formatDate(lastBilans[client.id]) : "Aucun"}</p>
-                  <p>Créé le {formatDate(client.created_at)}</p>
-                </div>
-
-                <Button
-                  variant="secondary"
-                  className="mt-6 w-full"
-                  onClick={() => navigate(`/clients/${client.id}`)}
-                >
-                  Voir fiche
-                </Button>
-              </Card>
-            ))}
+      {selectedOwner ? (
+        <Card className="space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <DistributorBadge
+              user={selectedOwner}
+              detail={`${selectedOwnerMetrics?.clients.length ?? 0} clients - ${selectedOwnerMetrics?.relanceFollowUps.length ?? 0} relances`}
+            />
+            <Link
+              to={`/distributors/${selectedOwner.id}`}
+              className="inline-flex min-h-[48px] items-center justify-center rounded-[18px] bg-white/[0.04] px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/[0.07]"
+            >
+              Ouvrir le portefeuille
+            </Link>
           </div>
-
-          <div className="flex items-center justify-between gap-3">
-            <p className="text-sm text-[var(--lor-muted)]">
-              Page {page} sur {totalPages}
-            </p>
-            <div className="flex gap-2">
-              <Button variant="secondary" disabled={page === 1} onClick={() => setPage((current) => current - 1)}>
-                Précédent
-              </Button>
-              <Button
-                variant="secondary"
-                disabled={page === totalPages}
-                onClick={() => setPage((current) => current + 1)}
-              >
-                Suivant
-              </Button>
-            </div>
+          <div className="grid gap-3 md:grid-cols-3">
+            <MiniFact
+              label="Clients"
+              value={`${selectedOwnerMetrics?.clients.length ?? 0} dossiers`}
+            />
+            <MiniFact
+              label="Rendez-vous"
+              value={`${selectedOwnerMetrics?.scheduledFollowUps.length ?? 0} planifiés`}
+            />
+            <MiniFact
+              label="Relances"
+              value={`${selectedOwnerMetrics?.relanceFollowUps.length ?? 0} à reprendre`}
+            />
           </div>
-        </>
-      )}
-
-      {modalOpen ? (
-        <div className="fixed inset-0 z-40 flex items-center justify-center bg-[rgba(11,13,17,0.78)] p-4 backdrop-blur-sm">
-          <Card className="w-full max-w-[640px] p-6">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <p className="eyebrow-label">Nouveau client</p>
-                <h2 className="mt-3 text-[1.6rem] font-bold">Créer un dossier client</h2>
-              </div>
-              <Button variant="ghost" onClick={() => updateSearchParam(false)}>
-                Fermer
-              </Button>
-            </div>
-
-            <form className="mt-6 space-y-4" onSubmit={handleCreateClient}>
-              <div className="grid gap-4 md:grid-cols-2">
-                <Input
-                  label="Prénom"
-                  value={formState.first_name}
-                  onChange={(event) => setFormState((current) => ({ ...current, first_name: event.target.value }))}
-                  required
-                />
-                <Input
-                  label="Nom"
-                  value={formState.last_name}
-                  onChange={(event) => setFormState((current) => ({ ...current, last_name: event.target.value }))}
-                  required
-                />
-                <Input
-                  label="Email"
-                  type="email"
-                  value={formState.email}
-                  onChange={(event) => setFormState((current) => ({ ...current, email: event.target.value }))}
-                />
-                <Input
-                  label="Téléphone"
-                  value={formState.phone}
-                  onChange={(event) => setFormState((current) => ({ ...current, phone: event.target.value }))}
-                />
-                <Input
-                  label="Date de naissance"
-                  type="date"
-                  value={formState.birth_date}
-                  onChange={(event) => setFormState((current) => ({ ...current, birth_date: event.target.value }))}
-                />
-                <label className="block">
-                  <span className="lor-label">Genre</span>
-                  <select
-                    value={formState.gender}
-                    onChange={(event) => setFormState((current) => ({ ...current, gender: event.target.value }))}
-                    className="lor-select"
-                  >
-                    <option value="">Sélectionner</option>
-                    <option value="homme">Homme</option>
-                    <option value="femme">Femme</option>
-                    <option value="autre">Autre</option>
-                  </select>
-                </label>
-                <Input
-                  label="Taille (cm)"
-                  type="number"
-                  value={formState.height_cm}
-                  onChange={(event) => setFormState((current) => ({ ...current, height_cm: event.target.value }))}
-                />
-              </div>
-
-              <label className="block">
-                <span className="lor-label">Objectif principal</span>
-                <textarea
-                  value={formState.objective}
-                  onChange={(event) => setFormState((current) => ({ ...current, objective: event.target.value }))}
-                  className="lor-textarea"
-                />
-              </label>
-
-              {formError ? <div className="lor-danger-banner rounded-[12px] px-4 py-3 text-sm">{formError}</div> : null}
-
-              <div className="flex justify-end">
-                <Button type="submit" loading={submitting}>
-                  Créer le client
-                </Button>
-              </div>
-            </form>
-          </Card>
-        </div>
+        </Card>
       ) : null}
+
+      <div className="space-y-5">
+        {groupedClients.length ? (
+          groupedClients.map((group) => (
+            <Card key={group.key} className="space-y-4">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                  <p className="eyebrow-label">Arborescence mensuelle</p>
+                  <h2 className="mt-3 text-2xl text-white">{group.label}</h2>
+                  </div>
+                  <StatusBadge label={`${group.clients.length} clients`} tone="blue" />
+                </div>
+
+              <div className="grid gap-4">
+                {group.clients.map((client) => {
+                  const latestAssessment = getLatestAssessment(client);
+                  const firstAssessment = getFirstAssessment(client);
+                  const latestBodyScan = getLatestBodyScan(client);
+                  const status = statusLabels[client.status];
+                  const owner = ownerTabs.find((user) => user.id === client.distributorId);
+
+                  return (
+                    <Link key={client.id} to={`/clients/${client.id}`}>
+                      <Card className="transition hover:bg-white/[0.07]">
+                        <div className="grid gap-4 xl:grid-cols-[1.2fr_1.15fr_0.85fr] xl:items-center">
+                          <div className="space-y-3">
+                            <div className="flex flex-wrap items-center gap-3">
+                              <p className="text-2xl font-semibold text-white">
+                                {client.firstName} {client.lastName}
+                              </p>
+                              <StatusBadge label={status.label} tone={status.tone} />
+                            </div>
+                            <p className="text-sm text-slate-400">
+                              {client.job} - {client.city ?? "Ville non renseignee"}
+                            </p>
+                            {owner ? (
+                              <div className="inline-flex max-w-full">
+                                <DistributorBadge
+                                  user={owner}
+                                  detail={`Portefeuille ${owner.name}`}
+                                />
+                              </div>
+                            ) : null}
+                            {firstAssessment.questionnaire.referredByName ? (
+                              <p className="text-sm text-sky-100/80">
+                                Invite par {firstAssessment.questionnaire.referredByName}
+                              </p>
+                            ) : null}
+                            <p className="text-sm leading-6 text-slate-400">{client.notes}</p>
+                          </div>
+
+                          <div className="grid gap-3 md:grid-cols-3">
+                            <ClientMetric
+                              label="Programme"
+                              value={client.currentProgram || "Programme a confirmer"}
+                              note={
+                                latestAssessment.type === "initial"
+                                  ? "Bilan initial"
+                                  : "Dernier suivi"
+                              }
+                            />
+                            <ClientMetric
+                              label="Hydratation cible"
+                              value={`${calculateWaterNeed(latestBodyScan.weight)} L`}
+                            />
+                            <ClientMetric
+                              label="Repère protéines"
+                              value={calculateProteinRange(latestBodyScan.weight, client.objective)}
+                            />
+                          </div>
+
+                          <div className="space-y-3 xl:text-right">
+                            <p className="eyebrow-label">Prochain suivi</p>
+                            <p className="text-xl font-semibold text-white">
+                              {formatDateTime(client.nextFollowUp)}
+                            </p>
+                            <p className="text-sm text-slate-400">
+                              Dernier bilan {formatDate(latestAssessment.date)}
+                            </p>
+                          </div>
+                        </div>
+                      </Card>
+                    </Link>
+                  );
+                })}
+              </div>
+            </Card>
+          ))
+        ) : (
+          <Card className="space-y-3">
+            <p className="text-2xl text-white">Aucun client sur ce filtre</p>
+            <p className="text-sm leading-6 text-slate-400">
+              Ajuste la recherche, le statut ou le portefeuille pour retrouver le bon dossier.
+            </p>
+            <div>
+              <Link
+                to="/assessments/new"
+                className="inline-flex min-h-[48px] items-center justify-center rounded-[18px] bg-white/[0.04] px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/[0.07]"
+              >
+                Lancer un premier bilan
+              </Link>
+            </div>
+          </Card>
+        )}
+      </div>
     </div>
   );
 }
 
-function statusToVariant(status: Client["status"]) {
-  if (status === "actif") {
-    return "success";
-  }
-
-  if (status === "pause") {
-    return "warning";
-  }
-
-  return "default";
+function MiniFact({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-[22px] bg-slate-950/24 px-4 py-4">
+      <p className="text-[11px] font-medium text-slate-500">{label}</p>
+      <p className="mt-3 text-lg font-semibold text-white">{value}</p>
+    </div>
+  );
 }
 
-function formatDate(value: string) {
-  return new Intl.DateTimeFormat("fr-FR", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric"
-  }).format(new Date(value));
+function ClientMetric({
+  label,
+  value,
+  note
+}: {
+  label: string;
+  value: string;
+  note?: string;
+}) {
+  return (
+    <div className="rounded-[22px] bg-slate-950/30 p-4">
+      <p className="text-[11px] font-medium text-slate-500">{label}</p>
+      <p className="mt-3 text-lg font-semibold text-white">{value}</p>
+      {note ? <p className="mt-2 text-xs text-slate-400">{note}</p> : null}
+    </div>
+  );
 }
-
-export default ClientsPage;

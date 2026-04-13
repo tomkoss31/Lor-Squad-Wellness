@@ -1,15 +1,20 @@
-import type { HTMLAttributes, ReactNode } from "react";
+import type { HTMLAttributes, PropsWithChildren } from "react";
+import { cn } from "../../lib/utils";
 
-interface CardProps extends HTMLAttributes<HTMLDivElement> {
-  children: ReactNode;
-}
-
-export function Card({ children, className = "", ...props }: CardProps) {
+export function Card({
+  children,
+  className,
+  ...props
+}: PropsWithChildren<HTMLAttributes<HTMLDivElement>>) {
   return (
-    <div {...props} className={["lor-card", className].join(" ")}>
+    <div
+      className={cn(
+        "glass-panel rounded-[26px] p-5 sm:rounded-[28px] sm:p-6 md:p-7",
+        className
+      )}
+      {...props}
+    >
       {children}
     </div>
   );
 }
-
-export default Card;

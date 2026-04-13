@@ -1,260 +1,205 @@
+@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap");
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
   color-scheme: dark;
-  --lor-bg: #0b0d11;
-  --lor-surface: #13161c;
-  --lor-surface2: #1a1e27;
-  --lor-border: rgba(255, 255, 255, 0.07);
-  --lor-border2: rgba(255, 255, 255, 0.12);
-  --lor-gold: #c9a84c;
-  --lor-gold2: #f0c96a;
-  --lor-teal: #2dd4bf;
-  --lor-purple: #a78bfa;
-  --lor-coral: #fb7185;
-  --lor-text: #f0ede8;
-  --lor-muted: #7a8099;
-  --lor-muted2: #4a5068;
-  --lor-radius-card: 12px;
-  --lor-radius-input: 10px;
-  --lor-radius-pill: 20px;
-  --lor-shadow: 0 18px 46px rgba(0, 0, 0, 0.34);
+  --background-main: #07111f;
+  --background-secondary: #0b1524;
+  --background-tertiary: #101a2a;
+  --surface-base: rgba(16, 24, 38, 0.78);
+  --surface-elevated: rgba(20, 29, 44, 0.88);
+  --surface-muted: rgba(255, 255, 255, 0.03);
+  --text-primary: #f4f7fb;
+  --text-secondary: #b7c2d3;
+  --text-muted: #7e8a9e;
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-soft: rgba(255, 255, 255, 0.05);
+  --border-active: rgba(107, 194, 255, 0.34);
+  --accent-blue: #59b7ff;
+  --accent-blue-soft: rgba(89, 183, 255, 0.16);
+  --accent-glow: rgba(89, 183, 255, 0.1);
+  --warm-highlight: #efc58d;
+  --radius-card: 28px;
+  --radius-card-secondary: 22px;
+  --radius-input: 18px;
+  --shadow-soft: 0 10px 30px rgba(0, 0, 0, 0.22);
+  --shadow-medium: 0 2px 12px rgba(0, 0, 0, 0.16), 0 18px 48px rgba(0, 0, 0, 0.22);
 }
 
 html {
   background:
-    radial-gradient(circle at top right, rgba(201, 168, 76, 0.13), transparent 24%),
-    radial-gradient(circle at bottom left, rgba(45, 212, 191, 0.1), transparent 20%),
-    linear-gradient(180deg, #0b0d11 0%, #10141b 100%);
+    radial-gradient(circle at 86% 8%, rgba(89, 183, 255, 0.12), transparent 24%),
+    radial-gradient(circle at 22% 0%, rgba(113, 88, 138, 0.12), transparent 24%),
+    radial-gradient(circle at 50% 18%, rgba(255, 255, 255, 0.03), transparent 30%),
+    linear-gradient(180deg, var(--background-main) 0%, var(--background-secondary) 48%, #060f1b 100%);
+  scrollbar-color: rgba(126, 138, 158, 0.45) transparent;
   scrollbar-width: thin;
-  scrollbar-color: rgba(122, 128, 153, 0.5) transparent;
 }
 
 body {
-  margin: 0;
-  min-height: 100vh;
-  background:
-    radial-gradient(circle at 10% 0%, rgba(201, 168, 76, 0.08), transparent 24%),
-    radial-gradient(circle at 85% 12%, rgba(167, 139, 250, 0.08), transparent 22%),
-    linear-gradient(180deg, #0b0d11 0%, #0d1117 100%);
-  color: var(--lor-text);
-  font-family: "DM Sans", sans-serif;
+  @apply min-h-screen font-body antialiased;
+  background-color: var(--background-main);
+  background-image:
+    radial-gradient(circle at top, rgba(89, 183, 255, 0.09), transparent 30%),
+    radial-gradient(circle at 18% 16%, rgba(239, 197, 141, 0.045), transparent 17%),
+    radial-gradient(circle at 76% 24%, rgba(150, 121, 186, 0.045), transparent 18%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.012), rgba(255, 255, 255, 0));
+  color: var(--text-primary);
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
+  font-feature-settings: "ss01" 1, "cv02" 1, "cv11" 1;
 }
 
 #root {
-  min-height: 100vh;
-}
-
-* {
-  box-sizing: border-box;
+  @apply min-h-screen;
 }
 
 ::selection {
-  background: rgba(201, 168, 76, 0.28);
-  color: var(--lor-text);
-}
-
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-  border-radius: 999px;
-  background: rgba(122, 128, 153, 0.42);
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(122, 128, 153, 0.58);
+  background: rgba(59, 130, 246, 0.4);
+  color: white;
 }
 
 @layer base {
   h1,
   h2,
   h3,
-  h4,
-  h5,
-  h6 {
-    margin: 0;
-    font-family: "Syne", sans-serif;
-    color: var(--lor-text);
+  h4 {
+    @apply font-display text-white;
+  }
+
+  h1 {
+    @apply text-[3.12rem] font-semibold leading-[1] tracking-[-0.05em] md:text-[3.75rem];
+  }
+
+  h2 {
+    @apply text-[2.08rem] font-semibold leading-[1.05] tracking-[-0.032em];
+  }
+
+  h3 {
+    @apply text-[1.52rem] font-semibold leading-[1.08] tracking-[-0.022em];
+  }
+
+  h4 {
+    @apply text-[1.18rem] font-semibold leading-[1.12];
   }
 
   p {
-    margin: 0;
+    color: var(--text-secondary);
   }
 
-  button,
-  input,
-  textarea,
-  select {
-    font: inherit;
-  }
-
-  button {
-    border: 0;
-  }
-
-  a {
-    color: inherit;
-    text-decoration: none;
+  label {
+    @apply text-[12px] font-medium tracking-[0.01em];
+    color: rgba(223, 231, 242, 0.9);
   }
 
   input,
-  textarea,
-  select {
-    width: 100%;
-    border-radius: var(--lor-radius-input);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    background: var(--lor-surface2);
-    color: var(--lor-text);
-    transition:
-      border-color 0.2s ease,
-      box-shadow 0.2s ease,
-      transform 0.2s ease;
+  select,
+  textarea {
+    @apply w-full px-4 text-[15px] font-medium outline-none transition duration-200 md:px-5;
+    min-height: 54px;
+    border-radius: var(--radius-input);
+    border: 1px solid var(--border-soft);
+    background: linear-gradient(180deg, rgba(17, 25, 39, 0.86), rgba(14, 21, 33, 0.92));
+    color: var(--text-primary);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.02);
   }
 
-  input:focus,
-  textarea:focus,
-  select:focus {
-    outline: none;
-    border-color: rgba(201, 168, 76, 0.5);
-    box-shadow: 0 0 0 4px rgba(201, 168, 76, 0.08);
+  select {
+    appearance: none;
+    padding-right: 52px;
+    background-image:
+      linear-gradient(180deg, rgba(17, 25, 39, 0.86), rgba(14, 21, 33, 0.92)),
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 14 14' fill='none'%3E%3Cpath d='M3 5.25L7 9.25L11 5.25' stroke='%23B7C2D3' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat, no-repeat;
+    background-position: center, right 18px center;
+    background-size: auto, 14px 14px;
+    color-scheme: dark;
+    cursor: pointer;
+  }
+
+  select option,
+  select optgroup {
+    background-color: #0f1928;
+    color: var(--text-primary);
+  }
+
+  textarea {
+    min-height: 120px;
+    padding-top: 15px;
+    padding-bottom: 15px;
+    resize: vertical;
   }
 
   input::placeholder,
   textarea::placeholder {
-    color: var(--lor-muted2);
+    color: rgba(126, 138, 158, 0.72);
+  }
+
+  input:focus,
+  select:focus,
+  textarea:focus {
+    border-color: var(--border-active);
+    background: linear-gradient(180deg, rgba(18, 27, 43, 0.92), rgba(16, 24, 38, 0.96));
+    box-shadow:
+      0 0 0 4px rgba(89, 183, 255, 0.08),
+      0 12px 28px rgba(0, 0, 0, 0.16);
+  }
+
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    border-radius: 999px;
+    background: rgba(126, 138, 158, 0.32);
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(126, 138, 158, 0.46);
   }
 }
 
 @layer components {
-  .lor-page-shell {
-    @apply min-h-screen;
-    background-color: var(--lor-bg);
+  .glass-panel {
+    @apply backdrop-blur-xl;
+    background:
+      radial-gradient(circle at top right, rgba(89, 183, 255, 0.075), transparent 25%),
+      radial-gradient(circle at bottom left, rgba(239, 197, 141, 0.03), transparent 18%),
+      linear-gradient(180deg, var(--surface-elevated), rgba(14, 22, 35, 0.92));
+    border: 1px solid var(--border-soft);
+    box-shadow: var(--shadow-medium);
   }
 
-  .lor-card,
-  .glass-panel,
   .surface-card {
-    background:
-      linear-gradient(180deg, rgba(19, 22, 28, 0.98), rgba(19, 22, 28, 0.94)),
-      rgba(19, 22, 28, 0.96);
-    border: 1px solid var(--lor-border);
-    border-radius: var(--lor-radius-card);
-    box-shadow: var(--lor-shadow);
+    background: linear-gradient(180deg, rgba(20, 29, 44, 0.88), rgba(15, 22, 34, 0.94));
+    border: 1px solid var(--border-soft);
+    box-shadow: var(--shadow-medium);
   }
 
   .surface-soft {
-    background: rgba(255, 255, 255, 0.02);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.018));
     border: 1px solid rgba(255, 255, 255, 0.04);
-    border-radius: var(--lor-radius-card);
   }
 
   .eyebrow-label {
-    font-size: 11px;
-    font-weight: 500;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-    color: var(--lor-muted);
+    @apply text-[11px] font-medium uppercase;
+    letter-spacing: 0.09em;
+    color: rgba(183, 194, 211, 0.72);
   }
 
-  .lor-section-title {
-    font-family: "Syne", sans-serif;
-    font-size: 1.8rem;
-    font-weight: 700;
-    line-height: 1.05;
-    color: var(--lor-text);
+  .section-title {
+    @apply text-[1.92rem] font-semibold leading-[1.05] tracking-[-0.034em] text-white;
   }
 
-  .lor-label {
-    display: block;
-    margin-bottom: 0.45rem;
-    font-size: 11px;
-    font-weight: 500;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--lor-muted);
-  }
-
-  .lor-field,
-  .lor-textarea,
-  .lor-select {
-    min-height: 46px;
-    padding: 0.85rem 0.95rem;
-  }
-
-  .lor-textarea {
-    min-height: 112px;
-    resize: vertical;
-  }
-
-  .lor-button-reset {
-    appearance: none;
-    cursor: pointer;
-    background: transparent;
-  }
-
-  .lor-skeleton {
-    position: relative;
-    overflow: hidden;
-    border-radius: 10px;
-    background: rgba(255, 255, 255, 0.05);
-    animation: shimmer 1.4s ease-in-out infinite;
-  }
-
-  .lor-danger-banner {
-    border: 1px solid rgba(251, 113, 133, 0.18);
-    background: rgba(251, 113, 133, 0.08);
-    color: #ffd0d8;
-  }
-
-  .lor-grid-panel {
-    display: grid;
-    gap: 1rem;
-  }
-
-  .lor-tab-button {
-    border-radius: 999px;
-    border: 1px solid transparent;
-    padding: 0.7rem 1rem;
-    font-size: 0.92rem;
-    font-weight: 500;
-    color: var(--lor-muted);
-    transition: all 0.2s ease;
-  }
-
-  .lor-tab-button[data-active="true"] {
-    border-color: rgba(201, 168, 76, 0.26);
-    background: rgba(201, 168, 76, 0.12);
-    color: var(--lor-text);
-  }
-}
-
-@keyframes shimmer {
-  0% {
-    opacity: 0.4;
-  }
-
-  50% {
-    opacity: 0.72;
-  }
-
-  100% {
-    opacity: 0.4;
-  }
-}
-
-@keyframes spin {
-  100% {
-    transform: rotate(360deg);
+  .soft-divider {
+    border-color: rgba(255, 255, 255, 0.05);
   }
 }
