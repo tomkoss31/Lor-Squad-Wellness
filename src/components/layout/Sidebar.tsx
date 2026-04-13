@@ -6,7 +6,7 @@ const NAV_ITEMS = [
   { path: '/dashboard', label: 'Dashboard', icon: 'grid' },
   { path: '/clients', label: 'Mes clients', icon: 'users' },
   { path: '/recommandations', label: 'Recommandations', icon: 'star' },
-  { path: '/suivi-pv', label: 'Suivi PV', icon: 'trending', soon: true },
+  { path: '/suivi-pv', label: 'Suivi PV', icon: 'trending' },
 ]
 
 function Icon({ name }: { name: string }) {
@@ -89,11 +89,6 @@ export default function Sidebar() {
           >
             <Icon name={item.icon} />
             <span style={{ flex: 1 }}>{item.label}</span>
-            {item.soon && (
-              <span style={{ fontSize: 9, background: 'rgba(201,168,76,0.15)', color: '#C9A84C', padding: '2px 7px', borderRadius: 20, fontWeight: 500 }}>
-                Bientôt
-              </span>
-            )}
           </NavLink>
         ))}
       </nav>

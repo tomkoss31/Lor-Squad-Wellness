@@ -222,19 +222,29 @@ export default function ClientDetailPage() {
 
       {/* ONGLET BODY SCAN */}
       {tab === 2 && (
-        <div style={{ textAlign:'center', padding:'48px 0', background:'#13161C', border:'1px solid rgba(255,255,255,0.07)', borderRadius:14, color:'#4A5068' }}>
+        <div style={{ textAlign:'center', padding:'48px 0', background:'#13161C', border:'1px solid rgba(255,255,255,0.07)', borderRadius:14 }}>
           <div style={{ fontSize:32, marginBottom:12 }}>⚖️</div>
-          <div style={{ fontSize:14, marginBottom:4, color:'#7A8099' }}>Module Body Scan</div>
-          <div style={{ fontSize:12 }}>Bientôt disponible</div>
+          <div style={{ fontSize:14, color:'#7A8099', marginBottom:16 }}>Aucun body scan enregistré</div>
+          <button
+            onClick={() => navigate(`/clients/${id}/scan/new`)}
+            style={{ background:'#C9A84C', color:'#0B0D11', border:'none', borderRadius:8, padding:'10px 20px', fontFamily:'Syne,sans-serif', fontWeight:700, cursor:'pointer', fontSize:13 }}
+          >
+            Faire un body scan
+          </button>
         </div>
       )}
 
       {/* ONGLET SUIVIS */}
       {tab === 3 && (
-        <div style={{ textAlign:'center', padding:'48px 0', background:'#13161C', border:'1px solid rgba(255,255,255,0.07)', borderRadius:14, color:'#4A5068' }}>
+        <div style={{ textAlign:'center', padding:'48px 0', background:'#13161C', border:'1px solid rgba(255,255,255,0.07)', borderRadius:14 }}>
           <div style={{ fontSize:32, marginBottom:12 }}>📈</div>
-          <div style={{ fontSize:14, marginBottom:4, color:'#7A8099' }}>Module Suivi hebdomadaire</div>
-          <div style={{ fontSize:12 }}>Bientôt disponible</div>
+          <div style={{ fontSize:14, color:'#7A8099', marginBottom:16 }}>Aucun suivi enregistré</div>
+          <button
+            onClick={() => navigate(`/clients/${id}/suivi/new`)}
+            style={{ background:'#C9A84C', color:'#0B0D11', border:'none', borderRadius:8, padding:'10px 20px', fontFamily:'Syne,sans-serif', fontWeight:700, cursor:'pointer', fontSize:13 }}
+          >
+            Démarrer un suivi
+          </button>
         </div>
       )}
     </div>
