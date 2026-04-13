@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import type { Session, User } from "@supabase/supabase-js";
+import { ensureDemoData } from "../lib/localData";
 import { hasSupabaseEnv, supabase } from "../lib/supabaseClient";
 import type { Profile } from "../lib/types";
 
@@ -44,6 +45,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!hasSupabaseEnv) {
+      ensureDemoData();
       setUser({
         id: "demo-user",
         email: "demo@lor-squad.local",
