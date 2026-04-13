@@ -373,7 +373,38 @@ export function NewAssessmentPage() {
     goToStep(currentStep - 1);
   };
 
+  const [stepWarning, setStepWarning] = useState("");
+
   const goToNextStep = () => {
+    setStepWarning("");
+
+    // Validation étape 0 — infos client
+    if (currentStep === 0) {
+      if (!form.firstName.trim() || !form.lastName.trim()) {
+        setStepWarning("Prénom et nom du client sont obligatoires pour continuer.");
+        return;
+      }
+      if (!form.objectiveFocus) {
+        setStepWarning("Choisis un objectif principal pour le client.");
+        return;
+      }
+    }
+
+    // Validation étape 5 — body scan (poids minimum)
+    if (currentStep === 5) {
+      if (!form.weight || form.weight <= 0) {
+        setStepWarning("Le poids est nécessaire pour le body scan. Tu peux le compléter plus tard si besoin.");
+      }
+    }
+
+    // Validation étape 10 — programme
+    if (currentStep === 10) {
+      if (form.afterAssessmentAction === "started" && !form.selectedProgramId) {
+        setStepWarning("Sélectionne un programme si le client démarre maintenant.");
+        return;
+      }
+    }
+
     goToStep(currentStep + 1);
   };
 
@@ -685,9 +716,10 @@ export function NewAssessmentPage() {
               ]
           : currentStep === 10
             ? [
-                "Presenter le programme comme une reponse simple au besoin du client.",
-                "Relier le choix du programme aux habitudes observees pendant le bilan.",
-                "Rester dans une logique d'accompagnement, pas de pression."
+                "« Vu ce qu'on a vu ensemble, voilà ce que je te recommande. »",
+                "Presenter le programme comme une réponse simple au besoin du client.",
+                "« C'est exactement ce que d'autres clients avec le même objectif ont fait. »",
+                "Relier le choix du programme aux habitudes observées pendant le bilan."
               ]
           : currentStep === 11
             ? [
@@ -695,10 +727,17 @@ export function NewAssessmentPage() {
                 "On ancre les bases du matin et de l'hydratation dans l'esprit du client.",
                 "Le but est de rassurer, pas d'ajouter une couche de complexite."
               ]
-            : currentStep >= 12
+            : currentStep === 12
               ? [
+                  "« On fixe un créneau maintenant pour voir ta progression. »",
                   "Toujours finir avec une suite claire et un rendez-vous déjà posé.",
-                  "Le client doit repartir avec des repères simples à retenir.",
+                  "« Je te rappelle dans quelques jours pour faire un point rapide. »",
+                  "Le client doit repartir avec des repères simples à retenir."
+                ]
+              : currentStep >= 13
+              ? [
+                  "Relire le résumé à voix haute pour ancrer le rendez-vous.",
+                  "« Tu repars avec un plan clair, simple et déjà en place. »",
                   "La conclusion doit rassurer et donner envie d'avancer."
                 ]
               : [
@@ -1748,6 +1787,28 @@ export function NewAssessmentPage() {
 
           {currentStep === 12 && (
             <div className="space-y-4">
+              {/* Mini-résumé bilan pour contexte */}
+              <div className="rounded-[16px] border border-[rgba(201,168,76,0.15)] bg-[rgba(201,168,76,0.04)] p-4">
+                <div className="mb-3 text-[10px] font-semibold uppercase tracking-[0.15em] text-[#C9A84C]">✦ Résumé du bilan</div>
+                <div className="flex flex-wrap gap-4">
+                  {form.objectiveFocus && (
+                    <div><span className="text-[11px] text-[#4A5068]">Objectif</span><p className="text-sm font-semibold text-[#F0EDE8]">{form.objectiveFocus}</p></div>
+                  )}
+                  {form.weight > 0 && (
+                    <div><span className="text-[11px] text-[#4A5068]">Poids</span><p className="text-sm font-semibold text-[#C9A84C]">{form.weight} kg</p></div>
+                  )}
+                  {form.targetWeight > 0 && (
+                    <div><span className="text-[11px] text-[#4A5068]">Objectif poids</span><p className="text-sm font-semibold text-[#2DD4BF]">{form.targetWeight} kg</p></div>
+                  )}
+                  {form.selectedProgramId && (
+                    <div><span className="text-[11px] text-[#4A5068]">Programme</span><p className="text-sm font-semibold text-[#F0EDE8]">{form.selectedProgramId}</p></div>
+                  )}
+                  {form.afterAssessmentAction && (
+                    <div><span className="text-[11px] text-[#4A5068]">Démarrage</span><p className="text-sm font-semibold" style={{ color: form.afterAssessmentAction === 'started' ? '#2DD4BF' : '#C9A84C' }}>{form.afterAssessmentAction === 'started' ? 'Immédiat' : 'À relancer'}</p></div>
+                  )}
+                </div>
+              </div>
+
               <div className="grid gap-4 md:grid-cols-3">
                 <ChoiceGroup label="Decision client" value={form.comment.includes("partant") ? "Partant" : form.comment.includes("interesse") ? "A confirmer" : "A rassurer"} options={["Partant", "A rassurer", "A confirmer"]} onChange={(v) => update("comment", v === "Partant" ? "Client partant, rassure par la simplicite du plan." : v === "A confirmer" ? "Client interesse, souhaite valider rapidement." : "Client interesse mais a besoin d'etre rassure sur la mise en place.")} />
                 <ChoiceGroup label="Type de suite" value="Rendez-vous fixe" options={["Rendez-vous fixe", "Message de rappel", "Relance douce"]} onChange={() => undefined} />
@@ -1913,6 +1974,13 @@ export function NewAssessmentPage() {
               <MuscleMassInsightCard
                 current={{ weight: form.weight, muscleMass: form.muscleMass }}
               />
+            </div>
+          )}
+
+          {/* Avertissement validation */}
+          {stepWarning && (
+            <div className="rounded-[14px] border border-[rgba(201,168,76,0.25)] bg-[rgba(201,168,76,0.08)] px-4 py-3 text-sm text-[#C9A84C]">
+              {stepWarning}
             </div>
           )}
 
@@ -2271,7 +2339,7 @@ function ChoiceGroup({
       <label className="text-sm font-medium text-[#B0B4C4]">{label}</label>
       <div className="flex flex-wrap gap-2">
         {options.map((option) => (
-          <button key={option} type="button" onClick={() => onChange(option)} className={`rounded-full px-4 py-2 text-sm font-medium transition ${value === option ? "bg-white text-[#0B0D11]" : "border border-white/10 bg-white/[0.03] text-[#F0EDE8]"}`}>
+          <button key={option} type="button" onClick={() => onChange(option)} className={`rounded-full px-4 py-2 text-sm font-medium transition ${value === option ? "bg-[#C9A84C] text-[#0B0D11] font-semibold" : "border border-white/10 bg-white/[0.03] text-[#7A8099] hover:text-[#F0EDE8] hover:border-white/20"}`}>
             {formatOption ? formatOption(option) : option}
           </button>
         ))}
