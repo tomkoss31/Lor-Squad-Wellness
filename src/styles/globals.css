@@ -203,3 +203,37 @@ body {
     border-color: rgba(255, 255, 255, 0.05);
   }
 }
+
+/* ═══ Lor'Squad V2 Polish ═══ */
+
+input[type="range"] {
+  -webkit-appearance: none;
+  height: 6px;
+  border-radius: 3px;
+  background: #1A1E27;
+  outline: none;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #C9A84C;
+  cursor: pointer;
+  border: 2px solid #0B0D11;
+}
+
+select option {
+  background: #1A1E27;
+  color: #F0EDE8;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.page-enter {
+  animation: fadeIn 0.25s ease forwards;
+}
