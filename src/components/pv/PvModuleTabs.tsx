@@ -21,8 +21,8 @@ export function PvModuleTabs({ currentUser }: { currentUser: User }) {
           className={({ isActive }) =>
             `inline-flex min-h-[42px] items-center rounded-full px-4 py-2.5 text-sm font-semibold transition ${
               isActive
-                ? "bg-[rgba(45,212,191,0.14)] text-white shadow-[0_0_0_1px_rgba(201,168,76,0.16)]"
-                : "bg-white/[0.03] text-[#B0B4C4] hover:bg-white/[0.05] hover:text-white"
+                ? "bg-[rgba(201,168,76,0.12)] text-white shadow-[0_0_0_1px_rgba(201,168,76,0.2)]"
+                : "bg-white/[0.03] text-[#7A8099] hover:bg-white/[0.05] hover:text-white"
             }`
           }
         >
