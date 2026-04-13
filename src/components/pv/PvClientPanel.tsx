@@ -155,7 +155,7 @@ export function PvClientPanel({
                     <div className="flex flex-wrap items-center gap-2 md:justify-end">
                       <Link
                         to={`/pv/orders?client=${record.clientId}&product=${product.productId}&type=commande`}
-                        className="inline-flex min-h-[36px] items-center justify-center rounded-full bg-sky-400/[0.1] px-3.5 py-2 text-xs font-semibold text-white transition hover:bg-sky-400/[0.16]"
+                        className="inline-flex min-h-[36px] items-center justify-center rounded-full bg-sky-400/[0.1] px-3.5 py-2 text-xs font-semibold text-white transition hover:bg-[rgba(201,168,76,0.16)]"
                       >
                         Reassort
                       </Link>
@@ -227,7 +227,7 @@ export function PvClientPanel({
                         type="button"
                         onClick={() => void handleSaveProduct(product)}
                         disabled={isSaving}
-                        className="inline-flex min-h-[42px] items-center justify-center rounded-full bg-sky-400/[0.18] px-4 py-2 text-sm font-semibold text-white transition hover:bg-sky-400/[0.24] disabled:opacity-70"
+                        className="inline-flex min-h-[42px] items-center justify-center rounded-full bg-[rgba(201,168,76,0.18)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[rgba(201,168,76,0.24)] disabled:opacity-70"
                       >
                         {isSaving ? "Enregistrement..." : "Enregistrer"}
                       </button>

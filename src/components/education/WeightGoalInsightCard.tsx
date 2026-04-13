@@ -67,7 +67,7 @@ export function WeightGoalInsightCard({
               gradientId="weight-line"
               gradientFrom="#38bdf8"
               gradientTo="#22d3ee"
-              accentClass="border-sky-300/18 bg-sky-400/[0.08]"
+              accentClass="border-[rgba(201,168,76,0.18)] bg-[rgba(201,168,76,0.08)]"
               valueSuffix=" kg"
             />
           ) : null}

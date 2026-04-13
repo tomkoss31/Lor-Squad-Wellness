@@ -116,8 +116,17 @@
   @keyframes shimmer { 0%,100%{opacity:.4} 50%{opacity:.7} }
   @keyframes spin { to{transform:rotate(360deg)} }
   @keyframes fadeIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.6;transform:scale(0.85)} }
+  @keyframes slideUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+  @keyframes scaleIn { from{opacity:0;transform:scale(0.96)} to{opacity:1;transform:scale(1)} }
 
   .animate-shimmer { animation: shimmer 1.5s ease-in-out infinite; }
   .animate-spin { animation: spin 0.7s linear infinite; }
   .animate-fade-in { animation: fadeIn 0.22s ease forwards; }
+  .page-mount { animation: slideUp 0.25s ease forwards; }
+  .card-mount { animation: scaleIn 0.2s ease forwards; }
+  .dot-pulse { animation: pulse 2s ease-in-out infinite; }
+
+  .list-row { transition: background 0.15s ease; }
+  .list-row:hover { background: rgba(255,255,255,0.02); }
 }

@@ -196,9 +196,9 @@ function GaugeLegendChip({
         }
       : tone === "blue"
         ? {
-            base: "bg-sky-400/[0.08] ring-1 ring-sky-300/12",
+            base: "bg-[rgba(201,168,76,0.08)] ring-1 ring-[rgba(201,168,76,0.12)]",
             active:
-              "bg-sky-400/[0.18] ring-1 ring-sky-300/30 shadow-[0_0_0_1px_rgba(125,211,252,0.12),0_12px_28px_rgba(14,165,233,0.12)]",
+              "bg-[rgba(201,168,76,0.18)] ring-1 ring-[rgba(201,168,76,0.3)] shadow-[0_0_0_1px_rgba(201,168,76,0.12),0_12px_28px_rgba(201,168,76,0.1)]",
             label: "text-[#2DD4BF]/90"
           }
         : tone === "amber"

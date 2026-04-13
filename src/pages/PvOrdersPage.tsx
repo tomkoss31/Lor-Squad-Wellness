@@ -303,7 +303,7 @@ export function PvOrdersPage() {
               type="button"
               onClick={() => void handleAddTransaction()}
               disabled={!canSubmit || isSubmitting}
-              className="inline-flex min-h-[48px] items-center justify-center rounded-[18px] bg-sky-400/[0.16] px-5 py-3 text-sm font-semibold text-white transition hover:bg-sky-400/[0.2] disabled:opacity-60"
+              className="inline-flex min-h-[48px] items-center justify-center rounded-[18px] bg-[rgba(201,168,76,0.16)] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[rgba(201,168,76,0.2)] disabled:opacity-60"
             >
               {isSubmitting ? "Enregistrement..." : submitLabel}
             </button>

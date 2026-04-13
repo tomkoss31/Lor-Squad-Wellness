@@ -20,7 +20,7 @@ export function HistoryTimeline({ entries }: HistoryTimelineProps) {
       {entries.map((entry, index) => (
         <div key={entry.id} className="flex gap-4">
           <div className="flex w-10 flex-col items-center">
-            <div className="mt-1 h-3 w-3 rounded-full bg-sky-300 shadow-[0_0_16px_rgba(125,211,252,0.45)]" />
+            <div className="mt-1 h-3 w-3 rounded-full bg-[#C9A84C] shadow-[0_0_16px_rgba(201,168,76,0.35)]" />
             {index < entries.length - 1 && <div className="mt-2 h-full w-px bg-white/10" />}
           </div>
           <div className="flex-1 rounded-[22px] border border-white/10 bg-white/[0.03] p-4">
@@ -43,7 +43,7 @@ export function HistoryTimeline({ entries }: HistoryTimelineProps) {
                 {entry.editTo ? (
                   <Link
                     to={entry.editTo}
-                    className="rounded-full bg-[rgba(45,212,191,0.1)] px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#2DD4BF] transition hover:bg-sky-400/18"
+                    className="rounded-full bg-[rgba(45,212,191,0.1)] px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#2DD4BF] transition hover:bg-[rgba(201,168,76,0.18)]"
                   >
                     Modifier
                   </Link>

@@ -2089,7 +2089,7 @@ function RecommendationStepCard({
               <p className="mt-2 text-xl text-white">A partir de 5 noms</p>
               <p className="mt-2 text-sm leading-6 text-[#B0B4C4]">Premier repere cadeau.</p>
             </div>
-            <div className="rounded-[22px] bg-sky-400/[0.08] px-5 py-4">
+            <div className="rounded-[22px] bg-[rgba(201,168,76,0.08)] px-5 py-4">
               <p className="eyebrow-label text-[#2DD4BF]/70">Palier cadeau 2</p>
               <p className="mt-2 text-xl text-white">A partir de 10 noms</p>
               <p className="mt-2 text-sm leading-6 text-[#B0B4C4]">Deuxieme repere cadeau.</p>
@@ -2104,7 +2104,7 @@ function RecommendationStepCard({
                   className={`rounded-[20px] px-4 py-3 text-sm ${
                     index === 5
                       ? "bg-amber-400/[0.08] text-amber-50"
-                      : "bg-sky-400/[0.08] text-sky-50"
+                      : "bg-[rgba(201,168,76,0.08)] text-[#F0C96A]"
                   }`}
                   >
                     {index === 5
@@ -2535,7 +2535,7 @@ function ClientTotalCalculatorCard({
   estimatedClientTotal: number;
 }) {
   return (
-      <div className="rounded-[28px] border border-sky-300/16 bg-gradient-to-br from-sky-400/[0.12] via-slate-950/24 to-emerald-400/[0.06] p-5">
+      <div className="rounded-[28px] border border-[rgba(201,168,76,0.16)] bg-gradient-to-br from-[rgba(201,168,76,0.12)] via-slate-950/24 to-[rgba(45,212,191,0.06)] p-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <p className="eyebrow-label text-[#2DD4BF]/80">Lecture simple</p>
