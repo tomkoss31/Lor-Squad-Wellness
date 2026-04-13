@@ -1,320 +1,151 @@
-import { useMemo, useState, type FormEvent } from "react";
-import { useNavigate } from "react-router-dom";
-import { BrandSignature } from "../components/branding/BrandSignature";
-import { Button } from "../components/ui/Button";
-import { StatusBadge } from "../components/ui/StatusBadge";
-import { useAppContext } from "../context/AppContext";
-import { useInstallPrompt } from "../context/InstallPromptContext";
-import { blasonLogo, lorSquadLogo } from "../data/visualContent";
+import { useState, type FormEvent } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { supabase } from '../lib/supabase'
 
-export function LoginPage() {
-  const { authReady, storageMode, users, loginWithCredentials } = useAppContext();
-  const { canPromptInstall, isIos, isMobile, isStandalone, promptInstall } = useInstallPrompt();
-  const navigate = useNavigate();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState("");
+const inp: React.CSSProperties = {
+  background: '#1A1E27',
+  border: '1px solid rgba(255,255,255,0.08)',
+  borderRadius: 10,
+  padding: '11px 14px',
+  color: '#F0EDE8',
+  fontSize: 13,
+  fontFamily: 'DM Sans, sans-serif',
+  outline: 'none',
+  width: '100%',
+  boxSizing: 'border-box',
+}
 
-  const demoAccounts = useMemo(() => {
-    const admin = users.find((user) => user.role === "admin");
-    const distributor = users.find((user) => user.role === "distributor");
+export default function LoginPage() {
+  const navigate = useNavigate()
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
 
-    return { admin, distributor };
-  }, [users]);
-
-  function fillDemoAccess(role: "admin" | "distributor") {
-    const account = role === "admin" ? demoAccounts.admin : demoAccounts.distributor;
-    if (!account) {
-      return;
-    }
-
-    setEmail(account.email);
-    setPassword("demo1234");
-    setError("");
-  }
-
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!authReady) {
-      return;
-    }
-
+  async function handleSubmit(e: FormEvent) {
+    e.preventDefault()
+    setError('')
+    setLoading(true)
     try {
-      const result = await loginWithCredentials({
+      const { error } = await supabase.auth.signInWithPassword({
         email: email.trim().toLowerCase(),
-        password: password.trim()
-      });
-      if (!result.ok) {
-        setError(
-          result.error ??
-            (storageMode === "supabase"
-              ? "Email ou mot de passe invalides pour cet accès."
-              : "Email ou mot de passe non reconnus pour cette version de démonstration.")
-        );
-        return;
-      }
-
-      setError("");
-      navigate("/dashboard");
-    } catch (submitError) {
-      console.error("Soumission du login impossible.", submitError);
-      setError(
-        storageMode === "supabase"
-          ? "La connexion sécurisée ne répond pas correctement pour le moment."
-          : "La version de démonstration ne répond pas correctement pour le moment."
-      );
+        password: password.trim(),
+      })
+      if (error) { setError(error.message); return }
+      navigate('/dashboard')
+    } catch {
+      setError('Connexion impossible. Vérifie tes identifiants.')
+    } finally {
+      setLoading(false)
     }
   }
 
-  async function handleInstallClick() {
-    await promptInstall();
-  }
-
   return (
-    <div className="min-h-screen bg-hero-mesh px-4 py-8 md:px-6">
-      <div className="mx-auto grid min-h-[calc(100vh-4rem)] max-w-[1500px] gap-5 lg:grid-cols-[1.08fr_0.92fr]">
-        <section className="glass-panel order-2 relative flex flex-col justify-between overflow-hidden rounded-[38px] p-6 md:p-8 lg:order-1 lg:p-12">
-          <div className="absolute right-[-90px] top-[-70px] h-64 w-64 rounded-full bg-[rgba(239,197,141,0.10)] blur-3xl" />
-          <div className="absolute bottom-[-110px] left-[-80px] h-72 w-72 rounded-full bg-[rgba(89,183,255,0.10)] blur-3xl" />
-          <div className="absolute left-1/2 top-[24%] h-[340px] w-[340px] -translate-x-1/2 rounded-full bg-[rgba(89,183,255,0.08)] blur-[120px]" />
+    <div style={{ minHeight: '100vh', background: '#0B0D11', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem', fontFamily: 'DM Sans, sans-serif' }}>
+      {/* Ambient glow */}
+      <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', right: '10%', top: '-5%', width: 480, height: 480, borderRadius: '50%', background: 'rgba(201,168,76,0.06)', filter: 'blur(120px)' }} />
+        <div style={{ position: 'absolute', bottom: '-10%', left: '5%', width: 400, height: 400, borderRadius: '50%', background: 'rgba(45,212,191,0.04)', filter: 'blur(100px)' }} />
+      </div>
 
-          <div className="relative z-10 flex h-full flex-col justify-between">
-            <div className="space-y-10 md:space-y-12">
-              <div>
-                <StatusBadge label="Connexion" tone="amber" />
-              </div>
-
-              <div className="space-y-7 md:space-y-8">
-                <div className="flex justify-center lg:justify-start">
-                  <img
-                    src={lorSquadLogo}
-                    alt="Lor'Squad Wellness"
-                    className="w-full max-w-[440px] object-contain opacity-[0.99] drop-shadow-[0_28px_70px_rgba(0,0,0,0.36)] sm:max-w-[540px] lg:max-w-[700px]"
-                  />
-                </div>
-
-                <div className="space-y-4">
-                  <h1 className="max-w-[10ch] text-balance text-[2.5rem] leading-[0.95] tracking-[-0.055em] sm:text-[3.3rem] md:text-[4rem]">
-                    Retrouve un espace clair pour piloter les bilans, les rendez-vous et le suivi.
-                  </h1>
-                  <p className="max-w-[36rem] text-base leading-7 text-slate-300/92 md:text-[18px] md:leading-8">
-                    Lor&apos;Squad Wellness rassemble le bilan guidé, la lecture client, le suivi terrain et
-                    l&apos;activité de l&apos;équipe dans un seul espace fluide, premium et simple à rouvrir sur tablette.
-                  </p>
-                  <div className="grid gap-3 pt-2 sm:grid-cols-4">
-                    <MiniTag label="Bilans" />
-                    <MiniTag label="Rendez-vous" />
-                    <MiniTag label="Suivi client" />
-                    <MiniTag label="Équipe" />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-5 pt-8">
-              <div className="flex items-center gap-4 text-slate-500">
-                <img
-                  src={blasonLogo}
-                  alt="Blason Lor'Squad"
-                  className="h-12 w-12 rounded-[18px] object-cover ring-1 ring-white/10"
-                />
-                <div>
-                  <p className="text-sm font-medium text-white">Lor&apos;Squad Wellness</p>
-                  <p className="text-[12px] text-slate-500">Bilans guidés, suivi terrain et lecture d&apos;équipe</p>
-                </div>
-              </div>
-              <BrandSignature variant="inline" />
-            </div>
-          </div>
-        </section>
-
-        <section className="glass-panel order-1 rounded-[38px] p-6 md:p-8 lg:order-2 lg:p-10">
-          <div className="space-y-8">
+      <div style={{ position: 'relative', zIndex: 1, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, maxWidth: 960, width: '100%' }}>
+        {/* Branding */}
+        <div style={{ background: '#13161C', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12, padding: '48px 40px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: 40 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
+            <span style={{ display: 'inline-flex', padding: '6px 14px', borderRadius: 20, border: '1px solid rgba(201,168,76,0.2)', background: 'rgba(201,168,76,0.08)', color: '#C9A84C', fontSize: 11, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', width: 'fit-content' }}>
+              Lor'Squad Wellness
+            </span>
             <div>
-              <p className="eyebrow-label">Connexion</p>
-              <h2 className="mt-4 max-w-[10ch] text-balance text-4xl">Accède à ton espace.</h2>
-              <p className="mt-4 max-w-md text-sm leading-7 text-slate-300/92">
-                Retrouve tes rendez-vous, tes suivis et tes dossiers en quelques secondes.
-              </p>
+              <h1 style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 36, color: '#F0EDE8', lineHeight: 1.1, letterSpacing: '-0.03em', marginBottom: 16 }}>
+                Pilote tes bilans,<br />tes clients et<br />ton équipe.
+              </h1>
+              <p style={{ color: '#7A8099', fontSize: 14, lineHeight: 1.75 }}>Bilan guidé, body scan, suivi hebdomadaire et module PV — tout en un seul espace fluide.</p>
             </div>
-
-            <form className="space-y-5" onSubmit={handleSubmit}>
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-300">Identifiant</label>
-                <input
-                  type="email"
-                  placeholder="E-mail professionnel"
-                  value={email}
-                  onChange={(event) => setEmail(event.target.value)}
-                  autoCapitalize="none"
-                  autoCorrect="off"
-                  autoComplete="username"
-                  inputMode="email"
-                  spellCheck={false}
-                />
-                <p className="text-xs text-slate-500">Utilise l&apos;e-mail professionnel associé à ton accès.</p>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-300">Mot de passe</label>
-                <input
-                  type={showPassword ? "text" : "password"}
-                  placeholder="Mot de passe"
-                  value={password}
-                  onChange={(event) => setPassword(event.target.value)}
-                  autoCapitalize="none"
-                  autoCorrect="off"
-                  autoComplete="current-password"
-                  spellCheck={false}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword((visible) => !visible)}
-                  className="text-xs font-medium text-slate-400 transition hover:text-white"
-                >
-                  {showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
-                </button>
-              </div>
-
-              {error ? (
-                <div className="rounded-[22px] bg-rose-400/10 px-4 py-3 text-sm text-rose-100 shadow-soft">
-                  {error}
-                </div>
-              ) : null}
-
-              <Button type="submit" className="w-full" disabled={!authReady}>
-                Ouvrir mon espace
-              </Button>
-            </form>
-
-            {!isStandalone ? (
-              <div className="surface-soft rounded-[24px] p-5">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="eyebrow-label">Installer l&apos;app</p>
-                    <p className="mt-3 text-lg font-semibold text-white">Ajoute Lor&apos;Squad Wellness à ton écran d&apos;accueil.</p>
-                    <p className="mt-2 text-sm leading-6 text-slate-300">
-                      Plus rapide à rouvrir en rendez-vous, surtout sur tablette et mobile.
-                    </p>
-                  </div>
-                  <StatusBadge label="Accès direct" tone="green" />
-                </div>
-
-                {canPromptInstall ? (
-                  <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-                    <p className="text-sm text-slate-300">L&apos;installation directe est disponible sur ce navigateur.</p>
-                    <Button variant="secondary" onClick={() => void handleInstallClick()}>
-                      Installer l&apos;app
-                    </Button>
-                  </div>
-                ) : isIos ? (
-                  <div className="mt-4 rounded-[18px] bg-white/[0.03] px-4 py-4 text-sm leading-6 text-slate-300">
-                    Sur iPhone / iPad : ouvre ce lien dans <span className="font-semibold text-white">Safari</span>, puis
-                    touche <span className="font-semibold text-white">Partager</span> et choisis{" "}
-                    <span className="font-semibold text-white">Sur l&apos;écran d&apos;accueil</span>.
-                  </div>
-                ) : isMobile ? (
-                  <div className="mt-4 rounded-[18px] bg-white/[0.03] px-4 py-4 text-sm leading-6 text-slate-300">
-                    Sur Android : ouvre ce lien dans <span className="font-semibold text-white">Chrome</span>, puis utilise
-                    le menu du navigateur pour <span className="font-semibold text-white">Installer l&apos;app</span> ou{" "}
-                    <span className="font-semibold text-white">Ajouter à l&apos;écran d&apos;accueil</span>.
-                  </div>
-                ) : (
-                  <div className="mt-4 rounded-[18px] bg-white/[0.03] px-4 py-4 text-sm leading-6 text-slate-300">
-                    Sur ordinateur, utilise l&apos;icône d&apos;installation dans la barre d&apos;adresse de Chrome ou Edge
-                    pour ajouter l&apos;app.
-                  </div>
-                )}
-              </div>
-            ) : null}
-
-            {storageMode === "local" ? (
-              <div className="surface-soft rounded-[24px] p-5">
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <p className="text-sm font-semibold text-white">Accès de démonstration</p>
-                    <p className="mt-1 text-xs leading-6 text-slate-400">
-                      Pour tester rapidement l&apos;interface, sans exposer de comptes nominatifs.
-                    </p>
-                  </div>
-                  <StatusBadge label="Démo" tone="blue" />
-                </div>
-                <div className="mt-4 grid gap-3 md:grid-cols-2">
-                  <button
-                    type="button"
-                    onClick={() => fillDemoAccess("distributor")}
-                    className="rounded-[22px] bg-slate-950/26 px-4 py-4 text-left transition hover:bg-white/[0.05]"
-                  >
-                    <p className="text-sm font-semibold text-white">Accès distributeur</p>
-                    <p className="mt-1 text-xs leading-6 text-slate-400">Vue limitée à ses clients, ses bilans et ses suivis.</p>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => fillDemoAccess("admin")}
-                    className="rounded-[22px] bg-slate-950/26 px-4 py-4 text-left transition hover:bg-white/[0.05]"
-                  >
-                    <p className="text-sm font-semibold text-white">Accès admin</p>
-                    <p className="mt-1 text-xs leading-6 text-slate-400">Vue globale sur les clients, l&apos;activité et le pilotage d&apos;équipe.</p>
-                  </button>
-                </div>
-                <p className="mt-3 text-xs text-slate-500">Mot de passe démo : demo1234</p>
-              </div>
-            ) : null}
-
-            <div className="surface-soft rounded-[24px] p-5">
-              <p className="eyebrow-label">Comment créer les accès</p>
-              <div className="mt-4 space-y-3">
-                <AccessStep
-                  index="01"
-                  title="Tu crées le compte depuis l&apos;admin"
-                  text="Tu renseignes le nom, l&apos;email professionnel, le rôle et l&apos;état actif du compte."
-                />
-                <AccessStep
-                  index="02"
-                  title="L&apos;email devient l&apos;identifiant"
-                  text="On ne crée pas de pseudo séparé. L&apos;identifiant de connexion sera simplement l&apos;email."
-                />
-                <AccessStep
-                  index="03"
-                  title="Le mot de passe est défini par l&apos;admin"
-                  text="Le mot de passe saisi à la création devient le mot de passe initial. Il peut ensuite être redéfini depuis la page équipe."
-                />
-              </div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+              {['Bilans guidés', 'Body Scan', 'Suivi client', 'Module PV'].map(tag => (
+                <span key={tag} style={{ padding: '6px 14px', borderRadius: 20, border: '1px solid rgba(255,255,255,0.07)', background: 'rgba(255,255,255,0.03)', color: '#7A8099', fontSize: 12 }}>{tag}</span>
+              ))}
             </div>
           </div>
-        </section>
-      </div>
-    </div>
-  );
-}
+          <p style={{ color: '#4A5068', fontSize: 11, borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: 24 }}>© 2025 Lor'Squad Wellness — Espace coach</p>
+        </div>
 
-function MiniTag({ label }: { label: string }) {
-  return (
-    <div className="surface-soft rounded-[18px] px-4 py-3 text-sm font-medium text-slate-200 shadow-[0_10px_24px_rgba(0,0,0,0.12)]">
-      {label}
-    </div>
-  );
-}
+        {/* Form */}
+        <div style={{ background: '#13161C', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12, padding: '48px 40px' }}>
+          <div style={{ marginBottom: 32 }}>
+            <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#C9A84C', marginBottom: 12 }}>Connexion</p>
+            <h2 style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 26, color: '#F0EDE8', letterSpacing: '-0.02em', marginBottom: 8 }}>Accède à ton espace.</h2>
+            <p style={{ color: '#7A8099', fontSize: 13, lineHeight: 1.7 }}>Retrouve tes clients, bilans et suivis en quelques secondes.</p>
+          </div>
 
-function AccessStep({
-  index,
-  title,
-  text
-}: {
-  index: string;
-  title: string;
-  text: string;
-}) {
-  return (
-    <div className="flex gap-3 rounded-[22px] bg-white/[0.03] p-4">
-      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/[0.06] text-xs font-semibold tracking-[0.08em] text-slate-200">
-        {index}
+          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <label style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#7A8099' }}>Identifiant</label>
+              <input
+                type="email"
+                placeholder="E-mail professionnel"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                autoComplete="username"
+                style={inp}
+                onFocus={e => (e.target.style.borderColor = 'rgba(201,168,76,0.5)')}
+                onBlur={e => (e.target.style.borderColor = 'rgba(255,255,255,0.08)')}
+              />
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <label style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#7A8099' }}>Mot de passe</label>
+              <input
+                type={showPassword ? 'text' : 'password'}
+                placeholder="Mot de passe"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                autoComplete="current-password"
+                style={inp}
+                onFocus={e => (e.target.style.borderColor = 'rgba(201,168,76,0.5)')}
+                onBlur={e => (e.target.style.borderColor = 'rgba(255,255,255,0.08)')}
+              />
+              <button type="button" onClick={() => setShowPassword(v => !v)} style={{ alignSelf: 'flex-start', background: 'none', border: 'none', color: '#4A5068', fontSize: 11, cursor: 'pointer' }}>
+                {showPassword ? 'Masquer' : 'Afficher'} le mot de passe
+              </button>
+            </div>
+
+            {error && (
+              <div style={{ background: 'rgba(251,113,133,0.08)', border: '1px solid rgba(251,113,133,0.2)', borderRadius: 10, padding: '10px 14px', color: '#FB7185', fontSize: 13 }}>
+                {error}
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={loading}
+              style={{
+                width: '100%',
+                background: '#C9A84C',
+                color: '#0B0D11',
+                border: 'none',
+                borderRadius: 10,
+                padding: '12px 20px',
+                fontFamily: 'Syne, sans-serif',
+                fontSize: 14,
+                fontWeight: 700,
+                cursor: loading ? 'not-allowed' : 'pointer',
+                opacity: loading ? 0.7 : 1,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 8,
+              }}
+            >
+              {loading && (
+                <span style={{ width: 14, height: 14, border: '2px solid rgba(11,13,17,0.3)', borderTop: '2px solid #0B0D11', borderRadius: '50%', display: 'inline-block', animation: 'spin 0.7s linear infinite' }} />
+              )}
+              Ouvrir mon espace
+            </button>
+          </form>
+        </div>
       </div>
-      <div>
-        <p className="text-sm font-semibold text-white">{title}</p>
-        <p className="mt-1 text-sm leading-6 text-slate-400/90">{text}</p>
-      </div>
+      <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
     </div>
-  );
+  )
 }
