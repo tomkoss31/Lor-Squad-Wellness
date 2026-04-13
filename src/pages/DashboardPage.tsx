@@ -188,6 +188,53 @@ export function DashboardPage() {
         </div>
       </Card>
 
+      {/* Actions du jour — priorités fusionnées */}
+      {actionsToOpen.length > 0 && (
+        <Card className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#C9A84C', boxShadow: '0 0 8px rgba(201,168,76,0.6)' }} className="dot-pulse" />
+              <span style={{ fontFamily: 'Syne, sans-serif', fontSize: 15, fontWeight: 700, color: '#F0EDE8' }}>Actions prioritaires</span>
+            </div>
+            <span className="text-[11px] text-[#4A5068]">Aujourd'hui</span>
+          </div>
+          <div className="space-y-1">
+            {actionsToOpen.slice(0, 5).map((followUp) => (
+              <Link
+                key={followUp.id}
+                to={`/clients/${followUp.clientId}`}
+                className="list-row flex items-center gap-3 rounded-[14px] px-4 py-3"
+              >
+                <div style={{
+                  width: 32, height: 32, borderRadius: 8, flexShrink: 0,
+                  background: followUp.status === 'scheduled' ? 'rgba(45,212,191,0.1)' : 'rgba(201,168,76,0.1)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14,
+                }}>
+                  {followUp.status === 'scheduled' ? '📅' : '🔔'}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-medium text-[#F0EDE8] truncate">{followUp.clientName}</div>
+                  <div className="text-[11px] text-[#7A8099] mt-0.5">{followUp.type}</div>
+                </div>
+                <div className="text-[11px] text-[#4A5068]">{formatDashboardDateTime(followUp.dueDate)}</div>
+                <span style={{
+                  fontSize: 10, padding: '3px 10px', borderRadius: 20, fontWeight: 500,
+                  background: followUp.status === 'pending' ? 'rgba(251,113,133,0.1)' : 'rgba(45,212,191,0.1)',
+                  color: followUp.status === 'pending' ? '#FB7185' : '#2DD4BF',
+                }}>
+                  {followUp.status === 'pending' ? 'Urgent' : 'Planifié'}
+                </span>
+              </Link>
+            ))}
+          </div>
+          {actionsToOpen.length > 5 && (
+            <Link to={`/distributors/${currentUser.id}`} className="block text-center text-sm text-[#C9A84C] font-medium">
+              Voir les {actionsToOpen.length - 5} autres →
+            </Link>
+          )}
+        </Card>
+      )}
+
       <div className="grid gap-4 xl:grid-cols-[1fr_1fr]">
         <Card className="space-y-4">
           <div className="flex items-center justify-between gap-3">

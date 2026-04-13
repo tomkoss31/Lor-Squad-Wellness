@@ -83,6 +83,11 @@ const LoginPage = lazy(() =>
     default: module.LoginPage
   }))
 );
+const RecapPage = lazy(() =>
+  import("./pages/RecapPage").then((module) => ({
+    default: module.RecapPage
+  }))
+);
 
 export default function App() {
   return (
@@ -118,6 +123,8 @@ export default function App() {
               <Route path="assessments/new" element={<NewAssessmentPage />} />
             </Route>
           </Route>
+          {/* Route publique — récap client accessible par QR code */}
+          <Route path="/recap/:clientId" element={<RecapPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Suspense>
