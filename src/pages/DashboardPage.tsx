@@ -9,6 +9,7 @@ interface DashStats {
   bilansThisMonth: number
   upcomingRenewals: number
   activeClients: number
+  suiviRate: number
 }
 
 function StatCard({ label, value, color, sub }: { label: string; value: string | number; color: string; sub: string }) {
@@ -67,23 +68,31 @@ export default function DashboardPage() {
       const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
       const in7days = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
 
-      const [clientsRes, bilansRes, renewalsRes, scansRes] = await Promise.all([
+      const last30 = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString()
+
+      const [clientsRes, bilansRes, renewalsRes, scansRes, suivisRes] = await Promise.all([
         supabase.from('clients').select('*').order('created_at', { ascending: false }),
-        supabase.from('bilans').select('id').gte('created_at', firstOfMonth),
+        supabase.from('bilans').select('id, client_id').gte('created_at', firstOfMonth),
         supabase.from('client_produits').select('id').lte('expected_end_date', in7days).eq('status', 'actif'),
-        supabase.from('body_scans').select('*').order('created_at', { ascending: false }).limit(3),
+        supabase.from('body_scans').select('*, clients(first_name, last_name)').order('created_at', { ascending: false }).limit(3),
+        supabase.from('suivis').select('client_id').gte('created_at', last30),
       ])
 
       if (clientsRes.error) throw clientsRes.error
 
       const clients = clientsRes.data || []
       const activeClients = clients.filter(c => c.status === 'actif')
+      const suiviClientIds = new Set((suivisRes.data || []).map((s: { client_id: string }) => s.client_id))
+      const suiviRate = activeClients.length > 0
+        ? Math.round((suiviClientIds.size / activeClients.length) * 100)
+        : 0
 
       setStats({
         totalClients: clients.length,
         activeClients: activeClients.length,
         bilansThisMonth: bilansRes.data?.length || 0,
         upcomingRenewals: renewalsRes.data?.length || 0,
+        suiviRate,
       })
       setRecentClients(clients.slice(0, 5))
       setRecentScans(scansRes.data || [])
@@ -146,7 +155,7 @@ export default function DashboardPage() {
           <>
             <StatCard label="Clients actifs" value={stats?.activeClients || 0} color="#C9A84C" sub={`${stats?.totalClients || 0} au total`} />
             <StatCard label="Bilans ce mois" value={stats?.bilansThisMonth || 0} color="#2DD4BF" sub="Réalisés" />
-            <StatCard label="Taux de suivi" value="—" color="#A78BFA" sub="Bientôt disponible" />
+            <StatCard label="Taux de suivi" value={`${stats?.suiviRate || 0}%`} color="#A78BFA" sub="Clients suivis ce mois" />
             <StatCard label="Renouvellements" value={stats?.upcomingRenewals || 0} color="#FB7185" sub="Dans les 7 jours" />
           </>
         )}
@@ -229,10 +238,18 @@ export default function DashboardPage() {
               Aucun body scan enregistré
             </div>
           ) : (
-            recentScans.map(scan => (
+            recentScans.map(scan => {
+              const scanAny = scan as unknown as { clients?: { first_name: string; last_name: string } }
+              const clientName = scanAny.clients
+                ? `${scanAny.clients.first_name} ${scanAny.clients.last_name}`
+                : 'Client inconnu'
+              return (
               <div key={scan.id} style={{ padding: '14px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                <div style={{ fontSize: 12, color: '#7A8099', marginBottom: 10 }}>
-                  {new Date(scan.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })}
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
+                  <span style={{ fontSize: 13, fontWeight: 500, color: '#F0EDE8' }}>{clientName}</span>
+                  <span style={{ fontSize: 12, color: '#7A8099' }}>
+                    {new Date(scan.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
+                  </span>
                 </div>
                 {scan.fat_mass_percent !== undefined && (
                   <div style={{ display: 'flex', alignItems: 'center', marginBottom: 6 }}>
@@ -256,7 +273,8 @@ export default function DashboardPage() {
                   </div>
                 )}
               </div>
-            ))
+              )
+            })
           )}
         </div>
       </div>
