@@ -367,9 +367,9 @@ export function ClientDetailPage() {
             <div className="flex flex-wrap items-center justify-end gap-3">
               <Link
                 to={`/clients/${client.id}/follow-up/new`}
-                className="inline-flex items-center gap-3 rounded-[22px] bg-emerald-400/12 px-4 py-3 text-sm font-semibold text-emerald-100 transition hover:bg-emerald-400/18"
+                className="inline-flex items-center gap-3 rounded-[22px] bg-[rgba(45,212,191,0.12)] px-4 py-3 text-sm font-semibold text-[#2DD4BF] transition hover:bg-[rgba(45,212,191,0.18)]"
               >
-                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-400/18 text-emerald-100">
+                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[rgba(45,212,191,0.18)] text-[#2DD4BF]">
                   <svg
                     aria-hidden="true"
                     viewBox="0 0 24 24"
@@ -389,7 +389,7 @@ export function ClientDetailPage() {
                   </svg>
                 </span>
                 <span className="text-left">
-                  <span className="block text-[11px] font-medium text-emerald-200/70">
+                  <span className="block text-[11px] font-medium text-[#2DD4BF]/70">
                     Action rapide
                   </span>
                   <span className="block">Démarrer le body scan</span>
@@ -1090,10 +1090,10 @@ function StartingPointOverviewCard({
       ? "text-[#F0EDE8]"
       : objective === "weight-loss"
         ? weightDelta < 0
-          ? "text-emerald-200"
+          ? "text-[#2DD4BF]"
           : "text-amber-200"
         : weightDelta > 0
-          ? "text-emerald-200"
+          ? "text-[#2DD4BF]"
           : "text-amber-200";
 
   return (
@@ -1150,7 +1150,7 @@ function OverviewMetricCard({
 }) {
   const toneClass =
     tone === "green"
-      ? "bg-emerald-400/[0.07] ring-1 ring-emerald-400/12"
+      ? "bg-[rgba(45,212,191,0.07)] ring-1 ring-[rgba(45,212,191,0.12)]"
       : tone === "blue"
         ? "bg-[rgba(201,168,76,0.07)] ring-1 ring-[rgba(201,168,76,0.12)]"
         : "bg-[#0B0D11]/80 ring-1 ring-white/6";
@@ -1205,7 +1205,7 @@ function LinkButton({
       to={to}
       className={`rounded-[22px] px-4 py-3 text-left transition ${
         tone === "green"
-          ? "bg-emerald-400/10 hover:bg-emerald-400/15"
+          ? "bg-[rgba(45,212,191,0.1)] hover:bg-[rgba(45,212,191,0.15)]"
           : "bg-[rgba(45,212,191,0.1)] hover:bg-[rgba(201,168,76,0.15)]"
       }`}
     >

@@ -224,10 +224,10 @@ function VisceralRangeChip({
   const palette =
     tone === "green"
       ? {
-          base: "bg-emerald-400/[0.08] ring-1 ring-emerald-300/12",
+          base: "bg-[rgba(45,212,191,0.08)] ring-1 ring-[rgba(45,212,191,0.12)]",
           active:
-            "bg-emerald-400/[0.18] ring-1 ring-emerald-300/30 shadow-[0_0_0_1px_rgba(110,231,183,0.12),0_12px_28px_rgba(16,185,129,0.12)]",
-          label: "text-emerald-100/90"
+            "bg-[rgba(45,212,191,0.18)] ring-1 ring-[rgba(45,212,191,0.3)] shadow-[0_0_0_1px_rgba(45,212,191,0.12),0_12px_28px_rgba(45,212,191,0.1)]",
+          label: "text-[#2DD4BF]/90"
         }
       : tone === "amber"
         ? {

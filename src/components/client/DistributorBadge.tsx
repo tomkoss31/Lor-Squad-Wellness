@@ -21,9 +21,9 @@ const accentClasses: Record<
     detail: "text-[#2DD4BF]/70"
   },
   green: {
-    shell: "border-emerald-300/20 bg-emerald-400/12 text-emerald-100",
-    glyph: "text-emerald-200",
-    detail: "text-emerald-100/70"
+    shell: "border-[rgba(45,212,191,0.2)] bg-[rgba(45,212,191,0.12)] text-[#2DD4BF]",
+    glyph: "text-[#2DD4BF]",
+    detail: "text-[#2DD4BF]/70"
   },
   amber: {
     shell: "border-amber-300/25 bg-amber-400/12 text-amber-50",

@@ -89,7 +89,7 @@ export function BodyFatInsightCard({
             </div>
 
             <div className="mt-4">
-              <div className="relative h-3 rounded-full bg-gradient-to-r from-emerald-400 via-amber-300 to-rose-500">
+              <div className="relative h-3 rounded-full bg-gradient-to-r from-[#2DD4BF] via-[#C9A84C] to-rose-500">
                 <div
                   className="absolute top-1/2 h-6 -translate-y-1/2 rounded-full border border-white/60 bg-white/10 shadow-[0_0_0_1px_rgba(255,255,255,0.12)]"
                   style={{
@@ -189,10 +189,10 @@ function GaugeLegendChip({
   const palette =
     tone === "green"
       ? {
-          base: "bg-emerald-400/[0.08] ring-1 ring-emerald-300/12",
+          base: "bg-[rgba(45,212,191,0.08)] ring-1 ring-[rgba(45,212,191,0.12)]",
           active:
-            "bg-emerald-400/[0.18] ring-1 ring-emerald-300/30 shadow-[0_0_0_1px_rgba(110,231,183,0.12),0_12px_28px_rgba(16,185,129,0.12)]",
-          label: "text-emerald-100/90"
+            "bg-[rgba(45,212,191,0.18)] ring-1 ring-[rgba(45,212,191,0.3)] shadow-[0_0_0_1px_rgba(45,212,191,0.12),0_12px_28px_rgba(45,212,191,0.1)]",
+          label: "text-[#2DD4BF]/90"
         }
       : tone === "blue"
         ? {
@@ -419,10 +419,10 @@ function DeltaValue({
       ? "bg-white/[0.05] text-[#F0EDE8]"
       : inverseGood
         ? value < 0
-          ? "bg-emerald-400/[0.12] text-emerald-200"
+          ? "bg-[rgba(45,212,191,0.12)] text-[#2DD4BF]"
           : "bg-rose-400/[0.12] text-rose-200"
         : value > 0
-          ? "bg-emerald-400/[0.12] text-emerald-200"
+          ? "bg-[rgba(45,212,191,0.12)] text-[#2DD4BF]"
           : "bg-rose-400/[0.12] text-rose-200";
 
   return (

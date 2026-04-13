@@ -44,9 +44,9 @@ export function AppLayout() {
 
   const pageTitle =
     location.pathname === "/dashboard"
-      ? "Pilotage clair de la journee"
+      ? "Pilotage clair de la journée"
       : location.pathname === "/guide"
-        ? "Reperes simples pour conduire le rendez-vous"
+        ? "Repères simples pour conduire le rendez-vous"
         : location.pathname === "/recommendations"
           ? "Le bon ton pour ouvrir les recommandations"
           : location.pathname.startsWith("/pv")
@@ -56,11 +56,11 @@ export function AppLayout() {
               : location.pathname.startsWith("/distributors/")
                 ? "Portefeuille, relances et rythme du suivi"
                 : location.pathname === "/users"
-                  ? "Acces equipe et roles cles"
+                  ? "Accès équipe et rôles clés"
                   : location.pathname.startsWith("/clients/")
-                    ? "Lecture complete du dossier client"
+                    ? "Lecture complète du dossier client"
                     : location.pathname === "/assessments/new"
-                      ? "Le bilan guide pour cadrer le rendez-vous"
+                      ? "Le bilan guidé pour cadrer le rendez-vous"
                       : "Lor'Squad Wellness";
 
   async function handleLogout() {
@@ -110,7 +110,7 @@ export function AppLayout() {
                 </div>
                 <p className="mt-3 text-[13px] leading-6 text-[#4A5068]">{getAccessSummary(currentUser)}</p>
                 <Button variant="ghost" className="mt-4 w-full" onClick={() => void handleLogout()}>
-                  Se deconnecter
+                  Se déconnecter
                 </Button>
               </div>
 
@@ -166,7 +166,7 @@ export function AppLayout() {
               </div>
               {currentSession ? (
                 <div className="rounded-[18px] bg-[#1A1E27] px-4 py-3 text-[12px] text-[#7A8099]">
-                  Session active · acces {accessScopeLabel}
+                  Session active · accès {accessScopeLabel}
                 </div>
               ) : null}
               <Button className="w-full" onClick={() => navigate("/assessments/new")}>
@@ -216,7 +216,7 @@ export function AppLayout() {
               className="mt-3 w-full justify-center"
               onClick={() => void handleLogout()}
             >
-              Se deconnecter
+              Se déconnecter
             </Button>
 
             <nav className="mt-4 flex gap-2 overflow-x-auto pb-1">
@@ -291,7 +291,7 @@ export function AppLayout() {
                   ) : null
                 ) : null}
                 <Button variant="ghost" onClick={() => void handleLogout()}>
-                  Se deconnecter
+                  Se déconnecter
                 </Button>
               </div>
               <div className="md:hidden">

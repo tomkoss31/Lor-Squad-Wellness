@@ -151,7 +151,7 @@ function HydrationValueCard({
       </p>
       <div
         className={`mt-4 h-px w-14 ${
-          accent === "green" ? "bg-emerald-300/50" : "bg-[#C9A84C]/50"
+          accent === "green" ? "bg-[#2DD4BF]/50" : "bg-[#C9A84C]/50"
         }`}
       />
     </div>
@@ -255,7 +255,7 @@ function VisceralRange({
 }) {
   const activeClass =
     tone === "green"
-      ? "bg-emerald-400/12 ring-1 ring-emerald-300/18"
+      ? "bg-[rgba(45,212,191,0.12)] ring-1 ring-[rgba(45,212,191,0.18)]"
       : tone === "amber"
         ? "bg-amber-300/12 ring-1 ring-amber-200/18"
         : "bg-rose-400/12 ring-1 ring-rose-300/18";

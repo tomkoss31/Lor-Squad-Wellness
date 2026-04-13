@@ -61,7 +61,7 @@ export function PedagogicalMetricCard({
       <div
         className={`absolute inset-x-0 top-0 h-1 ${
           accent === "green"
-            ? "bg-gradient-to-r from-emerald-400 via-lime-300 to-transparent"
+            ? "bg-gradient-to-r from-[#2DD4BF] via-[#F0C96A] to-transparent"
             : accent === "red"
               ? "bg-gradient-to-r from-rose-400 via-orange-300 to-transparent"
               : "bg-gradient-to-r from-sky-400 via-cyan-300 to-transparent"
