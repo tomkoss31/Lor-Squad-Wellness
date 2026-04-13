@@ -1,5 +1,6 @@
 import { NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
+import { blasonLogo } from '../../data/visualContent'
 
 const NAV_ITEMS = [
   { path: '/dashboard', label: 'Dashboard', icon: 'grid' },
@@ -45,15 +46,12 @@ export default function Sidebar() {
     }}>
       {/* Logo */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 36 }}>
-        <div style={{
+        <img src={blasonLogo} alt="Lor'Squad" style={{
           width: 34, height: 34,
-          background: '#C9A84C',
           borderRadius: 9,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          objectFit: 'cover',
           flexShrink: 0,
-        }}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="#0B0D11"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-        </div>
+        }} />
         <div>
           <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 14, color: '#F0EDE8', letterSpacing: '-0.2px', lineHeight: 1.2 }}>
             Lor'<span style={{ color: '#C9A84C' }}>Squad</span>

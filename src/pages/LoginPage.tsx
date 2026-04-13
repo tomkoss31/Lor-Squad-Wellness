@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import { blasonLogo, lorSquadLogo } from '../data/visualContent'
 
 const inp: React.CSSProperties = {
   background: '#1A1E27',
@@ -53,15 +54,21 @@ export default function LoginPage() {
         {/* Branding */}
         <div style={{ background: '#13161C', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12, padding: '48px 40px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: 40 }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
-            <span style={{ display: 'inline-flex', padding: '6px 14px', borderRadius: 20, border: '1px solid rgba(201,168,76,0.2)', background: 'rgba(201,168,76,0.08)', color: '#C9A84C', fontSize: 11, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', width: 'fit-content' }}>
-              Lor'Squad Wellness
-            </span>
+            {/* Logo blason + badge */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+              <img src={blasonLogo} alt="Lor'Squad" style={{ width: 52, height: 52, borderRadius: 16, objectFit: 'cover', border: '1px solid rgba(255,255,255,0.08)' }} />
+              <span style={{ display: 'inline-flex', padding: '6px 14px', borderRadius: 20, border: '1px solid rgba(201,168,76,0.2)', background: 'rgba(201,168,76,0.08)', color: '#C9A84C', fontSize: 11, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase' }}>
+                Lor'Squad Wellness
+              </span>
+            </div>
             <div>
               <h1 style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 36, color: '#F0EDE8', lineHeight: 1.1, letterSpacing: '-0.03em', marginBottom: 16 }}>
                 Pilote tes bilans,<br />tes clients et<br />ton équipe.
               </h1>
               <p style={{ color: '#7A8099', fontSize: 14, lineHeight: 1.75 }}>Bilan guidé, body scan, suivi hebdomadaire et module PV — tout en un seul espace fluide.</p>
             </div>
+            {/* Logo Lor'Squad */}
+            <img src={lorSquadLogo} alt="Lor'Squad Wellness" style={{ width: '100%', maxWidth: 320, objectFit: 'contain', opacity: 0.95 }} />
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
               {['Bilans guidés', 'Body Scan', 'Suivi client', 'Module PV'].map(tag => (
                 <span key={tag} style={{ padding: '6px 14px', borderRadius: 20, border: '1px solid rgba(255,255,255,0.07)', background: 'rgba(255,255,255,0.03)', color: '#7A8099', fontSize: 12 }}>{tag}</span>
