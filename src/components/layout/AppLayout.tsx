@@ -5,10 +5,12 @@ import { useInstallPrompt } from "../../context/InstallPromptContext";
 import { blasonLogo, laBaseLogo, lorSquadLogo } from "../../data/visualContent";
 import { Button } from "../ui/Button";
 import { StatusBadge } from "../ui/StatusBadge";
+import { BottomNav } from "./BottomNav";
 import { getAccessSummary, getRoleLabel } from "../../lib/auth";
 
 export function AppLayout() {
-  const { currentSession, currentUser, logout } = useAppContext();
+  const { currentSession, currentUser, logout, followUps } = useAppContext();
+  const urgentRelanceCount = followUps.filter(f => f.status === "pending").length;
   const { canPromptInstall, isIos, isMobile, isStandalone, promptInstall } = useInstallPrompt();
   const location = useLocation();
   const navigate = useNavigate();
@@ -31,13 +33,13 @@ export function AppLayout() {
         : "personnel";
 
   const navigation = [
-    { label: "Accueil", path: "/dashboard" },
-    { label: "Guide rendez-vous", path: "/guide" },
-    { label: "Recommandations", path: "/recommendations" },
-    { label: "Suivi PV", path: "/pv" },
-    { label: "Dossiers clients", path: "/clients" },
-    ...(currentUser.role === "admin" ? [{ label: "Equipe", path: "/users" }] : []),
-    { label: "Nouveau bilan", path: "/assessments/new" }
+    { label: "Accueil", path: "/dashboard", badge: 0 },
+    { label: "Guide rendez-vous", path: "/guide", badge: 0 },
+    { label: "Recommandations", path: "/recommendations", badge: 0 },
+    { label: "Suivi PV", path: "/pv", badge: urgentRelanceCount },
+    { label: "Dossiers clients", path: "/clients", badge: 0 },
+    ...(currentUser.role === "admin" ? [{ label: "Equipe", path: "/users", badge: 0 }] : []),
+    { label: "Nouveau bilan", path: "/assessments/new", badge: 0 }
   ];
 
   const pageTitle =
@@ -140,7 +142,11 @@ export function AppLayout() {
                         }`}
                       />
                       <span>{item.label}</span>
-                      {item.path === "/assessments/new" ? (
+                      {item.badge > 0 ? (
+                        <span className="ml-auto flex h-5 min-w-[20px] items-center justify-center rounded-full bg-[#FB7185] px-1.5 text-[10px] font-bold text-white">
+                          {item.badge}
+                        </span>
+                      ) : item.path === "/assessments/new" ? (
                         <span className="ml-auto rounded-full bg-[rgba(239,197,141,0.18)] px-2.5 py-1 text-[11px] font-medium text-[rgba(255,235,214,0.92)]">
                           Nouveau
                         </span>
@@ -295,8 +301,11 @@ export function AppLayout() {
           </header>
 
           <Outlet />
+          {/* Padding for bottom nav on mobile */}
+          <div className="h-20 xl:hidden" />
         </main>
       </div>
+      <BottomNav />
     </div>
   );
 }

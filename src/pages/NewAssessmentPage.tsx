@@ -1956,8 +1956,39 @@ export function NewAssessmentPage() {
                   </div>
                 </Card>
 
-              <div className="rounded-[24px] bg-emerald-400/10 p-5">
-                <p className="eyebrow-label text-emerald-100/80">Formulation conseillee</p>
+              {/* QR Code récap client */}
+              <Card className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="eyebrow-label">Récap client</p>
+                    <p className="mt-2 text-lg font-bold text-white" style={{ fontFamily: 'Syne, sans-serif' }}>
+                      QR Code à scanner
+                    </p>
+                    <p className="mt-1 text-sm text-[#7A8099]">
+                      Le client scanne ce code avec son téléphone pour voir son récap de bilan.
+                    </p>
+                  </div>
+                  <div style={{
+                    width: 120, height: 120, borderRadius: 14, background: '#1A1E27',
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    flexShrink: 0,
+                  }}>
+                    <div style={{ textAlign: 'center', padding: 8 }}>
+                      <div style={{ fontSize: 28, marginBottom: 4 }}>📱</div>
+                      <div style={{ fontSize: 9, color: '#4A5068', lineHeight: 1.3 }}>
+                        QR disponible<br/>après enregistrement
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <p className="text-[11px] text-[#4A5068]">
+                  Le lien récap sera généré automatiquement à l'enregistrement du bilan. Le client pourra consulter ses résultats depuis son téléphone.
+                </p>
+              </Card>
+
+              <div className="rounded-[24px] bg-[rgba(45,212,191,0.08)] p-5">
+                <p className="eyebrow-label text-[#2DD4BF]/80">Formulation conseillee</p>
                 <div className="mt-4 grid gap-2 md:grid-cols-3">
                   <ClosingLine text="On part sur une routine simple, claire et coherente avec ton objectif." />
                   <ClosingLine text="Les repères du jour servent à rendre le plan plus facile à suivre dès maintenant." />
