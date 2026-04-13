@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
-// Logo assets disponibles si besoin : blasonLogo, lorSquadLogo
+import { blasonLogo } from '../data/visualContent'
 
 const inp: React.CSSProperties = {
   background: '#1A1E27',
@@ -58,9 +58,7 @@ export default function LoginPage() {
 
             {/* Logo + nom */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-              <div style={{ width: 44, height: 44, borderRadius: 12, background: '#C9A84C', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="#0B0D11"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-              </div>
+              <img src={blasonLogo} alt="Lor'Squad" style={{ width: 44, height: 44, borderRadius: 12, objectFit: 'cover', flexShrink: 0 }} />
               <div>
                 <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 17, color: '#F0EDE8', letterSpacing: '-0.3px' }}>
                   Lor'<span style={{ color: '#C9A84C' }}>Squad</span> Wellness
