@@ -4,7 +4,8 @@ import Button from "../components/ui/Button";
 import Card from "../components/ui/Card";
 import EmptyState from "../components/ui/EmptyState";
 import ScoreBar from "../components/ui/ScoreBar";
-import { supabase } from "../lib/supabaseClient";
+import { readBilans, readBodyScans, readClientProduits, readClients, readSuivis } from "../lib/localData";
+import { hasSupabaseEnv, supabase } from "../lib/supabaseClient";
 import type { Bilan, BodyScan, Client } from "../lib/types";
 
 interface DashboardStats {
@@ -28,6 +29,50 @@ export function DashboardPage() {
 
   useEffect(() => {
     async function loadDashboard() {
+      if (!hasSupabaseEnv) {
+        const clients = readClients();
+        const bilans = readBilans();
+        const scans = readBodyScans();
+        const suivis = readSuivis();
+        const products = readClientProduits();
+        const today = new Date();
+        const monthStart = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().slice(0, 10);
+        const followUpStart = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+        const renewalsEnd = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+        const latestBilansMap = new Map<string, string>();
+        [...bilans]
+          .sort((left, right) => right.date.localeCompare(left.date))
+          .forEach((bilan) => {
+            if (!latestBilansMap.has(bilan.client_id)) {
+              latestBilansMap.set(bilan.client_id, bilan.date);
+            }
+          });
+        const activeClients = clients.filter((client) => client.status === "actif");
+        const clientsWithFollowUp = new Set(
+          suivis.filter((suivi) => suivi.date >= followUpStart).map((suivi) => suivi.client_id)
+        );
+        setStats({
+          activeClients: activeClients.length,
+          monthBilans: bilans.filter((bilan) => bilan.date >= monthStart).length,
+          followUpRate: activeClients.length === 0 ? 0 : Math.round((clientsWithFollowUp.size / activeClients.length) * 100),
+          renewalsSoon: products.filter(
+            (program) =>
+              (program.status === "actif" || program.status === "pause") &&
+              Boolean(program.expected_end_date) &&
+              (program.expected_end_date as string) <= renewalsEnd
+          ).length
+        });
+        setRecentClients(
+          [...clients]
+            .sort((left, right) => right.created_at.localeCompare(left.created_at))
+            .slice(0, 5)
+            .map((client) => ({ ...client, latestBilanDate: latestBilansMap.get(client.id) }))
+        );
+        setLatestScans([...scans].sort((left, right) => right.date.localeCompare(left.date)).slice(0, 3));
+        setLoading(false);
+        return;
+      }
+
       try {
         setLoading(true);
         setError(null);

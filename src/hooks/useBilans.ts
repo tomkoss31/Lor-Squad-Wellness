@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
-import { supabase } from "../lib/supabaseClient";
+import { hasSupabaseEnv, supabase } from "../lib/supabaseClient";
+import { readBilans, writeBilans } from "../lib/localData";
 import type { Bilan } from "../lib/types";
 
 export function useBilans(clientId?: string) {
@@ -8,6 +9,16 @@ export function useBilans(clientId?: string) {
   const [error, setError] = useState<string | null>(null);
 
   const fetchBilans = useCallback(async () => {
+    if (!hasSupabaseEnv) {
+      const data = readBilans()
+        .filter((bilan) => (clientId ? bilan.client_id === clientId : true))
+        .sort((left, right) => right.date.localeCompare(left.date));
+      setBilans(data);
+      setError(null);
+      setLoading(false);
+      return;
+    }
+
     try {
       setLoading(true);
       setError(null);
@@ -35,6 +46,46 @@ export function useBilans(clientId?: string) {
   }, [fetchBilans]);
 
   async function createBilan(data: Partial<Bilan>) {
+    if (!hasSupabaseEnv) {
+      const created: Bilan = {
+        id: crypto.randomUUID(),
+        client_id: data.client_id ?? clientId ?? "",
+        coach_id: "demo-user",
+        date: data.date ?? new Date().toISOString().slice(0, 10),
+        wake_time: data.wake_time,
+        sleep_time: data.sleep_time,
+        sleep_quality: data.sleep_quality,
+        energy_level: data.energy_level,
+        stress_level: data.stress_level,
+        breakfast: data.breakfast,
+        breakfast_time: data.breakfast_time,
+        lunch: data.lunch,
+        dinner: data.dinner,
+        snacking: data.snacking,
+        snacking_frequency: data.snacking_frequency,
+        water_liters: data.water_liters,
+        other_drinks: data.other_drinks,
+        sport_type: data.sport_type,
+        sport_frequency: data.sport_frequency,
+        sport_duration: data.sport_duration,
+        health_issues: data.health_issues,
+        medications: data.medications,
+        digestion_quality: data.digestion_quality,
+        transit: data.transit,
+        main_objective: data.main_objective,
+        secondary_objective: data.secondary_objective,
+        blockers: data.blockers,
+        motivation_level: data.motivation_level,
+        recommendations: data.recommendations ?? [],
+        notes: data.notes,
+        created_at: new Date().toISOString()
+      };
+      const next = [created, ...readBilans()];
+      writeBilans(next);
+      setBilans((previous) => [created, ...previous]);
+      return created;
+    }
+
     const {
       data: { user }
     } = await supabase.auth.getUser();

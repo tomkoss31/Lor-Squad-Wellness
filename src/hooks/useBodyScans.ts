@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
-import { supabase } from "../lib/supabaseClient";
+import { hasSupabaseEnv, supabase } from "../lib/supabaseClient";
+import { readBodyScans, writeBodyScans } from "../lib/localData";
 import type { BodyScan } from "../lib/types";
 
 export function useBodyScans(clientId?: string) {
@@ -8,6 +9,16 @@ export function useBodyScans(clientId?: string) {
   const [error, setError] = useState<string | null>(null);
 
   const fetchScans = useCallback(async () => {
+    if (!hasSupabaseEnv) {
+      const data = readBodyScans()
+        .filter((scan) => (clientId ? scan.client_id === clientId : true))
+        .sort((left, right) => right.date.localeCompare(left.date));
+      setScans(data);
+      setError(null);
+      setLoading(false);
+      return;
+    }
+
     try {
       setLoading(true);
       setError(null);
@@ -35,6 +46,35 @@ export function useBodyScans(clientId?: string) {
   }, [fetchScans]);
 
   async function createScan(data: Partial<BodyScan>) {
+    if (!hasSupabaseEnv) {
+      const created: BodyScan = {
+        id: crypto.randomUUID(),
+        client_id: data.client_id ?? clientId ?? "",
+        coach_id: "demo-user",
+        bilan_id: data.bilan_id,
+        date: data.date ?? new Date().toISOString().slice(0, 10),
+        weight_kg: data.weight_kg,
+        fat_mass_percent: data.fat_mass_percent,
+        fat_mass_kg: data.fat_mass_kg,
+        muscle_mass_kg: data.muscle_mass_kg,
+        bone_mass_kg: data.bone_mass_kg,
+        water_percent: data.water_percent,
+        visceral_fat_level: data.visceral_fat_level,
+        bmr: data.bmr,
+        metabolic_age: data.metabolic_age,
+        bmi: data.bmi,
+        waist_cm: data.waist_cm,
+        hip_cm: data.hip_cm,
+        chest_cm: data.chest_cm,
+        notes: data.notes,
+        created_at: new Date().toISOString()
+      };
+      const next = [created, ...readBodyScans()];
+      writeBodyScans(next);
+      setScans((previous) => [created, ...previous]);
+      return created;
+    }
+
     const {
       data: { user }
     } = await supabase.auth.getUser();

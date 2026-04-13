@@ -2,7 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import Badge from "../components/ui/Badge";
 import Card from "../components/ui/Card";
 import EmptyState from "../components/ui/EmptyState";
-import { supabase } from "../lib/supabaseClient";
+import { readBilans, readClients } from "../lib/localData";
+import { hasSupabaseEnv, supabase } from "../lib/supabaseClient";
 import type { Bilan, Client, Recommendation } from "../lib/types";
 
 interface RecommendationRow {
@@ -20,6 +21,21 @@ export function RecommandationsPage() {
   useEffect(() => {
     async function loadRecommendations() {
       setLoading(true);
+      if (!hasSupabaseEnv) {
+        const clientMap = new Map(readClients().map((client) => [client.id, `${client.first_name} ${client.last_name}`]));
+        const flattened = readBilans().flatMap((bilan) =>
+          (bilan.recommendations ?? []).map((recommendation, index) => ({
+            id: `${bilan.id}-${index}`,
+            clientName: clientMap.get(bilan.client_id) ?? "Client inconnu",
+            date: bilan.date,
+            recommendation
+          }))
+        );
+        setRows(flattened);
+        setLoading(false);
+        return;
+      }
+
       const [{ data: clients }, { data: bilans }] = await Promise.all([
         supabase.from("clients").select("id, first_name, last_name"),
         supabase.from("bilans").select("id, client_id, date, recommendations").order("date", { ascending: false })

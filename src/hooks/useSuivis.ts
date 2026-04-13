@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
-import { supabase } from "../lib/supabaseClient";
+import { hasSupabaseEnv, supabase } from "../lib/supabaseClient";
+import { readSuivis, writeSuivis } from "../lib/localData";
 import type { Suivi } from "../lib/types";
 
 export function useSuivis(clientId?: string) {
@@ -8,6 +9,16 @@ export function useSuivis(clientId?: string) {
   const [error, setError] = useState<string | null>(null);
 
   const fetchSuivis = useCallback(async () => {
+    if (!hasSupabaseEnv) {
+      const data = readSuivis()
+        .filter((suivi) => (clientId ? suivi.client_id === clientId : true))
+        .sort((left, right) => right.date.localeCompare(left.date));
+      setSuivis(data);
+      setError(null);
+      setLoading(false);
+      return;
+    }
+
     try {
       setLoading(true);
       setError(null);
@@ -35,6 +46,32 @@ export function useSuivis(clientId?: string) {
   }, [fetchSuivis]);
 
   async function createSuivi(data: Partial<Suivi>) {
+    if (!hasSupabaseEnv) {
+      const created: Suivi = {
+        id: crypto.randomUUID(),
+        client_id: data.client_id ?? clientId ?? "",
+        coach_id: "demo-user",
+        date: data.date ?? new Date().toISOString().slice(0, 10),
+        week_number: data.week_number,
+        energy_level: data.energy_level,
+        hunger_level: data.hunger_level,
+        digestion_quality: data.digestion_quality,
+        bloating: data.bloating,
+        water_liters: data.water_liters,
+        sleep_quality: data.sleep_quality,
+        meals_respected: data.meals_respected,
+        prep_difficulty: data.prep_difficulty,
+        small_victories: data.small_victories,
+        remaining_blockers: data.remaining_blockers,
+        notes: data.notes,
+        created_at: new Date().toISOString()
+      };
+      const next = [created, ...readSuivis()];
+      writeSuivis(next);
+      setSuivis((previous) => [created, ...previous]);
+      return created;
+    }
+
     const {
       data: { user }
     } = await supabase.auth.getUser();

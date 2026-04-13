@@ -4,7 +4,8 @@ import Button from "../components/ui/Button";
 import Card from "../components/ui/Card";
 import EmptyState from "../components/ui/EmptyState";
 import Input from "../components/ui/Input";
-import { supabase } from "../lib/supabaseClient";
+import { readClientProduits, readClients, writeClientProduits } from "../lib/localData";
+import { hasSupabaseEnv, supabase } from "../lib/supabaseClient";
 import type { Client, ClientProduit } from "../lib/types";
 
 const defaultProgramForm = {
@@ -28,6 +29,13 @@ export function SuiviPVPage() {
   useEffect(() => {
     async function loadData() {
       setLoading(true);
+      if (!hasSupabaseEnv) {
+        setClients(readClients().sort((left, right) => left.last_name.localeCompare(right.last_name)));
+        setPrograms(readClientProduits().sort((left, right) => right.start_date.localeCompare(left.start_date)));
+        setLoading(false);
+        return;
+      }
+
       const [{ data: clients }, { data: products }] = await Promise.all([
         supabase.from("clients").select("*").order("last_name", { ascending: true }),
         supabase.from("client_produits").select("*").order("start_date", { ascending: false })
@@ -76,6 +84,29 @@ export function SuiviPVPage() {
     setFormError(null);
 
     try {
+      if (!hasSupabaseEnv) {
+        const expectedEndDate = new Date(formState.start_date);
+        expectedEndDate.setDate(expectedEndDate.getDate() + Number(formState.duration_days));
+        const created: ClientProduit = {
+          id: crypto.randomUUID(),
+          client_id: formState.client_id,
+          coach_id: "demo-user",
+          produit_name: formState.produit_name,
+          start_date: formState.start_date,
+          expected_end_date: expectedEndDate.toISOString().slice(0, 10),
+          pv: formState.pv ? Number(formState.pv) : undefined,
+          price_public: formState.price_public ? Number(formState.price_public) : undefined,
+          status: "actif",
+          created_at: new Date().toISOString()
+        };
+        const next = [created, ...readClientProduits()];
+        writeClientProduits(next);
+        setPrograms(next);
+        setFormState(defaultProgramForm);
+        setModalOpen(false);
+        return;
+      }
+
       const {
         data: { user }
       } = await supabase.auth.getUser();

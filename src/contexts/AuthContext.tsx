@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import type { Session, User } from "@supabase/supabase-js";
-import { supabase } from "../lib/supabaseClient";
+import { hasSupabaseEnv, supabase } from "../lib/supabaseClient";
 import type { Profile } from "../lib/types";
 
 interface AuthContextType {
@@ -43,6 +43,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   useEffect(() => {
+    if (!hasSupabaseEnv) {
+      setUser({
+        id: "demo-user",
+        email: "demo@lor-squad.local",
+        app_metadata: {},
+        user_metadata: {},
+        aud: "authenticated",
+        created_at: new Date().toISOString()
+      } as User);
+      setSession(null);
+      setProfile({
+        id: "demo-user",
+        full_name: "Coach Démo",
+        role: "coach",
+        avatar_url: null,
+        created_at: new Date().toISOString()
+      });
+      setLoading(false);
+      return;
+    }
+
     void supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
       setSession(currentSession);
       setUser(currentSession?.user ?? null);
@@ -73,6 +94,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   async function signOut() {
+    if (!hasSupabaseEnv) {
+      return;
+    }
+
     await supabase.auth.signOut();
   }
 

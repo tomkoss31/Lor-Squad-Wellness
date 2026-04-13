@@ -7,7 +7,8 @@ import Card from "../components/ui/Card";
 import EmptyState from "../components/ui/EmptyState";
 import Input from "../components/ui/Input";
 import { useClients } from "../hooks/useClients";
-import { supabase } from "../lib/supabaseClient";
+import { readBilans } from "../lib/localData";
+import { hasSupabaseEnv, supabase } from "../lib/supabaseClient";
 import type { Bilan, Client } from "../lib/types";
 
 type SortMode = "created_at" | "name" | "last_bilan";
@@ -44,6 +45,19 @@ export function ClientsPage() {
 
   useEffect(() => {
     async function fetchBilans() {
+      if (!hasSupabaseEnv) {
+        const map: Record<string, string> = {};
+        readBilans()
+          .sort((left, right) => right.date.localeCompare(left.date))
+          .forEach((bilan) => {
+            if (!map[bilan.client_id]) {
+              map[bilan.client_id] = bilan.date;
+            }
+          });
+        setLastBilans(map);
+        return;
+      }
+
       const { data, error } = await supabase.from("bilans").select("client_id, date").order("date", { ascending: false });
       if (error) {
         console.error(error);

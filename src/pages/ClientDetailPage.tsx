@@ -11,7 +11,8 @@ import { useClients } from "../hooks/useClients";
 import { useBilans } from "../hooks/useBilans";
 import { useBodyScans } from "../hooks/useBodyScans";
 import { useSuivis } from "../hooks/useSuivis";
-import { supabase } from "../lib/supabaseClient";
+import { readClientProduits, writeClientProduits } from "../lib/localData";
+import { hasSupabaseEnv, supabase } from "../lib/supabaseClient";
 import type { ClientProduit } from "../lib/types";
 
 type DetailTab = "profil" | "bilans" | "scan" | "suivis" | "products";
@@ -63,6 +64,15 @@ export function ClientDetailPage() {
   useEffect(() => {
     async function fetchPrograms() {
       if (!id) {
+        return;
+      }
+
+      if (!hasSupabaseEnv) {
+        setPrograms(
+          readClientProduits()
+            .filter((program) => program.client_id === id)
+            .sort((left, right) => right.start_date.localeCompare(left.start_date))
+        );
         return;
       }
 
@@ -148,11 +158,38 @@ export function ClientDetailPage() {
   async function handleAddProgram(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
+    if (!id) {
+      return;
+    }
+
+    if (!hasSupabaseEnv) {
+      const endDate = new Date(programForm.start_date);
+      endDate.setDate(endDate.getDate() + Number(programForm.duration_days));
+      const created: ClientProduit = {
+        id: crypto.randomUUID(),
+        client_id: id,
+        coach_id: "demo-user",
+        produit_name: programForm.produit_name,
+        start_date: programForm.start_date,
+        expected_end_date: endDate.toISOString().slice(0, 10),
+        pv: programForm.pv ? Number(programForm.pv) : undefined,
+        price_public: programForm.price_public ? Number(programForm.price_public) : undefined,
+        status: "actif",
+        created_at: new Date().toISOString()
+      };
+      const next = [created, ...readClientProduits()];
+      writeClientProduits(next);
+      setPrograms((previous) => [created, ...previous]);
+      setProgramModalOpen(false);
+      setProgramForm(emptyProgramForm);
+      return;
+    }
+
     const {
       data: { user }
     } = await supabase.auth.getUser();
 
-    if (!user || !id) {
+    if (!user) {
       return;
     }
 

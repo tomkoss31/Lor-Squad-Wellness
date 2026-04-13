@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
-import { supabase } from "../lib/supabaseClient";
+import { hasSupabaseEnv, supabase } from "../lib/supabaseClient";
+import { readClients, writeClients } from "../lib/localData";
 import type { Client } from "../lib/types";
 
 export function useClients() {
@@ -8,6 +9,13 @@ export function useClients() {
   const [error, setError] = useState<string | null>(null);
 
   const fetchClients = useCallback(async () => {
+    if (!hasSupabaseEnv) {
+      setClients(readClients());
+      setError(null);
+      setLoading(false);
+      return;
+    }
+
     try {
       setLoading(true);
       setError(null);
@@ -30,6 +38,29 @@ export function useClients() {
   }, [fetchClients]);
 
   async function createClient(data: Partial<Client>) {
+    if (!hasSupabaseEnv) {
+      const created: Client = {
+        id: crypto.randomUUID(),
+        coach_id: "demo-user",
+        first_name: data.first_name ?? "",
+        last_name: data.last_name ?? "",
+        email: data.email,
+        phone: data.phone,
+        birth_date: data.birth_date,
+        gender: data.gender,
+        height_cm: data.height_cm,
+        objective: data.objective,
+        notes: data.notes,
+        status: data.status ?? "actif",
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+      const next = [created, ...readClients()];
+      writeClients(next);
+      setClients(next);
+      return created;
+    }
+
     const {
       data: { user }
     } = await supabase.auth.getUser();
@@ -79,6 +110,15 @@ export function useClients() {
   }
 
   async function updateClient(id: string, data: Partial<Client>) {
+    if (!hasSupabaseEnv) {
+      const next = readClients().map((client) =>
+        client.id === id ? { ...client, ...data, updated_at: new Date().toISOString() } : client
+      );
+      writeClients(next);
+      setClients(next);
+      return;
+    }
+
     const snapshot = clients.find((client) => client.id === id);
     setClients((previous) =>
       previous.map((client) =>
