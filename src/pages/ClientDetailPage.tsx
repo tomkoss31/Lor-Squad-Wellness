@@ -15,7 +15,6 @@ import { HistoryTimeline } from "../components/client/HistoryTimeline";
 import { Button } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
 import { MetricTile } from "../components/ui/MetricTile";
-import { PageHeading } from "../components/ui/PageHeading";
 import { StatusBadge } from "../components/ui/StatusBadge";
 import { useAppContext } from "../context/AppContext";
 import { buildPvTrackingRecords, pvProductCatalog } from "../data/mockPvModule";
@@ -67,6 +66,7 @@ export function ClientDetailPage() {
   const [nextOwnerId, setNextOwnerId] = useState(client.distributorId);
   const [transferFeedback, setTransferFeedback] = useState("");
   const [showScheduleModal, setShowScheduleModal] = useState(false);
+  const [activeTab, setActiveTab] = useState(0);
   const activeFollowUp = getClientActiveFollowUp(currentClient, followUps);
   const canReassignClient = isAdmin(currentUser) || isReferent(currentUser);
   const assignableOwnerIds = getAccessibleOwnerIds(currentUser, users);
@@ -238,12 +238,112 @@ export function ClientDetailPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeading
-        eyebrow="Fiche client"
-        title={`${client.firstName} ${client.lastName}`}
-        description="Chiffres utiles, progression, cap actuel et prochaine action."
-      />
+      {/* Hero header client */}
+      <div className="glass-panel rounded-[24px] p-5 sm:p-6" style={{ position: 'relative', overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', top: -40, right: -40, width: 180, height: 180, borderRadius: '50%', background: 'rgba(201,168,76,0.06)', pointerEvents: 'none' }} />
+        <div className="flex flex-wrap items-center justify-between gap-4" style={{ position: 'relative' }}>
+          <div className="flex items-center gap-4">
+            <div style={{
+              width: 56, height: 56, borderRadius: '50%', flexShrink: 0,
+              background: 'rgba(201,168,76,0.15)', color: '#C9A84C',
+              border: '2px solid rgba(201,168,76,0.3)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontFamily: 'Syne, sans-serif', fontSize: 20, fontWeight: 700
+            }}>
+              {client.firstName[0]}{client.lastName[0]}
+            </div>
+            <div>
+              <div className="flex items-center gap-3">
+                <h1 style={{ fontFamily: 'Syne, sans-serif', fontSize: 22, fontWeight: 800, color: '#F0EDE8', margin: 0 }}>
+                  {client.firstName} {client.lastName}
+                </h1>
+                <StatusBadge
+                  label={client.started ? "Démarré" : "À démarrer"}
+                  tone={client.started ? "green" : "amber"}
+                />
+                <StatusBadge
+                  label={client.objective === "sport" ? "Sport" : "Perte de poids"}
+                  tone={client.objective === "sport" ? "green" : "blue"}
+                />
+              </div>
+              <p className="mt-1 text-sm text-[#7A8099]">
+                {client.currentProgram || "Programme à confirmer"} · {client.city ?? "Ville non renseignée"} · <Link to={`/distributors/${client.distributorId}`} className="font-medium text-[#C9A84C] transition hover:text-[#2DD4BF]">{client.distributorName}</Link>
+              </p>
+              <p className="mt-1 text-[11px] text-[#4A5068]">
+                Client depuis {formatDate(client.startDate ?? '')} · {client.assessments.length} bilan{client.assessments.length > 1 ? 's' : ''}
+              </p>
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Link
+              to={`/clients/${client.id}/follow-up/new`}
+              className="inline-flex min-h-[40px] items-center gap-2 rounded-[12px] border border-white/[0.1] bg-white/[0.04] px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/[0.08]"
+            >
+              📋 Suivi
+            </Link>
+            <Link
+              to="/assessments/new"
+              className="inline-flex min-h-[40px] items-center gap-2 rounded-[12px] bg-[#C9A84C] px-4 py-2 text-sm font-bold text-[#0B0D11] transition hover:brightness-105"
+            >
+              + Bilan
+            </Link>
+          </div>
+        </div>
 
+        {/* Recommandations actives */}
+        {recommendationCount > 0 && (
+          <div className="mt-4 flex items-center gap-3 rounded-[14px] border border-white/[0.06] bg-white/[0.02] px-4 py-3">
+            <span style={{ fontSize: 11, color: '#C9A84C', letterSpacing: '1px', textTransform: 'uppercase', fontWeight: 600 }}>Recommandations</span>
+            <StatusBadge
+              label={recommendationsContacted ? `${recommendationCount} contactées` : `${recommendationCount} à contacter`}
+              tone={recommendationsContacted ? "green" : "amber"}
+            />
+            {retainedProducts.length > 0 && (
+              <div className="flex flex-wrap gap-1 ml-2">
+                {retainedProducts.slice(0, 3).map((p, idx) => (
+                  <span key={idx} className="rounded-full bg-[rgba(201,168,76,0.08)] px-2.5 py-0.5 text-[10px] text-[#C9A84C]">{'name' in p ? (p as { name: string }).name : String(idx + 1)}</span>
+                ))}
+                {retainedProducts.length > 3 && <span className="text-[10px] text-[#4A5068]">+{retainedProducts.length - 3}</span>}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Tab bar */}
+      <div className="flex gap-1 rounded-[14px] border border-white/[0.07] bg-[#13161C] p-1" style={{ width: 'fit-content' }}>
+        {[
+          { label: 'Vue complète', icon: '📊' },
+          { label: 'Body Scan', icon: '⚖️', count: client.assessments.filter(a => a.bodyScan?.weight).length },
+          { label: 'Historique', icon: '📋', count: client.assessments.length },
+          { label: 'Actions', icon: '⚡' },
+        ].map((tab, i) => (
+          <button
+            key={tab.label}
+            onClick={() => setActiveTab(i)}
+            className="transition-all duration-150"
+            style={{
+              padding: '7px 14px', borderRadius: 10, border: 'none', cursor: 'pointer',
+              fontSize: 13, fontFamily: 'DM Sans, sans-serif', fontWeight: activeTab === i ? 500 : 400,
+              background: activeTab === i ? '#1A1E27' : 'transparent',
+              color: activeTab === i ? '#F0EDE8' : '#7A8099',
+              display: 'flex', alignItems: 'center', gap: 6,
+            }}
+          >
+            <span style={{ fontSize: 13 }}>{tab.icon}</span> {tab.label}
+            {tab.count !== undefined && tab.count > 0 && (
+              <span style={{
+                fontSize: 10, padding: '1px 6px', borderRadius: 10,
+                background: activeTab === i ? 'rgba(201,168,76,0.2)' : 'rgba(255,255,255,0.06)',
+                color: activeTab === i ? '#C9A84C' : '#4A5068'
+              }}>{tab.count}</span>
+            )}
+          </button>
+        ))}
+      </div>
+
+      {/* Tab 0: Vue complète (original layout) */}
+      {activeTab === 0 && (
       <div className="grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
         <Card className="space-y-5">
           <div className="flex flex-wrap items-center justify-between gap-4">
@@ -690,6 +790,187 @@ export function ClientDetailPage() {
           </Card>
         </div>
       </div>
+      )}
+
+      {/* Tab 1: Body Scan dédié */}
+      {activeTab === 1 && (
+        <Card className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="eyebrow-label">Body Scan</p>
+              <h2 className="mt-2 text-xl font-bold text-white" style={{ fontFamily: 'Syne, sans-serif' }}>
+                Évolution corporelle
+              </h2>
+            </div>
+            <Link
+              to={`/clients/${client.id}/follow-up/new`}
+              className="inline-flex min-h-[40px] items-center gap-2 rounded-[12px] bg-[#C9A84C] px-4 py-2 text-sm font-bold text-[#0B0D11]"
+            >
+              + Nouveau scan
+            </Link>
+          </div>
+
+          {/* Dernier scan en grand */}
+          {latestBodyScan && (
+            <>
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                {[
+                  { label: 'Poids', value: latestBodyScan.weight ? `${latestBodyScan.weight} kg` : '—', color: '#C9A84C' },
+                  { label: 'Masse grasse', value: latestBodyScan.bodyFat ? `${latestBodyScan.bodyFat}%` : '—', color: '#FB7185' },
+                  { label: 'Masse musc.', value: latestBodyScan.muscleMass ? `${latestBodyScan.muscleMass} kg` : '—', color: '#2DD4BF' },
+                  { label: 'Hydratation', value: latestBodyScan.hydration ? `${latestBodyScan.hydration}%` : '—', color: '#A78BFA' },
+                ].map(m => (
+                  <div key={m.label} className="rounded-[16px] bg-[#1A1E27] p-4 text-center" style={{ borderTop: `2px solid ${m.color}` }}>
+                    <div style={{ fontSize: 28, fontFamily: 'Syne, sans-serif', fontWeight: 800, color: m.color, lineHeight: 1 }}>{m.value}</div>
+                    <div className="mt-2 text-[11px] text-[#4A5068]">{m.label}</div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Métabolisme + viscéral */}
+              <div className="grid gap-3 sm:grid-cols-3">
+                {[
+                  { label: 'Graisse viscérale', value: latestBodyScan.visceralFat ?? '—', color: '#C9A84C' },
+                  { label: 'Âge métabolique', value: latestBodyScan.metabolicAge ? `${latestBodyScan.metabolicAge} ans` : '—', color: '#A78BFA' },
+                  { label: 'BMR', value: latestBodyScan.bmr ? `${latestBodyScan.bmr} kcal` : '—', color: '#F0C96A' },
+                ].map(m => (
+                  <div key={m.label} className="rounded-[14px] bg-[#1A1E27] p-3 text-center">
+                    <div style={{ fontSize: 20, fontFamily: 'Syne, sans-serif', fontWeight: 700, color: m.color as string }}>{m.value}</div>
+                    <div className="mt-1 text-[10px] text-[#4A5068]">{m.label}</div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+
+          {/* Graphique évolution */}
+          {client.assessments.length > 0 && (
+            <EvolutionChart assessments={client.assessments} />
+          )}
+
+          {/* Note: Insight cards détaillés visibles dans l'onglet "Vue complète" */}
+
+          {/* Historique scans tableau */}
+          {client.assessments.length > 1 && (
+            <div>
+              <p className="eyebrow-label mb-3">Historique des mesures</p>
+              <div className="rounded-[14px] border border-white/[0.07] overflow-hidden">
+                {client.assessments.filter(a => a.bodyScan?.weight).map((a, i) => {
+                  const scan = a.bodyScan;
+                  return (
+                    <div key={a.id ?? i} className="list-row flex items-center justify-between gap-3 px-4 py-3" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                      <span className="text-sm text-[#7A8099]">{formatDate(a.date)}</span>
+                      {scan?.weight && <span className="text-sm font-semibold text-[#C9A84C]">{scan.weight} kg</span>}
+                      {scan?.bodyFat && <span className="text-sm text-[#FB7185]">MG {scan.bodyFat}%</span>}
+                      {scan?.muscleMass && <span className="text-sm text-[#2DD4BF]">MM {scan.muscleMass} kg</span>}
+                      {scan?.hydration && <span className="text-sm text-[#A78BFA]">{scan.hydration}%</span>}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {!latestBodyScan && (
+            <div className="rounded-[20px] bg-white/[0.03] px-6 py-10 text-center">
+              <div style={{ fontSize: 32, marginBottom: 12 }}>⚖️</div>
+              <p className="text-sm text-[#7A8099]">Aucun body scan enregistré</p>
+              <Link
+                to={`/clients/${client.id}/follow-up/new`}
+                className="mt-4 inline-flex min-h-[40px] items-center gap-2 rounded-[12px] bg-[#C9A84C] px-4 py-2 text-sm font-bold text-[#0B0D11]"
+              >
+                Démarrer un body scan
+              </Link>
+            </div>
+          )}
+        </Card>
+      )}
+
+      {/* Tab 2: Historique bilans */}
+      {activeTab === 2 && (
+        <Card className="space-y-5">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="eyebrow-label">Historique</p>
+              <h2 className="mt-2 text-xl font-bold text-white" style={{ fontFamily: 'Syne, sans-serif' }}>
+                Bilans & suivis
+              </h2>
+            </div>
+            <Link
+              to="/assessments/new"
+              className="inline-flex min-h-[40px] items-center gap-2 rounded-[12px] bg-[#C9A84C] px-4 py-2 text-sm font-bold text-[#0B0D11]"
+            >
+              + Nouveau bilan
+            </Link>
+          </div>
+
+          <HistoryTimeline
+            entries={[...client.assessments]
+              .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+              .map((assessment) => ({
+                id: assessment.id ?? assessment.date,
+                date: assessment.date,
+                summary: assessment.summary,
+                weight: assessment.bodyScan?.weight,
+                hydration: assessment.bodyScan?.hydration,
+                editTo: assessment.type === "initial"
+                  ? `/clients/${client.id}/start-assessment/edit`
+                  : `/clients/${client.id}/assessments/${assessment.id}/edit`,
+                typeLabel: assessment.type === "initial" ? "Départ" : "Suivi",
+              }))}
+          />
+        </Card>
+      )}
+
+      {/* Tab 3: Actions rapides */}
+      {activeTab === 3 && (
+        <div className="grid gap-4 md:grid-cols-2">
+          <Card className="space-y-4">
+            <p className="eyebrow-label">Actions client</p>
+            <h2 className="text-lg font-bold text-white" style={{ fontFamily: 'Syne, sans-serif' }}>Raccourcis</h2>
+            <div className="space-y-3">
+              <LinkButton to={`/clients/${client.id}/follow-up/new`} label="Nouveau suivi" hint="Relire, mesurer et poser la suite" />
+              <LinkButton to={`/clients/${client.id}/start-assessment/edit`} label="Modifier le bilan de départ" hint="Corriger la date et les valeurs de référence" />
+              {latestAssessment && latestAssessment.id ? (
+                <LinkButton to={`/clients/${client.id}/assessments/${latestAssessment.id}/edit`} label="Modifier le dernier bilan" hint="Compléter une section oubliée ou corriger les valeurs" />
+              ) : null}
+              <button type="button" onClick={() => setShowScheduleModal(true)} className="w-full rounded-[22px] bg-white/[0.03] p-4 text-left transition hover:bg-white/[0.05]">
+                <p className="text-sm font-semibold text-white">Modifier le prochain rendez-vous</p>
+                <p className="mt-1 text-sm leading-6 text-[#7A8099]">Ajuster la date, l'heure ou le type de suivi</p>
+              </button>
+              <LinkButton
+                to={`/pv/clients?responsable=${encodeURIComponent(client.distributorId)}&client=${encodeURIComponent(client.id)}`}
+                label="Ouvrir la fiche point volume"
+                hint="Visualiser les commandes et le suivi produits"
+              />
+            </div>
+          </Card>
+
+          <Card className="space-y-4">
+            <p className="eyebrow-label">Fiche rapide</p>
+            <h2 className="text-lg font-bold text-white" style={{ fontFamily: 'Syne, sans-serif' }}>Infos clés</h2>
+            <div className="space-y-2">
+              <SummaryRow label="Objectif" value={latestQuestionnaire?.objectiveFocus ?? client.objective ?? "Non défini"} />
+              <SummaryRow label="Programme" value={client.currentProgram || "À confirmer"} />
+              <SummaryRow label="Prochain RDV" value={activeFollowUp ? formatDateTime(activeFollowUp.dueDate) : "Non planifié"} />
+              {waterNeed && <SummaryRow label="Eau recommandée" value={`${waterNeed.toFixed(1)}L / jour`} />}
+              {proteinRange && <SummaryRow label="Protéines" value={`${proteinRange[0]}–${proteinRange[1]}g / repas`} />}
+            </div>
+            {canReassignClient && (
+              <div className="mt-4 rounded-[18px] border border-white/[0.06] bg-white/[0.02] p-4">
+                <p className="text-[11px] text-[#4A5068] uppercase tracking-wider mb-3">Transférer le dossier</p>
+                <select value={nextOwnerId} onChange={(e) => setNextOwnerId(e.target.value)} className="mb-3">
+                  {assignableOwners.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
+                </select>
+                <Button className="w-full" onClick={() => void handleTransferClient()} disabled={nextOwnerId === client.distributorId}>
+                  Transférer
+                </Button>
+                {transferFeedback && <p className="mt-2 text-sm text-[#2DD4BF]">{transferFeedback}</p>}
+              </div>
+            )}
+          </Card>
+        </div>
+      )}
 
       {/* Schedule Modal */}
       {showScheduleModal && (
