@@ -23,6 +23,29 @@ export interface Client {
   updated_at: string
 }
 
+export interface BodyScan {
+  id: string
+  client_id: string
+  coach_id: string
+  bilan_id?: string
+  date: string
+  weight_kg?: number
+  fat_mass_percent?: number
+  fat_mass_kg?: number
+  muscle_mass_kg?: number
+  bone_mass_kg?: number
+  water_percent?: number
+  visceral_fat_level?: number
+  bmr?: number
+  metabolic_age?: number
+  bmi?: number
+  waist_cm?: number
+  hip_cm?: number
+  chest_cm?: number
+  notes?: string
+  created_at: string
+}
+
 export interface Bilan {
   id: string
   client_id: string
@@ -53,29 +76,6 @@ export interface Bilan {
   blockers?: string
   motivation_level?: number
   recommendations: Recommendation[]
-  notes?: string
-  created_at: string
-}
-
-export interface BodyScan {
-  id: string
-  client_id: string
-  coach_id: string
-  bilan_id?: string
-  date: string
-  weight_kg?: number
-  fat_mass_percent?: number
-  fat_mass_kg?: number
-  muscle_mass_kg?: number
-  bone_mass_kg?: number
-  water_percent?: number
-  visceral_fat_level?: number
-  bmr?: number
-  metabolic_age?: number
-  bmi?: number
-  waist_cm?: number
-  hip_cm?: number
-  chest_cm?: number
   notes?: string
   created_at: string
 }
