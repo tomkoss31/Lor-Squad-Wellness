@@ -20,8 +20,8 @@ var config = {
                 luxe: "0 2px 12px rgba(0,0,0,0.16), 0 18px 48px rgba(0,0,0,0.22)"
             },
             fontFamily: {
-                display: ["Syne", "Plus Jakarta Sans", "sans-serif"],
-                body: ["DM Sans", "Plus Jakarta Sans", "sans-serif"]
+                display: ["Plus Jakarta Sans", "Segoe UI", "sans-serif"],
+                body: ["Plus Jakarta Sans", "Segoe UI", "sans-serif"]
             },
             backgroundImage: {
                 "hero-mesh": "radial-gradient(circle at 86% 10%, rgba(89, 183, 255, 0.14), transparent 24%), radial-gradient(circle at 18% 8%, rgba(84, 64, 104, 0.14), transparent 24%), radial-gradient(circle at 50% 0%, rgba(255,255,255,0.03), transparent 28%)"
