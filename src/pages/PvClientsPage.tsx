@@ -205,7 +205,7 @@ export function PvClientsPage() {
       <Card className="space-y-5">
         <div className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr_auto] lg:items-end">
           <div className="space-y-2">
-            <label className="text-sm font-medium text-slate-300">Recherche client</label>
+            <label className="text-sm font-medium text-[#B0B4C4]">Recherche client</label>
             <input
               value={search}
               onChange={(event) => setSearch(event.target.value)}
@@ -214,7 +214,7 @@ export function PvClientsPage() {
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium text-slate-300">Programme</label>
+            <label className="text-sm font-medium text-[#B0B4C4]">Programme</label>
             <select value={programFilter} onChange={(event) => setProgramFilter(event.target.value)}>
               <option value="all">Tous les programmes</option>
               {programOptions.map((program) => (
@@ -233,7 +233,7 @@ export function PvClientsPage() {
 
         {isAdmin ? (
           <div className="space-y-3">
-            <p className="text-sm font-medium text-slate-300">Portefeuilles</p>
+            <p className="text-sm font-medium text-[#B0B4C4]">Portefeuilles</p>
             <div className="flex flex-wrap gap-2">
               {records.some((record) => record.responsibleId === currentUser.id) ? (
                 <ResponsibleFilterChip
@@ -269,7 +269,7 @@ export function PvClientsPage() {
         ) : (
           <div className="rounded-[22px] border border-white/8 bg-white/[0.03] px-5 py-4">
             <p className="eyebrow-label">Vue personnelle</p>
-            <p className="mt-2 text-sm leading-6 text-slate-300">
+            <p className="mt-2 text-sm leading-6 text-[#B0B4C4]">
               Cette vue ne montre que les clients du distributeur connecte.
             </p>
           </div>
@@ -279,7 +279,7 @@ export function PvClientsPage() {
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1.05fr)_400px]">
         <div className="space-y-4">
           {storageMode === "supabase" && filteredRecords.length === 0 ? (
-            <div className="rounded-[22px] border border-white/10 bg-white/[0.03] px-4 py-4 text-sm leading-6 text-slate-300">
+            <div className="rounded-[22px] border border-white/10 bg-white/[0.03] px-4 py-4 text-sm leading-6 text-[#B0B4C4]">
               Aucun dossier PV n&apos;est visible avec les filtres en cours. Essaie un autre portefeuille ou un autre programme.
             </div>
           ) : null}
@@ -290,7 +290,7 @@ export function PvClientsPage() {
                   <p className="eyebrow-label">{isAdmin ? "Distributeur" : "Mes clients"}</p>
                   <p className="mt-2 text-xl text-white">{group.responsibleName}</p>
                 </div>
-                <div className="rounded-full bg-white/[0.04] px-4 py-2 text-sm font-medium text-slate-200">
+                <div className="rounded-full bg-white/[0.04] px-4 py-2 text-sm font-medium text-[#F0EDE8]">
                   {group.records.length} client{group.records.length > 1 ? "s" : ""}
                 </div>
               </div>
@@ -317,7 +317,7 @@ export function PvClientsPage() {
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div>
                         <p className="text-2xl font-semibold text-white">{record.clientName}</p>
-                        <p className="mt-2 text-sm text-slate-400">{record.responsibleName}</p>
+                        <p className="mt-2 text-sm text-[#7A8099]">{record.responsibleName}</p>
                       </div>
                       <div className="flex items-center gap-2">
                         {selectedRecord?.clientId === record.clientId ? (
@@ -340,7 +340,7 @@ export function PvClientsPage() {
                       {record.activeProducts.map((product) => (
                         <span
                           key={product.id}
-                          className="inline-flex items-center rounded-full bg-white/[0.03] px-3 py-2 text-xs font-semibold text-slate-200"
+                          className="inline-flex items-center rounded-full bg-white/[0.03] px-3 py-2 text-xs font-semibold text-[#F0EDE8]"
                         >
                           {product.productName} - {product.estimatedRemainingDays} j
                         </span>
@@ -380,8 +380,8 @@ function ResponsibleFilterChip({
       onClick={onClick}
       className={`inline-flex min-h-[40px] items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition ${
         active
-          ? "border-sky-300/18 bg-sky-400/[0.14] text-white"
-          : "border-white/10 bg-white/[0.03] text-slate-300 hover:bg-white/[0.06]"
+          ? "border-sky-300/18 bg-[rgba(45,212,191,0.14)] text-white"
+          : "border-white/10 bg-white/[0.03] text-[#B0B4C4] hover:bg-white/[0.06]"
       }`}
     >
       <span>{label}</span>
@@ -392,8 +392,8 @@ function ResponsibleFilterChip({
 
 function ClientFact({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-[18px] bg-slate-950/24 px-4 py-3">
-      <p className="text-[11px] font-medium text-slate-500">{label}</p>
+    <div className="rounded-[18px] bg-[#0B0D11]/60 px-4 py-3">
+      <p className="text-[11px] font-medium text-[#4A5068]">{label}</p>
       <p className="mt-2 text-sm font-semibold text-white">{value}</p>
     </div>
   );

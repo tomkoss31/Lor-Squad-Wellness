@@ -28,7 +28,7 @@ export function EvolutionChart({ assessments }: EvolutionChartProps) {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <p className="text-sm font-semibold text-white">Évolution des mesures clés</p>
-          <p className="text-xs text-slate-400">Poids, masse grasse et masse musculaire</p>
+          <p className="text-xs text-[#7A8099]">Poids, masse grasse et masse musculaire</p>
         </div>
         <div className="flex flex-wrap gap-2">
           {metricOptions.map((option) => (
@@ -38,8 +38,8 @@ export function EvolutionChart({ assessments }: EvolutionChartProps) {
               onClick={() => setMetricKey(option.key)}
               className={`rounded-full border px-3 py-2 text-xs font-medium transition ${
                 option.key === metricKey
-                  ? "border-white/15 bg-white text-slate-950"
-                  : "border-white/10 bg-white/[0.05] text-slate-300 hover:bg-white/[0.08]"
+                  ? "border-white/15 bg-white text-[#0B0D11]"
+                  : "border-white/10 bg-white/[0.05] text-[#B0B4C4] hover:bg-white/[0.08]"
               }`}
             >
               {option.label}
@@ -56,7 +56,7 @@ export function EvolutionChart({ assessments }: EvolutionChartProps) {
           return (
             <div
               key={assessment.id}
-              className="rounded-[22px] border border-white/10 bg-slate-950/35 p-4"
+              className="rounded-[22px] border border-white/10 bg-[#0B0D11]/80 p-4"
             >
               <div className="flex h-40 items-end">
                 <div
@@ -67,7 +67,7 @@ export function EvolutionChart({ assessments }: EvolutionChartProps) {
               <p className="mt-3 text-lg font-semibold text-white">
                 {value} {selectedOption.suffix}
               </p>
-              <p className="text-sm text-slate-400">
+              <p className="text-sm text-[#7A8099]">
                 {new Intl.DateTimeFormat("fr-FR", { day: "2-digit", month: "short" }).format(
                   new Date(assessment.date)
                 )}

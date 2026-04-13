@@ -25,14 +25,14 @@ export function ProgramCard({ program, selected = false, onSelect }: ProgramCard
 
         <div className="space-y-3">
           <h3 className="text-[1.75rem] leading-none text-white">{program.title}</h3>
-          <p className="text-sm leading-6 text-slate-300">{program.summary}</p>
+          <p className="text-sm leading-6 text-[#B0B4C4]">{program.summary}</p>
         </div>
 
         <div className="grid gap-2">
           {program.benefits.slice(0, 3).map((benefit) => (
             <div
               key={benefit}
-              className="rounded-[18px] bg-slate-950/24 px-4 py-3 text-sm text-slate-200"
+              className="rounded-[18px] bg-[#0B0D11]/60 px-4 py-3 text-sm text-[#F0EDE8]"
             >
               {benefit}
             </div>
@@ -41,14 +41,14 @@ export function ProgramCard({ program, selected = false, onSelect }: ProgramCard
 
         {program.composition?.length ? (
           <div className="space-y-3">
-            <p className="text-[10px] uppercase tracking-[0.18em] text-slate-500">
+            <p className="text-[10px] uppercase tracking-[0.18em] text-[#4A5068]">
               Contenu court
             </p>
             <div className="flex flex-wrap gap-2">
               {program.composition.map((item) => (
                 <span
                   key={item}
-                  className="rounded-full bg-white/[0.04] px-3 py-1.5 text-xs text-slate-200"
+                  className="rounded-full bg-white/[0.04] px-3 py-1.5 text-xs text-[#F0EDE8]"
                 >
                   {item}
                 </span>

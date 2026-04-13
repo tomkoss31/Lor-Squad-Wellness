@@ -84,10 +84,10 @@ export function PvTeamPage() {
               >
                 <div>
                   <p className="text-lg font-semibold text-white">{row.name}</p>
-                  <p className="mt-1 text-sm text-slate-400">{row.clients} clients actifs</p>
+                  <p className="mt-1 text-sm text-[#7A8099]">{row.clients} clients actifs</p>
                 </div>
-                <div className="text-sm text-slate-300">{row.pv} PV ce mois</div>
-                <div className="text-sm text-slate-300">{row.clients} dossiers suivis</div>
+                <div className="text-sm text-[#B0B4C4]">{row.pv} PV ce mois</div>
+                <div className="text-sm text-[#B0B4C4]">{row.clients} dossiers suivis</div>
               </div>
             ))}
           </div>
@@ -111,10 +111,10 @@ export function PvTeamPage() {
                 >
                   <div>
                     <p className="text-lg font-semibold text-white">{record.clientName}</p>
-                    <p className="mt-1 text-sm text-slate-400">{record.responsibleName}</p>
+                    <p className="mt-1 text-sm text-[#7A8099]">{record.responsibleName}</p>
                   </div>
                   <div className="text-sm font-semibold text-white">{record.monthlyPv} PV</div>
-                  <div className="text-sm text-slate-300">{record.program}</div>
+                  <div className="text-sm text-[#B0B4C4]">{record.program}</div>
                 </div>
               ))}
           </div>
@@ -136,13 +136,13 @@ export function PvTeamPage() {
                 >
                   <div>
                     <p className="text-sm font-semibold text-white">{record.clientName}</p>
-                    <p className="mt-1 text-xs text-slate-400">{record.responsibleName}</p>
+                    <p className="mt-1 text-xs text-[#7A8099]">{record.responsibleName}</p>
                   </div>
                   <PvStatusBadge status={record.status} />
                 </div>
               ))
             ) : (
-              <div className="rounded-[20px] bg-white/[0.03] px-4 py-4 text-sm text-slate-400">
+              <div className="rounded-[20px] bg-white/[0.03] px-4 py-4 text-sm text-[#7A8099]">
                 Aucune relance en attente pour le moment.
               </div>
             )}
@@ -163,7 +163,7 @@ export function PvTeamPage() {
                 >
                   <div>
                     <p className="text-sm font-semibold text-white">{record.clientName}</p>
-                    <p className="mt-1 text-xs text-slate-400">
+                    <p className="mt-1 text-xs text-[#7A8099]">
                       {record.estimatedRemainingDays} jours restants - {record.responsibleName}
                     </p>
                   </div>
@@ -171,7 +171,7 @@ export function PvTeamPage() {
                 </div>
               ))
             ) : (
-              <div className="rounded-[20px] bg-white/[0.03] px-4 py-4 text-sm text-slate-400">
+              <div className="rounded-[20px] bg-white/[0.03] px-4 py-4 text-sm text-[#7A8099]">
                 Rien de sensible a signaler pour l&apos;instant.
               </div>
             )}

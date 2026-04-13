@@ -142,7 +142,7 @@ export function PvOverviewPage() {
       <Card className="space-y-5">
         <div className="grid gap-4 xl:grid-cols-[1.25fr_repeat(3,minmax(0,0.8fr))]">
           <div className="space-y-2">
-            <label className="text-sm font-medium text-slate-300">Recherche client</label>
+            <label className="text-sm font-medium text-[#B0B4C4]">Recherche client</label>
             <input
               value={search}
               onChange={(event) => setSearch(event.target.value)}
@@ -203,7 +203,7 @@ export function PvOverviewPage() {
 
         {isAdmin ? (
           <div className="space-y-3">
-            <p className="text-sm font-medium text-slate-300">Portefeuilles</p>
+            <p className="text-sm font-medium text-[#B0B4C4]">Portefeuilles</p>
             <div className="flex flex-wrap gap-2">
               {records.some((record) => record.responsibleId === currentUser.id) ? (
                 <ResponsibleFilterChip
@@ -240,7 +240,7 @@ export function PvOverviewPage() {
         ) : (
           <div className="rounded-[22px] border border-white/8 bg-white/[0.03] px-5 py-4">
             <p className="eyebrow-label">Vue personnelle</p>
-            <p className="mt-2 text-sm leading-6 text-slate-300">
+            <p className="mt-2 text-sm leading-6 text-[#B0B4C4]">
               Cette vue ne montre que les clients du distributeur connecté.
             </p>
           </div>
@@ -254,19 +254,19 @@ export function PvOverviewPage() {
               <p className="eyebrow-label">Vue globale</p>
               <h2 className="mt-3 text-2xl text-white">Clients, démarrage et conso estimée</h2>
             </div>
-            <div className="rounded-[18px] bg-white/[0.03] px-4 py-3 text-sm text-slate-300">
+            <div className="rounded-[18px] bg-white/[0.03] px-4 py-3 text-sm text-[#B0B4C4]">
               {filteredRecords.length} dossiers
             </div>
           </div>
 
           <div className="overflow-x-auto">
             {storageMode === "supabase" && records.length === 0 ? (
-              <div className="mb-4 rounded-[22px] border border-white/10 bg-white/[0.03] px-4 py-4 text-sm leading-6 text-slate-300">
+              <div className="mb-4 rounded-[22px] border border-white/10 bg-white/[0.03] px-4 py-4 text-sm leading-6 text-[#B0B4C4]">
                 Aucun dossier PV actif n&apos;est encore visible avec les filtres en cours.
               </div>
             ) : null}
             <div className="min-w-[1120px] space-y-2">
-              <div className="grid grid-cols-[1.4fr_1fr_1fr_1fr_0.8fr_0.9fr_0.9fr_0.9fr_1fr_0.7fr] gap-3 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">
+              <div className="grid grid-cols-[1.4fr_1fr_1fr_1fr_0.8fr_0.9fr_0.9fr_0.9fr_1fr_0.7fr] gap-3 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#4A5068]">
                 <span>Client</span>
                 <span>Programme</span>
                 <span>Date démarrage</span>
@@ -297,19 +297,19 @@ export function PvOverviewPage() {
                   >
                     <div>
                       <p className="text-sm font-semibold text-white">{record.clientName}</p>
-                      <p className="mt-1 text-xs text-slate-400">Suivi le {formatDate(record.lastFollowUpDate)}</p>
+                      <p className="mt-1 text-xs text-[#7A8099]">Suivi le {formatDate(record.lastFollowUpDate)}</p>
                     </div>
-                    <div className="text-sm text-slate-300">{record.program}</div>
-                    <div className="text-sm text-slate-300">{formatDate(record.startDate)}</div>
-                    <div className="text-sm text-slate-300">{formatDate(record.lastOrderDate)}</div>
+                    <div className="text-sm text-[#B0B4C4]">{record.program}</div>
+                    <div className="text-sm text-[#B0B4C4]">{formatDate(record.startDate)}</div>
+                    <div className="text-sm text-[#B0B4C4]">{formatDate(record.lastOrderDate)}</div>
                     <div className="text-sm font-semibold text-white">{record.pvCumulative} PV</div>
-                    <div className="text-sm text-slate-300">{record.daysSinceStart} j</div>
-                    <div className="text-sm text-slate-300">{record.estimatedRemainingDays} j</div>
+                    <div className="text-sm text-[#B0B4C4]">{record.daysSinceStart} j</div>
+                    <div className="text-sm text-[#B0B4C4]">{record.estimatedRemainingDays} j</div>
                     <div>
                       <PvStatusBadge status={record.status} />
-                      <p className="mt-1 text-[11px] text-slate-500">{statusMeta.label}</p>
+                      <p className="mt-1 text-[11px] text-[#4A5068]">{statusMeta.label}</p>
                     </div>
-                    <div className="text-sm text-slate-300">{record.responsibleName}</div>
+                    <div className="text-sm text-[#B0B4C4]">{record.responsibleName}</div>
                     <div>
                       <span
                         className={`inline-flex min-h-[40px] items-center justify-center rounded-full px-4 py-2 text-xs font-semibold transition ${
@@ -347,7 +347,7 @@ function ToolbarSelect({
 }) {
   return (
     <div className="space-y-2">
-      <label className="text-sm font-medium text-slate-300">{label}</label>
+      <label className="text-sm font-medium text-[#B0B4C4]">{label}</label>
       <select value={value} onChange={(event) => onChange(event.target.value)}>
         {options.map((option) => (
           <option key={option.value} value={option.value}>
@@ -362,7 +362,7 @@ function ToolbarSelect({
 function ToolbarInfo({ label, value }: { label: string; value: string }) {
   return (
     <div className="space-y-2">
-      <label className="text-sm font-medium text-slate-300">{label}</label>
+      <label className="text-sm font-medium text-[#B0B4C4]">{label}</label>
       <div className="rounded-[18px] border border-white/8 bg-white/[0.03] px-4 py-3 text-sm font-medium text-white">
         {value}
       </div>
@@ -387,8 +387,8 @@ function ResponsibleFilterChip({
       onClick={onClick}
       className={`inline-flex min-h-[40px] items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition ${
         active
-          ? "border-sky-300/18 bg-sky-400/[0.14] text-white"
-          : "border-white/10 bg-white/[0.03] text-slate-300 hover:bg-white/[0.06]"
+          ? "border-sky-300/18 bg-[rgba(45,212,191,0.14)] text-white"
+          : "border-white/10 bg-white/[0.03] text-[#B0B4C4] hover:bg-white/[0.06]"
       }`}
     >
       <span>{label}</span>

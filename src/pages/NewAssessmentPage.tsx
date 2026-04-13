@@ -1054,7 +1054,7 @@ export function NewAssessmentPage() {
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="font-display text-xl text-white">{panelTitle}</p>
-          <p className="mt-2 text-sm leading-6 text-slate-400">{panelIntro}</p>
+          <p className="mt-2 text-sm leading-6 text-[#7A8099]">{panelIntro}</p>
         </div>
         <StatusBadge label={`Étape ${currentStep + 1}`} tone="blue" />
       </div>
@@ -1063,12 +1063,12 @@ export function NewAssessmentPage() {
           <FocusPanelItem key={point} text={point} highlighted={index === 0} />
         ))}
       </div>
-      <div className="rounded-[18px] bg-slate-950/24 px-4 py-3 text-sm leading-6 text-slate-200">
+      <div className="rounded-[18px] bg-[#0B0D11]/60 px-4 py-3 text-sm leading-6 text-[#F0EDE8]">
         {prompts[0]}
       </div>
       {currentStep === 0 ? (
         <div className="space-y-2 rounded-[18px] bg-white/[0.03] px-4 py-4">
-          <label className="text-sm font-medium text-slate-300">
+          <label className="text-sm font-medium text-[#B0B4C4]">
             Invite par / recommande par
           </label>
           <input
@@ -1087,7 +1087,7 @@ export function NewAssessmentPage() {
         <div className="flex items-start justify-between gap-3">
           <div>
             <p className="font-display text-2xl text-white">{panelTitle}</p>
-            <p className="mt-2 text-sm leading-6 text-slate-400">{panelIntro}</p>
+            <p className="mt-2 text-sm leading-6 text-[#7A8099]">{panelIntro}</p>
           </div>
           <StatusBadge label="Aide terrain" tone="blue" />
         </div>
@@ -1098,7 +1098,7 @@ export function NewAssessmentPage() {
         </div>
         {currentStep === 0 ? (
           <div className="space-y-2 rounded-[20px] bg-white/[0.03] px-4 py-4">
-            <label className="text-sm font-medium text-slate-300">
+            <label className="text-sm font-medium text-[#B0B4C4]">
               Invite par / recommande par
             </label>
             <input
@@ -1106,7 +1106,7 @@ export function NewAssessmentPage() {
               onChange={(event) => update("referredByName", event.target.value)}
               placeholder="Exemple : Sylvie"
             />
-            <p className="text-xs leading-6 text-slate-400">
+            <p className="text-xs leading-6 text-[#7A8099]">
               Note ici la personne qui a amene ce client pour garder le lien de recommandation sans
               surcharger l&apos;ecran principal.
             </p>
@@ -1119,7 +1119,7 @@ export function NewAssessmentPage() {
           <p className="eyebrow-label">A dire simplement</p>
           <div className="grid gap-2">
             {prompts.slice(0, 2).map((prompt) => (
-              <div key={prompt} className="rounded-[20px] bg-slate-950/24 px-4 py-3 text-sm text-slate-200">
+              <div key={prompt} className="rounded-[20px] bg-[#0B0D11]/60 px-4 py-3 text-sm text-[#F0EDE8]">
                 {prompt}
               </div>
             ))}
@@ -1202,7 +1202,7 @@ export function NewAssessmentPage() {
                   />
                   {currentUser?.role === "admin" ? (
                     <div className="space-y-2">
-                      <label className="text-sm font-medium text-slate-300">
+                      <label className="text-sm font-medium text-[#B0B4C4]">
                         Responsable du dossier
                       </label>
                       <select
@@ -1216,7 +1216,7 @@ export function NewAssessmentPage() {
                         ))}
                       </select>
                       {!isAdmin(currentUser) ? (
-                        <p className="text-xs leading-6 text-slate-400">
+                        <p className="text-xs leading-6 text-[#7A8099]">
                           Tu peux attribuer le dossier a toi-meme ou a un distributeur de ton equipe.
                         </p>
                       ) : null}
@@ -1295,7 +1295,7 @@ export function NewAssessmentPage() {
                           value={weightLossPace.label}
                         />
                       </div>
-                      <div className="rounded-[22px] bg-white/[0.03] px-4 py-4 text-sm leading-6 text-slate-300">
+                      <div className="rounded-[22px] bg-white/[0.03] px-4 py-4 text-sm leading-6 text-[#B0B4C4]">
                         En fonction du délai choisi, l&apos;app ajuste automatiquement le rythme moyen
                         à tenir et le repère protéines pour garder un cadre simple à expliquer.
                       </div>
@@ -1303,7 +1303,7 @@ export function NewAssessmentPage() {
                   )}
                   <div className="space-y-3 rounded-[24px] bg-white/[0.03] p-4">
                     <div className="flex items-center justify-between gap-3">
-                      <label className="text-sm font-medium text-slate-300">Motivation</label>
+                      <label className="text-sm font-medium text-[#B0B4C4]">Motivation</label>
                       <span className="text-sm font-semibold text-white">{form.motivation}/10</span>
                     </div>
                     <input
@@ -1452,7 +1452,7 @@ export function NewAssessmentPage() {
                     <h2 className="mt-3 text-3xl text-white md:text-[2.6rem]">
                       Relevé complet des mesures de départ
                     </h2>
-                    <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-300">
+                    <p className="mt-3 max-w-2xl text-sm leading-7 text-[#B0B4C4]">
                       Toutes les mesures body scan sont reunies ici pour construire une base claire
                       avant le suivi.
                     </p>
@@ -1508,7 +1508,7 @@ export function NewAssessmentPage() {
                     <h2 className="mt-3 text-3xl text-white md:text-[2.6rem]">
                       Lecture simple des valeurs de départ et des priorités
                     </h2>
-                    <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-300">
+                    <p className="mt-3 max-w-2xl text-sm leading-7 text-[#B0B4C4]">
                       On compare la base du jour, la cible et les ecarts utiles pour rendre le suivi
                       plus simple a expliquer.
                     </p>
@@ -1613,7 +1613,7 @@ export function NewAssessmentPage() {
                   }
                 />
                 {!startsImmediately ? (
-                  <p className="text-sm leading-6 text-slate-300">
+                  <p className="text-sm leading-6 text-[#B0B4C4]">
                     Le bilan sera enregistre, la personne apparaitra en attente dans les dossiers,
                     et elle ne comptera pas dans le module PV tant qu&apos;aucun programme n&apos;est demarre.
                   </p>
@@ -1660,7 +1660,7 @@ export function NewAssessmentPage() {
                     </div>
                   </div>
                 ) : (
-                  <div className="rounded-[24px] bg-white/[0.03] p-5 text-sm leading-7 text-slate-300">
+                  <div className="rounded-[24px] bg-white/[0.03] p-5 text-sm leading-7 text-[#B0B4C4]">
                     Le bilan ne fait pas encore ressortir une priorite forte. On peut partir sur une
                     base simple, puis personnaliser au premier suivi.
                   </div>
@@ -1674,7 +1674,7 @@ export function NewAssessmentPage() {
                     <p className="text-xl text-white">
                       {recommendedProgram?.title ?? "Base a confirmer"}
                     </p>
-                    <p className="mt-2 text-sm leading-6 text-slate-200">
+                    <p className="mt-2 text-sm leading-6 text-[#F0EDE8]">
                       {recommendationPlan.recommendedProgramReason}
                     </p>
                   </div>
@@ -1690,7 +1690,7 @@ export function NewAssessmentPage() {
                 ))}
               </div>
                 {boosterPrograms.length ? (
-                  <div className="rounded-[24px] border border-white/10 bg-slate-950/35 p-5">
+                  <div className="rounded-[24px] border border-white/10 bg-[#0B0D11]/80 p-5">
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
                       <p className="eyebrow-label">
@@ -1772,7 +1772,7 @@ export function NewAssessmentPage() {
                   <div className="max-w-3xl">
                     <p className="eyebrow-label">Conclusion du rendez-vous</p>
                     <p className="mt-3 text-4xl text-white">Une proposition claire, un cap simple et une suite déjà visible.</p>
-                    <p className="mt-3 text-sm leading-7 text-slate-300">
+                    <p className="mt-3 text-sm leading-7 text-[#B0B4C4]">
                       Cette synthese aide a reformuler le plan, confirmer le programme et terminer
                       le rendez-vous avec une direction nette.
                     </p>
@@ -1785,7 +1785,7 @@ export function NewAssessmentPage() {
 
                   <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_340px]">
                     <div className="space-y-4">
-                    <div className="rounded-[28px] bg-slate-950/24 p-5">
+                    <div className="rounded-[28px] bg-[#0B0D11]/60 p-5">
                       <div className="flex flex-wrap items-center justify-between gap-3">
                         <div>
                           <p className="eyebrow-label">Besoins detectes</p>
@@ -1814,26 +1814,26 @@ export function NewAssessmentPage() {
                           ))}
                         </div>
                       ) : (
-                        <div className="mt-5 rounded-[22px] bg-white/[0.03] px-4 py-4 text-sm leading-6 text-slate-200">
+                        <div className="mt-5 rounded-[22px] bg-white/[0.03] px-4 py-4 text-sm leading-6 text-[#F0EDE8]">
                           Une base simple suffit pour le moment. Les produits se personaliseront
                           au besoin dans le suivi.
                         </div>
                       )}
                     </div>
 
-                    <div className="rounded-[28px] bg-slate-950/24 p-5">
+                    <div className="rounded-[28px] bg-[#0B0D11]/60 p-5">
                       <p className="eyebrow-label">Programme conseille</p>
                       <div className="mt-4 flex flex-wrap items-start justify-between gap-3">
                         <div>
                           <p className="text-3xl text-white">
                             {selectedProgram?.title ?? recommendedProgram?.title ?? "Programme a confirmer"}
                           </p>
-                          <p className="mt-2 text-sm leading-6 text-slate-300">
+                          <p className="mt-2 text-sm leading-6 text-[#B0B4C4]">
                             {selectedProgram?.summary ??
                               recommendationPlan.recommendedProgramReason}
                           </p>
                         </div>
-                        <span className="rounded-full bg-sky-400/10 px-4 py-2 text-lg font-semibold text-sky-200">
+                        <span className="rounded-full bg-[rgba(45,212,191,0.1)] px-4 py-2 text-lg font-semibold text-[#2DD4BF]">
                           {selectedProgram?.price ?? recommendedProgram?.price ?? "Relance"}
                         </span>
                       </div>
@@ -1846,7 +1846,7 @@ export function NewAssessmentPage() {
                           ]).map((benefit) => (
                           <div
                             key={benefit}
-                            className="rounded-[22px] bg-white/[0.03] px-4 py-4 text-sm leading-6 text-slate-200"
+                            className="rounded-[22px] bg-white/[0.03] px-4 py-4 text-sm leading-6 text-[#F0EDE8]"
                           >
                             {benefit}
                           </div>
@@ -1931,10 +1931,10 @@ export function NewAssessmentPage() {
           </div>
           <div className="sticky bottom-3 z-20 -mx-1 mt-2 rounded-[24px] border border-white/10 bg-[linear-gradient(180deg,rgba(8,12,22,0.92),rgba(8,12,22,0.82))] p-3 shadow-luxe backdrop-blur-xl md:hidden">
             <div className="mb-3 flex items-center justify-between gap-3 px-1">
-              <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">
+              <p className="text-[11px] uppercase tracking-[0.22em] text-[#4A5068]">
                 Etape {currentStep + 1} / {steps.length}
               </p>
-              <p className="text-xs text-slate-400">{steps[currentStep]}</p>
+              <p className="text-xs text-[#7A8099]">{steps[currentStep]}</p>
             </div>
             <div className="grid grid-cols-2 gap-2">
               <Button
@@ -1976,7 +1976,7 @@ function StepVisualLoadingCard({ label }: { label: string }) {
       <p className="eyebrow-label">Chargement</p>
       <div className="rounded-[28px] bg-white/[0.03] p-6">
         <div className="h-64 rounded-[22px] bg-[linear-gradient(135deg,rgba(255,255,255,0.06),rgba(255,255,255,0.02))]" />
-        <p className="mt-4 text-sm text-slate-300">{label}</p>
+        <p className="mt-4 text-sm text-[#B0B4C4]">{label}</p>
       </div>
     </Card>
   );
@@ -2015,7 +2015,7 @@ class VisualStepBoundary extends Component<
           <StatusBadge label="Brouillon conserve" tone="amber" />
         </div>
         <div className="rounded-[24px] bg-white/[0.03] p-5">
-          <p className="text-sm leading-7 text-slate-300">
+          <p className="text-sm leading-7 text-[#B0B4C4]">
             Le visuel n&apos;a pas pu s&apos;afficher correctement. Les valeurs déjà saisies sont
             gardees automatiquement, tu peux reessayer sans perdre le bilan en cours.
           </p>
@@ -2061,7 +2061,7 @@ function RecommendationStepCard({
             <div>
               <p className="eyebrow-label">Liste nominative</p>
               <p className="mt-2 text-3xl text-white">Les personnes a qui offrir l&apos;experience</p>
-              <p className="mt-2 max-w-3xl text-sm leading-7 text-slate-300">
+              <p className="mt-2 max-w-3xl text-sm leading-7 text-[#B0B4C4]">
                 Note simplement un prenom et un contact par ligne.
               </p>
             </div>
@@ -2071,7 +2071,7 @@ function RecommendationStepCard({
           <label className="flex items-center justify-between gap-3 rounded-[22px] border border-white/10 bg-white/[0.03] px-4 py-4">
             <div>
               <p className="text-sm font-medium text-white">Recommandations contactées</p>
-              <p className="mt-1 text-sm text-slate-400">
+              <p className="mt-1 text-sm text-[#7A8099]">
                 Coche ici quand les contacts de ce bilan ont déjà été repris.
               </p>
             </div>
@@ -2087,12 +2087,12 @@ function RecommendationStepCard({
             <div className="rounded-[22px] bg-amber-400/[0.08] px-5 py-4">
               <p className="eyebrow-label text-amber-100/70">Palier cadeau 1</p>
               <p className="mt-2 text-xl text-white">A partir de 5 noms</p>
-              <p className="mt-2 text-sm leading-6 text-slate-300">Premier repere cadeau.</p>
+              <p className="mt-2 text-sm leading-6 text-[#B0B4C4]">Premier repere cadeau.</p>
             </div>
             <div className="rounded-[22px] bg-sky-400/[0.08] px-5 py-4">
-              <p className="eyebrow-label text-sky-100/70">Palier cadeau 2</p>
+              <p className="eyebrow-label text-[#2DD4BF]/70">Palier cadeau 2</p>
               <p className="mt-2 text-xl text-white">A partir de 10 noms</p>
-              <p className="mt-2 text-sm leading-6 text-slate-300">Deuxieme repere cadeau.</p>
+              <p className="mt-2 text-sm leading-6 text-[#B0B4C4]">Deuxieme repere cadeau.</p>
             </div>
           </div>
 
@@ -2146,12 +2146,12 @@ function RecommendationLineField({
 }) {
   return (
     <label className="block space-y-3">
-      <span className="text-sm font-medium text-slate-300">{label}</span>
+      <span className="text-sm font-medium text-[#B0B4C4]">{label}</span>
       <div className="relative rounded-[20px] bg-white/[0.02] px-4 py-4">
         <input
           value={value}
           onChange={(event) => onChange(event.target.value)}
-          className="w-full border-0 bg-transparent px-0 pb-2 text-base text-white placeholder:text-slate-500 focus:outline-none focus:ring-0"
+          className="w-full border-0 bg-transparent px-0 pb-2 text-base text-white placeholder:text-[#4A5068] focus:outline-none focus:ring-0"
           placeholder="Noter ici"
         />
         <div className="pointer-events-none absolute bottom-3 left-4 right-4 h-px bg-[linear-gradient(90deg,rgba(255,255,255,0.25),rgba(255,255,255,0.06))]" />
@@ -2175,7 +2175,7 @@ function Field({
 }) {
   return (
     <div className="space-y-2">
-      <label className="text-sm font-medium text-slate-300">{label}</label>
+      <label className="text-sm font-medium text-[#B0B4C4]">{label}</label>
       {type === "number" ? (
         <DecimalInput value={Number(value) || 0} onChange={onChange} step={step} />
       ) : (
@@ -2247,7 +2247,7 @@ function DecimalInput({
 function AreaField({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void; }) {
   return (
     <div className="space-y-2">
-      <label className="text-sm font-medium text-slate-300">{label}</label>
+      <label className="text-sm font-medium text-[#B0B4C4]">{label}</label>
       <textarea rows={4} value={value} onChange={(event) => onChange(event.target.value)} />
     </div>
   );
@@ -2268,10 +2268,10 @@ function ChoiceGroup({
 }) {
   return (
     <div className="space-y-2">
-      <label className="text-sm font-medium text-slate-300">{label}</label>
+      <label className="text-sm font-medium text-[#B0B4C4]">{label}</label>
       <div className="flex flex-wrap gap-2">
         {options.map((option) => (
-          <button key={option} type="button" onClick={() => onChange(option)} className={`rounded-full px-4 py-2 text-sm font-medium transition ${value === option ? "bg-white text-slate-950" : "border border-white/10 bg-white/[0.03] text-slate-200"}`}>
+          <button key={option} type="button" onClick={() => onChange(option)} className={`rounded-full px-4 py-2 text-sm font-medium transition ${value === option ? "bg-white text-[#0B0D11]" : "border border-white/10 bg-white/[0.03] text-[#F0EDE8]"}`}>
             {formatOption ? formatOption(option) : option}
           </button>
         ))}
@@ -2314,13 +2314,13 @@ function NeedProductGroup({
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="max-w-3xl space-y-2">
             <div className="flex flex-wrap items-center gap-3">
-              <p className="text-sm font-semibold uppercase tracking-[0.22em] text-slate-400">
+              <p className="text-sm font-semibold uppercase tracking-[0.22em] text-[#7A8099]">
                 {title}
               </p>
               <StatusBadge label={`${products.length} repere${products.length > 1 ? "s" : ""}`} tone="blue" />
             </div>
             <p className="text-lg font-medium text-white">{summary}</p>
-            <p className="text-sm leading-6 text-slate-300">{reasonLabel}</p>
+            <p className="text-sm leading-6 text-[#B0B4C4]">{reasonLabel}</p>
           </div>
         </div>
         <div className="grid gap-3">
@@ -2366,22 +2366,22 @@ function SuggestedProductCard({
     <div
       className={`rounded-[20px] p-3.5 transition ${
         selected
-          ? "border border-sky-300/25 bg-sky-400/[0.09]"
-          : "bg-slate-950/26"
+          ? "border border-[rgba(45,212,191,0.25)] bg-[rgba(45,212,191,0.09)]"
+          : "bg-[#1A1E27]"
       }`}
     >
       <div className="flex h-full flex-col gap-3">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 space-y-1.5">
             <p className="text-lg font-semibold text-white">{name}</p>
-            <p className="text-sm leading-6 text-slate-300">{shortBenefit}</p>
+            <p className="text-sm leading-6 text-[#B0B4C4]">{shortBenefit}</p>
           </div>
           <button
             type="button"
             onClick={onToggle}
             className={`inline-flex min-h-[34px] shrink-0 items-center justify-center rounded-full px-3.5 py-1.5 text-sm font-semibold transition ${
               selected
-                ? "bg-white text-slate-950"
+                ? "bg-white text-[#0B0D11]"
                 : "border border-white/10 bg-white/[0.03] text-white hover:bg-white/[0.08]"
             }`}
           >
@@ -2390,14 +2390,14 @@ function SuggestedProductCard({
         </div>
         <div className="mt-auto flex flex-wrap items-center gap-2">
           {quantityLabel ? (
-            <span className="rounded-full bg-white/[0.05] px-3 py-1 text-sm font-medium text-slate-200">
+            <span className="rounded-full bg-white/[0.05] px-3 py-1 text-sm font-medium text-[#F0EDE8]">
               {quantityLabel}
             </span>
           ) : null}
-          <span className="rounded-full bg-white/[0.05] px-3 py-1 text-sm font-medium text-slate-200">
+          <span className="rounded-full bg-white/[0.05] px-3 py-1 text-sm font-medium text-[#F0EDE8]">
             {dureeReferenceJours} jours
           </span>
-          <span className="rounded-full bg-sky-400/10 px-3 py-1 text-sm font-semibold text-sky-200">
+          <span className="rounded-full bg-[rgba(45,212,191,0.1)] px-3 py-1 text-sm font-semibold text-[#2DD4BF]">
             {formatPriceEuro(prixPublic)}
           </span>
           <span className="rounded-full bg-emerald-400/10 px-3 py-1 text-sm font-semibold text-emerald-100">
@@ -2424,7 +2424,7 @@ function TimelineChoiceField({
 
   return (
     <div className="space-y-3">
-      <label className="text-sm font-medium text-slate-300">{label}</label>
+      <label className="text-sm font-medium text-[#B0B4C4]">{label}</label>
       <div className="flex flex-wrap gap-2">
         {options.map((option) => (
           <button
@@ -2433,8 +2433,8 @@ function TimelineChoiceField({
             onClick={() => onChange(option)}
             className={`rounded-full px-4 py-2 text-sm font-medium transition ${
               value === option
-                ? "bg-white text-slate-950"
-                : "border border-white/10 bg-white/[0.03] text-slate-200"
+                ? "bg-white text-[#0B0D11]"
+                : "border border-white/10 bg-white/[0.03] text-[#F0EDE8]"
             }`}
           >
             {option}
@@ -2449,8 +2449,8 @@ function TimelineChoiceField({
           }}
           className={`rounded-full px-4 py-2 text-sm font-medium transition ${
             isCustom
-              ? "bg-white text-slate-950"
-              : "border border-dashed border-white/10 bg-white/[0.03] text-slate-200"
+              ? "bg-white text-[#0B0D11]"
+              : "border border-dashed border-white/10 bg-white/[0.03] text-[#F0EDE8]"
           }`}
         >
           Choix libre
@@ -2461,7 +2461,7 @@ function TimelineChoiceField({
         onChange={(event) => onChange(event.target.value)}
         placeholder="Ex : 2 mois, 4 mois, 5 mois"
       />
-      <p className="text-xs leading-6 text-slate-400">
+      <p className="text-xs leading-6 text-[#7A8099]">
         Tu peux choisir un délai rapide ou écrire librement un cap simple comme 2 mois, 4 mois ou
         5 mois.
       </p>
@@ -2474,7 +2474,7 @@ function SectionBlock({ title, description, children }: { title: string; descrip
     <div className="rounded-[24px] bg-white/[0.03] p-5">
       <div className="space-y-1">
         <p className="text-lg font-semibold text-white">{title}</p>
-        <p className="text-sm leading-6 text-slate-400">{description}</p>
+        <p className="text-sm leading-6 text-[#7A8099]">{description}</p>
       </div>
       <div className="mt-4 space-y-4">{children}</div>
     </div>
@@ -2482,7 +2482,7 @@ function SectionBlock({ title, description, children }: { title: string; descrip
 }
 
 function SummaryMini({ label, value }: { label: string; value: string }) {
-  return <div className="flex items-center justify-between gap-3 rounded-[20px] bg-white/[0.03] px-4 py-3"><span className="text-[11px] font-medium text-slate-500">{label}</span><span className="text-sm font-semibold text-white">{value}</span></div>;
+  return <div className="flex items-center justify-between gap-3 rounded-[20px] bg-white/[0.03] px-4 py-3"><span className="text-[11px] font-medium text-[#4A5068]">{label}</span><span className="text-sm font-semibold text-white">{value}</span></div>;
 }
 
 function FocusPanelItem({ text, highlighted = false }: { text: string; highlighted?: boolean }) {
@@ -2490,8 +2490,8 @@ function FocusPanelItem({ text, highlighted = false }: { text: string; highlight
     <div
       className={`rounded-[20px] px-4 py-3 text-sm leading-6 ${
         highlighted
-          ? "bg-sky-400/10 text-white"
-          : "bg-white/[0.03] text-slate-200"
+          ? "bg-[rgba(45,212,191,0.1)] text-white"
+          : "bg-white/[0.03] text-[#F0EDE8]"
       }`}
     >
       {text}
@@ -2500,13 +2500,13 @@ function FocusPanelItem({ text, highlighted = false }: { text: string; highlight
 }
 
 function ClosingLine({ text }: { text: string }) {
-  return <div className="rounded-2xl bg-slate-950/24 px-4 py-3 text-sm leading-6 text-white">{text}</div>;
+  return <div className="rounded-2xl bg-[#0B0D11]/60 px-4 py-3 text-sm leading-6 text-white">{text}</div>;
 }
 
 function SummaryHighlightCard({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-[22px] bg-white/[0.03] px-4 py-4">
-      <p className="text-[11px] font-medium text-slate-500">{label}</p>
+      <p className="text-[11px] font-medium text-[#4A5068]">{label}</p>
       <p className="mt-3 text-lg font-semibold text-white">{value}</p>
     </div>
   );
@@ -2538,7 +2538,7 @@ function ClientTotalCalculatorCard({
       <div className="rounded-[28px] border border-sky-300/16 bg-gradient-to-br from-sky-400/[0.12] via-slate-950/24 to-emerald-400/[0.06] p-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <p className="eyebrow-label text-sky-100/80">Lecture simple</p>
+            <p className="eyebrow-label text-[#2DD4BF]/80">Lecture simple</p>
             <p className="mt-2 text-2xl text-white">Ticket du jour</p>
           </div>
           <StatusBadge label={addOnProducts.length ? "Programme + ajouts" : "Programme seul"} tone="blue" />
@@ -2546,11 +2546,11 @@ function ClientTotalCalculatorCard({
 
       <div className="mt-5 space-y-3">
         <div className="rounded-[22px] bg-white/[0.04] px-4 py-4">
-          <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-slate-500">Base choisie</p>
+          <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-[#4A5068]">Base choisie</p>
             <div className="mt-3 flex items-start justify-between gap-3">
               <div>
                 <p className="text-lg font-semibold text-white">{programTitle}</p>
-                <p className="mt-2 text-sm leading-6 text-slate-300">
+                <p className="mt-2 text-sm leading-6 text-[#B0B4C4]">
                   {includedComposition.length ? includedComposition.join(" • ") : "Composition a confirmer"}
                 </p>
               </div>
@@ -2559,14 +2559,14 @@ function ClientTotalCalculatorCard({
               </span>
             </div>
             <div className="mt-3 flex items-center justify-between gap-3 rounded-[16px] bg-slate-950/22 px-3.5 py-2.5">
-              <p className="text-sm text-slate-300">Base choisie</p>
+              <p className="text-sm text-[#B0B4C4]">Base choisie</p>
               <p className="text-sm font-semibold text-white">{displayedProgramPrice || "A confirmer"}</p>
             </div>
           </div>
 
         <div className="rounded-[22px] bg-white/[0.03] px-4 py-4">
           <div className="flex items-center justify-between gap-3">
-              <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-slate-500">Ajouts</p>
+              <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-[#4A5068]">Ajouts</p>
             <span className="text-sm font-semibold text-white">{addOnProducts.length}</span>
           </div>
           {addOnProducts.length ? (
@@ -2574,18 +2574,18 @@ function ClientTotalCalculatorCard({
                 {addOnProducts.map((product) => (
                   <div
                     key={product.id}
-                    className="flex items-center justify-between gap-3 rounded-[16px] bg-slate-950/24 px-3.5 py-3"
+                    className="flex items-center justify-between gap-3 rounded-[16px] bg-[#0B0D11]/60 px-3.5 py-3"
                   >
                     <div>
                       <p className="text-sm font-semibold text-white">{product.name}</p>
-                      <p className="mt-1 text-xs text-slate-400">{formatPv(product.pv)}</p>
+                      <p className="mt-1 text-xs text-[#7A8099]">{formatPv(product.pv)}</p>
                     </div>
-                    <p className="text-sm font-semibold text-sky-100">+ {formatPriceEuro(product.prixPublic)}</p>
+                    <p className="text-sm font-semibold text-[#2DD4BF]">+ {formatPriceEuro(product.prixPublic)}</p>
                   </div>
                 ))}
               </div>
           ) : (
-            <p className="mt-3 text-sm leading-6 text-slate-300">
+            <p className="mt-3 text-sm leading-6 text-[#B0B4C4]">
               Aucun supplément ajouté pour l&apos;instant.
             </p>
           )}
@@ -2614,9 +2614,9 @@ function ClientTotalCalculatorCard({
 function QuickReadCard({ label, value, detail }: { label: string; value: string; detail: string }) {
   return (
     <div className="rounded-[20px] bg-white/[0.03] p-4">
-      <p className="text-[11px] font-medium text-slate-500">{label}</p>
+      <p className="text-[11px] font-medium text-[#4A5068]">{label}</p>
       <p className="mt-3 text-lg font-semibold text-white">{value}</p>
-      <p className="mt-2 text-sm leading-6 text-slate-400">{detail}</p>
+      <p className="mt-2 text-sm leading-6 text-[#7A8099]">{detail}</p>
     </div>
   );
 }
@@ -2645,7 +2645,7 @@ function ReferenceComparisonRow({
         ? "bg-rose-400/10 text-rose-100"
         : tone === "amber"
           ? "bg-amber-400/10 text-amber-100"
-          : "bg-sky-400/10 text-sky-100";
+          : "bg-[rgba(45,212,191,0.1)] text-[#2DD4BF]";
 
   return (
     <div className="grid gap-3 rounded-[24px] border border-white/10 bg-white/[0.03] px-4 py-4 md:grid-cols-[1.1fr_repeat(4,minmax(0,0.8fr))_minmax(0,1fr)] md:items-center">
@@ -2656,8 +2656,8 @@ function ReferenceComparisonRow({
       <ReferenceDatum label="Aujourd'hui" value={current} />
       <ReferenceDatum label="Cible" value={target} />
       <ReferenceDatum label="Ecart" value={gap} />
-      <div className="rounded-[18px] bg-slate-950/24 px-3.5 py-3">
-        <p className="text-[11px] font-medium text-slate-500">Priorite</p>
+      <div className="rounded-[18px] bg-[#0B0D11]/60 px-3.5 py-3">
+        <p className="text-[11px] font-medium text-[#4A5068]">Priorite</p>
         <p className={`mt-2 inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${toneClass}`}>
           {priority}
         </p>
@@ -2668,8 +2668,8 @@ function ReferenceComparisonRow({
 
 function ReferenceDatum({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-[18px] bg-slate-950/24 px-3.5 py-3">
-      <p className="text-[11px] font-medium text-slate-500">{label}</p>
+    <div className="rounded-[18px] bg-[#0B0D11]/60 px-3.5 py-3">
+      <p className="text-[11px] font-medium text-[#4A5068]">{label}</p>
       <p className="mt-2 text-sm font-semibold text-white">{value}</p>
     </div>
   );

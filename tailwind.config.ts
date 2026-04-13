@@ -5,15 +5,28 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        ink: "#07111F",
-        panel: "#0B1524",
-        "panel-alt": "#101A2A",
-        line: "rgba(255, 255, 255, 0.08)",
+        ink: "#0B0D11",
+        panel: "#13161C",
+        "panel-alt": "#1A1E27",
+        line: "rgba(255, 255, 255, 0.07)",
         glow: {
-          blue: "#59B7FF",
-          amber: "#EFC58D",
-          red: "#F08E98",
-          green: "#63D1A6"
+          blue: "#2DD4BF",
+          amber: "#C9A84C",
+          red: "#FB7185",
+          green: "#2DD4BF"
+        },
+        lor: {
+          bg: '#0B0D11',
+          surface: '#13161C',
+          surface2: '#1A1E27',
+          gold: '#C9A84C',
+          gold2: '#F0C96A',
+          teal: '#2DD4BF',
+          purple: '#A78BFA',
+          coral: '#FB7185',
+          text: '#F0EDE8',
+          muted: '#7A8099',
+          hint: '#4A5068',
         }
       },
       boxShadow: {
@@ -22,12 +35,13 @@ const config: Config = {
         luxe: "0 2px 12px rgba(0,0,0,0.16), 0 18px 48px rgba(0,0,0,0.22)"
       },
       fontFamily: {
-        display: ["Plus Jakarta Sans", "Segoe UI", "sans-serif"],
-        body: ["Plus Jakarta Sans", "Segoe UI", "sans-serif"]
+        display: ["Syne", "sans-serif"],
+        body: ["DM Sans", "sans-serif"],
+        sans: ["DM Sans", "sans-serif"],
       },
       backgroundImage: {
         "hero-mesh":
-          "radial-gradient(circle at 86% 10%, rgba(89, 183, 255, 0.14), transparent 24%), radial-gradient(circle at 18% 8%, rgba(84, 64, 104, 0.14), transparent 24%), radial-gradient(circle at 50% 0%, rgba(255,255,255,0.03), transparent 28%)"
+          "radial-gradient(ellipse 60% 40% at 15% 15%, rgba(201,168,76,0.09) 0%, transparent 60%), radial-gradient(ellipse 50% 40% at 85% 85%, rgba(45,212,191,0.07) 0%, transparent 60%)"
       }
     }
   },

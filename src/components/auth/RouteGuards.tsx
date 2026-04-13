@@ -68,16 +68,16 @@ function AuthBootSplash() {
   return (
     <div className="min-h-screen bg-hero-mesh px-4 py-8">
       <div className="mx-auto flex min-h-[calc(100vh-4rem)] max-w-[720px] items-center justify-center">
-        <div className="glass-panel w-full rounded-[32px] px-8 py-10 text-center">
+        <div className="glass-panel w-full rounded-[22px] px-8 py-10 text-center">
           <p className="eyebrow-label">Lor&apos;Squad Wellness</p>
           <h1 className="mt-4 text-3xl md:text-4xl">Ouverture de la session</h1>
-          <p className="mt-4 text-sm leading-7 text-slate-300">
+          <p className="mt-4 text-sm leading-7 text-[#B0B4C4]">
             On verifie simplement l&apos;acces pour rouvrir l&apos;espace dans de bonnes
             conditions.
           </p>
           {showRecovery ? (
             <div className="mt-6 space-y-3">
-              <p className="text-sm text-slate-400">
+              <p className="text-sm text-[#7A8099]">
                 Si l&apos;ecran reste bloque, tu peux reinitialiser la session et revenir a la
                 connexion.
               </p>

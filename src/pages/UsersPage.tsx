@@ -331,18 +331,18 @@ export function UsersPage() {
 
           <form className="space-y-4" onSubmit={handleSubmit}>
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-300">Nom affiche</label>
+              <label className="text-sm font-medium text-[#B0B4C4]">Nom affiche</label>
               <input value={name} onChange={(event) => setName(event.target.value)} placeholder="Exemple : Camille Martin" />
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-300">Email professionnel</label>
+              <label className="text-sm font-medium text-[#B0B4C4]">Email professionnel</label>
               <input type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="camille@lorsquadwellness.app" />
             </div>
 
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-300">Role</label>
+                <label className="text-sm font-medium text-[#B0B4C4]">Role</label>
                 <select value={role} onChange={(event) => setRole(event.target.value as User["role"])}>
                   <option value="distributor">Distributeur</option>
                   <option value="referent">Referent</option>
@@ -351,14 +351,14 @@ export function UsersPage() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-300">Mot de passe initial</label>
+                <label className="text-sm font-medium text-[#B0B4C4]">Mot de passe initial</label>
                 <input type="password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Choisir un mot de passe" />
               </div>
             </div>
 
             {role === "distributor" ? (
               <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-300">Rattachement referent / sponsor</label>
+                <label className="text-sm font-medium text-[#B0B4C4]">Rattachement referent / sponsor</label>
                 <select value={sponsorId} onChange={(event) => setSponsorId(event.target.value)}>
                   <option value="">Aucun rattachement pour l'instant</option>
                   {sponsorOptions.map((user) => (
@@ -370,7 +370,7 @@ export function UsersPage() {
               </div>
             ) : null}
 
-            <label className="flex items-center gap-3 rounded-[20px] bg-white/[0.04] px-4 py-3 text-sm text-slate-300">
+            <label className="flex items-center gap-3 rounded-[20px] bg-white/[0.04] px-4 py-3 text-sm text-[#B0B4C4]">
               <input type="checkbox" checked={active} onChange={(event) => setActive(event.target.checked)} className="h-4 w-4" />
               Compte actif des sa creation
             </label>
@@ -391,22 +391,22 @@ export function UsersPage() {
           <form className="space-y-4" onSubmit={handleRepairSubmit}>
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-300">Email Auth</label>
+                <label className="text-sm font-medium text-[#B0B4C4]">Email Auth</label>
                 <input type="email" value={repairEmail} onChange={(event) => setRepairEmail(event.target.value)} placeholder="priscalexnutrition@gmail.com" />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-300">ID Supabase (optionnel)</label>
+                <label className="text-sm font-medium text-[#B0B4C4]">ID Supabase (optionnel)</label>
                 <input value={repairUserId} onChange={(event) => setRepairUserId(event.target.value)} placeholder="2c6653c6-525a-48b7-8965-ee8439bf1798" />
               </div>
             </div>
 
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-300">Nom affiche (optionnel)</label>
+                <label className="text-sm font-medium text-[#B0B4C4]">Nom affiche (optionnel)</label>
                 <input value={repairName} onChange={(event) => setRepairName(event.target.value)} placeholder="Prisca et Alex" />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-300">Role</label>
+                <label className="text-sm font-medium text-[#B0B4C4]">Role</label>
                 <select value={repairRole} onChange={(event) => setRepairRole(event.target.value as User["role"])}>
                   <option value="referent">Referent</option>
                   <option value="distributor">Distributeur</option>
@@ -417,7 +417,7 @@ export function UsersPage() {
 
             {repairRole === "distributor" ? (
               <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-300">Rattachement referent / sponsor</label>
+                <label className="text-sm font-medium text-[#B0B4C4]">Rattachement referent / sponsor</label>
                 <select value={repairSponsorId} onChange={(event) => setRepairSponsorId(event.target.value)}>
                   <option value="">Aucun rattachement pour l'instant</option>
                   {sponsorOptions.map((user) => (
@@ -429,7 +429,7 @@ export function UsersPage() {
               </div>
             ) : null}
 
-            <label className="flex items-center gap-3 rounded-[20px] bg-white/[0.04] px-4 py-3 text-sm text-slate-300">
+            <label className="flex items-center gap-3 rounded-[20px] bg-white/[0.04] px-4 py-3 text-sm text-[#B0B4C4]">
               <input type="checkbox" checked={repairActive} onChange={(event) => setRepairActive(event.target.checked)} className="h-4 w-4" />
               Profil applicatif actif
             </label>
@@ -441,7 +441,7 @@ export function UsersPage() {
           </form>
 
           {storageMode === "supabase" ? (
-            <div className="rounded-[20px] bg-sky-400/10 px-4 py-4 text-sm leading-7 text-slate-200">
+            <div className="rounded-[20px] bg-[rgba(45,212,191,0.1)] px-4 py-4 text-sm leading-7 text-[#F0EDE8]">
               Si le compte existe dans Authentication mais pas ici, repare-le depuis ce bloc.
             </div>
           ) : null}
@@ -459,12 +459,12 @@ export function UsersPage() {
             <div className="space-y-3">
               <div className="rounded-[22px] bg-amber-400/10 px-4 py-4">
                 <p className="text-sm font-semibold text-white">Reinitialiser les acces beta</p>
-                <p className="mt-2 text-sm leading-7 text-slate-300">Repars sur les acces par defaut et ferme la session actuelle.</p>
+                <p className="mt-2 text-sm leading-7 text-[#B0B4C4]">Repars sur les acces par defaut et ferme la session actuelle.</p>
                 <Button className="mt-4" variant="secondary" onClick={resetAccessData}>Reinitialiser les acces</Button>
               </div>
               <div className="rounded-[22px] bg-rose-400/10 px-4 py-4">
                 <p className="text-sm font-semibold text-white">Vider la base clients locale</p>
-                <p className="mt-2 text-sm leading-7 text-slate-300">Supprime les dossiers et les suivis locaux pour repartir proprement.</p>
+                <p className="mt-2 text-sm leading-7 text-[#B0B4C4]">Supprime les dossiers et les suivis locaux pour repartir proprement.</p>
                 <Button className="mt-4" variant="secondary" onClick={clearBusinessData}>Vider les dossiers</Button>
               </div>
             </div>
@@ -472,11 +472,11 @@ export function UsersPage() {
             <div className="space-y-3">
               <div className="rounded-[22px] bg-emerald-400/10 px-4 py-4">
                 <p className="text-sm font-semibold text-white">Base distante active</p>
-                <p className="mt-2 text-sm leading-7 text-slate-300">Les comptes et l'arborescence equipe sont lus depuis Supabase.</p>
+                <p className="mt-2 text-sm leading-7 text-[#B0B4C4]">Les comptes et l'arborescence equipe sont lus depuis Supabase.</p>
               </div>
-              <div className="rounded-[22px] bg-sky-400/10 px-4 py-4">
+              <div className="rounded-[22px] bg-[rgba(45,212,191,0.1)] px-4 py-4">
                 <p className="text-sm font-semibold text-white">Importer les anciens dossiers</p>
-                <p className="mt-2 text-sm leading-7 text-slate-300">Si l'ancienne beta locale contient encore des dossiers, pousse-les ici.</p>
+                <p className="mt-2 text-sm leading-7 text-[#B0B4C4]">Si l'ancienne beta locale contient encore des dossiers, pousse-les ici.</p>
                 <Button className="mt-4" variant="secondary" onClick={() => void handleImportLocalData()}>Importer la base locale</Button>
                 {importStatus ? <p className="mt-3 text-sm text-white">{importStatus}</p> : null}
               </div>
@@ -513,7 +513,7 @@ function FilterPill({ label, active, onClick }: { label: string; active: boolean
       className={`min-h-[46px] rounded-full border px-4 text-sm font-semibold transition ${
         active
           ? "border-white/25 bg-white/12 text-white shadow-[0_10px_30px_rgba(8,15,30,0.24)]"
-          : "border-white/10 bg-white/[0.03] text-slate-300 hover:border-white/16 hover:bg-white/[0.06]"
+          : "border-white/10 bg-white/[0.03] text-[#B0B4C4] hover:border-white/16 hover:bg-white/[0.06]"
       }`}
     >
       {label}
@@ -522,13 +522,13 @@ function FilterPill({ label, active, onClick }: { label: string; active: boolean
 }
 
 function EmptyState({ text }: { text: string }) {
-  return <div className="rounded-[22px] bg-white/[0.03] px-4 py-4 text-sm leading-7 text-slate-400">{text}</div>;
+  return <div className="rounded-[22px] bg-white/[0.03] px-4 py-4 text-sm leading-7 text-[#7A8099]">{text}</div>;
 }
 
 function StatCard({ label, value }: { label: string; value: number }) {
   return (
     <Card className="space-y-2 rounded-[24px] p-5">
-      <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-slate-500">{label}</p>
+      <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-[#4A5068]">{label}</p>
       <p className="text-3xl font-semibold text-white">{value}</p>
     </Card>
   );
@@ -596,7 +596,7 @@ function OrganizationCluster({
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <p className="text-sm font-semibold text-white">{referent.name}</p>
-          <p className="mt-1 text-sm text-slate-400">{referent.email}</p>
+          <p className="mt-1 text-sm text-[#7A8099]">{referent.email}</p>
         </div>
         <StatusBadge
           label={`${distributors.length} distributeur${distributors.length > 1 ? "s" : ""}`}
@@ -657,13 +657,13 @@ function OrganizationUserCard({
   return (
     <div
       className={`rounded-[22px] px-4 py-4 ${
-        highlighted ? "bg-amber-400/[0.08] ring-1 ring-amber-400/12" : "bg-slate-950/24"
+        highlighted ? "bg-amber-400/[0.08] ring-1 ring-amber-400/12" : "bg-[#0B0D11]/60"
       }`}
     >
       <div className="flex items-center justify-between gap-3">
         <div>
           <p className="text-sm font-semibold text-white">{user.name}</p>
-          <p className="mt-1 text-sm text-slate-400">{getRoleLabel(user.role)}</p>
+          <p className="mt-1 text-sm text-[#7A8099]">{getRoleLabel(user.role)}</p>
         </div>
         <StatusBadge
           label={`${metrics.clients.length} clients`}
@@ -682,7 +682,7 @@ function OrganizationUserCard({
 function MiniMetric({ label, value }: { label: string; value: number }) {
   return (
     <div className="rounded-[18px] bg-white/[0.03] px-3 py-3 text-center">
-      <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-slate-500">{label}</p>
+      <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-[#4A5068]">{label}</p>
       <p className="mt-2 text-lg font-semibold text-white">{value}</p>
     </div>
   );
@@ -790,32 +790,32 @@ function UserAccessCard({
           <StatusBadge label={getRoleLabel(user.role)} tone={roleTone} />
           <StatusBadge label={user.active ? "Actif" : "Inactif"} tone={user.active ? "green" : "amber"} />
         </div>
-        <p className="text-sm text-slate-400">{user.email}</p>
-        <p className="break-all text-xs text-slate-500">{user.id}</p>
+        <p className="text-sm text-[#7A8099]">{user.email}</p>
+        <p className="break-all text-xs text-[#4A5068]">{user.id}</p>
         {user.sponsorName ? (
-          <p className="text-sm text-sky-100/80">Rattachement actuel : {user.sponsorName}</p>
+          <p className="text-sm text-[#2DD4BF]/80">Rattachement actuel : {user.sponsorName}</p>
         ) : null}
-        <p className="text-xs text-slate-500">
+        <p className="text-xs text-[#4A5068]">
           Cree le {user.createdAt ? formatDate(user.createdAt) : "Date non renseignee"}
         </p>
       </div>
 
-      <div className="grid gap-3 text-sm text-slate-300">
-        <div className="rounded-[18px] bg-slate-950/24 px-3 py-3">
-          <span className="text-slate-500">Portefeuille</span>
+      <div className="grid gap-3 text-sm text-[#B0B4C4]">
+        <div className="rounded-[18px] bg-[#0B0D11]/60 px-3 py-3">
+          <span className="text-[#4A5068]">Portefeuille</span>
           <p className="mt-1 font-medium text-white">
             {metrics.clients.length} clients - {metrics.relanceFollowUps.length} relances
           </p>
         </div>
-        <div className="rounded-[18px] bg-slate-950/24 px-3 py-3">
-          <span className="text-slate-500">Perimetre</span>
+        <div className="rounded-[18px] bg-[#0B0D11]/60 px-3 py-3">
+          <span className="text-[#4A5068]">Perimetre</span>
           <p className="mt-1 font-medium text-white">{perimeterLabel}</p>
         </div>
 
         {!isAdmin(user) ? (
-          <div className="grid gap-3 rounded-[18px] bg-slate-950/24 px-3 py-3">
+          <div className="grid gap-3 rounded-[18px] bg-[#0B0D11]/60 px-3 py-3">
             <div className="space-y-2">
-              <label className="text-xs font-medium uppercase tracking-[0.14em] text-slate-500">
+              <label className="text-xs font-medium uppercase tracking-[0.14em] text-[#4A5068]">
                 Role
               </label>
               <select
@@ -835,7 +835,7 @@ function UserAccessCard({
 
             {selectedRole === "distributor" ? (
               <div className="space-y-2">
-                <label className="text-xs font-medium uppercase tracking-[0.14em] text-slate-500">
+                <label className="text-xs font-medium uppercase tracking-[0.14em] text-[#4A5068]">
                   Rattachement referent / sponsor
                 </label>
                 <select
@@ -854,8 +854,8 @@ function UserAccessCard({
           </div>
         ) : null}
 
-        <div className="grid gap-2 rounded-[18px] bg-slate-950/24 px-3 py-3">
-          <label className="text-xs font-medium uppercase tracking-[0.14em] text-slate-500">
+        <div className="grid gap-2 rounded-[18px] bg-[#0B0D11]/60 px-3 py-3">
+          <label className="text-xs font-medium uppercase tracking-[0.14em] text-[#4A5068]">
             Redefinir le mot de passe
           </label>
           <input
@@ -893,7 +893,7 @@ function UserAccessCard({
         <Button variant="secondary" onClick={onToggleStatus}>
           {user.active ? "Desactiver" : "Reactiver"}
         </Button>
-        {feedback ? <p className="text-xs text-slate-400 xl:text-right">{feedback}</p> : null}
+        {feedback ? <p className="text-xs text-[#7A8099] xl:text-right">{feedback}</p> : null}
       </div>
     </div>
   );
@@ -905,11 +905,11 @@ function ActivityRow({ entry }: { entry: ActivityLog }) {
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-sm font-semibold text-white">{entry.summary}</p>
-          {entry.detail ? <p className="mt-1 text-sm leading-6 text-slate-400">{entry.detail}</p> : null}
+          {entry.detail ? <p className="mt-1 text-sm leading-6 text-[#7A8099]">{entry.detail}</p> : null}
         </div>
-        <p className="text-xs text-slate-500">{formatDateTime(entry.createdAt)}</p>
+        <p className="text-xs text-[#4A5068]">{formatDateTime(entry.createdAt)}</p>
       </div>
-      <p className="mt-3 text-xs text-slate-500">
+      <p className="mt-3 text-xs text-[#4A5068]">
         {entry.actorName}
         {entry.targetUserName ? ` - ${entry.targetUserName}` : ""}
         {entry.clientName ? ` - ${entry.clientName}` : ""}

@@ -28,7 +28,7 @@ export function PedagogicalSection({
         <div className="max-w-2xl">
           <p className="eyebrow-label">{eyebrow}</p>
           <h3 className="mt-2 text-[2rem] leading-none text-white md:text-[2.2rem]">{title}</h3>
-          <p className="mt-3 max-w-xl text-[15px] leading-7 text-slate-300">{subtitle}</p>
+          <p className="mt-3 max-w-xl text-[15px] leading-7 text-[#B0B4C4]">{subtitle}</p>
         </div>
         {statusLabel ? <StatusBadge label={statusLabel} tone={statusTone} /> : null}
       </div>
@@ -67,16 +67,16 @@ export function PedagogicalMetricCard({
               : "bg-gradient-to-r from-sky-400 via-cyan-300 to-transparent"
         }`}
       />
-      <p className="text-[11px] font-medium text-slate-500">{label}</p>
+      <p className="text-[11px] font-medium text-[#4A5068]">{label}</p>
       <p className="mt-3 text-[1.9rem] font-semibold leading-none text-white">{value}</p>
-      {note ? <p className="mt-2.5 text-sm leading-6 text-slate-400">{note}</p> : null}
+      {note ? <p className="mt-2.5 text-sm leading-6 text-[#7A8099]">{note}</p> : null}
     </div>
   );
 }
 
 export function PedagogicalPoint({ text }: { text: string }) {
   return (
-    <div className="rounded-[18px] bg-slate-950/24 px-4 py-3 text-sm text-slate-200">
+    <div className="rounded-[18px] bg-[#0B0D11]/60 px-4 py-3 text-sm text-[#F0EDE8]">
       {text}
     </div>
   );

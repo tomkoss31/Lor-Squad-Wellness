@@ -1,54 +1,68 @@
-import { cn } from "../../lib/utils";
-
 interface StepRailProps {
-  currentStep: number;
-  steps: string[];
+  currentStep: number
+  steps: string[]
 }
 
 export function StepRail({ currentStep, steps }: StepRailProps) {
-  return (
-    <div className="glass-panel rounded-[24px] p-3 sm:p-4">
-      <div className="flex items-center justify-between gap-3">
-        <p className="eyebrow-label">Parcours bilan</p>
-        <p className="text-[12px] text-slate-400">
-          Étape {currentStep + 1} / {steps.length}
-        </p>
-      </div>
-      <div className="mt-4 flex gap-3 overflow-x-auto pb-1">
-        {steps.map((step, index) => {
-          const isActive = index === currentStep;
-          const isComplete = index < currentStep;
+  const progress = steps.length > 1 ? (currentStep / (steps.length - 1)) * 100 : 0
 
+  return (
+    <div className="rounded-[18px] border border-white/[0.07] bg-[#13161C] p-4 md:p-5">
+      {/* Header */}
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <span className="eyebrow-label">
+          Étape {currentStep + 1} sur {steps.length}
+        </span>
+        <span
+          className="text-sm font-semibold text-[#C9A84C] text-right"
+          style={{ fontFamily: "Syne, sans-serif" }}
+        >
+          {steps[currentStep]}
+        </span>
+      </div>
+
+      {/* Barre de progression */}
+      <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/[0.06]">
+        <div
+          className="h-full rounded-full transition-all duration-500 ease-out"
+          style={{
+            width: `${progress}%`,
+            background: "linear-gradient(90deg, #C9A84C, #F0C96A)",
+          }}
+        />
+      </div>
+
+      {/* Points étapes desktop */}
+      <div className="mt-5 hidden xl:flex items-start justify-between">
+        {steps.map((step, index) => {
+          const isDone = index < currentStep
+          const isActive = index === currentStep
           return (
-            <div
-              key={step}
-              className={cn(
-                "min-w-[190px] flex-shrink-0 rounded-[22px] px-3.5 py-3.5 transition sm:min-w-[220px] sm:px-4",
-                isActive && "bg-[linear-gradient(180deg,rgba(89,183,255,0.14),rgba(89,183,255,0.08))] shadow-soft",
-                isComplete && "bg-[linear-gradient(180deg,rgba(99,209,166,0.12),rgba(99,209,166,0.06))]",
-                !isActive && !isComplete && "bg-white/[0.03]"
-              )}
-            >
-              <div className="flex items-center gap-3">
-                <div
-                  className={cn(
-                    "flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-semibold sm:text-sm",
-                    isActive && "bg-sky-300/90 text-slate-950",
-                    isComplete && "bg-emerald-300/90 text-slate-950",
-                    !isActive && !isComplete && "bg-white/10 text-slate-300"
-                  )}
-                >
-                  {index + 1}
-                </div>
-                <p className="text-[13px] font-semibold text-white sm:text-sm">{step}</p>
+            <div key={step} className="flex flex-col items-center gap-1.5" style={{ flex: 1 }}>
+              <div
+                className="flex h-7 w-7 items-center justify-center rounded-full text-[10px] font-bold transition-all duration-300"
+                style={{
+                  background: isDone
+                    ? "#C9A84C"
+                    : isActive
+                      ? "rgba(201,168,76,0.18)"
+                      : "rgba(255,255,255,0.04)",
+                  border: `2px solid ${isDone || isActive ? "#C9A84C" : "rgba(255,255,255,0.1)"}`,
+                  color: isDone ? "#0B0D11" : isActive ? "#C9A84C" : "#4A5068",
+                }}
+              >
+                {isDone ? "✓" : index + 1}
               </div>
-              <p className="mt-2 pl-12 text-[12px] text-slate-400">
-                {isActive ? "Étape en cours" : isComplete ? "Étape validée" : "Étape à venir"}
-              </p>
+              <span
+                className="text-center text-[9px] leading-tight"
+                style={{ color: isActive ? "#C9A84C" : "#4A5068", maxWidth: 56 }}
+              >
+                {step}
+              </span>
             </div>
-          );
+          )
         })}
       </div>
     </div>
-  );
+  )
 }

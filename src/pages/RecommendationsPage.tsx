@@ -71,7 +71,7 @@ export function RecommendationsPage() {
                   ? `${pendingCount} recommandation${pendingCount > 1 ? "s" : ""} restent à reprendre.`
                   : "Les recommandations visibles sont déjà reprises."}
               </h2>
-              <p className="mt-2 text-sm leading-6 text-slate-300">
+              <p className="mt-2 text-sm leading-6 text-[#B0B4C4]">
                 Tu ouvres le dossier, tu vois ce qui reste à faire, puis tu repars sur l’action.
               </p>
             </div>
@@ -132,7 +132,7 @@ export function RecommendationsPage() {
                               tone={item.recommendationsContacted ? "green" : "amber"}
                             />
                           </div>
-                          <p className="text-sm text-slate-400">
+                          <p className="text-sm text-[#7A8099]">
                             {item.programTitle} · {item.objectiveFocus}
                           </p>
                         </div>
@@ -145,7 +145,7 @@ export function RecommendationsPage() {
                           />
                         </div>
 
-                        <div className="text-sm text-slate-400 xl:text-right">
+                        <div className="text-sm text-[#7A8099] xl:text-right">
                           <p>{item.recommendationsContacted ? "Suivi relu" : "Rappel en attente"}</p>
                           <p className="mt-1">
                             {currentUser?.role === "admin" ? `Coach : ${item.distributorName}` : "Voir le dossier"}
@@ -162,7 +162,7 @@ export function RecommendationsPage() {
       ) : (
         <Card className="space-y-3">
           <p className="text-2xl text-white">Aucune recommandation visible</p>
-          <p className="text-sm leading-6 text-slate-400">
+          <p className="text-sm leading-6 text-[#7A8099]">
             Les recommandations notées dans les bilans apparaîtront ici, par coach et par dossier.
           </p>
         </Card>
@@ -185,10 +185,10 @@ function RecommendationMetricCard({
   return (
     <div className="rounded-[24px] bg-white/[0.03] px-5 py-4">
       <div className="flex items-center justify-between gap-3">
-        <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-slate-500">{label}</p>
+        <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-[#4A5068]">{label}</p>
         <StatusBadge label={String(value)} tone={tone} />
       </div>
-      <p className="mt-3 text-sm leading-6 text-slate-300">{hint}</p>
+      <p className="mt-3 text-sm leading-6 text-[#B0B4C4]">{hint}</p>
     </div>
   );
 }
@@ -197,15 +197,15 @@ function CompactReminder({ title, text }: { title: string; text: string }) {
   return (
     <div className="rounded-[22px] bg-white/[0.03] px-4 py-4">
       <p className="text-sm font-semibold text-white">{title}</p>
-      <p className="mt-2 text-sm leading-6 text-slate-400">{text}</p>
+      <p className="mt-2 text-sm leading-6 text-[#7A8099]">{text}</p>
     </div>
   );
 }
 
 function RecommendationFact({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-[20px] bg-slate-950/24 px-4 py-3">
-      <p className="text-[11px] font-medium text-slate-500">{label}</p>
+    <div className="rounded-[20px] bg-[#0B0D11]/60 px-4 py-3">
+      <p className="text-[11px] font-medium text-[#4A5068]">{label}</p>
       <p className="mt-2 text-sm font-semibold text-white">{value}</p>
     </div>
   );

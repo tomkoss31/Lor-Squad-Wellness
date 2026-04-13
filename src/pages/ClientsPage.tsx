@@ -1,292 +1,393 @@
-import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { supabase } from '../lib/supabase'
-import { useAuth } from '../contexts/AuthContext'
+import { useDeferredValue, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
+import { DistributorBadge } from "../components/client/DistributorBadge";
+import { Card } from "../components/ui/Card";
+import { MetricTile } from "../components/ui/MetricTile";
+import { PageHeading } from "../components/ui/PageHeading";
+import { StatusBadge } from "../components/ui/StatusBadge";
+import { useAppContext } from "../context/AppContext";
+import { getAccessibleOwnerIds } from "../lib/auth";
+import {
+  getActivePortfolioUsers,
+  getGroupedClientsByMonth,
+  getPortfolioOwnerIds,
+  getPortfolioMetrics,
+  isRelanceFollowUp
+} from "../lib/portfolio";
+import {
+  calculateProteinRange,
+  calculateWaterNeed,
+  formatDate,
+  formatDateTime,
+  getFirstAssessment,
+  getLatestAssessment,
+  getLatestBodyScan
+} from "../lib/calculations";
 
-interface Client {
-  id: string
-  first_name: string
-  last_name: string
-  email?: string
-  phone?: string
-  objective?: string
-  status: string
-  created_at: string
-}
+const statusLabels = {
+  active: { label: "Actif", tone: "green" as const },
+  pending: { label: "En attente", tone: "amber" as const },
+  "follow-up": { label: "Suivi", tone: "blue" as const }
+};
 
-const STATUS_COLORS: Record<string, { bg: string; text: string }> = {
-  actif:   { bg: 'rgba(45,212,191,0.12)',  text: '#2DD4BF' },
-  inactif: { bg: 'rgba(122,128,153,0.12)', text: '#7A8099' },
-  pause:   { bg: 'rgba(201,168,76,0.12)',  text: '#C9A84C' },
-}
+export function ClientsPage() {
+  const {
+    currentUser,
+    users,
+    visibleClients,
+    visibleFollowUps
+  } = useAppContext();
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "pending" | "follow-up">(
+    "all"
+  );
+  const [ownerFilter, setOwnerFilter] = useState("all");
+  const deferredSearch = useDeferredValue(search);
 
-const AVATAR_COLORS = ['#C9A84C', '#2DD4BF', '#A78BFA', '#FB7185', '#F0C96A', '#60A5FA']
+  const portfolioUsers = useMemo(
+    () => getActivePortfolioUsers(users, visibleClients, currentUser),
+    [currentUser, users, visibleClients]
+  );
+  const ownerTabs = currentUser
+    ? portfolioUsers.filter((user) => getAccessibleOwnerIds(currentUser, users).has(user.id))
+    : [];
+  const selectedOwner =
+    ownerFilter === "all"
+      ? null
+      : ownerTabs.find((user) => user.id === ownerFilter) ?? null;
+  const selectedOwnerIds =
+    selectedOwner && currentUser
+      ? getPortfolioOwnerIds(
+          selectedOwner,
+          users,
+          selectedOwner.role === "referent" ? "network" : "personal"
+        )
+      : null;
+  const normalizedSearch = deferredSearch.trim().toLowerCase();
+  const filteredClients = useMemo(() => {
+    return visibleClients.filter((client) => {
+      const firstAssessment = getFirstAssessment(client);
+      const matchesOwner =
+        ownerFilter === "all" || (selectedOwnerIds ? selectedOwnerIds.has(client.distributorId) : false);
+      const matchesStatus = statusFilter === "all" || client.status === statusFilter;
+      const matchesSearch =
+        !normalizedSearch ||
+        `${client.firstName} ${client.lastName} ${client.city ?? ""} ${client.currentProgram} ${firstAssessment.questionnaire.referredByName ?? ""}`
+          .toLowerCase()
+          .includes(normalizedSearch);
 
-function Avatar({ firstName, lastName, index }: { firstName: string; lastName: string; index: number }) {
-  const color = AVATAR_COLORS[index % AVATAR_COLORS.length]
-  const initials = `${firstName[0]}${lastName[0]}`.toUpperCase()
-  return (
-    <div style={{
-      width: 42, height: 42, borderRadius: '50%', flexShrink: 0,
-      background: `${color}20`, color, border: `1px solid ${color}30`,
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      fontSize: 13, fontWeight: 600, fontFamily: 'Syne, sans-serif',
-    }}>
-      {initials}
-    </div>
-  )
-}
-
-export default function ClientsPage() {
-  const { user } = useAuth()
-  const navigate = useNavigate()
-  const [clients, setClients] = useState<Client[]>([])
-  const [loading, setLoading] = useState(true)
-  const [search, setSearch] = useState('')
-  const [filterStatus, setFilterStatus] = useState('tous')
-  const [showModal, setShowModal] = useState(false)
-  const [creating, setCreating] = useState(false)
-  const [form, setForm] = useState({
-    first_name: '', last_name: '', email: '',
-    phone: '', objective: '', gender: '', height_cm: '',
-  })
-  const [formError, setFormError] = useState<string | null>(null)
-
-  useEffect(() => { fetchClients() }, [])
-
-  const fetchClients = async () => {
-    try {
-      setLoading(true)
-      const { data, error } = await supabase
-        .from('clients')
-        .select('*')
-        .order('created_at', { ascending: false })
-      if (error) throw error
-      setClients(data || [])
-    } catch (err) {
-      console.error(err)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const filtered = clients.filter(c => {
-    const matchSearch = `${c.first_name} ${c.last_name}`.toLowerCase().includes(search.toLowerCase())
-    const matchStatus = filterStatus === 'tous' || c.status === filterStatus
-    return matchSearch && matchStatus
-  })
-
-  const handleCreate = async () => {
-    if (!form.first_name.trim() || !form.last_name.trim()) {
-      setFormError('Prénom et nom sont obligatoires.')
-      return
-    }
-    try {
-      setCreating(true)
-      setFormError(null)
-      const { error } = await supabase.from('clients').insert({
-        ...form,
-        height_cm: form.height_cm ? parseFloat(form.height_cm) : null,
-        coach_id: user!.id,
-        status: 'actif',
-      })
-      if (error) throw error
-      setShowModal(false)
-      setForm({ first_name: '', last_name: '', email: '', phone: '', objective: '', gender: '', height_cm: '' })
-      await fetchClients()
-    } catch (err) {
-      setFormError(err instanceof Error ? err.message : 'Erreur lors de la création')
-    } finally {
-      setCreating(false)
-    }
-  }
+      return matchesOwner && matchesStatus && matchesSearch;
+    });
+  }, [normalizedSearch, ownerFilter, selectedOwnerIds, statusFilter, visibleClients]);
+  const groupedClients = useMemo(
+    () => getGroupedClientsByMonth(filteredClients),
+    [filteredClients]
+  );
+  const selectedOwnerMetrics = selectedOwner
+    ? getPortfolioMetrics(
+        selectedOwner,
+        visibleClients,
+        visibleFollowUps,
+        users,
+        selectedOwner.role === "referent" ? "network" : "personal"
+      )
+    : null;
+  const visibleRelanceCount = selectedOwnerMetrics
+    ? selectedOwnerMetrics.relanceFollowUps.length
+    : visibleFollowUps.filter((followUp) => isRelanceFollowUp(followUp)).length;
 
   return (
-    <div style={{ padding: 32, maxWidth: 1100, margin: '0 auto' }}>
-      <style>{`
-        @keyframes shimmer { 0%,100%{opacity:.4} 50%{opacity:.7} }
-        .client-row:hover { background: rgba(255,255,255,0.02) !important; cursor: pointer; }
-        .lor-input-s { width:100%; background:#1A1E27; border:1px solid rgba(255,255,255,0.08); border-radius:10px; padding:11px 14px; font-size:14px; color:#F0EDE8; font-family:'DM Sans',sans-serif; outline:none; transition:border .2s; }
-        .lor-input-s:focus { border-color:rgba(201,168,76,0.5); }
-        .lor-input-s::placeholder { color:#4A5068; }
-        .lor-select-s { width:100%; background:#1A1E27; border:1px solid rgba(255,255,255,0.08); border-radius:10px; padding:11px 14px; font-size:14px; color:#F0EDE8; font-family:'DM Sans',sans-serif; outline:none; appearance:none; }
-        .lor-select-s:focus { border-color:rgba(201,168,76,0.5); }
-      `}</style>
+    <div className="space-y-6">
+      <PageHeading
+        eyebrow="Clients"
+        title="Base clients"
+        description="Recherche, responsables, statuts et arborescence mensuelle."
+      />
 
-      {/* Header */}
-      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:28 }}>
-        <div>
-          <h1 style={{ fontFamily:'Syne,sans-serif', fontSize:24, fontWeight:800, color:'#F0EDE8', margin:'0 0 4px', letterSpacing:'-0.3px' }}>
-            Mes clients
-          </h1>
-          <p style={{ fontSize:13, color:'#7A8099', margin:0 }}>
-            {clients.filter(c => c.status === 'actif').length} actifs · {clients.length} au total
-          </p>
-        </div>
-        <button
-          onClick={() => setShowModal(true)}
-          style={{ background:'#C9A84C', color:'#0B0D11', border:'none', borderRadius:10, padding:'11px 20px', fontFamily:'Syne,sans-serif', fontSize:13, fontWeight:700, cursor:'pointer', display:'flex', alignItems:'center', gap:8 }}
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          Nouveau client
-        </button>
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <MetricTile
+          label="Clients visibles"
+          value={filteredClients.length}
+          hint="Resultat du filtre"
+          accent="blue"
+        />
+        <MetricTile
+          label="Responsables visibles"
+          value={ownerTabs.length}
+          hint="Portefeuilles actifs"
+          accent="green"
+        />
+        <MetricTile
+          label="Relances visibles"
+          value={visibleRelanceCount}
+          hint="A reprendre"
+          accent="red"
+        />
       </div>
 
-      {/* Filtres */}
-      <div style={{ display:'flex', gap:12, marginBottom:24 }}>
-        <div style={{ position:'relative', flex:1 }}>
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#4A5068" strokeWidth="1.5" style={{ position:'absolute', left:13, top:'50%', transform:'translateY(-50%)' }}><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-          <input
-            className="lor-input-s"
-            style={{ paddingLeft:38 }}
-            placeholder="Rechercher un client..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-          />
-        </div>
-        {['tous','actif','pause','inactif'].map(s => (
-          <button
-            key={s}
-            onClick={() => setFilterStatus(s)}
-            style={{
-              padding:'0 16px', borderRadius:20, fontSize:12, fontWeight:500, cursor:'pointer', border:'none', fontFamily:'DM Sans,sans-serif', transition:'all .15s',
-              background: filterStatus === s ? '#C9A84C' : 'rgba(255,255,255,0.05)',
-              color: filterStatus === s ? '#0B0D11' : '#7A8099',
-            }}
-          >
-            {s.charAt(0).toUpperCase() + s.slice(1)}
-          </button>
-        ))}
-      </div>
-
-      {/* Liste */}
-      <div style={{ background:'#13161C', border:'1px solid rgba(255,255,255,0.07)', borderRadius:12, overflow:'hidden' }}>
-        {loading ? (
-          Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} style={{ display:'flex', alignItems:'center', gap:14, padding:'16px 20px', borderBottom:'1px solid rgba(255,255,255,0.05)' }}>
-              <div style={{ width:42, height:42, borderRadius:'50%', background:'rgba(255,255,255,0.05)', animation:'shimmer 1.5s infinite', flexShrink:0 }} />
-              <div style={{ flex:1 }}>
-                <div style={{ height:13, width:'30%', background:'rgba(255,255,255,0.05)', borderRadius:4, marginBottom:7, animation:'shimmer 1.5s infinite' }} />
-                <div style={{ height:10, width:'20%', background:'rgba(255,255,255,0.05)', borderRadius:4, animation:'shimmer 1.5s infinite' }} />
-              </div>
-            </div>
-          ))
-        ) : filtered.length === 0 ? (
-          <div style={{ textAlign:'center', padding:'48px 0', color:'#4A5068' }}>
-            <div style={{ fontSize:32, marginBottom:12 }}>👤</div>
-            <div style={{ fontSize:14, marginBottom:4 }}>Aucun client trouvé</div>
-            <div style={{ fontSize:12 }}>Modifie ta recherche ou crée un nouveau client</div>
+      <Card className="space-y-5">
+        <div className="grid gap-4 lg:grid-cols-[1.4fr_0.9fr] lg:items-end">
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-[#B0B4C4]">Rechercher un client</label>
+            <input
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Nom, ville ou programme..."
+            />
           </div>
-        ) : (
-          filtered.map((client, i) => {
-            const sc = STATUS_COLORS[client.status] || STATUS_COLORS.actif
-            return (
-              <div
-                key={client.id}
-                className="client-row"
-                onClick={() => navigate(`/clients/${client.id}`)}
-                style={{ display:'flex', alignItems:'center', gap:14, padding:'15px 20px', borderBottom: i < filtered.length-1 ? '1px solid rgba(255,255,255,0.05)' : 'none', transition:'background .15s' }}
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-[#B0B4C4]">Filtrer par statut</label>
+            <select
+              value={statusFilter}
+              onChange={(event) =>
+                setStatusFilter(
+                  event.target.value as "all" | "active" | "pending" | "follow-up"
+                )
+              }
+            >
+              <option value="all">Tous les statuts</option>
+              <option value="active">Actifs</option>
+              <option value="pending">En attente</option>
+              <option value="follow-up">Suivi prioritaire</option>
+            </select>
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          <p className="eyebrow-label">Responsables du dossier</p>
+          <div className="flex flex-wrap gap-3">
+            <button
+              type="button"
+              onClick={() => setOwnerFilter("all")}
+              className={`rounded-[22px] px-4 py-3 text-left transition ${
+                ownerFilter === "all"
+                  ? "bg-[rgba(45,212,191,0.12)] text-white shadow-[0_0_0_1px_rgba(201,168,76,0.16)]"
+                  : "bg-white/[0.03] text-white hover:bg-white/[0.05]"
+              }`}
+            >
+              <span className="block text-sm font-semibold">Toute la base</span>
+              <span
+                className={`mt-1 block text-xs ${
+                  ownerFilter === "all" ? "text-[#2DD4BF]/75" : "text-[#7A8099]"
+                }`}
               >
-                <Avatar firstName={client.first_name} lastName={client.last_name} index={i} />
-                <div style={{ flex:1 }}>
-                  <div style={{ fontSize:14, fontWeight:500, color:'#F0EDE8' }}>
-                    {client.first_name} {client.last_name}
+                {visibleClients.length} dossiers visibles
+              </span>
+            </button>
+
+            {ownerTabs.map((user) => {
+              const metrics = getPortfolioMetrics(
+                user,
+                visibleClients,
+                visibleFollowUps,
+                users,
+                user.role === "referent" ? "network" : "personal"
+              );
+              const isActive = ownerFilter === user.id;
+
+              return (
+                <button
+                  key={user.id}
+                  type="button"
+                  onClick={() => setOwnerFilter(user.id)}
+                  className={`rounded-[22px] px-4 py-3 text-left transition ${
+                    isActive
+                      ? "bg-[rgba(45,212,191,0.12)] text-white shadow-[0_0_0_1px_rgba(201,168,76,0.16)]"
+                      : "bg-white/[0.03] hover:bg-white/[0.05]"
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <DistributorBadge user={user} compact />
+                    <div>
+                      <span
+                        className={`block text-sm font-semibold ${
+                          isActive ? "text-white" : "text-white"
+                        }`}
+                      >
+                        {user.name}
+                      </span>
+                      <span
+                        className={`mt-1 block text-xs ${
+                          isActive ? "text-[#2DD4BF]/75" : "text-[#7A8099]"
+                        }`}
+                      >
+                        {metrics.clients.length} clients - {metrics.relanceFollowUps.length} relances
+                      </span>
+                      {user.role === "referent" ? (
+                        <span className="mt-1 block text-[11px] text-[#4A5068]">Vue equipe</span>
+                      ) : null}
+                    </div>
                   </div>
-                  <div style={{ fontSize:12, color:'#7A8099', marginTop:2 }}>
-                    {client.objective || 'Objectif non défini'}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </Card>
+
+      {selectedOwner ? (
+        <Card className="space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <DistributorBadge
+              user={selectedOwner}
+              detail={`${selectedOwnerMetrics?.clients.length ?? 0} clients - ${selectedOwnerMetrics?.relanceFollowUps.length ?? 0} relances`}
+            />
+            <Link
+              to={`/distributors/${selectedOwner.id}`}
+              className="inline-flex min-h-[48px] items-center justify-center rounded-[18px] bg-white/[0.04] px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/[0.07]"
+            >
+              Ouvrir le portefeuille
+            </Link>
+          </div>
+          <div className="grid gap-3 md:grid-cols-3">
+            <MiniFact
+              label="Clients"
+              value={`${selectedOwnerMetrics?.clients.length ?? 0} dossiers`}
+            />
+            <MiniFact
+              label="Rendez-vous"
+              value={`${selectedOwnerMetrics?.scheduledFollowUps.length ?? 0} planifiés`}
+            />
+            <MiniFact
+              label="Relances"
+              value={`${selectedOwnerMetrics?.relanceFollowUps.length ?? 0} à reprendre`}
+            />
+          </div>
+        </Card>
+      ) : null}
+
+      <div className="space-y-5">
+        {groupedClients.length ? (
+          groupedClients.map((group) => (
+            <Card key={group.key} className="space-y-4">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                  <p className="eyebrow-label">Arborescence mensuelle</p>
+                  <h2 className="mt-3 text-2xl text-white">{group.label}</h2>
                   </div>
+                  <StatusBadge label={`${group.clients.length} clients`} tone="blue" />
                 </div>
-                <div style={{ fontSize:12, color:'#4A5068' }}>
-                  {new Date(client.created_at).toLocaleDateString('fr-FR', { day:'numeric', month:'short' })}
-                </div>
-                <span style={{ fontSize:11, padding:'4px 12px', borderRadius:20, background:sc.bg, color:sc.text, fontWeight:500 }}>
-                  {client.status}
-                </span>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4A5068" strokeWidth="1.5"><polyline points="9 18 15 12 9 6"/></svg>
+
+              <div className="grid gap-4">
+                {group.clients.map((client) => {
+                  const latestAssessment = getLatestAssessment(client);
+                  const firstAssessment = getFirstAssessment(client);
+                  const latestBodyScan = getLatestBodyScan(client);
+                  const status = statusLabels[client.status];
+                  const owner = ownerTabs.find((user) => user.id === client.distributorId);
+
+                  return (
+                    <Link key={client.id} to={`/clients/${client.id}`}>
+                      <Card className="transition hover:bg-white/[0.07]">
+                        <div className="grid gap-4 xl:grid-cols-[1.2fr_1.15fr_0.85fr] xl:items-center">
+                          <div className="space-y-3">
+                            <div className="flex flex-wrap items-center gap-3">
+                              <p className="text-2xl font-semibold text-white">
+                                {client.firstName} {client.lastName}
+                              </p>
+                              <StatusBadge label={status.label} tone={status.tone} />
+                            </div>
+                            <p className="text-sm text-[#7A8099]">
+                              {client.job} - {client.city ?? "Ville non renseignee"}
+                            </p>
+                            {owner ? (
+                              <div className="inline-flex max-w-full">
+                                <DistributorBadge
+                                  user={owner}
+                                  detail={`Portefeuille ${owner.name}`}
+                                />
+                              </div>
+                            ) : null}
+                            {firstAssessment.questionnaire.referredByName ? (
+                              <p className="text-sm text-[#2DD4BF]/80">
+                                Invite par {firstAssessment.questionnaire.referredByName}
+                              </p>
+                            ) : null}
+                            <p className="text-sm leading-6 text-[#7A8099]">{client.notes}</p>
+                          </div>
+
+                          <div className="grid gap-3 md:grid-cols-3">
+                            <ClientMetric
+                              label="Programme"
+                              value={client.currentProgram || "Programme a confirmer"}
+                              note={
+                                latestAssessment.type === "initial"
+                                  ? "Bilan initial"
+                                  : "Dernier suivi"
+                              }
+                            />
+                            <ClientMetric
+                              label="Hydratation cible"
+                              value={`${calculateWaterNeed(latestBodyScan.weight)} L`}
+                            />
+                            <ClientMetric
+                              label="Repère protéines"
+                              value={calculateProteinRange(latestBodyScan.weight, client.objective)}
+                            />
+                          </div>
+
+                          <div className="space-y-3 xl:text-right">
+                            <p className="eyebrow-label">Prochain suivi</p>
+                            <p className="text-xl font-semibold text-white">
+                              {formatDateTime(client.nextFollowUp)}
+                            </p>
+                            <p className="text-sm text-[#7A8099]">
+                              Dernier bilan {formatDate(latestAssessment.date)}
+                            </p>
+                          </div>
+                        </div>
+                      </Card>
+                    </Link>
+                  );
+                })}
               </div>
-            )
-          })
+            </Card>
+          ))
+        ) : (
+          <Card className="space-y-3">
+            <p className="text-2xl text-white">Aucun client sur ce filtre</p>
+            <p className="text-sm leading-6 text-[#7A8099]">
+              Ajuste la recherche, le statut ou le portefeuille pour retrouver le bon dossier.
+            </p>
+            <div>
+              <Link
+                to="/assessments/new"
+                className="inline-flex min-h-[48px] items-center justify-center rounded-[18px] bg-white/[0.04] px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/[0.07]"
+              >
+                Lancer un premier bilan
+              </Link>
+            </div>
+          </Card>
         )}
       </div>
-
-      {/* Modal création */}
-      {showModal && (
-        <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.7)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:100 }}>
-          <div style={{ background:'#13161C', border:'1px solid rgba(255,255,255,0.1)', borderRadius:16, padding:32, width:'100%', maxWidth:480, maxHeight:'90vh', overflowY:'auto' }}>
-            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:24 }}>
-              <div style={{ fontFamily:'Syne,sans-serif', fontSize:18, fontWeight:700, color:'#F0EDE8' }}>Nouveau client</div>
-              <button onClick={() => setShowModal(false)} style={{ background:'none', border:'none', color:'#7A8099', cursor:'pointer', fontSize:20, lineHeight:1 }}>×</button>
-            </div>
-
-            {formError && (
-              <div style={{ background:'rgba(251,113,133,0.08)', border:'1px solid rgba(251,113,133,0.2)', borderRadius:8, padding:'10px 14px', color:'#FB7185', fontSize:13, marginBottom:16 }}>
-                {formError}
-              </div>
-            )}
-
-            <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
-              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
-                <div>
-                  <label style={{ fontSize:11, color:'#7A8099', letterSpacing:'1px', textTransform:'uppercase', display:'block', marginBottom:6 }}>Prénom *</label>
-                  <input className="lor-input-s" placeholder="Marie" value={form.first_name} onChange={e => setForm(f => ({...f, first_name: e.target.value}))} />
-                </div>
-                <div>
-                  <label style={{ fontSize:11, color:'#7A8099', letterSpacing:'1px', textTransform:'uppercase', display:'block', marginBottom:6 }}>Nom *</label>
-                  <input className="lor-input-s" placeholder="Dupont" value={form.last_name} onChange={e => setForm(f => ({...f, last_name: e.target.value}))} />
-                </div>
-              </div>
-              <div>
-                <label style={{ fontSize:11, color:'#7A8099', letterSpacing:'1px', textTransform:'uppercase', display:'block', marginBottom:6 }}>Email</label>
-                <input className="lor-input-s" type="email" placeholder="marie@email.com" value={form.email} onChange={e => setForm(f => ({...f, email: e.target.value}))} />
-              </div>
-              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
-                <div>
-                  <label style={{ fontSize:11, color:'#7A8099', letterSpacing:'1px', textTransform:'uppercase', display:'block', marginBottom:6 }}>Téléphone</label>
-                  <input className="lor-input-s" placeholder="06 12 34 56 78" value={form.phone} onChange={e => setForm(f => ({...f, phone: e.target.value}))} />
-                </div>
-                <div>
-                  <label style={{ fontSize:11, color:'#7A8099', letterSpacing:'1px', textTransform:'uppercase', display:'block', marginBottom:6 }}>Genre</label>
-                  <select className="lor-select-s" value={form.gender} onChange={e => setForm(f => ({...f, gender: e.target.value}))}>
-                    <option value="">Choisir</option>
-                    <option value="homme">Homme</option>
-                    <option value="femme">Femme</option>
-                    <option value="autre">Autre</option>
-                  </select>
-                </div>
-              </div>
-              <div>
-                <label style={{ fontSize:11, color:'#7A8099', letterSpacing:'1px', textTransform:'uppercase', display:'block', marginBottom:6 }}>Taille (cm)</label>
-                <input className="lor-input-s" type="number" placeholder="165" value={form.height_cm} onChange={e => setForm(f => ({...f, height_cm: e.target.value}))} />
-              </div>
-              <div>
-                <label style={{ fontSize:11, color:'#7A8099', letterSpacing:'1px', textTransform:'uppercase', display:'block', marginBottom:6 }}>Objectif principal</label>
-                <select className="lor-select-s" value={form.objective} onChange={e => setForm(f => ({...f, objective: e.target.value}))}>
-                  <option value="">Choisir un objectif</option>
-                  <option value="perte-de-poids">Perte de poids</option>
-                  <option value="prise-de-muscle">Prise de muscle</option>
-                  <option value="energie">Boost d'énergie</option>
-                  <option value="bien-etre">Bien-être général</option>
-                  <option value="sport">Performance sportive</option>
-                  <option value="autre">Autre</option>
-                </select>
-              </div>
-            </div>
-
-            <div style={{ display:'flex', gap:12, marginTop:24 }}>
-              <button onClick={() => setShowModal(false)} style={{ flex:1, padding:'12px', borderRadius:10, border:'1px solid rgba(255,255,255,0.1)', background:'transparent', color:'#7A8099', fontFamily:'DM Sans,sans-serif', fontSize:14, cursor:'pointer' }}>
-                Annuler
-              </button>
-              <button
-                onClick={handleCreate}
-                disabled={creating}
-                style={{ flex:2, padding:'12px', borderRadius:10, border:'none', background:'#C9A84C', color:'#0B0D11', fontFamily:'Syne,sans-serif', fontSize:14, fontWeight:700, cursor:'pointer', opacity: creating ? 0.7 : 1 }}
-              >
-                {creating ? 'Création...' : 'Créer le client'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
-  )
+  );
+}
+
+function MiniFact({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-[22px] bg-[#0B0D11]/60 px-4 py-4">
+      <p className="text-[11px] font-medium text-[#4A5068]">{label}</p>
+      <p className="mt-3 text-lg font-semibold text-white">{value}</p>
+    </div>
+  );
+}
+
+function ClientMetric({
+  label,
+  value,
+  note
+}: {
+  label: string;
+  value: string;
+  note?: string;
+}) {
+  return (
+    <div className="rounded-[22px] bg-slate-950/30 p-4">
+      <p className="text-[11px] font-medium text-[#4A5068]">{label}</p>
+      <p className="mt-3 text-lg font-semibold text-white">{value}</p>
+      {note ? <p className="mt-2 text-xs text-[#7A8099]">{note}</p> : null}
+    </div>
+  );
 }

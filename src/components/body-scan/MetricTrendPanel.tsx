@@ -67,17 +67,17 @@ export function MetricTrendPanel({
       <div className="flex items-center justify-between gap-3">
         <div>
           <p className="text-sm font-semibold text-white">{title}</p>
-          <p className="mt-1 text-xs text-slate-400">{subtitle}</p>
+          <p className="mt-1 text-xs text-[#7A8099]">{subtitle}</p>
         </div>
-        <p className="text-[11px] font-medium text-slate-500">Progression</p>
+        <p className="text-[11px] font-medium text-[#4A5068]">Progression</p>
       </div>
 
-      <div className="mt-4 rounded-[22px] border border-white/8 bg-slate-950/28 p-4">
+      <div className="mt-4 rounded-[22px] border border-white/8 bg-[#1A1E27] p-4">
         <div className="flex items-center justify-between gap-3">
-          <p className="text-xs font-medium uppercase tracking-[0.16em] text-slate-500">
+          <p className="text-xs font-medium uppercase tracking-[0.16em] text-[#4A5068]">
             Courbe complete
           </p>
-          <p className="text-xs text-slate-400">{unitLabel}</p>
+          <p className="text-xs text-[#7A8099]">{unitLabel}</p>
         </div>
 
         <div className="mt-4">
@@ -155,18 +155,18 @@ export function MetricTrendPanel({
             className={`rounded-[20px] border px-4 py-4 ${
               index === recentPoints.length - 1
                 ? `${accentClass} shadow-[0_10px_30px_rgba(0,0,0,0.12)]`
-                : "border-white/8 bg-slate-950/24"
+                : "border-white/8 bg-[#0B0D11]/60"
             }`}
           >
-            <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-slate-500">
+            <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-[#4A5068]">
               {point.label ?? formatDate(point.date)}
             </p>
-            {point.label ? <p className="mt-1 text-xs text-slate-400">{formatDate(point.date)}</p> : null}
+            {point.label ? <p className="mt-1 text-xs text-[#7A8099]">{formatDate(point.date)}</p> : null}
             <div className="mt-4">
               <p className="text-[2rem] font-semibold tracking-[-0.04em] text-white">
                 {`${point.value}${valueSuffix}`}
               </p>
-              <p className="mt-1 text-sm text-slate-400">{point.secondary}</p>
+              <p className="mt-1 text-sm text-[#7A8099]">{point.secondary}</p>
             </div>
           </div>
         ))}

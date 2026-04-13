@@ -54,8 +54,8 @@ const accentClasses: Record<
     value: "text-slate-100"
   },
   blue: {
-    dot: "bg-sky-300/90",
-    chip: "border-sky-400/20 bg-sky-400/10 text-sky-100",
+    dot: "bg-[#2DD4BF]",
+    chip: "border-sky-400/20 bg-[rgba(45,212,191,0.1)] text-[#2DD4BF]",
     value: "text-slate-100"
   }
 };
@@ -92,9 +92,9 @@ export function PlateGuideCard({
   const mainExamples = foodExamples.filter((group) => group.label !== "Lipides");
 
   return (
-    <Card className="space-y-6 bg-slate-950/35">
+    <Card className="space-y-6 bg-[#0B0D11]/80">
       <div className="max-w-3xl">
-        <p className="text-xs uppercase tracking-[0.28em] text-slate-500">Assiette type</p>
+        <p className="text-xs uppercase tracking-[0.28em] text-[#4A5068]">Assiette type</p>
         <h3 className="mt-2 text-3xl text-white">{title}</h3>
       </div>
 
@@ -108,7 +108,7 @@ export function PlateGuideCard({
               />
               <div className="absolute inset-11 rounded-full border border-white/10 bg-slate-950/82" />
               <div className="relative z-10 max-w-[11rem] px-2 text-center">
-                <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Assiette simple</p>
+                <p className="text-xs uppercase tracking-[0.24em] text-[#4A5068]">Assiette simple</p>
                 <p className="mt-4 text-xl font-semibold leading-7 text-white">
                   {mode === "sport"
                     ? "Equilibre, energie, recuperation"
@@ -119,14 +119,14 @@ export function PlateGuideCard({
           </div>
 
           <div className="max-w-[22rem] px-1 text-center xl:text-left">
-            <p className="text-sm leading-7 text-slate-300">{subtitle}</p>
+            <p className="text-sm leading-7 text-[#B0B4C4]">{subtitle}</p>
           </div>
 
           <div className="rounded-[22px] border border-white/10 bg-white/[0.04] px-5 py-4">
-            <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
+            <p className="text-xs uppercase tracking-[0.2em] text-[#4A5068]">
               Bons lipides
             </p>
-            <p className="mt-3 text-sm leading-6 text-slate-200">
+            <p className="mt-3 text-sm leading-6 text-[#F0EDE8]">
               <span className="font-semibold text-white">{lipidsNote}</span>
             </p>
             {lipidExamples.length ? (
@@ -153,7 +153,7 @@ export function PlateGuideCard({
               >
                 <div className={`h-1.5 w-14 rounded-full ${accentClasses[segment.accent].dot}`} />
                 <div className="mt-5 space-y-3">
-                  <p className="text-xs uppercase tracking-[0.12em] text-slate-500">
+                  <p className="text-xs uppercase tracking-[0.12em] text-[#4A5068]">
                     {segment.label}
                   </p>
                   <p
@@ -162,7 +162,7 @@ export function PlateGuideCard({
                     {segment.share}%
                   </p>
                 </div>
-                <p className="mt-5 max-w-[18rem] text-base leading-8 text-slate-300">
+                <p className="mt-5 max-w-[18rem] text-base leading-8 text-[#B0B4C4]">
                   {segment.note}
                 </p>
               </div>
@@ -170,16 +170,16 @@ export function PlateGuideCard({
           </div>
 
           <div className="grid gap-4">
-            <div className="rounded-[22px] border border-white/10 bg-slate-950/35 px-5 py-4">
+            <div className="rounded-[22px] border border-white/10 bg-[#0B0D11]/80 px-5 py-4">
               <p className="eyebrow-label">Repère portions main</p>
               <div className="mt-4 grid gap-2">
                 {portionGuides.map((guide) => (
                   <div
                     key={guide.label}
-                    className="flex items-center justify-between gap-3 rounded-[18px] bg-white/[0.04] px-4 py-3.5 text-sm text-slate-200"
+                    className="flex items-center justify-between gap-3 rounded-[18px] bg-white/[0.04] px-4 py-3.5 text-sm text-[#F0EDE8]"
                   >
                     <span className="text-base font-semibold text-white">{guide.label}</span>
-                    <span className="text-right text-base text-slate-300">{guide.value}</span>
+                    <span className="text-right text-base text-[#B0B4C4]">{guide.value}</span>
                   </div>
                 ))}
               </div>
@@ -191,7 +191,7 @@ export function PlateGuideCard({
                 {mainExamples.map((group) => (
                   <div
                     key={group.label}
-                    className="rounded-[18px] bg-slate-950/24 px-4 py-4"
+                    className="rounded-[18px] bg-[#0B0D11]/60 px-4 py-4"
                   >
                     <p className="text-sm font-semibold text-white">{group.label}</p>
                     <div className="mt-3 flex flex-wrap gap-2">
