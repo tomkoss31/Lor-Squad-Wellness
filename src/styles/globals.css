@@ -160,3 +160,7 @@ button, a, [role="button"] { min-height: 44px; }
 .bottom-nav a { min-height: 52px; padding: 6px 12px; }
 .choice-pill { min-height: 44px; padding: 10px 18px; }
 .icon-btn { min-height: 44px; min-width: 44px; display: inline-flex; align-items: center; justify-content: center; border-radius: 10px; }
+
+/* Dashboard 3 colonnes responsive */
+@media (max-width: 768px) { .dashboard-cols { grid-template-columns: 1fr !important; } }
+@media (min-width: 768px) and (max-width: 1024px) { .dashboard-cols { grid-template-columns: 1fr 1fr !important; } }
