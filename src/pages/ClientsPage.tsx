@@ -156,13 +156,13 @@ export function ClientsPage() {
 
         <div className="space-y-3">
           <p className="eyebrow-label">Responsables du dossier</p>
-          <div className="flex flex-wrap gap-3">
+          <div className="flex gap-3 overflow-x-auto pb-1 flex-nowrap" style={{ scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' } as React.CSSProperties}>
             <button
               type="button"
               onClick={() => setOwnerFilter("all")}
-              className={`rounded-[22px] px-4 py-3 text-left transition ${
+              className={`rounded-[22px] px-4 py-3 text-left transition flex-shrink-0 ${
                 ownerFilter === "all"
-                  ? "bg-[rgba(45,212,191,0.12)] text-white shadow-[0_0_0_1px_rgba(201,168,76,0.16)]"
+                  ? "bg-[rgba(201,168,76,0.12)] text-white shadow-[0_0_0_1px_rgba(201,168,76,0.16)]"
                   : "bg-white/[0.03] text-white hover:bg-white/[0.05]"
               }`}
             >
