@@ -1,11 +1,9 @@
 import { useMemo, useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
-import { BrandSignature } from "../components/branding/BrandSignature";
 import { Button } from "../components/ui/Button";
 import { StatusBadge } from "../components/ui/StatusBadge";
 import { useAppContext } from "../context/AppContext";
 import { useInstallPrompt } from "../context/InstallPromptContext";
-import { blasonLogo, lorSquadLogo } from "../data/visualContent";
 
 export function LoginPage() {
   const { authReady, storageMode, users, loginWithCredentials } = useAppContext();
@@ -19,16 +17,12 @@ export function LoginPage() {
   const demoAccounts = useMemo(() => {
     const admin = users.find((user) => user.role === "admin");
     const distributor = users.find((user) => user.role === "distributor");
-
     return { admin, distributor };
   }, [users]);
 
   function fillDemoAccess(role: "admin" | "distributor") {
     const account = role === "admin" ? demoAccounts.admin : demoAccounts.distributor;
-    if (!account) {
-      return;
-    }
-
+    if (!account) return;
     setEmail(account.email);
     setPassword("demo1234");
     setError("");
@@ -36,9 +30,7 @@ export function LoginPage() {
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!authReady) {
-      return;
-    }
+    if (!authReady) return;
 
     try {
       const result = await loginWithCredentials({
@@ -54,7 +46,6 @@ export function LoginPage() {
         );
         return;
       }
-
       setError("");
       navigate("/dashboard");
     } catch (submitError) {
@@ -72,249 +63,208 @@ export function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-hero-mesh px-4 py-8 md:px-6">
-      <div className="mx-auto grid min-h-[calc(100vh-4rem)] max-w-[1500px] gap-5 lg:grid-cols-[1.08fr_0.92fr]">
-        <section className="glass-panel order-2 relative flex flex-col justify-between overflow-hidden rounded-[24px] p-6 md:p-8 lg:order-1 lg:p-12">
-          <div className="absolute right-[-90px] top-[-70px] h-64 w-64 rounded-full bg-[rgba(239,197,141,0.10)] blur-3xl" />
-          <div className="absolute bottom-[-110px] left-[-80px] h-72 w-72 rounded-full bg-[rgba(45,212,191,0.10)] blur-3xl" />
-          <div className="absolute left-1/2 top-[24%] h-[340px] w-[340px] -translate-x-1/2 rounded-full bg-[rgba(45,212,191,0.08)] blur-[120px]" />
+    <>
+      <style>{`
+        @media (max-width: 768px) {
+          .login-grid { grid-template-columns: 1fr !important; }
+          .login-left { display: none !important; }
+          .login-right { padding: 36px 24px !important; justify-content: flex-start !important; padding-top: 52px !important; }
+        }
+        @keyframes lor-pulse {
+          0%, 100% { box-shadow: 0 0 0 3px rgba(45,212,191,0.2); }
+          50% { box-shadow: 0 0 0 6px rgba(45,212,191,0.05); }
+        }
+      `}</style>
 
-          <div className="relative z-10 flex h-full flex-col justify-between">
-            <div className="space-y-10 md:space-y-12">
-              <div>
-                <StatusBadge label="Connexion" tone="amber" />
+      <div className="login-grid" style={{ minHeight: '100vh', background: '#0B0D11', display: 'grid', gridTemplateColumns: '1fr 1fr', fontFamily: 'DM Sans, sans-serif' }}>
+
+        {/* ── PANNEAU GAUCHE ── */}
+        <div className="login-left" style={{ padding: '52px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', borderRight: '1px solid rgba(255,255,255,0.06)', position: 'relative', overflow: 'hidden' }}>
+          <div style={{ position:'absolute', top:-60, right:-60, width:220, height:220, borderRadius:'50%', background:'rgba(201,168,76,0.07)', pointerEvents:'none' }} />
+          <div style={{ position:'absolute', bottom:-80, left:-40, width:240, height:240, borderRadius:'50%', background:'rgba(45,212,191,0.05)', pointerEvents:'none' }} />
+
+          <div style={{ position:'relative', zIndex:1, display:'flex', flexDirection:'column', gap:44 }}>
+            {/* Logo */}
+            <div style={{ display:'flex', alignItems:'center', gap:12 }}>
+              <div style={{ width:44, height:44, background:'#C9A84C', borderRadius:12, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="#0B0D11"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
               </div>
-
-              <div className="space-y-7 md:space-y-8">
-                <div className="flex justify-center lg:justify-start">
-                  <img
-                    src={lorSquadLogo}
-                    alt="Lor'Squad Wellness"
-                    className="w-full max-w-[440px] object-contain opacity-[0.99] drop-shadow-[0_28px_70px_rgba(0,0,0,0.36)] sm:max-w-[540px] lg:max-w-[700px]"
-                  />
-                </div>
-
-                <div className="space-y-4">
-                  <h1 className="max-w-[10ch] text-balance text-[2.5rem] leading-[0.95] tracking-[-0.055em] sm:text-[3.3rem] md:text-[4rem]">
-                    Retrouve un espace clair pour piloter les bilans, les rendez-vous et le suivi.
-                  </h1>
-                  <p className="max-w-[36rem] text-base leading-7 text-[#B0B4C4]/92 md:text-[18px] md:leading-8">
-                    Lor&apos;Squad Wellness rassemble le bilan guidé, la lecture client, le suivi terrain et
-                    l&apos;activité de l&apos;équipe dans un seul espace fluide, premium et simple à rouvrir sur tablette.
-                  </p>
-                  <div className="grid gap-3 pt-2 sm:grid-cols-4">
-                    <MiniTag label="Bilans" />
-                    <MiniTag label="Rendez-vous" />
-                    <MiniTag label="Suivi client" />
-                    <MiniTag label="Équipe" />
-                  </div>
-                </div>
+              <div style={{ fontFamily:'Syne, sans-serif', fontWeight:800, fontSize:18, color:'#F0EDE8', letterSpacing:'-0.3px' }}>
+                Lor&apos;<span style={{ color:'#C9A84C' }}>Squad</span> Wellness
               </div>
             </div>
 
-            <div className="space-y-5 pt-8">
-              <div className="flex items-center gap-4 text-[#4A5068]">
-                <img
-                  src={blasonLogo}
-                  alt="Blason Lor'Squad"
-                  className="h-12 w-12 rounded-[18px] object-cover ring-1 ring-white/10"
-                />
-                <div>
-                  <p className="text-sm font-medium text-white">Lor&apos;Squad Wellness</p>
-                  <p className="text-[12px] text-[#4A5068]">Bilans guidés, suivi terrain et lecture d&apos;équipe</p>
-                </div>
+            {/* Hero */}
+            <div>
+              <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:18 }}>
+                <div style={{ width:28, height:1, background:'#C9A84C' }} />
+                <span style={{ fontSize:11, color:'#C9A84C', letterSpacing:'2px', textTransform:'uppercase', fontWeight:500 }}>Outil coach professionnel</span>
               </div>
-              <BrandSignature variant="inline" />
+              <h1 style={{ fontFamily:'Syne, sans-serif', fontSize:'clamp(28px, 3.2vw, 40px)', fontWeight:800, color:'#F0EDE8', lineHeight:1.1, letterSpacing:'-0.5px', margin:'0 0 18px' }}>
+                L&apos;accompagnement<br />nutrition <span style={{ color:'#2DD4BF' }}>réinventé</span>
+              </h1>
+              <p style={{ fontSize:14, color:'#7A8099', lineHeight:1.75, maxWidth:360, fontWeight:300, margin:'0 0 32px' }}>
+                Bilan bien-être, body scan, suivi client et recommandations personnalisées — tout en un seul cockpit.
+              </p>
+
+              {/* Features card */}
+              <div style={{ background:'#13161C', border:'1px solid rgba(255,255,255,0.07)', borderRadius:14, padding:'18px 20px' }}>
+                <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:14 }}>
+                  <div style={{ width:8, height:8, borderRadius:'50%', background:'#2DD4BF', animation:'lor-pulse 2s ease-in-out infinite' }} />
+                  <span style={{ fontSize:11, color:'#2DD4BF', fontWeight:500, letterSpacing:'0.5px' }}>Application active</span>
+                </div>
+                {[
+                  { icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="11" x2="12" y2="17"/><line x1="9" y1="14" x2="15" y2="14"/></svg>, label:'14 étapes de bilan guidé', color:'#C9A84C' },
+                  { icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>, label:'Body scan & suivi terrain', color:'#2DD4BF' },
+                  { icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>, label:'Recommandations & Suivi PV', color:'#A78BFA' },
+                ].map((f, i) => (
+                  <div key={i} style={{ display:'flex', alignItems:'center', gap:10, padding:'8px 0', borderTop: i > 0 ? '1px solid rgba(255,255,255,0.05)' : 'none' }}>
+                    <div style={{ width:28, height:28, borderRadius:8, flexShrink:0, background:`${f.color}15`, color:f.color, display:'flex', alignItems:'center', justifyContent:'center' }}>{f.icon}</div>
+                    <span style={{ fontSize:13, color:'#B0B4C4', fontWeight:400 }}>{f.label}</span>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#2DD4BF" strokeWidth="2" style={{ marginLeft:'auto', flexShrink:0 }}><polyline points="20 6 9 17 4 12"/></svg>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
-        </section>
 
-        <section className="glass-panel order-1 rounded-[24px] p-6 md:p-8 lg:order-2 lg:p-10">
-          <div className="space-y-8">
+          {/* Trust footer */}
+          <div style={{ position:'relative', zIndex:1, display:'flex', alignItems:'center', gap:12 }}>
+            <div style={{ display:'flex' }}>
+              {[{ initials:'LC', color:'#C9A84C' }, { initials:'SC', color:'#2DD4BF' }, { initials:'MR', color:'#A78BFA' }].map((av, i) => (
+                <div key={av.initials} style={{ width:30, height:30, borderRadius:'50%', background:`${av.color}25`, color:av.color, border:'2px solid #0B0D11', display:'flex', alignItems:'center', justifyContent:'center', fontSize:10, fontWeight:700, fontFamily:'Syne, sans-serif', marginLeft: i === 0 ? 0 : -8 }}>{av.initials}</div>
+              ))}
+            </div>
+            <span style={{ fontSize:12, color:'#4A5068' }}>Utilisé par <strong style={{ color:'#7A8099', fontWeight:500 }}>votre équipe</strong> au quotidien</span>
+          </div>
+        </div>
+
+        {/* ── PANNEAU DROIT ── */}
+        <div className="login-right" style={{ background:'#13161C', padding:'52px', display:'flex', flexDirection:'column', justifyContent:'center', gap:28 }}>
+          <div>
+            <h2 style={{ fontFamily:'Syne, sans-serif', fontSize:26, fontWeight:800, color:'#F0EDE8', margin:'0 0 6px', letterSpacing:'-0.2px' }}>Connexion coach</h2>
+            <p style={{ fontSize:13, color:'#7A8099', margin:0, fontWeight:300 }}>Accédez à votre espace professionnel</p>
+          </div>
+
+          <form onSubmit={handleSubmit} style={{ display:'flex', flexDirection:'column', gap:18 }}>
             <div>
-              <p className="eyebrow-label">Connexion</p>
-              <h2 className="mt-4 max-w-[10ch] text-balance text-4xl">Accède à ton espace.</h2>
-              <p className="mt-4 max-w-md text-sm leading-7 text-[#B0B4C4]/92">
-                Retrouve tes rendez-vous, tes suivis et tes dossiers en quelques secondes.
-              </p>
+              <label style={{ fontSize:11, color:'#7A8099', letterSpacing:'1px', textTransform:'uppercase', display:'block', marginBottom:8, fontWeight:500 }}>Adresse email</label>
+              <div style={{ position:'relative' }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4A5068" strokeWidth="1.5" style={{ position:'absolute', left:14, top:'50%', transform:'translateY(-50%)', pointerEvents:'none' }}><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                <input type="email" placeholder="E-mail professionnel" value={email} onChange={(e) => setEmail(e.target.value)} autoCapitalize="none" autoCorrect="off" autoComplete="username" inputMode="email" spellCheck={false}
+                  style={{ width:'100%', boxSizing:'border-box' as const, background:'#1A1E27', border:'1px solid rgba(255,255,255,0.08)', borderRadius:10, padding:'13px 14px 13px 42px', fontSize:14, color:'#F0EDE8', fontFamily:'DM Sans, sans-serif', outline:'none', transition:'border-color 0.2s' }}
+                  onFocus={e => e.target.style.borderColor = 'rgba(201,168,76,0.45)'} onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.08)'} />
+              </div>
             </div>
 
-            <form className="space-y-5" onSubmit={handleSubmit}>
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-[#B0B4C4]">Identifiant</label>
-                <input
-                  type="email"
-                  placeholder="E-mail professionnel"
-                  value={email}
-                  onChange={(event) => setEmail(event.target.value)}
-                  autoCapitalize="none"
-                  autoCorrect="off"
-                  autoComplete="username"
-                  inputMode="email"
-                  spellCheck={false}
-                />
-                <p className="text-xs text-[#4A5068]">Utilise l&apos;e-mail professionnel associé à ton accès.</p>
+            <div>
+              <label style={{ fontSize:11, color:'#7A8099', letterSpacing:'1px', textTransform:'uppercase', display:'block', marginBottom:8, fontWeight:500 }}>Mot de passe</label>
+              <div style={{ position:'relative' }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4A5068" strokeWidth="1.5" style={{ position:'absolute', left:14, top:'50%', transform:'translateY(-50%)', pointerEvents:'none' }}><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                <input type={showPassword ? 'text' : 'password'} placeholder="Mot de passe" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" autoCapitalize="none" autoCorrect="off" spellCheck={false}
+                  style={{ width:'100%', boxSizing:'border-box' as const, background:'#1A1E27', border:'1px solid rgba(255,255,255,0.08)', borderRadius:10, padding:'13px 14px 13px 42px', fontSize:14, color:'#F0EDE8', fontFamily:'DM Sans, sans-serif', outline:'none', transition:'border-color 0.2s' }}
+                  onFocus={e => e.target.style.borderColor = 'rgba(201,168,76,0.45)'} onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.08)'} />
               </div>
+              <button type="button" onClick={() => setShowPassword(v => !v)} style={{ background:'none', border:'none', cursor:'pointer', fontSize:11, color:'#7A8099', marginTop:6, fontFamily:'DM Sans, sans-serif', padding:0, transition:'color 0.2s' }}
+                onMouseEnter={e => e.currentTarget.style.color = '#C9A84C'} onMouseLeave={e => e.currentTarget.style.color = '#7A8099'}>
+                {showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
+              </button>
+            </div>
 
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-[#B0B4C4]">Mot de passe</label>
-                <input
-                  type={showPassword ? "text" : "password"}
-                  placeholder="Mot de passe"
-                  value={password}
-                  onChange={(event) => setPassword(event.target.value)}
-                  autoCapitalize="none"
-                  autoCorrect="off"
-                  autoComplete="current-password"
-                  spellCheck={false}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword((visible) => !visible)}
-                  className="text-xs font-medium text-[#7A8099] transition hover:text-white"
-                >
-                  {showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+            {error ? (
+              <div style={{ background:'rgba(251,113,133,0.08)', border:'1px solid rgba(251,113,133,0.2)', borderRadius:10, padding:'11px 14px', fontSize:13, color:'#FB7185' }}>{error}</div>
+            ) : null}
+
+            <button type="submit" disabled={!authReady} style={{ width:'100%', background: authReady ? '#C9A84C' : 'rgba(201,168,76,0.4)', color:'#0B0D11', border:'none', borderRadius:10, padding:'14px', fontFamily:'Syne, sans-serif', fontSize:15, fontWeight:700, cursor: authReady ? 'pointer' : 'not-allowed', display:'flex', alignItems:'center', justifyContent:'center', gap:8, transition:'opacity 0.2s' }}
+              onMouseEnter={e => { if (authReady) e.currentTarget.style.opacity = '0.9' }} onMouseLeave={e => e.currentTarget.style.opacity = '1'}>
+              Ouvrir mon espace
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </button>
+          </form>
+
+          {/* PWA Install */}
+          {!isStandalone ? (
+            <div style={{ background:'#1A1E27', border:'1px solid rgba(255,255,255,0.07)', borderRadius:14, padding:20 }}>
+              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:12 }}>
+                <div>
+                  <p style={{ fontSize:11, color:'#C9A84C', letterSpacing:'1px', textTransform:'uppercase', marginBottom:8 }}>Installer l&apos;app</p>
+                  <p style={{ fontSize:15, fontFamily:'Syne, sans-serif', fontWeight:700, color:'#F0EDE8', marginBottom:6 }}>Ajoute Lor&apos;Squad à ton écran d&apos;accueil</p>
+                  <p style={{ fontSize:12, color:'#7A8099', lineHeight:1.6 }}>Plus rapide en rendez-vous, surtout sur tablette.</p>
+                </div>
+                <span style={{ fontSize:10, padding:'3px 10px', borderRadius:20, background:'rgba(45,212,191,0.1)', color:'#2DD4BF', whiteSpace:'nowrap' }}>Accès direct</span>
+              </div>
+              {canPromptInstall ? (
+                <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+                  <p className="text-sm text-[#7A8099]">Installation directe disponible.</p>
+                  <Button variant="secondary" onClick={() => void handleInstallClick()}>Installer</Button>
+                </div>
+              ) : isIos ? (
+                <div className="mt-4 rounded-[12px] bg-white/[0.03] px-4 py-3 text-sm leading-6 text-[#7A8099]">
+                  Sur iPhone/iPad : Safari → <span className="font-semibold text-white">Partager</span> → <span className="font-semibold text-white">Sur l&apos;écran d&apos;accueil</span>
+                </div>
+              ) : isMobile ? (
+                <div className="mt-4 rounded-[12px] bg-white/[0.03] px-4 py-3 text-sm leading-6 text-[#7A8099]">
+                  Sur Android : Chrome → <span className="font-semibold text-white">Installer l&apos;app</span>
+                </div>
+              ) : (
+                <div className="mt-4 rounded-[12px] bg-white/[0.03] px-4 py-3 text-sm leading-6 text-[#7A8099]">
+                  Icône d&apos;installation dans la barre d&apos;adresse Chrome/Edge.
+                </div>
+              )}
+            </div>
+          ) : null}
+
+          {/* Démo */}
+          {storageMode === "local" ? (
+            <div style={{ background:'#1A1E27', border:'1px solid rgba(255,255,255,0.07)', borderRadius:14, padding:20 }}>
+              <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:12, marginBottom:14 }}>
+                <div>
+                  <p style={{ fontSize:13, fontWeight:600, color:'#F0EDE8' }}>Accès démonstration</p>
+                  <p style={{ fontSize:11, color:'#7A8099', marginTop:2 }}>Tester l&apos;interface sans comptes réels</p>
+                </div>
+                <StatusBadge label="Démo" tone="blue" />
+              </div>
+              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 }}>
+                <button type="button" onClick={() => fillDemoAccess("distributor")} style={{ background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.06)', borderRadius:12, padding:14, textAlign:'left', cursor:'pointer', transition:'background 0.15s' }}
+                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'} onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.03)'}>
+                  <p style={{ fontSize:12, fontWeight:600, color:'#F0EDE8', margin:0 }}>Distributeur</p>
+                  <p style={{ fontSize:10, color:'#7A8099', margin:'4px 0 0', lineHeight:1.5 }}>Vue limitée</p>
+                </button>
+                <button type="button" onClick={() => fillDemoAccess("admin")} style={{ background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.06)', borderRadius:12, padding:14, textAlign:'left', cursor:'pointer', transition:'background 0.15s' }}
+                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'} onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.03)'}>
+                  <p style={{ fontSize:12, fontWeight:600, color:'#F0EDE8', margin:0 }}>Admin</p>
+                  <p style={{ fontSize:10, color:'#7A8099', margin:'4px 0 0', lineHeight:1.5 }}>Vue complète</p>
                 </button>
               </div>
-
-              {error ? (
-                <div className="rounded-[22px] bg-rose-400/10 px-4 py-3 text-sm text-rose-100 shadow-soft">
-                  {error}
-                </div>
-              ) : null}
-
-              <Button type="submit" className="w-full" disabled={!authReady}>
-                Ouvrir mon espace
-              </Button>
-            </form>
-
-            {!isStandalone ? (
-              <div className="surface-soft rounded-[24px] p-5">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="eyebrow-label">Installer l&apos;app</p>
-                    <p className="mt-3 text-lg font-semibold text-white">Ajoute Lor&apos;Squad Wellness à ton écran d&apos;accueil.</p>
-                    <p className="mt-2 text-sm leading-6 text-[#B0B4C4]">
-                      Plus rapide à rouvrir en rendez-vous, surtout sur tablette et mobile.
-                    </p>
-                  </div>
-                  <StatusBadge label="Accès direct" tone="green" />
-                </div>
-
-                {canPromptInstall ? (
-                  <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-                    <p className="text-sm text-[#B0B4C4]">L&apos;installation directe est disponible sur ce navigateur.</p>
-                    <Button variant="secondary" onClick={() => void handleInstallClick()}>
-                      Installer l&apos;app
-                    </Button>
-                  </div>
-                ) : isIos ? (
-                  <div className="mt-4 rounded-[18px] bg-white/[0.03] px-4 py-4 text-sm leading-6 text-[#B0B4C4]">
-                    Sur iPhone / iPad : ouvre ce lien dans <span className="font-semibold text-white">Safari</span>, puis
-                    touche <span className="font-semibold text-white">Partager</span> et choisis{" "}
-                    <span className="font-semibold text-white">Sur l&apos;écran d&apos;accueil</span>.
-                  </div>
-                ) : isMobile ? (
-                  <div className="mt-4 rounded-[18px] bg-white/[0.03] px-4 py-4 text-sm leading-6 text-[#B0B4C4]">
-                    Sur Android : ouvre ce lien dans <span className="font-semibold text-white">Chrome</span>, puis utilise
-                    le menu du navigateur pour <span className="font-semibold text-white">Installer l&apos;app</span> ou{" "}
-                    <span className="font-semibold text-white">Ajouter à l&apos;écran d&apos;accueil</span>.
-                  </div>
-                ) : (
-                  <div className="mt-4 rounded-[18px] bg-white/[0.03] px-4 py-4 text-sm leading-6 text-[#B0B4C4]">
-                    Sur ordinateur, utilise l&apos;icône d&apos;installation dans la barre d&apos;adresse de Chrome ou Edge
-                    pour ajouter l&apos;app.
-                  </div>
-                )}
-              </div>
-            ) : null}
-
-            {storageMode === "local" ? (
-              <div className="surface-soft rounded-[24px] p-5">
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <p className="text-sm font-semibold text-white">Accès de démonstration</p>
-                    <p className="mt-1 text-xs leading-6 text-[#7A8099]">
-                      Pour tester rapidement l&apos;interface, sans exposer de comptes nominatifs.
-                    </p>
-                  </div>
-                  <StatusBadge label="Démo" tone="blue" />
-                </div>
-                <div className="mt-4 grid gap-3 md:grid-cols-2">
-                  <button
-                    type="button"
-                    onClick={() => fillDemoAccess("distributor")}
-                    className="rounded-[22px] bg-[#1A1E27] px-4 py-4 text-left transition hover:bg-white/[0.05]"
-                  >
-                    <p className="text-sm font-semibold text-white">Accès distributeur</p>
-                    <p className="mt-1 text-xs leading-6 text-[#7A8099]">Vue limitée à ses clients, ses bilans et ses suivis.</p>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => fillDemoAccess("admin")}
-                    className="rounded-[22px] bg-[#1A1E27] px-4 py-4 text-left transition hover:bg-white/[0.05]"
-                  >
-                    <p className="text-sm font-semibold text-white">Accès admin</p>
-                    <p className="mt-1 text-xs leading-6 text-[#7A8099]">Vue globale sur les clients, l&apos;activité et le pilotage d&apos;équipe.</p>
-                  </button>
-                </div>
-                <p className="mt-3 text-xs text-[#4A5068]">Mot de passe démo : demo1234</p>
-              </div>
-            ) : null}
-
-            <div className="surface-soft rounded-[24px] p-5">
-              <p className="eyebrow-label">Comment créer les accès</p>
-              <div className="mt-4 space-y-3">
-                <AccessStep
-                  index="01"
-                  title="Tu crées le compte depuis l&apos;admin"
-                  text="Tu renseignes le nom, l&apos;email professionnel, le rôle et l&apos;état actif du compte."
-                />
-                <AccessStep
-                  index="02"
-                  title="L&apos;email devient l&apos;identifiant"
-                  text="On ne crée pas de pseudo séparé. L&apos;identifiant de connexion sera simplement l&apos;email."
-                />
-                <AccessStep
-                  index="03"
-                  title="Le mot de passe est défini par l&apos;admin"
-                  text="Le mot de passe saisi à la création devient le mot de passe initial. Il peut ensuite être redéfini depuis la page équipe."
-                />
-              </div>
+              <p style={{ fontSize:10, color:'#4A5068', marginTop:10 }}>Mot de passe : demo1234</p>
             </div>
+          ) : null}
+
+          {/* Accès */}
+          <div style={{ background:'#1A1E27', border:'1px solid rgba(255,255,255,0.07)', borderRadius:14, padding:20 }}>
+            <p style={{ fontSize:10, color:'#4A5068', letterSpacing:'1.5px', textTransform:'uppercase', margin:'0 0 14px' }}>Comment créer les accès</p>
+            {[
+              { n:'01', title:"Tu crées le compte depuis l'admin", text:"Nom, email professionnel, rôle et état actif." },
+              { n:'02', title:"L'email devient l'identifiant", text:"Pas de pseudo séparé." },
+              { n:'03', title:"Mot de passe défini par l'admin", text:"Il peut être redéfini depuis la page équipe." },
+            ].map((step, i) => (
+              <div key={step.n} style={{ display:'flex', gap:12, alignItems:'flex-start', marginBottom: i < 2 ? 12 : 0 }}>
+                <div style={{ width:28, height:28, borderRadius:'50%', flexShrink:0, background:'rgba(201,168,76,0.12)', color:'#C9A84C', display:'flex', alignItems:'center', justifyContent:'center', fontSize:10, fontWeight:700, fontFamily:'Syne, sans-serif' }}>{step.n}</div>
+                <div>
+                  <p style={{ fontSize:12, fontWeight:600, color:'#F0EDE8', margin:'0 0 3px' }}>{step.title}</p>
+                  <p style={{ fontSize:11, color:'#7A8099', margin:0, lineHeight:1.6 }}>{step.text}</p>
+                </div>
+              </div>
+            ))}
           </div>
-        </section>
-      </div>
-    </div>
-  );
-}
 
-function MiniTag({ label }: { label: string }) {
-  return (
-    <div className="surface-soft rounded-[18px] px-4 py-3 text-sm font-medium text-[#F0EDE8] shadow-[0_10px_24px_rgba(0,0,0,0.12)]">
-      {label}
-    </div>
-  );
-}
-
-function AccessStep({
-  index,
-  title,
-  text
-}: {
-  index: string;
-  title: string;
-  text: string;
-}) {
-  return (
-    <div className="flex gap-3 rounded-[22px] bg-white/[0.03] p-4">
-      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/[0.06] text-xs font-semibold tracking-[0.08em] text-[#F0EDE8]">
-        {index}
+          {/* Sécurité */}
+          <div style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:6, fontSize:11, color:'#4A5068' }}>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            Connexion sécurisée — données chiffrées
+          </div>
+        </div>
       </div>
-      <div>
-        <p className="text-sm font-semibold text-white">{title}</p>
-        <p className="mt-1 text-sm leading-6 text-[#7A8099]">{text}</p>
-      </div>
-    </div>
+    </>
   );
 }
