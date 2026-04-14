@@ -1,8 +1,7 @@
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
-import { BrandSignature } from "../branding/BrandSignature";
 import { useAppContext } from "../../context/AppContext";
 import { useInstallPrompt } from "../../context/InstallPromptContext";
-import { blasonLogo, lorSquadLogo } from "../../data/visualContent";
+import { blasonLogo } from "../../data/visualContent";
 import { Button } from "../ui/Button";
 import { StatusBadge } from "../ui/StatusBadge";
 import { BottomNav } from "./BottomNav";
@@ -242,50 +241,20 @@ export function AppLayout() {
             ) : null}
           </section>
 
-          <header className="glass-panel relative overflow-hidden rounded-[30px] px-5 py-6 md:px-7 md:py-7">
-            <div className="absolute right-10 top-0 h-24 w-24 rounded-full bg-[rgba(239,197,141,0.08)] blur-3xl" />
-            <div className="absolute -right-6 top-4 hidden h-32 w-32 rounded-full bg-[rgba(45,212,191,0.08)] blur-3xl lg:block" />
-            <div className="pointer-events-none absolute right-6 top-5 hidden lg:block">
-              <img
-                src={lorSquadLogo}
-                alt=""
-                className="w-[132px] object-contain opacity-[0.16]"
-              />
+          {/* Header compact — visible uniquement sur desktop (xl+) */}
+          <header className="hidden xl:flex items-center justify-between rounded-[16px] border border-white/[0.07] bg-[#13161C] px-5 py-3">
+            <div className="flex items-center gap-3">
+              <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#2DD4BF', flexShrink: 0 }} />
+              <span className="text-[13px] text-[#7A8099]">{pageTitle}</span>
             </div>
-            <div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
-              <div className="max-w-3xl">
-                <p className="eyebrow-label">Lor&apos;Squad Wellness</p>
-                <p className="mt-4 max-w-[18ch] text-[1.88rem] font-semibold leading-[1.04] tracking-[-0.035em] text-white sm:text-[2.16rem] md:text-[2.5rem]">
-                  {pageTitle}
-                </p>
-                <div className="mt-4 hidden md:block">
-                  <BrandSignature variant="inline" />
-                </div>
-              </div>
-              <div className="hidden flex-wrap gap-2 md:flex md:justify-end">
-                {!isStandalone ? (
-                  canPromptInstall ? (
-                    <Button variant="secondary" onClick={() => void handleInstallClick()}>
-                      Installer l&apos;app
-                    </Button>
-                  ) : isIos ? (
-                    <div className="rounded-full bg-white/[0.03] px-4 py-3 text-[12px] text-[#B0B4C4]">
-                      Partager puis ecran d&apos;accueil
-                    </div>
-                  ) : isMobile ? (
-                    <div className="rounded-full bg-white/[0.03] px-4 py-3 text-[12px] text-[#B0B4C4]">
-                      Installer via Chrome
-                    </div>
-                  ) : null
-                ) : null}
-                <Button variant="ghost" onClick={() => void handleLogout()}>
-                  Se déconnecter
-                </Button>
-              </div>
-              <div className="md:hidden">
-                <BrandSignature variant="inline" />
-              </div>
-            </div>
+            <button
+              onClick={() => void handleLogout()}
+              className="flex items-center gap-2 rounded-[8px] px-3 py-1.5 text-[12px] text-[#7A8099] transition hover:text-[#FB7185] hover:bg-[rgba(251,113,133,0.06)]"
+              style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'DM Sans, sans-serif' }}
+            >
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+              Déconnexion
+            </button>
           </header>
 
           <Outlet />
