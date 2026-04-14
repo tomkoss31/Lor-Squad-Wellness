@@ -149,139 +149,196 @@ const NEED_DEFINITIONS: Record<AssessmentNeedId, NeedDefinition> = {
 };
 
 const PRODUCT_CATALOG: ProductDefinition[] = [
+  // ── Base programme (petit-déjeuner & protéines) ──
   {
     id: "formula-1",
-    name: "Formula 1",
-    shortBenefit: "Matin plus cale et plus simple.",
+    name: "Formula 1 Boisson Nutritionnelle",
+    shortBenefit: "Repas équilibré · Contrôle des calories · Base du programme",
     pv: 23.95,
-    prixPublic: 63.5,
+    prixPublic: 63.50,
     dureeReferenceJours: 21,
-    quantityLabel: "21 repas",
+    quantityLabel: "21 repas (550g)",
     tags: ["breakfast_structure", "protein_muscle"]
   },
   {
     id: "pdm",
-    name: "Melange pour boisson proteinee",
-    shortBenefit: "Repere proteine simple au quotidien.",
-    pv: 33,
-    prixPublic: 75,
+    name: "Mélange pour Boisson Protéinée Vanille",
+    shortBenefit: "Apport protéiné élevé · Prise de masse · Récupération musculaire",
+    pv: 33.00,
+    prixPublic: 75.00,
     dureeReferenceJours: 42,
     quantityLabel: "42 doses",
     tags: ["breakfast_structure", "protein_muscle"]
   },
   {
+    id: "formula-3",
+    name: "Formula 3 — Personalised Protein Powder",
+    shortBenefit: "Complète le shake F1 · Augmente l'apport protéique · Muscle & satiété",
+    pv: 17.95,
+    prixPublic: 49.00,
+    dureeReferenceJours: 30,
+    tags: ["protein_muscle", "breakfast_structure"]
+  },
+  // ── Hydratation & énergie ──
+  {
     id: "the-51g",
-    name: "Boisson instantanee a base de the 51 g",
-    shortBenefit: "Elan du matin + routine eau.",
+    name: "Boisson Instantanée à base de Thé",
+    shortBenefit: "Booster d'énergie · Thermogenèse · Complément du shake F1",
     pv: 19.95,
-    prixPublic: 41,
+    prixPublic: 41.00,
     dureeReferenceJours: 21,
-    quantityLabel: "51 g",
+    quantityLabel: "51g",
     tags: ["hydration", "energy"]
   },
   {
     id: "aloe-vera",
-    name: "Boisson Aloe Vera",
-    shortBenefit: "Repere eau simple au quotidien.",
+    name: "Boisson Concentrée à l'Aloe Vera",
+    shortBenefit: "Digestion & transit · Hydratation · Muqueuse intestinale",
     pv: 24.95,
-    prixPublic: 54.5,
+    prixPublic: 54.50,
     dureeReferenceJours: 21,
-    quantityLabel: "473 ml",
-    tags: ["hydration"]
+    quantityLabel: "473ml",
+    tags: ["hydration", "digestive_support"]
   },
   {
+    id: "h24-hydrate",
+    name: "Herbalife 24 — Hydrate",
+    shortBenefit: "Hydratation optimale · Électrolytes · Effort & endurance",
+    pv: 17.20,
+    prixPublic: 47.50,
+    dureeReferenceJours: 20,
+    tags: ["hydration"]
+  },
+  // ── Digestion & transit ──
+  {
     id: "multifibres",
-    name: "Boisson multi-fibres",
-    shortBenefit: "Fibres et confort digestif.",
+    name: "Boisson Multi-Fibres",
+    shortBenefit: "Fibres solubles & insolubles · Transit · Satiété · Intestin",
     pv: 22.95,
-    prixPublic: 43.5,
+    prixPublic: 43.50,
     dureeReferenceJours: 30,
     quantityLabel: "30 doses",
     tags: ["digestive_support"]
   },
   {
-    id: "phyto-brule-graisse",
-    name: "Phyto Complete",
-    shortBenefit: "Soutien silhouette et cadre global.",
-    pv: 38.15,
-    prixPublic: 90,
-    dureeReferenceJours: 30,
-    tags: ["visceral_fat"]
-  },
-  {
     id: "microbiotic-max",
     name: "Microbiotic Max",
-    shortBenefit: "Equilibre digestif plus stable.",
-    pv: 27.1,
-    prixPublic: 64.5,
+    shortBenefit: "Flore intestinale · Digestion · Transit · Microbiote",
+    pv: 27.10,
+    prixPublic: 64.50,
     dureeReferenceJours: 30,
     tags: ["digestive_support"]
   },
+  // ── Silhouette & viscéral ──
   {
-    id: "night-mode",
-    name: "Night Mode",
-    shortBenefit: "Routine du soir plus calme.",
-    pv: 31.25,
-    prixPublic: 69,
+    id: "phyto-brule-graisse",
+    name: "Phyto Complete",
+    shortBenefit: "Extraits de plantes · Bien-être global · Antioxydants naturels",
+    pv: 38.15,
+    prixPublic: 90.00,
     dureeReferenceJours: 30,
-    tags: ["sleep"]
-  },
-  {
-    id: "xtra-cal",
-    name: "Xtra-Cal",
-    shortBenefit: "Repere calcium simple.",
-    pv: 10.25,
-    prixPublic: 24.5,
-    dureeReferenceJours: 30,
-    tags: ["bone_support"]
+    tags: ["visceral_fat"]
   },
   {
     id: "beta-heart",
     name: "Beta Heart",
-    shortBenefit: "Repere fibres d'avoine ciblé.",
+    shortBenefit: "Bêta-glucanes · Cholestérol · Santé cardiovasculaire",
     pv: 25.95,
-    prixPublic: 57.5,
+    prixPublic: 57.50,
     dureeReferenceJours: 30,
     quantityLabel: "30 jours",
     tags: ["visceral_fat"]
   },
+  // ── Sommeil ──
   {
-    id: "protein-bars",
-    name: "Barres aux proteines",
-    shortBenefit: "Encas plus cadre.",
-    pv: 13.22,
-    prixPublic: 31.5,
-    dureeReferenceJours: 14,
-    tags: ["snacking_control"]
+    id: "night-mode",
+    name: "Night Mode",
+    shortBenefit: "Qualité du sommeil · Récupération nocturne · Gestion du poids",
+    pv: 31.25,
+    prixPublic: 69.00,
+    dureeReferenceJours: 30,
+    tags: ["sleep"]
   },
+  // ── Os & calcium ──
+  {
+    id: "xtra-cal",
+    name: "Xtra-Cal",
+    shortBenefit: "Calcium & Magnésium · Os & articulations · Récupération",
+    pv: 10.25,
+    prixPublic: 24.50,
+    dureeReferenceJours: 30,
+    tags: ["bone_support"]
+  },
+  // ── Énergie ──
   {
     id: "liftoff",
-    name: "LiftOff",
-    shortBenefit: "Coup d'elan rapide.",
+    name: "LiftOff® — Citron Vert",
+    shortBenefit: "Énergie & concentration · Vitamines B & C · Effervescent",
     pv: 15.95,
-    prixPublic: 39.5,
+    prixPublic: 39.50,
     dureeReferenceJours: 10,
     tags: ["energy"]
   },
   {
-    id: "h24-hydrate",
-    name: "Herbalife24 Hydrate",
-    shortBenefit: "Hydratation plus soutenue.",
-    pv: 17.2,
-    prixPublic: 47.5,
-    dureeReferenceJours: 20,
-    tags: ["hydration"]
-  }
+    id: "active-mind",
+    name: "Active Mind Complex",
+    shortBenefit: "Concentration · Mémoire · Clarté mentale · Énergie cognitive",
+    pv: 27.25,
+    prixPublic: 57.50,
+    dureeReferenceJours: 30,
+    tags: ["energy"]
+  },
+  // ── Grignotage ──
+  {
+    id: "protein-bars",
+    name: "Barres aux Protéines — Vanille-Amandes",
+    shortBenefit: "En-cas protéiné · Muscle & récupération · Pratique en RDV terrain",
+    pv: 13.22,
+    prixPublic: 31.50,
+    dureeReferenceJours: 14,
+    tags: ["snacking_control"]
+  },
+  {
+    id: "chips-proteinees",
+    name: "Chips Protéinées",
+    shortBenefit: "En-cas protéiné · Coupe-faim sain · Alternative chips classiques",
+    pv: 11.75,
+    prixPublic: 27.50,
+    dureeReferenceJours: 10,
+    tags: ["snacking_control"]
+  },
+  // ── Immunité ──
+  {
+    id: "immune-booster",
+    name: "Immune Booster",
+    shortBenefit: "Renforce les défenses immunitaires · Vitamines C & D · Zinc",
+    pv: 18.90,
+    prixPublic: 51.00,
+    dureeReferenceJours: 21,
+    tags: ["energy"]
+  },
+  // ── Sport ──
+  {
+    id: "rebuild-strength",
+    name: "Herbalife 24 — Rebuild Strength",
+    shortBenefit: "Protéines & créatine · Prise de masse musculaire · Récupération intense",
+    pv: 33.55,
+    prixPublic: 83.50,
+    dureeReferenceJours: 30,
+    tags: ["protein_muscle"]
+  },
 ];
 
 const UPSELL_PRODUCT_BY_NEED: Partial<Record<AssessmentNeedId, string>> = {
   hydration: "h24-hydrate",
-  energy: "liftoff",
+  energy: "active-mind",
   sleep: "night-mode",
+  breakfast_structure: "formula-3",
+  protein_muscle: "rebuild-strength",
   digestive_support: "microbiotic-max",
   visceral_fat: "beta-heart",
   bone_support: "xtra-cal",
-  snacking_control: "protein-bars"
+  snacking_control: "chips-proteinees"
 };
 
 function normalizeText(value: string) {
