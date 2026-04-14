@@ -2,14 +2,14 @@ import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { BrandSignature } from "../branding/BrandSignature";
 import { useAppContext } from "../../context/AppContext";
 import { useInstallPrompt } from "../../context/InstallPromptContext";
-import { blasonLogo, laBaseLogo, lorSquadLogo } from "../../data/visualContent";
+import { blasonLogo, lorSquadLogo } from "../../data/visualContent";
 import { Button } from "../ui/Button";
 import { StatusBadge } from "../ui/StatusBadge";
 import { BottomNav } from "./BottomNav";
-import { getAccessSummary, getRoleLabel } from "../../lib/auth";
+import { getRoleLabel } from "../../lib/auth";
 
 export function AppLayout() {
-  const { currentSession, currentUser, logout, followUps } = useAppContext();
+  const { currentUser, logout, followUps } = useAppContext();
   const urgentRelanceCount = followUps.filter(f => f.status === "pending").length;
   const { canPromptInstall, isIos, isMobile, isStandalone, promptInstall } = useInstallPrompt();
   const location = useLocation();
@@ -25,13 +25,6 @@ export function AppLayout() {
       : currentUser.role === "referent"
         ? "amber"
         : "green";
-  const accessScopeLabel =
-    currentSession?.accessScope === "all-clients"
-      ? "global"
-      : currentSession?.accessScope === "team-clients"
-        ? "equipe"
-        : "personnel";
-
   const navigation = [
     { label: "Accueil", path: "/dashboard", badge: 0 },
     { label: "Guide rendez-vous", path: "/guide", badge: 0 },
@@ -75,104 +68,99 @@ export function AppLayout() {
   return (
     <div className="min-h-screen bg-hero-mesh">
       <div className="mx-auto flex min-h-screen max-w-[1480px] flex-col gap-5 px-3 py-3 md:px-4 xl:grid xl:grid-cols-[252px_minmax(0,1fr)] xl:gap-6 xl:px-5">
-        <aside className="glass-panel relative hidden overflow-hidden rounded-[34px] px-5 py-6 xl:sticky xl:top-5 xl:block xl:h-[calc(100vh-2.5rem)]">
-          <div className="absolute -left-10 top-0 h-28 w-28 rounded-full bg-[rgba(239,197,141,0.10)] blur-3xl" />
-          <div className="absolute -right-10 bottom-20 h-28 w-28 rounded-full bg-[rgba(45,212,191,0.10)] blur-3xl" />
-          <div className="flex h-full min-h-0 flex-col gap-6">
-            <div className="min-h-0 flex-1 space-y-7 overflow-y-auto pr-1">
-              <div className="flex items-center gap-4 pb-1">
-                <img
-                  src={blasonLogo}
-                  alt="Lor'Squad"
-                  className="h-14 w-14 rounded-[22px] object-cover shadow-soft"
-                />
-                <div>
-                  <p className="font-display text-[1.45rem] leading-none text-white">Lor'Squad</p>
-                  <p className="text-[12px] text-[#4A5068]">Wellness</p>
-                </div>
+        <aside className="glass-panel relative hidden overflow-hidden rounded-[24px] xl:sticky xl:top-5 xl:flex xl:flex-col xl:h-[calc(100vh-2.5rem)]">
+          {/* ZONE 1 — Logo */}
+          <div style={{ padding: '20px 16px 16px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div style={{ width: 34, height: 34, background: '#C9A84C', borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="#0B0D11"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
               </div>
-
-              <div className="flex items-center gap-3 rounded-[22px] bg-white/[0.035] px-4 py-3">
-                <img src={laBaseLogo} alt="La Base" className="h-9 w-9 rounded-xl object-cover" />
-                <div>
-                  <p className="text-sm font-semibold text-white">La Base</p>
-                  <p className="text-[12px] text-[#4A5068]">Powered by La Base</p>
-                </div>
-              </div>
-
-              <div className="rounded-[24px] bg-white/[0.03] px-4 py-4">
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <p className="text-[15px] font-semibold text-white">{currentUser.name}</p>
-                    <p className="mt-1 text-[13px] text-[#7A8099]">{currentUser.title}</p>
-                  </div>
-                  <StatusBadge label={getRoleLabel(currentUser.role)} tone={roleTone} />
-                </div>
-                <p className="mt-3 text-[13px] leading-6 text-[#4A5068]">{getAccessSummary(currentUser)}</p>
-                <Button variant="ghost" className="mt-4 w-full" onClick={() => void handleLogout()}>
-                  Se déconnecter
-                </Button>
-              </div>
-
-              <nav className="space-y-1.5">
-                {navigation.map((item) => {
-                  const isActive =
-                    location.pathname === item.path ||
-                    (item.path === "/clients" && location.pathname.startsWith("/clients/")) ||
-                    (item.path === "/pv" && location.pathname.startsWith("/pv"));
-
-                  return (
-                    <NavLink
-                      key={item.path}
-                      to={item.path}
-                      className={`flex items-center gap-3 rounded-[20px] px-4 py-3.5 text-[15px] font-medium transition ${
-                        isActive
-                          ? "bg-[rgba(201,168,76,0.1)] text-white shadow-[0_0_0_1px_rgba(201,168,76,0.2),0_10px_24px_rgba(0,0,0,0.12)]"
-                          : "text-[#7A8099] hover:bg-white/[0.035] hover:text-white"
-                      }`}
-                    >
-                      <span
-                        className={`h-9 w-1 rounded-full transition ${
-                          isActive ? "bg-[#C9A84C]/80 shadow-[0_0_14px_rgba(201,168,76,0.24)]" : "bg-transparent"
-                        }`}
-                      />
-                      <span
-                        className={`h-1.5 w-1.5 rounded-full ${
-                          isActive ? "bg-[#C9A84C]" : "bg-white/15"
-                        }`}
-                      />
-                      <span>{item.label}</span>
-                      {item.badge > 0 ? (
-                        <span className="ml-auto flex h-5 min-w-[20px] items-center justify-center rounded-full bg-[#FB7185] px-1.5 text-[10px] font-bold text-white">
-                          {item.badge}
-                        </span>
-                      ) : item.path === "/assessments/new" ? (
-                        <span className="ml-auto rounded-full bg-[rgba(239,197,141,0.18)] px-2.5 py-1 text-[11px] font-medium text-[rgba(255,235,214,0.92)]">
-                          Nouveau
-                        </span>
-                      ) : null}
-                    </NavLink>
-                  );
-                })}
-              </nav>
-            </div>
-
-            <div className="shrink-0 space-y-4 rounded-[26px] bg-white/[0.025] p-5">
               <div>
-                <p className="eyebrow-label">Session</p>
-                <p className="mt-3 text-[14px] leading-7 text-[#B0B4C4]">
-                  Une navigation simple a rouvrir pendant le rendez-vous, sur ordi comme sur tablette.
-                </p>
-              </div>
-              {currentSession ? (
-                <div className="rounded-[18px] bg-[#1A1E27] px-4 py-3 text-[12px] text-[#7A8099]">
-                  Session active · accès {accessScopeLabel}
+                <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 14, color: '#F0EDE8', lineHeight: 1.2 }}>
+                  Lor&apos;<span style={{ color: '#C9A84C' }}>Squad</span>
                 </div>
-              ) : null}
-              <Button className="w-full" onClick={() => navigate("/assessments/new")}>
-                Nouveau bilan
-              </Button>
+                <div style={{ fontSize: 10, color: '#4A5068', letterSpacing: '0.5px' }}>Wellness</div>
+              </div>
             </div>
+          </div>
+
+          {/* ZONE 2 — Navigation */}
+          <nav style={{ flex: 1, padding: '12px 10px', display: 'flex', flexDirection: 'column', gap: 2, overflowY: 'auto' }}>
+            {navigation.map((item) => {
+              const isActive =
+                location.pathname === item.path ||
+                (item.path === "/clients" && location.pathname.startsWith("/clients/")) ||
+                (item.path === "/pv" && location.pathname.startsWith("/pv"));
+
+              return (
+                <NavLink
+                  key={item.path}
+                  to={item.path}
+                  className={`flex items-center gap-3 rounded-[12px] px-3 py-2.5 text-[13px] font-medium transition ${
+                    isActive
+                      ? "bg-[rgba(201,168,76,0.1)] text-white"
+                      : "text-[#7A8099] hover:bg-white/[0.035] hover:text-white"
+                  }`}
+                >
+                  <span
+                    className={`h-1.5 w-1.5 rounded-full flex-shrink-0 ${
+                      isActive ? "bg-[#C9A84C]" : "bg-white/15"
+                    }`}
+                  />
+                  <span className="flex-1">{item.label}</span>
+                  {item.badge > 0 ? (
+                    <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-[#FB7185] px-1.5 text-[10px] font-bold text-white">
+                      {item.badge}
+                    </span>
+                  ) : item.path === "/assessments/new" ? (
+                    <span className="rounded-full bg-[rgba(201,168,76,0.15)] px-2 py-0.5 text-[10px] font-semibold text-[#C9A84C]">
+                      Nouveau
+                    </span>
+                  ) : null}
+                </NavLink>
+              );
+            })}
+          </nav>
+
+          {/* ZONE 3 — Profil + déconnexion */}
+          <div style={{ padding: '12px 14px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+              <div style={{
+                width: 32, height: 32, borderRadius: '50%',
+                background: 'linear-gradient(135deg, #C9A84C, #2DD4BF)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 11, fontWeight: 700, color: '#0B0D11',
+                fontFamily: 'Syne, sans-serif', flexShrink: 0,
+              }}>
+                {currentUser.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
+              </div>
+              <div style={{ minWidth: 0, flex: 1 }}>
+                <div style={{ fontSize: 12, fontWeight: 500, color: '#F0EDE8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {currentUser.name}
+                </div>
+                <div style={{ fontSize: 10, color: '#4A5068' }}>
+                  {currentUser.role === 'admin' ? 'Administrateur' : 'Coach'}
+                </div>
+              </div>
+              {currentUser.role === 'admin' && (
+                <span style={{ fontSize: 9, padding: '2px 7px', borderRadius: 10, background: 'rgba(201,168,76,0.15)', color: '#C9A84C', fontWeight: 600, flexShrink: 0 }}>
+                  Admin
+                </span>
+              )}
+            </div>
+            <button
+              onClick={() => void handleLogout()}
+              style={{
+                width: '100%', padding: '8px', borderRadius: 9,
+                background: 'rgba(251,113,133,0.06)', border: '1px solid rgba(251,113,133,0.15)',
+                color: '#FB7185', fontSize: 12, fontFamily: 'DM Sans, sans-serif',
+                cursor: 'pointer', transition: 'all 0.15s',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+              }}
+            >
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+              Déconnexion
+            </button>
           </div>
         </aside>
 

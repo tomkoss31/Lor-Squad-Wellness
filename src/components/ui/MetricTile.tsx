@@ -16,7 +16,7 @@ export function MetricTile({ label, value, hint, accent = "blue" }: MetricTilePr
   const color = ACCENT_COLORS[accent]
   return (
     <div
-      className="rounded-[16px] bg-[#13161C] p-4 border border-white/[0.07]"
+      className="rounded-[14px] bg-[#13161C] p-5 border border-white/[0.07]"
       style={{ borderTop: `2px solid ${color}` }}
     >
       <p className="eyebrow-label mb-3">{label}</p>

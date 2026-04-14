@@ -109,62 +109,57 @@ export function DashboardPage() {
         </Card>
       ) : null}
 
+      {/* Stats + actions directes */}
+      <div className="space-y-5">
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+              <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#C9A84C', boxShadow: '0 0 8px rgba(201,168,76,0.6)' }} className="dot-pulse" />
+              <span style={{ fontSize: 10, color: '#C9A84C', letterSpacing: '1.5px', textTransform: 'uppercase', fontWeight: 500 }}>En ligne</span>
+            </div>
+            <h2 className="text-[1.5rem] leading-[1.08] tracking-[-0.03em] text-white md:text-[1.85rem]" style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800 }}>
+              Mes priorités du jour
+            </h2>
+          </div>
+          <Link
+            to="/assessments/new"
+            className="inline-flex min-h-[44px] items-center gap-2 rounded-[12px] bg-[#C9A84C] px-4 py-2.5 text-sm font-bold text-[#0B0D11] transition hover:brightness-105"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Nouveau bilan
+          </Link>
+        </div>
+
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          {['Bilans', 'Rendez-vous', 'Relances'].map(tag => (
+            <span key={tag} style={{ padding: '6px 14px', borderRadius: 20, border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.03)', fontSize: 12, color: '#B0B4C4' }}>{tag}</span>
+          ))}
+        </div>
+
+        <div className="grid grid-cols-2 gap-3 xl:grid-cols-4 xl:gap-4">
+          {statCards.map((stat) => (
+            <MetricTile key={stat.label} label={stat.label} value={stat.value} hint={stat.hint} accent={stat.accent} />
+          ))}
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          <Link to="/clients" className="inline-flex min-h-[44px] items-center rounded-[12px] bg-white/[0.04] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-white/[0.07]">
+            Base clients
+          </Link>
+          <Link to={`/distributors/${currentUser.id}`} className="inline-flex min-h-[44px] items-center rounded-[12px] bg-white/[0.04] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-white/[0.07]">
+            Mon portefeuille
+          </Link>
+        </div>
+      </div>
+
       <Card className="relative overflow-hidden">
         <div className="grid gap-6 xl:grid-cols-[1.08fr_0.92fr]">
           <div className="space-y-5">
-            <div>
-              <p className="eyebrow-label">Vue personnelle</p>
-              <h2 className="mt-3 text-[1.5rem] leading-[1.08] tracking-[-0.03em] text-white md:text-[1.85rem] xl:text-[2.05rem]">
-                Mes priorités du jour
-              </h2>
-              <p className="mt-2 text-sm leading-6 text-[#B0B4C4]/88 md:text-[15px]">
-                Rendez-vous, relances et dossiers a rouvrir.
-              </p>
-            </div>
-
-            <div className="mt-4 flex flex-wrap gap-2">
-              {["Bilans", "Rendez-vous", "Relances"].map((item) => (
-                <span
-                  key={item}
-                  className="rounded-full border border-white/8 bg-white/[0.03] px-3 py-1.5 text-[12px] font-medium text-[#F0EDE8]"
-                >
-                  {item}
-                </span>
-              ))}
-            </div>
-
-            <div className="grid grid-cols-2 gap-3 md:gap-4 xl:grid-cols-4 xl:pr-28">
-              {statCards.map((stat) => (
-                <MetricTile key={stat.label} label={stat.label} value={stat.value} hint={stat.hint} accent={stat.accent} />
-              ))}
-            </div>
-
-            <div className="flex flex-wrap gap-3">
-              <Link
-                to="/clients"
-                className="inline-flex min-h-[50px] items-center justify-center rounded-[18px] bg-[#C9A84C] text-[#0B0D11] px-5 py-3 text-sm font-semibold text-[#0B0D11] shadow-soft transition duration-200 hover:brightness-[1.03]"
-              >
-                Base clients
-              </Link>
-              <Link
-                to={`/distributors/${currentUser.id}`}
-                className="inline-flex min-h-[50px] items-center justify-center rounded-[18px] bg-white/[0.04] px-5 py-3 text-sm font-semibold text-white transition duration-200 hover:bg-white/[0.07]"
-              >
-                Mon portefeuille
-              </Link>
-              <Link
-                to="/assessments/new"
-                className="inline-flex min-h-[50px] items-center justify-center rounded-[18px] bg-white/[0.04] px-5 py-3 text-sm font-semibold text-white transition duration-200 hover:bg-white/[0.07]"
-              >
-                Nouveau bilan
-              </Link>
-            </div>
-
-            <div className="relative hidden min-h-[500px] overflow-hidden xl:flex xl:items-center xl:justify-center">
+            <div className="relative hidden min-h-[100px] overflow-hidden xl:flex xl:items-center xl:justify-center">
               <img
                 src={lorSquadLogo}
                 alt="Lor'Squad Wellness"
-                className="mx-auto w-[720px] max-w-[96%] translate-y-[72px] object-contain"
+                className="mx-auto w-[400px] max-w-[96%] object-contain opacity-[0.12]"
               />
             </div>
           </div>
