@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { formatDateTime } from '../../lib/calculations'
+import { createGoogleCalendarLink } from '../../lib/googleCalendar'
 
 interface UrgencyItem {
   id: string
@@ -55,6 +56,23 @@ export function UrgencyColumn({ title, count, color, icon, items, emptyLabel, se
               <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
               {formatDateTime(item.dueDate)}
               {item.status === 'pending' && <span style={{ color: '#FB7185', marginLeft: 4 }}>· En retard</span>}
+              {item.status === 'scheduled' && (
+                <a
+                  href={createGoogleCalendarLink({
+                    title: `RDV ${item.clientName} — Lor'Squad`,
+                    description: `${item.type}\nProgramme : ${item.programTitle}`,
+                    startDate: new Date(item.dueDate),
+                    location: 'La Base Shakes & Drinks, Pont-à-Mousson',
+                  })}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={e => e.stopPropagation()}
+                  style={{ marginLeft: 'auto', display: 'inline-flex', alignItems: 'center', gap: 4, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 6, padding: '3px 8px', fontSize: 9, color: '#7A8099', textDecoration: 'none', flexShrink: 0 }}
+                >
+                  <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                  Agenda
+                </a>
+              )}
             </div>
           </div>
         </Link>

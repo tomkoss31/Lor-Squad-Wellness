@@ -6,6 +6,7 @@ import { Card } from "../components/ui/Card";
 import { PageHeading } from "../components/ui/PageHeading";
 import { StatusBadge } from "../components/ui/StatusBadge";
 import { useAppContext } from "../context/AppContext";
+import { PushNotificationSettings } from "../components/settings/PushNotificationSettings";
 import { canSponsorDistributors, getRoleLabel, isAdmin } from "../lib/auth";
 import { formatDate, formatDateTime } from "../lib/calculations";
 import { getPortfolioMetrics } from "../lib/portfolio";
@@ -222,6 +223,9 @@ export function UsersPage() {
         <StatCard label="Referents" value={userStats.referents} />
         <StatCard label="Distributeurs" value={userStats.distributors} />
       </div>
+
+      {/* Notifications push */}
+      <PushNotificationSettings userId={users[0]?.id} userName={users[0]?.name} />
 
       <Card className="space-y-4">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
