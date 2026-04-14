@@ -164,3 +164,11 @@ button, a, [role="button"] { min-height: 44px; }
 /* Dashboard 3 colonnes responsive */
 @media (max-width: 768px) { .dashboard-cols { grid-template-columns: 1fr !important; } }
 @media (min-width: 768px) and (max-width: 1024px) { .dashboard-cols { grid-template-columns: 1fr 1fr !important; } }
+
+/* Safe area iOS contenu principal */
+.main-content { padding-bottom: max(24px, calc(env(safe-area-inset-bottom) + 80px)); }
+
+/* Stats grilles responsive */
+@media (max-width: 640px) {
+  .stats-grid { grid-template-columns: repeat(2, 1fr) !important; }
+}
