@@ -314,24 +314,24 @@ export function ClientDetailPage() {
       {/* Tab bar */}
       <div className="flex gap-1 rounded-[14px] border border-white/[0.07] bg-[#13161C] p-1" style={{ width: 'fit-content' }}>
         {[
-          { label: 'Vue complète', icon: '📊' },
-          { label: 'Body Scan', icon: '⚖️', count: client.assessments.filter(a => a.bodyScan?.weight).length },
-          { label: 'Historique', icon: '📋', count: client.assessments.length },
-          { label: 'Actions', icon: '⚡' },
+          { label: 'Vue complète', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg> },
+          { label: 'Body Scan', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>, count: client.assessments.filter(a => a.bodyScan?.weight).length },
+          { label: 'Historique', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>, count: client.assessments.length },
+          { label: 'Actions', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><polyline points="13 2 13 9 20 9"/><polyline points="11 22 11 15 4 15"/><path d="M3 3l18 18"/></svg> },
         ].map((tab, i) => (
           <button
             key={tab.label}
             onClick={() => setActiveTab(i)}
             className="transition-all duration-150"
             style={{
-              padding: '7px 14px', borderRadius: 10, border: 'none', cursor: 'pointer',
+              padding: '7px 14px', borderRadius: 8, border: 'none', cursor: 'pointer',
               fontSize: 13, fontFamily: 'DM Sans, sans-serif', fontWeight: activeTab === i ? 500 : 400,
               background: activeTab === i ? '#1A1E27' : 'transparent',
               color: activeTab === i ? '#F0EDE8' : '#7A8099',
               display: 'flex', alignItems: 'center', gap: 6,
             }}
           >
-            <span style={{ fontSize: 13 }}>{tab.icon}</span> {tab.label}
+            {tab.icon} {tab.label}
             {tab.count !== undefined && tab.count > 0 && (
               <span style={{
                 fontSize: 10, padding: '1px 6px', borderRadius: 10,
