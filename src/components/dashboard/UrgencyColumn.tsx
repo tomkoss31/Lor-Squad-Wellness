@@ -56,23 +56,39 @@ export function UrgencyColumn({ title, count, color, icon, items, emptyLabel, se
               <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
               {formatDateTime(item.dueDate)}
               {item.status === 'pending' && <span style={{ color: '#FB7185', marginLeft: 4 }}>· En retard</span>}
-              {item.status === 'scheduled' && (
+              {item.status === 'scheduled' && (() => {
+                const due = new Date(item.dueDate)
+                const now = new Date()
+                const diffMs = due.getTime() - now.getTime()
+                const diffDays = diffMs / 86400000
+                const isToday = due.toDateString() === now.toDateString()
+                const isPast = diffMs < 0
+                const isThisWeek = diffDays > 0 && diffDays <= 7
+                const agendaStyle = isPast
+                  ? { bg: 'rgba(251,113,133,0.1)', c: '#FB7185', bd: 'rgba(251,113,133,0.2)' }
+                  : isToday
+                    ? { bg: 'rgba(45,212,191,0.15)', c: '#2DD4BF', bd: 'rgba(45,212,191,0.3)' }
+                    : isThisWeek
+                      ? { bg: 'rgba(201,168,76,0.1)', c: '#C9A84C', bd: 'rgba(201,168,76,0.2)' }
+                      : { bg: 'rgba(255,255,255,0.05)', c: '#7A8099', bd: 'rgba(255,255,255,0.1)' }
+                return (
                 <a
                   href={createGoogleCalendarLink({
-                    title: `RDV ${item.clientName} — Lor'Squad`,
-                    description: `${item.type}\nProgramme : ${item.programTitle}`,
-                    startDate: new Date(item.dueDate),
-                    location: 'La Base Shakes & Drinks, Pont-à-Mousson',
+                    title: `RDV ${item.clientName} — Lor'Squad Wellness, La Base Verdun`,
+                    description: `Type : ${item.type}\nProgramme : ${item.programTitle}\nLor'Squad Wellness — La Base, Verdun`,
+                    startDate: due,
+                    location: 'La Base Shakes & Drinks, Verdun',
                   })}
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={e => e.stopPropagation()}
-                  style={{ marginLeft: 'auto', display: 'inline-flex', alignItems: 'center', gap: 4, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 6, padding: '3px 8px', fontSize: 9, color: '#7A8099', textDecoration: 'none', flexShrink: 0 }}
+                  style={{ marginLeft: 'auto', display: 'inline-flex', alignItems: 'center', gap: 4, background: agendaStyle.bg, border: `1px solid ${agendaStyle.bd}`, borderRadius: 6, padding: '3px 8px', fontSize: 9, color: agendaStyle.c, textDecoration: 'none', flexShrink: 0 }}
                 >
                   <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
                   Agenda
                 </a>
-              )}
+                )
+              })()}
             </div>
           </div>
         </Link>
