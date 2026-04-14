@@ -11,6 +11,7 @@ import { BodyScanSnapshotCard } from "../components/body-scan/BodyScanSnapshotCa
 import { HydrationVisceralInsightCard } from "../components/body-scan/HydrationVisceralInsightCard";
 import { WeightGoalInsightCard } from "../components/education/WeightGoalInsightCard";
 import { EvolutionChart } from "../components/body-scan/EvolutionChart";
+import { BodyScanRadar } from "../components/body-scan/BodyScanRadar";
 import { HistoryTimeline } from "../components/client/HistoryTimeline";
 import { Button } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
@@ -547,71 +548,31 @@ export function ClientDetailPage() {
         </Card>
 
         <div className="space-y-4">
-          <Card className="space-y-2.5">
+          {/* Sidebar épurée — essentiel seulement */}
+          <Card className="space-y-3">
             <div className="flex items-center justify-between gap-3">
-              <div>
-                <p className="eyebrow-label">Cap du moment</p>
-                <p className="mt-1.5 text-xl text-white">Lecture rapide</p>
-              </div>
-              <StatusBadge label={client.currentProgram || "Programme a confirmer"} tone={client.started ? "green" : "amber"} />
+              <p className="eyebrow-label">Cap du moment</p>
+              <StatusBadge label={client.currentProgram || "À confirmer"} tone={client.started ? "green" : "amber"} />
             </div>
-            <div className="grid gap-2 md:grid-cols-2">
-              <div className="md:col-span-2">
-                <SummaryFocusCard
-                  label="Objectif reformulé"
-                  value={
-                    latestQuestionnaire.objectiveFocus ||
-                    (client.objective === "sport" ? "Prise de masse" : "Perte de poids")
-                  }
-                />
-              </div>
-              <SummaryFocusCard label="Âge" value={`${client.age} ans`} />
-              <SummaryFocusCard label="Taille" value={`${client.height} cm`} />
+            <SummaryFocusCard
+              label="Objectif"
+              value={latestQuestionnaire.objectiveFocus || (client.objective === "sport" ? "Prise de masse" : "Perte de poids")}
+            />
+            <div className="grid grid-cols-2 gap-2">
+              <SummaryRow label="Protéines" value={proteinRange} />
+              <SummaryRow label="Eau cible" value={`${waterNeed} L`} />
             </div>
-            <div className="grid gap-2">
-              <SummaryRow label="Statut" value={client.started ? "Routine démarrée" : "Mise en place à lancer"} />
-              {recommendationCount ? (
-                <SummaryStatusRow
-                  label="Recommandations"
-                  badgeLabel={recommendationsContacted ? "Contactées" : "À contacter"}
-                  tone={recommendationsContacted ? "green" : "amber"}
-                  detail={`${recommendationCount} nom${recommendationCount > 1 ? "s" : ""}`}
-                />
-              ) : null}
-              <SummaryRow label="Repère protéines" value={proteinRange} />
-              <SummaryRow label="Hydratation cible" value={`${waterNeed} L`} />
-              {retainedProducts.length ? (
-                <SummaryRow label="Composition retenue" value={retainedProductsLabel} />
-              ) : null}
-              {retainedProducts.length ? (
-                <SummaryRow
-                  label="Prix routine estime"
-                  value={formatPriceEuro(retainedProductsTotalPrice)}
-                />
-              ) : null}
-              {retainedProducts.length ? (
-                <SummaryRow label="PV routine estime" value={formatPv(retainedProductsTotalPv)} />
-              ) : null}
-              {pvRecord ? (
-                <SummaryRow label="Dernière commande PV" value={formatDate(pvRecord.lastOrderDate)} />
-              ) : null}
-              <SummaryRow label="Produits optionnels" value={optionalProductsLabel} />
-              {pvRecord ? (
-                <SummaryLinkRow
-                  label="Point volume"
-                  to={`/pv/clients?responsable=${pvRecord.responsibleId}&client=${client.id}`}
-                  value="Ouvrir la fiche PV"
-                />
-              ) : null}
-              {pvRecord ? (
-                <SummaryLinkRow
-                  label="Commande / réassort"
-                  to={`/pv/orders?client=${client.id}&product=${pvRecord.activeProducts[0]?.productId ?? "formula-1"}&type=commande`}
-                  value="Ajouter un produit"
-                />
-              ) : null}
-              <SummaryRow label="Note du moment" value={latestAssessment.notes} />
-            </div>
+            {recommendationCount > 0 && (
+              <SummaryStatusRow
+                label="Recommandations"
+                badgeLabel={recommendationsContacted ? "Contactées" : "À contacter"}
+                tone={recommendationsContacted ? "green" : "amber"}
+                detail={`${recommendationCount} nom${recommendationCount > 1 ? "s" : ""}`}
+              />
+            )}
+            {retainedProducts.length > 0 && (
+              <SummaryRow label="Programme" value={retainedProductsLabel} />
+            )}
           </Card>
 
           {client.objective === "weight-loss" && (
@@ -626,53 +587,16 @@ export function ClientDetailPage() {
             />
           )}
 
-          <Card className="space-y-4">
-            <div>
-              <p className="eyebrow-label">Actions rapides</p>
-              <p className="mt-3 text-2xl text-white">Pour avancer maintenant</p>
-            </div>
-            <div className="grid gap-3">
-              <LinkButton
-                to={`/clients/${client.id}/follow-up/new`}
-                label="Nouveau suivi"
-                hint="Relire, mesurer et poser la suite"
-              />
-              <LinkButton
-                to={`/clients/${client.id}/start-assessment/edit`}
-                label="Modifier le bilan de départ"
-                hint="Corriger la date et les valeurs de reference"
-              />
-              <LinkButton
-                to={`/pv/clients?responsable=${client.distributorId}&client=${client.id}`}
-                label="Ouvrir la fiche point volume"
-                hint="Voir la commande, le reste estime et les alertes produits"
-              />
-              <LinkButton
-                to={`/clients/${client.id}/follow-up/new`}
-                label="Nouveau body scan"
-                hint="Entrer directement les nouvelles valeurs"
-                tone="green"
-              />
-              <LinkButton
-                to={`/clients/${client.id}/assessments/${latestAssessment.id}/edit`}
-                label="Modifier le dernier bilan"
-                hint="Completer une section oubliee ou corriger les valeurs"
-              />
-              <button
-                type="button"
-                onClick={() => setShowScheduleModal(true)}
-                className="w-full rounded-[22px] bg-white/[0.03] p-4 text-left transition hover:bg-white/[0.05]"
-              >
-                <p className="text-sm font-semibold text-white">Modifier le prochain rendez-vous</p>
-                <p className="mt-1 text-sm leading-6 text-[#7A8099]">Ajuster la date, l'heure ou le type de suivi</p>
+          {/* Actions — 3 essentielles max */}
+          <Card className="space-y-3">
+            <p className="eyebrow-label">Actions rapides</p>
+            <div className="grid gap-2">
+              <LinkButton to={`/clients/${client.id}/follow-up/new`} label="Nouveau suivi" hint="Mesurer et poser la suite" />
+              <LinkButton to={`/clients/${client.id}/follow-up/new`} label="Body scan" hint="Nouvelles mesures" tone="green" />
+              <button type="button" onClick={() => setShowScheduleModal(true)} className="w-full rounded-[22px] bg-white/[0.03] p-4 text-left transition hover:bg-white/[0.05]">
+                <p className="text-sm font-semibold text-white">Modifier le RDV</p>
+                <p className="mt-1 text-[12px] text-[#7A8099]">Date, heure ou type</p>
               </button>
-              {canDeleteClient && (
-                <DangerActionButton
-                  label="Supprimer ce dossier"
-                  hint="Retirer ce client, ses bilans et ses suivis liés"
-                  onClick={handleDeleteClient}
-                />
-              )}
             </div>
           </Card>
 
@@ -840,6 +764,20 @@ export function ClientDetailPage() {
                   </div>
                 ))}
               </div>
+
+              {/* Radar 5 branches */}
+              <div className="flex items-center justify-center rounded-[16px] bg-[#1A1E27] p-6">
+                <BodyScanRadar
+                  size={220}
+                  metrics={[
+                    { label: 'Poids', value: latestBodyScan.weight ?? 0, max: 120, color: '#C9A84C' },
+                    { label: 'M. grasse', value: latestBodyScan.bodyFat ?? 0, max: 50, color: '#FB7185' },
+                    { label: 'Muscle', value: latestBodyScan.muscleMass ?? 0, max: 80, color: '#2DD4BF' },
+                    { label: 'Hydrat.', value: latestBodyScan.hydration ?? 0, max: 100, color: '#A78BFA' },
+                    { label: 'Viscéral', value: latestBodyScan.visceralFat ?? 0, max: 20, color: '#C9A84C' },
+                  ]}
+                />
+              </div>
             </>
           )}
 
@@ -955,7 +893,16 @@ export function ClientDetailPage() {
               <SummaryRow label="Prochain RDV" value={activeFollowUp ? formatDateTime(activeFollowUp.dueDate) : "Non planifié"} />
               {waterNeed && <SummaryRow label="Eau recommandée" value={`${waterNeed.toFixed(1)}L / jour`} />}
               {proteinRange && <SummaryRow label="Protéines" value={`${proteinRange[0]}–${proteinRange[1]}g / repas`} />}
+              <SummaryRow label="Produits optionnels" value={optionalProductsLabel} />
+              {retainedProductsTotalPrice > 0 && <SummaryRow label="Prix routine" value={`${retainedProductsTotalPrice.toFixed(2)} €`} />}
+              {retainedProductsTotalPv > 0 && <SummaryRow label="PV routine" value={`${retainedProductsTotalPv.toFixed(1)} PV`} />}
+              {pvRecord && <SummaryRow label="Dernière commande" value={formatDate(pvRecord.lastOrderDate)} />}
             </div>
+            {canDeleteClient && (
+              <div className="mt-3 pt-3 border-t border-white/[0.06]">
+                <DangerActionButton label="Supprimer ce dossier" hint="Retirer ce client et ses données" onClick={handleDeleteClient} />
+              </div>
+            )}
             {canReassignClient && (
               <div className="mt-4 rounded-[18px] border border-white/[0.06] bg-white/[0.02] p-4">
                 <p className="text-[11px] text-[#4A5068] uppercase tracking-wider mb-3">Transférer le dossier</p>
@@ -1015,40 +962,12 @@ function SummaryStatusRow({
   );
 }
 
-function SummaryLinkRow({
-  label,
-  value,
-  to
-}: {
-  label: string;
-  value: string;
-  to: string;
-}) {
-  return (
-    <Link
-      to={to}
-      className="flex items-center justify-between gap-3 rounded-[22px] bg-[rgba(201,168,76,0.08)] px-4 py-3 transition hover:bg-[rgba(45,212,191,0.14)]"
-    >
-      <span className="text-sm text-[#B0B4C4]">{label}</span>
-      <span className="text-right text-sm font-semibold text-white">{value}</span>
-    </Link>
-  );
-}
-
 function QuickInfo({ text }: { text: string }) {
   return (
     <div className="rounded-[20px] bg-[#0B0D11]/60 px-4 py-3 text-sm leading-6 text-[#F0EDE8]">
       {text}
     </div>
   );
-}
-
-function formatPriceEuro(value: number) {
-  return `${value.toFixed(2)} EUR`;
-}
-
-function formatPv(value: number) {
-  return `${value.toFixed(2)} PV`;
 }
 
 function SummaryFocusCard({
