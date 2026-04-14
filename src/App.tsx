@@ -124,7 +124,7 @@ export default function App() {
             </Route>
           </Route>
           {/* Route publique — récap client accessible par QR code */}
-          <Route path="/recap/:clientId" element={<RecapPage />} />
+          <Route path="/recap/:token" element={<RecapPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Suspense>
