@@ -259,7 +259,35 @@ export function PvOverviewPage() {
             </div>
           </div>
 
-          <div className="overflow-x-auto">
+          {/* Mobile cards */}
+          <div className="md:hidden space-y-3">
+            {filteredRecords.length === 0 ? (
+              <div className="rounded-[16px] bg-white/[0.03] px-4 py-6 text-center text-sm text-[#7A8099]">Aucun dossier PV visible</div>
+            ) : filteredRecords.map((record) => {
+              return (
+                <button key={record.clientId} type="button" onClick={() => handleSelectClient(record.clientId)}
+                  className="w-full rounded-[16px] border border-white/[0.07] bg-[#13161C] p-4 text-left transition hover:bg-white/[0.04]">
+                  <div className="flex justify-between items-start mb-3">
+                    <div>
+                      <div className="text-sm font-semibold text-white">{record.clientName}</div>
+                      <div className="text-[11px] text-[#7A8099] mt-1">{record.program}</div>
+                    </div>
+                    <div className="text-right">
+                      <div style={{ fontFamily: 'Syne, sans-serif', fontSize: 18, fontWeight: 700, color: '#C9A84C' }}>{record.pvCumulative} PV</div>
+                      <PvStatusBadge status={record.status} />
+                    </div>
+                  </div>
+                  <div className="flex gap-4 text-[11px] text-[#4A5068]">
+                    <span>Début : {formatDate(record.startDate)}</span>
+                    <span>{record.estimatedRemainingDays}j restants</span>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Desktop table */}
+          <div className="hidden md:block overflow-x-auto">
             {storageMode === "supabase" && records.length === 0 ? (
               <div className="mb-4 rounded-[22px] border border-white/10 bg-white/[0.03] px-4 py-4 text-sm leading-6 text-[#B0B4C4]">
                 Aucun dossier PV actif n&apos;est encore visible avec les filtres en cours.
