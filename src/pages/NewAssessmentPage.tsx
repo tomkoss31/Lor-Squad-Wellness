@@ -1414,6 +1414,35 @@ export function NewAssessmentPage() {
                   <Field label="Heures de sommeil" type="number" step="0.5" value={form.sleepHours} onChange={(v) => update("sleepHours", Number(v))} />
                   <ChoiceGroup label="Qualité du sommeil" value={form.sleepQuality} options={["Très bonne", "Bonne", "Moyenne", "Mauvaise"]} onChange={(v) => update("sleepQuality", v)} />
                 </div>
+                {/* Calculateur sommeil auto */}
+                {form.bedTime && form.wakeUpTime ? (() => {
+                  const [bh, bm] = form.bedTime.split(':').map(Number)
+                  const [wh, wm] = form.wakeUpTime.split(':').map(Number)
+                  let bedMin = bh * 60 + bm, wakeMin = wh * 60 + wm
+                  if (wakeMin <= bedMin) wakeMin += 24 * 60
+                  const hours = (wakeMin - bedMin) / 60
+                  const quality = hours >= 7 && hours <= 9 ? 'optimal' : hours >= 6 ? 'correct' : 'insuffisant'
+                  const qColors: Record<string, string> = { optimal: '#2DD4BF', correct: '#C9A84C', insuffisant: '#FB7185' }
+                  const color = qColors[quality]
+                  return (
+                    <div style={{ background: '#13161C', border: `1px solid ${color}30`, borderRadius: 12, padding: 14, display: 'flex', alignItems: 'center', gap: 14 }}>
+                      <div style={{ textAlign: 'center', flexShrink: 0 }}>
+                        <div style={{ fontFamily: 'Syne, sans-serif', fontSize: 28, fontWeight: 800, color, lineHeight: 1 }}>{hours.toFixed(1)}h</div>
+                        <div style={{ fontSize: 10, color: '#4A5068', marginTop: 2 }}>de sommeil</div>
+                      </div>
+                      <div>
+                        <div style={{ fontSize: 13, fontWeight: 600, color, marginBottom: 2 }}>
+                          {quality === 'optimal' ? 'Sommeil optimal' : quality === 'correct' ? 'Sommeil correct' : 'Sommeil insuffisant'}
+                        </div>
+                        <div style={{ fontSize: 11, color: '#7A8099', lineHeight: 1.5 }}>
+                          {quality === 'optimal' ? 'Entre 7h et 9h — idéal pour la récupération et la gestion du poids.'
+                            : quality === 'correct' ? 'Correct mais en dessous des recommandations. Night Mode peut aider.'
+                            : 'Moins de 6h — impacte la prise de poids et la récupération. Night Mode recommandé.'}
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })() : null}
                 <ChoiceGroup label="Sieste en journee" value={form.napFrequency} options={["Jamais", "Parfois", "Souvent"]} onChange={(v) => update("napFrequency", v)} />
               </SectionBlock>
 

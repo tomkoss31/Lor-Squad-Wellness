@@ -369,12 +369,14 @@ function detectNeeds(source: AssessmentRecommendationSource): DetectedNeed[] {
     source.waterIntake < 1.6 ||
     source.hydration > 0 && source.hydration < hydrationReferenceMin
   ) {
+    const isCritical = source.hydration > 0 && source.hydration < 50;
     needs.push({
       id: "hydration",
-      priority: source.hydration > 0 && source.hydration < hydrationReferenceMin ? 9 : 8,
-      reasonLabel:
-        source.hydration > 0 && source.hydration < hydrationReferenceMin
-          ? "Hydratation body scan sous le repere."
+      priority: isCritical ? 10 : source.hydration > 0 && source.hydration < hydrationReferenceMin ? 9 : 8,
+      reasonLabel: isCritical
+        ? "Hydratation critique (< 50%) — Aloe Vera + H24 Hydrate essentiels."
+        : source.hydration > 0 && source.hydration < hydrationReferenceMin
+          ? "Hydratation body scan sous le repère."
           : "Volume d'eau du quotidien trop bas."
     });
   }
@@ -464,21 +466,45 @@ function detectNeeds(source: AssessmentRecommendationSource): DetectedNeed[] {
   if (source.visceralFat >= 7) {
     needs.push({
       id: "visceral_fat",
-      priority: source.visceralFat >= 10 ? 10 : 9,
-      reasonLabel: "La graisse viscerale ressort comme priorite du moment."
+      priority: source.visceralFat >= 12 ? 10 : source.visceralFat >= 9 ? 9 : 8,
+      reasonLabel: source.visceralFat >= 12
+        ? "Graisse viscérale critique — Phyto Complete fortement recommandé."
+        : source.visceralFat >= 9
+        ? "Graisse viscérale élevée — accompagnement ciblé nécessaire."
+        : "La graisse viscerale ressort comme priorite du moment."
     });
+  }
+
+  // Hydratation très basse souvent corrélée à masse grasse élevée
+  // Si viscéral déjà détecté ET hydratation basse → renforcer la priorité
+  if (source.visceralFat >= 7 && source.hydration > 0 && source.hydration < 50) {
+    const existing = needs.find(n => n.id === 'visceral_fat');
+    if (existing) existing.priority = Math.max(existing.priority, 10);
   }
 
   if (
     source.boneMass > 0 &&
     ((source.sex === "female" && source.boneMass < 2.4) ||
       (source.sex === "male" && source.boneMass < 3) ||
-      boneRatio < 0.031)
+      boneRatio < 0.04)
   ) {
     needs.push({
       id: "bone_support",
-      priority: 6,
-      reasonLabel: "La base osseuse semble basse sur ce releve."
+      priority: boneRatio < 0.035 ? 9 : source.sex === "female" ? 8 : 6,
+      reasonLabel: boneRatio < 0.035
+        ? "Masse osseuse faible détectée — calcium & vitamine D essentiels."
+        : source.sex === "female"
+        ? "Calcium essentiel femme — prévention ostéoporose à tout âge."
+        : "La base osseuse semble basse sur ce relevé."
+    });
+  }
+
+  // Femme sans données body scan → calcium recommandé quand même
+  if (source.sex === "female" && source.boneMass === 0 && !needs.some(n => n.id === "bone_support")) {
+    needs.push({
+      id: "bone_support",
+      priority: 5,
+      reasonLabel: "Calcium recommandé pour les femmes — prévention osseuse."
     });
   }
 
