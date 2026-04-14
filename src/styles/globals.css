@@ -172,3 +172,11 @@ button, a, [role="button"] { min-height: 44px; }
 @media (max-width: 640px) {
   .stats-grid { grid-template-columns: repeat(2, 1fr) !important; }
 }
+
+/* Mobile padding + titres */
+@media (max-width: 768px) {
+  .page-content { padding: 16px !important; }
+}
+@media (max-width: 1024px) {
+  .main-content { padding-bottom: calc(80px + env(safe-area-inset-bottom)) !important; }
+}

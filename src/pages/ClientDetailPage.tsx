@@ -1112,7 +1112,6 @@ function LinkButton({
   to,
   label,
   hint,
-  tone = "blue"
 }: {
   to: string;
   label: string;
@@ -1122,14 +1121,13 @@ function LinkButton({
   return (
     <Link
       to={to}
-      className={`rounded-[22px] px-4 py-3 text-left transition ${
-        tone === "green"
-          ? "bg-[rgba(45,212,191,0.1)] hover:bg-[rgba(45,212,191,0.15)]"
-          : "bg-[rgba(45,212,191,0.1)] hover:bg-[rgba(201,168,76,0.15)]"
-      }`}
+      style={{ display: 'block', background: '#13161C', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12, padding: '14px 16px', textDecoration: 'none', position: 'relative', overflow: 'hidden', transition: 'border-color 0.15s' }}
+      onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.14)'}
+      onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.07)'}
     >
-      <span className="block text-sm font-medium text-white">{label}</span>
-      <span className="mt-1 block text-sm text-[#F0EDE8]/85">{hint}</span>
+      <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 3, background: '#C9A84C', borderRadius: '3px 0 0 3px' }} />
+      <div style={{ fontSize: 14, fontWeight: 600, color: '#F0EDE8', marginBottom: 3 }}>{label}</div>
+      <div style={{ fontSize: 12, color: '#7A8099' }}>{hint}</div>
     </Link>
   );
 }
