@@ -6,6 +6,8 @@ import { useEffect } from "react";
 import { useRef } from "react";
 import { Component, type ErrorInfo } from "react";
 import { useNavigate } from "react-router-dom";
+import { RecapModal } from "../components/assessment/RecapModal";
+import { getSupabaseClient } from "../services/supabaseClient";
 import { BodyFatInsightCard } from "../components/body-scan/BodyFatInsightCard";
 import { HydrationVisceralInsightCard } from "../components/body-scan/HydrationVisceralInsightCard";
 import { MuscleMassInsightCard } from "../components/body-scan/MuscleMassInsightCard";
@@ -351,6 +353,9 @@ export function NewAssessmentPage() {
   const [form, setForm] = useState(initialForm);
   const [currentStep, setCurrentStep] = useState(0);
   const [saveError, setSaveError] = useState("");
+  const [showRecapModal, setShowRecapModal] = useState(false);
+  const [recapToken, setRecapToken] = useState("");
+  const [recapClientName, setRecapClientName] = useState("");
   const [assignedUserId, setAssignedUserId] = useState("");
   const [draftReady, setDraftReady] = useState(false);
 
@@ -1077,6 +1082,49 @@ export function NewAssessmentPage() {
       });
 
       setSaveError("");
+
+      // Créer récap Supabase pour QR code
+      try {
+        const sb = await getSupabaseClient();
+        if (sb) {
+          const { data: recapData } = await sb
+            .from('client_recaps')
+            .insert({
+              client_id: clientId,
+              coach_name: currentUser?.name ?? 'Coach',
+              client_first_name: form.firstName?.trim() ?? '',
+              client_last_name: form.lastName?.trim() ?? '',
+              assessment_date: new Date().toISOString(),
+              program_title: programTitle || null,
+              objective: form.objectiveFocus || null,
+              body_scan: {
+                weight: form.weight || null,
+                bodyFat: form.bodyFat || null,
+                muscleMass: form.muscleMass || null,
+                hydration: form.hydration || null,
+                visceralFat: form.visceralFat || null,
+                metabolicAge: form.metabolicAge || null,
+              },
+              recommendations: selectedRecommendationProducts
+                .slice(0, 5)
+                .map(p => ({ name: p.name, shortBenefit: p.shortBenefit ?? '' })),
+              referrals: [],
+            })
+            .select('token')
+            .single();
+
+          if (recapData?.token) {
+            clearAssessmentDraft();
+            setRecapToken(recapData.token);
+            setRecapClientName(`${form.firstName?.trim()} ${form.lastName?.trim()}`);
+            setShowRecapModal(true);
+            return; // Modal handles navigation
+          }
+        }
+      } catch (recapErr) {
+        console.error('Recap creation error (non-blocking):', recapErr);
+      }
+
       clearAssessmentDraft();
       navigate(`/clients/${clientId}`);
     } catch (error) {
@@ -2065,6 +2113,14 @@ export function NewAssessmentPage() {
 
         {desktopHelperPanel}
       </div>
+
+      {showRecapModal && recapToken && (
+        <RecapModal
+          clientName={recapClientName}
+          recapToken={recapToken}
+          onClose={() => { setShowRecapModal(false); navigate('/clients'); }}
+        />
+      )}
     </div>
     );
   }
