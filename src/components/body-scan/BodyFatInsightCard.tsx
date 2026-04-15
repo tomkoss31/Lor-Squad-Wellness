@@ -296,7 +296,10 @@ function BodyFatProgressChart({
                 <text
                   x={4}
                   y={y + 4}
-                  fill="rgba(148,163,184,0.7)"
+                  fill="var(--ls-text-muted)"
+                  stroke="var(--ls-surface2)"
+                  strokeWidth="2.5"
+                  paintOrder="stroke"
                   fontSize="10"
                   fontWeight="500"
                 >
@@ -319,17 +322,20 @@ function BodyFatProgressChart({
                 cx={point.x}
                 cy={point.y}
                 r="5"
-                fill="#0f172a"
-                stroke="#ffffff"
+                fill="var(--ls-text)"
+                stroke="var(--ls-surface2)"
                 strokeWidth="2"
               />
               <text
                 x={point.x}
                 y={point.y - 10}
                 textAnchor="middle"
-                fill="rgba(255,255,255,0.92)"
-                fontSize="10"
-                fontWeight="600"
+                fill="var(--ls-text-muted)"
+                stroke="var(--ls-surface2)"
+                strokeWidth="3"
+                paintOrder="stroke"
+                fontSize="11"
+                fontWeight="700"
               >
                 {point.kg} kg
               </text>
@@ -356,19 +362,21 @@ function HistoryReadingCard({
 }) {
   return (
     <div
-      className={`rounded-[20px] border px-4 py-4 ${
-        emphasized
-          ? "border-rose-300/18 bg-rose-400/[0.08] shadow-[0_10px_30px_rgba(251,113,133,0.08)]"
-          : "border-white/8 bg-[var(--ls-bg)]/60"
-      }`}
+      style={{
+        borderRadius: 20,
+        padding: 16,
+        background: emphasized ? 'rgba(220,38,38,0.08)' : 'var(--ls-surface2)',
+        border: `1px solid ${emphasized ? 'rgba(220,38,38,0.25)' : 'var(--ls-border)'}`,
+        boxShadow: emphasized ? '0 4px 16px rgba(220,38,38,0.1)' : 'none',
+      }}
     >
-      <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-[var(--ls-text-hint)]">
+      <p style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.14em', color: 'var(--ls-text-hint)' }}>
         {label}
       </p>
-      {dateLabel ? <p className="mt-1 text-xs text-[var(--ls-text-muted)]">{dateLabel}</p> : null}
-      <div className="mt-4">
-        <p className="text-[2rem] font-semibold tracking-[-0.04em] text-white">{kg} kg</p>
-        <p className="mt-1 text-sm text-[var(--ls-text-muted)]">{percent} % de masse grasse</p>
+      {dateLabel ? <p style={{ marginTop: 4, fontSize: 12, color: 'var(--ls-text-hint)' }}>{dateLabel}</p> : null}
+      <div style={{ marginTop: 16 }}>
+        <p style={{ fontSize: '2rem', fontWeight: 600, letterSpacing: '-0.04em', color: 'var(--ls-text)' }}>{kg} kg</p>
+        <p style={{ marginTop: 4, fontSize: 14, color: 'var(--ls-text-muted)' }}>{percent} % de masse grasse</p>
       </div>
     </div>
   );
