@@ -8,10 +8,44 @@ import { BottomNav } from "./BottomNav";
 import { useTheme } from "../../hooks/useTheme";
 import { getRoleLabel } from "../../lib/auth";
 
+const NAV_ICONS: Record<string, JSX.Element> = {
+  "/dashboard": (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+  ),
+  "/guide": (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+  ),
+  "/recommendations": (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+  ),
+  "/pv": (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+  ),
+  "/clients": (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+  ),
+  "/users": (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="23" y1="11" x2="17" y2="11"/><line x1="20" y1="8" x2="20" y2="14"/></svg>
+  ),
+  "/assessments/new": (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+  ),
+};
+
 export function AppLayout() {
-  const { currentUser, logout, followUps } = useAppContext();
+  const { currentUser, logout, followUps, pvClientProducts } = useAppContext();
   const { isDark, toggleTheme } = useTheme();
   const urgentRelanceCount = followUps.filter(f => f.status === "pending").length;
+  const pvOverdueCount = (() => {
+    if (!pvClientProducts) return 0;
+    const now = new Date();
+    return pvClientProducts.filter(p => {
+      if (!p.active) return false;
+      const end = new Date(p.startDate);
+      end.setDate(end.getDate() + p.durationReferenceDays);
+      return end < now;
+    }).length;
+  })();
   const { canPromptInstall, isIos, isMobile, isStandalone, promptInstall } = useInstallPrompt();
   const location = useLocation();
   const navigate = useNavigate();
@@ -29,8 +63,8 @@ export function AppLayout() {
   const navigation = [
     { label: "Accueil", path: "/dashboard", badge: 0 },
     { label: "Guide rendez-vous", path: "/guide", badge: 0 },
-    { label: "Recommandations", path: "/recommendations", badge: 0 },
-    { label: "Suivi PV", path: "/pv", badge: urgentRelanceCount },
+    { label: "Recommandations", path: "/recommendations", badge: urgentRelanceCount },
+    { label: "Suivi PV", path: "/pv", badge: pvOverdueCount },
     { label: "Dossiers clients", path: "/clients", badge: 0 },
     ...(currentUser.role === "admin" ? [{ label: "Equipe", path: "/users", badge: 0 }] : []),
     { label: "Nouveau bilan", path: "/assessments/new", badge: 0 }
@@ -115,12 +149,13 @@ export function AppLayout() {
                 >
                   <span
                     className={`h-1.5 w-1.5 rounded-full flex-shrink-0 ${
-                      isActive ? "bg-[#C9A84C]" : "bg-white/15"
+                      isActive ? "bg-[#C9A84C]" : "bg-[var(--ls-border2)]"
                     }`}
                   />
+                  {NAV_ICONS[item.path] ?? null}
                   <span className="flex-1">{item.label}</span>
                   {item.badge > 0 ? (
-                    <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-[#FB7185] px-1.5 text-[10px] font-bold text-white">
+                    <span style={{ fontSize: 9, padding: '2px 6px', borderRadius: 10, background: 'rgba(220,38,38,0.12)', color: 'var(--ls-coral)', fontWeight: 700, marginLeft: 'auto', fontFamily: 'DM Sans, sans-serif' }}>
                       {item.badge}
                     </span>
                   ) : item.path === "/assessments/new" ? (
