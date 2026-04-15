@@ -442,6 +442,74 @@ html.theme-light .recap-hero {
   background: linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 60%, #F4F2EE 100%) !important;
 }
 
+/* ═══ COULEURS TAILWIND SÉMANTIQUES EN MODE CLAIR ═══ */
+/* Toutes les teintes "pastel" Tailwind hardcodées sont invisibles
+   sur fond blanc — les remplacer par leurs variantes sombres */
+
+/* Rose / rouge → coral */
+html.theme-light .text-rose-50,
+html.theme-light .text-rose-100,
+html.theme-light .text-rose-200,
+html.theme-light .text-red-50,
+html.theme-light .text-red-100,
+html.theme-light .text-red-200,
+html.theme-light [class*="text-rose-100/"],
+html.theme-light [class*="text-red-100/"] {
+  color: var(--ls-coral) !important;
+}
+
+/* Amber / jaune → gold foncé */
+html.theme-light .text-amber-50,
+html.theme-light .text-amber-100,
+html.theme-light .text-amber-200,
+html.theme-light [class*="text-amber-100/"],
+html.theme-light [class*="text-amber-50/"] {
+  color: #B8922A !important;
+}
+
+/* Emerald / vert → teal foncé */
+html.theme-light .text-emerald-50,
+html.theme-light .text-emerald-100,
+html.theme-light .text-emerald-200 {
+  color: var(--ls-teal) !important;
+}
+
+/* Sky / cyan → bleu foncé */
+html.theme-light .text-sky-50,
+html.theme-light .text-sky-100,
+html.theme-light .text-sky-200,
+html.theme-light .text-cyan-50,
+html.theme-light .text-cyan-100,
+html.theme-light .text-cyan-200 {
+  color: #0369A1 !important;
+}
+
+/* Fonds pastel Tailwind — renforcer contraste bordure */
+html.theme-light [class*="bg-rose-400/"] {
+  background-color: rgba(220,38,38,0.1) !important;
+}
+html.theme-light [class*="bg-amber-400/"],
+html.theme-light [class*="bg-amber-300/"] {
+  background-color: rgba(245,158,11,0.12) !important;
+}
+html.theme-light [class*="border-rose-"] {
+  border-color: rgba(220,38,38,0.3) !important;
+}
+html.theme-light [class*="border-amber-"] {
+  border-color: rgba(245,158,11,0.35) !important;
+}
+html.theme-light [class*="ring-rose-"] {
+  --tw-ring-color: rgba(220,38,38,0.25) !important;
+}
+html.theme-light [class*="ring-amber-"] {
+  --tw-ring-color: rgba(245,158,11,0.3) !important;
+}
+
+/* Labels eyebrow avec Tailwind color */
+html.theme-light .eyebrow-label {
+  color: var(--ls-text-hint) !important;
+}
+
 /* ── SIDEBAR icônes/items actifs ── */
 html.theme-light .app-sidebar [aria-current="page"] svg,
 html.theme-light .app-sidebar [aria-current="page"] span svg {
