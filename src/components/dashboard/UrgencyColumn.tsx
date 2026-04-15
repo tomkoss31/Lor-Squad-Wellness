@@ -46,16 +46,20 @@ export function UrgencyColumn({ title, count, color, icon, items, emptyLabel, se
         <div style={{ background: 'var(--ls-surface)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 10, padding: 14, fontSize: 12, color: 'var(--ls-text-hint)', textAlign: 'center' }}>{emptyLabel}</div>
       ) : items.map(item => (
         <Link key={item.id} to={`/clients/${item.clientId}`} style={{ textDecoration: 'none' }}>
-          <div data-urgency={urgencyKind} style={{ background: 'var(--ls-surface)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 11, padding: '12px 14px', cursor: 'pointer', transition: 'border-color 0.15s, background 0.15s', position: 'relative', overflow: 'hidden' }}
+          <div data-urgency={urgencyKind} style={{ background: 'var(--ls-surface)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 11, padding: '12px 14px', cursor: 'pointer', transition: 'all 0.15s ease', position: 'relative', overflow: 'hidden' }}
             onMouseEnter={e => {
               const el = e.currentTarget as HTMLElement
               el.style.background = 'var(--ls-surface2)'
               el.style.borderColor = 'var(--ls-border2)'
+              el.style.transform = 'translateY(-1px)'
+              el.style.boxShadow = '0 4px 14px rgba(0,0,0,0.08)'
             }}
             onMouseLeave={e => {
               const el = e.currentTarget as HTMLElement
               el.style.background = 'var(--ls-surface)'
-              el.style.borderColor = 'rgba(255,255,255,0.07)'
+              el.style.borderColor = 'var(--ls-border)'
+              el.style.transform = 'translateY(0)'
+              el.style.boxShadow = 'none'
             }}>
             <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 4, background: color, borderRadius: '0 2px 2px 0' }} />
             <div style={{ position: 'absolute', top: 10, right: 10, fontSize: 9, padding: '2px 8px', borderRadius: 10, background: `${color}15`, color, fontWeight: 600 }}>
@@ -79,12 +83,12 @@ export function UrgencyColumn({ title, count, color, icon, items, emptyLabel, se
                 const isPast = diffMs < 0
                 const isThisWeek = diffDays > 0 && diffDays <= 7
                 const agendaStyle = isPast
-                  ? { bg: 'rgba(251,113,133,0.1)', c: '#FB7185', bd: 'rgba(251,113,133,0.2)' }
+                  ? { bg: 'rgba(220,38,38,0.1)', c: 'var(--ls-coral)', bd: 'rgba(220,38,38,0.2)' }
                   : isToday
-                    ? { bg: 'rgba(45,212,191,0.15)', c: '#2DD4BF', bd: 'rgba(45,212,191,0.3)' }
+                    ? { bg: 'rgba(13,148,136,0.1)', c: 'var(--ls-teal)', bd: 'rgba(13,148,136,0.2)' }
                     : isThisWeek
-                      ? { bg: 'rgba(201,168,76,0.1)', c: '#C9A84C', bd: 'rgba(201,168,76,0.2)' }
-                      : { bg: 'rgba(128,128,128,0.08)', c: 'var(--ls-text-muted)', bd: 'var(--ls-border2)' }
+                      ? { bg: 'rgba(201,168,76,0.1)', c: 'var(--ls-gold)', bd: 'rgba(201,168,76,0.2)' }
+                      : { bg: 'var(--ls-surface2)', c: 'var(--ls-text-muted)', bd: 'var(--ls-border)' }
                 return (
                 <a
                   href={createGoogleCalendarLink({

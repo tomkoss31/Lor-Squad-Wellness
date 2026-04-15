@@ -88,7 +88,7 @@ export function DashboardPage() {
           </h1>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#2DD4BF', boxShadow: '0 0 0 3px rgba(45,212,191,0.2)', flexShrink: 0 }} />
-            <span style={{ fontSize: 12, color: 'var(--ls-text-muted)', textTransform: 'capitalize' }}>{today}</span>
+            <span style={{ fontSize: 12, color: 'var(--ls-text-muted)', textTransform: 'capitalize' }}>{today} — Vos priorités du jour</span>
           </div>
         </div>
         <Link to="/assessments/new" style={{ background: '#C9A84C', color: '#0B0D11', borderRadius: 10, padding: '11px 20px', fontFamily: 'Syne, sans-serif', fontSize: 13, fontWeight: 700, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 8 }}>

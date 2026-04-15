@@ -84,7 +84,7 @@ export function RecapPage() {
       <div style={{ background: 'var(--ls-bg)', minHeight: '100vh', color: 'var(--ls-text)', fontFamily: 'DM Sans, sans-serif', maxWidth: 480, margin: '0 auto' }}>
 
         {/* Hero */}
-        <div style={{ background: 'linear-gradient(135deg,var(--ls-surface) 0%,var(--ls-surface2) 100%)', padding: '28px 20px 24px', position: 'relative', overflow: 'hidden', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+        <div className="recap-hero" style={{ background: 'linear-gradient(135deg,var(--ls-surface) 0%,var(--ls-surface2) 100%)', padding: '28px 20px 24px', position: 'relative', overflow: 'hidden', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
           <div style={{ position: 'absolute', top: -40, right: -40, width: 160, height: 160, borderRadius: '50%', background: 'rgba(201,168,76,0.08)', pointerEvents: 'none' }} />
           <div style={{ position: 'absolute', bottom: -30, left: -20, width: 120, height: 120, borderRadius: '50%', background: 'rgba(45,212,191,0.06)', pointerEvents: 'none' }} />
 
@@ -126,7 +126,7 @@ export function RecapPage() {
               { label: 'Masse grasse', val: scan.bodyFat ? `${scan.bodyFat}%` : '—', color: '#FB7185', sub: scan.bodyFat && scan.weight ? `≈ ${((scan.bodyFat/100)*scan.weight).toFixed(1)} kg` : '' },
               { label: 'Âge métabo.', val: scan.metabolicAge ? `${scan.metabolicAge} ans` : '—', color: '#A78BFA', sub: '' },
             ].map(m => (
-              <div key={m.label} style={{ background: 'var(--ls-surface)', border: '1px solid rgba(255,255,255,0.07)', borderTop: `2px solid ${m.color}`, borderRadius: 10, padding: 12 }}>
+              <div key={m.label} style={{ background: 'var(--ls-surface2)', border: '1px solid var(--ls-border)', borderTop: `2px solid ${m.color}`, borderRadius: 10, padding: 12 }}>
                 <div style={{ fontSize: 9, color: 'var(--ls-text-hint)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6 }}>{m.label}</div>
                 <div style={{ fontFamily: 'Syne, sans-serif', fontSize: 18, fontWeight: 700, color: m.color, lineHeight: 1 }}>{m.val}</div>
                 {m.sub && <div style={{ fontSize: 10, color: 'var(--ls-text-hint)', marginTop: 3 }}>{m.sub}</div>}
@@ -177,7 +177,7 @@ export function RecapPage() {
           </div>
           <div style={{ background: 'var(--ls-surface)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12, padding: 16, marginBottom: 20 }}>
             <div style={{ display: 'flex', gap: 14, alignItems: 'center', marginBottom: 14 }}>
-              <div style={{ width: 82, height: 82, background: 'var(--ls-text)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <div className="qr-container" style={{ width: 82, height: 82, background: '#FFFFFF', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, padding: 6 }}>
                 <img src={`https://api.qrserver.com/v1/create-qr-code/?size=70x70&data=${encodeURIComponent(recapUrl)}&color=0B0D11&bgcolor=F0EDE8`} width="70" height="70" alt="QR" style={{ borderRadius: 6, display: 'block' }} />
               </div>
               <div style={{ minWidth: 0, flex: 1 }}>
