@@ -2,11 +2,65 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --ls-bg: #0B0D11;
+  --ls-surface: #13161C;
+  --ls-surface2: #1A1E27;
+  --ls-border: rgba(255,255,255,0.07);
+  --ls-border2: rgba(255,255,255,0.12);
+  --ls-text: #F0EDE8;
+  --ls-text-muted: #7A8099;
+  --ls-text-hint: #4A5068;
+  --ls-gold: #C9A84C;
+  --ls-teal: #2DD4BF;
+  --ls-coral: #FB7185;
+  --ls-purple: #A78BFA;
+  --ls-gold-bg: rgba(201,168,76,0.1);
+  --ls-teal-bg: rgba(45,212,191,0.1);
+  --ls-coral-bg: rgba(251,113,133,0.1);
+  --ls-purple-bg: rgba(167,139,250,0.1);
+  --ls-input-bg: #1A1E27;
+  --ls-sidebar-bg: #13161C;
+}
+
+html.theme-light {
+  --ls-bg: #F4F2EE;
+  --ls-surface: #FFFFFF;
+  --ls-surface2: #F0EDE8;
+  --ls-border: rgba(0,0,0,0.08);
+  --ls-border2: rgba(0,0,0,0.14);
+  --ls-text: #111827;
+  --ls-text-muted: #6B7280;
+  --ls-text-hint: #9CA3AF;
+  --ls-gold: #B8922A;
+  --ls-teal: #0D9488;
+  --ls-coral: #DC2626;
+  --ls-purple: #7C3AED;
+  --ls-gold-bg: rgba(184,146,42,0.1);
+  --ls-teal-bg: rgba(13,148,136,0.1);
+  --ls-coral-bg: rgba(220,38,38,0.08);
+  --ls-purple-bg: rgba(124,58,237,0.1);
+  --ls-input-bg: #F0EDE8;
+  --ls-sidebar-bg: #FFFFFF;
+}
+
+/* Classes utilitaires thème */
+.ls-bg       { background: var(--ls-bg) !important; }
+.ls-surface  { background: var(--ls-surface) !important; }
+.ls-surface2 { background: var(--ls-surface2) !important; }
+.ls-text     { color: var(--ls-text) !important; }
+.ls-muted    { color: var(--ls-text-muted) !important; }
+.ls-hint     { color: var(--ls-text-hint) !important; }
+
+/* Mode clair — ombres sidebar et bottom nav */
+html.theme-light .app-sidebar { box-shadow: 2px 0 8px rgba(0,0,0,0.06); }
+html.theme-light .bottom-nav { box-shadow: 0 -2px 8px rgba(0,0,0,0.06); }
+
 @layer base {
   * { box-sizing: border-box; -webkit-font-smoothing: antialiased; }
 
   html { font-family: 'DM Sans', sans-serif; }
-  body { background: #0B0D11; color: #F0EDE8; font-family: 'DM Sans', sans-serif; }
+  body { background: var(--ls-bg); color: var(--ls-text); font-family: 'DM Sans', sans-serif; transition: background 0.2s, color 0.2s; }
 
   h1, h2, h3, h4, .font-display { font-family: 'Syne', sans-serif; }
 

@@ -33,8 +33,8 @@ export function BottomNav() {
     <nav
       className="bottom-nav fixed bottom-0 left-0 right-0 z-50 lg:hidden"
       style={{
-        background: '#13161C',
-        borderTop: '1px solid rgba(255,255,255,0.07)',
+        background: 'var(--ls-sidebar-bg)',
+        borderTop: '1px solid var(--ls-border)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-around',
