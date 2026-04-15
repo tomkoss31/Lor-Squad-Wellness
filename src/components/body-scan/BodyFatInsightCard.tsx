@@ -68,12 +68,12 @@ export function BodyFatInsightCard({
           <PedagogicalMetricCard
             label="% actuel"
             value={`${current.percent} %`}
-            accent="red"
+            accent={bodyFatTone === "amber" ? "red" : bodyFatTone}
           />
           <PedagogicalMetricCard
             label="Equivalent estime"
             value={`${currentKg} kg`}
-            accent="red"
+            accent={bodyFatTone === "amber" ? "red" : bodyFatTone}
           />
           <div className="md:col-span-2 xl:col-span-3 rounded-[24px] border border-white/10 bg-[var(--ls-bg)]/80 p-5">
             <div className="flex items-center justify-between gap-3">
