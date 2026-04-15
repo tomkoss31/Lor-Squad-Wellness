@@ -210,7 +210,7 @@ export function PvOrdersPage() {
           <div>
             <p className="eyebrow-label">Saisie rapide</p>
             <h2 className="mt-3 text-2xl text-white">{title}</h2>
-          <p className="mt-2 text-sm leading-6 text-[#7A8099]">
+          <p className="mt-2 text-sm leading-6 text-[var(--ls-text-muted)]">
             Choisis le client, le produit et la quantite. Les PV et le prix se prechargent automatiquement et le suivi produit se met a jour ensuite.
           </p>
           </div>
@@ -342,7 +342,7 @@ export function PvOrdersPage() {
 
           <div className="overflow-x-auto">
             <div className="min-w-[860px] space-y-2">
-              <div className="grid grid-cols-[110px_1.2fr_1fr_70px_80px_90px_1.2fr] gap-3 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#4A5068]">
+              <div className="grid grid-cols-[110px_1.2fr_1fr_70px_80px_90px_1.2fr] gap-3 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--ls-text-hint)]">
                 <span>Date</span>
                 <span>Client</span>
                 <span>Produit</span>
@@ -360,13 +360,13 @@ export function PvOrdersPage() {
                   <div className="text-sm text-[#B0B4C4]">{formatDate(transaction.date)}</div>
                   <div>
                     <p className="text-sm font-semibold text-white">{transaction.clientName}</p>
-                    <p className="mt-1 text-xs text-[#7A8099]">{transaction.responsibleName}</p>
+                    <p className="mt-1 text-xs text-[var(--ls-text-muted)]">{transaction.responsibleName}</p>
                   </div>
                   <div className="text-sm text-[#B0B4C4]">{transaction.productName}</div>
                   <div className="text-sm text-[#B0B4C4]">{transaction.quantity}</div>
                   <div className="text-sm font-semibold text-white">{transaction.pv}</div>
                   <div className="text-sm text-[#B0B4C4]">{getPvTypeLabel(transaction.type)}</div>
-                  <div className="text-sm text-[#7A8099]">{transaction.note}</div>
+                  <div className="text-sm text-[var(--ls-text-muted)]">{transaction.note}</div>
                 </div>
               ))}
             </div>
@@ -402,10 +402,10 @@ function QuickSummaryCard({
   hint: string;
 }) {
   return (
-    <div className="rounded-[20px] bg-[#0B0D11]/60 px-4 py-3">
-      <p className="text-[11px] font-medium text-[#4A5068]">{label}</p>
+    <div className="rounded-[20px] bg-[var(--ls-bg)]/60 px-4 py-3">
+      <p className="text-[11px] font-medium text-[var(--ls-text-hint)]">{label}</p>
       <p className="mt-2 text-sm font-semibold text-white">{value}</p>
-      <p className="mt-1 text-xs text-[#7A8099]">{hint}</p>
+      <p className="mt-1 text-xs text-[var(--ls-text-muted)]">{hint}</p>
     </div>
   );
 }

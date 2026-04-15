@@ -382,7 +382,7 @@ export function NewFollowUpPage() {
           <Card className="space-y-5">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <p className="text-sm text-[#7A8099]">
+                <p className="text-sm text-[var(--ls-text-muted)]">
                   Dernier bilan {formatDate(latest.date)}
                   {previous && ` - précédent ${formatDate(previous.date)}`}
                 </p>
@@ -404,26 +404,26 @@ export function NewFollowUpPage() {
               </div>
 
               <div className="mt-5 grid gap-3 md:grid-cols-3">
-                <div className="rounded-[20px] border border-white/10 bg-[#1A1E27] px-4 py-4">
+                <div className="rounded-[20px] border border-white/10 bg-[var(--ls-surface2)] px-4 py-4">
                   <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-[#2DD4BF]/70">
                     Age
                   </p>
                   <p className="mt-3 text-2xl font-semibold text-white">{targetClient.age} ans</p>
-                  <p className="mt-2 text-sm text-[#7A8099]">Visible au moment de la balance</p>
+                  <p className="mt-2 text-sm text-[var(--ls-text-muted)]">Visible au moment de la balance</p>
                 </div>
-                <div className="rounded-[20px] border border-white/10 bg-[#1A1E27] px-4 py-4">
+                <div className="rounded-[20px] border border-white/10 bg-[var(--ls-surface2)] px-4 py-4">
                   <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-[#2DD4BF]/70">
                     Taille
                   </p>
                   <p className="mt-3 text-2xl font-semibold text-white">{targetClient.height} cm</p>
-                  <p className="mt-2 text-sm text-[#7A8099]">Sans revenir sur la fiche client</p>
+                  <p className="mt-2 text-sm text-[var(--ls-text-muted)]">Sans revenir sur la fiche client</p>
                 </div>
-                <div className="rounded-[20px] border border-white/10 bg-[#1A1E27] px-4 py-4">
+                <div className="rounded-[20px] border border-white/10 bg-[var(--ls-surface2)] px-4 py-4">
                   <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-[#2DD4BF]/70">
                     Dernier point
                   </p>
                   <p className="mt-3 text-2xl font-semibold text-white">{formatDate(latest.date)}</p>
-                  <p className="mt-2 text-sm text-[#7A8099]">Repere rapide avant la saisie</p>
+                  <p className="mt-2 text-sm text-[var(--ls-text-muted)]">Repere rapide avant la saisie</p>
                 </div>
               </div>
 
@@ -580,7 +580,7 @@ export function NewFollowUpPage() {
               <CompactWeightPanel label="Poids de départ" value={`${first.bodyScan.weight} kg`} />
               <CompactWeightPanel label="Dernier relevé" value={`${latest.bodyScan.weight} kg`} />
               <div className="rounded-[22px] border border-white/10 bg-white/[0.03] px-5 py-4">
-                <p className="text-[12px] font-medium text-[#7A8099]">Écart depuis départ</p>
+                <p className="text-[12px] font-medium text-[var(--ls-text-muted)]">Écart depuis départ</p>
                 <div className="mt-3 flex items-center justify-between gap-3">
                   <p className="text-[2rem] font-semibold tracking-[-0.04em] text-white">
                     {weightDeltaFromStart > 0 ? "+" : ""}
@@ -593,12 +593,12 @@ export function NewFollowUpPage() {
                 </div>
               </div>
               <div className="rounded-[22px] border border-white/10 bg-white/[0.03] px-5 py-4">
-                <p className="text-[12px] font-medium text-[#7A8099]">À repérer avant la balance</p>
+                <p className="text-[12px] font-medium text-[var(--ls-text-muted)]">À repérer avant la balance</p>
                 <div className="mt-4 flex flex-wrap gap-2">
                   {["Énergie", "Faim", "Digestion", "Régularité repas"].map((item) => (
                     <span
                       key={item}
-                      className="inline-flex min-h-[38px] items-center rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-[13px] font-medium text-[#F0EDE8]"
+                      className="inline-flex min-h-[38px] items-center rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-[13px] font-medium text-[var(--ls-text)]"
                     >
                       {item}
                     </span>
@@ -636,7 +636,7 @@ export function NewFollowUpPage() {
                     value={`${pvRecord.pvCumulative} PV`}
                   />
                   <div className="rounded-[22px] border border-white/10 bg-white/[0.03] px-5 py-4">
-                    <p className="text-[12px] font-medium text-[#7A8099]">Statut actuel</p>
+                    <p className="text-[12px] font-medium text-[var(--ls-text-muted)]">Statut actuel</p>
                     <div className="mt-3">
                       <PvFollowUpStatusLabel status={pvRecord.status} />
                     </div>
@@ -644,7 +644,7 @@ export function NewFollowUpPage() {
                 </div>
 
                 <div className="rounded-[22px] border border-white/10 bg-white/[0.03] px-5 py-4">
-                  <p className="text-[12px] font-medium text-[#7A8099]">Produits a suivre</p>
+                  <p className="text-[12px] font-medium text-[var(--ls-text-muted)]">Produits a suivre</p>
                   <div className="mt-4 flex flex-wrap gap-2">
                     {pvRecord.activeProducts.map((product) => {
                       const meta = getPvProductStatusMeta(product.status);
@@ -726,7 +726,7 @@ export function NewFollowUpPage() {
               <label className="flex items-center justify-between gap-3 rounded-[22px] border border-white/10 bg-white/[0.03] px-4 py-4">
                 <div>
                   <p className="text-sm font-medium text-white">Recommandations contactées</p>
-                  <p className="mt-1 text-sm text-[#7A8099]">
+                  <p className="mt-1 text-sm text-[var(--ls-text-muted)]">
                     {latest.questionnaire.recommendations.length} contact
                     {latest.questionnaire.recommendations.length > 1 ? "s" : ""} à reprendre pour ce dossier.
                   </p>
@@ -740,12 +740,12 @@ export function NewFollowUpPage() {
               </label>
             ) : null}
             <div className="rounded-[22px] bg-white/[0.03] px-4 py-4">
-              <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-[#4A5068]">
+              <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-[var(--ls-text-hint)]">
                 Synthèse automatique
               </p>
-              <p className="mt-3 text-sm leading-6 text-[#F0EDE8]">{followUpSummary}</p>
+              <p className="mt-3 text-sm leading-6 text-[var(--ls-text)]">{followUpSummary}</p>
               {targetClient.objective === "weight-loss" ? (
-                <p className="mt-2 text-sm text-[#7A8099]">{weightLossPace.label}</p>
+                <p className="mt-2 text-sm text-[var(--ls-text-muted)]">{weightLossPace.label}</p>
               ) : null}
             </div>
             <div className="flex justify-end gap-3">
@@ -878,7 +878,7 @@ function FollowUpChoiceGroup({
 }) {
   return (
     <div className="space-y-3">
-      <p className="text-sm font-medium text-[#F0EDE8]">{label}</p>
+      <p className="text-sm font-medium text-[var(--ls-text)]">{label}</p>
       <div className="flex flex-wrap gap-3">
         {options.map((option) => {
           const isActive = option === value;
@@ -930,7 +930,7 @@ function FollowUpTextField({
 function CompactWeightPanel({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-[22px] border border-white/8 bg-white/[0.03] px-5 py-4">
-      <p className="text-[12px] font-medium text-[#7A8099]">{label}</p>
+      <p className="text-[12px] font-medium text-[var(--ls-text-muted)]">{label}</p>
       <p className="mt-3 text-[2rem] font-semibold tracking-[-0.04em] text-white">{value}</p>
     </div>
   );
@@ -967,7 +967,7 @@ function StartingPointWeightCard({
   const isWeightLoss = objective === "weight-loss";
   const mainTone =
     deltaFromStart === 0
-      ? "text-[#F0EDE8]"
+      ? "text-[var(--ls-text)]"
       : isWeightLoss
         ? deltaFromStart < 0
           ? "text-[#2DD4BF]"
@@ -1005,7 +1005,7 @@ function StartingPointWeightCard({
         <WeightMilestoneCard label="Aujourd'hui" date={formatDate(currentDate)} weight={currentWeight} tone="green" highlighted />
       </div>
 
-      <div className="rounded-[24px] border border-white/10 bg-[#0B0D11]/80 p-5">
+      <div className="rounded-[24px] border border-white/10 bg-[var(--ls-bg)]/80 p-5">
         <div className="flex items-center gap-3">
           <div className="h-2 flex-1 rounded-full bg-white/10">
             <div className="flex h-full items-center justify-between px-1">
@@ -1017,7 +1017,7 @@ function StartingPointWeightCard({
         </div>
         <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
           <p className={`text-lg font-semibold ${mainTone}`}>{mainDeltaLabel}</p>
-          <p className="text-sm text-[#7A8099]">{secondaryDeltaLabel}</p>
+          <p className="text-sm text-[var(--ls-text-muted)]">{secondaryDeltaLabel}</p>
         </div>
       </div>
     </Card>
@@ -1050,9 +1050,9 @@ function WeightMilestoneCard({
         highlighted ? "shadow-[0_0_30px_rgba(52,211,153,0.08)]" : ""
       }`}
     >
-      <p className="text-[11px] font-medium text-[#4A5068]">{label}</p>
+      <p className="text-[11px] font-medium text-[var(--ls-text-hint)]">{label}</p>
       <p className="mt-3 text-3xl text-white">{weight} kg</p>
-      <p className="mt-2 text-sm text-[#7A8099]">{date}</p>
+      <p className="mt-2 text-sm text-[var(--ls-text-muted)]">{date}</p>
     </div>
   );
 }

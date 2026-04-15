@@ -43,7 +43,7 @@ export function MorningRoutineCard() {
         {["Plus de protéines", "Meilleure régularité", "Plus facile à tenir"].map((benefit) => (
           <div
             key={benefit}
-            className="rounded-full border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-[#F0EDE8]"
+            className="rounded-full border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-[var(--ls-text)]"
           >
             {benefit}
           </div>

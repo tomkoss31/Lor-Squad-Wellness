@@ -24,10 +24,10 @@ export function BodyScanComparisonGrid({ items }: BodyScanComparisonGridProps) {
         >
           <div className="flex items-start justify-between gap-3">
             <div>
-              <p className="text-[11px] uppercase tracking-[0.18em] text-[#4A5068]">{item.label}</p>
+              <p className="text-[11px] uppercase tracking-[0.18em] text-[var(--ls-text-hint)]">{item.label}</p>
               <p className="mt-3 text-2xl font-semibold text-white">{item.primary}</p>
               {item.secondary ? (
-                <p className="mt-2 text-sm text-[#7A8099]">{item.secondary}</p>
+                <p className="mt-2 text-sm text-[var(--ls-text-muted)]">{item.secondary}</p>
               ) : null}
             </div>
           </div>
@@ -64,8 +64,8 @@ function ComparisonLine({
   inverseGood?: boolean;
 }) {
   return (
-    <div className="flex items-center justify-between gap-3 rounded-[18px] bg-[#0B0D11]/80 px-3 py-3">
-      <span className="text-xs uppercase tracking-[0.18em] text-[#4A5068]">{label}</span>
+    <div className="flex items-center justify-between gap-3 rounded-[18px] bg-[var(--ls-bg)]/80 px-3 py-3">
+      <span className="text-xs uppercase tracking-[0.18em] text-[var(--ls-text-hint)]">{label}</span>
       <DeltaBadge value={value} suffix={suffix} inverseGood={inverseGood} />
     </div>
   );

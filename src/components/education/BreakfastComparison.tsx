@@ -35,7 +35,7 @@ export function BreakfastComparison() {
         <SupportVisualCard />
       </div>
 
-      <div className="rounded-[24px] border border-white/10 bg-[#0B0D11]/80 p-4 md:p-5">
+      <div className="rounded-[24px] border border-white/10 bg-[var(--ls-bg)]/80 p-4 md:p-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <p className="eyebrow-label">Lecture utile</p>
@@ -43,7 +43,7 @@ export function BreakfastComparison() {
               Repère configurable selon la routine du matin choisie dans l&apos;app.
             </p>
           </div>
-          <div className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs text-[#F0EDE8]">
+          <div className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs text-[var(--ls-text)]">
             Comparatif simple
           </div>
         </div>
@@ -103,7 +103,7 @@ function ImageScenarioCard({
           {points.map((point) => (
             <div
               key={point}
-              className="rounded-[18px] border border-white/8 bg-[#0B0D11]/80 px-4 py-3 text-sm text-[#F0EDE8]"
+              className="rounded-[18px] border border-white/8 bg-[var(--ls-bg)]/80 px-4 py-3 text-sm text-[var(--ls-text)]"
             >
               {point}
             </div>
@@ -141,7 +141,7 @@ function SupportVisualCard() {
           {breakfastProfiles.structured.chips.map((point) => (
             <div
               key={point}
-              className="rounded-[18px] border border-white/8 bg-[#0B0D11]/80 px-4 py-3 text-sm text-[#F0EDE8]"
+              className="rounded-[18px] border border-white/8 bg-[var(--ls-bg)]/80 px-4 py-3 text-sm text-[var(--ls-text)]"
             >
               {point}
             </div>
@@ -149,7 +149,7 @@ function SupportVisualCard() {
         </div>
         <div className="grid gap-3 md:grid-cols-2">
           {breakfastFacts.map((fact) => (
-            <div key={fact.title} className="rounded-[20px] bg-[#0B0D11]/60 px-4 py-4">
+            <div key={fact.title} className="rounded-[20px] bg-[var(--ls-bg)]/60 px-4 py-4">
               <p className="text-sm font-semibold text-white">{fact.title}</p>
               <p className="mt-2 text-sm leading-6 text-[#B0B4C4]">{fact.detail}</p>
             </div>
@@ -184,8 +184,8 @@ function ComparisonMetricRow({
   return (
     <div className="grid gap-3 rounded-[18px] border border-white/8 bg-white/[0.03] px-4 py-4 md:grid-cols-[140px_1fr_1fr] md:items-center">
       <div>
-        <p className="text-[10px] uppercase tracking-[0.12em] text-[#4A5068]">{label}</p>
-        <p className="mt-2 text-xs text-[#7A8099]">{helper}</p>
+        <p className="text-[10px] uppercase tracking-[0.12em] text-[var(--ls-text-hint)]">{label}</p>
+        <p className="mt-2 text-xs text-[var(--ls-text-muted)]">{helper}</p>
       </div>
 
       <ComparisonSide
@@ -224,17 +224,17 @@ function ComparisonSide({
   emphasized?: boolean;
 }) {
   return (
-    <div className="rounded-[18px] bg-[#0B0D11]/60 px-3.5 py-3">
+    <div className="rounded-[18px] bg-[var(--ls-bg)]/60 px-3.5 py-3">
       <div className="flex items-center justify-between gap-3">
-        <p className="text-[11px] font-medium text-[#4A5068]">{title}</p>
-        <p className={`text-sm font-semibold ${emphasized ? "text-white" : "text-[#F0EDE8]"}`}>
+        <p className="text-[11px] font-medium text-[var(--ls-text-hint)]">{title}</p>
+        <p className={`text-sm font-semibold ${emphasized ? "text-white" : "text-[var(--ls-text)]"}`}>
           {value}
         </p>
       </div>
       <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/[0.06]">
         <div className={`h-full rounded-full ${toneClass}`} style={{ width }} />
       </div>
-      <p className="mt-2 text-xs text-[#7A8099]">{helper}</p>
+      <p className="mt-2 text-xs text-[var(--ls-text-muted)]">{helper}</p>
     </div>
   );
 }

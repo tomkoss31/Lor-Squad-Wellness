@@ -11,7 +11,7 @@ const TONES = {
   red:    "bg-[rgba(251,113,133,0.1)] text-[#FB7185]",
   amber:  "bg-[rgba(201,168,76,0.12)] text-[#C9A84C]",
   purple: "bg-[rgba(167,139,250,0.1)] text-[#A78BFA]",
-  gray:   "bg-white/[0.06] text-[#7A8099]",
+  gray:   "bg-white/[0.06] text-[var(--ls-text-muted)]",
 }
 
 export function StatusBadge({ label, tone = "blue" }: StatusBadgeProps) {

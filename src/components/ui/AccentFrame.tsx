@@ -30,7 +30,7 @@ export function AccentFrame({
       />
       <div className="flex h-full flex-col justify-between gap-5">
         <div>
-          <p className="text-xs uppercase tracking-[0.35em] text-[#4A5068]">Zone visuelle</p>
+          <p className="text-xs uppercase tracking-[0.35em] text-[var(--ls-text-hint)]">Zone visuelle</p>
           <p className={cn("mt-4 font-display text-white", compact ? "text-xl" : "text-2xl")}>
             {title}
           </p>
@@ -40,7 +40,7 @@ export function AccentFrame({
           <div className="h-12 rounded-2xl bg-white/[0.07]" />
           <div className="h-12 rounded-2xl bg-white/[0.04]" />
         </div>
-        <p className="text-sm leading-6 text-[#7A8099]">{subtitle}</p>
+        <p className="text-sm leading-6 text-[var(--ls-text-muted)]">{subtitle}</p>
       </div>
     </div>
   );

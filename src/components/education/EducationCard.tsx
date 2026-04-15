@@ -25,12 +25,12 @@ export function EducationCard({ item }: EducationCardProps) {
           tone={tone}
         />
       </div>
-      <p className="mt-3 text-sm leading-6 text-[#7A8099]">{item.description}</p>
+      <p className="mt-3 text-sm leading-6 text-[var(--ls-text-muted)]">{item.description}</p>
       <div className="mt-5 grid gap-2">
         {item.points.map((point) => (
           <div
             key={point}
-            className="rounded-2xl border border-white/10 bg-slate-950/40 px-4 py-3 text-sm text-[#F0EDE8]"
+            className="rounded-2xl border border-white/10 bg-slate-950/40 px-4 py-3 text-sm text-[var(--ls-text)]"
           >
             {point}
           </div>

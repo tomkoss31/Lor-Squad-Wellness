@@ -77,7 +77,7 @@ function AuthBootSplash() {
           </p>
           {showRecovery ? (
             <div className="mt-6 space-y-3">
-              <p className="text-sm text-[#7A8099]">
+              <p className="text-sm text-[var(--ls-text-muted)]">
                 Si l&apos;ecran reste bloque, tu peux reinitialiser la session et revenir a la
                 connexion.
               </p>

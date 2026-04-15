@@ -28,7 +28,7 @@ export function EvolutionChart({ assessments }: EvolutionChartProps) {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <p className="text-sm font-semibold text-white">Évolution des mesures clés</p>
-          <p className="text-xs text-[#7A8099]">Poids, masse grasse et masse musculaire</p>
+          <p className="text-xs text-[var(--ls-text-muted)]">Poids, masse grasse et masse musculaire</p>
         </div>
         <div className="flex flex-wrap gap-2">
           {metricOptions.map((option) => (
@@ -56,7 +56,7 @@ export function EvolutionChart({ assessments }: EvolutionChartProps) {
           return (
             <div
               key={assessment.id}
-              className="rounded-[22px] border border-white/10 bg-[#0B0D11]/80 p-4"
+              className="rounded-[22px] border border-white/10 bg-[var(--ls-bg)]/80 p-4"
             >
               <div className="flex h-40 items-end">
                 <div
@@ -67,7 +67,7 @@ export function EvolutionChart({ assessments }: EvolutionChartProps) {
               <p className="mt-3 text-lg font-semibold text-white">
                 {value} {selectedOption.suffix}
               </p>
-              <p className="text-sm text-[#7A8099]">
+              <p className="text-sm text-[var(--ls-text-muted)]">
                 {new Intl.DateTimeFormat("fr-FR", { day: "2-digit", month: "short" }).format(
                   new Date(assessment.date)
                 )}

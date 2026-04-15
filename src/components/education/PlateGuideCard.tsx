@@ -92,9 +92,9 @@ export function PlateGuideCard({
   const mainExamples = foodExamples.filter((group) => group.label !== "Lipides");
 
   return (
-    <Card className="space-y-6 bg-[#0B0D11]/80">
+    <Card className="space-y-6 bg-[var(--ls-bg)]/80">
       <div className="max-w-3xl">
-        <p className="text-xs uppercase tracking-[0.28em] text-[#4A5068]">Assiette type</p>
+        <p className="text-xs uppercase tracking-[0.28em] text-[var(--ls-text-hint)]">Assiette type</p>
         <h3 className="mt-2 text-3xl text-white">{title}</h3>
       </div>
 
@@ -108,7 +108,7 @@ export function PlateGuideCard({
               />
               <div className="absolute inset-11 rounded-full border border-white/10 bg-slate-950/82" />
               <div className="relative z-10 max-w-[11rem] px-2 text-center">
-                <p className="text-xs uppercase tracking-[0.24em] text-[#4A5068]">Assiette simple</p>
+                <p className="text-xs uppercase tracking-[0.24em] text-[var(--ls-text-hint)]">Assiette simple</p>
                 <p className="mt-4 text-xl font-semibold leading-7 text-white">
                   {mode === "sport"
                     ? "Equilibre, energie, recuperation"
@@ -123,10 +123,10 @@ export function PlateGuideCard({
           </div>
 
           <div className="rounded-[22px] border border-white/10 bg-white/[0.04] px-5 py-4">
-            <p className="text-xs uppercase tracking-[0.2em] text-[#4A5068]">
+            <p className="text-xs uppercase tracking-[0.2em] text-[var(--ls-text-hint)]">
               Bons lipides
             </p>
-            <p className="mt-3 text-sm leading-6 text-[#F0EDE8]">
+            <p className="mt-3 text-sm leading-6 text-[var(--ls-text)]">
               <span className="font-semibold text-white">{lipidsNote}</span>
             </p>
             {lipidExamples.length ? (
@@ -153,7 +153,7 @@ export function PlateGuideCard({
               >
                 <div className={`h-1.5 w-14 rounded-full ${accentClasses[segment.accent].dot}`} />
                 <div className="mt-5 space-y-3">
-                  <p className="text-xs uppercase tracking-[0.12em] text-[#4A5068]">
+                  <p className="text-xs uppercase tracking-[0.12em] text-[var(--ls-text-hint)]">
                     {segment.label}
                   </p>
                   <p
@@ -170,13 +170,13 @@ export function PlateGuideCard({
           </div>
 
           <div className="grid gap-4">
-            <div className="rounded-[22px] border border-white/10 bg-[#0B0D11]/80 px-5 py-4">
+            <div className="rounded-[22px] border border-white/10 bg-[var(--ls-bg)]/80 px-5 py-4">
               <p className="eyebrow-label">Repère portions main</p>
               <div className="mt-4 grid gap-2">
                 {portionGuides.map((guide) => (
                   <div
                     key={guide.label}
-                    className="flex items-center justify-between gap-3 rounded-[18px] bg-white/[0.04] px-4 py-3.5 text-sm text-[#F0EDE8]"
+                    className="flex items-center justify-between gap-3 rounded-[18px] bg-white/[0.04] px-4 py-3.5 text-sm text-[var(--ls-text)]"
                   >
                     <span className="text-base font-semibold text-white">{guide.label}</span>
                     <span className="text-right text-base text-[#B0B4C4]">{guide.value}</span>
@@ -191,7 +191,7 @@ export function PlateGuideCard({
                 {mainExamples.map((group) => (
                   <div
                     key={group.label}
-                    className="rounded-[18px] bg-[#0B0D11]/60 px-4 py-4"
+                    className="rounded-[18px] bg-[var(--ls-bg)]/60 px-4 py-4"
                   >
                     <p className="text-sm font-semibold text-white">{group.label}</p>
                     <div className="mt-3 flex flex-wrap gap-2">

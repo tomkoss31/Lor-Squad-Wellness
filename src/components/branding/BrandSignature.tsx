@@ -15,7 +15,7 @@ export function BrandSignature({ variant = "inline" }: BrandSignatureProps) {
         />
         <div>
           <p className="text-sm font-semibold text-white">Lor&apos;Squad Wellness</p>
-          <p className="text-[11px] text-[#4A5068]">Powered by La Base</p>
+          <p className="text-[11px] text-[var(--ls-text-hint)]">Powered by La Base</p>
         </div>
       </div>
     );
@@ -32,7 +32,7 @@ export function BrandSignature({ variant = "inline" }: BrandSignatureProps) {
           />
           <div>
             <p className="text-lg font-semibold text-white">Lor&apos;Squad Wellness</p>
-            <p className="mt-1 text-[12px] text-[#4A5068]">
+            <p className="mt-1 text-[12px] text-[var(--ls-text-hint)]">
               Accompagnement premium
             </p>
           </div>
@@ -42,7 +42,7 @@ export function BrandSignature({ variant = "inline" }: BrandSignatureProps) {
           <img src={laBaseLogo} alt="La Base" className="h-10 w-10 rounded-xl object-cover" />
           <div>
             <p className="text-sm font-semibold text-white">La Base Shakes &amp; Drinks</p>
-            <p className="text-xs text-[#7A8099]">Présence club et nutrition</p>
+            <p className="text-xs text-[var(--ls-text-muted)]">Présence club et nutrition</p>
           </div>
         </div>
       </div>
@@ -50,12 +50,12 @@ export function BrandSignature({ variant = "inline" }: BrandSignatureProps) {
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-4 text-sm text-[#7A8099]">
+    <div className="flex flex-wrap items-center gap-4 text-sm text-[var(--ls-text-muted)]">
       <div className="inline-flex items-center gap-2">
         <img src={blasonLogo} alt="Lor'Squad" className="h-6 w-6 rounded-full object-cover" />
         <span className="font-medium text-white">Lor&apos;Squad Wellness</span>
       </div>
-      <div className="inline-flex items-center gap-2 text-[#4A5068]">
+      <div className="inline-flex items-center gap-2 text-[var(--ls-text-hint)]">
         <img src={laBaseLogo} alt="La Base" className="h-6 w-6 rounded-full object-cover" />
         <span>Powered by La Base</span>
       </div>

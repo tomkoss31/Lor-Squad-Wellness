@@ -37,22 +37,22 @@ export function UrgencyColumn({ title, count, color, icon, items, emptyLabel, se
 
       {/* Items */}
       {items.length === 0 ? (
-        <div style={{ background: '#13161C', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 10, padding: 14, fontSize: 12, color: '#4A5068', textAlign: 'center' }}>{emptyLabel}</div>
+        <div style={{ background: 'var(--ls-surface)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 10, padding: 14, fontSize: 12, color: 'var(--ls-text-hint)', textAlign: 'center' }}>{emptyLabel}</div>
       ) : items.map(item => (
         <Link key={item.id} to={`/clients/${item.clientId}`} style={{ textDecoration: 'none' }}>
-          <div style={{ background: '#13161C', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 11, padding: '12px 14px', cursor: 'pointer', transition: 'border-color 0.15s, background 0.15s', position: 'relative', overflow: 'hidden' }}
+          <div style={{ background: 'var(--ls-surface)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 11, padding: '12px 14px', cursor: 'pointer', transition: 'border-color 0.15s, background 0.15s', position: 'relative', overflow: 'hidden' }}
             onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.14)'; e.currentTarget.style.background = '#15181F' }}
-            onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.07)'; e.currentTarget.style.background = '#13161C' }}>
+            onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--ls-border)'; e.currentTarget.style.background = 'var(--ls-surface)' }}>
             <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 3, background: color, borderRadius: '3px 0 0 3px' }} />
             <div style={{ position: 'absolute', top: 10, right: 10, fontSize: 9, padding: '2px 8px', borderRadius: 10, background: `${color}15`, color, fontWeight: 600 }}>
               {item.status === 'pending' ? 'Relance' : 'RDV'}
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 9, marginBottom: 6 }}>
               <div style={{ width: 26, height: 26, borderRadius: '50%', flexShrink: 0, background: `${color}15`, color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 700, fontFamily: 'Syne, sans-serif' }}>{initials(item.clientName)}</div>
-              <div style={{ fontSize: 13, fontWeight: 500, color: '#F0EDE8', paddingRight: 48 }}>{item.clientName}</div>
+              <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--ls-text)', paddingRight: 48 }}>{item.clientName}</div>
             </div>
-            <div style={{ fontSize: 11, color: '#7A8099', marginBottom: 5 }}>{item.type}</div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 10, color: '#4A5068' }}>
+            <div style={{ fontSize: 11, color: 'var(--ls-text-muted)', marginBottom: 5 }}>{item.type}</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 10, color: 'var(--ls-text-hint)' }}>
               <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
               {formatDateTime(item.dueDate)}
               {item.status === 'pending' && <span style={{ color: '#FB7185', marginLeft: 4 }}>· En retard</span>}
@@ -70,7 +70,7 @@ export function UrgencyColumn({ title, count, color, icon, items, emptyLabel, se
                     ? { bg: 'rgba(45,212,191,0.15)', c: '#2DD4BF', bd: 'rgba(45,212,191,0.3)' }
                     : isThisWeek
                       ? { bg: 'rgba(201,168,76,0.1)', c: '#C9A84C', bd: 'rgba(201,168,76,0.2)' }
-                      : { bg: 'rgba(255,255,255,0.05)', c: '#7A8099', bd: 'rgba(255,255,255,0.1)' }
+                      : { bg: 'rgba(255,255,255,0.05)', c: 'var(--ls-text-muted)', bd: 'var(--ls-border2)' }
                 return (
                 <a
                   href={createGoogleCalendarLink({

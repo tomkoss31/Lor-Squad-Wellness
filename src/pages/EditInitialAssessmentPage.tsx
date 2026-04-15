@@ -349,7 +349,7 @@ export function EditInitialAssessmentPage() {
         <Card className="space-y-5">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <p className="text-xs uppercase tracking-[0.25em] text-[#4A5068]">Base historique</p>
+              <p className="text-xs uppercase tracking-[0.25em] text-[var(--ls-text-hint)]">Base historique</p>
               <p className="mt-2 text-2xl text-white">
                 {isInitialAssessment
                   ? "Revenir sur toutes les infos du bilan initial"
@@ -482,7 +482,7 @@ export function EditInitialAssessmentPage() {
                       className={`rounded-full px-4 py-2 text-sm font-medium transition ${
                         questionnaire.desiredTimeline === option
                           ? "bg-white text-[#0B0D11]"
-                          : "border border-white/10 bg-white/[0.03] text-[#F0EDE8]"
+                          : "border border-white/10 bg-white/[0.03] text-[var(--ls-text)]"
                       }`}
                     >
                       {option}
@@ -494,7 +494,7 @@ export function EditInitialAssessmentPage() {
                   onChange={(event) => updateQuestionnaire("desiredTimeline", event.target.value)}
                   placeholder="Ex : 2 mois, 4 mois, 5 mois"
                 />
-                <p className="text-xs leading-6 text-[#7A8099]">
+                <p className="text-xs leading-6 text-[var(--ls-text-muted)]">
                   Tu peux garder un délai simple ou écrire un cap libre si le client a formulé son
                   objectif autrement.
                 </p>
@@ -517,7 +517,7 @@ export function EditInitialAssessmentPage() {
             <label className="flex items-center justify-between gap-3 rounded-[22px] border border-white/10 bg-white/[0.03] px-4 py-4">
               <div>
                 <p className="text-sm font-medium text-white">Recommandations contactées</p>
-                <p className="mt-1 text-sm text-[#7A8099]">
+                <p className="mt-1 text-sm text-[var(--ls-text-muted)]">
                   A cocher une fois les recommandations de ce bilan reprises.
                 </p>
               </div>
@@ -549,7 +549,7 @@ export function EditInitialAssessmentPage() {
         </Card>
 
         <Card className="space-y-4">
-          <p className="text-xs uppercase tracking-[0.25em] text-[#4A5068]">A retenir</p>
+          <p className="text-xs uppercase tracking-[0.25em] text-[var(--ls-text-hint)]">A retenir</p>
           <InfoCard
             title="Ce que tu peux corriger ici"
             text={
@@ -593,7 +593,7 @@ function SectionCard({
     <div className="space-y-4 rounded-[24px] border border-white/10 bg-white/[0.03] p-5">
       <div>
         <p className="text-lg font-semibold text-white">{title}</p>
-        <p className="mt-2 text-sm leading-6 text-[#7A8099]">{description}</p>
+        <p className="mt-2 text-sm leading-6 text-[var(--ls-text-muted)]">{description}</p>
       </div>
       {children}
     </div>
@@ -664,7 +664,7 @@ function InfoCard({ title, text }: { title: string; text: string }) {
   return (
     <div className="rounded-[22px] border border-white/10 bg-white/[0.03] px-4 py-4">
       <p className="text-sm font-semibold text-white">{title}</p>
-      <p className="mt-2 text-sm leading-6 text-[#7A8099]">{text}</p>
+      <p className="mt-2 text-sm leading-6 text-[var(--ls-text-muted)]">{text}</p>
     </div>
   );
 }

@@ -79,7 +79,7 @@ export function PvClientPanel({
       <Card className="space-y-3">
         <p className="eyebrow-label">Detail client</p>
         <h2 className="text-2xl text-white">Choisis un client</h2>
-        <p className="text-sm leading-6 text-[#7A8099]">
+        <p className="text-sm leading-6 text-[var(--ls-text-muted)]">
           Ouvre un dossier pour voir les produits actifs, l&apos;historique des commandes et la
           lecture rapide du suivi PV.
         </p>
@@ -93,7 +93,7 @@ export function PvClientPanel({
         <div>
           <p className="eyebrow-label">{title}</p>
           <h2 className="mt-3 text-2xl text-white">{record.clientName}</h2>
-          <p className="mt-2 text-sm text-[#7A8099]">{record.responsibleName}</p>
+          <p className="mt-2 text-sm text-[var(--ls-text-muted)]">{record.responsibleName}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Link
@@ -120,7 +120,7 @@ export function PvClientPanel({
         <div className="flex items-center justify-between gap-3">
           <div>
             <p className="eyebrow-label">Produits actifs</p>
-            <p className="mt-1 text-xs text-[#4A5068]">
+            <p className="mt-1 text-xs text-[var(--ls-text-hint)]">
               Modifier un produit actif, declarer un reassort ou ajouter un nouveau produit.
             </p>
           </div>
@@ -147,7 +147,7 @@ export function PvClientPanel({
                     <p className="text-[1.02rem] font-semibold leading-[1.22] text-white">
                       {product.productName}
                     </p>
-                    <p className="mt-1 text-sm leading-6 text-[#7A8099]">
+                    <p className="mt-1 text-sm leading-6 text-[var(--ls-text-muted)]">
                       Quantite de depart {product.quantityStart} - {product.quantiteLabel}
                     </p>
                   </div>
@@ -219,7 +219,7 @@ export function PvClientPanel({
                       <button
                         type="button"
                         onClick={cancelEditing}
-                        className="inline-flex min-h-[42px] items-center justify-center rounded-full border border-white/10 px-4 py-2 text-sm font-semibold text-[#F0EDE8] transition hover:bg-white/[0.04]"
+                        className="inline-flex min-h-[42px] items-center justify-center rounded-full border border-white/10 px-4 py-2 text-sm font-semibold text-[var(--ls-text)] transition hover:bg-white/[0.04]"
                       >
                         Annuler
                       </button>
@@ -236,7 +236,7 @@ export function PvClientPanel({
                 ) : null}
 
                 {product.noteMetier ? (
-                  <p className="mt-2.5 text-xs leading-6 text-[#4A5068]">{product.noteMetier}</p>
+                  <p className="mt-2.5 text-xs leading-6 text-[var(--ls-text-hint)]">{product.noteMetier}</p>
                 ) : null}
               </div>
             );
@@ -250,14 +250,14 @@ export function PvClientPanel({
           {record.transactions.slice(0, 6).map((transaction) => (
             <div
               key={transaction.id}
-              className="grid gap-2 rounded-[18px] bg-[#1A1E27] px-4 py-2.5 md:grid-cols-[100px_1fr_80px_84px_84px]"
+              className="grid gap-2 rounded-[18px] bg-[var(--ls-surface2)] px-4 py-2.5 md:grid-cols-[100px_1fr_80px_84px_84px]"
             >
               <div className="text-[13px] text-[#B0B4C4]">{formatDate(transaction.date)}</div>
               <div>
                 <p className="text-[13px] font-semibold text-white">
                   {getPvTypeLabel(transaction.type)} - {transaction.productName}
                 </p>
-                <p className="mt-0.5 text-[11px] text-[#7A8099]">{transaction.note}</p>
+                <p className="mt-0.5 text-[11px] text-[var(--ls-text-muted)]">{transaction.note}</p>
               </div>
               <div className="text-[13px] text-[#B0B4C4]">{transaction.quantity} un.</div>
               <div className="text-[13px] font-semibold text-white">{transaction.pv} PV</div>
@@ -282,8 +282,8 @@ export function PvClientPanel({
 
 function PanelFact({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-[18px] bg-[#0B0D11]/60 px-4 py-3">
-      <p className="text-[11px] font-medium text-[#4A5068]">{label}</p>
+    <div className="rounded-[18px] bg-[var(--ls-bg)]/60 px-4 py-3">
+      <p className="text-[11px] font-medium text-[var(--ls-text-hint)]">{label}</p>
       <p className="mt-2 text-sm font-semibold text-white">{value}</p>
     </div>
   );

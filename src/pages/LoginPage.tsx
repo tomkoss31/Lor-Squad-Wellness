@@ -76,7 +76,7 @@ export function LoginPage() {
         }
       `}</style>
 
-      <div className="login-grid" style={{ minHeight: '100vh', background: '#0B0D11', display: 'grid', gridTemplateColumns: '1fr 1fr', fontFamily: 'DM Sans, sans-serif' }}>
+      <div className="login-grid" style={{ minHeight: '100vh', background: 'var(--ls-bg)', display: 'grid', gridTemplateColumns: '1fr 1fr', fontFamily: 'DM Sans, sans-serif' }}>
 
         {/* ── PANNEAU GAUCHE ── */}
         <div className="login-left" style={{ padding: '52px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', borderRight: '1px solid rgba(255,255,255,0.06)', position: 'relative', overflow: 'hidden' }}>
@@ -89,7 +89,7 @@ export function LoginPage() {
               <div style={{ width:44, height:44, background:'#C9A84C', borderRadius:12, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="#0B0D11"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
               </div>
-              <div style={{ fontFamily:'Syne, sans-serif', fontWeight:800, fontSize:18, color:'#F0EDE8', letterSpacing:'-0.3px' }}>
+              <div style={{ fontFamily:'Syne, sans-serif', fontWeight:800, fontSize:18, color:'var(--ls-text)', letterSpacing:'-0.3px' }}>
                 Lor&apos;<span style={{ color:'#C9A84C' }}>Squad</span> Wellness
               </div>
             </div>
@@ -100,15 +100,15 @@ export function LoginPage() {
                 <div style={{ width:28, height:1, background:'#C9A84C' }} />
                 <span style={{ fontSize:11, color:'#C9A84C', letterSpacing:'2px', textTransform:'uppercase', fontWeight:500 }}>Outil coach professionnel</span>
               </div>
-              <h1 style={{ fontFamily:'Syne, sans-serif', fontSize:'clamp(28px, 3.2vw, 40px)', fontWeight:800, color:'#F0EDE8', lineHeight:1.1, letterSpacing:'-0.5px', margin:'0 0 18px' }}>
+              <h1 style={{ fontFamily:'Syne, sans-serif', fontSize:'clamp(28px, 3.2vw, 40px)', fontWeight:800, color:'var(--ls-text)', lineHeight:1.1, letterSpacing:'-0.5px', margin:'0 0 18px' }}>
                 L&apos;accompagnement<br />nutrition <span style={{ color:'#2DD4BF' }}>réinventé</span>
               </h1>
-              <p style={{ fontSize:14, color:'#7A8099', lineHeight:1.75, maxWidth:360, fontWeight:300, margin:'0 0 32px' }}>
+              <p style={{ fontSize:14, color:'var(--ls-text-muted)', lineHeight:1.75, maxWidth:360, fontWeight:300, margin:'0 0 32px' }}>
                 Bilan bien-être, body scan, suivi client et recommandations personnalisées — tout en un seul cockpit.
               </p>
 
               {/* Features card */}
-              <div style={{ background:'#13161C', border:'1px solid rgba(255,255,255,0.07)', borderRadius:14, padding:'18px 20px' }}>
+              <div style={{ background:'var(--ls-surface)', border:'1px solid rgba(255,255,255,0.07)', borderRadius:14, padding:'18px 20px' }}>
                 <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:14 }}>
                   <div style={{ width:8, height:8, borderRadius:'50%', background:'#2DD4BF', animation:'lor-pulse 2s ease-in-out infinite' }} />
                   <span style={{ fontSize:11, color:'#2DD4BF', fontWeight:500, letterSpacing:'0.5px' }}>Application active</span>
@@ -135,38 +135,38 @@ export function LoginPage() {
                 <div key={av.initials} style={{ width:30, height:30, borderRadius:'50%', background:`${av.color}25`, color:av.color, border:'2px solid #0B0D11', display:'flex', alignItems:'center', justifyContent:'center', fontSize:10, fontWeight:700, fontFamily:'Syne, sans-serif', marginLeft: i === 0 ? 0 : -8 }}>{av.initials}</div>
               ))}
             </div>
-            <span style={{ fontSize:12, color:'#4A5068' }}>Utilisé par <strong style={{ color:'#7A8099', fontWeight:500 }}>votre équipe</strong> au quotidien</span>
+            <span style={{ fontSize:12, color:'var(--ls-text-hint)' }}>Utilisé par <strong style={{ color:'var(--ls-text-muted)', fontWeight:500 }}>votre équipe</strong> au quotidien</span>
           </div>
         </div>
 
         {/* ── PANNEAU DROIT ── */}
-        <div className="login-right" style={{ background:'#13161C', padding:'52px', display:'flex', flexDirection:'column', justifyContent:'center', gap:28 }}>
+        <div className="login-right" style={{ background:'var(--ls-surface)', padding:'52px', display:'flex', flexDirection:'column', justifyContent:'center', gap:28 }}>
           <div>
-            <h2 style={{ fontFamily:'Syne, sans-serif', fontSize:26, fontWeight:800, color:'#F0EDE8', margin:'0 0 6px', letterSpacing:'-0.2px' }}>Connexion coach</h2>
-            <p style={{ fontSize:13, color:'#7A8099', margin:0, fontWeight:300 }}>Accédez à votre espace professionnel</p>
+            <h2 style={{ fontFamily:'Syne, sans-serif', fontSize:26, fontWeight:800, color:'var(--ls-text)', margin:'0 0 6px', letterSpacing:'-0.2px' }}>Connexion coach</h2>
+            <p style={{ fontSize:13, color:'var(--ls-text-muted)', margin:0, fontWeight:300 }}>Accédez à votre espace professionnel</p>
           </div>
 
           <form onSubmit={handleSubmit} style={{ display:'flex', flexDirection:'column', gap:18 }}>
             <div>
-              <label style={{ fontSize:11, color:'#7A8099', letterSpacing:'1px', textTransform:'uppercase', display:'block', marginBottom:8, fontWeight:500 }}>Adresse email</label>
+              <label style={{ fontSize:11, color:'var(--ls-text-muted)', letterSpacing:'1px', textTransform:'uppercase', display:'block', marginBottom:8, fontWeight:500 }}>Adresse email</label>
               <div style={{ position:'relative' }}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4A5068" strokeWidth="1.5" style={{ position:'absolute', left:14, top:'50%', transform:'translateY(-50%)', pointerEvents:'none' }}><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
                 <input type="email" placeholder="E-mail professionnel" value={email} onChange={(e) => setEmail(e.target.value)} autoCapitalize="none" autoCorrect="off" autoComplete="username" inputMode="email" spellCheck={false}
-                  style={{ width:'100%', boxSizing:'border-box' as const, background:'#1A1E27', border:'1px solid rgba(255,255,255,0.08)', borderRadius:10, padding:'13px 14px 13px 42px', fontSize:14, color:'#F0EDE8', fontFamily:'DM Sans, sans-serif', outline:'none', transition:'border-color 0.2s' }}
-                  onFocus={e => e.target.style.borderColor = 'rgba(201,168,76,0.45)'} onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.08)'} />
+                  style={{ width:'100%', boxSizing:'border-box' as const, background:'var(--ls-surface2)', border:'1px solid rgba(255,255,255,0.08)', borderRadius:10, padding:'13px 14px 13px 42px', fontSize:14, color:'var(--ls-text)', fontFamily:'DM Sans, sans-serif', outline:'none', transition:'border-color 0.2s' }}
+                  onFocus={e => e.target.style.borderColor = 'rgba(201,168,76,0.45)'} onBlur={e => e.target.style.borderColor = 'var(--ls-border)'} />
               </div>
             </div>
 
             <div>
-              <label style={{ fontSize:11, color:'#7A8099', letterSpacing:'1px', textTransform:'uppercase', display:'block', marginBottom:8, fontWeight:500 }}>Mot de passe</label>
+              <label style={{ fontSize:11, color:'var(--ls-text-muted)', letterSpacing:'1px', textTransform:'uppercase', display:'block', marginBottom:8, fontWeight:500 }}>Mot de passe</label>
               <div style={{ position:'relative' }}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4A5068" strokeWidth="1.5" style={{ position:'absolute', left:14, top:'50%', transform:'translateY(-50%)', pointerEvents:'none' }}><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
                 <input type={showPassword ? 'text' : 'password'} placeholder="Mot de passe" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" autoCapitalize="none" autoCorrect="off" spellCheck={false}
-                  style={{ width:'100%', boxSizing:'border-box' as const, background:'#1A1E27', border:'1px solid rgba(255,255,255,0.08)', borderRadius:10, padding:'13px 14px 13px 42px', fontSize:14, color:'#F0EDE8', fontFamily:'DM Sans, sans-serif', outline:'none', transition:'border-color 0.2s' }}
-                  onFocus={e => e.target.style.borderColor = 'rgba(201,168,76,0.45)'} onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.08)'} />
+                  style={{ width:'100%', boxSizing:'border-box' as const, background:'var(--ls-surface2)', border:'1px solid rgba(255,255,255,0.08)', borderRadius:10, padding:'13px 14px 13px 42px', fontSize:14, color:'var(--ls-text)', fontFamily:'DM Sans, sans-serif', outline:'none', transition:'border-color 0.2s' }}
+                  onFocus={e => e.target.style.borderColor = 'rgba(201,168,76,0.45)'} onBlur={e => e.target.style.borderColor = 'var(--ls-border)'} />
               </div>
-              <button type="button" onClick={() => setShowPassword(v => !v)} style={{ background:'none', border:'none', cursor:'pointer', fontSize:11, color:'#7A8099', marginTop:6, fontFamily:'DM Sans, sans-serif', padding:0, transition:'color 0.2s' }}
-                onMouseEnter={e => e.currentTarget.style.color = '#C9A84C'} onMouseLeave={e => e.currentTarget.style.color = '#7A8099'}>
+              <button type="button" onClick={() => setShowPassword(v => !v)} style={{ background:'none', border:'none', cursor:'pointer', fontSize:11, color:'var(--ls-text-muted)', marginTop:6, fontFamily:'DM Sans, sans-serif', padding:0, transition:'color 0.2s' }}
+                onMouseEnter={e => e.currentTarget.style.color = '#C9A84C'} onMouseLeave={e => e.currentTarget.style.color = 'var(--ls-text-muted)'}>
                 {showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
               </button>
             </div>
@@ -175,7 +175,7 @@ export function LoginPage() {
               <div style={{ background:'rgba(251,113,133,0.08)', border:'1px solid rgba(251,113,133,0.2)', borderRadius:10, padding:'11px 14px', fontSize:13, color:'#FB7185' }}>{error}</div>
             ) : null}
 
-            <button type="submit" disabled={!authReady} style={{ width:'100%', background: authReady ? '#C9A84C' : 'rgba(201,168,76,0.4)', color:'#0B0D11', border:'none', borderRadius:10, padding:'14px', fontFamily:'Syne, sans-serif', fontSize:15, fontWeight:700, cursor: authReady ? 'pointer' : 'not-allowed', display:'flex', alignItems:'center', justifyContent:'center', gap:8, transition:'opacity 0.2s' }}
+            <button type="submit" disabled={!authReady} style={{ width:'100%', background: authReady ? '#C9A84C' : 'rgba(201,168,76,0.4)', color:'var(--ls-bg)', border:'none', borderRadius:10, padding:'14px', fontFamily:'Syne, sans-serif', fontSize:15, fontWeight:700, cursor: authReady ? 'pointer' : 'not-allowed', display:'flex', alignItems:'center', justifyContent:'center', gap:8, transition:'opacity 0.2s' }}
               onMouseEnter={e => { if (authReady) e.currentTarget.style.opacity = '0.9' }} onMouseLeave={e => e.currentTarget.style.opacity = '1'}>
               Ouvrir mon espace
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
@@ -184,30 +184,30 @@ export function LoginPage() {
 
           {/* PWA Install */}
           {!isStandalone ? (
-            <div style={{ background:'#1A1E27', border:'1px solid rgba(255,255,255,0.07)', borderRadius:14, padding:20 }}>
+            <div style={{ background:'var(--ls-surface2)', border:'1px solid rgba(255,255,255,0.07)', borderRadius:14, padding:20 }}>
               <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:12 }}>
                 <div>
                   <p style={{ fontSize:11, color:'#C9A84C', letterSpacing:'1px', textTransform:'uppercase', marginBottom:8 }}>Installer l&apos;app</p>
-                  <p style={{ fontSize:15, fontFamily:'Syne, sans-serif', fontWeight:700, color:'#F0EDE8', marginBottom:6 }}>Ajoute Lor&apos;Squad à ton écran d&apos;accueil</p>
-                  <p style={{ fontSize:12, color:'#7A8099', lineHeight:1.6 }}>Plus rapide en rendez-vous, surtout sur tablette.</p>
+                  <p style={{ fontSize:15, fontFamily:'Syne, sans-serif', fontWeight:700, color:'var(--ls-text)', marginBottom:6 }}>Ajoute Lor&apos;Squad à ton écran d&apos;accueil</p>
+                  <p style={{ fontSize:12, color:'var(--ls-text-muted)', lineHeight:1.6 }}>Plus rapide en rendez-vous, surtout sur tablette.</p>
                 </div>
                 <span style={{ fontSize:10, padding:'3px 10px', borderRadius:20, background:'rgba(45,212,191,0.1)', color:'#2DD4BF', whiteSpace:'nowrap' }}>Accès direct</span>
               </div>
               {canPromptInstall ? (
                 <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-                  <p className="text-sm text-[#7A8099]">Installation directe disponible.</p>
+                  <p className="text-sm text-[var(--ls-text-muted)]">Installation directe disponible.</p>
                   <Button variant="secondary" onClick={() => void handleInstallClick()}>Installer</Button>
                 </div>
               ) : isIos ? (
-                <div className="mt-4 rounded-[12px] bg-white/[0.03] px-4 py-3 text-sm leading-6 text-[#7A8099]">
+                <div className="mt-4 rounded-[12px] bg-white/[0.03] px-4 py-3 text-sm leading-6 text-[var(--ls-text-muted)]">
                   Sur iPhone/iPad : Safari → <span className="font-semibold text-white">Partager</span> → <span className="font-semibold text-white">Sur l&apos;écran d&apos;accueil</span>
                 </div>
               ) : isMobile ? (
-                <div className="mt-4 rounded-[12px] bg-white/[0.03] px-4 py-3 text-sm leading-6 text-[#7A8099]">
+                <div className="mt-4 rounded-[12px] bg-white/[0.03] px-4 py-3 text-sm leading-6 text-[var(--ls-text-muted)]">
                   Sur Android : Chrome → <span className="font-semibold text-white">Installer l&apos;app</span>
                 </div>
               ) : (
-                <div className="mt-4 rounded-[12px] bg-white/[0.03] px-4 py-3 text-sm leading-6 text-[#7A8099]">
+                <div className="mt-4 rounded-[12px] bg-white/[0.03] px-4 py-3 text-sm leading-6 text-[var(--ls-text-muted)]">
                   Icône d&apos;installation dans la barre d&apos;adresse Chrome/Edge.
                 </div>
               )}
@@ -216,33 +216,33 @@ export function LoginPage() {
 
           {/* Démo */}
           {storageMode === "local" ? (
-            <div style={{ background:'#1A1E27', border:'1px solid rgba(255,255,255,0.07)', borderRadius:14, padding:20 }}>
+            <div style={{ background:'var(--ls-surface2)', border:'1px solid rgba(255,255,255,0.07)', borderRadius:14, padding:20 }}>
               <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:12, marginBottom:14 }}>
                 <div>
-                  <p style={{ fontSize:13, fontWeight:600, color:'#F0EDE8' }}>Accès démonstration</p>
-                  <p style={{ fontSize:11, color:'#7A8099', marginTop:2 }}>Tester l&apos;interface sans comptes réels</p>
+                  <p style={{ fontSize:13, fontWeight:600, color:'var(--ls-text)' }}>Accès démonstration</p>
+                  <p style={{ fontSize:11, color:'var(--ls-text-muted)', marginTop:2 }}>Tester l&apos;interface sans comptes réels</p>
                 </div>
                 <StatusBadge label="Démo" tone="blue" />
               </div>
               <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 }}>
                 <button type="button" onClick={() => fillDemoAccess("distributor")} style={{ background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.06)', borderRadius:12, padding:14, textAlign:'left', cursor:'pointer', transition:'background 0.15s' }}
                   onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'} onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.03)'}>
-                  <p style={{ fontSize:12, fontWeight:600, color:'#F0EDE8', margin:0 }}>Distributeur</p>
-                  <p style={{ fontSize:10, color:'#7A8099', margin:'4px 0 0', lineHeight:1.5 }}>Vue limitée</p>
+                  <p style={{ fontSize:12, fontWeight:600, color:'var(--ls-text)', margin:0 }}>Distributeur</p>
+                  <p style={{ fontSize:10, color:'var(--ls-text-muted)', margin:'4px 0 0', lineHeight:1.5 }}>Vue limitée</p>
                 </button>
                 <button type="button" onClick={() => fillDemoAccess("admin")} style={{ background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.06)', borderRadius:12, padding:14, textAlign:'left', cursor:'pointer', transition:'background 0.15s' }}
                   onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'} onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.03)'}>
-                  <p style={{ fontSize:12, fontWeight:600, color:'#F0EDE8', margin:0 }}>Admin</p>
-                  <p style={{ fontSize:10, color:'#7A8099', margin:'4px 0 0', lineHeight:1.5 }}>Vue complète</p>
+                  <p style={{ fontSize:12, fontWeight:600, color:'var(--ls-text)', margin:0 }}>Admin</p>
+                  <p style={{ fontSize:10, color:'var(--ls-text-muted)', margin:'4px 0 0', lineHeight:1.5 }}>Vue complète</p>
                 </button>
               </div>
-              <p style={{ fontSize:10, color:'#4A5068', marginTop:10 }}>Mot de passe : demo1234</p>
+              <p style={{ fontSize:10, color:'var(--ls-text-hint)', marginTop:10 }}>Mot de passe : demo1234</p>
             </div>
           ) : null}
 
           {/* Accès */}
-          <div style={{ background:'#1A1E27', border:'1px solid rgba(255,255,255,0.07)', borderRadius:14, padding:20 }}>
-            <p style={{ fontSize:10, color:'#4A5068', letterSpacing:'1.5px', textTransform:'uppercase', margin:'0 0 14px' }}>Comment créer les accès</p>
+          <div style={{ background:'var(--ls-surface2)', border:'1px solid rgba(255,255,255,0.07)', borderRadius:14, padding:20 }}>
+            <p style={{ fontSize:10, color:'var(--ls-text-hint)', letterSpacing:'1.5px', textTransform:'uppercase', margin:'0 0 14px' }}>Comment créer les accès</p>
             {[
               { n:'01', title:"Tu crées le compte depuis l'admin", text:"Nom, email professionnel, rôle et état actif." },
               { n:'02', title:"L'email devient l'identifiant", text:"Pas de pseudo séparé." },
@@ -251,15 +251,15 @@ export function LoginPage() {
               <div key={step.n} style={{ display:'flex', gap:12, alignItems:'flex-start', marginBottom: i < 2 ? 12 : 0 }}>
                 <div style={{ width:28, height:28, borderRadius:'50%', flexShrink:0, background:'rgba(201,168,76,0.12)', color:'#C9A84C', display:'flex', alignItems:'center', justifyContent:'center', fontSize:10, fontWeight:700, fontFamily:'Syne, sans-serif' }}>{step.n}</div>
                 <div>
-                  <p style={{ fontSize:12, fontWeight:600, color:'#F0EDE8', margin:'0 0 3px' }}>{step.title}</p>
-                  <p style={{ fontSize:11, color:'#7A8099', margin:0, lineHeight:1.6 }}>{step.text}</p>
+                  <p style={{ fontSize:12, fontWeight:600, color:'var(--ls-text)', margin:'0 0 3px' }}>{step.title}</p>
+                  <p style={{ fontSize:11, color:'var(--ls-text-muted)', margin:0, lineHeight:1.6 }}>{step.text}</p>
                 </div>
               </div>
             ))}
           </div>
 
           {/* Sécurité */}
-          <div style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:6, fontSize:11, color:'#4A5068' }}>
+          <div style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:6, fontSize:11, color:'var(--ls-text-hint)' }}>
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
             Connexion sécurisée — données chiffrées
           </div>

@@ -19,7 +19,7 @@ export function ProgramBoosterCard({ program }: { program: Program }) {
           {program.benefits.slice(0, 2).map((benefit) => (
             <span
               key={benefit}
-              className="rounded-full border border-white/10 bg-slate-950/30 px-3 py-1.5 text-xs text-[#F0EDE8]"
+              className="rounded-full border border-white/10 bg-slate-950/30 px-3 py-1.5 text-xs text-[var(--ls-text)]"
             >
               {benefit}
             </span>

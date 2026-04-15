@@ -28,16 +28,16 @@ export function HistoryTimeline({ entries }: HistoryTimelineProps) {
               <div className="flex items-center gap-3">
                 <p className="text-base font-semibold text-white">{entry.date}</p>
                 {entry.typeLabel ? (
-                  <span className="rounded-full bg-[#0B0D11]/60 px-2.5 py-1 text-[11px] uppercase tracking-[0.2em] text-[#7A8099]">
+                  <span className="rounded-full bg-[var(--ls-bg)]/60 px-2.5 py-1 text-[11px] uppercase tracking-[0.2em] text-[var(--ls-text-muted)]">
                     {entry.typeLabel}
                   </span>
                 ) : null}
               </div>
-              <div className="flex flex-wrap items-center gap-2 text-xs text-[#7A8099]">
-                <span className="rounded-full bg-[#0B0D11]/60 px-2.5 py-1">
+              <div className="flex flex-wrap items-center gap-2 text-xs text-[var(--ls-text-muted)]">
+                <span className="rounded-full bg-[var(--ls-bg)]/60 px-2.5 py-1">
                   {entry.weight} kg
                 </span>
-                <span className="rounded-full bg-[#0B0D11]/60 px-2.5 py-1">
+                <span className="rounded-full bg-[var(--ls-bg)]/60 px-2.5 py-1">
                   {entry.hydration} % hydratation
                 </span>
                 {entry.editTo ? (

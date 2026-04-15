@@ -169,7 +169,7 @@ export function ClientsPage() {
               <span className="block text-sm font-semibold">Toute la base</span>
               <span
                 className={`mt-1 block text-xs ${
-                  ownerFilter === "all" ? "text-[#2DD4BF]/75" : "text-[#7A8099]"
+                  ownerFilter === "all" ? "text-[#2DD4BF]/75" : "text-[var(--ls-text-muted)]"
                 }`}
               >
                 {visibleClients.length} dossiers visibles
@@ -209,13 +209,13 @@ export function ClientsPage() {
                       </span>
                       <span
                         className={`mt-1 block text-xs ${
-                          isActive ? "text-[#2DD4BF]/75" : "text-[#7A8099]"
+                          isActive ? "text-[#2DD4BF]/75" : "text-[var(--ls-text-muted)]"
                         }`}
                       >
                         {metrics.clients.length} clients - {metrics.relanceFollowUps.length} relances
                       </span>
                       {user.role === "referent" ? (
-                        <span className="mt-1 block text-[11px] text-[#4A5068]">Vue equipe</span>
+                        <span className="mt-1 block text-[11px] text-[var(--ls-text-hint)]">Vue equipe</span>
                       ) : null}
                     </div>
                   </div>
@@ -288,7 +288,7 @@ export function ClientsPage() {
                               </p>
                               <StatusBadge label={status.label} tone={status.tone} />
                             </div>
-                            <p className="text-sm text-[#7A8099]">
+                            <p className="text-sm text-[var(--ls-text-muted)]">
                               {client.job} - {client.city ?? "Ville non renseignee"}
                             </p>
                             {owner ? (
@@ -304,7 +304,7 @@ export function ClientsPage() {
                                 Invite par {firstAssessment.questionnaire.referredByName}
                               </p>
                             ) : null}
-                            <p className="text-sm leading-6 text-[#7A8099]">{client.notes}</p>
+                            <p className="text-sm leading-6 text-[var(--ls-text-muted)]">{client.notes}</p>
                           </div>
 
                           <div className="grid gap-3 md:grid-cols-3">
@@ -332,7 +332,7 @@ export function ClientsPage() {
                             <p className="text-xl font-semibold text-white">
                               {formatDateTime(client.nextFollowUp)}
                             </p>
-                            <p className="text-sm text-[#7A8099]">
+                            <p className="text-sm text-[var(--ls-text-muted)]">
                               Dernier bilan {formatDate(latestAssessment.date)}
                             </p>
                           </div>
@@ -347,7 +347,7 @@ export function ClientsPage() {
         ) : (
           <Card className="space-y-3">
             <p className="text-2xl text-white">Aucun client sur ce filtre</p>
-            <p className="text-sm leading-6 text-[#7A8099]">
+            <p className="text-sm leading-6 text-[var(--ls-text-muted)]">
               Ajuste la recherche, le statut ou le portefeuille pour retrouver le bon dossier.
             </p>
             <div>
@@ -367,8 +367,8 @@ export function ClientsPage() {
 
 function MiniFact({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-[22px] bg-[#0B0D11]/60 px-4 py-4">
-      <p className="text-[11px] font-medium text-[#4A5068]">{label}</p>
+    <div className="rounded-[22px] bg-[var(--ls-bg)]/60 px-4 py-4">
+      <p className="text-[11px] font-medium text-[var(--ls-text-hint)]">{label}</p>
       <p className="mt-3 text-lg font-semibold text-white">{value}</p>
     </div>
   );
@@ -385,9 +385,9 @@ function ClientMetric({
 }) {
   return (
     <div className="rounded-[22px] bg-slate-950/30 p-4">
-      <p className="text-[11px] font-medium text-[#4A5068]">{label}</p>
+      <p className="text-[11px] font-medium text-[var(--ls-text-hint)]">{label}</p>
       <p className="mt-3 text-lg font-semibold text-white">{value}</p>
-      {note ? <p className="mt-2 text-xs text-[#7A8099]">{note}</p> : null}
+      {note ? <p className="mt-2 text-xs text-[var(--ls-text-muted)]">{note}</p> : null}
     </div>
   );
 }
