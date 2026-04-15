@@ -442,6 +442,219 @@ html.theme-light .recap-hero {
   background: linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 60%, #F4F2EE 100%) !important;
 }
 
+/* ════════════════════════════════════════════════════
+   RESPONSIVE MOBILE iPhone + iPad — passe complète
+   ════════════════════════════════════════════════════ */
+
+/* ── BASES MOBILE ── */
+* { -webkit-overflow-scrolling: touch; }
+button, nav, [role="tab"] {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Safe area wrappers */
+main, .main-content {
+  padding-bottom: max(100px, calc(env(safe-area-inset-bottom) + 90px));
+}
+
+/* ── DASHBOARD MOBILE (≤640px) ── */
+@media (max-width: 640px) {
+  .dashboard-cols {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+  .dashboard-header {
+    flex-direction: column !important;
+    gap: 12px !important;
+    align-items: flex-start !important;
+  }
+  .dashboard-greeting {
+    font-size: 20px !important;
+  }
+  .dashboard-cta {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+  .pv-alert-name {
+    max-width: 180px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+/* ── TABLETTE iPad (768-1279px) : Dashboard 2 colonnes ── */
+@media (min-width: 768px) and (max-width: 1279px) {
+  .dashboard-cols {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  .dashboard-cols > div:last-child {
+    grid-column: span 2 !important;
+  }
+  .assessment-help-panel {
+    width: 240px !important;
+  }
+  .client-detail-layout {
+    grid-template-columns: 1fr 280px !important;
+  }
+}
+
+/* ── BILAN 14 ÉTAPES MOBILE (≤768px) ── */
+@media (max-width: 768px) {
+  .step-rail-wrapper {
+    overflow-x: auto !important;
+    scrollbar-width: none !important;
+  }
+  .step-rail-wrapper::-webkit-scrollbar { display: none; }
+  .assessment-help-panel {
+    display: none !important;
+  }
+  .assessment-form-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .gender-btn {
+    min-height: 52px !important;
+    font-size: 15px !important;
+  }
+}
+
+/* ── PAGE CLIENTS MOBILE (≤640px) ── */
+@media (max-width: 640px) {
+  .clients-stats-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  .responsables-scroll {
+    overflow-x: auto !important;
+    flex-wrap: nowrap !important;
+    padding-bottom: 8px !important;
+  }
+  .arbo-cards-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* ── FICHE CLIENT MOBILE (≤768px) ── */
+@media (max-width: 768px) {
+  .client-detail-layout {
+    grid-template-columns: 1fr !important;
+  }
+  .client-cap-panel {
+    order: 2 !important;
+    margin-top: 16px !important;
+  }
+  .bodyscan-metrics {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  .depart-cards {
+    overflow-x: auto !important;
+    flex-wrap: nowrap !important;
+    gap: 8px !important;
+    padding-bottom: 8px !important;
+  }
+  .depart-card {
+    min-width: 120px !important;
+    flex-shrink: 0 !important;
+  }
+  .client-tabs {
+    overflow-x: auto !important;
+    flex-wrap: nowrap !important;
+    scrollbar-width: none !important;
+  }
+  .client-tabs::-webkit-scrollbar { display: none; }
+  .client-tab {
+    flex-shrink: 0 !important;
+    white-space: nowrap !important;
+  }
+}
+
+/* ── SUIVI PV MOBILE (≤768px) ── */
+@media (max-width: 768px) {
+  .pv-table-wrapper {
+    overflow-x: auto !important;
+  }
+  .pv-table {
+    min-width: 600px !important;
+    table-layout: auto !important;
+  }
+  .pv-tabs {
+    overflow-x: auto !important;
+    flex-wrap: nowrap !important;
+    scrollbar-width: none !important;
+  }
+  .pv-tabs::-webkit-scrollbar { display: none; }
+  .pv-detail-panel {
+    width: 100% !important;
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    border-radius: 20px 20px 0 0 !important;
+    max-height: 70vh !important;
+    overflow-y: auto !important;
+    z-index: 100 !important;
+    padding-bottom: max(20px, env(safe-area-inset-bottom)) !important;
+    box-shadow: 0 -4px 24px rgba(0,0,0,0.15) !important;
+  }
+}
+
+/* ── BOTTOM NAV MOBILE ── */
+@media (max-width: 1279px) {
+  .bottom-nav {
+    padding-bottom: max(12px, env(safe-area-inset-bottom)) !important;
+  }
+  .bottom-nav-icon {
+    width: 22px !important;
+    height: 22px !important;
+  }
+  .bottom-nav-bilan-btn {
+    width: 52px !important;
+    height: 52px !important;
+    margin-top: -14px !important;
+  }
+  .bottom-nav-label {
+    font-size: 10px !important;
+    margin-top: 3px !important;
+  }
+}
+
+/* ── LOGIN MOBILE ── */
+@media (max-width: 768px) {
+  .login-left { display: none !important; }
+  .login-right {
+    padding: 36px 24px !important;
+    min-height: 100vh !important;
+  }
+  .login-logo-mobile {
+    display: flex !important;
+    margin-bottom: 32px !important;
+  }
+}
+
+/* ── RÉCAP CLIENT MOBILE (≤640px) ── */
+@media (max-width: 640px) {
+  .recap-page { padding: 12px !important; }
+  .recap-metrics-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  .recap-share-buttons {
+    flex-direction: column !important;
+    gap: 8px !important;
+  }
+  .recap-share-btn {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+}
+
+/* ── INPUTS MOBILE : zoom iOS empêché (font-size 16 min) ── */
+@media (max-width: 1024px) {
+  input:not([type="range"]):not([type="checkbox"]):not([type="radio"]),
+  select, textarea {
+    font-size: 16px !important;
+  }
+}
+
 
 @layer base {
   * { box-sizing: border-box; -webkit-font-smoothing: antialiased; }

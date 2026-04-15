@@ -46,7 +46,7 @@ export function UrgencyColumn({ title, count, color, icon, items, emptyLabel, se
         <div style={{ background: 'var(--ls-surface)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 10, padding: 14, fontSize: 12, color: 'var(--ls-text-hint)', textAlign: 'center' }}>{emptyLabel}</div>
       ) : items.map(item => (
         <Link key={item.id} to={`/clients/${item.clientId}`} style={{ textDecoration: 'none' }}>
-          <div data-urgency={urgencyKind} style={{ background: 'var(--ls-surface)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 11, padding: '12px 14px', cursor: 'pointer', transition: 'all 0.15s ease', position: 'relative', overflow: 'hidden' }}
+          <div className="dashboard-col-card" data-urgency={urgencyKind} style={{ background: 'var(--ls-surface)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 11, padding: '12px 14px', cursor: 'pointer', transition: 'all 0.15s ease', position: 'relative', overflow: 'hidden' }}
             onMouseEnter={e => {
               const el = e.currentTarget as HTMLElement
               el.style.background = 'var(--ls-surface2)'
@@ -67,7 +67,7 @@ export function UrgencyColumn({ title, count, color, icon, items, emptyLabel, se
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 9, marginBottom: 6 }}>
               <div style={{ width: 26, height: 26, borderRadius: '50%', flexShrink: 0, background: `${color}15`, color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 700, fontFamily: 'Syne, sans-serif' }}>{initials(item.clientName)}</div>
-              <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--ls-text)', paddingRight: 48 }}>{item.clientName}</div>
+              <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--ls-text)', paddingRight: 48, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.clientName}</div>
             </div>
             <div style={{ fontSize: 11, color: 'var(--ls-text-muted)', marginBottom: 5 }}>{item.type}</div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 10, color: 'var(--ls-text-hint)' }}>

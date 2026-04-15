@@ -78,12 +78,12 @@ export function DashboardPage() {
   const today = new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
 
   return (
-    <div style={{ padding: '24px 28px', maxWidth: 1200, margin: '0 auto' }}>
+    <div style={{ padding: 'clamp(16px, 4vw, 28px)', maxWidth: 1200, margin: '0 auto' }}>
 
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
+      <div className="dashboard-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
         <div>
-          <h1 style={{ fontFamily: 'Syne, sans-serif', fontSize: 24, fontWeight: 800, color: 'var(--ls-text)', margin: '0 0 6px', letterSpacing: '-0.3px' }}>
+          <h1 className="dashboard-greeting" style={{ fontFamily: 'Syne, sans-serif', fontSize: 'clamp(18px, 4vw, 24px)', fontWeight: 800, color: 'var(--ls-text)', margin: '0 0 6px', letterSpacing: '-0.3px' }}>
             {greeting()}, {currentUser.name?.split(' ')[0]} ✦
           </h1>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -91,7 +91,7 @@ export function DashboardPage() {
             <span style={{ fontSize: 12, color: 'var(--ls-text-muted)', textTransform: 'capitalize' }}>{today} — Vos priorités du jour</span>
           </div>
         </div>
-        <Link to="/assessments/new" style={{ background: '#C9A84C', color: '#0B0D11', borderRadius: 10, padding: '11px 20px', fontFamily: 'Syne, sans-serif', fontSize: 13, fontWeight: 700, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 8 }}>
+        <Link className="dashboard-cta" to="/assessments/new" style={{ background: '#C9A84C', color: '#0B0D11', borderRadius: 10, padding: '11px 20px', fontFamily: 'Syne, sans-serif', fontSize: 13, fontWeight: 700, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 8 }}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
           Nouveau bilan
         </Link>
