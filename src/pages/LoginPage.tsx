@@ -118,7 +118,7 @@ export function LoginPage() {
                   { icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>, label:'Body scan & suivi terrain', color:'#2DD4BF' },
                   { icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>, label:'Recommandations & Suivi PV', color:'#A78BFA' },
                 ].map((f, i) => (
-                  <div key={i} style={{ display:'flex', alignItems:'center', gap:10, padding:'8px 0', borderTop: i > 0 ? '1px solid rgba(255,255,255,0.05)' : 'none' }}>
+                  <div key={i} style={{ display:'flex', alignItems:'center', gap:10, padding:'8px 0', borderTop: i > 0 ? '1px solid rgba(128,128,128,0.08)' : 'none' }}>
                     <div style={{ width:28, height:28, borderRadius:8, flexShrink:0, background:`${f.color}15`, color:f.color, display:'flex', alignItems:'center', justifyContent:'center' }}>{f.icon}</div>
                     <span style={{ fontSize:13, color:'#B0B4C4', fontWeight:400 }}>{f.label}</span>
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#2DD4BF" strokeWidth="2" style={{ marginLeft:'auto', flexShrink:0 }}><polyline points="20 6 9 17 4 12"/></svg>
@@ -225,13 +225,13 @@ export function LoginPage() {
                 <StatusBadge label="Démo" tone="blue" />
               </div>
               <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 }}>
-                <button type="button" onClick={() => fillDemoAccess("distributor")} style={{ background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.06)', borderRadius:12, padding:14, textAlign:'left', cursor:'pointer', transition:'background 0.15s' }}
-                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'} onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.03)'}>
+                <button type="button" onClick={() => fillDemoAccess("distributor")} style={{ background:'rgba(128,128,128,0.05)', border:'1px solid rgba(255,255,255,0.06)', borderRadius:12, padding:14, textAlign:'left', cursor:'pointer', transition:'background 0.15s' }}
+                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(128,128,128,0.08)'} onMouseLeave={e => e.currentTarget.style.background = 'rgba(128,128,128,0.05)'}>
                   <p style={{ fontSize:12, fontWeight:600, color:'var(--ls-text)', margin:0 }}>Distributeur</p>
                   <p style={{ fontSize:10, color:'var(--ls-text-muted)', margin:'4px 0 0', lineHeight:1.5 }}>Vue limitée</p>
                 </button>
-                <button type="button" onClick={() => fillDemoAccess("admin")} style={{ background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.06)', borderRadius:12, padding:14, textAlign:'left', cursor:'pointer', transition:'background 0.15s' }}
-                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'} onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.03)'}>
+                <button type="button" onClick={() => fillDemoAccess("admin")} style={{ background:'rgba(128,128,128,0.05)', border:'1px solid rgba(255,255,255,0.06)', borderRadius:12, padding:14, textAlign:'left', cursor:'pointer', transition:'background 0.15s' }}
+                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(128,128,128,0.08)'} onMouseLeave={e => e.currentTarget.style.background = 'rgba(128,128,128,0.05)'}>
                   <p style={{ fontSize:12, fontWeight:600, color:'var(--ls-text)', margin:0 }}>Admin</p>
                   <p style={{ fontSize:10, color:'var(--ls-text-muted)', margin:'4px 0 0', lineHeight:1.5 }}>Vue complète</p>
                 </button>

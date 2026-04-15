@@ -270,7 +270,7 @@ export function AppLayout() {
           </section>
 
           {/* Header compact — visible uniquement sur desktop (xl+) */}
-          <header className="hidden xl:flex items-center justify-between rounded-[16px] border border-white/[0.07] bg-[#13161C] px-5 py-3">
+          <header className="hidden xl:flex items-center justify-between rounded-[16px] border border-[var(--ls-border)] px-5 py-3" style={{ background: 'var(--ls-surface)' }}>
             <div className="flex items-center gap-3">
               <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#2DD4BF', flexShrink: 0 }} />
               <span className="text-[13px] text-[#7A8099]">{pageTitle}</span>

@@ -149,7 +149,7 @@ export function PlateGuideCard({
             {segments.map((segment) => (
               <div
                 key={segment.label}
-                className="rounded-[26px] border border-white/10 bg-slate-950/30 px-6 py-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] md:min-h-[188px]"
+                className="rounded-[26px] border border-white/10 bg-slate-950/30 px-6 py-5 shadow-[inset_0_1px_0_rgba(128,128,128,0.05)] md:min-h-[188px]"
               >
                 <div className={`h-1.5 w-14 rounded-full ${accentClasses[segment.accent].dot}`} />
                 <div className="mt-5 space-y-3">

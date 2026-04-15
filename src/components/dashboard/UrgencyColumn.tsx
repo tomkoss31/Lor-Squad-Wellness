@@ -70,7 +70,7 @@ export function UrgencyColumn({ title, count, color, icon, items, emptyLabel, se
                     ? { bg: 'rgba(45,212,191,0.15)', c: '#2DD4BF', bd: 'rgba(45,212,191,0.3)' }
                     : isThisWeek
                       ? { bg: 'rgba(201,168,76,0.1)', c: '#C9A84C', bd: 'rgba(201,168,76,0.2)' }
-                      : { bg: 'rgba(255,255,255,0.05)', c: 'var(--ls-text-muted)', bd: 'var(--ls-border2)' }
+                      : { bg: 'rgba(128,128,128,0.08)', c: 'var(--ls-text-muted)', bd: 'var(--ls-border2)' }
                 return (
                 <a
                   href={createGoogleCalendarLink({

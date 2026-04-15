@@ -105,7 +105,7 @@ export function DashboardPage() {
             <p style={{ fontSize: 12, color: 'var(--ls-text-muted)', margin: '4px 0 0' }}>Défini par un admin. Contacte ton sponsor pour le modifier.</p>
           </div>
           <button onClick={() => { localStorage.setItem(`lor-squad-password-notice-dismissed-${currentUser.id}`, "true"); setShowPasswordNotice(false) }}
-            style={{ fontSize: 12, color: 'var(--ls-text-muted)', background: 'rgba(255,255,255,0.04)', border: 'none', borderRadius: 8, padding: '6px 14px', cursor: 'pointer', flexShrink: 0 }}>Compris</button>
+            style={{ fontSize: 12, color: 'var(--ls-text-muted)', background: 'rgba(128,128,128,0.06)', border: 'none', borderRadius: 8, padding: '6px 14px', cursor: 'pointer', flexShrink: 0 }}>Compris</button>
         </div>
       )}
 

@@ -311,7 +311,7 @@ export function PvClientsPage() {
                     className={`space-y-4 ${
                       selectedRecord?.clientId === record.clientId
                         ? "border border-white/34 bg-white/[0.12] shadow-[0_0_0_1px_rgba(255,255,255,0.14),0_22px_60px_rgba(10,18,32,0.46)]"
-                        : "border border-white/8 bg-white/[0.03] hover:border-white/14 hover:bg-white/[0.055] hover:shadow-[0_0_0_1px_rgba(255,255,255,0.04),0_18px_40px_rgba(7,12,22,0.28)]"
+                        : "border border-white/8 bg-white/[0.03] hover:border-white/14 hover:bg-white/[0.055] hover:shadow-[0_0_0_1px_rgba(128,128,128,0.06),0_18px_40px_rgba(7,12,22,0.28)]"
                     }`}
                   >
                     <div className="flex flex-wrap items-start justify-between gap-3">

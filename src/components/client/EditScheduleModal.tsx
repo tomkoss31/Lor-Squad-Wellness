@@ -91,7 +91,7 @@ export function EditScheduleModal({ client, onClose, onSaved }: EditScheduleModa
       <div
         className="card-mount"
         style={{
-          background: "#13161C", border: "1px solid rgba(255,255,255,0.1)",
+          background: "var(--ls-surface)", border: "1px solid rgba(255,255,255,0.1)",
           borderRadius: 18, padding: 28, width: "100%", maxWidth: 480
         }}
       >
@@ -121,7 +121,7 @@ export function EditScheduleModal({ client, onClose, onSaved }: EditScheduleModa
 
         {/* Current value */}
         <div style={{
-          background: "#1A1E27", borderRadius: 12, padding: "12px 16px", marginBottom: 20,
+          background: "var(--ls-surface2)", borderRadius: 12, padding: "12px 16px", marginBottom: 20,
           display: "flex", justifyContent: "space-between", alignItems: "center"
         }}>
           <span style={{ fontSize: 11, color: "#4A5068", textTransform: "uppercase", letterSpacing: "1px" }}>Créneau actuel</span>

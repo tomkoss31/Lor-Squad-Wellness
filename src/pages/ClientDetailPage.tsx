@@ -796,7 +796,7 @@ export function ClientDetailPage() {
                 {client.assessments.filter(a => a.bodyScan?.weight).map((a, i) => {
                   const scan = a.bodyScan;
                   return (
-                    <div key={a.id ?? i} className="list-row flex items-center justify-between gap-3 px-4 py-3" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                    <div key={a.id ?? i} className="list-row flex items-center justify-between gap-3 px-4 py-3" style={{ borderBottom: '1px solid rgba(128,128,128,0.08)' }}>
                       <span className="text-sm text-[var(--ls-text-muted)]">{formatDate(a.date)}</span>
                       {scan?.weight && <span className="text-sm font-semibold text-[#C9A84C]">{scan.weight} kg</span>}
                       {scan?.bodyFat && <span className="text-sm text-[#FB7185]">MG {scan.bodyFat}%</span>}
