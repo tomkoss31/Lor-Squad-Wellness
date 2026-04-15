@@ -262,6 +262,122 @@ html.theme-light .action-card:hover {
   box-shadow: 0 3px 10px rgba(0,0,0,0.08);
 }
 
+/* ═══ 1. BARRES COLORÉES GAUCHE SUR CARDS URGENCE ═══ */
+html.theme-light .urgency-card-urgent,
+html.theme-light [data-urgency="urgent"] {
+  border-left: 3px solid #DC2626 !important;
+  border-radius: 0 12px 12px 0 !important;
+}
+
+html.theme-light .urgency-card-planned,
+html.theme-light [data-urgency="planned"] {
+  border-left: 3px solid #0D9488 !important;
+  border-radius: 0 12px 12px 0 !important;
+}
+
+html.theme-light .urgency-card-watch,
+html.theme-light [data-urgency="watch"] {
+  border-left: 3px solid #7C3AED !important;
+  border-radius: 0 12px 12px 0 !important;
+}
+
+/* ═══ 2. FICHE CLIENT — SECTIONS GRISES RÉSIDUELLES ═══ */
+html.theme-light [style*="glass-panel"],
+html.theme-light [class*="glass-panel"] {
+  background: var(--ls-surface) !important;
+  border: 1px solid var(--ls-border) !important;
+  backdrop-filter: none !important;
+}
+
+html.theme-light [style*="background: rgba(255"] {
+  background: var(--ls-surface2) !important;
+}
+
+html.theme-light [style*="COURBE"],
+html.theme-light [class*="courbe"],
+html.theme-light [class*="chart"] {
+  background: var(--ls-surface) !important;
+}
+
+/* ═══ 3. PAGE CLIENTS — CARDS PROGRAMME/HYDRATATION ═══ */
+html.theme-light [style*="Hydratation"],
+html.theme-light [style*="Programme"],
+html.theme-light [style*="Repère"] {
+  background: var(--ls-surface) !important;
+  border: 1px solid var(--ls-border) !important;
+}
+
+html.theme-light [class*="rounded"][style*="background: #"] {
+  background: var(--ls-surface) !important;
+}
+
+/* ═══ 4. HERO RÉCAP CLIENT — DÉGRADÉ JAUNE PÂLE ═══ */
+html.theme-light .recap-hero,
+html.theme-light [class*="recap"] > div:first-child {
+  background: linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 60%, #F4F2EE 100%) !important;
+}
+
+html.theme-light .qr-container img {
+  filter: sepia(40%) hue-rotate(10deg) saturate(150%) !important;
+}
+
+/* ═══ 5. DÉTAILS PREMIUM ═══ */
+html.theme-light [style*="background: #C9A84C"][style*="border-radius: 9px"],
+html.theme-light [style*="background: #C9A84C"][style*="border-radius: 12px"],
+html.theme-light [style*="background: #C9A84C"][style*="border-radius: 14px"] {
+  box-shadow: 0 2px 10px rgba(201,168,76,0.35) !important;
+}
+
+html.theme-light button[style*="background: #C9A84C"],
+html.theme-light a[style*="background: #C9A84C"] {
+  box-shadow: 0 2px 12px rgba(184,146,42,0.3) !important;
+}
+
+html.theme-light [style*="border-radius: 12px"][style*="border: 1px"],
+html.theme-light [style*="border-radius: 14px"][style*="border: 1px"] {
+  box-shadow: 0 1px 4px rgba(0,0,0,0.05) !important;
+}
+
+html.theme-light [style*="cursor: pointer"]:hover,
+html.theme-light [style*="cursor:pointer"]:hover {
+  box-shadow: 0 4px 14px rgba(0,0,0,0.09) !important;
+  transform: translateY(-1px) !important;
+  transition: all 0.15s ease !important;
+}
+
+/* ═══ 6. SIDEBAR OMBRE ═══ */
+html.theme-light aside,
+html.theme-light [class*="sidebar"],
+html.theme-light nav {
+  box-shadow: 2px 0 14px rgba(0,0,0,0.06) !important;
+}
+
+/* ═══ 7. BADGES URGENCE BIEN VISIBLES ═══ */
+html.theme-light [style*="color: #DC2626"][style*="border-radius: 10px"],
+html.theme-light [style*="color: #FB7185"][style*="border-radius: 10px"] {
+  background: rgba(220,38,38,0.1) !important;
+  font-weight: 600 !important;
+}
+
+html.theme-light [style*="color: #0D9488"][style*="border-radius: 10px"],
+html.theme-light [style*="color: #2DD4BF"][style*="border-radius: 10px"] {
+  background: rgba(13,148,136,0.1) !important;
+  font-weight: 600 !important;
+}
+
+html.theme-light [style*="color: #7C3AED"][style*="border-radius: 10px"],
+html.theme-light [style*="color: #A78BFA"][style*="border-radius: 10px"] {
+  background: rgba(124,58,237,0.1) !important;
+  font-weight: 600 !important;
+}
+
+/* ═══ 8. TRANSITIONS GLOBALES FLUIDES ═══ */
+html.theme-light * {
+  transition: background-color 0.2s ease,
+              border-color 0.2s ease,
+              box-shadow 0.15s ease !important;
+}
+
 
 @layer base {
   * { box-sizing: border-box; -webkit-font-smoothing: antialiased; }
