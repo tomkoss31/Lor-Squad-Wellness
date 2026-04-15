@@ -18,7 +18,7 @@ export function BreakfastComparison() {
         <h3 className="mt-2 text-[1.9rem] leading-none text-white md:text-[2.1rem]">
           Comparer un matin improvisé à une routine plus structurée
         </h3>
-        <p className="mt-3 text-[14px] leading-7 text-[#B0B4C4]">
+        <p className="mt-3 text-[14px] leading-7 text-[var(--ls-text-muted)]">
           Le client doit voir vite ce qui change en apports, en hydratation et en régularité.
         </p>
       </div>
@@ -39,11 +39,11 @@ export function BreakfastComparison() {
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <p className="eyebrow-label">Lecture utile</p>
-            <p className="mt-2 text-sm leading-6 text-[#B0B4C4]">
+            <p className="mt-2 text-sm leading-6 text-[var(--ls-text-muted)]">
               Repère configurable selon la routine du matin choisie dans l&apos;app.
             </p>
           </div>
-          <div className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs text-[var(--ls-text)]">
+          <div className="rounded-full border border-white/10 bg-[var(--ls-surface2)] px-3 py-1.5 text-xs text-[var(--ls-text)]">
             Comparatif simple
           </div>
         </div>
@@ -82,7 +82,7 @@ function ImageScenarioCard({
   points: string[];
 }) {
   return (
-    <div className="overflow-hidden rounded-[28px] border border-white/10 bg-white/[0.03]">
+    <div className="overflow-hidden rounded-[28px] border border-white/10 bg-[var(--ls-surface2)]">
       <div className="relative min-h-[320px] bg-slate-950">
         <img
           src={image}
@@ -97,7 +97,7 @@ function ImageScenarioCard({
       <div className="space-y-4 p-5">
         <div>
           <h4 className="text-[1.5rem] leading-none text-white">{title}</h4>
-          <p className="mt-3 text-sm leading-6 text-[#B0B4C4]">{subtitle}</p>
+          <p className="mt-3 text-sm leading-6 text-[var(--ls-text-muted)]">{subtitle}</p>
         </div>
         <div className="grid gap-2">
           {points.map((point) => (
@@ -116,7 +116,7 @@ function ImageScenarioCard({
 
 function SupportVisualCard() {
   return (
-    <div className="overflow-hidden rounded-[28px] border border-white/10 bg-white/[0.03]">
+    <div className="overflow-hidden rounded-[28px] border border-white/10 bg-[var(--ls-surface2)]">
       <div className="relative min-h-[320px] bg-slate-950">
         <img
           src={breakfastSupportVisual}
@@ -133,7 +133,7 @@ function SupportVisualCard() {
           <h4 className="text-[1.5rem] leading-none text-white">
             {breakfastProfiles.structured.title}
           </h4>
-          <p className="mt-3 text-sm leading-6 text-[#B0B4C4]">
+          <p className="mt-3 text-sm leading-6 text-[var(--ls-text-muted)]">
             {breakfastProfiles.structured.subtitle}
           </p>
         </div>
@@ -151,7 +151,7 @@ function SupportVisualCard() {
           {breakfastFacts.map((fact) => (
             <div key={fact.title} className="rounded-[20px] bg-[var(--ls-bg)]/60 px-4 py-4">
               <p className="text-sm font-semibold text-white">{fact.title}</p>
-              <p className="mt-2 text-sm leading-6 text-[#B0B4C4]">{fact.detail}</p>
+              <p className="mt-2 text-sm leading-6 text-[var(--ls-text-muted)]">{fact.detail}</p>
             </div>
           ))}
         </div>
@@ -182,7 +182,7 @@ function ComparisonMetricRow({
     metricKey === "fastSugar" ? "bg-[#2DD4BF]/80" : metricKey === "hydration" ? "bg-[#2DD4BF]" : "bg-[#2DD4BF]/85";
 
   return (
-    <div className="grid gap-3 rounded-[18px] border border-white/8 bg-white/[0.03] px-4 py-4 md:grid-cols-[140px_1fr_1fr] md:items-center">
+    <div className="grid gap-3 rounded-[18px] border border-white/8 bg-[var(--ls-surface2)] px-4 py-4 md:grid-cols-[140px_1fr_1fr] md:items-center">
       <div>
         <p className="text-[10px] uppercase tracking-[0.12em] text-[var(--ls-text-hint)]">{label}</p>
         <p className="mt-2 text-xs text-[var(--ls-text-muted)]">{helper}</p>
@@ -231,7 +231,7 @@ function ComparisonSide({
           {value}
         </p>
       </div>
-      <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/[0.06]">
+      <div className="mt-3 h-2 overflow-hidden rounded-full bg-[var(--ls-surface2)]">
         <div className={`h-full rounded-full ${toneClass}`} style={{ width }} />
       </div>
       <p className="mt-2 text-xs text-[var(--ls-text-muted)]">{helper}</p>

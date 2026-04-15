@@ -305,7 +305,7 @@ export function NewFollowUpPage() {
               <div>
                 <p className="eyebrow-label">Check-in bien-être & nutrition</p>
                 <p className="mt-3 text-3xl text-white">Avant la balance</p>
-                <p className="mt-2 text-sm leading-6 text-[#B0B4C4]">
+                <p className="mt-2 text-sm leading-6 text-[var(--ls-text-muted)]">
                   Avant la balance, on fait un point rapide sur l&apos;énergie, la faim, la digestion et la gestion des repas depuis le dernier rendez-vous.
                 </p>
               </div>
@@ -396,7 +396,7 @@ export function NewFollowUpPage() {
                 <div>
                   <p className="eyebrow-label text-[#2DD4BF]/70">Nouveau relevé</p>
                   <p className="mt-3 text-2xl text-white">Nouvelles valeurs body scan</p>
-                  <p className="mt-2 text-sm leading-6 text-[#B0B4C4]">
+                  <p className="mt-2 text-sm leading-6 text-[var(--ls-text-muted)]">
                     Saisir les chiffres du jour puis relire les écarts.
                   </p>
                 </div>
@@ -579,7 +579,7 @@ export function NewFollowUpPage() {
             <div className="grid gap-4">
               <CompactWeightPanel label="Poids de départ" value={`${first.bodyScan.weight} kg`} />
               <CompactWeightPanel label="Dernier relevé" value={`${latest.bodyScan.weight} kg`} />
-              <div className="rounded-[22px] border border-white/10 bg-white/[0.03] px-5 py-4">
+              <div className="rounded-[22px] border border-white/10 bg-[var(--ls-surface2)] px-5 py-4">
                 <p className="text-[12px] font-medium text-[var(--ls-text-muted)]">Écart depuis départ</p>
                 <div className="mt-3 flex items-center justify-between gap-3">
                   <p className="text-[2rem] font-semibold tracking-[-0.04em] text-white">
@@ -592,13 +592,13 @@ export function NewFollowUpPage() {
                   />
                 </div>
               </div>
-              <div className="rounded-[22px] border border-white/10 bg-white/[0.03] px-5 py-4">
+              <div className="rounded-[22px] border border-white/10 bg-[var(--ls-surface2)] px-5 py-4">
                 <p className="text-[12px] font-medium text-[var(--ls-text-muted)]">À repérer avant la balance</p>
                 <div className="mt-4 flex flex-wrap gap-2">
                   {["Énergie", "Faim", "Digestion", "Régularité repas"].map((item) => (
                     <span
                       key={item}
-                      className="inline-flex min-h-[38px] items-center rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-[13px] font-medium text-[var(--ls-text)]"
+                      className="inline-flex min-h-[38px] items-center rounded-full border border-white/10 bg-[var(--ls-surface2)] px-4 py-2 text-[13px] font-medium text-[var(--ls-text)]"
                     >
                       {item}
                     </span>
@@ -613,7 +613,7 @@ export function NewFollowUpPage() {
               <div>
                 <p className="eyebrow-label">Point volume</p>
                 <p className="mt-3 text-2xl text-white">Commande et reste estime</p>
-                <p className="mt-2 text-sm leading-6 text-[#B0B4C4]">
+                <p className="mt-2 text-sm leading-6 text-[var(--ls-text-muted)]">
                   Un coup d&apos;oeil pour voir ou en est la commande avant de relancer le prochain pas.
                 </p>
               </div>
@@ -635,7 +635,7 @@ export function NewFollowUpPage() {
                     label="PV cumules"
                     value={`${pvRecord.pvCumulative} PV`}
                   />
-                  <div className="rounded-[22px] border border-white/10 bg-white/[0.03] px-5 py-4">
+                  <div className="rounded-[22px] border border-white/10 bg-[var(--ls-surface2)] px-5 py-4">
                     <p className="text-[12px] font-medium text-[var(--ls-text-muted)]">Statut actuel</p>
                     <div className="mt-3">
                       <PvFollowUpStatusLabel status={pvRecord.status} />
@@ -643,7 +643,7 @@ export function NewFollowUpPage() {
                   </div>
                 </div>
 
-                <div className="rounded-[22px] border border-white/10 bg-white/[0.03] px-5 py-4">
+                <div className="rounded-[22px] border border-white/10 bg-[var(--ls-surface2)] px-5 py-4">
                   <p className="text-[12px] font-medium text-[var(--ls-text-muted)]">Produits a suivre</p>
                   <div className="mt-4 flex flex-wrap gap-2">
                     {pvRecord.activeProducts.map((product) => {
@@ -651,7 +651,7 @@ export function NewFollowUpPage() {
                       return (
                         <span
                           key={product.id}
-                          className="inline-flex min-h-[38px] items-center rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-[13px] font-medium text-slate-100"
+                          className="inline-flex min-h-[38px] items-center rounded-full border border-white/10 bg-[var(--ls-surface2)] px-4 py-2 text-[13px] font-medium text-slate-100"
                         >
                           {product.productName} - {product.estimatedRemainingDays} j - {meta.label}
                         </span>
@@ -668,8 +668,8 @@ export function NewFollowUpPage() {
                 </Link>
               </>
             ) : (
-              <div className="rounded-[22px] border border-white/10 bg-white/[0.03] px-5 py-4">
-                <p className="text-sm leading-6 text-[#B0B4C4]">
+              <div className="rounded-[22px] border border-white/10 bg-[var(--ls-surface2)] px-5 py-4">
+                <p className="text-sm leading-6 text-[var(--ls-text-muted)]">
                   Aucun suivi PV n&apos;est encore visible pour ce dossier.
                 </p>
               </div>
@@ -678,11 +678,11 @@ export function NewFollowUpPage() {
 
           <Card className="space-y-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium text-[#B0B4C4]">Type de suivi</label>
+              <label className="text-sm font-medium text-[var(--ls-text-muted)]">Type de suivi</label>
               <input value={followUpType} onChange={(event) => setFollowUpType(event.target.value)} />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium text-[#B0B4C4]">Date et heure du suivi</label>
+              <label className="text-sm font-medium text-[var(--ls-text-muted)]">Date et heure du suivi</label>
               <input
                 type="datetime-local"
                 value={assessmentDate}
@@ -690,7 +690,7 @@ export function NewFollowUpPage() {
               />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium text-[#B0B4C4]">Prochain rendez-vous</label>
+              <label className="text-sm font-medium text-[var(--ls-text-muted)]">Prochain rendez-vous</label>
               <input
                 type="datetime-local"
                 value={dueDate}
@@ -705,7 +705,7 @@ export function NewFollowUpPage() {
             />
             {optionalProductsToggle === "Oui" ? (
               <div className="space-y-2">
-                <label className="text-sm font-medium text-[#B0B4C4]">Lesquels ?</label>
+                <label className="text-sm font-medium text-[var(--ls-text-muted)]">Lesquels ?</label>
                 <input
                   value={optionalProductsUsed}
                   onChange={(event) => setOptionalProductsUsed(event.target.value)}
@@ -714,7 +714,7 @@ export function NewFollowUpPage() {
               </div>
             ) : null}
             <div className="space-y-2">
-              <label className="text-sm font-medium text-[#B0B4C4]">Note du suivi</label>
+              <label className="text-sm font-medium text-[var(--ls-text-muted)]">Note du suivi</label>
               <textarea
                 rows={4}
                 value={coachNote}
@@ -723,7 +723,7 @@ export function NewFollowUpPage() {
               />
             </div>
             {latest.questionnaire.recommendations.length ? (
-              <label className="flex items-center justify-between gap-3 rounded-[22px] border border-white/10 bg-white/[0.03] px-4 py-4">
+              <label className="flex items-center justify-between gap-3 rounded-[22px] border border-white/10 bg-[var(--ls-surface2)] px-4 py-4">
                 <div>
                   <p className="text-sm font-medium text-white">Recommandations contactées</p>
                   <p className="mt-1 text-sm text-[var(--ls-text-muted)]">
@@ -739,7 +739,7 @@ export function NewFollowUpPage() {
                 />
               </label>
             ) : null}
-            <div className="rounded-[22px] bg-white/[0.03] px-4 py-4">
+            <div className="rounded-[22px] bg-[var(--ls-surface2)] px-4 py-4">
               <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-[var(--ls-text-hint)]">
                 Synthèse automatique
               </p>
@@ -803,7 +803,7 @@ function MetricField({
 }) {
   return (
     <div className="space-y-2">
-      <label className="text-sm font-medium text-[#B0B4C4]">{label}</label>
+      <label className="text-sm font-medium text-[var(--ls-text-muted)]">{label}</label>
       <DecimalMetricInput value={value} onChange={onChange} />
     </div>
   );
@@ -891,7 +891,7 @@ function FollowUpChoiceGroup({
               className={`inline-flex min-h-[44px] items-center rounded-full border px-5 py-2.5 text-[14px] font-semibold transition duration-200 ${
                 isActive
                   ? "border-white/20 bg-[#C9A84C] text-[#0B0D11] shadow-[0_8px_24px_rgba(201,168,76,0.22)]"
-                  : "border-white/10 bg-white/[0.04] text-[#C8D2E1] hover:-translate-y-[1px] hover:border-white/14 hover:bg-white/[0.07] hover:shadow-[0_10px_22px_rgba(0,0,0,0.14)]"
+                  : "border-white/10 bg-[var(--ls-surface2)] text-[#C8D2E1] hover:-translate-y-[1px] hover:border-white/14 hover:bg-[var(--ls-surface2)] hover:shadow-[0_10px_22px_rgba(0,0,0,0.14)]"
               }`}
             >
               {option}
@@ -916,7 +916,7 @@ function FollowUpTextField({
 }) {
   return (
     <div className="space-y-2">
-      <label className="text-sm font-medium text-[#B0B4C4]">{label}</label>
+      <label className="text-sm font-medium text-[var(--ls-text-muted)]">{label}</label>
       <textarea
         rows={4}
         value={value}
@@ -929,7 +929,7 @@ function FollowUpTextField({
 
 function CompactWeightPanel({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-[22px] border border-white/8 bg-white/[0.03] px-5 py-4">
+    <div className="rounded-[22px] border border-white/8 bg-[var(--ls-surface2)] px-5 py-4">
       <p className="text-[12px] font-medium text-[var(--ls-text-muted)]">{label}</p>
       <p className="mt-3 text-[2rem] font-semibold tracking-[-0.04em] text-white">{value}</p>
     </div>
@@ -990,11 +990,11 @@ function StartingPointWeightCard({
         <div>
           <p className="eyebrow-label">Repère de progression</p>
           <p className="mt-3 text-2xl text-white">Départ vs aujourd&apos;hui</p>
-          <p className="mt-2 text-sm leading-6 text-[#B0B4C4]">
+          <p className="mt-2 text-sm leading-6 text-[var(--ls-text-muted)]">
             Ce bloc sert à montrer tout de suite le point de départ, le dernier relevé et la situation aujourd&apos;hui.
           </p>
         </div>
-        <div className="rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-sm font-medium text-white">
+        <div className="rounded-full border border-white/10 bg-[var(--ls-surface2)] px-4 py-2 text-sm font-medium text-white">
           {currentWeight} kg aujourd&apos;hui
         </div>
       </div>
@@ -1042,7 +1042,7 @@ function WeightMilestoneCard({
       ? "bg-[rgba(45,212,191,0.07)] ring-1 ring-[rgba(45,212,191,0.12)]"
       : tone === "blue"
         ? "bg-[rgba(201,168,76,0.07)] ring-1 ring-[rgba(201,168,76,0.12)]"
-        : "bg-white/[0.03] ring-1 ring-white/6";
+        : "bg-[var(--ls-surface2)] ring-1 ring-white/6";
 
   return (
     <div

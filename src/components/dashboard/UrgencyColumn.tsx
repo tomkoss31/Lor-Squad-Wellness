@@ -41,7 +41,7 @@ export function UrgencyColumn({ title, count, color, icon, items, emptyLabel, se
       ) : items.map(item => (
         <Link key={item.id} to={`/clients/${item.clientId}`} style={{ textDecoration: 'none' }}>
           <div style={{ background: 'var(--ls-surface)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 11, padding: '12px 14px', cursor: 'pointer', transition: 'border-color 0.15s, background 0.15s', position: 'relative', overflow: 'hidden' }}
-            onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.14)'; e.currentTarget.style.background = '#15181F' }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--ls-border2)'; e.currentTarget.style.background = '#15181F' }}
             onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--ls-border)'; e.currentTarget.style.background = 'var(--ls-surface)' }}>
             <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 3, background: color, borderRadius: '3px 0 0 3px' }} />
             <div style={{ position: 'absolute', top: 10, right: 10, fontSize: 9, padding: '2px 8px', borderRadius: 10, background: `${color}15`, color, fontWeight: 600 }}>

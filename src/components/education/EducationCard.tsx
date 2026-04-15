@@ -9,7 +9,7 @@ export function EducationCard({ item }: EducationCardProps) {
   const tone = item.accent;
 
   return (
-    <div className="rounded-[26px] border border-white/10 bg-white/[0.03] p-5">
+    <div className="rounded-[26px] border border-white/10 bg-[var(--ls-surface2)] p-5">
       <div className="flex items-center justify-between gap-3">
         <p className="font-display text-2xl text-white">{item.title}</p>
         <StatusBadge

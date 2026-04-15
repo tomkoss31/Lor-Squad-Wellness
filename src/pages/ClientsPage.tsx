@@ -128,7 +128,7 @@ export function ClientsPage() {
       <Card className="space-y-5">
         <div className="grid gap-4 lg:grid-cols-[1.4fr_0.9fr] lg:items-end">
           <div className="space-y-2">
-            <label className="text-sm font-medium text-[#B0B4C4]">Rechercher un client</label>
+            <label className="text-sm font-medium text-[var(--ls-text-muted)]">Rechercher un client</label>
             <input
               value={search}
               onChange={(event) => setSearch(event.target.value)}
@@ -137,7 +137,7 @@ export function ClientsPage() {
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium text-[#B0B4C4]">Filtrer par statut</label>
+            <label className="text-sm font-medium text-[var(--ls-text-muted)]">Filtrer par statut</label>
             <select
               value={statusFilter}
               onChange={(event) =>
@@ -163,7 +163,7 @@ export function ClientsPage() {
               className={`rounded-[22px] px-4 py-3 text-left transition flex-shrink-0 ${
                 ownerFilter === "all"
                   ? "bg-[rgba(201,168,76,0.12)] text-white shadow-[0_0_0_1px_rgba(201,168,76,0.16)]"
-                  : "bg-white/[0.03] text-white hover:bg-white/[0.05]"
+                  : "bg-[var(--ls-surface2)] text-white hover:bg-[var(--ls-surface2)]"
               }`}
             >
               <span className="block text-sm font-semibold">Toute la base</span>
@@ -194,7 +194,7 @@ export function ClientsPage() {
                   className={`rounded-[22px] px-4 py-3 text-left transition ${
                     isActive
                       ? "bg-[rgba(45,212,191,0.12)] text-white shadow-[0_0_0_1px_rgba(201,168,76,0.16)]"
-                      : "bg-white/[0.03] hover:bg-white/[0.05]"
+                      : "bg-[var(--ls-surface2)] hover:bg-[var(--ls-surface2)]"
                   }`}
                 >
                   <div className="flex items-center gap-3">
@@ -235,7 +235,7 @@ export function ClientsPage() {
             />
             <Link
               to={`/distributors/${selectedOwner.id}`}
-              className="inline-flex min-h-[48px] items-center justify-center rounded-[18px] bg-white/[0.04] px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/[0.07]"
+              className="inline-flex min-h-[48px] items-center justify-center rounded-[18px] bg-[var(--ls-surface2)] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[var(--ls-surface2)]"
             >
               Ouvrir le portefeuille
             </Link>
@@ -279,7 +279,7 @@ export function ClientsPage() {
 
                   return (
                     <Link key={client.id} to={`/clients/${client.id}`}>
-                      <Card className="transition hover:bg-white/[0.07]">
+                      <Card className="transition hover:bg-[var(--ls-surface2)]">
                         <div className="grid gap-4 xl:grid-cols-[1.2fr_1.15fr_0.85fr] xl:items-center">
                           <div className="space-y-3">
                             <div className="flex flex-wrap items-center gap-3">
@@ -353,7 +353,7 @@ export function ClientsPage() {
             <div>
               <Link
                 to="/assessments/new"
-                className="inline-flex min-h-[48px] items-center justify-center rounded-[18px] bg-white/[0.04] px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/[0.07]"
+                className="inline-flex min-h-[48px] items-center justify-center rounded-[18px] bg-[var(--ls-surface2)] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[var(--ls-surface2)]"
               >
                 Lancer un premier bilan
               </Link>

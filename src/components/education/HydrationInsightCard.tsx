@@ -42,7 +42,7 @@ export function HydrationInsightCard({
         <h3 className="mt-2 text-[1.9rem] leading-none text-white md:text-[2.1rem]">
           Hydratation
         </h3>
-        <p className="mt-3 text-[14px] leading-7 text-[#B0B4C4]">
+        <p className="mt-3 text-[14px] leading-7 text-[var(--ls-text-muted)]">
           Une lecture simple pour voir si le corps tient mieux, plus regulierement, dans la vraie vie.
         </p>
       </div>
@@ -87,7 +87,7 @@ export function HydrationInsightCard({
               valueSuffix="%"
             />
           ) : (
-            <div className="rounded-[24px] bg-white/[0.04] p-4 md:p-5">
+            <div className="rounded-[24px] bg-[var(--ls-surface2)] p-4 md:p-5">
               <div className="grid gap-3 md:grid-cols-3 xl:grid-cols-1">
                 <HydrationMeta label="Poids actuel" value={`${weight} kg`} />
                 <HydrationMeta label="Masse hydrique estimee" value={`${hydrationKg} kg`} />
@@ -99,10 +99,10 @@ export function HydrationInsightCard({
       </div>
 
       <div className="grid gap-3 xl:grid-cols-[1.15fr_0.85fr]">
-        <div className="rounded-[24px] bg-white/[0.04] p-4 md:p-5">
+        <div className="rounded-[24px] bg-[var(--ls-surface2)] p-4 md:p-5">
           <div className="flex items-center justify-between gap-3">
             <p className="text-[11px] font-medium text-[var(--ls-text-hint)]">Repere hydratation</p>
-            <span className="rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 text-xs font-medium text-white">
+            <span className="rounded-full border border-white/10 bg-[var(--ls-surface2)] px-3 py-1 text-xs font-medium text-white">
               {hydrationStatus.label}
             </span>
           </div>
@@ -113,10 +113,10 @@ export function HydrationInsightCard({
           <p className="mt-4 text-sm leading-6 text-[var(--ls-text-muted)]">{hydrationStatus.description}</p>
         </div>
 
-        <div className="rounded-[24px] bg-white/[0.04] p-4 md:p-5">
+        <div className="rounded-[24px] bg-[var(--ls-surface2)] p-4 md:p-5">
           <div className="flex items-center justify-between gap-3">
             <p className="text-[11px] font-medium text-[var(--ls-text-hint)]">Graisse viscerale</p>
-            <span className="rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 text-xs font-medium text-white">
+            <span className="rounded-full border border-white/10 bg-[var(--ls-surface2)] px-3 py-1 text-xs font-medium text-white">
               {visceralStatus.label}
             </span>
           </div>
@@ -233,7 +233,7 @@ function HydrationPill({
   return (
     <div
       className={`rounded-[20px] px-4 py-3.5 ${
-        highlighted ? "bg-[rgba(45,212,191,0.1)] ring-1 ring-[rgba(201,168,76,0.2)]" : "bg-white/[0.04]"
+        highlighted ? "bg-[rgba(45,212,191,0.1)] ring-1 ring-[rgba(201,168,76,0.2)]" : "bg-[var(--ls-surface2)]"
       }`}
     >
       <p className="text-sm font-medium text-white">{title}</p>

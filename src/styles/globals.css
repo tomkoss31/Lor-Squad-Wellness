@@ -21,6 +21,8 @@
   --ls-purple-bg: rgba(167,139,250,0.1);
   --ls-input-bg: #1A1E27;
   --ls-sidebar-bg: #13161C;
+  --ls-icon: #7A8099;
+  --ls-icon-active: #F0EDE8;
 }
 
 html.theme-light {
@@ -42,6 +44,8 @@ html.theme-light {
   --ls-purple-bg: rgba(124,58,237,0.1);
   --ls-input-bg: #F0EDE8;
   --ls-sidebar-bg: #FFFFFF;
+  --ls-icon: #6B7280;
+  --ls-icon-active: #111827;
 }
 
 /* Classes utilitaires thème */

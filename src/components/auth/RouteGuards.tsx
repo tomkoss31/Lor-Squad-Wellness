@@ -71,7 +71,7 @@ function AuthBootSplash() {
         <div className="glass-panel w-full rounded-[22px] px-8 py-10 text-center">
           <p className="eyebrow-label">Lor&apos;Squad Wellness</p>
           <h1 className="mt-4 text-3xl md:text-4xl">Ouverture de la session</h1>
-          <p className="mt-4 text-sm leading-7 text-[#B0B4C4]">
+          <p className="mt-4 text-sm leading-7 text-[var(--ls-text-muted)]">
             On verifie simplement l&apos;accès pour rouvrir l&apos;espace dans de bonnes
             conditions.
           </p>
@@ -84,7 +84,7 @@ function AuthBootSplash() {
               <button
                 type="button"
                 onClick={() => void handleRecovery()}
-                className="rounded-[18px] bg-white/[0.06] px-5 py-3 text-sm font-medium text-white transition hover:bg-white/[0.1]"
+                className="rounded-[18px] bg-[var(--ls-surface2)] px-5 py-3 text-sm font-medium text-white transition hover:bg-[var(--ls-border2)]"
               >
                 Revenir a la connexion
               </button>

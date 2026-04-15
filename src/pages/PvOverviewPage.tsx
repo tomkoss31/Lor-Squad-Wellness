@@ -142,7 +142,7 @@ export function PvOverviewPage() {
       <Card className="space-y-5">
         <div className="grid gap-4 xl:grid-cols-[1.25fr_repeat(3,minmax(0,0.8fr))]">
           <div className="space-y-2">
-            <label className="text-sm font-medium text-[#B0B4C4]">Recherche client</label>
+            <label className="text-sm font-medium text-[var(--ls-text-muted)]">Recherche client</label>
             <input
               value={search}
               onChange={(event) => setSearch(event.target.value)}
@@ -203,7 +203,7 @@ export function PvOverviewPage() {
 
         {isAdmin ? (
           <div className="space-y-3">
-            <p className="text-sm font-medium text-[#B0B4C4]">Portefeuilles</p>
+            <p className="text-sm font-medium text-[var(--ls-text-muted)]">Portefeuilles</p>
             <div className="flex flex-wrap gap-2">
               {records.some((record) => record.responsibleId === currentUser.id) ? (
                 <ResponsibleFilterChip
@@ -238,9 +238,9 @@ export function PvOverviewPage() {
             </div>
           </div>
         ) : (
-          <div className="rounded-[22px] border border-white/8 bg-white/[0.03] px-5 py-4">
+          <div className="rounded-[22px] border border-white/8 bg-[var(--ls-surface2)] px-5 py-4">
             <p className="eyebrow-label">Vue personnelle</p>
-            <p className="mt-2 text-sm leading-6 text-[#B0B4C4]">
+            <p className="mt-2 text-sm leading-6 text-[var(--ls-text-muted)]">
               Cette vue ne montre que les clients du distributeur connecté.
             </p>
           </div>
@@ -254,7 +254,7 @@ export function PvOverviewPage() {
               <p className="eyebrow-label">Vue globale</p>
               <h2 className="mt-3 text-2xl text-white">Clients, démarrage et conso estimée</h2>
             </div>
-            <div className="rounded-[18px] bg-white/[0.03] px-4 py-3 text-sm text-[#B0B4C4]">
+            <div className="rounded-[18px] bg-[var(--ls-surface2)] px-4 py-3 text-sm text-[var(--ls-text-muted)]">
               {filteredRecords.length} dossiers
             </div>
           </div>
@@ -262,11 +262,11 @@ export function PvOverviewPage() {
           {/* Mobile cards */}
           <div className="md:hidden space-y-3">
             {filteredRecords.length === 0 ? (
-              <div className="rounded-[16px] bg-white/[0.03] px-4 py-6 text-center text-sm text-[var(--ls-text-muted)]">Aucun dossier PV visible</div>
+              <div className="rounded-[16px] bg-[var(--ls-surface2)] px-4 py-6 text-center text-sm text-[var(--ls-text-muted)]">Aucun dossier PV visible</div>
             ) : filteredRecords.map((record) => {
               return (
                 <button key={record.clientId} type="button" onClick={() => handleSelectClient(record.clientId)}
-                  className="w-full rounded-[16px] border border-white/[0.07] bg-[var(--ls-surface)] p-4 text-left transition hover:bg-white/[0.04]">
+                  className="w-full rounded-[16px] border border-[var(--ls-border)] bg-[var(--ls-surface)] p-4 text-left transition hover:bg-[var(--ls-surface2)]">
                   <div className="flex justify-between items-start mb-3">
                     <div>
                       <div className="text-sm font-semibold text-white">{record.clientName}</div>
@@ -289,7 +289,7 @@ export function PvOverviewPage() {
           {/* Desktop table */}
           <div className="hidden md:block overflow-x-auto">
             {storageMode === "supabase" && records.length === 0 ? (
-              <div className="mb-4 rounded-[22px] border border-white/10 bg-white/[0.03] px-4 py-4 text-sm leading-6 text-[#B0B4C4]">
+              <div className="mb-4 rounded-[22px] border border-white/10 bg-[var(--ls-surface2)] px-4 py-4 text-sm leading-6 text-[var(--ls-text-muted)]">
                 Aucun dossier PV actif n&apos;est encore visible avec les filtres en cours.
               </div>
             ) : null}
@@ -319,31 +319,31 @@ export function PvOverviewPage() {
                     onClick={() => handleSelectClient(record.clientId)}
                     className={`grid w-full grid-cols-[1.4fr_1fr_1fr_1fr_0.8fr_0.9fr_0.9fr_0.9fr_1fr_0.7fr] gap-3 rounded-[22px] border px-3 py-4 text-left transition ${
                       isActive
-                        ? "border-white/28 bg-white/[0.1] shadow-[0_0_0_1px_rgba(255,255,255,0.12),0_22px_54px_rgba(8,15,28,0.4)]"
-                        : "border-white/8 bg-white/[0.03] hover:border-white/16 hover:bg-white/[0.055] hover:shadow-[0_0_0_1px_rgba(128,128,128,0.08),0_18px_40px_rgba(7,12,22,0.3)]"
+                        ? "border-white/28 bg-[var(--ls-border2)] shadow-[0_0_0_1px_rgba(255,255,255,0.12),0_22px_54px_rgba(8,15,28,0.4)]"
+                        : "border-white/8 bg-[var(--ls-surface2)] hover:border-white/16 hover:bg-white/[0.055] hover:shadow-[0_0_0_1px_rgba(128,128,128,0.08),0_18px_40px_rgba(7,12,22,0.3)]"
                     }`}
                   >
                     <div>
                       <p className="text-sm font-semibold text-white">{record.clientName}</p>
                       <p className="mt-1 text-xs text-[var(--ls-text-muted)]">Suivi le {formatDate(record.lastFollowUpDate)}</p>
                     </div>
-                    <div className="text-sm text-[#B0B4C4]">{record.program}</div>
-                    <div className="text-sm text-[#B0B4C4]">{formatDate(record.startDate)}</div>
-                    <div className="text-sm text-[#B0B4C4]">{formatDate(record.lastOrderDate)}</div>
+                    <div className="text-sm text-[var(--ls-text-muted)]">{record.program}</div>
+                    <div className="text-sm text-[var(--ls-text-muted)]">{formatDate(record.startDate)}</div>
+                    <div className="text-sm text-[var(--ls-text-muted)]">{formatDate(record.lastOrderDate)}</div>
                     <div className="text-sm font-semibold text-white">{record.pvCumulative} PV</div>
-                    <div className="text-sm text-[#B0B4C4]">{record.daysSinceStart} j</div>
-                    <div className="text-sm text-[#B0B4C4]">{record.estimatedRemainingDays} j</div>
+                    <div className="text-sm text-[var(--ls-text-muted)]">{record.daysSinceStart} j</div>
+                    <div className="text-sm text-[var(--ls-text-muted)]">{record.estimatedRemainingDays} j</div>
                     <div>
                       <PvStatusBadge status={record.status} />
                       <p className="mt-1 text-[11px] text-[var(--ls-text-hint)]">{statusMeta.label}</p>
                     </div>
-                    <div className="text-sm text-[#B0B4C4]">{record.responsibleName}</div>
+                    <div className="text-sm text-[var(--ls-text-muted)]">{record.responsibleName}</div>
                     <div>
                       <span
                         className={`inline-flex min-h-[40px] items-center justify-center rounded-full px-4 py-2 text-xs font-semibold transition ${
                           isActive
                             ? "border border-white/18 bg-white/[0.14] text-white"
-                            : "bg-white/[0.04] text-white"
+                            : "bg-[var(--ls-surface2)] text-white"
                         }`}
                       >
                         {isActive ? "Ouvert" : "Ouvrir"}
@@ -375,7 +375,7 @@ function ToolbarSelect({
 }) {
   return (
     <div className="space-y-2">
-      <label className="text-sm font-medium text-[#B0B4C4]">{label}</label>
+      <label className="text-sm font-medium text-[var(--ls-text-muted)]">{label}</label>
       <select value={value} onChange={(event) => onChange(event.target.value)}>
         {options.map((option) => (
           <option key={option.value} value={option.value}>
@@ -390,8 +390,8 @@ function ToolbarSelect({
 function ToolbarInfo({ label, value }: { label: string; value: string }) {
   return (
     <div className="space-y-2">
-      <label className="text-sm font-medium text-[#B0B4C4]">{label}</label>
-      <div className="rounded-[18px] border border-white/8 bg-white/[0.03] px-4 py-3 text-sm font-medium text-white">
+      <label className="text-sm font-medium text-[var(--ls-text-muted)]">{label}</label>
+      <div className="rounded-[18px] border border-white/8 bg-[var(--ls-surface2)] px-4 py-3 text-sm font-medium text-white">
         {value}
       </div>
     </div>
@@ -416,7 +416,7 @@ function ResponsibleFilterChip({
       className={`inline-flex min-h-[40px] items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition ${
         active
           ? "border-[rgba(201,168,76,0.18)] bg-[rgba(45,212,191,0.14)] text-white"
-          : "border-white/10 bg-white/[0.03] text-[#B0B4C4] hover:bg-white/[0.06]"
+          : "border-white/10 bg-[var(--ls-surface2)] text-[var(--ls-text-muted)] hover:bg-[var(--ls-surface2)]"
       }`}
     >
       <span>{label}</span>

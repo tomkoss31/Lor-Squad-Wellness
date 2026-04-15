@@ -54,7 +54,7 @@ export function PushNotificationSettings({ userId, userName }: Props) {
       </div>
 
       {denied ? (
-        <div style={{ background: 'rgba(251,113,133,0.08)', border: '1px solid rgba(251,113,133,0.15)', borderRadius: 10, padding: '10px 14px', fontSize: 12, color: '#FB7185', lineHeight: 1.6 }}>
+        <div style={{ background: 'var(--ls-coral-bg)', border: '1px solid rgba(251,113,133,0.15)', borderRadius: 10, padding: '10px 14px', fontSize: 12, color: '#FB7185', lineHeight: 1.6 }}>
           Les notifications ont été bloquées. Pour les réactiver, va dans les réglages de ton navigateur → Autorisations → Notifications.
         </div>
       ) : (
@@ -63,7 +63,7 @@ export function PushNotificationSettings({ userId, userName }: Props) {
           disabled={loading}
           style={{
             width: '100%', padding: '10px', borderRadius: 10, border: 'none', cursor: loading ? 'not-allowed' : 'pointer',
-            background: subscribed ? 'rgba(251,113,133,0.08)' : '#C9A84C',
+            background: subscribed ? 'var(--ls-coral-bg)' : '#C9A84C',
             color: subscribed ? '#FB7185' : 'var(--ls-bg)',
             fontFamily: 'DM Sans, sans-serif', fontSize: 13, fontWeight: 600,
             opacity: loading ? 0.6 : 1, transition: 'all 0.15s',

@@ -80,14 +80,14 @@ export function PvTeamPage() {
             {pvByDistributor.map((row) => (
               <div
                 key={row.id}
-                className="grid gap-3 rounded-[22px] border border-white/8 bg-white/[0.03] px-4 py-4 md:grid-cols-[1.2fr_0.7fr_0.7fr]"
+                className="grid gap-3 rounded-[22px] border border-white/8 bg-[var(--ls-surface2)] px-4 py-4 md:grid-cols-[1.2fr_0.7fr_0.7fr]"
               >
                 <div>
                   <p className="text-lg font-semibold text-white">{row.name}</p>
                   <p className="mt-1 text-sm text-[var(--ls-text-muted)]">{row.clients} clients actifs</p>
                 </div>
-                <div className="text-sm text-[#B0B4C4]">{row.pv} PV ce mois</div>
-                <div className="text-sm text-[#B0B4C4]">{row.clients} dossiers suivis</div>
+                <div className="text-sm text-[var(--ls-text-muted)]">{row.pv} PV ce mois</div>
+                <div className="text-sm text-[var(--ls-text-muted)]">{row.clients} dossiers suivis</div>
               </div>
             ))}
           </div>
@@ -107,14 +107,14 @@ export function PvTeamPage() {
               .map((record) => (
                 <div
                   key={record.clientId}
-                  className="grid gap-3 rounded-[22px] border border-white/8 bg-white/[0.03] px-4 py-4 md:grid-cols-[1.2fr_0.7fr_0.7fr]"
+                  className="grid gap-3 rounded-[22px] border border-white/8 bg-[var(--ls-surface2)] px-4 py-4 md:grid-cols-[1.2fr_0.7fr_0.7fr]"
                 >
                   <div>
                     <p className="text-lg font-semibold text-white">{record.clientName}</p>
                     <p className="mt-1 text-sm text-[var(--ls-text-muted)]">{record.responsibleName}</p>
                   </div>
                   <div className="text-sm font-semibold text-white">{record.monthlyPv} PV</div>
-                  <div className="text-sm text-[#B0B4C4]">{record.program}</div>
+                  <div className="text-sm text-[var(--ls-text-muted)]">{record.program}</div>
                 </div>
               ))}
           </div>
@@ -132,7 +132,7 @@ export function PvTeamPage() {
               clientsToRelaunch.map((record) => (
                 <div
                   key={record.clientId}
-                  className="flex flex-wrap items-center justify-between gap-3 rounded-[20px] bg-white/[0.03] px-4 py-4"
+                  className="flex flex-wrap items-center justify-between gap-3 rounded-[20px] bg-[var(--ls-surface2)] px-4 py-4"
                 >
                   <div>
                     <p className="text-sm font-semibold text-white">{record.clientName}</p>
@@ -142,7 +142,7 @@ export function PvTeamPage() {
                 </div>
               ))
             ) : (
-              <div className="rounded-[20px] bg-white/[0.03] px-4 py-4 text-sm text-[var(--ls-text-muted)]">
+              <div className="rounded-[20px] bg-[var(--ls-surface2)] px-4 py-4 text-sm text-[var(--ls-text-muted)]">
                 Aucune relance en attente pour le moment.
               </div>
             )}
@@ -159,7 +159,7 @@ export function PvTeamPage() {
               clientsToWatch.map((record) => (
                 <div
                   key={record.clientId}
-                  className="flex flex-wrap items-center justify-between gap-3 rounded-[20px] bg-white/[0.03] px-4 py-4"
+                  className="flex flex-wrap items-center justify-between gap-3 rounded-[20px] bg-[var(--ls-surface2)] px-4 py-4"
                 >
                   <div>
                     <p className="text-sm font-semibold text-white">{record.clientName}</p>
@@ -171,7 +171,7 @@ export function PvTeamPage() {
                 </div>
               ))
             ) : (
-              <div className="rounded-[20px] bg-white/[0.03] px-4 py-4 text-sm text-[var(--ls-text-muted)]">
+              <div className="rounded-[20px] bg-[var(--ls-surface2)] px-4 py-4 text-sm text-[var(--ls-text-muted)]">
                 Rien de sensible a signaler pour l&apos;instant.
               </div>
             )}

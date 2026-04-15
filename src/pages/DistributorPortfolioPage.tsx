@@ -156,13 +156,13 @@ export function DistributorPortfolioPage() {
           <div className="flex flex-wrap gap-3">
             <Link
               to="/dashboard"
-              className="inline-flex min-h-[48px] items-center justify-center rounded-[18px] bg-white/[0.04] px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/[0.07]"
+              className="inline-flex min-h-[48px] items-center justify-center rounded-[18px] bg-[var(--ls-surface2)] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[var(--ls-surface2)]"
             >
               Retour accueil
             </Link>
             <Link
               to="/clients"
-              className="inline-flex min-h-[48px] items-center justify-center rounded-[18px] bg-white/[0.04] px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/[0.07]"
+              className="inline-flex min-h-[48px] items-center justify-center rounded-[18px] bg-[var(--ls-surface2)] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[var(--ls-surface2)]"
             >
               Voir la base clients
             </Link>
@@ -188,7 +188,7 @@ export function DistributorPortfolioPage() {
       <Card className="space-y-5">
         <div className="grid gap-4 lg:grid-cols-[1.2fr_0.9fr_auto] lg:items-end">
           <div className="space-y-2">
-            <label className="text-sm font-medium text-[#B0B4C4]">
+            <label className="text-sm font-medium text-[var(--ls-text-muted)]">
               Rechercher dans le portefeuille
             </label>
             <input
@@ -199,7 +199,7 @@ export function DistributorPortfolioPage() {
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium text-[#B0B4C4]">Filtrer par statut</label>
+            <label className="text-sm font-medium text-[var(--ls-text-muted)]">Filtrer par statut</label>
             <select
               value={statusFilter}
               onChange={(event) =>
@@ -249,7 +249,7 @@ export function DistributorPortfolioPage() {
                     <Link
                       key={client.id}
                       to={`/clients/${client.id}`}
-                      className="rounded-[24px] bg-white/[0.03] p-4 transition hover:bg-white/[0.05]"
+                      className="rounded-[24px] bg-[var(--ls-surface2)] p-4 transition hover:bg-[var(--ls-surface2)]"
                     >
                       <div className="grid gap-4 xl:grid-cols-[1.1fr_1fr_0.85fr] xl:items-center">
                         <div className="space-y-2">
@@ -348,7 +348,7 @@ function FollowUpPanel({
             <Link
               key={followUp.id}
               to={`/clients/${followUp.clientId}`}
-              className="block rounded-[22px] bg-white/[0.03] p-4 transition hover:bg-white/[0.05]"
+              className="block rounded-[22px] bg-[var(--ls-surface2)] p-4 transition hover:bg-[var(--ls-surface2)]"
             >
               <div className="flex items-start justify-between gap-3">
                 <div>
@@ -360,13 +360,13 @@ function FollowUpPanel({
                   tone={followUp.status === "scheduled" ? "green" : "amber"}
                 />
               </div>
-              <p className="mt-4 text-sm text-[#B0B4C4]">
+              <p className="mt-4 text-sm text-[var(--ls-text-muted)]">
                 Échéance {formatDateTime(followUp.dueDate)}
               </p>
             </Link>
           ))
         ) : (
-          <div className="rounded-[22px] bg-white/[0.03] p-5 text-sm text-[var(--ls-text-muted)]">
+          <div className="rounded-[22px] bg-[var(--ls-surface2)] p-5 text-sm text-[var(--ls-text-muted)]">
             {emptyLabel}
           </div>
         )}

@@ -28,7 +28,7 @@ export function PedagogicalSection({
         <div className="max-w-2xl">
           <p className="eyebrow-label">{eyebrow}</p>
           <h3 className="mt-2 text-[2rem] leading-none text-white md:text-[2.2rem]">{title}</h3>
-          <p className="mt-3 max-w-xl text-[15px] leading-7 text-[#B0B4C4]">{subtitle}</p>
+          <p className="mt-3 max-w-xl text-[15px] leading-7 text-[var(--ls-text-muted)]">{subtitle}</p>
         </div>
         {statusLabel ? <StatusBadge label={statusLabel} tone={statusTone} /> : null}
       </div>
@@ -57,7 +57,7 @@ export function PedagogicalMetricCard({
   accent?: "blue" | "green" | "red";
 }) {
   return (
-    <div className="relative overflow-hidden rounded-[24px] bg-white/[0.04] p-4 md:p-5">
+    <div className="relative overflow-hidden rounded-[24px] bg-[var(--ls-surface2)] p-4 md:p-5">
       <div
         className={`absolute inset-x-0 top-0 h-1 ${
           accent === "green"

@@ -64,7 +64,7 @@ export function RecapPage() {
   if (notFound) return (
     <div style={{ background: 'var(--ls-bg)', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, textAlign: 'center', fontFamily: 'DM Sans, sans-serif', color: 'var(--ls-text)' }}>
       <div>
-        <div style={{ fontFamily: 'Syne, sans-serif', fontSize: 48, fontWeight: 800, color: 'rgba(201,168,76,0.15)', marginBottom: 16 }}>404</div>
+        <div style={{ fontFamily: 'Syne, sans-serif', fontSize: 48, fontWeight: 800, color: 'var(--ls-gold-bg)', marginBottom: 16 }}>404</div>
         <div style={{ fontSize: 16, marginBottom: 8 }}>Récap introuvable ou expiré</div>
         <div style={{ fontSize: 13, color: 'var(--ls-text-muted)' }}>Ce lien est valable 90 jours après le bilan.</div>
       </div>
@@ -80,11 +80,11 @@ export function RecapPage() {
 
   return (
     <>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500&display=swap');*{box-sizing:border-box;margin:0;padding:0}body{background:#0B0D11}input::placeholder{color:#4A5068}a{text-decoration:none}`}</style>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500&display=swap');*{box-sizing:border-box;margin:0;padding:0}body{background:var(--ls-bg)}input::placeholder{color:#4A5068}a{text-decoration:none}`}</style>
       <div style={{ background: 'var(--ls-bg)', minHeight: '100vh', color: 'var(--ls-text)', fontFamily: 'DM Sans, sans-serif', maxWidth: 480, margin: '0 auto' }}>
 
         {/* Hero */}
-        <div style={{ background: 'linear-gradient(135deg,#13161C 0%,#1A1E27 100%)', padding: '28px 20px 24px', position: 'relative', overflow: 'hidden', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+        <div style={{ background: 'linear-gradient(135deg,var(--ls-surface) 0%,var(--ls-surface2) 100%)', padding: '28px 20px 24px', position: 'relative', overflow: 'hidden', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
           <div style={{ position: 'absolute', top: -40, right: -40, width: 160, height: 160, borderRadius: '50%', background: 'rgba(201,168,76,0.08)', pointerEvents: 'none' }} />
           <div style={{ position: 'absolute', bottom: -30, left: -20, width: 120, height: 120, borderRadius: '50%', background: 'rgba(45,212,191,0.06)', pointerEvents: 'none' }} />
 
@@ -102,7 +102,7 @@ export function RecapPage() {
           </a>
 
           <div style={{ position: 'relative', zIndex: 1 }}>
-            <div style={{ width: 52, height: 52, borderRadius: '50%', background: 'rgba(201,168,76,0.15)', color: '#C9A84C', border: '2px solid rgba(201,168,76,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Syne, sans-serif', fontSize: 18, fontWeight: 800, marginBottom: 10 }}>{initials}</div>
+            <div style={{ width: 52, height: 52, borderRadius: '50%', background: 'var(--ls-gold-bg)', color: '#C9A84C', border: '2px solid rgba(201,168,76,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Syne, sans-serif', fontSize: 18, fontWeight: 800, marginBottom: 10 }}>{initials}</div>
             <div style={{ fontFamily: 'Syne, sans-serif', fontSize: 22, fontWeight: 800, color: 'var(--ls-text)', marginBottom: 3 }}>{recap.client_first_name} {recap.client_last_name}</div>
             <div style={{ fontSize: 12, color: 'var(--ls-text-muted)', marginBottom: 12 }}>Bilan du {fDate} · Coach {recap.coach_name}</div>
             {recap.program_title && (

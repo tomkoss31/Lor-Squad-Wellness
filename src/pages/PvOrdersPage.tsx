@@ -281,7 +281,7 @@ export function PvOrdersPage() {
           </div>
 
           {storageMode === "supabase" && !clientOptions.length ? (
-            <div className="rounded-[22px] border border-white/10 bg-white/[0.03] px-4 py-4 text-sm leading-6 text-[#B0B4C4]">
+            <div className="rounded-[22px] border border-white/10 bg-[var(--ls-surface2)] px-4 py-4 text-sm leading-6 text-[var(--ls-text-muted)]">
               Aucun client exploitable n&apos;est encore visible dans le module PV. Il faut au moins un dossier client accessible pour enregistrer une commande ou un reassort.
             </div>
           ) : null}
@@ -310,7 +310,7 @@ export function PvOrdersPage() {
             {selectedClientBase ? (
               <Link
                 to={`/pv/clients?responsable=${selectedClientBase.distributorId}&client=${selectedClientBase.id}`}
-                className="inline-flex min-h-[48px] items-center justify-center rounded-[18px] border border-white/10 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/[0.04]"
+                className="inline-flex min-h-[48px] items-center justify-center rounded-[18px] border border-white/10 px-5 py-3 text-sm font-semibold text-white transition hover:bg-[var(--ls-surface2)]"
               >
                 Revenir a sa fiche PV
               </Link>
@@ -321,7 +321,7 @@ export function PvOrdersPage() {
                 onClick={() =>
                   navigate(`/pv/clients?responsable=${selectedClientBase.distributorId}&client=${selectedClientBase.id}`)
                 }
-                className="inline-flex min-h-[48px] items-center justify-center rounded-[18px] border border-white/10 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/[0.04]"
+                className="inline-flex min-h-[48px] items-center justify-center rounded-[18px] border border-white/10 px-5 py-3 text-sm font-semibold text-white transition hover:bg-[var(--ls-surface2)]"
               >
                 Ouvrir le detail client
               </button>
@@ -335,7 +335,7 @@ export function PvOrdersPage() {
               <p className="eyebrow-label">Historique</p>
               <h2 className="mt-3 text-2xl text-white">Commandes et reprises</h2>
             </div>
-            <div className="rounded-[18px] bg-white/[0.03] px-4 py-3 text-sm text-[#B0B4C4]">
+            <div className="rounded-[18px] bg-[var(--ls-surface2)] px-4 py-3 text-sm text-[var(--ls-text-muted)]">
               {transactions.length} lignes
             </div>
           </div>
@@ -355,17 +355,17 @@ export function PvOrdersPage() {
               {transactions.map((transaction) => (
                 <div
                   key={transaction.id}
-                  className="grid grid-cols-[110px_1.2fr_1fr_70px_80px_90px_1.2fr] gap-3 rounded-[20px] border border-white/8 bg-white/[0.03] px-3 py-4"
+                  className="grid grid-cols-[110px_1.2fr_1fr_70px_80px_90px_1.2fr] gap-3 rounded-[20px] border border-white/8 bg-[var(--ls-surface2)] px-3 py-4"
                 >
-                  <div className="text-sm text-[#B0B4C4]">{formatDate(transaction.date)}</div>
+                  <div className="text-sm text-[var(--ls-text-muted)]">{formatDate(transaction.date)}</div>
                   <div>
                     <p className="text-sm font-semibold text-white">{transaction.clientName}</p>
                     <p className="mt-1 text-xs text-[var(--ls-text-muted)]">{transaction.responsibleName}</p>
                   </div>
-                  <div className="text-sm text-[#B0B4C4]">{transaction.productName}</div>
-                  <div className="text-sm text-[#B0B4C4]">{transaction.quantity}</div>
+                  <div className="text-sm text-[var(--ls-text-muted)]">{transaction.productName}</div>
+                  <div className="text-sm text-[var(--ls-text-muted)]">{transaction.quantity}</div>
                   <div className="text-sm font-semibold text-white">{transaction.pv}</div>
-                  <div className="text-sm text-[#B0B4C4]">{getPvTypeLabel(transaction.type)}</div>
+                  <div className="text-sm text-[var(--ls-text-muted)]">{getPvTypeLabel(transaction.type)}</div>
                   <div className="text-sm text-[var(--ls-text-muted)]">{transaction.note}</div>
                 </div>
               ))}
@@ -386,7 +386,7 @@ function Field({
 }) {
   return (
     <div className="space-y-2">
-      <label className="text-sm font-medium text-[#B0B4C4]">{label}</label>
+      <label className="text-sm font-medium text-[var(--ls-text-muted)]">{label}</label>
       {children}
     </div>
   );

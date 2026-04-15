@@ -120,7 +120,7 @@ export function LoginPage() {
                 ].map((f, i) => (
                   <div key={i} style={{ display:'flex', alignItems:'center', gap:10, padding:'8px 0', borderTop: i > 0 ? '1px solid rgba(128,128,128,0.08)' : 'none' }}>
                     <div style={{ width:28, height:28, borderRadius:8, flexShrink:0, background:`${f.color}15`, color:f.color, display:'flex', alignItems:'center', justifyContent:'center' }}>{f.icon}</div>
-                    <span style={{ fontSize:13, color:'#B0B4C4', fontWeight:400 }}>{f.label}</span>
+                    <span style={{ fontSize:13, color:'var(--ls-text-muted)', fontWeight:400 }}>{f.label}</span>
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#2DD4BF" strokeWidth="2" style={{ marginLeft:'auto', flexShrink:0 }}><polyline points="20 6 9 17 4 12"/></svg>
                   </div>
                 ))}
@@ -172,7 +172,7 @@ export function LoginPage() {
             </div>
 
             {error ? (
-              <div style={{ background:'rgba(251,113,133,0.08)', border:'1px solid rgba(251,113,133,0.2)', borderRadius:10, padding:'11px 14px', fontSize:13, color:'#FB7185' }}>{error}</div>
+              <div style={{ background:'var(--ls-coral-bg)', border:'1px solid rgba(251,113,133,0.2)', borderRadius:10, padding:'11px 14px', fontSize:13, color:'#FB7185' }}>{error}</div>
             ) : null}
 
             <button type="submit" disabled={!authReady} style={{ width:'100%', background: authReady ? '#C9A84C' : 'rgba(201,168,76,0.4)', color:'var(--ls-bg)', border:'none', borderRadius:10, padding:'14px', fontFamily:'Syne, sans-serif', fontSize:15, fontWeight:700, cursor: authReady ? 'pointer' : 'not-allowed', display:'flex', alignItems:'center', justifyContent:'center', gap:8, transition:'opacity 0.2s' }}
@@ -199,15 +199,15 @@ export function LoginPage() {
                   <Button variant="secondary" onClick={() => void handleInstallClick()}>Installer</Button>
                 </div>
               ) : isIos ? (
-                <div className="mt-4 rounded-[12px] bg-white/[0.03] px-4 py-3 text-sm leading-6 text-[var(--ls-text-muted)]">
+                <div className="mt-4 rounded-[12px] bg-[var(--ls-surface2)] px-4 py-3 text-sm leading-6 text-[var(--ls-text-muted)]">
                   Sur iPhone/iPad : Safari → <span className="font-semibold text-white">Partager</span> → <span className="font-semibold text-white">Sur l&apos;écran d&apos;accueil</span>
                 </div>
               ) : isMobile ? (
-                <div className="mt-4 rounded-[12px] bg-white/[0.03] px-4 py-3 text-sm leading-6 text-[var(--ls-text-muted)]">
+                <div className="mt-4 rounded-[12px] bg-[var(--ls-surface2)] px-4 py-3 text-sm leading-6 text-[var(--ls-text-muted)]">
                   Sur Android : Chrome → <span className="font-semibold text-white">Installer l&apos;app</span>
                 </div>
               ) : (
-                <div className="mt-4 rounded-[12px] bg-white/[0.03] px-4 py-3 text-sm leading-6 text-[var(--ls-text-muted)]">
+                <div className="mt-4 rounded-[12px] bg-[var(--ls-surface2)] px-4 py-3 text-sm leading-6 text-[var(--ls-text-muted)]">
                   Icône d&apos;installation dans la barre d&apos;adresse Chrome/Edge.
                 </div>
               )}
@@ -249,7 +249,7 @@ export function LoginPage() {
               { n:'03', title:"Mot de passe défini par l'admin", text:"Il peut être redéfini depuis la page équipe." },
             ].map((step, i) => (
               <div key={step.n} style={{ display:'flex', gap:12, alignItems:'flex-start', marginBottom: i < 2 ? 12 : 0 }}>
-                <div style={{ width:28, height:28, borderRadius:'50%', flexShrink:0, background:'rgba(201,168,76,0.12)', color:'#C9A84C', display:'flex', alignItems:'center', justifyContent:'center', fontSize:10, fontWeight:700, fontFamily:'Syne, sans-serif' }}>{step.n}</div>
+                <div style={{ width:28, height:28, borderRadius:'50%', flexShrink:0, background:'var(--ls-gold-bg)', color:'#C9A84C', display:'flex', alignItems:'center', justifyContent:'center', fontSize:10, fontWeight:700, fontFamily:'Syne, sans-serif' }}>{step.n}</div>
                 <div>
                   <p style={{ fontSize:12, fontWeight:600, color:'var(--ls-text)', margin:'0 0 3px' }}>{step.title}</p>
                   <p style={{ fontSize:11, color:'var(--ls-text-muted)', margin:0, lineHeight:1.6 }}>{step.text}</p>

@@ -83,7 +83,7 @@ export function BodyFatInsightCard({
                   Cible {getSexLabel(sex)} : {targetRange.min}-{targetRange.max} %
                 </p>
               </div>
-              <span className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-sm font-semibold text-white">
+              <span className="rounded-full border border-white/10 bg-[var(--ls-surface2)] px-3 py-1 text-sm font-semibold text-white">
                 {bodyFatBand}
               </span>
             </div>
@@ -108,7 +108,7 @@ export function BodyFatInsightCard({
                 ))}
               </div>
               <div className="mt-4 flex flex-wrap items-center gap-2 text-xs text-[var(--ls-text-hint)]">
-                <span className="rounded-full bg-white/[0.03] px-2.5 py-1">Zone cible</span>
+                <span className="rounded-full bg-[var(--ls-surface2)] px-2.5 py-1">Zone cible</span>
                 <span>{getTargetHint(sex, objective)}</span>
               </div>
               <div className="mt-4 grid gap-2 md:grid-cols-2 xl:grid-cols-4">
@@ -125,7 +125,7 @@ export function BodyFatInsightCard({
             </div>
           </div>
           {shouldShowHistoryPanel ? (
-            <div className="md:col-span-2 xl:col-span-3 rounded-[24px] bg-white/[0.04] p-5">
+            <div className="md:col-span-2 xl:col-span-3 rounded-[24px] bg-[var(--ls-surface2)] p-5">
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <p className="text-sm font-semibold text-white">Historique balance</p>
@@ -416,7 +416,7 @@ function DeltaValue({
   const sign = value > 0 ? "+" : "";
   const tone =
     value === 0
-      ? "bg-white/[0.05] text-[var(--ls-text)]"
+      ? "bg-[var(--ls-surface2)] text-[var(--ls-text)]"
       : inverseGood
         ? value < 0
           ? "bg-[rgba(45,212,191,0.12)] text-[#2DD4BF]"

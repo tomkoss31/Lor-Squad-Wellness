@@ -111,7 +111,7 @@ function SnapshotMetricCard({
           : "from-sky-400/90 via-cyan-300/70 to-transparent";
 
   return (
-    <div className="relative overflow-hidden rounded-[22px] bg-white/[0.03] p-4">
+    <div className="relative overflow-hidden rounded-[22px] bg-[var(--ls-surface2)] p-4">
       <div className={`absolute inset-x-0 top-0 h-px bg-gradient-to-r ${accentClass}`} />
       <p className="text-[11px] font-medium text-[var(--ls-text-hint)]">{label}</p>
       <p

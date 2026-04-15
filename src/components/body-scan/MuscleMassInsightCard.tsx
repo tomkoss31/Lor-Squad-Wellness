@@ -88,7 +88,7 @@ export function MuscleMassInsightCard({
               valueSuffix="%"
             />
           ) : shouldShowComparisonPanel ? (
-            <div className="md:col-span-2 xl:col-span-3 rounded-[24px] border border-white/10 bg-white/[0.03] p-4">
+            <div className="md:col-span-2 xl:col-span-3 rounded-[24px] border border-white/10 bg-[var(--ls-surface2)] p-4">
               <div className="flex items-center justify-between gap-3">
                 <p className="text-sm font-semibold text-white">Ecarts lisibles</p>
                 <p className="text-xs uppercase tracking-[0.18em] text-[var(--ls-text-hint)]">Suivi</p>
@@ -148,7 +148,7 @@ function DeltaValue({ value, suffix }: { value: number; suffix: string }) {
   const sign = value > 0 ? "+" : "";
   const tone =
     value === 0
-      ? "bg-white/[0.05] text-[var(--ls-text)]"
+      ? "bg-[var(--ls-surface2)] text-[var(--ls-text)]"
       : value > 0
         ? "bg-[rgba(45,212,191,0.12)] text-[#2DD4BF]"
         : "bg-rose-400/[0.12] text-rose-200";
