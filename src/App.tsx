@@ -89,7 +89,10 @@ const RecapPage = lazy(() =>
   }))
 );
 
+import { useTheme } from './hooks/useTheme'
+
 export default function App() {
+  useTheme() // active le thème persisté au démarrage
   return (
     <BrowserRouter>
       <Suspense fallback={<RouteLoadingScreen />}>
