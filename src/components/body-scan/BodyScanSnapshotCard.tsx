@@ -21,6 +21,16 @@ export function BodyScanSnapshotCard({
   const musclePercent = estimateMuscleMassPercent(metrics.weight, metrics.muscleMass);
   const hydrationKg = estimateHydrationKg(metrics.weight, metrics.hydration);
   const bonePercent = estimateRelativeMassPercent(metrics.weight, metrics.boneMass);
+  const boneRatio = (metrics.boneMass / metrics.weight) * 100;
+
+  const bodyFatTone: "blue" | "green" | "red" | "amber" =
+    metrics.bodyFat >= 32 ? "red" : metrics.bodyFat >= 28 ? "amber" : "green";
+  const visceralTone: "blue" | "green" | "red" | "amber" =
+    metrics.visceralFat >= 13 ? "red" : metrics.visceralFat >= 9 ? "amber" : metrics.visceralFat >= 5 ? "blue" : "green";
+  const hydrationTone: "blue" | "green" | "red" | "amber" =
+    metrics.hydration < 45 ? "red" : metrics.hydration < 50 ? "amber" : "blue";
+  const boneTone: "blue" | "green" | "red" | "amber" =
+    boneRatio < 3.0 ? "red" : boneRatio < 4.0 ? "amber" : "green";
 
   const items = [
     { label: "Poids", primary: `${metrics.weight} kg`, secondary: "Mesure actuelle", tone: "blue" as const },
@@ -28,7 +38,7 @@ export function BodyScanSnapshotCard({
       label: "Masse grasse",
       primary: `${metrics.bodyFat} %`,
       secondary: `${bodyFatKg} kg`,
-      tone: "red" as const
+      tone: bodyFatTone
     },
     {
       label: "Masse musculaire",
@@ -40,15 +50,15 @@ export function BodyScanSnapshotCard({
       label: "Hydratation",
       primary: `${metrics.hydration} %`,
       secondary: `${hydrationKg} kg`,
-      tone: "blue" as const
+      tone: hydrationTone
     },
     {
       label: "Masse osseuse",
       primary: `${metrics.boneMass} kg`,
       secondary: `${bonePercent} % du poids`,
-      tone: "blue" as const
+      tone: boneTone
     },
-    { label: "Graisse viscérale", primary: `${metrics.visceralFat}`, tone: "red" as const },
+    { label: "Graisse viscérale", primary: `${metrics.visceralFat}`, tone: visceralTone },
     { label: "BMR", primary: `${metrics.bmr} kcal`, tone: "green" as const },
     { label: "Âge métabolique", primary: `${metrics.metabolicAge} ans`, tone: "amber" as const }
   ];
@@ -115,9 +125,10 @@ function SnapshotMetricCard({
       <div className={`absolute inset-x-0 top-0 h-px bg-gradient-to-r ${accentClass}`} />
       <p className="text-[11px] font-medium text-[var(--ls-text-hint)]">{label}</p>
       <p
-        className={`mt-3 font-semibold text-white ${
+        className={`mt-3 font-semibold ${
           emphasized ? "text-[1.8rem] leading-none" : "text-[1.35rem] leading-none"
         }`}
+        style={{ color: tone === "red" ? "var(--ls-coral)" : tone === "amber" ? "#F59E0B" : tone === "green" ? "var(--ls-teal)" : "var(--ls-text)" }}
       >
         {primary}
       </p>
