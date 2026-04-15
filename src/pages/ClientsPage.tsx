@@ -104,7 +104,7 @@ export function ClientsPage() {
         description="Recherche, responsables, statuts et arborescence mensuelle."
       />
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+      <div className="clients-stats-grid grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         <MetricTile
           label="Clients visibles"
           value={filteredClients.length}

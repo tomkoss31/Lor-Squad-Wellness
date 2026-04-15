@@ -119,7 +119,7 @@ export function RecapPage() {
           <div style={{ fontSize: 10, color: 'var(--ls-text-hint)', letterSpacing: '1.5px', textTransform: 'uppercase', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
             <div style={{ width: 4, height: 4, borderRadius: '50%', background: '#C9A84C' }} />Ton bilan du jour
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 12 }}>
+          <div className="recap-metrics-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 12 }}>
             {[
               { label: 'Poids', val: scan.weight ? `${scan.weight} kg` : '—', color: '#C9A84C', sub: 'Point de départ' },
               { label: 'Objectif', val: recap.objective || '—', color: '#2DD4BF', sub: 'Cap du programme' },
@@ -189,13 +189,13 @@ export function RecapPage() {
                 </div>
               </div>
             </div>
-            <div style={{ display: 'flex', gap: 8 }}>
+            <div className="recap-share-buttons" style={{ display: 'flex', gap: 8 }}>
               {[
                 { l: 'WhatsApp', bg: 'rgba(37,211,102,0.12)', c: '#25D366', fn: shareWA },
                 { l: 'Telegram', bg: 'rgba(42,171,238,0.1)', c: '#2AABEE', fn: shareTG },
                 { l: 'SMS', bg: 'var(--ls-border)', c: 'var(--ls-text-muted)', fn: shareSMS },
               ].map(b => (
-                <button key={b.l} onClick={b.fn} style={{ flex: 1, padding: '10px 4px', borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 12, fontFamily: 'DM Sans, sans-serif', fontWeight: 500, background: b.bg, color: b.c }}>{b.l}</button>
+                <button key={b.l} className="recap-share-btn" onClick={b.fn} style={{ flex: 1, padding: '10px 4px', borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 12, fontFamily: 'DM Sans, sans-serif', fontWeight: 500, background: b.bg, color: b.c }}>{b.l}</button>
               ))}
             </div>
           </div>

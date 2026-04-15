@@ -312,7 +312,7 @@ export function ClientDetailPage() {
       </div>
 
       {/* Tab bar */}
-      <div className="flex gap-1 rounded-[14px] border border-[var(--ls-border)] bg-[var(--ls-surface)] p-1" style={{ width: 'fit-content' }}>
+      <div className="client-tabs flex gap-1 rounded-[14px] border border-[var(--ls-border)] bg-[var(--ls-surface)] p-1" style={{ width: 'fit-content', maxWidth: '100%' }}>
         {[
           { label: 'Vue complète', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg> },
           { label: 'Body Scan', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>, count: client.assessments.filter(a => a.bodyScan?.weight).length },
@@ -322,7 +322,7 @@ export function ClientDetailPage() {
           <button
             key={tab.label}
             onClick={() => setActiveTab(i)}
-            className="transition-all duration-150"
+            className="client-tab transition-all duration-150"
             style={{
               padding: '7px 14px', borderRadius: 8, border: 'none', cursor: 'pointer',
               fontSize: 13, fontFamily: 'DM Sans, sans-serif', fontWeight: activeTab === i ? 500 : 400,
@@ -345,7 +345,7 @@ export function ClientDetailPage() {
 
       {/* Tab 0: Vue complète (original layout) */}
       {activeTab === 0 && (
-      <div className="grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
+      <div className="client-detail-layout grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
         <Card className="space-y-5">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
@@ -420,7 +420,7 @@ export function ClientDetailPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3 md:gap-4 xl:grid-cols-4">
+          <div className="bodyscan-metrics grid grid-cols-2 gap-3 md:gap-4 xl:grid-cols-4">
             <MetricTile
               label="Poids de départ"
               value={`${firstAssessment.bodyScan.weight} kg`}
@@ -1030,7 +1030,7 @@ function StartingPointOverviewCard({
         </div>
       </div>
 
-      <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <div className="bodyscan-metrics mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <OverviewMetricCard label="Départ" value={`${startWeight} kg`} note={formatDate(startDate)} tone="blue" />
         <OverviewMetricCard label="Aujourd'hui" value={`${currentWeight} kg`} note={formatDate(currentDate)} tone="green" highlighted />
         <OverviewMetricCard
