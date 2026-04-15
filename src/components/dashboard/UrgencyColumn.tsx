@@ -62,22 +62,12 @@ export function UrgencyColumn({ title, count, color, icon, items, emptyLabel, se
               el.style.boxShadow = 'none'
             }}>
             <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 4, background: color, borderRadius: '0 2px 2px 0' }} />
+            <div style={{ position: 'absolute', top: 10, right: 10, fontSize: 9, padding: '2px 8px', borderRadius: 10, background: `${color}18`, color, fontWeight: 700, fontFamily: 'DM Sans, sans-serif' }}>
+              {item.status === 'pending' ? 'Relance' : 'RDV'}
+            </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 9, marginBottom: 6 }}>
               <div style={{ width: 26, height: 26, borderRadius: '50%', flexShrink: 0, background: `${color}15`, color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 700, fontFamily: 'Syne, sans-serif' }}>{initials(item.clientName)}</div>
-              <div style={{ flex: 1, minWidth: 0, fontSize: 13, fontWeight: 500, color: 'var(--ls-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.clientName}</div>
-              <span style={{
-                fontSize: 9,
-                padding: '2px 8px',
-                borderRadius: 10,
-                background: `${color}18`,
-                color: color,
-                fontWeight: 700,
-                fontFamily: 'DM Sans, sans-serif',
-                marginLeft: 'auto',
-                flexShrink: 0,
-              }}>
-                {item.status === 'pending' ? 'Relance' : 'RDV'}
-              </span>
+              <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--ls-text)', paddingRight: 48, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.clientName}</div>
             </div>
             <div style={{ fontSize: 11, color: 'var(--ls-text-muted)', marginBottom: 5 }}>{item.type}</div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 10, color: 'var(--ls-text-hint)' }}>
