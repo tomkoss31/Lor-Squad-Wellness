@@ -87,6 +87,15 @@ export function AppLayout() {
 
           {/* ZONE 2 — Navigation */}
           <nav style={{ flex: 1, padding: '12px 10px', display: 'flex', flexDirection: 'column', gap: 2, overflowY: 'auto' }}>
+            <div style={{
+              fontSize: 9,
+              color: 'var(--ls-text-hint)',
+              letterSpacing: '1.5px',
+              textTransform: 'uppercase',
+              padding: '0 12px',
+              marginBottom: 6,
+              marginTop: 8,
+            }}>Navigation</div>
             {navigation.map((item) => {
               const isActive =
                 location.pathname === item.path ||
@@ -269,22 +278,6 @@ export function AppLayout() {
               </div>
             ) : null}
           </section>
-
-          {/* Header compact — visible uniquement sur desktop (xl+) */}
-          <header className="hidden xl:flex items-center justify-between rounded-[16px] border border-[var(--ls-border)] px-5 py-3" style={{ background: 'var(--ls-surface)' }}>
-            <div className="flex items-center gap-3">
-              <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#2DD4BF', flexShrink: 0 }} />
-              <span className="text-[13px] text-[#7A8099]">{pageTitle}</span>
-            </div>
-            <button
-              onClick={() => void handleLogout()}
-              className="flex items-center gap-2 rounded-[8px] px-3 py-1.5 text-[12px] text-[#7A8099] transition hover:text-[#FB7185] hover:bg-[rgba(251,113,133,0.06)]"
-              style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'DM Sans, sans-serif' }}
-            >
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-              Déconnexion
-            </button>
-          </header>
 
           <Outlet />
           {/* Padding for bottom nav on mobile */}
