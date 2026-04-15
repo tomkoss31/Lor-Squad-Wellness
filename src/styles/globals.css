@@ -620,6 +620,9 @@ main, .main-content {
 
 /* ── LOGIN MOBILE ── */
 @media (max-width: 768px) {
+  .login-grid {
+    grid-template-columns: 1fr !important;
+  }
   .login-left { display: none !important; }
   .login-right {
     padding: 36px 24px !important;

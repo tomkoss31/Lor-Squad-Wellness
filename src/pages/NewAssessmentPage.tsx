@@ -1169,7 +1169,7 @@ export function NewAssessmentPage() {
   ) : null;
 
   const desktopHelperPanel = !shouldHideStepSidebar ? (
-    <div className="hidden space-y-4 xl:sticky xl:top-5 xl:block xl:self-start">
+    <div className="assessment-help-panel hidden space-y-4 xl:sticky xl:top-5 xl:block xl:self-start">
       <Card className="space-y-4">
         <div className="flex items-start justify-between gap-3">
           <div>
@@ -1255,7 +1255,7 @@ export function NewAssessmentPage() {
         title="Bilan guidé"
         description="Un parcours clair pour conduire le rendez-vous, relire les habitudes et poser la suite."
       />
-      <div ref={stepRailRef}>
+      <div ref={stepRailRef} className="step-rail-wrapper">
         <StepRail currentStep={currentStep} steps={steps} />
       </div>
 
