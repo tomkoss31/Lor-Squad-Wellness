@@ -144,7 +144,7 @@ export function AppLayout() {
                   style={{
                     padding: '9px 12px 9px 14px',
                     marginLeft: -2,
-                    borderLeft: isActive ? '2px solid var(--ls-gold)' : '2px solid transparent',
+                    borderLeft: isActive ? '3px solid var(--ls-gold)' : '2px solid transparent',
                     background: isActive ? 'rgba(201,168,76,0.08)' : 'transparent',
                     color: isActive ? 'var(--ls-text)' : 'var(--ls-text-muted)',
                     fontWeight: isActive ? 500 : 400,
