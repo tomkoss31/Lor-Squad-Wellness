@@ -62,7 +62,7 @@ export function HydrationVisceralInsightCard({
             note={visceralStatus.label}
             accent="red"
           />
-          <div className="md:col-span-2 xl:col-span-3 rounded-[24px] bg-white/[0.04] p-5">
+          <div className="md:col-span-2 xl:col-span-3 rounded-[24px] bg-[var(--ls-surface2)] p-5">
             <div className="flex items-center justify-between gap-3">
               <div>
                 <p className="text-[11px] font-medium text-[var(--ls-text-hint)]">Repère hydratation</p>
@@ -70,7 +70,7 @@ export function HydrationVisceralInsightCard({
                   Zone moyenne {hydrationReference.min}-{hydrationReference.max} %
                 </p>
               </div>
-              <span className="rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 text-sm font-semibold text-white">
+              <span className="rounded-full border border-white/10 bg-[var(--ls-surface2)] px-3 py-1 text-sm font-semibold text-white">
                 {hydrationStatus.label}
               </span>
             </div>
@@ -134,7 +134,7 @@ export function HydrationVisceralInsightCard({
                   La graisse viscérale mérite un repère de vigilance très simple.
                 </p>
               </div>
-              <span className="rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 text-sm font-semibold text-white">
+              <span className="rounded-full border border-white/10 bg-[var(--ls-surface2)] px-3 py-1 text-sm font-semibold text-white">
                 {visceralStatus.label}
               </span>
             </div>

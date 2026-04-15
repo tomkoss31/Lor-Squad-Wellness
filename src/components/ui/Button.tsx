@@ -20,9 +20,9 @@ export function Button({
         variant === "primary" &&
           "bg-[#C9A84C] text-[#0B0D11] hover:brightness-105 font-bold",
         variant === "secondary" &&
-          "border border-white/[0.1] bg-white/[0.04] text-white hover:bg-white/[0.08]",
+          "border border-[var(--ls-border2)] bg-[var(--ls-surface2)] text-white hover:bg-white/[0.08]",
         variant === "ghost" &&
-          "bg-transparent text-[var(--ls-text-muted)] hover:text-white hover:bg-white/[0.04]",
+          "bg-transparent text-[var(--ls-text-muted)] hover:text-white hover:bg-[var(--ls-surface2)]",
         className
       )}
       {...props}

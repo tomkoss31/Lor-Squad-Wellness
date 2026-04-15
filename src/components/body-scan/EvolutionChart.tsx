@@ -24,7 +24,7 @@ export function EvolutionChart({ assessments }: EvolutionChartProps) {
   const selectedOption = metricOptions.find((option) => option.key === metricKey)!;
 
   return (
-    <div className="rounded-[24px] border border-white/10 bg-white/[0.03] p-4">
+    <div className="rounded-[24px] border border-white/10 bg-[var(--ls-surface2)] p-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <p className="text-sm font-semibold text-white">Évolution des mesures clés</p>
@@ -39,7 +39,7 @@ export function EvolutionChart({ assessments }: EvolutionChartProps) {
               className={`rounded-full border px-3 py-2 text-xs font-medium transition ${
                 option.key === metricKey
                   ? "border-white/15 bg-white text-[#0B0D11]"
-                  : "border-white/10 bg-white/[0.05] text-[#B0B4C4] hover:bg-white/[0.08]"
+                  : "border-white/10 bg-[var(--ls-surface2)] text-[var(--ls-text-muted)] hover:bg-white/[0.08]"
               }`}
             >
               {option.label}

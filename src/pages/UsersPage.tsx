@@ -335,18 +335,18 @@ export function UsersPage() {
 
           <form className="space-y-4" onSubmit={handleSubmit}>
             <div className="space-y-2">
-              <label className="text-sm font-medium text-[#B0B4C4]">Nom affiche</label>
+              <label className="text-sm font-medium text-[var(--ls-text-muted)]">Nom affiche</label>
               <input value={name} onChange={(event) => setName(event.target.value)} placeholder="Exemple : Camille Martin" />
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-[#B0B4C4]">Email professionnel</label>
+              <label className="text-sm font-medium text-[var(--ls-text-muted)]">Email professionnel</label>
               <input type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="camille@lorsquadwellness.app" />
             </div>
 
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <label className="text-sm font-medium text-[#B0B4C4]">Role</label>
+                <label className="text-sm font-medium text-[var(--ls-text-muted)]">Role</label>
                 <select value={role} onChange={(event) => setRole(event.target.value as User["role"])}>
                   <option value="distributor">Distributeur</option>
                   <option value="referent">Referent</option>
@@ -355,14 +355,14 @@ export function UsersPage() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium text-[#B0B4C4]">Mot de passe initial</label>
+                <label className="text-sm font-medium text-[var(--ls-text-muted)]">Mot de passe initial</label>
                 <input type="password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Choisir un mot de passe" />
               </div>
             </div>
 
             {role === "distributor" ? (
               <div className="space-y-2">
-                <label className="text-sm font-medium text-[#B0B4C4]">Rattachement referent / sponsor</label>
+                <label className="text-sm font-medium text-[var(--ls-text-muted)]">Rattachement referent / sponsor</label>
                 <select value={sponsorId} onChange={(event) => setSponsorId(event.target.value)}>
                   <option value="">Aucun rattachement pour l'instant</option>
                   {sponsorOptions.map((user) => (
@@ -374,7 +374,7 @@ export function UsersPage() {
               </div>
             ) : null}
 
-            <label className="flex items-center gap-3 rounded-[20px] bg-white/[0.04] px-4 py-3 text-sm text-[#B0B4C4]">
+            <label className="flex items-center gap-3 rounded-[20px] bg-[var(--ls-surface2)] px-4 py-3 text-sm text-[var(--ls-text-muted)]">
               <input type="checkbox" checked={active} onChange={(event) => setActive(event.target.checked)} className="h-4 w-4" />
               Compte actif des sa creation
             </label>
@@ -395,22 +395,22 @@ export function UsersPage() {
           <form className="space-y-4" onSubmit={handleRepairSubmit}>
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <label className="text-sm font-medium text-[#B0B4C4]">Email Auth</label>
+                <label className="text-sm font-medium text-[var(--ls-text-muted)]">Email Auth</label>
                 <input type="email" value={repairEmail} onChange={(event) => setRepairEmail(event.target.value)} placeholder="priscalexnutrition@gmail.com" />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-[#B0B4C4]">ID Supabase (optionnel)</label>
+                <label className="text-sm font-medium text-[var(--ls-text-muted)]">ID Supabase (optionnel)</label>
                 <input value={repairUserId} onChange={(event) => setRepairUserId(event.target.value)} placeholder="2c6653c6-525a-48b7-8965-ee8439bf1798" />
               </div>
             </div>
 
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <label className="text-sm font-medium text-[#B0B4C4]">Nom affiche (optionnel)</label>
+                <label className="text-sm font-medium text-[var(--ls-text-muted)]">Nom affiche (optionnel)</label>
                 <input value={repairName} onChange={(event) => setRepairName(event.target.value)} placeholder="Prisca et Alex" />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-[#B0B4C4]">Role</label>
+                <label className="text-sm font-medium text-[var(--ls-text-muted)]">Role</label>
                 <select value={repairRole} onChange={(event) => setRepairRole(event.target.value as User["role"])}>
                   <option value="referent">Referent</option>
                   <option value="distributor">Distributeur</option>
@@ -421,7 +421,7 @@ export function UsersPage() {
 
             {repairRole === "distributor" ? (
               <div className="space-y-2">
-                <label className="text-sm font-medium text-[#B0B4C4]">Rattachement referent / sponsor</label>
+                <label className="text-sm font-medium text-[var(--ls-text-muted)]">Rattachement referent / sponsor</label>
                 <select value={repairSponsorId} onChange={(event) => setRepairSponsorId(event.target.value)}>
                   <option value="">Aucun rattachement pour l'instant</option>
                   {sponsorOptions.map((user) => (
@@ -433,7 +433,7 @@ export function UsersPage() {
               </div>
             ) : null}
 
-            <label className="flex items-center gap-3 rounded-[20px] bg-white/[0.04] px-4 py-3 text-sm text-[#B0B4C4]">
+            <label className="flex items-center gap-3 rounded-[20px] bg-[var(--ls-surface2)] px-4 py-3 text-sm text-[var(--ls-text-muted)]">
               <input type="checkbox" checked={repairActive} onChange={(event) => setRepairActive(event.target.checked)} className="h-4 w-4" />
               Profil applicatif actif
             </label>
@@ -463,12 +463,12 @@ export function UsersPage() {
             <div className="space-y-3">
               <div className="rounded-[22px] bg-amber-400/10 px-4 py-4">
                 <p className="text-sm font-semibold text-white">Reinitialiser les accès beta</p>
-                <p className="mt-2 text-sm leading-7 text-[#B0B4C4]">Repars sur les accès par defaut et ferme la session actuelle.</p>
+                <p className="mt-2 text-sm leading-7 text-[var(--ls-text-muted)]">Repars sur les accès par defaut et ferme la session actuelle.</p>
                 <Button className="mt-4" variant="secondary" onClick={resetAccessData}>Reinitialiser les acces</Button>
               </div>
               <div className="rounded-[22px] bg-rose-400/10 px-4 py-4">
                 <p className="text-sm font-semibold text-white">Vider la base clients locale</p>
-                <p className="mt-2 text-sm leading-7 text-[#B0B4C4]">Supprime les dossiers et les suivis locaux pour repartir proprement.</p>
+                <p className="mt-2 text-sm leading-7 text-[var(--ls-text-muted)]">Supprime les dossiers et les suivis locaux pour repartir proprement.</p>
                 <Button className="mt-4" variant="secondary" onClick={clearBusinessData}>Vider les dossiers</Button>
               </div>
             </div>
@@ -476,11 +476,11 @@ export function UsersPage() {
             <div className="space-y-3">
               <div className="rounded-[22px] bg-[rgba(45,212,191,0.1)] px-4 py-4">
                 <p className="text-sm font-semibold text-white">Base distante active</p>
-                <p className="mt-2 text-sm leading-7 text-[#B0B4C4]">Les comptes et l'arborescence equipe sont lus depuis Supabase.</p>
+                <p className="mt-2 text-sm leading-7 text-[var(--ls-text-muted)]">Les comptes et l'arborescence equipe sont lus depuis Supabase.</p>
               </div>
               <div className="rounded-[22px] bg-[rgba(45,212,191,0.1)] px-4 py-4">
                 <p className="text-sm font-semibold text-white">Importer les anciens dossiers</p>
-                <p className="mt-2 text-sm leading-7 text-[#B0B4C4]">Si l'ancienne beta locale contient encore des dossiers, pousse-les ici.</p>
+                <p className="mt-2 text-sm leading-7 text-[var(--ls-text-muted)]">Si l'ancienne beta locale contient encore des dossiers, pousse-les ici.</p>
                 <Button className="mt-4" variant="secondary" onClick={() => void handleImportLocalData()}>Importer la base locale</Button>
                 {importStatus ? <p className="mt-3 text-sm text-white">{importStatus}</p> : null}
               </div>
@@ -517,7 +517,7 @@ function FilterPill({ label, active, onClick }: { label: string; active: boolean
       className={`min-h-[46px] rounded-full border px-4 text-sm font-semibold transition ${
         active
           ? "border-white/25 bg-white/12 text-white shadow-[0_10px_30px_rgba(8,15,30,0.24)]"
-          : "border-white/10 bg-white/[0.03] text-[#B0B4C4] hover:border-white/16 hover:bg-white/[0.06]"
+          : "border-white/10 bg-[var(--ls-surface2)] text-[var(--ls-text-muted)] hover:border-white/16 hover:bg-[var(--ls-surface2)]"
       }`}
     >
       {label}
@@ -526,7 +526,7 @@ function FilterPill({ label, active, onClick }: { label: string; active: boolean
 }
 
 function EmptyState({ text }: { text: string }) {
-  return <div className="rounded-[22px] bg-white/[0.03] px-4 py-4 text-sm leading-7 text-[var(--ls-text-muted)]">{text}</div>;
+  return <div className="rounded-[22px] bg-[var(--ls-surface2)] px-4 py-4 text-sm leading-7 text-[var(--ls-text-muted)]">{text}</div>;
 }
 
 function StatCard({ label, value }: { label: string; value: number }) {
@@ -596,7 +596,7 @@ function OrganizationCluster({
   followUps: FollowUp[];
 }) {
   return (
-    <div className="rounded-[24px] border border-white/8 bg-white/[0.03] p-4">
+    <div className="rounded-[24px] border border-white/8 bg-[var(--ls-surface2)] p-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <p className="text-sm font-semibold text-white">{referent.name}</p>
@@ -685,7 +685,7 @@ function OrganizationUserCard({
 
 function MiniMetric({ label, value }: { label: string; value: number }) {
   return (
-    <div className="rounded-[18px] bg-white/[0.03] px-3 py-3 text-center">
+    <div className="rounded-[18px] bg-[var(--ls-surface2)] px-3 py-3 text-center">
       <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-[var(--ls-text-hint)]">{label}</p>
       <p className="mt-2 text-lg font-semibold text-white">{value}</p>
     </div>
@@ -784,7 +784,7 @@ function UserAccessCard({
   }
 
   return (
-    <div className="grid gap-4 rounded-[24px] border border-white/10 bg-white/[0.03] p-4 xl:grid-cols-[1.05fr_1fr_auto]">
+    <div className="grid gap-4 rounded-[24px] border border-white/10 bg-[var(--ls-surface2)] p-4 xl:grid-cols-[1.05fr_1fr_auto]">
       <div className="space-y-3">
         <div className="flex flex-wrap items-center gap-3">
           <DistributorBadge
@@ -804,7 +804,7 @@ function UserAccessCard({
         </p>
       </div>
 
-      <div className="grid gap-3 text-sm text-[#B0B4C4]">
+      <div className="grid gap-3 text-sm text-[var(--ls-text-muted)]">
         <div className="rounded-[18px] bg-[var(--ls-bg)]/60 px-3 py-3">
           <span className="text-[var(--ls-text-hint)]">Portefeuille</span>
           <p className="mt-1 font-medium text-white">
@@ -874,7 +874,7 @@ function UserAccessCard({
       <div className="flex flex-col items-stretch gap-3 xl:min-w-[220px] xl:items-end">
         <Link
           to={`/distributors/${user.id}`}
-          className="inline-flex min-h-[46px] items-center justify-center rounded-[18px] bg-white/[0.04] px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/[0.07]"
+          className="inline-flex min-h-[46px] items-center justify-center rounded-[18px] bg-[var(--ls-surface2)] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[var(--ls-surface2)]"
         >
           Voir portefeuille
         </Link>
@@ -905,7 +905,7 @@ function UserAccessCard({
 
 function ActivityRow({ entry }: { entry: ActivityLog }) {
   return (
-    <div className="rounded-[22px] bg-white/[0.03] px-4 py-4">
+    <div className="rounded-[22px] bg-[var(--ls-surface2)] px-4 py-4">
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-sm font-semibold text-white">{entry.summary}</p>

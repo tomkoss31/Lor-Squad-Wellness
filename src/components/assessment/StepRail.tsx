@@ -52,7 +52,7 @@ export function StepRail({ currentStep, steps }: StepRailProps) {
 
       {/* Version desktop complète */}
       <div className="hidden lg:block">
-        <div className="rounded-[18px] border border-white/[0.07] bg-[var(--ls-surface)] p-4 md:p-5">
+        <div className="rounded-[18px] border border-[var(--ls-border)] bg-[var(--ls-surface)] p-4 md:p-5">
           {/* Header */}
           <div className="mb-3 flex items-center justify-between gap-3">
             <span className="eyebrow-label">
@@ -84,7 +84,7 @@ export function StepRail({ currentStep, steps }: StepRailProps) {
           </div>
 
           {/* Barre de progression */}
-          <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/[0.06]">
+          <div className="h-1.5 w-full overflow-hidden rounded-full bg-[var(--ls-surface2)]">
             <div
               className="h-full rounded-full transition-all duration-500 ease-out"
               style={{

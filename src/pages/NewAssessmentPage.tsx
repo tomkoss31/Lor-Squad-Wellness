@@ -1154,8 +1154,8 @@ export function NewAssessmentPage() {
         {prompts[0]}
       </div>
       {currentStep === 0 ? (
-        <div className="space-y-2 rounded-[18px] bg-white/[0.03] px-4 py-4">
-          <label className="text-sm font-medium text-[#B0B4C4]">
+        <div className="space-y-2 rounded-[18px] bg-[var(--ls-surface2)] px-4 py-4">
+          <label className="text-sm font-medium text-[var(--ls-text-muted)]">
             Invite par / recommande par
           </label>
           <input
@@ -1184,8 +1184,8 @@ export function NewAssessmentPage() {
           ))}
         </div>
         {currentStep === 0 ? (
-          <div className="space-y-2 rounded-[20px] bg-white/[0.03] px-4 py-4">
-            <label className="text-sm font-medium text-[#B0B4C4]">
+          <div className="space-y-2 rounded-[20px] bg-[var(--ls-surface2)] px-4 py-4">
+            <label className="text-sm font-medium text-[var(--ls-text-muted)]">
               Invite par / recommande par
             </label>
             <input
@@ -1289,7 +1289,7 @@ export function NewAssessmentPage() {
                   />
                   {currentUser?.role === "admin" ? (
                     <div className="space-y-2">
-                      <label className="text-sm font-medium text-[#B0B4C4]">
+                      <label className="text-sm font-medium text-[var(--ls-text-muted)]">
                         Responsable du dossier
                       </label>
                       <select
@@ -1382,15 +1382,15 @@ export function NewAssessmentPage() {
                           value={weightLossPace.label}
                         />
                       </div>
-                      <div className="rounded-[22px] bg-white/[0.03] px-4 py-4 text-sm leading-6 text-[#B0B4C4]">
+                      <div className="rounded-[22px] bg-[var(--ls-surface2)] px-4 py-4 text-sm leading-6 text-[var(--ls-text-muted)]">
                         En fonction du délai choisi, l&apos;app ajuste automatiquement le rythme moyen
                         à tenir et le repère protéines pour garder un cadre simple à expliquer.
                       </div>
                     </div>
                   )}
-                  <div className="space-y-3 rounded-[24px] bg-white/[0.03] p-4">
+                  <div className="space-y-3 rounded-[24px] bg-[var(--ls-surface2)] p-4">
                     <div className="flex items-center justify-between gap-3">
-                      <label className="text-sm font-medium text-[#B0B4C4]">Motivation</label>
+                      <label className="text-sm font-medium text-[var(--ls-text-muted)]">Motivation</label>
                       <span className="text-sm font-semibold text-white">{form.motivation}/10</span>
                     </div>
                     <input
@@ -1568,7 +1568,7 @@ export function NewAssessmentPage() {
                     <h2 className="mt-3 text-3xl text-white md:text-[2.6rem]">
                       Relevé complet des mesures de départ
                     </h2>
-                    <p className="mt-3 max-w-2xl text-sm leading-7 text-[#B0B4C4]">
+                    <p className="mt-3 max-w-2xl text-sm leading-7 text-[var(--ls-text-muted)]">
                       Toutes les mesures body scan sont reunies ici pour construire une base claire
                       avant le suivi.
                     </p>
@@ -1624,7 +1624,7 @@ export function NewAssessmentPage() {
                     <h2 className="mt-3 text-3xl text-white md:text-[2.6rem]">
                       Lecture simple des valeurs de départ et des priorités
                     </h2>
-                    <p className="mt-3 max-w-2xl text-sm leading-7 text-[#B0B4C4]">
+                    <p className="mt-3 max-w-2xl text-sm leading-7 text-[var(--ls-text-muted)]">
                       On compare la base du jour, la cible et les ecarts utiles pour rendre le suivi
                       plus simple a expliquer.
                     </p>
@@ -1729,7 +1729,7 @@ export function NewAssessmentPage() {
                   }
                 />
                 {!startsImmediately ? (
-                  <p className="text-sm leading-6 text-[#B0B4C4]">
+                  <p className="text-sm leading-6 text-[var(--ls-text-muted)]">
                     Le bilan sera enregistre, la personne apparaitra en attente dans les dossiers,
                     et elle ne comptera pas dans le module PV tant qu&apos;aucun programme n&apos;est demarre.
                   </p>
@@ -1776,7 +1776,7 @@ export function NewAssessmentPage() {
                     </div>
                   </div>
                 ) : (
-                  <div className="rounded-[24px] bg-white/[0.03] p-5 text-sm leading-7 text-[#B0B4C4]">
+                  <div className="rounded-[24px] bg-[var(--ls-surface2)] p-5 text-sm leading-7 text-[var(--ls-text-muted)]">
                     Le bilan ne fait pas encore ressortir une priorite forte. On peut partir sur une
                     base simple, puis personnaliser au premier suivi.
                   </div>
@@ -1910,7 +1910,7 @@ export function NewAssessmentPage() {
                   <div className="max-w-3xl">
                     <p className="eyebrow-label">Conclusion du rendez-vous</p>
                     <p className="mt-3 text-4xl text-white">Une proposition claire, un cap simple et une suite déjà visible.</p>
-                    <p className="mt-3 text-sm leading-7 text-[#B0B4C4]">
+                    <p className="mt-3 text-sm leading-7 text-[var(--ls-text-muted)]">
                       Cette synthese aide a reformuler le plan, confirmer le programme et terminer
                       le rendez-vous avec une direction nette.
                     </p>
@@ -1952,7 +1952,7 @@ export function NewAssessmentPage() {
                           ))}
                         </div>
                       ) : (
-                        <div className="mt-5 rounded-[22px] bg-white/[0.03] px-4 py-4 text-sm leading-6 text-[var(--ls-text)]">
+                        <div className="mt-5 rounded-[22px] bg-[var(--ls-surface2)] px-4 py-4 text-sm leading-6 text-[var(--ls-text)]">
                           Une base simple suffit pour le moment. Les produits se personaliseront
                           au besoin dans le suivi.
                         </div>
@@ -1966,7 +1966,7 @@ export function NewAssessmentPage() {
                           <p className="text-3xl text-white">
                             {selectedProgram?.title ?? recommendedProgram?.title ?? "Programme a confirmer"}
                           </p>
-                          <p className="mt-2 text-sm leading-6 text-[#B0B4C4]">
+                          <p className="mt-2 text-sm leading-6 text-[var(--ls-text-muted)]">
                             {selectedProgram?.summary ??
                               recommendationPlan.recommendedProgramReason}
                           </p>
@@ -1984,7 +1984,7 @@ export function NewAssessmentPage() {
                           ]).map((benefit) => (
                           <div
                             key={benefit}
-                            className="rounded-[22px] bg-white/[0.03] px-4 py-4 text-sm leading-6 text-[var(--ls-text)]"
+                            className="rounded-[22px] bg-[var(--ls-surface2)] px-4 py-4 text-sm leading-6 text-[var(--ls-text)]"
                           >
                             {benefit}
                           </div>
@@ -2158,9 +2158,9 @@ function StepVisualLoadingCard({ label }: { label: string }) {
   return (
     <Card className="space-y-4">
       <p className="eyebrow-label">Chargement</p>
-      <div className="rounded-[28px] bg-white/[0.03] p-6">
+      <div className="rounded-[28px] bg-[var(--ls-surface2)] p-6">
         <div className="h-64 rounded-[22px] bg-[linear-gradient(135deg,rgba(255,255,255,0.06),rgba(255,255,255,0.02))]" />
-        <p className="mt-4 text-sm text-[#B0B4C4]">{label}</p>
+        <p className="mt-4 text-sm text-[var(--ls-text-muted)]">{label}</p>
       </div>
     </Card>
   );
@@ -2198,8 +2198,8 @@ class VisualStepBoundary extends Component<
           </div>
           <StatusBadge label="Brouillon conserve" tone="amber" />
         </div>
-        <div className="rounded-[24px] bg-white/[0.03] p-5">
-          <p className="text-sm leading-7 text-[#B0B4C4]">
+        <div className="rounded-[24px] bg-[var(--ls-surface2)] p-5">
+          <p className="text-sm leading-7 text-[var(--ls-text-muted)]">
             Le visuel n&apos;a pas pu s&apos;afficher correctement. Les valeurs déjà saisies sont
             gardees automatiquement, tu peux reessayer sans perdre le bilan en cours.
           </p>
@@ -2245,14 +2245,14 @@ function RecommendationStepCard({
             <div>
               <p className="eyebrow-label">Liste nominative</p>
               <p className="mt-2 text-3xl text-white">Les personnes a qui offrir l&apos;experience</p>
-              <p className="mt-2 max-w-3xl text-sm leading-7 text-[#B0B4C4]">
+              <p className="mt-2 max-w-3xl text-sm leading-7 text-[var(--ls-text-muted)]">
                 Note simplement un prenom et un contact par ligne.
               </p>
             </div>
             <StatusBadge label={`${filledRecommendations}/10`} tone="amber" />
           </div>
 
-          <label className="flex items-center justify-between gap-3 rounded-[22px] border border-white/10 bg-white/[0.03] px-4 py-4">
+          <label className="flex items-center justify-between gap-3 rounded-[22px] border border-white/10 bg-[var(--ls-surface2)] px-4 py-4">
             <div>
               <p className="text-sm font-medium text-white">Recommandations contactées</p>
               <p className="mt-1 text-sm text-[var(--ls-text-muted)]">
@@ -2271,12 +2271,12 @@ function RecommendationStepCard({
             <div className="rounded-[22px] bg-amber-400/[0.08] px-5 py-4">
               <p className="eyebrow-label text-amber-100/70">Palier cadeau 1</p>
               <p className="mt-2 text-xl text-white">A partir de 5 noms</p>
-              <p className="mt-2 text-sm leading-6 text-[#B0B4C4]">Premier repere cadeau.</p>
+              <p className="mt-2 text-sm leading-6 text-[var(--ls-text-muted)]">Premier repere cadeau.</p>
             </div>
             <div className="rounded-[22px] bg-[rgba(201,168,76,0.08)] px-5 py-4">
               <p className="eyebrow-label text-[#2DD4BF]/70">Palier cadeau 2</p>
               <p className="mt-2 text-xl text-white">A partir de 10 noms</p>
-              <p className="mt-2 text-sm leading-6 text-[#B0B4C4]">Deuxieme repere cadeau.</p>
+              <p className="mt-2 text-sm leading-6 text-[var(--ls-text-muted)]">Deuxieme repere cadeau.</p>
             </div>
           </div>
 
@@ -2297,7 +2297,7 @@ function RecommendationStepCard({
                   </div>
                 )}
               <div className="grid gap-4 rounded-[26px] bg-[linear-gradient(180deg,rgba(2,6,23,0.4),rgba(15,23,42,0.28))] p-5 lg:grid-cols-[110px_1.1fr_1.3fr]">
-                <div className="flex min-h-[72px] items-center justify-center rounded-[20px] bg-white/[0.03] px-4 py-3 text-base font-semibold text-white">
+                <div className="flex min-h-[72px] items-center justify-center rounded-[20px] bg-[var(--ls-surface2)] px-4 py-3 text-base font-semibold text-white">
                   Reco {index + 1}
                 </div>
                 <RecommendationLineField
@@ -2330,7 +2330,7 @@ function RecommendationLineField({
 }) {
   return (
     <label className="block space-y-3">
-      <span className="text-sm font-medium text-[#B0B4C4]">{label}</span>
+      <span className="text-sm font-medium text-[var(--ls-text-muted)]">{label}</span>
       <div className="relative rounded-[20px] bg-white/[0.02] px-4 py-4">
         <input
           value={value}
@@ -2359,7 +2359,7 @@ function Field({
 }) {
   return (
     <div className="space-y-2">
-      <label className="text-sm font-medium text-[#B0B4C4]">{label}</label>
+      <label className="text-sm font-medium text-[var(--ls-text-muted)]">{label}</label>
       {type === "number" ? (
         <DecimalInput value={Number(value) || 0} onChange={onChange} step={step} />
       ) : (
@@ -2431,7 +2431,7 @@ function DecimalInput({
 function AreaField({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void; }) {
   return (
     <div className="space-y-2">
-      <label className="text-sm font-medium text-[#B0B4C4]">{label}</label>
+      <label className="text-sm font-medium text-[var(--ls-text-muted)]">{label}</label>
       <textarea rows={4} value={value} onChange={(event) => onChange(event.target.value)} />
     </div>
   );
@@ -2452,10 +2452,10 @@ function ChoiceGroup({
 }) {
   return (
     <div className="space-y-2">
-      <label className="text-sm font-medium text-[#B0B4C4]">{label}</label>
+      <label className="text-sm font-medium text-[var(--ls-text-muted)]">{label}</label>
       <div className="flex flex-wrap gap-2">
         {options.map((option) => (
-          <button key={option} type="button" onClick={() => onChange(option)} className={`rounded-full px-4 py-2 text-sm font-medium transition ${value === option ? "bg-[#C9A84C] text-[#0B0D11] font-semibold" : "border border-white/10 bg-white/[0.03] text-[var(--ls-text-muted)] hover:text-[var(--ls-text)] hover:border-white/20"}`}>
+          <button key={option} type="button" onClick={() => onChange(option)} className={`rounded-full px-4 py-2 text-sm font-medium transition ${value === option ? "bg-[#C9A84C] text-[#0B0D11] font-semibold" : "border border-white/10 bg-[var(--ls-surface2)] text-[var(--ls-text-muted)] hover:text-[var(--ls-text)] hover:border-white/20"}`}>
             {formatOption ? formatOption(option) : option}
           </button>
         ))}
@@ -2504,7 +2504,7 @@ function NeedProductGroup({
               <StatusBadge label={`${products.length} repere${products.length > 1 ? "s" : ""}`} tone="blue" />
             </div>
             <p className="text-lg font-medium text-white">{summary}</p>
-            <p className="text-sm leading-6 text-[#B0B4C4]">{reasonLabel}</p>
+            <p className="text-sm leading-6 text-[var(--ls-text-muted)]">{reasonLabel}</p>
           </div>
         </div>
         <div className="grid gap-3">
@@ -2558,7 +2558,7 @@ function SuggestedProductCard({
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 space-y-1.5">
             <p className="text-lg font-semibold text-white">{name}</p>
-            <p className="text-sm leading-6 text-[#B0B4C4]">{shortBenefit}</p>
+            <p className="text-sm leading-6 text-[var(--ls-text-muted)]">{shortBenefit}</p>
           </div>
           <button
             type="button"
@@ -2566,7 +2566,7 @@ function SuggestedProductCard({
             className={`inline-flex min-h-[34px] shrink-0 items-center justify-center rounded-full px-3.5 py-1.5 text-sm font-semibold transition ${
               selected
                 ? "bg-white text-[#0B0D11]"
-                : "border border-white/10 bg-white/[0.03] text-white hover:bg-white/[0.08]"
+                : "border border-white/10 bg-[var(--ls-surface2)] text-white hover:bg-white/[0.08]"
             }`}
           >
             {selected ? "Retenu" : "Retenir"}
@@ -2574,11 +2574,11 @@ function SuggestedProductCard({
         </div>
         <div className="mt-auto flex flex-wrap items-center gap-2">
           {quantityLabel ? (
-            <span className="rounded-full bg-white/[0.05] px-3 py-1 text-sm font-medium text-[var(--ls-text)]">
+            <span className="rounded-full bg-[var(--ls-surface2)] px-3 py-1 text-sm font-medium text-[var(--ls-text)]">
               {quantityLabel}
             </span>
           ) : null}
-          <span className="rounded-full bg-white/[0.05] px-3 py-1 text-sm font-medium text-[var(--ls-text)]">
+          <span className="rounded-full bg-[var(--ls-surface2)] px-3 py-1 text-sm font-medium text-[var(--ls-text)]">
             {dureeReferenceJours} jours
           </span>
           <span className="rounded-full bg-[rgba(45,212,191,0.1)] px-3 py-1 text-sm font-semibold text-[#2DD4BF]">
@@ -2608,7 +2608,7 @@ function TimelineChoiceField({
 
   return (
     <div className="space-y-3">
-      <label className="text-sm font-medium text-[#B0B4C4]">{label}</label>
+      <label className="text-sm font-medium text-[var(--ls-text-muted)]">{label}</label>
       <div className="flex flex-wrap gap-2">
         {options.map((option) => (
           <button
@@ -2618,7 +2618,7 @@ function TimelineChoiceField({
             className={`rounded-full px-4 py-2 text-sm font-medium transition ${
               value === option
                 ? "bg-white text-[#0B0D11]"
-                : "border border-white/10 bg-white/[0.03] text-[var(--ls-text)]"
+                : "border border-white/10 bg-[var(--ls-surface2)] text-[var(--ls-text)]"
             }`}
           >
             {option}
@@ -2634,7 +2634,7 @@ function TimelineChoiceField({
           className={`rounded-full px-4 py-2 text-sm font-medium transition ${
             isCustom
               ? "bg-white text-[#0B0D11]"
-              : "border border-dashed border-white/10 bg-white/[0.03] text-[var(--ls-text)]"
+              : "border border-dashed border-white/10 bg-[var(--ls-surface2)] text-[var(--ls-text)]"
           }`}
         >
           Choix libre
@@ -2655,7 +2655,7 @@ function TimelineChoiceField({
 
 function SectionBlock({ title, description, children }: { title: string; description: string; children: ReactNode; }) {
   return (
-    <div className="rounded-[24px] bg-white/[0.03] p-5">
+    <div className="rounded-[24px] bg-[var(--ls-surface2)] p-5">
       <div className="space-y-1">
         <p className="text-lg font-semibold text-white">{title}</p>
         <p className="text-sm leading-6 text-[var(--ls-text-muted)]">{description}</p>
@@ -2666,7 +2666,7 @@ function SectionBlock({ title, description, children }: { title: string; descrip
 }
 
 function SummaryMini({ label, value }: { label: string; value: string }) {
-  return <div className="flex items-center justify-between gap-3 rounded-[20px] bg-white/[0.03] px-4 py-3"><span className="text-[11px] font-medium text-[var(--ls-text-hint)]">{label}</span><span className="text-sm font-semibold text-white">{value}</span></div>;
+  return <div className="flex items-center justify-between gap-3 rounded-[20px] bg-[var(--ls-surface2)] px-4 py-3"><span className="text-[11px] font-medium text-[var(--ls-text-hint)]">{label}</span><span className="text-sm font-semibold text-white">{value}</span></div>;
 }
 
 function FocusPanelItem({ text, highlighted = false }: { text: string; highlighted?: boolean }) {
@@ -2675,7 +2675,7 @@ function FocusPanelItem({ text, highlighted = false }: { text: string; highlight
       className={`rounded-[20px] px-4 py-3 text-sm leading-6 ${
         highlighted
           ? "bg-[rgba(45,212,191,0.1)] text-white"
-          : "bg-white/[0.03] text-[var(--ls-text)]"
+          : "bg-[var(--ls-surface2)] text-[var(--ls-text)]"
       }`}
     >
       {text}
@@ -2689,7 +2689,7 @@ function ClosingLine({ text }: { text: string }) {
 
 function SummaryHighlightCard({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-[22px] bg-white/[0.03] px-4 py-4">
+    <div className="rounded-[22px] bg-[var(--ls-surface2)] px-4 py-4">
       <p className="text-[11px] font-medium text-[var(--ls-text-hint)]">{label}</p>
       <p className="mt-3 text-lg font-semibold text-white">{value}</p>
     </div>
@@ -2729,26 +2729,26 @@ function ClientTotalCalculatorCard({
         </div>
 
       <div className="mt-5 space-y-3">
-        <div className="rounded-[22px] bg-white/[0.04] px-4 py-4">
+        <div className="rounded-[22px] bg-[var(--ls-surface2)] px-4 py-4">
           <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-[var(--ls-text-hint)]">Base choisie</p>
             <div className="mt-3 flex items-start justify-between gap-3">
               <div>
                 <p className="text-lg font-semibold text-white">{programTitle}</p>
-                <p className="mt-2 text-sm leading-6 text-[#B0B4C4]">
+                <p className="mt-2 text-sm leading-6 text-[var(--ls-text-muted)]">
                   {includedComposition.length ? includedComposition.join(" • ") : "Composition a confirmer"}
                 </p>
               </div>
-              <span className="rounded-full bg-white/[0.06] px-3 py-1.5 text-sm font-semibold text-white">
+              <span className="rounded-full bg-[var(--ls-surface2)] px-3 py-1.5 text-sm font-semibold text-white">
                 {displayedProgramPrice || "A confirmer"}
               </span>
             </div>
             <div className="mt-3 flex items-center justify-between gap-3 rounded-[16px] bg-slate-950/22 px-3.5 py-2.5">
-              <p className="text-sm text-[#B0B4C4]">Base choisie</p>
+              <p className="text-sm text-[var(--ls-text-muted)]">Base choisie</p>
               <p className="text-sm font-semibold text-white">{displayedProgramPrice || "A confirmer"}</p>
             </div>
           </div>
 
-        <div className="rounded-[22px] bg-white/[0.03] px-4 py-4">
+        <div className="rounded-[22px] bg-[var(--ls-surface2)] px-4 py-4">
           <div className="flex items-center justify-between gap-3">
               <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-[var(--ls-text-hint)]">Ajouts</p>
             <span className="text-sm font-semibold text-white">{addOnProducts.length}</span>
@@ -2769,7 +2769,7 @@ function ClientTotalCalculatorCard({
                 ))}
               </div>
           ) : (
-            <p className="mt-3 text-sm leading-6 text-[#B0B4C4]">
+            <p className="mt-3 text-sm leading-6 text-[var(--ls-text-muted)]">
               Aucun supplément ajouté pour l&apos;instant.
             </p>
           )}
@@ -2797,7 +2797,7 @@ function ClientTotalCalculatorCard({
 
 function QuickReadCard({ label, value, detail }: { label: string; value: string; detail: string }) {
   return (
-    <div className="rounded-[20px] bg-white/[0.03] p-4">
+    <div className="rounded-[20px] bg-[var(--ls-surface2)] p-4">
       <p className="text-[11px] font-medium text-[var(--ls-text-hint)]">{label}</p>
       <p className="mt-3 text-lg font-semibold text-white">{value}</p>
       <p className="mt-2 text-sm leading-6 text-[var(--ls-text-muted)]">{detail}</p>
@@ -2832,7 +2832,7 @@ function ReferenceComparisonRow({
           : "bg-[rgba(45,212,191,0.1)] text-[#2DD4BF]";
 
   return (
-    <div className="grid gap-3 rounded-[24px] border border-white/10 bg-white/[0.03] px-4 py-4 md:grid-cols-[1.1fr_repeat(4,minmax(0,0.8fr))_minmax(0,1fr)] md:items-center">
+    <div className="grid gap-3 rounded-[24px] border border-white/10 bg-[var(--ls-surface2)] px-4 py-4 md:grid-cols-[1.1fr_repeat(4,minmax(0,0.8fr))_minmax(0,1fr)] md:items-center">
       <div>
         <p className="text-base font-semibold text-white">{label}</p>
       </div>

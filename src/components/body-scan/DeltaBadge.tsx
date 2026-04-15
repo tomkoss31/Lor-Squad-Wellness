@@ -18,7 +18,7 @@ export function DeltaBadge({
     <span
       className={`inline-flex rounded-full px-3 py-1 text-xs font-medium ${
         isNeutral
-          ? "bg-white/[0.06] text-[#B0B4C4]"
+          ? "bg-[var(--ls-surface2)] text-[var(--ls-text-muted)]"
           : isPositive
             ? "bg-[rgba(45,212,191,0.1)] text-[#2DD4BF]"
             : "bg-rose-400/10 text-rose-200"

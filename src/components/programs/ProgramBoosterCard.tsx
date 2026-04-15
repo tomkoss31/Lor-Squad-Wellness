@@ -12,7 +12,7 @@ export function ProgramBoosterCard({ program }: { program: Program }) {
 
         <div>
           <p className="text-lg font-semibold leading-tight text-white">{program.title}</p>
-          <p className="mt-2 text-sm leading-6 text-[#B0B4C4]">{program.summary}</p>
+          <p className="mt-2 text-sm leading-6 text-[var(--ls-text-muted)]">{program.summary}</p>
         </div>
 
         <div className="flex flex-wrap gap-2">

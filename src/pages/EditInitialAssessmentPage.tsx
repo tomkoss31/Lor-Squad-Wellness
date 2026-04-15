@@ -472,7 +472,7 @@ export function EditInitialAssessmentPage() {
               <MetricField label="Poids cible (kg)" value={questionnaire.targetWeight ?? 0} onChange={(value) => updateQuestionnaire("targetWeight", Number(value))} />
               <MetricField label="Motivation / 10" value={questionnaire.motivation} onChange={(value) => updateQuestionnaire("motivation", Number(value))} />
               <div className="space-y-2 md:col-span-2">
-                <label className="text-sm font-medium text-[#B0B4C4]">Horizon / delai</label>
+                <label className="text-sm font-medium text-[var(--ls-text-muted)]">Horizon / delai</label>
                 <div className="flex flex-wrap gap-2">
                   {timelineOptions.map((option) => (
                     <button
@@ -482,7 +482,7 @@ export function EditInitialAssessmentPage() {
                       className={`rounded-full px-4 py-2 text-sm font-medium transition ${
                         questionnaire.desiredTimeline === option
                           ? "bg-white text-[#0B0D11]"
-                          : "border border-white/10 bg-white/[0.03] text-[var(--ls-text)]"
+                          : "border border-white/10 bg-[var(--ls-surface2)] text-[var(--ls-text)]"
                       }`}
                     >
                       {option}
@@ -509,12 +509,12 @@ export function EditInitialAssessmentPage() {
           </SectionCard>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium text-[#B0B4C4]">Note du bilan</label>
+            <label className="text-sm font-medium text-[var(--ls-text-muted)]">Note du bilan</label>
             <textarea rows={6} value={notes} onChange={(event) => setNotes(event.target.value)} />
           </div>
 
           {questionnaire.recommendations.length ? (
-            <label className="flex items-center justify-between gap-3 rounded-[22px] border border-white/10 bg-white/[0.03] px-4 py-4">
+            <label className="flex items-center justify-between gap-3 rounded-[22px] border border-white/10 bg-[var(--ls-surface2)] px-4 py-4">
               <div>
                 <p className="text-sm font-medium text-white">Recommandations contactées</p>
                 <p className="mt-1 text-sm text-[var(--ls-text-muted)]">
@@ -590,7 +590,7 @@ function SectionCard({
   children: ReactNode;
 }) {
   return (
-    <div className="space-y-4 rounded-[24px] border border-white/10 bg-white/[0.03] p-5">
+    <div className="space-y-4 rounded-[24px] border border-white/10 bg-[var(--ls-surface2)] p-5">
       <div>
         <p className="text-lg font-semibold text-white">{title}</p>
         <p className="mt-2 text-sm leading-6 text-[var(--ls-text-muted)]">{description}</p>
@@ -613,7 +613,7 @@ function MetricField({
 }) {
   return (
     <div className="space-y-2">
-      <label className="text-sm font-medium text-[#B0B4C4]">{label}</label>
+      <label className="text-sm font-medium text-[var(--ls-text-muted)]">{label}</label>
       <input
         type={type}
         step={type === "number" ? "0.1" : undefined}
@@ -635,7 +635,7 @@ function TextField({
 }) {
   return (
     <div className="space-y-2">
-      <label className="text-sm font-medium text-[#B0B4C4]">{label}</label>
+      <label className="text-sm font-medium text-[var(--ls-text-muted)]">{label}</label>
       <input value={value} onChange={(event) => onChange(event.target.value)} />
     </div>
   );
@@ -654,7 +654,7 @@ function AreaField({
 }) {
   return (
     <div className="space-y-2">
-      <label className="text-sm font-medium text-[#B0B4C4]">{label}</label>
+      <label className="text-sm font-medium text-[var(--ls-text-muted)]">{label}</label>
       <textarea rows={rows} value={value} onChange={(event) => onChange(event.target.value)} />
     </div>
   );
@@ -662,7 +662,7 @@ function AreaField({
 
 function InfoCard({ title, text }: { title: string; text: string }) {
   return (
-    <div className="rounded-[22px] border border-white/10 bg-white/[0.03] px-4 py-4">
+    <div className="rounded-[22px] border border-white/10 bg-[var(--ls-surface2)] px-4 py-4">
       <p className="text-sm font-semibold text-white">{title}</p>
       <p className="mt-2 text-sm leading-6 text-[var(--ls-text-muted)]">{text}</p>
     </div>

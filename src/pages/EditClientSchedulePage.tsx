@@ -225,7 +225,7 @@ function Field({
 }) {
   return (
     <div className="space-y-2">
-      <label className="text-sm font-medium text-[#B0B4C4]">{label}</label>
+      <label className="text-sm font-medium text-[var(--ls-text-muted)]">{label}</label>
       <input type={type} value={value} onChange={(event) => onChange(event.target.value)} />
     </div>
   );
@@ -233,7 +233,7 @@ function Field({
 
 function InfoCard({ title, text }: { title: string; text: string }) {
   return (
-    <div className="rounded-[22px] border border-white/10 bg-white/[0.03] px-4 py-4">
+    <div className="rounded-[22px] border border-white/10 bg-[var(--ls-surface2)] px-4 py-4">
       <p className="text-sm font-semibold text-white">{title}</p>
       <p className="mt-2 text-sm leading-6 text-[var(--ls-text-muted)]">{text}</p>
     </div>

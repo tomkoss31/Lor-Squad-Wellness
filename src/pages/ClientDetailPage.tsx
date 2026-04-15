@@ -246,7 +246,7 @@ export function ClientDetailPage() {
           <div className="flex items-center gap-4">
             <div style={{
               width: 56, height: 56, borderRadius: '50%', flexShrink: 0,
-              background: 'rgba(201,168,76,0.15)', color: '#C9A84C',
+              background: 'var(--ls-gold-bg)', color: '#C9A84C',
               border: '2px solid rgba(201,168,76,0.3)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontFamily: 'Syne, sans-serif', fontSize: 20, fontWeight: 700
@@ -278,7 +278,7 @@ export function ClientDetailPage() {
           <div className="flex flex-wrap gap-2">
             <Link
               to={`/clients/${client.id}/follow-up/new`}
-              className="inline-flex min-h-[40px] items-center gap-2 rounded-[12px] border border-white/[0.1] bg-white/[0.04] px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/[0.08]"
+              className="inline-flex min-h-[40px] items-center gap-2 rounded-[12px] border border-[var(--ls-border2)] bg-[var(--ls-surface2)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/[0.08]"
             >
               📋 Suivi
             </Link>
@@ -293,7 +293,7 @@ export function ClientDetailPage() {
 
         {/* Recommandations actives */}
         {recommendationCount > 0 && (
-          <div className="mt-4 flex items-center gap-3 rounded-[14px] border border-white/[0.06] bg-white/[0.02] px-4 py-3">
+          <div className="mt-4 flex items-center gap-3 rounded-[14px] border border-[var(--ls-border)] bg-white/[0.02] px-4 py-3">
             <span style={{ fontSize: 11, color: '#C9A84C', letterSpacing: '1px', textTransform: 'uppercase', fontWeight: 600 }}>Recommandations</span>
             <StatusBadge
               label={recommendationsContacted ? `${recommendationCount} contactées` : `${recommendationCount} à contacter`}
@@ -312,7 +312,7 @@ export function ClientDetailPage() {
       </div>
 
       {/* Tab bar */}
-      <div className="flex gap-1 rounded-[14px] border border-white/[0.07] bg-[var(--ls-surface)] p-1" style={{ width: 'fit-content' }}>
+      <div className="flex gap-1 rounded-[14px] border border-[var(--ls-border)] bg-[var(--ls-surface)] p-1" style={{ width: 'fit-content' }}>
         {[
           { label: 'Vue complète', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg> },
           { label: 'Body Scan', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>, count: client.assessments.filter(a => a.bodyScan?.weight).length },
@@ -593,7 +593,7 @@ export function ClientDetailPage() {
             <div className="grid gap-2">
               <LinkButton to={`/clients/${client.id}/follow-up/new`} label="Nouveau suivi" hint="Mesurer et poser la suite" />
               <LinkButton to={`/clients/${client.id}/follow-up/new`} label="Body scan" hint="Nouvelles mesures" tone="green" />
-              <button type="button" onClick={() => setShowScheduleModal(true)} className="w-full rounded-[22px] bg-white/[0.03] p-4 text-left transition hover:bg-white/[0.05]">
+              <button type="button" onClick={() => setShowScheduleModal(true)} className="w-full rounded-[22px] bg-[var(--ls-surface2)] p-4 text-left transition hover:bg-[var(--ls-surface2)]">
                 <p className="text-sm font-semibold text-white">Modifier le RDV</p>
                 <p className="mt-1 text-[12px] text-[var(--ls-text-muted)]">Date, heure ou type</p>
               </button>
@@ -611,7 +611,7 @@ export function ClientDetailPage() {
               </div>
               <div className="space-y-3">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-[#B0B4C4]">
+                  <label className="text-sm font-medium text-[var(--ls-text-muted)]">
                     Nouveau responsable du dossier
                   </label>
                   <select
@@ -695,7 +695,7 @@ export function ClientDetailPage() {
             </div>
             <div className="space-y-3">
               {clientActivity.map((entry) => (
-                <div key={entry.id} className="rounded-[20px] bg-white/[0.03] px-4 py-4">
+                <div key={entry.id} className="rounded-[20px] bg-[var(--ls-surface2)] px-4 py-4">
                   <p className="text-sm font-semibold text-white">{entry.summary}</p>
                   {entry.detail ? (
                     <p className="mt-1 text-sm leading-6 text-[var(--ls-text-muted)]">{entry.detail}</p>
@@ -706,7 +706,7 @@ export function ClientDetailPage() {
                 </div>
               ))}
               {!clientActivity.length ? (
-                <div className="rounded-[20px] bg-white/[0.03] px-4 py-4 text-sm text-[var(--ls-text-muted)]">
+                <div className="rounded-[20px] bg-[var(--ls-surface2)] px-4 py-4 text-sm text-[var(--ls-text-muted)]">
                   Les changements de responsable, de rendez-vous et de bilans apparaitront ici.
                 </div>
               ) : null}
@@ -792,7 +792,7 @@ export function ClientDetailPage() {
           {client.assessments.length > 1 && (
             <div>
               <p className="eyebrow-label mb-3">Historique des mesures</p>
-              <div className="rounded-[14px] border border-white/[0.07] overflow-hidden">
+              <div className="rounded-[14px] border border-[var(--ls-border)] overflow-hidden">
                 {client.assessments.filter(a => a.bodyScan?.weight).map((a, i) => {
                   const scan = a.bodyScan;
                   return (
@@ -810,7 +810,7 @@ export function ClientDetailPage() {
           )}
 
           {!latestBodyScan && (
-            <div className="rounded-[20px] bg-white/[0.03] px-6 py-10 text-center">
+            <div className="rounded-[20px] bg-[var(--ls-surface2)] px-6 py-10 text-center">
               <div style={{ fontSize: 32, marginBottom: 12 }}>⚖️</div>
               <p className="text-sm text-[var(--ls-text-muted)]">Aucun body scan enregistré</p>
               <Link
@@ -872,7 +872,7 @@ export function ClientDetailPage() {
               {latestAssessment && latestAssessment.id ? (
                 <LinkButton to={`/clients/${client.id}/assessments/${latestAssessment.id}/edit`} label="Modifier le dernier bilan" hint="Compléter une section oubliée ou corriger les valeurs" />
               ) : null}
-              <button type="button" onClick={() => setShowScheduleModal(true)} className="w-full rounded-[22px] bg-white/[0.03] p-4 text-left transition hover:bg-white/[0.05]">
+              <button type="button" onClick={() => setShowScheduleModal(true)} className="w-full rounded-[22px] bg-[var(--ls-surface2)] p-4 text-left transition hover:bg-[var(--ls-surface2)]">
                 <p className="text-sm font-semibold text-white">Modifier le prochain rendez-vous</p>
                 <p className="mt-1 text-sm leading-6 text-[var(--ls-text-muted)]">Ajuster la date, l'heure ou le type de suivi</p>
               </button>
@@ -899,12 +899,12 @@ export function ClientDetailPage() {
               {pvRecord && <SummaryRow label="Dernière commande" value={formatDate(pvRecord.lastOrderDate)} />}
             </div>
             {canDeleteClient && (
-              <div className="mt-3 pt-3 border-t border-white/[0.06]">
+              <div className="mt-3 pt-3 border-t border-[var(--ls-border)]">
                 <DangerActionButton label="Supprimer ce dossier" hint="Retirer ce client et ses données" onClick={handleDeleteClient} />
               </div>
             )}
             {canReassignClient && (
-              <div className="mt-4 rounded-[18px] border border-white/[0.06] bg-white/[0.02] p-4">
+              <div className="mt-4 rounded-[18px] border border-[var(--ls-border)] bg-white/[0.02] p-4">
                 <p className="text-[11px] text-[var(--ls-text-hint)] uppercase tracking-wider mb-3">Transférer le dossier</p>
                 <select value={nextOwnerId} onChange={(e) => setNextOwnerId(e.target.value)} className="mb-3">
                   {assignableOwners.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
@@ -933,7 +933,7 @@ export function ClientDetailPage() {
 
 function SummaryRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex items-center justify-between gap-3 rounded-[22px] bg-white/[0.03] px-4 py-3">
+    <div className="flex items-center justify-between gap-3 rounded-[22px] bg-[var(--ls-surface2)] px-4 py-3">
       <span className="text-sm text-[var(--ls-text-muted)]">{label}</span>
       <span className="text-right text-sm font-semibold text-white">{value}</span>
     </div>
@@ -952,7 +952,7 @@ function SummaryStatusRow({
   detail: string;
 }) {
   return (
-    <div className="flex items-center justify-between gap-3 rounded-[22px] bg-white/[0.03] px-4 py-3">
+    <div className="flex items-center justify-between gap-3 rounded-[22px] bg-[var(--ls-surface2)] px-4 py-3">
       <span className="text-sm text-[var(--ls-text-muted)]">{label}</span>
       <div className="flex items-center gap-3">
         <span className="text-sm text-[var(--ls-text-muted)]">{detail}</span>
@@ -1021,11 +1021,11 @@ function StartingPointOverviewCard({
         <div>
           <p className="eyebrow-label">Repère de départ</p>
           <p className="mt-3 text-2xl text-white">Départ vs aujourd'hui</p>
-          <p className="mt-2 text-sm leading-6 text-[#B0B4C4]">
+          <p className="mt-2 text-sm leading-6 text-[var(--ls-text-muted)]">
             Ce bloc aide à relire tout de suite l&apos;évolution depuis le premier bilan.
           </p>
         </div>
-        <div className={`rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-sm font-medium ${weightTone}`}>
+        <div className={`rounded-full border border-white/10 bg-[var(--ls-surface2)] px-4 py-2 text-sm font-medium ${weightTone}`}>
           {weightDelta === 0 ? "Poids stable" : `${weightDelta > 0 ? "+" : ""}${weightDelta} kg depuis le départ`}
         </div>
       </div>
@@ -1122,7 +1122,7 @@ function LinkButton({
     <Link
       to={to}
       style={{ display: 'block', background: 'var(--ls-surface)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12, padding: '14px 16px', textDecoration: 'none', position: 'relative', overflow: 'hidden', transition: 'border-color 0.15s' }}
-      onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.14)'}
+      onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--ls-border2)'}
       onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--ls-border)'}
     >
       <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 3, background: '#C9A84C', borderRadius: '3px 0 0 3px' }} />

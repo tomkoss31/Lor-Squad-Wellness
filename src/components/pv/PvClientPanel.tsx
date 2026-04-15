@@ -98,7 +98,7 @@ export function PvClientPanel({
         <div className="flex flex-wrap items-center gap-2">
           <Link
             to={`/clients/${record.clientId}`}
-            className="inline-flex min-h-[38px] items-center justify-center rounded-full bg-white/[0.04] px-4 py-2 text-xs font-semibold text-white transition hover:bg-white/[0.08]"
+            className="inline-flex min-h-[38px] items-center justify-center rounded-full bg-[var(--ls-surface2)] px-4 py-2 text-xs font-semibold text-white transition hover:bg-white/[0.08]"
           >
             Ouvrir dossier client
           </Link>
@@ -140,7 +140,7 @@ export function PvClientPanel({
             return (
               <div
                 key={product.id}
-                className="rounded-[22px] border border-white/8 bg-white/[0.03] px-4 py-3.5"
+                className="rounded-[22px] border border-white/8 bg-[var(--ls-surface2)] px-4 py-3.5"
               >
                 <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                   <div className="min-w-0 md:max-w-[52%]">
@@ -162,7 +162,7 @@ export function PvClientPanel({
                       <button
                         type="button"
                         onClick={() => (isEditing ? cancelEditing() : startEditing(product))}
-                        className="inline-flex min-h-[36px] items-center justify-center rounded-full bg-white/[0.04] px-3.5 py-2 text-xs font-semibold text-white transition hover:bg-white/[0.08]"
+                        className="inline-flex min-h-[36px] items-center justify-center rounded-full bg-[var(--ls-surface2)] px-3.5 py-2 text-xs font-semibold text-white transition hover:bg-white/[0.08]"
                       >
                         {isEditing ? "Fermer" : "Modifier"}
                       </button>
@@ -219,7 +219,7 @@ export function PvClientPanel({
                       <button
                         type="button"
                         onClick={cancelEditing}
-                        className="inline-flex min-h-[42px] items-center justify-center rounded-full border border-white/10 px-4 py-2 text-sm font-semibold text-[var(--ls-text)] transition hover:bg-white/[0.04]"
+                        className="inline-flex min-h-[42px] items-center justify-center rounded-full border border-white/10 px-4 py-2 text-sm font-semibold text-[var(--ls-text)] transition hover:bg-[var(--ls-surface2)]"
                       >
                         Annuler
                       </button>
@@ -252,22 +252,22 @@ export function PvClientPanel({
               key={transaction.id}
               className="grid gap-2 rounded-[18px] bg-[var(--ls-surface2)] px-4 py-2.5 md:grid-cols-[100px_1fr_80px_84px_84px]"
             >
-              <div className="text-[13px] text-[#B0B4C4]">{formatDate(transaction.date)}</div>
+              <div className="text-[13px] text-[var(--ls-text-muted)]">{formatDate(transaction.date)}</div>
               <div>
                 <p className="text-[13px] font-semibold text-white">
                   {getPvTypeLabel(transaction.type)} - {transaction.productName}
                 </p>
                 <p className="mt-0.5 text-[11px] text-[var(--ls-text-muted)]">{transaction.note}</p>
               </div>
-              <div className="text-[13px] text-[#B0B4C4]">{transaction.quantity} un.</div>
+              <div className="text-[13px] text-[var(--ls-text-muted)]">{transaction.quantity} un.</div>
               <div className="text-[13px] font-semibold text-white">{transaction.pv} PV</div>
-              <div className="text-[13px] text-[#B0B4C4]">{transaction.price.toFixed(2)} EUR</div>
+              <div className="text-[13px] text-[var(--ls-text-muted)]">{transaction.price.toFixed(2)} EUR</div>
             </div>
           ))}
         </div>
       </section>
 
-      <section className="rounded-[24px] bg-white/[0.03] p-5">
+      <section className="rounded-[24px] bg-[var(--ls-surface2)] p-5">
         <p className="eyebrow-label">Lecture rapide</p>
         <div className="mt-4 grid gap-3 md:grid-cols-2">
           <PanelFact label="Demarre il y a" value={`${record.daysSinceStart} jours`} />
@@ -298,7 +298,7 @@ function EditorField({
 }) {
   return (
     <div className="space-y-2">
-      <label className="text-sm font-medium text-[#B0B4C4]">{label}</label>
+      <label className="text-sm font-medium text-[var(--ls-text-muted)]">{label}</label>
       {children}
     </div>
   );

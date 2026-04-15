@@ -119,10 +119,10 @@ export function PlateGuideCard({
           </div>
 
           <div className="max-w-[22rem] px-1 text-center xl:text-left">
-            <p className="text-sm leading-7 text-[#B0B4C4]">{subtitle}</p>
+            <p className="text-sm leading-7 text-[var(--ls-text-muted)]">{subtitle}</p>
           </div>
 
-          <div className="rounded-[22px] border border-white/10 bg-white/[0.04] px-5 py-4">
+          <div className="rounded-[22px] border border-white/10 bg-[var(--ls-surface2)] px-5 py-4">
             <p className="text-xs uppercase tracking-[0.2em] text-[var(--ls-text-hint)]">
               Bons lipides
             </p>
@@ -162,7 +162,7 @@ export function PlateGuideCard({
                     {segment.share}%
                   </p>
                 </div>
-                <p className="mt-5 max-w-[18rem] text-base leading-8 text-[#B0B4C4]">
+                <p className="mt-5 max-w-[18rem] text-base leading-8 text-[var(--ls-text-muted)]">
                   {segment.note}
                 </p>
               </div>
@@ -176,16 +176,16 @@ export function PlateGuideCard({
                 {portionGuides.map((guide) => (
                   <div
                     key={guide.label}
-                    className="flex items-center justify-between gap-3 rounded-[18px] bg-white/[0.04] px-4 py-3.5 text-sm text-[var(--ls-text)]"
+                    className="flex items-center justify-between gap-3 rounded-[18px] bg-[var(--ls-surface2)] px-4 py-3.5 text-sm text-[var(--ls-text)]"
                   >
                     <span className="text-base font-semibold text-white">{guide.label}</span>
-                    <span className="text-right text-base text-[#B0B4C4]">{guide.value}</span>
+                    <span className="text-right text-base text-[var(--ls-text-muted)]">{guide.value}</span>
                   </div>
                 ))}
               </div>
             </div>
 
-            <div className="rounded-[22px] border border-white/10 bg-white/[0.03] px-5 py-4">
+            <div className="rounded-[22px] border border-white/10 bg-[var(--ls-surface2)] px-5 py-4">
               <p className="eyebrow-label">Exemples simples</p>
               <div className="mt-4 grid gap-3">
                 {mainExamples.map((group) => (

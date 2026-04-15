@@ -36,9 +36,9 @@ export function AccentFrame({
           </p>
         </div>
         <div className="grid grid-cols-3 gap-2">
-          <div className="h-12 rounded-2xl bg-white/[0.04]" />
-          <div className="h-12 rounded-2xl bg-white/[0.07]" />
-          <div className="h-12 rounded-2xl bg-white/[0.04]" />
+          <div className="h-12 rounded-2xl bg-[var(--ls-surface2)]" />
+          <div className="h-12 rounded-2xl bg-[var(--ls-surface2)]" />
+          <div className="h-12 rounded-2xl bg-[var(--ls-surface2)]" />
         </div>
         <p className="text-sm leading-6 text-[var(--ls-text-muted)]">{subtitle}</p>
       </div>

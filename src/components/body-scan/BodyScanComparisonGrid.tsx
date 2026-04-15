@@ -20,7 +20,7 @@ export function BodyScanComparisonGrid({ items }: BodyScanComparisonGridProps) {
       {items.map((item) => (
         <div
           key={item.label}
-          className="rounded-[22px] border border-white/10 bg-white/[0.03] p-4"
+          className="rounded-[22px] border border-white/10 bg-[var(--ls-surface2)] p-4"
         >
           <div className="flex items-start justify-between gap-3">
             <div>

@@ -9,7 +9,7 @@ export function MorningRoutineCard() {
         <h3 className="mt-2 text-[1.9rem] leading-none text-white md:text-[2.1rem]">
           Routine matin Lor&apos;Squad
         </h3>
-        <p className="mt-3 text-[14px] leading-7 text-[#B0B4C4]">
+        <p className="mt-3 text-[14px] leading-7 text-[var(--ls-text-muted)]">
           Une routine simple, régulière et cohérente avec l&apos;objectif du client.
         </p>
       </div>
@@ -43,7 +43,7 @@ export function MorningRoutineCard() {
         {["Plus de protéines", "Meilleure régularité", "Plus facile à tenir"].map((benefit) => (
           <div
             key={benefit}
-            className="rounded-full border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-[var(--ls-text)]"
+            className="rounded-full border border-white/10 bg-[var(--ls-surface2)] px-4 py-3 text-sm text-[var(--ls-text)]"
           >
             {benefit}
           </div>
@@ -55,9 +55,9 @@ export function MorningRoutineCard() {
 
 function RoutinePointCard({ title, detail }: { title: string; detail: string }) {
   return (
-    <div className="rounded-[22px] border border-white/10 bg-white/[0.04] p-4 md:p-5">
+    <div className="rounded-[22px] border border-white/10 bg-[var(--ls-surface2)] p-4 md:p-5">
       <p className="text-[1.02rem] font-semibold leading-none text-white">{title}</p>
-      <p className="mt-2 text-sm leading-6 text-[#B0B4C4]">{detail}</p>
+      <p className="mt-2 text-sm leading-6 text-[var(--ls-text-muted)]">{detail}</p>
     </div>
   );
 }

@@ -71,7 +71,7 @@ export function RecommendationsPage() {
                   ? `${pendingCount} recommandation${pendingCount > 1 ? "s" : ""} restent à reprendre.`
                   : "Les recommandations visibles sont déjà reprises."}
               </h2>
-              <p className="mt-2 text-sm leading-6 text-[#B0B4C4]">
+              <p className="mt-2 text-sm leading-6 text-[var(--ls-text-muted)]">
                 Tu ouvres le dossier, tu vois ce qui reste à faire, puis tu repars sur l’action.
               </p>
             </div>
@@ -121,7 +121,7 @@ export function RecommendationsPage() {
                     <Link
                       key={`${item.id}-${item.assessmentId}`}
                       to={`/clients/${item.id}`}
-                      className="rounded-[24px] bg-white/[0.03] p-4 transition hover:bg-white/[0.05]"
+                      className="rounded-[24px] bg-[var(--ls-surface2)] p-4 transition hover:bg-[var(--ls-surface2)]"
                     >
                       <div className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr_0.7fr] xl:items-center">
                         <div className="space-y-2">
@@ -183,19 +183,19 @@ function RecommendationMetricCard({
   tone: "blue" | "green" | "amber";
 }) {
   return (
-    <div className="rounded-[24px] bg-white/[0.03] px-5 py-4">
+    <div className="rounded-[24px] bg-[var(--ls-surface2)] px-5 py-4">
       <div className="flex items-center justify-between gap-3">
         <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-[var(--ls-text-hint)]">{label}</p>
         <StatusBadge label={String(value)} tone={tone} />
       </div>
-      <p className="mt-3 text-sm leading-6 text-[#B0B4C4]">{hint}</p>
+      <p className="mt-3 text-sm leading-6 text-[var(--ls-text-muted)]">{hint}</p>
     </div>
   );
 }
 
 function CompactReminder({ title, text }: { title: string; text: string }) {
   return (
-    <div className="rounded-[22px] bg-white/[0.03] px-4 py-4">
+    <div className="rounded-[22px] bg-[var(--ls-surface2)] px-4 py-4">
       <p className="text-sm font-semibold text-white">{title}</p>
       <p className="mt-2 text-sm leading-6 text-[var(--ls-text-muted)]">{text}</p>
     </div>

@@ -25,7 +25,7 @@ export function ProgramCard({ program, selected = false, onSelect }: ProgramCard
 
         <div className="space-y-3">
           <h3 className="text-[1.75rem] leading-none text-white">{program.title}</h3>
-          <p className="text-sm leading-6 text-[#B0B4C4]">{program.summary}</p>
+          <p className="text-sm leading-6 text-[var(--ls-text-muted)]">{program.summary}</p>
         </div>
 
         <div className="grid gap-2">
@@ -48,7 +48,7 @@ export function ProgramCard({ program, selected = false, onSelect }: ProgramCard
               {program.composition.map((item) => (
                 <span
                   key={item}
-                  className="rounded-full bg-white/[0.04] px-3 py-1.5 text-xs text-[var(--ls-text)]"
+                  className="rounded-full bg-[var(--ls-surface2)] px-3 py-1.5 text-xs text-[var(--ls-text)]"
                 >
                   {item}
                 </span>

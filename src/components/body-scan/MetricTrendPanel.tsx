@@ -63,7 +63,7 @@ export function MetricTrendPanel({
     .join(" ");
 
   return (
-    <div className="md:col-span-2 xl:col-span-3 rounded-[24px] bg-white/[0.04] p-5">
+    <div className="md:col-span-2 xl:col-span-3 rounded-[24px] bg-[var(--ls-surface2)] p-5">
       <div className="flex items-center justify-between gap-3">
         <div>
           <p className="text-sm font-semibold text-white">{title}</p>

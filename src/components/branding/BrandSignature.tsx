@@ -23,7 +23,7 @@ export function BrandSignature({ variant = "inline" }: BrandSignatureProps) {
 
   if (variant === "stacked") {
     return (
-      <div className="space-y-4 rounded-[24px] bg-white/[0.03] p-5">
+      <div className="space-y-4 rounded-[24px] bg-[var(--ls-surface2)] p-5">
         <div className="flex items-center gap-4">
           <img
             src={blasonLogo}
