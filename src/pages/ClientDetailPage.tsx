@@ -1005,16 +1005,18 @@ function StartingPointOverviewCard({
 }) {
   const weightDelta = Number((currentWeight - startWeight).toFixed(1));
   const bodyFatDelta = Number((currentBodyFat - startBodyFat).toFixed(1));
-  const weightTone =
+  const goodTrend =
     weightDelta === 0
-      ? "text-[var(--ls-text)]"
+      ? null
       : objective === "weight-loss"
         ? weightDelta < 0
-          ? "text-[#2DD4BF]"
-          : "text-amber-200"
-        : weightDelta > 0
-          ? "text-[#2DD4BF]"
-          : "text-amber-200";
+        : weightDelta > 0;
+  const deltaAccent =
+    goodTrend === null
+      ? { rgb: "148,163,184", hex: "var(--ls-text-muted)" }
+      : goodTrend
+        ? { rgb: "45,212,191", hex: "var(--ls-teal)" }
+        : { rgb: "220,38,38", hex: "var(--ls-coral)" };
 
   return (
     <div className="rounded-[28px] bg-[linear-gradient(180deg,rgba(15,23,42,0.28),rgba(15,23,42,0.52))] p-5">
@@ -1026,7 +1028,17 @@ function StartingPointOverviewCard({
             Ce bloc aide à relire tout de suite l&apos;évolution depuis le premier bilan.
           </p>
         </div>
-        <div className={`rounded-full border border-white/10 bg-[var(--ls-surface2)] px-4 py-2 text-sm font-medium ${weightTone}`}>
+        <div
+          style={{
+            borderRadius: 999,
+            padding: '8px 16px',
+            fontSize: 14,
+            fontWeight: 600,
+            background: `rgba(${deltaAccent.rgb},0.15)`,
+            border: `1px solid rgba(${deltaAccent.rgb},0.35)`,
+            color: deltaAccent.hex,
+          }}
+        >
           {weightDelta === 0 ? "Poids stable" : `${weightDelta > 0 ? "+" : ""}${weightDelta} kg depuis le départ`}
         </div>
       </div>
@@ -1068,22 +1080,26 @@ function OverviewMetricCard({
   tone: "blue" | "green" | "slate";
   highlighted?: boolean;
 }) {
-  const toneClass =
+  const accent =
     tone === "green"
-      ? "bg-[rgba(45,212,191,0.07)] ring-1 ring-[rgba(45,212,191,0.12)]"
+      ? { rgb: "45,212,191", hex: "var(--ls-teal)" }
       : tone === "blue"
-        ? "bg-[rgba(201,168,76,0.07)] ring-1 ring-[rgba(201,168,76,0.12)]"
-        : "bg-[var(--ls-bg)]/80 ring-1 ring-white/6";
+        ? { rgb: "201,168,76", hex: "var(--ls-gold)" }
+        : { rgb: "148,163,184", hex: "var(--ls-text-muted)" };
 
   return (
     <div
-      className={`rounded-[24px] p-4 ${toneClass} ${
-        highlighted ? "shadow-[0_0_30px_rgba(52,211,153,0.08)]" : ""
-      }`}
+      style={{
+        borderRadius: 24,
+        padding: 16,
+        background: `rgba(${accent.rgb},0.12)`,
+        border: `1px solid rgba(${accent.rgb},0.28)`,
+        boxShadow: highlighted ? `0 4px 18px rgba(${accent.rgb},0.18)` : 'none',
+      }}
     >
-      <p className="text-[11px] font-medium text-[var(--ls-text-hint)]">{label}</p>
-      <p className="mt-3 text-2xl text-white">{value}</p>
-      <p className="mt-2 text-sm text-[var(--ls-text-muted)]">{note}</p>
+      <p style={{ fontSize: 11, fontWeight: 600, color: accent.hex, letterSpacing: '0.02em', textTransform: 'uppercase' }}>{label}</p>
+      <p style={{ marginTop: 12, fontSize: 24, fontWeight: 600, color: 'var(--ls-text)' }}>{value}</p>
+      <p style={{ marginTop: 8, fontSize: 13, color: 'var(--ls-text-muted)' }}>{note}</p>
     </div>
   );
 }
