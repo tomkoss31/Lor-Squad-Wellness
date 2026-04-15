@@ -186,49 +186,47 @@ function GaugeLegendChip({
   tone: "blue" | "green" | "amber" | "red";
   active: boolean;
 }) {
-  const palette =
+  const accent =
     tone === "green"
-      ? {
-          base: "bg-[rgba(45,212,191,0.08)] ring-1 ring-[rgba(45,212,191,0.12)]",
-          active:
-            "bg-[rgba(45,212,191,0.18)] ring-1 ring-[rgba(45,212,191,0.3)] shadow-[0_0_0_1px_rgba(45,212,191,0.12),0_12px_28px_rgba(45,212,191,0.1)]",
-          label: "text-[#2DD4BF]/90"
-        }
+      ? { rgb: "45,212,191", hex: "var(--ls-teal)" }
       : tone === "blue"
-        ? {
-            base: "bg-[rgba(201,168,76,0.08)] ring-1 ring-[rgba(201,168,76,0.12)]",
-            active:
-              "bg-[rgba(201,168,76,0.18)] ring-1 ring-[rgba(201,168,76,0.3)] shadow-[0_0_0_1px_rgba(201,168,76,0.12),0_12px_28px_rgba(201,168,76,0.1)]",
-            label: "text-[#2DD4BF]/90"
-          }
+        ? { rgb: "201,168,76", hex: "var(--ls-gold)" }
         : tone === "amber"
-          ? {
-              base: "bg-amber-300/[0.08] ring-1 ring-amber-200/12",
-              active:
-                "bg-amber-300/[0.18] ring-1 ring-amber-200/28 shadow-[0_0_0_1px_rgba(252,211,77,0.12),0_12px_28px_rgba(245,158,11,0.12)]",
-              label: "text-amber-50/90"
-            }
-          : {
-              base: "bg-rose-400/[0.08] ring-1 ring-rose-300/12",
-              active:
-                "bg-rose-400/[0.18] ring-1 ring-rose-300/28 shadow-[0_0_0_1px_rgba(251,113,133,0.12),0_12px_28px_rgba(244,63,94,0.12)]",
-              label: "text-rose-50/90"
-            };
+          ? { rgb: "245,158,11", hex: "#F59E0B" }
+          : { rgb: "251,113,133", hex: "var(--ls-coral)" };
 
   return (
     <div
-      className={`rounded-[18px] px-3 py-3 ${
-        active ? palette.active : palette.base
-      }`}
+      style={{
+        borderRadius: 18,
+        padding: '12px 14px',
+        background: active ? `rgba(${accent.rgb},0.18)` : `rgba(${accent.rgb},0.08)`,
+        border: active ? `1.5px solid rgba(${accent.rgb},0.5)` : `1px solid rgba(${accent.rgb},0.2)`,
+        boxShadow: active ? `0 4px 14px rgba(${accent.rgb},0.18)` : 'none',
+        transition: 'all 0.15s',
+      }}
     >
       <p
-        className={`text-[11px] font-medium tracking-[0.02em] ${
-          active ? palette.label : "text-[var(--ls-text-muted)]"
-        }`}
+        style={{
+          fontSize: 11,
+          fontWeight: 600,
+          letterSpacing: '0.02em',
+          color: accent.hex,
+          opacity: active ? 1 : 0.75,
+        }}
       >
         {label}
       </p>
-      <p className="mt-2 text-sm font-medium text-white">{value}</p>
+      <p
+        style={{
+          marginTop: 8,
+          fontSize: 14,
+          fontWeight: 600,
+          color: active ? accent.hex : 'var(--ls-text)',
+        }}
+      >
+        {value}
+      </p>
     </div>
   );
 }
