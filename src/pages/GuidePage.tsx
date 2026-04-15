@@ -218,7 +218,7 @@ function RendezVousGuide() {
             {shakePoints.map((point) => (
               <div
                 key={point}
-                className="rounded-[22px] border border-white/10 bg-[#0B0D11]/80 px-5 py-4 text-sm leading-7 text-[#F0EDE8]"
+                className="rounded-[22px] border border-white/10 bg-[var(--ls-bg)]/80 px-5 py-4 text-sm leading-7 text-[var(--ls-text)]"
               >
                 {point}
               </div>
@@ -250,7 +250,7 @@ function RendezVousGuide() {
                 className="rounded-[22px] border border-white/10 bg-white/[0.03] px-5 py-4"
               >
                 <p className="text-lg font-semibold text-white">{item.title}</p>
-                <p className="mt-2 text-sm leading-6 text-[#7A8099]">{item.detail}</p>
+                <p className="mt-2 text-sm leading-6 text-[var(--ls-text-muted)]">{item.detail}</p>
               </div>
             ))}
           </div>
@@ -270,7 +270,7 @@ function RendezVousGuide() {
           {usefulPhrases.map((phrase) => (
             <div
               key={phrase}
-              className="rounded-[22px] border border-white/10 bg-[#0B0D11]/80 px-5 py-4 text-sm leading-7 text-[#F0EDE8]"
+              className="rounded-[22px] border border-white/10 bg-[var(--ls-bg)]/80 px-5 py-4 text-sm leading-7 text-[var(--ls-text)]"
             >
               {phrase}
             </div>
@@ -299,7 +299,7 @@ function RecommendationGuide() {
           {recommendationHighlights.map((point) => (
             <div
               key={point}
-              className="rounded-[22px] border border-white/10 bg-white/[0.03] px-5 py-4 text-sm leading-7 text-[#F0EDE8]"
+              className="rounded-[22px] border border-white/10 bg-white/[0.03] px-5 py-4 text-sm leading-7 text-[var(--ls-text)]"
             >
               {point}
             </div>
@@ -324,7 +324,7 @@ function RecommendationGuide() {
                 className="rounded-[22px] border border-white/10 bg-white/[0.03] px-5 py-4"
               >
                 <p className="text-lg font-semibold text-white">{item.title}</p>
-                <p className="mt-2 text-sm leading-6 text-[#7A8099]">{item.detail}</p>
+                <p className="mt-2 text-sm leading-6 text-[var(--ls-text-muted)]">{item.detail}</p>
               </div>
             ))}
           </div>
@@ -351,7 +351,7 @@ function RecommendationGuide() {
             {recommendationRules.map((rule) => (
               <div
                 key={rule}
-                className="rounded-[22px] border border-white/10 bg-[#0B0D11]/80 px-5 py-4 text-sm leading-7 text-[#F0EDE8]"
+                className="rounded-[22px] border border-white/10 bg-[var(--ls-bg)]/80 px-5 py-4 text-sm leading-7 text-[var(--ls-text)]"
               >
                 {rule}
               </div>
@@ -390,7 +390,7 @@ function TabButton({
       className={`rounded-full px-4 py-3 text-sm font-semibold transition ${
         active
           ? "bg-white text-[#0B0D11]"
-          : "bg-white/[0.04] text-[#F0EDE8] hover:bg-white/[0.08]"
+          : "bg-white/[0.04] text-[var(--ls-text)] hover:bg-white/[0.08]"
       }`}
     >
       {label}
@@ -410,12 +410,12 @@ function GuideSectionCard({
   return (
     <div className="rounded-[26px] bg-white/[0.03] p-5">
       <p className="text-xl font-semibold text-white">{title}</p>
-      <p className="mt-2 text-sm leading-6 text-[#7A8099]">{subtitle}</p>
+      <p className="mt-2 text-sm leading-6 text-[var(--ls-text-muted)]">{subtitle}</p>
       <div className="mt-4 grid gap-2">
         {points.map((point) => (
           <div
             key={point}
-            className="rounded-[18px] bg-[#0B0D11]/60 px-4 py-3 text-sm leading-6 text-[#F0EDE8]"
+            className="rounded-[18px] bg-[var(--ls-bg)]/60 px-4 py-3 text-sm leading-6 text-[var(--ls-text)]"
           >
             {point}
           </div>

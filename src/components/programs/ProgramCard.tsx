@@ -32,7 +32,7 @@ export function ProgramCard({ program, selected = false, onSelect }: ProgramCard
           {program.benefits.slice(0, 3).map((benefit) => (
             <div
               key={benefit}
-              className="rounded-[18px] bg-[#0B0D11]/60 px-4 py-3 text-sm text-[#F0EDE8]"
+              className="rounded-[18px] bg-[var(--ls-bg)]/60 px-4 py-3 text-sm text-[var(--ls-text)]"
             >
               {benefit}
             </div>
@@ -41,14 +41,14 @@ export function ProgramCard({ program, selected = false, onSelect }: ProgramCard
 
         {program.composition?.length ? (
           <div className="space-y-3">
-            <p className="text-[10px] uppercase tracking-[0.18em] text-[#4A5068]">
+            <p className="text-[10px] uppercase tracking-[0.18em] text-[var(--ls-text-hint)]">
               Contenu court
             </p>
             <div className="flex flex-wrap gap-2">
               {program.composition.map((item) => (
                 <span
                   key={item}
-                  className="rounded-full bg-white/[0.04] px-3 py-1.5 text-xs text-[#F0EDE8]"
+                  className="rounded-full bg-white/[0.04] px-3 py-1.5 text-xs text-[var(--ls-text)]"
                 >
                   {item}
                 </span>

@@ -22,7 +22,7 @@ export function Button({
         variant === "secondary" &&
           "border border-white/[0.1] bg-white/[0.04] text-white hover:bg-white/[0.08]",
         variant === "ghost" &&
-          "bg-transparent text-[#7A8099] hover:text-white hover:bg-white/[0.04]",
+          "bg-transparent text-[var(--ls-text-muted)] hover:text-white hover:bg-white/[0.04]",
         className
       )}
       {...props}

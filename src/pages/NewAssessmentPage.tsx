@@ -1141,7 +1141,7 @@ export function NewAssessmentPage() {
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="font-display text-xl text-white">{panelTitle}</p>
-          <p className="mt-2 text-sm leading-6 text-[#7A8099]">{panelIntro}</p>
+          <p className="mt-2 text-sm leading-6 text-[var(--ls-text-muted)]">{panelIntro}</p>
         </div>
         <StatusBadge label={`Étape ${currentStep + 1}`} tone="blue" />
       </div>
@@ -1150,7 +1150,7 @@ export function NewAssessmentPage() {
           <FocusPanelItem key={point} text={point} highlighted={index === 0} />
         ))}
       </div>
-      <div className="rounded-[18px] bg-[#0B0D11]/60 px-4 py-3 text-sm leading-6 text-[#F0EDE8]">
+      <div className="rounded-[18px] bg-[var(--ls-bg)]/60 px-4 py-3 text-sm leading-6 text-[var(--ls-text)]">
         {prompts[0]}
       </div>
       {currentStep === 0 ? (
@@ -1174,7 +1174,7 @@ export function NewAssessmentPage() {
         <div className="flex items-start justify-between gap-3">
           <div>
             <p className="font-display text-2xl text-white">{panelTitle}</p>
-            <p className="mt-2 text-sm leading-6 text-[#7A8099]">{panelIntro}</p>
+            <p className="mt-2 text-sm leading-6 text-[var(--ls-text-muted)]">{panelIntro}</p>
           </div>
           <StatusBadge label="Aide terrain" tone="blue" />
         </div>
@@ -1193,7 +1193,7 @@ export function NewAssessmentPage() {
               onChange={(event) => update("referredByName", event.target.value)}
               placeholder="Exemple : Sylvie"
             />
-            <p className="text-xs leading-6 text-[#7A8099]">
+            <p className="text-xs leading-6 text-[var(--ls-text-muted)]">
               Note ici la personne qui a amene ce client pour garder le lien de recommandation sans
               surcharger l&apos;ecran principal.
             </p>
@@ -1206,7 +1206,7 @@ export function NewAssessmentPage() {
           <p className="eyebrow-label">A dire simplement</p>
           <div className="grid gap-2">
             {prompts.slice(0, 2).map((prompt) => (
-              <div key={prompt} className="rounded-[20px] bg-[#0B0D11]/60 px-4 py-3 text-sm text-[#F0EDE8]">
+              <div key={prompt} className="rounded-[20px] bg-[var(--ls-bg)]/60 px-4 py-3 text-sm text-[var(--ls-text)]">
                 {prompt}
               </div>
             ))}
@@ -1303,7 +1303,7 @@ export function NewAssessmentPage() {
                         ))}
                       </select>
                       {!isAdmin(currentUser) ? (
-                        <p className="text-xs leading-6 text-[#7A8099]">
+                        <p className="text-xs leading-6 text-[var(--ls-text-muted)]">
                           Tu peux attribuer le dossier a toi-meme ou a un distributeur de ton equipe.
                         </p>
                       ) : null}
@@ -1425,16 +1425,16 @@ export function NewAssessmentPage() {
                   const qColors: Record<string, string> = { optimal: '#2DD4BF', correct: '#C9A84C', insuffisant: '#FB7185' }
                   const color = qColors[quality]
                   return (
-                    <div style={{ background: '#13161C', border: `1px solid ${color}30`, borderRadius: 12, padding: 14, display: 'flex', alignItems: 'center', gap: 14 }}>
+                    <div style={{ background: 'var(--ls-surface)', border: `1px solid ${color}30`, borderRadius: 12, padding: 14, display: 'flex', alignItems: 'center', gap: 14 }}>
                       <div style={{ textAlign: 'center', flexShrink: 0 }}>
                         <div style={{ fontFamily: 'Syne, sans-serif', fontSize: 28, fontWeight: 800, color, lineHeight: 1 }}>{hours.toFixed(1)}h</div>
-                        <div style={{ fontSize: 10, color: '#4A5068', marginTop: 2 }}>de sommeil</div>
+                        <div style={{ fontSize: 10, color: 'var(--ls-text-hint)', marginTop: 2 }}>de sommeil</div>
                       </div>
                       <div>
                         <div style={{ fontSize: 13, fontWeight: 600, color, marginBottom: 2 }}>
                           {quality === 'optimal' ? 'Sommeil optimal' : quality === 'correct' ? 'Sommeil correct' : 'Sommeil insuffisant'}
                         </div>
-                        <div style={{ fontSize: 11, color: '#7A8099', lineHeight: 1.5 }}>
+                        <div style={{ fontSize: 11, color: 'var(--ls-text-muted)', lineHeight: 1.5 }}>
                           {quality === 'optimal' ? 'Entre 7h et 9h — idéal pour la récupération et la gestion du poids.'
                             : quality === 'correct' ? 'Correct mais en dessous des recommandations. Night Mode peut aider.'
                             : 'Moins de 6h — impacte la prise de poids et la récupération. Night Mode recommandé.'}
@@ -1790,7 +1790,7 @@ export function NewAssessmentPage() {
                     <p className="text-xl text-white">
                       {recommendedProgram?.title ?? "Base a confirmer"}
                     </p>
-                    <p className="mt-2 text-sm leading-6 text-[#F0EDE8]">
+                    <p className="mt-2 text-sm leading-6 text-[var(--ls-text)]">
                       {recommendationPlan.recommendedProgramReason}
                     </p>
                   </div>
@@ -1806,7 +1806,7 @@ export function NewAssessmentPage() {
                 ))}
               </div>
                 {boosterPrograms.length ? (
-                  <div className="rounded-[24px] border border-white/10 bg-[#0B0D11]/80 p-5">
+                  <div className="rounded-[24px] border border-white/10 bg-[var(--ls-bg)]/80 p-5">
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
                       <p className="eyebrow-label">
@@ -1869,19 +1869,19 @@ export function NewAssessmentPage() {
                 <div className="mb-3 text-[10px] font-semibold uppercase tracking-[0.15em] text-[#C9A84C]">✦ Résumé du bilan</div>
                 <div className="flex flex-wrap gap-4">
                   {form.objectiveFocus && (
-                    <div><span className="text-[11px] text-[#4A5068]">Objectif</span><p className="text-sm font-semibold text-[#F0EDE8]">{form.objectiveFocus}</p></div>
+                    <div><span className="text-[11px] text-[var(--ls-text-hint)]">Objectif</span><p className="text-sm font-semibold text-[var(--ls-text)]">{form.objectiveFocus}</p></div>
                   )}
                   {form.weight > 0 && (
-                    <div><span className="text-[11px] text-[#4A5068]">Poids</span><p className="text-sm font-semibold text-[#C9A84C]">{form.weight} kg</p></div>
+                    <div><span className="text-[11px] text-[var(--ls-text-hint)]">Poids</span><p className="text-sm font-semibold text-[#C9A84C]">{form.weight} kg</p></div>
                   )}
                   {form.targetWeight > 0 && (
-                    <div><span className="text-[11px] text-[#4A5068]">Objectif poids</span><p className="text-sm font-semibold text-[#2DD4BF]">{form.targetWeight} kg</p></div>
+                    <div><span className="text-[11px] text-[var(--ls-text-hint)]">Objectif poids</span><p className="text-sm font-semibold text-[#2DD4BF]">{form.targetWeight} kg</p></div>
                   )}
                   {form.selectedProgramId && (
-                    <div><span className="text-[11px] text-[#4A5068]">Programme</span><p className="text-sm font-semibold text-[#F0EDE8]">{form.selectedProgramId}</p></div>
+                    <div><span className="text-[11px] text-[var(--ls-text-hint)]">Programme</span><p className="text-sm font-semibold text-[var(--ls-text)]">{form.selectedProgramId}</p></div>
                   )}
                   {form.afterAssessmentAction && (
-                    <div><span className="text-[11px] text-[#4A5068]">Démarrage</span><p className="text-sm font-semibold" style={{ color: form.afterAssessmentAction === 'started' ? '#2DD4BF' : '#C9A84C' }}>{form.afterAssessmentAction === 'started' ? 'Immédiat' : 'À relancer'}</p></div>
+                    <div><span className="text-[11px] text-[var(--ls-text-hint)]">Démarrage</span><p className="text-sm font-semibold" style={{ color: form.afterAssessmentAction === 'started' ? '#2DD4BF' : '#C9A84C' }}>{form.afterAssessmentAction === 'started' ? 'Immédiat' : 'À relancer'}</p></div>
                   )}
                 </div>
               </div>
@@ -1923,7 +1923,7 @@ export function NewAssessmentPage() {
 
                   <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_340px]">
                     <div className="space-y-4">
-                    <div className="rounded-[28px] bg-[#0B0D11]/60 p-5">
+                    <div className="rounded-[28px] bg-[var(--ls-bg)]/60 p-5">
                       <div className="flex flex-wrap items-center justify-between gap-3">
                         <div>
                           <p className="eyebrow-label">Besoins detectes</p>
@@ -1952,14 +1952,14 @@ export function NewAssessmentPage() {
                           ))}
                         </div>
                       ) : (
-                        <div className="mt-5 rounded-[22px] bg-white/[0.03] px-4 py-4 text-sm leading-6 text-[#F0EDE8]">
+                        <div className="mt-5 rounded-[22px] bg-white/[0.03] px-4 py-4 text-sm leading-6 text-[var(--ls-text)]">
                           Une base simple suffit pour le moment. Les produits se personaliseront
                           au besoin dans le suivi.
                         </div>
                       )}
                     </div>
 
-                    <div className="rounded-[28px] bg-[#0B0D11]/60 p-5">
+                    <div className="rounded-[28px] bg-[var(--ls-bg)]/60 p-5">
                       <p className="eyebrow-label">Programme conseille</p>
                       <div className="mt-4 flex flex-wrap items-start justify-between gap-3">
                         <div>
@@ -1984,7 +1984,7 @@ export function NewAssessmentPage() {
                           ]).map((benefit) => (
                           <div
                             key={benefit}
-                            className="rounded-[22px] bg-white/[0.03] px-4 py-4 text-sm leading-6 text-[#F0EDE8]"
+                            className="rounded-[22px] bg-white/[0.03] px-4 py-4 text-sm leading-6 text-[var(--ls-text)]"
                           >
                             {benefit}
                           </div>
@@ -2041,25 +2041,25 @@ export function NewAssessmentPage() {
                     <p className="mt-2 text-lg font-bold text-white" style={{ fontFamily: 'Syne, sans-serif' }}>
                       QR Code à scanner
                     </p>
-                    <p className="mt-1 text-sm text-[#7A8099]">
+                    <p className="mt-1 text-sm text-[var(--ls-text-muted)]">
                       Le client scanne ce code avec son téléphone pour voir son récap de bilan.
                     </p>
                   </div>
                   <div style={{
-                    width: 120, height: 120, borderRadius: 14, background: '#1A1E27',
+                    width: 120, height: 120, borderRadius: 14, background: 'var(--ls-surface2)',
                     border: '1px solid rgba(255,255,255,0.1)',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     flexShrink: 0,
                   }}>
                     <div style={{ textAlign: 'center', padding: 8 }}>
                       <div style={{ fontSize: 28, marginBottom: 4 }}>📱</div>
-                      <div style={{ fontSize: 9, color: '#4A5068', lineHeight: 1.3 }}>
+                      <div style={{ fontSize: 9, color: 'var(--ls-text-hint)', lineHeight: 1.3 }}>
                         QR disponible<br/>après enregistrement
                       </div>
                     </div>
                   </div>
                 </div>
-                <p className="text-[11px] text-[#4A5068]">
+                <p className="text-[11px] text-[var(--ls-text-hint)]">
                   Le lien récap sera généré automatiquement à l'enregistrement du bilan. Le client pourra consulter ses résultats depuis son téléphone.
                 </p>
               </Card>
@@ -2107,10 +2107,10 @@ export function NewAssessmentPage() {
           </div>
           <div className="sticky bottom-20 lg:bottom-3 z-20 -mx-1 mt-2 rounded-[24px] border border-white/10 bg-[linear-gradient(180deg,rgba(8,12,22,0.92),rgba(8,12,22,0.82))] p-3 shadow-luxe backdrop-blur-xl md:hidden">
             <div className="mb-3 flex items-center justify-between gap-3 px-1">
-              <p className="text-[11px] uppercase tracking-[0.22em] text-[#4A5068]">
+              <p className="text-[11px] uppercase tracking-[0.22em] text-[var(--ls-text-hint)]">
                 Etape {currentStep + 1} / {steps.length}
               </p>
-              <p className="text-xs text-[#7A8099]">{steps[currentStep]}</p>
+              <p className="text-xs text-[var(--ls-text-muted)]">{steps[currentStep]}</p>
             </div>
             <div className="grid grid-cols-2 gap-2">
               <Button
@@ -2255,7 +2255,7 @@ function RecommendationStepCard({
           <label className="flex items-center justify-between gap-3 rounded-[22px] border border-white/10 bg-white/[0.03] px-4 py-4">
             <div>
               <p className="text-sm font-medium text-white">Recommandations contactées</p>
-              <p className="mt-1 text-sm text-[#7A8099]">
+              <p className="mt-1 text-sm text-[var(--ls-text-muted)]">
                 Coche ici quand les contacts de ce bilan ont déjà été repris.
               </p>
             </div>
@@ -2335,7 +2335,7 @@ function RecommendationLineField({
         <input
           value={value}
           onChange={(event) => onChange(event.target.value)}
-          className="w-full border-0 bg-transparent px-0 pb-2 text-base text-white placeholder:text-[#4A5068] focus:outline-none focus:ring-0"
+          className="w-full border-0 bg-transparent px-0 pb-2 text-base text-white placeholder:text-[var(--ls-text-hint)] focus:outline-none focus:ring-0"
           placeholder="Noter ici"
         />
         <div className="pointer-events-none absolute bottom-3 left-4 right-4 h-px bg-[linear-gradient(90deg,rgba(255,255,255,0.25),rgba(255,255,255,0.06))]" />
@@ -2455,7 +2455,7 @@ function ChoiceGroup({
       <label className="text-sm font-medium text-[#B0B4C4]">{label}</label>
       <div className="flex flex-wrap gap-2">
         {options.map((option) => (
-          <button key={option} type="button" onClick={() => onChange(option)} className={`rounded-full px-4 py-2 text-sm font-medium transition ${value === option ? "bg-[#C9A84C] text-[#0B0D11] font-semibold" : "border border-white/10 bg-white/[0.03] text-[#7A8099] hover:text-[#F0EDE8] hover:border-white/20"}`}>
+          <button key={option} type="button" onClick={() => onChange(option)} className={`rounded-full px-4 py-2 text-sm font-medium transition ${value === option ? "bg-[#C9A84C] text-[#0B0D11] font-semibold" : "border border-white/10 bg-white/[0.03] text-[var(--ls-text-muted)] hover:text-[var(--ls-text)] hover:border-white/20"}`}>
             {formatOption ? formatOption(option) : option}
           </button>
         ))}
@@ -2498,7 +2498,7 @@ function NeedProductGroup({
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="max-w-3xl space-y-2">
             <div className="flex flex-wrap items-center gap-3">
-              <p className="text-sm font-semibold uppercase tracking-[0.22em] text-[#7A8099]">
+              <p className="text-sm font-semibold uppercase tracking-[0.22em] text-[var(--ls-text-muted)]">
                 {title}
               </p>
               <StatusBadge label={`${products.length} repere${products.length > 1 ? "s" : ""}`} tone="blue" />
@@ -2551,7 +2551,7 @@ function SuggestedProductCard({
       className={`rounded-[20px] p-3.5 transition ${
         selected
           ? "border border-[rgba(45,212,191,0.25)] bg-[rgba(45,212,191,0.09)]"
-          : "bg-[#1A1E27]"
+          : "bg-[var(--ls-surface2)]"
       }`}
     >
       <div className="flex h-full flex-col gap-3">
@@ -2574,11 +2574,11 @@ function SuggestedProductCard({
         </div>
         <div className="mt-auto flex flex-wrap items-center gap-2">
           {quantityLabel ? (
-            <span className="rounded-full bg-white/[0.05] px-3 py-1 text-sm font-medium text-[#F0EDE8]">
+            <span className="rounded-full bg-white/[0.05] px-3 py-1 text-sm font-medium text-[var(--ls-text)]">
               {quantityLabel}
             </span>
           ) : null}
-          <span className="rounded-full bg-white/[0.05] px-3 py-1 text-sm font-medium text-[#F0EDE8]">
+          <span className="rounded-full bg-white/[0.05] px-3 py-1 text-sm font-medium text-[var(--ls-text)]">
             {dureeReferenceJours} jours
           </span>
           <span className="rounded-full bg-[rgba(45,212,191,0.1)] px-3 py-1 text-sm font-semibold text-[#2DD4BF]">
@@ -2618,7 +2618,7 @@ function TimelineChoiceField({
             className={`rounded-full px-4 py-2 text-sm font-medium transition ${
               value === option
                 ? "bg-white text-[#0B0D11]"
-                : "border border-white/10 bg-white/[0.03] text-[#F0EDE8]"
+                : "border border-white/10 bg-white/[0.03] text-[var(--ls-text)]"
             }`}
           >
             {option}
@@ -2634,7 +2634,7 @@ function TimelineChoiceField({
           className={`rounded-full px-4 py-2 text-sm font-medium transition ${
             isCustom
               ? "bg-white text-[#0B0D11]"
-              : "border border-dashed border-white/10 bg-white/[0.03] text-[#F0EDE8]"
+              : "border border-dashed border-white/10 bg-white/[0.03] text-[var(--ls-text)]"
           }`}
         >
           Choix libre
@@ -2645,7 +2645,7 @@ function TimelineChoiceField({
         onChange={(event) => onChange(event.target.value)}
         placeholder="Ex : 2 mois, 4 mois, 5 mois"
       />
-      <p className="text-xs leading-6 text-[#7A8099]">
+      <p className="text-xs leading-6 text-[var(--ls-text-muted)]">
         Tu peux choisir un délai rapide ou écrire librement un cap simple comme 2 mois, 4 mois ou
         5 mois.
       </p>
@@ -2658,7 +2658,7 @@ function SectionBlock({ title, description, children }: { title: string; descrip
     <div className="rounded-[24px] bg-white/[0.03] p-5">
       <div className="space-y-1">
         <p className="text-lg font-semibold text-white">{title}</p>
-        <p className="text-sm leading-6 text-[#7A8099]">{description}</p>
+        <p className="text-sm leading-6 text-[var(--ls-text-muted)]">{description}</p>
       </div>
       <div className="mt-4 space-y-4">{children}</div>
     </div>
@@ -2666,7 +2666,7 @@ function SectionBlock({ title, description, children }: { title: string; descrip
 }
 
 function SummaryMini({ label, value }: { label: string; value: string }) {
-  return <div className="flex items-center justify-between gap-3 rounded-[20px] bg-white/[0.03] px-4 py-3"><span className="text-[11px] font-medium text-[#4A5068]">{label}</span><span className="text-sm font-semibold text-white">{value}</span></div>;
+  return <div className="flex items-center justify-between gap-3 rounded-[20px] bg-white/[0.03] px-4 py-3"><span className="text-[11px] font-medium text-[var(--ls-text-hint)]">{label}</span><span className="text-sm font-semibold text-white">{value}</span></div>;
 }
 
 function FocusPanelItem({ text, highlighted = false }: { text: string; highlighted?: boolean }) {
@@ -2675,7 +2675,7 @@ function FocusPanelItem({ text, highlighted = false }: { text: string; highlight
       className={`rounded-[20px] px-4 py-3 text-sm leading-6 ${
         highlighted
           ? "bg-[rgba(45,212,191,0.1)] text-white"
-          : "bg-white/[0.03] text-[#F0EDE8]"
+          : "bg-white/[0.03] text-[var(--ls-text)]"
       }`}
     >
       {text}
@@ -2684,13 +2684,13 @@ function FocusPanelItem({ text, highlighted = false }: { text: string; highlight
 }
 
 function ClosingLine({ text }: { text: string }) {
-  return <div className="rounded-2xl bg-[#0B0D11]/60 px-4 py-3 text-sm leading-6 text-white">{text}</div>;
+  return <div className="rounded-2xl bg-[var(--ls-bg)]/60 px-4 py-3 text-sm leading-6 text-white">{text}</div>;
 }
 
 function SummaryHighlightCard({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-[22px] bg-white/[0.03] px-4 py-4">
-      <p className="text-[11px] font-medium text-[#4A5068]">{label}</p>
+      <p className="text-[11px] font-medium text-[var(--ls-text-hint)]">{label}</p>
       <p className="mt-3 text-lg font-semibold text-white">{value}</p>
     </div>
   );
@@ -2730,7 +2730,7 @@ function ClientTotalCalculatorCard({
 
       <div className="mt-5 space-y-3">
         <div className="rounded-[22px] bg-white/[0.04] px-4 py-4">
-          <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-[#4A5068]">Base choisie</p>
+          <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-[var(--ls-text-hint)]">Base choisie</p>
             <div className="mt-3 flex items-start justify-between gap-3">
               <div>
                 <p className="text-lg font-semibold text-white">{programTitle}</p>
@@ -2750,7 +2750,7 @@ function ClientTotalCalculatorCard({
 
         <div className="rounded-[22px] bg-white/[0.03] px-4 py-4">
           <div className="flex items-center justify-between gap-3">
-              <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-[#4A5068]">Ajouts</p>
+              <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-[var(--ls-text-hint)]">Ajouts</p>
             <span className="text-sm font-semibold text-white">{addOnProducts.length}</span>
           </div>
           {addOnProducts.length ? (
@@ -2758,11 +2758,11 @@ function ClientTotalCalculatorCard({
                 {addOnProducts.map((product) => (
                   <div
                     key={product.id}
-                    className="flex items-center justify-between gap-3 rounded-[16px] bg-[#0B0D11]/60 px-3.5 py-3"
+                    className="flex items-center justify-between gap-3 rounded-[16px] bg-[var(--ls-bg)]/60 px-3.5 py-3"
                   >
                     <div>
                       <p className="text-sm font-semibold text-white">{product.name}</p>
-                      <p className="mt-1 text-xs text-[#7A8099]">{formatPv(product.pv)}</p>
+                      <p className="mt-1 text-xs text-[var(--ls-text-muted)]">{formatPv(product.pv)}</p>
                     </div>
                     <p className="text-sm font-semibold text-[#2DD4BF]">+ {formatPriceEuro(product.prixPublic)}</p>
                   </div>
@@ -2798,9 +2798,9 @@ function ClientTotalCalculatorCard({
 function QuickReadCard({ label, value, detail }: { label: string; value: string; detail: string }) {
   return (
     <div className="rounded-[20px] bg-white/[0.03] p-4">
-      <p className="text-[11px] font-medium text-[#4A5068]">{label}</p>
+      <p className="text-[11px] font-medium text-[var(--ls-text-hint)]">{label}</p>
       <p className="mt-3 text-lg font-semibold text-white">{value}</p>
-      <p className="mt-2 text-sm leading-6 text-[#7A8099]">{detail}</p>
+      <p className="mt-2 text-sm leading-6 text-[var(--ls-text-muted)]">{detail}</p>
     </div>
   );
 }
@@ -2840,8 +2840,8 @@ function ReferenceComparisonRow({
       <ReferenceDatum label="Aujourd'hui" value={current} />
       <ReferenceDatum label="Cible" value={target} />
       <ReferenceDatum label="Ecart" value={gap} />
-      <div className="rounded-[18px] bg-[#0B0D11]/60 px-3.5 py-3">
-        <p className="text-[11px] font-medium text-[#4A5068]">Priorite</p>
+      <div className="rounded-[18px] bg-[var(--ls-bg)]/60 px-3.5 py-3">
+        <p className="text-[11px] font-medium text-[var(--ls-text-hint)]">Priorite</p>
         <p className={`mt-2 inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${toneClass}`}>
           {priority}
         </p>
@@ -2852,8 +2852,8 @@ function ReferenceComparisonRow({
 
 function ReferenceDatum({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-[18px] bg-[#0B0D11]/60 px-3.5 py-3">
-      <p className="text-[11px] font-medium text-[#4A5068]">{label}</p>
+    <div className="rounded-[18px] bg-[var(--ls-bg)]/60 px-3.5 py-3">
+      <p className="text-[11px] font-medium text-[var(--ls-text-hint)]">{label}</p>
       <p className="mt-2 text-sm font-semibold text-white">{value}</p>
     </div>
   );

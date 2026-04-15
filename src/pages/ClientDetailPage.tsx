@@ -255,7 +255,7 @@ export function ClientDetailPage() {
             </div>
             <div>
               <div className="flex items-center gap-3">
-                <h1 style={{ fontFamily: 'Syne, sans-serif', fontSize: 22, fontWeight: 800, color: '#F0EDE8', margin: 0 }}>
+                <h1 style={{ fontFamily: 'Syne, sans-serif', fontSize: 22, fontWeight: 800, color: 'var(--ls-text)', margin: 0 }}>
                   {client.firstName} {client.lastName}
                 </h1>
                 <StatusBadge
@@ -267,10 +267,10 @@ export function ClientDetailPage() {
                   tone={client.objective === "sport" ? "green" : "blue"}
                 />
               </div>
-              <p className="mt-1 text-sm text-[#7A8099]">
+              <p className="mt-1 text-sm text-[var(--ls-text-muted)]">
                 {client.currentProgram || "Programme à confirmer"} · {client.city ?? "Ville non renseignée"} · <Link to={`/distributors/${client.distributorId}`} className="font-medium text-[#C9A84C] transition hover:text-[#2DD4BF]">{client.distributorName}</Link>
               </p>
-              <p className="mt-1 text-[11px] text-[#4A5068]">
+              <p className="mt-1 text-[11px] text-[var(--ls-text-hint)]">
                 Client depuis {formatDate(client.startDate ?? '')} · {client.assessments.length} bilan{client.assessments.length > 1 ? 's' : ''}
               </p>
             </div>
@@ -304,7 +304,7 @@ export function ClientDetailPage() {
                 {retainedProducts.slice(0, 3).map((p, idx) => (
                   <span key={idx} className="rounded-full bg-[rgba(201,168,76,0.08)] px-2.5 py-0.5 text-[10px] text-[#C9A84C]">{'name' in p ? (p as { name: string }).name : String(idx + 1)}</span>
                 ))}
-                {retainedProducts.length > 3 && <span className="text-[10px] text-[#4A5068]">+{retainedProducts.length - 3}</span>}
+                {retainedProducts.length > 3 && <span className="text-[10px] text-[var(--ls-text-hint)]">+{retainedProducts.length - 3}</span>}
               </div>
             )}
           </div>
@@ -312,7 +312,7 @@ export function ClientDetailPage() {
       </div>
 
       {/* Tab bar */}
-      <div className="flex gap-1 rounded-[14px] border border-white/[0.07] bg-[#13161C] p-1" style={{ width: 'fit-content' }}>
+      <div className="flex gap-1 rounded-[14px] border border-white/[0.07] bg-[var(--ls-surface)] p-1" style={{ width: 'fit-content' }}>
         {[
           { label: 'Vue complète', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg> },
           { label: 'Body Scan', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>, count: client.assessments.filter(a => a.bodyScan?.weight).length },
@@ -326,8 +326,8 @@ export function ClientDetailPage() {
             style={{
               padding: '7px 14px', borderRadius: 8, border: 'none', cursor: 'pointer',
               fontSize: 13, fontFamily: 'DM Sans, sans-serif', fontWeight: activeTab === i ? 500 : 400,
-              background: activeTab === i ? '#1A1E27' : 'transparent',
-              color: activeTab === i ? '#F0EDE8' : '#7A8099',
+              background: activeTab === i ? 'var(--ls-surface2)' : 'transparent',
+              color: activeTab === i ? 'var(--ls-text)' : 'var(--ls-text-muted)',
               display: 'flex', alignItems: 'center', gap: 6,
             }}
           >
@@ -335,8 +335,8 @@ export function ClientDetailPage() {
             {tab.count !== undefined && tab.count > 0 && (
               <span style={{
                 fontSize: 10, padding: '1px 6px', borderRadius: 10,
-                background: activeTab === i ? 'rgba(201,168,76,0.2)' : 'rgba(255,255,255,0.06)',
-                color: activeTab === i ? '#C9A84C' : '#4A5068'
+                background: activeTab === i ? 'rgba(201,168,76,0.2)' : 'var(--ls-border)',
+                color: activeTab === i ? '#C9A84C' : 'var(--ls-text-hint)'
               }}>{tab.count}</span>
             )}
           </button>
@@ -349,7 +349,7 @@ export function ClientDetailPage() {
         <Card className="space-y-5">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
-              <p className="text-sm text-[#7A8099]">
+              <p className="text-sm text-[var(--ls-text-muted)]">
                 {client.job} - {client.city ?? "Ville non renseignee"} -{" "}
                 <Link
                   to={`/distributors/${client.distributorId}`}
@@ -361,7 +361,7 @@ export function ClientDetailPage() {
               <p className="mt-2 text-4xl">
                 {client.firstName} {client.lastName}
               </p>
-              <p className="mt-2 text-sm text-[#7A8099]">
+              <p className="mt-2 text-sm text-[var(--ls-text-muted)]">
                 Programme en cours : {client.currentProgram || "Programme a confirmer"}
               </p>
             </div>
@@ -530,7 +530,7 @@ export function ClientDetailPage() {
             }))}
           />
 
-          <div className="space-y-4 rounded-[26px] bg-[#1A1E27] p-5">
+          <div className="space-y-4 rounded-[26px] bg-[var(--ls-surface2)] p-5">
             <div className="flex items-center justify-between gap-3">
               <div>
                 <p className="eyebrow-label">Écarts et évolution</p>
@@ -595,7 +595,7 @@ export function ClientDetailPage() {
               <LinkButton to={`/clients/${client.id}/follow-up/new`} label="Body scan" hint="Nouvelles mesures" tone="green" />
               <button type="button" onClick={() => setShowScheduleModal(true)} className="w-full rounded-[22px] bg-white/[0.03] p-4 text-left transition hover:bg-white/[0.05]">
                 <p className="text-sm font-semibold text-white">Modifier le RDV</p>
-                <p className="mt-1 text-[12px] text-[#7A8099]">Date, heure ou type</p>
+                <p className="mt-1 text-[12px] text-[var(--ls-text-muted)]">Date, heure ou type</p>
               </button>
             </div>
           </Card>
@@ -632,7 +632,7 @@ export function ClientDetailPage() {
                 >
                   Enregistrer le transfert
                 </Button>
-                <p className="text-sm leading-6 text-[#7A8099]">
+                <p className="text-sm leading-6 text-[var(--ls-text-muted)]">
                   {transferFeedback ||
                     "Le dossier, le responsable affiche et le suivi produits actifs seront realignes ensemble."}
                 </p>
@@ -698,15 +698,15 @@ export function ClientDetailPage() {
                 <div key={entry.id} className="rounded-[20px] bg-white/[0.03] px-4 py-4">
                   <p className="text-sm font-semibold text-white">{entry.summary}</p>
                   {entry.detail ? (
-                    <p className="mt-1 text-sm leading-6 text-[#7A8099]">{entry.detail}</p>
+                    <p className="mt-1 text-sm leading-6 text-[var(--ls-text-muted)]">{entry.detail}</p>
                   ) : null}
-                  <p className="mt-3 text-xs text-[#4A5068]">
+                  <p className="mt-3 text-xs text-[var(--ls-text-hint)]">
                     {entry.actorName} - {formatDateTime(entry.createdAt)}
                   </p>
                 </div>
               ))}
               {!clientActivity.length ? (
-                <div className="rounded-[20px] bg-white/[0.03] px-4 py-4 text-sm text-[#7A8099]">
+                <div className="rounded-[20px] bg-white/[0.03] px-4 py-4 text-sm text-[var(--ls-text-muted)]">
                   Les changements de responsable, de rendez-vous et de bilans apparaitront ici.
                 </div>
               ) : null}
@@ -744,9 +744,9 @@ export function ClientDetailPage() {
                   { label: 'Masse musc.', value: latestBodyScan.muscleMass ? `${latestBodyScan.muscleMass} kg` : '—', color: '#2DD4BF' },
                   { label: 'Hydratation', value: latestBodyScan.hydration ? `${latestBodyScan.hydration}%` : '—', color: '#A78BFA' },
                 ].map(m => (
-                  <div key={m.label} className="rounded-[16px] bg-[#1A1E27] p-4 text-center" style={{ borderTop: `2px solid ${m.color}` }}>
+                  <div key={m.label} className="rounded-[16px] bg-[var(--ls-surface2)] p-4 text-center" style={{ borderTop: `2px solid ${m.color}` }}>
                     <div style={{ fontSize: 28, fontFamily: 'Syne, sans-serif', fontWeight: 800, color: m.color, lineHeight: 1 }}>{m.value}</div>
-                    <div className="mt-2 text-[11px] text-[#4A5068]">{m.label}</div>
+                    <div className="mt-2 text-[11px] text-[var(--ls-text-hint)]">{m.label}</div>
                   </div>
                 ))}
               </div>
@@ -758,15 +758,15 @@ export function ClientDetailPage() {
                   { label: 'Âge métabolique', value: latestBodyScan.metabolicAge ? `${latestBodyScan.metabolicAge} ans` : '—', color: '#A78BFA' },
                   { label: 'BMR', value: latestBodyScan.bmr ? `${latestBodyScan.bmr} kcal` : '—', color: '#F0C96A' },
                 ].map(m => (
-                  <div key={m.label} className="rounded-[14px] bg-[#1A1E27] p-3 text-center">
+                  <div key={m.label} className="rounded-[14px] bg-[var(--ls-surface2)] p-3 text-center">
                     <div style={{ fontSize: 20, fontFamily: 'Syne, sans-serif', fontWeight: 700, color: m.color as string }}>{m.value}</div>
-                    <div className="mt-1 text-[10px] text-[#4A5068]">{m.label}</div>
+                    <div className="mt-1 text-[10px] text-[var(--ls-text-hint)]">{m.label}</div>
                   </div>
                 ))}
               </div>
 
               {/* Radar 5 branches */}
-              <div className="flex items-center justify-center rounded-[16px] bg-[#1A1E27] p-6">
+              <div className="flex items-center justify-center rounded-[16px] bg-[var(--ls-surface2)] p-6">
                 <BodyScanRadar
                   size={220}
                   metrics={[
@@ -797,7 +797,7 @@ export function ClientDetailPage() {
                   const scan = a.bodyScan;
                   return (
                     <div key={a.id ?? i} className="list-row flex items-center justify-between gap-3 px-4 py-3" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                      <span className="text-sm text-[#7A8099]">{formatDate(a.date)}</span>
+                      <span className="text-sm text-[var(--ls-text-muted)]">{formatDate(a.date)}</span>
                       {scan?.weight && <span className="text-sm font-semibold text-[#C9A84C]">{scan.weight} kg</span>}
                       {scan?.bodyFat && <span className="text-sm text-[#FB7185]">MG {scan.bodyFat}%</span>}
                       {scan?.muscleMass && <span className="text-sm text-[#2DD4BF]">MM {scan.muscleMass} kg</span>}
@@ -812,7 +812,7 @@ export function ClientDetailPage() {
           {!latestBodyScan && (
             <div className="rounded-[20px] bg-white/[0.03] px-6 py-10 text-center">
               <div style={{ fontSize: 32, marginBottom: 12 }}>⚖️</div>
-              <p className="text-sm text-[#7A8099]">Aucun body scan enregistré</p>
+              <p className="text-sm text-[var(--ls-text-muted)]">Aucun body scan enregistré</p>
               <Link
                 to={`/clients/${client.id}/follow-up/new`}
                 className="mt-4 inline-flex min-h-[40px] items-center gap-2 rounded-[12px] bg-[#C9A84C] px-4 py-2 text-sm font-bold text-[#0B0D11]"
@@ -874,7 +874,7 @@ export function ClientDetailPage() {
               ) : null}
               <button type="button" onClick={() => setShowScheduleModal(true)} className="w-full rounded-[22px] bg-white/[0.03] p-4 text-left transition hover:bg-white/[0.05]">
                 <p className="text-sm font-semibold text-white">Modifier le prochain rendez-vous</p>
-                <p className="mt-1 text-sm leading-6 text-[#7A8099]">Ajuster la date, l'heure ou le type de suivi</p>
+                <p className="mt-1 text-sm leading-6 text-[var(--ls-text-muted)]">Ajuster la date, l'heure ou le type de suivi</p>
               </button>
               <LinkButton
                 to={`/pv/clients?responsable=${encodeURIComponent(client.distributorId)}&client=${encodeURIComponent(client.id)}`}
@@ -905,7 +905,7 @@ export function ClientDetailPage() {
             )}
             {canReassignClient && (
               <div className="mt-4 rounded-[18px] border border-white/[0.06] bg-white/[0.02] p-4">
-                <p className="text-[11px] text-[#4A5068] uppercase tracking-wider mb-3">Transférer le dossier</p>
+                <p className="text-[11px] text-[var(--ls-text-hint)] uppercase tracking-wider mb-3">Transférer le dossier</p>
                 <select value={nextOwnerId} onChange={(e) => setNextOwnerId(e.target.value)} className="mb-3">
                   {assignableOwners.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
                 </select>
@@ -934,7 +934,7 @@ export function ClientDetailPage() {
 function SummaryRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-center justify-between gap-3 rounded-[22px] bg-white/[0.03] px-4 py-3">
-      <span className="text-sm text-[#7A8099]">{label}</span>
+      <span className="text-sm text-[var(--ls-text-muted)]">{label}</span>
       <span className="text-right text-sm font-semibold text-white">{value}</span>
     </div>
   );
@@ -953,9 +953,9 @@ function SummaryStatusRow({
 }) {
   return (
     <div className="flex items-center justify-between gap-3 rounded-[22px] bg-white/[0.03] px-4 py-3">
-      <span className="text-sm text-[#7A8099]">{label}</span>
+      <span className="text-sm text-[var(--ls-text-muted)]">{label}</span>
       <div className="flex items-center gap-3">
-        <span className="text-sm text-[#7A8099]">{detail}</span>
+        <span className="text-sm text-[var(--ls-text-muted)]">{detail}</span>
         <StatusBadge label={badgeLabel} tone={tone} />
       </div>
     </div>
@@ -964,7 +964,7 @@ function SummaryStatusRow({
 
 function QuickInfo({ text }: { text: string }) {
   return (
-    <div className="rounded-[20px] bg-[#0B0D11]/60 px-4 py-3 text-sm leading-6 text-[#F0EDE8]">
+    <div className="rounded-[20px] bg-[var(--ls-bg)]/60 px-4 py-3 text-sm leading-6 text-[var(--ls-text)]">
       {text}
     </div>
   );
@@ -978,8 +978,8 @@ function SummaryFocusCard({
   value: string;
 }) {
   return (
-    <div className="rounded-[20px] bg-[#0B0D11]/60 px-4 py-3.5">
-      <p className="text-[11px] font-medium text-[#4A5068]">{label}</p>
+    <div className="rounded-[20px] bg-[var(--ls-bg)]/60 px-4 py-3.5">
+      <p className="text-[11px] font-medium text-[var(--ls-text-hint)]">{label}</p>
       <p className="mt-2.5 text-base font-semibold text-white">{value}</p>
     </div>
   );
@@ -1006,7 +1006,7 @@ function StartingPointOverviewCard({
   const bodyFatDelta = Number((currentBodyFat - startBodyFat).toFixed(1));
   const weightTone =
     weightDelta === 0
-      ? "text-[#F0EDE8]"
+      ? "text-[var(--ls-text)]"
       : objective === "weight-loss"
         ? weightDelta < 0
           ? "text-[#2DD4BF]"
@@ -1072,7 +1072,7 @@ function OverviewMetricCard({
       ? "bg-[rgba(45,212,191,0.07)] ring-1 ring-[rgba(45,212,191,0.12)]"
       : tone === "blue"
         ? "bg-[rgba(201,168,76,0.07)] ring-1 ring-[rgba(201,168,76,0.12)]"
-        : "bg-[#0B0D11]/80 ring-1 ring-white/6";
+        : "bg-[var(--ls-bg)]/80 ring-1 ring-white/6";
 
   return (
     <div
@@ -1080,9 +1080,9 @@ function OverviewMetricCard({
         highlighted ? "shadow-[0_0_30px_rgba(52,211,153,0.08)]" : ""
       }`}
     >
-      <p className="text-[11px] font-medium text-[#4A5068]">{label}</p>
+      <p className="text-[11px] font-medium text-[var(--ls-text-hint)]">{label}</p>
       <p className="mt-3 text-2xl text-white">{value}</p>
-      <p className="mt-2 text-sm text-[#7A8099]">{note}</p>
+      <p className="mt-2 text-sm text-[var(--ls-text-muted)]">{note}</p>
     </div>
   );
 }
@@ -1121,13 +1121,13 @@ function LinkButton({
   return (
     <Link
       to={to}
-      style={{ display: 'block', background: '#13161C', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12, padding: '14px 16px', textDecoration: 'none', position: 'relative', overflow: 'hidden', transition: 'border-color 0.15s' }}
+      style={{ display: 'block', background: 'var(--ls-surface)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12, padding: '14px 16px', textDecoration: 'none', position: 'relative', overflow: 'hidden', transition: 'border-color 0.15s' }}
       onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.14)'}
-      onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.07)'}
+      onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--ls-border)'}
     >
       <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 3, background: '#C9A84C', borderRadius: '3px 0 0 3px' }} />
-      <div style={{ fontSize: 14, fontWeight: 600, color: '#F0EDE8', marginBottom: 3 }}>{label}</div>
-      <div style={{ fontSize: 12, color: '#7A8099' }}>{hint}</div>
+      <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--ls-text)', marginBottom: 3 }}>{label}</div>
+      <div style={{ fontSize: 12, color: 'var(--ls-text-muted)' }}>{hint}</div>
     </Link>
   );
 }

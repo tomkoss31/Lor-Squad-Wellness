@@ -15,7 +15,7 @@ export function PageHeading({ eyebrow, title, description }: PageHeadingProps) {
         {title}
       </h1>
       {description && (
-        <p className="max-w-2xl text-sm leading-7 text-[#7A8099] md:text-[15px]">
+        <p className="max-w-2xl text-sm leading-7 text-[var(--ls-text-muted)] md:text-[15px]">
           {description}
         </p>
       )}

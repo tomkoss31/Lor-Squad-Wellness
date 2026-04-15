@@ -83,15 +83,15 @@ export function DashboardPage() {
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
         <div>
-          <h1 style={{ fontFamily: 'Syne, sans-serif', fontSize: 24, fontWeight: 800, color: '#F0EDE8', margin: '0 0 6px', letterSpacing: '-0.3px' }}>
+          <h1 style={{ fontFamily: 'Syne, sans-serif', fontSize: 24, fontWeight: 800, color: 'var(--ls-text)', margin: '0 0 6px', letterSpacing: '-0.3px' }}>
             {greeting()}, {currentUser.name?.split(' ')[0]} ✦
           </h1>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#2DD4BF', boxShadow: '0 0 0 3px rgba(45,212,191,0.2)', flexShrink: 0 }} />
-            <span style={{ fontSize: 12, color: '#7A8099', textTransform: 'capitalize' }}>{today}</span>
+            <span style={{ fontSize: 12, color: 'var(--ls-text-muted)', textTransform: 'capitalize' }}>{today}</span>
           </div>
         </div>
-        <Link to="/assessments/new" style={{ background: '#C9A84C', color: '#0B0D11', borderRadius: 10, padding: '11px 20px', fontFamily: 'Syne, sans-serif', fontSize: 13, fontWeight: 700, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 8 }}>
+        <Link to="/assessments/new" style={{ background: '#C9A84C', color: 'var(--ls-bg)', borderRadius: 10, padding: '11px 20px', fontFamily: 'Syne, sans-serif', fontSize: 13, fontWeight: 700, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 8 }}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
           Nouveau bilan
         </Link>
@@ -99,13 +99,13 @@ export function DashboardPage() {
 
       {/* Password notice */}
       {showPasswordNotice && (
-        <div style={{ background: '#13161C', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12, padding: 16, marginBottom: 16, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+        <div style={{ background: 'var(--ls-surface)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12, padding: 16, marginBottom: 16, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
           <div>
-            <p style={{ fontSize: 13, fontWeight: 600, color: '#F0EDE8', margin: 0 }}>Mot de passe initial</p>
-            <p style={{ fontSize: 12, color: '#7A8099', margin: '4px 0 0' }}>Défini par un admin. Contacte ton sponsor pour le modifier.</p>
+            <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--ls-text)', margin: 0 }}>Mot de passe initial</p>
+            <p style={{ fontSize: 12, color: 'var(--ls-text-muted)', margin: '4px 0 0' }}>Défini par un admin. Contacte ton sponsor pour le modifier.</p>
           </div>
           <button onClick={() => { localStorage.setItem(`lor-squad-password-notice-dismissed-${currentUser.id}`, "true"); setShowPasswordNotice(false) }}
-            style={{ fontSize: 12, color: '#7A8099', background: 'rgba(255,255,255,0.04)', border: 'none', borderRadius: 8, padding: '6px 14px', cursor: 'pointer', flexShrink: 0 }}>Compris</button>
+            style={{ fontSize: 12, color: 'var(--ls-text-muted)', background: 'rgba(255,255,255,0.04)', border: 'none', borderRadius: 8, padding: '6px 14px', cursor: 'pointer', flexShrink: 0 }}>Compris</button>
         </div>
       )}
 

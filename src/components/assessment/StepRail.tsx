@@ -25,20 +25,20 @@ export function StepRail({ currentStep, steps }: StepRailProps) {
       {/* Version mobile compacte */}
       <div className="lg:hidden">
         <div style={{
-          background: '#13161C',
+          background: 'var(--ls-surface)',
           border: '1px solid rgba(255,255,255,0.07)',
           borderRadius: 12,
           padding: '12px 16px',
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
-            <span style={{ fontSize: 11, color: '#4A5068', letterSpacing: '1px', textTransform: 'uppercase' }}>
+            <span style={{ fontSize: 11, color: 'var(--ls-text-hint)', letterSpacing: '1px', textTransform: 'uppercase' }}>
               Étape {currentStep + 1} / {steps.length}
             </span>
             <span style={{ fontSize: 12, fontFamily: 'Syne, sans-serif', fontWeight: 700, color: getPhaseColor(currentStep) }}>
               {steps[currentStep]}
             </span>
           </div>
-          <div style={{ height: 4, background: 'rgba(255,255,255,0.06)', borderRadius: 2, overflow: 'hidden' }}>
+          <div style={{ height: 4, background: 'var(--ls-border)', borderRadius: 2, overflow: 'hidden' }}>
             <div style={{
               height: '100%',
               width: `${progress}%`,
@@ -52,7 +52,7 @@ export function StepRail({ currentStep, steps }: StepRailProps) {
 
       {/* Version desktop complète */}
       <div className="hidden lg:block">
-        <div className="rounded-[18px] border border-white/[0.07] bg-[#13161C] p-4 md:p-5">
+        <div className="rounded-[18px] border border-white/[0.07] bg-[var(--ls-surface)] p-4 md:p-5">
           {/* Header */}
           <div className="mb-3 flex items-center justify-between gap-3">
             <span className="eyebrow-label">
@@ -72,7 +72,7 @@ export function StepRail({ currentStep, steps }: StepRailProps) {
               <div key={phase.label} style={{ flex: phase.steps.length }} className="flex flex-col items-start">
                 <span style={{
                   fontSize: 9,
-                  color: currentStep >= phase.steps[0] ? phase.color : '#4A5068',
+                  color: currentStep >= phase.steps[0] ? phase.color : 'var(--ls-text-hint)',
                   fontWeight: 500,
                   letterSpacing: '1px',
                   textTransform: 'uppercase',

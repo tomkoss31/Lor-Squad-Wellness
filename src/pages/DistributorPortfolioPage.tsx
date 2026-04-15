@@ -110,7 +110,7 @@ export function DistributorPortfolioPage() {
               <div>
                 <p className="eyebrow-label">Responsable</p>
                 <h2 className="mt-3 text-3xl text-white">{portfolioUser.name}</h2>
-                <p className="mt-2 text-sm text-[#7A8099]">{portfolioUser.title}</p>
+                <p className="mt-2 text-sm text-[var(--ls-text-muted)]">{portfolioUser.title}</p>
               </div>
             </div>
 
@@ -269,7 +269,7 @@ export function DistributorPortfolioPage() {
                               />
                             ) : null}
                           </div>
-                          <p className="text-sm text-[#7A8099]">
+                          <p className="text-sm text-[var(--ls-text-muted)]">
                             {client.city ?? "Ville non renseignée"} - {client.currentProgram}
                           </p>
                           {firstAssessment.questionnaire.referredByName ? (
@@ -277,7 +277,7 @@ export function DistributorPortfolioPage() {
                               Invité par {firstAssessment.questionnaire.referredByName}
                             </p>
                           ) : null}
-                          <p className="text-sm leading-6 text-[#7A8099]">{client.notes}</p>
+                          <p className="text-sm leading-6 text-[var(--ls-text-muted)]">{client.notes}</p>
                         </div>
 
                         <div className="grid gap-3 md:grid-cols-2">
@@ -285,7 +285,7 @@ export function DistributorPortfolioPage() {
                           <PortfolioFact label="Prochain suivi" value={formatDateTime(activeFollowUp.dueDate)} />
                         </div>
 
-                        <div className="text-sm text-[#7A8099] xl:text-right">
+                        <div className="text-sm text-[var(--ls-text-muted)] xl:text-right">
                           <p>Bilans : {client.assessments.length}</p>
                           <p className="mt-1">Objectif : {client.objective === "sport" ? "Sport" : "Perte de poids"}</p>
                           {recommendationCount ? (
@@ -304,7 +304,7 @@ export function DistributorPortfolioPage() {
         ) : (
           <Card className="space-y-3">
             <p className="text-2xl text-white">Aucun dossier sur ce filtre</p>
-            <p className="text-sm leading-6 text-[#7A8099]">
+            <p className="text-sm leading-6 text-[var(--ls-text-muted)]">
               Ajuste la recherche ou le statut pour retrouver un dossier plus vite.
             </p>
           </Card>
@@ -353,7 +353,7 @@ function FollowUpPanel({
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="text-lg font-semibold text-white">{followUp.clientName}</p>
-                  <p className="mt-1 text-sm text-[#7A8099]">{followUp.type}</p>
+                  <p className="mt-1 text-sm text-[var(--ls-text-muted)]">{followUp.type}</p>
                 </div>
                 <StatusBadge
                   label={followUp.status === "scheduled" ? "Planifié" : "Relance"}
@@ -366,7 +366,7 @@ function FollowUpPanel({
             </Link>
           ))
         ) : (
-          <div className="rounded-[22px] bg-white/[0.03] p-5 text-sm text-[#7A8099]">
+          <div className="rounded-[22px] bg-white/[0.03] p-5 text-sm text-[var(--ls-text-muted)]">
             {emptyLabel}
           </div>
         )}
@@ -377,8 +377,8 @@ function FollowUpPanel({
 
 function PortfolioFact({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-[20px] bg-[#0B0D11]/60 px-4 py-3">
-      <p className="text-[11px] font-medium text-[#4A5068]">{label}</p>
+    <div className="rounded-[20px] bg-[var(--ls-bg)]/60 px-4 py-3">
+      <p className="text-[11px] font-medium text-[var(--ls-text-hint)]">{label}</p>
       <p className="mt-2 text-sm font-semibold text-white">{value}</p>
     </div>
   );

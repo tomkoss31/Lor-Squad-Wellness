@@ -235,7 +235,7 @@ function InfoCard({ title, text }: { title: string; text: string }) {
   return (
     <div className="rounded-[22px] border border-white/10 bg-white/[0.03] px-4 py-4">
       <p className="text-sm font-semibold text-white">{title}</p>
-      <p className="mt-2 text-sm leading-6 text-[#7A8099]">{text}</p>
+      <p className="mt-2 text-sm leading-6 text-[var(--ls-text-muted)]">{text}</p>
     </div>
   );
 }

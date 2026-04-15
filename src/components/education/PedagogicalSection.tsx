@@ -67,16 +67,16 @@ export function PedagogicalMetricCard({
               : "bg-gradient-to-r from-sky-400 via-cyan-300 to-transparent"
         }`}
       />
-      <p className="text-[11px] font-medium text-[#4A5068]">{label}</p>
+      <p className="text-[11px] font-medium text-[var(--ls-text-hint)]">{label}</p>
       <p className="mt-3 text-[1.9rem] font-semibold leading-none text-white">{value}</p>
-      {note ? <p className="mt-2.5 text-sm leading-6 text-[#7A8099]">{note}</p> : null}
+      {note ? <p className="mt-2.5 text-sm leading-6 text-[var(--ls-text-muted)]">{note}</p> : null}
     </div>
   );
 }
 
 export function PedagogicalPoint({ text }: { text: string }) {
   return (
-    <div className="rounded-[18px] bg-[#0B0D11]/60 px-4 py-3 text-sm text-[#F0EDE8]">
+    <div className="rounded-[18px] bg-[var(--ls-bg)]/60 px-4 py-3 text-sm text-[var(--ls-text)]">
       {text}
     </div>
   );

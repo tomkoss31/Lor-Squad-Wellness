@@ -23,7 +23,7 @@ export function ClientInsightPanel({
         {points.map((point) => (
           <div
             key={point}
-            className="rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-[#F0EDE8]"
+            className="rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-[var(--ls-text)]"
           >
             {point}
           </div>

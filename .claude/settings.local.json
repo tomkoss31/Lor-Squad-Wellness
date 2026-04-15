@@ -4,7 +4,9 @@
       "Bash(where gh:*)",
       "Bash(npm run:*)",
       "mcp__Claude_Preview__preview_start",
-      "Bash(xargs grep:*)"
+      "Bash(xargs grep:*)",
+      "Bash(find src/pages src/components -name '*.tsx' -not -path '*/layout/AppLayout*' -not -path '*/layout/BottomNav*' -exec sed -i -e 's/'\\\\''#0B0D11'\\\\''/'\\\\''var\\(--ls-bg\\)'\\\\''/g' -e 's/'\\\\''#13161C'\\\\''/'\\\\''var\\(--ls-surface\\)'\\\\''/g' -e 's/'\\\\''#1A1E27'\\\\''/'\\\\''var\\(--ls-surface2\\)'\\\\''/g' -e 's/'\\\\''#F0EDE8'\\\\''/'\\\\''var\\(--ls-text\\)'\\\\''/g' -e 's/'\\\\''#7A8099'\\\\''/'\\\\''var\\(--ls-text-muted\\)'\\\\''/g' -e 's/'\\\\''#4A5068'\\\\''/'\\\\''var\\(--ls-text-hint\\)'\\\\''/g' -e 's/'\\\\''rgba\\(255,255,255,0.07\\)'\\\\''/'\\\\''var\\(--ls-border\\)'\\\\''/g' -e 's/'\\\\''rgba\\(255,255,255,0.06\\)'\\\\''/'\\\\''var\\(--ls-border\\)'\\\\''/g' -e 's/'\\\\''rgba\\(255,255,255,0.08\\)'\\\\''/'\\\\''var\\(--ls-border\\)'\\\\''/g' -e 's/'\\\\''rgba\\(255,255,255,0.1\\)'\\\\''/'\\\\''var\\(--ls-border2\\)'\\\\''/g' -e 's/'\\\\''rgba\\(255,255,255,0.12\\)'\\\\''/'\\\\''var\\(--ls-border2\\)'\\\\''/g' '{}' +)",
+      "Bash(find src/pages src/components -name '*.tsx' -not -path '*/layout/AppLayout*' -not -path '*/layout/BottomNav*' -exec sed -i -e 's/bg-\\\\[#0B0D11\\\\]/bg-[var\\(--ls-bg\\)]/g' -e 's/bg-\\\\[#13161C\\\\]/bg-[var\\(--ls-surface\\)]/g' -e 's/bg-\\\\[#1A1E27\\\\]/bg-[var\\(--ls-surface2\\)]/g' -e 's/text-\\\\[#F0EDE8\\\\]/text-[var\\(--ls-text\\)]/g' -e 's/text-\\\\[#7A8099\\\\]/text-[var\\(--ls-text-muted\\)]/g' -e 's/text-\\\\[#4A5068\\\\]/text-[var\\(--ls-text-hint\\)]/g' '{}' +)"
     ]
   }
 }

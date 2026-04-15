@@ -262,22 +262,22 @@ export function PvOverviewPage() {
           {/* Mobile cards */}
           <div className="md:hidden space-y-3">
             {filteredRecords.length === 0 ? (
-              <div className="rounded-[16px] bg-white/[0.03] px-4 py-6 text-center text-sm text-[#7A8099]">Aucun dossier PV visible</div>
+              <div className="rounded-[16px] bg-white/[0.03] px-4 py-6 text-center text-sm text-[var(--ls-text-muted)]">Aucun dossier PV visible</div>
             ) : filteredRecords.map((record) => {
               return (
                 <button key={record.clientId} type="button" onClick={() => handleSelectClient(record.clientId)}
-                  className="w-full rounded-[16px] border border-white/[0.07] bg-[#13161C] p-4 text-left transition hover:bg-white/[0.04]">
+                  className="w-full rounded-[16px] border border-white/[0.07] bg-[var(--ls-surface)] p-4 text-left transition hover:bg-white/[0.04]">
                   <div className="flex justify-between items-start mb-3">
                     <div>
                       <div className="text-sm font-semibold text-white">{record.clientName}</div>
-                      <div className="text-[11px] text-[#7A8099] mt-1">{record.program}</div>
+                      <div className="text-[11px] text-[var(--ls-text-muted)] mt-1">{record.program}</div>
                     </div>
                     <div className="text-right">
                       <div style={{ fontFamily: 'Syne, sans-serif', fontSize: 18, fontWeight: 700, color: '#C9A84C' }}>{record.pvCumulative} PV</div>
                       <PvStatusBadge status={record.status} />
                     </div>
                   </div>
-                  <div className="flex gap-4 text-[11px] text-[#4A5068]">
+                  <div className="flex gap-4 text-[11px] text-[var(--ls-text-hint)]">
                     <span>Début : {formatDate(record.startDate)}</span>
                     <span>{record.estimatedRemainingDays}j restants</span>
                   </div>
@@ -294,7 +294,7 @@ export function PvOverviewPage() {
               </div>
             ) : null}
             <div className="min-w-[1120px] space-y-2">
-              <div className="grid grid-cols-[1.4fr_1fr_1fr_1fr_0.8fr_0.9fr_0.9fr_0.9fr_1fr_0.7fr] gap-3 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#4A5068]">
+              <div className="grid grid-cols-[1.4fr_1fr_1fr_1fr_0.8fr_0.9fr_0.9fr_0.9fr_1fr_0.7fr] gap-3 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--ls-text-hint)]">
                 <span>Client</span>
                 <span>Programme</span>
                 <span>Date démarrage</span>
@@ -325,7 +325,7 @@ export function PvOverviewPage() {
                   >
                     <div>
                       <p className="text-sm font-semibold text-white">{record.clientName}</p>
-                      <p className="mt-1 text-xs text-[#7A8099]">Suivi le {formatDate(record.lastFollowUpDate)}</p>
+                      <p className="mt-1 text-xs text-[var(--ls-text-muted)]">Suivi le {formatDate(record.lastFollowUpDate)}</p>
                     </div>
                     <div className="text-sm text-[#B0B4C4]">{record.program}</div>
                     <div className="text-sm text-[#B0B4C4]">{formatDate(record.startDate)}</div>
@@ -335,7 +335,7 @@ export function PvOverviewPage() {
                     <div className="text-sm text-[#B0B4C4]">{record.estimatedRemainingDays} j</div>
                     <div>
                       <PvStatusBadge status={record.status} />
-                      <p className="mt-1 text-[11px] text-[#4A5068]">{statusMeta.label}</p>
+                      <p className="mt-1 text-[11px] text-[var(--ls-text-hint)]">{statusMeta.label}</p>
                     </div>
                     <div className="text-sm text-[#B0B4C4]">{record.responsibleName}</div>
                     <div>

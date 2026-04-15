@@ -445,7 +445,7 @@ export function UsersPage() {
           </form>
 
           {storageMode === "supabase" ? (
-            <div className="rounded-[20px] bg-[rgba(45,212,191,0.1)] px-4 py-4 text-sm leading-7 text-[#F0EDE8]">
+            <div className="rounded-[20px] bg-[rgba(45,212,191,0.1)] px-4 py-4 text-sm leading-7 text-[var(--ls-text)]">
               Si le compte existe dans Authentication mais pas ici, repare-le depuis ce bloc.
             </div>
           ) : null}
@@ -526,13 +526,13 @@ function FilterPill({ label, active, onClick }: { label: string; active: boolean
 }
 
 function EmptyState({ text }: { text: string }) {
-  return <div className="rounded-[22px] bg-white/[0.03] px-4 py-4 text-sm leading-7 text-[#7A8099]">{text}</div>;
+  return <div className="rounded-[22px] bg-white/[0.03] px-4 py-4 text-sm leading-7 text-[var(--ls-text-muted)]">{text}</div>;
 }
 
 function StatCard({ label, value }: { label: string; value: number }) {
   return (
     <Card className="space-y-2 rounded-[24px] p-5">
-      <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-[#4A5068]">{label}</p>
+      <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-[var(--ls-text-hint)]">{label}</p>
       <p className="text-3xl font-semibold text-white">{value}</p>
     </Card>
   );
@@ -600,7 +600,7 @@ function OrganizationCluster({
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <p className="text-sm font-semibold text-white">{referent.name}</p>
-          <p className="mt-1 text-sm text-[#7A8099]">{referent.email}</p>
+          <p className="mt-1 text-sm text-[var(--ls-text-muted)]">{referent.email}</p>
         </div>
         <StatusBadge
           label={`${distributors.length} distributeur${distributors.length > 1 ? "s" : ""}`}
@@ -661,13 +661,13 @@ function OrganizationUserCard({
   return (
     <div
       className={`rounded-[22px] px-4 py-4 ${
-        highlighted ? "bg-amber-400/[0.08] ring-1 ring-amber-400/12" : "bg-[#0B0D11]/60"
+        highlighted ? "bg-amber-400/[0.08] ring-1 ring-amber-400/12" : "bg-[var(--ls-bg)]/60"
       }`}
     >
       <div className="flex items-center justify-between gap-3">
         <div>
           <p className="text-sm font-semibold text-white">{user.name}</p>
-          <p className="mt-1 text-sm text-[#7A8099]">{getRoleLabel(user.role)}</p>
+          <p className="mt-1 text-sm text-[var(--ls-text-muted)]">{getRoleLabel(user.role)}</p>
         </div>
         <StatusBadge
           label={`${metrics.clients.length} clients`}
@@ -686,7 +686,7 @@ function OrganizationUserCard({
 function MiniMetric({ label, value }: { label: string; value: number }) {
   return (
     <div className="rounded-[18px] bg-white/[0.03] px-3 py-3 text-center">
-      <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-[#4A5068]">{label}</p>
+      <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-[var(--ls-text-hint)]">{label}</p>
       <p className="mt-2 text-lg font-semibold text-white">{value}</p>
     </div>
   );
@@ -794,32 +794,32 @@ function UserAccessCard({
           <StatusBadge label={getRoleLabel(user.role)} tone={roleTone} />
           <StatusBadge label={user.active ? "Actif" : "Inactif"} tone={user.active ? "green" : "amber"} />
         </div>
-        <p className="text-sm text-[#7A8099]">{user.email}</p>
-        <p className="break-all text-xs text-[#4A5068]">{user.id}</p>
+        <p className="text-sm text-[var(--ls-text-muted)]">{user.email}</p>
+        <p className="break-all text-xs text-[var(--ls-text-hint)]">{user.id}</p>
         {user.sponsorName ? (
           <p className="text-sm text-[#2DD4BF]/80">Rattachement actuel : {user.sponsorName}</p>
         ) : null}
-        <p className="text-xs text-[#4A5068]">
+        <p className="text-xs text-[var(--ls-text-hint)]">
           Cree le {user.createdAt ? formatDate(user.createdAt) : "Date non renseignee"}
         </p>
       </div>
 
       <div className="grid gap-3 text-sm text-[#B0B4C4]">
-        <div className="rounded-[18px] bg-[#0B0D11]/60 px-3 py-3">
-          <span className="text-[#4A5068]">Portefeuille</span>
+        <div className="rounded-[18px] bg-[var(--ls-bg)]/60 px-3 py-3">
+          <span className="text-[var(--ls-text-hint)]">Portefeuille</span>
           <p className="mt-1 font-medium text-white">
             {metrics.clients.length} clients - {metrics.relanceFollowUps.length} relances
           </p>
         </div>
-        <div className="rounded-[18px] bg-[#0B0D11]/60 px-3 py-3">
-          <span className="text-[#4A5068]">Perimetre</span>
+        <div className="rounded-[18px] bg-[var(--ls-bg)]/60 px-3 py-3">
+          <span className="text-[var(--ls-text-hint)]">Perimetre</span>
           <p className="mt-1 font-medium text-white">{perimeterLabel}</p>
         </div>
 
         {!isAdmin(user) ? (
-          <div className="grid gap-3 rounded-[18px] bg-[#0B0D11]/60 px-3 py-3">
+          <div className="grid gap-3 rounded-[18px] bg-[var(--ls-bg)]/60 px-3 py-3">
             <div className="space-y-2">
-              <label className="text-xs font-medium uppercase tracking-[0.14em] text-[#4A5068]">
+              <label className="text-xs font-medium uppercase tracking-[0.14em] text-[var(--ls-text-hint)]">
                 Role
               </label>
               <select
@@ -839,7 +839,7 @@ function UserAccessCard({
 
             {selectedRole === "distributor" ? (
               <div className="space-y-2">
-                <label className="text-xs font-medium uppercase tracking-[0.14em] text-[#4A5068]">
+                <label className="text-xs font-medium uppercase tracking-[0.14em] text-[var(--ls-text-hint)]">
                   Rattachement referent / sponsor
                 </label>
                 <select
@@ -858,8 +858,8 @@ function UserAccessCard({
           </div>
         ) : null}
 
-        <div className="grid gap-2 rounded-[18px] bg-[#0B0D11]/60 px-3 py-3">
-          <label className="text-xs font-medium uppercase tracking-[0.14em] text-[#4A5068]">
+        <div className="grid gap-2 rounded-[18px] bg-[var(--ls-bg)]/60 px-3 py-3">
+          <label className="text-xs font-medium uppercase tracking-[0.14em] text-[var(--ls-text-hint)]">
             Redefinir le mot de passe
           </label>
           <input
@@ -897,7 +897,7 @@ function UserAccessCard({
         <Button variant="secondary" onClick={onToggleStatus}>
           {user.active ? "Desactiver" : "Reactiver"}
         </Button>
-        {feedback ? <p className="text-xs text-[#7A8099] xl:text-right">{feedback}</p> : null}
+        {feedback ? <p className="text-xs text-[var(--ls-text-muted)] xl:text-right">{feedback}</p> : null}
       </div>
     </div>
   );
@@ -909,11 +909,11 @@ function ActivityRow({ entry }: { entry: ActivityLog }) {
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-sm font-semibold text-white">{entry.summary}</p>
-          {entry.detail ? <p className="mt-1 text-sm leading-6 text-[#7A8099]">{entry.detail}</p> : null}
+          {entry.detail ? <p className="mt-1 text-sm leading-6 text-[var(--ls-text-muted)]">{entry.detail}</p> : null}
         </div>
-        <p className="text-xs text-[#4A5068]">{formatDateTime(entry.createdAt)}</p>
+        <p className="text-xs text-[var(--ls-text-hint)]">{formatDateTime(entry.createdAt)}</p>
       </div>
-      <p className="mt-3 text-xs text-[#4A5068]">
+      <p className="mt-3 text-xs text-[var(--ls-text-hint)]">
         {entry.actorName}
         {entry.targetUserName ? ` - ${entry.targetUserName}` : ""}
         {entry.clientName ? ` - ${entry.clientName}` : ""}

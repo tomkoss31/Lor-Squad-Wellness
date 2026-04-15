@@ -65,8 +65,8 @@ export function HydrationVisceralInsightCard({
           <div className="md:col-span-2 xl:col-span-3 rounded-[24px] bg-white/[0.04] p-5">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <p className="text-[11px] font-medium text-[#4A5068]">Repère hydratation</p>
-                <p className="mt-2 text-sm text-[#7A8099]">
+                <p className="text-[11px] font-medium text-[var(--ls-text-hint)]">Repère hydratation</p>
+                <p className="mt-2 text-sm text-[var(--ls-text-muted)]">
                   Zone moyenne {hydrationReference.min}-{hydrationReference.max} %
                 </p>
               </div>
@@ -76,7 +76,7 @@ export function HydrationVisceralInsightCard({
             </div>
 
             <div className="mt-4 grid gap-4 lg:grid-cols-[0.82fr_1.18fr]">
-              <div className="flex items-center justify-center rounded-[22px] bg-[#1A1E27] p-5">
+              <div className="flex items-center justify-center rounded-[22px] bg-[var(--ls-surface2)] p-5">
                 <div className="relative flex h-[210px] w-[170px] items-center justify-center">
                   <div
                     className="absolute inset-x-3 bottom-0 rounded-b-[88px] rounded-t-[110px] border border-white/10 bg-[linear-gradient(180deg,rgba(56,189,248,0.2),rgba(14,165,233,0.05))]"
@@ -92,7 +92,7 @@ export function HydrationVisceralInsightCard({
                     />
                   </div>
                   <div className="relative z-10 text-center">
-                    <p className="text-[11px] font-medium text-[#4A5068]">Taux du jour</p>
+                    <p className="text-[11px] font-medium text-[var(--ls-text-hint)]">Taux du jour</p>
                     <p className="mt-3 text-[2.1rem] font-semibold leading-none text-white">
                       {formatRawNumber(hydrationPercent)} %
                     </p>
@@ -126,11 +126,11 @@ export function HydrationVisceralInsightCard({
             </div>
           </div>
 
-          <div className="md:col-span-2 xl:col-span-3 rounded-[24px] border border-white/10 bg-[#0B0D11]/80 p-5">
+          <div className="md:col-span-2 xl:col-span-3 rounded-[24px] border border-white/10 bg-[var(--ls-bg)]/80 p-5">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <p className="text-[11px] font-medium text-[#4A5068]">Repère viscéral</p>
-                <p className="mt-2 text-sm text-[#7A8099]">
+                <p className="text-[11px] font-medium text-[var(--ls-text-hint)]">Repère viscéral</p>
+                <p className="mt-2 text-sm text-[var(--ls-text-muted)]">
                   La graisse viscérale mérite un repère de vigilance très simple.
                 </p>
               </div>
@@ -203,8 +203,8 @@ function HydrationRangeChip({
   active: boolean;
 }) {
   return (
-    <div className={`rounded-[18px] px-3 py-3 ${active ? "bg-[rgba(45,212,191,0.1)]" : "bg-[#0B0D11]/60"}`}>
-      <p className="text-[11px] font-medium text-[#4A5068]">{label}</p>
+    <div className={`rounded-[18px] px-3 py-3 ${active ? "bg-[rgba(45,212,191,0.1)]" : "bg-[var(--ls-bg)]/60"}`}>
+      <p className="text-[11px] font-medium text-[var(--ls-text-hint)]">{label}</p>
       <p className="mt-2 text-sm font-medium text-white">{detail}</p>
     </div>
   );
@@ -250,7 +250,7 @@ function VisceralRangeChip({
       }`}
     >
       <span className="text-sm font-medium text-white">{label}</span>
-      <span className={`text-sm ${active ? palette.label : "text-[#7A8099]"}`}>{detail}</span>
+      <span className={`text-sm ${active ? palette.label : "text-[var(--ls-text-muted)]"}`}>{detail}</span>
     </div>
   );
 }
