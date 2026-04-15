@@ -54,13 +54,13 @@ export function HydrationVisceralInsightCard({
             label="Hydratation"
             value={`${formatRawNumber(hydrationPercent)} %`}
             note={`${formatRawNumber(hydrationKg)} kg estimes`}
-            accent="blue"
+            accent={hydrationStatus.tone === "amber" ? "red" : hydrationStatus.tone}
           />
           <PedagogicalMetricCard
             label="Graisse viscérale"
             value={formatRawNumber(visceralFat)}
             note={visceralStatus.label}
-            accent="red"
+            accent={visceralStatus.band === "healthy" ? "green" : "red"}
           />
           <div className="md:col-span-2 xl:col-span-3 rounded-[24px] bg-[var(--ls-surface2)] p-5">
             <div className="flex items-center justify-between gap-3">
