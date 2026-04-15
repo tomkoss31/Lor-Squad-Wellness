@@ -442,6 +442,25 @@ html.theme-light .recap-hero {
   background: linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 60%, #F4F2EE 100%) !important;
 }
 
+/* ── SIDEBAR icônes/items actifs ── */
+html.theme-light .app-sidebar [aria-current="page"] svg,
+html.theme-light .app-sidebar [aria-current="page"] span svg {
+  color: var(--ls-gold) !important;
+  stroke: var(--ls-gold) !important;
+}
+html.theme-light .app-sidebar svg {
+  opacity: 1 !important;
+}
+html.theme-light .app-sidebar [aria-current="page"] {
+  background: rgba(201,168,76,0.08) !important;
+}
+
+/* Header fixe legacy — masqué s'il reste */
+html.theme-light .layout-header,
+[class*="header"][class*="fixed"] .pilotage-ribbon {
+  display: none !important;
+}
+
 /* ════════════════════════════════════════════════════
    RESPONSIVE MOBILE iPhone + iPad — passe complète
    ════════════════════════════════════════════════════ */

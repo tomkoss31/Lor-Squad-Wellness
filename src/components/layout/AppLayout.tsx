@@ -140,28 +140,57 @@ export function AppLayout() {
                 <NavLink
                   key={item.path}
                   to={item.path}
-                  className={`flex items-center gap-3 rounded-[12px] px-3 py-2.5 text-[13px] font-medium transition ${
-                    isActive
-                      ? "bg-[var(--ls-gold-bg)]"
-                      : "hover:bg-[var(--ls-surface2)]"
-                  }`}
-                  style={{ color: isActive ? 'var(--ls-text)' : 'var(--ls-text-muted)' }}
+                  className="flex items-center gap-3 rounded-r-[12px] text-[13px] transition"
+                  style={{
+                    padding: '9px 12px 9px 14px',
+                    marginLeft: -2,
+                    borderLeft: isActive ? '2px solid var(--ls-gold)' : '2px solid transparent',
+                    background: isActive ? 'rgba(201,168,76,0.08)' : 'transparent',
+                    color: isActive ? 'var(--ls-text)' : 'var(--ls-text-muted)',
+                    fontWeight: isActive ? 500 : 400,
+                    fontFamily: 'DM Sans, sans-serif',
+                    textDecoration: 'none',
+                    transition: 'all 0.15s',
+                  }}
+                  onMouseEnter={e => {
+                    if (!isActive) e.currentTarget.style.background = 'var(--ls-surface2)'
+                  }}
+                  onMouseLeave={e => {
+                    if (!isActive) e.currentTarget.style.background = 'transparent'
+                  }}
                 >
                   <span style={{
                     flexShrink: 0,
-                    opacity: isActive ? 1 : 0.6,
+                    display: 'flex',
+                    alignItems: 'center',
                     color: isActive ? 'var(--ls-gold)' : 'var(--ls-text-muted)',
-                    display: 'inline-flex',
+                    opacity: 1,
                   }}>
                     {NAV_ICONS[item.path]}
                   </span>
                   <span className="flex-1">{item.label}</span>
                   {item.badge > 0 ? (
-                    <span style={{ fontSize: 9, padding: '2px 6px', borderRadius: 10, background: 'rgba(220,38,38,0.12)', color: 'var(--ls-coral)', fontWeight: 700, marginLeft: 'auto', fontFamily: 'DM Sans, sans-serif' }}>
+                    <span style={{
+                      fontSize: 9, padding: '2px 7px', borderRadius: 10,
+                      background: 'rgba(220,38,38,0.1)',
+                      color: '#DC2626',
+                      fontWeight: 700,
+                      marginLeft: 'auto',
+                      fontFamily: 'DM Sans, sans-serif',
+                      flexShrink: 0,
+                    }}>
                       {item.badge}
                     </span>
                   ) : item.path === "/assessments/new" ? (
-                    <span className="rounded-full bg-[rgba(201,168,76,0.15)] px-2 py-0.5 text-[10px] font-semibold text-[#C9A84C]">
+                    <span style={{
+                      fontSize: 10, padding: '2px 8px', borderRadius: 10,
+                      background: 'rgba(201,168,76,0.15)',
+                      color: 'var(--ls-gold)',
+                      fontWeight: 600,
+                      marginLeft: 'auto',
+                      fontFamily: 'DM Sans, sans-serif',
+                      flexShrink: 0,
+                    }}>
                       Nouveau
                     </span>
                   ) : null}
