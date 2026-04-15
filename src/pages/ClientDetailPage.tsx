@@ -471,6 +471,7 @@ export function ClientDetailPage() {
             title="Dernier body scan"
             dateLabel={`Relevé du ${formatDate(latestAssessment.date)}`}
             metrics={latestBodyScan}
+            realAge={client.age}
           />
 
           <BodyFatInsightCard

@@ -10,12 +10,14 @@ interface BodyScanSnapshotCardProps {
   title: string;
   dateLabel: string;
   metrics: BodyScanMetrics;
+  realAge?: number;
 }
 
 export function BodyScanSnapshotCard({
   title,
   dateLabel,
-  metrics
+  metrics,
+  realAge
 }: BodyScanSnapshotCardProps) {
   const bodyFatKg = estimateBodyFatKg(metrics.weight, metrics.bodyFat);
   const musclePercent = estimateMuscleMassPercent(metrics.weight, metrics.muscleMass);
@@ -31,6 +33,14 @@ export function BodyScanSnapshotCard({
     metrics.hydration < 45 ? "red" : metrics.hydration < 50 ? "amber" : "blue";
   const boneTone: "blue" | "green" | "red" | "amber" =
     boneRatio < 3.0 ? "red" : boneRatio < 4.0 ? "amber" : "green";
+  const metabolicAgeTone: "blue" | "green" | "red" | "amber" = (() => {
+    if (realAge == null) return "amber";
+    const diff = metrics.metabolicAge - realAge;
+    if (diff > 10) return "red";
+    if (diff > 5) return "amber";
+    if (diff > 0) return "blue";
+    return "green";
+  })();
 
   const items = [
     { label: "Poids", primary: `${metrics.weight} kg`, secondary: "Mesure actuelle", tone: "blue" as const },
@@ -60,7 +70,7 @@ export function BodyScanSnapshotCard({
     },
     { label: "Graisse viscérale", primary: `${metrics.visceralFat}`, tone: visceralTone },
     { label: "BMR", primary: `${metrics.bmr} kcal`, tone: "green" as const },
-    { label: "Âge métabolique", primary: `${metrics.metabolicAge} ans`, tone: "amber" as const }
+    { label: "Âge métabolique", primary: `${metrics.metabolicAge} ans`, tone: metabolicAgeTone }
   ];
 
   return (
