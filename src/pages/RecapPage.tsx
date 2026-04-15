@@ -142,7 +142,7 @@ export function RecapPage() {
                 { label: 'Hydratation', v: scan.hydration, unit: '%', max: 100, c: '#A78BFA' },
                 { label: 'Graisse visc.', v: scan.visceralFat, unit: '', max: 30, c: (scan.visceralFat ?? 0) > 9 ? '#FB7185' : '#2DD4BF' },
               ].filter(m => m.v).map((m, i, arr) => (
-                <div key={m.label} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '7px 0', borderBottom: i < arr.length-1 ? '1px solid rgba(255,255,255,0.05)' : 'none' }}>
+                <div key={m.label} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '7px 0', borderBottom: i < arr.length-1 ? '1px solid rgba(128,128,128,0.08)' : 'none' }}>
                   <div style={{ fontSize: 11, color: 'var(--ls-text-muted)', width: 90, flexShrink: 0 }}>{m.label}</div>
                   <div style={{ flex: 1, height: 4, background: 'var(--ls-border)', borderRadius: 2, overflow: 'hidden' }}>
                     <div style={{ height: '100%', width: `${Math.min(100, ((m.v||0)/m.max)*100)}%`, background: m.c, borderRadius: 2 }} />

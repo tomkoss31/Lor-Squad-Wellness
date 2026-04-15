@@ -56,6 +56,21 @@ html.theme-light {
 html.theme-light .app-sidebar { box-shadow: 2px 0 8px rgba(0,0,0,0.06); }
 html.theme-light .bottom-nav { box-shadow: 0 -2px 8px rgba(0,0,0,0.06); }
 
+/* Mode clair — neutraliser le gradient hero-mesh sombre */
+html.theme-light .bg-hero-mesh { background: var(--ls-bg) !important; background-image: none !important; }
+
+/* Mode clair — neutraliser les fonds semi-transparents blancs */
+html.theme-light [class*="bg-white/"],
+html.theme-light [class*="bg-white\\/"] {
+  background-color: rgba(0, 0, 0, 0.04) !important;
+}
+
+/* Mode clair — les bordures blanches semi-transparentes doivent devenir sombres */
+html.theme-light [class*="border-white/"],
+html.theme-light [class*="border-white\\/"] {
+  border-color: rgba(0, 0, 0, 0.1) !important;
+}
+
 @layer base {
   * { box-sizing: border-box; -webkit-font-smoothing: antialiased; }
 
@@ -126,25 +141,25 @@ html.theme-light .bottom-nav { box-shadow: 0 -2px 8px rgba(0,0,0,0.06); }
   }
 
   .glass-panel {
-    border: 1px solid rgba(255,255,255,0.07);
-    background: rgba(19,22,28,0.85);
+    border: 1px solid var(--ls-border);
+    background: var(--ls-surface);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
   }
 
   .surface-soft {
     border-radius: 20px;
-    background: rgba(255,255,255,0.03);
+    background: var(--ls-surface2);
   }
 
   .surface-card {
-    background: #13161C;
-    border: 1px solid rgba(255,255,255,0.07);
-    box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+    background: var(--ls-surface);
+    border: 1px solid var(--ls-border);
+    box-shadow: 0 2px 12px rgba(0,0,0,0.1);
   }
 
   .bg-hero-mesh {
-    background: #0B0D11;
+    background: var(--ls-bg);
     background-image:
       radial-gradient(ellipse 60% 40% at 15% 15%, rgba(201,168,76,0.09) 0%, transparent 60%),
       radial-gradient(ellipse 50% 40% at 85% 85%, rgba(45,212,191,0.07) 0%, transparent 60%);

@@ -14,7 +14,7 @@ export function ProgramCard({ program, selected = false, onSelect }: ProgramCard
       className={`rounded-[30px] p-5 transition md:p-6 ${
         selected
           ? "bg-[linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.045))] shadow-luxe ring-1 ring-white/12"
-          : "bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.03))]"
+          : "bg-[linear-gradient(180deg,rgba(128,128,128,0.08),rgba(128,128,128,0.05))]"
       }`}
     >
       <div className="space-y-5">

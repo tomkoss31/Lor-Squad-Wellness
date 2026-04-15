@@ -144,7 +144,7 @@ function HydrationValueCard({
   accent?: "blue" | "green";
 }) {
   return (
-    <div className="rounded-[24px] bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.025))] p-4 md:p-5">
+    <div className="rounded-[24px] bg-[linear-gradient(180deg,rgba(128,128,128,0.08),rgba(255,255,255,0.025))] p-4 md:p-5">
       <p className="text-[11px] font-medium text-[var(--ls-text-hint)]">{label}</p>
       <p className="mt-4 text-[1.45rem] font-semibold leading-none text-white md:text-[1.6rem]">
         {value}
@@ -197,7 +197,7 @@ function HydrationGaugeScene({
             style={{
               background: `conic-gradient(from 205deg, rgba(56,189,248,0.96) 0deg, rgba(103,232,249,0.9) ${
                 progressPercent * 1.8
-              }deg, rgba(255,255,255,0.08) ${progressPercent * 1.8}deg, rgba(255,255,255,0.04) 360deg)`
+              }deg, rgba(255,255,255,0.08) ${progressPercent * 1.8}deg, rgba(128,128,128,0.06) 360deg)`
             }}
           >
             <div className="absolute inset-[16px] rounded-full bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.07),transparent_38%),linear-gradient(180deg,rgba(2,6,23,0.95),rgba(15,23,42,0.92))]" />

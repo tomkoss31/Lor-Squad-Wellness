@@ -320,7 +320,7 @@ export function PvOverviewPage() {
                     className={`grid w-full grid-cols-[1.4fr_1fr_1fr_1fr_0.8fr_0.9fr_0.9fr_0.9fr_1fr_0.7fr] gap-3 rounded-[22px] border px-3 py-4 text-left transition ${
                       isActive
                         ? "border-white/28 bg-white/[0.1] shadow-[0_0_0_1px_rgba(255,255,255,0.12),0_22px_54px_rgba(8,15,28,0.4)]"
-                        : "border-white/8 bg-white/[0.03] hover:border-white/16 hover:bg-white/[0.055] hover:shadow-[0_0_0_1px_rgba(255,255,255,0.05),0_18px_40px_rgba(7,12,22,0.3)]"
+                        : "border-white/8 bg-white/[0.03] hover:border-white/16 hover:bg-white/[0.055] hover:shadow-[0_0_0_1px_rgba(128,128,128,0.08),0_18px_40px_rgba(7,12,22,0.3)]"
                     }`}
                   >
                     <div>

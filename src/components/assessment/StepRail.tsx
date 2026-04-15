@@ -105,7 +105,7 @@ export function StepRail({ currentStep, steps }: StepRailProps) {
                   <div
                     className="flex h-7 w-7 items-center justify-center rounded-full text-[10px] font-bold transition-all duration-300"
                     style={{
-                      background: isDone ? color : isActive ? `${color}30` : "rgba(255,255,255,0.04)",
+                      background: isDone ? color : isActive ? `${color}30` : "rgba(128,128,128,0.06)",
                       border: `2px solid ${isDone || isActive ? color : "rgba(255,255,255,0.1)"}`,
                       color: isDone ? "#0B0D11" : isActive ? color : "#4A5068",
                     }}
