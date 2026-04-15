@@ -1019,7 +1019,10 @@ function StartingPointOverviewCard({
         : { rgb: "220,38,38", hex: "var(--ls-coral)" };
 
   return (
-    <div className="rounded-[28px] bg-[linear-gradient(180deg,rgba(15,23,42,0.28),rgba(15,23,42,0.52))] p-5">
+    <div
+      className="rounded-[28px] p-5"
+      style={{ background: 'var(--ls-surface2)', border: '1px solid var(--ls-border)' }}
+    >
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="eyebrow-label">Repère de départ</p>

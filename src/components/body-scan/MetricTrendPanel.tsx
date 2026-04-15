@@ -62,15 +62,6 @@ export function MetricTrendPanel({
     .map((point, index) => `${index === 0 ? "M" : "L"} ${point.x} ${point.y}`)
     .join(" ");
 
-  // Couleur des labels selon tendance (dernier vs premier) — rouge si ça remonte, vert si ça descend
-  const getTrendColor = (idx: number): string => {
-    if (idx === 0) return "var(--ls-text-muted)";
-    const prev = coordinates[idx - 1].value;
-    const curr = coordinates[idx].value;
-    if (curr < prev) return "var(--ls-teal)";   // descend → bon
-    if (curr > prev) return "var(--ls-coral)";  // remonte → mauvais
-    return "var(--ls-text)";                     // stable
-  };
 
   return (
     <div className="md:col-span-2 xl:col-span-3 rounded-[24px] bg-[var(--ls-surface2)] p-5">
@@ -149,7 +140,7 @@ export function MetricTrendPanel({
                   x={point.x}
                   y={point.y - 10}
                   textAnchor="middle"
-                fill={getTrendColor(index)}
+                fill="var(--ls-text-muted)"
                 stroke="var(--ls-surface2)"
                 strokeWidth="3"
                 paintOrder="stroke"
@@ -165,10 +156,7 @@ export function MetricTrendPanel({
       </div>
 
       <div className="mt-4 grid gap-3 md:grid-cols-3">
-        {recentPoints.map((point, index) => {
-          const recentIdx = chartPoints.length - recentPoints.length + index;
-          const valueColor = getTrendColor(recentIdx);
-          return (
+        {recentPoints.map((point, index) => (
           <div
             key={`${gradientId}-card-${point.date}-${index}`}
             className={`rounded-[20px] border px-4 py-4 ${
@@ -177,19 +165,18 @@ export function MetricTrendPanel({
                 : "border-white/8 bg-[var(--ls-bg)]/60"
             }`}
           >
-            <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-[var(--ls-text-hint)]">
+            <p className="text-[11px] font-medium uppercase tracking-[0.14em]" style={{ color: 'var(--ls-text-hint)' }}>
               {point.label ?? formatDate(point.date)}
             </p>
-            {point.label ? <p className="mt-1 text-xs text-[var(--ls-text-muted)]">{formatDate(point.date)}</p> : null}
+            {point.label ? <p className="mt-1 text-xs" style={{ color: 'var(--ls-text-hint)' }}>{formatDate(point.date)}</p> : null}
             <div className="mt-4">
-              <p className="text-[2rem] font-semibold tracking-[-0.04em]" style={{ color: valueColor }}>
+              <p className="text-[2rem] font-semibold tracking-[-0.04em]" style={{ color: 'var(--ls-text)' }}>
                 {`${point.value}${valueSuffix}`}
               </p>
-              <p className="mt-1 text-sm text-[var(--ls-text-muted)]">{point.secondary}</p>
+              <p className="mt-1 text-sm" style={{ color: 'var(--ls-text-muted)' }}>{point.secondary}</p>
             </div>
           </div>
-          );
-        })}
+        ))}
       </div>
     </div>
   );
