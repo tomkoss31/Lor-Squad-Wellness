@@ -115,7 +115,10 @@ export function MetricTrendPanel({
                   <text
                     x={4}
                     y={y + 4}
-                  fill="var(--ls-text-hint)"
+                  fill="var(--ls-text-muted)"
+                  stroke="var(--ls-surface2)"
+                  strokeWidth="2.5"
+                  paintOrder="stroke"
                   fontSize="10"
                   fontWeight="500"
                 >
@@ -147,6 +150,9 @@ export function MetricTrendPanel({
                   y={point.y - 10}
                   textAnchor="middle"
                 fill={getTrendColor(index)}
+                stroke="var(--ls-surface2)"
+                strokeWidth="3"
+                paintOrder="stroke"
                 fontSize="11"
                 fontWeight="700"
               >
