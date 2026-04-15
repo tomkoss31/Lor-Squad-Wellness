@@ -234,6 +234,34 @@ html.theme-light button:not([disabled]):hover {
   filter: brightness(0.96);
 }
 
+/* ── TOUCHES PREMIUM MODE CLAIR ── */
+html.theme-light .logo-mark,
+html.theme-light [style*="background: #C9A84C"][style*="border-radius: 9px"],
+html.theme-light [style*="background: #C9A84C"][style*="border-radius: 12px"] {
+  box-shadow: 0 2px 8px rgba(201,168,76,0.3);
+}
+
+html.theme-light .btn-new,
+html.theme-light [style*="background: #B8922A"],
+html.theme-light [style*="background: #C9A84C"][style*="border-radius: 10px"] {
+  box-shadow: 0 2px 10px rgba(184,146,42,0.2);
+}
+
+html.theme-light .ls-sidebar,
+html.theme-light [class*="sidebar"] {
+  box-shadow: 2px 0 12px rgba(0,0,0,0.04);
+}
+
+html.theme-light .action-card,
+html.theme-light .dark-card {
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  transition: box-shadow 0.15s;
+}
+
+html.theme-light .action-card:hover {
+  box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+}
+
 
 @layer base {
   * { box-sizing: border-box; -webkit-font-smoothing: antialiased; }
