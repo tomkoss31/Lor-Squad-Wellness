@@ -99,9 +99,10 @@ export function AppLayout() {
                   to={item.path}
                   className={`flex items-center gap-3 rounded-[12px] px-3 py-2.5 text-[13px] font-medium transition ${
                     isActive
-                      ? "bg-[rgba(201,168,76,0.1)] text-white"
-                      : "text-[#7A8099] hover:bg-white/[0.035] hover:text-white"
+                      ? "bg-[var(--ls-gold-bg)]"
+                      : "hover:bg-[var(--ls-surface2)]"
                   }`}
+                  style={{ color: isActive ? 'var(--ls-text)' : 'var(--ls-text-muted)' }}
                 >
                   <span
                     className={`h-1.5 w-1.5 rounded-full flex-shrink-0 ${

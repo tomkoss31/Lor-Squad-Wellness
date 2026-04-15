@@ -75,6 +75,24 @@ html.theme-light [class*="border-white\\/"] {
   border-color: rgba(0, 0, 0, 0.1) !important;
 }
 
+/* Mode clair — inputs natifs forcés clairs */
+html.theme-light input:not([type="range"]):not([type="checkbox"]):not([type="radio"]),
+html.theme-light select,
+html.theme-light textarea {
+  background: var(--ls-input-bg) !important;
+  color: var(--ls-text) !important;
+  border-color: var(--ls-border) !important;
+}
+html.theme-light input::placeholder,
+html.theme-light textarea::placeholder {
+  color: var(--ls-text-hint) !important;
+}
+html.theme-light select option {
+  background: var(--ls-input-bg) !important;
+  color: var(--ls-text) !important;
+}
+
+
 @layer base {
   * { box-sizing: border-box; -webkit-font-smoothing: antialiased; }
 

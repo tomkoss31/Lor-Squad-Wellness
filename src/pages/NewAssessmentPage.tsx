@@ -2666,7 +2666,20 @@ function SectionBlock({ title, description, children }: { title: string; descrip
 }
 
 function SummaryMini({ label, value }: { label: string; value: string }) {
-  return <div className="flex items-center justify-between gap-3 rounded-[20px] bg-[var(--ls-surface2)] px-4 py-3"><span className="text-[11px] font-medium text-[var(--ls-text-hint)]">{label}</span><span className="text-sm font-semibold text-white">{value}</span></div>;
+  return (
+    <div
+      className="flex items-center justify-between gap-3"
+      style={{
+        background: 'var(--ls-surface)',
+        border: '1px solid var(--ls-border2)',
+        borderRadius: 10,
+        padding: '10px 14px',
+      }}
+    >
+      <span className="text-[11px] font-medium" style={{ color: 'var(--ls-text-hint)' }}>{label}</span>
+      <span className="text-sm font-semibold" style={{ color: 'var(--ls-text)' }}>{value}</span>
+    </div>
+  );
 }
 
 function FocusPanelItem({ text, highlighted = false }: { text: string; highlighted?: boolean }) {
