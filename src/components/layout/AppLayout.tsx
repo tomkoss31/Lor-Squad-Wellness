@@ -147,12 +147,14 @@ export function AppLayout() {
                   }`}
                   style={{ color: isActive ? 'var(--ls-text)' : 'var(--ls-text-muted)' }}
                 >
-                  <span
-                    className={`h-1.5 w-1.5 rounded-full flex-shrink-0 ${
-                      isActive ? "bg-[#C9A84C]" : "bg-[var(--ls-border2)]"
-                    }`}
-                  />
-                  {NAV_ICONS[item.path] ?? null}
+                  <span style={{
+                    flexShrink: 0,
+                    opacity: isActive ? 1 : 0.6,
+                    color: isActive ? 'var(--ls-gold)' : 'var(--ls-text-muted)',
+                    display: 'inline-flex',
+                  }}>
+                    {NAV_ICONS[item.path]}
+                  </span>
                   <span className="flex-1">{item.label}</span>
                   {item.badge > 0 ? (
                     <span style={{ fontSize: 9, padding: '2px 6px', borderRadius: 10, background: 'rgba(220,38,38,0.12)', color: 'var(--ls-coral)', fontWeight: 700, marginLeft: 'auto', fontFamily: 'DM Sans, sans-serif' }}>
