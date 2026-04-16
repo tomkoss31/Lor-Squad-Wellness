@@ -8,13 +8,15 @@ interface HistoryTimelineEntry {
   hydration: number;
   editTo?: string;
   typeLabel?: string;
+  canDelete?: boolean;
 }
 
 interface HistoryTimelineProps {
   entries: HistoryTimelineEntry[];
+  onDelete?: (id: string) => void;
 }
 
-export function HistoryTimeline({ entries }: HistoryTimelineProps) {
+export function HistoryTimeline({ entries, onDelete }: HistoryTimelineProps) {
   return (
     <div className="space-y-4">
       {entries.map((entry, index) => (
@@ -47,6 +49,14 @@ export function HistoryTimeline({ entries }: HistoryTimelineProps) {
                   >
                     Modifier
                   </Link>
+                ) : null}
+                {entry.canDelete && onDelete ? (
+                  <button
+                    onClick={() => { if (window.confirm(`Supprimer ce ${entry.typeLabel?.toLowerCase() ?? 'bilan'} ?`)) onDelete(entry.id) }}
+                    className="rounded-full bg-[rgba(220,38,38,0.08)] px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--ls-coral)] transition hover:bg-[rgba(220,38,38,0.15)]"
+                  >
+                    Supprimer
+                  </button>
                 ) : null}
               </div>
             </div>
