@@ -83,9 +83,12 @@ export function ClientDetailPage() {
       if (!data) return;
       const sb = await getSupabaseClient();
       if (!sb) return;
+      // Supprimer l'ancien rapport si existant
+      await sb.from('client_evolution_reports').delete().eq('client_id', client.id);
+      // Insérer le nouveau
       const { data: inserted, error } = await sb
         .from('client_evolution_reports')
-        .upsert(data, { onConflict: 'client_id' })
+        .insert(data)
         .select('token')
         .single();
       if (!error && inserted) {
@@ -367,18 +370,21 @@ export function ClientDetailPage() {
             )}
           </button>
         ))}
-      </div>
-
-      {/* Bouton rapport d'évolution */}
-      {(client.assessments?.length ?? 0) >= 2 && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        {/* Bouton rapport inline avec les onglets */}
+        {(client.assessments?.length ?? 0) >= 2 && (
           <button onClick={() => void generateReport()} disabled={generatingReport}
-            style={{ display: 'flex', alignItems: 'center', gap: 7, background: 'var(--ls-surface)', border: '1px solid var(--ls-border)', borderRadius: 10, padding: '10px 16px', fontSize: 13, color: 'var(--ls-text-muted)', fontFamily: 'DM Sans, sans-serif', cursor: generatingReport ? 'wait' : 'pointer', transition: 'all 0.15s' }}>
+            className="client-tab transition-all duration-150"
+            style={{
+              padding: '7px 14px', borderRadius: 8, border: 'none', cursor: generatingReport ? 'wait' : 'pointer',
+              fontSize: 13, fontFamily: 'DM Sans, sans-serif', fontWeight: 400,
+              background: 'transparent', color: 'var(--ls-gold)',
+              display: 'flex', alignItems: 'center', gap: 6, marginLeft: 4,
+            }}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-            {generatingReport ? 'Génération...' : "Rapport d'évolution"}
+            {generatingReport ? 'Génération...' : 'Rapport'}
           </button>
-        </div>
-      )}
+        )}
+      </div>
 
       {reportUrl && (
         <EvolutionReportModal
