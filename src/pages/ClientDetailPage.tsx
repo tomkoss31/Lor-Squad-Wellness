@@ -546,7 +546,7 @@ export function ClientDetailPage() {
               weight: firstAssessment.bodyScan.weight,
               percent: firstAssessment.bodyScan.bodyFat
             }}
-            history={client.assessments.map((assessment) => ({
+            history={[...client.assessments].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()).map((assessment) => ({
               date: assessment.date,
               weight: assessment.bodyScan.weight,
               percent: assessment.bodyScan.bodyFat
@@ -567,7 +567,7 @@ export function ClientDetailPage() {
               weight: firstAssessment.bodyScan.weight,
               muscleMass: firstAssessment.bodyScan.muscleMass
             }}
-            history={client.assessments.map((assessment) => ({
+            history={[...client.assessments].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()).map((assessment) => ({
               date: assessment.date,
               weight: assessment.bodyScan.weight,
               muscleMass: assessment.bodyScan.muscleMass
@@ -579,7 +579,7 @@ export function ClientDetailPage() {
             hydrationPercent={latestBodyScan.hydration}
             sex={client.sex}
             visceralFat={latestBodyScan.visceralFat}
-            history={client.assessments.map((assessment) => ({
+            history={[...client.assessments].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()).map((assessment) => ({
               date: assessment.date,
               weight: assessment.bodyScan.weight,
               hydrationPercent: assessment.bodyScan.hydration,
@@ -637,7 +637,7 @@ export function ClientDetailPage() {
               currentWeight={latestBodyScan.weight}
               targetWeight={latestQuestionnaire.targetWeight}
               timeline={latestQuestionnaire.desiredTimeline}
-              history={client.assessments.map((assessment) => ({
+              history={[...client.assessments].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()).map((assessment) => ({
                 date: assessment.date,
                 weight: assessment.bodyScan.weight
               }))}
