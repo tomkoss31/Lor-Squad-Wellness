@@ -35,7 +35,7 @@ export function WeightGoalInsightCard({
     value: entry.weight,
     secondary:
       plan.targetWeight == null
-        ? "Repere poids"
+        ? "Repère poids"
         : `${Math.max(Number((entry.weight - plan.targetWeight).toFixed(1)), 0)} kg au-dessus de la cible`
   }));
 
@@ -61,7 +61,7 @@ export function WeightGoalInsightCard({
           {trendPoints.length ? (
             <MetricTrendPanel
               title="Historique balance"
-              subtitle="Toute l'evolution du poids reste visible, avec les 3 derniers points en repere."
+              subtitle="Toute l'evolution du poids reste visible, avec les 3 derniers points en repère."
               unitLabel="Poids en kg"
               points={trendPoints}
               gradientId="weight-line"

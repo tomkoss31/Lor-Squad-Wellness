@@ -164,7 +164,7 @@ export function HydrationVisceralInsightCard({
           {hydrationTrendPoints.length ? (
             <MetricTrendPanel
               title="Historique balance"
-              subtitle="Toute l'evolution de l'hydratation reste visible, avec les 3 derniers points en repere."
+              subtitle="Toute l'evolution de l'hydratation reste visible, avec les 3 derniers points en repère."
               unitLabel="Hydratation en %"
               points={hydrationTrendPoints}
               gradientId="hydration-balance-line"

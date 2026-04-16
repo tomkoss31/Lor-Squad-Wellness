@@ -130,7 +130,7 @@ export function BodyFatInsightCard({
                 <div>
                   <p className="text-sm font-semibold text-white">Historique balance</p>
                   <p className="mt-1 text-xs text-[var(--ls-text-muted)]">
-                    Toute la progression reste visible, avec les 3 derniers points en repere.
+                    Toute la progression reste visible, avec les 3 derniers points en repère.
                   </p>
                 </div>
                 <p className="text-[11px] font-medium text-[var(--ls-text-hint)]">Progression</p>
@@ -542,20 +542,20 @@ function getSexLabel(sex?: BiologicalSex) {
 
 function getTargetHint(sex?: BiologicalSex, objective?: Objective) {
   if (sex === "male" && objective === "sport") {
-    return "Repere sport homme";
+    return "Repère sport homme";
   }
 
   if (sex === "male" && objective === "weight-loss") {
-    return "Repere progression homme";
+    return "Repère progression homme";
   }
 
   if (sex === "female" && objective === "sport") {
-    return "Repere sport femme";
+    return "Repère sport femme";
   }
 
   if (sex === "female" && objective === "weight-loss") {
-    return "Repere progression femme";
+    return "Repère progression femme";
   }
 
-  return "Repere corporel general";
+  return "Repère corporel general";
 }

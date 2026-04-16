@@ -195,7 +195,7 @@ export function PvClientPanel({
                           onChange={(event) => setDraftStartDate(event.target.value)}
                         />
                       </EditorField>
-                      <EditorField label="Quantite de depart">
+                      <EditorField label="Quantite de départ">
                         <input
                           value={draftQuantity}
                           onChange={(event) => setDraftQuantity(event.target.value)}

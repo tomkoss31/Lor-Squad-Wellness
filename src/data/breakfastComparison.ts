@@ -60,7 +60,7 @@ export const breakfastFacts: BreakfastFact[] = [
   {
     title: "Boisson aloe vera",
     detail:
-      "Boisson a base d'aloe vera avec 40 % de jus presse a froid issu de feuilles entieres, utilisee ici comme repere d'hydratation."
+      "Boisson a base d'aloe vera avec 40 % de jus presse a froid issu de feuilles entieres, utilisee ici comme repère d'hydratation."
   }
 ];
 
@@ -178,7 +178,7 @@ export const breakfastMetricRanges: Record<
       max: 350,
       unit: "ml",
       label: "250-350 ml",
-      helper: "Repere d'hydratation present",
+      helper: "Repère d'hydratation present",
       classicQualifier: "Faible ou absente",
       structuredQualifier: "Presente des le matin"
     }

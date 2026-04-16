@@ -6,12 +6,12 @@ export function isAdmin(user: User | null | undefined) {
   return user?.role === "admin";
 }
 
-export function isReferent(user: User | null | undefined) {
+export function isRéférent(user: User | null | undefined) {
   return user?.role === "referent";
 }
 
 export function canSponsorDistributors(user: User | null | undefined) {
-  return isAdmin(user) || isReferent(user);
+  return isAdmin(user) || isRéférent(user);
 }
 
 export function getRoleLabel(role: UserRole) {
@@ -20,7 +20,7 @@ export function getRoleLabel(role: UserRole) {
   }
 
   if (role === "referent") {
-    return "Referent";
+    return "Référent";
   }
 
   return "Distributeur";
@@ -32,7 +32,7 @@ export function getDefaultUserTitle(role: UserRole) {
   }
 
   if (role === "referent") {
-    return "Referent d'equipe";
+    return "Référent d'equipe";
   }
 
   return "Portefeuille terrain";
@@ -43,7 +43,7 @@ export function getRoleScope(user: User) {
     return "all-clients" as const;
   }
 
-  if (isReferent(user)) {
+  if (isRéférent(user)) {
     return "team-clients" as const;
   }
 
@@ -59,10 +59,10 @@ export function hasRequiredRole(
 
 export function getAccessSummary(user: User) {
   if (isAdmin(user)) {
-    return "Acces global aux clients, aux bilans et a l'activite de toutes les equipes.";
+    return "Acces global aux clients, aux bilans et a l'activité de toutes les equipes.";
   }
 
-  if (isReferent(user)) {
+  if (isRéférent(user)) {
     return "Acces a ses clients et a ceux des distributeurs rattaches a son equipe.";
   }
 
@@ -71,11 +71,11 @@ export function getAccessSummary(user: User) {
 
 export function getAccessBoundary(user: User) {
   if (isAdmin(user)) {
-    return "Peut ouvrir tous les dossiers et piloter l'activite complete.";
+    return "Peut ouvrir tous les dossiers et piloter l'activité complete.";
   }
 
-  if (isReferent(user)) {
-    return "Peut ouvrir ses dossiers et suivre l'activite de son equipe directe.";
+  if (isRéférent(user)) {
+    return "Peut ouvrir ses dossiers et suivre l'activité de son equipe directe.";
   }
 
   return "Peut ouvrir uniquement les dossiers qui lui sont attribues.";
@@ -110,7 +110,7 @@ export function getAccessibleOwnerIds(
 
   const ids = new Set([user.id]);
 
-  if (isReferent(user)) {
+  if (isRéférent(user)) {
     users
       .filter((item) => item.active && item.sponsorId === user.id)
       .forEach((item) => ids.add(item.id));
@@ -131,7 +131,7 @@ export function canAccessPortfolioUser(
     return true;
   }
 
-  return isReferent(viewer) && targetUser.sponsorId === viewer.id;
+  return isRéférent(viewer) && targetUser.sponsorId === viewer.id;
 }
 
 export function canAccessClient(

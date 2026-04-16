@@ -78,7 +78,7 @@ export function MuscleMassInsightCard({
           {trendPoints.length ? (
             <MetricTrendPanel
               title="Historique balance"
-              subtitle="Toute la progression musculaire reste visible, avec les 3 derniers points en repere."
+              subtitle="Toute la progression musculaire reste visible, avec les 3 derniers points en repère."
               unitLabel="Masse musculaire en %"
               points={trendPoints}
               gradientId="muscle-mass-line"

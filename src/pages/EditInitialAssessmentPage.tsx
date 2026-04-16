@@ -148,7 +148,7 @@ function buildEditableQuestionnaire(questionnaire: AssessmentQuestionnaire): Ass
 
 function buildFallbackSummary(isInitialAssessment: boolean) {
   return isInitialAssessment
-    ? "Bilan de depart ajuste pour garder un vrai repere."
+    ? "Bilan de depart ajuste pour garder un vrai repère."
     : "Suivi ajuste pour garder une lecture propre du dossier.";
 }
 
@@ -336,12 +336,12 @@ export function EditInitialAssessmentPage() {
   return (
     <div className="space-y-6">
       <PageHeading
-        eyebrow={isInitialAssessment ? "Bilan de depart" : "Suivi enregistre"}
-        title={`Modifier ${isInitialAssessment ? "le bilan de depart" : "ce bilan"} de ${targetClient.firstName} ${targetClient.lastName}`}
+        eyebrow={isInitialAssessment ? "Bilan de départ" : "Suivi enregistre"}
+        title={`Modifier ${isInitialAssessment ? "le bilan de départ" : "ce bilan"} de ${targetClient.firstName} ${targetClient.lastName}`}
         description={
           isInitialAssessment
-            ? "Tu peux revenir completer ou corriger l'ensemble du bilan initial : chiffres, habitudes, hydratation, alimentation, activite et notes."
-            : "Tu peux rouvrir un bilan deja realise pour corriger les valeurs, les notes et les sections oubliees sans recréer un faux rendez-vous."
+            ? "Tu peux revenir completer ou corriger l'ensemble du bilan initial : chiffres, habitudes, hydratation, alimentation, activité et notes."
+            : "Tu peux rouvrir un bilan déjà réalisé pour corriger les valeurs, les notes et les sections oubliees sans recréer un faux rendez-vous."
         }
       />
 
@@ -357,13 +357,13 @@ export function EditInitialAssessmentPage() {
               </p>
             </div>
             <StatusBadge
-              label={isInitialAssessment ? "Bilan de depart" : "Suivi"}
+              label={isInitialAssessment ? "Bilan de départ" : "Suivi"}
               tone={isInitialAssessment ? "blue" : "green"}
             />
           </div>
 
           <SectionCard
-            title="Reperes du dossier"
+            title="Repères du dossier"
             description="Date, programme, resume et points de base du body scan."
           >
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -407,7 +407,7 @@ export function EditInitialAssessmentPage() {
 
           <SectionCard
             title="Sommeil et rythme"
-            description="Les reperes de journee qui aident a relire l'energie."
+            description="Les repères de journee qui aident a relire l'energie."
           >
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
               <MetricField label="Reveil" type="time" value={questionnaire.wakeUpTime} onChange={(value) => updateQuestionnaire("wakeUpTime", value)} />
@@ -455,7 +455,7 @@ export function EditInitialAssessmentPage() {
               <MetricField label="Eau / jour (L)" value={questionnaire.waterIntake} onChange={(value) => updateQuestionnaire("waterIntake", Number(value))} />
               <TextField label="Cafe" value={questionnaire.drinksCoffee} onChange={(value) => updateQuestionnaire("drinksCoffee", value)} />
               <MetricField label="Cafes / jour" value={questionnaire.coffeePerDay} onChange={(value) => updateQuestionnaire("coffeePerDay", Number(value))} />
-              <TextField label="Boissons sucrees" value={questionnaire.sweetDrinks} onChange={(value) => updateQuestionnaire("sweetDrinks", value)} />
+              <TextField label="Boissons sucrées" value={questionnaire.sweetDrinks} onChange={(value) => updateQuestionnaire("sweetDrinks", value)} />
               <TextField label="Alcool" value={questionnaire.alcohol} onChange={(value) => updateQuestionnaire("alcohol", value)} />
             </div>
           </SectionCard>
@@ -466,7 +466,7 @@ export function EditInitialAssessmentPage() {
           >
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
               <TextField label="Activite physique" value={questionnaire.physicalActivity} onChange={(value) => updateQuestionnaire("physicalActivity", value)} />
-              <TextField label="Type d'activite" value={questionnaire.activityType} onChange={(value) => updateQuestionnaire("activityType", value)} />
+              <TextField label="Type d'activité" value={questionnaire.activityType} onChange={(value) => updateQuestionnaire("activityType", value)} />
               <MetricField label="Seances / semaine" value={questionnaire.sessionsPerWeek} onChange={(value) => updateQuestionnaire("sessionsPerWeek", Number(value))} />
               <TextField label="Objectif reformule" value={questionnaire.objectiveFocus} onChange={(value) => updateQuestionnaire("objectiveFocus", value)} />
               <MetricField label="Poids cible (kg)" value={questionnaire.targetWeight ?? 0} onChange={(value) => updateQuestionnaire("targetWeight", Number(value))} />
@@ -504,7 +504,7 @@ export function EditInitialAssessmentPage() {
               <AreaField label="Tentatives passees" value={questionnaire.pastAttempts} onChange={(value) => updateQuestionnaire("pastAttempts", value)} rows={3} />
               <AreaField label="Le plus difficile" value={questionnaire.hardestPart} onChange={(value) => updateQuestionnaire("hardestPart", value)} rows={3} />
               <AreaField label="Blocage principal" value={questionnaire.mainBlocker} onChange={(value) => updateQuestionnaire("mainBlocker", value)} rows={3} />
-              <AreaField label="Produits optionnels deja pris" value={questionnaire.optionalProductsUsed ?? ""} onChange={(value) => updateQuestionnaire("optionalProductsUsed", value)} rows={3} />
+              <AreaField label="Produits optionnels déjà pris" value={questionnaire.optionalProductsUsed ?? ""} onChange={(value) => updateQuestionnaire("optionalProductsUsed", value)} rows={3} />
             </div>
           </SectionCard>
 
@@ -555,23 +555,23 @@ export function EditInitialAssessmentPage() {
             text={
               isInitialAssessment
                 ? "Le body scan de depart, les habitudes, l'hydratation, les repas, l'activite, l'objectif et toutes les notes du premier bilan."
-                : "Les valeurs body scan, les habitudes, les sections oubliees et les notes de ce bilan deja enregistre."
+                : "Les valeurs body scan, les habitudes, les sections oubliees et les notes de ce bilan déjà enregistre."
             }
           />
           <InfoCard
             title="Ce que cela change"
             text={
               isInitialAssessment
-                ? "La fiche client, les reperes de depart et toutes les lectures relieront ensuite les bonnes informations."
-                : "La fiche client et les lectures body scan reliront ensuite les bonnes donnees sans recreer un faux suivi."
+                ? "La fiche client, les repères de depart et toutes les lectures relieront ensuite les bonnes informations."
+                : "La fiche client et les lectures body scan reliront ensuite les bonnes donnees sans recrééer un faux suivi."
             }
           />
           <InfoCard
             title={isInitialAssessment ? "Ce que cela ne supprime pas" : "Ce que cela preserve"}
             text={
               isInitialAssessment
-                ? "Les suivis deja saisis restent en place. Tu remets seulement la vraie base propre du dossier."
-                : "Tu ajustes ce bilan sans toucher aux autres rendez-vous deja enregistres dans le dossier."
+                ? "Les suivis déjà saisis restent en place. Tu remets seulement la vraie base propre du dossier."
+                : "Tu ajustes ce bilan sans toucher aux autres rendez-vous déjà enregistres dans le dossier."
             }
           />
         </Card>

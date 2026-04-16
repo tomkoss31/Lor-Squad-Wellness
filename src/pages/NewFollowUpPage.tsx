@@ -451,7 +451,7 @@ export function NewFollowUpPage() {
                     Dernier point
                   </p>
                   <p className="mt-3 text-2xl font-semibold text-white">{formatDate(latest.date)}</p>
-                  <p className="mt-2 text-sm text-[var(--ls-text-muted)]">Repere rapide avant la saisie</p>
+                  <p className="mt-2 text-sm text-[var(--ls-text-muted)]">Repère rapide avant la saisie</p>
                 </div>
               </div>
 

@@ -174,13 +174,13 @@ export function UsersPage() {
     });
 
     if (!result.ok) {
-      setRepairError(result.error ?? "Impossible de recreer ce profil.");
+      setRepairError(result.error ?? "Impossible de recrééer ce profil.");
       setRepairSuccess("");
       return;
     }
 
     setRepairError("");
-    setRepairSuccess(`Profil recree pour ${repairEmail.trim().toLowerCase()}.`);
+    setRepairSuccess(`Profil recréée pour ${repairEmail.trim().toLowerCase()}.`);
     setRepairUserId("");
     setRepairEmail("");
     setRepairName("");
@@ -196,7 +196,7 @@ export function UsersPage() {
         result.imported
           ? `${result.imported} dossier(s) importe(s) dans la base distante.`
           : result.skipped
-            ? `Aucun nouveau dossier importe. ${result.skipped} deja present(s).`
+            ? `Aucun nouveau dossier importe. ${result.skipped} déjà present(s).`
             : "Aucune donnee locale a importer."
       );
     } catch (importError) {
@@ -213,14 +213,14 @@ export function UsersPage() {
       <PageHeading
         eyebrow="Equipe"
         title="Structure et acces"
-        description="Retrouve les comptes, rattache un distributeur et repare un profil Auth sans repasser dans Supabase."
+        description="Retrouve les comptes, rattache un distributeur et répare un profil Auth sans repasser dans Supabase."
       />
 
       <div className="grid gap-4 lg:grid-cols-5">
         <StatCard label="Actifs" value={userStats.active} />
         <StatCard label="Total comptes" value={userStats.total} />
         <StatCard label="Admins" value={userStats.admins} />
-        <StatCard label="Referents" value={userStats.referents} />
+        <StatCard label="Référents" value={userStats.referents} />
         <StatCard label="Distributeurs" value={userStats.distributors} />
       </div>
 
@@ -242,7 +242,7 @@ export function UsersPage() {
             />
             <FilterPill label="Arborescence" active={viewMode === "tree"} onClick={() => setViewMode("tree")} />
             <FilterPill label="Tous" active={viewMode === "all"} onClick={() => setViewMode("all")} />
-            <FilterPill label="Referents" active={viewMode === "referents"} onClick={() => setViewMode("referents")} />
+            <FilterPill label="Référents" active={viewMode === "referents"} onClick={() => setViewMode("referents")} />
             <FilterPill label="Distributeurs" active={viewMode === "distributors"} onClick={() => setViewMode("distributors")} />
           </div>
         </div>
@@ -262,7 +262,7 @@ export function UsersPage() {
           <Card className="space-y-4">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <p className="eyebrow-label">Referents</p>
+                <p className="eyebrow-label">Référents</p>
                 <h2 className="mt-3 text-3xl">Equipes rattachees</h2>
               </div>
               <StatusBadge label={`${teamGroups.referentGroups.length} equipe${teamGroups.referentGroups.length > 1 ? "s" : ""}`} tone="amber" />
@@ -292,7 +292,7 @@ export function UsersPage() {
             usersIndex={users}
             clients={clients}
             followUps={followUps}
-            emptyMessage="Tout le monde est deja rattache."
+            emptyMessage="Tout le monde est déjà rattache."
           />
         </div>
       ) : null}
@@ -349,7 +349,7 @@ export function UsersPage() {
                 <label className="text-sm font-medium text-[var(--ls-text-muted)]">Role</label>
                 <select value={role} onChange={(event) => setRole(event.target.value as User["role"])}>
                   <option value="distributor">Distributeur</option>
-                  <option value="referent">Referent</option>
+                  <option value="referent">Référent</option>
                   <option value="admin">Admin</option>
                 </select>
               </div>
@@ -389,7 +389,7 @@ export function UsersPage() {
         <Card className="space-y-5">
           <div>
             <p className="eyebrow-label">Reparer un compte existant</p>
-            <h2 className="mt-3 text-3xl">Profil Auth deja cree</h2>
+            <h2 className="mt-3 text-3xl">Profil Auth déjà cree</h2>
           </div>
 
           <form className="space-y-4" onSubmit={handleRepairSubmit}>
@@ -412,7 +412,7 @@ export function UsersPage() {
               <div className="space-y-2">
                 <label className="text-sm font-medium text-[var(--ls-text-muted)]">Role</label>
                 <select value={repairRole} onChange={(event) => setRepairRole(event.target.value as User["role"])}>
-                  <option value="referent">Referent</option>
+                  <option value="referent">Référent</option>
                   <option value="distributor">Distributeur</option>
                   <option value="admin">Admin</option>
                 </select>
@@ -833,7 +833,7 @@ function UserAccessCard({
                 }}
               >
                 <option value="distributor">Distributeur</option>
-                <option value="referent">Referent</option>
+                <option value="referent">Référent</option>
               </select>
             </div>
 
@@ -884,7 +884,7 @@ function UserAccessCard({
             onClick={() => void handleSaveAccess()}
             disabled={!hasPendingChanges || saving}
           >
-            {saving ? "Mise a jour..." : "Enregistrer le rattachement"}
+            {saving ? "Mise à jour..." : "Enregistrer le rattachement"}
           </Button>
         ) : null}
         <Button
@@ -892,7 +892,7 @@ function UserAccessCard({
           onClick={() => void handleResetPassword()}
           disabled={!nextPassword.trim() || saving}
         >
-          {saving ? "Mise a jour..." : "Redefinir le mot de passe"}
+          {saving ? "Mise à jour..." : "Redefinir le mot de passe"}
         </Button>
         <Button variant="secondary" onClick={onToggleStatus}>
           {user.active ? "Desactiver" : "Reactiver"}

@@ -153,7 +153,7 @@ export function createMockUser({
       ? users.find((user) => user.id === sponsorId && user.active)
       : null;
   if (users.some((user) => user.email.toLowerCase() === nextEmail)) {
-    return { ok: false, error: "Un acces existe deja avec cet email." };
+    return { ok: false, error: "Un acces existe déjà avec cet email." };
   }
 
   if (role === "distributor" && sponsorId && !sponsor) {

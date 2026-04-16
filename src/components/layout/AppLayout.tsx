@@ -357,12 +357,12 @@ export function AppLayout() {
 
             {!isStandalone && isIos ? (
               <div className="mt-4 rounded-[18px] bg-white/[0.03] px-4 py-3 text-[13px] leading-6 text-[#B0B4C4]">
-                Ouvre ce lien dans Safari, puis Partager et Sur l'ecran d'accueil.
+                Ouvre ce lien dans Safari, puis Partager et Sur l'écran d'accueil.
               </div>
             ) : null}
             {!isStandalone && !isIos && isMobile && !canPromptInstall ? (
               <div className="mt-4 rounded-[18px] bg-white/[0.03] px-4 py-3 text-[13px] leading-6 text-[#B0B4C4]">
-                Ouvre ce lien dans Chrome puis installe l'app ou ajoute-la a l'ecran d'accueil.
+                Ouvre ce lien dans Chrome puis installe l'app ou ajoute-la a l'écran d'accueil.
               </div>
             ) : null}
           </section>
