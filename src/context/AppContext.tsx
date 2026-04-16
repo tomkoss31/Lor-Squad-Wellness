@@ -97,6 +97,7 @@ interface AppContextValue {
   markMessageRead: (id: string) => Promise<void>;
   deleteMessage: (id: string) => Promise<void>;
   updateClientInfo: (clientId: string, data: { phone?: string; email?: string; city?: string }) => Promise<void>;
+  updateFollowUpStatus: (followUpId: string, status: 'scheduled' | 'pending' | 'completed' | 'dismissed') => Promise<void>;
   loginAs: (userId: string) => Promise<void>;
   loginWithCredentials: (
     payload: { email: string; password: string }
@@ -1310,6 +1311,17 @@ export function AppProvider({ children }: PropsWithChildren) {
           }
         } else {
           setClients(prev => prev.map(c => c.id === clientId ? { ...c, ...data } : c));
+        }
+      },
+      updateFollowUpStatus: async (followUpId: string, status: 'scheduled' | 'pending' | 'completed' | 'dismissed') => {
+        if (storageMode === 'supabase') {
+          const sb = await getSupabaseClient();
+          if (sb) {
+            await sb.from('follow_ups').update({ status }).eq('id', followUpId);
+            await refreshRemoteData(currentUser);
+          }
+        } else {
+          setFollowUps(prev => prev.map(f => f.id === followUpId ? { ...f, status } : f));
         }
       },
       loginAs,
