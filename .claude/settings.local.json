@@ -11,7 +11,8 @@
       "Bash(grep -l \"bodyFat\\\\|visceralFat\\\\|boneMass\\\\|hydration\\\\|metabolicAge\" src/components/body-scan/*.tsx)",
       "Bash(npx tsc:*)",
       "WebSearch",
-      "Bash(grep -v \"^$\\\\|dist/\\\\|✓ built\")"
+      "Bash(grep -v \"^$\\\\|dist/\\\\|✓ built\")",
+      "Bash(grep -n \"return \\($\\\\|return \\(\" src/pages/NewFollowUpPage.tsx)"
     ]
   }
 }

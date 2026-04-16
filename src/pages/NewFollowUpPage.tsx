@@ -116,18 +116,8 @@ export function NewFollowUpPage() {
   const previous = getPreviousAssessment(targetClient);
   const first = getFirstAssessment(targetClient);
 
-  if (!latest || !latest.bodyScan) {
-    return (
-      <Card>
-        <p className="text-white">Ce client n'a pas encore de bilan initial enregistré. Crée d'abord un bilan avant de faire un suivi.</p>
-        <button onClick={() => navigate(`/clients/${targetClient.id}`)} style={{ marginTop: 12, padding: '8px 16px', borderRadius: 8, background: 'var(--ls-gold)', color: '#0B0D11', border: 'none', cursor: 'pointer', fontFamily: 'Syne, sans-serif', fontWeight: 700 }}>
-          Retour à la fiche
-        </button>
-      </Card>
-    );
-  }
-
-  const [bodyScan, setBodyScan] = useState<BodyScanMetrics>({ ...latest.bodyScan });
+  const defaultScan: BodyScanMetrics = latest?.bodyScan ?? { weight: 0, bodyFat: 0, muscleMass: 0, hydration: 0, boneMass: 0, visceralFat: 0, bmr: 0, metabolicAge: 0 };
+  const [bodyScan, setBodyScan] = useState<BodyScanMetrics>({ ...defaultScan });
   const [assessmentDate, setAssessmentDate] = useState(
     normalizeDateTimeLocalInputValue(new Date().toISOString())
   );
@@ -327,6 +317,17 @@ export function NewFollowUpPage() {
     } catch { /* silently continue */ }
 
     navigate(`/clients/${targetClient.id}`);
+  }
+
+  if (!latest || !latest.bodyScan) {
+    return (
+      <Card>
+        <p style={{ color: 'var(--ls-text)', fontSize: 14, marginBottom: 12 }}>Ce client n'a pas encore de bilan initial complet. Crée d'abord un bilan avec body scan avant de faire un suivi.</p>
+        <button onClick={() => navigate(`/clients/${targetClient.id}`)} style={{ padding: '10px 18px', borderRadius: 10, background: 'var(--ls-gold)', color: '#0B0D11', border: 'none', cursor: 'pointer', fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 13 }}>
+          Retour à la fiche
+        </button>
+      </Card>
+    );
   }
 
   return (
