@@ -183,8 +183,8 @@ export interface ProductRecommendation {
 }
 
 const MYHERBALIFE_URL = 'https://www.myherbalife.com/fr-fr'
-const APP_STORE_URL = 'https://apps.apple.com/fr/app/herbalife-nutrition/id1460aborb'
-const PLAY_STORE_URL = 'https://play.google.com/store/apps/details?id=com.herbalife.goshop'
+const APP_STORE_URL = 'https://apps.apple.com/fr/app/herbalife-shop/id1154285940'
+const PLAY_STORE_URL = 'https://play.google.com/store/apps/details?id=com.hrbl.mobile.android.ordering&hl=fr'
 
 export function generateProductRecommendations(
   latestScan: BodyScanMetrics,
