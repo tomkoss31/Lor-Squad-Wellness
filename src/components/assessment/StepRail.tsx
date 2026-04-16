@@ -1,6 +1,7 @@
 interface StepRailProps {
   currentStep: number
   steps: string[]
+  onStepClick?: (step: number) => void
 }
 
 const STEP_PHASES = [
@@ -17,7 +18,7 @@ function getPhaseColor(stepIndex: number): string {
   return '#C9A84C'
 }
 
-export function StepRail({ currentStep, steps }: StepRailProps) {
+export function StepRail({ currentStep, steps, onStepClick }: StepRailProps) {
   const progress = steps.length > 1 ? (currentStep / (steps.length - 1)) * 100 : 0
 
   return (
@@ -101,20 +102,22 @@ export function StepRail({ currentStep, steps }: StepRailProps) {
               const isActive = index === currentStep
               const color = getPhaseColor(index)
               return (
-                <div key={step} className="flex flex-col items-center gap-1.5" style={{ flex: 1 }}>
+                <div key={step} className="flex flex-col items-center gap-1.5"
+                  style={{ flex: 1, cursor: onStepClick ? 'pointer' : 'default' }}
+                  onClick={() => onStepClick?.(index)}>
                   <div
                     className="flex h-7 w-7 items-center justify-center rounded-full text-[10px] font-bold transition-all duration-300"
                     style={{
                       background: isDone ? color : isActive ? `${color}30` : "rgba(128,128,128,0.06)",
-                      border: `2px solid ${isDone || isActive ? color : "rgba(255,255,255,0.1)"}`,
-                      color: isDone ? "#0B0D11" : isActive ? color : "#4A5068",
+                      border: `2px solid ${isDone || isActive ? color : "var(--ls-border2)"}`,
+                      color: isDone ? "#0B0D11" : isActive ? color : "var(--ls-text-hint)",
                     }}
                   >
                     {isDone ? "✓" : index + 1}
                   </div>
                   <span
                     className="text-center text-[9px] leading-tight"
-                    style={{ color: isActive ? color : "#4A5068", maxWidth: 56 }}
+                    style={{ color: isActive ? color : "var(--ls-text-hint)", maxWidth: 56 }}
                   >
                     {step}
                   </span>
