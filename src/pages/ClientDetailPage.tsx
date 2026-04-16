@@ -1153,6 +1153,7 @@ function LinkButton({
 }
 
 function ProductAdder({ clientId, existingIds, onAdded }: { clientId: string; existingIds: Set<string>; onAdded: () => void }) {
+  const { getClientById, updateAssessment } = useAppContext();
   const [open, setOpen] = useState(false);
   const [adding, setAdding] = useState(false);
   const [added, setAdded] = useState<string[]>([]);
@@ -1163,38 +1164,31 @@ function ProductAdder({ clientId, existingIds, onAdded }: { clientId: string; ex
     setAdding(true);
     setError('');
     try {
-      const sb = await getSupabaseClient();
-      if (!sb) { setError('Connexion base indisponible'); return; }
+      const client = getClientById(clientId);
+      if (!client || !client.assessments.length) { setError('Aucun bilan trouvé'); return; }
 
-      // Chercher le PREMIER assessment (initial) pour y ajouter les produits
-      const { data: assessments, error: fetchErr } = await sb
-        .from('assessments')
-        .select('id, questionnaire')
-        .eq('client_id', clientId)
-        .order('date', { ascending: true })
-        .limit(1);
-
-      if (fetchErr) { setError(`Erreur : ${fetchErr.message}`); return; }
-      if (!assessments || assessments.length === 0) { setError('Aucun bilan trouvé'); return; }
-
-      const initial = assessments[0];
-      const q = (initial.questionnaire ?? {}) as Record<string, unknown>;
-      const currentIds = (q.selectedProductIds as string[] | undefined) ?? [];
+      // Trouver le bilan initial (premier par date)
+      const sorted = [...client.assessments].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+      const initial = sorted[0];
+      const currentIds = initial.questionnaire?.selectedProductIds ?? [];
 
       if (currentIds.includes(productId)) {
         setAdded(prev => [...prev, productId]);
         return;
       }
 
-      const newIds = [...currentIds, productId];
-      const { error: updateErr } = await sb
-        .from('assessments')
-        .update({ questionnaire: { ...q, selectedProductIds: newIds } })
-        .eq('id', initial.id);
+      const updatedAssessment = {
+        ...initial,
+        questionnaire: {
+          ...initial.questionnaire,
+          selectedProductIds: [...currentIds, productId],
+        },
+      };
 
-      if (updateErr) { setError(`Erreur : ${updateErr.message}`); return; }
-
+      await updateAssessment(clientId, updatedAssessment);
       setAdded(prev => [...prev, productId]);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erreur lors de l\'ajout');
     } finally {
       setAdding(false);
     }
