@@ -537,26 +537,6 @@ export function NewAssessmentPage() {
       tone: "amber" as const
     }
   ];
-  const supportReferences = [
-    {
-      label: "Objectif eau quotidien",
-      value: `${formatRawNumber(waterNeed)} L / jour`
-    },
-    {
-      label: "Protéines conseillées",
-      value: proteinRange
-    },
-    {
-      label: "Délai retenu",
-      value: timelineLabel
-    }
-  ];
-  const followUpPriorities = [
-    getHydrationPriority(form.hydration, hydrationReference),
-    form.objective === "sport" ? "Masse musculaire a developper" : "Masse musculaire a preserver",
-    getVisceralPriority(form.visceralFat),
-    getBodyFatPriority(form.bodyFat, bodyFatTarget)
-  ].filter((value, index, values) => values.indexOf(value) === index);
   const recommendationPlan = buildAssessmentRecommendationPlan({
     sex: form.sex,
     objective: form.objective,
@@ -1327,35 +1307,7 @@ export function NewAssessmentPage() {
                   ))}
                 </div>
 
-                <div className="grid gap-4 md:grid-cols-2">
-                  {supportReferences.map((item) => (
-                    <SummaryHighlightCard key={item.label} label={item.label} value={item.value} />
-                  ))}
-                </div>
               </Card>
-
-              <div className="grid gap-4 xl:grid-cols-[1.08fr_0.92fr]">
-                <Card className="space-y-4">
-                  <div>
-                    <p className="eyebrow-label">Priorites d'accompagnement</p>
-                    <h3 className="mt-3 text-[1.65rem] text-white">Les repères a garder en tete</h3>
-                  </div>
-                  <div className="grid gap-3 md:grid-cols-2">
-                    {followUpPriorities.map((priority) => (
-                      <FocusPanelItem key={priority} text={priority} highlighted={priority === followUpPriorities[0]} />
-                    ))}
-                  </div>
-                </Card>
-
-                <Card className="space-y-4">
-                  <p className="eyebrow-label">Lecture express</p>
-                  <div className="grid gap-3">
-                    <ClosingLine text="On fixe une base claire." />
-                    <ClosingLine text="On suit l'evolution sans complexifier." />
-                    <ClosingLine text="On avance par priorités." />
-                  </div>
-                </Card>
-              </div>
             </div>
           )}
 
@@ -2345,19 +2297,6 @@ function SectionBlock({ title, description, children }: { title: string; descrip
 }
 
 
-function FocusPanelItem({ text, highlighted = false }: { text: string; highlighted?: boolean }) {
-  return (
-    <div
-      className={`rounded-[20px] px-4 py-3 text-sm leading-6 ${
-        highlighted
-          ? "bg-[rgba(45,212,191,0.1)] text-white"
-          : "bg-[var(--ls-surface2)] text-[var(--ls-text)]"
-      }`}
-    >
-      {text}
-    </div>
-  );
-}
 
 function ClosingLine({ text }: { text: string }) {
   return <div className="rounded-2xl bg-[var(--ls-bg)]/60 px-4 py-3 text-sm leading-6 text-white">{text}</div>;
