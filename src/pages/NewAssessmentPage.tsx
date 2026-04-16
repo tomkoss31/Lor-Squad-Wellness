@@ -395,13 +395,7 @@ export function NewAssessmentPage() {
       }
     }
 
-    // Validation étape 10 — programme
-    if (currentStep === 10) {
-      if (form.afterAssessmentAction === "started" && !form.selectedProgramId) {
-        setStepWarning("Sélectionne un programme si le client démarre maintenant.");
-        return;
-      }
-    }
+    // Étape 10 — programme optionnel (pas de validation bloquante)
 
     goToStep(currentStep + 1);
   };
@@ -562,8 +556,11 @@ export function NewAssessmentPage() {
     .filter((productId, index, array) => array.indexOf(productId) === index);
   const effectiveSelectedProductIds =
     form.selectedProductIds.length > 0 ? form.selectedProductIds : defaultSuggestedProductIds;
-  const selectedRecommendationProducts = recommendationPlan.needs
-    .flatMap((need) => need.products)
+  const allRecommendableProducts = [
+    ...recommendationPlan.needs.flatMap((need) => need.products),
+    ...recommendationPlan.optionalUpsells,
+  ];
+  const selectedRecommendationProducts = allRecommendableProducts
     .filter(
       (product, index, array) =>
         effectiveSelectedProductIds.includes(product.id) &&
@@ -723,11 +720,7 @@ export function NewAssessmentPage() {
       return;
     }
 
-    if (startsImmediately && !selectedProgram) {
-      setSaveError("Choisis un programme avant d'enregistrer le bilan.");
-      goToStep(10);
-      return;
-    }
+    // Programme optionnel — pas de validation bloquante
 
     const assessmentDate = form.assessmentDate || getCurrentDateTimeValue();
     const nextFollowUp = serializeDateTimeForStorage(
