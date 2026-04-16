@@ -627,7 +627,8 @@ export async function createSupabaseClientWithInitialAssessment(payload: {
   });
 
   if (assessmentError) {
-    throw new Error("Impossible d'enregistrer le premier bilan.");
+    console.error("Supabase assessment insert error:", assessmentError);
+    throw new Error(`Impossible d'enregistrer le bilan : ${assessmentError.message}`);
   }
 
   const { error: followUpError } = await client.from("follow_ups").insert({
