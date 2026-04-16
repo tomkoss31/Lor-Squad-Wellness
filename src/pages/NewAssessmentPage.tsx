@@ -11,6 +11,7 @@ import { getSupabaseClient } from "../services/supabaseClient";
 import { BodyFatInsightCard } from "../components/body-scan/BodyFatInsightCard";
 import { MuscleMassInsightCard } from "../components/body-scan/MuscleMassInsightCard";
 import { HydrationVisceralInsightCard } from "../components/body-scan/HydrationVisceralInsightCard";
+import { BodyScanRadar } from "../components/body-scan/BodyScanRadar";
 import { PlateGuideCard } from "../components/education/PlateGuideCard";
 import { ProgramBoosterCard } from "../components/programs/ProgramBoosterCard";
 import { ProgramCard } from "../components/programs/ProgramCard";
@@ -1275,6 +1276,22 @@ export function NewAssessmentPage() {
                   visceralFat={form.visceralFat}
                   sex={form.sex}
                 />
+              )}
+
+              {/* Radar synthèse */}
+              {form.weight > 0 && (
+                <Card className="flex items-center justify-center py-6">
+                  <BodyScanRadar
+                    size={280}
+                    metrics={[
+                      { label: 'Poids', value: form.weight, max: 120, color: '#C9A84C' },
+                      { label: 'M. grasse', value: form.bodyFat, max: 50, color: '#FB7185' },
+                      { label: 'Muscle', value: form.muscleMass, max: 60, color: '#2DD4BF' },
+                      { label: 'Hydrat.', value: form.hydration, max: 80, color: '#A78BFA' },
+                      { label: 'Viscéral', value: form.visceralFat, max: 30, color: '#FB7185' },
+                    ]}
+                  />
+                </Card>
               )}
             </div>
           )}
