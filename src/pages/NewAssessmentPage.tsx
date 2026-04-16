@@ -25,7 +25,6 @@ import {
   estimateMuscleMassPercent,
   normalizeDateTimeLocalInputValue,
   serializeDateTimeForStorage,
-  normalizeTimelineLabel
 } from "../lib/calculations";
 import { buildAssessmentRecommendationPlan } from "../lib/assessmentRecommendations";
 import type { BiologicalSex, Objective, RecommendationLead } from "../types/domain";
