@@ -88,6 +88,11 @@ const RecapPage = lazy(() =>
     default: module.RecapPage
   }))
 );
+const EvolutionReportPage = lazy(() =>
+  import("./pages/EvolutionReportPage").then((module) => ({
+    default: module.EvolutionReportPage
+  }))
+);
 
 import { useTheme } from './hooks/useTheme'
 
@@ -126,8 +131,9 @@ export default function App() {
               <Route path="assessments/new" element={<NewAssessmentPage />} />
             </Route>
           </Route>
-          {/* Route publique — récap client accessible par QR code */}
+          {/* Routes publiques — récap + rapport évolution */}
           <Route path="/recap/:token" element={<RecapPage />} />
+          <Route path="/rapport/:token" element={<EvolutionReportPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Suspense>
