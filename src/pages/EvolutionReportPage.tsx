@@ -143,13 +143,11 @@ export function EvolutionReportPage() {
                 <div style={{ fontSize: 10, color: '#9CA3AF', letterSpacing: '1.5px', textTransform: 'uppercase', marginBottom: 10 }}>Évolution depuis le début</div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10 }}>
                   {[
-                    { label: 'Poids', unit: 'kg', field: 'weight', color: '#B8922A', reverse: true },
-                    { label: 'Masse grasse', unit: '%', field: 'bodyFat', color: '#DC2626', reverse: true },
-                    { label: 'Masse musculaire', unit: 'kg', field: 'muscleMass', color: '#0D9488', reverse: false },
-                    { label: 'Hydratation', unit: '%', field: 'hydration', color: '#7C3AED', reverse: false },
-                  ].map(({ label, unit, field, color, reverse }) => {
-                    const firstVal = Number(first[field])
-                    const latestVal = Number(latest[field])
+                    { label: 'Poids', unit: 'kg', first: Number(first.weight), latest: Number(latest.weight), color: '#B8922A', reverse: true },
+                    { label: 'Masse grasse', unit: 'kg', first: Number(first.bodyFat) * Number(first.weight) / 100, latest: Number(latest.bodyFat) * Number(latest.weight) / 100, color: '#DC2626', reverse: true },
+                    { label: 'Masse musculaire', unit: '%', first: (Number(first.muscleMass) / Number(first.weight)) * 100, latest: (Number(latest.muscleMass) / Number(latest.weight)) * 100, color: '#0D9488', reverse: false },
+                    { label: 'Hydratation', unit: '%', first: Number(first.hydration), latest: Number(latest.hydration), color: '#7C3AED', reverse: false },
+                  ].map(({ label, unit, first: firstVal, latest: latestVal, color, reverse }) => {
                     const delta = latestVal - firstVal
                     return (
                       <div key={field} style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.07)', borderRadius: 12, padding: '12px 14px', borderTop: `2px solid ${color}` }}>
@@ -173,12 +171,16 @@ export function EvolutionReportPage() {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
                   {[
                     { label: 'Poids (kg)', field: 'weight', color: '#B8922A' },
-                    { label: 'Masse grasse (%)', field: 'bodyFat', color: '#DC2626' },
-                    { label: 'Masse musculaire (kg)', field: 'muscleMass', color: '#0D9488' },
+                    { label: 'Masse grasse (kg)', field: 'bodyFatKg', color: '#DC2626' },
+                    { label: 'Masse musculaire (%)', field: 'musclePct', color: '#0D9488' },
                   ].map(({ label, field, color }) => (
                     <div key={field}>
                       <div style={{ fontSize: 10, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: 6 }}>{label}</div>
-                      <MiniChart data={metrics} field={field} color={color}/>
+                      <MiniChart data={metrics.map(m => ({
+                        ...m,
+                        bodyFatKg: Number((Number(m.bodyFat) * Number(m.weight) / 100).toFixed(1)),
+                        musclePct: Number(((Number(m.muscleMass) / Number(m.weight)) * 100).toFixed(1)),
+                      }))} field={field} color={color}/>
                     </div>
                   ))}
                 </div>
@@ -275,11 +277,11 @@ export function EvolutionReportPage() {
                   </div>
                 ))}
                 <div style={{ marginTop: 14, display: 'flex', gap: 8 }}>
-                  <a href="https://apps.apple.com/fr/app/herbalife-nutrition/id1460165497" target="_blank" rel="noopener noreferrer"
+                  <a href="https://apps.apple.com/fr/app/herbalife-shop/id1154285940" target="_blank" rel="noopener noreferrer"
                     style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '8px 0', borderRadius: 8, border: '1px solid rgba(0,0,0,0.08)', background: '#FAFAF9', color: '#6B7280', fontSize: 10, fontWeight: 500, textDecoration: 'none' }}>
                     App Store
                   </a>
-                  <a href="https://play.google.com/store/apps/details?id=com.herbalife.goshop" target="_blank" rel="noopener noreferrer"
+                  <a href="https://play.google.com/store/apps/details?id=com.hrbl.mobile.android.ordering&hl=fr" target="_blank" rel="noopener noreferrer"
                     style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '8px 0', borderRadius: 8, border: '1px solid rgba(0,0,0,0.08)', background: '#FAFAF9', color: '#6B7280', fontSize: 10, fontWeight: 500, textDecoration: 'none' }}>
                     Google Play
                   </a>
