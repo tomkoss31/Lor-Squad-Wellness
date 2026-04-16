@@ -1267,8 +1267,8 @@ export function NewAssessmentPage() {
         title="Bilan guidé"
         description="Un parcours clair pour conduire le rendez-vous, relire les habitudes et poser la suite."
       />
-      <div ref={stepRailRef} className="step-rail-wrapper">
-        <StepRail currentStep={currentStep} steps={steps} />
+      <div ref={stepRailRef} className="step-rail-wrapper" style={{ position: 'sticky', top: 0, zIndex: 40, paddingTop: 8, paddingBottom: 8 }}>
+        <StepRail currentStep={currentStep} steps={steps} onStepClick={goToStep} />
       </div>
 
       {mobileHelperPanel}
