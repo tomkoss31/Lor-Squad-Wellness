@@ -12,7 +12,15 @@
       "Bash(npx tsc:*)",
       "WebSearch",
       "Bash(grep -v \"^$\\\\|dist/\\\\|✓ built\")",
-      "Bash(grep -n \"return \\($\\\\|return \\(\" src/pages/NewFollowUpPage.tsx)"
+      "Bash(grep -n \"return \\($\\\\|return \\(\" src/pages/NewFollowUpPage.tsx)",
+      "Bash(sed -n '606p' src/pages/ClientDetailPage.tsx)",
+      "Bash(sed -n '773p' src/pages/ClientDetailPage.tsx)",
+      "Bash(sed -i '/WeightGoalInsightCard/d' src/pages/ClientDetailPage.tsx)",
+      "Bash(sed -i 's/const clientActivity = activityLogs/\\\\/\\\\/ const clientActivity = activityLogs/' src/pages/ClientDetailPage.tsx)",
+      "Bash(sed -i 's/const latestBonePercent = /\\\\/\\\\/ const latestBonePercent = /' src/pages/ClientDetailPage.tsx)",
+      "Bash(sed -i 's/const retainedProductsLabel = /\\\\/\\\\/ const retainedProductsLabel = /' src/pages/ClientDetailPage.tsx)",
+      "Bash(sed -i '/estimateRelativeMassPercent,/d' src/pages/ClientDetailPage.tsx)",
+      "Bash(sed -i 's/    activityLogs,//' src/pages/ClientDetailPage.tsx)"
     ]
   }
 }

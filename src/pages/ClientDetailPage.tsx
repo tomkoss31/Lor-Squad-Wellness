@@ -9,7 +9,6 @@ import { BodyFatInsightCard } from "../components/body-scan/BodyFatInsightCard";
 import { MuscleMassInsightCard } from "../components/body-scan/MuscleMassInsightCard";
 import { BodyScanSnapshotCard } from "../components/body-scan/BodyScanSnapshotCard";
 import { HydrationVisceralInsightCard } from "../components/body-scan/HydrationVisceralInsightCard";
-import { WeightGoalInsightCard } from "../components/education/WeightGoalInsightCard";
 import { EvolutionChart } from "../components/body-scan/EvolutionChart";
 import { BodyScanRadar } from "../components/body-scan/BodyScanRadar";
 import { HistoryTimeline } from "../components/client/HistoryTimeline";
@@ -28,7 +27,6 @@ import {
   calculateProteinRange,
   calculateWaterNeed,
   estimateHydrationKg,
-  estimateRelativeMassPercent,
   estimateMuscleMassPercent,
   formatDate,
   formatDateTime,
@@ -47,7 +45,7 @@ export function ClientDetailPage() {
   const {
     currentUser,
     users,
-    activityLogs,
+
     deleteClient,
     getClientById,
     followUps,
@@ -108,9 +106,6 @@ export function ClientDetailPage() {
   const assignableOwners = users.filter(
     (user) => user.active && assignableOwnerIds.has(user.id)
   );
-  const clientActivity = activityLogs
-    .filter((entry) => entry.clientId === currentClient.id)
-    .slice(0, 6);
 
   useEffect(() => {
     setNextOwnerId(currentClient.distributorId);
@@ -127,10 +122,6 @@ export function ClientDetailPage() {
   const latestMusclePercent = estimateMuscleMassPercent(
     latestBodyScan.weight,
     latestBodyScan.muscleMass
-  );
-  const latestBonePercent = estimateRelativeMassPercent(
-    latestBodyScan.weight,
-    latestBodyScan.boneMass
   );
   const latestHydrationKg = estimateHydrationKg(latestBodyScan.weight, latestBodyScan.hydration);
   const previousHydrationKg = previousAssessment
@@ -160,11 +151,6 @@ export function ClientDetailPage() {
   const retainedProducts = retainedProductIds
     .map((productId) => pvProductCatalog.find((product) => product.id === productId) ?? null)
     .filter((product): product is NonNullable<typeof product> => product != null);
-  const retainedProductsLabel = retainedProducts.length
-    ? retainedProducts.length <= 2
-      ? retainedProducts.map((product) => product.name).join(" + ")
-      : `${retainedProducts.length} produits retenus`
-    : "Base programme";
   const retainedProductsTotalPrice = Number(
     retainedProducts.reduce((total, product) => total + product.pricePublic, 0).toFixed(2)
   );
@@ -399,9 +385,9 @@ export function ClientDetailPage() {
         />
       )}
 
-      {/* Tab 0: Vue complète (original layout) */}
+      {/* Tab 0: Vue complète (pleine largeur) */}
       {activeTab === 0 && (
-      <div className="client-detail-layout grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
+      <div className="space-y-4">
         <Card className="space-y-5">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
@@ -604,172 +590,6 @@ export function ClientDetailPage() {
           <EvolutionChart assessments={client.assessments} />
         </Card>
 
-        <div className="space-y-4">
-          {/* Sidebar épurée — essentiel seulement */}
-          <Card className="space-y-3">
-            <div className="flex items-center justify-between gap-3">
-              <p className="eyebrow-label">Cap du moment</p>
-              <StatusBadge label={client.currentProgram || "À confirmer"} tone={client.started ? "green" : "amber"} />
-            </div>
-            <SummaryFocusCard
-              label="Objectif"
-              value={latestQuestionnaire.objectiveFocus || (client.objective === "sport" ? "Prise de masse" : "Perte de poids")}
-            />
-            <div className="grid grid-cols-2 gap-2">
-              <SummaryRow label="Protéines" value={proteinRange} />
-              <SummaryRow label="Eau cible" value={`${waterNeed} L`} />
-            </div>
-            {recommendationCount > 0 && (
-              <SummaryStatusRow
-                label="Recommandations"
-                badgeLabel={recommendationsContacted ? "Contactées" : "À contacter"}
-                tone={recommendationsContacted ? "green" : "amber"}
-                detail={`${recommendationCount} nom${recommendationCount > 1 ? "s" : ""}`}
-              />
-            )}
-            {retainedProducts.length > 0 && (
-              <SummaryRow label="Programme" value={retainedProductsLabel} />
-            )}
-          </Card>
-
-          {client.objective === "weight-loss" && (
-            <WeightGoalInsightCard
-              currentWeight={latestBodyScan.weight}
-              targetWeight={latestQuestionnaire.targetWeight}
-              timeline={latestQuestionnaire.desiredTimeline}
-              history={[...client.assessments].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()).map((assessment) => ({
-                date: assessment.date,
-                weight: assessment.bodyScan.weight
-              }))}
-            />
-          )}
-
-          {/* Actions — 3 essentielles max */}
-          <Card className="space-y-3">
-            <p className="eyebrow-label">Actions rapides</p>
-            <div className="grid gap-2">
-              <LinkButton to={`/clients/${client.id}/follow-up/new`} label="Nouveau suivi" hint="Mesurer et poser la suite" />
-              <LinkButton to={`/clients/${client.id}/follow-up/new`} label="Body scan" hint="Nouvelles mesures" tone="green" />
-              <button type="button" onClick={() => setShowScheduleModal(true)} className="w-full rounded-[22px] bg-[var(--ls-surface2)] p-4 text-left transition hover:bg-[var(--ls-surface2)]">
-                <p className="text-sm font-semibold text-white">Modifier le RDV</p>
-                <p className="mt-1 text-[12px] text-[var(--ls-text-muted)]">Date, heure ou type</p>
-              </button>
-            </div>
-          </Card>
-
-          {canReassignClient ? (
-            <Card className="space-y-4">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <p className="eyebrow-label">Transfert de portefeuille</p>
-                  <p className="mt-3 text-2xl text-white">Changer le responsable</p>
-                </div>
-                <StatusBadge label={currentClient.distributorName} tone="amber" />
-              </div>
-              <div className="space-y-3">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-[var(--ls-text-muted)]">
-                    Nouveau responsable du dossier
-                  </label>
-                  <select
-                    value={nextOwnerId}
-                    onChange={(event) => setNextOwnerId(event.target.value)}
-                  >
-                    {assignableOwners.map((user) => (
-                      <option key={user.id} value={user.id}>
-                        {user.name} - {user.role === "referent" ? "Référent" : user.role === "admin" ? "Admin" : "Distributeur"}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <Button
-                  variant="secondary"
-                  onClick={() => void handleTransferClient()}
-                  disabled={nextOwnerId === currentClient.distributorId}
-                >
-                  Enregistrer le transfert
-                </Button>
-                <p className="text-sm leading-6 text-[var(--ls-text-muted)]">
-                  {transferFeedback ||
-                    "Le dossier, le responsable affiche et le suivi produits actifs seront réalignés ensemble."}
-                </p>
-              </div>
-            </Card>
-          ) : null}
-
-          <Card className="space-y-4">
-            <div>
-              <p className="eyebrow-label">Repères du moment</p>
-              <p className="mt-3 text-2xl text-white">À reformuler simplement</p>
-            </div>
-            <div className="grid gap-2">
-              <QuickInfo
-                text={`Petit-déjeuner : ${latestQuestionnaire.breakfastFrequency} - ${latestQuestionnaire.breakfastContent}`}
-              />
-              <QuickInfo text={`Protéines : ${latestQuestionnaire.proteinEachMeal} - repère actuel ${proteinRange}`} />
-              <QuickInfo text={`Hydratation : ${latestQuestionnaire.waterIntake} L / jour pour un besoin estimé à ${waterNeed} L`} />
-              <QuickInfo text={`Lecture corporelle : ${latestMusclePercent} % de masse musculaire et ${latestBonePercent} % de masse osseuse`} />
-              <QuickInfo text={`Motivation : ${latestQuestionnaire.motivation}/10`} />
-              {retainedProducts.length ? (
-                <QuickInfo
-                  text={`Routine retenue : ${retainedProducts
-                    .map((product) => product.name)
-                    .join(", ")}`}
-                />
-              ) : null}
-            </div>
-          </Card>
-
-          <Card className="space-y-4">
-            <div className="flex items-center justify-between gap-3">
-              <p className="eyebrow-label">Historique des bilans</p>
-              <Link to="/assessments/new" className="text-sm font-semibold text-[#C9A84C]">
-                Nouveau bilan
-              </Link>
-            </div>
-            <HistoryTimeline
-              entries={[...client.assessments]
-                .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-                .map((entry) => ({
-                  id: entry.id,
-                  date: formatDate(entry.date),
-                  summary: entry.summary,
-                  weight: entry.bodyScan.weight,
-                  hydration: entry.bodyScan.hydration,
-                  typeLabel: entry.type === "initial" ? "Depart" : "Suivi",
-                  editTo: `/clients/${client.id}/assessments/${entry.id}/edit`
-                }))}
-            />
-          </Card>
-
-          <Card className="space-y-4">
-            <div className="flex items-center justify-between gap-3">
-              <p className="eyebrow-label">Activite dossier</p>
-              <StatusBadge
-                label={`${clientActivity.length} visible${clientActivity.length > 1 ? "s" : ""}`}
-                tone="blue"
-              />
-            </div>
-            <div className="space-y-3">
-              {clientActivity.map((entry) => (
-                <div key={entry.id} className="rounded-[20px] bg-[var(--ls-surface2)] px-4 py-4">
-                  <p className="text-sm font-semibold text-white">{entry.summary}</p>
-                  {entry.detail ? (
-                    <p className="mt-1 text-sm leading-6 text-[var(--ls-text-muted)]">{entry.detail}</p>
-                  ) : null}
-                  <p className="mt-3 text-xs text-[var(--ls-text-hint)]">
-                    {entry.actorName} - {formatDateTime(entry.createdAt)}
-                  </p>
-                </div>
-              ))}
-              {!clientActivity.length ? (
-                <div className="rounded-[20px] bg-[var(--ls-surface2)] px-4 py-4 text-sm text-[var(--ls-text-muted)]">
-                  Les changements de responsable, de rendez-vous et de bilans apparaitront ici.
-                </div>
-              ) : null}
-            </div>
-          </Card>
-        </div>
       </div>
       )}
 
@@ -1065,51 +885,6 @@ function SummaryRow({ label, value }: { label: string; value: string }) {
     <div className="flex items-center justify-between gap-3 rounded-[22px] bg-[var(--ls-surface2)] px-4 py-3">
       <span className="text-sm text-[var(--ls-text-muted)]">{label}</span>
       <span className="text-right text-sm font-semibold text-white">{value}</span>
-    </div>
-  );
-}
-
-function SummaryStatusRow({
-  label,
-  badgeLabel,
-  tone,
-  detail
-}: {
-  label: string;
-  badgeLabel: string;
-  tone: "green" | "amber";
-  detail: string;
-}) {
-  return (
-    <div className="flex items-center justify-between gap-3 rounded-[22px] bg-[var(--ls-surface2)] px-4 py-3">
-      <span className="text-sm text-[var(--ls-text-muted)]">{label}</span>
-      <div className="flex items-center gap-3">
-        <span className="text-sm text-[var(--ls-text-muted)]">{detail}</span>
-        <StatusBadge label={badgeLabel} tone={tone} />
-      </div>
-    </div>
-  );
-}
-
-function QuickInfo({ text }: { text: string }) {
-  return (
-    <div className="rounded-[20px] bg-[var(--ls-bg)]/60 px-4 py-3 text-sm leading-6 text-[var(--ls-text)]">
-      {text}
-    </div>
-  );
-}
-
-function SummaryFocusCard({
-  label,
-  value
-}: {
-  label: string;
-  value: string;
-}) {
-  return (
-    <div className="rounded-[20px] bg-[var(--ls-bg)]/60 px-4 py-3.5">
-      <p className="text-[11px] font-medium text-[var(--ls-text-hint)]">{label}</p>
-      <p className="mt-2.5 text-base font-semibold text-white">{value}</p>
     </div>
   );
 }
