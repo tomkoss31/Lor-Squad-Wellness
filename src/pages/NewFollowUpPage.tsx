@@ -116,6 +116,17 @@ export function NewFollowUpPage() {
   const previous = getPreviousAssessment(targetClient);
   const first = getFirstAssessment(targetClient);
 
+  if (!latest || !latest.bodyScan) {
+    return (
+      <Card>
+        <p className="text-white">Ce client n'a pas encore de bilan initial enregistré. Crée d'abord un bilan avant de faire un suivi.</p>
+        <button onClick={() => navigate(`/clients/${targetClient.id}`)} style={{ marginTop: 12, padding: '8px 16px', borderRadius: 8, background: 'var(--ls-gold)', color: '#0B0D11', border: 'none', cursor: 'pointer', fontFamily: 'Syne, sans-serif', fontWeight: 700 }}>
+          Retour à la fiche
+        </button>
+      </Card>
+    );
+  }
+
   const [bodyScan, setBodyScan] = useState<BodyScanMetrics>({ ...latest.bodyScan });
   const [assessmentDate, setAssessmentDate] = useState(
     normalizeDateTimeLocalInputValue(new Date().toISOString())
