@@ -44,21 +44,21 @@ export function BodyScanRadar({ metrics, size = 200 }: BodyScanRadarProps) {
       {gridLevels.map(level => {
         const points = Array.from({ length: count }, (_, i) => toXY(i, level * maxR))
         const path = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(' ') + ' Z'
-        return <path key={level} d={path} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="1" />
+        return <path key={level} d={path} fill="none" stroke="var(--ls-border2)" strokeWidth="1" />
       })}
 
       {/* Axis lines */}
       {Array.from({ length: count }, (_, i) => {
         const end = toXY(i, maxR)
-        return <line key={i} x1={center} y1={center} x2={end.x} y2={end.y} stroke="rgba(255,255,255,0.06)" strokeWidth="1" />
+        return <line key={i} x1={center} y1={center} x2={end.x} y2={end.y} stroke="var(--ls-border2)" strokeWidth="1" />
       })}
 
       {/* Data polygon fill */}
-      <path d={dataPath} fill="rgba(201,168,76,0.12)" stroke="#C9A84C" strokeWidth="1.5" strokeLinejoin="round" />
+      <path d={dataPath} fill="rgba(201,168,76,0.18)" stroke="var(--ls-gold)" strokeWidth="2" strokeLinejoin="round" />
 
       {/* Data points */}
       {dataPoints.map((p, i) => (
-        <circle key={i} cx={p.x} cy={p.y} r="3" fill={metrics[i].color} />
+        <circle key={i} cx={p.x} cy={p.y} r="4.5" fill={metrics[i].color} stroke="var(--ls-surface)" strokeWidth="2" />
       ))}
 
       {/* Labels */}
@@ -71,8 +71,9 @@ export function BodyScanRadar({ metrics, size = 200 }: BodyScanRadarProps) {
             y={pos.y}
             textAnchor="middle"
             dominantBaseline="middle"
-            fill="#7A8099"
-            fontSize="9"
+            fill="var(--ls-text-muted)"
+            fontSize="11"
+            fontWeight="600"
             fontFamily="DM Sans, sans-serif"
           >
             {m.label}
