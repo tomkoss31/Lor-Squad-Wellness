@@ -23,7 +23,7 @@ export function PedagogicalSection({
   const hasAside = aside != null;
 
   return (
-    <div className="rounded-[30px] bg-[linear-gradient(180deg,rgba(15,23,42,0.34),rgba(15,23,42,0.52))] p-5 shadow-panel md:p-6">
+    <div className="rounded-[30px] p-5 md:p-6" style={{ background: 'var(--ls-surface)', border: '1px solid var(--ls-border)' }}>
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="max-w-2xl">
           <p className="eyebrow-label">{eyebrow}</p>
