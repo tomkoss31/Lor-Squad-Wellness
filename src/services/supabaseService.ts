@@ -604,7 +604,8 @@ export async function createSupabaseClientWithInitialAssessment(payload: {
   }
 
   if (clientError || !insertedClient) {
-    throw new Error("Impossible de creer le client dans la base.");
+    console.error("Supabase client insert error:", clientError);
+    throw new Error(`Impossible de créer le client : ${clientError?.message ?? 'réponse vide'}`);
   }
 
   const clientId = insertedClient.id;
