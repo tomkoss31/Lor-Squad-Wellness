@@ -18,7 +18,7 @@ import { Card } from "../components/ui/Card";
 import { MetricTile } from "../components/ui/MetricTile";
 import { StatusBadge } from "../components/ui/StatusBadge";
 import { useAppContext } from "../context/AppContext";
-import { buildReportData } from "../lib/evolutionReport";
+import { buildReportData, generateProductRecommendations } from "../lib/evolutionReport";
 import { EvolutionReportModal } from "../components/assessment/EvolutionReportModal";
 import { getSupabaseClient } from "../services/supabaseClient";
 import { buildPvTrackingRecords, pvProductCatalog } from "../data/mockPvModule";
@@ -767,6 +767,37 @@ export function ClientDetailPage() {
         </div>
       </div>
       )}
+
+      {/* Section produits conseillés */}
+      {(() => {
+        const recoProducts = generateProductRecommendations(latestBodyScan, client.sex ?? 'male', client.objective ?? '');
+        const existingNames = new Set(retainedProducts.map(p => ('name' in p ? (p as { name: string }).name : '')));
+        const upsells = recoProducts.filter(r => !existingNames.has(r.name));
+        if (upsells.length === 0) return null;
+        return (
+          <Card className="space-y-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="eyebrow-label">Recommandations produits</p>
+                <p className="mt-2 text-sm" style={{ color: 'var(--ls-text-muted)' }}>Selon les résultats body scan</p>
+              </div>
+            </div>
+            <div className="grid gap-2">
+              {upsells.slice(0, 4).map((r, idx) => (
+                <div key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '10px 12px', borderRadius: 12, background: 'var(--ls-surface2)', border: '1px solid var(--ls-border)' }}>
+                  <div style={{ width: 28, height: 28, borderRadius: 8, background: 'var(--ls-gold-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--ls-gold)" strokeWidth="1.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--ls-text)' }}>{r.name}</div>
+                    <div style={{ fontSize: 11, color: 'var(--ls-text-muted)', lineHeight: 1.5, marginTop: 2 }}>{r.reason}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Card>
+        );
+      })()}
 
       {/* Tab 1: Body Scan dédié */}
       {activeTab === 1 && (

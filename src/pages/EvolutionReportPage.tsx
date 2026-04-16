@@ -248,20 +248,11 @@ export function EvolutionReportPage() {
               </div>
             )}
 
-            {/* PRODUITS CONSEILLÉS */}
+            {/* PRODUITS CONSEILLÉS — ton programme */}
             {recommendations.length > 0 && (
-              <div style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.07)', borderRadius: 14, padding: 16, marginBottom: 20 }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-                  <div>
-                    <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 14, color: '#111827', marginBottom: 4 }}>Produits conseillés</div>
-                    <div style={{ fontSize: 11, color: '#9CA3AF' }}>Sélectionnés selon tes derniers résultats</div>
-                  </div>
-                  <a href="https://www.myherbalife.com/fr-fr" target="_blank" rel="noopener noreferrer"
-                    style={{ display: 'flex', alignItems: 'center', gap: 5, background: '#0D9488', color: '#fff', borderRadius: 8, padding: '7px 12px', textDecoration: 'none', fontSize: 11, fontWeight: 600, flexShrink: 0 }}>
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 3h18v18H3z" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
-                    Commander
-                  </a>
-                </div>
+              <div style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.07)', borderRadius: 14, padding: 16, marginBottom: 12 }}>
+                <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 14, color: '#111827', marginBottom: 4 }}>Ton programme</div>
+                <div style={{ fontSize: 11, color: '#9CA3AF', marginBottom: 14 }}>Produits conseillés selon tes résultats</div>
                 {recommendations.map((reco, i) => (
                   <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '10px 0', borderTop: i > 0 ? '1px solid rgba(0,0,0,0.06)' : 'none' }}>
                     <div style={{ width: 32, height: 32, borderRadius: 8, background: 'rgba(184,146,42,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
@@ -271,27 +262,58 @@ export function EvolutionReportPage() {
                       <div style={{ fontSize: 13, fontWeight: 600, color: '#111827', marginBottom: 2 }}>{reco.name}</div>
                       <div style={{ fontSize: 11, color: '#6B7280', lineHeight: 1.5 }}>{reco.reason}</div>
                     </div>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: '#B8922A', fontFamily: 'Syne, sans-serif', flexShrink: 0 }}>
-                      {(reco.public_price ?? reco.publicPrice)?.toFixed(2)} €
-                    </div>
                   </div>
                 ))}
-                <div style={{ marginTop: 14, display: 'flex', gap: 8 }}>
-                  <a href="https://apps.apple.com/fr/app/herbalife-shop/id1154285940" target="_blank" rel="noopener noreferrer"
-                    style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '8px 0', borderRadius: 8, border: '1px solid rgba(0,0,0,0.08)', background: '#FAFAF9', color: '#6B7280', fontSize: 10, fontWeight: 500, textDecoration: 'none' }}>
-                    App Store
-                  </a>
-                  <a href="https://play.google.com/store/apps/details?id=com.hrbl.mobile.android.ordering&hl=fr" target="_blank" rel="noopener noreferrer"
-                    style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '8px 0', borderRadius: 8, border: '1px solid rgba(0,0,0,0.08)', background: '#FAFAF9', color: '#6B7280', fontSize: 10, fontWeight: 500, textDecoration: 'none' }}>
-                    Google Play
-                  </a>
-                  <a href="https://www.myherbalife.com/fr-fr" target="_blank" rel="noopener noreferrer"
-                    style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '8px 0', borderRadius: 8, border: '1px solid rgba(184,146,42,0.2)', background: 'rgba(184,146,42,0.06)', color: '#B8922A', fontSize: 10, fontWeight: 600, textDecoration: 'none' }}>
-                    MyHerbalife.com
-                  </a>
-                </div>
               </div>
             )}
+
+            {/* UPSELL — Pour aller plus loin */}
+            {(() => {
+              const recoNames = new Set(recommendations.map(r => r.name))
+              const upsells = [
+                { name: 'Phyto Complete', reason: 'Agit sur la graisse viscérale et le métabolisme. Recommandé si ton score viscéral est au-dessus de 9.', icon: '🌿' },
+                { name: 'Beta Heart', reason: 'Réduit le cholestérol et soutient la perte de masse grasse via les bêta-glucanes d\'avoine.', icon: '❤️' },
+                { name: 'Protein Drink Mix', reason: 'Apport protéiné supplémentaire pour renforcer la masse musculaire entre les repas.', icon: '💪' },
+                { name: 'Aloe Vera Concentré', reason: 'Améliore l\'absorption des nutriments et l\'hydratation cellulaire au quotidien.', icon: '💧' },
+                { name: 'Xtra-Cal', reason: 'Calcium et vitamine D pour la solidité osseuse — essentiel pour les femmes.', icon: '🦴' },
+              ].filter(u => !recoNames.has(u.name))
+
+              if (upsells.length === 0) return null
+              return (
+                <div style={{ background: '#FFFFFF', border: '1px solid rgba(13,148,136,0.15)', borderRadius: 14, padding: 16, marginBottom: 20 }}>
+                  <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 14, color: '#0D9488', marginBottom: 4 }}>Pour aller plus loin</div>
+                  <div style={{ fontSize: 11, color: '#9CA3AF', marginBottom: 14 }}>Ces produits complémentaires peuvent accélérer tes résultats</div>
+                  {upsells.slice(0, 3).map((u, i) => (
+                    <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '10px 0', borderTop: i > 0 ? '1px solid rgba(0,0,0,0.06)' : 'none' }}>
+                      <div style={{ width: 32, height: 32, borderRadius: 8, background: 'rgba(13,148,136,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 16 }}>
+                        {u.icon}
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: '#111827', marginBottom: 2 }}>{u.name}</div>
+                        <div style={{ fontSize: 11, color: '#6B7280', lineHeight: 1.5 }}>{u.reason}</div>
+                      </div>
+                      <div style={{ fontSize: 10, color: '#0D9488', fontWeight: 600, flexShrink: 0, padding: '3px 8px', borderRadius: 6, background: 'rgba(13,148,136,0.08)' }}>
+                        + Ajouter
+                      </div>
+                    </div>
+                  ))}
+                  <div style={{ marginTop: 14, display: 'flex', gap: 8 }}>
+                    <a href="https://apps.apple.com/fr/app/herbalife-shop/id1154285940" target="_blank" rel="noopener noreferrer"
+                      style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '8px 0', borderRadius: 8, border: '1px solid rgba(0,0,0,0.08)', background: '#FAFAF9', color: '#6B7280', fontSize: 10, fontWeight: 500, textDecoration: 'none' }}>
+                      App Store
+                    </a>
+                    <a href="https://play.google.com/store/apps/details?id=com.hrbl.mobile.android.ordering&hl=fr" target="_blank" rel="noopener noreferrer"
+                      style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '8px 0', borderRadius: 8, border: '1px solid rgba(0,0,0,0.08)', background: '#FAFAF9', color: '#6B7280', fontSize: 10, fontWeight: 500, textDecoration: 'none' }}>
+                      Google Play
+                    </a>
+                    <a href="https://www.myherbalife.com/fr-fr" target="_blank" rel="noopener noreferrer"
+                      style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '8px 0', borderRadius: 8, border: '1px solid rgba(184,146,42,0.2)', background: 'rgba(184,146,42,0.06)', color: '#B8922A', fontSize: 10, fontWeight: 600, textDecoration: 'none' }}>
+                      MyHerbalife.com
+                    </a>
+                  </div>
+                </div>
+              )
+            })()}
 
             {/* PROCHAIN RDV */}
             {report.next_follow_up && (

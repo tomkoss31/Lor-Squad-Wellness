@@ -178,13 +178,7 @@ export interface ProductRecommendation {
   ref: string
   name: string
   reason: string
-  publicPrice: number
-  orderUrl?: string
 }
-
-const MYHERBALIFE_URL = 'https://www.myherbalife.com/fr-fr'
-const APP_STORE_URL = 'https://apps.apple.com/fr/app/herbalife-shop/id1154285940'
-const PLAY_STORE_URL = 'https://play.google.com/store/apps/details?id=com.hrbl.mobile.android.ordering&hl=fr'
 
 export function generateProductRecommendations(
   latestScan: BodyScanMetrics,
@@ -194,76 +188,49 @@ export function generateProductRecommendations(
   const recos: ProductRecommendation[] = []
   const isFemale = sex === 'female'
   const bodyFatThreshold = isFemale ? 30 : 22
-
-  // Apport protéiné recommandé
   const proteinMin = Math.round(latestScan.weight * 1.2)
   const proteinMax = Math.round(latestScan.weight * 1.8)
-  // Besoin hydrique
   const waterLiters = (latestScan.weight * 0.033).toFixed(1)
 
-  recos.push({
-    ref: '4466', name: 'Formula 1',
-    reason: `Shake repas complet — apport protéiné ciblé ${proteinMin}-${proteinMax}g/jour. Remplace un repas pour un contrôle calorique efficace.`,
-    publicPrice: 63.50, orderUrl: MYHERBALIFE_URL,
-  })
+  recos.push({ ref: '4466', name: 'Formula 1',
+    reason: `Shake repas complet — apport protéiné ciblé ${proteinMin}-${proteinMax}g/jour. Remplace un repas pour un contrôle calorique efficace.` })
 
-  recos.push({
-    ref: '488K', name: 'Créatine+',
+  recos.push({ ref: '488K', name: 'Créatine+',
     reason: isFemale
       ? 'Tonus musculaire et énergie cellulaire — recommandé pour toutes les femmes actives'
-      : `Objectif masse musculaire (${latestScan.muscleMass.toFixed(1)} kg actuel) — maintien et renforcement`,
-    publicPrice: 39.50, orderUrl: MYHERBALIFE_URL,
-  })
+      : `Objectif masse musculaire (${latestScan.muscleMass.toFixed(1)} kg actuel) — maintien et renforcement` })
 
   if (isFemale) {
-    recos.push({
-      ref: '0020', name: 'Xtra-Cal',
-      reason: `Calcium + vitamine D — renforcement osseux (masse osseuse actuelle : ${latestScan.boneMass.toFixed(1)} kg)`,
-      publicPrice: 24.50, orderUrl: MYHERBALIFE_URL,
-    })
+    recos.push({ ref: '0020', name: 'Xtra-Cal',
+      reason: `Calcium + vitamine D — renforcement osseux (masse osseuse : ${latestScan.boneMass.toFixed(1)} kg)` })
   }
 
   if (latestScan.hydration < 50) {
-    recos.push({
-      ref: '0006', name: 'Aloe Vera Concentré',
-      reason: `Hydratation à ${latestScan.hydration.toFixed(0)}% (objectif ≥ 50%). Boire ${waterLiters}L d'eau/jour + aloe vera pour améliorer l'absorption.`,
-      publicPrice: 54.50, orderUrl: MYHERBALIFE_URL,
-    })
+    recos.push({ ref: '0006', name: 'Aloe Vera Concentré',
+      reason: `Hydratation à ${latestScan.hydration.toFixed(0)}% (objectif ≥ 50%). Boire ${waterLiters}L d'eau/jour + aloe vera.` })
   }
 
   if (latestScan.visceralFat >= 9) {
-    recos.push({
-      ref: '236K', name: 'Phyto Complete',
-      reason: `Graisse viscérale à ${latestScan.visceralFat}/30 (seuil sain < 9). Les extraits de plantes aident à réduire la graisse interne.`,
-      publicPrice: 90.00, orderUrl: MYHERBALIFE_URL,
-    })
+    recos.push({ ref: '236K', name: 'Phyto Complete',
+      reason: `Graisse viscérale à ${latestScan.visceralFat}/30 (seuil sain < 9). Extraits de plantes pour réduire la graisse interne.` })
   }
 
   if (latestScan.bodyFat >= bodyFatThreshold) {
-    recos.push({
-      ref: '0267', name: 'Beta Heart',
-      reason: `Masse grasse à ${latestScan.bodyFat.toFixed(1)}% (cible < ${bodyFatThreshold}%). Bêta-glucanes pour agir sur le cholestérol et la graisse corporelle.`,
-      publicPrice: 57.50, orderUrl: MYHERBALIFE_URL,
-    })
+    recos.push({ ref: '0267', name: 'Beta Heart',
+      reason: `Masse grasse à ${latestScan.bodyFat.toFixed(1)}% (cible < ${bodyFatThreshold}%). Bêta-glucanes pour cholestérol et graisse.` })
   }
 
   if (latestScan.boneMass && latestScan.weight) {
     const ratio = (latestScan.boneMass / latestScan.weight) * 100
     if (ratio < 4.0 && !isFemale) {
-      recos.push({
-        ref: '0020', name: 'Xtra-Cal',
-        reason: `Masse osseuse faible (${ratio.toFixed(1)}% du poids, objectif ≥ 4%). Calcium et vitamine D essentiels.`,
-        publicPrice: 24.50, orderUrl: MYHERBALIFE_URL,
-      })
+      recos.push({ ref: '0020', name: 'Xtra-Cal',
+        reason: `Masse osseuse faible (${ratio.toFixed(1)}% du poids, objectif ≥ 4%). Calcium et vitamine D.` })
     }
   }
 
   if (objective?.includes('poids') || objective?.includes('weight')) {
-    recos.push({
-      ref: '178K', name: 'Thé Concentré',
-      reason: `Booster thermogénique naturel — complément à la perte de poids. Boire ${waterLiters}L d'eau minimum par jour.`,
-      publicPrice: 41.00, orderUrl: MYHERBALIFE_URL,
-    })
+    recos.push({ ref: '178K', name: 'Thé Concentré',
+      reason: `Booster thermogénique — complément à la perte de poids. Boire ${waterLiters}L d'eau/jour minimum.` })
   }
 
   const seen = new Set<string>()
@@ -272,12 +239,6 @@ export function generateProductRecommendations(
     seen.add(r.ref)
     return true
   }).slice(0, 6)
-}
-
-export const ORDER_LINKS = {
-  myherbalife: MYHERBALIFE_URL,
-  appStore: APP_STORE_URL,
-  playStore: PLAY_STORE_URL,
 }
 
 // ─── BUILD REPORT DATA ──────────────────────────────────────────────────────
