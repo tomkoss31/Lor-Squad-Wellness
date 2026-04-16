@@ -1329,7 +1329,7 @@ export function NewAssessmentPage() {
                     formatOption={(option) => (option === "male" ? "Homme" : "Femme")}
                   />
                   <Field label="Age" type="number" value={form.age} onChange={(v) => update("age", Number(v))} />
-                  <Field label="Taille" type="number" value={form.height} onChange={(v) => update("height", Number(v))} />
+                  <Field label="Taille (cm)" type="number" value={form.height} onChange={(v) => update("height", Number(v))} />
                   <Field label="Ville" value={form.city} onChange={(v) => update("city", v)} />
                 </div>
 
