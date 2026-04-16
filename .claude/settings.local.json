@@ -20,7 +20,14 @@
       "Bash(sed -i 's/const latestBonePercent = /\\\\/\\\\/ const latestBonePercent = /' src/pages/ClientDetailPage.tsx)",
       "Bash(sed -i 's/const retainedProductsLabel = /\\\\/\\\\/ const retainedProductsLabel = /' src/pages/ClientDetailPage.tsx)",
       "Bash(sed -i '/estimateRelativeMassPercent,/d' src/pages/ClientDetailPage.tsx)",
-      "Bash(sed -i 's/    activityLogs,//' src/pages/ClientDetailPage.tsx)"
+      "Bash(sed -i 's/    activityLogs,//' src/pages/ClientDetailPage.tsx)",
+      "Bash(sed -i 's/  const bodyScanExpressItems = \\\\[/  const _bodyScanExpressItems = [/' src/pages/NewAssessmentPage.tsx)",
+      "Bash(sed -i 's/  const prompts =/  const _prompts =/' src/pages/NewAssessmentPage.tsx)",
+      "Bash(sed -i 's/  const rightPanelPoints =/  const _rightPanelPoints =/' src/pages/NewAssessmentPage.tsx)",
+      "Bash(sed -i 's/  const panelTitle =/  const _panelTitle =/' src/pages/NewAssessmentPage.tsx)",
+      "Bash(sed -i 's/  const panelIntro =/  const _panelIntro =/' src/pages/NewAssessmentPage.tsx)",
+      "Bash(node -e ':*)",
+      "Bash(sed -i '/formatDateTime,/d' src/pages/NewAssessmentPage.tsx)"
     ]
   }
 }
