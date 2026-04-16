@@ -175,6 +175,20 @@ export interface ActivityLog {
   detail?: string;
 }
 
+export interface ClientMessage {
+  id: string;
+  report_token?: string;
+  client_id: string;
+  client_name: string;
+  distributor_id: string;
+  message_type: 'product_request' | 'recommendation' | 'general';
+  product_name?: string;
+  message?: string;
+  client_contact?: string;
+  read: boolean;
+  created_at: string;
+}
+
 export interface Program {
   id: string;
   title: string;

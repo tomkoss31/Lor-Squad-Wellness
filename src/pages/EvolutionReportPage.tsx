@@ -62,6 +62,39 @@ export function EvolutionReportPage() {
     })()
   }, [token])
 
+  // Upsell messaging
+  const [requestProduct, setRequestProduct] = useState<string | null>(null)
+  const [contactInfo, setContactInfo] = useState('')
+  const [msgNote, setMsgNote] = useState('')
+  const [msgSent, setMsgSent] = useState<Set<string>>(new Set())
+  const [sending, setSending] = useState(false)
+
+  async function sendProductRequest(productName: string) {
+    if (!contactInfo.trim() || !report) return
+    setSending(true)
+    try {
+      const sb = await getSupabaseClient()
+      if (sb) {
+        await sb.from('client_messages').insert({
+          report_token: token,
+          client_id: report.client_id,
+          client_name: `${report.client_first_name} ${report.client_last_name}`,
+          distributor_id: report.coach_name,
+          message_type: 'product_request',
+          product_name: productName,
+          message: msgNote.trim() || `Intéressé(e) par ${productName}`,
+          client_contact: contactInfo.trim(),
+        })
+        setMsgSent(prev => new Set(prev).add(productName))
+        setRequestProduct(null)
+        setContactInfo('')
+        setMsgNote('')
+      }
+    } finally {
+      setSending(false)
+    }
+  }
+
   if (loading) return (
     <div style={{ minHeight: '100vh', background: '#F4F2EE', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <div style={{ width: 32, height: 32, border: '2px solid rgba(184,146,42,0.2)', borderTop: '2px solid #B8922A', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
@@ -195,7 +228,7 @@ export function EvolutionReportPage() {
                   <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11, minWidth: 500 }}>
                     <thead>
                       <tr style={{ borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
-                        {['Date', 'Poids', 'M. Grasse', 'Muscle', 'Hydrat.', 'Viscéral', 'Âge M.'].map(h => (
+                        {['Date', 'Poids', 'MG (kg)', 'Muscle (%)', 'Hydrat.', 'Viscéral', 'Âge M.'].map(h => (
                           <th key={h} style={{ padding: '6px 8px', textAlign: 'left', fontSize: 9, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 500 }}>{h}</th>
                         ))}
                       </tr>
@@ -215,8 +248,8 @@ export function EvolutionReportPage() {
                         <tr key={i} style={{ borderBottom: '1px solid rgba(0,0,0,0.05)', background: i % 2 === 0 ? '#FAFAF9' : '#FFFFFF' }}>
                           <td style={{ padding: '8px', color: '#6B7280', whiteSpace: 'nowrap' }}>{new Date(row.date as string).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: '2-digit' })}</td>
                           <td style={{ padding: '8px', fontWeight: 600, color: tc('weight', true) }}>{Number(row.weight).toFixed(1)}</td>
-                          <td style={{ padding: '8px', fontWeight: 600, color: tc('bodyFat', true) }}>{Number(row.bodyFat).toFixed(1)}%</td>
-                          <td style={{ padding: '8px', fontWeight: 600, color: tc('muscleMass', false) }}>{Number(row.muscleMass).toFixed(1)}</td>
+                          <td style={{ padding: '8px', fontWeight: 600, color: tc('bodyFat', true) }}>{(Number(row.bodyFat) * Number(row.weight) / 100).toFixed(1)}</td>
+                          <td style={{ padding: '8px', fontWeight: 600, color: tc('muscleMass', false) }}>{((Number(row.muscleMass) / Number(row.weight)) * 100).toFixed(1)}%</td>
                           <td style={{ padding: '8px', fontWeight: 600, color: tc('hydration', false) }}>{Number(row.hydration).toFixed(1)}%</td>
                           <td style={{ padding: '8px', fontWeight: 600, color: Number(row.visceralFat) >= 13 ? '#DC2626' : Number(row.visceralFat) >= 9 ? '#F59E0B' : '#0D9488' }}>{row.visceralFat}</td>
                           <td style={{ padding: '8px', color: '#111827' }}>{row.metabolicAge}</td>
@@ -284,17 +317,36 @@ export function EvolutionReportPage() {
                   <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 14, color: '#0D9488', marginBottom: 4 }}>Pour aller plus loin</div>
                   <div style={{ fontSize: 11, color: '#9CA3AF', marginBottom: 14 }}>Ces produits complémentaires peuvent accélérer tes résultats</div>
                   {upsells.slice(0, 3).map((u, i) => (
-                    <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '10px 0', borderTop: i > 0 ? '1px solid rgba(0,0,0,0.06)' : 'none' }}>
-                      <div style={{ width: 32, height: 32, borderRadius: 8, background: 'rgba(13,148,136,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 16 }}>
-                        {u.icon}
+                    <div key={i}>
+                      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '10px 0', borderTop: i > 0 ? '1px solid rgba(0,0,0,0.06)' : 'none' }}>
+                        <div style={{ width: 32, height: 32, borderRadius: 8, background: 'rgba(13,148,136,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 16 }}>
+                          {u.icon}
+                        </div>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontSize: 13, fontWeight: 600, color: '#111827', marginBottom: 2 }}>{u.name}</div>
+                          <div style={{ fontSize: 11, color: '#6B7280', lineHeight: 1.5 }}>{u.reason}</div>
+                        </div>
+                        {msgSent.has(u.name) ? (
+                          <div style={{ fontSize: 10, color: '#0D9488', fontWeight: 600, flexShrink: 0, padding: '3px 8px', borderRadius: 6, background: 'rgba(13,148,136,0.08)' }}>✓ Envoyé</div>
+                        ) : (
+                          <button onClick={() => setRequestProduct(u.name)} style={{ fontSize: 10, color: '#0D9488', fontWeight: 600, flexShrink: 0, padding: '3px 8px', borderRadius: 6, background: 'rgba(13,148,136,0.08)', border: 'none', cursor: 'pointer' }}>+ Ajouter</button>
+                        )}
                       </div>
-                      <div style={{ flex: 1 }}>
-                        <div style={{ fontSize: 13, fontWeight: 600, color: '#111827', marginBottom: 2 }}>{u.name}</div>
-                        <div style={{ fontSize: 11, color: '#6B7280', lineHeight: 1.5 }}>{u.reason}</div>
-                      </div>
-                      <div style={{ fontSize: 10, color: '#0D9488', fontWeight: 600, flexShrink: 0, padding: '3px 8px', borderRadius: 6, background: 'rgba(13,148,136,0.08)' }}>
-                        + Ajouter
-                      </div>
+                      {requestProduct === u.name && (
+                        <div style={{ marginLeft: 44, padding: '10px 0 6px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+                          <input placeholder="Ton nom ou téléphone" value={contactInfo} onChange={e => setContactInfo(e.target.value)}
+                            style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid rgba(0,0,0,0.1)', fontSize: 13, fontFamily: 'DM Sans, sans-serif', outline: 'none' }}/>
+                          <input placeholder="Message (optionnel)" value={msgNote} onChange={e => setMsgNote(e.target.value)}
+                            style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid rgba(0,0,0,0.1)', fontSize: 13, fontFamily: 'DM Sans, sans-serif', outline: 'none' }}/>
+                          <div style={{ display: 'flex', gap: 8 }}>
+                            <button onClick={() => void sendProductRequest(u.name)} disabled={sending || !contactInfo.trim()}
+                              style={{ padding: '7px 14px', borderRadius: 8, border: 'none', background: '#0D9488', color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'DM Sans, sans-serif', opacity: sending || !contactInfo.trim() ? 0.5 : 1 }}>
+                              {sending ? 'Envoi...' : 'Envoyer la demande'}
+                            </button>
+                            <button onClick={() => setRequestProduct(null)} style={{ padding: '7px 14px', borderRadius: 8, border: '1px solid rgba(0,0,0,0.1)', background: 'transparent', color: '#6B7280', fontSize: 12, cursor: 'pointer', fontFamily: 'DM Sans, sans-serif' }}>Annuler</button>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   ))}
                   <div style={{ marginTop: 14, display: 'flex', gap: 8 }}>
