@@ -27,7 +27,7 @@ import {
 const statusLabels = {
   active: { label: "Actif", tone: "green" as const },
   pending: { label: "En attente", tone: "amber" as const },
-  "follow-up": { label: "Suivi", tone: "blue" as const }
+  "follow-up": { label: "Classé", tone: "gray" as const }
 };
 
 export function ClientsPage() {
@@ -149,7 +149,7 @@ export function ClientsPage() {
               <option value="all">Tous les statuts</option>
               <option value="active">Actifs</option>
               <option value="pending">En attente</option>
-              <option value="follow-up">Suivi prioritaire</option>
+              <option value="follow-up">Classés — Pas démarré</option>
             </select>
           </div>
         </div>
@@ -287,6 +287,22 @@ export function ClientsPage() {
                                 {client.firstName} {client.lastName}
                               </p>
                               <StatusBadge label={status.label} tone={status.tone} />
+                              {client.status === 'follow-up' && (
+                                <button
+                                  onClick={async (e) => {
+                                    e.preventDefault()
+                                    e.stopPropagation()
+                                    const { getSupabaseClient } = await import('../services/supabaseClient')
+                                    const sb = await getSupabaseClient()
+                                    if (sb) {
+                                      await sb.from('clients').update({ status: 'active' }).eq('id', client.id)
+                                      window.location.reload()
+                                    }
+                                  }}
+                                  style={{ fontSize: 10, padding: '4px 12px', borderRadius: 7, border: 'none', background: 'rgba(13,148,136,0.12)', color: 'var(--ls-teal)', cursor: 'pointer', fontWeight: 600, fontFamily: 'DM Sans, sans-serif' }}>
+                                  ↻ Réactiver
+                                </button>
+                              )}
                             </div>
                             <p className="text-sm text-[var(--ls-text-muted)]">
                               {client.job} - {client.city ?? "Ville non renseignee"}

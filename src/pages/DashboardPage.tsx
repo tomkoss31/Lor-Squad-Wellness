@@ -24,7 +24,7 @@ function greeting() {
 }
 
 export function DashboardPage() {
-  const { currentUser, users, clients, followUps, pvClientProducts, unreadMessageCount, updateFollowUpStatus } = useAppContext()
+  const { currentUser, users, clients, followUps, pvClientProducts, unreadMessageCount, updateFollowUpStatus, updateClientSchedule } = useAppContext()
   const [showPasswordNotice, setShowPasswordNotice] = useState(false)
 
   if (!currentUser) return null
@@ -133,18 +133,60 @@ export function DashboardPage() {
       <div className="dashboard-cols" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginTop: 16 }}>
         <UrgencyColumn title="Urgent" count={metrics.relanceFollowUps.length} color="#FB7185" icon={<IconUrgent />} items={relances} emptyLabel="Aucune relance en attente"
           seeAllLink={`/distributors/${currentUser.id}`} seeAllCount={Math.max(0, metrics.relanceFollowUps.length - 4)}
-          onMarkContacted={(item) => void updateFollowUpStatus(item.id, 'completed')}
-          onDismiss={(item) => void updateFollowUpStatus(item.id, 'dismissed')}
+          onMarkContacted={(item) => {
+            const in7days = new Date(Date.now() + 7 * 86400000).toISOString()
+            void updateClientSchedule(item.clientId, { nextFollowUp: in7days, followUpId: item.id, followUpType: 'Relance', followUpStatus: 'scheduled' })
+          }}
+          onDismiss={(item) => {
+            void updateFollowUpStatus(item.id, 'dismissed')
+            // Passer le client en statut "follow-up" (classé sans suite)
+            const cl = clients.find(c => c.id === item.clientId)
+            if (cl && cl.status !== 'follow-up') {
+              void (async () => {
+                const { getSupabaseClient } = await import('../services/supabaseClient')
+                const sb = await getSupabaseClient()
+                if (sb) await sb.from('clients').update({ status: 'follow-up' }).eq('id', item.clientId)
+              })()
+            }
+          }}
         />
         <UrgencyColumn title="Planifiés" count={metrics.scheduledFollowUps.length} color="#2DD4BF" icon={<IconPlanned />} items={planifies} emptyLabel="Aucun RDV planifié"
           seeAllLink={`/distributors/${currentUser.id}`} seeAllCount={Math.max(0, metrics.scheduledFollowUps.length - 4)}
-          onMarkContacted={(item) => void updateFollowUpStatus(item.id, 'completed')}
-          onDismiss={(item) => void updateFollowUpStatus(item.id, 'dismissed')}
+          onMarkContacted={(item) => {
+            const in7days = new Date(Date.now() + 7 * 86400000).toISOString()
+            void updateClientSchedule(item.clientId, { nextFollowUp: in7days, followUpId: item.id, followUpType: 'Suivi replanifié', followUpStatus: 'scheduled' })
+          }}
+          onDismiss={(item) => {
+            void updateFollowUpStatus(item.id, 'dismissed')
+            // Passer le client en statut "follow-up" (classé sans suite)
+            const cl = clients.find(c => c.id === item.clientId)
+            if (cl && cl.status !== 'follow-up') {
+              void (async () => {
+                const { getSupabaseClient } = await import('../services/supabaseClient')
+                const sb = await getSupabaseClient()
+                if (sb) await sb.from('clients').update({ status: 'follow-up' }).eq('id', item.clientId)
+              })()
+            }
+          }}
         />
         <UrgencyColumn title="À surveiller" count={metrics.clients.length} color="#A78BFA" icon={<IconWatch />} items={surveiller} emptyLabel="Aucun dossier à surveiller"
           seeAllLink="/clients" seeAllCount={Math.max(0, metrics.clients.length - 4)}
-          onMarkContacted={(item) => void updateFollowUpStatus(item.id, 'completed')}
-          onDismiss={(item) => void updateFollowUpStatus(item.id, 'dismissed')}
+          onMarkContacted={(item) => {
+            const in7days = new Date(Date.now() + 7 * 86400000).toISOString()
+            void updateClientSchedule(item.clientId, { nextFollowUp: in7days, followUpId: item.id, followUpType: 'Suivi replanifié', followUpStatus: 'scheduled' })
+          }}
+          onDismiss={(item) => {
+            void updateFollowUpStatus(item.id, 'dismissed')
+            // Passer le client en statut "follow-up" (classé sans suite)
+            const cl = clients.find(c => c.id === item.clientId)
+            if (cl && cl.status !== 'follow-up') {
+              void (async () => {
+                const { getSupabaseClient } = await import('../services/supabaseClient')
+                const sb = await getSupabaseClient()
+                if (sb) await sb.from('clients').update({ status: 'follow-up' }).eq('id', item.clientId)
+              })()
+            }
+          }}
         />
       </div>
     </div>
