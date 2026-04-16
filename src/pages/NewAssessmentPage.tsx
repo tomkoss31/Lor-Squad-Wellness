@@ -28,7 +28,6 @@ import {
   estimateMuscleMassPercent,
   normalizeDateTimeLocalInputValue,
   serializeDateTimeForStorage,
-  getWeightLossPlan,
   normalizeTimelineLabel
 } from "../lib/calculations";
 import { buildAssessmentRecommendationPlan } from "../lib/assessmentRecommendations";
