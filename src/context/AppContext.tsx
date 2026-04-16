@@ -1280,10 +1280,10 @@ export function AppProvider({ children }: PropsWithChildren) {
       pvTransactions,
       programs: mockPrograms,
       clientMessages: currentUser
-        ? clientMessages.filter(m => m.distributor_id === currentUser.id || currentUser.role === 'admin')
+        ? clientMessages.filter(m => m.distributor_id === currentUser.id || m.distributor_id === currentUser.name || currentUser.role === 'admin')
         : [],
       unreadMessageCount: currentUser
-        ? clientMessages.filter(m => !m.read && (m.distributor_id === currentUser.id || currentUser.role === 'admin')).length
+        ? clientMessages.filter(m => !m.read && (m.distributor_id === currentUser.id || m.distributor_id === currentUser.name || currentUser.role === 'admin')).length
         : 0,
       markMessageRead: async (id: string) => {
         const sb = await getSupabaseClient();

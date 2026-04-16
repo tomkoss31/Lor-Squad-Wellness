@@ -271,6 +271,7 @@ export function buildReportData(client: Client, coachName: string) {
 
   return {
     client_id: client.id,
+    distributor_id: client.distributorId,
     coach_name: coachName,
     client_first_name: client.firstName,
     client_last_name: client.lastName,
