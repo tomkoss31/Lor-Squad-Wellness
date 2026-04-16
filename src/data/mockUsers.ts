@@ -43,7 +43,7 @@ export const mockUsers: User[] = [
     mockPassword: "demo1234",
     role: "referent",
     active: true,
-    title: "Referent d'equipe",
+    title: "Référent d'equipe",
     createdAt: "2026-02-10",
     lastAccessAt: "2026-03-29"
   }

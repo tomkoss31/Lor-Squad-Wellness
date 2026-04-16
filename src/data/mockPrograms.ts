@@ -188,7 +188,7 @@ export const learningVisuals: VisualCardContent[] = [
     title: "Routine Formula 1",
     description: "Montrer une solution pratique, credible et coherente avec l'objectif du client.",
     kind: "routine",
-    points: ["Rapide a preparer", "Repere proteines", "Regularite quotidienne"],
+    points: ["Rapide a preparer", "Repère proteines", "Regularite quotidienne"],
     accent: "green"
   },
   {

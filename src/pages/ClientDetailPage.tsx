@@ -22,7 +22,7 @@ import { buildReportData, generateProductRecommendations } from "../lib/evolutio
 import { EvolutionReportModal } from "../components/assessment/EvolutionReportModal";
 import { getSupabaseClient } from "../services/supabaseClient";
 import { buildPvTrackingRecords, pvProductCatalog } from "../data/mockPvModule";
-import { getAccessibleOwnerIds, isAdmin, isReferent } from "../lib/auth";
+import { getAccessibleOwnerIds, isAdmin, isRéférent } from "../lib/auth";
 import { getClientActiveFollowUp } from "../lib/portfolio";
 import {
   calculateProteinRange,
@@ -98,7 +98,7 @@ export function ClientDetailPage() {
       setGeneratingReport(false);
     }
   }
-  const canReassignClient = isAdmin(currentUser) || isReferent(currentUser);
+  const canReassignClient = isAdmin(currentUser) || isRéférent(currentUser);
   const assignableOwnerIds = getAccessibleOwnerIds(currentUser, users);
   const assignableOwners = users.filter(
     (user) => user.active && assignableOwnerIds.has(user.id)
@@ -198,7 +198,7 @@ export function ClientDetailPage() {
       const nextOwner = users.find((user) => user.id === nextOwnerId);
       setTransferFeedback(
         nextOwner
-          ? `Le dossier est maintenant rattache a ${nextOwner.name}.`
+          ? `Le dossier est maintenant rattaché à ${nextOwner.name}.`
           : "Le dossier a bien change de responsable."
       );
     } catch (error) {
@@ -672,7 +672,7 @@ export function ClientDetailPage() {
                   >
                     {assignableOwners.map((user) => (
                       <option key={user.id} value={user.id}>
-                        {user.name} - {user.role === "referent" ? "Referent" : user.role === "admin" ? "Admin" : "Distributeur"}
+                        {user.name} - {user.role === "referent" ? "Référent" : user.role === "admin" ? "Admin" : "Distributeur"}
                       </option>
                     ))}
                   </select>
@@ -686,7 +686,7 @@ export function ClientDetailPage() {
                 </Button>
                 <p className="text-sm leading-6 text-[var(--ls-text-muted)]">
                   {transferFeedback ||
-                    "Le dossier, le responsable affiche et le suivi produits actifs seront realignes ensemble."}
+                    "Le dossier, le responsable affiche et le suivi produits actifs seront réalignés ensemble."}
                 </p>
               </div>
             </Card>

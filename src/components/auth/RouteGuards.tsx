@@ -72,7 +72,7 @@ function AuthBootSplash() {
           <p className="eyebrow-label">Lor&apos;Squad Wellness</p>
           <h1 className="mt-4 text-3xl md:text-4xl">Ouverture de la session</h1>
           <p className="mt-4 text-sm leading-7 text-[var(--ls-text-muted)]">
-            On verifie simplement l&apos;accès pour rouvrir l&apos;espace dans de bonnes
+            On vérifie simplement l&apos;accès pour rouvrir l&apos;espace dans de bonnes
             conditions.
           </p>
           {showRecovery ? (

@@ -481,7 +481,7 @@ export function NewAssessmentPage() {
     form.hydration < 50
       ? "Hydratation a renforcer en priorite."
       : form.bodyFat > 28 && form.objective !== "sport"
-        ? "La masse grasse sera un bon repere de progression."
+        ? "La masse grasse sera un bon repère de progression."
         : form.muscleMass < 28 && form.objective === "sport"
           ? "La masse musculaire sera le point a suivre de pres."
           : "Le suivi pourra surtout s'appuyer sur la regularite du plan.";
@@ -505,7 +505,7 @@ export function NewAssessmentPage() {
   const hydrationGapLabel = getRangeGapLabel(form.hydration, hydrationReference, "%");
   const visceralTargetLabel = "0-6";
   const visceralGapLabel =
-    form.visceralFat > 6 ? `+${formatRawNumber(form.visceralFat - 6)}` : "Dans le repere";
+    form.visceralFat > 6 ? `+${formatRawNumber(form.visceralFat - 6)}` : "Dans le repère";
   const comparisonRows = [
     {
       label: "Poids",
@@ -679,9 +679,9 @@ export function NewAssessmentPage() {
           ]
         : currentStep === 3
           ? [
-              "On affine ici avec les points sante utiles a connaitre sans casser le rythme du rendez-vous.",
-              "Allergies, transit et contexte pathologique servent a poser un cadre simple et securisant.",
-              "Ensuite, on relie l'activite et les freins a l'accompagnement."
+              "On affine ici avec les points sante utiles à connaître sans casser le rythme du rendez-vous.",
+              "Allergies, transit et contexte pathologique servent a poser un cadre simple et sécurisant.",
+              "Ensuite, on relie l'activité et les freins a l'accompagnement."
             ]
           : currentStep === 4
             ? [
@@ -711,7 +711,7 @@ export function NewAssessmentPage() {
             ? [
                 "Comparer un matin improvise a un matin structure.",
                 "Faire ressortir proteines, hydratation et regularite.",
-                "Le client doit se reconnaitre rapidement."
+                "Le client doit se reconnaître rapidement."
               ]
           : currentStep === 9
             ? [
@@ -779,7 +779,7 @@ export function NewAssessmentPage() {
                     ? "Assiette sport plus complete"
                     : "Assiette simple pour perdre du poids",
                   "Montrer d'abord les volumes puis les portions main",
-                  "Le client doit repartir avec un repere facile a refaire"
+                  "Le client doit repartir avec un repère facile a refaire"
                 ]
               : currentStep === 5
                 ? [
@@ -806,14 +806,14 @@ export function NewAssessmentPage() {
                     ? [
                         "Comparer un matin improvise a un matin structure.",
                         "Faire ressortir proteines, hydratation et regularite.",
-                        "Le client doit se reconnaitre rapidement."
+                        "Le client doit se reconnaître rapidement."
                       ]
                 : currentStep === 9
                       ? ["Montrer la routine comme un ensemble simple.", "Le visuel doit porter l'explication.", "Moins de texte, plus de lisibilite."]
                 : currentStep === 10
                       ? [
                           `Besoin prioritaire : ${recommendationPlan.needs[0]?.label ?? "A preciser"}`,
-                          `Produit repere : ${recommendationPlan.needs[0]?.products[0]?.name ?? "A proposer"}`,
+                          `Produit repère : ${recommendationPlan.needs[0]?.products[0]?.name ?? "A proposer"}`,
                           `Programme conseille : ${recommendedProgram?.title ?? "Base a confirmer"}`
                         ]
                 : currentStep === 11
@@ -1030,8 +1030,8 @@ export function NewAssessmentPage() {
       notes:
         form.comment.trim() ||
         (startsImmediately
-          ? "Le client repart avec un cadre simple, un programme clair et un prochain suivi deja pose."
-          : "Le client repart avec un bilan clair, sans demarrage immediat, et une relance deja prevue."),
+          ? "Le client repart avec un cadre simple, un programme clair et un prochain suivi déjà pose."
+          : "Le client repart avec un bilan clair, sans demarrage immediat, et une relance déjà prevue."),
       nextFollowUp,
       bodyScan: {
         weight: form.weight,
@@ -1077,7 +1077,7 @@ export function NewAssessmentPage() {
         notes:
           form.comment.trim() ||
           (startsImmediately
-            ? "Nouveau client cree depuis le bilan initial. La suite est deja fixee."
+            ? "Nouveau client cree depuis le bilan initial. La suite est déjà fixee."
             : "Bilan enregistre sans demarrage. Une relance est a prevoir.")
       });
 
@@ -1493,7 +1493,7 @@ export function NewAssessmentPage() {
                   <Field label="Eau par jour (L)" type="number" step="0.1" value={form.waterIntake} onChange={(v) => update("waterIntake", Number(v))} />
                   <ChoiceGroup label="Cafe" value={form.drinksCoffee} options={["Oui", "Non"]} onChange={(v) => update("drinksCoffee", v)} />
                   <Field label="Cafes par jour" type="number" value={form.coffeePerDay} onChange={(v) => update("coffeePerDay", Number(v))} />
-                  <ChoiceGroup label="Boissons sucrees" value={form.sweetDrinks} options={["Jamais", "Parfois", "Souvent"]} onChange={(v) => update("sweetDrinks", v)} />
+                  <ChoiceGroup label="Boissons sucrées" value={form.sweetDrinks} options={["Jamais", "Parfois", "Souvent"]} onChange={(v) => update("sweetDrinks", v)} />
                 </div>
                 <ChoiceGroup label="Alcool" value={form.alcohol} options={["Jamais", "Occasionnellement", "Chaque semaine", "Souvent"]} onChange={(v) => update("alcohol", v)} />
               </SectionBlock>
@@ -2271,12 +2271,12 @@ function RecommendationStepCard({
             <div className="rounded-[22px] bg-amber-400/[0.08] px-5 py-4">
               <p className="eyebrow-label text-amber-100/70">Palier cadeau 1</p>
               <p className="mt-2 text-xl text-white">A partir de 5 noms</p>
-              <p className="mt-2 text-sm leading-6 text-[var(--ls-text-muted)]">Premier repere cadeau.</p>
+              <p className="mt-2 text-sm leading-6 text-[var(--ls-text-muted)]">Premier repère cadeau.</p>
             </div>
             <div className="rounded-[22px] bg-[rgba(201,168,76,0.08)] px-5 py-4">
               <p className="eyebrow-label text-[#2DD4BF]/70">Palier cadeau 2</p>
               <p className="mt-2 text-xl text-white">A partir de 10 noms</p>
-              <p className="mt-2 text-sm leading-6 text-[var(--ls-text-muted)]">Deuxieme repere cadeau.</p>
+              <p className="mt-2 text-sm leading-6 text-[var(--ls-text-muted)]">Deuxieme repère cadeau.</p>
             </div>
           </div>
 

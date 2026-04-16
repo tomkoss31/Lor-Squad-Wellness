@@ -8,7 +8,7 @@ type GuideTab = "rdv" | "recos";
 const preparationPoints = [
   "Sois a l'heure, idealement un peu en avance.",
   "Club range, propre et accueillant.",
-  "Balance, fiche bilan et stylo deja prets."
+  "Balance, fiche bilan et stylo déjà prets."
 ];
 
 const accueilPoints = [
@@ -115,7 +115,7 @@ export function GuidePage() {
       <PageHeading
         eyebrow="Guide rendez-vous"
         title="Guide rendez-vous"
-        description="Des reperes simples pour accueillir, expliquer et conclure avec justesse."
+        description="Des repères simples pour accueillir, expliquer et conclure avec justesse."
       />
 
       <Card className="space-y-5 overflow-hidden bg-[linear-gradient(180deg,rgba(15,23,42,0.26),rgba(15,23,42,0.5))]">
@@ -166,12 +166,12 @@ function RendezVousGuide() {
         <div className="grid gap-4 xl:grid-cols-3">
           <GuideSectionCard
             title="Preparation"
-            subtitle="Tout doit etre deja pret avant l'arrivee."
+            subtitle="Tout doit etre déjà pret avant l'arrivee."
             points={preparationPoints}
           />
           <GuideSectionCard
             title="Accueil"
-            subtitle="Le sourire et le prenom change deja la tonalite."
+            subtitle="Le sourire et le prenom change déjà la tonalite."
             points={accueilPoints}
           />
           <GuideSectionCard

@@ -140,7 +140,7 @@ const NEED_DEFINITIONS: Record<AssessmentNeedId, NeedDefinition> = {
   },
   bone_support: {
     label: "Masse osseuse basse / soutien calcium",
-    summary: "Ajouter un repere simple quand la base osseuse semble basse."
+    summary: "Ajouter un repère simple quand la base osseuse semble basse."
   },
   snacking_control: {
     label: "Grignotage / encas cadre",
@@ -523,7 +523,7 @@ function detectNeeds(source: AssessmentRecommendationSource): DetectedNeed[] {
       reasonLabel:
         source.snackingFrequency === "Souvent"
           ? "Le grignotage revient souvent dans la journee."
-          : "Les envies sucrees merite un encas plus cadre."
+          : "Les envies sucrées merite un encas plus cadre."
     });
   }
 
@@ -542,7 +542,7 @@ function detectNeeds(source: AssessmentRecommendationSource): DetectedNeed[] {
 function getReasonForProduct(needId: AssessmentNeedId, productName: string) {
   switch (needId) {
     case "hydration":
-      return `${productName} aide a remettre un repere eau simple au quotidien.`;
+      return `${productName} aide a remettre un repère eau simple au quotidien.`;
     case "energy":
       return `${productName} vient soutenir l'elan du matin ou des heures creuses.`;
     case "sleep":
@@ -550,7 +550,7 @@ function getReasonForProduct(needId: AssessmentNeedId, productName: string) {
     case "breakfast_structure":
       return `${productName} aide a cadrer un petit-dejeuner plus stable.`;
     case "protein_muscle":
-      return `${productName} apporte un repere proteine plus simple a tenir.`;
+      return `${productName} apporte un repère proteine plus simple a tenir.`;
     case "digestive_support":
       return `${productName} soutient un confort digestif plus regulier.`;
     case "visceral_fat":

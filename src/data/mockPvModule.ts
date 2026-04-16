@@ -159,7 +159,7 @@ export const pvProductCatalog: PvProductCatalogItem[] = [
     pv: 31.25,
     quantiteLabel: "30 jours",
     dureeReferenceJours: 30,
-    noteMetier: "Repere routine du soir sur 30 jours.",
+    noteMetier: "Repère routine du soir sur 30 jours.",
     recommendedProgram: "Suivi personnalise",
     active: true
   },
@@ -171,7 +171,7 @@ export const pvProductCatalog: PvProductCatalogItem[] = [
     pv: 10.25,
     quantiteLabel: "30 jours",
     dureeReferenceJours: 30,
-    noteMetier: "Repere simple autour du calcium.",
+    noteMetier: "Repère simple autour du calcium.",
     recommendedProgram: "Suivi personnalise",
     active: true
   },
@@ -183,7 +183,7 @@ export const pvProductCatalog: PvProductCatalogItem[] = [
     pv: 25.95,
     quantiteLabel: "30 jours",
     dureeReferenceJours: 30,
-    noteMetier: "Repere complementaire quand la lecture viscerale ressort.",
+    noteMetier: "Repère complementaire quand la lecture viscerale ressort.",
     recommendedProgram: "Suivi personnalise",
     active: true
   },

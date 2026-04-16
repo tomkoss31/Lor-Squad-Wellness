@@ -204,7 +204,7 @@ export function AppProvider({ children }: PropsWithChildren) {
         fetchSupabasePvTransactions(),
         fetchSupabasePvClientProducts(),
         fetchSupabaseActivityLogs().catch((error) => {
-          console.error("Historique d'activite indisponible pour l'instant.", error);
+          console.error("Historique d'activité indisponible pour l'instant.", error);
           return [] as ActivityLog[];
         })
       ]);
@@ -372,7 +372,7 @@ export function AppProvider({ children }: PropsWithChildren) {
         setActivityLogs((previousLogs) => [createdEntry, ...previousLogs].slice(0, 120));
         return;
       } catch (error) {
-        console.error("Journal d'activite indisponible.", error);
+        console.error("Journal d'activité indisponible.", error);
         return;
       }
     }
@@ -408,7 +408,7 @@ export function AppProvider({ children }: PropsWithChildren) {
         console.error("Connexion Supabase impossible.", error);
         return {
           ok: false,
-          error: "La connexion Supabase a echoue avant de pouvoir ouvrir la session."
+          error: "La connexion Supabase a échoué avant de pouvoir ouvrir la session."
         };
       }
     }
@@ -497,14 +497,14 @@ export function AppProvider({ children }: PropsWithChildren) {
           action: "user-created",
           targetUserName: payload.name.trim(),
           summary: `${payload.name.trim()} rejoint l'equipe.`,
-          detail: `${payload.role === "admin" ? "Admin" : payload.role === "referent" ? "Referent" : "Distributeur"} cree depuis la page equipe.`
+          detail: `${payload.role === "admin" ? "Admin" : payload.role === "referent" ? "Référent" : "Distributeur"} cree depuis la page equipe.`
         });
         return { ok: true };
       } catch (error) {
         console.error("Creation d'accès Supabase impossible.", error);
         return {
           ok: false,
-          error: "La création du compte a echoue. Verifie la configuration backend."
+          error: "La création du compte a échoué. Verifie la configuration backend."
         };
       }
     }
@@ -519,7 +519,7 @@ export function AppProvider({ children }: PropsWithChildren) {
       action: "user-created",
       targetUserName: payload.name.trim(),
       summary: `${payload.name.trim()} rejoint l'equipe.`,
-      detail: `${payload.role === "admin" ? "Admin" : payload.role === "referent" ? "Referent" : "Distributeur"} cree en mode local.`
+      detail: `${payload.role === "admin" ? "Admin" : payload.role === "referent" ? "Référent" : "Distributeur"} cree en mode local.`
     });
     return { ok: true };
   }
@@ -542,17 +542,17 @@ export function AppProvider({ children }: PropsWithChildren) {
           targetUserName: targetUser?.name,
           ownerUserId: payload.role === "distributor" ? payload.sponsorId : userId,
           summary: `Acces mis a jour pour ${targetUser?.name ?? "ce compte"}.`,
-          detail: `Role passe sur ${payload.role === "referent" ? "Referent" : payload.role === "admin" ? "Admin" : "Distributeur"}.`
+          detail: `Role passe sur ${payload.role === "referent" ? "Référent" : payload.role === "admin" ? "Admin" : "Distributeur"}.`
         });
         return { ok: true };
       } catch (error) {
-        console.error("Mise a jour d'accès Supabase impossible.", error);
+        console.error("Mise à jour d'accès Supabase impossible.", error);
         return {
           ok: false,
           error:
             error instanceof Error
               ? error.message
-              : "La mise a jour de cet accès a echoue."
+              : "La mise à jour de cet accès a échoué."
         };
       }
     }
@@ -570,7 +570,7 @@ export function AppProvider({ children }: PropsWithChildren) {
       targetUserName: targetUser?.name,
       ownerUserId: payload.role === "distributor" ? payload.sponsorId : userId,
       summary: `Acces mis a jour pour ${targetUser?.name ?? "ce compte"}.`,
-      detail: `Role passe sur ${payload.role === "referent" ? "Referent" : payload.role === "admin" ? "Admin" : "Distributeur"}.`
+      detail: `Role passe sur ${payload.role === "referent" ? "Référent" : payload.role === "admin" ? "Admin" : "Distributeur"}.`
     });
     return { ok: true };
   }
@@ -602,12 +602,12 @@ export function AppProvider({ children }: PropsWithChildren) {
         targetUserId: payload.userId,
         targetUserName: payload.name?.trim() || payload.email.trim().toLowerCase(),
         ownerUserId: payload.role === "distributor" ? payload.sponsorId : payload.userId,
-        summary: `Profil applicatif recree pour ${payload.name?.trim() || payload.email.trim().toLowerCase()}.`,
-        detail: `${payload.role === "admin" ? "Admin" : payload.role === "referent" ? "Referent" : "Distributeur"} repare depuis la page equipe.`
+        summary: `Profil applicatif recréée pour ${payload.name?.trim() || payload.email.trim().toLowerCase()}.`,
+        detail: `${payload.role === "admin" ? "Admin" : payload.role === "referent" ? "Référent" : "Distributeur"} répare depuis la page equipe.`
       });
       return { ok: true };
     } catch (error) {
-      console.error("Reparation d'accès Supabase impossible.", error);
+      console.error("Réparation d'accès Supabase impossible.", error);
       return {
         ok: false,
         error:
@@ -1008,7 +1008,7 @@ export function AppProvider({ children }: PropsWithChildren) {
         clientName: targetClient ? `${targetClient.firstName} ${targetClient.lastName}` : undefined,
         ownerUserId: targetClient?.distributorId,
         summary: `Le bilan de ${targetClient?.firstName ?? "ce client"} a ete ajuste.`,
-        detail: `Mise a jour du ${assessment.type === "initial" ? "bilan de depart" : "suivi"}.`
+        detail: `Mise à jour du ${assessment.type === "initial" ? "bilan de départ" : "suivi"}.`
       });
       return;
     }
@@ -1083,7 +1083,7 @@ export function AppProvider({ children }: PropsWithChildren) {
       clientName: targetClient ? `${targetClient.firstName} ${targetClient.lastName}` : undefined,
       ownerUserId: targetClient?.distributorId,
       summary: `Le bilan de ${targetClient?.firstName ?? "ce client"} a ete ajuste.`,
-      detail: `Mise a jour du ${assessment.type === "initial" ? "bilan de depart" : "suivi"}.`
+      detail: `Mise à jour du ${assessment.type === "initial" ? "bilan de départ" : "suivi"}.`
     });
   }
 

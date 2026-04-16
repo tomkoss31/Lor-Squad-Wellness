@@ -186,8 +186,8 @@ export function getWeightLossPaceInsight(plan: WeightLossPlan): WeightLossPaceIn
 
   if (plan.isAchieved) {
     return {
-      label: "Objectif deja atteint",
-      description: "Le poids cible est deja atteint ou depasse.",
+      label: "Objectif déjà atteint",
+      description: "Le poids cible est déjà atteint ou depasse.",
       tone: "green"
     };
   }
