@@ -21,6 +21,7 @@ import { buildReportData, generateProductRecommendations } from "../lib/evolutio
 import { EvolutionReportModal } from "../components/assessment/EvolutionReportModal";
 import { getSupabaseClient } from "../services/supabaseClient";
 import { buildPvTrackingRecords, pvProductCatalog } from "../data/mockPvModule";
+import { createGoogleCalendarLink } from "../lib/googleCalendar";
 import { getAccessibleOwnerIds, isAdmin, isRéférent } from "../lib/auth";
 import { getClientActiveFollowUp } from "../lib/portfolio";
 import {
@@ -873,6 +874,30 @@ export function ClientDetailPage() {
                 label="Ouvrir la fiche point volume"
                 hint="Visualiser les commandes et le suivi produits"
               />
+              {activeFollowUp && (
+                <a
+                  href={createGoogleCalendarLink({
+                    title: `RDV ${client.firstName} ${client.lastName} — Lor'Squad Wellness`,
+                    description: `${activeFollowUp.type}\nCoach : ${client.distributorName}\nProgramme : ${client.currentProgram}`,
+                    startDate: new Date(activeFollowUp.dueDate),
+                    location: 'La Base Shakes & Drinks, Verdun',
+                  })}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 16px', borderRadius: 12, background: 'var(--ls-surface2)', border: '1px solid var(--ls-border)', textDecoration: 'none', transition: 'all 0.15s' }}
+                >
+                  <div style={{ width: 3, height: '100%', minHeight: 36, background: '#0D9488', borderRadius: 3, flexShrink: 0 }} />
+                  <div>
+                    <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--ls-text)' }}>Ajouter à Google Agenda</div>
+                    <div style={{ fontSize: 12, color: 'var(--ls-text-muted)', marginTop: 2 }}>
+                      RDV le {new Date(activeFollowUp.dueDate).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
+                    </div>
+                  </div>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--ls-teal)" strokeWidth="1.5" style={{ marginLeft: 'auto', flexShrink: 0 }}>
+                    <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+                  </svg>
+                </a>
+              )}
             </div>
           </Card>
 

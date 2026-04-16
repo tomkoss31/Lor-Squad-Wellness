@@ -100,9 +100,11 @@ const MessagesPage = lazy(() =>
 );
 
 import { useTheme } from './hooks/useTheme'
+import { useAutoNotifications } from './hooks/useAutoNotifications'
 
 export default function App() {
-  useTheme() // active le thème persisté au démarrage
+  useTheme()
+  useAutoNotifications()
   return (
     <BrowserRouter>
       <Suspense fallback={<RouteLoadingScreen />}>
