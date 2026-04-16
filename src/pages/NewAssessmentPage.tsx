@@ -20,8 +20,6 @@ import { StatusBadge } from "../components/ui/StatusBadge";
 import { useAppContext } from "../context/AppContext";
 import { getAccessibleOwnerIds, getRoleLabel, isAdmin } from "../lib/auth";
 import {
-  calculateProteinRange,
-  calculateWaterNeed,
   estimateBodyFatKg,
   estimateHydrationKg,
   estimateMuscleMassPercent,
@@ -457,9 +455,6 @@ export function NewAssessmentPage() {
   const selectedProgram =
     mainPrograms.find((program) => program.id === form.selectedProgramId) ?? null;
   const startsImmediately = form.afterAssessmentAction === "started";
-  const waterNeed = calculateWaterNeed(form.weight);
-  const timelineLabel = normalizeTimelineLabel(form.desiredTimeline);
-  const proteinRange = calculateProteinRange(form.weight, form.objective, form.desiredTimeline);
   const bodyFatKg = estimateBodyFatKg(form.weight, form.bodyFat);
   const musclePercent = estimateMuscleMassPercent(form.weight, form.muscleMass);
   const hydrationKg = estimateHydrationKg(form.weight, form.hydration);
