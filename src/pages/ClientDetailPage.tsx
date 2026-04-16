@@ -586,8 +586,6 @@ export function ClientDetailPage() {
             </div>
             <BodyScanComparisonGrid items={comparisonItems} />
           </div>
-
-          <EvolutionChart assessments={client.assessments} />
         </Card>
 
       </div>
