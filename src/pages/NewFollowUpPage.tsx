@@ -256,6 +256,7 @@ export function NewFollowUpPage() {
     const nextQuestionnaire: AssessmentQuestionnaire = {
       ...(latest?.questionnaire ?? {} as AssessmentQuestionnaire),
       desiredTimeline: latest?.questionnaire?.desiredTimeline ?? '',
+      recommendations: recommendationsContacted ? [] : (latest?.questionnaire?.recommendations ?? []),
       recommendationsContacted,
       optionalProductsUsed:
         optionalProductsToggle === "Oui" ? optionalProductsUsed.trim() || "Oui" : ""
@@ -292,6 +293,28 @@ export function NewFollowUpPage() {
     });
 
     clearFollowUpDraft(targetClient.id);
+
+    // Envoyer les recos dans la messagerie si cochées comme contactées
+    if (recommendationsContacted && latest?.questionnaire?.recommendations?.length) {
+      try {
+        const sb = await getSupabaseClient();
+        if (sb && currentUser) {
+          for (const reco of latest.questionnaire.recommendations) {
+            if (reco.name.trim()) {
+              await sb.from('client_messages').insert({
+                client_id: targetClient.id,
+                client_name: `${targetClient.firstName} ${targetClient.lastName}`,
+                distributor_id: currentUser.id,
+                message_type: 'recommendation',
+                product_name: reco.name,
+                message: `Recommandation de ${targetClient.firstName} : ${reco.name}${reco.contact ? ` (${reco.contact})` : ''}`,
+                client_contact: reco.contact || null,
+              });
+            }
+          }
+        }
+      } catch { /* silently continue */ }
+    }
 
     // Générer le rapport d'évolution si >= 2 assessments
     try {
