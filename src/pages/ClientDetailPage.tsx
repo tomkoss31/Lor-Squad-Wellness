@@ -749,8 +749,32 @@ export function ClientDetailPage() {
       )}
 
       {/* Tab 3: Produits */}
-      {activeTab === 3 && (
+      {activeTab === 3 && (() => {
+        const recoProducts = generateProductRecommendations(latestBodyScan, client.sex ?? 'male', client.objective ?? '');
+        const existingIds = new Set(retainedProductIds);
+        const existingNames = new Set(retainedProducts.map(p => p.name));
+        const upsells = recoProducts.filter(r => !existingNames.has(r.name));
+        const allProductIds = [...retainedProductIds];
+        const allProducts = allProductIds.map(id => pvProductCatalog.find(p => p.id === id) ?? null).filter((p): p is NonNullable<typeof p> => p != null);
+        const totalPv = allProducts.reduce((s, p) => s + p.pv, 0);
+        const totalPrice = allProducts.reduce((s, p) => s + p.pricePublic, 0);
+
+        return (
         <div className="space-y-4">
+          {/* Lien rapide vers suivi PV */}
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <Link to={`/pv/clients?responsable=${encodeURIComponent(client.distributorId)}&client=${encodeURIComponent(client.id)}`}
+              style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px', borderRadius: 10, background: 'rgba(13,148,136,0.08)', border: '1px solid rgba(13,148,136,0.2)', color: 'var(--ls-teal)', textDecoration: 'none', fontSize: 13, fontWeight: 600 }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+              Suivi PV / Réassort
+            </Link>
+            <Link to={`/clients/${client.id}/start-assessment/edit`}
+              style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px', borderRadius: 10, background: 'var(--ls-surface2)', border: '1px solid var(--ls-border)', color: 'var(--ls-text-muted)', textDecoration: 'none', fontSize: 13 }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              Modifier les produits du bilan
+            </Link>
+          </div>
+
           {/* Produits en possession */}
           <Card className="space-y-4">
             <div className="flex items-center justify-between">
@@ -763,16 +787,16 @@ export function ClientDetailPage() {
                   {client.currentProgram || 'Programme à confirmer'}
                 </p>
               </div>
-              {retainedProductsTotalPv > 0 && (
+              {totalPv > 0 && (
                 <div style={{ textAlign: 'right' }}>
-                  <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--ls-gold)', fontFamily: 'Syne, sans-serif' }}>{retainedProductsTotalPv.toFixed(1)} PV</div>
-                  <div style={{ fontSize: 11, color: 'var(--ls-text-hint)' }}>{retainedProductsTotalPrice.toFixed(2)} €</div>
+                  <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--ls-gold)', fontFamily: 'Syne, sans-serif' }}>{totalPv.toFixed(1)} PV</div>
+                  <div style={{ fontSize: 11, color: 'var(--ls-text-hint)' }}>{totalPrice.toFixed(2)} €</div>
                 </div>
               )}
             </div>
-            {retainedProducts.length > 0 ? (
+            {allProducts.length > 0 ? (
               <div className="grid gap-2">
-                {retainedProducts.map((product, idx) => (
+                {allProducts.map((product, idx) => (
                   <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderRadius: 12, background: 'var(--ls-surface2)', border: '1px solid var(--ls-border)' }}>
                     <div style={{ width: 32, height: 32, borderRadius: 8, background: 'rgba(13,148,136,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ls-teal)" strokeWidth="1.5"><polyline points="20 6 9 17 4 12"/></svg>
@@ -787,44 +811,46 @@ export function ClientDetailPage() {
               </div>
             ) : (
               <div style={{ padding: '24px 0', textAlign: 'center', color: 'var(--ls-text-hint)', fontSize: 13 }}>
-                Aucun produit sélectionné dans le bilan initial.
+                Aucun produit sélectionné. Modifie le bilan initial pour ajouter les produits.
               </div>
             )}
+
+            {/* Ajouter un produit (upsell) */}
+            <ProductAdder
+              clientId={client.id}
+              existingIds={existingIds}
+              onAdded={() => window.location.reload()}
+            />
           </Card>
 
           {/* Produits recommandés */}
-          {(() => {
-            const recoProducts = generateProductRecommendations(latestBodyScan, client.sex ?? 'male', client.objective ?? '');
-            const existingNames = new Set(retainedProducts.map(p => ('name' in p ? (p as { name: string }).name : '')));
-            const upsells = recoProducts.filter(r => !existingNames.has(r.name));
-            if (upsells.length === 0) return null;
-            return (
-              <Card className="space-y-4">
-                <div>
-                  <p className="eyebrow-label" style={{ color: 'var(--ls-gold)' }}>Recommandations</p>
-                  <h2 className="mt-2 text-xl font-bold" style={{ fontFamily: 'Syne, sans-serif', color: 'var(--ls-text)' }}>
-                    Produits conseillés
-                  </h2>
-                  <p className="mt-1 text-sm" style={{ color: 'var(--ls-text-muted)' }}>Basés sur les derniers résultats body scan</p>
-                </div>
-                <div className="grid gap-2">
-                  {upsells.map((r, idx) => (
-                    <div key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '12px 14px', borderRadius: 12, background: 'var(--ls-surface2)', border: '1px solid var(--ls-border)' }}>
-                      <div style={{ width: 32, height: 32, borderRadius: 8, background: 'var(--ls-gold-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ls-gold)" strokeWidth="1.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-                      </div>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--ls-text)' }}>{r.name}</div>
-                        <div style={{ fontSize: 11, color: 'var(--ls-text-muted)', lineHeight: 1.5, marginTop: 2 }}>{r.reason}</div>
-                      </div>
+          {upsells.length > 0 && (
+            <Card className="space-y-4">
+              <div>
+                <p className="eyebrow-label" style={{ color: 'var(--ls-gold)' }}>Recommandations</p>
+                <h2 className="mt-2 text-xl font-bold" style={{ fontFamily: 'Syne, sans-serif', color: 'var(--ls-text)' }}>
+                  Produits conseillés
+                </h2>
+                <p className="mt-1 text-sm" style={{ color: 'var(--ls-text-muted)' }}>Basés sur les derniers résultats body scan</p>
+              </div>
+              <div className="grid gap-2">
+                {upsells.map((r, idx) => (
+                  <div key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '12px 14px', borderRadius: 12, background: 'var(--ls-surface2)', border: '1px solid var(--ls-border)' }}>
+                    <div style={{ width: 32, height: 32, borderRadius: 8, background: 'var(--ls-gold-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ls-gold)" strokeWidth="1.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
                     </div>
-                  ))}
-                </div>
-              </Card>
-            );
-          })()}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--ls-text)' }}>{r.name}</div>
+                      <div style={{ fontSize: 11, color: 'var(--ls-text-muted)', lineHeight: 1.5, marginTop: 2 }}>{r.reason}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          )}
         </div>
-      )}
+        );
+      })()}
 
       {/* Tab 4: Actions rapides */}
       {activeTab === 4 && (
@@ -1098,5 +1124,66 @@ function LinkButton({
       <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--ls-text)', marginBottom: 3 }}>{label}</div>
       <div style={{ fontSize: 12, color: 'var(--ls-text-muted)' }}>{hint}</div>
     </Link>
+  );
+}
+
+function ProductAdder({ clientId, existingIds, onAdded }: { clientId: string; existingIds: Set<string>; onAdded: () => void }) {
+  const [open, setOpen] = useState(false);
+  const [adding, setAdding] = useState(false);
+  const available = pvProductCatalog.filter(p => p.active && !existingIds.has(p.id));
+
+  async function addProduct(productId: string) {
+    setAdding(true);
+    try {
+      const sb = await getSupabaseClient();
+      if (!sb) return;
+      // Get current latest assessment to update selectedProductIds
+      const { data: assessments } = await sb.from('assessments').select('id, questionnaire').eq('client_id', clientId).order('date', { ascending: false }).limit(1);
+      if (assessments && assessments.length > 0) {
+        const latest = assessments[0];
+        const q = (latest.questionnaire ?? {}) as Record<string, unknown>;
+        const currentIds = (q.selectedProductIds as string[] | undefined) ?? [];
+        if (!currentIds.includes(productId)) {
+          await sb.from('assessments').update({
+            questionnaire: { ...q, selectedProductIds: [...currentIds, productId] }
+          }).eq('id', latest.id);
+        }
+      }
+      setOpen(false);
+      onAdded();
+    } finally {
+      setAdding(false);
+    }
+  }
+
+  if (!open) {
+    return (
+      <button onClick={() => setOpen(true)}
+        style={{ width: '100%', padding: '12px', borderRadius: 10, border: '2px dashed var(--ls-border2)', background: 'transparent', color: 'var(--ls-gold)', cursor: 'pointer', fontSize: 13, fontWeight: 600, fontFamily: 'DM Sans, sans-serif', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Ajouter un produit (upsell)
+      </button>
+    );
+  }
+
+  return (
+    <div style={{ border: '1px solid var(--ls-border)', borderRadius: 12, padding: 14, background: 'var(--ls-surface2)' }}>
+      <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--ls-text)', marginBottom: 10 }}>Choisir un produit à ajouter</div>
+      <div style={{ maxHeight: 300, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 4 }}>
+        {available.map(product => (
+          <button key={product.id} onClick={() => void addProduct(product.id)} disabled={adding}
+            style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', borderRadius: 8, border: '1px solid var(--ls-border)', background: 'var(--ls-surface)', cursor: adding ? 'wait' : 'pointer', textAlign: 'left', fontFamily: 'DM Sans, sans-serif', width: '100%' }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--ls-text)' }}>{product.name}</div>
+              <div style={{ fontSize: 10, color: 'var(--ls-text-hint)' }}>{product.category} · {product.pv} PV</div>
+            </div>
+            <div style={{ fontSize: 11, color: 'var(--ls-gold)', fontWeight: 600, flexShrink: 0 }}>+ Ajouter</div>
+          </button>
+        ))}
+      </div>
+      <button onClick={() => setOpen(false)} style={{ marginTop: 8, fontSize: 12, color: 'var(--ls-text-hint)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'DM Sans, sans-serif' }}>
+        Fermer
+      </button>
+    </div>
   );
 }
