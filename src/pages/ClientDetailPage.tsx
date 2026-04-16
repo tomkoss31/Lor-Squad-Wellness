@@ -337,6 +337,7 @@ export function ClientDetailPage() {
           { label: 'Vue complète', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg> },
           { label: 'Body Scan', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>, count: client.assessments.filter(a => a.bodyScan?.weight).length },
           { label: 'Historique', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>, count: client.assessments.length },
+          { label: 'Produits', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>, count: retainedProducts.length },
           { label: 'Actions', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><polyline points="13 2 13 9 20 9"/><polyline points="11 22 11 15 4 15"/><path d="M3 3l18 18"/></svg> },
         ].map((tab, i) => (
           <button
@@ -591,37 +592,6 @@ export function ClientDetailPage() {
       </div>
       )}
 
-      {/* Section produits conseillés */}
-      {(() => {
-        const recoProducts = generateProductRecommendations(latestBodyScan, client.sex ?? 'male', client.objective ?? '');
-        const existingNames = new Set(retainedProducts.map(p => ('name' in p ? (p as { name: string }).name : '')));
-        const upsells = recoProducts.filter(r => !existingNames.has(r.name));
-        if (upsells.length === 0) return null;
-        return (
-          <Card className="space-y-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="eyebrow-label">Recommandations produits</p>
-                <p className="mt-2 text-sm" style={{ color: 'var(--ls-text-muted)' }}>Selon les résultats body scan</p>
-              </div>
-            </div>
-            <div className="grid gap-2">
-              {upsells.slice(0, 4).map((r, idx) => (
-                <div key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '10px 12px', borderRadius: 12, background: 'var(--ls-surface2)', border: '1px solid var(--ls-border)' }}>
-                  <div style={{ width: 28, height: 28, borderRadius: 8, background: 'var(--ls-gold-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--ls-gold)" strokeWidth="1.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-                  </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--ls-text)' }}>{r.name}</div>
-                    <div style={{ fontSize: 11, color: 'var(--ls-text-muted)', lineHeight: 1.5, marginTop: 2 }}>{r.reason}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </Card>
-        );
-      })()}
-
       {/* Tab 1: Body Scan dédié */}
       {activeTab === 1 && (
         <Card className="space-y-6">
@@ -778,8 +748,86 @@ export function ClientDetailPage() {
         </Card>
       )}
 
-      {/* Tab 3: Actions rapides */}
+      {/* Tab 3: Produits */}
       {activeTab === 3 && (
+        <div className="space-y-4">
+          {/* Produits en possession */}
+          <Card className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="eyebrow-label">Programme actuel</p>
+                <h2 className="mt-2 text-xl font-bold" style={{ fontFamily: 'Syne, sans-serif', color: 'var(--ls-text)' }}>
+                  Produits du client
+                </h2>
+                <p className="mt-1 text-sm" style={{ color: 'var(--ls-text-muted)' }}>
+                  {client.currentProgram || 'Programme à confirmer'}
+                </p>
+              </div>
+              {retainedProductsTotalPv > 0 && (
+                <div style={{ textAlign: 'right' }}>
+                  <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--ls-gold)', fontFamily: 'Syne, sans-serif' }}>{retainedProductsTotalPv.toFixed(1)} PV</div>
+                  <div style={{ fontSize: 11, color: 'var(--ls-text-hint)' }}>{retainedProductsTotalPrice.toFixed(2)} €</div>
+                </div>
+              )}
+            </div>
+            {retainedProducts.length > 0 ? (
+              <div className="grid gap-2">
+                {retainedProducts.map((product, idx) => (
+                  <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderRadius: 12, background: 'var(--ls-surface2)', border: '1px solid var(--ls-border)' }}>
+                    <div style={{ width: 32, height: 32, borderRadius: 8, background: 'rgba(13,148,136,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ls-teal)" strokeWidth="1.5"><polyline points="20 6 9 17 4 12"/></svg>
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--ls-text)' }}>{product.name}</div>
+                      <div style={{ fontSize: 11, color: 'var(--ls-text-muted)', marginTop: 2 }}>Réf. {product.id} · {product.pv} PV · {product.pricePublic.toFixed(2)} €</div>
+                    </div>
+                    <div style={{ fontSize: 12, color: 'var(--ls-teal)', fontWeight: 600, flexShrink: 0 }}>En cours</div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div style={{ padding: '24px 0', textAlign: 'center', color: 'var(--ls-text-hint)', fontSize: 13 }}>
+                Aucun produit sélectionné dans le bilan initial.
+              </div>
+            )}
+          </Card>
+
+          {/* Produits recommandés */}
+          {(() => {
+            const recoProducts = generateProductRecommendations(latestBodyScan, client.sex ?? 'male', client.objective ?? '');
+            const existingNames = new Set(retainedProducts.map(p => ('name' in p ? (p as { name: string }).name : '')));
+            const upsells = recoProducts.filter(r => !existingNames.has(r.name));
+            if (upsells.length === 0) return null;
+            return (
+              <Card className="space-y-4">
+                <div>
+                  <p className="eyebrow-label" style={{ color: 'var(--ls-gold)' }}>Recommandations</p>
+                  <h2 className="mt-2 text-xl font-bold" style={{ fontFamily: 'Syne, sans-serif', color: 'var(--ls-text)' }}>
+                    Produits conseillés
+                  </h2>
+                  <p className="mt-1 text-sm" style={{ color: 'var(--ls-text-muted)' }}>Basés sur les derniers résultats body scan</p>
+                </div>
+                <div className="grid gap-2">
+                  {upsells.map((r, idx) => (
+                    <div key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '12px 14px', borderRadius: 12, background: 'var(--ls-surface2)', border: '1px solid var(--ls-border)' }}>
+                      <div style={{ width: 32, height: 32, borderRadius: 8, background: 'var(--ls-gold-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ls-gold)" strokeWidth="1.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--ls-text)' }}>{r.name}</div>
+                        <div style={{ fontSize: 11, color: 'var(--ls-text-muted)', lineHeight: 1.5, marginTop: 2 }}>{r.reason}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </Card>
+            );
+          })()}
+        </div>
+      )}
+
+      {/* Tab 4: Actions rapides */}
+      {activeTab === 4 && (
         <div className="grid gap-4 md:grid-cols-2">
           <Card className="space-y-4">
             <p className="eyebrow-label">Actions client</p>
