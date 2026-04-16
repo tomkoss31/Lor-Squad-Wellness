@@ -27,7 +27,6 @@ import {
   estimateBodyFatKg,
   estimateHydrationKg,
   estimateMuscleMassPercent,
-  formatDateTime,
   normalizeDateTimeLocalInputValue,
   serializeDateTimeForStorage,
   getWeightLossPaceInsight,
@@ -477,14 +476,6 @@ export function NewAssessmentPage() {
     weightLossPlan.days > 0
       ? Number(((weightLossPlan.remainingKg / weightLossPlan.days) * 7).toFixed(1))
       : 0;
-  const bodyScanAttention =
-    form.hydration < 50
-      ? "Hydratation a renforcer en priorite."
-      : form.bodyFat > 28 && form.objective !== "sport"
-        ? "La masse grasse sera un bon repère de progression."
-        : form.muscleMass < 28 && form.objective === "sport"
-          ? "La masse musculaire sera le point a suivre de pres."
-          : "Le suivi pourra surtout s'appuyer sur la regularite du plan.";
   const bodyFatTarget = getBodyFatTargetRange(form.sex, form.objective);
   const hydrationReference = getHydrationReference(form.sex);
   const weightTargetLabel =
@@ -573,22 +564,12 @@ export function NewAssessmentPage() {
       value: timelineLabel
     }
   ];
-  const bodyScanExpressItems = [
-    { label: "Poids", value: formatValue(form.weight, "kg") },
-    { label: "Masse grasse", value: `${formatRawNumber(form.bodyFat)} %` },
-    { label: "Masse musculaire", value: formatValue(form.muscleMass, "kg") },
-    { label: "Hydratation", value: `${formatRawNumber(form.hydration)} %` },
-    { label: "Viscérale", value: formatRawNumber(form.visceralFat) }
-  ];
   const followUpPriorities = [
     getHydrationPriority(form.hydration, hydrationReference),
     form.objective === "sport" ? "Masse musculaire a developper" : "Masse musculaire a preserver",
     getVisceralPriority(form.visceralFat),
     getBodyFatPriority(form.bodyFat, bodyFatTarget)
   ].filter((value, index, values) => values.indexOf(value) === index);
-  const recommendationCount = form.recommendations.filter(
-    (item) => item.name.trim() || item.contact.trim()
-  ).length;
   const recommendationPlan = buildAssessmentRecommendationPlan({
     sex: form.sex,
     objective: form.objective,
@@ -650,7 +631,6 @@ export function NewAssessmentPage() {
       (addOnProducts.length ? addOnProductsTotalPrice : 0)
     ).toFixed(2)
   );
-  const shouldHideStepSidebar = currentStep === 10 || currentStep === 13;
 
   useEffect(() => {
     if (currentStep !== 10) {
@@ -664,189 +644,7 @@ export function NewAssessmentPage() {
     update("selectedProductIds", defaultSuggestedProductIds);
   }, [currentStep, defaultSuggestedProductIds, form.selectedProductIds.length]);
 
-  const prompts =
-    currentStep === 1
-      ? [
-          "On commence par comprendre le rythme de vie avant de parler de programme.",
-          "Le petit-dejeuner et l'organisation des repas donnent souvent la cle du rendez-vous.",
-          "Chercher ce qui est tenable dans la vraie vie, pas la perfection."
-        ]
-      : currentStep === 2
-        ? [
-            "Faire decrire simplement le midi, le soir et les moments de grignotage.",
-            "Repère utile : eau, café, boissons sucrées et alcool changent souvent la lecture.",
-            "Ne pas multiplier les details, rester sur les habitudes qui reviennent."
-          ]
-        : currentStep === 3
-          ? [
-              "On affine ici avec les points sante utiles à connaître sans casser le rythme du rendez-vous.",
-              "Allergies, transit et contexte pathologique servent a poser un cadre simple et sécurisant.",
-              "Ensuite, on relie l'activité et les freins a l'accompagnement."
-            ]
-          : currentStep === 4
-            ? [
-                "Avant le body scan, donner déjà un repère concret sur la composition des repas.",
-                "L'assiette doit aider le client a visualiser quoi mettre dans son quotidien.",
-                "Rester simple: volume, proteines, glucides bien places."
-              ]
-          : currentStep === 5
-            ? [
-                "Toutes les mesures body scan sont reunies ici sur une seule page.",
-                "On pose un relevé de départ clair avant de parler objectif.",
-                "Rester factuel, simple et lisible en rendez-vous."
-              ]
-          : currentStep === 6
-            ? [
-                "Cette page sert à transformer les chiffres en repères de suivi.",
-                "On compare la base du jour, la cible et les priorités sans complexifier.",
-                "L'objectif est de rendre le suivi facile a reformuler."
-              ]
-          : currentStep === 7
-            ? [
-                "Ouvrir simplement le sujet, puis laisser noter.",
-                "Rester leger et sans pression.",
-                "Aller vite vers la saisie des noms."
-              ]
-          : currentStep === 8
-            ? [
-                "Comparer un matin improvise a un matin structure.",
-                "Faire ressortir proteines, hydratation et regularite.",
-                "Le client doit se reconnaître rapidement."
-              ]
-          : currentStep === 9
-            ? [
-                "La routine matin doit paraitre simple, premium et facile a expliquer.",
-                "On montre peu d'elements, mais bien choisis.",
-                "Le visuel principal doit faire une grande partie du travail."
-              ]
-          : currentStep === 10
-            ? [
-                "« Vu ce qu'on a vu ensemble, voilà ce que je te recommande. »",
-                "Presenter le programme comme une réponse simple au besoin du client.",
-                "« C'est exactement ce que d'autres clients avec le même objectif ont fait. »",
-                "Relier le choix du programme aux habitudes observées pendant le bilan."
-              ]
-          : currentStep === 11
-            ? [
-                "Cette page sert de synthese pedagogique avant le demarrage.",
-                "On ancre les bases du matin et de l'hydratation dans l'esprit du client.",
-                "Le but est de rassurer, pas d'ajouter une couche de complexite."
-              ]
-            : currentStep === 12
-              ? [
-                  "« On fixe un créneau maintenant pour voir ta progression. »",
-                  "Toujours finir avec une suite claire et un rendez-vous déjà posé.",
-                  "« Je te rappelle dans quelques jours pour faire un point rapide. »",
-                  "Le client doit repartir avec des repères simples à retenir."
-                ]
-              : currentStep >= 13
-              ? [
-                  "Relire le résumé à voix haute pour ancrer le rendez-vous.",
-                  "« Tu repars avec un plan clair, simple et déjà en place. »",
-                  "La conclusion doit rassurer et donner envie d'avancer."
-                ]
-              : [
-                  "Faire simple, humain et progressif.",
-                  "Relier chaque explication au quotidien du client.",
-                  "Utiliser les chiffres comme des repères et non comme une pression."
-                ];
 
-  const rightPanelPoints =
-    currentStep === 0
-      ? [
-          `Responsable : ${assignedUser?.name ?? "-"}`,
-          `Invite par : ${form.referredByName || "Non renseigne"}`,
-          `Objectif : ${form.objectiveFocus}`,
-          `Sante : ${form.healthStatus}`,
-          form.objective === "weight-loss"
-            ? `Poids cible : ${form.targetWeight} kg`
-            : `Delai : ${timelineLabel}`
-        ]
-      : currentStep === 1
-        ? [`Sommeil : ${form.sleepHours} h`, `Petit-dejeuner : ${form.breakfastFrequency}`, `Repas reguliers : ${form.regularMealTimes}`]
-      : currentStep === 2
-          ? [`Eau actuelle : ${form.waterIntake} L`, `Grignotage : ${form.snackingFrequency}`, `Cafe : ${form.drinksCoffee === "Oui" ? `${form.coffeePerDay} / jour` : "Non"}`]
-          : currentStep === 3
-              ? [
-                  `Allergies : ${form.allergies}`,
-                  `Transit : ${form.transitStatus}`,
-                  `Contexte : ${form.pathologyContext}`,
-                  `Blocage principal : ${form.mainBlocker}`
-                ]
-            : currentStep === 4
-              ? [
-                  form.objective === "sport"
-                    ? "Assiette sport plus complete"
-                    : "Assiette simple pour perdre du poids",
-                  "Montrer d'abord les volumes puis les portions main",
-                  "Le client doit repartir avec un repère facile a refaire"
-                ]
-              : currentStep === 5
-                ? [
-                    `Poids de départ : ${formatValue(form.weight, "kg")}`,
-                    `Hydratation : ${formatRawNumber(form.hydration)} %`,
-                    `Graisse viscérale : ${formatRawNumber(form.visceralFat)}`,
-                    `Masse grasse : ${formatRawNumber(form.bodyFat)} %`,
-                    `Masse musculaire : ${formatValue(form.muscleMass, "kg")}`
-                  ]
-              : currentStep === 6
-                ? [
-                    `Poids cible : ${weightTargetLabel}`,
-                    `Hydratation cible : ${hydrationTargetLabel}`,
-                    `Protéines conseillées : ${proteinRange}`,
-                    followUpPriorities[0] ?? bodyScanAttention
-                  ]
-              : currentStep === 7
-                ? [
-                    `Recommandations notees : ${recommendationCount}`,
-                    "Ouvrir le sujet puis laisser noter.",
-                    "Rester leger et sans pression."
-                  ]
-              : currentStep === 8
-                    ? [
-                        "Comparer un matin improvise a un matin structure.",
-                        "Faire ressortir proteines, hydratation et regularite.",
-                        "Le client doit se reconnaître rapidement."
-                      ]
-                : currentStep === 9
-                      ? ["Montrer la routine comme un ensemble simple.", "Le visuel doit porter l'explication.", "Moins de texte, plus de lisibilite."]
-                : currentStep === 10
-                      ? [
-                          `Besoin prioritaire : ${recommendationPlan.needs[0]?.label ?? "A preciser"}`,
-                          `Produit repère : ${recommendationPlan.needs[0]?.products[0]?.name ?? "A proposer"}`,
-                          `Programme conseille : ${recommendedProgram?.title ?? "Base a confirmer"}`
-                        ]
-                : currentStep === 11
-                        ? ["Ancrer les bases avant le demarrage.", "Hydratation et matin doivent paraitre evidents.", "Pas de surcharge autour du visuel."]
-                        : currentStep === 12
-                          ? [
-                              `Prochain suivi : ${form.nextFollowUp ? formatDateTime(form.nextFollowUp) : "-"}`,
-                              "Fixer la suite avant de terminer le rendez-vous",
-                              "Le client repart avec un cap clair"
-                            ]
-                          : [`Programme retenu : ${selectedProgram?.title ?? "-"}`, `Hydratation cible : ${waterNeed} L`, `Protéines : ${proteinRange}`];
-  const panelTitle =
-    currentStep >= 10
-      ? "Cap du moment"
-      : currentStep === 6
-        ? "Références de suivi"
-        : currentStep === 5
-          ? "Lecture body scan"
-          : currentStep >= 5
-            ? "Lecture du bilan"
-            : "Aide au rendez-vous";
-  const panelIntro =
-    currentStep >= 12
-      ? "La fin du rendez-vous doit rester simple, claire et facile a reformuler."
-      : currentStep >= 10
-        ? "Ici, on garde seulement ce qui aide a presenter la proposition."
-        : currentStep === 6
-          ? "Le panneau sert à garder les cibles, les écarts et les priorités à portée de voix."
-        : currentStep === 5
-          ? "Le panneau sert a relire vite les mesures brutes sans doubler la page."
-        : currentStep >= 5
-          ? "Le panneau sert a relire vite les chiffres et la logique du bilan."
-          : "Le panneau sert a garder le bon fil sans surcharger l'echange.";
 
   const plateTitle = form.objective === "sport" ? "Assiette sport / prise de masse" : "Assiette perte de poids";
   const plateSubtitle =
@@ -1148,117 +946,6 @@ export function NewAssessmentPage() {
     }
   }
 
-  const mobileHelperPanel = !shouldHideStepSidebar ? (
-    <Card className="space-y-4 xl:hidden">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <p className="font-display text-xl text-white">{panelTitle}</p>
-          <p className="mt-2 text-sm leading-6 text-[var(--ls-text-muted)]">{panelIntro}</p>
-        </div>
-        <StatusBadge label={`Étape ${currentStep + 1}`} tone="blue" />
-      </div>
-      <div className="grid gap-3">
-        {rightPanelPoints.slice(0, 2).map((point, index) => (
-          <FocusPanelItem key={point} text={point} highlighted={index === 0} />
-        ))}
-      </div>
-      <div className="rounded-[18px] bg-[var(--ls-bg)]/60 px-4 py-3 text-sm leading-6 text-[var(--ls-text)]">
-        {prompts[0]}
-      </div>
-      {currentStep === 0 ? (
-        <div className="space-y-2 rounded-[18px] bg-[var(--ls-surface2)] px-4 py-4">
-          <label className="text-sm font-medium text-[var(--ls-text-muted)]">
-            Invite par / recommande par
-          </label>
-          <input
-            value={form.referredByName}
-            onChange={(event) => update("referredByName", event.target.value)}
-            placeholder="Exemple : Sylvie"
-          />
-        </div>
-      ) : null}
-    </Card>
-  ) : null;
-
-  const desktopHelperPanel = !shouldHideStepSidebar ? (
-    <div className="assessment-help-panel hidden space-y-4 xl:sticky xl:top-5 xl:block xl:self-start">
-      <Card className="space-y-4">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <p className="font-display text-2xl text-white">{panelTitle}</p>
-            <p className="mt-2 text-sm leading-6 text-[var(--ls-text-muted)]">{panelIntro}</p>
-          </div>
-          <StatusBadge label="Aide terrain" tone="blue" />
-        </div>
-        <div className="grid gap-3">
-          {rightPanelPoints.map((point, index) => (
-            <FocusPanelItem key={point} text={point} highlighted={index === 0} />
-          ))}
-        </div>
-        {currentStep === 0 ? (
-          <div className="space-y-2 rounded-[20px] bg-[var(--ls-surface2)] px-4 py-4">
-            <label className="text-sm font-medium text-[var(--ls-text-muted)]">
-              Invite par / recommande par
-            </label>
-            <input
-              value={form.referredByName}
-              onChange={(event) => update("referredByName", event.target.value)}
-              placeholder="Exemple : Sylvie"
-            />
-            <p className="text-xs leading-6 text-[var(--ls-text-muted)]">
-              Note ici la personne qui a amene ce client pour garder le lien de recommandation sans
-              surcharger l&apos;ecran principal.
-            </p>
-          </div>
-        ) : null}
-      </Card>
-
-      {currentStep !== 7 ? (
-        <Card className="space-y-4">
-          <p className="eyebrow-label">A dire simplement</p>
-          <div className="grid gap-2">
-            {prompts.slice(0, 2).map((prompt) => (
-              <div key={prompt} className="rounded-[20px] bg-[var(--ls-bg)]/60 px-4 py-3 text-sm text-[var(--ls-text)]">
-                {prompt}
-              </div>
-            ))}
-          </div>
-        </Card>
-      ) : null}
-
-      {currentStep !== 7 ? (
-        <Card className="space-y-4">
-          <p className="eyebrow-label">Lecture express</p>
-          {currentStep === 5 ? (
-            <>
-              {bodyScanExpressItems.map((item) => (
-                <SummaryMini key={item.label} label={item.label} value={item.value} />
-              ))}
-            </>
-          ) : currentStep === 6 ? (
-            <>
-              <SummaryMini label="Poids cible" value={weightTargetLabel} />
-              <SummaryMini label="Hydratation cible" value={hydrationTargetLabel} />
-              <SummaryMini label="Objectif eau" value={`${formatRawNumber(waterNeed)} L`} />
-              <SummaryMini label="Protéines" value={proteinRange} />
-              <SummaryMini label="Délai" value={timelineLabel} />
-            </>
-          ) : (
-            <>
-              <SummaryMini label="Objectif" value={form.objectiveFocus} />
-              <SummaryMini label="Programme" value={selectedProgram?.title ?? "A choisir"} />
-              <SummaryMini label="Hydratation" value={`${waterNeed} L`} />
-              {form.objective === "weight-loss" ? (
-                <SummaryMini label="Rythme" value={weightLossPace.label} />
-              ) : (
-                <SummaryMini label="Motivation" value={`${form.motivation}/10`} />
-              )}
-            </>
-          )}
-        </Card>
-      ) : null}
-    </div>
-  ) : null;
 
   return (
     <div className="space-y-6">
@@ -1271,9 +958,7 @@ export function NewAssessmentPage() {
         <StepRail currentStep={currentStep} steps={steps} onStepClick={goToStep} />
       </div>
 
-      {mobileHelperPanel}
-
-      <div className={`grid gap-4 ${shouldHideStepSidebar ? "" : "xl:grid-cols-[minmax(0,1.2fr)_340px]"}`}>
+      <div className="grid gap-4">
         <Card className="space-y-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
@@ -1293,6 +978,7 @@ export function NewAssessmentPage() {
                   <Field label="Nom" value={form.lastName} onChange={(v) => update("lastName", v)} />
                   <Field label="Téléphone *" value={form.phone} onChange={(v) => update("phone", v)} />
                   <Field label="Email *" value={form.email} onChange={(v) => update("email", v)} />
+                  <Field label="Invité par / recommandé par" value={form.referredByName} onChange={(v) => update("referredByName", v)} />
                   <Field
                     label="Date et heure du bilan initial"
                     type="datetime-local"
@@ -2152,7 +1838,6 @@ export function NewAssessmentPage() {
           ) : null}
         </Card>
 
-        {desktopHelperPanel}
       </div>
 
       {showRecapModal && recapToken && (
@@ -2677,22 +2362,6 @@ function SectionBlock({ title, description, children }: { title: string; descrip
   );
 }
 
-function SummaryMini({ label, value }: { label: string; value: string }) {
-  return (
-    <div
-      className="flex items-center justify-between gap-3"
-      style={{
-        background: 'var(--ls-surface)',
-        border: '1px solid var(--ls-border2)',
-        borderRadius: 10,
-        padding: '10px 14px',
-      }}
-    >
-      <span className="text-[11px] font-medium" style={{ color: 'var(--ls-text-hint)' }}>{label}</span>
-      <span className="text-sm font-semibold" style={{ color: 'var(--ls-text)' }}>{value}</span>
-    </div>
-  );
-}
 
 function FocusPanelItem({ text, highlighted = false }: { text: string; highlighted?: boolean }) {
   return (
