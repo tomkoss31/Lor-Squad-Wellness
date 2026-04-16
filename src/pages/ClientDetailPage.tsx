@@ -18,6 +18,9 @@ import { Card } from "../components/ui/Card";
 import { MetricTile } from "../components/ui/MetricTile";
 import { StatusBadge } from "../components/ui/StatusBadge";
 import { useAppContext } from "../context/AppContext";
+import { buildReportData } from "../lib/evolutionReport";
+import { EvolutionReportModal } from "../components/assessment/EvolutionReportModal";
+import { getSupabaseClient } from "../services/supabaseClient";
 import { buildPvTrackingRecords, pvProductCatalog } from "../data/mockPvModule";
 import { getAccessibleOwnerIds, isAdmin, isReferent } from "../lib/auth";
 import { getClientActiveFollowUp } from "../lib/portfolio";
@@ -68,7 +71,30 @@ export function ClientDetailPage() {
   const [transferFeedback, setTransferFeedback] = useState("");
   const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [activeTab, setActiveTab] = useState(0);
+  const [reportUrl, setReportUrl] = useState<string | null>(null);
+  const [generatingReport, setGeneratingReport] = useState(false);
   const activeFollowUp = getClientActiveFollowUp(currentClient, followUps);
+
+  async function generateReport() {
+    if (!client || !currentUser) return;
+    setGeneratingReport(true);
+    try {
+      const data = buildReportData(client, currentUser.name ?? 'Coach');
+      if (!data) return;
+      const sb = await getSupabaseClient();
+      if (!sb) return;
+      const { data: inserted, error } = await sb
+        .from('client_evolution_reports')
+        .upsert(data, { onConflict: 'client_id' })
+        .select('token')
+        .single();
+      if (!error && inserted) {
+        setReportUrl(`${window.location.origin}/rapport/${inserted.token}`);
+      }
+    } finally {
+      setGeneratingReport(false);
+    }
+  }
   const canReassignClient = isAdmin(currentUser) || isReferent(currentUser);
   const assignableOwnerIds = getAccessibleOwnerIds(currentUser, users);
   const assignableOwners = users.filter(
@@ -342,6 +368,25 @@ export function ClientDetailPage() {
           </button>
         ))}
       </div>
+
+      {/* Bouton rapport d'évolution */}
+      {(client.assessments?.length ?? 0) >= 2 && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <button onClick={() => void generateReport()} disabled={generatingReport}
+            style={{ display: 'flex', alignItems: 'center', gap: 7, background: 'var(--ls-surface)', border: '1px solid var(--ls-border)', borderRadius: 10, padding: '10px 16px', fontSize: 13, color: 'var(--ls-text-muted)', fontFamily: 'DM Sans, sans-serif', cursor: generatingReport ? 'wait' : 'pointer', transition: 'all 0.15s' }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+            {generatingReport ? 'Génération...' : "Rapport d'évolution"}
+          </button>
+        </div>
+      )}
+
+      {reportUrl && (
+        <EvolutionReportModal
+          reportUrl={reportUrl}
+          clientName={`${client.firstName} ${client.lastName}`}
+          onClose={() => setReportUrl(null)}
+        />
+      )}
 
       {/* Tab 0: Vue complète (original layout) */}
       {activeTab === 0 && (
