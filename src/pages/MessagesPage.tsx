@@ -73,7 +73,7 @@ function ContactPopup({ contact, name, onClose }: { contact: string; name: strin
   )
 }
 
-function MessageCard({ msg, onMarkRead, onContact }: { msg: ClientMessage; onMarkRead: () => void; onContact: () => void }) {
+function MessageCard({ msg, onMarkRead, onContact, onDelete }: { msg: ClientMessage; onMarkRead: () => void; onContact: () => void; onDelete: () => void }) {
   const isUnread = !msg.read
   const typeLabel = msg.message_type === 'product_request' ? '🛒 Demande produit' : msg.message_type === 'recommendation' ? '👥 Recommandation' : '💬 Message'
   const timeAgo = getTimeAgo(msg.created_at)
@@ -114,15 +114,54 @@ function MessageCard({ msg, onMarkRead, onContact }: { msg: ClientMessage; onMar
             </div>
           )}
 
-          {msg.client_contact && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8 }}>
-              <span style={{ fontSize: 12, color: 'var(--ls-text-hint)' }}>📱 {msg.client_contact}</span>
-              <button onClick={onContact}
-                style={{ fontSize: 11, padding: '4px 12px', borderRadius: 8, border: 'none', background: 'var(--ls-gold)', color: '#fff', cursor: 'pointer', fontWeight: 600, fontFamily: 'DM Sans, sans-serif' }}>
-                Contacter
-              </button>
-            </div>
-          )}
+          {msg.client_contact && (() => {
+            const contact = msg.client_contact ?? ''
+            const isPhone = /[\d+]/.test(contact)
+            const cleanPhone = contact.replace(/[^\d+]/g, '')
+            const name = msg.client_name
+            const pre = encodeURIComponent(`Bonjour ${name}, suite à votre intérêt pour Lor'Squad Wellness.`)
+            return (
+              <div style={{ marginTop: 8 }}>
+                <div style={{ fontSize: 11, color: 'var(--ls-text-hint)', marginBottom: 6 }}>📱 {contact}</div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                  {isPhone && (
+                    <a href={`https://wa.me/${cleanPhone}?text=${pre}`} target="_blank" rel="noopener noreferrer"
+                      style={{ fontSize: 10, padding: '5px 10px', borderRadius: 7, background: 'rgba(37,211,102,0.1)', color: '#16A34A', textDecoration: 'none', fontWeight: 600 }}>
+                      WhatsApp
+                    </a>
+                  )}
+                  {isPhone && (
+                    <a href={`https://t.me/+${cleanPhone}`} target="_blank" rel="noopener noreferrer"
+                      style={{ fontSize: 10, padding: '5px 10px', borderRadius: 7, background: 'rgba(0,136,204,0.1)', color: '#0088CC', textDecoration: 'none', fontWeight: 600 }}>
+                      Telegram
+                    </a>
+                  )}
+                  {isPhone && (
+                    <a href={`sms:${cleanPhone}?body=${pre}`}
+                      style={{ fontSize: 10, padding: '5px 10px', borderRadius: 7, background: 'var(--ls-surface2)', color: 'var(--ls-text-muted)', textDecoration: 'none', fontWeight: 500 }}>
+                      SMS
+                    </a>
+                  )}
+                  {isPhone && (
+                    <a href={`tel:${cleanPhone}`}
+                      style={{ fontSize: 10, padding: '5px 10px', borderRadius: 7, background: 'rgba(201,168,76,0.08)', color: 'var(--ls-gold)', textDecoration: 'none', fontWeight: 600 }}>
+                      Appeler
+                    </a>
+                  )}
+                  {contact.includes('@') && (
+                    <a href={`mailto:${contact}?subject=${encodeURIComponent("Lor'Squad Wellness")}&body=${pre}`}
+                      style={{ fontSize: 10, padding: '5px 10px', borderRadius: 7, background: 'var(--ls-surface2)', color: 'var(--ls-text-muted)', textDecoration: 'none', fontWeight: 500 }}>
+                      Email
+                    </a>
+                  )}
+                  <button onClick={onContact}
+                    style={{ fontSize: 10, padding: '5px 10px', borderRadius: 7, border: '1px solid var(--ls-border)', background: 'transparent', color: 'var(--ls-text-hint)', cursor: 'pointer', fontFamily: 'DM Sans, sans-serif' }}>
+                    Plus…
+                  </button>
+                </div>
+              </div>
+            )
+          })()}
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 10 }}>
             {msg.client_id && (
@@ -134,9 +173,13 @@ function MessageCard({ msg, onMarkRead, onContact }: { msg: ClientMessage; onMar
             {isUnread && (
               <button onClick={onMarkRead}
                 style={{ fontSize: 11, padding: '5px 12px', borderRadius: 8, background: 'rgba(124,58,237,0.08)', border: 'none', color: 'var(--ls-purple)', cursor: 'pointer', fontFamily: 'DM Sans, sans-serif' }}>
-                ✓ Marquer comme lu
+                ✓ Lu
               </button>
             )}
+            <button onClick={onDelete}
+              style={{ fontSize: 11, padding: '5px 12px', borderRadius: 8, background: 'rgba(220,38,38,0.06)', border: 'none', color: 'var(--ls-coral)', cursor: 'pointer', fontFamily: 'DM Sans, sans-serif', marginLeft: 'auto' }}>
+              Supprimer
+            </button>
           </div>
         </div>
       </div>
@@ -145,7 +188,7 @@ function MessageCard({ msg, onMarkRead, onContact }: { msg: ClientMessage; onMar
 }
 
 export function MessagesPage() {
-  const { clientMessages, markMessageRead } = useAppContext()
+  const { clientMessages, markMessageRead, deleteMessage } = useAppContext()
   const [tab, setTab] = useState<Tab>('products')
   const [contactTarget, setContactTarget] = useState<{ contact: string; name: string } | null>(null)
 
@@ -208,6 +251,7 @@ export function MessagesPage() {
               key={msg.id}
               msg={msg}
               onMarkRead={() => void markMessageRead(msg.id)}
+              onDelete={() => void deleteMessage(msg.id)}
               onContact={() => msg.client_contact && setContactTarget({ contact: msg.client_contact, name: msg.client_name })}
             />
           ))}
