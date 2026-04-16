@@ -78,12 +78,12 @@ export function BodyFatInsightCard({
           <div className="md:col-span-2 xl:col-span-3 rounded-[24px] border border-white/10 bg-[var(--ls-bg)]/80 p-5">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <p className="text-[11px] font-medium text-[var(--ls-text-hint)]">Jauge corporelle</p>
+                <p className="text-[11px] font-medium text-[var(--ls-text-hint)]">Jauge corporelle — {getSexLabel(sex)}</p>
                 <p className="mt-2 text-sm text-[var(--ls-text-muted)]">
-                  Cible {getSexLabel(sex)} : {targetRange.min}-{targetRange.max} %
+                  Zone cible {sex === 'female' ? 'femme' : 'homme'}{objective === 'sport' ? ' sportif' : ''} : <strong style={{ color: 'var(--ls-text)' }}>{targetRange.min}–{targetRange.max}%</strong> de masse grasse
                 </p>
               </div>
-              <span className="rounded-full border border-white/10 bg-[var(--ls-surface2)] px-3 py-1 text-sm font-semibold text-white">
+              <span className="rounded-full border border-white/10 bg-[var(--ls-surface2)] px-3 py-1 text-sm font-semibold" style={{ color: 'var(--ls-text)' }}>
                 {bodyFatBand}
               </span>
             </div>
@@ -103,7 +103,7 @@ export function BodyFatInsightCard({
                 />
               </div>
               <div className="mt-2 flex items-center justify-between text-[11px] font-medium text-[var(--ls-text-hint)]">
-                {[10, 20, 30, 40, 50].map((value) => (
+                {[0, 10, 20, 30, 40, 50].map((value) => (
                   <span key={value}>{value}</span>
                 ))}
               </div>
@@ -445,7 +445,7 @@ function round(value: number) {
 }
 
 function getGaugePosition(percent: number) {
-  const min = 10;
+  const min = 0;
   const max = 50;
   const clamped = Math.min(Math.max(percent, min), max);
   return ((clamped - min) / (max - min)) * 100;
@@ -492,7 +492,7 @@ function getBodyFatGaugeRanges(sex?: BiologicalSex) {
       { label: "Sec", value: "< 10 %", min: Number.NEGATIVE_INFINITY, max: 9.9, tone: "blue" as const },
       { label: "Sain", value: "10 - 20 %", min: 10, max: 20, tone: "green" as const },
       { label: "Surpoids", value: "20 - 25 %", min: 20.1, max: 25, tone: "amber" as const },
-      { label: "Obesite", value: "> 25 %", min: 25.1, max: Number.POSITIVE_INFINITY, tone: "red" as const }
+      { label: "Obésité", value: "> 25 %", min: 25.1, max: Number.POSITIVE_INFINITY, tone: "red" as const }
     ];
   }
 
@@ -500,7 +500,7 @@ function getBodyFatGaugeRanges(sex?: BiologicalSex) {
     { label: "Sec", value: "< 20 %", min: Number.NEGATIVE_INFINITY, max: 19.9, tone: "blue" as const },
     { label: "Sain", value: "20 - 30 %", min: 20, max: 30, tone: "green" as const },
     { label: "Surpoids", value: "30 - 35 %", min: 30.1, max: 35, tone: "amber" as const },
-    { label: "Obesite", value: "> 35 %", min: 35.1, max: Number.POSITIVE_INFINITY, tone: "red" as const }
+    { label: "Obésité", value: "> 35 %", min: 35.1, max: Number.POSITIVE_INFINITY, tone: "red" as const }
   ];
 }
 
