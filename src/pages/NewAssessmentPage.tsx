@@ -9,7 +9,6 @@ import { useNavigate } from "react-router-dom";
 import { RecapModal } from "../components/assessment/RecapModal";
 import { getSupabaseClient } from "../services/supabaseClient";
 import { BodyFatInsightCard } from "../components/body-scan/BodyFatInsightCard";
-import { HydrationVisceralInsightCard } from "../components/body-scan/HydrationVisceralInsightCard";
 import { MuscleMassInsightCard } from "../components/body-scan/MuscleMassInsightCard";
 import { PlateGuideCard } from "../components/education/PlateGuideCard";
 import { ProgramBoosterCard } from "../components/programs/ProgramBoosterCard";
@@ -1220,57 +1219,64 @@ export function NewAssessmentPage() {
 
           {currentStep === 5 && (
             <div className="space-y-4">
-              <Card className="space-y-6">
-                <div className="flex flex-wrap items-start justify-between gap-4">
-                  <div className="max-w-3xl">
-                    <p className="eyebrow-label">Body scan</p>
-                    <h2 className="mt-3 text-3xl text-white md:text-[2.6rem]">
-                      Relevé complet des mesures de départ
-                    </h2>
-                    <p className="mt-3 max-w-2xl text-sm leading-7 text-[var(--ls-text-muted)]">
-                      Toutes les mesures body scan sont reunies ici pour construire une base claire
-                      avant le suivi.
-                    </p>
+              {/* Saisie body scan — grille claire */}
+              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                {[
+                  { label: 'Poids (kg)', key: 'weight', icon: '⚖️', color: 'var(--ls-gold)' },
+                  { label: 'Masse grasse (%)', key: 'bodyFat', icon: '🔥', color: 'var(--ls-coral)', step: '0.1' },
+                  { label: 'Masse musculaire (kg)', key: 'muscleMass', icon: '💪', color: 'var(--ls-teal)', step: '0.1' },
+                  { label: 'Hydratation (%)', key: 'hydration', icon: '💧', color: 'var(--ls-purple)', step: '0.1' },
+                  { label: 'Masse osseuse (kg)', key: 'boneMass', icon: '🦴', color: 'var(--ls-text-muted)', step: '0.1' },
+                  { label: 'Graisse viscérale', key: 'visceralFat', icon: '🫀', color: 'var(--ls-coral)' },
+                  { label: 'BMR (kcal)', key: 'bmr', icon: '⚡', color: 'var(--ls-gold)' },
+                  { label: 'Âge métabolique', key: 'metabolicAge', icon: '🧬', color: 'var(--ls-purple)' },
+                ].map(({ label, key, icon, color, step }) => (
+                  <div key={key} style={{ background: 'var(--ls-surface)', border: '1px solid var(--ls-border)', borderTop: `2px solid ${color}`, borderRadius: 14, padding: '14px 16px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+                      <span style={{ fontSize: 16 }}>{icon}</span>
+                      <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--ls-text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{label}</span>
+                    </div>
+                    <input
+                      type="number"
+                      step={step ?? '1'}
+                      value={(form as Record<string, unknown>)[key] as number || 0}
+                      onChange={(e) => update(key as keyof typeof form, Number(e.target.value))}
+                      style={{ width: '100%', background: 'var(--ls-input-bg)', border: '1px solid var(--ls-border)', borderRadius: 10, padding: '10px 14px', fontSize: 22, fontWeight: 700, fontFamily: 'Syne, sans-serif', color: 'var(--ls-text)', outline: 'none' }}
+                    />
                   </div>
-                  <StatusBadge label="Référence de départ" tone="blue" />
-                </div>
-
-                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-                  <Field label="Poids (kg)" type="number" value={form.weight} onChange={(v) => update("weight", Number(v))} />
-                  <Field label="Masse grasse (%)" type="number" step="0.1" value={form.bodyFat} onChange={(v) => update("bodyFat", Number(v))} />
-                  <Field label="Masse musculaire (kg)" type="number" step="0.1" value={form.muscleMass} onChange={(v) => update("muscleMass", Number(v))} />
-                  <Field label="Hydratation (%)" type="number" step="0.1" value={form.hydration} onChange={(v) => update("hydration", Number(v))} />
-                  <Field label="Masse osseuse (kg)" type="number" step="0.1" value={form.boneMass} onChange={(v) => update("boneMass", Number(v))} />
-                  <Field label="Graisse viscérale" type="number" value={form.visceralFat} onChange={(v) => update("visceralFat", Number(v))} />
-                  <Field label="BMR (kcal)" type="number" value={form.bmr} onChange={(v) => update("bmr", Number(v))} />
-                  <Field label="Âge métabolique (ans)" type="number" value={form.metabolicAge} onChange={(v) => update("metabolicAge", Number(v))} />
-                </div>
-              </Card>
-
-              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
-                <QuickReadCard label="Poids de départ" value={formatValue(form.weight, "kg")} detail="Base du suivi" />
-                <QuickReadCard label="Masse grasse" value={`${formatRawNumber(form.bodyFat)} %`} detail={`${bodyFatKg} kg estimes`} />
-                <QuickReadCard label="Masse musculaire" value={formatValue(form.muscleMass, "kg")} detail={`${formatRawNumber(musclePercent)} % du poids`} />
-                <QuickReadCard label="Hydratation" value={`${formatRawNumber(form.hydration)} %`} detail={`${hydrationKg} kg estimes`} />
-                <QuickReadCard label="Graisse viscérale" value={formatRawNumber(form.visceralFat)} detail="Repère à surveiller" />
+                ))}
               </div>
 
-              <BodyFatInsightCard
-                current={{ weight: form.weight, percent: form.bodyFat }}
-                objective={form.objective}
-                sex={form.sex}
-              />
-
-              <MuscleMassInsightCard
-                current={{ weight: form.weight, muscleMass: form.muscleMass }}
-              />
-
-              <HydrationVisceralInsightCard
-                weight={form.weight}
-                hydrationPercent={form.hydration}
-                visceralFat={form.visceralFat}
-                sex={form.sex}
-              />
+              {/* Résumé rapide calculé */}
+              {form.weight > 0 && (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, padding: '14px 0' }}>
+                  {form.bodyFat > 0 && (
+                    <div style={{ fontSize: 12, color: 'var(--ls-text-muted)', background: 'var(--ls-surface2)', padding: '6px 14px', borderRadius: 20, border: '1px solid var(--ls-border)' }}>
+                      MG : <strong style={{ color: 'var(--ls-text)' }}>{bodyFatKg} kg</strong> ({form.bodyFat}%)
+                    </div>
+                  )}
+                  {form.muscleMass > 0 && (
+                    <div style={{ fontSize: 12, color: 'var(--ls-text-muted)', background: 'var(--ls-surface2)', padding: '6px 14px', borderRadius: 20, border: '1px solid var(--ls-border)' }}>
+                      Muscle : <strong style={{ color: 'var(--ls-text)' }}>{formatRawNumber(musclePercent)}%</strong> ({form.muscleMass} kg)
+                    </div>
+                  )}
+                  {form.hydration > 0 && (
+                    <div style={{ fontSize: 12, color: 'var(--ls-text-muted)', background: 'var(--ls-surface2)', padding: '6px 14px', borderRadius: 20, border: '1px solid var(--ls-border)' }}>
+                      Hydrat. : <strong style={{ color: form.hydration < 50 ? 'var(--ls-coral)' : 'var(--ls-text)' }}>{form.hydration}%</strong> ({hydrationKg} kg)
+                    </div>
+                  )}
+                  {form.visceralFat > 0 && (
+                    <div style={{ fontSize: 12, color: 'var(--ls-text-muted)', background: 'var(--ls-surface2)', padding: '6px 14px', borderRadius: 20, border: '1px solid var(--ls-border)' }}>
+                      Viscéral : <strong style={{ color: form.visceralFat >= 13 ? 'var(--ls-coral)' : form.visceralFat >= 9 ? '#F59E0B' : 'var(--ls-teal)' }}>{form.visceralFat}</strong>/30
+                    </div>
+                  )}
+                  {form.metabolicAge > 0 && (
+                    <div style={{ fontSize: 12, color: 'var(--ls-text-muted)', background: 'var(--ls-surface2)', padding: '6px 14px', borderRadius: 20, border: '1px solid var(--ls-border)' }}>
+                      Âge métabo : <strong style={{ color: 'var(--ls-text)' }}>{form.metabolicAge} ans</strong>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
 
@@ -2450,15 +2456,6 @@ function ClientTotalCalculatorCard({
   );
 }
 
-function QuickReadCard({ label, value, detail }: { label: string; value: string; detail: string }) {
-  return (
-    <div className="rounded-[20px] bg-[var(--ls-surface2)] p-4">
-      <p className="text-[11px] font-medium text-[var(--ls-text-hint)]">{label}</p>
-      <p className="mt-3 text-lg font-semibold text-white">{value}</p>
-      <p className="mt-2 text-sm leading-6 text-[var(--ls-text-muted)]">{detail}</p>
-    </div>
-  );
-}
 
 function ReferenceComparisonRow({
   label,
