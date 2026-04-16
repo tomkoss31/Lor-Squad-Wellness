@@ -50,7 +50,26 @@ export function RecapPage() {
     if (!filled.length) return
     setSending(true)
     const sb = await getSupabaseClient()
-    if (sb) await sb.from('client_recaps').update({ referrals: filled }).eq('token', token)
+    if (sb) {
+      await sb.from('client_recaps').update({ referrals: filled }).eq('token', token)
+      // Envoyer un message au coach pour chaque recommandation
+      if (recap) {
+        const clientName = `${recap.client_first_name} ${recap.client_last_name}`
+        for (const ref of filled) {
+          try {
+            await sb.from('client_messages').insert({
+              client_id: token,
+              client_name: clientName,
+              distributor_id: recap.coach_name,
+              message_type: 'recommendation',
+              product_name: ref.name,
+              message: `Recommandation : ${ref.name} (${ref.contact})`,
+              client_contact: ref.contact,
+            })
+          } catch { /* silently continue */ }
+        }
+      }
+    }
     setSending(false); setSent(true)
   }
 

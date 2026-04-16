@@ -79,7 +79,7 @@ export function EvolutionReportPage() {
           report_token: token,
           client_id: report.client_id,
           client_name: `${report.client_first_name} ${report.client_last_name}`,
-          distributor_id: report.coach_name,
+          distributor_id: (report.distributor_id as string) || (report.coach_name as string),
           message_type: 'product_request',
           product_name: productName,
           message: msgNote.trim() || `Intéressé(e) par ${productName}`,
