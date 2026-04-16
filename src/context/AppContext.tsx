@@ -95,6 +95,7 @@ interface AppContextValue {
   clientMessages: ClientMessage[];
   unreadMessageCount: number;
   markMessageRead: (id: string) => Promise<void>;
+  deleteMessage: (id: string) => Promise<void>;
   loginAs: (userId: string) => Promise<void>;
   loginWithCredentials: (
     payload: { email: string; password: string }
@@ -1289,6 +1290,11 @@ export function AppProvider({ children }: PropsWithChildren) {
         const sb = await getSupabaseClient();
         if (sb) await sb.from('client_messages').update({ read: true }).eq('id', id);
         setClientMessages(prev => prev.map(m => m.id === id ? { ...m, read: true } : m));
+      },
+      deleteMessage: async (id: string) => {
+        const sb = await getSupabaseClient();
+        if (sb) await sb.from('client_messages').delete().eq('id', id);
+        setClientMessages(prev => prev.filter(m => m.id !== id));
       },
       loginAs,
       loginWithCredentials,
