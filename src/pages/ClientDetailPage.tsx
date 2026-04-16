@@ -1130,27 +1130,46 @@ function LinkButton({
 function ProductAdder({ clientId, existingIds, onAdded }: { clientId: string; existingIds: Set<string>; onAdded: () => void }) {
   const [open, setOpen] = useState(false);
   const [adding, setAdding] = useState(false);
-  const available = pvProductCatalog.filter(p => p.active && !existingIds.has(p.id));
+  const [added, setAdded] = useState<string[]>([]);
+  const [error, setError] = useState('');
+  const available = pvProductCatalog.filter(p => p.active && !existingIds.has(p.id) && !added.includes(p.id));
 
   async function addProduct(productId: string) {
     setAdding(true);
+    setError('');
     try {
       const sb = await getSupabaseClient();
-      if (!sb) return;
-      // Get current latest assessment to update selectedProductIds
-      const { data: assessments } = await sb.from('assessments').select('id, questionnaire').eq('client_id', clientId).order('date', { ascending: false }).limit(1);
-      if (assessments && assessments.length > 0) {
-        const latest = assessments[0];
-        const q = (latest.questionnaire ?? {}) as Record<string, unknown>;
-        const currentIds = (q.selectedProductIds as string[] | undefined) ?? [];
-        if (!currentIds.includes(productId)) {
-          await sb.from('assessments').update({
-            questionnaire: { ...q, selectedProductIds: [...currentIds, productId] }
-          }).eq('id', latest.id);
-        }
+      if (!sb) { setError('Connexion base indisponible'); return; }
+
+      // Chercher le PREMIER assessment (initial) pour y ajouter les produits
+      const { data: assessments, error: fetchErr } = await sb
+        .from('assessments')
+        .select('id, questionnaire')
+        .eq('client_id', clientId)
+        .order('date', { ascending: true })
+        .limit(1);
+
+      if (fetchErr) { setError(`Erreur : ${fetchErr.message}`); return; }
+      if (!assessments || assessments.length === 0) { setError('Aucun bilan trouvé'); return; }
+
+      const initial = assessments[0];
+      const q = (initial.questionnaire ?? {}) as Record<string, unknown>;
+      const currentIds = (q.selectedProductIds as string[] | undefined) ?? [];
+
+      if (currentIds.includes(productId)) {
+        setAdded(prev => [...prev, productId]);
+        return;
       }
-      setOpen(false);
-      onAdded();
+
+      const newIds = [...currentIds, productId];
+      const { error: updateErr } = await sb
+        .from('assessments')
+        .update({ questionnaire: { ...q, selectedProductIds: newIds } })
+        .eq('id', initial.id);
+
+      if (updateErr) { setError(`Erreur : ${updateErr.message}`); return; }
+
+      setAdded(prev => [...prev, productId]);
     } finally {
       setAdding(false);
     }
@@ -1168,7 +1187,16 @@ function ProductAdder({ clientId, existingIds, onAdded }: { clientId: string; ex
 
   return (
     <div style={{ border: '1px solid var(--ls-border)', borderRadius: 12, padding: 14, background: 'var(--ls-surface2)' }}>
-      <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--ls-text)', marginBottom: 10 }}>Choisir un produit à ajouter</div>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+        <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--ls-text)' }}>Choisir un produit à ajouter</div>
+        {added.length > 0 && (
+          <button onClick={() => { setOpen(false); onAdded(); }}
+            style={{ fontSize: 11, padding: '4px 12px', borderRadius: 7, border: 'none', background: 'var(--ls-teal)', color: '#fff', cursor: 'pointer', fontWeight: 600, fontFamily: 'DM Sans, sans-serif' }}>
+            ✓ Terminé ({added.length} ajouté{added.length > 1 ? 's' : ''})
+          </button>
+        )}
+      </div>
+      {error && <div style={{ fontSize: 11, color: 'var(--ls-coral)', marginBottom: 8, padding: '6px 10px', borderRadius: 8, background: 'rgba(220,38,38,0.08)' }}>{error}</div>}
       <div style={{ maxHeight: 300, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 4 }}>
         {available.map(product => (
           <button key={product.id} onClick={() => void addProduct(product.id)} disabled={adding}
@@ -1180,8 +1208,10 @@ function ProductAdder({ clientId, existingIds, onAdded }: { clientId: string; ex
             <div style={{ fontSize: 11, color: 'var(--ls-gold)', fontWeight: 600, flexShrink: 0 }}>+ Ajouter</div>
           </button>
         ))}
+        {available.length === 0 && <div style={{ fontSize: 12, color: 'var(--ls-text-hint)', textAlign: 'center', padding: 12 }}>Tous les produits ont été ajoutés</div>}
       </div>
-      <button onClick={() => setOpen(false)} style={{ marginTop: 8, fontSize: 12, color: 'var(--ls-text-hint)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'DM Sans, sans-serif' }}>
+      <button onClick={() => { setOpen(false); if (added.length > 0) onAdded(); }}
+        style={{ marginTop: 8, fontSize: 12, color: 'var(--ls-text-hint)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'DM Sans, sans-serif' }}>
         Fermer
       </button>
     </div>
