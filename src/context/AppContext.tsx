@@ -96,6 +96,7 @@ interface AppContextValue {
   unreadMessageCount: number;
   markMessageRead: (id: string) => Promise<void>;
   deleteMessage: (id: string) => Promise<void>;
+  updateClientInfo: (clientId: string, data: { phone?: string; email?: string; city?: string }) => Promise<void>;
   loginAs: (userId: string) => Promise<void>;
   loginWithCredentials: (
     payload: { email: string; password: string }
@@ -1295,6 +1296,21 @@ export function AppProvider({ children }: PropsWithChildren) {
         const sb = await getSupabaseClient();
         if (sb) await sb.from('client_messages').delete().eq('id', id);
         setClientMessages(prev => prev.filter(m => m.id !== id));
+      },
+      updateClientInfo: async (clientId: string, data: { phone?: string; email?: string; city?: string }) => {
+        if (storageMode === 'supabase') {
+          const sb = await getSupabaseClient();
+          if (sb) {
+            const updateData: Record<string, string> = {};
+            if (data.phone !== undefined) updateData.phone = data.phone;
+            if (data.email !== undefined) updateData.email = data.email;
+            if (data.city !== undefined) updateData.city = data.city;
+            await sb.from('clients').update(updateData).eq('id', clientId);
+            await refreshRemoteData(currentUser);
+          }
+        } else {
+          setClients(prev => prev.map(c => c.id === clientId ? { ...c, ...data } : c));
+        }
       },
       loginAs,
       loginWithCredentials,

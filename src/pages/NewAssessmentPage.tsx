@@ -995,6 +995,18 @@ export function NewAssessmentPage() {
       return;
     }
 
+    if (!form.phone.trim()) {
+      setSaveError("Le numéro de téléphone est obligatoire.");
+      goToStep(0);
+      return;
+    }
+
+    if (!form.email.trim()) {
+      setSaveError("L'adresse email est obligatoire.");
+      goToStep(0);
+      return;
+    }
+
     if (!form.objectiveFocus.trim()) {
       setSaveError("Choisis d'abord l'objectif principal du client.");
       goToStep(0);
@@ -1279,8 +1291,8 @@ export function NewAssessmentPage() {
                 <div className="grid gap-4 md:grid-cols-2">
                   <Field label="Prenom" value={form.firstName} onChange={(v) => update("firstName", v)} />
                   <Field label="Nom" value={form.lastName} onChange={(v) => update("lastName", v)} />
-                  <Field label="Telephone" value={form.phone} onChange={(v) => update("phone", v)} />
-                  <Field label="Email" value={form.email} onChange={(v) => update("email", v)} />
+                  <Field label="Téléphone *" value={form.phone} onChange={(v) => update("phone", v)} />
+                  <Field label="Email *" value={form.email} onChange={(v) => update("email", v)} />
                   <Field
                     label="Date et heure du bilan initial"
                     type="datetime-local"
