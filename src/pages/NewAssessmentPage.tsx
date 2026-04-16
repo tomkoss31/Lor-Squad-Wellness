@@ -10,6 +10,7 @@ import { RecapModal } from "../components/assessment/RecapModal";
 import { getSupabaseClient } from "../services/supabaseClient";
 import { BodyFatInsightCard } from "../components/body-scan/BodyFatInsightCard";
 import { MuscleMassInsightCard } from "../components/body-scan/MuscleMassInsightCard";
+import { HydrationVisceralInsightCard } from "../components/body-scan/HydrationVisceralInsightCard";
 import { PlateGuideCard } from "../components/education/PlateGuideCard";
 import { ProgramBoosterCard } from "../components/programs/ProgramBoosterCard";
 import { ProgramCard } from "../components/programs/ProgramCard";
@@ -1264,6 +1265,15 @@ export function NewAssessmentPage() {
               {form.weight > 0 && form.muscleMass > 0 && (
                 <MuscleMassInsightCard
                   current={{ weight: form.weight, muscleMass: form.muscleMass }}
+                />
+              )}
+
+              {form.weight > 0 && form.hydration > 0 && (
+                <HydrationVisceralInsightCard
+                  weight={form.weight}
+                  hydrationPercent={form.hydration}
+                  visceralFat={form.visceralFat}
+                  sex={form.sex}
                 />
               )}
             </div>
