@@ -8,9 +8,9 @@ import { StatusBadge } from "../components/ui/StatusBadge";
 import { useAppContext } from "../context/AppContext";
 import { PushNotificationSettings } from "../components/settings/PushNotificationSettings";
 import { canSponsorDistributors, getRoleLabel, isAdmin } from "../lib/auth";
-import { formatDate, formatDateTime } from "../lib/calculations";
+import { formatDate } from "../lib/calculations";
 import { getPortfolioMetrics } from "../lib/portfolio";
-import type { ActivityLog, Client, FollowUp, User } from "../types/domain";
+import type { Client, FollowUp, User } from "../types/domain";
 
 type TeamViewMode = "tree" | "all" | "admins" | "referents" | "distributors";
 
@@ -53,16 +53,12 @@ export function UsersPage() {
     users,
     clients,
     followUps,
-    activityLogs,
     storageMode,
     createUserAccess,
     repairUserAccess,
     updateUserAccess,
     updateUserPassword,
     updateUserStatus,
-    resetAccessData,
-    clearBusinessData,
-    importLocalBusinessData
   } = useAppContext();
 
   const [search, setSearch] = useState("");
@@ -85,7 +81,6 @@ export function UsersPage() {
   const [repairActive, setRepairActive] = useState(true);
   const [repairError, setRepairError] = useState("");
   const [repairSuccess, setRepairSuccess] = useState("");
-  const [importStatus, setImportStatus] = useState("");
 
   const sponsorOptions = useMemo(
     () => users.filter((user) => user.active && canSponsorDistributors(user)),
@@ -187,25 +182,6 @@ export function UsersPage() {
     setRepairRole("referent");
     setRepairSponsorId("");
     setRepairActive(true);
-  }
-
-  async function handleImportLocalData() {
-    try {
-      const result = await importLocalBusinessData();
-      setImportStatus(
-        result.imported
-          ? `${result.imported} dossier(s) importe(s) dans la base distante.`
-          : result.skipped
-            ? `Aucun nouveau dossier importe. ${result.skipped} déjà present(s).`
-            : "Aucune donnee locale a importer."
-      );
-    } catch (importError) {
-      setImportStatus(
-        importError instanceof Error
-          ? importError.message
-          : "Impossible d'importer les dossiers locaux."
-      );
-    }
   }
 
   return (
@@ -452,59 +428,7 @@ export function UsersPage() {
         </Card>
       </div>
 
-      <div className="grid gap-4 xl:grid-cols-[1fr_1fr]">
-        <Card className="space-y-4">
-          <div>
-            <p className="eyebrow-label">Base et securite</p>
-            <h2 className="mt-3 text-3xl">Actions de maintenance</h2>
-          </div>
-
-          {storageMode === "local" ? (
-            <div className="space-y-3">
-              <div className="rounded-[22px] bg-amber-400/10 px-4 py-4">
-                <p className="text-sm font-semibold text-white">Reinitialiser les accès beta</p>
-                <p className="mt-2 text-sm leading-7 text-[var(--ls-text-muted)]">Repars sur les accès par defaut et ferme la session actuelle.</p>
-                <Button className="mt-4" variant="secondary" onClick={resetAccessData}>Reinitialiser les acces</Button>
-              </div>
-              <div className="rounded-[22px] bg-rose-400/10 px-4 py-4">
-                <p className="text-sm font-semibold text-white">Vider la base clients locale</p>
-                <p className="mt-2 text-sm leading-7 text-[var(--ls-text-muted)]">Supprime les dossiers et les suivis locaux pour repartir proprement.</p>
-                <Button className="mt-4" variant="secondary" onClick={clearBusinessData}>Vider les dossiers</Button>
-              </div>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              <div className="rounded-[22px] bg-[rgba(45,212,191,0.1)] px-4 py-4">
-                <p className="text-sm font-semibold text-white">Base distante active</p>
-                <p className="mt-2 text-sm leading-7 text-[var(--ls-text-muted)]">Les comptes et l'arborescence equipe sont lus depuis Supabase.</p>
-              </div>
-              <div className="rounded-[22px] bg-[rgba(45,212,191,0.1)] px-4 py-4">
-                <p className="text-sm font-semibold text-white">Importer les anciens dossiers</p>
-                <p className="mt-2 text-sm leading-7 text-[var(--ls-text-muted)]">Si l'ancienne beta locale contient encore des dossiers, pousse-les ici.</p>
-                <Button className="mt-4" variant="secondary" onClick={() => void handleImportLocalData()}>Importer la base locale</Button>
-                {importStatus ? <p className="mt-3 text-sm text-white">{importStatus}</p> : null}
-              </div>
-            </div>
-          )}
-        </Card>
-
-        <Card className="space-y-4">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <p className="eyebrow-label">Activite recente</p>
-              <h2 className="mt-3 text-3xl">Ce qui a bouge</h2>
-            </div>
-            <StatusBadge label={`${Math.min(activityLogs.length, 8)} visibles`} tone="blue" />
-          </div>
-
-          <div className="space-y-3">
-            {activityLogs.slice(0, 8).map((entry) => (
-              <ActivityRow key={entry.id} entry={entry} />
-            ))}
-            {!activityLogs.length ? <EmptyState text="Les prochaines creations, corrections et changements d'accès apparaitront ici." /> : null}
-          </div>
-        </Card>
-      </div>
+      {/* Sections maintenance/import/activité supprimées — nettoyage interface */}
     </div>
   );
 }
@@ -903,21 +827,3 @@ function UserAccessCard({
   );
 }
 
-function ActivityRow({ entry }: { entry: ActivityLog }) {
-  return (
-    <div className="rounded-[22px] bg-[var(--ls-surface2)] px-4 py-4">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <p className="text-sm font-semibold text-white">{entry.summary}</p>
-          {entry.detail ? <p className="mt-1 text-sm leading-6 text-[var(--ls-text-muted)]">{entry.detail}</p> : null}
-        </div>
-        <p className="text-xs text-[var(--ls-text-hint)]">{formatDateTime(entry.createdAt)}</p>
-      </div>
-      <p className="mt-3 text-xs text-[var(--ls-text-hint)]">
-        {entry.actorName}
-        {entry.targetUserName ? ` - ${entry.targetUserName}` : ""}
-        {entry.clientName ? ` - ${entry.clientName}` : ""}
-      </p>
-    </div>
-  );
-}

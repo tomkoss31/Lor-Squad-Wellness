@@ -943,7 +943,19 @@ export function ClientDetailPage() {
                   ? `/clients/${client.id}/start-assessment/edit`
                   : `/clients/${client.id}/assessments/${assessment.id}/edit`,
                 typeLabel: assessment.type === "initial" ? "Départ" : "Suivi",
+                canDelete: assessment.type !== "initial",
               }))}
+            onDelete={async (assessmentId) => {
+              try {
+                const sb = await getSupabaseClient();
+                if (sb) {
+                  await sb.from('assessments').delete().eq('id', assessmentId);
+                  window.location.reload();
+                }
+              } catch (err) {
+                console.error('Delete assessment error:', err);
+              }
+            }}
           />
         </Card>
       )}
