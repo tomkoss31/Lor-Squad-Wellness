@@ -138,13 +138,13 @@ export function NewFollowUpPage() {
   const [coachNote, setCoachNote] = useState("");
   const [reportUrl, setReportUrl] = useState<string | null>(null);
   const [optionalProductsToggle, setOptionalProductsToggle] = useState(
-    latest.questionnaire.optionalProductsUsed?.trim() ? "Oui" : "Non"
+    latest?.questionnaire?.optionalProductsUsed?.trim() ? "Oui" : "Non"
   );
   const [optionalProductsUsed, setOptionalProductsUsed] = useState(
-    latest.questionnaire.optionalProductsUsed ?? ""
+    latest?.questionnaire?.optionalProductsUsed ?? ""
   );
   const [recommendationsContacted, setRecommendationsContacted] = useState(
-    latest.questionnaire.recommendationsContacted ?? false
+    latest?.questionnaire?.recommendationsContacted ?? false
   );
   const [draftReady, setDraftReady] = useState(false);
 
@@ -223,18 +223,18 @@ export function NewFollowUpPage() {
     targetClient.id
   ]);
 
-  const delta = getAssessmentDelta(bodyScan, latest.bodyScan);
+  const delta = getAssessmentDelta(bodyScan, latest?.bodyScan ?? defaultScan);
   const pvRecord = useMemo(
     () => buildPvTrackingRecords([targetClient], pvTransactions, pvClientProducts)[0] ?? null,
     [pvClientProducts, pvTransactions, targetClient]
   );
   const weightLossPlan = getWeightLossPlan(
     bodyScan.weight,
-    latest.questionnaire.targetWeight,
-    latest.questionnaire.desiredTimeline
+    latest?.questionnaire?.targetWeight,
+    latest?.questionnaire?.desiredTimeline
   );
   const weightLossPace = getWeightLossPaceInsight(weightLossPlan);
-  const weightDeltaFromStart = Number((bodyScan.weight - first.bodyScan.weight).toFixed(1));
+  const weightDeltaFromStart = Number((bodyScan.weight - (first?.bodyScan?.weight ?? bodyScan.weight)).toFixed(1));
   const followUpSummary = `${energyCheck} • ${hungerCheck} • ${digestionCheck}`;
   const followUpNotes = [
     `Énergie : ${energyCheck}.`,
@@ -254,8 +254,8 @@ export function NewFollowUpPage() {
 
   async function handleSubmit() {
     const nextQuestionnaire: AssessmentQuestionnaire = {
-      ...latest.questionnaire,
-      desiredTimeline: latest.questionnaire.desiredTimeline,
+      ...(latest?.questionnaire ?? {} as AssessmentQuestionnaire),
+      desiredTimeline: latest?.questionnaire?.desiredTimeline ?? '',
       recommendationsContacted,
       optionalProductsUsed:
         optionalProductsToggle === "Oui" ? optionalProductsUsed.trim() || "Oui" : ""
@@ -282,7 +282,7 @@ export function NewFollowUpPage() {
       nextFollowUp: serializeDateTimeForStorage(dueDate),
       bodyScan,
       questionnaire: nextQuestionnaire,
-      pedagogicalFocus: latest.pedagogicalFocus
+      pedagogicalFocus: latest?.pedagogicalFocus ?? []
     };
 
     await addFollowUpAssessment(targetClient.id, assessment, {
