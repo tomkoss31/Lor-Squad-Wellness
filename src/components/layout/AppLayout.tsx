@@ -364,8 +364,8 @@ export function AppLayout() {
           </section>
 
           <Outlet />
-          {/* Padding for bottom nav on mobile */}
-          <div className="h-20 xl:hidden" />
+          {/* Padding for bottom nav on mobile — assez d'espace pour que le dernier bouton reste au-dessus */}
+          <div className="h-32 xl:hidden" />
         </main>
       </div>
       <BottomNav />

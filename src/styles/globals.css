@@ -371,11 +371,14 @@ html.theme-light [style*="color: #A78BFA"][style*="border-radius: 10px"] {
   font-weight: 600 !important;
 }
 
-/* ═══ 8. TRANSITIONS GLOBALES FLUIDES ═══ */
-html.theme-light * {
+/* ═══ 8. TRANSITIONS FLUIDES (scopées, pas sur *) ═══ */
+html.theme-light .app-sidebar,
+html.theme-light .glass-panel,
+html.theme-light .bottom-nav,
+html.theme-light [data-urgency] {
   transition: background-color 0.2s ease,
               border-color 0.2s ease,
-              box-shadow 0.15s ease !important;
+              box-shadow 0.15s ease;
 }
 
 /* ── SIDEBAR OMBRE + DOT MODE CLAIR ── */
