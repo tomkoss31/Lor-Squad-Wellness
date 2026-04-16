@@ -27,7 +27,9 @@
       "Bash(sed -i 's/  const panelTitle =/  const _panelTitle =/' src/pages/NewAssessmentPage.tsx)",
       "Bash(sed -i 's/  const panelIntro =/  const _panelIntro =/' src/pages/NewAssessmentPage.tsx)",
       "Bash(node -e ':*)",
-      "Bash(sed -i '/formatDateTime,/d' src/pages/NewAssessmentPage.tsx)"
+      "Bash(sed -i '/formatDateTime,/d' src/pages/NewAssessmentPage.tsx)",
+      "Bash(sed -i '/WeightGoalInsightCard/d' src/pages/NewAssessmentPage.tsx)",
+      "Bash(sed -i '/getWeightLossPaceInsight,/d' src/pages/NewAssessmentPage.tsx)"
     ]
   }
 }

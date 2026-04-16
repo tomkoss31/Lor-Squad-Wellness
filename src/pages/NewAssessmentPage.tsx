@@ -13,7 +13,6 @@ import { HydrationVisceralInsightCard } from "../components/body-scan/HydrationV
 import { MuscleMassInsightCard } from "../components/body-scan/MuscleMassInsightCard";
 import { PlateGuideCard } from "../components/education/PlateGuideCard";
 import { ProgramBoosterCard } from "../components/programs/ProgramBoosterCard";
-import { WeightGoalInsightCard } from "../components/education/WeightGoalInsightCard";
 import { ProgramCard } from "../components/programs/ProgramCard";
 import { Button } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
@@ -29,7 +28,6 @@ import {
   estimateMuscleMassPercent,
   normalizeDateTimeLocalInputValue,
   serializeDateTimeForStorage,
-  getWeightLossPaceInsight,
   getWeightLossPlan,
   normalizeTimelineLabel
 } from "../lib/calculations";
@@ -467,15 +465,6 @@ export function NewAssessmentPage() {
   const bodyFatKg = estimateBodyFatKg(form.weight, form.bodyFat);
   const musclePercent = estimateMuscleMassPercent(form.weight, form.muscleMass);
   const hydrationKg = estimateHydrationKg(form.weight, form.hydration);
-  const weightLossPlan = getWeightLossPlan(form.weight, form.targetWeight, form.desiredTimeline);
-  const weightLossPace = getWeightLossPaceInsight(weightLossPlan);
-  const weeklyWeightTarget =
-    form.objective === "weight-loss" &&
-    !weightLossPlan.isAchieved &&
-    weightLossPlan.targetWeight != null &&
-    weightLossPlan.days > 0
-      ? Number(((weightLossPlan.remainingKg / weightLossPlan.days) * 7).toFixed(1))
-      : 0;
   const bodyFatTarget = getBodyFatTargetRange(form.sex, form.objective);
   const hydrationReference = getHydrationReference(form.sex);
   const weightTargetLabel =
@@ -1051,40 +1040,13 @@ export function NewAssessmentPage() {
                     />
                   </div>
                   {form.objective === "weight-loss" && (
-                    <div className="space-y-4">
-                      <Field
-                        label="Poids cible (kg)"
-                        type="number"
-                        step="0.1"
-                        value={form.targetWeight}
-                        onChange={(v) => update("targetWeight", Number(v))}
-                      />
-                      <WeightGoalInsightCard
-                        currentWeight={form.weight}
-                        targetWeight={form.targetWeight}
-                        timeline={form.desiredTimeline}
-                      />
-                      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-                        <SummaryHighlightCard label="Délai choisi" value={timelineLabel} />
-                        <SummaryHighlightCard
-                          label="Repère / semaine"
-                          value={
-                            weightLossPlan.isAchieved || !weeklyWeightTarget
-                              ? "Cap atteint"
-                              : `${weeklyWeightTarget} kg / semaine`
-                          }
-                        />
-                        <SummaryHighlightCard label="Protéines auto" value={proteinRange} />
-                        <SummaryHighlightCard
-                          label="Lecture du cap"
-                          value={weightLossPace.label}
-                        />
-                      </div>
-                      <div className="rounded-[22px] bg-[var(--ls-surface2)] px-4 py-4 text-sm leading-6 text-[var(--ls-text-muted)]">
-                        En fonction du délai choisi, l&apos;app ajuste automatiquement le rythme moyen
-                        à tenir et le repère protéines pour garder un cadre simple à expliquer.
-                      </div>
-                    </div>
+                    <Field
+                      label="Poids cible (kg)"
+                      type="number"
+                      step="0.1"
+                      value={form.targetWeight}
+                      onChange={(v) => update("targetWeight", Number(v))}
+                    />
                   )}
                   <div className="space-y-3 rounded-[24px] bg-[var(--ls-surface2)] p-4">
                     <div className="flex items-center justify-between gap-3">
