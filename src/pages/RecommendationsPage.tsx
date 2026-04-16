@@ -244,11 +244,23 @@ export function RecommendationsPage() {
                             background: isMarking ? 'var(--ls-surface2)' : 'var(--ls-teal)',
                             color: isMarking ? 'var(--ls-text-muted)' : '#fff',
                             cursor: isMarking ? 'wait' : 'pointer',
-                            fontFamily: 'DM Sans, sans-serif', fontWeight: 600, marginLeft: 'auto',
+                            fontFamily: 'DM Sans, sans-serif', fontWeight: 600,
                           }}>
                           {isMarking ? '...' : '✓ Contacté'}
                         </button>
                       )}
+
+                      {/* Supprimer les recos */}
+                      <button onClick={() => void markContacted(row)} disabled={isMarking}
+                        style={{
+                          fontSize: 11, padding: '5px 14px', borderRadius: 8, border: 'none',
+                          background: 'rgba(220,38,38,0.06)',
+                          color: 'var(--ls-coral)',
+                          cursor: isMarking ? 'wait' : 'pointer',
+                          fontFamily: 'DM Sans, sans-serif', marginLeft: 'auto',
+                        }}>
+                        Supprimer
+                      </button>
                     </div>
                   </div>
                 </div>
