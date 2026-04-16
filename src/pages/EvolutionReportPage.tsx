@@ -150,7 +150,7 @@ export function EvolutionReportPage() {
                   ].map(({ label, unit, first: firstVal, latest: latestVal, color, reverse }) => {
                     const delta = latestVal - firstVal
                     return (
-                      <div key={field} style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.07)', borderRadius: 12, padding: '12px 14px', borderTop: `2px solid ${color}` }}>
+                      <div key={label} style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.07)', borderRadius: 12, padding: '12px 14px', borderTop: `2px solid ${color}` }}>
                         <div style={{ fontSize: 9, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 4 }}>{label}</div>
                         <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 22, color, lineHeight: 1 }}>{latestVal.toFixed(1)}{unit}</div>
                         <div style={{ fontSize: 10, color: '#9CA3AF', marginTop: 4 }}>
