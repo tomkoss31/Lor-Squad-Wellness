@@ -12,7 +12,6 @@ import { BodyFatInsightCard } from "../components/body-scan/BodyFatInsightCard";
 import { MuscleMassInsightCard } from "../components/body-scan/MuscleMassInsightCard";
 import { HydrationVisceralInsightCard } from "../components/body-scan/HydrationVisceralInsightCard";
 import { BodyScanRadar } from "../components/body-scan/BodyScanRadar";
-import { PlateGuideCard } from "../components/education/PlateGuideCard";
 import { ProgramBoosterCard } from "../components/programs/ProgramBoosterCard";
 import { ProgramCard } from "../components/programs/ProgramCard";
 import { Button } from "../components/ui/Button";
@@ -609,56 +608,6 @@ export function NewAssessmentPage() {
 
 
 
-  const plateTitle = form.objective === "sport" ? "Assiette sport / prise de masse" : "Assiette perte de poids";
-  const plateSubtitle =
-    form.objective === "sport"
-      ? "Le client doit voir tout de suite comment construire une assiette plus complète pour soutenir l'énergie, l'entraînement et la récupération."
-      : "Le client doit comprendre en un coup d'oeil comment remplir son assiette pour avoir plus de volume, plus de satiete et un cadre simple a suivre.";
-    const plateSegments =
-      form.objective === "sport"
-        ? [
-          { label: "Legumes", share: 33, note: "Base d'equilibre", accent: "green" as const },
-          { label: "Protéines", share: 33, note: "Récupération musculaire", accent: "red" as const },
-          { label: "Glucides", share: 34, note: "Énergie autour du sport", accent: "amber" as const }
-        ]
-      : [
-          { label: "Legumes", share: 50, note: "Volume et satiete", accent: "green" as const },
-          { label: "Protéines", share: 25, note: "Tenue musculaire", accent: "red" as const },
-          { label: "Glucides", share: 25, note: "Portion simple et énergie", accent: "amber" as const }
-        ];
-  const platePortionGuides =
-    form.objective === "sport"
-      ? [
-          { label: "Legumes", value: "1 a 2 poings" },
-          { label: "Protéines", value: "1 à 1,5 paume" },
-          { label: "Glucides", value: "1 a 2 poings" },
-          { label: "Lipides", value: "1 pouce" }
-        ]
-      : [
-          { label: "Legumes", value: "2 poings" },
-          { label: "Protéines", value: "1 paume" },
-          { label: "Glucides", value: "1 poing" },
-          { label: "Lipides", value: "1 pouce" }
-        ];
-  const plateFoodExamples = [
-    {
-      label: "Protéines",
-      accent: "red" as const,
-      items: ["poulet", "oeufs", "poisson", "tofu"]
-    },
-    {
-      label: "Glucides",
-      accent: "amber" as const,
-      items: ["riz", "pates", "pommes de terre", "flocons d'avoine"]
-    },
-    {
-      label: "Lipides",
-      accent: "blue" as const,
-      items: ["avocat", "huile d'olive", "oleagineux"]
-    }
-  ];
-  const plateLipidsNote =
-    form.objective === "sport" ? "Bons lipides en complement regulier" : "Petite portion de bons lipides";
 
   function update<K extends keyof AssessmentForm>(key: K, value: AssessmentForm[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -1181,17 +1130,69 @@ export function NewAssessmentPage() {
               </div>
             )}
 
-          {currentStep === 4 && (
-            <PlateGuideCard
-              title={plateTitle}
-              mode={form.objective}
-              subtitle={plateSubtitle}
-              segments={plateSegments}
-              portionGuides={platePortionGuides}
-              foodExamples={plateFoodExamples}
-              lipidsNote={plateLipidsNote}
-            />
-          )}
+          {currentStep === 4 && (() => {
+            const mealConfigs: Record<string, { title: string; legumes: number; proteines: number; glucides: number; message: string }> = {
+              'weight-loss': { title: 'Assiette perte de poids', legumes: 50, proteines: 25, glucides: 25, message: 'La moitié de ton assiette en légumes te donnera du volume et de la satiété sans excès de calories.' },
+              'sport': { title: 'Assiette prise de masse', legumes: 30, proteines: 40, glucides: 30, message: 'Plus de protéines et de glucides pour nourrir la croissance musculaire. Les légumes restent présents pour la récupération.' },
+            }
+            const cfg = mealConfigs[form.objective] ?? { title: 'Assiette équilibrée', legumes: 40, proteines: 30, glucides: 30, message: 'Un repas équilibré couvre tous tes besoins nutritionnels sans effort de calcul.' }
+
+            return (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <div>
+                <div style={{ fontSize: 9, letterSpacing: '2px', textTransform: 'uppercase', color: 'var(--ls-text-hint)', fontWeight: 500, marginBottom: 6 }}>Assiette type</div>
+                <h2 style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 'clamp(20px, 4vw, 26px)', color: 'var(--ls-text)', margin: '0 0 8px' }}>{cfg.title}</h2>
+                <p style={{ fontSize: 13, color: 'var(--ls-text-muted)', lineHeight: 1.7, margin: 0, maxWidth: 520 }}>Construisons une assiette simple que tu peux reproduire tous les jours, sans te peser, sans calculer.</p>
+              </div>
+
+              <div style={{ background: 'var(--ls-surface)', border: '1px solid var(--ls-border)', borderRadius: 16, padding: 20 }}>
+                <div className="plate-row" style={{ display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap' }}>
+                  <PlateChartSvg legumes={cfg.legumes} proteines={cfg.proteines} glucides={cfg.glucides} />
+                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 10, minWidth: 180 }}>
+                    <MacroCardItem color="#0D9488" bg="rgba(13,148,136,0.07)" border="rgba(13,148,136,0.15)" label="Légumes" pct={cfg.legumes} desc="Volume, satiété, fibres" fraction="½" />
+                    <MacroCardItem color="var(--ls-gold)" bg="rgba(184,146,42,0.07)" border="rgba(184,146,42,0.15)" label="Protéines" pct={cfg.proteines} desc="Muscles, satiété longue" fraction="¼" />
+                    <MacroCardItem color="#7C3AED" bg="rgba(124,58,237,0.06)" border="rgba(124,58,237,0.12)" label="Glucides" pct={cfg.glucides} desc="Énergie, récupération" fraction="¼" />
+                  </div>
+                </div>
+                <div style={{ marginTop: 16, padding: '12px 14px', background: 'var(--ls-surface2)', borderRadius: 10, fontSize: 12, color: 'var(--ls-text-muted)', lineHeight: 1.7 }}>{cfg.message}</div>
+              </div>
+
+              <div style={{ background: 'var(--ls-surface)', border: '1px solid var(--ls-border)', borderRadius: 16, padding: 20 }}>
+                <div style={{ fontSize: 9, letterSpacing: '2px', textTransform: 'uppercase', color: 'var(--ls-text-hint)', fontWeight: 500, marginBottom: 14 }}>Exemples concrets</div>
+                {[
+                  { color: '#0D9488', bg: 'rgba(13,148,136,0.08)', label: 'Légumes · la moitié', items: ['Salade verte', 'Courgettes', 'Brocolis', 'Tomates', 'Carottes', 'Poivrons', 'Concombre'] },
+                  { color: '#B8922A', bg: 'rgba(184,146,42,0.08)', label: 'Protéines · un quart', items: ['Poulet grillé', 'Œufs', 'Thon', 'Saumon', 'Dinde', 'Tofu', 'Légumineuses'] },
+                  { color: '#7C3AED', bg: 'rgba(124,58,237,0.07)', label: 'Glucides · un quart', items: ['Riz complet', 'Patate douce', 'Quinoa', 'Pain complet', 'Pâtes complètes', 'Lentilles'] },
+                ].map(({ color, bg, label, items }, i) => (
+                  <div key={label} style={{ borderTop: i > 0 ? '1px solid var(--ls-border)' : 'none', paddingTop: i > 0 ? 14 : 0, marginTop: i > 0 ? 14 : 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+                      <div style={{ width: 8, height: 8, borderRadius: 2, background: color, flexShrink: 0 }} />
+                      <span style={{ fontSize: 12, fontWeight: 600, color }}>{label}</span>
+                    </div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, paddingLeft: 16 }}>
+                      {items.map(item => (
+                        <span key={item} style={{ fontSize: 11, padding: '4px 10px', borderRadius: 20, background: bg, color }}>{item}</span>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div style={{ background: 'linear-gradient(135deg, rgba(184,146,42,0.08), rgba(184,146,42,0.04))', border: '1px solid rgba(184,146,42,0.2)', borderRadius: 16, padding: '18px 20px', display: 'flex', gap: 14, alignItems: 'flex-start' }}>
+                <div style={{ width: 38, height: 38, background: 'var(--ls-gold)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: '0 2px 8px rgba(184,146,42,0.25)' }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                </div>
+                <div>
+                  <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 14, color: 'var(--ls-text)', marginBottom: 6 }}>La règle des 3 doigts</div>
+                  <div style={{ fontSize: 12, color: 'var(--ls-text-muted)', lineHeight: 1.75 }}>
+                    Pas besoin de peser. Utilise ta main comme repère :<br/>
+                    <span style={{ color: 'var(--ls-gold)', fontWeight: 600 }}>Protéines</span> = 1 paume · <span style={{ color: '#7C3AED', fontWeight: 600 }}>Glucides</span> = 1 poing fermé · <span style={{ color: '#0D9488', fontWeight: 600 }}>Légumes</span> = 2 mains ouvertes
+                  </div>
+                </div>
+              </div>
+            </div>
+            )
+          })()}
 
           {currentStep === 5 && (
             <div className="space-y-4">
@@ -2621,3 +2622,42 @@ function formatSignedValue(value: number, unit: string) {
   return `${prefix}${formatRawNumber(rounded)} ${unit}`;
 }
 
+
+function PlateChartSvg({ legumes, proteines, glucides }: { legumes: number; proteines: number; glucides: number }) {
+  const total = legumes + proteines + glucides
+  const toRad = (pct: number) => (pct / total) * 2 * Math.PI
+  const R = 80, cx = 90, cy = 90
+  function slice(startAngle: number, pct: number, color: string) {
+    const endAngle = startAngle + toRad(pct)
+    const x1 = cx + R * Math.sin(startAngle), y1 = cy - R * Math.cos(startAngle)
+    const x2 = cx + R * Math.sin(endAngle), y2 = cy - R * Math.cos(endAngle)
+    const largeArc = pct / total > 0.5 ? 1 : 0
+    return <path d={`M ${cx} ${cy} L ${x1.toFixed(1)} ${y1.toFixed(1)} A ${R} ${R} 0 ${largeArc} 1 ${x2.toFixed(1)} ${y2.toFixed(1)} Z`} fill={color} opacity={0.85} />
+  }
+  const a1 = 0, a2 = a1 + toRad(legumes), a3 = a2 + toRad(proteines)
+  return (
+    <svg width="180" height="180" viewBox="0 0 180 180" style={{ flexShrink: 0 }}>
+      <circle cx={cx} cy={cy} r={R + 4} fill="var(--ls-surface2)" stroke="var(--ls-border)" strokeWidth="1"/>
+      {slice(a1, legumes, '#0D9488')}
+      {slice(a2, proteines, '#B8922A')}
+      {slice(a3, glucides, '#7C3AED')}
+      <circle cx={cx} cy={cy} r={36} fill="var(--ls-surface)"/>
+      <circle cx={cx} cy={cy} r={R + 4} fill="none" stroke="var(--ls-border)" strokeWidth="1.5"/>
+      <text x={cx} y={cy - 4} textAnchor="middle" fontSize="9" fill="var(--ls-text-hint)">Mon</text>
+      <text x={cx} y={cy + 8} textAnchor="middle" fontSize="9" fill="var(--ls-text-hint)">assiette</text>
+    </svg>
+  )
+}
+
+function MacroCardItem({ color, bg, border, label, pct, desc, fraction }: { color: string; bg: string; border: string; label: string; pct: number; desc: string; fraction: string }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 13px', background: bg, border: `1px solid ${border}`, borderRadius: 12 }}>
+      <div style={{ width: 10, height: 10, borderRadius: 3, background: color, flexShrink: 0 }}/>
+      <div style={{ flex: 1 }}>
+        <div style={{ fontSize: 11, color, fontWeight: 600, marginBottom: 1 }}>{label} · {pct}%</div>
+        <div style={{ fontSize: 11, color: 'var(--ls-text-muted)' }}>{desc}</div>
+      </div>
+      <div style={{ fontFamily: 'Syne, sans-serif', fontSize: 22, fontWeight: 800, color, flexShrink: 0 }}>{fraction}</div>
+    </div>
+  )
+}

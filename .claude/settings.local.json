@@ -29,7 +29,8 @@
       "Bash(node -e ':*)",
       "Bash(sed -i '/formatDateTime,/d' src/pages/NewAssessmentPage.tsx)",
       "Bash(sed -i '/WeightGoalInsightCard/d' src/pages/NewAssessmentPage.tsx)",
-      "Bash(sed -i '/getWeightLossPaceInsight,/d' src/pages/NewAssessmentPage.tsx)"
+      "Bash(sed -i '/getWeightLossPaceInsight,/d' src/pages/NewAssessmentPage.tsx)",
+      "Bash(sed -i '/PlateGuideCard/d' src/pages/NewAssessmentPage.tsx)"
     ]
   }
 }
