@@ -53,7 +53,8 @@ export function ClientDetailPage() {
     followUps,
     pvTransactions,
     pvClientProducts,
-    reassignClientOwner
+    reassignClientOwner,
+    updateClientInfo
   } = useAppContext();
 
   const client = clientId ? getClientById(clientId) : undefined;
@@ -73,6 +74,10 @@ export function ClientDetailPage() {
   const [activeTab, setActiveTab] = useState(0);
   const [reportUrl, setReportUrl] = useState<string | null>(null);
   const [generatingReport, setGeneratingReport] = useState(false);
+  const [editPhone, setEditPhone] = useState(client.phone);
+  const [editEmail, setEditEmail] = useState(client.email);
+  const [editCity, setEditCity] = useState(client.city ?? '');
+  const [editSaved, setEditSaved] = useState(false);
   const activeFollowUp = getClientActiveFollowUp(currentClient, followUps);
 
   async function generateReport() {
@@ -964,6 +969,35 @@ export function ClientDetailPage() {
                 label="Ouvrir la fiche point volume"
                 hint="Visualiser les commandes et le suivi produits"
               />
+            </div>
+          </Card>
+
+          <Card className="space-y-4">
+            <p className="eyebrow-label">Coordonnées</p>
+            <h2 className="text-lg font-bold text-white" style={{ fontFamily: 'Syne, sans-serif' }}>Modifier les infos</h2>
+            <div className="space-y-3">
+              <div>
+                <label className="text-[11px] font-medium text-[var(--ls-text-hint)] uppercase tracking-wider">Téléphone</label>
+                <input value={editPhone} onChange={e => { setEditPhone(e.target.value); setEditSaved(false) }} style={{ marginTop: 4 }} />
+              </div>
+              <div>
+                <label className="text-[11px] font-medium text-[var(--ls-text-hint)] uppercase tracking-wider">Email</label>
+                <input value={editEmail} onChange={e => { setEditEmail(e.target.value); setEditSaved(false) }} style={{ marginTop: 4 }} />
+              </div>
+              <div>
+                <label className="text-[11px] font-medium text-[var(--ls-text-hint)] uppercase tracking-wider">Ville</label>
+                <input value={editCity} onChange={e => { setEditCity(e.target.value); setEditSaved(false) }} style={{ marginTop: 4 }} />
+              </div>
+              <Button
+                variant="secondary"
+                className="w-full"
+                onClick={() => {
+                  void updateClientInfo(client.id, { phone: editPhone.trim(), email: editEmail.trim().toLowerCase(), city: editCity.trim() || undefined })
+                    .then(() => setEditSaved(true))
+                }}
+              >
+                {editSaved ? '✓ Enregistré' : 'Enregistrer les modifications'}
+              </Button>
             </div>
           </Card>
 
