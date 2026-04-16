@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { useAppContext } from '../context/AppContext'
 import { getPortfolioMetrics } from '../lib/portfolio'
 import { PvDismissAlert } from '../components/dashboard/PvDismissAlert'
-import { MessageInbox } from '../components/dashboard/MessageInbox'
+import { Link as RouterLink } from 'react-router-dom'
 import { UrgencyColumn } from '../components/dashboard/UrgencyColumn'
 
 const IconUrgent = () => (
@@ -24,7 +24,7 @@ function greeting() {
 }
 
 export function DashboardPage() {
-  const { currentUser, users, clients, followUps, pvClientProducts, clientMessages, markMessageRead } = useAppContext()
+  const { currentUser, users, clients, followUps, pvClientProducts, unreadMessageCount } = useAppContext()
   const [showPasswordNotice, setShowPasswordNotice] = useState(false)
 
   if (!currentUser) return null
@@ -110,9 +110,20 @@ export function DashboardPage() {
         </div>
       )}
 
-      {/* Messages clients */}
-      {clientMessages && clientMessages.length > 0 && (
-        <MessageInbox messages={clientMessages} onMarkRead={(id) => void markMessageRead(id)} />
+      {/* Messages clients — lien vers page dédiée */}
+      {(unreadMessageCount ?? 0) > 0 && (
+        <RouterLink to="/messages" style={{
+          display: 'flex', alignItems: 'center', gap: 10,
+          background: 'var(--ls-surface)', border: '1px solid rgba(124,58,237,0.2)',
+          borderLeft: '3px solid var(--ls-purple)', borderRadius: '0 12px 12px 0',
+          padding: '12px 16px', textDecoration: 'none', marginBottom: 4,
+        }}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--ls-purple)" strokeWidth="1.5"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--ls-text)' }}>
+            {unreadMessageCount} message{unreadMessageCount > 1 ? 's' : ''} non lu{unreadMessageCount > 1 ? 's' : ''}
+          </span>
+          <span style={{ marginLeft: 'auto', fontSize: 12, color: 'var(--ls-purple)', fontWeight: 500 }}>Voir →</span>
+        </RouterLink>
       )}
 
       {/* PV Alerts */}
