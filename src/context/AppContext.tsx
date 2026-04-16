@@ -37,7 +37,7 @@ import {
   persistPvClientProducts,
   persistPvTransactions
 } from "../services/appDataService";
-import { resolveStorageMode } from "../services/supabaseClient";
+import { resolveStorageMode, getSupabaseClient } from "../services/supabaseClient";
 import {
   addSupabaseFollowUpAssessment,
   createSupabaseClientWithInitialAssessment,
@@ -69,6 +69,7 @@ import type {
   AssessmentRecord,
   AuthSession,
   Client,
+  ClientMessage,
   FollowUp,
   Program,
   User
@@ -91,6 +92,9 @@ interface AppContextValue {
   pvClientProducts: PvClientProductRecord[];
   pvTransactions: PvClientTransaction[];
   programs: Program[];
+  clientMessages: ClientMessage[];
+  unreadMessageCount: number;
+  markMessageRead: (id: string) => Promise<void>;
   loginAs: (userId: string) => Promise<void>;
   loginWithCredentials: (
     payload: { email: string; password: string }
@@ -181,6 +185,7 @@ export function AppProvider({ children }: PropsWithChildren) {
   const [activityLogs, setActivityLogs] = useState<ActivityLog[]>([]);
   const [pvClientProducts, setPvClientProducts] = useState<PvClientProductRecord[]>([]);
   const [pvTransactions, setPvTransactions] = useState<PvClientTransaction[]>([]);
+  const [clientMessages, setClientMessages] = useState<ClientMessage[]>([]);
 
   async function refreshRemoteData(activeUser?: User | null) {
     const nextUser = activeUser ?? currentUser;
@@ -210,6 +215,15 @@ export function AppProvider({ children }: PropsWithChildren) {
       setPvTransactions(nextPvTransactions);
       setPvClientProducts(nextPvClientProducts);
       setActivityLogs(nextActivityLogs);
+
+      // Fetch messages
+      try {
+        const sb2 = await getSupabaseClient();
+        if (sb2) {
+          const { data: msgs } = await sb2.from('client_messages').select('*').order('created_at', { ascending: false }).limit(50);
+          setClientMessages((msgs ?? []) as ClientMessage[]);
+        }
+      } catch { /* messages unavailable */ }
     } catch (error) {
       console.error("Impossible de recharger les donnees distantes.", error);
       setClients([]);
@@ -218,6 +232,7 @@ export function AppProvider({ children }: PropsWithChildren) {
       setPvTransactions([]);
       setPvClientProducts([]);
       setActivityLogs([]);
+      setClientMessages([]);
     }
   }
 
@@ -1264,6 +1279,17 @@ export function AppProvider({ children }: PropsWithChildren) {
       pvClientProducts,
       pvTransactions,
       programs: mockPrograms,
+      clientMessages: currentUser
+        ? clientMessages.filter(m => m.distributor_id === currentUser.id || currentUser.role === 'admin')
+        : [],
+      unreadMessageCount: currentUser
+        ? clientMessages.filter(m => !m.read && (m.distributor_id === currentUser.id || currentUser.role === 'admin')).length
+        : 0,
+      markMessageRead: async (id: string) => {
+        const sb = await getSupabaseClient();
+        if (sb) await sb.from('client_messages').update({ read: true }).eq('id', id);
+        setClientMessages(prev => prev.map(m => m.id === id ? { ...m, read: true } : m));
+      },
       loginAs,
       loginWithCredentials,
       logout,
@@ -1290,6 +1316,7 @@ export function AppProvider({ children }: PropsWithChildren) {
     [
       authReady,
       activityLogs,
+      clientMessages,
       clients,
       currentSession,
       currentUser,

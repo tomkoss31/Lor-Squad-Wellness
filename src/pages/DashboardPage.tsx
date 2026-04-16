@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { useAppContext } from '../context/AppContext'
 import { getPortfolioMetrics } from '../lib/portfolio'
 import { PvDismissAlert } from '../components/dashboard/PvDismissAlert'
+import { MessageInbox } from '../components/dashboard/MessageInbox'
 import { UrgencyColumn } from '../components/dashboard/UrgencyColumn'
 
 const IconUrgent = () => (
@@ -23,7 +24,7 @@ function greeting() {
 }
 
 export function DashboardPage() {
-  const { currentUser, users, clients, followUps, pvClientProducts } = useAppContext()
+  const { currentUser, users, clients, followUps, pvClientProducts, clientMessages, markMessageRead } = useAppContext()
   const [showPasswordNotice, setShowPasswordNotice] = useState(false)
 
   if (!currentUser) return null
@@ -107,6 +108,11 @@ export function DashboardPage() {
           <button onClick={() => { localStorage.setItem(`lor-squad-password-notice-dismissed-${currentUser.id}`, "true"); setShowPasswordNotice(false) }}
             style={{ fontSize: 12, color: 'var(--ls-text-muted)', background: 'rgba(128,128,128,0.06)', border: 'none', borderRadius: 8, padding: '6px 14px', cursor: 'pointer', flexShrink: 0 }}>Compris</button>
         </div>
+      )}
+
+      {/* Messages clients */}
+      {clientMessages && clientMessages.length > 0 && (
+        <MessageInbox messages={clientMessages} onMarkRead={(id) => void markMessageRead(id)} />
       )}
 
       {/* PV Alerts */}

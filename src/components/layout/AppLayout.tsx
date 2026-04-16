@@ -33,7 +33,7 @@ const NAV_ICONS: Record<string, JSX.Element> = {
 };
 
 export function AppLayout() {
-  const { currentUser, logout, followUps, pvClientProducts } = useAppContext();
+  const { currentUser, logout, followUps, pvClientProducts, unreadMessageCount } = useAppContext();
   const { isDark, toggleTheme } = useTheme();
   const urgentRelanceCount = followUps.filter(f => f.status === "pending").length;
   const pvOverdueCount = (() => {
@@ -61,7 +61,7 @@ export function AppLayout() {
         ? "amber"
         : "green";
   const navigation = [
-    { label: "Accueil", path: "/dashboard", badge: 0 },
+    { label: "Accueil", path: "/dashboard", badge: unreadMessageCount ?? 0 },
     { label: "Guide rendez-vous", path: "/guide", badge: 0 },
     { label: "Recommandations", path: "/recommendations", badge: urgentRelanceCount },
     { label: "Suivi PV", path: "/pv", badge: pvOverdueCount },
