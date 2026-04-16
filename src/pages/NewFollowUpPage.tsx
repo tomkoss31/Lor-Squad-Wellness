@@ -8,6 +8,9 @@ import { WeightGoalInsightCard } from "../components/education/WeightGoalInsight
 import { Button } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
 import { PageHeading } from "../components/ui/PageHeading";
+import { EvolutionReportModal } from "../components/assessment/EvolutionReportModal";
+import { buildReportData } from "../lib/evolutionReport";
+import { getSupabaseClient } from "../services/supabaseClient";
 import { StatusBadge } from "../components/ui/StatusBadge";
 import { useAppContext } from "../context/AppContext";
 import { buildPvTrackingRecords, getPvProductStatusMeta } from "../data/mockPvModule";
@@ -97,7 +100,7 @@ function clearFollowUpDraft(clientId: string) {
 export function NewFollowUpPage() {
   const { clientId } = useParams();
   const navigate = useNavigate();
-  const { getClientById, addFollowUpAssessment, pvTransactions, pvClientProducts } = useAppContext();
+  const { currentUser, getClientById, addFollowUpAssessment, pvTransactions, pvClientProducts } = useAppContext();
   const client = clientId ? getClientById(clientId) : undefined;
 
   if (!client) {
@@ -132,6 +135,7 @@ export function NewFollowUpPage() {
   const [easyWin, setEasyWin] = useState("");
   const [attentionPoint, setAttentionPoint] = useState("");
   const [coachNote, setCoachNote] = useState("");
+  const [reportUrl, setReportUrl] = useState<string | null>(null);
   const [optionalProductsToggle, setOptionalProductsToggle] = useState(
     latest.questionnaire.optionalProductsUsed?.trim() ? "Oui" : "Non"
   );
@@ -287,6 +291,30 @@ export function NewFollowUpPage() {
     });
 
     clearFollowUpDraft(targetClient.id);
+
+    // Générer le rapport d'évolution si >= 2 assessments
+    try {
+      const updatedClient = getClientById(targetClient.id);
+      if (updatedClient && (updatedClient.assessments?.length ?? 0) >= 2 && currentUser) {
+        const reportData = buildReportData(updatedClient, currentUser.name ?? 'Coach');
+        if (reportData) {
+          const sb = await getSupabaseClient();
+          if (sb) {
+            await sb.from('client_evolution_reports').delete().eq('client_id', targetClient.id);
+            const { data: inserted } = await sb
+              .from('client_evolution_reports')
+              .insert(reportData)
+              .select('token')
+              .single();
+            if (inserted) {
+              setReportUrl(`${window.location.origin}/rapport/${inserted.token}`);
+              return; // Ne pas naviguer — afficher le modal
+            }
+          }
+        }
+      }
+    } catch { /* silently continue */ }
+
     navigate(`/clients/${targetClient.id}`);
   }
 
@@ -757,6 +785,17 @@ export function NewFollowUpPage() {
           </Card>
         </div>
       </div>
+
+      {reportUrl && (
+        <EvolutionReportModal
+          reportUrl={reportUrl}
+          clientName={`${targetClient.firstName} ${targetClient.lastName}`}
+          onClose={() => {
+            setReportUrl(null);
+            navigate(`/clients/${targetClient.id}`);
+          }}
+        />
+      )}
     </div>
   );
 }
