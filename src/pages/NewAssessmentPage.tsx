@@ -1277,6 +1277,21 @@ export function NewAssessmentPage() {
                   )}
                 </div>
               )}
+
+              {/* Jauges body scan */}
+              {form.weight > 0 && form.bodyFat > 0 && (
+                <BodyFatInsightCard
+                  current={{ weight: form.weight, percent: form.bodyFat }}
+                  objective={form.objective}
+                  sex={form.sex}
+                />
+              )}
+
+              {form.weight > 0 && form.muscleMass > 0 && (
+                <MuscleMassInsightCard
+                  current={{ weight: form.weight, muscleMass: form.muscleMass }}
+                />
+              )}
             </div>
           )}
 
