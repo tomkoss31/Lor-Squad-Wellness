@@ -93,6 +93,11 @@ const EvolutionReportPage = lazy(() =>
     default: module.EvolutionReportPage
   }))
 );
+const MessagesPage = lazy(() =>
+  import("./pages/MessagesPage").then((module) => ({
+    default: module.MessagesPage
+  }))
+);
 
 import { useTheme } from './hooks/useTheme'
 
@@ -114,6 +119,7 @@ export default function App() {
               <Route path="pv" element={<PvOverviewPage />} />
               <Route path="pv/clients" element={<PvClientsPage />} />
               <Route path="pv/orders" element={<PvOrdersPage />} />
+              <Route path="messages" element={<MessagesPage />} />
               <Route path="clients" element={<ClientsPage />} />
               <Route element={<RoleRoute allowedRoles={["admin"]} />}>
                 <Route path="users" element={<UsersPage />} />
