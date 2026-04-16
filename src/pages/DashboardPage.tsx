@@ -24,7 +24,7 @@ function greeting() {
 }
 
 export function DashboardPage() {
-  const { currentUser, users, clients, followUps, pvClientProducts, unreadMessageCount } = useAppContext()
+  const { currentUser, users, clients, followUps, pvClientProducts, unreadMessageCount, updateFollowUpStatus } = useAppContext()
   const [showPasswordNotice, setShowPasswordNotice] = useState(false)
 
   if (!currentUser) return null
@@ -132,11 +132,20 @@ export function DashboardPage() {
       {/* 3 Colonnes urgence */}
       <div className="dashboard-cols" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginTop: 16 }}>
         <UrgencyColumn title="Urgent" count={metrics.relanceFollowUps.length} color="#FB7185" icon={<IconUrgent />} items={relances} emptyLabel="Aucune relance en attente"
-          seeAllLink={`/distributors/${currentUser.id}`} seeAllCount={Math.max(0, metrics.relanceFollowUps.length - 4)} />
+          seeAllLink={`/distributors/${currentUser.id}`} seeAllCount={Math.max(0, metrics.relanceFollowUps.length - 4)}
+          onMarkContacted={(item) => void updateFollowUpStatus(item.id, 'completed')}
+          onDismiss={(item) => void updateFollowUpStatus(item.id, 'dismissed')}
+        />
         <UrgencyColumn title="Planifiés" count={metrics.scheduledFollowUps.length} color="#2DD4BF" icon={<IconPlanned />} items={planifies} emptyLabel="Aucun RDV planifié"
-          seeAllLink={`/distributors/${currentUser.id}`} seeAllCount={Math.max(0, metrics.scheduledFollowUps.length - 4)} />
+          seeAllLink={`/distributors/${currentUser.id}`} seeAllCount={Math.max(0, metrics.scheduledFollowUps.length - 4)}
+          onMarkContacted={(item) => void updateFollowUpStatus(item.id, 'completed')}
+          onDismiss={(item) => void updateFollowUpStatus(item.id, 'dismissed')}
+        />
         <UrgencyColumn title="À surveiller" count={metrics.clients.length} color="#A78BFA" icon={<IconWatch />} items={surveiller} emptyLabel="Aucun dossier à surveiller"
-          seeAllLink="/clients" seeAllCount={Math.max(0, metrics.clients.length - 4)} />
+          seeAllLink="/clients" seeAllCount={Math.max(0, metrics.clients.length - 4)}
+          onMarkContacted={(item) => void updateFollowUpStatus(item.id, 'completed')}
+          onDismiss={(item) => void updateFollowUpStatus(item.id, 'dismissed')}
+        />
       </div>
     </div>
   )

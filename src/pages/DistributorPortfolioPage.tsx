@@ -329,7 +329,7 @@ function FollowUpPanel({
     clientName: string;
     dueDate: string;
     type: string;
-    status: "scheduled" | "pending";
+    status: "scheduled" | "pending" | "completed" | "dismissed";
   }>;
 }) {
   return (

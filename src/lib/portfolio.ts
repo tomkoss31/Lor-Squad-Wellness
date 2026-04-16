@@ -133,7 +133,7 @@ function getClientFallbackLastAssessmentDate(client: Client) {
 
 export function getClientActiveFollowUp(client: Client, followUps: FollowUp[]) {
   const clientFollowUps = followUps
-    .filter((followUp) => followUp.clientId === client.id)
+    .filter((followUp) => followUp.clientId === client.id && followUp.status !== 'completed' && followUp.status !== 'dismissed')
     .sort((left, right) => compareByDateAsc(left.dueDate, right.dueDate));
   const normalizedClientDueDate = normalizeScheduleDateTime(client.nextFollowUp);
   const clientDateKey = getDateKey(normalizedClientDueDate);

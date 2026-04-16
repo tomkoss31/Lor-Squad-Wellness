@@ -144,7 +144,7 @@ export interface FollowUp {
   clientName: string;
   dueDate: string;
   type: string;
-  status: "scheduled" | "pending";
+  status: "scheduled" | "pending" | "completed" | "dismissed";
   programTitle: string;
   lastAssessmentDate: string;
 }

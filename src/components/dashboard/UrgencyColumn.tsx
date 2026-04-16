@@ -8,7 +8,7 @@ interface UrgencyItem {
   clientName: string
   type: string
   dueDate: string
-  status: 'pending' | 'scheduled'
+  status: 'pending' | 'scheduled' | 'completed' | 'dismissed'
   programTitle: string
 }
 
@@ -21,9 +21,11 @@ interface UrgencyColumnProps {
   emptyLabel: string
   seeAllLink?: string
   seeAllCount?: number
+  onMarkContacted?: (item: UrgencyItem) => void
+  onDismiss?: (item: UrgencyItem) => void
 }
 
-export function UrgencyColumn({ title, count, color, icon, items, emptyLabel, seeAllLink, seeAllCount }: UrgencyColumnProps) {
+export function UrgencyColumn({ title, count, color, icon, items, emptyLabel, seeAllLink, seeAllCount, onMarkContacted, onDismiss }: UrgencyColumnProps) {
   const initials = (name: string) => name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
   const urgencyKind =
     color === '#FB7185' || color === '#DC2626'
@@ -108,6 +110,24 @@ export function UrgencyColumn({ title, count, color, icon, items, emptyLabel, se
                 )
               })()}
             </div>
+            {/* Actions rapides */}
+            {(onMarkContacted || onDismiss) && (
+              <div style={{ display: 'flex', gap: 6, marginTop: 8, paddingTop: 8, borderTop: '1px solid var(--ls-border)' }}
+                onClick={e => e.preventDefault()}>
+                {onMarkContacted && (
+                  <button onClick={e => { e.preventDefault(); e.stopPropagation(); onMarkContacted(item) }}
+                    style={{ fontSize: 9, padding: '4px 10px', borderRadius: 6, border: 'none', background: 'rgba(13,148,136,0.1)', color: 'var(--ls-teal)', cursor: 'pointer', fontWeight: 600, fontFamily: 'DM Sans, sans-serif' }}>
+                    ✓ Contacté
+                  </button>
+                )}
+                {onDismiss && (
+                  <button onClick={e => { e.preventDefault(); e.stopPropagation(); onDismiss(item) }}
+                    style={{ fontSize: 9, padding: '4px 10px', borderRadius: 6, border: 'none', background: 'rgba(148,163,184,0.08)', color: 'var(--ls-text-hint)', cursor: 'pointer', fontFamily: 'DM Sans, sans-serif' }}>
+                    Sans suite
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         </Link>
       ))}
