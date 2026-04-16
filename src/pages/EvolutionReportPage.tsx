@@ -199,17 +199,28 @@ export function EvolutionReportPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {metrics.map((row, i) => (
+                      {metrics.map((row, i) => {
+                        const prev = i > 0 ? metrics[i - 1] : null
+                        // Color: green if improving, red if worsening, neutral otherwise
+                        const tc = (field: string, lower: boolean) => {
+                          if (!prev) return '#111827'
+                          const cur = Number(row[field]), p = Number(prev[field])
+                          if (cur === p) return '#111827'
+                          const better = lower ? cur < p : cur > p
+                          return better ? '#0D9488' : '#DC2626'
+                        }
+                        return (
                         <tr key={i} style={{ borderBottom: '1px solid rgba(0,0,0,0.05)', background: i % 2 === 0 ? '#FAFAF9' : '#FFFFFF' }}>
                           <td style={{ padding: '8px', color: '#6B7280', whiteSpace: 'nowrap' }}>{new Date(row.date as string).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: '2-digit' })}</td>
-                          <td style={{ padding: '8px', fontWeight: 600, color: '#111827' }}>{Number(row.weight).toFixed(1)}</td>
-                          <td style={{ padding: '8px', color: Number(row.bodyFat) > 25 ? '#DC2626' : '#111827' }}>{Number(row.bodyFat).toFixed(1)}%</td>
-                          <td style={{ padding: '8px', color: '#111827' }}>{Number(row.muscleMass).toFixed(1)}</td>
-                          <td style={{ padding: '8px', color: Number(row.hydration) < 50 ? '#DC2626' : '#111827' }}>{Number(row.hydration).toFixed(1)}%</td>
-                          <td style={{ padding: '8px', color: Number(row.visceralFat) >= 9 ? '#DC2626' : '#111827' }}>{row.visceralFat}</td>
+                          <td style={{ padding: '8px', fontWeight: 600, color: tc('weight', true) }}>{Number(row.weight).toFixed(1)}</td>
+                          <td style={{ padding: '8px', fontWeight: 600, color: tc('bodyFat', true) }}>{Number(row.bodyFat).toFixed(1)}%</td>
+                          <td style={{ padding: '8px', fontWeight: 600, color: tc('muscleMass', false) }}>{Number(row.muscleMass).toFixed(1)}</td>
+                          <td style={{ padding: '8px', fontWeight: 600, color: tc('hydration', false) }}>{Number(row.hydration).toFixed(1)}%</td>
+                          <td style={{ padding: '8px', fontWeight: 600, color: Number(row.visceralFat) >= 13 ? '#DC2626' : Number(row.visceralFat) >= 9 ? '#F59E0B' : '#0D9488' }}>{row.visceralFat}</td>
                           <td style={{ padding: '8px', color: '#111827' }}>{row.metabolicAge}</td>
                         </tr>
-                      ))}
+                        )
+                      })}
                     </tbody>
                   </table>
                 </div>
@@ -238,8 +249,17 @@ export function EvolutionReportPage() {
             {/* PRODUITS CONSEILLÉS */}
             {recommendations.length > 0 && (
               <div style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.07)', borderRadius: 14, padding: 16, marginBottom: 20 }}>
-                <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 14, color: '#111827', marginBottom: 4 }}>Produits conseillés</div>
-                <div style={{ fontSize: 11, color: '#9CA3AF', marginBottom: 14 }}>Sélectionnés selon tes derniers résultats</div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+                  <div>
+                    <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 14, color: '#111827', marginBottom: 4 }}>Produits conseillés</div>
+                    <div style={{ fontSize: 11, color: '#9CA3AF' }}>Sélectionnés selon tes derniers résultats</div>
+                  </div>
+                  <a href="https://www.myherbalife.com/fr-fr" target="_blank" rel="noopener noreferrer"
+                    style={{ display: 'flex', alignItems: 'center', gap: 5, background: '#0D9488', color: '#fff', borderRadius: 8, padding: '7px 12px', textDecoration: 'none', fontSize: 11, fontWeight: 600, flexShrink: 0 }}>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 3h18v18H3z" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
+                    Commander
+                  </a>
+                </div>
                 {recommendations.map((reco, i) => (
                   <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '10px 0', borderTop: i > 0 ? '1px solid rgba(0,0,0,0.06)' : 'none' }}>
                     <div style={{ width: 32, height: 32, borderRadius: 8, background: 'rgba(184,146,42,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
@@ -254,6 +274,20 @@ export function EvolutionReportPage() {
                     </div>
                   </div>
                 ))}
+                <div style={{ marginTop: 14, display: 'flex', gap: 8 }}>
+                  <a href="https://apps.apple.com/fr/app/herbalife-nutrition/id1460165497" target="_blank" rel="noopener noreferrer"
+                    style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '8px 0', borderRadius: 8, border: '1px solid rgba(0,0,0,0.08)', background: '#FAFAF9', color: '#6B7280', fontSize: 10, fontWeight: 500, textDecoration: 'none' }}>
+                    App Store
+                  </a>
+                  <a href="https://play.google.com/store/apps/details?id=com.herbalife.goshop" target="_blank" rel="noopener noreferrer"
+                    style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '8px 0', borderRadius: 8, border: '1px solid rgba(0,0,0,0.08)', background: '#FAFAF9', color: '#6B7280', fontSize: 10, fontWeight: 500, textDecoration: 'none' }}>
+                    Google Play
+                  </a>
+                  <a href="https://www.myherbalife.com/fr-fr" target="_blank" rel="noopener noreferrer"
+                    style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '8px 0', borderRadius: 8, border: '1px solid rgba(184,146,42,0.2)', background: 'rgba(184,146,42,0.06)', color: '#B8922A', fontSize: 10, fontWeight: 600, textDecoration: 'none' }}>
+                    MyHerbalife.com
+                  </a>
+                </div>
               </div>
             )}
 

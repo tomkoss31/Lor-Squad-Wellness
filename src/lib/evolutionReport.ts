@@ -40,6 +40,10 @@ export function generateInsights(
   const visceralDelta = latestScan.visceralFat - firstScan.visceralFat
   const ageDelta = latestScan.metabolicAge - firstScan.metabolicAge
 
+  const waterLiters = (latestScan.weight * 0.033).toFixed(1)
+  const proteinMin = Math.round(latestScan.weight * 1.2)
+  const proteinMax = Math.round(latestScan.weight * 1.8)
+
   const assessmentsCount = client.assessments?.length ?? 1
   const daysSinceStart = Math.floor(
     (new Date(latest.date).getTime() - new Date(first.date).getTime()) / 86400000
@@ -159,48 +163,107 @@ export function generateInsights(
     }
   }
 
-  return insights.slice(0, 6)
+  // REPÈRES PRATIQUES (toujours affiché)
+  insights.push({
+    type: 'neutral', icon: '🥤', title: 'Tes repères du jour',
+    message: `Objectif hydratation : ${waterLiters}L d'eau par jour. Protéines : ${proteinMin}-${proteinMax}g/jour pour maintenir ta masse musculaire (${latestScan.muscleMass.toFixed(1)} kg).`,
+  })
+
+  return insights.slice(0, 7)
 }
 
 // ─── RECOMMANDATIONS PRODUITS ────────────────────────────────────────────────
+
+export interface ProductRecommendation {
+  ref: string
+  name: string
+  reason: string
+  publicPrice: number
+  orderUrl?: string
+}
+
+const MYHERBALIFE_URL = 'https://www.myherbalife.com/fr-fr'
+const APP_STORE_URL = 'https://apps.apple.com/fr/app/herbalife-nutrition/id1460aborb'
+const PLAY_STORE_URL = 'https://play.google.com/store/apps/details?id=com.herbalife.goshop'
 
 export function generateProductRecommendations(
   latestScan: BodyScanMetrics,
   sex: string,
   objective: string
-): { ref: string; name: string; reason: string; publicPrice: number }[] {
-  const recos: { ref: string; name: string; reason: string; publicPrice: number }[] = []
+): ProductRecommendation[] {
+  const recos: ProductRecommendation[] = []
   const isFemale = sex === 'female'
   const bodyFatThreshold = isFemale ? 30 : 22
 
-  recos.push({ ref: '4466', name: 'Formula 1 Vanille', reason: 'Base du programme nutritionnel — repas équilibré et contrôle calorique', publicPrice: 63.50 })
-  recos.push({ ref: '488K', name: 'Créatine+', reason: isFemale ? 'Tonus musculaire et énergie cellulaire' : 'Force, puissance et maintien de la masse musculaire', publicPrice: 39.50 })
+  // Apport protéiné recommandé
+  const proteinMin = Math.round(latestScan.weight * 1.2)
+  const proteinMax = Math.round(latestScan.weight * 1.8)
+  // Besoin hydrique
+  const waterLiters = (latestScan.weight * 0.033).toFixed(1)
+
+  recos.push({
+    ref: '4466', name: 'Formula 1',
+    reason: `Shake repas complet — apport protéiné ciblé ${proteinMin}-${proteinMax}g/jour. Remplace un repas pour un contrôle calorique efficace.`,
+    publicPrice: 63.50, orderUrl: MYHERBALIFE_URL,
+  })
+
+  recos.push({
+    ref: '488K', name: 'Créatine+',
+    reason: isFemale
+      ? 'Tonus musculaire et énergie cellulaire — recommandé pour toutes les femmes actives'
+      : `Objectif masse musculaire (${latestScan.muscleMass.toFixed(1)} kg actuel) — maintien et renforcement`,
+    publicPrice: 39.50, orderUrl: MYHERBALIFE_URL,
+  })
 
   if (isFemale) {
-    recos.push({ ref: '0020', name: 'Xtra-Cal', reason: 'Calcium essentiel pour les femmes — os, articulations et prévention', publicPrice: 24.50 })
+    recos.push({
+      ref: '0020', name: 'Xtra-Cal',
+      reason: `Calcium + vitamine D — renforcement osseux (masse osseuse actuelle : ${latestScan.boneMass.toFixed(1)} kg)`,
+      publicPrice: 24.50, orderUrl: MYHERBALIFE_URL,
+    })
   }
 
   if (latestScan.hydration < 50) {
-    recos.push({ ref: '0006', name: 'Aloe Vera Concentré', reason: `Hydratation cellulaire insuffisante (${latestScan.hydration.toFixed(0)}%) — l'aloe vera améliore l'absorption et le transit`, publicPrice: 54.50 })
+    recos.push({
+      ref: '0006', name: 'Aloe Vera Concentré',
+      reason: `Hydratation à ${latestScan.hydration.toFixed(0)}% (objectif ≥ 50%). Boire ${waterLiters}L d'eau/jour + aloe vera pour améliorer l'absorption.`,
+      publicPrice: 54.50, orderUrl: MYHERBALIFE_URL,
+    })
   }
 
   if (latestScan.visceralFat >= 9) {
-    recos.push({ ref: '236K', name: 'Phyto Complete', reason: `Graisse viscérale à ${latestScan.visceralFat} — les extraits de plantes aident à réduire la graisse interne`, publicPrice: 90.00 })
+    recos.push({
+      ref: '236K', name: 'Phyto Complete',
+      reason: `Graisse viscérale à ${latestScan.visceralFat}/30 (seuil sain < 9). Les extraits de plantes aident à réduire la graisse interne.`,
+      publicPrice: 90.00, orderUrl: MYHERBALIFE_URL,
+    })
   }
 
   if (latestScan.bodyFat >= bodyFatThreshold) {
-    recos.push({ ref: '0267', name: 'Beta Heart', reason: `Masse grasse à ${latestScan.bodyFat.toFixed(1)}% — les bêta-glucanes agissent sur le cholestérol et la graisse corporelle`, publicPrice: 57.50 })
+    recos.push({
+      ref: '0267', name: 'Beta Heart',
+      reason: `Masse grasse à ${latestScan.bodyFat.toFixed(1)}% (cible < ${bodyFatThreshold}%). Bêta-glucanes pour agir sur le cholestérol et la graisse corporelle.`,
+      publicPrice: 57.50, orderUrl: MYHERBALIFE_URL,
+    })
   }
 
   if (latestScan.boneMass && latestScan.weight) {
     const ratio = (latestScan.boneMass / latestScan.weight) * 100
     if (ratio < 4.0 && !isFemale) {
-      recos.push({ ref: '0020', name: 'Xtra-Cal', reason: `Masse osseuse faible (${ratio.toFixed(1)}% du poids) — calcium et vitamine D`, publicPrice: 24.50 })
+      recos.push({
+        ref: '0020', name: 'Xtra-Cal',
+        reason: `Masse osseuse faible (${ratio.toFixed(1)}% du poids, objectif ≥ 4%). Calcium et vitamine D essentiels.`,
+        publicPrice: 24.50, orderUrl: MYHERBALIFE_URL,
+      })
     }
   }
 
   if (objective?.includes('poids') || objective?.includes('weight')) {
-    recos.push({ ref: '178K', name: 'Thé Concentré Original', reason: 'Booster thermogénique — complément naturel à la perte de poids', publicPrice: 41.00 })
+    recos.push({
+      ref: '178K', name: 'Thé Concentré',
+      reason: `Booster thermogénique naturel — complément à la perte de poids. Boire ${waterLiters}L d'eau minimum par jour.`,
+      publicPrice: 41.00, orderUrl: MYHERBALIFE_URL,
+    })
   }
 
   const seen = new Set<string>()
@@ -208,7 +271,13 @@ export function generateProductRecommendations(
     if (seen.has(r.ref)) return false
     seen.add(r.ref)
     return true
-  }).slice(0, 5)
+  }).slice(0, 6)
+}
+
+export const ORDER_LINKS = {
+  myherbalife: MYHERBALIFE_URL,
+  appStore: APP_STORE_URL,
+  playStore: PLAY_STORE_URL,
 }
 
 // ─── BUILD REPORT DATA ──────────────────────────────────────────────────────
