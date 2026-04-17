@@ -6,6 +6,7 @@ on:
 
 permissions:
   contents: write
+  issues: write
 
 jobs:
   backup:
@@ -34,3 +35,32 @@ jobs:
           git add -f backups/
           git diff --staged --quiet || git commit -m "backup: $(date +%Y-%m-%d)"
           git push
+
+      - name: Récap hebdo (dimanche) → crée une issue GitHub
+        if: github.event_name == 'schedule'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Ne s'exécute que le dimanche (jour 7)
+          if [ "$(date -u +%u)" = "7" ]; then
+            DATE=$(date -u +%Y-%m-%d)
+            MANIFEST="backups/$DATE/manifest.json"
+            if [ -f "$MANIFEST" ]; then
+              TOTAL=$(jq -r '.total' "$MANIFEST")
+              DETAILS=$(jq -r '.tables | to_entries | map("- **\(.key)** : \(.value) enregistrements") | join("\n")' "$MANIFEST")
+              gh issue create \
+                --title "📊 Récap backup Lor'Squad — $DATE" \
+                --body "## ✅ Sauvegarde hebdomadaire OK
+
+          **Total sauvegardé aujourd'hui : $TOTAL enregistrements**
+
+          $DETAILS
+
+          ---
+
+          📂 [Voir les sauvegardes](../tree/main/backups)
+          📖 [Guide de restauration](../blob/main/backups/README.md)
+
+          Si tu reçois cet email, ta sauvegarde tourne normalement. ✨"
+            fi
+          fi
