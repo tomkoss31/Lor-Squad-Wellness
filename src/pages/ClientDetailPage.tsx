@@ -88,15 +88,19 @@ export function ClientDetailPage() {
     try {
       const sb = await getSupabaseClient();
       if (!sb) return;
+      // Récupérer les infos du coach (téléphone, whatsapp) depuis users si dispo
+      const coachUser = users.find(u => u.id === currentUser.id);
       const { data, error } = await sb
         .from('client_app_accounts')
         .upsert(
           {
             client_id: client.id,
+            client_first_name: client.firstName,
+            client_last_name: client.lastName,
             coach_id: currentUser.id,
             coach_name: currentUser.name ?? 'Coach',
-            coach_whatsapp: client.phone ?? '',
-            coach_phone: client.phone ?? '',
+            coach_whatsapp: (coachUser as unknown as { phone?: string })?.phone ?? '',
+            coach_phone: (coachUser as unknown as { phone?: string })?.phone ?? '',
           },
           { onConflict: 'client_id' }
         )

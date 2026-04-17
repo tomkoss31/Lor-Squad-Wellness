@@ -75,22 +75,55 @@ export function ClientAppPage() {
         return
       }
 
-      // Chercher d'abord dans client_recaps (données riches)
-      const { data: recap } = await sb
-        .from('client_recaps')
+      // 1. Chercher le compte app (contient infos coach + nom client)
+      const { data: appAccount } = await sb
+        .from('client_app_accounts')
         .select('*')
         .eq('token', token)
         .maybeSingle()
 
-      if (recap) {
-        setData(recap as ClientAppData)
-      } else {
-        const { data: appAccount } = await sb
-          .from('client_app_accounts')
+      // 2. Chercher le dernier recap du même client (données riches : metrics, insights…)
+      let recap: Record<string, unknown> | null = null
+      if (appAccount?.client_id) {
+        const { data: recapRow } = await sb
+          .from('client_recaps')
+          .select('*')
+          .eq('client_id', appAccount.client_id)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle()
+        recap = recapRow
+      }
+
+      // 3. Fallback : token direct sur un recap (ancien lien de récap)
+      if (!appAccount && !recap) {
+        const { data: recapByToken } = await sb
+          .from('client_recaps')
           .select('*')
           .eq('token', token)
           .maybeSingle()
-        if (appAccount) setData(appAccount as ClientAppData)
+        if (recapByToken) recap = recapByToken
+      }
+
+      if (appAccount || recap) {
+        // Fusion : recap prioritaire pour données riches, app_account prioritaire pour infos coach
+        const merged: ClientAppData = {
+          ...(recap ?? {}),
+          ...(appAccount ?? {}),
+          // Coach info : privilégier appAccount car à jour
+          coach_name: appAccount?.coach_name ?? (recap as any)?.coach_name ?? 'Coach',
+          coach_whatsapp: appAccount?.coach_whatsapp ?? (recap as any)?.coach_whatsapp,
+          coach_telegram: appAccount?.coach_telegram ?? (recap as any)?.coach_telegram,
+          coach_phone: appAccount?.coach_phone ?? (recap as any)?.coach_phone,
+          // Données riches : depuis le recap uniquement
+          metrics_history: (recap as any)?.metrics_history,
+          insights: (recap as any)?.insights,
+          recommendations: (recap as any)?.recommendations,
+          program_title: (recap as any)?.program_title,
+          assessments_count: (recap as any)?.assessments_count,
+          next_follow_up: (recap as any)?.next_follow_up,
+        } as ClientAppData
+        setData(merged)
       }
     } catch {
       // silencieux
@@ -182,10 +215,14 @@ export function ClientAppPage() {
     return good ? '#0D9488' : '#DC2626'
   }
 
-  const recommendedRefs = (data.recommendations ?? []).map((r) => r.ref).filter(Boolean) as string[]
-  const recommendedProducts = HERBALIFE_PRODUCTS.filter((p) => recommendedRefs.includes(p.ref))
+  // Match par ref OU par nom (les recaps stockent souvent juste { name, shortBenefit })
+  const recoList = data.recommendations ?? []
+  const recommendedProducts = HERBALIFE_PRODUCTS.filter((p) =>
+    recoList.some((r) => (r.ref && r.ref === p.ref) || (r.name && (r.name === p.name || r.name === p.shortName)))
+  )
+  const recommendedRefs = new Set(recommendedProducts.map((p) => p.ref))
   const otherProducts = HERBALIFE_PRODUCTS.filter(
-    (p) => !recommendedRefs.includes(p.ref) && ['formula1', 'boissons', 'proteines'].includes(p.category)
+    (p) => !recommendedRefs.has(p.ref) && ['formula1', 'boissons', 'proteines'].includes(p.category)
   ).slice(0, 6)
 
   return (
