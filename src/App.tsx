@@ -2,6 +2,7 @@ import { Suspense, lazy } from "react";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { ProtectedRoute, PublicRoute, RoleRoute } from "./components/auth/RouteGuards";
 import { AppLayout } from "./components/layout/AppLayout";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 
 const DashboardPage = lazy(() =>
   import("./pages/DashboardPage").then((module) => ({
@@ -113,6 +114,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <Suspense fallback={<RouteLoadingScreen />}>
+        <ErrorBoundary>
         <Routes>
           <Route element={<PublicRoute />}>
             <Route path="/login" element={<LoginPage />} />
@@ -150,6 +152,7 @@ export default function App() {
           <Route path="/client/:token" element={<ClientAppPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+        </ErrorBoundary>
       </Suspense>
     </BrowserRouter>
   );
