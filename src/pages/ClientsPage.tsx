@@ -156,7 +156,37 @@ export function ClientsPage() {
 
         <div className="space-y-3">
           <p className="eyebrow-label">Responsables du dossier</p>
-          <div className="flex gap-3 overflow-x-auto pb-1 flex-nowrap" style={{ scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' } as React.CSSProperties}>
+
+          {/* Mobile — select natif */}
+          <select
+            className="md:hidden"
+            value={ownerFilter}
+            onChange={(e) => setOwnerFilter(e.target.value)}
+            style={{
+              width: '100%', padding: '12px 14px', borderRadius: 12,
+              border: '1px solid var(--ls-border)', background: 'var(--ls-surface2)',
+              color: 'var(--ls-text)', fontSize: 16, fontFamily: 'DM Sans, sans-serif',
+              outline: 'none', appearance: 'none',
+              backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239CA3AF' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E\")",
+              backgroundRepeat: 'no-repeat', backgroundPosition: 'right 14px center', paddingRight: 38,
+            }}
+          >
+            <option value="all">Toute la base ({visibleClients.length} dossiers)</option>
+            {ownerTabs.map((user) => {
+              const metrics = getPortfolioMetrics(
+                user, visibleClients, visibleFollowUps, users,
+                user.role === "referent" ? "network" : "personal"
+              );
+              return (
+                <option key={user.id} value={user.id}>
+                  {user.name} — {metrics.clients.length} clients, {metrics.relanceFollowUps.length} relances
+                </option>
+              );
+            })}
+          </select>
+
+          {/* Desktop — cards horizontales */}
+          <div className="hidden md:flex gap-3 overflow-x-auto pb-1 flex-nowrap" style={{ scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' } as React.CSSProperties}>
             <button
               type="button"
               onClick={() => setOwnerFilter("all")}

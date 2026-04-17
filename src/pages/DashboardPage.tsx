@@ -23,11 +23,59 @@ function greeting() {
   return 'Bonsoir'
 }
 
+interface ClientReferral {
+  id: string
+  from_client_name: string
+  referred_name: string
+  referred_contact: string
+  created_at: string
+}
+
+interface RdvChangeRequest {
+  id: string
+  client_name: string
+  current_rdv?: string
+  message: string
+  created_at: string
+}
+
 export function DashboardPage() {
   const { currentUser, users, clients, followUps, pvClientProducts, unreadMessageCount, updateFollowUpStatus, updateClientSchedule } = useAppContext()
   const [showPasswordNotice, setShowPasswordNotice] = useState(false)
+  const [newLeads, setNewLeads] = useState<ClientReferral[]>([])
+  const [rdvRequests, setRdvRequests] = useState<RdvChangeRequest[]>([])
 
   if (!currentUser) return null
+
+  useEffect(() => {
+    void (async () => {
+      const { getSupabaseClient } = await import('../services/supabaseClient')
+      const sb = await getSupabaseClient()
+      if (!sb) return
+      const [{ data: leads }, { data: requests }] = await Promise.all([
+        sb.from('client_referrals').select('*').eq('coach_id', currentUser.id).eq('status', 'new').order('created_at', { ascending: false }).limit(5),
+        sb.from('rdv_change_requests').select('*').eq('coach_id', currentUser.id).eq('status', 'pending').order('created_at', { ascending: false }).limit(5),
+      ])
+      if (leads) setNewLeads(leads as ClientReferral[])
+      if (requests) setRdvRequests(requests as RdvChangeRequest[])
+    })()
+  }, [currentUser.id])
+
+  async function markLeadTreated(id: string) {
+    const { getSupabaseClient } = await import('../services/supabaseClient')
+    const sb = await getSupabaseClient()
+    if (!sb) return
+    await sb.from('client_referrals').update({ status: 'treated' }).eq('id', id)
+    setNewLeads(prev => prev.filter(l => l.id !== id))
+  }
+
+  async function markRdvRequestTreated(id: string) {
+    const { getSupabaseClient } = await import('../services/supabaseClient')
+    const sb = await getSupabaseClient()
+    if (!sb) return
+    await sb.from('rdv_change_requests').update({ status: 'treated' }).eq('id', id)
+    setRdvRequests(prev => prev.filter(r => r.id !== id))
+  }
 
   useEffect(() => {
     if (currentUser.role === "admin" || typeof window === "undefined") { setShowPasswordNotice(false); return }
@@ -128,6 +176,61 @@ export function DashboardPage() {
 
       {/* PV Alerts */}
       {pvAlerts.length > 0 && <PvDismissAlert clients={pvAlerts} />}
+
+      {/* Nouveaux leads recommandés par les clients */}
+      {newLeads.length > 0 && (
+        <div style={{ background: 'var(--ls-surface)', border: '1px solid rgba(184,146,42,0.2)', borderLeft: '3px solid #B8922A', borderRadius: '0 12px 12px 0', padding: 14, marginTop: 12 }}>
+          <div style={{ fontSize: 11, fontWeight: 600, color: '#B8922A', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: 10 }}>
+            Nouveaux leads · {newLeads.length}
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {newLeads.map(lead => (
+              <div key={lead.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', background: 'var(--ls-surface2)', borderRadius: 10 }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--ls-text)' }}>{lead.referred_name}</div>
+                  <div style={{ fontSize: 11, color: 'var(--ls-text-muted)', marginTop: 2 }}>
+                    {lead.referred_contact} · recommandé par {lead.from_client_name}
+                  </div>
+                </div>
+                <button onClick={() => void markLeadTreated(lead.id)}
+                  style={{ padding: '6px 12px', borderRadius: 7, border: 'none', background: 'rgba(184,146,42,0.12)', color: '#B8922A', fontSize: 11, fontWeight: 600, cursor: 'pointer', flexShrink: 0 }}>
+                  Traité
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Demandes de modification RDV */}
+      {rdvRequests.length > 0 && (
+        <div style={{ background: 'var(--ls-surface)', border: '1px solid rgba(13,148,136,0.2)', borderLeft: '3px solid #0D9488', borderRadius: '0 12px 12px 0', padding: 14, marginTop: 12 }}>
+          <div style={{ fontSize: 11, fontWeight: 600, color: '#0D9488', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: 10 }}>
+            Demandes de modification RDV · {rdvRequests.length}
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {rdvRequests.map(req => (
+              <div key={req.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '10px 12px', background: 'var(--ls-surface2)', borderRadius: 10 }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--ls-text)' }}>{req.client_name}</div>
+                  {req.current_rdv && (
+                    <div style={{ fontSize: 10, color: 'var(--ls-text-hint)', marginTop: 2 }}>
+                      RDV actuel : {new Date(req.current_rdv).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                    </div>
+                  )}
+                  <div style={{ fontSize: 12, color: 'var(--ls-text-muted)', marginTop: 4, lineHeight: 1.5 }}>
+                    « {req.message} »
+                  </div>
+                </div>
+                <button onClick={() => void markRdvRequestTreated(req.id)}
+                  style={{ padding: '6px 12px', borderRadius: 7, border: 'none', background: 'rgba(13,148,136,0.12)', color: '#0D9488', fontSize: 11, fontWeight: 600, cursor: 'pointer', flexShrink: 0 }}>
+                  Traité
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* 3 Colonnes urgence */}
       <div className="dashboard-cols" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginTop: 16 }}>

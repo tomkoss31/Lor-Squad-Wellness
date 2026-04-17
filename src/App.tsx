@@ -93,6 +93,11 @@ const EvolutionReportPage = lazy(() =>
     default: module.EvolutionReportPage
   }))
 );
+const ClientAppPage = lazy(() =>
+  import("./pages/ClientAppPage").then((module) => ({
+    default: module.ClientAppPage
+  }))
+);
 const MessagesPage = lazy(() =>
   import("./pages/MessagesPage").then((module) => ({
     default: module.MessagesPage
@@ -142,6 +147,7 @@ export default function App() {
           {/* Routes publiques — récap + rapport évolution */}
           <Route path="/recap/:token" element={<RecapPage />} />
           <Route path="/rapport/:token" element={<EvolutionReportPage />} />
+          <Route path="/client/:token" element={<ClientAppPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Suspense>

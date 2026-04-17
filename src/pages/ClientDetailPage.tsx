@@ -77,7 +77,42 @@ export function ClientDetailPage() {
   const [editEmail, setEditEmail] = useState(client.email);
   const [editCity, setEditCity] = useState(client.city ?? '');
   const [editSaved, setEditSaved] = useState(false);
+  const [clientAppUrl, setClientAppUrl] = useState<string | null>(null);
+  const [creatingClientApp, setCreatingClientApp] = useState(false);
+  const [clientAppCopied, setClientAppCopied] = useState(false);
   const activeFollowUp = getClientActiveFollowUp(currentClient, followUps);
+
+  async function createClientAppAccount() {
+    if (!client || !currentUser) return;
+    setCreatingClientApp(true);
+    try {
+      const sb = await getSupabaseClient();
+      if (!sb) return;
+      // Récupérer les infos du coach (téléphone, whatsapp) depuis users si dispo
+      const coachUser = users.find(u => u.id === currentUser.id);
+      const { data, error } = await sb
+        .from('client_app_accounts')
+        .upsert(
+          {
+            client_id: client.id,
+            client_first_name: client.firstName,
+            client_last_name: client.lastName,
+            coach_id: currentUser.id,
+            coach_name: currentUser.name ?? 'Coach',
+            coach_whatsapp: (coachUser as unknown as { phone?: string })?.phone ?? '',
+            coach_phone: (coachUser as unknown as { phone?: string })?.phone ?? '',
+          },
+          { onConflict: 'client_id' }
+        )
+        .select('token')
+        .single();
+      if (!error && data) {
+        setClientAppUrl(`${window.location.origin}/client/${data.token}`);
+      }
+    } finally {
+      setCreatingClientApp(false);
+    }
+  }
 
   async function generateReport() {
     if (!client || !currentUser) return;
@@ -874,6 +909,49 @@ export function ClientDetailPage() {
                 label="Ouvrir la fiche point volume"
                 hint="Visualiser les commandes et le suivi produits"
               />
+              {/* Accès app client (PWA) */}
+              <div style={{ padding: '14px 16px', borderRadius: 12, background: 'var(--ls-surface2)', border: '1px solid var(--ls-border)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: clientAppUrl ? 10 : 0 }}>
+                  <div style={{ width: 3, minHeight: 36, background: '#B8922A', borderRadius: 3, flexShrink: 0 }} />
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--ls-text)' }}>Créer l'accès app client</div>
+                    <div style={{ fontSize: 12, color: 'var(--ls-text-muted)', marginTop: 2 }}>
+                      Lien à partager au client — installable sur iPhone
+                    </div>
+                  </div>
+                  {!clientAppUrl && (
+                    <button type="button" onClick={() => void createClientAppAccount()} disabled={creatingClientApp}
+                      style={{ padding: '8px 14px', borderRadius: 8, border: 'none', background: '#B8922A', color: '#fff', fontSize: 12, fontWeight: 600, cursor: creatingClientApp ? 'wait' : 'pointer', flexShrink: 0 }}>
+                      {creatingClientApp ? 'Création...' : 'Créer'}
+                    </button>
+                  )}
+                </div>
+                {clientAppUrl && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    <div style={{ fontSize: 11, color: 'var(--ls-text-muted)', padding: '8px 10px', background: 'var(--ls-surface)', border: '1px solid var(--ls-border)', borderRadius: 8, wordBreak: 'break-all', fontFamily: 'monospace' }}>
+                      {clientAppUrl}
+                    </div>
+                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                      <button type="button" onClick={() => {
+                        void navigator.clipboard.writeText(clientAppUrl);
+                        setClientAppCopied(true);
+                        setTimeout(() => setClientAppCopied(false), 2000);
+                      }} style={{ padding: '7px 12px', borderRadius: 8, border: '1px solid var(--ls-border)', background: 'var(--ls-surface)', color: 'var(--ls-text)', fontSize: 11, fontWeight: 500, cursor: 'pointer' }}>
+                        {clientAppCopied ? '✓ Copié' : 'Copier le lien'}
+                      </button>
+                      <a href={`https://wa.me/?text=${encodeURIComponent(`Ton espace Lor'Squad Wellness ✦\n${clientAppUrl}`)}`} target="_blank" rel="noopener noreferrer"
+                        style={{ padding: '7px 12px', borderRadius: 8, background: 'rgba(37,211,102,0.1)', color: '#16A34A', fontSize: 11, fontWeight: 600, textDecoration: 'none' }}>
+                        Partager WhatsApp
+                      </a>
+                      <a href={`sms:?body=${encodeURIComponent(`Ton espace Lor'Squad : ${clientAppUrl}`)}`}
+                        style={{ padding: '7px 12px', borderRadius: 8, background: 'var(--ls-surface)', border: '1px solid var(--ls-border)', color: 'var(--ls-text-muted)', fontSize: 11, fontWeight: 500, textDecoration: 'none' }}>
+                        SMS
+                      </a>
+                    </div>
+                  </div>
+                )}
+              </div>
+
               {activeFollowUp && (
                 <a
                   href={createGoogleCalendarLink({

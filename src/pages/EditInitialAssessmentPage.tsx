@@ -6,6 +6,7 @@ import { PageHeading } from "../components/ui/PageHeading";
 import { StatusBadge } from "../components/ui/StatusBadge";
 import { useAppContext } from "../context/AppContext";
 import { getFirstAssessment, normalizeDateTimeLocalInputValue } from "../lib/calculations";
+import { pvProductCatalog } from "../data/mockPvModule";
 import type { AssessmentQuestionnaire, AssessmentRecord } from "../types/domain";
 
 const timelineOptions = [
@@ -506,6 +507,50 @@ export function EditInitialAssessmentPage() {
               <AreaField label="Blocage principal" value={questionnaire.mainBlocker} onChange={(value) => updateQuestionnaire("mainBlocker", value)} rows={3} />
               <AreaField label="Produits optionnels déjà pris" value={questionnaire.optionalProductsUsed ?? ""} onChange={(value) => updateQuestionnaire("optionalProductsUsed", value)} rows={3} />
             </div>
+          </SectionCard>
+
+          <SectionCard
+            title="Produits recommandés"
+            description="Ajoute ou retire des produits du programme de ce bilan."
+          >
+            <div className="grid gap-2 md:grid-cols-2">
+              {pvProductCatalog.filter((p) => p.active).map((product) => {
+                const selected = (questionnaire.selectedProductIds ?? []).includes(product.id);
+                return (
+                  <button
+                    key={product.id}
+                    type="button"
+                    onClick={() => {
+                      const current = questionnaire.selectedProductIds ?? [];
+                      const next = current.includes(product.id)
+                        ? current.filter((id) => id !== product.id)
+                        : [...current, product.id];
+                      updateQuestionnaire("selectedProductIds", next);
+                    }}
+                    className={`flex items-center justify-between gap-3 rounded-[14px] border px-3 py-2.5 text-left transition ${
+                      selected
+                        ? "border-[rgba(45,212,191,0.35)] bg-[rgba(45,212,191,0.1)]"
+                        : "border-white/10 bg-[var(--ls-surface2)] hover:border-white/20"
+                    }`}
+                  >
+                    <div className="min-w-0 flex-1">
+                      <div className="text-sm font-medium text-[var(--ls-text)] truncate">{product.name}</div>
+                      <div className="text-xs text-[var(--ls-text-hint)]">{product.category} · {product.pv} PV</div>
+                    </div>
+                    <div
+                      className={`flex-shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${
+                        selected ? "bg-[var(--ls-teal)] text-white" : "bg-[var(--ls-surface)] text-[var(--ls-text-muted)]"
+                      }`}
+                    >
+                      {selected ? "✓ Ajouté" : "+ Ajouter"}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+            <p className="mt-3 text-xs text-[var(--ls-text-muted)]">
+              {(questionnaire.selectedProductIds ?? []).length} produit(s) sélectionné(s)
+            </p>
           </SectionCard>
 
           <div className="space-y-2">

@@ -30,7 +30,32 @@ const TABLES = [
   'client_evolution_reports',
   'client_messages',
   'push_subscriptions',
+  'client_app_accounts',
+  'client_referrals',
+  'rdv_change_requests',
 ]
+
+/** Convertit un tableau d'objets en CSV (échappe quotes, commas, newlines) */
+function toCsv(rows: Record<string, unknown>[]): string {
+  if (!rows.length) return ''
+  const headers = Array.from(
+    rows.reduce((set, row) => {
+      Object.keys(row).forEach((k) => set.add(k))
+      return set
+    }, new Set<string>())
+  )
+  const escape = (v: unknown): string => {
+    if (v === null || v === undefined) return ''
+    const s = typeof v === 'object' ? JSON.stringify(v) : String(v)
+    if (/[",\n\r]/.test(s)) return `"${s.replace(/"/g, '""')}"`
+    return s
+  }
+  const lines = [headers.join(',')]
+  for (const row of rows) {
+    lines.push(headers.map((h) => escape((row as Record<string, unknown>)[h])).join(','))
+  }
+  return lines.join('\n')
+}
 
 async function backup() {
   const timestamp = new Date().toISOString().split('T')[0]
@@ -51,8 +76,10 @@ async function backup() {
         manifest[table] = -1
         continue
       }
-      const filePath = path.join(backupDir, `${table}.json`)
-      fs.writeFileSync(filePath, JSON.stringify(data, null, 2))
+      // JSON (format restore)
+      fs.writeFileSync(path.join(backupDir, `${table}.json`), JSON.stringify(data, null, 2))
+      // CSV (format Excel / humain)
+      fs.writeFileSync(path.join(backupDir, `${table}.csv`), toCsv((data ?? []) as Record<string, unknown>[]))
       manifest[table] = data?.length ?? 0
       console.log(`  ✓ ${table} — ${data?.length ?? 0} enregistrements`)
     } catch (err) {

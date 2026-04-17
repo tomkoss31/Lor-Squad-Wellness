@@ -204,7 +204,36 @@ export function PvOverviewPage() {
         {isAdmin ? (
           <div className="space-y-3">
             <p className="text-sm font-medium text-[var(--ls-text-muted)]">Portefeuilles</p>
-            <div className="flex flex-wrap gap-2">
+
+            {/* Mobile — select natif */}
+            <select
+              className="md:hidden"
+              value={responsibleFilter}
+              onChange={(e) => handleResponsibleChange(e.target.value)}
+              style={{
+                width: '100%', padding: '12px 14px', borderRadius: 12,
+                border: '1px solid var(--ls-border)', background: 'var(--ls-surface2)',
+                color: 'var(--ls-text)', fontSize: 16, fontFamily: 'DM Sans, sans-serif',
+                outline: 'none', appearance: 'none',
+                backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239CA3AF' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E\")",
+                backgroundRepeat: 'no-repeat', backgroundPosition: 'right 14px center', paddingRight: 38,
+              }}
+            >
+              {records.some((r) => r.responsibleId === currentUser.id) && (
+                <option value={currentUser.id}>
+                  Mon portefeuille ({records.filter((r) => r.responsibleId === currentUser.id).length})
+                </option>
+              )}
+              {responsibleOptions.filter((o) => o.id !== currentUser.id).map((option) => (
+                <option key={option.id} value={option.id}>
+                  {formatPortfolioTabLabel(option.name)} ({records.filter((r) => r.responsibleId === option.id).length})
+                </option>
+              ))}
+              <option value="all">Tous ({records.length})</option>
+            </select>
+
+            {/* Desktop — chips */}
+            <div className="hidden md:flex flex-wrap gap-2">
               {records.some((record) => record.responsibleId === currentUser.id) ? (
                 <ResponsibleFilterChip
                   label="Mon portefeuille"
