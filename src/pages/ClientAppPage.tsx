@@ -192,6 +192,8 @@ export function ClientAppPage() {
   const [referSent, setReferSent] = useState(false)
   const [rdvMessage, setRdvMessage] = useState('')
   const [rdvSent, setRdvSent] = useState(false)
+  const [openCategory, setOpenCategory] = useState<string | null>(null)
+  const [showInstallPrompt, setShowInstallPrompt] = useState(false)
 
   useEffect(() => {
     if (typeof document !== 'undefined') {
@@ -214,6 +216,19 @@ export function ClientAppPage() {
     void loadClientData()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token])
+
+  // Détection iOS Safari pour proposer l'installation PWA
+  useEffect(() => {
+    if (typeof window === 'undefined' || typeof navigator === 'undefined') return
+    const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent)
+    const isInStandaloneMode = window.matchMedia?.('(display-mode: standalone)').matches
+      || (navigator as unknown as { standalone?: boolean }).standalone === true
+    const alreadyDismissed = window.localStorage?.getItem('lor-install-dismissed')
+    if (isIOS && !isInStandaloneMode && !alreadyDismissed) {
+      const timer = setTimeout(() => setShowInstallPrompt(true), 2000)
+      return () => clearTimeout(timer)
+    }
+  }, [])
 
   function normalizeData(row: Record<string, unknown>): ClientAppData {
     const r = row as Record<string, any>
@@ -662,7 +677,7 @@ export function ClientAppPage() {
         {/* ══════════════════════════════════════════════════════════════ */}
         {activeTab === 'products' && (
           <div style={{ display: 'flex', flexDirection: 'column' }}>
-            {/* Recommandés pour toi */}
+            {/* Recommandés pour toi (reste toujours visible en haut) */}
             {recommendedProducts.length > 0 && (
               <div style={{ marginBottom: 16 }}>
                 <div style={{ fontSize: 9, letterSpacing: '2px', textTransform: 'uppercase', color: '#B8922A', fontWeight: 600, marginBottom: 10 }}>
@@ -674,18 +689,36 @@ export function ClientAppPage() {
               </div>
             )}
 
-            {/* Par catégorie */}
+            {/* Accordéon par catégorie */}
             {CATEGORY_DISPLAY.map(({ key, label }) => {
               const products = HERBALIFE_PRODUCTS.filter((p) => p.category === key && !recommendedRefs.has(p.ref))
               if (products.length === 0) return null
+              const isOpen = openCategory === key
               return (
-                <div key={key} style={{ marginBottom: 16 }}>
-                  <div style={{ fontSize: 9, letterSpacing: '2px', textTransform: 'uppercase', color: '#9CA3AF', fontWeight: 500, marginBottom: 10 }}>
-                    {label}
-                  </div>
-                  {products.map((product) => (
-                    <ProductCard key={product.ref} product={product} isRecommended={false} coachWhatsapp={data.coach_whatsapp} />
-                  ))}
+                <div key={key} style={{ marginBottom: 8 }}>
+                  <button
+                    onClick={() => setOpenCategory(isOpen ? null : key)}
+                    style={{
+                      width: '100%', display: 'flex', alignItems: 'center',
+                      justifyContent: 'space-between', padding: '14px 16px',
+                      background: '#fff', border: '1px solid rgba(0,0,0,0.07)',
+                      borderRadius: isOpen ? '12px 12px 0 0' : 12,
+                      fontSize: 14, fontWeight: 600, color: '#111827',
+                      fontFamily: 'Syne, sans-serif', cursor: 'pointer',
+                    }}
+                  >
+                    <span>{label} <span style={{ fontSize: 11, color: '#9CA3AF', fontWeight: 400, fontFamily: 'DM Sans, sans-serif', marginLeft: 6 }}>· {products.length}</span></span>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth="2">
+                      {isOpen ? <polyline points="18 15 12 9 6 15" /> : <polyline points="6 9 12 15 18 9" />}
+                    </svg>
+                  </button>
+                  {isOpen && (
+                    <div style={{ border: '1px solid rgba(0,0,0,0.07)', borderTop: 'none', borderRadius: '0 0 12px 12px', padding: 10, background: '#fafaf9' }}>
+                      {products.map((product) => (
+                        <ProductCard key={product.ref} product={product} isRecommended={false} coachWhatsapp={data.coach_whatsapp} />
+                      ))}
+                    </div>
+                  )}
                 </div>
               )
             })}
@@ -726,6 +759,78 @@ export function ClientAppPage() {
           </div>
         )}
       </div>
+
+      {/* POPUP INSTALL PWA iOS */}
+      {showInstallPrompt && (
+        <div style={{
+          position: 'fixed', bottom: 90, left: 12, right: 12,
+          background: '#111827', borderRadius: 16, padding: 18,
+          zIndex: 200, boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div style={{ width: 36, height: 36, background: '#B8922A', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="#fff">
+                  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                </svg>
+              </div>
+              <div>
+                <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 14, color: '#fff' }}>Installer l'app</div>
+                <div style={{ fontSize: 11, color: '#9CA3AF' }}>Lor'Squad Wellness</div>
+              </div>
+            </div>
+            <button
+              onClick={() => {
+                setShowInstallPrompt(false)
+                try { window.localStorage.setItem('lor-install-dismissed', '1') } catch { /* ignore */ }
+              }}
+              style={{ background: 'none', border: 'none', color: '#9CA3AF', fontSize: 20, cursor: 'pointer', padding: 4, lineHeight: 1 }}
+              aria-label="Fermer"
+            >×</button>
+          </div>
+
+          <div style={{ fontSize: 12, color: '#D1D5DB', lineHeight: 1.7, marginBottom: 14 }}>
+            Ajoute cette app sur ton écran d'accueil pour y accéder rapidement, même sans internet.
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(255,255,255,0.06)', borderRadius: 10, padding: '10px 12px' }}>
+              <div style={{ width: 24, height: 24, background: 'rgba(184,146,42,0.2)', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 14, color: '#B8922A', fontWeight: 700 }}>1</div>
+              <div style={{ fontSize: 12, color: '#fff', lineHeight: 1.5 }}>
+                Appuie sur le bouton
+                <span style={{ color: '#B8922A', fontWeight: 600 }}> Partager </span>
+                (carré avec flèche ↑) en bas de Safari
+              </div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(255,255,255,0.06)', borderRadius: 10, padding: '10px 12px' }}>
+              <div style={{ width: 24, height: 24, background: 'rgba(184,146,42,0.2)', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 14, color: '#B8922A', fontWeight: 700 }}>2</div>
+              <div style={{ fontSize: 12, color: '#fff', lineHeight: 1.5 }}>
+                Sélectionne
+                <span style={{ color: '#B8922A', fontWeight: 600 }}> "Sur l'écran d'accueil" </span>
+                dans le menu
+              </div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(255,255,255,0.06)', borderRadius: 10, padding: '10px 12px' }}>
+              <div style={{ width: 24, height: 24, background: 'rgba(184,146,42,0.2)', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 14, color: '#B8922A', fontWeight: 700 }}>3</div>
+              <div style={{ fontSize: 12, color: '#fff', lineHeight: 1.5 }}>
+                Appuie sur
+                <span style={{ color: '#B8922A', fontWeight: 600 }}> "Ajouter" </span>
+                en haut à droite
+              </div>
+            </div>
+          </div>
+
+          <button
+            onClick={() => {
+              setShowInstallPrompt(false)
+              try { window.localStorage.setItem('lor-install-dismissed', '1') } catch { /* ignore */ }
+            }}
+            style={{ width: '100%', marginTop: 14, padding: 12, borderRadius: 10, border: 'none', background: '#B8922A', color: '#fff', fontFamily: 'Syne, sans-serif', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
+          >
+            J'ai compris !
+          </button>
+        </div>
+      )}
 
       {/* BOTTOM NAV */}
       <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: '#fff', borderTop: '1px solid rgba(0,0,0,0.07)', display: 'flex', paddingBottom: 'max(12px, env(safe-area-inset-bottom))', zIndex: 100 }}>
