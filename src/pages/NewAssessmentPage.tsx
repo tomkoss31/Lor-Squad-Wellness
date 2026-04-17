@@ -40,6 +40,9 @@ type AssessmentForm = {
   sex: BiologicalSex;
   age: number;
   height: number;
+  job: string;
+  currentClothingSize: string;
+  targetClothingSize: string;
   city: string;
   healthStatus: string;
   healthNotes: string;
@@ -165,6 +168,9 @@ const initialForm: AssessmentForm = {
   sex: "female",
   age: 0,
   height: 0,
+  job: "",
+  currentClothingSize: "",
+  targetClothingSize: "",
   city: "",
   healthStatus: "",
   healthNotes: "",
@@ -642,6 +648,8 @@ export function NewAssessmentPage() {
   function buildQuestionnaire() {
     return {
       referredByName: form.referredByName.trim() || undefined,
+      currentClothingSize: form.currentClothingSize || undefined,
+      targetClothingSize: form.targetClothingSize || undefined,
       detectedNeedIds: recommendationPlan.needs.map((need) => need.id),
       selectedProductIds: effectiveSelectedProductIds,
       healthStatus: form.healthStatus,
@@ -775,7 +783,7 @@ export function NewAssessmentPage() {
           email: form.email.trim().toLowerCase(),
           age: form.age,
           height: form.height,
-          job: "Non renseigne",
+          job: form.job.trim() || "Non renseigné",
           city: form.city.trim() || undefined,
           distributorId: assignedUser?.id ?? currentUser?.id ?? "u-local-admin",
           distributorName: assignedUser?.name ?? currentUser?.name ?? "Lor'Squad Wellness",
@@ -921,7 +929,20 @@ export function NewAssessmentPage() {
                   />
                   <Field label="Age" type="number" value={form.age} onChange={(v) => update("age", Number(v))} />
                   <Field label="Taille (cm)" type="number" value={form.height} onChange={(v) => update("height", Number(v))} />
+                  <Field label="Profession" value={form.job} onChange={(v) => update("job", v)} />
                   <Field label="Ville" value={form.city} onChange={(v) => update("city", v)} />
+                  <ClothingSizeSelect
+                    label="Taille vêtement actuelle"
+                    value={form.currentClothingSize}
+                    sex={form.sex}
+                    onChange={(v) => update("currentClothingSize", v)}
+                  />
+                  <ClothingSizeSelect
+                    label="Taille vêtement cible"
+                    value={form.targetClothingSize}
+                    sex={form.sex}
+                    onChange={(v) => update("targetClothingSize", v)}
+                  />
                 </div>
 
                 <SectionBlock
@@ -2011,6 +2032,35 @@ function Field({
       ) : (
         <input type={type} step={step} value={value} onChange={(event) => onChange(event.target.value)} />
       )}
+    </div>
+  );
+}
+
+function ClothingSizeSelect({
+  label,
+  value,
+  sex,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  sex: BiologicalSex;
+  onChange: (value: string) => void;
+}) {
+  const femaleSizes = [34, 36, 38, 40, 42, 44, 46, 48, 50, 52, 54, 56];
+  const maleSizes = [38, 40, 42, 44, 46, 48, 50, 52, 54, 56, 58, 60];
+  const sizes =
+    sex === "female" ? femaleSizes : sex === "male" ? maleSizes : Array.from(new Set([...femaleSizes, ...maleSizes])).sort((a, b) => a - b);
+
+  return (
+    <div className="space-y-2">
+      <label className="text-sm font-medium text-[var(--ls-text-muted)]">{label}</label>
+      <select value={value} onChange={(e) => onChange(e.target.value)}>
+        <option value="">— Choisir —</option>
+        {sizes.map((size) => (
+          <option key={size} value={size}>{size}</option>
+        ))}
+      </select>
     </div>
   );
 }
