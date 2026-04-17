@@ -135,5 +135,6 @@ dist
 .yarn/install-state.gz
 .pnp.*
 
-# Backups Supabase
-backups/
+# Les backups Supabase SONT versionnés (commit automatique par GitHub Actions)
+# Ne PAS ignorer backups/
+# backups/
