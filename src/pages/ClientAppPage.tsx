@@ -194,6 +194,8 @@ export function ClientAppPage() {
   const [rdvSent, setRdvSent] = useState(false)
   const [openCategory, setOpenCategory] = useState<string | null>(null)
   const [showInstallPrompt, setShowInstallPrompt] = useState(false)
+  const [installPlatform, setInstallPlatform] = useState<'ios' | 'android' | null>(null)
+  const [deferredInstallEvent, setDeferredInstallEvent] = useState<{ prompt: () => Promise<void>; userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }> } | null>(null)
 
   useEffect(() => {
     if (typeof document !== 'undefined') {
@@ -217,18 +219,56 @@ export function ClientAppPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token])
 
-  // Détection iOS Safari pour proposer l'installation PWA
+  // Détection iOS / Android pour proposer l'installation PWA
   useEffect(() => {
     if (typeof window === 'undefined' || typeof navigator === 'undefined') return
-    const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent)
+    const ua = navigator.userAgent
+    const isIOS = /iphone|ipad|ipod/i.test(ua)
+    const isAndroid = /android/i.test(ua)
     const isInStandaloneMode = window.matchMedia?.('(display-mode: standalone)').matches
       || (navigator as unknown as { standalone?: boolean }).standalone === true
     const alreadyDismissed = window.localStorage?.getItem('lor-install-dismissed')
-    if (isIOS && !isInStandaloneMode && !alreadyDismissed) {
+
+    if (isInStandaloneMode || alreadyDismissed) return
+
+    // iOS Safari : pas d'event natif, on affiche les instructions manuelles
+    if (isIOS) {
+      setInstallPlatform('ios')
       const timer = setTimeout(() => setShowInstallPrompt(true), 2000)
       return () => clearTimeout(timer)
     }
+
+    // Android Chrome : écouter beforeinstallprompt pour déclencher l'install native
+    if (isAndroid) {
+      setInstallPlatform('android')
+      const handler = (e: Event) => {
+        e.preventDefault()
+        setDeferredInstallEvent(e as unknown as { prompt: () => Promise<void>; userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }> })
+        setShowInstallPrompt(true)
+      }
+      window.addEventListener('beforeinstallprompt', handler)
+      // Fallback : si l'event n'arrive pas dans les 3 sec, affiche quand même la popup manuelle
+      const timer = setTimeout(() => setShowInstallPrompt(true), 3000)
+      return () => {
+        window.removeEventListener('beforeinstallprompt', handler)
+        clearTimeout(timer)
+      }
+    }
   }, [])
+
+  async function triggerNativeInstall() {
+    if (!deferredInstallEvent) return
+    try {
+      await deferredInstallEvent.prompt()
+      const { outcome } = await deferredInstallEvent.userChoice
+      if (outcome === 'accepted' || outcome === 'dismissed') {
+        setShowInstallPrompt(false)
+        try { window.localStorage.setItem('lor-install-dismissed', '1') } catch { /* ignore */ }
+      }
+    } catch {
+      // silencieux
+    }
+  }
 
   function normalizeData(row: Record<string, unknown>): ClientAppData {
     const r = row as Record<string, any>
@@ -793,42 +833,114 @@ export function ClientAppPage() {
             Ajoute cette app sur ton écran d'accueil pour y accéder rapidement, même sans internet.
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(255,255,255,0.06)', borderRadius: 10, padding: '10px 12px' }}>
-              <div style={{ width: 24, height: 24, background: 'rgba(184,146,42,0.2)', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 14, color: '#B8922A', fontWeight: 700 }}>1</div>
-              <div style={{ fontSize: 12, color: '#fff', lineHeight: 1.5 }}>
-                Appuie sur le bouton
-                <span style={{ color: '#B8922A', fontWeight: 600 }}> Partager </span>
-                (carré avec flèche ↑) en bas de Safari
+          {/* ─── Android avec prompt natif disponible ─── */}
+          {installPlatform === 'android' && deferredInstallEvent ? (
+            <>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(184,146,42,0.1)', borderRadius: 10, padding: '12px 14px', marginBottom: 14 }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#B8922A" strokeWidth="2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="7 10 12 15 17 10" />
+                  <line x1="12" y1="15" x2="12" y2="3" />
+                </svg>
+                <div style={{ fontSize: 12, color: '#fff', lineHeight: 1.5 }}>
+                  Un simple clic pour l'installer sur ton téléphone.
+                </div>
               </div>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(255,255,255,0.06)', borderRadius: 10, padding: '10px 12px' }}>
-              <div style={{ width: 24, height: 24, background: 'rgba(184,146,42,0.2)', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 14, color: '#B8922A', fontWeight: 700 }}>2</div>
-              <div style={{ fontSize: 12, color: '#fff', lineHeight: 1.5 }}>
-                Sélectionne
-                <span style={{ color: '#B8922A', fontWeight: 600 }}> "Sur l'écran d'accueil" </span>
-                dans le menu
+              <button
+                onClick={() => void triggerNativeInstall()}
+                style={{ width: '100%', padding: 14, borderRadius: 10, border: 'none', background: '#B8922A', color: '#fff', fontFamily: 'Syne, sans-serif', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}
+              >
+                Installer l'app
+              </button>
+              <button
+                onClick={() => {
+                  setShowInstallPrompt(false)
+                  try { window.localStorage.setItem('lor-install-dismissed', '1') } catch { /* ignore */ }
+                }}
+                style={{ width: '100%', marginTop: 8, padding: 10, borderRadius: 10, border: 'none', background: 'transparent', color: '#9CA3AF', fontSize: 12, cursor: 'pointer' }}
+              >
+                Plus tard
+              </button>
+            </>
+          ) : installPlatform === 'android' ? (
+            /* ─── Android sans prompt natif (ex: Firefox, Samsung Internet) ─── */
+            <>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(255,255,255,0.06)', borderRadius: 10, padding: '10px 12px' }}>
+                  <div style={{ width: 24, height: 24, background: 'rgba(184,146,42,0.2)', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 14, color: '#B8922A', fontWeight: 700 }}>1</div>
+                  <div style={{ fontSize: 12, color: '#fff', lineHeight: 1.5 }}>
+                    Ouvre le menu
+                    <span style={{ color: '#B8922A', fontWeight: 600 }}> ⋮ </span>
+                    en haut à droite
+                  </div>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(255,255,255,0.06)', borderRadius: 10, padding: '10px 12px' }}>
+                  <div style={{ width: 24, height: 24, background: 'rgba(184,146,42,0.2)', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 14, color: '#B8922A', fontWeight: 700 }}>2</div>
+                  <div style={{ fontSize: 12, color: '#fff', lineHeight: 1.5 }}>
+                    Choisis
+                    <span style={{ color: '#B8922A', fontWeight: 600 }}> "Installer l'application" </span>
+                    ou
+                    <span style={{ color: '#B8922A', fontWeight: 600 }}> "Ajouter à l'écran d'accueil" </span>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(255,255,255,0.06)', borderRadius: 10, padding: '10px 12px' }}>
+                  <div style={{ width: 24, height: 24, background: 'rgba(184,146,42,0.2)', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 14, color: '#B8922A', fontWeight: 700 }}>3</div>
+                  <div style={{ fontSize: 12, color: '#fff', lineHeight: 1.5 }}>
+                    Valide avec
+                    <span style={{ color: '#B8922A', fontWeight: 600 }}> "Installer" </span>
+                  </div>
+                </div>
               </div>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(255,255,255,0.06)', borderRadius: 10, padding: '10px 12px' }}>
-              <div style={{ width: 24, height: 24, background: 'rgba(184,146,42,0.2)', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 14, color: '#B8922A', fontWeight: 700 }}>3</div>
-              <div style={{ fontSize: 12, color: '#fff', lineHeight: 1.5 }}>
-                Appuie sur
-                <span style={{ color: '#B8922A', fontWeight: 600 }}> "Ajouter" </span>
-                en haut à droite
+              <button
+                onClick={() => {
+                  setShowInstallPrompt(false)
+                  try { window.localStorage.setItem('lor-install-dismissed', '1') } catch { /* ignore */ }
+                }}
+                style={{ width: '100%', marginTop: 14, padding: 12, borderRadius: 10, border: 'none', background: '#B8922A', color: '#fff', fontFamily: 'Syne, sans-serif', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
+              >
+                J'ai compris !
+              </button>
+            </>
+          ) : (
+            /* ─── iOS Safari ─── */
+            <>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(255,255,255,0.06)', borderRadius: 10, padding: '10px 12px' }}>
+                  <div style={{ width: 24, height: 24, background: 'rgba(184,146,42,0.2)', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 14, color: '#B8922A', fontWeight: 700 }}>1</div>
+                  <div style={{ fontSize: 12, color: '#fff', lineHeight: 1.5 }}>
+                    Appuie sur le bouton
+                    <span style={{ color: '#B8922A', fontWeight: 600 }}> Partager </span>
+                    (carré avec flèche ↑) en bas de Safari
+                  </div>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(255,255,255,0.06)', borderRadius: 10, padding: '10px 12px' }}>
+                  <div style={{ width: 24, height: 24, background: 'rgba(184,146,42,0.2)', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 14, color: '#B8922A', fontWeight: 700 }}>2</div>
+                  <div style={{ fontSize: 12, color: '#fff', lineHeight: 1.5 }}>
+                    Sélectionne
+                    <span style={{ color: '#B8922A', fontWeight: 600 }}> "Sur l'écran d'accueil" </span>
+                    dans le menu
+                  </div>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(255,255,255,0.06)', borderRadius: 10, padding: '10px 12px' }}>
+                  <div style={{ width: 24, height: 24, background: 'rgba(184,146,42,0.2)', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 14, color: '#B8922A', fontWeight: 700 }}>3</div>
+                  <div style={{ fontSize: 12, color: '#fff', lineHeight: 1.5 }}>
+                    Appuie sur
+                    <span style={{ color: '#B8922A', fontWeight: 600 }}> "Ajouter" </span>
+                    en haut à droite
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
-
-          <button
-            onClick={() => {
-              setShowInstallPrompt(false)
-              try { window.localStorage.setItem('lor-install-dismissed', '1') } catch { /* ignore */ }
-            }}
-            style={{ width: '100%', marginTop: 14, padding: 12, borderRadius: 10, border: 'none', background: '#B8922A', color: '#fff', fontFamily: 'Syne, sans-serif', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
-          >
-            J'ai compris !
-          </button>
+              <button
+                onClick={() => {
+                  setShowInstallPrompt(false)
+                  try { window.localStorage.setItem('lor-install-dismissed', '1') } catch { /* ignore */ }
+                }}
+                style={{ width: '100%', marginTop: 14, padding: 12, borderRadius: 10, border: 'none', background: '#B8922A', color: '#fff', fontFamily: 'Syne, sans-serif', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
+              >
+                J'ai compris !
+              </button>
+            </>
+          )}
         </div>
       )}
 
