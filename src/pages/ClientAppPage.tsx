@@ -67,6 +67,48 @@ export function ClientAppPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token])
 
+  /**
+   * Normalise les données quelle que soit la source (recap, evolution_report, app_account).
+   * - Les recaps ont juste body_scan (un seul objet) → on le convertit en metrics_history [1 entrée]
+   * - Les evolution_reports ont déjà metrics_history
+   * - Les app_accounts ont metrics_history + coach contacts
+   */
+  function normalizeData(row: Record<string, unknown>): ClientAppData {
+    const r = row as Record<string, any>
+    let metrics = r.metrics_history as Array<any> | undefined
+
+    // Si pas de metrics_history mais body_scan (ancien recap) → construire une entrée
+    if ((!metrics || metrics.length === 0) && r.body_scan) {
+      const bs = r.body_scan as Record<string, number>
+      metrics = [{
+        date: r.assessment_date ?? r.created_at ?? new Date().toISOString(),
+        weight: bs.weight ?? 0,
+        bodyFat: bs.bodyFat ?? 0,
+        muscleMass: bs.muscleMass ?? 0,
+        hydration: bs.hydration ?? 0,
+        visceralFat: bs.visceralFat ?? 0,
+        metabolicAge: bs.metabolicAge ?? 0,
+      }]
+    }
+
+    return {
+      client_id: r.client_id ?? '',
+      client_first_name: r.client_first_name ?? '',
+      client_last_name: r.client_last_name ?? '',
+      coach_id: r.coach_id ?? r.distributor_id,
+      coach_name: r.coach_name ?? 'Coach',
+      coach_whatsapp: r.coach_whatsapp,
+      coach_telegram: r.coach_telegram,
+      coach_phone: r.coach_phone,
+      program_title: r.program_title,
+      assessments_count: r.assessments_count ?? (metrics?.length ?? 0),
+      next_follow_up: r.next_follow_up,
+      metrics_history: metrics,
+      recommendations: r.recommendations,
+      insights: r.insights,
+    }
+  }
+
   async function loadClientData() {
     try {
       const sb = await getSupabaseClient()
@@ -75,27 +117,43 @@ export function ClientAppPage() {
         return
       }
 
-      // 1. Source principale : client_app_accounts (contient TOUT : infos coach + snapshot métriques)
+      // Ordre de recherche : recaps → evolution_reports → app_accounts
+      // (priorité aux tables existantes qui contiennent déjà des vraies données)
+
+      // 1. client_recaps (créé à la fin de chaque bilan initial)
+      const { data: recap } = await sb
+        .from('client_recaps')
+        .select('*')
+        .eq('token', token)
+        .maybeSingle()
+      if (recap) {
+        setData(normalizeData(recap))
+        setLoading(false)
+        return
+      }
+
+      // 2. client_evolution_reports (données riches avec metrics_history + insights)
+      const { data: report } = await sb
+        .from('client_evolution_reports')
+        .select('*')
+        .eq('token', token)
+        .maybeSingle()
+      if (report) {
+        setData(normalizeData(report))
+        setLoading(false)
+        return
+      }
+
+      // 3. client_app_accounts (compte dédié avec coach contacts)
       const { data: appAccount } = await sb
         .from('client_app_accounts')
         .select('*')
         .eq('token', token)
         .maybeSingle()
-
       if (appAccount) {
-        setData(appAccount as ClientAppData)
+        setData(normalizeData(appAccount))
         setLoading(false)
         return
-      }
-
-      // 2. Fallback : ancien lien /recap/:token (si le client utilise ça)
-      const { data: recapByToken } = await sb
-        .from('client_recaps')
-        .select('*')
-        .eq('token', token)
-        .maybeSingle()
-      if (recapByToken) {
-        setData(recapByToken as ClientAppData)
       }
     } catch {
       // silencieux
