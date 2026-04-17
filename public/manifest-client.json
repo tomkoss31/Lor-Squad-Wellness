@@ -1,0 +1,22 @@
+{
+  "name": "Lor'Squad Wellness",
+  "short_name": "Lor'Squad",
+  "description": "Mon espace bien-être personnalisé",
+  "start_url": "/client/",
+  "display": "standalone",
+  "background_color": "#F4F2EE",
+  "theme_color": "#B8922A",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/icons/lor-squad-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/lor-squad-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

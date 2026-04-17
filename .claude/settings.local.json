@@ -32,7 +32,9 @@
       "Bash(sed -i '/getWeightLossPaceInsight,/d' src/pages/NewAssessmentPage.tsx)",
       "Bash(sed -i '/PlateGuideCard/d' src/pages/NewAssessmentPage.tsx)",
       "Bash(grep -l \"VAPID\\\\|vapid\" src/**/*.ts src/**/*.tsx)",
-      "Bash(grep -n \"function MetricField\" src/pages/NewFollowUpPage.tsx src/components/ui/*.tsx)"
+      "Bash(grep -n \"function MetricField\" src/pages/NewFollowUpPage.tsx src/components/ui/*.tsx)",
+      "Bash(ls src/App.tsx)",
+      "Bash(ls src/main.tsx src/*.tsx)"
     ]
   }
 }
