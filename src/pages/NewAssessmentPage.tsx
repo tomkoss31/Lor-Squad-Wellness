@@ -1227,13 +1227,13 @@ export function NewAssessmentPage() {
                       <span style={{ fontSize: 16 }}>{icon}</span>
                       <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--ls-text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{label}</span>
                     </div>
-                    <input
-                      type="number"
-                      step={step ?? '1'}
-                      value={(form as Record<string, unknown>)[key] as number || 0}
-                      onChange={(e) => update(key as keyof typeof form, Number(e.target.value))}
-                      style={{ width: '100%', background: 'var(--ls-input-bg)', border: '1px solid var(--ls-border)', borderRadius: 10, padding: '10px 14px', fontSize: 22, fontWeight: 700, fontFamily: 'Syne, sans-serif', color: 'var(--ls-text)', outline: 'none' }}
-                    />
+                    <div className="body-scan-big-input">
+                      <DecimalInput
+                        value={(form as Record<string, unknown>)[key] as number || 0}
+                        onChange={(v) => update(key as keyof typeof form, Number(v) as never)}
+                        step={step}
+                      />
+                    </div>
                   </div>
                 ))}
               </div>
@@ -2085,7 +2085,9 @@ function DecimalInput({
       type="text"
       inputMode="decimal"
       pattern="[0-9]*[.,]?[0-9]*"
+      placeholder="—"
       value={draft}
+      onFocus={(e) => e.currentTarget.select()}
       onChange={(event) => {
         const nextValue = event.target.value.replace(/\s+/g, "");
         if (!/^\d*([.,]\d*)?$/.test(nextValue)) {
@@ -2095,6 +2097,7 @@ function DecimalInput({
         setDraft(nextValue);
         const normalized = nextValue.replace(",", ".");
         if (normalized === "" || normalized === ".") {
+          onChange("0");
           return;
         }
 
@@ -2103,9 +2106,8 @@ function DecimalInput({
       onBlur={() => {
         const normalized = draft.replace(",", ".");
         if (normalized === "" || normalized === ".") {
-          const fallback = formatEditableNumber(value);
-          setDraft(fallback);
-          onChange(fallback);
+          setDraft("");
+          onChange("0");
           return;
         }
 
@@ -2620,8 +2622,8 @@ function formatRawNumber(value: number) {
 }
 
 function formatEditableNumber(value: number) {
-  if (!Number.isFinite(value)) {
-    return "0";
+  if (!Number.isFinite(value) || value === 0) {
+    return "";
   }
 
   const asString = String(value);

@@ -748,6 +748,21 @@ main, .main-content {
   }
 }
 
+/* ── BODY SCAN : input XL style ── */
+.body-scan-big-input input {
+  font-size: 22px !important;
+  font-weight: 700 !important;
+  font-family: 'Syne', sans-serif !important;
+  padding: 10px 14px !important;
+  border-radius: 10px !important;
+  text-align: left !important;
+}
+@media (max-width: 1024px) {
+  .body-scan-big-input input {
+    font-size: 20px !important;
+  }
+}
+
 
 @layer base {
   * { box-sizing: border-box; -webkit-font-smoothing: antialiased; }

@@ -901,7 +901,9 @@ function DecimalMetricInput({
       type="text"
       inputMode="decimal"
       pattern="[0-9]*[.,]?[0-9]*"
+      placeholder="—"
       value={draft}
+      onFocus={(e) => e.currentTarget.select()}
       onChange={(event) => {
         const nextValue = event.target.value.replace(/\s+/g, "");
         if (!/^\d*([.,]\d*)?$/.test(nextValue)) {
@@ -911,6 +913,7 @@ function DecimalMetricInput({
         setDraft(nextValue);
         const normalized = nextValue.replace(",", ".");
         if (normalized === "" || normalized === ".") {
+          onChange("0");
           return;
         }
 
@@ -919,9 +922,8 @@ function DecimalMetricInput({
       onBlur={() => {
         const normalized = draft.replace(",", ".");
         if (normalized === "" || normalized === ".") {
-          const fallback = formatEditableMetric(value);
-          setDraft(fallback);
-          onChange(fallback);
+          setDraft("");
+          onChange("0");
           return;
         }
 
@@ -1011,8 +1013,8 @@ function CompactWeightPanel({ label, value }: { label: string; value: string }) 
 }
 
 function formatEditableMetric(value: number) {
-  if (!Number.isFinite(value)) {
-    return "0";
+  if (!Number.isFinite(value) || value === 0) {
+    return "";
   }
 
   const asString = String(value);
