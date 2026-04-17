@@ -75,55 +75,27 @@ export function ClientAppPage() {
         return
       }
 
-      // 1. Chercher le compte app (contient infos coach + nom client)
+      // 1. Source principale : client_app_accounts (contient TOUT : infos coach + snapshot métriques)
       const { data: appAccount } = await sb
         .from('client_app_accounts')
         .select('*')
         .eq('token', token)
         .maybeSingle()
 
-      // 2. Chercher le dernier recap du même client (données riches : metrics, insights…)
-      let recap: Record<string, unknown> | null = null
-      if (appAccount?.client_id) {
-        const { data: recapRow } = await sb
-          .from('client_recaps')
-          .select('*')
-          .eq('client_id', appAccount.client_id)
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .maybeSingle()
-        recap = recapRow
+      if (appAccount) {
+        setData(appAccount as ClientAppData)
+        setLoading(false)
+        return
       }
 
-      // 3. Fallback : token direct sur un recap (ancien lien de récap)
-      if (!appAccount && !recap) {
-        const { data: recapByToken } = await sb
-          .from('client_recaps')
-          .select('*')
-          .eq('token', token)
-          .maybeSingle()
-        if (recapByToken) recap = recapByToken
-      }
-
-      if (appAccount || recap) {
-        // Fusion : recap prioritaire pour données riches, app_account prioritaire pour infos coach
-        const merged: ClientAppData = {
-          ...(recap ?? {}),
-          ...(appAccount ?? {}),
-          // Coach info : privilégier appAccount car à jour
-          coach_name: appAccount?.coach_name ?? (recap as any)?.coach_name ?? 'Coach',
-          coach_whatsapp: appAccount?.coach_whatsapp ?? (recap as any)?.coach_whatsapp,
-          coach_telegram: appAccount?.coach_telegram ?? (recap as any)?.coach_telegram,
-          coach_phone: appAccount?.coach_phone ?? (recap as any)?.coach_phone,
-          // Données riches : depuis le recap uniquement
-          metrics_history: (recap as any)?.metrics_history,
-          insights: (recap as any)?.insights,
-          recommendations: (recap as any)?.recommendations,
-          program_title: (recap as any)?.program_title,
-          assessments_count: (recap as any)?.assessments_count,
-          next_follow_up: (recap as any)?.next_follow_up,
-        } as ClientAppData
-        setData(merged)
+      // 2. Fallback : ancien lien /recap/:token (si le client utilise ça)
+      const { data: recapByToken } = await sb
+        .from('client_recaps')
+        .select('*')
+        .eq('token', token)
+        .maybeSingle()
+      if (recapByToken) {
+        setData(recapByToken as ClientAppData)
       }
     } catch {
       // silencieux

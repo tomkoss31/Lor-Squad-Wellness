@@ -80,6 +80,15 @@ export function ClientDetailPage() {
   const [clientAppUrl, setClientAppUrl] = useState<string | null>(null);
   const [creatingClientApp, setCreatingClientApp] = useState(false);
   const [clientAppCopied, setClientAppCopied] = useState(false);
+  const coachContactKey = `lor-squad-coach-contact-${currentUser?.id ?? 'anon'}`;
+  const [coachPhoneInput, setCoachPhoneInput] = useState<string>(() => {
+    if (typeof window === 'undefined') return '';
+    try { return JSON.parse(window.localStorage.getItem(coachContactKey) ?? '{}').phone ?? ''; } catch { return ''; }
+  });
+  const [coachTelegramInput, setCoachTelegramInput] = useState<string>(() => {
+    if (typeof window === 'undefined') return '';
+    try { return JSON.parse(window.localStorage.getItem(coachContactKey) ?? '{}').telegram ?? ''; } catch { return ''; }
+  });
   const activeFollowUp = getClientActiveFollowUp(currentClient, followUps);
 
   async function createClientAppAccount() {
@@ -88,8 +97,29 @@ export function ClientDetailPage() {
     try {
       const sb = await getSupabaseClient();
       if (!sb) return;
-      // Récupérer les infos du coach (téléphone, whatsapp) depuis users si dispo
-      const coachUser = users.find(u => u.id === currentUser.id);
+
+      // Mémoriser les coordonnées coach en localStorage
+      try {
+        window.localStorage.setItem(coachContactKey, JSON.stringify({
+          phone: coachPhoneInput.trim(),
+          telegram: coachTelegramInput.trim(),
+        }));
+      } catch {}
+
+      // Snapshot des métriques depuis les bilans du client
+      const sortedAssessments = [...client.assessments].sort(
+        (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+      );
+      const metricsHistory = sortedAssessments.map(a => ({
+        date: a.date,
+        weight: a.bodyScan?.weight ?? 0,
+        bodyFat: a.bodyScan?.bodyFat ?? 0,
+        muscleMass: a.bodyScan?.muscleMass ?? 0,
+        hydration: a.bodyScan?.hydration ?? 0,
+        visceralFat: a.bodyScan?.visceralFat ?? 0,
+        metabolicAge: a.bodyScan?.metabolicAge ?? 0,
+      }));
+
       const { data, error } = await sb
         .from('client_app_accounts')
         .upsert(
@@ -99,8 +129,13 @@ export function ClientDetailPage() {
             client_last_name: client.lastName,
             coach_id: currentUser.id,
             coach_name: currentUser.name ?? 'Coach',
-            coach_whatsapp: (coachUser as unknown as { phone?: string })?.phone ?? '',
-            coach_phone: (coachUser as unknown as { phone?: string })?.phone ?? '',
+            coach_whatsapp: coachPhoneInput.trim(),
+            coach_telegram: coachTelegramInput.trim(),
+            coach_phone: coachPhoneInput.trim(),
+            metrics_history: metricsHistory,
+            program_title: client.currentProgram ?? 'Programme en cours',
+            assessments_count: client.assessments.length,
+            next_follow_up: activeFollowUp?.dueDate ?? null,
           },
           { onConflict: 'client_id' }
         )
@@ -926,6 +961,30 @@ export function ClientDetailPage() {
                     </button>
                   )}
                 </div>
+
+                {/* Coordonnées coach (mémorisées en local) */}
+                {!clientAppUrl && (
+                  <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px dashed var(--ls-border)', display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    <div style={{ fontSize: 11, color: 'var(--ls-text-muted)', fontWeight: 500 }}>
+                      Tes coordonnées (affichées au client pour te contacter) :
+                    </div>
+                    <input
+                      value={coachPhoneInput}
+                      onChange={(e) => setCoachPhoneInput(e.target.value)}
+                      placeholder="Ton WhatsApp (ex: +33612345678)"
+                      style={{ width: '100%', padding: '9px 12px', border: '1px solid var(--ls-border)', borderRadius: 8, fontSize: 13, background: 'var(--ls-surface)', color: 'var(--ls-text)', fontFamily: 'DM Sans, sans-serif', outline: 'none' }}
+                    />
+                    <input
+                      value={coachTelegramInput}
+                      onChange={(e) => setCoachTelegramInput(e.target.value)}
+                      placeholder="Ton Telegram (ex: tomthomas) — optionnel"
+                      style={{ width: '100%', padding: '9px 12px', border: '1px solid var(--ls-border)', borderRadius: 8, fontSize: 13, background: 'var(--ls-surface)', color: 'var(--ls-text)', fontFamily: 'DM Sans, sans-serif', outline: 'none' }}
+                    />
+                    <div style={{ fontSize: 10, color: 'var(--ls-text-hint)' }}>
+                      Ces infos sont mémorisées localement — à saisir une seule fois.
+                    </div>
+                  </div>
+                )}
                 {clientAppUrl && (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                     <div style={{ fontSize: 11, color: 'var(--ls-text-muted)', padding: '8px 10px', background: 'var(--ls-surface)', border: '1px solid var(--ls-border)', borderRadius: 8, wordBreak: 'break-all', fontFamily: 'monospace' }}>

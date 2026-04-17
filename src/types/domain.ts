@@ -23,6 +23,8 @@ export interface User {
   sponsorName?: string;
   active: boolean;
   title: string;
+  phone?: string;
+  telegram?: string;
   createdAt?: string;
   lastAccessAt?: string;
 }
