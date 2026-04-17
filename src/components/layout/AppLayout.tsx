@@ -282,7 +282,6 @@ export function AppLayout() {
                 />
                 <div className="min-w-0">
                   <p className="truncate text-base font-semibold text-white">Lor&apos;Squad Wellness</p>
-                  <p className="truncate text-[12px] text-[#4A5068]">Powered by La Base</p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
@@ -324,13 +323,19 @@ export function AppLayout() {
               <StatusBadge label={getRoleLabel(currentUser.role)} tone={roleTone} />
             </div>
 
-            <Button
-              variant="ghost"
-              className="mt-3 w-full justify-center"
+            <button
               onClick={() => void handleLogout()}
+              style={{
+                marginTop: 12, width: '100%', padding: '10px 14px', borderRadius: 10,
+                background: 'transparent', border: '1px solid var(--ls-border)',
+                color: 'var(--ls-text-muted)', fontFamily: 'DM Sans, sans-serif',
+                fontSize: 13, cursor: 'pointer',
+                display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'center',
+              }}
             >
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
               Se déconnecter
-            </Button>
+            </button>
 
             <nav className="mt-4 flex gap-2 overflow-x-auto pb-1">
               {navigation.map((item) => {

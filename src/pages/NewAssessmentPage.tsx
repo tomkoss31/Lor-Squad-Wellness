@@ -873,9 +873,9 @@ export function NewAssessmentPage() {
 
       <div className="grid gap-4">
         <Card className="space-y-5">
-          <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="hidden md:flex flex-wrap items-center justify-between gap-3">
             <div>
-              <p className="eyebrow-label">Etape {currentStep + 1} / {steps.length}</p>
+              <p className="eyebrow-label">Étape {currentStep + 1} / {steps.length}</p>
               <h2 className="mt-3 text-3xl md:text-4xl">{steps[currentStep]}</h2>
             </div>
             <StatusBadge
@@ -1773,12 +1773,12 @@ export function NewAssessmentPage() {
               </Button>
             </div>
           </div>
-          <div className="sticky bottom-20 lg:bottom-3 z-20 -mx-1 mt-2 rounded-[24px] border border-white/10 bg-[linear-gradient(180deg,rgba(8,12,22,0.92),rgba(8,12,22,0.82))] p-3 shadow-luxe backdrop-blur-xl md:hidden">
+          <div className="sticky bottom-20 lg:bottom-3 z-20 -mx-1 mt-2 rounded-[24px] p-3 md:hidden" style={{ background: 'var(--ls-surface)', borderTop: '1px solid var(--ls-border)', color: 'var(--ls-text)', boxShadow: '0 -4px 16px rgba(0,0,0,0.08)' }}>
             <div className="mb-3 flex items-center justify-between gap-3 px-1">
-              <p className="text-[11px] uppercase tracking-[0.22em] text-[var(--ls-text-hint)]">
-                Etape {currentStep + 1} / {steps.length}
+              <p className="text-[11px] uppercase tracking-[0.22em]" style={{ color: 'var(--ls-text-hint)' }}>
+                Étape {currentStep + 1} / {steps.length}
               </p>
-              <p className="text-xs text-[var(--ls-text-muted)]">{steps[currentStep]}</p>
+              <p className="text-xs" style={{ color: 'var(--ls-text-muted)' }}>{steps[currentStep]}</p>
             </div>
             <div className="grid grid-cols-2 gap-2">
               <Button
@@ -1787,7 +1787,7 @@ export function NewAssessmentPage() {
                 onClick={goToPreviousStep}
                 disabled={currentStep === 0}
               >
-                Precedente
+                Précédente
               </Button>
               <Button
                 className="w-full justify-center"
