@@ -1,9 +1,35 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { getSupabaseClient } from '../services/supabaseClient'
-import { HERBALIFE_PRODUCTS } from '../data/herbalifeCatalog'
+import { HERBALIFE_PRODUCTS, type HerbalifeProduct } from '../data/herbalifeCatalog'
 
 const GOOGLE_MAPS_LA_BASE = 'https://www.google.com/maps/place/LA+BASE+Shakes%26Drinks/@49.1619589,5.3840559,17z'
+
+// ─── Catégories produits dans l'ordre du PDF officiel ──────────────────────
+const CATEGORY_DISPLAY: Array<{ key: HerbalifeProduct['category']; label: string }> = [
+  { key: 'formula1', label: 'Formula 1' },
+  { key: 'select', label: 'Select' },
+  { key: 'proteines', label: 'En-cas & Protéines' },
+  { key: 'complements', label: 'Compléments' },
+  { key: 'boissons', label: 'Boissons' },
+  { key: 'sport', label: 'Sport & Vitalité H24' },
+]
+
+// ─── Descriptions détaillées par référence produit ─────────────────────────
+const PRODUCT_DETAILS: Record<string, string> = {
+  '4466': "Le Formula 1 Vanille est la base de ton programme nutritionnel. Il remplace un repas avec 21 vitamines et minéraux essentiels, 17g de protéines et moins de 220 kcal. À prendre le matin ou à midi avec 250ml de lait écrémé ou boisson végétale.",
+  '178K': "Le Thé Concentré Herbalife est une boisson à base d'extraits de thé et de plantes. Il apporte une énergie douce et durable, favorise la thermogenèse et s'utilise chaud ou froid. 1 cuillère pour 240ml d'eau.",
+  '0006': "L'Aloe Vera Herbalife soutient la digestion et améliore l'absorption des nutriments. À prendre chaque matin, il prépare le système digestif à recevoir les autres compléments.",
+  '488K': 'La Créatine+ améliore les performances musculaires, la force et la récupération. Bénéfique pour tous, homme ou femme, avec ou sans activité sportive intensive.',
+  '0020': 'Xtra-Cal apporte calcium et magnésium essentiels pour la solidité osseuse. Particulièrement recommandé pour les femmes à tous les âges.',
+  '236K': "Phyto Complete est un complexe d'extraits de plantes qui soutient le bien-être général et aide à réduire la graisse viscérale. Riche en antioxydants naturels.",
+  '0267': "Beta Heart contient des bêta-glucanes d'avoine qui contribuent à maintenir un taux de cholestérol normal. Recommandé en cas de masse grasse élevée.",
+  '173K': 'Microbiotic Max soutient l\'équilibre de la flore intestinale avec des probiotiques et prébiotiques. Idéal pour améliorer le transit et la digestion.',
+  '282K': 'Night Mode favorise une meilleure qualité de sommeil. Un bon sommeil est essentiel pour la gestion du poids et la récupération musculaire.',
+  '1433': "H24 Hydrate est une boisson aux électrolytes qui optimise l'hydratation avant, pendant et après l'effort physique.",
+  '402K': "Les Gels Prolong apportent 30g de glucides à libération progressive pour maintenir l'énergie pendant les efforts d'endurance.",
+  '1466': "CR7 Drive est la boisson sportive officielle de Cristiano Ronaldo. Elle hydrate et fournit l'énergie nécessaire pendant l'effort.",
+}
 
 interface ClientAppData {
   client_id: string
@@ -22,17 +48,140 @@ interface ClientAppData {
   insights?: Array<{ type?: string; title: string; message: string }>
 }
 
-const PRODUCT_DESCRIPTIONS: Record<string, string> = {
-  formula1: 'Repas nutritionnel complet en shake. Remplace un repas avec tous les nutriments essentiels. À prendre matin ou midi.',
-  select: "Boisson protéinée premium multi-sources. Idéale avant ou après l'entraînement.",
-  proteines: 'Complément protéique pur à ajouter à vos shakes ou repas. Sans goût ajouté.',
-  boissons: "Boisson à base de plantes et d'extraits naturels. Énergie douce et durable sans sucre ajouté.",
-  sport: 'Gamme sportive pour optimiser les performances, la récupération et l\'hydratation.',
-  complements: 'Compléments nutritionnels ciblés pour soutenir votre programme selon vos besoins spécifiques.',
-  complements_enfants: 'Compléments nutritionnels adaptés aux enfants.',
-  packs: 'Pack complet regroupant plusieurs produits essentiels à votre programme.',
+// ─── Mini graphique SVG ────────────────────────────────────────────────────
+function MiniLineChart({
+  data, field, color, label, unit,
+}: {
+  data: Array<Record<string, number> & { date: string }>
+  field: string
+  color: string
+  label: string
+  unit: string
+}) {
+  const values = data.map((d) => d[field]).filter((v): v is number => typeof v === 'number' && !Number.isNaN(v))
+  if (values.length < 2) return null
+
+  const min = Math.min(...values)
+  const max = Math.max(...values)
+  const range = max - min || 1
+  const W = 280, H = 56, PAD = 8
+
+  const pts = data
+    .filter((d) => typeof d[field] === 'number')
+    .map((d, i, arr) => ({
+      x: PAD + (i / (arr.length - 1)) * (W - PAD * 2),
+      y: H - PAD - ((d[field] - min) / range) * (H - PAD * 2),
+      val: d[field],
+      date: new Date(d.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }),
+    }))
+
+  const pathD = pts.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(' ')
+  const last = values[values.length - 1]
+
+  return (
+    <div style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.07)', borderRadius: 12, padding: '12px 14px', marginBottom: 10 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+        <div style={{ fontSize: 9, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 500 }}>{label}</div>
+        <div style={{ fontFamily: 'Syne, sans-serif', fontSize: 13, fontWeight: 700, color }}>
+          {last.toFixed(1)}{unit}
+        </div>
+      </div>
+      <svg width="100%" viewBox={`0 0 ${W} ${H}`} style={{ overflow: 'visible' }}>
+        <path d={pathD} fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        {pts.map((p, i) => (
+          <g key={i}>
+            <circle cx={p.x} cy={p.y} r="3" fill={color} />
+            {(i === 0 || i === pts.length - 1) && (
+              <text x={p.x} y={p.y - 7} textAnchor={i === 0 ? 'start' : 'end'} fontSize="8" fill="#9CA3AF">
+                {p.val.toFixed(1)}{unit}
+              </text>
+            )}
+          </g>
+        ))}
+      </svg>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4 }}>
+        <span style={{ fontSize: 8, color: '#9CA3AF' }}>{pts[0]?.date}</span>
+        <span style={{ fontSize: 8, color: '#9CA3AF' }}>{pts[pts.length - 1]?.date}</span>
+      </div>
+    </div>
+  )
 }
 
+// ─── Carte produit avec description + CTA ──────────────────────────────────
+function ProductCard({
+  product, isRecommended, coachWhatsapp,
+}: {
+  product: HerbalifeProduct
+  isRecommended: boolean
+  coachWhatsapp?: string
+}) {
+  const [open, setOpen] = useState(false)
+  const description = PRODUCT_DETAILS[product.ref] ?? product.shortBenefit
+
+  return (
+    <div
+      onClick={() => setOpen(!open)}
+      style={{
+        background: '#fff',
+        border: isRecommended ? '1px solid rgba(184,146,42,0.2)' : '1px solid rgba(0,0,0,0.07)',
+        borderRadius: 14,
+        padding: 14,
+        marginBottom: 8,
+        cursor: 'pointer',
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div style={{ width: 8, height: 8, borderRadius: '50%', background: isRecommended ? '#B8922A' : '#9CA3AF', flexShrink: 0 }} />
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 13, fontWeight: 500, color: '#111827' }}>{product.shortName}</div>
+          <div style={{ fontSize: 11, color: '#9CA3AF' }}>{product.shortBenefit.split('·')[0].trim()}</div>
+        </div>
+        {isRecommended && (
+          <div style={{ fontSize: 9, padding: '3px 8px', borderRadius: 10, background: 'rgba(184,146,42,0.1)', color: '#B8922A', fontWeight: 600, flexShrink: 0 }}>
+            Pour toi
+          </div>
+        )}
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth="2">
+          {open ? <polyline points="18 15 12 9 6 15" /> : <polyline points="6 9 12 15 18 9" />}
+        </svg>
+      </div>
+
+      {open && (
+        <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid rgba(0,0,0,0.06)' }}>
+          <p style={{ fontSize: 12, color: '#6B7280', lineHeight: 1.75, marginBottom: 14 }}>
+            {description}
+          </p>
+          <div style={{ display: 'flex', gap: 8 }}>
+            {coachWhatsapp && (
+              <a
+                href={`https://wa.me/${coachWhatsapp.replace(/\D/g, '')}?text=${encodeURIComponent(`Bonjour, je suis intéressé(e) par le produit : ${product.shortName}`)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                style={{ flex: 1, padding: '9px 6px', borderRadius: 9, background: 'rgba(37,211,102,0.1)', color: '#16A34A', fontSize: 11, fontWeight: 600, textAlign: 'center', textDecoration: 'none' }}
+              >
+                Contacter mon coach
+              </a>
+            )}
+            <a
+              href="https://www.myherbalife.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              style={{ flex: 1, padding: '9px 6px', borderRadius: 9, background: 'rgba(184,146,42,0.1)', color: '#B8922A', fontSize: 11, fontWeight: 600, textAlign: 'center', textDecoration: 'none' }}
+            >
+              Commander
+            </a>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// COMPOSANT PRINCIPAL
+// ══════════════════════════════════════════════════════════════════════════
 export function ClientAppPage() {
   const { token } = useParams<{ token: string }>()
   const [data, setData] = useState<ClientAppData | null>(null)
@@ -43,7 +192,6 @@ export function ClientAppPage() {
   const [referSent, setReferSent] = useState(false)
   const [rdvMessage, setRdvMessage] = useState('')
   const [rdvSent, setRdvSent] = useState(false)
-  const [selectedProduct, setSelectedProduct] = useState<{ ref: string } | null>(null)
 
   useEffect(() => {
     if (typeof document !== 'undefined') {
@@ -67,17 +215,10 @@ export function ClientAppPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token])
 
-  /**
-   * Normalise les données quelle que soit la source (recap, evolution_report, app_account).
-   * - Les recaps ont juste body_scan (un seul objet) → on le convertit en metrics_history [1 entrée]
-   * - Les evolution_reports ont déjà metrics_history
-   * - Les app_accounts ont metrics_history + coach contacts
-   */
   function normalizeData(row: Record<string, unknown>): ClientAppData {
     const r = row as Record<string, any>
     let metrics = r.metrics_history as Array<any> | undefined
 
-    // Si pas de metrics_history mais body_scan (ancien recap) → construire une entrée
     if ((!metrics || metrics.length === 0) && r.body_scan) {
       const bs = r.body_scan as Record<string, number>
       metrics = [{
@@ -112,54 +253,18 @@ export function ClientAppPage() {
   async function loadClientData() {
     try {
       const sb = await getSupabaseClient()
-      if (!sb || !token) {
-        setLoading(false)
-        return
-      }
+      if (!sb || !token) { setLoading(false); return }
 
-      // Ordre de recherche : recaps → evolution_reports → app_accounts
-      // (priorité aux tables existantes qui contiennent déjà des vraies données)
+      const { data: recap } = await sb.from('client_recaps').select('*').eq('token', token).maybeSingle()
+      if (recap) { setData(normalizeData(recap)); setLoading(false); return }
 
-      // 1. client_recaps (créé à la fin de chaque bilan initial)
-      const { data: recap } = await sb
-        .from('client_recaps')
-        .select('*')
-        .eq('token', token)
-        .maybeSingle()
-      if (recap) {
-        setData(normalizeData(recap))
-        setLoading(false)
-        return
-      }
+      const { data: report } = await sb.from('client_evolution_reports').select('*').eq('token', token).maybeSingle()
+      if (report) { setData(normalizeData(report)); setLoading(false); return }
 
-      // 2. client_evolution_reports (données riches avec metrics_history + insights)
-      const { data: report } = await sb
-        .from('client_evolution_reports')
-        .select('*')
-        .eq('token', token)
-        .maybeSingle()
-      if (report) {
-        setData(normalizeData(report))
-        setLoading(false)
-        return
-      }
-
-      // 3. client_app_accounts (compte dédié avec coach contacts)
-      const { data: appAccount } = await sb
-        .from('client_app_accounts')
-        .select('*')
-        .eq('token', token)
-        .maybeSingle()
-      if (appAccount) {
-        setData(normalizeData(appAccount))
-        setLoading(false)
-        return
-      }
-    } catch {
-      // silencieux
-    } finally {
-      setLoading(false)
-    }
+      const { data: appAccount } = await sb.from('client_app_accounts').select('*').eq('token', token).maybeSingle()
+      if (appAccount) { setData(normalizeData(appAccount)); setLoading(false); return }
+    } catch { /* silencieux */ }
+    finally { setLoading(false) }
   }
 
   async function sendReferral() {
@@ -174,12 +279,8 @@ export function ClientAppPage() {
         referred_name: referName,
         referred_contact: referContact,
       })
-      setReferSent(true)
-      setReferName('')
-      setReferContact('')
-    } catch {
-      // silencieux
-    }
+      setReferSent(true); setReferName(''); setReferContact('')
+    } catch { /* silencieux */ }
   }
 
   async function sendRdvChangeRequest() {
@@ -194,11 +295,8 @@ export function ClientAppPage() {
         current_rdv: data.next_follow_up,
         message: rdvMessage,
       })
-      setRdvSent(true)
-      setRdvMessage('')
-    } catch {
-      // silencieux
-    }
+      setRdvSent(true); setRdvMessage('')
+    } catch { /* silencieux */ }
   }
 
   function getGoogleCalendarUrl() {
@@ -212,48 +310,90 @@ export function ClientAppPage() {
   }
 
   if (loading)
-    return (
-      <div style={{ minHeight: '100vh', background: '#F4F2EE', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'DM Sans, sans-serif', color: '#9CA3AF' }}>
-        Chargement...
-      </div>
-    )
+    return <div style={{ minHeight: '100vh', background: '#F4F2EE', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'DM Sans, sans-serif', color: '#9CA3AF' }}>Chargement...</div>
 
   if (!data)
-    return (
-      <div style={{ minHeight: '100vh', background: '#F4F2EE', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'DM Sans, sans-serif', color: '#DC2626' }}>
-        Lien introuvable ou expiré.
-      </div>
-    )
+    return <div style={{ minHeight: '100vh', background: '#F4F2EE', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'DM Sans, sans-serif', color: '#DC2626' }}>Lien introuvable ou expiré.</div>
 
+  // ─── Calculs métriques ─────────────────────────────────────────────────
   const metrics = data.metrics_history ?? []
   const latest = metrics[metrics.length - 1] as (Record<string, number> & { date: string }) | undefined
   const first = metrics[0] as (Record<string, number> & { date: string }) | undefined
 
-  const delta = (field: string) => {
-    if (!latest || !first) return null
-    const a = latest[field]
-    const b = first[field]
-    if (typeof a !== 'number' || typeof b !== 'number') return null
-    return (a - b).toFixed(1)
-  }
+  const latestWeight = latest?.weight
+  const latestBodyFatPct = latest?.bodyFat
+  const latestBodyFatKg = latest && latestWeight ? (latestWeight * latest.bodyFat / 100) : null
+  const latestMusclePct = latest && latestWeight ? (latest.muscleMass / latestWeight * 100) : null
+  const latestMuscleKg = latest?.muscleMass
+  const latestVisceral = latest?.visceralFat ?? 0
 
-  const deltaColor = (val: string | null, inverse = false) => {
-    if (!val) return '#9CA3AF'
-    const n = parseFloat(val)
-    if (n === 0) return '#9CA3AF'
-    const good = inverse ? n > 0 : n < 0
-    return good ? '#0D9488' : '#DC2626'
-  }
+  const dWeight = first && latest ? (latest.weight - first.weight) : null
+  const dBodyFatKg = first && latest && first.weight && latest.weight
+    ? (latest.weight * latest.bodyFat / 100) - (first.weight * first.bodyFat / 100)
+    : null
+  const dMuscleKg = first && latest ? (latest.muscleMass - first.muscleMass) : null
+  const dVisceral = first && latest ? ((latest.visceralFat ?? 0) - (first.visceralFat ?? 0)) : null
 
-  // Match par ref OU par nom (les recaps stockent souvent juste { name, shortBenefit })
+  const visceralColor = latestVisceral >= 13 ? '#DC2626' : latestVisceral >= 9 ? '#F59E0B' : '#0D9488'
+  const visceralLabel = latestVisceral >= 13 ? 'Élevée' : latestVisceral >= 9 ? 'Modérée' : 'Normale'
+
+  // ─── Produits recommandés ──────────────────────────────────────────────
   const recoList = data.recommendations ?? []
   const recommendedProducts = HERBALIFE_PRODUCTS.filter((p) =>
     recoList.some((r) => (r.ref && r.ref === p.ref) || (r.name && (r.name === p.name || r.name === p.shortName)))
   )
   const recommendedRefs = new Set(recommendedProducts.map((p) => p.ref))
-  const otherProducts = HERBALIFE_PRODUCTS.filter(
-    (p) => !recommendedRefs.has(p.ref) && ['formula1', 'boissons', 'proteines'].includes(p.category)
-  ).slice(0, 6)
+
+  // ─── Type local pour les cards métriques ───────────────────────────────
+  type MetricCard = {
+    label: string
+    main: string
+    sub?: string | null
+    subColor?: string
+    delta: number | null
+    unit: string
+    color: string
+    inverse: boolean
+  }
+
+  const metricCards: MetricCard[] = [
+    {
+      label: 'Poids',
+      main: latestWeight !== undefined ? `${latestWeight.toFixed(1)} kg` : '—',
+      delta: dWeight,
+      unit: 'kg',
+      color: '#B8922A',
+      inverse: false,
+    },
+    {
+      label: 'Masse grasse',
+      main: latestBodyFatPct !== undefined ? `${latestBodyFatPct.toFixed(1)} %` : '—',
+      sub: latestBodyFatKg !== null ? `soit ${latestBodyFatKg.toFixed(1)} kg` : null,
+      delta: dBodyFatKg,
+      unit: 'kg de graisse',
+      color: '#DC2626',
+      inverse: false,
+    },
+    {
+      label: 'Muscle',
+      main: latestMuscleKg !== undefined ? `${latestMuscleKg.toFixed(1)} kg` : '—',
+      sub: latestMusclePct !== null ? `${latestMusclePct.toFixed(0)}% du poids` : null,
+      delta: dMuscleKg,
+      unit: 'kg',
+      color: '#0D9488',
+      inverse: true,
+    },
+    {
+      label: 'Graisse viscérale',
+      main: `${latestVisceral}`,
+      sub: visceralLabel,
+      subColor: visceralColor,
+      delta: dVisceral,
+      unit: 'points',
+      color: latestVisceral >= 9 ? '#DC2626' : '#0D9488',
+      inverse: false,
+    },
+  ]
 
   return (
     <div style={{ minHeight: '100vh', background: '#F4F2EE', fontFamily: 'DM Sans, sans-serif', color: '#111827', paddingBottom: 80 }}>
@@ -262,9 +402,7 @@ export function ClientAppPage() {
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <div style={{ width: 28, height: 28, background: '#B8922A', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="#fff">
-                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-              </svg>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="#fff"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></svg>
             </div>
             <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 14, color: '#111827' }}>
               Lor'<span style={{ color: '#B8922A' }}>Squad</span>
@@ -278,55 +416,42 @@ export function ClientAppPage() {
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'rgba(184,146,42,0.15)', border: '2px solid rgba(184,146,42,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 16, color: '#B8922A', flexShrink: 0 }}>
-            {data.client_first_name?.[0]}
-            {data.client_last_name?.[0]}
+            {data.client_first_name?.[0]}{data.client_last_name?.[0]}
           </div>
           <div>
             <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 20, color: '#111827' }}>
               Bonjour {data.client_first_name} !
             </div>
             <div style={{ fontSize: 11, color: '#6B7280', marginTop: 2 }}>
-              {data.program_title ?? 'Programme en cours'} · {data.assessments_count ?? 1} bilan
-              {(data.assessments_count ?? 1) > 1 ? 's' : ''}
+              {data.program_title ?? 'Programme en cours'} · {data.assessments_count ?? 1} bilan{(data.assessments_count ?? 1) > 1 ? 's' : ''}
             </div>
           </div>
         </div>
       </div>
 
       <div style={{ padding: '12px 14px' }}>
-        {/* ── ONGLET HOME ── */}
+        {/* ══════════════════════════════════════════════════════════════ */}
+        {/* ONGLET ACCUEIL                                                  */}
+        {/* ══════════════════════════════════════════════════════════════ */}
         {activeTab === 'home' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {latest && (
               <>
-                <div style={{ fontSize: 9, letterSpacing: '2px', textTransform: 'uppercase', color: '#9CA3AF', fontWeight: 500 }}>
-                  Ton évolution
-                </div>
+                <div style={{ fontSize: 9, letterSpacing: '2px', textTransform: 'uppercase', color: '#9CA3AF', fontWeight: 500 }}>Ton évolution</div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                   {([
-                    { label: 'Poids', field: 'weight', unit: 'kg', color: '#B8922A', inverse: false },
-                    { label: 'Masse grasse', field: 'bodyFat', unit: '%', color: '#DC2626', inverse: false },
-                    { label: 'Muscle', field: 'muscleMass', unit: 'kg', color: '#0D9488', inverse: true },
-                    { label: 'Hydratation', field: 'hydration', unit: '%', color: '#7C3AED', inverse: true },
-                  ] as const).map(({ label, field, unit, color, inverse }) => {
-                    const d = delta(field)
+                    { label: 'Poids', field: 'weight', unit: 'kg', color: '#B8922A' },
+                    { label: 'Masse grasse', field: 'bodyFat', unit: '%', color: '#DC2626' },
+                    { label: 'Muscle', field: 'muscleMass', unit: 'kg', color: '#0D9488' },
+                    { label: 'Hydratation', field: 'hydration', unit: '%', color: '#7C3AED' },
+                  ] as const).map(({ label, field, unit, color }) => {
                     const val = latest[field]
                     return (
                       <div key={field} style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.07)', borderRadius: 12, padding: '12px', borderTop: `2px solid ${color}` }}>
-                        <div style={{ fontSize: 9, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 4 }}>
-                          {label}
-                        </div>
+                        <div style={{ fontSize: 9, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 4 }}>{label}</div>
                         <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 22, color, lineHeight: 1 }}>
-                          {typeof val === 'number' ? val.toFixed(1) : '—'}
-                          {unit}
+                          {typeof val === 'number' ? val.toFixed(1) : '—'}{unit}
                         </div>
-                        {d && first && (
-                          <div style={{ fontSize: 10, color: deltaColor(d, inverse), marginTop: 4 }}>
-                            {parseFloat(d) > 0 ? '+' : ''}
-                            {d}
-                            {unit} depuis le début
-                          </div>
-                        )}
                       </div>
                     )
                   })}
@@ -337,9 +462,7 @@ export function ClientAppPage() {
             {/* Prochain RDV */}
             {data.next_follow_up && (
               <div style={{ background: 'rgba(13,148,136,0.06)', border: '1px solid rgba(13,148,136,0.15)', borderRadius: 14, padding: 14 }}>
-                <div style={{ fontSize: 9, color: '#0D9488', fontWeight: 600, letterSpacing: '1px', textTransform: 'uppercase', marginBottom: 8 }}>
-                  Prochain rendez-vous
-                </div>
+                <div style={{ fontSize: 9, color: '#0D9488', fontWeight: 600, letterSpacing: '1px', textTransform: 'uppercase', marginBottom: 8 }}>Prochain rendez-vous</div>
                 <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 18, color: '#111827', marginBottom: 2 }}>
                   {new Date(data.next_follow_up).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
                 </div>
@@ -350,10 +473,7 @@ export function ClientAppPage() {
                   <a href={getGoogleCalendarUrl()} target="_blank" rel="noopener noreferrer"
                     style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '9px 14px', background: '#0D9488', color: '#fff', borderRadius: 9, textDecoration: 'none', fontSize: 12, fontWeight: 600 }}>
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                      <rect x="3" y="4" width="18" height="18" rx="2" />
-                      <line x1="16" y1="2" x2="16" y2="6" />
-                      <line x1="8" y1="2" x2="8" y2="6" />
-                      <line x1="3" y1="10" x2="21" y2="10" />
+                      <rect x="3" y="4" width="18" height="18" rx="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" />
                     </svg>
                     Google Agenda
                   </a>
@@ -363,15 +483,13 @@ export function ClientAppPage() {
                   </a>
                 </div>
 
-                {/* Demande modification RDV */}
                 <div style={{ marginTop: 12, borderTop: '1px solid rgba(13,148,136,0.1)', paddingTop: 12 }}>
                   <div style={{ fontSize: 11, color: '#6B7280', marginBottom: 8 }}>Tu veux modifier ce RDV ?</div>
                   {rdvSent ? (
                     <div style={{ fontSize: 12, color: '#0D9488', fontWeight: 500 }}>✓ Message envoyé à {data.coach_name}</div>
                   ) : (
                     <>
-                      <textarea value={rdvMessage} onChange={(e) => setRdvMessage(e.target.value)}
-                        placeholder="Ex : Je préfèrerais le 30 avril à 14h..." rows={2}
+                      <textarea value={rdvMessage} onChange={(e) => setRdvMessage(e.target.value)} placeholder="Ex : Je préfèrerais le 30 avril à 14h..." rows={2}
                         style={{ width: '100%', padding: '9px 12px', border: '1px solid rgba(13,148,136,0.2)', borderRadius: 9, fontFamily: 'DM Sans, sans-serif', fontSize: 13, background: '#fff', color: '#111827', resize: 'none', outline: 'none', marginBottom: 8 }} />
                       <button onClick={() => void sendRdvChangeRequest()}
                         style={{ padding: '9px 16px', borderRadius: 9, border: 'none', background: 'rgba(13,148,136,0.1)', color: '#0D9488', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
@@ -383,24 +501,39 @@ export function ClientAppPage() {
               </div>
             )}
 
+            {/* Avis Google */}
+            <a href={GOOGLE_MAPS_LA_BASE} target="_blank" rel="noopener noreferrer"
+              style={{ display: 'flex', alignItems: 'center', gap: 10, background: '#fff', border: '1px solid rgba(184,146,42,0.2)', borderRadius: 14, padding: '13px 16px', textDecoration: 'none' }}>
+              <div style={{ width: 36, height: 36, background: 'rgba(184,146,42,0.1)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="#B8922A"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></svg>
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 13, color: '#111827' }}>Laisser un avis Google</div>
+                <div style={{ fontSize: 11, color: '#9CA3AF' }}>★★★★★ La Base — Verdun</div>
+              </div>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth="1.5">
+                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" /><polyline points="15 3 21 3 21 9" /><line x1="10" y1="14" x2="21" y2="3" />
+              </svg>
+            </a>
+
             {/* Contacter le coach */}
             <div style={{ fontSize: 9, letterSpacing: '2px', textTransform: 'uppercase', color: '#9CA3AF', fontWeight: 500 }}>Contacter mon coach</div>
             <div style={{ display: 'flex', gap: 8 }}>
               {data.coach_whatsapp && (
                 <a href={`https://wa.me/${data.coach_whatsapp.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer"
-                  style={{ flex: 1, padding: '11px 6px', borderRadius: 10, background: 'rgba(37,211,102,0.1)', color: '#16A34A', fontSize: 12, fontWeight: 600, textAlign: 'center', textDecoration: 'none', border: 'none' }}>
+                  style={{ flex: 1, padding: '11px 6px', borderRadius: 10, background: 'rgba(37,211,102,0.1)', color: '#16A34A', fontSize: 12, fontWeight: 600, textAlign: 'center', textDecoration: 'none' }}>
                   WhatsApp
                 </a>
               )}
               {data.coach_telegram && (
                 <a href={`https://t.me/${data.coach_telegram}`} target="_blank" rel="noopener noreferrer"
-                  style={{ flex: 1, padding: '11px 6px', borderRadius: 10, background: 'rgba(0,136,204,0.1)', color: '#0088CC', fontSize: 12, fontWeight: 600, textAlign: 'center', textDecoration: 'none', border: 'none' }}>
+                  style={{ flex: 1, padding: '11px 6px', borderRadius: 10, background: 'rgba(0,136,204,0.1)', color: '#0088CC', fontSize: 12, fontWeight: 600, textAlign: 'center', textDecoration: 'none' }}>
                   Telegram
                 </a>
               )}
               {data.coach_phone && (
                 <a href={`sms:${data.coach_phone}`}
-                  style={{ flex: 1, padding: '11px 6px', borderRadius: 10, background: 'rgba(0,0,0,0.05)', color: '#6B7280', fontSize: 12, fontWeight: 500, textAlign: 'center', textDecoration: 'none', border: 'none' }}>
+                  style={{ flex: 1, padding: '11px 6px', borderRadius: 10, background: 'rgba(0,0,0,0.05)', color: '#6B7280', fontSize: 12, fontWeight: 500, textAlign: 'center', textDecoration: 'none' }}>
                   SMS
                 </a>
               )}
@@ -408,129 +541,160 @@ export function ClientAppPage() {
           </div>
         )}
 
-        {/* ── ONGLET ÉVOLUTION ── */}
+        {/* ══════════════════════════════════════════════════════════════ */}
+        {/* ONGLET ÉVOLUTION                                                */}
+        {/* ══════════════════════════════════════════════════════════════ */}
         {activeTab === 'evolution' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <div style={{ fontSize: 9, letterSpacing: '2px', textTransform: 'uppercase', color: '#9CA3AF', fontWeight: 500 }}>
-              Historique de tes bilans
-            </div>
             {metrics.length === 0 ? (
               <div style={{ textAlign: 'center', color: '#9CA3AF', fontSize: 13, padding: 40 }}>Pas encore de données d'évolution</div>
             ) : (
-              <div style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.07)', borderRadius: 14, overflow: 'hidden' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11 }}>
-                  <thead>
-                    <tr style={{ borderBottom: '1px solid rgba(0,0,0,0.07)' }}>
-                      {['Date', 'Poids', 'M.Grasse', 'Muscle', 'Eau'].map((h) => (
-                        <th key={h} style={{ padding: '10px 8px', textAlign: 'left', fontSize: 9, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 500 }}>
-                          {h}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {metrics.map((row, i) => (
-                      <tr key={i} style={{ borderBottom: i < metrics.length - 1 ? '1px solid rgba(0,0,0,0.05)' : 'none', background: i % 2 === 0 ? '#FAFAF9' : '#fff' }}>
-                        <td style={{ padding: '10px 8px', color: '#6B7280', fontSize: 10, whiteSpace: 'nowrap' }}>
-                          {new Date(row.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
-                        </td>
-                        <td style={{ padding: '10px 8px', fontWeight: 600, color: '#B8922A' }}>{row.weight?.toFixed(1)}</td>
-                        <td style={{ padding: '10px 8px', color: (row.bodyFat ?? 0) > 25 ? '#DC2626' : '#111827' }}>{row.bodyFat?.toFixed(1)}%</td>
-                        <td style={{ padding: '10px 8px', color: '#0D9488' }}>{row.muscleMass?.toFixed(1)}</td>
-                        <td style={{ padding: '10px 8px', color: (row.hydration ?? 100) < 50 ? '#DC2626' : '#7C3AED' }}>{row.hydration?.toFixed(0)}%</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-
-            {/* Insights */}
-            {(data.insights ?? []).length > 0 && (
               <>
-                <div style={{ fontSize: 9, letterSpacing: '2px', textTransform: 'uppercase', color: '#9CA3AF', fontWeight: 500, marginTop: 4 }}>
-                  Ce qui évolue
-                </div>
-                {(data.insights ?? []).slice(0, 3).map((insight, i) => {
-                  const borderColor = insight.type === 'positive' ? '#0D9488' : insight.type === 'warning' ? '#DC2626' : '#B8922A'
-                  return (
-                    <div key={i} style={{ background: '#fff', border: `1px solid ${borderColor}20`, borderLeft: `3px solid ${borderColor}`, borderRadius: '0 12px 12px 0', padding: '12px 14px' }}>
-                      <div style={{ fontSize: 12, fontWeight: 600, color: borderColor, marginBottom: 3 }}>{insight.title}</div>
-                      <div style={{ fontSize: 11, color: '#6B7280', lineHeight: 1.6 }}>{insight.message}</div>
+                {/* 1. Grid 2x2 métriques avec double valeur */}
+                <div style={{ fontSize: 9, letterSpacing: '2px', textTransform: 'uppercase', color: '#9CA3AF', fontWeight: 500 }}>Tes chiffres clés</div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                  {metricCards.map((card) => (
+                    <div key={card.label} style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.07)', borderRadius: 12, padding: 12, borderTop: `2px solid ${card.color}` }}>
+                      <div style={{ fontSize: 9, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 4 }}>{card.label}</div>
+                      <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 20, color: card.color, lineHeight: 1 }}>{card.main}</div>
+                      {card.sub && (
+                        <div style={{ fontSize: 10, color: card.subColor ?? '#9CA3AF', marginTop: 3 }}>{card.sub}</div>
+                      )}
+                      {card.delta !== null && (
+                        <div style={{
+                          fontSize: 10,
+                          color: (card.inverse ? card.delta > 0 : card.delta < 0) ? '#0D9488' : card.delta === 0 ? '#9CA3AF' : '#DC2626',
+                          marginTop: 4,
+                          fontWeight: 500,
+                        }}>
+                          {card.delta > 0 ? '+' : ''}{card.delta.toFixed(1)} {card.unit} depuis le début
+                        </div>
+                      )}
                     </div>
-                  )
-                })}
+                  ))}
+                </div>
+
+                {/* 2. Tableau compact */}
+                <div style={{ fontSize: 9, letterSpacing: '2px', textTransform: 'uppercase', color: '#9CA3AF', fontWeight: 500, marginTop: 4 }}>Historique de tes bilans</div>
+                <div style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.07)', borderRadius: 14, overflow: 'hidden' }}>
+                  <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 10, minWidth: 480 }}>
+                      <thead>
+                        <tr style={{ borderBottom: '1px solid rgba(0,0,0,0.07)' }}>
+                          {['Date', 'Poids', 'MG %', 'MG kg', 'Muscle', 'Eau', 'Viscéral'].map((h) => (
+                            <th key={h} style={{ padding: '8px 6px', textAlign: 'left', fontSize: 8, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 500 }}>{h}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {metrics.map((row, i) => {
+                          const mgKg = row.weight && row.bodyFat ? (row.weight * row.bodyFat / 100).toFixed(1) : '-'
+                          return (
+                            <tr key={i} style={{ borderBottom: i < metrics.length - 1 ? '1px solid rgba(0,0,0,0.05)' : 'none', background: i % 2 === 0 ? '#FAFAF9' : '#fff' }}>
+                              <td style={{ padding: '8px 6px', color: '#6B7280', fontSize: 9, whiteSpace: 'nowrap' }}>
+                                {new Date(row.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
+                              </td>
+                              <td style={{ padding: '8px 6px', fontWeight: 600, color: '#B8922A', fontSize: 11 }}>{row.weight?.toFixed(1)}</td>
+                              <td style={{ padding: '8px 6px', color: (row.bodyFat ?? 0) > 30 ? '#DC2626' : '#111827', fontSize: 11 }}>{row.bodyFat?.toFixed(1)}%</td>
+                              <td style={{ padding: '8px 6px', color: '#6B7280', fontSize: 11 }}>{mgKg}</td>
+                              <td style={{ padding: '8px 6px', color: '#0D9488', fontSize: 11 }}>{row.muscleMass?.toFixed(1)}</td>
+                              <td style={{ padding: '8px 6px', color: (row.hydration ?? 100) < 50 ? '#DC2626' : '#7C3AED', fontSize: 11 }}>{row.hydration?.toFixed(0)}%</td>
+                              <td style={{ padding: '8px 6px', color: (row.visceralFat ?? 0) >= 9 ? '#DC2626' : '#111827', fontSize: 11 }}>{row.visceralFat}</td>
+                            </tr>
+                          )
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                {/* 3. Mini graphiques */}
+                {metrics.length >= 2 && (
+                  <>
+                    <div style={{ fontSize: 9, letterSpacing: '2px', textTransform: 'uppercase', color: '#9CA3AF', fontWeight: 500, marginTop: 4 }}>Courbes</div>
+                    <MiniLineChart data={metrics} field="weight" color="#B8922A" label="Poids" unit=" kg" />
+                    <MiniLineChart data={metrics} field="bodyFat" color="#DC2626" label="Masse grasse" unit="%" />
+                    <MiniLineChart data={metrics} field="muscleMass" color="#0D9488" label="Masse musculaire" unit=" kg" />
+                  </>
+                )}
+
+                {/* 4. Explication hydratation */}
+                {latest?.hydration != null && (
+                  <div style={{ background: 'rgba(124,58,237,0.05)', border: '1px solid rgba(124,58,237,0.12)', borderRadius: 12, padding: '12px 14px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                      <div style={{ fontSize: 12, fontWeight: 600, color: '#7C3AED' }}>Hydratation</div>
+                      <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 16, color: '#7C3AED' }}>
+                        {latest.hydration.toFixed(0)}%
+                      </div>
+                    </div>
+                    <div style={{ fontSize: 11, color: '#6B7280', lineHeight: 1.6 }}>
+                      {latest.hydration < 45
+                        ? "Hydratation insuffisante. Boire 2L d'eau par jour minimum. L'aloe vera peut aider à améliorer l'absorption."
+                        : latest.hydration < 55
+                        ? "Hydratation correcte. Continue à bien t'hydrater tout au long de la journée."
+                        : "Excellente hydratation. Ton corps est bien hydraté, c'est un atout pour la récupération."}
+                    </div>
+                  </div>
+                )}
+
+                {/* 5. Insights (gardés) */}
+                {(data.insights ?? []).length > 0 && (
+                  <>
+                    <div style={{ fontSize: 9, letterSpacing: '2px', textTransform: 'uppercase', color: '#9CA3AF', fontWeight: 500, marginTop: 4 }}>Ce qui évolue</div>
+                    {(data.insights ?? []).slice(0, 3).map((insight, i) => {
+                      const borderColor = insight.type === 'positive' ? '#0D9488' : insight.type === 'warning' ? '#DC2626' : '#B8922A'
+                      return (
+                        <div key={i} style={{ background: '#fff', border: `1px solid ${borderColor}20`, borderLeft: `3px solid ${borderColor}`, borderRadius: '0 12px 12px 0', padding: '12px 14px' }}>
+                          <div style={{ fontSize: 12, fontWeight: 600, color: borderColor, marginBottom: 3 }}>{insight.title}</div>
+                          <div style={{ fontSize: 11, color: '#6B7280', lineHeight: 1.6 }}>{insight.message}</div>
+                        </div>
+                      )
+                    })}
+                  </>
+                )}
               </>
             )}
           </div>
         )}
 
-        {/* ── ONGLET PRODUITS ── */}
+        {/* ══════════════════════════════════════════════════════════════ */}
+        {/* ONGLET PRODUITS                                                 */}
+        {/* ══════════════════════════════════════════════════════════════ */}
         {activeTab === 'products' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            {/* Recommandés pour toi */}
             {recommendedProducts.length > 0 && (
-              <>
-                <div style={{ fontSize: 9, letterSpacing: '2px', textTransform: 'uppercase', color: '#B8922A', fontWeight: 500 }}>
+              <div style={{ marginBottom: 16 }}>
+                <div style={{ fontSize: 9, letterSpacing: '2px', textTransform: 'uppercase', color: '#B8922A', fontWeight: 600, marginBottom: 10 }}>
                   Recommandés pour toi
                 </div>
                 {recommendedProducts.map((product) => (
-                  <div key={product.ref}
-                    onClick={() => setSelectedProduct(selectedProduct?.ref === product.ref ? null : { ref: product.ref })}
-                    style={{ background: '#fff', border: `1px solid rgba(184,146,42,0.2)`, borderRadius: 14, padding: 14, cursor: 'pointer' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                      <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#B8922A', flexShrink: 0 }} />
-                      <div style={{ flex: 1 }}>
-                        <div style={{ fontSize: 13, fontWeight: 500, color: '#111827' }}>{product.shortName}</div>
-                        <div style={{ fontSize: 11, color: '#9CA3AF' }}>{product.shortBenefit.split('·')[0]}</div>
-                      </div>
-                      <div style={{ fontFamily: 'Syne, sans-serif', fontSize: 14, fontWeight: 700, color: '#B8922A' }}>
-                        {product.publicPrice.toFixed(2)} €
-                      </div>
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth="2">
-                        {selectedProduct?.ref === product.ref ? <polyline points="18 15 12 9 6 15" /> : <polyline points="6 9 12 15 18 9" />}
-                      </svg>
-                    </div>
-                    {selectedProduct?.ref === product.ref && (
-                      <div style={{ marginTop: 12, padding: '10px 12px', background: 'rgba(184,146,42,0.05)', borderRadius: 9, fontSize: 12, color: '#6B7280', lineHeight: 1.7 }}>
-                        {PRODUCT_DESCRIPTIONS[product.category] ?? product.shortBenefit}
-                        <div style={{ marginTop: 8, fontSize: 11, color: '#B8922A', fontWeight: 500 }}>
-                          {product.pv} PV {product.vegan ? '· 🌱 Vegan' : ''}
-                        </div>
-                      </div>
-                    )}
-                  </div>
+                  <ProductCard key={product.ref} product={product} isRecommended={true} coachWhatsapp={data.coach_whatsapp} />
                 ))}
-              </>
+              </div>
             )}
 
-            <div style={{ fontSize: 9, letterSpacing: '2px', textTransform: 'uppercase', color: '#9CA3AF', fontWeight: 500 }}>
-              Découvrir d'autres produits
-            </div>
-            {otherProducts.map((product) => (
-              <div key={product.ref}
-                onClick={() => setSelectedProduct(selectedProduct?.ref === product.ref ? null : { ref: product.ref })}
-                style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.07)', borderRadius: 14, padding: 14, cursor: 'pointer' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#9CA3AF', flexShrink: 0 }} />
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 13, fontWeight: 500, color: '#111827' }}>{product.shortName}</div>
-                    <div style={{ fontSize: 11, color: '#9CA3AF' }}>{product.shortBenefit.split('·')[0]}</div>
+            {/* Par catégorie */}
+            {CATEGORY_DISPLAY.map(({ key, label }) => {
+              const products = HERBALIFE_PRODUCTS.filter((p) => p.category === key && !recommendedRefs.has(p.ref))
+              if (products.length === 0) return null
+              return (
+                <div key={key} style={{ marginBottom: 16 }}>
+                  <div style={{ fontSize: 9, letterSpacing: '2px', textTransform: 'uppercase', color: '#9CA3AF', fontWeight: 500, marginBottom: 10 }}>
+                    {label}
                   </div>
-                  <div style={{ fontFamily: 'Syne, sans-serif', fontSize: 13, fontWeight: 700, color: '#6B7280' }}>
-                    {product.publicPrice.toFixed(2)} €
-                  </div>
+                  {products.map((product) => (
+                    <ProductCard key={product.ref} product={product} isRecommended={false} coachWhatsapp={data.coach_whatsapp} />
+                  ))}
                 </div>
-                {selectedProduct?.ref === product.ref && (
-                  <div style={{ marginTop: 10, padding: '10px 12px', background: '#F9F8F6', borderRadius: 9, fontSize: 12, color: '#6B7280', lineHeight: 1.7 }}>
-                    {PRODUCT_DESCRIPTIONS[product.category] ?? product.shortBenefit}
-                  </div>
-                )}
-              </div>
-            ))}
+              )
+            })}
           </div>
         )}
 
-        {/* ── ONGLET RECOMMANDER ── */}
+        {/* ══════════════════════════════════════════════════════════════ */}
+        {/* ONGLET RECOMMANDER                                              */}
+        {/* ══════════════════════════════════════════════════════════════ */}
         {activeTab === 'refer' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             <div style={{ background: 'rgba(184,146,42,0.06)', border: '1px solid rgba(184,146,42,0.15)', borderRadius: 14, padding: 16 }}>
@@ -544,9 +708,7 @@ export function ClientAppPage() {
               {referSent ? (
                 <div style={{ padding: 16, background: 'rgba(13,148,136,0.08)', borderRadius: 12, textAlign: 'center' }}>
                   <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 15, color: '#0D9488', marginBottom: 4 }}>Merci !</div>
-                  <div style={{ fontSize: 12, color: '#6B7280' }}>
-                    {data.coach_name} a reçu les coordonnées et va contacter cette personne.
-                  </div>
+                  <div style={{ fontSize: 12, color: '#6B7280' }}>{data.coach_name} a reçu les coordonnées et va contacter cette personne.</div>
                 </div>
               ) : (
                 <>
@@ -561,22 +723,6 @@ export function ClientAppPage() {
                 </>
               )}
             </div>
-
-            <a href={GOOGLE_MAPS_LA_BASE} target="_blank" rel="noopener noreferrer"
-              style={{ display: 'flex', alignItems: 'center', gap: 12, background: '#fff', border: '1px solid rgba(0,0,0,0.07)', borderRadius: 14, padding: 16, textDecoration: 'none' }}>
-              <div style={{ width: 36, height: 36, background: 'rgba(184,146,42,0.1)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <span style={{ fontSize: 18 }}>⭐</span>
-              </div>
-              <div>
-                <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 13, color: '#111827', marginBottom: 2 }}>Laisser un avis Google</div>
-                <div style={{ fontSize: 11, color: '#9CA3AF' }}>La Base Shakes & Drinks — Verdun</div>
-              </div>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth="1.5" style={{ marginLeft: 'auto', flexShrink: 0 }}>
-                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-                <polyline points="15 3 21 3 21 9" />
-                <line x1="10" y1="14" x2="21" y2="3" />
-              </svg>
-            </a>
           </div>
         )}
       </div>
@@ -584,10 +730,10 @@ export function ClientAppPage() {
       {/* BOTTOM NAV */}
       <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: '#fff', borderTop: '1px solid rgba(0,0,0,0.07)', display: 'flex', paddingBottom: 'max(12px, env(safe-area-inset-bottom))', zIndex: 100 }}>
         {([
-          { key: 'home' as const, label: 'Accueil', icon: (<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>) },
-          { key: 'evolution' as const, label: 'Évolution', icon: (<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>) },
-          { key: 'products' as const, label: 'Produits', icon: (<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>) },
-          { key: 'refer' as const, label: 'Recommander', icon: (<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="23" y1="11" x2="17" y2="11"/><line x1="20" y1="8" x2="20" y2="14"/></svg>) },
+          { key: 'home' as const, label: 'Accueil', icon: (<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="7" height="7" rx="1.5" /><rect x="14" y="3" width="7" height="7" rx="1.5" /><rect x="3" y="14" width="7" height="7" rx="1.5" /><rect x="14" y="14" width="7" height="7" rx="1.5" /></svg>) },
+          { key: 'evolution' as const, label: 'Évolution', icon: (<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12" /></svg>) },
+          { key: 'products' as const, label: 'Produits', icon: (<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></svg>) },
+          { key: 'refer' as const, label: 'Recommander', icon: (<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><line x1="23" y1="11" x2="17" y2="11" /><line x1="20" y1="8" x2="20" y2="14" /></svg>) },
         ]).map(({ key, label, icon }) => {
           const isActive = activeTab === key
           return (
