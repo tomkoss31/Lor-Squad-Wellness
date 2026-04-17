@@ -1,0 +1,32 @@
+name: Auto-merge claude/focused-pike → main
+
+on:
+  push:
+    branches:
+      - 'claude/focused-pike'
+
+permissions:
+  contents: write
+
+jobs:
+  merge:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Merge claude/focused-pike into main
+        run: |
+          git config user.name "auto-merge-bot"
+          git config user.email "bot@lorsquad.app"
+          git checkout main
+          git pull origin main
+          # Merge avec strategy-option "theirs" si conflit (la branche gagne)
+          git merge origin/claude/focused-pike --no-edit -X theirs || {
+            echo "Conflit non résolvable — abandon"
+            git merge --abort
+            exit 1
+          }
+          git push origin main
