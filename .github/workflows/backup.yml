@@ -1,82 +1,33 @@
 name: Sauvegarde Supabase
-
 on:
   schedule:
-    # Tous les jours à 03:00 UTC (04h ou 05h Paris selon saison)
-    - cron: '0 3 * * *'
-  # Permet aussi de déclencher manuellement depuis l'onglet Actions de GitHub
+    - cron: '0 4 * * *'
   workflow_dispatch:
-
-permissions:
-  contents: write   # pour commit + push
-  issues: write     # pour créer l'issue hebdo
 
 jobs:
   backup:
-    name: Export quotidien des tables Supabase
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout du repo
-        uses: actions/checkout@v4
-
-      - name: Installer Node
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v3
         with:
-          node-version: '20'
-          cache: 'npm'
+          token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Installer les dépendances
-        run: npm ci
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '18'
 
-      - name: Lancer le backup
+      - run: npm install
+
+      - name: Lancer la sauvegarde
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: npm run backup
 
-      - name: Commit et push des sauvegardes
+      - name: Committer les backups
         run: |
-          git config user.name "lor-squad-backup-bot"
-          git config user.email "backup-bot@users.noreply.github.com"
+          git config user.name "backup-bot"
+          git config user.email "backup@lorsquad.app"
           git add backups/
-          if git diff --staged --quiet; then
-            echo "Aucun changement à commiter."
-          else
-            DATE=$(date -u +%Y-%m-%d)
-            TOTAL=$(jq -r '.total // 0' backups/$DATE/manifest.json 2>/dev/null || echo "?")
-            git commit -m "🔒 Backup $DATE — $TOTAL enregistrements"
-            git push
-          fi
-
-      - name: Récap hebdo (dimanche) — crée une issue
-        if: github.event_name == 'schedule'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          # Dimanche = jour 0
-          if [ "$(date -u +%u)" = "7" ]; then
-            DATE=$(date -u +%Y-%m-%d)
-            MANIFEST="backups/$DATE/manifest.json"
-            if [ -f "$MANIFEST" ]; then
-              SUMMARY=$(jq -r '.tables | to_entries | map("- **\(.key)** : \(.value) enregistrements") | join("\n")' "$MANIFEST")
-              TOTAL=$(jq -r '.total' "$MANIFEST")
-              gh issue create \
-                --title "📊 Récap backup Lor'Squad — semaine du $DATE" \
-                --body "$(cat <<EOF
-          ## Récapitulatif hebdomadaire
-
-          **Backup du $DATE — $TOTAL enregistrements au total**
-
-          $SUMMARY
-
-          ---
-
-          📂 [Voir les backups](../tree/main/backups)
-          📖 [Guide de restauration](../blob/main/backups/README.md)
-
-          Si tu reçois cet email, ta sauvegarde tourne normalement. ✅
-          EOF
-          )"
-            fi
-          fi
+          git diff --staged --quiet || git commit -m "backup: $(date +%Y-%m-%d)"
+          git push
