@@ -1468,6 +1468,103 @@ button, a, [role="button"] { min-height: 44px; }
 .ls-role-badge[data-role="referent"]    { background: #FAEEDA; color: #633806; }
 .ls-role-badge[data-role="distributor"] { background: #EAF3DE; color: #27500A; }
 
+/* =========================================================
+   CTA — Nouveau bilan (Tab 0 Vue complète)
+   ========================================================= */
+
+.ls-nouveau-bilan-cta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  width: 100%;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--ls-teal) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--ls-teal) 25%, transparent);
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+  text-align: left;
+  font-family: "DM Sans", sans-serif;
+}
+.ls-nouveau-bilan-cta:hover {
+  background: color-mix(in srgb, var(--ls-teal) 14%, transparent);
+  border-color: color-mix(in srgb, var(--ls-teal) 40%, transparent);
+}
+.ls-nouveau-bilan-cta:active {
+  transform: scale(0.995);
+}
+.ls-nouveau-bilan-cta__icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--ls-teal);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.ls-nouveau-bilan-cta__content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.ls-nouveau-bilan-cta__eyebrow {
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ls-teal);
+  font-weight: 500;
+}
+.ls-nouveau-bilan-cta__title {
+  font-family: "Syne", sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ls-text);
+  line-height: 1.2;
+}
+.ls-nouveau-bilan-cta__subtitle {
+  font-size: 12px;
+  color: var(--ls-text-muted);
+  line-height: 1.2;
+}
+.ls-nouveau-bilan-cta__action {
+  padding: 8px 14px;
+  border-radius: 10px;
+  background: var(--ls-surface);
+  border: 1px solid color-mix(in srgb, var(--ls-teal) 20%, transparent);
+  color: var(--ls-teal);
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+@media (max-width: 640px) {
+  .ls-nouveau-bilan-cta {
+    padding: 12px 14px;
+    gap: 12px;
+  }
+  .ls-nouveau-bilan-cta__icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+  }
+  .ls-nouveau-bilan-cta__title {
+    font-size: 14px;
+  }
+  .ls-nouveau-bilan-cta__subtitle {
+    font-size: 11px;
+  }
+  .ls-nouveau-bilan-cta__action {
+    padding: 6px 10px;
+    font-size: 11px;
+  }
+}
+
 @media (max-width: 1024px) {
   .ls-portfolio-hero {
     flex-direction: column;
