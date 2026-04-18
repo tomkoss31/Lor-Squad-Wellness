@@ -52,8 +52,15 @@ export function useAutoNotifications() {
     const metrics = getPortfolioMetrics(currentUser, clients, followUps, users, 'personal')
     const now = new Date()
 
-    // 1. Relances en retard
-    const retards = metrics.relanceFollowUps?.length ?? 0
+    // Lifecycle filter — on exclut les clients morts/en pause des notifs auto
+    const deadOrPausedIds = new Set(
+      metrics.clients
+        .filter((c) => c.lifecycleStatus === 'stopped' || c.lifecycleStatus === 'lost' || c.lifecycleStatus === 'paused')
+        .map((c) => c.id)
+    )
+
+    // 1. Relances en retard (exclut clients morts/pause)
+    const retards = (metrics.relanceFollowUps ?? []).filter((f) => !deadOrPausedIds.has(f.clientId)).length
     if (retards > 0) {
       await sendNotif(
         `${retards} relance${retards > 1 ? 's' : ''} en attente`,
@@ -63,8 +70,9 @@ export function useAutoNotifications() {
       )
     }
 
-    // 2. RDV du jour dans moins d'1h
+    // 2. RDV du jour dans moins d'1h (exclut clients morts/pause)
     const bientot = (metrics.scheduledFollowUps ?? []).filter(f => {
+      if (deadOrPausedIds.has(f.clientId)) return false
       const diff = new Date(f.dueDate).getTime() - now.getTime()
       return diff > 0 && diff < 3600000
     })
@@ -77,9 +85,10 @@ export function useAutoNotifications() {
       )
     }
 
-    // 3. Réassorts PV dépassés
+    // 3. Réassorts PV dépassés (exclut clients morts/pause)
     if (pvClientProducts) {
       const depasses = pvClientProducts.filter(p => {
+        if (deadOrPausedIds.has(p.clientId)) return false
         if (!p.startDate || !p.durationReferenceDays || !p.active) return false
         const end = new Date(p.startDate)
         end.setDate(end.getDate() + p.durationReferenceDays)
