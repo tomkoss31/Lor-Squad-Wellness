@@ -28,7 +28,8 @@ import {
   serializeDateTimeForStorage,
 } from "../lib/calculations";
 import { buildAssessmentRecommendationPlan } from "../lib/assessmentRecommendations";
-import type { BiologicalSex, DecisionClient, MessageALaisser, Objective, RecommendationLead, TypeDeSuite } from "../types/domain";
+import type { BiologicalSex, BreakfastAnalysis, DecisionClient, MessageALaisser, Objective, RecommendationLead, TypeDeSuite } from "../types/domain";
+import { BreakfastStorySlider, DEFAULT_BREAKFAST_ANALYSIS } from "../components/education/BreakfastStorySlider";
 
 type AssessmentForm = {
   assessmentDate: string;
@@ -109,6 +110,8 @@ type AssessmentForm = {
   decisionClient: DecisionClient | null;
   typeDeSuite: TypeDeSuite | null;
   messageALaisser: MessageALaisser | null;
+  // Étape 9 — Chantier 6 (story petit-déjeuner)
+  breakfastAnalysis: BreakfastAnalysis;
 };
 
 interface AssessmentDraftPayload {
@@ -239,7 +242,8 @@ const initialForm: AssessmentForm = {
   selectedProductIds: [],
   decisionClient: null,
   typeDeSuite: "rdv_fixe",
-  messageALaisser: null
+  messageALaisser: null,
+  breakfastAnalysis: DEFAULT_BREAKFAST_ANALYSIS
 };
 
 function readAssessmentDraft(): AssessmentDraftPayload | null {
@@ -333,12 +337,6 @@ const PROGRAM_INCLUDED_PRODUCT_IDS: Record<string, string[]> = {
   "p-booster-1": ["aloe-vera", "the-51g", "formula-1", "pdm", "multifibres"],
   "p-booster-2": ["aloe-vera", "the-51g", "formula-1", "pdm", "phyto-brule-graisse"]
 };
-
-const LazyBreakfastComparison = lazy(() =>
-  import("../components/education/BreakfastComparison").then((module) => ({
-    default: module.BreakfastComparison
-  }))
-);
 
 const LazyMorningRoutineCard = lazy(() =>
   import("../components/education/MorningRoutineCard").then((module) => ({
@@ -1370,9 +1368,11 @@ export function NewAssessmentPage() {
 
           {currentStep === 8 && (
             <VisualStepBoundary title="Petit-dejeuner">
-              <Suspense fallback={<StepVisualLoadingCard label="Chargement du visuel petit-dejeuner" />}>
-                <LazyBreakfastComparison />
-              </Suspense>
+              <BreakfastStorySlider
+                breakfastContent={form.breakfastContent}
+                analysis={form.breakfastAnalysis}
+                onAnalysisChange={(next) => update("breakfastAnalysis", next)}
+              />
             </VisualStepBoundary>
           )}
 
