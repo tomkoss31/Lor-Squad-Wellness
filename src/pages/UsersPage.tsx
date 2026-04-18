@@ -20,7 +20,6 @@ export function UsersPage() {
     createUserAccess,
     repairUserAccess,
     updateUserAccess,
-    updateUserPassword,
     updateUserStatus,
   } = useAppContext();
 
@@ -82,9 +81,12 @@ export function UsersPage() {
       list = list.filter((u) => u.role === roleFilter);
     }
     const roleOrder: Record<string, number> = { admin: 0, referent: 1, distributor: 2 };
-    return [...list].sort(
-      (a, b) => (roleOrder[a.role] ?? 99) - (roleOrder[b.role] ?? 99)
-    );
+    return [...list].sort((a, b) => {
+      // 1. Actifs d'abord
+      if (a.active !== b.active) return a.active ? -1 : 1;
+      // 2. Puis par rôle
+      return (roleOrder[a.role] ?? 99) - (roleOrder[b.role] ?? 99);
+    });
   }, [users, search, roleFilter]);
 
   useEffect(() => {
@@ -455,14 +457,6 @@ export function UsersPage() {
                             </div>
                           )}
 
-                          {/* Mot de passe */}
-                          <div>
-                            <div style={{ fontSize: 9, letterSpacing: "2px", textTransform: "uppercase", color: "var(--ls-text)", fontWeight: 500, marginBottom: 8, fontFamily: "DM Sans, sans-serif" }}>
-                              Redéfinir le mot de passe
-                            </div>
-                            <UserInlinePasswordForm onApply={(pw) => updateUserPassword(user.id, pw)} />
-                          </div>
-
                           {/* Actions */}
                           <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", paddingTop: 4, borderTop: "1px solid var(--ls-border)", marginTop: 4 }}>
                             <Link
@@ -470,8 +464,8 @@ export function UsersPage() {
                               style={{
                                 padding: "8px 14px",
                                 border: "none",
-                                background: "rgba(184,146,42,0.1)",
-                                color: "var(--ls-gold)",
+                                background: "var(--ls-gold)",
+                                color: "#fff",
                                 borderRadius: 9,
                                 fontSize: 12,
                                 fontWeight: 600,
@@ -481,6 +475,7 @@ export function UsersPage() {
                                 alignItems: "center",
                                 gap: 5,
                                 fontFamily: "DM Sans, sans-serif",
+                                boxShadow: "0 2px 6px rgba(184,146,42,0.2)",
                               }}
                             >
                               Voir portefeuille
@@ -489,17 +484,20 @@ export function UsersPage() {
                                 <polyline points="12 5 19 12 12 19" />
                               </svg>
                             </Link>
+
+                            <UserInlinePasswordForm userId={user.id} userName={user.name} />
+
                             <button
                               onClick={() => void updateUserStatus(user.id, !user.active)}
                               disabled={currentUser?.id === user.id}
                               title={currentUser?.id === user.id ? "Vous ne pouvez pas désactiver votre propre compte" : ""}
                               style={{
-                                padding: "8px 14px",
-                                border: user.active ? "1px solid rgba(220,38,38,0.2)" : "1px solid rgba(13,148,136,0.2)",
-                                background: user.active ? "rgba(220,38,38,0.05)" : "rgba(13,148,136,0.05)",
-                                color: user.active ? "var(--ls-coral)" : "var(--ls-teal)",
-                                borderRadius: 9,
-                                fontSize: 12,
+                                padding: "7px 12px",
+                                border: user.active ? "1px solid var(--ls-border)" : "1px solid rgba(13,148,136,0.2)",
+                                background: "transparent",
+                                color: user.active ? "var(--ls-text-hint)" : "var(--ls-teal)",
+                                borderRadius: 8,
+                                fontSize: 11,
                                 cursor: currentUser?.id === user.id ? "not-allowed" : "pointer",
                                 marginLeft: "auto",
                                 fontFamily: "DM Sans, sans-serif",
@@ -806,24 +804,67 @@ function UserInlineAttachmentForm({
   );
 }
 
-function UserInlinePasswordForm({ onApply }: { onApply: (pw: string) => Promise<{ ok: boolean; error?: string }> }) {
+function UserInlinePasswordForm({ userId, userName }: { userId: string; userName: string }) {
+  const [showModal, setShowModal] = useState(false);
+
+  return (
+    <>
+      <button
+        onClick={() => setShowModal(true)}
+        style={{
+          padding: "8px 14px",
+          border: "1px solid var(--ls-border)",
+          background: "var(--ls-surface)",
+          color: "var(--ls-text-muted)",
+          borderRadius: 9,
+          fontSize: 12,
+          cursor: "pointer",
+          fontFamily: "DM Sans, sans-serif",
+          display: "inline-flex",
+          alignItems: "center",
+          gap: 6,
+        }}
+      >
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+          <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+        </svg>
+        Changer le mot de passe
+      </button>
+
+      {showModal && (
+        <PasswordChangeModal userId={userId} userName={userName} onClose={() => setShowModal(false)} />
+      )}
+    </>
+  );
+}
+
+function PasswordChangeModal({
+  userId,
+  userName,
+  onClose,
+}: {
+  userId: string;
+  userName: string;
+  onClose: () => void;
+}) {
+  const { updateUserPassword } = useAppContext();
   const [password, setPassword] = useState("");
   const [saving, setSaving] = useState(false);
   const [done, setDone] = useState(false);
   const [error, setError] = useState("");
 
   async function handleApply() {
-    if (!password.trim()) return;
+    if (!password || password.length < 6) return;
     setSaving(true);
     setError("");
     try {
-      const result = await onApply(password);
+      const result = await updateUserPassword(userId, password);
       if (result.ok) {
-        setPassword("");
         setDone(true);
-        setTimeout(() => setDone(false), 2000);
+        setTimeout(onClose, 1500);
       } else {
-        setError(result.error ?? "Erreur");
+        setError(result.error ?? "Impossible de modifier le mot de passe.");
       }
     } finally {
       setSaving(false);
@@ -831,45 +872,122 @@ function UserInlinePasswordForm({ onApply }: { onApply: (pw: string) => Promise<
   }
 
   return (
-    <div>
-      <div style={{ display: "flex", gap: 8 }}>
-        <input
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          placeholder="Nouveau mot de passe"
-          style={{
-            flex: 1,
-            padding: "8px 10px",
-            border: "1px solid var(--ls-border)",
-            borderRadius: 8,
-            fontSize: 12,
-            background: "var(--ls-surface)",
-            color: "var(--ls-text)",
-            outline: "none",
-            fontFamily: "DM Sans, sans-serif",
-          }}
-        />
-        <button
-          onClick={() => void handleApply()}
-          disabled={saving || !password.trim()}
-          style={{
-            padding: "8px 14px",
-            border: "1px solid var(--ls-border)",
-            background: "var(--ls-surface)",
-            color: done ? "var(--ls-teal)" : "var(--ls-text-muted)",
-            borderRadius: 8,
-            fontSize: 11,
-            cursor: saving || !password.trim() ? "not-allowed" : "pointer",
-            whiteSpace: "nowrap",
-            fontFamily: "DM Sans, sans-serif",
-            opacity: saving || !password.trim() ? 0.5 : 1,
-          }}
-        >
-          {done ? "✓ OK" : saving ? "..." : "Appliquer"}
-        </button>
+    <div
+      onClick={onClose}
+      style={{
+        position: "fixed",
+        inset: 0,
+        background: "rgba(0,0,0,0.5)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        zIndex: 1000,
+        padding: 20,
+      }}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          background: "var(--ls-surface)",
+          border: "1px solid var(--ls-border)",
+          borderRadius: 16,
+          padding: 24,
+          maxWidth: 400,
+          width: "100%",
+          boxShadow: "0 10px 40px rgba(0,0,0,0.25)",
+        }}
+      >
+        <div style={{ fontFamily: "Syne, sans-serif", fontWeight: 800, fontSize: 18, color: "var(--ls-text)", marginBottom: 6 }}>
+          Changer le mot de passe
+        </div>
+        <div style={{ fontSize: 13, color: "var(--ls-text-muted)", marginBottom: 18 }}>
+          Nouveau mot de passe pour <strong style={{ color: "var(--ls-text)" }}>{userName}</strong>
+        </div>
+
+        {done ? (
+          <div
+            style={{
+              padding: 16,
+              background: "rgba(13,148,136,0.08)",
+              borderRadius: 10,
+              textAlign: "center",
+              color: "var(--ls-teal)",
+              fontWeight: 600,
+              fontSize: 13,
+            }}
+          >
+            ✓ Mot de passe mis à jour
+          </div>
+        ) : (
+          <>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Nouveau mot de passe (6 caractères min.)"
+              autoFocus
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && password.length >= 6 && !saving) void handleApply();
+                if (e.key === "Escape") onClose();
+              }}
+              style={{
+                width: "100%",
+                padding: "12px 14px",
+                border: "1px solid var(--ls-border)",
+                borderRadius: 10,
+                fontSize: 14,
+                background: "var(--ls-input-bg)",
+                color: "var(--ls-text)",
+                outline: "none",
+                marginBottom: 14,
+                fontFamily: "DM Sans, sans-serif",
+              }}
+            />
+            {error && (
+              <div style={{ padding: "8px 12px", borderRadius: 9, background: "rgba(220,38,38,0.08)", border: "1px solid rgba(220,38,38,0.2)", color: "var(--ls-coral)", fontSize: 12, marginBottom: 12 }}>
+                {error}
+              </div>
+            )}
+            <div style={{ display: "flex", gap: 10 }}>
+              <button
+                onClick={onClose}
+                style={{
+                  flex: 1,
+                  padding: 11,
+                  border: "1px solid var(--ls-border)",
+                  background: "transparent",
+                  color: "var(--ls-text-muted)",
+                  borderRadius: 10,
+                  fontSize: 13,
+                  cursor: "pointer",
+                  fontFamily: "DM Sans, sans-serif",
+                }}
+              >
+                Annuler
+              </button>
+              <button
+                onClick={() => void handleApply()}
+                disabled={saving || password.length < 6}
+                style={{
+                  flex: 1,
+                  padding: 11,
+                  border: "none",
+                  background: "var(--ls-gold)",
+                  color: "#fff",
+                  borderRadius: 10,
+                  fontSize: 13,
+                  fontWeight: 700,
+                  cursor: saving || password.length < 6 ? "not-allowed" : "pointer",
+                  opacity: saving || password.length < 6 ? 0.5 : 1,
+                  fontFamily: "Syne, sans-serif",
+                }}
+              >
+                {saving ? "Application..." : "Appliquer"}
+              </button>
+            </div>
+          </>
+        )}
       </div>
-      {error && <div style={{ marginTop: 6, fontSize: 11, color: "var(--ls-coral)" }}>{error}</div>}
     </div>
   );
 }
