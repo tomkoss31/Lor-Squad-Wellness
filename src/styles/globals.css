@@ -976,3 +976,16 @@ button, a, [role="button"] { min-height: 44px; }
     display: none !important;
   }
 }
+
+/* UsersPage — stats + accord\u00e9on responsive */
+@media (max-width: 768px) {
+  .users-stats-grid {
+    grid-template-columns: repeat(3, 1fr) !important;
+  }
+  .users-attach-form {
+    grid-template-columns: 1fr !important;
+  }
+  .users-perimeter-hint span {
+    display: none !important;
+  }
+}
