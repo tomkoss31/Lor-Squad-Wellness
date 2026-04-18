@@ -77,6 +77,7 @@ import type {
   Program,
   User
 } from "../types/domain";
+import { deriveLifecycleFromAssessment } from "../lib/lifecycleMapping";
 import type { PvClientProductRecord, PvClientTransaction } from "../types/pv";
 
 type StorageMode = "local" | "supabase";
@@ -153,6 +154,7 @@ interface AppContextValue {
     followUpType: string;
     followUpStatus: FollowUp["status"];
     notes: string;
+    afterAssessmentAction?: "started" | "pending";
   }) => Promise<string>;
   deleteClient: (clientId: string) => Promise<void>;
   addFollowUpAssessment: (
@@ -830,6 +832,7 @@ export function AppProvider({ children }: PropsWithChildren) {
     followUpType: string;
     followUpStatus: FollowUp["status"];
     notes: string;
+    afterAssessmentAction?: "started" | "pending";
   }) {
     if (storageMode === "supabase") {
       const clientId = await createSupabaseClientWithInitialAssessment(payload);
@@ -848,6 +851,14 @@ export function AppProvider({ children }: PropsWithChildren) {
     }
 
     const clientId = `c-${Date.now()}`;
+
+    // Derive lifecycle from decisionClient × afterAssessmentAction (Matrice B)
+    const { lifecycleStatus, isFragile } = deriveLifecycleFromAssessment({
+      decisionClient: payload.assessment.decisionClient ?? null,
+      afterAssessmentAction:
+        payload.afterAssessmentAction ?? (payload.started ? "started" : "pending"),
+    });
+
     const nextClient: Client = {
       ...payload.client,
       id: clientId,
@@ -858,6 +869,9 @@ export function AppProvider({ children }: PropsWithChildren) {
       startDate: payload.started ? payload.assessment.date : undefined,
       nextFollowUp: payload.nextFollowUp,
       notes: payload.notes,
+      lifecycleStatus,
+      isFragile,
+      lifecycleUpdatedAt: new Date().toISOString(),
       assessments: [payload.assessment]
     };
 

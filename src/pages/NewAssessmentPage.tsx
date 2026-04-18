@@ -28,7 +28,7 @@ import {
   serializeDateTimeForStorage,
 } from "../lib/calculations";
 import { buildAssessmentRecommendationPlan } from "../lib/assessmentRecommendations";
-import type { BiologicalSex, Objective, RecommendationLead } from "../types/domain";
+import type { BiologicalSex, DecisionClient, MessageALaisser, Objective, RecommendationLead, TypeDeSuite } from "../types/domain";
 
 type AssessmentForm = {
   assessmentDate: string;
@@ -105,6 +105,10 @@ type AssessmentForm = {
   recommendationsContacted: boolean;
   detectedNeedIds: string[];
   selectedProductIds: string[];
+  // Étape 13 — Chantier 1
+  decisionClient: DecisionClient | null;
+  typeDeSuite: TypeDeSuite | null;
+  messageALaisser: MessageALaisser | null;
 };
 
 interface AssessmentDraftPayload {
@@ -232,7 +236,10 @@ const initialForm: AssessmentForm = {
   recommendations: createEmptyRecommendations(),
   recommendationsContacted: false,
   detectedNeedIds: [],
-  selectedProductIds: []
+  selectedProductIds: [],
+  decisionClient: null,
+  typeDeSuite: "rdv_fixe",
+  messageALaisser: null
 };
 
 function readAssessmentDraft(): AssessmentDraftPayload | null {
@@ -770,7 +777,11 @@ export function NewAssessmentPage() {
       pedagogicalFocus:
         form.objective === "sport"
           ? ["Hydratation", "Routine matin", "Assiette sport"]
-          : ["Hydratation", "Routine matin", "Assiette perte de poids"]
+          : ["Hydratation", "Routine matin", "Assiette perte de poids"],
+      // Étape 13 — Chantier 1 (Matrice B)
+      decisionClient: form.decisionClient,
+      typeDeSuite: form.typeDeSuite,
+      messageALaisser: form.messageALaisser
     };
 
     try {
@@ -801,7 +812,8 @@ export function NewAssessmentPage() {
           form.comment.trim() ||
           (startsImmediately
             ? "Nouveau client cree depuis le bilan initial. La suite est déjà fixee."
-            : "Bilan enregistre sans demarrage. Une relance est a prevoir.")
+            : "Bilan enregistre sans demarrage. Une relance est a prevoir."),
+        afterAssessmentAction: form.afterAssessmentAction
       });
 
       setSaveError("");
@@ -1555,10 +1567,43 @@ export function NewAssessmentPage() {
               </div>
 
               <div className="grid gap-4 md:grid-cols-3">
-                <ChoiceGroup label="Decision client" value={form.comment.includes("partant") ? "Partant" : form.comment.includes("interesse") ? "A confirmer" : "A rassurer"} options={["Partant", "A rassurer", "A confirmer"]} onChange={(v) => update("comment", v === "Partant" ? "Client partant, rassure par la simplicite du plan." : v === "A confirmer" ? "Client interesse, souhaite valider rapidement." : "Client interesse mais a besoin d'etre rassure sur la mise en place.")} />
-                <ChoiceGroup label="Type de suite" value="Rendez-vous fixe" options={["Rendez-vous fixe", "Message de rappel", "Relance douce"]} onChange={() => undefined} />
-                <ChoiceGroup label="Message a laisser" value={form.comment.includes("cadre clair") ? "Cadre clair" : "Simple"} options={["Simple", "Progressif", "Cadre clair"]} onChange={(v) => update("comment", v === "Cadre clair" ? "Le client repart avec un cadre clair et un prochain pas precis." : v === "Progressif" ? "Le client repart avec un demarrage progressif et rassurant." : "Le client repart avec une solution simple a mettre en place.")} />
+                <ChoiceGroup
+                  label="Décision client"
+                  value={form.decisionClient === "partant" ? "Partant" : form.decisionClient === "a_rassurer" ? "A rassurer" : form.decisionClient === "a_confirmer" ? "A confirmer" : ""}
+                  options={["Partant", "A rassurer", "A confirmer"]}
+                  onChange={(v) =>
+                    update(
+                      "decisionClient",
+                      v === "Partant" ? "partant" : v === "A rassurer" ? "a_rassurer" : "a_confirmer"
+                    )
+                  }
+                />
+                <ChoiceGroup
+                  label="Type de suite"
+                  value={form.typeDeSuite === "rdv_fixe" ? "Rendez-vous fixe" : form.typeDeSuite === "message_rappel" ? "Message de rappel" : form.typeDeSuite === "relance_douce" ? "Relance douce" : ""}
+                  options={["Rendez-vous fixe", "Message de rappel", "Relance douce"]}
+                  onChange={(v) =>
+                    update(
+                      "typeDeSuite",
+                      v === "Rendez-vous fixe" ? "rdv_fixe" : v === "Message de rappel" ? "message_rappel" : "relance_douce"
+                    )
+                  }
+                />
+                <ChoiceGroup
+                  label="Message à laisser"
+                  value={form.messageALaisser === "simple" ? "Simple" : form.messageALaisser === "progressif" ? "Progressif" : form.messageALaisser === "cadre_clair" ? "Cadre clair" : ""}
+                  options={["Simple", "Progressif", "Cadre clair"]}
+                  onChange={(v) =>
+                    update(
+                      "messageALaisser",
+                      v === "Simple" ? "simple" : v === "Progressif" ? "progressif" : "cadre_clair"
+                    )
+                  }
+                />
               </div>
+              <p className="text-[11px] text-[var(--ls-text-muted)]">
+                Ce choix affecte le statut du client dans ta base (actif / pas démarré / fragile).
+              </p>
               <div className="grid gap-4 md:grid-cols-2">
                 <Field
                   label="Prochain rendez-vous"
@@ -1566,7 +1611,11 @@ export function NewAssessmentPage() {
                   value={form.nextFollowUp}
                   onChange={(v) => update("nextFollowUp", v)}
                 />
-                <AreaField label="Commentaire de fin de rendez-vous" value={form.comment} onChange={(v) => update("comment", v)} />
+                <AreaField
+                  label="Commentaire libre"
+                  value={form.comment}
+                  onChange={(v) => update("comment", v)}
+                />
               </div>
             </div>
           )}
