@@ -12,10 +12,6 @@ const IconUrgent = () => (
 const IconPlanned = () => (
   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
 )
-const IconWatch = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-)
-
 function greeting() {
   const h = new Date().getHours()
   if (h < 12) return 'Bonjour'
@@ -93,11 +89,6 @@ export function DashboardPage() {
     [...metrics.scheduledFollowUps].sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime()).slice(0, 4)
   , [metrics.scheduledFollowUps])
 
-  const surveiller = useMemo(() => {
-    const relanceIds = new Set(metrics.relanceFollowUps.map(f => f.id))
-    return metrics.scheduledFollowUps.filter(f => !relanceIds.has(f.id)).slice(0, 4)
-  }, [metrics])
-
   // PV alerts — produits expirés (startDate + durationReferenceDays < now)
   const pvAlerts = useMemo(() => {
     if (!pvClientProducts) return []
@@ -137,7 +128,7 @@ export function DashboardPage() {
           </h1>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#2DD4BF', boxShadow: '0 0 0 3px rgba(45,212,191,0.2)', flexShrink: 0 }} />
-            <span style={{ fontSize: 12, color: 'var(--ls-text-muted)', textTransform: 'capitalize' }}>{today} — Vos priorités du jour</span>
+            <span style={{ fontSize: 12, color: 'var(--ls-text-muted)', textTransform: 'capitalize' }}>{today}</span>
           </div>
         </div>
         <Link className="dashboard-cta" to="/assessments/new" style={{ background: '#C9A84C', color: '#0B0D11', borderRadius: 10, padding: '11px 20px', fontFamily: 'Syne, sans-serif', fontSize: 13, fontWeight: 700, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -232,9 +223,9 @@ export function DashboardPage() {
         </div>
       )}
 
-      {/* 3 Colonnes urgence */}
-      <div className="dashboard-cols" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginTop: 16 }}>
-        <UrgencyColumn title="Urgent" count={metrics.relanceFollowUps.length} color="#FB7185" icon={<IconUrgent />} items={relances} emptyLabel="Aucune relance en attente"
+      {/* 2 Colonnes urgence — "À surveiller" supprimé car redondant avec "RDV confirmés" */}
+      <div className="dashboard-cols" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16, marginTop: 16 }}>
+        <UrgencyColumn title="Suivi à programmer" count={metrics.relanceFollowUps.length} color="#C9A84C" icon={<IconUrgent />} items={relances} emptyLabel="Aucune relance en attente"
           seeAllLink={`/distributors/${currentUser.id}`} seeAllCount={Math.max(0, metrics.relanceFollowUps.length - 4)}
           onMarkContacted={(item) => {
             const in7days = new Date(Date.now() + 7 * 86400000).toISOString()
@@ -242,7 +233,6 @@ export function DashboardPage() {
           }}
           onDismiss={(item) => {
             void updateFollowUpStatus(item.id, 'dismissed')
-            // Passer le client en statut "follow-up" (classé sans suite)
             const cl = clients.find(c => c.id === item.clientId)
             if (cl && cl.status !== 'follow-up') {
               void (async () => {
@@ -253,7 +243,7 @@ export function DashboardPage() {
             }
           }}
         />
-        <UrgencyColumn title="Planifiés" count={metrics.scheduledFollowUps.length} color="#2DD4BF" icon={<IconPlanned />} items={planifies} emptyLabel="Aucun RDV planifié"
+        <UrgencyColumn title="RDV confirmés" count={metrics.scheduledFollowUps.length} color="#2DD4BF" icon={<IconPlanned />} items={planifies} emptyLabel="Aucun RDV planifié"
           seeAllLink={`/distributors/${currentUser.id}`} seeAllCount={Math.max(0, metrics.scheduledFollowUps.length - 4)}
           onMarkContacted={(item) => {
             const in7days = new Date(Date.now() + 7 * 86400000).toISOString()
@@ -261,26 +251,6 @@ export function DashboardPage() {
           }}
           onDismiss={(item) => {
             void updateFollowUpStatus(item.id, 'dismissed')
-            // Passer le client en statut "follow-up" (classé sans suite)
-            const cl = clients.find(c => c.id === item.clientId)
-            if (cl && cl.status !== 'follow-up') {
-              void (async () => {
-                const { getSupabaseClient } = await import('../services/supabaseClient')
-                const sb = await getSupabaseClient()
-                if (sb) await sb.from('clients').update({ status: 'follow-up' }).eq('id', item.clientId)
-              })()
-            }
-          }}
-        />
-        <UrgencyColumn title="À surveiller" count={metrics.clients.length} color="#A78BFA" icon={<IconWatch />} items={surveiller} emptyLabel="Aucun dossier à surveiller"
-          seeAllLink="/clients" seeAllCount={Math.max(0, metrics.clients.length - 4)}
-          onMarkContacted={(item) => {
-            const in7days = new Date(Date.now() + 7 * 86400000).toISOString()
-            void updateClientSchedule(item.clientId, { nextFollowUp: in7days, followUpId: item.id, followUpType: 'Suivi replanifié', followUpStatus: 'scheduled' })
-          }}
-          onDismiss={(item) => {
-            void updateFollowUpStatus(item.id, 'dismissed')
-            // Passer le client en statut "follow-up" (classé sans suite)
             const cl = clients.find(c => c.id === item.clientId)
             if (cl && cl.status !== 'follow-up') {
               void (async () => {
