@@ -1112,3 +1112,40 @@ button, a, [role="button"] { min-height: 44px; }
     width: auto !important;
   }
 }
+
+/* \u2550\u2550\u2550 DASHBOARD COCKPIT \u2550\u2550\u2550 */
+@media (max-width: 1024px) {
+  .dashboard-tiles {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  .dashboard-week-stats {
+    grid-template-columns: repeat(3, 1fr) !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .dashboard-header {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+  }
+  .dashboard-header > a,
+  .dashboard-header > button {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+  .dashboard-tiles {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 10px !important;
+  }
+  .dashboard-week-stats {
+    grid-template-columns: 1fr !important;
+  }
+  .priority-item {
+    flex-wrap: wrap !important;
+    gap: 10px !important;
+  }
+  .priority-item > button {
+    width: 100% !important;
+    margin-left: 50px !important;
+  }
+}
