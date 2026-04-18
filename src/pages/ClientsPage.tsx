@@ -10,13 +10,14 @@ import {
   isRelanceFollowUp,
 } from "../lib/portfolio";
 import { formatDateTime } from "../lib/calculations";
-import type { User, Client } from "../types/domain";
+import type { User, Client, LifecycleStatus } from "../types/domain";
+import { LIFECYCLE_LABELS, LIFECYCLE_TONES } from "../types/domain";
 
 export function ClientsPage() {
   const { currentUser, users, visibleClients, visibleFollowUps } = useAppContext();
 
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "pending" | "follow-up">("all");
+  const [statusFilter, setStatusFilter] = useState<"all" | LifecycleStatus | "fragile">("all");
   const [ownerFilter, setOwnerFilter] = useState("all");
   const deferredSearch = useDeferredValue(search);
 
@@ -43,7 +44,13 @@ export function ClientsPage() {
     return visibleClients.filter((client) => {
       const matchesOwner =
         ownerFilter === "all" || (selectedOwnerIds ? selectedOwnerIds.has(client.distributorId) : false);
-      const matchesStatus = statusFilter === "all" || client.status === statusFilter;
+      const effectiveLifecycle: LifecycleStatus = client.lifecycleStatus ?? (client.started ? "active" : "not_started");
+      const matchesStatus =
+        statusFilter === "all"
+          ? true
+          : statusFilter === "fragile"
+            ? client.isFragile === true
+            : effectiveLifecycle === statusFilter;
       const matchesSearch =
         !normalizedSearch ||
         `${client.firstName} ${client.lastName} ${client.city ?? ""} ${client.currentProgram}`
@@ -121,7 +128,7 @@ export function ClientsPage() {
         </div>
         <select
           value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value as "all" | "active" | "pending" | "follow-up")}
+          onChange={(e) => setStatusFilter(e.target.value as "all" | LifecycleStatus | "fragile")}
           style={{
             padding: "11px 14px", border: "1px solid var(--ls-border)",
             borderRadius: 10, fontFamily: "DM Sans, sans-serif", fontSize: 13,
@@ -131,8 +138,11 @@ export function ClientsPage() {
         >
           <option value="all">Tous les statuts</option>
           <option value="active">Actifs</option>
-          <option value="pending">En attente</option>
-          <option value="follow-up">À relancer</option>
+          <option value="not_started">Pas démarrés</option>
+          <option value="paused">En pause</option>
+          <option value="stopped">Arrêtés</option>
+          <option value="lost">Perdus</option>
+          <option value="fragile">⚠ Fragiles</option>
         </select>
       </div>
 
@@ -256,8 +266,28 @@ export function ClientsPage() {
               >
                 {/* Client */}
                 <div className="clients-cell-client" style={{ flex: 2, minWidth: 0 }}>
-                  <div style={{ fontSize: 13, fontWeight: 500, color: "var(--ls-text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                    {client.firstName} {client.lastName}
+                  <div style={{ fontSize: 13, fontWeight: 500, color: "var(--ls-text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", display: "flex", alignItems: "center", gap: 6 }}>
+                    <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {client.firstName} {client.lastName}
+                    </span>
+                    {client.isFragile && (
+                      <span
+                        title="Client fragile"
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          padding: "1px 6px",
+                          borderRadius: 8,
+                          fontSize: 9,
+                          fontWeight: 600,
+                          background: "rgba(220,38,38,0.12)",
+                          color: "var(--ls-coral)",
+                          flexShrink: 0,
+                        }}
+                      >
+                        ⚠
+                      </span>
+                    )}
                   </div>
                   <div style={{ fontSize: 11, color: "var(--ls-text-hint)", marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                     {client.city ?? "Non renseigné"}
@@ -342,7 +372,21 @@ function getOwnerAvatarColors(role: User["role"]) {
   }
 }
 
+const LIFECYCLE_TONE_TO_COLORS: Record<"teal" | "gold" | "muted" | "coral", { bg: string; color: string }> = {
+  teal:  { bg: "rgba(13,148,136,0.1)",  color: "var(--ls-teal)" },
+  gold:  { bg: "rgba(184,146,42,0.1)",  color: "var(--ls-gold)" },
+  muted: { bg: "var(--ls-surface2)",    color: "var(--ls-text-muted)" },
+  coral: { bg: "rgba(220,38,38,0.1)",   color: "var(--ls-coral)" },
+};
+
 function getClientStatusInfo(client: Client, nextFollowUp: string | undefined) {
+  // Priorité 1 : lifecycle stopped/lost → label direct
+  const lifecycle: LifecycleStatus = client.lifecycleStatus ?? (client.started ? "active" : "not_started");
+  if (lifecycle === "stopped" || lifecycle === "lost" || lifecycle === "paused") {
+    const colors = LIFECYCLE_TONE_TO_COLORS[LIFECYCLE_TONES[lifecycle]];
+    return { label: LIFECYCLE_LABELS[lifecycle], bg: colors.bg, color: colors.color };
+  }
+  // Priorité 2 : RDV urgent ou en retard
   if (nextFollowUp && isOverdue(nextFollowUp)) {
     return { label: "Relance", bg: "rgba(220,38,38,0.1)", color: "var(--ls-coral)" };
   }
@@ -352,13 +396,9 @@ function getClientStatusInfo(client: Client, nextFollowUp: string | undefined) {
       return { label: "RDV", bg: "rgba(184,146,42,0.1)", color: "var(--ls-gold)" };
     }
   }
-  if (client.status === "pending") {
-    return { label: "En attente", bg: "rgba(124,58,237,0.1)", color: "var(--ls-purple)" };
-  }
-  if (client.status === "follow-up") {
-    return { label: "Classé", bg: "var(--ls-surface2)", color: "var(--ls-text-muted)" };
-  }
-  return { label: "Actif", bg: "rgba(13,148,136,0.1)", color: "var(--ls-teal)" };
+  // Priorité 3 : lifecycle basique
+  const colors = LIFECYCLE_TONE_TO_COLORS[LIFECYCLE_TONES[lifecycle]];
+  return { label: LIFECYCLE_LABELS[lifecycle], bg: colors.bg, color: colors.color };
 }
 
 function isOverdue(dateStr: string | undefined): boolean {
