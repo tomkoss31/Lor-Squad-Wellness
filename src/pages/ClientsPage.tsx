@@ -14,12 +14,59 @@ import type { User, Client, LifecycleStatus } from "../types/domain";
 import { LIFECYCLE_LABELS, LIFECYCLE_TONES } from "../types/domain";
 
 export function ClientsPage() {
-  const { currentUser, users, visibleClients, visibleFollowUps } = useAppContext();
+  const { currentUser, users, visibleClients, visibleFollowUps, setClientLifecycleStatus } = useAppContext();
 
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | LifecycleStatus | "fragile">("all");
   const [ownerFilter, setOwnerFilter] = useState("all");
   const deferredSearch = useDeferredValue(search);
+
+  // Chantier 5 — Batch lifecycle
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkStatus, setBulkStatus] = useState<LifecycleStatus>("stopped");
+  const [bulkApplying, setBulkApplying] = useState(false);
+  const [bulkFeedback, setBulkFeedback] = useState<string>("");
+
+  function toggleClient(id: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function toggleAllVisible(ids: string[]) {
+    setSelectedIds((prev) => {
+      const allSelected = ids.every((id) => prev.has(id));
+      if (allSelected) return new Set();
+      return new Set(ids);
+    });
+  }
+
+  async function handleBulkApply() {
+    if (selectedIds.size === 0) return;
+    setBulkApplying(true);
+    setBulkFeedback("");
+    const ids = Array.from(selectedIds);
+    let ok = 0, fail = 0;
+    for (const id of ids) {
+      try {
+        await setClientLifecycleStatus(id, bulkStatus);
+        ok++;
+      } catch {
+        fail++;
+      }
+    }
+    setBulkApplying(false);
+    setSelectedIds(new Set());
+    setBulkFeedback(
+      fail === 0
+        ? `✓ ${ok} client${ok > 1 ? "s" : ""} mis à jour`
+        : `${ok} OK · ${fail} échec${fail > 1 ? "s" : ""}`
+    );
+    setTimeout(() => setBulkFeedback(""), 3500);
+  }
 
   const portfolioUsers = useMemo(
     () => (currentUser ? getActivePortfolioUsers(users, visibleClients, currentUser) : []),
@@ -208,6 +255,98 @@ export function ClientsPage() {
         </div>
       )}
 
+      {/* TOOLBAR BATCH LIFECYCLE (si au moins 1 sélectionné) */}
+      {selectedIds.size > 0 && (
+        <div style={{
+          position: "sticky",
+          top: 8,
+          zIndex: 20,
+          background: "var(--ls-surface)",
+          border: "1.5px solid var(--ls-gold)",
+          borderRadius: 12,
+          padding: "12px 14px",
+          display: "flex",
+          alignItems: "center",
+          gap: 10,
+          flexWrap: "wrap",
+          boxShadow: "0 6px 20px rgba(184,146,42,0.15)",
+        }}>
+          <div style={{ fontSize: 13, fontWeight: 600, color: "var(--ls-gold)", fontFamily: "DM Sans, sans-serif" }}>
+            {selectedIds.size} sélectionné{selectedIds.size > 1 ? "s" : ""}
+          </div>
+          <span style={{ fontSize: 11, color: "var(--ls-text-muted)" }}>→ changer le statut en</span>
+          <select
+            value={bulkStatus}
+            onChange={(e) => setBulkStatus(e.target.value as LifecycleStatus)}
+            style={{
+              padding: "8px 12px",
+              border: "1px solid var(--ls-border)",
+              borderRadius: 9,
+              fontSize: 12,
+              background: "var(--ls-input-bg)",
+              color: "var(--ls-text)",
+              fontFamily: "DM Sans, sans-serif",
+              cursor: "pointer",
+              outline: "none",
+            }}
+          >
+            <option value="active">Actif</option>
+            <option value="not_started">Pas démarré</option>
+            <option value="paused">En pause</option>
+            <option value="stopped">Arrêté</option>
+            <option value="lost">Perdu</option>
+          </select>
+          <button
+            type="button"
+            onClick={() => void handleBulkApply()}
+            disabled={bulkApplying}
+            style={{
+              padding: "8px 16px",
+              border: "none",
+              background: "var(--ls-gold)",
+              color: "#fff",
+              borderRadius: 9,
+              fontSize: 12,
+              fontWeight: 700,
+              cursor: bulkApplying ? "wait" : "pointer",
+              fontFamily: "Syne, sans-serif",
+            }}
+          >
+            {bulkApplying ? "Application..." : "Appliquer"}
+          </button>
+          <button
+            type="button"
+            onClick={() => setSelectedIds(new Set())}
+            style={{
+              padding: "8px 12px",
+              border: "1px solid var(--ls-border)",
+              background: "transparent",
+              color: "var(--ls-text-muted)",
+              borderRadius: 9,
+              fontSize: 11,
+              cursor: "pointer",
+              fontFamily: "DM Sans, sans-serif",
+              marginLeft: "auto",
+            }}
+          >
+            Désélectionner
+          </button>
+        </div>
+      )}
+      {bulkFeedback && (
+        <div style={{
+          padding: "8px 12px",
+          borderRadius: 9,
+          background: bulkFeedback.startsWith("✓") ? "rgba(13,148,136,0.08)" : "rgba(220,38,38,0.08)",
+          border: bulkFeedback.startsWith("✓") ? "1px solid rgba(13,148,136,0.2)" : "1px solid rgba(220,38,38,0.2)",
+          color: bulkFeedback.startsWith("✓") ? "var(--ls-teal)" : "var(--ls-coral)",
+          fontSize: 12,
+          fontFamily: "DM Sans, sans-serif",
+        }}>
+          {bulkFeedback}
+        </div>
+      )}
+
       {/* TABLEAU CLIENTS */}
       {filteredClients.length === 0 ? (
         <div style={{
@@ -225,7 +364,14 @@ export function ClientsPage() {
       ) : (
         <div style={{ background: "var(--ls-surface)", border: "1px solid var(--ls-border)", borderRadius: 14, overflow: "hidden" }}>
           {/* Header */}
-          <div className="clients-table-header" style={{ display: "flex", padding: "12px 16px", borderBottom: "1px solid var(--ls-border)", background: "var(--ls-surface2)" }}>
+          <div className="clients-table-header" style={{ display: "flex", alignItems: "center", padding: "12px 16px", borderBottom: "1px solid var(--ls-border)", background: "var(--ls-surface2)", gap: 8 }}>
+            <input
+              type="checkbox"
+              checked={filteredClients.length > 0 && filteredClients.every((c) => selectedIds.has(c.id))}
+              onChange={() => toggleAllVisible(filteredClients.map((c) => c.id))}
+              title="Tout sélectionner"
+              style={{ width: 16, height: 16, cursor: "pointer", accentColor: "var(--ls-gold)", flexShrink: 0 }}
+            />
             <div style={{ flex: 2, fontSize: 9, letterSpacing: "2px", textTransform: "uppercase", color: "var(--ls-text-hint)", fontWeight: 500 }}>Client</div>
             <div style={{ flex: 1.5, fontSize: 9, letterSpacing: "2px", textTransform: "uppercase", color: "var(--ls-text-hint)", fontWeight: 500 }}>Programme</div>
             <div style={{ flex: 1, fontSize: 9, letterSpacing: "2px", textTransform: "uppercase", color: "var(--ls-text-hint)", fontWeight: 500 }}>Responsable</div>
@@ -238,30 +384,45 @@ export function ClientsPage() {
             const nextFollowUp = client.nextFollowUp;
             const statusInfo = getClientStatusInfo(client, nextFollowUp);
             const avatar = owner ? getOwnerAvatarColors(owner.role) : { bg: "var(--ls-surface2)", text: "var(--ls-text-muted)" };
+            const isSelected = selectedIds.has(client.id);
 
             return (
-              <Link
+              <div
                 key={client.id}
+                style={{
+                  display: "flex", alignItems: "center",
+                  padding: "0 0 0 16px",
+                  borderBottom: i < filteredClients.length - 1 ? "1px solid var(--ls-border)" : "none",
+                  background: isSelected ? "rgba(184,146,42,0.04)" : "transparent",
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={isSelected}
+                  onChange={(e) => {
+                    e.stopPropagation();
+                    toggleClient(client.id);
+                  }}
+                  onClick={(e) => e.stopPropagation()}
+                  style={{ width: 16, height: 16, cursor: "pointer", accentColor: "var(--ls-gold)", flexShrink: 0, marginRight: 8 }}
+                />
+              <Link
                 to={`/clients/${client.id}`}
                 className="clients-table-row"
                 style={{
+                  flex: 1,
                   display: "flex", alignItems: "center",
-                  padding: "14px 16px",
-                  borderBottom: i < filteredClients.length - 1 ? "1px solid var(--ls-border)" : "none",
+                  padding: "14px 16px 14px 0",
                   cursor: "pointer", transition: "all 0.15s",
-                  background: "transparent", borderLeft: "3px solid transparent",
-                  paddingLeft: 16, textDecoration: "none", color: "inherit",
+                  background: "transparent",
+                  textDecoration: "none", color: "inherit",
                   gap: 8, flexWrap: "wrap",
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.background = "rgba(184,146,42,0.06)";
-                  e.currentTarget.style.borderLeft = "3px solid var(--ls-gold)";
-                  e.currentTarget.style.paddingLeft = "13px";
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.background = "transparent";
-                  e.currentTarget.style.borderLeft = "3px solid transparent";
-                  e.currentTarget.style.paddingLeft = "16px";
                 }}
               >
                 {/* Client */}
@@ -344,6 +505,7 @@ export function ClientsPage() {
                   </span>
                 </div>
               </Link>
+              </div>
             );
           })}
         </div>

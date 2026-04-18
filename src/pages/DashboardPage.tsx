@@ -17,8 +17,27 @@ export function DashboardPage() {
   if (!currentUser) return null;
 
   // Scope : uniquement le périmètre du coach
-  const metrics = getPortfolioMetrics(currentUser, clients, followUps, users, "personal");
+  const rawMetrics = getPortfolioMetrics(currentUser, clients, followUps, users, "personal");
+
+  // Chantier 3 — Lifecycle : exclure les clients morts des stats opérationnelles
+  const deadClientIds = useMemo(
+    () => new Set(rawMetrics.clients.filter((c) => c.lifecycleStatus === "stopped" || c.lifecycleStatus === "lost").map((c) => c.id)),
+    [rawMetrics.clients]
+  );
+
+  const metrics = useMemo(() => ({
+    clients: rawMetrics.clients.filter((c) => !deadClientIds.has(c.id)),
+    scheduledFollowUps: rawMetrics.scheduledFollowUps.filter((f) => !deadClientIds.has(f.clientId)),
+    relanceFollowUps: rawMetrics.relanceFollowUps.filter((f) => !deadClientIds.has(f.clientId)),
+  }), [rawMetrics, deadClientIds]);
+
   const scopedClientIds = useMemo(() => new Set(metrics.clients.map((c) => c.id)), [metrics.clients]);
+
+  // Clients fragiles (non morts) du périmètre
+  const fragileClients = useMemo(
+    () => metrics.clients.filter((c) => c.isFragile === true).slice(0, 5),
+    [metrics.clients]
+  );
 
   // ─── Calculs tuiles ──────────────────────────────────────────────
   const todayStr = new Date().toISOString().slice(0, 10);
@@ -273,6 +292,76 @@ export function DashboardPage() {
                 item={item}
                 onAction={() => navigate(`/clients/${item.clientId}`)}
               />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* BLOC CLIENTS FRAGILES */}
+      {fragileClients.length > 0 && (
+        <div style={{
+          background: "var(--ls-surface)",
+          border: "1px solid rgba(220,38,38,0.15)",
+          borderLeft: "3px solid var(--ls-coral)",
+          borderRadius: 14,
+          padding: 18,
+        }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12, flexWrap: "wrap", gap: 8 }}>
+            <div>
+              <div style={{ fontSize: 9, letterSpacing: "2px", textTransform: "uppercase", color: "var(--ls-coral)", fontWeight: 600, marginBottom: 4 }}>
+                ⚠ Attention particulière
+              </div>
+              <div style={{ fontFamily: "Syne, sans-serif", fontWeight: 800, fontSize: 16, color: "var(--ls-text)" }}>
+                {fragileClients.length} client{fragileClients.length > 1 ? "s" : ""} fragile{fragileClients.length > 1 ? "s" : ""}
+              </div>
+            </div>
+            <Link
+              to="/clients?filter=fragile"
+              style={{
+                padding: "7px 14px", border: "1px solid var(--ls-border)",
+                background: "transparent", color: "var(--ls-text-muted)",
+                borderRadius: 9, fontSize: 11, cursor: "pointer",
+                textDecoration: "none", fontFamily: "DM Sans, sans-serif",
+              }}
+            >
+              Voir tous →
+            </Link>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            {fragileClients.map((c) => (
+              <Link
+                key={c.id}
+                to={`/clients/${c.id}`}
+                style={{
+                  display: "flex", alignItems: "center", gap: 10,
+                  padding: "10px 12px",
+                  background: "var(--ls-surface2)",
+                  borderRadius: 10,
+                  textDecoration: "none", color: "inherit",
+                }}
+              >
+                <span style={{
+                  display: "inline-flex",
+                  padding: "2px 8px",
+                  borderRadius: 8,
+                  fontSize: 10,
+                  fontWeight: 600,
+                  background: "rgba(220,38,38,0.12)",
+                  color: "var(--ls-coral)",
+                  flexShrink: 0,
+                }}>⚠</span>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: "var(--ls-text)" }}>
+                    {c.firstName} {c.lastName}
+                  </div>
+                  <div style={{ fontSize: 11, color: "var(--ls-text-muted)" }}>
+                    {c.currentProgram || "Programme à confirmer"}
+                  </div>
+                </div>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ls-text-hint)" strokeWidth="2">
+                  <polyline points="9 18 15 12 9 6" />
+                </svg>
+              </Link>
             ))}
           </div>
         </div>
