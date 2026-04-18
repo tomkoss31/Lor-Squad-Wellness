@@ -31,6 +31,8 @@ import {
   getLatestQuestionnaire,
   getPreviousAssessment
 } from "../lib/calculations";
+import type { Client, LifecycleStatus } from "../types/domain";
+import { LIFECYCLE_LABELS, LIFECYCLE_TONES } from "../types/domain";
 
 export function ClientDetailPage() {
   const navigate = useNavigate();
@@ -296,14 +298,12 @@ export function ClientDetailPage() {
               {client.firstName[0]}{client.lastName[0]}
             </div>
             <div>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 flex-wrap">
                 <h1 style={{ fontFamily: 'Syne, sans-serif', fontSize: 22, fontWeight: 800, color: 'var(--ls-text)', margin: 0 }}>
                   {client.firstName} {client.lastName}
                 </h1>
-                <StatusBadge
-                  label={client.started ? "Démarré" : "À démarrer"}
-                  tone={client.started ? "green" : "amber"}
-                />
+                <LifecycleBadge status={client.lifecycleStatus ?? (client.started ? "active" : "not_started")} />
+                {client.isFragile && <FragileBadge />}
                 <StatusBadge
                   label={client.objective === "sport" ? "Sport" : "Perte de poids"}
                   tone={client.objective === "sport" ? "green" : "blue"}
@@ -1004,6 +1004,8 @@ export function ClientDetailPage() {
               </div>
             )}
           </Card>
+
+          <LifecycleControlCard client={client} />
         </div>
       )}
 
@@ -1177,5 +1179,225 @@ function ProductAdder({ clientId, existingIds, onAdded }: { clientId: string; ex
         Fermer
       </button>
     </div>
+  );
+}
+
+// ─── Lifecycle UI (Chantier 2) ─────────────────────────────────────────
+const LIFECYCLE_TONE_COLORS: Record<"teal" | "gold" | "muted" | "coral", { bg: string; text: string }> = {
+  teal:  { bg: "rgba(13,148,136,0.12)",  text: "var(--ls-teal)" },
+  gold:  { bg: "rgba(184,146,42,0.12)",  text: "var(--ls-gold)" },
+  muted: { bg: "var(--ls-surface2)",     text: "var(--ls-text-muted)" },
+  coral: { bg: "rgba(220,38,38,0.1)",    text: "var(--ls-coral)" },
+};
+
+function LifecycleBadge({ status }: { status: LifecycleStatus }) {
+  const tone = LIFECYCLE_TONES[status] ?? "muted";
+  const colors = LIFECYCLE_TONE_COLORS[tone];
+  return (
+    <span
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        padding: "4px 11px",
+        borderRadius: 12,
+        fontSize: 11,
+        fontWeight: 600,
+        background: colors.bg,
+        color: colors.text,
+        fontFamily: "DM Sans, sans-serif",
+      }}
+    >
+      {LIFECYCLE_LABELS[status]}
+    </span>
+  );
+}
+
+function FragileBadge() {
+  return (
+    <span
+      title="Client fragile — à rassurer"
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 4,
+        padding: "4px 11px",
+        borderRadius: 12,
+        fontSize: 11,
+        fontWeight: 600,
+        background: "rgba(220,38,38,0.1)",
+        color: "var(--ls-coral)",
+        fontFamily: "DM Sans, sans-serif",
+      }}
+    >
+      ⚠ Fragile
+    </span>
+  );
+}
+
+function LifecycleControlCard({ client }: { client: Client }) {
+  const { setClientLifecycleStatus, setClientFragileFlag } = useAppContext();
+  const currentStatus: LifecycleStatus = client.lifecycleStatus ?? (client.started ? "active" : "not_started");
+  const [selected, setSelected] = useState<LifecycleStatus>(currentStatus);
+  const [saving, setSaving] = useState(false);
+  const [feedback, setFeedback] = useState<{ type: "ok" | "err"; msg: string } | null>(null);
+  const [fragileSaving, setFragileSaving] = useState(false);
+  const isFragile = client.isFragile ?? false;
+
+  async function handleSaveStatus() {
+    if (selected === currentStatus) return;
+    setSaving(true);
+    setFeedback(null);
+    try {
+      await setClientLifecycleStatus(client.id, selected);
+      setFeedback({
+        type: "ok",
+        msg:
+          selected === "stopped" || selected === "lost"
+            ? "Statut mis à jour · les suivis en cours ont été désactivés"
+            : "Statut mis à jour",
+      });
+      setTimeout(() => setFeedback(null), 2500);
+    } catch (err) {
+      setFeedback({
+        type: "err",
+        msg: err instanceof Error ? err.message : "Impossible de modifier le statut.",
+      });
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleToggleFragile() {
+    setFragileSaving(true);
+    try {
+      await setClientFragileFlag(client.id, !isFragile);
+    } finally {
+      setFragileSaving(false);
+    }
+  }
+
+  const options: Array<{ value: LifecycleStatus; label: string; hint: string }> = [
+    { value: "active",      label: "Actif",         hint: "Programme en cours, suivi normal" },
+    { value: "not_started", label: "Pas démarré",   hint: "Bilan fait, programme pas encore démarré" },
+    { value: "paused",      label: "En pause",      hint: "Temporairement en standby (vacances, maladie…)" },
+    { value: "stopped",     label: "Arrêté",        hint: "A arrêté volontairement · stoppe les suivis auto" },
+    { value: "lost",        label: "Perdu",         hint: "Injoignable · stoppe les suivis auto" },
+  ];
+
+  return (
+    <Card className="space-y-4">
+      <p className="eyebrow-label">Cycle de vie</p>
+      <h2 className="text-lg font-bold text-white" style={{ fontFamily: "Syne, sans-serif" }}>
+        Statut du dossier
+      </h2>
+
+      <div className="space-y-2">
+        {options.map((opt) => {
+          const isActive = selected === opt.value;
+          return (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => setSelected(opt.value)}
+              style={{
+                width: "100%",
+                display: "flex",
+                alignItems: "center",
+                gap: 12,
+                padding: "12px 14px",
+                borderRadius: 12,
+                border: isActive ? "1.5px solid var(--ls-gold)" : "1px solid var(--ls-border)",
+                background: isActive ? "rgba(184,146,42,0.08)" : "var(--ls-surface2)",
+                color: "var(--ls-text)",
+                cursor: "pointer",
+                textAlign: "left",
+                fontFamily: "DM Sans, sans-serif",
+                transition: "all 0.15s",
+              }}
+            >
+              <div style={{ flexShrink: 0 }}>
+                <LifecycleBadge status={opt.value} />
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: "var(--ls-text)" }}>{opt.label}</div>
+                <div style={{ fontSize: 11, color: "var(--ls-text-muted)", marginTop: 2 }}>{opt.hint}</div>
+              </div>
+              {isActive && (
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ls-gold)" strokeWidth="2.5">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      <Button
+        className="w-full"
+        onClick={() => void handleSaveStatus()}
+        disabled={saving || selected === currentStatus}
+      >
+        {saving ? "Enregistrement..." : selected === currentStatus ? "Statut inchangé" : "Enregistrer le statut"}
+      </Button>
+
+      {feedback && (
+        <div
+          style={{
+            fontSize: 12,
+            padding: "8px 12px",
+            borderRadius: 9,
+            background: feedback.type === "ok" ? "rgba(13,148,136,0.08)" : "rgba(220,38,38,0.08)",
+            border: feedback.type === "ok" ? "1px solid rgba(13,148,136,0.2)" : "1px solid rgba(220,38,38,0.2)",
+            color: feedback.type === "ok" ? "var(--ls-teal)" : "var(--ls-coral)",
+          }}
+        >
+          {feedback.msg}
+        </div>
+      )}
+
+      {/* Flag fragile */}
+      <div
+        style={{
+          marginTop: 10,
+          padding: "12px 14px",
+          borderRadius: 12,
+          background: isFragile ? "rgba(220,38,38,0.06)" : "var(--ls-surface2)",
+          border: isFragile ? "1px solid rgba(220,38,38,0.2)" : "1px solid var(--ls-border)",
+          display: "flex",
+          alignItems: "center",
+          gap: 10,
+        }}
+      >
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 13, fontWeight: 600, color: "var(--ls-text)" }}>
+            {isFragile ? "⚠ Client marqué fragile" : "Marquer comme fragile"}
+          </div>
+          <div style={{ fontSize: 11, color: "var(--ls-text-muted)", marginTop: 2 }}>
+            {isFragile
+              ? "Ce client a besoin d'attention particulière — visible dans le dashboard."
+              : "À activer si le client hésite ou a besoin d'être rassuré."}
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={() => void handleToggleFragile()}
+          disabled={fragileSaving}
+          style={{
+            padding: "7px 14px",
+            borderRadius: 9,
+            border: isFragile ? "1px solid var(--ls-border)" : "1px solid rgba(220,38,38,0.25)",
+            background: isFragile ? "transparent" : "rgba(220,38,38,0.08)",
+            color: isFragile ? "var(--ls-text-muted)" : "var(--ls-coral)",
+            fontSize: 12,
+            fontWeight: 600,
+            cursor: fragileSaving ? "wait" : "pointer",
+            fontFamily: "DM Sans, sans-serif",
+            flexShrink: 0,
+          }}
+        >
+          {fragileSaving ? "..." : isFragile ? "Retirer" : "Marquer"}
+        </button>
+      </div>
+    </Card>
   );
 }
