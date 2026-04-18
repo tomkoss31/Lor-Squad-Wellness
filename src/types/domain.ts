@@ -192,7 +192,7 @@ export interface FollowUp {
   clientName: string;
   dueDate: string;
   type: string;
-  status: "scheduled" | "pending" | "completed" | "dismissed";
+  status: "scheduled" | "pending" | "completed" | "dismissed" | "inactive";
   programTitle: string;
   lastAssessmentDate: string;
 }

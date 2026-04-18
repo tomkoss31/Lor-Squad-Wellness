@@ -60,6 +60,8 @@ import {
   upsertSupabasePvClientProduct,
   updateSupabaseAssessment,
   updateSupabaseClientSchedule,
+  updateSupabaseClientLifecycleStatus,
+  updateSupabaseClientFragileFlag,
   updateSupabaseUserAccess,
   updateSupabaseUserPassword,
   updateSupabaseUserStatus
@@ -71,6 +73,7 @@ import type {
   Client,
   ClientMessage,
   FollowUp,
+  LifecycleStatus,
   Program,
   User
 } from "../types/domain";
@@ -97,6 +100,8 @@ interface AppContextValue {
   markMessageRead: (id: string) => Promise<void>;
   deleteMessage: (id: string) => Promise<void>;
   updateClientInfo: (clientId: string, data: { phone?: string; email?: string; city?: string }) => Promise<void>;
+  setClientLifecycleStatus: (clientId: string, newStatus: LifecycleStatus) => Promise<void>;
+  setClientFragileFlag: (clientId: string, isFragile: boolean) => Promise<void>;
   updateFollowUpStatus: (followUpId: string, status: 'scheduled' | 'pending' | 'completed' | 'dismissed') => Promise<void>;
   loginAs: (userId: string) => Promise<void>;
   loginWithCredentials: (
@@ -1324,6 +1329,42 @@ export function AppProvider({ children }: PropsWithChildren) {
           setFollowUps(prev => prev.map(f => f.id === followUpId ? { ...f, status } : f));
         }
       },
+      setClientLifecycleStatus: async (clientId: string, newStatus: LifecycleStatus) => {
+        if (!currentUser?.id) throw new Error("Not authenticated");
+
+        if (storageMode === 'supabase') {
+          await updateSupabaseClientLifecycleStatus({ clientId, newStatus, userId: currentUser.id });
+        }
+
+        // Optimistic local state update
+        setClients(prev => prev.map(c =>
+          c.id === clientId
+            ? {
+                ...c,
+                lifecycleStatus: newStatus,
+                lifecycleUpdatedAt: new Date().toISOString(),
+                lifecycleUpdatedBy: currentUser.id,
+              }
+            : c
+        ));
+
+        // Si "mort" → désactiver tous les follow-ups ouverts
+        if (newStatus === 'stopped' || newStatus === 'lost') {
+          setFollowUps(prev => prev.map(fu =>
+            fu.clientId === clientId && (fu.status === 'scheduled' || fu.status === 'pending')
+              ? { ...fu, status: 'inactive' as const }
+              : fu
+          ));
+        }
+      },
+      setClientFragileFlag: async (clientId: string, isFragile: boolean) => {
+        if (storageMode === 'supabase') {
+          await updateSupabaseClientFragileFlag({ clientId, isFragile });
+        }
+        setClients(prev => prev.map(c =>
+          c.id === clientId ? { ...c, isFragile } : c
+        ));
+      },
       loginAs,
       loginWithCredentials,
       logout,
@@ -1345,7 +1386,7 @@ export function AppProvider({ children }: PropsWithChildren) {
       updateClientSchedule,
       reassignClientOwner,
       addPvTransaction,
-      savePvClientProduct
+      savePvClientProduct,
     }),
     [
       authReady,
