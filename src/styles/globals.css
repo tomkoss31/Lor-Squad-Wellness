@@ -989,3 +989,75 @@ button, a, [role="button"] { min-height: 44px; }
     display: none !important;
   }
 }
+
+/* ═══ SUIVI PV V2 — Responsive complet ═══ */
+
+/* iPad : 2x2 stats */
+@media (max-width: 1024px) {
+  .pv-stats-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  .pv-fullpage-header {
+    gap: 10px !important;
+  }
+  .pv-fullpage-header > a {
+    width: 100% !important;
+    text-align: center !important;
+  }
+}
+
+/* iPhone : cards empil\u00e9es + labels inline */
+@media (max-width: 640px) {
+  .pv-stats-grid {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 8px !important;
+  }
+  .pv-filters {
+    flex-direction: column !important;
+  }
+  .pv-filters > select {
+    width: 100% !important;
+  }
+  .pv-table-header {
+    display: none !important;
+  }
+  .pv-table-row {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    padding: 14px !important;
+    gap: 8px !important;
+  }
+  .pv-cell-client, .pv-cell-program, .pv-cell-pv, .pv-cell-days, .pv-cell-status {
+    flex: none !important;
+    width: 100% !important;
+  }
+  .pv-cell-program::before {
+    content: 'Programme : ';
+    color: var(--ls-text-hint);
+    font-size: 10px;
+    font-weight: 400;
+  }
+  .pv-cell-pv::before {
+    content: 'PV cumul\u00e9s : ';
+    color: var(--ls-text-hint);
+    font-size: 10px;
+    font-weight: 400;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .pv-cell-days::before {
+    content: 'D\u00e9marr\u00e9 il y a : ';
+    color: var(--ls-text-hint);
+    font-size: 10px;
+  }
+  .pv-form-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .pv-history-row {
+    padding: 12px !important;
+  }
+  .pv-history-row > div:first-child {
+    width: 100% !important;
+    font-weight: 600 !important;
+    color: var(--ls-text) !important;
+  }
+}

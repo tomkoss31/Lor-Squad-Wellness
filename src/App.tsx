@@ -24,16 +24,6 @@ const PvOverviewPage = lazy(() =>
     default: module.PvOverviewPage
   }))
 );
-const PvClientsPage = lazy(() =>
-  import("./pages/PvClientsPage").then((module) => ({
-    default: module.PvClientsPage
-  }))
-);
-const PvOrdersPage = lazy(() =>
-  import("./pages/PvOrdersPage").then((module) => ({
-    default: module.PvOrdersPage
-  }))
-);
 const PvTeamPage = lazy(() =>
   import("./pages/PvTeamPage").then((module) => ({
     default: module.PvTeamPage
@@ -126,8 +116,6 @@ export default function App() {
               <Route path="guide" element={<GuidePage />} />
               <Route path="recommendations" element={<RecommendationsPage />} />
               <Route path="pv" element={<PvOverviewPage />} />
-              <Route path="pv/clients" element={<PvClientsPage />} />
-              <Route path="pv/orders" element={<PvOrdersPage />} />
               <Route path="messages" element={<MessagesPage />} />
               <Route path="clients" element={<ClientsPage />} />
               <Route element={<RoleRoute allowedRoles={["admin"]} />}>
