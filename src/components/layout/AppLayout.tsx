@@ -76,7 +76,7 @@ export function AppLayout() {
 
   const pageTitle =
     location.pathname === "/dashboard"
-      ? "Pilotage clair de la journée"
+      ? ""
       : location.pathname === "/guide"
         ? "Repères simples pour conduire le rendez-vous"
         : location.pathname === "/recommendations"
