@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { getSupabaseClient } from '../services/supabaseClient'
 import { HERBALIFE_PRODUCTS, type HerbalifeProduct } from '../data/herbalifeCatalog'
+import { BreakfastStorySlider, DEFAULT_BREAKFAST_ANALYSIS } from '../components/education/BreakfastStorySlider'
+import type { BreakfastAnalysis } from '../types/domain'
 
 const GOOGLE_MAPS_LA_BASE = 'https://www.google.com/maps/place/LA+BASE+Shakes%26Drinks/@49.1619589,5.3840559,17z'
 
@@ -186,7 +188,8 @@ export function ClientAppPage() {
   const { token } = useParams<{ token: string }>()
   const [data, setData] = useState<ClientAppData | null>(null)
   const [loading, setLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState<'home' | 'evolution' | 'products' | 'refer'>('home')
+  const [activeTab, setActiveTab] = useState<'home' | 'evolution' | 'products' | 'coaching' | 'refer'>('home')
+  const [coachingData, setCoachingData] = useState<{ breakfastAnalysis: BreakfastAnalysis; breakfastContent: string } | null>(null)
   const [referName, setReferName] = useState('')
   const [referContact, setReferContact] = useState('')
   const [referSent, setReferSent] = useState(false)
@@ -305,10 +308,26 @@ export function ClientAppPage() {
     }
   }
 
+  async function loadCoachingData(sb: NonNullable<Awaited<ReturnType<typeof getSupabaseClient>>>, tok: string) {
+    try {
+      const { data: rows } = await sb.rpc('get_client_assessment_by_token', { p_token: tok })
+      const row = Array.isArray(rows) ? rows[0] : rows
+      const q = (row as Record<string, any> | null)?.questionnaire as Record<string, any> | undefined
+      const analysis = q?.breakfastAnalysis as BreakfastAnalysis | undefined
+      const content = typeof q?.breakfastContent === 'string' ? q.breakfastContent : ''
+      if (analysis) {
+        setCoachingData({ breakfastAnalysis: { ...DEFAULT_BREAKFAST_ANALYSIS, ...analysis }, breakfastContent: content })
+      }
+    } catch { /* silencieux — onglet Coaching affichera l'état vide */ }
+  }
+
   async function loadClientData() {
     try {
       const sb = await getSupabaseClient()
       if (!sb || !token) { setLoading(false); return }
+
+      // Fetch coaching (assessment) en parallèle — n'influe pas sur l'affichage principal
+      void loadCoachingData(sb, token)
 
       const { data: recap } = await sb.from('client_recaps').select('*').eq('token', token).maybeSingle()
       if (recap) { setData(normalizeData(recap)); setLoading(false); return }
@@ -766,6 +785,31 @@ export function ClientAppPage() {
         )}
 
         {/* ══════════════════════════════════════════════════════════════ */}
+        {/* ONGLET COACHING — story petit-déjeuner (Chantier 6)             */}
+        {/* ══════════════════════════════════════════════════════════════ */}
+        {activeTab === 'coaching' && (
+          <div className="ls-coaching-tab">
+            {coachingData ? (
+              <BreakfastStorySlider
+                breakfastContent={coachingData.breakfastContent}
+                analysis={coachingData.breakfastAnalysis}
+                onAnalysisChange={() => { /* readOnly — no-op */ }}
+                readOnly
+              />
+            ) : (
+              <div className="ls-coaching-empty">
+                <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 16, color: '#111827' }}>
+                  Ton coaching personnalisé
+                </div>
+                <div>
+                  Ton coaching personnalisé arrive après ton prochain bilan avec&nbsp;{data.coach_name}.
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ══════════════════════════════════════════════════════════════ */}
         {/* ONGLET RECOMMANDER                                              */}
         {/* ══════════════════════════════════════════════════════════════ */}
         {activeTab === 'refer' && (
@@ -950,6 +994,7 @@ export function ClientAppPage() {
           { key: 'home' as const, label: 'Accueil', icon: (<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="7" height="7" rx="1.5" /><rect x="14" y="3" width="7" height="7" rx="1.5" /><rect x="3" y="14" width="7" height="7" rx="1.5" /><rect x="14" y="14" width="7" height="7" rx="1.5" /></svg>) },
           { key: 'evolution' as const, label: 'Évolution', icon: (<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12" /></svg>) },
           { key: 'products' as const, label: 'Produits', icon: (<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></svg>) },
+          { key: 'coaching' as const, label: 'Coaching', icon: (<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18h6" /><path d="M10 22h4" /><path d="M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.2 1 2V17h6v-.3c0-.8.4-1.5 1-2A7 7 0 0 0 12 2z" /></svg>) },
           { key: 'refer' as const, label: 'Recommander', icon: (<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><line x1="23" y1="11" x2="17" y2="11" /><line x1="20" y1="8" x2="20" y2="14" /></svg>) },
         ]).map(({ key, label, icon }) => {
           const isActive = activeTab === key
