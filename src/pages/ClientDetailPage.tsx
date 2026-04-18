@@ -1,10 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { EditScheduleModal } from "../components/client/EditScheduleModal";
-import {
-  BodyScanComparisonGrid,
-  type ComparisonMetricCard
-} from "../components/body-scan/BodyScanComparisonGrid";
 import { BodyFatInsightCard } from "../components/body-scan/BodyFatInsightCard";
 import { MuscleMassInsightCard } from "../components/body-scan/MuscleMassInsightCard";
 import { BodyScanSnapshotCard } from "../components/body-scan/BodyScanSnapshotCard";
@@ -27,17 +23,13 @@ import { getClientActiveFollowUp } from "../lib/portfolio";
 import {
   calculateProteinRange,
   calculateWaterNeed,
-  estimateHydrationKg,
-  estimateMuscleMassPercent,
   formatDate,
   formatDateTime,
-  getAssessmentDelta,
   getFirstAssessment,
   getLatestAssessment,
   getLatestBodyScan,
   getLatestQuestionnaire,
-  getPreviousAssessment,
-  getWeightLossPlan
+  getPreviousAssessment
 } from "../lib/calculations";
 
 export function ClientDetailPage() {
@@ -220,26 +212,8 @@ export function ClientDetailPage() {
   const firstAssessment = getFirstAssessment(client);
   const latestBodyScan = getLatestBodyScan(client);
   const latestQuestionnaire = getLatestQuestionnaire(client);
-  const previousDelta = getAssessmentDelta(latestBodyScan, previousAssessment?.bodyScan ?? null);
   const waterNeed = calculateWaterNeed(latestBodyScan.weight);
   const proteinRange = calculateProteinRange(latestBodyScan.weight, client.objective);
-  const latestMusclePercent = estimateMuscleMassPercent(
-    latestBodyScan.weight,
-    latestBodyScan.muscleMass
-  );
-  const latestHydrationKg = estimateHydrationKg(latestBodyScan.weight, latestBodyScan.hydration);
-  const previousHydrationKg = previousAssessment
-    ? estimateHydrationKg(previousAssessment.bodyScan.weight, previousAssessment.bodyScan.hydration)
-    : null;
-  const firstHydrationKg = estimateHydrationKg(
-    firstAssessment.bodyScan.weight,
-    firstAssessment.bodyScan.hydration
-  );
-  const weightLossPlan = getWeightLossPlan(
-    latestBodyScan.weight,
-    latestQuestionnaire.targetWeight,
-    latestQuestionnaire.desiredTimeline
-  );
   const recommendationCount = latestQuestionnaire.recommendations?.length ?? 0;
   const recommendationsContacted = latestQuestionnaire.recommendationsContacted ?? false;
   const optionalProductsLabel = latestQuestionnaire.optionalProductsUsed?.trim()
@@ -304,62 +278,6 @@ export function ClientDetailPage() {
       );
     }
   }
-
-  const comparisonItems: ComparisonMetricCard[] = [
-    {
-      label: "Masse musculaire",
-      primary: `${latestBodyScan.muscleMass} kg`,
-      secondary: `${latestMusclePercent} %`,
-      previousDelta: previousAssessment == null ? 0 : previousDelta.muscleMass,
-      initialDelta: Number(
-        (latestBodyScan.muscleMass - firstAssessment.bodyScan.muscleMass).toFixed(1)
-      ),
-      suffix: " kg"
-    },
-    {
-      label: "Hydratation",
-      primary: `${latestBodyScan.hydration} %`,
-      secondary: `${latestHydrationKg} kg estimes`,
-      previousDelta:
-        previousHydrationKg == null
-          ? 0
-          : Number((latestHydrationKg - previousHydrationKg).toFixed(1)),
-      initialDelta: Number((latestHydrationKg - firstHydrationKg).toFixed(1)),
-      suffix: " kg"
-    },
-    {
-      label: "Poids",
-      primary: `${latestBodyScan.weight} kg`,
-      secondary:
-        client.objective === "weight-loss"
-          ? weightLossPlan.isAchieved
-            ? `Cible ${latestQuestionnaire.targetWeight} kg atteinte`
-            : `${weightLossPlan.remainingKg} kg restants`
-          : "Repère de suivi",
-      previousDelta: previousDelta.weight,
-      initialDelta: Number((latestBodyScan.weight - firstAssessment.bodyScan.weight).toFixed(1)),
-      suffix: " kg",
-      inverseGood: true
-    },
-    {
-      label: "Graisse viscérale",
-      primary: `${latestBodyScan.visceralFat}`,
-      secondary: "Indice actuel",
-      previousDelta: previousDelta.visceralFat,
-      initialDelta: Number((latestBodyScan.visceralFat - firstAssessment.bodyScan.visceralFat).toFixed(1)),
-      suffix: "",
-      inverseGood: true
-    },
-    {
-      label: "Âge métabolique",
-      primary: `${latestBodyScan.metabolicAge} ans`,
-      secondary: `Age reel ${client.age} ans`,
-      previousDelta: previousDelta.metabolicAge,
-      initialDelta: Number((latestBodyScan.metabolicAge - firstAssessment.bodyScan.metabolicAge).toFixed(1)),
-      suffix: " ans",
-      inverseGood: true
-    }
-  ];
 
   return (
     <div className="space-y-6">
@@ -543,82 +461,10 @@ export function ClientDetailPage() {
         />
       )}
 
-      {/* Tab 0: Vue complète (pleine largeur) */}
+      {/* Tab 0: Vue complète — cockpit light */}
       {activeTab === 0 && (
-      <div className="space-y-4">
         <Card className="space-y-5">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div>
-              <p className="text-sm text-[var(--ls-text-muted)]">
-                {client.job} - {client.city ?? "Ville non renseignee"} -{" "}
-                <Link
-                  to={`/distributors/${client.distributorId}`}
-                  className="font-medium text-[#C9A84C] transition hover:text-[#2DD4BF]"
-                >
-                  {client.distributorName}
-                </Link>
-              </p>
-              <p className="mt-2 text-4xl">
-                {client.firstName} {client.lastName}
-              </p>
-              <p className="mt-2 text-sm text-[var(--ls-text-muted)]">
-                Programme en cours : {client.currentProgram || "Programme a confirmer"}
-              </p>
-            </div>
-            <div className="flex flex-wrap items-center justify-end gap-3">
-              <Link
-                to={`/clients/${client.id}/follow-up/new`}
-                className="inline-flex items-center gap-3 rounded-[22px] bg-[rgba(45,212,191,0.12)] px-4 py-3 text-sm font-semibold text-[#2DD4BF] transition hover:bg-[rgba(45,212,191,0.18)]"
-              >
-                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[rgba(45,212,191,0.18)] text-[#2DD4BF]">
-                  <svg
-                    aria-hidden="true"
-                    viewBox="0 0 24 24"
-                    className="h-5 w-5"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.8"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M4 7.5h4" />
-                    <path d="M4 12h7" />
-                    <path d="M4 16.5h4" />
-                    <path d="M15.5 4v5" />
-                    <path d="M13 6.5h5" />
-                    <rect x="11" y="10" width="9" height="9" rx="2" />
-                  </svg>
-                </span>
-                <span className="text-left">
-                  <span className="block text-[11px] font-medium text-[#2DD4BF]/70">
-                    Action rapide
-                  </span>
-                  <span className="block">Démarrer le body scan</span>
-                </span>
-              </Link>
-
-              <div className="flex flex-wrap gap-2">
-              <StatusBadge
-                label={client.started ? "Programme démarré" : "À démarrer"}
-                tone={client.started ? "green" : "amber"}
-              />
-              <StatusBadge
-                label={client.objective === "sport" ? "Sport" : "Perte de poids"}
-                tone={client.objective === "sport" ? "green" : "blue"}
-              />
-              {recommendationCount ? (
-                <StatusBadge
-                  label={
-                    recommendationsContacted
-                      ? `${recommendationCount} recommandations contactées`
-                      : `${recommendationCount} recommandations à contacter`
-                  }
-                  tone={recommendationsContacted ? "green" : "amber"}
-                />
-              ) : null}
-              </div>
-            </div>
-          </div>
+          <NouveauBilanCTA onClick={() => navigate(`/clients/${client.id}/follow-up/new`)} />
 
           <div className="bodyscan-metrics grid grid-cols-2 gap-3 md:gap-4 xl:grid-cols-4">
             <MetricTile
@@ -642,11 +488,7 @@ export function ClientDetailPage() {
                     : "À définir"
                   : latestQuestionnaire.objectiveFocus || "Prise de masse"
               }
-              hint={
-                client.objective === "weight-loss"
-                  ? "Repère cible"
-                  : "Cap actuel"
-              }
+              hint={client.objective === "weight-loss" ? "Repère cible" : "Cap actuel"}
               accent="red"
             />
             <MetricTile
@@ -657,96 +499,13 @@ export function ClientDetailPage() {
             />
           </div>
 
-          <StartingPointOverviewCard
-            objective={client.objective}
-            startDate={firstAssessment.date}
-            startWeight={firstAssessment.bodyScan.weight}
-            currentDate={latestAssessment.date}
-            currentWeight={latestBodyScan.weight}
-            currentBodyFat={latestBodyScan.bodyFat}
-            startBodyFat={firstAssessment.bodyScan.bodyFat}
-          />
-
           <BodyScanSnapshotCard
             title="Dernier body scan"
             dateLabel={`Relevé du ${formatDate(latestAssessment.date)}`}
             metrics={latestBodyScan}
             realAge={client.age}
           />
-
-          <BodyFatInsightCard
-            current={{ weight: latestBodyScan.weight, percent: latestBodyScan.bodyFat }}
-            objective={client.objective}
-            sex={client.sex}
-            previous={
-              previousAssessment
-                ? {
-                    weight: previousAssessment.bodyScan.weight,
-                    percent: previousAssessment.bodyScan.bodyFat
-                  }
-                : null
-            }
-            initial={{
-              weight: firstAssessment.bodyScan.weight,
-              percent: firstAssessment.bodyScan.bodyFat
-            }}
-            history={[...client.assessments].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()).map((assessment) => ({
-              date: assessment.date,
-              weight: assessment.bodyScan.weight,
-              percent: assessment.bodyScan.bodyFat
-            }))}
-          />
-
-          <MuscleMassInsightCard
-            current={{ weight: latestBodyScan.weight, muscleMass: latestBodyScan.muscleMass }}
-            previous={
-              previousAssessment
-                ? {
-                    weight: previousAssessment.bodyScan.weight,
-                    muscleMass: previousAssessment.bodyScan.muscleMass
-                  }
-                : null
-            }
-            initial={{
-              weight: firstAssessment.bodyScan.weight,
-              muscleMass: firstAssessment.bodyScan.muscleMass
-            }}
-            history={[...client.assessments].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()).map((assessment) => ({
-              date: assessment.date,
-              weight: assessment.bodyScan.weight,
-              muscleMass: assessment.bodyScan.muscleMass
-            }))}
-          />
-
-          <HydrationVisceralInsightCard
-            weight={latestBodyScan.weight}
-            hydrationPercent={latestBodyScan.hydration}
-            sex={client.sex}
-            visceralFat={latestBodyScan.visceralFat}
-            history={[...client.assessments].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()).map((assessment) => ({
-              date: assessment.date,
-              weight: assessment.bodyScan.weight,
-              hydrationPercent: assessment.bodyScan.hydration,
-              visceralFat: assessment.bodyScan.visceralFat
-            }))}
-          />
-
-          <div className="space-y-4 rounded-[26px] bg-[var(--ls-surface2)] p-5">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <p className="eyebrow-label">Écarts et évolution</p>
-                <p className="mt-3 text-2xl text-white">Ce qui a bougé</p>
-              </div>
-              <StatusBadge
-                label={previousAssessment ? "Comparaison active" : "Premier bilan"}
-                tone="blue"
-              />
-            </div>
-            <BodyScanComparisonGrid items={comparisonItems} />
-          </div>
         </Card>
-
-      </div>
       )}
 
       {/* Tab 1: Body Scan dédié */}
@@ -819,7 +578,67 @@ export function ClientDetailPage() {
             <EvolutionChart assessments={client.assessments} />
           )}
 
-          {/* Note: Insight cards détaillés visibles dans l'onglet "Vue complète" */}
+          {/* Lectures détaillées — insights corporels */}
+          {latestBodyScan && (
+            <>
+              <BodyFatInsightCard
+                current={{ weight: latestBodyScan.weight, percent: latestBodyScan.bodyFat }}
+                objective={client.objective}
+                sex={client.sex}
+                previous={
+                  previousAssessment
+                    ? {
+                        weight: previousAssessment.bodyScan.weight,
+                        percent: previousAssessment.bodyScan.bodyFat
+                      }
+                    : null
+                }
+                initial={{
+                  weight: firstAssessment.bodyScan.weight,
+                  percent: firstAssessment.bodyScan.bodyFat
+                }}
+                history={[...client.assessments].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()).map((assessment) => ({
+                  date: assessment.date,
+                  weight: assessment.bodyScan.weight,
+                  percent: assessment.bodyScan.bodyFat
+                }))}
+              />
+
+              <MuscleMassInsightCard
+                current={{ weight: latestBodyScan.weight, muscleMass: latestBodyScan.muscleMass }}
+                previous={
+                  previousAssessment
+                    ? {
+                        weight: previousAssessment.bodyScan.weight,
+                        muscleMass: previousAssessment.bodyScan.muscleMass
+                      }
+                    : null
+                }
+                initial={{
+                  weight: firstAssessment.bodyScan.weight,
+                  muscleMass: firstAssessment.bodyScan.muscleMass
+                }}
+                history={[...client.assessments].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()).map((assessment) => ({
+                  date: assessment.date,
+                  weight: assessment.bodyScan.weight,
+                  muscleMass: assessment.bodyScan.muscleMass
+                }))}
+              />
+
+              <HydrationVisceralInsightCard
+                weight={latestBodyScan.weight}
+                hydrationPercent={latestBodyScan.hydration}
+                sex={client.sex}
+                visceralFat={latestBodyScan.visceralFat}
+                history={[...client.assessments].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()).map((assessment) => ({
+                  date: assessment.date,
+                  weight: assessment.bodyScan.weight,
+                  hydrationPercent: assessment.bodyScan.hydration,
+                  visceralFat: assessment.bodyScan.visceralFat
+                }))}
+              />
+            </>
+          )}
 
           {/* Historique scans tableau */}
           {client.assessments.length > 1 && (
@@ -1209,124 +1028,25 @@ function SummaryRow({ label, value }: { label: string; value: string }) {
   );
 }
 
-function StartingPointOverviewCard({
-  objective,
-  startDate,
-  startWeight,
-  currentDate,
-  currentWeight,
-  startBodyFat,
-  currentBodyFat
-}: {
-  objective: "weight-loss" | "sport";
-  startDate: string;
-  startWeight: number;
-  currentDate: string;
-  currentWeight: number;
-  startBodyFat: number;
-  currentBodyFat: number;
-}) {
-  const weightDelta = Number((currentWeight - startWeight).toFixed(1));
-  const bodyFatDelta = Number((currentBodyFat - startBodyFat).toFixed(1));
-  const goodTrend =
-    weightDelta === 0
-      ? null
-      : objective === "weight-loss"
-        ? weightDelta < 0
-        : weightDelta > 0;
-  const deltaAccent =
-    goodTrend === null
-      ? { rgb: "148,163,184", hex: "var(--ls-text-muted)" }
-      : goodTrend
-        ? { rgb: "45,212,191", hex: "var(--ls-teal)" }
-        : { rgb: "220,38,38", hex: "var(--ls-coral)" };
-
+function NouveauBilanCTA({ onClick }: { onClick: () => void }) {
   return (
-    <div
-      className="rounded-[28px] p-5"
-      style={{ background: 'var(--ls-surface2)', border: '1px solid var(--ls-border)' }}
-    >
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <p className="eyebrow-label">Repère de départ</p>
-          <p className="mt-3 text-2xl text-white">Départ vs aujourd'hui</p>
-          <p className="mt-2 text-sm leading-6 text-[var(--ls-text-muted)]">
-            Ce bloc aide à relire tout de suite l&apos;évolution depuis le premier bilan.
-          </p>
-        </div>
-        <div
-          style={{
-            borderRadius: 999,
-            padding: '8px 16px',
-            fontSize: 14,
-            fontWeight: 600,
-            background: `rgba(${deltaAccent.rgb},0.15)`,
-            border: `1px solid rgba(${deltaAccent.rgb},0.35)`,
-            color: deltaAccent.hex,
-          }}
-        >
-          {weightDelta === 0 ? "Poids stable" : `${weightDelta > 0 ? "+" : ""}${weightDelta} kg depuis le départ`}
-        </div>
+    <button type="button" onClick={onClick} className="ls-nouveau-bilan-cta">
+      <div className="ls-nouveau-bilan-cta__icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M3 7V5a2 2 0 0 1 2-2h2" />
+          <path d="M17 3h2a2 2 0 0 1 2 2v2" />
+          <path d="M21 17v2a2 2 0 0 1-2 2h-2" />
+          <path d="M7 21H5a2 2 0 0 1-2-2v-2" />
+          <line x1="7" y1="12" x2="17" y2="12" />
+        </svg>
       </div>
-
-      <div className="bodyscan-metrics mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <OverviewMetricCard label="Départ" value={`${startWeight} kg`} note={formatDate(startDate)} tone="blue" />
-        <OverviewMetricCard label="Aujourd'hui" value={`${currentWeight} kg`} note={formatDate(currentDate)} tone="green" highlighted />
-        <OverviewMetricCard
-          label="Graisse de départ"
-          value={`${startBodyFat} %`}
-          note="Premier body scan"
-          tone="slate"
-        />
-        <OverviewMetricCard
-          label="Graisse actuelle"
-          value={`${currentBodyFat} %`}
-          note={
-            bodyFatDelta === 0
-              ? "Stable"
-              : `${bodyFatDelta > 0 ? "+" : ""}${bodyFatDelta} pt depuis le départ`
-          }
-          tone="slate"
-        />
+      <div className="ls-nouveau-bilan-cta__content">
+        <span className="ls-nouveau-bilan-cta__eyebrow">Nouveau bilan</span>
+        <span className="ls-nouveau-bilan-cta__title">Démarrer le body scan</span>
+        <span className="ls-nouveau-bilan-cta__subtitle">Enregistrer les nouvelles mesures</span>
       </div>
-    </div>
-  );
-}
-
-function OverviewMetricCard({
-  label,
-  value,
-  note,
-  tone,
-  highlighted = false
-}: {
-  label: string;
-  value: string;
-  note: string;
-  tone: "blue" | "green" | "slate";
-  highlighted?: boolean;
-}) {
-  const accent =
-    tone === "green"
-      ? { rgb: "45,212,191", hex: "var(--ls-teal)" }
-      : tone === "blue"
-        ? { rgb: "201,168,76", hex: "var(--ls-gold)" }
-        : { rgb: "148,163,184", hex: "var(--ls-text-muted)" };
-
-  return (
-    <div
-      style={{
-        borderRadius: 24,
-        padding: 16,
-        background: `rgba(${accent.rgb},0.12)`,
-        border: `1px solid rgba(${accent.rgb},0.28)`,
-        boxShadow: highlighted ? `0 4px 18px rgba(${accent.rgb},0.18)` : 'none',
-      }}
-    >
-      <p style={{ fontSize: 11, fontWeight: 600, color: accent.hex, letterSpacing: '0.02em', textTransform: 'uppercase' }}>{label}</p>
-      <p style={{ marginTop: 12, fontSize: 24, fontWeight: 600, color: 'var(--ls-text)' }}>{value}</p>
-      <p style={{ marginTop: 8, fontSize: 13, color: 'var(--ls-text-muted)' }}>{note}</p>
-    </div>
+      <span className="ls-nouveau-bilan-cta__action">Lancer ↗</span>
+    </button>
   );
 }
 
