@@ -1,60 +1,34 @@
 import { useDeferredValue, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { DistributorBadge } from "../components/client/DistributorBadge";
-import { Card } from "../components/ui/Card";
-import { MetricTile } from "../components/ui/MetricTile";
 import { PageHeading } from "../components/ui/PageHeading";
-import { StatusBadge } from "../components/ui/StatusBadge";
 import { useAppContext } from "../context/AppContext";
 import { getAccessibleOwnerIds } from "../lib/auth";
 import {
   getActivePortfolioUsers,
-  getGroupedClientsByMonth,
   getPortfolioOwnerIds,
   getPortfolioMetrics,
-  isRelanceFollowUp
+  isRelanceFollowUp,
 } from "../lib/portfolio";
-import {
-  calculateProteinRange,
-  calculateWaterNeed,
-  formatDate,
-  formatDateTime,
-  getFirstAssessment,
-  getLatestAssessment,
-  getLatestBodyScan
-} from "../lib/calculations";
-
-const statusLabels = {
-  active: { label: "Actif", tone: "green" as const },
-  pending: { label: "En attente", tone: "amber" as const },
-  "follow-up": { label: "Classé", tone: "gray" as const }
-};
+import { formatDateTime } from "../lib/calculations";
+import type { User, Client } from "../types/domain";
 
 export function ClientsPage() {
-  const {
-    currentUser,
-    users,
-    visibleClients,
-    visibleFollowUps
-  } = useAppContext();
+  const { currentUser, users, visibleClients, visibleFollowUps } = useAppContext();
+
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "pending" | "follow-up">(
-    "all"
-  );
+  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "pending" | "follow-up">("all");
   const [ownerFilter, setOwnerFilter] = useState("all");
   const deferredSearch = useDeferredValue(search);
 
   const portfolioUsers = useMemo(
-    () => getActivePortfolioUsers(users, visibleClients, currentUser),
+    () => (currentUser ? getActivePortfolioUsers(users, visibleClients, currentUser) : []),
     [currentUser, users, visibleClients]
   );
   const ownerTabs = currentUser
     ? portfolioUsers.filter((user) => getAccessibleOwnerIds(currentUser, users).has(user.id))
     : [];
   const selectedOwner =
-    ownerFilter === "all"
-      ? null
-      : ownerTabs.find((user) => user.id === ownerFilter) ?? null;
+    ownerFilter === "all" ? null : ownerTabs.find((u) => u.id === ownerFilter) ?? null;
   const selectedOwnerIds =
     selectedOwner && currentUser
       ? getPortfolioOwnerIds(
@@ -63,377 +37,349 @@ export function ClientsPage() {
           selectedOwner.role === "referent" ? "network" : "personal"
         )
       : null;
+
   const normalizedSearch = deferredSearch.trim().toLowerCase();
   const filteredClients = useMemo(() => {
     return visibleClients.filter((client) => {
-      const firstAssessment = getFirstAssessment(client);
       const matchesOwner =
         ownerFilter === "all" || (selectedOwnerIds ? selectedOwnerIds.has(client.distributorId) : false);
       const matchesStatus = statusFilter === "all" || client.status === statusFilter;
       const matchesSearch =
         !normalizedSearch ||
-        `${client.firstName} ${client.lastName} ${client.city ?? ""} ${client.currentProgram} ${firstAssessment.questionnaire.referredByName ?? ""}`
+        `${client.firstName} ${client.lastName} ${client.city ?? ""} ${client.currentProgram}`
           .toLowerCase()
           .includes(normalizedSearch);
-
       return matchesOwner && matchesStatus && matchesSearch;
     });
   }, [normalizedSearch, ownerFilter, selectedOwnerIds, statusFilter, visibleClients]);
-  const groupedClients = useMemo(
-    () => getGroupedClientsByMonth(filteredClients),
-    [filteredClients]
-  );
-  const selectedOwnerMetrics = selectedOwner
-    ? getPortfolioMetrics(
-        selectedOwner,
-        visibleClients,
-        visibleFollowUps,
-        users,
-        selectedOwner.role === "referent" ? "network" : "personal"
-      )
-    : null;
-  const visibleRelanceCount = selectedOwnerMetrics
-    ? selectedOwnerMetrics.relanceFollowUps.length
-    : visibleFollowUps.filter((followUp) => isRelanceFollowUp(followUp)).length;
+
+  // Relances visibles pour le filtre courant
+  const visibleRelanceCount = useMemo(() => {
+    const clientIds = new Set(filteredClients.map((c) => c.id));
+    return visibleFollowUps.filter((fu) => clientIds.has(fu.clientId) && isRelanceFollowUp(fu)).length;
+  }, [filteredClients, visibleFollowUps]);
+
+  if (!currentUser) return null;
 
   return (
-    <div className="space-y-6">
+    <div style={{
+      padding: "clamp(16px, 4vw, 28px)",
+      maxWidth: 1200, margin: "0 auto",
+      display: "flex", flexDirection: "column", gap: 18,
+    }}>
       <PageHeading
         eyebrow="Clients"
         title="Base clients"
-        description="Recherche, responsables, statuts et arborescence mensuelle."
+        description={`${filteredClients.length} dossier${filteredClients.length > 1 ? "s" : ""} · recherche, responsables et fiche détaillée.`}
       />
 
-      <div className="clients-stats-grid grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        <MetricTile
-          label="Clients visibles"
-          value={filteredClients.length}
-          hint="Résultat du filtre"
-          accent="blue"
-        />
-        <MetricTile
-          label="Responsables visibles"
-          value={ownerTabs.length}
-          hint="Portefeuilles actifs"
-          accent="green"
-        />
-        <MetricTile
-          label="Relances visibles"
-          value={visibleRelanceCount}
-          hint="À reprendre"
-          accent="red"
-        />
+      {/* 3 STATS COMPACTES */}
+      <div className="clients-stats-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }}>
+        {[
+          { label: "Visibles", value: filteredClients.length, borderColor: "#0D9488", textColor: "var(--ls-teal)", sub: "Résultat du filtre" },
+          { label: "Responsables", value: ownerTabs.length, borderColor: "#B8922A", textColor: "var(--ls-gold)", sub: "Portefeuilles actifs" },
+          { label: "Relances", value: visibleRelanceCount, borderColor: "#DC2626", textColor: "var(--ls-coral)", sub: "À reprendre" },
+        ].map(({ label, value, borderColor, textColor, sub }) => (
+          <div key={label} style={{
+            background: "var(--ls-surface)",
+            border: "1px solid var(--ls-border)",
+            borderTop: `2px solid ${borderColor}`,
+            borderRadius: 14,
+            padding: "14px 16px",
+          }}>
+            <div style={{ fontSize: 9, letterSpacing: "2px", textTransform: "uppercase", color: "var(--ls-text-hint)", fontWeight: 500, marginBottom: 6, fontFamily: "DM Sans, sans-serif" }}>
+              {label}
+            </div>
+            <div style={{ fontFamily: "Syne, sans-serif", fontWeight: 800, fontSize: 22, color: textColor, lineHeight: 1, marginBottom: 4 }}>
+              {value}
+            </div>
+            <div style={{ fontSize: 10, color: "var(--ls-text-hint)" }}>{sub}</div>
+          </div>
+        ))}
       </div>
 
-      <Card className="space-y-5">
-        <div className="grid gap-4 lg:grid-cols-[1.4fr_0.9fr] lg:items-end">
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-[var(--ls-text-muted)]">Rechercher un client</label>
-            <input
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder="Nom, ville ou programme..."
-            />
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-[var(--ls-text-muted)]">Filtrer par statut</label>
-            <select
-              value={statusFilter}
-              onChange={(event) =>
-                setStatusFilter(
-                  event.target.value as "all" | "active" | "pending" | "follow-up"
-                )
-              }
-            >
-              <option value="all">Tous les statuts</option>
-              <option value="active">Actifs</option>
-              <option value="pending">En attente</option>
-              <option value="follow-up">Classés — Pas démarré</option>
-            </select>
-          </div>
-        </div>
-
-        <div className="space-y-3">
-          <p className="eyebrow-label">Responsables du dossier</p>
-
-          {/* Mobile — select natif */}
-          <select
-            className="md:hidden"
-            value={ownerFilter}
-            onChange={(e) => setOwnerFilter(e.target.value)}
+      {/* BARRE RECHERCHE + FILTRE STATUT */}
+      <div className="clients-search-bar" style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+        <div style={{ flex: 1, minWidth: 220, position: "relative" }}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ls-text-hint)" strokeWidth="1.5"
+            style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)" }}>
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Nom, ville, programme..."
             style={{
-              width: '100%', padding: '12px 14px', borderRadius: 12,
-              border: '1px solid var(--ls-border)', background: 'var(--ls-surface2)',
-              color: 'var(--ls-text)', fontSize: 16, fontFamily: 'DM Sans, sans-serif',
-              outline: 'none', appearance: 'none',
-              backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239CA3AF' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E\")",
-              backgroundRepeat: 'no-repeat', backgroundPosition: 'right 14px center', paddingRight: 38,
+              width: "100%", padding: "11px 14px 11px 36px",
+              border: "1px solid var(--ls-border)", borderRadius: 10,
+              fontFamily: "DM Sans, sans-serif", fontSize: 14,
+              background: "var(--ls-input-bg)", color: "var(--ls-text)",
+              outline: "none",
             }}
-          >
-            <option value="all">Toute la base ({visibleClients.length} dossiers)</option>
-            {ownerTabs.map((user) => {
-              const metrics = getPortfolioMetrics(
-                user, visibleClients, visibleFollowUps, users,
-                user.role === "referent" ? "network" : "personal"
-              );
-              return (
-                <option key={user.id} value={user.id}>
-                  {user.name} — {metrics.clients.length} clients, {metrics.relanceFollowUps.length} relances
-                </option>
-              );
-            })}
-          </select>
+          />
+        </div>
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value as "all" | "active" | "pending" | "follow-up")}
+          style={{
+            padding: "11px 14px", border: "1px solid var(--ls-border)",
+            borderRadius: 10, fontFamily: "DM Sans, sans-serif", fontSize: 13,
+            background: "var(--ls-input-bg)", color: "var(--ls-text-muted)",
+            outline: "none", cursor: "pointer", minWidth: 180,
+          }}
+        >
+          <option value="all">Tous les statuts</option>
+          <option value="active">Actifs</option>
+          <option value="pending">En attente</option>
+          <option value="follow-up">À relancer</option>
+        </select>
+      </div>
 
-          {/* Desktop — cards horizontales */}
-          <div className="hidden md:flex gap-3 overflow-x-auto pb-1 flex-nowrap" style={{ scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' } as React.CSSProperties}>
+      {/* PILLS RESPONSABLES */}
+      {ownerTabs.length > 0 && (
+        <div>
+          <div style={{ fontSize: 9, letterSpacing: "2px", textTransform: "uppercase", color: "var(--ls-text-hint)", fontWeight: 500, marginBottom: 8, fontFamily: "DM Sans, sans-serif" }}>
+            Filtrer par responsable
+          </div>
+          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+            {/* Pill "Toute la base" */}
             <button
-              type="button"
               onClick={() => setOwnerFilter("all")}
-              className={`rounded-[22px] px-4 py-3 text-left transition flex-shrink-0 ${
-                ownerFilter === "all"
-                  ? "bg-[rgba(201,168,76,0.12)] text-white shadow-[0_0_0_1px_rgba(201,168,76,0.16)]"
-                  : "bg-[var(--ls-surface2)] text-white hover:bg-[var(--ls-surface2)]"
-              }`}
+              style={{
+                display: "inline-flex", alignItems: "center", gap: 6,
+                padding: "7px 12px", borderRadius: 20,
+                background: ownerFilter === "all" ? "rgba(184,146,42,0.08)" : "var(--ls-surface)",
+                border: ownerFilter === "all" ? "1px solid var(--ls-gold)" : "1px solid var(--ls-border)",
+                color: ownerFilter === "all" ? "var(--ls-gold)" : "var(--ls-text-muted)",
+                fontSize: 11, fontWeight: ownerFilter === "all" ? 600 : 400,
+                cursor: "pointer", whiteSpace: "nowrap", fontFamily: "DM Sans, sans-serif",
+                transition: "all 0.15s",
+              }}
             >
-              <span className="block text-sm font-semibold">Toute la base</span>
-              <span
-                className={`mt-1 block text-xs ${
-                  ownerFilter === "all" ? "text-[#2DD4BF]/75" : "text-[var(--ls-text-muted)]"
-                }`}
-              >
-                {visibleClients.length} dossiers visibles
-              </span>
+              Toute la base · {visibleClients.length}
             </button>
 
-            {ownerTabs.map((user) => {
-              const metrics = getPortfolioMetrics(
-                user,
-                visibleClients,
-                visibleFollowUps,
-                users,
-                user.role === "referent" ? "network" : "personal"
+            {ownerTabs.map((owner) => {
+              const isActive = ownerFilter === owner.id;
+              const ownerMetrics = getPortfolioMetrics(
+                owner, visibleClients, visibleFollowUps, users,
+                owner.role === "referent" ? "network" : "personal"
               );
-              const isActive = ownerFilter === user.id;
-
+              const avatar = getOwnerAvatarColors(owner.role);
               return (
                 <button
-                  key={user.id}
-                  type="button"
-                  onClick={() => setOwnerFilter(user.id)}
-                  className={`rounded-[22px] px-4 py-3 text-left transition ${
-                    isActive
-                      ? "bg-[rgba(45,212,191,0.12)] text-white shadow-[0_0_0_1px_rgba(201,168,76,0.16)]"
-                      : "bg-[var(--ls-surface2)] hover:bg-[var(--ls-surface2)]"
-                  }`}
+                  key={owner.id}
+                  onClick={() => setOwnerFilter(owner.id)}
+                  style={{
+                    display: "inline-flex", alignItems: "center", gap: 7,
+                    padding: "6px 12px 6px 6px", borderRadius: 20,
+                    background: isActive ? "rgba(184,146,42,0.08)" : "var(--ls-surface)",
+                    border: isActive ? "1px solid var(--ls-gold)" : "1px solid var(--ls-border)",
+                    color: isActive ? "var(--ls-gold)" : "var(--ls-text-muted)",
+                    fontSize: 11, fontWeight: isActive ? 600 : 400,
+                    cursor: "pointer", whiteSpace: "nowrap", fontFamily: "DM Sans, sans-serif",
+                    transition: "all 0.15s",
+                  }}
                 >
-                  <div className="flex items-center gap-3">
-                    <DistributorBadge user={user} compact />
-                    <div>
-                      <span
-                        className={`block text-sm font-semibold ${
-                          isActive ? "text-white" : "text-white"
-                        }`}
-                      >
-                        {user.name}
-                      </span>
-                      <span
-                        className={`mt-1 block text-xs ${
-                          isActive ? "text-[#2DD4BF]/75" : "text-[var(--ls-text-muted)]"
-                        }`}
-                      >
-                        {metrics.clients.length} clients - {metrics.relanceFollowUps.length} relances
-                      </span>
-                      {user.role === "referent" ? (
-                        <span className="mt-1 block text-[11px] text-[var(--ls-text-hint)]">Vue equipe</span>
-                      ) : null}
-                    </div>
-                  </div>
+                  <span style={{
+                    width: 22, height: 22, borderRadius: "50%",
+                    background: avatar.bg, color: avatar.text,
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    fontFamily: "Syne, sans-serif", fontWeight: 800, fontSize: 9,
+                  }}>
+                    {getInitials(owner.name)}
+                  </span>
+                  {owner.name} · {ownerMetrics.clients.length}
                 </button>
               );
             })}
           </div>
         </div>
-      </Card>
+      )}
 
-      {selectedOwner ? (
-        <Card className="space-y-4">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <DistributorBadge
-              user={selectedOwner}
-              detail={`${selectedOwnerMetrics?.clients.length ?? 0} clients - ${selectedOwnerMetrics?.relanceFollowUps.length ?? 0} relances`}
-            />
-            <Link
-              to={`/distributors/${selectedOwner.id}`}
-              className="inline-flex min-h-[48px] items-center justify-center rounded-[18px] bg-[var(--ls-surface2)] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[var(--ls-surface2)]"
-            >
-              Ouvrir le portefeuille
+      {/* TABLEAU CLIENTS */}
+      {filteredClients.length === 0 ? (
+        <div style={{
+          background: "var(--ls-surface)", border: "1px solid var(--ls-border)",
+          borderRadius: 14, padding: "40px 20px",
+          textAlign: "center", color: "var(--ls-text-hint)", fontSize: 13,
+        }}>
+          Aucun client sur ce filtre.
+          <div style={{ marginTop: 12 }}>
+            <Link to="/assessments/new" style={{ color: "var(--ls-gold)", textDecoration: "none", fontWeight: 600, fontSize: 13 }}>
+              → Lancer un premier bilan
             </Link>
           </div>
-          <div className="grid gap-3 md:grid-cols-3">
-            <MiniFact
-              label="Clients"
-              value={`${selectedOwnerMetrics?.clients.length ?? 0} dossiers`}
-            />
-            <MiniFact
-              label="Rendez-vous"
-              value={`${selectedOwnerMetrics?.scheduledFollowUps.length ?? 0} planifiés`}
-            />
-            <MiniFact
-              label="Relances"
-              value={`${selectedOwnerMetrics?.relanceFollowUps.length ?? 0} à reprendre`}
-            />
+        </div>
+      ) : (
+        <div style={{ background: "var(--ls-surface)", border: "1px solid var(--ls-border)", borderRadius: 14, overflow: "hidden" }}>
+          {/* Header */}
+          <div className="clients-table-header" style={{ display: "flex", padding: "12px 16px", borderBottom: "1px solid var(--ls-border)", background: "var(--ls-surface2)" }}>
+            <div style={{ flex: 2, fontSize: 9, letterSpacing: "2px", textTransform: "uppercase", color: "var(--ls-text-hint)", fontWeight: 500 }}>Client</div>
+            <div style={{ flex: 1.5, fontSize: 9, letterSpacing: "2px", textTransform: "uppercase", color: "var(--ls-text-hint)", fontWeight: 500 }}>Programme</div>
+            <div style={{ flex: 1, fontSize: 9, letterSpacing: "2px", textTransform: "uppercase", color: "var(--ls-text-hint)", fontWeight: 500 }}>Responsable</div>
+            <div style={{ flex: 1.3, fontSize: 9, letterSpacing: "2px", textTransform: "uppercase", color: "var(--ls-text-hint)", fontWeight: 500 }}>Prochain suivi</div>
+            <div style={{ width: 90, fontSize: 9, letterSpacing: "2px", textTransform: "uppercase", color: "var(--ls-text-hint)", fontWeight: 500 }}>Statut</div>
           </div>
-        </Card>
-      ) : null}
 
-      <div className="space-y-5">
-        {groupedClients.length ? (
-          groupedClients.map((group) => (
-            <Card key={group.key} className="space-y-4">
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                  <p className="eyebrow-label">Arborescence mensuelle</p>
-                  <h2 className="mt-3 text-2xl text-white">{group.label}</h2>
+          {filteredClients.map((client, i) => {
+            const owner = users.find((u) => u.id === client.distributorId);
+            const nextFollowUp = client.nextFollowUp;
+            const statusInfo = getClientStatusInfo(client, nextFollowUp);
+            const avatar = owner ? getOwnerAvatarColors(owner.role) : { bg: "var(--ls-surface2)", text: "var(--ls-text-muted)" };
+
+            return (
+              <Link
+                key={client.id}
+                to={`/clients/${client.id}`}
+                className="clients-table-row"
+                style={{
+                  display: "flex", alignItems: "center",
+                  padding: "14px 16px",
+                  borderBottom: i < filteredClients.length - 1 ? "1px solid var(--ls-border)" : "none",
+                  cursor: "pointer", transition: "all 0.15s",
+                  background: "transparent", borderLeft: "3px solid transparent",
+                  paddingLeft: 16, textDecoration: "none", color: "inherit",
+                  gap: 8, flexWrap: "wrap",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = "rgba(184,146,42,0.06)";
+                  e.currentTarget.style.borderLeft = "3px solid var(--ls-gold)";
+                  e.currentTarget.style.paddingLeft = "13px";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = "transparent";
+                  e.currentTarget.style.borderLeft = "3px solid transparent";
+                  e.currentTarget.style.paddingLeft = "16px";
+                }}
+              >
+                {/* Client */}
+                <div className="clients-cell-client" style={{ flex: 2, minWidth: 0 }}>
+                  <div style={{ fontSize: 13, fontWeight: 500, color: "var(--ls-text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {client.firstName} {client.lastName}
                   </div>
-                  <StatusBadge label={`${group.clients.length} clients`} tone="blue" />
+                  <div style={{ fontSize: 11, color: "var(--ls-text-hint)", marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {client.city ?? "Non renseigné"}
+                    {client.assessments?.length ? ` · ${client.assessments.length} bilan${client.assessments.length > 1 ? "s" : ""}` : ""}
+                  </div>
                 </div>
 
-              <div className="grid gap-4">
-                {group.clients.map((client) => {
-                  const latestAssessment = getLatestAssessment(client);
-                  const firstAssessment = getFirstAssessment(client);
-                  const latestBodyScan = getLatestBodyScan(client);
-                  const status = statusLabels[client.status];
-                  const owner = ownerTabs.find((user) => user.id === client.distributorId);
+                {/* Programme */}
+                <div className="clients-cell-program" style={{ flex: 1.5, fontSize: 12, color: "var(--ls-text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {client.currentProgram || "—"}
+                </div>
 
-                  return (
-                    <Link key={client.id} to={`/clients/${client.id}`}>
-                      <Card className="transition hover:bg-[var(--ls-surface2)]">
-                        <div className="grid gap-4 xl:grid-cols-[1.2fr_1.15fr_0.85fr] xl:items-center">
-                          <div className="space-y-3">
-                            <div className="flex flex-wrap items-center gap-3">
-                              <p className="text-2xl font-semibold text-white">
-                                {client.firstName} {client.lastName}
-                              </p>
-                              <StatusBadge label={status.label} tone={status.tone} />
-                              {client.status === 'follow-up' && (
-                                <button
-                                  onClick={async (e) => {
-                                    e.preventDefault()
-                                    e.stopPropagation()
-                                    const { getSupabaseClient } = await import('../services/supabaseClient')
-                                    const sb = await getSupabaseClient()
-                                    if (sb) {
-                                      await sb.from('clients').update({ status: 'active' }).eq('id', client.id)
-                                      window.location.reload()
-                                    }
-                                  }}
-                                  style={{ fontSize: 10, padding: '4px 12px', borderRadius: 7, border: 'none', background: 'rgba(13,148,136,0.12)', color: 'var(--ls-teal)', cursor: 'pointer', fontWeight: 600, fontFamily: 'DM Sans, sans-serif' }}>
-                                  ↻ Réactiver
-                                </button>
-                              )}
-                            </div>
-                            <p className="text-sm text-[var(--ls-text-muted)]">
-                              {client.job} - {client.city ?? "Ville non renseignee"}
-                            </p>
-                            {owner ? (
-                              <div className="inline-flex max-w-full">
-                                <DistributorBadge
-                                  user={owner}
-                                  detail={`Portefeuille ${owner.name}`}
-                                />
-                              </div>
-                            ) : null}
-                            {firstAssessment.questionnaire.referredByName ? (
-                              <p className="text-sm text-[#2DD4BF]/80">
-                                Invite par {firstAssessment.questionnaire.referredByName}
-                              </p>
-                            ) : null}
-                            <p className="text-sm leading-6 text-[var(--ls-text-muted)]">{client.notes}</p>
-                          </div>
+                {/* Responsable */}
+                <div className="clients-cell-owner" style={{ flex: 1, display: "flex", alignItems: "center", gap: 6, minWidth: 0 }}>
+                  <div style={{
+                    width: 22, height: 22, borderRadius: "50%",
+                    background: avatar.bg, color: avatar.text,
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    fontFamily: "Syne, sans-serif", fontWeight: 800, fontSize: 9,
+                    flexShrink: 0,
+                  }}>
+                    {owner ? getInitials(owner.name) : "?"}
+                  </div>
+                  <span style={{ fontSize: 12, color: "var(--ls-text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {owner?.name ?? "Non assigné"}
+                  </span>
+                </div>
 
-                          <div className="grid gap-3 md:grid-cols-3">
-                            <ClientMetric
-                              label="Programme"
-                              value={client.currentProgram || "Programme a confirmer"}
-                              note={
-                                latestAssessment.type === "initial"
-                                  ? "Bilan initial"
-                                  : "Dernier suivi"
-                              }
-                            />
-                            <ClientMetric
-                              label="Hydratation cible"
-                              value={`${calculateWaterNeed(latestBodyScan.weight)} L`}
-                            />
-                            <ClientMetric
-                              label="Repère protéines"
-                              value={calculateProteinRange(latestBodyScan.weight, client.objective)}
-                            />
-                          </div>
+                {/* Prochain suivi */}
+                <div className="clients-cell-followup" style={{ flex: 1.3 }}>
+                  {nextFollowUp ? (
+                    <>
+                      <div style={{ fontSize: 12, fontWeight: 600, color: isOverdue(nextFollowUp) ? "var(--ls-coral)" : "var(--ls-text)" }}>
+                        {isOverdue(nextFollowUp) ? "En retard" : formatDateTime(nextFollowUp)}
+                      </div>
+                      <div style={{ fontSize: 10, color: isOverdue(nextFollowUp) ? "var(--ls-coral)" : "var(--ls-text-hint)", marginTop: 2 }}>
+                        {getRelativeTime(nextFollowUp)}
+                      </div>
+                    </>
+                  ) : (
+                    <div style={{ fontSize: 11, color: "var(--ls-text-hint)" }}>Aucun suivi planifié</div>
+                  )}
+                </div>
 
-                          <div className="space-y-3 xl:text-right">
-                            <p className="eyebrow-label">Prochain suivi</p>
-                            <p className="text-xl font-semibold text-white">
-                              {formatDateTime(client.nextFollowUp)}
-                            </p>
-                            <p className="text-sm text-[var(--ls-text-muted)]">
-                              Dernier bilan {formatDate(latestAssessment.date)}
-                            </p>
-                          </div>
-                        </div>
-                      </Card>
-                    </Link>
-                  );
-                })}
-              </div>
-            </Card>
-          ))
-        ) : (
-          <Card className="space-y-3">
-            <p className="text-2xl text-white">Aucun client sur ce filtre</p>
-            <p className="text-sm leading-6 text-[var(--ls-text-muted)]">
-              Ajuste la recherche, le statut ou le portefeuille pour retrouver le bon dossier.
-            </p>
-            <div>
-              <Link
-                to="/assessments/new"
-                className="inline-flex min-h-[48px] items-center justify-center rounded-[18px] bg-[var(--ls-surface2)] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[var(--ls-surface2)]"
-              >
-                Lancer un premier bilan
+                {/* Statut */}
+                <div className="clients-cell-status" style={{ width: 90 }}>
+                  <span style={{
+                    display: "inline-flex", alignItems: "center",
+                    padding: "3px 10px", borderRadius: 10,
+                    fontSize: 10, fontWeight: 600,
+                    background: statusInfo.bg, color: statusInfo.color,
+                  }}>
+                    {statusInfo.label}
+                  </span>
+                </div>
               </Link>
-            </div>
-          </Card>
-        )}
-      </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
 
-function MiniFact({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-[22px] bg-[var(--ls-bg)]/60 px-4 py-4">
-      <p className="text-[11px] font-medium text-[var(--ls-text-hint)]">{label}</p>
-      <p className="mt-3 text-lg font-semibold text-white">{value}</p>
-    </div>
-  );
+// ─── Helpers ─────────────────────────────────────────────────────────
+function getInitials(name: string): string {
+  if (!name) return "?";
+  const parts = name.trim().split(/\s+/);
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[1][0]).toUpperCase();
 }
 
-function ClientMetric({
-  label,
-  value,
-  note
-}: {
-  label: string;
-  value: string;
-  note?: string;
-}) {
-  return (
-    <div className="rounded-[22px] bg-slate-950/30 p-4">
-      <p className="text-[11px] font-medium text-[var(--ls-text-hint)]">{label}</p>
-      <p className="mt-3 text-lg font-semibold text-white">{value}</p>
-      {note ? <p className="mt-2 text-xs text-[var(--ls-text-muted)]">{note}</p> : null}
-    </div>
-  );
+function getOwnerAvatarColors(role: User["role"]) {
+  switch (role) {
+    case "admin":
+      return { bg: "#E6F1FB", text: "#0C447C" };
+    case "referent":
+      return { bg: "#FAEEDA", text: "#633806" };
+    case "distributor":
+    default:
+      return { bg: "#EAF3DE", text: "#27500A" };
+  }
+}
+
+function getClientStatusInfo(client: Client, nextFollowUp: string | undefined) {
+  if (nextFollowUp && isOverdue(nextFollowUp)) {
+    return { label: "Relance", bg: "rgba(220,38,38,0.1)", color: "var(--ls-coral)" };
+  }
+  if (nextFollowUp) {
+    const daysUntil = getDaysUntil(nextFollowUp);
+    if (daysUntil !== null && daysUntil <= 2) {
+      return { label: "RDV", bg: "rgba(184,146,42,0.1)", color: "var(--ls-gold)" };
+    }
+  }
+  if (client.status === "pending") {
+    return { label: "En attente", bg: "rgba(124,58,237,0.1)", color: "var(--ls-purple)" };
+  }
+  if (client.status === "follow-up") {
+    return { label: "Classé", bg: "var(--ls-surface2)", color: "var(--ls-text-muted)" };
+  }
+  return { label: "Actif", bg: "rgba(13,148,136,0.1)", color: "var(--ls-teal)" };
+}
+
+function isOverdue(dateStr: string | undefined): boolean {
+  if (!dateStr) return false;
+  return new Date(dateStr).getTime() < Date.now();
+}
+
+function getDaysUntil(dateStr: string | undefined): number | null {
+  if (!dateStr) return null;
+  const diff = new Date(dateStr).getTime() - Date.now();
+  return Math.ceil(diff / (1000 * 60 * 60 * 24));
+}
+
+function getRelativeTime(dateStr: string | undefined): string {
+  if (!dateStr) return "—";
+  const days = getDaysUntil(dateStr);
+  if (days === null) return "—";
+  if (days < 0) return `depuis ${Math.abs(days)} j`;
+  if (days === 0) return "aujourd'hui";
+  if (days === 1) return "demain";
+  if (days < 30) return `dans ${days} jours`;
+  const months = Math.floor(days / 30);
+  return `dans ${months} mois`;
 }

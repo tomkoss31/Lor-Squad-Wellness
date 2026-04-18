@@ -1061,3 +1061,54 @@ button, a, [role="button"] { min-height: 44px; }
     color: var(--ls-text) !important;
   }
 }
+
+/* \u2550\u2550\u2550 BASE CLIENTS \u2550\u2550\u2550 */
+
+/* iPad : stats compactes */
+@media (max-width: 1024px) {
+  .clients-stats-grid {
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 8px !important;
+  }
+}
+
+/* iPhone : stack total */
+@media (max-width: 640px) {
+  .clients-stats-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .clients-search-bar {
+    flex-direction: column !important;
+  }
+  .clients-search-bar > select {
+    width: 100% !important;
+  }
+  .clients-table-header {
+    display: none !important;
+  }
+  .clients-table-row {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    padding: 14px !important;
+    gap: 6px !important;
+  }
+  .clients-cell-client, .clients-cell-program, .clients-cell-owner, .clients-cell-followup, .clients-cell-status {
+    flex: none !important;
+    width: 100% !important;
+  }
+  .clients-cell-program::before {
+    content: 'Programme : ';
+    color: var(--ls-text-hint);
+    font-size: 10px;
+  }
+  .clients-cell-followup::before {
+    content: 'Prochain suivi : ';
+    color: var(--ls-text-hint);
+    font-size: 10px;
+    display: block;
+    margin-bottom: 2px;
+  }
+  .clients-cell-status {
+    width: auto !important;
+  }
+}
