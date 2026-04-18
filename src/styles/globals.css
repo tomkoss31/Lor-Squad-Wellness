@@ -958,3 +958,21 @@ button, a, [role="button"] { min-height: 44px; }
   }
 }
 
+
+/* Suivi PV — stats responsive mobile */
+@media (max-width: 768px) {
+  .pv-stats-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  .pv-stats-grid > a, .pv-stats-grid > button {
+    grid-column: span 2 !important;
+    padding: 12px !important;
+    justify-content: center;
+  }
+  .pv-col-hide-mobile {
+    display: none !important;
+  }
+  .pv-table-header > .pv-col-hide-mobile {
+    display: none !important;
+  }
+}
