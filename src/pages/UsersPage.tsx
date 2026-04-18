@@ -1,58 +1,21 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
-import { DistributorBadge } from "../components/client/DistributorBadge";
 import { Button } from "../components/ui/Button";
-import { Card } from "../components/ui/Card";
-import { PageHeading } from "../components/ui/PageHeading";
-import { StatusBadge } from "../components/ui/StatusBadge";
 import { useAppContext } from "../context/AppContext";
 import { PushNotificationSettings } from "../components/settings/PushNotificationSettings";
-import { canSponsorDistributors, getRoleLabel, isAdmin } from "../lib/auth";
-import { formatDate } from "../lib/calculations";
+import { canSponsorDistributors, getRoleLabel } from "../lib/auth";
 import { getPortfolioMetrics } from "../lib/portfolio";
-import type { Client, FollowUp, User } from "../types/domain";
+import type { User } from "../types/domain";
 
-type TeamViewMode = "tree" | "all" | "admins" | "referents" | "distributors";
-
-function normalizeSearchValue(value: string) {
-  return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
-}
-
-function matchesSearch(user: User, query: string) {
-  if (!query) {
-    return true;
-  }
-
-  const haystack = normalizeSearchValue(
-    [user.name, user.email, user.title, user.sponsorName ?? "", user.id].join(" ")
-  );
-
-  return haystack.includes(normalizeSearchValue(query));
-}
-
-function buildTeamGroups(users: User[]) {
-  const activeUsers = users.filter((user) => user.active);
-  const admins = activeUsers.filter((user) => user.role === "admin");
-  const referents = activeUsers.filter((user) => user.role === "referent");
-  const distributors = activeUsers.filter((user) => user.role === "distributor");
-
-  return {
-    admins,
-    referentGroups: referents.map((referent) => ({
-      referent,
-      distributors: distributors.filter((user) => user.sponsorId === referent.id)
-    })),
-    orphanDistributors: distributors.filter(
-      (user) => !user.sponsorId || !activeUsers.some((item) => item.id === user.sponsorId)
-    )
-  };
-}
+type TabKey = "members" | "new" | "repair";
+type RoleFilter = "all" | "admin" | "referent" | "distributor";
 
 export function UsersPage() {
   const {
     users,
     clients,
     followUps,
+    currentUser,
     storageMode,
     createUserAccess,
     repairUserAccess,
@@ -61,9 +24,13 @@ export function UsersPage() {
     updateUserStatus,
   } = useAppContext();
 
+  // ─── States filtres + onglets ─────────────────────────────────────
+  const [activeTab, setActiveTab] = useState<TabKey>("members");
+  const [expandedUserId, setExpandedUserId] = useState<string | null>(null);
+  const [roleFilter, setRoleFilter] = useState<RoleFilter>("all");
   const [search, setSearch] = useState("");
-  const [viewMode, setViewMode] = useState<TeamViewMode>("tree");
 
+  // ─── States formulaire création ───────────────────────────────────
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<User["role"]>("distributor");
@@ -73,6 +40,7 @@ export function UsersPage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
+  // ─── States formulaire réparation ─────────────────────────────────
   const [repairUserId, setRepairUserId] = useState("");
   const [repairEmail, setRepairEmail] = useState("");
   const [repairName, setRepairName] = useState("");
@@ -83,51 +51,48 @@ export function UsersPage() {
   const [repairSuccess, setRepairSuccess] = useState("");
 
   const sponsorOptions = useMemo(
-    () => users.filter((user) => user.active && canSponsorDistributors(user)),
+    () => users.filter((u) => u.active && canSponsorDistributors(u)),
     [users]
   );
 
   const userStats = useMemo(
     () => ({
-      active: users.filter((user) => user.active).length,
+      active: users.filter((u) => u.active).length,
       total: users.length,
-      admins: users.filter((user) => user.role === "admin").length,
-      referents: users.filter((user) => user.role === "referent").length,
-      distributors: users.filter((user) => user.role === "distributor").length
+      admins: users.filter((u) => u.role === "admin").length,
+      referents: users.filter((u) => u.role === "referent").length,
+      distributors: users.filter((u) => u.role === "distributor").length,
     }),
     [users]
   );
 
-  const filteredUsers = useMemo(
-    () => users.filter((user) => matchesSearch(user, search)),
-    [search, users]
-  );
-
-  const visibleUsers = useMemo(() => {
-    if (viewMode === "admins") {
-      return filteredUsers.filter((user) => user.role === "admin");
+  const filteredUsers = useMemo(() => {
+    let list = users ?? [];
+    const q = search.trim().toLowerCase();
+    if (q) {
+      list = list.filter(
+        (u) =>
+          u.name?.toLowerCase().includes(q) ||
+          u.email?.toLowerCase().includes(q) ||
+          u.id?.toLowerCase().includes(q) ||
+          (u.sponsorName ?? "").toLowerCase().includes(q)
+      );
     }
-    if (viewMode === "referents") {
-      return filteredUsers.filter((user) => user.role === "referent");
+    if (roleFilter !== "all") {
+      list = list.filter((u) => u.role === roleFilter);
     }
-    if (viewMode === "distributors") {
-      return filteredUsers.filter((user) => user.role === "distributor");
-    }
-    return filteredUsers;
-  }, [filteredUsers, viewMode]);
-
-  const teamGroups = useMemo(() => buildTeamGroups(filteredUsers), [filteredUsers]);
+    const roleOrder: Record<string, number> = { admin: 0, referent: 1, distributor: 2 };
+    return [...list].sort(
+      (a, b) => (roleOrder[a.role] ?? 99) - (roleOrder[b.role] ?? 99)
+    );
+  }, [users, search, roleFilter]);
 
   useEffect(() => {
-    if (role !== "distributor") {
-      setSponsorId("");
-    }
+    if (role !== "distributor") setSponsorId("");
   }, [role]);
 
   useEffect(() => {
-    if (repairRole !== "distributor") {
-      setRepairSponsorId("");
-    }
+    if (repairRole !== "distributor") setRepairSponsorId("");
   }, [repairRole]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -138,17 +103,17 @@ export function UsersPage() {
       role,
       sponsorId: role === "distributor" ? sponsorId || undefined : undefined,
       active,
-      mockPassword: password
+      mockPassword: password,
     });
 
     if (!result.ok) {
-      setError(result.error ?? "Impossible de creer cet accès pour le moment.");
+      setError(result.error ?? "Impossible de créer cet accès pour le moment.");
       setSuccess("");
       return;
     }
 
     setError("");
-    setSuccess(`Acces cree pour ${name.trim()} avec l'identifiant ${email.trim().toLowerCase()}.`);
+    setSuccess(`Accès créé pour ${name.trim()} (${email.trim().toLowerCase()}).`);
     setName("");
     setEmail("");
     setRole("distributor");
@@ -165,17 +130,17 @@ export function UsersPage() {
       name: repairName.trim() || undefined,
       role: repairRole,
       sponsorId: repairRole === "distributor" ? repairSponsorId || undefined : undefined,
-      active: repairActive
+      active: repairActive,
     });
 
     if (!result.ok) {
-      setRepairError(result.error ?? "Impossible de recrééer ce profil.");
+      setRepairError(result.error ?? "Impossible de réparer ce profil.");
       setRepairSuccess("");
       return;
     }
 
     setRepairError("");
-    setRepairSuccess(`Profil recréée pour ${repairEmail.trim().toLowerCase()}.`);
+    setRepairSuccess(`Profil réparé pour ${repairEmail.trim().toLowerCase()}.`);
     setRepairUserId("");
     setRepairEmail("");
     setRepairName("");
@@ -185,645 +150,726 @@ export function UsersPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <PageHeading
-        eyebrow="Equipe"
-        title="Structure et acces"
-        description="Retrouve les comptes, rattache un distributeur et répare un profil Auth sans repasser dans Supabase."
-      />
-
-      <div className="grid gap-4 lg:grid-cols-5">
-        <StatCard label="Actifs" value={userStats.active} />
-        <StatCard label="Total comptes" value={userStats.total} />
-        <StatCard label="Admins" value={userStats.admins} />
-        <StatCard label="Référents" value={userStats.referents} />
-        <StatCard label="Distributeurs" value={userStats.distributors} />
-      </div>
-
-      {/* Notifications push */}
-      <PushNotificationSettings userId={users[0]?.id} userName={users[0]?.name} />
-
-      <Card className="space-y-4">
-        <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
-          <div>
-            <p className="eyebrow-label">Lecture simple</p>
-            <h2 className="mt-3 text-3xl">Arborescence equipe</h2>
-          </div>
-
-          <div className="grid gap-3 xl:w-[720px] xl:grid-cols-[1.2fr_repeat(4,minmax(0,0.7fr))]">
-            <input
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder="Recherche nom, email, sponsor ou identifiant..."
-            />
-            <FilterPill label="Arborescence" active={viewMode === "tree"} onClick={() => setViewMode("tree")} />
-            <FilterPill label="Tous" active={viewMode === "all"} onClick={() => setViewMode("all")} />
-            <FilterPill label="Référents" active={viewMode === "referents"} onClick={() => setViewMode("referents")} />
-            <FilterPill label="Distributeurs" active={viewMode === "distributors"} onClick={() => setViewMode("distributors")} />
-          </div>
+    <div style={{ padding: "clamp(16px, 4vw, 28px)", maxWidth: 1100, margin: "0 auto", display: "flex", flexDirection: "column", gap: 14 }}>
+      {/* HEADER */}
+      <div>
+        <div style={{ fontSize: 9, letterSpacing: "2px", textTransform: "uppercase", color: "var(--ls-text-hint)", fontWeight: 500, marginBottom: 6, fontFamily: "DM Sans, sans-serif" }}>
+          Équipe
         </div>
-      </Card>
-
-      {viewMode === "tree" ? (
-        <div className="grid gap-4">
-          <OrganizationTreeCard
-            title="Admins"
-            users={teamGroups.admins}
-            usersIndex={users}
-            clients={clients}
-            followUps={followUps}
-            emptyMessage="Aucun admin visible avec ce filtre."
-          />
-
-          <Card className="space-y-4">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <p className="eyebrow-label">Référents</p>
-                <h2 className="mt-3 text-3xl">Equipes rattachees</h2>
-              </div>
-              <StatusBadge label={`${teamGroups.referentGroups.length} equipe${teamGroups.referentGroups.length > 1 ? "s" : ""}`} tone="amber" />
-            </div>
-
-            <div className="grid gap-4">
-              {teamGroups.referentGroups.length ? (
-                teamGroups.referentGroups.map((group) => (
-                  <OrganizationCluster
-                    key={group.referent.id}
-                    referent={group.referent}
-                    distributors={group.distributors}
-                    users={users}
-                    clients={clients}
-                    followUps={followUps}
-                  />
-                ))
-              ) : (
-                <EmptyState text="Aucun referent visible avec ce filtre." />
-              )}
-            </div>
-          </Card>
-
-          <OrganizationTreeCard
-            title="Distributeurs sans rattachement"
-            users={teamGroups.orphanDistributors}
-            usersIndex={users}
-            clients={clients}
-            followUps={followUps}
-            emptyMessage="Tout le monde est déjà rattache."
-          />
-        </div>
-      ) : null}
-
-      <Card className="space-y-4">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <p className="eyebrow-label">Edition directe</p>
-            <h2 className="mt-3 text-3xl">Comptes de l'equipe</h2>
-          </div>
-          <StatusBadge label={`${visibleUsers.length} visible${visibleUsers.length > 1 ? "s" : ""}`} tone="blue" />
-        </div>
-
-        <div className="grid gap-3">
-          {visibleUsers.length ? (
-            visibleUsers.map((user) => (
-              <UserAccessCard
-                key={user.id}
-                user={user}
-                users={users}
-                clients={clients}
-                followUps={followUps}
-                onSaveAccess={(payload) => updateUserAccess(user.id, payload)}
-                onResetPassword={(nextPassword) => updateUserPassword(user.id, nextPassword)}
-                onToggleStatus={() => void updateUserStatus(user.id, !user.active)}
-              />
-            ))
-          ) : (
-            <EmptyState text="Aucun compte ne correspond a cette recherche." />
-          )}
-        </div>
-      </Card>
-
-      <div className="grid gap-4 xl:grid-cols-[1fr_1fr]">
-        <Card className="space-y-5">
-          <div>
-            <p className="eyebrow-label">Creer un acces</p>
-            <h2 className="mt-3 text-3xl">Nouveau compte equipe</h2>
-          </div>
-
-          <form className="space-y-4" onSubmit={handleSubmit}>
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-[var(--ls-text-muted)]">Nom affiche</label>
-              <input value={name} onChange={(event) => setName(event.target.value)} placeholder="Exemple : Camille Martin" />
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-[var(--ls-text-muted)]">Email professionnel</label>
-              <input type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="camille@lorsquadwellness.app" />
-            </div>
-
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-[var(--ls-text-muted)]">Role</label>
-                <select value={role} onChange={(event) => setRole(event.target.value as User["role"])}>
-                  <option value="distributor">Distributeur</option>
-                  <option value="referent">Référent</option>
-                  <option value="admin">Admin</option>
-                </select>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-[var(--ls-text-muted)]">Mot de passe initial</label>
-                <input type="password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Choisir un mot de passe" />
-              </div>
-            </div>
-
-            {role === "distributor" ? (
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-[var(--ls-text-muted)]">Rattachement referent / sponsor</label>
-                <select value={sponsorId} onChange={(event) => setSponsorId(event.target.value)}>
-                  <option value="">Aucun rattachement pour l'instant</option>
-                  {sponsorOptions.map((user) => (
-                    <option key={user.id} value={user.id}>
-                      {user.name} - {getRoleLabel(user.role)}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            ) : null}
-
-            <label className="flex items-center gap-3 rounded-[20px] bg-[var(--ls-surface2)] px-4 py-3 text-sm text-[var(--ls-text-muted)]">
-              <input type="checkbox" checked={active} onChange={(event) => setActive(event.target.checked)} className="h-4 w-4" />
-              Compte actif des sa creation
-            </label>
-
-            {error ? <div className="rounded-[20px] border border-rose-400/20 bg-rose-400/10 px-4 py-3 text-sm text-rose-100">{error}</div> : null}
-            {success ? <div className="rounded-[20px] border border-[rgba(45,212,191,0.2)] bg-[rgba(45,212,191,0.1)] px-4 py-3 text-sm text-[#2DD4BF]">{success}</div> : null}
-
-            <Button className="w-full">Creer cet acces</Button>
-          </form>
-        </Card>
-
-        <Card className="space-y-5">
-          <div>
-            <p className="eyebrow-label">Reparer un compte existant</p>
-            <h2 className="mt-3 text-3xl">Profil Auth déjà cree</h2>
-          </div>
-
-          <form className="space-y-4" onSubmit={handleRepairSubmit}>
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-[var(--ls-text-muted)]">Email Auth</label>
-                <input type="email" value={repairEmail} onChange={(event) => setRepairEmail(event.target.value)} placeholder="priscalexnutrition@gmail.com" />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-[var(--ls-text-muted)]">ID Supabase (optionnel)</label>
-                <input value={repairUserId} onChange={(event) => setRepairUserId(event.target.value)} placeholder="2c6653c6-525a-48b7-8965-ee8439bf1798" />
-              </div>
-            </div>
-
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-[var(--ls-text-muted)]">Nom affiche (optionnel)</label>
-                <input value={repairName} onChange={(event) => setRepairName(event.target.value)} placeholder="Prisca et Alex" />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-[var(--ls-text-muted)]">Role</label>
-                <select value={repairRole} onChange={(event) => setRepairRole(event.target.value as User["role"])}>
-                  <option value="referent">Référent</option>
-                  <option value="distributor">Distributeur</option>
-                  <option value="admin">Admin</option>
-                </select>
-              </div>
-            </div>
-
-            {repairRole === "distributor" ? (
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-[var(--ls-text-muted)]">Rattachement referent / sponsor</label>
-                <select value={repairSponsorId} onChange={(event) => setRepairSponsorId(event.target.value)}>
-                  <option value="">Aucun rattachement pour l'instant</option>
-                  {sponsorOptions.map((user) => (
-                    <option key={user.id} value={user.id}>
-                      {user.name} - {getRoleLabel(user.role)}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            ) : null}
-
-            <label className="flex items-center gap-3 rounded-[20px] bg-[var(--ls-surface2)] px-4 py-3 text-sm text-[var(--ls-text-muted)]">
-              <input type="checkbox" checked={repairActive} onChange={(event) => setRepairActive(event.target.checked)} className="h-4 w-4" />
-              Profil applicatif actif
-            </label>
-
-            {repairError ? <div className="rounded-[20px] border border-rose-400/20 bg-rose-400/10 px-4 py-3 text-sm text-rose-100">{repairError}</div> : null}
-            {repairSuccess ? <div className="rounded-[20px] border border-[rgba(45,212,191,0.2)] bg-[rgba(45,212,191,0.1)] px-4 py-3 text-sm text-[#2DD4BF]">{repairSuccess}</div> : null}
-
-            <Button className="w-full">Reparer ce profil</Button>
-          </form>
-
-          {storageMode === "supabase" ? (
-            <div className="rounded-[20px] bg-[rgba(45,212,191,0.1)] px-4 py-4 text-sm leading-7 text-[var(--ls-text)]">
-              Si le compte existe dans Authentication mais pas ici, repare-le depuis ce bloc.
-            </div>
-          ) : null}
-        </Card>
-      </div>
-
-      {/* Sections maintenance/import/activité supprimées — nettoyage interface */}
-    </div>
-  );
-}
-
-function FilterPill({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`min-h-[46px] rounded-full border px-4 text-sm font-semibold transition ${
-        active
-          ? "border-white/25 bg-white/12 text-white shadow-[0_10px_30px_rgba(8,15,30,0.24)]"
-          : "border-white/10 bg-[var(--ls-surface2)] text-[var(--ls-text-muted)] hover:border-white/16 hover:bg-[var(--ls-surface2)]"
-      }`}
-    >
-      {label}
-    </button>
-  );
-}
-
-function EmptyState({ text }: { text: string }) {
-  return <div className="rounded-[22px] bg-[var(--ls-surface2)] px-4 py-4 text-sm leading-7 text-[var(--ls-text-muted)]">{text}</div>;
-}
-
-function StatCard({ label, value }: { label: string; value: number }) {
-  return (
-    <Card className="space-y-2 rounded-[24px] p-5">
-      <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-[var(--ls-text-hint)]">{label}</p>
-      <p className="text-3xl font-semibold text-white">{value}</p>
-    </Card>
-  );
-}
-
-function OrganizationTreeCard({
-  title,
-  users,
-  usersIndex,
-  clients,
-  followUps,
-  emptyMessage
-}: {
-  title: string;
-  users: User[];
-  usersIndex: User[];
-  clients: Client[];
-  followUps: FollowUp[];
-  emptyMessage: string;
-}) {
-  return (
-    <Card className="space-y-4">
-      <div className="flex items-center justify-between gap-3">
-        <div>
-          <p className="eyebrow-label">{title}</p>
-          <h2 className="mt-3 text-3xl">{title}</h2>
-        </div>
-        <StatusBadge label={`${users.length} compte${users.length > 1 ? "s" : ""}`} tone="blue" />
-      </div>
-
-      <div className="grid gap-3 md:grid-cols-2">
-        {users.length ? (
-          users.map((user) => (
-            <OrganizationUserCard
-              key={user.id}
-              user={user}
-              users={usersIndex}
-              clients={clients}
-              followUps={followUps}
-            />
-          ))
-        ) : (
-          <EmptyState text={emptyMessage} />
-        )}
-      </div>
-    </Card>
-  );
-}
-
-function OrganizationCluster({
-  referent,
-  distributors,
-  users,
-  clients,
-  followUps
-}: {
-  referent: User;
-  distributors: User[];
-  users: User[];
-  clients: Client[];
-  followUps: FollowUp[];
-}) {
-  return (
-    <div className="rounded-[24px] border border-white/8 bg-[var(--ls-surface2)] p-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <p className="text-sm font-semibold text-white">{referent.name}</p>
-          <p className="mt-1 text-sm text-[var(--ls-text-muted)]">{referent.email}</p>
-        </div>
-        <StatusBadge
-          label={`${distributors.length} distributeur${distributors.length > 1 ? "s" : ""}`}
-          tone="amber"
-        />
-      </div>
-
-      <div className="mt-4 grid gap-4 xl:grid-cols-[0.95fr_1.05fr]">
-        <OrganizationUserCard
-          user={referent}
-          users={users}
-          clients={clients}
-          followUps={followUps}
-          highlighted
-        />
-
-        <div className="grid gap-3 md:grid-cols-2">
-          {distributors.length ? (
-            distributors.map((user) => (
-              <OrganizationUserCard
-                key={user.id}
-                user={user}
-                users={users}
-                clients={clients}
-                followUps={followUps}
-              />
-            ))
-          ) : (
-            <EmptyState text="Aucun distributeur rattache pour l'instant." />
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function OrganizationUserCard({
-  user,
-  users,
-  clients,
-  followUps,
-  highlighted = false
-}: {
-  user: User;
-  users: User[];
-  clients: Client[];
-  followUps: FollowUp[];
-  highlighted?: boolean;
-}) {
-  const metrics = getPortfolioMetrics(
-    user,
-    clients,
-    followUps,
-    users,
-    user.role === "referent" ? "network" : "personal"
-  );
-
-  return (
-    <div
-      className={`rounded-[22px] px-4 py-4 ${
-        highlighted ? "bg-amber-400/[0.08] ring-1 ring-amber-400/12" : "bg-[var(--ls-bg)]/60"
-      }`}
-    >
-      <div className="flex items-center justify-between gap-3">
-        <div>
-          <p className="text-sm font-semibold text-white">{user.name}</p>
-          <p className="mt-1 text-sm text-[var(--ls-text-muted)]">{getRoleLabel(user.role)}</p>
-        </div>
-        <StatusBadge
-          label={`${metrics.clients.length} clients`}
-          tone={user.role === "referent" ? "amber" : "blue"}
-        />
-      </div>
-      <div className="mt-4 grid grid-cols-3 gap-2 text-sm">
-        <MiniMetric label="RDV" value={metrics.scheduledFollowUps.length} />
-        <MiniMetric label="Relances" value={metrics.relanceFollowUps.length} />
-        <MiniMetric label="Clients" value={metrics.clients.length} />
-      </div>
-    </div>
-  );
-}
-
-function MiniMetric({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="rounded-[18px] bg-[var(--ls-surface2)] px-3 py-3 text-center">
-      <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-[var(--ls-text-hint)]">{label}</p>
-      <p className="mt-2 text-lg font-semibold text-white">{value}</p>
-    </div>
-  );
-}
-
-function UserAccessCard({
-  user,
-  users,
-  clients,
-  followUps,
-  onSaveAccess,
-  onResetPassword,
-  onToggleStatus
-}: {
-  user: User;
-  users: User[];
-  clients: Client[];
-  followUps: FollowUp[];
-  onSaveAccess: (payload: {
-    role: User["role"];
-    sponsorId?: string;
-  }) => Promise<{ ok: boolean; error?: string }>;
-  onResetPassword: (password: string) => Promise<{ ok: boolean; error?: string }>;
-  onToggleStatus: () => void;
-}) {
-  const metrics = getPortfolioMetrics(
-    user,
-    clients,
-    followUps,
-    users,
-    user.role === "referent" ? "network" : "personal"
-  );
-  const sponsorOptions = users.filter(
-    (item) => item.active && item.id !== user.id && canSponsorDistributors(item)
-  );
-  const [selectedRole, setSelectedRole] = useState<User["role"]>(user.role);
-  const [selectedSponsorId, setSelectedSponsorId] = useState(user.sponsorId ?? "");
-  const [nextPassword, setNextPassword] = useState("");
-  const [feedback, setFeedback] = useState("");
-  const [saving, setSaving] = useState(false);
-
-  useEffect(() => {
-    setSelectedRole(user.role);
-    setSelectedSponsorId(user.sponsorId ?? "");
-    setFeedback("");
-  }, [user.role, user.sponsorId]);
-
-  const roleTone =
-    user.role === "admin" ? "blue" : user.role === "referent" ? "amber" : "green";
-  const perimeterLabel =
-    user.role === "admin"
-      ? "Toute la base"
-      : user.role === "referent"
-        ? "Ses clients + son equipe"
-        : "Clients attribues";
-  const hasPendingChanges =
-    selectedRole !== user.role ||
-    (selectedRole === "distributor"
-      ? selectedSponsorId !== (user.sponsorId ?? "")
-      : user.role === "distributor");
-
-  async function handleSaveAccess() {
-    setSaving(true);
-    const result = await onSaveAccess({
-      role: selectedRole,
-      sponsorId: selectedRole === "distributor" ? selectedSponsorId || undefined : undefined
-    });
-    setSaving(false);
-
-    if (!result.ok) {
-      setFeedback(result.error ?? "Impossible de mettre a jour ce compte.");
-      return;
-    }
-
-    setFeedback("Rattachement mis a jour.");
-  }
-
-  async function handleResetPassword() {
-    if (!nextPassword.trim()) {
-      setFeedback("Saisis d'abord un nouveau mot de passe.");
-      return;
-    }
-
-    setSaving(true);
-    const result = await onResetPassword(nextPassword);
-    setSaving(false);
-
-    if (!result.ok) {
-      setFeedback(result.error ?? "Impossible de redefinir ce mot de passe.");
-      return;
-    }
-
-    setNextPassword("");
-    setFeedback("Mot de passe redefini.");
-  }
-
-  return (
-    <div className="grid gap-4 rounded-[24px] border border-white/10 bg-[var(--ls-surface2)] p-4 xl:grid-cols-[1.05fr_1fr_auto]">
-      <div className="space-y-3">
-        <div className="flex flex-wrap items-center gap-3">
-          <DistributorBadge
-            user={user}
-            detail={`${metrics.clients.length} clients - ${metrics.relanceFollowUps.length} relances`}
-          />
-          <StatusBadge label={getRoleLabel(user.role)} tone={roleTone} />
-          <StatusBadge label={user.active ? "Actif" : "Inactif"} tone={user.active ? "green" : "amber"} />
-        </div>
-        <p className="text-sm text-[var(--ls-text-muted)]">{user.email}</p>
-        <p className="break-all text-xs text-[var(--ls-text-hint)]">{user.id}</p>
-        {user.sponsorName ? (
-          <p className="text-sm text-[#2DD4BF]/80">Rattachement actuel : {user.sponsorName}</p>
-        ) : null}
-        <p className="text-xs text-[var(--ls-text-hint)]">
-          Cree le {user.createdAt ? formatDate(user.createdAt) : "Date non renseignee"}
+        <h1 style={{ fontFamily: "Syne, sans-serif", fontWeight: 800, fontSize: "clamp(20px, 4vw, 26px)", color: "var(--ls-text)", margin: "0 0 6px", letterSpacing: "-0.3px" }}>
+          Structure & accès
+        </h1>
+        <p style={{ fontSize: 13, color: "var(--ls-text-muted)", margin: 0 }}>
+          Gère tes distributeurs, leurs accès et leurs rattachements.
         </p>
       </div>
 
-      <div className="grid gap-3 text-sm text-[var(--ls-text-muted)]">
-        <div className="rounded-[18px] bg-[var(--ls-bg)]/60 px-3 py-3">
-          <span className="text-[var(--ls-text-hint)]">Portefeuille</span>
-          <p className="mt-1 font-medium text-white">
-            {metrics.clients.length} clients - {metrics.relanceFollowUps.length} relances
-          </p>
-        </div>
-        <div className="rounded-[18px] bg-[var(--ls-bg)]/60 px-3 py-3">
-          <span className="text-[var(--ls-text-hint)]">Perimetre</span>
-          <p className="mt-1 font-medium text-white">{perimeterLabel}</p>
-        </div>
+      {/* 5 STATS COMPACTES */}
+      <div className="users-stats-grid" style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 10 }}>
+        {[
+          { label: "Actifs", value: userStats.active, borderColor: "#0D9488", textColor: "var(--ls-teal)" },
+          { label: "Total", value: userStats.total, borderColor: "transparent", textColor: "var(--ls-text)" },
+          { label: "Admins", value: userStats.admins, borderColor: "#378ADD", textColor: "#378ADD" },
+          { label: "Référents", value: userStats.referents, borderColor: "#BA7517", textColor: "#BA7517" },
+          { label: "Distrib.", value: userStats.distributors, borderColor: "#639922", textColor: "#639922" },
+        ].map(({ label, value, borderColor, textColor }) => (
+          <div
+            key={label}
+            style={{
+              background: "var(--ls-surface)",
+              border: "1px solid var(--ls-border)",
+              borderTop: borderColor !== "transparent" ? `2px solid ${borderColor}` : "1px solid var(--ls-border)",
+              borderRadius: 14,
+              padding: "12px 14px",
+            }}
+          >
+            <div style={{ fontSize: 9, letterSpacing: "2px", textTransform: "uppercase", color: "var(--ls-text-hint)", fontWeight: 500, marginBottom: 4, fontFamily: "DM Sans, sans-serif" }}>
+              {label}
+            </div>
+            <div style={{ fontFamily: "Syne, sans-serif", fontWeight: 800, fontSize: 20, color: textColor, lineHeight: 1 }}>
+              {value}
+            </div>
+          </div>
+        ))}
+      </div>
 
-        {!isAdmin(user) ? (
-          <div className="grid gap-3 rounded-[18px] bg-[var(--ls-bg)]/60 px-3 py-3">
-            <div className="space-y-2">
-              <label className="text-xs font-medium uppercase tracking-[0.14em] text-[var(--ls-text-hint)]">
-                Role
-              </label>
-              <select
-                value={selectedRole}
-                onChange={(event) => {
-                  const nextRole = event.target.value as User["role"];
-                  setSelectedRole(nextRole);
-                  if (nextRole !== "distributor") {
-                    setSelectedSponsorId("");
-                  }
+      {/* CARD PRINCIPALE avec 3 ONGLETS */}
+      <div style={{ background: "var(--ls-surface)", border: "1px solid var(--ls-border)", borderRadius: 14, overflow: "hidden" }}>
+        {/* Barre d'onglets */}
+        <div className="users-tabs-bar" style={{ display: "flex", borderBottom: "1px solid var(--ls-border)", overflowX: "auto" }}>
+          {(
+            [
+              {
+                key: "members",
+                label: "Membres",
+                icon: (
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                    <circle cx="9" cy="7" r="4" />
+                  </svg>
+                ),
+              },
+              {
+                key: "new",
+                label: "Nouveau compte",
+                icon: (
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                    <line x1="12" y1="5" x2="12" y2="19" />
+                    <line x1="5" y1="12" x2="19" y2="12" />
+                  </svg>
+                ),
+              },
+              {
+                key: "repair",
+                label: "Réparer un compte",
+                icon: (
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                    <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
+                  </svg>
+                ),
+              },
+            ] as const
+          ).map(({ key, label, icon }) => {
+            const isActive = activeTab === key;
+            return (
+              <button
+                key={key}
+                onClick={() => setActiveTab(key)}
+                style={{
+                  padding: "12px 18px",
+                  border: "none",
+                  background: "transparent",
+                  color: isActive ? "var(--ls-gold)" : "var(--ls-text-muted)",
+                  fontSize: 13,
+                  fontWeight: isActive ? 600 : 400,
+                  cursor: "pointer",
+                  borderBottom: isActive ? "2px solid var(--ls-gold)" : "2px solid transparent",
+                  marginBottom: -1,
+                  fontFamily: "DM Sans, sans-serif",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 7,
+                  whiteSpace: "nowrap",
+                  transition: "all 0.15s",
                 }}
               >
-                <option value="distributor">Distributeur</option>
-                <option value="referent">Référent</option>
-              </select>
+                {icon}
+                {label}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* ONGLET MEMBRES */}
+        {activeTab === "members" && (
+          <div style={{ padding: 16 }}>
+            {/* Recherche + filtres */}
+            <div style={{ display: "flex", gap: 8, marginBottom: 14, flexWrap: "wrap", alignItems: "center" }}>
+              <div style={{ flex: 1, minWidth: 200, position: "relative" }}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--ls-text-hint)" strokeWidth="1.5" style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)" }}>
+                  <circle cx="11" cy="11" r="8" />
+                  <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                </svg>
+                <input
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Nom, email..."
+                  style={{
+                    width: "100%",
+                    padding: "9px 12px 9px 32px",
+                    border: "1px solid var(--ls-border)",
+                    borderRadius: 9,
+                    fontFamily: "DM Sans, sans-serif",
+                    fontSize: 13,
+                    background: "var(--ls-input-bg)",
+                    color: "var(--ls-text)",
+                    outline: "none",
+                  }}
+                />
+              </div>
+              <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                {(
+                  [
+                    { key: "all", label: "Tous" },
+                    { key: "admin", label: "Admins" },
+                    { key: "referent", label: "Référents" },
+                    { key: "distributor", label: "Distributeurs" },
+                  ] as const
+                ).map(({ key, label }) => {
+                  const isActive = roleFilter === key;
+                  return (
+                    <button
+                      key={key}
+                      onClick={() => setRoleFilter(key)}
+                      style={{
+                        padding: "8px 12px",
+                        border: isActive ? "1.5px solid var(--ls-gold)" : "1px solid var(--ls-border)",
+                        background: isActive ? "rgba(184,146,42,0.08)" : "transparent",
+                        color: isActive ? "var(--ls-gold)" : "var(--ls-text-muted)",
+                        borderRadius: 9,
+                        fontSize: 11,
+                        fontWeight: isActive ? 600 : 400,
+                        cursor: "pointer",
+                        fontFamily: "DM Sans, sans-serif",
+                      }}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
-            {selectedRole === "distributor" ? (
-              <div className="space-y-2">
-                <label className="text-xs font-medium uppercase tracking-[0.14em] text-[var(--ls-text-hint)]">
-                  Rattachement referent / sponsor
-                </label>
-                <select
-                  value={selectedSponsorId}
-                  onChange={(event) => setSelectedSponsorId(event.target.value)}
-                >
-                  <option value="">Aucun rattachement</option>
-                  {sponsorOptions.map((item) => (
-                    <option key={item.id} value={item.id}>
-                      {item.name} - {getRoleLabel(item.role)}
-                    </option>
-                  ))}
-                </select>
+            {/* Liste membres accordéon */}
+            {filteredUsers.length === 0 ? (
+              <div style={{ padding: "40px 20px", textAlign: "center", color: "var(--ls-text-hint)", fontSize: 13 }}>
+                Aucun membre trouvé.
               </div>
-            ) : null}
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {filteredUsers.map((user) => {
+                  const isExpanded = expandedUserId === user.id;
+                  const metrics = getPortfolioMetrics(
+                    user,
+                    clients ?? [],
+                    followUps ?? [],
+                    users ?? [],
+                    user.role === "referent" ? "network" : "personal"
+                  );
+                  const rc = getRoleColors(user.role);
+
+                  return (
+                    <div
+                      key={user.id}
+                      style={{
+                        background: "var(--ls-surface)",
+                        border: isExpanded ? "1.5px solid var(--ls-gold)" : "1px solid var(--ls-border)",
+                        borderRadius: 11,
+                        overflow: "hidden",
+                        opacity: user.active ? 1 : 0.65,
+                        transition: "all 0.15s",
+                      }}
+                    >
+                      {/* Ligne principale cliquable */}
+                      <div
+                        onClick={() => setExpandedUserId(isExpanded ? null : user.id)}
+                        onMouseEnter={(e) => {
+                          if (!isExpanded) e.currentTarget.style.background = "var(--ls-surface2)";
+                        }}
+                        onMouseLeave={(e) => {
+                          if (!isExpanded) e.currentTarget.style.background = "var(--ls-surface)";
+                        }}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 12,
+                          padding: "12px 14px",
+                          cursor: "pointer",
+                          transition: "all 0.15s",
+                        }}
+                      >
+                        {/* Avatar coloré selon rôle */}
+                        <div
+                          style={{
+                            width: 38,
+                            height: 38,
+                            borderRadius: "50%",
+                            background: rc.avatarBg,
+                            border: `2px solid ${rc.avatarBorder}`,
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            fontFamily: "Syne, sans-serif",
+                            fontWeight: 800,
+                            fontSize: 12,
+                            color: rc.avatarText,
+                            flexShrink: 0,
+                          }}
+                        >
+                          {getInitials(user.name)}
+                        </div>
+
+                        {/* Infos centrales */}
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", marginBottom: 3 }}>
+                            <span style={{ fontSize: 13, fontWeight: 600, color: isExpanded ? "var(--ls-gold)" : "var(--ls-text)" }}>
+                              {user.name}
+                            </span>
+                            <span style={{ display: "inline-flex", alignItems: "center", padding: "3px 9px", borderRadius: 10, fontSize: 10, fontWeight: 600, background: rc.chipBg, color: rc.chipText }}>
+                              {rc.label}
+                            </span>
+                            <span
+                              style={{
+                                display: "inline-flex",
+                                alignItems: "center",
+                                padding: "3px 9px",
+                                borderRadius: 10,
+                                fontSize: 10,
+                                fontWeight: 600,
+                                background: user.active ? "rgba(13,148,136,0.1)" : "var(--ls-surface2)",
+                                color: user.active ? "var(--ls-teal)" : "var(--ls-text-muted)",
+                              }}
+                            >
+                              {user.active ? "Actif" : "Inactif"}
+                            </span>
+                          </div>
+                          <div style={{ fontSize: 11, color: "var(--ls-text-hint)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                            {user.email} · {metrics.clients.length} clients · {metrics.relanceFollowUps.length} relances
+                          </div>
+                        </div>
+
+                        {/* Périmètre + chevron */}
+                        <div
+                          className="users-perimeter-hint"
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 6,
+                            fontSize: 10,
+                            color: isExpanded ? "var(--ls-gold)" : "var(--ls-text-hint)",
+                            fontWeight: isExpanded ? 600 : 400,
+                            flexShrink: 0,
+                          }}
+                        >
+                          <span>{getPerimeterLabel(user.role)}</span>
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            {isExpanded ? <polyline points="18 15 12 9 6 15" /> : <polyline points="6 9 12 15 18 9" />}
+                          </svg>
+                        </div>
+                      </div>
+
+                      {/* Panneau déplié */}
+                      {isExpanded && (
+                        <div style={{ background: "var(--ls-surface2)", borderTop: "1px solid var(--ls-border)", padding: 14, display: "flex", flexDirection: "column", gap: 12 }}>
+                          {/* Rattachement (sauf admin) */}
+                          {user.role !== "admin" && (
+                            <div>
+                              <div style={{ fontSize: 9, letterSpacing: "2px", textTransform: "uppercase", color: "var(--ls-text)", fontWeight: 500, marginBottom: 8, fontFamily: "DM Sans, sans-serif" }}>
+                                Rattachement
+                              </div>
+                              <UserInlineAttachmentForm
+                                user={user}
+                                sponsors={sponsorOptions.filter((s) => s.id !== user.id)}
+                                onSave={(payload) => updateUserAccess(user.id, payload)}
+                              />
+                            </div>
+                          )}
+
+                          {/* Mot de passe */}
+                          <div>
+                            <div style={{ fontSize: 9, letterSpacing: "2px", textTransform: "uppercase", color: "var(--ls-text)", fontWeight: 500, marginBottom: 8, fontFamily: "DM Sans, sans-serif" }}>
+                              Redéfinir le mot de passe
+                            </div>
+                            <UserInlinePasswordForm onApply={(pw) => updateUserPassword(user.id, pw)} />
+                          </div>
+
+                          {/* Actions */}
+                          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", paddingTop: 4, borderTop: "1px solid var(--ls-border)", marginTop: 4 }}>
+                            <Link
+                              to={`/distributors/${user.id}`}
+                              style={{
+                                padding: "8px 14px",
+                                border: "none",
+                                background: "rgba(184,146,42,0.1)",
+                                color: "var(--ls-gold)",
+                                borderRadius: 9,
+                                fontSize: 12,
+                                fontWeight: 600,
+                                cursor: "pointer",
+                                textDecoration: "none",
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: 5,
+                                fontFamily: "DM Sans, sans-serif",
+                              }}
+                            >
+                              Voir portefeuille
+                              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <line x1="5" y1="12" x2="19" y2="12" />
+                                <polyline points="12 5 19 12 12 19" />
+                              </svg>
+                            </Link>
+                            <button
+                              onClick={() => void updateUserStatus(user.id, !user.active)}
+                              disabled={currentUser?.id === user.id}
+                              title={currentUser?.id === user.id ? "Vous ne pouvez pas désactiver votre propre compte" : ""}
+                              style={{
+                                padding: "8px 14px",
+                                border: user.active ? "1px solid rgba(220,38,38,0.2)" : "1px solid rgba(13,148,136,0.2)",
+                                background: user.active ? "rgba(220,38,38,0.05)" : "rgba(13,148,136,0.05)",
+                                color: user.active ? "var(--ls-coral)" : "var(--ls-teal)",
+                                borderRadius: 9,
+                                fontSize: 12,
+                                cursor: currentUser?.id === user.id ? "not-allowed" : "pointer",
+                                marginLeft: "auto",
+                                fontFamily: "DM Sans, sans-serif",
+                                opacity: currentUser?.id === user.id ? 0.5 : 1,
+                              }}
+                            >
+                              {user.active ? "Désactiver" : "Réactiver"}
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
-        ) : null}
+        )}
 
-        <div className="grid gap-2 rounded-[18px] bg-[var(--ls-bg)]/60 px-3 py-3">
-          <label className="text-xs font-medium uppercase tracking-[0.14em] text-[var(--ls-text-hint)]">
-            Redefinir le mot de passe
-          </label>
-          <input
-            type="password"
-            value={nextPassword}
-            onChange={(event) => setNextPassword(event.target.value)}
-            placeholder="Nouveau mot de passe"
-          />
-        </div>
+        {/* ONGLET NOUVEAU COMPTE */}
+        {activeTab === "new" && (
+          <div style={{ padding: 20 }}>
+            <form className="space-y-4" onSubmit={handleSubmit}>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-[var(--ls-text-muted)]">Nom affiché</label>
+                <input value={name} onChange={(event) => setName(event.target.value)} placeholder="Exemple : Camille Martin" />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-[var(--ls-text-muted)]">Email professionnel</label>
+                <input type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="camille@lorsquadwellness.app" />
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-[var(--ls-text-muted)]">Rôle</label>
+                  <select value={role} onChange={(event) => setRole(event.target.value as User["role"])}>
+                    <option value="distributor">Distributeur</option>
+                    <option value="referent">Référent</option>
+                    <option value="admin">Admin</option>
+                  </select>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-[var(--ls-text-muted)]">Mot de passe initial</label>
+                  <input type="password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Choisir un mot de passe" />
+                </div>
+              </div>
+
+              {role === "distributor" ? (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-[var(--ls-text-muted)]">Rattachement référent / sponsor</label>
+                  <select value={sponsorId} onChange={(event) => setSponsorId(event.target.value)}>
+                    <option value="">Aucun rattachement pour l'instant</option>
+                    {sponsorOptions.map((u) => (
+                      <option key={u.id} value={u.id}>
+                        {u.name} - {getRoleLabel(u.role)}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              ) : null}
+
+              <label className="flex items-center gap-3 rounded-[20px] bg-[var(--ls-surface2)] px-4 py-3 text-sm text-[var(--ls-text-muted)]">
+                <input type="checkbox" checked={active} onChange={(event) => setActive(event.target.checked)} className="h-4 w-4" />
+                Compte actif dès sa création
+              </label>
+
+              {error ? <div className="rounded-[20px] border border-rose-400/20 bg-rose-400/10 px-4 py-3 text-sm text-rose-100">{error}</div> : null}
+              {success ? <div className="rounded-[20px] border border-[rgba(45,212,191,0.2)] bg-[rgba(45,212,191,0.1)] px-4 py-3 text-sm text-[#2DD4BF]">{success}</div> : null}
+
+              <Button className="w-full">Créer cet accès</Button>
+            </form>
+          </div>
+        )}
+
+        {/* ONGLET RÉPARER UN COMPTE */}
+        {activeTab === "repair" && (
+          <div style={{ padding: 20 }}>
+            <form className="space-y-4" onSubmit={handleRepairSubmit}>
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-[var(--ls-text-muted)]">Email Auth</label>
+                  <input type="email" value={repairEmail} onChange={(event) => setRepairEmail(event.target.value)} placeholder="priscalexnutrition@gmail.com" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-[var(--ls-text-muted)]">ID Supabase (optionnel)</label>
+                  <input value={repairUserId} onChange={(event) => setRepairUserId(event.target.value)} placeholder="2c6653c6-525a-48b7-8965-ee8439bf1798" />
+                </div>
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-[var(--ls-text-muted)]">Nom affiché (optionnel)</label>
+                  <input value={repairName} onChange={(event) => setRepairName(event.target.value)} placeholder="Prisca et Alex" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-[var(--ls-text-muted)]">Rôle</label>
+                  <select value={repairRole} onChange={(event) => setRepairRole(event.target.value as User["role"])}>
+                    <option value="referent">Référent</option>
+                    <option value="distributor">Distributeur</option>
+                    <option value="admin">Admin</option>
+                  </select>
+                </div>
+              </div>
+
+              {repairRole === "distributor" ? (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-[var(--ls-text-muted)]">Rattachement référent / sponsor</label>
+                  <select value={repairSponsorId} onChange={(event) => setRepairSponsorId(event.target.value)}>
+                    <option value="">Aucun rattachement pour l'instant</option>
+                    {sponsorOptions.map((u) => (
+                      <option key={u.id} value={u.id}>
+                        {u.name} - {getRoleLabel(u.role)}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              ) : null}
+
+              <label className="flex items-center gap-3 rounded-[20px] bg-[var(--ls-surface2)] px-4 py-3 text-sm text-[var(--ls-text-muted)]">
+                <input type="checkbox" checked={repairActive} onChange={(event) => setRepairActive(event.target.checked)} className="h-4 w-4" />
+                Profil applicatif actif
+              </label>
+
+              {repairError ? <div className="rounded-[20px] border border-rose-400/20 bg-rose-400/10 px-4 py-3 text-sm text-rose-100">{repairError}</div> : null}
+              {repairSuccess ? <div className="rounded-[20px] border border-[rgba(45,212,191,0.2)] bg-[rgba(45,212,191,0.1)] px-4 py-3 text-sm text-[#2DD4BF]">{repairSuccess}</div> : null}
+
+              <Button className="w-full">Réparer ce profil</Button>
+
+              {storageMode === "supabase" ? (
+                <div className="rounded-[20px] bg-[rgba(45,212,191,0.1)] px-4 py-4 text-sm leading-7 text-[var(--ls-text)]">
+                  Si le compte existe dans Authentication mais pas ici, répare-le depuis ce bloc.
+                </div>
+              ) : null}
+            </form>
+          </div>
+        )}
       </div>
 
-      <div className="flex flex-col items-stretch gap-3 xl:min-w-[220px] xl:items-end">
-        <Link
-          to={`/distributors/${user.id}`}
-          className="inline-flex min-h-[46px] items-center justify-center rounded-[18px] bg-[var(--ls-surface2)] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[var(--ls-surface2)]"
-        >
-          Voir portefeuille
-        </Link>
-        {!isAdmin(user) ? (
-          <Button
-            variant="secondary"
-            onClick={() => void handleSaveAccess()}
-            disabled={!hasPendingChanges || saving}
-          >
-            {saving ? "Mise à jour..." : "Enregistrer le rattachement"}
-          </Button>
-        ) : null}
-        <Button
-          variant="secondary"
-          onClick={() => void handleResetPassword()}
-          disabled={!nextPassword.trim() || saving}
-        >
-          {saving ? "Mise à jour..." : "Redefinir le mot de passe"}
-        </Button>
-        <Button variant="secondary" onClick={onToggleStatus}>
-          {user.active ? "Desactiver" : "Reactiver"}
-        </Button>
-        {feedback ? <p className="text-xs text-[var(--ls-text-muted)] xl:text-right">{feedback}</p> : null}
-      </div>
+      {/* NOTIFICATIONS COMPACTES */}
+      <PushNotificationSettings userId={currentUser?.id} userName={currentUser?.name} />
     </div>
   );
 }
 
+// ─── Helpers ─────────────────────────────────────────────────────────
+function getInitials(name: string): string {
+  if (!name) return "?";
+  const parts = name.trim().split(/\s+/);
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[1][0]).toUpperCase();
+}
+
+function getRoleColors(role: string) {
+  switch (role) {
+    case "admin":
+      return {
+        label: "Admin",
+        avatarBg: "#E6F1FB",
+        avatarBorder: "#B5D4F4",
+        avatarText: "#0C447C",
+        chipBg: "#E6F1FB",
+        chipText: "#0C447C",
+      };
+    case "referent":
+      return {
+        label: "Référent",
+        avatarBg: "#FAEEDA",
+        avatarBorder: "#FAC775",
+        avatarText: "#633806",
+        chipBg: "#FAEEDA",
+        chipText: "#633806",
+      };
+    case "distributor":
+    default:
+      return {
+        label: "Distributeur",
+        avatarBg: "#EAF3DE",
+        avatarBorder: "#C0DD97",
+        avatarText: "#27500A",
+        chipBg: "#EAF3DE",
+        chipText: "#27500A",
+      };
+  }
+}
+
+function getPerimeterLabel(role: string): string {
+  switch (role) {
+    case "admin":
+      return "Toute la base";
+    case "referent":
+      return "Ses clients + équipe";
+    case "distributor":
+      return "Ses clients";
+    default:
+      return "";
+  }
+}
+
+// ─── Composants inline ───────────────────────────────────────────────
+function UserInlineAttachmentForm({
+  user,
+  sponsors,
+  onSave,
+}: {
+  user: User;
+  sponsors: User[];
+  onSave: (payload: { role: User["role"]; sponsorId?: string }) => Promise<{ ok: boolean; error?: string }>;
+}) {
+  const [role, setRole] = useState<User["role"]>(user.role);
+  const [sponsorId, setSponsorId] = useState(user.sponsorId ?? "");
+  const [saving, setSaving] = useState(false);
+  const [feedback, setFeedback] = useState<{ type: "ok" | "err"; msg: string } | null>(null);
+
+  async function handleSave() {
+    setSaving(true);
+    setFeedback(null);
+    try {
+      const result = await onSave({
+        role,
+        sponsorId: role === "distributor" ? sponsorId || undefined : undefined,
+      });
+      if (result.ok) {
+        setFeedback({ type: "ok", msg: "Enregistré" });
+        setTimeout(() => setFeedback(null), 2000);
+      } else {
+        setFeedback({ type: "err", msg: result.error ?? "Erreur" });
+      }
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div>
+      <div className="users-attach-form" style={{ display: "grid", gridTemplateColumns: "1fr 1fr auto", gap: 8, alignItems: "end" }}>
+        <select
+          value={role}
+          onChange={(e) => setRole(e.target.value as User["role"])}
+          style={{
+            padding: "8px 10px",
+            border: "1px solid var(--ls-border)",
+            borderRadius: 8,
+            fontSize: 12,
+            background: "var(--ls-surface)",
+            color: "var(--ls-text)",
+            outline: "none",
+            fontFamily: "DM Sans, sans-serif",
+          }}
+        >
+          <option value="distributor">Distributeur</option>
+          <option value="referent">Référent</option>
+        </select>
+        <select
+          value={sponsorId}
+          onChange={(e) => setSponsorId(e.target.value)}
+          disabled={role !== "distributor"}
+          style={{
+            padding: "8px 10px",
+            border: "1px solid var(--ls-border)",
+            borderRadius: 8,
+            fontSize: 12,
+            background: role !== "distributor" ? "var(--ls-surface2)" : "var(--ls-surface)",
+            color: "var(--ls-text)",
+            outline: "none",
+            fontFamily: "DM Sans, sans-serif",
+            opacity: role !== "distributor" ? 0.5 : 1,
+          }}
+        >
+          <option value="">— Choisir un sponsor —</option>
+          {sponsors.map((s) => (
+            <option key={s.id} value={s.id}>
+              {s.name} - {getRoleLabel(s.role)}
+            </option>
+          ))}
+        </select>
+        <button
+          onClick={() => void handleSave()}
+          disabled={saving}
+          style={{
+            padding: "8px 14px",
+            border: "none",
+            background: "var(--ls-gold)",
+            color: "#fff",
+            borderRadius: 8,
+            fontSize: 11,
+            fontWeight: 600,
+            cursor: saving ? "wait" : "pointer",
+            whiteSpace: "nowrap",
+            fontFamily: "DM Sans, sans-serif",
+            opacity: saving ? 0.7 : 1,
+          }}
+        >
+          {saving ? "..." : "Enregistrer"}
+        </button>
+      </div>
+      {feedback && (
+        <div style={{ marginTop: 6, fontSize: 11, color: feedback.type === "ok" ? "var(--ls-teal)" : "var(--ls-coral)" }}>
+          {feedback.msg}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function UserInlinePasswordForm({ onApply }: { onApply: (pw: string) => Promise<{ ok: boolean; error?: string }> }) {
+  const [password, setPassword] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [done, setDone] = useState(false);
+  const [error, setError] = useState("");
+
+  async function handleApply() {
+    if (!password.trim()) return;
+    setSaving(true);
+    setError("");
+    try {
+      const result = await onApply(password);
+      if (result.ok) {
+        setPassword("");
+        setDone(true);
+        setTimeout(() => setDone(false), 2000);
+      } else {
+        setError(result.error ?? "Erreur");
+      }
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div>
+      <div style={{ display: "flex", gap: 8 }}>
+        <input
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          placeholder="Nouveau mot de passe"
+          style={{
+            flex: 1,
+            padding: "8px 10px",
+            border: "1px solid var(--ls-border)",
+            borderRadius: 8,
+            fontSize: 12,
+            background: "var(--ls-surface)",
+            color: "var(--ls-text)",
+            outline: "none",
+            fontFamily: "DM Sans, sans-serif",
+          }}
+        />
+        <button
+          onClick={() => void handleApply()}
+          disabled={saving || !password.trim()}
+          style={{
+            padding: "8px 14px",
+            border: "1px solid var(--ls-border)",
+            background: "var(--ls-surface)",
+            color: done ? "var(--ls-teal)" : "var(--ls-text-muted)",
+            borderRadius: 8,
+            fontSize: 11,
+            cursor: saving || !password.trim() ? "not-allowed" : "pointer",
+            whiteSpace: "nowrap",
+            fontFamily: "DM Sans, sans-serif",
+            opacity: saving || !password.trim() ? 0.5 : 1,
+          }}
+        >
+          {done ? "✓ OK" : saving ? "..." : "Appliquer"}
+        </button>
+      </div>
+      {error && <div style={{ marginTop: 6, fontSize: 11, color: "var(--ls-coral)" }}>{error}</div>}
+    </div>
+  );
+}
