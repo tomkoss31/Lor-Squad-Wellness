@@ -269,7 +269,12 @@ function readAssessmentDraft(): AssessmentDraftPayload | null {
         assessmentDate: normalizeDateTimeLocalInputValue(parsed.form.assessmentDate),
         nextFollowUp: normalizeDateTimeLocalInputValue(parsed.form.nextFollowUp ?? initialForm.nextFollowUp),
         recommendations: normalizeRecommendations(parsed.form.recommendations),
-        recommendationsContacted: parsed.form.recommendationsContacted ?? false
+        recommendationsContacted: parsed.form.recommendationsContacted ?? false,
+        // Fallback si draft antérieur au Chantier 6 (pas de breakfastAnalysis ou partiel)
+        breakfastAnalysis: {
+          ...DEFAULT_BREAKFAST_ANALYSIS,
+          ...(parsed.form.breakfastAnalysis ?? {})
+        }
       },
       currentStep:
         typeof parsed.currentStep === "number"
@@ -704,7 +709,9 @@ export function NewAssessmentPage() {
       recommendations: form.recommendations.filter(
         (item) => item.name.trim() || item.contact.trim()
       ),
-      recommendationsContacted: form.recommendationsContacted
+      recommendationsContacted: form.recommendationsContacted,
+      // Étape 9 (Chantier 6) — story petit-déjeuner
+      breakfastAnalysis: form.breakfastAnalysis
     };
   }
 
