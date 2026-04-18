@@ -6,9 +6,14 @@ import type {
   AssessmentRecord,
   AuthSession,
   Client,
+  DecisionClient,
   FollowUp,
+  LifecycleStatus,
+  MessageALaisser,
+  TypeDeSuite,
   User
 } from "../types/domain";
+import { deriveLifecycleFromAssessment } from "../lib/lifecycleMapping";
 import type { PvClientProductRecord, PvClientTransaction } from "../types/pv";
 
 type UserRow = {
@@ -36,6 +41,9 @@ type AssessmentRow = {
   next_follow_up?: string | null;
   body_scan: AssessmentRecord["bodyScan"];
   questionnaire: AssessmentRecord["questionnaire"];
+  decision_client?: DecisionClient | null;
+  type_de_suite?: TypeDeSuite | null;
+  message_a_laisser?: MessageALaisser | null;
   pedagogical_focus: string[] | null;
 };
 
@@ -60,6 +68,10 @@ type ClientRow = {
   start_date?: string | null;
   next_follow_up: string;
   notes: string;
+  lifecycle_status?: LifecycleStatus | null;
+  is_fragile?: boolean | null;
+  lifecycle_updated_at?: string | null;
+  lifecycle_updated_by?: string | null;
   assessments?: AssessmentRow[] | null;
 };
 
@@ -267,7 +279,10 @@ function mapAssessment(row: AssessmentRow): AssessmentRecord {
     nextFollowUp: row.next_follow_up ?? undefined,
     bodyScan: row.body_scan,
     questionnaire: row.questionnaire,
-    pedagogicalFocus: row.pedagogical_focus ?? []
+    pedagogicalFocus: row.pedagogical_focus ?? [],
+    decisionClient: row.decision_client ?? null,
+    typeDeSuite: row.type_de_suite ?? null,
+    messageALaisser: row.message_a_laisser ?? null
   };
 }
 
@@ -293,6 +308,10 @@ function mapClient(row: ClientRow): Client {
     startDate: row.start_date ?? undefined,
     nextFollowUp: row.next_follow_up,
     notes: row.notes,
+    lifecycleStatus: row.lifecycle_status ?? undefined,
+    isFragile: row.is_fragile ?? false,
+    lifecycleUpdatedAt: row.lifecycle_updated_at ?? undefined,
+    lifecycleUpdatedBy: row.lifecycle_updated_by ?? null,
     assessments: (row.assessments ?? []).map(mapAssessment)
   };
 }
@@ -563,8 +582,17 @@ export async function createSupabaseClientWithInitialAssessment(payload: {
   followUpType: string;
   followUpStatus: FollowUp["status"];
   notes: string;
+  afterAssessmentAction?: "started" | "pending";
 }) {
   const client = await requireSupabase();
+
+  // ─── Lifecycle (Matrice B) ──────────────────────────────────────────
+  const { lifecycleStatus, isFragile } = deriveLifecycleFromAssessment({
+    decisionClient: payload.assessment.decisionClient ?? null,
+    afterAssessmentAction:
+      payload.afterAssessmentAction ?? (payload.started ? "started" : "pending"),
+  });
+
   const clientInsertPayload = {
       first_name: payload.client.firstName,
       last_name: payload.client.lastName,
@@ -584,7 +612,9 @@ export async function createSupabaseClientWithInitialAssessment(payload: {
       started: payload.started,
       start_date: payload.started ? payload.assessment.date : null,
       next_follow_up: payload.nextFollowUp,
-      notes: payload.notes
+      notes: payload.notes,
+      lifecycle_status: lifecycleStatus,
+      is_fragile: isFragile
     };
   let { data: insertedClient, error: clientError } = await client
     .from("clients")
@@ -603,6 +633,21 @@ export async function createSupabaseClientWithInitialAssessment(payload: {
       .single<{ id: string }>());
   }
 
+  // Fallback : migration lifecycle pas encore exécutée → retry sans ces champs
+  if (
+    clientError &&
+    (isMissingColumnError(clientError, "lifecycle_status") ||
+      isMissingColumnError(clientError, "is_fragile"))
+  ) {
+    const { lifecycle_status: _ls, is_fragile: _if, ...withoutLifecycle } = clientInsertPayload;
+    void _ls; void _if;
+    ({ data: insertedClient, error: clientError } = await client
+      .from("clients")
+      .insert(withoutLifecycle)
+      .select("id")
+      .single<{ id: string }>());
+  }
+
   if (clientError || !insertedClient) {
     console.error("Supabase client insert error:", clientError);
     throw new Error(`Impossible de créer le client : ${clientError?.message ?? 'réponse vide'}`);
@@ -610,7 +655,7 @@ export async function createSupabaseClientWithInitialAssessment(payload: {
 
   const clientId = insertedClient.id;
 
-  const { error: assessmentError } = await client.from("assessments").insert({
+  const assessmentInsertPayload = {
     id: payload.assessment.id,
     client_id: clientId,
     date: payload.assessment.date,
@@ -623,8 +668,24 @@ export async function createSupabaseClientWithInitialAssessment(payload: {
     next_follow_up: payload.assessment.nextFollowUp ?? null,
     body_scan: payload.assessment.bodyScan,
     questionnaire: payload.assessment.questionnaire,
-    pedagogical_focus: payload.assessment.pedagogicalFocus
-  });
+    pedagogical_focus: payload.assessment.pedagogicalFocus,
+    decision_client: payload.assessment.decisionClient ?? null,
+    type_de_suite: payload.assessment.typeDeSuite ?? null,
+    message_a_laisser: payload.assessment.messageALaisser ?? null,
+  };
+  let { error: assessmentError } = await client.from("assessments").insert(assessmentInsertPayload);
+
+  // Fallback : colonnes étape 13 pas encore présentes → retry sans
+  if (
+    assessmentError &&
+    (isMissingColumnError(assessmentError, "decision_client") ||
+      isMissingColumnError(assessmentError, "type_de_suite") ||
+      isMissingColumnError(assessmentError, "message_a_laisser"))
+  ) {
+    const { decision_client: _dc, type_de_suite: _ts, message_a_laisser: _ma, ...withoutStep13 } = assessmentInsertPayload;
+    void _dc; void _ts; void _ma;
+    ({ error: assessmentError } = await client.from("assessments").insert(withoutStep13));
+  }
 
   if (assessmentError) {
     console.error("Supabase assessment insert error:", assessmentError);
@@ -1305,5 +1366,59 @@ export async function updateSupabaseUserPassword(userId: string, password: strin
   const result = (await response.json()) as { ok: boolean; error?: string };
   if (!response.ok || !result.ok) {
     throw new Error(result.error ?? "Impossible de redefinir ce mot de passe.");
+  }
+}
+
+// ─── Lifecycle setters (Chantier 1 — Matrice B) ──────────────────────────
+export async function updateSupabaseClientLifecycleStatus(params: {
+  clientId: string;
+  newStatus: LifecycleStatus;
+  userId: string;
+}): Promise<void> {
+  const { clientId, newStatus, userId } = params;
+  const client = await requireSupabase();
+
+  const { error: clientError } = await client
+    .from("clients")
+    .update({
+      lifecycle_status: newStatus,
+      lifecycle_updated_at: new Date().toISOString(),
+      lifecycle_updated_by: userId,
+    })
+    .eq("id", clientId);
+
+  if (clientError) {
+    throw new Error(`Impossible de mettre à jour le statut du client : ${clientError.message}`);
+  }
+
+  // Si le client bascule en "mort" → tous ses follow-ups ouverts deviennent inactifs
+  if (newStatus === "stopped" || newStatus === "lost") {
+    const { error: fuError } = await client
+      .from("follow_ups")
+      .update({ status: "inactive" })
+      .eq("client_id", clientId)
+      .in("status", ["scheduled", "pending"]);
+
+    if (fuError) {
+      // Non-fatal : on loggue et on continue
+      console.warn("[updateSupabaseClientLifecycleStatus] follow_ups update warning:", fuError);
+    }
+  }
+}
+
+export async function updateSupabaseClientFragileFlag(params: {
+  clientId: string;
+  isFragile: boolean;
+}): Promise<void> {
+  const { clientId, isFragile } = params;
+  const client = await requireSupabase();
+
+  const { error } = await client
+    .from("clients")
+    .update({ is_fragile: isFragile })
+    .eq("id", clientId);
+
+  if (error) {
+    throw new Error(`Impossible de mettre à jour le flag fragile : ${error.message}`);
   }
 }

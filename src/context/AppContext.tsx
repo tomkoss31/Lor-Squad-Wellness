@@ -60,6 +60,8 @@ import {
   upsertSupabasePvClientProduct,
   updateSupabaseAssessment,
   updateSupabaseClientSchedule,
+  updateSupabaseClientLifecycleStatus,
+  updateSupabaseClientFragileFlag,
   updateSupabaseUserAccess,
   updateSupabaseUserPassword,
   updateSupabaseUserStatus
@@ -71,9 +73,11 @@ import type {
   Client,
   ClientMessage,
   FollowUp,
+  LifecycleStatus,
   Program,
   User
 } from "../types/domain";
+import { deriveLifecycleFromAssessment } from "../lib/lifecycleMapping";
 import type { PvClientProductRecord, PvClientTransaction } from "../types/pv";
 
 type StorageMode = "local" | "supabase";
@@ -97,6 +101,8 @@ interface AppContextValue {
   markMessageRead: (id: string) => Promise<void>;
   deleteMessage: (id: string) => Promise<void>;
   updateClientInfo: (clientId: string, data: { phone?: string; email?: string; city?: string }) => Promise<void>;
+  setClientLifecycleStatus: (clientId: string, newStatus: LifecycleStatus) => Promise<void>;
+  setClientFragileFlag: (clientId: string, isFragile: boolean) => Promise<void>;
   updateFollowUpStatus: (followUpId: string, status: 'scheduled' | 'pending' | 'completed' | 'dismissed') => Promise<void>;
   loginAs: (userId: string) => Promise<void>;
   loginWithCredentials: (
@@ -148,6 +154,7 @@ interface AppContextValue {
     followUpType: string;
     followUpStatus: FollowUp["status"];
     notes: string;
+    afterAssessmentAction?: "started" | "pending";
   }) => Promise<string>;
   deleteClient: (clientId: string) => Promise<void>;
   addFollowUpAssessment: (
@@ -825,6 +832,7 @@ export function AppProvider({ children }: PropsWithChildren) {
     followUpType: string;
     followUpStatus: FollowUp["status"];
     notes: string;
+    afterAssessmentAction?: "started" | "pending";
   }) {
     if (storageMode === "supabase") {
       const clientId = await createSupabaseClientWithInitialAssessment(payload);
@@ -843,6 +851,14 @@ export function AppProvider({ children }: PropsWithChildren) {
     }
 
     const clientId = `c-${Date.now()}`;
+
+    // Derive lifecycle from decisionClient × afterAssessmentAction (Matrice B)
+    const { lifecycleStatus, isFragile } = deriveLifecycleFromAssessment({
+      decisionClient: payload.assessment.decisionClient ?? null,
+      afterAssessmentAction:
+        payload.afterAssessmentAction ?? (payload.started ? "started" : "pending"),
+    });
+
     const nextClient: Client = {
       ...payload.client,
       id: clientId,
@@ -853,6 +869,9 @@ export function AppProvider({ children }: PropsWithChildren) {
       startDate: payload.started ? payload.assessment.date : undefined,
       nextFollowUp: payload.nextFollowUp,
       notes: payload.notes,
+      lifecycleStatus,
+      isFragile,
+      lifecycleUpdatedAt: new Date().toISOString(),
       assessments: [payload.assessment]
     };
 
@@ -1324,6 +1343,42 @@ export function AppProvider({ children }: PropsWithChildren) {
           setFollowUps(prev => prev.map(f => f.id === followUpId ? { ...f, status } : f));
         }
       },
+      setClientLifecycleStatus: async (clientId: string, newStatus: LifecycleStatus) => {
+        if (!currentUser?.id) throw new Error("Not authenticated");
+
+        if (storageMode === 'supabase') {
+          await updateSupabaseClientLifecycleStatus({ clientId, newStatus, userId: currentUser.id });
+        }
+
+        // Optimistic local state update
+        setClients(prev => prev.map(c =>
+          c.id === clientId
+            ? {
+                ...c,
+                lifecycleStatus: newStatus,
+                lifecycleUpdatedAt: new Date().toISOString(),
+                lifecycleUpdatedBy: currentUser.id,
+              }
+            : c
+        ));
+
+        // Si "mort" → désactiver tous les follow-ups ouverts
+        if (newStatus === 'stopped' || newStatus === 'lost') {
+          setFollowUps(prev => prev.map(fu =>
+            fu.clientId === clientId && (fu.status === 'scheduled' || fu.status === 'pending')
+              ? { ...fu, status: 'inactive' as const }
+              : fu
+          ));
+        }
+      },
+      setClientFragileFlag: async (clientId: string, isFragile: boolean) => {
+        if (storageMode === 'supabase') {
+          await updateSupabaseClientFragileFlag({ clientId, isFragile });
+        }
+        setClients(prev => prev.map(c =>
+          c.id === clientId ? { ...c, isFragile } : c
+        ));
+      },
       loginAs,
       loginWithCredentials,
       logout,
@@ -1345,7 +1400,7 @@ export function AppProvider({ children }: PropsWithChildren) {
       updateClientSchedule,
       reassignClientOwner,
       addPvTransaction,
-      savePvClientProduct
+      savePvClientProduct,
     }),
     [
       authReady,
