@@ -1,48 +1,37 @@
 import { useDeferredValue, useState } from "react";
-import { Link, useParams } from "react-router-dom";
-import { DistributorBadge } from "../components/client/DistributorBadge";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { Card } from "../components/ui/Card";
-import { MetricTile } from "../components/ui/MetricTile";
-import { PageHeading } from "../components/ui/PageHeading";
-import { StatusBadge } from "../components/ui/StatusBadge";
+import { DistributorBadge } from "../components/client/DistributorBadge";
 import { useAppContext } from "../context/AppContext";
 import { canAccessPortfolioUser } from "../lib/auth";
 import {
   getActivePortfolioUsers,
   getClientActiveFollowUp,
   getGroupedClientsByMonth,
-  getPortfolioMetrics
+  getPortfolioMetrics,
 } from "../lib/portfolio";
-import { formatDate, formatDateTime, getFirstAssessment, getLatestAssessment } from "../lib/calculations";
+import { formatDate, formatDateTime, getFirstAssessment } from "../lib/calculations";
+import type { Client, FollowUp, User } from "../types/domain";
 
-const statusLabels = {
-  active: { label: "Actif", tone: "green" as const },
-  pending: { label: "En attente", tone: "amber" as const },
-  "follow-up": { label: "Suivi", tone: "blue" as const }
+const statusTone: Record<string, { label: string; tone: "active" | "pending" | "follow-up" }> = {
+  active: { label: "Actif", tone: "active" },
+  pending: { label: "En attente", tone: "pending" },
+  "follow-up": { label: "À relancer", tone: "follow-up" },
 };
 
 export function DistributorPortfolioPage() {
   const { distributorId } = useParams();
-  const {
-    currentUser,
-    users,
-    visibleClients,
-    visibleFollowUps
-  } = useAppContext();
+  const navigate = useNavigate();
+  const { currentUser, users, visibleClients, visibleFollowUps } = useAppContext();
+
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "pending" | "follow-up">(
-    "all"
-  );
+  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "pending" | "follow-up">("all");
   const deferredSearch = useDeferredValue(search);
 
-  if (!currentUser || !distributorId) {
-    return null;
-  }
+  if (!currentUser || !distributorId) return null;
 
-  const targetUser = users.find((user) => user.id === distributorId) ?? null;
-  const isAuthorized = canAccessPortfolioUser(currentUser, targetUser);
-
-  if (!isAuthorized) {
+  const targetUser = users.find((u) => u.id === distributorId) ?? null;
+  if (!canAccessPortfolioUser(currentUser, targetUser)) {
     return (
       <Card>
         <p className="text-lg text-white">Ce portefeuille n&apos;est pas accessible avec cet accès.</p>
@@ -52,9 +41,8 @@ export function DistributorPortfolioPage() {
 
   const portfolioUsers = getActivePortfolioUsers(users, visibleClients, currentUser);
   const portfolioUser =
-    portfolioUsers.find((user) => user.id === distributorId) ??
+    portfolioUsers.find((u) => u.id === distributorId) ??
     (currentUser.id === distributorId ? currentUser : null);
-
   if (!portfolioUser) {
     return (
       <Card>
@@ -70,316 +58,196 @@ export function DistributorPortfolioPage() {
     users,
     portfolioUser.role === "referent" ? "network" : "personal"
   );
+
+  // Compteurs pour les pills (basés sur l'ensemble du portefeuille, pas sur filteredClients
+  // pour que les compteurs restent stables quand on change de filtre)
+  const counts = {
+    all: portfolioMetrics.clients.length,
+    active: portfolioMetrics.clients.filter((c) => c.status === "active").length,
+    pending: portfolioMetrics.clients.filter((c) => c.status === "pending").length,
+    followUp: portfolioMetrics.clients.filter((c) => c.status === "follow-up").length,
+  };
+
   const normalizedSearch = deferredSearch.trim().toLowerCase();
   const filteredClients = portfolioMetrics.clients.filter((client) => {
-    const firstAssessment = getFirstAssessment(client);
+    const first = getFirstAssessment(client);
     const matchesStatus = statusFilter === "all" || client.status === statusFilter;
     const matchesSearch =
       !normalizedSearch ||
-        `${client.firstName} ${client.lastName} ${client.city ?? ""} ${client.currentProgram} ${firstAssessment.questionnaire.referredByName ?? ""}`
-          .toLowerCase()
-          .includes(normalizedSearch);
-
+      `${client.firstName} ${client.lastName} ${client.city ?? ""} ${client.currentProgram} ${first.questionnaire.referredByName ?? ""}`
+        .toLowerCase()
+        .includes(normalizedSearch);
     return matchesStatus && matchesSearch;
   });
+
   const groupedClients = getGroupedClientsByMonth(filteredClients);
-  const pendingRecommendationClients = portfolioMetrics.clients.filter((client) => {
-    const latestAssessment = getLatestAssessment(client);
-    return (
-      (latestAssessment.questionnaire.recommendations?.length ?? 0) > 0 &&
-      !latestAssessment.questionnaire.recommendationsContacted
-    );
-  }).length;
 
   return (
-    <div className="space-y-6">
-      <PageHeading
-        eyebrow="Portefeuille client"
-        title={portfolioUser.name}
-        description="Clients, rendez-vous, relances et lecture mensuelle du portefeuille."
-      />
+    <div className="ls-portfolio-page">
+      {/* 1. Header row : flèche retour + titre */}
+      <header className="ls-portfolio-header-row">
+        <button
+          type="button"
+          onClick={() => navigate(-1)}
+          aria-label="Retour"
+          className="ls-portfolio-header-row__back"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <polyline points="15 18 9 12 15 6" />
+          </svg>
+        </button>
+        <div>
+          <span className="ls-portfolio-header-row__eyebrow">Portefeuille client</span>
+          <h1 className="ls-portfolio-header-row__title">{portfolioUser.name}</h1>
+        </div>
+      </header>
 
-      <div className="grid gap-4 xl:grid-cols-[1.08fr_0.92fr]">
-        <Card className="space-y-5">
-          <div className="flex flex-wrap items-start justify-between gap-4">
-            <div className="flex items-center gap-4">
-              <DistributorBadge
-                user={portfolioUser}
-                detail={`${portfolioMetrics.clients.length} clients`}
-              />
-              <div>
-                <p className="eyebrow-label">Responsable</p>
-                <h2 className="mt-3 text-3xl text-white">{portfolioUser.name}</h2>
-                <p className="mt-2 text-sm text-[var(--ls-text-muted)]">{portfolioUser.title}</p>
-              </div>
-            </div>
-
-            <div className="flex flex-wrap gap-2">
-              <StatusBadge
-                label={`${portfolioMetrics.clients.length} dossiers`}
-                tone="blue"
-              />
-              <StatusBadge
-                label={`${portfolioMetrics.relanceFollowUps.length} relances`}
-                tone={portfolioMetrics.relanceFollowUps.length ? "amber" : "green"}
-              />
-              {pendingRecommendationClients ? (
-                <StatusBadge
-                  label={`${pendingRecommendationClients} recos à contacter`}
-                  tone="amber"
-                />
-              ) : null}
+      {/* 2. Hero : identité + stats inline + CTA */}
+      <Card className="ls-portfolio-hero">
+        <div className="ls-portfolio-hero__identity">
+          <DistributorBadge user={portfolioUser} compact />
+          <div>
+            <span className="ls-portfolio-header-row__eyebrow">Responsable</span>
+            <h2>{portfolioUser.name}</h2>
+            <div className="ls-portfolio-hero__meta">
+              <RoleBadge role={portfolioUser.role} />
+              <span>{portfolioUser.title || "Lor'Squad Wellness"}</span>
             </div>
           </div>
-
-          <div className="grid gap-4 md:grid-cols-3">
-            <MetricTile
-              label="Clients suivis"
-              value={portfolioMetrics.clients.length}
-              hint="Dossiers attribués"
-              accent="blue"
-            />
-            <MetricTile
-              label="Rendez-vous"
-              value={portfolioMetrics.scheduledFollowUps.length}
-              hint="Suivis planifiés"
-              accent="green"
-            />
-            <MetricTile
-              label="Relances"
-              value={portfolioMetrics.relanceFollowUps.length}
-              hint="À reprendre"
-              accent="red"
-            />
-          </div>
-
-          <div className="flex flex-wrap gap-3">
-            <Link
-              to="/dashboard"
-              className="inline-flex min-h-[48px] items-center justify-center rounded-[18px] bg-[var(--ls-surface2)] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[var(--ls-surface2)]"
-            >
-              Retour accueil
-            </Link>
-            <Link
-              to="/clients"
-              className="inline-flex min-h-[48px] items-center justify-center rounded-[18px] bg-[var(--ls-surface2)] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[var(--ls-surface2)]"
-            >
-              Voir la base clients
-            </Link>
-          </div>
-        </Card>
-
-        <div className="grid gap-4">
-          <FollowUpPanel
-            title="Rendez-vous à venir"
-            tone="green"
-            emptyLabel="Aucun rendez-vous planifié pour le moment"
-            items={portfolioMetrics.scheduledFollowUps.slice(0, 5)}
-          />
-          <FollowUpPanel
-            title="Relances à reprendre"
-            tone="amber"
-            emptyLabel="Aucune relance en attente"
-            items={portfolioMetrics.relanceFollowUps.slice(0, 5)}
-          />
         </div>
-      </div>
 
-      <Card className="space-y-5">
-        <div className="grid gap-4 lg:grid-cols-[1.2fr_0.9fr_auto] lg:items-end">
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-[var(--ls-text-muted)]">
-              Rechercher dans le portefeuille
-            </label>
-            <input
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder="Nom, ville ou programme..."
-            />
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-[var(--ls-text-muted)]">Filtrer par statut</label>
-            <select
-              value={statusFilter}
-              onChange={(event) =>
-                setStatusFilter(
-                  event.target.value as "all" | "active" | "pending" | "follow-up"
-                )
-              }
-            >
-              <option value="all">Tous les statuts</option>
-              <option value="active">Actifs</option>
-              <option value="pending">En attente</option>
-              <option value="follow-up">Suivi prioritaire</option>
-            </select>
-          </div>
-
-          <div className="surface-soft rounded-[24px] px-5 py-4">
-            <p className="eyebrow-label">Résultats</p>
-            <p className="mt-2 text-3xl font-semibold text-white">{filteredClients.length}</p>
-          </div>
+        <div className="ls-portfolio-hero__stats">
+          <StatInline label="Clients" value={portfolioMetrics.clients.length} tone="gold" />
+          <div className="ls-portfolio-hero__divider" />
+          <StatInline label="RDV" value={portfolioMetrics.scheduledFollowUps.length} tone="teal" />
+          <div className="ls-portfolio-hero__divider" />
+          <StatInline label="Relances" value={portfolioMetrics.relanceFollowUps.length} tone="coral" />
         </div>
+
+        <Link to="/clients" className="ls-portfolio-hero__cta">
+          Voir base ↗
+        </Link>
       </Card>
 
-      <div className="space-y-5">
-        {groupedClients.length ? (
-          groupedClients.map((group) => (
-            <Card key={group.key} className="space-y-4">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <p className="eyebrow-label">Arborescence</p>
-                  <h2 className="mt-3 text-2xl text-white">{group.label}</h2>
-                </div>
-                <StatusBadge label={`${group.clients.length} clients`} tone="blue" />
-              </div>
+      {/* 3. Barre filtres : pills + search */}
+      <div className="ls-portfolio-filters">
+        <FilterPill label="Tous" count={counts.all} active={statusFilter === "all"} tone="gold" onClick={() => setStatusFilter("all")} />
+        <FilterPill label="Actifs" count={counts.active} active={statusFilter === "active"} tone="teal" onClick={() => setStatusFilter("active")} />
+        <FilterPill label="En attente" count={counts.pending} active={statusFilter === "pending"} tone="gold-soft" onClick={() => setStatusFilter("pending")} />
+        <FilterPill label="À relancer" count={counts.followUp} active={statusFilter === "follow-up"} tone="coral" onClick={() => setStatusFilter("follow-up")} />
 
-              <div className="grid gap-3">
-                {group.clients.map((client) => {
-                  const firstAssessment = getFirstAssessment(client);
-                  const latestAssessment = getLatestAssessment(client);
-                  const activeFollowUp = getClientActiveFollowUp(client, visibleFollowUps);
-                  const recommendationCount =
-                    latestAssessment.questionnaire.recommendations?.length ?? 0;
-                  const recommendationsContacted =
-                    latestAssessment.questionnaire.recommendationsContacted ?? false;
-                  const status = statusLabels[client.status];
+        <div className="ls-portfolio-search">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Rechercher un client…"
+          />
+        </div>
+      </div>
 
-                  return (
-                    <Link
-                      key={client.id}
-                      to={`/clients/${client.id}`}
-                      className="rounded-[24px] bg-[var(--ls-surface2)] p-4 transition hover:bg-[var(--ls-surface2)]"
-                    >
-                      <div className="grid gap-4 xl:grid-cols-[1.1fr_1fr_0.85fr] xl:items-center">
-                        <div className="space-y-2">
-                          <div className="flex flex-wrap items-center gap-3">
-                            <p className="text-xl font-semibold text-white">
-                              {client.firstName} {client.lastName}
-                            </p>
-                            <StatusBadge label={status.label} tone={status.tone} />
-                            {recommendationCount ? (
-                              <StatusBadge
-                                label={
-                                  recommendationsContacted
-                                    ? "Recommandations contactées"
-                                    : "Recommandations à contacter"
-                                }
-                                tone={recommendationsContacted ? "green" : "amber"}
-                              />
-                            ) : null}
-                          </div>
-                          <p className="text-sm text-[var(--ls-text-muted)]">
-                            {client.city ?? "Ville non renseignée"} - {client.currentProgram}
-                          </p>
-                          {firstAssessment.questionnaire.referredByName ? (
-                            <p className="text-sm text-[#2DD4BF]/80">
-                              Invité par {firstAssessment.questionnaire.referredByName}
-                            </p>
-                          ) : null}
-                          <p className="text-sm leading-6 text-[var(--ls-text-muted)]">{client.notes}</p>
-                        </div>
-
-                        <div className="grid gap-3 md:grid-cols-2">
-                          <PortfolioFact label="Démarrage" value={client.startDate ? formatDate(client.startDate) : "En cours de lancement"} />
-                          <PortfolioFact label="Prochain suivi" value={formatDateTime(activeFollowUp.dueDate)} />
-                        </div>
-
-                        <div className="text-sm text-[var(--ls-text-muted)] xl:text-right">
-                          <p>Bilans : {client.assessments.length}</p>
-                          <p className="mt-1">Objectif : {client.objective === "sport" ? "Sport" : "Perte de poids"}</p>
-                          {recommendationCount ? (
-                            <p className="mt-1">
-                              Recos : {recommendationCount} - {recommendationsContacted ? "contactées" : "à reprendre"}
-                            </p>
-                          ) : null}
-                        </div>
-                      </div>
-                    </Link>
-                  );
-                })}
-              </div>
-            </Card>
-          ))
-        ) : (
-          <Card className="space-y-3">
-            <p className="text-2xl text-white">Aucun dossier sur ce filtre</p>
-            <p className="text-sm leading-6 text-[var(--ls-text-muted)]">
-              Ajuste la recherche ou le statut pour retrouver un dossier plus vite.
-            </p>
+      {/* 4. Liste clients groupée par mois */}
+      <div className="ls-portfolio-list">
+        {groupedClients.length === 0 ? (
+          <Card>
+            <div style={{ padding: "20px 4px" }}>
+              <p className="text-2xl text-white" style={{ margin: 0 }}>Aucun dossier sur ce filtre</p>
+              <p className="text-sm leading-6 text-[var(--ls-text-muted)]" style={{ marginTop: 8 }}>
+                Ajuste la recherche ou le statut pour retrouver un dossier plus vite.
+              </p>
+            </div>
           </Card>
+        ) : (
+          groupedClients.map((group) => (
+            <section key={group.key} className="ls-portfolio-month">
+              <div className="ls-portfolio-month__header">
+                <span>{group.label}</span>
+                <span>· {group.clients.length} client{group.clients.length > 1 ? "s" : ""}</span>
+              </div>
+              <div className="ls-portfolio-month__rows">
+                {group.clients.map((client) => (
+                  <ClientRow key={client.id} client={client} followUps={visibleFollowUps} />
+                ))}
+              </div>
+            </section>
+          ))
         )}
       </div>
     </div>
   );
 }
 
-function FollowUpPanel({
-  title,
-  tone,
-  emptyLabel,
-  items
+// ─── Sous-composants ──────────────────────────────────────────────────
+
+function StatInline({ label, value, tone }: { label: string; value: number; tone: "gold" | "teal" | "coral" }) {
+  return (
+    <div className="ls-stat-inline" data-tone={tone}>
+      <span className="ls-stat-inline__value">{value}</span>
+      <span className="ls-stat-inline__label">{label}</span>
+    </div>
+  );
+}
+
+type FilterPillTone = "gold" | "teal" | "gold-soft" | "coral";
+function FilterPill({
+  label, count, active, tone, onClick,
 }: {
-  title: string;
-  tone: "green" | "amber";
-  emptyLabel: string;
-  items: Array<{
-    id: string;
-    clientId: string;
-    clientName: string;
-    dueDate: string;
-    type: string;
-    status: "scheduled" | "pending" | "completed" | "dismissed";
-  }>;
+  label: string; count: number; active: boolean; tone: FilterPillTone; onClick: () => void;
 }) {
   return (
-    <Card className="space-y-4">
-      <div className="flex items-center justify-between gap-3">
-        <div>
-          <p className="eyebrow-label">Priorités</p>
-          <h2 className="mt-3 text-2xl text-white">{title}</h2>
-        </div>
-        <StatusBadge label={`${items.length} visibles`} tone={tone} />
-      </div>
-
-      <div className="space-y-3">
-        {items.length ? (
-          items.map((followUp) => (
-            <Link
-              key={followUp.id}
-              to={`/clients/${followUp.clientId}`}
-              className="block rounded-[22px] bg-[var(--ls-surface2)] p-4 transition hover:bg-[var(--ls-surface2)]"
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="text-lg font-semibold text-white">{followUp.clientName}</p>
-                  <p className="mt-1 text-sm text-[var(--ls-text-muted)]">{followUp.type}</p>
-                </div>
-                <StatusBadge
-                  label={followUp.status === "scheduled" ? "Planifié" : "Relance"}
-                  tone={followUp.status === "scheduled" ? "green" : "amber"}
-                />
-              </div>
-              <p className="mt-4 text-sm text-[var(--ls-text-muted)]">
-                Échéance {formatDateTime(followUp.dueDate)}
-              </p>
-            </Link>
-          ))
-        ) : (
-          <div className="rounded-[22px] bg-[var(--ls-surface2)] p-5 text-sm text-[var(--ls-text-muted)]">
-            {emptyLabel}
-          </div>
-        )}
-      </div>
-    </Card>
+    <button
+      type="button"
+      onClick={onClick}
+      data-tone={tone}
+      data-active={active}
+      className="ls-filter-pill"
+    >
+      <span className="ls-filter-pill__label">{label}</span>
+      <span className="ls-filter-pill__count">{count}</span>
+    </button>
   );
 }
 
-function PortfolioFact({ label, value }: { label: string; value: string }) {
+function RoleBadge({ role }: { role: User["role"] }) {
+  const label = role === "admin" ? "Admin" : role === "referent" ? "Référent" : "Distributeur";
   return (
-    <div className="rounded-[20px] bg-[var(--ls-bg)]/60 px-4 py-3">
-      <p className="text-[11px] font-medium text-[var(--ls-text-hint)]">{label}</p>
-      <p className="mt-2 text-sm font-semibold text-white">{value}</p>
-    </div>
+    <span className="ls-role-badge" data-role={role}>
+      {label}
+    </span>
+  );
+}
+
+function ClientRow({ client, followUps }: { client: Client; followUps: FollowUp[] }) {
+  const status = statusTone[client.status] ?? { label: client.status, tone: "active" as const };
+  const activeFollowUp = getClientActiveFollowUp(client, followUps);
+  const nextDate = activeFollowUp?.dueDate ?? client.nextFollowUp ?? null;
+
+  return (
+    <Link to={`/clients/${client.id}`} className="ls-client-row" data-status={status.tone}>
+      <div className="ls-client-row__main">
+        <div className="ls-client-row__name">
+          {client.firstName} {client.lastName}
+        </div>
+        <div className="ls-client-row__meta">
+          {client.currentProgram && <span>{client.currentProgram}</span>}
+          {client.currentProgram && client.city && <span> · </span>}
+          {client.city && <span>{client.city}</span>}
+        </div>
+      </div>
+      <div className="ls-client-row__side">
+        <span className="ls-client-row__status">{status.label}</span>
+        {nextDate && (
+          <span className="ls-client-row__date">
+            {activeFollowUp ? formatDateTime(nextDate) : formatDate(nextDate)}
+          </span>
+        )}
+        <svg className="ls-client-row__chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <polyline points="9 18 15 12 9 6" />
+        </svg>
+      </div>
+    </Link>
   );
 }
