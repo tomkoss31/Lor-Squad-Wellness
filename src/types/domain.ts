@@ -1,5 +1,40 @@
 export type UserRole = "admin" | "referent" | "distributor";
 
+// ─── Lifecycle status (Matrice B — Chantier 1) ──────────────────────────
+export type LifecycleStatus =
+  | "active"
+  | "not_started"
+  | "paused"
+  | "stopped"
+  | "lost";
+
+export const LIFECYCLE_LABELS: Record<LifecycleStatus, string> = {
+  active: "Actif",
+  not_started: "Pas démarré",
+  paused: "En pause",
+  stopped: "Arrêté",
+  lost: "Perdu",
+};
+
+export const LIFECYCLE_TONES: Record<LifecycleStatus, "teal" | "gold" | "muted" | "coral"> = {
+  active: "teal",
+  not_started: "gold",
+  paused: "muted",
+  stopped: "coral",
+  lost: "coral",
+};
+
+export const isDeadLifecycle = (s: LifecycleStatus): boolean =>
+  s === "stopped" || s === "lost";
+
+export const isActiveLifecycle = (s: LifecycleStatus): boolean =>
+  s === "active" || s === "not_started" || s === "paused";
+
+// ─── Étape 13 du bilan — choix structurés ───────────────────────────────
+export type DecisionClient = "partant" | "a_rassurer" | "a_confirmer";
+export type TypeDeSuite = "rdv_fixe" | "message_rappel" | "relance_douce";
+export type MessageALaisser = "simple" | "progressif" | "cadre_clair";
+
 export type Objective = "weight-loss" | "sport";
 
 export type ProgramCategory = "weight-loss" | "sport";
@@ -116,6 +151,10 @@ export interface AssessmentRecord {
   bodyScan: BodyScanMetrics;
   questionnaire: AssessmentQuestionnaire;
   pedagogicalFocus: string[];
+  // Étape 13 du bilan (Chantier 1)
+  decisionClient?: DecisionClient | null;
+  typeDeSuite?: TypeDeSuite | null;
+  messageALaisser?: MessageALaisser | null;
 }
 
 export interface Client {
@@ -140,6 +179,11 @@ export interface Client {
   nextFollowUp: string;
   notes: string;
   assessments: AssessmentRecord[];
+  // Lifecycle (Chantier 1 — Matrice B)
+  lifecycleStatus?: LifecycleStatus;
+  isFragile?: boolean;
+  lifecycleUpdatedAt?: string;
+  lifecycleUpdatedBy?: string | null;
 }
 
 export interface FollowUp {
