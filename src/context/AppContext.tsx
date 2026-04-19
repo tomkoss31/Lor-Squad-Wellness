@@ -84,6 +84,7 @@ type StorageMode = "local" | "supabase";
 
 interface AppContextValue {
   authReady: boolean;
+  bootError: string | null;
   storageMode: StorageMode;
   currentUser: User | null;
   currentSession: AuthSession | null;
@@ -187,6 +188,8 @@ const AppContext = createContext<AppContextValue | undefined>(undefined);
 export function AppProvider({ children }: PropsWithChildren) {
   const [storageMode, setStorageMode] = useState<StorageMode>("local");
   const [authReady, setAuthReady] = useState(false);
+  // Hard-fail boot si mock tombe en prod (faille de sécurité mock password)
+  const [bootError, setBootError] = useState<string | null>(null);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [currentSession, setCurrentSession] = useState<AuthSession | null>(null);
   const [users, setUsers] = useState<User[]>([]);
@@ -253,6 +256,18 @@ export function AppProvider({ children }: PropsWithChildren) {
       try {
         nextStorageMode = await resolveStorageMode();
         setStorageMode(nextStorageMode);
+
+        // HARD FAIL si on bascule en mock en production.
+        // Évite l'exposition du login mock (ex-demo1234) si l'env Supabase
+        // manque côté déploiement prod.
+        if (import.meta.env.PROD && nextStorageMode === "local") {
+          setBootError(
+            "Configuration Supabase manquante. Cette instance est bloquée pour protéger les données. " +
+            "Contactez l'administrateur."
+          );
+          // On ne passe PAS authReady à true : l'app reste figée sur l'écran d'erreur.
+          return;
+        }
 
         if (nextStorageMode === "supabase") {
           setActivityLogs(getStoredActivityLogs());
@@ -1289,6 +1304,7 @@ export function AppProvider({ children }: PropsWithChildren) {
   const value = useMemo(
     () => ({
       authReady,
+      bootError,
       storageMode,
       currentUser,
       currentSession,
@@ -1318,6 +1334,7 @@ export function AppProvider({ children }: PropsWithChildren) {
         setClientMessages(prev => prev.filter(m => m.id !== id));
       },
       updateClientInfo: async (clientId: string, data: { phone?: string; email?: string; city?: string }) => {
+        // Site 4 du durcissement audit L1 : on lève l'erreur au caller + toast explicite.
         if (storageMode === 'supabase') {
           const sb = await getSupabaseClient();
           if (sb) {
@@ -1325,7 +1342,10 @@ export function AppProvider({ children }: PropsWithChildren) {
             if (data.phone !== undefined) updateData.phone = data.phone;
             if (data.email !== undefined) updateData.email = data.email;
             if (data.city !== undefined) updateData.city = data.city;
-            await sb.from('clients').update(updateData).eq('id', clientId);
+            const { error } = await sb.from('clients').update(updateData).eq('id', clientId);
+            if (error) {
+              throw error;
+            }
             await refreshRemoteData(currentUser);
           }
         } else {
@@ -1333,10 +1353,14 @@ export function AppProvider({ children }: PropsWithChildren) {
         }
       },
       updateFollowUpStatus: async (followUpId: string, status: 'scheduled' | 'pending' | 'completed' | 'dismissed') => {
+        // Site 5 du durcissement audit L1 : on lève l'erreur au caller + toast explicite.
         if (storageMode === 'supabase') {
           const sb = await getSupabaseClient();
           if (sb) {
-            await sb.from('follow_ups').update({ status }).eq('id', followUpId);
+            const { error } = await sb.from('follow_ups').update({ status }).eq('id', followUpId);
+            if (error) {
+              throw error;
+            }
             await refreshRemoteData(currentUser);
           }
         } else {
@@ -1404,6 +1428,7 @@ export function AppProvider({ children }: PropsWithChildren) {
     }),
     [
       authReady,
+      bootError,
       activityLogs,
       clientMessages,
       clients,

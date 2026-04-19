@@ -607,3 +607,367 @@ using (
       and public.can_access_owner(public.clients.distributor_id)
   )
 );
+
+-- =============================================================================
+-- === Tables créées via Studio (export 2026-04-18) ============================
+-- =============================================================================
+-- Les 7 tables ci-dessous étaient créées manuellement dans Supabase Studio
+-- et n'étaient pas versionnées. Extraction réalisée via
+-- scripts/export-missing-rls.sql pour les remettre sous contrôle de version.
+--
+-- ⚠️ SÉCURITÉ : plusieurs policies ci-dessous utilisent USING (true) ou
+-- TO public sans filtrage par owner_id / token. Cela constitue des angles
+-- morts RLS identifiés lors de l'intégration. Ne PAS corriger sans
+-- validation explicite — à traiter dans un chantier Sécurité L2 dédié.
+-- =============================================================================
+
+-- ---------- Tables ----------
+
+create table if not exists public.client_app_accounts (
+  id uuid not null default gen_random_uuid(),
+  token uuid not null default gen_random_uuid(),
+  client_id text not null,
+  coach_id text not null,
+  coach_name text not null,
+  coach_whatsapp text,
+  coach_telegram text,
+  coach_phone text,
+  created_at timestamp with time zone default now(),
+  expires_at timestamp with time zone default (now() + '1 year'::interval),
+  client_first_name text,
+  client_last_name text,
+  metrics_history jsonb,
+  insights jsonb,
+  recommendations jsonb,
+  program_title text,
+  assessments_count integer,
+  next_follow_up text
+);
+
+create table if not exists public.client_evolution_reports (
+  id uuid not null default gen_random_uuid(),
+  token uuid not null default gen_random_uuid(),
+  client_id text not null,
+  coach_name text not null,
+  client_first_name text not null,
+  client_last_name text not null,
+  client_gender text,
+  generated_at text not null,
+  assessments_count integer not null default 0,
+  first_assessment_date text,
+  latest_assessment_date text,
+  objective text,
+  program_title text,
+  next_follow_up text,
+  metrics_history jsonb default '[]'::jsonb,
+  recommendations jsonb default '[]'::jsonb,
+  insights jsonb default '[]'::jsonb,
+  created_at timestamp with time zone default now(),
+  expires_at timestamp with time zone default (now() + '90 days'::interval),
+  distributor_id text
+);
+
+create table if not exists public.client_messages (
+  id uuid not null default gen_random_uuid(),
+  report_token uuid,
+  client_id text not null,
+  client_name text not null,
+  distributor_id text not null,
+  message_type text not null default 'product_request'::text,
+  product_name text,
+  message text,
+  client_contact text,
+  read boolean default false,
+  created_at timestamp with time zone default now()
+);
+
+create table if not exists public.client_recaps (
+  id uuid not null default gen_random_uuid(),
+  token uuid not null default gen_random_uuid(),
+  client_id text not null,
+  coach_name text not null,
+  client_first_name text not null,
+  client_last_name text not null,
+  assessment_date text not null,
+  program_title text,
+  objective text,
+  body_scan jsonb,
+  recommendations jsonb default '[]'::jsonb,
+  referrals jsonb default '[]'::jsonb,
+  created_at timestamp with time zone default now(),
+  expires_at timestamp with time zone default (now() + '90 days'::interval)
+);
+
+create table if not exists public.client_referrals (
+  id uuid not null default gen_random_uuid(),
+  from_client_id text not null,
+  from_client_name text not null,
+  coach_id text not null,
+  referred_name text not null,
+  referred_contact text not null,
+  status text default 'new'::text,
+  created_at timestamp with time zone default now()
+);
+
+create table if not exists public.push_subscriptions (
+  id uuid not null default gen_random_uuid(),
+  user_id text not null,
+  endpoint text not null,
+  p256dh text not null,
+  auth text not null,
+  user_name text,
+  updated_at timestamp with time zone default now()
+);
+
+create table if not exists public.rdv_change_requests (
+  id uuid not null default gen_random_uuid(),
+  client_id text not null,
+  coach_id text not null,
+  client_name text not null,
+  current_rdv text,
+  message text not null,
+  status text default 'pending'::text,
+  created_at timestamp with time zone default now()
+);
+
+-- ---------- Index uniques ----------
+
+create unique index if not exists client_app_accounts_client_id_key
+  on public.client_app_accounts using btree (client_id);
+create unique index if not exists client_app_accounts_token_key
+  on public.client_app_accounts using btree (token);
+create unique index if not exists client_evolution_reports_token_key
+  on public.client_evolution_reports using btree (token);
+create unique index if not exists client_recaps_token_key
+  on public.client_recaps using btree (token);
+create unique index if not exists push_subscriptions_user_id_key
+  on public.push_subscriptions using btree (user_id);
+
+-- ---------- Enable RLS ----------
+
+alter table public.client_app_accounts enable row level security;
+alter table public.client_evolution_reports enable row level security;
+alter table public.client_messages enable row level security;
+alter table public.client_recaps enable row level security;
+alter table public.client_referrals enable row level security;
+alter table public.push_subscriptions enable row level security;
+alter table public.rdv_change_requests enable row level security;
+
+-- ---------- Policies : client_app_accounts ----------
+
+drop policy if exists "client_app_coach_write" on public.client_app_accounts;
+create policy "client_app_coach_write"
+  on public.client_app_accounts
+  as permissive
+  for all
+  to public
+  using (auth.uid() is not null);
+
+drop policy if exists "client_app_public_read" on public.client_app_accounts;
+create policy "client_app_public_read"
+  on public.client_app_accounts
+  as permissive
+  for select
+  to public
+  using (expires_at > now());
+
+-- ---------- Policies : client_evolution_reports ----------
+
+drop policy if exists "report_coach_delete" on public.client_evolution_reports;
+create policy "report_coach_delete"
+  on public.client_evolution_reports
+  as permissive
+  for delete
+  to public
+  using (true);
+
+drop policy if exists "report_coach_insert" on public.client_evolution_reports;
+create policy "report_coach_insert"
+  on public.client_evolution_reports
+  as permissive
+  for insert
+  to public
+  with check (true);
+
+drop policy if exists "report_coach_update" on public.client_evolution_reports;
+create policy "report_coach_update"
+  on public.client_evolution_reports
+  as permissive
+  for update
+  to public
+  using (true);
+
+drop policy if exists "report_public_read" on public.client_evolution_reports;
+create policy "report_public_read"
+  on public.client_evolution_reports
+  as permissive
+  for select
+  to public
+  using (expires_at > now());
+
+-- ---------- Policies : client_messages ----------
+
+drop policy if exists "msg_coach_delete" on public.client_messages;
+create policy "msg_coach_delete"
+  on public.client_messages
+  as permissive
+  for delete
+  to public
+  using (true);
+
+drop policy if exists "msg_coach_read" on public.client_messages;
+create policy "msg_coach_read"
+  on public.client_messages
+  as permissive
+  for select
+  to public
+  using (true);
+
+drop policy if exists "msg_coach_update" on public.client_messages;
+create policy "msg_coach_update"
+  on public.client_messages
+  as permissive
+  for update
+  to public
+  using (true);
+
+drop policy if exists "msg_public_insert" on public.client_messages;
+create policy "msg_public_insert"
+  on public.client_messages
+  as permissive
+  for insert
+  to public
+  with check (true);
+
+-- ---------- Policies : client_recaps ----------
+
+drop policy if exists "recap_coach_insert" on public.client_recaps;
+create policy "recap_coach_insert"
+  on public.client_recaps
+  as permissive
+  for insert
+  to public
+  with check (auth.uid() is not null);
+
+drop policy if exists "recap_public_read" on public.client_recaps;
+create policy "recap_public_read"
+  on public.client_recaps
+  as permissive
+  for select
+  to public
+  using (expires_at > now());
+
+drop policy if exists "recap_public_update" on public.client_recaps;
+create policy "recap_public_update"
+  on public.client_recaps
+  as permissive
+  for update
+  to public
+  using (expires_at > now())
+  with check (expires_at > now());
+
+-- ---------- Policies : client_referrals ----------
+
+drop policy if exists "referral_coach_read" on public.client_referrals;
+create policy "referral_coach_read"
+  on public.client_referrals
+  as permissive
+  for select
+  to public
+  using ((auth.uid())::text = coach_id);
+
+drop policy if exists "referral_coach_update" on public.client_referrals;
+create policy "referral_coach_update"
+  on public.client_referrals
+  as permissive
+  for update
+  to public
+  using ((auth.uid())::text = coach_id);
+
+drop policy if exists "referral_via_valid_app_account" on public.client_referrals;
+create policy "referral_via_valid_app_account"
+  on public.client_referrals
+  as permissive
+  for insert
+  to public
+  with check (exists (
+    select 1
+    from public.client_app_accounts
+    where client_app_accounts.client_id = client_referrals.from_client_id
+      and client_app_accounts.coach_id = client_referrals.coach_id
+      and client_app_accounts.expires_at > now()
+  ));
+
+-- ---------- Policies : push_subscriptions ----------
+
+drop policy if exists "push_own" on public.push_subscriptions;
+create policy "push_own"
+  on public.push_subscriptions
+  as permissive
+  for all
+  to public
+  using ((auth.uid())::text = user_id);
+
+drop policy if exists "push_public_delete" on public.push_subscriptions;
+create policy "push_public_delete"
+  on public.push_subscriptions
+  as permissive
+  for delete
+  to public
+  using (true);
+
+drop policy if exists "push_public_insert" on public.push_subscriptions;
+create policy "push_public_insert"
+  on public.push_subscriptions
+  as permissive
+  for insert
+  to public
+  with check (true);
+
+drop policy if exists "push_public_select" on public.push_subscriptions;
+create policy "push_public_select"
+  on public.push_subscriptions
+  as permissive
+  for select
+  to public
+  using (true);
+
+drop policy if exists "push_public_update" on public.push_subscriptions;
+create policy "push_public_update"
+  on public.push_subscriptions
+  as permissive
+  for update
+  to public
+  using (true);
+
+-- ---------- Policies : rdv_change_requests ----------
+
+drop policy if exists "rdv_request_coach_read" on public.rdv_change_requests;
+create policy "rdv_request_coach_read"
+  on public.rdv_change_requests
+  as permissive
+  for select
+  to public
+  using ((auth.uid())::text = coach_id);
+
+drop policy if exists "rdv_request_coach_update" on public.rdv_change_requests;
+create policy "rdv_request_coach_update"
+  on public.rdv_change_requests
+  as permissive
+  for update
+  to public
+  using ((auth.uid())::text = coach_id);
+
+drop policy if exists "rdv_request_via_valid_app_account" on public.rdv_change_requests;
+create policy "rdv_request_via_valid_app_account"
+  on public.rdv_change_requests
+  as permissive
+  for insert
+  to public
+  with check (exists (
+    select 1
+    from public.client_app_accounts
+    where client_app_accounts.client_id = rdv_change_requests.client_id
+      and client_app_accounts.coach_id = rdv_change_requests.coach_id
+      and client_app_accounts.expires_at > now()
+  ));

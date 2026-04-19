@@ -74,6 +74,18 @@ export async function resolveStorageMode() {
   return config ? "supabase" : "local";
 }
 
+/**
+ * Retourne true si le mock mode est encore en vigueur en production.
+ * En prod, on ne tolère AUCUN fallback mock : ni via env Vite, ni via
+ * runtime-config. Si on tombe ici, on a un problème de déploiement qui
+ * exposerait le login mock (demo1234) à n'importe quel visiteur.
+ */
+export async function isMockInProduction(): Promise<boolean> {
+  if (!import.meta.env.PROD) return false; // tolérance dev uniquement
+  const mode = await resolveStorageMode();
+  return mode === "local";
+}
+
 export async function getSupabaseClient() {
   if (cachedClient) {
     return cachedClient;

@@ -3,6 +3,7 @@ import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { ProtectedRoute, PublicRoute, RoleRoute } from "./components/auth/RouteGuards";
 import { AppLayout } from "./components/layout/AppLayout";
 import { ErrorBoundary } from "./components/ErrorBoundary";
+import { ToastHost } from "./components/ui/ToastHost";
 
 const DashboardPage = lazy(() =>
   import("./pages/DashboardPage").then((module) => ({
@@ -97,10 +98,19 @@ const MessagesPage = lazy(() =>
 
 import { useTheme } from './hooks/useTheme'
 import { useAutoNotifications } from './hooks/useAutoNotifications'
+import { useAppContext } from './context/AppContext'
 
 export default function App() {
   useTheme()
   useAutoNotifications()
+  const { bootError } = useAppContext()
+
+  // Hard-fail boot : si mock en prod (faille sécurité), on bloque toute l'app.
+  // Couvre routes protégées ET routes publiques (client app, recap, rapport).
+  if (bootError) {
+    return <BootErrorScreen message={bootError} />
+  }
+
   return (
     <BrowserRouter>
       <Suspense fallback={<RouteLoadingScreen />}>
@@ -142,7 +152,51 @@ export default function App() {
         </Routes>
         </ErrorBoundary>
       </Suspense>
+      <ToastHost />
     </BrowserRouter>
+  );
+}
+
+function BootErrorScreen({ message }: { message: string }) {
+  return (
+    <div
+      role="alert"
+      style={{
+        minHeight: "100vh",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: "32px",
+        background: "var(--ls-bg)",
+        color: "var(--ls-text)",
+        fontFamily: "'DM Sans', sans-serif",
+        textAlign: "center",
+      }}
+    >
+      <div style={{ maxWidth: "420px" }}>
+        <div style={{ fontSize: "64px", marginBottom: "16px" }}>🛑</div>
+        <h1
+          style={{
+            fontFamily: "'Syne', sans-serif",
+            fontSize: "22px",
+            fontWeight: 700,
+            marginBottom: "12px",
+            color: "var(--ls-coral)",
+          }}
+        >
+          Configuration manquante
+        </h1>
+        <p
+          style={{
+            fontSize: "14px",
+            color: "var(--ls-text-muted)",
+            lineHeight: 1.5,
+          }}
+        >
+          {message}
+        </p>
+      </div>
+    </div>
   );
 }
 

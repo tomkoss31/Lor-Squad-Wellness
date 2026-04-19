@@ -12,6 +12,7 @@ import { Card } from "../components/ui/Card";
 import { MetricTile } from "../components/ui/MetricTile";
 import { StatusBadge } from "../components/ui/StatusBadge";
 import { useAppContext } from "../context/AppContext";
+import { useToast, buildSupabaseErrorToast } from "../context/ToastContext";
 import { buildReportData, generateProductRecommendations } from "../lib/evolutionReport";
 import { EvolutionReportModal } from "../components/assessment/EvolutionReportModal";
 import { getSupabaseClient } from "../services/supabaseClient";
@@ -48,6 +49,7 @@ export function ClientDetailPage() {
     reassignClientOwner,
     updateClientInfo
   } = useAppContext();
+  const { push: pushToast } = useToast();
 
   const client = clientId ? getClientById(clientId) : undefined;
 
@@ -961,8 +963,26 @@ export function ClientDetailPage() {
                 variant="secondary"
                 className="w-full"
                 onClick={() => {
-                  void updateClientInfo(client.id, { phone: editPhone.trim(), email: editEmail.trim().toLowerCase(), city: editCity.trim() || undefined })
-                    .then(() => setEditSaved(true))
+                  void (async () => {
+                    try {
+                      await updateClientInfo(client.id, {
+                        phone: editPhone.trim(),
+                        email: editEmail.trim().toLowerCase(),
+                        city: editCity.trim() || undefined
+                      });
+                      setEditSaved(true);
+                      pushToast({
+                        tone: "success",
+                        title: "Coordonnées mises à jour",
+                      });
+                    } catch (err) {
+                      setEditSaved(false);
+                      pushToast(buildSupabaseErrorToast(
+                        err,
+                        "Impossible de mettre à jour les coordonnées. Vérifiez votre connexion et réessayez."
+                      ));
+                    }
+                  })();
                 }}
               >
                 {editSaved ? '✓ Enregistré' : 'Enregistrer les modifications'}
