@@ -2225,9 +2225,10 @@ function Field({
         fontWeight: 600,
       }
     : undefined;
+  const inputClassName = type === "time" ? "ls-input-time" : undefined;
   return (
     <div className="space-y-2" style={disabled ? { opacity: 0.5 } : undefined}>
-      <label className="text-sm font-medium text-[var(--ls-text-muted)]">
+      <label className="ls-field-label">
         {label}{prefilled && <span style={{ marginLeft: 6, fontSize: 10, color: "var(--ls-teal)" }}>✦ pré-rempli</span>}
       </label>
       {type === "number" ? (
@@ -2239,6 +2240,7 @@ function Field({
           value={value}
           disabled={disabled}
           onChange={(event) => onChange(event.target.value)}
+          className={inputClassName}
           style={prefillStyle}
         />
       )}

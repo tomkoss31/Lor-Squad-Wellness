@@ -663,12 +663,13 @@ function MetricField({
 }) {
   return (
     <div className="space-y-2">
-      <label className="text-sm font-medium text-[var(--ls-text-muted)]">{label}</label>
+      <label className="ls-field-label">{label}</label>
       <input
         type={type}
         step={type === "number" ? "0.1" : undefined}
         value={value}
         onChange={(event) => onChange(event.target.value)}
+        className={type === "time" ? "ls-input-time" : undefined}
       />
     </div>
   );
