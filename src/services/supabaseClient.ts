@@ -69,21 +69,15 @@ export async function resolveSupabaseConfig() {
   return cachedConfig;
 }
 
-export async function resolveStorageMode() {
-  const config = await resolveSupabaseConfig();
-  return config ? "supabase" : "local";
-}
-
 /**
- * Retourne true si le mock mode est encore en vigueur en production.
- * En prod, on ne tolère AUCUN fallback mock : ni via env Vite, ni via
- * runtime-config. Si on tombe ici, on a un problème de déploiement qui
- * exposerait le login mock (demo1234) à n'importe quel visiteur.
+ * Retourne true si aucune configuration Supabase utilisable n'a pu être
+ * résolue (ni via VITE_SUPABASE_URL/ANON_KEY, ni via /api/runtime-config).
+ * Sert à bloquer le boot de l'app en production — depuis la suppression
+ * du mode mock (chantier 2026-04-19), il n'y a plus de fallback local.
  */
-export async function isMockInProduction(): Promise<boolean> {
-  if (!import.meta.env.PROD) return false; // tolérance dev uniquement
-  const mode = await resolveStorageMode();
-  return mode === "local";
+export async function isSupabaseUnavailable(): Promise<boolean> {
+  const config = await resolveSupabaseConfig();
+  return config === null;
 }
 
 export async function getSupabaseClient() {
