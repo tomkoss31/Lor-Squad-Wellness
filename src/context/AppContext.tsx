@@ -41,6 +41,10 @@ import {
   updateSupabaseClientLifecycleStatus,
   updateSupabaseClientFragileFlag,
   updateSupabaseClientFreeFollowUp,
+  fetchSupabaseProspects,
+  createSupabaseProspect,
+  updateSupabaseProspect,
+  deleteSupabaseProspect,
   updateSupabaseUserAccess,
   updateSupabaseUserPassword,
   updateSupabaseUserStatus
@@ -54,6 +58,8 @@ import type {
   FollowUp,
   LifecycleStatus,
   Program,
+  Prospect,
+  ProspectFormInput,
   User
 } from "../types/domain";
 import type { PvClientProductRecord, PvClientTransaction } from "../types/pv";
@@ -74,6 +80,10 @@ interface AppContextValue {
   programs: Program[];
   clientMessages: ClientMessage[];
   unreadMessageCount: number;
+  prospects: Prospect[];
+  createProspect: (input: ProspectFormInput) => Promise<Prospect>;
+  updateProspect: (id: string, updates: Partial<Prospect>) => Promise<Prospect>;
+  deleteProspect: (id: string) => Promise<void>;
   markMessageRead: (id: string) => Promise<void>;
   deleteMessage: (id: string) => Promise<void>;
   updateClientInfo: (clientId: string, data: { phone?: string; email?: string; city?: string }) => Promise<void>;
@@ -172,6 +182,7 @@ export function AppProvider({ children }: PropsWithChildren) {
   const [pvClientProducts, setPvClientProducts] = useState<PvClientProductRecord[]>([]);
   const [pvTransactions, setPvTransactions] = useState<PvClientTransaction[]>([]);
   const [clientMessages, setClientMessages] = useState<ClientMessage[]>([]);
+  const [prospects, setProspects] = useState<Prospect[]>([]);
 
   async function refreshRemoteData(activeUser?: User | null) {
     const nextUser = activeUser ?? currentUser;
@@ -182,7 +193,8 @@ export function AppProvider({ children }: PropsWithChildren) {
         nextUsers,
         nextPvTransactions,
         nextPvClientProducts,
-        nextActivityLogs
+        nextActivityLogs,
+        nextProspects
       ] = await Promise.all([
         fetchSupabaseClients(),
         fetchSupabaseFollowUps(),
@@ -192,6 +204,10 @@ export function AppProvider({ children }: PropsWithChildren) {
         fetchSupabaseActivityLogs().catch((error) => {
           console.error("Historique d'activité indisponible pour l'instant.", error);
           return [] as ActivityLog[];
+        }),
+        fetchSupabaseProspects().catch((error) => {
+          console.error("Prospects indisponibles pour l'instant.", error);
+          return [] as Prospect[];
         })
       ]);
 
@@ -201,6 +217,7 @@ export function AppProvider({ children }: PropsWithChildren) {
       setPvTransactions(nextPvTransactions);
       setPvClientProducts(nextPvClientProducts);
       setActivityLogs(nextActivityLogs);
+      setProspects(nextProspects);
 
       // Fetch messages
       try {
@@ -219,6 +236,7 @@ export function AppProvider({ children }: PropsWithChildren) {
       setPvClientProducts([]);
       setActivityLogs([]);
       setClientMessages([]);
+      setProspects([]);
     }
   }
 
@@ -356,6 +374,7 @@ export function AppProvider({ children }: PropsWithChildren) {
     setFollowUps([]);
     setPvClientProducts([]);
     setPvTransactions([]);
+    setProspects([]);
   }
 
   async function forceResetSession() {
@@ -372,6 +391,7 @@ export function AppProvider({ children }: PropsWithChildren) {
     setFollowUps([]);
     setPvClientProducts(getStoredPvClientProducts());
     setPvTransactions(getStoredPvTransactions());
+    setProspects([]);
   }
 
   async function createUserAccess(payload: {
@@ -715,6 +735,24 @@ export function AppProvider({ children }: PropsWithChildren) {
       unreadMessageCount: currentUser
         ? clientMessages.filter(m => !m.read && (m.distributor_id === currentUser.id || m.distributor_id === currentUser.name || currentUser.role === 'admin')).length
         : 0,
+      // ─── Agenda Prospects ─────────────────────────────────────────────
+      prospects: currentUser
+        ? prospects.filter(p => currentUser.role === 'admin' || p.distributorId === currentUser.id)
+        : [],
+      createProspect: async (input: ProspectFormInput) => {
+        const created = await createSupabaseProspect(input);
+        setProspects(prev => [...prev, created]);
+        return created;
+      },
+      updateProspect: async (id: string, updates: Partial<Prospect>) => {
+        const updated = await updateSupabaseProspect(id, updates);
+        setProspects(prev => prev.map(p => (p.id === id ? updated : p)));
+        return updated;
+      },
+      deleteProspect: async (id: string) => {
+        await deleteSupabaseProspect(id);
+        setProspects(prev => prev.filter(p => p.id !== id));
+      },
       markMessageRead: async (id: string) => {
         const sb = await getSupabaseClient();
         if (sb) await sb.from('client_messages').update({ read: true }).eq('id', id);
@@ -833,6 +871,7 @@ export function AppProvider({ children }: PropsWithChildren) {
       followUps,
       pvClientProducts,
       pvTransactions,
+      prospects,
       users
     ]
   );
