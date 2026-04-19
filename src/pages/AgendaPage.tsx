@@ -7,6 +7,7 @@ import { ProspectCard } from "../components/prospect/ProspectCard";
 import { ProspectFormModal } from "../components/prospect/ProspectFormModal";
 import { useAppContext } from "../context/AppContext";
 import { useToast, buildSupabaseErrorToast } from "../context/ToastContext";
+import { createGoogleCalendarLink } from "../lib/googleCalendar";
 import type { Prospect, ProspectStatus } from "../types/domain";
 import { PROSPECT_STATUS_LABELS } from "../types/domain";
 
@@ -170,12 +171,12 @@ export function AgendaPage() {
       });
       pushToast({
         tone: "success",
-        title: "Prospect en froid 🔥",
-        message: `Relance prévue après le ${new Date(coldUntil).toLocaleDateString("fr-FR")}.`,
+        title: "Prospect en pause ❄️",
+        message: `À reprendre après le ${new Date(coldUntil).toLocaleDateString("fr-FR")}.`,
       });
       setDetailProspect(null);
     } catch (err) {
-      pushToast(buildSupabaseErrorToast(err, "Impossible de mettre le prospect en froid."));
+      pushToast(buildSupabaseErrorToast(err, "Impossible de mettre le prospect en pause."));
     }
   }
 
@@ -273,8 +274,8 @@ export function AgendaPage() {
             { key: "upcoming"    as StatusFilter, label: "À venir" },
             { key: "done"        as StatusFilter, label: "Effectués" },
             { key: "converted"   as StatusFilter, label: "Convertis" },
-            { key: "cold"        as StatusFilter, label: "🔥 Froids" },
-            { key: "lost_no_show" as StatusFilter, label: "Perdus/No-show" },
+            { key: "cold"        as StatusFilter, label: "❄️ En pause" },
+            { key: "lost_no_show" as StatusFilter, label: "Pas venus / Pas intéressés" },
             { key: "all"         as StatusFilter, label: "Tous statuts" },
           ]).map((f) => (
             <FilterPill
@@ -419,6 +420,24 @@ function ProspectDetailModal({
     } catch { return prospect.rdvDate; }
   })();
 
+  // Chantier UX modal (2026-04-19) : export Google Agenda
+  function handleAddToGoogleCalendar() {
+    const title = `RDV prospection — ${prospect.firstName} ${prospect.lastName}`;
+    const startDate = new Date(prospect.rdvDate);
+    if (Number.isNaN(startDate.getTime())) return;
+    const endDate = new Date(startDate.getTime() + 60 * 60 * 1000); // +1h
+
+    const description = [
+      prospect.note ? `Note : ${prospect.note}` : null,
+      prospect.phone ? `Tél : ${prospect.phone}` : null,
+      prospect.email ? `Email : ${prospect.email}` : null,
+      `Source : ${prospect.source}${prospect.sourceDetail ? ` (${prospect.sourceDetail})` : ""}`,
+    ].filter(Boolean).join("\n");
+
+    const url = createGoogleCalendarLink({ title, startDate, endDate, description });
+    window.open(url, "_blank");
+  }
+
   return (
     <div
       role="dialog"
@@ -440,8 +459,8 @@ function ProspectDetailModal({
           boxShadow: "0 20px 60px rgba(0,0,0,0.35)",
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
-          <div>
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 14, gap: 12 }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontFamily: "'Syne', sans-serif", fontWeight: 700, fontSize: 20, color: "var(--ls-text)" }}>
               {prospect.firstName} {prospect.lastName}
             </div>
@@ -449,34 +468,72 @@ function ProspectDetailModal({
               {rdvDisplay}
             </div>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Fermer"
-            style={{ background: "transparent", border: "none", color: "var(--ls-text-muted)", fontSize: 22, cursor: "pointer", padding: 4, lineHeight: 1 }}
-          >×</button>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+            <button
+              type="button"
+              onClick={handleAddToGoogleCalendar}
+              title="Ajouter à Google Agenda"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 6,
+                padding: "8px 14px",
+                border: "1px solid var(--ls-border)",
+                borderRadius: 10,
+                background: "var(--ls-surface)",
+                color: "var(--ls-text)",
+                fontFamily: "'DM Sans', sans-serif",
+                fontSize: 13,
+                fontWeight: 500,
+                cursor: "pointer",
+                transition: "border-color 150ms, background 150ms",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = "var(--ls-teal)";
+                e.currentTarget.style.background = "color-mix(in srgb, var(--ls-teal) 6%, transparent)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = "var(--ls-border)";
+                e.currentTarget.style.background = "var(--ls-surface)";
+              }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                <line x1="16" y1="2" x2="16" y2="6" />
+                <line x1="8" y1="2" x2="8" y2="6" />
+                <line x1="3" y1="10" x2="21" y2="10" />
+              </svg>
+              Ajouter à mon agenda
+            </button>
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="Fermer"
+              style={{ background: "transparent", border: "none", color: "var(--ls-text-muted)", fontSize: 22, cursor: "pointer", padding: 4, lineHeight: 1 }}
+            >×</button>
+          </div>
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 16 }}>
           {prospect.phone && <InfoRow label="Téléphone" value={prospect.phone} />}
           {prospect.email && <InfoRow label="Email" value={prospect.email} />}
           <InfoRow label="Source" value={`${prospect.source}${prospect.sourceDetail ? ` · ${prospect.sourceDetail}` : ""}`} />
-          <InfoRow label="Statut" value={`${prospect.status === "cold" ? "🔥 " : ""}${PROSPECT_STATUS_LABELS[prospect.status]}`} />
+          <InfoRow label="Statut" value={PROSPECT_STATUS_LABELS[prospect.status]} />
           {prospect.note && (
             <div style={{ padding: 12, borderRadius: 10, background: "var(--ls-surface2)", border: "1px solid var(--ls-border)" }}>
               <div style={{ fontSize: 10, letterSpacing: "1px", textTransform: "uppercase", color: "var(--ls-text-hint)", fontWeight: 500, marginBottom: 4 }}>Note</div>
               <div style={{ fontSize: 13, color: "var(--ls-text)", lineHeight: 1.5 }}>{prospect.note}</div>
             </div>
           )}
-          {/* Chantier Cold : affichage de la date de réchauffement + raison */}
+          {/* Prospect en pause : date de reprise + contexte */}
           {prospect.status === "cold" && (
-            <div style={{ padding: 12, borderRadius: 10, background: "color-mix(in srgb, var(--ls-gold) 8%, transparent)", border: "1px solid color-mix(in srgb, var(--ls-gold) 25%, transparent)" }}>
-              <div style={{ fontSize: 10, letterSpacing: "1px", textTransform: "uppercase", color: "var(--ls-gold)", fontWeight: 600, marginBottom: 4 }}>
-                🔥 En froid
+            <div style={{ padding: 12, borderRadius: 10, background: "color-mix(in srgb, var(--ls-teal) 7%, transparent)", border: "1px solid color-mix(in srgb, var(--ls-teal) 25%, transparent)" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 10, letterSpacing: "1px", textTransform: "uppercase", color: "var(--ls-teal)", fontWeight: 600, marginBottom: 4 }}>
+                <SnowflakeIcon /> En pause
               </div>
               {prospect.coldUntil && (
                 <div style={{ fontSize: 13, color: "var(--ls-text)", marginBottom: 4 }}>
-                  Relance prévue après le {new Date(prospect.coldUntil).toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" })}
+                  À reprendre à partir du {new Date(prospect.coldUntil).toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" })}
                 </div>
               )}
               {prospect.coldReason && (
@@ -512,20 +569,23 @@ function ProspectDetailModal({
           )}
         </div>
 
-        {/* Mini-formulaire "Mettre en froid" */}
+        {/* Mini-formulaire "Mettre en pause" */}
         {showColdForm && (
           <div style={{
             marginTop: 12, padding: 14, borderRadius: 10,
-            background: "color-mix(in srgb, var(--ls-gold) 6%, transparent)",
-            border: "1px solid color-mix(in srgb, var(--ls-gold) 25%, transparent)",
+            background: "color-mix(in srgb, var(--ls-teal) 6%, transparent)",
+            border: "1px solid color-mix(in srgb, var(--ls-teal) 25%, transparent)",
           }}>
-            <div style={{ fontSize: 11, letterSpacing: "1px", textTransform: "uppercase", color: "var(--ls-gold)", fontWeight: 600, marginBottom: 10 }}>
-              🔥 Passer en froid
+            <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, letterSpacing: "1px", textTransform: "uppercase", color: "var(--ls-teal)", fontWeight: 600, marginBottom: 6 }}>
+              <SnowflakeIcon /> Mettre en pause
             </div>
+            <p style={{ fontSize: 12, color: "var(--ls-text-muted)", marginBottom: 12, lineHeight: 1.5 }}>
+              On note ce contact pour le reprendre plus tard. Choisis la date à laquelle tu veux le relancer.
+            </p>
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               <div>
                 <label style={{ display: "block", fontSize: 11, color: "var(--ls-text-muted)", marginBottom: 6, fontWeight: 500 }}>
-                  Réchauffer à partir du
+                  Date de reprise
                 </label>
                 <input
                   type="date"
@@ -537,13 +597,13 @@ function ProspectDetailModal({
               </div>
               <div>
                 <label style={{ display: "block", fontSize: 11, color: "var(--ls-text-muted)", marginBottom: 6, fontWeight: 500 }}>
-                  Raison / contexte (facultatif)
+                  Contexte (facultatif)
                 </label>
                 <textarea
                   value={coldReason}
                   onChange={(e) => setColdReason(e.target.value)}
                   rows={2}
-                  placeholder="Ex : Budget serré, relancer en septembre"
+                  placeholder="ex : budget serré, relancer en septembre"
                   style={{
                     width: "100%",
                     padding: "10px 12px",
@@ -573,7 +633,7 @@ function ProspectDetailModal({
                     const iso = new Date(coldDate + "T09:00:00").toISOString();
                     onSetCold(iso, coldReason);
                   }}
-                  style={{ padding: "7px 14px", borderRadius: 9, border: "none", background: "var(--ls-gold)", color: "var(--ls-bg)", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}
+                  style={{ padding: "7px 14px", borderRadius: 9, border: "none", background: "var(--ls-teal)", color: "var(--ls-bg)", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}
                 >
                   Confirmer
                 </button>
@@ -582,38 +642,70 @@ function ProspectDetailModal({
           </div>
         )}
 
-        {/* Changement de statut rapide */}
+        {/* Actions secondaires en 2 sections hiérarchisées */}
         {prospect.status !== "converted" && !showColdForm && (
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 10, paddingTop: 12, borderTop: "1px solid var(--ls-border)" }}>
-            {prospect.status !== "done" && (
-              <SmallStatusBtn label="Marquer effectué" onClick={() => onChangeStatus("done")} />
-            )}
-            {prospect.status !== "no_show" && (
-              <SmallStatusBtn label="No-show" onClick={() => onChangeStatus("no_show")} />
-            )}
-            {prospect.status !== "lost" && (
-              <SmallStatusBtn label="Perdu" onClick={() => onChangeStatus("lost")} />
-            )}
-            {prospect.status !== "cancelled" && (
-              <SmallStatusBtn label="Annulé" onClick={() => onChangeStatus("cancelled")} />
-            )}
-            {prospect.status !== "cold" && (
-              <SmallStatusBtn label="🔥 Mettre en froid" onClick={() => setShowColdForm(true)} />
-            )}
+          <div style={{ marginTop: 10, paddingTop: 14, borderTop: "1px solid var(--ls-border)", display: "flex", flexDirection: "column", gap: 14 }}>
+            {/* Après le RDV : actions positives/neutres */}
+            <div>
+              <div style={{ fontSize: 11, letterSpacing: "0.5px", color: "var(--ls-text-muted)", marginBottom: 8, fontFamily: "'DM Sans', sans-serif" }}>
+                Après le RDV :
+              </div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                {prospect.status !== "done" && (
+                  <SmallStatusBtn label="Effectué" onClick={() => onChangeStatus("done")} />
+                )}
+                <SmallStatusBtn
+                  label="✓ Converti"
+                  onClick={onStartAssessment}
+                  tone="positive"
+                />
+                {prospect.status !== "cold" && (
+                  <SmallStatusBtn
+                    label="Mettre en pause"
+                    icon={<SnowflakeIcon />}
+                    onClick={() => setShowColdForm(true)}
+                    tone="neutral"
+                  />
+                )}
+              </div>
+            </div>
+
+            {/* Sinon : actions négatives */}
+            <div>
+              <div style={{ fontSize: 11, letterSpacing: "0.5px", color: "var(--ls-text-muted)", marginBottom: 8, fontFamily: "'DM Sans', sans-serif" }}>
+                Sinon :
+              </div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                {prospect.status !== "no_show" && (
+                  <SmallStatusBtn label="Pas venu" onClick={() => onChangeStatus("no_show")} tone="soft-negative" />
+                )}
+                {prospect.status !== "lost" && (
+                  <SmallStatusBtn label="Pas intéressé" onClick={() => onChangeStatus("lost")} tone="soft-negative" />
+                )}
+                {prospect.status !== "cancelled" && (
+                  <SmallStatusBtn label="Annulé" onClick={() => onChangeStatus("cancelled")} tone="soft-negative" />
+                )}
+              </div>
+            </div>
           </div>
         )}
 
-        <div style={{ display: "flex", gap: 8, justifyContent: "space-between", marginTop: 16, paddingTop: 12, borderTop: "1px solid var(--ls-border)" }}>
+        {/* Administration — footer discret */}
+        <div style={{ display: "flex", gap: 8, justifyContent: "space-between", alignItems: "center", marginTop: 18, paddingTop: 12, borderTop: "1px solid var(--ls-border)" }}>
+          <button
+            type="button"
+            onClick={onEdit}
+            style={{ background: "transparent", border: "none", color: "var(--ls-text-muted)", fontSize: 12, cursor: "pointer", padding: "6px 10px", fontFamily: "'DM Sans', sans-serif", textDecoration: "underline", textUnderlineOffset: 3 }}
+          >
+            Modifier
+          </button>
           <button
             type="button"
             onClick={onDelete}
-            style={{ background: "transparent", border: "none", color: "var(--ls-coral)", fontSize: 12, cursor: "pointer", padding: "6px 10px" }}
+            style={{ background: "transparent", border: "none", color: "var(--ls-coral)", fontSize: 12, cursor: "pointer", padding: "6px 10px", fontFamily: "'DM Sans', sans-serif", textDecoration: "underline", textUnderlineOffset: 3 }}
           >
             Supprimer
           </button>
-          <Button variant="secondary" onClick={onEdit}>
-            Modifier
-          </Button>
         </div>
       </div>
     </div>
@@ -629,24 +721,74 @@ function InfoRow({ label, value }: { label: string; value: string }) {
   );
 }
 
-function SmallStatusBtn({ label, onClick }: { label: string; onClick: () => void }) {
+type SmallStatusBtnTone = "default" | "positive" | "neutral" | "soft-negative";
+
+function SmallStatusBtn({
+  label,
+  onClick,
+  tone = "default",
+  icon,
+}: {
+  label: string;
+  onClick: () => void;
+  tone?: SmallStatusBtnTone;
+  icon?: React.ReactNode;
+}) {
+  const hoverColorByTone: Record<SmallStatusBtnTone, string> = {
+    default: "var(--ls-text)",
+    positive: "var(--ls-teal)",
+    neutral: "var(--ls-teal)",
+    "soft-negative": "var(--ls-coral)",
+  };
+  const hoverColor = hoverColorByTone[tone];
+  const iconColor = tone === "neutral" ? "var(--ls-teal)" : "currentColor";
+
   return (
     <button
       type="button"
       onClick={onClick}
       style={{
-        fontSize: 11,
-        padding: "5px 10px",
-        borderRadius: 8,
-        background: "var(--ls-surface2)",
-        border: "1px solid var(--ls-border)",
-        color: "var(--ls-text-muted)",
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 6,
+        fontSize: 12,
+        padding: "6px 12px",
+        borderRadius: 999,
+        background: "transparent",
+        border: "1.5px solid var(--ls-border)",
+        color: "var(--ls-text)",
         cursor: "pointer",
         fontFamily: "'DM Sans', sans-serif",
+        fontWeight: 400,
+        transition: "border-color 150ms, color 150ms, background 150ms",
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.borderColor = hoverColor;
+        e.currentTarget.style.color = hoverColor;
+        e.currentTarget.style.background = `color-mix(in srgb, ${hoverColor} 7%, transparent)`;
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.borderColor = "var(--ls-border)";
+        e.currentTarget.style.color = "var(--ls-text)";
+        e.currentTarget.style.background = "transparent";
       }}
     >
+      {icon && (
+        <span style={{ display: "inline-flex", color: iconColor }}>{icon}</span>
+      )}
       {label}
     </button>
+  );
+}
+
+function SnowflakeIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="12" y1="2" x2="12" y2="22" />
+      <line x1="2" y1="12" x2="22" y2="12" />
+      <line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
+      <line x1="19.07" y1="4.93" x2="4.93" y2="19.07" />
+    </svg>
   );
 }
 
@@ -684,8 +826,8 @@ function TeamStatsWidget({ prospects }: { prospects: Prospect[] }) {
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12 }}>
         <StatTile icon="📅" value={stats.total} label="RDV" />
         <StatTile icon="✓" value={stats.converted} label="Convertis" accent="var(--ls-teal)" />
-        <StatTile icon="🔥" value={stats.cold} label="Froids" accent="var(--ls-gold)" />
-        <StatTile icon="❌" value={stats.noShow} label="No-show" accent="var(--ls-coral)" />
+        <StatTile icon="❄" value={stats.cold} label="En pause" accent="var(--ls-teal)" />
+        <StatTile icon="❌" value={stats.noShow} label="Pas venus" accent="var(--ls-coral)" />
       </div>
       <div style={{ marginTop: 14, paddingTop: 14, borderTop: "1px solid var(--ls-border)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <span style={{ fontSize: 12, color: "var(--ls-text-muted)", fontFamily: "'DM Sans', sans-serif" }}>
