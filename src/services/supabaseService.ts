@@ -585,6 +585,10 @@ export async function createSupabaseClientWithInitialAssessment(payload: {
   followUpStatus: FollowUp["status"];
   notes: string;
   afterAssessmentAction?: "started" | "pending";
+  // Sujet C — étape 13 "Suivi libre" : si true, client créé avec free_follow_up=true
+  // ET aucun follow-up auto n'est inséré. La colonne next_follow_up reste posée
+  // (elle est NOT NULL dans le schema) mais sera masquée côté UI.
+  freeFollowUp?: boolean;
 }) {
   const client = await requireSupabase();
 
@@ -616,7 +620,8 @@ export async function createSupabaseClientWithInitialAssessment(payload: {
       next_follow_up: payload.nextFollowUp,
       notes: payload.notes,
       lifecycle_status: lifecycleStatus,
-      is_fragile: isFragile
+      is_fragile: isFragile,
+      free_follow_up: payload.freeFollowUp ?? false
     };
   let { data: insertedClient, error: clientError } = await client
     .from("clients")
@@ -646,6 +651,17 @@ export async function createSupabaseClientWithInitialAssessment(payload: {
     ({ data: insertedClient, error: clientError } = await client
       .from("clients")
       .insert(withoutLifecycle)
+      .select("id")
+      .single<{ id: string }>());
+  }
+
+  // Fallback : migration free_follow_up pas encore exécutée → retry sans ce champ
+  if (clientError && isMissingColumnError(clientError, "free_follow_up")) {
+    const { free_follow_up: _ff, ...withoutFreeFollow } = clientInsertPayload;
+    void _ff;
+    ({ data: insertedClient, error: clientError } = await client
+      .from("clients")
+      .insert(withoutFreeFollow)
       .select("id")
       .single<{ id: string }>());
   }
@@ -694,18 +710,23 @@ export async function createSupabaseClientWithInitialAssessment(payload: {
     throw new Error(`Impossible d'enregistrer le bilan : ${assessmentError.message}`);
   }
 
-  const { error: followUpError } = await client.from("follow_ups").insert({
-    client_id: clientId,
-    client_name: `${payload.client.firstName} ${payload.client.lastName}`,
-    due_date: payload.nextFollowUp,
-    type: payload.followUpType,
-    status: payload.followUpStatus,
-    program_title: payload.currentProgram || payload.assessment.programTitle,
-    last_assessment_date: payload.assessment.date
-  });
+  // Sujet C : si suivi libre → on ne crée AUCUN follow-up auto. Le client est
+  // actif mais hors agenda. Le coach pourra créer un RDV manuel plus tard
+  // depuis la fiche (ce qui nécessitera de désactiver le suivi libre d'abord).
+  if (!payload.freeFollowUp) {
+    const { error: followUpError } = await client.from("follow_ups").insert({
+      client_id: clientId,
+      client_name: `${payload.client.firstName} ${payload.client.lastName}`,
+      due_date: payload.nextFollowUp,
+      type: payload.followUpType,
+      status: payload.followUpStatus,
+      program_title: payload.currentProgram || payload.assessment.programTitle,
+      last_assessment_date: payload.assessment.date
+    });
 
-  if (followUpError) {
-    throw new Error("Impossible de creer le premier suivi.");
+    if (followUpError) {
+      throw new Error("Impossible de creer le premier suivi.");
+    }
   }
 
   const seedProducts = payload.started && payload.currentProgram
