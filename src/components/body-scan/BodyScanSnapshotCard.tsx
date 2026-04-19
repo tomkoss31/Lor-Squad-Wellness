@@ -42,8 +42,9 @@ export function BodyScanSnapshotCard({
     return "green";
   })();
 
+  // Correctif Vue complète : la tuile "Poids" est retirée — elle est déjà
+  // affichée dans le MetricTile "Poids du jour" juste au-dessus (doublon visuel).
   const items = [
-    { label: "Poids", primary: `${metrics.weight} kg`, secondary: "Mesure actuelle", tone: "blue" as const },
     {
       label: "Masse grasse",
       primary: `${metrics.bodyFat} %`,
@@ -81,8 +82,8 @@ export function BodyScanSnapshotCard({
           <p className="mt-2 text-sm text-[var(--ls-text-muted)]">{dateLabel}</p>
         </div>
       </div>
-      <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-        {items.slice(0, 4).map((item) => (
+      <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+        {items.slice(0, 3).map((item) => (
           <SnapshotMetricCard
             key={item.label}
             label={item.label}
@@ -94,7 +95,7 @@ export function BodyScanSnapshotCard({
         ))}
       </div>
       <div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-        {items.slice(4).map((item) => (
+        {items.slice(3).map((item) => (
           <SnapshotMetricCard
             key={item.label}
             label={item.label}
