@@ -105,9 +105,20 @@ export function ProspectCard({ prospect, ownerName, showDate = false, onClick }:
               color: statusStyle.fg,
               fontFamily: "DM Sans, sans-serif",
               whiteSpace: "nowrap",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 4,
             }}
           >
-            {prospect.status === "cold" ? "🔥 " : ""}{PROSPECT_STATUS_LABELS[prospect.status]}
+            {prospect.status === "cold" && (
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="12" y1="2" x2="12" y2="22" />
+                <line x1="2" y1="12" x2="22" y2="12" />
+                <line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
+                <line x1="19.07" y1="4.93" x2="4.93" y2="19.07" />
+              </svg>
+            )}
+            {PROSPECT_STATUS_LABELS[prospect.status]}
           </span>
         )}
       </div>
