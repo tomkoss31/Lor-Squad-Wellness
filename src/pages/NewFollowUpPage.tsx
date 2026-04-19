@@ -13,6 +13,7 @@ import { buildReportData } from "../lib/evolutionReport";
 import { getSupabaseClient } from "../services/supabaseClient";
 import { StatusBadge } from "../components/ui/StatusBadge";
 import { useAppContext } from "../context/AppContext";
+import { useToast, buildSupabaseErrorToast } from "../context/ToastContext";
 import { buildPvTrackingRecords, getPvProductStatusMeta } from "../data/mockPvModule";
 import {
   formatDate,
@@ -101,6 +102,7 @@ export function NewFollowUpPage() {
   const { clientId } = useParams();
   const navigate = useNavigate();
   const { currentUser, getClientById, addFollowUpAssessment, pvTransactions, pvClientProducts } = useAppContext();
+  const { push: pushToast } = useToast();
   const client = clientId ? getClientById(clientId) : undefined;
 
   if (!client) {
@@ -295,28 +297,39 @@ export function NewFollowUpPage() {
     clearFollowUpDraft(targetClient.id);
 
     // Envoyer les recos dans la messagerie si cochées comme contactées
+    // Site 1 du durcissement audit L1 : erreurs remontées en toast pour éviter
+    // perte silencieuse des contacts filleuls. On continue la boucle sur les
+    // autres recos même si une échoue.
     if (recommendationsContacted && latest?.questionnaire?.recommendations?.length) {
-      try {
-        const sb = await getSupabaseClient();
-        if (sb && currentUser) {
-          for (const reco of latest.questionnaire.recommendations) {
-            if (reco.name.trim()) {
-              await sb.from('client_messages').insert({
-                client_id: targetClient.id,
-                client_name: `${targetClient.firstName} ${targetClient.lastName}`,
-                distributor_id: currentUser.id,
-                message_type: 'recommendation',
-                product_name: reco.name,
-                message: `Recommandation de ${targetClient.firstName} : ${reco.name}${reco.contact ? ` (${reco.contact})` : ''}`,
-                client_contact: reco.contact || null,
-              });
-            }
+      const sb = await getSupabaseClient();
+      if (sb && currentUser) {
+        for (const reco of latest.questionnaire.recommendations) {
+          if (!reco.name.trim()) continue;
+          try {
+            const { error } = await sb.from('client_messages').insert({
+              client_id: targetClient.id,
+              client_name: `${targetClient.firstName} ${targetClient.lastName}`,
+              distributor_id: currentUser.id,
+              message_type: 'recommendation',
+              product_name: reco.name,
+              message: `Recommandation de ${targetClient.firstName} : ${reco.name}${reco.contact ? ` (${reco.contact})` : ''}`,
+              client_contact: reco.contact || null,
+            });
+            if (error) throw error;
+          } catch (err) {
+            pushToast(buildSupabaseErrorToast(
+              err,
+              `Impossible d'enregistrer le contact avec ${reco.name}. Réessayez ou notez-le manuellement.`
+            ));
           }
         }
-      } catch { /* silently continue */ }
+      }
     }
 
-    // Générer le rapport d'évolution si >= 2 assessments
+    // Générer le rapport d'évolution si >= 2 assessments.
+    // Site 3 du durcissement audit L1 : on insère AVANT de supprimer les
+    // anciens, pour garantir qu'on n'a jamais d'état "plus aucun rapport
+    // valide" si l'insert échoue.
     try {
       const updatedClient = getClientById(targetClient.id);
       if (updatedClient && (updatedClient.assessments?.length ?? 0) >= 2 && currentUser) {
@@ -324,20 +337,45 @@ export function NewFollowUpPage() {
         if (reportData) {
           const sb = await getSupabaseClient();
           if (sb) {
-            await sb.from('client_evolution_reports').delete().eq('client_id', targetClient.id);
-            const { data: inserted } = await sb
+            // 1. Insert NOUVEAU rapport d'abord
+            const { data: inserted, error: insertError } = await sb
               .from('client_evolution_reports')
               .insert(reportData)
-              .select('token')
+              .select('id, token')
               .single();
+
+            if (insertError) throw insertError;
+
+            // 2. Cleanup des anciens rapports, mais seulement après succès de l'insert.
+            //    On garde explicitement le tout nouveau via son id.
             if (inserted) {
+              const { error: deleteError } = await sb
+                .from('client_evolution_reports')
+                .delete()
+                .eq('client_id', targetClient.id)
+                .neq('id', inserted.id);
+
+              if (deleteError) {
+                // Non-fatal : le nouveau rapport existe bien, juste un reliquat
+                pushToast({
+                  tone: "warning",
+                  title: "Rapport créé",
+                  message: "Le nouveau rapport est disponible, mais les anciens n'ont pas pu être supprimés.",
+                });
+              }
+
               setReportUrl(`${window.location.origin}/rapport/${inserted.token}`);
               return; // Ne pas naviguer — afficher le modal
             }
           }
         }
       }
-    } catch { /* silently continue */ }
+    } catch (err) {
+      pushToast(buildSupabaseErrorToast(
+        err,
+        "Impossible de régénérer le rapport d'évolution. Les anciens rapports sont intacts."
+      ));
+    }
 
     navigate(`/clients/${targetClient.id}`);
   }

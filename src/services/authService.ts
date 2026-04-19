@@ -121,7 +121,9 @@ export function loginWithMockCredentials({
     return null;
   }
 
-  if (!password.trim() || (user.mockPassword ?? "demo1234") !== password.trim()) {
+  // Sécurité : aucun fallback sur "demo1234" — le mock password DOIT être explicite
+  // sur l'utilisateur, sinon login refusé (même en mode mock local).
+  if (!password.trim() || !user.mockPassword || user.mockPassword !== password.trim()) {
     return null;
   }
 

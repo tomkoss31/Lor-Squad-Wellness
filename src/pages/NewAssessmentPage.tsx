@@ -19,6 +19,7 @@ import { Card } from "../components/ui/Card";
 import { PageHeading } from "../components/ui/PageHeading";
 import { StatusBadge } from "../components/ui/StatusBadge";
 import { useAppContext } from "../context/AppContext";
+import { useToast, buildSupabaseErrorToast } from "../context/ToastContext";
 import { getAccessibleOwnerIds, getRoleLabel, isAdmin } from "../lib/auth";
 import {
   estimateBodyFatKg,
@@ -358,6 +359,7 @@ const LazyHydrationRoutinePrimerCard = lazy(() =>
 export function NewAssessmentPage() {
   const navigate = useNavigate();
   const { programs, users, currentUser, createClientWithInitialAssessment } = useAppContext();
+  const { push: pushToast } = useToast();
   const stepRailRef = useRef<HTMLDivElement | null>(null);
   const [form, setForm] = useState(initialForm);
   const [currentStep, setCurrentStep] = useState(0);
@@ -823,11 +825,16 @@ export function NewAssessmentPage() {
 
       setSaveError("");
 
-      // Créer récap Supabase pour QR code
+      // Créer récap Supabase pour QR code.
+      // Site 2 du durcissement audit L1 (le plus critique) :
+      //   - si l'insert échoue, le bilan lui-même est enregistré (addFollowUpAssessment
+      //     au-dessus a déjà tourné), MAIS on ne vide PAS le draft local pour permettre
+      //     une régénération via la fiche client.
+      //   - on remonte l'erreur en toast explicite.
       try {
         const sb = await getSupabaseClient();
         if (sb) {
-          const { data: recapData } = await sb
+          const { data: recapData, error: recapError } = await sb
             .from('client_recaps')
             .insert({
               client_id: clientId,
@@ -853,6 +860,8 @@ export function NewAssessmentPage() {
             .select('token')
             .single();
 
+          if (recapError) throw recapError;
+
           if (recapData?.token) {
             clearAssessmentDraft();
             setRecapToken(recapData.token);
@@ -861,12 +870,21 @@ export function NewAssessmentPage() {
             return; // Modal handles navigation
           }
         }
-      } catch (recapErr) {
-        console.error('Recap creation error (non-blocking):', recapErr);
-      }
 
-      clearAssessmentDraft();
-      navigate(`/clients/${clientId}`);
+        // Pas de Supabase ou pas de token renvoyé → mode local, on nettoie le draft
+        clearAssessmentDraft();
+        navigate(`/clients/${clientId}`);
+      } catch (recapErr) {
+        // Bilan enregistré, mais recap KO. On NE nettoie PAS le draft pour permettre
+        // une régénération depuis la fiche client.
+        console.error('Recap creation error:', recapErr);
+        pushToast(buildSupabaseErrorToast(
+          recapErr,
+          "Le bilan est enregistré, mais le lien client n'a pas été généré. " +
+          "Tu peux le régénérer depuis la fiche client (onglet Actions > Accès client)."
+        ));
+        navigate(`/clients/${clientId}`);
+      }
     } catch (error) {
       setSaveError(
         error instanceof Error
