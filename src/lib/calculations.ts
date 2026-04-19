@@ -43,15 +43,28 @@ export function calculateProteinRange(
   return `${Math.round(weight * multiplier.min)} - ${Math.round(weight * multiplier.max)} g`;
 }
 
-export function formatDate(input: string): string {
+export function formatDate(input: string | null | undefined): string {
+  // Fix Invalid time value (2026-04-19) : protège contre null/undefined/"" et
+  // dates non-parseables. Alignement avec le pattern de formatDateTime().
+  if (!input) {
+    return "—";
+  }
+  const date = new Date(input);
+  if (Number.isNaN(date.getTime())) {
+    return "—";
+  }
   return new Intl.DateTimeFormat("fr-FR", {
     day: "2-digit",
     month: "short",
     year: "numeric"
-  }).format(new Date(input));
+  }).format(date);
 }
 
-export function formatDateTime(input: string): string {
+export function formatDateTime(input: string | null | undefined): string {
+  // Fix Invalid time value (2026-04-19) : même protection que formatDate().
+  if (!input) {
+    return "—";
+  }
   const date = new Date(input);
   if (Number.isNaN(date.getTime())) {
     return input;

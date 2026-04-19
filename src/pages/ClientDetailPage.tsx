@@ -314,7 +314,7 @@ export function ClientDetailPage() {
                 {client.currentProgram || "Programme à confirmer"} · {client.city ?? "Ville non renseignée"} · <Link to={`/distributors/${client.distributorId}`} className="font-medium text-[#C9A84C] transition hover:text-[#2DD4BF]">{client.distributorName}</Link>
               </p>
               <p className="mt-1 text-[11px] text-[var(--ls-text-hint)]">
-                Client depuis {formatDate(client.startDate ?? '')} · {client.assessments.length} bilan{client.assessments.length > 1 ? 's' : ''}
+                {client.startDate ? `Client depuis ${formatDate(client.startDate)}` : "Programme non démarré"} · {client.assessments.length} bilan{client.assessments.length > 1 ? 's' : ''}
               </p>
             </div>
           </div>
@@ -916,12 +916,20 @@ export function ClientDetailPage() {
                 )}
               </div>
 
-              {activeFollowUp && (
+              {activeFollowUp && (() => {
+                // Fix Invalid time value (2026-04-19) : on n'affiche le lien
+                // Google Calendar que si dueDate est parseable — sinon
+                // createGoogleCalendarLink().toISOString() throwerait au render.
+                const dueDateObj = new Date(activeFollowUp.dueDate);
+                if (Number.isNaN(dueDateObj.getTime())) {
+                  return null;
+                }
+                return (
                 <a
                   href={createGoogleCalendarLink({
                     title: `RDV ${client.firstName} ${client.lastName} — Lor'Squad Wellness`,
                     description: `${activeFollowUp.type}\nCoach : ${client.distributorName}\nProgramme : ${client.currentProgram}`,
-                    startDate: new Date(activeFollowUp.dueDate),
+                    startDate: dueDateObj,
                     location: 'La Base Shakes & Drinks, Verdun',
                   })}
                   target="_blank"
@@ -932,14 +940,15 @@ export function ClientDetailPage() {
                   <div>
                     <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--ls-text)' }}>Ajouter à Google Agenda</div>
                     <div style={{ fontSize: 12, color: 'var(--ls-text-muted)', marginTop: 2 }}>
-                      RDV le {new Date(activeFollowUp.dueDate).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
+                      RDV le {dueDateObj.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
                     </div>
                   </div>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--ls-teal)" strokeWidth="1.5" style={{ marginLeft: 'auto', flexShrink: 0 }}>
                     <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
                   </svg>
                 </a>
-              )}
+                );
+              })()}
             </div>
           </Card>
 
