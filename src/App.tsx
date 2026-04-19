@@ -95,6 +95,11 @@ const MessagesPage = lazy(() =>
     default: module.MessagesPage
   }))
 );
+const AgendaPage = lazy(() =>
+  import("./pages/AgendaPage").then((module) => ({
+    default: module.AgendaPage
+  }))
+);
 
 import { useTheme } from './hooks/useTheme'
 import { useAutoNotifications } from './hooks/useAutoNotifications'
@@ -127,6 +132,7 @@ export default function App() {
               <Route path="recommendations" element={<RecommendationsPage />} />
               <Route path="pv" element={<PvOverviewPage />} />
               <Route path="messages" element={<MessagesPage />} />
+              <Route path="agenda" element={<AgendaPage />} />
               <Route path="clients" element={<ClientsPage />} />
               <Route element={<RoleRoute allowedRoles={["admin"]} />}>
                 <Route path="users" element={<UsersPage />} />
