@@ -1518,5 +1518,43 @@
     "active": true,
     "created_at": "2026-04-17T15:14:48.949863+00:00",
     "updated_at": "2026-04-17T15:14:48.949863+00:00"
+  },
+  {
+    "id": "44830746-9f4b-4eeb-8a12-c19c67bf78d5",
+    "client_id": "fef3096d-526b-47c2-8524-e7fb3f468350",
+    "responsible_id": "aa28c3b6-b46b-4f67-823e-07097024249e",
+    "responsible_name": "Léa Monfort",
+    "program_id": "starter",
+    "product_id": "xtra-cal",
+    "product_name": "Xtra-Cal",
+    "quantity_start": 1,
+    "start_date": "2026-04-14",
+    "duration_reference_days": 30,
+    "pv_per_unit": 10.25,
+    "price_public_per_unit": 24.5,
+    "quantite_label": "30 jours",
+    "note_metier": "Repère simple autour du calcium.",
+    "active": true,
+    "created_at": "2026-04-19T10:33:37.140188+00:00",
+    "updated_at": "2026-04-19T10:33:37.140188+00:00"
+  },
+  {
+    "id": "14652c99-0a95-49e4-8978-4b96db540074",
+    "client_id": "fef3096d-526b-47c2-8524-e7fb3f468350",
+    "responsible_id": "aa28c3b6-b46b-4f67-823e-07097024249e",
+    "responsible_name": "Léa Monfort",
+    "program_id": "starter",
+    "product_id": "the-51g",
+    "product_name": "Boisson instantanee a base de the 51 g",
+    "quantity_start": 1,
+    "start_date": "2026-04-14",
+    "duration_reference_days": 21,
+    "pv_per_unit": 19.95,
+    "price_public_per_unit": 41,
+    "quantite_label": "51 g",
+    "note_metier": "Meme logique terrain que l'aloe : au-dela de 21 jours, la routine n'a pas ete tenue.",
+    "active": true,
+    "created_at": "2026-04-19T10:33:37.140188+00:00",
+    "updated_at": "2026-04-19T10:33:37.140188+00:00"
   }
 ]

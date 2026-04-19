@@ -1,7 +1,7 @@
 id,name,email,role,active,title,created_at,last_access_at,sponsor_id,sponsor_name
 8f7f9ec2-e541-42fd-b878-7ab852943711,testbeta,testbeta@lorsquadwellness.app,distributor,true,Acces distributeur,2026-04-01T20:41:38.766+00:00,,,
 aa28c3b6-b46b-4f67-823e-07097024249e,Léa Monfort,lea.monfort55@gmail.com,distributor,true,Portefeuille terrain,2026-04-14T10:08:01.852+00:00,,656dcf35-4859-4a70-9d20-990104813423,Thomas
-656dcf35-4859-4a70-9d20-990104813423,Thomas,fit2tom.coach@gmail.com,admin,true,Lor'Squad Wellness,2026-04-01T20:21:27.426204+00:00,2026-04-18T15:41:18.165+00:00,,
+656dcf35-4859-4a70-9d20-990104813423,Thomas,fit2tom.coach@gmail.com,admin,true,Lor'Squad Wellness,2026-04-01T20:21:27.426204+00:00,2026-04-19T13:47:49.652+00:00,,
 42c54ab6-0244-4bd5-b912-c4eb4be85a6f,Thomas,tomkoss31@gmail.com,admin,false,Lor'Squad Wellness,2026-04-01T20:24:54.907997+00:00,2026-04-01T20:38:41.81+00:00,,
 2c6653c6-525a-48b7-8965-ee8439bf1798,Prisca et Alex,priscalexnutrition@gmail.com,referent,true,Referent d'equipe,2026-04-04T07:46:10.774656+00:00,,,
 6e552738-3fe5-4cdb-a4c8-15c5d7dca036,Mélanie,milmel55@gmail.com,admin,true,Administration,2026-04-02T12:13:09.685+00:00,2026-04-08T17:38:02.68+00:00,,

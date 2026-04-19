@@ -642,5 +642,37 @@
     "referrals": [],
     "created_at": "2026-04-17T15:14:49.577413+00:00",
     "expires_at": "2026-07-16T15:14:49.577413+00:00"
+  },
+  {
+    "id": "32ab663b-8570-4074-8f60-3692c1d1d9d8",
+    "token": "dcd5dd8f-2e86-46e0-bba6-e62f1f213e84",
+    "client_id": "fef3096d-526b-47c2-8524-e7fb3f468350",
+    "coach_name": "Léa Monfort",
+    "client_first_name": "Léa",
+    "client_last_name": "Monfort",
+    "assessment_date": "2026-04-19T10:33:37.743Z",
+    "program_title": "Programme a confirmer",
+    "objective": "Energie",
+    "body_scan": {
+      "weight": 58.2,
+      "bodyFat": 26.8,
+      "hydration": 53,
+      "muscleMass": 40.4,
+      "visceralFat": 1.5,
+      "metabolicAge": 21
+    },
+    "recommendations": [
+      {
+        "name": "Xtra-Cal",
+        "shortBenefit": "Calcium & Magnésium · Os & articulations · Récupération"
+      },
+      {
+        "name": "Boisson Instantanée à base de Thé",
+        "shortBenefit": "Booster d'énergie · Thermogenèse · Complément du shake F1"
+      }
+    ],
+    "referrals": [],
+    "created_at": "2026-04-19T10:33:37.908342+00:00",
+    "expires_at": "2026-07-18T10:33:37.908342+00:00"
   }
 ]

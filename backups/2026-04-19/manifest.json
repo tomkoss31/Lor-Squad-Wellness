@@ -2,13 +2,13 @@
   "date": "2026-04-19",
   "tables": {
     "users": 7,
-    "clients": 38,
-    "assessments": 133,
-    "follow_ups": 37,
+    "clients": 39,
+    "assessments": 134,
+    "follow_ups": 38,
     "activity_logs": -1,
-    "pv_client_products": 80,
+    "pv_client_products": 82,
     "pv_transactions": 44,
-    "client_recaps": 17,
+    "client_recaps": 18,
     "client_evolution_reports": 10,
     "client_messages": 0,
     "push_subscriptions": 2,
@@ -16,5 +16,5 @@
     "client_referrals": 0,
     "rdv_change_requests": 0
   },
-  "total": 372
+  "total": 378
 }
