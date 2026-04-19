@@ -5,7 +5,7 @@ import { StepRail } from "../components/assessment/StepRail";
 import { useEffect } from "react";
 import { useRef } from "react";
 import { Component, type ErrorInfo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { RecapModal } from "../components/assessment/RecapModal";
 import { getSupabaseClient } from "../services/supabaseClient";
 import { BodyFatInsightCard } from "../components/body-scan/BodyFatInsightCard";
@@ -358,8 +358,11 @@ const LazyHydrationRoutinePrimerCard = lazy(() =>
 
 export function NewAssessmentPage() {
   const navigate = useNavigate();
-  const { programs, users, currentUser, createClientWithInitialAssessment } = useAppContext();
+  const { programs, users, currentUser, createClientWithInitialAssessment, prospects, updateProspect } = useAppContext();
   const { push: pushToast } = useToast();
+  const [searchParams] = useSearchParams();
+  const prospectId = searchParams.get("prospectId");
+  const sourceProspect = prospectId ? prospects.find((p) => p.id === prospectId) : undefined;
   const stepRailRef = useRef<HTMLDivElement | null>(null);
   const [form, setForm] = useState(initialForm);
   const [currentStep, setCurrentStep] = useState(0);
@@ -369,6 +372,11 @@ export function NewAssessmentPage() {
   const [recapClientName, setRecapClientName] = useState("");
   const [assignedUserId, setAssignedUserId] = useState("");
   const [draftReady, setDraftReady] = useState(false);
+  // Chantier Prospects : suivi des champs pré-remplis par le prospect (surlignés en vert
+  // tant qu'ils n'ont pas été modifiés manuellement).
+  const [prefilledFields, setPrefilledFields] = useState<{
+    firstName: boolean; lastName: boolean; phone: boolean; email: boolean;
+  }>({ firstName: false, lastName: false, phone: false, email: false });
 
   useEffect(() => {
     const draft = readAssessmentDraft();
@@ -378,8 +386,30 @@ export function NewAssessmentPage() {
       setAssignedUserId(draft.assignedUserId);
     }
 
+    // Pré-remplissage depuis prospect (priorité sur le draft local si params URL)
+    if (sourceProspect) {
+      setForm((prev) => ({
+        ...prev,
+        firstName: sourceProspect.firstName || prev.firstName,
+        lastName: sourceProspect.lastName || prev.lastName,
+        phone: sourceProspect.phone || prev.phone,
+        email: sourceProspect.email || prev.email,
+      }));
+      setPrefilledFields({
+        firstName: !!sourceProspect.firstName,
+        lastName: !!sourceProspect.lastName,
+        phone: !!sourceProspect.phone,
+        email: !!sourceProspect.email,
+      });
+      // Assigner le distributeur du prospect si admin
+      if (currentUser?.role === 'admin') {
+        setAssignedUserId(sourceProspect.distributorId);
+      }
+    }
+
     setDraftReady(true);
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [prospectId]);
 
   const goToStep = (nextStep: number) => {
     setCurrentStep(Math.min(Math.max(nextStep, 0), steps.length - 1));
@@ -626,6 +656,10 @@ export function NewAssessmentPage() {
 
   function update<K extends keyof AssessmentForm>(key: K, value: AssessmentForm[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
+    // Prospects : retirer le flag pré-rempli dès que le coach édite le champ
+    if (key === 'firstName' || key === 'lastName' || key === 'phone' || key === 'email') {
+      setPrefilledFields((prev) => ({ ...prev, [key]: false }));
+    }
   }
 
   function updateRecommendation(index: number, field: keyof RecommendationLead, value: string) {
@@ -831,6 +865,24 @@ export function NewAssessmentPage() {
 
       setSaveError("");
 
+      // Chantier Prospects : si le bilan provient d'un prospect, on le convertit.
+      if (sourceProspect) {
+        try {
+          await updateProspect(sourceProspect.id, {
+            status: 'converted',
+            convertedClientId: clientId,
+          });
+          pushToast({
+            tone: "success",
+            title: "Prospect converti en client ✓",
+            message: `${sourceProspect.firstName} ${sourceProspect.lastName} est désormais dans ta base clients.`,
+          });
+        } catch (convErr) {
+          // Non-fatal : le client est créé, seule la MAJ du prospect a échoué.
+          console.error('Prospect conversion error:', convErr);
+        }
+      }
+
       // Créer récap Supabase pour QR code.
       // Site 2 du durcissement audit L1 (le plus critique) :
       //   - si l'insert échoue, le bilan lui-même est enregistré (addFollowUpAssessment
@@ -908,6 +960,35 @@ export function NewAssessmentPage() {
         title="Bilan guidé"
         description="Un parcours clair pour conduire le rendez-vous, relire les habitudes et poser la suite."
       />
+
+      {/* Chantier Prospects : bandeau persistant avec la note du prospect */}
+      {sourceProspect && (
+        <div
+          style={{
+            background: "color-mix(in srgb, var(--ls-teal) 8%, transparent)",
+            borderLeft: "4px solid var(--ls-teal)",
+            borderRadius: 10,
+            padding: "12px 16px",
+            fontFamily: "'DM Sans', sans-serif",
+            marginBottom: 4,
+          }}
+        >
+          <div style={{ fontSize: 10, letterSpacing: "2px", textTransform: "uppercase", color: "var(--ls-teal)", fontWeight: 600, marginBottom: 4 }}>
+            ✦ Bilan issu du prospect {sourceProspect.source}
+          </div>
+          {sourceProspect.note && (
+            <div style={{ fontSize: 13, color: "var(--ls-text)", lineHeight: 1.5 }}>
+              {sourceProspect.note}
+            </div>
+          )}
+          {!sourceProspect.note && (
+            <div style={{ fontSize: 12, color: "var(--ls-text-muted)" }}>
+              Prospect sans note. Les coordonnées ont été pré-remplies sur l'étape 1.
+            </div>
+          )}
+        </div>
+      )}
+
       <div ref={stepRailRef} className="step-rail-wrapper" style={{ position: 'sticky', top: 0, zIndex: 40, paddingTop: 8, paddingBottom: 8 }}>
         <StepRail currentStep={currentStep} steps={steps} onStepClick={goToStep} />
       </div>
@@ -928,10 +1009,10 @@ export function NewAssessmentPage() {
           {currentStep === 0 && (
               <div className="space-y-4">
                 <div className="grid gap-4 md:grid-cols-2">
-                  <Field label="Prenom" value={form.firstName} onChange={(v) => update("firstName", v)} />
-                  <Field label="Nom" value={form.lastName} onChange={(v) => update("lastName", v)} />
-                  <Field label="Téléphone *" value={form.phone} onChange={(v) => update("phone", v)} />
-                  <Field label="Email *" value={form.email} onChange={(v) => update("email", v)} />
+                  <Field label="Prenom" value={form.firstName} onChange={(v) => update("firstName", v)} prefilled={prefilledFields.firstName} />
+                  <Field label="Nom" value={form.lastName} onChange={(v) => update("lastName", v)} prefilled={prefilledFields.lastName} />
+                  <Field label="Téléphone *" value={form.phone} onChange={(v) => update("phone", v)} prefilled={prefilledFields.phone} />
+                  <Field label="Email *" value={form.email} onChange={(v) => update("email", v)} prefilled={prefilledFields.email} />
                   <Field label="Invité par / recommandé par" value={form.referredByName} onChange={(v) => update("referredByName", v)} />
                   <Field
                     label="Date et heure du bilan initial"
@@ -2123,7 +2204,8 @@ function Field({
   onChange,
   type = "text",
   step,
-  disabled = false
+  disabled = false,
+  prefilled = false
 }: {
   label: string;
   value: string | number;
@@ -2131,10 +2213,23 @@ function Field({
   type?: string;
   step?: string;
   disabled?: boolean;
+  prefilled?: boolean;
 }) {
+  // Chantier Prospects : style vert visible pour les champs pré-remplis depuis
+  // un prospect. Se dissipe dès que le coach édite le champ (prefilledFields[key]→false).
+  const prefillStyle: React.CSSProperties | undefined = prefilled
+    ? {
+        background: "color-mix(in srgb, var(--ls-teal) 14%, transparent)",
+        color: "var(--ls-teal)",
+        border: "1px solid var(--ls-teal)",
+        fontWeight: 600,
+      }
+    : undefined;
   return (
     <div className="space-y-2" style={disabled ? { opacity: 0.5 } : undefined}>
-      <label className="text-sm font-medium text-[var(--ls-text-muted)]">{label}</label>
+      <label className="text-sm font-medium text-[var(--ls-text-muted)]">
+        {label}{prefilled && <span style={{ marginLeft: 6, fontSize: 10, color: "var(--ls-teal)" }}>✦ pré-rempli</span>}
+      </label>
       {type === "number" ? (
         <DecimalInput value={Number(value) || 0} onChange={onChange} step={step} />
       ) : (
@@ -2144,6 +2239,7 @@ function Field({
           value={value}
           disabled={disabled}
           onChange={(event) => onChange(event.target.value)}
+          style={prefillStyle}
         />
       )}
     </div>

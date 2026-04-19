@@ -298,3 +298,69 @@ export interface WeightLossPaceInsight {
   description: string;
   tone: "blue" | "green" | "amber" | "red";
 }
+
+// ─── Agenda Prospects (Chantier 2026-04-19) ─────────────────────────────
+export type ProspectSource =
+  | 'Meta Ads'
+  | 'Instagram'
+  | 'TikTok'
+  | 'Bouche à oreille'
+  | 'Parrainage'
+  | 'Événement'
+  | 'Autre';
+
+export type ProspectStatus =
+  | 'scheduled'   // RDV pris, à venir
+  | 'done'        // RDV effectué mais pas encore converti
+  | 'converted'   // devenu client
+  | 'lost'        // pas intéressé
+  | 'no_show'     // n'est pas venu
+  | 'cancelled';  // RDV annulé
+
+export interface Prospect {
+  id: string;
+  firstName: string;
+  lastName: string;
+  phone?: string;
+  email?: string;
+  rdvDate: string;          // ISO timestamptz
+  source: ProspectSource;
+  sourceDetail?: string;
+  note?: string;
+  distributorId: string;
+  status: ProspectStatus;
+  convertedClientId?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ProspectFormInput {
+  firstName: string;
+  lastName: string;
+  phone?: string;
+  email?: string;
+  rdvDate: string;
+  source: ProspectSource;
+  sourceDetail?: string;
+  note?: string;
+  distributorId: string;
+}
+
+export const PROSPECT_SOURCES: ProspectSource[] = [
+  'Meta Ads',
+  'Instagram',
+  'TikTok',
+  'Bouche à oreille',
+  'Parrainage',
+  'Événement',
+  'Autre',
+];
+
+export const PROSPECT_STATUS_LABELS: Record<ProspectStatus, string> = {
+  scheduled: 'À venir',
+  done: 'Effectué',
+  converted: 'Converti',
+  lost: 'Perdu',
+  no_show: 'Absent',
+  cancelled: 'Annulé',
+};

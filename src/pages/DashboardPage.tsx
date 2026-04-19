@@ -2,6 +2,8 @@ import { useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAppContext } from "../context/AppContext";
 import { getPortfolioMetrics } from "../lib/portfolio";
+import { ProspectCard } from "../components/prospect/ProspectCard";
+import type { Prospect } from "../types/domain";
 
 function greeting() {
   const h = new Date().getHours();
@@ -11,7 +13,7 @@ function greeting() {
 }
 
 export function DashboardPage() {
-  const { currentUser, users, clients, followUps, pvClientProducts, pvTransactions, unreadMessageCount } = useAppContext();
+  const { currentUser, users, clients, followUps, pvClientProducts, pvTransactions, unreadMessageCount, prospects } = useAppContext();
   const navigate = useNavigate();
 
   if (!currentUser) return null;
@@ -180,6 +182,21 @@ export function DashboardPage() {
     };
   }, [metrics.clients, pvTransactions, scopedClientIds]);
 
+  // Chantier Agenda : prospects du jour
+  const prospectsToday = useMemo(() => {
+    const today = new Date().toDateString();
+    return prospects
+      .filter((p) => {
+        try {
+          return new Date(p.rdvDate).toDateString() === today;
+        } catch { return false; }
+      })
+      .sort((a, b) => new Date(a.rdvDate).getTime() - new Date(b.rdvDate).getTime());
+  }, [prospects]);
+
+  const prospectsTodayScheduled = prospectsToday.filter((p) => p.status === 'scheduled');
+  const prospectsTodayDone = prospectsToday.filter((p) => p.status === 'done' || p.status === 'converted');
+
   return (
     <div style={{ padding: "clamp(16px, 4vw, 28px)", maxWidth: 1200, margin: "0 auto", display: "flex", flexDirection: "column", gap: 20 }}>
       {/* HEADER */}
@@ -296,6 +313,14 @@ export function DashboardPage() {
           </div>
         </div>
       )}
+
+      {/* BLOC AGENDA PROSPECTS DU JOUR */}
+      <ProspectsTodayWidget
+        todayScheduled={prospectsTodayScheduled}
+        todayDone={prospectsTodayDone}
+        onOpenAgenda={() => navigate("/agenda")}
+        onCreate={() => navigate("/agenda")}
+      />
 
       {/* BLOC CLIENTS FRAGILES */}
       {fragileClients.length > 0 && (
@@ -561,5 +586,92 @@ function MessageIcon() {
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
       <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
     </svg>
+  );
+}
+
+// ─── Widget Agenda du jour (Chantier Prospects 2026-04-19) ──────────────
+function ProspectsTodayWidget({
+  todayScheduled,
+  todayDone,
+  onOpenAgenda,
+  onCreate,
+}: {
+  todayScheduled: Prospect[];
+  todayDone: Prospect[];
+  onOpenAgenda: () => void;
+  onCreate: () => void;
+}) {
+  const total = todayScheduled.length + todayDone.length;
+  const nextThree = todayScheduled.slice(0, 3);
+
+  return (
+    <div
+      style={{
+        background: "var(--ls-surface)",
+        border: "1px solid var(--ls-border)",
+        borderRadius: 14,
+        padding: 20,
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14, flexWrap: "wrap", gap: 10 }}>
+        <div>
+          <div style={{ fontSize: 9, letterSpacing: "2px", textTransform: "uppercase", color: "var(--ls-text-hint)", fontWeight: 500, marginBottom: 4, fontFamily: "DM Sans, sans-serif" }}>
+            Agenda prospection
+          </div>
+          <div style={{ fontFamily: "Syne, sans-serif", fontWeight: 800, fontSize: 17, color: "var(--ls-text)" }}>
+            {total === 0
+              ? "Aucun RDV aujourd'hui"
+              : `Agenda du jour · ${todayScheduled.length} programmé${todayScheduled.length > 1 ? "s" : ""}`}
+          </div>
+          {todayDone.length > 0 && (
+            <div style={{ fontSize: 11, color: "var(--ls-text-muted)", marginTop: 4 }}>
+              {todayDone.length} effectué{todayDone.length > 1 ? "s" : ""} aujourd'hui
+            </div>
+          )}
+        </div>
+        <button
+          type="button"
+          onClick={onOpenAgenda}
+          style={{
+            padding: "7px 14px", border: "1px solid var(--ls-border)",
+            background: "transparent", color: "var(--ls-text-muted)",
+            borderRadius: 9, fontSize: 11, cursor: "pointer",
+            fontFamily: "DM Sans, sans-serif",
+          }}
+        >
+          Voir tout →
+        </button>
+      </div>
+
+      {nextThree.length === 0 ? (
+        <div style={{ textAlign: "center", padding: "18px 0 8px" }}>
+          <div style={{ fontSize: 12, color: "var(--ls-text-muted)", marginBottom: 10 }}>
+            Aucun RDV prospection aujourd'hui.
+          </div>
+          <button
+            type="button"
+            onClick={onCreate}
+            style={{
+              padding: "8px 16px", background: "var(--ls-gold)", color: "var(--ls-bg)",
+              border: "none", borderRadius: 10,
+              fontFamily: "Syne, sans-serif", fontSize: 12, fontWeight: 700,
+              cursor: "pointer",
+            }}
+          >
+            + Nouveau RDV
+          </button>
+        </div>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          {nextThree.map((p) => (
+            <ProspectCard
+              key={p.id}
+              prospect={p}
+              onClick={() => onOpenAgenda()}
+            />
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
