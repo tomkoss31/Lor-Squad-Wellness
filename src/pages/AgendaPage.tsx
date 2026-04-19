@@ -150,6 +150,43 @@ export function AgendaPage() {
     }
   }
 
+  // Chantier Cold : mettre en froid avec date de réchauffement + raison
+  async function handleSetCold(prospect: Prospect, coldUntil: string, coldReason: string) {
+    try {
+      await updateProspect(prospect.id, {
+        status: "cold",
+        coldUntil,
+        coldReason: coldReason.trim() || undefined,
+      });
+      pushToast({
+        tone: "success",
+        title: "Prospect en froid 🔥",
+        message: `Relance prévue après le ${new Date(coldUntil).toLocaleDateString("fr-FR")}.`,
+      });
+      setDetailProspect(null);
+    } catch (err) {
+      pushToast(buildSupabaseErrorToast(err, "Impossible de mettre le prospect en froid."));
+    }
+  }
+
+  // Réactiver un prospect cold : status → scheduled + cold_until + cold_reason à null
+  async function handleReactivate(prospect: Prospect) {
+    try {
+      await updateProspect(prospect.id, {
+        status: "scheduled",
+        coldUntil: null as unknown as string,
+        coldReason: null as unknown as string,
+      });
+      pushToast({ tone: "success", title: "Prospect réactivé", message: "Pense à fixer une date de RDV." });
+      setDetailProspect(null);
+      // Ouvre le form d'édition pour saisir la nouvelle date
+      setEditing(prospect);
+      setShowForm(true);
+    } catch (err) {
+      pushToast(buildSupabaseErrorToast(err, "Impossible de réactiver le prospect."));
+    }
+  }
+
   async function handleDelete(prospect: Prospect) {
     if (!window.confirm(`Supprimer le RDV avec ${prospect.firstName} ${prospect.lastName} ?`)) return;
     try {
@@ -297,6 +334,8 @@ export function AgendaPage() {
             if (detailProspect.convertedClientId) navigate(`/clients/${detailProspect.convertedClientId}`);
           }}
           onChangeStatus={(status) => handleQuickStatus(detailProspect, status)}
+          onSetCold={(until, reason) => handleSetCold(detailProspect, until, reason)}
+          onReactivate={() => handleReactivate(detailProspect)}
           onDelete={() => handleDelete(detailProspect)}
         />
       )}
@@ -334,6 +373,8 @@ function ProspectDetailModal({
   onStartAssessment,
   onOpenClient,
   onChangeStatus,
+  onSetCold,
+  onReactivate,
   onDelete,
 }: {
   prospect: Prospect;
@@ -342,8 +383,18 @@ function ProspectDetailModal({
   onStartAssessment: () => void;
   onOpenClient: () => void;
   onChangeStatus: (status: ProspectStatus) => void;
+  onSetCold: (coldUntil: string, coldReason: string) => void;
+  onReactivate: () => void;
   onDelete: () => void;
 }) {
+  const [showColdForm, setShowColdForm] = useState(false);
+  const defaultColdDate = (() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 90); // +90 jours par défaut
+    return d.toISOString().slice(0, 10);
+  })();
+  const [coldDate, setColdDate] = useState(defaultColdDate);
+  const [coldReason, setColdReason] = useState("");
   const rdvDisplay = (() => {
     try {
       return new Date(prospect.rdvDate).toLocaleString("fr-FR", {
@@ -395,11 +446,29 @@ function ProspectDetailModal({
           {prospect.phone && <InfoRow label="Téléphone" value={prospect.phone} />}
           {prospect.email && <InfoRow label="Email" value={prospect.email} />}
           <InfoRow label="Source" value={`${prospect.source}${prospect.sourceDetail ? ` · ${prospect.sourceDetail}` : ""}`} />
-          <InfoRow label="Statut" value={PROSPECT_STATUS_LABELS[prospect.status]} />
+          <InfoRow label="Statut" value={`${prospect.status === "cold" ? "🔥 " : ""}${PROSPECT_STATUS_LABELS[prospect.status]}`} />
           {prospect.note && (
             <div style={{ padding: 12, borderRadius: 10, background: "var(--ls-surface2)", border: "1px solid var(--ls-border)" }}>
               <div style={{ fontSize: 10, letterSpacing: "1px", textTransform: "uppercase", color: "var(--ls-text-hint)", fontWeight: 500, marginBottom: 4 }}>Note</div>
               <div style={{ fontSize: 13, color: "var(--ls-text)", lineHeight: 1.5 }}>{prospect.note}</div>
+            </div>
+          )}
+          {/* Chantier Cold : affichage de la date de réchauffement + raison */}
+          {prospect.status === "cold" && (
+            <div style={{ padding: 12, borderRadius: 10, background: "color-mix(in srgb, var(--ls-gold) 8%, transparent)", border: "1px solid color-mix(in srgb, var(--ls-gold) 25%, transparent)" }}>
+              <div style={{ fontSize: 10, letterSpacing: "1px", textTransform: "uppercase", color: "var(--ls-gold)", fontWeight: 600, marginBottom: 4 }}>
+                🔥 En froid
+              </div>
+              {prospect.coldUntil && (
+                <div style={{ fontSize: 13, color: "var(--ls-text)", marginBottom: 4 }}>
+                  Relance prévue après le {new Date(prospect.coldUntil).toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" })}
+                </div>
+              )}
+              {prospect.coldReason && (
+                <div style={{ fontSize: 12, color: "var(--ls-text-muted)", lineHeight: 1.5, fontStyle: "italic" }}>
+                  « {prospect.coldReason} »
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -421,10 +490,85 @@ function ProspectDetailModal({
               Ouvrir la fiche client →
             </Button>
           )}
+          {prospect.status === "cold" && (
+            <Button onClick={onReactivate} className="flex-1">
+              Planifier un RDV →
+            </Button>
+          )}
         </div>
 
+        {/* Mini-formulaire "Mettre en froid" */}
+        {showColdForm && (
+          <div style={{
+            marginTop: 12, padding: 14, borderRadius: 10,
+            background: "color-mix(in srgb, var(--ls-gold) 6%, transparent)",
+            border: "1px solid color-mix(in srgb, var(--ls-gold) 25%, transparent)",
+          }}>
+            <div style={{ fontSize: 11, letterSpacing: "1px", textTransform: "uppercase", color: "var(--ls-gold)", fontWeight: 600, marginBottom: 10 }}>
+              🔥 Passer en froid
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              <div>
+                <label style={{ display: "block", fontSize: 11, color: "var(--ls-text-muted)", marginBottom: 6, fontWeight: 500 }}>
+                  Réchauffer à partir du
+                </label>
+                <input
+                  type="date"
+                  value={coldDate}
+                  onChange={(e) => setColdDate(e.target.value)}
+                  className="ls-input-time"
+                  style={{ width: "100%" }}
+                />
+              </div>
+              <div>
+                <label style={{ display: "block", fontSize: 11, color: "var(--ls-text-muted)", marginBottom: 6, fontWeight: 500 }}>
+                  Raison / contexte (facultatif)
+                </label>
+                <textarea
+                  value={coldReason}
+                  onChange={(e) => setColdReason(e.target.value)}
+                  rows={2}
+                  placeholder="Ex : Budget serré, relancer en septembre"
+                  style={{
+                    width: "100%",
+                    padding: "10px 12px",
+                    borderRadius: 10,
+                    border: "1.5px solid var(--ls-border)",
+                    background: "var(--ls-surface)",
+                    color: "var(--ls-text)",
+                    fontSize: 13,
+                    fontFamily: "'DM Sans', sans-serif",
+                    outline: "none",
+                    resize: "vertical",
+                    boxSizing: "border-box",
+                  }}
+                />
+              </div>
+              <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+                <button
+                  type="button"
+                  onClick={() => setShowColdForm(false)}
+                  style={{ padding: "7px 14px", borderRadius: 9, border: "1px solid var(--ls-border)", background: "transparent", color: "var(--ls-text-muted)", fontSize: 12, cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}
+                >
+                  Annuler
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const iso = new Date(coldDate + "T09:00:00").toISOString();
+                    onSetCold(iso, coldReason);
+                  }}
+                  style={{ padding: "7px 14px", borderRadius: 9, border: "none", background: "var(--ls-gold)", color: "var(--ls-bg)", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}
+                >
+                  Confirmer
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Changement de statut rapide */}
-        {prospect.status !== "converted" && (
+        {prospect.status !== "converted" && !showColdForm && (
           <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 10, paddingTop: 12, borderTop: "1px solid var(--ls-border)" }}>
             {prospect.status !== "done" && (
               <SmallStatusBtn label="Marquer effectué" onClick={() => onChangeStatus("done")} />
@@ -437,6 +581,9 @@ function ProspectDetailModal({
             )}
             {prospect.status !== "cancelled" && (
               <SmallStatusBtn label="Annulé" onClick={() => onChangeStatus("cancelled")} />
+            )}
+            {prospect.status !== "cold" && (
+              <SmallStatusBtn label="🔥 Mettre en froid" onClick={() => setShowColdForm(true)} />
             )}
           </div>
         )}
