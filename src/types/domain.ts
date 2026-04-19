@@ -194,6 +194,8 @@ export interface Client {
   isFragile?: boolean;
   lifecycleUpdatedAt?: string;
   lifecycleUpdatedBy?: string | null;
+  // Suivi libre (Sujet C — 2026-04-19) : client actif mais hors agenda auto
+  freeFollowUp?: boolean;
 }
 
 export interface FollowUp {
