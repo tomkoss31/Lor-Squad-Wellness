@@ -35,6 +35,16 @@ function endOfWeek(d: Date): Date {
   return copy;
 }
 
+function startOfWeek(d: Date): Date {
+  // Lundi 00:00 de la semaine en cours (convention française)
+  const copy = new Date(d);
+  const day = copy.getDay(); // 0=Dim, 1=Lun, 2=Mar...
+  const daysSinceMonday = day === 0 ? 6 : day - 1;
+  copy.setDate(copy.getDate() - daysSinceMonday);
+  copy.setHours(0, 0, 0, 0);
+  return copy;
+}
+
 function matchesStatusFilter(p: Prospect, f: StatusFilter): boolean {
   switch (f) {
     case "upcoming": return p.status === "scheduled";
@@ -236,6 +246,11 @@ export function AgendaPage() {
             ))}
           </select>
         </div>
+      )}
+
+      {/* Stats équipe — admin only + mode "Toute l'équipe" */}
+      {currentUser?.role === "admin" && agendaFilter === "all" && (
+        <TeamStatsWidget prospects={distributorFiltered} />
       )}
 
       {/* Filtres */}
@@ -632,5 +647,90 @@ function SmallStatusBtn({ label, onClick }: { label: string; onClick: () => void
     >
       {label}
     </button>
+  );
+}
+
+// ─── Stats équipe cette semaine (admin only, mode "Toute l'équipe") ──────
+function TeamStatsWidget({ prospects }: { prospects: Prospect[] }) {
+  const stats = useMemo(() => {
+    const weekStart = startOfWeek(new Date());
+    const weekEnd = endOfWeek(new Date());
+    const thisWeek = prospects.filter((p) => {
+      try {
+        const d = new Date(p.rdvDate);
+        return d >= weekStart && d <= weekEnd;
+      } catch { return false; }
+    });
+    const total = thisWeek.length;
+    const converted = thisWeek.filter((p) => p.status === "converted").length;
+    const cold = thisWeek.filter((p) => p.status === "cold").length;
+    const noShow = thisWeek.filter((p) => p.status === "no_show").length;
+    const conversionRate = total > 0 ? Math.round((converted / total) * 100) : 0;
+    return { total, converted, cold, noShow, conversionRate };
+  }, [prospects]);
+
+  return (
+    <div
+      style={{
+        background: "var(--ls-surface)",
+        border: "1px solid var(--ls-border)",
+        borderRadius: 14,
+        padding: 18,
+      }}
+    >
+      <div style={{ fontSize: 9, letterSpacing: "2px", textTransform: "uppercase", color: "var(--ls-text-hint)", fontWeight: 500, marginBottom: 14, fontFamily: "'DM Sans', sans-serif" }}>
+        Cette semaine · Toute l'équipe
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12 }}>
+        <StatTile icon="📅" value={stats.total} label="RDV" />
+        <StatTile icon="✓" value={stats.converted} label="Convertis" accent="var(--ls-teal)" />
+        <StatTile icon="🔥" value={stats.cold} label="Froids" accent="var(--ls-gold)" />
+        <StatTile icon="❌" value={stats.noShow} label="No-show" accent="var(--ls-coral)" />
+      </div>
+      <div style={{ marginTop: 14, paddingTop: 14, borderTop: "1px solid var(--ls-border)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <span style={{ fontSize: 12, color: "var(--ls-text-muted)", fontFamily: "'DM Sans', sans-serif" }}>
+          Taux de conversion
+        </span>
+        <span
+          style={{
+            fontFamily: "Syne, sans-serif",
+            fontWeight: 700,
+            fontSize: 18,
+            color: stats.conversionRate >= 40 ? "var(--ls-teal)" : stats.conversionRate >= 20 ? "var(--ls-gold)" : "var(--ls-text-muted)",
+          }}
+        >
+          {stats.conversionRate}%
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function StatTile({ icon, value, label, accent }: { icon: string; value: number; label: string; accent?: string }) {
+  return (
+    <div
+      style={{
+        background: "var(--ls-surface2)",
+        borderRadius: 10,
+        padding: "10px 12px",
+        textAlign: "center",
+      }}
+    >
+      <div style={{ fontSize: 16, marginBottom: 4 }}>{icon}</div>
+      <div
+        style={{
+          fontFamily: "Syne, sans-serif",
+          fontWeight: 700,
+          fontSize: 24,
+          color: accent ?? "var(--ls-text)",
+          lineHeight: 1,
+        }}
+      >
+        {value}
+      </div>
+      <div style={{ fontSize: 11, color: "var(--ls-text-muted)", marginTop: 4, fontFamily: "'DM Sans', sans-serif" }}>
+        {label}
+      </div>
+    </div>
   );
 }
