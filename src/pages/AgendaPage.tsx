@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
@@ -11,7 +11,7 @@ import type { Prospect, ProspectStatus } from "../types/domain";
 import { PROSPECT_STATUS_LABELS } from "../types/domain";
 
 type DateFilter = "today" | "week" | "all";
-type StatusFilter = "upcoming" | "done" | "converted" | "lost_no_show" | "all";
+type StatusFilter = "upcoming" | "done" | "converted" | "cold" | "lost_no_show" | "all";
 
 function startOfDay(d: Date): Date {
   const copy = new Date(d);
@@ -40,6 +40,7 @@ function matchesStatusFilter(p: Prospect, f: StatusFilter): boolean {
     case "upcoming": return p.status === "scheduled";
     case "done": return p.status === "done";
     case "converted": return p.status === "converted";
+    case "cold": return p.status === "cold";
     case "lost_no_show": return p.status === "lost" || p.status === "no_show" || p.status === "cancelled";
     case "all": return true;
   }
@@ -63,6 +64,8 @@ function groupLabel(dateIso: string, today: Date): string {
 
 const GROUP_ORDER = ["Aujourd'hui", "Demain", "Cette semaine", "Plus tard", "Passés"];
 
+const AGENDA_FILTER_KEY = "lorsquad.agenda.filter";
+
 export function AgendaPage() {
   const { prospects, users, currentUser, deleteProspect, updateProspect } = useAppContext();
   const { push: pushToast } = useToast();
@@ -70,18 +73,43 @@ export function AgendaPage() {
 
   const [dateFilter, setDateFilter] = useState<DateFilter>("all");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("upcoming");
+  // Chantier Cold (2026-04-19) : filtre admin par distributeur.
+  // "mine" = RDV du user connecté · "all" = toute l'équipe · "<uuid>" = un distri précis
+  const [agendaFilter, setAgendaFilter] = useState<string>(() => {
+    try {
+      return localStorage.getItem(AGENDA_FILTER_KEY) ?? (currentUser?.role === "admin" ? "mine" : "all");
+    } catch {
+      return currentUser?.role === "admin" ? "mine" : "all";
+    }
+  });
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<Prospect | undefined>(undefined);
   const [detailProspect, setDetailProspect] = useState<Prospect | null>(null);
 
+  useEffect(() => {
+    try { localStorage.setItem(AGENDA_FILTER_KEY, agendaFilter); } catch { /* ignore */ }
+  }, [agendaFilter]);
+
   const now = new Date();
+
+  // Application du filtre distributeur AVANT les autres filtres.
+  // Non-admin : toujours scopé sur son id (RLS s'en charge de toute façon).
+  const distributorFiltered = useMemo(() => {
+    if (!currentUser) return prospects;
+    if (currentUser.role !== "admin") {
+      return prospects.filter((p) => p.distributorId === currentUser.id);
+    }
+    if (agendaFilter === "all") return prospects;
+    if (agendaFilter === "mine") return prospects.filter((p) => p.distributorId === currentUser.id);
+    return prospects.filter((p) => p.distributorId === agendaFilter);
+  }, [prospects, agendaFilter, currentUser]);
 
   const filtered = useMemo(() => {
     const todayStart = startOfDay(now);
     const todayEnd = endOfDay(now);
     const weekEnd = endOfWeek(now);
 
-    return prospects.filter((p) => {
+    return distributorFiltered.filter((p) => {
       if (!matchesStatusFilter(p, statusFilter)) return false;
 
       let d: Date;
@@ -92,7 +120,7 @@ export function AgendaPage() {
       if (dateFilter === "week")  return d >= todayStart && d <= weekEnd;
       return true; // "all"
     });
-  }, [prospects, statusFilter, dateFilter, now]);
+  }, [distributorFiltered, statusFilter, dateFilter, now]);
 
   const grouped = useMemo(() => {
     const map = new Map<string, Prospect[]>();
@@ -146,6 +174,33 @@ export function AgendaPage() {
         </Button>
       </div>
 
+      {/* Dropdown distributeur — admin only */}
+      {currentUser?.role === "admin" && (
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--ls-text-muted)" strokeWidth="1.5">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+            <circle cx="12" cy="7" r="4" />
+          </svg>
+          <label style={{ fontSize: 12, color: "var(--ls-text-muted)", fontFamily: "'DM Sans', sans-serif", fontWeight: 500 }}>
+            Vue :
+          </label>
+          <select
+            value={agendaFilter}
+            onChange={(e) => setAgendaFilter(e.target.value)}
+            className="ls-input-time"
+            style={{ minWidth: 180, padding: "8px 12px" }}
+          >
+            <option value="mine">Mes RDV</option>
+            <option value="all">Toute l'équipe</option>
+            {users.filter((u) => u.active && u.id !== currentUser.id).map((u) => (
+              <option key={u.id} value={u.id}>
+                {u.name} · {u.role === "admin" ? "Admin" : u.role === "referent" ? "Référent" : "Distri"}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
       {/* Filtres */}
       <Card className="space-y-3">
         <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
@@ -166,6 +221,7 @@ export function AgendaPage() {
             { key: "upcoming"    as StatusFilter, label: "À venir" },
             { key: "done"        as StatusFilter, label: "Effectués" },
             { key: "converted"   as StatusFilter, label: "Convertis" },
+            { key: "cold"        as StatusFilter, label: "🔥 Froids" },
             { key: "lost_no_show" as StatusFilter, label: "Perdus/No-show" },
             { key: "all"         as StatusFilter, label: "Tous statuts" },
           ]).map((f) => (
