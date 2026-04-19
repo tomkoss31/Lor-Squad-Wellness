@@ -1357,6 +1357,8 @@ type ProspectRow = {
   distributor_id: string;
   status: string;
   converted_client_id?: string | null;
+  cold_until?: string | null;
+  cold_reason?: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -1375,6 +1377,8 @@ function mapProspectFromDb(row: ProspectRow): Prospect {
     distributorId: row.distributor_id,
     status: row.status as ProspectStatus,
     convertedClientId: row.converted_client_id ?? undefined,
+    coldUntil: row.cold_until ?? undefined,
+    coldReason: row.cold_reason ?? undefined,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -1393,6 +1397,8 @@ function mapProspectToDbUpdates(updates: Partial<Prospect>): Record<string, unkn
   if (updates.distributorId !== undefined) out.distributor_id = updates.distributorId;
   if (updates.status !== undefined) out.status = updates.status;
   if (updates.convertedClientId !== undefined) out.converted_client_id = updates.convertedClientId ?? null;
+  if (updates.coldUntil !== undefined) out.cold_until = updates.coldUntil ?? null;
+  if (updates.coldReason !== undefined) out.cold_reason = updates.coldReason ?? null;
   // updated_at piloté côté SQL à chaque UPDATE : on force côté appli pour tracking UI
   out.updated_at = new Date().toISOString();
   return out;

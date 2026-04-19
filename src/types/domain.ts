@@ -315,7 +315,8 @@ export type ProspectStatus =
   | 'converted'   // devenu client
   | 'lost'        // pas intéressé
   | 'no_show'     // n'est pas venu
-  | 'cancelled';  // RDV annulé
+  | 'cancelled'   // RDV annulé
+  | 'cold';       // à réchauffer plus tard (base froide)
 
 export interface Prospect {
   id: string;
@@ -330,6 +331,8 @@ export interface Prospect {
   distributorId: string;
   status: ProspectStatus;
   convertedClientId?: string;
+  coldUntil?: string;       // ISO — date à partir de laquelle réchauffer
+  coldReason?: string;      // note contextuelle pour se souvenir au moment de réchauffer
   createdAt: string;
   updatedAt: string;
 }
@@ -363,4 +366,5 @@ export const PROSPECT_STATUS_LABELS: Record<ProspectStatus, string> = {
   lost: 'Perdu',
   no_show: 'Absent',
   cancelled: 'Annulé',
+  cold: 'À réchauffer',
 };

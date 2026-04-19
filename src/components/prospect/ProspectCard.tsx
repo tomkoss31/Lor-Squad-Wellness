@@ -26,6 +26,7 @@ const STATUS_COLORS: Record<Prospect["status"], { bg: string; fg: string }> = {
   lost:      { bg: "rgba(251,113,133,0.1)",  fg: "var(--ls-coral)" },
   no_show:   { bg: "rgba(251,113,133,0.1)",  fg: "var(--ls-coral)" },
   cancelled: { bg: "var(--ls-surface2)",     fg: "var(--ls-text-hint)" },
+  cold:      { bg: "color-mix(in srgb, var(--ls-gold) 15%, transparent)", fg: "var(--ls-gold)" },
 };
 
 function formatTime(iso: string): string {
@@ -103,9 +104,10 @@ export function ProspectCard({ prospect, ownerName, showDate = false, onClick }:
               background: statusStyle.bg,
               color: statusStyle.fg,
               fontFamily: "DM Sans, sans-serif",
+              whiteSpace: "nowrap",
             }}
           >
-            {PROSPECT_STATUS_LABELS[prospect.status]}
+            {prospect.status === "cold" ? "🔥 " : ""}{PROSPECT_STATUS_LABELS[prospect.status]}
           </span>
         )}
       </div>
