@@ -38,7 +38,9 @@ export function BottomNav() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-around',
-        padding: '8px 8px 12px',
+        minHeight: 56,
+        // iOS safe-area : bouton home indicator ne touche pas les labels
+        padding: '6px 8px calc(6px + env(safe-area-inset-bottom, 0px))',
       }}
     >
       {NAV_ITEMS.map((item) => {
@@ -47,19 +49,19 @@ export function BottomNav() {
 
         if (item.primary) {
           return (
-            <NavLink key={item.path} to={item.path} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, textDecoration: 'none', marginTop: -20 }}>
-              <div className="bottom-nav-bilan-btn" style={{ width: 52, height: 52, borderRadius: '50%', background: '#C9A84C', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#0B0D11', boxShadow: '0 4px 16px rgba(201,168,76,0.35)' }}>
+            <NavLink key={item.path} to={item.path} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, textDecoration: 'none', marginTop: -18 }}>
+              <div className="bottom-nav-bilan-btn" style={{ width: 48, height: 48, borderRadius: '50%', background: 'var(--ls-gold)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--ls-bg)', boxShadow: '0 4px 14px rgba(201,168,76,0.35)' }}>
                 <span className="bottom-nav-icon" style={{ display: 'inline-flex' }}>{item.icon}</span>
               </div>
-              <span className="bottom-nav-label" style={{ fontSize: 10, color: '#C9A84C', fontFamily: 'Syne, sans-serif', fontWeight: 700 }}>{item.label}</span>
+              <span className="bottom-nav-label" style={{ fontSize: 10, color: 'var(--ls-gold)', fontFamily: 'Syne, sans-serif', fontWeight: 700, letterSpacing: '0.05em' }}>{item.label}</span>
             </NavLink>
           )
         }
 
         return (
-          <NavLink key={item.path} to={item.path} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, textDecoration: 'none', minWidth: 52, color: isActive ? '#C9A84C' : '#4A5068', transition: 'color 0.15s' }}>
+          <NavLink key={item.path} to={item.path} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, textDecoration: 'none', minWidth: 48, color: isActive ? 'var(--ls-gold)' : 'var(--ls-text-hint)', transition: 'color 0.15s' }}>
             <span className="bottom-nav-icon" style={{ display: 'inline-flex' }}>{item.icon}</span>
-            <span className="bottom-nav-label" style={{ fontSize: 10, fontFamily: 'DM Sans, sans-serif', fontWeight: isActive ? 500 : 400 }}>{item.label}</span>
+            <span className="bottom-nav-label" style={{ fontSize: 10, fontFamily: 'DM Sans, sans-serif', fontWeight: isActive ? 500 : 400, letterSpacing: '0.05em' }}>{item.label}</span>
           </NavLink>
         )
       })}

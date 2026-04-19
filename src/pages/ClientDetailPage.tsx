@@ -5,7 +5,6 @@ import { BodyFatInsightCard } from "../components/body-scan/BodyFatInsightCard";
 import { MuscleMassInsightCard } from "../components/body-scan/MuscleMassInsightCard";
 import { BodyScanSnapshotCard } from "../components/body-scan/BodyScanSnapshotCard";
 import { HydrationVisceralInsightCard } from "../components/body-scan/HydrationVisceralInsightCard";
-import { EvolutionChart } from "../components/body-scan/EvolutionChart";
 import { BodyScanRadar } from "../components/body-scan/BodyScanRadar";
 import { HistoryTimeline } from "../components/client/HistoryTimeline";
 import { Button } from "../components/ui/Button";
@@ -463,7 +462,7 @@ export function ClientDetailPage() {
 
       {/* Tab 0: Vue complète — cockpit light */}
       {activeTab === 0 && (
-        <Card className="space-y-5">
+        <Card className="space-y-6">
           <NouveauBilanCTA onClick={() => navigate(`/clients/${client.id}/follow-up/new`)} />
 
           <div className="bodyscan-metrics grid grid-cols-2 gap-3 md:gap-4 xl:grid-cols-4">
@@ -489,7 +488,11 @@ export function ClientDetailPage() {
                   : latestQuestionnaire.objectiveFocus || "Prise de masse"
               }
               hint={client.objective === "weight-loss" ? "Repère cible" : "Cap actuel"}
-              accent="red"
+              accent={
+                client.objective === "weight-loss" && !latestQuestionnaire.targetWeight
+                  ? "muted"
+                  : "red"
+              }
             />
             <MetricTile
               label="Prochain rendez-vous"
@@ -571,11 +574,6 @@ export function ClientDetailPage() {
                 />
               </div>
             </>
-          )}
-
-          {/* Graphique évolution */}
-          {client.assessments.length > 0 && (
-            <EvolutionChart assessments={client.assessments} />
           )}
 
           {/* Lectures détaillées — insights corporels */}
