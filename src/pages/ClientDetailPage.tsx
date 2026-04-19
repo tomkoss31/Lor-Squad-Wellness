@@ -305,6 +305,7 @@ export function ClientDetailPage() {
                 </h1>
                 <LifecycleBadge status={client.lifecycleStatus ?? (client.started ? "active" : "not_started")} />
                 {client.isFragile && <FragileBadge />}
+                {client.freeFollowUp && <FreeFollowUpBadge />}
                 <StatusBadge
                   label={client.objective === "sport" ? "Sport" : "Perte de poids"}
                   tone={client.objective === "sport" ? "green" : "blue"}
@@ -1261,14 +1262,60 @@ function FragileBadge() {
   );
 }
 
+function FreeFollowUpBadge() {
+  return (
+    <span
+      title="Suivi libre — client actif mais hors agenda automatique"
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 4,
+        padding: "4px 11px",
+        borderRadius: 12,
+        fontSize: 11,
+        fontWeight: 600,
+        background: "color-mix(in srgb, var(--ls-gold) 12%, transparent)",
+        color: "var(--ls-gold)",
+        fontFamily: "DM Sans, sans-serif",
+      }}
+    >
+      ✦ Suivi libre
+    </span>
+  );
+}
+
 function LifecycleControlCard({ client }: { client: Client }) {
-  const { setClientLifecycleStatus, setClientFragileFlag } = useAppContext();
+  const { setClientLifecycleStatus, setClientFragileFlag, setClientFreeFollowUp } = useAppContext();
+  const { push: pushToast } = useToast();
   const currentStatus: LifecycleStatus = client.lifecycleStatus ?? (client.started ? "active" : "not_started");
   const [selected, setSelected] = useState<LifecycleStatus>(currentStatus);
   const [saving, setSaving] = useState(false);
   const [feedback, setFeedback] = useState<{ type: "ok" | "err"; msg: string } | null>(null);
   const [fragileSaving, setFragileSaving] = useState(false);
+  const [freeSaving, setFreeSaving] = useState(false);
   const isFragile = client.isFragile ?? false;
+  const isFreeFollowUp = client.freeFollowUp ?? false;
+
+  async function handleToggleFreeFollowUp() {
+    setFreeSaving(true);
+    try {
+      await setClientFreeFollowUp(client.id, !isFreeFollowUp);
+      pushToast({
+        tone: "success",
+        title: isFreeFollowUp ? "Suivi libre désactivé" : "Suivi libre activé",
+        message: isFreeFollowUp
+          ? "Le client est de nouveau suivi dans l'agenda automatique."
+          : "Le client reste actif mais n'apparaîtra plus dans l'agenda ni les relances.",
+      });
+    } catch (err) {
+      pushToast(buildSupabaseErrorToast(
+        err,
+        "Impossible de modifier le mode de suivi."
+      ));
+    } finally {
+      setFreeSaving(false);
+    }
+  }
 
   async function handleSaveStatus() {
     if (selected === currentStatus) return;
@@ -1423,6 +1470,58 @@ function LifecycleControlCard({ client }: { client: Client }) {
           }}
         >
           {fragileSaving ? "..." : isFragile ? "Retirer" : "Marquer"}
+        </button>
+      </div>
+
+      {/* Sujet C — Mode de suivi (suivi libre / standard) */}
+      <div
+        style={{
+          marginTop: 10,
+          padding: "12px 14px",
+          borderRadius: 12,
+          background: isFreeFollowUp
+            ? "color-mix(in srgb, var(--ls-gold) 6%, transparent)"
+            : "var(--ls-surface2)",
+          border: isFreeFollowUp
+            ? "1px solid color-mix(in srgb, var(--ls-gold) 25%, transparent)"
+            : "1px solid var(--ls-border)",
+          display: "flex",
+          alignItems: "center",
+          gap: 10,
+        }}
+      >
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 13, fontWeight: 600, color: "var(--ls-text)" }}>
+            {isFreeFollowUp ? "✦ Suivi libre activé" : "Activer le suivi libre"}
+          </div>
+          <div style={{ fontSize: 11, color: "var(--ls-text-muted)", marginTop: 2, lineHeight: 1.5 }}>
+            {isFreeFollowUp
+              ? "Le client est hors agenda auto — pas de relance, pas de notif. Géré à la demande."
+              : "À activer pour les clients fidèles sans besoin de rappel auto (pas de RDV, pas de relance)."}
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={() => void handleToggleFreeFollowUp()}
+          disabled={freeSaving}
+          style={{
+            padding: "7px 14px",
+            borderRadius: 9,
+            border: isFreeFollowUp
+              ? "1px solid var(--ls-border)"
+              : "1px solid color-mix(in srgb, var(--ls-gold) 30%, transparent)",
+            background: isFreeFollowUp
+              ? "transparent"
+              : "color-mix(in srgb, var(--ls-gold) 10%, transparent)",
+            color: isFreeFollowUp ? "var(--ls-text-muted)" : "var(--ls-gold)",
+            fontSize: 12,
+            fontWeight: 600,
+            cursor: freeSaving ? "wait" : "pointer",
+            fontFamily: "DM Sans, sans-serif",
+            flexShrink: 0,
+          }}
+        >
+          {freeSaving ? "..." : isFreeFollowUp ? "Désactiver" : "Activer"}
         </button>
       </div>
     </Card>
