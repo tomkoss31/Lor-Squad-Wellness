@@ -2030,3 +2030,109 @@ button, a, [role="button"] { min-height: 44px; }
     padding: 12px;
   }
 }
+
+/* ─────────────────────────────────────────────────────────────────────── */
+/* UX Polish Bilan v1 (2026-04-19) — Pills sélectionnables + inputs time   */
+/* + hiérarchie typo renforcée. Classes réutilisables pour tout le bilan.  */
+/* ─────────────────────────────────────────────────────────────────────── */
+
+/* Pills sélectionnables (ChoiceGroup, préréglages, type de suite, etc.) */
+.ls-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 999px;
+  border: 1.5px solid var(--ls-border);
+  background: transparent;
+  color: var(--ls-text);
+  font-family: "DM Sans", sans-serif;
+  font-size: 13px;
+  font-weight: 400;
+  cursor: pointer;
+  transition: border-color 150ms ease-out, background 150ms ease-out, color 150ms ease-out;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.ls-pill:hover:not(.ls-pill--selected):not(:disabled) {
+  border-color: var(--ls-gold);
+  background: color-mix(in srgb, var(--ls-gold) 8%, transparent);
+  color: var(--ls-text);
+}
+.ls-pill:focus-visible {
+  outline: none;
+  border-color: var(--ls-gold);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ls-gold) 22%, transparent);
+}
+.ls-pill--selected {
+  border-color: transparent;
+  background: var(--ls-gold);
+  color: var(--ls-bg);
+  font-weight: 500;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08);
+}
+.ls-pill--selected:hover:not(:disabled) {
+  background: var(--ls-gold);
+}
+.ls-pill__check {
+  display: inline-flex;
+  width: 14px;
+  height: 14px;
+}
+.ls-pill:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* Inputs time affirmés — bordure + halo focus */
+.ls-input-time {
+  border: 1.5px solid var(--ls-border);
+  background: var(--ls-surface);
+  color: var(--ls-text);
+  padding: 11px 14px;
+  border-radius: 10px;
+  font-family: "DM Sans", sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  transition: border-color 150ms ease-out, box-shadow 150ms ease-out;
+  outline: none;
+}
+.ls-input-time:hover {
+  border-color: color-mix(in srgb, var(--ls-teal) 40%, var(--ls-border));
+}
+.ls-input-time:focus {
+  outline: none;
+  border-color: var(--ls-teal);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ls-teal) 18%, transparent);
+}
+/* Icône horloge native (Chrome/Edge) */
+.ls-input-time::-webkit-calendar-picker-indicator {
+  filter: invert(0) brightness(1) sepia(0.5) hue-rotate(140deg) saturate(5);
+  opacity: 0.85;
+  cursor: pointer;
+}
+
+/* Hiérarchie typographique des blocs de bilan */
+.ls-block-title {
+  font-family: "Syne", sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ls-text);
+  margin: 0 0 6px 0;
+  letter-spacing: -0.01em;
+}
+.ls-block-desc {
+  font-family: "DM Sans", sans-serif;
+  font-size: 13px;
+  color: var(--ls-text-muted);
+  line-height: 1.5;
+  margin: 0 0 20px 0;
+}
+.ls-field-label {
+  display: block;
+  font-family: "DM Sans", sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ls-text);
+  margin-bottom: 8px;
+}

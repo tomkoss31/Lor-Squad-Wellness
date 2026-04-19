@@ -473,22 +473,27 @@ export function EditInitialAssessmentPage() {
               <MetricField label="Poids cible (kg)" value={questionnaire.targetWeight ?? 0} onChange={(value) => updateQuestionnaire("targetWeight", Number(value))} />
               <MetricField label="Motivation / 10" value={questionnaire.motivation} onChange={(value) => updateQuestionnaire("motivation", Number(value))} />
               <div className="space-y-2 md:col-span-2">
-                <label className="text-sm font-medium text-[var(--ls-text-muted)]">Horizon / delai</label>
+                <label className="ls-field-label">Horizon / delai</label>
                 <div className="flex flex-wrap gap-2">
-                  {timelineOptions.map((option) => (
-                    <button
-                      key={option}
-                      type="button"
-                      onClick={() => updateQuestionnaire("desiredTimeline", option)}
-                      className={`rounded-full px-4 py-2 text-sm font-medium transition ${
-                        questionnaire.desiredTimeline === option
-                          ? "bg-white text-[#0B0D11]"
-                          : "border border-white/10 bg-[var(--ls-surface2)] text-[var(--ls-text)]"
-                      }`}
-                    >
-                      {option}
-                    </button>
-                  ))}
+                  {timelineOptions.map((option) => {
+                    const isActive = questionnaire.desiredTimeline === option;
+                    return (
+                      <button
+                        key={option}
+                        type="button"
+                        onClick={() => updateQuestionnaire("desiredTimeline", option)}
+                        className={`ls-pill${isActive ? " ls-pill--selected" : ""}`}
+                        aria-pressed={isActive}
+                      >
+                        {isActive && (
+                          <svg className="ls-pill__check" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="20 6 9 17 4 12" />
+                          </svg>
+                        )}
+                        {option}
+                      </button>
+                    );
+                  })}
                 </div>
                 <input
                   value={timelineOptions.includes(questionnaire.desiredTimeline) ? "" : questionnaire.desiredTimeline}
@@ -658,12 +663,13 @@ function MetricField({
 }) {
   return (
     <div className="space-y-2">
-      <label className="text-sm font-medium text-[var(--ls-text-muted)]">{label}</label>
+      <label className="ls-field-label">{label}</label>
       <input
         type={type}
         step={type === "number" ? "0.1" : undefined}
         value={value}
         onChange={(event) => onChange(event.target.value)}
+        className={type === "time" ? "ls-input-time" : undefined}
       />
     </div>
   );
