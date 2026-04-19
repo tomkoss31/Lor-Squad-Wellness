@@ -2360,13 +2360,27 @@ function ChoiceGroup({
 }) {
   return (
     <div className="space-y-2">
-      <label className="text-sm font-medium text-[var(--ls-text-muted)]">{label}</label>
+      <label className="ls-field-label">{label}</label>
       <div className="flex flex-wrap gap-2">
-        {options.map((option) => (
-          <button key={option} type="button" onClick={() => onChange(option)} className={`rounded-full px-4 py-2 text-sm font-medium transition ${value === option ? "bg-[#C9A84C] text-[#0B0D11] font-semibold" : "border border-white/10 bg-[var(--ls-surface2)] text-[var(--ls-text-muted)] hover:text-[var(--ls-text)] hover:border-white/20"}`}>
-            {formatOption ? formatOption(option) : option}
-          </button>
-        ))}
+        {options.map((option) => {
+          const isSelected = value === option;
+          return (
+            <button
+              key={option}
+              type="button"
+              onClick={() => onChange(option)}
+              className={`ls-pill${isSelected ? " ls-pill--selected" : ""}`}
+              aria-pressed={isSelected}
+            >
+              {isSelected && (
+                <svg className="ls-pill__check" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              )}
+              {formatOption ? formatOption(option) : option}
+            </button>
+          );
+        })}
       </div>
     </div>
   );
@@ -2516,22 +2530,27 @@ function TimelineChoiceField({
 
   return (
     <div className="space-y-3">
-      <label className="text-sm font-medium text-[var(--ls-text-muted)]">{label}</label>
+      <label className="ls-field-label">{label}</label>
       <div className="flex flex-wrap gap-2">
-        {options.map((option) => (
-          <button
-            key={option}
-            type="button"
-            onClick={() => onChange(option)}
-            className={`rounded-full px-4 py-2 text-sm font-medium transition ${
-              value === option
-                ? "bg-white text-[#0B0D11]"
-                : "border border-white/10 bg-[var(--ls-surface2)] text-[var(--ls-text)]"
-            }`}
-          >
-            {option}
-          </button>
-        ))}
+        {options.map((option) => {
+          const isActive = value === option;
+          return (
+            <button
+              key={option}
+              type="button"
+              onClick={() => onChange(option)}
+              className={`ls-pill${isActive ? " ls-pill--selected" : ""}`}
+              aria-pressed={isActive}
+            >
+              {isActive && (
+                <svg className="ls-pill__check" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              )}
+              {option}
+            </button>
+          );
+        })}
         <button
           type="button"
           onClick={() => {
@@ -2539,12 +2558,15 @@ function TimelineChoiceField({
               onChange("");
             }
           }}
-          className={`rounded-full px-4 py-2 text-sm font-medium transition ${
-            isCustom
-              ? "bg-white text-[#0B0D11]"
-              : "border border-dashed border-white/10 bg-[var(--ls-surface2)] text-[var(--ls-text)]"
-          }`}
+          className={`ls-pill${isCustom ? " ls-pill--selected" : ""}`}
+          aria-pressed={isCustom}
+          style={!isCustom ? { borderStyle: "dashed" } : undefined}
         >
+          {isCustom && (
+            <svg className="ls-pill__check" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
+          )}
           Choix libre
         </button>
       </div>
