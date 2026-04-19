@@ -498,9 +498,9 @@ export function ClientDetailPage() {
             />
             <MetricTile
               label="Prochain rendez-vous"
-              value={formatDateTime(activeFollowUp.dueDate)}
-              hint="Suite déjà posée"
-              accent="blue"
+              value={activeFollowUp ? formatDateTime(activeFollowUp.dueDate) : "Non planifié"}
+              hint={activeFollowUp ? "Suite déjà posée" : "Client inactif ou en pause"}
+              accent={activeFollowUp ? "blue" : "muted"}
             />
           </div>
 
