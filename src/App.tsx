@@ -3,6 +3,7 @@ import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { ProtectedRoute, PublicRoute, RoleRoute } from "./components/auth/RouteGuards";
 import { AppLayout } from "./components/layout/AppLayout";
 import { ErrorBoundary } from "./components/ErrorBoundary";
+import { ToastHost } from "./components/ui/ToastHost";
 
 const DashboardPage = lazy(() =>
   import("./pages/DashboardPage").then((module) => ({
@@ -151,6 +152,7 @@ export default function App() {
         </Routes>
         </ErrorBoundary>
       </Suspense>
+      <ToastHost />
     </BrowserRouter>
   );
 }

@@ -1334,6 +1334,7 @@ export function AppProvider({ children }: PropsWithChildren) {
         setClientMessages(prev => prev.filter(m => m.id !== id));
       },
       updateClientInfo: async (clientId: string, data: { phone?: string; email?: string; city?: string }) => {
+        // Site 4 du durcissement audit L1 : on lève l'erreur au caller + toast explicite.
         if (storageMode === 'supabase') {
           const sb = await getSupabaseClient();
           if (sb) {
@@ -1341,7 +1342,10 @@ export function AppProvider({ children }: PropsWithChildren) {
             if (data.phone !== undefined) updateData.phone = data.phone;
             if (data.email !== undefined) updateData.email = data.email;
             if (data.city !== undefined) updateData.city = data.city;
-            await sb.from('clients').update(updateData).eq('id', clientId);
+            const { error } = await sb.from('clients').update(updateData).eq('id', clientId);
+            if (error) {
+              throw error;
+            }
             await refreshRemoteData(currentUser);
           }
         } else {
@@ -1349,10 +1353,14 @@ export function AppProvider({ children }: PropsWithChildren) {
         }
       },
       updateFollowUpStatus: async (followUpId: string, status: 'scheduled' | 'pending' | 'completed' | 'dismissed') => {
+        // Site 5 du durcissement audit L1 : on lève l'erreur au caller + toast explicite.
         if (storageMode === 'supabase') {
           const sb = await getSupabaseClient();
           if (sb) {
-            await sb.from('follow_ups').update({ status }).eq('id', followUpId);
+            const { error } = await sb.from('follow_ups').update({ status }).eq('id', followUpId);
+            if (error) {
+              throw error;
+            }
             await refreshRemoteData(currentUser);
           }
         } else {
