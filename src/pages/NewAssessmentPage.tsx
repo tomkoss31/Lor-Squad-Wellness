@@ -2588,11 +2588,9 @@ function TimelineChoiceField({
 function SectionBlock({ title, description, children }: { title: string; description: string; children: ReactNode; }) {
   return (
     <div className="rounded-[24px] bg-[var(--ls-surface2)] p-5">
-      <div className="space-y-1">
-        <p className="text-lg font-semibold text-white">{title}</p>
-        <p className="text-sm leading-6 text-[var(--ls-text-muted)]">{description}</p>
-      </div>
-      <div className="mt-4 space-y-4">{children}</div>
+      <h3 className="ls-block-title">{title}</h3>
+      <p className="ls-block-desc">{description}</p>
+      <div className="space-y-4">{children}</div>
     </div>
   );
 }
