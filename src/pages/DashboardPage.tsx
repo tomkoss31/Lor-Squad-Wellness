@@ -197,6 +197,20 @@ export function DashboardPage() {
   const prospectsTodayScheduled = prospectsToday.filter((p) => p.status === 'scheduled');
   const prospectsTodayDone = prospectsToday.filter((p) => p.status === 'done' || p.status === 'converted');
 
+  // Chantier Cold : prospects à réchauffer (cold_until <= maintenant)
+  const coldToWarm = useMemo(() => {
+    const nowTime = Date.now();
+    return prospects
+      .filter((p) => {
+        if (p.status !== 'cold') return false;
+        if (!p.coldUntil) return false;
+        try {
+          return new Date(p.coldUntil).getTime() <= nowTime;
+        } catch { return false; }
+      })
+      .sort((a, b) => new Date(a.coldUntil ?? 0).getTime() - new Date(b.coldUntil ?? 0).getTime());
+  }, [prospects]);
+
   return (
     <div style={{ padding: "clamp(16px, 4vw, 28px)", maxWidth: 1200, margin: "0 auto", display: "flex", flexDirection: "column", gap: 20 }}>
       {/* HEADER */}
@@ -312,6 +326,15 @@ export function DashboardPage() {
             ))}
           </div>
         </div>
+      )}
+
+      {/* BLOC À RÉCHAUFFER (Chantier Cold 2026-04-19) */}
+      {coldToWarm.length > 0 && (
+        <ColdToWarmWidget
+          items={coldToWarm.slice(0, 5)}
+          total={coldToWarm.length}
+          onOpenAgenda={() => navigate("/agenda")}
+        />
       )}
 
       {/* BLOC AGENDA PROSPECTS DU JOUR */}
@@ -672,6 +695,94 @@ function ProspectsTodayWidget({
           ))}
         </div>
       )}
+    </div>
+  );
+}
+
+// ─── Widget À réchauffer (Chantier Cold 2026-04-19) ─────────────────────
+function ColdToWarmWidget({
+  items,
+  total,
+  onOpenAgenda,
+}: {
+  items: Prospect[];
+  total: number;
+  onOpenAgenda: () => void;
+}) {
+  function formatRelative(iso?: string): string {
+    if (!iso) return "";
+    try {
+      const diff = Date.now() - new Date(iso).getTime();
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+      if (days < 1) return "aujourd'hui";
+      if (days < 7) return `il y a ${days} j`;
+      if (days < 30) return `il y a ${Math.floor(days / 7)} sem`;
+      if (days < 365) return `il y a ${Math.floor(days / 30)} mois`;
+      return `il y a ${Math.floor(days / 365)} an${Math.floor(days / 365) > 1 ? "s" : ""}`;
+    } catch { return ""; }
+  }
+
+  return (
+    <div
+      style={{
+        background: "var(--ls-surface)",
+        border: "1px solid color-mix(in srgb, var(--ls-gold) 30%, transparent)",
+        borderLeft: "3px solid var(--ls-gold)",
+        borderRadius: 14,
+        padding: 18,
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12, flexWrap: "wrap", gap: 8 }}>
+        <div>
+          <div style={{ fontSize: 9, letterSpacing: "2px", textTransform: "uppercase", color: "var(--ls-gold)", fontWeight: 600, marginBottom: 4 }}>
+            🔥 À RÉCHAUFFER
+          </div>
+          <div style={{ fontFamily: "Syne, sans-serif", fontWeight: 800, fontSize: 17, color: "var(--ls-text)" }}>
+            {total} prospect{total > 1 ? "s" : ""} à relancer aujourd'hui
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={onOpenAgenda}
+          style={{
+            padding: "7px 14px", border: "1px solid var(--ls-border)",
+            background: "transparent", color: "var(--ls-text-muted)",
+            borderRadius: 9, fontSize: 11, cursor: "pointer",
+            fontFamily: "DM Sans, sans-serif",
+          }}
+        >
+          Voir tout →
+        </button>
+      </div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+        {items.map((p) => (
+          <div
+            key={p.id}
+            style={{
+              display: "flex", alignItems: "center", gap: 12,
+              padding: "8px 12px",
+              borderRadius: 10,
+              background: "var(--ls-surface2)",
+              fontSize: 13,
+              fontFamily: "DM Sans, sans-serif",
+            }}
+          >
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ color: "var(--ls-text)", fontWeight: 500 }}>
+                {p.firstName} {p.lastName}
+              </div>
+              {p.coldReason && (
+                <div style={{ fontSize: 11, color: "var(--ls-text-muted)", marginTop: 2, fontStyle: "italic", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  « {p.coldReason} »
+                </div>
+              )}
+            </div>
+            <div style={{ fontSize: 11, color: "var(--ls-text-hint)", whiteSpace: "nowrap" }}>
+              {formatRelative(p.rdvDate)}
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
