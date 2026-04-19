@@ -35,7 +35,9 @@
       "Bash(grep -n \"function MetricField\" src/pages/NewFollowUpPage.tsx src/components/ui/*.tsx)",
       "Bash(ls src/App.tsx)",
       "Bash(ls src/main.tsx src/*.tsx)",
-      "Bash(gh pr create --base main --head claude/focused-pike --title 'Récap backup hebdo — email dimanche + derniers fixes' --body 'Merge des derniers commits sur main : *)"
+      "Bash(gh pr create --base main --head claude/focused-pike --title 'Récap backup hebdo — email dimanche + derniers fixes' --body 'Merge des derniers commits sur main : *)",
+      "Bash(git add *)",
+      "Bash(git commit *)"
     ]
   }
 }

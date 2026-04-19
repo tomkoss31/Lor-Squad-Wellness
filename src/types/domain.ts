@@ -35,6 +35,14 @@ export type DecisionClient = "partant" | "a_rassurer" | "a_confirmer";
 export type TypeDeSuite = "rdv_fixe" | "message_rappel" | "relance_douce";
 export type MessageALaisser = "simple" | "progressif" | "cadre_clair";
 
+// ─── Petit-déjeuner story (Chantier 6) ─────────────────────────────────
+export interface BreakfastAnalysis {
+  sucres: number;       // 0-100
+  proteines: number;    // 0-100
+  hydratation: number;  // 0-100
+  fibres: number;       // 0-100
+}
+
 export type Objective = "weight-loss" | "sport";
 
 export type ProgramCategory = "weight-loss" | "sport";
@@ -136,6 +144,8 @@ export interface AssessmentQuestionnaire {
   desiredTimeline: string;
   recommendations: RecommendationLead[];
   recommendationsContacted: boolean;
+  // Étape 9 story petit-déjeuner (Chantier 6)
+  breakfastAnalysis?: BreakfastAnalysis;
 }
 
 export interface AssessmentRecord {
