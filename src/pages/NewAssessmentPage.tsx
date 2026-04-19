@@ -745,6 +745,11 @@ export function NewAssessmentPage() {
     // Programme optionnel — pas de validation bloquante
 
     const assessmentDate = form.assessmentDate || getCurrentDateTimeValue();
+    // Sujet C — "Suivi libre" : client actif mais hors agenda. La colonne
+    // clients.next_follow_up est NOT NULL dans le schema, on y met donc une
+    // date neutre (J+14) jamais affichée à l'utilisateur (masquée par
+    // getClientActiveFollowUp / ClientsPage / DistributorPortfolio).
+    const isFreeFollowUp = form.typeDeSuite === "suivi_libre";
     const nextFollowUp = serializeDateTimeForStorage(
       form.nextFollowUp || getDefaultNextFollowUpDateTime(),
       10
@@ -820,7 +825,8 @@ export function NewAssessmentPage() {
           (startsImmediately
             ? "Nouveau client cree depuis le bilan initial. La suite est déjà fixee."
             : "Bilan enregistre sans demarrage. Une relance est a prevoir."),
-        afterAssessmentAction: form.afterAssessmentAction
+        afterAssessmentAction: form.afterAssessmentAction,
+        freeFollowUp: isFreeFollowUp
       });
 
       setSaveError("");
@@ -1605,12 +1611,20 @@ export function NewAssessmentPage() {
                 />
                 <ChoiceGroup
                   label="Type de suite"
-                  value={form.typeDeSuite === "rdv_fixe" ? "Rendez-vous fixe" : form.typeDeSuite === "message_rappel" ? "Message de rappel" : form.typeDeSuite === "relance_douce" ? "Relance douce" : ""}
-                  options={["Rendez-vous fixe", "Message de rappel", "Relance douce"]}
+                  value={
+                    form.typeDeSuite === "rdv_fixe" ? "Rendez-vous fixe" :
+                    form.typeDeSuite === "message_rappel" ? "Message de rappel" :
+                    form.typeDeSuite === "relance_douce" ? "Relance douce" :
+                    form.typeDeSuite === "suivi_libre" ? "Suivi libre" : ""
+                  }
+                  options={["Rendez-vous fixe", "Message de rappel", "Relance douce", "Suivi libre"]}
                   onChange={(v) =>
                     update(
                       "typeDeSuite",
-                      v === "Rendez-vous fixe" ? "rdv_fixe" : v === "Message de rappel" ? "message_rappel" : "relance_douce"
+                      v === "Rendez-vous fixe" ? "rdv_fixe" :
+                      v === "Message de rappel" ? "message_rappel" :
+                      v === "Relance douce" ? "relance_douce" :
+                      "suivi_libre"
                     )
                   }
                 />
@@ -1629,12 +1643,30 @@ export function NewAssessmentPage() {
               <p className="text-[11px] text-[var(--ls-text-muted)]">
                 Ce choix affecte le statut du client dans ta base (actif / pas démarré / fragile).
               </p>
+              {form.typeDeSuite === "suivi_libre" && (
+                <div
+                  style={{
+                    padding: "10px 14px",
+                    borderRadius: 12,
+                    background: "color-mix(in srgb, var(--ls-gold) 8%, transparent)",
+                    border: "1px solid color-mix(in srgb, var(--ls-gold) 25%, transparent)",
+                    fontSize: 12,
+                    color: "var(--ls-text)",
+                    lineHeight: 1.5,
+                  }}
+                >
+                  <strong style={{ color: "var(--ls-gold)" }}>✦ Suivi libre sélectionné.</strong>{" "}
+                  Ce client sera actif mais sans rappel automatique dans ton agenda.
+                  Tu pourras le rebasculer en suivi planifié depuis sa fiche (onglet Actions → Cycle de vie).
+                </div>
+              )}
               <div className="grid gap-4 md:grid-cols-2">
                 <Field
-                  label="Prochain rendez-vous"
+                  label={form.typeDeSuite === "suivi_libre" ? "Prochain rendez-vous (facultatif)" : "Prochain rendez-vous"}
                   type="datetime-local"
                   value={form.nextFollowUp}
                   onChange={(v) => update("nextFollowUp", v)}
+                  disabled={form.typeDeSuite === "suivi_libre"}
                 />
                 <AreaField
                   label="Commentaire libre"
@@ -2090,21 +2122,29 @@ function Field({
   value,
   onChange,
   type = "text",
-  step
+  step,
+  disabled = false
 }: {
   label: string;
   value: string | number;
   onChange: (value: string) => void;
   type?: string;
   step?: string;
+  disabled?: boolean;
 }) {
   return (
-    <div className="space-y-2">
+    <div className="space-y-2" style={disabled ? { opacity: 0.5 } : undefined}>
       <label className="text-sm font-medium text-[var(--ls-text-muted)]">{label}</label>
       {type === "number" ? (
         <DecimalInput value={Number(value) || 0} onChange={onChange} step={step} />
       ) : (
-        <input type={type} step={step} value={value} onChange={(event) => onChange(event.target.value)} />
+        <input
+          type={type}
+          step={step}
+          value={value}
+          disabled={disabled}
+          onChange={(event) => onChange(event.target.value)}
+        />
       )}
     </div>
   );

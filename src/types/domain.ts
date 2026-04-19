@@ -32,7 +32,7 @@ export const isActiveLifecycle = (s: LifecycleStatus): boolean =>
 
 // ─── Étape 13 du bilan — choix structurés ───────────────────────────────
 export type DecisionClient = "partant" | "a_rassurer" | "a_confirmer";
-export type TypeDeSuite = "rdv_fixe" | "message_rappel" | "relance_douce";
+export type TypeDeSuite = "rdv_fixe" | "message_rappel" | "relance_douce" | "suivi_libre";
 export type MessageALaisser = "simple" | "progressif" | "cadre_clair";
 
 // ─── Petit-déjeuner story (Chantier 6) ─────────────────────────────────

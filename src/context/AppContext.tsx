@@ -128,6 +128,7 @@ interface AppContextValue {
     followUpStatus: FollowUp["status"];
     notes: string;
     afterAssessmentAction?: "started" | "pending";
+    freeFollowUp?: boolean;
   }) => Promise<string>;
   deleteClient: (clientId: string) => Promise<void>;
   addFollowUpAssessment: (
@@ -540,6 +541,7 @@ export function AppProvider({ children }: PropsWithChildren) {
     followUpStatus: FollowUp["status"];
     notes: string;
     afterAssessmentAction?: "started" | "pending";
+    freeFollowUp?: boolean;
   }) {
     const clientId = await createSupabaseClientWithInitialAssessment(payload);
     await refreshRemoteData(currentUser);
