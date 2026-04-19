@@ -992,7 +992,7 @@ function FollowUpChoiceGroup({
 }) {
   return (
     <div className="space-y-3">
-      <p className="text-sm font-medium text-[var(--ls-text)]">{label}</p>
+      <p className="ls-field-label">{label}</p>
       <div className="flex flex-wrap gap-3">
         {options.map((option) => {
           const isActive = option === value;
@@ -1002,12 +1002,15 @@ function FollowUpChoiceGroup({
               key={option}
               type="button"
               onClick={() => onChange(option)}
-              className={`inline-flex min-h-[44px] items-center rounded-full border px-5 py-2.5 text-[14px] font-semibold transition duration-200 ${
-                isActive
-                  ? "border-white/20 bg-[#C9A84C] text-[#0B0D11] shadow-[0_8px_24px_rgba(201,168,76,0.22)]"
-                  : "border-white/10 bg-[var(--ls-surface2)] text-[#C8D2E1] hover:-translate-y-[1px] hover:border-white/14 hover:bg-[var(--ls-surface2)] hover:shadow-[0_10px_22px_rgba(0,0,0,0.14)]"
-              }`}
+              className={`ls-pill${isActive ? " ls-pill--selected" : ""}`}
+              style={{ minHeight: 44 }}
+              aria-pressed={isActive}
             >
+              {isActive && (
+                <svg className="ls-pill__check" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              )}
               {option}
             </button>
           );
