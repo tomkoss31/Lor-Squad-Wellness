@@ -1,0 +1,20 @@
+{
+  "date": "2026-04-17",
+  "tables": {
+    "users": 7,
+    "clients": 37,
+    "assessments": 127,
+    "follow_ups": 37,
+    "activity_logs": -1,
+    "pv_client_products": 81,
+    "pv_transactions": 44,
+    "client_recaps": 15,
+    "client_evolution_reports": 7,
+    "client_messages": 0,
+    "push_subscriptions": 1,
+    "client_app_accounts": 0,
+    "client_referrals": 0,
+    "rdv_change_requests": 0
+  },
+  "total": 356
+}

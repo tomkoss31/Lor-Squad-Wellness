@@ -16,7 +16,6 @@ export function UsersPage() {
     clients,
     followUps,
     currentUser,
-    storageMode,
     createUserAccess,
     repairUserAccess,
     updateUserAccess,
@@ -628,11 +627,9 @@ export function UsersPage() {
 
               <Button className="w-full">Réparer ce profil</Button>
 
-              {storageMode === "supabase" ? (
-                <div className="rounded-[20px] bg-[rgba(45,212,191,0.1)] px-4 py-4 text-sm leading-7 text-[var(--ls-text)]">
-                  Si le compte existe dans Authentication mais pas ici, répare-le depuis ce bloc.
-                </div>
-              ) : null}
+              <div className="rounded-[20px] bg-[rgba(45,212,191,0.1)] px-4 py-4 text-sm leading-7 text-[var(--ls-text)]">
+                Si le compte existe dans Authentication mais pas ici, répare-le depuis ce bloc.
+              </div>
             </form>
           </div>
         )}
