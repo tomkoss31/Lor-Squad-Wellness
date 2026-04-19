@@ -463,7 +463,7 @@ export function ClientDetailPage() {
 
       {/* Tab 0: Vue complète — cockpit light */}
       {activeTab === 0 && (
-        <Card className="space-y-5">
+        <Card className="space-y-6">
           <NouveauBilanCTA onClick={() => navigate(`/clients/${client.id}/follow-up/new`)} />
 
           <div className="bodyscan-metrics grid grid-cols-2 gap-3 md:gap-4 xl:grid-cols-4">
@@ -489,7 +489,11 @@ export function ClientDetailPage() {
                   : latestQuestionnaire.objectiveFocus || "Prise de masse"
               }
               hint={client.objective === "weight-loss" ? "Repère cible" : "Cap actuel"}
-              accent="red"
+              accent={
+                client.objective === "weight-loss" && !latestQuestionnaire.targetWeight
+                  ? "muted"
+                  : "red"
+              }
             />
             <MetricTile
               label="Prochain rendez-vous"
