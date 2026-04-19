@@ -384,10 +384,12 @@ export function ClientsPage() {
             // Fix bug B (2026-04-19) : masquer la date next_follow_up pour les
             // clients stopped/lost/paused — sinon on continue d'afficher une date
             // bidon (laissée stockée en DB) qui perturbe la lecture de l'agenda.
+            // Sujet C : idem pour les clients en suivi libre (freeFollowUp=true).
             const hideFollowUp =
               client.lifecycleStatus === 'stopped'
               || client.lifecycleStatus === 'lost'
-              || client.lifecycleStatus === 'paused';
+              || client.lifecycleStatus === 'paused'
+              || client.freeFollowUp === true;
             const nextFollowUp = hideFollowUp ? undefined : client.nextFollowUp;
             const statusInfo = getClientStatusInfo(client, nextFollowUp);
             const avatar = owner ? getOwnerAvatarColors(owner.role) : { bg: "var(--ls-surface2)", text: "var(--ls-text-muted)" };

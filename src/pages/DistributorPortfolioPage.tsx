@@ -225,10 +225,12 @@ function ClientRow({ client, followUps }: { client: Client; followUps: FollowUp[
   const activeFollowUp = getClientActiveFollowUp(client, followUps);
   // Fix bug B : si activeFollowUp est null (client stopped/lost/paused), on
   // ne doit PAS retomber sur client.nextFollowUp qui contient la date stale.
+  // Sujet C : idem pour les clients en suivi libre (freeFollowUp=true).
   const isLifecycleHidden =
     client.lifecycleStatus === 'stopped'
     || client.lifecycleStatus === 'lost'
-    || client.lifecycleStatus === 'paused';
+    || client.lifecycleStatus === 'paused'
+    || client.freeFollowUp === true;
   const nextDate = isLifecycleHidden
     ? null
     : activeFollowUp?.dueDate ?? client.nextFollowUp ?? null;

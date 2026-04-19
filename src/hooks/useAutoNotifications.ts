@@ -52,10 +52,16 @@ export function useAutoNotifications() {
     const metrics = getPortfolioMetrics(currentUser, clients, followUps, users, 'personal')
     const now = new Date()
 
-    // Lifecycle filter — on exclut les clients morts/en pause des notifs auto
+    // Lifecycle filter — on exclut les clients morts/en pause ET les clients
+    // en suivi libre (Sujet C) des notifs auto.
     const deadOrPausedIds = new Set(
       metrics.clients
-        .filter((c) => c.lifecycleStatus === 'stopped' || c.lifecycleStatus === 'lost' || c.lifecycleStatus === 'paused')
+        .filter((c) =>
+          c.lifecycleStatus === 'stopped'
+          || c.lifecycleStatus === 'lost'
+          || c.lifecycleStatus === 'paused'
+          || c.freeFollowUp === true
+        )
         .map((c) => c.id)
     )
 
