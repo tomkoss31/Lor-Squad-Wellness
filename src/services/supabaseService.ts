@@ -72,6 +72,7 @@ type ClientRow = {
   is_fragile?: boolean | null;
   lifecycle_updated_at?: string | null;
   lifecycle_updated_by?: string | null;
+  free_follow_up?: boolean | null;
   assessments?: AssessmentRow[] | null;
 };
 
@@ -312,6 +313,7 @@ function mapClient(row: ClientRow): Client {
     isFragile: row.is_fragile ?? false,
     lifecycleUpdatedAt: row.lifecycle_updated_at ?? undefined,
     lifecycleUpdatedBy: row.lifecycle_updated_by ?? null,
+    freeFollowUp: row.free_follow_up ?? false,
     assessments: (row.assessments ?? []).map(mapAssessment)
   };
 }
@@ -1278,5 +1280,39 @@ export async function updateSupabaseClientFragileFlag(params: {
 
   if (error) {
     throw new Error(`Impossible de mettre à jour le flag fragile : ${error.message}`);
+  }
+}
+
+// ─── Suivi libre (Sujet C — 2026-04-19) ──────────────────────────────────
+export async function updateSupabaseClientFreeFollowUp(params: {
+  clientId: string;
+  freeFollowUp: boolean;
+}): Promise<void> {
+  const { clientId, freeFollowUp } = params;
+  const client = await requireSupabase();
+
+  const { error: clientError } = await client
+    .from("clients")
+    .update({ free_follow_up: freeFollowUp })
+    .eq("id", clientId);
+
+  if (clientError) {
+    throw new Error(`Impossible de mettre à jour le mode de suivi : ${clientError.message}`);
+  }
+
+  // Règle métier : activer le suivi libre → désactiver tous les follow-ups
+  // ouverts du client (comme pour stopped/lost). Si on repasse en false,
+  // le coach recréera un RDV manuel via le modal planning.
+  if (freeFollowUp) {
+    const { error: fuError } = await client
+      .from("follow_ups")
+      .update({ status: "inactive" })
+      .eq("client_id", clientId)
+      .in("status", ["scheduled", "pending"]);
+
+    if (fuError) {
+      // Non-fatal : on loggue et on continue.
+      console.warn("[updateSupabaseClientFreeFollowUp] follow_ups update warning:", fuError);
+    }
   }
 }
