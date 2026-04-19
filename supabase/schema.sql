@@ -754,14 +754,78 @@ alter table public.push_subscriptions enable row level security;
 alter table public.rdv_change_requests enable row level security;
 
 -- ---------- Policies : client_app_accounts ----------
+-- Audit L2 (2026-04-19) : `client_app_coach_write` (FOR ALL TO public USING
+-- auth.uid() IS NOT NULL) remplacée par 4 policies fines scopées via
+-- can_access_owner(). Plus aucun coach ne peut manipuler l'accès app d'un
+-- client qui ne lui appartient pas (sauf admin, et référent pour ses filleuls).
 
-drop policy if exists "client_app_coach_write" on public.client_app_accounts;
-create policy "client_app_coach_write"
+drop policy if exists "client_app_coach_select" on public.client_app_accounts;
+create policy "client_app_coach_select"
   on public.client_app_accounts
   as permissive
-  for all
-  to public
-  using (auth.uid() is not null);
+  for select
+  to authenticated
+  using (
+    public.is_active_user()
+    and exists (
+      select 1 from public.clients
+      where public.clients.id::text = public.client_app_accounts.client_id
+        and public.can_access_owner(public.clients.distributor_id)
+    )
+  );
+
+drop policy if exists "client_app_coach_insert" on public.client_app_accounts;
+create policy "client_app_coach_insert"
+  on public.client_app_accounts
+  as permissive
+  for insert
+  to authenticated
+  with check (
+    public.is_active_user()
+    and exists (
+      select 1 from public.clients
+      where public.clients.id::text = public.client_app_accounts.client_id
+        and public.can_access_owner(public.clients.distributor_id)
+    )
+  );
+
+drop policy if exists "client_app_coach_update" on public.client_app_accounts;
+create policy "client_app_coach_update"
+  on public.client_app_accounts
+  as permissive
+  for update
+  to authenticated
+  using (
+    public.is_active_user()
+    and exists (
+      select 1 from public.clients
+      where public.clients.id::text = public.client_app_accounts.client_id
+        and public.can_access_owner(public.clients.distributor_id)
+    )
+  )
+  with check (
+    public.is_active_user()
+    and exists (
+      select 1 from public.clients
+      where public.clients.id::text = public.client_app_accounts.client_id
+        and public.can_access_owner(public.clients.distributor_id)
+    )
+  );
+
+drop policy if exists "client_app_coach_delete" on public.client_app_accounts;
+create policy "client_app_coach_delete"
+  on public.client_app_accounts
+  as permissive
+  for delete
+  to authenticated
+  using (
+    public.is_active_user()
+    and exists (
+      select 1 from public.clients
+      where public.clients.id::text = public.client_app_accounts.client_id
+        and public.can_access_owner(public.clients.distributor_id)
+    )
+  );
 
 drop policy if exists "client_app_public_read" on public.client_app_accounts;
 create policy "client_app_public_read"
@@ -772,30 +836,62 @@ create policy "client_app_public_read"
   using (expires_at > now());
 
 -- ---------- Policies : client_evolution_reports ----------
+-- Audit L2 (2026-04-19) : insert/update/delete étaient `TO public USING (true)`.
+-- Resserrées sur le coach propriétaire via can_access_owner(). La lecture
+-- publique par token (`report_public_read`) reste ouverte (clients).
 
 drop policy if exists "report_coach_delete" on public.client_evolution_reports;
 create policy "report_coach_delete"
   on public.client_evolution_reports
   as permissive
   for delete
-  to public
-  using (true);
+  to authenticated
+  using (
+    public.is_active_user()
+    and exists (
+      select 1 from public.clients
+      where public.clients.id::text = public.client_evolution_reports.client_id
+        and public.can_access_owner(public.clients.distributor_id)
+    )
+  );
 
 drop policy if exists "report_coach_insert" on public.client_evolution_reports;
 create policy "report_coach_insert"
   on public.client_evolution_reports
   as permissive
   for insert
-  to public
-  with check (true);
+  to authenticated
+  with check (
+    public.is_active_user()
+    and exists (
+      select 1 from public.clients
+      where public.clients.id::text = public.client_evolution_reports.client_id
+        and public.can_access_owner(public.clients.distributor_id)
+    )
+  );
 
 drop policy if exists "report_coach_update" on public.client_evolution_reports;
 create policy "report_coach_update"
   on public.client_evolution_reports
   as permissive
   for update
-  to public
-  using (true);
+  to authenticated
+  using (
+    public.is_active_user()
+    and exists (
+      select 1 from public.clients
+      where public.clients.id::text = public.client_evolution_reports.client_id
+        and public.can_access_owner(public.clients.distributor_id)
+    )
+  )
+  with check (
+    public.is_active_user()
+    and exists (
+      select 1 from public.clients
+      where public.clients.id::text = public.client_evolution_reports.client_id
+        and public.can_access_owner(public.clients.distributor_id)
+    )
+  );
 
 drop policy if exists "report_public_read" on public.client_evolution_reports;
 create policy "report_public_read"
@@ -806,30 +902,62 @@ create policy "report_public_read"
   using (expires_at > now());
 
 -- ---------- Policies : client_messages ----------
+-- Audit L2 (2026-04-19) : read/update/delete étaient `TO public USING (true)`.
+-- Resserrées sur le coach propriétaire via can_access_owner(). L'insert
+-- public (`msg_public_insert`) reste ouvert pour les rapports/recaps clients.
 
 drop policy if exists "msg_coach_delete" on public.client_messages;
 create policy "msg_coach_delete"
   on public.client_messages
   as permissive
   for delete
-  to public
-  using (true);
+  to authenticated
+  using (
+    public.is_active_user()
+    and exists (
+      select 1 from public.clients
+      where public.clients.id::text = public.client_messages.client_id
+        and public.can_access_owner(public.clients.distributor_id)
+    )
+  );
 
 drop policy if exists "msg_coach_read" on public.client_messages;
 create policy "msg_coach_read"
   on public.client_messages
   as permissive
   for select
-  to public
-  using (true);
+  to authenticated
+  using (
+    public.is_active_user()
+    and exists (
+      select 1 from public.clients
+      where public.clients.id::text = public.client_messages.client_id
+        and public.can_access_owner(public.clients.distributor_id)
+    )
+  );
 
 drop policy if exists "msg_coach_update" on public.client_messages;
 create policy "msg_coach_update"
   on public.client_messages
   as permissive
   for update
-  to public
-  using (true);
+  to authenticated
+  using (
+    public.is_active_user()
+    and exists (
+      select 1 from public.clients
+      where public.clients.id::text = public.client_messages.client_id
+        and public.can_access_owner(public.clients.distributor_id)
+    )
+  )
+  with check (
+    public.is_active_user()
+    and exists (
+      select 1 from public.clients
+      where public.clients.id::text = public.client_messages.client_id
+        and public.can_access_owner(public.clients.distributor_id)
+    )
+  );
 
 drop policy if exists "msg_public_insert" on public.client_messages;
 create policy "msg_public_insert"
@@ -857,14 +985,32 @@ create policy "recap_public_read"
   to public
   using (expires_at > now());
 
-drop policy if exists "recap_public_update" on public.client_recaps;
-create policy "recap_public_update"
+-- Audit L2 (2026-04-19) : `recap_public_update` supprimée — n'importe qui
+-- pouvait modifier un recap tant qu'il n'était pas expiré. Remplacée par
+-- `recap_coach_update` scopée sur le coach propriétaire du client.
+
+drop policy if exists "recap_coach_update" on public.client_recaps;
+create policy "recap_coach_update"
   on public.client_recaps
   as permissive
   for update
-  to public
-  using (expires_at > now())
-  with check (expires_at > now());
+  to authenticated
+  using (
+    public.is_active_user()
+    and exists (
+      select 1 from public.clients
+      where public.clients.id::text = public.client_recaps.client_id
+        and public.can_access_owner(public.clients.distributor_id)
+    )
+  )
+  with check (
+    public.is_active_user()
+    and exists (
+      select 1 from public.clients
+      where public.clients.id::text = public.client_recaps.client_id
+        and public.can_access_owner(public.clients.distributor_id)
+    )
+  );
 
 -- ---------- Policies : client_referrals ----------
 
@@ -908,37 +1054,44 @@ create policy "push_own"
   to public
   using ((auth.uid())::text = user_id);
 
-drop policy if exists "push_public_delete" on public.push_subscriptions;
-create policy "push_public_delete"
+-- Audit L2 (2026-04-19) : les 4 policies push_public_* (TO public USING true)
+-- remplacées par 4 policies push_user_* scopées sur (auth.uid())::text = user_id.
+-- Pas de can_access_owner() : la table porte l'owner directement, et un admin
+-- ne doit pas pouvoir manipuler les endpoints VAPID des autres coachs.
+-- Note : `push_own` (ci-dessus) reste active, redondante mais non-conflictuelle.
+
+drop policy if exists "push_user_delete" on public.push_subscriptions;
+create policy "push_user_delete"
   on public.push_subscriptions
   as permissive
   for delete
-  to public
-  using (true);
+  to authenticated
+  using ((auth.uid())::text = user_id);
 
-drop policy if exists "push_public_insert" on public.push_subscriptions;
-create policy "push_public_insert"
+drop policy if exists "push_user_insert" on public.push_subscriptions;
+create policy "push_user_insert"
   on public.push_subscriptions
   as permissive
   for insert
-  to public
-  with check (true);
+  to authenticated
+  with check ((auth.uid())::text = user_id);
 
-drop policy if exists "push_public_select" on public.push_subscriptions;
-create policy "push_public_select"
+drop policy if exists "push_user_select" on public.push_subscriptions;
+create policy "push_user_select"
   on public.push_subscriptions
   as permissive
   for select
-  to public
-  using (true);
+  to authenticated
+  using ((auth.uid())::text = user_id);
 
-drop policy if exists "push_public_update" on public.push_subscriptions;
-create policy "push_public_update"
+drop policy if exists "push_user_update" on public.push_subscriptions;
+create policy "push_user_update"
   on public.push_subscriptions
   as permissive
   for update
-  to public
-  using (true);
+  to authenticated
+  using ((auth.uid())::text = user_id)
+  with check ((auth.uid())::text = user_id);
 
 -- ---------- Policies : rdv_change_requests ----------
 
