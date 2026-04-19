@@ -726,16 +726,22 @@ function ColdToWarmWidget({
     <div
       style={{
         background: "var(--ls-surface)",
-        border: "1px solid color-mix(in srgb, var(--ls-gold) 30%, transparent)",
-        borderLeft: "3px solid var(--ls-gold)",
+        border: "1px solid color-mix(in srgb, var(--ls-teal) 30%, transparent)",
+        borderLeft: "3px solid var(--ls-teal)",
         borderRadius: 14,
         padding: 18,
       }}
     >
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12, flexWrap: "wrap", gap: 8 }}>
         <div>
-          <div style={{ fontSize: 9, letterSpacing: "2px", textTransform: "uppercase", color: "var(--ls-gold)", fontWeight: 600, marginBottom: 4 }}>
-            🔥 À RÉCHAUFFER
+          <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 9, letterSpacing: "2px", textTransform: "uppercase", color: "var(--ls-teal)", fontWeight: 600, marginBottom: 4 }}>
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="12" y1="2" x2="12" y2="22" />
+              <line x1="2" y1="12" x2="22" y2="12" />
+              <line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
+              <line x1="19.07" y1="4.93" x2="4.93" y2="19.07" />
+            </svg>
+            SUIVIS À REPRENDRE
           </div>
           <div style={{ fontFamily: "Syne, sans-serif", fontWeight: 800, fontSize: 17, color: "var(--ls-text)" }}>
             {total} prospect{total > 1 ? "s" : ""} à relancer aujourd'hui

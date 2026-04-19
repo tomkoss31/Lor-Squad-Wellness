@@ -359,12 +359,15 @@ export const PROSPECT_SOURCES: ProspectSource[] = [
   'Autre',
 ];
 
+// Chantier UX modal (2026-04-19) : terminologie adoucie
+// Les valeurs techniques (lost, no_show, cold) restent inchangées en DB,
+// seuls les labels UI sont reformulés pour une approche Go Pro non forcée.
 export const PROSPECT_STATUS_LABELS: Record<ProspectStatus, string> = {
   scheduled: 'À venir',
   done: 'Effectué',
   converted: 'Converti',
-  lost: 'Perdu',
-  no_show: 'Absent',
+  lost: 'Pas intéressé',
+  no_show: 'Pas venu',
   cancelled: 'Annulé',
-  cold: 'À réchauffer',
+  cold: 'À reprendre',
 };

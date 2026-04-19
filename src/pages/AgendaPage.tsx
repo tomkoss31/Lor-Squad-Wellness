@@ -171,12 +171,12 @@ export function AgendaPage() {
       });
       pushToast({
         tone: "success",
-        title: "Prospect en froid 🔥",
-        message: `Relance prévue après le ${new Date(coldUntil).toLocaleDateString("fr-FR")}.`,
+        title: "Prospect en pause ❄️",
+        message: `À reprendre après le ${new Date(coldUntil).toLocaleDateString("fr-FR")}.`,
       });
       setDetailProspect(null);
     } catch (err) {
-      pushToast(buildSupabaseErrorToast(err, "Impossible de mettre le prospect en froid."));
+      pushToast(buildSupabaseErrorToast(err, "Impossible de mettre le prospect en pause."));
     }
   }
 
@@ -274,8 +274,8 @@ export function AgendaPage() {
             { key: "upcoming"    as StatusFilter, label: "À venir" },
             { key: "done"        as StatusFilter, label: "Effectués" },
             { key: "converted"   as StatusFilter, label: "Convertis" },
-            { key: "cold"        as StatusFilter, label: "🔥 Froids" },
-            { key: "lost_no_show" as StatusFilter, label: "Perdus/No-show" },
+            { key: "cold"        as StatusFilter, label: "❄️ En pause" },
+            { key: "lost_no_show" as StatusFilter, label: "Pas venus / Pas intéressés" },
             { key: "all"         as StatusFilter, label: "Tous statuts" },
           ]).map((f) => (
             <FilterPill
@@ -518,22 +518,22 @@ function ProspectDetailModal({
           {prospect.phone && <InfoRow label="Téléphone" value={prospect.phone} />}
           {prospect.email && <InfoRow label="Email" value={prospect.email} />}
           <InfoRow label="Source" value={`${prospect.source}${prospect.sourceDetail ? ` · ${prospect.sourceDetail}` : ""}`} />
-          <InfoRow label="Statut" value={`${prospect.status === "cold" ? "🔥 " : ""}${PROSPECT_STATUS_LABELS[prospect.status]}`} />
+          <InfoRow label="Statut" value={PROSPECT_STATUS_LABELS[prospect.status]} />
           {prospect.note && (
             <div style={{ padding: 12, borderRadius: 10, background: "var(--ls-surface2)", border: "1px solid var(--ls-border)" }}>
               <div style={{ fontSize: 10, letterSpacing: "1px", textTransform: "uppercase", color: "var(--ls-text-hint)", fontWeight: 500, marginBottom: 4 }}>Note</div>
               <div style={{ fontSize: 13, color: "var(--ls-text)", lineHeight: 1.5 }}>{prospect.note}</div>
             </div>
           )}
-          {/* Chantier Cold : affichage de la date de réchauffement + raison */}
+          {/* Prospect en pause : date de reprise + contexte */}
           {prospect.status === "cold" && (
-            <div style={{ padding: 12, borderRadius: 10, background: "color-mix(in srgb, var(--ls-gold) 8%, transparent)", border: "1px solid color-mix(in srgb, var(--ls-gold) 25%, transparent)" }}>
-              <div style={{ fontSize: 10, letterSpacing: "1px", textTransform: "uppercase", color: "var(--ls-gold)", fontWeight: 600, marginBottom: 4 }}>
-                🔥 En froid
+            <div style={{ padding: 12, borderRadius: 10, background: "color-mix(in srgb, var(--ls-teal) 7%, transparent)", border: "1px solid color-mix(in srgb, var(--ls-teal) 25%, transparent)" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 10, letterSpacing: "1px", textTransform: "uppercase", color: "var(--ls-teal)", fontWeight: 600, marginBottom: 4 }}>
+                <SnowflakeIcon /> En pause
               </div>
               {prospect.coldUntil && (
                 <div style={{ fontSize: 13, color: "var(--ls-text)", marginBottom: 4 }}>
-                  Relance prévue après le {new Date(prospect.coldUntil).toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" })}
+                  À reprendre à partir du {new Date(prospect.coldUntil).toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" })}
                 </div>
               )}
               {prospect.coldReason && (
@@ -569,20 +569,23 @@ function ProspectDetailModal({
           )}
         </div>
 
-        {/* Mini-formulaire "Mettre en froid" */}
+        {/* Mini-formulaire "Mettre en pause" */}
         {showColdForm && (
           <div style={{
             marginTop: 12, padding: 14, borderRadius: 10,
-            background: "color-mix(in srgb, var(--ls-gold) 6%, transparent)",
-            border: "1px solid color-mix(in srgb, var(--ls-gold) 25%, transparent)",
+            background: "color-mix(in srgb, var(--ls-teal) 6%, transparent)",
+            border: "1px solid color-mix(in srgb, var(--ls-teal) 25%, transparent)",
           }}>
-            <div style={{ fontSize: 11, letterSpacing: "1px", textTransform: "uppercase", color: "var(--ls-gold)", fontWeight: 600, marginBottom: 10 }}>
-              🔥 Passer en froid
+            <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, letterSpacing: "1px", textTransform: "uppercase", color: "var(--ls-teal)", fontWeight: 600, marginBottom: 6 }}>
+              <SnowflakeIcon /> Mettre en pause
             </div>
+            <p style={{ fontSize: 12, color: "var(--ls-text-muted)", marginBottom: 12, lineHeight: 1.5 }}>
+              On note ce contact pour le reprendre plus tard. Choisis la date à laquelle tu veux le relancer.
+            </p>
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               <div>
                 <label style={{ display: "block", fontSize: 11, color: "var(--ls-text-muted)", marginBottom: 6, fontWeight: 500 }}>
-                  Réchauffer à partir du
+                  Date de reprise
                 </label>
                 <input
                   type="date"
@@ -594,13 +597,13 @@ function ProspectDetailModal({
               </div>
               <div>
                 <label style={{ display: "block", fontSize: 11, color: "var(--ls-text-muted)", marginBottom: 6, fontWeight: 500 }}>
-                  Raison / contexte (facultatif)
+                  Contexte (facultatif)
                 </label>
                 <textarea
                   value={coldReason}
                   onChange={(e) => setColdReason(e.target.value)}
                   rows={2}
-                  placeholder="Ex : Budget serré, relancer en septembre"
+                  placeholder="ex : budget serré, relancer en septembre"
                   style={{
                     width: "100%",
                     padding: "10px 12px",
@@ -630,7 +633,7 @@ function ProspectDetailModal({
                     const iso = new Date(coldDate + "T09:00:00").toISOString();
                     onSetCold(iso, coldReason);
                   }}
-                  style={{ padding: "7px 14px", borderRadius: 9, border: "none", background: "var(--ls-gold)", color: "var(--ls-bg)", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}
+                  style={{ padding: "7px 14px", borderRadius: 9, border: "none", background: "var(--ls-teal)", color: "var(--ls-bg)", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}
                 >
                   Confirmer
                 </button>
@@ -823,8 +826,8 @@ function TeamStatsWidget({ prospects }: { prospects: Prospect[] }) {
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12 }}>
         <StatTile icon="📅" value={stats.total} label="RDV" />
         <StatTile icon="✓" value={stats.converted} label="Convertis" accent="var(--ls-teal)" />
-        <StatTile icon="🔥" value={stats.cold} label="Froids" accent="var(--ls-gold)" />
-        <StatTile icon="❌" value={stats.noShow} label="No-show" accent="var(--ls-coral)" />
+        <StatTile icon="❄" value={stats.cold} label="En pause" accent="var(--ls-teal)" />
+        <StatTile icon="❌" value={stats.noShow} label="Pas venus" accent="var(--ls-coral)" />
       </div>
       <div style={{ marginTop: 14, paddingTop: 14, borderTop: "1px solid var(--ls-border)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <span style={{ fontSize: 12, color: "var(--ls-text-muted)", fontFamily: "'DM Sans', sans-serif" }}>
