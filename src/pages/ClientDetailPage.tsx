@@ -5,7 +5,6 @@ import { BodyFatInsightCard } from "../components/body-scan/BodyFatInsightCard";
 import { MuscleMassInsightCard } from "../components/body-scan/MuscleMassInsightCard";
 import { BodyScanSnapshotCard } from "../components/body-scan/BodyScanSnapshotCard";
 import { HydrationVisceralInsightCard } from "../components/body-scan/HydrationVisceralInsightCard";
-import { EvolutionChart } from "../components/body-scan/EvolutionChart";
 import { BodyScanRadar } from "../components/body-scan/BodyScanRadar";
 import { HistoryTimeline } from "../components/client/HistoryTimeline";
 import { Button } from "../components/ui/Button";
@@ -575,11 +574,6 @@ export function ClientDetailPage() {
                 />
               </div>
             </>
-          )}
-
-          {/* Graphique évolution */}
-          {client.assessments.length > 0 && (
-            <EvolutionChart assessments={client.assessments} />
           )}
 
           {/* Lectures détaillées — insights corporels */}
