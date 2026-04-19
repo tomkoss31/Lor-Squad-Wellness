@@ -79,13 +79,14 @@ export function AppLayout() {
       : currentUser.role === "referent"
         ? "amber"
         : "green";
-  // Ordre réorganisé (Chantier Agenda 2026-04-19) : quotidien-first
+  // Ordre réorganisé (Chantier UX Polish Bilan v1 — 2026-04-19) :
+  // Agenda remonté en position 2 juste après Accueil (quotidien-first).
   const navigation = [
     { label: "Accueil", path: "/dashboard", badge: 0 },
+    { label: "Agenda", path: "/agenda", badge: todayProspectsCount },
     { label: "Messages", path: "/messages", badge: unreadMessageCount ?? 0 },
     { label: "Dossiers clients", path: "/clients", badge: 0 },
     ...(currentUser.role === "admin" ? [{ label: "Equipe", path: "/users", badge: 0 }] : []),
-    { label: "Agenda", path: "/agenda", badge: todayProspectsCount },
     { label: "Suivi PV", path: "/pv", badge: pvOverdueCount },
     { label: "Guide rendez-vous", path: "/guide", badge: 0 },
     { label: "Recommandations", path: "/recommendations", badge: urgentRelanceCount },
