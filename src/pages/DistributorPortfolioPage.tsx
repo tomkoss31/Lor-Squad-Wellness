@@ -223,7 +223,15 @@ function RoleBadge({ role }: { role: User["role"] }) {
 function ClientRow({ client, followUps }: { client: Client; followUps: FollowUp[] }) {
   const status = statusTone[client.status] ?? { label: client.status, tone: "active" as const };
   const activeFollowUp = getClientActiveFollowUp(client, followUps);
-  const nextDate = activeFollowUp?.dueDate ?? client.nextFollowUp ?? null;
+  // Fix bug B : si activeFollowUp est null (client stopped/lost/paused), on
+  // ne doit PAS retomber sur client.nextFollowUp qui contient la date stale.
+  const isLifecycleHidden =
+    client.lifecycleStatus === 'stopped'
+    || client.lifecycleStatus === 'lost'
+    || client.lifecycleStatus === 'paused';
+  const nextDate = isLifecycleHidden
+    ? null
+    : activeFollowUp?.dueDate ?? client.nextFollowUp ?? null;
 
   return (
     <Link to={`/clients/${client.id}`} className="ls-client-row" data-status={status.tone}>
