@@ -6,38 +6,17 @@ import {
   useState,
   type PropsWithChildren
 } from "react";
-import {
-  buildSeedPvClientProductsForClient,
-  pvProductCatalog,
-  resolvePvProgram
-} from "../data/mockPvModule";
+import { pvProductCatalog, resolvePvProgram } from "../data/mockPvModule";
 import { mockPrograms } from "../data/mockPrograms";
 import { canAccessClient, getVisibleClients, getVisibleFollowUps } from "../lib/auth";
 import {
-  clearPersistedSession,
-  createMockUser,
-  getStoredUsers,
-  loginWithMockCredentials,
-  resetMockAuthData,
-  restoreSession,
-  updateMockUserAccess,
-  updateMockUserPassword,
-  updateMockUserStatus
-} from "../services/authService";
-import {
-  clearStoredAppData,
   getStoredActivityLogs,
-  getStoredClients,
-  getStoredFollowUps,
   getStoredPvClientProducts,
   getStoredPvTransactions,
-  persistActivityLogs,
-  persistClients,
-  persistFollowUps,
   persistPvClientProducts,
   persistPvTransactions
 } from "../services/appDataService";
-import { resolveStorageMode, getSupabaseClient } from "../services/supabaseClient";
+import { isSupabaseUnavailable, getSupabaseClient } from "../services/supabaseClient";
 import {
   addSupabaseFollowUpAssessment,
   createSupabaseClientWithInitialAssessment,
@@ -50,7 +29,6 @@ import {
   fetchSupabasePvClientProducts,
   fetchSupabasePvTransactions,
   fetchSupabaseUsers,
-  importLocalBusinessDataToSupabase,
   loginWithSupabaseCredentials,
   logoutFromSupabase,
   restoreSupabaseSession,
@@ -77,15 +55,11 @@ import type {
   Program,
   User
 } from "../types/domain";
-import { deriveLifecycleFromAssessment } from "../lib/lifecycleMapping";
 import type { PvClientProductRecord, PvClientTransaction } from "../types/pv";
-
-type StorageMode = "local" | "supabase";
 
 interface AppContextValue {
   authReady: boolean;
   bootError: string | null;
-  storageMode: StorageMode;
   currentUser: User | null;
   currentSession: AuthSession | null;
   users: User[];
@@ -105,7 +79,6 @@ interface AppContextValue {
   setClientLifecycleStatus: (clientId: string, newStatus: LifecycleStatus) => Promise<void>;
   setClientFragileFlag: (clientId: string, isFragile: boolean) => Promise<void>;
   updateFollowUpStatus: (followUpId: string, status: 'scheduled' | 'pending' | 'completed' | 'dismissed') => Promise<void>;
-  loginAs: (userId: string) => Promise<void>;
   loginWithCredentials: (
     payload: { email: string; password: string }
   ) => Promise<{ ok: boolean; error?: string }>;
@@ -139,9 +112,6 @@ interface AppContextValue {
     password: string
   ) => Promise<{ ok: boolean; error?: string }>;
   updateUserStatus: (userId: string, active: boolean) => Promise<void>;
-  resetAccessData: () => void;
-  clearBusinessData: () => void;
-  importLocalBusinessData: () => Promise<{ imported: number; skipped: number }>;
   getClientById: (clientId: string) => Client | undefined;
   canAccessClient: (clientId: string) => boolean;
   createClientWithInitialAssessment: (payload: {
@@ -186,9 +156,9 @@ interface AppContextValue {
 const AppContext = createContext<AppContextValue | undefined>(undefined);
 
 export function AppProvider({ children }: PropsWithChildren) {
-  const [storageMode, setStorageMode] = useState<StorageMode>("local");
   const [authReady, setAuthReady] = useState(false);
-  // Hard-fail boot si mock tombe en prod (faille de sécurité mock password)
+  // Hard-fail boot si aucune config Supabase n'est résolue (faille
+  // historique : pas de bascule vers un mode mock, dépôt chantier du 2026-04-19)
   const [bootError, setBootError] = useState<string | null>(null);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [currentSession, setCurrentSession] = useState<AuthSession | null>(null);
@@ -251,46 +221,32 @@ export function AppProvider({ children }: PropsWithChildren) {
 
   useEffect(() => {
     async function initialize() {
-      let nextStorageMode: StorageMode = "local";
-
       try {
-        nextStorageMode = await resolveStorageMode();
-        setStorageMode(nextStorageMode);
-
-        // HARD FAIL si on bascule en mock en production.
-        // Évite l'exposition du login mock (ex-demo1234) si l'env Supabase
-        // manque côté déploiement prod.
-        if (import.meta.env.PROD && nextStorageMode === "local") {
+        // HARD FAIL si aucune config Supabase utilisable n'est résolue.
+        // Depuis la suppression du mode mock, il n'existe plus aucun fallback
+        // local — on bloque le boot et on affiche l'écran d'erreur.
+        const unavailable = await isSupabaseUnavailable();
+        if (unavailable) {
           setBootError(
             "Configuration Supabase manquante. Cette instance est bloquée pour protéger les données. " +
             "Contactez l'administrateur."
           );
-          // On ne passe PAS authReady à true : l'app reste figée sur l'écran d'erreur.
+          // authReady reste false → App.tsx bascule sur BootErrorScreen.
           return;
         }
 
-        if (nextStorageMode === "supabase") {
-          setActivityLogs(getStoredActivityLogs());
-          setPvClientProducts(getStoredPvClientProducts());
-          setPvTransactions(getStoredPvTransactions());
-          try {
-            const restored = await restoreSupabaseSession();
-            if (restored) {
-              setCurrentUser(restored.user);
-              setCurrentSession(restored.session);
-              await refreshRemoteData(restored.user);
-            } else {
-              setCurrentUser(null);
-              setCurrentSession(null);
-              setUsers([]);
-              setClients([]);
-              setFollowUps([]);
-              setActivityLogs([]);
-              setPvClientProducts([]);
-              setPvTransactions([]);
-            }
-          } catch (error) {
-            console.error("Initialisation Supabase impossible.", error);
+        // Hydratation rapide depuis le cache localStorage avant le fetch Supabase.
+        setActivityLogs(getStoredActivityLogs());
+        setPvClientProducts(getStoredPvClientProducts());
+        setPvTransactions(getStoredPvTransactions());
+
+        try {
+          const restored = await restoreSupabaseSession();
+          if (restored) {
+            setCurrentUser(restored.user);
+            setCurrentSession(restored.session);
+            await refreshRemoteData(restored.user);
+          } else {
             setCurrentUser(null);
             setCurrentSession(null);
             setUsers([]);
@@ -300,43 +256,25 @@ export function AppProvider({ children }: PropsWithChildren) {
             setPvClientProducts([]);
             setPvTransactions([]);
           }
-          return;
-        }
-
-        setUsers(getStoredUsers());
-        setClients(getStoredClients());
-        setFollowUps(getStoredFollowUps());
-        setActivityLogs(getStoredActivityLogs());
-        setPvClientProducts(getStoredPvClientProducts());
-        setPvTransactions(getStoredPvTransactions());
-
-        const restored = restoreSession();
-        if (restored) {
-          setCurrentUser(restored.user);
-          setCurrentSession(restored.session);
-        } else {
+        } catch (error) {
+          console.error("Initialisation Supabase impossible.", error);
           setCurrentUser(null);
           setCurrentSession(null);
-        }
-      } catch (error) {
-        console.error("Initialisation de session impossible.", error);
-        if (nextStorageMode === "supabase") {
-          setStorageMode("supabase");
           setUsers([]);
           setClients([]);
           setFollowUps([]);
-          setActivityLogs(getStoredActivityLogs());
-          setPvClientProducts(getStoredPvClientProducts());
-          setPvTransactions(getStoredPvTransactions());
-        } else {
-          setStorageMode("local");
-          setUsers(getStoredUsers());
-          setClients(getStoredClients());
-          setFollowUps(getStoredFollowUps());
-          setActivityLogs(getStoredActivityLogs());
-          setPvClientProducts(getStoredPvClientProducts());
-          setPvTransactions(getStoredPvTransactions());
+          setActivityLogs([]);
+          setPvClientProducts([]);
+          setPvTransactions([]);
         }
+      } catch (error) {
+        console.error("Initialisation de session impossible.", error);
+        setUsers([]);
+        setClients([]);
+        setFollowUps([]);
+        setActivityLogs(getStoredActivityLogs());
+        setPvClientProducts(getStoredPvClientProducts());
+        setPvTransactions(getStoredPvTransactions());
         setCurrentUser(null);
         setCurrentSession(null);
       } finally {
@@ -347,26 +285,8 @@ export function AppProvider({ children }: PropsWithChildren) {
     void initialize();
   }, []);
 
-  useEffect(() => {
-    if (storageMode !== "local") {
-      return;
-    }
-
-    persistClients(clients);
-  }, [clients, storageMode]);
-
-  useEffect(() => {
-    if (storageMode === "local") {
-      persistFollowUps(followUps);
-    }
-  }, [followUps, storageMode]);
-
-  useEffect(() => {
-    if (storageMode === "local") {
-      persistActivityLogs(activityLogs);
-    }
-  }, [activityLogs, storageMode]);
-
+  // Cache localStorage : PV client products et transactions sont persistées
+  // en continu pour hydratation rapide au prochain boot.
   useEffect(() => {
     persistPvClientProducts(pvClientProducts);
   }, [pvClientProducts]);
@@ -391,87 +311,48 @@ export function AppProvider({ children }: PropsWithChildren) {
       ...payload
     };
 
-    if (storageMode === "supabase") {
-      try {
-        const createdEntry = await createSupabaseActivityLog(nextEntry);
-        setActivityLogs((previousLogs) => [createdEntry, ...previousLogs].slice(0, 120));
-        return;
-      } catch (error) {
-        console.error("Journal d'activité indisponible.", error);
-        return;
-      }
+    try {
+      const createdEntry = await createSupabaseActivityLog(nextEntry);
+      setActivityLogs((previousLogs) => [createdEntry, ...previousLogs].slice(0, 120));
+    } catch (error) {
+      console.error("Journal d'activité indisponible.", error);
     }
-
-    setActivityLogs((previousLogs) => [nextEntry, ...previousLogs].slice(0, 120));
-  }
-
-  async function loginAs(userId: string) {
-    const matchedUser = users.find((user) => user.id === userId);
-    if (!matchedUser) {
-      return;
-    }
-
-    await loginWithCredentials({
-      email: matchedUser.email,
-      password: "demo1234"
-    });
   }
 
   async function loginWithCredentials(payload: { email: string; password: string }) {
-    if (storageMode === "supabase") {
-      try {
-        const result = await loginWithSupabaseCredentials(payload);
-        if (!result.ok) {
-          return { ok: false, error: result.error };
-        }
-
-        setCurrentUser(result.user);
-        setCurrentSession(result.session);
-        await refreshRemoteData(result.user);
-        return { ok: true };
-      } catch (error) {
-        console.error("Connexion Supabase impossible.", error);
-        return {
-          ok: false,
-          error: "La connexion Supabase a échoué avant de pouvoir ouvrir la session."
-        };
+    try {
+      const result = await loginWithSupabaseCredentials(payload);
+      if (!result.ok) {
+        return { ok: false, error: result.error };
       }
-    }
 
-    const result = loginWithMockCredentials(payload);
-    if (!result) {
+      setCurrentUser(result.user);
+      setCurrentSession(result.session);
+      await refreshRemoteData(result.user);
+      return { ok: true };
+    } catch (error) {
+      console.error("Connexion Supabase impossible.", error);
       return {
         ok: false,
-        error: "Email ou mot de passe non reconnus pour cette version de demonstration."
+        error: "La connexion Supabase a échoué avant de pouvoir ouvrir la session."
       };
     }
-
-    setCurrentUser(result.user);
-    setCurrentSession(result.session);
-    return { ok: true };
   }
 
   async function logout() {
-    if (storageMode === "supabase") {
-      try {
-        await logoutFromSupabase();
-      } catch (error) {
-        console.error("Fermeture de session Supabase impossible.", error);
-      }
-
-      setCurrentUser(null);
-      setCurrentSession(null);
-      setUsers([]);
-      setClients([]);
-      setFollowUps([]);
-      setPvClientProducts([]);
-      setPvTransactions([]);
-      return;
+    try {
+      await logoutFromSupabase();
+    } catch (error) {
+      console.error("Fermeture de session Supabase impossible.", error);
     }
 
     setCurrentUser(null);
     setCurrentSession(null);
-    clearPersistedSession();
+    setUsers([]);
+    setClients([]);
+    setFollowUps([]);
+    setPvClientProducts([]);
+    setPvTransactions([]);
   }
 
   async function forceResetSession() {
@@ -481,23 +362,11 @@ export function AppProvider({ children }: PropsWithChildren) {
       console.error("Impossible de fermer la session distante proprement.", error);
     }
 
-    clearPersistedSession();
     setCurrentUser(null);
     setCurrentSession(null);
-
-    if (storageMode === "supabase") {
-      setUsers([]);
-      setClients([]);
-      setFollowUps([]);
-      setPvClientProducts(getStoredPvClientProducts());
-      setPvTransactions(getStoredPvTransactions());
-      return;
-    }
-
-    setUsers(getStoredUsers());
-    setClients(getStoredClients());
-    setFollowUps(getStoredFollowUps());
-    setActivityLogs(getStoredActivityLogs());
+    setUsers([]);
+    setClients([]);
+    setFollowUps([]);
     setPvClientProducts(getStoredPvClientProducts());
     setPvTransactions(getStoredPvTransactions());
   }
@@ -510,43 +379,27 @@ export function AppProvider({ children }: PropsWithChildren) {
     active: boolean;
     mockPassword: string;
   }) {
-    if (storageMode === "supabase") {
-      try {
-        const result = await createSupabaseUserAccess(payload);
-        if (!result.ok) {
-          return result;
-        }
-
-        await refreshRemoteData(currentUser);
-        await recordActivity({
-          action: "user-created",
-          targetUserName: payload.name.trim(),
-          summary: `${payload.name.trim()} rejoint l'equipe.`,
-          detail: `${payload.role === "admin" ? "Admin" : payload.role === "referent" ? "Référent" : "Distributeur"} cree depuis la page equipe.`
-        });
-        return { ok: true };
-      } catch (error) {
-        console.error("Creation d'accès Supabase impossible.", error);
-        return {
-          ok: false,
-          error: "La création du compte a échoué. Verifie la configuration backend."
-        };
+    try {
+      const result = await createSupabaseUserAccess(payload);
+      if (!result.ok) {
+        return result;
       }
-    }
 
-    const result = createMockUser(payload);
-    if (!result.ok || !result.users) {
-      return { ok: false, error: result.error };
+      await refreshRemoteData(currentUser);
+      await recordActivity({
+        action: "user-created",
+        targetUserName: payload.name.trim(),
+        summary: `${payload.name.trim()} rejoint l'equipe.`,
+        detail: `${payload.role === "admin" ? "Admin" : payload.role === "referent" ? "Référent" : "Distributeur"} cree depuis la page equipe.`
+      });
+      return { ok: true };
+    } catch (error) {
+      console.error("Creation d'accès Supabase impossible.", error);
+      return {
+        ok: false,
+        error: "La création du compte a échoué. Verifie la configuration backend."
+      };
     }
-
-    setUsers(result.users);
-    await recordActivity({
-      action: "user-created",
-      targetUserName: payload.name.trim(),
-      summary: `${payload.name.trim()} rejoint l'equipe.`,
-      detail: `${payload.role === "admin" ? "Admin" : payload.role === "referent" ? "Référent" : "Distributeur"} cree en mode local.`
-    });
-    return { ok: true };
   }
 
   async function updateUserAccess(
@@ -556,48 +409,29 @@ export function AppProvider({ children }: PropsWithChildren) {
       sponsorId?: string;
     }
   ) {
-    if (storageMode === "supabase") {
-      try {
-        const targetUser = users.find((user) => user.id === userId);
-        await updateSupabaseUserAccess(userId, payload);
-        await refreshRemoteData(currentUser);
-        await recordActivity({
-          action: "user-updated",
-          targetUserId: userId,
-          targetUserName: targetUser?.name,
-          ownerUserId: payload.role === "distributor" ? payload.sponsorId : userId,
-          summary: `Acces mis a jour pour ${targetUser?.name ?? "ce compte"}.`,
-          detail: `Role passe sur ${payload.role === "referent" ? "Référent" : payload.role === "admin" ? "Admin" : "Distributeur"}.`
-        });
-        return { ok: true };
-      } catch (error) {
-        console.error("Mise à jour d'accès Supabase impossible.", error);
-        return {
-          ok: false,
-          error:
-            error instanceof Error
-              ? error.message
-              : "La mise à jour de cet accès a échoué."
-        };
-      }
+    try {
+      const targetUser = users.find((user) => user.id === userId);
+      await updateSupabaseUserAccess(userId, payload);
+      await refreshRemoteData(currentUser);
+      await recordActivity({
+        action: "user-updated",
+        targetUserId: userId,
+        targetUserName: targetUser?.name,
+        ownerUserId: payload.role === "distributor" ? payload.sponsorId : userId,
+        summary: `Acces mis a jour pour ${targetUser?.name ?? "ce compte"}.`,
+        detail: `Role passe sur ${payload.role === "referent" ? "Référent" : payload.role === "admin" ? "Admin" : "Distributeur"}.`
+      });
+      return { ok: true };
+    } catch (error) {
+      console.error("Mise à jour d'accès Supabase impossible.", error);
+      return {
+        ok: false,
+        error:
+          error instanceof Error
+            ? error.message
+            : "La mise à jour de cet accès a échoué."
+      };
     }
-
-    const result = updateMockUserAccess(userId, payload);
-    if (!result.ok || !result.users) {
-      return { ok: false, error: result.error };
-    }
-
-    setUsers(result.users);
-    const targetUser = result.users.find((user) => user.id === userId);
-    await recordActivity({
-      action: "user-updated",
-      targetUserId: userId,
-      targetUserName: targetUser?.name,
-      ownerUserId: payload.role === "distributor" ? payload.sponsorId : userId,
-      summary: `Acces mis a jour pour ${targetUser?.name ?? "ce compte"}.`,
-      detail: `Role passe sur ${payload.role === "referent" ? "Référent" : payload.role === "admin" ? "Admin" : "Distributeur"}.`
-    });
-    return { ok: true };
   }
 
   async function repairUserAccess(payload: {
@@ -608,13 +442,6 @@ export function AppProvider({ children }: PropsWithChildren) {
     sponsorId?: string;
     active: boolean;
   }) {
-    if (storageMode !== "supabase") {
-      return {
-        ok: false,
-        error: "La reparation d'un compte Auth est disponible uniquement avec Supabase."
-      };
-    }
-
     try {
       const result = await repairSupabaseUserAccess(payload);
       if (!result.ok) {
@@ -645,30 +472,8 @@ export function AppProvider({ children }: PropsWithChildren) {
 
   async function updateUserStatus(userId: string, active: boolean) {
     const targetUser = users.find((user) => user.id === userId);
-    if (storageMode === "supabase") {
-      await updateSupabaseUserStatus(userId, active);
-      await refreshRemoteData(currentUser);
-      await recordActivity({
-        action: "user-status-updated",
-        targetUserId: userId,
-        targetUserName: targetUser?.name,
-        ownerUserId: userId,
-        summary: `${targetUser?.name ?? "Le compte"} est ${active ? "reactive" : "desactive"}.`,
-        detail: active ? "Le compte peut revenir sur la plateforme." : "Le compte n'a plus accès a l'application."
-      });
-
-      if (currentUser?.id === userId && !active) {
-        await logout();
-      }
-      return;
-    }
-
-    const result = updateMockUserStatus(userId, active);
-    if (!result.users) {
-      return;
-    }
-
-    setUsers(result.users);
+    await updateSupabaseUserStatus(userId, active);
+    await refreshRemoteData(currentUser);
     await recordActivity({
       action: "user-status-updated",
       targetUserId: userId,
@@ -684,88 +489,27 @@ export function AppProvider({ children }: PropsWithChildren) {
   }
 
   async function updateUserPassword(userId: string, password: string) {
-    if (storageMode === "supabase") {
-      try {
-        const targetUser = users.find((user) => user.id === userId);
-        await updateSupabaseUserPassword(userId, password);
-        await recordActivity({
-          action: "user-updated",
-          targetUserId: userId,
-          targetUserName: targetUser?.name,
-          ownerUserId: userId,
-          summary: `Mot de passe redefini pour ${targetUser?.name ?? "ce compte"}.`,
-          detail: "Le nouvel accès peut etre communique directement a la personne."
-        });
-        return { ok: true };
-      } catch (error) {
-        return {
-          ok: false,
-          error:
-            error instanceof Error
-              ? error.message
-              : "Impossible de redefinir ce mot de passe."
-        };
-      }
+    try {
+      const targetUser = users.find((user) => user.id === userId);
+      await updateSupabaseUserPassword(userId, password);
+      await recordActivity({
+        action: "user-updated",
+        targetUserId: userId,
+        targetUserName: targetUser?.name,
+        ownerUserId: userId,
+        summary: `Mot de passe redefini pour ${targetUser?.name ?? "ce compte"}.`,
+        detail: "Le nouvel accès peut etre communique directement a la personne."
+      });
+      return { ok: true };
+    } catch (error) {
+      return {
+        ok: false,
+        error:
+          error instanceof Error
+            ? error.message
+            : "Impossible de redefinir ce mot de passe."
+      };
     }
-
-    const result = updateMockUserPassword(userId, password);
-    if (!result.ok || !result.users) {
-      return { ok: false, error: result.error };
-    }
-
-    setUsers(result.users);
-    const targetUser = result.users.find((user) => user.id === userId);
-    await recordActivity({
-      action: "user-updated",
-      targetUserId: userId,
-      targetUserName: targetUser?.name,
-      ownerUserId: userId,
-      summary: `Mot de passe redefini pour ${targetUser?.name ?? "ce compte"}.`,
-      detail: "Le nouvel accès peut etre communique directement a la personne."
-    });
-    return { ok: true };
-  }
-
-  function resetAccessData() {
-    if (storageMode === "supabase") {
-      return;
-    }
-
-    const nextUsers = resetMockAuthData();
-    setUsers(nextUsers);
-    setCurrentUser(null);
-    setCurrentSession(null);
-  }
-
-  function clearBusinessData() {
-    if (storageMode === "supabase") {
-      return;
-    }
-
-    const cleared = clearStoredAppData();
-    setClients(cleared.clients);
-    setFollowUps(cleared.followUps);
-    setActivityLogs([]);
-    setPvClientProducts([]);
-    setPvTransactions([]);
-  }
-
-  async function importLocalBusinessData() {
-    if (storageMode !== "supabase" || !currentUser) {
-      return { imported: 0, skipped: 0 };
-    }
-
-    const localClients = getStoredClients();
-    const localFollowUps = getStoredFollowUps();
-
-    const result = await importLocalBusinessDataToSupabase({
-      clients: localClients,
-      followUps: localFollowUps,
-      owner: currentUser
-    });
-
-    await refreshRemoteData(currentUser);
-    return result;
   }
 
   function getClientById(clientId: string) {
@@ -782,60 +526,6 @@ export function AppProvider({ children }: PropsWithChildren) {
     return client ? canAccessClient(currentUser, client, users) : false;
   }
 
-  function upsertLocalPvClientProduct(product: PvClientProductRecord) {
-    setPvClientProducts((previousProducts) => {
-      const existingIndex = previousProducts.findIndex(
-        (item) => item.clientId === product.clientId && item.productId === product.productId
-      );
-
-      if (existingIndex === -1) {
-        const nextProduct = product.id.startsWith("pv-seed-")
-          ? { ...product, id: `pv-local-${Date.now()}-${product.productId}` }
-          : product;
-        return [nextProduct, ...previousProducts];
-      }
-
-      return previousProducts.map((item, index) =>
-        index === existingIndex ? { ...item, ...product } : item
-      );
-    });
-  }
-
-  function syncLocalPvProductFromTransaction(transaction: PvClientTransaction) {
-    const targetClient = clients.find((client) => client.id === transaction.clientId);
-    const baseProgram = resolvePvProgram(targetClient?.pvProgramId ?? targetClient?.currentProgram);
-    const existingProduct = pvClientProducts.find(
-      (item) => item.clientId === transaction.clientId && item.productId === transaction.productId
-    );
-    const catalogProduct = pvProductCatalog.find((item) => item.id === transaction.productId);
-
-    const syncedProduct: PvClientProductRecord = {
-      id: existingProduct?.id ?? `pv-local-${Date.now()}-${transaction.productId}`,
-      clientId: transaction.clientId,
-      responsibleId: transaction.responsibleId,
-      responsibleName: transaction.responsibleName,
-      programId: existingProduct?.programId ?? baseProgram.id,
-      productId: transaction.productId,
-      productName: transaction.productName,
-      quantityStart: transaction.quantity,
-      startDate: transaction.date,
-      durationReferenceDays:
-        existingProduct?.durationReferenceDays ?? catalogProduct?.dureeReferenceJours ?? 21,
-      pvPerUnit:
-        transaction.quantity > 0 ? Number((transaction.pv / transaction.quantity).toFixed(2)) : transaction.pv,
-      pricePublicPerUnit:
-        transaction.quantity > 0
-          ? Number((transaction.price / transaction.quantity).toFixed(2))
-          : transaction.price,
-      quantiteLabel: existingProduct?.quantiteLabel ?? catalogProduct?.quantiteLabel ?? "1 unite",
-      noteMetier: existingProduct?.noteMetier ?? catalogProduct?.noteMetier,
-      active: true
-    };
-
-    upsertLocalPvClientProduct(syncedProduct);
-    return syncedProduct;
-  }
-
   async function createClientWithInitialAssessment(payload: {
     client: Omit<Client, "id" | "status" | "currentProgram" | "started" | "startDate" | "nextFollowUp" | "notes" | "assessments">;
     assessment: AssessmentRecord;
@@ -849,79 +539,18 @@ export function AppProvider({ children }: PropsWithChildren) {
     notes: string;
     afterAssessmentAction?: "started" | "pending";
   }) {
-    if (storageMode === "supabase") {
-      const clientId = await createSupabaseClientWithInitialAssessment(payload);
-      await refreshRemoteData(currentUser);
-      await recordActivity({
-        action: "client-created",
-        clientId,
-        clientName: `${payload.client.firstName} ${payload.client.lastName}`,
-        ownerUserId: payload.client.distributorId,
-        targetUserId: payload.client.distributorId,
-        targetUserName: payload.client.distributorName,
-        summary: `${payload.client.firstName} ${payload.client.lastName} entre dans la base.`,
-        detail: `Dossier ouvert sur ${payload.assessment.programTitle}.`
-      });
-      return clientId;
-    }
-
-    const clientId = `c-${Date.now()}`;
-
-    // Derive lifecycle from decisionClient × afterAssessmentAction (Matrice B)
-    const { lifecycleStatus, isFragile } = deriveLifecycleFromAssessment({
-      decisionClient: payload.assessment.decisionClient ?? null,
-      afterAssessmentAction:
-        payload.afterAssessmentAction ?? (payload.started ? "started" : "pending"),
-    });
-
-    const nextClient: Client = {
-      ...payload.client,
-      id: clientId,
-      status: payload.clientStatus,
-      currentProgram: payload.currentProgram,
-      pvProgramId: payload.pvProgramId,
-      started: payload.started,
-      startDate: payload.started ? payload.assessment.date : undefined,
-      nextFollowUp: payload.nextFollowUp,
-      notes: payload.notes,
-      lifecycleStatus,
-      isFragile,
-      lifecycleUpdatedAt: new Date().toISOString(),
-      assessments: [payload.assessment]
-    };
-
-    const nextFollowUpItem: FollowUp = {
-      id: `f-${Date.now()}`,
-      clientId,
-      clientName: `${nextClient.firstName} ${nextClient.lastName}`,
-      dueDate: payload.nextFollowUp,
-      type: payload.followUpType,
-      status: payload.followUpStatus,
-      programTitle: payload.currentProgram || payload.assessment.programTitle,
-      lastAssessmentDate: payload.assessment.date
-    };
-
-    setClients((previousClients) => [nextClient, ...previousClients]);
-    setFollowUps((previousFollowUps) => [nextFollowUpItem, ...previousFollowUps]);
-    if (nextClient.started) {
-      setPvClientProducts((previousProducts) => [
-        ...buildSeedPvClientProductsForClient(nextClient),
-        ...previousProducts
-      ]);
-    }
+    const clientId = await createSupabaseClientWithInitialAssessment(payload);
+    await refreshRemoteData(currentUser);
     await recordActivity({
       action: "client-created",
       clientId,
-      clientName: `${nextClient.firstName} ${nextClient.lastName}`,
-      ownerUserId: nextClient.distributorId,
-      targetUserId: nextClient.distributorId,
-      targetUserName: nextClient.distributorName,
-      summary: `${nextClient.firstName} ${nextClient.lastName} entre dans la base.`,
-      detail: nextClient.started
-        ? `Dossier ouvert sur ${payload.currentProgram}.`
-        : "Bilan enregistre sans demarrage, relance a prevoir."
+      clientName: `${payload.client.firstName} ${payload.client.lastName}`,
+      ownerUserId: payload.client.distributorId,
+      targetUserId: payload.client.distributorId,
+      targetUserName: payload.client.distributorName,
+      summary: `${payload.client.firstName} ${payload.client.lastName} entre dans la base.`,
+      detail: `Dossier ouvert sur ${payload.assessment.programTitle}.`
     });
-
     return clientId;
   }
 
@@ -930,95 +559,23 @@ export function AppProvider({ children }: PropsWithChildren) {
     assessment: AssessmentRecord,
     followUpMeta: Pick<FollowUp, "dueDate" | "type" | "status">
   ) {
-    if (storageMode === "supabase") {
-      await addSupabaseFollowUpAssessment(clientId, assessment, followUpMeta);
-      await refreshRemoteData(currentUser);
-      const targetClient = clients.find((client) => client.id === clientId);
-      await recordActivity({
-        action: "assessment-created",
-        clientId,
-        clientName: targetClient ? `${targetClient.firstName} ${targetClient.lastName}` : undefined,
-        ownerUserId: targetClient?.distributorId,
-        summary: `Nouveau suivi enregistre pour ${targetClient?.firstName ?? "ce client"}.`,
-        detail: `${followUpMeta.type} pose au ${followUpMeta.dueDate}.`
-      });
-      return;
-    }
-
+    await addSupabaseFollowUpAssessment(clientId, assessment, followUpMeta);
+    await refreshRemoteData(currentUser);
     const targetClient = clients.find((client) => client.id === clientId);
-    if (!targetClient) {
-      return;
-    }
-
-    setClients((previousClients) =>
-      previousClients.map((client) => {
-        if (client.id !== clientId) {
-          return client;
-        }
-
-        return {
-          ...client,
-          currentProgram: assessment.programTitle,
-          pvProgramId: resolvePvProgram(assessment.programTitle).id,
-          nextFollowUp: followUpMeta.dueDate,
-          status: "follow-up",
-          assessments: [assessment, ...client.assessments]
-        };
-      })
-    );
-
-    setFollowUps((previousFollowUps) => {
-      const nextItem: FollowUp = {
-        id: `f-${Date.now()}`,
-        clientId,
-        clientName: `${targetClient.firstName} ${targetClient.lastName}`,
-        dueDate: followUpMeta.dueDate,
-        type: followUpMeta.type,
-        status: followUpMeta.status,
-        programTitle: assessment.programTitle,
-        lastAssessmentDate: assessment.date
-      };
-
-      return [nextItem, ...previousFollowUps.filter((item) => item.clientId !== clientId)];
-    });
     await recordActivity({
       action: "assessment-created",
       clientId,
-      clientName: `${targetClient.firstName} ${targetClient.lastName}`,
-      ownerUserId: targetClient.distributorId,
-      summary: `Nouveau suivi enregistre pour ${targetClient.firstName}.`,
+      clientName: targetClient ? `${targetClient.firstName} ${targetClient.lastName}` : undefined,
+      ownerUserId: targetClient?.distributorId,
+      summary: `Nouveau suivi enregistre pour ${targetClient?.firstName ?? "ce client"}.`,
       detail: `${followUpMeta.type} pose au ${followUpMeta.dueDate}.`
     });
   }
 
   async function deleteClient(clientId: string) {
     const targetClient = clients.find((client) => client.id === clientId);
-    if (storageMode === "supabase") {
-      await deleteSupabaseClient(clientId);
-      await refreshRemoteData(currentUser);
-      if (targetClient) {
-        await recordActivity({
-          action: "client-deleted",
-          clientId,
-          clientName: `${targetClient.firstName} ${targetClient.lastName}`,
-          ownerUserId: targetClient.distributorId,
-          summary: `${targetClient.firstName} ${targetClient.lastName} a ete retire de la base.`,
-          detail: "Le dossier client et ses suivis ont ete supprimes."
-        });
-      }
-      return;
-    }
-
-    setClients((previousClients) => previousClients.filter((client) => client.id !== clientId));
-    setFollowUps((previousFollowUps) =>
-      previousFollowUps.filter((followUp) => followUp.clientId !== clientId)
-    );
-    setPvClientProducts((previousProducts) =>
-      previousProducts.filter((product) => product.clientId !== clientId)
-    );
-    setPvTransactions((previousTransactions) =>
-      previousTransactions.filter((transaction) => transaction.clientId !== clientId)
-    );
+    await deleteSupabaseClient(clientId);
+    await refreshRemoteData(currentUser);
     if (targetClient) {
       await recordActivity({
         action: "client-deleted",
@@ -1033,87 +590,8 @@ export function AppProvider({ children }: PropsWithChildren) {
 
   async function updateAssessment(clientId: string, assessment: AssessmentRecord) {
     const targetClient = clients.find((client) => client.id === clientId);
-    const nextAssessments = targetClient?.assessments.map((item) =>
-      item.id === assessment.id ? assessment : item
-    );
-    if (storageMode === "supabase") {
-      await updateSupabaseAssessment(clientId, assessment);
-      await refreshRemoteData(currentUser);
-      await recordActivity({
-        action: "assessment-updated",
-        clientId,
-        clientName: targetClient ? `${targetClient.firstName} ${targetClient.lastName}` : undefined,
-        ownerUserId: targetClient?.distributorId,
-        summary: `Le bilan de ${targetClient?.firstName ?? "ce client"} a ete ajuste.`,
-        detail: `Mise à jour du ${assessment.type === "initial" ? "bilan de départ" : "suivi"}.`
-      });
-      return;
-    }
-
-    setClients((previousClients) =>
-      previousClients.map((client) => {
-        if (client.id !== clientId) {
-          return client;
-        }
-
-        const nextAssessments = client.assessments.map((item) =>
-          item.id === assessment.id ? assessment : item
-        );
-
-        return {
-          ...client,
-          currentProgram:
-            assessment.type === "initial" && assessment.programId
-              ? assessment.programTitle
-              : assessment.type === "initial"
-                ? ""
-                : client.currentProgram,
-          pvProgramId:
-            assessment.type === "initial"
-              ? assessment.programId
-                ? resolvePvProgram(assessment.programTitle).id
-                : undefined
-              : client.pvProgramId,
-          started:
-            assessment.type === "initial" ? Boolean(assessment.programId) : client.started,
-          status:
-            assessment.type === "initial"
-              ? assessment.programId
-                ? "active"
-                : "pending"
-              : client.status,
-          startDate:
-            assessment.type === "initial"
-              ? assessment.programId
-                ? assessment.date
-                : undefined
-              : client.startDate,
-          assessments: nextAssessments
-        };
-      })
-    );
-
-    if (assessment.type === "initial") {
-      if (targetClient && assessment.programId) {
-        const seededClient: Client = {
-          ...targetClient,
-          currentProgram: assessment.programTitle,
-          pvProgramId: resolvePvProgram(assessment.programTitle).id,
-          started: true,
-          status: "active",
-          startDate: assessment.date,
-          assessments: nextAssessments ?? targetClient.assessments
-        };
-        setPvClientProducts((previousProducts) => [
-          ...buildSeedPvClientProductsForClient(seededClient),
-          ...previousProducts.filter((item) => item.clientId !== clientId)
-        ]);
-      } else {
-        setPvClientProducts((previousProducts) =>
-          previousProducts.filter((item) => item.clientId !== clientId)
-        );
-      }
-    }
+    await updateSupabaseAssessment(clientId, assessment);
+    await refreshRemoteData(currentUser);
     await recordActivity({
       action: "assessment-updated",
       clientId,
@@ -1134,48 +612,8 @@ export function AppProvider({ children }: PropsWithChildren) {
     }
   ) {
     const targetClient = clients.find((client) => client.id === clientId);
-    if (storageMode === "supabase") {
-      await updateSupabaseClientSchedule(clientId, payload);
-      await refreshRemoteData(currentUser);
-      await recordActivity({
-        action: "schedule-updated",
-        clientId,
-        clientName: targetClient ? `${targetClient.firstName} ${targetClient.lastName}` : undefined,
-        ownerUserId: targetClient?.distributorId,
-        summary: `Le prochain rendez-vous de ${targetClient?.firstName ?? "ce client"} a change.`,
-        detail: `Nouvelle date : ${payload.nextFollowUp}.`
-      });
-      return;
-    }
-
-    setClients((previousClients) =>
-      previousClients.map((client) =>
-        client.id === clientId
-          ? {
-              ...client,
-              nextFollowUp: payload.nextFollowUp
-            }
-          : client
-      )
-    );
-
-    setFollowUps((previousFollowUps) =>
-      previousFollowUps.map((followUp) => {
-        const matchesById = payload.followUpId ? followUp.id === payload.followUpId : false;
-        const matchesByClient = !payload.followUpId && followUp.clientId === clientId;
-
-        if (!matchesById && !matchesByClient) {
-          return followUp;
-        }
-
-        return {
-          ...followUp,
-          dueDate: payload.nextFollowUp,
-          type: payload.followUpType ?? followUp.type,
-          status: payload.followUpStatus ?? followUp.status
-        };
-      })
-    );
+    await updateSupabaseClientSchedule(clientId, payload);
+    await refreshRemoteData(currentUser);
     await recordActivity({
       action: "schedule-updated",
       clientId,
@@ -1199,46 +637,8 @@ export function AppProvider({ children }: PropsWithChildren) {
       return;
     }
 
-    if (storageMode === "supabase") {
-      await reassignSupabaseClientOwner(clientId, payload.distributorId);
-      await refreshRemoteData(currentUser);
-      await recordActivity({
-        action: "client-reassigned",
-        clientId,
-        clientName: `${targetClient.firstName} ${targetClient.lastName}`,
-        ownerUserId: nextOwner.id,
-        targetUserId: nextOwner.id,
-        targetUserName: nextOwner.name,
-        summary: `${targetClient.firstName} ${targetClient.lastName} passe chez ${nextOwner.name}.`,
-        detail: `Ancien responsable : ${targetClient.distributorName}.`
-      });
-      return;
-    }
-
-    setClients((previousClients) =>
-      previousClients.map((client) =>
-        client.id === clientId
-          ? {
-              ...client,
-              distributorId: nextOwner.id,
-              distributorName: nextOwner.name
-            }
-          : client
-      )
-    );
-
-    setPvClientProducts((previousProducts) =>
-      previousProducts.map((product) =>
-        product.clientId === clientId
-          ? {
-              ...product,
-              responsibleId: nextOwner.id,
-              responsibleName: nextOwner.name
-            }
-          : product
-      )
-    );
-
+    await reassignSupabaseClientOwner(clientId, payload.distributorId);
+    await refreshRemoteData(currentUser);
     await recordActivity({
       action: "client-reassigned",
       clientId,
@@ -1252,60 +652,48 @@ export function AppProvider({ children }: PropsWithChildren) {
   }
 
   async function addPvTransaction(transaction: PvClientTransaction) {
-    if (storageMode === "supabase") {
-      const targetClient = clients.find((client) => client.id === transaction.clientId);
-      const baseProgram = resolvePvProgram(targetClient?.pvProgramId ?? targetClient?.currentProgram);
-      const existingProduct = pvClientProducts.find(
-        (item) => item.clientId === transaction.clientId && item.productId === transaction.productId
-      );
-      const catalogProduct = pvProductCatalog.find((item) => item.id === transaction.productId);
+    const targetClient = clients.find((client) => client.id === transaction.clientId);
+    const baseProgram = resolvePvProgram(targetClient?.pvProgramId ?? targetClient?.currentProgram);
+    const existingProduct = pvClientProducts.find(
+      (item) => item.clientId === transaction.clientId && item.productId === transaction.productId
+    );
+    const catalogProduct = pvProductCatalog.find((item) => item.id === transaction.productId);
 
-      await upsertSupabasePvClientProduct({
-        id: existingProduct?.id ?? `pv-seed-${transaction.clientId}-${transaction.productId}`,
-        clientId: transaction.clientId,
-        responsibleId: transaction.responsibleId,
-        responsibleName: transaction.responsibleName,
-        programId: existingProduct?.programId ?? baseProgram.id,
-        productId: transaction.productId,
-        productName: transaction.productName,
-        quantityStart: transaction.quantity,
-        startDate: transaction.date,
-        durationReferenceDays:
-          existingProduct?.durationReferenceDays ?? catalogProduct?.dureeReferenceJours ?? 21,
-        pvPerUnit:
-          transaction.quantity > 0 ? Number((transaction.pv / transaction.quantity).toFixed(2)) : transaction.pv,
-        pricePublicPerUnit:
-          transaction.quantity > 0
-            ? Number((transaction.price / transaction.quantity).toFixed(2))
-            : transaction.price,
-        quantiteLabel: existingProduct?.quantiteLabel ?? catalogProduct?.quantiteLabel ?? "1 unite",
-        noteMetier: existingProduct?.noteMetier ?? catalogProduct?.noteMetier,
-        active: true
-      });
-      await addSupabasePvTransaction(transaction);
-      await refreshRemoteData(currentUser);
-      return;
-    }
-
-    setPvTransactions((previousTransactions) => [transaction, ...previousTransactions]);
-    syncLocalPvProductFromTransaction(transaction);
+    await upsertSupabasePvClientProduct({
+      id: existingProduct?.id ?? `pv-seed-${transaction.clientId}-${transaction.productId}`,
+      clientId: transaction.clientId,
+      responsibleId: transaction.responsibleId,
+      responsibleName: transaction.responsibleName,
+      programId: existingProduct?.programId ?? baseProgram.id,
+      productId: transaction.productId,
+      productName: transaction.productName,
+      quantityStart: transaction.quantity,
+      startDate: transaction.date,
+      durationReferenceDays:
+        existingProduct?.durationReferenceDays ?? catalogProduct?.dureeReferenceJours ?? 21,
+      pvPerUnit:
+        transaction.quantity > 0 ? Number((transaction.pv / transaction.quantity).toFixed(2)) : transaction.pv,
+      pricePublicPerUnit:
+        transaction.quantity > 0
+          ? Number((transaction.price / transaction.quantity).toFixed(2))
+          : transaction.price,
+      quantiteLabel: existingProduct?.quantiteLabel ?? catalogProduct?.quantiteLabel ?? "1 unite",
+      noteMetier: existingProduct?.noteMetier ?? catalogProduct?.noteMetier,
+      active: true
+    });
+    await addSupabasePvTransaction(transaction);
+    await refreshRemoteData(currentUser);
   }
 
   async function savePvClientProduct(product: PvClientProductRecord) {
-    if (storageMode === "supabase") {
-      await upsertSupabasePvClientProduct(product);
-      await refreshRemoteData(currentUser);
-      return;
-    }
-
-    upsertLocalPvClientProduct(product);
+    await upsertSupabasePvClientProduct(product);
+    await refreshRemoteData(currentUser);
   }
 
   const value = useMemo(
     () => ({
       authReady,
       bootError,
-      storageMode,
       currentUser,
       currentSession,
       users,
@@ -1335,44 +723,36 @@ export function AppProvider({ children }: PropsWithChildren) {
       },
       updateClientInfo: async (clientId: string, data: { phone?: string; email?: string; city?: string }) => {
         // Site 4 du durcissement audit L1 : on lève l'erreur au caller + toast explicite.
-        if (storageMode === 'supabase') {
-          const sb = await getSupabaseClient();
-          if (sb) {
-            const updateData: Record<string, string> = {};
-            if (data.phone !== undefined) updateData.phone = data.phone;
-            if (data.email !== undefined) updateData.email = data.email;
-            if (data.city !== undefined) updateData.city = data.city;
-            const { error } = await sb.from('clients').update(updateData).eq('id', clientId);
-            if (error) {
-              throw error;
-            }
-            await refreshRemoteData(currentUser);
-          }
-        } else {
-          setClients(prev => prev.map(c => c.id === clientId ? { ...c, ...data } : c));
+        const sb = await getSupabaseClient();
+        if (!sb) {
+          throw new Error("Client Supabase indisponible.");
         }
+        const updateData: Record<string, string> = {};
+        if (data.phone !== undefined) updateData.phone = data.phone;
+        if (data.email !== undefined) updateData.email = data.email;
+        if (data.city !== undefined) updateData.city = data.city;
+        const { error } = await sb.from('clients').update(updateData).eq('id', clientId);
+        if (error) {
+          throw error;
+        }
+        await refreshRemoteData(currentUser);
       },
       updateFollowUpStatus: async (followUpId: string, status: 'scheduled' | 'pending' | 'completed' | 'dismissed') => {
         // Site 5 du durcissement audit L1 : on lève l'erreur au caller + toast explicite.
-        if (storageMode === 'supabase') {
-          const sb = await getSupabaseClient();
-          if (sb) {
-            const { error } = await sb.from('follow_ups').update({ status }).eq('id', followUpId);
-            if (error) {
-              throw error;
-            }
-            await refreshRemoteData(currentUser);
-          }
-        } else {
-          setFollowUps(prev => prev.map(f => f.id === followUpId ? { ...f, status } : f));
+        const sb = await getSupabaseClient();
+        if (!sb) {
+          throw new Error("Client Supabase indisponible.");
         }
+        const { error } = await sb.from('follow_ups').update({ status }).eq('id', followUpId);
+        if (error) {
+          throw error;
+        }
+        await refreshRemoteData(currentUser);
       },
       setClientLifecycleStatus: async (clientId: string, newStatus: LifecycleStatus) => {
         if (!currentUser?.id) throw new Error("Not authenticated");
 
-        if (storageMode === 'supabase') {
-          await updateSupabaseClientLifecycleStatus({ clientId, newStatus, userId: currentUser.id });
-        }
+        await updateSupabaseClientLifecycleStatus({ clientId, newStatus, userId: currentUser.id });
 
         // Optimistic local state update
         setClients(prev => prev.map(c =>
@@ -1396,14 +776,11 @@ export function AppProvider({ children }: PropsWithChildren) {
         }
       },
       setClientFragileFlag: async (clientId: string, isFragile: boolean) => {
-        if (storageMode === 'supabase') {
-          await updateSupabaseClientFragileFlag({ clientId, isFragile });
-        }
+        await updateSupabaseClientFragileFlag({ clientId, isFragile });
         setClients(prev => prev.map(c =>
           c.id === clientId ? { ...c, isFragile } : c
         ));
       },
-      loginAs,
       loginWithCredentials,
       logout,
       forceResetSession,
@@ -1412,9 +789,6 @@ export function AppProvider({ children }: PropsWithChildren) {
       updateUserAccess,
       updateUserPassword,
       updateUserStatus,
-      resetAccessData,
-      clearBusinessData,
-      importLocalBusinessData,
       getClientById,
       canAccessClient: canAccessClientById,
       createClientWithInitialAssessment,
@@ -1437,7 +811,6 @@ export function AppProvider({ children }: PropsWithChildren) {
       followUps,
       pvClientProducts,
       pvTransactions,
-      storageMode,
       users
     ]
   );
