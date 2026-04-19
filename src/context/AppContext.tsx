@@ -40,6 +40,7 @@ import {
   updateSupabaseClientSchedule,
   updateSupabaseClientLifecycleStatus,
   updateSupabaseClientFragileFlag,
+  updateSupabaseClientFreeFollowUp,
   updateSupabaseUserAccess,
   updateSupabaseUserPassword,
   updateSupabaseUserStatus
@@ -78,6 +79,7 @@ interface AppContextValue {
   updateClientInfo: (clientId: string, data: { phone?: string; email?: string; city?: string }) => Promise<void>;
   setClientLifecycleStatus: (clientId: string, newStatus: LifecycleStatus) => Promise<void>;
   setClientFragileFlag: (clientId: string, isFragile: boolean) => Promise<void>;
+  setClientFreeFollowUp: (clientId: string, freeFollowUp: boolean) => Promise<void>;
   updateFollowUpStatus: (followUpId: string, status: 'scheduled' | 'pending' | 'completed' | 'dismissed') => Promise<void>;
   loginWithCredentials: (
     payload: { email: string; password: string }
@@ -780,6 +782,24 @@ export function AppProvider({ children }: PropsWithChildren) {
         setClients(prev => prev.map(c =>
           c.id === clientId ? { ...c, isFragile } : c
         ));
+      },
+      setClientFreeFollowUp: async (clientId: string, freeFollowUp: boolean) => {
+        // Sujet C : si on active le suivi libre, les follow-ups ouverts passent
+        // à 'inactive' (comme pour stopped/lost). La DB le fait dans
+        // updateSupabaseClientFreeFollowUp ; on réplique ici en optimistic update.
+        await updateSupabaseClientFreeFollowUp({ clientId, freeFollowUp });
+
+        setClients(prev => prev.map(c =>
+          c.id === clientId ? { ...c, freeFollowUp } : c
+        ));
+
+        if (freeFollowUp) {
+          setFollowUps(prev => prev.map(fu =>
+            fu.clientId === clientId && (fu.status === 'scheduled' || fu.status === 'pending')
+              ? { ...fu, status: 'inactive' as const }
+              : fu
+          ));
+        }
       },
       loginWithCredentials,
       logout,

@@ -141,6 +141,11 @@ export function getClientActiveFollowUp(client: Client, followUps: FollowUp[]): 
     return null;
   }
 
+  // Sujet C (2026-04-19) : client en suivi libre → hors agenda auto, pas de RDV.
+  if (client.freeFollowUp) {
+    return null;
+  }
+
   const clientFollowUps = followUps
     .filter((followUp) =>
       followUp.clientId === client.id
