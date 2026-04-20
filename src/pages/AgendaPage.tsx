@@ -1,5 +1,5 @@
 import { startTransition, useCallback, useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
 import { PageHeading } from "../components/ui/PageHeading";
@@ -8,11 +8,19 @@ import { ProspectFormModal } from "../components/prospect/ProspectFormModal";
 import { useAppContext } from "../context/AppContext";
 import { useToast, buildSupabaseErrorToast } from "../context/ToastContext";
 import { createGoogleCalendarLink } from "../lib/googleCalendar";
-import type { Prospect, ProspectStatus } from "../types/domain";
+import type { Client, FollowUp, Prospect, ProspectStatus } from "../types/domain";
 import { PROSPECT_STATUS_LABELS } from "../types/domain";
 
 type DateFilter = "today" | "week" | "all";
 type StatusFilter = "upcoming" | "done" | "converted" | "cold" | "lost_no_show" | "all";
+// Chantier Agenda unifié (2026-04-20) : 3 onglets au-dessus des filtres date/statut
+type EntityFilter = "all" | "clients" | "prospects";
+
+// Entrée unifiée pour la liste : soit un follow-up client, soit un prospect.
+// Conserve l'entité d'origine pour router le click au bon endroit.
+type AgendaEntry =
+  | { kind: "client"; id: string; date: string; distributorId: string; followUp: FollowUp; client: Client }
+  | { kind: "prospect"; id: string; date: string; distributorId: string; prospect: Prospect };
 
 function startOfDay(d: Date): Date {
   const copy = new Date(d);
@@ -76,13 +84,19 @@ function groupLabel(dateIso: string, today: Date): string {
 const GROUP_ORDER = ["Aujourd'hui", "Demain", "Cette semaine", "Plus tard", "Passés"];
 
 const AGENDA_FILTER_KEY = "lorsquad.agenda.filter";
+const AGENDA_ENTITY_KEY = "lorsquad.agenda.entity-filter";
 
 export function AgendaPage() {
-  const { prospects, users, currentUser, deleteProspect, updateProspect } = useAppContext();
+  const { prospects, clients, followUps, users, currentUser, deleteProspect, updateProspect } = useAppContext();
   const { push: pushToast } = useToast();
   const navigate = useNavigate();
 
-  const [dateFilter, setDateFilter] = useState<DateFilter>("all");
+  // Nav Dashboard → Agenda (Chantier 3 / 2026-04-20) : si on arrive via
+  // ?filter=today (depuis la carte Dashboard "RDV aujourd'hui" ou "Agenda du
+  // jour"), pré-sélectionner le filtre journée.
+  const [searchParams] = useSearchParams();
+  const initialDateFilter: DateFilter = searchParams.get("filter") === "today" ? "today" : "all";
+  const [dateFilter, setDateFilter] = useState<DateFilter>(initialDateFilter);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("upcoming");
   // Chantier Cold (2026-04-19) : filtre admin par distributeur.
   // "mine" = RDV du user connecté · "all" = toute l'équipe · "<uuid>" = un distri précis
@@ -93,6 +107,14 @@ export function AgendaPage() {
       return currentUser?.role === "admin" ? "mine" : "all";
     }
   });
+  // Chantier Agenda unifié (2026-04-20) : onglet entité (tous / clients / prospects).
+  const [entityFilter, setEntityFilter] = useState<EntityFilter>(() => {
+    try {
+      const stored = localStorage.getItem(AGENDA_ENTITY_KEY);
+      if (stored === "all" || stored === "clients" || stored === "prospects") return stored;
+    } catch { /* ignore */ }
+    return "all";
+  });
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<Prospect | undefined>(undefined);
   const [detailProspect, setDetailProspect] = useState<Prospect | null>(null);
@@ -100,6 +122,9 @@ export function AgendaPage() {
   useEffect(() => {
     try { localStorage.setItem(AGENDA_FILTER_KEY, agendaFilter); } catch { /* ignore */ }
   }, [agendaFilter]);
+  useEffect(() => {
+    try { localStorage.setItem(AGENDA_ENTITY_KEY, entityFilter); } catch { /* ignore */ }
+  }, [entityFilter]);
 
   // Perf (2026-04-20) : on NE créé plus `const now = new Date()` dans le body
   // du composant. Chaque render créait une nouvelle référence Date qui cassait
@@ -107,51 +132,117 @@ export function AgendaPage() {
   // Les bornes (todayStart, todayEnd, weekEnd) sont désormais calculées à
   // l'intérieur de chaque memo, sans être exposées dans les deps.
 
-  // Application du filtre distributeur AVANT les autres filtres.
-  // Non-admin : toujours scopé sur son id (RLS s'en charge de toute façon).
-  const distributorFiltered = useMemo(() => {
-    if (!currentUser) return prospects;
-    if (currentUser.role !== "admin") {
-      return prospects.filter((p) => p.distributorId === currentUser.id);
-    }
-    if (agendaFilter === "all") return prospects;
-    if (agendaFilter === "mine") return prospects.filter((p) => p.distributorId === currentUser.id);
-    return prospects.filter((p) => p.distributorId === agendaFilter);
-  }, [prospects, agendaFilter, currentUser]);
+  // ─── Scope distributeur commun (prospects + clients) ─────────────────
+  // Détermine si un distributorId entre dans le périmètre actif.
+  const isInScope = useCallback((distributorId: string): boolean => {
+    if (!currentUser) return false;
+    if (currentUser.role !== "admin") return distributorId === currentUser.id;
+    if (agendaFilter === "all") return true;
+    if (agendaFilter === "mine") return distributorId === currentUser.id;
+    return distributorId === agendaFilter;
+  }, [currentUser, agendaFilter]);
 
-  const filtered = useMemo(() => {
+  // Prospects scopés (conservé pour TeamStatsWidget)
+  const distributorFilteredProspects = useMemo(
+    () => prospects.filter((p) => isInScope(p.distributorId)),
+    [prospects, isInScope]
+  );
+
+  // ─── Construction des entrées unifiées (prospects + follow-ups clients) ───
+  // Chantier Agenda unifié (2026-04-20) :
+  // - Prospects : on filtre par status (scheduled / done / cold / etc.)
+  // - Clients : on prend les follow-ups avec status "scheduled" ou "pending"
+  //   et on retrouve le client via clientsById pour distributorId + nom.
+  const clientsById = useMemo(() => new Map(clients.map((c) => [c.id, c])), [clients]);
+
+  const agendaEntries = useMemo(() => {
     const now = new Date();
     const todayStart = startOfDay(now);
     const todayEnd = endOfDay(now);
     const weekEnd = endOfWeek(now);
 
-    return distributorFiltered.filter((p) => {
-      if (!matchesStatusFilter(p, statusFilter)) return false;
+    const entries: AgendaEntry[] = [];
 
-      let d: Date;
-      try { d = new Date(p.rdvDate); } catch { return false; }
-      if (Number.isNaN(d.getTime())) return false;
+    // 1. Prospects
+    if (entityFilter === "all" || entityFilter === "prospects") {
+      for (const p of prospects) {
+        if (!isInScope(p.distributorId)) continue;
+        if (!matchesStatusFilter(p, statusFilter)) continue;
+        const d = new Date(p.rdvDate);
+        if (Number.isNaN(d.getTime())) continue;
+        if (dateFilter === "today" && !(d >= todayStart && d <= todayEnd)) continue;
+        if (dateFilter === "week" && !(d >= todayStart && d <= weekEnd)) continue;
+        entries.push({ kind: "prospect", id: p.id, date: p.rdvDate, distributorId: p.distributorId, prospect: p });
+      }
+    }
 
-      if (dateFilter === "today") return d >= todayStart && d <= todayEnd;
-      if (dateFilter === "week")  return d >= todayStart && d <= weekEnd;
-      return true; // "all"
-    });
-  }, [distributorFiltered, statusFilter, dateFilter]);
+    // 2. Follow-ups clients
+    if (entityFilter === "all" || entityFilter === "clients") {
+      for (const fu of followUps) {
+        // On ne prend que les follow-ups "actifs" sur l'agenda
+        if (fu.status !== "scheduled" && fu.status !== "pending") continue;
+        const client = clientsById.get(fu.clientId);
+        if (!client) continue;
+        if (!isInScope(client.distributorId)) continue;
+        // Exclure les clients morts (lifecycle stopped / lost)
+        if (client.lifecycleStatus === "stopped" || client.lifecycleStatus === "lost") continue;
+        const d = new Date(fu.dueDate);
+        if (Number.isNaN(d.getTime())) continue;
+        if (dateFilter === "today" && !(d >= todayStart && d <= todayEnd)) continue;
+        if (dateFilter === "week" && !(d >= todayStart && d <= weekEnd)) continue;
+        entries.push({ kind: "client", id: fu.id, date: fu.dueDate, distributorId: client.distributorId, followUp: fu, client });
+      }
+    }
+
+    return entries;
+  }, [entityFilter, prospects, followUps, clientsById, isInScope, statusFilter, dateFilter]);
 
   const grouped = useMemo(() => {
     const now = new Date();
-    const map = new Map<string, Prospect[]>();
-    filtered.forEach((p) => {
-      const g = groupLabel(p.rdvDate, now);
+    const map = new Map<string, AgendaEntry[]>();
+    agendaEntries.forEach((entry) => {
+      const g = groupLabel(entry.date, now);
       if (!map.has(g)) map.set(g, []);
-      map.get(g)!.push(p);
+      map.get(g)!.push(entry);
     });
-    // Tri interne par date croissante
     for (const arr of map.values()) {
-      arr.sort((a, b) => new Date(a.rdvDate).getTime() - new Date(b.rdvDate).getTime());
+      arr.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
     }
     return GROUP_ORDER.filter((g) => map.has(g)).map((g) => ({ label: g, items: map.get(g)! }));
-  }, [filtered]);
+  }, [agendaEntries]);
+
+  // Compteurs pour les onglets — scopés et filtrés par date mais pas par status
+  // (le status filter est "prospect-only", on ne veut pas qu'il fausse le compte client).
+  const entityCounts = useMemo(() => {
+    const now = new Date();
+    const todayStart = startOfDay(now);
+    const todayEnd = endOfDay(now);
+    const weekEnd = endOfWeek(now);
+    const inDateRange = (iso: string): boolean => {
+      const d = new Date(iso);
+      if (Number.isNaN(d.getTime())) return false;
+      if (dateFilter === "today") return d >= todayStart && d <= todayEnd;
+      if (dateFilter === "week") return d >= todayStart && d <= weekEnd;
+      return true;
+    };
+    let clientCount = 0;
+    let prospectCount = 0;
+    for (const fu of followUps) {
+      if (fu.status !== "scheduled" && fu.status !== "pending") continue;
+      const c = clientsById.get(fu.clientId);
+      if (!c || !isInScope(c.distributorId)) continue;
+      if (c.lifecycleStatus === "stopped" || c.lifecycleStatus === "lost") continue;
+      if (!inDateRange(fu.dueDate)) continue;
+      clientCount += 1;
+    }
+    for (const p of prospects) {
+      if (!isInScope(p.distributorId)) continue;
+      if (!matchesStatusFilter(p, statusFilter)) continue;
+      if (!inDateRange(p.rdvDate)) continue;
+      prospectCount += 1;
+    }
+    return { clients: clientCount, prospects: prospectCount, all: clientCount + prospectCount };
+  }, [followUps, prospects, clientsById, isInScope, statusFilter, dateFilter]);
 
   // Perf (2026-04-20) : lookup O(1) par distributorId au lieu d'un `users.find`
   // linéaire par carte à chaque render. Stable tant que la liste users ne change pas.
@@ -234,11 +325,31 @@ export function AgendaPage() {
   return (
     <div className="space-y-5">
       <div className="flex items-start justify-between gap-4 flex-wrap">
-        <PageHeading
-          eyebrow="Agenda"
-          title="Agenda prospection"
-          description="RDV prospects à venir, en cours et convertis en clients."
-        />
+        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          <PageHeading
+            eyebrow="Agenda"
+            title="Agenda unifié"
+            description="Tous tes RDV clients (suivis) et prospects sur la même vue."
+          />
+          {/* Chantier Nav (2026-04-20) : raccourci discret vers le dashboard */}
+          <Link
+            to="/"
+            style={{
+              display: "inline-flex", alignItems: "center", gap: 6,
+              padding: "6px 12px", borderRadius: 9,
+              background: "color-mix(in srgb, var(--ls-teal) 7%, transparent)",
+              border: "1px solid color-mix(in srgb, var(--ls-teal) 20%, transparent)",
+              color: "var(--ls-teal)",
+              fontSize: 12, fontWeight: 500, fontFamily: "'DM Sans', sans-serif",
+              textDecoration: "none", width: "fit-content",
+            }}
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M3 3h7v7H3zM14 3h7v5h-7zM14 12h7v9h-7zM3 14h7v7H3z" />
+            </svg>
+            Voir mes priorités →
+          </Link>
+        </div>
         <Button onClick={() => { setEditing(undefined); setShowForm(true); }}>
           + Nouveau RDV
         </Button>
@@ -273,8 +384,33 @@ export function AgendaPage() {
 
       {/* Stats équipe — admin only + mode "Toute l'équipe" */}
       {currentUser?.role === "admin" && agendaFilter === "all" && (
-        <TeamStatsWidget prospects={distributorFiltered} />
+        <TeamStatsWidget prospects={distributorFilteredProspects} />
       )}
+
+      {/* Onglets entité (Chantier Agenda unifié 2026-04-20) */}
+      <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+        <EntityTab
+          label="Tous"
+          count={entityCounts.all}
+          active={entityFilter === "all"}
+          onClick={() => setEntityFilter("all")}
+          dot={null}
+        />
+        <EntityTab
+          label="Clients"
+          count={entityCounts.clients}
+          active={entityFilter === "clients"}
+          onClick={() => setEntityFilter("clients")}
+          dot="var(--ls-gold)"
+        />
+        <EntityTab
+          label="Prospects"
+          count={entityCounts.prospects}
+          active={entityFilter === "prospects"}
+          onClick={() => setEntityFilter("prospects")}
+          dot="var(--ls-purple)"
+        />
+      </div>
 
       {/* Filtres */}
       <Card className="space-y-3">
@@ -310,20 +446,26 @@ export function AgendaPage() {
         </div>
       </Card>
 
-      {/* Liste groupée */}
+      {/* Liste groupée — rendu unifié clients + prospects */}
       {grouped.length === 0 ? (
         <Card>
           <div style={{ textAlign: "center", padding: "32px 0" }}>
             <div style={{ fontSize: 32, marginBottom: 12, opacity: 0.4 }}>📅</div>
             <div style={{ fontSize: 14, color: "var(--ls-text-muted)", marginBottom: 4 }}>
-              Aucun RDV prospection pour l'instant.
+              Aucun RDV pour cette période.
             </div>
             <div style={{ fontSize: 12, color: "var(--ls-text-hint)", marginBottom: 16 }}>
-              Crée ton premier RDV en cliquant sur « + Nouveau RDV ».
+              {entityFilter === "clients"
+                ? "Pas de suivi client programmé sur la période choisie."
+                : entityFilter === "prospects"
+                ? "Pas de RDV prospect à venir. Crée-en un via « + Nouveau RDV »."
+                : "Change de période ou crée un RDV prospect via « + Nouveau RDV »."}
             </div>
-            <Button onClick={() => { setEditing(undefined); setShowForm(true); }}>
-              + Nouveau RDV
-            </Button>
+            {entityFilter !== "clients" && (
+              <Button onClick={() => { setEditing(undefined); setShowForm(true); }}>
+                + Nouveau RDV
+              </Button>
+            )}
           </div>
         </Card>
       ) : (
@@ -333,13 +475,25 @@ export function AgendaPage() {
               {label} · {items.length} RDV
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              {items.map((p) => (
-                <ProspectCard
-                  key={p.id}
-                  prospect={p}
-                  ownerName={currentUser?.role === "admin" ? ownerNameMap.get(p.distributorId) : undefined}
+              {items.map((entry) => entry.kind === "prospect" ? (
+                <div key={`p-${entry.id}`} style={{ display: "flex", alignItems: "stretch" }}>
+                  <div style={{ width: 3, borderRadius: "3px 0 0 3px", background: "var(--ls-purple)", flexShrink: 0 }} />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <ProspectCard
+                      prospect={entry.prospect}
+                      ownerName={currentUser?.role === "admin" ? ownerNameMap.get(entry.distributorId) : undefined}
+                      showDate={label !== "Aujourd'hui" && label !== "Demain"}
+                      onClick={handleCardClick}
+                    />
+                  </div>
+                </div>
+              ) : (
+                <ClientFollowUpCard
+                  key={`c-${entry.id}`}
+                  followUp={entry.followUp}
+                  client={entry.client}
+                  ownerName={currentUser?.role === "admin" ? ownerNameMap.get(entry.distributorId) : undefined}
                   showDate={label !== "Aujourd'hui" && label !== "Demain"}
-                  onClick={handleCardClick}
                 />
               ))}
             </div>
@@ -384,6 +538,123 @@ export function AgendaPage() {
           onDelete={() => handleDelete(detailProspect)}
         />
       )}
+    </div>
+  );
+}
+
+// ─── Onglet entité (Agenda unifié) ────────────────────────────────────────
+function EntityTab({
+  label, count, active, onClick, dot,
+}: {
+  label: string;
+  count: number;
+  active: boolean;
+  onClick: () => void;
+  dot: string | null;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`ls-pill${active ? " ls-pill--selected" : ""}`}
+      style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "8px 14px", fontSize: 13 }}
+    >
+      {dot && (
+        <span
+          style={{
+            width: 8, height: 8, borderRadius: "50%", background: dot,
+            flexShrink: 0, display: "inline-block",
+          }}
+        />
+      )}
+      <span>{label}</span>
+      <span
+        style={{
+          fontSize: 11,
+          padding: "1px 7px",
+          borderRadius: 10,
+          fontWeight: 600,
+          background: active ? "rgba(0,0,0,0.08)" : "var(--ls-surface2)",
+          color: active ? "var(--ls-bg)" : "var(--ls-text-muted)",
+          minWidth: 18,
+          textAlign: "center",
+        }}
+      >
+        {count}
+      </span>
+    </button>
+  );
+}
+
+// ─── Carte RDV client (agenda unifié) ─────────────────────────────────────
+function ClientFollowUpCard({
+  followUp, client, ownerName, showDate,
+}: {
+  followUp: FollowUp;
+  client: Client;
+  ownerName?: string;
+  showDate: boolean;
+}) {
+  const timeLabel = (() => {
+    try {
+      const d = new Date(followUp.dueDate);
+      return d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+    } catch { return "—"; }
+  })();
+  const dateLabel = (() => {
+    try {
+      const d = new Date(followUp.dueDate);
+      return d.toLocaleDateString("fr-FR", { day: "2-digit", month: "short" });
+    } catch { return "—"; }
+  })();
+
+  return (
+    <div style={{ display: "flex", alignItems: "stretch" }}>
+      <div style={{ width: 3, borderRadius: "3px 0 0 3px", background: "var(--ls-gold)", flexShrink: 0 }} />
+      <Link
+        to={`/clients/${client.id}`}
+        style={{
+          flex: 1, minWidth: 0,
+          display: "flex", alignItems: "center", gap: 14, padding: "12px 16px",
+          background: "var(--ls-surface)", border: "1px solid var(--ls-border)",
+          borderLeft: "none", borderRadius: "0 14px 14px 0",
+          textDecoration: "none", color: "inherit", cursor: "pointer",
+          transition: "border-color 0.15s",
+        }}
+        onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--ls-gold)"; }}
+        onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--ls-border)"; }}
+      >
+        {/* Colonne heure/date */}
+        <div style={{ minWidth: 60, textAlign: "center", flexShrink: 0 }}>
+          <div style={{ fontFamily: "Syne, sans-serif", fontWeight: 700, fontSize: 14, color: "var(--ls-text)" }}>
+            {showDate ? dateLabel : timeLabel}
+          </div>
+          {showDate && (
+            <div style={{ fontSize: 11, color: "var(--ls-text-hint)", marginTop: 2 }}>
+              {timeLabel}
+            </div>
+          )}
+        </div>
+        {/* Colonne infos */}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 14, fontWeight: 600, color: "var(--ls-text)", marginBottom: 2 }}>
+            {client.firstName} {client.lastName}
+          </div>
+          <div style={{ fontSize: 11, color: "var(--ls-text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            {followUp.type || "Suivi"}
+            {followUp.programTitle ? ` · ${followUp.programTitle}` : ""}
+            {ownerName ? ` · ${ownerName}` : ""}
+          </div>
+        </div>
+        {/* Badge Client */}
+        <span
+          className="ls-badge"
+          data-tone="gold"
+          style={{ flexShrink: 0 }}
+        >
+          Client
+        </span>
+      </Link>
     </div>
   );
 }
