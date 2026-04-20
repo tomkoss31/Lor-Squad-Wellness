@@ -23,6 +23,19 @@
   --ls-sidebar-bg: #13161C;
   --ls-icon: #7A8099;
   --ls-icon-active: #F0EDE8;
+  /* UX Polish global (2026-04-20) : tokens étendus */
+  --ls-gold-rgb: 201, 168, 76;
+  --ls-teal-rgb: 45, 212, 191;
+  --ls-coral-rgb: 251, 113, 133;
+  --ls-purple-rgb: 167, 139, 250;
+  /* Gold reste volontairement sombre/dark-on-gold dans les 2 thèmes — gold clair
+     suffit pour un contraste AA avec un texte #0B0D11 */
+  --ls-gold-contrast: #0B0D11;
+  --ls-teal-contrast: #0B0D11;
+  --ls-radius: 8px;
+  --ls-radius-lg: 16px;
+  --ls-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04), 0 1px 1px rgba(0, 0, 0, 0.02);
+  --ls-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08), 0 2px 4px rgba(0, 0, 0, 0.04);
 }
 
 html.theme-light {
@@ -44,6 +57,15 @@ html.theme-light {
   --ls-purple-bg: rgba(124,58,237,0.1);
   --ls-input-bg: #F0EDE8;
   --ls-sidebar-bg: #FFFFFF;
+  /* UX Polish global (2026-04-20) : overrides light mode */
+  --ls-gold-rgb: 184, 146, 42;
+  --ls-teal-rgb: 13, 148, 136;
+  --ls-coral-rgb: 220, 38, 38;
+  --ls-purple-rgb: 124, 58, 237;
+  --ls-gold-contrast: #FFFFFF;
+  --ls-teal-contrast: #FFFFFF;
+  --ls-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.06), 0 1px 1px rgba(0, 0, 0, 0.04);
+  --ls-shadow-md: 0 4px 14px rgba(0, 0, 0, 0.1), 0 2px 6px rgba(0, 0, 0, 0.05);
   --ls-icon: #6B7280;
   --ls-icon-active: #111827;
 }
@@ -2135,4 +2157,110 @@ button, a, [role="button"] { min-height: 44px; }
   font-weight: 500;
   color: var(--ls-text);
   margin-bottom: 8px;
+}
+
+/* ─────────────────────────────────────────────────────────────────────── */
+/* UX Polish global (2026-04-20) — classes utilitaires étendues à toute l'app
+   Additif sur le chantier "UX Polish Bilan v1" : on généralise .ls-input
+   (text/number/date/email, en plus de .ls-input-time), .ls-badge,
+   .ls-card-interactive, et on ajoute un hover lift aux pills.            */
+/* ─────────────────────────────────────────────────────────────────────── */
+
+/* Input générique (text, number, date, email, tel, search) — pendant direct
+   de .ls-input-time pour les autres types. Halo focus teal + transition douce. */
+.ls-input {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1.5px solid var(--ls-border);
+  background: var(--ls-input-bg);
+  color: var(--ls-text);
+  padding: 10px 12px;
+  border-radius: var(--ls-radius);
+  font-family: "DM Sans", sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.4;
+  transition: border-color 120ms ease-out, box-shadow 120ms ease-out, background 120ms ease-out;
+  outline: none;
+}
+.ls-input::placeholder {
+  color: var(--ls-text-hint);
+}
+.ls-input:hover:not(:disabled):not(:focus) {
+  border-color: color-mix(in srgb, var(--ls-teal) 35%, var(--ls-border));
+}
+.ls-input:focus {
+  outline: none;
+  border-color: var(--ls-teal);
+  box-shadow: 0 0 0 3px rgba(var(--ls-teal-rgb), 0.18);
+}
+.ls-input:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.ls-input[aria-invalid="true"] {
+  border-color: var(--ls-coral);
+}
+.ls-input[aria-invalid="true"]:focus {
+  box-shadow: 0 0 0 3px rgba(var(--ls-coral-rgb), 0.18);
+}
+
+/* Pills — hover lift ajouté (design spec point 1 : translateY -1px) */
+.ls-pill:hover:not(.ls-pill--selected):not(:disabled) {
+  transform: translateY(-1px);
+}
+.ls-pill {
+  transition: border-color 150ms ease-out, background 150ms ease-out,
+              color 150ms ease-out, transform 150ms ease-out;
+}
+
+/* Badges — tone par data-tone (gold/teal/coral/purple/muted).
+   Spec : uppercase, letter-spacing 0.03em, opacity 0.12 du fond, couleur pleine. */
+.ls-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-family: "DM Sans", sans-serif;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  line-height: 1.2;
+}
+.ls-badge[data-tone="gold"] {
+  background: rgba(var(--ls-gold-rgb), 0.12);
+  color: var(--ls-gold);
+}
+.ls-badge[data-tone="teal"] {
+  background: rgba(var(--ls-teal-rgb), 0.12);
+  color: var(--ls-teal);
+}
+.ls-badge[data-tone="coral"] {
+  background: rgba(var(--ls-coral-rgb), 0.12);
+  color: var(--ls-coral);
+}
+.ls-badge[data-tone="purple"] {
+  background: rgba(var(--ls-purple-rgb), 0.12);
+  color: var(--ls-purple);
+}
+.ls-badge[data-tone="muted"] {
+  background: var(--ls-surface2);
+  color: var(--ls-text-muted);
+}
+
+/* Card cliquable — lift au hover */
+.ls-card-interactive {
+  transition: box-shadow 180ms ease-out, transform 180ms ease-out,
+              border-color 180ms ease-out;
+  cursor: pointer;
+}
+.ls-card-interactive:hover {
+  box-shadow: var(--ls-shadow-md);
+  transform: translateY(-2px);
+}
+.ls-card-interactive:active {
+  transform: translateY(0);
 }
