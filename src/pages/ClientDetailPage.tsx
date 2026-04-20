@@ -15,6 +15,7 @@ import { useAppContext } from "../context/AppContext";
 import { useToast, buildSupabaseErrorToast } from "../context/ToastContext";
 import { ErrorBoundary } from "../components/ErrorBoundary";
 import { FollowUpProtocolCard } from "../components/follow-up/FollowUpProtocolCard";
+import { ClientGeneralNote } from "../components/client/ClientGeneralNote";
 import { buildReportData, generateProductRecommendations } from "../lib/evolutionReport";
 import { EvolutionReportModal } from "../components/assessment/EvolutionReportModal";
 import { getSupabaseClient } from "../services/supabaseClient";
@@ -875,6 +876,13 @@ export function ClientDetailPage() {
       {/* Tab 4: Actions rapides */}
       {activeTab === 4 && (
         <div className="grid gap-4 md:grid-cols-2">
+          {/* Chantier bilan updates (2026-04-20) : note libre "À savoir sur
+              ce client" — en tête, full-width, juste au-dessus du protocole. */}
+          <div className="md:col-span-2">
+            <ErrorBoundary name="ClientDetailPage/GeneralNote" fallback={null}>
+              <ClientGeneralNote client={client} />
+            </ErrorBoundary>
+          </div>
           {/* Chantier Protocole de suivi (2026-04-20) : bloc 5 étapes visible
               en tête de la colonne Actions. L'ErrorBoundary l'isole d'un
               crash éventuel pour ne pas casser le reste de l'onglet. */}
