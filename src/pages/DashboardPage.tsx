@@ -51,6 +51,14 @@ export function DashboardPage() {
 
   const scopedClientIds = useMemo(() => new Set(metrics.clients.map((c) => c.id)), [metrics.clients]);
 
+  // Free PV tracking (2026-04-20) : clients sous un autre superviseur, exclus
+  // des listes de réassort (carte cockpit + priorités). On les garde visibles
+  // dans le reste du dashboard (stats clients, RDV, etc.).
+  const pvTrackedClientIds = useMemo(
+    () => new Set(metrics.clients.filter((c) => !c.freePvTracking).map((c) => c.id)),
+    [metrics.clients]
+  );
+
   // Clients fragiles (non morts) du périmètre
   const fragileClients = useMemo(
     () => metrics.clients.filter((c) => c.isFragile === true).slice(0, 5),
@@ -112,7 +120,8 @@ export function DashboardPage() {
   const overdueReassorts = useMemo(() => {
     const now = new Date();
     return (pvClientProducts ?? [])
-      .filter((p) => p.active && scopedClientIds.has(p.clientId))
+      // Free PV tracking (2026-04-20) : exclure les clients avec flag actif
+      .filter((p) => p.active && pvTrackedClientIds.has(p.clientId))
       .map((p) => {
         const end = new Date(p.startDate);
         end.setDate(end.getDate() + p.durationReferenceDays);
@@ -120,7 +129,7 @@ export function DashboardPage() {
         return { ...p, daysRemaining };
       })
       .filter((p) => p.daysRemaining < 0);
-  }, [pvClientProducts, scopedClientIds]);
+  }, [pvClientProducts, pvTrackedClientIds]);
 
   // ─── Top 3 priorités du jour ────────────────────────────────────
   const topPriorities = useMemo(() => {
