@@ -11,9 +11,11 @@ import { PageHeading } from "../components/ui/PageHeading";
 import { EvolutionReportModal } from "../components/assessment/EvolutionReportModal";
 import { buildReportData } from "../lib/evolutionReport";
 import { getSupabaseClient } from "../services/supabaseClient";
+import { refreshClientRecap } from "../services/supabaseService";
 import { StatusBadge } from "../components/ui/StatusBadge";
 import { useAppContext } from "../context/AppContext";
-import { buildPvTrackingRecords, getPvProductStatusMeta } from "../data/mockPvModule";
+import { useToast, buildSupabaseErrorToast } from "../context/ToastContext";
+import { buildPvTrackingRecords, getPvProductStatusMeta } from "../data/pvCatalog";
 import {
   formatDate,
   getAssessmentDelta,
@@ -101,6 +103,7 @@ export function NewFollowUpPage() {
   const { clientId } = useParams();
   const navigate = useNavigate();
   const { currentUser, getClientById, addFollowUpAssessment, pvTransactions, pvClientProducts } = useAppContext();
+  const { push: pushToast } = useToast();
   const client = clientId ? getClientById(clientId) : undefined;
 
   if (!client) {
@@ -292,31 +295,54 @@ export function NewFollowUpPage() {
       status: "scheduled"
     });
 
+    // Chantier sync client_recaps (2026-04-20) : le body scan rapide est un
+    // follow-up. Sans ce refresh, la vue client /client/:token affiche encore
+    // les valeurs du bilan initial. Non-bloquant : le suivi est déjà enregistré.
+    try {
+      await refreshClientRecap(targetClient.id);
+    } catch (err) {
+      pushToast(buildSupabaseErrorToast(
+        err,
+        "Les données ont été enregistrées mais le lien client n'a pas pu être mis à jour. Tu peux régénérer l'accès depuis la fiche."
+      ));
+    }
+
     clearFollowUpDraft(targetClient.id);
 
     // Envoyer les recos dans la messagerie si cochées comme contactées
+    // Site 1 du durcissement audit L1 : erreurs remontées en toast pour éviter
+    // perte silencieuse des contacts filleuls. On continue la boucle sur les
+    // autres recos même si une échoue.
     if (recommendationsContacted && latest?.questionnaire?.recommendations?.length) {
-      try {
-        const sb = await getSupabaseClient();
-        if (sb && currentUser) {
-          for (const reco of latest.questionnaire.recommendations) {
-            if (reco.name.trim()) {
-              await sb.from('client_messages').insert({
-                client_id: targetClient.id,
-                client_name: `${targetClient.firstName} ${targetClient.lastName}`,
-                distributor_id: currentUser.id,
-                message_type: 'recommendation',
-                product_name: reco.name,
-                message: `Recommandation de ${targetClient.firstName} : ${reco.name}${reco.contact ? ` (${reco.contact})` : ''}`,
-                client_contact: reco.contact || null,
-              });
-            }
+      const sb = await getSupabaseClient();
+      if (sb && currentUser) {
+        for (const reco of latest.questionnaire.recommendations) {
+          if (!reco.name.trim()) continue;
+          try {
+            const { error } = await sb.from('client_messages').insert({
+              client_id: targetClient.id,
+              client_name: `${targetClient.firstName} ${targetClient.lastName}`,
+              distributor_id: currentUser.id,
+              message_type: 'recommendation',
+              product_name: reco.name,
+              message: `Recommandation de ${targetClient.firstName} : ${reco.name}${reco.contact ? ` (${reco.contact})` : ''}`,
+              client_contact: reco.contact || null,
+            });
+            if (error) throw error;
+          } catch (err) {
+            pushToast(buildSupabaseErrorToast(
+              err,
+              `Impossible d'enregistrer le contact avec ${reco.name}. Réessayez ou notez-le manuellement.`
+            ));
           }
         }
-      } catch { /* silently continue */ }
+      }
     }
 
-    // Générer le rapport d'évolution si >= 2 assessments
+    // Générer le rapport d'évolution si >= 2 assessments.
+    // Site 3 du durcissement audit L1 : on insère AVANT de supprimer les
+    // anciens, pour garantir qu'on n'a jamais d'état "plus aucun rapport
+    // valide" si l'insert échoue.
     try {
       const updatedClient = getClientById(targetClient.id);
       if (updatedClient && (updatedClient.assessments?.length ?? 0) >= 2 && currentUser) {
@@ -324,20 +350,45 @@ export function NewFollowUpPage() {
         if (reportData) {
           const sb = await getSupabaseClient();
           if (sb) {
-            await sb.from('client_evolution_reports').delete().eq('client_id', targetClient.id);
-            const { data: inserted } = await sb
+            // 1. Insert NOUVEAU rapport d'abord
+            const { data: inserted, error: insertError } = await sb
               .from('client_evolution_reports')
               .insert(reportData)
-              .select('token')
+              .select('id, token')
               .single();
+
+            if (insertError) throw insertError;
+
+            // 2. Cleanup des anciens rapports, mais seulement après succès de l'insert.
+            //    On garde explicitement le tout nouveau via son id.
             if (inserted) {
+              const { error: deleteError } = await sb
+                .from('client_evolution_reports')
+                .delete()
+                .eq('client_id', targetClient.id)
+                .neq('id', inserted.id);
+
+              if (deleteError) {
+                // Non-fatal : le nouveau rapport existe bien, juste un reliquat
+                pushToast({
+                  tone: "warning",
+                  title: "Rapport créé",
+                  message: "Le nouveau rapport est disponible, mais les anciens n'ont pas pu être supprimés.",
+                });
+              }
+
               setReportUrl(`${window.location.origin}/rapport/${inserted.token}`);
               return; // Ne pas naviguer — afficher le modal
             }
           }
         }
       }
-    } catch { /* silently continue */ }
+    } catch (err) {
+      pushToast(buildSupabaseErrorToast(
+        err,
+        "Impossible de régénérer le rapport d'évolution. Les anciens rapports sont intacts."
+      ));
+    }
 
     navigate(`/clients/${targetClient.id}`);
   }
@@ -954,7 +1005,7 @@ function FollowUpChoiceGroup({
 }) {
   return (
     <div className="space-y-3">
-      <p className="text-sm font-medium text-[var(--ls-text)]">{label}</p>
+      <p className="ls-field-label">{label}</p>
       <div className="flex flex-wrap gap-3">
         {options.map((option) => {
           const isActive = option === value;
@@ -964,12 +1015,15 @@ function FollowUpChoiceGroup({
               key={option}
               type="button"
               onClick={() => onChange(option)}
-              className={`inline-flex min-h-[44px] items-center rounded-full border px-5 py-2.5 text-[14px] font-semibold transition duration-200 ${
-                isActive
-                  ? "border-white/20 bg-[#C9A84C] text-[#0B0D11] shadow-[0_8px_24px_rgba(201,168,76,0.22)]"
-                  : "border-white/10 bg-[var(--ls-surface2)] text-[#C8D2E1] hover:-translate-y-[1px] hover:border-white/14 hover:bg-[var(--ls-surface2)] hover:shadow-[0_10px_22px_rgba(0,0,0,0.14)]"
-              }`}
+              className={`ls-pill${isActive ? " ls-pill--selected" : ""}`}
+              style={{ minHeight: 44 }}
+              aria-pressed={isActive}
             >
+              {isActive && (
+                <svg className="ls-pill__check" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              )}
               {option}
             </button>
           );

@@ -1,501 +1,306 @@
 import { useEffect, useMemo, useState } from "react";
-import { buildPvTrackingRecords, getPvStatusMeta } from "../data/mockPvModule";
+import { useSearchParams } from "react-router-dom";
+import { buildPvTrackingRecords } from "../data/pvCatalog";
 import { formatDate } from "../lib/calculations";
-import { Card } from "../components/ui/Card";
-import { MetricTile } from "../components/ui/MetricTile";
 import { PvModuleHeader } from "../components/pv/PvModuleHeader";
-import { PvClientPanel } from "../components/pv/PvClientPanel";
-import { PvStatusBadge } from "../components/pv/PvStatusBadge";
+import { PvClientFullPage } from "../components/pv/PvClientFullPage";
 import { useAppContext } from "../context/AppContext";
-import type { PvStatus } from "../types/pv";
+import type { PvClientTrackingRecord } from "../types/pv";
 
 export function PvOverviewPage() {
-  const { currentUser, clients, visibleClients, pvTransactions, pvClientProducts, storageMode } = useAppContext();
+  const { currentUser, clients, visibleClients, pvTransactions, pvClientProducts } = useAppContext();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"all" | PvStatus>("all");
-  const [responsibleFilter, setResponsibleFilter] = useState("all");
-  const [programFilter, setProgramFilter] = useState("all");
-  const [periodFilter, setPeriodFilter] = useState("all");
-  const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
+  const [statusFilter, setStatusFilter] = useState<"all" | "ok" | "relaunch" | "overdue">("all");
+  const [responsibleFilter, setResponsibleFilter] = useState(
+    currentUser?.role === "admin" ? searchParams.get("responsable") ?? "all" : "all"
+  );
+  const [selectedClientId, setSelectedClientId] = useState<string | null>(
+    searchParams.get("client")
+  );
 
-  if (!currentUser) {
-    return null;
-  }
+  if (!currentUser) return null;
 
   const isAdmin = currentUser.role === "admin";
-  const sourceClients = isAdmin ? clients : visibleClients;
+  // Free PV tracking (2026-04-20) : exclure les clients marqués "sous autre
+  // superviseur" de la liste principale du suivi PV. Le coach ne peut pas
+  // agir sur leurs commandes, inutile qu'ils polluent la liste.
+  const sourceClients = useMemo(
+    () => (isAdmin ? clients : visibleClients).filter((c) => !c.freePvTracking),
+    [isAdmin, clients, visibleClients]
+  );
+
   const records = useMemo(
     () => buildPvTrackingRecords(sourceClients, pvTransactions, pvClientProducts),
     [pvClientProducts, pvTransactions, sourceClients]
   );
-  const responsibleOptions = useMemo(
-    () =>
-      [...new Map(records.map((record) => [record.responsibleId, record.responsibleName])).entries()].map(
-        ([id, name]) => ({ id, name })
-      ),
-    [records]
-  );
-  const defaultResponsibleFilter = useMemo(() => {
-    if (!isAdmin) {
-      return "all";
-    }
 
-    const hasOwnClients = records.some((record) => record.responsibleId === currentUser.id);
-    return hasOwnClients ? currentUser.id : "all";
-  }, [currentUser.id, isAdmin, records]);
-  const programOptions = useMemo(
-    () => [...new Set(records.map((record) => record.program))].sort((left, right) => left.localeCompare(right, "fr")),
+  const responsibleOptions = useMemo(
+    () => [...new Map(records.map((r) => [r.responsibleId, r.responsibleName])).entries()].map(([id, name]) => ({ id, name })),
     [records]
   );
 
   const filteredRecords = useMemo(
     () =>
-      records.filter((record) =>
-        matchesPvOverviewFilters(record, {
-          search,
-          statusFilter,
-          responsibleFilter,
-          programFilter,
-          periodFilter,
-          isAdmin
-        })
-      ),
-    [isAdmin, periodFilter, programFilter, records, responsibleFilter, search, statusFilter]
+      records.filter((r) => {
+        const s = search.trim().toLowerCase();
+        const matchesSearch = !s || `${r.clientName} ${r.program} ${r.responsibleName}`.toLowerCase().includes(s);
+        const matchesResponsible = !isAdmin || responsibleFilter === "all" || r.responsibleId === responsibleFilter;
+        const matchesStatus =
+          statusFilter === "all"
+            ? true
+            : statusFilter === "overdue"
+              ? r.status === "restock" || r.status === "inconsistent"
+              : statusFilter === "relaunch"
+                ? r.status === "watch" || r.status === "follow-up"
+                : r.status === "ok";
+        return matchesSearch && matchesResponsible && matchesStatus;
+      }),
+    [records, search, statusFilter, responsibleFilter, isAdmin]
   );
 
-  function handleResponsibleChange(nextResponsibleId: string) {
-    setResponsibleFilter(nextResponsibleId);
-    const nextVisibleRecords = records.filter((record) =>
-      matchesPvOverviewFilters(record, {
-        search,
-        statusFilter,
-        responsibleFilter: nextResponsibleId,
-        programFilter,
-        periodFilter,
-        isAdmin
-      })
-    );
-    setSelectedClientId(nextVisibleRecords[0]?.clientId ?? null);
-  }
+  const stats = useMemo(() => {
+    const monthlyPv = records.reduce((sum, r) => sum + (r.monthlyPv ?? 0), 0);
+    const overdue = records.filter((r) => r.status === "restock" || r.status === "inconsistent").length;
+    const toRelaunch = records.filter((r) => r.status === "watch" || r.status === "follow-up").length;
+    return {
+      totalClients: records.length,
+      pvMonth: monthlyPv,
+      toRelaunch,
+      overdue,
+    };
+  }, [records]);
 
-  function handleSelectClient(clientId: string) {
-    setSelectedClientId(clientId);
-  }
-
-  useEffect(() => {
-    if (isAdmin && responsibleFilter === "all" && defaultResponsibleFilter !== "all") {
-      const nextVisibleRecords = records.filter((record) =>
-        matchesPvOverviewFilters(record, {
-          search,
-          statusFilter,
-          responsibleFilter: defaultResponsibleFilter,
-          programFilter,
-          periodFilter,
-          isAdmin
-        })
-      );
-
-      setResponsibleFilter(defaultResponsibleFilter);
-      setSelectedClientId(nextVisibleRecords[0]?.clientId ?? null);
-    }
-  }, [defaultResponsibleFilter, isAdmin, periodFilter, programFilter, records, responsibleFilter, search, statusFilter]);
-
-  useEffect(() => {
-    if (!selectedClientId || !filteredRecords.some((record) => record.clientId === selectedClientId)) {
-      setSelectedClientId(filteredRecords[0]?.clientId ?? null);
-    }
-  }, [filteredRecords, selectedClientId]);
-
-  const selectedRecord =
-    filteredRecords.find((record) => record.clientId === selectedClientId) ??
-    filteredRecords[0] ??
-    null;
-  const monthPv = filteredRecords.reduce((total, record) => total + record.monthlyPv, 0).toFixed(1);
-  const restockCount = filteredRecords.filter((record) => record.status === "restock").length;
-  const repriseCount = filteredRecords.reduce(
-    (total, record) =>
-      total +
-      record.transactions.filter(
-        (transaction) =>
-          transaction.type === "reprise-sur-place" &&
-          new Date(transaction.date).getMonth() === new Date().getMonth() &&
-          new Date(transaction.date).getFullYear() === new Date().getFullYear()
-      ).length,
-    0
+  const selectedRecord = useMemo(
+    () => records.find((r) => r.clientId === selectedClientId) ?? null,
+    [records, selectedClientId]
   );
+
+  // Sync ?client= avec selectedClientId
+  useEffect(() => {
+    const next = new URLSearchParams(searchParams);
+    if (selectedClientId) next.set("client", selectedClientId);
+    else next.delete("client");
+    setSearchParams(next, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedClientId]);
+
+  function handleResponsibleChange(value: string) {
+    setResponsibleFilter(value);
+    const next = new URLSearchParams(searchParams);
+    if (value === "all") next.delete("responsable");
+    else next.set("responsable", value);
+    setSearchParams(next, { replace: true });
+  }
 
   return (
-    <div className="space-y-6">
+    <div style={{ padding: "clamp(16px, 4vw, 28px)", maxWidth: 1200, margin: "0 auto", display: "flex", flexDirection: "column", gap: 20 }}>
       <PvModuleHeader
         currentUser={currentUser}
         title="Suivi PV"
-        description="Vue simple des clients, des points volume, des démarrages et des besoins de suivi."
+        description="Vue globale des clients actifs, de leurs produits et commandes."
       />
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <MetricTile label="PV du mois" value={`${monthPv} PV`} hint="Lecture du mois en cours" accent="blue" />
-        <MetricTile label="Clients actifs" value={filteredRecords.length} hint="Portefeuille visible" accent="green" />
-        <MetricTile label="Réassorts probables" value={restockCount} hint="Produits bientôt à renouveler" accent="red" />
-        <MetricTile label="Reprises sur place" value={repriseCount} hint="Mouvements du mois" accent="blue" />
-      </div>
+      {/* Vue FICHE pleine page */}
+      {selectedClientId && selectedRecord && (
+        <PvClientFullPage record={selectedRecord} onClose={() => setSelectedClientId(null)} />
+      )}
 
-      <Card className="space-y-5">
-        <div className="grid gap-4 xl:grid-cols-[1.25fr_repeat(3,minmax(0,0.8fr))]">
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-[var(--ls-text-muted)]">Recherche client</label>
-            <input
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder="Nom, programme ou responsable..."
-            />
-          </div>
+      {/* Vue TABLEAU */}
+      {(!selectedClientId || !selectedRecord) && (
+        <>
+          <PvStatsGrid stats={stats} />
 
-          <ToolbarSelect
-            label="Statut"
-            value={statusFilter}
-            onChange={(value) => setStatusFilter(value as "all" | PvStatus)}
-            options={[
-              { value: "all", label: "Tous les statuts" },
-              { value: "ok", label: "RAS" },
-              { value: "watch", label: "À surveiller" },
-              { value: "restock", label: "Réassort probable" },
-              { value: "inconsistent", label: "Incohérence conso" },
-              { value: "follow-up", label: "À relancer" }
-            ]}
-          />
-
-          {isAdmin ? (
-            <ToolbarSelect
-              label="Responsable"
-              value={responsibleFilter}
-              onChange={setResponsibleFilter}
-              options={[
-                { value: "all", label: "Tous les responsables" },
-                ...responsibleOptions.map((option) => ({ value: option.id, label: option.name }))
-              ]}
-            />
-          ) : (
-            <ToolbarInfo label="Responsable" value={currentUser.name} />
+          {isAdmin && responsibleOptions.length > 1 && (
+            <div>
+              <select
+                value={responsibleFilter}
+                onChange={(e) => handleResponsibleChange(e.target.value)}
+                style={{
+                  padding: "10px 14px", borderRadius: 10,
+                  border: "1px solid var(--ls-border)", background: "var(--ls-input-bg)",
+                  color: "var(--ls-text-muted)", fontSize: 13, fontFamily: "DM Sans, sans-serif",
+                  cursor: "pointer", minWidth: 220, outline: "none",
+                }}
+              >
+                <option value="all">Tous les portefeuilles</option>
+                {responsibleOptions.map((o) => (
+                  <option key={o.id} value={o.id}>{o.name}</option>
+                ))}
+              </select>
+            </div>
           )}
 
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-1">
-            <ToolbarSelect
-              label="Programme"
-              value={programFilter}
-              onChange={setProgramFilter}
-              options={[
-                { value: "all", label: "Tous les programmes" },
-                ...programOptions.map((program) => ({ value: program, label: program }))
-              ]}
-            />
-            <ToolbarSelect
-              label="Période"
-              value={periodFilter}
-              onChange={setPeriodFilter}
-              options={[
-                { value: "all", label: "Toutes les périodes" },
-                { value: "30", label: "30 derniers jours" },
-                { value: "90", label: "90 derniers jours" }
-              ]}
-            />
-          </div>
-        </div>
+          <PvSearchFilters
+            search={search}
+            onSearchChange={setSearch}
+            status={statusFilter}
+            onStatusChange={(v) => setStatusFilter(v as typeof statusFilter)}
+          />
 
-        {isAdmin ? (
-          <div className="space-y-3">
-            <p className="text-sm font-medium text-[var(--ls-text-muted)]">Portefeuilles</p>
+          <PvClientsTable records={filteredRecords} selectedId={selectedClientId} onSelect={setSelectedClientId} />
 
-            {/* Mobile — select natif */}
-            <select
-              className="md:hidden"
-              value={responsibleFilter}
-              onChange={(e) => handleResponsibleChange(e.target.value)}
-              style={{
-                width: '100%', padding: '12px 14px', borderRadius: 12,
-                border: '1px solid var(--ls-border)', background: 'var(--ls-surface2)',
-                color: 'var(--ls-text)', fontSize: 16, fontFamily: 'DM Sans, sans-serif',
-                outline: 'none', appearance: 'none',
-                backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239CA3AF' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E\")",
-                backgroundRepeat: 'no-repeat', backgroundPosition: 'right 14px center', paddingRight: 38,
-              }}
-            >
-              {records.some((r) => r.responsibleId === currentUser.id) && (
-                <option value={currentUser.id}>
-                  Mon portefeuille ({records.filter((r) => r.responsibleId === currentUser.id).length})
-                </option>
-              )}
-              {responsibleOptions.filter((o) => o.id !== currentUser.id).map((option) => (
-                <option key={option.id} value={option.id}>
-                  {formatPortfolioTabLabel(option.name)} ({records.filter((r) => r.responsibleId === option.id).length})
-                </option>
-              ))}
-              <option value="all">Tous ({records.length})</option>
-            </select>
-
-            {/* Desktop — chips */}
-            <div className="hidden md:flex flex-wrap gap-2">
-              {records.some((record) => record.responsibleId === currentUser.id) ? (
-                <ResponsibleFilterChip
-                  label="Mon portefeuille"
-                  count={records.filter((record) => record.responsibleId === currentUser.id).length}
-                  active={responsibleFilter === currentUser.id}
-                  onClick={() => handleResponsibleChange(currentUser.id)}
-                />
-              ) : null}
-              {responsibleOptions.map((option) => {
-                if (option.id === currentUser.id) {
-                  return null;
-                }
-
-                const count = records.filter((record) => record.responsibleId === option.id).length;
-                return (
-                  <ResponsibleFilterChip
-                    key={option.id}
-                    label={formatPortfolioTabLabel(option.name)}
-                    count={count}
-                    active={responsibleFilter === option.id}
-                    onClick={() => handleResponsibleChange(option.id)}
-                  />
-                );
-              })}
-              <ResponsibleFilterChip
-                label="Tous"
-                count={records.length}
-                active={responsibleFilter === "all"}
-                onClick={() => handleResponsibleChange("all")}
-              />
+          {filteredRecords.length === 0 && (
+            <div style={{ padding: "32px 20px", textAlign: "center", color: "var(--ls-text-hint)", fontSize: 13, background: "var(--ls-surface)", border: "1px solid var(--ls-border)", borderRadius: 14 }}>
+              Aucun client ne correspond aux filtres en cours.
             </div>
-          </div>
-        ) : (
-          <div className="rounded-[22px] border border-white/8 bg-[var(--ls-surface2)] px-5 py-4">
-            <p className="eyebrow-label">Vue personnelle</p>
-            <p className="mt-2 text-sm leading-6 text-[var(--ls-text-muted)]">
-              Cette vue ne montre que les clients du distributeur connecté.
-            </p>
-          </div>
-        )}
-      </Card>
-
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.2fr)_380px]">
-        <Card className="space-y-4 overflow-hidden">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <p className="eyebrow-label">Vue globale</p>
-              <h2 className="mt-3 text-2xl text-white">Clients, démarrage et conso estimée</h2>
-            </div>
-            <div className="rounded-[18px] bg-[var(--ls-surface2)] px-4 py-3 text-sm text-[var(--ls-text-muted)]">
-              {filteredRecords.length} dossiers
-            </div>
-          </div>
-
-          {/* Mobile cards */}
-          <div className="md:hidden space-y-3">
-            {filteredRecords.length === 0 ? (
-              <div className="rounded-[16px] bg-[var(--ls-surface2)] px-4 py-6 text-center text-sm text-[var(--ls-text-muted)]">Aucun dossier PV visible</div>
-            ) : filteredRecords.map((record) => {
-              return (
-                <button key={record.clientId} type="button" onClick={() => handleSelectClient(record.clientId)}
-                  className="w-full rounded-[16px] border border-[var(--ls-border)] bg-[var(--ls-surface)] p-4 text-left transition hover:bg-[var(--ls-surface2)]">
-                  <div className="flex justify-between items-start mb-3">
-                    <div>
-                      <div className="text-sm font-semibold text-white">{record.clientName}</div>
-                      <div className="text-[11px] text-[var(--ls-text-muted)] mt-1">{record.program}</div>
-                    </div>
-                    <div className="text-right">
-                      <div style={{ fontFamily: 'Syne, sans-serif', fontSize: 18, fontWeight: 700, color: '#C9A84C' }}>{record.pvCumulative} PV</div>
-                      <PvStatusBadge status={record.status} />
-                    </div>
-                  </div>
-                  <div className="flex gap-4 text-[11px] text-[var(--ls-text-hint)]">
-                    <span>Début : {formatDate(record.startDate)}</span>
-                    <span>{record.estimatedRemainingDays}j restants</span>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Desktop table */}
-          <div className="hidden md:block overflow-x-auto">
-            {storageMode === "supabase" && records.length === 0 ? (
-              <div className="mb-4 rounded-[22px] border border-white/10 bg-[var(--ls-surface2)] px-4 py-4 text-sm leading-6 text-[var(--ls-text-muted)]">
-                Aucun dossier PV actif n&apos;est encore visible avec les filtres en cours.
-              </div>
-            ) : null}
-            <div className="min-w-[1120px] space-y-2">
-              <div className="grid grid-cols-[1.4fr_1fr_1fr_1fr_0.8fr_0.9fr_0.9fr_0.9fr_1fr_0.7fr] gap-3 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--ls-text-hint)]">
-                <span>Client</span>
-                <span>Programme</span>
-                <span>Date démarrage</span>
-                <span>Dernière commande</span>
-                <span>PV cumulés</span>
-                <span>Jours depuis démarrage</span>
-                <span>Reste estimé</span>
-                <span>Statut</span>
-                <span>Responsable</span>
-                <span>Action</span>
-              </div>
-
-              {filteredRecords.map((record) => {
-                const statusMeta = getPvStatusMeta(record.status);
-                const isActive = selectedRecord?.clientId === record.clientId;
-
-                return (
-                  <button
-                    key={record.clientId}
-                    type="button"
-                    aria-pressed={isActive}
-                    onClick={() => handleSelectClient(record.clientId)}
-                    className={`grid w-full grid-cols-[1.4fr_1fr_1fr_1fr_0.8fr_0.9fr_0.9fr_0.9fr_1fr_0.7fr] gap-3 rounded-[22px] border px-3 py-4 text-left transition ${
-                      isActive
-                        ? "border-white/28 bg-[var(--ls-border2)] shadow-[0_0_0_1px_rgba(255,255,255,0.12),0_22px_54px_rgba(8,15,28,0.4)]"
-                        : "border-white/8 bg-[var(--ls-surface2)] hover:border-white/16 hover:bg-white/[0.055] hover:shadow-[0_0_0_1px_rgba(128,128,128,0.08),0_18px_40px_rgba(7,12,22,0.3)]"
-                    }`}
-                  >
-                    <div>
-                      <p className="text-sm font-semibold text-white">{record.clientName}</p>
-                      <p className="mt-1 text-xs text-[var(--ls-text-muted)]">Suivi le {formatDate(record.lastFollowUpDate)}</p>
-                    </div>
-                    <div className="text-sm text-[var(--ls-text-muted)]">{record.program}</div>
-                    <div className="text-sm text-[var(--ls-text-muted)]">{formatDate(record.startDate)}</div>
-                    <div className="text-sm text-[var(--ls-text-muted)]">{formatDate(record.lastOrderDate)}</div>
-                    <div className="text-sm font-semibold text-white">{record.pvCumulative} PV</div>
-                    <div className="text-sm text-[var(--ls-text-muted)]">{record.daysSinceStart} j</div>
-                    <div className="text-sm text-[var(--ls-text-muted)]">{record.estimatedRemainingDays} j</div>
-                    <div>
-                      <PvStatusBadge status={record.status} />
-                      <p className="mt-1 text-[11px] text-[var(--ls-text-hint)]">{statusMeta.label}</p>
-                    </div>
-                    <div className="text-sm text-[var(--ls-text-muted)]">{record.responsibleName}</div>
-                    <div>
-                      <span
-                        className={`inline-flex min-h-[40px] items-center justify-center rounded-full px-4 py-2 text-xs font-semibold transition ${
-                          isActive
-                            ? "border border-white/18 bg-white/[0.14] text-white"
-                            : "bg-[var(--ls-surface2)] text-white"
-                        }`}
-                      >
-                        {isActive ? "Ouvert" : "Ouvrir"}
-                      </span>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        </Card>
-
-        <PvClientPanel key={selectedRecord?.clientId ?? "empty"} record={selectedRecord} />
-      </div>
+          )}
+        </>
+      )}
     </div>
   );
 }
 
-function ToolbarSelect({
-  label,
-  value,
-  onChange,
-  options
-}: {
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-  options: Array<{ value: string; label: string }>;
-}) {
+// ─── Sous-composants ────────────────────────────────────────────────────
+
+function PvStatsGrid({ stats }: { stats: { totalClients: number; pvMonth: number; toRelaunch: number; overdue: number } }) {
+  const cards = [
+    { label: "Clients actifs", value: stats.totalClients, borderColor: "transparent", textColor: "var(--ls-text)" },
+    { label: "PV ce mois", value: stats.pvMonth.toFixed(0), borderColor: "#0D9488", textColor: "var(--ls-teal)" },
+    { label: "À relancer", value: stats.toRelaunch, borderColor: "#B8922A", textColor: "var(--ls-gold)" },
+    { label: "En retard", value: stats.overdue, borderColor: "#DC2626", textColor: "var(--ls-coral)" },
+  ];
   return (
-    <div className="space-y-2">
-      <label className="text-sm font-medium text-[var(--ls-text-muted)]">{label}</label>
-      <select value={value} onChange={(event) => onChange(event.target.value)}>
-        {options.map((option) => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
-        ))}
+    <div className="pv-stats-grid" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12 }}>
+      {cards.map(({ label, value, borderColor, textColor }) => (
+        <div key={label} style={{
+          background: "var(--ls-surface)",
+          border: "1px solid var(--ls-border)",
+          borderTop: borderColor !== "transparent" ? `2px solid ${borderColor}` : "1px solid var(--ls-border)",
+          borderRadius: 14,
+          padding: "14px 16px",
+        }}>
+          <div style={{ fontSize: 9, letterSpacing: "2px", textTransform: "uppercase", color: "var(--ls-text-hint)", fontWeight: 500, marginBottom: 6, fontFamily: "DM Sans, sans-serif" }}>
+            {label}
+          </div>
+          <div style={{ fontFamily: "Syne, sans-serif", fontWeight: 800, fontSize: 22, color: textColor, lineHeight: 1 }}>
+            {value}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function PvSearchFilters({ search, onSearchChange, status, onStatusChange }: { search: string; onSearchChange: (s: string) => void; status: string; onStatusChange: (s: string) => void }) {
+  return (
+    <div className="pv-filters" style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+      <div style={{ flex: 1, position: "relative", minWidth: 200 }}>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ls-text-hint)" strokeWidth="1.5"
+          style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)" }}>
+          <circle cx="11" cy="11" r="8" />
+          <line x1="21" y1="21" x2="16.65" y2="16.65" />
+        </svg>
+        <input
+          value={search}
+          onChange={(e) => onSearchChange(e.target.value)}
+          placeholder="Rechercher un client..."
+          style={{
+            width: "100%", padding: "11px 14px 11px 36px",
+            border: "1px solid var(--ls-border)", borderRadius: 10,
+            fontFamily: "DM Sans, sans-serif", fontSize: 14,
+            background: "var(--ls-input-bg)", color: "var(--ls-text)",
+            outline: "none",
+          }}
+        />
+      </div>
+      <select
+        value={status}
+        onChange={(e) => onStatusChange(e.target.value)}
+        style={{
+          padding: "11px 14px", border: "1px solid var(--ls-border)",
+          borderRadius: 10, fontFamily: "DM Sans, sans-serif", fontSize: 13,
+          background: "var(--ls-input-bg)", color: "var(--ls-text-muted)",
+          outline: "none", cursor: "pointer", minWidth: 180,
+        }}
+      >
+        <option value="all">Tous les statuts</option>
+        <option value="ok">OK</option>
+        <option value="relaunch">À relancer</option>
+        <option value="overdue">En retard</option>
       </select>
     </div>
   );
 }
 
-function ToolbarInfo({ label, value }: { label: string; value: string }) {
+function PvClientsTable({ records, selectedId, onSelect }: { records: PvClientTrackingRecord[]; selectedId: string | null; onSelect: (id: string) => void }) {
   return (
-    <div className="space-y-2">
-      <label className="text-sm font-medium text-[var(--ls-text-muted)]">{label}</label>
-      <div className="rounded-[18px] border border-white/8 bg-[var(--ls-surface2)] px-4 py-3 text-sm font-medium text-white">
-        {value}
+    <div style={{ background: "var(--ls-surface)", border: "1px solid var(--ls-border)", borderRadius: 14, overflow: "hidden" }}>
+      <div className="pv-table-header" style={{ display: "flex", padding: "12px 16px", borderBottom: "1px solid var(--ls-border)", background: "var(--ls-surface2)" }}>
+        <div style={{ flex: 2, fontSize: 9, letterSpacing: "2px", textTransform: "uppercase", color: "var(--ls-text-hint)", fontWeight: 500 }}>Client</div>
+        <div style={{ flex: 1.5, fontSize: 9, letterSpacing: "2px", textTransform: "uppercase", color: "var(--ls-text-hint)", fontWeight: 500 }}>Programme</div>
+        <div style={{ flex: 1, fontSize: 9, letterSpacing: "2px", textTransform: "uppercase", color: "var(--ls-text-hint)", fontWeight: 500 }}>PV cumulés</div>
+        <div style={{ flex: 1, fontSize: 9, letterSpacing: "2px", textTransform: "uppercase", color: "var(--ls-text-hint)", fontWeight: 500 }}>Jours</div>
+        <div style={{ width: 90, fontSize: 9, letterSpacing: "2px", textTransform: "uppercase", color: "var(--ls-text-hint)", fontWeight: 500 }}>Statut</div>
       </div>
+
+      {records.map((r, i) => {
+        const isSelected = r.clientId === selectedId;
+        const statusInfo = getStatusInfo(r.status);
+        return (
+          <div
+            key={r.clientId}
+            className="pv-table-row"
+            onClick={() => onSelect(r.clientId)}
+            onMouseEnter={(e) => { if (!isSelected) e.currentTarget.style.background = "var(--ls-surface2)"; }}
+            onMouseLeave={(e) => { if (!isSelected) e.currentTarget.style.background = "transparent"; }}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              padding: "13px 16px",
+              borderBottom: i < records.length - 1 ? "1px solid var(--ls-border)" : "none",
+              cursor: "pointer",
+              transition: "all 0.15s",
+              background: isSelected ? "rgba(184,146,42,0.06)" : "transparent",
+              borderLeft: isSelected ? "3px solid var(--ls-gold)" : "3px solid transparent",
+              paddingLeft: isSelected ? 13 : 16,
+              gap: 8,
+            }}
+          >
+            <div className="pv-cell-client" style={{ flex: 2, minWidth: 0 }}>
+              <div style={{ fontSize: 13, fontWeight: isSelected ? 600 : 500, color: isSelected ? "var(--ls-gold)" : "var(--ls-text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                {r.clientName}
+              </div>
+              <div style={{ fontSize: 11, color: "var(--ls-text-hint)", marginTop: 2 }}>
+                Suivi le {formatDate(r.lastFollowUpDate)} · {r.activeProducts?.length ?? 0} produit{(r.activeProducts?.length ?? 0) > 1 ? "s" : ""}
+              </div>
+            </div>
+            <div className="pv-cell-program" style={{ flex: 1.5, fontSize: 12, color: "var(--ls-text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", paddingRight: 8 }}>
+              {r.program ?? "—"}
+            </div>
+            <div className="pv-cell-pv" style={{ flex: 1, fontFamily: "Syne, sans-serif", fontSize: 14, fontWeight: 700, color: isSelected ? "var(--ls-gold)" : "var(--ls-text)" }}>
+              {(r.pvCumulative ?? 0).toFixed(0)}
+            </div>
+            <div className="pv-cell-days" style={{ flex: 1, fontSize: 12, color: r.daysSinceStart > 60 ? "var(--ls-coral)" : r.daysSinceStart > 30 ? "var(--ls-gold)" : "var(--ls-text-muted)" }}>
+              {r.daysSinceStart ?? 0} j
+            </div>
+            <div className="pv-cell-status" style={{ width: 90 }}>
+              <span style={{
+                display: "inline-flex", alignItems: "center",
+                padding: "3px 10px", borderRadius: 10,
+                fontSize: 10, fontWeight: 600,
+                background: statusInfo.bg, color: statusInfo.color,
+              }}>
+                {statusInfo.label}
+              </span>
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }
 
-function ResponsibleFilterChip({
-  label,
-  count,
-  active,
-  onClick
-}: {
-  label: string;
-  count: number;
-  active: boolean;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`inline-flex min-h-[40px] items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition ${
-        active
-          ? "border-[rgba(201,168,76,0.18)] bg-[rgba(45,212,191,0.14)] text-white"
-          : "border-white/10 bg-[var(--ls-surface2)] text-[var(--ls-text-muted)] hover:bg-[var(--ls-surface2)]"
-      }`}
-    >
-      <span>{label}</span>
-      <span className="rounded-full bg-black/20 px-2 py-0.5 text-[11px]">{count}</span>
-    </button>
-  );
-}
-
-function formatPortfolioTabLabel(name: string) {
-  const firstWord = name.trim().split(/\s+/)[0] ?? name;
-  return firstWord.length > 14 ? `${firstWord.slice(0, 14)}...` : firstWord;
-}
-
-function matchesPvOverviewFilters(
-  record: {
-    clientName: string;
-    program: string;
-    responsibleName: string;
-    responsibleId: string;
-    status: PvStatus;
-    lastOrderDate: string;
-  },
-  {
-    search,
-    statusFilter,
-    responsibleFilter,
-    programFilter,
-    periodFilter,
-    isAdmin
-  }: {
-    search: string;
-    statusFilter: "all" | PvStatus;
-    responsibleFilter: string;
-    programFilter: string;
-    periodFilter: string;
-    isAdmin: boolean;
+function getStatusInfo(status: PvClientTrackingRecord["status"]) {
+  switch (status) {
+    case "restock":
+    case "inconsistent":
+      return { label: "Retard", bg: "rgba(220,38,38,0.1)", color: "var(--ls-coral)" };
+    case "watch":
+    case "follow-up":
+      return { label: "À relancer", bg: "rgba(184,146,42,0.1)", color: "var(--ls-gold)" };
+    case "ok":
+    default:
+      return { label: "OK", bg: "rgba(13,148,136,0.1)", color: "var(--ls-teal)" };
   }
-) {
-  const normalizedSearch = search.trim().toLowerCase();
-  const matchesSearch =
-    !normalizedSearch ||
-    `${record.clientName} ${record.program} ${record.responsibleName}`.toLowerCase().includes(normalizedSearch);
-  const matchesStatus = statusFilter === "all" || record.status === statusFilter;
-  const matchesResponsible = !isAdmin || responsibleFilter === "all" || record.responsibleId === responsibleFilter;
-  const matchesProgram = programFilter === "all" || record.program === programFilter;
-  const daysSinceOrder = Math.floor((Date.now() - new Date(record.lastOrderDate).getTime()) / (24 * 60 * 60 * 1000));
-  const matchesPeriod =
-    periodFilter === "all" ||
-    (periodFilter === "30" && daysSinceOrder <= 30) ||
-    (periodFilter === "90" && daysSinceOrder <= 90);
-
-  return matchesSearch && matchesStatus && matchesResponsible && matchesProgram && matchesPeriod;
 }

@@ -33,8 +33,10 @@ export function BodyScanSnapshotCard({
     metrics.hydration < 45 ? "red" : metrics.hydration < 50 ? "amber" : "blue";
   const boneTone: "blue" | "green" | "red" | "amber" =
     boneRatio < 3.0 ? "red" : boneRatio < 4.0 ? "amber" : "green";
+  // Coral UNIQUEMENT si l'âge métabolique dépasse l'âge réel de plus de 10 ans.
+  // Si realAge inconnu → neutre (blue = text) plutôt qu'alerte amber injustifiée.
   const metabolicAgeTone: "blue" | "green" | "red" | "amber" = (() => {
-    if (realAge == null) return "amber";
+    if (realAge == null) return "blue";
     const diff = metrics.metabolicAge - realAge;
     if (diff > 10) return "red";
     if (diff > 5) return "amber";
@@ -42,8 +44,9 @@ export function BodyScanSnapshotCard({
     return "green";
   })();
 
+  // Correctif Vue complète : la tuile "Poids" est retirée — elle est déjà
+  // affichée dans le MetricTile "Poids du jour" juste au-dessus (doublon visuel).
   const items = [
-    { label: "Poids", primary: `${metrics.weight} kg`, secondary: "Mesure actuelle", tone: "blue" as const },
     {
       label: "Masse grasse",
       primary: `${metrics.bodyFat} %`,
@@ -69,7 +72,11 @@ export function BodyScanSnapshotCard({
       tone: boneTone
     },
     { label: "Graisse viscérale", primary: `${metrics.visceralFat}`, tone: visceralTone },
-    { label: "BMR", primary: `${metrics.bmr} kcal`, tone: "green" as const },
+    {
+      label: "BMR",
+      primary: metrics.bmr > 0 ? `${metrics.bmr} kcal` : "—",
+      tone: (metrics.bmr > 0 ? "green" : "blue") as "blue" | "green" | "red" | "amber"
+    },
     { label: "Âge métabolique", primary: `${metrics.metabolicAge} ans`, tone: metabolicAgeTone }
   ];
 
@@ -81,8 +88,8 @@ export function BodyScanSnapshotCard({
           <p className="mt-2 text-sm text-[var(--ls-text-muted)]">{dateLabel}</p>
         </div>
       </div>
-      <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-        {items.slice(0, 4).map((item) => (
+      <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+        {items.slice(0, 3).map((item) => (
           <SnapshotMetricCard
             key={item.label}
             label={item.label}
@@ -94,7 +101,7 @@ export function BodyScanSnapshotCard({
         ))}
       </div>
       <div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-        {items.slice(4).map((item) => (
+        {items.slice(3).map((item) => (
           <SnapshotMetricCard
             key={item.label}
             label={item.label}
@@ -130,6 +137,18 @@ function SnapshotMetricCard({
           ? "from-amber-300/90 via-orange-300/65 to-transparent"
           : "from-sky-400/90 via-cyan-300/70 to-transparent";
 
+  // Valeur absente → "—" affiché en couleur hint discrète (évite le faux-0 agressif).
+  const isEmpty = primary === "—";
+  const valueColor = isEmpty
+    ? "var(--ls-text-hint)"
+    : tone === "red"
+      ? "var(--ls-coral)"
+      : tone === "amber"
+        ? "var(--ls-gold)"
+        : tone === "green"
+          ? "var(--ls-teal)"
+          : "var(--ls-text)";
+
   return (
     <div className="relative overflow-hidden rounded-[22px] bg-[var(--ls-surface2)] p-4">
       <div className={`absolute inset-x-0 top-0 h-px bg-gradient-to-r ${accentClass}`} />
@@ -138,7 +157,7 @@ function SnapshotMetricCard({
         className={`mt-3 font-semibold ${
           emphasized ? "text-[1.8rem] leading-none" : "text-[1.35rem] leading-none"
         }`}
-        style={{ color: tone === "red" ? "var(--ls-coral)" : tone === "amber" ? "#F59E0B" : tone === "green" ? "var(--ls-teal)" : "var(--ls-text)" }}
+        style={{ color: valueColor }}
       >
         {primary}
       </p>

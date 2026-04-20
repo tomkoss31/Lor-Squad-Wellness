@@ -131,9 +131,28 @@ function getClientFallbackLastAssessmentDate(client: Client) {
     ?.date ?? client.startDate ?? client.nextFollowUp;
 }
 
-export function getClientActiveFollowUp(client: Client, followUps: FollowUp[]) {
+export function getClientActiveFollowUp(client: Client, followUps: FollowUp[]): FollowUp | null {
+  // Fix bug B (2026-04-19) : si le client est mort (stopped/lost) ou en pause,
+  // aucun RDV ne doit être présenté comme actif. La date stockée sur
+  // clients.next_follow_up n'est pas nettoyée en DB (NOT NULL), mais on la
+  // masque côté UI tant que le lifecycle est inactif.
+  const lifecycle = client.lifecycleStatus;
+  if (lifecycle === 'stopped' || lifecycle === 'lost' || lifecycle === 'paused') {
+    return null;
+  }
+
+  // Sujet C (2026-04-19) : client en suivi libre → hors agenda auto, pas de RDV.
+  if (client.freeFollowUp) {
+    return null;
+  }
+
   const clientFollowUps = followUps
-    .filter((followUp) => followUp.clientId === client.id && followUp.status !== 'completed' && followUp.status !== 'dismissed')
+    .filter((followUp) =>
+      followUp.clientId === client.id
+      && followUp.status !== 'completed'
+      && followUp.status !== 'dismissed'
+      && followUp.status !== 'inactive' // fix bug B : stop auto chantier 1 passe en inactive, on l'exclut
+    )
     .sort((left, right) => compareByDateAsc(left.dueDate, right.dueDate));
   const normalizedClientDueDate = normalizeScheduleDateTime(client.nextFollowUp);
   const clientDateKey = getDateKey(normalizedClientDueDate);
@@ -165,6 +184,8 @@ export function getClientActiveFollowUp(client: Client, followUps: FollowUp[]) {
     };
   }
 
+  // Fallback synthétique : uniquement si le client est vivant (active/not_started)
+  // — utile pour les clients qui n'ont pas encore de ligne dans follow_ups.
   return {
     id: `client-schedule-${client.id}`,
     clientId: client.id,
@@ -287,6 +308,7 @@ export function getPortfolioMetrics(
   const scopedFollowUpPool = followUps.filter((followUp) => clientIds.has(followUp.clientId));
   const scopedFollowUps = scopedClients
     .map((client) => getClientActiveFollowUp(client, scopedFollowUpPool))
+    .filter((followUp): followUp is FollowUp => followUp !== null) // fix bug B : exclure dead/paused
     .sort((left, right) => compareByDateAsc(left.dueDate, right.dueDate));
   const relanceFollowUps = scopedFollowUps.filter((followUp) => isRelanceFollowUp(followUp));
   const overdueFollowUps = scopedFollowUps.filter((followUp) => isOverdueFollowUp(followUp));

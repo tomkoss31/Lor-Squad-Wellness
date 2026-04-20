@@ -43,15 +43,28 @@ export function calculateProteinRange(
   return `${Math.round(weight * multiplier.min)} - ${Math.round(weight * multiplier.max)} g`;
 }
 
-export function formatDate(input: string): string {
+export function formatDate(input: string | null | undefined): string {
+  // Fix Invalid time value (2026-04-19) : protège contre null/undefined/"" et
+  // dates non-parseables. Alignement avec le pattern de formatDateTime().
+  if (!input) {
+    return "—";
+  }
+  const date = new Date(input);
+  if (Number.isNaN(date.getTime())) {
+    return "—";
+  }
   return new Intl.DateTimeFormat("fr-FR", {
     day: "2-digit",
     month: "short",
     year: "numeric"
-  }).format(new Date(input));
+  }).format(date);
 }
 
-export function formatDateTime(input: string): string {
+export function formatDateTime(input: string | null | undefined): string {
+  // Fix Invalid time value (2026-04-19) : même protection que formatDate().
+  if (!input) {
+    return "—";
+  }
   const date = new Date(input);
   if (Number.isNaN(date.getTime())) {
     return input;
@@ -223,27 +236,71 @@ export function getWeightLossPaceInsight(plan: WeightLossPlan): WeightLossPaceIn
   };
 }
 
+// ─── BodyScan par défaut — sécurité contre null/undefined ──────────
+const SAFE_BODY_SCAN: BodyScanMetrics = {
+  weight: 0, bodyFat: 0, muscleMass: 0, hydration: 0,
+  boneMass: 0, visceralFat: 0, bmr: 0, metabolicAge: 0,
+};
+
+function ensureBodyScan(scan: Partial<BodyScanMetrics> | null | undefined): BodyScanMetrics {
+  if (!scan) return { ...SAFE_BODY_SCAN };
+  return {
+    weight: typeof scan.weight === 'number' && !Number.isNaN(scan.weight) ? scan.weight : 0,
+    bodyFat: typeof scan.bodyFat === 'number' && !Number.isNaN(scan.bodyFat) ? scan.bodyFat : 0,
+    muscleMass: typeof scan.muscleMass === 'number' && !Number.isNaN(scan.muscleMass) ? scan.muscleMass : 0,
+    hydration: typeof scan.hydration === 'number' && !Number.isNaN(scan.hydration) ? scan.hydration : 0,
+    boneMass: typeof scan.boneMass === 'number' && !Number.isNaN(scan.boneMass) ? scan.boneMass : 0,
+    visceralFat: typeof scan.visceralFat === 'number' && !Number.isNaN(scan.visceralFat) ? scan.visceralFat : 0,
+    bmr: typeof scan.bmr === 'number' && !Number.isNaN(scan.bmr) ? scan.bmr : 0,
+    metabolicAge: typeof scan.metabolicAge === 'number' && !Number.isNaN(scan.metabolicAge) ? scan.metabolicAge : 0,
+  };
+}
+
+function ensureAssessment(a: AssessmentRecord | undefined | null): AssessmentRecord {
+  if (!a) {
+    return {
+      id: 'empty',
+      date: new Date().toISOString(),
+      type: 'initial',
+      objective: 'weight-loss',
+      programTitle: '',
+      summary: '',
+      notes: '',
+      bodyScan: { ...SAFE_BODY_SCAN },
+      questionnaire: {} as AssessmentRecord['questionnaire'],
+      pedagogicalFocus: [],
+    } as unknown as AssessmentRecord;
+  }
+  return {
+    ...a,
+    bodyScan: ensureBodyScan(a.bodyScan as Partial<BodyScanMetrics> | null | undefined),
+  };
+}
+
 export function getLatestAssessment(client: Client): AssessmentRecord {
-  return [...client.assessments].sort(compareAssessmentsDesc)[0];
+  const sorted = [...(client.assessments ?? [])].sort(compareAssessmentsDesc);
+  return ensureAssessment(sorted[0]);
 }
 
 export function getPreviousAssessment(client: Client): AssessmentRecord | null {
-  const sorted = [...client.assessments].sort(compareAssessmentsDesc);
-  return sorted[1] ?? null;
+  const sorted = [...(client.assessments ?? [])].sort(compareAssessmentsDesc);
+  const prev = sorted[1];
+  return prev ? ensureAssessment(prev) : null;
 }
 
 export function getFirstAssessment(client: Client): AssessmentRecord {
-  return [...client.assessments].sort(
+  const sorted = [...(client.assessments ?? [])].sort(
     (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
-  )[0];
+  );
+  return ensureAssessment(sorted[0]);
 }
 
 export function getLatestBodyScan(client: Client): BodyScanMetrics {
-  return getLatestAssessment(client).bodyScan;
+  return ensureBodyScan(getLatestAssessment(client).bodyScan);
 }
 
 export function getLatestQuestionnaire(client: Client) {
-  return getLatestAssessment(client).questionnaire;
+  return getLatestAssessment(client).questionnaire ?? ({} as AssessmentRecord['questionnaire']);
 }
 
 export function getAssessmentDelta(

@@ -5,7 +5,7 @@ import { StepRail } from "../components/assessment/StepRail";
 import { useEffect } from "react";
 import { useRef } from "react";
 import { Component, type ErrorInfo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { RecapModal } from "../components/assessment/RecapModal";
 import { getSupabaseClient } from "../services/supabaseClient";
 import { BodyFatInsightCard } from "../components/body-scan/BodyFatInsightCard";
@@ -19,6 +19,7 @@ import { Card } from "../components/ui/Card";
 import { PageHeading } from "../components/ui/PageHeading";
 import { StatusBadge } from "../components/ui/StatusBadge";
 import { useAppContext } from "../context/AppContext";
+import { useToast, buildSupabaseErrorToast } from "../context/ToastContext";
 import { getAccessibleOwnerIds, getRoleLabel, isAdmin } from "../lib/auth";
 import {
   estimateBodyFatKg,
@@ -28,7 +29,8 @@ import {
   serializeDateTimeForStorage,
 } from "../lib/calculations";
 import { buildAssessmentRecommendationPlan } from "../lib/assessmentRecommendations";
-import type { BiologicalSex, Objective, RecommendationLead } from "../types/domain";
+import type { BiologicalSex, BreakfastAnalysis, DecisionClient, MessageALaisser, Objective, RecommendationLead, TypeDeSuite } from "../types/domain";
+import { BreakfastStorySlider, DEFAULT_BREAKFAST_ANALYSIS } from "../components/education/BreakfastStorySlider";
 
 type AssessmentForm = {
   assessmentDate: string;
@@ -105,6 +107,12 @@ type AssessmentForm = {
   recommendationsContacted: boolean;
   detectedNeedIds: string[];
   selectedProductIds: string[];
+  // Étape 13 — Chantier 1
+  decisionClient: DecisionClient | null;
+  typeDeSuite: TypeDeSuite | null;
+  messageALaisser: MessageALaisser | null;
+  // Étape 9 — Chantier 6 (story petit-déjeuner)
+  breakfastAnalysis: BreakfastAnalysis;
 };
 
 interface AssessmentDraftPayload {
@@ -232,7 +240,11 @@ const initialForm: AssessmentForm = {
   recommendations: createEmptyRecommendations(),
   recommendationsContacted: false,
   detectedNeedIds: [],
-  selectedProductIds: []
+  selectedProductIds: [],
+  decisionClient: null,
+  typeDeSuite: "rdv_fixe",
+  messageALaisser: null,
+  breakfastAnalysis: DEFAULT_BREAKFAST_ANALYSIS
 };
 
 function readAssessmentDraft(): AssessmentDraftPayload | null {
@@ -258,7 +270,12 @@ function readAssessmentDraft(): AssessmentDraftPayload | null {
         assessmentDate: normalizeDateTimeLocalInputValue(parsed.form.assessmentDate),
         nextFollowUp: normalizeDateTimeLocalInputValue(parsed.form.nextFollowUp ?? initialForm.nextFollowUp),
         recommendations: normalizeRecommendations(parsed.form.recommendations),
-        recommendationsContacted: parsed.form.recommendationsContacted ?? false
+        recommendationsContacted: parsed.form.recommendationsContacted ?? false,
+        // Fallback si draft antérieur au Chantier 6 (pas de breakfastAnalysis ou partiel)
+        breakfastAnalysis: {
+          ...DEFAULT_BREAKFAST_ANALYSIS,
+          ...(parsed.form.breakfastAnalysis ?? {})
+        }
       },
       currentStep:
         typeof parsed.currentStep === "number"
@@ -327,12 +344,6 @@ const PROGRAM_INCLUDED_PRODUCT_IDS: Record<string, string[]> = {
   "p-booster-2": ["aloe-vera", "the-51g", "formula-1", "pdm", "phyto-brule-graisse"]
 };
 
-const LazyBreakfastComparison = lazy(() =>
-  import("../components/education/BreakfastComparison").then((module) => ({
-    default: module.BreakfastComparison
-  }))
-);
-
 const LazyMorningRoutineCard = lazy(() =>
   import("../components/education/MorningRoutineCard").then((module) => ({
     default: module.MorningRoutineCard
@@ -347,7 +358,11 @@ const LazyHydrationRoutinePrimerCard = lazy(() =>
 
 export function NewAssessmentPage() {
   const navigate = useNavigate();
-  const { programs, users, currentUser, createClientWithInitialAssessment } = useAppContext();
+  const { programs, users, currentUser, createClientWithInitialAssessment, prospects, updateProspect } = useAppContext();
+  const { push: pushToast } = useToast();
+  const [searchParams] = useSearchParams();
+  const prospectId = searchParams.get("prospectId");
+  const sourceProspect = prospectId ? prospects.find((p) => p.id === prospectId) : undefined;
   const stepRailRef = useRef<HTMLDivElement | null>(null);
   const [form, setForm] = useState(initialForm);
   const [currentStep, setCurrentStep] = useState(0);
@@ -357,6 +372,11 @@ export function NewAssessmentPage() {
   const [recapClientName, setRecapClientName] = useState("");
   const [assignedUserId, setAssignedUserId] = useState("");
   const [draftReady, setDraftReady] = useState(false);
+  // Chantier Prospects : suivi des champs pré-remplis par le prospect (surlignés en vert
+  // tant qu'ils n'ont pas été modifiés manuellement).
+  const [prefilledFields, setPrefilledFields] = useState<{
+    firstName: boolean; lastName: boolean; phone: boolean; email: boolean;
+  }>({ firstName: false, lastName: false, phone: false, email: false });
 
   useEffect(() => {
     const draft = readAssessmentDraft();
@@ -366,8 +386,30 @@ export function NewAssessmentPage() {
       setAssignedUserId(draft.assignedUserId);
     }
 
+    // Pré-remplissage depuis prospect (priorité sur le draft local si params URL)
+    if (sourceProspect) {
+      setForm((prev) => ({
+        ...prev,
+        firstName: sourceProspect.firstName || prev.firstName,
+        lastName: sourceProspect.lastName || prev.lastName,
+        phone: sourceProspect.phone || prev.phone,
+        email: sourceProspect.email || prev.email,
+      }));
+      setPrefilledFields({
+        firstName: !!sourceProspect.firstName,
+        lastName: !!sourceProspect.lastName,
+        phone: !!sourceProspect.phone,
+        email: !!sourceProspect.email,
+      });
+      // Assigner le distributeur du prospect si admin
+      if (currentUser?.role === 'admin') {
+        setAssignedUserId(sourceProspect.distributorId);
+      }
+    }
+
     setDraftReady(true);
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [prospectId]);
 
   const goToStep = (nextStep: number) => {
     setCurrentStep(Math.min(Math.max(nextStep, 0), steps.length - 1));
@@ -614,6 +656,10 @@ export function NewAssessmentPage() {
 
   function update<K extends keyof AssessmentForm>(key: K, value: AssessmentForm[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
+    // Prospects : retirer le flag pré-rempli dès que le coach édite le champ
+    if (key === 'firstName' || key === 'lastName' || key === 'phone' || key === 'email') {
+      setPrefilledFields((prev) => ({ ...prev, [key]: false }));
+    }
   }
 
   function updateRecommendation(index: number, field: keyof RecommendationLead, value: string) {
@@ -699,7 +745,9 @@ export function NewAssessmentPage() {
       recommendations: form.recommendations.filter(
         (item) => item.name.trim() || item.contact.trim()
       ),
-      recommendationsContacted: form.recommendationsContacted
+      recommendationsContacted: form.recommendationsContacted,
+      // Étape 9 (Chantier 6) — story petit-déjeuner
+      breakfastAnalysis: form.breakfastAnalysis
     };
   }
 
@@ -731,6 +779,11 @@ export function NewAssessmentPage() {
     // Programme optionnel — pas de validation bloquante
 
     const assessmentDate = form.assessmentDate || getCurrentDateTimeValue();
+    // Sujet C — "Suivi libre" : client actif mais hors agenda. La colonne
+    // clients.next_follow_up est NOT NULL dans le schema, on y met donc une
+    // date neutre (J+14) jamais affichée à l'utilisateur (masquée par
+    // getClientActiveFollowUp / ClientsPage / DistributorPortfolio).
+    const isFreeFollowUp = form.typeDeSuite === "suivi_libre";
     const nextFollowUp = serializeDateTimeForStorage(
       form.nextFollowUp || getDefaultNextFollowUpDateTime(),
       10
@@ -770,7 +823,11 @@ export function NewAssessmentPage() {
       pedagogicalFocus:
         form.objective === "sport"
           ? ["Hydratation", "Routine matin", "Assiette sport"]
-          : ["Hydratation", "Routine matin", "Assiette perte de poids"]
+          : ["Hydratation", "Routine matin", "Assiette perte de poids"],
+      // Étape 13 — Chantier 1 (Matrice B)
+      decisionClient: form.decisionClient,
+      typeDeSuite: form.typeDeSuite,
+      messageALaisser: form.messageALaisser
     };
 
     try {
@@ -801,16 +858,41 @@ export function NewAssessmentPage() {
           form.comment.trim() ||
           (startsImmediately
             ? "Nouveau client cree depuis le bilan initial. La suite est déjà fixee."
-            : "Bilan enregistre sans demarrage. Une relance est a prevoir.")
+            : "Bilan enregistre sans demarrage. Une relance est a prevoir."),
+        afterAssessmentAction: form.afterAssessmentAction,
+        freeFollowUp: isFreeFollowUp
       });
 
       setSaveError("");
 
-      // Créer récap Supabase pour QR code
+      // Chantier Prospects : si le bilan provient d'un prospect, on le convertit.
+      if (sourceProspect) {
+        try {
+          await updateProspect(sourceProspect.id, {
+            status: 'converted',
+            convertedClientId: clientId,
+          });
+          pushToast({
+            tone: "success",
+            title: "Prospect converti en client ✓",
+            message: `${sourceProspect.firstName} ${sourceProspect.lastName} est désormais dans ta base clients.`,
+          });
+        } catch (convErr) {
+          // Non-fatal : le client est créé, seule la MAJ du prospect a échoué.
+          console.error('Prospect conversion error:', convErr);
+        }
+      }
+
+      // Créer récap Supabase pour QR code.
+      // Site 2 du durcissement audit L1 (le plus critique) :
+      //   - si l'insert échoue, le bilan lui-même est enregistré (addFollowUpAssessment
+      //     au-dessus a déjà tourné), MAIS on ne vide PAS le draft local pour permettre
+      //     une régénération via la fiche client.
+      //   - on remonte l'erreur en toast explicite.
       try {
         const sb = await getSupabaseClient();
         if (sb) {
-          const { data: recapData } = await sb
+          const { data: recapData, error: recapError } = await sb
             .from('client_recaps')
             .insert({
               client_id: clientId,
@@ -836,6 +918,8 @@ export function NewAssessmentPage() {
             .select('token')
             .single();
 
+          if (recapError) throw recapError;
+
           if (recapData?.token) {
             clearAssessmentDraft();
             setRecapToken(recapData.token);
@@ -844,12 +928,21 @@ export function NewAssessmentPage() {
             return; // Modal handles navigation
           }
         }
-      } catch (recapErr) {
-        console.error('Recap creation error (non-blocking):', recapErr);
-      }
 
-      clearAssessmentDraft();
-      navigate(`/clients/${clientId}`);
+        // Pas de Supabase ou pas de token renvoyé → mode local, on nettoie le draft
+        clearAssessmentDraft();
+        navigate(`/clients/${clientId}`);
+      } catch (recapErr) {
+        // Bilan enregistré, mais recap KO. On NE nettoie PAS le draft pour permettre
+        // une régénération depuis la fiche client.
+        console.error('Recap creation error:', recapErr);
+        pushToast(buildSupabaseErrorToast(
+          recapErr,
+          "Le bilan est enregistré, mais le lien client n'a pas été généré. " +
+          "Tu peux le régénérer depuis la fiche client (onglet Actions > Accès client)."
+        ));
+        navigate(`/clients/${clientId}`);
+      }
     } catch (error) {
       setSaveError(
         error instanceof Error
@@ -867,6 +960,35 @@ export function NewAssessmentPage() {
         title="Bilan guidé"
         description="Un parcours clair pour conduire le rendez-vous, relire les habitudes et poser la suite."
       />
+
+      {/* Chantier Prospects : bandeau persistant avec la note du prospect */}
+      {sourceProspect && (
+        <div
+          style={{
+            background: "color-mix(in srgb, var(--ls-teal) 8%, transparent)",
+            borderLeft: "4px solid var(--ls-teal)",
+            borderRadius: 10,
+            padding: "12px 16px",
+            fontFamily: "'DM Sans', sans-serif",
+            marginBottom: 4,
+          }}
+        >
+          <div style={{ fontSize: 10, letterSpacing: "2px", textTransform: "uppercase", color: "var(--ls-teal)", fontWeight: 600, marginBottom: 4 }}>
+            ✦ Bilan issu du prospect {sourceProspect.source}
+          </div>
+          {sourceProspect.note && (
+            <div style={{ fontSize: 13, color: "var(--ls-text)", lineHeight: 1.5 }}>
+              {sourceProspect.note}
+            </div>
+          )}
+          {!sourceProspect.note && (
+            <div style={{ fontSize: 12, color: "var(--ls-text-muted)" }}>
+              Prospect sans note. Les coordonnées ont été pré-remplies sur l'étape 1.
+            </div>
+          )}
+        </div>
+      )}
+
       <div ref={stepRailRef} className="step-rail-wrapper" style={{ position: 'sticky', top: 0, zIndex: 40, paddingTop: 8, paddingBottom: 8 }}>
         <StepRail currentStep={currentStep} steps={steps} onStepClick={goToStep} />
       </div>
@@ -887,10 +1009,10 @@ export function NewAssessmentPage() {
           {currentStep === 0 && (
               <div className="space-y-4">
                 <div className="grid gap-4 md:grid-cols-2">
-                  <Field label="Prenom" value={form.firstName} onChange={(v) => update("firstName", v)} />
-                  <Field label="Nom" value={form.lastName} onChange={(v) => update("lastName", v)} />
-                  <Field label="Téléphone *" value={form.phone} onChange={(v) => update("phone", v)} />
-                  <Field label="Email *" value={form.email} onChange={(v) => update("email", v)} />
+                  <Field label="Prenom" value={form.firstName} onChange={(v) => update("firstName", v)} prefilled={prefilledFields.firstName} />
+                  <Field label="Nom" value={form.lastName} onChange={(v) => update("lastName", v)} prefilled={prefilledFields.lastName} />
+                  <Field label="Téléphone *" value={form.phone} onChange={(v) => update("phone", v)} prefilled={prefilledFields.phone} />
+                  <Field label="Email *" value={form.email} onChange={(v) => update("email", v)} prefilled={prefilledFields.email} />
                   <Field label="Invité par / recommandé par" value={form.referredByName} onChange={(v) => update("referredByName", v)} />
                   <Field
                     label="Date et heure du bilan initial"
@@ -1358,9 +1480,11 @@ export function NewAssessmentPage() {
 
           {currentStep === 8 && (
             <VisualStepBoundary title="Petit-dejeuner">
-              <Suspense fallback={<StepVisualLoadingCard label="Chargement du visuel petit-dejeuner" />}>
-                <LazyBreakfastComparison />
-              </Suspense>
+              <BreakfastStorySlider
+                breakfastContent={form.breakfastContent}
+                analysis={form.breakfastAnalysis}
+                onAnalysisChange={(next) => update("breakfastAnalysis", next)}
+              />
             </VisualStepBoundary>
           )}
 
@@ -1555,18 +1679,81 @@ export function NewAssessmentPage() {
               </div>
 
               <div className="grid gap-4 md:grid-cols-3">
-                <ChoiceGroup label="Decision client" value={form.comment.includes("partant") ? "Partant" : form.comment.includes("interesse") ? "A confirmer" : "A rassurer"} options={["Partant", "A rassurer", "A confirmer"]} onChange={(v) => update("comment", v === "Partant" ? "Client partant, rassure par la simplicite du plan." : v === "A confirmer" ? "Client interesse, souhaite valider rapidement." : "Client interesse mais a besoin d'etre rassure sur la mise en place.")} />
-                <ChoiceGroup label="Type de suite" value="Rendez-vous fixe" options={["Rendez-vous fixe", "Message de rappel", "Relance douce"]} onChange={() => undefined} />
-                <ChoiceGroup label="Message a laisser" value={form.comment.includes("cadre clair") ? "Cadre clair" : "Simple"} options={["Simple", "Progressif", "Cadre clair"]} onChange={(v) => update("comment", v === "Cadre clair" ? "Le client repart avec un cadre clair et un prochain pas precis." : v === "Progressif" ? "Le client repart avec un demarrage progressif et rassurant." : "Le client repart avec une solution simple a mettre en place.")} />
+                <ChoiceGroup
+                  label="Décision client"
+                  value={form.decisionClient === "partant" ? "Partant" : form.decisionClient === "a_rassurer" ? "A rassurer" : form.decisionClient === "a_confirmer" ? "A confirmer" : ""}
+                  options={["Partant", "A rassurer", "A confirmer"]}
+                  onChange={(v) =>
+                    update(
+                      "decisionClient",
+                      v === "Partant" ? "partant" : v === "A rassurer" ? "a_rassurer" : "a_confirmer"
+                    )
+                  }
+                />
+                <ChoiceGroup
+                  label="Type de suite"
+                  value={
+                    form.typeDeSuite === "rdv_fixe" ? "Rendez-vous fixe" :
+                    form.typeDeSuite === "message_rappel" ? "Message de rappel" :
+                    form.typeDeSuite === "relance_douce" ? "Relance douce" :
+                    form.typeDeSuite === "suivi_libre" ? "Suivi libre" : ""
+                  }
+                  options={["Rendez-vous fixe", "Message de rappel", "Relance douce", "Suivi libre"]}
+                  onChange={(v) =>
+                    update(
+                      "typeDeSuite",
+                      v === "Rendez-vous fixe" ? "rdv_fixe" :
+                      v === "Message de rappel" ? "message_rappel" :
+                      v === "Relance douce" ? "relance_douce" :
+                      "suivi_libre"
+                    )
+                  }
+                />
+                <ChoiceGroup
+                  label="Message à laisser"
+                  value={form.messageALaisser === "simple" ? "Simple" : form.messageALaisser === "progressif" ? "Progressif" : form.messageALaisser === "cadre_clair" ? "Cadre clair" : ""}
+                  options={["Simple", "Progressif", "Cadre clair"]}
+                  onChange={(v) =>
+                    update(
+                      "messageALaisser",
+                      v === "Simple" ? "simple" : v === "Progressif" ? "progressif" : "cadre_clair"
+                    )
+                  }
+                />
               </div>
+              <p className="text-[11px] text-[var(--ls-text-muted)]">
+                Ce choix affecte le statut du client dans ta base (actif / pas démarré / fragile).
+              </p>
+              {form.typeDeSuite === "suivi_libre" && (
+                <div
+                  style={{
+                    padding: "10px 14px",
+                    borderRadius: 12,
+                    background: "color-mix(in srgb, var(--ls-gold) 8%, transparent)",
+                    border: "1px solid color-mix(in srgb, var(--ls-gold) 25%, transparent)",
+                    fontSize: 12,
+                    color: "var(--ls-text)",
+                    lineHeight: 1.5,
+                  }}
+                >
+                  <strong style={{ color: "var(--ls-gold)" }}>✦ Suivi libre sélectionné.</strong>{" "}
+                  Ce client sera actif mais sans rappel automatique dans ton agenda.
+                  Tu pourras le rebasculer en suivi planifié depuis sa fiche (onglet Actions → Cycle de vie).
+                </div>
+              )}
               <div className="grid gap-4 md:grid-cols-2">
                 <Field
-                  label="Prochain rendez-vous"
+                  label={form.typeDeSuite === "suivi_libre" ? "Prochain rendez-vous (facultatif)" : "Prochain rendez-vous"}
                   type="datetime-local"
                   value={form.nextFollowUp}
                   onChange={(v) => update("nextFollowUp", v)}
+                  disabled={form.typeDeSuite === "suivi_libre"}
                 />
-                <AreaField label="Commentaire de fin de rendez-vous" value={form.comment} onChange={(v) => update("comment", v)} />
+                <AreaField
+                  label="Commentaire libre"
+                  value={form.comment}
+                  onChange={(v) => update("comment", v)}
+                />
               </div>
             </div>
           )}
@@ -2016,21 +2203,46 @@ function Field({
   value,
   onChange,
   type = "text",
-  step
+  step,
+  disabled = false,
+  prefilled = false
 }: {
   label: string;
   value: string | number;
   onChange: (value: string) => void;
   type?: string;
   step?: string;
+  disabled?: boolean;
+  prefilled?: boolean;
 }) {
+  // Chantier Prospects : style vert visible pour les champs pré-remplis depuis
+  // un prospect. Se dissipe dès que le coach édite le champ (prefilledFields[key]→false).
+  const prefillStyle: React.CSSProperties | undefined = prefilled
+    ? {
+        background: "color-mix(in srgb, var(--ls-teal) 14%, transparent)",
+        color: "var(--ls-teal)",
+        border: "1px solid var(--ls-teal)",
+        fontWeight: 600,
+      }
+    : undefined;
+  const inputClassName = type === "time" ? "ls-input-time" : undefined;
   return (
-    <div className="space-y-2">
-      <label className="text-sm font-medium text-[var(--ls-text-muted)]">{label}</label>
+    <div className="space-y-2" style={disabled ? { opacity: 0.5 } : undefined}>
+      <label className="ls-field-label">
+        {label}{prefilled && <span style={{ marginLeft: 6, fontSize: 10, color: "var(--ls-teal)" }}>✦ pré-rempli</span>}
+      </label>
       {type === "number" ? (
         <DecimalInput value={Number(value) || 0} onChange={onChange} step={step} />
       ) : (
-        <input type={type} step={step} value={value} onChange={(event) => onChange(event.target.value)} />
+        <input
+          type={type}
+          step={step}
+          value={value}
+          disabled={disabled}
+          onChange={(event) => onChange(event.target.value)}
+          className={inputClassName}
+          style={prefillStyle}
+        />
       )}
     </div>
   );
@@ -2150,13 +2362,27 @@ function ChoiceGroup({
 }) {
   return (
     <div className="space-y-2">
-      <label className="text-sm font-medium text-[var(--ls-text-muted)]">{label}</label>
+      <label className="ls-field-label">{label}</label>
       <div className="flex flex-wrap gap-2">
-        {options.map((option) => (
-          <button key={option} type="button" onClick={() => onChange(option)} className={`rounded-full px-4 py-2 text-sm font-medium transition ${value === option ? "bg-[#C9A84C] text-[#0B0D11] font-semibold" : "border border-white/10 bg-[var(--ls-surface2)] text-[var(--ls-text-muted)] hover:text-[var(--ls-text)] hover:border-white/20"}`}>
-            {formatOption ? formatOption(option) : option}
-          </button>
-        ))}
+        {options.map((option) => {
+          const isSelected = value === option;
+          return (
+            <button
+              key={option}
+              type="button"
+              onClick={() => onChange(option)}
+              className={`ls-pill${isSelected ? " ls-pill--selected" : ""}`}
+              aria-pressed={isSelected}
+            >
+              {isSelected && (
+                <svg className="ls-pill__check" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              )}
+              {formatOption ? formatOption(option) : option}
+            </button>
+          );
+        })}
       </div>
     </div>
   );
@@ -2306,22 +2532,27 @@ function TimelineChoiceField({
 
   return (
     <div className="space-y-3">
-      <label className="text-sm font-medium text-[var(--ls-text-muted)]">{label}</label>
+      <label className="ls-field-label">{label}</label>
       <div className="flex flex-wrap gap-2">
-        {options.map((option) => (
-          <button
-            key={option}
-            type="button"
-            onClick={() => onChange(option)}
-            className={`rounded-full px-4 py-2 text-sm font-medium transition ${
-              value === option
-                ? "bg-white text-[#0B0D11]"
-                : "border border-white/10 bg-[var(--ls-surface2)] text-[var(--ls-text)]"
-            }`}
-          >
-            {option}
-          </button>
-        ))}
+        {options.map((option) => {
+          const isActive = value === option;
+          return (
+            <button
+              key={option}
+              type="button"
+              onClick={() => onChange(option)}
+              className={`ls-pill${isActive ? " ls-pill--selected" : ""}`}
+              aria-pressed={isActive}
+            >
+              {isActive && (
+                <svg className="ls-pill__check" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              )}
+              {option}
+            </button>
+          );
+        })}
         <button
           type="button"
           onClick={() => {
@@ -2329,12 +2560,15 @@ function TimelineChoiceField({
               onChange("");
             }
           }}
-          className={`rounded-full px-4 py-2 text-sm font-medium transition ${
-            isCustom
-              ? "bg-white text-[#0B0D11]"
-              : "border border-dashed border-white/10 bg-[var(--ls-surface2)] text-[var(--ls-text)]"
-          }`}
+          className={`ls-pill${isCustom ? " ls-pill--selected" : ""}`}
+          aria-pressed={isCustom}
+          style={!isCustom ? { borderStyle: "dashed" } : undefined}
         >
+          {isCustom && (
+            <svg className="ls-pill__check" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
+          )}
           Choix libre
         </button>
       </div>
@@ -2354,11 +2588,9 @@ function TimelineChoiceField({
 function SectionBlock({ title, description, children }: { title: string; description: string; children: ReactNode; }) {
   return (
     <div className="rounded-[24px] bg-[var(--ls-surface2)] p-5">
-      <div className="space-y-1">
-        <p className="text-lg font-semibold text-white">{title}</p>
-        <p className="text-sm leading-6 text-[var(--ls-text-muted)]">{description}</p>
-      </div>
-      <div className="mt-4 space-y-4">{children}</div>
+      <h3 className="ls-block-title">{title}</h3>
+      <p className="ls-block-desc">{description}</p>
+      <div className="space-y-4">{children}</div>
     </div>
   );
 }

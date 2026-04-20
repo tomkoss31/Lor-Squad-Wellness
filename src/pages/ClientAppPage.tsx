@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { getSupabaseClient } from '../services/supabaseClient'
 import { HERBALIFE_PRODUCTS, type HerbalifeProduct } from '../data/herbalifeCatalog'
+import { BreakfastStorySlider, DEFAULT_BREAKFAST_ANALYSIS } from '../components/education/BreakfastStorySlider'
+import type { BreakfastAnalysis } from '../types/domain'
 
 const GOOGLE_MAPS_LA_BASE = 'https://www.google.com/maps/place/LA+BASE+Shakes%26Drinks/@49.1619589,5.3840559,17z'
 
@@ -186,12 +188,17 @@ export function ClientAppPage() {
   const { token } = useParams<{ token: string }>()
   const [data, setData] = useState<ClientAppData | null>(null)
   const [loading, setLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState<'home' | 'evolution' | 'products' | 'refer'>('home')
+  const [activeTab, setActiveTab] = useState<'home' | 'evolution' | 'products' | 'coaching' | 'refer'>('home')
+  const [coachingData, setCoachingData] = useState<{ breakfastAnalysis: BreakfastAnalysis; breakfastContent: string } | null>(null)
   const [referName, setReferName] = useState('')
   const [referContact, setReferContact] = useState('')
   const [referSent, setReferSent] = useState(false)
   const [rdvMessage, setRdvMessage] = useState('')
   const [rdvSent, setRdvSent] = useState(false)
+  const [openCategory, setOpenCategory] = useState<string | null>(null)
+  const [showInstallPrompt, setShowInstallPrompt] = useState(false)
+  const [installPlatform, setInstallPlatform] = useState<'ios' | 'android' | null>(null)
+  const [deferredInstallEvent, setDeferredInstallEvent] = useState<{ prompt: () => Promise<void>; userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }> } | null>(null)
 
   useEffect(() => {
     if (typeof document !== 'undefined') {
@@ -214,6 +221,57 @@ export function ClientAppPage() {
     void loadClientData()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token])
+
+  // Détection iOS / Android pour proposer l'installation PWA
+  useEffect(() => {
+    if (typeof window === 'undefined' || typeof navigator === 'undefined') return
+    const ua = navigator.userAgent
+    const isIOS = /iphone|ipad|ipod/i.test(ua)
+    const isAndroid = /android/i.test(ua)
+    const isInStandaloneMode = window.matchMedia?.('(display-mode: standalone)').matches
+      || (navigator as unknown as { standalone?: boolean }).standalone === true
+    const alreadyDismissed = window.localStorage?.getItem('lor-install-dismissed')
+
+    if (isInStandaloneMode || alreadyDismissed) return
+
+    // iOS Safari : pas d'event natif, on affiche les instructions manuelles
+    if (isIOS) {
+      setInstallPlatform('ios')
+      const timer = setTimeout(() => setShowInstallPrompt(true), 2000)
+      return () => clearTimeout(timer)
+    }
+
+    // Android Chrome : écouter beforeinstallprompt pour déclencher l'install native
+    if (isAndroid) {
+      setInstallPlatform('android')
+      const handler = (e: Event) => {
+        e.preventDefault()
+        setDeferredInstallEvent(e as unknown as { prompt: () => Promise<void>; userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }> })
+        setShowInstallPrompt(true)
+      }
+      window.addEventListener('beforeinstallprompt', handler)
+      // Fallback : si l'event n'arrive pas dans les 3 sec, affiche quand même la popup manuelle
+      const timer = setTimeout(() => setShowInstallPrompt(true), 3000)
+      return () => {
+        window.removeEventListener('beforeinstallprompt', handler)
+        clearTimeout(timer)
+      }
+    }
+  }, [])
+
+  async function triggerNativeInstall() {
+    if (!deferredInstallEvent) return
+    try {
+      await deferredInstallEvent.prompt()
+      const { outcome } = await deferredInstallEvent.userChoice
+      if (outcome === 'accepted' || outcome === 'dismissed') {
+        setShowInstallPrompt(false)
+        try { window.localStorage.setItem('lor-install-dismissed', '1') } catch { /* ignore */ }
+      }
+    } catch {
+      // silencieux
+    }
+  }
 
   function normalizeData(row: Record<string, unknown>): ClientAppData {
     const r = row as Record<string, any>
@@ -250,10 +308,26 @@ export function ClientAppPage() {
     }
   }
 
+  async function loadCoachingData(sb: NonNullable<Awaited<ReturnType<typeof getSupabaseClient>>>, tok: string) {
+    try {
+      const { data: rows } = await sb.rpc('get_client_assessment_by_token', { p_token: tok })
+      const row = Array.isArray(rows) ? rows[0] : rows
+      const q = (row as Record<string, any> | null)?.questionnaire as Record<string, any> | undefined
+      const analysis = q?.breakfastAnalysis as BreakfastAnalysis | undefined
+      const content = typeof q?.breakfastContent === 'string' ? q.breakfastContent : ''
+      if (analysis) {
+        setCoachingData({ breakfastAnalysis: { ...DEFAULT_BREAKFAST_ANALYSIS, ...analysis }, breakfastContent: content })
+      }
+    } catch { /* silencieux — onglet Coaching affichera l'état vide */ }
+  }
+
   async function loadClientData() {
     try {
       const sb = await getSupabaseClient()
       if (!sb || !token) { setLoading(false); return }
+
+      // Fetch coaching (assessment) en parallèle — n'influe pas sur l'affichage principal
+      void loadCoachingData(sb, token)
 
       const { data: recap } = await sb.from('client_recaps').select('*').eq('token', token).maybeSingle()
       if (recap) { setData(normalizeData(recap)); setLoading(false); return }
@@ -662,7 +736,7 @@ export function ClientAppPage() {
         {/* ══════════════════════════════════════════════════════════════ */}
         {activeTab === 'products' && (
           <div style={{ display: 'flex', flexDirection: 'column' }}>
-            {/* Recommandés pour toi */}
+            {/* Recommandés pour toi (reste toujours visible en haut) */}
             {recommendedProducts.length > 0 && (
               <div style={{ marginBottom: 16 }}>
                 <div style={{ fontSize: 9, letterSpacing: '2px', textTransform: 'uppercase', color: '#B8922A', fontWeight: 600, marginBottom: 10 }}>
@@ -674,21 +748,64 @@ export function ClientAppPage() {
               </div>
             )}
 
-            {/* Par catégorie */}
+            {/* Accordéon par catégorie */}
             {CATEGORY_DISPLAY.map(({ key, label }) => {
               const products = HERBALIFE_PRODUCTS.filter((p) => p.category === key && !recommendedRefs.has(p.ref))
               if (products.length === 0) return null
+              const isOpen = openCategory === key
               return (
-                <div key={key} style={{ marginBottom: 16 }}>
-                  <div style={{ fontSize: 9, letterSpacing: '2px', textTransform: 'uppercase', color: '#9CA3AF', fontWeight: 500, marginBottom: 10 }}>
-                    {label}
-                  </div>
-                  {products.map((product) => (
-                    <ProductCard key={product.ref} product={product} isRecommended={false} coachWhatsapp={data.coach_whatsapp} />
-                  ))}
+                <div key={key} style={{ marginBottom: 8 }}>
+                  <button
+                    onClick={() => setOpenCategory(isOpen ? null : key)}
+                    style={{
+                      width: '100%', display: 'flex', alignItems: 'center',
+                      justifyContent: 'space-between', padding: '14px 16px',
+                      background: '#fff', border: '1px solid rgba(0,0,0,0.07)',
+                      borderRadius: isOpen ? '12px 12px 0 0' : 12,
+                      fontSize: 14, fontWeight: 600, color: '#111827',
+                      fontFamily: 'Syne, sans-serif', cursor: 'pointer',
+                    }}
+                  >
+                    <span>{label} <span style={{ fontSize: 11, color: '#9CA3AF', fontWeight: 400, fontFamily: 'DM Sans, sans-serif', marginLeft: 6 }}>· {products.length}</span></span>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth="2">
+                      {isOpen ? <polyline points="18 15 12 9 6 15" /> : <polyline points="6 9 12 15 18 9" />}
+                    </svg>
+                  </button>
+                  {isOpen && (
+                    <div style={{ border: '1px solid rgba(0,0,0,0.07)', borderTop: 'none', borderRadius: '0 0 12px 12px', padding: 10, background: '#fafaf9' }}>
+                      {products.map((product) => (
+                        <ProductCard key={product.ref} product={product} isRecommended={false} coachWhatsapp={data.coach_whatsapp} />
+                      ))}
+                    </div>
+                  )}
                 </div>
               )
             })}
+          </div>
+        )}
+
+        {/* ══════════════════════════════════════════════════════════════ */}
+        {/* ONGLET COACHING — story petit-déjeuner (Chantier 6)             */}
+        {/* ══════════════════════════════════════════════════════════════ */}
+        {activeTab === 'coaching' && (
+          <div className="ls-coaching-tab">
+            {coachingData ? (
+              <BreakfastStorySlider
+                breakfastContent={coachingData.breakfastContent}
+                analysis={coachingData.breakfastAnalysis}
+                onAnalysisChange={() => { /* readOnly — no-op */ }}
+                readOnly
+              />
+            ) : (
+              <div className="ls-coaching-empty">
+                <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 16, color: '#111827' }}>
+                  Ton coaching personnalisé
+                </div>
+                <div>
+                  Ton coaching personnalisé arrive après ton prochain bilan avec&nbsp;{data.coach_name}.
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -727,12 +844,157 @@ export function ClientAppPage() {
         )}
       </div>
 
+      {/* POPUP INSTALL PWA iOS */}
+      {showInstallPrompt && (
+        <div style={{
+          position: 'fixed', bottom: 90, left: 12, right: 12,
+          background: '#111827', borderRadius: 16, padding: 18,
+          zIndex: 200, boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div style={{ width: 36, height: 36, background: '#B8922A', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="#fff">
+                  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                </svg>
+              </div>
+              <div>
+                <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 14, color: '#fff' }}>Installer l'app</div>
+                <div style={{ fontSize: 11, color: '#9CA3AF' }}>Lor'Squad Wellness</div>
+              </div>
+            </div>
+            <button
+              onClick={() => {
+                setShowInstallPrompt(false)
+                try { window.localStorage.setItem('lor-install-dismissed', '1') } catch { /* ignore */ }
+              }}
+              style={{ background: 'none', border: 'none', color: '#9CA3AF', fontSize: 20, cursor: 'pointer', padding: 4, lineHeight: 1 }}
+              aria-label="Fermer"
+            >×</button>
+          </div>
+
+          <div style={{ fontSize: 12, color: '#D1D5DB', lineHeight: 1.7, marginBottom: 14 }}>
+            Ajoute cette app sur ton écran d'accueil pour y accéder rapidement, même sans internet.
+          </div>
+
+          {/* ─── Android avec prompt natif disponible ─── */}
+          {installPlatform === 'android' && deferredInstallEvent ? (
+            <>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(184,146,42,0.1)', borderRadius: 10, padding: '12px 14px', marginBottom: 14 }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#B8922A" strokeWidth="2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="7 10 12 15 17 10" />
+                  <line x1="12" y1="15" x2="12" y2="3" />
+                </svg>
+                <div style={{ fontSize: 12, color: '#fff', lineHeight: 1.5 }}>
+                  Un simple clic pour l'installer sur ton téléphone.
+                </div>
+              </div>
+              <button
+                onClick={() => void triggerNativeInstall()}
+                style={{ width: '100%', padding: 14, borderRadius: 10, border: 'none', background: '#B8922A', color: '#fff', fontFamily: 'Syne, sans-serif', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}
+              >
+                Installer l'app
+              </button>
+              <button
+                onClick={() => {
+                  setShowInstallPrompt(false)
+                  try { window.localStorage.setItem('lor-install-dismissed', '1') } catch { /* ignore */ }
+                }}
+                style={{ width: '100%', marginTop: 8, padding: 10, borderRadius: 10, border: 'none', background: 'transparent', color: '#9CA3AF', fontSize: 12, cursor: 'pointer' }}
+              >
+                Plus tard
+              </button>
+            </>
+          ) : installPlatform === 'android' ? (
+            /* ─── Android sans prompt natif (ex: Firefox, Samsung Internet) ─── */
+            <>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(255,255,255,0.06)', borderRadius: 10, padding: '10px 12px' }}>
+                  <div style={{ width: 24, height: 24, background: 'rgba(184,146,42,0.2)', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 14, color: '#B8922A', fontWeight: 700 }}>1</div>
+                  <div style={{ fontSize: 12, color: '#fff', lineHeight: 1.5 }}>
+                    Ouvre le menu
+                    <span style={{ color: '#B8922A', fontWeight: 600 }}> ⋮ </span>
+                    en haut à droite
+                  </div>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(255,255,255,0.06)', borderRadius: 10, padding: '10px 12px' }}>
+                  <div style={{ width: 24, height: 24, background: 'rgba(184,146,42,0.2)', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 14, color: '#B8922A', fontWeight: 700 }}>2</div>
+                  <div style={{ fontSize: 12, color: '#fff', lineHeight: 1.5 }}>
+                    Choisis
+                    <span style={{ color: '#B8922A', fontWeight: 600 }}> "Installer l'application" </span>
+                    ou
+                    <span style={{ color: '#B8922A', fontWeight: 600 }}> "Ajouter à l'écran d'accueil" </span>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(255,255,255,0.06)', borderRadius: 10, padding: '10px 12px' }}>
+                  <div style={{ width: 24, height: 24, background: 'rgba(184,146,42,0.2)', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 14, color: '#B8922A', fontWeight: 700 }}>3</div>
+                  <div style={{ fontSize: 12, color: '#fff', lineHeight: 1.5 }}>
+                    Valide avec
+                    <span style={{ color: '#B8922A', fontWeight: 600 }}> "Installer" </span>
+                  </div>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  setShowInstallPrompt(false)
+                  try { window.localStorage.setItem('lor-install-dismissed', '1') } catch { /* ignore */ }
+                }}
+                style={{ width: '100%', marginTop: 14, padding: 12, borderRadius: 10, border: 'none', background: '#B8922A', color: '#fff', fontFamily: 'Syne, sans-serif', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
+              >
+                J'ai compris !
+              </button>
+            </>
+          ) : (
+            /* ─── iOS Safari ─── */
+            <>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(255,255,255,0.06)', borderRadius: 10, padding: '10px 12px' }}>
+                  <div style={{ width: 24, height: 24, background: 'rgba(184,146,42,0.2)', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 14, color: '#B8922A', fontWeight: 700 }}>1</div>
+                  <div style={{ fontSize: 12, color: '#fff', lineHeight: 1.5 }}>
+                    Appuie sur le bouton
+                    <span style={{ color: '#B8922A', fontWeight: 600 }}> Partager </span>
+                    (carré avec flèche ↑) en bas de Safari
+                  </div>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(255,255,255,0.06)', borderRadius: 10, padding: '10px 12px' }}>
+                  <div style={{ width: 24, height: 24, background: 'rgba(184,146,42,0.2)', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 14, color: '#B8922A', fontWeight: 700 }}>2</div>
+                  <div style={{ fontSize: 12, color: '#fff', lineHeight: 1.5 }}>
+                    Sélectionne
+                    <span style={{ color: '#B8922A', fontWeight: 600 }}> "Sur l'écran d'accueil" </span>
+                    dans le menu
+                  </div>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(255,255,255,0.06)', borderRadius: 10, padding: '10px 12px' }}>
+                  <div style={{ width: 24, height: 24, background: 'rgba(184,146,42,0.2)', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 14, color: '#B8922A', fontWeight: 700 }}>3</div>
+                  <div style={{ fontSize: 12, color: '#fff', lineHeight: 1.5 }}>
+                    Appuie sur
+                    <span style={{ color: '#B8922A', fontWeight: 600 }}> "Ajouter" </span>
+                    en haut à droite
+                  </div>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  setShowInstallPrompt(false)
+                  try { window.localStorage.setItem('lor-install-dismissed', '1') } catch { /* ignore */ }
+                }}
+                style={{ width: '100%', marginTop: 14, padding: 12, borderRadius: 10, border: 'none', background: '#B8922A', color: '#fff', fontFamily: 'Syne, sans-serif', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
+              >
+                J'ai compris !
+              </button>
+            </>
+          )}
+        </div>
+      )}
+
       {/* BOTTOM NAV */}
       <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: '#fff', borderTop: '1px solid rgba(0,0,0,0.07)', display: 'flex', paddingBottom: 'max(12px, env(safe-area-inset-bottom))', zIndex: 100 }}>
         {([
           { key: 'home' as const, label: 'Accueil', icon: (<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="7" height="7" rx="1.5" /><rect x="14" y="3" width="7" height="7" rx="1.5" /><rect x="3" y="14" width="7" height="7" rx="1.5" /><rect x="14" y="14" width="7" height="7" rx="1.5" /></svg>) },
           { key: 'evolution' as const, label: 'Évolution', icon: (<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12" /></svg>) },
           { key: 'products' as const, label: 'Produits', icon: (<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></svg>) },
+          { key: 'coaching' as const, label: 'Coaching', icon: (<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18h6" /><path d="M10 22h4" /><path d="M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.2 1 2V17h6v-.3c0-.8.4-1.5 1-2A7 7 0 0 0 12 2z" /></svg>) },
           { key: 'refer' as const, label: 'Recommander', icon: (<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><line x1="23" y1="11" x2="17" y2="11" /><line x1="20" y1="8" x2="20" y2="14" /></svg>) },
         ]).map(({ key, label, icon }) => {
           const isActive = activeTab === key

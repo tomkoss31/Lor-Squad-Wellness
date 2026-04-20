@@ -33,10 +33,16 @@ const NAV_ICONS: Record<string, JSX.Element> = {
   "/assessments/new": (
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
   ),
+  "/agenda": (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+  ),
+  "/guide-suivi": (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+  ),
 };
 
 export function AppLayout() {
-  const { currentUser, logout, followUps, pvClientProducts, unreadMessageCount } = useAppContext();
+  const { currentUser, logout, followUps, pvClientProducts, unreadMessageCount, prospects } = useAppContext();
   const { isDark, toggleTheme } = useTheme();
   const urgentRelanceCount = followUps.filter(f => f.status === "pending").length;
   const pvOverdueCount = (() => {
@@ -47,6 +53,19 @@ export function AppLayout() {
       const end = new Date(p.startDate);
       end.setDate(end.getDate() + p.durationReferenceDays);
       return end < now;
+    }).length;
+  })();
+  // Chantier Agenda : badge = RDV prospects programmés aujourd'hui
+  const todayProspectsCount = (() => {
+    if (!prospects?.length) return 0;
+    const today = new Date().toDateString();
+    return prospects.filter(p => {
+      if (p.status !== 'scheduled') return false;
+      try {
+        return new Date(p.rdvDate).toDateString() === today;
+      } catch {
+        return false;
+      }
     }).length;
   })();
   const { canPromptInstall, isIos, isMobile, isStandalone, promptInstall } = useInstallPrompt();
@@ -63,20 +82,24 @@ export function AppLayout() {
       : currentUser.role === "referent"
         ? "amber"
         : "green";
+  // Ordre réorganisé (Chantier UX Polish Bilan v1 — 2026-04-19) :
+  // Agenda remonté en position 2 juste après Accueil (quotidien-first).
   const navigation = [
     { label: "Accueil", path: "/dashboard", badge: 0 },
+    { label: "Agenda", path: "/agenda", badge: todayProspectsCount },
     { label: "Messages", path: "/messages", badge: unreadMessageCount ?? 0 },
-    { label: "Guide rendez-vous", path: "/guide", badge: 0 },
-    { label: "Recommandations", path: "/recommendations", badge: urgentRelanceCount },
-    { label: "Suivi PV", path: "/pv", badge: pvOverdueCount },
     { label: "Dossiers clients", path: "/clients", badge: 0 },
     ...(currentUser.role === "admin" ? [{ label: "Equipe", path: "/users", badge: 0 }] : []),
+    { label: "Suivi PV", path: "/pv", badge: pvOverdueCount },
+    { label: "Guide rendez-vous", path: "/guide", badge: 0 },
+    { label: "Guide suivi client", path: "/guide-suivi", badge: 0, isNew: true },
+    { label: "Recommandations", path: "/recommendations", badge: urgentRelanceCount },
     { label: "Nouveau bilan", path: "/assessments/new", badge: 0 }
   ];
 
   const pageTitle =
     location.pathname === "/dashboard"
-      ? "Pilotage clair de la journée"
+      ? ""
       : location.pathname === "/guide"
         ? "Repères simples pour conduire le rendez-vous"
         : location.pathname === "/recommendations"
@@ -93,7 +116,9 @@ export function AppLayout() {
                     ? "Lecture complète du dossier client"
                     : location.pathname === "/assessments/new"
                       ? "Le bilan guidé pour cadrer le rendez-vous"
-                      : "Lor'Squad Wellness";
+                      : location.pathname === "/agenda"
+                        ? "Agenda prospection et RDV à venir"
+                        : "Lor'Squad Wellness";
 
   async function handleLogout() {
     await logout();
@@ -194,6 +219,20 @@ export function AppLayout() {
                       marginLeft: 'auto',
                       fontFamily: 'DM Sans, sans-serif',
                       flexShrink: 0,
+                    }}>
+                      Nouveau
+                    </span>
+                  ) : ("isNew" in item && (item as { isNew?: boolean }).isNew) ? (
+                    <span style={{
+                      fontSize: 9, padding: '2px 8px', borderRadius: 10,
+                      background: 'rgba(45,212,191,0.15)',
+                      color: 'var(--ls-teal)',
+                      fontWeight: 700,
+                      letterSpacing: '0.05em',
+                      marginLeft: 'auto',
+                      fontFamily: 'DM Sans, sans-serif',
+                      flexShrink: 0,
+                      textTransform: 'uppercase',
                     }}>
                       Nouveau
                     </span>

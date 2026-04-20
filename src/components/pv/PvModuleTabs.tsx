@@ -3,9 +3,7 @@ import type { User } from "../../types/domain";
 
 const tabs = [
   { label: "Vue globale", path: "/pv", adminOnly: false },
-  { label: "Fiches clients", path: "/pv/clients", adminOnly: false },
-  { label: "Reprises / commandes", path: "/pv/orders", adminOnly: false },
-  { label: "Vue equipe", path: "/pv/team", adminOnly: true }
+  { label: "Vue équipe", path: "/pv/team", adminOnly: true }
 ];
 
 export function PvModuleTabs({ currentUser }: { currentUser: User }) {

@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { buildPvTrackingRecords } from "../data/mockPvModule";
+import { buildPvTrackingRecords } from "../data/pvCatalog";
 import { Card } from "../components/ui/Card";
 import { MetricTile } from "../components/ui/MetricTile";
 import { PvModuleHeader } from "../components/pv/PvModuleHeader";
@@ -13,9 +13,15 @@ export function PvTeamPage() {
     return null;
   }
 
+  // Free PV tracking (2026-04-20) : exclure les clients marqués "sous autre
+  // superviseur" — même logique que PvOverviewPage.
+  const pvTrackedClients = useMemo(
+    () => clients.filter((c) => !c.freePvTracking),
+    [clients]
+  );
   const records = useMemo(
-    () => buildPvTrackingRecords(clients, pvTransactions, pvClientProducts),
-    [clients, pvClientProducts, pvTransactions]
+    () => buildPvTrackingRecords(pvTrackedClients, pvTransactions, pvClientProducts),
+    [pvTrackedClients, pvClientProducts, pvTransactions]
   );
   const pvByDistributor = useMemo(
     () =>

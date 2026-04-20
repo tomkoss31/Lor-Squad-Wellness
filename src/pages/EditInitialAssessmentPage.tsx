@@ -5,8 +5,10 @@ import { Card } from "../components/ui/Card";
 import { PageHeading } from "../components/ui/PageHeading";
 import { StatusBadge } from "../components/ui/StatusBadge";
 import { useAppContext } from "../context/AppContext";
+import { useToast, buildSupabaseErrorToast } from "../context/ToastContext";
 import { getFirstAssessment, normalizeDateTimeLocalInputValue } from "../lib/calculations";
-import { pvProductCatalog } from "../data/mockPvModule";
+import { pvProductCatalog } from "../data/pvCatalog";
+import { refreshClientRecap } from "../services/supabaseService";
 import type { AssessmentQuestionnaire, AssessmentRecord } from "../types/domain";
 
 const timelineOptions = [
@@ -157,6 +159,7 @@ export function EditInitialAssessmentPage() {
   const { clientId, assessmentId } = useParams();
   const navigate = useNavigate();
   const { getClientById, updateAssessment } = useAppContext();
+  const { push: pushToast } = useToast();
   const client = clientId ? getClientById(clientId) : undefined;
 
   if (!client) {
@@ -168,7 +171,15 @@ export function EditInitialAssessmentPage() {
   }
 
   const targetClient = client;
-  const fallbackAssessment = getFirstAssessment(targetClient);
+  // Fix P3a (2026-04-20) : quand on édite via /start-assessment/edit (sans
+  // assessmentId), on cible EXPLICITEMENT le bilan avec type === "initial",
+  // pas juste le plus ancien par date. Sans ça, si un follow-up a une date
+  // antérieure (cas réel : corrections de date), on éditait le mauvais bilan
+  // → le "Poids de départ" affiché sur la fiche (lié au même calcul) ne
+  // reflétait jamais la modif. Fallback sur getFirstAssessment si pas
+  // d'assessment "initial" (cas de migration / anciens dossiers).
+  const explicitInitial = targetClient.assessments.find((entry) => entry.type === "initial");
+  const fallbackAssessment = explicitInitial ?? getFirstAssessment(targetClient);
   const targetAssessment =
     targetClient.assessments.find((entry) => entry.id === assessmentId) ?? fallbackAssessment;
 
@@ -321,6 +332,16 @@ export function EditInitialAssessmentPage() {
 
     try {
       await updateAssessment(targetClient.id, updatedAssessment);
+      // Chantier sync client_recaps (2026-04-20) : le bilan modifié (bilan
+      // initial ou suivi) doit se refléter côté /client/:token. Non-bloquant.
+      try {
+        await refreshClientRecap(targetClient.id);
+      } catch (refreshErr) {
+        pushToast(buildSupabaseErrorToast(
+          refreshErr,
+          "Le bilan a été modifié mais le lien client n'a pas pu être mis à jour. Tu peux régénérer l'accès depuis la fiche."
+        ));
+      }
       clearEditAssessmentDraft(targetClient.id, targetAssessment.id);
       navigate(`/clients/${targetClient.id}`);
     } catch (saveError) {
@@ -473,22 +494,27 @@ export function EditInitialAssessmentPage() {
               <MetricField label="Poids cible (kg)" value={questionnaire.targetWeight ?? 0} onChange={(value) => updateQuestionnaire("targetWeight", Number(value))} />
               <MetricField label="Motivation / 10" value={questionnaire.motivation} onChange={(value) => updateQuestionnaire("motivation", Number(value))} />
               <div className="space-y-2 md:col-span-2">
-                <label className="text-sm font-medium text-[var(--ls-text-muted)]">Horizon / delai</label>
+                <label className="ls-field-label">Horizon / delai</label>
                 <div className="flex flex-wrap gap-2">
-                  {timelineOptions.map((option) => (
-                    <button
-                      key={option}
-                      type="button"
-                      onClick={() => updateQuestionnaire("desiredTimeline", option)}
-                      className={`rounded-full px-4 py-2 text-sm font-medium transition ${
-                        questionnaire.desiredTimeline === option
-                          ? "bg-white text-[#0B0D11]"
-                          : "border border-white/10 bg-[var(--ls-surface2)] text-[var(--ls-text)]"
-                      }`}
-                    >
-                      {option}
-                    </button>
-                  ))}
+                  {timelineOptions.map((option) => {
+                    const isActive = questionnaire.desiredTimeline === option;
+                    return (
+                      <button
+                        key={option}
+                        type="button"
+                        onClick={() => updateQuestionnaire("desiredTimeline", option)}
+                        className={`ls-pill${isActive ? " ls-pill--selected" : ""}`}
+                        aria-pressed={isActive}
+                      >
+                        {isActive && (
+                          <svg className="ls-pill__check" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="20 6 9 17 4 12" />
+                          </svg>
+                        )}
+                        {option}
+                      </button>
+                    );
+                  })}
                 </div>
                 <input
                   value={timelineOptions.includes(questionnaire.desiredTimeline) ? "" : questionnaire.desiredTimeline}
@@ -658,12 +684,13 @@ function MetricField({
 }) {
   return (
     <div className="space-y-2">
-      <label className="text-sm font-medium text-[var(--ls-text-muted)]">{label}</label>
+      <label className="ls-field-label">{label}</label>
       <input
         type={type}
         step={type === "number" ? "0.1" : undefined}
         value={value}
         onChange={(event) => onChange(event.target.value)}
+        className={type === "time" ? "ls-input-time" : undefined}
       />
     </div>
   );

@@ -1,32 +1,17 @@
-import { useMemo, useState, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "../components/ui/Button";
-import { StatusBadge } from "../components/ui/StatusBadge";
 import { useAppContext } from "../context/AppContext";
 import { useInstallPrompt } from "../context/InstallPromptContext";
 
 export function LoginPage() {
-  const { authReady, storageMode, users, loginWithCredentials } = useAppContext();
+  const { authReady, loginWithCredentials } = useAppContext();
   const { canPromptInstall, isIos, isMobile, isStandalone, promptInstall } = useInstallPrompt();
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
-
-  const demoAccounts = useMemo(() => {
-    const admin = users.find((user) => user.role === "admin");
-    const distributor = users.find((user) => user.role === "distributor");
-    return { admin, distributor };
-  }, [users]);
-
-  function fillDemoAccess(role: "admin" | "distributor") {
-    const account = role === "admin" ? demoAccounts.admin : demoAccounts.distributor;
-    if (!account) return;
-    setEmail(account.email);
-    setPassword("demo1234");
-    setError("");
-  }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -38,23 +23,14 @@ export function LoginPage() {
         password: password.trim()
       });
       if (!result.ok) {
-        setError(
-          result.error ??
-            (storageMode === "supabase"
-              ? "Email ou mot de passe invalides pour cet accès."
-              : "Email ou mot de passe non reconnus pour cette version de démonstration.")
-        );
+        setError(result.error ?? "Email ou mot de passe invalides pour cet accès.");
         return;
       }
       setError("");
       navigate("/dashboard");
     } catch (submitError) {
       console.error("Soumission du login impossible.", submitError);
-      setError(
-        storageMode === "supabase"
-          ? "La connexion sécurisée ne répond pas correctement pour le moment."
-          : "La version de démonstration ne répond pas correctement pour le moment."
-      );
+      setError("La connexion sécurisée ne répond pas correctement pour le moment.");
     }
   }
 
@@ -211,32 +187,6 @@ export function LoginPage() {
                   Icône d&apos;installation dans la barre d&apos;adresse Chrome/Edge.
                 </div>
               )}
-            </div>
-          ) : null}
-
-          {/* Démo */}
-          {storageMode === "local" ? (
-            <div style={{ background:'var(--ls-surface2)', border:'1px solid rgba(255,255,255,0.07)', borderRadius:14, padding:20 }}>
-              <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:12, marginBottom:14 }}>
-                <div>
-                  <p style={{ fontSize:13, fontWeight:600, color:'var(--ls-text)' }}>Accès démonstration</p>
-                  <p style={{ fontSize:11, color:'var(--ls-text-muted)', marginTop:2 }}>Tester l&apos;interface sans comptes réels</p>
-                </div>
-                <StatusBadge label="Démo" tone="blue" />
-              </div>
-              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 }}>
-                <button type="button" onClick={() => fillDemoAccess("distributor")} style={{ background:'rgba(128,128,128,0.05)', border:'1px solid rgba(255,255,255,0.06)', borderRadius:12, padding:14, textAlign:'left', cursor:'pointer', transition:'background 0.15s' }}
-                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(128,128,128,0.08)'} onMouseLeave={e => e.currentTarget.style.background = 'rgba(128,128,128,0.05)'}>
-                  <p style={{ fontSize:12, fontWeight:600, color:'var(--ls-text)', margin:0 }}>Distributeur</p>
-                  <p style={{ fontSize:10, color:'var(--ls-text-muted)', margin:'4px 0 0', lineHeight:1.5 }}>Vue limitée</p>
-                </button>
-                <button type="button" onClick={() => fillDemoAccess("admin")} style={{ background:'rgba(128,128,128,0.05)', border:'1px solid rgba(255,255,255,0.06)', borderRadius:12, padding:14, textAlign:'left', cursor:'pointer', transition:'background 0.15s' }}
-                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(128,128,128,0.08)'} onMouseLeave={e => e.currentTarget.style.background = 'rgba(128,128,128,0.05)'}>
-                  <p style={{ fontSize:12, fontWeight:600, color:'var(--ls-text)', margin:0 }}>Admin</p>
-                  <p style={{ fontSize:10, color:'var(--ls-text-muted)', margin:'4px 0 0', lineHeight:1.5 }}>Vue complète</p>
-                </button>
-              </div>
-              <p style={{ fontSize:10, color:'var(--ls-text-hint)', marginTop:10 }}>Mot de passe : demo1234</p>
             </div>
           ) : null}
 

@@ -1,14 +1,26 @@
 import { createMockSession, getDefaultUserTitle, getRoleScope } from "../lib/auth";
 import { getSupabaseClient } from "./supabaseClient";
-import { pvProductCatalog, resolvePvProgram } from "../data/mockPvModule";
+import { pvProductCatalog, resolvePvProgram } from "../data/pvCatalog";
 import type {
   ActivityLog,
   AssessmentRecord,
   AuthSession,
   Client,
+  DecisionClient,
   FollowUp,
+  FollowUpProtocolLog,
+  FollowUpProtocolStepId,
+  LifecycleStatus,
+  MessageALaisser,
+  Prospect,
+  ProspectFormInput,
+  ProspectSource,
+  ProspectStatus,
+  TypeDeSuite,
   User
 } from "../types/domain";
+import { deriveLifecycleFromAssessment } from "../lib/lifecycleMapping";
+import { getRecommendableProductById } from "../lib/assessmentRecommendations";
 import type { PvClientProductRecord, PvClientTransaction } from "../types/pv";
 
 type UserRow = {
@@ -36,6 +48,9 @@ type AssessmentRow = {
   next_follow_up?: string | null;
   body_scan: AssessmentRecord["bodyScan"];
   questionnaire: AssessmentRecord["questionnaire"];
+  decision_client?: DecisionClient | null;
+  type_de_suite?: TypeDeSuite | null;
+  message_a_laisser?: MessageALaisser | null;
   pedagogical_focus: string[] | null;
 };
 
@@ -60,6 +75,12 @@ type ClientRow = {
   start_date?: string | null;
   next_follow_up: string;
   notes: string;
+  lifecycle_status?: LifecycleStatus | null;
+  is_fragile?: boolean | null;
+  lifecycle_updated_at?: string | null;
+  lifecycle_updated_by?: string | null;
+  free_follow_up?: boolean | null;
+  free_pv_tracking?: boolean | null;
   assessments?: AssessmentRow[] | null;
 };
 
@@ -267,7 +288,10 @@ function mapAssessment(row: AssessmentRow): AssessmentRecord {
     nextFollowUp: row.next_follow_up ?? undefined,
     bodyScan: row.body_scan,
     questionnaire: row.questionnaire,
-    pedagogicalFocus: row.pedagogical_focus ?? []
+    pedagogicalFocus: row.pedagogical_focus ?? [],
+    decisionClient: row.decision_client ?? null,
+    typeDeSuite: row.type_de_suite ?? null,
+    messageALaisser: row.message_a_laisser ?? null
   };
 }
 
@@ -293,6 +317,12 @@ function mapClient(row: ClientRow): Client {
     startDate: row.start_date ?? undefined,
     nextFollowUp: row.next_follow_up,
     notes: row.notes,
+    lifecycleStatus: row.lifecycle_status ?? undefined,
+    isFragile: row.is_fragile ?? false,
+    lifecycleUpdatedAt: row.lifecycle_updated_at ?? undefined,
+    lifecycleUpdatedBy: row.lifecycle_updated_by ?? null,
+    freeFollowUp: row.free_follow_up ?? false,
+    freePvTracking: row.free_pv_tracking ?? false,
     assessments: (row.assessments ?? []).map(mapAssessment)
   };
 }
@@ -563,8 +593,21 @@ export async function createSupabaseClientWithInitialAssessment(payload: {
   followUpType: string;
   followUpStatus: FollowUp["status"];
   notes: string;
+  afterAssessmentAction?: "started" | "pending";
+  // Sujet C — étape 13 "Suivi libre" : si true, client créé avec free_follow_up=true
+  // ET aucun follow-up auto n'est inséré. La colonne next_follow_up reste posée
+  // (elle est NOT NULL dans le schema) mais sera masquée côté UI.
+  freeFollowUp?: boolean;
 }) {
   const client = await requireSupabase();
+
+  // ─── Lifecycle (Matrice B) ──────────────────────────────────────────
+  const { lifecycleStatus, isFragile } = deriveLifecycleFromAssessment({
+    decisionClient: payload.assessment.decisionClient ?? null,
+    afterAssessmentAction:
+      payload.afterAssessmentAction ?? (payload.started ? "started" : "pending"),
+  });
+
   const clientInsertPayload = {
       first_name: payload.client.firstName,
       last_name: payload.client.lastName,
@@ -584,7 +627,10 @@ export async function createSupabaseClientWithInitialAssessment(payload: {
       started: payload.started,
       start_date: payload.started ? payload.assessment.date : null,
       next_follow_up: payload.nextFollowUp,
-      notes: payload.notes
+      notes: payload.notes,
+      lifecycle_status: lifecycleStatus,
+      is_fragile: isFragile,
+      free_follow_up: payload.freeFollowUp ?? false
     };
   let { data: insertedClient, error: clientError } = await client
     .from("clients")
@@ -603,6 +649,32 @@ export async function createSupabaseClientWithInitialAssessment(payload: {
       .single<{ id: string }>());
   }
 
+  // Fallback : migration lifecycle pas encore exécutée → retry sans ces champs
+  if (
+    clientError &&
+    (isMissingColumnError(clientError, "lifecycle_status") ||
+      isMissingColumnError(clientError, "is_fragile"))
+  ) {
+    const { lifecycle_status: _ls, is_fragile: _if, ...withoutLifecycle } = clientInsertPayload;
+    void _ls; void _if;
+    ({ data: insertedClient, error: clientError } = await client
+      .from("clients")
+      .insert(withoutLifecycle)
+      .select("id")
+      .single<{ id: string }>());
+  }
+
+  // Fallback : migration free_follow_up pas encore exécutée → retry sans ce champ
+  if (clientError && isMissingColumnError(clientError, "free_follow_up")) {
+    const { free_follow_up: _ff, ...withoutFreeFollow } = clientInsertPayload;
+    void _ff;
+    ({ data: insertedClient, error: clientError } = await client
+      .from("clients")
+      .insert(withoutFreeFollow)
+      .select("id")
+      .single<{ id: string }>());
+  }
+
   if (clientError || !insertedClient) {
     console.error("Supabase client insert error:", clientError);
     throw new Error(`Impossible de créer le client : ${clientError?.message ?? 'réponse vide'}`);
@@ -610,7 +682,7 @@ export async function createSupabaseClientWithInitialAssessment(payload: {
 
   const clientId = insertedClient.id;
 
-  const { error: assessmentError } = await client.from("assessments").insert({
+  const assessmentInsertPayload = {
     id: payload.assessment.id,
     client_id: clientId,
     date: payload.assessment.date,
@@ -623,26 +695,47 @@ export async function createSupabaseClientWithInitialAssessment(payload: {
     next_follow_up: payload.assessment.nextFollowUp ?? null,
     body_scan: payload.assessment.bodyScan,
     questionnaire: payload.assessment.questionnaire,
-    pedagogical_focus: payload.assessment.pedagogicalFocus
-  });
+    pedagogical_focus: payload.assessment.pedagogicalFocus,
+    decision_client: payload.assessment.decisionClient ?? null,
+    type_de_suite: payload.assessment.typeDeSuite ?? null,
+    message_a_laisser: payload.assessment.messageALaisser ?? null,
+  };
+  let { error: assessmentError } = await client.from("assessments").insert(assessmentInsertPayload);
+
+  // Fallback : colonnes étape 13 pas encore présentes → retry sans
+  if (
+    assessmentError &&
+    (isMissingColumnError(assessmentError, "decision_client") ||
+      isMissingColumnError(assessmentError, "type_de_suite") ||
+      isMissingColumnError(assessmentError, "message_a_laisser"))
+  ) {
+    const { decision_client: _dc, type_de_suite: _ts, message_a_laisser: _ma, ...withoutStep13 } = assessmentInsertPayload;
+    void _dc; void _ts; void _ma;
+    ({ error: assessmentError } = await client.from("assessments").insert(withoutStep13));
+  }
 
   if (assessmentError) {
     console.error("Supabase assessment insert error:", assessmentError);
     throw new Error(`Impossible d'enregistrer le bilan : ${assessmentError.message}`);
   }
 
-  const { error: followUpError } = await client.from("follow_ups").insert({
-    client_id: clientId,
-    client_name: `${payload.client.firstName} ${payload.client.lastName}`,
-    due_date: payload.nextFollowUp,
-    type: payload.followUpType,
-    status: payload.followUpStatus,
-    program_title: payload.currentProgram || payload.assessment.programTitle,
-    last_assessment_date: payload.assessment.date
-  });
+  // Sujet C : si suivi libre → on ne crée AUCUN follow-up auto. Le client est
+  // actif mais hors agenda. Le coach pourra créer un RDV manuel plus tard
+  // depuis la fiche (ce qui nécessitera de désactiver le suivi libre d'abord).
+  if (!payload.freeFollowUp) {
+    const { error: followUpError } = await client.from("follow_ups").insert({
+      client_id: clientId,
+      client_name: `${payload.client.firstName} ${payload.client.lastName}`,
+      due_date: payload.nextFollowUp,
+      type: payload.followUpType,
+      status: payload.followUpStatus,
+      program_title: payload.currentProgram || payload.assessment.programTitle,
+      last_assessment_date: payload.assessment.date
+    });
 
-  if (followUpError) {
-    throw new Error("Impossible de creer le premier suivi.");
+    if (followUpError) {
+      throw new Error("Impossible de creer le premier suivi.");
+    }
   }
 
   const seedProducts = payload.started && payload.currentProgram
@@ -1012,148 +1105,6 @@ export async function deleteSupabaseClient(clientId: string) {
   }
 }
 
-export async function importLocalBusinessDataToSupabase(payload: {
-  clients: Client[];
-  followUps: FollowUp[];
-  owner: User;
-}) {
-  const client = await requireSupabase();
-  let imported = 0;
-  let skipped = 0;
-
-  for (const localClient of payload.clients) {
-    const pvProgram = resolvePvProgram(localClient.pvProgramId ?? localClient.currentProgram);
-    const { data: existingClient } = await client
-      .from("clients")
-      .select("id")
-      .eq("email", localClient.email)
-      .eq("first_name", localClient.firstName)
-      .eq("last_name", localClient.lastName)
-      .maybeSingle<{ id: string }>();
-
-    if (existingClient?.id) {
-      skipped += 1;
-      continue;
-    }
-
-    const clientInsertPayload = {
-      first_name: localClient.firstName,
-      last_name: localClient.lastName,
-      sex: localClient.sex,
-      phone: localClient.phone,
-      email: localClient.email,
-      age: localClient.age,
-      height: localClient.height,
-      job: localClient.job,
-      city: localClient.city ?? null,
-      distributor_id: payload.owner.id,
-      distributor_name: payload.owner.name,
-      status: localClient.status,
-      objective: localClient.objective,
-      current_program: localClient.currentProgram,
-      pv_program_id: pvProgram.id,
-      started: localClient.started,
-      start_date: localClient.startDate ?? null,
-      next_follow_up: localClient.nextFollowUp,
-      notes: localClient.notes
-    };
-    let { data: insertedClient, error: clientError } = await client
-      .from("clients")
-      .insert(clientInsertPayload)
-      .select("id")
-      .single<{ id: string }>();
-
-    if (clientError && isMissingColumnError(clientError, "pv_program_id")) {
-      ({ data: insertedClient, error: clientError } = await client
-        .from("clients")
-        .insert({
-          ...clientInsertPayload,
-          pv_program_id: undefined
-        })
-        .select("id")
-        .single<{ id: string }>());
-    }
-
-    if (clientError || !insertedClient) {
-      throw new Error(
-        `Impossible d'importer le dossier de ${localClient.firstName} ${localClient.lastName}.`
-      );
-    }
-
-    for (const assessment of localClient.assessments) {
-      const { error: assessmentError } = await client.from("assessments").insert({
-        id: assessment.id,
-        client_id: insertedClient.id,
-        date: assessment.date,
-        type: assessment.type,
-        objective: assessment.objective,
-        program_id: assessment.programId ?? null,
-        program_title: assessment.programTitle,
-        summary: assessment.summary,
-        notes: assessment.notes,
-        next_follow_up: assessment.nextFollowUp ?? null,
-        body_scan: assessment.bodyScan,
-        questionnaire: assessment.questionnaire,
-        pedagogical_focus: assessment.pedagogicalFocus
-      });
-
-      if (assessmentError) {
-        throw new Error(
-          `Impossible d'importer un bilan pour ${localClient.firstName} ${localClient.lastName}.`
-        );
-      }
-    }
-
-    const matchingFollowUp = payload.followUps.find(
-      (followUp) => followUp.clientId === localClient.id
-    );
-
-    const { error: followUpError } = await client.from("follow_ups").insert({
-      client_id: insertedClient.id,
-      client_name: `${localClient.firstName} ${localClient.lastName}`,
-      due_date: matchingFollowUp?.dueDate ?? localClient.nextFollowUp,
-      type: matchingFollowUp?.type ?? "Premier suivi",
-      status: matchingFollowUp?.status ?? "scheduled",
-      program_title: matchingFollowUp?.programTitle ?? localClient.currentProgram,
-      last_assessment_date:
-        matchingFollowUp?.lastAssessmentDate ??
-        localClient.assessments[0]?.date ??
-        new Date().toISOString().slice(0, 10)
-    });
-
-    if (followUpError) {
-      throw new Error(
-        `Impossible d'importer le suivi de ${localClient.firstName} ${localClient.lastName}.`
-      );
-    }
-
-    const seedProducts = buildSeedPvProducts({
-      clientId: insertedClient.id,
-      distributorId: payload.owner.id,
-      distributorName: payload.owner.name,
-      programTitle: localClient.currentProgram,
-      startDate:
-        localClient.startDate ??
-        localClient.assessments[0]?.date ??
-        new Date().toISOString().slice(0, 10),
-      selectedProductIds: localClient.assessments[0]?.questionnaire.selectedProductIds
-    });
-
-    if (seedProducts.length) {
-      const { error: pvSeedError } = await client.from("pv_client_products").insert(seedProducts);
-      if (pvSeedError && !isMissingTableError(pvSeedError, "pv_client_products")) {
-        throw new Error(
-          `Impossible d'initialiser le suivi PV pour ${localClient.firstName} ${localClient.lastName}.`
-        );
-      }
-    }
-
-    imported += 1;
-  }
-
-  return { imported, skipped };
-}
-
 export async function createSupabaseUserAccess(payload: {
   name: string;
   email: string;
@@ -1305,5 +1256,449 @@ export async function updateSupabaseUserPassword(userId: string, password: strin
   const result = (await response.json()) as { ok: boolean; error?: string };
   if (!response.ok || !result.ok) {
     throw new Error(result.error ?? "Impossible de redefinir ce mot de passe.");
+  }
+}
+
+// ─── Lifecycle setters (Chantier 1 — Matrice B) ──────────────────────────
+export async function updateSupabaseClientLifecycleStatus(params: {
+  clientId: string;
+  newStatus: LifecycleStatus;
+  userId: string;
+}): Promise<void> {
+  const { clientId, newStatus, userId } = params;
+  const client = await requireSupabase();
+
+  const { error: clientError } = await client
+    .from("clients")
+    .update({
+      lifecycle_status: newStatus,
+      lifecycle_updated_at: new Date().toISOString(),
+      lifecycle_updated_by: userId,
+    })
+    .eq("id", clientId);
+
+  if (clientError) {
+    throw new Error(`Impossible de mettre à jour le statut du client : ${clientError.message}`);
+  }
+
+  // Si le client bascule en "mort" → tous ses follow-ups ouverts deviennent inactifs
+  if (newStatus === "stopped" || newStatus === "lost") {
+    const { error: fuError } = await client
+      .from("follow_ups")
+      .update({ status: "inactive" })
+      .eq("client_id", clientId)
+      .in("status", ["scheduled", "pending"]);
+
+    if (fuError) {
+      // Non-fatal : on loggue et on continue
+      console.warn("[updateSupabaseClientLifecycleStatus] follow_ups update warning:", fuError);
+    }
+  }
+}
+
+export async function updateSupabaseClientFragileFlag(params: {
+  clientId: string;
+  isFragile: boolean;
+}): Promise<void> {
+  const { clientId, isFragile } = params;
+  const client = await requireSupabase();
+
+  const { error } = await client
+    .from("clients")
+    .update({ is_fragile: isFragile })
+    .eq("id", clientId);
+
+  if (error) {
+    throw new Error(`Impossible de mettre à jour le flag fragile : ${error.message}`);
+  }
+}
+
+// ─── Suivi libre (Sujet C — 2026-04-19) ──────────────────────────────────
+export async function updateSupabaseClientFreeFollowUp(params: {
+  clientId: string;
+  freeFollowUp: boolean;
+}): Promise<void> {
+  const { clientId, freeFollowUp } = params;
+  const client = await requireSupabase();
+
+  const { error: clientError } = await client
+    .from("clients")
+    .update({ free_follow_up: freeFollowUp })
+    .eq("id", clientId);
+
+  if (clientError) {
+    throw new Error(`Impossible de mettre à jour le mode de suivi : ${clientError.message}`);
+  }
+
+  // Règle métier : activer le suivi libre → désactiver tous les follow-ups
+  // ouverts du client (comme pour stopped/lost). Si on repasse en false,
+  // le coach recréera un RDV manuel via le modal planning.
+  if (freeFollowUp) {
+    const { error: fuError } = await client
+      .from("follow_ups")
+      .update({ status: "inactive" })
+      .eq("client_id", clientId)
+      .in("status", ["scheduled", "pending"]);
+
+    if (fuError) {
+      // Non-fatal : on loggue et on continue.
+      console.warn("[updateSupabaseClientFreeFollowUp] follow_ups update warning:", fuError);
+    }
+  }
+}
+
+// ─── Free PV Tracking (Chantier 2026-04-20) ──────────────────────────────
+// Toggle simple : client sous un autre superviseur → exclu des listes de
+// réassort côté dashboard + page Suivi PV. Le reste du dossier (bilans,
+// RDV, messages) reste normal — contrairement à `free_follow_up` qui
+// désactive aussi les follow-ups automatiques.
+export async function updateSupabaseClientFreePvTracking(params: {
+  clientId: string;
+  freePvTracking: boolean;
+}): Promise<void> {
+  const { clientId, freePvTracking } = params;
+  const client = await requireSupabase();
+
+  const { error: clientError } = await client
+    .from("clients")
+    .update({ free_pv_tracking: freePvTracking })
+    .eq("id", clientId);
+
+  if (clientError) {
+    // Fallback : colonne pas encore créée → message explicite
+    if (isMissingColumnError(clientError, "free_pv_tracking")) {
+      throw new Error(
+        "La colonne free_pv_tracking n'existe pas encore. Exécute la migration supabase/migrations/20260420120000_free_pv_tracking.sql."
+      );
+    }
+    throw new Error(`Impossible de mettre à jour le suivi PV : ${clientError.message}`);
+  }
+}
+
+// ─── Agenda Prospects (Chantier 2026-04-19) ─────────────────────────────
+
+type ProspectRow = {
+  id: string;
+  first_name: string;
+  last_name: string;
+  phone?: string | null;
+  email?: string | null;
+  rdv_date: string;
+  source: string;
+  source_detail?: string | null;
+  note?: string | null;
+  distributor_id: string;
+  status: string;
+  converted_client_id?: string | null;
+  cold_until?: string | null;
+  cold_reason?: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+function mapProspectFromDb(row: ProspectRow): Prospect {
+  return {
+    id: row.id,
+    firstName: row.first_name,
+    lastName: row.last_name,
+    phone: row.phone ?? undefined,
+    email: row.email ?? undefined,
+    rdvDate: row.rdv_date,
+    source: row.source as ProspectSource,
+    sourceDetail: row.source_detail ?? undefined,
+    note: row.note ?? undefined,
+    distributorId: row.distributor_id,
+    status: row.status as ProspectStatus,
+    convertedClientId: row.converted_client_id ?? undefined,
+    coldUntil: row.cold_until ?? undefined,
+    coldReason: row.cold_reason ?? undefined,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+function mapProspectToDbUpdates(updates: Partial<Prospect>): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  if (updates.firstName !== undefined) out.first_name = updates.firstName;
+  if (updates.lastName !== undefined) out.last_name = updates.lastName;
+  if (updates.phone !== undefined) out.phone = updates.phone ?? null;
+  if (updates.email !== undefined) out.email = updates.email ?? null;
+  if (updates.rdvDate !== undefined) out.rdv_date = updates.rdvDate;
+  if (updates.source !== undefined) out.source = updates.source;
+  if (updates.sourceDetail !== undefined) out.source_detail = updates.sourceDetail ?? null;
+  if (updates.note !== undefined) out.note = updates.note ?? null;
+  if (updates.distributorId !== undefined) out.distributor_id = updates.distributorId;
+  if (updates.status !== undefined) out.status = updates.status;
+  if (updates.convertedClientId !== undefined) out.converted_client_id = updates.convertedClientId ?? null;
+  if (updates.coldUntil !== undefined) out.cold_until = updates.coldUntil ?? null;
+  if (updates.coldReason !== undefined) out.cold_reason = updates.coldReason ?? null;
+  // updated_at piloté côté SQL à chaque UPDATE : on force côté appli pour tracking UI
+  out.updated_at = new Date().toISOString();
+  return out;
+}
+
+export async function fetchSupabaseProspects(): Promise<Prospect[]> {
+  const client = await requireSupabase();
+  const { data, error } = await client
+    .from("prospects")
+    .select("*")
+    .order("rdv_date", { ascending: true });
+
+  if (error) {
+    // Fallback : si la table n'existe pas encore (migration pas jouée)
+    if (isMissingTableError(error, "prospects")) {
+      console.warn("[fetchSupabaseProspects] table prospects absente — migration pas jouée ?");
+      return [];
+    }
+    throw new Error(`Impossible de charger les prospects : ${error.message}`);
+  }
+  return (data ?? []).map((row) => mapProspectFromDb(row as ProspectRow));
+}
+
+export async function createSupabaseProspect(input: ProspectFormInput): Promise<Prospect> {
+  const client = await requireSupabase();
+  const { data, error } = await client
+    .from("prospects")
+    .insert({
+      first_name: input.firstName,
+      last_name: input.lastName,
+      phone: input.phone ?? null,
+      email: input.email ?? null,
+      rdv_date: input.rdvDate,
+      source: input.source,
+      source_detail: input.sourceDetail ?? null,
+      note: input.note ?? null,
+      distributor_id: input.distributorId,
+      status: "scheduled" as ProspectStatus,
+    })
+    .select()
+    .single();
+
+  if (error || !data) {
+    throw new Error(`Impossible de créer le prospect : ${error?.message ?? "réponse vide"}`);
+  }
+  return mapProspectFromDb(data as ProspectRow);
+}
+
+export async function updateSupabaseProspect(id: string, updates: Partial<Prospect>): Promise<Prospect> {
+  const client = await requireSupabase();
+  const dbUpdates = mapProspectToDbUpdates(updates);
+  const { data, error } = await client
+    .from("prospects")
+    .update(dbUpdates)
+    .eq("id", id)
+    .select()
+    .single();
+
+  if (error || !data) {
+    throw new Error(`Impossible de mettre à jour le prospect : ${error?.message ?? "réponse vide"}`);
+  }
+  return mapProspectFromDb(data as ProspectRow);
+}
+
+export async function deleteSupabaseProspect(id: string): Promise<void> {
+  const client = await requireSupabase();
+  const { error } = await client.from("prospects").delete().eq("id", id);
+  if (error) {
+    throw new Error(`Impossible de supprimer le prospect : ${error.message}`);
+  }
+}
+
+// ─── Sync client_recaps (Chantier 2026-04-20) ────────────────────────────
+// Le snapshot `client_recaps` (vu par le client sur /client/:token) n'est créé
+// qu'une fois, à la création du client (NewAssessmentPage). Toutes les autres
+// mutations (follow-up, body scan rapide, édition bilan, ajout produit,
+// update coordonnées, réassignation coach) laissent le récap figé.
+//
+// `refreshClientRecap(clientId)` reconstruit un nouveau snapshot à partir de
+// l'état courant : clients + dernier assessment + questionnaire.selectedProductIds.
+// Les lectures côté client (ClientAppPage, RecapPage, ClientDetailPage)
+// font toutes `order by created_at desc limit 1`, donc on INSERT sans delete.
+//
+// Usage : appeler APRÈS la mutation principale. Les erreurs sont remontées
+// au caller pour affichage toast, mais l'appelant doit catch sans bloquer
+// le flux principal (l'action utilisateur a déjà réussi).
+export async function refreshClientRecap(clientId: string): Promise<void> {
+  const client = await requireSupabase();
+
+  // 1. Fetch client — coach (distributor_name), prénom/nom, programme, objectif
+  const { data: clientRow, error: clientErr } = await client
+    .from("clients")
+    .select("first_name, last_name, distributor_name, current_program, objective")
+    .eq("id", clientId)
+    .single<{
+      first_name: string;
+      last_name: string;
+      distributor_name: string | null;
+      current_program: string | null;
+      objective: string | null;
+    }>();
+
+  if (clientErr || !clientRow) {
+    throw new Error(
+      `Impossible de rafraîchir le récap : ${clientErr?.message ?? "client introuvable"}`
+    );
+  }
+
+  // 2. Fetch dernier assessment (par date DESC) pour body_scan + questionnaire
+  const { data: latestAssessment, error: assessErr } = await client
+    .from("assessments")
+    .select("date, body_scan, questionnaire")
+    .eq("client_id", clientId)
+    .order("date", { ascending: false })
+    .limit(1)
+    .maybeSingle<{
+      date: string;
+      body_scan: AssessmentRecord["bodyScan"] | null;
+      questionnaire: AssessmentRecord["questionnaire"] | null;
+    }>();
+
+  if (assessErr) {
+    throw new Error(`Impossible de lire le dernier bilan : ${assessErr.message}`);
+  }
+
+  // Cas limite : client sans aucun bilan (ne devrait pas arriver en pratique
+  // car le bilan initial est obligatoire à la création). On skip silencieux.
+  if (!latestAssessment) {
+    return;
+  }
+
+  // 3. Reconstruire les recommendations à partir du questionnaire (top 5)
+  const selectedIds: string[] =
+    (latestAssessment.questionnaire?.selectedProductIds as string[] | undefined) ?? [];
+  const recommendations = selectedIds
+    .map((id) => getRecommendableProductById(id))
+    .filter((product): product is NonNullable<typeof product> => product != null)
+    .slice(0, 5)
+    .map((product) => ({ name: product.name, shortBenefit: product.shortBenefit }));
+
+  // 4. INSERT du nouveau snapshot (pas de delete — lecture last-wins)
+  const { error: recapError } = await client.from("client_recaps").insert({
+    client_id: clientId,
+    coach_name: clientRow.distributor_name ?? "Coach",
+    client_first_name: clientRow.first_name ?? "",
+    client_last_name: clientRow.last_name ?? "",
+    assessment_date: latestAssessment.date ?? new Date().toISOString(),
+    program_title: clientRow.current_program || null,
+    objective: clientRow.objective || null,
+    body_scan: latestAssessment.body_scan ?? null,
+    recommendations,
+    referrals: []
+  });
+
+  if (recapError) {
+    throw new Error(`Impossible d'écrire le récap : ${recapError.message}`);
+  }
+}
+
+// ─── Protocole de suivi (Chantier 2026-04-20) ────────────────────────────
+// Log simple des messages envoyés : INSERT au marquage, SELECT pour l'état
+// des 5 étapes sur la fiche client. Tolère l'absence de la migration via
+// un fallback [] (pas de crash si la table n'existe pas encore).
+
+type FollowUpProtocolLogRow = {
+  id: string;
+  client_id: string;
+  coach_id: string;
+  step_id: FollowUpProtocolStepId;
+  sent_at: string;
+  notes?: string | null;
+};
+
+function mapFollowUpProtocolLog(row: FollowUpProtocolLogRow): FollowUpProtocolLog {
+  return {
+    id: row.id,
+    clientId: row.client_id,
+    coachId: row.coach_id,
+    stepId: row.step_id,
+    sentAt: row.sent_at,
+    notes: row.notes ?? undefined,
+  };
+}
+
+export async function fetchSupabaseFollowUpProtocolLogs(
+  clientId: string
+): Promise<FollowUpProtocolLog[]> {
+  const client = await requireSupabase();
+  const { data, error } = await client
+    .from("follow_up_protocol_log")
+    .select("*")
+    .eq("client_id", clientId)
+    .order("sent_at", { ascending: true });
+  if (error) {
+    // Migration pas encore exécutée → tolérant (UI affichera 0/5).
+    if (isMissingTableError(error, "follow_up_protocol_log")) {
+      return [];
+    }
+    throw new Error(`Impossible de lire le protocole de suivi : ${error.message}`);
+  }
+  return (data as FollowUpProtocolLogRow[]).map(mapFollowUpProtocolLog);
+}
+
+/**
+ * Chantier Protocole dans Agenda + Dashboard (2026-04-20)
+ * Fetch global des logs protocole — utilisé par Dashboard widget et Agenda
+ * onglet Suivis. Tolère l'absence de la migration comme la version par-client.
+ * Le filtrage sur le coach courant se fait côté client pour des raisons de
+ * compatibilité RLS (can_access_owner couvre la scope admin / référent).
+ */
+export async function fetchAllSupabaseFollowUpProtocolLogs(): Promise<FollowUpProtocolLog[]> {
+  const client = await requireSupabase();
+  const { data, error } = await client
+    .from("follow_up_protocol_log")
+    .select("*")
+    .order("sent_at", { ascending: false });
+  if (error) {
+    if (isMissingTableError(error, "follow_up_protocol_log")) {
+      return [];
+    }
+    throw new Error(`Impossible de lire les logs protocole : ${error.message}`);
+  }
+  return (data as FollowUpProtocolLogRow[]).map(mapFollowUpProtocolLog);
+}
+
+export async function logSupabaseFollowUpProtocolStep(params: {
+  clientId: string;
+  coachId: string;
+  stepId: FollowUpProtocolStepId;
+  notes?: string;
+}): Promise<FollowUpProtocolLog> {
+  const { clientId, coachId, stepId, notes } = params;
+  const client = await requireSupabase();
+
+  // UPSERT via la contrainte unique (client_id, step_id) — si l'user ré-envoie
+  // le message, on rafraîchit sent_at au lieu de dupliquer.
+  const { data, error } = await client
+    .from("follow_up_protocol_log")
+    .upsert(
+      {
+        client_id: clientId,
+        coach_id: coachId,
+        step_id: stepId,
+        sent_at: new Date().toISOString(),
+        notes: notes ?? null,
+      },
+      { onConflict: "client_id,step_id" }
+    )
+    .select("*")
+    .single();
+
+  if (error) {
+    if (isMissingTableError(error, "follow_up_protocol_log")) {
+      throw new Error(
+        "La table follow_up_protocol_log n'existe pas encore. Exécute la migration supabase/migrations/20260420160000_follow_up_protocol_log.sql."
+      );
+    }
+    throw new Error(`Impossible d'enregistrer l'envoi : ${error.message}`);
+  }
+
+  return mapFollowUpProtocolLog(data as FollowUpProtocolLogRow);
+}
+
+export async function deleteSupabaseFollowUpProtocolLog(logId: string): Promise<void> {
+  const client = await requireSupabase();
+  const { error } = await client.from("follow_up_protocol_log").delete().eq("id", logId);
+  if (error) {
+    throw new Error(`Impossible d'annuler l'envoi : ${error.message}`);
   }
 }

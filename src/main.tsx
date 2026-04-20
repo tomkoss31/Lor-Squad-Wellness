@@ -3,15 +3,18 @@ import ReactDOM from "react-dom/client";
 import App from "./App";
 import { AppProvider } from "./context/AppContext";
 import { InstallPromptProvider } from "./context/InstallPromptContext";
+import { ToastProvider } from "./context/ToastContext";
 import "./styles/globals.css";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <InstallPromptProvider>
-      <AppProvider>
-        <App />
-      </AppProvider>
-    </InstallPromptProvider>
+    <ToastProvider>
+      <InstallPromptProvider>
+        <AppProvider>
+          <App />
+        </AppProvider>
+      </InstallPromptProvider>
+    </ToastProvider>
   </React.StrictMode>
 );
 

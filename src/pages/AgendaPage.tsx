@@ -1,0 +1,1395 @@
+import { startTransition, useCallback, useEffect, useMemo, useState } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Button } from "../components/ui/Button";
+import { Card } from "../components/ui/Card";
+import { PageHeading } from "../components/ui/PageHeading";
+import { ProspectCard } from "../components/prospect/ProspectCard";
+import { ProspectFormModal } from "../components/prospect/ProspectFormModal";
+import { useAppContext } from "../context/AppContext";
+import { useToast, buildSupabaseErrorToast } from "../context/ToastContext";
+import { createGoogleCalendarLink } from "../lib/googleCalendar";
+import type { Client, FollowUp, Prospect, ProspectStatus } from "../types/domain";
+import { PROSPECT_STATUS_LABELS } from "../types/domain";
+import { getFollowUpsDue, type FollowUpDueItem } from "../lib/followUpProtocolScheduler";
+import { FOLLOW_UP_PROTOCOL, type FollowUpStep } from "../data/followUpProtocol";
+import { logSupabaseFollowUpProtocolStep } from "../services/supabaseService";
+import { FollowUpStepModal } from "../components/follow-up/FollowUpStepModal";
+
+type DateFilter = "today" | "week" | "all";
+type StatusFilter = "upcoming" | "done" | "converted" | "cold" | "lost_no_show" | "all";
+// Chantier Agenda unifié (2026-04-20) : onglets au-dessus des filtres date/statut
+// + onglet Suivis ajouté dans le chantier Protocole Agenda+Dashboard.
+type EntityFilter = "all" | "clients" | "prospects" | "followups";
+
+// Entrée unifiée pour la liste : follow-up client, prospect, OU suivi protocole.
+type AgendaEntry =
+  | { kind: "client"; id: string; date: string; distributorId: string; followUp: FollowUp; client: Client }
+  | { kind: "prospect"; id: string; date: string; distributorId: string; prospect: Prospect }
+  | { kind: "protocol"; id: string; date: string; distributorId: string; due: FollowUpDueItem };
+
+function startOfDay(d: Date): Date {
+  const copy = new Date(d);
+  copy.setHours(0, 0, 0, 0);
+  return copy;
+}
+
+function endOfDay(d: Date): Date {
+  const copy = new Date(d);
+  copy.setHours(23, 59, 59, 999);
+  return copy;
+}
+
+function endOfWeek(d: Date): Date {
+  // Dimanche soir de la semaine en cours (convention française)
+  const copy = new Date(d);
+  const day = copy.getDay(); // 0=Dim, 1=Lun...
+  const daysUntilSunday = day === 0 ? 0 : 7 - day;
+  copy.setDate(copy.getDate() + daysUntilSunday);
+  copy.setHours(23, 59, 59, 999);
+  return copy;
+}
+
+function startOfWeek(d: Date): Date {
+  // Lundi 00:00 de la semaine en cours (convention française)
+  const copy = new Date(d);
+  const day = copy.getDay(); // 0=Dim, 1=Lun, 2=Mar...
+  const daysSinceMonday = day === 0 ? 6 : day - 1;
+  copy.setDate(copy.getDate() - daysSinceMonday);
+  copy.setHours(0, 0, 0, 0);
+  return copy;
+}
+
+function matchesStatusFilter(p: Prospect, f: StatusFilter): boolean {
+  switch (f) {
+    case "upcoming": return p.status === "scheduled";
+    case "done": return p.status === "done";
+    case "converted": return p.status === "converted";
+    case "cold": return p.status === "cold";
+    case "lost_no_show": return p.status === "lost" || p.status === "no_show" || p.status === "cancelled";
+    case "all": return true;
+  }
+}
+
+function groupLabel(dateIso: string, today: Date): string {
+  const d = new Date(dateIso);
+  const todayStart = startOfDay(today);
+  const tomorrowStart = new Date(todayStart);
+  tomorrowStart.setDate(tomorrowStart.getDate() + 1);
+  const weekEnd = endOfWeek(today);
+
+  const dayStart = startOfDay(d);
+
+  if (dayStart.getTime() === todayStart.getTime()) return "Aujourd'hui";
+  if (dayStart.getTime() === tomorrowStart.getTime()) return "Demain";
+  if (d < todayStart) return "Passés";
+  if (d <= weekEnd) return "Cette semaine";
+  return "Plus tard";
+}
+
+const GROUP_ORDER = ["Aujourd'hui", "Demain", "Cette semaine", "Plus tard", "Passés"];
+
+const AGENDA_FILTER_KEY = "lorsquad.agenda.filter";
+const AGENDA_ENTITY_KEY = "lorsquad.agenda.entity-filter";
+
+export function AgendaPage() {
+  const {
+    prospects, clients, followUps, users, currentUser,
+    deleteProspect, updateProspect,
+    followUpProtocolLogs, refreshFollowUpProtocolLogs,
+  } = useAppContext();
+  const { push: pushToast } = useToast();
+  const navigate = useNavigate();
+
+  // Nav Dashboard → Agenda (Chantier 3 / 2026-04-20) : si on arrive via
+  // ?filter=today (depuis la carte Dashboard "RDV aujourd'hui" ou "Agenda du
+  // jour"), pré-sélectionner le filtre journée. ?tab=followups arrive depuis
+  // le widget "Voir tout les suivis" du dashboard.
+  const [searchParams] = useSearchParams();
+  const initialDateFilter: DateFilter = searchParams.get("filter") === "today" ? "today" : "all";
+  const initialEntityFromQuery = searchParams.get("tab") === "followups" ? "followups" : null;
+  const [dateFilter, setDateFilter] = useState<DateFilter>(initialDateFilter);
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("upcoming");
+  // Chantier Cold (2026-04-19) : filtre admin par distributeur.
+  // "mine" = RDV du user connecté · "all" = toute l'équipe · "<uuid>" = un distri précis
+  const [agendaFilter, setAgendaFilter] = useState<string>(() => {
+    try {
+      return localStorage.getItem(AGENDA_FILTER_KEY) ?? (currentUser?.role === "admin" ? "mine" : "all");
+    } catch {
+      return currentUser?.role === "admin" ? "mine" : "all";
+    }
+  });
+  // Chantier Agenda unifié (2026-04-20) : onglet entité (tous / clients /
+  // prospects / suivis). La query ?tab=followups prime sur localStorage.
+  const [entityFilter, setEntityFilter] = useState<EntityFilter>(() => {
+    if (initialEntityFromQuery) return initialEntityFromQuery;
+    try {
+      const stored = localStorage.getItem(AGENDA_ENTITY_KEY);
+      if (stored === "all" || stored === "clients" || stored === "prospects" || stored === "followups") return stored;
+    } catch { /* ignore */ }
+    return "all";
+  });
+  // Chantier Protocole Agenda+Dashboard (2026-04-20) : popup suivi modale
+  const [openProtocol, setOpenProtocol] = useState<FollowUpDueItem | null>(null);
+  const [protocolBusy, setProtocolBusy] = useState(false);
+  const [showForm, setShowForm] = useState(false);
+  const [editing, setEditing] = useState<Prospect | undefined>(undefined);
+  const [detailProspect, setDetailProspect] = useState<Prospect | null>(null);
+
+  useEffect(() => {
+    try { localStorage.setItem(AGENDA_FILTER_KEY, agendaFilter); } catch { /* ignore */ }
+  }, [agendaFilter]);
+  useEffect(() => {
+    try { localStorage.setItem(AGENDA_ENTITY_KEY, entityFilter); } catch { /* ignore */ }
+  }, [entityFilter]);
+
+  // Perf (2026-04-20) : on NE créé plus `const now = new Date()` dans le body
+  // du composant. Chaque render créait une nouvelle référence Date qui cassait
+  // les deps de `filtered`/`grouped` → invalidation systématique des memos.
+  // Les bornes (todayStart, todayEnd, weekEnd) sont désormais calculées à
+  // l'intérieur de chaque memo, sans être exposées dans les deps.
+
+  // ─── Scope distributeur commun (prospects + clients) ─────────────────
+  // Détermine si un distributorId entre dans le périmètre actif.
+  const isInScope = useCallback((distributorId: string): boolean => {
+    if (!currentUser) return false;
+    if (currentUser.role !== "admin") return distributorId === currentUser.id;
+    if (agendaFilter === "all") return true;
+    if (agendaFilter === "mine") return distributorId === currentUser.id;
+    return distributorId === agendaFilter;
+  }, [currentUser, agendaFilter]);
+
+  // Prospects scopés (conservé pour TeamStatsWidget)
+  const distributorFilteredProspects = useMemo(
+    () => prospects.filter((p) => isInScope(p.distributorId)),
+    [prospects, isInScope]
+  );
+
+  // ─── Construction des entrées unifiées (prospects + follow-ups clients) ───
+  // Chantier Agenda unifié (2026-04-20) :
+  // - Prospects : on filtre par status (scheduled / done / cold / etc.)
+  // - Clients : on prend les follow-ups avec status "scheduled" ou "pending"
+  //   et on retrouve le client via clientsById pour distributorId + nom.
+  const clientsById = useMemo(() => new Map(clients.map((c) => [c.id, c])), [clients]);
+
+  const agendaEntries = useMemo(() => {
+    const now = new Date();
+    const todayStart = startOfDay(now);
+    const todayEnd = endOfDay(now);
+    const weekEnd = endOfWeek(now);
+
+    const entries: AgendaEntry[] = [];
+
+    // 1. Prospects
+    if (entityFilter === "all" || entityFilter === "prospects") {
+      for (const p of prospects) {
+        if (!isInScope(p.distributorId)) continue;
+        if (!matchesStatusFilter(p, statusFilter)) continue;
+        const d = new Date(p.rdvDate);
+        if (Number.isNaN(d.getTime())) continue;
+        if (dateFilter === "today" && !(d >= todayStart && d <= todayEnd)) continue;
+        if (dateFilter === "week" && !(d >= todayStart && d <= weekEnd)) continue;
+        entries.push({ kind: "prospect", id: p.id, date: p.rdvDate, distributorId: p.distributorId, prospect: p });
+      }
+    }
+
+    // 2. Follow-ups clients
+    if (entityFilter === "all" || entityFilter === "clients") {
+      for (const fu of followUps) {
+        // On ne prend que les follow-ups "actifs" sur l'agenda
+        if (fu.status !== "scheduled" && fu.status !== "pending") continue;
+        const client = clientsById.get(fu.clientId);
+        if (!client) continue;
+        if (!isInScope(client.distributorId)) continue;
+        // Exclure les clients morts (lifecycle stopped / lost)
+        if (client.lifecycleStatus === "stopped" || client.lifecycleStatus === "lost") continue;
+        const d = new Date(fu.dueDate);
+        if (Number.isNaN(d.getTime())) continue;
+        if (dateFilter === "today" && !(d >= todayStart && d <= todayEnd)) continue;
+        if (dateFilter === "week" && !(d >= todayStart && d <= weekEnd)) continue;
+        entries.push({ kind: "client", id: fu.id, date: fu.dueDate, distributorId: client.distributorId, followUp: fu, client });
+      }
+    }
+
+    // 3. Suivis protocole — Chantier Protocole Agenda+Dashboard (2026-04-20)
+    // Scope strictement personnel (getFollowUpsDue filtre déjà sur currentUserId).
+    // includeUpcoming=true pour que l'onglet Suivis montre aussi les prochains.
+    if ((entityFilter === "all" || entityFilter === "followups") && currentUser) {
+      const dueItems = getFollowUpsDue(clients, currentUser.id, followUpProtocolLogs, {
+        now,
+        includeUpcoming: true,
+        maxDaysUpcoming: 30,
+      });
+      for (const item of dueItems) {
+        // Filtre date uniforme avec le reste (today/week) — un suivi en retard
+        // d'hier reste visible aujourd'hui.
+        const d = item.dueDate;
+        if (dateFilter === "today") {
+          const isTodayOrLate = item.status === "due_today" || item.status === "overdue_1d" || item.status === "overdue_more";
+          if (!isTodayOrLate) continue;
+        } else if (dateFilter === "week") {
+          // Visible si dû aujourd'hui, en retard, ou dû dans la semaine courante.
+          const inRange = d >= todayStart && d <= weekEnd;
+          const isLate = item.status === "overdue_1d" || item.status === "overdue_more";
+          if (!inRange && !isLate) continue;
+        }
+        entries.push({
+          kind: "protocol",
+          id: `${item.client.id}-${item.stepId}`,
+          date: item.dueDate.toISOString(),
+          distributorId: item.client.distributorId,
+          due: item,
+        });
+      }
+    }
+
+    return entries;
+  }, [entityFilter, prospects, followUps, clientsById, isInScope, statusFilter, dateFilter, clients, currentUser, followUpProtocolLogs]);
+
+  const grouped = useMemo(() => {
+    const now = new Date();
+    const map = new Map<string, AgendaEntry[]>();
+    agendaEntries.forEach((entry) => {
+      const g = groupLabel(entry.date, now);
+      if (!map.has(g)) map.set(g, []);
+      map.get(g)!.push(entry);
+    });
+    for (const arr of map.values()) {
+      arr.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    }
+    return GROUP_ORDER.filter((g) => map.has(g)).map((g) => ({ label: g, items: map.get(g)! }));
+  }, [agendaEntries]);
+
+  // Compteurs pour les onglets — scopés et filtrés par date mais pas par status
+  // (le status filter est "prospect-only", on ne veut pas qu'il fausse le compte client).
+  const entityCounts = useMemo(() => {
+    const now = new Date();
+    const todayStart = startOfDay(now);
+    const todayEnd = endOfDay(now);
+    const weekEnd = endOfWeek(now);
+    const inDateRange = (iso: string): boolean => {
+      const d = new Date(iso);
+      if (Number.isNaN(d.getTime())) return false;
+      if (dateFilter === "today") return d >= todayStart && d <= todayEnd;
+      if (dateFilter === "week") return d >= todayStart && d <= weekEnd;
+      return true;
+    };
+    let clientCount = 0;
+    let prospectCount = 0;
+    for (const fu of followUps) {
+      if (fu.status !== "scheduled" && fu.status !== "pending") continue;
+      const c = clientsById.get(fu.clientId);
+      if (!c || !isInScope(c.distributorId)) continue;
+      if (c.lifecycleStatus === "stopped" || c.lifecycleStatus === "lost") continue;
+      if (!inDateRange(fu.dueDate)) continue;
+      clientCount += 1;
+    }
+    for (const p of prospects) {
+      if (!isInScope(p.distributorId)) continue;
+      if (!matchesStatusFilter(p, statusFilter)) continue;
+      if (!inDateRange(p.rdvDate)) continue;
+      prospectCount += 1;
+    }
+    // Suivis protocole — Chantier Protocole Agenda+Dashboard (2026-04-20).
+    let protocolCount = 0;
+    if (currentUser) {
+      const dueItems = getFollowUpsDue(clients, currentUser.id, followUpProtocolLogs, {
+        now,
+        includeUpcoming: true,
+        maxDaysUpcoming: 30,
+      });
+      for (const item of dueItems) {
+        if (dateFilter === "today") {
+          if (item.status === "due_today" || item.status === "overdue_1d" || item.status === "overdue_more") protocolCount += 1;
+        } else if (dateFilter === "week") {
+          const inRange = item.dueDate >= todayStart && item.dueDate <= weekEnd;
+          const isLate = item.status === "overdue_1d" || item.status === "overdue_more";
+          if (inRange || isLate) protocolCount += 1;
+        } else {
+          protocolCount += 1;
+        }
+      }
+    }
+    return {
+      clients: clientCount,
+      prospects: prospectCount,
+      followups: protocolCount,
+      all: clientCount + prospectCount + protocolCount,
+    };
+  }, [followUps, prospects, clientsById, isInScope, statusFilter, dateFilter, clients, currentUser, followUpProtocolLogs]);
+
+  // Perf (2026-04-20) : lookup O(1) par distributorId au lieu d'un `users.find`
+  // linéaire par carte à chaque render. Stable tant que la liste users ne change pas.
+  const ownerNameMap = useMemo(
+    () => new Map(users.map((u) => [u.id, u.name])),
+    [users]
+  );
+
+  // Perf (2026-04-20) : handler stable pour ProspectCard.onClick. Sans ça,
+  // la flèche inline était recréée à chaque render, défaisant React.memo côté carte.
+  const handleCardClick = useCallback((prospect: Prospect) => {
+    setDetailProspect(prospect);
+  }, []);
+
+  const handleQuickStatus = useCallback(async (prospect: Prospect, nextStatus: ProspectStatus) => {
+    try {
+      await updateProspect(prospect.id, { status: nextStatus });
+      pushToast({ tone: "success", title: `Statut → ${PROSPECT_STATUS_LABELS[nextStatus]}` });
+      setDetailProspect(null);
+    } catch (err) {
+      pushToast(buildSupabaseErrorToast(err, "Impossible de mettre à jour le statut."));
+    }
+  }, [updateProspect, pushToast]);
+
+  // Chantier Cold : mettre en froid avec date de réchauffement + raison
+  const handleSetCold = useCallback(async (prospect: Prospect, coldUntil: string, coldReason: string) => {
+    try {
+      await updateProspect(prospect.id, {
+        status: "cold",
+        coldUntil,
+        coldReason: coldReason.trim() || undefined,
+      });
+      pushToast({
+        tone: "success",
+        title: "Prospect en pause ❄️",
+        message: `À reprendre après le ${new Date(coldUntil).toLocaleDateString("fr-FR")}.`,
+      });
+      setDetailProspect(null);
+    } catch (err) {
+      pushToast(buildSupabaseErrorToast(err, "Impossible de mettre le prospect en pause."));
+    }
+  }, [updateProspect, pushToast]);
+
+  // Réactiver un prospect cold : status → scheduled + cold_until + cold_reason à null
+  const handleReactivate = useCallback(async (prospect: Prospect) => {
+    try {
+      await updateProspect(prospect.id, {
+        status: "scheduled",
+        coldUntil: null as unknown as string,
+        coldReason: null as unknown as string,
+      });
+      pushToast({ tone: "success", title: "Prospect réactivé", message: "Pense à fixer une date de RDV." });
+      // Perf (2026-04-20) : React 18 n'autobatch pas après un await hors d'un
+      // event handler natif. startTransition regroupe les 3 setState en une seule
+      // passe de render au lieu de 3, évitant des recomputes memo en cascade.
+      startTransition(() => {
+        setDetailProspect(null);
+        setEditing(prospect);
+        setShowForm(true);
+      });
+    } catch (err) {
+      pushToast(buildSupabaseErrorToast(err, "Impossible de réactiver le prospect."));
+    }
+  }, [updateProspect, pushToast]);
+
+  const handleDelete = useCallback(async (prospect: Prospect) => {
+    // TODO (perf/UX) : remplacer window.confirm (bloque le thread principal
+    // synchrone) par une modale custom ou une toast annulable. Pour l'instant
+    // on garde le confirm natif — coûteux seulement sur l'action delete.
+    if (!window.confirm(`Supprimer le RDV avec ${prospect.firstName} ${prospect.lastName} ?`)) return;
+    try {
+      await deleteProspect(prospect.id);
+      pushToast({ tone: "success", title: "RDV supprimé" });
+      setDetailProspect(null);
+    } catch (err) {
+      pushToast(buildSupabaseErrorToast(err, "Impossible de supprimer ce prospect."));
+    }
+  }, [deleteProspect, pushToast]);
+
+  return (
+    <div className="space-y-5">
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          <PageHeading
+            eyebrow="Agenda"
+            title="Agenda unifié"
+            description="Tous tes RDV clients (suivis) et prospects sur la même vue."
+          />
+          {/* Chantier Nav (2026-04-20) : raccourci discret vers le dashboard */}
+          <Link
+            to="/"
+            style={{
+              display: "inline-flex", alignItems: "center", gap: 6,
+              padding: "6px 12px", borderRadius: 9,
+              background: "color-mix(in srgb, var(--ls-teal) 7%, transparent)",
+              border: "1px solid color-mix(in srgb, var(--ls-teal) 20%, transparent)",
+              color: "var(--ls-teal)",
+              fontSize: 12, fontWeight: 500, fontFamily: "'DM Sans', sans-serif",
+              textDecoration: "none", width: "fit-content",
+            }}
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M3 3h7v7H3zM14 3h7v5h-7zM14 12h7v9h-7zM3 14h7v7H3z" />
+            </svg>
+            Voir mes priorités →
+          </Link>
+        </div>
+        <Button onClick={() => { setEditing(undefined); setShowForm(true); }}>
+          + Nouveau RDV
+        </Button>
+      </div>
+
+      {/* Dropdown distributeur — admin only */}
+      {currentUser?.role === "admin" && (
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--ls-text-muted)" strokeWidth="1.5">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+            <circle cx="12" cy="7" r="4" />
+          </svg>
+          <label style={{ fontSize: 12, color: "var(--ls-text-muted)", fontFamily: "'DM Sans', sans-serif", fontWeight: 500 }}>
+            Vue :
+          </label>
+          <select
+            value={agendaFilter}
+            onChange={(e) => setAgendaFilter(e.target.value)}
+            className="ls-input-time"
+            style={{ minWidth: 180, padding: "8px 12px" }}
+          >
+            <option value="mine">Mes RDV</option>
+            <option value="all">Toute l'équipe</option>
+            {users.filter((u) => u.active && u.id !== currentUser.id).map((u) => (
+              <option key={u.id} value={u.id}>
+                {u.name} · {u.role === "admin" ? "Admin" : u.role === "referent" ? "Référent" : "Distri"}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
+      {/* Stats équipe — admin only + mode "Toute l'équipe" */}
+      {currentUser?.role === "admin" && agendaFilter === "all" && (
+        <TeamStatsWidget prospects={distributorFilteredProspects} />
+      )}
+
+      {/* Onglets entité (Chantier Agenda unifié 2026-04-20) */}
+      <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+        <EntityTab
+          label="Tous"
+          count={entityCounts.all}
+          active={entityFilter === "all"}
+          onClick={() => setEntityFilter("all")}
+          dot={null}
+        />
+        <EntityTab
+          label="Clients"
+          count={entityCounts.clients}
+          active={entityFilter === "clients"}
+          onClick={() => setEntityFilter("clients")}
+          dot="var(--ls-gold)"
+        />
+        <EntityTab
+          label="Prospects"
+          count={entityCounts.prospects}
+          active={entityFilter === "prospects"}
+          onClick={() => setEntityFilter("prospects")}
+          dot="var(--ls-purple)"
+        />
+        <EntityTab
+          label="Suivis"
+          count={entityCounts.followups}
+          active={entityFilter === "followups"}
+          onClick={() => setEntityFilter("followups")}
+          dot="var(--ls-teal)"
+        />
+      </div>
+
+      {/* Filtres */}
+      <Card className="space-y-3">
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+          {([
+            { key: "today" as DateFilter, label: "Aujourd'hui" },
+            { key: "week"  as DateFilter, label: "Cette semaine" },
+            { key: "all"   as DateFilter, label: "Tous" },
+          ]).map((f) => (
+            <FilterPill
+              key={f.key}
+              label={f.label}
+              active={dateFilter === f.key}
+              onClick={() => setDateFilter(f.key)}
+            />
+          ))}
+          <div style={{ width: 1, background: "var(--ls-border)", margin: "0 6px" }} />
+          {([
+            { key: "upcoming"    as StatusFilter, label: "À venir" },
+            { key: "done"        as StatusFilter, label: "Effectués" },
+            { key: "converted"   as StatusFilter, label: "Convertis" },
+            { key: "cold"        as StatusFilter, label: "❄️ En pause" },
+            { key: "lost_no_show" as StatusFilter, label: "Pas venus / Pas intéressés" },
+            { key: "all"         as StatusFilter, label: "Tous statuts" },
+          ]).map((f) => (
+            <FilterPill
+              key={f.key}
+              label={f.label}
+              active={statusFilter === f.key}
+              onClick={() => setStatusFilter(f.key)}
+            />
+          ))}
+        </div>
+      </Card>
+
+      {/* Liste groupée — rendu unifié clients + prospects */}
+      {grouped.length === 0 ? (
+        <Card>
+          <div style={{ textAlign: "center", padding: "32px 0" }}>
+            <div style={{ fontSize: 32, marginBottom: 12, opacity: 0.4 }}>📅</div>
+            <div style={{ fontSize: 14, color: "var(--ls-text-muted)", marginBottom: 4 }}>
+              Aucun RDV pour cette période.
+            </div>
+            <div style={{ fontSize: 12, color: "var(--ls-text-hint)", marginBottom: 16, maxWidth: 360, margin: "0 auto 16px", lineHeight: 1.55 }}>
+              {entityFilter === "clients"
+                ? "Pas de suivi client programmé sur la période choisie."
+                : entityFilter === "prospects"
+                ? "Pas de RDV prospect à venir. Crée-en un via « + Nouveau RDV »."
+                : entityFilter === "followups"
+                ? "Aucun suivi en cours. Les suivis démarrent après un bilan initial avec programme nutrition et body scan — jusqu'à 10 jours maximum."
+                : "Change de période ou crée un RDV prospect via « + Nouveau RDV »."}
+            </div>
+            {entityFilter !== "clients" && entityFilter !== "followups" && (
+              <Button onClick={() => { setEditing(undefined); setShowForm(true); }}>
+                + Nouveau RDV
+              </Button>
+            )}
+          </div>
+        </Card>
+      ) : (
+        grouped.map(({ label, items }) => (
+          <div key={label} className="space-y-2">
+            <div style={{ fontSize: 11, letterSpacing: "2px", textTransform: "uppercase", color: "var(--ls-text-hint)", fontWeight: 500, marginLeft: 4 }}>
+              {label} · {items.length} RDV
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {items.map((entry) => {
+                if (entry.kind === "prospect") {
+                  return (
+                    <div key={`p-${entry.id}`} style={{ display: "flex", alignItems: "stretch" }}>
+                      <div style={{ width: 3, borderRadius: "3px 0 0 3px", background: "var(--ls-purple)", flexShrink: 0 }} />
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <ProspectCard
+                          prospect={entry.prospect}
+                          ownerName={currentUser?.role === "admin" ? ownerNameMap.get(entry.distributorId) : undefined}
+                          showDate={label !== "Aujourd'hui" && label !== "Demain"}
+                          onClick={handleCardClick}
+                        />
+                      </div>
+                    </div>
+                  );
+                }
+                if (entry.kind === "client") {
+                  return (
+                    <ClientFollowUpCard
+                      key={`c-${entry.id}`}
+                      followUp={entry.followUp}
+                      client={entry.client}
+                      ownerName={currentUser?.role === "admin" ? ownerNameMap.get(entry.distributorId) : undefined}
+                      showDate={label !== "Aujourd'hui" && label !== "Demain"}
+                    />
+                  );
+                }
+                // kind === "protocol"
+                return (
+                  <ProtocolAgendaCard
+                    key={`proto-${entry.id}`}
+                    item={entry.due}
+                    showDate={label !== "Aujourd'hui" && label !== "Demain"}
+                    onOpen={() => setOpenProtocol(entry.due)}
+                  />
+                );
+              })}
+            </div>
+          </div>
+        ))
+      )}
+
+      {/* Form modal */}
+      {showForm && (
+        <ProspectFormModal
+          initial={editing}
+          onClose={() => { setShowForm(false); setEditing(undefined); }}
+          onSaved={() => {
+            pushToast({
+              tone: "success",
+              title: editing ? "RDV mis à jour" : "RDV créé",
+            });
+          }}
+        />
+      )}
+
+      {/* Détail prospect */}
+      {detailProspect && (
+        <ProspectDetailModal
+          prospect={detailProspect}
+          onClose={() => setDetailProspect(null)}
+          onEdit={() => {
+            // Perf (2026-04-20) : batch les 3 setState en une seule passe de render.
+            startTransition(() => {
+              setEditing(detailProspect);
+              setShowForm(true);
+              setDetailProspect(null);
+            });
+          }}
+          onStartAssessment={() => navigate(`/assessments/new?prospectId=${detailProspect.id}`)}
+          onOpenClient={() => {
+            if (detailProspect.convertedClientId) navigate(`/clients/${detailProspect.convertedClientId}`);
+          }}
+          onChangeStatus={(status) => handleQuickStatus(detailProspect, status)}
+          onSetCold={(until, reason) => handleSetCold(detailProspect, until, reason)}
+          onReactivate={() => handleReactivate(detailProspect)}
+          onDelete={() => handleDelete(detailProspect)}
+        />
+      )}
+
+      {/* Modal protocole — Chantier Protocole Agenda+Dashboard (2026-04-20) */}
+      {openProtocol && (() => {
+        const step: FollowUpStep | undefined = FOLLOW_UP_PROTOCOL.find((s) => s.id === openProtocol.stepId);
+        if (!step) return null;
+        const existingLog = followUpProtocolLogs.find(
+          (l) => l.clientId === openProtocol.client.id && l.stepId === openProtocol.stepId
+        );
+        return (
+          <FollowUpStepModal
+            step={step}
+            client={openProtocol.client}
+            existingLog={existingLog}
+            onClose={() => setOpenProtocol(null)}
+            onMarkSent={async () => {
+              if (!currentUser) return;
+              setProtocolBusy(true);
+              try {
+                await logSupabaseFollowUpProtocolStep({
+                  clientId: openProtocol.client.id,
+                  coachId: currentUser.id,
+                  stepId: openProtocol.stepId,
+                });
+                await refreshFollowUpProtocolLogs();
+                pushToast({ tone: "success", title: `${openProtocol.stepShortTitle} marqué envoyé ✓` });
+                setOpenProtocol(null);
+              } catch (err) {
+                pushToast(
+                  buildSupabaseErrorToast(
+                    err,
+                    "Impossible d'enregistrer l'envoi. Vérifie la migration follow_up_protocol_log."
+                  )
+                );
+              } finally {
+                setProtocolBusy(false);
+              }
+            }}
+            busy={protocolBusy}
+          />
+        );
+      })()}
+    </div>
+  );
+}
+
+// ─── Carte RDV protocole (agenda unifié / onglet Suivis) ─────────────────
+function ProtocolAgendaCard({
+  item,
+  showDate,
+  onOpen,
+}: {
+  item: FollowUpDueItem;
+  showDate: boolean;
+  onOpen: () => void;
+}) {
+  const timeLabel = (() => {
+    try {
+      return item.dueDate.toLocaleDateString("fr-FR", { day: "2-digit", month: "short" });
+    } catch {
+      return "—";
+    }
+  })();
+  const isLate = item.status === "overdue_1d" || item.status === "overdue_more";
+  const lateLabel = item.status === "overdue_1d"
+    ? "En retard 1j"
+    : item.status === "overdue_more"
+      ? `En retard ${item.daysLate}j`
+      : null;
+
+  return (
+    <div style={{ display: "flex", alignItems: "stretch" }}>
+      <div
+        style={{
+          width: 3,
+          borderRadius: "3px 0 0 3px",
+          background: isLate ? "var(--ls-coral)" : "var(--ls-teal)",
+          flexShrink: 0,
+        }}
+      />
+      <button
+        type="button"
+        onClick={onOpen}
+        style={{
+          flex: 1,
+          minWidth: 0,
+          display: "flex",
+          alignItems: "center",
+          gap: 14,
+          padding: "12px 16px",
+          background: "var(--ls-surface)",
+          border: "1px solid var(--ls-border)",
+          borderLeft: "none",
+          borderRadius: "0 14px 14px 0",
+          color: "inherit",
+          cursor: "pointer",
+          fontFamily: "'DM Sans', sans-serif",
+          textAlign: "left",
+          transition: "border-color 0.15s",
+        }}
+        onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--ls-teal)"; }}
+        onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--ls-border)"; }}
+      >
+        <div style={{ minWidth: 60, textAlign: "center", flexShrink: 0 }}>
+          <div style={{ fontFamily: "Syne, sans-serif", fontWeight: 700, fontSize: 14, color: "var(--ls-text)" }}>
+            J+{item.dayOffset}
+          </div>
+          {showDate && (
+            <div style={{ fontSize: 11, color: "var(--ls-text-hint)", marginTop: 2 }}>
+              {timeLabel}
+            </div>
+          )}
+        </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 14, fontWeight: 600, color: "var(--ls-text)", marginBottom: 2, display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+            <span>{item.client.firstName} {item.client.lastName}</span>
+            {lateLabel && (
+              <span
+                style={{
+                  padding: "1px 7px",
+                  borderRadius: 6,
+                  fontSize: 10,
+                  fontWeight: 700,
+                  background: "rgba(220,38,38,0.1)",
+                  color: "var(--ls-coral)",
+                  letterSpacing: "0.02em",
+                }}
+              >
+                {lateLabel}
+              </span>
+            )}
+          </div>
+          <div style={{ fontSize: 11, color: "var(--ls-text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            {item.stepIconEmoji} {item.stepShortTitle}
+          </div>
+        </div>
+        <span
+          className="ls-badge"
+          data-tone="teal"
+          style={{ flexShrink: 0 }}
+        >
+          Suivi
+        </span>
+      </button>
+    </div>
+  );
+}
+
+// ─── Onglet entité (Agenda unifié) ────────────────────────────────────────
+function EntityTab({
+  label, count, active, onClick, dot,
+}: {
+  label: string;
+  count: number;
+  active: boolean;
+  onClick: () => void;
+  dot: string | null;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`ls-pill${active ? " ls-pill--selected" : ""}`}
+      style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "8px 14px", fontSize: 13 }}
+    >
+      {dot && (
+        <span
+          style={{
+            width: 8, height: 8, borderRadius: "50%", background: dot,
+            flexShrink: 0, display: "inline-block",
+          }}
+        />
+      )}
+      <span>{label}</span>
+      <span
+        style={{
+          fontSize: 11,
+          padding: "1px 7px",
+          borderRadius: 10,
+          fontWeight: 600,
+          background: active ? "rgba(0,0,0,0.08)" : "var(--ls-surface2)",
+          color: active ? "var(--ls-bg)" : "var(--ls-text-muted)",
+          minWidth: 18,
+          textAlign: "center",
+        }}
+      >
+        {count}
+      </span>
+    </button>
+  );
+}
+
+// ─── Carte RDV client (agenda unifié) ─────────────────────────────────────
+function ClientFollowUpCard({
+  followUp, client, ownerName, showDate,
+}: {
+  followUp: FollowUp;
+  client: Client;
+  ownerName?: string;
+  showDate: boolean;
+}) {
+  const timeLabel = (() => {
+    try {
+      const d = new Date(followUp.dueDate);
+      return d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+    } catch { return "—"; }
+  })();
+  const dateLabel = (() => {
+    try {
+      const d = new Date(followUp.dueDate);
+      return d.toLocaleDateString("fr-FR", { day: "2-digit", month: "short" });
+    } catch { return "—"; }
+  })();
+
+  return (
+    <div style={{ display: "flex", alignItems: "stretch" }}>
+      <div style={{ width: 3, borderRadius: "3px 0 0 3px", background: "var(--ls-gold)", flexShrink: 0 }} />
+      <Link
+        to={`/clients/${client.id}`}
+        style={{
+          flex: 1, minWidth: 0,
+          display: "flex", alignItems: "center", gap: 14, padding: "12px 16px",
+          background: "var(--ls-surface)", border: "1px solid var(--ls-border)",
+          borderLeft: "none", borderRadius: "0 14px 14px 0",
+          textDecoration: "none", color: "inherit", cursor: "pointer",
+          transition: "border-color 0.15s",
+        }}
+        onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--ls-gold)"; }}
+        onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--ls-border)"; }}
+      >
+        {/* Colonne heure/date */}
+        <div style={{ minWidth: 60, textAlign: "center", flexShrink: 0 }}>
+          <div style={{ fontFamily: "Syne, sans-serif", fontWeight: 700, fontSize: 14, color: "var(--ls-text)" }}>
+            {showDate ? dateLabel : timeLabel}
+          </div>
+          {showDate && (
+            <div style={{ fontSize: 11, color: "var(--ls-text-hint)", marginTop: 2 }}>
+              {timeLabel}
+            </div>
+          )}
+        </div>
+        {/* Colonne infos */}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 14, fontWeight: 600, color: "var(--ls-text)", marginBottom: 2 }}>
+            {client.firstName} {client.lastName}
+          </div>
+          <div style={{ fontSize: 11, color: "var(--ls-text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            {followUp.type || "Suivi"}
+            {followUp.programTitle ? ` · ${followUp.programTitle}` : ""}
+            {ownerName ? ` · ${ownerName}` : ""}
+          </div>
+        </div>
+        {/* Badge Client */}
+        <span
+          className="ls-badge"
+          data-tone="gold"
+          style={{ flexShrink: 0 }}
+        >
+          Client
+        </span>
+      </Link>
+    </div>
+  );
+}
+
+function FilterPill({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`ls-pill${active ? " ls-pill--selected" : ""}`}
+      style={{ fontSize: 12, padding: "6px 12px" }}
+    >
+      {label}
+    </button>
+  );
+}
+
+function ProspectDetailModal({
+  prospect,
+  onClose,
+  onEdit,
+  onStartAssessment,
+  onOpenClient,
+  onChangeStatus,
+  onSetCold,
+  onReactivate,
+  onDelete,
+}: {
+  prospect: Prospect;
+  onClose: () => void;
+  onEdit: () => void;
+  onStartAssessment: () => void;
+  onOpenClient: () => void;
+  onChangeStatus: (status: ProspectStatus) => void;
+  onSetCold: (coldUntil: string, coldReason: string) => void;
+  onReactivate: () => void;
+  onDelete: () => void;
+}) {
+  const [showColdForm, setShowColdForm] = useState(false);
+  // Perf (2026-04-20) : mémoïsé pour éviter le recalcul à chaque render de la modal.
+  const defaultColdDate = useMemo(() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 90); // +90 jours par défaut
+    return d.toISOString().slice(0, 10);
+  }, []);
+  const [coldDate, setColdDate] = useState(defaultColdDate);
+  const [coldReason, setColdReason] = useState("");
+  const rdvDisplay = (() => {
+    try {
+      return new Date(prospect.rdvDate).toLocaleString("fr-FR", {
+        weekday: "long", day: "2-digit", month: "long", year: "numeric",
+        hour: "2-digit", minute: "2-digit",
+      });
+    } catch { return prospect.rdvDate; }
+  })();
+
+  // Chantier UX modal (2026-04-19) : export Google Agenda
+  function handleAddToGoogleCalendar() {
+    const title = `RDV prospection — ${prospect.firstName} ${prospect.lastName}`;
+    const startDate = new Date(prospect.rdvDate);
+    if (Number.isNaN(startDate.getTime())) return;
+    const endDate = new Date(startDate.getTime() + 60 * 60 * 1000); // +1h
+
+    const description = [
+      prospect.note ? `Note : ${prospect.note}` : null,
+      prospect.phone ? `Tél : ${prospect.phone}` : null,
+      prospect.email ? `Email : ${prospect.email}` : null,
+      `Source : ${prospect.source}${prospect.sourceDetail ? ` (${prospect.sourceDetail})` : ""}`,
+    ].filter(Boolean).join("\n");
+
+    const url = createGoogleCalendarLink({ title, startDate, endDate, description });
+    window.open(url, "_blank");
+  }
+
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      onClick={onClose}
+      style={{
+        position: "fixed", inset: 0,
+        background: "rgba(0,0,0,0.55)", zIndex: 10000,
+        display: "flex", alignItems: "center", justifyContent: "center",
+        padding: 16, fontFamily: "'DM Sans', sans-serif",
+      }}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          background: "var(--ls-surface)", borderRadius: 14,
+          width: "100%", maxWidth: 480, padding: 22,
+          border: "1px solid var(--ls-border)",
+          boxShadow: "0 20px 60px rgba(0,0,0,0.35)",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 14, gap: 12 }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontFamily: "'Syne', sans-serif", fontWeight: 700, fontSize: 20, color: "var(--ls-text)" }}>
+              {prospect.firstName} {prospect.lastName}
+            </div>
+            <div style={{ fontSize: 12, color: "var(--ls-text-muted)", marginTop: 2 }}>
+              {rdvDisplay}
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Fermer"
+            style={{ flexShrink: 0, background: "transparent", border: "none", color: "var(--ls-text-muted)", fontSize: 22, cursor: "pointer", padding: 4, lineHeight: 1 }}
+          >×</button>
+        </div>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 16 }}>
+          {prospect.phone && <InfoRow label="Téléphone" value={prospect.phone} />}
+          {prospect.email && <InfoRow label="Email" value={prospect.email} />}
+          <InfoRow label="Source" value={`${prospect.source}${prospect.sourceDetail ? ` · ${prospect.sourceDetail}` : ""}`} />
+          <InfoRow label="Statut" value={PROSPECT_STATUS_LABELS[prospect.status]} />
+          {prospect.note && (
+            <div style={{ padding: 12, borderRadius: 10, background: "var(--ls-surface2)", border: "1px solid var(--ls-border)" }}>
+              <div style={{ fontSize: 10, letterSpacing: "1px", textTransform: "uppercase", color: "var(--ls-text-hint)", fontWeight: 500, marginBottom: 4 }}>Note</div>
+              <div style={{ fontSize: 13, color: "var(--ls-text)", lineHeight: 1.5 }}>{prospect.note}</div>
+            </div>
+          )}
+          {/* Prospect en pause : date de reprise + contexte */}
+          {prospect.status === "cold" && (
+            <div style={{ padding: 12, borderRadius: 10, background: "color-mix(in srgb, var(--ls-teal) 7%, transparent)", border: "1px solid color-mix(in srgb, var(--ls-teal) 25%, transparent)" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 10, letterSpacing: "1px", textTransform: "uppercase", color: "var(--ls-teal)", fontWeight: 600, marginBottom: 4 }}>
+                <SnowflakeIcon /> En pause
+              </div>
+              {prospect.coldUntil && (
+                <div style={{ fontSize: 13, color: "var(--ls-text)", marginBottom: 4 }}>
+                  À reprendre à partir du {new Date(prospect.coldUntil).toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" })}
+                </div>
+              )}
+              {prospect.coldReason && (
+                <div style={{ fontSize: 12, color: "var(--ls-text-muted)", lineHeight: 1.5, fontStyle: "italic" }}>
+                  « {prospect.coldReason} »
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Actions primaires selon statut */}
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 8 }}>
+          {prospect.status === "scheduled" && (
+            <Button onClick={onStartAssessment} className="flex-1">
+              Commencer son bilan
+            </Button>
+          )}
+          {prospect.status === "done" && (
+            <Button onClick={onStartAssessment} className="flex-1">
+              Convertir en client
+            </Button>
+          )}
+          {prospect.status === "converted" && prospect.convertedClientId && (
+            <Button onClick={onOpenClient} className="flex-1">
+              Ouvrir la fiche client →
+            </Button>
+          )}
+          {prospect.status === "cold" && (
+            <Button onClick={onReactivate} className="flex-1">
+              Planifier un RDV →
+            </Button>
+          )}
+        </div>
+
+        {/* CTA secondaire teal — Ajouter à mon agenda Google (RDV futurs uniquement).
+            Chantier UX modal (2026-04-20) : remonté depuis le header pour en faire
+            une action visible sous le CTA principal gold. */}
+        {prospect.status === "scheduled" && (
+          <button
+            type="button"
+            onClick={handleAddToGoogleCalendar}
+            style={{
+              width: "100%",
+              padding: "12px 16px",
+              marginTop: 10,
+              background: "var(--ls-teal)",
+              color: "#0B0D11",
+              border: "none",
+              borderRadius: 10,
+              fontFamily: "'DM Sans', sans-serif",
+              fontWeight: 600,
+              fontSize: 14,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 8,
+              cursor: "pointer",
+              transition: "opacity 150ms",
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.9"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+              <line x1="16" y1="2" x2="16" y2="6" />
+              <line x1="8" y1="2" x2="8" y2="6" />
+              <line x1="3" y1="10" x2="21" y2="10" />
+            </svg>
+            Ajouter à mon agenda
+          </button>
+        )}
+
+        {/* Mini-formulaire "Mettre en pause" */}
+        {showColdForm && (
+          <div style={{
+            marginTop: 12, padding: 14, borderRadius: 10,
+            background: "color-mix(in srgb, var(--ls-teal) 6%, transparent)",
+            border: "1px solid color-mix(in srgb, var(--ls-teal) 25%, transparent)",
+          }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, letterSpacing: "1px", textTransform: "uppercase", color: "var(--ls-teal)", fontWeight: 600, marginBottom: 6 }}>
+              <SnowflakeIcon /> Mettre en pause
+            </div>
+            <p style={{ fontSize: 12, color: "var(--ls-text-muted)", marginBottom: 12, lineHeight: 1.5 }}>
+              On note ce contact pour le reprendre plus tard. Choisis la date à laquelle tu veux le relancer.
+            </p>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              <div>
+                <label className="ls-field-label">Date de reprise</label>
+                <input
+                  type="date"
+                  value={coldDate}
+                  onChange={(e) => setColdDate(e.target.value)}
+                  className="ls-input-time"
+                  style={{ width: "100%" }}
+                />
+              </div>
+              <div>
+                <label className="ls-field-label">Contexte (facultatif)</label>
+                <textarea
+                  value={coldReason}
+                  onChange={(e) => setColdReason(e.target.value)}
+                  rows={2}
+                  placeholder="ex : budget serré, relancer en septembre"
+                  className="ls-input"
+                  style={{ resize: "vertical" }}
+                />
+              </div>
+              <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+                <button
+                  type="button"
+                  onClick={() => setShowColdForm(false)}
+                  style={{ padding: "7px 14px", borderRadius: 9, border: "1px solid var(--ls-border)", background: "transparent", color: "var(--ls-text-muted)", fontSize: 12, cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}
+                >
+                  Annuler
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const iso = new Date(coldDate + "T09:00:00").toISOString();
+                    onSetCold(iso, coldReason);
+                  }}
+                  style={{ padding: "7px 14px", borderRadius: 9, border: "none", background: "var(--ls-teal)", color: "var(--ls-bg)", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}
+                >
+                  Confirmer
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Actions secondaires en 2 sections hiérarchisées */}
+        {prospect.status !== "converted" && !showColdForm && (
+          <div style={{ marginTop: 10, paddingTop: 14, borderTop: "1px solid var(--ls-border)", display: "flex", flexDirection: "column", gap: 14 }}>
+            {/* Après le RDV : actions positives/neutres */}
+            <div>
+              <div style={{ fontSize: 11, letterSpacing: "0.5px", color: "var(--ls-text-muted)", marginBottom: 8, fontFamily: "'DM Sans', sans-serif" }}>
+                Après le RDV :
+              </div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                {prospect.status !== "done" && (
+                  <SmallStatusBtn label="Effectué" onClick={() => onChangeStatus("done")} />
+                )}
+                <SmallStatusBtn
+                  label="✓ Converti"
+                  onClick={onStartAssessment}
+                  tone="positive"
+                />
+                {prospect.status !== "cold" && (
+                  <SmallStatusBtn
+                    label="Mettre en pause"
+                    icon={<SnowflakeIcon />}
+                    onClick={() => setShowColdForm(true)}
+                    tone="neutral"
+                  />
+                )}
+              </div>
+            </div>
+
+            {/* Sinon : actions négatives */}
+            <div>
+              <div style={{ fontSize: 11, letterSpacing: "0.5px", color: "var(--ls-text-muted)", marginBottom: 8, fontFamily: "'DM Sans', sans-serif" }}>
+                Sinon :
+              </div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                {prospect.status !== "no_show" && (
+                  <SmallStatusBtn label="Pas venu" onClick={() => onChangeStatus("no_show")} tone="soft-negative" />
+                )}
+                {prospect.status !== "lost" && (
+                  <SmallStatusBtn label="Pas intéressé" onClick={() => onChangeStatus("lost")} tone="soft-negative" />
+                )}
+                {prospect.status !== "cancelled" && (
+                  <SmallStatusBtn label="Annulé" onClick={() => onChangeStatus("cancelled")} tone="soft-negative" />
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Administration — footer discret */}
+        <div style={{ display: "flex", gap: 8, justifyContent: "space-between", alignItems: "center", marginTop: 18, paddingTop: 12, borderTop: "1px solid var(--ls-border)" }}>
+          <button
+            type="button"
+            onClick={onEdit}
+            style={{ background: "transparent", border: "none", color: "var(--ls-text-muted)", fontSize: 12, cursor: "pointer", padding: "6px 10px", fontFamily: "'DM Sans', sans-serif", textDecoration: "underline", textUnderlineOffset: 3 }}
+          >
+            Modifier
+          </button>
+          <button
+            type="button"
+            onClick={onDelete}
+            style={{ background: "transparent", border: "none", color: "var(--ls-coral)", fontSize: 12, cursor: "pointer", padding: "6px 10px", fontFamily: "'DM Sans', sans-serif", textDecoration: "underline", textUnderlineOffset: 3 }}
+          >
+            Supprimer
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function InfoRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div style={{ display: "flex", justifyContent: "space-between", gap: 10, fontSize: 13 }}>
+      <span style={{ color: "var(--ls-text-muted)" }}>{label}</span>
+      <span style={{ color: "var(--ls-text)", fontWeight: 500, textAlign: "right" }}>{value}</span>
+    </div>
+  );
+}
+
+type SmallStatusBtnTone = "default" | "positive" | "neutral" | "soft-negative";
+
+function SmallStatusBtn({
+  label,
+  onClick,
+  tone = "default",
+  icon,
+}: {
+  label: string;
+  onClick: () => void;
+  tone?: SmallStatusBtnTone;
+  icon?: React.ReactNode;
+}) {
+  const hoverColorByTone: Record<SmallStatusBtnTone, string> = {
+    default: "var(--ls-text)",
+    positive: "var(--ls-teal)",
+    neutral: "var(--ls-teal)",
+    "soft-negative": "var(--ls-coral)",
+  };
+  const hoverColor = hoverColorByTone[tone];
+  const iconColor = tone === "neutral" ? "var(--ls-teal)" : "currentColor";
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 6,
+        fontSize: 12,
+        padding: "6px 12px",
+        borderRadius: 999,
+        background: "transparent",
+        border: "1.5px solid var(--ls-border)",
+        color: "var(--ls-text)",
+        cursor: "pointer",
+        fontFamily: "'DM Sans', sans-serif",
+        fontWeight: 400,
+        transition: "border-color 150ms, color 150ms, background 150ms",
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.borderColor = hoverColor;
+        e.currentTarget.style.color = hoverColor;
+        e.currentTarget.style.background = `color-mix(in srgb, ${hoverColor} 7%, transparent)`;
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.borderColor = "var(--ls-border)";
+        e.currentTarget.style.color = "var(--ls-text)";
+        e.currentTarget.style.background = "transparent";
+      }}
+    >
+      {icon && (
+        <span style={{ display: "inline-flex", color: iconColor }}>{icon}</span>
+      )}
+      {label}
+    </button>
+  );
+}
+
+function SnowflakeIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="12" y1="2" x2="12" y2="22" />
+      <line x1="2" y1="12" x2="22" y2="12" />
+      <line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
+      <line x1="19.07" y1="4.93" x2="4.93" y2="19.07" />
+    </svg>
+  );
+}
+
+// ─── Stats équipe cette semaine (admin only, mode "Toute l'équipe") ──────
+function TeamStatsWidget({ prospects }: { prospects: Prospect[] }) {
+  const stats = useMemo(() => {
+    const weekStart = startOfWeek(new Date());
+    const weekEnd = endOfWeek(new Date());
+    const thisWeek = prospects.filter((p) => {
+      try {
+        const d = new Date(p.rdvDate);
+        return d >= weekStart && d <= weekEnd;
+      } catch { return false; }
+    });
+    const total = thisWeek.length;
+    const converted = thisWeek.filter((p) => p.status === "converted").length;
+    const cold = thisWeek.filter((p) => p.status === "cold").length;
+    const noShow = thisWeek.filter((p) => p.status === "no_show").length;
+    const conversionRate = total > 0 ? Math.round((converted / total) * 100) : 0;
+    return { total, converted, cold, noShow, conversionRate };
+  }, [prospects]);
+
+  return (
+    <div
+      style={{
+        background: "var(--ls-surface)",
+        border: "1px solid var(--ls-border)",
+        borderRadius: 14,
+        padding: 18,
+      }}
+    >
+      <div style={{ fontSize: 9, letterSpacing: "2px", textTransform: "uppercase", color: "var(--ls-text-hint)", fontWeight: 500, marginBottom: 14, fontFamily: "'DM Sans', sans-serif" }}>
+        Cette semaine · Toute l'équipe
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12 }}>
+        <StatTile icon="📅" value={stats.total} label="RDV" />
+        <StatTile icon="✓" value={stats.converted} label="Convertis" accent="var(--ls-teal)" />
+        <StatTile icon="❄" value={stats.cold} label="En pause" accent="var(--ls-teal)" />
+        <StatTile icon="❌" value={stats.noShow} label="Pas venus" accent="var(--ls-coral)" />
+      </div>
+      <div style={{ marginTop: 14, paddingTop: 14, borderTop: "1px solid var(--ls-border)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <span style={{ fontSize: 12, color: "var(--ls-text-muted)", fontFamily: "'DM Sans', sans-serif" }}>
+          Taux de conversion
+        </span>
+        <span
+          style={{
+            fontFamily: "Syne, sans-serif",
+            fontWeight: 700,
+            fontSize: 18,
+            color: stats.conversionRate >= 40 ? "var(--ls-teal)" : stats.conversionRate >= 20 ? "var(--ls-gold)" : "var(--ls-text-muted)",
+          }}
+        >
+          {stats.conversionRate}%
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function StatTile({ icon, value, label, accent }: { icon: string; value: number; label: string; accent?: string }) {
+  return (
+    <div
+      style={{
+        background: "var(--ls-surface2)",
+        borderRadius: 10,
+        padding: "10px 12px",
+        textAlign: "center",
+      }}
+    >
+      <div style={{ fontSize: 16, marginBottom: 4 }}>{icon}</div>
+      <div
+        style={{
+          fontFamily: "Syne, sans-serif",
+          fontWeight: 700,
+          fontSize: 24,
+          color: accent ?? "var(--ls-text)",
+          lineHeight: 1,
+        }}
+      >
+        {value}
+      </div>
+      <div style={{ fontSize: 11, color: "var(--ls-text-muted)", marginTop: 4, fontFamily: "'DM Sans', sans-serif" }}>
+        {label}
+      </div>
+    </div>
+  );
+}

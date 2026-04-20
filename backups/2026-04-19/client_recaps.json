@@ -1,0 +1,678 @@
+[
+  {
+    "id": "12dd3214-304e-43e6-b0ef-511010ce12d5",
+    "token": "f7001b14-d403-468a-aa39-75445b96d111",
+    "client_id": "35020c0c-9531-4036-9500-c57293f21648",
+    "coach_name": "Thomas",
+    "client_first_name": "test",
+    "client_last_name": "Beta complet",
+    "assessment_date": "2026-04-14T11:43:46.282Z",
+    "program_title": "Programme Premium",
+    "objective": "Perte de poids",
+    "body_scan": {
+      "weight": null,
+      "bodyFat": null,
+      "hydration": null,
+      "muscleMass": null,
+      "visceralFat": null,
+      "metabolicAge": null
+    },
+    "recommendations": [
+      {
+        "name": "Formula 1",
+        "shortBenefit": "Matin plus cale et plus simple."
+      },
+      {
+        "name": "Melange pour boisson proteinee",
+        "shortBenefit": "Repere proteine simple au quotidien."
+      },
+      {
+        "name": "Night Mode",
+        "shortBenefit": "Routine du soir plus calme."
+      },
+      {
+        "name": "Boisson multi-fibres",
+        "shortBenefit": "Fibres et confort digestif."
+      }
+    ],
+    "referrals": [],
+    "created_at": "2026-04-14T11:43:47.337978+00:00",
+    "expires_at": "2026-07-13T11:43:47.337978+00:00"
+  },
+  {
+    "id": "37cf0399-a312-49a4-9307-001cabc159e6",
+    "token": "96ff646c-a557-416d-8339-bd348dc12c80",
+    "client_id": "0a271703-f109-4b9b-8a86-69857a480948",
+    "coach_name": "Thomas",
+    "client_first_name": "TY",
+    "client_last_name": "YUG",
+    "assessment_date": "2026-04-14T11:53:33.957Z",
+    "program_title": "Programme Premium",
+    "objective": "Perte de poids",
+    "body_scan": {
+      "weight": null,
+      "bodyFat": null,
+      "hydration": null,
+      "muscleMass": null,
+      "visceralFat": null,
+      "metabolicAge": null
+    },
+    "recommendations": [
+      {
+        "name": "Boisson instantanee a base de the 51 g",
+        "shortBenefit": "Elan du matin + routine eau."
+      },
+      {
+        "name": "Boisson Aloe Vera",
+        "shortBenefit": "Repere eau simple au quotidien."
+      },
+      {
+        "name": "Formula 1",
+        "shortBenefit": "Matin plus cale et plus simple."
+      },
+      {
+        "name": "Melange pour boisson proteinee",
+        "shortBenefit": "Repere proteine simple au quotidien."
+      },
+      {
+        "name": "Night Mode",
+        "shortBenefit": "Routine du soir plus calme."
+      }
+    ],
+    "referrals": [],
+    "created_at": "2026-04-14T11:53:34.956519+00:00",
+    "expires_at": "2026-07-13T11:53:34.956519+00:00"
+  },
+  {
+    "id": "b9b98cba-bff2-4feb-8518-864f5dc6ae14",
+    "token": "7fa97989-6bc0-4d2b-896b-dc4bf183294f",
+    "client_id": "d49fa503-f9c2-48c5-8559-57200c10e0d9",
+    "coach_name": "Thomas",
+    "client_first_name": "Nathalie",
+    "client_last_name": "Habrant",
+    "assessment_date": "2026-04-14T14:52:57.310Z",
+    "program_title": "Programme Premium",
+    "objective": "Perte de poids",
+    "body_scan": {
+      "weight": 68.7,
+      "bodyFat": 35.6,
+      "hydration": 44.8,
+      "muscleMass": 42,
+      "visceralFat": 7.5,
+      "metabolicAge": 52
+    },
+    "recommendations": [
+      {
+        "name": "Boisson Instantanée à base de Thé",
+        "shortBenefit": "Booster d'énergie · Thermogenèse · Complément du shake F1"
+      },
+      {
+        "name": "Boisson Concentrée à l'Aloe Vera",
+        "shortBenefit": "Digestion & transit · Hydratation · Muqueuse intestinale"
+      }
+    ],
+    "referrals": [],
+    "created_at": "2026-04-14T14:52:58.403262+00:00",
+    "expires_at": "2026-07-13T14:52:58.403262+00:00"
+  },
+  {
+    "id": "84658cdf-9768-4552-ad57-7b10b4f9fecd",
+    "token": "38bb5c88-4586-4586-82a3-6adcdfbf1e49",
+    "client_id": "85dd2bac-a429-4d80-9d2c-12f957667bea",
+    "coach_name": "Prisca et Alex",
+    "client_first_name": "Juliette",
+    "client_last_name": "Lesueur",
+    "assessment_date": "2026-04-16T08:11:12.292Z",
+    "program_title": "Programme Premium",
+    "objective": "Perte de poids",
+    "body_scan": {
+      "weight": 84.5,
+      "bodyFat": 40.7,
+      "hydration": 42.2,
+      "muscleMass": 47.5,
+      "visceralFat": 8,
+      "metabolicAge": 56
+    },
+    "recommendations": [
+      {
+        "name": "Boisson Instantanée à base de Thé",
+        "shortBenefit": "Booster d'énergie · Thermogenèse · Complément du shake F1"
+      },
+      {
+        "name": "Formula 1 Boisson Nutritionnelle",
+        "shortBenefit": "Repas équilibré · Contrôle des calories · Base du programme"
+      }
+    ],
+    "referrals": [],
+    "created_at": "2026-04-16T08:11:10.992191+00:00",
+    "expires_at": "2026-07-15T08:11:10.992191+00:00"
+  },
+  {
+    "id": "b39b719d-e180-4aa4-8b8f-138e24ca6d5c",
+    "token": "468de753-c157-4675-ada9-624b7a851648",
+    "client_id": "254e5a53-4238-4b9a-8534-aba8f1039910",
+    "coach_name": "Mandy",
+    "client_first_name": "Floriant",
+    "client_last_name": "Schiltz",
+    "assessment_date": "2026-04-16T12:43:58.724Z",
+    "program_title": "Programme Premium",
+    "objective": "Perte de poids",
+    "body_scan": {
+      "weight": 86.9,
+      "bodyFat": 24.8,
+      "hydration": 53.2,
+      "muscleMass": 61.2,
+      "visceralFat": 8,
+      "metabolicAge": 44
+    },
+    "recommendations": [
+      {
+        "name": "Formula 1 Boisson Nutritionnelle",
+        "shortBenefit": "Repas équilibré · Contrôle des calories · Base du programme"
+      },
+      {
+        "name": "Mélange pour Boisson Protéinée Vanille",
+        "shortBenefit": "Apport protéiné élevé · Prise de masse · Récupération musculaire"
+      }
+    ],
+    "referrals": [],
+    "created_at": "2026-04-16T12:43:58.673207+00:00",
+    "expires_at": "2026-07-15T12:43:58.673207+00:00"
+  },
+  {
+    "id": "24d47ea6-c677-44c4-8a07-f1e97cb532f7",
+    "token": "d9129d4e-fbe9-4a82-a441-7dff9d9b07a9",
+    "client_id": "f09b3dc7-9d86-4e51-a344-e5d5256bfff7",
+    "coach_name": "Mandy",
+    "client_first_name": "Pascal",
+    "client_last_name": "Florimont",
+    "assessment_date": "2026-04-16T14:51:12.051Z",
+    "program_title": "Programme Premium",
+    "objective": "Perte de poids",
+    "body_scan": {
+      "weight": 101.8,
+      "bodyFat": 33.2,
+      "hydration": 47,
+      "muscleMass": 64.6,
+      "visceralFat": 17.5,
+      "metabolicAge": 75
+    },
+    "recommendations": [
+      {
+        "name": "Boisson Instantanée à base de Thé",
+        "shortBenefit": "Booster d'énergie · Thermogenèse · Complément du shake F1"
+      },
+      {
+        "name": "Boisson Concentrée à l'Aloe Vera",
+        "shortBenefit": "Digestion & transit · Hydratation · Muqueuse intestinale"
+      },
+      {
+        "name": "Formula 1 Boisson Nutritionnelle",
+        "shortBenefit": "Repas équilibré · Contrôle des calories · Base du programme"
+      }
+    ],
+    "referrals": [],
+    "created_at": "2026-04-16T14:51:12.021668+00:00",
+    "expires_at": "2026-07-15T14:51:12.021668+00:00"
+  },
+  {
+    "id": "85115c8e-2b4f-4a26-bce6-e59dbc609695",
+    "token": "b98b4113-5ec9-4cd0-bdce-9a7ffc8a1ccf",
+    "client_id": "dd508019-bab1-4304-9ed1-795e7202e889",
+    "coach_name": "Mandy",
+    "client_first_name": "Pascal",
+    "client_last_name": "Florimont",
+    "assessment_date": "2026-04-16T14:51:12.144Z",
+    "program_title": "Programme Premium",
+    "objective": "Perte de poids",
+    "body_scan": {
+      "weight": 101.8,
+      "bodyFat": 33.2,
+      "hydration": 47,
+      "muscleMass": 64.6,
+      "visceralFat": 17.5,
+      "metabolicAge": 75
+    },
+    "recommendations": [
+      {
+        "name": "Boisson Instantanée à base de Thé",
+        "shortBenefit": "Booster d'énergie · Thermogenèse · Complément du shake F1"
+      },
+      {
+        "name": "Boisson Concentrée à l'Aloe Vera",
+        "shortBenefit": "Digestion & transit · Hydratation · Muqueuse intestinale"
+      },
+      {
+        "name": "Formula 1 Boisson Nutritionnelle",
+        "shortBenefit": "Repas équilibré · Contrôle des calories · Base du programme"
+      }
+    ],
+    "referrals": [],
+    "created_at": "2026-04-16T14:51:12.082258+00:00",
+    "expires_at": "2026-07-15T14:51:12.082258+00:00"
+  },
+  {
+    "id": "b848caae-913b-4ef0-a1c8-4c57f7b0be72",
+    "token": "0af6c276-bffd-49da-a5c1-da295a8e9fbd",
+    "client_id": "04361985-439c-40a6-a584-5627b3e4b94b",
+    "coach_name": "Mélanie",
+    "client_first_name": "Jessie",
+    "client_last_name": "Astolfi",
+    "assessment_date": "2026-04-16T16:49:50.579Z",
+    "program_title": "Programme Premium",
+    "objective": "Perte de poids",
+    "body_scan": {
+      "weight": 69.6,
+      "bodyFat": 36.9,
+      "hydration": 44.5,
+      "muscleMass": 41.7,
+      "visceralFat": 5.5,
+      "metabolicAge": 50
+    },
+    "recommendations": [
+      {
+        "name": "Boisson Instantanée à base de Thé",
+        "shortBenefit": "Booster d'énergie · Thermogenèse · Complément du shake F1"
+      },
+      {
+        "name": "Boisson Concentrée à l'Aloe Vera",
+        "shortBenefit": "Digestion & transit · Hydratation · Muqueuse intestinale"
+      },
+      {
+        "name": "Formula 1 Boisson Nutritionnelle",
+        "shortBenefit": "Repas équilibré · Contrôle des calories · Base du programme"
+      },
+      {
+        "name": "Mélange pour Boisson Protéinée Vanille",
+        "shortBenefit": "Apport protéiné élevé · Prise de masse · Récupération musculaire"
+      }
+    ],
+    "referrals": [],
+    "created_at": "2026-04-16T16:49:50.674996+00:00",
+    "expires_at": "2026-07-15T16:49:50.674996+00:00"
+  },
+  {
+    "id": "0ec34db9-f297-472f-a91f-1d051a6cb095",
+    "token": "7f24f300-6b30-4427-b179-c9eb48971755",
+    "client_id": "8e54426e-fd1e-4784-8b8c-8e14047542cf",
+    "coach_name": "Mélanie",
+    "client_first_name": "Jessie",
+    "client_last_name": "Astolfi",
+    "assessment_date": "2026-04-16T16:49:50.807Z",
+    "program_title": "Programme Premium",
+    "objective": "Perte de poids",
+    "body_scan": {
+      "weight": 69.6,
+      "bodyFat": 36.9,
+      "hydration": 44.5,
+      "muscleMass": 41.7,
+      "visceralFat": 5.5,
+      "metabolicAge": 50
+    },
+    "recommendations": [
+      {
+        "name": "Boisson Instantanée à base de Thé",
+        "shortBenefit": "Booster d'énergie · Thermogenèse · Complément du shake F1"
+      },
+      {
+        "name": "Boisson Concentrée à l'Aloe Vera",
+        "shortBenefit": "Digestion & transit · Hydratation · Muqueuse intestinale"
+      },
+      {
+        "name": "Formula 1 Boisson Nutritionnelle",
+        "shortBenefit": "Repas équilibré · Contrôle des calories · Base du programme"
+      },
+      {
+        "name": "Mélange pour Boisson Protéinée Vanille",
+        "shortBenefit": "Apport protéiné élevé · Prise de masse · Récupération musculaire"
+      }
+    ],
+    "referrals": [],
+    "created_at": "2026-04-16T16:49:50.858503+00:00",
+    "expires_at": "2026-07-15T16:49:50.858503+00:00"
+  },
+  {
+    "id": "6c669409-9e02-4174-8bab-d38dc5ed024f",
+    "token": "e232e10a-9273-4017-a4d5-f29ba102b8ca",
+    "client_id": "760ca664-63fe-4282-8143-bc4de330bb16",
+    "coach_name": "Mélanie",
+    "client_first_name": "Fabien",
+    "client_last_name": "Astolfi",
+    "assessment_date": "2026-04-16T20:04:43.420Z",
+    "program_title": "Programme Premium",
+    "objective": "Perte de poids",
+    "body_scan": {
+      "weight": 97.3,
+      "bodyFat": 34.7,
+      "hydration": 47.3,
+      "muscleMass": 60.4,
+      "visceralFat": 13,
+      "metabolicAge": 51
+    },
+    "recommendations": [
+      {
+        "name": "Boisson Instantanée à base de Thé",
+        "shortBenefit": "Booster d'énergie · Thermogenèse · Complément du shake F1"
+      },
+      {
+        "name": "Boisson Concentrée à l'Aloe Vera",
+        "shortBenefit": "Digestion & transit · Hydratation · Muqueuse intestinale"
+      },
+      {
+        "name": "Formula 1 Boisson Nutritionnelle",
+        "shortBenefit": "Repas équilibré · Contrôle des calories · Base du programme"
+      }
+    ],
+    "referrals": [],
+    "created_at": "2026-04-16T20:04:43.51884+00:00",
+    "expires_at": "2026-07-15T20:04:43.51884+00:00"
+  },
+  {
+    "id": "6420a539-0b73-465f-9ca0-1ae0a4a541b6",
+    "token": "be493d42-906a-4f4c-803b-17eace4e8737",
+    "client_id": "4277d7e7-cbc0-4ec7-85cf-d455f5403f22",
+    "coach_name": "Mélanie",
+    "client_first_name": "Julie",
+    "client_last_name": "Furnon",
+    "assessment_date": "2026-04-17T05:55:13.739Z",
+    "program_title": "Programme a confirmer",
+    "objective": "Perte de poids",
+    "body_scan": {
+      "weight": null,
+      "bodyFat": null,
+      "hydration": null,
+      "muscleMass": null,
+      "visceralFat": null,
+      "metabolicAge": null
+    },
+    "recommendations": [
+      {
+        "name": "Xtra-Cal",
+        "shortBenefit": "Calcium & Magnésium · Os & articulations · Récupération"
+      },
+      {
+        "name": "Formula 1 Boisson Nutritionnelle",
+        "shortBenefit": "Repas équilibré · Contrôle des calories · Base du programme"
+      },
+      {
+        "name": "Night Mode",
+        "shortBenefit": "Qualité du sommeil · Récupération nocturne · Gestion du poids"
+      },
+      {
+        "name": "Mélange pour Boisson Protéinée Vanille",
+        "shortBenefit": "Apport protéiné élevé · Prise de masse · Récupération musculaire"
+      }
+    ],
+    "referrals": [],
+    "created_at": "2026-04-17T05:55:13.835638+00:00",
+    "expires_at": "2026-07-16T05:55:13.835638+00:00"
+  },
+  {
+    "id": "ab7ebf01-7025-4f0e-8ac6-6f375490f4c0",
+    "token": "c48b8ebc-577d-48b8-9053-9fe772636269",
+    "client_id": "013c5496-5061-4197-a316-a7a9721c6d42",
+    "coach_name": "Mélanie",
+    "client_first_name": "Julie",
+    "client_last_name": "Furnon",
+    "assessment_date": "2026-04-17T05:55:13.740Z",
+    "program_title": "Programme a confirmer",
+    "objective": "Perte de poids",
+    "body_scan": {
+      "weight": null,
+      "bodyFat": null,
+      "hydration": null,
+      "muscleMass": null,
+      "visceralFat": null,
+      "metabolicAge": null
+    },
+    "recommendations": [
+      {
+        "name": "Xtra-Cal",
+        "shortBenefit": "Calcium & Magnésium · Os & articulations · Récupération"
+      },
+      {
+        "name": "Formula 1 Boisson Nutritionnelle",
+        "shortBenefit": "Repas équilibré · Contrôle des calories · Base du programme"
+      },
+      {
+        "name": "Night Mode",
+        "shortBenefit": "Qualité du sommeil · Récupération nocturne · Gestion du poids"
+      },
+      {
+        "name": "Mélange pour Boisson Protéinée Vanille",
+        "shortBenefit": "Apport protéiné élevé · Prise de masse · Récupération musculaire"
+      }
+    ],
+    "referrals": [],
+    "created_at": "2026-04-17T05:55:13.824486+00:00",
+    "expires_at": "2026-07-16T05:55:13.824486+00:00"
+  },
+  {
+    "id": "fef2b31c-f714-490d-9dab-4bbe0a673c6a",
+    "token": "b00269b0-2cf1-4f10-b022-5162572c9f9d",
+    "client_id": "c77e7351-ca2e-492c-be6f-f763b2045f71",
+    "coach_name": "Mélanie",
+    "client_first_name": "Julie",
+    "client_last_name": "Furnon",
+    "assessment_date": "2026-04-17T05:55:13.991Z",
+    "program_title": "Programme a confirmer",
+    "objective": "Perte de poids",
+    "body_scan": {
+      "weight": null,
+      "bodyFat": null,
+      "hydration": null,
+      "muscleMass": null,
+      "visceralFat": null,
+      "metabolicAge": null
+    },
+    "recommendations": [
+      {
+        "name": "Xtra-Cal",
+        "shortBenefit": "Calcium & Magnésium · Os & articulations · Récupération"
+      },
+      {
+        "name": "Formula 1 Boisson Nutritionnelle",
+        "shortBenefit": "Repas équilibré · Contrôle des calories · Base du programme"
+      },
+      {
+        "name": "Night Mode",
+        "shortBenefit": "Qualité du sommeil · Récupération nocturne · Gestion du poids"
+      },
+      {
+        "name": "Mélange pour Boisson Protéinée Vanille",
+        "shortBenefit": "Apport protéiné élevé · Prise de masse · Récupération musculaire"
+      }
+    ],
+    "referrals": [],
+    "created_at": "2026-04-17T05:55:14.037142+00:00",
+    "expires_at": "2026-07-16T05:55:14.037142+00:00"
+  },
+  {
+    "id": "8e1c1655-3f70-4bc3-a2a2-f2839b9bcb10",
+    "token": "12e4fced-17f1-48fa-b19b-bb3099e91ab0",
+    "client_id": "1d38c103-0c32-465b-a23d-003e4ade8aea",
+    "coach_name": "Mélanie",
+    "client_first_name": "Julie",
+    "client_last_name": "Furnon",
+    "assessment_date": "2026-04-17T05:55:14.012Z",
+    "program_title": "Programme a confirmer",
+    "objective": "Perte de poids",
+    "body_scan": {
+      "weight": null,
+      "bodyFat": null,
+      "hydration": null,
+      "muscleMass": null,
+      "visceralFat": null,
+      "metabolicAge": null
+    },
+    "recommendations": [
+      {
+        "name": "Xtra-Cal",
+        "shortBenefit": "Calcium & Magnésium · Os & articulations · Récupération"
+      },
+      {
+        "name": "Formula 1 Boisson Nutritionnelle",
+        "shortBenefit": "Repas équilibré · Contrôle des calories · Base du programme"
+      },
+      {
+        "name": "Night Mode",
+        "shortBenefit": "Qualité du sommeil · Récupération nocturne · Gestion du poids"
+      },
+      {
+        "name": "Mélange pour Boisson Protéinée Vanille",
+        "shortBenefit": "Apport protéiné élevé · Prise de masse · Récupération musculaire"
+      }
+    ],
+    "referrals": [],
+    "created_at": "2026-04-17T05:55:14.054719+00:00",
+    "expires_at": "2026-07-16T05:55:14.054719+00:00"
+  },
+  {
+    "id": "a42e51e5-e11e-47c9-a22f-8432a7d1984a",
+    "token": "88756ff0-52f1-437f-bcb3-1cfe0b4af329",
+    "client_id": "cd09432a-c9c0-4e77-afc8-f6fdcf018e6c",
+    "coach_name": "Mélanie",
+    "client_first_name": "Julie",
+    "client_last_name": "Furnon",
+    "assessment_date": "2026-04-17T05:55:14.100Z",
+    "program_title": "Programme a confirmer",
+    "objective": "Perte de poids",
+    "body_scan": {
+      "weight": null,
+      "bodyFat": null,
+      "hydration": null,
+      "muscleMass": null,
+      "visceralFat": null,
+      "metabolicAge": null
+    },
+    "recommendations": [
+      {
+        "name": "Xtra-Cal",
+        "shortBenefit": "Calcium & Magnésium · Os & articulations · Récupération"
+      },
+      {
+        "name": "Formula 1 Boisson Nutritionnelle",
+        "shortBenefit": "Repas équilibré · Contrôle des calories · Base du programme"
+      },
+      {
+        "name": "Night Mode",
+        "shortBenefit": "Qualité du sommeil · Récupération nocturne · Gestion du poids"
+      },
+      {
+        "name": "Mélange pour Boisson Protéinée Vanille",
+        "shortBenefit": "Apport protéiné élevé · Prise de masse · Récupération musculaire"
+      }
+    ],
+    "referrals": [],
+    "created_at": "2026-04-17T05:55:14.146946+00:00",
+    "expires_at": "2026-07-16T05:55:14.146946+00:00"
+  },
+  {
+    "id": "dcfb487c-8969-4743-b790-4b06001b4889",
+    "token": "aeb7056d-15bd-4633-b075-93e570873cab",
+    "client_id": "5ea847e8-b4d5-4b51-8986-f53f032b7c2f",
+    "coach_name": "Mélanie",
+    "client_first_name": "Sabrina",
+    "client_last_name": "Freilinger",
+    "assessment_date": "2026-04-17T10:28:55.048Z",
+    "program_title": "Programme Premium",
+    "objective": "Perte de poids",
+    "body_scan": {
+      "weight": 88.8,
+      "bodyFat": 44.6,
+      "hydration": 39.6,
+      "muscleMass": 46.7,
+      "visceralFat": 9,
+      "metabolicAge": 62
+    },
+    "recommendations": [
+      {
+        "name": "Boisson Instantanée à base de Thé",
+        "shortBenefit": "Booster d'énergie · Thermogenèse · Complément du shake F1"
+      },
+      {
+        "name": "Boisson Concentrée à l'Aloe Vera",
+        "shortBenefit": "Digestion & transit · Hydratation · Muqueuse intestinale"
+      },
+      {
+        "name": "Formula 1 Boisson Nutritionnelle",
+        "shortBenefit": "Repas équilibré · Contrôle des calories · Base du programme"
+      }
+    ],
+    "referrals": [],
+    "created_at": "2026-04-17T10:28:54.222682+00:00",
+    "expires_at": "2026-07-16T10:28:54.222682+00:00"
+  },
+  {
+    "id": "4a4636b7-290e-4b14-a12a-93428f456f99",
+    "token": "6417bf86-6ee2-4fb2-a218-de3491e54c01",
+    "client_id": "bf6c057f-4a48-41e2-9abe-b24ca42ada72",
+    "coach_name": "Mélanie",
+    "client_first_name": "Julien",
+    "client_last_name": "GABRIEL",
+    "assessment_date": "2026-04-17T15:14:50.499Z",
+    "program_title": "Programme a confirmer",
+    "objective": "Perte de poids",
+    "body_scan": {
+      "weight": 86.9,
+      "bodyFat": 28.3,
+      "hydration": 50.4,
+      "muscleMass": 59.3,
+      "visceralFat": 11.5,
+      "metabolicAge": 58
+    },
+    "recommendations": [
+      {
+        "name": "Phyto Complete",
+        "shortBenefit": "Extraits de plantes · Bien-être global · Antioxydants naturels"
+      },
+      {
+        "name": "Xtra-Cal",
+        "shortBenefit": "Calcium & Magnésium · Os & articulations · Récupération"
+      },
+      {
+        "name": "Boisson Instantanée à base de Thé",
+        "shortBenefit": "Booster d'énergie · Thermogenèse · Complément du shake F1"
+      },
+      {
+        "name": "Formula 1 Boisson Nutritionnelle",
+        "shortBenefit": "Repas équilibré · Contrôle des calories · Base du programme"
+      }
+    ],
+    "referrals": [],
+    "created_at": "2026-04-17T15:14:49.577413+00:00",
+    "expires_at": "2026-07-16T15:14:49.577413+00:00"
+  },
+  {
+    "id": "32ab663b-8570-4074-8f60-3692c1d1d9d8",
+    "token": "dcd5dd8f-2e86-46e0-bba6-e62f1f213e84",
+    "client_id": "fef3096d-526b-47c2-8524-e7fb3f468350",
+    "coach_name": "Léa Monfort",
+    "client_first_name": "Léa",
+    "client_last_name": "Monfort",
+    "assessment_date": "2026-04-19T10:33:37.743Z",
+    "program_title": "Programme a confirmer",
+    "objective": "Energie",
+    "body_scan": {
+      "weight": 58.2,
+      "bodyFat": 26.8,
+      "hydration": 53,
+      "muscleMass": 40.4,
+      "visceralFat": 1.5,
+      "metabolicAge": 21
+    },
+    "recommendations": [
+      {
+        "name": "Xtra-Cal",
+        "shortBenefit": "Calcium & Magnésium · Os & articulations · Récupération"
+      },
+      {
+        "name": "Boisson Instantanée à base de Thé",
+        "shortBenefit": "Booster d'énergie · Thermogenèse · Complément du shake F1"
+      }
+    ],
+    "referrals": [],
+    "created_at": "2026-04-19T10:33:37.908342+00:00",
+    "expires_at": "2026-07-18T10:33:37.908342+00:00"
+  }
+]

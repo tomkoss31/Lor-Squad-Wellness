@@ -2,6 +2,8 @@ import { Suspense, lazy } from "react";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { ProtectedRoute, PublicRoute, RoleRoute } from "./components/auth/RouteGuards";
 import { AppLayout } from "./components/layout/AppLayout";
+import { ErrorBoundary } from "./components/ErrorBoundary";
+import { ToastHost } from "./components/ui/ToastHost";
 
 const DashboardPage = lazy(() =>
   import("./pages/DashboardPage").then((module) => ({
@@ -21,16 +23,6 @@ const RecommendationsPage = lazy(() =>
 const PvOverviewPage = lazy(() =>
   import("./pages/PvOverviewPage").then((module) => ({
     default: module.PvOverviewPage
-  }))
-);
-const PvClientsPage = lazy(() =>
-  import("./pages/PvClientsPage").then((module) => ({
-    default: module.PvClientsPage
-  }))
-);
-const PvOrdersPage = lazy(() =>
-  import("./pages/PvOrdersPage").then((module) => ({
-    default: module.PvOrdersPage
   }))
 );
 const PvTeamPage = lazy(() =>
@@ -103,16 +95,36 @@ const MessagesPage = lazy(() =>
     default: module.MessagesPage
   }))
 );
+const AgendaPage = lazy(() =>
+  import("./pages/AgendaPage").then((module) => ({
+    default: module.AgendaPage
+  }))
+);
+const FollowUpGuidePage = lazy(() =>
+  import("./pages/FollowUpGuidePage").then((module) => ({
+    default: module.FollowUpGuidePage
+  }))
+);
 
 import { useTheme } from './hooks/useTheme'
 import { useAutoNotifications } from './hooks/useAutoNotifications'
+import { useAppContext } from './context/AppContext'
 
 export default function App() {
   useTheme()
   useAutoNotifications()
+  const { bootError } = useAppContext()
+
+  // Hard-fail boot : si mock en prod (faille sécurité), on bloque toute l'app.
+  // Couvre routes protégées ET routes publiques (client app, recap, rapport).
+  if (bootError) {
+    return <BootErrorScreen message={bootError} />
+  }
+
   return (
     <BrowserRouter>
       <Suspense fallback={<RouteLoadingScreen />}>
+        <ErrorBoundary>
         <Routes>
           <Route element={<PublicRoute />}>
             <Route path="/login" element={<LoginPage />} />
@@ -122,11 +134,11 @@ export default function App() {
               <Route index element={<Navigate to="/dashboard" replace />} />
               <Route path="dashboard" element={<DashboardPage />} />
               <Route path="guide" element={<GuidePage />} />
+              <Route path="guide-suivi" element={<FollowUpGuidePage />} />
               <Route path="recommendations" element={<RecommendationsPage />} />
               <Route path="pv" element={<PvOverviewPage />} />
-              <Route path="pv/clients" element={<PvClientsPage />} />
-              <Route path="pv/orders" element={<PvOrdersPage />} />
               <Route path="messages" element={<MessagesPage />} />
+              <Route path="agenda" element={<AgendaPage />} />
               <Route path="clients" element={<ClientsPage />} />
               <Route element={<RoleRoute allowedRoles={["admin"]} />}>
                 <Route path="users" element={<UsersPage />} />
@@ -150,8 +162,53 @@ export default function App() {
           <Route path="/client/:token" element={<ClientAppPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+        </ErrorBoundary>
       </Suspense>
+      <ToastHost />
     </BrowserRouter>
+  );
+}
+
+function BootErrorScreen({ message }: { message: string }) {
+  return (
+    <div
+      role="alert"
+      style={{
+        minHeight: "100vh",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: "32px",
+        background: "var(--ls-bg)",
+        color: "var(--ls-text)",
+        fontFamily: "'DM Sans', sans-serif",
+        textAlign: "center",
+      }}
+    >
+      <div style={{ maxWidth: "420px" }}>
+        <div style={{ fontSize: "64px", marginBottom: "16px" }}>🛑</div>
+        <h1
+          style={{
+            fontFamily: "'Syne', sans-serif",
+            fontSize: "22px",
+            fontWeight: 700,
+            marginBottom: "12px",
+            color: "var(--ls-coral)",
+          }}
+        >
+          Configuration manquante
+        </h1>
+        <p
+          style={{
+            fontSize: "14px",
+            color: "var(--ls-text-muted)",
+            lineHeight: 1.5,
+          }}
+        >
+          {message}
+        </p>
+      </div>
+    </div>
   );
 }
 

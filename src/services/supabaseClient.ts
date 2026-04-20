@@ -69,9 +69,15 @@ export async function resolveSupabaseConfig() {
   return cachedConfig;
 }
 
-export async function resolveStorageMode() {
+/**
+ * Retourne true si aucune configuration Supabase utilisable n'a pu être
+ * résolue (ni via VITE_SUPABASE_URL/ANON_KEY, ni via /api/runtime-config).
+ * Sert à bloquer le boot de l'app en production — depuis la suppression
+ * du mode mock (chantier 2026-04-19), il n'y a plus de fallback local.
+ */
+export async function isSupabaseUnavailable(): Promise<boolean> {
   const config = await resolveSupabaseConfig();
-  return config ? "supabase" : "local";
+  return config === null;
 }
 
 export async function getSupabaseClient() {

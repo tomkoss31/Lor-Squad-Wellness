@@ -1,5 +1,48 @@
 export type UserRole = "admin" | "referent" | "distributor";
 
+// ─── Lifecycle status (Matrice B — Chantier 1) ──────────────────────────
+export type LifecycleStatus =
+  | "active"
+  | "not_started"
+  | "paused"
+  | "stopped"
+  | "lost";
+
+export const LIFECYCLE_LABELS: Record<LifecycleStatus, string> = {
+  active: "Actif",
+  not_started: "Pas démarré",
+  paused: "En pause",
+  stopped: "Arrêté",
+  lost: "Perdu",
+};
+
+export const LIFECYCLE_TONES: Record<LifecycleStatus, "teal" | "gold" | "muted" | "coral"> = {
+  active: "teal",
+  not_started: "gold",
+  paused: "muted",
+  stopped: "coral",
+  lost: "coral",
+};
+
+export const isDeadLifecycle = (s: LifecycleStatus): boolean =>
+  s === "stopped" || s === "lost";
+
+export const isActiveLifecycle = (s: LifecycleStatus): boolean =>
+  s === "active" || s === "not_started" || s === "paused";
+
+// ─── Étape 13 du bilan — choix structurés ───────────────────────────────
+export type DecisionClient = "partant" | "a_rassurer" | "a_confirmer";
+export type TypeDeSuite = "rdv_fixe" | "message_rappel" | "relance_douce" | "suivi_libre";
+export type MessageALaisser = "simple" | "progressif" | "cadre_clair";
+
+// ─── Petit-déjeuner story (Chantier 6) ─────────────────────────────────
+export interface BreakfastAnalysis {
+  sucres: number;       // 0-100
+  proteines: number;    // 0-100
+  hydratation: number;  // 0-100
+  fibres: number;       // 0-100
+}
+
 export type Objective = "weight-loss" | "sport";
 
 export type ProgramCategory = "weight-loss" | "sport";
@@ -101,6 +144,8 @@ export interface AssessmentQuestionnaire {
   desiredTimeline: string;
   recommendations: RecommendationLead[];
   recommendationsContacted: boolean;
+  // Étape 9 story petit-déjeuner (Chantier 6)
+  breakfastAnalysis?: BreakfastAnalysis;
 }
 
 export interface AssessmentRecord {
@@ -116,6 +161,10 @@ export interface AssessmentRecord {
   bodyScan: BodyScanMetrics;
   questionnaire: AssessmentQuestionnaire;
   pedagogicalFocus: string[];
+  // Étape 13 du bilan (Chantier 1)
+  decisionClient?: DecisionClient | null;
+  typeDeSuite?: TypeDeSuite | null;
+  messageALaisser?: MessageALaisser | null;
 }
 
 export interface Client {
@@ -140,6 +189,17 @@ export interface Client {
   nextFollowUp: string;
   notes: string;
   assessments: AssessmentRecord[];
+  // Lifecycle (Chantier 1 — Matrice B)
+  lifecycleStatus?: LifecycleStatus;
+  isFragile?: boolean;
+  lifecycleUpdatedAt?: string;
+  lifecycleUpdatedBy?: string | null;
+  // Suivi libre (Sujet C — 2026-04-19) : client actif mais hors agenda auto
+  freeFollowUp?: boolean;
+  // Free PV tracking (2026-04-20) : client sous un autre superviseur, exclu
+  // des listes de réassort (dashboard, suivi PV, alertes). Le reste (bilans,
+  // RDV, body scan, messages) reste normal.
+  freePvTracking?: boolean;
 }
 
 export interface FollowUp {
@@ -148,7 +208,7 @@ export interface FollowUp {
   clientName: string;
   dueDate: string;
   type: string;
-  status: "scheduled" | "pending" | "completed" | "dismissed";
+  status: "scheduled" | "pending" | "completed" | "dismissed" | "inactive";
   programTitle: string;
   lastAssessmentDate: string;
 }
@@ -177,6 +237,18 @@ export interface ActivityLog {
   targetUserName?: string;
   summary: string;
   detail?: string;
+}
+
+// ─── Protocole de suivi (Chantier 2026-04-20) ────────────────────────────
+export type FollowUpProtocolStepId = "j1" | "j3" | "j7" | "j10" | "j14";
+
+export interface FollowUpProtocolLog {
+  id: string;
+  clientId: string;
+  coachId: string;
+  stepId: FollowUpProtocolStepId;
+  sentAt: string;
+  notes?: string;
 }
 
 export interface ClientMessage {
@@ -242,3 +314,78 @@ export interface WeightLossPaceInsight {
   description: string;
   tone: "blue" | "green" | "amber" | "red";
 }
+
+// ─── Agenda Prospects (Chantier 2026-04-19) ─────────────────────────────
+export type ProspectSource =
+  | 'Meta Ads'
+  | 'Instagram'
+  | 'Facebook'
+  | 'TikTok'
+  | 'Bouche à oreille'
+  | 'Parrainage'
+  | 'Événement'
+  | 'Autre';
+
+export type ProspectStatus =
+  | 'scheduled'   // RDV pris, à venir
+  | 'done'        // RDV effectué mais pas encore converti
+  | 'converted'   // devenu client
+  | 'lost'        // pas intéressé
+  | 'no_show'     // n'est pas venu
+  | 'cancelled'   // RDV annulé
+  | 'cold';       // à réchauffer plus tard (base froide)
+
+export interface Prospect {
+  id: string;
+  firstName: string;
+  lastName: string;
+  phone?: string;
+  email?: string;
+  rdvDate: string;          // ISO timestamptz
+  source: ProspectSource;
+  sourceDetail?: string;
+  note?: string;
+  distributorId: string;
+  status: ProspectStatus;
+  convertedClientId?: string;
+  coldUntil?: string;       // ISO — date à partir de laquelle réchauffer
+  coldReason?: string;      // note contextuelle pour se souvenir au moment de réchauffer
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ProspectFormInput {
+  firstName: string;
+  lastName: string;
+  phone?: string;
+  email?: string;
+  rdvDate: string;
+  source: ProspectSource;
+  sourceDetail?: string;
+  note?: string;
+  distributorId: string;
+}
+
+export const PROSPECT_SOURCES: ProspectSource[] = [
+  'Meta Ads',
+  'Instagram',
+  'Facebook',
+  'TikTok',
+  'Bouche à oreille',
+  'Parrainage',
+  'Événement',
+  'Autre',
+];
+
+// Chantier UX modal (2026-04-19) : terminologie adoucie
+// Les valeurs techniques (lost, no_show, cold) restent inchangées en DB,
+// seuls les labels UI sont reformulés pour une approche Go Pro non forcée.
+export const PROSPECT_STATUS_LABELS: Record<ProspectStatus, string> = {
+  scheduled: 'À venir',
+  done: 'Effectué',
+  converted: 'Converti',
+  lost: 'Pas intéressé',
+  no_show: 'Pas venu',
+  cancelled: 'Annulé',
+  cold: 'À reprendre',
+};
