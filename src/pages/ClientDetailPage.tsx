@@ -186,7 +186,12 @@ export function ClientDetailPage() {
 
   const latestAssessment = getLatestAssessment(client);
   const previousAssessment = getPreviousAssessment(client);
-  const firstAssessment = getFirstAssessment(client);
+  // Fix P3a (2026-04-20) : on préfère le bilan type === "initial", pas juste
+  // le plus ancien par date. Aligne la fiche sur EditInitialAssessmentPage
+  // (qui édite le même bilan). Sans ça, éditer le "Poids de départ" n'était
+  // pas reflété sur la fiche si un follow-up avait une date antérieure.
+  const firstAssessment =
+    client.assessments.find((entry) => entry.type === "initial") ?? getFirstAssessment(client);
   const latestBodyScan = getLatestBodyScan(client);
   const latestQuestionnaire = getLatestQuestionnaire(client);
   const waterNeed = calculateWaterNeed(latestBodyScan.weight);
@@ -1266,7 +1271,7 @@ function FreeFollowUpBadge() {
 }
 
 function LifecycleControlCard({ client }: { client: Client }) {
-  const { setClientLifecycleStatus, setClientFragileFlag, setClientFreeFollowUp } = useAppContext();
+  const { setClientLifecycleStatus, setClientFragileFlag, setClientFreeFollowUp, setClientFreePvTracking } = useAppContext();
   const { push: pushToast } = useToast();
   const currentStatus: LifecycleStatus = client.lifecycleStatus ?? (client.started ? "active" : "not_started");
   const [selected, setSelected] = useState<LifecycleStatus>(currentStatus);
@@ -1274,8 +1279,31 @@ function LifecycleControlCard({ client }: { client: Client }) {
   const [feedback, setFeedback] = useState<{ type: "ok" | "err"; msg: string } | null>(null);
   const [fragileSaving, setFragileSaving] = useState(false);
   const [freeSaving, setFreeSaving] = useState(false);
+  const [freePvSaving, setFreePvSaving] = useState(false);
   const isFragile = client.isFragile ?? false;
   const isFreeFollowUp = client.freeFollowUp ?? false;
+  const isFreePvTracking = client.freePvTracking ?? false;
+
+  async function handleToggleFreePvTracking() {
+    setFreePvSaving(true);
+    try {
+      await setClientFreePvTracking(client.id, !isFreePvTracking);
+      pushToast({
+        tone: "success",
+        title: isFreePvTracking ? "Suivi PV réactivé" : "PV volume libre activé",
+        message: isFreePvTracking
+          ? "Ce client réapparaît dans les listes de réassort."
+          : "Ce client n'apparaîtra plus dans les listes de réassort ni dans les alertes PV.",
+      });
+    } catch (err) {
+      pushToast(buildSupabaseErrorToast(
+        err,
+        "Impossible de modifier le suivi PV."
+      ));
+    } finally {
+      setFreePvSaving(false);
+    }
+  }
 
   async function handleToggleFreeFollowUp() {
     setFreeSaving(true);
@@ -1503,6 +1531,58 @@ function LifecycleControlCard({ client }: { client: Client }) {
           }}
         >
           {freeSaving ? "..." : isFreeFollowUp ? "Désactiver" : "Activer"}
+        </button>
+      </div>
+
+      {/* Free PV tracking (2026-04-20) — client sous un autre superviseur */}
+      <div
+        style={{
+          marginTop: 10,
+          padding: "12px 14px",
+          borderRadius: 12,
+          background: isFreePvTracking
+            ? "color-mix(in srgb, var(--ls-teal) 6%, transparent)"
+            : "var(--ls-surface2)",
+          border: isFreePvTracking
+            ? "1px solid color-mix(in srgb, var(--ls-teal) 25%, transparent)"
+            : "1px solid var(--ls-border)",
+          display: "flex",
+          alignItems: "center",
+          gap: 10,
+        }}
+      >
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 13, fontWeight: 600, color: "var(--ls-text)" }}>
+            {isFreePvTracking ? "◇ PV volume libre activé" : "PV volume libre"}
+          </div>
+          <div style={{ fontSize: 11, color: "var(--ls-text-muted)", marginTop: 2, lineHeight: 1.5 }}>
+            {isFreePvTracking
+              ? "Ce client est sous un autre superviseur. Exclu des listes de réassort et alertes PV. Bilans et RDV restent normaux."
+              : "À activer si le client est sous un autre superviseur (pas accès aux commandes). Il sera exclu du suivi PV."}
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={() => void handleToggleFreePvTracking()}
+          disabled={freePvSaving}
+          style={{
+            padding: "7px 14px",
+            borderRadius: 9,
+            border: isFreePvTracking
+              ? "1px solid var(--ls-border)"
+              : "1px solid color-mix(in srgb, var(--ls-teal) 30%, transparent)",
+            background: isFreePvTracking
+              ? "transparent"
+              : "color-mix(in srgb, var(--ls-teal) 10%, transparent)",
+            color: isFreePvTracking ? "var(--ls-text-muted)" : "var(--ls-teal)",
+            fontSize: 12,
+            fontWeight: 600,
+            cursor: freePvSaving ? "wait" : "pointer",
+            fontFamily: "DM Sans, sans-serif",
+            flexShrink: 0,
+          }}
+        >
+          {freePvSaving ? "..." : isFreePvTracking ? "Désactiver" : "Activer"}
         </button>
       </div>
     </Card>

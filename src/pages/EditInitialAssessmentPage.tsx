@@ -171,7 +171,15 @@ export function EditInitialAssessmentPage() {
   }
 
   const targetClient = client;
-  const fallbackAssessment = getFirstAssessment(targetClient);
+  // Fix P3a (2026-04-20) : quand on édite via /start-assessment/edit (sans
+  // assessmentId), on cible EXPLICITEMENT le bilan avec type === "initial",
+  // pas juste le plus ancien par date. Sans ça, si un follow-up a une date
+  // antérieure (cas réel : corrections de date), on éditait le mauvais bilan
+  // → le "Poids de départ" affiché sur la fiche (lié au même calcul) ne
+  // reflétait jamais la modif. Fallback sur getFirstAssessment si pas
+  // d'assessment "initial" (cas de migration / anciens dossiers).
+  const explicitInitial = targetClient.assessments.find((entry) => entry.type === "initial");
+  const fallbackAssessment = explicitInitial ?? getFirstAssessment(targetClient);
   const targetAssessment =
     targetClient.assessments.find((entry) => entry.id === assessmentId) ?? fallbackAssessment;
 
