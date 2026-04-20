@@ -534,14 +534,16 @@ export function AgendaPage() {
             <div style={{ fontSize: 14, color: "var(--ls-text-muted)", marginBottom: 4 }}>
               Aucun RDV pour cette période.
             </div>
-            <div style={{ fontSize: 12, color: "var(--ls-text-hint)", marginBottom: 16 }}>
+            <div style={{ fontSize: 12, color: "var(--ls-text-hint)", marginBottom: 16, maxWidth: 360, margin: "0 auto 16px", lineHeight: 1.55 }}>
               {entityFilter === "clients"
                 ? "Pas de suivi client programmé sur la période choisie."
                 : entityFilter === "prospects"
                 ? "Pas de RDV prospect à venir. Crée-en un via « + Nouveau RDV »."
+                : entityFilter === "followups"
+                ? "Aucun suivi en cours. Les suivis démarrent après un bilan initial avec programme nutrition et body scan — jusqu'à 10 jours maximum."
                 : "Change de période ou crée un RDV prospect via « + Nouveau RDV »."}
             </div>
-            {entityFilter !== "clients" && (
+            {entityFilter !== "clients" && entityFilter !== "followups" && (
               <Button onClick={() => { setEditing(undefined); setShowForm(true); }}>
                 + Nouveau RDV
               </Button>

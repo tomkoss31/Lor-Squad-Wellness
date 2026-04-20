@@ -92,7 +92,7 @@ export function FollowUpsDueWidget() {
               À faire maintenant
             </div>
             <div style={{ fontFamily: "Syne, sans-serif", fontWeight: 800, fontSize: 17, color: "var(--ls-text)" }}>
-              Suivis à faire · {dueItems.length} {dueItems.length > 1 ? "suivis" : "suivi"}
+              Suivis à faire · {dueItems.length}
             </div>
           </div>
           <button

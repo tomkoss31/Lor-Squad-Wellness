@@ -16,6 +16,106 @@
 import type { Client, FollowUpProtocolLog, FollowUpProtocolStepId } from "../types/domain";
 import { FOLLOW_UP_PROTOCOL } from "../data/followUpProtocol";
 
+// ─── Garde-fou éligibilité (Hotfix 2026-04-20) ───────────────────────────
+// Le protocole est conçu pour le nurturing J+1 → J+10. Au-delà, un client
+// sort du cadre "démarrage" et ne doit plus polluer les listes agrégées.
+
+/** Statuts lifecycle qui excluent un client du protocole. */
+const INACTIVE_LIFECYCLE_STATUSES = ["stopped", "lost", "paused"] as const;
+
+/** Limite max en jours depuis le bilan initial — au-delà, on coupe. */
+export const PROTOCOL_MAX_DAYS_ELIGIBLE = 10;
+
+/** Raisons d'exclusion — utilisé pour afficher "voir pourquoi" sur la fiche. */
+export type ProtocolIneligibilityReason =
+  | "no_initial_assessment"
+  | "too_old" // bilan initial > PROTOCOL_MAX_DAYS_ELIGIBLE jours
+  | "lifecycle_inactive" // stopped / lost / paused
+  | "no_program" // pas de programId ni de selectedProductIds
+  | "no_body_scan"; // pas de poids mesuré > 0
+
+export interface ProtocolEligibility {
+  eligible: boolean;
+  reasons: ProtocolIneligibilityReason[];
+}
+
+/**
+ * Retourne le détail d'éligibilité d'un client au protocole.
+ * Utilisé par la fiche client pour afficher une bande info explicite et
+ * par getFollowUpsDue() pour exclure en amont.
+ */
+export function evaluateProtocolEligibility(
+  client: Client,
+  options?: { maxDays?: number; now?: Date }
+): ProtocolEligibility {
+  const maxDays = options?.maxDays ?? PROTOCOL_MAX_DAYS_ELIGIBLE;
+  const now = options?.now ?? new Date();
+  const reasons: ProtocolIneligibilityReason[] = [];
+
+  // Filtre 1 : Date récente
+  const initialDate = getInitialAssessmentDate(client);
+  const initialAssessment =
+    client.assessments?.find((a) => a.type === "initial") ??
+    [...(client.assessments ?? [])].sort(
+      (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+    )[0];
+
+  if (!initialDate || !initialAssessment) {
+    reasons.push("no_initial_assessment");
+    return { eligible: false, reasons };
+  }
+
+  const daysSinceInitial = computeDaysSinceInitial(initialDate, now);
+  if (daysSinceInitial < 0 || daysSinceInitial > maxDays) {
+    reasons.push("too_old");
+  }
+
+  // Filtre 2 : Lifecycle actif
+  if (
+    client.lifecycleStatus &&
+    (INACTIVE_LIFECYCLE_STATUSES as readonly string[]).includes(client.lifecycleStatus)
+  ) {
+    reasons.push("lifecycle_inactive");
+  }
+
+  // Filtre 3 : Programme nutrition
+  // Critère OR — on accepte soit un programId officiel, soit au moins 1
+  // produit sélectionné dans le questionnaire (le client a démarré la
+  // routine via le parcours bilan). Cela couvre les 2 flows existants :
+  // (a) le bilan a assigné un programId (parcours "Programme démarré"),
+  // (b) le questionnaire a retenu au moins 1 produit (parcours libre).
+  const hasProgram = typeof initialAssessment.programId === "string" && initialAssessment.programId.trim().length > 0;
+  const productIds = initialAssessment.questionnaire?.selectedProductIds;
+  const hasProducts = Array.isArray(productIds) && productIds.length > 0;
+  if (!hasProgram && !hasProducts) {
+    reasons.push("no_program");
+  }
+
+  // Filtre 4 : Body scan avec poids valide
+  const weight = initialAssessment.bodyScan?.weight;
+  if (typeof weight !== "number" || Number.isNaN(weight) || weight <= 0) {
+    reasons.push("no_body_scan");
+  }
+
+  return { eligible: reasons.length === 0, reasons };
+}
+
+/** Libellé FR pour une raison d'exclusion. */
+export function labelForIneligibilityReason(reason: ProtocolIneligibilityReason): string {
+  switch (reason) {
+    case "no_initial_assessment":
+      return "Pas de bilan initial";
+    case "too_old":
+      return `Bilan initial il y a plus de ${PROTOCOL_MAX_DAYS_ELIGIBLE} jours`;
+    case "lifecycle_inactive":
+      return "Client inactif (stoppé, perdu ou en pause)";
+    case "no_program":
+      return "Pas de programme nutrition assigné";
+    case "no_body_scan":
+      return "Pas de body scan avec poids mesuré";
+  }
+}
+
 export type FollowUpDueStatus =
   | "overdue_more" // en retard de 2+ jours
   | "overdue_1d" // en retard d'1 jour
@@ -86,16 +186,25 @@ export function getFollowUpsDue(
   const logKey = (clientId: string, stepId: FollowUpProtocolStepId) => `${clientId}::${stepId}`;
   const loggedSteps = new Set(protocolLogs.map((l) => logKey(l.clientId, l.stepId)));
 
+  // Garde-fou éligibilité (Hotfix 2026-04-20) : on ne traite que les étapes
+  // J+1 → J+10. J+14 reste disponible dans FOLLOW_UP_PROTOCOL pour le Guide
+  // éducatif mais ne doit PAS apparaître dans dashboard/agenda.
+  const ACTIVE_STEPS = FOLLOW_UP_PROTOCOL.filter((s) => s.dayOffset <= PROTOCOL_MAX_DAYS_ELIGIBLE);
+
   for (const client of clients) {
     if (client.distributorId !== currentUserId) continue;
-    if (client.lifecycleStatus === "stopped" || client.lifecycleStatus === "lost") continue;
+
+    // Filtres d'éligibilité : trop vieux / inactif / pas de programme /
+    // pas de body scan → le client est exclu entièrement des listes agrégées.
+    const eligibility = evaluateProtocolEligibility(client, { now });
+    if (!eligibility.eligible) continue;
 
     const initialDate = getInitialAssessmentDate(client);
     if (!initialDate) continue;
 
     const daysSince = computeDaysSinceInitial(initialDate, now);
 
-    for (const step of FOLLOW_UP_PROTOCOL) {
+    for (const step of ACTIVE_STEPS) {
       if (loggedSteps.has(logKey(client.id, step.id))) continue;
 
       const daysLate = daysSince - step.dayOffset;
