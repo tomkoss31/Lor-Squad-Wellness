@@ -346,8 +346,8 @@ const steps = [
   "Santé, objectif, activité et freins", // 3
   "Composition des repas",           // 4
   "Body scan",                       // 5
-  "Recommandations",                 // 6
-  "Dégustation",                     // 7  (déplacée — avant Petit-déjeuner pour que le client goûte pendant que le coach prépare le shake)
+  "Dégustation",                     // 6  (déplacée avant les reco : le client goûte en premier, lit les reco pendant qu'il boit)
+  "Recommandations",                 // 7
   "Petit-déjeuner",                  // 8
   "Notre concept de rééquilibrage alimentaire", // 9  (ex 11, sans LazyMorningRoutineCard)
   "Programme proposé",               // 10 (ex 12)
@@ -1432,17 +1432,9 @@ export function NewAssessmentPage() {
           {/* Chantier nettoyage bilan (2026-04-20) : "Références de suivi"
               supprimée de la numérotation. Les index ci-dessous sont décalés. */}
 
+          {/* ─── Étape 6 : Dégustation — déplacée avant Recommandations (2026-04-20).
+                Le client goûte d'abord, puis lit les recos pendant qu'il boit. ─── */}
           {currentStep === 6 && (
-            <RecommendationStepCard
-              recommendations={form.recommendations}
-              recommendationsContacted={form.recommendationsContacted}
-              onChange={updateRecommendation}
-              onToggleContacted={(value) => update("recommendationsContacted", value)}
-            />
-          )}
-
-          {/* ─── Étape 7 : Dégustation — déplacée avant Petit-déjeuner (2026-04-20) ─── */}
-          {currentStep === 7 && (
             <VisualStepBoundary title="Place à la dégustation">
               <Card className="space-y-5">
                 <div>
@@ -1496,9 +1488,19 @@ export function NewAssessmentPage() {
             </VisualStepBoundary>
           )}
 
+          {/* ─── Étape 7 : Recommandations (déplacée après Dégustation — 2026-04-20) ─── */}
+          {currentStep === 7 && (
+            <RecommendationStepCard
+              recommendations={form.recommendations}
+              recommendationsContacted={form.recommendationsContacted}
+              onChange={updateRecommendation}
+              onToggleContacted={(value) => update("recommendationsContacted", value)}
+            />
+          )}
+
           {/* Étape "Reconnaissance" supprimée — Chantier nettoyage bilan (2026-04-20) */}
 
-          {/* ─── Étape 8 : Petit-déjeuner (déplacée après Dégustation — 2026-04-20) ─── */}
+          {/* ─── Étape 8 : Petit-déjeuner ─── */}
           {currentStep === 8 && (
             <VisualStepBoundary title="Petit-dejeuner">
               <BreakfastStorySlider
