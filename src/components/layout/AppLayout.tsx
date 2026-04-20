@@ -36,6 +36,9 @@ const NAV_ICONS: Record<string, JSX.Element> = {
   "/agenda": (
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
   ),
+  "/guide-suivi": (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+  ),
 };
 
 export function AppLayout() {
@@ -89,6 +92,7 @@ export function AppLayout() {
     ...(currentUser.role === "admin" ? [{ label: "Equipe", path: "/users", badge: 0 }] : []),
     { label: "Suivi PV", path: "/pv", badge: pvOverdueCount },
     { label: "Guide rendez-vous", path: "/guide", badge: 0 },
+    { label: "Guide suivi client", path: "/guide-suivi", badge: 0, isNew: true },
     { label: "Recommandations", path: "/recommendations", badge: urgentRelanceCount },
     { label: "Nouveau bilan", path: "/assessments/new", badge: 0 }
   ];
@@ -215,6 +219,20 @@ export function AppLayout() {
                       marginLeft: 'auto',
                       fontFamily: 'DM Sans, sans-serif',
                       flexShrink: 0,
+                    }}>
+                      Nouveau
+                    </span>
+                  ) : ("isNew" in item && (item as { isNew?: boolean }).isNew) ? (
+                    <span style={{
+                      fontSize: 9, padding: '2px 8px', borderRadius: 10,
+                      background: 'rgba(45,212,191,0.15)',
+                      color: 'var(--ls-teal)',
+                      fontWeight: 700,
+                      letterSpacing: '0.05em',
+                      marginLeft: 'auto',
+                      fontFamily: 'DM Sans, sans-serif',
+                      flexShrink: 0,
+                      textTransform: 'uppercase',
                     }}>
                       Nouveau
                     </span>
