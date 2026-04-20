@@ -1635,6 +1635,28 @@ export async function fetchSupabaseFollowUpProtocolLogs(
   return (data as FollowUpProtocolLogRow[]).map(mapFollowUpProtocolLog);
 }
 
+/**
+ * Chantier Protocole dans Agenda + Dashboard (2026-04-20)
+ * Fetch global des logs protocole — utilisé par Dashboard widget et Agenda
+ * onglet Suivis. Tolère l'absence de la migration comme la version par-client.
+ * Le filtrage sur le coach courant se fait côté client pour des raisons de
+ * compatibilité RLS (can_access_owner couvre la scope admin / référent).
+ */
+export async function fetchAllSupabaseFollowUpProtocolLogs(): Promise<FollowUpProtocolLog[]> {
+  const client = await requireSupabase();
+  const { data, error } = await client
+    .from("follow_up_protocol_log")
+    .select("*")
+    .order("sent_at", { ascending: false });
+  if (error) {
+    if (isMissingTableError(error, "follow_up_protocol_log")) {
+      return [];
+    }
+    throw new Error(`Impossible de lire les logs protocole : ${error.message}`);
+  }
+  return (data as FollowUpProtocolLogRow[]).map(mapFollowUpProtocolLog);
+}
+
 export async function logSupabaseFollowUpProtocolStep(params: {
   clientId: string;
   coachId: string;

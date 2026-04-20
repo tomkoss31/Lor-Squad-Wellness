@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAppContext } from "../context/AppContext";
 import { getPortfolioMetrics } from "../lib/portfolio";
 import { ProspectCard } from "../components/prospect/ProspectCard";
+import { FollowUpsDueWidget } from "../components/dashboard/FollowUpsDueWidget";
 import type { Prospect } from "../types/domain";
 
 function greeting() {
@@ -388,6 +389,9 @@ export function DashboardPage() {
           onOpenAgenda={() => navigate("/agenda?filter=today")}
         />
       )}
+
+      {/* BLOC SUIVIS À FAIRE — Chantier Protocole Agenda+Dashboard (2026-04-20) */}
+      <FollowUpsDueWidget />
 
       {/* BLOC AGENDA PROSPECTS DU JOUR */}
       <ProspectsTodayWidget
