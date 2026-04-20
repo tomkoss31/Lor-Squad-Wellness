@@ -13,6 +13,7 @@ interface ProspectCardProps {
 const SOURCE_COLORS: Record<string, { bg: string; fg: string }> = {
   "Meta Ads":          { bg: "rgba(124,58,237,0.12)", fg: "var(--ls-purple)" },
   "Instagram":         { bg: "rgba(251,113,133,0.12)", fg: "var(--ls-coral)" },
+  "Facebook":          { bg: "rgba(45,212,191,0.12)", fg: "var(--ls-teal)" },
   "TikTok":            { bg: "rgba(45,212,191,0.12)", fg: "var(--ls-teal)" },
   "Bouche à oreille":  { bg: "rgba(201,168,76,0.12)", fg: "var(--ls-gold)" },
   "Parrainage":        { bg: "rgba(201,168,76,0.12)", fg: "var(--ls-gold)" },
