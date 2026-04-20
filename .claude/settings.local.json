@@ -39,7 +39,11 @@
       "Bash(git add *)",
       "Bash(git commit *)",
       "Bash(git push *)",
-      "Bash(git rm *)"
+      "Bash(git rm *)",
+      "Bash(npm install *)",
+      "Bash(npx eslint *)",
+      "Bash(awk -F' - ' '{print $2}')",
+      "Bash(grep -oE '[a-z@/-]+[a-z-]+$')"
     ]
   }
 }

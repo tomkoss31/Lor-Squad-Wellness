@@ -1,11 +1,8 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import type { Client, FollowUpProtocolLog } from "../../types/domain";
 import { useAppContext } from "../../context/AppContext";
 import { useToast, buildSupabaseErrorToast } from "../../context/ToastContext";
-import {
-  fetchSupabaseFollowUpProtocolLogs,
-  logSupabaseFollowUpProtocolStep,
-} from "../../services/supabaseService";
+import { logSupabaseFollowUpProtocolStep } from "../../services/supabaseService";
 import { FOLLOW_UP_PROTOCOL, type FollowUpStep } from "../../data/followUpProtocol";
 import { FollowUpStepModal } from "./FollowUpStepModal";
 import { Card } from "../ui/Card";
@@ -23,12 +20,17 @@ type StepState = "upcoming" | "active" | "past";
  * "Voir →" ouvre la modal de message + actions.
  */
 export function FollowUpProtocolCard({ client }: Props) {
-  const { currentUser } = useAppContext();
+  const { currentUser, followUpProtocolLogs, refreshFollowUpProtocolLogs } = useAppContext();
   const { push: pushToast } = useToast();
-  const [logs, setLogs] = useState<FollowUpProtocolLog[]>([]);
+  // Chantier Protocole Agenda+Dashboard (2026-04-20) : logs partagés via
+  // AppContext pour garder fiche / dashboard / agenda en sync. Pas de
+  // local fetch : on filtre la liste globale pour ce client.
+  const logs = useMemo(
+    () => followUpProtocolLogs.filter((l) => l.clientId === client.id),
+    [followUpProtocolLogs, client.id]
+  );
   const [openStepId, setOpenStepId] = useState<string | null>(null);
   const [busyStepId, setBusyStepId] = useState<string | null>(null);
-  const [loadingLogs, setLoadingLogs] = useState(true);
 
   // Date du bilan initial — base pour calculer l'état des étapes.
   const initialAssessmentDate = useMemo(() => {
@@ -43,27 +45,6 @@ export function FollowUpProtocolCard({ client }: Props) {
     const diff = Date.now() - new Date(initialAssessmentDate).getTime();
     return Math.floor(diff / (1000 * 60 * 60 * 24));
   }, [initialAssessmentDate]);
-
-  useEffect(() => {
-    let cancelled = false;
-    setLoadingLogs(true);
-    fetchSupabaseFollowUpProtocolLogs(client.id)
-      .then((rows) => {
-        if (!cancelled) {
-          setLogs(rows);
-          setLoadingLogs(false);
-        }
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setLogs([]);
-          setLoadingLogs(false);
-        }
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [client.id]);
 
   // Helpers
   const logsByStep = useMemo(() => {
@@ -98,16 +79,13 @@ export function FollowUpProtocolCard({ client }: Props) {
     if (!currentUser) return;
     setBusyStepId(step.id);
     try {
-      const saved = await logSupabaseFollowUpProtocolStep({
+      await logSupabaseFollowUpProtocolStep({
         clientId: client.id,
         coachId: currentUser.id,
         stepId: step.id,
       });
-      // Remplace l'ancien log si existant (upsert côté DB) sinon append
-      setLogs((prev) => {
-        const filtered = prev.filter((l) => l.stepId !== step.id);
-        return [...filtered, saved];
-      });
+      // Refresh global — garde le dashboard + agenda à jour en même temps
+      await refreshFollowUpProtocolLogs();
       pushToast({ tone: "success", title: `${step.shortTitle} marqué envoyé ✓` });
       setOpenStepId(null);
     } catch (err) {
@@ -234,7 +212,7 @@ export function FollowUpProtocolCard({ client }: Props) {
                       {step.iconEmoji} {step.title}
                     </div>
                     <div style={{ fontSize: 11, color: "var(--ls-text-muted)", marginTop: 2 }}>
-                      {loadingLogs ? "Chargement…" : subtitle}
+                      {subtitle}
                     </div>
                   </div>
 
