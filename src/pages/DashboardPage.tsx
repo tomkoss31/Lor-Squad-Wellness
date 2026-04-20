@@ -17,7 +17,10 @@ export function DashboardPage() {
   const { currentUser, users, clients, followUps, pvClientProducts, pvTransactions, clientMessages, prospects } = useAppContext();
   const navigate = useNavigate();
 
-  if (!currentUser) return null;
+  // Hooks AVANT tout early return (rules-of-hooks / chantier nuit 2026-04-20).
+  // currentUser peut être null pendant le boot — on utilise optional chaining
+  // partout et on return null à la fin seulement si currentUser reste null.
+  const userId = currentUser?.id ?? "";
 
   // Fix dashboard scope (2026-04-20) : le dashboard d'accueil est TOUJOURS une
   // vue personnelle, même pour admin. Le filtre "Toute l'équipe" existe
@@ -27,16 +30,18 @@ export function DashboardPage() {
   // - Les follow-ups passent déjà par getPortfolioMetrics(scope="personal")
   //   qui scope sur user.id uniquement — OK.
   const myProspects = useMemo(
-    () => prospects.filter((p) => p.distributorId === currentUser.id),
-    [prospects, currentUser.id]
+    () => prospects.filter((p) => p.distributorId === userId),
+    [prospects, userId]
   );
   const myUnreadMessageCount = useMemo(
-    () => clientMessages.filter((m) => !m.read && m.distributor_id === currentUser.id).length,
-    [clientMessages, currentUser.id]
+    () => clientMessages.filter((m) => !m.read && m.distributor_id === userId).length,
+    [clientMessages, userId]
   );
 
-  // Scope : uniquement le périmètre du coach
-  const rawMetrics = getPortfolioMetrics(currentUser, clients, followUps, users, "personal");
+  // Scope : uniquement le périmètre du coach. currentUser null → metrics vides.
+  const rawMetrics = currentUser
+    ? getPortfolioMetrics(currentUser, clients, followUps, users, "personal")
+    : { clients: [], scheduledFollowUps: [], relanceFollowUps: [] };
 
   // Chantier 3 — Lifecycle : exclure les clients morts des stats opérationnelles
   const deadClientIds = useMemo(
@@ -259,6 +264,9 @@ export function DashboardPage() {
       })
       .sort((a, b) => new Date(a.coldUntil ?? 0).getTime() - new Date(b.coldUntil ?? 0).getTime());
   }, [myProspects]);
+
+  // Early return APRÈS tous les hooks (rules-of-hooks).
+  if (!currentUser) return null;
 
   return (
     <div style={{ padding: "clamp(16px, 4vw, 28px)", maxWidth: 1200, margin: "0 auto", display: "flex", flexDirection: "column", gap: 20 }}>

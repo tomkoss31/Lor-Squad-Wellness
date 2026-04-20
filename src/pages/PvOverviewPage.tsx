@@ -19,9 +19,8 @@ export function PvOverviewPage() {
     searchParams.get("client")
   );
 
-  if (!currentUser) return null;
-
-  const isAdmin = currentUser.role === "admin";
+  // Hooks AVANT l'early return (rules-of-hooks / chantier nuit 2026-04-20).
+  const isAdmin = currentUser?.role === "admin";
   // Free PV tracking (2026-04-20) : exclure les clients marqués "sous autre
   // superviseur" de la liste principale du suivi PV. Le coach ne peut pas
   // agir sur leurs commandes, inutile qu'ils polluent la liste.
@@ -92,6 +91,9 @@ export function PvOverviewPage() {
     else next.set("responsable", value);
     setSearchParams(next, { replace: true });
   }
+
+  // Early return APRÈS les hooks.
+  if (!currentUser) return null;
 
   return (
     <div style={{ padding: "clamp(16px, 4vw, 28px)", maxWidth: 1200, margin: "0 auto", display: "flex", flexDirection: "column", gap: 20 }}>

@@ -9,10 +9,7 @@ import { useAppContext } from "../context/AppContext";
 export function PvTeamPage() {
   const { currentUser, clients, pvTransactions, pvClientProducts } = useAppContext();
 
-  if (!currentUser || currentUser.role !== "admin") {
-    return null;
-  }
-
+  // Hooks avant tout early return (rules-of-hooks / chantier nuit 2026-04-20).
   // Free PV tracking (2026-04-20) : exclure les clients marqués "sous autre
   // superviseur" — même logique que PvOverviewPage.
   const pvTrackedClients = useMemo(
@@ -37,6 +34,11 @@ export function PvTeamPage() {
   );
   const clientsToRelaunch = records.filter((record) => record.status === "follow-up");
   const clientsToWatch = records.filter((record) => record.status === "watch" || record.status === "restock");
+
+  // Early return après tous les hooks (rules-of-hooks).
+  if (!currentUser || currentUser.role !== "admin") {
+    return null;
+  }
 
   return (
     <div className="space-y-6">

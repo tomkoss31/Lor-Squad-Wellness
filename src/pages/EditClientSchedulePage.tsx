@@ -76,6 +76,44 @@ export function EditClientSchedulePage() {
   const { getClientById, followUps, updateClientSchedule } = useAppContext();
   const client = clientId ? getClientById(clientId) : undefined;
 
+  // Hooks AVANT tout early return (rules-of-hooks / chantier nuit 2026-04-20).
+  // On utilise optional chaining + fallback pour rester safe quand client
+  // est undefined — le early return en bas renverra tout de même la carte.
+  const currentFollowUp = useMemo(
+    () => (client ? getClientActiveFollowUp(client, followUps) : null),
+    [followUps, client]
+  );
+
+  const [nextFollowUp, setNextFollowUp] = useState(
+    normalizeDateTimeLocalInputValue(currentFollowUp?.dueDate ?? client?.nextFollowUp ?? "")
+  );
+  const [followUpType, setFollowUpType] = useState(currentFollowUp?.type ?? "Suivi terrain");
+  const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState("");
+  const [draftReady, setDraftReady] = useState(false);
+
+  useEffect(() => {
+    if (!client) return;
+    const draft = readEditClientScheduleDraft(client.id);
+    if (draft) {
+      setNextFollowUp(draft.nextFollowUp);
+      setFollowUpType(draft.followUpType);
+    }
+    setDraftReady(true);
+  }, [client]);
+
+  useEffect(() => {
+    if (!client || !draftReady) {
+      return;
+    }
+
+    persistEditClientScheduleDraft({
+      clientId: client.id,
+      nextFollowUp,
+      followUpType
+    });
+  }, [draftReady, followUpType, nextFollowUp, client]);
+
   if (!client) {
     return (
       <Card>
@@ -85,41 +123,6 @@ export function EditClientSchedulePage() {
   }
 
   const targetClient = client;
-
-  const currentFollowUp = useMemo(
-    () => getClientActiveFollowUp(targetClient, followUps),
-    [followUps, targetClient.id]
-  );
-
-  const [nextFollowUp, setNextFollowUp] = useState(
-    normalizeDateTimeLocalInputValue(currentFollowUp?.dueDate ?? targetClient.nextFollowUp)
-  );
-  const [followUpType, setFollowUpType] = useState(currentFollowUp?.type ?? "Suivi terrain");
-  const [isSaving, setIsSaving] = useState(false);
-  const [error, setError] = useState("");
-  const [draftReady, setDraftReady] = useState(false);
-
-  useEffect(() => {
-    const draft = readEditClientScheduleDraft(targetClient.id);
-    if (draft) {
-      setNextFollowUp(draft.nextFollowUp);
-      setFollowUpType(draft.followUpType);
-    }
-
-    setDraftReady(true);
-  }, [targetClient.id]);
-
-  useEffect(() => {
-    if (!draftReady) {
-      return;
-    }
-
-    persistEditClientScheduleDraft({
-      clientId: targetClient.id,
-      nextFollowUp,
-      followUpType
-    });
-  }, [draftReady, followUpType, nextFollowUp, targetClient.id]);
 
   async function handleSave() {
     setError("");
