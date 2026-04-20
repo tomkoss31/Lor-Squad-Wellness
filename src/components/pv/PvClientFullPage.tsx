@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import type { PvClientTrackingRecord, PvProductUsage, PvClientTransaction, PvTransactionType } from "../../types/pv";
 import { useAppContext } from "../../context/AppContext";
@@ -217,60 +217,101 @@ function ProductCard({ p }: { p: PvProductUsage }) {
 }
 
 // ─── FORMULAIRE INLINE COMMANDE ─────────────────────────────────────────
+// Chantier bilan updates (2026-04-20) : jusqu'à 6 lignes produits par
+// commande. Chaque ligne = produit + quantité. Date + type communs à
+// toute la commande. Submit = boucle addPvTransaction pour chaque ligne.
+const MAX_ORDER_LINES = 6;
+
+interface OrderLine {
+  id: string;
+  productId: string;
+  quantity: string;
+}
+
+function createEmptyLine(initialProductId: string): OrderLine {
+  return {
+    id: `line-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    productId: initialProductId,
+    quantity: "1",
+  };
+}
+
 function InlineOrderForm({ record, onClose }: { record: PvClientTrackingRecord; onClose: () => void }) {
   const { addPvTransaction } = useAppContext();
   const initialProduct = pvProductCatalog.find((p) => p.active) ?? pvProductCatalog[0];
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
-  const [productId, setProductId] = useState(initialProduct?.id ?? "");
-  const [quantity, setQuantity] = useState("1");
   const [type, setType] = useState<PvTransactionType>("commande");
-  const [pv, setPv] = useState(initialProduct ? String(initialProduct.pv) : "0");
-  const [price, setPrice] = useState(initialProduct ? String(initialProduct.pricePublic) : "0");
+  const [lines, setLines] = useState<OrderLine[]>(() => [createEmptyLine(initialProduct?.id ?? "")]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string>("");
 
-  useEffect(() => {
-    const p = pvProductCatalog.find((x) => x.id === productId);
-    if (p) {
-      setPv(String(p.pv));
-      setPrice(String(p.pricePublic));
-    }
-  }, [productId]);
+  function updateLine(lineId: string, patch: Partial<OrderLine>) {
+    setLines((prev) => prev.map((l) => (l.id === lineId ? { ...l, ...patch } : l)));
+  }
+  function removeLine(lineId: string) {
+    setLines((prev) => (prev.length > 1 ? prev.filter((l) => l.id !== lineId) : prev));
+  }
+  function addLine() {
+    setLines((prev) =>
+      prev.length < MAX_ORDER_LINES ? [...prev, createEmptyLine(initialProduct?.id ?? "")] : prev
+    );
+  }
 
-  const totalPv = Number((Number(pv || 0) * Number(quantity || 0)).toFixed(2));
-  const totalPrice = Number((Number(price || 0) * Number(quantity || 0)).toFixed(2));
+  // Totaux agrégés sur toutes les lignes
+  const { totalPv, totalPrice } = (() => {
+    let pv = 0;
+    let price = 0;
+    for (const line of lines) {
+      const product = pvProductCatalog.find((p) => p.id === line.productId);
+      const qty = Number(line.quantity || 0);
+      if (!product || !qty) continue;
+      pv += product.pv * qty;
+      price += product.pricePublic * qty;
+    }
+    return { totalPv: Number(pv.toFixed(2)), totalPrice: Number(price.toFixed(2)) };
+  })();
 
   async function handleSubmit() {
-    const qty = Number(quantity);
-    if (!qty || qty <= 0) {
-      setError("La quantité doit être supérieure à 0.");
-      return;
+    // Validation : au moins 1 ligne avec qty > 0
+    const valid: Array<{ line: OrderLine; product: (typeof pvProductCatalog)[number]; qty: number }> = [];
+    for (const line of lines) {
+      const qty = Number(line.quantity);
+      if (!qty || qty <= 0) continue;
+      const product = pvProductCatalog.find((p) => p.id === line.productId);
+      if (!product) continue;
+      valid.push({ line, product, qty });
     }
-    const selectedProduct = pvProductCatalog.find((p) => p.id === productId);
-    if (!selectedProduct) {
-      setError("Produit introuvable.");
+    if (valid.length === 0) {
+      setError("Ajoute au moins un produit avec une quantité > 0.");
       return;
     }
 
     setError("");
     setSubmitting(true);
     try {
-      const tx: PvClientTransaction = {
-        id: `local-${Date.now()}`,
-        date,
-        clientId: record.clientId,
-        clientName: record.clientName,
-        responsibleId: record.responsibleId,
-        responsibleName: record.responsibleName,
-        productId: selectedProduct.id,
-        productName: selectedProduct.name,
-        quantity: qty,
-        pv: totalPv,
-        price: totalPrice,
-        type,
-        note: type === "commande" ? "Commande ajoutée depuis la fiche client" : "Reprise sur place ajoutée depuis la fiche client",
-      };
-      await addPvTransaction(tx);
+      // Boucle d'INSERT — on incrémente un nano-offset pour l'id local afin
+      // d'éviter les doublons.
+      for (let i = 0; i < valid.length; i += 1) {
+        const { product, qty } = valid[i];
+        const tx: PvClientTransaction = {
+          id: `local-${Date.now()}-${i}`,
+          date,
+          clientId: record.clientId,
+          clientName: record.clientName,
+          responsibleId: record.responsibleId,
+          responsibleName: record.responsibleName,
+          productId: product.id,
+          productName: product.name,
+          quantity: qty,
+          pv: Number((product.pv * qty).toFixed(2)),
+          price: Number((product.pricePublic * qty).toFixed(2)),
+          type,
+          note: type === "commande"
+            ? `Commande multi-produits (${valid.length} ligne${valid.length > 1 ? "s" : ""}) depuis la fiche client`
+            : `Reprise sur place (${valid.length} ligne${valid.length > 1 ? "s" : ""}) depuis la fiche client`,
+        };
+        await addPvTransaction(tx);
+      }
       onClose();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Impossible d'enregistrer la commande.");
@@ -286,7 +327,7 @@ function InlineOrderForm({ record, onClose }: { record: PvClientTrackingRecord; 
     }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
         <div style={{ fontFamily: "Syne, sans-serif", fontWeight: 700, fontSize: 14, color: "var(--ls-text)" }}>
-          Nouvelle commande
+          Nouvelle commande ({lines.length}/{MAX_ORDER_LINES} ligne{lines.length > 1 ? "s" : ""})
         </div>
         <button
           onClick={onClose}
@@ -297,7 +338,8 @@ function InlineOrderForm({ record, onClose }: { record: PvClientTrackingRecord; 
         </button>
       </div>
 
-      <div className="pv-form-grid" style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 10, marginBottom: 10 }}>
+      {/* Date + Type (communs) */}
+      <div className="pv-form-grid" style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 10, marginBottom: 12 }}>
         <FormField label="Date">
           <input type="date" value={date} onChange={(e) => setDate(e.target.value)} style={inputStyle} />
         </FormField>
@@ -307,24 +349,99 @@ function InlineOrderForm({ record, onClose }: { record: PvClientTrackingRecord; 
             <option value="reprise-sur-place">Reprise sur place</option>
           </select>
         </FormField>
-        <FormField label="Produit">
-          <select value={productId} onChange={(e) => setProductId(e.target.value)} style={inputStyle}>
-            {pvProductCatalog.filter((p) => p.active).map((p) => (
-              <option key={p.id} value={p.id}>{p.name}</option>
-            ))}
-          </select>
-        </FormField>
-        <FormField label="Quantité">
-          <input type="number" min="1" value={quantity} onChange={(e) => setQuantity(e.target.value)} style={inputStyle} />
-        </FormField>
       </div>
 
+      {/* Lignes produits */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 10 }}>
+        {lines.map((line, idx) => (
+          <div
+            key={line.id}
+            style={{
+              display: "grid",
+              gridTemplateColumns: "minmax(0, 1fr) 90px auto",
+              gap: 8,
+              alignItems: "center",
+              padding: 10,
+              borderRadius: 9,
+              background: "var(--ls-surface)",
+              border: "1px solid var(--ls-border)",
+            }}
+          >
+            <select
+              value={line.productId}
+              onChange={(e) => updateLine(line.id, { productId: e.target.value })}
+              style={inputStyle}
+              aria-label={`Produit ligne ${idx + 1}`}
+            >
+              {pvProductCatalog.filter((p) => p.active).map((p) => (
+                <option key={p.id} value={p.id}>{p.name}</option>
+              ))}
+            </select>
+            <input
+              type="number"
+              min="1"
+              value={line.quantity}
+              onChange={(e) => updateLine(line.id, { quantity: e.target.value })}
+              style={inputStyle}
+              aria-label={`Quantité ligne ${idx + 1}`}
+            />
+            <button
+              type="button"
+              onClick={() => removeLine(line.id)}
+              disabled={lines.length === 1}
+              aria-label={`Supprimer ligne ${idx + 1}`}
+              style={{
+                background: "transparent",
+                border: "1px solid var(--ls-border)",
+                color: lines.length === 1 ? "var(--ls-text-hint)" : "var(--ls-coral)",
+                borderRadius: 8,
+                padding: "6px 10px",
+                fontSize: 14,
+                cursor: lines.length === 1 ? "not-allowed" : "pointer",
+                opacity: lines.length === 1 ? 0.5 : 1,
+              }}
+            >
+              ×
+            </button>
+          </div>
+        ))}
+      </div>
+
+      {/* Ajouter ligne */}
+      {lines.length < MAX_ORDER_LINES && (
+        <button
+          type="button"
+          onClick={addLine}
+          style={{
+            width: "100%",
+            padding: 10,
+            borderRadius: 9,
+            border: "1.5px dashed var(--ls-border2)",
+            background: "transparent",
+            color: "var(--ls-gold)",
+            fontSize: 12,
+            fontWeight: 600,
+            cursor: "pointer",
+            fontFamily: "'DM Sans', sans-serif",
+            marginBottom: 14,
+          }}
+        >
+          + Ajouter une ligne produit
+        </button>
+      )}
+      {lines.length >= MAX_ORDER_LINES && (
+        <p style={{ fontSize: 11, color: "var(--ls-text-hint)", textAlign: "center", margin: "0 0 14px" }}>
+          Maximum {MAX_ORDER_LINES} produits par commande.
+        </p>
+      )}
+
+      {/* Totaux live */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 10, marginBottom: 14, padding: 10, background: "var(--ls-surface)", borderRadius: 9 }}>
         <div style={{ fontSize: 11, color: "var(--ls-text-hint)" }}>
           PV total : <strong style={{ color: "var(--ls-gold)", fontSize: 13 }}>{totalPv.toFixed(2)} PV</strong>
         </div>
         <div style={{ fontSize: 11, color: "var(--ls-text-hint)" }}>
-          Prix : <strong style={{ color: "var(--ls-text)", fontSize: 13 }}>{totalPrice.toFixed(2)} €</strong>
+          Prix total : <strong style={{ color: "var(--ls-text)", fontSize: 13 }}>{totalPrice.toFixed(2)} €</strong>
         </div>
       </div>
 
