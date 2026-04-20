@@ -21,6 +21,7 @@ import { ProgramChoiceCard } from "../components/assessment/ProgramChoiceCard";
 import { RoutineMatinList } from "../components/assessment/RoutineMatinList";
 import { ProgrammeTicket, type TicketAddOn } from "../components/assessment/ProgrammeTicket";
 import { PROGRAM_CHOICES, getProgramById } from "../data/programs";
+import { FelicitationsStep } from "../components/assessment/FelicitationsStep";
 import { Button } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
 import { PageHeading } from "../components/ui/PageHeading";
@@ -352,7 +353,7 @@ const steps = [
   "Notre concept de rééquilibrage alimentaire", // 9  (ex 11, sans LazyMorningRoutineCard)
   "Programme proposé",               // 10 (ex 12)
   "Suite du suivi",                  // 11 (ex 13)
-  "Résumé du rendez-vous"            // 12 (ex 14)
+  "Félicitations"                    // 12 (remplace "Résumé du rendez-vous" — 2026-04-20)
 ];
 
 const timelineOptions = [
@@ -385,6 +386,9 @@ export function NewAssessmentPage() {
   const [form, setForm] = useState(initialForm);
   const [currentStep, setCurrentStep] = useState(0);
   const [saveError, setSaveError] = useState("");
+  // Chantier Félicitations (2026-04-20) : le bouton "Enregistrer et terminer"
+  // montre un état "Enregistrement…" pendant handleSaveAssessment.
+  const [saving, setSaving] = useState(false);
   const [showRecapModal, setShowRecapModal] = useState(false);
   const [recapToken, setRecapToken] = useState("");
   const [recapClientName, setRecapClientName] = useState("");
@@ -566,25 +570,14 @@ export function NewAssessmentPage() {
     mainPrograms.find((program) => program.id === recommendationPlan.recommendedProgramId) ??
     null;
   const activeProgram = selectedProgram ?? recommendedProgram;
-  const displayedProgramPrice = selectedProgram?.price ?? recommendedProgram?.price ?? "";
-  const displayedProgramPriceValue = parsePriceValue(displayedProgramPrice);
+  // displayedProgramPrice* + addOnProductsTotalPrice retirés avec le résumé
+  // administratif (Chantier Félicitations 2026-04-20). selectedProgram reste
+  // utilisé pour le titre programme dans handleSaveAssessment.
   const includedProgramProductIds = activeProgram
     ? new Set(PROGRAM_INCLUDED_PRODUCT_IDS[activeProgram.id] ?? [])
     : new Set<string>();
   const addOnProducts = selectedRecommendationProducts.filter(
     (product) => !includedProgramProductIds.has(product.id)
-  );
-  const addOnProductsTotalPrice = Number(
-    addOnProducts.reduce((total, product) => total + product.prixPublic, 0).toFixed(2)
-  );
-  const addOnProductsTotalPv = Number(
-    addOnProducts.reduce((total, product) => total + product.pv, 0).toFixed(2)
-  );
-  const estimatedClientTotal = Number(
-    (
-      displayedProgramPriceValue +
-      (addOnProducts.length ? addOnProductsTotalPrice : 0)
-    ).toFixed(2)
   );
 
   useEffect(() => {
@@ -709,6 +702,7 @@ export function NewAssessmentPage() {
   }
 
   async function handleSaveAssessment() {
+    if (saving) return;
     if (!form.firstName.trim() || !form.lastName.trim()) {
       setSaveError("Renseigne au minimum le prenom et le nom du client.");
       goToStep(0);
@@ -735,6 +729,7 @@ export function NewAssessmentPage() {
 
     // Programme optionnel — pas de validation bloquante
 
+    setSaving(true);
     const assessmentDate = form.assessmentDate || getCurrentDateTimeValue();
     // Sujet C — "Suivi libre" : client actif mais hors agenda. La colonne
     // clients.next_follow_up est NOT NULL dans le schema, on y met donc une
@@ -906,6 +901,8 @@ export function NewAssessmentPage() {
           ? error.message
           : "Impossible d'enregistrer le bilan pour le moment."
       );
+    } finally {
+      setSaving(false);
     }
   }
 
@@ -1808,186 +1805,16 @@ export function NewAssessmentPage() {
             </div>
           )}
 
+          {/* ─── Étape 12 : Félicitations (remplace l'ancienne "Conclusion du
+                rendez-vous" — Chantier Félicitations 2026-04-20) ─── */}
           {currentStep === 12 && (
-            <div className="space-y-4">
-              <Card className="space-y-5 bg-[linear-gradient(180deg,rgba(15,23,42,0.32),rgba(15,23,42,0.52))]">
-                <div className="flex flex-wrap items-start justify-between gap-4">
-                  <div className="max-w-3xl">
-                    <p className="eyebrow-label">Conclusion du rendez-vous</p>
-                    <p className="mt-3 text-4xl text-white">Une proposition claire, un cap simple et une suite déjà visible.</p>
-                    <p className="mt-3 text-sm leading-7 text-[var(--ls-text-muted)]">
-                      Cette synthese aide a reformuler le plan, confirmer le programme et terminer
-                      le rendez-vous avec une direction nette.
-                    </p>
-                  </div>
-                  <StatusBadge
-                    label={startsImmediately ? "Pret a presenter" : "Pret a relancer"}
-                    tone={startsImmediately ? "green" : "amber"}
-                  />
-                </div>
-
-                  <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_340px]">
-                    <div className="space-y-4">
-                    <div className="rounded-[28px] bg-[var(--ls-bg)]/60 p-5">
-                      <div className="flex flex-wrap items-center justify-between gap-3">
-                        <div>
-                          <p className="eyebrow-label">Besoins detectes</p>
-                          <p className="mt-3 text-3xl text-white">
-                            Ce qui ressort du bilan pour lancer la routine
-                          </p>
-                        </div>
-                        <StatusBadge
-                          label={`${recommendationPlan.needs.length} priorite${recommendationPlan.needs.length > 1 ? "s" : ""}`}
-                          tone={recommendationPlan.needs.length ? "green" : "blue"}
-                        />
-                      </div>
-
-                      {recommendationPlan.needs.length ? (
-                        <div className="mt-5 space-y-4">
-                            {recommendationPlan.needs.map((need) => (
-                              <NeedProductGroup
-                                key={`summary-products-${need.id}`}
-                              title={need.label}
-                              summary={need.summary}
-                              reasonLabel={need.reasonLabel}
-                              products={need.products}
-                              selectedProductIds={effectiveSelectedProductIds}
-                              onToggleProduct={toggleSelectedProduct}
-                            />
-                          ))}
-                        </div>
-                      ) : (
-                        <div className="mt-5 rounded-[22px] bg-[var(--ls-surface2)] px-4 py-4 text-sm leading-6 text-[var(--ls-text)]">
-                          Une base simple suffit pour le moment. Les produits se personaliseront
-                          au besoin dans le suivi.
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="rounded-[28px] bg-[var(--ls-bg)]/60 p-5">
-                      <p className="eyebrow-label">Programme conseille</p>
-                      <div className="mt-4 flex flex-wrap items-start justify-between gap-3">
-                        <div>
-                          <p className="text-3xl text-white">
-                            {selectedProgram?.title ?? recommendedProgram?.title ?? "Programme a confirmer"}
-                          </p>
-                          <p className="mt-2 text-sm leading-6 text-[var(--ls-text-muted)]">
-                            {selectedProgram?.summary ??
-                              recommendationPlan.recommendedProgramReason}
-                          </p>
-                        </div>
-                        <span className="rounded-full bg-[rgba(45,212,191,0.1)] px-4 py-2 text-lg font-semibold text-[#2DD4BF]">
-                          {selectedProgram?.price ?? recommendedProgram?.price ?? "Relance"}
-                        </span>
-                      </div>
-                      <div className="mt-5 grid gap-3 md:grid-cols-3">
-                        {(selectedProgram?.benefits ??
-                          recommendedProgram?.benefits ?? [
-                            "Base simple a demarrer",
-                            "Routine facile a expliquer",
-                            "Personnalisation possible ensuite"
-                          ]).map((benefit) => (
-                          <div
-                            key={benefit}
-                            className="rounded-[22px] bg-[var(--ls-surface2)] px-4 py-4 text-sm leading-6 text-[var(--ls-text)]"
-                          >
-                            {benefit}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-
-                    <div className="grid gap-4">
-                      <ClientTotalCalculatorCard
-                        programTitle={activeProgram?.title ?? "Programme a confirmer"}
-                      displayedProgramPrice={displayedProgramPrice}
-                      includedComposition={activeProgram?.composition ?? []}
-                      addOnProducts={addOnProducts}
-                      addOnProductsTotalPrice={addOnProductsTotalPrice}
-                      addOnProductsTotalPv={addOnProductsTotalPv}
-                        estimatedClientTotal={estimatedClientTotal}
-                      />
-                      {recommendationPlan.optionalUpsells.length ? (
-                        <Card className="space-y-4">
-                          <div className="flex flex-wrap items-center justify-between gap-3">
-                            <div>
-                              <p className="eyebrow-label">Options en plus si besoin</p>
-                              <p className="mt-2 text-xl text-white">Ajouts légers a proposer seulement si ca colle</p>
-                            </div>
-                            <StatusBadge label={`${recommendationPlan.optionalUpsells.length} option${recommendationPlan.optionalUpsells.length > 1 ? "s" : ""}`} tone="blue" />
-                          </div>
-                          <div className="grid gap-3">
-                            {recommendationPlan.optionalUpsells.map((product) => (
-                              <SuggestedProductCard
-                                key={`summary-upsell-${product.id}`}
-                                name={product.name}
-                                shortBenefit={product.shortBenefit}
-                                pv={product.pv}
-                                prixPublic={product.prixPublic}
-                                dureeReferenceJours={product.dureeReferenceJours}
-                                quantityLabel={product.quantityLabel}
-                                selected={effectiveSelectedProductIds.includes(product.id)}
-                                onToggle={() => toggleSelectedProduct(product.id)}
-                              />
-                            ))}
-                          </div>
-                        </Card>
-                      ) : null}
-                    </div>
-                  </div>
-                </Card>
-
-              {/* QR Code récap client */}
-              <Card className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="eyebrow-label">Récap client</p>
-                    <p className="mt-2 text-lg font-bold text-white" style={{ fontFamily: 'Syne, sans-serif' }}>
-                      QR Code à scanner
-                    </p>
-                    <p className="mt-1 text-sm text-[var(--ls-text-muted)]">
-                      Le client scanne ce code avec son téléphone pour voir son récap de bilan.
-                    </p>
-                  </div>
-                  <div style={{
-                    width: 120, height: 120, borderRadius: 14, background: 'var(--ls-surface2)',
-                    border: '1px solid rgba(255,255,255,0.1)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    flexShrink: 0,
-                  }}>
-                    <div style={{ textAlign: 'center', padding: 8 }}>
-                      <div style={{ fontSize: 28, marginBottom: 4 }}>📱</div>
-                      <div style={{ fontSize: 9, color: 'var(--ls-text-hint)', lineHeight: 1.3 }}>
-                        QR disponible<br/>après enregistrement
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <p className="text-[11px] text-[var(--ls-text-hint)]">
-                  Le lien récap sera généré automatiquement à l'enregistrement du bilan. Le client pourra consulter ses résultats depuis son téléphone.
-                </p>
-              </Card>
-
-              <div className="rounded-[24px] bg-[rgba(45,212,191,0.08)] p-5">
-                <p className="eyebrow-label text-[#2DD4BF]/80">Formulation conseillee</p>
-                <div className="mt-4 grid gap-2 md:grid-cols-3">
-                  <ClosingLine text="On part sur une routine simple, claire et coherente avec ton objectif." />
-                  <ClosingLine text="Les repères du jour servent à rendre le plan plus facile à suivre dès maintenant." />
-                  <ClosingLine text="On se revoit au prochain rendez-vous pour relire les premiers effets et ajuster si besoin." />
-                </div>
-              </div>
-
-              <BodyFatInsightCard
-                current={{ weight: form.weight, percent: form.bodyFat }}
-                objective={form.objective}
-                sex={form.sex}
-              />
-
-              <MuscleMassInsightCard
-                current={{ weight: form.weight, muscleMass: form.muscleMass }}
-              />
-            </div>
+            <FelicitationsStep
+              clientFirstName={form.firstName}
+              coachFirstName={currentUser?.name?.split(" ")[0] ?? "Ton coach"}
+              programChoice={form.programChoice}
+              onSave={() => void handleSaveAssessment()}
+              saving={saving}
+            />
           )}
 
           {/* Avertissement validation */}
@@ -2638,117 +2465,6 @@ function SectionBlock({ title, description, children }: { title: string; descrip
 
 
 
-function ClosingLine({ text }: { text: string }) {
-  return <div className="rounded-2xl bg-[var(--ls-bg)]/60 px-4 py-3 text-sm leading-6 text-white">{text}</div>;
-}
-
-function SummaryHighlightCard({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-[22px] bg-[var(--ls-surface2)] px-4 py-4">
-      <p className="text-[11px] font-medium text-[var(--ls-text-hint)]">{label}</p>
-      <p className="mt-3 text-lg font-semibold text-white">{value}</p>
-    </div>
-  );
-}
-
-function ClientTotalCalculatorCard({
-  programTitle,
-  displayedProgramPrice,
-  includedComposition,
-  addOnProducts,
-  addOnProductsTotalPrice,
-  addOnProductsTotalPv,
-  estimatedClientTotal
-}: {
-  programTitle: string;
-  displayedProgramPrice: string;
-  includedComposition: string[];
-  addOnProducts: Array<{
-    id: string;
-    name: string;
-    prixPublic: number;
-    pv: number;
-  }>;
-  addOnProductsTotalPrice: number;
-  addOnProductsTotalPv: number;
-  estimatedClientTotal: number;
-}) {
-  return (
-      <div className="rounded-[28px] border border-[rgba(201,168,76,0.16)] bg-gradient-to-br from-[rgba(201,168,76,0.12)] via-slate-950/24 to-[rgba(45,212,191,0.06)] p-5">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <p className="eyebrow-label text-[#2DD4BF]/80">Lecture simple</p>
-            <p className="mt-2 text-2xl text-white">Ticket du jour</p>
-          </div>
-          <StatusBadge label={addOnProducts.length ? "Programme + ajouts" : "Programme seul"} tone="blue" />
-        </div>
-
-      <div className="mt-5 space-y-3">
-        <div className="rounded-[22px] bg-[var(--ls-surface2)] px-4 py-4">
-          <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-[var(--ls-text-hint)]">Base choisie</p>
-            <div className="mt-3 flex items-start justify-between gap-3">
-              <div>
-                <p className="text-lg font-semibold text-white">{programTitle}</p>
-                <p className="mt-2 text-sm leading-6 text-[var(--ls-text-muted)]">
-                  {includedComposition.length ? includedComposition.join(" • ") : "Composition a confirmer"}
-                </p>
-              </div>
-              <span className="rounded-full bg-[var(--ls-surface2)] px-3 py-1.5 text-sm font-semibold text-white">
-                {displayedProgramPrice || "A confirmer"}
-              </span>
-            </div>
-            <div className="mt-3 flex items-center justify-between gap-3 rounded-[16px] bg-slate-950/22 px-3.5 py-2.5">
-              <p className="text-sm text-[var(--ls-text-muted)]">Base choisie</p>
-              <p className="text-sm font-semibold text-white">{displayedProgramPrice || "A confirmer"}</p>
-            </div>
-          </div>
-
-        <div className="rounded-[22px] bg-[var(--ls-surface2)] px-4 py-4">
-          <div className="flex items-center justify-between gap-3">
-              <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-[var(--ls-text-hint)]">Ajouts</p>
-            <span className="text-sm font-semibold text-white">{addOnProducts.length}</span>
-          </div>
-          {addOnProducts.length ? (
-            <div className="mt-3 space-y-2">
-                {addOnProducts.map((product) => (
-                  <div
-                    key={product.id}
-                    className="flex items-center justify-between gap-3 rounded-[16px] bg-[var(--ls-bg)]/60 px-3.5 py-3"
-                  >
-                    <div>
-                      <p className="text-sm font-semibold text-white">{product.name}</p>
-                      <p className="mt-1 text-xs text-[var(--ls-text-muted)]">{formatPv(product.pv)}</p>
-                    </div>
-                    <p className="text-sm font-semibold text-[#2DD4BF]">+ {formatPriceEuro(product.prixPublic)}</p>
-                  </div>
-                ))}
-              </div>
-          ) : (
-            <p className="mt-3 text-sm leading-6 text-[var(--ls-text-muted)]">
-              Aucun supplément ajouté pour l&apos;instant.
-            </p>
-          )}
-        </div>
-
-          <div className="grid gap-3 md:grid-cols-3">
-            <SummaryHighlightCard label="Base choisie" value={displayedProgramPrice || "A confirmer"} />
-            <SummaryHighlightCard label="Total ajouts" value={addOnProducts.length ? formatPriceEuro(addOnProductsTotalPrice) : "0.00 EUR"} />
-            <SummaryHighlightCard label="PV ajouts" value={addOnProducts.length ? formatPv(addOnProductsTotalPv) : "0.00 PV"} />
-          </div>
-
-          <div className="rounded-[22px] border border-[rgba(45,212,191,0.18)] bg-[rgba(45,212,191,0.1)] px-4 py-4">
-            <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-[#2DD4BF]/70">Total a prevoir aujourd&apos;hui</p>
-            <div className="mt-3 flex items-center justify-between gap-3">
-              <p className="text-base text-[#2DD4BF]">Base choisie + ajouts</p>
-              <p className="text-2xl font-semibold text-white">
-                {estimatedClientTotal > 0 ? formatPriceEuro(estimatedClientTotal) : "A definir"}
-              </p>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 
 // ReferenceComparisonRow / ReferenceDatum retirés — ne sont plus utilisés
@@ -2784,21 +2500,6 @@ function formatPriceEuro(value: number) {
 
 function formatPv(value: number) {
   return `${value.toFixed(2)} PV`;
-}
-
-function parsePriceValue(value: string) {
-  const normalized = String(value)
-    .replace(",", ".")
-    .match(/-?\d+(?:\.\d+)?/g);
-
-  if (!normalized?.length) {
-    return 0;
-  }
-
-  return normalized
-    .map((part) => Number(part))
-    .filter((part) => Number.isFinite(part))
-    .reduce((total, part) => total + part, 0);
 }
 
 // formatValue / formatSignedValue retirés — alimentaient comparaisons
