@@ -76,8 +76,6 @@ export function ClientDetailPage() {
   const [clientAppUrl, setClientAppUrl] = useState<string | null>(null);
   const [creatingClientApp, setCreatingClientApp] = useState(false);
   const [clientAppCopied, setClientAppCopied] = useState(false);
-  const [existingClientToken, setExistingClientToken] = useState<string | null>(null);
-  const [showHeaderAppModal, setShowHeaderAppModal] = useState(false);
   const coachContactKey = `lor-squad-coach-contact-${currentUser?.id ?? 'anon'}`;
   const [coachPhoneInput, setCoachPhoneInput] = useState<string>(() => {
     if (typeof window === 'undefined') return '';
@@ -180,36 +178,11 @@ export function ClientDetailPage() {
     setNextOwnerId(currentClient.distributorId);
   }, [currentClient.distributorId]);
 
-  // Récupère un token partageable pour l'app client
-  // Priorité : client_recaps (dernier) → client_evolution_reports → client_app_accounts
-  useEffect(() => {
-    void (async () => {
-      const sb = await getSupabaseClient();
-      if (!sb) return;
-      const { data: recap } = await sb
-        .from('client_recaps')
-        .select('token')
-        .eq('client_id', currentClient.id)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      if (recap?.token) { setExistingClientToken(recap.token); return; }
-      const { data: report } = await sb
-        .from('client_evolution_reports')
-        .select('token')
-        .eq('client_id', currentClient.id)
-        .order('generated_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      if (report?.token) { setExistingClientToken(report.token); return; }
-      const { data: account } = await sb
-        .from('client_app_accounts')
-        .select('token')
-        .eq('client_id', currentClient.id)
-        .maybeSingle();
-      if (account?.token) setExistingClientToken(account.token);
-    })();
-  }, [currentClient.id]);
+  // Fix UX (2026-04-20) : l'ancien useEffect qui pré-chargeait un
+  // existingClientToken depuis client_recaps/client_evolution_reports/
+  // client_app_accounts n'est plus utile — le bouton "App client" header
+  // et l'onglet "Rapport" appellent désormais generateReport() qui crée
+  // un snapshot frais à la volée, ce qui évite les liens périmés.
 
   const latestAssessment = getLatestAssessment(client);
   const previousAssessment = getPreviousAssessment(client);
@@ -331,13 +304,15 @@ export function ClientDetailPage() {
             </div>
           </div>
           <div className="flex flex-wrap gap-2">
-            {existingClientToken && (
+            {client.assessments.length >= 1 && (
               <button
                 type="button"
-                onClick={() => setShowHeaderAppModal(true)}
-                className="inline-flex min-h-[40px] items-center gap-2 rounded-[12px] border border-[var(--ls-border2)] bg-[var(--ls-surface2)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/[0.08]"
+                onClick={() => void generateReport()}
+                disabled={generatingReport}
+                className="inline-flex min-h-[40px] items-center gap-2 rounded-[12px] border border-[var(--ls-border2)] bg-[var(--ls-surface2)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/[0.08] disabled:opacity-60"
+                style={{ cursor: generatingReport ? 'wait' : 'pointer' }}
               >
-                📱 App client
+                {generatingReport ? 'Génération...' : '📱 App client'}
               </button>
             )}
             <Link
@@ -355,49 +330,11 @@ export function ClientDetailPage() {
           </div>
         </div>
 
-        {/* Modal App client — header */}
-        {showHeaderAppModal && existingClientToken && (
-          <div onClick={() => setShowHeaderAppModal(false)}
-            style={{ position: 'fixed', inset: 0, zIndex: 400, background: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-            <div onClick={(e) => e.stopPropagation()}
-              style={{ background: 'var(--ls-surface)', border: '1px solid rgba(201,168,76,0.25)', borderRadius: 18, padding: 24, width: '100%', maxWidth: 380 }}>
-              <div style={{ fontFamily: 'Syne, sans-serif', fontSize: 18, fontWeight: 800, color: 'var(--ls-text)', marginBottom: 4 }}>
-                📱 App client
-              </div>
-              <div style={{ fontSize: 12, color: 'var(--ls-text-muted)', marginBottom: 16 }}>
-                Lien à partager au client — installable sur iPhone/Android
-              </div>
-              <div style={{ padding: '10px 12px', background: 'var(--ls-surface2)', border: '1px solid var(--ls-border)', borderRadius: 10, fontSize: 11, color: 'var(--ls-text-muted)', fontFamily: 'monospace', wordBreak: 'break-all', marginBottom: 12 }}>
-                {window.location.origin}/client/{existingClientToken}
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 12 }}>
-                <button type="button" onClick={() => {
-                  void navigator.clipboard.writeText(`${window.location.origin}/client/${existingClientToken}`);
-                }} style={{ padding: '10px 4px', borderRadius: 8, border: '1px solid var(--ls-border)', background: 'var(--ls-surface2)', color: 'var(--ls-text)', fontSize: 12, fontWeight: 500, cursor: 'pointer' }}>
-                  Copier
-                </button>
-                <a href={`https://wa.me/?text=${encodeURIComponent(`Ton espace Lor'Squad Wellness ✦\n${window.location.origin}/client/${existingClientToken}`)}`} target="_blank" rel="noopener noreferrer"
-                  style={{ padding: '10px 4px', borderRadius: 8, background: 'rgba(37,211,102,0.12)', color: '#25D366', fontSize: 12, fontWeight: 600, textAlign: 'center', textDecoration: 'none' }}>
-                  WhatsApp
-                </a>
-                <a href={`sms:?body=${encodeURIComponent(`Ton espace Lor'Squad : ${window.location.origin}/client/${existingClientToken}`)}`}
-                  style={{ padding: '10px 4px', borderRadius: 8, background: 'var(--ls-border)', color: 'var(--ls-text-muted)', fontSize: 12, fontWeight: 500, textAlign: 'center', textDecoration: 'none' }}>
-                  SMS
-                </a>
-              </div>
-              <div style={{ display: 'flex', gap: 8 }}>
-                <button onClick={() => setShowHeaderAppModal(false)}
-                  style={{ flex: 1, padding: 10, borderRadius: 10, border: '1px solid var(--ls-border)', background: 'transparent', color: 'var(--ls-text-muted)', fontSize: 13, cursor: 'pointer' }}>
-                  Fermer
-                </button>
-                <button onClick={() => window.open(`${window.location.origin}/client/${existingClientToken}`, '_blank')}
-                  style={{ flex: 1, padding: 10, borderRadius: 10, border: 'none', background: '#C9A84C', color: '#0B0D11', fontFamily: 'Syne, sans-serif', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
-                  Ouvrir
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+        {/* Fix UX (2026-04-20) : le bouton "App client" header ouvre désormais
+            le même popup EvolutionReportModal que l'onglet "Rapport" — via
+            generateReport() qui rafraîchit le snapshot avant affichage. Le
+            modal inline précédent (showHeaderAppModal) affichait l'ancien
+            existingClientToken sans régénération, d'où des liens périmés. */}
 
         {/* Recommandations actives */}
         {recommendationCount > 0 && (
