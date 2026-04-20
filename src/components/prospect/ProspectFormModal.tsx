@@ -201,11 +201,11 @@ export function ProspectFormModal({ initial, onClose, onSaved }: ProspectFormMod
 
           {/* Source */}
           <div>
-            <label style={labelStyle}>Source</label>
+            <label className={labelClass}>Source</label>
             <select
               value={source}
               onChange={(e) => setSource(e.target.value as ProspectSource)}
-              style={inputStyle}
+              className={inputClass}
             >
               {PROSPECT_SOURCES.map((s) => (
                 <option key={s} value={s}>{s}</option>
@@ -224,11 +224,11 @@ export function ProspectFormModal({ initial, onClose, onSaved }: ProspectFormMod
           {/* Distri */}
           {assignable.length > 1 && (
             <div>
-              <label style={labelStyle}>Distributeur assigné</label>
+              <label className={labelClass}>Distributeur assigné</label>
               <select
                 value={distributorId}
                 onChange={(e) => setDistributorId(e.target.value)}
-                style={inputStyle}
+                className={inputClass}
               >
                 {assignable.map((u) => (
                   <option key={u.id} value={u.id}>
@@ -241,13 +241,14 @@ export function ProspectFormModal({ initial, onClose, onSaved }: ProspectFormMod
 
           {/* Note */}
           <div>
-            <label style={labelStyle}>Note (qu'est-ce que la personne cherche ?)</label>
+            <label className={labelClass}>Note (qu'est-ce que la personne cherche ?)</label>
             <textarea
               value={note}
               onChange={(e) => setNote(e.target.value)}
               rows={3}
               placeholder="Objectif, contexte, attentes particulières…"
-              style={{ ...inputStyle, resize: "vertical" }}
+              className={inputClass}
+              style={{ resize: "vertical" }}
             />
           </div>
 
@@ -281,27 +282,11 @@ export function ProspectFormModal({ initial, onClose, onSaved }: ProspectFormMod
   );
 }
 
-const labelStyle: React.CSSProperties = {
-  display: "block",
-  fontSize: 11,
-  fontWeight: 500,
-  color: "var(--ls-text-muted)",
-  marginBottom: 6,
-  letterSpacing: "0.04em",
-};
-
-const inputStyle: React.CSSProperties = {
-  width: "100%",
-  padding: "10px 12px",
-  borderRadius: 10,
-  border: "1px solid var(--ls-border)",
-  background: "var(--ls-input-bg)",
-  color: "var(--ls-text)",
-  fontSize: 13,
-  fontFamily: "'DM Sans', sans-serif",
-  outline: "none",
-  boxSizing: "border-box",
-};
+// UX Polish global (2026-04-20) : migré vers classes utilitaires partagées.
+// `labelClass` = .ls-field-label (13px, weight 500, text pas muted)
+// `inputClass` = .ls-input (halo teal focus, hover tint, tokens cohérents)
+const labelClass = "ls-field-label";
+const inputClass = "ls-input";
 
 function LabelInput({
   label,
@@ -322,7 +307,7 @@ function LabelInput({
 }) {
   return (
     <div>
-      <label style={labelStyle}>{label}</label>
+      <label className={labelClass}>{label}</label>
       <input
         type={type}
         value={value}
@@ -330,7 +315,7 @@ function LabelInput({
         placeholder={placeholder}
         inputMode={inputMode}
         autoFocus={autoFocus}
-        style={inputStyle}
+        className={inputClass}
       />
     </div>
   );
