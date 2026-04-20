@@ -186,7 +186,12 @@ export function ClientDetailPage() {
 
   const latestAssessment = getLatestAssessment(client);
   const previousAssessment = getPreviousAssessment(client);
-  const firstAssessment = getFirstAssessment(client);
+  // Fix P3a (2026-04-20) : on préfère le bilan type === "initial", pas juste
+  // le plus ancien par date. Aligne la fiche sur EditInitialAssessmentPage
+  // (qui édite le même bilan). Sans ça, éditer le "Poids de départ" n'était
+  // pas reflété sur la fiche si un follow-up avait une date antérieure.
+  const firstAssessment =
+    client.assessments.find((entry) => entry.type === "initial") ?? getFirstAssessment(client);
   const latestBodyScan = getLatestBodyScan(client);
   const latestQuestionnaire = getLatestQuestionnaire(client);
   const waterNeed = calculateWaterNeed(latestBodyScan.weight);
