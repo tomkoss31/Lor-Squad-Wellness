@@ -346,9 +346,9 @@ const steps = [
   "Santé, objectif, activité et freins", // 3
   "Composition des repas",           // 4
   "Body scan",                       // 5
-  "Recommandations",                 // 6  (ex 7)
-  "Petit-déjeuner",                  // 7  (ex 8)
-  "Dégustation",                     // 8  (ex 9)
+  "Recommandations",                 // 6
+  "Dégustation",                     // 7  (déplacée — avant Petit-déjeuner pour que le client goûte pendant que le coach prépare le shake)
+  "Petit-déjeuner",                  // 8
   "Notre concept de rééquilibrage alimentaire", // 9  (ex 11, sans LazyMorningRoutineCard)
   "Programme proposé",               // 10 (ex 12)
   "Suite du suivi",                  // 11 (ex 13)
@@ -1441,18 +1441,8 @@ export function NewAssessmentPage() {
             />
           )}
 
+          {/* ─── Étape 7 : Dégustation — déplacée avant Petit-déjeuner (2026-04-20) ─── */}
           {currentStep === 7 && (
-            <VisualStepBoundary title="Petit-dejeuner">
-              <BreakfastStorySlider
-                breakfastContent={form.breakfastContent}
-                analysis={form.breakfastAnalysis}
-                onAnalysisChange={(next) => update("breakfastAnalysis", next)}
-              />
-            </VisualStepBoundary>
-          )}
-
-          {/* ─── Étape 8 : Dégustation ─── */}
-          {currentStep === 8 /* ex-9 — décalé après suppression "Références" */ && (
             <VisualStepBoundary title="Place à la dégustation">
               <Card className="space-y-5">
                 <div>
@@ -1507,6 +1497,17 @@ export function NewAssessmentPage() {
           )}
 
           {/* Étape "Reconnaissance" supprimée — Chantier nettoyage bilan (2026-04-20) */}
+
+          {/* ─── Étape 8 : Petit-déjeuner (déplacée après Dégustation — 2026-04-20) ─── */}
+          {currentStep === 8 && (
+            <VisualStepBoundary title="Petit-dejeuner">
+              <BreakfastStorySlider
+                breakfastContent={form.breakfastContent}
+                analysis={form.breakfastAnalysis}
+                onAnalysisChange={(next) => update("breakfastAnalysis", next)}
+              />
+            </VisualStepBoundary>
+          )}
 
           {/* ─── Étape 9 : Notre concept de rééquilibrage alimentaire
                 Contenu = uniquement l'image de référence. L'ancien
