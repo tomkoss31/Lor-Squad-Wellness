@@ -2,6 +2,12 @@ import { Component, type ReactNode } from 'react'
 
 interface Props {
   children: ReactNode
+  /** Optional compact fallback for sectional boundaries (e.g. around
+   *  ProductAdder) instead of the default full-page crash UI.
+   *  Added 2026-04-20 for defensive sectional wrapping. */
+  fallback?: ReactNode
+  /** Optional tag to help locate the crash source in console logs. */
+  name?: string
 }
 
 interface State {
@@ -17,7 +23,8 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, info: React.ErrorInfo) {
-    console.error('[ErrorBoundary] render crash:', error, info)
+    const tag = this.props.name ? `[ErrorBoundary:${this.props.name}]` : '[ErrorBoundary]'
+    console.error(`${tag} render crash:`, error, info)
   }
 
   reset = () => {
@@ -26,6 +33,10 @@ export class ErrorBoundary extends Component<Props, State> {
 
   render() {
     if (this.state.hasError) {
+      // Sectional fallback — ne casse pas toute la page.
+      if (this.props.fallback) {
+        return this.props.fallback
+      }
       return (
         <div style={{
           minHeight: '60vh',

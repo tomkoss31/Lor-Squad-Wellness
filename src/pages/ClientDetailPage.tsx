@@ -13,6 +13,7 @@ import { MetricTile } from "../components/ui/MetricTile";
 import { StatusBadge } from "../components/ui/StatusBadge";
 import { useAppContext } from "../context/AppContext";
 import { useToast, buildSupabaseErrorToast } from "../context/ToastContext";
+import { ErrorBoundary } from "../components/ErrorBoundary";
 import { buildReportData, generateProductRecommendations } from "../lib/evolutionReport";
 import { EvolutionReportModal } from "../components/assessment/EvolutionReportModal";
 import { getSupabaseClient } from "../services/supabaseClient";
@@ -238,19 +239,24 @@ export function ClientDetailPage() {
     : "Non renseigné";
   const canDeleteClient = currentUser?.role === "admin";
   const pvRecord = buildPvTrackingRecords([currentClient], pvTransactions, pvClientProducts)[0] ?? null;
+  // Durcissement (2026-04-20 — crash Mélanie Jessie) : certains vieux dossiers
+  // importés ont `questionnaire = null` en DB. ensureAssessment ne wrap pas
+  // ce champ, donc `firstAssessment.questionnaire.selectedProductIds?.length`
+  // pouvait throw "Cannot read properties of null". Optional chaining partout
+  // + coalesce vers [] + fallback sur pv/price 0 pour les produits orphelins.
   const retainedProductIds = (
-    firstAssessment.questionnaire.selectedProductIds?.length
+    firstAssessment.questionnaire?.selectedProductIds?.length
       ? firstAssessment.questionnaire.selectedProductIds
-      : latestQuestionnaire.selectedProductIds ?? []
+      : latestQuestionnaire?.selectedProductIds ?? []
   ).filter((productId, index, array) => array.indexOf(productId) === index);
   const retainedProducts = retainedProductIds
     .map((productId) => pvProductCatalog.find((product) => product.id === productId) ?? null)
     .filter((product): product is NonNullable<typeof product> => product != null);
   const retainedProductsTotalPrice = Number(
-    retainedProducts.reduce((total, product) => total + product.pricePublic, 0).toFixed(2)
+    retainedProducts.reduce((total, product) => total + (product?.pricePublic ?? 0), 0).toFixed(2)
   );
   const retainedProductsTotalPv = Number(
-    retainedProducts.reduce((total, product) => total + product.pv, 0).toFixed(2)
+    retainedProducts.reduce((total, product) => total + (product?.pv ?? 0), 0).toFixed(2)
   );
 
   async function handleDeleteClient() {
@@ -724,18 +730,49 @@ export function ClientDetailPage() {
         </Card>
       )}
 
-      {/* Tab 3: Produits */}
-      {activeTab === 3 && (() => {
-        const recoProducts = generateProductRecommendations(latestBodyScan, client.sex ?? 'male', client.objective ?? '');
-        const existingIds = new Set(retainedProductIds);
-        const existingNames = new Set(retainedProducts.map(p => p.name));
-        const upsells = recoProducts.filter(r => !existingNames.has(r.name));
-        const allProductIds = [...retainedProductIds];
-        const allProducts = allProductIds.map(id => pvProductCatalog.find(p => p.id === id) ?? null).filter((p): p is NonNullable<typeof p> => p != null);
-        const totalPv = allProducts.reduce((s, p) => s + p.pv, 0);
-        const totalPrice = allProducts.reduce((s, p) => s + p.pricePublic, 0);
+      {/* Tab 3: Produits — wrapped in an ErrorBoundary to prevent a crash
+          inside ProductAdder or recommendations logic from breaking the
+          entire fiche. Sectional fallback = discreet card, user can navigate
+          to another tab without reloading. */}
+      {activeTab === 3 && (
+        <ErrorBoundary
+          name="ClientDetailPage/Tab3-Produits"
+          fallback={(
+            <Card>
+              <div style={{ padding: '24px 0', textAlign: 'center' }}>
+                <div style={{ fontSize: 32, marginBottom: 10, opacity: 0.4 }}>⚠️</div>
+                <div style={{ fontSize: 14, color: 'var(--ls-text)', fontWeight: 600, marginBottom: 6 }}>
+                  Impossible d'afficher les produits
+                </div>
+                <div style={{ fontSize: 12, color: 'var(--ls-text-muted)', maxWidth: 340, margin: '0 auto 14px', lineHeight: 1.5 }}>
+                  Une donnée manque sur ce dossier. Essaie de basculer vers un autre onglet puis reviens,
+                  ou recharge la page.
+                </div>
+                <button
+                  type="button"
+                  onClick={() => window.location.reload()}
+                  style={{ padding: '8px 16px', borderRadius: 10, border: '1px solid var(--ls-border)', background: 'var(--ls-surface2)', color: 'var(--ls-text)', fontSize: 13, cursor: 'pointer', fontFamily: 'DM Sans, sans-serif' }}
+                >
+                  Recharger
+                </button>
+              </div>
+            </Card>
+          )}
+        >
+          {(() => {
+            // Durcissement défensif : ensureBodyScan garantit déjà des
+            // valeurs numériques sur latestBodyScan. Pour generateProductRecommendations
+            // on passe des fallbacks sûrs sur sex + objective.
+            const recoProducts = generateProductRecommendations(latestBodyScan, client.sex ?? 'male', client.objective ?? '');
+            const existingIds = new Set(retainedProductIds);
+            const existingNames = new Set(retainedProducts.map(p => p?.name).filter((n): n is string => typeof n === 'string'));
+            const upsells = (recoProducts ?? []).filter(r => r && !existingNames.has(r.name));
+            const allProductIds = [...retainedProductIds];
+            const allProducts = allProductIds.map(id => pvProductCatalog.find(p => p.id === id) ?? null).filter((p): p is NonNullable<typeof p> => p != null);
+            const totalPv = allProducts.reduce((s, p) => s + (p?.pv ?? 0), 0);
+            const totalPrice = allProducts.reduce((s, p) => s + (p?.pricePublic ?? 0), 0);
 
-        return (
+            return (
         <div className="space-y-4">
           {/* Lien rapide vers suivi PV */}
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
@@ -826,7 +863,9 @@ export function ClientDetailPage() {
           )}
         </div>
         );
-      })()}
+          })()}
+        </ErrorBoundary>
+      )}
 
       {/* Tab 4: Actions rapides */}
       {activeTab === 4 && (
