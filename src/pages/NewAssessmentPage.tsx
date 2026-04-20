@@ -87,6 +87,12 @@ type AssessmentForm = {
   hardestPart: string;
   mainBlocker: string;
   objectiveFocus: string;
+  /** Chantier bilan updates (2026-04-20) : texte libre si objectiveFocus === "Autre". */
+  customGoal: string;
+  /** Chantier bilan updates (2026-04-20) : snacks/fast-food/resto par semaine. */
+  snacksFastFoodPerWeek: number | null;
+  /** Chantier bilan updates (2026-04-20) : saveur Formula 1 choisie au tasting. */
+  preferredFlavor: string;
   targetWeight: number;
   motivation: number;
   desiredTimeline: string;
@@ -221,6 +227,9 @@ const initialForm: AssessmentForm = {
   hardestPart: "",
   mainBlocker: "",
   objectiveFocus: "",
+  customGoal: "",
+  snacksFastFoodPerWeek: null,
+  preferredFlavor: "",
   targetWeight: 0,
   motivation: 0,
   desiredTimeline: "3 mois",
@@ -310,21 +319,26 @@ function clearAssessmentDraft() {
   window.localStorage.removeItem(ASSESSMENT_DRAFT_KEY);
 }
 
+// Chantier bilan updates (2026-04-20) : renommage + insertion + suppression.
+// - étape "Routine matin" → "Notre concept de rééquilibrage alimentaire"
+// - suppression de "Hydratation & routine du matin"
+// - insertion de "Dégustation" et "Reconnaissance" après "Petit-déjeuner"
 const steps = [
-  "Informations client",
-  "Habitudes de vie et repas",
-  "Qualité alimentaire et boissons",
-  "Santé, objectif, activité et freins",
-  "Composition des repas",
-  "Body scan",
-  "Références de suivi",
-  "Recommandations",
-  "Petit-déjeuner",
-  "Routine matin",
-  "Programme proposé",
-  "Hydratation & routine du matin",
-  "Suite du suivi",
-  "Résumé du rendez-vous"
+  "Informations client",             // 0
+  "Habitudes de vie et repas",       // 1
+  "Qualité alimentaire et boissons", // 2
+  "Santé, objectif, activité et freins", // 3
+  "Composition des repas",           // 4
+  "Body scan",                       // 5
+  "Références de suivi",             // 6
+  "Recommandations",                 // 7
+  "Petit-déjeuner",                  // 8
+  "Dégustation",                     // 9  (NEW)
+  "Reconnaissance",                  // 10 (NEW)
+  "Notre concept de rééquilibrage alimentaire", // 11 (renommé de "Routine matin")
+  "Programme proposé",               // 12 (inchangé — chantier dédié plus tard)
+  "Suite du suivi",                  // 13 (ancien "Hydratation" supprimé)
+  "Résumé du rendez-vous"            // 14
 ];
 
 const timelineOptions = [
@@ -350,11 +364,6 @@ const LazyMorningRoutineCard = lazy(() =>
   }))
 );
 
-const LazyHydrationRoutinePrimerCard = lazy(() =>
-  import("../components/education/HydrationRoutinePrimerCard").then((module) => ({
-    default: module.HydrationRoutinePrimerCard
-  }))
-);
 
 export function NewAssessmentPage() {
   const navigate = useNavigate();
@@ -742,6 +751,13 @@ export function NewAssessmentPage() {
       targetWeight: form.targetWeight > 0 ? form.targetWeight : undefined,
       motivation: form.motivation,
       desiredTimeline: form.desiredTimeline,
+      // Chantier bilan updates (2026-04-20)
+      customGoal: form.customGoal?.trim() || undefined,
+      snacksFastFoodPerWeek:
+        form.snacksFastFoodPerWeek != null && form.snacksFastFoodPerWeek >= 0
+          ? form.snacksFastFoodPerWeek
+          : null,
+      preferredFlavor: form.preferredFlavor?.trim() || undefined,
       recommendations: form.recommendations.filter(
         (item) => item.name.trim() || item.contact.trim()
       ),
@@ -1053,18 +1069,6 @@ export function NewAssessmentPage() {
                   <Field label="Taille (cm)" type="number" value={form.height} onChange={(v) => update("height", Number(v))} />
                   <Field label="Profession" value={form.job} onChange={(v) => update("job", v)} />
                   <Field label="Ville" value={form.city} onChange={(v) => update("city", v)} />
-                  <ClothingSizeSelect
-                    label="Taille vêtement actuelle"
-                    value={form.currentClothingSize}
-                    sex={form.sex}
-                    onChange={(v) => update("currentClothingSize", v)}
-                  />
-                  <ClothingSizeSelect
-                    label="Taille vêtement cible"
-                    value={form.targetClothingSize}
-                    sex={form.sex}
-                    onChange={(v) => update("targetClothingSize", v)}
-                  />
                 </div>
 
                 <SectionBlock
@@ -1075,7 +1079,7 @@ export function NewAssessmentPage() {
                     <ChoiceGroup
                       label="Objectif principal"
                       value={form.objectiveFocus}
-                      options={["Perte de poids", "Prise de masse", "Energie", "Remise en forme"]}
+                      options={["Perte de poids", "Prise de masse", "Energie", "Remise en forme", "Autre"]}
                       onChange={updateObjectiveFocus}
                     />
                     <TimelineChoiceField
@@ -1085,6 +1089,14 @@ export function NewAssessmentPage() {
                       onChange={(v) => update("desiredTimeline", v)}
                     />
                   </div>
+                  {/* Chantier bilan updates (2026-04-20) : texte libre si "Autre" */}
+                  {form.objectiveFocus === "Autre" && (
+                    <AreaField
+                      label="Précise ton objectif"
+                      value={form.customGoal ?? ""}
+                      onChange={(v) => update("customGoal", v)}
+                    />
+                  )}
                   <div className="grid gap-4 md:grid-cols-2">
                     <ChoiceGroup
                       label="Sante / traitement"
@@ -1107,6 +1119,22 @@ export function NewAssessmentPage() {
                       onChange={(v) => update("targetWeight", Number(v))}
                     />
                   )}
+                  {/* Chantier bilan updates (2026-04-20) : taille vêtement déplacée
+                      après le poids cible (ordre visuel plus logique). */}
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <ClothingSizeSelect
+                      label="Taille vêtement actuelle"
+                      value={form.currentClothingSize}
+                      sex={form.sex}
+                      onChange={(v) => update("currentClothingSize", v)}
+                    />
+                    <ClothingSizeSelect
+                      label="Taille vêtement cible"
+                      value={form.targetClothingSize}
+                      sex={form.sex}
+                      onChange={(v) => update("targetClothingSize", v)}
+                    />
+                  </div>
                   <div className="space-y-3 rounded-[24px] bg-[var(--ls-surface2)] p-4">
                     <div className="flex items-center justify-between gap-3">
                       <label className="text-sm font-medium text-[var(--ls-text-muted)]">Motivation</label>
@@ -1182,6 +1210,28 @@ export function NewAssessmentPage() {
                   <ChoiceGroup label="Midi" value={form.lunchLocation} options={["A la maison", "Au travail", "Au restaurant", "Sur le pouce"]} onChange={(v) => update("lunchLocation", v)} />
                 </div>
                 <ChoiceGroup label="Le soir" value={form.dinnerTiming} options={["Tot", "Normalement", "Tard"]} onChange={(v) => update("dinnerTiming", v)} />
+                {/* Chantier bilan updates (2026-04-20) : snacks/fast-food/resto — budget alim */}
+                <div className="space-y-2">
+                  <label className="ls-field-label">Nombre de snacks / fast-food / resto par semaine</label>
+                  <input
+                    type="number"
+                    min={0}
+                    max={30}
+                    placeholder="Ex : 3"
+                    value={form.snacksFastFoodPerWeek ?? ""}
+                    onChange={(event) => {
+                      const str = event.target.value.trim();
+                      if (str === "") { update("snacksFastFoodPerWeek", null); return; }
+                      const n = Number(str);
+                      if (Number.isNaN(n) || n < 0) { update("snacksFastFoodPerWeek", null); return; }
+                      update("snacksFastFoodPerWeek", Math.min(30, Math.max(0, n)));
+                    }}
+                    className="ls-input"
+                  />
+                  <p style={{ fontSize: 11, color: "var(--ls-text-hint)", margin: 0 }}>
+                    Nous servira à calculer ton budget alimentation plus tard.
+                  </p>
+                </div>
               </SectionBlock>
             </div>
           )}
@@ -1195,7 +1245,12 @@ export function NewAssessmentPage() {
                   <ChoiceGroup label="Legumes chaque jour" value={form.vegetablesDaily} options={["Oui", "Non", "Pas assez"]} onChange={(v) => update("vegetablesDaily", v)} />
                   <ChoiceGroup label="Protéines à chaque repas" value={form.proteinEachMeal} options={["Oui", "Non", "Pas toujours"]} onChange={(v) => update("proteinEachMeal", v)} />
                 </div>
-                <ChoiceGroup label="Produits sucres ou industriels" value={form.sugaryProducts} options={["Rarement", "Parfois", "Souvent", "Tres souvent"]} onChange={(v) => update("sugaryProducts", v)} />
+                <ChoiceGroup
+                  label="À quelle fréquence consommes-tu des produits sucrés ou ultra-transformés ? (sodas, plats préparés, bonbons)"
+                  value={form.sugaryProducts}
+                  options={["Rarement", "Parfois", "Souvent", "Très souvent"]}
+                  onChange={(v) => update("sugaryProducts", v)}
+                />
               </SectionBlock>
 
               <SectionBlock title="Bloc 5 - Grignotage et fringales" description="Faire ressortir le vrai moment de craquage et la cause la plus frequente.">
@@ -1488,15 +1543,90 @@ export function NewAssessmentPage() {
             </VisualStepBoundary>
           )}
 
+          {/* ─── Étape 9 : Dégustation (Chantier bilan updates 2026-04-20) ─── */}
           {currentStep === 9 && (
-            <VisualStepBoundary title="Routine matin">
-              <Suspense fallback={<StepVisualLoadingCard label="Chargement de la routine matin" />}>
+            <VisualStepBoundary title="Place à la dégustation">
+              <Card className="space-y-5">
+                <div>
+                  <p className="eyebrow-label">Dégustation</p>
+                  <h2 className="mt-2 text-2xl" style={{ fontFamily: "Syne, sans-serif", color: "var(--ls-text)" }}>
+                    Je vais te faire goûter notre délicieux petit-déj, tu préfères quelle saveur ?
+                  </h2>
+                </div>
+                <div style={{ display: "flex", justifyContent: "center" }}>
+                  <img
+                    src="/images/assessment/saveurs-formula1.png"
+                    alt="Saveurs Formula 1 disponibles"
+                    style={{ maxWidth: 500, width: "100%", height: "auto", borderRadius: 14 }}
+                    onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+                  />
+                </div>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "center" }}>
+                  {[
+                    "Vanille Onctueuse",
+                    "Délice de Fraise",
+                    "Cookie Crunch",
+                    "Crème de Banane",
+                    "Café Latte",
+                    "Chocolat Gourmand",
+                    "Menthe Chocolat",
+                  ].map((flavor) => {
+                    const active = form.preferredFlavor === flavor;
+                    return (
+                      <button
+                        key={flavor}
+                        type="button"
+                        onClick={() => update("preferredFlavor", active ? "" : flavor)}
+                        className={`ls-pill${active ? " ls-pill--selected" : ""}`}
+                      >
+                        {flavor}
+                      </button>
+                    );
+                  })}
+                </div>
+                <p style={{ fontSize: 12, color: "var(--ls-text-hint)", textAlign: "center", margin: 0 }}>
+                  Sélection facultative — tu peux passer à l'étape suivante.
+                </p>
+              </Card>
+            </VisualStepBoundary>
+          )}
+
+          {/* ─── Étape 10 : Reconnaissance (placeholder — à remplir) ─── */}
+          {currentStep === 10 && (
+            <VisualStepBoundary title="Reconnaissance">
+              <Card className="space-y-4">
+                <div>
+                  <p className="eyebrow-label">Reconnaissance</p>
+                  <h2 className="mt-2 text-2xl" style={{ fontFamily: "Syne, sans-serif", color: "var(--ls-text)" }}>
+                    À remplir prochainement
+                  </h2>
+                </div>
+                <p style={{ fontSize: 14, color: "var(--ls-text-muted)", lineHeight: 1.6, margin: 0 }}>
+                  Contenu en cours de préparation. Tu peux passer à l'étape suivante.
+                </p>
+              </Card>
+            </VisualStepBoundary>
+          )}
+
+          {/* ─── Étape 11 : Notre concept de rééquilibrage alimentaire
+                (renommé depuis "Routine matin" — Chantier bilan updates 2026-04-20) ─── */}
+          {currentStep === 11 && (
+            <VisualStepBoundary title="Notre concept de rééquilibrage alimentaire">
+              <div style={{ display: "flex", justifyContent: "center", marginBottom: 16 }}>
+                <img
+                  src="/images/assessment/petit-dejeuner-concept.png"
+                  alt="Notre concept de rééquilibrage alimentaire"
+                  style={{ maxWidth: 900, width: "100%", height: "auto", borderRadius: 14 }}
+                  onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+                />
+              </div>
+              <Suspense fallback={<StepVisualLoadingCard label="Chargement du concept" />}>
                 <LazyMorningRoutineCard />
               </Suspense>
             </VisualStepBoundary>
           )}
 
-          {currentStep === 10 && (
+          {currentStep === 12 && (
             <div className="space-y-4">
               <Card className="space-y-4">
                 <div className="flex flex-wrap items-center justify-between gap-3">
@@ -1646,15 +1776,9 @@ export function NewAssessmentPage() {
               </div>
             )}
 
-          {currentStep === 11 && (
-            <VisualStepBoundary title="Repère hydratation">
-              <Suspense fallback={<StepVisualLoadingCard label="Chargement du repère hydratation" />}>
-                <LazyHydrationRoutinePrimerCard />
-              </Suspense>
-            </VisualStepBoundary>
-          )}
+          {/* Ancien step Hydratation supprimé — Chantier bilan updates (2026-04-20) */}
 
-          {currentStep === 12 && (
+          {currentStep === 13 && (
             <div className="space-y-4">
               {/* Mini-résumé bilan pour contexte */}
               <div className="rounded-[16px] border border-[rgba(201,168,76,0.15)] bg-[rgba(201,168,76,0.04)] p-4">
@@ -1758,7 +1882,7 @@ export function NewAssessmentPage() {
             </div>
           )}
 
-          {currentStep === 13 && (
+          {currentStep === 14 && (
             <div className="space-y-4">
               <Card className="space-y-5 bg-[linear-gradient(180deg,rgba(15,23,42,0.32),rgba(15,23,42,0.52))]">
                 <div className="flex flex-wrap items-start justify-between gap-4">
