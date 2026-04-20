@@ -604,9 +604,7 @@ function ProspectDetailModal({
             </p>
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               <div>
-                <label style={{ display: "block", fontSize: 11, color: "var(--ls-text-muted)", marginBottom: 6, fontWeight: 500 }}>
-                  Date de reprise
-                </label>
+                <label className="ls-field-label">Date de reprise</label>
                 <input
                   type="date"
                   value={coldDate}
@@ -616,27 +614,14 @@ function ProspectDetailModal({
                 />
               </div>
               <div>
-                <label style={{ display: "block", fontSize: 11, color: "var(--ls-text-muted)", marginBottom: 6, fontWeight: 500 }}>
-                  Contexte (facultatif)
-                </label>
+                <label className="ls-field-label">Contexte (facultatif)</label>
                 <textarea
                   value={coldReason}
                   onChange={(e) => setColdReason(e.target.value)}
                   rows={2}
                   placeholder="ex : budget serré, relancer en septembre"
-                  style={{
-                    width: "100%",
-                    padding: "10px 12px",
-                    borderRadius: 10,
-                    border: "1.5px solid var(--ls-border)",
-                    background: "var(--ls-surface)",
-                    color: "var(--ls-text)",
-                    fontSize: 13,
-                    fontFamily: "'DM Sans', sans-serif",
-                    outline: "none",
-                    resize: "vertical",
-                    boxSizing: "border-box",
-                  }}
+                  className="ls-input"
+                  style={{ resize: "vertical" }}
                 />
               </div>
               <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
