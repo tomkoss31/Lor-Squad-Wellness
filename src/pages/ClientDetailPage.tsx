@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { EditScheduleModal } from "../components/client/EditScheduleModal";
 import { BodyFatInsightCard } from "../components/body-scan/BodyFatInsightCard";
 import { MuscleMassInsightCard } from "../components/body-scan/MuscleMassInsightCard";
@@ -68,7 +68,11 @@ export function ClientDetailPage() {
   const [nextOwnerId, setNextOwnerId] = useState(client.distributorId);
   const [transferFeedback, setTransferFeedback] = useState("");
   const [showScheduleModal, setShowScheduleModal] = useState(false);
-  const [activeTab, setActiveTab] = useState(0);
+  // Chantier Protocole Agenda+Dashboard (2026-04-20) : ?tab=actions pour
+  // arriver directement sur l'onglet Actions depuis le widget dashboard.
+  const [searchParams] = useSearchParams();
+  const initialTabFromQuery = searchParams.get("tab") === "actions" ? 4 : 0;
+  const [activeTab, setActiveTab] = useState(initialTabFromQuery);
   const [reportUrl, setReportUrl] = useState<string | null>(null);
   const [generatingReport, setGeneratingReport] = useState(false);
   const [editPhone, setEditPhone] = useState(client.phone);
