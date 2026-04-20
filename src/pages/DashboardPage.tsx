@@ -13,10 +13,26 @@ function greeting() {
 }
 
 export function DashboardPage() {
-  const { currentUser, users, clients, followUps, pvClientProducts, pvTransactions, unreadMessageCount, prospects } = useAppContext();
+  const { currentUser, users, clients, followUps, pvClientProducts, pvTransactions, clientMessages, prospects } = useAppContext();
   const navigate = useNavigate();
 
   if (!currentUser) return null;
+
+  // Fix dashboard scope (2026-04-20) : le dashboard d'accueil est TOUJOURS une
+  // vue personnelle, même pour admin. Le filtre "Toute l'équipe" existe
+  // uniquement sur la page Agenda (module dédié).
+  // - Les prospects du context sont "admin voit tout" → on re-filtre ici.
+  // - Les clientMessages idem → on recompte les non-lus strictement perso.
+  // - Les follow-ups passent déjà par getPortfolioMetrics(scope="personal")
+  //   qui scope sur user.id uniquement — OK.
+  const myProspects = useMemo(
+    () => prospects.filter((p) => p.distributorId === currentUser.id),
+    [prospects, currentUser.id]
+  );
+  const myUnreadMessageCount = useMemo(
+    () => clientMessages.filter((m) => !m.read && m.distributor_id === currentUser.id).length,
+    [clientMessages, currentUser.id]
+  );
 
   // Scope : uniquement le périmètre du coach
   const rawMetrics = getPortfolioMetrics(currentUser, clients, followUps, users, "personal");
@@ -55,10 +71,10 @@ export function DashboardPage() {
   // jour (valeur incohérente avec la carte cockpit).
   const todayProspects = useMemo(
     () =>
-      prospects.filter(
+      myProspects.filter(
         (p) => p.status === "scheduled" && p.rdvDate?.slice(0, 10) === todayStr
       ),
-    [prospects, todayStr]
+    [myProspects, todayStr]
   );
 
   const todayRdvTotal = todayFollowUps.length + todayProspects.length;
@@ -205,25 +221,25 @@ export function DashboardPage() {
     };
   }, [metrics.clients, pvTransactions, scopedClientIds]);
 
-  // Chantier Agenda : prospects du jour
+  // Chantier Agenda : prospects du jour (scope personnel sur le dashboard)
   const prospectsToday = useMemo(() => {
     const today = new Date().toDateString();
-    return prospects
+    return myProspects
       .filter((p) => {
         try {
           return new Date(p.rdvDate).toDateString() === today;
         } catch { return false; }
       })
       .sort((a, b) => new Date(a.rdvDate).getTime() - new Date(b.rdvDate).getTime());
-  }, [prospects]);
+  }, [myProspects]);
 
   const prospectsTodayScheduled = prospectsToday.filter((p) => p.status === 'scheduled');
   const prospectsTodayDone = prospectsToday.filter((p) => p.status === 'done' || p.status === 'converted');
 
-  // Chantier Cold : prospects à réchauffer (cold_until <= maintenant)
+  // Chantier Cold : prospects à réchauffer (cold_until <= maintenant) — scope perso.
   const coldToWarm = useMemo(() => {
     const nowTime = Date.now();
-    return prospects
+    return myProspects
       .filter((p) => {
         if (p.status !== 'cold') return false;
         if (!p.coldUntil) return false;
@@ -232,7 +248,7 @@ export function DashboardPage() {
         } catch { return false; }
       })
       .sort((a, b) => new Date(a.coldUntil ?? 0).getTime() - new Date(b.coldUntil ?? 0).getTime());
-  }, [prospects]);
+  }, [myProspects]);
 
   return (
     <div style={{ padding: "clamp(16px, 4vw, 28px)", maxWidth: 1200, margin: "0 auto", display: "flex", flexDirection: "column", gap: 20 }}>
@@ -308,9 +324,9 @@ export function DashboardPage() {
         />
         <CockpitTile
           icon={<MessageIcon />}
-          value={unreadMessageCount ?? 0}
+          value={myUnreadMessageCount}
           label="Messages"
-          subtitle={(unreadMessageCount ?? 0) > 0 ? "Non lus" : "Tout lu"}
+          subtitle={myUnreadMessageCount > 0 ? "Non lus" : "Tout lu"}
           borderColor="#0D9488"
           iconColor="var(--ls-teal)"
           iconBg="rgba(13,148,136,0.08)"
