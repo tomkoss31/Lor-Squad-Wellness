@@ -393,18 +393,8 @@ function FilterPill({ label, active, onClick }: { label: string; active: boolean
     <button
       type="button"
       onClick={onClick}
-      style={{
-        padding: "6px 12px",
-        borderRadius: 999,
-        fontSize: 12,
-        fontWeight: active ? 600 : 400,
-        fontFamily: "'DM Sans', sans-serif",
-        background: active ? "var(--ls-gold)" : "var(--ls-surface2)",
-        color: active ? "var(--ls-bg)" : "var(--ls-text-muted)",
-        border: active ? "1px solid var(--ls-gold)" : "1px solid var(--ls-border)",
-        cursor: "pointer",
-        transition: "all 0.15s",
-      }}
+      className={`ls-pill${active ? " ls-pill--selected" : ""}`}
+      style={{ fontSize: 12, padding: "6px 12px" }}
     >
       {label}
     </button>
