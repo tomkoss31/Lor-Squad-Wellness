@@ -12,8 +12,14 @@ import { BodyFatInsightCard } from "../components/body-scan/BodyFatInsightCard";
 import { MuscleMassInsightCard } from "../components/body-scan/MuscleMassInsightCard";
 import { HydrationVisceralInsightCard } from "../components/body-scan/HydrationVisceralInsightCard";
 import { BodyScanRadar } from "../components/body-scan/BodyScanRadar";
-import { ProgramBoosterCard } from "../components/programs/ProgramBoosterCard";
-import { ProgramCard } from "../components/programs/ProgramCard";
+// Chantier refonte étape 11 (2026-04-20) : ProgramBoosterCard + ProgramCard
+// retirés car l'étape 11 est désormais gérée par les nouveaux composants
+// ProgramChoiceCard + RoutineMatinList + ProgrammeTicket.
+import { MilkConsumptionToggle } from "../components/assessment/MilkConsumptionToggle";
+import { ProgramChoiceCard } from "../components/assessment/ProgramChoiceCard";
+import { RoutineMatinList } from "../components/assessment/RoutineMatinList";
+import { ProgrammeTicket, type TicketAddOn } from "../components/assessment/ProgrammeTicket";
+import { PROGRAM_CHOICES, getProgramById } from "../data/programs";
 import { Button } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
 import { PageHeading } from "../components/ui/PageHeading";
@@ -93,6 +99,9 @@ type AssessmentForm = {
   snacksFastFoodPerWeek: number | null;
   /** Chantier bilan updates (2026-04-20) : saveur Formula 1 choisie au tasting. */
   preferredFlavor: string;
+  /** Chantier refonte étape 11 (2026-04-20). */
+  consumesMilk: "yes" | "sometimes" | "no" | "";
+  programChoice: "discovery" | "premium" | "booster1" | "booster2";
   targetWeight: number;
   motivation: number;
   desiredTimeline: string;
@@ -230,6 +239,8 @@ const initialForm: AssessmentForm = {
   customGoal: "",
   snacksFastFoodPerWeek: null,
   preferredFlavor: "",
+  consumesMilk: "" as "yes" | "sometimes" | "no" | "",
+  programChoice: "premium" as "discovery" | "premium" | "booster1" | "booster2",
   targetWeight: 0,
   motivation: 0,
   desiredTimeline: "3 mois",
@@ -502,7 +513,8 @@ export function NewAssessmentPage() {
 
   const currentPrograms = programs.filter((program) => program.category === form.objective);
   const mainPrograms = currentPrograms.filter((program) => program.kind !== "booster");
-  const boosterPrograms = currentPrograms.filter((program) => program.kind === "booster");
+  // boosterPrograms retiré — l'étape 11 est refactorée, les "boosters" sont
+  // gérés via les programmes Booster 1 / Booster 2 dans programs.ts.
   const selectedProgram =
     mainPrograms.find((program) => program.id === form.selectedProgramId) ?? null;
   const startsImmediately = form.afterAssessmentAction === "started";
@@ -758,6 +770,8 @@ export function NewAssessmentPage() {
           ? form.snacksFastFoodPerWeek
           : null,
       preferredFlavor: form.preferredFlavor?.trim() || undefined,
+      consumesMilk: form.consumesMilk ? form.consumesMilk : undefined,
+      programChoice: form.programChoice,
       recommendations: form.recommendations.filter(
         (item) => item.name.trim() || item.contact.trim()
       ),
@@ -1626,55 +1640,110 @@ export function NewAssessmentPage() {
             </VisualStepBoundary>
           )}
 
-          {currentStep === 12 && (
-            <div className="space-y-4">
-              <Card className="space-y-4">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div>
-                    <p className="eyebrow-label">Suite après le bilan</p>
-                    <p className="mt-2 text-2xl text-white">La personne démarre maintenant ou revient plus tard ?</p>
-                  </div>
-                  <StatusBadge
-                    label={startsImmediately ? "Demarrage maintenant" : "Bilan sans demarrage"}
-                    tone={startsImmediately ? "green" : "amber"}
+          {currentStep === 12 && (() => {
+            // Chantier refonte étape 11 (2026-04-20) — tunnel de vente structuré.
+            const chosenProgram = getProgramById(form.programChoice);
+            const ticketAddOns: TicketAddOn[] = addOnProducts.map((p) => ({
+              id: p.id,
+              name: p.name,
+              price: p.prixPublic,
+              pv: p.pv,
+            }));
+            return (
+              <div className="grid gap-4 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+                {/* ─── Colonne principale ─────────────────────────────── */}
+                <div className="space-y-5">
+                  {/* Bloc 0 — Curseur lait */}
+                  <MilkConsumptionToggle
+                    value={form.consumesMilk}
+                    onChange={(v) => update("consumesMilk", v)}
                   />
-                </div>
-                <ChoiceGroup
-                  label="Décision du jour"
-                  value={form.afterAssessmentAction}
-                  options={["Demarrage maintenant", "A relancer / ne demarre pas aujourd'hui"]}
-                  onChange={(value) =>
-                    update(
-                      "afterAssessmentAction",
-                      value === "Demarrage maintenant" ? "started" : "pending"
-                    )
-                  }
-                />
-                {!startsImmediately ? (
-                  <p className="text-sm leading-6 text-[var(--ls-text-muted)]">
-                    Le bilan sera enregistre, la personne apparaitra en attente dans les dossiers,
-                    et elle ne comptera pas dans le module PV tant qu&apos;aucun programme n&apos;est demarre.
-                  </p>
-                ) : null}
-              </Card>
 
-              <Card className="space-y-5">
-                <div className="flex flex-wrap items-center justify-between gap-3">
+                  {/* Bloc 1 — 4 cards programmes */}
                   <div>
-                    <p className="eyebrow-label">Lecture besoins</p>
-                    <p className="mt-2 text-2xl text-white">Ce que le bilan fait ressortir en priorite</p>
+                    <p className="eyebrow-label" style={{ marginBottom: 10 }}>
+                      Choix du programme
+                    </p>
+                    <div
+                      className="grid gap-2"
+                      style={{ gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))" }}
+                    >
+                      {PROGRAM_CHOICES.map((p) => (
+                        <ProgramChoiceCard
+                          key={p.id}
+                          program={p}
+                          active={form.programChoice === p.id}
+                          onSelect={() => update("programChoice", p.id)}
+                        />
+                      ))}
+                    </div>
+                    <div
+                      style={{
+                        marginTop: 10,
+                        padding: "10px 14px",
+                        borderRadius: 10,
+                        background: "color-mix(in srgb, var(--ls-gold) 10%, transparent)",
+                        border: "1px solid color-mix(in srgb, var(--ls-gold) 30%, transparent)",
+                        color: "var(--ls-text)",
+                        fontSize: 13,
+                        fontFamily: "'DM Sans', sans-serif",
+                      }}
+                    >
+                      ✓ Programme{" "}
+                      <strong style={{ color: "var(--ls-gold)" }}>{chosenProgram.title}</strong>{" "}
+                      sélectionné · <strong>{chosenProgram.price}€</strong>
+                    </div>
                   </div>
-                  <StatusBadge
-                    label={`${recommendationPlan.needs.length} besoin${recommendationPlan.needs.length > 1 ? "s" : ""}`}
-                    tone={recommendationPlan.needs.length ? "green" : "blue"}
-                  />
-                </div>
 
-                {recommendationPlan.needs.length ? (
-                  <div className="space-y-4">
-                      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_340px]">
-                        <div className="space-y-4">
-                          {recommendationPlan.needs.map((need) => (
+                  {/* Bloc 2 — Routine matin */}
+                  <RoutineMatinList program={chosenProgram} />
+
+                  {/* Bloc "Suite après le bilan" — EXISTANT conservé */}
+                  <Card className="space-y-4">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div>
+                        <p className="eyebrow-label">Suite après le bilan</p>
+                        <p className="mt-2 text-2xl text-white">La personne démarre maintenant ou revient plus tard ?</p>
+                      </div>
+                      <StatusBadge
+                        label={startsImmediately ? "Demarrage maintenant" : "Bilan sans demarrage"}
+                        tone={startsImmediately ? "green" : "amber"}
+                      />
+                    </div>
+                    <ChoiceGroup
+                      label="Décision du jour"
+                      value={form.afterAssessmentAction}
+                      options={["Demarrage maintenant", "A relancer / ne demarre pas aujourd'hui"]}
+                      onChange={(value) =>
+                        update(
+                          "afterAssessmentAction",
+                          value === "Demarrage maintenant" ? "started" : "pending"
+                        )
+                      }
+                    />
+                    {!startsImmediately ? (
+                      <p className="text-sm leading-6 text-[var(--ls-text-muted)]">
+                        Le bilan sera enregistre, la personne apparaitra en attente dans les dossiers,
+                        et elle ne comptera pas dans le module PV tant qu&apos;aucun programme n&apos;est demarre.
+                      </p>
+                    ) : null}
+                  </Card>
+
+                  {/* Bloc 3 — Ce que le bilan fait ressortir (EXISTANT, nettoyé) */}
+                  <Card className="space-y-5">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div>
+                        <p className="eyebrow-label">Lecture besoins</p>
+                        <p className="mt-2 text-2xl text-white">Ce que le bilan fait ressortir en priorité</p>
+                      </div>
+                      <StatusBadge
+                        label={`${recommendationPlan.needs.length} besoin${recommendationPlan.needs.length > 1 ? "s" : ""}`}
+                        tone={recommendationPlan.needs.length ? "green" : "blue"}
+                      />
+                    </div>
+                    {recommendationPlan.needs.length ? (
+                      <div className="space-y-4">
+                        {recommendationPlan.needs.map((need) => (
                           <NeedProductGroup
                             key={`products-${need.id}`}
                             title={need.label}
@@ -1686,95 +1755,57 @@ export function NewAssessmentPage() {
                           />
                         ))}
                       </div>
-                      <ClientTotalCalculatorCard
-                        programTitle={activeProgram?.title ?? "Programme a confirmer"}
-                        displayedProgramPrice={displayedProgramPrice}
-                        includedComposition={activeProgram?.composition ?? []}
-                        addOnProducts={addOnProducts}
-                        addOnProductsTotalPrice={addOnProductsTotalPrice}
-                        addOnProductsTotalPv={addOnProductsTotalPv}
-                        estimatedClientTotal={estimatedClientTotal}
-                      />
-                    </div>
-                  </div>
-                ) : (
-                  <div className="rounded-[24px] bg-[var(--ls-surface2)] p-5 text-sm leading-7 text-[var(--ls-text-muted)]">
-                    Le bilan ne fait pas encore ressortir une priorite forte. On peut partir sur une
-                    base simple, puis personnaliser au premier suivi.
-                  </div>
-                )}
-              </Card>
+                    ) : (
+                      <div className="rounded-[24px] bg-[var(--ls-surface2)] p-5 text-sm leading-7 text-[var(--ls-text-muted)]">
+                        Le bilan ne fait pas encore ressortir une priorité forte. On peut partir sur une
+                        base simple, puis personnaliser au premier suivi.
+                      </div>
+                    )}
+                  </Card>
 
-              <div className="rounded-[24px] bg-[rgba(45,212,191,0.1)] p-4">
-                <p className="eyebrow-label text-[#2DD4BF]/80">Programme conseille</p>
-                <div className="mt-3 flex flex-wrap items-start justify-between gap-3">
-                  <div>
-                    <p className="text-xl text-white">
-                      {recommendedProgram?.title ?? "Base a confirmer"}
-                    </p>
-                    <p className="mt-2 text-sm leading-6 text-[var(--ls-text)]">
-                      {recommendationPlan.recommendedProgramReason}
-                    </p>
-                  </div>
-                  <span className="rounded-full bg-[rgba(45,212,191,0.12)] px-4 py-2 text-sm font-semibold text-[#2DD4BF]">
-                    {recommendedProgram?.price ?? "A ajuster"}
-                  </span>
+                  {/* Bloc 4 — Options en plus si besoin (EXISTANT) */}
+                  {recommendationPlan.optionalUpsells.length ? (
+                    <Card className="space-y-4">
+                      <div className="flex flex-wrap items-center justify-between gap-3">
+                        <div>
+                          <p className="eyebrow-label">Options en plus si besoin</p>
+                          <p className="mt-2 text-2xl text-white">Quelques ajouts utiles sans alourdir la base</p>
+                        </div>
+                        <StatusBadge label={`${recommendationPlan.optionalUpsells.length} option${recommendationPlan.optionalUpsells.length > 1 ? "s" : ""}`} tone="blue" />
+                      </div>
+                      <div className="grid gap-3">
+                        {recommendationPlan.optionalUpsells.map((product) => (
+                          <SuggestedProductCard
+                            key={`upsell-${product.id}`}
+                            name={product.name}
+                            shortBenefit={product.shortBenefit}
+                            pv={product.pv}
+                            prixPublic={product.prixPublic}
+                            dureeReferenceJours={product.dureeReferenceJours}
+                            quantityLabel={product.quantityLabel}
+                            selected={effectiveSelectedProductIds.includes(product.id)}
+                            onToggle={() => toggleSelectedProduct(product.id)}
+                          />
+                        ))}
+                      </div>
+                    </Card>
+                  ) : null}
+                </div>
+
+                {/* ─── Colonne ticket sticky ──────────────────────────── */}
+                <div
+                  style={{
+                    position: "sticky",
+                    top: 16,
+                    alignSelf: "start",
+                    height: "fit-content",
+                  }}
+                >
+                  <ProgrammeTicket program={chosenProgram} addOns={ticketAddOns} />
                 </div>
               </div>
-
-              <div className="grid gap-4 lg:grid-cols-2">
-                {mainPrograms.map((program) => (
-                  <ProgramCard key={program.id} program={program} selected={form.selectedProgramId === program.id} onSelect={() => update("selectedProgramId", program.id)} />
-                ))}
-              </div>
-                {boosterPrograms.length ? (
-                  <div className="rounded-[24px] border border-white/10 bg-[var(--ls-bg)]/80 p-5">
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <div>
-                      <p className="eyebrow-label">
-                        Options pour booster les resultats
-                      </p>
-                      <p className="mt-2 text-2xl text-white">
-                        Ajouter seulement ce qui sert vraiment le profil sport
-                      </p>
-                    </div>
-                    <StatusBadge label="Options sport" tone="green" />
-                  </div>
-                  <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-                    {boosterPrograms.map((program) => (
-                      <ProgramBoosterCard key={program.id} program={program} />
-                    ))}
-                  </div>
-                  </div>
-                ) : null}
-                {recommendationPlan.optionalUpsells.length ? (
-                  <Card className="space-y-4">
-                    <div className="flex flex-wrap items-center justify-between gap-3">
-                      <div>
-                        <p className="eyebrow-label">Options en plus si besoin</p>
-                        <p className="mt-2 text-2xl text-white">Quelques ajouts utiles sans alourdir la base</p>
-                      </div>
-                      <StatusBadge label={`${recommendationPlan.optionalUpsells.length} option${recommendationPlan.optionalUpsells.length > 1 ? "s" : ""}`} tone="blue" />
-                    </div>
-                    <div className="grid gap-3">
-                      {recommendationPlan.optionalUpsells.map((product) => (
-                        <SuggestedProductCard
-                          key={`upsell-${product.id}`}
-                          name={product.name}
-                          shortBenefit={product.shortBenefit}
-                          pv={product.pv}
-                          prixPublic={product.prixPublic}
-                          dureeReferenceJours={product.dureeReferenceJours}
-                          quantityLabel={product.quantityLabel}
-                          selected={effectiveSelectedProductIds.includes(product.id)}
-                          onToggle={() => toggleSelectedProduct(product.id)}
-                        />
-                      ))}
-                    </div>
-                  </Card>
-                ) : null}
-              </div>
-            )}
+            );
+          })()}
 
           {/* Ancien step Hydratation supprimé — Chantier bilan updates (2026-04-20) */}
 

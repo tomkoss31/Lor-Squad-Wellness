@@ -153,6 +153,11 @@ export interface AssessmentQuestionnaire {
   snacksFastFoodPerWeek?: number | null;
   /** Saveur de Formula 1 choisie lors de la dégustation (étape dédiée). */
   preferredFlavor?: string;
+  // Chantier refonte étape 11 (2026-04-20)
+  /** Consommation de lait (animal ou végétal) — oriente le distri sur PDM. */
+  consumesMilk?: "yes" | "sometimes" | "no";
+  /** Programme choisi par le client dans le tunnel de vente étape 11. */
+  programChoice?: "discovery" | "premium" | "booster1" | "booster2";
 }
 
 export interface AssessmentRecord {
