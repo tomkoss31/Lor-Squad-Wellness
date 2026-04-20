@@ -1,4 +1,4 @@
-import { getPvStatusMeta } from "../../data/mockPvModule";
+import { getPvStatusMeta } from "../../data/pvCatalog";
 import type { PvStatus } from "../../types/pv";
 import { StatusBadge } from "../ui/StatusBadge";
 

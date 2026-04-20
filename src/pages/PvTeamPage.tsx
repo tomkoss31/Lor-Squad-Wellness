@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { buildPvTrackingRecords } from "../data/mockPvModule";
+import { buildPvTrackingRecords } from "../data/pvCatalog";
 import { Card } from "../components/ui/Card";
 import { MetricTile } from "../components/ui/MetricTile";
 import { PvModuleHeader } from "../components/pv/PvModuleHeader";

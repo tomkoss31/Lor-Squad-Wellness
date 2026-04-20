@@ -17,7 +17,7 @@ import { buildReportData, generateProductRecommendations } from "../lib/evolutio
 import { EvolutionReportModal } from "../components/assessment/EvolutionReportModal";
 import { getSupabaseClient } from "../services/supabaseClient";
 import { refreshClientRecap } from "../services/supabaseService";
-import { buildPvTrackingRecords, pvProductCatalog } from "../data/mockPvModule";
+import { buildPvTrackingRecords, pvProductCatalog } from "../data/pvCatalog";
 import { createGoogleCalendarLink } from "../lib/googleCalendar";
 import { getAccessibleOwnerIds, isAdmin, isRéférent } from "../lib/auth";
 import { getClientActiveFollowUp } from "../lib/portfolio";
