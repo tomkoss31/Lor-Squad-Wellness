@@ -5,8 +5,10 @@ import { Card } from "../components/ui/Card";
 import { PageHeading } from "../components/ui/PageHeading";
 import { StatusBadge } from "../components/ui/StatusBadge";
 import { useAppContext } from "../context/AppContext";
+import { useToast, buildSupabaseErrorToast } from "../context/ToastContext";
 import { getFirstAssessment, normalizeDateTimeLocalInputValue } from "../lib/calculations";
 import { pvProductCatalog } from "../data/mockPvModule";
+import { refreshClientRecap } from "../services/supabaseService";
 import type { AssessmentQuestionnaire, AssessmentRecord } from "../types/domain";
 
 const timelineOptions = [
@@ -157,6 +159,7 @@ export function EditInitialAssessmentPage() {
   const { clientId, assessmentId } = useParams();
   const navigate = useNavigate();
   const { getClientById, updateAssessment } = useAppContext();
+  const { push: pushToast } = useToast();
   const client = clientId ? getClientById(clientId) : undefined;
 
   if (!client) {
@@ -321,6 +324,16 @@ export function EditInitialAssessmentPage() {
 
     try {
       await updateAssessment(targetClient.id, updatedAssessment);
+      // Chantier sync client_recaps (2026-04-20) : le bilan modifié (bilan
+      // initial ou suivi) doit se refléter côté /client/:token. Non-bloquant.
+      try {
+        await refreshClientRecap(targetClient.id);
+      } catch (refreshErr) {
+        pushToast(buildSupabaseErrorToast(
+          refreshErr,
+          "Le bilan a été modifié mais le lien client n'a pas pu être mis à jour. Tu peux régénérer l'accès depuis la fiche."
+        ));
+      }
       clearEditAssessmentDraft(targetClient.id, targetAssessment.id);
       navigate(`/clients/${targetClient.id}`);
     } catch (saveError) {
