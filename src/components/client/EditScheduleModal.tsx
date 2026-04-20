@@ -82,11 +82,15 @@ export function EditScheduleModal({ client, onClose, onSaved }: EditScheduleModa
 
   return (
     <div
+      role="button"
+      tabIndex={0}
+      aria-label="Fermer la fenêtre"
       style={{
         position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)",
         display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100
       }}
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+      onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }}
     >
       <div
         className="card-mount"

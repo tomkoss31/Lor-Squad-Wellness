@@ -974,7 +974,9 @@ function ProspectDetailModal({
     <div
       role="dialog"
       aria-modal="true"
+      tabIndex={0}
       onClick={onClose}
+      onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }}
       style={{
         position: "fixed", inset: 0,
         background: "rgba(0,0,0,0.55)", zIndex: 10000,
@@ -983,7 +985,9 @@ function ProspectDetailModal({
       }}
     >
       <div
+        role="presentation"
         onClick={(e) => e.stopPropagation()}
+        onKeyDown={(e) => e.stopPropagation()}
         style={{
           background: "var(--ls-surface)", borderRadius: 14,
           width: "100%", maxWidth: 480, padding: 22,

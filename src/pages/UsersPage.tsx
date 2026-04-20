@@ -353,7 +353,11 @@ export function UsersPage() {
                     >
                       {/* Ligne principale cliquable */}
                       <div
+                        role="button"
+                        tabIndex={0}
+                        aria-expanded={isExpanded}
                         onClick={() => setExpandedUserId(isExpanded ? null : user.id)}
+                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setExpandedUserId(isExpanded ? null : user.id); } }}
                         onMouseEnter={(e) => {
                           if (!isExpanded) e.currentTarget.style.background = "var(--ls-surface2)";
                         }}
@@ -870,7 +874,11 @@ function PasswordChangeModal({
 
   return (
     <div
+      role="button"
+      tabIndex={0}
+      aria-label="Fermer la fenêtre"
       onClick={onClose}
+      onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }}
       style={{
         position: "fixed",
         inset: 0,
@@ -883,7 +891,9 @@ function PasswordChangeModal({
       }}
     >
       <div
+        role="presentation"
         onClick={(e) => e.stopPropagation()}
+        onKeyDown={(e) => e.stopPropagation()}
         style={{
           background: "var(--ls-surface)",
           border: "1px solid var(--ls-border)",

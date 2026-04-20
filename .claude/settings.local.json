@@ -43,7 +43,27 @@
       "Bash(npm install *)",
       "Bash(npx eslint *)",
       "Bash(awk -F' - ' '{print $2}')",
-      "Bash(grep -oE '[a-z@/-]+[a-z-]+$')"
+      "Bash(grep -oE '[a-z@/-]+[a-z-]+$')",
+      "Bash(sed -n '2044,2052p' src/pages/NewAssessmentPage.tsx)",
+      "Bash(sed -n '2744,2752p' src/pages/NewAssessmentPage.tsx)",
+      "Bash(sed -n '2828,2900p' src/pages/NewAssessmentPage.tsx)",
+      "Bash(cp \"C:/Users/tomko/Documents/Lor'Squad Wellness/assets/images/saveurs-formula1.png\" public/images/assessment/)",
+      "Bash(cp \"C:/Users/tomko/Documents/Lor'Squad Wellness/assets/images/petit-dejeuner-concept.png\" public/images/assessment/)",
+      "Bash(node scripts/optimize-bilan-images.mjs)",
+      "Bash(awk 'NR>=1811 && /^          \\\\\\)\\\\}/ {print NR; exit}' src/pages/NewAssessmentPage.tsx)",
+      "Bash(sed -n '1811,1991p' src/pages/NewAssessmentPage.tsx)",
+      "Read(//tmp/**)",
+      "Bash(grep -n \"const \\\\[saving\\\\|useState.*false\\).*saving\\\\|const currentUser\\\\|currentUser?\\\\\\\\.name\" src/pages/NewAssessmentPage.tsx)",
+      "Bash(grep -n \"^  async function handleSaveAssessment\\\\|^  }\\\\s*$\\\\|setSaveError\\\\|navigate\\(\\\\|setRecapToken\" src/pages/NewAssessmentPage.tsx)",
+      "Bash(awk '/^function ClientTotalCalculatorCard/{p=NR; print \"START\",NR} p && NR>p && /^}$/{print \"END\",NR; exit}' src/pages/NewAssessmentPage.tsx)",
+      "Bash(awk '/^function ClientTotalCalculatorCard/{p=NR} p && NR>=p && NR<=p+120 && NR>p && /^}$/{print NR; exit}' src/pages/NewAssessmentPage.tsx)",
+      "Bash(grep -n \"questionnaire:\\\\s\\\\|\\\\.\\\\\\\\.\\\\\\\\..*questionnaire\\\\|targetWeight.*questionnaire\\\\|questionnaire,$\" src/pages/EditInitialAssessmentPage.tsx)",
+      "Bash(awk -F'\\\\\\\\.tsx?:' '{print $1\".tsx\"}')",
+      "Bash(grep -E \"^[A-Za-z]:\\\\\\\\\\\\\\\\|^/\")",
+      "Bash(awk -F: '{print $1}')",
+      "Bash(node -e \"const d=JSON.parse\\(require\\('fs'\\).readFileSync\\(0,'utf8'\\)\\);const m={};for\\(const f of d\\){for\\(const m2 of f.messages\\){if\\(m2.ruleId==='react-hooks/rules-of-hooks'\\){const k=f.filePath.split\\(/[\\\\\\\\\\\\\\\\/]/\\).slice\\(-3\\).join\\('/'\\);m[k]=\\(m[k]||0\\)+1}}}console.log\\(Object.entries\\(m\\).sort\\(\\(a,b\\)=>b[1]-a[1]\\).map\\(\\([k,v]\\)=>v+' '+k\\).join\\('\\\\n'\\)\\)\")",
+      "Bash(grep -E \"error|^\\\\w:\\\\\\\\\\\\\\\\\")",
+      "Bash(npx vitest *)"
     ]
   }
 }

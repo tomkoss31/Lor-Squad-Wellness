@@ -49,7 +49,9 @@ export function UrgencyColumn({ title, count, color, icon, items, emptyLabel, se
       ) : items.map(item => (
         <div key={item.id} style={{ display: 'flex', flexDirection: 'column', gap: 0, background: 'var(--ls-surface)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 11, overflow: 'hidden', transition: 'all 0.15s ease' }}>
           <Link to={`/clients/${item.clientId}`} style={{ textDecoration: 'none' }}>
-            <div className="dashboard-col-card" data-urgency={urgencyKind} style={{ padding: '12px 14px', cursor: 'pointer', position: 'relative' }}
+            <div className="dashboard-col-card" data-urgency={urgencyKind} role="presentation" style={{ padding: '12px 14px', cursor: 'pointer', position: 'relative' }}
+              onFocus={e => { e.currentTarget.style.background = 'var(--ls-surface2)' }}
+              onBlur={e => { e.currentTarget.style.background = 'transparent' }}
               onMouseEnter={e => { e.currentTarget.style.background = 'var(--ls-surface2)' }}
               onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}>
               <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 4, background: color, borderRadius: '0 2px 2px 0' }} />
