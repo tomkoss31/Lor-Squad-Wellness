@@ -22,7 +22,13 @@ export function PvOverviewPage() {
   if (!currentUser) return null;
 
   const isAdmin = currentUser.role === "admin";
-  const sourceClients = isAdmin ? clients : visibleClients;
+  // Free PV tracking (2026-04-20) : exclure les clients marqués "sous autre
+  // superviseur" de la liste principale du suivi PV. Le coach ne peut pas
+  // agir sur leurs commandes, inutile qu'ils polluent la liste.
+  const sourceClients = useMemo(
+    () => (isAdmin ? clients : visibleClients).filter((c) => !c.freePvTracking),
+    [isAdmin, clients, visibleClients]
+  );
 
   const records = useMemo(
     () => buildPvTrackingRecords(sourceClients, pvTransactions, pvClientProducts),

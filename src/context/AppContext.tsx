@@ -41,6 +41,7 @@ import {
   updateSupabaseClientLifecycleStatus,
   updateSupabaseClientFragileFlag,
   updateSupabaseClientFreeFollowUp,
+  updateSupabaseClientFreePvTracking,
   fetchSupabaseProspects,
   createSupabaseProspect,
   updateSupabaseProspect,
@@ -90,6 +91,8 @@ interface AppContextValue {
   setClientLifecycleStatus: (clientId: string, newStatus: LifecycleStatus) => Promise<void>;
   setClientFragileFlag: (clientId: string, isFragile: boolean) => Promise<void>;
   setClientFreeFollowUp: (clientId: string, freeFollowUp: boolean) => Promise<void>;
+  // Free PV tracking (2026-04-20) : toggle exclusion des listes de réassort
+  setClientFreePvTracking: (clientId: string, freePvTracking: boolean) => Promise<void>;
   updateFollowUpStatus: (followUpId: string, status: 'scheduled' | 'pending' | 'completed' | 'dismissed') => Promise<void>;
   loginWithCredentials: (
     payload: { email: string; password: string }
@@ -840,6 +843,15 @@ export function AppProvider({ children }: PropsWithChildren) {
               : fu
           ));
         }
+      },
+      // Free PV tracking (2026-04-20) : simple toggle + optimistic update.
+      // Pas de side-effect sur follow_ups — seulement les listes de réassort
+      // côté UI filtrent sur ce flag.
+      setClientFreePvTracking: async (clientId: string, freePvTracking: boolean) => {
+        await updateSupabaseClientFreePvTracking({ clientId, freePvTracking });
+        setClients(prev => prev.map(c =>
+          c.id === clientId ? { ...c, freePvTracking } : c
+        ));
       },
       loginWithCredentials,
       logout,

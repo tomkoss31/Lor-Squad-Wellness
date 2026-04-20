@@ -78,6 +78,7 @@ type ClientRow = {
   lifecycle_updated_at?: string | null;
   lifecycle_updated_by?: string | null;
   free_follow_up?: boolean | null;
+  free_pv_tracking?: boolean | null;
   assessments?: AssessmentRow[] | null;
 };
 
@@ -319,6 +320,7 @@ function mapClient(row: ClientRow): Client {
     lifecycleUpdatedAt: row.lifecycle_updated_at ?? undefined,
     lifecycleUpdatedBy: row.lifecycle_updated_by ?? null,
     freeFollowUp: row.free_follow_up ?? false,
+    freePvTracking: row.free_pv_tracking ?? false,
     assessments: (row.assessments ?? []).map(mapAssessment)
   };
 }
@@ -1340,6 +1342,34 @@ export async function updateSupabaseClientFreeFollowUp(params: {
       // Non-fatal : on loggue et on continue.
       console.warn("[updateSupabaseClientFreeFollowUp] follow_ups update warning:", fuError);
     }
+  }
+}
+
+// ─── Free PV Tracking (Chantier 2026-04-20) ──────────────────────────────
+// Toggle simple : client sous un autre superviseur → exclu des listes de
+// réassort côté dashboard + page Suivi PV. Le reste du dossier (bilans,
+// RDV, messages) reste normal — contrairement à `free_follow_up` qui
+// désactive aussi les follow-ups automatiques.
+export async function updateSupabaseClientFreePvTracking(params: {
+  clientId: string;
+  freePvTracking: boolean;
+}): Promise<void> {
+  const { clientId, freePvTracking } = params;
+  const client = await requireSupabase();
+
+  const { error: clientError } = await client
+    .from("clients")
+    .update({ free_pv_tracking: freePvTracking })
+    .eq("id", clientId);
+
+  if (clientError) {
+    // Fallback : colonne pas encore créée → message explicite
+    if (isMissingColumnError(clientError, "free_pv_tracking")) {
+      throw new Error(
+        "La colonne free_pv_tracking n'existe pas encore. Exécute la migration supabase/migrations/20260420120000_free_pv_tracking.sql."
+      );
+    }
+    throw new Error(`Impossible de mettre à jour le suivi PV : ${clientError.message}`);
   }
 }
 

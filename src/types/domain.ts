@@ -196,6 +196,10 @@ export interface Client {
   lifecycleUpdatedBy?: string | null;
   // Suivi libre (Sujet C — 2026-04-19) : client actif mais hors agenda auto
   freeFollowUp?: boolean;
+  // Free PV tracking (2026-04-20) : client sous un autre superviseur, exclu
+  // des listes de réassort (dashboard, suivi PV, alertes). Le reste (bilans,
+  // RDV, body scan, messages) reste normal.
+  freePvTracking?: boolean;
 }
 
 export interface FollowUp {
