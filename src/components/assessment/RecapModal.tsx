@@ -55,7 +55,7 @@ export function RecapModal({ clientName, recapToken, onClose }: RecapModalProps)
           </div>
         </div>
 
-        <div onClick={copy} style={{ background: 'var(--ls-surface2)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10, padding: '10px 14px', display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14, cursor: 'pointer' }}>
+        <div role="button" tabIndex={0} onClick={copy} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); copy(); } }} style={{ background: 'var(--ls-surface2)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10, padding: '10px 14px', display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14, cursor: 'pointer' }}>
           <div style={{ flex: 1, fontSize: 11, color: 'var(--ls-text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{currentUrl.replace('https://', '')}</div>
           <div style={{ fontSize: 11, color: copied ? '#2DD4BF' : '#C9A84C', fontWeight: 500, flexShrink: 0 }}>{copied ? 'Copié ✓' : 'Copier'}</div>
         </div>

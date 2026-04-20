@@ -122,7 +122,11 @@ function ProductCard({
 
   return (
     <div
+      role="button"
+      tabIndex={0}
+      aria-expanded={open}
       onClick={() => setOpen(!open)}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setOpen(!open); } }}
       style={{
         background: '#fff',
         border: isRecommended ? '1px solid rgba(184,146,42,0.2)' : '1px solid rgba(0,0,0,0.07)',

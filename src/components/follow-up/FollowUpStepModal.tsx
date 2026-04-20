@@ -61,7 +61,11 @@ export function FollowUpStepModal({
 
   return (
     <div
+      role="button"
+      tabIndex={0}
+      aria-label="Fermer la fenêtre"
       onClick={onClose}
+      onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }}
       style={{
         position: "fixed",
         inset: 0,
@@ -76,6 +80,7 @@ export function FollowUpStepModal({
     >
       <div
         onClick={(e) => e.stopPropagation()}
+        onKeyDown={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
         aria-label={`${step.title} — message pour ${client.firstName}`}

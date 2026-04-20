@@ -106,18 +106,12 @@ export function NewFollowUpPage() {
   const { push: pushToast } = useToast();
   const client = clientId ? getClientById(clientId) : undefined;
 
-  if (!client) {
-    return (
-      <Card>
-        <p className="text-white">Client introuvable ou accès indisponible.</p>
-      </Card>
-    );
-  }
-
-  const targetClient = client;
-  const latest = getLatestAssessment(targetClient);
-  const previous = getPreviousAssessment(targetClient);
-  const first = getFirstAssessment(targetClient);
+  // Hooks AVANT tout early return (rules-of-hooks / chantier nuit 2026-04-20).
+  // Les valeurs latest/previous/first et bodyScan sont calculées avec un
+  // fallback safe si `client` est undefined.
+  const latest = client ? getLatestAssessment(client) : null;
+  const previous = client ? getPreviousAssessment(client) : null;
+  const first = client ? getFirstAssessment(client) : null;
 
   const defaultScan: BodyScanMetrics = latest?.bodyScan ?? { weight: 0, bodyFat: 0, muscleMass: 0, hydration: 0, boneMass: 0, visceralFat: 0, bmr: 0, metabolicAge: 0 };
   const [bodyScan, setBodyScan] = useState<BodyScanMetrics>({ ...defaultScan });
@@ -125,7 +119,7 @@ export function NewFollowUpPage() {
     normalizeDateTimeLocalInputValue(new Date().toISOString())
   );
   const [dueDate, setDueDate] = useState(
-    normalizeDateTimeLocalInputValue(targetClient.nextFollowUp)
+    normalizeDateTimeLocalInputValue(client?.nextFollowUp ?? "")
   );
   const [followUpType, setFollowUpType] = useState("Suivi terrain");
   const [energyCheck, setEnergyCheck] = useState("Correct");
@@ -152,7 +146,8 @@ export function NewFollowUpPage() {
   const [draftReady, setDraftReady] = useState(false);
 
   useEffect(() => {
-    const draft = readFollowUpDraft(targetClient.id);
+    if (!client) return;
+    const draft = readFollowUpDraft(client.id);
     if (draft) {
       setBodyScan(draft.bodyScan);
       setAssessmentDate(draft.assessmentDate);
@@ -175,15 +170,15 @@ export function NewFollowUpPage() {
     }
 
     setDraftReady(true);
-  }, [targetClient.id]);
+  }, [client]);
 
   useEffect(() => {
-    if (!draftReady) {
+    if (!client || !draftReady) {
       return;
     }
 
     persistFollowUpDraft({
-      clientId: targetClient.id,
+      clientId: client.id,
       bodyScan,
       assessmentDate,
       dueDate,
@@ -223,14 +218,25 @@ export function NewFollowUpPage() {
     optionalProductsUsed,
     quantityCheck,
     recommendationsContacted,
-    targetClient.id
+    client
   ]);
 
-  const delta = getAssessmentDelta(bodyScan, latest?.bodyScan ?? defaultScan);
   const pvRecord = useMemo(
-    () => buildPvTrackingRecords([targetClient], pvTransactions, pvClientProducts)[0] ?? null,
-    [pvClientProducts, pvTransactions, targetClient]
+    () => (client ? buildPvTrackingRecords([client], pvTransactions, pvClientProducts)[0] ?? null : null),
+    [pvClientProducts, pvTransactions, client]
   );
+
+  // Early return APRÈS tous les hooks (rules-of-hooks / chantier nuit 2026-04-20).
+  if (!client) {
+    return (
+      <Card>
+        <p className="text-white">Client introuvable ou accès indisponible.</p>
+      </Card>
+    );
+  }
+  const targetClient = client;
+
+  const delta = getAssessmentDelta(bodyScan, latest?.bodyScan ?? defaultScan);
   const weightLossPlan = getWeightLossPlan(
     bodyScan.weight,
     latest?.questionnaire?.targetWeight,
@@ -393,7 +399,7 @@ export function NewFollowUpPage() {
     navigate(`/clients/${targetClient.id}`);
   }
 
-  if (!latest || !latest.bodyScan) {
+  if (!latest || !latest.bodyScan || !first) {
     return (
       <Card>
         <p style={{ color: 'var(--ls-text)', fontSize: 14, marginBottom: 12 }}>Ce client n'a pas encore de bilan initial complet. Crée d'abord un bilan avec body scan avant de faire un suivi.</p>

@@ -1103,7 +1103,8 @@ export function NewAssessmentPage() {
                 {form.bedTime && form.wakeUpTime ? (() => {
                   const [bh, bm] = form.bedTime.split(':').map(Number)
                   const [wh, wm] = form.wakeUpTime.split(':').map(Number)
-                  let bedMin = bh * 60 + bm, wakeMin = wh * 60 + wm
+                  const bedMin = bh * 60 + bm
+                  let wakeMin = wh * 60 + wm
                   if (wakeMin <= bedMin) wakeMin += 24 * 60
                   const hours = (wakeMin - bedMin) / 60
                   const quality = hours >= 7 && hours <= 9 ? 'optimal' : hours >= 6 ? 'correct' : 'insuffisant'
