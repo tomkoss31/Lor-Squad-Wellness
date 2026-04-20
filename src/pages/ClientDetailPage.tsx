@@ -14,6 +14,7 @@ import { StatusBadge } from "../components/ui/StatusBadge";
 import { useAppContext } from "../context/AppContext";
 import { useToast, buildSupabaseErrorToast } from "../context/ToastContext";
 import { ErrorBoundary } from "../components/ErrorBoundary";
+import { FollowUpProtocolCard } from "../components/follow-up/FollowUpProtocolCard";
 import { buildReportData, generateProductRecommendations } from "../lib/evolutionReport";
 import { EvolutionReportModal } from "../components/assessment/EvolutionReportModal";
 import { getSupabaseClient } from "../services/supabaseClient";
@@ -870,6 +871,14 @@ export function ClientDetailPage() {
       {/* Tab 4: Actions rapides */}
       {activeTab === 4 && (
         <div className="grid gap-4 md:grid-cols-2">
+          {/* Chantier Protocole de suivi (2026-04-20) : bloc 5 étapes visible
+              en tête de la colonne Actions. L'ErrorBoundary l'isole d'un
+              crash éventuel pour ne pas casser le reste de l'onglet. */}
+          <div className="md:col-span-2">
+            <ErrorBoundary name="ClientDetailPage/FollowUpProtocol" fallback={null}>
+              <FollowUpProtocolCard client={client} />
+            </ErrorBoundary>
+          </div>
           <Card className="space-y-4">
             <p className="eyebrow-label">Actions client</p>
             <h2 className="text-lg font-bold text-white" style={{ fontFamily: 'Syne, sans-serif' }}>Raccourcis</h2>

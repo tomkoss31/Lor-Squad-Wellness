@@ -239,6 +239,18 @@ export interface ActivityLog {
   detail?: string;
 }
 
+// ─── Protocole de suivi (Chantier 2026-04-20) ────────────────────────────
+export type FollowUpProtocolStepId = "j1" | "j3" | "j7" | "j10" | "j14";
+
+export interface FollowUpProtocolLog {
+  id: string;
+  clientId: string;
+  coachId: string;
+  stepId: FollowUpProtocolStepId;
+  sentAt: string;
+  notes?: string;
+}
+
 export interface ClientMessage {
   id: string;
   report_token?: string;

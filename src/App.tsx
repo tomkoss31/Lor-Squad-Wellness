@@ -100,6 +100,11 @@ const AgendaPage = lazy(() =>
     default: module.AgendaPage
   }))
 );
+const FollowUpGuidePage = lazy(() =>
+  import("./pages/FollowUpGuidePage").then((module) => ({
+    default: module.FollowUpGuidePage
+  }))
+);
 
 import { useTheme } from './hooks/useTheme'
 import { useAutoNotifications } from './hooks/useAutoNotifications'
@@ -129,6 +134,7 @@ export default function App() {
               <Route index element={<Navigate to="/dashboard" replace />} />
               <Route path="dashboard" element={<DashboardPage />} />
               <Route path="guide" element={<GuidePage />} />
+              <Route path="guide-suivi" element={<FollowUpGuidePage />} />
               <Route path="recommendations" element={<RecommendationsPage />} />
               <Route path="pv" element={<PvOverviewPage />} />
               <Route path="messages" element={<MessagesPage />} />
