@@ -16,6 +16,7 @@ import { useToast, buildSupabaseErrorToast } from "../context/ToastContext";
 import { buildReportData, generateProductRecommendations } from "../lib/evolutionReport";
 import { EvolutionReportModal } from "../components/assessment/EvolutionReportModal";
 import { getSupabaseClient } from "../services/supabaseClient";
+import { refreshClientRecap } from "../services/supabaseService";
 import { buildPvTrackingRecords, pvProductCatalog } from "../data/mockPvModule";
 import { createGoogleCalendarLink } from "../lib/googleCalendar";
 import { getAccessibleOwnerIds, isAdmin, isRéférent } from "../lib/auth";
@@ -267,6 +268,16 @@ export function ClientDetailPage() {
 
     try {
       await reassignClientOwner(currentClient.id, { distributorId: nextOwnerId });
+      // Chantier sync client_recaps (2026-04-20) : le coach_name du récap
+      // doit refléter le nouveau responsable. Non-bloquant.
+      try {
+        await refreshClientRecap(currentClient.id);
+      } catch (refreshErr) {
+        pushToast(buildSupabaseErrorToast(
+          refreshErr,
+          "Le dossier a été réattribué mais le lien client n'a pas pu être mis à jour."
+        ));
+      }
       const nextOwner = users.find((user) => user.id === nextOwnerId);
       setTransferFeedback(
         nextOwner
@@ -715,6 +726,17 @@ export function ClientDetailPage() {
                 const sb = await getSupabaseClient();
                 if (sb) {
                   await sb.from('assessments').delete().eq('id', assessmentId);
+                  // Chantier sync client_recaps (2026-04-20) : après suppression,
+                  // le snapshot doit refléter le nouveau "dernier bilan". On skip
+                  // silencieux si le client n'a plus aucun bilan (edge case).
+                  try {
+                    await refreshClientRecap(client.id);
+                  } catch (refreshErr) {
+                    pushToast(buildSupabaseErrorToast(
+                      refreshErr,
+                      "Le bilan a été supprimé mais le lien client n'a pas pu être mis à jour."
+                    ));
+                  }
                   window.location.reload();
                 }
               } catch (err) {
@@ -980,6 +1002,14 @@ export function ClientDetailPage() {
                         email: editEmail.trim().toLowerCase(),
                         city: editCity.trim() || undefined
                       });
+                      // Chantier sync client_recaps (2026-04-20) : les infos
+                      // client (nom affiché) dans le récap doivent suivre.
+                      // Non-bloquant : la mise à jour coordonnées a réussi.
+                      try {
+                        await refreshClientRecap(client.id);
+                      } catch (refreshErr) {
+                        console.error('refreshClientRecap (updateClientInfo) error:', refreshErr);
+                      }
                       setEditSaved(true);
                       pushToast({
                         tone: "success",
@@ -1159,6 +1189,13 @@ function ProductAdder({ clientId, existingIds, onAdded }: { clientId: string; ex
       };
 
       await updateAssessment(clientId, updatedAssessment);
+      // Chantier sync client_recaps (2026-04-20) : l'ajout d'un produit change
+      // les recos du récap client. Non-bloquant (l'ajout est déjà enregistré).
+      try {
+        await refreshClientRecap(clientId);
+      } catch (refreshErr) {
+        console.error('refreshClientRecap (ProductAdder) error:', refreshErr);
+      }
       setAdded(prev => [...prev, productId]);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erreur lors de l\'ajout');
