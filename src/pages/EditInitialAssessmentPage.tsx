@@ -556,6 +556,133 @@ export function EditInitialAssessmentPage() {
           </SectionCard>
 
           <SectionCard
+            title="Compléments bilan (chantier 2026-04-20)"
+            description="Champs ajoutés récemment : objectif libre, budget snacks, saveur F1, lait, programme choisi, analyse petit-déj."
+          >
+            <div className="grid gap-4 md:grid-cols-2">
+              <AreaField
+                label="Objectif libre (si « Autre »)"
+                value={questionnaire.customGoal ?? ""}
+                onChange={(value) => updateQuestionnaire("customGoal", value)}
+                rows={3}
+              />
+              <MetricField
+                label="Snacks / fast-food / restos par semaine"
+                type="number"
+                value={questionnaire.snacksFastFoodPerWeek ?? 0}
+                onChange={(value) => updateQuestionnaire("snacksFastFoodPerWeek", value === "" ? null : Number(value))}
+              />
+              <TextField
+                label="Saveur Formula 1 préférée"
+                value={questionnaire.preferredFlavor ?? ""}
+                onChange={(value) => updateQuestionnaire("preferredFlavor", value)}
+              />
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-[var(--ls-text-muted)]">Consomme du lait ?</label>
+                <div className="flex flex-wrap gap-2">
+                  {([
+                    { value: "yes", label: "Oui" },
+                    { value: "sometimes", label: "Parfois" },
+                    { value: "no", label: "Non" }
+                  ] as const).map((opt) => {
+                    const selected = questionnaire.consumesMilk === opt.value;
+                    return (
+                      <button
+                        key={opt.value}
+                        type="button"
+                        onClick={() => updateQuestionnaire("consumesMilk", opt.value)}
+                        className={`rounded-[14px] border px-3 py-2 text-sm transition ${
+                          selected
+                            ? "border-[rgba(45,212,191,0.35)] bg-[rgba(45,212,191,0.12)] text-white"
+                            : "border-white/10 bg-[var(--ls-surface2)] text-[var(--ls-text-muted)] hover:border-white/20"
+                        }`}
+                      >
+                        {opt.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+              <div className="space-y-2 md:col-span-2">
+                <label className="text-sm font-medium text-[var(--ls-text-muted)]">Programme choisi</label>
+                <div className="flex flex-wrap gap-2">
+                  {([
+                    { value: "discovery", label: "Découverte" },
+                    { value: "premium", label: "Premium" },
+                    { value: "booster1", label: "Booster 1" },
+                    { value: "booster2", label: "Booster 2" }
+                  ] as const).map((opt) => {
+                    const selected = questionnaire.programChoice === opt.value;
+                    return (
+                      <button
+                        key={opt.value}
+                        type="button"
+                        onClick={() => updateQuestionnaire("programChoice", opt.value)}
+                        className={`rounded-[14px] border px-3 py-2 text-sm transition ${
+                          selected
+                            ? "border-[rgba(201,168,76,0.45)] bg-[rgba(201,168,76,0.12)] text-white"
+                            : "border-white/10 bg-[var(--ls-surface2)] text-[var(--ls-text-muted)] hover:border-white/20"
+                        }`}
+                      >
+                        {opt.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+            <div className="mt-2">
+              <p className="text-sm font-medium text-[var(--ls-text-muted)] mb-2">Analyse petit-déjeuner (0-100)</p>
+              <div className="grid gap-4 md:grid-cols-4">
+                <MetricField
+                  label="Sucres"
+                  type="number"
+                  value={questionnaire.breakfastAnalysis?.sucres ?? 0}
+                  onChange={(value) => updateQuestionnaire("breakfastAnalysis", {
+                    sucres: Number(value),
+                    proteines: questionnaire.breakfastAnalysis?.proteines ?? 0,
+                    hydratation: questionnaire.breakfastAnalysis?.hydratation ?? 0,
+                    fibres: questionnaire.breakfastAnalysis?.fibres ?? 0
+                  })}
+                />
+                <MetricField
+                  label="Protéines"
+                  type="number"
+                  value={questionnaire.breakfastAnalysis?.proteines ?? 0}
+                  onChange={(value) => updateQuestionnaire("breakfastAnalysis", {
+                    sucres: questionnaire.breakfastAnalysis?.sucres ?? 0,
+                    proteines: Number(value),
+                    hydratation: questionnaire.breakfastAnalysis?.hydratation ?? 0,
+                    fibres: questionnaire.breakfastAnalysis?.fibres ?? 0
+                  })}
+                />
+                <MetricField
+                  label="Hydratation"
+                  type="number"
+                  value={questionnaire.breakfastAnalysis?.hydratation ?? 0}
+                  onChange={(value) => updateQuestionnaire("breakfastAnalysis", {
+                    sucres: questionnaire.breakfastAnalysis?.sucres ?? 0,
+                    proteines: questionnaire.breakfastAnalysis?.proteines ?? 0,
+                    hydratation: Number(value),
+                    fibres: questionnaire.breakfastAnalysis?.fibres ?? 0
+                  })}
+                />
+                <MetricField
+                  label="Fibres"
+                  type="number"
+                  value={questionnaire.breakfastAnalysis?.fibres ?? 0}
+                  onChange={(value) => updateQuestionnaire("breakfastAnalysis", {
+                    sucres: questionnaire.breakfastAnalysis?.sucres ?? 0,
+                    proteines: questionnaire.breakfastAnalysis?.proteines ?? 0,
+                    hydratation: questionnaire.breakfastAnalysis?.hydratation ?? 0,
+                    fibres: Number(value)
+                  })}
+                />
+              </div>
+            </div>
+          </SectionCard>
+
+          <SectionCard
             title="Produits recommandés"
             description="Ajoute ou retire des produits du programme de ce bilan."
           >
