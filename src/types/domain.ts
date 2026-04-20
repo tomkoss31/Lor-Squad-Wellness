@@ -307,6 +307,7 @@ export interface WeightLossPaceInsight {
 export type ProspectSource =
   | 'Meta Ads'
   | 'Instagram'
+  | 'Facebook'
   | 'TikTok'
   | 'Bouche à oreille'
   | 'Parrainage'
@@ -356,6 +357,7 @@ export interface ProspectFormInput {
 export const PROSPECT_SOURCES: ProspectSource[] = [
   'Meta Ads',
   'Instagram',
+  'Facebook',
   'TikTok',
   'Bouche à oreille',
   'Parrainage',

@@ -307,7 +307,7 @@ export function DashboardPage() {
           iconColor="var(--ls-gold)"
           iconBg="rgba(184,146,42,0.1)"
           valueColor="var(--ls-gold)"
-          onClick={() => navigate(todayProspects.length > 0 && todayFollowUps.length === 0 ? "/agenda" : "/clients")}
+          onClick={() => navigate("/agenda?filter=today")}
         />
         <CockpitTile
           icon={<ClockIcon />}
@@ -385,7 +385,7 @@ export function DashboardPage() {
         <ColdToWarmWidget
           items={coldToWarm.slice(0, 5)}
           total={coldToWarm.length}
-          onOpenAgenda={() => navigate("/agenda")}
+          onOpenAgenda={() => navigate("/agenda?filter=today")}
         />
       )}
 
@@ -393,7 +393,7 @@ export function DashboardPage() {
       <ProspectsTodayWidget
         todayScheduled={prospectsTodayScheduled}
         todayDone={prospectsTodayDone}
-        onOpenAgenda={() => navigate("/agenda")}
+        onOpenAgenda={() => navigate("/agenda?filter=today")}
         onCreate={() => navigate("/agenda")}
       />
 
