@@ -49,6 +49,29 @@ export function DashboardPage() {
     [metrics.scheduledFollowUps, todayStr]
   );
 
+  // Fix UX (2026-04-20) : inclure les RDV prospects du jour dans le compteur
+  // "RDV aujourd'hui". Avant, on comptait uniquement les follow-ups clients,
+  // alors que le widget "Agenda prospection" affichait déjà des prospects du
+  // jour (valeur incohérente avec la carte cockpit).
+  const todayProspects = useMemo(
+    () =>
+      prospects.filter(
+        (p) => p.status === "scheduled" && p.rdvDate?.slice(0, 10) === todayStr
+      ),
+    [prospects, todayStr]
+  );
+
+  const todayRdvTotal = todayFollowUps.length + todayProspects.length;
+
+  // Prochain RDV du jour : le plus tôt, tous types confondus.
+  const nextRdvToday = useMemo(() => {
+    const all: Array<{ date: string }> = [
+      ...todayFollowUps.map((f) => ({ date: f.dueDate })),
+      ...todayProspects.map((p) => ({ date: p.rdvDate })),
+    ];
+    return all.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0];
+  }, [todayFollowUps, todayProspects]);
+
   const nextFollowUpToday = useMemo(
     () =>
       [...todayFollowUps].sort(
@@ -246,16 +269,20 @@ export function DashboardPage() {
       <div className="dashboard-tiles" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12 }}>
         <CockpitTile
           icon={<CalendarIcon />}
-          value={todayFollowUps.length}
+          value={todayRdvTotal}
           label="RDV aujourd'hui"
-          subtitle={nextFollowUpToday
-            ? `Prochain à ${new Date(nextFollowUpToday.dueDate).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}`
-            : "Aucun RDV"}
+          subtitle={
+            nextRdvToday
+              ? todayProspects.length > 0 && todayFollowUps.length > 0
+                ? `${todayFollowUps.length} client${todayFollowUps.length > 1 ? "s" : ""} · ${todayProspects.length} prospect${todayProspects.length > 1 ? "s" : ""}`
+                : `Prochain à ${new Date(nextRdvToday.date).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}`
+              : "Aucun RDV"
+          }
           borderColor="#B8922A"
           iconColor="var(--ls-gold)"
           iconBg="rgba(184,146,42,0.1)"
           valueColor="var(--ls-gold)"
-          onClick={() => navigate("/clients")}
+          onClick={() => navigate(todayProspects.length > 0 && todayFollowUps.length === 0 ? "/agenda" : "/clients")}
         />
         <CockpitTile
           icon={<ClockIcon />}
