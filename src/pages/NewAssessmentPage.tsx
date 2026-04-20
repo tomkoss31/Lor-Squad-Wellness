@@ -93,6 +93,9 @@ type AssessmentForm = {
   snacksFastFoodPerWeek: number | null;
   /** Chantier bilan updates (2026-04-20) : saveur Formula 1 choisie au tasting. */
   preferredFlavor: string;
+  /** Chantier refonte étape 11 (2026-04-20). */
+  consumesMilk: "yes" | "sometimes" | "no" | "";
+  programChoice: "discovery" | "premium" | "booster1" | "booster2";
   targetWeight: number;
   motivation: number;
   desiredTimeline: string;
@@ -230,6 +233,8 @@ const initialForm: AssessmentForm = {
   customGoal: "",
   snacksFastFoodPerWeek: null,
   preferredFlavor: "",
+  consumesMilk: "" as "yes" | "sometimes" | "no" | "",
+  programChoice: "premium" as "discovery" | "premium" | "booster1" | "booster2",
   targetWeight: 0,
   motivation: 0,
   desiredTimeline: "3 mois",
@@ -758,6 +763,8 @@ export function NewAssessmentPage() {
           ? form.snacksFastFoodPerWeek
           : null,
       preferredFlavor: form.preferredFlavor?.trim() || undefined,
+      consumesMilk: form.consumesMilk ? form.consumesMilk : undefined,
+      programChoice: form.programChoice,
       recommendations: form.recommendations.filter(
         (item) => item.name.trim() || item.contact.trim()
       ),
