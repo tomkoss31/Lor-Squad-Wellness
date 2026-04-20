@@ -1462,12 +1462,19 @@ export function NewAssessmentPage() {
                   </h2>
                 </div>
                 <div style={{ display: "flex", justifyContent: "center" }}>
-                  <img
-                    src="/images/assessment/saveurs-formula1.png"
-                    alt="Saveurs Formula 1 disponibles"
-                    style={{ maxWidth: 500, width: "100%", height: "auto", borderRadius: 14 }}
-                    onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
-                  />
+                  {/* WebP primary (76 KB) + PNG fallback (270 KB) — Chantier
+                      optimize-bilan-images (2026-04-20). */}
+                  <picture>
+                    <source srcSet="/images/assessment/saveurs-formula1.webp" type="image/webp" />
+                    <img
+                      src="/images/assessment/saveurs-formula1.png"
+                      alt="Saveurs Formula 1 disponibles"
+                      loading="lazy"
+                      decoding="async"
+                      style={{ maxWidth: 500, width: "100%", height: "auto", borderRadius: 14, display: "block" }}
+                      onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+                    />
+                  </picture>
                 </div>
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "center" }}>
                   {[
@@ -1508,12 +1515,19 @@ export function NewAssessmentPage() {
           {currentStep === 9 && (
             <VisualStepBoundary title="Notre concept de rééquilibrage alimentaire">
               <div style={{ display: "flex", justifyContent: "center" }}>
-                <img
-                  src="/images/assessment/petit-dejeuner-concept.png"
-                  alt="Notre concept de rééquilibrage alimentaire"
-                  style={{ maxWidth: 900, width: "100%", height: "auto", borderRadius: 14 }}
-                  onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
-                />
+                {/* WebP primary (118 KB) + PNG fallback (513 KB) — Chantier
+                    optimize-bilan-images (2026-04-20). */}
+                <picture>
+                  <source srcSet="/images/assessment/petit-dejeuner-concept.webp" type="image/webp" />
+                  <img
+                    src="/images/assessment/petit-dejeuner-concept.png"
+                    alt="Notre concept de rééquilibrage alimentaire"
+                    loading="lazy"
+                    decoding="async"
+                    style={{ maxWidth: 900, width: "100%", height: "auto", borderRadius: 14, display: "block" }}
+                    onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+                  />
+                </picture>
               </div>
             </VisualStepBoundary>
           )}
