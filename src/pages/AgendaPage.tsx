@@ -10,17 +10,22 @@ import { useToast, buildSupabaseErrorToast } from "../context/ToastContext";
 import { createGoogleCalendarLink } from "../lib/googleCalendar";
 import type { Client, FollowUp, Prospect, ProspectStatus } from "../types/domain";
 import { PROSPECT_STATUS_LABELS } from "../types/domain";
+import { getFollowUpsDue, type FollowUpDueItem } from "../lib/followUpProtocolScheduler";
+import { FOLLOW_UP_PROTOCOL, type FollowUpStep } from "../data/followUpProtocol";
+import { logSupabaseFollowUpProtocolStep } from "../services/supabaseService";
+import { FollowUpStepModal } from "../components/follow-up/FollowUpStepModal";
 
 type DateFilter = "today" | "week" | "all";
 type StatusFilter = "upcoming" | "done" | "converted" | "cold" | "lost_no_show" | "all";
-// Chantier Agenda unifié (2026-04-20) : 3 onglets au-dessus des filtres date/statut
-type EntityFilter = "all" | "clients" | "prospects";
+// Chantier Agenda unifié (2026-04-20) : onglets au-dessus des filtres date/statut
+// + onglet Suivis ajouté dans le chantier Protocole Agenda+Dashboard.
+type EntityFilter = "all" | "clients" | "prospects" | "followups";
 
-// Entrée unifiée pour la liste : soit un follow-up client, soit un prospect.
-// Conserve l'entité d'origine pour router le click au bon endroit.
+// Entrée unifiée pour la liste : follow-up client, prospect, OU suivi protocole.
 type AgendaEntry =
   | { kind: "client"; id: string; date: string; distributorId: string; followUp: FollowUp; client: Client }
-  | { kind: "prospect"; id: string; date: string; distributorId: string; prospect: Prospect };
+  | { kind: "prospect"; id: string; date: string; distributorId: string; prospect: Prospect }
+  | { kind: "protocol"; id: string; date: string; distributorId: string; due: FollowUpDueItem };
 
 function startOfDay(d: Date): Date {
   const copy = new Date(d);
@@ -87,15 +92,21 @@ const AGENDA_FILTER_KEY = "lorsquad.agenda.filter";
 const AGENDA_ENTITY_KEY = "lorsquad.agenda.entity-filter";
 
 export function AgendaPage() {
-  const { prospects, clients, followUps, users, currentUser, deleteProspect, updateProspect } = useAppContext();
+  const {
+    prospects, clients, followUps, users, currentUser,
+    deleteProspect, updateProspect,
+    followUpProtocolLogs, refreshFollowUpProtocolLogs,
+  } = useAppContext();
   const { push: pushToast } = useToast();
   const navigate = useNavigate();
 
   // Nav Dashboard → Agenda (Chantier 3 / 2026-04-20) : si on arrive via
   // ?filter=today (depuis la carte Dashboard "RDV aujourd'hui" ou "Agenda du
-  // jour"), pré-sélectionner le filtre journée.
+  // jour"), pré-sélectionner le filtre journée. ?tab=followups arrive depuis
+  // le widget "Voir tout les suivis" du dashboard.
   const [searchParams] = useSearchParams();
   const initialDateFilter: DateFilter = searchParams.get("filter") === "today" ? "today" : "all";
+  const initialEntityFromQuery = searchParams.get("tab") === "followups" ? "followups" : null;
   const [dateFilter, setDateFilter] = useState<DateFilter>(initialDateFilter);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("upcoming");
   // Chantier Cold (2026-04-19) : filtre admin par distributeur.
@@ -107,14 +118,19 @@ export function AgendaPage() {
       return currentUser?.role === "admin" ? "mine" : "all";
     }
   });
-  // Chantier Agenda unifié (2026-04-20) : onglet entité (tous / clients / prospects).
+  // Chantier Agenda unifié (2026-04-20) : onglet entité (tous / clients /
+  // prospects / suivis). La query ?tab=followups prime sur localStorage.
   const [entityFilter, setEntityFilter] = useState<EntityFilter>(() => {
+    if (initialEntityFromQuery) return initialEntityFromQuery;
     try {
       const stored = localStorage.getItem(AGENDA_ENTITY_KEY);
-      if (stored === "all" || stored === "clients" || stored === "prospects") return stored;
+      if (stored === "all" || stored === "clients" || stored === "prospects" || stored === "followups") return stored;
     } catch { /* ignore */ }
     return "all";
   });
+  // Chantier Protocole Agenda+Dashboard (2026-04-20) : popup suivi modale
+  const [openProtocol, setOpenProtocol] = useState<FollowUpDueItem | null>(null);
+  const [protocolBusy, setProtocolBusy] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<Prospect | undefined>(undefined);
   const [detailProspect, setDetailProspect] = useState<Prospect | null>(null);
@@ -194,8 +210,40 @@ export function AgendaPage() {
       }
     }
 
+    // 3. Suivis protocole — Chantier Protocole Agenda+Dashboard (2026-04-20)
+    // Scope strictement personnel (getFollowUpsDue filtre déjà sur currentUserId).
+    // includeUpcoming=true pour que l'onglet Suivis montre aussi les prochains.
+    if ((entityFilter === "all" || entityFilter === "followups") && currentUser) {
+      const dueItems = getFollowUpsDue(clients, currentUser.id, followUpProtocolLogs, {
+        now,
+        includeUpcoming: true,
+        maxDaysUpcoming: 30,
+      });
+      for (const item of dueItems) {
+        // Filtre date uniforme avec le reste (today/week) — un suivi en retard
+        // d'hier reste visible aujourd'hui.
+        const d = item.dueDate;
+        if (dateFilter === "today") {
+          const isTodayOrLate = item.status === "due_today" || item.status === "overdue_1d" || item.status === "overdue_more";
+          if (!isTodayOrLate) continue;
+        } else if (dateFilter === "week") {
+          // Visible si dû aujourd'hui, en retard, ou dû dans la semaine courante.
+          const inRange = d >= todayStart && d <= weekEnd;
+          const isLate = item.status === "overdue_1d" || item.status === "overdue_more";
+          if (!inRange && !isLate) continue;
+        }
+        entries.push({
+          kind: "protocol",
+          id: `${item.client.id}-${item.stepId}`,
+          date: item.dueDate.toISOString(),
+          distributorId: item.client.distributorId,
+          due: item,
+        });
+      }
+    }
+
     return entries;
-  }, [entityFilter, prospects, followUps, clientsById, isInScope, statusFilter, dateFilter]);
+  }, [entityFilter, prospects, followUps, clientsById, isInScope, statusFilter, dateFilter, clients, currentUser, followUpProtocolLogs]);
 
   const grouped = useMemo(() => {
     const now = new Date();
@@ -241,8 +289,33 @@ export function AgendaPage() {
       if (!inDateRange(p.rdvDate)) continue;
       prospectCount += 1;
     }
-    return { clients: clientCount, prospects: prospectCount, all: clientCount + prospectCount };
-  }, [followUps, prospects, clientsById, isInScope, statusFilter, dateFilter]);
+    // Suivis protocole — Chantier Protocole Agenda+Dashboard (2026-04-20).
+    let protocolCount = 0;
+    if (currentUser) {
+      const dueItems = getFollowUpsDue(clients, currentUser.id, followUpProtocolLogs, {
+        now,
+        includeUpcoming: true,
+        maxDaysUpcoming: 30,
+      });
+      for (const item of dueItems) {
+        if (dateFilter === "today") {
+          if (item.status === "due_today" || item.status === "overdue_1d" || item.status === "overdue_more") protocolCount += 1;
+        } else if (dateFilter === "week") {
+          const inRange = item.dueDate >= todayStart && item.dueDate <= weekEnd;
+          const isLate = item.status === "overdue_1d" || item.status === "overdue_more";
+          if (inRange || isLate) protocolCount += 1;
+        } else {
+          protocolCount += 1;
+        }
+      }
+    }
+    return {
+      clients: clientCount,
+      prospects: prospectCount,
+      followups: protocolCount,
+      all: clientCount + prospectCount + protocolCount,
+    };
+  }, [followUps, prospects, clientsById, isInScope, statusFilter, dateFilter, clients, currentUser, followUpProtocolLogs]);
 
   // Perf (2026-04-20) : lookup O(1) par distributorId au lieu d'un `users.find`
   // linéaire par carte à chaque render. Stable tant que la liste users ne change pas.
@@ -410,6 +483,13 @@ export function AgendaPage() {
           onClick={() => setEntityFilter("prospects")}
           dot="var(--ls-purple)"
         />
+        <EntityTab
+          label="Suivis"
+          count={entityCounts.followups}
+          active={entityFilter === "followups"}
+          onClick={() => setEntityFilter("followups")}
+          dot="var(--ls-teal)"
+        />
       </div>
 
       {/* Filtres */}
@@ -475,27 +555,43 @@ export function AgendaPage() {
               {label} · {items.length} RDV
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              {items.map((entry) => entry.kind === "prospect" ? (
-                <div key={`p-${entry.id}`} style={{ display: "flex", alignItems: "stretch" }}>
-                  <div style={{ width: 3, borderRadius: "3px 0 0 3px", background: "var(--ls-purple)", flexShrink: 0 }} />
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <ProspectCard
-                      prospect={entry.prospect}
+              {items.map((entry) => {
+                if (entry.kind === "prospect") {
+                  return (
+                    <div key={`p-${entry.id}`} style={{ display: "flex", alignItems: "stretch" }}>
+                      <div style={{ width: 3, borderRadius: "3px 0 0 3px", background: "var(--ls-purple)", flexShrink: 0 }} />
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <ProspectCard
+                          prospect={entry.prospect}
+                          ownerName={currentUser?.role === "admin" ? ownerNameMap.get(entry.distributorId) : undefined}
+                          showDate={label !== "Aujourd'hui" && label !== "Demain"}
+                          onClick={handleCardClick}
+                        />
+                      </div>
+                    </div>
+                  );
+                }
+                if (entry.kind === "client") {
+                  return (
+                    <ClientFollowUpCard
+                      key={`c-${entry.id}`}
+                      followUp={entry.followUp}
+                      client={entry.client}
                       ownerName={currentUser?.role === "admin" ? ownerNameMap.get(entry.distributorId) : undefined}
                       showDate={label !== "Aujourd'hui" && label !== "Demain"}
-                      onClick={handleCardClick}
                     />
-                  </div>
-                </div>
-              ) : (
-                <ClientFollowUpCard
-                  key={`c-${entry.id}`}
-                  followUp={entry.followUp}
-                  client={entry.client}
-                  ownerName={currentUser?.role === "admin" ? ownerNameMap.get(entry.distributorId) : undefined}
-                  showDate={label !== "Aujourd'hui" && label !== "Demain"}
-                />
-              ))}
+                  );
+                }
+                // kind === "protocol"
+                return (
+                  <ProtocolAgendaCard
+                    key={`proto-${entry.id}`}
+                    item={entry.due}
+                    showDate={label !== "Aujourd'hui" && label !== "Demain"}
+                    onOpen={() => setOpenProtocol(entry.due)}
+                  />
+                );
+              })}
             </div>
           </div>
         ))
@@ -538,6 +634,149 @@ export function AgendaPage() {
           onDelete={() => handleDelete(detailProspect)}
         />
       )}
+
+      {/* Modal protocole — Chantier Protocole Agenda+Dashboard (2026-04-20) */}
+      {openProtocol && (() => {
+        const step: FollowUpStep | undefined = FOLLOW_UP_PROTOCOL.find((s) => s.id === openProtocol.stepId);
+        if (!step) return null;
+        const existingLog = followUpProtocolLogs.find(
+          (l) => l.clientId === openProtocol.client.id && l.stepId === openProtocol.stepId
+        );
+        return (
+          <FollowUpStepModal
+            step={step}
+            client={openProtocol.client}
+            existingLog={existingLog}
+            onClose={() => setOpenProtocol(null)}
+            onMarkSent={async () => {
+              if (!currentUser) return;
+              setProtocolBusy(true);
+              try {
+                await logSupabaseFollowUpProtocolStep({
+                  clientId: openProtocol.client.id,
+                  coachId: currentUser.id,
+                  stepId: openProtocol.stepId,
+                });
+                await refreshFollowUpProtocolLogs();
+                pushToast({ tone: "success", title: `${openProtocol.stepShortTitle} marqué envoyé ✓` });
+                setOpenProtocol(null);
+              } catch (err) {
+                pushToast(
+                  buildSupabaseErrorToast(
+                    err,
+                    "Impossible d'enregistrer l'envoi. Vérifie la migration follow_up_protocol_log."
+                  )
+                );
+              } finally {
+                setProtocolBusy(false);
+              }
+            }}
+            busy={protocolBusy}
+          />
+        );
+      })()}
+    </div>
+  );
+}
+
+// ─── Carte RDV protocole (agenda unifié / onglet Suivis) ─────────────────
+function ProtocolAgendaCard({
+  item,
+  showDate,
+  onOpen,
+}: {
+  item: FollowUpDueItem;
+  showDate: boolean;
+  onOpen: () => void;
+}) {
+  const timeLabel = (() => {
+    try {
+      return item.dueDate.toLocaleDateString("fr-FR", { day: "2-digit", month: "short" });
+    } catch {
+      return "—";
+    }
+  })();
+  const isLate = item.status === "overdue_1d" || item.status === "overdue_more";
+  const lateLabel = item.status === "overdue_1d"
+    ? "En retard 1j"
+    : item.status === "overdue_more"
+      ? `En retard ${item.daysLate}j`
+      : null;
+
+  return (
+    <div style={{ display: "flex", alignItems: "stretch" }}>
+      <div
+        style={{
+          width: 3,
+          borderRadius: "3px 0 0 3px",
+          background: isLate ? "var(--ls-coral)" : "var(--ls-teal)",
+          flexShrink: 0,
+        }}
+      />
+      <button
+        type="button"
+        onClick={onOpen}
+        style={{
+          flex: 1,
+          minWidth: 0,
+          display: "flex",
+          alignItems: "center",
+          gap: 14,
+          padding: "12px 16px",
+          background: "var(--ls-surface)",
+          border: "1px solid var(--ls-border)",
+          borderLeft: "none",
+          borderRadius: "0 14px 14px 0",
+          color: "inherit",
+          cursor: "pointer",
+          fontFamily: "'DM Sans', sans-serif",
+          textAlign: "left",
+          transition: "border-color 0.15s",
+        }}
+        onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--ls-teal)"; }}
+        onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--ls-border)"; }}
+      >
+        <div style={{ minWidth: 60, textAlign: "center", flexShrink: 0 }}>
+          <div style={{ fontFamily: "Syne, sans-serif", fontWeight: 700, fontSize: 14, color: "var(--ls-text)" }}>
+            J+{item.dayOffset}
+          </div>
+          {showDate && (
+            <div style={{ fontSize: 11, color: "var(--ls-text-hint)", marginTop: 2 }}>
+              {timeLabel}
+            </div>
+          )}
+        </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 14, fontWeight: 600, color: "var(--ls-text)", marginBottom: 2, display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+            <span>{item.client.firstName} {item.client.lastName}</span>
+            {lateLabel && (
+              <span
+                style={{
+                  padding: "1px 7px",
+                  borderRadius: 6,
+                  fontSize: 10,
+                  fontWeight: 700,
+                  background: "rgba(220,38,38,0.1)",
+                  color: "var(--ls-coral)",
+                  letterSpacing: "0.02em",
+                }}
+              >
+                {lateLabel}
+              </span>
+            )}
+          </div>
+          <div style={{ fontSize: 11, color: "var(--ls-text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            {item.stepIconEmoji} {item.stepShortTitle}
+          </div>
+        </div>
+        <span
+          className="ls-badge"
+          data-tone="teal"
+          style={{ flexShrink: 0 }}
+        >
+          Suivi
+        </span>
+      </button>
     </div>
   );
 }
