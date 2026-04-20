@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { Link } from "react-router-dom";
 import type { Prospect } from "../../types/domain";
 import { PROSPECT_STATUS_LABELS } from "../../types/domain";
@@ -45,7 +46,7 @@ function formatShortDate(iso: string): string {
   }
 }
 
-export function ProspectCard({ prospect, ownerName, showDate = false, onClick }: ProspectCardProps) {
+function ProspectCardImpl({ prospect, ownerName, showDate = false, onClick }: ProspectCardProps) {
   const sourceStyle = SOURCE_COLORS[prospect.source] ?? SOURCE_COLORS["Autre"];
   const statusStyle = STATUS_COLORS[prospect.status];
   const timeLabel = showDate ? formatShortDate(prospect.rdvDate) : formatTime(prospect.rdvDate);
@@ -164,3 +165,10 @@ export function ProspectCard({ prospect, ownerName, showDate = false, onClick }:
 
   return <div style={rowStyle}>{content}</div>;
 }
+
+// Perf (2026-04-20) : React.memo évite le re-render des N cartes quand le
+// parent (AgendaPage) re-render pour une raison non liée à la carte
+// (filtre cliqué, update d'un autre prospect, etc.). Fonctionne à condition
+// que `prospect`, `ownerName`, `showDate`, `onClick` soient des références
+// stables côté parent — ce qui est le cas depuis le chantier INP.
+export const ProspectCard = memo(ProspectCardImpl);

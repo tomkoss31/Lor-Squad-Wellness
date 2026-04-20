@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { startTransition, useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
@@ -101,7 +101,11 @@ export function AgendaPage() {
     try { localStorage.setItem(AGENDA_FILTER_KEY, agendaFilter); } catch { /* ignore */ }
   }, [agendaFilter]);
 
-  const now = new Date();
+  // Perf (2026-04-20) : on NE créé plus `const now = new Date()` dans le body
+  // du composant. Chaque render créait une nouvelle référence Date qui cassait
+  // les deps de `filtered`/`grouped` → invalidation systématique des memos.
+  // Les bornes (todayStart, todayEnd, weekEnd) sont désormais calculées à
+  // l'intérieur de chaque memo, sans être exposées dans les deps.
 
   // Application du filtre distributeur AVANT les autres filtres.
   // Non-admin : toujours scopé sur son id (RLS s'en charge de toute façon).
@@ -116,6 +120,7 @@ export function AgendaPage() {
   }, [prospects, agendaFilter, currentUser]);
 
   const filtered = useMemo(() => {
+    const now = new Date();
     const todayStart = startOfDay(now);
     const todayEnd = endOfDay(now);
     const weekEnd = endOfWeek(now);
@@ -131,9 +136,10 @@ export function AgendaPage() {
       if (dateFilter === "week")  return d >= todayStart && d <= weekEnd;
       return true; // "all"
     });
-  }, [distributorFiltered, statusFilter, dateFilter, now]);
+  }, [distributorFiltered, statusFilter, dateFilter]);
 
   const grouped = useMemo(() => {
+    const now = new Date();
     const map = new Map<string, Prospect[]>();
     filtered.forEach((p) => {
       const g = groupLabel(p.rdvDate, now);
@@ -145,13 +151,22 @@ export function AgendaPage() {
       arr.sort((a, b) => new Date(a.rdvDate).getTime() - new Date(b.rdvDate).getTime());
     }
     return GROUP_ORDER.filter((g) => map.has(g)).map((g) => ({ label: g, items: map.get(g)! }));
-  }, [filtered, now]);
+  }, [filtered]);
 
-  function ownerName(distributorId: string): string | undefined {
-    return users.find((u) => u.id === distributorId)?.name;
-  }
+  // Perf (2026-04-20) : lookup O(1) par distributorId au lieu d'un `users.find`
+  // linéaire par carte à chaque render. Stable tant que la liste users ne change pas.
+  const ownerNameMap = useMemo(
+    () => new Map(users.map((u) => [u.id, u.name])),
+    [users]
+  );
 
-  async function handleQuickStatus(prospect: Prospect, nextStatus: ProspectStatus) {
+  // Perf (2026-04-20) : handler stable pour ProspectCard.onClick. Sans ça,
+  // la flèche inline était recréée à chaque render, défaisant React.memo côté carte.
+  const handleCardClick = useCallback((prospect: Prospect) => {
+    setDetailProspect(prospect);
+  }, []);
+
+  const handleQuickStatus = useCallback(async (prospect: Prospect, nextStatus: ProspectStatus) => {
     try {
       await updateProspect(prospect.id, { status: nextStatus });
       pushToast({ tone: "success", title: `Statut → ${PROSPECT_STATUS_LABELS[nextStatus]}` });
@@ -159,10 +174,10 @@ export function AgendaPage() {
     } catch (err) {
       pushToast(buildSupabaseErrorToast(err, "Impossible de mettre à jour le statut."));
     }
-  }
+  }, [updateProspect, pushToast]);
 
   // Chantier Cold : mettre en froid avec date de réchauffement + raison
-  async function handleSetCold(prospect: Prospect, coldUntil: string, coldReason: string) {
+  const handleSetCold = useCallback(async (prospect: Prospect, coldUntil: string, coldReason: string) => {
     try {
       await updateProspect(prospect.id, {
         status: "cold",
@@ -178,10 +193,10 @@ export function AgendaPage() {
     } catch (err) {
       pushToast(buildSupabaseErrorToast(err, "Impossible de mettre le prospect en pause."));
     }
-  }
+  }, [updateProspect, pushToast]);
 
   // Réactiver un prospect cold : status → scheduled + cold_until + cold_reason à null
-  async function handleReactivate(prospect: Prospect) {
+  const handleReactivate = useCallback(async (prospect: Prospect) => {
     try {
       await updateProspect(prospect.id, {
         status: "scheduled",
@@ -189,16 +204,23 @@ export function AgendaPage() {
         coldReason: null as unknown as string,
       });
       pushToast({ tone: "success", title: "Prospect réactivé", message: "Pense à fixer une date de RDV." });
-      setDetailProspect(null);
-      // Ouvre le form d'édition pour saisir la nouvelle date
-      setEditing(prospect);
-      setShowForm(true);
+      // Perf (2026-04-20) : React 18 n'autobatch pas après un await hors d'un
+      // event handler natif. startTransition regroupe les 3 setState en une seule
+      // passe de render au lieu de 3, évitant des recomputes memo en cascade.
+      startTransition(() => {
+        setDetailProspect(null);
+        setEditing(prospect);
+        setShowForm(true);
+      });
     } catch (err) {
       pushToast(buildSupabaseErrorToast(err, "Impossible de réactiver le prospect."));
     }
-  }
+  }, [updateProspect, pushToast]);
 
-  async function handleDelete(prospect: Prospect) {
+  const handleDelete = useCallback(async (prospect: Prospect) => {
+    // TODO (perf/UX) : remplacer window.confirm (bloque le thread principal
+    // synchrone) par une modale custom ou une toast annulable. Pour l'instant
+    // on garde le confirm natif — coûteux seulement sur l'action delete.
     if (!window.confirm(`Supprimer le RDV avec ${prospect.firstName} ${prospect.lastName} ?`)) return;
     try {
       await deleteProspect(prospect.id);
@@ -207,7 +229,7 @@ export function AgendaPage() {
     } catch (err) {
       pushToast(buildSupabaseErrorToast(err, "Impossible de supprimer ce prospect."));
     }
-  }
+  }, [deleteProspect, pushToast]);
 
   return (
     <div className="space-y-5">
@@ -315,9 +337,9 @@ export function AgendaPage() {
                 <ProspectCard
                   key={p.id}
                   prospect={p}
-                  ownerName={currentUser?.role === "admin" ? ownerName(p.distributorId) : undefined}
+                  ownerName={currentUser?.role === "admin" ? ownerNameMap.get(p.distributorId) : undefined}
                   showDate={label !== "Aujourd'hui" && label !== "Demain"}
-                  onClick={(prospect) => setDetailProspect(prospect)}
+                  onClick={handleCardClick}
                 />
               ))}
             </div>
@@ -344,7 +366,14 @@ export function AgendaPage() {
         <ProspectDetailModal
           prospect={detailProspect}
           onClose={() => setDetailProspect(null)}
-          onEdit={() => { setEditing(detailProspect); setShowForm(true); setDetailProspect(null); }}
+          onEdit={() => {
+            // Perf (2026-04-20) : batch les 3 setState en une seule passe de render.
+            startTransition(() => {
+              setEditing(detailProspect);
+              setShowForm(true);
+              setDetailProspect(null);
+            });
+          }}
           onStartAssessment={() => navigate(`/assessments/new?prospectId=${detailProspect.id}`)}
           onOpenClient={() => {
             if (detailProspect.convertedClientId) navigate(`/clients/${detailProspect.convertedClientId}`);
@@ -404,11 +433,12 @@ function ProspectDetailModal({
   onDelete: () => void;
 }) {
   const [showColdForm, setShowColdForm] = useState(false);
-  const defaultColdDate = (() => {
+  // Perf (2026-04-20) : mémoïsé pour éviter le recalcul à chaque render de la modal.
+  const defaultColdDate = useMemo(() => {
     const d = new Date();
     d.setDate(d.getDate() + 90); // +90 jours par défaut
     return d.toISOString().slice(0, 10);
-  })();
+  }, []);
   const [coldDate, setColdDate] = useState(defaultColdDate);
   const [coldReason, setColdReason] = useState("");
   const rdvDisplay = (() => {
