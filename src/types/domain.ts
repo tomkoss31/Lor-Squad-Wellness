@@ -146,6 +146,13 @@ export interface AssessmentQuestionnaire {
   recommendationsContacted: boolean;
   // Étape 9 story petit-déjeuner (Chantier 6)
   breakfastAnalysis?: BreakfastAnalysis;
+  // Chantier bilan updates (2026-04-20)
+  /** Si objectiveFocus === "Autre", texte libre saisi par le client. */
+  customGoal?: string;
+  /** Nombre de snacks / fast-food / restos par semaine (budget alimentation). */
+  snacksFastFoodPerWeek?: number | null;
+  /** Saveur de Formula 1 choisie lors de la dégustation (étape dédiée). */
+  preferredFlavor?: string;
 }
 
 export interface AssessmentRecord {
@@ -200,6 +207,10 @@ export interface Client {
   // des listes de réassort (dashboard, suivi PV, alertes). Le reste (bilans,
   // RDV, body scan, messages) reste normal.
   freePvTracking?: boolean;
+  // Chantier bilan updates (2026-04-20) : note libre "À savoir sur ce client"
+  // (loisirs, préférences, anecdotes — cheval, piscine, Mars, etc.).
+  // Distinct du champ notes qui est déjà utilisé pour les notes coach par bilan.
+  generalNote?: string;
 }
 
 export interface FollowUp {
