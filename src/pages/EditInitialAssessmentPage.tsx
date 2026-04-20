@@ -145,7 +145,16 @@ function buildEditableQuestionnaire(questionnaire: AssessmentQuestionnaire): Ass
     motivation: questionnaire.motivation ?? 0,
     desiredTimeline: questionnaire.desiredTimeline ?? "",
     recommendations: questionnaire.recommendations ?? [],
-    recommendationsContacted: questionnaire.recommendationsContacted ?? false
+    recommendationsContacted: questionnaire.recommendationsContacted ?? false,
+    // Audit 2026-04-20 : préserver les champs introduits récemment.
+    // L'Edit page n'expose pas encore d'UI pour les éditer, mais sans ce
+    // pass-through le save écraserait les valeurs saisies au bilan initial.
+    breakfastAnalysis: questionnaire.breakfastAnalysis,
+    customGoal: questionnaire.customGoal,
+    snacksFastFoodPerWeek: questionnaire.snacksFastFoodPerWeek,
+    preferredFlavor: questionnaire.preferredFlavor,
+    consumesMilk: questionnaire.consumesMilk,
+    programChoice: questionnaire.programChoice
   };
 }
 
