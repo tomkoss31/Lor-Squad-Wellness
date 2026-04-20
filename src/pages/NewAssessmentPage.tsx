@@ -1,6 +1,7 @@
 ﻿import { useState, type ReactNode } from "react";
-import { lazy } from "react";
-import { Suspense } from "react";
+// lazy retiré — Chantier nettoyage bilan (2026-04-20)
+// Chantier nettoyage bilan (2026-04-20) : Suspense retiré — LazyMorningRoutineCard
+// supprimé de l'étape "Notre concept" qui n'affiche plus que l'image.
 import { StepRail } from "../components/assessment/StepRail";
 import { useEffect } from "react";
 import { useRef } from "react";
@@ -334,6 +335,10 @@ function clearAssessmentDraft() {
 // - étape "Routine matin" → "Notre concept de rééquilibrage alimentaire"
 // - suppression de "Hydratation & routine du matin"
 // - insertion de "Dégustation" et "Reconnaissance" après "Petit-déjeuner"
+// Chantier nettoyage bilan (2026-04-20) :
+// - Supprimé "Références de suivi"
+// - Supprimé "Reconnaissance"
+// Total étapes : 13 (0-12).
 const steps = [
   "Informations client",             // 0
   "Habitudes de vie et repas",       // 1
@@ -341,15 +346,13 @@ const steps = [
   "Santé, objectif, activité et freins", // 3
   "Composition des repas",           // 4
   "Body scan",                       // 5
-  "Références de suivi",             // 6
-  "Recommandations",                 // 7
-  "Petit-déjeuner",                  // 8
-  "Dégustation",                     // 9  (NEW)
-  "Reconnaissance",                  // 10 (NEW)
-  "Notre concept de rééquilibrage alimentaire", // 11 (renommé de "Routine matin")
-  "Programme proposé",               // 12 (inchangé — chantier dédié plus tard)
-  "Suite du suivi",                  // 13 (ancien "Hydratation" supprimé)
-  "Résumé du rendez-vous"            // 14
+  "Recommandations",                 // 6  (ex 7)
+  "Petit-déjeuner",                  // 7  (ex 8)
+  "Dégustation",                     // 8  (ex 9)
+  "Notre concept de rééquilibrage alimentaire", // 9  (ex 11, sans LazyMorningRoutineCard)
+  "Programme proposé",               // 10 (ex 12)
+  "Suite du suivi",                  // 11 (ex 13)
+  "Résumé du rendez-vous"            // 12 (ex 14)
 ];
 
 const timelineOptions = [
@@ -369,11 +372,6 @@ const PROGRAM_INCLUDED_PRODUCT_IDS: Record<string, string[]> = {
   "p-booster-2": ["aloe-vera", "the-51g", "formula-1", "pdm", "phyto-brule-graisse"]
 };
 
-const LazyMorningRoutineCard = lazy(() =>
-  import("../components/education/MorningRoutineCard").then((module) => ({
-    default: module.MorningRoutineCard
-  }))
-);
 
 
 export function NewAssessmentPage() {
@@ -521,80 +519,9 @@ export function NewAssessmentPage() {
   const bodyFatKg = estimateBodyFatKg(form.weight, form.bodyFat);
   const musclePercent = estimateMuscleMassPercent(form.weight, form.muscleMass);
   const hydrationKg = estimateHydrationKg(form.weight, form.hydration);
-  const bodyFatTarget = getBodyFatTargetRange(form.sex, form.objective);
-  const hydrationReference = getHydrationReference(form.sex);
-  const weightTargetLabel =
-    form.objective === "weight-loss" && form.targetWeight > 0
-      ? `${formatValue(form.targetWeight, "kg")}`
-      : form.objective === "sport"
-        ? "Base a consolider"
-        : "À définir";
-  const weightGapLabel =
-    form.objective === "weight-loss" && form.targetWeight > 0
-      ? form.weight > form.targetWeight
-        ? `${formatSignedValue(form.targetWeight - form.weight, "kg")}`
-        : "Dans la cible"
-      : "Base du jour";
-  const bodyFatTargetLabel = `${bodyFatTarget.min}-${bodyFatTarget.max} %`;
-  const bodyFatGapLabel = getRangeGapLabel(form.bodyFat, bodyFatTarget, "%");
-  const hydrationTargetLabel = `${hydrationReference.min}-${hydrationReference.max} %`;
-  const hydrationGapLabel = getRangeGapLabel(form.hydration, hydrationReference, "%");
-  const visceralTargetLabel = "0-6";
-  const visceralGapLabel =
-    form.visceralFat > 6 ? `+${formatRawNumber(form.visceralFat - 6)}` : "Dans le repère";
-  const comparisonRows = [
-    {
-      label: "Poids",
-      initial: formatValue(form.weight, "kg"),
-      current: formatValue(form.weight, "kg"),
-      target: weightTargetLabel,
-      gap: weightGapLabel,
-      priority:
-        form.objective === "weight-loss" && form.targetWeight > 0
-          ? form.weight > form.targetWeight
-            ? "A reduire progressivement"
-            : "Dans l'objectif"
-          : "Base de référence",
-      tone: "blue" as const
-    },
-    {
-      label: "Masse grasse",
-      initial: `${formatRawNumber(form.bodyFat)} %`,
-      current: `${formatRawNumber(form.bodyFat)} %`,
-      target: bodyFatTargetLabel,
-      gap: bodyFatGapLabel,
-      priority: getBodyFatPriority(form.bodyFat, bodyFatTarget),
-      tone: "red" as const
-    },
-    {
-      label: "Masse musculaire",
-      initial: formatValue(form.muscleMass, "kg"),
-      current: formatValue(form.muscleMass, "kg"),
-      target: form.objective === "sport" ? "A developper" : "A preserver",
-      gap: `${formatRawNumber(musclePercent)} % du poids`,
-      priority:
-        form.objective === "sport" ? "A soutenir dans le suivi" : "A preserver",
-      tone: "green" as const
-    },
-    {
-      label: "Hydratation",
-      initial: `${formatRawNumber(form.hydration)} %`,
-      current: `${formatRawNumber(form.hydration)} %`,
-      target: hydrationTargetLabel,
-      gap: hydrationGapLabel,
-      priority: getHydrationPriority(form.hydration, hydrationReference),
-      tone: "blue" as const
-    },
-    {
-      label: "Graisse viscérale",
-      initial: formatRawNumber(form.visceralFat),
-      current: formatRawNumber(form.visceralFat),
-      target: visceralTargetLabel,
-      gap: visceralGapLabel,
-      priority: getVisceralPriority(form.visceralFat),
-      tone: "amber" as const
-    }
-  ];
+  // Chantier nettoyage bilan (2026-04-20) : les helpers body-fat / hydratation
+  // / comparisonRows alimentaient l'étape "Références de suivi" supprimée,
+  // donc retirés (non utilisés ailleurs dans le bilan).
   const recommendationPlan = buildAssessmentRecommendationPlan({
     sex: form.sex,
     objective: form.objective,
@@ -1502,52 +1429,19 @@ export function NewAssessmentPage() {
             </div>
           )}
 
+          {/* Chantier nettoyage bilan (2026-04-20) : "Références de suivi"
+              supprimée de la numérotation. Les index ci-dessous sont décalés. */}
+
           {currentStep === 6 && (
-            <div className="space-y-4">
-              <Card className="space-y-6">
-                <div className="flex flex-wrap items-start justify-between gap-4">
-                  <div className="max-w-3xl">
-                    <p className="eyebrow-label">Références de suivi</p>
-                    <h2 className="mt-3 text-3xl text-white md:text-[2.6rem]">
-                      Lecture simple des valeurs de départ et des priorités
-                    </h2>
-                    <p className="mt-3 max-w-2xl text-sm leading-7 text-[var(--ls-text-muted)]">
-                      On compare la base du jour, la cible et les ecarts utiles pour rendre le suivi
-                      plus simple a expliquer.
-                    </p>
-                  </div>
-                  <StatusBadge label="Lecture comparative" tone="green" />
-                </div>
-
-                <div className="grid gap-3">
-                  {comparisonRows.map((row) => (
-                    <ReferenceComparisonRow
-                      key={row.label}
-                      label={row.label}
-                      initial={row.initial}
-                      current={row.current}
-                      target={row.target}
-                      gap={row.gap}
-                      priority={row.priority}
-                      tone={row.tone}
-                    />
-                  ))}
-                </div>
-
-              </Card>
-            </div>
+            <RecommendationStepCard
+              recommendations={form.recommendations}
+              recommendationsContacted={form.recommendationsContacted}
+              onChange={updateRecommendation}
+              onToggleContacted={(value) => update("recommendationsContacted", value)}
+            />
           )}
 
-            {currentStep === 7 && (
-              <RecommendationStepCard
-                recommendations={form.recommendations}
-                recommendationsContacted={form.recommendationsContacted}
-                onChange={updateRecommendation}
-                onToggleContacted={(value) => update("recommendationsContacted", value)}
-              />
-            )}
-
-          {currentStep === 8 && (
+          {currentStep === 7 && (
             <VisualStepBoundary title="Petit-dejeuner">
               <BreakfastStorySlider
                 breakfastContent={form.breakfastContent}
@@ -1557,8 +1451,8 @@ export function NewAssessmentPage() {
             </VisualStepBoundary>
           )}
 
-          {/* ─── Étape 9 : Dégustation (Chantier bilan updates 2026-04-20) ─── */}
-          {currentStep === 9 && (
+          {/* ─── Étape 8 : Dégustation ─── */}
+          {currentStep === 8 /* ex-9 — décalé après suppression "Références" */ && (
             <VisualStepBoundary title="Place à la dégustation">
               <Card className="space-y-5">
                 <div>
@@ -1605,28 +1499,15 @@ export function NewAssessmentPage() {
             </VisualStepBoundary>
           )}
 
-          {/* ─── Étape 10 : Reconnaissance (placeholder — à remplir) ─── */}
-          {currentStep === 10 && (
-            <VisualStepBoundary title="Reconnaissance">
-              <Card className="space-y-4">
-                <div>
-                  <p className="eyebrow-label">Reconnaissance</p>
-                  <h2 className="mt-2 text-2xl" style={{ fontFamily: "Syne, sans-serif", color: "var(--ls-text)" }}>
-                    À remplir prochainement
-                  </h2>
-                </div>
-                <p style={{ fontSize: 14, color: "var(--ls-text-muted)", lineHeight: 1.6, margin: 0 }}>
-                  Contenu en cours de préparation. Tu peux passer à l'étape suivante.
-                </p>
-              </Card>
-            </VisualStepBoundary>
-          )}
+          {/* Étape "Reconnaissance" supprimée — Chantier nettoyage bilan (2026-04-20) */}
 
-          {/* ─── Étape 11 : Notre concept de rééquilibrage alimentaire
-                (renommé depuis "Routine matin" — Chantier bilan updates 2026-04-20) ─── */}
-          {currentStep === 11 && (
+          {/* ─── Étape 9 : Notre concept de rééquilibrage alimentaire
+                Contenu = uniquement l'image de référence. L'ancien
+                LazyMorningRoutineCard (titre "Routine matin Lor'Squad") a
+                été retiré — Chantier nettoyage bilan (2026-04-20) ─── */}
+          {currentStep === 9 && (
             <VisualStepBoundary title="Notre concept de rééquilibrage alimentaire">
-              <div style={{ display: "flex", justifyContent: "center", marginBottom: 16 }}>
+              <div style={{ display: "flex", justifyContent: "center" }}>
                 <img
                   src="/images/assessment/petit-dejeuner-concept.png"
                   alt="Notre concept de rééquilibrage alimentaire"
@@ -1634,13 +1515,10 @@ export function NewAssessmentPage() {
                   onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
                 />
               </div>
-              <Suspense fallback={<StepVisualLoadingCard label="Chargement du concept" />}>
-                <LazyMorningRoutineCard />
-              </Suspense>
             </VisualStepBoundary>
           )}
 
-          {currentStep === 12 && (() => {
+          {currentStep === 10 && (() => {
             // Chantier refonte étape 11 (2026-04-20) — tunnel de vente structuré.
             const chosenProgram = getProgramById(form.programChoice);
             const ticketAddOns: TicketAddOn[] = addOnProducts.map((p) => ({
@@ -1809,7 +1687,7 @@ export function NewAssessmentPage() {
 
           {/* Ancien step Hydratation supprimé — Chantier bilan updates (2026-04-20) */}
 
-          {currentStep === 13 && (
+          {currentStep === 11 && (
             <div className="space-y-4">
               {/* Mini-résumé bilan pour contexte */}
               <div className="rounded-[16px] border border-[rgba(201,168,76,0.15)] bg-[rgba(201,168,76,0.04)] p-4">
@@ -1913,7 +1791,7 @@ export function NewAssessmentPage() {
             </div>
           )}
 
-          {currentStep === 14 && (
+          {currentStep === 12 && (
             <div className="space-y-4">
               <Card className="space-y-5 bg-[linear-gradient(180deg,rgba(15,23,42,0.32),rgba(15,23,42,0.52))]">
                 <div className="flex flex-wrap items-start justify-between gap-4">
@@ -2163,17 +2041,8 @@ export function NewAssessmentPage() {
     );
   }
 
-function StepVisualLoadingCard({ label }: { label: string }) {
-  return (
-    <Card className="space-y-4">
-      <p className="eyebrow-label">Chargement</p>
-      <div className="rounded-[28px] bg-[var(--ls-surface2)] p-6">
-        <div className="h-64 rounded-[22px] bg-[linear-gradient(135deg,rgba(255,255,255,0.06),rgba(255,255,255,0.02))]" />
-        <p className="mt-4 text-sm text-[var(--ls-text-muted)]">{label}</p>
-      </div>
-    </Card>
-  );
-}
+// StepVisualLoadingCard retiré — utilisé uniquement par LazyMorningRoutineCard
+// qui a été supprimé du bilan (Chantier nettoyage 2026-04-20).
 
 class VisualStepBoundary extends Component<
   { title: string; children: ReactNode },
@@ -2865,139 +2734,14 @@ function ClientTotalCalculatorCard({
 }
 
 
-function ReferenceComparisonRow({
-  label,
-  initial,
-  current,
-  target,
-  gap,
-  priority,
-  tone
-}: {
-  label: string;
-  initial: string;
-  current: string;
-  target: string;
-  gap: string;
-  priority: string;
-  tone: "blue" | "green" | "amber" | "red";
-}) {
-  const toneClass =
-    tone === "green"
-      ? "bg-[rgba(45,212,191,0.1)] text-[#2DD4BF]"
-      : tone === "red"
-        ? "bg-rose-400/10 text-rose-100"
-        : tone === "amber"
-          ? "bg-amber-400/10 text-amber-100"
-          : "bg-[rgba(45,212,191,0.1)] text-[#2DD4BF]";
+// ReferenceComparisonRow / ReferenceDatum retirés — ne sont plus utilisés
+// suite à la suppression de l'étape "Références de suivi" (Chantier
+// nettoyage bilan 2026-04-20).
 
-  return (
-    <div className="grid gap-3 rounded-[24px] border border-white/10 bg-[var(--ls-surface2)] px-4 py-4 md:grid-cols-[1.1fr_repeat(4,minmax(0,0.8fr))_minmax(0,1fr)] md:items-center">
-      <div>
-        <p className="text-base font-semibold text-white">{label}</p>
-      </div>
-      <ReferenceDatum label="Depart" value={initial} />
-      <ReferenceDatum label="Aujourd'hui" value={current} />
-      <ReferenceDatum label="Cible" value={target} />
-      <ReferenceDatum label="Ecart" value={gap} />
-      <div className="rounded-[18px] bg-[var(--ls-bg)]/60 px-3.5 py-3">
-        <p className="text-[11px] font-medium text-[var(--ls-text-hint)]">Priorite</p>
-        <p className={`mt-2 inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${toneClass}`}>
-          {priority}
-        </p>
-      </div>
-    </div>
-  );
-}
-
-function ReferenceDatum({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-[18px] bg-[var(--ls-bg)]/60 px-3.5 py-3">
-      <p className="text-[11px] font-medium text-[var(--ls-text-hint)]">{label}</p>
-      <p className="mt-2 text-sm font-semibold text-white">{value}</p>
-    </div>
-  );
-}
-
-function getBodyFatTargetRange(sex: BiologicalSex, objective: Objective) {
-  if (sex === "male") {
-    if (objective === "sport") {
-      return { min: 10, max: 15 };
-    }
-
-    if (objective === "weight-loss") {
-      return { min: 14, max: 20 };
-    }
-
-    return { min: 12, max: 20 };
-  }
-
-  if (objective === "sport") {
-    return { min: 18, max: 24 };
-  }
-
-  if (objective === "weight-loss") {
-    return { min: 24, max: 30 };
-  }
-
-  return { min: 22, max: 30 };
-}
-
-function getHydrationReference(sex: BiologicalSex) {
-  if (sex === "male") {
-    return { min: 50, max: 65 };
-  }
-
-  return { min: 45, max: 60 };
-}
-
-function getRangeGapLabel(value: number, range: { min: number; max: number }, unit: string) {
-  if (value < range.min) {
-    return `${formatSignedValue(value - range.min, unit)}`;
-  }
-
-  if (value > range.max) {
-    return `${formatSignedValue(value - range.max, unit)}`;
-  }
-
-  return "Dans la cible";
-}
-
-function getBodyFatPriority(value: number, range: { min: number; max: number }) {
-  if (value > range.max) {
-    return "A reduire progressivement";
-  }
-
-  if (value < range.min) {
-    return "A surveiller";
-  }
-
-  return "Dans la cible";
-}
-
-function getHydrationPriority(value: number, range: { min: number; max: number }) {
-  if (value < range.min) {
-    return "Hydratation a renforcer";
-  }
-
-  if (value > range.max) {
-    return "Lecture a surveiller";
-  }
-
-  return "Hydratation stable";
-}
-
-function getVisceralPriority(value: number) {
-  if (value <= 6) {
-    return "Repère sain";
-  }
-
-  if (value <= 12) {
-    return "A surveiller";
-  }
-
-  return "Priorite de suivi";
-}
+// Helpers de comparaison (getBodyFatTargetRange, getHydrationReference,
+// getRangeGapLabel, getBodyFatPriority, getHydrationPriority,
+// getVisceralPriority) retirés — alimentaient l'étape "Références de suivi"
+// supprimée. Chantier nettoyage bilan (2026-04-20).
 
 function formatRawNumber(value: number) {
   if (!Number.isFinite(value)) {
@@ -3040,19 +2784,8 @@ function parsePriceValue(value: string) {
     .reduce((total, part) => total + part, 0);
 }
 
-function formatValue(value: number, unit: string) {
-  return `${formatRawNumber(value)} ${unit}`;
-}
-
-function formatSignedValue(value: number, unit: string) {
-  const rounded = Number(value.toFixed(1));
-  if (Math.abs(rounded) < 0.05) {
-    return `0 ${unit}`;
-  }
-
-  const prefix = rounded > 0 ? "+" : "";
-  return `${prefix}${formatRawNumber(rounded)} ${unit}`;
-}
+// formatValue / formatSignedValue retirés — alimentaient comparaisons
+// de l'étape supprimée. Chantier nettoyage bilan (2026-04-20).
 
 
 function PlateChartSvg({ legumes, proteines, glucides }: { legumes: number; proteines: number; glucides: number }) {
