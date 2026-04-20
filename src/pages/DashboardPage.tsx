@@ -505,7 +505,11 @@ type CockpitTileProps = {
 function CockpitTile({ icon, value, label, subtitle, borderColor, iconColor, iconBg, valueColor, onClick }: CockpitTileProps) {
   return (
     <div
+      role="button"
+      tabIndex={0}
+      aria-label={label}
       onClick={onClick}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick(); } }}
       onMouseEnter={(e) => {
         e.currentTarget.style.transform = "translateY(-2px)";
         e.currentTarget.style.boxShadow = "0 8px 24px rgba(0,0,0,0.08)";
@@ -579,7 +583,11 @@ function PriorityItem({ item, onAction }: { item: PriorityItemData; onAction: ()
 
   return (
     <div
+      role="button"
+      tabIndex={0}
+      aria-label={item.clientName}
       onClick={onAction}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onAction(); } }}
       className="priority-item"
       style={{
         display: "flex", alignItems: "center", gap: 14,

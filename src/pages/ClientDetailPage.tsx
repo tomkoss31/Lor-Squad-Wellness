@@ -102,7 +102,9 @@ export function ClientDetailPage() {
           phone: coachPhoneInput.trim(),
           telegram: coachTelegramInput.trim(),
         }));
-      } catch {}
+      } catch {
+        // localStorage indisponible (mode privé, quota) : non-bloquant.
+      }
 
       // Snapshot des métriques depuis les bilans du client
       const sortedAssessments = [...client.assessments].sort(

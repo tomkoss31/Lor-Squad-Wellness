@@ -243,7 +243,10 @@ function PvClientsTable({ records, selectedId, onSelect }: { records: PvClientTr
           <div
             key={r.clientId}
             className="pv-table-row"
+            role="button"
+            tabIndex={0}
             onClick={() => onSelect(r.clientId)}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelect(r.clientId); } }}
             onMouseEnter={(e) => { if (!isSelected) e.currentTarget.style.background = "var(--ls-surface2)"; }}
             onMouseLeave={(e) => { if (!isSelected) e.currentTarget.style.background = "transparent"; }}
             style={{

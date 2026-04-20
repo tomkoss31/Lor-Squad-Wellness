@@ -133,9 +133,13 @@ export function ProspectFormModal({ initial, onClose, onSaved }: ProspectFormMod
         fontFamily: "'DM Sans', sans-serif",
       }}
       onClick={onClose}
+      onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }}
+      tabIndex={0}
     >
       <div
         onClick={(e) => e.stopPropagation()}
+        onKeyDown={(e) => e.stopPropagation()}
+        role="presentation"
         style={{
           background: "var(--ls-surface)",
           borderRadius: 14,

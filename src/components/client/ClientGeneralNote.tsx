@@ -88,7 +88,11 @@ export function ClientGeneralNote({ client }: Props) {
 
       {editOpen && (
         <div
+          role="button"
+          tabIndex={0}
+          aria-label="Fermer la fenêtre"
           onClick={() => !saving && setEditOpen(false)}
+          onKeyDown={(e) => { if (e.key === 'Escape') { if (!saving) setEditOpen(false); } }}
           style={{
             position: "fixed",
             inset: 0,
@@ -103,6 +107,7 @@ export function ClientGeneralNote({ client }: Props) {
         >
           <div
             onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => e.stopPropagation()}
             role="dialog"
             aria-modal="true"
             aria-label="Modifier la note client"

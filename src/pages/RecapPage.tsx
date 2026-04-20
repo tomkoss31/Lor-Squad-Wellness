@@ -202,7 +202,7 @@ export function RecapPage() {
               <div style={{ minWidth: 0, flex: 1 }}>
                 <div style={{ fontFamily: 'Syne, sans-serif', fontSize: 13, fontWeight: 700, color: 'var(--ls-text)', marginBottom: 4 }}>Ton récap personnel</div>
                 <div style={{ fontSize: 11, color: 'var(--ls-text-muted)', lineHeight: 1.5, marginBottom: 8 }}>Scanne ou partage pour retrouver tes résultats.</div>
-                <div onClick={copyLink} style={{ fontSize: 10, background: 'var(--ls-surface2)', borderRadius: 6, padding: '5px 10px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
+                <div role="button" tabIndex={0} onClick={copyLink} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); copyLink(); } }} style={{ fontSize: 10, background: 'var(--ls-surface2)', borderRadius: 6, padding: '5px 10px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
                   <span style={{ flex: 1, color: 'var(--ls-text-hint)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{recapUrl.replace('https://','')}</span>
                   <span style={{ color: copied ? '#2DD4BF' : '#C9A84C', fontWeight: 600, flexShrink: 0 }}>{copied ? '✓ Copié' : 'Copier'}</span>
                 </div>
