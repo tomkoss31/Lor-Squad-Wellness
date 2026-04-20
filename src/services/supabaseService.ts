@@ -18,6 +18,7 @@ import type {
   User
 } from "../types/domain";
 import { deriveLifecycleFromAssessment } from "../lib/lifecycleMapping";
+import { getRecommendableProductById } from "../lib/assessmentRecommendations";
 import type { PvClientProductRecord, PvClientTransaction } from "../types/pv";
 
 type UserRow = {
@@ -1468,5 +1469,92 @@ export async function deleteSupabaseProspect(id: string): Promise<void> {
   const { error } = await client.from("prospects").delete().eq("id", id);
   if (error) {
     throw new Error(`Impossible de supprimer le prospect : ${error.message}`);
+  }
+}
+
+// ─── Sync client_recaps (Chantier 2026-04-20) ────────────────────────────
+// Le snapshot `client_recaps` (vu par le client sur /client/:token) n'est créé
+// qu'une fois, à la création du client (NewAssessmentPage). Toutes les autres
+// mutations (follow-up, body scan rapide, édition bilan, ajout produit,
+// update coordonnées, réassignation coach) laissent le récap figé.
+//
+// `refreshClientRecap(clientId)` reconstruit un nouveau snapshot à partir de
+// l'état courant : clients + dernier assessment + questionnaire.selectedProductIds.
+// Les lectures côté client (ClientAppPage, RecapPage, ClientDetailPage)
+// font toutes `order by created_at desc limit 1`, donc on INSERT sans delete.
+//
+// Usage : appeler APRÈS la mutation principale. Les erreurs sont remontées
+// au caller pour affichage toast, mais l'appelant doit catch sans bloquer
+// le flux principal (l'action utilisateur a déjà réussi).
+export async function refreshClientRecap(clientId: string): Promise<void> {
+  const client = await requireSupabase();
+
+  // 1. Fetch client — coach (distributor_name), prénom/nom, programme, objectif
+  const { data: clientRow, error: clientErr } = await client
+    .from("clients")
+    .select("first_name, last_name, distributor_name, current_program, objective")
+    .eq("id", clientId)
+    .single<{
+      first_name: string;
+      last_name: string;
+      distributor_name: string | null;
+      current_program: string | null;
+      objective: string | null;
+    }>();
+
+  if (clientErr || !clientRow) {
+    throw new Error(
+      `Impossible de rafraîchir le récap : ${clientErr?.message ?? "client introuvable"}`
+    );
+  }
+
+  // 2. Fetch dernier assessment (par date DESC) pour body_scan + questionnaire
+  const { data: latestAssessment, error: assessErr } = await client
+    .from("assessments")
+    .select("date, body_scan, questionnaire")
+    .eq("client_id", clientId)
+    .order("date", { ascending: false })
+    .limit(1)
+    .maybeSingle<{
+      date: string;
+      body_scan: AssessmentRecord["bodyScan"] | null;
+      questionnaire: AssessmentRecord["questionnaire"] | null;
+    }>();
+
+  if (assessErr) {
+    throw new Error(`Impossible de lire le dernier bilan : ${assessErr.message}`);
+  }
+
+  // Cas limite : client sans aucun bilan (ne devrait pas arriver en pratique
+  // car le bilan initial est obligatoire à la création). On skip silencieux.
+  if (!latestAssessment) {
+    return;
+  }
+
+  // 3. Reconstruire les recommendations à partir du questionnaire (top 5)
+  const selectedIds: string[] =
+    (latestAssessment.questionnaire?.selectedProductIds as string[] | undefined) ?? [];
+  const recommendations = selectedIds
+    .map((id) => getRecommendableProductById(id))
+    .filter((product): product is NonNullable<typeof product> => product != null)
+    .slice(0, 5)
+    .map((product) => ({ name: product.name, shortBenefit: product.shortBenefit }));
+
+  // 4. INSERT du nouveau snapshot (pas de delete — lecture last-wins)
+  const { error: recapError } = await client.from("client_recaps").insert({
+    client_id: clientId,
+    coach_name: clientRow.distributor_name ?? "Coach",
+    client_first_name: clientRow.first_name ?? "",
+    client_last_name: clientRow.last_name ?? "",
+    assessment_date: latestAssessment.date ?? new Date().toISOString(),
+    program_title: clientRow.current_program || null,
+    objective: clientRow.objective || null,
+    body_scan: latestAssessment.body_scan ?? null,
+    recommendations,
+    referrals: []
+  });
+
+  if (recapError) {
+    throw new Error(`Impossible d'écrire le récap : ${recapError.message}`);
   }
 }

@@ -621,6 +621,13 @@ function getProgramReason(programId: string, needs: DetectedNeed[]) {
   return "Une base simple suffit pour lancer la routine sans surcharge.";
 }
 
+// Chantier sync client_recaps (2026-04-20) : lookup utilisé par refreshClientRecap
+// pour reconstruire le champ recommendations à partir des selectedProductIds
+// stockés dans le questionnaire. Évite la duplication du catalogue produits.
+export function getRecommendableProductById(id: string): SuggestedProduct | undefined {
+  return PRODUCT_CATALOG.find((product) => product.id === id);
+}
+
 export function buildAssessmentRecommendationPlan(
   source: AssessmentRecommendationSource
 ): AssessmentRecommendationPlan {

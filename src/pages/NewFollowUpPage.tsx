@@ -11,6 +11,7 @@ import { PageHeading } from "../components/ui/PageHeading";
 import { EvolutionReportModal } from "../components/assessment/EvolutionReportModal";
 import { buildReportData } from "../lib/evolutionReport";
 import { getSupabaseClient } from "../services/supabaseClient";
+import { refreshClientRecap } from "../services/supabaseService";
 import { StatusBadge } from "../components/ui/StatusBadge";
 import { useAppContext } from "../context/AppContext";
 import { useToast, buildSupabaseErrorToast } from "../context/ToastContext";
@@ -293,6 +294,18 @@ export function NewFollowUpPage() {
       type: followUpType,
       status: "scheduled"
     });
+
+    // Chantier sync client_recaps (2026-04-20) : le body scan rapide est un
+    // follow-up. Sans ce refresh, la vue client /client/:token affiche encore
+    // les valeurs du bilan initial. Non-bloquant : le suivi est déjà enregistré.
+    try {
+      await refreshClientRecap(targetClient.id);
+    } catch (err) {
+      pushToast(buildSupabaseErrorToast(
+        err,
+        "Les données ont été enregistrées mais le lien client n'a pas pu être mis à jour. Tu peux régénérer l'accès depuis la fiche."
+      ));
+    }
 
     clearFollowUpDraft(targetClient.id);
 
