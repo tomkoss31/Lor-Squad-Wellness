@@ -43,6 +43,7 @@ import {
   updateSupabaseClientFreeFollowUp,
   updateSupabaseClientFreePvTracking,
   fetchSupabaseProspects,
+  fetchAllSupabaseFollowUpProtocolLogs,
   createSupabaseProspect,
   updateSupabaseProspect,
   deleteSupabaseProspect,
@@ -57,6 +58,7 @@ import type {
   Client,
   ClientMessage,
   FollowUp,
+  FollowUpProtocolLog,
   LifecycleStatus,
   Program,
   Prospect,
@@ -82,6 +84,9 @@ interface AppContextValue {
   clientMessages: ClientMessage[];
   unreadMessageCount: number;
   prospects: Prospect[];
+  // Chantier Protocole Agenda+Dashboard (2026-04-20) : logs partagés
+  followUpProtocolLogs: FollowUpProtocolLog[];
+  refreshFollowUpProtocolLogs: () => Promise<void>;
   createProspect: (input: ProspectFormInput) => Promise<Prospect>;
   updateProspect: (id: string, updates: Partial<Prospect>) => Promise<Prospect>;
   deleteProspect: (id: string) => Promise<void>;
@@ -186,6 +191,8 @@ export function AppProvider({ children }: PropsWithChildren) {
   const [pvTransactions, setPvTransactions] = useState<PvClientTransaction[]>([]);
   const [clientMessages, setClientMessages] = useState<ClientMessage[]>([]);
   const [prospects, setProspects] = useState<Prospect[]>([]);
+  // Chantier Protocole Agenda+Dashboard (2026-04-20) : logs partagés
+  const [followUpProtocolLogs, setFollowUpProtocolLogs] = useState<FollowUpProtocolLog[]>([]);
 
   async function refreshRemoteData(activeUser?: User | null) {
     const nextUser = activeUser ?? currentUser;
@@ -197,7 +204,8 @@ export function AppProvider({ children }: PropsWithChildren) {
         nextPvTransactions,
         nextPvClientProducts,
         nextActivityLogs,
-        nextProspects
+        nextProspects,
+        nextFollowUpProtocolLogs
       ] = await Promise.all([
         fetchSupabaseClients(),
         fetchSupabaseFollowUps(),
@@ -211,6 +219,10 @@ export function AppProvider({ children }: PropsWithChildren) {
         fetchSupabaseProspects().catch((error) => {
           console.error("Prospects indisponibles pour l'instant.", error);
           return [] as Prospect[];
+        }),
+        fetchAllSupabaseFollowUpProtocolLogs().catch((error) => {
+          console.error("Logs protocole suivi indisponibles pour l'instant.", error);
+          return [] as FollowUpProtocolLog[];
         })
       ]);
 
@@ -221,6 +233,7 @@ export function AppProvider({ children }: PropsWithChildren) {
       setPvClientProducts(nextPvClientProducts);
       setActivityLogs(nextActivityLogs);
       setProspects(nextProspects);
+      setFollowUpProtocolLogs(nextFollowUpProtocolLogs);
 
       // Fetch messages
       try {
@@ -742,6 +755,18 @@ export function AppProvider({ children }: PropsWithChildren) {
       prospects: currentUser
         ? prospects.filter(p => currentUser.role === 'admin' || p.distributorId === currentUser.id)
         : [],
+      // ─── Protocole Agenda+Dashboard (2026-04-20) ─────────────────────
+      // Les logs sont exposés bruts — les consommateurs filtrent via le helper
+      // `getFollowUpsDue()` qui applique la scope par coach.
+      followUpProtocolLogs,
+      refreshFollowUpProtocolLogs: async () => {
+        try {
+          const rows = await fetchAllSupabaseFollowUpProtocolLogs();
+          setFollowUpProtocolLogs(rows);
+        } catch (err) {
+          console.error("refreshFollowUpProtocolLogs error:", err);
+        }
+      },
       createProspect: async (input: ProspectFormInput) => {
         const created = await createSupabaseProspect(input);
         setProspects(prev => [...prev, created]);
