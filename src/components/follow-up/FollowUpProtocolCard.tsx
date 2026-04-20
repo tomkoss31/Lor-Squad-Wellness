@@ -6,6 +6,10 @@ import { logSupabaseFollowUpProtocolStep } from "../../services/supabaseService"
 import { FOLLOW_UP_PROTOCOL, type FollowUpStep } from "../../data/followUpProtocol";
 import { FollowUpStepModal } from "./FollowUpStepModal";
 import { Card } from "../ui/Card";
+import {
+  evaluateProtocolEligibility,
+  labelForIneligibilityReason,
+} from "../../lib/followUpProtocolScheduler";
 
 interface Props {
   client: Client;
@@ -31,6 +35,17 @@ export function FollowUpProtocolCard({ client }: Props) {
   );
   const [openStepId, setOpenStepId] = useState<string | null>(null);
   const [busyStepId, setBusyStepId] = useState<string | null>(null);
+  const [showReasonsDetail, setShowReasonsDetail] = useState(false);
+
+  // Hotfix (2026-04-20) : si le client n'est pas éligible au protocole
+  // automatique (vieux, inactif, pas de programme, pas de scan), on
+  // affiche une bande info en tête — sans masquer les 5 étapes (la fiche
+  // client reste l'endroit où le coach peut suivre précisément même un
+  // dossier ancien).
+  const eligibility = useMemo(
+    () => evaluateProtocolEligibility(client),
+    [client]
+  );
 
   // Date du bilan initial — base pour calculer l'état des étapes.
   const initialAssessmentDate = useMemo(() => {
@@ -125,6 +140,57 @@ export function FollowUpProtocolCard({ client }: Props) {
         <p style={{ fontSize: 12, color: "var(--ls-text-muted)", lineHeight: 1.5, margin: "0 0 8px" }}>
           5 points de contact clés pour ancrer la routine de {client.firstName} et préparer le RDV de suivi.
         </p>
+
+        {!eligibility.eligible && (
+          <div
+            style={{
+              padding: "10px 12px",
+              borderRadius: 10,
+              background: "var(--ls-surface2)",
+              border: "1px solid var(--ls-border)",
+              fontSize: 12,
+              lineHeight: 1.55,
+              color: "var(--ls-text-muted)",
+              display: "flex",
+              flexDirection: "column",
+              gap: 6,
+            }}
+            role="note"
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <span aria-hidden="true">ℹ️</span>
+              <span>Ce client n'apparaît plus dans les suivis automatiques.</span>
+              <button
+                type="button"
+                onClick={() => setShowReasonsDetail((v) => !v)}
+                style={{
+                  marginLeft: "auto",
+                  background: "transparent",
+                  border: "none",
+                  color: "var(--ls-teal)",
+                  fontSize: 11,
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  padding: 0,
+                  fontFamily: "'DM Sans', sans-serif",
+                }}
+                aria-expanded={showReasonsDetail}
+              >
+                {showReasonsDetail ? "masquer" : "voir pourquoi"}
+              </button>
+            </div>
+            {showReasonsDetail && (
+              <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: 4 }}>
+                {eligibility.reasons.map((reason) => (
+                  <li key={reason} style={{ display: "flex", gap: 8, fontSize: 12 }}>
+                    <span style={{ color: "var(--ls-coral)" }} aria-hidden="true">•</span>
+                    <span>{labelForIneligibilityReason(reason)}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        )}
 
         <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
           {FOLLOW_UP_PROTOCOL.map((step, idx) => {
