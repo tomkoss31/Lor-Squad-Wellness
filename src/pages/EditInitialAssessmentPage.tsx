@@ -7,7 +7,7 @@ import { StatusBadge } from "../components/ui/StatusBadge";
 import { useAppContext } from "../context/AppContext";
 import { useToast, buildSupabaseErrorToast } from "../context/ToastContext";
 import { getFirstAssessment, normalizeDateTimeLocalInputValue } from "../lib/calculations";
-import { pvProductCatalog } from "../data/mockPvModule";
+import { pvProductCatalog } from "../data/pvCatalog";
 import { refreshClientRecap } from "../services/supabaseService";
 import type { AssessmentQuestionnaire, AssessmentRecord } from "../types/domain";
 

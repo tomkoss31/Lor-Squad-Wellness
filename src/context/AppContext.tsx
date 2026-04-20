@@ -6,7 +6,7 @@ import {
   useState,
   type PropsWithChildren
 } from "react";
-import { pvProductCatalog, resolvePvProgram } from "../data/mockPvModule";
+import { pvProductCatalog, resolvePvProgram } from "../data/pvCatalog";
 import { mockPrograms } from "../data/mockPrograms";
 import { canAccessClient, getVisibleClients, getVisibleFollowUps } from "../lib/auth";
 import {
