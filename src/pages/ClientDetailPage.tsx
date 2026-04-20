@@ -1008,7 +1008,10 @@ export function ClientDetailPage() {
                       try {
                         await refreshClientRecap(client.id);
                       } catch (refreshErr) {
-                        console.error('refreshClientRecap (updateClientInfo) error:', refreshErr);
+                        pushToast(buildSupabaseErrorToast(
+                          refreshErr,
+                          "Les données sont enregistrées mais le lien client n'a pas pu être mis à jour. Tu peux regénérer l'accès depuis la fiche."
+                        ));
                       }
                       setEditSaved(true);
                       pushToast({
@@ -1157,6 +1160,7 @@ function LinkButton({
 
 function ProductAdder({ clientId, existingIds, onAdded }: { clientId: string; existingIds: Set<string>; onAdded: () => void }) {
   const { getClientById, updateAssessment } = useAppContext();
+  const { push: pushToast } = useToast();
   const [open, setOpen] = useState(false);
   const [adding, setAdding] = useState(false);
   const [added, setAdded] = useState<string[]>([]);
@@ -1194,7 +1198,10 @@ function ProductAdder({ clientId, existingIds, onAdded }: { clientId: string; ex
       try {
         await refreshClientRecap(clientId);
       } catch (refreshErr) {
-        console.error('refreshClientRecap (ProductAdder) error:', refreshErr);
+        pushToast(buildSupabaseErrorToast(
+          refreshErr,
+          "Les données sont enregistrées mais le lien client n'a pas pu être mis à jour. Tu peux regénérer l'accès depuis la fiche."
+        ));
       }
       setAdded(prev => [...prev, productId]);
     } catch (err) {
