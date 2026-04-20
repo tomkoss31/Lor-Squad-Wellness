@@ -1,5 +1,5 @@
 import { startTransition, useCallback, useEffect, useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
 import { PageHeading } from "../components/ui/PageHeading";
@@ -91,7 +91,12 @@ export function AgendaPage() {
   const { push: pushToast } = useToast();
   const navigate = useNavigate();
 
-  const [dateFilter, setDateFilter] = useState<DateFilter>("all");
+  // Nav Dashboard → Agenda (Chantier 3 / 2026-04-20) : si on arrive via
+  // ?filter=today (depuis la carte Dashboard "RDV aujourd'hui" ou "Agenda du
+  // jour"), pré-sélectionner le filtre journée.
+  const [searchParams] = useSearchParams();
+  const initialDateFilter: DateFilter = searchParams.get("filter") === "today" ? "today" : "all";
+  const [dateFilter, setDateFilter] = useState<DateFilter>(initialDateFilter);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("upcoming");
   // Chantier Cold (2026-04-19) : filtre admin par distributeur.
   // "mine" = RDV du user connecté · "all" = toute l'équipe · "<uuid>" = un distri précis
@@ -320,11 +325,31 @@ export function AgendaPage() {
   return (
     <div className="space-y-5">
       <div className="flex items-start justify-between gap-4 flex-wrap">
-        <PageHeading
-          eyebrow="Agenda"
-          title="Agenda unifié"
-          description="Tous tes RDV clients (suivis) et prospects sur la même vue."
-        />
+        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          <PageHeading
+            eyebrow="Agenda"
+            title="Agenda unifié"
+            description="Tous tes RDV clients (suivis) et prospects sur la même vue."
+          />
+          {/* Chantier Nav (2026-04-20) : raccourci discret vers le dashboard */}
+          <Link
+            to="/"
+            style={{
+              display: "inline-flex", alignItems: "center", gap: 6,
+              padding: "6px 12px", borderRadius: 9,
+              background: "color-mix(in srgb, var(--ls-teal) 7%, transparent)",
+              border: "1px solid color-mix(in srgb, var(--ls-teal) 20%, transparent)",
+              color: "var(--ls-teal)",
+              fontSize: 12, fontWeight: 500, fontFamily: "'DM Sans', sans-serif",
+              textDecoration: "none", width: "fit-content",
+            }}
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M3 3h7v7H3zM14 3h7v5h-7zM14 12h7v9h-7zM3 14h7v7H3z" />
+            </svg>
+            Voir mes priorités →
+          </Link>
+        </div>
         <Button onClick={() => { setEditing(undefined); setShowForm(true); }}>
           + Nouveau RDV
         </Button>
