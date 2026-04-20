@@ -468,50 +468,12 @@ function ProspectDetailModal({
               {rdvDisplay}
             </div>
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
-            <button
-              type="button"
-              onClick={handleAddToGoogleCalendar}
-              title="Ajouter à Google Agenda"
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 6,
-                padding: "8px 14px",
-                border: "1px solid var(--ls-border)",
-                borderRadius: 10,
-                background: "var(--ls-surface)",
-                color: "var(--ls-text)",
-                fontFamily: "'DM Sans', sans-serif",
-                fontSize: 13,
-                fontWeight: 500,
-                cursor: "pointer",
-                transition: "border-color 150ms, background 150ms",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = "var(--ls-teal)";
-                e.currentTarget.style.background = "color-mix(in srgb, var(--ls-teal) 6%, transparent)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = "var(--ls-border)";
-                e.currentTarget.style.background = "var(--ls-surface)";
-              }}
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-                <line x1="16" y1="2" x2="16" y2="6" />
-                <line x1="8" y1="2" x2="8" y2="6" />
-                <line x1="3" y1="10" x2="21" y2="10" />
-              </svg>
-              Ajouter à mon agenda
-            </button>
-            <button
-              type="button"
-              onClick={onClose}
-              aria-label="Fermer"
-              style={{ background: "transparent", border: "none", color: "var(--ls-text-muted)", fontSize: 22, cursor: "pointer", padding: 4, lineHeight: 1 }}
-            >×</button>
-          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Fermer"
+            style={{ flexShrink: 0, background: "transparent", border: "none", color: "var(--ls-text-muted)", fontSize: 22, cursor: "pointer", padding: 4, lineHeight: 1 }}
+          >×</button>
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 16 }}>
@@ -568,6 +530,44 @@ function ProspectDetailModal({
             </Button>
           )}
         </div>
+
+        {/* CTA secondaire teal — Ajouter à mon agenda Google (RDV futurs uniquement).
+            Chantier UX modal (2026-04-20) : remonté depuis le header pour en faire
+            une action visible sous le CTA principal gold. */}
+        {prospect.status === "scheduled" && (
+          <button
+            type="button"
+            onClick={handleAddToGoogleCalendar}
+            style={{
+              width: "100%",
+              padding: "12px 16px",
+              marginTop: 10,
+              background: "var(--ls-teal)",
+              color: "#0B0D11",
+              border: "none",
+              borderRadius: 10,
+              fontFamily: "'DM Sans', sans-serif",
+              fontWeight: 600,
+              fontSize: 14,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 8,
+              cursor: "pointer",
+              transition: "opacity 150ms",
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.9"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+              <line x1="16" y1="2" x2="16" y2="6" />
+              <line x1="8" y1="2" x2="8" y2="6" />
+              <line x1="3" y1="10" x2="21" y2="10" />
+            </svg>
+            Ajouter à mon agenda
+          </button>
+        )}
 
         {/* Mini-formulaire "Mettre en pause" */}
         {showColdForm && (
