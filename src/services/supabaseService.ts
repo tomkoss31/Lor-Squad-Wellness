@@ -1,6 +1,6 @@
 import { createMockSession, getDefaultUserTitle, getRoleScope } from "../lib/auth";
 import { getSupabaseClient } from "./supabaseClient";
-import { pvProductCatalog, resolvePvProgram } from "../data/mockPvModule";
+import { pvProductCatalog, resolvePvProgram } from "../data/pvCatalog";
 import type {
   ActivityLog,
   AssessmentRecord,

@@ -15,7 +15,7 @@ import { refreshClientRecap } from "../services/supabaseService";
 import { StatusBadge } from "../components/ui/StatusBadge";
 import { useAppContext } from "../context/AppContext";
 import { useToast, buildSupabaseErrorToast } from "../context/ToastContext";
-import { buildPvTrackingRecords, getPvProductStatusMeta } from "../data/mockPvModule";
+import { buildPvTrackingRecords, getPvProductStatusMeta } from "../data/pvCatalog";
 import {
   formatDate,
   getAssessmentDelta,

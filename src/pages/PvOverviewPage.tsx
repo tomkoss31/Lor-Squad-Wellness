@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { buildPvTrackingRecords } from "../data/mockPvModule";
+import { buildPvTrackingRecords } from "../data/pvCatalog";
 import { formatDate } from "../lib/calculations";
 import { PvModuleHeader } from "../components/pv/PvModuleHeader";
 import { PvClientFullPage } from "../components/pv/PvClientFullPage";

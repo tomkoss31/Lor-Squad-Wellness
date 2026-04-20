@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import type { PvClientTrackingRecord, PvProductUsage, PvClientTransaction, PvTransactionType } from "../../types/pv";
 import { useAppContext } from "../../context/AppContext";
-import { pvProductCatalog, getPvTypeLabel } from "../../data/mockPvModule";
+import { pvProductCatalog, getPvTypeLabel } from "../../data/pvCatalog";
 
 type Tab = "products" | "history";
 
