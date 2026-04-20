@@ -81,6 +81,7 @@ type ClientRow = {
   lifecycle_updated_by?: string | null;
   free_follow_up?: boolean | null;
   free_pv_tracking?: boolean | null;
+  general_note?: string | null;
   assessments?: AssessmentRow[] | null;
 };
 
@@ -323,6 +324,7 @@ function mapClient(row: ClientRow): Client {
     lifecycleUpdatedBy: row.lifecycle_updated_by ?? null,
     freeFollowUp: row.free_follow_up ?? false,
     freePvTracking: row.free_pv_tracking ?? false,
+    generalNote: row.general_note ?? undefined,
     assessments: (row.assessments ?? []).map(mapAssessment)
   };
 }
@@ -1344,6 +1346,30 @@ export async function updateSupabaseClientFreeFollowUp(params: {
       // Non-fatal : on loggue et on continue.
       console.warn("[updateSupabaseClientFreeFollowUp] follow_ups update warning:", fuError);
     }
+  }
+}
+
+// ─── General Note (Chantier bilan updates 2026-04-20) ────────────────────
+// Note libre "À savoir sur ce client" — anecdotes, préférences, loisirs.
+export async function updateSupabaseClientGeneralNote(params: {
+  clientId: string;
+  generalNote: string;
+}): Promise<void> {
+  const { clientId, generalNote } = params;
+  const client = await requireSupabase();
+
+  const { error } = await client
+    .from("clients")
+    .update({ general_note: generalNote })
+    .eq("id", clientId);
+
+  if (error) {
+    if (isMissingColumnError(error, "general_note")) {
+      throw new Error(
+        "La colonne general_note n'existe pas encore. Exécute la migration supabase/migrations/20260420200000_add_general_note.sql."
+      );
+    }
+    throw new Error(`Impossible de mettre à jour la note générale : ${error.message}`);
   }
 }
 
