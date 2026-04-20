@@ -149,7 +149,33 @@ export function ClientDetailPage() {
     if (!client || !currentUser) return;
     setGeneratingReport(true);
     try {
-      const data = buildReportData(client, currentUser.name ?? 'Coach');
+      // Fix target weight (2026-04-20) : buildReportData lit
+      // latest.questionnaire?.targetWeight avec fallback arbitraire
+      // (firstScan.weight - 10). Si l'initial a été édité après la création
+      // du dernier follow-up, le targetWeight vit sur l'initial mais pas
+      // sur le latest → rapport incohérent. On clone le client et on
+      // recopie targetWeight depuis l'initial vers le questionnaire du
+      // latest avant d'appeler buildReportData. Aucune mutation du state
+      // React ni de la DB.
+      const initialAssessment =
+        client.assessments.find((a) => a.type === "initial") ??
+        [...client.assessments].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0];
+      const initialTargetWeight = initialAssessment?.questionnaire?.targetWeight;
+      const latestByDate = [...client.assessments].sort(
+        (x, y) => new Date(y.date).getTime() - new Date(x.date).getTime()
+      )[0];
+      const patchedClient =
+        initialTargetWeight && latestByDate && !latestByDate.questionnaire?.targetWeight
+          ? {
+              ...client,
+              assessments: client.assessments.map((a) =>
+                a.id === latestByDate.id
+                  ? { ...a, questionnaire: { ...a.questionnaire, targetWeight: initialTargetWeight } }
+                  : a
+              ),
+            }
+          : client;
+      const data = buildReportData(patchedClient, currentUser.name ?? 'Coach');
       if (!data) return;
       const sb = await getSupabaseClient();
       if (!sb) return;
@@ -194,6 +220,15 @@ export function ClientDetailPage() {
     client.assessments.find((entry) => entry.type === "initial") ?? getFirstAssessment(client);
   const latestBodyScan = getLatestBodyScan(client);
   const latestQuestionnaire = getLatestQuestionnaire(client);
+  // Fix target weight (2026-04-20) : le poids cible est saisi sur le bilan
+  // INITIAL (via "Modifier la fiche de départ"). Si les follow-ups ont été
+  // créés AVANT cette saisie, leur questionnaire n'a pas targetWeight et
+  // `latestQuestionnaire.targetWeight` renvoie undefined → "Cible à définir"
+  // sur la fiche alors que Thomas l'a bien saisi. On lit en priorité depuis
+  // l'initial, fallback sur le latest pour les vieux dossiers sans initial.
+  const resolvedTargetWeight =
+    firstAssessment.questionnaire?.targetWeight ??
+    latestQuestionnaire.targetWeight;
   const waterNeed = calculateWaterNeed(latestBodyScan.weight);
   const proteinRange = calculateProteinRange(latestBodyScan.weight, client.objective);
   const recommendationCount = latestQuestionnaire.recommendations?.length ?? 0;
@@ -438,14 +473,14 @@ export function ClientDetailPage() {
               label={client.objective === "weight-loss" ? "Cible" : "Cap du moment"}
               value={
                 client.objective === "weight-loss"
-                  ? latestQuestionnaire.targetWeight
-                    ? `${latestQuestionnaire.targetWeight} kg`
+                  ? resolvedTargetWeight
+                    ? `${resolvedTargetWeight} kg`
                     : "À définir"
                   : latestQuestionnaire.objectiveFocus || "Prise de masse"
               }
               hint={client.objective === "weight-loss" ? "Repère cible" : "Cap actuel"}
               accent={
-                client.objective === "weight-loss" && !latestQuestionnaire.targetWeight
+                client.objective === "weight-loss" && !resolvedTargetWeight
                   ? "muted"
                   : "red"
               }
