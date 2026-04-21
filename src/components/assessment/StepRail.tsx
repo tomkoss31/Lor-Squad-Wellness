@@ -104,7 +104,10 @@ export function StepRail({ currentStep, steps, onStepClick }: StepRailProps) {
               return (
                 <div key={step} className="flex flex-col items-center gap-1.5"
                   style={{ flex: 1, cursor: onStepClick ? 'pointer' : 'default' }}
-                  onClick={() => onStepClick?.(index)}>
+                  role={onStepClick ? "button" : undefined}
+                  tabIndex={onStepClick ? 0 : undefined}
+                  onClick={onStepClick ? () => onStepClick(index) : undefined}
+                  onKeyDown={onStepClick ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onStepClick(index); } } : undefined}>
                   <div
                     className="flex h-7 w-7 items-center justify-center rounded-full text-[10px] font-bold transition-all duration-300"
                     style={{

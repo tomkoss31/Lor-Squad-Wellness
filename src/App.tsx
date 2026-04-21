@@ -105,6 +105,11 @@ const FollowUpGuidePage = lazy(() =>
     default: module.FollowUpGuidePage
   }))
 );
+const DebugNotificationsPage = lazy(() =>
+  import("./pages/DebugNotificationsPage").then((module) => ({
+    default: module.DebugNotificationsPage
+  }))
+);
 
 import { useTheme } from './hooks/useTheme'
 import { useAutoNotifications } from './hooks/useAutoNotifications'
@@ -143,6 +148,7 @@ export default function App() {
               <Route element={<RoleRoute allowedRoles={["admin"]} />}>
                 <Route path="users" element={<UsersPage />} />
                 <Route path="pv/team" element={<PvTeamPage />} />
+                <Route path="debug/notifications" element={<DebugNotificationsPage />} />
               </Route>
               <Route path="distributors/:distributorId" element={<DistributorPortfolioPage />} />
               <Route path="clients/:clientId" element={<ClientDetailPage />} />

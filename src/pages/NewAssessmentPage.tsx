@@ -1,6 +1,7 @@
 ﻿import { useState, type ReactNode } from "react";
-import { lazy } from "react";
-import { Suspense } from "react";
+// lazy retiré — Chantier nettoyage bilan (2026-04-20)
+// Chantier nettoyage bilan (2026-04-20) : Suspense retiré — LazyMorningRoutineCard
+// supprimé de l'étape "Notre concept" qui n'affiche plus que l'image.
 import { StepRail } from "../components/assessment/StepRail";
 import { useEffect } from "react";
 import { useRef } from "react";
@@ -12,8 +13,15 @@ import { BodyFatInsightCard } from "../components/body-scan/BodyFatInsightCard";
 import { MuscleMassInsightCard } from "../components/body-scan/MuscleMassInsightCard";
 import { HydrationVisceralInsightCard } from "../components/body-scan/HydrationVisceralInsightCard";
 import { BodyScanRadar } from "../components/body-scan/BodyScanRadar";
-import { ProgramBoosterCard } from "../components/programs/ProgramBoosterCard";
-import { ProgramCard } from "../components/programs/ProgramCard";
+// Chantier refonte étape 11 (2026-04-20) : ProgramBoosterCard + ProgramCard
+// retirés car l'étape 11 est désormais gérée par les nouveaux composants
+// ProgramChoiceCard + RoutineMatinList + ProgrammeTicket.
+import { MilkConsumptionToggle } from "../components/assessment/MilkConsumptionToggle";
+import { ProgramChoiceCard } from "../components/assessment/ProgramChoiceCard";
+import { RoutineMatinList } from "../components/assessment/RoutineMatinList";
+import { ProgrammeTicket, type TicketAddOn } from "../components/assessment/ProgrammeTicket";
+import { PROGRAM_CHOICES, getProgramById } from "../data/programs";
+import { FelicitationsStep } from "../components/assessment/FelicitationsStep";
 import { Button } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
 import { PageHeading } from "../components/ui/PageHeading";
@@ -87,6 +95,15 @@ type AssessmentForm = {
   hardestPart: string;
   mainBlocker: string;
   objectiveFocus: string;
+  /** Chantier bilan updates (2026-04-20) : texte libre si objectiveFocus === "Autre". */
+  customGoal: string;
+  /** Chantier bilan updates (2026-04-20) : snacks/fast-food/resto par semaine. */
+  snacksFastFoodPerWeek: number | null;
+  /** Chantier bilan updates (2026-04-20) : saveur Formula 1 choisie au tasting. */
+  preferredFlavor: string;
+  /** Chantier refonte étape 11 (2026-04-20). */
+  consumesMilk: "yes" | "sometimes" | "no" | "";
+  programChoice: "discovery" | "premium" | "booster1" | "booster2";
   targetWeight: number;
   motivation: number;
   desiredTimeline: string;
@@ -221,6 +238,11 @@ const initialForm: AssessmentForm = {
   hardestPart: "",
   mainBlocker: "",
   objectiveFocus: "",
+  customGoal: "",
+  snacksFastFoodPerWeek: null,
+  preferredFlavor: "",
+  consumesMilk: "" as "yes" | "sometimes" | "no" | "",
+  programChoice: "premium" as "discovery" | "premium" | "booster1" | "booster2",
   targetWeight: 0,
   motivation: 0,
   desiredTimeline: "3 mois",
@@ -310,21 +332,28 @@ function clearAssessmentDraft() {
   window.localStorage.removeItem(ASSESSMENT_DRAFT_KEY);
 }
 
+// Chantier bilan updates (2026-04-20) : renommage + insertion + suppression.
+// - étape "Routine matin" → "Notre concept de rééquilibrage alimentaire"
+// - suppression de "Hydratation & routine du matin"
+// - insertion de "Dégustation" et "Reconnaissance" après "Petit-déjeuner"
+// Chantier nettoyage bilan (2026-04-20) :
+// - Supprimé "Références de suivi"
+// - Supprimé "Reconnaissance"
+// Total étapes : 13 (0-12).
 const steps = [
-  "Informations client",
-  "Habitudes de vie et repas",
-  "Qualité alimentaire et boissons",
-  "Santé, objectif, activité et freins",
-  "Composition des repas",
-  "Body scan",
-  "Références de suivi",
-  "Recommandations",
-  "Petit-déjeuner",
-  "Routine matin",
-  "Programme proposé",
-  "Hydratation & routine du matin",
-  "Suite du suivi",
-  "Résumé du rendez-vous"
+  "Informations client",             // 0
+  "Habitudes de vie et repas",       // 1
+  "Qualité alimentaire et boissons", // 2
+  "Santé, objectif, activité et freins", // 3
+  "Composition des repas",           // 4
+  "Body scan",                       // 5
+  "Dégustation",                     // 6  (déplacée avant les reco : le client goûte en premier, lit les reco pendant qu'il boit)
+  "Recommandations",                 // 7
+  "Petit-déjeuner",                  // 8
+  "Notre concept de rééquilibrage alimentaire", // 9  (ex 11, sans LazyMorningRoutineCard)
+  "Programme proposé",               // 10 (ex 12)
+  "Suite du suivi",                  // 11 (ex 13)
+  "Félicitations"                    // 12 (remplace "Résumé du rendez-vous" — 2026-04-20)
 ];
 
 const timelineOptions = [
@@ -344,17 +373,7 @@ const PROGRAM_INCLUDED_PRODUCT_IDS: Record<string, string[]> = {
   "p-booster-2": ["aloe-vera", "the-51g", "formula-1", "pdm", "phyto-brule-graisse"]
 };
 
-const LazyMorningRoutineCard = lazy(() =>
-  import("../components/education/MorningRoutineCard").then((module) => ({
-    default: module.MorningRoutineCard
-  }))
-);
 
-const LazyHydrationRoutinePrimerCard = lazy(() =>
-  import("../components/education/HydrationRoutinePrimerCard").then((module) => ({
-    default: module.HydrationRoutinePrimerCard
-  }))
-);
 
 export function NewAssessmentPage() {
   const navigate = useNavigate();
@@ -367,6 +386,9 @@ export function NewAssessmentPage() {
   const [form, setForm] = useState(initialForm);
   const [currentStep, setCurrentStep] = useState(0);
   const [saveError, setSaveError] = useState("");
+  // Chantier Félicitations (2026-04-20) : le bouton "Enregistrer et terminer"
+  // montre un état "Enregistrement…" pendant handleSaveAssessment.
+  const [saving, setSaving] = useState(false);
   const [showRecapModal, setShowRecapModal] = useState(false);
   const [recapToken, setRecapToken] = useState("");
   const [recapClientName, setRecapClientName] = useState("");
@@ -493,87 +515,17 @@ export function NewAssessmentPage() {
 
   const currentPrograms = programs.filter((program) => program.category === form.objective);
   const mainPrograms = currentPrograms.filter((program) => program.kind !== "booster");
-  const boosterPrograms = currentPrograms.filter((program) => program.kind === "booster");
+  // boosterPrograms retiré — l'étape 11 est refactorée, les "boosters" sont
+  // gérés via les programmes Booster 1 / Booster 2 dans programs.ts.
   const selectedProgram =
     mainPrograms.find((program) => program.id === form.selectedProgramId) ?? null;
   const startsImmediately = form.afterAssessmentAction === "started";
   const bodyFatKg = estimateBodyFatKg(form.weight, form.bodyFat);
   const musclePercent = estimateMuscleMassPercent(form.weight, form.muscleMass);
   const hydrationKg = estimateHydrationKg(form.weight, form.hydration);
-  const bodyFatTarget = getBodyFatTargetRange(form.sex, form.objective);
-  const hydrationReference = getHydrationReference(form.sex);
-  const weightTargetLabel =
-    form.objective === "weight-loss" && form.targetWeight > 0
-      ? `${formatValue(form.targetWeight, "kg")}`
-      : form.objective === "sport"
-        ? "Base a consolider"
-        : "À définir";
-  const weightGapLabel =
-    form.objective === "weight-loss" && form.targetWeight > 0
-      ? form.weight > form.targetWeight
-        ? `${formatSignedValue(form.targetWeight - form.weight, "kg")}`
-        : "Dans la cible"
-      : "Base du jour";
-  const bodyFatTargetLabel = `${bodyFatTarget.min}-${bodyFatTarget.max} %`;
-  const bodyFatGapLabel = getRangeGapLabel(form.bodyFat, bodyFatTarget, "%");
-  const hydrationTargetLabel = `${hydrationReference.min}-${hydrationReference.max} %`;
-  const hydrationGapLabel = getRangeGapLabel(form.hydration, hydrationReference, "%");
-  const visceralTargetLabel = "0-6";
-  const visceralGapLabel =
-    form.visceralFat > 6 ? `+${formatRawNumber(form.visceralFat - 6)}` : "Dans le repère";
-  const comparisonRows = [
-    {
-      label: "Poids",
-      initial: formatValue(form.weight, "kg"),
-      current: formatValue(form.weight, "kg"),
-      target: weightTargetLabel,
-      gap: weightGapLabel,
-      priority:
-        form.objective === "weight-loss" && form.targetWeight > 0
-          ? form.weight > form.targetWeight
-            ? "A reduire progressivement"
-            : "Dans l'objectif"
-          : "Base de référence",
-      tone: "blue" as const
-    },
-    {
-      label: "Masse grasse",
-      initial: `${formatRawNumber(form.bodyFat)} %`,
-      current: `${formatRawNumber(form.bodyFat)} %`,
-      target: bodyFatTargetLabel,
-      gap: bodyFatGapLabel,
-      priority: getBodyFatPriority(form.bodyFat, bodyFatTarget),
-      tone: "red" as const
-    },
-    {
-      label: "Masse musculaire",
-      initial: formatValue(form.muscleMass, "kg"),
-      current: formatValue(form.muscleMass, "kg"),
-      target: form.objective === "sport" ? "A developper" : "A preserver",
-      gap: `${formatRawNumber(musclePercent)} % du poids`,
-      priority:
-        form.objective === "sport" ? "A soutenir dans le suivi" : "A preserver",
-      tone: "green" as const
-    },
-    {
-      label: "Hydratation",
-      initial: `${formatRawNumber(form.hydration)} %`,
-      current: `${formatRawNumber(form.hydration)} %`,
-      target: hydrationTargetLabel,
-      gap: hydrationGapLabel,
-      priority: getHydrationPriority(form.hydration, hydrationReference),
-      tone: "blue" as const
-    },
-    {
-      label: "Graisse viscérale",
-      initial: formatRawNumber(form.visceralFat),
-      current: formatRawNumber(form.visceralFat),
-      target: visceralTargetLabel,
-      gap: visceralGapLabel,
-      priority: getVisceralPriority(form.visceralFat),
-      tone: "amber" as const
-    }
-  ];
+  // Chantier nettoyage bilan (2026-04-20) : les helpers body-fat / hydratation
+  // / comparisonRows alimentaient l'étape "Références de suivi" supprimée,
+  // donc retirés (non utilisés ailleurs dans le bilan).
   const recommendationPlan = buildAssessmentRecommendationPlan({
     sex: form.sex,
     objective: form.objective,
@@ -618,25 +570,14 @@ export function NewAssessmentPage() {
     mainPrograms.find((program) => program.id === recommendationPlan.recommendedProgramId) ??
     null;
   const activeProgram = selectedProgram ?? recommendedProgram;
-  const displayedProgramPrice = selectedProgram?.price ?? recommendedProgram?.price ?? "";
-  const displayedProgramPriceValue = parsePriceValue(displayedProgramPrice);
+  // displayedProgramPrice* + addOnProductsTotalPrice retirés avec le résumé
+  // administratif (Chantier Félicitations 2026-04-20). selectedProgram reste
+  // utilisé pour le titre programme dans handleSaveAssessment.
   const includedProgramProductIds = activeProgram
     ? new Set(PROGRAM_INCLUDED_PRODUCT_IDS[activeProgram.id] ?? [])
     : new Set<string>();
   const addOnProducts = selectedRecommendationProducts.filter(
     (product) => !includedProgramProductIds.has(product.id)
-  );
-  const addOnProductsTotalPrice = Number(
-    addOnProducts.reduce((total, product) => total + product.prixPublic, 0).toFixed(2)
-  );
-  const addOnProductsTotalPv = Number(
-    addOnProducts.reduce((total, product) => total + product.pv, 0).toFixed(2)
-  );
-  const estimatedClientTotal = Number(
-    (
-      displayedProgramPriceValue +
-      (addOnProducts.length ? addOnProductsTotalPrice : 0)
-    ).toFixed(2)
   );
 
   useEffect(() => {
@@ -742,6 +683,15 @@ export function NewAssessmentPage() {
       targetWeight: form.targetWeight > 0 ? form.targetWeight : undefined,
       motivation: form.motivation,
       desiredTimeline: form.desiredTimeline,
+      // Chantier bilan updates (2026-04-20)
+      customGoal: form.customGoal?.trim() || undefined,
+      snacksFastFoodPerWeek:
+        form.snacksFastFoodPerWeek != null && form.snacksFastFoodPerWeek >= 0
+          ? form.snacksFastFoodPerWeek
+          : null,
+      preferredFlavor: form.preferredFlavor?.trim() || undefined,
+      consumesMilk: form.consumesMilk ? form.consumesMilk : undefined,
+      programChoice: form.programChoice,
       recommendations: form.recommendations.filter(
         (item) => item.name.trim() || item.contact.trim()
       ),
@@ -752,6 +702,7 @@ export function NewAssessmentPage() {
   }
 
   async function handleSaveAssessment() {
+    if (saving) return;
     if (!form.firstName.trim() || !form.lastName.trim()) {
       setSaveError("Renseigne au minimum le prenom et le nom du client.");
       goToStep(0);
@@ -778,6 +729,7 @@ export function NewAssessmentPage() {
 
     // Programme optionnel — pas de validation bloquante
 
+    setSaving(true);
     const assessmentDate = form.assessmentDate || getCurrentDateTimeValue();
     // Sujet C — "Suivi libre" : client actif mais hors agenda. La colonne
     // clients.next_follow_up est NOT NULL dans le schema, on y met donc une
@@ -949,6 +901,8 @@ export function NewAssessmentPage() {
           ? error.message
           : "Impossible d'enregistrer le bilan pour le moment."
       );
+    } finally {
+      setSaving(false);
     }
   }
 
@@ -1053,18 +1007,6 @@ export function NewAssessmentPage() {
                   <Field label="Taille (cm)" type="number" value={form.height} onChange={(v) => update("height", Number(v))} />
                   <Field label="Profession" value={form.job} onChange={(v) => update("job", v)} />
                   <Field label="Ville" value={form.city} onChange={(v) => update("city", v)} />
-                  <ClothingSizeSelect
-                    label="Taille vêtement actuelle"
-                    value={form.currentClothingSize}
-                    sex={form.sex}
-                    onChange={(v) => update("currentClothingSize", v)}
-                  />
-                  <ClothingSizeSelect
-                    label="Taille vêtement cible"
-                    value={form.targetClothingSize}
-                    sex={form.sex}
-                    onChange={(v) => update("targetClothingSize", v)}
-                  />
                 </div>
 
                 <SectionBlock
@@ -1075,7 +1017,7 @@ export function NewAssessmentPage() {
                     <ChoiceGroup
                       label="Objectif principal"
                       value={form.objectiveFocus}
-                      options={["Perte de poids", "Prise de masse", "Energie", "Remise en forme"]}
+                      options={["Perte de poids", "Prise de masse", "Energie", "Remise en forme", "Autre"]}
                       onChange={updateObjectiveFocus}
                     />
                     <TimelineChoiceField
@@ -1085,6 +1027,14 @@ export function NewAssessmentPage() {
                       onChange={(v) => update("desiredTimeline", v)}
                     />
                   </div>
+                  {/* Chantier bilan updates (2026-04-20) : texte libre si "Autre" */}
+                  {form.objectiveFocus === "Autre" && (
+                    <AreaField
+                      label="Précise ton objectif"
+                      value={form.customGoal ?? ""}
+                      onChange={(v) => update("customGoal", v)}
+                    />
+                  )}
                   <div className="grid gap-4 md:grid-cols-2">
                     <ChoiceGroup
                       label="Sante / traitement"
@@ -1107,6 +1057,22 @@ export function NewAssessmentPage() {
                       onChange={(v) => update("targetWeight", Number(v))}
                     />
                   )}
+                  {/* Chantier bilan updates (2026-04-20) : taille vêtement déplacée
+                      après le poids cible (ordre visuel plus logique). */}
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <ClothingSizeSelect
+                      label="Taille vêtement actuelle"
+                      value={form.currentClothingSize}
+                      sex={form.sex}
+                      onChange={(v) => update("currentClothingSize", v)}
+                    />
+                    <ClothingSizeSelect
+                      label="Taille vêtement cible"
+                      value={form.targetClothingSize}
+                      sex={form.sex}
+                      onChange={(v) => update("targetClothingSize", v)}
+                    />
+                  </div>
                   <div className="space-y-3 rounded-[24px] bg-[var(--ls-surface2)] p-4">
                     <div className="flex items-center justify-between gap-3">
                       <label className="text-sm font-medium text-[var(--ls-text-muted)]">Motivation</label>
@@ -1137,7 +1103,8 @@ export function NewAssessmentPage() {
                 {form.bedTime && form.wakeUpTime ? (() => {
                   const [bh, bm] = form.bedTime.split(':').map(Number)
                   const [wh, wm] = form.wakeUpTime.split(':').map(Number)
-                  let bedMin = bh * 60 + bm, wakeMin = wh * 60 + wm
+                  const bedMin = bh * 60 + bm
+                  let wakeMin = wh * 60 + wm
                   if (wakeMin <= bedMin) wakeMin += 24 * 60
                   const hours = (wakeMin - bedMin) / 60
                   const quality = hours >= 7 && hours <= 9 ? 'optimal' : hours >= 6 ? 'correct' : 'insuffisant'
@@ -1182,6 +1149,28 @@ export function NewAssessmentPage() {
                   <ChoiceGroup label="Midi" value={form.lunchLocation} options={["A la maison", "Au travail", "Au restaurant", "Sur le pouce"]} onChange={(v) => update("lunchLocation", v)} />
                 </div>
                 <ChoiceGroup label="Le soir" value={form.dinnerTiming} options={["Tot", "Normalement", "Tard"]} onChange={(v) => update("dinnerTiming", v)} />
+                {/* Chantier bilan updates (2026-04-20) : snacks/fast-food/resto — budget alim */}
+                <div className="space-y-2">
+                  <label className="ls-field-label">Nombre de snacks / fast-food / resto par semaine</label>
+                  <input
+                    type="number"
+                    min={0}
+                    max={30}
+                    placeholder="Ex : 3"
+                    value={form.snacksFastFoodPerWeek ?? ""}
+                    onChange={(event) => {
+                      const str = event.target.value.trim();
+                      if (str === "") { update("snacksFastFoodPerWeek", null); return; }
+                      const n = Number(str);
+                      if (Number.isNaN(n) || n < 0) { update("snacksFastFoodPerWeek", null); return; }
+                      update("snacksFastFoodPerWeek", Math.min(30, Math.max(0, n)));
+                    }}
+                    className="ls-input"
+                  />
+                  <p style={{ fontSize: 11, color: "var(--ls-text-hint)", margin: 0 }}>
+                    Nous servira à calculer ton budget alimentation plus tard.
+                  </p>
+                </div>
               </SectionBlock>
             </div>
           )}
@@ -1195,7 +1184,12 @@ export function NewAssessmentPage() {
                   <ChoiceGroup label="Legumes chaque jour" value={form.vegetablesDaily} options={["Oui", "Non", "Pas assez"]} onChange={(v) => update("vegetablesDaily", v)} />
                   <ChoiceGroup label="Protéines à chaque repas" value={form.proteinEachMeal} options={["Oui", "Non", "Pas toujours"]} onChange={(v) => update("proteinEachMeal", v)} />
                 </div>
-                <ChoiceGroup label="Produits sucres ou industriels" value={form.sugaryProducts} options={["Rarement", "Parfois", "Souvent", "Tres souvent"]} onChange={(v) => update("sugaryProducts", v)} />
+                <ChoiceGroup
+                  label="À quelle fréquence consommes-tu des produits sucrés ou ultra-transformés ? (sodas, plats préparés, bonbons)"
+                  value={form.sugaryProducts}
+                  options={["Rarement", "Parfois", "Souvent", "Très souvent"]}
+                  onChange={(v) => update("sugaryProducts", v)}
+                />
               </SectionBlock>
 
               <SectionBlock title="Bloc 5 - Grignotage et fringales" description="Faire ressortir le vrai moment de craquage et la cause la plus frequente.">
@@ -1433,51 +1427,78 @@ export function NewAssessmentPage() {
             </div>
           )}
 
+          {/* Chantier nettoyage bilan (2026-04-20) : "Références de suivi"
+              supprimée de la numérotation. Les index ci-dessous sont décalés. */}
+
+          {/* ─── Étape 6 : Dégustation — déplacée avant Recommandations (2026-04-20).
+                Le client goûte d'abord, puis lit les recos pendant qu'il boit. ─── */}
           {currentStep === 6 && (
-            <div className="space-y-4">
-              <Card className="space-y-6">
-                <div className="flex flex-wrap items-start justify-between gap-4">
-                  <div className="max-w-3xl">
-                    <p className="eyebrow-label">Références de suivi</p>
-                    <h2 className="mt-3 text-3xl text-white md:text-[2.6rem]">
-                      Lecture simple des valeurs de départ et des priorités
-                    </h2>
-                    <p className="mt-3 max-w-2xl text-sm leading-7 text-[var(--ls-text-muted)]">
-                      On compare la base du jour, la cible et les ecarts utiles pour rendre le suivi
-                      plus simple a expliquer.
-                    </p>
-                  </div>
-                  <StatusBadge label="Lecture comparative" tone="green" />
+            <VisualStepBoundary title="Place à la dégustation">
+              <Card className="space-y-5">
+                <div>
+                  <p className="eyebrow-label">Dégustation</p>
+                  <h2 className="mt-2 text-2xl" style={{ fontFamily: "Syne, sans-serif", color: "var(--ls-text)" }}>
+                    Je vais te faire goûter notre délicieux petit-déj, tu préfères quelle saveur ?
+                  </h2>
                 </div>
-
-                <div className="grid gap-3">
-                  {comparisonRows.map((row) => (
-                    <ReferenceComparisonRow
-                      key={row.label}
-                      label={row.label}
-                      initial={row.initial}
-                      current={row.current}
-                      target={row.target}
-                      gap={row.gap}
-                      priority={row.priority}
-                      tone={row.tone}
+                <div style={{ display: "flex", justifyContent: "center" }}>
+                  {/* WebP primary (76 KB) + PNG fallback (270 KB) — Chantier
+                      optimize-bilan-images (2026-04-20). */}
+                  <picture>
+                    <source srcSet="/images/assessment/saveurs-formula1.webp" type="image/webp" />
+                    <img
+                      src="/images/assessment/saveurs-formula1.png"
+                      alt="Saveurs Formula 1 disponibles"
+                      loading="lazy"
+                      decoding="async"
+                      style={{ maxWidth: 500, width: "100%", height: "auto", borderRadius: 14, display: "block" }}
+                      onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
                     />
-                  ))}
+                  </picture>
                 </div>
-
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "center" }}>
+                  {[
+                    "Vanille Onctueuse",
+                    "Délice de Fraise",
+                    "Cookie Crunch",
+                    "Crème de Banane",
+                    "Café Latte",
+                    "Chocolat Gourmand",
+                    "Menthe Chocolat",
+                  ].map((flavor) => {
+                    const active = form.preferredFlavor === flavor;
+                    return (
+                      <button
+                        key={flavor}
+                        type="button"
+                        onClick={() => update("preferredFlavor", active ? "" : flavor)}
+                        className={`ls-pill${active ? " ls-pill--selected" : ""}`}
+                      >
+                        {flavor}
+                      </button>
+                    );
+                  })}
+                </div>
+                <p style={{ fontSize: 12, color: "var(--ls-text-hint)", textAlign: "center", margin: 0 }}>
+                  Sélection facultative — tu peux passer à l'étape suivante.
+                </p>
               </Card>
-            </div>
+            </VisualStepBoundary>
           )}
 
-            {currentStep === 7 && (
-              <RecommendationStepCard
-                recommendations={form.recommendations}
-                recommendationsContacted={form.recommendationsContacted}
-                onChange={updateRecommendation}
-                onToggleContacted={(value) => update("recommendationsContacted", value)}
-              />
-            )}
+          {/* ─── Étape 7 : Recommandations (déplacée après Dégustation — 2026-04-20) ─── */}
+          {currentStep === 7 && (
+            <RecommendationStepCard
+              recommendations={form.recommendations}
+              recommendationsContacted={form.recommendationsContacted}
+              onChange={updateRecommendation}
+              onToggleContacted={(value) => update("recommendationsContacted", value)}
+            />
+          )}
 
+          {/* Étape "Reconnaissance" supprimée — Chantier nettoyage bilan (2026-04-20) */}
+
+          {/* ─── Étape 8 : Petit-déjeuner ─── */}
           {currentStep === 8 && (
             <VisualStepBoundary title="Petit-dejeuner">
               <BreakfastStorySlider
@@ -1488,63 +1509,134 @@ export function NewAssessmentPage() {
             </VisualStepBoundary>
           )}
 
+          {/* ─── Étape 9 : Notre concept de rééquilibrage alimentaire
+                Contenu = uniquement l'image de référence. L'ancien
+                LazyMorningRoutineCard (titre "Routine matin Lor'Squad") a
+                été retiré — Chantier nettoyage bilan (2026-04-20) ─── */}
           {currentStep === 9 && (
-            <VisualStepBoundary title="Routine matin">
-              <Suspense fallback={<StepVisualLoadingCard label="Chargement de la routine matin" />}>
-                <LazyMorningRoutineCard />
-              </Suspense>
+            <VisualStepBoundary title="Notre concept de rééquilibrage alimentaire">
+              <div style={{ display: "flex", justifyContent: "center" }}>
+                {/* WebP primary (118 KB) + PNG fallback (513 KB) — Chantier
+                    optimize-bilan-images (2026-04-20). */}
+                <picture>
+                  <source srcSet="/images/assessment/petit-dejeuner-concept.webp" type="image/webp" />
+                  <img
+                    src="/images/assessment/petit-dejeuner-concept.png"
+                    alt="Notre concept de rééquilibrage alimentaire"
+                    loading="lazy"
+                    decoding="async"
+                    style={{ maxWidth: 900, width: "100%", height: "auto", borderRadius: 14, display: "block" }}
+                    onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+                  />
+                </picture>
+              </div>
             </VisualStepBoundary>
           )}
 
-          {currentStep === 10 && (
-            <div className="space-y-4">
-              <Card className="space-y-4">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div>
-                    <p className="eyebrow-label">Suite après le bilan</p>
-                    <p className="mt-2 text-2xl text-white">La personne démarre maintenant ou revient plus tard ?</p>
-                  </div>
-                  <StatusBadge
-                    label={startsImmediately ? "Demarrage maintenant" : "Bilan sans demarrage"}
-                    tone={startsImmediately ? "green" : "amber"}
+          {currentStep === 10 && (() => {
+            // Chantier refonte étape 11 (2026-04-20) — tunnel de vente structuré.
+            const chosenProgram = getProgramById(form.programChoice);
+            const ticketAddOns: TicketAddOn[] = addOnProducts.map((p) => ({
+              id: p.id,
+              name: p.name,
+              price: p.prixPublic,
+              pv: p.pv,
+            }));
+            return (
+              <div className="grid gap-4 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+                {/* ─── Colonne principale ─────────────────────────────── */}
+                <div className="space-y-5">
+                  {/* Bloc 0 — Curseur lait */}
+                  <MilkConsumptionToggle
+                    value={form.consumesMilk}
+                    onChange={(v) => update("consumesMilk", v)}
                   />
-                </div>
-                <ChoiceGroup
-                  label="Décision du jour"
-                  value={form.afterAssessmentAction}
-                  options={["Demarrage maintenant", "A relancer / ne demarre pas aujourd'hui"]}
-                  onChange={(value) =>
-                    update(
-                      "afterAssessmentAction",
-                      value === "Demarrage maintenant" ? "started" : "pending"
-                    )
-                  }
-                />
-                {!startsImmediately ? (
-                  <p className="text-sm leading-6 text-[var(--ls-text-muted)]">
-                    Le bilan sera enregistre, la personne apparaitra en attente dans les dossiers,
-                    et elle ne comptera pas dans le module PV tant qu&apos;aucun programme n&apos;est demarre.
-                  </p>
-                ) : null}
-              </Card>
 
-              <Card className="space-y-5">
-                <div className="flex flex-wrap items-center justify-between gap-3">
+                  {/* Bloc 1 — 4 cards programmes */}
                   <div>
-                    <p className="eyebrow-label">Lecture besoins</p>
-                    <p className="mt-2 text-2xl text-white">Ce que le bilan fait ressortir en priorite</p>
+                    <p className="eyebrow-label" style={{ marginBottom: 10 }}>
+                      Choix du programme
+                    </p>
+                    <div
+                      className="grid gap-2"
+                      style={{ gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))" }}
+                    >
+                      {PROGRAM_CHOICES.map((p) => (
+                        <ProgramChoiceCard
+                          key={p.id}
+                          program={p}
+                          active={form.programChoice === p.id}
+                          onSelect={() => update("programChoice", p.id)}
+                        />
+                      ))}
+                    </div>
+                    <div
+                      style={{
+                        marginTop: 10,
+                        padding: "10px 14px",
+                        borderRadius: 10,
+                        background: "color-mix(in srgb, var(--ls-gold) 10%, transparent)",
+                        border: "1px solid color-mix(in srgb, var(--ls-gold) 30%, transparent)",
+                        color: "var(--ls-text)",
+                        fontSize: 13,
+                        fontFamily: "'DM Sans', sans-serif",
+                      }}
+                    >
+                      ✓ Programme{" "}
+                      <strong style={{ color: "var(--ls-gold)" }}>{chosenProgram.title}</strong>{" "}
+                      sélectionné · <strong>{chosenProgram.price}€</strong>
+                    </div>
                   </div>
-                  <StatusBadge
-                    label={`${recommendationPlan.needs.length} besoin${recommendationPlan.needs.length > 1 ? "s" : ""}`}
-                    tone={recommendationPlan.needs.length ? "green" : "blue"}
-                  />
-                </div>
 
-                {recommendationPlan.needs.length ? (
-                  <div className="space-y-4">
-                      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_340px]">
-                        <div className="space-y-4">
-                          {recommendationPlan.needs.map((need) => (
+                  {/* Bloc 2 — Routine matin */}
+                  <RoutineMatinList program={chosenProgram} />
+
+                  {/* Bloc "Suite après le bilan" — EXISTANT conservé */}
+                  <Card className="space-y-4">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div>
+                        <p className="eyebrow-label">Suite après le bilan</p>
+                        <p className="mt-2 text-2xl text-white">La personne démarre maintenant ou revient plus tard ?</p>
+                      </div>
+                      <StatusBadge
+                        label={startsImmediately ? "Demarrage maintenant" : "Bilan sans demarrage"}
+                        tone={startsImmediately ? "green" : "amber"}
+                      />
+                    </div>
+                    <ChoiceGroup
+                      label="Décision du jour"
+                      value={form.afterAssessmentAction}
+                      options={["Demarrage maintenant", "A relancer / ne demarre pas aujourd'hui"]}
+                      onChange={(value) =>
+                        update(
+                          "afterAssessmentAction",
+                          value === "Demarrage maintenant" ? "started" : "pending"
+                        )
+                      }
+                    />
+                    {!startsImmediately ? (
+                      <p className="text-sm leading-6 text-[var(--ls-text-muted)]">
+                        Le bilan sera enregistre, la personne apparaitra en attente dans les dossiers,
+                        et elle ne comptera pas dans le module PV tant qu&apos;aucun programme n&apos;est demarre.
+                      </p>
+                    ) : null}
+                  </Card>
+
+                  {/* Bloc 3 — Ce que le bilan fait ressortir (EXISTANT, nettoyé) */}
+                  <Card className="space-y-5">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div>
+                        <p className="eyebrow-label">Lecture besoins</p>
+                        <p className="mt-2 text-2xl text-white">Ce que le bilan fait ressortir en priorité</p>
+                      </div>
+                      <StatusBadge
+                        label={`${recommendationPlan.needs.length} besoin${recommendationPlan.needs.length > 1 ? "s" : ""}`}
+                        tone={recommendationPlan.needs.length ? "green" : "blue"}
+                      />
+                    </div>
+                    {recommendationPlan.needs.length ? (
+                      <div className="space-y-4">
+                        {recommendationPlan.needs.map((need) => (
                           <NeedProductGroup
                             key={`products-${need.id}`}
                             title={need.label}
@@ -1556,105 +1648,61 @@ export function NewAssessmentPage() {
                           />
                         ))}
                       </div>
-                      <ClientTotalCalculatorCard
-                        programTitle={activeProgram?.title ?? "Programme a confirmer"}
-                        displayedProgramPrice={displayedProgramPrice}
-                        includedComposition={activeProgram?.composition ?? []}
-                        addOnProducts={addOnProducts}
-                        addOnProductsTotalPrice={addOnProductsTotalPrice}
-                        addOnProductsTotalPv={addOnProductsTotalPv}
-                        estimatedClientTotal={estimatedClientTotal}
-                      />
-                    </div>
-                  </div>
-                ) : (
-                  <div className="rounded-[24px] bg-[var(--ls-surface2)] p-5 text-sm leading-7 text-[var(--ls-text-muted)]">
-                    Le bilan ne fait pas encore ressortir une priorite forte. On peut partir sur une
-                    base simple, puis personnaliser au premier suivi.
-                  </div>
-                )}
-              </Card>
+                    ) : (
+                      <div className="rounded-[24px] bg-[var(--ls-surface2)] p-5 text-sm leading-7 text-[var(--ls-text-muted)]">
+                        Le bilan ne fait pas encore ressortir une priorité forte. On peut partir sur une
+                        base simple, puis personnaliser au premier suivi.
+                      </div>
+                    )}
+                  </Card>
 
-              <div className="rounded-[24px] bg-[rgba(45,212,191,0.1)] p-4">
-                <p className="eyebrow-label text-[#2DD4BF]/80">Programme conseille</p>
-                <div className="mt-3 flex flex-wrap items-start justify-between gap-3">
-                  <div>
-                    <p className="text-xl text-white">
-                      {recommendedProgram?.title ?? "Base a confirmer"}
-                    </p>
-                    <p className="mt-2 text-sm leading-6 text-[var(--ls-text)]">
-                      {recommendationPlan.recommendedProgramReason}
-                    </p>
-                  </div>
-                  <span className="rounded-full bg-[rgba(45,212,191,0.12)] px-4 py-2 text-sm font-semibold text-[#2DD4BF]">
-                    {recommendedProgram?.price ?? "A ajuster"}
-                  </span>
+                  {/* Bloc 4 — Options en plus si besoin (EXISTANT) */}
+                  {recommendationPlan.optionalUpsells.length ? (
+                    <Card className="space-y-4">
+                      <div className="flex flex-wrap items-center justify-between gap-3">
+                        <div>
+                          <p className="eyebrow-label">Options en plus si besoin</p>
+                          <p className="mt-2 text-2xl text-white">Quelques ajouts utiles sans alourdir la base</p>
+                        </div>
+                        <StatusBadge label={`${recommendationPlan.optionalUpsells.length} option${recommendationPlan.optionalUpsells.length > 1 ? "s" : ""}`} tone="blue" />
+                      </div>
+                      <div className="grid gap-3">
+                        {recommendationPlan.optionalUpsells.map((product) => (
+                          <SuggestedProductCard
+                            key={`upsell-${product.id}`}
+                            name={product.name}
+                            shortBenefit={product.shortBenefit}
+                            pv={product.pv}
+                            prixPublic={product.prixPublic}
+                            dureeReferenceJours={product.dureeReferenceJours}
+                            quantityLabel={product.quantityLabel}
+                            selected={effectiveSelectedProductIds.includes(product.id)}
+                            onToggle={() => toggleSelectedProduct(product.id)}
+                          />
+                        ))}
+                      </div>
+                    </Card>
+                  ) : null}
+                </div>
+
+                {/* ─── Colonne ticket sticky ──────────────────────────── */}
+                <div
+                  style={{
+                    position: "sticky",
+                    top: 16,
+                    alignSelf: "start",
+                    height: "fit-content",
+                  }}
+                >
+                  <ProgrammeTicket program={chosenProgram} addOns={ticketAddOns} />
                 </div>
               </div>
+            );
+          })()}
 
-              <div className="grid gap-4 lg:grid-cols-2">
-                {mainPrograms.map((program) => (
-                  <ProgramCard key={program.id} program={program} selected={form.selectedProgramId === program.id} onSelect={() => update("selectedProgramId", program.id)} />
-                ))}
-              </div>
-                {boosterPrograms.length ? (
-                  <div className="rounded-[24px] border border-white/10 bg-[var(--ls-bg)]/80 p-5">
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <div>
-                      <p className="eyebrow-label">
-                        Options pour booster les resultats
-                      </p>
-                      <p className="mt-2 text-2xl text-white">
-                        Ajouter seulement ce qui sert vraiment le profil sport
-                      </p>
-                    </div>
-                    <StatusBadge label="Options sport" tone="green" />
-                  </div>
-                  <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-                    {boosterPrograms.map((program) => (
-                      <ProgramBoosterCard key={program.id} program={program} />
-                    ))}
-                  </div>
-                  </div>
-                ) : null}
-                {recommendationPlan.optionalUpsells.length ? (
-                  <Card className="space-y-4">
-                    <div className="flex flex-wrap items-center justify-between gap-3">
-                      <div>
-                        <p className="eyebrow-label">Options en plus si besoin</p>
-                        <p className="mt-2 text-2xl text-white">Quelques ajouts utiles sans alourdir la base</p>
-                      </div>
-                      <StatusBadge label={`${recommendationPlan.optionalUpsells.length} option${recommendationPlan.optionalUpsells.length > 1 ? "s" : ""}`} tone="blue" />
-                    </div>
-                    <div className="grid gap-3">
-                      {recommendationPlan.optionalUpsells.map((product) => (
-                        <SuggestedProductCard
-                          key={`upsell-${product.id}`}
-                          name={product.name}
-                          shortBenefit={product.shortBenefit}
-                          pv={product.pv}
-                          prixPublic={product.prixPublic}
-                          dureeReferenceJours={product.dureeReferenceJours}
-                          quantityLabel={product.quantityLabel}
-                          selected={effectiveSelectedProductIds.includes(product.id)}
-                          onToggle={() => toggleSelectedProduct(product.id)}
-                        />
-                      ))}
-                    </div>
-                  </Card>
-                ) : null}
-              </div>
-            )}
+          {/* Ancien step Hydratation supprimé — Chantier bilan updates (2026-04-20) */}
 
           {currentStep === 11 && (
-            <VisualStepBoundary title="Repère hydratation">
-              <Suspense fallback={<StepVisualLoadingCard label="Chargement du repère hydratation" />}>
-                <LazyHydrationRoutinePrimerCard />
-              </Suspense>
-            </VisualStepBoundary>
-          )}
-
-          {currentStep === 12 && (
             <div className="space-y-4">
               {/* Mini-résumé bilan pour contexte */}
               <div className="rounded-[16px] border border-[rgba(201,168,76,0.15)] bg-[rgba(201,168,76,0.04)] p-4">
@@ -1758,186 +1806,16 @@ export function NewAssessmentPage() {
             </div>
           )}
 
-          {currentStep === 13 && (
-            <div className="space-y-4">
-              <Card className="space-y-5 bg-[linear-gradient(180deg,rgba(15,23,42,0.32),rgba(15,23,42,0.52))]">
-                <div className="flex flex-wrap items-start justify-between gap-4">
-                  <div className="max-w-3xl">
-                    <p className="eyebrow-label">Conclusion du rendez-vous</p>
-                    <p className="mt-3 text-4xl text-white">Une proposition claire, un cap simple et une suite déjà visible.</p>
-                    <p className="mt-3 text-sm leading-7 text-[var(--ls-text-muted)]">
-                      Cette synthese aide a reformuler le plan, confirmer le programme et terminer
-                      le rendez-vous avec une direction nette.
-                    </p>
-                  </div>
-                  <StatusBadge
-                    label={startsImmediately ? "Pret a presenter" : "Pret a relancer"}
-                    tone={startsImmediately ? "green" : "amber"}
-                  />
-                </div>
-
-                  <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_340px]">
-                    <div className="space-y-4">
-                    <div className="rounded-[28px] bg-[var(--ls-bg)]/60 p-5">
-                      <div className="flex flex-wrap items-center justify-between gap-3">
-                        <div>
-                          <p className="eyebrow-label">Besoins detectes</p>
-                          <p className="mt-3 text-3xl text-white">
-                            Ce qui ressort du bilan pour lancer la routine
-                          </p>
-                        </div>
-                        <StatusBadge
-                          label={`${recommendationPlan.needs.length} priorite${recommendationPlan.needs.length > 1 ? "s" : ""}`}
-                          tone={recommendationPlan.needs.length ? "green" : "blue"}
-                        />
-                      </div>
-
-                      {recommendationPlan.needs.length ? (
-                        <div className="mt-5 space-y-4">
-                            {recommendationPlan.needs.map((need) => (
-                              <NeedProductGroup
-                                key={`summary-products-${need.id}`}
-                              title={need.label}
-                              summary={need.summary}
-                              reasonLabel={need.reasonLabel}
-                              products={need.products}
-                              selectedProductIds={effectiveSelectedProductIds}
-                              onToggleProduct={toggleSelectedProduct}
-                            />
-                          ))}
-                        </div>
-                      ) : (
-                        <div className="mt-5 rounded-[22px] bg-[var(--ls-surface2)] px-4 py-4 text-sm leading-6 text-[var(--ls-text)]">
-                          Une base simple suffit pour le moment. Les produits se personaliseront
-                          au besoin dans le suivi.
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="rounded-[28px] bg-[var(--ls-bg)]/60 p-5">
-                      <p className="eyebrow-label">Programme conseille</p>
-                      <div className="mt-4 flex flex-wrap items-start justify-between gap-3">
-                        <div>
-                          <p className="text-3xl text-white">
-                            {selectedProgram?.title ?? recommendedProgram?.title ?? "Programme a confirmer"}
-                          </p>
-                          <p className="mt-2 text-sm leading-6 text-[var(--ls-text-muted)]">
-                            {selectedProgram?.summary ??
-                              recommendationPlan.recommendedProgramReason}
-                          </p>
-                        </div>
-                        <span className="rounded-full bg-[rgba(45,212,191,0.1)] px-4 py-2 text-lg font-semibold text-[#2DD4BF]">
-                          {selectedProgram?.price ?? recommendedProgram?.price ?? "Relance"}
-                        </span>
-                      </div>
-                      <div className="mt-5 grid gap-3 md:grid-cols-3">
-                        {(selectedProgram?.benefits ??
-                          recommendedProgram?.benefits ?? [
-                            "Base simple a demarrer",
-                            "Routine facile a expliquer",
-                            "Personnalisation possible ensuite"
-                          ]).map((benefit) => (
-                          <div
-                            key={benefit}
-                            className="rounded-[22px] bg-[var(--ls-surface2)] px-4 py-4 text-sm leading-6 text-[var(--ls-text)]"
-                          >
-                            {benefit}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-
-                    <div className="grid gap-4">
-                      <ClientTotalCalculatorCard
-                        programTitle={activeProgram?.title ?? "Programme a confirmer"}
-                      displayedProgramPrice={displayedProgramPrice}
-                      includedComposition={activeProgram?.composition ?? []}
-                      addOnProducts={addOnProducts}
-                      addOnProductsTotalPrice={addOnProductsTotalPrice}
-                      addOnProductsTotalPv={addOnProductsTotalPv}
-                        estimatedClientTotal={estimatedClientTotal}
-                      />
-                      {recommendationPlan.optionalUpsells.length ? (
-                        <Card className="space-y-4">
-                          <div className="flex flex-wrap items-center justify-between gap-3">
-                            <div>
-                              <p className="eyebrow-label">Options en plus si besoin</p>
-                              <p className="mt-2 text-xl text-white">Ajouts légers a proposer seulement si ca colle</p>
-                            </div>
-                            <StatusBadge label={`${recommendationPlan.optionalUpsells.length} option${recommendationPlan.optionalUpsells.length > 1 ? "s" : ""}`} tone="blue" />
-                          </div>
-                          <div className="grid gap-3">
-                            {recommendationPlan.optionalUpsells.map((product) => (
-                              <SuggestedProductCard
-                                key={`summary-upsell-${product.id}`}
-                                name={product.name}
-                                shortBenefit={product.shortBenefit}
-                                pv={product.pv}
-                                prixPublic={product.prixPublic}
-                                dureeReferenceJours={product.dureeReferenceJours}
-                                quantityLabel={product.quantityLabel}
-                                selected={effectiveSelectedProductIds.includes(product.id)}
-                                onToggle={() => toggleSelectedProduct(product.id)}
-                              />
-                            ))}
-                          </div>
-                        </Card>
-                      ) : null}
-                    </div>
-                  </div>
-                </Card>
-
-              {/* QR Code récap client */}
-              <Card className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="eyebrow-label">Récap client</p>
-                    <p className="mt-2 text-lg font-bold text-white" style={{ fontFamily: 'Syne, sans-serif' }}>
-                      QR Code à scanner
-                    </p>
-                    <p className="mt-1 text-sm text-[var(--ls-text-muted)]">
-                      Le client scanne ce code avec son téléphone pour voir son récap de bilan.
-                    </p>
-                  </div>
-                  <div style={{
-                    width: 120, height: 120, borderRadius: 14, background: 'var(--ls-surface2)',
-                    border: '1px solid rgba(255,255,255,0.1)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    flexShrink: 0,
-                  }}>
-                    <div style={{ textAlign: 'center', padding: 8 }}>
-                      <div style={{ fontSize: 28, marginBottom: 4 }}>📱</div>
-                      <div style={{ fontSize: 9, color: 'var(--ls-text-hint)', lineHeight: 1.3 }}>
-                        QR disponible<br/>après enregistrement
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <p className="text-[11px] text-[var(--ls-text-hint)]">
-                  Le lien récap sera généré automatiquement à l'enregistrement du bilan. Le client pourra consulter ses résultats depuis son téléphone.
-                </p>
-              </Card>
-
-              <div className="rounded-[24px] bg-[rgba(45,212,191,0.08)] p-5">
-                <p className="eyebrow-label text-[#2DD4BF]/80">Formulation conseillee</p>
-                <div className="mt-4 grid gap-2 md:grid-cols-3">
-                  <ClosingLine text="On part sur une routine simple, claire et coherente avec ton objectif." />
-                  <ClosingLine text="Les repères du jour servent à rendre le plan plus facile à suivre dès maintenant." />
-                  <ClosingLine text="On se revoit au prochain rendez-vous pour relire les premiers effets et ajuster si besoin." />
-                </div>
-              </div>
-
-              <BodyFatInsightCard
-                current={{ weight: form.weight, percent: form.bodyFat }}
-                objective={form.objective}
-                sex={form.sex}
-              />
-
-              <MuscleMassInsightCard
-                current={{ weight: form.weight, muscleMass: form.muscleMass }}
-              />
-            </div>
+          {/* ─── Étape 12 : Félicitations (remplace l'ancienne "Conclusion du
+                rendez-vous" — Chantier Félicitations 2026-04-20) ─── */}
+          {currentStep === 12 && (
+            <FelicitationsStep
+              clientFirstName={form.firstName}
+              coachFirstName={currentUser?.name?.split(" ")[0] ?? "Ton coach"}
+              programChoice={form.programChoice}
+              onSave={() => void handleSaveAssessment()}
+              saving={saving}
+            />
           )}
 
           {/* Avertissement validation */}
@@ -2008,17 +1886,8 @@ export function NewAssessmentPage() {
     );
   }
 
-function StepVisualLoadingCard({ label }: { label: string }) {
-  return (
-    <Card className="space-y-4">
-      <p className="eyebrow-label">Chargement</p>
-      <div className="rounded-[28px] bg-[var(--ls-surface2)] p-6">
-        <div className="h-64 rounded-[22px] bg-[linear-gradient(135deg,rgba(255,255,255,0.06),rgba(255,255,255,0.02))]" />
-        <p className="mt-4 text-sm text-[var(--ls-text-muted)]">{label}</p>
-      </div>
-    </Card>
-  );
-}
+// StepVisualLoadingCard retiré — utilisé uniquement par LazyMorningRoutineCard
+// qui a été supprimé du bilan (Chantier nettoyage 2026-04-20).
 
 class VisualStepBoundary extends Component<
   { title: string; children: ReactNode },
@@ -2597,252 +2466,16 @@ function SectionBlock({ title, description, children }: { title: string; descrip
 
 
 
-function ClosingLine({ text }: { text: string }) {
-  return <div className="rounded-2xl bg-[var(--ls-bg)]/60 px-4 py-3 text-sm leading-6 text-white">{text}</div>;
-}
-
-function SummaryHighlightCard({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-[22px] bg-[var(--ls-surface2)] px-4 py-4">
-      <p className="text-[11px] font-medium text-[var(--ls-text-hint)]">{label}</p>
-      <p className="mt-3 text-lg font-semibold text-white">{value}</p>
-    </div>
-  );
-}
-
-function ClientTotalCalculatorCard({
-  programTitle,
-  displayedProgramPrice,
-  includedComposition,
-  addOnProducts,
-  addOnProductsTotalPrice,
-  addOnProductsTotalPv,
-  estimatedClientTotal
-}: {
-  programTitle: string;
-  displayedProgramPrice: string;
-  includedComposition: string[];
-  addOnProducts: Array<{
-    id: string;
-    name: string;
-    prixPublic: number;
-    pv: number;
-  }>;
-  addOnProductsTotalPrice: number;
-  addOnProductsTotalPv: number;
-  estimatedClientTotal: number;
-}) {
-  return (
-      <div className="rounded-[28px] border border-[rgba(201,168,76,0.16)] bg-gradient-to-br from-[rgba(201,168,76,0.12)] via-slate-950/24 to-[rgba(45,212,191,0.06)] p-5">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <p className="eyebrow-label text-[#2DD4BF]/80">Lecture simple</p>
-            <p className="mt-2 text-2xl text-white">Ticket du jour</p>
-          </div>
-          <StatusBadge label={addOnProducts.length ? "Programme + ajouts" : "Programme seul"} tone="blue" />
-        </div>
-
-      <div className="mt-5 space-y-3">
-        <div className="rounded-[22px] bg-[var(--ls-surface2)] px-4 py-4">
-          <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-[var(--ls-text-hint)]">Base choisie</p>
-            <div className="mt-3 flex items-start justify-between gap-3">
-              <div>
-                <p className="text-lg font-semibold text-white">{programTitle}</p>
-                <p className="mt-2 text-sm leading-6 text-[var(--ls-text-muted)]">
-                  {includedComposition.length ? includedComposition.join(" • ") : "Composition a confirmer"}
-                </p>
-              </div>
-              <span className="rounded-full bg-[var(--ls-surface2)] px-3 py-1.5 text-sm font-semibold text-white">
-                {displayedProgramPrice || "A confirmer"}
-              </span>
-            </div>
-            <div className="mt-3 flex items-center justify-between gap-3 rounded-[16px] bg-slate-950/22 px-3.5 py-2.5">
-              <p className="text-sm text-[var(--ls-text-muted)]">Base choisie</p>
-              <p className="text-sm font-semibold text-white">{displayedProgramPrice || "A confirmer"}</p>
-            </div>
-          </div>
-
-        <div className="rounded-[22px] bg-[var(--ls-surface2)] px-4 py-4">
-          <div className="flex items-center justify-between gap-3">
-              <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-[var(--ls-text-hint)]">Ajouts</p>
-            <span className="text-sm font-semibold text-white">{addOnProducts.length}</span>
-          </div>
-          {addOnProducts.length ? (
-            <div className="mt-3 space-y-2">
-                {addOnProducts.map((product) => (
-                  <div
-                    key={product.id}
-                    className="flex items-center justify-between gap-3 rounded-[16px] bg-[var(--ls-bg)]/60 px-3.5 py-3"
-                  >
-                    <div>
-                      <p className="text-sm font-semibold text-white">{product.name}</p>
-                      <p className="mt-1 text-xs text-[var(--ls-text-muted)]">{formatPv(product.pv)}</p>
-                    </div>
-                    <p className="text-sm font-semibold text-[#2DD4BF]">+ {formatPriceEuro(product.prixPublic)}</p>
-                  </div>
-                ))}
-              </div>
-          ) : (
-            <p className="mt-3 text-sm leading-6 text-[var(--ls-text-muted)]">
-              Aucun supplément ajouté pour l&apos;instant.
-            </p>
-          )}
-        </div>
-
-          <div className="grid gap-3 md:grid-cols-3">
-            <SummaryHighlightCard label="Base choisie" value={displayedProgramPrice || "A confirmer"} />
-            <SummaryHighlightCard label="Total ajouts" value={addOnProducts.length ? formatPriceEuro(addOnProductsTotalPrice) : "0.00 EUR"} />
-            <SummaryHighlightCard label="PV ajouts" value={addOnProducts.length ? formatPv(addOnProductsTotalPv) : "0.00 PV"} />
-          </div>
-
-          <div className="rounded-[22px] border border-[rgba(45,212,191,0.18)] bg-[rgba(45,212,191,0.1)] px-4 py-4">
-            <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-[#2DD4BF]/70">Total a prevoir aujourd&apos;hui</p>
-            <div className="mt-3 flex items-center justify-between gap-3">
-              <p className="text-base text-[#2DD4BF]">Base choisie + ajouts</p>
-              <p className="text-2xl font-semibold text-white">
-                {estimatedClientTotal > 0 ? formatPriceEuro(estimatedClientTotal) : "A definir"}
-              </p>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 
-function ReferenceComparisonRow({
-  label,
-  initial,
-  current,
-  target,
-  gap,
-  priority,
-  tone
-}: {
-  label: string;
-  initial: string;
-  current: string;
-  target: string;
-  gap: string;
-  priority: string;
-  tone: "blue" | "green" | "amber" | "red";
-}) {
-  const toneClass =
-    tone === "green"
-      ? "bg-[rgba(45,212,191,0.1)] text-[#2DD4BF]"
-      : tone === "red"
-        ? "bg-rose-400/10 text-rose-100"
-        : tone === "amber"
-          ? "bg-amber-400/10 text-amber-100"
-          : "bg-[rgba(45,212,191,0.1)] text-[#2DD4BF]";
+// ReferenceComparisonRow / ReferenceDatum retirés — ne sont plus utilisés
+// suite à la suppression de l'étape "Références de suivi" (Chantier
+// nettoyage bilan 2026-04-20).
 
-  return (
-    <div className="grid gap-3 rounded-[24px] border border-white/10 bg-[var(--ls-surface2)] px-4 py-4 md:grid-cols-[1.1fr_repeat(4,minmax(0,0.8fr))_minmax(0,1fr)] md:items-center">
-      <div>
-        <p className="text-base font-semibold text-white">{label}</p>
-      </div>
-      <ReferenceDatum label="Depart" value={initial} />
-      <ReferenceDatum label="Aujourd'hui" value={current} />
-      <ReferenceDatum label="Cible" value={target} />
-      <ReferenceDatum label="Ecart" value={gap} />
-      <div className="rounded-[18px] bg-[var(--ls-bg)]/60 px-3.5 py-3">
-        <p className="text-[11px] font-medium text-[var(--ls-text-hint)]">Priorite</p>
-        <p className={`mt-2 inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${toneClass}`}>
-          {priority}
-        </p>
-      </div>
-    </div>
-  );
-}
-
-function ReferenceDatum({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-[18px] bg-[var(--ls-bg)]/60 px-3.5 py-3">
-      <p className="text-[11px] font-medium text-[var(--ls-text-hint)]">{label}</p>
-      <p className="mt-2 text-sm font-semibold text-white">{value}</p>
-    </div>
-  );
-}
-
-function getBodyFatTargetRange(sex: BiologicalSex, objective: Objective) {
-  if (sex === "male") {
-    if (objective === "sport") {
-      return { min: 10, max: 15 };
-    }
-
-    if (objective === "weight-loss") {
-      return { min: 14, max: 20 };
-    }
-
-    return { min: 12, max: 20 };
-  }
-
-  if (objective === "sport") {
-    return { min: 18, max: 24 };
-  }
-
-  if (objective === "weight-loss") {
-    return { min: 24, max: 30 };
-  }
-
-  return { min: 22, max: 30 };
-}
-
-function getHydrationReference(sex: BiologicalSex) {
-  if (sex === "male") {
-    return { min: 50, max: 65 };
-  }
-
-  return { min: 45, max: 60 };
-}
-
-function getRangeGapLabel(value: number, range: { min: number; max: number }, unit: string) {
-  if (value < range.min) {
-    return `${formatSignedValue(value - range.min, unit)}`;
-  }
-
-  if (value > range.max) {
-    return `${formatSignedValue(value - range.max, unit)}`;
-  }
-
-  return "Dans la cible";
-}
-
-function getBodyFatPriority(value: number, range: { min: number; max: number }) {
-  if (value > range.max) {
-    return "A reduire progressivement";
-  }
-
-  if (value < range.min) {
-    return "A surveiller";
-  }
-
-  return "Dans la cible";
-}
-
-function getHydrationPriority(value: number, range: { min: number; max: number }) {
-  if (value < range.min) {
-    return "Hydratation a renforcer";
-  }
-
-  if (value > range.max) {
-    return "Lecture a surveiller";
-  }
-
-  return "Hydratation stable";
-}
-
-function getVisceralPriority(value: number) {
-  if (value <= 6) {
-    return "Repère sain";
-  }
-
-  if (value <= 12) {
-    return "A surveiller";
-  }
-
-  return "Priorite de suivi";
-}
+// Helpers de comparaison (getBodyFatTargetRange, getHydrationReference,
+// getRangeGapLabel, getBodyFatPriority, getHydrationPriority,
+// getVisceralPriority) retirés — alimentaient l'étape "Références de suivi"
+// supprimée. Chantier nettoyage bilan (2026-04-20).
 
 function formatRawNumber(value: number) {
   if (!Number.isFinite(value)) {
@@ -2870,34 +2503,8 @@ function formatPv(value: number) {
   return `${value.toFixed(2)} PV`;
 }
 
-function parsePriceValue(value: string) {
-  const normalized = String(value)
-    .replace(",", ".")
-    .match(/-?\d+(?:\.\d+)?/g);
-
-  if (!normalized?.length) {
-    return 0;
-  }
-
-  return normalized
-    .map((part) => Number(part))
-    .filter((part) => Number.isFinite(part))
-    .reduce((total, part) => total + part, 0);
-}
-
-function formatValue(value: number, unit: string) {
-  return `${formatRawNumber(value)} ${unit}`;
-}
-
-function formatSignedValue(value: number, unit: string) {
-  const rounded = Number(value.toFixed(1));
-  if (Math.abs(rounded) < 0.05) {
-    return `0 ${unit}`;
-  }
-
-  const prefix = rounded > 0 ? "+" : "";
-  return `${prefix}${formatRawNumber(rounded)} ${unit}`;
-}
+// formatValue / formatSignedValue retirés — alimentaient comparaisons
+// de l'étape supprimée. Chantier nettoyage bilan (2026-04-20).
 
 
 function PlateChartSvg({ legumes, proteines, glucides }: { legumes: number; proteines: number; glucides: number }) {

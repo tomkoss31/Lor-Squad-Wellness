@@ -15,6 +15,7 @@ import { useAppContext } from "../context/AppContext";
 import { useToast, buildSupabaseErrorToast } from "../context/ToastContext";
 import { ErrorBoundary } from "../components/ErrorBoundary";
 import { FollowUpProtocolCard } from "../components/follow-up/FollowUpProtocolCard";
+import { ClientGeneralNote } from "../components/client/ClientGeneralNote";
 import { buildReportData, generateProductRecommendations } from "../lib/evolutionReport";
 import { EvolutionReportModal } from "../components/assessment/EvolutionReportModal";
 import { getSupabaseClient } from "../services/supabaseClient";
@@ -56,16 +57,11 @@ export function ClientDetailPage() {
 
   const client = clientId ? getClientById(clientId) : undefined;
 
-  if (!client) {
-    return (
-      <Card>
-        <p className="text-lg text-white">Client introuvable ou accès indisponible.</p>
-      </Card>
-    );
-  }
-
-  const currentClient = client;
-  const [nextOwnerId, setNextOwnerId] = useState(client.distributorId);
+  // Hooks AVANT tout early return (rules-of-hooks / chantier nuit 2026-04-20).
+  // `client` peut être undefined pendant le boot ou si l'id n'est pas visible.
+  // On utilise optional chaining partout et le return `<Card>` est placé
+  // APRÈS tous les hooks.
+  const [nextOwnerId, setNextOwnerId] = useState(client?.distributorId ?? "");
   const [transferFeedback, setTransferFeedback] = useState("");
   const [showScheduleModal, setShowScheduleModal] = useState(false);
   // Chantier Protocole Agenda+Dashboard (2026-04-20) : ?tab=actions pour
@@ -75,9 +71,9 @@ export function ClientDetailPage() {
   const [activeTab, setActiveTab] = useState(initialTabFromQuery);
   const [reportUrl, setReportUrl] = useState<string | null>(null);
   const [generatingReport, setGeneratingReport] = useState(false);
-  const [editPhone, setEditPhone] = useState(client.phone);
-  const [editEmail, setEditEmail] = useState(client.email);
-  const [editCity, setEditCity] = useState(client.city ?? '');
+  const [editPhone, setEditPhone] = useState(client?.phone ?? "");
+  const [editEmail, setEditEmail] = useState(client?.email ?? "");
+  const [editCity, setEditCity] = useState(client?.city ?? "");
   const [editSaved, setEditSaved] = useState(false);
   const [clientAppUrl, setClientAppUrl] = useState<string | null>(null);
   const [creatingClientApp, setCreatingClientApp] = useState(false);
@@ -91,7 +87,7 @@ export function ClientDetailPage() {
     if (typeof window === 'undefined') return '';
     try { return JSON.parse(window.localStorage.getItem(coachContactKey) ?? '{}').telegram ?? ''; } catch { return ''; }
   });
-  const activeFollowUp = getClientActiveFollowUp(currentClient, followUps);
+  const activeFollowUp = client ? getClientActiveFollowUp(client, followUps) : null;
 
   async function createClientAppAccount() {
     if (!client || !currentUser) return;
@@ -106,7 +102,9 @@ export function ClientDetailPage() {
           phone: coachPhoneInput.trim(),
           telegram: coachTelegramInput.trim(),
         }));
-      } catch {}
+      } catch {
+        // localStorage indisponible (mode privé, quota) : non-bloquant.
+      }
 
       // Snapshot des métriques depuis les bilans du client
       const sortedAssessments = [...client.assessments].sort(
@@ -207,14 +205,24 @@ export function ClientDetailPage() {
   );
 
   useEffect(() => {
-    setNextOwnerId(currentClient.distributorId);
-  }, [currentClient.distributorId]);
+    if (client) setNextOwnerId(client.distributorId);
+  }, [client]);
 
   // Fix UX (2026-04-20) : l'ancien useEffect qui pré-chargeait un
   // existingClientToken depuis client_recaps/client_evolution_reports/
   // client_app_accounts n'est plus utile — le bouton "App client" header
   // et l'onglet "Rapport" appellent désormais generateReport() qui crée
   // un snapshot frais à la volée, ce qui évite les liens périmés.
+
+  // Early return APRÈS tous les hooks (rules-of-hooks / chantier nuit 2026-04-20).
+  if (!client) {
+    return (
+      <Card>
+        <p className="text-lg text-white">Client introuvable ou accès indisponible.</p>
+      </Card>
+    );
+  }
+  const currentClient = client;
 
   const latestAssessment = getLatestAssessment(client);
   const previousAssessment = getPreviousAssessment(client);
@@ -875,6 +883,13 @@ export function ClientDetailPage() {
       {/* Tab 4: Actions rapides */}
       {activeTab === 4 && (
         <div className="grid gap-4 md:grid-cols-2">
+          {/* Chantier bilan updates (2026-04-20) : note libre "À savoir sur
+              ce client" — en tête, full-width, juste au-dessus du protocole. */}
+          <div className="md:col-span-2">
+            <ErrorBoundary name="ClientDetailPage/GeneralNote" fallback={null}>
+              <ClientGeneralNote client={client} />
+            </ErrorBoundary>
+          </div>
           {/* Chantier Protocole de suivi (2026-04-20) : bloc 5 étapes visible
               en tête de la colonne Actions. L'ErrorBoundary l'isole d'un
               crash éventuel pour ne pas casser le reste de l'onglet. */}

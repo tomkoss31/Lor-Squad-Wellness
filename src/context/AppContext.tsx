@@ -42,6 +42,7 @@ import {
   updateSupabaseClientFragileFlag,
   updateSupabaseClientFreeFollowUp,
   updateSupabaseClientFreePvTracking,
+  updateSupabaseClientGeneralNote,
   fetchSupabaseProspects,
   fetchAllSupabaseFollowUpProtocolLogs,
   createSupabaseProspect,
@@ -98,6 +99,8 @@ interface AppContextValue {
   setClientFreeFollowUp: (clientId: string, freeFollowUp: boolean) => Promise<void>;
   // Free PV tracking (2026-04-20) : toggle exclusion des listes de réassort
   setClientFreePvTracking: (clientId: string, freePvTracking: boolean) => Promise<void>;
+  // Chantier bilan updates (2026-04-20) : note libre "À savoir sur ce client"
+  setClientGeneralNote: (clientId: string, generalNote: string) => Promise<void>;
   updateFollowUpStatus: (followUpId: string, status: 'scheduled' | 'pending' | 'completed' | 'dismissed') => Promise<void>;
   loginWithCredentials: (
     payload: { email: string; password: string }
@@ -876,6 +879,13 @@ export function AppProvider({ children }: PropsWithChildren) {
         await updateSupabaseClientFreePvTracking({ clientId, freePvTracking });
         setClients(prev => prev.map(c =>
           c.id === clientId ? { ...c, freePvTracking } : c
+        ));
+      },
+      // Note libre (Chantier bilan updates 2026-04-20)
+      setClientGeneralNote: async (clientId: string, generalNote: string) => {
+        await updateSupabaseClientGeneralNote({ clientId, generalNote });
+        setClients(prev => prev.map(c =>
+          c.id === clientId ? { ...c, generalNote } : c
         ));
       },
       loginWithCredentials,

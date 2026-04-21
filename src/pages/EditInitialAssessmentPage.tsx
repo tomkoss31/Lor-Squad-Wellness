@@ -145,7 +145,16 @@ function buildEditableQuestionnaire(questionnaire: AssessmentQuestionnaire): Ass
     motivation: questionnaire.motivation ?? 0,
     desiredTimeline: questionnaire.desiredTimeline ?? "",
     recommendations: questionnaire.recommendations ?? [],
-    recommendationsContacted: questionnaire.recommendationsContacted ?? false
+    recommendationsContacted: questionnaire.recommendationsContacted ?? false,
+    // Audit 2026-04-20 : préserver les champs introduits récemment.
+    // L'Edit page n'expose pas encore d'UI pour les éditer, mais sans ce
+    // pass-through le save écraserait les valeurs saisies au bilan initial.
+    breakfastAnalysis: questionnaire.breakfastAnalysis,
+    customGoal: questionnaire.customGoal,
+    snacksFastFoodPerWeek: questionnaire.snacksFastFoodPerWeek,
+    preferredFlavor: questionnaire.preferredFlavor,
+    consumesMilk: questionnaire.consumesMilk,
+    programChoice: questionnaire.programChoice
   };
 }
 
@@ -162,15 +171,6 @@ export function EditInitialAssessmentPage() {
   const { push: pushToast } = useToast();
   const client = clientId ? getClientById(clientId) : undefined;
 
-  if (!client) {
-    return (
-      <Card>
-        <p className="text-lg text-white">Client introuvable ou accès indisponible.</p>
-      </Card>
-    );
-  }
-
-  const targetClient = client;
   // Fix P3a (2026-04-20) : quand on édite via /start-assessment/edit (sans
   // assessmentId), on cible EXPLICITEMENT le bilan avec type === "initial",
   // pas juste le plus ancien par date. Sans ça, si un follow-up a une date
@@ -178,42 +178,41 @@ export function EditInitialAssessmentPage() {
   // → le "Poids de départ" affiché sur la fiche (lié au même calcul) ne
   // reflétait jamais la modif. Fallback sur getFirstAssessment si pas
   // d'assessment "initial" (cas de migration / anciens dossiers).
-  const explicitInitial = targetClient.assessments.find((entry) => entry.type === "initial");
-  const fallbackAssessment = explicitInitial ?? getFirstAssessment(targetClient);
+  // Chantier nuit (2026-04-20) : toute la chaîne est safe avec optional
+  // chaining — les hooks ci-dessous s'exécutent même si client/targetAssessment
+  // sont undefined, et les early returns sont placés APRÈS tous les hooks
+  // (rules-of-hooks).
+  const explicitInitial = client?.assessments.find((entry) => entry.type === "initial");
+  const fallbackAssessment = explicitInitial ?? (client ? getFirstAssessment(client) : undefined);
   const targetAssessment =
-    targetClient.assessments.find((entry) => entry.id === assessmentId) ?? fallbackAssessment;
+    client?.assessments.find((entry) => entry.id === assessmentId) ?? fallbackAssessment;
 
-  if (!targetAssessment) {
-    return (
-      <Card>
-        <p className="text-lg text-white">Bilan introuvable sur ce dossier.</p>
-      </Card>
-    );
-  }
-
-  const isInitialAssessment = targetAssessment.type === "initial";
+  const isInitialAssessment = targetAssessment?.type === "initial";
   const [assessmentDate, setAssessmentDate] = useState(
-    normalizeDateTimeLocalInputValue(targetAssessment.date)
+    targetAssessment ? normalizeDateTimeLocalInputValue(targetAssessment.date) : ""
   );
-  const [programTitle, setProgramTitle] = useState(targetAssessment.programTitle);
-  const [summary, setSummary] = useState(targetAssessment.summary);
-  const [weight, setWeight] = useState(targetAssessment.bodyScan.weight);
-  const [bodyFat, setBodyFat] = useState(targetAssessment.bodyScan.bodyFat);
-  const [muscleMass, setMuscleMass] = useState(targetAssessment.bodyScan.muscleMass);
-  const [hydration, setHydration] = useState(targetAssessment.bodyScan.hydration);
-  const [boneMass, setBoneMass] = useState(targetAssessment.bodyScan.boneMass);
-  const [visceralFat, setVisceralFat] = useState(targetAssessment.bodyScan.visceralFat);
-  const [bmr, setBmr] = useState(targetAssessment.bodyScan.bmr);
-  const [metabolicAge, setMetabolicAge] = useState(targetAssessment.bodyScan.metabolicAge);
+  const [programTitle, setProgramTitle] = useState(targetAssessment?.programTitle ?? "");
+  const [summary, setSummary] = useState(targetAssessment?.summary ?? "");
+  const [weight, setWeight] = useState(targetAssessment?.bodyScan?.weight ?? 0);
+  const [bodyFat, setBodyFat] = useState(targetAssessment?.bodyScan?.bodyFat ?? 0);
+  const [muscleMass, setMuscleMass] = useState(targetAssessment?.bodyScan?.muscleMass ?? 0);
+  const [hydration, setHydration] = useState(targetAssessment?.bodyScan?.hydration ?? 0);
+  const [boneMass, setBoneMass] = useState(targetAssessment?.bodyScan?.boneMass ?? 0);
+  const [visceralFat, setVisceralFat] = useState(targetAssessment?.bodyScan?.visceralFat ?? 0);
+  const [bmr, setBmr] = useState(targetAssessment?.bodyScan?.bmr ?? 0);
+  const [metabolicAge, setMetabolicAge] = useState(targetAssessment?.bodyScan?.metabolicAge ?? 0);
   const [questionnaire, setQuestionnaire] = useState<AssessmentQuestionnaire>(
-    buildEditableQuestionnaire(targetAssessment.questionnaire)
+    targetAssessment?.questionnaire
+      ? buildEditableQuestionnaire(targetAssessment.questionnaire)
+      : buildEditableQuestionnaire({} as AssessmentQuestionnaire)
   );
-  const [notes, setNotes] = useState(targetAssessment.notes);
+  const [notes, setNotes] = useState(targetAssessment?.notes ?? "");
   const [error, setError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [draftReady, setDraftReady] = useState(false);
 
   useEffect(() => {
+    if (!client || !targetAssessment) return;
     setAssessmentDate(normalizeDateTimeLocalInputValue(targetAssessment.date));
     setProgramTitle(targetAssessment.programTitle);
     setSummary(targetAssessment.summary);
@@ -228,7 +227,7 @@ export function EditInitialAssessmentPage() {
     setQuestionnaire(buildEditableQuestionnaire(targetAssessment.questionnaire));
     setNotes(targetAssessment.notes);
 
-    const draft = readEditAssessmentDraft(targetClient.id, targetAssessment.id);
+    const draft = readEditAssessmentDraft(client.id, targetAssessment.id);
     if (draft) {
       setAssessmentDate(draft.assessmentDate);
       setProgramTitle(draft.programTitle);
@@ -246,15 +245,15 @@ export function EditInitialAssessmentPage() {
     }
 
     setDraftReady(true);
-  }, [targetAssessment, targetClient.id]);
+  }, [targetAssessment, client]);
 
   useEffect(() => {
-    if (!draftReady) {
+    if (!client || !targetAssessment || !draftReady) {
       return;
     }
 
     persistEditAssessmentDraft({
-      clientId: targetClient.id,
+      clientId: client.id,
       assessmentId: targetAssessment.id,
       assessmentDate,
       programTitle,
@@ -283,11 +282,28 @@ export function EditInitialAssessmentPage() {
     programTitle,
     questionnaire,
     summary,
-    targetAssessment.id,
-    targetClient.id,
+    targetAssessment,
+    client,
     visceralFat,
     weight
   ]);
+
+  // Early returns APRÈS tous les hooks (rules-of-hooks / chantier nuit 2026-04-20).
+  if (!client) {
+    return (
+      <Card>
+        <p className="text-lg text-white">Client introuvable ou accès indisponible.</p>
+      </Card>
+    );
+  }
+  if (!targetAssessment) {
+    return (
+      <Card>
+        <p className="text-lg text-white">Bilan introuvable sur ce dossier.</p>
+      </Card>
+    );
+  }
+  const targetClient = client;
 
   function updateQuestionnaire<K extends keyof AssessmentQuestionnaire>(
     key: K,
@@ -301,6 +317,10 @@ export function EditInitialAssessmentPage() {
 
   async function handleSave() {
     setError("");
+    if (!client || !targetAssessment) {
+      setError("Bilan introuvable — impossible d'enregistrer.");
+      return;
+    }
     setIsSaving(true);
 
     const updatedAssessment: AssessmentRecord = {
@@ -532,6 +552,133 @@ export function EditInitialAssessmentPage() {
               <AreaField label="Le plus difficile" value={questionnaire.hardestPart} onChange={(value) => updateQuestionnaire("hardestPart", value)} rows={3} />
               <AreaField label="Blocage principal" value={questionnaire.mainBlocker} onChange={(value) => updateQuestionnaire("mainBlocker", value)} rows={3} />
               <AreaField label="Produits optionnels déjà pris" value={questionnaire.optionalProductsUsed ?? ""} onChange={(value) => updateQuestionnaire("optionalProductsUsed", value)} rows={3} />
+            </div>
+          </SectionCard>
+
+          <SectionCard
+            title="Compléments bilan (chantier 2026-04-20)"
+            description="Champs ajoutés récemment : objectif libre, budget snacks, saveur F1, lait, programme choisi, analyse petit-déj."
+          >
+            <div className="grid gap-4 md:grid-cols-2">
+              <AreaField
+                label="Objectif libre (si « Autre »)"
+                value={questionnaire.customGoal ?? ""}
+                onChange={(value) => updateQuestionnaire("customGoal", value)}
+                rows={3}
+              />
+              <MetricField
+                label="Snacks / fast-food / restos par semaine"
+                type="number"
+                value={questionnaire.snacksFastFoodPerWeek ?? 0}
+                onChange={(value) => updateQuestionnaire("snacksFastFoodPerWeek", value === "" ? null : Number(value))}
+              />
+              <TextField
+                label="Saveur Formula 1 préférée"
+                value={questionnaire.preferredFlavor ?? ""}
+                onChange={(value) => updateQuestionnaire("preferredFlavor", value)}
+              />
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-[var(--ls-text-muted)]">Consomme du lait ?</label>
+                <div className="flex flex-wrap gap-2">
+                  {([
+                    { value: "yes", label: "Oui" },
+                    { value: "sometimes", label: "Parfois" },
+                    { value: "no", label: "Non" }
+                  ] as const).map((opt) => {
+                    const selected = questionnaire.consumesMilk === opt.value;
+                    return (
+                      <button
+                        key={opt.value}
+                        type="button"
+                        onClick={() => updateQuestionnaire("consumesMilk", opt.value)}
+                        className={`rounded-[14px] border px-3 py-2 text-sm transition ${
+                          selected
+                            ? "border-[rgba(45,212,191,0.35)] bg-[rgba(45,212,191,0.12)] text-white"
+                            : "border-white/10 bg-[var(--ls-surface2)] text-[var(--ls-text-muted)] hover:border-white/20"
+                        }`}
+                      >
+                        {opt.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+              <div className="space-y-2 md:col-span-2">
+                <label className="text-sm font-medium text-[var(--ls-text-muted)]">Programme choisi</label>
+                <div className="flex flex-wrap gap-2">
+                  {([
+                    { value: "discovery", label: "Découverte" },
+                    { value: "premium", label: "Premium" },
+                    { value: "booster1", label: "Booster 1" },
+                    { value: "booster2", label: "Booster 2" }
+                  ] as const).map((opt) => {
+                    const selected = questionnaire.programChoice === opt.value;
+                    return (
+                      <button
+                        key={opt.value}
+                        type="button"
+                        onClick={() => updateQuestionnaire("programChoice", opt.value)}
+                        className={`rounded-[14px] border px-3 py-2 text-sm transition ${
+                          selected
+                            ? "border-[rgba(201,168,76,0.45)] bg-[rgba(201,168,76,0.12)] text-white"
+                            : "border-white/10 bg-[var(--ls-surface2)] text-[var(--ls-text-muted)] hover:border-white/20"
+                        }`}
+                      >
+                        {opt.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+            <div className="mt-2">
+              <p className="text-sm font-medium text-[var(--ls-text-muted)] mb-2">Analyse petit-déjeuner (0-100)</p>
+              <div className="grid gap-4 md:grid-cols-4">
+                <MetricField
+                  label="Sucres"
+                  type="number"
+                  value={questionnaire.breakfastAnalysis?.sucres ?? 0}
+                  onChange={(value) => updateQuestionnaire("breakfastAnalysis", {
+                    sucres: Number(value),
+                    proteines: questionnaire.breakfastAnalysis?.proteines ?? 0,
+                    hydratation: questionnaire.breakfastAnalysis?.hydratation ?? 0,
+                    fibres: questionnaire.breakfastAnalysis?.fibres ?? 0
+                  })}
+                />
+                <MetricField
+                  label="Protéines"
+                  type="number"
+                  value={questionnaire.breakfastAnalysis?.proteines ?? 0}
+                  onChange={(value) => updateQuestionnaire("breakfastAnalysis", {
+                    sucres: questionnaire.breakfastAnalysis?.sucres ?? 0,
+                    proteines: Number(value),
+                    hydratation: questionnaire.breakfastAnalysis?.hydratation ?? 0,
+                    fibres: questionnaire.breakfastAnalysis?.fibres ?? 0
+                  })}
+                />
+                <MetricField
+                  label="Hydratation"
+                  type="number"
+                  value={questionnaire.breakfastAnalysis?.hydratation ?? 0}
+                  onChange={(value) => updateQuestionnaire("breakfastAnalysis", {
+                    sucres: questionnaire.breakfastAnalysis?.sucres ?? 0,
+                    proteines: questionnaire.breakfastAnalysis?.proteines ?? 0,
+                    hydratation: Number(value),
+                    fibres: questionnaire.breakfastAnalysis?.fibres ?? 0
+                  })}
+                />
+                <MetricField
+                  label="Fibres"
+                  type="number"
+                  value={questionnaire.breakfastAnalysis?.fibres ?? 0}
+                  onChange={(value) => updateQuestionnaire("breakfastAnalysis", {
+                    sucres: questionnaire.breakfastAnalysis?.sucres ?? 0,
+                    proteines: questionnaire.breakfastAnalysis?.proteines ?? 0,
+                    hydratation: questionnaire.breakfastAnalysis?.hydratation ?? 0,
+                    fibres: Number(value)
+                  })}
+                />
+              </div>
             </div>
           </SectionCard>
 

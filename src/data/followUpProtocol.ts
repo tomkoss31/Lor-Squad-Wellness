@@ -103,9 +103,55 @@ export const FOLLOW_UP_PROTOCOL: FollowUpStep[] = [
     title: "J+7 · Bonjour le VIP",
     shortTitle: "Découvrir le VIP",
     iconEmoji: "👑",
-    clientMessage:
-      "Coucou [Prénom] ! 👋 Une semaine déjà, bravo pour ta régularité. Tu as peut-être vu sur le groupe qu'on parle du programme VIP ? Tu veux qu'on en parle 2 min ?",
-    smsMessage: "[Prénom] 👑 1 semaine ! Tu veux qu'on parle du programme VIP (remises + suivi prio) ? 😊",
+    // Message VIP Tom (mis à jour 2026-04-20). Variables interpolées :
+    // [Prénom], [SPONSOR_ID], [SPONSOR_NAME_3].
+    clientMessage: [
+      "Jour 7 – Franchement, je suis trop fière de toi 🤩",
+      "",
+      "Comme je vois que tu es régulière et sérieuse, j'ai envie de te proposer quelque chose que je ne propose pas à tout le monde…",
+      "",
+      "👉 Te faire bénéficier de mon tarif VIP pour avoir tes produits moins chers (entre 15% et 35% de remise)",
+      "",
+      "Le tarif est de 36,74€ une seule fois, sans abonnement ni engagement 👍",
+      "",
+      "—",
+      "",
+      "👉 Voici le lien pour t'inscrire en Client Privilégié :",
+      "https://accounts.myherbalife.com/Account/Create?appId=1&locale=fr-FR&redirect=https://fr.myherbalife.com",
+      "",
+      "Tu vas devoir remplir tes infos + répondre à ça :",
+      "- ID sponsor : [SPONSOR_ID]",
+      "- 3 premières lettres : [SPONSOR_NAME_3]",
+      "- As-tu déjà un pack client privilégié ? → NON",
+      "",
+      "Ensuite tu finalises en réglant ton accès 👌",
+      "",
+      "—",
+      "",
+      "🎁 Petit bonus sympa :",
+      "Tu recevras un coffret de produits directement chez toi sous 2 à 3 jours, parfait pour continuer avec encore plus de motivation",
+      "",
+      "—",
+      "",
+      "👉 Une fois inscrit :",
+      "Télécharge l'appli « Commandes Herbalife » pour commander facilement",
+      "- iPhone : https://apps.apple.com/fr/app/commandes-herbalife-nutrition/id1154285940",
+      "- Android : https://play.google.com/store/apps/details?id=com.hrbl.mobile.android.ordering&hl=fr",
+      "",
+      "Tu pourras te connecter et commander avec tes remises :",
+      "- 15% à 35% minimum à vie",
+      "- 100 points → 25%",
+      "- 500 points → 35% + cadeaux 🎁",
+      "",
+      "👉 Les points se cumulent et tu ne redescends jamais 🥳",
+      "👉 Frais de port offerts à partir de 40 points",
+      "",
+      "—",
+      "",
+      "Si tu as la moindre question, je suis là 😊",
+      "Et dis-moi quand c'est fait pour que je vérifie que tout est OK 👌",
+    ].join("\n"),
+    smsMessage: "Jour 7 🎉 Fière de toi ! Je te propose mon tarif VIP (15-35% remise, 36,74€ une fois sans engagement). Ça t'intéresse ?",
     coachGuide: {
       objective:
         "Féliciter la régularité de la semaine 1, présenter l'option VIP de manière simple, sécuriser la continuité du programme.",
@@ -205,8 +251,30 @@ export const FOLLOW_UP_PROTOCOL: FollowUpStep[] = [
   },
 ];
 
-/** Remplace les variables dynamiques dans un message. Pour l'instant : [Prénom]. */
-export function interpolateStepMessage(template: string, variables: { firstName?: string }): string {
-  const firstName = variables.firstName?.trim() ?? "";
-  return template.replace(/\[Prénom\]/g, firstName || "toi");
+/**
+ * Valeurs par défaut des variables "profil distri" — utilisées tant que le
+ * chantier dédié (profil distri avec ID sponsor perso) n'est pas en prod.
+ * Thomas peut modifier ici directement si besoin temporaire.
+ */
+export const DEFAULT_SPONSOR_ID = "21Y0103610 CC";
+export const DEFAULT_SPONSOR_NAME_3 = "HOU";
+
+/**
+ * Remplace les variables dynamiques dans un message.
+ * Variables supportées :
+ *  - [Prénom]       → `firstName` (fallback "toi")
+ *  - [SPONSOR_ID]   → ID parrain (défaut DEFAULT_SPONSOR_ID)
+ *  - [SPONSOR_NAME_3] → 3 premières lettres du nom parrain (défaut DEFAULT_SPONSOR_NAME_3)
+ */
+export function interpolateStepMessage(
+  template: string,
+  variables: { firstName?: string; sponsorId?: string; sponsorName3?: string }
+): string {
+  const firstName = variables.firstName?.trim() || "toi";
+  const sponsorId = variables.sponsorId?.trim() || DEFAULT_SPONSOR_ID;
+  const sponsorName3 = variables.sponsorName3?.trim() || DEFAULT_SPONSOR_NAME_3;
+  return template
+    .replace(/\[Prénom\]/g, firstName)
+    .replace(/\[SPONSOR_ID\]/g, sponsorId)
+    .replace(/\[SPONSOR_NAME_3\]/g, sponsorName3);
 }
