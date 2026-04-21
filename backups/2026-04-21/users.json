@@ -1,0 +1,86 @@
+[
+  {
+    "id": "8f7f9ec2-e541-42fd-b878-7ab852943711",
+    "name": "testbeta",
+    "email": "testbeta@lorsquadwellness.app",
+    "role": "distributor",
+    "active": true,
+    "title": "Acces distributeur",
+    "created_at": "2026-04-01T20:41:38.766+00:00",
+    "last_access_at": null,
+    "sponsor_id": null,
+    "sponsor_name": null
+  },
+  {
+    "id": "aa28c3b6-b46b-4f67-823e-07097024249e",
+    "name": "Léa Monfort",
+    "email": "lea.monfort55@gmail.com",
+    "role": "distributor",
+    "active": true,
+    "title": "Portefeuille terrain",
+    "created_at": "2026-04-14T10:08:01.852+00:00",
+    "last_access_at": null,
+    "sponsor_id": "656dcf35-4859-4a70-9d20-990104813423",
+    "sponsor_name": "Thomas"
+  },
+  {
+    "id": "f5285ea5-9521-4e0d-8e09-523e310c494f",
+    "name": "Mandy",
+    "email": "mandydasilva55@gmail.com",
+    "role": "distributor",
+    "active": true,
+    "title": "Portefeuille terrain",
+    "created_at": "2026-04-02T11:28:28.249+00:00",
+    "last_access_at": null,
+    "sponsor_id": "656dcf35-4859-4a70-9d20-990104813423",
+    "sponsor_name": "Thomas"
+  },
+  {
+    "id": "42c54ab6-0244-4bd5-b912-c4eb4be85a6f",
+    "name": "Thomas",
+    "email": "tomkoss31@gmail.com",
+    "role": "admin",
+    "active": false,
+    "title": "Lor'Squad Wellness",
+    "created_at": "2026-04-01T20:24:54.907997+00:00",
+    "last_access_at": "2026-04-01T20:38:41.81+00:00",
+    "sponsor_id": null,
+    "sponsor_name": null
+  },
+  {
+    "id": "656dcf35-4859-4a70-9d20-990104813423",
+    "name": "Thomas",
+    "email": "fit2tom.coach@gmail.com",
+    "role": "admin",
+    "active": true,
+    "title": "Lor'Squad Wellness",
+    "created_at": "2026-04-01T20:21:27.426204+00:00",
+    "last_access_at": "2026-04-20T19:20:11.169+00:00",
+    "sponsor_id": null,
+    "sponsor_name": null
+  },
+  {
+    "id": "2c6653c6-525a-48b7-8965-ee8439bf1798",
+    "name": "Prisca et Alex",
+    "email": "priscalexnutrition@gmail.com",
+    "role": "referent",
+    "active": true,
+    "title": "Referent d'equipe",
+    "created_at": "2026-04-04T07:46:10.774656+00:00",
+    "last_access_at": null,
+    "sponsor_id": null,
+    "sponsor_name": null
+  },
+  {
+    "id": "6e552738-3fe5-4cdb-a4c8-15c5d7dca036",
+    "name": "Mélanie",
+    "email": "milmel55@gmail.com",
+    "role": "admin",
+    "active": true,
+    "title": "Administration",
+    "created_at": "2026-04-02T12:13:09.685+00:00",
+    "last_access_at": "2026-04-08T17:38:02.68+00:00",
+    "sponsor_id": null,
+    "sponsor_name": null
+  }
+]
