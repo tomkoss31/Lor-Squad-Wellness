@@ -273,7 +273,8 @@ export interface ClientMessage {
   client_id: string;
   client_name: string;
   distributor_id: string;
-  message_type: 'product_request' | 'recommendation' | 'general';
+  // Chantier Messagerie client ↔ coach (2026-04-21) : +'rdv_request'.
+  message_type: 'product_request' | 'recommendation' | 'rdv_request' | 'general';
   product_name?: string;
   message?: string;
   client_contact?: string;
