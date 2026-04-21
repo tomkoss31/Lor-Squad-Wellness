@@ -28,7 +28,15 @@ export function MessageInbox({ messages, onMarkRead }: MessageInboxProps) {
 
       {display.map((msg, i) => {
         const isUnread = !msg.read
-        const typeLabel = msg.message_type === 'product_request' ? '🛒 Produit' : msg.message_type === 'recommendation' ? '👥 Recommandation' : '💬 Message'
+        // Chantier Messagerie client ↔ coach (2026-04-21) : +'rdv_request'.
+        const typeLabel =
+          msg.message_type === 'product_request'
+            ? '🛒 Produit'
+            : msg.message_type === 'recommendation'
+              ? '👥 Recommandation'
+              : msg.message_type === 'rdv_request'
+                ? '📅 RDV'
+                : '💬 Message'
         const timeAgo = getTimeAgo(msg.created_at)
 
         return (

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { getSupabaseClient } from '../services/supabaseClient'
 import { HERBALIFE_PRODUCTS, type HerbalifeProduct } from '../data/herbalifeCatalog'
+import { ClientMessageModal } from '../components/client-app/ClientMessageModal'
 import { BreakfastStorySlider, DEFAULT_BREAKFAST_ANALYSIS } from '../components/education/BreakfastStorySlider'
 import type { BreakfastAnalysis } from '../types/domain'
 
@@ -111,11 +112,14 @@ function MiniLineChart({
 
 // ─── Carte produit avec description + CTA ──────────────────────────────────
 function ProductCard({
-  product, isRecommended, coachWhatsapp,
+  product, isRecommended, onAskCoach,
 }: {
   product: HerbalifeProduct
   isRecommended: boolean
-  coachWhatsapp?: string
+  /** Chantier Messagerie client ↔ coach (2026-04-21) : ouvre la modale
+   *  centralisée ClientMessageModal à la place de l'ancien lien
+   *  MyHerbalife externe + WhatsApp. Le coach reçoit une notif push. */
+  onAskCoach: (product: HerbalifeProduct) => void
 }) {
   const [open, setOpen] = useState(false)
   const description = PRODUCT_DETAILS[product.ref] ?? product.shortBenefit
@@ -157,28 +161,29 @@ function ProductCard({
           <p style={{ fontSize: 12, color: '#6B7280', lineHeight: 1.75, marginBottom: 14 }}>
             {description}
           </p>
-          <div style={{ display: 'flex', gap: 8 }}>
-            {coachWhatsapp && (
-              <a
-                href={`https://wa.me/${coachWhatsapp.replace(/\D/g, '')}?text=${encodeURIComponent(`Bonjour, je suis intéressé(e) par le produit : ${product.shortName}`)}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={(e) => e.stopPropagation()}
-                style={{ flex: 1, padding: '9px 6px', borderRadius: 9, background: 'rgba(37,211,102,0.1)', color: '#16A34A', fontSize: 11, fontWeight: 600, textAlign: 'center', textDecoration: 'none' }}
-              >
-                Contacter mon coach
-              </a>
-            )}
-            <a
-              href="https://www.myherbalife.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={(e) => e.stopPropagation()}
-              style={{ flex: 1, padding: '9px 6px', borderRadius: 9, background: 'rgba(184,146,42,0.1)', color: '#B8922A', fontSize: 11, fontWeight: 600, textAlign: 'center', textDecoration: 'none' }}
-            >
-              Commander
-            </a>
-          </div>
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); onAskCoach(product) }}
+            style={{
+              width: '100%',
+              padding: '11px 14px',
+              borderRadius: 10,
+              background: '#B8922A',
+              color: '#FFFFFF',
+              border: 'none',
+              fontSize: 13,
+              fontWeight: 600,
+              fontFamily: 'DM Sans, sans-serif',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 8,
+            }}
+          >
+            <span aria-hidden="true">💬</span>
+            Parler à mon coach à propos de ce produit
+          </button>
         </div>
       )}
     </div>
@@ -205,6 +210,11 @@ export function ClientAppPage() {
     return () => window.clearTimeout(id)
   }, [showWelcome])
   const [activeTab, setActiveTab] = useState<'home' | 'evolution' | 'products' | 'coaching' | 'refer'>('home')
+  // Chantier Messagerie client ↔ coach (2026-04-21) : 2 modales pour parler
+  // au coach depuis l'app — question produit OU demande de reco générique.
+  const [productAskModal, setProductAskModal] = useState<HerbalifeProduct | null>(null)
+  const [recoAskOpen, setRecoAskOpen] = useState(false)
+  const openProductAskModal = (product: HerbalifeProduct) => setProductAskModal(product)
   const [coachingData, setCoachingData] = useState<{ breakfastAnalysis: BreakfastAnalysis; breakfastContent: string } | null>(null)
   const [referName, setReferName] = useState('')
   const [referContact, setReferContact] = useState('')
@@ -378,13 +388,28 @@ export function ClientAppPage() {
     try {
       const sb = await getSupabaseClient()
       if (!sb) return
-      await sb.from('rdv_change_requests').insert({
-        client_id: data.client_id,
-        coach_id: data.coach_id ?? '',
-        client_name: `${data.client_first_name} ${data.client_last_name}`,
-        current_rdv: data.next_follow_up,
-        message: rdvMessage,
-      })
+
+      // Chantier Messagerie client ↔ coach (2026-04-21) : dual-write.
+      // 1. rdv_change_requests (legacy, pour l'existant côté coach).
+      // 2. client_messages avec message_type='rdv_request' → le trigger
+      //    Postgres notify_new_client_message push une notif au coach
+      //    + le message apparaît dans la messagerie.
+      await Promise.all([
+        sb.from('rdv_change_requests').insert({
+          client_id: data.client_id,
+          coach_id: data.coach_id ?? '',
+          client_name: `${data.client_first_name} ${data.client_last_name}`,
+          current_rdv: data.next_follow_up,
+          message: rdvMessage,
+        }),
+        sb.from('client_messages').insert({
+          client_id: data.client_id,
+          client_name: `${data.client_first_name} ${data.client_last_name}`,
+          distributor_id: data.coach_id ?? '',
+          message_type: 'rdv_request',
+          message: rdvMessage,
+        }),
+      ])
       setRdvSent(true); setRdvMessage('')
     } catch { /* silencieux */ }
   }
@@ -512,6 +537,43 @@ export function ClientAppPage() {
           Bienvenue dans ton espace Lor'Squad 🎉
         </div>
       ) : null}
+
+      {/* Chantier Messagerie client ↔ coach (2026-04-21) : modale "Parler à
+          mon coach" sur fiche produit + modale "Demander une reco" sur home. */}
+      <ClientMessageModal
+        open={productAskModal !== null}
+        onClose={() => setProductAskModal(null)}
+        clientId={data.client_id}
+        clientFirstName={data.client_first_name}
+        clientLastName={data.client_last_name}
+        distributorId={data.coach_id ?? ''}
+        title="Parler à mon coach"
+        intro={
+          productAskModal
+            ? `Pose ta question sur ${productAskModal.shortName} à ${data.coach_name}.`
+            : ''
+        }
+        messageType="product_request"
+        productName={productAskModal?.shortName}
+        defaultMessage={
+          productAskModal
+            ? `Bonjour ${data.coach_name}, j'ai une question sur ${productAskModal.shortName} : `
+            : ''
+        }
+      />
+      <ClientMessageModal
+        open={recoAskOpen}
+        onClose={() => setRecoAskOpen(false)}
+        clientId={data.client_id}
+        clientFirstName={data.client_first_name}
+        clientLastName={data.client_last_name}
+        distributorId={data.coach_id ?? ''}
+        title="Demander une recommandation"
+        intro={`Dis à ${data.coach_name} ce dont tu as besoin. Elle te répondra avec un conseil personnalisé.`}
+        messageType="recommendation"
+        defaultMessage={`Bonjour ${data.coach_name}, j'aurais besoin d'une recommandation sur `}
+      />
+
       {/* HERO */}
       <div style={{ background: 'linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 60%, #F4F2EE 100%)', padding: '20px 16px 16px' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
@@ -615,6 +677,57 @@ export function ClientAppPage() {
                 </div>
               </div>
             )}
+
+            {/* Chantier Messagerie client ↔ coach (2026-04-21) : CTA
+                "Demander une reco" — bouton gold large qui ouvre la modale.
+                Le message atterrit dans client_messages et push une notif
+                au coach. */}
+            <button
+              type="button"
+              onClick={() => setRecoAskOpen(true)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 12,
+                background: 'linear-gradient(135deg, #FAEEDA, #F0DBB0)',
+                border: '1px solid rgba(184,146,42,0.35)',
+                borderRadius: 14,
+                padding: '14px 16px',
+                width: '100%',
+                textAlign: 'left',
+                cursor: 'pointer',
+                fontFamily: 'DM Sans, sans-serif',
+              }}
+            >
+              <div
+                aria-hidden="true"
+                style={{
+                  width: 38,
+                  height: 38,
+                  borderRadius: 10,
+                  background: '#B8922A',
+                  color: '#FFFFFF',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: 18,
+                  flexShrink: 0,
+                }}
+              >
+                🎁
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 14, color: '#633806' }}>
+                  Demander une recommandation
+                </div>
+                <div style={{ fontSize: 11, color: '#854F0B', marginTop: 2 }}>
+                  Ton coach te répondra avec un conseil personnalisé
+                </div>
+              </div>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#854F0B" strokeWidth="2">
+                <polyline points="9 18 15 12 9 6" />
+              </svg>
+            </button>
 
             {/* Avis Google */}
             <a href={GOOGLE_MAPS_LA_BASE} target="_blank" rel="noopener noreferrer"
@@ -784,7 +897,7 @@ export function ClientAppPage() {
                   Recommandés pour toi
                 </div>
                 {recommendedProducts.map((product) => (
-                  <ProductCard key={product.ref} product={product} isRecommended={true} coachWhatsapp={data.coach_whatsapp} />
+                  <ProductCard key={product.ref} product={product} isRecommended={true} onAskCoach={openProductAskModal} />
                 ))}
               </div>
             )}
@@ -815,7 +928,7 @@ export function ClientAppPage() {
                   {isOpen && (
                     <div style={{ border: '1px solid rgba(0,0,0,0.07)', borderTop: 'none', borderRadius: '0 0 12px 12px', padding: 10, background: '#fafaf9' }}>
                       {products.map((product) => (
-                        <ProductCard key={product.ref} product={product} isRecommended={false} coachWhatsapp={data.coach_whatsapp} />
+                        <ProductCard key={product.ref} product={product} isRecommended={false} onAskCoach={openProductAskModal} />
                       ))}
                     </div>
                   )}
