@@ -340,7 +340,7 @@ export function ClientDetailPage() {
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontFamily: 'Syne, sans-serif', fontSize: 20, fontWeight: 700
             }}>
-              {client.firstName[0]}{client.lastName[0]}
+              {client.firstName?.[0] ?? "?"}{client.lastName?.[0] ?? ""}
             </div>
             <div>
               <div className="flex items-center gap-3 flex-wrap">
@@ -479,7 +479,7 @@ export function ClientDetailPage() {
           <div className="bodyscan-metrics grid grid-cols-2 gap-3 md:gap-4 xl:grid-cols-4">
             <MetricTile
               label="Poids de départ"
-              value={`${firstAssessment.bodyScan.weight} kg`}
+              value={`${firstAssessment.bodyScan?.weight ?? 0} kg`}
               hint={`Depuis le ${formatDate(firstAssessment.date)}`}
               accent="blue"
             />
@@ -597,19 +597,19 @@ export function ClientDetailPage() {
                 previous={
                   previousAssessment
                     ? {
-                        weight: previousAssessment.bodyScan.weight,
-                        percent: previousAssessment.bodyScan.bodyFat
+                        weight: previousAssessment.bodyScan?.weight ?? 0,
+                        percent: previousAssessment.bodyScan?.bodyFat ?? 0
                       }
                     : null
                 }
                 initial={{
-                  weight: firstAssessment.bodyScan.weight,
-                  percent: firstAssessment.bodyScan.bodyFat
+                  weight: firstAssessment.bodyScan?.weight ?? 0,
+                  percent: firstAssessment.bodyScan?.bodyFat ?? 0
                 }}
-                history={[...client.assessments].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()).map((assessment) => ({
+                history={[...(client.assessments ?? [])].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()).map((assessment) => ({
                   date: assessment.date,
-                  weight: assessment.bodyScan.weight,
-                  percent: assessment.bodyScan.bodyFat
+                  weight: assessment.bodyScan?.weight ?? 0,
+                  percent: assessment.bodyScan?.bodyFat ?? 0
                 }))}
               />
 
@@ -618,19 +618,19 @@ export function ClientDetailPage() {
                 previous={
                   previousAssessment
                     ? {
-                        weight: previousAssessment.bodyScan.weight,
-                        muscleMass: previousAssessment.bodyScan.muscleMass
+                        weight: previousAssessment.bodyScan?.weight ?? 0,
+                        muscleMass: previousAssessment.bodyScan?.muscleMass ?? 0
                       }
                     : null
                 }
                 initial={{
-                  weight: firstAssessment.bodyScan.weight,
-                  muscleMass: firstAssessment.bodyScan.muscleMass
+                  weight: firstAssessment.bodyScan?.weight ?? 0,
+                  muscleMass: firstAssessment.bodyScan?.muscleMass ?? 0
                 }}
-                history={[...client.assessments].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()).map((assessment) => ({
+                history={[...(client.assessments ?? [])].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()).map((assessment) => ({
                   date: assessment.date,
-                  weight: assessment.bodyScan.weight,
-                  muscleMass: assessment.bodyScan.muscleMass
+                  weight: assessment.bodyScan?.weight ?? 0,
+                  muscleMass: assessment.bodyScan?.muscleMass ?? 0
                 }))}
               />
 
@@ -639,11 +639,11 @@ export function ClientDetailPage() {
                 hydrationPercent={latestBodyScan.hydration}
                 sex={client.sex}
                 visceralFat={latestBodyScan.visceralFat}
-                history={[...client.assessments].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()).map((assessment) => ({
+                history={[...(client.assessments ?? [])].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()).map((assessment) => ({
                   date: assessment.date,
-                  weight: assessment.bodyScan.weight,
-                  hydrationPercent: assessment.bodyScan.hydration,
-                  visceralFat: assessment.bodyScan.visceralFat
+                  weight: assessment.bodyScan?.weight ?? 0,
+                  hydrationPercent: assessment.bodyScan?.hydration ?? 0,
+                  visceralFat: assessment.bodyScan?.visceralFat ?? 0
                 }))}
               />
             </>
