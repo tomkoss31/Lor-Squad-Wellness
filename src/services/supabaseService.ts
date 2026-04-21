@@ -276,6 +276,25 @@ function mapUser(row: UserRow): User {
   };
 }
 
+/**
+ * Durcissement import client (2026-04-21) : normalise les sous-champs
+ * tableau du questionnaire qui peuvent arriver null/absents depuis un
+ * INSERT SQL brut (import Mélanie / CSV / restore). Le reste du code
+ * app suppose que ces champs sont des tableaux ([]) — sans ça, un
+ * simple `.length` crash la page "Nouveau body scan".
+ */
+function normalizeQuestionnaire(
+  raw: AssessmentRecord["questionnaire"] | null | undefined
+): AssessmentRecord["questionnaire"] {
+  const q = (raw ?? {}) as AssessmentRecord["questionnaire"];
+  return {
+    ...q,
+    recommendations: Array.isArray(q.recommendations) ? q.recommendations : [],
+    selectedProductIds: Array.isArray(q.selectedProductIds) ? q.selectedProductIds : [],
+    detectedNeedIds: Array.isArray(q.detectedNeedIds) ? q.detectedNeedIds : []
+  };
+}
+
 function mapAssessment(row: AssessmentRow): AssessmentRecord {
   return {
     id: row.id,
@@ -288,7 +307,7 @@ function mapAssessment(row: AssessmentRow): AssessmentRecord {
     notes: row.notes,
     nextFollowUp: row.next_follow_up ?? undefined,
     bodyScan: row.body_scan,
-    questionnaire: row.questionnaire,
+    questionnaire: normalizeQuestionnaire(row.questionnaire),
     pedagogicalFocus: row.pedagogical_focus ?? [],
     decisionClient: row.decision_client ?? null,
     typeDeSuite: row.type_de_suite ?? null,
