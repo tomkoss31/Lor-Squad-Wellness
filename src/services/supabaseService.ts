@@ -295,6 +295,28 @@ function normalizeQuestionnaire(
   };
 }
 
+/**
+ * Durcissement import (2026-04-21) : garantit un BodyScanMetrics complet
+ * même si le JSONB importé est null ou manque des clés. Toutes les valeurs
+ * manquantes deviennent 0 — le reste du code peut calculer / afficher sans
+ * crash (0 est interprété comme "pas encore mesuré" dans l'UI).
+ */
+function normalizeBodyScan(
+  raw: AssessmentRecord["bodyScan"] | null | undefined
+): AssessmentRecord["bodyScan"] {
+  const b = (raw ?? {}) as Partial<AssessmentRecord["bodyScan"]>;
+  return {
+    weight: typeof b.weight === "number" ? b.weight : 0,
+    bodyFat: typeof b.bodyFat === "number" ? b.bodyFat : 0,
+    muscleMass: typeof b.muscleMass === "number" ? b.muscleMass : 0,
+    hydration: typeof b.hydration === "number" ? b.hydration : 0,
+    boneMass: typeof b.boneMass === "number" ? b.boneMass : 0,
+    visceralFat: typeof b.visceralFat === "number" ? b.visceralFat : 0,
+    bmr: typeof b.bmr === "number" ? b.bmr : 0,
+    metabolicAge: typeof b.metabolicAge === "number" ? b.metabolicAge : 0
+  };
+}
+
 function mapAssessment(row: AssessmentRow): AssessmentRecord {
   return {
     id: row.id,
@@ -306,7 +328,7 @@ function mapAssessment(row: AssessmentRow): AssessmentRecord {
     summary: row.summary,
     notes: row.notes,
     nextFollowUp: row.next_follow_up ?? undefined,
-    bodyScan: row.body_scan,
+    bodyScan: normalizeBodyScan(row.body_scan),
     questionnaire: normalizeQuestionnaire(row.questionnaire),
     pedagogicalFocus: row.pedagogical_focus ?? [],
     decisionClient: row.decision_client ?? null,

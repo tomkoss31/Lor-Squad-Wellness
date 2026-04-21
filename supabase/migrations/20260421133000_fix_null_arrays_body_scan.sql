@@ -49,6 +49,33 @@ where jsonb_typeof(questionnaire) = 'object'
     or jsonb_typeof(questionnaire -> 'detectedNeedIds') <> 'array'
   );
 
+-- ─── 3bis. Normalise assessments.body_scan (objet complet) ─────────────────
+-- Si body_scan est null OU un objet incomplet, on met au moins les 8 clés à 0.
+-- Le code app suppose ces clés présentes (weight, bodyFat, muscleMass,
+-- hydration, boneMass, visceralFat, bmr, metabolicAge).
+update public.assessments
+set body_scan = coalesce(body_scan, '{}'::jsonb)
+  || jsonb_build_object(
+    'weight', coalesce((body_scan ->> 'weight')::numeric, 0),
+    'bodyFat', coalesce((body_scan ->> 'bodyFat')::numeric, 0),
+    'muscleMass', coalesce((body_scan ->> 'muscleMass')::numeric, 0),
+    'hydration', coalesce((body_scan ->> 'hydration')::numeric, 0),
+    'boneMass', coalesce((body_scan ->> 'boneMass')::numeric, 0),
+    'visceralFat', coalesce((body_scan ->> 'visceralFat')::numeric, 0),
+    'bmr', coalesce((body_scan ->> 'bmr')::numeric, 0),
+    'metabolicAge', coalesce((body_scan ->> 'metabolicAge')::numeric, 0)
+  )
+where body_scan is null
+   or jsonb_typeof(body_scan) <> 'object'
+   or not (body_scan ? 'weight')
+   or not (body_scan ? 'bodyFat')
+   or not (body_scan ? 'muscleMass')
+   or not (body_scan ? 'hydration')
+   or not (body_scan ? 'boneMass')
+   or not (body_scan ? 'visceralFat')
+   or not (body_scan ? 'bmr')
+   or not (body_scan ? 'metabolicAge');
+
 -- ─── 4. pedagogical_focus au niveau assessment ──────────────────────────────
 -- La colonne a un default '[]' mais un import brut peut avoir mis null.
 update public.assessments

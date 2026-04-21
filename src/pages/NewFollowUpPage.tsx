@@ -401,7 +401,9 @@ export function NewFollowUpPage() {
     navigate(`/clients/${targetClient.id}`);
   }
 
-  if (!latest || !latest.bodyScan || !first) {
+  // Durcissement import (2026-04-21) : on exige aussi first.bodyScan, sinon
+  // les cartes Initial crash quand le bilan initial importé a un bodyScan null.
+  if (!latest || !latest.bodyScan || !first || !first.bodyScan) {
     return (
       <Card>
         <p style={{ color: 'var(--ls-text)', fontSize: 14, marginBottom: 12 }}>Ce client n'a pas encore de bilan initial complet. Crée d'abord un bilan avec body scan avant de faire un suivi.</p>
@@ -614,8 +616,8 @@ export function NewFollowUpPage() {
               history={[
                 ...(targetClient.assessments ?? []).map((assessment) => ({
                   date: assessment.date,
-                  weight: assessment.bodyScan.weight,
-                  percent: assessment.bodyScan.bodyFat
+                  weight: assessment.bodyScan?.weight ?? 0,
+                  percent: assessment.bodyScan?.bodyFat ?? 0
                 })),
                 {
                   date: assessmentDate,
@@ -633,8 +635,8 @@ export function NewFollowUpPage() {
               history={[
                 ...(targetClient.assessments ?? []).map((assessment) => ({
                   date: assessment.date,
-                  weight: assessment.bodyScan.weight,
-                  muscleMass: assessment.bodyScan.muscleMass
+                  weight: assessment.bodyScan?.weight ?? 0,
+                  muscleMass: assessment.bodyScan?.muscleMass ?? 0
                 })),
                 {
                   date: assessmentDate,
@@ -653,9 +655,9 @@ export function NewFollowUpPage() {
               history={[
                 ...(targetClient.assessments ?? []).map((assessment) => ({
                   date: assessment.date,
-                  weight: assessment.bodyScan.weight,
-                  hydrationPercent: assessment.bodyScan.hydration,
-                  visceralFat: assessment.bodyScan.visceralFat
+                  weight: assessment.bodyScan?.weight ?? 0,
+                  hydrationPercent: assessment.bodyScan?.hydration ?? 0,
+                  visceralFat: assessment.bodyScan?.visceralFat ?? 0
                 })),
                 {
                   date: assessmentDate,
@@ -675,7 +677,7 @@ export function NewFollowUpPage() {
                 history={[
                   ...(targetClient.assessments ?? []).map((assessment) => ({
                     date: assessment.date,
-                    weight: assessment.bodyScan.weight
+                    weight: assessment.bodyScan?.weight ?? 0
                   })),
                   {
                     date: assessmentDate,

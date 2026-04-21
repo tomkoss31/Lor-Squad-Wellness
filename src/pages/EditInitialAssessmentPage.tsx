@@ -216,14 +216,16 @@ export function EditInitialAssessmentPage() {
     setAssessmentDate(normalizeDateTimeLocalInputValue(targetAssessment.date));
     setProgramTitle(targetAssessment.programTitle);
     setSummary(targetAssessment.summary);
-    setWeight(targetAssessment.bodyScan.weight);
-    setBodyFat(targetAssessment.bodyScan.bodyFat);
-    setMuscleMass(targetAssessment.bodyScan.muscleMass);
-    setHydration(targetAssessment.bodyScan.hydration);
-    setBoneMass(targetAssessment.bodyScan.boneMass);
-    setVisceralFat(targetAssessment.bodyScan.visceralFat);
-    setBmr(targetAssessment.bodyScan.bmr);
-    setMetabolicAge(targetAssessment.bodyScan.metabolicAge);
+    // Durcissement import (2026-04-21) : bodyScan peut être null sur les
+    // assessments importés via SQL brut.
+    setWeight(targetAssessment.bodyScan?.weight ?? 0);
+    setBodyFat(targetAssessment.bodyScan?.bodyFat ?? 0);
+    setMuscleMass(targetAssessment.bodyScan?.muscleMass ?? 0);
+    setHydration(targetAssessment.bodyScan?.hydration ?? 0);
+    setBoneMass(targetAssessment.bodyScan?.boneMass ?? 0);
+    setVisceralFat(targetAssessment.bodyScan?.visceralFat ?? 0);
+    setBmr(targetAssessment.bodyScan?.bmr ?? 0);
+    setMetabolicAge(targetAssessment.bodyScan?.metabolicAge ?? 0);
     setQuestionnaire(buildEditableQuestionnaire(targetAssessment.questionnaire));
     setNotes(targetAssessment.notes);
 
