@@ -110,6 +110,11 @@ const DebugNotificationsPage = lazy(() =>
     default: module.DebugNotificationsPage
   }))
 );
+const BienvenuePage = lazy(() =>
+  import("./pages/BienvenuePage").then((module) => ({
+    default: module.BienvenuePage
+  }))
+);
 
 import { useTheme } from './hooks/useTheme'
 import { useAutoNotifications } from './hooks/useAutoNotifications'
@@ -166,6 +171,10 @@ export default function App() {
           <Route path="/recap/:token" element={<RecapPage />} />
           <Route path="/rapport/:token" element={<EvolutionReportPage />} />
           <Route path="/client/:token" element={<ClientAppPage />} />
+          {/* Chantier invitation client app (2026-04-21) : page publique
+              pour que le client crée son accès via le lien magique envoyé
+              par le coach. Pas besoin d'être authentifié. */}
+          <Route path="/bienvenue" element={<BienvenuePage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
         </ErrorBoundary>
