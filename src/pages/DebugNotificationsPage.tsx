@@ -22,12 +22,12 @@ interface SentLog {
 
 interface SubscriptionInfo {
   endpoint: string;
-  created_at?: string;
+  updated_at?: string;
 }
 
 export function DebugNotificationsPage() {
   const { currentUser } = useAppContext();
-  const [subscription, setSubscription] = useState<SubscriptionInfo | null>(null);
+  const [subscriptions, setSubscriptions] = useState<SubscriptionInfo[]>([]);
   const [logs, setLogs] = useState<SentLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [testing, setTesting] = useState(false);
@@ -44,12 +44,15 @@ export function DebugNotificationsPage() {
         return;
       }
 
+      // Chantier hotfix 2026-04-21 : on accepte >1 lignes (unique index
+      // peut manquer selon l'état de la DB). Les colonnes réelles sont
+      // endpoint / updated_at (pas created_at).
       const [subRes, logsRes] = await Promise.all([
         sb
           .from("push_subscriptions")
-          .select("endpoint, created_at")
+          .select("endpoint, updated_at")
           .eq("user_id", currentUser.id)
-          .maybeSingle(),
+          .order("updated_at", { ascending: false }),
         sb
           .from("push_notifications_sent")
           .select("id, entity_id, entity_type, sent_at")
@@ -58,7 +61,7 @@ export function DebugNotificationsPage() {
           .limit(10),
       ]);
 
-      setSubscription(subRes.data ?? null);
+      setSubscriptions((subRes.data as SubscriptionInfo[] | null) ?? []);
       setLogs((logsRes.data as SentLog[] | null) ?? []);
     } finally {
       setLoading(false);
@@ -101,7 +104,8 @@ export function DebugNotificationsPage() {
     }
   }
 
-  const hasSubscription = Boolean(subscription?.endpoint);
+  const subscriptionCount = subscriptions.length;
+  const hasSubscription = subscriptionCount > 0;
 
   return (
     <div className="space-y-6">
@@ -113,20 +117,23 @@ export function DebugNotificationsPage() {
 
       <Card className="space-y-4">
         <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <p className="eyebrow-label">Souscription</p>
+          <div className="min-w-0 flex-1">
+            <p className="eyebrow-label">Souscriptions</p>
             <p className="mt-2 text-lg text-white">
               {loading
                 ? "Chargement…"
                 : hasSubscription
-                  ? "Ce device est abonné"
+                  ? `${subscriptionCount} device${subscriptionCount > 1 ? "s" : ""} abonné${subscriptionCount > 1 ? "s" : ""}`
                   : "Aucune souscription sur ce compte"}
             </p>
-            {hasSubscription && subscription?.endpoint ? (
-              <p className="mt-2 break-all text-xs text-[var(--ls-text-muted)]">
-                {subscription.endpoint.slice(0, 80)}…
+            {subscriptions.map((sub, i) => (
+              <p
+                key={`${sub.endpoint.slice(0, 20)}-${i}`}
+                className="mt-2 break-all text-xs text-[var(--ls-text-muted)]"
+              >
+                #{i + 1} · {sub.endpoint.slice(0, 80)}…
               </p>
-            ) : null}
+            ))}
           </div>
           <StatusBadge
             label={hasSubscription ? "Abonné" : "Non abonné"}
