@@ -322,7 +322,9 @@ export function NewFollowUpPage() {
     if (recommendationsContacted && latest?.questionnaire?.recommendations?.length) {
       const sb = await getSupabaseClient();
       if (sb && currentUser) {
-        for (const reco of latest.questionnaire.recommendations) {
+        // Durcissement import (2026-04-21) : fallback [] si le questionnaire
+        // a été importé sans la clé recommendations.
+        for (const reco of latest.questionnaire.recommendations ?? []) {
           if (!reco.name.trim()) continue;
           try {
             const { error } = await sb.from('client_messages').insert({
@@ -610,7 +612,7 @@ export function NewFollowUpPage() {
               previous={{ weight: latest.bodyScan.weight, percent: latest.bodyScan.bodyFat }}
               initial={{ weight: first.bodyScan.weight, percent: first.bodyScan.bodyFat }}
               history={[
-                ...targetClient.assessments.map((assessment) => ({
+                ...(targetClient.assessments ?? []).map((assessment) => ({
                   date: assessment.date,
                   weight: assessment.bodyScan.weight,
                   percent: assessment.bodyScan.bodyFat
@@ -629,7 +631,7 @@ export function NewFollowUpPage() {
               previous={{ weight: latest.bodyScan.weight, muscleMass: latest.bodyScan.muscleMass }}
               initial={{ weight: first.bodyScan.weight, muscleMass: first.bodyScan.muscleMass }}
               history={[
-                ...targetClient.assessments.map((assessment) => ({
+                ...(targetClient.assessments ?? []).map((assessment) => ({
                   date: assessment.date,
                   weight: assessment.bodyScan.weight,
                   muscleMass: assessment.bodyScan.muscleMass
@@ -649,7 +651,7 @@ export function NewFollowUpPage() {
               visceralFat={bodyScan.visceralFat}
               sex={targetClient.sex}
               history={[
-                ...targetClient.assessments.map((assessment) => ({
+                ...(targetClient.assessments ?? []).map((assessment) => ({
                   date: assessment.date,
                   weight: assessment.bodyScan.weight,
                   hydrationPercent: assessment.bodyScan.hydration,
@@ -671,7 +673,7 @@ export function NewFollowUpPage() {
                 targetWeight={latest.questionnaire.targetWeight}
                 timeline={latest.questionnaire.desiredTimeline}
                 history={[
-                  ...targetClient.assessments.map((assessment) => ({
+                  ...(targetClient.assessments ?? []).map((assessment) => ({
                     date: assessment.date,
                     weight: assessment.bodyScan.weight
                   })),
@@ -842,13 +844,15 @@ export function NewFollowUpPage() {
                 placeholder="Ce que tu veux garder visible dans la fiche client."
               />
             </div>
-            {latest.questionnaire.recommendations.length ? (
+            {/* Durcissement import (2026-04-21) : recommendations peut être
+                null/undefined sur les clients importés via SQL brut. */}
+            {(latest.questionnaire.recommendations?.length ?? 0) > 0 ? (
               <label className="flex items-center justify-between gap-3 rounded-[22px] border border-white/10 bg-[var(--ls-surface2)] px-4 py-4">
                 <div>
                   <p className="text-sm font-medium text-white">Recommandations contactées</p>
                   <p className="mt-1 text-sm text-[var(--ls-text-muted)]">
-                    {latest.questionnaire.recommendations.length} contact
-                    {latest.questionnaire.recommendations.length > 1 ? "s" : ""} à reprendre pour ce dossier.
+                    {latest.questionnaire.recommendations?.length ?? 0} contact
+                    {(latest.questionnaire.recommendations?.length ?? 0) > 1 ? "s" : ""} à reprendre pour ce dossier.
                   </p>
                 </div>
                 <input
