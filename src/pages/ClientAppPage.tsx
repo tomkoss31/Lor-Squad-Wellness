@@ -192,6 +192,18 @@ export function ClientAppPage() {
   const { token } = useParams<{ token: string }>()
   const [data, setData] = useState<ClientAppData | null>(null)
   const [loading, setLoading] = useState(true)
+  // Chantier invitation client app (2026-04-21) : toast accueil quand le
+  // client arrive ici depuis /bienvenue?welcome=1. Le toast s'efface tout
+  // seul après 4s.
+  const [showWelcome, setShowWelcome] = useState(() => {
+    if (typeof window === 'undefined') return false
+    return new URLSearchParams(window.location.search).get('welcome') === '1'
+  })
+  useEffect(() => {
+    if (!showWelcome) return
+    const id = window.setTimeout(() => setShowWelcome(false), 4500)
+    return () => window.clearTimeout(id)
+  }, [showWelcome])
   const [activeTab, setActiveTab] = useState<'home' | 'evolution' | 'products' | 'coaching' | 'refer'>('home')
   const [coachingData, setCoachingData] = useState<{ breakfastAnalysis: BreakfastAnalysis; breakfastContent: string } | null>(null)
   const [referName, setReferName] = useState('')
@@ -475,6 +487,31 @@ export function ClientAppPage() {
 
   return (
     <div style={{ minHeight: '100vh', background: '#F4F2EE', fontFamily: 'DM Sans, sans-serif', color: '#111827', paddingBottom: 80 }}>
+      {/* Chantier invitation client app (2026-04-21) : toast de bienvenue
+          quand on arrive depuis /bienvenue via ?welcome=1. */}
+      {showWelcome ? (
+        <div
+          role="status"
+          style={{
+            position: 'fixed',
+            top: 16,
+            left: 16,
+            right: 16,
+            zIndex: 9999,
+            padding: '14px 18px',
+            borderRadius: 14,
+            background: 'linear-gradient(135deg, #D4B460, #B8922A)',
+            color: '#fff',
+            fontFamily: 'Syne, sans-serif',
+            fontWeight: 700,
+            fontSize: 15,
+            textAlign: 'center',
+            boxShadow: '0 12px 30px rgba(184,146,42,0.35)',
+          }}
+        >
+          Bienvenue dans ton espace Lor'Squad 🎉
+        </div>
+      ) : null}
       {/* HERO */}
       <div style={{ background: 'linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 60%, #F4F2EE 100%)', padding: '20px 16px 16px' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
