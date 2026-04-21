@@ -731,7 +731,9 @@ export function EditInitialAssessmentPage() {
             <textarea rows={6} value={notes} onChange={(event) => setNotes(event.target.value)} />
           </div>
 
-          {questionnaire.recommendations.length ? (
+          {/* Durcissement import (2026-04-21) : fallback si questionnaire
+              importé sans la clé recommendations. */}
+          {(questionnaire.recommendations?.length ?? 0) > 0 ? (
             <label className="flex items-center justify-between gap-3 rounded-[22px] border border-white/10 bg-[var(--ls-surface2)] px-4 py-4">
               <div>
                 <p className="text-sm font-medium text-white">Recommandations contactées</p>
