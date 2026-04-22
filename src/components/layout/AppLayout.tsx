@@ -158,7 +158,18 @@ export function AppLayout() {
         }`}
       >
         {isAssessmentPage ? null : (
-        <aside className="app-sidebar glass-panel relative hidden rounded-[24px] xl:sticky xl:top-5 xl:flex xl:flex-col xl:h-[calc(100vh-2.5rem)] xl:overflow-y-auto" style={{ background: 'var(--ls-sidebar-bg)' }}>
+        <aside
+          className="app-sidebar-grid glass-panel relative hidden overflow-hidden rounded-[24px] xl:sticky xl:top-5 xl:h-[calc(100vh-2.5rem)] xl:grid"
+          style={{
+            background: 'var(--ls-sidebar-bg)',
+            // Hotfix sticky footer (2026-04-24) : CSS grid 3-rows remplace
+            // flex-col pour garantir que le footer (ZONE 3 avec Sortir)
+            // reste collé en bas peu importe la taille du nav. Le
+            // minmax(0, 1fr) sur le middle row force la nav à shrink
+            // plutôt que de pousser le footer hors écran.
+            gridTemplateRows: 'auto minmax(0, 1fr) auto',
+          }}
+        >
           {/* ZONE 1 — Logo */}
           <div style={{ padding: '20px 16px 16px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -174,8 +185,9 @@ export function AppLayout() {
             </div>
           </div>
 
-          {/* ZONE 2 — Navigation */}
-          <nav style={{ flex: 1, padding: '12px 10px', display: 'flex', flexDirection: 'column', gap: 2, overflowY: 'auto' }}>
+          {/* ZONE 2 — Navigation (grid row = minmax(0, 1fr) → peut shrink
+              sous la taille naturelle, scroll interne si débordement) */}
+          <nav style={{ minHeight: 0, padding: '12px 10px', display: 'flex', flexDirection: 'column', gap: 2, overflowY: 'auto' }}>
             <div style={{
               fontSize: 9,
               color: 'var(--ls-text-hint)',
@@ -291,23 +303,26 @@ export function AppLayout() {
             })}
           </nav>
 
-          {/* ZONE 3 — Toggle thème + profil + déconnexion
-              (Chantier V3 2026-04-24 : toggle remonté AU-DESSUS du bloc
-              profil pour être immédiatement visible).
-              Hotfix clipping (2026-04-24) : padding-bottom safe-area pour
-              respecter la zone de geste iOS. Le scroll de la sidebar est
-              géré par xl:overflow-y-auto sur l'aside. */}
+          {/* ZONE 3 — Footer sticky : toggle thème + profil + BIG bouton
+              Sortir pleine largeur.
+              Chantier V3 fix 2 (2026-04-24) : le bouton Sortir était
+              parfois caché sous la BottomNav / hors viewport. Refonte :
+              - Le footer est la 3e row du CSS grid de l'aside → toujours
+                collé en bas, toujours visible.
+              - Bouton "Se déconnecter" pleine largeur rouge plein, 40px
+                min-height, pas d'ambiguïté visuelle.
+              - Profil compact (avatar + nom), sans bouton inline. */}
           <div
             style={{
-              padding: '12px 14px calc(12px + env(safe-area-inset-bottom, 0px))',
-              borderTop: '1px solid rgba(255,255,255,0.06)',
-              flexShrink: 0,
+              padding: '10px 12px calc(10px + env(safe-area-inset-bottom, 0px))',
+              borderTop: '1px solid rgba(255,255,255,0.08)',
+              background: 'var(--ls-sidebar-bg)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 8,
             }}
           >
-            <div style={{ marginBottom: 12 }}>
-              <ThemeToggle />
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <div style={{
                 width: 30, height: 30, borderRadius: '50%',
                 background: 'linear-gradient(135deg, #2DD4BF, #0D9488)',
@@ -325,26 +340,43 @@ export function AppLayout() {
                   {currentUser.role === 'admin' ? 'Admin' : 'Coach'}
                 </div>
               </div>
-
-              {/* Bouton "Sortir" rouge clair — toujours visible */}
-              <button
-                onClick={() => void handleLogout()}
-                title="Se déconnecter"
-                aria-label="Se déconnecter"
-                style={{
-                  padding: '6px 12px', borderRadius: 8,
-                  background: '#FCEBEB', color: '#A32D2D',
-                  border: 'none', fontSize: 11, fontWeight: 500,
-                  fontFamily: 'DM Sans, sans-serif', cursor: 'pointer',
-                  flexShrink: 0, transition: 'all 0.15s',
-                }}
-                onMouseEnter={e => { e.currentTarget.style.background = '#F9D8D8' }}
-                onMouseLeave={e => { e.currentTarget.style.background = '#FCEBEB' }}
-              >
-                Sortir
-              </button>
             </div>
 
+            <ThemeToggle />
+
+            {/* Bouton "Se déconnecter" pleine largeur — toujours visible */}
+            <button
+              onClick={() => void handleLogout()}
+              aria-label="Se déconnecter"
+              style={{
+                width: '100%',
+                minHeight: 40,
+                padding: '9px 12px',
+                borderRadius: 10,
+                background: '#E24B4A',
+                color: '#FFFFFF',
+                border: 'none',
+                fontSize: 13,
+                fontWeight: 600,
+                fontFamily: 'DM Sans, sans-serif',
+                cursor: 'pointer',
+                transition: 'all 0.15s',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 8,
+                boxShadow: '0 2px 6px rgba(226,75,74,0.3)',
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = '#C33F3E'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = '#E24B4A'; }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                <polyline points="16 17 21 12 16 7" />
+                <line x1="21" y1="12" x2="9" y2="12" />
+              </svg>
+              Se déconnecter
+            </button>
           </div>
         </aside>
         )}
