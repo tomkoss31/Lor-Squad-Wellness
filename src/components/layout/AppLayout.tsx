@@ -5,7 +5,6 @@ import { blasonLogo } from "../../data/visualContent";
 import { Button } from "../ui/Button";
 import { StatusBadge } from "../ui/StatusBadge";
 import { BottomNav } from "./BottomNav";
-import { NewBilanFab } from "./NewBilanFab";
 import { useRealtimeMessages } from "../../hooks/useRealtimeMessages";
 import { getInitials } from "../../lib/utils/getInitials";
 import { useTheme } from "../../hooks/useTheme";
@@ -180,53 +179,100 @@ export function AppLayout() {
                 (item.path === "/pv" && location.pathname.startsWith("/pv")) ||
                 (item.path === "/formation" && location.pathname.startsWith("/guide"));
 
+              // Chantier Mini-fix V2 Co-pilote (2026-04-24) : bouton
+              // "+ Nouveau bilan" déplacé du FAB top-right vers la sidebar,
+              // inséré juste avant "Centre de formation".
+              const insertNewBilanBefore = item.path === "/formation";
+
               return (
-                <NavLink
-                  key={item.path}
-                  to={item.path}
-                  className="flex items-center gap-3 rounded-r-[12px] text-[13px] transition"
-                  style={{
-                    padding: '9px 12px 9px 14px',
-                    marginLeft: -2,
-                    borderLeft: isActive ? '3px solid var(--ls-gold)' : '2px solid transparent',
-                    background: isActive ? 'rgba(201,168,76,0.08)' : 'transparent',
-                    color: isActive ? 'var(--ls-text)' : 'var(--ls-text-muted)',
-                    fontWeight: isActive ? 500 : 400,
-                    fontFamily: 'DM Sans, sans-serif',
-                    textDecoration: 'none',
-                    transition: 'all 0.15s',
-                  }}
-                  onMouseEnter={e => {
-                    if (!isActive) e.currentTarget.style.background = 'var(--ls-surface2)'
-                  }}
-                  onMouseLeave={e => {
-                    if (!isActive) e.currentTarget.style.background = 'transparent'
-                  }}
-                >
-                  <span style={{
-                    flexShrink: 0,
-                    display: 'flex',
-                    alignItems: 'center',
-                    color: isActive ? 'var(--ls-gold)' : 'var(--ls-text-muted)',
-                    opacity: 1,
-                  }}>
-                    {NAV_ICONS[item.path]}
-                  </span>
-                  <span className="flex-1">{item.label}</span>
-                  {item.badge > 0 ? (
-                    <span style={{
-                      fontSize: 9, padding: '2px 7px', borderRadius: 10,
-                      background: 'rgba(220,38,38,0.1)',
-                      color: '#DC2626',
-                      fontWeight: 700,
-                      marginLeft: 'auto',
-                      fontFamily: 'DM Sans, sans-serif',
-                      flexShrink: 0,
-                    }}>
-                      {item.badge}
-                    </span>
+                <div key={item.path} style={{ display: 'contents' }}>
+                  {insertNewBilanBefore ? (
+                    <NavLink
+                      key="new-bilan-cta"
+                      to="/assessments/new"
+                      aria-label="Nouveau bilan"
+                      className="flex items-center gap-2 text-[13px] transition"
+                      style={{
+                        margin: '8px 6px 10px',
+                        padding: '11px 14px',
+                        borderRadius: 12,
+                        background: 'linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)',
+                        color: '#FFFFFF',
+                        fontFamily: 'DM Sans, sans-serif',
+                        fontWeight: 600,
+                        letterSpacing: 0.2,
+                        textDecoration: 'none',
+                        boxShadow: '0 2px 6px rgba(186,117,23,0.25)',
+                        justifyContent: 'center',
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.boxShadow =
+                          '0 4px 12px rgba(186,117,23,0.35)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.boxShadow =
+                          '0 2px 6px rgba(186,117,23,0.25)';
+                      }}
+                    >
+                      <span
+                        aria-hidden="true"
+                        style={{
+                          fontSize: 16,
+                          fontWeight: 700,
+                          lineHeight: 1,
+                        }}
+                      >
+                        +
+                      </span>
+                      <span>Nouveau bilan</span>
+                    </NavLink>
                   ) : null}
-                </NavLink>
+                  <NavLink
+                    to={item.path}
+                    className="flex items-center gap-3 rounded-r-[12px] text-[13px] transition"
+                    style={{
+                      padding: '9px 12px 9px 14px',
+                      marginLeft: -2,
+                      borderLeft: isActive ? '3px solid var(--ls-gold)' : '2px solid transparent',
+                      background: isActive ? 'rgba(201,168,76,0.08)' : 'transparent',
+                      color: isActive ? 'var(--ls-text)' : 'var(--ls-text-muted)',
+                      fontWeight: isActive ? 500 : 400,
+                      fontFamily: 'DM Sans, sans-serif',
+                      textDecoration: 'none',
+                      transition: 'all 0.15s',
+                    }}
+                    onMouseEnter={e => {
+                      if (!isActive) e.currentTarget.style.background = 'var(--ls-surface2)'
+                    }}
+                    onMouseLeave={e => {
+                      if (!isActive) e.currentTarget.style.background = 'transparent'
+                    }}
+                  >
+                    <span style={{
+                      flexShrink: 0,
+                      display: 'flex',
+                      alignItems: 'center',
+                      color: isActive ? 'var(--ls-gold)' : 'var(--ls-text-muted)',
+                      opacity: 1,
+                    }}>
+                      {NAV_ICONS[item.path]}
+                    </span>
+                    <span className="flex-1">{item.label}</span>
+                    {item.badge > 0 ? (
+                      <span style={{
+                        fontSize: 9, padding: '2px 7px', borderRadius: 10,
+                        background: 'rgba(220,38,38,0.1)',
+                        color: '#DC2626',
+                        fontWeight: 700,
+                        marginLeft: 'auto',
+                        fontFamily: 'DM Sans, sans-serif',
+                        flexShrink: 0,
+                      }}>
+                        {item.badge}
+                      </span>
+                    ) : null}
+                  </NavLink>
+                </div>
               );
             })}
           </nav>
@@ -407,9 +453,6 @@ export function AppLayout() {
         </main>
       </div>
       <BottomNav />
-      {/* Chantier Refonte Navigation (2026-04-22) : bouton "+ Nouveau bilan"
-          fixe en top-right visible sur toutes les pages coach authentifiées. */}
-      <NewBilanFab />
     </div>
   );
 }
