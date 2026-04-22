@@ -142,30 +142,33 @@ export function HeroActionCard({
               fontSize: 18,
               fontWeight: 500,
               color: "#FFFFFF",
+              opacity: 1,
+              display: "flex",
+              alignItems: "baseline",
+              gap: 10,
+              flexWrap: "wrap",
             }}
           >
-            {nextAction.clientName}
+            <span style={{ color: "#FFFFFF", opacity: 1 }}>{nextAction.clientName}</span>
+            {isRdv && nextAction.time ? (
+              <span
+                style={{
+                  color: "#FFFFFF",
+                  opacity: 1,
+                  fontSize: 22,
+                  fontWeight: 500,
+                  letterSpacing: "-0.01em",
+                }}
+              >
+                · {formatHour(nextAction.time)}
+              </span>
+            ) : null}
           </div>
           <div style={{ fontSize: 13, color: "rgba(255,255,255,0.85)", marginTop: 2 }}>
             {nextAction.title}
             {nextAction.location ? ` · ${nextAction.location}` : ""}
           </div>
         </div>
-
-        {isRdv && nextAction.time ? (
-          <div
-            style={{
-              textAlign: "right",
-              fontFamily: "Syne, sans-serif",
-              fontWeight: 700,
-              fontSize: 32,
-              letterSpacing: "-0.02em",
-              flexShrink: 0,
-            }}
-          >
-            {formatHour(nextAction.time)}
-          </div>
-        ) : null}
       </div>
 
       <div
@@ -189,8 +192,8 @@ export function HeroActionCard({
           style={{
             padding: "10px 16px",
             borderRadius: 10,
-            background: "rgba(255,255,255,0.15)",
-            border: "1px solid rgba(255,255,255,0.35)",
+            background: "rgba(255,255,255,0.22)",
+            border: "1px solid rgba(255,255,255,0.5)",
             color: "#FFFFFF",
             fontSize: 13,
             fontFamily: "DM Sans, sans-serif",
