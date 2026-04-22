@@ -23,11 +23,19 @@ export function LoginPage() {
         password: password.trim()
       });
       if (!result.ok) {
-        setError(result.error ?? "Email ou mot de passe invalides pour cet accès.");
+        // Hotfix PWA login (2026-04-24) : messages d'erreur plus clairs.
+        const raw = result.error ?? "";
+        const friendly =
+          /invalid login credentials/i.test(raw) || /invalid_credentials/i.test(raw)
+            ? "Email ou mot de passe incorrect."
+            : raw;
+        setError(friendly || "Email ou mot de passe incorrect.");
         return;
       }
       setError("");
-      navigate("/dashboard");
+      // Hotfix PWA login client (2026-04-24) : on suit redirectTo selon
+      // kind (coach → /co-pilote, client → /client/:token).
+      navigate(result.redirectTo);
     } catch (submitError) {
       console.error("Soumission du login impossible.", submitError);
       setError("La connexion sécurisée ne répond pas correctement pour le moment.");
@@ -118,8 +126,8 @@ export function LoginPage() {
         {/* ── PANNEAU DROIT ── */}
         <div className="login-right" style={{ background:'var(--ls-surface)', padding:'52px', display:'flex', flexDirection:'column', justifyContent:'center', gap:28 }}>
           <div>
-            <h2 style={{ fontFamily:'Syne, sans-serif', fontSize:26, fontWeight:800, color:'var(--ls-text)', margin:'0 0 6px', letterSpacing:'-0.2px' }}>Connexion coach</h2>
-            <p style={{ fontSize:13, color:'var(--ls-text-muted)', margin:0, fontWeight:300 }}>Accédez à votre espace professionnel</p>
+            <h2 style={{ fontFamily:'Syne, sans-serif', fontSize:26, fontWeight:800, color:'var(--ls-text)', margin:'0 0 6px', letterSpacing:'-0.2px' }}>Connexion</h2>
+            <p style={{ fontSize:13, color:'var(--ls-text-muted)', margin:0, fontWeight:300 }}>Accède à ton espace</p>
           </div>
 
           <form onSubmit={handleSubmit} style={{ display:'flex', flexDirection:'column', gap:18 }}>
@@ -190,22 +198,21 @@ export function LoginPage() {
             </div>
           ) : null}
 
-          {/* Accès */}
-          <div style={{ background:'var(--ls-surface2)', border:'1px solid rgba(255,255,255,0.07)', borderRadius:14, padding:20 }}>
-            <p style={{ fontSize:10, color:'var(--ls-text-hint)', letterSpacing:'1.5px', textTransform:'uppercase', margin:'0 0 14px' }}>Comment créer les accès</p>
-            {[
-              { n:'01', title:"Tu crées le compte depuis l'admin", text:"Nom, email professionnel, rôle et état actif." },
-              { n:'02', title:"L'email devient l'identifiant", text:"Pas de pseudo séparé." },
-              { n:'03', title:"Mot de passe défini par l'admin", text:"Il peut être redéfini depuis la page équipe." },
-            ].map((step, i) => (
-              <div key={step.n} style={{ display:'flex', gap:12, alignItems:'flex-start', marginBottom: i < 2 ? 12 : 0 }}>
-                <div style={{ width:28, height:28, borderRadius:'50%', flexShrink:0, background:'var(--ls-gold-bg)', color:'#C9A84C', display:'flex', alignItems:'center', justifyContent:'center', fontSize:10, fontWeight:700, fontFamily:'Syne, sans-serif' }}>{step.n}</div>
-                <div>
-                  <p style={{ fontSize:12, fontWeight:600, color:'var(--ls-text)', margin:'0 0 3px' }}>{step.title}</p>
-                  <p style={{ fontSize:11, color:'var(--ls-text-muted)', margin:0, lineHeight:1.6 }}>{step.text}</p>
-                </div>
-              </div>
-            ))}
+          {/* Hotfix PWA login (2026-04-24) : la section "Comment créer les
+              accès" (admin-oriented) a été retirée car la page est désormais
+              servie aussi aux clients. Message discret de support à la place. */}
+          <div
+            style={{
+              background: 'var(--ls-surface2)',
+              border: '1px solid rgba(255,255,255,0.07)',
+              borderRadius: 12,
+              padding: '14px 18px',
+              fontSize: 12,
+              color: 'var(--ls-text-muted)',
+              lineHeight: 1.6,
+            }}
+          >
+            Pas encore d'accès ? Demande à ton coach de te regénérer un lien.
           </div>
 
           {/* Sécurité */}
