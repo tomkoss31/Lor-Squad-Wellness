@@ -135,8 +135,8 @@ function Gauge({ metric, sex, label, current, initial, target, unit = "%" }: Gau
         ) : null}
       </div>
 
-      {/* Barre gradient + marqueurs */}
-      <div style={{ position: "relative", height: 22, margin: "4px 0 8px" }}>
+      {/* Barre gradient + marqueurs + graduations chiffrées (V3) */}
+      <div style={{ position: "relative", height: 22, marginTop: 4 }}>
         <div
           style={{
             position: "absolute",
@@ -193,6 +193,52 @@ function Gauge({ metric, sex, label, current, initial, target, unit = "%" }: Gau
             }}
           />
         ) : null}
+      </div>
+
+      {/* Graduations chiffrées (V3) : une étiquette à chaque frontière de zone */}
+      <div
+        aria-hidden="true"
+        style={{
+          position: "relative",
+          height: 14,
+          marginBottom: 8,
+          marginTop: 2,
+        }}
+      >
+        {(() => {
+          // Bornes : min + fin de chaque zone (dédupliquées, clampées 0-100)
+          const borders = Array.from(
+            new Set([
+              range.min,
+              ...range.zones.map((z) => z.from),
+              ...range.zones.map((z) => z.to),
+            ]),
+          )
+            .filter((v) => v >= range.min && v <= range.max)
+            .sort((a, b) => a - b);
+          return borders.map((v) => {
+            const pct = ((v - range.min) / (range.max - range.min)) * 100;
+            return (
+              <span
+                key={v}
+                style={{
+                  position: "absolute",
+                  left: `${pct}%`,
+                  transform:
+                    pct < 5 ? "translateX(0)" : pct > 95 ? "translateX(-100%)" : "translateX(-50%)",
+                  fontSize: 10,
+                  color: "var(--ls-text-hint)",
+                  fontFamily: "DM Sans, sans-serif",
+                  whiteSpace: "nowrap",
+                  lineHeight: 1,
+                  top: 2,
+                }}
+              >
+                {Math.round(v)}%
+              </span>
+            );
+          });
+        })()}
       </div>
 
       <div

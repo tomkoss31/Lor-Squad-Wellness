@@ -5,6 +5,7 @@ import { WeightSummaryBlock } from "../components/client/WeightSummaryBlock";
 import { BodyCompositionGauges } from "../components/client/BodyCompositionGauges";
 import { OnboardingChecksBlock } from "../components/client/OnboardingChecksBlock";
 import { CoachNotesBlock } from "../components/client/CoachNotesBlock";
+import { NextAppointmentBanner } from "../components/client/NextAppointmentBanner";
 import { BodyFatInsightCard } from "../components/body-scan/BodyFatInsightCard";
 import { MuscleMassInsightCard } from "../components/body-scan/MuscleMassInsightCard";
 import { HydrationVisceralInsightCard } from "../components/body-scan/HydrationVisceralInsightCard";
@@ -12,7 +13,6 @@ import { BodyScanRadar } from "../components/body-scan/BodyScanRadar";
 import { HistoryTimeline } from "../components/client/HistoryTimeline";
 import { Button } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
-import { MetricTile } from "../components/ui/MetricTile";
 import { StatusBadge } from "../components/ui/StatusBadge";
 import { useAppContext } from "../context/AppContext";
 import { useToast, buildSupabaseErrorToast } from "../context/ToastContext";
@@ -419,7 +419,8 @@ export function ClientDetailPage() {
         )}
       </div>
 
-      {/* Tab bar */}
+      {/* Tab bar + bandeau Prochain RDV (Chantier V3 2026-04-24) */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
       <div className="client-tabs flex gap-1 rounded-[14px] border border-[var(--ls-border)] bg-[var(--ls-surface)] p-1" style={{ width: 'fit-content', maxWidth: '100%' }}>
         {[
           { label: 'Vue complète', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg> },
@@ -466,6 +467,14 @@ export function ClientDetailPage() {
         )}
       </div>
 
+      {/* Bandeau Prochain RDV (V3) */}
+      <NextAppointmentBanner
+        nextAppointmentDate={activeFollowUp?.dueDate ?? null}
+        onPlan={() => setActiveTab(4)}
+        onViewDetails={() => setActiveTab(4)}
+      />
+      </div>
+
       {reportUrl && (
         <EvolutionReportModal
           reportUrl={reportUrl}
@@ -497,42 +506,9 @@ export function ClientDetailPage() {
               body scan. Modifiables via modale. */}
           <OnboardingChecksBlock clientId={client.id} checks={client.onboardingChecks} />
 
-          <div className="bodyscan-metrics grid grid-cols-2 gap-3 md:gap-4 xl:grid-cols-4">
-            <MetricTile
-              label="Poids de départ"
-              value={`${firstAssessment.bodyScan?.weight ?? 0} kg`}
-              hint={`Depuis le ${formatDate(firstAssessment.date)}`}
-              accent="blue"
-            />
-            <MetricTile
-              label="Poids du jour"
-              value={`${latestBodyScan.weight} kg`}
-              hint={`Relevé du ${formatDate(latestAssessment.date)}`}
-              accent="green"
-            />
-            <MetricTile
-              label={client.objective === "weight-loss" ? "Cible" : "Cap du moment"}
-              value={
-                client.objective === "weight-loss"
-                  ? resolvedTargetWeight
-                    ? `${resolvedTargetWeight} kg`
-                    : "À définir"
-                  : latestQuestionnaire.objectiveFocus || "Prise de masse"
-              }
-              hint={client.objective === "weight-loss" ? "Repère cible" : "Cap actuel"}
-              accent={
-                client.objective === "weight-loss" && !resolvedTargetWeight
-                  ? "muted"
-                  : "red"
-              }
-            />
-            <MetricTile
-              label="Prochain rendez-vous"
-              value={activeFollowUp ? formatDateTime(activeFollowUp.dueDate) : "Non planifié"}
-              hint={activeFollowUp ? "Suite déjà posée" : "Client inactif ou en pause"}
-              accent={activeFollowUp ? "blue" : "muted"}
-            />
-          </div>
+          {/* Chantier V3 (2026-04-24) : 4 MetricTiles Poids départ/jour/
+              cible/RDV supprimées — fusion dans le WeightSummaryBlock en
+              haut et NextAppointmentBanner à côté des onglets. */}
 
           {/* Chantier Polish Vue complète (2026-04-24) : remplace le
               BodyScanSnapshotCard (chiffres bruts) par 3 jauges combinées
