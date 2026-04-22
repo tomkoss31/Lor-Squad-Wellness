@@ -19,6 +19,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ExplainerModal } from "../components/bienvenue/ExplainerModal";
+import { InstallPwaInstructions } from "../components/pwa/InstallPwaInstructions";
+import { isStandalonePwa } from "../lib/utils/detectDevice";
 import { getSupabaseClient } from "../services/supabaseClient";
 
 type ValidationState =
@@ -43,6 +45,11 @@ export function BienvenuePage() {
   const [passwordConfirm, setPasswordConfirm] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string>("");
+  // Hotfix client-login (2026-04-24) : étape intermédiaire "installe la
+  // PWA" entre la création du compte et la redirection finale.
+  const [installPromptStage, setInstallPromptStage] = useState<
+    { redirectToken: string | null; firstName: string } | null
+  >(null);
 
   // 1. Parse token from URL + validate.
   useEffect(() => {
@@ -154,8 +161,17 @@ export function BienvenuePage() {
         }
       }
 
-      // 4. Redirect vers ClientAppPage (existing magic-link UI) avec flag
-      //    welcome=1 pour afficher un toast.
+      // 4. Hotfix client-login (2026-04-24) : avant la redirection finale,
+      //    si la PWA n'est PAS encore installée, on affiche une étape
+      //    intermédiaire avec instructions. Déjà installée → navigate direct.
+      const firstName = validation.status === "valid" ? validation.firstName : "toi";
+      if (!isStandalonePwa()) {
+        setInstallPromptStage({
+          redirectToken: data.redirect_token ?? null,
+          firstName,
+        });
+        return;
+      }
       if (data.redirect_token) {
         navigate(`/client/${data.redirect_token}?welcome=1`, { replace: true });
       } else {
@@ -184,7 +200,17 @@ export function BienvenuePage() {
       }}
     >
       <div style={{ maxWidth: 440, width: "100%" }}>
-        {validation.status === "loading" ? (
+        {installPromptStage ? (
+          <InstallPwaStep
+            firstName={installPromptStage.firstName}
+            onContinue={() => {
+              const redirect = installPromptStage.redirectToken
+                ? `/client/${installPromptStage.redirectToken}?welcome=1`
+                : `/login?welcome=1`;
+              navigate(redirect, { replace: true });
+            }}
+          />
+        ) : validation.status === "loading" ? (
           <p style={{ textAlign: "center", opacity: 0.8 }}>Vérification du lien…</p>
         ) : validation.status === "invalid" ? (
           <InvalidCard message={validation.message} />
@@ -309,6 +335,102 @@ export function BienvenuePage() {
           </>
         )}
       </div>
+    </div>
+  );
+}
+
+function InstallPwaStep({
+  firstName,
+  onContinue,
+}: {
+  firstName: string;
+  onContinue: () => void;
+}) {
+  return (
+    <div
+      style={{
+        background: "rgba(255,255,255,0.04)",
+        border: "1px solid rgba(201,168,76,0.3)",
+        borderRadius: 22,
+        padding: 28,
+        color: "#F4E9CF",
+      }}
+    >
+      <div
+        style={{
+          fontFamily: "Syne, sans-serif",
+          fontSize: 26,
+          fontWeight: 700,
+          color: "#FDECC0",
+          lineHeight: 1.15,
+          marginBottom: 10,
+        }}
+      >
+        C'est bon {firstName}, ton accès est créé ! 🎉
+      </div>
+      <p
+        style={{
+          fontSize: 14,
+          lineHeight: 1.6,
+          opacity: 0.9,
+          marginBottom: 22,
+        }}
+      >
+        Une dernière étape pour un accès rapide :{" "}
+        <strong>installe l'app sur ton téléphone</strong>. Comme ça, tu la
+        retrouves en 1 clic, comme une vraie appli.
+      </p>
+
+      <div
+        style={{
+          background: "#FFFFFF",
+          color: "#111827",
+          borderRadius: 16,
+          padding: 22,
+          marginBottom: 20,
+        }}
+      >
+        <InstallPwaInstructions compact />
+      </div>
+
+      <button
+        type="button"
+        onClick={onContinue}
+        style={{
+          width: "100%",
+          padding: "14px 20px",
+          borderRadius: 14,
+          background: "linear-gradient(135deg, #D4B460, #C9A84C)",
+          color: "#0B0D11",
+          border: "none",
+          fontFamily: "Syne, sans-serif",
+          fontWeight: 700,
+          fontSize: 16,
+          cursor: "pointer",
+          letterSpacing: 0.3,
+          boxShadow: "0 8px 24px rgba(201,168,76,0.25)",
+        }}
+      >
+        J'ai installé, c'est parti !
+      </button>
+      <button
+        type="button"
+        onClick={onContinue}
+        style={{
+          marginTop: 12,
+          width: "100%",
+          padding: "10px 14px",
+          borderRadius: 10,
+          background: "transparent",
+          color: "rgba(244,233,207,0.65)",
+          border: "none",
+          fontFamily: "DM Sans, sans-serif",
+          fontSize: 13,
+          cursor: "pointer",
+        }}
+      >
+        Je ferai ça plus tard
+      </button>
     </div>
   );
 }
