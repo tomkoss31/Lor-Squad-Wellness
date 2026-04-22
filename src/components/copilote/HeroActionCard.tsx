@@ -136,10 +136,17 @@ export function HeroActionCard({
           >
             Prochaine action{countdown ? ` · ${countdown}` : ""}
           </div>
-          <div style={{ fontFamily: "Syne, sans-serif", fontSize: 22, fontWeight: 700 }}>
+          <div
+            style={{
+              fontFamily: "Syne, sans-serif",
+              fontSize: 18,
+              fontWeight: 500,
+              color: "#FFFFFF",
+            }}
+          >
             {nextAction.clientName}
           </div>
-          <div style={{ fontSize: 13, opacity: 0.9, marginTop: 2 }}>
+          <div style={{ fontSize: 13, color: "rgba(255,255,255,0.85)", marginTop: 2 }}>
             {nextAction.title}
             {nextAction.location ? ` · ${nextAction.location}` : ""}
           </div>
