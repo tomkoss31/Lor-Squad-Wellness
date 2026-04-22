@@ -304,23 +304,20 @@ export function AppLayout() {
           </nav>
 
           {/* ZONE 3 — Footer sticky sidebar.
-              Hotfix visibilité Déconnecter (2026-04-24 fix 3) :
-              ordre final = Profil → BOUTON DÉCONNEXION → Toggle thème.
-              Le bouton rouge est désormais juste sous le profil (zone
-              la plus visible), le toggle dark/white passe en dernier
-              (moins critique). Padding-bottom safe-area + 24px de
-              marge de sécurité pour que rien ne puisse couper le
-              toggle par la BottomNav ou le notch iOS. */}
+              Design final (2026-04-24 fix 5) : ligne profil avec petit
+              bouton logout inline à droite du nom, puis toggle thème
+              en dessous. Compact et moderne. */}
           <div
             style={{
-              padding: '10px 12px calc(24px + env(safe-area-inset-bottom, 0px))',
+              padding: '12px 12px calc(16px + env(safe-area-inset-bottom, 0px))',
               borderTop: '1px solid rgba(255,255,255,0.08)',
               background: 'var(--ls-sidebar-bg)',
               display: 'flex',
               flexDirection: 'column',
-              gap: 8,
+              gap: 10,
             }}
           >
+            {/* Ligne profil + bouton Sortir inline */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <div style={{
                 width: 30, height: 30, borderRadius: '50%',
@@ -335,47 +332,51 @@ export function AppLayout() {
                 <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--ls-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {currentUser.name}
                 </div>
-                <div style={{ fontSize: 11, color: 'var(--ls-text-hint)' }}>
+                <div style={{ fontSize: 10, color: 'var(--ls-text-hint)' }}>
                   {currentUser.role === 'admin' ? 'Admin' : 'Coach'}
                 </div>
               </div>
+
+              {/* Bouton Sortir compact à droite du nom */}
+              <button
+                onClick={() => void handleLogout()}
+                aria-label="Se déconnecter"
+                title="Se déconnecter"
+                style={{
+                  flexShrink: 0,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 5,
+                  padding: '6px 10px',
+                  borderRadius: 8,
+                  background: 'rgba(226,75,74,0.12)',
+                  border: '1px solid rgba(226,75,74,0.35)',
+                  color: '#E24B4A',
+                  cursor: 'pointer',
+                  fontSize: 11,
+                  fontWeight: 600,
+                  fontFamily: 'DM Sans, sans-serif',
+                  transition: 'all 0.15s',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = '#E24B4A';
+                  e.currentTarget.style.color = '#FFFFFF';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'rgba(226,75,74,0.12)';
+                  e.currentTarget.style.color = '#E24B4A';
+                }}
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                  <polyline points="16 17 21 12 16 7" />
+                  <line x1="21" y1="12" x2="9" y2="12" />
+                </svg>
+                Sortir
+              </button>
             </div>
 
-            {/* Bouton "Se déconnecter" pleine largeur — AU-DESSUS du toggle */}
-            <button
-              onClick={() => void handleLogout()}
-              aria-label="Se déconnecter"
-              style={{
-                width: '100%',
-                minHeight: 40,
-                padding: '9px 12px',
-                borderRadius: 10,
-                background: '#E24B4A',
-                color: '#FFFFFF',
-                border: 'none',
-                fontSize: 13,
-                fontWeight: 600,
-                fontFamily: 'DM Sans, sans-serif',
-                cursor: 'pointer',
-                transition: 'all 0.15s',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 8,
-                boxShadow: '0 2px 6px rgba(226,75,74,0.3)',
-              }}
-              onMouseEnter={(e) => { e.currentTarget.style.background = '#C33F3E'; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = '#E24B4A'; }}
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-                <polyline points="16 17 21 12 16 7" />
-                <line x1="21" y1="12" x2="9" y2="12" />
-              </svg>
-              Se déconnecter
-            </button>
-
-            {/* Toggle thème — maintenant en dernier (moins critique) */}
+            {/* Toggle thème — compact en dessous */}
             <ThemeToggle />
           </div>
         </aside>
