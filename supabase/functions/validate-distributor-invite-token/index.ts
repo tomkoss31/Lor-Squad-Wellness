@@ -53,7 +53,7 @@ serve(async (req) => {
 
     const { data: invitation, error: invErr } = await sb
       .from("distributor_invitation_tokens")
-      .select("id, email, first_name, last_name, sponsor_id, expires_at, consumed_at")
+      .select("id, email, first_name, last_name, phone, variant, sponsor_id, expires_at, consumed_at")
       .eq("token", token)
       .maybeSingle();
 
@@ -89,7 +89,9 @@ serve(async (req) => {
       valid: true,
       invited_first_name: invitation.first_name ?? "",
       invited_last_name: invitation.last_name ?? "",
-      invited_email: invitation.email,
+      invited_email: invitation.email ?? "",
+      invited_phone: (invitation as { phone?: string | null }).phone ?? "",
+      variant: (invitation as { variant?: string }).variant ?? "admin",
       sponsor_name: sponsorName,
       sponsor_first_name: sponsorFirstName,
     });

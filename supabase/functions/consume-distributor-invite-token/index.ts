@@ -54,6 +54,7 @@ serve(async (req) => {
     const body = (await req.json().catch(() => ({}))) as {
       token?: string;
       password?: string;
+      email?: string;
       first_name?: string;
       last_name?: string;
       phone?: string;
@@ -63,6 +64,7 @@ serve(async (req) => {
     };
     const token = (body.token ?? "").trim();
     const password = (body.password ?? "").trim();
+    const payloadEmail = (body.email ?? "").trim().toLowerCase();
     const firstName = (body.first_name ?? "").trim();
     const lastName = (body.last_name ?? "").trim();
     const phone = (body.phone ?? "").trim();
@@ -85,7 +87,7 @@ serve(async (req) => {
     // ─── 2. Re-validation token ─────────────────────────────────────────────
     const { data: invitation, error: invErr } = await sbAdmin
       .from("distributor_invitation_tokens")
-      .select("id, email, sponsor_id, expires_at, consumed_at")
+      .select("id, email, variant, sponsor_id, expires_at, consumed_at")
       .eq("token", token)
       .maybeSingle();
 
@@ -99,7 +101,13 @@ serve(async (req) => {
       return json({ success: false, error: "Ce lien a expiré." }, 410);
     }
 
-    const email = invitation.email.trim().toLowerCase();
+    // Chantier V2 (2026-04-24) : flow 'sponsor' → email vient du payload
+    // (l'invité l'a saisi dans le wizard). Flow 'admin' → email du token.
+    const tokenEmail = invitation.email ? invitation.email.trim().toLowerCase() : "";
+    const email = tokenEmail || payloadEmail;
+    if (!email || !/.+@.+\..+/.test(email)) {
+      return json({ success: false, error: "Adresse email invalide." }, 400);
+    }
 
     // ─── 3. Lookup sponsor_name dénormalisé ─────────────────────────────────
     let sponsorName: string | null = null;
