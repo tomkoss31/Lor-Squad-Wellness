@@ -51,6 +51,8 @@ type AssessmentRow = {
   decision_client?: DecisionClient | null;
   type_de_suite?: TypeDeSuite | null;
   message_a_laisser?: MessageALaisser | null;
+  coach_notes_draft?: string | null;
+  coach_notes_initial?: string | null;
   pedagogical_focus: string[] | null;
 };
 
@@ -82,6 +84,7 @@ type ClientRow = {
   free_follow_up?: boolean | null;
   free_pv_tracking?: boolean | null;
   general_note?: string | null;
+  onboarding_checks?: { telegram?: boolean; photo_before?: boolean; measurements?: boolean } | null;
   assessments?: AssessmentRow[] | null;
 };
 
@@ -333,7 +336,9 @@ function mapAssessment(row: AssessmentRow): AssessmentRecord {
     pedagogicalFocus: row.pedagogical_focus ?? [],
     decisionClient: row.decision_client ?? null,
     typeDeSuite: row.type_de_suite ?? null,
-    messageALaisser: row.message_a_laisser ?? null
+    messageALaisser: row.message_a_laisser ?? null,
+    coachNotesDraft: row.coach_notes_draft ?? null,
+    coachNotesInitial: row.coach_notes_initial ?? null
   };
 }
 
@@ -366,6 +371,7 @@ function mapClient(row: ClientRow): Client {
     freeFollowUp: row.free_follow_up ?? false,
     freePvTracking: row.free_pv_tracking ?? false,
     generalNote: row.general_note ?? undefined,
+    onboardingChecks: row.onboarding_checks ?? undefined,
     assessments: (row.assessments ?? []).map(mapAssessment)
   };
 }
@@ -778,6 +784,9 @@ export async function createSupabaseClientWithInitialAssessment(payload: {
     decision_client: payload.assessment.decisionClient ?? null,
     type_de_suite: payload.assessment.typeDeSuite ?? null,
     message_a_laisser: payload.assessment.messageALaisser ?? null,
+    // Chantier Polish Vue complète (2026-04-24)
+    coach_notes_draft: payload.assessment.coachNotesDraft ?? null,
+    coach_notes_initial: payload.assessment.coachNotesInitial ?? null,
   };
   let { error: assessmentError } = await client.from("assessments").insert(assessmentInsertPayload);
 
@@ -791,6 +800,17 @@ export async function createSupabaseClientWithInitialAssessment(payload: {
     const { decision_client: _dc, type_de_suite: _ts, message_a_laisser: _ma, ...withoutStep13 } = assessmentInsertPayload;
     void _dc; void _ts; void _ma;
     ({ error: assessmentError } = await client.from("assessments").insert(withoutStep13));
+  }
+
+  // Fallback : colonnes coach_notes_* pas encore présentes → retry sans
+  if (
+    assessmentError &&
+    (isMissingColumnError(assessmentError, "coach_notes_draft") ||
+      isMissingColumnError(assessmentError, "coach_notes_initial"))
+  ) {
+    const { coach_notes_draft: _cd, coach_notes_initial: _ci, ...withoutNotes } = assessmentInsertPayload;
+    void _cd; void _ci;
+    ({ error: assessmentError } = await client.from("assessments").insert(withoutNotes));
   }
 
   if (assessmentError) {
@@ -1447,6 +1467,31 @@ export async function updateSupabaseClientGeneralNote(params: {
       );
     }
     throw new Error(`Impossible de mettre à jour la note générale : ${error.message}`);
+  }
+}
+
+// ─── Onboarding Checks (Chantier Polish Vue complète 2026-04-24) ─────────
+// 3 checks coach cochables depuis la fiche client (telegram, photo before,
+// mensurations). Stocké en jsonb sur clients.onboarding_checks.
+export async function updateSupabaseClientOnboardingChecks(params: {
+  clientId: string;
+  checks: { telegram?: boolean; photo_before?: boolean; measurements?: boolean };
+}): Promise<void> {
+  const { clientId, checks } = params;
+  const client = await requireSupabase();
+
+  const { error } = await client
+    .from("clients")
+    .update({ onboarding_checks: checks })
+    .eq("id", clientId);
+
+  if (error) {
+    if (isMissingColumnError(error, "onboarding_checks")) {
+      throw new Error(
+        "La colonne onboarding_checks n'existe pas encore. Exécute la migration supabase/migrations/20260423090000_client_onboarding_checks.sql."
+      );
+    }
+    throw new Error(`Impossible de mettre à jour les checks onboarding : ${error.message}`);
   }
 }
 
