@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { EditScheduleModal } from "../components/client/EditScheduleModal";
+import { WeightSummaryBlock } from "../components/client/WeightSummaryBlock";
+import { BodyCompositionGauges } from "../components/client/BodyCompositionGauges";
 import { BodyFatInsightCard } from "../components/body-scan/BodyFatInsightCard";
 import { MuscleMassInsightCard } from "../components/body-scan/MuscleMassInsightCard";
 import { BodyScanSnapshotCard } from "../components/body-scan/BodyScanSnapshotCard";
@@ -474,6 +476,19 @@ export function ClientDetailPage() {
       {/* Tab 0: Vue complète — cockpit light */}
       {activeTab === 0 && (
         <Card className="space-y-6">
+          {/* Chantier Polish Vue complète (2026-04-24) : résumé perte/graisse/muscle
+              en haut, au-dessus des 4 MetricTiles. */}
+          <WeightSummaryBlock
+            client={client}
+            firstWeight={firstAssessment.bodyScan?.weight ?? null}
+            latestWeight={latestBodyScan.weight ?? null}
+            firstBodyFatPct={firstAssessment.bodyScan?.bodyFat ?? null}
+            latestBodyFatPct={latestBodyScan.bodyFat ?? null}
+            firstMuscleMass={firstAssessment.bodyScan?.muscleMass ?? null}
+            latestMuscleMass={latestBodyScan.muscleMass ?? null}
+            targetWeight={resolvedTargetWeight ?? null}
+          />
+
           <NouveauBilanCTA onClick={() => navigate(`/clients/${client.id}/follow-up/new`)} />
 
           <div className="bodyscan-metrics grid grid-cols-2 gap-3 md:gap-4 xl:grid-cols-4">
@@ -513,11 +528,18 @@ export function ClientDetailPage() {
             />
           </div>
 
-          <BodyScanSnapshotCard
-            title="Dernier body scan"
-            dateLabel={`Relevé du ${formatDate(latestAssessment.date)}`}
-            metrics={latestBodyScan}
-            realAge={client.age}
+          {/* Chantier Polish Vue complète (2026-04-24) : remplace le
+              BodyScanSnapshotCard (chiffres bruts) par 3 jauges combinées
+              avec zones de santé, marqueurs départ/actuel/cible et message
+              contextuel selon progression. */}
+          <BodyCompositionGauges
+            sex={client.sex}
+            currentBodyFat={latestBodyScan.bodyFat ?? null}
+            initialBodyFat={firstAssessment.bodyScan?.bodyFat ?? null}
+            currentMuscleMass={latestBodyScan.muscleMass ?? null}
+            initialMuscleMass={firstAssessment.bodyScan?.muscleMass ?? null}
+            currentHydration={latestBodyScan.hydration ?? null}
+            initialHydration={firstAssessment.bodyScan?.hydration ?? null}
           />
         </Card>
       )}
