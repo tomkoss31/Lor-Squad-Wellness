@@ -96,28 +96,28 @@ export function useTraining(): TrainingState {
       if (!currentUser) return;
       const sb = await getSupabaseClient();
       if (!sb) return;
-      await sb
+      // Cleanup post-audit (2026-04-23) : on exploite le returning de
+      // l'upsert pour connaître completed_at réel côté serveur, au lieu
+      // de refetcher toute la liste en background.
+      const { data: upserted, error } = await sb
         .from("training_progress")
         .upsert(
           { user_id: currentUser.id, resource_id: resourceId },
           { onConflict: "user_id,resource_id" },
-        );
-      // Optimistic : on ajoute localement puis on re-fetch en background.
+        )
+        .select("resource_id, completed_at")
+        .maybeSingle();
+      if (error) return;
+      const finalRow: TrainingProgressRow = upserted
+        ? (upserted as TrainingProgressRow)
+        : { resource_id: resourceId, completed_at: new Date().toISOString() };
       setData((prev) =>
         prev.progress.some((p) => p.resource_id === resourceId)
           ? prev
-          : {
-              ...prev,
-              progress: [
-                ...prev.progress,
-                { resource_id: resourceId, completed_at: new Date().toISOString() },
-              ],
-            },
+          : { ...prev, progress: [...prev.progress, finalRow] },
       );
-      // Silent refresh pour rattraper toute divergence serveur.
-      void refresh();
     },
-    [currentUser, refresh],
+    [currentUser],
   );
 
   const isCompleted = useCallback(

@@ -5,9 +5,8 @@ import { AppLayout } from "./components/layout/AppLayout";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { ToastHost } from "./components/ui/ToastHost";
 
-// DashboardPage est re-exporté via CoPilotePage (placeholder initial).
-// Quand le nouveau CoPilotePage autonome sera prêt, DashboardPage pourra
-// être retiré du bundle principal.
+// CoPilotePage remplace définitivement l'ancien DashboardPage (retiré
+// au chantier cleanup-post-audit 2026-04-23).
 const GuidePage = lazy(() =>
   import("./pages/GuidePage").then((module) => ({
     default: module.GuidePage
@@ -120,9 +119,8 @@ const CoPilotePage = lazy(() =>
   }))
 );
 // Chantier Centre de Formation V1 (2026-04-23) : la home /formation est
-// maintenant FormationPage (catalogue avec progression), et /formation/:slug
-// pointe vers FormationCategoryPage. CentreFormationPage (placeholder du
-// chantier 2) reste en backup pour ne pas breaker les hot-reload dev.
+// FormationPage (catalogue avec progression), /formation/:slug pointe
+// vers FormationCategoryPage.
 const FormationPage = lazy(() =>
   import("./pages/FormationPage").then((module) => ({
     default: module.FormationPage

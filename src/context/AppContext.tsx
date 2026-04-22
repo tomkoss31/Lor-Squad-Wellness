@@ -332,6 +332,10 @@ export function AppProvider({ children }: PropsWithChildren) {
     }
 
     void initialize();
+    // initialize capture refreshRemoteData via closure — il est défini
+    // plus bas dans le composant, volontairement hors deps pour éviter
+    // les re-boots en cascade.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Cache localStorage : PV client products et transactions sont persistées
@@ -966,6 +970,11 @@ export function AppProvider({ children }: PropsWithChildren) {
       addPvTransaction,
       savePvClientProduct,
     }),
+    // Les handlers (addFollowUpAssessment, etc.) sont volontairement absents
+    // des deps : ils capturent state/setters stables, ré-exécuter le useMemo
+    // à chaque render des handlers réinstantierait le context value à chaque
+    // frame et casserait la mémoïsation en cascade côté consumers.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [
       authReady,
       bootError,

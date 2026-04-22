@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { formatDateTime } from '../../lib/calculations'
 import { createGoogleCalendarLink } from '../../lib/googleCalendar'
+import { getInitials } from '../../lib/utils/getInitials'
 
 interface UrgencyItem {
   id: string
@@ -26,7 +27,7 @@ interface UrgencyColumnProps {
 }
 
 export function UrgencyColumn({ title, count, color, icon, items, emptyLabel, seeAllLink, seeAllCount, onMarkContacted, onDismiss }: UrgencyColumnProps) {
-  const initials = (name: string) => name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
+  const initials = (name: string) => getInitials(name)
   const urgencyKind =
     color === '#FB7185' || color === '#DC2626'
       ? 'urgent'
