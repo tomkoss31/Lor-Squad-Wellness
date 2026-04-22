@@ -2264,3 +2264,25 @@ button, a, [role="button"] { min-height: 44px; }
 .ls-card-interactive:active {
   transform: translateY(0);
 }
+
+/* Cleanup post-audit (2026-04-23) : ConversationView + ClientChatTab
+   utilisent --conv-vh / --conv-offset pour rester safe sur mobile sous
+   la BottomNav (56px) et iOS safe-area. Desktop (>=1280px) : offset plus
+   petit (pas de BottomNav). Mobile : offset 140 + 56 + safe-area. */
+.conversation-view-shell,
+.client-chat-shell {
+  --conv-vh: 100vh;
+  --conv-offset: calc(200px + env(safe-area-inset-bottom, 0px));
+}
+@supports (height: 100dvh) {
+  .conversation-view-shell,
+  .client-chat-shell {
+    --conv-vh: 100dvh;
+  }
+}
+@media (min-width: 1280px) {
+  .conversation-view-shell,
+  .client-chat-shell {
+    --conv-offset: 140px;
+  }
+}

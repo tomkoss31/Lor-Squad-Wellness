@@ -115,11 +115,14 @@ export function ClientChatTab({ token, clientFirstName, coachFirstName }: Client
 
   return (
     <div
+      className="client-chat-shell"
       style={{
         display: "flex",
         flexDirection: "column",
-        height: "calc(100vh - 180px)",
-        maxHeight: 700,
+        // Cleanup post-audit (2026-04-23) : --conv-vh / --conv-offset
+        // (cf. globals.css) pour supporter dvh + safe-area mobile sans
+        // créer de zone vide sur desktop (suppression du maxHeight 700).
+        height: "calc(var(--conv-vh, 100vh) - var(--conv-offset, 200px))",
         background: "#F4F2EE",
         borderRadius: 16,
         overflow: "hidden",

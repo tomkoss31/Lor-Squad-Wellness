@@ -387,9 +387,13 @@ function Graph30Days({ points }: { points: { date: string; pv: number }[] }) {
     return null;
   }
 
+  // Cleanup post-audit (2026-04-23) : viewBox revu pour rester lisible sur
+  // mobile. Ratio 3:1 (600x200) au lieu de 5:1 (600x120), padding réduit,
+  // stroke + points légèrement épaissis pour contrer le down-scaling
+  // automatique quand le conteneur est étroit (<400px).
   const W = 600;
-  const H = 120;
-  const PAD = 20;
+  const H = 200;
+  const PAD = 14;
   const max = Math.max(1, ...points.map((p) => p.pv));
   const step = (W - PAD * 2) / Math.max(1, points.length - 1);
 
@@ -435,7 +439,15 @@ function Graph30Days({ points }: { points: { date: string; pv: number }[] }) {
       <svg
         width="100%"
         viewBox={`0 0 ${W} ${H}`}
-        style={{ display: "block", overflow: "visible" }}
+        preserveAspectRatio="none"
+        role="img"
+        aria-label="Évolution PV sur 30 jours"
+        style={{
+          display: "block",
+          overflow: "visible",
+          minHeight: 120,
+          maxHeight: 260,
+        }}
       >
         <defs>
           <linearGradient id="pv-gradient" x1="0" x2="0" y1="0" y2="1">
@@ -448,25 +460,31 @@ function Graph30Days({ points }: { points: { date: string; pv: number }[] }) {
           d={`${path} L ${coords[coords.length - 1].x} ${H - PAD} L ${coords[0].x} ${H - PAD} Z`}
           fill="url(#pv-gradient)"
         />
-        {/* Ligne */}
+        {/* Ligne — vectorEffect non-scaling pour garder 2.5px d'épaisseur
+            même avec preserveAspectRatio=none sur mobile. */}
         <path
           d={path}
           fill="none"
           stroke="#C9A84C"
-          strokeWidth="2"
+          strokeWidth="2.5"
           strokeLinecap="round"
           strokeLinejoin="round"
+          vectorEffect="non-scaling-stroke"
         />
-        {/* Points */}
-        {coords.map((c, i) => (
-          <circle
-            key={i}
-            cx={c.x}
-            cy={c.y}
-            r={c.pv > 0 ? 2.5 : 1.2}
-            fill="#C9A84C"
-          />
-        ))}
+        {/* Points : visibles uniquement quand pv > 0 pour éviter le bruit
+            sur les jours sans activité. */}
+        {coords.map((c, i) =>
+          c.pv > 0 ? (
+            <circle
+              key={i}
+              cx={c.x}
+              cy={c.y}
+              r={3}
+              fill="#C9A84C"
+              vectorEffect="non-scaling-stroke"
+            />
+          ) : null,
+        )}
       </svg>
       <div
         style={{
