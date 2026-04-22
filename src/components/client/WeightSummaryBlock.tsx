@@ -25,12 +25,15 @@ function column({
   hint,
   positive,
   hasData,
+  beforeAfter,
 }: {
   label: string;
   value: string;
   hint: string;
   positive: boolean;
   hasData: boolean;
+  /** V3 (2026-04-24) : petite ligne "départ → actuel" au-dessus du gros chiffre */
+  beforeAfter?: string | null;
 }) {
   return (
     <div
@@ -41,6 +44,19 @@ function column({
         textAlign: "center",
       }}
     >
+      {beforeAfter ? (
+        <div
+          style={{
+            fontSize: 11,
+            color: "var(--ls-text-hint)",
+            fontWeight: 400,
+            marginBottom: 4,
+            letterSpacing: "0.01em",
+          }}
+        >
+          {beforeAfter}
+        </div>
+      ) : null}
       <div
         style={{
           fontSize: 10,
@@ -214,6 +230,10 @@ export function WeightSummaryBlock({
         hint: col1Hint,
         positive: col1Positive,
         hasData: col1HasData,
+        beforeAfter:
+          firstWeight != null && latestWeight != null
+            ? `${firstWeight.toFixed(1)} kg → ${latestWeight.toFixed(1)} kg`
+            : null,
       })}
       <div
         aria-hidden="true"
@@ -230,6 +250,10 @@ export function WeightSummaryBlock({
         hint: col2Hint,
         positive: col2Positive,
         hasData: col2HasData,
+        beforeAfter:
+          firstBodyFatPct != null && latestBodyFatPct != null
+            ? `${firstBodyFatPct.toFixed(1)}% → ${latestBodyFatPct.toFixed(1)}%`
+            : null,
       })}
       <div
         aria-hidden="true"
@@ -246,6 +270,10 @@ export function WeightSummaryBlock({
         hint: col3Hint,
         positive: col3Positive,
         hasData: col3HasData,
+        beforeAfter:
+          firstMuscleMass != null && latestMuscleMass != null
+            ? `${firstMuscleMass.toFixed(1)} kg → ${latestMuscleMass.toFixed(1)} kg`
+            : null,
       })}
     </div>
   );

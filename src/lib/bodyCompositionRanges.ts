@@ -75,31 +75,34 @@ const BODY_FAT_MALE: MetricRange = {
   ],
 };
 
+// V3 (2026-04-24) : thresholds recalibrés par Thomas.
+// Femme : <35 Faible / 35-40 Normal / 40-45 Élevé / >45 Très élevé
+// Homme : <40 Faible / 40-45 Normal / 45-50 Élevé / >50 Très élevé
 const MUSCLE_MASS_FEMALE: MetricRange = {
   metric: "muscleMass",
   sex: "female",
-  min: 0,
-  max: 70,
+  min: 20,
+  max: 55,
   higherIsBetter: true,
   zones: [
-    { key: "low", label: "Faible", color: COLORS.low, from: 0, to: 24 },
-    { key: "normal", label: "Normal", color: COLORS.normal, from: 24, to: 30 },
-    { key: "ideal", label: "Idéal", color: COLORS.ideal, from: 30, to: 36 },
-    { key: "high", label: "Élevé", color: COLORS.ideal, from: 36, to: 100 },
+    { key: "low", label: "Faible", color: COLORS.low, from: 0, to: 35 },
+    { key: "normal", label: "Normal", color: COLORS.normal, from: 35, to: 40 },
+    { key: "ideal", label: "Élevé", color: COLORS.ideal, from: 40, to: 45 },
+    { key: "high", label: "Très élevé", color: COLORS.ideal, from: 45, to: 100 },
   ],
 };
 
 const MUSCLE_MASS_MALE: MetricRange = {
   metric: "muscleMass",
   sex: "male",
-  min: 0,
-  max: 80,
+  min: 25,
+  max: 60,
   higherIsBetter: true,
   zones: [
-    { key: "low", label: "Faible", color: COLORS.low, from: 0, to: 33 },
-    { key: "normal", label: "Normal", color: COLORS.normal, from: 33, to: 39 },
-    { key: "ideal", label: "Idéal", color: COLORS.ideal, from: 39, to: 44 },
-    { key: "high", label: "Élevé", color: COLORS.ideal, from: 44, to: 100 },
+    { key: "low", label: "Faible", color: COLORS.low, from: 0, to: 40 },
+    { key: "normal", label: "Normal", color: COLORS.normal, from: 40, to: 45 },
+    { key: "ideal", label: "Élevé", color: COLORS.ideal, from: 45, to: 50 },
+    { key: "high", label: "Très élevé", color: COLORS.ideal, from: 50, to: 100 },
   ],
 };
 

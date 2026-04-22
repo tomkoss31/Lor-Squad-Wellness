@@ -5,6 +5,7 @@ import { blasonLogo } from "../../data/visualContent";
 import { Button } from "../ui/Button";
 import { StatusBadge } from "../ui/StatusBadge";
 import { BottomNav } from "./BottomNav";
+import { ThemeToggle } from "./ThemeToggle";
 import { useRealtimeMessages } from "../../hooks/useRealtimeMessages";
 import { getInitials } from "../../lib/utils/getInitials";
 import { useTheme } from "../../hooks/useTheme";
@@ -290,11 +291,14 @@ export function AppLayout() {
             })}
           </nav>
 
-          {/* ZONE 3 — Profil + déconnexion (Chantier Refonte Nav 2026-04-22 :
-              bouton Sortir rouge toujours visible, plus caché derrière la
-              nav mobile du bas). */}
+          {/* ZONE 3 — Toggle thème + profil + déconnexion
+              (Chantier V3 2026-04-24 : toggle remonté AU-DESSUS du bloc
+              profil pour être immédiatement visible). */}
           <div style={{ padding: '12px 14px', borderTop: '1px solid rgba(255,255,255,0.06)', flexShrink: 0 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+            <div style={{ marginBottom: 12 }}>
+              <ThemeToggle />
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 0 }}>
               <div style={{
                 width: 30, height: 30, borderRadius: '50%',
                 background: 'linear-gradient(135deg, #2DD4BF, #0D9488)',
@@ -332,30 +336,6 @@ export function AppLayout() {
               </button>
             </div>
 
-            {/* Toggle theme — déplacé en ligne compacte sous le bloc user */}
-            <button
-              onClick={toggleTheme}
-              style={{
-                width: '100%', display: 'flex', alignItems: 'center', gap: 8,
-                padding: '7px 10px', borderRadius: 8, background: 'transparent',
-                border: '1px solid var(--ls-border)', cursor: 'pointer',
-                transition: 'background 0.15s',
-              }}
-              onMouseEnter={e => e.currentTarget.style.background = 'var(--ls-surface2)'}
-              onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-            >
-              {isDark ? (
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--ls-text-muted)" strokeWidth="1.5"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
-              ) : (
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--ls-text-muted)" strokeWidth="1.5"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-              )}
-              <span style={{ fontSize: 11, color: 'var(--ls-text-muted)', fontFamily: 'DM Sans, sans-serif', flex: 1, textAlign: 'left' }}>
-                {isDark ? 'Mode sombre' : 'Mode clair'}
-              </span>
-              <div style={{ width: 28, height: 16, borderRadius: 8, background: isDark ? 'rgba(255,255,255,0.1)' : '#C9A84C', position: 'relative', transition: 'background 0.2s', flexShrink: 0 }}>
-                <div style={{ position: 'absolute', top: 2, left: isDark ? 2 : 14, width: 12, height: 12, borderRadius: '50%', background: '#FFFFFF', transition: 'left 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.3)' }} />
-              </div>
-            </button>
           </div>
         </aside>
         )}
