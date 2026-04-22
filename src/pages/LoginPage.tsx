@@ -49,6 +49,24 @@ export function LoginPage() {
   return (
     <>
       <style>{`
+        .login-back-home {
+          position: fixed;
+          top: 14px;
+          left: 14px;
+          z-index: 20;
+          padding: 7px 12px;
+          border-radius: 10px;
+          background: rgba(255,255,255,0.04);
+          border: 1px solid var(--ls-border);
+          color: var(--ls-text-muted);
+          text-decoration: none;
+          font-size: 12px;
+          font-family: DM Sans, sans-serif;
+        }
+        .login-back-home:hover {
+          background: var(--ls-surface2);
+          color: var(--ls-text);
+        }
         @media (max-width: 768px) {
           .login-grid { grid-template-columns: 1fr !important; }
           .login-left { display: none !important; }
@@ -59,6 +77,11 @@ export function LoginPage() {
           50% { box-shadow: 0 0 0 6px rgba(45,212,191,0.05); }
         }
       `}</style>
+
+      {/* Chantier Welcome Page (2026-04-24) : lien retour vers la porte
+          d'entrée publique pour les users arrivés ici sans savoir qui
+          ils sont. */}
+      <a href="/welcome" className="login-back-home">← Retour à l&apos;accueil</a>
 
       <div className="login-grid" style={{ minHeight: '100vh', background: 'var(--ls-bg)', display: 'grid', gridTemplateColumns: '1fr 1fr', fontFamily: 'DM Sans, sans-serif' }}>
 
