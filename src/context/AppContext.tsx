@@ -92,6 +92,9 @@ interface AppContextValue {
   updateProspect: (id: string, updates: Partial<Prospect>) => Promise<Prospect>;
   deleteProspect: (id: string) => Promise<void>;
   markMessageRead: (id: string) => Promise<void>;
+  // Chantier Notif in-app temps réel (2026-04-23) : injecté par
+  // useRealtimeMessages quand un INSERT Realtime arrive.
+  addLiveClientMessage?: (message: ClientMessage) => void;
   // Chantier Messagerie finalisée (2026-04-23).
   markMessagesRead: (ids: string[]) => Promise<void>;
   archiveMessage: (id: string) => Promise<void>;
@@ -803,6 +806,14 @@ export function AppProvider({ children }: PropsWithChildren) {
         const now = new Date().toISOString();
         if (sb) await sb.from('client_messages').update({ read: true, read_at: now }).eq('id', id);
         setClientMessages(prev => prev.map(m => m.id === id ? { ...m, read: true, read_at: now } : m));
+      },
+      // Chantier Notif in-app temps réel (2026-04-23) : appelé par
+      // useRealtimeMessages à chaque INSERT Realtime sur client_messages.
+      // Évite les doublons via check sur l'id.
+      addLiveClientMessage: (message: ClientMessage) => {
+        setClientMessages(prev =>
+          prev.some(m => m.id === message.id) ? prev : [message, ...prev],
+        );
       },
       // Chantier Messagerie finalisée (2026-04-23) : bulk read + archive
       // + resolve avec optimistic updates. Toutes les RLS côté coach

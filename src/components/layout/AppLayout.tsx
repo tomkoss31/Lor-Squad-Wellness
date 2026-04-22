@@ -6,6 +6,7 @@ import { Button } from "../ui/Button";
 import { StatusBadge } from "../ui/StatusBadge";
 import { BottomNav } from "./BottomNav";
 import { NewBilanFab } from "./NewBilanFab";
+import { useRealtimeMessages } from "../../hooks/useRealtimeMessages";
 import { useTheme } from "../../hooks/useTheme";
 import { getRoleLabel } from "../../lib/auth";
 
@@ -41,6 +42,11 @@ const NAV_ICONS: Record<string, JSX.Element> = {
 export function AppLayout() {
   const { currentUser, logout, followUps, pvClientProducts, unreadMessageCount, prospects } = useAppContext();
   const { isDark, toggleTheme } = useTheme();
+  // Chantier Notif in-app temps réel (2026-04-23) : s'abonne à
+  // client_messages Realtime tant que le coach est authentifié et sur
+  // l'app (les routes publiques /client/:token, /recap/:token, etc.
+  // ne passent pas par AppLayout donc n'activent pas ce hook).
+  useRealtimeMessages();
   const urgentRelanceCount = followUps.filter(f => f.status === "pending").length;
   const pvOverdueCount = (() => {
     if (!pvClientProducts) return 0;
