@@ -141,9 +141,22 @@ export function AppLayout() {
     await promptInstall();
   }
 
+  // Chantier Polish Vue complète + refonte bilan (2026-04-24) :
+  // sur les pages de bilan (/assessments/new, /clients/.../follow-up/new),
+  // la sidebar est masquée. NewAssessmentPage prend toute la largeur et
+  // gère lui-même son propre panneau de notes sur la gauche.
+  const isAssessmentPage =
+    location.pathname === "/assessments/new" ||
+    /^\/clients\/[^/]+\/follow-up\/new$/.test(location.pathname);
+
   return (
     <div className="min-h-screen bg-hero-mesh">
-      <div className="mx-auto flex min-h-screen max-w-[1480px] flex-col gap-5 px-3 py-3 md:px-4 xl:grid xl:grid-cols-[252px_minmax(0,1fr)] xl:gap-6 xl:px-5">
+      <div
+        className={`mx-auto flex min-h-screen max-w-[1480px] flex-col gap-5 px-3 py-3 md:px-4 xl:gap-6 xl:px-5 ${
+          isAssessmentPage ? "" : "xl:grid xl:grid-cols-[252px_minmax(0,1fr)]"
+        }`}
+      >
+        {isAssessmentPage ? null : (
         <aside className="app-sidebar glass-panel relative hidden overflow-hidden rounded-[24px] xl:sticky xl:top-5 xl:flex xl:flex-col xl:h-[calc(100vh-2.5rem)]" style={{ background: 'var(--ls-sidebar-bg)' }}>
           {/* ZONE 1 — Logo */}
           <div style={{ padding: '20px 16px 16px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
@@ -345,6 +358,7 @@ export function AppLayout() {
             </button>
           </div>
         </aside>
+        )}
 
         <main className="min-w-0 space-y-5 md:space-y-6">
           <section className="glass-panel overflow-hidden rounded-[28px] p-4 xl:hidden">

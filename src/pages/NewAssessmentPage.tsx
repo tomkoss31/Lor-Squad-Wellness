@@ -22,6 +22,8 @@ import { RoutineMatinList } from "../components/assessment/RoutineMatinList";
 import { ProgrammeTicket, type TicketAddOn } from "../components/assessment/ProgrammeTicket";
 import { PROGRAM_CHOICES, getProgramById } from "../data/programs";
 import { FelicitationsStep } from "../components/assessment/FelicitationsStep";
+import { NotesPanel } from "../components/assessment/NotesPanel";
+import { ValidationBlockedBanner } from "../components/assessment/ValidationBlockedBanner";
 import { Button } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
 import { PageHeading } from "../components/ui/PageHeading";
@@ -330,6 +332,9 @@ function clearAssessmentDraft() {
   }
 
   window.localStorage.removeItem(ASSESSMENT_DRAFT_KEY);
+  // Chantier Polish Vue complète (2026-04-24) : purge aussi la note coach
+  // liée au bilan une fois celui-ci validé / abandonné.
+  window.localStorage.removeItem("lorsquad-assessment-coach-notes");
 }
 
 // Chantier bilan updates (2026-04-20) : renommage + insertion + suppression.
@@ -399,6 +404,39 @@ export function NewAssessmentPage() {
   const [prefilledFields, setPrefilledFields] = useState<{
     firstName: boolean; lastName: boolean; phone: boolean; email: boolean;
   }>({ firstName: false, lastName: false, phone: false, email: false });
+
+  // Chantier Polish Vue complète + refonte bilan (2026-04-24) :
+  // notes coach libres. Auto-save localStorage pendant le bilan, puis
+  // figées dans assessments.coach_notes_initial à la validation.
+  const LS_COACH_NOTES_KEY = "lorsquad-assessment-coach-notes";
+  const [coachNotes, setCoachNotes] = useState<string>(() => {
+    if (typeof window === "undefined") return "";
+    try {
+      return window.localStorage.getItem(LS_COACH_NOTES_KEY) ?? "";
+    } catch {
+      return "";
+    }
+  });
+  const [showValidationBanner, setShowValidationBanner] = useState(false);
+  const [showMobileNotes, setShowMobileNotes] = useState(false);
+
+  const persistCoachNotesLocal = (value: string) => {
+    if (typeof window === "undefined") return;
+    try {
+      window.localStorage.setItem(LS_COACH_NOTES_KEY, value);
+    } catch {
+      // quota
+    }
+  };
+
+  // L'étape 11 "Suite du suivi" est validée si le coach a choisi
+  // "suivi_libre" OU s'il a un RDV planifié (typeDeSuite + date).
+  const hasFollowUpPlanned =
+    form.typeDeSuite === "suivi_libre" ||
+    (!!form.typeDeSuite && form.nextFollowUp.trim().length > 0);
+
+  // Panneau notes visible sur étapes 0-4 (1-5 humain) et 12 (13 humain).
+  const notesVisible = currentStep <= 4 || currentStep === 12;
 
   useEffect(() => {
     const draft = readAssessmentDraft();
@@ -727,6 +765,13 @@ export function NewAssessmentPage() {
       return;
     }
 
+    // Chantier refonte bilan (2026-04-24) : impossible de valider sans
+    // avoir planifié de RDV suivi (sauf suivi libre explicite).
+    if (!hasFollowUpPlanned) {
+      setShowValidationBanner(true);
+      return;
+    }
+
     // Programme optionnel — pas de validation bloquante
 
     setSaving(true);
@@ -779,7 +824,12 @@ export function NewAssessmentPage() {
       // Étape 13 — Chantier 1 (Matrice B)
       decisionClient: form.decisionClient,
       typeDeSuite: form.typeDeSuite,
-      messageALaisser: form.messageALaisser
+      messageALaisser: form.messageALaisser,
+      // Chantier Polish Vue complète (2026-04-24) : on fige les notes
+      // coach à la validation du bilan, affichées en lecture seule dans
+      // la fiche client (bloc "Notes du bilan initial").
+      coachNotesInitial: coachNotes.trim() || null,
+      coachNotesDraft: null
     };
 
     try {
@@ -908,7 +958,65 @@ export function NewAssessmentPage() {
 
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col xl:flex-row xl:gap-6">
+      {/* Chantier refonte bilan (2026-04-24) : panneau notes desktop visible
+          uniquement sur étapes 0-4 et 12. Remplace la sidebar gauche. */}
+      {notesVisible ? (
+        <div className="hidden xl:block">
+          <NotesPanel
+            clientFirstName={form.firstName}
+            value={coachNotes}
+            onChange={(v) => {
+              setCoachNotes(v);
+              persistCoachNotesLocal(v);
+            }}
+            onAutoSave={() => persistCoachNotesLocal(coachNotes)}
+          />
+        </div>
+      ) : null}
+
+      {/* Mobile : bouton flottant + drawer notes (visible uniquement quand panneau actif) */}
+      {notesVisible ? (
+        <button
+          type="button"
+          onClick={() => setShowMobileNotes(true)}
+          className="xl:hidden"
+          aria-label="Ouvrir mes notes"
+          style={{
+            position: "fixed",
+            right: 14,
+            bottom: 84,
+            zIndex: 30,
+            padding: "10px 14px",
+            borderRadius: 999,
+            background: "#BA7517",
+            color: "#FFFFFF",
+            border: "none",
+            fontSize: 13,
+            fontFamily: "DM Sans, sans-serif",
+            fontWeight: 600,
+            boxShadow: "0 4px 14px rgba(186,117,23,0.4)",
+            cursor: "pointer",
+          }}
+        >
+          📝 Mes notes
+        </button>
+      ) : null}
+      {showMobileNotes && notesVisible ? (
+        <NotesPanel
+          mobile
+          clientFirstName={form.firstName}
+          value={coachNotes}
+          onChange={(v) => {
+            setCoachNotes(v);
+            persistCoachNotesLocal(v);
+          }}
+          onAutoSave={() => persistCoachNotesLocal(coachNotes)}
+          onClose={() => setShowMobileNotes(false)}
+        />
+      ) : null}
+
+      <div className="space-y-6 min-w-0 flex-1">
       <PageHeading
         eyebrow="Nouveau bilan"
         title="Bilan guidé"
@@ -1809,13 +1917,29 @@ export function NewAssessmentPage() {
           {/* ─── Étape 12 : Félicitations (remplace l'ancienne "Conclusion du
                 rendez-vous" — Chantier Félicitations 2026-04-20) ─── */}
           {currentStep === 12 && (
-            <FelicitationsStep
-              clientFirstName={form.firstName}
-              coachFirstName={currentUser?.name?.split(" ")[0] ?? "Ton coach"}
-              programChoice={form.programChoice}
-              onSave={() => void handleSaveAssessment()}
-              saving={saving}
-            />
+            <>
+              {showValidationBanner && !hasFollowUpPlanned ? (
+                <ValidationBlockedBanner
+                  onBack={() => {
+                    setShowValidationBanner(false);
+                    goToStep(11);
+                  }}
+                />
+              ) : null}
+              <FelicitationsStep
+                clientFirstName={form.firstName}
+                coachFirstName={currentUser?.name?.split(" ")[0] ?? "Ton coach"}
+                programChoice={form.programChoice}
+                onSave={() => {
+                  if (!hasFollowUpPlanned) {
+                    setShowValidationBanner(true);
+                    return;
+                  }
+                  void handleSaveAssessment();
+                }}
+                saving={saving}
+              />
+            </>
           )}
 
           {/* Avertissement validation */}
@@ -1873,6 +1997,7 @@ export function NewAssessmentPage() {
           ) : null}
         </Card>
 
+      </div>
       </div>
 
       {showRecapModal && recapToken && (
