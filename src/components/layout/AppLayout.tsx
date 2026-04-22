@@ -158,7 +158,7 @@ export function AppLayout() {
         }`}
       >
         {isAssessmentPage ? null : (
-        <aside className="app-sidebar glass-panel relative hidden overflow-hidden rounded-[24px] xl:sticky xl:top-5 xl:flex xl:flex-col xl:h-[calc(100vh-2.5rem)]" style={{ background: 'var(--ls-sidebar-bg)' }}>
+        <aside className="app-sidebar glass-panel relative hidden rounded-[24px] xl:sticky xl:top-5 xl:flex xl:flex-col xl:h-[calc(100vh-2.5rem)] xl:overflow-y-auto" style={{ background: 'var(--ls-sidebar-bg)' }}>
           {/* ZONE 1 — Logo */}
           <div style={{ padding: '20px 16px 16px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -293,8 +293,17 @@ export function AppLayout() {
 
           {/* ZONE 3 — Toggle thème + profil + déconnexion
               (Chantier V3 2026-04-24 : toggle remonté AU-DESSUS du bloc
-              profil pour être immédiatement visible). */}
-          <div style={{ padding: '12px 14px', borderTop: '1px solid rgba(255,255,255,0.06)', flexShrink: 0 }}>
+              profil pour être immédiatement visible).
+              Hotfix clipping (2026-04-24) : padding-bottom safe-area pour
+              respecter la zone de geste iOS. Le scroll de la sidebar est
+              géré par xl:overflow-y-auto sur l'aside. */}
+          <div
+            style={{
+              padding: '12px 14px calc(12px + env(safe-area-inset-bottom, 0px))',
+              borderTop: '1px solid rgba(255,255,255,0.06)',
+              flexShrink: 0,
+            }}
+          >
             <div style={{ marginBottom: 12 }}>
               <ThemeToggle />
             </div>
