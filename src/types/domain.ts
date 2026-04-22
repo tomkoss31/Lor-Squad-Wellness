@@ -274,7 +274,12 @@ export interface ClientMessage {
   client_name: string;
   distributor_id: string;
   // Chantier Messagerie client ↔ coach (2026-04-21) : +'rdv_request'.
-  message_type: 'product_request' | 'recommendation' | 'rdv_request' | 'general';
+  // Chantier messagerie bidirectionnelle (2026-04-22) : +'coach_reply'.
+  message_type: 'product_request' | 'recommendation' | 'rdv_request' | 'coach_reply' | 'general';
+  // Chantier messagerie bidirectionnelle (2026-04-22) : origine du message.
+  sender?: 'client' | 'coach';
+  sender_id?: string | null;
+  read_at?: string | null;
   product_name?: string;
   message?: string;
   client_contact?: string;
