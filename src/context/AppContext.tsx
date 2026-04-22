@@ -92,6 +92,12 @@ interface AppContextValue {
   updateProspect: (id: string, updates: Partial<Prospect>) => Promise<Prospect>;
   deleteProspect: (id: string) => Promise<void>;
   markMessageRead: (id: string) => Promise<void>;
+  // Chantier Messagerie finalisée (2026-04-23).
+  markMessagesRead: (ids: string[]) => Promise<void>;
+  archiveMessage: (id: string) => Promise<void>;
+  unarchiveMessage: (id: string) => Promise<void>;
+  resolveMessage: (id: string) => Promise<void>;
+  unresolveMessage: (id: string) => Promise<void>;
   deleteMessage: (id: string) => Promise<void>;
   updateClientInfo: (clientId: string, data: { phone?: string; email?: string; city?: string }) => Promise<void>;
   setClientLifecycleStatus: (clientId: string, newStatus: LifecycleStatus) => Promise<void>;
@@ -786,8 +792,42 @@ export function AppProvider({ children }: PropsWithChildren) {
       },
       markMessageRead: async (id: string) => {
         const sb = await getSupabaseClient();
-        if (sb) await sb.from('client_messages').update({ read: true }).eq('id', id);
-        setClientMessages(prev => prev.map(m => m.id === id ? { ...m, read: true } : m));
+        const now = new Date().toISOString();
+        if (sb) await sb.from('client_messages').update({ read: true, read_at: now }).eq('id', id);
+        setClientMessages(prev => prev.map(m => m.id === id ? { ...m, read: true, read_at: now } : m));
+      },
+      // Chantier Messagerie finalisée (2026-04-23) : bulk read + archive
+      // + resolve avec optimistic updates. Toutes les RLS côté coach
+      // existent déjà depuis le chantier 1 (UPDATE via can_access_owner).
+      markMessagesRead: async (ids: string[]) => {
+        if (ids.length === 0) return;
+        const sb = await getSupabaseClient();
+        const now = new Date().toISOString();
+        if (sb) await sb.from('client_messages').update({ read: true, read_at: now }).in('id', ids);
+        const idSet = new Set(ids);
+        setClientMessages(prev => prev.map(m => idSet.has(m.id) ? { ...m, read: true, read_at: now } : m));
+      },
+      archiveMessage: async (id: string) => {
+        const sb = await getSupabaseClient();
+        const now = new Date().toISOString();
+        if (sb) await sb.from('client_messages').update({ archived_at: now }).eq('id', id);
+        setClientMessages(prev => prev.map(m => m.id === id ? { ...m, archived_at: now } : m));
+      },
+      unarchiveMessage: async (id: string) => {
+        const sb = await getSupabaseClient();
+        if (sb) await sb.from('client_messages').update({ archived_at: null }).eq('id', id);
+        setClientMessages(prev => prev.map(m => m.id === id ? { ...m, archived_at: null } : m));
+      },
+      resolveMessage: async (id: string) => {
+        const sb = await getSupabaseClient();
+        const now = new Date().toISOString();
+        if (sb) await sb.from('client_messages').update({ resolved_at: now }).eq('id', id);
+        setClientMessages(prev => prev.map(m => m.id === id ? { ...m, resolved_at: now } : m));
+      },
+      unresolveMessage: async (id: string) => {
+        const sb = await getSupabaseClient();
+        if (sb) await sb.from('client_messages').update({ resolved_at: null }).eq('id', id);
+        setClientMessages(prev => prev.map(m => m.id === id ? { ...m, resolved_at: null } : m));
       },
       deleteMessage: async (id: string) => {
         const sb = await getSupabaseClient();
