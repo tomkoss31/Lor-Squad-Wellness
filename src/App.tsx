@@ -129,6 +129,13 @@ const SettingsPage = lazy(() =>
     default: module.SettingsPage
   }))
 );
+// Chantier Paramètres Admin (2026-04-23) : /parametres admin-only avec
+// les 5 onglets (Profil, Équipe, Transferts, Stats, Debug).
+const ParametresPage = lazy(() =>
+  import("./pages/ParametresPage").then((module) => ({
+    default: module.ParametresPage
+  }))
+);
 
 import { useTheme } from './hooks/useTheme'
 import { useAutoNotifications } from './hooks/useAutoNotifications'
@@ -161,6 +168,8 @@ export default function App() {
               <Route path="co-pilote" element={<CoPilotePage />} />
               <Route path="dashboard" element={<Navigate to="/co-pilote" replace />} />
               <Route path="formation" element={<CentreFormationPage />} />
+              {/* /settings (non-admin) reste accessible comme placeholder profil léger.
+                  Les admins ont /parametres avec la version complète. */}
               <Route path="settings" element={<SettingsPage />} />
               <Route path="guide" element={<GuidePage />} />
               <Route path="guide-suivi" element={<FollowUpGuidePage />} />
@@ -173,6 +182,9 @@ export default function App() {
                 <Route path="users" element={<UsersPage />} />
                 <Route path="pv/team" element={<PvTeamPage />} />
                 <Route path="debug/notifications" element={<DebugNotificationsPage />} />
+                {/* Chantier Paramètres Admin (2026-04-23) : /parametres admin-only.
+                    /settings redirige pour compat avec la placeholder du chantier 2. */}
+                <Route path="parametres" element={<ParametresPage />} />
               </Route>
               <Route path="distributors/:distributorId" element={<DistributorPortfolioPage />} />
               <Route path="clients/:clientId" element={<ClientDetailPage />} />

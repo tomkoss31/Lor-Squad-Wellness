@@ -91,7 +91,13 @@ export function AppLayout() {
     { label: "Suivi PV", path: "/pv", badge: pvOverdueCount },
     ...(currentUser.role === "admin" ? [{ label: "Mon équipe", path: "/users", badge: 0 }] : []),
     { label: "Centre de formation", path: "/formation", badge: 0 },
-    { label: "Paramètres", path: "/settings", badge: 0 },
+    // Chantier Paramètres Admin (2026-04-23) : /parametres full UI pour
+    // les admins, /settings placeholder profil pour les autres.
+    {
+      label: "Paramètres",
+      path: currentUser.role === "admin" ? "/parametres" : "/settings",
+      badge: 0,
+    },
   ];
   // urgentRelanceCount n'est plus utilisé dans la sidebar (item Recommandations
   // retiré) — on le conserve en variable au cas où un futur dashboard l'affiche.
