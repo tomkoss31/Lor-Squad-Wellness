@@ -15,6 +15,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAppContext } from "../context/AppContext";
 import { PageHeading } from "../components/ui/PageHeading";
+import { InboxWidget } from "../components/copilote/InboxWidget";
 
 function useLiveClock(): Date {
   const [now, setNow] = useState(() => new Date());
@@ -263,6 +264,11 @@ export function CoPilotePage() {
           linkTo="/pv"
         />
       </div>
+
+      {/* Chantier Messagerie finalisée (2026-04-23) : widget "À traiter"
+          entre les KPI cards et le graph, pour remonter les demandes en
+          attente avant la vue stats. */}
+      <InboxWidget />
 
       {/* Graph 30 jours */}
       <Graph30Days points={graphPoints} />

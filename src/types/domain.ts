@@ -280,6 +280,9 @@ export interface ClientMessage {
   sender?: 'client' | 'coach';
   sender_id?: string | null;
   read_at?: string | null;
+  // Chantier messagerie finalisée (2026-04-23) : états workflow coach.
+  archived_at?: string | null;
+  resolved_at?: string | null;
   product_name?: string;
   message?: string;
   client_contact?: string;
