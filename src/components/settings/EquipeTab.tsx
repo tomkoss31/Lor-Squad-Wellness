@@ -1,39 +1,22 @@
 // Chantier Paramètres Admin (2026-04-23) — commit 4/7.
 //
 // Onglet Équipe : liste compacte des distributeurs + lien vers /users pour
-// l'édition détaillée + bouton "Inviter un distributeur" (crée un token
-// d'invitation 7j dans distributor_invitation_tokens).
+// l'édition détaillée + bouton "Inviter un distributeur".
 //
-// Stratégie V1 : on ne recrée pas la full UI de /users (1000 lignes,
-// pattern accordion déjà OK). On donne l'essentiel (roster + invite)
-// et on délègue les actions complexes (update, repair, password reset)
-// à /users via un bouton "Gérer les accès détaillés".
+// Fix V2 invite modal dedupe (2026-04-24) : l'ancienne InviteModal locale
+// utilisait le flow "admin" (email + nom + parrain) qui ne fait plus
+// sens → remplacée par <InviteDistributorModal /> partagé (flow sponsor
+// lite : prénom + téléphone + WhatsApp). Même composant que sur /users.
 
-import { useCallback, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Card } from "../ui/Card";
 import { Button } from "../ui/Button";
 import { useAppContext } from "../../context/AppContext";
-import { useToast } from "../../context/ToastContext";
-import { getSupabaseClient } from "../../services/supabaseClient";
-
-function randomToken(): string {
-  const bytes = new Uint8Array(24);
-  crypto.getRandomValues(bytes);
-  return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
-}
-
-function buildInviteUrl(token: string): string {
-  const origin =
-    typeof window !== "undefined" && window.location.origin
-      ? window.location.origin
-      : "https://lor-squad-wellness.vercel.app";
-  return `${origin}/bienvenue-distri?token=${token}`;
-}
+import { InviteDistributorModal } from "../users/InviteDistributorModal";
 
 export function EquipeTab() {
   const { currentUser, users, clients, pvTransactions } = useAppContext();
-  const { push: pushToast } = useToast();
   const [inviteOpen, setInviteOpen] = useState(false);
 
   const teamMembers = useMemo(() => {
@@ -122,12 +105,10 @@ export function EquipeTab() {
         )}
       </Card>
 
-      {inviteOpen ? (
-        <InviteModal onClose={() => setInviteOpen(false)} onInvited={(msg) => {
-          pushToast({ tone: "success", title: "Invitation créée", message: msg });
-          setInviteOpen(false);
-        }} />
-      ) : null}
+      <InviteDistributorModal
+        open={inviteOpen}
+        onClose={() => setInviteOpen(false)}
+      />
     </div>
   );
 }
@@ -224,259 +205,3 @@ function MemberCard({
   );
 }
 
-function InviteModal({ onClose, onInvited }: { onClose: () => void; onInvited: (m: string) => void }) {
-  const { currentUser, users } = useAppContext();
-  const [email, setEmail] = useState("");
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [sponsorId, setSponsorId] = useState<string>(currentUser?.id ?? "");
-  const [sending, setSending] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [generatedUrl, setGeneratedUrl] = useState<string | null>(null);
-
-  const sponsorOptions = useMemo(() => {
-    if (!currentUser) return [];
-    const opts: Array<{ id: string; label: string }> = [
-      { id: currentUser.id, label: `${currentUser.name} (toi)` },
-    ];
-    for (const u of users) {
-      if (u.id === currentUser.id) continue;
-      if (u.role === "admin" || u.role === "referent" || u.role === "distributor") {
-        opts.push({ id: u.id, label: `${u.name} (${u.role})` });
-      }
-    }
-    return opts;
-  }, [currentUser, users]);
-
-  const handleSubmit = useCallback(async () => {
-    setError(null);
-    const trimmedEmail = email.trim().toLowerCase();
-    if (!trimmedEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
-      setError("Email invalide.");
-      return;
-    }
-    if (!sponsorId) {
-      setError("Choisis un parrain.");
-      return;
-    }
-    setSending(true);
-    try {
-      const sb = await getSupabaseClient();
-      if (!sb || !currentUser) throw new Error("Service indisponible.");
-
-      const token = randomToken();
-      const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
-
-      const { error: insertErr } = await sb.from("distributor_invitation_tokens").insert({
-        email: trimmedEmail,
-        first_name: firstName.trim() || null,
-        last_name: lastName.trim() || null,
-        sponsor_id: sponsorId,
-        token,
-        invited_by: currentUser.id,
-        expires_at: expiresAt,
-      });
-      if (insertErr) throw new Error(insertErr.message);
-
-      const url = buildInviteUrl(token);
-      setGeneratedUrl(url);
-      onInvited(`Lien valable 7 jours généré pour ${trimmedEmail}.`);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Échec de l'invitation.");
-    } finally {
-      setSending(false);
-    }
-  }, [currentUser, email, firstName, lastName, sponsorId, onInvited]);
-
-  async function copyUrl() {
-    if (!generatedUrl) return;
-    try {
-      await navigator.clipboard.writeText(generatedUrl);
-    } catch {
-      // no-op — user peut sélectionner à la main
-    }
-  }
-
-  return (
-    <div
-      role="button"
-      tabIndex={0}
-      aria-label="Fermer"
-      onClick={onClose}
-      onKeyDown={(e) => {
-        if (e.key === "Escape") onClose();
-      }}
-      style={{
-        position: "fixed",
-        inset: 0,
-        background: "rgba(0,0,0,0.55)",
-        zIndex: 10000,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: 16,
-      }}
-    >
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-label="Inviter un distributeur"
-        onClick={(e) => e.stopPropagation()}
-        onKeyDown={(e) => e.stopPropagation()}
-        style={{
-          background: "var(--ls-surface)",
-          borderRadius: 18,
-          maxWidth: 500,
-          width: "100%",
-          padding: 24,
-          border: "1px solid var(--ls-border)",
-          boxShadow: "0 20px 60px rgba(0,0,0,0.4)",
-        }}
-      >
-        <p
-          style={{
-            fontFamily: "Syne, sans-serif",
-            fontSize: 20,
-            fontWeight: 700,
-            color: "var(--ls-text)",
-            margin: 0,
-            marginBottom: 6,
-          }}
-        >
-          Inviter un distributeur
-        </p>
-        <p style={{ fontSize: 13, color: "var(--ls-text-muted)", marginBottom: 16 }}>
-          Un lien magique valable 7 jours sera généré. Tu pourras l'envoyer
-          directement au futur distributeur (WhatsApp, email…).
-        </p>
-
-        {generatedUrl ? (
-          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            <div
-              style={{
-                padding: 12,
-                borderRadius: 10,
-                background: "var(--ls-surface2)",
-                border: "1px solid rgba(45,212,191,0.25)",
-                wordBreak: "break-all",
-                fontSize: 12,
-                color: "var(--ls-text)",
-                fontFamily: "DM Mono, monospace",
-              }}
-            >
-              {generatedUrl}
-            </div>
-            <div style={{ display: "flex", gap: 8 }}>
-              <Button onClick={() => void copyUrl()}>Copier le lien</Button>
-              <Button variant="secondary" onClick={onClose}>Fermer</Button>
-            </div>
-            <p style={{ fontSize: 11, color: "var(--ls-text-hint)" }}>
-              Note : l'envoi email automatique est prévu en V2 — pour l'instant,
-              colle ce lien dans WhatsApp/email/SMS.
-            </p>
-          </div>
-        ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-            <InviteField label="Email">
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                disabled={sending}
-                placeholder="nouveau.distri@email.com"
-                style={inputStyle}
-              />
-            </InviteField>
-            <div style={{ display: "grid", gap: 10, gridTemplateColumns: "1fr 1fr" }}>
-              <InviteField label="Prénom">
-                <input
-                  value={firstName}
-                  onChange={(e) => setFirstName(e.target.value)}
-                  disabled={sending}
-                  style={inputStyle}
-                />
-              </InviteField>
-              <InviteField label="Nom">
-                <input
-                  value={lastName}
-                  onChange={(e) => setLastName(e.target.value)}
-                  disabled={sending}
-                  style={inputStyle}
-                />
-              </InviteField>
-            </div>
-            <InviteField label="Parrain">
-              <select
-                value={sponsorId}
-                onChange={(e) => setSponsorId(e.target.value)}
-                disabled={sending}
-                style={inputStyle}
-              >
-                {sponsorOptions.map((opt) => (
-                  <option key={opt.id} value={opt.id}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
-            </InviteField>
-
-            {error ? (
-              <div
-                style={{
-                  padding: "10px 12px",
-                  borderRadius: 10,
-                  background: "rgba(251,113,133,0.12)",
-                  color: "#FBBFC8",
-                  fontSize: 13,
-                }}
-              >
-                {error}
-              </div>
-            ) : null}
-
-            <div style={{ marginTop: 4, display: "flex", gap: 8, justifyContent: "flex-end" }}>
-              <Button variant="secondary" onClick={onClose} disabled={sending}>
-                Annuler
-              </Button>
-              <Button onClick={() => void handleSubmit()} disabled={sending || !email}>
-                {sending ? "Génération…" : "Générer le lien"}
-              </Button>
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function InviteField({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-      <span
-        style={{
-          fontSize: 11,
-          fontWeight: 500,
-          color: "var(--ls-text-muted)",
-          letterSpacing: "0.03em",
-          textTransform: "uppercase",
-        }}
-      >
-        {label}
-      </span>
-      {children}
-    </label>
-  );
-}
-
-const inputStyle: React.CSSProperties = {
-  width: "100%",
-  padding: "10px 12px",
-  borderRadius: 10,
-  border: "1px solid var(--ls-border)",
-  background: "var(--ls-surface2)",
-  color: "var(--ls-text)",
-  fontSize: 14,
-  fontFamily: "DM Sans, sans-serif",
-  outline: "none",
-  boxSizing: "border-box",
-};
