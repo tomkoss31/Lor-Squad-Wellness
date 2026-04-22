@@ -54,18 +54,30 @@ describe("bodyCompositionRanges — getZone hydration female", () => {
   });
 });
 
-describe("bodyCompositionRanges — getZone muscleMass", () => {
-  it("femme 28% = normal", () => {
-    expect(getZone(28, "muscleMass", "female").key).toBe("normal");
+describe("bodyCompositionRanges — getZone muscleMass (V3 thresholds)", () => {
+  it("femme 30% = faible", () => {
+    expect(getZone(30, "muscleMass", "female").key).toBe("low");
   });
-  it("femme 33% = idéal", () => {
-    expect(getZone(33, "muscleMass", "female").key).toBe("ideal");
+  it("femme 37% = normal", () => {
+    expect(getZone(37, "muscleMass", "female").key).toBe("normal");
   });
-  it("homme 36% = normal", () => {
-    expect(getZone(36, "muscleMass", "male").key).toBe("normal");
+  it("femme 42% = élevé (ideal)", () => {
+    expect(getZone(42, "muscleMass", "female").key).toBe("ideal");
   });
-  it("homme 42% = idéal", () => {
-    expect(getZone(42, "muscleMass", "male").key).toBe("ideal");
+  it("femme 48% = très élevé (high)", () => {
+    expect(getZone(48, "muscleMass", "female").key).toBe("high");
+  });
+  it("homme 38% = faible", () => {
+    expect(getZone(38, "muscleMass", "male").key).toBe("low");
+  });
+  it("homme 42% = normal", () => {
+    expect(getZone(42, "muscleMass", "male").key).toBe("normal");
+  });
+  it("homme 47% = élevé (ideal)", () => {
+    expect(getZone(47, "muscleMass", "male").key).toBe("ideal");
+  });
+  it("homme 52% = très élevé (high)", () => {
+    expect(getZone(52, "muscleMass", "male").key).toBe("high");
   });
 });
 
