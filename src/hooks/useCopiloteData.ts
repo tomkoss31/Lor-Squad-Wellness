@@ -77,7 +77,7 @@ function hasMetric(user: unknown): user is { monthly_pv_target?: number } {
 
 const PROTOCOL_TONES = ["teal", "coral", "purple", "gold", "blue"] as const;
 
-export function useCopiloteData(now: Date): CopiloteData {
+export function useCopiloteData(now: Date, globalView: boolean = false): CopiloteData {
   const {
     currentUser,
     clients,
@@ -92,16 +92,21 @@ export function useCopiloteData(now: Date): CopiloteData {
       return emptyData(now);
     }
 
+    // Hotfix filtre Co-pilote (2026-04-24) : par défaut, TOUT LE MONDE
+    // (admin compris) voit uniquement ses propres RDV / clients / suivis.
+    // Un admin peut activer le toggle 'Vue globale' pour voir toute
+    // l'équipe.
     const isAdmin = currentUser.role === "admin";
-    const myClients: Client[] = isAdmin
+    const applyGlobal = isAdmin && globalView;
+    const myClients: Client[] = applyGlobal
       ? clients
       : clients.filter((c) => c.distributorId === currentUser.id);
     const myClientIds = new Set(myClients.map((c) => c.id));
 
-    const myFollowUps: FollowUp[] = isAdmin
+    const myFollowUps: FollowUp[] = applyGlobal
       ? followUps
       : followUps.filter((f) => myClientIds.has(f.clientId));
-    const myProspects: Prospect[] = isAdmin
+    const myProspects: Prospect[] = applyGlobal
       ? prospects
       : prospects.filter((p) => p.distributorId === currentUser.id);
 
@@ -305,6 +310,7 @@ export function useCopiloteData(now: Date): CopiloteData {
     followUpProtocolLogs,
     currentUser,
     now,
+    globalView,
   ]);
 }
 
