@@ -145,6 +145,13 @@ const ParametresPage = lazy(() =>
     default: module.ParametresPage
   }))
 );
+// Chantier Messagerie finalisée (2026-04-23) : vue conversation fil
+// WhatsApp-like pour un client donné.
+const ConversationView = lazy(() =>
+  import("./pages/ConversationView").then((module) => ({
+    default: module.ConversationView
+  }))
+);
 
 import { useTheme } from './hooks/useTheme'
 import { useAutoNotifications } from './hooks/useAutoNotifications'
@@ -186,6 +193,8 @@ export default function App() {
               <Route path="recommendations" element={<RecommendationsPage />} />
               <Route path="pv" element={<PvOverviewPage />} />
               <Route path="messages" element={<MessagesPage />} />
+              {/* Chantier Messagerie finalisée (2026-04-23). */}
+              <Route path="messagerie/conversation/:messageId" element={<ConversationView />} />
               <Route path="agenda" element={<AgendaPage />} />
               <Route path="clients" element={<ClientsPage />} />
               <Route element={<RoleRoute allowedRoles={["admin"]} />}>
