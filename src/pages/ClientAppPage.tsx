@@ -5,10 +5,21 @@ import { HERBALIFE_PRODUCTS, type HerbalifeProduct } from '../data/herbalifeCata
 import { ClientMessageModal } from '../components/client-app/ClientMessageModal'
 import { ClientChatTab } from '../components/client-app/ClientChatTab'
 import { ClientPushOptIn } from '../components/client-app/ClientPushOptIn'
+import { InstallPwaBanner } from '../components/pwa/InstallPwaBanner'
 import { BreakfastStorySlider, DEFAULT_BREAKFAST_ANALYSIS } from '../components/education/BreakfastStorySlider'
 import type { BreakfastAnalysis } from '../types/domain'
 
 const GOOGLE_MAPS_LA_BASE = 'https://www.google.com/maps/place/LA+BASE+Shakes%26Drinks/@49.1619589,5.3840559,17z'
+
+// Hotfix client-login (2026-04-24) : salutation dynamique — distincte de
+// celle de /co-pilote côté coach car le public et le ton diffèrent.
+function clientGreeting(d: Date): string {
+  const h = d.getHours()
+  if (h >= 5 && h < 12) return 'Bonjour'
+  if (h >= 12 && h < 18) return 'Bon après-midi'
+  if (h >= 18 && h < 23) return 'Bonsoir'
+  return 'Bonsoir'
+}
 
 // ─── Catégories produits dans l'ordre du PDF officiel ──────────────────────
 const CATEGORY_DISPLAY: Array<{ key: HerbalifeProduct['category']; label: string }> = [
@@ -605,6 +616,10 @@ export function ClientAppPage() {
         defaultMessage={`Bonjour ${data.coach_name}, j'aurais besoin d'une recommandation sur `}
       />
 
+      {/* Hotfix client-login (2026-04-24) : bannière install PWA si pas
+          déjà installée + non dismissée. Self-hides sinon. */}
+      <InstallPwaBanner />
+
       {/* HERO */}
       <div style={{ background: 'linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 60%, #F4F2EE 100%)', padding: '20px 16px 16px' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
@@ -627,8 +642,11 @@ export function ClientAppPage() {
             {data.client_first_name?.[0]}{data.client_last_name?.[0]}
           </div>
           <div>
-            <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 20, color: '#111827' }}>
-              Bonjour {data.client_first_name} !
+            {/* Hotfix client-login (2026-04-24) : salutation dynamique selon
+                l'heure de l'app client. 5-12h Bonjour / 12-18h Bon après-midi /
+                18-23h Bonsoir / sinon Bonne nuit. */}
+            <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 500, fontSize: 22, color: '#111827' }}>
+              {clientGreeting(new Date())} {data.client_first_name} !
             </div>
             <div style={{ fontSize: 11, color: '#6B7280', marginTop: 2 }}>
               {data.program_title ?? 'Programme en cours'} · {data.assessments_count ?? 1} bilan{(data.assessments_count ?? 1) > 1 ? 's' : ''}
