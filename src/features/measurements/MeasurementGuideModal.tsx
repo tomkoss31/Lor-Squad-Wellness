@@ -4,6 +4,7 @@
 import { useEffect, useState } from "react";
 import { getGuide, type MeasurementKey } from "../../data/measurementGuides";
 import { parseMeasurementInput } from "../../lib/measurementCalculations";
+import { IllustrationZoom } from "./illustrations";
 
 type Screen = "guide" | "input";
 
@@ -17,47 +18,6 @@ interface Props {
   onSave: (value: number) => Promise<void>;
 }
 
-/**
- * Illustration générique schématique : cercle + mètre-ruban orienté
- * selon la zone. Sobre, dark-mode ready.
- */
-function ZoomIllustration({ zoneKey }: { zoneKey: MeasurementKey }) {
-  const orientation = getGuide(zoneKey).orientation;
-  return (
-    <svg viewBox="0 0 160 160" width="160" height="160" aria-hidden="true">
-      <defs>
-        <linearGradient id="zoom-grad" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="var(--ls-surface2, #2a2f3a)" />
-          <stop offset="100%" stopColor="var(--ls-surface, #1a1d26)" />
-        </linearGradient>
-      </defs>
-      {/* Zone ovale (représente la partie du corps) */}
-      <ellipse cx="80" cy="80" rx="46" ry="58" fill="url(#zoom-grad)" stroke="var(--ls-text-hint, #6b6f7a)" strokeWidth="1.2" />
-      {/* Mètre-ruban accent teal */}
-      {orientation === "horizontal" ? (
-        <>
-          <line x1="22" y1="80" x2="138" y2="80" stroke="#1D9E75" strokeWidth="3" strokeLinecap="round" />
-          <line x1="22" y1="80" x2="138" y2="80" stroke="#FFFFFF" strokeWidth="1" strokeDasharray="4 4" strokeLinecap="round" />
-          {/* flèches */}
-          <polygon points="22,76 16,80 22,84" fill="#1D9E75" />
-          <polygon points="138,76 144,80 138,84" fill="#1D9E75" />
-          <text x="80" y="100" textAnchor="middle" fontSize="10" fill="var(--ls-text-muted, #9aa0ac)" fontFamily="DM Sans, sans-serif">
-            horizontal · à plat
-          </text>
-        </>
-      ) : (
-        <>
-          <line x1="80" y1="22" x2="80" y2="138" stroke="#1D9E75" strokeWidth="3" strokeLinecap="round" />
-          <polygon points="76,22 80,16 84,22" fill="#1D9E75" />
-          <polygon points="76,138 80,144 84,138" fill="#1D9E75" />
-          <text x="80" y="158" textAnchor="middle" fontSize="10" fill="var(--ls-text-muted, #9aa0ac)" fontFamily="DM Sans, sans-serif">
-            vertical
-          </text>
-        </>
-      )}
-    </svg>
-  );
-}
 
 function formatDate(iso: string | null): string {
   if (!iso) return "";
@@ -179,8 +139,20 @@ export function MeasurementGuideModal({
 
         {screen === "guide" ? (
           <>
-            <div style={{ display: "flex", justifyContent: "center", marginBottom: 14 }}>
-              <ZoomIllustration zoneKey={zoneKey} />
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "center",
+                marginBottom: 14,
+                background: "rgba(29,158,117,0.04)",
+                borderRadius: 14,
+                padding: 10,
+                border: "1px solid rgba(29,158,117,0.15)",
+              }}
+            >
+              <div style={{ width: 200, height: 200 }}>
+                <IllustrationZoom zoneKey={zoneKey} />
+              </div>
             </div>
 
             <div style={{ marginBottom: 14 }}>

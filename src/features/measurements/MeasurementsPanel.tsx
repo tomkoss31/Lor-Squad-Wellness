@@ -6,6 +6,7 @@
 import { useMemo, useState } from "react";
 import { SilhouetteSvg } from "./SilhouetteSvg";
 import { MeasurementGuideModal } from "./MeasurementGuideModal";
+import { MeasurementsHistoryGraph } from "./MeasurementsHistoryGraph";
 import { useMeasurements } from "./hooks/useMeasurements";
 import { useToast } from "../../context/ToastContext";
 import { MEASUREMENT_GUIDES, type MeasurementKey } from "../../data/measurementGuides";
@@ -67,6 +68,7 @@ export function MeasurementsPanel({
   const [activeKey, setActiveKey] = useState<MeasurementKey | null>(null);
   const [draft, setDraft] = useState<Partial<Record<MeasurementKey, number>>>({});
   const [committing, setCommitting] = useState(false);
+  const [graphOpen, setGraphOpen] = useState(false);
 
   const latest = useMemo(() => getLatestSession(sessions), [sessions]);
   const initial = useMemo(() => getInitialSession(sessions), [sessions]);
@@ -205,6 +207,7 @@ export function MeasurementsPanel({
               gender={gender}
               view={view}
               measurements={merged}
+              draftKeys={new Set(Object.keys(draft) as MeasurementKey[])}
               onPointClick={setActiveKey}
               activeKey={activeKey}
             />
@@ -316,44 +319,141 @@ export function MeasurementsPanel({
           )}
         </div>
 
-        {draftCount > 0 ? (
-          <div style={{ display: "flex", gap: 8 }}>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          {sessions.length >= 2 ? (
             <button
               type="button"
-              onClick={cancelDraft}
-              disabled={committing}
+              onClick={() => setGraphOpen(true)}
               style={{
                 padding: "9px 14px",
                 borderRadius: 10,
                 background: "transparent",
                 border: "1px solid var(--ls-border)",
-                color: "var(--ls-text-muted)",
-                cursor: committing ? "wait" : "pointer",
+                color: "var(--ls-gold)",
+                cursor: "pointer",
                 fontSize: 12,
-              }}
-            >
-              Annuler
-            </button>
-            <button
-              type="button"
-              onClick={() => void handleCommitSession()}
-              disabled={committing}
-              style={{
-                padding: "10px 16px",
-                borderRadius: 10,
-                background: "linear-gradient(135deg, #1D9E75, #0F6E56)",
-                border: "none",
-                color: "#FFFFFF",
-                cursor: committing ? "wait" : "pointer",
-                fontSize: 13,
                 fontWeight: 600,
+                fontFamily: "DM Sans, sans-serif",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 6,
               }}
             >
-              {committing ? "Enregistrement..." : `Enregistrer (${draftCount})`}
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+              </svg>
+              Voir l'évolution
             </button>
-          </div>
-        ) : null}
+          ) : null}
+          {draftCount > 0 ? (
+            <>
+              <button
+                type="button"
+                onClick={cancelDraft}
+                disabled={committing}
+                style={{
+                  padding: "9px 14px",
+                  borderRadius: 10,
+                  background: "transparent",
+                  border: "1px solid var(--ls-border)",
+                  color: "var(--ls-text-muted)",
+                  cursor: committing ? "wait" : "pointer",
+                  fontSize: 12,
+                }}
+              >
+                Annuler
+              </button>
+              <button
+                type="button"
+                onClick={() => void handleCommitSession()}
+                disabled={committing}
+                style={{
+                  padding: "10px 16px",
+                  borderRadius: 10,
+                  background: "linear-gradient(135deg, #1D9E75, #0F6E56)",
+                  border: "none",
+                  color: "#FFFFFF",
+                  cursor: committing ? "wait" : "pointer",
+                  fontSize: 13,
+                  fontWeight: 600,
+                }}
+              >
+                {committing ? "Enregistrement..." : `Enregistrer la session (${draftCount})`}
+              </button>
+            </>
+          ) : null}
+        </div>
       </div>
+
+      {/* Historique des sessions enregistrées (dernières 5) */}
+      {sessions.length > 0 ? (
+        <div
+          style={{
+            marginTop: 14,
+            paddingTop: 12,
+            borderTop: "1px dashed var(--ls-border)",
+          }}
+        >
+          <div
+            style={{
+              fontSize: 10,
+              letterSpacing: "0.08em",
+              textTransform: "uppercase",
+              color: "var(--ls-text-muted)",
+              fontWeight: 700,
+              marginBottom: 8,
+            }}
+          >
+            Sessions enregistrées
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+            {sessions.slice(0, 5).map((s) => {
+              const isSelf = s.measured_by_type === authorType;
+              const zoneCount = countFilledKeys(s);
+              return (
+                <div
+                  key={s.id}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 10,
+                    padding: "6px 10px",
+                    borderRadius: 8,
+                    background: "var(--ls-surface2)",
+                    fontSize: 12,
+                  }}
+                >
+                  <span style={{ flex: 1, color: "var(--ls-text)" }}>
+                    {formatDate(s.measured_at)}
+                  </span>
+                  <span style={{ color: "var(--ls-text-muted)", fontSize: 11 }}>
+                    {zoneCount}/10 zones
+                  </span>
+                  <span
+                    style={{
+                      padding: "2px 8px",
+                      borderRadius: 999,
+                      fontSize: 10,
+                      fontWeight: 600,
+                      background: isSelf ? "rgba(29,158,117,0.15)" : "rgba(186,117,23,0.15)",
+                      color: isSelf ? "#1D9E75" : "#BA7517",
+                    }}
+                  >
+                    {isSelf
+                      ? "Saisi par toi"
+                      : `Saisi par ${otherAuthorLabel}`}
+                  </span>
+                </div>
+              );
+            })}
+            {sessions.length > 5 ? (
+              <div style={{ fontSize: 11, color: "var(--ls-text-hint)", textAlign: "center", marginTop: 4 }}>
+                + {sessions.length - 5} session{sessions.length - 5 > 1 ? "s" : ""} plus anciennes
+              </div>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
 
       <MeasurementGuideModal
         open={!!activeGuide}
@@ -363,6 +463,12 @@ export function MeasurementsPanel({
         previousDate={initial?.measured_at ?? null}
         onClose={() => setActiveKey(null)}
         onSave={handleSaveOne}
+      />
+
+      <MeasurementsHistoryGraph
+        open={graphOpen}
+        onClose={() => setGraphOpen(false)}
+        sessions={sessions}
       />
 
       {/* Responsive mobile : stack vertical */}

@@ -20,7 +20,7 @@ export interface MeasurementGuide {
   shortLabel: string;
   zone: "head" | "torso" | "legs" | "arms";
   view: "face" | "back" | "both";
-  /** Position sur silhouette 180x380 (face). Miroir auto pour back. */
+  /** Position sur silhouette 180x400 (face). Miroir auto pour back. */
   position: { x: number; y: number };
   howToMeasure: string[];
   commonMistakes: string[];
@@ -34,7 +34,7 @@ export const MEASUREMENT_GUIDES: MeasurementGuide[] = [
     shortLabel: "Cou",
     zone: "head",
     view: "both",
-    position: { x: 90, y: 62 },
+    position: { x: 90, y: 58 },
     orientation: "horizontal",
     howToMeasure: [
       "Place le mètre juste sous la pomme d'Adam",
@@ -52,7 +52,7 @@ export const MEASUREMENT_GUIDES: MeasurementGuide[] = [
     shortLabel: "Poitrine",
     zone: "torso",
     view: "face",
-    position: { x: 90, y: 110 },
+    position: { x: 90, y: 115 },
     orientation: "horizontal",
     howToMeasure: [
       "Place le mètre à la partie la plus large du buste",
@@ -70,7 +70,7 @@ export const MEASUREMENT_GUIDES: MeasurementGuide[] = [
     shortLabel: "Taille",
     zone: "torso",
     view: "face",
-    position: { x: 90, y: 152 },
+    position: { x: 90, y: 175 },
     orientation: "horizontal",
     howToMeasure: [
       "Mesure à hauteur du nombril",
@@ -90,7 +90,7 @@ export const MEASUREMENT_GUIDES: MeasurementGuide[] = [
     shortLabel: "Hanches",
     zone: "torso",
     view: "back",
-    position: { x: 90, y: 190 },
+    position: { x: 90, y: 220 },
     orientation: "horizontal",
     howToMeasure: [
       "Place le mètre à la partie la plus large des fesses",
@@ -108,7 +108,7 @@ export const MEASUREMENT_GUIDES: MeasurementGuide[] = [
     shortLabel: "Cuisse G.",
     zone: "legs",
     view: "face",
-    position: { x: 76, y: 235 },
+    position: { x: 78, y: 265 },
     orientation: "horizontal",
     howToMeasure: [
       "Mesure au milieu de la cuisse, à environ 25 cm au-dessus du genou",
@@ -126,7 +126,7 @@ export const MEASUREMENT_GUIDES: MeasurementGuide[] = [
     shortLabel: "Cuisse D.",
     zone: "legs",
     view: "face",
-    position: { x: 104, y: 235 },
+    position: { x: 102, y: 265 },
     orientation: "horizontal",
     howToMeasure: [
       "Mesure au milieu de la cuisse, à environ 25 cm au-dessus du genou",
@@ -144,7 +144,7 @@ export const MEASUREMENT_GUIDES: MeasurementGuide[] = [
     shortLabel: "Bras G.",
     zone: "arms",
     view: "face",
-    position: { x: 58, y: 125 },
+    position: { x: 52, y: 140 },
     orientation: "horizontal",
     howToMeasure: [
       "Mesure au milieu du biceps, bras détendu le long du corps",
@@ -161,7 +161,7 @@ export const MEASUREMENT_GUIDES: MeasurementGuide[] = [
     shortLabel: "Bras D.",
     zone: "arms",
     view: "face",
-    position: { x: 122, y: 125 },
+    position: { x: 128, y: 140 },
     orientation: "horizontal",
     howToMeasure: [
       "Mesure au milieu du biceps, bras détendu le long du corps",
@@ -178,7 +178,7 @@ export const MEASUREMENT_GUIDES: MeasurementGuide[] = [
     shortLabel: "Mollet G.",
     zone: "legs",
     view: "face",
-    position: { x: 78, y: 310 },
+    position: { x: 80, y: 340 },
     orientation: "horizontal",
     howToMeasure: [
       "Mesure à la partie la plus large du mollet",
@@ -195,7 +195,7 @@ export const MEASUREMENT_GUIDES: MeasurementGuide[] = [
     shortLabel: "Mollet D.",
     zone: "legs",
     view: "face",
-    position: { x: 102, y: 310 },
+    position: { x: 100, y: 340 },
     orientation: "horizontal",
     howToMeasure: [
       "Mesure à la partie la plus large du mollet",
