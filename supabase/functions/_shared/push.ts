@@ -213,3 +213,71 @@ export function jsonResponse(payload: unknown, status = 200): Response {
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 }
+
+/**
+ * Chantier Messagerie bidirectionnelle (2026-04-22) : envoi push vers un
+ * client (table séparée client_push_subscriptions keyed par client_id).
+ * Ne throw jamais. Cleanup 404/410 Gone comme pour les coachs.
+ */
+export async function sendPushToClient(
+  sb: SupabaseClient,
+  clientId: string,
+  payload: PushPayload,
+): Promise<SendPushResult> {
+  ensureVapid();
+  if (!vapidInitialized) {
+    return {
+      sent: false,
+      reason: "vapid_invalid",
+      error: vapidInitError ?? "VAPID non initialisé",
+    };
+  }
+
+  try {
+    const { data: sub, error: subErr } = await sb
+      .from("client_push_subscriptions")
+      .select("id, endpoint, p256dh, auth")
+      .eq("client_id", clientId)
+      .maybeSingle();
+
+    if (subErr || !sub) {
+      return { sent: false, reason: "no_subscription" };
+    }
+
+    const body = JSON.stringify({
+      title: payload.title,
+      body: payload.body,
+      url: payload.url ?? "/",
+      type: payload.type ?? "info",
+    });
+
+    try {
+      await webpush.sendNotification(
+        {
+          endpoint: sub.endpoint,
+          keys: { p256dh: sub.p256dh, auth: sub.auth },
+        },
+        body,
+        { TTL: 60 },
+      );
+      return { sent: true, attempts: 1, succeeded: 1 };
+    } catch (err) {
+      const anyErr = err as { statusCode?: number; body?: string; message?: string };
+      const code = anyErr.statusCode;
+      const detail = anyErr.body || anyErr.message || String(err);
+      if (code === 404 || code === 410) {
+        await sb.from("client_push_subscriptions").delete().eq("id", sub.id);
+      }
+      return {
+        sent: false,
+        reason: "error",
+        error: `[${code ?? "?"}] ${detail}`,
+        attempts: 1,
+        succeeded: 0,
+      };
+    }
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "unknown";
+    return { sent: false, reason: "error", error: message };
+  }
+}

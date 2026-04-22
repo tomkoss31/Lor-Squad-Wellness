@@ -43,6 +43,7 @@ import {
   updateSupabaseClientFreeFollowUp,
   updateSupabaseClientFreePvTracking,
   updateSupabaseClientGeneralNote,
+  updateSupabaseClientOnboardingChecks,
   fetchSupabaseProspects,
   fetchAllSupabaseFollowUpProtocolLogs,
   createSupabaseProspect,
@@ -92,6 +93,15 @@ interface AppContextValue {
   updateProspect: (id: string, updates: Partial<Prospect>) => Promise<Prospect>;
   deleteProspect: (id: string) => Promise<void>;
   markMessageRead: (id: string) => Promise<void>;
+  // Chantier Notif in-app temps réel (2026-04-23) : injecté par
+  // useRealtimeMessages quand un INSERT Realtime arrive.
+  addLiveClientMessage?: (message: ClientMessage) => void;
+  // Chantier Messagerie finalisée (2026-04-23).
+  markMessagesRead: (ids: string[]) => Promise<void>;
+  archiveMessage: (id: string) => Promise<void>;
+  unarchiveMessage: (id: string) => Promise<void>;
+  resolveMessage: (id: string) => Promise<void>;
+  unresolveMessage: (id: string) => Promise<void>;
   deleteMessage: (id: string) => Promise<void>;
   updateClientInfo: (clientId: string, data: { phone?: string; email?: string; city?: string }) => Promise<void>;
   setClientLifecycleStatus: (clientId: string, newStatus: LifecycleStatus) => Promise<void>;
@@ -101,10 +111,19 @@ interface AppContextValue {
   setClientFreePvTracking: (clientId: string, freePvTracking: boolean) => Promise<void>;
   // Chantier bilan updates (2026-04-20) : note libre "À savoir sur ce client"
   setClientGeneralNote: (clientId: string, generalNote: string) => Promise<void>;
+  // Chantier Polish Vue complète (2026-04-24) : 3 checks onboarding coach
+  setClientOnboardingChecks: (
+    clientId: string,
+    checks: { telegram?: boolean; photo_before?: boolean; measurements?: boolean }
+  ) => Promise<void>;
   updateFollowUpStatus: (followUpId: string, status: 'scheduled' | 'pending' | 'completed' | 'dismissed') => Promise<void>;
   loginWithCredentials: (
     payload: { email: string; password: string }
-  ) => Promise<{ ok: boolean; error?: string }>;
+  ) => Promise<
+    | { ok: true; kind: "coach"; redirectTo: string }
+    | { ok: true; kind: "client"; redirectTo: string }
+    | { ok: false; error: string }
+  >;
   logout: () => Promise<void>;
   forceResetSession: () => Promise<void>;
   createUserAccess: (payload: {
@@ -323,6 +342,10 @@ export function AppProvider({ children }: PropsWithChildren) {
     }
 
     void initialize();
+    // initialize capture refreshRemoteData via closure — il est défini
+    // plus bas dans le composant, volontairement hors deps pour éviter
+    // les re-boots en cascade.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Cache localStorage : PV client products et transactions sont persistées
@@ -363,17 +386,30 @@ export function AppProvider({ children }: PropsWithChildren) {
     try {
       const result = await loginWithSupabaseCredentials(payload);
       if (!result.ok) {
-        return { ok: false, error: result.error };
+        return { ok: false as const, error: result.error };
+      }
+
+      // Hotfix PWA login client (2026-04-24) : le service retourne maintenant
+      // `kind: 'coach' | 'client'`. Client path = pas de profil public.users,
+      // on renvoie directement la route /client/:token pour redirection.
+      if (result.kind === "client") {
+        // Pas de setCurrentUser : la ProtectedRoute resterait à pointer vers
+        // /login, mais /client/:token est une route publique → OK.
+        return {
+          ok: true as const,
+          kind: "client" as const,
+          redirectTo: `/client/${result.clientToken}`,
+        };
       }
 
       setCurrentUser(result.user);
       setCurrentSession(result.session);
       await refreshRemoteData(result.user);
-      return { ok: true };
+      return { ok: true as const, kind: "coach" as const, redirectTo: "/co-pilote" };
     } catch (error) {
       console.error("Connexion Supabase impossible.", error);
       return {
-        ok: false,
+        ok: false as const,
         error: "La connexion Supabase a échoué avant de pouvoir ouvrir la session."
       };
     }
@@ -751,8 +787,16 @@ export function AppProvider({ children }: PropsWithChildren) {
       clientMessages: currentUser
         ? clientMessages.filter(m => m.distributor_id === currentUser.id || m.distributor_id === currentUser.name || currentUser.role === 'admin')
         : [],
+      // Chantier Messagerie finalisée (2026-04-23) : on exclut les archivés
+      // du badge sidebar, et on ne compte que les messages venant du client
+      // (sender='client' ou absent pour legacy).
       unreadMessageCount: currentUser
-        ? clientMessages.filter(m => !m.read && (m.distributor_id === currentUser.id || m.distributor_id === currentUser.name || currentUser.role === 'admin')).length
+        ? clientMessages.filter(m =>
+            !m.read &&
+            !m.archived_at &&
+            (m.sender ?? 'client') === 'client' &&
+            (m.distributor_id === currentUser.id || m.distributor_id === currentUser.name || currentUser.role === 'admin'),
+          ).length
         : 0,
       // ─── Agenda Prospects ─────────────────────────────────────────────
       prospects: currentUser
@@ -786,8 +830,50 @@ export function AppProvider({ children }: PropsWithChildren) {
       },
       markMessageRead: async (id: string) => {
         const sb = await getSupabaseClient();
-        if (sb) await sb.from('client_messages').update({ read: true }).eq('id', id);
-        setClientMessages(prev => prev.map(m => m.id === id ? { ...m, read: true } : m));
+        const now = new Date().toISOString();
+        if (sb) await sb.from('client_messages').update({ read: true, read_at: now }).eq('id', id);
+        setClientMessages(prev => prev.map(m => m.id === id ? { ...m, read: true, read_at: now } : m));
+      },
+      // Chantier Notif in-app temps réel (2026-04-23) : appelé par
+      // useRealtimeMessages à chaque INSERT Realtime sur client_messages.
+      // Évite les doublons via check sur l'id.
+      addLiveClientMessage: (message: ClientMessage) => {
+        setClientMessages(prev =>
+          prev.some(m => m.id === message.id) ? prev : [message, ...prev],
+        );
+      },
+      // Chantier Messagerie finalisée (2026-04-23) : bulk read + archive
+      // + resolve avec optimistic updates. Toutes les RLS côté coach
+      // existent déjà depuis le chantier 1 (UPDATE via can_access_owner).
+      markMessagesRead: async (ids: string[]) => {
+        if (ids.length === 0) return;
+        const sb = await getSupabaseClient();
+        const now = new Date().toISOString();
+        if (sb) await sb.from('client_messages').update({ read: true, read_at: now }).in('id', ids);
+        const idSet = new Set(ids);
+        setClientMessages(prev => prev.map(m => idSet.has(m.id) ? { ...m, read: true, read_at: now } : m));
+      },
+      archiveMessage: async (id: string) => {
+        const sb = await getSupabaseClient();
+        const now = new Date().toISOString();
+        if (sb) await sb.from('client_messages').update({ archived_at: now }).eq('id', id);
+        setClientMessages(prev => prev.map(m => m.id === id ? { ...m, archived_at: now } : m));
+      },
+      unarchiveMessage: async (id: string) => {
+        const sb = await getSupabaseClient();
+        if (sb) await sb.from('client_messages').update({ archived_at: null }).eq('id', id);
+        setClientMessages(prev => prev.map(m => m.id === id ? { ...m, archived_at: null } : m));
+      },
+      resolveMessage: async (id: string) => {
+        const sb = await getSupabaseClient();
+        const now = new Date().toISOString();
+        if (sb) await sb.from('client_messages').update({ resolved_at: now }).eq('id', id);
+        setClientMessages(prev => prev.map(m => m.id === id ? { ...m, resolved_at: now } : m));
+      },
+      unresolveMessage: async (id: string) => {
+        const sb = await getSupabaseClient();
+        if (sb) await sb.from('client_messages').update({ resolved_at: null }).eq('id', id);
+        setClientMessages(prev => prev.map(m => m.id === id ? { ...m, resolved_at: null } : m));
       },
       deleteMessage: async (id: string) => {
         const sb = await getSupabaseClient();
@@ -888,6 +974,16 @@ export function AppProvider({ children }: PropsWithChildren) {
           c.id === clientId ? { ...c, generalNote } : c
         ));
       },
+      // Onboarding checks (Chantier Polish Vue complète 2026-04-24)
+      setClientOnboardingChecks: async (
+        clientId: string,
+        checks: { telegram?: boolean; photo_before?: boolean; measurements?: boolean }
+      ) => {
+        await updateSupabaseClientOnboardingChecks({ clientId, checks });
+        setClients(prev => prev.map(c =>
+          c.id === clientId ? { ...c, onboardingChecks: checks } : c
+        ));
+      },
       loginWithCredentials,
       logout,
       forceResetSession,
@@ -907,6 +1003,11 @@ export function AppProvider({ children }: PropsWithChildren) {
       addPvTransaction,
       savePvClientProduct,
     }),
+    // Les handlers (addFollowUpAssessment, etc.) sont volontairement absents
+    // des deps : ils capturent state/setters stables, ré-exécuter le useMemo
+    // à chaque render des handlers réinstantierait le context value à chaque
+    // frame et casserait la mémoïsation en cascade côté consumers.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [
       authReady,
       bootError,

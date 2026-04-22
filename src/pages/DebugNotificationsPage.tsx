@@ -11,7 +11,7 @@ import { Card } from "../components/ui/Card";
 import { PageHeading } from "../components/ui/PageHeading";
 import { StatusBadge } from "../components/ui/StatusBadge";
 import { useAppContext } from "../context/AppContext";
-import { getSupabaseClient } from "../services/supabaseClient";
+import { getAnonKeyFormat, getSupabaseClient, type AnonKeyFormat } from "../services/supabaseClient";
 
 interface SentLog {
   id: string;
@@ -33,6 +33,11 @@ export function DebugNotificationsPage() {
   const [testing, setTesting] = useState(false);
   const [feedback, setFeedback] = useState<string>("");
   const [feedbackTone, setFeedbackTone] = useState<"ok" | "err" | "">("");
+  const [anonKeyFormat, setAnonKeyFormat] = useState<AnonKeyFormat | null>(null);
+
+  useEffect(() => {
+    void getAnonKeyFormat().then(setAnonKeyFormat);
+  }, []);
 
   const refresh = useCallback(async () => {
     if (!currentUser) return;
@@ -114,6 +119,34 @@ export function DebugNotificationsPage() {
         title="Notifications push"
         description="Diagnostic du circuit push pour l'utilisateur connecté. Admin uniquement."
       />
+
+      {anonKeyFormat === "es256_publishable" ? (
+        <Card className="space-y-3 border-rose-400/40 bg-rose-400/10">
+          <p className="text-sm font-semibold text-rose-100">
+            🚨 VITE_SUPABASE_ANON_KEY au format ES256 (publishable)
+          </p>
+          <p className="text-sm leading-6 text-rose-100/90">
+            Les Edge Functions Supabase rejettent ce format avec
+            <code className="mx-1 rounded bg-black/30 px-1.5 py-0.5 text-xs">
+              UNAUTHORIZED_UNSUPPORTED_TOKEN_ALGORITHM
+            </code>
+            — le bouton « Envoyer notif test » échouera tant que ce n'est
+            pas corrigé.
+          </p>
+          <p className="text-sm leading-6 text-rose-100/90">
+            <strong>Fix</strong> : Supabase Dashboard → Settings → API →
+            section « <strong>Legacy API keys</strong> » → copier la clé
+            <code className="mx-1 rounded bg-black/30 px-1.5 py-0.5 text-xs">
+              anon public
+            </code>
+            (format <code>eyJhbGciOiJIUzI1NiI…</code>). Remplacer la variable
+            <code className="mx-1 rounded bg-black/30 px-1.5 py-0.5 text-xs">
+              VITE_SUPABASE_ANON_KEY
+            </code>
+            sur Vercel avec cette valeur, puis redeploy.
+          </p>
+        </Card>
+      ) : null}
 
       <Card className="space-y-4">
         <div className="flex flex-wrap items-start justify-between gap-3">

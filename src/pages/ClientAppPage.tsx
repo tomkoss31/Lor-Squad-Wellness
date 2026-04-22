@@ -1,11 +1,34 @@
-import { useEffect, useState } from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { getSupabaseClient } from '../services/supabaseClient'
 import { HERBALIFE_PRODUCTS, type HerbalifeProduct } from '../data/herbalifeCatalog'
+import { ClientMessageModal } from '../components/client-app/ClientMessageModal'
+import { ClientChatTab } from '../components/client-app/ClientChatTab'
+import { ClientPushOptIn } from '../components/client-app/ClientPushOptIn'
+import { InstallPwaBanner } from '../components/pwa/InstallPwaBanner'
 import { BreakfastStorySlider, DEFAULT_BREAKFAST_ANALYSIS } from '../components/education/BreakfastStorySlider'
 import type { BreakfastAnalysis } from '../types/domain'
+import { useOnboardingState } from '../features/onboarding/hooks/useOnboardingState'
+
+// Chantier Tuto interactif client (2026-04-24) : lazy-load pour ne pas
+// alourdir le bundle initial de ClientAppPage.
+const OnboardingTutorial = lazy(() =>
+  import('../features/onboarding/OnboardingTutorial').then((m) => ({
+    default: m.OnboardingTutorial,
+  })),
+)
 
 const GOOGLE_MAPS_LA_BASE = 'https://www.google.com/maps/place/LA+BASE+Shakes%26Drinks/@49.1619589,5.3840559,17z'
+
+// Hotfix client-login (2026-04-24) : salutation dynamique — distincte de
+// celle de /co-pilote côté coach car le public et le ton diffèrent.
+function clientGreeting(d: Date): string {
+  const h = d.getHours()
+  if (h >= 5 && h < 12) return 'Bonjour'
+  if (h >= 12 && h < 18) return 'Bon après-midi'
+  if (h >= 18 && h < 23) return 'Bonsoir'
+  return 'Bonsoir'
+}
 
 // ─── Catégories produits dans l'ordre du PDF officiel ──────────────────────
 const CATEGORY_DISPLAY: Array<{ key: HerbalifeProduct['category']; label: string }> = [
@@ -111,11 +134,14 @@ function MiniLineChart({
 
 // ─── Carte produit avec description + CTA ──────────────────────────────────
 function ProductCard({
-  product, isRecommended, coachWhatsapp,
+  product, isRecommended, onAskCoach,
 }: {
   product: HerbalifeProduct
   isRecommended: boolean
-  coachWhatsapp?: string
+  /** Chantier Messagerie client ↔ coach (2026-04-21) : ouvre la modale
+   *  centralisée ClientMessageModal à la place de l'ancien lien
+   *  MyHerbalife externe + WhatsApp. Le coach reçoit une notif push. */
+  onAskCoach: (product: HerbalifeProduct) => void
 }) {
   const [open, setOpen] = useState(false)
   const description = PRODUCT_DETAILS[product.ref] ?? product.shortBenefit
@@ -157,28 +183,29 @@ function ProductCard({
           <p style={{ fontSize: 12, color: '#6B7280', lineHeight: 1.75, marginBottom: 14 }}>
             {description}
           </p>
-          <div style={{ display: 'flex', gap: 8 }}>
-            {coachWhatsapp && (
-              <a
-                href={`https://wa.me/${coachWhatsapp.replace(/\D/g, '')}?text=${encodeURIComponent(`Bonjour, je suis intéressé(e) par le produit : ${product.shortName}`)}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={(e) => e.stopPropagation()}
-                style={{ flex: 1, padding: '9px 6px', borderRadius: 9, background: 'rgba(37,211,102,0.1)', color: '#16A34A', fontSize: 11, fontWeight: 600, textAlign: 'center', textDecoration: 'none' }}
-              >
-                Contacter mon coach
-              </a>
-            )}
-            <a
-              href="https://www.myherbalife.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={(e) => e.stopPropagation()}
-              style={{ flex: 1, padding: '9px 6px', borderRadius: 9, background: 'rgba(184,146,42,0.1)', color: '#B8922A', fontSize: 11, fontWeight: 600, textAlign: 'center', textDecoration: 'none' }}
-            >
-              Commander
-            </a>
-          </div>
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); onAskCoach(product) }}
+            style={{
+              width: '100%',
+              padding: '11px 14px',
+              borderRadius: 10,
+              background: '#B8922A',
+              color: '#FFFFFF',
+              border: 'none',
+              fontSize: 13,
+              fontWeight: 600,
+              fontFamily: 'DM Sans, sans-serif',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 8,
+            }}
+          >
+            <span aria-hidden="true">💬</span>
+            Parler à mon coach à propos de ce produit
+          </button>
         </div>
       )}
     </div>
@@ -192,7 +219,52 @@ export function ClientAppPage() {
   const { token } = useParams<{ token: string }>()
   const [data, setData] = useState<ClientAppData | null>(null)
   const [loading, setLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState<'home' | 'evolution' | 'products' | 'coaching' | 'refer'>('home')
+  // Chantier invitation client app (2026-04-21) : toast accueil quand le
+  // client arrive ici depuis /bienvenue?welcome=1. Le toast s'efface tout
+  // seul après 4s.
+  const [showWelcome, setShowWelcome] = useState(() => {
+    if (typeof window === 'undefined') return false
+    return new URLSearchParams(window.location.search).get('welcome') === '1'
+  })
+  useEffect(() => {
+    if (!showWelcome) return
+    const id = window.setTimeout(() => setShowWelcome(false), 4500)
+    return () => window.clearTimeout(id)
+  }, [showWelcome])
+  // Chantier Tuto interactif client (2026-04-24) : state + auto-launch.
+  const [tutorialOpen, setTutorialOpen] = useState(false)
+  const onboardingState = useOnboardingState({
+    token: token ?? null,
+    clientId: data?.client_id ?? '',
+  })
+  useEffect(() => {
+    if (!onboardingState.state.loaded || !data) return
+    if (tutorialOpen) return
+    // Auto-launch si jamais vu ET jamais skipé (800ms pour laisser l'UI
+    // se stabiliser et le HERO s'afficher).
+    if (!onboardingState.state.completedAt && !onboardingState.state.skippedAt) {
+      const id = window.setTimeout(() => setTutorialOpen(true), 800)
+      return () => window.clearTimeout(id)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onboardingState.state.loaded, data?.client_id])
+  // Chantier Messagerie bidirectionnelle (2026-04-22) : nouveau tab 'messages'
+  // (conversation chat coach ↔ client). Ouverture auto si ?tab=messages dans
+  // l'URL (notif push coach_message y redirige).
+  const initialTab = (() => {
+    if (typeof window === 'undefined') return 'home' as const
+    const t = new URLSearchParams(window.location.search).get('tab')
+    if (t === 'messages' || t === 'evolution' || t === 'products' || t === 'coaching' || t === 'refer') {
+      return t as 'home' | 'evolution' | 'products' | 'coaching' | 'refer' | 'messages'
+    }
+    return 'home' as const
+  })()
+  const [activeTab, setActiveTab] = useState<'home' | 'evolution' | 'products' | 'coaching' | 'refer' | 'messages'>(initialTab)
+  // Chantier Messagerie client ↔ coach (2026-04-21) : 2 modales pour parler
+  // au coach depuis l'app — question produit OU demande de reco générique.
+  const [productAskModal, setProductAskModal] = useState<HerbalifeProduct | null>(null)
+  const [recoAskOpen, setRecoAskOpen] = useState(false)
+  const openProductAskModal = (product: HerbalifeProduct) => setProductAskModal(product)
   const [coachingData, setCoachingData] = useState<{ breakfastAnalysis: BreakfastAnalysis; breakfastContent: string } | null>(null)
   const [referName, setReferName] = useState('')
   const [referContact, setReferContact] = useState('')
@@ -278,37 +350,54 @@ export function ClientAppPage() {
   }
 
   function normalizeData(row: Record<string, unknown>): ClientAppData {
-    const r = row as Record<string, any>
-    let metrics = r.metrics_history as Array<any> | undefined
+    // Cleanup post-audit (2026-04-23) : Record<string, unknown> au lieu de
+    // any — les casts aux types concrets se font site par site. Même
+    // permissivité à l'import, stricte à l'usage.
+    const r = row as Record<string, unknown>
+    // metrics_history : tableau d'objets avec date string + valeurs numériques.
+    // Le type exact côté type domain (Array<Record<string, number> & { date }>)
+    // a une index signature incompatible avec la clé 'date'. On garde un type
+    // large ici et on laisse le consumer final affiner.
+    let metrics = r.metrics_history as ClientAppData["metrics_history"]
 
     if ((!metrics || metrics.length === 0) && r.body_scan) {
       const bs = r.body_scan as Record<string, number>
+      const fallbackDate =
+        typeof r.assessment_date === 'string'
+          ? r.assessment_date
+          : typeof r.created_at === 'string'
+            ? r.created_at
+            : new Date().toISOString()
+      // Le type ClientAppData.metrics_history combine Record<string, number>
+      // et {date: string} — incohérence héritée. Cast explicite via unknown
+      // pour rester compatible.
       metrics = [{
-        date: r.assessment_date ?? r.created_at ?? new Date().toISOString(),
+        date: fallbackDate,
         weight: bs.weight ?? 0,
         bodyFat: bs.bodyFat ?? 0,
         muscleMass: bs.muscleMass ?? 0,
         hydration: bs.hydration ?? 0,
         visceralFat: bs.visceralFat ?? 0,
         metabolicAge: bs.metabolicAge ?? 0,
-      }]
+      }] as unknown as ClientAppData["metrics_history"]
     }
 
+    const str = (v: unknown, fallback = ''): string => typeof v === 'string' ? v : fallback
     return {
-      client_id: r.client_id ?? '',
-      client_first_name: r.client_first_name ?? '',
-      client_last_name: r.client_last_name ?? '',
-      coach_id: r.coach_id ?? r.distributor_id,
-      coach_name: r.coach_name ?? 'Coach',
-      coach_whatsapp: r.coach_whatsapp,
-      coach_telegram: r.coach_telegram,
-      coach_phone: r.coach_phone,
-      program_title: r.program_title,
-      assessments_count: r.assessments_count ?? (metrics?.length ?? 0),
-      next_follow_up: r.next_follow_up,
+      client_id: str(r.client_id),
+      client_first_name: str(r.client_first_name),
+      client_last_name: str(r.client_last_name),
+      coach_id: str(r.coach_id ?? r.distributor_id, '') || undefined,
+      coach_name: str(r.coach_name, 'Coach'),
+      coach_whatsapp: typeof r.coach_whatsapp === 'string' ? r.coach_whatsapp : undefined,
+      coach_telegram: typeof r.coach_telegram === 'string' ? r.coach_telegram : undefined,
+      coach_phone: typeof r.coach_phone === 'string' ? r.coach_phone : undefined,
+      program_title: typeof r.program_title === 'string' ? r.program_title : undefined,
+      assessments_count: typeof r.assessments_count === 'number' ? r.assessments_count : (metrics?.length ?? 0),
+      next_follow_up: typeof r.next_follow_up === 'string' ? r.next_follow_up : undefined,
       metrics_history: metrics,
-      recommendations: r.recommendations,
-      insights: r.insights,
+      recommendations: r.recommendations as ClientAppData['recommendations'],
+      insights: r.insights as ClientAppData['insights'],
     }
   }
 
@@ -316,7 +405,7 @@ export function ClientAppPage() {
     try {
       const { data: rows } = await sb.rpc('get_client_assessment_by_token', { p_token: tok })
       const row = Array.isArray(rows) ? rows[0] : rows
-      const q = (row as Record<string, any> | null)?.questionnaire as Record<string, any> | undefined
+      const q = (row as Record<string, unknown> | null)?.questionnaire as Record<string, unknown> | undefined
       const analysis = q?.breakfastAnalysis as BreakfastAnalysis | undefined
       const content = typeof q?.breakfastContent === 'string' ? q.breakfastContent : ''
       if (analysis) {
@@ -366,13 +455,29 @@ export function ClientAppPage() {
     try {
       const sb = await getSupabaseClient()
       if (!sb) return
-      await sb.from('rdv_change_requests').insert({
-        client_id: data.client_id,
-        coach_id: data.coach_id ?? '',
-        client_name: `${data.client_first_name} ${data.client_last_name}`,
-        current_rdv: data.next_follow_up,
-        message: rdvMessage,
-      })
+
+      // Chantier Messagerie client ↔ coach (2026-04-21) : dual-write.
+      // 1. rdv_change_requests (legacy, pour l'existant côté coach).
+      // 2. client_messages avec message_type='rdv_request' → le trigger
+      //    Postgres notify_new_client_message push une notif au coach
+      //    + le message apparaît dans la messagerie.
+      await Promise.all([
+        sb.from('rdv_change_requests').insert({
+          client_id: data.client_id,
+          coach_id: data.coach_id ?? '',
+          client_name: `${data.client_first_name} ${data.client_last_name}`,
+          current_rdv: data.next_follow_up,
+          message: rdvMessage,
+        }),
+        sb.from('client_messages').insert({
+          client_id: data.client_id,
+          client_name: `${data.client_first_name} ${data.client_last_name}`,
+          distributor_id: data.coach_id ?? '',
+          message_type: 'rdv_request',
+          message: rdvMessage,
+          sender: 'client',
+        }),
+      ])
       setRdvSent(true); setRdvMessage('')
     } catch { /* silencieux */ }
   }
@@ -475,6 +580,72 @@ export function ClientAppPage() {
 
   return (
     <div style={{ minHeight: '100vh', background: '#F4F2EE', fontFamily: 'DM Sans, sans-serif', color: '#111827', paddingBottom: 80 }}>
+      {/* Chantier invitation client app (2026-04-21) : toast de bienvenue
+          quand on arrive depuis /bienvenue via ?welcome=1. */}
+      {showWelcome ? (
+        <div
+          role="status"
+          style={{
+            position: 'fixed',
+            top: 16,
+            left: 16,
+            right: 16,
+            zIndex: 9999,
+            padding: '14px 18px',
+            borderRadius: 14,
+            background: 'linear-gradient(135deg, #D4B460, #B8922A)',
+            color: '#fff',
+            fontFamily: 'Syne, sans-serif',
+            fontWeight: 700,
+            fontSize: 15,
+            textAlign: 'center',
+            boxShadow: '0 12px 30px rgba(184,146,42,0.35)',
+          }}
+        >
+          Bienvenue dans ton espace Lor'Squad 🎉
+        </div>
+      ) : null}
+
+      {/* Chantier Messagerie client ↔ coach (2026-04-21) : modale "Parler à
+          mon coach" sur fiche produit + modale "Demander une reco" sur home. */}
+      <ClientMessageModal
+        open={productAskModal !== null}
+        onClose={() => setProductAskModal(null)}
+        clientId={data.client_id}
+        clientFirstName={data.client_first_name}
+        clientLastName={data.client_last_name}
+        distributorId={data.coach_id ?? ''}
+        title="Parler à mon coach"
+        intro={
+          productAskModal
+            ? `Pose ta question sur ${productAskModal.shortName} à ${data.coach_name}.`
+            : ''
+        }
+        messageType="product_request"
+        productName={productAskModal?.shortName}
+        defaultMessage={
+          productAskModal
+            ? `Bonjour ${data.coach_name}, j'ai une question sur ${productAskModal.shortName} : `
+            : ''
+        }
+      />
+      <ClientMessageModal
+        open={recoAskOpen}
+        onClose={() => setRecoAskOpen(false)}
+        clientId={data.client_id}
+        clientFirstName={data.client_first_name}
+        clientLastName={data.client_last_name}
+        distributorId={data.coach_id ?? ''}
+        title="Demander une recommandation"
+        intro={`Dis à ${data.coach_name} ce dont tu as besoin. Elle te répondra avec un conseil personnalisé.`}
+        messageType="recommendation"
+        defaultMessage={`Bonjour ${data.coach_name}, j'aurais besoin d'une recommandation sur `}
+      />
+
+      {/* Hotfix client-login (2026-04-24) : bannière install PWA si pas
+          déjà installée + non dismissée. Self-hides sinon. */}
+      <InstallPwaBanner />
+
       {/* HERO */}
       <div style={{ background: 'linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 60%, #F4F2EE 100%)', padding: '20px 16px 16px' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
@@ -486,9 +657,37 @@ export function ClientAppPage() {
               Lor'<span style={{ color: '#B8922A' }}>Squad</span>
             </div>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-            <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#0D9488' }} />
-            <span style={{ fontSize: 10, color: '#0D9488', fontWeight: 500 }}>Coach {data.coach_name}</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+              <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#0D9488' }} />
+              <span style={{ fontSize: 10, color: '#0D9488', fontWeight: 500 }}>Coach {data.coach_name}</span>
+            </div>
+            {/* Chantier Tuto interactif client (2026-04-24) : bouton ? pour
+                relancer le tutoriel à tout moment. */}
+            <button
+              type="button"
+              onClick={() => setTutorialOpen(true)}
+              aria-label="Revoir le tutoriel"
+              title="Revoir le tutoriel"
+              style={{
+                width: 32,
+                height: 32,
+                borderRadius: '50%',
+                background: 'rgba(184,146,42,0.12)',
+                color: '#B8922A',
+                border: '1px solid rgba(184,146,42,0.2)',
+                fontFamily: 'Syne, sans-serif',
+                fontWeight: 700,
+                fontSize: 14,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+              }}
+            >
+              ?
+            </button>
           </div>
         </div>
 
@@ -497,8 +696,11 @@ export function ClientAppPage() {
             {data.client_first_name?.[0]}{data.client_last_name?.[0]}
           </div>
           <div>
-            <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 20, color: '#111827' }}>
-              Bonjour {data.client_first_name} !
+            {/* Hotfix client-login (2026-04-24) : salutation dynamique selon
+                l'heure de l'app client. 5-12h Bonjour / 12-18h Bon après-midi /
+                18-23h Bonsoir / sinon Bonne nuit. */}
+            <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 500, fontSize: 22, color: '#111827' }}>
+              {clientGreeting(new Date())} {data.client_first_name} !
             </div>
             <div style={{ fontSize: 11, color: '#6B7280', marginTop: 2 }}>
               {data.program_title ?? 'Programme en cours'} · {data.assessments_count ?? 1} bilan{(data.assessments_count ?? 1) > 1 ? 's' : ''}
@@ -506,6 +708,16 @@ export function ClientAppPage() {
           </div>
         </div>
       </div>
+
+      {/* Chantier Messagerie bidirectionnelle (2026-04-22) : CTA opt-in push
+          juste sous le HERO. S'affiche uniquement si Notification.permission
+          === 'default' et support natif. Self-hiding après accept/deny. */}
+      {token ? (
+        <ClientPushOptIn
+          token={token}
+          coachFirstName={(data.coach_name ?? '').split(/\s+/)[0] || 'Ton coach'}
+        />
+      ) : null}
 
       <div style={{ padding: '12px 14px' }}>
         {/* ══════════════════════════════════════════════════════════════ */}
@@ -539,7 +751,7 @@ export function ClientAppPage() {
 
             {/* Prochain RDV */}
             {data.next_follow_up && (
-              <div style={{ background: 'rgba(13,148,136,0.06)', border: '1px solid rgba(13,148,136,0.15)', borderRadius: 14, padding: 14 }}>
+              <div data-tuto="next-rdv" style={{ background: 'rgba(13,148,136,0.06)', border: '1px solid rgba(13,148,136,0.15)', borderRadius: 14, padding: 14 }}>
                 <div style={{ fontSize: 9, color: '#0D9488', fontWeight: 600, letterSpacing: '1px', textTransform: 'uppercase', marginBottom: 8 }}>Prochain rendez-vous</div>
                 <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 18, color: '#111827', marginBottom: 2 }}>
                   {new Date(data.next_follow_up).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
@@ -578,6 +790,58 @@ export function ClientAppPage() {
                 </div>
               </div>
             )}
+
+            {/* Chantier Messagerie client ↔ coach (2026-04-21) : CTA
+                "Demander une reco" — bouton gold large qui ouvre la modale.
+                Le message atterrit dans client_messages et push une notif
+                au coach. */}
+            <button
+              type="button"
+              data-tuto="messaging"
+              onClick={() => setRecoAskOpen(true)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 12,
+                background: 'linear-gradient(135deg, #FAEEDA, #F0DBB0)',
+                border: '1px solid rgba(184,146,42,0.35)',
+                borderRadius: 14,
+                padding: '14px 16px',
+                width: '100%',
+                textAlign: 'left',
+                cursor: 'pointer',
+                fontFamily: 'DM Sans, sans-serif',
+              }}
+            >
+              <div
+                aria-hidden="true"
+                style={{
+                  width: 38,
+                  height: 38,
+                  borderRadius: 10,
+                  background: '#B8922A',
+                  color: '#FFFFFF',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: 18,
+                  flexShrink: 0,
+                }}
+              >
+                🎁
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 14, color: '#633806' }}>
+                  Demander une recommandation
+                </div>
+                <div style={{ fontSize: 11, color: '#854F0B', marginTop: 2 }}>
+                  Ton coach te répondra avec un conseil personnalisé
+                </div>
+              </div>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#854F0B" strokeWidth="2">
+                <polyline points="9 18 15 12 9 6" />
+              </svg>
+            </button>
 
             {/* Avis Google */}
             <a href={GOOGLE_MAPS_LA_BASE} target="_blank" rel="noopener noreferrer"
@@ -739,7 +1003,7 @@ export function ClientAppPage() {
         {/* ONGLET PRODUITS                                                 */}
         {/* ══════════════════════════════════════════════════════════════ */}
         {activeTab === 'products' && (
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
+          <div data-tuto="program" style={{ display: 'flex', flexDirection: 'column' }}>
             {/* Recommandés pour toi (reste toujours visible en haut) */}
             {recommendedProducts.length > 0 && (
               <div style={{ marginBottom: 16 }}>
@@ -747,7 +1011,7 @@ export function ClientAppPage() {
                   Recommandés pour toi
                 </div>
                 {recommendedProducts.map((product) => (
-                  <ProductCard key={product.ref} product={product} isRecommended={true} coachWhatsapp={data.coach_whatsapp} />
+                  <ProductCard key={product.ref} product={product} isRecommended={true} onAskCoach={openProductAskModal} />
                 ))}
               </div>
             )}
@@ -778,7 +1042,7 @@ export function ClientAppPage() {
                   {isOpen && (
                     <div style={{ border: '1px solid rgba(0,0,0,0.07)', borderTop: 'none', borderRadius: '0 0 12px 12px', padding: 10, background: '#fafaf9' }}>
                       {products.map((product) => (
-                        <ProductCard key={product.ref} product={product} isRecommended={false} coachWhatsapp={data.coach_whatsapp} />
+                        <ProductCard key={product.ref} product={product} isRecommended={false} onAskCoach={openProductAskModal} />
                       ))}
                     </div>
                   )}
@@ -812,6 +1076,17 @@ export function ClientAppPage() {
             )}
           </div>
         )}
+
+        {/* ══════════════════════════════════════════════════════════════ */}
+        {/* ONGLET MESSAGES (chantier messagerie bidirectionnelle 2026-04-22) */}
+        {/* ══════════════════════════════════════════════════════════════ */}
+        {activeTab === 'messages' && token ? (
+          <ClientChatTab
+            token={token}
+            clientFirstName={data.client_first_name}
+            coachFirstName={(data.coach_name ?? '').split(/\s+/)[0] || 'Ton coach'}
+          />
+        ) : null}
 
         {/* ══════════════════════════════════════════════════════════════ */}
         {/* ONGLET RECOMMANDER                                              */}
@@ -992,6 +1267,41 @@ export function ClientAppPage() {
         </div>
       )}
 
+      {/* Chantier Tuto interactif client (2026-04-24). Lazy-loaded,
+          ne charge le code que si le tuto est ouvert. */}
+      {tutorialOpen ? (
+        <Suspense fallback={null}>
+          <OnboardingTutorial
+            firstName={data.client_first_name || 'toi'}
+            coachName={(data.coach_name ?? '').split(/\s+/)[0] || 'Ton coach'}
+            sex="female"
+            bodyFat={(() => {
+              const hist = data.metrics_history as Array<Record<string, unknown>> | undefined
+              const last = hist && hist.length > 0 ? hist[hist.length - 1] : null
+              return typeof last?.bodyFat === 'number' ? last.bodyFat : null
+            })()}
+            hydration={(() => {
+              const hist = data.metrics_history as Array<Record<string, unknown>> | undefined
+              const last = hist && hist.length > 0 ? hist[hist.length - 1] : null
+              return typeof last?.hydration === 'number' ? last.hydration : null
+            })()}
+            selectors={{
+              nextRdv: '[data-tuto="next-rdv"]',
+              program: '[data-tuto="program"]',
+              messaging: '[data-tuto="messaging"]',
+            }}
+            onClose={(reason) => {
+              setTutorialOpen(false)
+              if (reason === 'completed') {
+                onboardingState.markCompleted()
+              } else if (reason === 'skipped') {
+                onboardingState.markSkipped()
+              }
+            }}
+          />
+        </Suspense>
+      ) : null}
+
       {/* BOTTOM NAV */}
       <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: '#fff', borderTop: '1px solid rgba(0,0,0,0.07)', display: 'flex', paddingBottom: 'max(12px, env(safe-area-inset-bottom))', zIndex: 100 }}>
         {([
@@ -999,6 +1309,7 @@ export function ClientAppPage() {
           { key: 'evolution' as const, label: 'Évolution', icon: (<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12" /></svg>) },
           { key: 'products' as const, label: 'Produits', icon: (<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></svg>) },
           { key: 'coaching' as const, label: 'Coaching', icon: (<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18h6" /><path d="M10 22h4" /><path d="M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.2 1 2V17h6v-.3c0-.8.4-1.5 1-2A7 7 0 0 0 12 2z" /></svg>) },
+          { key: 'messages' as const, label: 'Messages', icon: (<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" /></svg>) },
           { key: 'refer' as const, label: 'Recommander', icon: (<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><line x1="23" y1="11" x2="17" y2="11" /><line x1="20" y1="8" x2="20" y2="14" /></svg>) },
         ]).map(({ key, label, icon }) => {
           const isActive = activeTab === key

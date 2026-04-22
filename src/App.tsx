@@ -5,11 +5,8 @@ import { AppLayout } from "./components/layout/AppLayout";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { ToastHost } from "./components/ui/ToastHost";
 
-const DashboardPage = lazy(() =>
-  import("./pages/DashboardPage").then((module) => ({
-    default: module.DashboardPage
-  }))
-);
+// CoPilotePage remplace définitivement l'ancien DashboardPage (retiré
+// au chantier cleanup-post-audit 2026-04-23).
 const GuidePage = lazy(() =>
   import("./pages/GuidePage").then((module) => ({
     default: module.GuidePage
@@ -110,6 +107,56 @@ const DebugNotificationsPage = lazy(() =>
     default: module.DebugNotificationsPage
   }))
 );
+const BienvenuePage = lazy(() =>
+  import("./pages/BienvenuePage").then((module) => ({
+    default: module.BienvenuePage
+  }))
+);
+// Chantier Onboarding distributeur complet (2026-04-24) : wizard
+// /bienvenue-distri pour que les nouveaux distri créent leur accès.
+const BienvenueDistriPage = lazy(() =>
+  import("./pages/BienvenueDistriPage").then((module) => ({
+    default: module.BienvenueDistriPage
+  }))
+);
+// Chantier Refonte Navigation (2026-04-22) : nouveau dashboard + placeholders.
+const CoPilotePage = lazy(() =>
+  import("./pages/CoPilotePage").then((module) => ({
+    default: module.CoPilotePage
+  }))
+);
+// Chantier Centre de Formation V1 (2026-04-23) : la home /formation est
+// FormationPage (catalogue avec progression), /formation/:slug pointe
+// vers FormationCategoryPage.
+const FormationPage = lazy(() =>
+  import("./pages/FormationPage").then((module) => ({
+    default: module.FormationPage
+  }))
+);
+const FormationCategoryPage = lazy(() =>
+  import("./pages/FormationCategoryPage").then((module) => ({
+    default: module.FormationCategoryPage
+  }))
+);
+const SettingsPage = lazy(() =>
+  import("./pages/SettingsPage").then((module) => ({
+    default: module.SettingsPage
+  }))
+);
+// Chantier Paramètres Admin (2026-04-23) : /parametres admin-only avec
+// les 5 onglets (Profil, Équipe, Transferts, Stats, Debug).
+const ParametresPage = lazy(() =>
+  import("./pages/ParametresPage").then((module) => ({
+    default: module.ParametresPage
+  }))
+);
+// Chantier Messagerie finalisée (2026-04-23) : vue conversation fil
+// WhatsApp-like pour un client donné.
+const ConversationView = lazy(() =>
+  import("./pages/ConversationView").then((module) => ({
+    default: module.ConversationView
+  }))
+);
 
 import { useTheme } from './hooks/useTheme'
 import { useAutoNotifications } from './hooks/useAutoNotifications'
@@ -136,19 +183,32 @@ export default function App() {
           </Route>
           <Route element={<ProtectedRoute />}>
             <Route path="/" element={<AppLayout />}>
-              <Route index element={<Navigate to="/dashboard" replace />} />
-              <Route path="dashboard" element={<DashboardPage />} />
+              <Route index element={<Navigate to="/co-pilote" replace />} />
+              {/* Chantier Refonte Navigation (2026-04-22) : /co-pilote = dashboard.
+                  /dashboard redirige pour ne pas casser les liens existants. */}
+              <Route path="co-pilote" element={<CoPilotePage />} />
+              <Route path="dashboard" element={<Navigate to="/co-pilote" replace />} />
+              <Route path="formation" element={<FormationPage />} />
+              <Route path="formation/:slug" element={<FormationCategoryPage />} />
+              {/* /settings (non-admin) reste accessible comme placeholder profil léger.
+                  Les admins ont /parametres avec la version complète. */}
+              <Route path="settings" element={<SettingsPage />} />
               <Route path="guide" element={<GuidePage />} />
               <Route path="guide-suivi" element={<FollowUpGuidePage />} />
               <Route path="recommendations" element={<RecommendationsPage />} />
               <Route path="pv" element={<PvOverviewPage />} />
               <Route path="messages" element={<MessagesPage />} />
+              {/* Chantier Messagerie finalisée (2026-04-23). */}
+              <Route path="messagerie/conversation/:messageId" element={<ConversationView />} />
               <Route path="agenda" element={<AgendaPage />} />
               <Route path="clients" element={<ClientsPage />} />
               <Route element={<RoleRoute allowedRoles={["admin"]} />}>
                 <Route path="users" element={<UsersPage />} />
                 <Route path="pv/team" element={<PvTeamPage />} />
                 <Route path="debug/notifications" element={<DebugNotificationsPage />} />
+                {/* Chantier Paramètres Admin (2026-04-23) : /parametres admin-only.
+                    /settings redirige pour compat avec la placeholder du chantier 2. */}
+                <Route path="parametres" element={<ParametresPage />} />
               </Route>
               <Route path="distributors/:distributorId" element={<DistributorPortfolioPage />} />
               <Route path="clients/:clientId" element={<ClientDetailPage />} />
@@ -166,6 +226,12 @@ export default function App() {
           <Route path="/recap/:token" element={<RecapPage />} />
           <Route path="/rapport/:token" element={<EvolutionReportPage />} />
           <Route path="/client/:token" element={<ClientAppPage />} />
+          {/* Chantier invitation client app (2026-04-21) : page publique
+              pour que le client crée son accès via le lien magique envoyé
+              par le coach. Pas besoin d'être authentifié. */}
+          <Route path="/bienvenue" element={<BienvenuePage />} />
+          {/* Chantier Onboarding distributeur complet (2026-04-24). */}
+          <Route path="/bienvenue-distri" element={<BienvenueDistriPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
         </ErrorBoundary>

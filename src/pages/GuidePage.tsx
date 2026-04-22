@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Card } from "../components/ui/Card";
 import { PageHeading } from "../components/ui/PageHeading";
 import { StatusBadge } from "../components/ui/StatusBadge";
+import { GuideCompletionFooter } from "../components/formation/GuideCompletionFooter";
 
 type GuideTab = "rdv" | "recos";
 
@@ -145,6 +146,10 @@ export function GuidePage() {
       </Card>
 
       {activeTab === "rdv" ? <RendezVousGuide /> : <RecommendationGuide />}
+
+      {/* Chantier Centre de Formation V1 (2026-04-23) : bouton "J'ai terminé"
+          qui marque cette ressource dans training_progress. */}
+      <GuideCompletionFooter resourceSlug="guide-rdv" title="J'ai terminé ce guide" />
     </div>
   );
 }

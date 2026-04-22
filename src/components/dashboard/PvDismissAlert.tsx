@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
+import { getInitials } from '../../lib/utils/getInitials'
 
 interface PvAlertClient {
   id: string
@@ -47,7 +48,7 @@ export function PvDismissAlert({ clients }: PvDismissAlertProps) {
         <button onClick={dismissAll} style={{ marginLeft: 'auto', fontSize: 10, color: 'var(--ls-text-hint)', background: 'rgba(128,128,128,0.06)', border: 'none', borderRadius: 6, padding: '3px 10px', cursor: 'pointer', fontFamily: 'DM Sans, sans-serif' }}>× Ignorer tout</button>
       </div>
       {visible.map((client, i) => {
-        const initials = client.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
+        const initials = getInitials(client.name)
         return (
           <div key={client.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 0', borderTop: i > 0 ? '1px solid rgba(128,128,128,0.08)' : 'none' }}>
             <div style={{ width: 30, height: 30, borderRadius: '50%', flexShrink: 0, background: 'rgba(251,113,133,0.12)', color: '#FB7185', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700, fontFamily: 'Syne, sans-serif' }}>{initials}</div>

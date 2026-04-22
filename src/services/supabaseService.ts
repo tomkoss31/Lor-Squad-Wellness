@@ -51,6 +51,8 @@ type AssessmentRow = {
   decision_client?: DecisionClient | null;
   type_de_suite?: TypeDeSuite | null;
   message_a_laisser?: MessageALaisser | null;
+  coach_notes_draft?: string | null;
+  coach_notes_initial?: string | null;
   pedagogical_focus: string[] | null;
 };
 
@@ -82,6 +84,10 @@ type ClientRow = {
   free_follow_up?: boolean | null;
   free_pv_tracking?: boolean | null;
   general_note?: string | null;
+  // V2 (2026-04-24) : après migration, la colonne est renommée. On lit
+  // les deux pour la transition (avant/après migration SQL).
+  general_note_deprecated?: string | null;
+  onboarding_checks?: { telegram?: boolean; photo_before?: boolean; measurements?: boolean } | null;
   assessments?: AssessmentRow[] | null;
 };
 
@@ -276,6 +282,47 @@ function mapUser(row: UserRow): User {
   };
 }
 
+/**
+ * Durcissement import client (2026-04-21) : normalise les sous-champs
+ * tableau du questionnaire qui peuvent arriver null/absents depuis un
+ * INSERT SQL brut (import Mélanie / CSV / restore). Le reste du code
+ * app suppose que ces champs sont des tableaux ([]) — sans ça, un
+ * simple `.length` crash la page "Nouveau body scan".
+ */
+function normalizeQuestionnaire(
+  raw: AssessmentRecord["questionnaire"] | null | undefined
+): AssessmentRecord["questionnaire"] {
+  const q = (raw ?? {}) as AssessmentRecord["questionnaire"];
+  return {
+    ...q,
+    recommendations: Array.isArray(q.recommendations) ? q.recommendations : [],
+    selectedProductIds: Array.isArray(q.selectedProductIds) ? q.selectedProductIds : [],
+    detectedNeedIds: Array.isArray(q.detectedNeedIds) ? q.detectedNeedIds : []
+  };
+}
+
+/**
+ * Durcissement import (2026-04-21) : garantit un BodyScanMetrics complet
+ * même si le JSONB importé est null ou manque des clés. Toutes les valeurs
+ * manquantes deviennent 0 — le reste du code peut calculer / afficher sans
+ * crash (0 est interprété comme "pas encore mesuré" dans l'UI).
+ */
+function normalizeBodyScan(
+  raw: AssessmentRecord["bodyScan"] | null | undefined
+): AssessmentRecord["bodyScan"] {
+  const b = (raw ?? {}) as Partial<AssessmentRecord["bodyScan"]>;
+  return {
+    weight: typeof b.weight === "number" ? b.weight : 0,
+    bodyFat: typeof b.bodyFat === "number" ? b.bodyFat : 0,
+    muscleMass: typeof b.muscleMass === "number" ? b.muscleMass : 0,
+    hydration: typeof b.hydration === "number" ? b.hydration : 0,
+    boneMass: typeof b.boneMass === "number" ? b.boneMass : 0,
+    visceralFat: typeof b.visceralFat === "number" ? b.visceralFat : 0,
+    bmr: typeof b.bmr === "number" ? b.bmr : 0,
+    metabolicAge: typeof b.metabolicAge === "number" ? b.metabolicAge : 0
+  };
+}
+
 function mapAssessment(row: AssessmentRow): AssessmentRecord {
   return {
     id: row.id,
@@ -287,12 +334,14 @@ function mapAssessment(row: AssessmentRow): AssessmentRecord {
     summary: row.summary,
     notes: row.notes,
     nextFollowUp: row.next_follow_up ?? undefined,
-    bodyScan: row.body_scan,
-    questionnaire: row.questionnaire,
+    bodyScan: normalizeBodyScan(row.body_scan),
+    questionnaire: normalizeQuestionnaire(row.questionnaire),
     pedagogicalFocus: row.pedagogical_focus ?? [],
     decisionClient: row.decision_client ?? null,
     typeDeSuite: row.type_de_suite ?? null,
-    messageALaisser: row.message_a_laisser ?? null
+    messageALaisser: row.message_a_laisser ?? null,
+    coachNotesDraft: row.coach_notes_draft ?? null,
+    coachNotesInitial: row.coach_notes_initial ?? null
   };
 }
 
@@ -324,7 +373,8 @@ function mapClient(row: ClientRow): Client {
     lifecycleUpdatedBy: row.lifecycle_updated_by ?? null,
     freeFollowUp: row.free_follow_up ?? false,
     freePvTracking: row.free_pv_tracking ?? false,
-    generalNote: row.general_note ?? undefined,
+    generalNote: row.general_note ?? row.general_note_deprecated ?? undefined,
+    onboardingChecks: row.onboarding_checks ?? undefined,
     assessments: (row.assessments ?? []).map(mapAssessment)
   };
 }
@@ -433,7 +483,14 @@ export async function restoreSupabaseSession() {
 
   const user = await getProfile(session.user.id);
   if (!user || !user.active) {
-    await client.auth.signOut();
+    // Hotfix PWA login client (2026-04-24) : on NE signout PAS ici.
+    // Un user auth valide sans profil public.users peut être un client
+    // (lié via client_app_accounts.auth_user_id). Signer out casserait
+    // sa session Supabase et forcerait un re-login manuel à chaque
+    // ouverture de l'app. On retourne juste null → AppContext.currentUser
+    // reste null, le ProtectedRoute redirige vers /login si l'user tente
+    // d'accéder à une route coach, et la session reste disponible pour
+    // les RPC anon token-based de /client/:token.
     return null;
   }
 
@@ -460,24 +517,53 @@ export async function loginWithSupabaseCredentials(payload: {
   }
 
   const user = await getProfile(data.user.id);
-  if (!user || !user.active) {
-    await client.auth.signOut();
+
+  if (user && user.active) {
+    // Coach / admin / referent : profil dans public.users, flow classique.
+    await client
+      .from("users")
+      .update({ last_access_at: new Date().toISOString() })
+      .eq("id", user.id);
+
     return {
-      ok: false as const,
-      error:
-        "Le compte existe bien, mais son profil applicatif est absent ou inactif dans la table users."
+      ok: true as const,
+      kind: "coach" as const,
+      user: { ...user, lastAccessAt: new Date().toISOString() },
+      session: createSupabaseSession(user)
     };
   }
 
-  await client
-    .from("users")
-    .update({ last_access_at: new Date().toISOString() })
-    .eq("id", user.id);
+  // Hotfix PWA login client (2026-04-24) : l'auth a réussi mais aucun
+  // profil coach trouvé. On check si c'est un compte client lié via
+  // client_app_accounts.auth_user_id — dans ce cas on renvoie le token
+  // magic-link pour rediriger vers /client/:token.
+  const { data: clientAccount } = await client
+    .from("client_app_accounts")
+    .select("token, client_id")
+    .eq("auth_user_id", data.user.id)
+    .maybeSingle();
 
+  if (clientAccount?.token) {
+    return {
+      ok: true as const,
+      kind: "client" as const,
+      clientToken: String(clientAccount.token),
+      clientId: String(clientAccount.client_id ?? ""),
+    };
+  }
+
+  // Aucun profil nulle part. Sign out pour éviter une session zombie.
+  await client.auth.signOut();
+  if (user && !user.active) {
+    return {
+      ok: false as const,
+      error: "Ton compte est désactivé. Contacte ton parrain ou l'administrateur.",
+    };
+  }
   return {
-    ok: true as const,
-    user: { ...user, lastAccessAt: new Date().toISOString() },
-    session: createSupabaseSession(user)
+    ok: false as const,
+    error:
+      "Ton compte n'est pas encore lié à un espace. Contacte ton coach pour qu'il te regénère un lien d'accès.",
   };
 }
 
@@ -701,6 +787,9 @@ export async function createSupabaseClientWithInitialAssessment(payload: {
     decision_client: payload.assessment.decisionClient ?? null,
     type_de_suite: payload.assessment.typeDeSuite ?? null,
     message_a_laisser: payload.assessment.messageALaisser ?? null,
+    // Chantier Polish Vue complète (2026-04-24)
+    coach_notes_draft: payload.assessment.coachNotesDraft ?? null,
+    coach_notes_initial: payload.assessment.coachNotesInitial ?? null,
   };
   let { error: assessmentError } = await client.from("assessments").insert(assessmentInsertPayload);
 
@@ -714,6 +803,17 @@ export async function createSupabaseClientWithInitialAssessment(payload: {
     const { decision_client: _dc, type_de_suite: _ts, message_a_laisser: _ma, ...withoutStep13 } = assessmentInsertPayload;
     void _dc; void _ts; void _ma;
     ({ error: assessmentError } = await client.from("assessments").insert(withoutStep13));
+  }
+
+  // Fallback : colonnes coach_notes_* pas encore présentes → retry sans
+  if (
+    assessmentError &&
+    (isMissingColumnError(assessmentError, "coach_notes_draft") ||
+      isMissingColumnError(assessmentError, "coach_notes_initial"))
+  ) {
+    const { coach_notes_draft: _cd, coach_notes_initial: _ci, ...withoutNotes } = assessmentInsertPayload;
+    void _cd; void _ci;
+    ({ error: assessmentError } = await client.from("assessments").insert(withoutNotes));
   }
 
   if (assessmentError) {
@@ -1358,18 +1458,48 @@ export async function updateSupabaseClientGeneralNote(params: {
   const { clientId, generalNote } = params;
   const client = await requireSupabase();
 
-  const { error } = await client
+  // V2 (2026-04-24) : après migration, la colonne est renommée en
+  // general_note_deprecated. On tente general_note d'abord, fallback
+  // sur general_note_deprecated, pour supporter les deux états.
+  let { error } = await client
     .from("clients")
     .update({ general_note: generalNote })
     .eq("id", clientId);
 
+  if (error && isMissingColumnError(error, "general_note")) {
+    ({ error } = await client
+      .from("clients")
+      .update({ general_note_deprecated: generalNote })
+      .eq("id", clientId));
+  }
+
   if (error) {
-    if (isMissingColumnError(error, "general_note")) {
+    throw new Error(`Impossible de mettre à jour la note générale : ${error.message}`);
+  }
+}
+
+// ─── Onboarding Checks (Chantier Polish Vue complète 2026-04-24) ─────────
+// 3 checks coach cochables depuis la fiche client (telegram, photo before,
+// mensurations). Stocké en jsonb sur clients.onboarding_checks.
+export async function updateSupabaseClientOnboardingChecks(params: {
+  clientId: string;
+  checks: { telegram?: boolean; photo_before?: boolean; measurements?: boolean };
+}): Promise<void> {
+  const { clientId, checks } = params;
+  const client = await requireSupabase();
+
+  const { error } = await client
+    .from("clients")
+    .update({ onboarding_checks: checks })
+    .eq("id", clientId);
+
+  if (error) {
+    if (isMissingColumnError(error, "onboarding_checks")) {
       throw new Error(
-        "La colonne general_note n'existe pas encore. Exécute la migration supabase/migrations/20260420200000_add_general_note.sql."
+        "La colonne onboarding_checks n'existe pas encore. Exécute la migration supabase/migrations/20260423090000_client_onboarding_checks.sql."
       );
     }
-    throw new Error(`Impossible de mettre à jour la note générale : ${error.message}`);
+    throw new Error(`Impossible de mettre à jour les checks onboarding : ${error.message}`);
   }
 }
 

@@ -4,6 +4,8 @@ import { Button } from "../components/ui/Button";
 import { useAppContext } from "../context/AppContext";
 import { PushNotificationSettings } from "../components/settings/PushNotificationSettings";
 import { canSponsorDistributors, getRoleLabel } from "../lib/auth";
+import { InviteDistributorModal } from "../components/users/InviteDistributorModal";
+import { PendingInvitationsList } from "../components/users/PendingInvitationsList";
 import { getPortfolioMetrics } from "../lib/portfolio";
 import type { User } from "../types/domain";
 
@@ -24,6 +26,10 @@ export function UsersPage() {
 
   // ─── States filtres + onglets ─────────────────────────────────────
   const [activeTab, setActiveTab] = useState<TabKey>("members");
+  // V2 invitation distributeur (2026-04-24)
+  const [inviteOpen, setInviteOpen] = useState(false);
+  const [invitationsKey, setInvitationsKey] = useState(0);
+  const canInviteDistri = !!currentUser && canSponsorDistributors(currentUser);
   const [expandedUserId, setExpandedUserId] = useState<string | null>(null);
   const [roleFilter, setRoleFilter] = useState<RoleFilter>("all");
   const [search, setSearch] = useState("");
@@ -264,6 +270,37 @@ export function UsersPage() {
         {/* ONGLET MEMBRES */}
         {activeTab === "members" && (
           <div style={{ padding: 16 }}>
+            {/* Bouton Inviter distributeur (V2) + invitations en cours */}
+            {canInviteDistri ? (
+              <div style={{ marginBottom: 14 }}>
+                <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 8 }}>
+                  <button
+                    type="button"
+                    onClick={() => setInviteOpen(true)}
+                    style={{
+                      padding: "10px 16px",
+                      borderRadius: 10,
+                      background: "linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)",
+                      border: "none",
+                      color: "#FFFFFF",
+                      cursor: "pointer",
+                      fontSize: 13,
+                      fontFamily: "DM Sans, sans-serif",
+                      fontWeight: 600,
+                      boxShadow: "0 2px 6px rgba(186,117,23,0.25)",
+                    }}
+                  >
+                    + Inviter un distributeur
+                  </button>
+                </div>
+                <PendingInvitationsList refreshKey={invitationsKey} />
+                <InviteDistributorModal
+                  open={inviteOpen}
+                  onClose={() => setInviteOpen(false)}
+                  onCreated={() => setInvitationsKey((k) => k + 1)}
+                />
+              </div>
+            ) : null}
             {/* Recherche + filtres */}
             <div style={{ display: "flex", gap: 8, marginBottom: 14, flexWrap: "wrap", alignItems: "center" }}>
               <div style={{ flex: 1, minWidth: 200, position: "relative" }}>

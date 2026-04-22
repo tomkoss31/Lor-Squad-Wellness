@@ -177,6 +177,11 @@ export interface AssessmentRecord {
   decisionClient?: DecisionClient | null;
   typeDeSuite?: TypeDeSuite | null;
   messageALaisser?: MessageALaisser | null;
+  // Chantier Polish Vue complète (2026-04-24) : notes coach prises pendant
+  // le bilan. `coachNotesDraft` = auto-save pendant le bilan, figé dans
+  // `coachNotesInitial` à la validation (affiché en lecture seule sur la fiche).
+  coachNotesDraft?: string | null;
+  coachNotesInitial?: string | null;
 }
 
 export interface Client {
@@ -216,6 +221,13 @@ export interface Client {
   // (loisirs, préférences, anecdotes — cheval, piscine, Mars, etc.).
   // Distinct du champ notes qui est déjà utilisé pour les notes coach par bilan.
   generalNote?: string;
+  // Chantier Polish Vue complète (2026-04-24) : 3 checks onboarding coach,
+  // cochables depuis la fiche client. Jsonb en DB, défaut tout false.
+  onboardingChecks?: {
+    telegram?: boolean;
+    photo_before?: boolean;
+    measurements?: boolean;
+  };
 }
 
 export interface FollowUp {
@@ -273,7 +285,16 @@ export interface ClientMessage {
   client_id: string;
   client_name: string;
   distributor_id: string;
-  message_type: 'product_request' | 'recommendation' | 'general';
+  // Chantier Messagerie client ↔ coach (2026-04-21) : +'rdv_request'.
+  // Chantier messagerie bidirectionnelle (2026-04-22) : +'coach_reply'.
+  message_type: 'product_request' | 'recommendation' | 'rdv_request' | 'coach_reply' | 'general';
+  // Chantier messagerie bidirectionnelle (2026-04-22) : origine du message.
+  sender?: 'client' | 'coach';
+  sender_id?: string | null;
+  read_at?: string | null;
+  // Chantier messagerie finalisée (2026-04-23) : états workflow coach.
+  archived_at?: string | null;
+  resolved_at?: string | null;
   product_name?: string;
   message?: string;
   client_contact?: string;

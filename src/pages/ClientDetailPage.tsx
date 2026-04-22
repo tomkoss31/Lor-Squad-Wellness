@@ -1,21 +1,25 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { EditScheduleModal } from "../components/client/EditScheduleModal";
+import { WeightSummaryBlock } from "../components/client/WeightSummaryBlock";
+import { BodyCompositionGauges } from "../components/client/BodyCompositionGauges";
+import { OnboardingChecksBlock } from "../components/client/OnboardingChecksBlock";
+import { CoachNotesBlock } from "../components/client/CoachNotesBlock";
+import { NextAppointmentBanner } from "../components/client/NextAppointmentBanner";
 import { BodyFatInsightCard } from "../components/body-scan/BodyFatInsightCard";
 import { MuscleMassInsightCard } from "../components/body-scan/MuscleMassInsightCard";
-import { BodyScanSnapshotCard } from "../components/body-scan/BodyScanSnapshotCard";
 import { HydrationVisceralInsightCard } from "../components/body-scan/HydrationVisceralInsightCard";
 import { BodyScanRadar } from "../components/body-scan/BodyScanRadar";
 import { HistoryTimeline } from "../components/client/HistoryTimeline";
 import { Button } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
-import { MetricTile } from "../components/ui/MetricTile";
 import { StatusBadge } from "../components/ui/StatusBadge";
 import { useAppContext } from "../context/AppContext";
 import { useToast, buildSupabaseErrorToast } from "../context/ToastContext";
 import { ErrorBoundary } from "../components/ErrorBoundary";
 import { FollowUpProtocolCard } from "../components/follow-up/FollowUpProtocolCard";
 import { ClientGeneralNote } from "../components/client/ClientGeneralNote";
+import { ClientInvitationButton } from "../components/client/ClientInvitationButton";
 import { buildReportData, generateProductRecommendations } from "../lib/evolutionReport";
 import { EvolutionReportModal } from "../components/assessment/EvolutionReportModal";
 import { getSupabaseClient } from "../services/supabaseClient";
@@ -339,7 +343,7 @@ export function ClientDetailPage() {
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontFamily: 'Syne, sans-serif', fontSize: 20, fontWeight: 700
             }}>
-              {client.firstName[0]}{client.lastName[0]}
+              {client.firstName?.[0] ?? "?"}{client.lastName?.[0] ?? ""}
             </div>
             <div>
               <div className="flex items-center gap-3 flex-wrap">
@@ -415,7 +419,8 @@ export function ClientDetailPage() {
         )}
       </div>
 
-      {/* Tab bar */}
+      {/* Tab bar + bandeau Prochain RDV (Chantier V3 2026-04-24) */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
       <div className="client-tabs flex gap-1 rounded-[14px] border border-[var(--ls-border)] bg-[var(--ls-surface)] p-1" style={{ width: 'fit-content', maxWidth: '100%' }}>
         {[
           { label: 'Vue complète', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg> },
@@ -462,6 +467,14 @@ export function ClientDetailPage() {
         )}
       </div>
 
+      {/* Bandeau Prochain RDV (V3) */}
+      <NextAppointmentBanner
+        nextAppointmentDate={activeFollowUp?.dueDate ?? null}
+        onPlan={() => setActiveTab(4)}
+        onViewDetails={() => setActiveTab(4)}
+      />
+      </div>
+
       {reportUrl && (
         <EvolutionReportModal
           reportUrl={reportUrl}
@@ -473,50 +486,51 @@ export function ClientDetailPage() {
       {/* Tab 0: Vue complète — cockpit light */}
       {activeTab === 0 && (
         <Card className="space-y-6">
+          {/* Chantier Polish Vue complète (2026-04-24) : résumé perte/graisse/muscle
+              en haut, au-dessus des 4 MetricTiles. */}
+          <WeightSummaryBlock
+            client={client}
+            firstWeight={firstAssessment.bodyScan?.weight ?? null}
+            latestWeight={latestBodyScan.weight ?? null}
+            firstBodyFatPct={firstAssessment.bodyScan?.bodyFat ?? null}
+            latestBodyFatPct={latestBodyScan.bodyFat ?? null}
+            firstMuscleMass={firstAssessment.bodyScan?.muscleMass ?? null}
+            latestMuscleMass={latestBodyScan.muscleMass ?? null}
+            targetWeight={resolvedTargetWeight ?? null}
+          />
+
           <NouveauBilanCTA onClick={() => navigate(`/clients/${client.id}/follow-up/new`)} />
 
-          <div className="bodyscan-metrics grid grid-cols-2 gap-3 md:gap-4 xl:grid-cols-4">
-            <MetricTile
-              label="Poids de départ"
-              value={`${firstAssessment.bodyScan.weight} kg`}
-              hint={`Depuis le ${formatDate(firstAssessment.date)}`}
-              accent="blue"
-            />
-            <MetricTile
-              label="Poids du jour"
-              value={`${latestBodyScan.weight} kg`}
-              hint={`Relevé du ${formatDate(latestAssessment.date)}`}
-              accent="green"
-            />
-            <MetricTile
-              label={client.objective === "weight-loss" ? "Cible" : "Cap du moment"}
-              value={
-                client.objective === "weight-loss"
-                  ? resolvedTargetWeight
-                    ? `${resolvedTargetWeight} kg`
-                    : "À définir"
-                  : latestQuestionnaire.objectiveFocus || "Prise de masse"
-              }
-              hint={client.objective === "weight-loss" ? "Repère cible" : "Cap actuel"}
-              accent={
-                client.objective === "weight-loss" && !resolvedTargetWeight
-                  ? "muted"
-                  : "red"
-              }
-            />
-            <MetricTile
-              label="Prochain rendez-vous"
-              value={activeFollowUp ? formatDateTime(activeFollowUp.dueDate) : "Non planifié"}
-              hint={activeFollowUp ? "Suite déjà posée" : "Client inactif ou en pause"}
-              accent={activeFollowUp ? "blue" : "muted"}
-            />
-          </div>
+          {/* Chantier Polish Vue complète (2026-04-24) : 3 checks onboarding
+              coach (Telegram, photo avant, mensurations) juste sous le CTA
+              body scan. Modifiables via modale. */}
+          <OnboardingChecksBlock clientId={client.id} checks={client.onboardingChecks} />
 
-          <BodyScanSnapshotCard
-            title="Dernier body scan"
-            dateLabel={`Relevé du ${formatDate(latestAssessment.date)}`}
-            metrics={latestBodyScan}
-            realAge={client.age}
+          {/* Chantier V3 (2026-04-24) : 4 MetricTiles Poids départ/jour/
+              cible/RDV supprimées — fusion dans le WeightSummaryBlock en
+              haut et NextAppointmentBanner à côté des onglets. */}
+
+          {/* Chantier Polish Vue complète (2026-04-24) : remplace le
+              BodyScanSnapshotCard (chiffres bruts) par 3 jauges combinées
+              avec zones de santé, marqueurs départ/actuel/cible et message
+              contextuel selon progression. */}
+          <BodyCompositionGauges
+            sex={client.sex}
+            currentBodyFat={latestBodyScan.bodyFat ?? null}
+            initialBodyFat={firstAssessment.bodyScan?.bodyFat ?? null}
+            currentMuscleMass={latestBodyScan.muscleMass ?? null}
+            initialMuscleMass={firstAssessment.bodyScan?.muscleMass ?? null}
+            currentHydration={latestBodyScan.hydration ?? null}
+            initialHydration={firstAssessment.bodyScan?.hydration ?? null}
+          />
+
+          {/* Chantier Polish Vue complète (2026-04-24) : notes coach vivantes
+              + bilan initial archivé. Stockage client_notes (typées). */}
+          <CoachNotesBlock
+            clientId={client.id}
+            clientName={`${client.firstName} ${client.lastName}`}
+            initialAssessmentNotes={firstAssessment.coachNotesInitial ?? firstAssessment.notes ?? null}
+            initialAssessmentDate={firstAssessment.date ?? null}
           />
         </Card>
       )}
@@ -596,19 +610,19 @@ export function ClientDetailPage() {
                 previous={
                   previousAssessment
                     ? {
-                        weight: previousAssessment.bodyScan.weight,
-                        percent: previousAssessment.bodyScan.bodyFat
+                        weight: previousAssessment.bodyScan?.weight ?? 0,
+                        percent: previousAssessment.bodyScan?.bodyFat ?? 0
                       }
                     : null
                 }
                 initial={{
-                  weight: firstAssessment.bodyScan.weight,
-                  percent: firstAssessment.bodyScan.bodyFat
+                  weight: firstAssessment.bodyScan?.weight ?? 0,
+                  percent: firstAssessment.bodyScan?.bodyFat ?? 0
                 }}
-                history={[...client.assessments].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()).map((assessment) => ({
+                history={[...(client.assessments ?? [])].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()).map((assessment) => ({
                   date: assessment.date,
-                  weight: assessment.bodyScan.weight,
-                  percent: assessment.bodyScan.bodyFat
+                  weight: assessment.bodyScan?.weight ?? 0,
+                  percent: assessment.bodyScan?.bodyFat ?? 0
                 }))}
               />
 
@@ -617,19 +631,19 @@ export function ClientDetailPage() {
                 previous={
                   previousAssessment
                     ? {
-                        weight: previousAssessment.bodyScan.weight,
-                        muscleMass: previousAssessment.bodyScan.muscleMass
+                        weight: previousAssessment.bodyScan?.weight ?? 0,
+                        muscleMass: previousAssessment.bodyScan?.muscleMass ?? 0
                       }
                     : null
                 }
                 initial={{
-                  weight: firstAssessment.bodyScan.weight,
-                  muscleMass: firstAssessment.bodyScan.muscleMass
+                  weight: firstAssessment.bodyScan?.weight ?? 0,
+                  muscleMass: firstAssessment.bodyScan?.muscleMass ?? 0
                 }}
-                history={[...client.assessments].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()).map((assessment) => ({
+                history={[...(client.assessments ?? [])].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()).map((assessment) => ({
                   date: assessment.date,
-                  weight: assessment.bodyScan.weight,
-                  muscleMass: assessment.bodyScan.muscleMass
+                  weight: assessment.bodyScan?.weight ?? 0,
+                  muscleMass: assessment.bodyScan?.muscleMass ?? 0
                 }))}
               />
 
@@ -638,11 +652,11 @@ export function ClientDetailPage() {
                 hydrationPercent={latestBodyScan.hydration}
                 sex={client.sex}
                 visceralFat={latestBodyScan.visceralFat}
-                history={[...client.assessments].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()).map((assessment) => ({
+                history={[...(client.assessments ?? [])].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()).map((assessment) => ({
                   date: assessment.date,
-                  weight: assessment.bodyScan.weight,
-                  hydrationPercent: assessment.bodyScan.hydration,
-                  visceralFat: assessment.bodyScan.visceralFat
+                  weight: assessment.bodyScan?.weight ?? 0,
+                  hydrationPercent: assessment.bodyScan?.hydration ?? 0,
+                  visceralFat: assessment.bodyScan?.visceralFat ?? 0
                 }))}
               />
             </>
@@ -883,6 +897,14 @@ export function ClientDetailPage() {
       {/* Tab 4: Actions rapides */}
       {activeTab === 4 && (
         <div className="grid gap-4 md:grid-cols-2">
+          {/* Chantier invitation client app (2026-04-21) : bouton d'invitation
+              en tête de l'onglet Actions, avant la note générale. Visible
+              direct au coach sans scroll. */}
+          <div className="md:col-span-2">
+            <ErrorBoundary name="ClientDetailPage/InvitationButton" fallback={null}>
+              <ClientInvitationButton client={client} />
+            </ErrorBoundary>
+          </div>
           {/* Chantier bilan updates (2026-04-20) : note libre "À savoir sur
               ce client" — en tête, full-width, juste au-dessus du protocole. */}
           <div className="md:col-span-2">
