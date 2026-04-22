@@ -474,7 +474,14 @@ export async function restoreSupabaseSession() {
 
   const user = await getProfile(session.user.id);
   if (!user || !user.active) {
-    await client.auth.signOut();
+    // Hotfix PWA login client (2026-04-24) : on NE signout PAS ici.
+    // Un user auth valide sans profil public.users peut être un client
+    // (lié via client_app_accounts.auth_user_id). Signer out casserait
+    // sa session Supabase et forcerait un re-login manuel à chaque
+    // ouverture de l'app. On retourne juste null → AppContext.currentUser
+    // reste null, le ProtectedRoute redirige vers /login si l'user tente
+    // d'accéder à une route coach, et la session reste disponible pour
+    // les RPC anon token-based de /client/:token.
     return null;
   }
 
@@ -501,24 +508,53 @@ export async function loginWithSupabaseCredentials(payload: {
   }
 
   const user = await getProfile(data.user.id);
-  if (!user || !user.active) {
-    await client.auth.signOut();
+
+  if (user && user.active) {
+    // Coach / admin / referent : profil dans public.users, flow classique.
+    await client
+      .from("users")
+      .update({ last_access_at: new Date().toISOString() })
+      .eq("id", user.id);
+
     return {
-      ok: false as const,
-      error:
-        "Le compte existe bien, mais son profil applicatif est absent ou inactif dans la table users."
+      ok: true as const,
+      kind: "coach" as const,
+      user: { ...user, lastAccessAt: new Date().toISOString() },
+      session: createSupabaseSession(user)
     };
   }
 
-  await client
-    .from("users")
-    .update({ last_access_at: new Date().toISOString() })
-    .eq("id", user.id);
+  // Hotfix PWA login client (2026-04-24) : l'auth a réussi mais aucun
+  // profil coach trouvé. On check si c'est un compte client lié via
+  // client_app_accounts.auth_user_id — dans ce cas on renvoie le token
+  // magic-link pour rediriger vers /client/:token.
+  const { data: clientAccount } = await client
+    .from("client_app_accounts")
+    .select("token, client_id")
+    .eq("auth_user_id", data.user.id)
+    .maybeSingle();
 
+  if (clientAccount?.token) {
+    return {
+      ok: true as const,
+      kind: "client" as const,
+      clientToken: String(clientAccount.token),
+      clientId: String(clientAccount.client_id ?? ""),
+    };
+  }
+
+  // Aucun profil nulle part. Sign out pour éviter une session zombie.
+  await client.auth.signOut();
+  if (user && !user.active) {
+    return {
+      ok: false as const,
+      error: "Ton compte est désactivé. Contacte ton parrain ou l'administrateur.",
+    };
+  }
   return {
-    ok: true as const,
-    user: { ...user, lastAccessAt: new Date().toISOString() },
-    session: createSupabaseSession(user)
+    ok: false as const,
+    error:
+      "Ton compte n'est pas encore lié à un espace. Contacte ton coach pour qu'il te regénère un lien d'accès.",
   };
 }
 
