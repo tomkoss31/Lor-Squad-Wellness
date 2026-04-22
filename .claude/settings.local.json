@@ -74,7 +74,8 @@
       "Bash(grep -rn \"split\\(/\\\\\\\\\\\\\\\\s+/\\)\" src --include=\"*.tsx\")",
       "Bash(awk '/^C:|^\\\\/.*\\(.ts|.tsx\\)$/ {file=$0; next} /error|warning/ {print file \": \" $0}')",
       "Bash(grep -n \"^    </div>$\\\\|^  \\);\\\\|^}$\" src/components/client/CoachNotesBlock.tsx)",
-      "Bash(awk '/activeTab === .evolution./{f=1} f&&/activeTab === .products./{print NR;exit}' src/pages/ClientAppPage.tsx)"
+      "Bash(awk '/activeTab === .evolution./{f=1} f&&/activeTab === .products./{print NR;exit}' src/pages/ClientAppPage.tsx)",
+      "Bash(awk '/^function InviteModal/{f=1} f{print NR\": \"$0} f && /^}$/ && NR > 207 {exit}' src/components/settings/EquipeTab.tsx)"
     ]
   }
 }
