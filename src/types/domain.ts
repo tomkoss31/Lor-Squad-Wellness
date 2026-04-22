@@ -216,6 +216,13 @@ export interface Client {
   // (loisirs, préférences, anecdotes — cheval, piscine, Mars, etc.).
   // Distinct du champ notes qui est déjà utilisé pour les notes coach par bilan.
   generalNote?: string;
+  // Chantier Polish Vue complète (2026-04-24) : 3 checks onboarding coach,
+  // cochables depuis la fiche client. Jsonb en DB, défaut tout false.
+  onboardingChecks?: {
+    telegram?: boolean;
+    photo_before?: boolean;
+    measurements?: boolean;
+  };
 }
 
 export interface FollowUp {

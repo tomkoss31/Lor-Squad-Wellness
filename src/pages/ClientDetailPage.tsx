@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom"
 import { EditScheduleModal } from "../components/client/EditScheduleModal";
 import { WeightSummaryBlock } from "../components/client/WeightSummaryBlock";
 import { BodyCompositionGauges } from "../components/client/BodyCompositionGauges";
+import { OnboardingChecksBlock } from "../components/client/OnboardingChecksBlock";
 import { BodyFatInsightCard } from "../components/body-scan/BodyFatInsightCard";
 import { MuscleMassInsightCard } from "../components/body-scan/MuscleMassInsightCard";
 import { BodyScanSnapshotCard } from "../components/body-scan/BodyScanSnapshotCard";
@@ -490,6 +491,11 @@ export function ClientDetailPage() {
           />
 
           <NouveauBilanCTA onClick={() => navigate(`/clients/${client.id}/follow-up/new`)} />
+
+          {/* Chantier Polish Vue complète (2026-04-24) : 3 checks onboarding
+              coach (Telegram, photo avant, mensurations) juste sous le CTA
+              body scan. Modifiables via modale. */}
+          <OnboardingChecksBlock clientId={client.id} checks={client.onboardingChecks} />
 
           <div className="bodyscan-metrics grid grid-cols-2 gap-3 md:gap-4 xl:grid-cols-4">
             <MetricTile

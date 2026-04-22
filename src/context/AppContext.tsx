@@ -43,6 +43,7 @@ import {
   updateSupabaseClientFreeFollowUp,
   updateSupabaseClientFreePvTracking,
   updateSupabaseClientGeneralNote,
+  updateSupabaseClientOnboardingChecks,
   fetchSupabaseProspects,
   fetchAllSupabaseFollowUpProtocolLogs,
   createSupabaseProspect,
@@ -110,6 +111,11 @@ interface AppContextValue {
   setClientFreePvTracking: (clientId: string, freePvTracking: boolean) => Promise<void>;
   // Chantier bilan updates (2026-04-20) : note libre "À savoir sur ce client"
   setClientGeneralNote: (clientId: string, generalNote: string) => Promise<void>;
+  // Chantier Polish Vue complète (2026-04-24) : 3 checks onboarding coach
+  setClientOnboardingChecks: (
+    clientId: string,
+    checks: { telegram?: boolean; photo_before?: boolean; measurements?: boolean }
+  ) => Promise<void>;
   updateFollowUpStatus: (followUpId: string, status: 'scheduled' | 'pending' | 'completed' | 'dismissed') => Promise<void>;
   loginWithCredentials: (
     payload: { email: string; password: string }
@@ -966,6 +972,13 @@ export function AppProvider({ children }: PropsWithChildren) {
         await updateSupabaseClientGeneralNote({ clientId, generalNote });
         setClients(prev => prev.map(c =>
           c.id === clientId ? { ...c, generalNote } : c
+        ));
+      },
+      // Onboarding checks (Chantier Polish Vue complète 2026-04-24)
+      setClientOnboardingChecks: async (clientId, checks) => {
+        await updateSupabaseClientOnboardingChecks({ clientId, checks });
+        setClients(prev => prev.map(c =>
+          c.id === clientId ? { ...c, onboardingChecks: checks } : c
         ));
       },
       loginWithCredentials,
