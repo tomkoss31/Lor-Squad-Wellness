@@ -757,8 +757,16 @@ export function AppProvider({ children }: PropsWithChildren) {
       clientMessages: currentUser
         ? clientMessages.filter(m => m.distributor_id === currentUser.id || m.distributor_id === currentUser.name || currentUser.role === 'admin')
         : [],
+      // Chantier Messagerie finalisée (2026-04-23) : on exclut les archivés
+      // du badge sidebar, et on ne compte que les messages venant du client
+      // (sender='client' ou absent pour legacy).
       unreadMessageCount: currentUser
-        ? clientMessages.filter(m => !m.read && (m.distributor_id === currentUser.id || m.distributor_id === currentUser.name || currentUser.role === 'admin')).length
+        ? clientMessages.filter(m =>
+            !m.read &&
+            !m.archived_at &&
+            (m.sender ?? 'client') === 'client' &&
+            (m.distributor_id === currentUser.id || m.distributor_id === currentUser.name || currentUser.role === 'admin'),
+          ).length
         : 0,
       // ─── Agenda Prospects ─────────────────────────────────────────────
       prospects: currentUser

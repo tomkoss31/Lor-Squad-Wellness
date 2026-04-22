@@ -178,6 +178,7 @@ export function ReplyMessageModal({ open, onClose, parent, onSent }: ReplyMessag
           rows={6}
           disabled={sending}
           placeholder={`Écris ta réponse à ${firstName}…`}
+          maxLength={1200}
           style={{
             width: "100%",
             padding: "12px 14px",
@@ -193,6 +194,17 @@ export function ReplyMessageModal({ open, onClose, parent, onSent }: ReplyMessag
             minHeight: 120,
           }}
         />
+        {/* Chantier Messagerie finalisée (2026-04-23) : compteur caractères. */}
+        <div
+          style={{
+            marginTop: 4,
+            fontSize: 10,
+            color: reply.length > 900 ? "#C9A84C" : "var(--ls-text-hint)",
+            textAlign: "right",
+          }}
+        >
+          {reply.length} / 1000
+        </div>
 
         {error ? (
           <p
