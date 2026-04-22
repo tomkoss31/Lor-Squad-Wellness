@@ -5,39 +5,36 @@ import { blasonLogo } from "../../data/visualContent";
 import { Button } from "../ui/Button";
 import { StatusBadge } from "../ui/StatusBadge";
 import { BottomNav } from "./BottomNav";
+import { NewBilanFab } from "./NewBilanFab";
 import { useTheme } from "../../hooks/useTheme";
 import { getRoleLabel } from "../../lib/auth";
 
+// Chantier Refonte Navigation (2026-04-22) : sidebar simplifiée +
+// renommage Accueil → Co-pilote. Ajout /formation et /settings.
 const NAV_ICONS: Record<string, JSX.Element> = {
-  "/dashboard": (
+  "/co-pilote": (
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
-  ),
-  "/guide": (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-  ),
-  "/recommendations": (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-  ),
-  "/pv": (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-  ),
-  "/clients": (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-  ),
-  "/users": (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="23" y1="11" x2="17" y2="11"/><line x1="20" y1="8" x2="20" y2="14"/></svg>
-  ),
-  "/messages": (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-  ),
-  "/assessments/new": (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
   ),
   "/agenda": (
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
   ),
-  "/guide-suivi": (
+  "/messages": (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+  ),
+  "/clients": (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+  ),
+  "/pv": (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+  ),
+  "/users": (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="23" y1="11" x2="17" y2="11"/><line x1="20" y1="8" x2="20" y2="14"/></svg>
+  ),
+  "/formation": (
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+  ),
+  "/settings": (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
   ),
 };
 
@@ -82,42 +79,45 @@ export function AppLayout() {
       : currentUser.role === "referent"
         ? "amber"
         : "green";
-  // Ordre réorganisé (Chantier UX Polish Bilan v1 — 2026-04-19) :
-  // Agenda remonté en position 2 juste après Accueil (quotidien-first).
+  // Chantier Refonte Navigation (2026-04-22) : sidebar plate 8 items max,
+  // Accueil → Co-pilote, suppression Recommandations/Nouveau bilan (FAB
+  // top-right à la place), fusion Guide RDV + Guide suivi → Centre de
+  // formation, ajout Paramètres en bas. Ordre exact validé avec Thomas.
   const navigation = [
-    { label: "Accueil", path: "/dashboard", badge: 0 },
+    { label: "Co-pilote", path: "/co-pilote", badge: 0 },
     { label: "Agenda", path: "/agenda", badge: todayProspectsCount },
-    { label: "Messages", path: "/messages", badge: unreadMessageCount ?? 0 },
+    { label: "Messagerie", path: "/messages", badge: unreadMessageCount ?? 0 },
     { label: "Dossiers clients", path: "/clients", badge: 0 },
-    ...(currentUser.role === "admin" ? [{ label: "Equipe", path: "/users", badge: 0 }] : []),
     { label: "Suivi PV", path: "/pv", badge: pvOverdueCount },
-    { label: "Guide rendez-vous", path: "/guide", badge: 0 },
-    { label: "Guide suivi client", path: "/guide-suivi", badge: 0, isNew: true },
-    { label: "Recommandations", path: "/recommendations", badge: urgentRelanceCount },
-    { label: "Nouveau bilan", path: "/assessments/new", badge: 0 }
+    ...(currentUser.role === "admin" ? [{ label: "Mon équipe", path: "/users", badge: 0 }] : []),
+    { label: "Centre de formation", path: "/formation", badge: 0 },
+    { label: "Paramètres", path: "/settings", badge: 0 },
   ];
+  // urgentRelanceCount n'est plus utilisé dans la sidebar (item Recommandations
+  // retiré) — on le conserve en variable au cas où un futur dashboard l'affiche.
+  void urgentRelanceCount;
 
   const pageTitle =
-    location.pathname === "/dashboard"
+    location.pathname === "/dashboard" || location.pathname === "/co-pilote"
       ? ""
-      : location.pathname === "/guide"
-        ? "Repères simples pour conduire le rendez-vous"
-        : location.pathname === "/recommendations"
-          ? "Le bon ton pour ouvrir les recommandations"
-          : location.pathname.startsWith("/pv")
-            ? "Pilotage simple des clients, commandes et points volume"
-            : location.pathname === "/clients"
-              ? "Dossiers clients et suivi en cours"
-              : location.pathname.startsWith("/distributors/")
-                ? "Portefeuille, relances et rythme du suivi"
-                : location.pathname === "/users"
-                  ? "Accès équipe et rôles clés"
-                  : location.pathname.startsWith("/clients/")
-                    ? "Lecture complète du dossier client"
-                    : location.pathname === "/assessments/new"
-                      ? "Le bilan guidé pour cadrer le rendez-vous"
-                      : location.pathname === "/agenda"
-                        ? "Agenda prospection et RDV à venir"
+      : location.pathname === "/guide" || location.pathname === "/formation"
+        ? "Centre de formation"
+        : location.pathname.startsWith("/pv")
+          ? "Pilotage simple des clients, commandes et points volume"
+          : location.pathname === "/clients"
+            ? "Dossiers clients et suivi en cours"
+            : location.pathname.startsWith("/distributors/")
+              ? "Portefeuille, relances et rythme du suivi"
+              : location.pathname === "/users"
+                ? "Mon équipe"
+                : location.pathname.startsWith("/clients/")
+                  ? "Lecture complète du dossier client"
+                  : location.pathname === "/assessments/new"
+                    ? "Le bilan guidé pour cadrer le rendez-vous"
+                    : location.pathname === "/agenda"
+                      ? "Agenda prospection et RDV à venir"
+                      : location.pathname === "/settings"
+                        ? "Paramètres"
                         : "Lor'Squad Wellness";
 
   async function handleLogout() {
@@ -162,8 +162,10 @@ export function AppLayout() {
             {navigation.map((item) => {
               const isActive =
                 location.pathname === item.path ||
+                (item.path === "/co-pilote" && location.pathname === "/dashboard") ||
                 (item.path === "/clients" && location.pathname.startsWith("/clients/")) ||
-                (item.path === "/pv" && location.pathname.startsWith("/pv"));
+                (item.path === "/pv" && location.pathname.startsWith("/pv")) ||
+                (item.path === "/formation" && location.pathname.startsWith("/guide"));
 
               return (
                 <NavLink
@@ -210,102 +212,77 @@ export function AppLayout() {
                     }}>
                       {item.badge}
                     </span>
-                  ) : item.path === "/assessments/new" ? (
-                    <span style={{
-                      fontSize: 10, padding: '2px 8px', borderRadius: 10,
-                      background: 'rgba(201,168,76,0.15)',
-                      color: 'var(--ls-gold)',
-                      fontWeight: 600,
-                      marginLeft: 'auto',
-                      fontFamily: 'DM Sans, sans-serif',
-                      flexShrink: 0,
-                    }}>
-                      Nouveau
-                    </span>
-                  ) : ("isNew" in item && (item as { isNew?: boolean }).isNew) ? (
-                    <span style={{
-                      fontSize: 9, padding: '2px 8px', borderRadius: 10,
-                      background: 'rgba(45,212,191,0.15)',
-                      color: 'var(--ls-teal)',
-                      fontWeight: 700,
-                      letterSpacing: '0.05em',
-                      marginLeft: 'auto',
-                      fontFamily: 'DM Sans, sans-serif',
-                      flexShrink: 0,
-                      textTransform: 'uppercase',
-                    }}>
-                      Nouveau
-                    </span>
                   ) : null}
                 </NavLink>
               );
             })}
           </nav>
 
-          {/* ZONE 3 — Profil + déconnexion */}
-          <div style={{ padding: '12px 14px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+          {/* ZONE 3 — Profil + déconnexion (Chantier Refonte Nav 2026-04-22 :
+              bouton Sortir rouge toujours visible, plus caché derrière la
+              nav mobile du bas). */}
+          <div style={{ padding: '12px 14px', borderTop: '1px solid rgba(255,255,255,0.06)', flexShrink: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
               <div style={{
-                width: 32, height: 32, borderRadius: '50%',
-                background: 'linear-gradient(135deg, #C9A84C, #2DD4BF)',
+                width: 30, height: 30, borderRadius: '50%',
+                background: 'linear-gradient(135deg, #2DD4BF, #0D9488)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 11, fontWeight: 700, color: '#0B0D11',
+                fontSize: 11, fontWeight: 700, color: '#FFFFFF',
                 fontFamily: 'Syne, sans-serif', flexShrink: 0,
               }}>
                 {currentUser.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
               </div>
               <div style={{ minWidth: 0, flex: 1 }}>
-                <div style={{ fontSize: 12, fontWeight: 500, color: '#F0EDE8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--ls-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {currentUser.name}
                 </div>
-                <div style={{ fontSize: 10, color: '#4A5068' }}>
-                  {currentUser.role === 'admin' ? 'Administrateur' : 'Coach'}
+                <div style={{ fontSize: 11, color: 'var(--ls-text-hint)' }}>
+                  {currentUser.role === 'admin' ? 'Admin' : 'Coach'}
                 </div>
               </div>
-              {currentUser.role === 'admin' && (
-                <span style={{ fontSize: 9, padding: '2px 7px', borderRadius: 10, background: 'rgba(201,168,76,0.15)', color: '#C9A84C', fontWeight: 600, flexShrink: 0 }}>
-                  Admin
-                </span>
-              )}
+
+              {/* Bouton "Sortir" rouge clair — toujours visible */}
+              <button
+                onClick={() => void handleLogout()}
+                title="Se déconnecter"
+                aria-label="Se déconnecter"
+                style={{
+                  padding: '6px 12px', borderRadius: 8,
+                  background: '#FCEBEB', color: '#A32D2D',
+                  border: 'none', fontSize: 11, fontWeight: 500,
+                  fontFamily: 'DM Sans, sans-serif', cursor: 'pointer',
+                  flexShrink: 0, transition: 'all 0.15s',
+                }}
+                onMouseEnter={e => { e.currentTarget.style.background = '#F9D8D8' }}
+                onMouseLeave={e => { e.currentTarget.style.background = '#FCEBEB' }}
+              >
+                Sortir
+              </button>
             </div>
 
-            {/* Toggle theme */}
+            {/* Toggle theme — déplacé en ligne compacte sous le bloc user */}
             <button
               onClick={toggleTheme}
               style={{
-                width: '100%', display: 'flex', alignItems: 'center', gap: 10,
-                padding: '9px 10px', borderRadius: 9, background: 'transparent',
+                width: '100%', display: 'flex', alignItems: 'center', gap: 8,
+                padding: '7px 10px', borderRadius: 8, background: 'transparent',
                 border: '1px solid var(--ls-border)', cursor: 'pointer',
-                marginBottom: 8, transition: 'background 0.15s',
+                transition: 'background 0.15s',
               }}
               onMouseEnter={e => e.currentTarget.style.background = 'var(--ls-surface2)'}
               onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
             >
               {isDark ? (
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ls-text-muted)" strokeWidth="1.5"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--ls-text-muted)" strokeWidth="1.5"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
               ) : (
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ls-text-muted)" strokeWidth="1.5"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--ls-text-muted)" strokeWidth="1.5"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
               )}
-              <div style={{ width: 36, height: 20, borderRadius: 10, background: isDark ? 'rgba(255,255,255,0.1)' : '#C9A84C', position: 'relative', transition: 'background 0.2s', flexShrink: 0 }}>
-                <div style={{ position: 'absolute', top: 3, left: isDark ? 3 : 17, width: 14, height: 14, borderRadius: '50%', background: '#FFFFFF', transition: 'left 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.3)' }} />
-              </div>
-              <span style={{ fontSize: 12, color: 'var(--ls-text-muted)', fontFamily: 'DM Sans, sans-serif' }}>
+              <span style={{ fontSize: 11, color: 'var(--ls-text-muted)', fontFamily: 'DM Sans, sans-serif', flex: 1, textAlign: 'left' }}>
                 {isDark ? 'Mode sombre' : 'Mode clair'}
               </span>
-            </button>
-
-            <button
-              onClick={() => void handleLogout()}
-              style={{
-                width: '100%', padding: '8px', borderRadius: 9,
-                background: 'rgba(251,113,133,0.06)', border: '1px solid rgba(251,113,133,0.15)',
-                color: '#FB7185', fontSize: 12, fontFamily: 'DM Sans, sans-serif',
-                cursor: 'pointer', transition: 'all 0.15s',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-              }}
-            >
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-              Déconnexion
+              <div style={{ width: 28, height: 16, borderRadius: 8, background: isDark ? 'rgba(255,255,255,0.1)' : '#C9A84C', position: 'relative', transition: 'background 0.2s', flexShrink: 0 }}>
+                <div style={{ position: 'absolute', top: 2, left: isDark ? 2 : 14, width: 12, height: 12, borderRadius: '50%', background: '#FFFFFF', transition: 'left 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.3)' }} />
+              </div>
             </button>
           </div>
         </aside>
@@ -417,6 +394,9 @@ export function AppLayout() {
         </main>
       </div>
       <BottomNav />
+      {/* Chantier Refonte Navigation (2026-04-22) : bouton "+ Nouveau bilan"
+          fixe en top-right visible sur toutes les pages coach authentifiées. */}
+      <NewBilanFab />
     </div>
   );
 }
