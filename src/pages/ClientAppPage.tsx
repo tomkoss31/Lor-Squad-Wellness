@@ -7,7 +7,7 @@ import { ClientChatTab } from '../components/client-app/ClientChatTab'
 import { ClientPushOptIn } from '../components/client-app/ClientPushOptIn'
 import { InstallPwaBanner } from '../components/pwa/InstallPwaBanner'
 import { BreakfastStorySlider, DEFAULT_BREAKFAST_ANALYSIS } from '../components/education/BreakfastStorySlider'
-import { MeasurementsPanel } from '../features/measurements/MeasurementsPanel'
+import { ClientMeasurementsSection } from '../features/measurements/ClientMeasurementsSection'
 import type { BreakfastAnalysis } from '../types/domain'
 import { useOnboardingState } from '../features/onboarding/hooks/useOnboardingState'
 
@@ -999,13 +999,10 @@ export function ClientAppPage() {
             )}
 
             {/* Section Mesures — Chantier Module Mensurations (2026-04-24) */}
-            <div style={{ marginTop: 16 }}>
-              <MeasurementsPanel
+            <div style={{ marginTop: 20 }}>
+              <ClientMeasurementsSection
                 clientId={data.client_id}
-                gender="female"
-                authorType="client"
-                authorUserId={null}
-                otherAuthorLabel={data.coach_name?.split(" ")[0] ?? "ton coach"}
+                coachFirstName={data.coach_name?.split(" ")[0]}
               />
             </div>
           </div>
