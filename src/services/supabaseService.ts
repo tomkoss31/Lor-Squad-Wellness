@@ -784,6 +784,9 @@ export async function createSupabaseClientWithInitialAssessment(payload: {
     decision_client: payload.assessment.decisionClient ?? null,
     type_de_suite: payload.assessment.typeDeSuite ?? null,
     message_a_laisser: payload.assessment.messageALaisser ?? null,
+    // Chantier Polish Vue complète (2026-04-24)
+    coach_notes_draft: payload.assessment.coachNotesDraft ?? null,
+    coach_notes_initial: payload.assessment.coachNotesInitial ?? null,
   };
   let { error: assessmentError } = await client.from("assessments").insert(assessmentInsertPayload);
 
@@ -797,6 +800,17 @@ export async function createSupabaseClientWithInitialAssessment(payload: {
     const { decision_client: _dc, type_de_suite: _ts, message_a_laisser: _ma, ...withoutStep13 } = assessmentInsertPayload;
     void _dc; void _ts; void _ma;
     ({ error: assessmentError } = await client.from("assessments").insert(withoutStep13));
+  }
+
+  // Fallback : colonnes coach_notes_* pas encore présentes → retry sans
+  if (
+    assessmentError &&
+    (isMissingColumnError(assessmentError, "coach_notes_draft") ||
+      isMissingColumnError(assessmentError, "coach_notes_initial"))
+  ) {
+    const { coach_notes_draft: _cd, coach_notes_initial: _ci, ...withoutNotes } = assessmentInsertPayload;
+    void _cd; void _ci;
+    ({ error: assessmentError } = await client.from("assessments").insert(withoutNotes));
   }
 
   if (assessmentError) {

@@ -975,7 +975,10 @@ export function AppProvider({ children }: PropsWithChildren) {
         ));
       },
       // Onboarding checks (Chantier Polish Vue complète 2026-04-24)
-      setClientOnboardingChecks: async (clientId, checks) => {
+      setClientOnboardingChecks: async (
+        clientId: string,
+        checks: { telegram?: boolean; photo_before?: boolean; measurements?: boolean }
+      ) => {
         await updateSupabaseClientOnboardingChecks({ clientId, checks });
         setClients(prev => prev.map(c =>
           c.id === clientId ? { ...c, onboardingChecks: checks } : c

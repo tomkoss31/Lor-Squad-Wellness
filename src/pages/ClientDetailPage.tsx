@@ -7,7 +7,6 @@ import { OnboardingChecksBlock } from "../components/client/OnboardingChecksBloc
 import { CoachNotesBlock } from "../components/client/CoachNotesBlock";
 import { BodyFatInsightCard } from "../components/body-scan/BodyFatInsightCard";
 import { MuscleMassInsightCard } from "../components/body-scan/MuscleMassInsightCard";
-import { BodyScanSnapshotCard } from "../components/body-scan/BodyScanSnapshotCard";
 import { HydrationVisceralInsightCard } from "../components/body-scan/HydrationVisceralInsightCard";
 import { BodyScanRadar } from "../components/body-scan/BodyScanRadar";
 import { HistoryTimeline } from "../components/client/HistoryTimeline";
