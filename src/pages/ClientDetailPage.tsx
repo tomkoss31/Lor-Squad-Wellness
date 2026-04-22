@@ -21,6 +21,8 @@ import { ErrorBoundary } from "../components/ErrorBoundary";
 import { FollowUpProtocolCard } from "../components/follow-up/FollowUpProtocolCard";
 import { ClientGeneralNote } from "../components/client/ClientGeneralNote";
 import { ClientInvitationButton } from "../components/client/ClientInvitationButton";
+import { ClientAccessModal } from "../components/client/ClientAccessModal";
+import { ClientAppPreviewButton } from "../components/client/ClientAppPreviewButton";
 import { buildReportData, generateProductRecommendations } from "../lib/evolutionReport";
 import { EvolutionReportModal } from "../components/assessment/EvolutionReportModal";
 import { getSupabaseClient } from "../services/supabaseClient";
@@ -76,6 +78,8 @@ export function ClientDetailPage() {
   const [activeTab, setActiveTab] = useState(initialTabFromQuery);
   const [reportUrl, setReportUrl] = useState<string | null>(null);
   const [generatingReport, setGeneratingReport] = useState(false);
+  // Chantier Client access unification (2026-04-24)
+  const [accessModalOpen, setAccessModalOpen] = useState(false);
   const [editPhone, setEditPhone] = useState(client?.phone ?? "");
   const [editEmail, setEditEmail] = useState(client?.email ?? "");
   const [editCity, setEditCity] = useState(client?.city ?? "");
@@ -367,18 +371,30 @@ export function ClientDetailPage() {
               </p>
             </div>
           </div>
-          <div className="flex flex-wrap gap-2">
-            {client.assessments.length >= 1 && (
-              <button
-                type="button"
-                onClick={() => void generateReport()}
-                disabled={generatingReport}
-                className="inline-flex min-h-[40px] items-center gap-2 rounded-[12px] border border-[var(--ls-border2)] bg-[var(--ls-surface2)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/[0.08] disabled:opacity-60"
-                style={{ cursor: generatingReport ? 'wait' : 'pointer' }}
-              >
-                {generatingReport ? 'Génération...' : '📱 App client'}
-              </button>
-            )}
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Chantier Client access unification (2026-04-24) :
+                bouton principal gold "Envoyer l'accès" (ouvre la modale
+                unifiée QR+WA+Copier+SMS) + bouton discret "Aperçu app"
+                (icône œil, nouvel onglet). Remplace l'ancien bouton
+                "📱 App client" qui passait par generateReport(). */}
+            <button
+              type="button"
+              onClick={() => setAccessModalOpen(true)}
+              className="inline-flex min-h-[40px] items-center gap-2 rounded-[12px] px-4 py-2 text-sm font-semibold text-white transition"
+              style={{
+                background: 'linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)',
+                boxShadow: '0 2px 6px rgba(186,117,23,0.25)',
+                fontFamily: 'DM Sans, sans-serif',
+              }}
+            >
+              🔗 Envoyer l'accès à l'app
+            </button>
+            <ClientAppPreviewButton
+              clientId={client.id}
+              clientFirstName={client.firstName}
+              clientLastName={client.lastName}
+              coachName={currentUser?.name ?? "Coach"}
+            />
             <Link
               to={`/clients/${client.id}/follow-up/new`}
               className="inline-flex min-h-[40px] items-center gap-2 rounded-[12px] border border-[var(--ls-border2)] bg-[var(--ls-surface2)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/[0.08]"
@@ -393,12 +409,6 @@ export function ClientDetailPage() {
             </Link>
           </div>
         </div>
-
-        {/* Fix UX (2026-04-20) : le bouton "App client" header ouvre désormais
-            le même popup EvolutionReportModal que l'onglet "Rapport" — via
-            generateReport() qui rafraîchit le snapshot avant affichage. Le
-            modal inline précédent (showHeaderAppModal) affichait l'ancien
-            existingClientToken sans régénération, d'où des liens périmés. */}
 
         {/* Recommandations actives */}
         {recommendationCount > 0 && (
@@ -1157,6 +1167,16 @@ export function ClientDetailPage() {
           onSaved={() => setShowScheduleModal(false)}
         />
       )}
+
+      {/* Modale unique pour envoyer l'accès client (QR/WA/Copier/SMS) */}
+      <ClientAccessModal
+        open={accessModalOpen}
+        onClose={() => setAccessModalOpen(false)}
+        clientId={client.id}
+        clientFirstName={client.firstName}
+        clientLastName={client.lastName}
+        clientPhone={client.phone}
+      />
     </div>
   );
 }
