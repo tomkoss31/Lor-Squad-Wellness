@@ -20,6 +20,32 @@ function hasFollowUpPlanned(typeDeSuite: TypeDeSuite, nextFollowUp: string): boo
   );
 }
 
+// V2 (2026-04-24) : muscle repris exprimé en % relatif au départ
+// plutôt qu'en kg absolu.
+function muscleGainPct(initialKg: number | null, latestKg: number | null): number | null {
+  if (initialKg == null || latestKg == null || initialKg <= 0) return null;
+  return ((latestKg - initialKg) / initialKg) * 100;
+}
+
+describe("muscleGainPct — muscle repris en % (V2)", () => {
+  it("null si données manquantes", () => {
+    expect(muscleGainPct(null, 52)).toBeNull();
+    expect(muscleGainPct(50, null)).toBeNull();
+  });
+  it("null si initial <= 0 (éviter division par 0)", () => {
+    expect(muscleGainPct(0, 52)).toBeNull();
+  });
+  it("+4.0 % si 50 → 52 kg", () => {
+    expect(muscleGainPct(50, 52)).toBeCloseTo(4, 2);
+  });
+  it("-2.0 % si 50 → 49 kg", () => {
+    expect(muscleGainPct(50, 49)).toBeCloseTo(-2, 2);
+  });
+  it("0 si stable", () => {
+    expect(muscleGainPct(50, 50)).toBe(0);
+  });
+});
+
 describe("hasFollowUpPlanned — règle validation bilan", () => {
   it("bloque si aucun typeDeSuite sélectionné", () => {
     expect(hasFollowUpPlanned("", "2026-05-01T10:00")).toBe(false);

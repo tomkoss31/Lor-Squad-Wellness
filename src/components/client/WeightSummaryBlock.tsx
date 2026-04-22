@@ -112,9 +112,13 @@ export function WeightSummaryBlock({
       ? firstBodyFatPct - latestBodyFatPct
       : null;
 
-  const muscleGainKg =
-    firstMuscleMass != null && latestMuscleMass != null
-      ? latestMuscleMass - firstMuscleMass
+  // Chantier V2 (2026-04-24) : muscle repris en POURCENTAGE (pas en kg)
+  //   = ((actuel - départ) / départ) × 100
+  // Plus parlant pour le coach ("tu as repris 4.2% de muscle") que +0.8 kg
+  // qui nécessite un référentiel absolu.
+  const muscleGainPct =
+    firstMuscleMass != null && latestMuscleMass != null && firstMuscleMass > 0
+      ? ((latestMuscleMass - firstMuscleMass) / firstMuscleMass) * 100
       : null;
 
   const firstAssessmentCount = client.assessments?.length ?? 0;
@@ -169,19 +173,19 @@ export function WeightSummaryBlock({
     }
   }
 
-  // --- Column 3: Muscle repris
+  // --- Column 3: Muscle repris (EN %)
   let col3Value = "—";
   let col3Hint = noComparison ? "En attente d'un second scan" : "Pas assez de données";
   let col3Positive = true;
   let col3HasData = false;
-  if (muscleGainKg != null) {
+  if (muscleGainPct != null) {
     col3HasData = true;
-    if (muscleGainKg > 0.05) {
-      col3Value = `+${muscleGainKg.toFixed(1)} kg`;
+    if (muscleGainPct > 0.1) {
+      col3Value = `+${muscleGainPct.toFixed(1)} %`;
       col3Positive = true;
-      col3Hint = "Masse maigre préservée";
-    } else if (muscleGainKg < -0.05) {
-      col3Value = `-${Math.abs(muscleGainKg).toFixed(1)} kg`;
+      col3Hint = "par rapport au départ";
+    } else if (muscleGainPct < -0.1) {
+      col3Value = `-${Math.abs(muscleGainPct).toFixed(1)} %`;
       col3Positive = false;
       col3Hint = "Attention à la masse maigre";
     } else {

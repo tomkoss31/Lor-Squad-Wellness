@@ -10,6 +10,7 @@ import { useCallback, useEffect, useState } from "react";
 import { getSupabaseClient } from "../../services/supabaseClient";
 import { useAppContext } from "../../context/AppContext";
 import { useToast } from "../../context/ToastContext";
+import { CoachNotesPrintView } from "./CoachNotesPrintView";
 
 type NoteType = "followup" | "product_adjustment" | "feeling" | "free";
 
@@ -42,12 +43,14 @@ function formatRelative(dateIso: string): string {
 
 interface Props {
   clientId: string;
+  clientName: string;
   initialAssessmentNotes: string | null;
   initialAssessmentDate: string | null;
 }
 
 export function CoachNotesBlock({
   clientId,
+  clientName,
   initialAssessmentNotes,
   initialAssessmentDate,
 }: Props) {
@@ -118,7 +121,21 @@ export function CoachNotesBlock({
     return u?.name ?? "Coach";
   }
 
+  const printNotes = notes.map((n) => ({
+    type: n.type,
+    content: n.content,
+    created_at: n.created_at,
+    author_name: authorName(n.author_id),
+  }));
+
   return (
+    <>
+    <CoachNotesPrintView
+      clientName={clientName}
+      initialAssessmentNotes={initialAssessmentNotes}
+      initialAssessmentDate={initialAssessmentDate}
+      notes={printNotes}
+    />
     <div
       style={{
         background: "var(--ls-surface)",
@@ -178,6 +195,36 @@ export function CoachNotesBlock({
         >
           Privé
         </span>
+        {/* Chantier V2 (2026-04-24) : bouton Exporter → window.print()
+            sur la vue imprimable dédiée (CSS @media print). */}
+        <button
+          type="button"
+          onClick={() => {
+            if (typeof window !== "undefined") window.print();
+          }}
+          style={{
+            marginLeft: "auto",
+            padding: "6px 12px",
+            borderRadius: 8,
+            border: "1px solid var(--ls-border)",
+            background: "transparent",
+            color: "var(--ls-gold)",
+            cursor: "pointer",
+            fontSize: 11,
+            fontFamily: "DM Sans, sans-serif",
+            fontWeight: 600,
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 6,
+          }}
+        >
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <polyline points="6 9 6 2 18 2 18 9"/>
+            <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
+            <rect x="6" y="14" width="12" height="8"/>
+          </svg>
+          Exporter
+        </button>
       </div>
 
       {/* Bloc archivé : notes du bilan initial (si existe) */}
@@ -333,5 +380,6 @@ export function CoachNotesBlock({
         </div>
       </div>
     </div>
+    </>
   );
 }
