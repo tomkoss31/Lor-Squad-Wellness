@@ -19,6 +19,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ExplainerModal } from "../components/bienvenue/ExplainerModal";
+import { MagicLinkFallback } from "../components/bienvenue/MagicLinkFallback";
 import { InstallPwaInstructions } from "../components/pwa/InstallPwaInstructions";
 import { isStandalonePwa } from "../lib/utils/detectDevice";
 import { getSupabaseClient } from "../services/supabaseClient";
@@ -203,6 +204,7 @@ export function BienvenuePage() {
         {installPromptStage ? (
           <InstallPwaStep
             firstName={installPromptStage.firstName}
+            clientPhone={null}
             onContinue={() => {
               const redirect = installPromptStage.redirectToken
                 ? `/client/${installPromptStage.redirectToken}?welcome=1`
@@ -342,9 +344,11 @@ export function BienvenuePage() {
 function InstallPwaStep({
   firstName,
   onContinue,
+  clientPhone,
 }: {
   firstName: string;
   onContinue: () => void;
+  clientPhone?: string | null;
 }) {
   return (
     <div
@@ -431,6 +435,11 @@ function InstallPwaStep({
       >
         Je ferai ça plus tard
       </button>
+
+      {/* Chantier Welcome Page + Magic Links (2026-04-24) : filet de
+          sécurité WhatsApp pour se reconnecter 24h si l'install PWA
+          rate ou le client change d'appareil. */}
+      <MagicLinkFallback firstName={firstName} clientPhone={clientPhone} />
     </div>
   );
 }

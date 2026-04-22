@@ -12,7 +12,10 @@ export function ProtectedRoute() {
   }
 
   if (!currentUser) {
-    return <Navigate to="/login" replace />;
+    // Chantier Welcome Page (2026-04-24) : /welcome est la porte d'entrée
+    // publique (identifie Client / Distri / Prospect). /login reste
+    // accessible directement pour ceux qui savent déjà.
+    return <Navigate to="/welcome" replace />;
   }
 
   return <Outlet />;
