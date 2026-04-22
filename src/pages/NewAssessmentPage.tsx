@@ -7,7 +7,7 @@ import { useEffect } from "react";
 import { useRef } from "react";
 import { Component, type ErrorInfo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { RecapModal } from "../components/assessment/RecapModal";
+import { ClientAccessModal } from "../components/client/ClientAccessModal";
 import { getSupabaseClient } from "../services/supabaseClient";
 import { BodyFatInsightCard } from "../components/body-scan/BodyFatInsightCard";
 import { MuscleMassInsightCard } from "../components/body-scan/MuscleMassInsightCard";
@@ -402,9 +402,13 @@ export function NewAssessmentPage() {
   // Chantier Félicitations (2026-04-20) : le bouton "Enregistrer et terminer"
   // montre un état "Enregistrement…" pendant handleSaveAssessment.
   const [saving, setSaving] = useState(false);
-  const [showRecapModal, setShowRecapModal] = useState(false);
-  const [recapToken, setRecapToken] = useState("");
   const [recapClientName, setRecapClientName] = useState("");
+  // Chantier Client access unification (2026-04-24) : après validation
+  // du bilan, on ouvre la modale d'envoi d'accès (QR + WhatsApp +
+  // Copier) à la place du RecapModal hybride qui mélangeait rapport +
+  // app client.
+  const [accessModalOpen, setAccessModalOpen] = useState(false);
+  const [savedClientId, setSavedClientId] = useState<string | null>(null);
   const [assignedUserId, setAssignedUserId] = useState("");
   const [draftReady, setDraftReady] = useState(false);
   // Chantier Prospects : suivi des champs pré-remplis par le prospect (surlignés en vert
@@ -933,10 +937,13 @@ export function NewAssessmentPage() {
           if (recapData?.token) {
             clearAssessmentDraft();
             clearCoachNotesDraft(prospectId);
-            setRecapToken(recapData.token);
+            // Chantier Client access unification (2026-04-24) : ouvre
+            // la modale unifiée au lieu du RecapModal hybride. QR visible
+            // par défaut pour scan en présentiel fin de bilan.
+            setSavedClientId(clientId);
             setRecapClientName(`${form.firstName?.trim()} ${form.lastName?.trim()}`);
-            setShowRecapModal(true);
-            return; // Modal handles navigation
+            setAccessModalOpen(true);
+            return; // la modale gère la navigation via onClose
           }
         }
 
@@ -2011,13 +2018,25 @@ export function NewAssessmentPage() {
       </div>
       </div>
 
-      {showRecapModal && recapToken && (
-        <RecapModal
-          clientName={recapClientName}
-          recapToken={recapToken}
-          onClose={() => { setShowRecapModal(false); navigate('/clients'); }}
+      {/* Modale unifiée ClientAccessModal (V2 Client access unification
+          2026-04-24) : remplace l'ancien RecapModal hybride. Fin de
+          bilan → QR visible par défaut pour scan en présentiel.
+          onClose → navigation vers la fiche client. */}
+      {accessModalOpen && savedClientId ? (
+        <ClientAccessModal
+          open={accessModalOpen}
+          onClose={() => {
+            setAccessModalOpen(false);
+            navigate(`/clients/${savedClientId}`);
+          }}
+          clientId={savedClientId}
+          clientFirstName={form.firstName?.trim() ?? recapClientName}
+          clientLastName={form.lastName?.trim() ?? ""}
+          clientPhone={form.phone}
+          qrDefault={true}
         />
-      )}
+      ) : null}
+
     </div>
     );
   }
