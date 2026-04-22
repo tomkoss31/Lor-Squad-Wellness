@@ -23,6 +23,9 @@ export function EditScheduleModal({ client, onClose, onSaved }: EditScheduleModa
 
   const currentFollowUp = useMemo(
     () => getClientActiveFollowUp(client, followUps),
+    // On ne dépend que de client.id (stable) — l'objet client peut
+    // re-render sans changer d'id, ça éviterait un recalcul inutile.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [followUps, client.id]
   );
 

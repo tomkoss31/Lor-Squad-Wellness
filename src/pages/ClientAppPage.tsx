@@ -313,37 +313,54 @@ export function ClientAppPage() {
   }
 
   function normalizeData(row: Record<string, unknown>): ClientAppData {
-    const r = row as Record<string, any>
-    let metrics = r.metrics_history as Array<any> | undefined
+    // Cleanup post-audit (2026-04-23) : Record<string, unknown> au lieu de
+    // any — les casts aux types concrets se font site par site. Même
+    // permissivité à l'import, stricte à l'usage.
+    const r = row as Record<string, unknown>
+    // metrics_history : tableau d'objets avec date string + valeurs numériques.
+    // Le type exact côté type domain (Array<Record<string, number> & { date }>)
+    // a une index signature incompatible avec la clé 'date'. On garde un type
+    // large ici et on laisse le consumer final affiner.
+    let metrics = r.metrics_history as ClientAppData["metrics_history"]
 
     if ((!metrics || metrics.length === 0) && r.body_scan) {
       const bs = r.body_scan as Record<string, number>
+      const fallbackDate =
+        typeof r.assessment_date === 'string'
+          ? r.assessment_date
+          : typeof r.created_at === 'string'
+            ? r.created_at
+            : new Date().toISOString()
+      // Le type ClientAppData.metrics_history combine Record<string, number>
+      // et {date: string} — incohérence héritée. Cast explicite via unknown
+      // pour rester compatible.
       metrics = [{
-        date: r.assessment_date ?? r.created_at ?? new Date().toISOString(),
+        date: fallbackDate,
         weight: bs.weight ?? 0,
         bodyFat: bs.bodyFat ?? 0,
         muscleMass: bs.muscleMass ?? 0,
         hydration: bs.hydration ?? 0,
         visceralFat: bs.visceralFat ?? 0,
         metabolicAge: bs.metabolicAge ?? 0,
-      }]
+      }] as unknown as ClientAppData["metrics_history"]
     }
 
+    const str = (v: unknown, fallback = ''): string => typeof v === 'string' ? v : fallback
     return {
-      client_id: r.client_id ?? '',
-      client_first_name: r.client_first_name ?? '',
-      client_last_name: r.client_last_name ?? '',
-      coach_id: r.coach_id ?? r.distributor_id,
-      coach_name: r.coach_name ?? 'Coach',
-      coach_whatsapp: r.coach_whatsapp,
-      coach_telegram: r.coach_telegram,
-      coach_phone: r.coach_phone,
-      program_title: r.program_title,
-      assessments_count: r.assessments_count ?? (metrics?.length ?? 0),
-      next_follow_up: r.next_follow_up,
+      client_id: str(r.client_id),
+      client_first_name: str(r.client_first_name),
+      client_last_name: str(r.client_last_name),
+      coach_id: str(r.coach_id ?? r.distributor_id, '') || undefined,
+      coach_name: str(r.coach_name, 'Coach'),
+      coach_whatsapp: typeof r.coach_whatsapp === 'string' ? r.coach_whatsapp : undefined,
+      coach_telegram: typeof r.coach_telegram === 'string' ? r.coach_telegram : undefined,
+      coach_phone: typeof r.coach_phone === 'string' ? r.coach_phone : undefined,
+      program_title: typeof r.program_title === 'string' ? r.program_title : undefined,
+      assessments_count: typeof r.assessments_count === 'number' ? r.assessments_count : (metrics?.length ?? 0),
+      next_follow_up: typeof r.next_follow_up === 'string' ? r.next_follow_up : undefined,
       metrics_history: metrics,
-      recommendations: r.recommendations,
-      insights: r.insights,
+      recommendations: r.recommendations as ClientAppData['recommendations'],
+      insights: r.insights as ClientAppData['insights'],
     }
   }
 
@@ -351,7 +368,7 @@ export function ClientAppPage() {
     try {
       const { data: rows } = await sb.rpc('get_client_assessment_by_token', { p_token: tok })
       const row = Array.isArray(rows) ? rows[0] : rows
-      const q = (row as Record<string, any> | null)?.questionnaire as Record<string, any> | undefined
+      const q = (row as Record<string, unknown> | null)?.questionnaire as Record<string, unknown> | undefined
       const analysis = q?.breakfastAnalysis as BreakfastAnalysis | undefined
       const content = typeof q?.breakfastContent === 'string' ? q.breakfastContent : ''
       if (analysis) {
