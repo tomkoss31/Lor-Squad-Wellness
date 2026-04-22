@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { getSupabaseClient } from '../services/supabaseClient'
 import { HERBALIFE_PRODUCTS, type HerbalifeProduct } from '../data/herbalifeCatalog'
@@ -8,6 +8,15 @@ import { ClientPushOptIn } from '../components/client-app/ClientPushOptIn'
 import { InstallPwaBanner } from '../components/pwa/InstallPwaBanner'
 import { BreakfastStorySlider, DEFAULT_BREAKFAST_ANALYSIS } from '../components/education/BreakfastStorySlider'
 import type { BreakfastAnalysis } from '../types/domain'
+import { useOnboardingState } from '../features/onboarding/hooks/useOnboardingState'
+
+// Chantier Tuto interactif client (2026-04-24) : lazy-load pour ne pas
+// alourdir le bundle initial de ClientAppPage.
+const OnboardingTutorial = lazy(() =>
+  import('../features/onboarding/OnboardingTutorial').then((m) => ({
+    default: m.OnboardingTutorial,
+  })),
+)
 
 const GOOGLE_MAPS_LA_BASE = 'https://www.google.com/maps/place/LA+BASE+Shakes%26Drinks/@49.1619589,5.3840559,17z'
 
@@ -222,6 +231,23 @@ export function ClientAppPage() {
     const id = window.setTimeout(() => setShowWelcome(false), 4500)
     return () => window.clearTimeout(id)
   }, [showWelcome])
+  // Chantier Tuto interactif client (2026-04-24) : state + auto-launch.
+  const [tutorialOpen, setTutorialOpen] = useState(false)
+  const onboardingState = useOnboardingState({
+    token: token ?? null,
+    clientId: data?.client_id ?? '',
+  })
+  useEffect(() => {
+    if (!onboardingState.state.loaded || !data) return
+    if (tutorialOpen) return
+    // Auto-launch si jamais vu ET jamais skipé (800ms pour laisser l'UI
+    // se stabiliser et le HERO s'afficher).
+    if (!onboardingState.state.completedAt && !onboardingState.state.skippedAt) {
+      const id = window.setTimeout(() => setTutorialOpen(true), 800)
+      return () => window.clearTimeout(id)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onboardingState.state.loaded, data?.client_id])
   // Chantier Messagerie bidirectionnelle (2026-04-22) : nouveau tab 'messages'
   // (conversation chat coach ↔ client). Ouverture auto si ?tab=messages dans
   // l'URL (notif push coach_message y redirige).
@@ -631,9 +657,37 @@ export function ClientAppPage() {
               Lor'<span style={{ color: '#B8922A' }}>Squad</span>
             </div>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-            <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#0D9488' }} />
-            <span style={{ fontSize: 10, color: '#0D9488', fontWeight: 500 }}>Coach {data.coach_name}</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+              <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#0D9488' }} />
+              <span style={{ fontSize: 10, color: '#0D9488', fontWeight: 500 }}>Coach {data.coach_name}</span>
+            </div>
+            {/* Chantier Tuto interactif client (2026-04-24) : bouton ? pour
+                relancer le tutoriel à tout moment. */}
+            <button
+              type="button"
+              onClick={() => setTutorialOpen(true)}
+              aria-label="Revoir le tutoriel"
+              title="Revoir le tutoriel"
+              style={{
+                width: 32,
+                height: 32,
+                borderRadius: '50%',
+                background: 'rgba(184,146,42,0.12)',
+                color: '#B8922A',
+                border: '1px solid rgba(184,146,42,0.2)',
+                fontFamily: 'Syne, sans-serif',
+                fontWeight: 700,
+                fontSize: 14,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+              }}
+            >
+              ?
+            </button>
           </div>
         </div>
 
@@ -697,7 +751,7 @@ export function ClientAppPage() {
 
             {/* Prochain RDV */}
             {data.next_follow_up && (
-              <div style={{ background: 'rgba(13,148,136,0.06)', border: '1px solid rgba(13,148,136,0.15)', borderRadius: 14, padding: 14 }}>
+              <div data-tuto="next-rdv" style={{ background: 'rgba(13,148,136,0.06)', border: '1px solid rgba(13,148,136,0.15)', borderRadius: 14, padding: 14 }}>
                 <div style={{ fontSize: 9, color: '#0D9488', fontWeight: 600, letterSpacing: '1px', textTransform: 'uppercase', marginBottom: 8 }}>Prochain rendez-vous</div>
                 <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 18, color: '#111827', marginBottom: 2 }}>
                   {new Date(data.next_follow_up).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
@@ -743,6 +797,7 @@ export function ClientAppPage() {
                 au coach. */}
             <button
               type="button"
+              data-tuto="messaging"
               onClick={() => setRecoAskOpen(true)}
               style={{
                 display: 'flex',
@@ -948,7 +1003,7 @@ export function ClientAppPage() {
         {/* ONGLET PRODUITS                                                 */}
         {/* ══════════════════════════════════════════════════════════════ */}
         {activeTab === 'products' && (
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
+          <div data-tuto="program" style={{ display: 'flex', flexDirection: 'column' }}>
             {/* Recommandés pour toi (reste toujours visible en haut) */}
             {recommendedProducts.length > 0 && (
               <div style={{ marginBottom: 16 }}>
@@ -1211,6 +1266,41 @@ export function ClientAppPage() {
           )}
         </div>
       )}
+
+      {/* Chantier Tuto interactif client (2026-04-24). Lazy-loaded,
+          ne charge le code que si le tuto est ouvert. */}
+      {tutorialOpen ? (
+        <Suspense fallback={null}>
+          <OnboardingTutorial
+            firstName={data.client_first_name || 'toi'}
+            coachName={(data.coach_name ?? '').split(/\s+/)[0] || 'Ton coach'}
+            sex="female"
+            bodyFat={(() => {
+              const hist = data.metrics_history as Array<Record<string, unknown>> | undefined
+              const last = hist && hist.length > 0 ? hist[hist.length - 1] : null
+              return typeof last?.bodyFat === 'number' ? last.bodyFat : null
+            })()}
+            hydration={(() => {
+              const hist = data.metrics_history as Array<Record<string, unknown>> | undefined
+              const last = hist && hist.length > 0 ? hist[hist.length - 1] : null
+              return typeof last?.hydration === 'number' ? last.hydration : null
+            })()}
+            selectors={{
+              nextRdv: '[data-tuto="next-rdv"]',
+              program: '[data-tuto="program"]',
+              messaging: '[data-tuto="messaging"]',
+            }}
+            onClose={(reason) => {
+              setTutorialOpen(false)
+              if (reason === 'completed') {
+                onboardingState.markCompleted()
+              } else if (reason === 'skipped') {
+                onboardingState.markSkipped()
+              }
+            }}
+          />
+        </Suspense>
+      ) : null}
 
       {/* BOTTOM NAV */}
       <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: '#fff', borderTop: '1px solid rgba(0,0,0,0.07)', display: 'flex', paddingBottom: 'max(12px, env(safe-area-inset-bottom))', zIndex: 100 }}>
