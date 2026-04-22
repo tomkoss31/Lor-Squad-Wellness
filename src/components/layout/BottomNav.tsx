@@ -314,7 +314,11 @@ export function BottomNav() {
                 <DrawerItem label="Mon équipe" icon="👥" onClick={() => goTo("/users")} />
               ) : null}
               <DrawerItem label="Centre de formation" icon="📚" onClick={() => goTo("/formation")} />
-              <DrawerItem label="Paramètres" icon="⚙️" onClick={() => goTo("/settings")} />
+              <DrawerItem
+                label="Paramètres"
+                icon="⚙️"
+                onClick={() => goTo(currentUser?.role === "admin" ? "/parametres" : "/settings")}
+              />
             </div>
 
             <div style={{ height: 1, background: "var(--ls-border)", margin: "14px 0" }} />
