@@ -119,9 +119,18 @@ const CoPilotePage = lazy(() =>
     default: module.CoPilotePage
   }))
 );
-const CentreFormationPage = lazy(() =>
-  import("./pages/CentreFormationPage").then((module) => ({
-    default: module.CentreFormationPage
+// Chantier Centre de Formation V1 (2026-04-23) : la home /formation est
+// maintenant FormationPage (catalogue avec progression), et /formation/:slug
+// pointe vers FormationCategoryPage. CentreFormationPage (placeholder du
+// chantier 2) reste en backup pour ne pas breaker les hot-reload dev.
+const FormationPage = lazy(() =>
+  import("./pages/FormationPage").then((module) => ({
+    default: module.FormationPage
+  }))
+);
+const FormationCategoryPage = lazy(() =>
+  import("./pages/FormationCategoryPage").then((module) => ({
+    default: module.FormationCategoryPage
   }))
 );
 const SettingsPage = lazy(() =>
@@ -167,7 +176,8 @@ export default function App() {
                   /dashboard redirige pour ne pas casser les liens existants. */}
               <Route path="co-pilote" element={<CoPilotePage />} />
               <Route path="dashboard" element={<Navigate to="/co-pilote" replace />} />
-              <Route path="formation" element={<CentreFormationPage />} />
+              <Route path="formation" element={<FormationPage />} />
+              <Route path="formation/:slug" element={<FormationCategoryPage />} />
               {/* /settings (non-admin) reste accessible comme placeholder profil léger.
                   Les admins ont /parametres avec la version complète. */}
               <Route path="settings" element={<SettingsPage />} />
