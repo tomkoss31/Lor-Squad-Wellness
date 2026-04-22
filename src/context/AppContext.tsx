@@ -113,7 +113,11 @@ interface AppContextValue {
   updateFollowUpStatus: (followUpId: string, status: 'scheduled' | 'pending' | 'completed' | 'dismissed') => Promise<void>;
   loginWithCredentials: (
     payload: { email: string; password: string }
-  ) => Promise<{ ok: boolean; error?: string }>;
+  ) => Promise<
+    | { ok: true; kind: "coach"; redirectTo: string }
+    | { ok: true; kind: "client"; redirectTo: string }
+    | { ok: false; error: string }
+  >;
   logout: () => Promise<void>;
   forceResetSession: () => Promise<void>;
   createUserAccess: (payload: {
@@ -376,17 +380,30 @@ export function AppProvider({ children }: PropsWithChildren) {
     try {
       const result = await loginWithSupabaseCredentials(payload);
       if (!result.ok) {
-        return { ok: false, error: result.error };
+        return { ok: false as const, error: result.error };
+      }
+
+      // Hotfix PWA login client (2026-04-24) : le service retourne maintenant
+      // `kind: 'coach' | 'client'`. Client path = pas de profil public.users,
+      // on renvoie directement la route /client/:token pour redirection.
+      if (result.kind === "client") {
+        // Pas de setCurrentUser : la ProtectedRoute resterait à pointer vers
+        // /login, mais /client/:token est une route publique → OK.
+        return {
+          ok: true as const,
+          kind: "client" as const,
+          redirectTo: `/client/${result.clientToken}`,
+        };
       }
 
       setCurrentUser(result.user);
       setCurrentSession(result.session);
       await refreshRemoteData(result.user);
-      return { ok: true };
+      return { ok: true as const, kind: "coach" as const, redirectTo: "/co-pilote" };
     } catch (error) {
       console.error("Connexion Supabase impossible.", error);
       return {
-        ok: false,
+        ok: false as const,
         error: "La connexion Supabase a échoué avant de pouvoir ouvrir la session."
       };
     }
