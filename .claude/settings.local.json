@@ -67,7 +67,11 @@
       "Bash(npx supabase *)",
       "Bash(awk '/^C:|^\\\\/.*\\(.ts|.tsx\\)$/ {file=$0} /error|warning/ {print file \": \" $0}')",
       "Bash(find \"C:\\\\Users\\\\tomko\\\\Documents\\\\Lor'Squad Wellness\\\\.claude\\\\worktrees\\\\focused-pike\\\\supabase\\\\migrations\" -name \"*.sql\" -exec grep -l \"push_notifications_sent\" {} \\\\;)",
-      "Bash(find \"C:\\\\Users\\\\tomko\\\\Documents\\\\Lor'Squad Wellness\\\\.claude\\\\worktrees\\\\focused-pike\\\\supabase\\\\functions\" -name \"index.ts\" -exec grep -l \"push_notifications_sent\\\\|client_messages\" {} \\\\;)"
+      "Bash(find \"C:\\\\Users\\\\tomko\\\\Documents\\\\Lor'Squad Wellness\\\\.claude\\\\worktrees\\\\focused-pike\\\\supabase\\\\functions\" -name \"index.ts\" -exec grep -l \"push_notifications_sent\\\\|client_messages\" {} \\\\;)",
+      "Bash(grep -rn \"\\\\.split\\(/\\\\\\\\\\\\\\\\s+/\\)\\\\|\\\\.split\\(' '\\).map\\(n => n\\\\[0\\\\]\\)\" src --include=\"*.tsx\")",
+      "Bash(grep -rn \"\\\\.split\\(/\\\\\\\\\\\\\\\\s+/\\)\" src --include=\"*.tsx\")",
+      "Bash(grep -v \"normalizeText\\\\|handleSend\\\\|split\\(/\\\\\\\\\\\\\\\\s+/\\)\\\\[0\\\\]\")",
+      "Bash(grep -rn \"split\\(/\\\\\\\\\\\\\\\\s+/\\)\" src --include=\"*.tsx\")"
     ]
   }
 }

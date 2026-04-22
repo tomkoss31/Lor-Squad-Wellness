@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import type { ClientMessage } from '../../types/domain'
+import { getInitials } from '../../lib/utils/getInitials'
 
 interface MessageInboxProps {
   messages: ClientMessage[]
@@ -53,7 +54,7 @@ export function MessageInbox({ messages, onMarkRead }: MessageInboxProps) {
               fontSize: 10, fontWeight: 700, fontFamily: 'Syne, sans-serif',
               color: isUnread ? 'var(--ls-purple)' : 'var(--ls-text-hint)',
             }}>
-              {msg.client_name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
+              {getInitials(msg.client_name)}
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>

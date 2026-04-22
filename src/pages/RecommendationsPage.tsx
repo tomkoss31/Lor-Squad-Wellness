@@ -5,6 +5,7 @@ import { PageHeading } from "../components/ui/PageHeading";
 import { StatusBadge } from "../components/ui/StatusBadge";
 import { useAppContext } from "../context/AppContext";
 import { formatDate, getLatestAssessment } from "../lib/calculations";
+import { getInitials } from "../lib/utils/getInitials";
 import type { Client, RecommendationLead } from "../types/domain";
 
 type Tab = "pending" | "contacted";
@@ -156,7 +157,7 @@ export function RecommendationsPage() {
                     fontSize: 12, fontWeight: 700, fontFamily: 'Syne, sans-serif',
                     color: row.contacted ? 'var(--ls-teal)' : 'var(--ls-coral)',
                   }}>
-                    {row.clientName.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
+                    {getInitials(row.clientName)}
                   </div>
 
                   <div style={{ flex: 1, minWidth: 0 }}>
