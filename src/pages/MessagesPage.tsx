@@ -11,6 +11,7 @@ import {
   type MessageFiltersState,
 } from '../components/messaging/MessageFilters'
 import { useMessageActions } from '../hooks/useMessageActions'
+import { getInitials } from '../lib/utils/getInitials'
 import type { ClientMessage } from '../types/domain'
 
 // Chantier Messagerie bidirectionnelle (2026-04-22) : +tab 'clients'.
@@ -120,7 +121,7 @@ function MessageCard({
           fontSize: 11, fontWeight: 700, fontFamily: 'Syne, sans-serif',
           color: isUnread && !isArchived ? 'var(--ls-purple)' : 'var(--ls-text-hint)',
         }}>
-          {msg.client_name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
+          {getInitials(msg.client_name)}
         </div>
 
         <div style={{ flex: 1, minWidth: 0 }}>

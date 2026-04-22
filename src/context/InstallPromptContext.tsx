@@ -112,6 +112,10 @@ export function InstallPromptProvider({ children }: PropsWithChildren) {
       isStandalone,
       promptInstall
     }),
+    // promptInstall capture deferredPrompt via closure — la nouvelle ref
+    // est re-créée à chaque render de toute façon via useCallback implicite,
+    // inutile de l'ajouter.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [deferredPrompt, isIos, isMobile, isStandalone]
   );
 

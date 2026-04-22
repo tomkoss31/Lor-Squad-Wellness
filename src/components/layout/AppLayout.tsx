@@ -7,6 +7,7 @@ import { StatusBadge } from "../ui/StatusBadge";
 import { BottomNav } from "./BottomNav";
 import { NewBilanFab } from "./NewBilanFab";
 import { useRealtimeMessages } from "../../hooks/useRealtimeMessages";
+import { getInitials } from "../../lib/utils/getInitials";
 import { useTheme } from "../../hooks/useTheme";
 import { getRoleLabel } from "../../lib/auth";
 
@@ -242,7 +243,7 @@ export function AppLayout() {
                 fontSize: 11, fontWeight: 700, color: '#FFFFFF',
                 fontFamily: 'Syne, sans-serif', flexShrink: 0,
               }}>
-                {currentUser.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
+                {getInitials(currentUser.name)}
               </div>
               <div style={{ minWidth: 0, flex: 1 }}>
                 <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--ls-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>

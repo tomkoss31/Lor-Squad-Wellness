@@ -165,7 +165,19 @@ export function ConversationView() {
   }
 
   return (
-    <div className="space-y-4" style={{ height: "calc(100vh - 140px)", display: "flex", flexDirection: "column" }}>
+    <div
+      className="space-y-4 conversation-view-shell"
+      style={{
+        // Cleanup post-audit (2026-04-23) : la BottomNav mobile (56px) +
+        // safe-area-inset masquaient les derniers messages. On utilise
+        // dvh quand dispo (fallback vh), on retire une valeur plus large
+        // sur mobile via CSS var pilotée par un class breakpoint.
+        height: "calc(var(--conv-vh, 100vh) - var(--conv-offset, 140px))",
+        display: "flex",
+        flexDirection: "column",
+        paddingBottom: 8,
+      }}
+    >
       {/* Header */}
       <div
         style={{
