@@ -6,6 +6,7 @@ import { BodyCompositionGauges } from "../components/client/BodyCompositionGauge
 import { OnboardingChecksBlock } from "../components/client/OnboardingChecksBlock";
 import { CoachNotesBlock } from "../components/client/CoachNotesBlock";
 import { NextAppointmentBanner } from "../components/client/NextAppointmentBanner";
+import { MeasurementsPanel } from "../features/measurements/MeasurementsPanel";
 import { BodyFatInsightCard } from "../components/body-scan/BodyFatInsightCard";
 import { MuscleMassInsightCard } from "../components/body-scan/MuscleMassInsightCard";
 import { HydrationVisceralInsightCard } from "../components/body-scan/HydrationVisceralInsightCard";
@@ -71,7 +72,7 @@ export function ClientDetailPage() {
   // Chantier Protocole Agenda+Dashboard (2026-04-20) : ?tab=actions pour
   // arriver directement sur l'onglet Actions depuis le widget dashboard.
   const [searchParams] = useSearchParams();
-  const initialTabFromQuery = searchParams.get("tab") === "actions" ? 4 : 0;
+  const initialTabFromQuery = searchParams.get("tab") === "actions" ? 5 : 0;
   const [activeTab, setActiveTab] = useState(initialTabFromQuery);
   const [reportUrl, setReportUrl] = useState<string | null>(null);
   const [generatingReport, setGeneratingReport] = useState(false);
@@ -425,6 +426,7 @@ export function ClientDetailPage() {
         {[
           { label: 'Vue complète', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg> },
           { label: 'Body Scan', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>, count: client.assessments.filter(a => a.bodyScan?.weight).length },
+          { label: 'Mensurations', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M4 4h16v6H4z"/><path d="M4 10v10h16V10"/><path d="M8 10v3M12 10v5M16 10v3"/></svg> },
           { label: 'Historique', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>, count: client.assessments.length },
           { label: 'Produits', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>, count: retainedProducts.length },
           { label: 'Actions', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><polyline points="13 2 13 9 20 9"/><polyline points="11 22 11 15 4 15"/><path d="M3 3l18 18"/></svg> },
@@ -470,8 +472,8 @@ export function ClientDetailPage() {
       {/* Bandeau Prochain RDV (V3) */}
       <NextAppointmentBanner
         nextAppointmentDate={activeFollowUp?.dueDate ?? null}
-        onPlan={() => setActiveTab(4)}
-        onViewDetails={() => setActiveTab(4)}
+        onPlan={() => setActiveTab(5)}
+        onViewDetails={() => setActiveTab(5)}
       />
       </div>
 
@@ -698,8 +700,19 @@ export function ClientDetailPage() {
         </Card>
       )}
 
-      {/* Tab 2: Historique bilans */}
+      {/* Tab 2: Mensurations — Chantier Module Mensurations (2026-04-24) */}
       {activeTab === 2 && (
+        <MeasurementsPanel
+          clientId={client.id}
+          gender={client.sex}
+          authorType="coach"
+          authorUserId={currentUser?.id ?? null}
+          otherAuthorLabel="le client"
+        />
+      )}
+
+      {/* Tab 3: Historique bilans */}
+      {activeTab === 3 && (
         <Card className="space-y-5">
           <div className="flex items-center justify-between">
             <div>
@@ -761,7 +774,7 @@ export function ClientDetailPage() {
           inside ProductAdder or recommendations logic from breaking the
           entire fiche. Sectional fallback = discreet card, user can navigate
           to another tab without reloading. */}
-      {activeTab === 3 && (
+      {activeTab === 4 && (
         <ErrorBoundary
           name="ClientDetailPage/Tab3-Produits"
           fallback={(
@@ -895,7 +908,7 @@ export function ClientDetailPage() {
       )}
 
       {/* Tab 4: Actions rapides */}
-      {activeTab === 4 && (
+      {activeTab === 5 && (
         <div className="grid gap-4 md:grid-cols-2">
           {/* Chantier invitation client app (2026-04-21) : bouton d'invitation
               en tête de l'onglet Actions, avant la note générale. Visible
