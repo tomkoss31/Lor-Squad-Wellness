@@ -4,6 +4,7 @@ import { getSupabaseClient } from '../services/supabaseClient'
 import { HERBALIFE_PRODUCTS, type HerbalifeProduct } from '../data/herbalifeCatalog'
 import { ClientMessageModal } from '../components/client-app/ClientMessageModal'
 import { ClientChatTab } from '../components/client-app/ClientChatTab'
+import { ClientPushOptIn } from '../components/client-app/ClientPushOptIn'
 import { BreakfastStorySlider, DEFAULT_BREAKFAST_ANALYSIS } from '../components/education/BreakfastStorySlider'
 import type { BreakfastAnalysis } from '../types/domain'
 
@@ -617,6 +618,16 @@ export function ClientAppPage() {
           </div>
         </div>
       </div>
+
+      {/* Chantier Messagerie bidirectionnelle (2026-04-22) : CTA opt-in push
+          juste sous le HERO. S'affiche uniquement si Notification.permission
+          === 'default' et support natif. Self-hiding après accept/deny. */}
+      {token ? (
+        <ClientPushOptIn
+          token={token}
+          coachFirstName={(data.coach_name ?? '').split(/\s+/)[0] || 'Ton coach'}
+        />
+      ) : null}
 
       <div style={{ padding: '12px 14px' }}>
         {/* ══════════════════════════════════════════════════════════════ */}
