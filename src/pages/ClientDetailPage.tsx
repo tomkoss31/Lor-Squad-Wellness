@@ -4,6 +4,7 @@ import { EditScheduleModal } from "../components/client/EditScheduleModal";
 import { WeightSummaryBlock } from "../components/client/WeightSummaryBlock";
 import { BodyCompositionGauges } from "../components/client/BodyCompositionGauges";
 import { OnboardingChecksBlock } from "../components/client/OnboardingChecksBlock";
+import { CoachNotesBlock } from "../components/client/CoachNotesBlock";
 import { BodyFatInsightCard } from "../components/body-scan/BodyFatInsightCard";
 import { MuscleMassInsightCard } from "../components/body-scan/MuscleMassInsightCard";
 import { BodyScanSnapshotCard } from "../components/body-scan/BodyScanSnapshotCard";
@@ -546,6 +547,14 @@ export function ClientDetailPage() {
             initialMuscleMass={firstAssessment.bodyScan?.muscleMass ?? null}
             currentHydration={latestBodyScan.hydration ?? null}
             initialHydration={firstAssessment.bodyScan?.hydration ?? null}
+          />
+
+          {/* Chantier Polish Vue complète (2026-04-24) : notes coach vivantes
+              + bilan initial archivé. Stockage client_notes (typées). */}
+          <CoachNotesBlock
+            clientId={client.id}
+            initialAssessmentNotes={firstAssessment.coachNotesInitial ?? firstAssessment.notes ?? null}
+            initialAssessmentDate={firstAssessment.date ?? null}
           />
         </Card>
       )}

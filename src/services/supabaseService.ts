@@ -51,6 +51,8 @@ type AssessmentRow = {
   decision_client?: DecisionClient | null;
   type_de_suite?: TypeDeSuite | null;
   message_a_laisser?: MessageALaisser | null;
+  coach_notes_draft?: string | null;
+  coach_notes_initial?: string | null;
   pedagogical_focus: string[] | null;
 };
 
@@ -334,7 +336,9 @@ function mapAssessment(row: AssessmentRow): AssessmentRecord {
     pedagogicalFocus: row.pedagogical_focus ?? [],
     decisionClient: row.decision_client ?? null,
     typeDeSuite: row.type_de_suite ?? null,
-    messageALaisser: row.message_a_laisser ?? null
+    messageALaisser: row.message_a_laisser ?? null,
+    coachNotesDraft: row.coach_notes_draft ?? null,
+    coachNotesInitial: row.coach_notes_initial ?? null
   };
 }
 
