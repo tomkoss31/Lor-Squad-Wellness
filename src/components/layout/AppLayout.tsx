@@ -218,70 +218,71 @@ export function AppLayout() {
             })}
           </nav>
 
-          {/* ZONE 3 — Profil + déconnexion */}
-          <div style={{ padding: '12px 14px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+          {/* ZONE 3 — Profil + déconnexion (Chantier Refonte Nav 2026-04-22 :
+              bouton Sortir rouge toujours visible, plus caché derrière la
+              nav mobile du bas). */}
+          <div style={{ padding: '12px 14px', borderTop: '1px solid rgba(255,255,255,0.06)', flexShrink: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
               <div style={{
-                width: 32, height: 32, borderRadius: '50%',
-                background: 'linear-gradient(135deg, #C9A84C, #2DD4BF)',
+                width: 30, height: 30, borderRadius: '50%',
+                background: 'linear-gradient(135deg, #2DD4BF, #0D9488)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 11, fontWeight: 700, color: '#0B0D11',
+                fontSize: 11, fontWeight: 700, color: '#FFFFFF',
                 fontFamily: 'Syne, sans-serif', flexShrink: 0,
               }}>
                 {currentUser.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
               </div>
               <div style={{ minWidth: 0, flex: 1 }}>
-                <div style={{ fontSize: 12, fontWeight: 500, color: '#F0EDE8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--ls-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {currentUser.name}
                 </div>
-                <div style={{ fontSize: 10, color: '#4A5068' }}>
-                  {currentUser.role === 'admin' ? 'Administrateur' : 'Coach'}
+                <div style={{ fontSize: 11, color: 'var(--ls-text-hint)' }}>
+                  {currentUser.role === 'admin' ? 'Admin' : 'Coach'}
                 </div>
               </div>
-              {currentUser.role === 'admin' && (
-                <span style={{ fontSize: 9, padding: '2px 7px', borderRadius: 10, background: 'rgba(201,168,76,0.15)', color: '#C9A84C', fontWeight: 600, flexShrink: 0 }}>
-                  Admin
-                </span>
-              )}
+
+              {/* Bouton "Sortir" rouge clair — toujours visible */}
+              <button
+                onClick={() => void handleLogout()}
+                title="Se déconnecter"
+                aria-label="Se déconnecter"
+                style={{
+                  padding: '6px 12px', borderRadius: 8,
+                  background: '#FCEBEB', color: '#A32D2D',
+                  border: 'none', fontSize: 11, fontWeight: 500,
+                  fontFamily: 'DM Sans, sans-serif', cursor: 'pointer',
+                  flexShrink: 0, transition: 'all 0.15s',
+                }}
+                onMouseEnter={e => { e.currentTarget.style.background = '#F9D8D8' }}
+                onMouseLeave={e => { e.currentTarget.style.background = '#FCEBEB' }}
+              >
+                Sortir
+              </button>
             </div>
 
-            {/* Toggle theme */}
+            {/* Toggle theme — déplacé en ligne compacte sous le bloc user */}
             <button
               onClick={toggleTheme}
               style={{
-                width: '100%', display: 'flex', alignItems: 'center', gap: 10,
-                padding: '9px 10px', borderRadius: 9, background: 'transparent',
+                width: '100%', display: 'flex', alignItems: 'center', gap: 8,
+                padding: '7px 10px', borderRadius: 8, background: 'transparent',
                 border: '1px solid var(--ls-border)', cursor: 'pointer',
-                marginBottom: 8, transition: 'background 0.15s',
+                transition: 'background 0.15s',
               }}
               onMouseEnter={e => e.currentTarget.style.background = 'var(--ls-surface2)'}
               onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
             >
               {isDark ? (
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ls-text-muted)" strokeWidth="1.5"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--ls-text-muted)" strokeWidth="1.5"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
               ) : (
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ls-text-muted)" strokeWidth="1.5"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--ls-text-muted)" strokeWidth="1.5"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
               )}
-              <div style={{ width: 36, height: 20, borderRadius: 10, background: isDark ? 'rgba(255,255,255,0.1)' : '#C9A84C', position: 'relative', transition: 'background 0.2s', flexShrink: 0 }}>
-                <div style={{ position: 'absolute', top: 3, left: isDark ? 3 : 17, width: 14, height: 14, borderRadius: '50%', background: '#FFFFFF', transition: 'left 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.3)' }} />
-              </div>
-              <span style={{ fontSize: 12, color: 'var(--ls-text-muted)', fontFamily: 'DM Sans, sans-serif' }}>
+              <span style={{ fontSize: 11, color: 'var(--ls-text-muted)', fontFamily: 'DM Sans, sans-serif', flex: 1, textAlign: 'left' }}>
                 {isDark ? 'Mode sombre' : 'Mode clair'}
               </span>
-            </button>
-
-            <button
-              onClick={() => void handleLogout()}
-              style={{
-                width: '100%', padding: '8px', borderRadius: 9,
-                background: 'rgba(251,113,133,0.06)', border: '1px solid rgba(251,113,133,0.15)',
-                color: '#FB7185', fontSize: 12, fontFamily: 'DM Sans, sans-serif',
-                cursor: 'pointer', transition: 'all 0.15s',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-              }}
-            >
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-              Déconnexion
+              <div style={{ width: 28, height: 16, borderRadius: 8, background: isDark ? 'rgba(255,255,255,0.1)' : '#C9A84C', position: 'relative', transition: 'background 0.2s', flexShrink: 0 }}>
+                <div style={{ position: 'absolute', top: 2, left: isDark ? 2 : 14, width: 12, height: 12, borderRadius: '50%', background: '#FFFFFF', transition: 'left 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.3)' }} />
+              </div>
             </button>
           </div>
         </aside>
