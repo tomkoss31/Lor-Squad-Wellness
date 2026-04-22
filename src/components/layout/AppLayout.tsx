@@ -303,18 +303,17 @@ export function AppLayout() {
             })}
           </nav>
 
-          {/* ZONE 3 — Footer sticky : toggle thème + profil + BIG bouton
-              Sortir pleine largeur.
-              Chantier V3 fix 2 (2026-04-24) : le bouton Sortir était
-              parfois caché sous la BottomNav / hors viewport. Refonte :
-              - Le footer est la 3e row du CSS grid de l'aside → toujours
-                collé en bas, toujours visible.
-              - Bouton "Se déconnecter" pleine largeur rouge plein, 40px
-                min-height, pas d'ambiguïté visuelle.
-              - Profil compact (avatar + nom), sans bouton inline. */}
+          {/* ZONE 3 — Footer sticky sidebar.
+              Hotfix visibilité Déconnecter (2026-04-24 fix 3) :
+              ordre final = Profil → BOUTON DÉCONNEXION → Toggle thème.
+              Le bouton rouge est désormais juste sous le profil (zone
+              la plus visible), le toggle dark/white passe en dernier
+              (moins critique). Padding-bottom safe-area + 24px de
+              marge de sécurité pour que rien ne puisse couper le
+              toggle par la BottomNav ou le notch iOS. */}
           <div
             style={{
-              padding: '10px 12px calc(10px + env(safe-area-inset-bottom, 0px))',
+              padding: '10px 12px calc(24px + env(safe-area-inset-bottom, 0px))',
               borderTop: '1px solid rgba(255,255,255,0.08)',
               background: 'var(--ls-sidebar-bg)',
               display: 'flex',
@@ -342,9 +341,7 @@ export function AppLayout() {
               </div>
             </div>
 
-            <ThemeToggle />
-
-            {/* Bouton "Se déconnecter" pleine largeur — toujours visible */}
+            {/* Bouton "Se déconnecter" pleine largeur — AU-DESSUS du toggle */}
             <button
               onClick={() => void handleLogout()}
               aria-label="Se déconnecter"
@@ -377,6 +374,9 @@ export function AppLayout() {
               </svg>
               Se déconnecter
             </button>
+
+            {/* Toggle thème — maintenant en dernier (moins critique) */}
+            <ThemeToggle />
           </div>
         </aside>
         )}
