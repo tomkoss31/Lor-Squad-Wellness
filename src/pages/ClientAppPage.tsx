@@ -421,6 +421,7 @@ export function ClientAppPage() {
           distributor_id: data.coach_id ?? '',
           message_type: 'rdv_request',
           message: rdvMessage,
+          sender: 'client',
         }),
       ])
       setRdvSent(true); setRdvMessage('')

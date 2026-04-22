@@ -94,6 +94,10 @@ export function ClientMessageModal({
         message_type: messageType,
         product_name: productName ?? null,
         message: trimmed,
+        // Chantier messagerie bidirectionnelle (2026-04-22) : explicite pour
+        // robustesse. Le default DB est 'client', mais on tient à marquer
+        // l'origine au cas où le default est retiré plus tard.
+        sender: "client",
       });
       if (insertErr) throw new Error(insertErr.message);
 
