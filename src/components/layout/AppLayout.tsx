@@ -5,6 +5,7 @@ import { blasonLogo } from "../../data/visualContent";
 import { Button } from "../ui/Button";
 import { StatusBadge } from "../ui/StatusBadge";
 import { BottomNav } from "./BottomNav";
+import { NewBilanFab } from "./NewBilanFab";
 import { useTheme } from "../../hooks/useTheme";
 import { getRoleLabel } from "../../lib/auth";
 
@@ -392,6 +393,9 @@ export function AppLayout() {
         </main>
       </div>
       <BottomNav />
+      {/* Chantier Refonte Navigation (2026-04-22) : bouton "+ Nouveau bilan"
+          fixe en top-right visible sur toutes les pages coach authentifiées. */}
+      <NewBilanFab />
     </div>
   );
 }
