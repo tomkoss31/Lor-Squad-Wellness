@@ -3,6 +3,8 @@ import { useParams } from 'react-router-dom'
 import { getSupabaseClient } from '../services/supabaseClient'
 import { HERBALIFE_PRODUCTS, type HerbalifeProduct } from '../data/herbalifeCatalog'
 import { ClientMessageModal } from '../components/client-app/ClientMessageModal'
+import { ClientChatTab } from '../components/client-app/ClientChatTab'
+import { ClientPushOptIn } from '../components/client-app/ClientPushOptIn'
 import { BreakfastStorySlider, DEFAULT_BREAKFAST_ANALYSIS } from '../components/education/BreakfastStorySlider'
 import type { BreakfastAnalysis } from '../types/domain'
 
@@ -209,7 +211,18 @@ export function ClientAppPage() {
     const id = window.setTimeout(() => setShowWelcome(false), 4500)
     return () => window.clearTimeout(id)
   }, [showWelcome])
-  const [activeTab, setActiveTab] = useState<'home' | 'evolution' | 'products' | 'coaching' | 'refer'>('home')
+  // Chantier Messagerie bidirectionnelle (2026-04-22) : nouveau tab 'messages'
+  // (conversation chat coach ↔ client). Ouverture auto si ?tab=messages dans
+  // l'URL (notif push coach_message y redirige).
+  const initialTab = (() => {
+    if (typeof window === 'undefined') return 'home' as const
+    const t = new URLSearchParams(window.location.search).get('tab')
+    if (t === 'messages' || t === 'evolution' || t === 'products' || t === 'coaching' || t === 'refer') {
+      return t as 'home' | 'evolution' | 'products' | 'coaching' | 'refer' | 'messages'
+    }
+    return 'home' as const
+  })()
+  const [activeTab, setActiveTab] = useState<'home' | 'evolution' | 'products' | 'coaching' | 'refer' | 'messages'>(initialTab)
   // Chantier Messagerie client ↔ coach (2026-04-21) : 2 modales pour parler
   // au coach depuis l'app — question produit OU demande de reco générique.
   const [productAskModal, setProductAskModal] = useState<HerbalifeProduct | null>(null)
@@ -408,6 +421,7 @@ export function ClientAppPage() {
           distributor_id: data.coach_id ?? '',
           message_type: 'rdv_request',
           message: rdvMessage,
+          sender: 'client',
         }),
       ])
       setRdvSent(true); setRdvMessage('')
@@ -605,6 +619,16 @@ export function ClientAppPage() {
           </div>
         </div>
       </div>
+
+      {/* Chantier Messagerie bidirectionnelle (2026-04-22) : CTA opt-in push
+          juste sous le HERO. S'affiche uniquement si Notification.permission
+          === 'default' et support natif. Self-hiding après accept/deny. */}
+      {token ? (
+        <ClientPushOptIn
+          token={token}
+          coachFirstName={(data.coach_name ?? '').split(/\s+/)[0] || 'Ton coach'}
+        />
+      ) : null}
 
       <div style={{ padding: '12px 14px' }}>
         {/* ══════════════════════════════════════════════════════════════ */}
@@ -964,6 +988,17 @@ export function ClientAppPage() {
         )}
 
         {/* ══════════════════════════════════════════════════════════════ */}
+        {/* ONGLET MESSAGES (chantier messagerie bidirectionnelle 2026-04-22) */}
+        {/* ══════════════════════════════════════════════════════════════ */}
+        {activeTab === 'messages' && token ? (
+          <ClientChatTab
+            token={token}
+            clientFirstName={data.client_first_name}
+            coachFirstName={(data.coach_name ?? '').split(/\s+/)[0] || 'Ton coach'}
+          />
+        ) : null}
+
+        {/* ══════════════════════════════════════════════════════════════ */}
         {/* ONGLET RECOMMANDER                                              */}
         {/* ══════════════════════════════════════════════════════════════ */}
         {activeTab === 'refer' && (
@@ -1149,6 +1184,7 @@ export function ClientAppPage() {
           { key: 'evolution' as const, label: 'Évolution', icon: (<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12" /></svg>) },
           { key: 'products' as const, label: 'Produits', icon: (<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></svg>) },
           { key: 'coaching' as const, label: 'Coaching', icon: (<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18h6" /><path d="M10 22h4" /><path d="M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.2 1 2V17h6v-.3c0-.8.4-1.5 1-2A7 7 0 0 0 12 2z" /></svg>) },
+          { key: 'messages' as const, label: 'Messages', icon: (<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" /></svg>) },
           { key: 'refer' as const, label: 'Recommander', icon: (<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><line x1="23" y1="11" x2="17" y2="11" /><line x1="20" y1="8" x2="20" y2="14" /></svg>) },
         ]).map(({ key, label, icon }) => {
           const isActive = activeTab === key
