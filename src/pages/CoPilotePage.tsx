@@ -14,6 +14,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAppContext } from "../context/AppContext";
+import { useToast } from "../context/ToastContext";
 import { PageHeading } from "../components/ui/PageHeading";
 import { InboxWidget } from "../components/copilote/InboxWidget";
 
@@ -56,7 +57,27 @@ export function CoPilotePage() {
     pvTransactions,
     prospects,
   } = useAppContext();
+  const { push: pushToast } = useToast();
   const now = useLiveClock();
+
+  // Chantier Onboarding distributeur complet (2026-04-24) : toast "Bienvenue
+  // dans Lor'Squad" quand l'utilisateur arrive depuis /bienvenue-distri.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const welcome = new URLSearchParams(window.location.search).get("welcome");
+    if (welcome !== "distri" || !currentUser) return;
+    const firstName = currentUser.name?.split(/\s+/)[0] ?? "";
+    pushToast({
+      tone: "success",
+      title: `Bienvenue dans Lor'Squad${firstName ? ", " + firstName : ""} ! 🎉`,
+      message: "Ton compte distributeur est prêt. Explore ton co-pilote.",
+    });
+    // Nettoyer le query param pour éviter un 2e toast au reload.
+    const url = new URL(window.location.href);
+    url.searchParams.delete("welcome");
+    window.history.replaceState({}, "", url.toString());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentUser?.id]);
 
   // ─── Derived stats (scopées au user courant) ──────────────────────────
   const stats = useMemo(() => {
