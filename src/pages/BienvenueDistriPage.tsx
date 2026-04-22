@@ -17,6 +17,8 @@ type ValidationState =
       firstName: string;
       lastName: string;
       email: string;
+      phone: string;
+      variant: "admin" | "sponsor";
       sponsorFirstName: string;
       sponsorName: string;
     }
@@ -31,6 +33,7 @@ export function BienvenueDistriPage() {
   // Form state
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [passwordConfirm, setPasswordConfirm] = useState("");
   const [phone, setPhone] = useState("");
@@ -77,16 +80,25 @@ export function BienvenueDistriPage() {
         setValidation({ status: "invalid", message });
         return;
       }
+      const invitedPhone = (data.invited_phone ?? "") as string;
+      const tokenVariant = ((data.variant as string) === "sponsor" ? "sponsor" : "admin") as
+        | "admin"
+        | "sponsor";
       setValidation({
         status: "valid",
         firstName: data.invited_first_name ?? "",
         lastName: data.invited_last_name ?? "",
         email: data.invited_email ?? "",
+        phone: invitedPhone,
+        variant: tokenVariant,
         sponsorFirstName: data.sponsor_first_name ?? "ton parrain",
         sponsorName: data.sponsor_name ?? "Ton parrain",
       });
       setFirstName(data.invited_first_name ?? "");
       setLastName(data.invited_last_name ?? "");
+      setEmail(data.invited_email ?? "");
+      // V2 sponsor : téléphone pré-rempli par le parrain (l'invité peut l'ajuster)
+      if (invitedPhone) setPhone(invitedPhone);
     })();
   }, []);
 
@@ -118,8 +130,13 @@ export function BienvenueDistriPage() {
     if (validation.status !== "valid") return;
     setFormError("");
 
-    if (password.length < 6) {
-      setFormError("Le mot de passe doit contenir au moins 6 caractères.");
+    if (!email.trim() || !/.+@.+\..+/.test(email.trim())) {
+      setFormError("Adresse email invalide.");
+      setStep(1);
+      return;
+    }
+    if (password.length < 8) {
+      setFormError("Le mot de passe doit contenir au moins 8 caractères.");
       setStep(1);
       return;
     }
@@ -154,6 +171,7 @@ export function BienvenueDistriPage() {
         body: {
           token,
           password,
+          email: email.trim().toLowerCase(),
           first_name: firstName.trim(),
           last_name: lastName.trim(),
           phone: phone.trim(),
@@ -251,10 +269,17 @@ export function BienvenueDistriPage() {
                 passwordConfirm={passwordConfirm}
                 onPasswordChange={setPassword}
                 onPasswordConfirmChange={setPasswordConfirm}
+                email={email}
+                onEmailChange={setEmail}
+                showEmailField={validation.variant === "sponsor"}
                 onBack={() => setStep(0)}
                 onContinue={() => {
-                  if (password.length < 6) {
-                    setFormError("Le mot de passe doit contenir au moins 6 caractères.");
+                  if (validation.variant === "sponsor" && (!email.trim() || !/.+@.+\..+/.test(email.trim()))) {
+                    setFormError("Adresse email invalide.");
+                    return;
+                  }
+                  if (password.length < 8) {
+                    setFormError("Le mot de passe doit contenir au moins 8 caractères.");
                     return;
                   }
                   if (password !== passwordConfirm) {
@@ -412,6 +437,9 @@ function PasswordStep({
   passwordConfirm,
   onPasswordChange,
   onPasswordConfirmChange,
+  email,
+  onEmailChange,
+  showEmailField,
   onBack,
   onContinue,
   error,
@@ -420,6 +448,9 @@ function PasswordStep({
   passwordConfirm: string;
   onPasswordChange: (v: string) => void;
   onPasswordConfirmChange: (v: string) => void;
+  email: string;
+  onEmailChange: (v: string) => void;
+  showEmailField: boolean;
   onBack: () => void;
   onContinue: () => void;
   error: string;
@@ -436,18 +467,33 @@ function PasswordStep({
           marginBottom: 6,
         }}
       >
-        Choisis ton mot de passe
+        {showEmailField ? "Ton email et ton mot de passe" : "Choisis ton mot de passe"}
       </p>
       <p style={{ fontSize: 13, color: "#6B7280", marginBottom: 20, lineHeight: 1.55 }}>
-        Il te servira à te connecter. Minimum 6 caractères — garde-le en sécurité.
+        {showEmailField
+          ? "Ils te serviront à te connecter. Minimum 8 caractères pour le mot de passe."
+          : "Il te servira à te connecter. Minimum 8 caractères — garde-le en sécurité."}
       </p>
+
+      {showEmailField ? (
+        <LargeField label="Ton adresse email">
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => onEmailChange(e.target.value)}
+            placeholder="prenom.nom@exemple.com"
+            autoComplete="email"
+            style={inputStyle}
+          />
+        </LargeField>
+      ) : null}
 
       <LargeField label="Mot de passe">
         <input
           type="password"
           value={password}
           onChange={(e) => onPasswordChange(e.target.value)}
-          placeholder="Au moins 6 caractères"
+          placeholder="Au moins 8 caractères"
           autoComplete="new-password"
           style={inputStyle}
         />
