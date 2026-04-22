@@ -1,13 +1,20 @@
-import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useEffect, useMemo, useState } from 'react'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAppContext } from '../context/AppContext'
 import { Card } from '../components/ui/Card'
 import { PageHeading } from '../components/ui/PageHeading'
 import { ReplyMessageModal } from '../components/messaging/ReplyMessageModal'
+import {
+  MessageFilters,
+  readFiltersFromSearch,
+  writeFiltersToSearch,
+  type MessageFiltersState,
+} from '../components/messaging/MessageFilters'
+import { useMessageActions } from '../hooks/useMessageActions'
 import type { ClientMessage } from '../types/domain'
 
-// Chantier Messagerie bidirectionnelle (2026-04-22) : +tab 'clients' pour
-// les demandes non-produit (RDV, questions générales).
+// Chantier Messagerie bidirectionnelle (2026-04-22) : +tab 'clients'.
+// Chantier Messagerie finalisée (2026-04-23) : filtres + actions + persist URL.
 type Tab = 'products' | 'recommendations' | 'clients'
 
 function ContactLinks({ phone, email, name }: { phone?: string; email?: string; name: string }) {
@@ -28,12 +35,6 @@ function ContactLinks({ phone, email, name }: { phone?: string; email?: string; 
           <a href={`https://wa.me/${cleanPhone}?text=${pre}`} target="_blank" rel="noopener noreferrer"
             style={{ fontSize: 10, padding: '5px 10px', borderRadius: 7, background: 'rgba(37,211,102,0.1)', color: '#16A34A', textDecoration: 'none', fontWeight: 600 }}>
             WhatsApp
-          </a>
-        )}
-        {hasPhone && (
-          <a href={`https://t.me/+${cleanPhone}`} target="_blank" rel="noopener noreferrer"
-            style={{ fontSize: 10, padding: '5px 10px', borderRadius: 7, background: 'rgba(0,136,204,0.1)', color: '#0088CC', textDecoration: 'none', fontWeight: 600 }}>
-            Telegram
           </a>
         )}
         {hasPhone && (
@@ -59,8 +60,6 @@ function ContactLinks({ phone, email, name }: { phone?: string; email?: string; 
   )
 }
 
-// Chantier Messagerie bidirectionnelle (2026-04-22) : badge coloré selon
-// le type de message, + label affiché sur la carte.
 function typeBadge(type: ClientMessage['message_type']): { label: string; color: string; bg: string } {
   switch (type) {
     case 'product_request':
@@ -76,43 +75,69 @@ function typeBadge(type: ClientMessage['message_type']): { label: string; color:
   }
 }
 
-function MessageCard({ msg, phone, email, onMarkRead, onDelete, onReply }: {
-  msg: ClientMessage;
-  phone?: string;
-  email?: string;
-  onMarkRead: () => void;
-  onDelete: () => void;
-  onReply: () => void;
+function MessageCard({
+  msg,
+  phone,
+  email,
+  onMarkRead,
+  onDelete,
+  onReply,
+  onArchive,
+  onResolve,
+  onViewConversation,
+}: {
+  msg: ClientMessage
+  phone?: string
+  email?: string
+  onMarkRead: () => void
+  onDelete: () => void
+  onReply: () => void
+  onArchive: () => void
+  onResolve: () => void
+  onViewConversation: () => void
 }) {
   const isUnread = !msg.read
-  const isCoachReply = msg.sender === 'coach'
+  const isArchived = !!msg.archived_at
+  const isResolved = !!msg.resolved_at
   const badge = typeBadge(msg.message_type)
   const timeAgo = getTimeAgo(msg.created_at)
 
   return (
     <div style={{
-      background: isUnread && !isCoachReply ? 'var(--ls-surface)' : 'var(--ls-surface2)',
-      border: `1px solid ${isUnread && !isCoachReply ? 'rgba(124,58,237,0.2)' : 'var(--ls-border)'}`,
-      borderLeft: isUnread && !isCoachReply ? '3px solid var(--ls-purple)' : '1px solid var(--ls-border)',
-      borderRadius: isUnread && !isCoachReply ? '0 12px 12px 0' : 12,
+      background: isUnread && !isArchived ? 'var(--ls-surface)' : 'var(--ls-surface2)',
+      border: `1px solid ${isUnread && !isArchived ? 'rgba(124,58,237,0.2)' : 'var(--ls-border)'}`,
+      borderLeft: isUnread && !isArchived ? '3px solid var(--ls-purple)' : '1px solid var(--ls-border)',
+      borderRadius: isUnread && !isArchived ? '0 12px 12px 0' : 12,
       padding: '14px 16px',
       transition: 'all 0.15s',
-      opacity: isCoachReply ? 0.7 : 1,
+      opacity: isArchived ? 0.55 : isResolved ? 0.78 : 1,
     }}>
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
         <div style={{
           width: 36, height: 36, borderRadius: '50%', flexShrink: 0,
-          background: isUnread && !isCoachReply ? 'rgba(124,58,237,0.12)' : 'var(--ls-surface2)',
+          background: isUnread && !isArchived ? 'rgba(124,58,237,0.12)' : 'var(--ls-surface2)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           fontSize: 11, fontWeight: 700, fontFamily: 'Syne, sans-serif',
-          color: isUnread && !isCoachReply ? 'var(--ls-purple)' : 'var(--ls-text-hint)',
+          color: isUnread && !isArchived ? 'var(--ls-purple)' : 'var(--ls-text-hint)',
         }}>
           {msg.client_name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
         </div>
 
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-            <span style={{ fontSize: 14, fontWeight: isUnread && !isCoachReply ? 600 : 400, color: 'var(--ls-text)' }}>{msg.client_name}</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4, flexWrap: 'wrap' }}>
+            <span style={{ fontSize: 14, fontWeight: isUnread ? 600 : 400, color: 'var(--ls-text)' }}>
+              {msg.client_name}
+            </span>
+            {isResolved ? (
+              <span style={{ fontSize: 9, padding: '1px 6px', borderRadius: 8, background: 'rgba(15,110,86,0.1)', color: '#0F6E56', fontWeight: 700 }}>
+                ✓ Traité
+              </span>
+            ) : null}
+            {isArchived ? (
+              <span style={{ fontSize: 9, padding: '1px 6px', borderRadius: 8, background: 'var(--ls-surface2)', color: 'var(--ls-text-hint)', fontWeight: 700 }}>
+                Archivé
+              </span>
+            ) : null}
             <span style={{ fontSize: 10, color: 'var(--ls-text-hint)', marginLeft: 'auto', flexShrink: 0 }}>{timeAgo}</span>
           </div>
 
@@ -125,34 +150,46 @@ function MessageCard({ msg, phone, email, onMarkRead, onDelete, onReply }: {
           </div>
 
           {msg.message && (
-            <div style={{ fontSize: 12, color: 'var(--ls-text-muted)', lineHeight: 1.5, marginBottom: 2, marginTop: 4 }}>
+            <div style={{ fontSize: 12, color: 'var(--ls-text-muted)', lineHeight: 1.5, marginTop: 4 }}>
               {msg.message}
             </div>
           )}
 
-          {!isCoachReply && (
-            <ContactLinks phone={phone || msg.client_contact || undefined} email={email} name={msg.client_name} />
-          )}
+          <ContactLinks phone={phone || msg.client_contact || undefined} email={email} name={msg.client_name} />
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 10, flexWrap: 'wrap' }}>
+            <button onClick={onViewConversation}
+              style={{ fontSize: 11, padding: '5px 12px', borderRadius: 8, background: 'rgba(13,148,136,0.1)', border: '1px solid rgba(13,148,136,0.25)', color: '#0F6E56', cursor: 'pointer', fontFamily: 'DM Sans, sans-serif', fontWeight: 500 }}>
+              💬 Conversation
+            </button>
+            <button onClick={onReply}
+              style={{ fontSize: 11, padding: '5px 12px', borderRadius: 8, background: 'var(--ls-gold)', border: 'none', color: '#0B0D11', cursor: 'pointer', fontFamily: 'DM Sans, sans-serif', fontWeight: 600 }}>
+              Répondre
+            </button>
             {msg.client_id && (
               <Link to={`/clients/${msg.client_id}`}
                 style={{ fontSize: 11, padding: '5px 12px', borderRadius: 8, background: 'var(--ls-surface2)', border: '1px solid var(--ls-border)', color: 'var(--ls-text-muted)', textDecoration: 'none' }}>
-                Voir la fiche
+                Fiche
               </Link>
             )}
-            {!isCoachReply && (
-              <button onClick={onReply}
-                style={{ fontSize: 11, padding: '5px 12px', borderRadius: 8, background: 'var(--ls-gold)', border: 'none', color: '#0B0D11', cursor: 'pointer', fontFamily: 'DM Sans, sans-serif', fontWeight: 600 }}>
-                💬 Répondre
-              </button>
-            )}
-            {isUnread && (
+            {isUnread && !isArchived && (
               <button onClick={onMarkRead}
                 style={{ fontSize: 11, padding: '5px 12px', borderRadius: 8, background: 'rgba(124,58,237,0.08)', border: 'none', color: 'var(--ls-purple)', cursor: 'pointer', fontFamily: 'DM Sans, sans-serif' }}>
                 ✓ Lu
               </button>
             )}
+            {!isResolved ? (
+              <button onClick={onResolve}
+                style={{ fontSize: 11, padding: '5px 12px', borderRadius: 8, background: 'rgba(15,110,86,0.08)', border: 'none', color: '#0F6E56', cursor: 'pointer', fontFamily: 'DM Sans, sans-serif' }}>
+                ✓ Traité
+              </button>
+            ) : null}
+            {!isArchived ? (
+              <button onClick={onArchive}
+                style={{ fontSize: 11, padding: '5px 12px', borderRadius: 8, background: 'var(--ls-surface2)', border: 'none', color: 'var(--ls-text-muted)', cursor: 'pointer', fontFamily: 'DM Sans, sans-serif' }}>
+                📂 Archiver
+              </button>
+            ) : null}
             <button onClick={onDelete}
               style={{ fontSize: 11, padding: '5px 12px', borderRadius: 8, background: 'rgba(220,38,38,0.06)', border: 'none', color: 'var(--ls-coral)', cursor: 'pointer', fontFamily: 'DM Sans, sans-serif', marginLeft: 'auto' }}>
               Supprimer
@@ -164,38 +201,100 @@ function MessageCard({ msg, phone, email, onMarkRead, onDelete, onReply }: {
   )
 }
 
+function normalizeText(s: string): string {
+  return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+}
+
+function filterAndSort(messages: ClientMessage[], filters: MessageFiltersState): ClientMessage[] {
+  let list = messages
+
+  // Status filter
+  switch (filters.status) {
+    case 'unread':
+      list = list.filter(m => !m.read && !m.archived_at)
+      break
+    case 'replied':
+      // Messages pour lesquels on a répondu : le même client a un coach_reply postérieur.
+      // Approximation simple : on affiche ceux marqués comme lus mais non résolus/archivés.
+      list = list.filter(m => m.read && !m.archived_at && !m.resolved_at)
+      break
+    case 'resolved':
+      list = list.filter(m => !!m.resolved_at && !m.archived_at)
+      break
+    case 'archived':
+      list = list.filter(m => !!m.archived_at)
+      break
+    case 'all':
+    default:
+      // Par défaut on cache quand même les archivés pour ne pas noyer l'inbox.
+      list = filters.status === 'all' ? list.filter(m => !m.archived_at) : list
+      break
+  }
+
+  // Search
+  const q = normalizeText(filters.query.trim())
+  if (q.length > 0) {
+    list = list.filter(m => {
+      const haystack = normalizeText(`${m.client_name} ${m.message ?? ''} ${m.product_name ?? ''}`)
+      return haystack.includes(q)
+    })
+  }
+
+  // Sort
+  list = [...list].sort((a, b) => {
+    const diff = new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    return filters.sort === 'recent' ? diff : -diff
+  })
+
+  return list
+}
+
 export function MessagesPage() {
   const { clientMessages, markMessageRead, deleteMessage, getClientById } = useAppContext()
-  const [tab, setTab] = useState<Tab>('products')
+  const actions = useMessageActions()
+  const navigate = useNavigate()
+  const location = useLocation()
+
+  const [tab, setTab] = useState<Tab>('clients')
   const [replyTarget, setReplyTarget] = useState<ClientMessage | null>(null)
+  const [filters, setFilters] = useState<MessageFiltersState>(() => readFiltersFromSearch(location.search))
 
-  // Chantier Messagerie bidirectionnelle (2026-04-22) : on n'affiche plus
-  // les messages sender='coach' dans la liste côté coach (c'est SES propres
-  // messages — elles apparaîtront dans l'onglet conversation client).
-  const incoming = clientMessages.filter(m => (m.sender ?? 'client') === 'client')
+  // Sync filters → URL
+  useEffect(() => {
+    const newSearch = writeFiltersToSearch(filters)
+    if (newSearch !== location.search) {
+      navigate({ pathname: location.pathname, search: newSearch }, { replace: true })
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters])
 
-  const productMessages = incoming.filter(m => m.message_type === 'product_request')
-  const recoMessages = incoming.filter(m => m.message_type === 'recommendation')
-  // "Demandes clients" = tout le reste (RDV, question générale, coach_reply stray, etc.)
-  const clientAskMessages = incoming.filter(m =>
-    m.message_type === 'rdv_request' || m.message_type === 'general'
+  const incoming = useMemo(
+    () => clientMessages.filter(m => (m.sender ?? 'client') === 'client'),
+    [clientMessages],
   )
 
-  const activeMessages =
-    tab === 'products' ? productMessages :
-    tab === 'recommendations' ? recoMessages :
-    clientAskMessages
+  const productMessages = useMemo(() => incoming.filter(m => m.message_type === 'product_request'), [incoming])
+  const recoMessages = useMemo(() => incoming.filter(m => m.message_type === 'recommendation'), [incoming])
+  const clientAskMessages = useMemo(
+    () => incoming.filter(m => m.message_type === 'rdv_request' || m.message_type === 'general'),
+    [incoming],
+  )
 
-  const unreadProducts = productMessages.filter(m => !m.read).length
-  const unreadRecos = recoMessages.filter(m => !m.read).length
-  const unreadClients = clientAskMessages.filter(m => !m.read).length
+  const baseMessages = tab === 'products' ? productMessages : tab === 'recommendations' ? recoMessages : clientAskMessages
+  const activeMessages = useMemo(() => filterAndSort(baseMessages, filters), [baseMessages, filters])
+
+  // Unread counts per tab (ignorant les archivés)
+  const unreadProducts = useMemo(() => productMessages.filter(m => !m.read && !m.archived_at).length, [productMessages])
+  const unreadRecos = useMemo(() => recoMessages.filter(m => !m.read && !m.archived_at).length, [recoMessages])
+  const unreadClients = useMemo(() => clientAskMessages.filter(m => !m.read && !m.archived_at).length, [clientAskMessages])
+  const unreadActive = tab === 'products' ? unreadProducts : tab === 'recommendations' ? unreadRecos : unreadClients
 
   return (
     <div className="space-y-5">
       <PageHeading
         eyebrow="Communication"
-        title="Messages clients"
-        description="Demandes produits, recommandations et demandes clients (RDV, questions)."
+        title="Messagerie"
+        description="Demandes clients, produits et recommandations — filtre, traite, archive."
       />
 
       {/* Tabs */}
@@ -224,6 +323,13 @@ export function MessagesPage() {
         ))}
       </div>
 
+      {/* Filtres */}
+      <MessageFilters
+        state={filters}
+        onChange={(patch) => setFilters(s => ({ ...s, ...patch }))}
+        unreadCount={unreadActive}
+      />
+
       {/* Messages */}
       {activeMessages.length === 0 ? (
         <Card>
@@ -232,12 +338,20 @@ export function MessagesPage() {
               {tab === 'products' ? '🛒' : tab === 'recommendations' ? '👥' : '📅'}
             </div>
             <div style={{ fontSize: 14, color: 'var(--ls-text-muted)', marginBottom: 4 }}>
-              {tab === 'products' ? 'Aucune demande de produit'
-                : tab === 'recommendations' ? 'Aucune recommandation'
-                : 'Aucune demande client'}
+              {filters.query.trim()
+                ? `Aucun résultat pour « ${filters.query} ».`
+                : filters.status === 'archived'
+                  ? 'Aucun message archivé.'
+                  : filters.status === 'resolved'
+                    ? 'Aucun message traité.'
+                    : tab === 'products'
+                      ? 'Aucune demande de produit'
+                      : tab === 'recommendations'
+                        ? 'Aucune recommandation'
+                        : 'Aucune demande client'}
             </div>
             <div style={{ fontSize: 12, color: 'var(--ls-text-hint)' }}>
-              Les messages apparaîtront ici quand un client interagira avec son app.
+              {filters.query.trim() ? 'Essaie une autre recherche.' : 'Les nouveaux messages apparaîtront ici.'}
             </div>
           </div>
         </Card>
@@ -254,6 +368,9 @@ export function MessagesPage() {
                 onMarkRead={() => void markMessageRead(msg.id)}
                 onDelete={() => void deleteMessage(msg.id)}
                 onReply={() => setReplyTarget(msg)}
+                onArchive={() => void actions.archive(msg.id)}
+                onResolve={() => void actions.resolve(msg.id)}
+                onViewConversation={() => navigate(`/messagerie/conversation/${msg.id}`)}
               />
             )
           })}
