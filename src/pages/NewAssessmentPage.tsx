@@ -24,6 +24,12 @@ import { PROGRAM_CHOICES, getProgramById } from "../data/programs";
 import { FelicitationsStep } from "../components/assessment/FelicitationsStep";
 import { NotesPanel } from "../components/assessment/NotesPanel";
 import { ValidationBlockedBanner } from "../components/assessment/ValidationBlockedBanner";
+import {
+  readCoachNotesDraft,
+  writeCoachNotesDraft,
+  clearCoachNotesDraft,
+  purgeLegacyCoachNotesKey,
+} from "../lib/assessmentNotesStorage";
 import { Button } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
 import { PageHeading } from "../components/ui/PageHeading";
@@ -332,8 +338,10 @@ function clearAssessmentDraft() {
   }
 
   window.localStorage.removeItem(ASSESSMENT_DRAFT_KEY);
-  // Chantier Polish Vue complète (2026-04-24) : purge aussi la note coach
-  // liée au bilan une fois celui-ci validé / abandonné.
+  // Chantier Hotfix fuite notes coach (2026-04-24) : la clé legacy
+  // globale est purgée systématiquement. La clé scopée par prospectId
+  // est purgée séparément à la validation effective (cf handleSaveAssessment
+  // qui appelle clearCoachNotesDraft(prospectId)).
   window.localStorage.removeItem("lorsquad-assessment-coach-notes");
 }
 
@@ -405,28 +413,28 @@ export function NewAssessmentPage() {
     firstName: boolean; lastName: boolean; phone: boolean; email: boolean;
   }>({ firstName: false, lastName: false, phone: false, email: false });
 
-  // Chantier Polish Vue complète + refonte bilan (2026-04-24) :
-  // notes coach libres. Auto-save localStorage pendant le bilan, puis
-  // figées dans assessments.coach_notes_initial à la validation.
-  const LS_COACH_NOTES_KEY = "lorsquad-assessment-coach-notes";
+  // Chantier Hotfix fuite notes coach (2026-04-24) :
+  // Les notes coach sont scopées par prospectId. Si pas de prospectId
+  // (bilan 100% neuf) → éphémère, state React uniquement, aucune
+  // persistance localStorage → zéro fuite cross-client possible.
+  // Purge opportuniste de la clé legacy globale au montage (users
+  // déjà affectés par le bug récupèrent un state propre).
   const [coachNotes, setCoachNotes] = useState<string>(() => {
-    if (typeof window === "undefined") return "";
-    try {
-      return window.localStorage.getItem(LS_COACH_NOTES_KEY) ?? "";
-    } catch {
-      return "";
-    }
+    purgeLegacyCoachNotesKey();
+    return readCoachNotesDraft(prospectId);
   });
   const [showValidationBanner, setShowValidationBanner] = useState(false);
   const [showMobileNotes, setShowMobileNotes] = useState(false);
 
+  // Si prospectId change (navigation entre bilans), on reset les notes
+  // pour éviter toute fuite visuelle avant le prochain fetch.
+  useEffect(() => {
+    setCoachNotes(readCoachNotesDraft(prospectId));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [prospectId]);
+
   const persistCoachNotesLocal = (value: string) => {
-    if (typeof window === "undefined") return;
-    try {
-      window.localStorage.setItem(LS_COACH_NOTES_KEY, value);
-    } catch {
-      // quota
-    }
+    writeCoachNotesDraft(prospectId, value);
   };
 
   // L'étape 11 "Suite du suivi" est validée si le coach a choisi
@@ -924,6 +932,7 @@ export function NewAssessmentPage() {
 
           if (recapData?.token) {
             clearAssessmentDraft();
+            clearCoachNotesDraft(prospectId);
             setRecapToken(recapData.token);
             setRecapClientName(`${form.firstName?.trim()} ${form.lastName?.trim()}`);
             setShowRecapModal(true);
@@ -933,6 +942,7 @@ export function NewAssessmentPage() {
 
         // Pas de Supabase ou pas de token renvoyé → mode local, on nettoie le draft
         clearAssessmentDraft();
+        clearCoachNotesDraft(prospectId);
         navigate(`/clients/${clientId}`);
       } catch (recapErr) {
         // Bilan enregistré, mais recap KO. On NE nettoie PAS le draft pour permettre
