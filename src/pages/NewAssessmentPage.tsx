@@ -971,6 +971,7 @@ export function NewAssessmentPage() {
               persistCoachNotesLocal(v);
             }}
             onAutoSave={() => persistCoachNotesLocal(coachNotes)}
+            clientId={null}
           />
         </div>
       ) : null}

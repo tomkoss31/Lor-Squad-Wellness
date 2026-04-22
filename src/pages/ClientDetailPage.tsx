@@ -552,6 +552,7 @@ export function ClientDetailPage() {
               + bilan initial archivé. Stockage client_notes (typées). */}
           <CoachNotesBlock
             clientId={client.id}
+            clientName={`${client.firstName} ${client.lastName}`}
             initialAssessmentNotes={firstAssessment.coachNotesInitial ?? firstAssessment.notes ?? null}
             initialAssessmentDate={firstAssessment.date ?? null}
           />

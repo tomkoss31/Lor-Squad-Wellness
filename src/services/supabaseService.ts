@@ -84,6 +84,9 @@ type ClientRow = {
   free_follow_up?: boolean | null;
   free_pv_tracking?: boolean | null;
   general_note?: string | null;
+  // V2 (2026-04-24) : après migration, la colonne est renommée. On lit
+  // les deux pour la transition (avant/après migration SQL).
+  general_note_deprecated?: string | null;
   onboarding_checks?: { telegram?: boolean; photo_before?: boolean; measurements?: boolean } | null;
   assessments?: AssessmentRow[] | null;
 };
@@ -370,7 +373,7 @@ function mapClient(row: ClientRow): Client {
     lifecycleUpdatedBy: row.lifecycle_updated_by ?? null,
     freeFollowUp: row.free_follow_up ?? false,
     freePvTracking: row.free_pv_tracking ?? false,
-    generalNote: row.general_note ?? undefined,
+    generalNote: row.general_note ?? row.general_note_deprecated ?? undefined,
     onboardingChecks: row.onboarding_checks ?? undefined,
     assessments: (row.assessments ?? []).map(mapAssessment)
   };
@@ -1455,17 +1458,22 @@ export async function updateSupabaseClientGeneralNote(params: {
   const { clientId, generalNote } = params;
   const client = await requireSupabase();
 
-  const { error } = await client
+  // V2 (2026-04-24) : après migration, la colonne est renommée en
+  // general_note_deprecated. On tente general_note d'abord, fallback
+  // sur general_note_deprecated, pour supporter les deux états.
+  let { error } = await client
     .from("clients")
     .update({ general_note: generalNote })
     .eq("id", clientId);
 
+  if (error && isMissingColumnError(error, "general_note")) {
+    ({ error } = await client
+      .from("clients")
+      .update({ general_note_deprecated: generalNote })
+      .eq("id", clientId));
+  }
+
   if (error) {
-    if (isMissingColumnError(error, "general_note")) {
-      throw new Error(
-        "La colonne general_note n'existe pas encore. Exécute la migration supabase/migrations/20260420200000_add_general_note.sql."
-      );
-    }
     throw new Error(`Impossible de mettre à jour la note générale : ${error.message}`);
   }
 }
