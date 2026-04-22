@@ -3,9 +3,12 @@ import { Link } from 'react-router-dom'
 import { useAppContext } from '../context/AppContext'
 import { Card } from '../components/ui/Card'
 import { PageHeading } from '../components/ui/PageHeading'
+import { ReplyMessageModal } from '../components/messaging/ReplyMessageModal'
 import type { ClientMessage } from '../types/domain'
 
-type Tab = 'products' | 'recommendations'
+// Chantier Messagerie bidirectionnelle (2026-04-22) : +tab 'clients' pour
+// les demandes non-produit (RDV, questions générales).
+type Tab = 'products' | 'recommendations' | 'clients'
 
 function ContactLinks({ phone, email, name }: { phone?: string; email?: string; name: string }) {
   const pre = encodeURIComponent(`Bonjour ${name}, suite à votre intérêt pour Lor'Squad Wellness.`)
@@ -56,69 +59,93 @@ function ContactLinks({ phone, email, name }: { phone?: string; email?: string; 
   )
 }
 
-function MessageCard({ msg, phone, email, onMarkRead, onDelete }: {
+// Chantier Messagerie bidirectionnelle (2026-04-22) : badge coloré selon
+// le type de message, + label affiché sur la carte.
+function typeBadge(type: ClientMessage['message_type']): { label: string; color: string; bg: string } {
+  switch (type) {
+    case 'product_request':
+      return { label: '🛒 Demande produit', color: '#B8922A', bg: 'rgba(184,146,42,0.12)' }
+    case 'recommendation':
+      return { label: '👥 Recommandation', color: '#7C3AED', bg: 'rgba(124,58,237,0.12)' }
+    case 'rdv_request':
+      return { label: '📅 Modification RDV', color: '#0D9488', bg: 'rgba(13,148,136,0.12)' }
+    case 'coach_reply':
+      return { label: '↩️ Réponse envoyée', color: '#0F6E56', bg: 'rgba(15,110,86,0.12)' }
+    default:
+      return { label: '💬 Message', color: '#6B7280', bg: 'var(--ls-surface2)' }
+  }
+}
+
+function MessageCard({ msg, phone, email, onMarkRead, onDelete, onReply }: {
   msg: ClientMessage;
   phone?: string;
   email?: string;
   onMarkRead: () => void;
   onDelete: () => void;
+  onReply: () => void;
 }) {
   const isUnread = !msg.read
-  // Chantier Messagerie client ↔ coach (2026-04-21) : +'rdv_request' label.
-  const typeLabel =
-    msg.message_type === 'product_request'
-      ? '🛒 Demande produit'
-      : msg.message_type === 'recommendation'
-        ? '👥 Recommandation'
-        : msg.message_type === 'rdv_request'
-          ? '📅 Demande de RDV'
-          : '💬 Message'
+  const isCoachReply = msg.sender === 'coach'
+  const badge = typeBadge(msg.message_type)
   const timeAgo = getTimeAgo(msg.created_at)
 
   return (
     <div style={{
-      background: isUnread ? 'var(--ls-surface)' : 'var(--ls-surface2)',
-      border: `1px solid ${isUnread ? 'rgba(124,58,237,0.2)' : 'var(--ls-border)'}`,
-      borderLeft: isUnread ? '3px solid var(--ls-purple)' : '1px solid var(--ls-border)',
-      borderRadius: isUnread ? '0 12px 12px 0' : 12,
+      background: isUnread && !isCoachReply ? 'var(--ls-surface)' : 'var(--ls-surface2)',
+      border: `1px solid ${isUnread && !isCoachReply ? 'rgba(124,58,237,0.2)' : 'var(--ls-border)'}`,
+      borderLeft: isUnread && !isCoachReply ? '3px solid var(--ls-purple)' : '1px solid var(--ls-border)',
+      borderRadius: isUnread && !isCoachReply ? '0 12px 12px 0' : 12,
       padding: '14px 16px',
       transition: 'all 0.15s',
+      opacity: isCoachReply ? 0.7 : 1,
     }}>
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
         <div style={{
           width: 36, height: 36, borderRadius: '50%', flexShrink: 0,
-          background: isUnread ? 'rgba(124,58,237,0.12)' : 'var(--ls-surface2)',
+          background: isUnread && !isCoachReply ? 'rgba(124,58,237,0.12)' : 'var(--ls-surface2)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           fontSize: 11, fontWeight: 700, fontFamily: 'Syne, sans-serif',
-          color: isUnread ? 'var(--ls-purple)' : 'var(--ls-text-hint)',
+          color: isUnread && !isCoachReply ? 'var(--ls-purple)' : 'var(--ls-text-hint)',
         }}>
           {msg.client_name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
         </div>
 
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-            <span style={{ fontSize: 14, fontWeight: isUnread ? 600 : 400, color: 'var(--ls-text)' }}>{msg.client_name}</span>
+            <span style={{ fontSize: 14, fontWeight: isUnread && !isCoachReply ? 600 : 400, color: 'var(--ls-text)' }}>{msg.client_name}</span>
             <span style={{ fontSize: 10, color: 'var(--ls-text-hint)', marginLeft: 'auto', flexShrink: 0 }}>{timeAgo}</span>
           </div>
 
-          <div style={{ fontSize: 11, color: 'var(--ls-purple)', fontWeight: 500, marginBottom: 4 }}>
-            {typeLabel}{msg.product_name ? ` — ${msg.product_name}` : ''}
+          <div style={{
+            fontSize: 11, fontWeight: 500, marginBottom: 4,
+            display: 'inline-block', padding: '2px 8px', borderRadius: 6,
+            color: badge.color, background: badge.bg,
+          }}>
+            {badge.label}{msg.product_name ? ` — ${msg.product_name}` : ''}
           </div>
 
           {msg.message && (
-            <div style={{ fontSize: 12, color: 'var(--ls-text-muted)', lineHeight: 1.5, marginBottom: 2 }}>
+            <div style={{ fontSize: 12, color: 'var(--ls-text-muted)', lineHeight: 1.5, marginBottom: 2, marginTop: 4 }}>
               {msg.message}
             </div>
           )}
 
-          <ContactLinks phone={phone || msg.client_contact || undefined} email={email} name={msg.client_name} />
+          {!isCoachReply && (
+            <ContactLinks phone={phone || msg.client_contact || undefined} email={email} name={msg.client_name} />
+          )}
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 10 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
             {msg.client_id && (
               <Link to={`/clients/${msg.client_id}`}
                 style={{ fontSize: 11, padding: '5px 12px', borderRadius: 8, background: 'var(--ls-surface2)', border: '1px solid var(--ls-border)', color: 'var(--ls-text-muted)', textDecoration: 'none' }}>
                 Voir la fiche
               </Link>
+            )}
+            {!isCoachReply && (
+              <button onClick={onReply}
+                style={{ fontSize: 11, padding: '5px 12px', borderRadius: 8, background: 'var(--ls-gold)', border: 'none', color: '#0B0D11', cursor: 'pointer', fontFamily: 'DM Sans, sans-serif', fontWeight: 600 }}>
+                💬 Répondre
+              </button>
             )}
             {isUnread && (
               <button onClick={onMarkRead}
@@ -140,24 +167,41 @@ function MessageCard({ msg, phone, email, onMarkRead, onDelete }: {
 export function MessagesPage() {
   const { clientMessages, markMessageRead, deleteMessage, getClientById } = useAppContext()
   const [tab, setTab] = useState<Tab>('products')
+  const [replyTarget, setReplyTarget] = useState<ClientMessage | null>(null)
 
-  const productMessages = clientMessages.filter(m => m.message_type === 'product_request')
-  const recoMessages = clientMessages.filter(m => m.message_type === 'recommendation')
-  const activeMessages = tab === 'products' ? productMessages : recoMessages
+  // Chantier Messagerie bidirectionnelle (2026-04-22) : on n'affiche plus
+  // les messages sender='coach' dans la liste côté coach (c'est SES propres
+  // messages — elles apparaîtront dans l'onglet conversation client).
+  const incoming = clientMessages.filter(m => (m.sender ?? 'client') === 'client')
+
+  const productMessages = incoming.filter(m => m.message_type === 'product_request')
+  const recoMessages = incoming.filter(m => m.message_type === 'recommendation')
+  // "Demandes clients" = tout le reste (RDV, question générale, coach_reply stray, etc.)
+  const clientAskMessages = incoming.filter(m =>
+    m.message_type === 'rdv_request' || m.message_type === 'general'
+  )
+
+  const activeMessages =
+    tab === 'products' ? productMessages :
+    tab === 'recommendations' ? recoMessages :
+    clientAskMessages
+
   const unreadProducts = productMessages.filter(m => !m.read).length
   const unreadRecos = recoMessages.filter(m => !m.read).length
+  const unreadClients = clientAskMessages.filter(m => !m.read).length
 
   return (
     <div className="space-y-5">
       <PageHeading
         eyebrow="Communication"
         title="Messages clients"
-        description="Demandes de produits et recommandations reçues depuis les rapports et bilans."
+        description="Demandes produits, recommandations et demandes clients (RDV, questions)."
       />
 
       {/* Tabs */}
-      <div style={{ display: 'flex', gap: 6, background: 'var(--ls-surface)', border: '1px solid var(--ls-border)', borderRadius: 12, padding: 4, width: 'fit-content' }}>
+      <div style={{ display: 'flex', gap: 6, background: 'var(--ls-surface)', border: '1px solid var(--ls-border)', borderRadius: 12, padding: 4, width: 'fit-content', flexWrap: 'wrap' }}>
         {([
+          { key: 'clients' as Tab, label: 'Demandes clients', count: unreadClients, icon: '📅' },
           { key: 'products' as Tab, label: 'Demandes produits', count: unreadProducts, icon: '🛒' },
           { key: 'recommendations' as Tab, label: 'Recommandations', count: unreadRecos, icon: '👥' },
         ]).map(t => (
@@ -184,12 +228,16 @@ export function MessagesPage() {
       {activeMessages.length === 0 ? (
         <Card>
           <div style={{ textAlign: 'center', padding: '32px 0' }}>
-            <div style={{ fontSize: 32, marginBottom: 12, opacity: 0.4 }}>{tab === 'products' ? '🛒' : '👥'}</div>
+            <div style={{ fontSize: 32, marginBottom: 12, opacity: 0.4 }}>
+              {tab === 'products' ? '🛒' : tab === 'recommendations' ? '👥' : '📅'}
+            </div>
             <div style={{ fontSize: 14, color: 'var(--ls-text-muted)', marginBottom: 4 }}>
-              {tab === 'products' ? 'Aucune demande de produit' : 'Aucune recommandation'}
+              {tab === 'products' ? 'Aucune demande de produit'
+                : tab === 'recommendations' ? 'Aucune recommandation'
+                : 'Aucune demande client'}
             </div>
             <div style={{ fontSize: 12, color: 'var(--ls-text-hint)' }}>
-              Les messages apparaîtront ici quand un client interagira avec son rapport.
+              Les messages apparaîtront ici quand un client interagira avec son app.
             </div>
           </div>
         </Card>
@@ -205,11 +253,18 @@ export function MessagesPage() {
                 email={client?.email}
                 onMarkRead={() => void markMessageRead(msg.id)}
                 onDelete={() => void deleteMessage(msg.id)}
+                onReply={() => setReplyTarget(msg)}
               />
             )
           })}
         </div>
       )}
+
+      <ReplyMessageModal
+        open={replyTarget !== null}
+        onClose={() => setReplyTarget(null)}
+        parent={replyTarget}
+      />
     </div>
   )
 }
