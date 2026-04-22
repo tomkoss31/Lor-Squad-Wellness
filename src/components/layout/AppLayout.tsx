@@ -8,36 +8,32 @@ import { BottomNav } from "./BottomNav";
 import { useTheme } from "../../hooks/useTheme";
 import { getRoleLabel } from "../../lib/auth";
 
+// Chantier Refonte Navigation (2026-04-22) : sidebar simplifiée +
+// renommage Accueil → Co-pilote. Ajout /formation et /settings.
 const NAV_ICONS: Record<string, JSX.Element> = {
-  "/dashboard": (
+  "/co-pilote": (
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
-  ),
-  "/guide": (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-  ),
-  "/recommendations": (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-  ),
-  "/pv": (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-  ),
-  "/clients": (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-  ),
-  "/users": (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="23" y1="11" x2="17" y2="11"/><line x1="20" y1="8" x2="20" y2="14"/></svg>
-  ),
-  "/messages": (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-  ),
-  "/assessments/new": (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
   ),
   "/agenda": (
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
   ),
-  "/guide-suivi": (
+  "/messages": (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+  ),
+  "/clients": (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+  ),
+  "/pv": (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+  ),
+  "/users": (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="23" y1="11" x2="17" y2="11"/><line x1="20" y1="8" x2="20" y2="14"/></svg>
+  ),
+  "/formation": (
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+  ),
+  "/settings": (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
   ),
 };
 
@@ -82,42 +78,45 @@ export function AppLayout() {
       : currentUser.role === "referent"
         ? "amber"
         : "green";
-  // Ordre réorganisé (Chantier UX Polish Bilan v1 — 2026-04-19) :
-  // Agenda remonté en position 2 juste après Accueil (quotidien-first).
+  // Chantier Refonte Navigation (2026-04-22) : sidebar plate 8 items max,
+  // Accueil → Co-pilote, suppression Recommandations/Nouveau bilan (FAB
+  // top-right à la place), fusion Guide RDV + Guide suivi → Centre de
+  // formation, ajout Paramètres en bas. Ordre exact validé avec Thomas.
   const navigation = [
-    { label: "Accueil", path: "/dashboard", badge: 0 },
+    { label: "Co-pilote", path: "/co-pilote", badge: 0 },
     { label: "Agenda", path: "/agenda", badge: todayProspectsCount },
-    { label: "Messages", path: "/messages", badge: unreadMessageCount ?? 0 },
+    { label: "Messagerie", path: "/messages", badge: unreadMessageCount ?? 0 },
     { label: "Dossiers clients", path: "/clients", badge: 0 },
-    ...(currentUser.role === "admin" ? [{ label: "Equipe", path: "/users", badge: 0 }] : []),
     { label: "Suivi PV", path: "/pv", badge: pvOverdueCount },
-    { label: "Guide rendez-vous", path: "/guide", badge: 0 },
-    { label: "Guide suivi client", path: "/guide-suivi", badge: 0, isNew: true },
-    { label: "Recommandations", path: "/recommendations", badge: urgentRelanceCount },
-    { label: "Nouveau bilan", path: "/assessments/new", badge: 0 }
+    ...(currentUser.role === "admin" ? [{ label: "Mon équipe", path: "/users", badge: 0 }] : []),
+    { label: "Centre de formation", path: "/formation", badge: 0 },
+    { label: "Paramètres", path: "/settings", badge: 0 },
   ];
+  // urgentRelanceCount n'est plus utilisé dans la sidebar (item Recommandations
+  // retiré) — on le conserve en variable au cas où un futur dashboard l'affiche.
+  void urgentRelanceCount;
 
   const pageTitle =
-    location.pathname === "/dashboard"
+    location.pathname === "/dashboard" || location.pathname === "/co-pilote"
       ? ""
-      : location.pathname === "/guide"
-        ? "Repères simples pour conduire le rendez-vous"
-        : location.pathname === "/recommendations"
-          ? "Le bon ton pour ouvrir les recommandations"
-          : location.pathname.startsWith("/pv")
-            ? "Pilotage simple des clients, commandes et points volume"
-            : location.pathname === "/clients"
-              ? "Dossiers clients et suivi en cours"
-              : location.pathname.startsWith("/distributors/")
-                ? "Portefeuille, relances et rythme du suivi"
-                : location.pathname === "/users"
-                  ? "Accès équipe et rôles clés"
-                  : location.pathname.startsWith("/clients/")
-                    ? "Lecture complète du dossier client"
-                    : location.pathname === "/assessments/new"
-                      ? "Le bilan guidé pour cadrer le rendez-vous"
-                      : location.pathname === "/agenda"
-                        ? "Agenda prospection et RDV à venir"
+      : location.pathname === "/guide" || location.pathname === "/formation"
+        ? "Centre de formation"
+        : location.pathname.startsWith("/pv")
+          ? "Pilotage simple des clients, commandes et points volume"
+          : location.pathname === "/clients"
+            ? "Dossiers clients et suivi en cours"
+            : location.pathname.startsWith("/distributors/")
+              ? "Portefeuille, relances et rythme du suivi"
+              : location.pathname === "/users"
+                ? "Mon équipe"
+                : location.pathname.startsWith("/clients/")
+                  ? "Lecture complète du dossier client"
+                  : location.pathname === "/assessments/new"
+                    ? "Le bilan guidé pour cadrer le rendez-vous"
+                    : location.pathname === "/agenda"
+                      ? "Agenda prospection et RDV à venir"
+                      : location.pathname === "/settings"
+                        ? "Paramètres"
                         : "Lor'Squad Wellness";
 
   async function handleLogout() {
@@ -162,8 +161,10 @@ export function AppLayout() {
             {navigation.map((item) => {
               const isActive =
                 location.pathname === item.path ||
+                (item.path === "/co-pilote" && location.pathname === "/dashboard") ||
                 (item.path === "/clients" && location.pathname.startsWith("/clients/")) ||
-                (item.path === "/pv" && location.pathname.startsWith("/pv"));
+                (item.path === "/pv" && location.pathname.startsWith("/pv")) ||
+                (item.path === "/formation" && location.pathname.startsWith("/guide"));
 
               return (
                 <NavLink
@@ -209,32 +210,6 @@ export function AppLayout() {
                       flexShrink: 0,
                     }}>
                       {item.badge}
-                    </span>
-                  ) : item.path === "/assessments/new" ? (
-                    <span style={{
-                      fontSize: 10, padding: '2px 8px', borderRadius: 10,
-                      background: 'rgba(201,168,76,0.15)',
-                      color: 'var(--ls-gold)',
-                      fontWeight: 600,
-                      marginLeft: 'auto',
-                      fontFamily: 'DM Sans, sans-serif',
-                      flexShrink: 0,
-                    }}>
-                      Nouveau
-                    </span>
-                  ) : ("isNew" in item && (item as { isNew?: boolean }).isNew) ? (
-                    <span style={{
-                      fontSize: 9, padding: '2px 8px', borderRadius: 10,
-                      background: 'rgba(45,212,191,0.15)',
-                      color: 'var(--ls-teal)',
-                      fontWeight: 700,
-                      letterSpacing: '0.05em',
-                      marginLeft: 'auto',
-                      fontFamily: 'DM Sans, sans-serif',
-                      flexShrink: 0,
-                      textTransform: 'uppercase',
-                    }}>
-                      Nouveau
                     </span>
                   ) : null}
                 </NavLink>

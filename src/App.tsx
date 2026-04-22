@@ -5,11 +5,9 @@ import { AppLayout } from "./components/layout/AppLayout";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { ToastHost } from "./components/ui/ToastHost";
 
-const DashboardPage = lazy(() =>
-  import("./pages/DashboardPage").then((module) => ({
-    default: module.DashboardPage
-  }))
-);
+// DashboardPage est re-exporté via CoPilotePage (placeholder initial).
+// Quand le nouveau CoPilotePage autonome sera prêt, DashboardPage pourra
+// être retiré du bundle principal.
 const GuidePage = lazy(() =>
   import("./pages/GuidePage").then((module) => ({
     default: module.GuidePage
@@ -115,6 +113,22 @@ const BienvenuePage = lazy(() =>
     default: module.BienvenuePage
   }))
 );
+// Chantier Refonte Navigation (2026-04-22) : nouveau dashboard + placeholders.
+const CoPilotePage = lazy(() =>
+  import("./pages/CoPilotePage").then((module) => ({
+    default: module.CoPilotePage
+  }))
+);
+const CentreFormationPage = lazy(() =>
+  import("./pages/CentreFormationPage").then((module) => ({
+    default: module.CentreFormationPage
+  }))
+);
+const SettingsPage = lazy(() =>
+  import("./pages/SettingsPage").then((module) => ({
+    default: module.SettingsPage
+  }))
+);
 
 import { useTheme } from './hooks/useTheme'
 import { useAutoNotifications } from './hooks/useAutoNotifications'
@@ -141,8 +155,13 @@ export default function App() {
           </Route>
           <Route element={<ProtectedRoute />}>
             <Route path="/" element={<AppLayout />}>
-              <Route index element={<Navigate to="/dashboard" replace />} />
-              <Route path="dashboard" element={<DashboardPage />} />
+              <Route index element={<Navigate to="/co-pilote" replace />} />
+              {/* Chantier Refonte Navigation (2026-04-22) : /co-pilote = dashboard.
+                  /dashboard redirige pour ne pas casser les liens existants. */}
+              <Route path="co-pilote" element={<CoPilotePage />} />
+              <Route path="dashboard" element={<Navigate to="/co-pilote" replace />} />
+              <Route path="formation" element={<CentreFormationPage />} />
+              <Route path="settings" element={<SettingsPage />} />
               <Route path="guide" element={<GuidePage />} />
               <Route path="guide-suivi" element={<FollowUpGuidePage />} />
               <Route path="recommendations" element={<RecommendationsPage />} />
