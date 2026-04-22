@@ -1,7 +1,6 @@
 // Chantier Co-pilote V4 (2026-04-24).
-// Horloge premium : heure 38px live + date uppercase + salutation + mood.
-// Le bouton "+ Nouveau bilan" est déjà géré par NewBilanFab en top-right
-// absolu dans AppLayout — on n'ajoute pas de doublon ici.
+// Mini-fix (2026-04-24bis) : layout inversé — salutation à gauche, horloge
+// 38px à droite. Date intégrée dans la ligne mood pour gain de place.
 
 import { greetingFor, moodForLoad } from "../../lib/utils/copiloteHelpers";
 
@@ -9,12 +8,11 @@ function formatTime(d: Date): string {
   return d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
 }
 
-function formatDateLong(d: Date): string {
+function formatDateShort(d: Date): string {
   return d.toLocaleDateString("fr-FR", {
     weekday: "long",
     day: "numeric",
     month: "long",
-    year: "numeric",
   });
 }
 
@@ -46,42 +44,8 @@ export function ClockHeader({
         flexWrap: "wrap",
       }}
     >
-      <div style={{ display: "flex", alignItems: "center", gap: 20, flexShrink: 0 }}>
-        <div>
-          <div
-            style={{
-              fontFamily: "Syne, sans-serif",
-              fontSize: 38,
-              fontWeight: 500,
-              letterSpacing: "-0.02em",
-              color: "var(--ls-text)",
-              lineHeight: 1,
-            }}
-          >
-            {formatTime(now)}
-          </div>
-          <div
-            style={{
-              fontSize: 11,
-              letterSpacing: "0.08em",
-              textTransform: "uppercase",
-              color: "var(--ls-text-hint)",
-              marginTop: 4,
-            }}
-          >
-            {formatDateLong(now)}
-          </div>
-        </div>
-        <div
-          aria-hidden="true"
-          style={{
-            width: 1,
-            height: 52,
-            background: "var(--ls-border)",
-          }}
-        />
-      </div>
-      <div style={{ flex: 1, minWidth: 180 }}>
+      {/* Bloc gauche : salutation + ligne mood (date + compteur + mood). */}
+      <div style={{ flex: 1, minWidth: 200 }}>
         <div
           style={{
             fontFamily: "Syne, sans-serif",
@@ -94,9 +58,33 @@ export function ClockHeader({
           {userFirstName ? ` ${userFirstName}` : ""}
         </div>
         <div style={{ fontSize: 12, color: "var(--ls-text-muted)", marginTop: 4 }}>
-          Aujourd'hui : {appointmentsToday} RDV · {followupsToday} suivi
+          {formatDateShort(now)} · {appointmentsToday} RDV · {followupsToday} suivi
           {followupsToday > 1 ? "s" : ""}. {moodLabel}
         </div>
+      </div>
+
+      {/* Séparateur vertical fin + horloge 38px à droite. */}
+      <div
+        aria-hidden="true"
+        style={{
+          width: 1,
+          height: 52,
+          background: "var(--ls-border)",
+          flexShrink: 0,
+        }}
+      />
+      <div
+        style={{
+          fontFamily: "Syne, sans-serif",
+          fontSize: 38,
+          fontWeight: 500,
+          letterSpacing: "-0.02em",
+          color: "var(--ls-text)",
+          lineHeight: 1,
+          flexShrink: 0,
+        }}
+      >
+        {formatTime(now)}
       </div>
     </div>
   );
