@@ -112,6 +112,13 @@ const BienvenuePage = lazy(() =>
     default: module.BienvenuePage
   }))
 );
+// Chantier Onboarding distributeur complet (2026-04-24) : wizard
+// /bienvenue-distri pour que les nouveaux distri créent leur accès.
+const BienvenueDistriPage = lazy(() =>
+  import("./pages/BienvenueDistriPage").then((module) => ({
+    default: module.BienvenueDistriPage
+  }))
+);
 // Chantier Refonte Navigation (2026-04-22) : nouveau dashboard + placeholders.
 const CoPilotePage = lazy(() =>
   import("./pages/CoPilotePage").then((module) => ({
@@ -223,6 +230,8 @@ export default function App() {
               pour que le client crée son accès via le lien magique envoyé
               par le coach. Pas besoin d'être authentifié. */}
           <Route path="/bienvenue" element={<BienvenuePage />} />
+          {/* Chantier Onboarding distributeur complet (2026-04-24). */}
+          <Route path="/bienvenue-distri" element={<BienvenueDistriPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
         </ErrorBoundary>
