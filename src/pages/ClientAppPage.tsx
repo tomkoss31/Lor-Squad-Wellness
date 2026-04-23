@@ -580,7 +580,54 @@ export function ClientAppPage() {
   ]
 
   return (
-    <div style={{ minHeight: '100vh', background: '#F4F2EE', fontFamily: 'DM Sans, sans-serif', color: '#111827', paddingBottom: 80 }}>
+    <div style={{ minHeight: '100vh', background: '#F7F5F0', fontFamily: 'DM Sans, sans-serif', color: '#111827', paddingBottom: 80, position: 'relative', overflow: 'hidden' }}>
+      {/* Chantier Premium App client (2026-04-24) : mesh gradient subtil
+          en arrière-plan pour cohérence avec Welcome/Login. Plus discret
+          que les pages publiques (app quotidienne, pas d'effet "wouah"
+          trop marqué qui fatiguerait à l'usage). */}
+      <style>{`
+        .clientapp-blob-a {
+          position: fixed;
+          top: -10%;
+          right: -15%;
+          width: 420px;
+          height: 420px;
+          border-radius: 50%;
+          background: radial-gradient(circle, rgba(239,159,39,0.18) 0%, transparent 70%);
+          filter: blur(70px);
+          pointer-events: none;
+          z-index: 0;
+          will-change: transform;
+          animation: clientapp-float-a 40s ease-in-out infinite alternate;
+        }
+        .clientapp-blob-b {
+          position: fixed;
+          bottom: -12%;
+          left: -12%;
+          width: 380px;
+          height: 380px;
+          border-radius: 50%;
+          background: radial-gradient(circle, rgba(29,158,117,0.12) 0%, transparent 70%);
+          filter: blur(70px);
+          pointer-events: none;
+          z-index: 0;
+          will-change: transform;
+          animation: clientapp-float-b 44s ease-in-out infinite alternate;
+        }
+        @keyframes clientapp-float-a {
+          0%   { transform: translate(0, 0); }
+          100% { transform: translate(-40px, 30px); }
+        }
+        @keyframes clientapp-float-b {
+          0%   { transform: translate(0, 0); }
+          100% { transform: translate(50px, -20px); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .clientapp-blob-a, .clientapp-blob-b { animation: none !important; }
+        }
+      `}</style>
+      <div aria-hidden="true" className="clientapp-blob-a" />
+      <div aria-hidden="true" className="clientapp-blob-b" />
       {/* Chantier invitation client app (2026-04-21) : toast de bienvenue
           quand on arrive depuis /bienvenue via ?welcome=1. */}
       {showWelcome ? (
@@ -594,16 +641,23 @@ export function ClientAppPage() {
             zIndex: 9999,
             padding: '14px 18px',
             borderRadius: 14,
-            background: 'linear-gradient(135deg, #D4B460, #B8922A)',
+            background: 'linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)',
             color: '#fff',
             fontFamily: 'Syne, sans-serif',
             fontWeight: 700,
             fontSize: 15,
             textAlign: 'center',
-            boxShadow: '0 12px 30px rgba(184,146,42,0.35)',
+            boxShadow: '0 12px 30px rgba(186,117,23,0.4), 0 2px 6px rgba(239,159,39,0.2)',
+            animation: 'clientapp-toast-in 0.5s cubic-bezier(0.16, 1, 0.3, 1)',
           }}
         >
-          Bienvenue dans ton espace Lor'Squad 🎉
+          <style>{`
+            @keyframes clientapp-toast-in {
+              from { opacity: 0; transform: translateY(-12px); }
+              to   { opacity: 1; transform: translateY(0); }
+            }
+          `}</style>
+          Bienvenue dans ton espace Lor&apos;Squad 🎉
         </div>
       ) : null}
 
