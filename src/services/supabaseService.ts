@@ -599,9 +599,25 @@ export async function fetchSupabaseClients() {
     .select("*, assessments(*)")
     .order("created_at", { ascending: false });
 
-  if (error || !data) {
-    return [] as Client[];
+  if (error) {
+    // Garde-fou (2026-04-25) : NE JAMAIS swallow silencieusement une erreur
+    // sur SELECT clients. Un RLS qui plante (cast ::uuid invalide, policy
+    // foireuse, etc.) renvoyait [] sans un mot → app semblait vide pour
+    // admin + coach. Désormais on log PARTOUT + on re-throw pour que le
+    // catch de refreshRemoteData affiche un toast visible à l'utilisateur.
+    console.error("[fetchSupabaseClients] Supabase error", {
+      message: error.message,
+      code: error.code,
+      details: error.details,
+      hint: error.hint,
+    });
+    throw new Error(
+      `Lecture des clients impossible (Supabase) : ${error.message}${
+        error.hint ? " — " + error.hint : ""
+      }`,
+    );
   }
+  if (!data) return [] as Client[];
 
   return (data as ClientRow[]).map(mapClient);
 }
