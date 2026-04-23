@@ -84,7 +84,8 @@
       "Bash(supabase link *)",
       "Read(//c/Users/tomko/.supabase/**)",
       "Bash(env)",
-      "Bash(supabase migration *)"
+      "Bash(supabase migration *)",
+      "Bash(awk '/activeTab === .home.$/,/activeTab === .evolution./' src/pages/ClientAppPage.tsx)"
     ]
   }
 }
