@@ -5,8 +5,6 @@ import { formatDate } from "../lib/calculations";
 import { PvModuleHeader } from "../components/pv/PvModuleHeader";
 import { PvClientFullPage } from "../components/pv/PvClientFullPage";
 import { useAppContext } from "../context/AppContext";
-import { useGlobalView } from "../hooks/useGlobalView";
-import { GlobalViewToggle } from "../components/ui/GlobalViewToggle";
 import type { PvClientTrackingRecord } from "../types/pv";
 
 export function PvOverviewPage() {
@@ -23,22 +21,24 @@ export function PvOverviewPage() {
 
   // Hooks AVANT l'early return (rules-of-hooks / chantier nuit 2026-04-20).
   const isAdmin = currentUser?.role === "admin";
-  // Chantier 5 bugs (2026-04-24) : toggle partagé Vue globale.
-  // Admin sans toggle → ne voit que ses propres clients.
-  const [globalView] = useGlobalView();
-  const applyPersonalScope = isAdmin && !globalView;
-  // Free PV tracking (2026-04-20) : exclure les clients marqués "sous autre
-  // superviseur" de la liste principale du suivi PV. Le coach ne peut pas
-  // agir sur leurs commandes, inutile qu'ils polluent la liste.
+  // Chantier tri priorité (2026-04-24) : l'admin voit TOUS les clients
+  // de l'arborescence, mais les siens sont triés EN PREMIER dans la
+  // liste. Plus de toggle. Free PV tracking exclus comme avant.
   const sourceClients = useMemo(
     () => {
-      const base = isAdmin && globalView ? clients : visibleClients;
-      const scoped = applyPersonalScope
-        ? base.filter((c) => c.distributorId === currentUser?.id)
-        : base;
-      return scoped.filter((c) => !c.freePvTracking);
+      const base = isAdmin ? clients : visibleClients;
+      const filtered = base.filter((c) => !c.freePvTracking);
+      if (isAdmin && currentUser?.id) {
+        return [...filtered].sort((a, b) => {
+          const aMine = a.distributorId === currentUser.id ? 0 : 1;
+          const bMine = b.distributorId === currentUser.id ? 0 : 1;
+          if (aMine !== bMine) return aMine - bMine;
+          return (a.lastName || "").localeCompare(b.lastName || "", "fr");
+        });
+      }
+      return filtered;
     },
-    [isAdmin, globalView, applyPersonalScope, currentUser?.id, clients, visibleClients]
+    [isAdmin, currentUser?.id, clients, visibleClients]
   );
 
   const records = useMemo(
@@ -115,12 +115,6 @@ export function PvOverviewPage() {
         description="Vue globale des clients actifs, de leurs produits et commandes."
       />
 
-      {/* Chantier 5 bugs : toggle Vue globale admin */}
-      <GlobalViewToggle
-        personalLabel="Vue personnelle (mes clients PV)"
-        globalLabel="Vue équipe (tous les clients PV)"
-      />
-
       {/* Vue FICHE pleine page */}
       {selectedClientId && selectedRecord && (
         <PvClientFullPage record={selectedRecord} onClose={() => setSelectedClientId(null)} />
@@ -158,7 +152,13 @@ export function PvOverviewPage() {
             onStatusChange={(v) => setStatusFilter(v as typeof statusFilter)}
           />
 
-          <PvClientsTable records={filteredRecords} selectedId={selectedClientId} onSelect={setSelectedClientId} />
+          <PvClientsTable
+            records={filteredRecords}
+            selectedId={selectedClientId}
+            onSelect={setSelectedClientId}
+            isAdmin={isAdmin}
+            currentUserId={currentUser?.id ?? null}
+          />
 
           {filteredRecords.length === 0 && (
             <div style={{ padding: "32px 20px", textAlign: "center", color: "var(--ls-text-hint)", fontSize: 13, background: "var(--ls-surface)", border: "1px solid var(--ls-border)", borderRadius: 14 }}>
@@ -243,7 +243,7 @@ function PvSearchFilters({ search, onSearchChange, status, onStatusChange }: { s
   );
 }
 
-function PvClientsTable({ records, selectedId, onSelect }: { records: PvClientTrackingRecord[]; selectedId: string | null; onSelect: (id: string) => void }) {
+function PvClientsTable({ records, selectedId, onSelect, isAdmin, currentUserId }: { records: PvClientTrackingRecord[]; selectedId: string | null; onSelect: (id: string) => void; isAdmin: boolean; currentUserId: string | null }) {
   return (
     <div style={{ background: "var(--ls-surface)", border: "1px solid var(--ls-border)", borderRadius: 14, overflow: "hidden" }}>
       <div className="pv-table-header" style={{ display: "flex", padding: "12px 16px", borderBottom: "1px solid var(--ls-border)", background: "var(--ls-surface2)" }}>
@@ -281,8 +281,28 @@ function PvClientsTable({ records, selectedId, onSelect }: { records: PvClientTr
             }}
           >
             <div className="pv-cell-client" style={{ flex: 2, minWidth: 0 }}>
-              <div style={{ fontSize: 13, fontWeight: isSelected ? 600 : 500, color: isSelected ? "var(--ls-gold)" : "var(--ls-text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                {r.clientName}
+              <div style={{ fontSize: 13, fontWeight: isSelected ? 600 : 500, color: isSelected ? "var(--ls-gold)" : "var(--ls-text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", display: "flex", alignItems: "center", gap: 6 }}>
+                <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {r.clientName}
+                </span>
+                {/* Chantier tri priorité (2026-04-24) : badge MIEN admin */}
+                {isAdmin && r.responsibleId === currentUserId ? (
+                  <span
+                    title="Ton client"
+                    style={{
+                      padding: "1px 6px",
+                      borderRadius: 8,
+                      fontSize: 9,
+                      fontWeight: 700,
+                      background: "rgba(239,159,39,0.14)",
+                      color: "#BA7517",
+                      flexShrink: 0,
+                      letterSpacing: "0.04em",
+                    }}
+                  >
+                    MIEN
+                  </span>
+                ) : null}
               </div>
               <div style={{ fontSize: 11, color: "var(--ls-text-hint)", marginTop: 2 }}>
                 Suivi le {formatDate(r.lastFollowUpDate)} · {r.activeProducts?.length ?? 0} produit{(r.activeProducts?.length ?? 0) > 1 ? "s" : ""}
