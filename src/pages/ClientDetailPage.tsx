@@ -6,6 +6,7 @@ import { BodyCompositionGauges } from "../components/client/BodyCompositionGauge
 import { OnboardingChecksBlock } from "../components/client/OnboardingChecksBlock";
 import { CoachNotesBlock } from "../components/client/CoachNotesBlock";
 import { NextAppointmentBanner } from "../components/client/NextAppointmentBanner";
+import { MeasurementsPanel } from "../features/measurements/MeasurementsPanel";
 import { BodyFatInsightCard } from "../components/body-scan/BodyFatInsightCard";
 import { MuscleMassInsightCard } from "../components/body-scan/MuscleMassInsightCard";
 import { HydrationVisceralInsightCard } from "../components/body-scan/HydrationVisceralInsightCard";
@@ -20,25 +21,27 @@ import { ErrorBoundary } from "../components/ErrorBoundary";
 import { FollowUpProtocolCard } from "../components/follow-up/FollowUpProtocolCard";
 import { ClientGeneralNote } from "../components/client/ClientGeneralNote";
 import { ClientInvitationButton } from "../components/client/ClientInvitationButton";
+import { ClientAccessModal } from "../components/client/ClientAccessModal";
+import { ClientAppPreviewButton } from "../components/client/ClientAppPreviewButton";
+import { SharePublicButton } from "../components/client/SharePublicButton";
 import { buildReportData, generateProductRecommendations } from "../lib/evolutionReport";
 import { EvolutionReportModal } from "../components/assessment/EvolutionReportModal";
 import { getSupabaseClient } from "../services/supabaseClient";
 import { refreshClientRecap } from "../services/supabaseService";
-import { buildPvTrackingRecords, pvProductCatalog } from "../data/pvCatalog";
-import { createGoogleCalendarLink } from "../lib/googleCalendar";
+import { pvProductCatalog } from "../data/pvCatalog";
 import { getAccessibleOwnerIds, isAdmin, isRéférent } from "../lib/auth";
 import { getClientActiveFollowUp } from "../lib/portfolio";
 import {
-  calculateProteinRange,
-  calculateWaterNeed,
+  computeWaterTarget,
+  computeProteinTarget,
   formatDate,
-  formatDateTime,
   getFirstAssessment,
   getLatestAssessment,
   getLatestBodyScan,
   getLatestQuestionnaire,
   getPreviousAssessment
 } from "../lib/calculations";
+import { createIcsDataUri } from "../lib/googleCalendar";
 import type { Client, LifecycleStatus } from "../types/domain";
 import { LIFECYCLE_LABELS, LIFECYCLE_TONES } from "../types/domain";
 
@@ -52,8 +55,6 @@ export function ClientDetailPage() {
     deleteClient,
     getClientById,
     followUps,
-    pvTransactions,
-    pvClientProducts,
     reassignClientOwner,
     updateClientInfo
   } = useAppContext();
@@ -71,87 +72,23 @@ export function ClientDetailPage() {
   // Chantier Protocole Agenda+Dashboard (2026-04-20) : ?tab=actions pour
   // arriver directement sur l'onglet Actions depuis le widget dashboard.
   const [searchParams] = useSearchParams();
-  const initialTabFromQuery = searchParams.get("tab") === "actions" ? 4 : 0;
+  const initialTabFromQuery = searchParams.get("tab") === "actions" ? 5 : 0;
   const [activeTab, setActiveTab] = useState(initialTabFromQuery);
   const [reportUrl, setReportUrl] = useState<string | null>(null);
   const [generatingReport, setGeneratingReport] = useState(false);
+  // Chantier Client access unification (2026-04-24)
+  const [accessModalOpen, setAccessModalOpen] = useState(false);
   const [editPhone, setEditPhone] = useState(client?.phone ?? "");
   const [editEmail, setEditEmail] = useState(client?.email ?? "");
   const [editCity, setEditCity] = useState(client?.city ?? "");
   const [editSaved, setEditSaved] = useState(false);
-  const [clientAppUrl, setClientAppUrl] = useState<string | null>(null);
-  const [creatingClientApp, setCreatingClientApp] = useState(false);
-  const [clientAppCopied, setClientAppCopied] = useState(false);
-  const coachContactKey = `lor-squad-coach-contact-${currentUser?.id ?? 'anon'}`;
-  const [coachPhoneInput, setCoachPhoneInput] = useState<string>(() => {
-    if (typeof window === 'undefined') return '';
-    try { return JSON.parse(window.localStorage.getItem(coachContactKey) ?? '{}').phone ?? ''; } catch { return ''; }
-  });
-  const [coachTelegramInput, setCoachTelegramInput] = useState<string>(() => {
-    if (typeof window === 'undefined') return '';
-    try { return JSON.parse(window.localStorage.getItem(coachContactKey) ?? '{}').telegram ?? ''; } catch { return ''; }
-  });
+  // Refonte fiche client 2 colonnes (2026-04-25) : la création d'accès
+  // app client est désormais gérée exclusivement par ClientInvitationButton
+  // (bouton header + colonne gauche). Les anciens states clientAppUrl/
+  // creatingClientApp/coachPhoneInput/coachTelegramInput et la fonction
+  // createClientAppAccount() ont été supprimés (déplacés dans les
+  // Paramètres distributeur pour la V2).
   const activeFollowUp = client ? getClientActiveFollowUp(client, followUps) : null;
-
-  async function createClientAppAccount() {
-    if (!client || !currentUser) return;
-    setCreatingClientApp(true);
-    try {
-      const sb = await getSupabaseClient();
-      if (!sb) return;
-
-      // Mémoriser les coordonnées coach en localStorage
-      try {
-        window.localStorage.setItem(coachContactKey, JSON.stringify({
-          phone: coachPhoneInput.trim(),
-          telegram: coachTelegramInput.trim(),
-        }));
-      } catch {
-        // localStorage indisponible (mode privé, quota) : non-bloquant.
-      }
-
-      // Snapshot des métriques depuis les bilans du client
-      const sortedAssessments = [...client.assessments].sort(
-        (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
-      );
-      const metricsHistory = sortedAssessments.map(a => ({
-        date: a.date,
-        weight: a.bodyScan?.weight ?? 0,
-        bodyFat: a.bodyScan?.bodyFat ?? 0,
-        muscleMass: a.bodyScan?.muscleMass ?? 0,
-        hydration: a.bodyScan?.hydration ?? 0,
-        visceralFat: a.bodyScan?.visceralFat ?? 0,
-        metabolicAge: a.bodyScan?.metabolicAge ?? 0,
-      }));
-
-      const { data, error } = await sb
-        .from('client_app_accounts')
-        .upsert(
-          {
-            client_id: client.id,
-            client_first_name: client.firstName,
-            client_last_name: client.lastName,
-            coach_id: currentUser.id,
-            coach_name: currentUser.name ?? 'Coach',
-            coach_whatsapp: coachPhoneInput.trim(),
-            coach_telegram: coachTelegramInput.trim(),
-            coach_phone: coachPhoneInput.trim(),
-            metrics_history: metricsHistory,
-            program_title: client.currentProgram ?? 'Programme en cours',
-            assessments_count: client.assessments.length,
-            next_follow_up: activeFollowUp?.dueDate ?? null,
-          },
-          { onConflict: 'client_id' }
-        )
-        .select('token')
-        .single();
-      if (!error && data) {
-        setClientAppUrl(`${window.location.origin}/client/${data.token}`);
-      }
-    } finally {
-      setCreatingClientApp(false);
-    }
-  }
 
   async function generateReport() {
     if (!client || !currentUser) return;
@@ -247,15 +184,9 @@ export function ClientDetailPage() {
   const resolvedTargetWeight =
     firstAssessment.questionnaire?.targetWeight ??
     latestQuestionnaire.targetWeight;
-  const waterNeed = calculateWaterNeed(latestBodyScan.weight);
-  const proteinRange = calculateProteinRange(latestBodyScan.weight, client.objective);
   const recommendationCount = latestQuestionnaire.recommendations?.length ?? 0;
   const recommendationsContacted = latestQuestionnaire.recommendationsContacted ?? false;
-  const optionalProductsLabel = latestQuestionnaire.optionalProductsUsed?.trim()
-    ? latestQuestionnaire.optionalProductsUsed
-    : "Non renseigné";
   const canDeleteClient = currentUser?.role === "admin";
-  const pvRecord = buildPvTrackingRecords([currentClient], pvTransactions, pvClientProducts)[0] ?? null;
   // Durcissement (2026-04-20 — crash Mélanie Jessie) : certains vieux dossiers
   // importés ont `questionnaire = null` en DB. ensureAssessment ne wrap pas
   // ce champ, donc `firstAssessment.questionnaire.selectedProductIds?.length`
@@ -366,18 +297,36 @@ export function ClientDetailPage() {
               </p>
             </div>
           </div>
-          <div className="flex flex-wrap gap-2">
-            {client.assessments.length >= 1 && (
-              <button
-                type="button"
-                onClick={() => void generateReport()}
-                disabled={generatingReport}
-                className="inline-flex min-h-[40px] items-center gap-2 rounded-[12px] border border-[var(--ls-border2)] bg-[var(--ls-surface2)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/[0.08] disabled:opacity-60"
-                style={{ cursor: generatingReport ? 'wait' : 'pointer' }}
-              >
-                {generatingReport ? 'Génération...' : '📱 App client'}
-              </button>
-            )}
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Chantier Client access unification (2026-04-24) :
+                bouton principal gold "Envoyer l'accès" (ouvre la modale
+                unifiée QR+WA+Copier+SMS) + bouton discret "Aperçu app"
+                (icône œil, nouvel onglet). Remplace l'ancien bouton
+                "📱 App client" qui passait par generateReport(). */}
+            <button
+              type="button"
+              onClick={() => setAccessModalOpen(true)}
+              className="inline-flex min-h-[40px] items-center gap-2 rounded-[12px] px-4 py-2 text-sm font-semibold text-white transition"
+              style={{
+                background: 'linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)',
+                boxShadow: '0 2px 6px rgba(186,117,23,0.25)',
+                fontFamily: 'DM Sans, sans-serif',
+              }}
+            >
+              🔗 Envoyer l'accès à l'app
+            </button>
+            <ClientAppPreviewButton
+              clientId={client.id}
+              clientFirstName={client.firstName}
+              clientLastName={client.lastName}
+              coachName={currentUser?.name ?? "Coach"}
+            />
+            <SharePublicButton
+              clientId={client.id}
+              clientFirstName={client.firstName}
+              publicShareConsent={client.publicShareConsent ?? false}
+              publicShareRevokedAt={client.publicShareRevokedAt}
+            />
             <Link
               to={`/clients/${client.id}/follow-up/new`}
               className="inline-flex min-h-[40px] items-center gap-2 rounded-[12px] border border-[var(--ls-border2)] bg-[var(--ls-surface2)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/[0.08]"
@@ -392,12 +341,6 @@ export function ClientDetailPage() {
             </Link>
           </div>
         </div>
-
-        {/* Fix UX (2026-04-20) : le bouton "App client" header ouvre désormais
-            le même popup EvolutionReportModal que l'onglet "Rapport" — via
-            generateReport() qui rafraîchit le snapshot avant affichage. Le
-            modal inline précédent (showHeaderAppModal) affichait l'ancien
-            existingClientToken sans régénération, d'où des liens périmés. */}
 
         {/* Recommandations actives */}
         {recommendationCount > 0 && (
@@ -425,6 +368,7 @@ export function ClientDetailPage() {
         {[
           { label: 'Vue complète', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg> },
           { label: 'Body Scan', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>, count: client.assessments.filter(a => a.bodyScan?.weight).length },
+          { label: 'Mensurations', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M4 4h16v6H4z"/><path d="M4 10v10h16V10"/><path d="M8 10v3M12 10v5M16 10v3"/></svg> },
           { label: 'Historique', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>, count: client.assessments.length },
           { label: 'Produits', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>, count: retainedProducts.length },
           { label: 'Actions', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><polyline points="13 2 13 9 20 9"/><polyline points="11 22 11 15 4 15"/><path d="M3 3l18 18"/></svg> },
@@ -470,8 +414,8 @@ export function ClientDetailPage() {
       {/* Bandeau Prochain RDV (V3) */}
       <NextAppointmentBanner
         nextAppointmentDate={activeFollowUp?.dueDate ?? null}
-        onPlan={() => setActiveTab(4)}
-        onViewDetails={() => setActiveTab(4)}
+        onPlan={() => setActiveTab(5)}
+        onViewDetails={() => setActiveTab(5)}
       />
       </div>
 
@@ -698,8 +642,19 @@ export function ClientDetailPage() {
         </Card>
       )}
 
-      {/* Tab 2: Historique bilans */}
+      {/* Tab 2: Mensurations — Chantier Module Mensurations (2026-04-24) */}
       {activeTab === 2 && (
+        <MeasurementsPanel
+          clientId={client.id}
+          gender={client.sex}
+          authorType="coach"
+          authorUserId={currentUser?.id ?? null}
+          otherAuthorLabel="le client"
+        />
+      )}
+
+      {/* Tab 3: Historique bilans */}
+      {activeTab === 3 && (
         <Card className="space-y-5">
           <div className="flex items-center justify-between">
             <div>
@@ -761,7 +716,7 @@ export function ClientDetailPage() {
           inside ProductAdder or recommendations logic from breaking the
           entire fiche. Sectional fallback = discreet card, user can navigate
           to another tab without reloading. */}
-      {activeTab === 3 && (
+      {activeTab === 4 && (
         <ErrorBoundary
           name="ClientDetailPage/Tab3-Produits"
           fallback={(
@@ -894,245 +849,242 @@ export function ClientDetailPage() {
         </ErrorBoundary>
       )}
 
-      {/* Tab 4: Actions rapides */}
-      {activeTab === 4 && (
-        <div className="grid gap-4 md:grid-cols-2">
-          {/* Chantier invitation client app (2026-04-21) : bouton d'invitation
-              en tête de l'onglet Actions, avant la note générale. Visible
-              direct au coach sans scroll. */}
-          <div className="md:col-span-2">
+      {/* Tab 5: Actions — Refonte 2 colonnes (Chantier 2026-04-25)
+          Structure : gauche = contenu dossier, droite = actions/statut.
+          Doublons supprimés : "Créer accès app" (déjà dans header via
+          ClientInvitationButton), coordonnées coach en localStorage
+          (déplacées en Paramètres distri, V2), lien Google Agenda seul
+          (remplacé par dropdown sur card Prochain RDV). */}
+      {activeTab === 5 && (
+        <div className="grid gap-4 xl:grid-cols-[1.6fr_1fr]">
+          {/* ═══ COLONNE GAUCHE — Contenu dossier ═══════════════════════ */}
+          <div className="space-y-4">
+            {/* Bouton d'invitation client app (bouton principal au-dessus
+                des blocs, remplace le duplicate "Créer l'accès" supprimé). */}
             <ErrorBoundary name="ClientDetailPage/InvitationButton" fallback={null}>
               <ClientInvitationButton client={client} />
             </ErrorBoundary>
-          </div>
-          {/* Chantier bilan updates (2026-04-20) : note libre "À savoir sur
-              ce client" — en tête, full-width, juste au-dessus du protocole. */}
-          <div className="md:col-span-2">
+
+            {/* Protocole de suivi 5 étapes J+1, J+3, J+7, J+10, J+14 */}
+            <ErrorBoundary name="ClientDetailPage/FollowUpProtocol" fallback={null}>
+              <FollowUpProtocolCard client={client} />
+            </ErrorBoundary>
+
+            {/* Infos clés du programme — 4 cards 2x2 */}
+            <Card className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="eyebrow-label">Programme</p>
+                  <h2 className="mt-2 text-lg font-bold text-white" style={{ fontFamily: 'Syne, sans-serif' }}>
+                    Infos clés
+                  </h2>
+                </div>
+                <Button variant="secondary" onClick={() => setShowScheduleModal(true)}>
+                  Modifier →
+                </Button>
+              </div>
+              <div className="grid gap-2 sm:grid-cols-2">
+                {/* Card 1 : Prochain RDV — cliquable avec dropdown menu */}
+                <RdvKeyInfoCardWithMenu
+                  client={client}
+                  activeFollowUp={activeFollowUp}
+                  onEditRdv={() => setShowScheduleModal(true)}
+                />
+                {/* Card 2 : Eau recommandée */}
+                <KeyInfoCard
+                  label="Eau recommandée"
+                  value={
+                    latestBodyScan.weight > 0
+                      ? `${computeWaterTarget(latestBodyScan.weight).toFixed(1)} L / jour`
+                      : "—"
+                  }
+                  icon="💧"
+                />
+                {/* Card 3 : Protéines cible */}
+                <KeyInfoCard
+                  label="Protéines cible"
+                  value={
+                    latestBodyScan.weight > 0
+                      ? `${computeProteinTarget(latestBodyScan.weight, client.objective)} g / jour`
+                      : "—"
+                  }
+                  icon="🥩"
+                />
+                {/* Card 4 : Produits en cours */}
+                <KeyInfoCard
+                  label="Produits en cours"
+                  value={
+                    retainedProducts.length > 0
+                      ? `${retainedProducts.length} produit${retainedProducts.length > 1 ? "s" : ""}`
+                      : "Aucun"
+                  }
+                  icon="🌿"
+                  sub={
+                    retainedProductsTotalPrice > 0
+                      ? `${retainedProductsTotalPrice.toFixed(2)} € / ${retainedProductsTotalPv.toFixed(1)} PV`
+                      : undefined
+                  }
+                />
+              </div>
+            </Card>
+
+            {/* À savoir sur ce client (note persona coach) */}
             <ErrorBoundary name="ClientDetailPage/GeneralNote" fallback={null}>
               <ClientGeneralNote client={client} />
             </ErrorBoundary>
           </div>
-          {/* Chantier Protocole de suivi (2026-04-20) : bloc 5 étapes visible
-              en tête de la colonne Actions. L'ErrorBoundary l'isole d'un
-              crash éventuel pour ne pas casser le reste de l'onglet. */}
-          <div className="md:col-span-2">
-            <ErrorBoundary name="ClientDetailPage/FollowUpProtocol" fallback={null}>
-              <FollowUpProtocolCard client={client} />
-            </ErrorBoundary>
-          </div>
-          <Card className="space-y-4">
-            <p className="eyebrow-label">Actions client</p>
-            <h2 className="text-lg font-bold text-white" style={{ fontFamily: 'Syne, sans-serif' }}>Raccourcis</h2>
-            <div className="space-y-3">
-              <LinkButton to={`/clients/${client.id}/follow-up/new`} label="Nouveau suivi" hint="Relire, mesurer et poser la suite" />
-              <LinkButton to={`/clients/${client.id}/start-assessment/edit`} label="Modifier le bilan de départ" hint="Corriger la date et les valeurs de référence" />
-              {latestAssessment && latestAssessment.id ? (
-                <LinkButton to={`/clients/${client.id}/assessments/${latestAssessment.id}/edit`} label="Modifier le dernier bilan" hint="Compléter une section oubliée ou corriger les valeurs" />
-              ) : null}
-              <button type="button" onClick={() => setShowScheduleModal(true)} className="w-full rounded-[22px] bg-[var(--ls-surface2)] p-4 text-left transition hover:bg-[var(--ls-surface2)]">
-                <p className="text-sm font-semibold text-white">Modifier le prochain rendez-vous</p>
-                <p className="mt-1 text-sm leading-6 text-[var(--ls-text-muted)]">Ajuster la date, l'heure ou le type de suivi</p>
-              </button>
-              <LinkButton
-                to={`/pv/clients?responsable=${encodeURIComponent(client.distributorId)}&client=${encodeURIComponent(client.id)}`}
-                label="Ouvrir la fiche point volume"
-                hint="Visualiser les commandes et le suivi produits"
-              />
-              {/* Accès app client (PWA) */}
-              <div style={{ padding: '14px 16px', borderRadius: 12, background: 'var(--ls-surface2)', border: '1px solid var(--ls-border)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: clientAppUrl ? 10 : 0 }}>
-                  <div style={{ width: 3, minHeight: 36, background: '#B8922A', borderRadius: 3, flexShrink: 0 }} />
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--ls-text)' }}>Créer l'accès app client</div>
-                    <div style={{ fontSize: 12, color: 'var(--ls-text-muted)', marginTop: 2 }}>
-                      Lien à partager au client — installable sur iPhone
-                    </div>
-                  </div>
-                  {!clientAppUrl && (
-                    <button type="button" onClick={() => void createClientAppAccount()} disabled={creatingClientApp}
-                      style={{ padding: '8px 14px', borderRadius: 8, border: 'none', background: '#B8922A', color: '#fff', fontSize: 12, fontWeight: 600, cursor: creatingClientApp ? 'wait' : 'pointer', flexShrink: 0 }}>
-                      {creatingClientApp ? 'Création...' : 'Créer'}
-                    </button>
-                  )}
+
+          {/* ═══ COLONNE DROITE — Actions & statut (sticky) ════════════ */}
+          <div className="space-y-4 xl:sticky xl:top-4 xl:self-start">
+            {/* Coordonnées — édition inline simple */}
+            <Card className="space-y-4">
+              <p className="eyebrow-label">Coordonnées</p>
+              <h2 className="text-lg font-bold text-white" style={{ fontFamily: 'Syne, sans-serif' }}>
+                Téléphone · email · ville
+              </h2>
+              <div className="space-y-3">
+                <div>
+                  <label className="text-[11px] font-medium text-[var(--ls-text-hint)] uppercase tracking-wider">Téléphone</label>
+                  <input value={editPhone} onChange={e => { setEditPhone(e.target.value); setEditSaved(false); }} style={{ marginTop: 4 }} />
                 </div>
-
-                {/* Coordonnées coach (mémorisées en local) */}
-                {!clientAppUrl && (
-                  <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px dashed var(--ls-border)', display: 'flex', flexDirection: 'column', gap: 8 }}>
-                    <div style={{ fontSize: 11, color: 'var(--ls-text-muted)', fontWeight: 500 }}>
-                      Tes coordonnées (affichées au client pour te contacter) :
-                    </div>
-                    <input
-                      value={coachPhoneInput}
-                      onChange={(e) => setCoachPhoneInput(e.target.value)}
-                      placeholder="Ton WhatsApp (ex: +33612345678)"
-                      style={{ width: '100%', padding: '9px 12px', border: '1px solid var(--ls-border)', borderRadius: 8, fontSize: 13, background: 'var(--ls-surface)', color: 'var(--ls-text)', fontFamily: 'DM Sans, sans-serif', outline: 'none' }}
-                    />
-                    <input
-                      value={coachTelegramInput}
-                      onChange={(e) => setCoachTelegramInput(e.target.value)}
-                      placeholder="Ton Telegram (ex: tomthomas) — optionnel"
-                      style={{ width: '100%', padding: '9px 12px', border: '1px solid var(--ls-border)', borderRadius: 8, fontSize: 13, background: 'var(--ls-surface)', color: 'var(--ls-text)', fontFamily: 'DM Sans, sans-serif', outline: 'none' }}
-                    />
-                    <div style={{ fontSize: 10, color: 'var(--ls-text-hint)' }}>
-                      Ces infos sont mémorisées localement — à saisir une seule fois.
-                    </div>
-                  </div>
-                )}
-                {clientAppUrl && (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                    <div style={{ fontSize: 11, color: 'var(--ls-text-muted)', padding: '8px 10px', background: 'var(--ls-surface)', border: '1px solid var(--ls-border)', borderRadius: 8, wordBreak: 'break-all', fontFamily: 'monospace' }}>
-                      {clientAppUrl}
-                    </div>
-                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                      <button type="button" onClick={() => {
-                        void navigator.clipboard.writeText(clientAppUrl);
-                        setClientAppCopied(true);
-                        setTimeout(() => setClientAppCopied(false), 2000);
-                      }} style={{ padding: '7px 12px', borderRadius: 8, border: '1px solid var(--ls-border)', background: 'var(--ls-surface)', color: 'var(--ls-text)', fontSize: 11, fontWeight: 500, cursor: 'pointer' }}>
-                        {clientAppCopied ? '✓ Copié' : 'Copier le lien'}
-                      </button>
-                      <a href={`https://wa.me/?text=${encodeURIComponent(`Ton espace Lor'Squad Wellness ✦\n${clientAppUrl}`)}`} target="_blank" rel="noopener noreferrer"
-                        style={{ padding: '7px 12px', borderRadius: 8, background: 'rgba(37,211,102,0.1)', color: '#16A34A', fontSize: 11, fontWeight: 600, textDecoration: 'none' }}>
-                        Partager WhatsApp
-                      </a>
-                      <a href={`sms:?body=${encodeURIComponent(`Ton espace Lor'Squad : ${clientAppUrl}`)}`}
-                        style={{ padding: '7px 12px', borderRadius: 8, background: 'var(--ls-surface)', border: '1px solid var(--ls-border)', color: 'var(--ls-text-muted)', fontSize: 11, fontWeight: 500, textDecoration: 'none' }}>
-                        SMS
-                      </a>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {activeFollowUp && (() => {
-                // Fix Invalid time value (2026-04-19) : on n'affiche le lien
-                // Google Calendar que si dueDate est parseable — sinon
-                // createGoogleCalendarLink().toISOString() throwerait au render.
-                const dueDateObj = new Date(activeFollowUp.dueDate);
-                if (Number.isNaN(dueDateObj.getTime())) {
-                  return null;
-                }
-                return (
-                <a
-                  href={createGoogleCalendarLink({
-                    title: `RDV ${client.firstName} ${client.lastName} — Lor'Squad Wellness`,
-                    description: `${activeFollowUp.type}\nCoach : ${client.distributorName}\nProgramme : ${client.currentProgram}`,
-                    startDate: dueDateObj,
-                    location: 'La Base Shakes & Drinks, Verdun',
-                  })}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 16px', borderRadius: 12, background: 'var(--ls-surface2)', border: '1px solid var(--ls-border)', textDecoration: 'none', transition: 'all 0.15s' }}
-                >
-                  <div style={{ width: 3, height: '100%', minHeight: 36, background: '#0D9488', borderRadius: 3, flexShrink: 0 }} />
-                  <div>
-                    <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--ls-text)' }}>Ajouter à Google Agenda</div>
-                    <div style={{ fontSize: 12, color: 'var(--ls-text-muted)', marginTop: 2 }}>
-                      RDV le {dueDateObj.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
-                    </div>
-                  </div>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--ls-teal)" strokeWidth="1.5" style={{ marginLeft: 'auto', flexShrink: 0 }}>
-                    <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
-                  </svg>
-                </a>
-                );
-              })()}
-            </div>
-          </Card>
-
-          <Card className="space-y-4">
-            <p className="eyebrow-label">Coordonnées</p>
-            <h2 className="text-lg font-bold text-white" style={{ fontFamily: 'Syne, sans-serif' }}>Modifier les infos</h2>
-            <div className="space-y-3">
-              <div>
-                <label className="text-[11px] font-medium text-[var(--ls-text-hint)] uppercase tracking-wider">Téléphone</label>
-                <input value={editPhone} onChange={e => { setEditPhone(e.target.value); setEditSaved(false) }} style={{ marginTop: 4 }} />
-              </div>
-              <div>
-                <label className="text-[11px] font-medium text-[var(--ls-text-hint)] uppercase tracking-wider">Email</label>
-                <input value={editEmail} onChange={e => { setEditEmail(e.target.value); setEditSaved(false) }} style={{ marginTop: 4 }} />
-              </div>
-              <div>
-                <label className="text-[11px] font-medium text-[var(--ls-text-hint)] uppercase tracking-wider">Ville</label>
-                <input value={editCity} onChange={e => { setEditCity(e.target.value); setEditSaved(false) }} style={{ marginTop: 4 }} />
-              </div>
-              <Button
-                variant="secondary"
-                className="w-full"
-                onClick={() => {
-                  void (async () => {
-                    try {
-                      await updateClientInfo(client.id, {
-                        phone: editPhone.trim(),
-                        email: editEmail.trim().toLowerCase(),
-                        city: editCity.trim() || undefined
-                      });
-                      // Chantier sync client_recaps (2026-04-20) : les infos
-                      // client (nom affiché) dans le récap doivent suivre.
-                      // Non-bloquant : la mise à jour coordonnées a réussi.
+                <div>
+                  <label className="text-[11px] font-medium text-[var(--ls-text-hint)] uppercase tracking-wider">Email</label>
+                  <input value={editEmail} onChange={e => { setEditEmail(e.target.value); setEditSaved(false); }} style={{ marginTop: 4 }} />
+                </div>
+                <div>
+                  <label className="text-[11px] font-medium text-[var(--ls-text-hint)] uppercase tracking-wider">Ville</label>
+                  <input value={editCity} onChange={e => { setEditCity(e.target.value); setEditSaved(false); }} style={{ marginTop: 4 }} />
+                </div>
+                <Button
+                  variant="secondary"
+                  className="w-full"
+                  onClick={() => {
+                    void (async () => {
                       try {
-                        await refreshClientRecap(client.id);
-                      } catch (refreshErr) {
+                        await updateClientInfo(client.id, {
+                          phone: editPhone.trim(),
+                          email: editEmail.trim().toLowerCase(),
+                          city: editCity.trim() || undefined,
+                        });
+                        try {
+                          await refreshClientRecap(client.id);
+                        } catch (refreshErr) {
+                          pushToast(buildSupabaseErrorToast(
+                            refreshErr,
+                            "Les données sont enregistrées mais le lien client n'a pas pu être mis à jour.",
+                          ));
+                        }
+                        setEditSaved(true);
+                        pushToast({ tone: "success", title: "Coordonnées mises à jour" });
+                      } catch (err) {
+                        setEditSaved(false);
                         pushToast(buildSupabaseErrorToast(
-                          refreshErr,
-                          "Les données sont enregistrées mais le lien client n'a pas pu être mis à jour. Tu peux regénérer l'accès depuis la fiche."
+                          err,
+                          "Impossible de mettre à jour les coordonnées.",
                         ));
                       }
-                      setEditSaved(true);
-                      pushToast({
-                        tone: "success",
-                        title: "Coordonnées mises à jour",
-                      });
-                    } catch (err) {
-                      setEditSaved(false);
-                      pushToast(buildSupabaseErrorToast(
-                        err,
-                        "Impossible de mettre à jour les coordonnées. Vérifiez votre connexion et réessayez."
-                      ));
-                    }
-                  })();
-                }}
-              >
-                {editSaved ? '✓ Enregistré' : 'Enregistrer les modifications'}
-              </Button>
-            </div>
-          </Card>
-
-          <Card className="space-y-4">
-            <p className="eyebrow-label">Fiche rapide</p>
-            <h2 className="text-lg font-bold text-white" style={{ fontFamily: 'Syne, sans-serif' }}>Infos clés</h2>
-            <div className="space-y-2">
-              <SummaryRow label="Objectif" value={latestQuestionnaire?.objectiveFocus ?? client.objective ?? "Non défini"} />
-              <SummaryRow label="Programme" value={client.currentProgram || "À confirmer"} />
-              <SummaryRow label="Prochain RDV" value={activeFollowUp ? formatDateTime(activeFollowUp.dueDate) : "Non planifié"} />
-              {waterNeed && <SummaryRow label="Eau recommandée" value={`${waterNeed.toFixed(1)}L / jour`} />}
-              {proteinRange && <SummaryRow label="Protéines" value={`${proteinRange[0]}–${proteinRange[1]}g / repas`} />}
-              <SummaryRow label="Produits optionnels" value={optionalProductsLabel} />
-              {retainedProductsTotalPrice > 0 && <SummaryRow label="Prix routine" value={`${retainedProductsTotalPrice.toFixed(2)} €`} />}
-              {retainedProductsTotalPv > 0 && <SummaryRow label="PV routine" value={`${retainedProductsTotalPv.toFixed(1)} PV`} />}
-              {pvRecord && <SummaryRow label="Dernière commande" value={formatDate(pvRecord.lastOrderDate)} />}
-            </div>
-            {canDeleteClient && (
-              <div className="mt-3 pt-3 border-t border-[var(--ls-border)]">
-                <DangerActionButton label="Supprimer ce dossier" hint="Retirer ce client et ses données" onClick={handleDeleteClient} />
-              </div>
-            )}
-            {canReassignClient && (
-              <div className="mt-4 rounded-[18px] border border-[var(--ls-border)] bg-white/[0.02] p-4">
-                <p className="text-[11px] text-[var(--ls-text-hint)] uppercase tracking-wider mb-3">Transférer le dossier</p>
-                <select value={nextOwnerId} onChange={(e) => setNextOwnerId(e.target.value)} className="mb-3">
-                  {assignableOwners.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
-                </select>
-                <Button className="w-full" onClick={() => void handleTransferClient()} disabled={nextOwnerId === client.distributorId}>
-                  Transférer
+                    })();
+                  }}
+                >
+                  {editSaved ? "✓ Enregistré" : "Enregistrer"}
                 </Button>
-                {transferFeedback && <p className="mt-2 text-sm text-[#2DD4BF]">{transferFeedback}</p>}
               </div>
-            )}
-          </Card>
+            </Card>
 
-          <LifecycleControlCard client={client} />
+            {/* Actions rapides — liste verticale, plus de doublon
+                "Créer accès app" (géré par le bouton header). */}
+            <Card className="space-y-4">
+              <p className="eyebrow-label">Actions client</p>
+              <h2 className="text-lg font-bold text-white" style={{ fontFamily: 'Syne, sans-serif' }}>
+                Actions rapides
+              </h2>
+              <div className="space-y-3">
+                <LinkButton
+                  to={`/clients/${client.id}/follow-up/new`}
+                  label="Nouveau suivi"
+                  hint="Relire, mesurer et poser la suite"
+                />
+                <LinkButton
+                  to={`/clients/${client.id}/start-assessment/edit`}
+                  label="Modifier le bilan de départ"
+                  hint="Corriger la date et les valeurs de référence"
+                />
+                {latestAssessment && latestAssessment.id ? (
+                  <LinkButton
+                    to={`/clients/${client.id}/assessments/${latestAssessment.id}/edit`}
+                    label="Modifier le dernier bilan"
+                    hint="Compléter une section oubliée ou corriger les valeurs"
+                  />
+                ) : null}
+                <button
+                  type="button"
+                  onClick={() => setShowScheduleModal(true)}
+                  className="w-full rounded-[22px] bg-[var(--ls-surface2)] p-4 text-left transition hover:bg-[var(--ls-surface2)]"
+                >
+                  <p className="text-sm font-semibold text-white">Modifier le prochain rendez-vous</p>
+                  <p className="mt-1 text-sm leading-6 text-[var(--ls-text-muted)]">
+                    Ajuster la date, l&apos;heure ou le type de suivi
+                  </p>
+                </button>
+                <LinkButton
+                  to={`/pv/clients?responsable=${encodeURIComponent(client.distributorId)}&client=${encodeURIComponent(client.id)}`}
+                  label="Ouvrir la fiche point volume"
+                  hint="Visualiser les commandes et le suivi produits"
+                />
+              </div>
+            </Card>
+
+            {/* Cycle de vie (statut + fragile + suivi libre) */}
+            <LifecycleControlCard client={client} />
+
+            {/* Dossier — transférer + supprimer (fusionné ici depuis
+                l'ancien bloc Fiche rapide). */}
+            {(canReassignClient || canDeleteClient) && (
+              <Card className="space-y-4">
+                <p className="eyebrow-label">Dossier</p>
+                <h2 className="text-lg font-bold text-white" style={{ fontFamily: 'Syne, sans-serif' }}>
+                  Gestion du dossier
+                </h2>
+                {canReassignClient && (
+                  <div className="rounded-[18px] border border-[var(--ls-border)] bg-white/[0.02] p-4">
+                    <p className="text-[11px] text-[var(--ls-text-hint)] uppercase tracking-wider mb-3">
+                      Transférer à
+                    </p>
+                    <select
+                      value={nextOwnerId}
+                      onChange={(e) => setNextOwnerId(e.target.value)}
+                      className="mb-3"
+                    >
+                      {assignableOwners.map((u) => (
+                        <option key={u.id} value={u.id}>
+                          {u.name}
+                        </option>
+                      ))}
+                    </select>
+                    <Button
+                      className="w-full"
+                      onClick={() => void handleTransferClient()}
+                      disabled={nextOwnerId === client.distributorId}
+                    >
+                      Transférer
+                    </Button>
+                    {transferFeedback && (
+                      <p className="mt-2 text-sm text-[#2DD4BF]">{transferFeedback}</p>
+                    )}
+                  </div>
+                )}
+                {canDeleteClient && (
+                  <div className="pt-3 border-t border-[var(--ls-border)]">
+                    <DangerActionButton
+                      label="Supprimer ce dossier"
+                      hint="Retirer ce client et ses données"
+                      onClick={handleDeleteClient}
+                    />
+                  </div>
+                )}
+              </Card>
+            )}
+          </div>
         </div>
       )}
 
@@ -1144,18 +1096,22 @@ export function ClientDetailPage() {
           onSaved={() => setShowScheduleModal(false)}
         />
       )}
+
+      {/* Modale unique pour envoyer l'accès client (QR/WA/Copier/SMS) */}
+      <ClientAccessModal
+        open={accessModalOpen}
+        onClose={() => setAccessModalOpen(false)}
+        clientId={client.id}
+        clientFirstName={client.firstName}
+        clientLastName={client.lastName}
+        clientPhone={client.phone}
+      />
     </div>
   );
 }
 
-function SummaryRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex items-center justify-between gap-3 rounded-[22px] bg-[var(--ls-surface2)] px-4 py-3">
-      <span className="text-sm text-[var(--ls-text-muted)]">{label}</span>
-      <span className="text-right text-sm font-semibold text-white">{value}</span>
-    </div>
-  );
-}
+// SummaryRow supprimé lors de la refonte 2026-04-25 : les "Fiche rapide"
+// cards qui l'utilisaient ont été remplacées par KeyInfoCard (grid 2x2).
 
 function NouveauBilanCTA({ onClick }: { onClick: () => void }) {
   return (
@@ -1710,5 +1666,361 @@ function LifecycleControlCard({ client }: { client: Client }) {
         </button>
       </div>
     </Card>
+  );
+}
+
+// ─── Refonte fiche client 2 colonnes (2026-04-25) ─────────────────────────
+// Card compacte "Infos clés" (eau, protéines, produits, etc.).
+function KeyInfoCard({
+  label,
+  value,
+  icon,
+  sub,
+}: {
+  label: string;
+  value: string;
+  icon?: string;
+  sub?: string;
+}) {
+  return (
+    <div
+      style={{
+        background: "var(--ls-surface2)",
+        border: "1px solid var(--ls-border)",
+        borderRadius: 12,
+        padding: "10px 12px",
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 6,
+          fontSize: 10,
+          textTransform: "uppercase",
+          letterSpacing: "0.08em",
+          color: "var(--ls-text-hint)",
+          fontWeight: 600,
+          marginBottom: 4,
+        }}
+      >
+        {icon ? <span aria-hidden="true">{icon}</span> : null}
+        {label}
+      </div>
+      <div
+        style={{
+          fontFamily: "Syne, sans-serif",
+          fontSize: 16,
+          fontWeight: 700,
+          color: "var(--ls-text)",
+          lineHeight: 1.15,
+        }}
+      >
+        {value}
+      </div>
+      {sub ? (
+        <div style={{ fontSize: 11, color: "var(--ls-text-muted)", marginTop: 2 }}>{sub}</div>
+      ) : null}
+    </div>
+  );
+}
+
+// Card "Prochain RDV" spécialisée avec menu contextuel dropdown (4 options)
+function RdvKeyInfoCardWithMenu({
+  client,
+  activeFollowUp,
+  onEditRdv,
+}: {
+  client: Client;
+  activeFollowUp: ReturnType<typeof getClientActiveFollowUp>;
+  onEditRdv: () => void;
+}) {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const dueDate = activeFollowUp ? new Date(activeFollowUp.dueDate) : null;
+  const hasValidDate = dueDate !== null && !Number.isNaN(dueDate.getTime());
+
+  // Fermeture menu sur clic extérieur
+  useEffect(() => {
+    if (!menuOpen) return;
+    function handleClick(e: MouseEvent) {
+      const target = e.target as HTMLElement | null;
+      if (!target?.closest("[data-rdv-menu-root]")) {
+        setMenuOpen(false);
+      }
+    }
+    document.addEventListener("click", handleClick);
+    return () => document.removeEventListener("click", handleClick);
+  }, [menuOpen]);
+
+  const displayValue = hasValidDate
+    ? `${dueDate.toLocaleDateString("fr-FR", {
+        weekday: "short",
+        day: "numeric",
+        month: "short",
+      })} ${dueDate.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}`
+    : "Non planifié";
+
+  // Générer URL Google Agenda
+  const googleUrl = (() => {
+    if (!hasValidDate) return "#";
+    const start = dueDate;
+    const end = new Date(start.getTime() + 45 * 60 * 1000);
+    const fmt = (d: Date) => d.toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
+    const params = new URLSearchParams({
+      action: "TEMPLATE",
+      text: `RDV Lor Squad - ${client.firstName}`,
+      dates: `${fmt(start)}/${fmt(end)}`,
+      details: `Suivi coaching nutrition Lor Squad avec ${client.distributorName}`,
+      location: "La Base Shakes & Drinks, Verdun",
+    });
+    return `https://calendar.google.com/calendar/render?${params.toString()}`;
+  })();
+
+  // Générer .ics data URI
+  const icsUri = hasValidDate
+    ? createIcsDataUri({
+        title: `RDV Lor Squad - ${client.firstName} ${client.lastName}`,
+        description: `Suivi coaching Lor Squad avec ${client.distributorName}.`,
+        startDate: dueDate,
+        location: "La Base Shakes & Drinks, Verdun",
+        organizerName: client.distributorName,
+      })
+    : "";
+  const icsFilename = hasValidDate
+    ? `rdv-${client.firstName.toLowerCase().replace(/\W+/g, "-")}-${dueDate.toISOString().slice(0, 10)}.ics`
+    : "rdv.ics";
+
+  // WhatsApp rappel client
+  const waUrl = (() => {
+    if (!hasValidDate) return "";
+    const phone = (client.phone ?? "").replace(/\D/g, "");
+    if (!phone) return "";
+    const dateStr = dueDate.toLocaleDateString("fr-FR", {
+      weekday: "long",
+      day: "numeric",
+      month: "long",
+    });
+    const timeStr = dueDate.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+    const msg = encodeURIComponent(
+      `Salut ${client.firstName} 👋 Rappel de notre RDV le ${dateStr} à ${timeStr} chez Lor Squad. Hâte de te voir ! 💪`,
+    );
+    return `https://wa.me/${phone}?text=${msg}`;
+  })();
+
+  return (
+    <div data-rdv-menu-root style={{ position: "relative" }}>
+      <button
+        type="button"
+        onClick={() => hasValidDate && setMenuOpen((v) => !v)}
+        disabled={!hasValidDate}
+        style={{
+          width: "100%",
+          textAlign: "left",
+          background: "var(--ls-surface2)",
+          border: hasValidDate
+            ? menuOpen
+              ? "1px solid rgba(201,168,76,0.6)"
+              : "1px solid var(--ls-border)"
+            : "1px solid var(--ls-border)",
+          borderRadius: 12,
+          padding: "10px 12px",
+          cursor: hasValidDate ? "pointer" : "default",
+          transition: "border-color 0.15s",
+          fontFamily: "inherit",
+          color: "inherit",
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 6,
+            fontSize: 10,
+            textTransform: "uppercase",
+            letterSpacing: "0.08em",
+            color: "var(--ls-text-hint)",
+            fontWeight: 600,
+            marginBottom: 4,
+          }}
+        >
+          <span>
+            <span aria-hidden="true" style={{ marginRight: 4 }}>📅</span>
+            Prochain RDV
+          </span>
+          {hasValidDate ? (
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              {menuOpen ? <polyline points="18 15 12 9 6 15" /> : <polyline points="6 9 12 15 18 9" />}
+            </svg>
+          ) : null}
+        </div>
+        <div
+          style={{
+            fontFamily: "Syne, sans-serif",
+            fontSize: 14,
+            fontWeight: 700,
+            color: "var(--ls-text)",
+            lineHeight: 1.2,
+          }}
+        >
+          {displayValue}
+        </div>
+      </button>
+
+      {menuOpen && hasValidDate ? (
+        <div
+          role="menu"
+          style={{
+            position: "absolute",
+            top: "100%",
+            left: 0,
+            right: 0,
+            marginTop: 4,
+            background: "var(--ls-surface)",
+            border: "1px solid var(--ls-border)",
+            borderRadius: 12,
+            boxShadow: "0 8px 24px rgba(0,0,0,0.24)",
+            zIndex: 20,
+            overflow: "hidden",
+          }}
+        >
+          <RdvMenuOption
+            icon="G"
+            iconColor="#4285F4"
+            title="Google Agenda"
+            hint="Ouvre dans un nouvel onglet"
+            onClick={() => {
+              window.open(googleUrl, "_blank", "noopener,noreferrer");
+              setMenuOpen(false);
+            }}
+          />
+          <a
+            href={icsUri}
+            download={icsFilename}
+            onClick={() => setMenuOpen(false)}
+            style={{ textDecoration: "none", color: "inherit", display: "block" }}
+          >
+            <RdvMenuOption
+              icon="📆"
+              title="Apple / Outlook (.ics)"
+              hint="Télécharge un fichier calendrier"
+              asDiv
+            />
+          </a>
+          <RdvMenuOption
+            icon="✎"
+            iconColor="var(--ls-teal)"
+            title="Modifier le RDV"
+            hint="Changer date ou heure"
+            onClick={() => {
+              onEditRdv();
+              setMenuOpen(false);
+            }}
+          />
+          {waUrl ? (
+            <a
+              href={waUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => setMenuOpen(false)}
+              style={{ textDecoration: "none", color: "inherit", display: "block" }}
+            >
+              <RdvMenuOption
+                icon="📤"
+                title="Envoyer au client (WhatsApp)"
+                hint="Rappel avec date et heure"
+                asDiv
+              />
+            </a>
+          ) : (
+            <RdvMenuOption
+              icon="📤"
+              title="WhatsApp client"
+              hint="Téléphone manquant sur la fiche"
+              disabled
+            />
+          )}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function RdvMenuOption({
+  icon,
+  iconColor,
+  title,
+  hint,
+  onClick,
+  asDiv,
+  disabled,
+}: {
+  icon: string;
+  iconColor?: string;
+  title: string;
+  hint: string;
+  onClick?: () => void;
+  asDiv?: boolean;
+  disabled?: boolean;
+}) {
+  const content = (
+    <>
+      <span
+        aria-hidden="true"
+        style={{
+          width: 26,
+          height: 26,
+          borderRadius: 8,
+          background: iconColor ?? "var(--ls-surface2)",
+          color: iconColor ? "#fff" : "var(--ls-text)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          fontWeight: 700,
+          fontSize: 12,
+          flexShrink: 0,
+        }}
+      >
+        {icon}
+      </span>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: 13, fontWeight: 600, color: "var(--ls-text)", lineHeight: 1.2 }}>
+          {title}
+        </div>
+        <div style={{ fontSize: 11, color: "var(--ls-text-muted)", marginTop: 1 }}>{hint}</div>
+      </div>
+    </>
+  );
+
+  const commonStyle: React.CSSProperties = {
+    display: "flex",
+    alignItems: "center",
+    gap: 10,
+    padding: "10px 12px",
+    cursor: disabled ? "not-allowed" : onClick || asDiv ? "pointer" : "default",
+    opacity: disabled ? 0.5 : 1,
+    transition: "background 0.12s",
+    borderBottom: "1px solid var(--ls-border)",
+  };
+
+  if (asDiv) {
+    return <div style={commonStyle}>{content}</div>;
+  }
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      style={{
+        ...commonStyle,
+        width: "100%",
+        textAlign: "left",
+        background: "transparent",
+        border: "none",
+        fontFamily: "inherit",
+      }}
+    >
+      {content}
+    </button>
   );
 }

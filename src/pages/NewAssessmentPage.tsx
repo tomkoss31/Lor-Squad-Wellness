@@ -7,7 +7,7 @@ import { useEffect } from "react";
 import { useRef } from "react";
 import { Component, type ErrorInfo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { RecapModal } from "../components/assessment/RecapModal";
+import { ClientAccessModal } from "../components/client/ClientAccessModal";
 import { getSupabaseClient } from "../services/supabaseClient";
 import { BodyFatInsightCard } from "../components/body-scan/BodyFatInsightCard";
 import { MuscleMassInsightCard } from "../components/body-scan/MuscleMassInsightCard";
@@ -24,6 +24,12 @@ import { PROGRAM_CHOICES, getProgramById } from "../data/programs";
 import { FelicitationsStep } from "../components/assessment/FelicitationsStep";
 import { NotesPanel } from "../components/assessment/NotesPanel";
 import { ValidationBlockedBanner } from "../components/assessment/ValidationBlockedBanner";
+import {
+  readCoachNotesDraft,
+  writeCoachNotesDraft,
+  clearCoachNotesDraft,
+  purgeLegacyCoachNotesKey,
+} from "../lib/assessmentNotesStorage";
 import { Button } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
 import { PageHeading } from "../components/ui/PageHeading";
@@ -37,6 +43,8 @@ import {
   estimateMuscleMassPercent,
   normalizeDateTimeLocalInputValue,
   serializeDateTimeForStorage,
+  computeWaterTarget,
+  computeProteinTarget,
 } from "../lib/calculations";
 import { buildAssessmentRecommendationPlan } from "../lib/assessmentRecommendations";
 import type { BiologicalSex, BreakfastAnalysis, DecisionClient, MessageALaisser, Objective, RecommendationLead, TypeDeSuite } from "../types/domain";
@@ -105,7 +113,7 @@ type AssessmentForm = {
   preferredFlavor: string;
   /** Chantier refonte étape 11 (2026-04-20). */
   consumesMilk: "yes" | "sometimes" | "no" | "";
-  programChoice: "discovery" | "premium" | "booster1" | "booster2";
+  programChoice: "discovery" | "premium" | "booster1" | "booster2" | "unit";
   targetWeight: number;
   motivation: number;
   desiredTimeline: string;
@@ -244,7 +252,7 @@ const initialForm: AssessmentForm = {
   snacksFastFoodPerWeek: null,
   preferredFlavor: "",
   consumesMilk: "" as "yes" | "sometimes" | "no" | "",
-  programChoice: "premium" as "discovery" | "premium" | "booster1" | "booster2",
+  programChoice: "premium" as "discovery" | "premium" | "booster1" | "booster2" | "unit",
   targetWeight: 0,
   motivation: 0,
   desiredTimeline: "3 mois",
@@ -332,8 +340,10 @@ function clearAssessmentDraft() {
   }
 
   window.localStorage.removeItem(ASSESSMENT_DRAFT_KEY);
-  // Chantier Polish Vue complète (2026-04-24) : purge aussi la note coach
-  // liée au bilan une fois celui-ci validé / abandonné.
+  // Chantier Hotfix fuite notes coach (2026-04-24) : la clé legacy
+  // globale est purgée systématiquement. La clé scopée par prospectId
+  // est purgée séparément à la validation effective (cf handleSaveAssessment
+  // qui appelle clearCoachNotesDraft(prospectId)).
   window.localStorage.removeItem("lorsquad-assessment-coach-notes");
 }
 
@@ -394,9 +404,13 @@ export function NewAssessmentPage() {
   // Chantier Félicitations (2026-04-20) : le bouton "Enregistrer et terminer"
   // montre un état "Enregistrement…" pendant handleSaveAssessment.
   const [saving, setSaving] = useState(false);
-  const [showRecapModal, setShowRecapModal] = useState(false);
-  const [recapToken, setRecapToken] = useState("");
   const [recapClientName, setRecapClientName] = useState("");
+  // Chantier Client access unification (2026-04-24) : après validation
+  // du bilan, on ouvre la modale d'envoi d'accès (QR + WhatsApp +
+  // Copier) à la place du RecapModal hybride qui mélangeait rapport +
+  // app client.
+  const [accessModalOpen, setAccessModalOpen] = useState(false);
+  const [savedClientId, setSavedClientId] = useState<string | null>(null);
   const [assignedUserId, setAssignedUserId] = useState("");
   const [draftReady, setDraftReady] = useState(false);
   // Chantier Prospects : suivi des champs pré-remplis par le prospect (surlignés en vert
@@ -405,28 +419,28 @@ export function NewAssessmentPage() {
     firstName: boolean; lastName: boolean; phone: boolean; email: boolean;
   }>({ firstName: false, lastName: false, phone: false, email: false });
 
-  // Chantier Polish Vue complète + refonte bilan (2026-04-24) :
-  // notes coach libres. Auto-save localStorage pendant le bilan, puis
-  // figées dans assessments.coach_notes_initial à la validation.
-  const LS_COACH_NOTES_KEY = "lorsquad-assessment-coach-notes";
+  // Chantier Hotfix fuite notes coach (2026-04-24) :
+  // Les notes coach sont scopées par prospectId. Si pas de prospectId
+  // (bilan 100% neuf) → éphémère, state React uniquement, aucune
+  // persistance localStorage → zéro fuite cross-client possible.
+  // Purge opportuniste de la clé legacy globale au montage (users
+  // déjà affectés par le bug récupèrent un state propre).
   const [coachNotes, setCoachNotes] = useState<string>(() => {
-    if (typeof window === "undefined") return "";
-    try {
-      return window.localStorage.getItem(LS_COACH_NOTES_KEY) ?? "";
-    } catch {
-      return "";
-    }
+    purgeLegacyCoachNotesKey();
+    return readCoachNotesDraft(prospectId);
   });
   const [showValidationBanner, setShowValidationBanner] = useState(false);
   const [showMobileNotes, setShowMobileNotes] = useState(false);
 
+  // Si prospectId change (navigation entre bilans), on reset les notes
+  // pour éviter toute fuite visuelle avant le prochain fetch.
+  useEffect(() => {
+    setCoachNotes(readCoachNotesDraft(prospectId));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [prospectId]);
+
   const persistCoachNotesLocal = (value: string) => {
-    if (typeof window === "undefined") return;
-    try {
-      window.localStorage.setItem(LS_COACH_NOTES_KEY, value);
-    } catch {
-      // quota
-    }
+    writeCoachNotesDraft(prospectId, value);
   };
 
   // L'étape 11 "Suite du suivi" est validée si le coach a choisi
@@ -850,7 +864,11 @@ export function NewAssessmentPage() {
         },
         assessment,
         clientStatus,
-        currentProgram: startsImmediately ? programTitle : "",
+        // Sync coach↔client (2026-04-25) : persister le programme sélectionné
+        // indépendamment de startsImmediately — sinon le header fiche + app
+        // client affiche "Programme à confirmer" alors que le coach a déjà
+        // choisi. startsImmediately n'influe plus que sur pvProgramId (module PV).
+        currentProgram: selectedProgram?.title ?? (startsImmediately ? programTitle : ""),
         pvProgramId: startsImmediately ? selectedProgram?.id : undefined,
         started: startsImmediately,
         nextFollowUp,
@@ -882,6 +900,36 @@ export function NewAssessmentPage() {
         } catch (convErr) {
           // Non-fatal : le client est créé, seule la MAJ du prospect a échoué.
           console.error('Prospect conversion error:', convErr);
+        }
+      }
+
+      // Chantier Auto-notif RDV (2026-04-24) : message auto au client
+      // si un RDV de suivi est planifié (sauf suivi libre). Best-effort,
+      // non bloquant si échec.
+      if (hasFollowUpPlanned && form.typeDeSuite !== "suivi_libre" && form.nextFollowUp) {
+        try {
+          const sbMsg = await getSupabaseClient();
+          if (sbMsg && currentUser?.id) {
+            const d = new Date(form.nextFollowUp);
+            const dateLabel = d.toLocaleDateString("fr-FR", {
+              weekday: "long",
+              day: "2-digit",
+              month: "long",
+            });
+            const hourLabel = d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+            const msg = `Salut ${form.firstName.trim()} ! 🎉\n\nMerci pour ce super bilan. Notre prochain RDV est confirmé :\n📅 ${dateLabel}\n⏰ ${hourLabel}\n\nÀ très vite pour ton suivi ! 💪\n${currentUser.name ?? "Coach"}`;
+            await sbMsg.from("client_messages").insert({
+              client_id: clientId,
+              client_name: `${form.firstName.trim()} ${form.lastName.trim()}`,
+              distributor_id: currentUser.id,
+              message_type: "coach_reply",
+              message: msg,
+              sender: "coach",
+              sender_id: currentUser.id,
+            });
+          }
+        } catch (msgErr) {
+          console.warn("[auto-notif RDV] échec non bloquant:", msgErr);
         }
       }
 
@@ -924,15 +972,20 @@ export function NewAssessmentPage() {
 
           if (recapData?.token) {
             clearAssessmentDraft();
-            setRecapToken(recapData.token);
+            clearCoachNotesDraft(prospectId);
+            // Chantier Client access unification (2026-04-24) : ouvre
+            // la modale unifiée au lieu du RecapModal hybride. QR visible
+            // par défaut pour scan en présentiel fin de bilan.
+            setSavedClientId(clientId);
             setRecapClientName(`${form.firstName?.trim()} ${form.lastName?.trim()}`);
-            setShowRecapModal(true);
-            return; // Modal handles navigation
+            setAccessModalOpen(true);
+            return; // la modale gère la navigation via onClose
           }
         }
 
         // Pas de Supabase ou pas de token renvoyé → mode local, on nettoie le draft
         clearAssessmentDraft();
+        clearCoachNotesDraft(prospectId);
         navigate(`/clients/${clientId}`);
       } catch (recapErr) {
         // Bilan enregistré, mais recap KO. On NE nettoie PAS le draft pour permettre
@@ -1655,6 +1708,68 @@ export function NewAssessmentPage() {
               <div className="grid gap-4 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
                 {/* ─── Colonne principale ─────────────────────────────── */}
                 <div className="space-y-5">
+                  {/* Bloc Nutri — Objectifs hydratation + protéines
+                      (Chantier Recommandations 2026-04-25). Calculés
+                      depuis form.weight + form.objective. */}
+                  {form.weight > 0 ? (
+                    <div
+                      style={{
+                        padding: "14px 16px",
+                        borderRadius: 14,
+                        background:
+                          "linear-gradient(135deg, color-mix(in srgb, var(--ls-teal) 10%, transparent), color-mix(in srgb, var(--ls-gold) 6%, transparent))",
+                        border:
+                          "1px solid color-mix(in srgb, var(--ls-teal) 25%, transparent)",
+                      }}
+                    >
+                      <p className="eyebrow-label" style={{ marginBottom: 8 }}>
+                        Objectifs nutritionnels
+                      </p>
+                      <div
+                        style={{
+                          display: "grid",
+                          gap: 12,
+                          gridTemplateColumns: "1fr 1fr",
+                        }}
+                      >
+                        <div>
+                          <div style={{ fontSize: 11, color: "var(--ls-text-muted)", marginBottom: 2 }}>
+                            💧 Hydratation cible
+                          </div>
+                          <div
+                            style={{
+                              fontFamily: "Syne, sans-serif",
+                              fontSize: 20,
+                              fontWeight: 800,
+                              color: "var(--ls-text)",
+                            }}
+                          >
+                            {computeWaterTarget(form.weight).toFixed(1)} L / jour
+                          </div>
+                        </div>
+                        <div>
+                          <div style={{ fontSize: 11, color: "var(--ls-text-muted)", marginBottom: 2 }}>
+                            🥩 Protéines cible
+                          </div>
+                          <div
+                            style={{
+                              fontFamily: "Syne, sans-serif",
+                              fontSize: 20,
+                              fontWeight: 800,
+                              color: "var(--ls-text)",
+                            }}
+                          >
+                            {computeProteinTarget(form.weight, form.objective)} g / jour
+                          </div>
+                        </div>
+                      </div>
+                      <div style={{ fontSize: 11, color: "var(--ls-text-muted)", marginTop: 8 }}>
+                        Calculé selon le poids actuel ({form.weight.toFixed(1)} kg) et
+                        l&apos;objectif « {form.objective === "sport" ? "Sport / masse" : "Perte de poids"} ».
+                      </div>
+                    </div>
+                  ) : null}
+
                   {/* Bloc 0 — Curseur lait */}
                   <MilkConsumptionToggle
                     value={form.consumesMilk}
@@ -2001,13 +2116,25 @@ export function NewAssessmentPage() {
       </div>
       </div>
 
-      {showRecapModal && recapToken && (
-        <RecapModal
-          clientName={recapClientName}
-          recapToken={recapToken}
-          onClose={() => { setShowRecapModal(false); navigate('/clients'); }}
+      {/* Modale unifiée ClientAccessModal (V2 Client access unification
+          2026-04-24) : remplace l'ancien RecapModal hybride. Fin de
+          bilan → QR visible par défaut pour scan en présentiel.
+          onClose → navigation vers la fiche client. */}
+      {accessModalOpen && savedClientId ? (
+        <ClientAccessModal
+          open={accessModalOpen}
+          onClose={() => {
+            setAccessModalOpen(false);
+            navigate(`/clients/${savedClientId}`);
+          }}
+          clientId={savedClientId}
+          clientFirstName={form.firstName?.trim() ?? recapClientName}
+          clientLastName={form.lastName?.trim() ?? ""}
+          clientPhone={form.phone}
+          qrDefault={true}
         />
-      )}
+      ) : null}
+
     </div>
     );
   }

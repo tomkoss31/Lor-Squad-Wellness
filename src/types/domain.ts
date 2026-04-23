@@ -157,7 +157,7 @@ export interface AssessmentQuestionnaire {
   /** Consommation de lait (animal ou végétal) — oriente le distri sur PDM. */
   consumesMilk?: "yes" | "sometimes" | "no";
   /** Programme choisi par le client dans le tunnel de vente étape 11. */
-  programChoice?: "discovery" | "premium" | "booster1" | "booster2";
+  programChoice?: "discovery" | "premium" | "booster1" | "booster2" | "unit";
 }
 
 export interface AssessmentRecord {
@@ -228,6 +228,11 @@ export interface Client {
     photo_before?: boolean;
     measurements?: boolean;
   };
+  // Chantier RGPD partage public (2026-04-24) : consentement explicite
+  // requis avant que le coach puisse créer un lien /partage/:token.
+  publicShareConsent?: boolean;
+  publicShareConsentAt?: string;
+  publicShareRevokedAt?: string;
 }
 
 export interface FollowUp {

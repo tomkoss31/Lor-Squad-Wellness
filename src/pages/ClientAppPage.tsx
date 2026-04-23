@@ -4,9 +4,12 @@ import { getSupabaseClient } from '../services/supabaseClient'
 import { HERBALIFE_PRODUCTS, type HerbalifeProduct } from '../data/herbalifeCatalog'
 import { ClientMessageModal } from '../components/client-app/ClientMessageModal'
 import { ClientChatTab } from '../components/client-app/ClientChatTab'
+import { ClientHomeTab } from '../components/client-app/ClientHomeTab'
 import { ClientPushOptIn } from '../components/client-app/ClientPushOptIn'
 import { InstallPwaBanner } from '../components/pwa/InstallPwaBanner'
 import { BreakfastStorySlider, DEFAULT_BREAKFAST_ANALYSIS } from '../components/education/BreakfastStorySlider'
+import { ClientMeasurementsSection } from '../features/measurements/ClientMeasurementsSection'
+import { ClientProductsTab } from '../components/client-app/ClientProductsTab'
 import type { BreakfastAnalysis } from '../types/domain'
 import { useOnboardingState } from '../features/onboarding/hooks/useOnboardingState'
 
@@ -18,7 +21,8 @@ const OnboardingTutorial = lazy(() =>
   })),
 )
 
-const GOOGLE_MAPS_LA_BASE = 'https://www.google.com/maps/place/LA+BASE+Shakes%26Drinks/@49.1619589,5.3840559,17z'
+// GOOGLE_MAPS_LA_BASE conservé en const pour future reuse si besoin
+void 'https://www.google.com/maps/place/LA+BASE+Shakes%26Drinks/@49.1619589,5.3840559,17z';
 
 // Hotfix client-login (2026-04-24) : salutation dynamique — distincte de
 // celle de /co-pilote côté coach car le public et le ton diffèrent.
@@ -30,15 +34,7 @@ function clientGreeting(d: Date): string {
   return 'Bonsoir'
 }
 
-// ─── Catégories produits dans l'ordre du PDF officiel ──────────────────────
-const CATEGORY_DISPLAY: Array<{ key: HerbalifeProduct['category']; label: string }> = [
-  { key: 'formula1', label: 'Formula 1' },
-  { key: 'select', label: 'Select' },
-  { key: 'proteines', label: 'En-cas & Protéines' },
-  { key: 'complements', label: 'Compléments' },
-  { key: 'boissons', label: 'Boissons' },
-  { key: 'sport', label: 'Sport & Vitalité H24' },
-]
+// Refonte Produits (2026-04-25) : catégories gérées dans ClientProductsTab.
 
 // ─── Descriptions détaillées par référence produit ─────────────────────────
 const PRODUCT_DETAILS: Record<string, string> = {
@@ -132,85 +128,9 @@ function MiniLineChart({
   )
 }
 
-// ─── Carte produit avec description + CTA ──────────────────────────────────
-function ProductCard({
-  product, isRecommended, onAskCoach,
-}: {
-  product: HerbalifeProduct
-  isRecommended: boolean
-  /** Chantier Messagerie client ↔ coach (2026-04-21) : ouvre la modale
-   *  centralisée ClientMessageModal à la place de l'ancien lien
-   *  MyHerbalife externe + WhatsApp. Le coach reçoit une notif push. */
-  onAskCoach: (product: HerbalifeProduct) => void
-}) {
-  const [open, setOpen] = useState(false)
-  const description = PRODUCT_DETAILS[product.ref] ?? product.shortBenefit
-
-  return (
-    <div
-      role="button"
-      tabIndex={0}
-      aria-expanded={open}
-      onClick={() => setOpen(!open)}
-      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setOpen(!open); } }}
-      style={{
-        background: '#fff',
-        border: isRecommended ? '1px solid rgba(184,146,42,0.2)' : '1px solid rgba(0,0,0,0.07)',
-        borderRadius: 14,
-        padding: 14,
-        marginBottom: 8,
-        cursor: 'pointer',
-      }}
-    >
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-        <div style={{ width: 8, height: 8, borderRadius: '50%', background: isRecommended ? '#B8922A' : '#9CA3AF', flexShrink: 0 }} />
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 13, fontWeight: 500, color: '#111827' }}>{product.shortName}</div>
-          <div style={{ fontSize: 11, color: '#9CA3AF' }}>{product.shortBenefit.split('·')[0].trim()}</div>
-        </div>
-        {isRecommended && (
-          <div style={{ fontSize: 9, padding: '3px 8px', borderRadius: 10, background: 'rgba(184,146,42,0.1)', color: '#B8922A', fontWeight: 600, flexShrink: 0 }}>
-            Pour toi
-          </div>
-        )}
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth="2">
-          {open ? <polyline points="18 15 12 9 6 15" /> : <polyline points="6 9 12 15 18 9" />}
-        </svg>
-      </div>
-
-      {open && (
-        <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid rgba(0,0,0,0.06)' }}>
-          <p style={{ fontSize: 12, color: '#6B7280', lineHeight: 1.75, marginBottom: 14 }}>
-            {description}
-          </p>
-          <button
-            type="button"
-            onClick={(e) => { e.stopPropagation(); onAskCoach(product) }}
-            style={{
-              width: '100%',
-              padding: '11px 14px',
-              borderRadius: 10,
-              background: '#B8922A',
-              color: '#FFFFFF',
-              border: 'none',
-              fontSize: 13,
-              fontWeight: 600,
-              fontFamily: 'DM Sans, sans-serif',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 8,
-            }}
-          >
-            <span aria-hidden="true">💬</span>
-            Parler à mon coach à propos de ce produit
-          </button>
-        </div>
-      )}
-    </div>
-  )
-}
+// ProductCard refactoré (2026-04-25) dans ClientProductsTab — l'onglet
+// Produits côté client utilise désormais des cards dédiées (Recommended /
+// Catalog) directement dans le composant refondu.
 
 // ══════════════════════════════════════════════════════════════════════════
 // COMPOSANT PRINCIPAL
@@ -271,7 +191,6 @@ export function ClientAppPage() {
   const [referSent, setReferSent] = useState(false)
   const [rdvMessage, setRdvMessage] = useState('')
   const [rdvSent, setRdvSent] = useState(false)
-  const [openCategory, setOpenCategory] = useState<string | null>(null)
   const [showInstallPrompt, setShowInstallPrompt] = useState(false)
   const [installPlatform, setInstallPlatform] = useState<'ios' | 'android' | null>(null)
   const [deferredInstallEvent, setDeferredInstallEvent] = useState<{ prompt: () => Promise<void>; userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }> } | null>(null)
@@ -393,7 +312,13 @@ export function ClientAppPage() {
       coach_telegram: typeof r.coach_telegram === 'string' ? r.coach_telegram : undefined,
       coach_phone: typeof r.coach_phone === 'string' ? r.coach_phone : undefined,
       program_title: typeof r.program_title === 'string' ? r.program_title : undefined,
-      assessments_count: typeof r.assessments_count === 'number' ? r.assessments_count : (metrics?.length ?? 0),
+      // Chantier Home Premium (2026-04-24) : fix "0 bilan" — si body_scan
+      // existe, au moins 1 bilan. Force max(raw, metrics, body_scan?1:0).
+      assessments_count: Math.max(
+        typeof r.assessments_count === 'number' ? r.assessments_count : 0,
+        metrics?.length ?? 0,
+        r.body_scan && typeof r.body_scan === 'object' ? 1 : 0,
+      ),
       next_follow_up: typeof r.next_follow_up === 'string' ? r.next_follow_up : undefined,
       metrics_history: metrics,
       recommendations: r.recommendations as ClientAppData['recommendations'],
@@ -422,14 +347,59 @@ export function ClientAppPage() {
       // Fetch coaching (assessment) en parallèle — n'influe pas sur l'affichage principal
       void loadCoachingData(sb, token)
 
+      let snapshot: Record<string, unknown> | null = null
       const { data: recap } = await sb.from('client_recaps').select('*').eq('token', token).maybeSingle()
-      if (recap) { setData(normalizeData(recap)); setLoading(false); return }
+      if (recap) snapshot = recap as Record<string, unknown>
+      if (!snapshot) {
+        const { data: report } = await sb.from('client_evolution_reports').select('*').eq('token', token).maybeSingle()
+        if (report) snapshot = report as Record<string, unknown>
+      }
+      if (!snapshot) {
+        const { data: appAccount } = await sb.from('client_app_accounts').select('*').eq('token', token).maybeSingle()
+        if (appAccount) snapshot = appAccount as Record<string, unknown>
+      }
+      if (!snapshot) { setLoading(false); return }
 
-      const { data: report } = await sb.from('client_evolution_reports').select('*').eq('token', token).maybeSingle()
-      if (report) { setData(normalizeData(report)); setLoading(false); return }
+      // Sync coach↔client (2026-04-25) : les snapshots ci-dessus sont figés
+      // au moment de la création. On override program_title + next_follow_up
+      // par la source de vérité live (clients.current_program + follow_ups
+      // upcoming) grâce aux nouvelles policies RLS self-select.
+      const clientId = typeof snapshot.client_id === 'string' ? snapshot.client_id : ''
+      if (clientId) {
+        try {
+          const [liveClient, liveFollowUp] = await Promise.all([
+            sb.from('clients').select('current_program').eq('id', clientId).maybeSingle(),
+            sb
+              .from('follow_ups')
+              .select('due_date, status')
+              .eq('client_id', clientId)
+              .in('status', ['scheduled', 'pending'])
+              .gte('due_date', new Date().toISOString())
+              .order('due_date', { ascending: true })
+              .limit(1)
+              .maybeSingle(),
+          ])
+          const live = liveClient.data as { current_program?: string | null } | null
+          if (live?.current_program != null && live.current_program.trim()) {
+            snapshot.program_title = live.current_program
+          }
+          const fu = liveFollowUp.data as { due_date?: string | null } | null
+          if (fu?.due_date) {
+            snapshot.next_follow_up = fu.due_date
+          } else if (!fu) {
+            // Aucun RDV à venir : on nettoie le snapshot éventuellement périmé
+            const snapshotDate = typeof snapshot.next_follow_up === 'string' ? snapshot.next_follow_up : null
+            if (snapshotDate && new Date(snapshotDate).getTime() < Date.now()) {
+              snapshot.next_follow_up = undefined
+            }
+          }
+        } catch {
+          // RLS pas encore déployée ou erreur réseau → on garde le snapshot
+        }
+      }
 
-      const { data: appAccount } = await sb.from('client_app_accounts').select('*').eq('token', token).maybeSingle()
-      if (appAccount) { setData(normalizeData(appAccount)); setLoading(false); return }
+      setData(normalizeData(snapshot))
+      setLoading(false)
     } catch { /* silencieux */ }
     finally { setLoading(false) }
   }
@@ -525,7 +495,6 @@ export function ClientAppPage() {
   const recommendedProducts = HERBALIFE_PRODUCTS.filter((p) =>
     recoList.some((r) => (r.ref && r.ref === p.ref) || (r.name && (r.name === p.name || r.name === p.shortName)))
   )
-  const recommendedRefs = new Set(recommendedProducts.map((p) => p.ref))
 
   // ─── Type local pour les cards métriques ───────────────────────────────
   type MetricCard = {
@@ -579,7 +548,54 @@ export function ClientAppPage() {
   ]
 
   return (
-    <div style={{ minHeight: '100vh', background: '#F4F2EE', fontFamily: 'DM Sans, sans-serif', color: '#111827', paddingBottom: 80 }}>
+    <div style={{ minHeight: '100vh', background: '#F7F5F0', fontFamily: 'DM Sans, sans-serif', color: '#111827', paddingBottom: 80, position: 'relative', overflow: 'hidden' }}>
+      {/* Chantier Premium App client (2026-04-24) : mesh gradient subtil
+          en arrière-plan pour cohérence avec Welcome/Login. Plus discret
+          que les pages publiques (app quotidienne, pas d'effet "wouah"
+          trop marqué qui fatiguerait à l'usage). */}
+      <style>{`
+        .clientapp-blob-a {
+          position: fixed;
+          top: -10%;
+          right: -15%;
+          width: 420px;
+          height: 420px;
+          border-radius: 50%;
+          background: radial-gradient(circle, rgba(239,159,39,0.18) 0%, transparent 70%);
+          filter: blur(70px);
+          pointer-events: none;
+          z-index: 0;
+          will-change: transform;
+          animation: clientapp-float-a 40s ease-in-out infinite alternate;
+        }
+        .clientapp-blob-b {
+          position: fixed;
+          bottom: -12%;
+          left: -12%;
+          width: 380px;
+          height: 380px;
+          border-radius: 50%;
+          background: radial-gradient(circle, rgba(29,158,117,0.12) 0%, transparent 70%);
+          filter: blur(70px);
+          pointer-events: none;
+          z-index: 0;
+          will-change: transform;
+          animation: clientapp-float-b 44s ease-in-out infinite alternate;
+        }
+        @keyframes clientapp-float-a {
+          0%   { transform: translate(0, 0); }
+          100% { transform: translate(-40px, 30px); }
+        }
+        @keyframes clientapp-float-b {
+          0%   { transform: translate(0, 0); }
+          100% { transform: translate(50px, -20px); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .clientapp-blob-a, .clientapp-blob-b { animation: none !important; }
+        }
+      `}</style>
+      <div aria-hidden="true" className="clientapp-blob-a" />
+      <div aria-hidden="true" className="clientapp-blob-b" />
       {/* Chantier invitation client app (2026-04-21) : toast de bienvenue
           quand on arrive depuis /bienvenue via ?welcome=1. */}
       {showWelcome ? (
@@ -593,16 +609,23 @@ export function ClientAppPage() {
             zIndex: 9999,
             padding: '14px 18px',
             borderRadius: 14,
-            background: 'linear-gradient(135deg, #D4B460, #B8922A)',
+            background: 'linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)',
             color: '#fff',
             fontFamily: 'Syne, sans-serif',
             fontWeight: 700,
             fontSize: 15,
             textAlign: 'center',
-            boxShadow: '0 12px 30px rgba(184,146,42,0.35)',
+            boxShadow: '0 12px 30px rgba(186,117,23,0.4), 0 2px 6px rgba(239,159,39,0.2)',
+            animation: 'clientapp-toast-in 0.5s cubic-bezier(0.16, 1, 0.3, 1)',
           }}
         >
-          Bienvenue dans ton espace Lor'Squad 🎉
+          <style>{`
+            @keyframes clientapp-toast-in {
+              from { opacity: 0; transform: translateY(-12px); }
+              to   { opacity: 1; transform: translateY(0); }
+            }
+          `}</style>
+          Bienvenue dans ton espace Lor&apos;Squad 🎉
         </div>
       ) : null}
 
@@ -724,163 +747,20 @@ export function ClientAppPage() {
         {/* ONGLET ACCUEIL                                                  */}
         {/* ══════════════════════════════════════════════════════════════ */}
         {activeTab === 'home' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            {latest && (
-              <>
-                <div style={{ fontSize: 9, letterSpacing: '2px', textTransform: 'uppercase', color: '#9CA3AF', fontWeight: 500 }}>Ton évolution</div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                  {([
-                    { label: 'Poids', field: 'weight', unit: 'kg', color: '#B8922A' },
-                    { label: 'Masse grasse', field: 'bodyFat', unit: '%', color: '#DC2626' },
-                    { label: 'Muscle', field: 'muscleMass', unit: 'kg', color: '#0D9488' },
-                    { label: 'Hydratation', field: 'hydration', unit: '%', color: '#7C3AED' },
-                  ] as const).map(({ label, field, unit, color }) => {
-                    const val = latest[field]
-                    return (
-                      <div key={field} style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.07)', borderRadius: 12, padding: '12px', borderTop: `2px solid ${color}` }}>
-                        <div style={{ fontSize: 9, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 4 }}>{label}</div>
-                        <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 22, color, lineHeight: 1 }}>
-                          {typeof val === 'number' ? val.toFixed(1) : '—'}{unit}
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
-              </>
-            )}
-
-            {/* Prochain RDV */}
-            {data.next_follow_up && (
-              <div data-tuto="next-rdv" style={{ background: 'rgba(13,148,136,0.06)', border: '1px solid rgba(13,148,136,0.15)', borderRadius: 14, padding: 14 }}>
-                <div style={{ fontSize: 9, color: '#0D9488', fontWeight: 600, letterSpacing: '1px', textTransform: 'uppercase', marginBottom: 8 }}>Prochain rendez-vous</div>
-                <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 18, color: '#111827', marginBottom: 2 }}>
-                  {new Date(data.next_follow_up).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
-                </div>
-                <div style={{ fontSize: 12, color: '#6B7280', marginBottom: 12 }}>
-                  {new Date(data.next_follow_up).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })} · La Base — Verdun
-                </div>
-                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                  <a href={getGoogleCalendarUrl()} target="_blank" rel="noopener noreferrer"
-                    style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '9px 14px', background: '#0D9488', color: '#fff', borderRadius: 9, textDecoration: 'none', fontSize: 12, fontWeight: 600 }}>
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                      <rect x="3" y="4" width="18" height="18" rx="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" />
-                    </svg>
-                    Google Agenda
-                  </a>
-                  <a href={GOOGLE_MAPS_LA_BASE} target="_blank" rel="noopener noreferrer"
-                    style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '9px 14px', background: 'rgba(13,148,136,0.1)', color: '#0D9488', borderRadius: 9, textDecoration: 'none', fontSize: 12, fontWeight: 500, border: '1px solid rgba(13,148,136,0.2)' }}>
-                    Itinéraire
-                  </a>
-                </div>
-
-                <div style={{ marginTop: 12, borderTop: '1px solid rgba(13,148,136,0.1)', paddingTop: 12 }}>
-                  <div style={{ fontSize: 11, color: '#6B7280', marginBottom: 8 }}>Tu veux modifier ce RDV ?</div>
-                  {rdvSent ? (
-                    <div style={{ fontSize: 12, color: '#0D9488', fontWeight: 500 }}>✓ Message envoyé à {data.coach_name}</div>
-                  ) : (
-                    <>
-                      <textarea value={rdvMessage} onChange={(e) => setRdvMessage(e.target.value)} placeholder="Ex : Je préfèrerais le 30 avril à 14h..." rows={2}
-                        style={{ width: '100%', padding: '9px 12px', border: '1px solid rgba(13,148,136,0.2)', borderRadius: 9, fontFamily: 'DM Sans, sans-serif', fontSize: 13, background: '#fff', color: '#111827', resize: 'none', outline: 'none', marginBottom: 8 }} />
-                      <button onClick={() => void sendRdvChangeRequest()}
-                        style={{ padding: '9px 16px', borderRadius: 9, border: 'none', background: 'rgba(13,148,136,0.1)', color: '#0D9488', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
-                        Envoyer à mon coach
-                      </button>
-                    </>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* Chantier Messagerie client ↔ coach (2026-04-21) : CTA
-                "Demander une reco" — bouton gold large qui ouvre la modale.
-                Le message atterrit dans client_messages et push une notif
-                au coach. */}
-            <button
-              type="button"
-              data-tuto="messaging"
-              onClick={() => setRecoAskOpen(true)}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 12,
-                background: 'linear-gradient(135deg, #FAEEDA, #F0DBB0)',
-                border: '1px solid rgba(184,146,42,0.35)',
-                borderRadius: 14,
-                padding: '14px 16px',
-                width: '100%',
-                textAlign: 'left',
-                cursor: 'pointer',
-                fontFamily: 'DM Sans, sans-serif',
-              }}
-            >
-              <div
-                aria-hidden="true"
-                style={{
-                  width: 38,
-                  height: 38,
-                  borderRadius: 10,
-                  background: '#B8922A',
-                  color: '#FFFFFF',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: 18,
-                  flexShrink: 0,
-                }}
-              >
-                🎁
-              </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 14, color: '#633806' }}>
-                  Demander une recommandation
-                </div>
-                <div style={{ fontSize: 11, color: '#854F0B', marginTop: 2 }}>
-                  Ton coach te répondra avec un conseil personnalisé
-                </div>
-              </div>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#854F0B" strokeWidth="2">
-                <polyline points="9 18 15 12 9 6" />
-              </svg>
-            </button>
-
-            {/* Avis Google */}
-            <a href={GOOGLE_MAPS_LA_BASE} target="_blank" rel="noopener noreferrer"
-              style={{ display: 'flex', alignItems: 'center', gap: 10, background: '#fff', border: '1px solid rgba(184,146,42,0.2)', borderRadius: 14, padding: '13px 16px', textDecoration: 'none' }}>
-              <div style={{ width: 36, height: 36, background: 'rgba(184,146,42,0.1)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="#B8922A"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></svg>
-              </div>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 13, color: '#111827' }}>Laisser un avis Google</div>
-                <div style={{ fontSize: 11, color: '#9CA3AF' }}>★★★★★ La Base — Verdun</div>
-              </div>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth="1.5">
-                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" /><polyline points="15 3 21 3 21 9" /><line x1="10" y1="14" x2="21" y2="3" />
-              </svg>
-            </a>
-
-            {/* Contacter le coach */}
-            <div style={{ fontSize: 9, letterSpacing: '2px', textTransform: 'uppercase', color: '#9CA3AF', fontWeight: 500 }}>Contacter mon coach</div>
-            <div style={{ display: 'flex', gap: 8 }}>
-              {data.coach_whatsapp && (
-                <a href={`https://wa.me/${data.coach_whatsapp.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer"
-                  style={{ flex: 1, padding: '11px 6px', borderRadius: 10, background: 'rgba(37,211,102,0.1)', color: '#16A34A', fontSize: 12, fontWeight: 600, textAlign: 'center', textDecoration: 'none' }}>
-                  WhatsApp
-                </a>
-              )}
-              {data.coach_telegram && (
-                <a href={`https://t.me/${data.coach_telegram}`} target="_blank" rel="noopener noreferrer"
-                  style={{ flex: 1, padding: '11px 6px', borderRadius: 10, background: 'rgba(0,136,204,0.1)', color: '#0088CC', fontSize: 12, fontWeight: 600, textAlign: 'center', textDecoration: 'none' }}>
-                  Telegram
-                </a>
-              )}
-              {data.coach_phone && (
-                <a href={`sms:${data.coach_phone}`}
-                  style={{ flex: 1, padding: '11px 6px', borderRadius: 10, background: 'rgba(0,0,0,0.05)', color: '#6B7280', fontSize: 12, fontWeight: 500, textAlign: 'center', textDecoration: 'none' }}>
-                  SMS
-                </a>
-              )}
-            </div>
-          </div>
+          <ClientHomeTab
+            data={data}
+            latest={latest}
+            first={first}
+            metrics={metrics as unknown as Array<{ date: string; weight?: number; bodyFat?: number; muscleMass?: number; hydration?: number }>}
+            recommendedProducts={recommendedProducts}
+            rdvSent={rdvSent}
+            rdvMessage={rdvMessage}
+            setRdvMessage={setRdvMessage}
+            sendRdvChangeRequest={sendRdvChangeRequest}
+            getGoogleCalendarUrl={getGoogleCalendarUrl}
+            setRecoAskOpen={setRecoAskOpen}
+            openProductAskModal={openProductAskModal}
+          />
         )}
 
         {/* ══════════════════════════════════════════════════════════════ */}
@@ -996,59 +876,31 @@ export function ClientAppPage() {
                 )}
               </>
             )}
+
+            {/* Section Mesures — Chantier Module Mensurations (2026-04-24) */}
+            <div style={{ marginTop: 20 }}>
+              <ClientMeasurementsSection
+                clientId={data.client_id}
+                coachFirstName={data.coach_name?.split(" ")[0]}
+              />
+            </div>
           </div>
         )}
 
         {/* ══════════════════════════════════════════════════════════════ */}
-        {/* ONGLET PRODUITS                                                 */}
+        {/* ONGLET PRODUITS — refonte 2026-04-25 (ClientProductsTab)       */}
         {/* ══════════════════════════════════════════════════════════════ */}
         {activeTab === 'products' && (
-          <div data-tuto="program" style={{ display: 'flex', flexDirection: 'column' }}>
-            {/* Recommandés pour toi (reste toujours visible en haut) */}
-            {recommendedProducts.length > 0 && (
-              <div style={{ marginBottom: 16 }}>
-                <div style={{ fontSize: 9, letterSpacing: '2px', textTransform: 'uppercase', color: '#B8922A', fontWeight: 600, marginBottom: 10 }}>
-                  Recommandés pour toi
-                </div>
-                {recommendedProducts.map((product) => (
-                  <ProductCard key={product.ref} product={product} isRecommended={true} onAskCoach={openProductAskModal} />
-                ))}
-              </div>
-            )}
-
-            {/* Accordéon par catégorie */}
-            {CATEGORY_DISPLAY.map(({ key, label }) => {
-              const products = HERBALIFE_PRODUCTS.filter((p) => p.category === key && !recommendedRefs.has(p.ref))
-              if (products.length === 0) return null
-              const isOpen = openCategory === key
-              return (
-                <div key={key} style={{ marginBottom: 8 }}>
-                  <button
-                    onClick={() => setOpenCategory(isOpen ? null : key)}
-                    style={{
-                      width: '100%', display: 'flex', alignItems: 'center',
-                      justifyContent: 'space-between', padding: '14px 16px',
-                      background: '#fff', border: '1px solid rgba(0,0,0,0.07)',
-                      borderRadius: isOpen ? '12px 12px 0 0' : 12,
-                      fontSize: 14, fontWeight: 600, color: '#111827',
-                      fontFamily: 'Syne, sans-serif', cursor: 'pointer',
-                    }}
-                  >
-                    <span>{label} <span style={{ fontSize: 11, color: '#9CA3AF', fontWeight: 400, fontFamily: 'DM Sans, sans-serif', marginLeft: 6 }}>· {products.length}</span></span>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth="2">
-                      {isOpen ? <polyline points="18 15 12 9 6 15" /> : <polyline points="6 9 12 15 18 9" />}
-                    </svg>
-                  </button>
-                  {isOpen && (
-                    <div style={{ border: '1px solid rgba(0,0,0,0.07)', borderTop: 'none', borderRadius: '0 0 12px 12px', padding: 10, background: '#fafaf9' }}>
-                      {products.map((product) => (
-                        <ProductCard key={product.ref} product={product} isRecommended={false} onAskCoach={openProductAskModal} />
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )
-            })}
+          <div data-tuto="program">
+            <ClientProductsTab
+              clientId={data.client_id}
+              coachFirstName={(data.coach_name ?? '').split(/\s+/)[0] || 'ton coach'}
+              coachWhatsapp={data.coach_whatsapp}
+              recommendedProducts={recommendedProducts}
+              latestScanDate={latest?.date ?? null}
+              productDetails={PRODUCT_DETAILS}
+              onAskCoach={openProductAskModal}
+            />
           </div>
         )}
 

@@ -1,6 +1,19 @@
 import { createMockSession, getDefaultUserTitle, getRoleScope } from "../lib/auth";
 import { getSupabaseClient } from "./supabaseClient";
 import { pvProductCatalog, resolvePvProgram } from "../data/pvCatalog";
+import { computeWaterTarget, computeProteinTarget } from "../lib/calculations";
+
+// Chantier Recommandations nutri (2026-04-25) : helpers safe qui
+// retournent null si le poids est absent — compatibles avec les
+// colonnes SQL nullable.
+function computeWaterTargetSafe(weight?: number): number | null {
+  if (!weight || weight <= 0) return null;
+  return computeWaterTarget(weight);
+}
+function computeProteinTargetSafe(weight?: number, objective?: string): number | null {
+  if (!weight || weight <= 0) return null;
+  return computeProteinTarget(weight, objective);
+}
 import type {
   ActivityLog,
   AssessmentRecord,
@@ -88,6 +101,9 @@ type ClientRow = {
   // les deux pour la transition (avant/après migration SQL).
   general_note_deprecated?: string | null;
   onboarding_checks?: { telegram?: boolean; photo_before?: boolean; measurements?: boolean } | null;
+  public_share_consent?: boolean | null;
+  public_share_consent_at?: string | null;
+  public_share_revoked_at?: string | null;
   assessments?: AssessmentRow[] | null;
 };
 
@@ -375,6 +391,9 @@ function mapClient(row: ClientRow): Client {
     freePvTracking: row.free_pv_tracking ?? false,
     generalNote: row.general_note ?? row.general_note_deprecated ?? undefined,
     onboardingChecks: row.onboarding_checks ?? undefined,
+    publicShareConsent: row.public_share_consent ?? false,
+    publicShareConsentAt: row.public_share_consent_at ?? undefined,
+    publicShareRevokedAt: row.public_share_revoked_at ?? undefined,
     assessments: (row.assessments ?? []).map(mapAssessment)
   };
 }
@@ -593,9 +612,25 @@ export async function fetchSupabaseClients() {
     .select("*, assessments(*)")
     .order("created_at", { ascending: false });
 
-  if (error || !data) {
-    return [] as Client[];
+  if (error) {
+    // Garde-fou (2026-04-25) : NE JAMAIS swallow silencieusement une erreur
+    // sur SELECT clients. Un RLS qui plante (cast ::uuid invalide, policy
+    // foireuse, etc.) renvoyait [] sans un mot → app semblait vide pour
+    // admin + coach. Désormais on log PARTOUT + on re-throw pour que le
+    // catch de refreshRemoteData affiche un toast visible à l'utilisateur.
+    console.error("[fetchSupabaseClients] Supabase error", {
+      message: error.message,
+      code: error.code,
+      details: error.details,
+      hint: error.hint,
+    });
+    throw new Error(
+      `Lecture des clients impossible (Supabase) : ${error.message}${
+        error.hint ? " — " + error.hint : ""
+      }`,
+    );
   }
+  if (!data) return [] as Client[];
 
   return (data as ClientRow[]).map(mapClient);
 }
@@ -790,6 +825,14 @@ export async function createSupabaseClientWithInitialAssessment(payload: {
     // Chantier Polish Vue complète (2026-04-24)
     coach_notes_draft: payload.assessment.coachNotesDraft ?? null,
     coach_notes_initial: payload.assessment.coachNotesInitial ?? null,
+    // Chantier Recommandations nutri (2026-04-25) : persister eau +
+    // protéines cible au moment du bilan. Migration 20260425220000
+    // rendue ces 2 colonnes disponibles. Fallback si encore absente.
+    water_target_l: computeWaterTargetSafe(payload.assessment.bodyScan?.weight),
+    protein_target_g: computeProteinTargetSafe(
+      payload.assessment.bodyScan?.weight,
+      payload.assessment.objective,
+    ),
   };
   let { error: assessmentError } = await client.from("assessments").insert(assessmentInsertPayload);
 
@@ -814,6 +857,18 @@ export async function createSupabaseClientWithInitialAssessment(payload: {
     const { coach_notes_draft: _cd, coach_notes_initial: _ci, ...withoutNotes } = assessmentInsertPayload;
     void _cd; void _ci;
     ({ error: assessmentError } = await client.from("assessments").insert(withoutNotes));
+  }
+
+  // Fallback : colonnes water_target_l / protein_target_g pas encore
+  // présentes (migration 20260425220000 pas déployée) → retry sans.
+  if (
+    assessmentError &&
+    (isMissingColumnError(assessmentError, "water_target_l") ||
+      isMissingColumnError(assessmentError, "protein_target_g"))
+  ) {
+    const { water_target_l: _wt, protein_target_g: _pt, ...withoutNutriTargets } = assessmentInsertPayload;
+    void _wt; void _pt;
+    ({ error: assessmentError } = await client.from("assessments").insert(withoutNutriTargets));
   }
 
   if (assessmentError) {

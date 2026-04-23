@@ -43,6 +43,7 @@ export function PvGaugeBand({
 
   return (
     <div
+      className="pv-gauge-band"
       style={{
         padding: 16,
         borderRadius: 16,
@@ -52,8 +53,35 @@ export function PvGaugeBand({
         alignItems: "center",
         gap: 16,
         flexWrap: "wrap",
+        transition: "box-shadow 0.3s ease, border-color 0.3s ease, transform 0.3s ease",
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.borderColor = "rgba(239,159,39,0.3)";
+        e.currentTarget.style.boxShadow = "0 4px 24px rgba(239,159,39,0.08)";
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.borderColor = "var(--ls-border)";
+        e.currentTarget.style.boxShadow = "none";
       }}
     >
+      <style>{`
+        @keyframes pv-stat-in {
+          from { opacity: 0; transform: translateY(6px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .pv-gauge-band > div {
+          animation: pv-stat-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
+        .pv-gauge-band > div:nth-child(1) { animation-delay: 0ms; }
+        .pv-gauge-band > div:nth-child(2) { animation-delay: 80ms; }
+        .pv-gauge-band > div:nth-child(3) { animation-delay: 160ms; }
+        .pv-gauge-band > div:nth-child(4) { animation-delay: 240ms; }
+        .pv-gauge-band > div:nth-child(5) { animation-delay: 320ms; }
+        .pv-gauge-band > div:nth-child(6) { animation-delay: 400ms; }
+        @media (prefers-reduced-motion: reduce) {
+          .pv-gauge-band > div { animation: none !important; }
+        }
+      `}</style>
       {/* Partie gauche : jauge */}
       <div style={{ display: "flex", alignItems: "center", gap: 14, flexShrink: 0 }}>
         <Gauge percent={pct} />

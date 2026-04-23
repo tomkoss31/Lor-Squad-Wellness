@@ -41,7 +41,7 @@ const NAV_ICONS: Record<string, JSX.Element> = {
 };
 
 export function AppLayout() {
-  const { currentUser, logout, followUps, pvClientProducts, unreadMessageCount, prospects } = useAppContext();
+  const { currentUser, logout, followUps, pvClientProducts, unreadMessageCount, prospects, lastFetchError } = useAppContext();
   const { isDark, toggleTheme } = useTheme();
   // Chantier Notif in-app temps réel (2026-04-23) : s'abonne à
   // client_messages Realtime tant que le coach est authentifié et sur
@@ -158,7 +158,18 @@ export function AppLayout() {
         }`}
       >
         {isAssessmentPage ? null : (
-        <aside className="app-sidebar glass-panel relative hidden overflow-hidden rounded-[24px] xl:sticky xl:top-5 xl:flex xl:flex-col xl:h-[calc(100vh-2.5rem)]" style={{ background: 'var(--ls-sidebar-bg)' }}>
+        <aside
+          className="app-sidebar-grid glass-panel relative hidden overflow-hidden rounded-[24px] xl:sticky xl:top-5 xl:h-[calc(100vh-2.5rem)] xl:grid"
+          style={{
+            background: 'var(--ls-sidebar-bg)',
+            // Hotfix sticky footer (2026-04-24) : CSS grid 3-rows remplace
+            // flex-col pour garantir que le footer (ZONE 3 avec Sortir)
+            // reste collé en bas peu importe la taille du nav. Le
+            // minmax(0, 1fr) sur le middle row force la nav à shrink
+            // plutôt que de pousser le footer hors écran.
+            gridTemplateRows: 'auto minmax(0, 1fr) auto',
+          }}
+        >
           {/* ZONE 1 — Logo */}
           <div style={{ padding: '20px 16px 16px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -174,8 +185,9 @@ export function AppLayout() {
             </div>
           </div>
 
-          {/* ZONE 2 — Navigation */}
-          <nav style={{ flex: 1, padding: '12px 10px', display: 'flex', flexDirection: 'column', gap: 2, overflowY: 'auto' }}>
+          {/* ZONE 2 — Navigation (grid row = minmax(0, 1fr) → peut shrink
+              sous la taille naturelle, scroll interne si débordement) */}
+          <nav style={{ minHeight: 0, padding: '12px 10px', display: 'flex', flexDirection: 'column', gap: 2, overflowY: 'auto' }}>
             <div style={{
               fontSize: 9,
               color: 'var(--ls-text-hint)',
@@ -291,14 +303,22 @@ export function AppLayout() {
             })}
           </nav>
 
-          {/* ZONE 3 — Toggle thème + profil + déconnexion
-              (Chantier V3 2026-04-24 : toggle remonté AU-DESSUS du bloc
-              profil pour être immédiatement visible). */}
-          <div style={{ padding: '12px 14px', borderTop: '1px solid rgba(255,255,255,0.06)', flexShrink: 0 }}>
-            <div style={{ marginBottom: 12 }}>
-              <ThemeToggle />
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 0 }}>
+          {/* ZONE 3 — Footer sticky sidebar.
+              Design final (2026-04-24 fix 5) : ligne profil avec petit
+              bouton logout inline à droite du nom, puis toggle thème
+              en dessous. Compact et moderne. */}
+          <div
+            style={{
+              padding: '12px 12px calc(16px + env(safe-area-inset-bottom, 0px))',
+              borderTop: '1px solid rgba(255,255,255,0.08)',
+              background: 'var(--ls-sidebar-bg)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 10,
+            }}
+          >
+            {/* Ligne profil + bouton Sortir inline */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <div style={{
                 width: 30, height: 30, borderRadius: '50%',
                 background: 'linear-gradient(135deg, #2DD4BF, #0D9488)',
@@ -312,35 +332,81 @@ export function AppLayout() {
                 <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--ls-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {currentUser.name}
                 </div>
-                <div style={{ fontSize: 11, color: 'var(--ls-text-hint)' }}>
+                <div style={{ fontSize: 10, color: 'var(--ls-text-hint)' }}>
                   {currentUser.role === 'admin' ? 'Admin' : 'Coach'}
                 </div>
               </div>
 
-              {/* Bouton "Sortir" rouge clair — toujours visible */}
+              {/* Bouton Sortir compact à droite du nom */}
               <button
                 onClick={() => void handleLogout()}
-                title="Se déconnecter"
                 aria-label="Se déconnecter"
+                title="Se déconnecter"
                 style={{
-                  padding: '6px 12px', borderRadius: 8,
-                  background: '#FCEBEB', color: '#A32D2D',
-                  border: 'none', fontSize: 11, fontWeight: 500,
-                  fontFamily: 'DM Sans, sans-serif', cursor: 'pointer',
-                  flexShrink: 0, transition: 'all 0.15s',
+                  flexShrink: 0,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 5,
+                  padding: '6px 10px',
+                  borderRadius: 8,
+                  background: 'rgba(226,75,74,0.12)',
+                  border: '1px solid rgba(226,75,74,0.35)',
+                  color: '#E24B4A',
+                  cursor: 'pointer',
+                  fontSize: 11,
+                  fontWeight: 600,
+                  fontFamily: 'DM Sans, sans-serif',
+                  transition: 'all 0.15s',
                 }}
-                onMouseEnter={e => { e.currentTarget.style.background = '#F9D8D8' }}
-                onMouseLeave={e => { e.currentTarget.style.background = '#FCEBEB' }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = '#E24B4A';
+                  e.currentTarget.style.color = '#FFFFFF';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'rgba(226,75,74,0.12)';
+                  e.currentTarget.style.color = '#E24B4A';
+                }}
               >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                  <polyline points="16 17 21 12 16 7" />
+                  <line x1="21" y1="12" x2="9" y2="12" />
+                </svg>
                 Sortir
               </button>
             </div>
 
+            {/* Toggle thème — compact en dessous */}
+            <ThemeToggle />
           </div>
         </aside>
         )}
 
         <main className="min-w-0 space-y-5 md:space-y-6">
+          {/* Garde-fou 2026-04-25 : bandeau rouge si le dernier fetch
+              principal a planté (typiquement RLS foireuse). Rend les
+              régressions visibles au lieu de "app vide" silencieux. */}
+          {lastFetchError ? (
+            <div
+              role="alert"
+              style={{
+                padding: "14px 16px",
+                borderRadius: 12,
+                background: "rgba(220,38,38,0.12)",
+                border: "1px solid rgba(220,38,38,0.4)",
+                color: "#FCA5A5",
+                fontSize: 13,
+                lineHeight: 1.5,
+              }}
+            >
+              <strong style={{ color: "#FEE2E2" }}>⚠ Données inaccessibles — </strong>
+              {lastFetchError}
+              <div style={{ fontSize: 11, opacity: 0.8, marginTop: 4 }}>
+                Recharge la page. Si le problème persiste, le souci vient de Supabase (RLS, policies, ou réseau).
+              </div>
+            </div>
+          ) : null}
+
           <section className="glass-panel overflow-hidden rounded-[28px] p-4 xl:hidden">
             <div className="flex items-center justify-between gap-3">
               <div className="flex min-w-0 items-center gap-3">

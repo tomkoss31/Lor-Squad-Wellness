@@ -34,9 +34,18 @@ interface AdminStats {
   error?: string;
 }
 
+interface LeadsFunnel {
+  total: number;
+  new: number;
+  contacted: number;
+  converted: number;
+  lost: number;
+}
+
 export function StatistiquesTab() {
   const { pvTransactions } = useAppContext();
   const [stats, setStats] = useState<AdminStats | null>(null);
+  const [leadsFunnel, setLeadsFunnel] = useState<LeadsFunnel | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -50,6 +59,21 @@ export function StatistiquesTab() {
         const { data, error: rpcErr } = await sb.rpc("get_admin_stats");
         if (rpcErr) throw new Error(rpcErr.message);
         setStats(data as AdminStats);
+
+        // Chantier stats polish (2026-04-24) : funnel leads
+        const { data: leads } = await sb
+          .from("prospect_leads")
+          .select("status");
+        if (leads) {
+          const typed = leads as Array<{ status: string }>;
+          setLeadsFunnel({
+            total: typed.length,
+            new: typed.filter((l) => l.status === "new").length,
+            contacted: typed.filter((l) => l.status === "contacted").length,
+            converted: typed.filter((l) => l.status === "converted").length,
+            lost: typed.filter((l) => l.status === "lost").length,
+          });
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : "Échec du chargement.");
       } finally {
@@ -117,8 +141,27 @@ export function StatistiquesTab() {
     );
   }
 
+  const leadsConvRate =
+    leadsFunnel && leadsFunnel.total > 0
+      ? Math.round((leadsFunnel.converted / leadsFunnel.total) * 100)
+      : null;
+
   return (
     <div className="space-y-4">
+      {leadsFunnel && leadsFunnel.total > 0 ? (
+        <Section title="🔥 Funnel leads (Welcome form)">
+          <StatGrid>
+            <StatCell label="Leads totaux" value={leadsFunnel.total} />
+            <StatCell label="Nouveaux à contacter" value={leadsFunnel.new} />
+            <StatCell label="Convertis" value={leadsFunnel.converted} />
+            <StatCell
+              label="Taux conversion"
+              value={leadsConvRate != null ? `${leadsConvRate}%` : "—"}
+            />
+          </StatGrid>
+        </Section>
+      ) : null}
+
       <Section title="Équipe">
         <StatGrid>
           <StatCell label="Distributeurs total" value={stats.team?.total ?? 0} />

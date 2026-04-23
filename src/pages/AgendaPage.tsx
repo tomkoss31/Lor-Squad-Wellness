@@ -6,6 +6,8 @@ import { PageHeading } from "../components/ui/PageHeading";
 import { ProspectCard } from "../components/prospect/ProspectCard";
 import { ProspectFormModal } from "../components/prospect/ProspectFormModal";
 import { useAppContext } from "../context/AppContext";
+import { useGlobalView } from "../hooks/useGlobalView";
+import { GlobalViewToggle } from "../components/ui/GlobalViewToggle";
 import { useToast, buildSupabaseErrorToast } from "../context/ToastContext";
 import { createGoogleCalendarLink } from "../lib/googleCalendar";
 import type { Client, FollowUp, Prospect, ProspectStatus } from "../types/domain";
@@ -138,6 +140,15 @@ export function AgendaPage() {
   useEffect(() => {
     try { localStorage.setItem(AGENDA_FILTER_KEY, agendaFilter); } catch { /* ignore */ }
   }, [agendaFilter]);
+
+  // Chantier Quick Wins (2026-04-24) : sync avec toggle global partagé
+  // (Co-pilote / Messagerie / Clients / PV). Admin ON → all, OFF → mine.
+  const [globalView] = useGlobalView();
+  useEffect(() => {
+    if (currentUser?.role === "admin") {
+      setAgendaFilter(globalView ? "all" : "mine");
+    }
+  }, [globalView, currentUser?.role]);
   useEffect(() => {
     try { localStorage.setItem(AGENDA_ENTITY_KEY, entityFilter); } catch { /* ignore */ }
   }, [entityFilter]);
@@ -397,6 +408,12 @@ export function AgendaPage() {
 
   return (
     <div className="space-y-5">
+      {/* Chantier Quick Wins : toggle Vue globale admin en tête */}
+      <GlobalViewToggle
+        personalLabel="Vue personnelle (mon agenda)"
+        globalLabel="Vue équipe (tout l'agenda)"
+      />
+
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
           <PageHeading

@@ -107,6 +107,31 @@ const DebugNotificationsPage = lazy(() =>
     default: module.DebugNotificationsPage
   }))
 );
+const WelcomePage = lazy(() =>
+  import("./pages/WelcomePage").then((module) => ({
+    default: module.WelcomePage,
+  })),
+);
+const AutoLoginPage = lazy(() =>
+  import("./pages/AutoLoginPage").then((module) => ({
+    default: module.AutoLoginPage,
+  })),
+);
+const ForgotPasswordPage = lazy(() =>
+  import("./pages/ForgotPasswordPage").then((module) => ({
+    default: module.ForgotPasswordPage,
+  })),
+);
+const ResetPasswordPage = lazy(() =>
+  import("./pages/ResetPasswordPage").then((module) => ({
+    default: module.ResetPasswordPage,
+  })),
+);
+const SharePage = lazy(() =>
+  import("./pages/SharePage").then((module) => ({
+    default: module.SharePage,
+  })),
+);
 const BienvenuePage = lazy(() =>
   import("./pages/BienvenuePage").then((module) => ({
     default: module.BienvenuePage
@@ -178,6 +203,16 @@ export default function App() {
       <Suspense fallback={<RouteLoadingScreen />}>
         <ErrorBoundary>
         <Routes>
+          {/* Chantier Welcome Page (2026-04-24) : /welcome public (pas
+              de garde PublicRoute : même un user connecté peut y passer
+              s'il tape l'URL — la logique de redirect se fait côté page
+              via useAppContext si besoin). /auto-login consomme un
+              magic link 24h pour re-établir une session. */}
+          <Route path="/welcome" element={<WelcomePage />} />
+          <Route path="/auto-login" element={<AutoLoginPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
+          <Route path="/partage/:token" element={<SharePage />} />
           <Route element={<PublicRoute />}>
             <Route path="/login" element={<LoginPage />} />
           </Route>

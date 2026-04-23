@@ -1,0 +1,282 @@
+[
+  {
+    "id": "abd36499-f6a8-45be-96fd-823f4e6261f5",
+    "token": "616fb007-1509-41f7-8732-c6ee221348c2",
+    "client_id": "512c149f-ebb0-40f4-986f-298dcb83d4c4",
+    "coach_id": "656dcf35-4859-4a70-9d20-990104813423",
+    "coach_name": "Thomas",
+    "coach_whatsapp": "",
+    "coach_telegram": "",
+    "coach_phone": "",
+    "created_at": "2026-04-17T11:26:34.873762+00:00",
+    "expires_at": "2027-04-17T11:26:34.873762+00:00",
+    "client_first_name": "Martial",
+    "client_last_name": "Duquenne",
+    "metrics_history": [
+      {
+        "date": "2026-03-24",
+        "weight": 99.1,
+        "bodyFat": 36.2,
+        "hydration": 45.6,
+        "muscleMass": 60.1,
+        "visceralFat": 18.5,
+        "metabolicAge": 76
+      },
+      {
+        "date": "2026-04-07",
+        "weight": 95.2,
+        "bodyFat": 35.2,
+        "hydration": 46.1,
+        "muscleMass": 59.1,
+        "visceralFat": 18.5,
+        "metabolicAge": 74
+      }
+    ],
+    "insights": null,
+    "recommendations": null,
+    "program_title": "Programme Premium",
+    "assessments_count": 2,
+    "next_follow_up": "2026-04-21T10:00:00+00:00",
+    "auth_user_id": null
+  },
+  {
+    "id": "b66bc15f-6785-4f71-be6e-83a5d2344bae",
+    "token": "961a1c58-0454-484d-8dd1-398d0ff4d971",
+    "client_id": "97c88603-dc1f-4993-b020-a508fafebf81",
+    "coach_id": "656dcf35-4859-4a70-9d20-990104813423",
+    "coach_name": "Thomas",
+    "coach_whatsapp": "",
+    "coach_telegram": "",
+    "coach_phone": "",
+    "created_at": "2026-04-17T10:54:03.563228+00:00",
+    "expires_at": "2027-04-17T10:54:03.563228+00:00",
+    "client_first_name": "Thomas",
+    "client_last_name": "Houbert",
+    "metrics_history": [
+      {
+        "date": "2026-02-26",
+        "weight": 71.7,
+        "bodyFat": 11,
+        "hydration": 60,
+        "muscleMass": 60.7,
+        "visceralFat": 4,
+        "metabolicAge": 24
+      },
+      {
+        "date": "2026-03-12",
+        "weight": 71.7,
+        "bodyFat": 10.5,
+        "hydration": 60.5,
+        "muscleMass": 61,
+        "visceralFat": 4,
+        "metabolicAge": 24
+      },
+      {
+        "date": "2026-03-18",
+        "weight": 70.3,
+        "bodyFat": 11.5,
+        "hydration": 59.4,
+        "muscleMass": 59.1,
+        "visceralFat": 4,
+        "metabolicAge": 24
+      },
+      {
+        "date": "2026-03-23",
+        "weight": 70.8,
+        "bodyFat": 9.7,
+        "hydration": 61,
+        "muscleMass": 60.7,
+        "visceralFat": 3.5,
+        "metabolicAge": 24
+      },
+      {
+        "date": "2026-04-02",
+        "weight": 69.7,
+        "bodyFat": 10.1,
+        "hydration": 60.5,
+        "muscleMass": 59.5,
+        "visceralFat": 4,
+        "metabolicAge": 24
+      },
+      {
+        "date": "2026-04-07",
+        "weight": 70.5,
+        "bodyFat": 10.6,
+        "hydration": 60.2,
+        "muscleMass": 59.9,
+        "visceralFat": 4,
+        "metabolicAge": 24
+      },
+      {
+        "date": "2026-04-08",
+        "weight": 69.8,
+        "bodyFat": 10.9,
+        "hydration": 59.8,
+        "muscleMass": 59.1,
+        "visceralFat": 4,
+        "metabolicAge": 24
+      },
+      {
+        "date": "2026-04-08",
+        "weight": 69.8,
+        "bodyFat": 10.7,
+        "hydration": 6,
+        "muscleMass": 59.2,
+        "visceralFat": 4,
+        "metabolicAge": 24
+      },
+      {
+        "date": "2026-04-08",
+        "weight": 69.8,
+        "bodyFat": 10.7,
+        "hydration": 6,
+        "muscleMass": 59.2,
+        "visceralFat": 4,
+        "metabolicAge": 24
+      },
+      {
+        "date": "2026-04-13",
+        "weight": 70,
+        "bodyFat": 10.4,
+        "hydration": 60.3,
+        "muscleMass": 59.6,
+        "visceralFat": 3.5,
+        "metabolicAge": 24
+      },
+      {
+        "date": "2026-04-16",
+        "weight": 69.3,
+        "bodyFat": 10.3,
+        "hydration": 60.3,
+        "muscleMass": 59.1,
+        "visceralFat": 3.5,
+        "metabolicAge": 24
+      },
+      {
+        "date": "2026-04-16",
+        "weight": 69.3,
+        "bodyFat": 10.3,
+        "hydration": 60.3,
+        "muscleMass": 59.1,
+        "visceralFat": 3.5,
+        "metabolicAge": 24
+      }
+    ],
+    "insights": null,
+    "recommendations": null,
+    "program_title": "Programme Premium",
+    "assessments_count": 12,
+    "next_follow_up": "2026-04-17T08:00:00+00:00",
+    "auth_user_id": null
+  },
+  {
+    "id": "57d3a5eb-1b71-425e-9fed-64a8e9f22662",
+    "token": "e915e81a-5a88-4a70-8150-5a02960058a1",
+    "client_id": "6d06fd6b-f452-4296-b565-8f935d4ba346",
+    "coach_id": "656dcf35-4859-4a70-9d20-990104813423",
+    "coach_name": "Thomas",
+    "coach_whatsapp": "",
+    "coach_telegram": "",
+    "coach_phone": "",
+    "created_at": "2026-04-17T13:53:10.837053+00:00",
+    "expires_at": "2027-04-17T13:53:10.837053+00:00",
+    "client_first_name": "Sylvie",
+    "client_last_name": "Chaumont",
+    "metrics_history": [
+      {
+        "date": "2026-03-06",
+        "weight": 78.5,
+        "bodyFat": 45.4,
+        "hydration": 38.2,
+        "muscleMass": 40.7,
+        "visceralFat": 12.5,
+        "metabolicAge": 76
+      },
+      {
+        "date": "2026-03-19",
+        "weight": 77.7,
+        "bodyFat": 44.9,
+        "hydration": 38.5,
+        "muscleMass": 40.7,
+        "visceralFat": 12,
+        "metabolicAge": 76
+      },
+      {
+        "date": "2026-04-02",
+        "weight": 77.3,
+        "bodyFat": 44.2,
+        "hydration": 38.8,
+        "muscleMass": 40.7,
+        "visceralFat": 12,
+        "metabolicAge": 76
+      },
+      {
+        "date": "2026-04-16",
+        "weight": 77.9,
+        "bodyFat": 43.1,
+        "hydration": 39.1,
+        "muscleMass": 41.4,
+        "visceralFat": 12,
+        "metabolicAge": 76
+      }
+    ],
+    "insights": null,
+    "recommendations": null,
+    "program_title": "Programme Premium",
+    "assessments_count": 4,
+    "next_follow_up": "2026-04-30T08:15:00+00:00",
+    "auth_user_id": null
+  },
+  {
+    "id": "0875db7f-64c3-46fa-8294-9a4898b78a64",
+    "token": "c3dd063a-a0f3-47c8-871e-e9f25f71e58d",
+    "client_id": "d49fa503-f9c2-48c5-8559-57200c10e0d9",
+    "coach_id": "656dcf35-4859-4a70-9d20-990104813423",
+    "coach_name": "Thomas",
+    "coach_whatsapp": "",
+    "coach_telegram": "",
+    "coach_phone": "",
+    "created_at": "2026-04-17T10:12:08.111521+00:00",
+    "expires_at": "2027-04-17T10:12:08.111521+00:00",
+    "client_first_name": "Nathalie",
+    "client_last_name": "Habrant",
+    "metrics_history": [
+      {
+        "date": "2026-04-14",
+        "weight": 68.7,
+        "bodyFat": 35.6,
+        "hydration": 44.8,
+        "muscleMass": 42,
+        "visceralFat": 7.5,
+        "metabolicAge": 52
+      }
+    ],
+    "insights": null,
+    "recommendations": null,
+    "program_title": "Programme Premium",
+    "assessments_count": 1,
+    "next_follow_up": "2026-04-27T12:00:00+00:00",
+    "auth_user_id": null
+  },
+  {
+    "id": "b9494be0-6c1c-4ed1-b07f-702074b570da",
+    "token": "babc77ae-6e18-414a-aab5-4cb721a94547",
+    "client_id": "edd819e7-8a2e-4d45-b3dd-f6c23f5f8be5",
+    "coach_id": "656dcf35-4859-4a70-9d20-990104813423",
+    "coach_name": "Thomas",
+    "coach_whatsapp": null,
+    "coach_telegram": null,
+    "coach_phone": null,
+    "created_at": "2026-04-21T18:26:33.406918+00:00",
+    "expires_at": "2027-04-21T18:26:33.406918+00:00",
+    "client_first_name": "Angelique",
+    "client_last_name": "Carlu",
+    "metrics_history": null,
+    "insights": null,
+    "recommendations": null,
+    "program_title": null,
+    "assessments_count": null,
+    "next_follow_up": null,
+    "auth_user_id": "15659cdf-4618-4cec-87c2-5ff75388a930"
+  }
+]

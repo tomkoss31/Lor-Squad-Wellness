@@ -167,7 +167,7 @@ function buildFallbackSummary(isInitialAssessment: boolean) {
 export function EditInitialAssessmentPage() {
   const { clientId, assessmentId } = useParams();
   const navigate = useNavigate();
-  const { getClientById, updateAssessment } = useAppContext();
+  const { getClientById, updateAssessment, updateClientInfo, currentUser } = useAppContext();
   const { push: pushToast } = useToast();
   const client = clientId ? getClientById(clientId) : undefined;
 
@@ -207,6 +207,11 @@ export function EditInitialAssessmentPage() {
       : buildEditableQuestionnaire({} as AssessmentQuestionnaire)
   );
   const [notes, setNotes] = useState(targetAssessment?.notes ?? "");
+  // Chantier edit height/age (2026-04-25) : édition du profil client
+  // (taille + âge) depuis la page Modifier bilan de départ — corrige les
+  // imports manuels Supabase où height=0 / age=0.
+  const [clientAge, setClientAge] = useState<number>(client?.age ?? 0);
+  const [clientHeight, setClientHeight] = useState<number>(client?.height ?? 0);
   const [error, setError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [draftReady, setDraftReady] = useState(false);
@@ -228,6 +233,9 @@ export function EditInitialAssessmentPage() {
     setMetabolicAge(targetAssessment.bodyScan?.metabolicAge ?? 0);
     setQuestionnaire(buildEditableQuestionnaire(targetAssessment.questionnaire));
     setNotes(targetAssessment.notes);
+    // Profil client live — pas dans le draft (colonne clients.* pas bilan)
+    setClientAge(client.age ?? 0);
+    setClientHeight(client.height ?? 0);
 
     const draft = readEditAssessmentDraft(client.id, targetAssessment.id);
     if (draft) {
@@ -323,6 +331,29 @@ export function EditInitialAssessmentPage() {
       setError("Bilan introuvable — impossible d'enregistrer.");
       return;
     }
+
+    // Chantier edit height/age (2026-04-25) : validation profil client.
+    const ageChanged = clientAge !== (client.age ?? 0);
+    const heightChanged = clientHeight !== (client.height ?? 0);
+    if (heightChanged && (clientHeight < 100 || clientHeight > 230)) {
+      setError("Taille invalide (doit être entre 100 et 230 cm).");
+      pushToast({
+        tone: "error",
+        title: "Taille invalide",
+        message: "La taille doit être comprise entre 100 et 230 cm.",
+      });
+      return;
+    }
+    if (ageChanged && (clientAge < 14 || clientAge > 100)) {
+      setError("Âge invalide (doit être entre 14 et 100 ans).");
+      pushToast({
+        tone: "error",
+        title: "Âge invalide",
+        message: "L'âge doit être compris entre 14 et 100 ans.",
+      });
+      return;
+    }
+
     setIsSaving(true);
 
     const updatedAssessment: AssessmentRecord = {
@@ -354,6 +385,61 @@ export function EditInitialAssessmentPage() {
 
     try {
       await updateAssessment(targetClient.id, updatedAssessment);
+
+      // Chantier edit height/age (2026-04-25) : persister la mise à jour
+      // du profil client (age + height) si au moins l'un des 2 a changé.
+      // RLS clients UPDATE vérifie can_access_owner(distributor_id) →
+      // admin + distri propriétaire seulement. Un distri non-owner aura
+      // une erreur Postgres, affichée via toast.
+      if (ageChanged || heightChanged) {
+        const oldAge = client.age ?? 0;
+        const oldHeight = client.height ?? 0;
+        try {
+          await updateClientInfo(targetClient.id, {
+            ...(ageChanged ? { age: clientAge } : {}),
+            ...(heightChanged ? { height: clientHeight } : {}),
+          });
+          // Audit trail console (la table activity_logs attend des actions
+          // typées — on garde un log console dev-friendly ici, suffisant
+          // pour tracer les modifs manuelles pendant la phase de
+          // corrections d'imports SQL bruts).
+          console.info(
+            "[audit] client-profile-updated",
+            {
+              client_id: targetClient.id,
+              client_name: `${targetClient.firstName} ${targetClient.lastName}`,
+              actor_id: currentUser?.id,
+              actor_name: currentUser?.name,
+              changes: {
+                ...(ageChanged ? { age: { from: oldAge, to: clientAge } } : {}),
+                ...(heightChanged ? { height: { from: oldHeight, to: clientHeight } } : {}),
+              },
+              at: new Date().toISOString(),
+            },
+          );
+          if (heightChanged) {
+            // Les calculs IMC/zones lisent client.height en live → aucune
+            // migration des bilans passés n'est nécessaire. Log pour
+            // confirmer à l'utilisateur que la propagation est automatique.
+            console.info(
+              "[height-change] IMC et dérivées recalculés en live pour tous les bilans (client.height lu dynamiquement).",
+            );
+          }
+          pushToast({
+            tone: "success",
+            title: "Profil mis à jour",
+            message: "Les corrections taille/âge ont été enregistrées.",
+          });
+        } catch (profileErr) {
+          // RLS rejection ou réseau → toast explicite mais on laisse
+          // le reste du save (assessment) se terminer.
+          pushToast(buildSupabaseErrorToast(
+            profileErr,
+            "Impossible de mettre à jour le profil client (tu n'as peut-être pas les droits sur ce dossier).",
+          ));
+        }
+      }
+
       // Chantier sync client_recaps (2026-04-20) : le bilan modifié (bilan
       // initial ou suivi) doit se refléter côté /client/:token. Non-bloquant.
       try {
@@ -405,6 +491,62 @@ export function EditInitialAssessmentPage() {
               tone={isInitialAssessment ? "blue" : "green"}
             />
           </div>
+
+          {/* Chantier edit height/age (2026-04-25) : édition profil client
+              (taille + âge). Les autres champs (prénom, nom, sexe) restent
+              en lecture seule ici — gérés ailleurs pour éviter toute
+              modification accidentelle du dossier. */}
+          <SectionCard
+            title="Profil client"
+            description="Corrige la taille ou l'âge si l'import initial contenait des valeurs erronées (0, null, etc.)."
+          >
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+              <div className="space-y-2">
+                <label className="ls-field-label">Prénom</label>
+                <input type="text" value={targetClient.firstName} readOnly disabled />
+              </div>
+              <div className="space-y-2">
+                <label className="ls-field-label">Nom</label>
+                <input type="text" value={targetClient.lastName} readOnly disabled />
+              </div>
+              <div className="space-y-2">
+                <label className="ls-field-label">Sexe</label>
+                <input type="text" value={targetClient.sex === "female" ? "Femme" : "Homme"} readOnly disabled />
+              </div>
+              <div className="space-y-2">
+                <label className="ls-field-label">Âge (années)</label>
+                <input
+                  type="number"
+                  min={14}
+                  max={100}
+                  step={1}
+                  value={clientAge}
+                  onChange={(e) => setClientAge(Number(e.target.value))}
+                />
+                {clientAge !== (targetClient.age ?? 0) ? (
+                  <p className="text-[11px] text-[var(--ls-gold)]">
+                    Modifié · était {targetClient.age ?? 0}
+                  </p>
+                ) : null}
+              </div>
+              <div className="space-y-2">
+                <label className="ls-field-label">Taille (cm)</label>
+                <input
+                  type="number"
+                  min={100}
+                  max={230}
+                  step={1}
+                  value={clientHeight}
+                  onChange={(e) => setClientHeight(Number(e.target.value))}
+                />
+                {clientHeight !== (targetClient.height ?? 0) ? (
+                  <p className="text-[11px] text-[var(--ls-gold)]">
+                    Modifié · était {targetClient.height ?? 0} cm · IMC recalculé en live
+                  </p>
+                ) : null}
+              </div>
+            </div>
+          </SectionCard>
 
           <SectionCard
             title="Repères du dossier"
@@ -612,7 +754,9 @@ export function EditInitialAssessmentPage() {
                     { value: "discovery", label: "Découverte" },
                     { value: "premium", label: "Premium" },
                     { value: "booster1", label: "Booster 1" },
-                    { value: "booster2", label: "Booster 2" }
+                    { value: "booster2", label: "Booster 2" },
+                    // Chantier 5 bugs (2026-04-24) : 5e option 'À l'unité'
+                    { value: "unit", label: "À l'unité" }
                   ] as const).map((opt) => {
                     const selected = questionnaire.programChoice === opt.value;
                     return (

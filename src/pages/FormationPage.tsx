@@ -1,17 +1,16 @@
-// Chantier Centre de Formation (2026-04-23) — V1 coming soon.
-// Le seed SQL est posé, les composants (CategoryCard, ResourceCard,
-// VideoPlayerModal, hook useTraining) sont prêts, mais les contenus
-// réels (vidéos, PDFs, scripts) ne sont pas encore fournis. On affiche
-// donc une page d'attente claire, en attendant que Thomas collecte
-// les ressources.
-//
-// Dès que les contenus arrivent, il suffira de remettre le rendu du
-// catalogue (préservé en commentaire ci-dessous) pour reprendre sur
-// les données déjà seedées.
+// Chantier Centre de Formation V1 (2026-04-24).
+// Liste des 4 catégories (Prospection / Bilan / Suivi / Business).
 
 import { Link } from "react-router-dom";
-import { Card } from "../components/ui/Card";
 import { PageHeading } from "../components/ui/PageHeading";
+import { FORMATION_CATEGORIES } from "../data/formationContent";
+
+const ACCENT_STYLES = {
+  teal: { bg: "rgba(29,158,117,0.12)", border: "rgba(29,158,117,0.3)", color: "#1D9E75" },
+  gold: { bg: "rgba(239,159,39,0.12)", border: "rgba(239,159,39,0.3)", color: "#BA7517" },
+  magenta: { bg: "rgba(212,83,126,0.12)", border: "rgba(212,83,126,0.3)", color: "#D4537E" },
+  violet: { bg: "rgba(167,139,250,0.14)", border: "rgba(167,139,250,0.35)", color: "#A78BFA" },
+};
 
 export function FormationPage() {
   return (
@@ -19,127 +18,90 @@ export function FormationPage() {
       <PageHeading
         eyebrow="Formation"
         title="Centre de formation"
-        description="Un espace pour progresser — du premier rendez-vous jusqu'au business 100 clubs."
+        description="Progresser chaque jour — du premier RDV jusqu'au 100 clubs."
       />
 
-      <Card
-        className="space-y-5"
+      <div
         style={{
-          textAlign: "center",
-          padding: "40px 28px",
-          background:
-            "linear-gradient(160deg, rgba(201,168,76,0.08) 0%, rgba(45,212,191,0.06) 100%)",
-          border: "1px solid rgba(201,168,76,0.25)",
+          display: "grid",
+          gap: 14,
+          gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
         }}
       >
-        <div
-          aria-hidden="true"
-          style={{
-            width: 64,
-            height: 64,
-            borderRadius: 18,
-            margin: "0 auto",
-            background: "linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            color: "#FFFFFF",
-            fontSize: 28,
-            boxShadow: "0 8px 24px rgba(186,117,23,0.25)",
-          }}
-        >
-          🎓
-        </div>
+        {FORMATION_CATEGORIES.map((cat) => {
+          const acc = ACCENT_STYLES[cat.accent];
+          return (
+            <Link
+              key={cat.slug}
+              to={`/formation/${cat.slug}`}
+              style={{
+                display: "block",
+                padding: 20,
+                background: "var(--ls-surface)",
+                border: `1px solid ${acc.border}`,
+                borderRadius: 16,
+                textDecoration: "none",
+                transition: "transform 0.2s ease, box-shadow 0.2s ease",
+                fontFamily: "DM Sans, sans-serif",
+                color: "var(--ls-text)",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = "translateY(-2px)";
+                e.currentTarget.style.boxShadow = `0 4px 18px ${acc.bg}`;
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = "translateY(0)";
+                e.currentTarget.style.boxShadow = "none";
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 10 }}>
+                <div
+                  style={{
+                    width: 44,
+                    height: 44,
+                    borderRadius: 12,
+                    background: acc.bg,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: 22,
+                    flexShrink: 0,
+                  }}
+                >
+                  {cat.emoji}
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontFamily: "Syne, sans-serif", fontSize: 15, fontWeight: 700, color: "var(--ls-text)" }}>
+                    {cat.title}
+                  </div>
+                  <div style={{ fontSize: 11, color: acc.color, fontWeight: 600, marginTop: 2 }}>
+                    {cat.resources.length} ressource{cat.resources.length > 1 ? "s" : ""}
+                  </div>
+                </div>
+                <span style={{ color: "var(--ls-text-muted)", fontSize: 18 }}>→</span>
+              </div>
+              <div style={{ fontSize: 13, color: "var(--ls-text-muted)", lineHeight: 1.55 }}>
+                {cat.description}
+              </div>
+            </Link>
+          );
+        })}
+      </div>
 
-        <div>
-          <p
-            style={{
-              fontFamily: "Syne, sans-serif",
-              fontSize: 24,
-              fontWeight: 700,
-              color: "var(--ls-text)",
-              margin: 0,
-              marginBottom: 8,
-            }}
-          >
-            Bientôt disponible
-          </p>
-          <p
-            style={{
-              fontSize: 14,
-              color: "var(--ls-text-muted)",
-              lineHeight: 1.7,
-              margin: 0,
-              maxWidth: 520,
-              marginLeft: "auto",
-              marginRight: "auto",
-            }}
-          >
-            Le catalogue de formation se prépare en coulisses. Vidéos,
-            scripts, PDFs et parcours par niveau (débutant · intermédiaire ·
-            avancé) arriveront au fil des semaines.
-          </p>
-        </div>
-
-        <div
-          style={{
-            display: "flex",
-            gap: 10,
-            justifyContent: "center",
-            flexWrap: "wrap",
-            marginTop: 6,
-          }}
-        >
-          <Link
-            to="/guide"
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 6,
-              padding: "10px 16px",
-              borderRadius: 10,
-              background: "var(--ls-gold)",
-              color: "#0B0D11",
-              textDecoration: "none",
-              fontFamily: "DM Sans, sans-serif",
-              fontWeight: 600,
-              fontSize: 13,
-            }}
-          >
-            📖 Guide rendez-vous
-          </Link>
-          <Link
-            to="/guide-suivi"
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 6,
-              padding: "10px 16px",
-              borderRadius: 10,
-              background: "var(--ls-surface)",
-              color: "var(--ls-text)",
-              border: "1px solid var(--ls-border)",
-              textDecoration: "none",
-              fontFamily: "DM Sans, sans-serif",
-              fontWeight: 500,
-              fontSize: 13,
-            }}
-          >
-            📚 Guide suivi client
-          </Link>
-        </div>
-
-        <p
-          style={{
-            fontSize: 11,
-            color: "var(--ls-text-hint)",
-            marginTop: 12,
-          }}
-        >
-          Patience — on te prévient dès que la première vague arrive. En attendant,
-          les 2 guides existants restent accessibles ci-dessus.
-        </p>
-      </Card>
+      <div
+        style={{
+          padding: "16px 18px",
+          background: "rgba(239,159,39,0.08)",
+          border: "1px solid rgba(239,159,39,0.25)",
+          borderRadius: 14,
+          fontSize: 13,
+          color: "var(--ls-text)",
+          lineHeight: 1.55,
+        }}
+      >
+        <strong style={{ color: "#BA7517" }}>💡 Astuce :</strong> Le contenu s&apos;enrichit chaque mois.
+        Demande à Thomas les dernières ressources si tu ne les trouves pas ici.
+      </div>
     </div>
   );
 }
