@@ -9,6 +9,7 @@ import { ClientPushOptIn } from '../components/client-app/ClientPushOptIn'
 import { InstallPwaBanner } from '../components/pwa/InstallPwaBanner'
 import { BreakfastStorySlider, DEFAULT_BREAKFAST_ANALYSIS } from '../components/education/BreakfastStorySlider'
 import { ClientMeasurementsSection } from '../features/measurements/ClientMeasurementsSection'
+import { ClientProductsTab } from '../components/client-app/ClientProductsTab'
 import type { BreakfastAnalysis } from '../types/domain'
 import { useOnboardingState } from '../features/onboarding/hooks/useOnboardingState'
 
@@ -33,15 +34,7 @@ function clientGreeting(d: Date): string {
   return 'Bonsoir'
 }
 
-// ─── Catégories produits dans l'ordre du PDF officiel ──────────────────────
-const CATEGORY_DISPLAY: Array<{ key: HerbalifeProduct['category']; label: string }> = [
-  { key: 'formula1', label: 'Formula 1' },
-  { key: 'select', label: 'Select' },
-  { key: 'proteines', label: 'En-cas & Protéines' },
-  { key: 'complements', label: 'Compléments' },
-  { key: 'boissons', label: 'Boissons' },
-  { key: 'sport', label: 'Sport & Vitalité H24' },
-]
+// Refonte Produits (2026-04-25) : catégories gérées dans ClientProductsTab.
 
 // ─── Descriptions détaillées par référence produit ─────────────────────────
 const PRODUCT_DETAILS: Record<string, string> = {
@@ -135,85 +128,9 @@ function MiniLineChart({
   )
 }
 
-// ─── Carte produit avec description + CTA ──────────────────────────────────
-function ProductCard({
-  product, isRecommended, onAskCoach,
-}: {
-  product: HerbalifeProduct
-  isRecommended: boolean
-  /** Chantier Messagerie client ↔ coach (2026-04-21) : ouvre la modale
-   *  centralisée ClientMessageModal à la place de l'ancien lien
-   *  MyHerbalife externe + WhatsApp. Le coach reçoit une notif push. */
-  onAskCoach: (product: HerbalifeProduct) => void
-}) {
-  const [open, setOpen] = useState(false)
-  const description = PRODUCT_DETAILS[product.ref] ?? product.shortBenefit
-
-  return (
-    <div
-      role="button"
-      tabIndex={0}
-      aria-expanded={open}
-      onClick={() => setOpen(!open)}
-      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setOpen(!open); } }}
-      style={{
-        background: '#fff',
-        border: isRecommended ? '1px solid rgba(184,146,42,0.2)' : '1px solid rgba(0,0,0,0.07)',
-        borderRadius: 14,
-        padding: 14,
-        marginBottom: 8,
-        cursor: 'pointer',
-      }}
-    >
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-        <div style={{ width: 8, height: 8, borderRadius: '50%', background: isRecommended ? '#B8922A' : '#9CA3AF', flexShrink: 0 }} />
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 13, fontWeight: 500, color: '#111827' }}>{product.shortName}</div>
-          <div style={{ fontSize: 11, color: '#9CA3AF' }}>{product.shortBenefit.split('·')[0].trim()}</div>
-        </div>
-        {isRecommended && (
-          <div style={{ fontSize: 9, padding: '3px 8px', borderRadius: 10, background: 'rgba(184,146,42,0.1)', color: '#B8922A', fontWeight: 600, flexShrink: 0 }}>
-            Pour toi
-          </div>
-        )}
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth="2">
-          {open ? <polyline points="18 15 12 9 6 15" /> : <polyline points="6 9 12 15 18 9" />}
-        </svg>
-      </div>
-
-      {open && (
-        <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid rgba(0,0,0,0.06)' }}>
-          <p style={{ fontSize: 12, color: '#6B7280', lineHeight: 1.75, marginBottom: 14 }}>
-            {description}
-          </p>
-          <button
-            type="button"
-            onClick={(e) => { e.stopPropagation(); onAskCoach(product) }}
-            style={{
-              width: '100%',
-              padding: '11px 14px',
-              borderRadius: 10,
-              background: '#B8922A',
-              color: '#FFFFFF',
-              border: 'none',
-              fontSize: 13,
-              fontWeight: 600,
-              fontFamily: 'DM Sans, sans-serif',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 8,
-            }}
-          >
-            <span aria-hidden="true">💬</span>
-            Parler à mon coach à propos de ce produit
-          </button>
-        </div>
-      )}
-    </div>
-  )
-}
+// ProductCard refactoré (2026-04-25) dans ClientProductsTab — l'onglet
+// Produits côté client utilise désormais des cards dédiées (Recommended /
+// Catalog) directement dans le composant refondu.
 
 // ══════════════════════════════════════════════════════════════════════════
 // COMPOSANT PRINCIPAL
@@ -274,7 +191,6 @@ export function ClientAppPage() {
   const [referSent, setReferSent] = useState(false)
   const [rdvMessage, setRdvMessage] = useState('')
   const [rdvSent, setRdvSent] = useState(false)
-  const [openCategory, setOpenCategory] = useState<string | null>(null)
   const [showInstallPrompt, setShowInstallPrompt] = useState(false)
   const [installPlatform, setInstallPlatform] = useState<'ios' | 'android' | null>(null)
   const [deferredInstallEvent, setDeferredInstallEvent] = useState<{ prompt: () => Promise<void>; userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }> } | null>(null)
@@ -579,7 +495,6 @@ export function ClientAppPage() {
   const recommendedProducts = HERBALIFE_PRODUCTS.filter((p) =>
     recoList.some((r) => (r.ref && r.ref === p.ref) || (r.name && (r.name === p.name || r.name === p.shortName)))
   )
-  const recommendedRefs = new Set(recommendedProducts.map((p) => p.ref))
 
   // ─── Type local pour les cards métriques ───────────────────────────────
   type MetricCard = {
@@ -973,83 +888,19 @@ export function ClientAppPage() {
         )}
 
         {/* ══════════════════════════════════════════════════════════════ */}
-        {/* ONGLET PRODUITS                                                 */}
+        {/* ONGLET PRODUITS — refonte 2026-04-25 (ClientProductsTab)       */}
         {/* ══════════════════════════════════════════════════════════════ */}
         {activeTab === 'products' && (
-          <div data-tuto="program" style={{ display: 'flex', flexDirection: 'column' }}>
-            {/* Chantier 5 bugs (2026-04-24) : section "Recommandé par ton coach"
-                renforcée visuellement (bordure gold + badge ⭐ + CTA clair). */}
-            {recommendedProducts.length > 0 && (
-              <div
-                style={{
-                  marginBottom: 20,
-                  padding: '14px 12px',
-                  background: 'linear-gradient(135deg, rgba(184,146,42,0.08), rgba(201,168,76,0.02))',
-                  border: '1px solid rgba(184,146,42,0.25)',
-                  borderRadius: 14,
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                  <span aria-hidden="true" style={{ fontSize: 16 }}>⭐</span>
-                  <div
-                    style={{
-                      fontFamily: 'Syne, sans-serif',
-                      fontSize: 14,
-                      fontWeight: 700,
-                      color: '#B8922A',
-                    }}
-                  >
-                    Recommandé par {data.coach_name?.split(' ')[0] ?? 'ton coach'}
-                  </div>
-                </div>
-                <div style={{ fontSize: 11, color: '#6B6F7A', marginBottom: 12, lineHeight: 1.5 }}>
-                  Ton coach a identifié ces produits comme utiles pour toi. Clique sur
-                  &laquo;&nbsp;En parler à mon coach&nbsp;&raquo; pour en discuter.
-                </div>
-                {recommendedProducts.map((product) => (
-                  <ProductCard key={product.ref} product={product} isRecommended={true} onAskCoach={openProductAskModal} />
-                ))}
-              </div>
-            )}
-
-            {/* Autres produits du catalogue par catégorie */}
-            <div style={{ fontSize: 9, letterSpacing: '2px', textTransform: 'uppercase', color: '#9CA3AF', fontWeight: 600, marginBottom: 8 }}>
-              Tout le catalogue
-            </div>
-
-            {/* Accordéon par catégorie */}
-            {CATEGORY_DISPLAY.map(({ key, label }) => {
-              const products = HERBALIFE_PRODUCTS.filter((p) => p.category === key && !recommendedRefs.has(p.ref))
-              if (products.length === 0) return null
-              const isOpen = openCategory === key
-              return (
-                <div key={key} style={{ marginBottom: 8 }}>
-                  <button
-                    onClick={() => setOpenCategory(isOpen ? null : key)}
-                    style={{
-                      width: '100%', display: 'flex', alignItems: 'center',
-                      justifyContent: 'space-between', padding: '14px 16px',
-                      background: '#fff', border: '1px solid rgba(0,0,0,0.07)',
-                      borderRadius: isOpen ? '12px 12px 0 0' : 12,
-                      fontSize: 14, fontWeight: 600, color: '#111827',
-                      fontFamily: 'Syne, sans-serif', cursor: 'pointer',
-                    }}
-                  >
-                    <span>{label} <span style={{ fontSize: 11, color: '#9CA3AF', fontWeight: 400, fontFamily: 'DM Sans, sans-serif', marginLeft: 6 }}>· {products.length}</span></span>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth="2">
-                      {isOpen ? <polyline points="18 15 12 9 6 15" /> : <polyline points="6 9 12 15 18 9" />}
-                    </svg>
-                  </button>
-                  {isOpen && (
-                    <div style={{ border: '1px solid rgba(0,0,0,0.07)', borderTop: 'none', borderRadius: '0 0 12px 12px', padding: 10, background: '#fafaf9' }}>
-                      {products.map((product) => (
-                        <ProductCard key={product.ref} product={product} isRecommended={false} onAskCoach={openProductAskModal} />
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )
-            })}
+          <div data-tuto="program">
+            <ClientProductsTab
+              clientId={data.client_id}
+              coachFirstName={(data.coach_name ?? '').split(/\s+/)[0] || 'ton coach'}
+              coachWhatsapp={data.coach_whatsapp}
+              recommendedProducts={recommendedProducts}
+              latestScanDate={latest?.date ?? null}
+              productDetails={PRODUCT_DETAILS}
+              onAskCoach={openProductAskModal}
+            />
           </div>
         )}
 

@@ -41,3 +41,23 @@ comment on policy "clients_self_select_via_app" on public.clients is
 
 comment on policy "follow_ups_self_select_via_app" on public.follow_ups is
   'Chantier sync 2026-04-25 : le client peut lire ses propres RDV → affichage live côté app client, plus de snapshot figé.';
+
+-- ─── pv_client_products : SELECT self (produits "en cours" du client) ──
+-- Permet à l'onglet Produits de l'app client d'afficher la section
+-- "Mon programme actuel" en live. Pas d'INSERT/UPDATE/DELETE — seul le
+-- coach gère via sa fiche.
+drop policy if exists "pv_client_products_self_select_via_app" on public.pv_client_products;
+create policy "pv_client_products_self_select_via_app"
+  on public.pv_client_products
+  for select
+  to authenticated
+  using (
+    exists (
+      select 1 from public.client_app_accounts caa
+      where caa.client_id::uuid = pv_client_products.client_id
+        and caa.auth_user_id = auth.uid()
+    )
+  );
+
+comment on policy "pv_client_products_self_select_via_app" on public.pv_client_products is
+  'Chantier Produits Tab 2026-04-25 : le client voit ses produits en cours (section "Mon programme actuel").';
