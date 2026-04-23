@@ -41,7 +41,7 @@ const NAV_ICONS: Record<string, JSX.Element> = {
 };
 
 export function AppLayout() {
-  const { currentUser, logout, followUps, pvClientProducts, unreadMessageCount, prospects } = useAppContext();
+  const { currentUser, logout, followUps, pvClientProducts, unreadMessageCount, prospects, lastFetchError } = useAppContext();
   const { isDark, toggleTheme } = useTheme();
   // Chantier Notif in-app temps réel (2026-04-23) : s'abonne à
   // client_messages Realtime tant que le coach est authentifié et sur
@@ -383,6 +383,30 @@ export function AppLayout() {
         )}
 
         <main className="min-w-0 space-y-5 md:space-y-6">
+          {/* Garde-fou 2026-04-25 : bandeau rouge si le dernier fetch
+              principal a planté (typiquement RLS foireuse). Rend les
+              régressions visibles au lieu de "app vide" silencieux. */}
+          {lastFetchError ? (
+            <div
+              role="alert"
+              style={{
+                padding: "14px 16px",
+                borderRadius: 12,
+                background: "rgba(220,38,38,0.12)",
+                border: "1px solid rgba(220,38,38,0.4)",
+                color: "#FCA5A5",
+                fontSize: 13,
+                lineHeight: 1.5,
+              }}
+            >
+              <strong style={{ color: "#FEE2E2" }}>⚠ Données inaccessibles — </strong>
+              {lastFetchError}
+              <div style={{ fontSize: 11, opacity: 0.8, marginTop: 4 }}>
+                Recharge la page. Si le problème persiste, le souci vient de Supabase (RLS, policies, ou réseau).
+              </div>
+            </div>
+          ) : null}
+
           <section className="glass-panel overflow-hidden rounded-[28px] p-4 xl:hidden">
             <div className="flex items-center justify-between gap-3">
               <div className="flex min-w-0 items-center gap-3">

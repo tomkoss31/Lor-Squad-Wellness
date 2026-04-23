@@ -77,6 +77,9 @@ interface AppContextValue {
   users: User[];
   clients: Client[];
   visibleClients: Client[];
+  // Garde-fou 2026-04-25 : erreur du dernier refresh. Si non-null, l'app
+  // affiche un bandeau rouge → évite les régressions RLS silencieuses.
+  lastFetchError: string | null;
   followUps: FollowUp[];
   visibleFollowUps: FollowUp[];
   activityLogs: ActivityLog[];
@@ -207,6 +210,10 @@ export function AppProvider({ children }: PropsWithChildren) {
   const [currentSession, setCurrentSession] = useState<AuthSession | null>(null);
   const [users, setUsers] = useState<User[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
+  // Garde-fou (2026-04-25) : message d'erreur du dernier fetch principal,
+  // affiché en bandeau rouge en haut de l'app pour rendre les régressions
+  // RLS visibles au lieu de "app vide" silencieux.
+  const [lastFetchError, setLastFetchError] = useState<string | null>(null);
   const [followUps, setFollowUps] = useState<FollowUp[]>([]);
   const [activityLogs, setActivityLogs] = useState<ActivityLog[]>([]);
   const [pvClientProducts, setPvClientProducts] = useState<PvClientProductRecord[]>([]);
@@ -266,7 +273,14 @@ export function AppProvider({ children }: PropsWithChildren) {
         }
       } catch { /* messages unavailable */ }
     } catch (error) {
-      console.error("Impossible de recharger les donnees distantes.", error);
+      // Garde-fou (2026-04-25) : un fetch principal qui plante
+      // (typiquement RLS foireuse) doit hurler dans la console avec le
+      // message Supabase complet. Plus de "zero clients" silencieux comme
+      // après les migrations RGPD+sync. Le state lastFetchError est exposé
+      // dans le contexte → App.tsx affiche un bandeau rouge en haut.
+      const msg = error instanceof Error ? error.message : String(error);
+      console.error("[refreshRemoteData] Rechargement impossible :", msg, error);
+      setLastFetchError(msg);
       setClients([]);
       setFollowUps([]);
       setUsers(nextUser ? [nextUser] : []);
@@ -275,7 +289,10 @@ export function AppProvider({ children }: PropsWithChildren) {
       setActivityLogs([]);
       setClientMessages([]);
       setProspects([]);
+      return;
     }
+    // Reset de l'erreur si le fetch a réussi
+    setLastFetchError(null);
   }
 
   useEffect(() => {
@@ -778,6 +795,7 @@ export function AppProvider({ children }: PropsWithChildren) {
       users,
       clients,
       visibleClients: getVisibleClients(currentUser, clients, users),
+      lastFetchError,
       followUps,
       visibleFollowUps: getVisibleFollowUps(currentUser, followUps, clients, users),
       activityLogs,
