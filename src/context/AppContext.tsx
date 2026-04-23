@@ -103,7 +103,7 @@ interface AppContextValue {
   resolveMessage: (id: string) => Promise<void>;
   unresolveMessage: (id: string) => Promise<void>;
   deleteMessage: (id: string) => Promise<void>;
-  updateClientInfo: (clientId: string, data: { phone?: string; email?: string; city?: string }) => Promise<void>;
+  updateClientInfo: (clientId: string, data: { phone?: string; email?: string; city?: string; age?: number; height?: number }) => Promise<void>;
   setClientLifecycleStatus: (clientId: string, newStatus: LifecycleStatus) => Promise<void>;
   setClientFragileFlag: (clientId: string, isFragile: boolean) => Promise<void>;
   setClientFreeFollowUp: (clientId: string, freeFollowUp: boolean) => Promise<void>;
@@ -880,16 +880,21 @@ export function AppProvider({ children }: PropsWithChildren) {
         if (sb) await sb.from('client_messages').delete().eq('id', id);
         setClientMessages(prev => prev.filter(m => m.id !== id));
       },
-      updateClientInfo: async (clientId: string, data: { phone?: string; email?: string; city?: string }) => {
+      updateClientInfo: async (clientId: string, data: { phone?: string; email?: string; city?: string; age?: number; height?: number }) => {
         // Site 4 du durcissement audit L1 : on lève l'erreur au caller + toast explicite.
+        // Chantier edit height/age (2026-04-25) : support des 2 champs profil
+        // numériques pour permettre aux coachs/distris de corriger les clients
+        // importés avec height=0 ou age=0.
         const sb = await getSupabaseClient();
         if (!sb) {
           throw new Error("Client Supabase indisponible.");
         }
-        const updateData: Record<string, string> = {};
+        const updateData: Record<string, string | number> = {};
         if (data.phone !== undefined) updateData.phone = data.phone;
         if (data.email !== undefined) updateData.email = data.email;
         if (data.city !== undefined) updateData.city = data.city;
+        if (data.age !== undefined) updateData.age = data.age;
+        if (data.height !== undefined) updateData.height = data.height;
         const { error } = await sb.from('clients').update(updateData).eq('id', clientId);
         if (error) {
           throw error;
