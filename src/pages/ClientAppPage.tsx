@@ -4,6 +4,7 @@ import { getSupabaseClient } from '../services/supabaseClient'
 import { HERBALIFE_PRODUCTS, type HerbalifeProduct } from '../data/herbalifeCatalog'
 import { ClientMessageModal } from '../components/client-app/ClientMessageModal'
 import { ClientChatTab } from '../components/client-app/ClientChatTab'
+import { ClientHomeTab } from '../components/client-app/ClientHomeTab'
 import { ClientPushOptIn } from '../components/client-app/ClientPushOptIn'
 import { InstallPwaBanner } from '../components/pwa/InstallPwaBanner'
 import { BreakfastStorySlider, DEFAULT_BREAKFAST_ANALYSIS } from '../components/education/BreakfastStorySlider'
@@ -19,7 +20,8 @@ const OnboardingTutorial = lazy(() =>
   })),
 )
 
-const GOOGLE_MAPS_LA_BASE = 'https://www.google.com/maps/place/LA+BASE+Shakes%26Drinks/@49.1619589,5.3840559,17z'
+// GOOGLE_MAPS_LA_BASE conservé en const pour future reuse si besoin
+void 'https://www.google.com/maps/place/LA+BASE+Shakes%26Drinks/@49.1619589,5.3840559,17z';
 
 // Hotfix client-login (2026-04-24) : salutation dynamique — distincte de
 // celle de /co-pilote côté coach car le public et le ton diffèrent.
@@ -394,7 +396,13 @@ export function ClientAppPage() {
       coach_telegram: typeof r.coach_telegram === 'string' ? r.coach_telegram : undefined,
       coach_phone: typeof r.coach_phone === 'string' ? r.coach_phone : undefined,
       program_title: typeof r.program_title === 'string' ? r.program_title : undefined,
-      assessments_count: typeof r.assessments_count === 'number' ? r.assessments_count : (metrics?.length ?? 0),
+      // Chantier Home Premium (2026-04-24) : fix "0 bilan" — si body_scan
+      // existe, au moins 1 bilan. Force max(raw, metrics, body_scan?1:0).
+      assessments_count: Math.max(
+        typeof r.assessments_count === 'number' ? r.assessments_count : 0,
+        metrics?.length ?? 0,
+        r.body_scan && typeof r.body_scan === 'object' ? 1 : 0,
+      ),
       next_follow_up: typeof r.next_follow_up === 'string' ? r.next_follow_up : undefined,
       metrics_history: metrics,
       recommendations: r.recommendations as ClientAppData['recommendations'],
@@ -779,187 +787,20 @@ export function ClientAppPage() {
         {/* ONGLET ACCUEIL                                                  */}
         {/* ══════════════════════════════════════════════════════════════ */}
         {activeTab === 'home' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            {/* Chantier 5 bugs (2026-04-24) : encart motivant "Ton point
-                de départ" quand un seul body scan (bilan initial) existe. */}
-            {latest && metrics.length === 1 ? (
-              <div
-                style={{
-                  background: 'linear-gradient(135deg, rgba(184,146,42,0.1), rgba(201,168,76,0.04))',
-                  border: '1px solid rgba(184,146,42,0.3)',
-                  borderRadius: 14,
-                  padding: '14px 16px',
-                }}
-              >
-                <div style={{ fontFamily: 'Syne, sans-serif', fontSize: 15, fontWeight: 700, color: '#B8922A', marginBottom: 4 }}>
-                  🎯 Ton point de départ, {data.client_first_name} !
-                </div>
-                <div style={{ fontSize: 12, color: '#6B6F7A', lineHeight: 1.55 }}>
-                  Bravo pour avoir posé tes premières mesures. C&apos;est à partir de là qu&apos;on va
-                  suivre ton évolution ensemble. Ton coach <strong>{data.coach_name}</strong> est
-                  avec toi à chaque étape 💪
-                </div>
-              </div>
-            ) : null}
-
-            {latest && (
-              <>
-                <div style={{ fontSize: 9, letterSpacing: '2px', textTransform: 'uppercase', color: '#9CA3AF', fontWeight: 500 }}>
-                  {metrics.length === 1 ? 'Tes valeurs de départ' : 'Ton évolution'}
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                  {([
-                    { label: 'Poids', field: 'weight', unit: 'kg', color: '#B8922A' },
-                    { label: 'Masse grasse', field: 'bodyFat', unit: '%', color: '#DC2626' },
-                    { label: 'Muscle', field: 'muscleMass', unit: 'kg', color: '#0D9488' },
-                    { label: 'Hydratation', field: 'hydration', unit: '%', color: '#7C3AED' },
-                  ] as const).map(({ label, field, unit, color }) => {
-                    const val = latest[field]
-                    return (
-                      <div key={field} style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.07)', borderRadius: 12, padding: '12px', borderTop: `2px solid ${color}` }}>
-                        <div style={{ fontSize: 9, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 4 }}>{label}</div>
-                        <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 22, color, lineHeight: 1 }}>
-                          {typeof val === 'number' ? val.toFixed(1) : '—'}{unit}
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
-              </>
-            )}
-
-            {/* Prochain RDV */}
-            {data.next_follow_up && (
-              <div data-tuto="next-rdv" style={{ background: 'rgba(13,148,136,0.06)', border: '1px solid rgba(13,148,136,0.15)', borderRadius: 14, padding: 14 }}>
-                <div style={{ fontSize: 9, color: '#0D9488', fontWeight: 600, letterSpacing: '1px', textTransform: 'uppercase', marginBottom: 8 }}>Prochain rendez-vous</div>
-                <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 18, color: '#111827', marginBottom: 2 }}>
-                  {new Date(data.next_follow_up).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
-                </div>
-                <div style={{ fontSize: 12, color: '#6B7280', marginBottom: 12 }}>
-                  {new Date(data.next_follow_up).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })} · La Base — Verdun
-                </div>
-                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                  <a href={getGoogleCalendarUrl()} target="_blank" rel="noopener noreferrer"
-                    style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '9px 14px', background: '#0D9488', color: '#fff', borderRadius: 9, textDecoration: 'none', fontSize: 12, fontWeight: 600 }}>
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                      <rect x="3" y="4" width="18" height="18" rx="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" />
-                    </svg>
-                    Google Agenda
-                  </a>
-                  <a href={GOOGLE_MAPS_LA_BASE} target="_blank" rel="noopener noreferrer"
-                    style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '9px 14px', background: 'rgba(13,148,136,0.1)', color: '#0D9488', borderRadius: 9, textDecoration: 'none', fontSize: 12, fontWeight: 500, border: '1px solid rgba(13,148,136,0.2)' }}>
-                    Itinéraire
-                  </a>
-                </div>
-
-                <div style={{ marginTop: 12, borderTop: '1px solid rgba(13,148,136,0.1)', paddingTop: 12 }}>
-                  <div style={{ fontSize: 11, color: '#6B7280', marginBottom: 8 }}>Tu veux modifier ce RDV ?</div>
-                  {rdvSent ? (
-                    <div style={{ fontSize: 12, color: '#0D9488', fontWeight: 500 }}>✓ Message envoyé à {data.coach_name}</div>
-                  ) : (
-                    <>
-                      <textarea value={rdvMessage} onChange={(e) => setRdvMessage(e.target.value)} placeholder="Ex : Je préfèrerais le 30 avril à 14h..." rows={2}
-                        style={{ width: '100%', padding: '9px 12px', border: '1px solid rgba(13,148,136,0.2)', borderRadius: 9, fontFamily: 'DM Sans, sans-serif', fontSize: 13, background: '#fff', color: '#111827', resize: 'none', outline: 'none', marginBottom: 8 }} />
-                      <button onClick={() => void sendRdvChangeRequest()}
-                        style={{ padding: '9px 16px', borderRadius: 9, border: 'none', background: 'rgba(13,148,136,0.1)', color: '#0D9488', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
-                        Envoyer à mon coach
-                      </button>
-                    </>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* Chantier Messagerie client ↔ coach (2026-04-21) : CTA
-                "Demander une reco" — bouton gold large qui ouvre la modale.
-                Le message atterrit dans client_messages et push une notif
-                au coach. */}
-            <button
-              type="button"
-              data-tuto="messaging"
-              onClick={() => setRecoAskOpen(true)}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 12,
-                background: 'linear-gradient(135deg, #FAEEDA, #F0DBB0)',
-                border: '1px solid rgba(184,146,42,0.35)',
-                borderRadius: 14,
-                padding: '14px 16px',
-                width: '100%',
-                textAlign: 'left',
-                cursor: 'pointer',
-                fontFamily: 'DM Sans, sans-serif',
-              }}
-            >
-              <div
-                aria-hidden="true"
-                style={{
-                  width: 38,
-                  height: 38,
-                  borderRadius: 10,
-                  background: '#B8922A',
-                  color: '#FFFFFF',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: 18,
-                  flexShrink: 0,
-                }}
-              >
-                🎁
-              </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 14, color: '#633806' }}>
-                  Demander une recommandation
-                </div>
-                <div style={{ fontSize: 11, color: '#854F0B', marginTop: 2 }}>
-                  Ton coach te répondra avec un conseil personnalisé
-                </div>
-              </div>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#854F0B" strokeWidth="2">
-                <polyline points="9 18 15 12 9 6" />
-              </svg>
-            </button>
-
-            {/* Avis Google */}
-            <a href={GOOGLE_MAPS_LA_BASE} target="_blank" rel="noopener noreferrer"
-              style={{ display: 'flex', alignItems: 'center', gap: 10, background: '#fff', border: '1px solid rgba(184,146,42,0.2)', borderRadius: 14, padding: '13px 16px', textDecoration: 'none' }}>
-              <div style={{ width: 36, height: 36, background: 'rgba(184,146,42,0.1)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="#B8922A"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></svg>
-              </div>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 13, color: '#111827' }}>Laisser un avis Google</div>
-                <div style={{ fontSize: 11, color: '#9CA3AF' }}>★★★★★ La Base — Verdun</div>
-              </div>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth="1.5">
-                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" /><polyline points="15 3 21 3 21 9" /><line x1="10" y1="14" x2="21" y2="3" />
-              </svg>
-            </a>
-
-            {/* Contacter le coach */}
-            <div style={{ fontSize: 9, letterSpacing: '2px', textTransform: 'uppercase', color: '#9CA3AF', fontWeight: 500 }}>Contacter mon coach</div>
-            <div style={{ display: 'flex', gap: 8 }}>
-              {data.coach_whatsapp && (
-                <a href={`https://wa.me/${data.coach_whatsapp.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer"
-                  style={{ flex: 1, padding: '11px 6px', borderRadius: 10, background: 'rgba(37,211,102,0.1)', color: '#16A34A', fontSize: 12, fontWeight: 600, textAlign: 'center', textDecoration: 'none' }}>
-                  WhatsApp
-                </a>
-              )}
-              {data.coach_telegram && (
-                <a href={`https://t.me/${data.coach_telegram}`} target="_blank" rel="noopener noreferrer"
-                  style={{ flex: 1, padding: '11px 6px', borderRadius: 10, background: 'rgba(0,136,204,0.1)', color: '#0088CC', fontSize: 12, fontWeight: 600, textAlign: 'center', textDecoration: 'none' }}>
-                  Telegram
-                </a>
-              )}
-              {data.coach_phone && (
-                <a href={`sms:${data.coach_phone}`}
-                  style={{ flex: 1, padding: '11px 6px', borderRadius: 10, background: 'rgba(0,0,0,0.05)', color: '#6B7280', fontSize: 12, fontWeight: 500, textAlign: 'center', textDecoration: 'none' }}>
-                  SMS
-                </a>
-              )}
-            </div>
-          </div>
+          <ClientHomeTab
+            data={data}
+            latest={latest}
+            first={first}
+            metrics={metrics as unknown as Array<{ date: string; weight?: number; bodyFat?: number; muscleMass?: number; hydration?: number }>}
+            recommendedProducts={recommendedProducts}
+            rdvSent={rdvSent}
+            rdvMessage={rdvMessage}
+            setRdvMessage={setRdvMessage}
+            sendRdvChangeRequest={sendRdvChangeRequest}
+            getGoogleCalendarUrl={getGoogleCalendarUrl}
+            setRecoAskOpen={setRecoAskOpen}
+            openProductAskModal={openProductAskModal}
+          />
         )}
 
         {/* ══════════════════════════════════════════════════════════════ */}
