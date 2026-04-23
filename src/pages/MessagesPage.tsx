@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAppContext } from '../context/AppContext'
+import { useGlobalView } from '../hooks/useGlobalView'
+import { GlobalViewToggle } from '../components/ui/GlobalViewToggle'
 import { Card } from '../components/ui/Card'
 import { PageHeading } from '../components/ui/PageHeading'
 import { ReplyMessageModal } from '../components/messaging/ReplyMessageModal'
@@ -251,7 +253,7 @@ function filterAndSort(messages: ClientMessage[], filters: MessageFiltersState):
 }
 
 export function MessagesPage() {
-  const { clientMessages, markMessageRead, deleteMessage, getClientById } = useAppContext()
+  const { clientMessages, markMessageRead, deleteMessage, getClientById, currentUser } = useAppContext()
   const actions = useMessageActions()
   const navigate = useNavigate()
   const location = useLocation()
@@ -259,6 +261,12 @@ export function MessagesPage() {
   const [tab, setTab] = useState<Tab>('clients')
   const [replyTarget, setReplyTarget] = useState<ClientMessage | null>(null)
   const [filters, setFilters] = useState<MessageFiltersState>(() => readFiltersFromSearch(location.search))
+
+  // Chantier 5 bugs (2026-04-24) : admin voit ses propres messages
+  // clients par défaut. Toggle partagé Vue globale.
+  const [globalView] = useGlobalView()
+  const isAdmin = currentUser?.role === 'admin'
+  const applyPersonalScope = isAdmin && !globalView
 
   // Sync filters → URL
   useEffect(() => {
@@ -270,8 +278,17 @@ export function MessagesPage() {
   }, [filters])
 
   const incoming = useMemo(
-    () => clientMessages.filter(m => (m.sender ?? 'client') === 'client'),
-    [clientMessages],
+    () => {
+      const base = clientMessages.filter(m => (m.sender ?? 'client') === 'client')
+      // Admin en vue perso → filtre sur les clients dont il est le distributeur
+      if (!applyPersonalScope || !currentUser) return base
+      return base.filter(m => {
+        if (!m.client_id) return false
+        const client = getClientById(m.client_id)
+        return client?.distributorId === currentUser.id
+      })
+    },
+    [clientMessages, applyPersonalScope, currentUser, getClientById],
   )
 
   const productMessages = useMemo(() => incoming.filter(m => m.message_type === 'product_request'), [incoming])
@@ -296,6 +313,12 @@ export function MessagesPage() {
         eyebrow="Communication"
         title="Messagerie"
         description="Demandes clients, produits et recommandations — filtre, traite, archive."
+      />
+
+      {/* Chantier 5 bugs : toggle Vue globale admin */}
+      <GlobalViewToggle
+        personalLabel="Vue personnelle (mes messages clients)"
+        globalLabel="Vue équipe (tous les messages)"
       />
 
       {/* Tabs */}

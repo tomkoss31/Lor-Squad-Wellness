@@ -157,7 +157,7 @@ export interface AssessmentQuestionnaire {
   /** Consommation de lait (animal ou végétal) — oriente le distri sur PDM. */
   consumesMilk?: "yes" | "sometimes" | "no";
   /** Programme choisi par le client dans le tunnel de vente étape 11. */
-  programChoice?: "discovery" | "premium" | "booster1" | "booster2";
+  programChoice?: "discovery" | "premium" | "booster1" | "booster2" | "unit";
 }
 
 export interface AssessmentRecord {
