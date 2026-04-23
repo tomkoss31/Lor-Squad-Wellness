@@ -399,8 +399,8 @@ export function ClientDetailPage() {
             <SharePublicButton
               clientId={client.id}
               clientFirstName={client.firstName}
-              clientLastName={client.lastName}
-              coachName={currentUser?.name ?? "Coach"}
+              publicShareConsent={client.publicShareConsent ?? false}
+              publicShareRevokedAt={client.publicShareRevokedAt}
             />
             <Link
               to={`/clients/${client.id}/follow-up/new`}

@@ -88,6 +88,9 @@ type ClientRow = {
   // les deux pour la transition (avant/après migration SQL).
   general_note_deprecated?: string | null;
   onboarding_checks?: { telegram?: boolean; photo_before?: boolean; measurements?: boolean } | null;
+  public_share_consent?: boolean | null;
+  public_share_consent_at?: string | null;
+  public_share_revoked_at?: string | null;
   assessments?: AssessmentRow[] | null;
 };
 
@@ -375,6 +378,9 @@ function mapClient(row: ClientRow): Client {
     freePvTracking: row.free_pv_tracking ?? false,
     generalNote: row.general_note ?? row.general_note_deprecated ?? undefined,
     onboardingChecks: row.onboarding_checks ?? undefined,
+    publicShareConsent: row.public_share_consent ?? false,
+    publicShareConsentAt: row.public_share_consent_at ?? undefined,
+    publicShareRevokedAt: row.public_share_revoked_at ?? undefined,
     assessments: (row.assessments ?? []).map(mapAssessment)
   };
 }
