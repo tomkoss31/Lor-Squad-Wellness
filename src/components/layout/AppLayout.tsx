@@ -96,7 +96,7 @@ export function AppLayout() {
     { label: "Messagerie", path: "/messages", badge: unreadMessageCount ?? 0 },
     { label: "Dossiers clients", path: "/clients", badge: 0 },
     { label: "Suivi PV", path: "/pv", badge: pvOverdueCount },
-    ...(currentUser.role === "admin" ? [{ label: "Mon équipe", path: "/users", badge: 0 }] : []),
+    ...(currentUser.role === "admin" ? [{ label: "Mon équipe", path: "/team", badge: 0 }] : []),
     { label: "Centre de formation", path: "/formation", badge: 0 },
     // Chantier Paramètres Admin (2026-04-23) : /parametres full UI pour
     // les admins, /settings placeholder profil pour les autres.
@@ -121,7 +121,7 @@ export function AppLayout() {
             ? "Dossiers clients et suivi en cours"
             : location.pathname.startsWith("/distributors/")
               ? "Portefeuille, relances et rythme du suivi"
-              : location.pathname === "/users"
+              : location.pathname === "/team" || location.pathname === "/users"
                 ? "Mon équipe"
                 : location.pathname.startsWith("/clients/")
                   ? "Lecture complète du dossier client"
