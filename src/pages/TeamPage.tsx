@@ -16,10 +16,20 @@ import {
   useTeamTree,
   useDistributorStats,
   useTeamRanking,
+  useCoupleTeamTree,
+  useCoupleDistributorStats,
   type Period,
   type TeamTreeRow,
   type TeamRankingEntry,
 } from "../hooks/useTeamData";
+import {
+  COUPLE_DISPLAY_NAME,
+  COUPLE_INITIALS,
+  COUPLE_SUBTITLE,
+  COUPLE_VIRTUAL_ID,
+  isCoupleVirtualId,
+  resolveCoupleUserIds,
+} from "../config/teamConfig";
 
 // ─── Tree builder à partir des rows RPC plates ────────────────────────────
 interface TreeNode {
@@ -62,6 +72,12 @@ export function TeamPage() {
   const [period, setPeriod] = useState<Period>("month");
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
+  // Chantier Team Couple Display (2026-04-26) : si Thomas + Mélanie sont
+  // résolus dans `users`, on bascule en "couple mode" — 1 seule card
+  // racine au lieu de 2, stats agrégées, ranking dédupliqué.
+  const coupleMemberIds = useMemo(() => resolveCoupleUserIds(users), [users]);
+  const coupleActive = coupleMemberIds.length >= 2;
+
   // Racine = admin connecté OU racine remontée de la lignée pour un distri
   const rootUser = useMemo(() => {
     if (!currentUser) return null;
@@ -78,17 +94,120 @@ export function TeamPage() {
   }, [currentUser, users]);
 
   const rootId = rootUser?.id ?? null;
+  // Si le currentUser est dans le couple, on affiche le tree "fusionné"
+  // des 2 membres. Sinon on reste sur le tree classique du rootUser.
+  const currentUserIsCoupleMember =
+    coupleActive && currentUser != null && coupleMemberIds.includes(currentUser.id);
+  const useCoupleMode = coupleActive && currentUserIsCoupleMember;
 
-  // Fetch des 3 RPCs agrégées côté DB
-  const { rows, loading: treeLoading, error: treeError } = useTeamTree(rootId);
-  const tree = useMemo(() => (rootId ? buildTreeFromRows(rows, rootId) : null), [rows, rootId]);
+  // Fetch des 2 trees via les RPCs puis merge (couple mode) ou single tree.
+  const {
+    rows: singleRows,
+    loading: singleLoading,
+    error: singleError,
+  } = useTeamTree(useCoupleMode ? null : rootId);
+  const {
+    rows: coupleRawRows,
+    loading: coupleLoading,
+    error: coupleError,
+  } = useCoupleTeamTree(useCoupleMode ? coupleMemberIds : []);
 
-  const effectiveSelectedId = selectedId ?? tree?.children[0]?.row.user_id ?? rootId ?? null;
+  // En couple mode, on transforme les rows :
+  // - on retire les 2 rows "Thomas" et "Mélanie"
+  // - on insère une row virtuelle COUPLE_VIRTUAL_ID avec stats agrégées
+  // - on re-parent les enfants directs des 2 membres vers le virtual id
+  const rows = useMemo<TeamTreeRow[]>(() => {
+    if (!useCoupleMode) return singleRows;
+    if (coupleRawRows.length === 0) return [];
+    const memberIdSet = new Set(coupleMemberIds);
+    const memberRows = coupleRawRows.filter((r) => memberIdSet.has(r.user_id));
+    const otherRows = coupleRawRows.filter((r) => !memberIdSet.has(r.user_id));
+
+    // Agrégation des stats sur la row virtuelle
+    const virtualRow: TeamTreeRow = {
+      user_id: COUPLE_VIRTUAL_ID,
+      parent_id: null,
+      depth: 0,
+      name: COUPLE_DISPLAY_NAME,
+      email: memberRows.map((r) => r.email).join(" · "),
+      role: "admin",
+      title: COUPLE_SUBTITLE,
+      active: memberRows.some((r) => r.active),
+      created_at: memberRows.reduce<string>((oldest, r) => {
+        if (!oldest) return r.created_at;
+        return new Date(r.created_at).getTime() < new Date(oldest).getTime() ? r.created_at : oldest;
+      }, memberRows[0]?.created_at ?? new Date().toISOString()),
+      clients_count: memberRows.reduce((s, r) => s + r.clients_count, 0),
+      active_clients_count: memberRows.reduce((s, r) => s + r.active_clients_count, 0),
+      prospects_count: memberRows.reduce((s, r) => s + r.prospects_count, 0),
+      subteam_count: otherRows.length, // nb de distri effectivement affichés
+    };
+
+    // Re-parent : les enfants directs pointent vers le virtual id
+    const reparented = otherRows.map<TeamTreeRow>((r) => ({
+      ...r,
+      parent_id: memberIdSet.has(r.parent_id ?? "") ? COUPLE_VIRTUAL_ID : r.parent_id,
+    }));
+
+    return [virtualRow, ...reparented];
+  }, [useCoupleMode, singleRows, coupleRawRows, coupleMemberIds]);
+
+  const effectiveRootId = useCoupleMode ? COUPLE_VIRTUAL_ID : rootId;
+  const treeLoading = useCoupleMode ? coupleLoading : singleLoading;
+  const treeError = useCoupleMode ? coupleError : singleError;
+
+  const tree = useMemo(
+    () => (effectiveRootId ? buildTreeFromRows(rows, effectiveRootId) : null),
+    [rows, effectiveRootId]
+  );
+
+  const effectiveSelectedId = selectedId ?? tree?.children[0]?.row.user_id ?? effectiveRootId ?? null;
 
   const selectedRow = rows.find((r) => r.user_id === effectiveSelectedId) ?? null;
+  const selectedIsCouple = isCoupleVirtualId(effectiveSelectedId);
 
-  const { stats: selectedStats } = useDistributorStats(effectiveSelectedId, period);
-  const { ranking } = useTeamRanking(rootId, period, 3);
+  // Stats : fetch couple agrégé OU single distri selon sélection
+  const { stats: singleStats } = useDistributorStats(
+    selectedIsCouple ? null : effectiveSelectedId,
+    period
+  );
+  const { stats: coupleStats } = useCoupleDistributorStats(
+    selectedIsCouple ? coupleMemberIds : [],
+    period
+  );
+  const selectedStats = selectedIsCouple ? coupleStats : singleStats;
+
+  // Classement : si couple mode, on fetch le ranking du membre "racine"
+  // (Thomas par convention = premier ID) puis on dédup/merge les entrées
+  // du couple en une seule entrée virtuelle.
+  const rankingRootId = useCoupleMode ? coupleMemberIds[0] ?? null : rootId;
+  const { ranking: rawRanking } = useTeamRanking(rankingRootId, period, 5);
+  const ranking = useMemo<TeamRankingEntry[]>(() => {
+    if (!useCoupleMode) return rawRanking.slice(0, 3);
+    const memberIdSet = new Set(coupleMemberIds);
+    const coupleEntries = rawRanking.filter((e) => memberIdSet.has(e.user_id));
+    const otherEntries = rawRanking.filter((e) => !memberIdSet.has(e.user_id));
+    if (coupleEntries.length === 0) return otherEntries.slice(0, 3);
+    // Merge les 2 entrées couple en une seule (somme delta, somme prospects,
+    // retention pondéré simplifié = moyenne si les 2 non nulls).
+    const merged: TeamRankingEntry = {
+      user_id: COUPLE_VIRTUAL_ID,
+      name: COUPLE_DISPLAY_NAME,
+      clients_delta: coupleEntries.reduce((s, e) => s + e.clients_delta, 0),
+      prospects_period: coupleEntries.reduce((s, e) => s + e.prospects_period, 0),
+      retention_prospects_pct: (() => {
+        const vals = coupleEntries.map((e) => e.retention_prospects_pct).filter((v): v is number => v != null);
+        return vals.length ? Math.round(vals.reduce((s, v) => s + v, 0) / vals.length) : null;
+      })(),
+      retention_clients_pct: (() => {
+        const vals = coupleEntries.map((e) => e.retention_clients_pct).filter((v): v is number => v != null);
+        return vals.length ? Math.round(vals.reduce((s, v) => s + v, 0) / vals.length) : null;
+      })(),
+      score: coupleEntries.reduce((s, e) => s + e.score, 0),
+    };
+    // Re-trie par score desc
+    return [merged, ...otherEntries].sort((a, b) => b.score - a.score).slice(0, 3);
+  }, [useCoupleMode, rawRanking, coupleMemberIds]);
 
   if (!currentUser || !rootUser) {
     return (
@@ -168,21 +287,26 @@ export function TeamPage() {
         <DistributorDetailCard
           row={selectedRow}
           sponsorName={
-            selectedRow.parent_id
+            selectedRow.parent_id && !isCoupleVirtualId(selectedRow.parent_id)
               ? rows.find((r) => r.user_id === selectedRow.parent_id)?.name ?? null
               : null
           }
           stats={selectedStats}
           period={period}
           ranking={ranking}
-          rootUserName={rootUser.name}
-          hasRecentActivity={hasRecentActivityFromContext(
-            selectedRow.user_id,
-            clients,
-            prospects,
-            period,
-          )}
-          activity={buildRecentActivity(selectedRow.user_id, clients, prospects, users)}
+          rootUserName={useCoupleMode ? COUPLE_DISPLAY_NAME : rootUser.name}
+          isCouple={isCoupleVirtualId(selectedRow.user_id)}
+          hasRecentActivity={(() => {
+            const ids = isCoupleVirtualId(selectedRow.user_id) ? coupleMemberIds : [selectedRow.user_id];
+            return ids.some((id) => hasRecentActivityFromContext(id, clients, prospects, period));
+          })()}
+          activity={(() => {
+            const ids = isCoupleVirtualId(selectedRow.user_id) ? coupleMemberIds : [selectedRow.user_id];
+            const merged = ids.flatMap((id) => buildRecentActivity(id, clients, prospects, users));
+            return merged
+              .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+              .slice(0, 5);
+          })()}
         />
       ) : null}
     </div>
@@ -332,6 +456,7 @@ function TreeCard({
   onSelect: () => void;
 }) {
   const row = node.row;
+  const isCouple = isCoupleVirtualId(row.user_id);
   const rootStyle: React.CSSProperties = isRoot
     ? {
         background: "linear-gradient(135deg, rgba(239,159,39,0.18), rgba(186,117,23,0.06))",
@@ -360,6 +485,7 @@ function TreeCard({
       ? "#0F6E56"
       : "rgba(211,209,199,0.9)";
   const avatarText = isRoot ? "#fff" : isSelected ? "#fff" : "#444441";
+  const avatarLabel = isCouple ? COUPLE_INITIALS : initialsOf(row.name);
 
   return (
     <button
@@ -391,15 +517,17 @@ function TreeCard({
           background: avatarColor,
           color: avatarText,
           fontFamily: "Syne, sans-serif",
-          fontSize: isRoot ? 15 : 12,
+          fontSize: isRoot ? (isCouple ? 13 : 15) : 12,
           fontWeight: 700,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
           flexShrink: 0,
+          letterSpacing: isCouple ? "0.02em" : undefined,
         }}
+        aria-label={isCouple ? `Couple ${row.name}` : row.name}
       >
-        {initialsOf(row.name)}
+        {avatarLabel}
       </div>
       <div style={{ fontSize: isRoot ? 13 : 12, fontWeight: 600, color: "var(--ls-text)" }}>
         {row.name}
@@ -477,6 +605,7 @@ function DistributorDetailCard({
   period,
   ranking,
   rootUserName,
+  isCouple,
   hasRecentActivity,
   activity,
 }: {
@@ -486,6 +615,7 @@ function DistributorDetailCard({
   period: Period;
   ranking: TeamRankingEntry[];
   rootUserName: string;
+  isCouple: boolean;
   hasRecentActivity: boolean;
   activity: Array<{ label: string; date: string; color: string }>;
 }) {
@@ -494,7 +624,7 @@ function DistributorDetailCard({
     : "—";
 
   return (
-    <Card style={{ borderTop: "2px solid #0F6E56" }} className="space-y-5">
+    <Card style={{ borderTop: isCouple ? "2px solid #BA7517" : "2px solid #0F6E56" }} className="space-y-5">
       {/* Header */}
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
@@ -503,25 +633,28 @@ function DistributorDetailCard({
               width: 48,
               height: 48,
               borderRadius: "50%",
-              background: "#0F6E56",
+              background: isCouple
+                ? "linear-gradient(135deg, #EF9F27, #BA7517)"
+                : "#0F6E56",
               color: "#fff",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
               fontFamily: "Syne, sans-serif",
-              fontSize: 16,
+              fontSize: isCouple ? 14 : 16,
               fontWeight: 700,
               flexShrink: 0,
+              letterSpacing: isCouple ? "0.02em" : undefined,
             }}
           >
-            {initialsOf(row.name)}
+            {isCouple ? COUPLE_INITIALS : initialsOf(row.name)}
           </div>
           <div>
             <div style={{ fontSize: 15, fontWeight: 600, color: "var(--ls-text)" }}>{row.name}</div>
             <div style={{ fontSize: 11, color: "var(--ls-text-muted)", marginTop: 2 }}>
               {row.title || "Distributeur"}
               {sponsorName ? ` · Parrainé·e par ${sponsorName}` : ""}
-              {` · Depuis ${memberSince}`}
+              {!isCouple && row.created_at ? ` · Depuis ${memberSince}` : ""}
             </div>
           </div>
         </div>
@@ -665,20 +798,23 @@ function DistributorDetailCard({
         )}
       </div>
 
-      {/* Footer : voir profil */}
-      <div style={{ display: "flex", justifyContent: "flex-end" }}>
-        <Link
-          to={`/distributors/${row.user_id}`}
-          style={{
-            fontSize: 12,
-            color: "var(--ls-teal)",
-            textDecoration: "none",
-            fontWeight: 600,
-          }}
-        >
-          Voir le profil complet →
-        </Link>
-      </div>
+      {/* Footer : voir profil (caché pour la row couple virtuelle — pas de
+          route /distributors/couple:... côté router) */}
+      {!isCouple ? (
+        <div style={{ display: "flex", justifyContent: "flex-end" }}>
+          <Link
+            to={`/distributors/${row.user_id}`}
+            style={{
+              fontSize: 12,
+              color: "var(--ls-teal)",
+              textDecoration: "none",
+              fontWeight: 600,
+            }}
+          >
+            Voir le profil complet →
+          </Link>
+        </div>
+      ) : null}
     </Card>
   );
 }
@@ -884,6 +1020,7 @@ function ActivityRow({ label, date, color }: { label: string; date: string; colo
 }
 
 function RankingRow({ rank, entry }: { rank: number; entry: TeamRankingEntry }) {
+  const entryIsCouple = isCoupleVirtualId(entry.user_id);
   const medal = rank === 1 ? "🥇" : rank === 2 ? "🥈" : "🥉";
   const bg =
     rank === 1
@@ -918,7 +1055,7 @@ function RankingRow({ rank, entry }: { rank: number; entry: TeamRankingEntry }) 
           width: 24,
           height: 24,
           borderRadius: "50%",
-          background: "#0F6E56",
+          background: entryIsCouple ? "linear-gradient(135deg, #EF9F27, #BA7517)" : "#0F6E56",
           color: "#fff",
           display: "flex",
           alignItems: "center",
@@ -929,7 +1066,7 @@ function RankingRow({ rank, entry }: { rank: number; entry: TeamRankingEntry }) 
           flexShrink: 0,
         }}
       >
-        {initialsOf(entry.name)}
+        {entryIsCouple ? COUPLE_INITIALS : initialsOf(entry.name)}
       </div>
       <div style={{ flex: 1, fontSize: 12, fontWeight: 600, color: "var(--ls-text)" }}>
         {entry.name}
