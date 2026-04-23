@@ -222,29 +222,95 @@ export function BienvenueDistriPage() {
 
   // ─── Rendu ───────────────────────────────────────────────────────────────
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        background:
-          "linear-gradient(180deg, rgba(201,168,76,0.08) 0%, #F4F2EE 60%, #FFFFFF 100%)",
-        padding: 20,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        fontFamily: "DM Sans, sans-serif",
-      }}
-    >
-      <div
-        style={{
-          width: "100%",
-          maxWidth: 480,
-          background: "#FFFFFF",
-          borderRadius: 18,
-          padding: 32,
-          boxShadow: "0 20px 60px rgba(0,0,0,0.08)",
-          border: "1px solid rgba(0,0,0,0.06)",
-        }}
-      >
+    <div className="distri-root">
+      {/* Chantier Premium Onboarding distri (2026-04-24) */}
+      <style>{`
+        .distri-root {
+          min-height: 100vh;
+          min-height: 100dvh;
+          background: #0A0D0F;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 32px 20px;
+          position: relative;
+          overflow: hidden;
+          font-family: 'DM Sans', sans-serif;
+        }
+        .distri-blob {
+          position: absolute;
+          border-radius: 50%;
+          filter: blur(90px);
+          pointer-events: none;
+          will-change: transform;
+        }
+        .distri-blob-gold {
+          top: -15%;
+          right: -8%;
+          width: 540px;
+          height: 540px;
+          background: radial-gradient(circle, #EF9F27 0%, transparent 70%);
+          opacity: 0.34;
+          animation: distri-float-1 32s ease-in-out infinite alternate;
+        }
+        .distri-blob-teal {
+          bottom: -18%;
+          left: -10%;
+          width: 500px;
+          height: 500px;
+          background: radial-gradient(circle, #1D9E75 0%, transparent 70%);
+          opacity: 0.3;
+          animation: distri-float-2 38s ease-in-out infinite alternate;
+        }
+        @keyframes distri-float-1 {
+          0%   { transform: translate(0, 0) scale(1); }
+          100% { transform: translate(-70px, 50px) scale(1.12); }
+        }
+        @keyframes distri-float-2 {
+          0%   { transform: translate(0, 0) scale(1); }
+          100% { transform: translate(80px, -40px) scale(1.1); }
+        }
+        .distri-grain {
+          position: absolute;
+          inset: 0;
+          pointer-events: none;
+          opacity: 0.06;
+          mix-blend-mode: overlay;
+          background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+        }
+        .distri-card {
+          position: relative;
+          z-index: 1;
+          width: 100%;
+          max-width: 480px;
+          background: rgba(255, 255, 255, 0.96);
+          backdrop-filter: blur(14px) saturate(140%);
+          -webkit-backdrop-filter: blur(14px) saturate(140%);
+          border-radius: 22px;
+          padding: 32px;
+          box-shadow: 0 24px 64px rgba(0, 0, 0, 0.45), 0 4px 16px rgba(239, 159, 39, 0.1);
+          border: 1px solid rgba(239, 159, 39, 0.18);
+          animation: distri-in 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
+        @keyframes distri-in {
+          from { opacity: 0; transform: translateY(14px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .distri-blob-gold, .distri-blob-teal, .distri-card { animation: none !important; }
+        }
+        @media (max-width: 480px) {
+          .distri-root { padding: 20px 16px; }
+          .distri-card { padding: 24px 22px; }
+          .distri-blob-gold, .distri-blob-teal { width: 360px; height: 360px; }
+        }
+      `}</style>
+
+      <div aria-hidden="true" className="distri-blob distri-blob-gold" />
+      <div aria-hidden="true" className="distri-blob distri-blob-teal" />
+      <div aria-hidden="true" className="distri-grain" />
+
+      <div className="distri-card">
         {validation.status === "loading" ? (
           <p style={{ textAlign: "center", color: "#6B7280", fontSize: 14 }}>
             Vérification de ton invitation…
