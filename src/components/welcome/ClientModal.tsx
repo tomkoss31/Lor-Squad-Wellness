@@ -40,7 +40,9 @@ export function ClientModal({ open, onClose }: Props) {
       style={{
         position: "fixed",
         inset: 0,
-        background: "rgba(0,0,0,0.6)",
+        background: "rgba(0,0,0,0.55)",
+        backdropFilter: "blur(6px)",
+        WebkitBackdropFilter: "blur(6px)",
         zIndex: 10000,
         display: "flex",
         alignItems: "center",
@@ -56,12 +58,12 @@ export function ClientModal({ open, onClose }: Props) {
         onKeyDown={(e) => e.stopPropagation()}
         style={{
           background: "var(--ls-surface)",
-          border: "1px solid var(--ls-border)",
-          borderRadius: 18,
-          maxWidth: 400,
+          border: "1px solid rgba(239,159,39,0.18)",
+          borderRadius: 20,
+          maxWidth: 420,
           width: "100%",
-          padding: 22,
-          boxShadow: "0 20px 60px rgba(0,0,0,0.5)",
+          padding: 26,
+          boxShadow: "0 24px 64px rgba(0,0,0,0.4), 0 4px 16px rgba(239,159,39,0.08)",
           fontFamily: "DM Sans, sans-serif",
           color: "var(--ls-text)",
         }}

@@ -49,23 +49,35 @@ export function LoginPage() {
   return (
     <>
       <style>{`
+        /* Chantier Welcome Premium (2026-04-24) : bouton retour minimal,
+           discret, sans card/bordure lourde — juste une flèche + texte. */
         .login-back-home {
           position: fixed;
-          top: 14px;
-          left: 14px;
+          top: 20px;
+          left: 20px;
           z-index: 20;
-          padding: 7px 12px;
-          border-radius: 10px;
-          background: rgba(255,255,255,0.04);
-          border: 1px solid var(--ls-border);
+          padding: 6px 10px;
+          border-radius: 8px;
+          background: transparent;
+          border: none;
           color: var(--ls-text-muted);
           text-decoration: none;
-          font-size: 12px;
-          font-family: DM Sans, sans-serif;
+          font-size: 13px;
+          font-family: 'DM Sans', sans-serif;
+          font-weight: 500;
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          transition: color 0.15s ease, transform 0.15s ease;
         }
         .login-back-home:hover {
-          background: var(--ls-surface2);
           color: var(--ls-text);
+          transform: translateX(-2px);
+        }
+        .login-back-home::before {
+          content: "←";
+          font-size: 16px;
+          line-height: 1;
         }
         @media (max-width: 768px) {
           .login-grid { grid-template-columns: 1fr !important; }
@@ -81,7 +93,7 @@ export function LoginPage() {
       {/* Chantier Welcome Page (2026-04-24) : lien retour vers la porte
           d'entrée publique pour les users arrivés ici sans savoir qui
           ils sont. */}
-      <a href="/welcome" className="login-back-home">← Retour à l&apos;accueil</a>
+      <a href="/welcome" className="login-back-home">Retour à l&apos;accueil</a>
 
       <div className="login-grid" style={{ minHeight: '100vh', background: 'var(--ls-bg)', display: 'grid', gridTemplateColumns: '1fr 1fr', fontFamily: 'DM Sans, sans-serif' }}>
 
