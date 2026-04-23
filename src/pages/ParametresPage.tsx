@@ -16,12 +16,14 @@ import { EquipeTab } from "../components/settings/EquipeTab";
 import { TransfertsTab } from "../components/settings/TransfertsTab";
 import { StatistiquesTab } from "../components/settings/StatistiquesTab";
 import { DebugTab } from "../components/settings/DebugTab";
+import { LeadsTab } from "../components/settings/LeadsTab";
 
-type TabKey = "profil" | "equipe" | "transferts" | "stats" | "debug";
+type TabKey = "profil" | "equipe" | "leads" | "transferts" | "stats" | "debug";
 
 const TABS: Array<{ key: TabKey; label: string; icon: string }> = [
   { key: "profil", label: "Profil", icon: "👤" },
   { key: "equipe", label: "Équipe", icon: "👥" },
+  { key: "leads", label: "Leads", icon: "🔥" },
   { key: "transferts", label: "Transferts", icon: "🔀" },
   { key: "stats", label: "Statistiques", icon: "📊" },
   { key: "debug", label: "Debug", icon: "🔧" },
@@ -88,6 +90,7 @@ export function ParametresPage() {
       {/* Contenu conditionnel */}
       {tab === "profil" ? <ProfilTab /> : null}
       {tab === "equipe" ? <EquipeTab /> : null}
+      {tab === "leads" ? <LeadsTab /> : null}
       {tab === "transferts" ? <TransfertsTab /> : null}
       {tab === "stats" ? <StatistiquesTab /> : null}
       {tab === "debug" ? <DebugTab /> : null}
