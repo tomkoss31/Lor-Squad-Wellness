@@ -726,9 +726,33 @@ export function ClientAppPage() {
         {/* ══════════════════════════════════════════════════════════════ */}
         {activeTab === 'home' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {/* Chantier 5 bugs (2026-04-24) : encart motivant "Ton point
+                de départ" quand un seul body scan (bilan initial) existe. */}
+            {latest && metrics.length === 1 ? (
+              <div
+                style={{
+                  background: 'linear-gradient(135deg, rgba(184,146,42,0.1), rgba(201,168,76,0.04))',
+                  border: '1px solid rgba(184,146,42,0.3)',
+                  borderRadius: 14,
+                  padding: '14px 16px',
+                }}
+              >
+                <div style={{ fontFamily: 'Syne, sans-serif', fontSize: 15, fontWeight: 700, color: '#B8922A', marginBottom: 4 }}>
+                  🎯 Ton point de départ, {data.client_first_name} !
+                </div>
+                <div style={{ fontSize: 12, color: '#6B6F7A', lineHeight: 1.55 }}>
+                  Bravo pour avoir posé tes premières mesures. C&apos;est à partir de là qu&apos;on va
+                  suivre ton évolution ensemble. Ton coach <strong>{data.coach_name}</strong> est
+                  avec toi à chaque étape 💪
+                </div>
+              </div>
+            ) : null}
+
             {latest && (
               <>
-                <div style={{ fontSize: 9, letterSpacing: '2px', textTransform: 'uppercase', color: '#9CA3AF', fontWeight: 500 }}>Ton évolution</div>
+                <div style={{ fontSize: 9, letterSpacing: '2px', textTransform: 'uppercase', color: '#9CA3AF', fontWeight: 500 }}>
+                  {metrics.length === 1 ? 'Tes valeurs de départ' : 'Ton évolution'}
+                </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                   {([
                     { label: 'Poids', field: 'weight', unit: 'kg', color: '#B8922A' },
@@ -1013,17 +1037,45 @@ export function ClientAppPage() {
         {/* ══════════════════════════════════════════════════════════════ */}
         {activeTab === 'products' && (
           <div data-tuto="program" style={{ display: 'flex', flexDirection: 'column' }}>
-            {/* Recommandés pour toi (reste toujours visible en haut) */}
+            {/* Chantier 5 bugs (2026-04-24) : section "Recommandé par ton coach"
+                renforcée visuellement (bordure gold + badge ⭐ + CTA clair). */}
             {recommendedProducts.length > 0 && (
-              <div style={{ marginBottom: 16 }}>
-                <div style={{ fontSize: 9, letterSpacing: '2px', textTransform: 'uppercase', color: '#B8922A', fontWeight: 600, marginBottom: 10 }}>
-                  Recommandés pour toi
+              <div
+                style={{
+                  marginBottom: 20,
+                  padding: '14px 12px',
+                  background: 'linear-gradient(135deg, rgba(184,146,42,0.08), rgba(201,168,76,0.02))',
+                  border: '1px solid rgba(184,146,42,0.25)',
+                  borderRadius: 14,
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                  <span aria-hidden="true" style={{ fontSize: 16 }}>⭐</span>
+                  <div
+                    style={{
+                      fontFamily: 'Syne, sans-serif',
+                      fontSize: 14,
+                      fontWeight: 700,
+                      color: '#B8922A',
+                    }}
+                  >
+                    Recommandé par {data.coach_name?.split(' ')[0] ?? 'ton coach'}
+                  </div>
+                </div>
+                <div style={{ fontSize: 11, color: '#6B6F7A', marginBottom: 12, lineHeight: 1.5 }}>
+                  Ton coach a identifié ces produits comme utiles pour toi. Clique sur
+                  &laquo;&nbsp;En parler à mon coach&nbsp;&raquo; pour en discuter.
                 </div>
                 {recommendedProducts.map((product) => (
                   <ProductCard key={product.ref} product={product} isRecommended={true} onAskCoach={openProductAskModal} />
                 ))}
               </div>
             )}
+
+            {/* Autres produits du catalogue par catégorie */}
+            <div style={{ fontSize: 9, letterSpacing: '2px', textTransform: 'uppercase', color: '#9CA3AF', fontWeight: 600, marginBottom: 8 }}>
+              Tout le catalogue
+            </div>
 
             {/* Accordéon par catégorie */}
             {CATEGORY_DISPLAY.map(({ key, label }) => {

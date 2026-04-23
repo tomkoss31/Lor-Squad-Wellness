@@ -612,7 +612,9 @@ export function EditInitialAssessmentPage() {
                     { value: "discovery", label: "Découverte" },
                     { value: "premium", label: "Premium" },
                     { value: "booster1", label: "Booster 1" },
-                    { value: "booster2", label: "Booster 2" }
+                    { value: "booster2", label: "Booster 2" },
+                    // Chantier 5 bugs (2026-04-24) : 5e option 'À l'unité'
+                    { value: "unit", label: "À l'unité" }
                   ] as const).map((opt) => {
                     const selected = questionnaire.programChoice === opt.value;
                     return (
