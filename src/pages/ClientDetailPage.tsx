@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { EditScheduleModal } from "../components/client/EditScheduleModal";
 import { WeightSummaryBlock } from "../components/client/WeightSummaryBlock";
@@ -12,28 +12,23 @@ import { MuscleMassInsightCard } from "../components/body-scan/MuscleMassInsight
 import { HydrationVisceralInsightCard } from "../components/body-scan/HydrationVisceralInsightCard";
 import { BodyScanRadar } from "../components/body-scan/BodyScanRadar";
 import { HistoryTimeline } from "../components/client/HistoryTimeline";
-import { Button } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
 import { StatusBadge } from "../components/ui/StatusBadge";
 import { useAppContext } from "../context/AppContext";
 import { useToast, buildSupabaseErrorToast } from "../context/ToastContext";
+import { refreshClientRecap } from "../services/supabaseService";
 import { ErrorBoundary } from "../components/ErrorBoundary";
-import { FollowUpProtocolCard } from "../components/follow-up/FollowUpProtocolCard";
-import { ClientGeneralNote } from "../components/client/ClientGeneralNote";
-import { ClientInvitationButton } from "../components/client/ClientInvitationButton";
 import { ClientAccessModal } from "../components/client/ClientAccessModal";
+import { ActionsTab } from "../components/client-detail/ActionsTab";
 import { ClientAppPreviewButton } from "../components/client/ClientAppPreviewButton";
 import { SharePublicButton } from "../components/client/SharePublicButton";
 import { buildReportData, generateProductRecommendations } from "../lib/evolutionReport";
 import { EvolutionReportModal } from "../components/assessment/EvolutionReportModal";
 import { getSupabaseClient } from "../services/supabaseClient";
-import { refreshClientRecap } from "../services/supabaseService";
 import { pvProductCatalog } from "../data/pvCatalog";
 import { getAccessibleOwnerIds, isAdmin, isRéférent } from "../lib/auth";
 import { getClientActiveFollowUp } from "../lib/portfolio";
 import {
-  computeWaterTarget,
-  computeProteinTarget,
   formatDate,
   getFirstAssessment,
   getLatestAssessment,
@@ -41,8 +36,7 @@ import {
   getLatestQuestionnaire,
   getPreviousAssessment
 } from "../lib/calculations";
-import { createIcsDataUri } from "../lib/googleCalendar";
-import type { Client, LifecycleStatus } from "../types/domain";
+import type { LifecycleStatus } from "../types/domain";
 import { LIFECYCLE_LABELS, LIFECYCLE_TONES } from "../types/domain";
 
 export function ClientDetailPage() {
@@ -50,13 +44,8 @@ export function ClientDetailPage() {
   const { clientId } = useParams();
   const {
     currentUser,
-    users,
-
-    deleteClient,
     getClientById,
     followUps,
-    reassignClientOwner,
-    updateClientInfo
   } = useAppContext();
   const { push: pushToast } = useToast();
 
@@ -66,8 +55,6 @@ export function ClientDetailPage() {
   // `client` peut être undefined pendant le boot ou si l'id n'est pas visible.
   // On utilise optional chaining partout et le return `<Card>` est placé
   // APRÈS tous les hooks.
-  const [nextOwnerId, setNextOwnerId] = useState(client?.distributorId ?? "");
-  const [transferFeedback, setTransferFeedback] = useState("");
   const [showScheduleModal, setShowScheduleModal] = useState(false);
   // Chantier Protocole Agenda+Dashboard (2026-04-20) : ?tab=actions pour
   // arriver directement sur l'onglet Actions depuis le widget dashboard.
@@ -78,16 +65,9 @@ export function ClientDetailPage() {
   const [generatingReport, setGeneratingReport] = useState(false);
   // Chantier Client access unification (2026-04-24)
   const [accessModalOpen, setAccessModalOpen] = useState(false);
-  const [editPhone, setEditPhone] = useState(client?.phone ?? "");
-  const [editEmail, setEditEmail] = useState(client?.email ?? "");
-  const [editCity, setEditCity] = useState(client?.city ?? "");
-  const [editSaved, setEditSaved] = useState(false);
-  // Refonte fiche client 2 colonnes (2026-04-25) : la création d'accès
-  // app client est désormais gérée exclusivement par ClientInvitationButton
-  // (bouton header + colonne gauche). Les anciens states clientAppUrl/
-  // creatingClientApp/coachPhoneInput/coachTelegramInput et la fonction
-  // createClientAppAccount() ont été supprimés (déplacés dans les
-  // Paramètres distributeur pour la V2).
+  // Refonte Actions Tab (2026-04-26) : les states editPhone/editEmail/
+  // editCity/transferFeedback/nextOwnerId et les handlers handleDelete/
+  // handleTransfer sont désormais internes à ActionsTab.tsx.
   const activeFollowUp = client ? getClientActiveFollowUp(client, followUps) : null;
 
   async function generateReport() {
@@ -139,15 +119,9 @@ export function ClientDetailPage() {
       setGeneratingReport(false);
     }
   }
-  const canReassignClient = isAdmin(currentUser) || isRéférent(currentUser);
-  const assignableOwnerIds = getAccessibleOwnerIds(currentUser, users);
-  const assignableOwners = users.filter(
-    (user) => user.active && assignableOwnerIds.has(user.id)
-  );
-
-  useEffect(() => {
-    if (client) setNextOwnerId(client.distributorId);
-  }, [client]);
+  // canReassignClient et assignableOwners sont désormais utilisés
+  // uniquement par ActionsTab qui les calcule en interne.
+  void isAdmin; void isRéférent; void getAccessibleOwnerIds;
 
   // Fix UX (2026-04-20) : l'ancien useEffect qui pré-chargeait un
   // existingClientToken depuis client_recaps/client_evolution_reports/
@@ -164,8 +138,10 @@ export function ClientDetailPage() {
     );
   }
   const currentClient = client;
+  void currentClient;
 
   const latestAssessment = getLatestAssessment(client);
+  void latestAssessment;
   const previousAssessment = getPreviousAssessment(client);
   // Fix P3a (2026-04-20) : on préfère le bilan type === "initial", pas juste
   // le plus ancien par date. Aligne la fiche sur EditInitialAssessmentPage
@@ -186,7 +162,6 @@ export function ClientDetailPage() {
     latestQuestionnaire.targetWeight;
   const recommendationCount = latestQuestionnaire.recommendations?.length ?? 0;
   const recommendationsContacted = latestQuestionnaire.recommendationsContacted ?? false;
-  const canDeleteClient = currentUser?.role === "admin";
   // Durcissement (2026-04-20 — crash Mélanie Jessie) : certains vieux dossiers
   // importés ont `questionnaire = null` en DB. ensureAssessment ne wrap pas
   // ce champ, donc `firstAssessment.questionnaire.selectedProductIds?.length`
@@ -200,65 +175,10 @@ export function ClientDetailPage() {
   const retainedProducts = retainedProductIds
     .map((productId) => pvProductCatalog.find((product) => product.id === productId) ?? null)
     .filter((product): product is NonNullable<typeof product> => product != null);
-  const retainedProductsTotalPrice = Number(
-    retainedProducts.reduce((total, product) => total + (product?.pricePublic ?? 0), 0).toFixed(2)
-  );
-  const retainedProductsTotalPv = Number(
-    retainedProducts.reduce((total, product) => total + (product?.pv ?? 0), 0).toFixed(2)
-  );
+  void retainedProducts;
 
-  async function handleDeleteClient() {
-    const shouldDelete = window.confirm(
-      `Supprimer le dossier de ${currentClient.firstName} ${currentClient.lastName} ? Cette action retire aussi les bilans et les suivis liés à ce client.`
-    );
-
-    if (!shouldDelete) {
-      return;
-    }
-
-    try {
-      await deleteClient(currentClient.id);
-      navigate("/clients");
-    } catch (error) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : "Impossible de supprimer ce dossier pour le moment.";
-      window.alert(message);
-    }
-  }
-
-  async function handleTransferClient() {
-    if (!canReassignClient || nextOwnerId === currentClient.distributorId) {
-      return;
-    }
-
-    try {
-      await reassignClientOwner(currentClient.id, { distributorId: nextOwnerId });
-      // Chantier sync client_recaps (2026-04-20) : le coach_name du récap
-      // doit refléter le nouveau responsable. Non-bloquant.
-      try {
-        await refreshClientRecap(currentClient.id);
-      } catch (refreshErr) {
-        pushToast(buildSupabaseErrorToast(
-          refreshErr,
-          "Le dossier a été réattribué mais le lien client n'a pas pu être mis à jour."
-        ));
-      }
-      const nextOwner = users.find((user) => user.id === nextOwnerId);
-      setTransferFeedback(
-        nextOwner
-          ? `Le dossier est maintenant rattaché à ${nextOwner.name}.`
-          : "Le dossier a bien change de responsable."
-      );
-    } catch (error) {
-      setTransferFeedback(
-        error instanceof Error
-          ? error.message
-          : "Impossible de reattribuer ce dossier pour le moment."
-      );
-    }
-  }
+  // handleDeleteClient + handleTransferClient déplacés dans ActionsTab.tsx
+  // (Chantier Refonte Actions premium 2026-04-26).
 
   return (
     <div className="space-y-6">
@@ -849,243 +769,20 @@ export function ClientDetailPage() {
         </ErrorBoundary>
       )}
 
-      {/* Tab 5: Actions — Refonte 2 colonnes (Chantier 2026-04-25)
-          Structure : gauche = contenu dossier, droite = actions/statut.
-          Doublons supprimés : "Créer accès app" (déjà dans header via
-          ClientInvitationButton), coordonnées coach en localStorage
-          (déplacées en Paramètres distri, V2), lien Google Agenda seul
-          (remplacé par dropdown sur card Prochain RDV). */}
+      {/* Tab 5: Actions - Refonte chirurgicale Actions premium (Chantier 2026-04-26).
+          Composant externalise dans src/components/client-detail/ActionsTab.tsx.
+          Tous les connecteurs metier (lifecycle, toggles, transfert, delete,
+          coordonnees) utilisent les hooks AppContext existants. */}
       {activeTab === 5 && (
-        <div className="grid gap-4 xl:grid-cols-[1.6fr_1fr]">
-          {/* ═══ COLONNE GAUCHE — Contenu dossier ═══════════════════════ */}
-          <div className="space-y-4">
-            {/* Bouton d'invitation client app (bouton principal au-dessus
-                des blocs, remplace le duplicate "Créer l'accès" supprimé). */}
-            <ErrorBoundary name="ClientDetailPage/InvitationButton" fallback={null}>
-              <ClientInvitationButton client={client} />
-            </ErrorBoundary>
-
-            {/* Protocole de suivi 5 étapes J+1, J+3, J+7, J+10, J+14 */}
-            <ErrorBoundary name="ClientDetailPage/FollowUpProtocol" fallback={null}>
-              <FollowUpProtocolCard client={client} />
-            </ErrorBoundary>
-
-            {/* Infos clés du programme — 4 cards 2x2 */}
-            <Card className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="eyebrow-label">Programme</p>
-                  <h2 className="mt-2 text-lg font-bold text-white" style={{ fontFamily: 'Syne, sans-serif' }}>
-                    Infos clés
-                  </h2>
-                </div>
-                <Button variant="secondary" onClick={() => setShowScheduleModal(true)}>
-                  Modifier →
-                </Button>
-              </div>
-              <div className="grid gap-2 sm:grid-cols-2">
-                {/* Card 1 : Prochain RDV — cliquable avec dropdown menu */}
-                <RdvKeyInfoCardWithMenu
-                  client={client}
-                  activeFollowUp={activeFollowUp}
-                  onEditRdv={() => setShowScheduleModal(true)}
-                />
-                {/* Card 2 : Eau recommandée */}
-                <KeyInfoCard
-                  label="Eau recommandée"
-                  value={
-                    latestBodyScan.weight > 0
-                      ? `${computeWaterTarget(latestBodyScan.weight).toFixed(1)} L / jour`
-                      : "—"
-                  }
-                  icon="💧"
-                />
-                {/* Card 3 : Protéines cible */}
-                <KeyInfoCard
-                  label="Protéines cible"
-                  value={
-                    latestBodyScan.weight > 0
-                      ? `${computeProteinTarget(latestBodyScan.weight, client.objective)} g / jour`
-                      : "—"
-                  }
-                  icon="🥩"
-                />
-                {/* Card 4 : Produits en cours */}
-                <KeyInfoCard
-                  label="Produits en cours"
-                  value={
-                    retainedProducts.length > 0
-                      ? `${retainedProducts.length} produit${retainedProducts.length > 1 ? "s" : ""}`
-                      : "Aucun"
-                  }
-                  icon="🌿"
-                  sub={
-                    retainedProductsTotalPrice > 0
-                      ? `${retainedProductsTotalPrice.toFixed(2)} € / ${retainedProductsTotalPv.toFixed(1)} PV`
-                      : undefined
-                  }
-                />
-              </div>
-            </Card>
-
-            {/* À savoir sur ce client (note persona coach) */}
-            <ErrorBoundary name="ClientDetailPage/GeneralNote" fallback={null}>
-              <ClientGeneralNote client={client} />
-            </ErrorBoundary>
-          </div>
-
-          {/* ═══ COLONNE DROITE — Actions & statut (sticky) ════════════ */}
-          <div className="space-y-4 xl:sticky xl:top-4 xl:self-start">
-            {/* Coordonnées — édition inline simple */}
-            <Card className="space-y-4">
-              <p className="eyebrow-label">Coordonnées</p>
-              <h2 className="text-lg font-bold text-white" style={{ fontFamily: 'Syne, sans-serif' }}>
-                Téléphone · email · ville
-              </h2>
-              <div className="space-y-3">
-                <div>
-                  <label className="text-[11px] font-medium text-[var(--ls-text-hint)] uppercase tracking-wider">Téléphone</label>
-                  <input value={editPhone} onChange={e => { setEditPhone(e.target.value); setEditSaved(false); }} style={{ marginTop: 4 }} />
-                </div>
-                <div>
-                  <label className="text-[11px] font-medium text-[var(--ls-text-hint)] uppercase tracking-wider">Email</label>
-                  <input value={editEmail} onChange={e => { setEditEmail(e.target.value); setEditSaved(false); }} style={{ marginTop: 4 }} />
-                </div>
-                <div>
-                  <label className="text-[11px] font-medium text-[var(--ls-text-hint)] uppercase tracking-wider">Ville</label>
-                  <input value={editCity} onChange={e => { setEditCity(e.target.value); setEditSaved(false); }} style={{ marginTop: 4 }} />
-                </div>
-                <Button
-                  variant="secondary"
-                  className="w-full"
-                  onClick={() => {
-                    void (async () => {
-                      try {
-                        await updateClientInfo(client.id, {
-                          phone: editPhone.trim(),
-                          email: editEmail.trim().toLowerCase(),
-                          city: editCity.trim() || undefined,
-                        });
-                        try {
-                          await refreshClientRecap(client.id);
-                        } catch (refreshErr) {
-                          pushToast(buildSupabaseErrorToast(
-                            refreshErr,
-                            "Les données sont enregistrées mais le lien client n'a pas pu être mis à jour.",
-                          ));
-                        }
-                        setEditSaved(true);
-                        pushToast({ tone: "success", title: "Coordonnées mises à jour" });
-                      } catch (err) {
-                        setEditSaved(false);
-                        pushToast(buildSupabaseErrorToast(
-                          err,
-                          "Impossible de mettre à jour les coordonnées.",
-                        ));
-                      }
-                    })();
-                  }}
-                >
-                  {editSaved ? "✓ Enregistré" : "Enregistrer"}
-                </Button>
-              </div>
-            </Card>
-
-            {/* Actions rapides — liste verticale, plus de doublon
-                "Créer accès app" (géré par le bouton header). */}
-            <Card className="space-y-4">
-              <p className="eyebrow-label">Actions client</p>
-              <h2 className="text-lg font-bold text-white" style={{ fontFamily: 'Syne, sans-serif' }}>
-                Actions rapides
-              </h2>
-              <div className="space-y-3">
-                <LinkButton
-                  to={`/clients/${client.id}/follow-up/new`}
-                  label="Nouveau suivi"
-                  hint="Relire, mesurer et poser la suite"
-                />
-                <LinkButton
-                  to={`/clients/${client.id}/start-assessment/edit`}
-                  label="Modifier le bilan de départ"
-                  hint="Corriger la date et les valeurs de référence"
-                />
-                {latestAssessment && latestAssessment.id ? (
-                  <LinkButton
-                    to={`/clients/${client.id}/assessments/${latestAssessment.id}/edit`}
-                    label="Modifier le dernier bilan"
-                    hint="Compléter une section oubliée ou corriger les valeurs"
-                  />
-                ) : null}
-                <button
-                  type="button"
-                  onClick={() => setShowScheduleModal(true)}
-                  className="w-full rounded-[22px] bg-[var(--ls-surface2)] p-4 text-left transition hover:bg-[var(--ls-surface2)]"
-                >
-                  <p className="text-sm font-semibold text-white">Modifier le prochain rendez-vous</p>
-                  <p className="mt-1 text-sm leading-6 text-[var(--ls-text-muted)]">
-                    Ajuster la date, l&apos;heure ou le type de suivi
-                  </p>
-                </button>
-                <LinkButton
-                  to={`/pv/clients?responsable=${encodeURIComponent(client.distributorId)}&client=${encodeURIComponent(client.id)}`}
-                  label="Ouvrir la fiche point volume"
-                  hint="Visualiser les commandes et le suivi produits"
-                />
-              </div>
-            </Card>
-
-            {/* Cycle de vie (statut + fragile + suivi libre) */}
-            <LifecycleControlCard client={client} />
-
-            {/* Dossier — transférer + supprimer (fusionné ici depuis
-                l'ancien bloc Fiche rapide). */}
-            {(canReassignClient || canDeleteClient) && (
-              <Card className="space-y-4">
-                <p className="eyebrow-label">Dossier</p>
-                <h2 className="text-lg font-bold text-white" style={{ fontFamily: 'Syne, sans-serif' }}>
-                  Gestion du dossier
-                </h2>
-                {canReassignClient && (
-                  <div className="rounded-[18px] border border-[var(--ls-border)] bg-white/[0.02] p-4">
-                    <p className="text-[11px] text-[var(--ls-text-hint)] uppercase tracking-wider mb-3">
-                      Transférer à
-                    </p>
-                    <select
-                      value={nextOwnerId}
-                      onChange={(e) => setNextOwnerId(e.target.value)}
-                      className="mb-3"
-                    >
-                      {assignableOwners.map((u) => (
-                        <option key={u.id} value={u.id}>
-                          {u.name}
-                        </option>
-                      ))}
-                    </select>
-                    <Button
-                      className="w-full"
-                      onClick={() => void handleTransferClient()}
-                      disabled={nextOwnerId === client.distributorId}
-                    >
-                      Transférer
-                    </Button>
-                    {transferFeedback && (
-                      <p className="mt-2 text-sm text-[#2DD4BF]">{transferFeedback}</p>
-                    )}
-                  </div>
-                )}
-                {canDeleteClient && (
-                  <div className="pt-3 border-t border-[var(--ls-border)]">
-                    <DangerActionButton
-                      label="Supprimer ce dossier"
-                      hint="Retirer ce client et ses données"
-                      onClick={handleDeleteClient}
-                    />
-                  </div>
-                )}
-              </Card>
-            )}
-          </div>
-        </div>
+        <ErrorBoundary name="ClientDetailPage/ActionsTab" fallback={(
+          <Card><p className="text-sm text-white">Impossible d'afficher l'onglet Actions.</p></Card>
+        )}>
+          <ActionsTab
+            client={client}
+            onEditRdv={() => setShowScheduleModal(true)}
+            onGoToVueComplete={() => setActiveTab(0)}
+          />
+        </ErrorBoundary>
       )}
 
       {/* Schedule Modal */}
@@ -1132,51 +829,6 @@ function NouveauBilanCTA({ onClick }: { onClick: () => void }) {
       </div>
       <span className="ls-nouveau-bilan-cta__action">Lancer ↗</span>
     </button>
-  );
-}
-
-function DangerActionButton({
-  label,
-  hint,
-  onClick
-}: {
-  label: string;
-  hint: string;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="rounded-[22px] bg-red-500/10 px-4 py-3 text-left transition hover:bg-red-500/15"
-    >
-      <span className="block text-sm font-medium text-red-100">{label}</span>
-      <span className="mt-1 block text-sm text-red-100/75">{hint}</span>
-    </button>
-  );
-}
-
-function LinkButton({
-  to,
-  label,
-  hint,
-}: {
-  to: string;
-  label: string;
-  hint: string;
-  tone?: "blue" | "green";
-}) {
-  return (
-    <Link
-      to={to}
-      style={{ display: 'block', background: 'var(--ls-surface)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12, padding: '14px 16px', textDecoration: 'none', position: 'relative', overflow: 'hidden', transition: 'border-color 0.15s' }}
-      onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--ls-border2)'}
-      onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--ls-border)'}
-    >
-      <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 3, background: '#C9A84C', borderRadius: '3px 0 0 3px' }} />
-      <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--ls-text)', marginBottom: 3 }}>{label}</div>
-      <div style={{ fontSize: 12, color: 'var(--ls-text-muted)' }}>{hint}</div>
-    </Link>
   );
 }
 
@@ -1347,680 +999,5 @@ function FreeFollowUpBadge() {
     >
       ✦ Suivi libre
     </span>
-  );
-}
-
-function LifecycleControlCard({ client }: { client: Client }) {
-  const { setClientLifecycleStatus, setClientFragileFlag, setClientFreeFollowUp, setClientFreePvTracking } = useAppContext();
-  const { push: pushToast } = useToast();
-  const currentStatus: LifecycleStatus = client.lifecycleStatus ?? (client.started ? "active" : "not_started");
-  const [selected, setSelected] = useState<LifecycleStatus>(currentStatus);
-  const [saving, setSaving] = useState(false);
-  const [feedback, setFeedback] = useState<{ type: "ok" | "err"; msg: string } | null>(null);
-  const [fragileSaving, setFragileSaving] = useState(false);
-  const [freeSaving, setFreeSaving] = useState(false);
-  const [freePvSaving, setFreePvSaving] = useState(false);
-  const isFragile = client.isFragile ?? false;
-  const isFreeFollowUp = client.freeFollowUp ?? false;
-  const isFreePvTracking = client.freePvTracking ?? false;
-
-  async function handleToggleFreePvTracking() {
-    setFreePvSaving(true);
-    try {
-      await setClientFreePvTracking(client.id, !isFreePvTracking);
-      pushToast({
-        tone: "success",
-        title: isFreePvTracking ? "Suivi PV réactivé" : "PV volume libre activé",
-        message: isFreePvTracking
-          ? "Ce client réapparaît dans les listes de réassort."
-          : "Ce client n'apparaîtra plus dans les listes de réassort ni dans les alertes PV.",
-      });
-    } catch (err) {
-      pushToast(buildSupabaseErrorToast(
-        err,
-        "Impossible de modifier le suivi PV."
-      ));
-    } finally {
-      setFreePvSaving(false);
-    }
-  }
-
-  async function handleToggleFreeFollowUp() {
-    setFreeSaving(true);
-    try {
-      await setClientFreeFollowUp(client.id, !isFreeFollowUp);
-      pushToast({
-        tone: "success",
-        title: isFreeFollowUp ? "Suivi libre désactivé" : "Suivi libre activé",
-        message: isFreeFollowUp
-          ? "Le client est de nouveau suivi dans l'agenda automatique."
-          : "Le client reste actif mais n'apparaîtra plus dans l'agenda ni les relances.",
-      });
-    } catch (err) {
-      pushToast(buildSupabaseErrorToast(
-        err,
-        "Impossible de modifier le mode de suivi."
-      ));
-    } finally {
-      setFreeSaving(false);
-    }
-  }
-
-  async function handleSaveStatus() {
-    if (selected === currentStatus) return;
-    setSaving(true);
-    setFeedback(null);
-    try {
-      await setClientLifecycleStatus(client.id, selected);
-      setFeedback({
-        type: "ok",
-        msg:
-          selected === "stopped" || selected === "lost"
-            ? "Statut mis à jour · les suivis en cours ont été désactivés"
-            : "Statut mis à jour",
-      });
-      setTimeout(() => setFeedback(null), 2500);
-    } catch (err) {
-      setFeedback({
-        type: "err",
-        msg: err instanceof Error ? err.message : "Impossible de modifier le statut.",
-      });
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  async function handleToggleFragile() {
-    setFragileSaving(true);
-    try {
-      await setClientFragileFlag(client.id, !isFragile);
-    } finally {
-      setFragileSaving(false);
-    }
-  }
-
-  const options: Array<{ value: LifecycleStatus; label: string; hint: string }> = [
-    { value: "active",      label: "Actif",         hint: "Programme en cours, suivi normal" },
-    { value: "not_started", label: "Pas démarré",   hint: "Bilan fait, programme pas encore démarré" },
-    { value: "paused",      label: "En pause",      hint: "Temporairement en standby (vacances, maladie…)" },
-    { value: "stopped",     label: "Arrêté",        hint: "A arrêté volontairement · stoppe les suivis auto" },
-    { value: "lost",        label: "Perdu",         hint: "Injoignable · stoppe les suivis auto" },
-  ];
-
-  return (
-    <Card className="space-y-4">
-      <p className="eyebrow-label">Cycle de vie</p>
-      <h2 className="text-lg font-bold text-white" style={{ fontFamily: "Syne, sans-serif" }}>
-        Statut du dossier
-      </h2>
-
-      <div className="space-y-2">
-        {options.map((opt) => {
-          const isActive = selected === opt.value;
-          return (
-            <button
-              key={opt.value}
-              type="button"
-              onClick={() => setSelected(opt.value)}
-              style={{
-                width: "100%",
-                display: "flex",
-                alignItems: "center",
-                gap: 12,
-                padding: "12px 14px",
-                borderRadius: 12,
-                border: isActive ? "1.5px solid var(--ls-gold)" : "1px solid var(--ls-border)",
-                background: isActive ? "rgba(184,146,42,0.08)" : "var(--ls-surface2)",
-                color: "var(--ls-text)",
-                cursor: "pointer",
-                textAlign: "left",
-                fontFamily: "DM Sans, sans-serif",
-                transition: "all 0.15s",
-              }}
-            >
-              <div style={{ flexShrink: 0 }}>
-                <LifecycleBadge status={opt.value} />
-              </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 13, fontWeight: 600, color: "var(--ls-text)" }}>{opt.label}</div>
-                <div style={{ fontSize: 11, color: "var(--ls-text-muted)", marginTop: 2 }}>{opt.hint}</div>
-              </div>
-              {isActive && (
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ls-gold)" strokeWidth="2.5">
-                  <polyline points="20 6 9 17 4 12" />
-                </svg>
-              )}
-            </button>
-          );
-        })}
-      </div>
-
-      <Button
-        className="w-full"
-        onClick={() => void handleSaveStatus()}
-        disabled={saving || selected === currentStatus}
-      >
-        {saving ? "Enregistrement..." : selected === currentStatus ? "Statut inchangé" : "Enregistrer le statut"}
-      </Button>
-
-      {feedback && (
-        <div
-          style={{
-            fontSize: 12,
-            padding: "8px 12px",
-            borderRadius: 9,
-            background: feedback.type === "ok" ? "rgba(13,148,136,0.08)" : "rgba(220,38,38,0.08)",
-            border: feedback.type === "ok" ? "1px solid rgba(13,148,136,0.2)" : "1px solid rgba(220,38,38,0.2)",
-            color: feedback.type === "ok" ? "var(--ls-teal)" : "var(--ls-coral)",
-          }}
-        >
-          {feedback.msg}
-        </div>
-      )}
-
-      {/* Flag fragile */}
-      <div
-        style={{
-          marginTop: 10,
-          padding: "12px 14px",
-          borderRadius: 12,
-          background: isFragile ? "rgba(220,38,38,0.06)" : "var(--ls-surface2)",
-          border: isFragile ? "1px solid rgba(220,38,38,0.2)" : "1px solid var(--ls-border)",
-          display: "flex",
-          alignItems: "center",
-          gap: 10,
-        }}
-      >
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 13, fontWeight: 600, color: "var(--ls-text)" }}>
-            {isFragile ? "⚠ Client marqué fragile" : "Marquer comme fragile"}
-          </div>
-          <div style={{ fontSize: 11, color: "var(--ls-text-muted)", marginTop: 2 }}>
-            {isFragile
-              ? "Ce client a besoin d'attention particulière — visible dans le dashboard."
-              : "À activer si le client hésite ou a besoin d'être rassuré."}
-          </div>
-        </div>
-        <button
-          type="button"
-          onClick={() => void handleToggleFragile()}
-          disabled={fragileSaving}
-          style={{
-            padding: "7px 14px",
-            borderRadius: 9,
-            border: isFragile ? "1px solid var(--ls-border)" : "1px solid rgba(220,38,38,0.25)",
-            background: isFragile ? "transparent" : "rgba(220,38,38,0.08)",
-            color: isFragile ? "var(--ls-text-muted)" : "var(--ls-coral)",
-            fontSize: 12,
-            fontWeight: 600,
-            cursor: fragileSaving ? "wait" : "pointer",
-            fontFamily: "DM Sans, sans-serif",
-            flexShrink: 0,
-          }}
-        >
-          {fragileSaving ? "..." : isFragile ? "Retirer" : "Marquer"}
-        </button>
-      </div>
-
-      {/* Sujet C — Mode de suivi (suivi libre / standard) */}
-      <div
-        style={{
-          marginTop: 10,
-          padding: "12px 14px",
-          borderRadius: 12,
-          background: isFreeFollowUp
-            ? "color-mix(in srgb, var(--ls-gold) 6%, transparent)"
-            : "var(--ls-surface2)",
-          border: isFreeFollowUp
-            ? "1px solid color-mix(in srgb, var(--ls-gold) 25%, transparent)"
-            : "1px solid var(--ls-border)",
-          display: "flex",
-          alignItems: "center",
-          gap: 10,
-        }}
-      >
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 13, fontWeight: 600, color: "var(--ls-text)" }}>
-            {isFreeFollowUp ? "✦ Suivi libre activé" : "Activer le suivi libre"}
-          </div>
-          <div style={{ fontSize: 11, color: "var(--ls-text-muted)", marginTop: 2, lineHeight: 1.5 }}>
-            {isFreeFollowUp
-              ? "Le client est hors agenda auto — pas de relance, pas de notif. Géré à la demande."
-              : "À activer pour les clients fidèles sans besoin de rappel auto (pas de RDV, pas de relance)."}
-          </div>
-        </div>
-        <button
-          type="button"
-          onClick={() => void handleToggleFreeFollowUp()}
-          disabled={freeSaving}
-          style={{
-            padding: "7px 14px",
-            borderRadius: 9,
-            border: isFreeFollowUp
-              ? "1px solid var(--ls-border)"
-              : "1px solid color-mix(in srgb, var(--ls-gold) 30%, transparent)",
-            background: isFreeFollowUp
-              ? "transparent"
-              : "color-mix(in srgb, var(--ls-gold) 10%, transparent)",
-            color: isFreeFollowUp ? "var(--ls-text-muted)" : "var(--ls-gold)",
-            fontSize: 12,
-            fontWeight: 600,
-            cursor: freeSaving ? "wait" : "pointer",
-            fontFamily: "DM Sans, sans-serif",
-            flexShrink: 0,
-          }}
-        >
-          {freeSaving ? "..." : isFreeFollowUp ? "Désactiver" : "Activer"}
-        </button>
-      </div>
-
-      {/* Free PV tracking (2026-04-20) — client sous un autre superviseur */}
-      <div
-        style={{
-          marginTop: 10,
-          padding: "12px 14px",
-          borderRadius: 12,
-          background: isFreePvTracking
-            ? "color-mix(in srgb, var(--ls-teal) 6%, transparent)"
-            : "var(--ls-surface2)",
-          border: isFreePvTracking
-            ? "1px solid color-mix(in srgb, var(--ls-teal) 25%, transparent)"
-            : "1px solid var(--ls-border)",
-          display: "flex",
-          alignItems: "center",
-          gap: 10,
-        }}
-      >
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 13, fontWeight: 600, color: "var(--ls-text)" }}>
-            {isFreePvTracking ? "◇ PV volume libre activé" : "PV volume libre"}
-          </div>
-          <div style={{ fontSize: 11, color: "var(--ls-text-muted)", marginTop: 2, lineHeight: 1.5 }}>
-            {isFreePvTracking
-              ? "Ce client est sous un autre superviseur. Exclu des listes de réassort et alertes PV. Bilans et RDV restent normaux."
-              : "À activer si le client est sous un autre superviseur (pas accès aux commandes). Il sera exclu du suivi PV."}
-          </div>
-        </div>
-        <button
-          type="button"
-          onClick={() => void handleToggleFreePvTracking()}
-          disabled={freePvSaving}
-          style={{
-            padding: "7px 14px",
-            borderRadius: 9,
-            border: isFreePvTracking
-              ? "1px solid var(--ls-border)"
-              : "1px solid color-mix(in srgb, var(--ls-teal) 30%, transparent)",
-            background: isFreePvTracking
-              ? "transparent"
-              : "color-mix(in srgb, var(--ls-teal) 10%, transparent)",
-            color: isFreePvTracking ? "var(--ls-text-muted)" : "var(--ls-teal)",
-            fontSize: 12,
-            fontWeight: 600,
-            cursor: freePvSaving ? "wait" : "pointer",
-            fontFamily: "DM Sans, sans-serif",
-            flexShrink: 0,
-          }}
-        >
-          {freePvSaving ? "..." : isFreePvTracking ? "Désactiver" : "Activer"}
-        </button>
-      </div>
-    </Card>
-  );
-}
-
-// ─── Refonte fiche client 2 colonnes (2026-04-25) ─────────────────────────
-// Card compacte "Infos clés" (eau, protéines, produits, etc.).
-function KeyInfoCard({
-  label,
-  value,
-  icon,
-  sub,
-}: {
-  label: string;
-  value: string;
-  icon?: string;
-  sub?: string;
-}) {
-  return (
-    <div
-      style={{
-        background: "var(--ls-surface2)",
-        border: "1px solid var(--ls-border)",
-        borderRadius: 12,
-        padding: "10px 12px",
-      }}
-    >
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 6,
-          fontSize: 10,
-          textTransform: "uppercase",
-          letterSpacing: "0.08em",
-          color: "var(--ls-text-hint)",
-          fontWeight: 600,
-          marginBottom: 4,
-        }}
-      >
-        {icon ? <span aria-hidden="true">{icon}</span> : null}
-        {label}
-      </div>
-      <div
-        style={{
-          fontFamily: "Syne, sans-serif",
-          fontSize: 16,
-          fontWeight: 700,
-          color: "var(--ls-text)",
-          lineHeight: 1.15,
-        }}
-      >
-        {value}
-      </div>
-      {sub ? (
-        <div style={{ fontSize: 11, color: "var(--ls-text-muted)", marginTop: 2 }}>{sub}</div>
-      ) : null}
-    </div>
-  );
-}
-
-// Card "Prochain RDV" spécialisée avec menu contextuel dropdown (4 options)
-function RdvKeyInfoCardWithMenu({
-  client,
-  activeFollowUp,
-  onEditRdv,
-}: {
-  client: Client;
-  activeFollowUp: ReturnType<typeof getClientActiveFollowUp>;
-  onEditRdv: () => void;
-}) {
-  const [menuOpen, setMenuOpen] = useState(false);
-  const dueDate = activeFollowUp ? new Date(activeFollowUp.dueDate) : null;
-  const hasValidDate = dueDate !== null && !Number.isNaN(dueDate.getTime());
-
-  // Fermeture menu sur clic extérieur
-  useEffect(() => {
-    if (!menuOpen) return;
-    function handleClick(e: MouseEvent) {
-      const target = e.target as HTMLElement | null;
-      if (!target?.closest("[data-rdv-menu-root]")) {
-        setMenuOpen(false);
-      }
-    }
-    document.addEventListener("click", handleClick);
-    return () => document.removeEventListener("click", handleClick);
-  }, [menuOpen]);
-
-  const displayValue = hasValidDate
-    ? `${dueDate.toLocaleDateString("fr-FR", {
-        weekday: "short",
-        day: "numeric",
-        month: "short",
-      })} ${dueDate.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}`
-    : "Non planifié";
-
-  // Générer URL Google Agenda
-  const googleUrl = (() => {
-    if (!hasValidDate) return "#";
-    const start = dueDate;
-    const end = new Date(start.getTime() + 45 * 60 * 1000);
-    const fmt = (d: Date) => d.toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
-    const params = new URLSearchParams({
-      action: "TEMPLATE",
-      text: `RDV Lor Squad - ${client.firstName}`,
-      dates: `${fmt(start)}/${fmt(end)}`,
-      details: `Suivi coaching nutrition Lor Squad avec ${client.distributorName}`,
-      location: "La Base Shakes & Drinks, Verdun",
-    });
-    return `https://calendar.google.com/calendar/render?${params.toString()}`;
-  })();
-
-  // Générer .ics data URI
-  const icsUri = hasValidDate
-    ? createIcsDataUri({
-        title: `RDV Lor Squad - ${client.firstName} ${client.lastName}`,
-        description: `Suivi coaching Lor Squad avec ${client.distributorName}.`,
-        startDate: dueDate,
-        location: "La Base Shakes & Drinks, Verdun",
-        organizerName: client.distributorName,
-      })
-    : "";
-  const icsFilename = hasValidDate
-    ? `rdv-${client.firstName.toLowerCase().replace(/\W+/g, "-")}-${dueDate.toISOString().slice(0, 10)}.ics`
-    : "rdv.ics";
-
-  // WhatsApp rappel client
-  const waUrl = (() => {
-    if (!hasValidDate) return "";
-    const phone = (client.phone ?? "").replace(/\D/g, "");
-    if (!phone) return "";
-    const dateStr = dueDate.toLocaleDateString("fr-FR", {
-      weekday: "long",
-      day: "numeric",
-      month: "long",
-    });
-    const timeStr = dueDate.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
-    const msg = encodeURIComponent(
-      `Salut ${client.firstName} 👋 Rappel de notre RDV le ${dateStr} à ${timeStr} chez Lor Squad. Hâte de te voir ! 💪`,
-    );
-    return `https://wa.me/${phone}?text=${msg}`;
-  })();
-
-  return (
-    <div data-rdv-menu-root style={{ position: "relative" }}>
-      <button
-        type="button"
-        onClick={() => hasValidDate && setMenuOpen((v) => !v)}
-        disabled={!hasValidDate}
-        style={{
-          width: "100%",
-          textAlign: "left",
-          background: "var(--ls-surface2)",
-          border: hasValidDate
-            ? menuOpen
-              ? "1px solid rgba(201,168,76,0.6)"
-              : "1px solid var(--ls-border)"
-            : "1px solid var(--ls-border)",
-          borderRadius: 12,
-          padding: "10px 12px",
-          cursor: hasValidDate ? "pointer" : "default",
-          transition: "border-color 0.15s",
-          fontFamily: "inherit",
-          color: "inherit",
-        }}
-      >
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            gap: 6,
-            fontSize: 10,
-            textTransform: "uppercase",
-            letterSpacing: "0.08em",
-            color: "var(--ls-text-hint)",
-            fontWeight: 600,
-            marginBottom: 4,
-          }}
-        >
-          <span>
-            <span aria-hidden="true" style={{ marginRight: 4 }}>📅</span>
-            Prochain RDV
-          </span>
-          {hasValidDate ? (
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              {menuOpen ? <polyline points="18 15 12 9 6 15" /> : <polyline points="6 9 12 15 18 9" />}
-            </svg>
-          ) : null}
-        </div>
-        <div
-          style={{
-            fontFamily: "Syne, sans-serif",
-            fontSize: 14,
-            fontWeight: 700,
-            color: "var(--ls-text)",
-            lineHeight: 1.2,
-          }}
-        >
-          {displayValue}
-        </div>
-      </button>
-
-      {menuOpen && hasValidDate ? (
-        <div
-          role="menu"
-          style={{
-            position: "absolute",
-            top: "100%",
-            left: 0,
-            right: 0,
-            marginTop: 4,
-            background: "var(--ls-surface)",
-            border: "1px solid var(--ls-border)",
-            borderRadius: 12,
-            boxShadow: "0 8px 24px rgba(0,0,0,0.24)",
-            zIndex: 20,
-            overflow: "hidden",
-          }}
-        >
-          <RdvMenuOption
-            icon="G"
-            iconColor="#4285F4"
-            title="Google Agenda"
-            hint="Ouvre dans un nouvel onglet"
-            onClick={() => {
-              window.open(googleUrl, "_blank", "noopener,noreferrer");
-              setMenuOpen(false);
-            }}
-          />
-          <a
-            href={icsUri}
-            download={icsFilename}
-            onClick={() => setMenuOpen(false)}
-            style={{ textDecoration: "none", color: "inherit", display: "block" }}
-          >
-            <RdvMenuOption
-              icon="📆"
-              title="Apple / Outlook (.ics)"
-              hint="Télécharge un fichier calendrier"
-              asDiv
-            />
-          </a>
-          <RdvMenuOption
-            icon="✎"
-            iconColor="var(--ls-teal)"
-            title="Modifier le RDV"
-            hint="Changer date ou heure"
-            onClick={() => {
-              onEditRdv();
-              setMenuOpen(false);
-            }}
-          />
-          {waUrl ? (
-            <a
-              href={waUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={() => setMenuOpen(false)}
-              style={{ textDecoration: "none", color: "inherit", display: "block" }}
-            >
-              <RdvMenuOption
-                icon="📤"
-                title="Envoyer au client (WhatsApp)"
-                hint="Rappel avec date et heure"
-                asDiv
-              />
-            </a>
-          ) : (
-            <RdvMenuOption
-              icon="📤"
-              title="WhatsApp client"
-              hint="Téléphone manquant sur la fiche"
-              disabled
-            />
-          )}
-        </div>
-      ) : null}
-    </div>
-  );
-}
-
-function RdvMenuOption({
-  icon,
-  iconColor,
-  title,
-  hint,
-  onClick,
-  asDiv,
-  disabled,
-}: {
-  icon: string;
-  iconColor?: string;
-  title: string;
-  hint: string;
-  onClick?: () => void;
-  asDiv?: boolean;
-  disabled?: boolean;
-}) {
-  const content = (
-    <>
-      <span
-        aria-hidden="true"
-        style={{
-          width: 26,
-          height: 26,
-          borderRadius: 8,
-          background: iconColor ?? "var(--ls-surface2)",
-          color: iconColor ? "#fff" : "var(--ls-text)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          fontWeight: 700,
-          fontSize: 12,
-          flexShrink: 0,
-        }}
-      >
-        {icon}
-      </span>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: 13, fontWeight: 600, color: "var(--ls-text)", lineHeight: 1.2 }}>
-          {title}
-        </div>
-        <div style={{ fontSize: 11, color: "var(--ls-text-muted)", marginTop: 1 }}>{hint}</div>
-      </div>
-    </>
-  );
-
-  const commonStyle: React.CSSProperties = {
-    display: "flex",
-    alignItems: "center",
-    gap: 10,
-    padding: "10px 12px",
-    cursor: disabled ? "not-allowed" : onClick || asDiv ? "pointer" : "default",
-    opacity: disabled ? 0.5 : 1,
-    transition: "background 0.12s",
-    borderBottom: "1px solid var(--ls-border)",
-  };
-
-  if (asDiv) {
-    return <div style={commonStyle}>{content}</div>;
-  }
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      style={{
-        ...commonStyle,
-        width: "100%",
-        textAlign: "left",
-        background: "transparent",
-        border: "none",
-        fontFamily: "inherit",
-      }}
-    >
-      {content}
-    </button>
   );
 }
