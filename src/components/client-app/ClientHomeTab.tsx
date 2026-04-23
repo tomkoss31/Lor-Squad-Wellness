@@ -5,6 +5,7 @@
 import { useEffect, useMemo, useState } from "react";
 import type { HerbalifeProduct } from "../../data/herbalifeCatalog";
 import { ClientPublicShareConsent } from "./ClientPublicShareConsent";
+import { createIcsDataUri } from "../../lib/googleCalendar";
 
 interface MetricEntry {
   date: string;
@@ -342,6 +343,37 @@ export function ClientHomeTab({
               Modifier
             </button>
           </div>
+          {/* Secondary CTA : téléchargement .ics universel (Apple Cal / Outlook / etc.) */}
+          {data.next_follow_up ? (
+            <div style={{ marginTop: 10 }}>
+              <a
+                href={createIcsDataUri({
+                  title: `Rendez-vous avec ${coachFirstName}`,
+                  description: `Rendez-vous Lor'Squad Wellness avec ${coachFirstName} à La Base — Verdun.`,
+                  startDate: new Date(data.next_follow_up),
+                  location: "La Base Shakes and drinks, Verdun",
+                  organizerName: coachFirstName,
+                })}
+                download={`rdv-labase-${data.next_follow_up.slice(0, 10)}.ics`}
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 6,
+                  padding: "7px 12px",
+                  background: "transparent",
+                  color: "#E7FFF4",
+                  borderRadius: 8,
+                  textDecoration: "none",
+                  fontSize: 11,
+                  fontWeight: 600,
+                  border: "1px solid rgba(29,158,117,0.6)",
+                  opacity: 0.92,
+                }}
+              >
+                📅 Ajouter à mon calendrier (.ics)
+              </a>
+            </div>
+          ) : null}
           {rdvEditOpen ? (
             <div style={{ marginTop: 12, padding: 12, background: "rgba(255,255,255,0.12)", borderRadius: 10 }}>
               {rdvSent ? (
