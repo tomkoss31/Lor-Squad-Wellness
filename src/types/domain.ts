@@ -228,6 +228,11 @@ export interface Client {
     photo_before?: boolean;
     measurements?: boolean;
   };
+  // Chantier RGPD partage public (2026-04-24) : consentement explicite
+  // requis avant que le coach puisse créer un lien /partage/:token.
+  publicShareConsent?: boolean;
+  publicShareConsentAt?: string;
+  publicShareRevokedAt?: string;
 }
 
 export interface FollowUp {

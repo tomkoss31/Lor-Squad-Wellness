@@ -4,6 +4,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import type { HerbalifeProduct } from "../../data/herbalifeCatalog";
+import { ClientPublicShareConsent } from "./ClientPublicShareConsent";
 
 interface MetricEntry {
   date: string;
@@ -860,6 +861,12 @@ export function ClientHomeTab({
           <line x1="10" y1="14" x2="21" y2="3" />
         </svg>
       </a>
+
+      {/* Consentement partage public (RGPD 2026-04-24) */}
+      <ClientPublicShareConsent
+        clientId={data.client_id}
+        clientFirstName={data.client_first_name}
+      />
 
       {/* 9. FOOTER QUOTE */}
       <div
