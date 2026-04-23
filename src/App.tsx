@@ -127,6 +127,11 @@ const ResetPasswordPage = lazy(() =>
     default: module.ResetPasswordPage,
   })),
 );
+const SharePage = lazy(() =>
+  import("./pages/SharePage").then((module) => ({
+    default: module.SharePage,
+  })),
+);
 const BienvenuePage = lazy(() =>
   import("./pages/BienvenuePage").then((module) => ({
     default: module.BienvenuePage
@@ -207,6 +212,7 @@ export default function App() {
           <Route path="/auto-login" element={<AutoLoginPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
+          <Route path="/partage/:token" element={<SharePage />} />
           <Route element={<PublicRoute />}>
             <Route path="/login" element={<LoginPage />} />
           </Route>
