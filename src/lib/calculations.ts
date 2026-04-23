@@ -43,6 +43,48 @@ export function calculateProteinRange(
   return `${Math.round(weight * multiplier.min)} - ${Math.round(weight * multiplier.max)} g`;
 }
 
+// Chantier Recommandations nutritionnelles (2026-04-25).
+// Variantes "target" : retournent une valeur NUMÉRIQUE unique (pas une
+// plage ni une string) pour stockage DB + affichage card "objectif".
+// Clampées sur plages physiologiques (2-4 L d'eau, protéines < 3 g/kg
+// pour rester sain même si calcul extrême).
+
+/**
+ * Eau recommandée (litres/jour) — number.
+ * Base : 33 mL / kg (recommandation EFSA adulte actif).
+ * Clamp 2.0 → 4.0 L. Arrondi à 0.1 L près.
+ */
+export function computeWaterTarget(weightKg: number): number {
+  if (!weightKg || weightKg <= 0) return 2.0;
+  const base = weightKg * 0.033;
+  const clamped = Math.max(2, Math.min(4, base));
+  return Math.round(clamped * 10) / 10;
+}
+
+/**
+ * Protéines cible (grammes/jour) — number.
+ * Multiplicateurs :
+ *   - sport / prise de masse : 2.0 g/kg
+ *   - perte de poids : 1.8 g/kg (préservation masse maigre)
+ *   - bien-être / maintenance : 1.4 g/kg
+ * Valeur par défaut 1.6 g/kg si objectif inconnu. Clamp max 3 g/kg.
+ */
+export function computeProteinTarget(weightKg: number, objective?: Objective | string): number {
+  if (!weightKg || weightKg <= 0) return 0;
+  const multipliers: Record<string, number> = {
+    sport: 2.0,
+    "weight-loss": 1.8,
+    weight_loss: 1.8,
+    muscle_gain: 2.0,
+    maintenance: 1.4,
+    wellbeing: 1.4,
+  };
+  const m = multipliers[(objective ?? "").toString()] ?? 1.6;
+  const base = weightKg * m;
+  const clamped = Math.min(weightKg * 3, base);
+  return Math.round(clamped);
+}
+
 export function formatDate(input: string | null | undefined): string {
   // Fix Invalid time value (2026-04-19) : protège contre null/undefined/"" et
   // dates non-parseables. Alignement avec le pattern de formatDateTime().
