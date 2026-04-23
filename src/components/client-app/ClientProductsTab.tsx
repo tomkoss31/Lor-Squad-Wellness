@@ -15,10 +15,13 @@ interface PvCurrentProduct {
   id: string;
   product_id: string;
   product_name: string;
-  quantite_label: string;
-  price_public_per_unit: number;
+  quantite_label: string | null;
+  price_public_per_unit: number | null;
   note_metier: string | null;
-  start_date: string;
+  start_date: string | null;
+  // Optionnel : présent uniquement sur la source live Edge Function.
+  pv_per_unit?: number | null;
+  active?: boolean;
 }
 
 interface Props {
@@ -29,6 +32,11 @@ interface Props {
   latestScanDate?: string | null;
   productDetails: Record<string, string>;
   onAskCoach: (product: HerbalifeProduct) => void;
+  // Chantier Migration RLS Edge Function (2026-04-26) : source live des
+  // produits "en cours" (pv_client_products). Si fournie, prioritaire sur
+  // le fetch legacy qui ne marche plus (RLS drop 25/04). Si non fournie
+  // (ex: loading), fallback silencieux sur le fetch legacy + empty state.
+  liveProducts?: PvCurrentProduct[] | null;
 }
 
 const CATEGORIES: Array<{ key: HerbalifeProduct["category"]; label: string; icon: string }> = [
@@ -61,14 +69,23 @@ export function ClientProductsTab({
   latestScanDate,
   productDetails,
   onAskCoach,
+  liveProducts,
 }: Props) {
-  const [currentProducts, setCurrentProducts] = useState<PvCurrentProduct[]>([]);
+  // Source des produits en cours :
+  //   1. liveProducts (Edge Function client-app-data) — prioritaire
+  //   2. fallback fetch legacy qui échoue silencieusement (policies RLS
+  //      droppées le 25/04) — empty array la plupart du temps
+  const [legacyProducts, setLegacyProducts] = useState<PvCurrentProduct[]>([]);
+  const currentProducts = liveProducts ?? legacyProducts;
   const [catalogueOpen, setCatalogueOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [openCategory, setOpenCategory] = useState<HerbalifeProduct["category"] | null>(null);
 
-  // ─── Live fetch produits en cours (pv_client_products) ──────────────────
+  // ─── Fallback legacy : SELECT direct (ne marchera plus tant que RLS
+  // drop, mais on garde comme filet si un jour policies restaurées). Pas
+  // appelé si liveProducts fourni.
   useEffect(() => {
+    if (liveProducts) return; // Skip : on a déjà les données live via Edge Function
     let cancelled = false;
     async function load() {
       try {
@@ -80,7 +97,7 @@ export function ClientProductsTab({
           .eq("client_id", clientId)
           .eq("active", true)
           .order("start_date", { ascending: false });
-        if (!cancelled && data) setCurrentProducts(data as PvCurrentProduct[]);
+        if (!cancelled && data) setLegacyProducts(data as PvCurrentProduct[]);
       } catch {
         /* RLS ou réseau — affichage empty state */
       }
@@ -89,7 +106,7 @@ export function ClientProductsTab({
     return () => {
       cancelled = true;
     };
-  }, [clientId]);
+  }, [clientId, liveProducts]);
 
   const whatsappUrl = useMemo(() => {
     const digits = (coachWhatsapp ?? "").replace(/\D/g, "");
@@ -260,7 +277,7 @@ export function ClientProductsTab({
                     flexShrink: 0,
                   }}
                 >
-                  {p.price_public_per_unit.toFixed(2)}€
+                  {(p.price_public_per_unit ?? 0).toFixed(2)}€
                 </div>
               </div>
             ))}
