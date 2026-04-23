@@ -188,19 +188,86 @@ export function BienvenuePage() {
 
   // ─── Rendu ───────────────────────────────────────────────────────────────
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        background: "linear-gradient(180deg, #0B0D11 0%, #131A2A 100%)",
-        color: "#F4E9CF",
-        padding: 20,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        fontFamily: "DM Sans, sans-serif",
-      }}
-    >
-      <div style={{ maxWidth: 440, width: "100%" }}>
+    <div className="bienvenue-root">
+      {/* Chantier Premium Onboarding (2026-04-24) : aligne BienvenuePage
+          sur direction Welcome/Login. Mesh gradient + grain + stagger
+          animations. */}
+      <style>{`
+        .bienvenue-root {
+          min-height: 100vh;
+          min-height: 100dvh;
+          background: #0A0D0F;
+          color: #F0EDE8;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 32px 20px;
+          position: relative;
+          overflow: hidden;
+          font-family: 'DM Sans', sans-serif;
+        }
+        .bienvenue-blob {
+          position: absolute;
+          border-radius: 50%;
+          filter: blur(90px);
+          pointer-events: none;
+          will-change: transform;
+        }
+        .bienvenue-blob-teal {
+          top: -14%;
+          left: -10%;
+          width: 520px;
+          height: 520px;
+          background: radial-gradient(circle, #1D9E75 0%, transparent 70%);
+          opacity: 0.35;
+          animation: bienvenue-float-1 32s ease-in-out infinite alternate;
+        }
+        .bienvenue-blob-gold {
+          bottom: -16%;
+          right: -8%;
+          width: 480px;
+          height: 480px;
+          background: radial-gradient(circle, #EF9F27 0%, transparent 70%);
+          opacity: 0.3;
+          animation: bienvenue-float-2 36s ease-in-out infinite alternate;
+        }
+        @keyframes bienvenue-float-1 {
+          0%   { transform: translate(0, 0) scale(1); }
+          100% { transform: translate(60px, 40px) scale(1.12); }
+        }
+        @keyframes bienvenue-float-2 {
+          0%   { transform: translate(0, 0) scale(1); }
+          100% { transform: translate(-70px, -30px) scale(1.1); }
+        }
+        .bienvenue-grain {
+          position: absolute;
+          inset: 0;
+          pointer-events: none;
+          opacity: 0.06;
+          mix-blend-mode: overlay;
+          background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+        }
+        .bienvenue-inner {
+          position: relative;
+          z-index: 1;
+          max-width: 460px;
+          width: 100%;
+          animation: bienvenue-in 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
+        @keyframes bienvenue-in {
+          from { opacity: 0; transform: translateY(12px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .bienvenue-blob-teal, .bienvenue-blob-gold, .bienvenue-inner { animation: none !important; }
+        }
+      `}</style>
+
+      <div aria-hidden="true" className="bienvenue-blob bienvenue-blob-teal" />
+      <div aria-hidden="true" className="bienvenue-blob bienvenue-blob-gold" />
+      <div aria-hidden="true" className="bienvenue-grain" />
+
+      <div className="bienvenue-inner">
         {installPromptStage ? (
           <InstallPwaStep
             firstName={installPromptStage.firstName}
