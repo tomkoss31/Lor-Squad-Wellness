@@ -2,8 +2,6 @@ import { useDeferredValue, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { PageHeading } from "../components/ui/PageHeading";
 import { useAppContext } from "../context/AppContext";
-import { useGlobalView } from "../hooks/useGlobalView";
-import { GlobalViewToggle } from "../components/ui/GlobalViewToggle";
 import { getAccessibleOwnerIds } from "../lib/auth";
 import {
   getActivePortfolioUsers,
@@ -17,11 +15,10 @@ import { LIFECYCLE_LABELS, LIFECYCLE_TONES } from "../types/domain";
 
 export function ClientsPage() {
   const { currentUser, users, visibleClients, visibleFollowUps, setClientLifecycleStatus } = useAppContext();
-  // Chantier 5 bugs (2026-04-24) : admin → vue perso par défaut.
-  // Toggle Vue globale partagé via useGlobalView.
-  const [globalView] = useGlobalView();
+  // Chantier tri priorite (2026-04-24) : l'admin voit TOUS les clients
+  // de l'arborescence, mais ses clients perso sont tries EN PREMIER
+  // (tri intelligent, pas filtrage). Plus de toggle.
   const isAdmin = currentUser?.role === "admin";
-  const applyPersonalScope = isAdmin && !globalView;
 
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | LifecycleStatus | "fragile">("all");
@@ -95,11 +92,7 @@ export function ClientsPage() {
 
   const normalizedSearch = deferredSearch.trim().toLowerCase();
   const filteredClients = useMemo(() => {
-    // Chantier 5 bugs : admin sans Vue globale → uniquement ses clients
-    const basePool = applyPersonalScope
-      ? visibleClients.filter((c) => c.distributorId === currentUser?.id)
-      : visibleClients;
-    return basePool.filter((client) => {
+    const filtered = visibleClients.filter((client) => {
       const matchesOwner =
         ownerFilter === "all" || (selectedOwnerIds ? selectedOwnerIds.has(client.distributorId) : false);
       const effectiveLifecycle: LifecycleStatus = client.lifecycleStatus ?? (client.started ? "active" : "not_started");
@@ -116,7 +109,19 @@ export function ClientsPage() {
           .includes(normalizedSearch);
       return matchesOwner && matchesStatus && matchesSearch;
     });
-  }, [normalizedSearch, ownerFilter, selectedOwnerIds, statusFilter, visibleClients, applyPersonalScope, currentUser?.id]);
+
+    // Chantier tri priorité (2026-04-24) : admin → ses clients en premier.
+    // Tri secondaire par nom de famille alphabétique.
+    if (isAdmin && currentUser?.id) {
+      return [...filtered].sort((a, b) => {
+        const aMine = a.distributorId === currentUser.id ? 0 : 1;
+        const bMine = b.distributorId === currentUser.id ? 0 : 1;
+        if (aMine !== bMine) return aMine - bMine;
+        return (a.lastName || "").localeCompare(b.lastName || "", "fr");
+      });
+    }
+    return filtered;
+  }, [normalizedSearch, ownerFilter, selectedOwnerIds, statusFilter, visibleClients, isAdmin, currentUser?.id]);
 
   // Relances visibles pour le filtre courant
   const visibleRelanceCount = useMemo(() => {
@@ -136,12 +141,6 @@ export function ClientsPage() {
         eyebrow="Clients"
         title="Base clients"
         description={`${filteredClients.length} dossier${filteredClients.length > 1 ? "s" : ""} · recherche, responsables et fiche détaillée.`}
-      />
-
-      {/* Chantier 5 bugs : toggle Vue globale admin */}
-      <GlobalViewToggle
-        personalLabel="Vue personnelle (mes clients)"
-        globalLabel="Vue équipe (tous les clients)"
       />
 
       {/* 3 STATS COMPACTES */}
@@ -457,6 +456,26 @@ export function ClientsPage() {
                     <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                       {client.firstName} {client.lastName}
                     </span>
+                    {/* Chantier tri priorité (2026-04-24) : badge 'Mien' pour l'admin */}
+                    {isAdmin && client.distributorId === currentUser?.id ? (
+                      <span
+                        title="Ton client"
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          padding: "1px 6px",
+                          borderRadius: 8,
+                          fontSize: 9,
+                          fontWeight: 700,
+                          background: "rgba(239,159,39,0.14)",
+                          color: "#BA7517",
+                          flexShrink: 0,
+                          letterSpacing: "0.04em",
+                        }}
+                      >
+                        MIEN
+                      </span>
+                    ) : null}
                     {client.isFragile && (
                       <span
                         title="Client fragile"
