@@ -32,14 +32,14 @@ create policy "clients_self_update_via_app"
   using (
     exists (
       select 1 from public.client_app_accounts caa
-      where caa.client_id = clients.id
+      where caa.client_id::uuid = clients.id
         and caa.auth_user_id = auth.uid()
     )
   )
   with check (
     exists (
       select 1 from public.client_app_accounts caa
-      where caa.client_id = clients.id
+      where caa.client_id::uuid = clients.id
         and caa.auth_user_id = auth.uid()
     )
   );

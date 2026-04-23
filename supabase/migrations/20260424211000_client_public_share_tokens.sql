@@ -123,7 +123,7 @@ create policy "public_share_tokens_client_self_select"
   using (
     exists (
       select 1 from public.client_app_accounts caa
-      where caa.client_id = client_public_share_tokens.client_id
+      where caa.client_id::uuid = client_public_share_tokens.client_id
         and caa.auth_user_id = auth.uid()
     )
   );
@@ -136,7 +136,7 @@ create policy "public_share_tokens_client_self_delete"
   using (
     exists (
       select 1 from public.client_app_accounts caa
-      where caa.client_id = client_public_share_tokens.client_id
+      where caa.client_id::uuid = client_public_share_tokens.client_id
         and caa.auth_user_id = auth.uid()
     )
   );
