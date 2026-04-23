@@ -1,22 +1,24 @@
-// Chantier Partage public recap (2026-04-24).
-// Route publique /partage/:token — affiche un résumé transformation
-// client pour partage Instagram / WhatsApp / tous réseaux.
-// CTA "Contacte-moi pour ton bilan gratuit" qui renvoie vers le coach.
+// Chantier RGPD partage public (2026-04-24).
+// Route publique /partage/:token — affiche un résumé transformation client
+// ANONYMISÉ pour partage Instagram / WhatsApp / tous réseaux.
 //
-// Utilise la table client_recaps existante (déjà publique via token).
+// Sécurité RGPD :
+// - Données fetchées via Edge Function resolve-public-share (service_role)
+// - Token vérifié : non révoqué, non expiré (30j), consentement client actif
+// - Affichage anonymisé : prénom uniquement, pas de nom, pas de PII coach
+// - CTA générique vers labase-nutrition.com (pas de lien WhatsApp direct)
+// - Meta noindex/nofollow pour bloquer les moteurs de recherche
+// - Vue loggée côté serveur (ip_hash SHA256 + user_agent)
 
 import { useCallback, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { getSupabaseClient } from "../services/supabaseClient";
 
-interface RecapData {
+interface ResolvedData {
   client_first_name: string;
-  client_last_name: string;
-  coach_name: string;
-  coach_whatsapp?: string;
-  coach_phone?: string;
+  coach_first_name: string;
   program_title?: string;
-  assessment_date: string;
+  expires_at: string;
   body_scan?: {
     weight?: number;
     bodyFat?: number;
@@ -32,11 +34,39 @@ interface RecapData {
   }>;
 }
 
+type ResolveReason = "not_found" | "expired" | "revoked" | "consent_revoked" | "server_error";
+
+function reasonToMessage(reason: ResolveReason | string | null): string {
+  switch (reason) {
+    case "expired":
+      return "Ce lien a expiré. Demande au coach un nouveau lien de partage.";
+    case "revoked":
+    case "consent_revoked":
+      return "Ce lien n'est plus actif — la personne concernée a retiré son accord de partage.";
+    case "not_found":
+      return "Lien introuvable.";
+    default:
+      return "Impossible d'afficher ce contenu pour le moment.";
+  }
+}
+
 export function SharePage() {
   const { token } = useParams<{ token: string }>();
-  const [data, setData] = useState<RecapData | null>(null);
+  const [data, setData] = useState<ResolvedData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  // Meta noindex/nofollow pour cette page publique (RGPD)
+  useEffect(() => {
+    const prev = document.querySelector<HTMLMetaElement>('meta[name="robots"]');
+    const meta = prev ?? document.createElement("meta");
+    meta.name = "robots";
+    meta.content = "noindex, nofollow, noarchive, nosnippet";
+    if (!prev) document.head.appendChild(meta);
+    return () => {
+      if (!prev && meta.parentNode) meta.parentNode.removeChild(meta);
+    };
+  }, []);
 
   const load = useCallback(async () => {
     if (!token) {
@@ -47,14 +77,16 @@ export function SharePage() {
     try {
       const sb = await getSupabaseClient();
       if (!sb) throw new Error("Service indisponible.");
-      const { data: row, error: err } = await sb
-        .from("client_recaps")
-        .select("*")
-        .eq("token", token)
-        .maybeSingle();
+      const { data: resp, error: err } = await sb.functions.invoke("resolve-public-share", {
+        body: { token },
+      });
       if (err) throw err;
-      if (!row) throw new Error("Lien introuvable ou expiré.");
-      setData(row as unknown as RecapData);
+      const r = resp as { valid: boolean; reason?: string; data?: ResolvedData };
+      if (!r.valid || !r.data) {
+        setError(reasonToMessage(r.reason ?? null));
+        return;
+      }
+      setData(r.data);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Erreur.");
     } finally {
@@ -77,11 +109,8 @@ export function SharePage() {
 
   const hasProgress = deltaWeight != null && deltaWeight < 0;
 
-  const whatsapp = (data?.coach_whatsapp ?? data?.coach_phone ?? "").replace(/\D/g, "");
-  const contactMessage = encodeURIComponent(
-    `Salut ${data?.coach_name ?? ""} ! J'ai vu la transformation de ${data?.client_first_name ?? ""}, je veux mon bilan gratuit.`,
-  );
-  const contactUrl = whatsapp ? `https://wa.me/${whatsapp}?text=${contactMessage}` : "";
+  // CTA générique (pas de numéro WhatsApp du coach — RGPD)
+  const ctaUrl = "https://labase-nutrition.com";
 
   return (
     <div style={{
@@ -119,7 +148,25 @@ export function SharePage() {
         {loading ? (
           <div style={{ textAlign: "center", padding: 60, color: "rgba(240,237,232,0.5)" }}>Chargement…</div>
         ) : error ? (
-          <div style={{ textAlign: "center", padding: 60, color: "#FBBFC8" }}>{error}</div>
+          <div style={{ textAlign: "center", padding: 60 }}>
+            <div style={{
+              fontSize: 48, marginBottom: 16, opacity: 0.5,
+            }}>🔒</div>
+            <div style={{ color: "#FBBFC8", fontSize: 14, lineHeight: 1.6, maxWidth: 380, margin: "0 auto" }}>
+              {error}
+            </div>
+            <a
+              href="/welcome"
+              style={{
+                display: "inline-block", marginTop: 24, padding: "12px 22px",
+                borderRadius: 10, background: "rgba(255,255,255,0.08)",
+                color: "#F0EDE8", textDecoration: "none",
+                fontSize: 13, fontWeight: 600,
+              }}
+            >
+              Découvrir Lor&apos;Squad Wellness
+            </a>
+          </div>
         ) : data ? (
           <div style={{ animation: "share-in 0.7s cubic-bezier(0.16,1,0.3,1) both" }}>
             {/* Header */}
@@ -155,7 +202,7 @@ export function SharePage() {
                 </span>
               </h1>
               <p style={{ fontSize: 14, color: "rgba(240,237,232,0.6)", marginTop: 10, lineHeight: 1.55 }}>
-                Avec <strong style={{ color: "#F0EDE8" }}>{data.coach_name}</strong> comme coach
+                Accompagné·e par <strong style={{ color: "#F0EDE8" }}>{data.coach_first_name}</strong>
                 {data.program_title ? ` · ${data.program_title}` : ""}
               </p>
             </div>
@@ -207,54 +254,55 @@ export function SharePage() {
               </div>
             )}
 
-            {/* CTA */}
-            {contactUrl ? (
-              <div style={{
-                background: "linear-gradient(135deg, rgba(239,159,39,0.14), rgba(186,117,23,0.1))",
-                border: "1px solid rgba(239,159,39,0.35)",
-                borderRadius: 20,
-                padding: 22,
-                textAlign: "center",
-                animation: "share-in 0.7s cubic-bezier(0.16,1,0.3,1) 0.5s both",
+            {/* CTA générique (pas de contact direct coach — RGPD) */}
+            <div style={{
+              background: "linear-gradient(135deg, rgba(239,159,39,0.14), rgba(186,117,23,0.1))",
+              border: "1px solid rgba(239,159,39,0.35)",
+              borderRadius: 20,
+              padding: 22,
+              textAlign: "center",
+              animation: "share-in 0.7s cubic-bezier(0.16,1,0.3,1) 0.5s both",
+            }}>
+              <h2 style={{
+                fontFamily: "Syne, sans-serif", fontSize: 20, fontWeight: 700,
+                margin: "0 0 8px", color: "#F0EDE8",
               }}>
-                <h2 style={{
-                  fontFamily: "Syne, sans-serif", fontSize: 20, fontWeight: 700,
-                  margin: "0 0 8px", color: "#F0EDE8",
-                }}>
-                  Ton tour maintenant ?
-                </h2>
-                <p style={{ fontSize: 13, color: "rgba(240,237,232,0.7)", margin: "0 0 16px", lineHeight: 1.55 }}>
-                  {data.coach_name} offre un <strong style={{ color: "#F5B847" }}>bilan gratuit de 45 min</strong>.
-                  Découvre ton point de départ et ton potentiel.
-                </p>
-                <a
-                  href={contactUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  style={{
-                    display: "inline-block",
-                    padding: "14px 28px",
-                    borderRadius: 12,
-                    background: "linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)",
-                    color: "#fff",
-                    textDecoration: "none",
-                    fontFamily: "Syne, sans-serif",
-                    fontWeight: 700,
-                    fontSize: 14,
-                    boxShadow: "0 4px 18px rgba(186,117,23,0.4)",
-                  }}
-                >
-                  📱 Contacter {data.coach_name.split(" ")[0]} sur WhatsApp
-                </a>
-              </div>
-            ) : null}
+                Ton tour maintenant ?
+              </h2>
+              <p style={{ fontSize: 13, color: "rgba(240,237,232,0.7)", margin: "0 0 16px", lineHeight: 1.55 }}>
+                Découvre ton <strong style={{ color: "#F5B847" }}>bilan gratuit</strong> et ton potentiel de
+                transformation avec un coach certifié Lor&apos;Squad.
+              </p>
+              <a
+                href={ctaUrl}
+                target="_blank"
+                rel="noopener noreferrer nofollow"
+                style={{
+                  display: "inline-block",
+                  padding: "14px 28px",
+                  borderRadius: 12,
+                  background: "linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)",
+                  color: "#fff",
+                  textDecoration: "none",
+                  fontFamily: "Syne, sans-serif",
+                  fontWeight: 700,
+                  fontSize: 14,
+                  boxShadow: "0 4px 18px rgba(186,117,23,0.4)",
+                }}
+              >
+                ✨ Je veux mon bilan gratuit
+              </a>
+            </div>
 
-            {/* Footer */}
+            {/* Footer RGPD */}
             <div style={{
               textAlign: "center", marginTop: 28,
-              fontSize: 11, color: "rgba(240,237,232,0.35)",
+              fontSize: 11, color: "rgba(240,237,232,0.45)",
+              lineHeight: 1.6,
               animation: "share-in 0.7s cubic-bezier(0.16,1,0.3,1) 0.7s both",
             }}>
+              Partagé avec l&apos;accord de <strong>{data.client_first_name}</strong>.
+              <br />
               Propulsé par <strong style={{ color: "#EF9F27" }}>Lor&apos;Squad Wellness</strong>
               <br />
               <a href="/welcome" style={{ color: "rgba(240,237,232,0.45)", textDecoration: "underline" }}>
