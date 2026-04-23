@@ -37,6 +37,11 @@ const UsersPage = lazy(() =>
     default: module.UsersPage
   }))
 );
+const TeamPage = lazy(() =>
+  import("./pages/TeamPage").then((module) => ({
+    default: module.TeamPage
+  }))
+);
 const DistributorPortfolioPage = lazy(() =>
   import("./pages/DistributorPortfolioPage").then((module) => ({
     default: module.DistributorPortfolioPage
@@ -239,6 +244,10 @@ export default function App() {
               <Route path="clients" element={<ClientsPage />} />
               <Route element={<RoleRoute allowedRoles={["admin"]} />}>
                 <Route path="users" element={<UsersPage />} />
+                {/* Chantier Team Tree (2026-04-25) : nouvelle fiche équipe
+                    avec arbre de parrainage interactif. /users reste
+                    accessible pour l'admin legacy (créer compte, réparer). */}
+                <Route path="team" element={<TeamPage />} />
                 <Route path="pv/team" element={<PvTeamPage />} />
                 <Route path="debug/notifications" element={<DebugNotificationsPage />} />
                 {/* Chantier Paramètres Admin (2026-04-23) : /parametres admin-only.

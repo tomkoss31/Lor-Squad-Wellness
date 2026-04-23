@@ -280,7 +280,7 @@ export function BottomNav() {
               <DrawerItem label="Agenda" icon="📅" onClick={() => goTo("/agenda")} />
               <DrawerItem label="Suivi PV" icon="📊" onClick={() => goTo("/pv")} />
               {currentUser?.role === "admin" ? (
-                <DrawerItem label="Mon équipe" icon="👥" onClick={() => goTo("/users")} />
+                <DrawerItem label="Mon équipe" icon="👥" onClick={() => goTo("/team")} />
               ) : null}
               <DrawerItem label="Centre de formation" icon="📚" onClick={() => goTo("/formation")} />
               <DrawerItem
