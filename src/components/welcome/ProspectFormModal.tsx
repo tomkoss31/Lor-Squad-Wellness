@@ -82,7 +82,9 @@ export function ProspectFormModal({ open, onClose }: Props) {
       style={{
         position: "fixed",
         inset: 0,
-        background: "rgba(0,0,0,0.6)",
+        background: "rgba(0,0,0,0.55)",
+        backdropFilter: "blur(6px)",
+        WebkitBackdropFilter: "blur(6px)",
         zIndex: 10000,
         display: "flex",
         alignItems: "center",
@@ -98,12 +100,12 @@ export function ProspectFormModal({ open, onClose }: Props) {
         onKeyDown={(e) => e.stopPropagation()}
         style={{
           background: "var(--ls-surface)",
-          border: "1px solid var(--ls-border)",
-          borderRadius: 18,
-          maxWidth: 440,
+          border: "1px solid rgba(239,159,39,0.18)",
+          borderRadius: 20,
+          maxWidth: 460,
           width: "100%",
-          padding: 22,
-          boxShadow: "0 20px 60px rgba(0,0,0,0.5)",
+          padding: 26,
+          boxShadow: "0 24px 64px rgba(0,0,0,0.4), 0 4px 16px rgba(239,159,39,0.08)",
           fontFamily: "DM Sans, sans-serif",
           color: "var(--ls-text)",
         }}
@@ -158,16 +160,17 @@ export function ProspectFormModal({ open, onClose }: Props) {
             <h3
               style={{
                 fontFamily: "Syne, sans-serif",
-                fontSize: 20,
+                fontSize: 22,
                 fontWeight: 700,
                 margin: 0,
                 marginBottom: 6,
+                letterSpacing: "-0.01em",
               }}
             >
-              Rejoindre l&apos;aventure ✨
+              Prêt à changer ta vie ? ✨
             </h3>
-            <p style={{ fontSize: 13, color: "var(--ls-text-muted)", marginBottom: 16, lineHeight: 1.5 }}>
-              Laisse-nous ton prénom et ton numéro : un coach te recontacte.
+            <p style={{ fontSize: 13, color: "var(--ls-text-muted)", marginBottom: 18, lineHeight: 1.55 }}>
+              Laisse-nous ton numéro, un coach te contacte sous 24h.
             </p>
             <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 14 }}>
               <label>
