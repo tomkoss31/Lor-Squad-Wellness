@@ -431,14 +431,59 @@ export function ClientAppPage() {
       // Fetch coaching (assessment) en parallèle — n'influe pas sur l'affichage principal
       void loadCoachingData(sb, token)
 
+      let snapshot: Record<string, unknown> | null = null
       const { data: recap } = await sb.from('client_recaps').select('*').eq('token', token).maybeSingle()
-      if (recap) { setData(normalizeData(recap)); setLoading(false); return }
+      if (recap) snapshot = recap as Record<string, unknown>
+      if (!snapshot) {
+        const { data: report } = await sb.from('client_evolution_reports').select('*').eq('token', token).maybeSingle()
+        if (report) snapshot = report as Record<string, unknown>
+      }
+      if (!snapshot) {
+        const { data: appAccount } = await sb.from('client_app_accounts').select('*').eq('token', token).maybeSingle()
+        if (appAccount) snapshot = appAccount as Record<string, unknown>
+      }
+      if (!snapshot) { setLoading(false); return }
 
-      const { data: report } = await sb.from('client_evolution_reports').select('*').eq('token', token).maybeSingle()
-      if (report) { setData(normalizeData(report)); setLoading(false); return }
+      // Sync coach↔client (2026-04-25) : les snapshots ci-dessus sont figés
+      // au moment de la création. On override program_title + next_follow_up
+      // par la source de vérité live (clients.current_program + follow_ups
+      // upcoming) grâce aux nouvelles policies RLS self-select.
+      const clientId = typeof snapshot.client_id === 'string' ? snapshot.client_id : ''
+      if (clientId) {
+        try {
+          const [liveClient, liveFollowUp] = await Promise.all([
+            sb.from('clients').select('current_program').eq('id', clientId).maybeSingle(),
+            sb
+              .from('follow_ups')
+              .select('due_date, status')
+              .eq('client_id', clientId)
+              .in('status', ['scheduled', 'pending'])
+              .gte('due_date', new Date().toISOString())
+              .order('due_date', { ascending: true })
+              .limit(1)
+              .maybeSingle(),
+          ])
+          const live = liveClient.data as { current_program?: string | null } | null
+          if (live?.current_program != null && live.current_program.trim()) {
+            snapshot.program_title = live.current_program
+          }
+          const fu = liveFollowUp.data as { due_date?: string | null } | null
+          if (fu?.due_date) {
+            snapshot.next_follow_up = fu.due_date
+          } else if (!fu) {
+            // Aucun RDV à venir : on nettoie le snapshot éventuellement périmé
+            const snapshotDate = typeof snapshot.next_follow_up === 'string' ? snapshot.next_follow_up : null
+            if (snapshotDate && new Date(snapshotDate).getTime() < Date.now()) {
+              snapshot.next_follow_up = undefined
+            }
+          }
+        } catch {
+          // RLS pas encore déployée ou erreur réseau → on garde le snapshot
+        }
+      }
 
-      const { data: appAccount } = await sb.from('client_app_accounts').select('*').eq('token', token).maybeSingle()
-      if (appAccount) { setData(normalizeData(appAccount)); setLoading(false); return }
+      setData(normalizeData(snapshot))
+      setLoading(false)
     } catch { /* silencieux */ }
     finally { setLoading(false) }
   }

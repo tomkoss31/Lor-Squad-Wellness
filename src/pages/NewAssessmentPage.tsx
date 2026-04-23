@@ -862,7 +862,11 @@ export function NewAssessmentPage() {
         },
         assessment,
         clientStatus,
-        currentProgram: startsImmediately ? programTitle : "",
+        // Sync coach↔client (2026-04-25) : persister le programme sélectionné
+        // indépendamment de startsImmediately — sinon le header fiche + app
+        // client affiche "Programme à confirmer" alors que le coach a déjà
+        // choisi. startsImmediately n'influe plus que sur pvProgramId (module PV).
+        currentProgram: selectedProgram?.title ?? (startsImmediately ? programTitle : ""),
         pvProgramId: startsImmediately ? selectedProgram?.id : undefined,
         started: startsImmediately,
         nextFollowUp,
