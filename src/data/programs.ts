@@ -4,7 +4,9 @@
 // Les produits "routine matin" sont identifiés par leur id du pvCatalog
 // (formula-1, pdm, aloe-vera, the-51g).
 
-export type ProgramChoiceId = "discovery" | "premium" | "booster1" | "booster2";
+// Chantier 5 bugs (2026-04-24) : ajout "unit" pour la vente a l'unite
+// (client veut un seul produit, pas de programme structure).
+export type ProgramChoiceId = "discovery" | "premium" | "booster1" | "booster2" | "unit";
 
 export interface ProgramChoice {
   id: ProgramChoiceId;
@@ -45,6 +47,13 @@ export const PROGRAM_CHOICES: ProgramChoice[] = [
     price: 324,
     shortContent: "Premium + Énergie · brûle graisse",
     routineProductIds: ["formula-1", "pdm", "aloe-vera", "the-51g"],
+  },
+  {
+    id: "unit",
+    title: "À l'unité",
+    price: 0,
+    shortContent: "Produits choisis à la carte",
+    routineProductIds: [],
   },
 ];
 

@@ -111,7 +111,7 @@ type AssessmentForm = {
   preferredFlavor: string;
   /** Chantier refonte étape 11 (2026-04-20). */
   consumesMilk: "yes" | "sometimes" | "no" | "";
-  programChoice: "discovery" | "premium" | "booster1" | "booster2";
+  programChoice: "discovery" | "premium" | "booster1" | "booster2" | "unit";
   targetWeight: number;
   motivation: number;
   desiredTimeline: string;
@@ -250,7 +250,7 @@ const initialForm: AssessmentForm = {
   snacksFastFoodPerWeek: null,
   preferredFlavor: "",
   consumesMilk: "" as "yes" | "sometimes" | "no" | "",
-  programChoice: "premium" as "discovery" | "premium" | "booster1" | "booster2",
+  programChoice: "premium" as "discovery" | "premium" | "booster1" | "booster2" | "unit",
   targetWeight: 0,
   motivation: 0,
   desiredTimeline: "3 mois",
