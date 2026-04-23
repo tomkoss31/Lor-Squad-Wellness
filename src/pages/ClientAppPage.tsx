@@ -12,6 +12,7 @@ import { ClientMeasurementsSection } from '../features/measurements/ClientMeasur
 import { ClientProductsTab } from '../components/client-app/ClientProductsTab'
 import type { BreakfastAnalysis } from '../types/domain'
 import { useOnboardingState } from '../features/onboarding/hooks/useOnboardingState'
+import { useClientLiveData } from '../hooks/useClientLiveData'
 
 // Chantier Tuto interactif client (2026-04-24) : lazy-load pour ne pas
 // alourdir le bundle initial de ClientAppPage.
@@ -195,6 +196,31 @@ export function ClientAppPage() {
   const [installPlatform, setInstallPlatform] = useState<'ios' | 'android' | null>(null)
   const [deferredInstallEvent, setDeferredInstallEvent] = useState<{ prompt: () => Promise<void>; userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }> } | null>(null)
 
+  // Chantier Migration RLS → Edge Function (2026-04-26).
+  // Fetch des données live (programme / RDV / produits) via
+  // client-app-data. Priorité : liveData > snapshot. Refresh on focus
+  // debounced 5s. Si l'edge function fail, on garde le snapshot.
+  const { liveData } = useClientLiveData(token)
+
+  // Merge liveData dans data dès qu'on a les 2 (snapshot + live fetchés).
+  // Live gagne sur snapshot (snapshot = figé, live = source de vérité DB).
+  useEffect(() => {
+    if (!liveData || !data) return
+    const nextProgramTitle = liveData.client?.current_program ?? data.program_title
+    const nextFollowUpIso = liveData.next_follow_up?.due_date ?? data.next_follow_up
+    // Ne déclenche un setData que si au moins une valeur change (évite
+    // une boucle render si liveData re-fetch au focus avec les mêmes data).
+    const programChanged = nextProgramTitle !== data.program_title
+    const rdvChanged = nextFollowUpIso !== data.next_follow_up
+    if (!programChanged && !rdvChanged) return
+    setData({
+      ...data,
+      program_title: nextProgramTitle ?? undefined,
+      next_follow_up: nextFollowUpIso ?? undefined,
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [liveData])
+
   useEffect(() => {
     if (typeof document !== 'undefined') {
       const link = document.createElement('link')
@@ -360,44 +386,14 @@ export function ClientAppPage() {
       }
       if (!snapshot) { setLoading(false); return }
 
-      // Sync coach↔client (2026-04-25) : les snapshots ci-dessus sont figés
-      // au moment de la création. On override program_title + next_follow_up
-      // par la source de vérité live (clients.current_program + follow_ups
-      // upcoming) grâce aux nouvelles policies RLS self-select.
-      const clientId = typeof snapshot.client_id === 'string' ? snapshot.client_id : ''
-      if (clientId) {
-        try {
-          const [liveClient, liveFollowUp] = await Promise.all([
-            sb.from('clients').select('current_program').eq('id', clientId).maybeSingle(),
-            sb
-              .from('follow_ups')
-              .select('due_date, status')
-              .eq('client_id', clientId)
-              .in('status', ['scheduled', 'pending'])
-              .gte('due_date', new Date().toISOString())
-              .order('due_date', { ascending: true })
-              .limit(1)
-              .maybeSingle(),
-          ])
-          const live = liveClient.data as { current_program?: string | null } | null
-          if (live?.current_program != null && live.current_program.trim()) {
-            snapshot.program_title = live.current_program
-          }
-          const fu = liveFollowUp.data as { due_date?: string | null } | null
-          if (fu?.due_date) {
-            snapshot.next_follow_up = fu.due_date
-          } else if (!fu) {
-            // Aucun RDV à venir : on nettoie le snapshot éventuellement périmé
-            const snapshotDate = typeof snapshot.next_follow_up === 'string' ? snapshot.next_follow_up : null
-            if (snapshotDate && new Date(snapshotDate).getTime() < Date.now()) {
-              snapshot.next_follow_up = undefined
-            }
-          }
-        } catch {
-          // RLS pas encore déployée ou erreur réseau → on garde le snapshot
-        }
-      }
-
+      // Chantier Migration RLS Edge Function (2026-04-26) : les 3 SELECT
+      // live directs (clients.current_program, follow_ups, pv_client_products)
+      // ont été retirés d'ici. Ils sont remplacés par l'Edge Function
+      // client-app-data (cf. useClientLiveData hook en bas du composant).
+      // Le snapshot ci-dessus (client_recaps / evolution_reports /
+      // app_accounts) reste le fallback silencieux si l'edge function
+      // plante ou timeout. La fraîcheur live arrive via setData dans un
+      // useEffect qui merge liveData > snapshot.
       setData(normalizeData(snapshot))
       setLoading(false)
     } catch { /* silencieux */ }
@@ -900,6 +896,7 @@ export function ClientAppPage() {
               latestScanDate={latest?.date ?? null}
               productDetails={PRODUCT_DETAILS}
               onAskCoach={openProductAskModal}
+              liveProducts={liveData?.current_products ?? null}
             />
           </div>
         )}
