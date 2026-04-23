@@ -5,6 +5,8 @@ import { formatDate } from "../lib/calculations";
 import { PvModuleHeader } from "../components/pv/PvModuleHeader";
 import { PvClientFullPage } from "../components/pv/PvClientFullPage";
 import { useAppContext } from "../context/AppContext";
+import { useGlobalView } from "../hooks/useGlobalView";
+import { GlobalViewToggle } from "../components/ui/GlobalViewToggle";
 import type { PvClientTrackingRecord } from "../types/pv";
 
 export function PvOverviewPage() {
@@ -21,12 +23,22 @@ export function PvOverviewPage() {
 
   // Hooks AVANT l'early return (rules-of-hooks / chantier nuit 2026-04-20).
   const isAdmin = currentUser?.role === "admin";
+  // Chantier 5 bugs (2026-04-24) : toggle partagé Vue globale.
+  // Admin sans toggle → ne voit que ses propres clients.
+  const [globalView] = useGlobalView();
+  const applyPersonalScope = isAdmin && !globalView;
   // Free PV tracking (2026-04-20) : exclure les clients marqués "sous autre
   // superviseur" de la liste principale du suivi PV. Le coach ne peut pas
   // agir sur leurs commandes, inutile qu'ils polluent la liste.
   const sourceClients = useMemo(
-    () => (isAdmin ? clients : visibleClients).filter((c) => !c.freePvTracking),
-    [isAdmin, clients, visibleClients]
+    () => {
+      const base = isAdmin && globalView ? clients : visibleClients;
+      const scoped = applyPersonalScope
+        ? base.filter((c) => c.distributorId === currentUser?.id)
+        : base;
+      return scoped.filter((c) => !c.freePvTracking);
+    },
+    [isAdmin, globalView, applyPersonalScope, currentUser?.id, clients, visibleClients]
   );
 
   const records = useMemo(
@@ -101,6 +113,12 @@ export function PvOverviewPage() {
         currentUser={currentUser}
         title="Suivi PV"
         description="Vue globale des clients actifs, de leurs produits et commandes."
+      />
+
+      {/* Chantier 5 bugs : toggle Vue globale admin */}
+      <GlobalViewToggle
+        personalLabel="Vue personnelle (mes clients PV)"
+        globalLabel="Vue équipe (tous les clients PV)"
       />
 
       {/* Vue FICHE pleine page */}
