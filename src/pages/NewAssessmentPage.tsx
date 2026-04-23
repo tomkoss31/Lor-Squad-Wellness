@@ -897,6 +897,36 @@ export function NewAssessmentPage() {
         }
       }
 
+      // Chantier Auto-notif RDV (2026-04-24) : message auto au client
+      // si un RDV de suivi est planifié (sauf suivi libre). Best-effort,
+      // non bloquant si échec.
+      if (hasFollowUpPlanned && form.typeDeSuite !== "suivi_libre" && form.nextFollowUp) {
+        try {
+          const sbMsg = await getSupabaseClient();
+          if (sbMsg && currentUser?.id) {
+            const d = new Date(form.nextFollowUp);
+            const dateLabel = d.toLocaleDateString("fr-FR", {
+              weekday: "long",
+              day: "2-digit",
+              month: "long",
+            });
+            const hourLabel = d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+            const msg = `Salut ${form.firstName.trim()} ! 🎉\n\nMerci pour ce super bilan. Notre prochain RDV est confirmé :\n📅 ${dateLabel}\n⏰ ${hourLabel}\n\nÀ très vite pour ton suivi ! 💪\n${currentUser.name ?? "Coach"}`;
+            await sbMsg.from("client_messages").insert({
+              client_id: clientId,
+              client_name: `${form.firstName.trim()} ${form.lastName.trim()}`,
+              distributor_id: currentUser.id,
+              message_type: "coach_reply",
+              message: msg,
+              sender: "coach",
+              sender_id: currentUser.id,
+            });
+          }
+        } catch (msgErr) {
+          console.warn("[auto-notif RDV] échec non bloquant:", msgErr);
+        }
+      }
+
       // Créer récap Supabase pour QR code.
       // Site 2 du durcissement audit L1 (le plus critique) :
       //   - si l'insert échoue, le bilan lui-même est enregistré (addFollowUpAssessment
