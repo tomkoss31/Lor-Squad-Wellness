@@ -117,6 +117,16 @@ const AutoLoginPage = lazy(() =>
     default: module.AutoLoginPage,
   })),
 );
+const ForgotPasswordPage = lazy(() =>
+  import("./pages/ForgotPasswordPage").then((module) => ({
+    default: module.ForgotPasswordPage,
+  })),
+);
+const ResetPasswordPage = lazy(() =>
+  import("./pages/ResetPasswordPage").then((module) => ({
+    default: module.ResetPasswordPage,
+  })),
+);
 const BienvenuePage = lazy(() =>
   import("./pages/BienvenuePage").then((module) => ({
     default: module.BienvenuePage
@@ -195,6 +205,8 @@ export default function App() {
               magic link 24h pour re-établir une session. */}
           <Route path="/welcome" element={<WelcomePage />} />
           <Route path="/auto-login" element={<AutoLoginPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
           <Route element={<PublicRoute />}>
             <Route path="/login" element={<LoginPage />} />
           </Route>
