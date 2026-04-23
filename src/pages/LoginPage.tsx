@@ -561,13 +561,22 @@ export function LoginPage() {
                 required
               />
             </div>
-            <button
-              type="button"
-              onClick={() => setShowPassword((v) => !v)}
-              className="login-password-toggle"
-            >
-              {showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
-            </button>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+              <button
+                type="button"
+                onClick={() => setShowPassword((v) => !v)}
+                className="login-password-toggle"
+              >
+                {showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+              </button>
+              <a
+                href="/forgot-password"
+                className="login-password-toggle"
+                style={{ fontWeight: 600, color: "#BA7517", textDecoration: "none" }}
+              >
+                Mot de passe oublié ?
+              </a>
+            </div>
           </div>
 
           {error ? <div className="login-error">{error}</div> : null}
