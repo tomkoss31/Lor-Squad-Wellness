@@ -23,6 +23,7 @@ import { ClientGeneralNote } from "../components/client/ClientGeneralNote";
 import { ClientInvitationButton } from "../components/client/ClientInvitationButton";
 import { ClientAccessModal } from "../components/client/ClientAccessModal";
 import { ClientAppPreviewButton } from "../components/client/ClientAppPreviewButton";
+import { SharePublicButton } from "../components/client/SharePublicButton";
 import { buildReportData, generateProductRecommendations } from "../lib/evolutionReport";
 import { EvolutionReportModal } from "../components/assessment/EvolutionReportModal";
 import { getSupabaseClient } from "../services/supabaseClient";
@@ -390,6 +391,12 @@ export function ClientDetailPage() {
               🔗 Envoyer l'accès à l'app
             </button>
             <ClientAppPreviewButton
+              clientId={client.id}
+              clientFirstName={client.firstName}
+              clientLastName={client.lastName}
+              coachName={currentUser?.name ?? "Coach"}
+            />
+            <SharePublicButton
               clientId={client.id}
               clientFirstName={client.firstName}
               clientLastName={client.lastName}
