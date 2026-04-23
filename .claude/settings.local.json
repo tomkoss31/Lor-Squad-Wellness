@@ -85,7 +85,11 @@
       "Read(//c/Users/tomko/.supabase/**)",
       "Bash(env)",
       "Bash(supabase migration *)",
-      "Bash(awk '/activeTab === .home.$/,/activeTab === .evolution./' src/pages/ClientAppPage.tsx)"
+      "Bash(awk '/activeTab === .home.$/,/activeTab === .evolution./' src/pages/ClientAppPage.tsx)",
+      "Bash(grep -cE \"og:image|twitter:card|application/ld\\\\\\\\+json\" index.html)",
+      "Bash(gh pr create --base claude/focused-pike --head feat/ics-calendar-button --title 'feat\\(client-app\\): bouton .ics sous CTA RDV' --body ' *)",
+      "Bash(awk 'NR>=1016 && NR<=1100' src/pages/ClientAppPage.tsx)",
+      "Bash(awk '/^      {activeTab === 5 && \\\\\\(/,/^      \\\\\\)}$/' src/pages/ClientDetailPage.tsx)"
     ]
   }
 }
