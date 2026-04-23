@@ -1,6 +1,19 @@
 import { createMockSession, getDefaultUserTitle, getRoleScope } from "../lib/auth";
 import { getSupabaseClient } from "./supabaseClient";
 import { pvProductCatalog, resolvePvProgram } from "../data/pvCatalog";
+import { computeWaterTarget, computeProteinTarget } from "../lib/calculations";
+
+// Chantier Recommandations nutri (2026-04-25) : helpers safe qui
+// retournent null si le poids est absent — compatibles avec les
+// colonnes SQL nullable.
+function computeWaterTargetSafe(weight?: number): number | null {
+  if (!weight || weight <= 0) return null;
+  return computeWaterTarget(weight);
+}
+function computeProteinTargetSafe(weight?: number, objective?: string): number | null {
+  if (!weight || weight <= 0) return null;
+  return computeProteinTarget(weight, objective);
+}
 import type {
   ActivityLog,
   AssessmentRecord,
@@ -812,6 +825,14 @@ export async function createSupabaseClientWithInitialAssessment(payload: {
     // Chantier Polish Vue complète (2026-04-24)
     coach_notes_draft: payload.assessment.coachNotesDraft ?? null,
     coach_notes_initial: payload.assessment.coachNotesInitial ?? null,
+    // Chantier Recommandations nutri (2026-04-25) : persister eau +
+    // protéines cible au moment du bilan. Migration 20260425220000
+    // rendue ces 2 colonnes disponibles. Fallback si encore absente.
+    water_target_l: computeWaterTargetSafe(payload.assessment.bodyScan?.weight),
+    protein_target_g: computeProteinTargetSafe(
+      payload.assessment.bodyScan?.weight,
+      payload.assessment.objective,
+    ),
   };
   let { error: assessmentError } = await client.from("assessments").insert(assessmentInsertPayload);
 
@@ -836,6 +857,18 @@ export async function createSupabaseClientWithInitialAssessment(payload: {
     const { coach_notes_draft: _cd, coach_notes_initial: _ci, ...withoutNotes } = assessmentInsertPayload;
     void _cd; void _ci;
     ({ error: assessmentError } = await client.from("assessments").insert(withoutNotes));
+  }
+
+  // Fallback : colonnes water_target_l / protein_target_g pas encore
+  // présentes (migration 20260425220000 pas déployée) → retry sans.
+  if (
+    assessmentError &&
+    (isMissingColumnError(assessmentError, "water_target_l") ||
+      isMissingColumnError(assessmentError, "protein_target_g"))
+  ) {
+    const { water_target_l: _wt, protein_target_g: _pt, ...withoutNutriTargets } = assessmentInsertPayload;
+    void _wt; void _pt;
+    ({ error: assessmentError } = await client.from("assessments").insert(withoutNutriTargets));
   }
 
   if (assessmentError) {

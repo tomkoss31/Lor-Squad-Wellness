@@ -43,6 +43,8 @@ import {
   estimateMuscleMassPercent,
   normalizeDateTimeLocalInputValue,
   serializeDateTimeForStorage,
+  computeWaterTarget,
+  computeProteinTarget,
 } from "../lib/calculations";
 import { buildAssessmentRecommendationPlan } from "../lib/assessmentRecommendations";
 import type { BiologicalSex, BreakfastAnalysis, DecisionClient, MessageALaisser, Objective, RecommendationLead, TypeDeSuite } from "../types/domain";
@@ -1706,6 +1708,68 @@ export function NewAssessmentPage() {
               <div className="grid gap-4 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
                 {/* ─── Colonne principale ─────────────────────────────── */}
                 <div className="space-y-5">
+                  {/* Bloc Nutri — Objectifs hydratation + protéines
+                      (Chantier Recommandations 2026-04-25). Calculés
+                      depuis form.weight + form.objective. */}
+                  {form.weight > 0 ? (
+                    <div
+                      style={{
+                        padding: "14px 16px",
+                        borderRadius: 14,
+                        background:
+                          "linear-gradient(135deg, color-mix(in srgb, var(--ls-teal) 10%, transparent), color-mix(in srgb, var(--ls-gold) 6%, transparent))",
+                        border:
+                          "1px solid color-mix(in srgb, var(--ls-teal) 25%, transparent)",
+                      }}
+                    >
+                      <p className="eyebrow-label" style={{ marginBottom: 8 }}>
+                        Objectifs nutritionnels
+                      </p>
+                      <div
+                        style={{
+                          display: "grid",
+                          gap: 12,
+                          gridTemplateColumns: "1fr 1fr",
+                        }}
+                      >
+                        <div>
+                          <div style={{ fontSize: 11, color: "var(--ls-text-muted)", marginBottom: 2 }}>
+                            💧 Hydratation cible
+                          </div>
+                          <div
+                            style={{
+                              fontFamily: "Syne, sans-serif",
+                              fontSize: 20,
+                              fontWeight: 800,
+                              color: "var(--ls-text)",
+                            }}
+                          >
+                            {computeWaterTarget(form.weight).toFixed(1)} L / jour
+                          </div>
+                        </div>
+                        <div>
+                          <div style={{ fontSize: 11, color: "var(--ls-text-muted)", marginBottom: 2 }}>
+                            🥩 Protéines cible
+                          </div>
+                          <div
+                            style={{
+                              fontFamily: "Syne, sans-serif",
+                              fontSize: 20,
+                              fontWeight: 800,
+                              color: "var(--ls-text)",
+                            }}
+                          >
+                            {computeProteinTarget(form.weight, form.objective)} g / jour
+                          </div>
+                        </div>
+                      </div>
+                      <div style={{ fontSize: 11, color: "var(--ls-text-muted)", marginTop: 8 }}>
+                        Calculé selon le poids actuel ({form.weight.toFixed(1)} kg) et
+                        l&apos;objectif « {form.objective === "sport" ? "Sport / masse" : "Perte de poids"} ».
+                      </div>
+                    </div>
+                  ) : null}
+
                   {/* Bloc 0 — Curseur lait */}
                   <MilkConsumptionToggle
                     value={form.consumesMilk}
