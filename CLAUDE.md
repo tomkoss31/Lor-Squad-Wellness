@@ -200,3 +200,75 @@ l'onglet Actions (tab 5). 3 cards : Besoins (4 stats), Plan journée
   `sport_types`, `sport_sub_objective`, `current_intake`.
 - `20260424130000_seed_sport_products.sql` : seed 8 produits sport/
   accessoire dans `pv_products`.
+
+## Chantier Conseils app client (2026-04-24)
+
+Refonte de l'onglet « Coaching » → « Conseils » + enrichissement de
+l'onglet Évolution + section « Recommandés pour ta progression » dans
+l'onglet Produits.
+
+### Onglet Accueil (ClientHomeTab)
+- Suppression du HERO interne : la salutation est portée par le bandeau
+  haut de `ClientAppPage` (avatar + nom + meta programme). La carte RDV
+  gold suit directement l'en-tête.
+
+### Onglet Évolution
+- Nouveau composant `EnrichedAssessmentHistory` (`src/components/client-app/`)
+  qui affiche :
+  - Point de départ (oldest assessment) distinct visuellement (3px gold
+    + badge 📍 + row dédiée).
+  - Jusqu'à 5 derniers bilans en ordre descendant.
+  - Colonne « Évolution » calculée vs Départ, couleur selon l'objectif
+    (weight-loss / sport mass-gain / sport cutting / sport default).
+  - Responsive : cards stackées <480 px, table ≥480 px.
+  - S'il n'y a qu'un seul bilan → Départ seul, pas de « 5 derniers ».
+
+### Onglet Produits — section « Recommandés non pris »
+- Nouvelle section dans `ClientProductsTab` sous « Mon programme actuel ».
+- Titre : « 💡 Recommandés pour ta progression ».
+- Source prioritaire : `liveData.recommendations_not_taken` (server-side).
+- Fallback client-side : `recommendedProducts` moins `currentProducts`
+  (match productId/ref ET nom normalisé).
+- Card : bg coral 8 %, border 0.5px coral 40 %, radius 12. Titre Syne
+  15 bold, prix gold, reason DM Sans 13 teal, CTA WhatsApp avec message
+  prérempli (utilise `coach_whatsapp`).
+
+### Onglet Conseils (nouveau)
+Fichier : `src/components/client-app/ClientConseilsTab.tsx` + `.css`.
+Propulsé par `liveData` (edge function étendue).
+
+4 sections :
+1. **Tes points d'attention** — cards issues de `sport_alerts`
+   (6 règles recalculées server-side). Placeholder neutre si vide ou
+   hors-sport.
+2. **Ton assiette idéale** — SVG circulaire à 3 secteurs + légende
+   détaillée. Répartition :
+   - sport → 33 / 33 / 33 (Protéines / Glucides complets / Légumes)
+   - weight-loss → 25 / 25 / 50 (plus de légumes)
+3. **Ta routine quotidienne** — toggle « Jour sport / Jour repos » pour
+   les sportifs (7 items sport, 5 items repos). 4 items pour
+   weight-loss. Chaque item : emoji + heure gold + titre + sub-label.
+4. **Tes conseils perso du coach** — quote-style card ; contenu issu de
+   `liveData.coach_advice` (champ `assessments.coach_notes_initial`).
+   Footer « — Thomas · [date du dernier bilan] ». Placeholder neutre si
+   vide.
+
+### Edge function `supabase/functions/client-app-data/index.ts`
+Clés ajoutées au payload JSON (sans retirer l'existant) :
+- `assessment_history: Assessment[]` (limit 20, ordre asc par date).
+- `recommendations_not_taken: { productId, name, price?, reason? }[]` —
+  diff server-side entre `assessments.questionnaire.recommendations`
+  (latest) et `pv_client_products` actifs.
+- `sport_alerts: { id, icon, title, detail, advice }[]` — recompute
+  inline des 6 règles (hydration-low / protein-low / sleep-low /
+  muscle-low / no-snack / frequency-mismatch) à partir de `sport_profile`,
+  `current_intake` et `body_scan`. Réécriture en Deno car impossible
+  d'importer `detectSportAlerts` (pipeline front React).
+- `sport_profile: { frequency, types, subObjective, otherTypeLabel? }`
+  — depuis les colonnes `sport_*` de l'assessment le plus récent.
+- `current_intake: CurrentIntake | null` — depuis l'assessment le plus récent.
+- `coach_advice: string` — `assessments.coach_notes_initial` (notes
+  figées à la validation du bilan, pas le draft auto-save, pour éviter
+  de remonter un brouillon au client).
+- `client.objective` ajouté au sous-objet `client` pour les règles de
+  coloration Évolution / assiette.
