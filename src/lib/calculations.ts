@@ -3,7 +3,10 @@ import type {
   BodyScanDelta,
   BodyScanMetrics,
   Client,
+  CurrentIntake,
   Objective,
+  SportFrequency,
+  SportSubObjective,
   WeightLossPaceInsight,
   WeightLossPlan
 } from "../types/domain";
@@ -69,6 +72,63 @@ export function computeWaterTarget(weightKg: number): number {
  *   - bien-être / maintenance : 1.4 g/kg
  * Valeur par défaut 1.6 g/kg si objectif inconnu. Clamp max 3 g/kg.
  */
+// Chantier Prise de masse (2026-04-24) : cibles protéines/eau tenant compte
+// du sous-objectif sport et de la fréquence d'entraînement.
+
+/**
+ * Cible protéines pour un client sport selon le sous-objectif.
+ * Retourne {min, max, target} en grammes/jour.
+ */
+export function computeProteinTargetSport(
+  weightKg: number,
+  sub: SportSubObjective
+): { min: number; max: number; target: number } {
+  const ranges: Record<SportSubObjective, { min: number; max: number }> = {
+    "mass-gain": { min: 1.8, max: 2.2 },
+    strength: { min: 1.8, max: 2.2 },
+    cutting: { min: 2.2, max: 2.6 },
+    endurance: { min: 1.4, max: 1.8 },
+    fitness: { min: 1.4, max: 1.6 },
+    competition: { min: 2.0, max: 2.5 },
+  };
+  const { min, max } = ranges[sub];
+  return {
+    min: Math.round(weightKg * min),
+    max: Math.round(weightKg * max),
+    target: Math.round((weightKg * (min + max)) / 2),
+  };
+}
+
+/**
+ * Cible eau (mL/jour) pour un client sport selon la fréquence.
+ * Base 33 mL/kg, multiplicateur selon la fréquence, clampé 2000-5000.
+ */
+export function computeWaterTargetSport(weightKg: number, freq: SportFrequency): number {
+  const base = weightKg * 33;
+  const multipliers: Record<SportFrequency, number> = {
+    none: 1,
+    occasional: 1.1,
+    regular: 1.25,
+    intensive: 1.4,
+  };
+  return Math.max(2000, Math.min(5000, Math.round(base * multipliers[freq])));
+}
+
+/**
+ * Estime l'apport protéique quotidien actuel (g) à partir du questionnaire
+ * "Tes apports actuels". Mode qualitatif : 0/5/15/25/35 g selon le niveau.
+ * Mode quantitatif : valeur saisie telle quelle.
+ */
+export function estimateCurrentProteinIntake(intake: CurrentIntake): number {
+  const qualMap: Record<0 | 1 | 2 | 3 | 4, number> = { 0: 0, 1: 5, 2: 15, 3: 25, 4: 35 };
+  let total = 0;
+  for (const moment of Object.values(intake)) {
+    if (!moment) continue;
+    total += moment.mode === "qualitative" ? qualMap[moment.level] : moment.proteinGrams;
+  }
+  return total;
+}
+
 export function computeProteinTarget(weightKg: number, objective?: Objective | string): number {
   if (!weightKg || weightKg <= 0) return 0;
   const multipliers: Record<string, number> = {
