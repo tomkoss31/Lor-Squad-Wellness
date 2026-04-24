@@ -215,8 +215,14 @@ export interface AssessmentQuestionnaire {
    * ne jamais muter `selectedProductIds` pour dériver une quantité.
    * Helper : getQty(id) = selectedProductQuantities[id] ?? 1.
    */
-  selectedProductQuantities?: Record<string, number>;
+  selectedProductQuantities?: QuantityMap;
 }
+
+/**
+ * Chantier Boosters cliquables + Quantités (D-urgent, 2026-04-24).
+ * Map id → quantité retenue (borné 1-10 côté UI, persisté en jsonb côté DB).
+ */
+export type QuantityMap = Record<string, number>;
 
 export interface AssessmentRecord {
   id: string;

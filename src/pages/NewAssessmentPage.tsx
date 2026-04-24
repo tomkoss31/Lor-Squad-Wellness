@@ -48,7 +48,7 @@ import {
   computeProteinTarget,
 } from "../lib/calculations";
 import { buildAssessmentRecommendationPlan, recommendBoosters } from "../lib/assessmentRecommendations";
-import type { BiologicalSex, BreakfastAnalysis, CurrentIntake, DecisionClient, MessageALaisser, Objective, RecommendationLead, SportProfile, TypeDeSuite } from "../types/domain";
+import type { BiologicalSex, BreakfastAnalysis, CurrentIntake, DecisionClient, MessageALaisser, Objective, QuantityMap, RecommendationLead, SportProfile, TypeDeSuite } from "../types/domain";
 import { SportProfileStep } from "../components/assessment/SportProfileStep";
 import { CurrentIntakeStep } from "../components/assessment/CurrentIntakeStep";
 import { SportAlertsDialog, detectSportAlerts, type SportAlert } from "../components/assessment/SportAlertsDialog";
@@ -139,7 +139,7 @@ type AssessmentForm = {
   detectedNeedIds: string[];
   selectedProductIds: string[];
   /** Chantier Boosters cliquables + Quantités (D-urgent, 2026-04-24). */
-  selectedProductQuantities: Record<string, number>;
+  selectedProductQuantities: QuantityMap;
   // Étape 13 — Chantier 1
   decisionClient: DecisionClient | null;
   typeDeSuite: TypeDeSuite | null;
