@@ -47,7 +47,8 @@ import {
   computeProteinTarget,
 } from "../lib/calculations";
 import { buildAssessmentRecommendationPlan } from "../lib/assessmentRecommendations";
-import type { BiologicalSex, BreakfastAnalysis, DecisionClient, MessageALaisser, Objective, RecommendationLead, TypeDeSuite } from "../types/domain";
+import type { BiologicalSex, BreakfastAnalysis, CurrentIntake, DecisionClient, MessageALaisser, Objective, RecommendationLead, SportProfile, TypeDeSuite } from "../types/domain";
+import { SportProfileStep } from "../components/assessment/SportProfileStep";
 import { BreakfastStorySlider, DEFAULT_BREAKFAST_ANALYSIS } from "../components/education/BreakfastStorySlider";
 
 type AssessmentForm = {
@@ -140,6 +141,9 @@ type AssessmentForm = {
   messageALaisser: MessageALaisser | null;
   // Étape 9 — Chantier 6 (story petit-déjeuner)
   breakfastAnalysis: BreakfastAnalysis;
+  // Chantier Prise de masse (2026-04-24) : étapes sport.
+  sportProfile: SportProfile | null;
+  currentIntake: CurrentIntake;
 };
 
 interface AssessmentDraftPayload {
@@ -276,7 +280,11 @@ const initialForm: AssessmentForm = {
   decisionClient: null,
   typeDeSuite: "rdv_fixe",
   messageALaisser: null,
-  breakfastAnalysis: DEFAULT_BREAKFAST_ANALYSIS
+  breakfastAnalysis: DEFAULT_BREAKFAST_ANALYSIS,
+  sportProfile: null,
+  currentIntake: {
+    morning: null, snackAM: null, lunch: null, preWO: null, postWO: null, snackPM: null, dinner: null,
+  },
 };
 
 function readAssessmentDraft(): AssessmentDraftPayload | null {
@@ -1535,6 +1543,13 @@ export function NewAssessmentPage() {
             </div>
             )
           })()}
+
+          {currentStepId === 'sport-profile' && (
+            <SportProfileStep
+              value={form.sportProfile}
+              onChange={(v) => update("sportProfile", v)}
+            />
+          )}
 
           {currentStepId === 'body-scan' && (
             <div className="space-y-4">
