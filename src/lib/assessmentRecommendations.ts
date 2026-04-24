@@ -11,7 +11,7 @@ export type AssessmentNeedId =
 
 export interface AssessmentRecommendationSource {
   sex: "female" | "male";
-  objective: "weight-loss" | "sport";
+  objective: "weight-loss" | "sport" | "mass-gain" | "strength" | "cutting" | "endurance" | "fitness" | "competition";
   sleepHours: number;
   sleepQuality: string;
   breakfastFrequency: string;
