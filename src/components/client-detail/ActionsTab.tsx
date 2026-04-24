@@ -1,4 +1,4 @@
-// Chantier Refonte Actions premium (2026-04-26).
+﻿// Chantier Refonte Actions premium (2026-04-26).
 // Onglet "Actions" de la fiche client — refonte chirurgicale selon mockup
 // validé. Toutes les infos programme (eau, protéines, produits, protocole
 // suivi, note persona) sont désormais dans l'onglet Vue complète.
@@ -20,7 +20,9 @@ import { useToast, buildSupabaseErrorToast } from "../../context/ToastContext";
 import { ClientAccessModal } from "../client/ClientAccessModal";
 import { refreshClientRecap } from "../../services/supabaseService";
 import { useClientPriorityAction } from "../../hooks/useClientPriorityAction";
-import type { Client, LifecycleStatus } from "../../types/domain";
+import { ActionsRdvBlock } from "./ActionsRdvBlock";
+import { getClientActiveFollowUp } from "../../lib/portfolio";
+import type { Client, FollowUp, LifecycleStatus } from "../../types/domain";
 import { LIFECYCLE_LABELS } from "../../types/domain";
 
 // Ordre des pills (mockup) : Actif / Pause / Pas démarré / Arrêté / Perdu
@@ -49,10 +51,6 @@ function daysSince(iso?: string | null): number | null {
 function formatPhone(p?: string): string {
   if (!p) return "Non renseigné";
   return p.replace(/(\d{2})(?=\d)/g, "$1 ").trim();
-}
-
-function initialsOf(first: string, last: string): string {
-  return ((first?.[0] ?? "") + (last?.[0] ?? "")).toUpperCase() || "?";
 }
 
 interface Props {
@@ -92,11 +90,18 @@ export function ActionsTab({ client, onEditRdv, onOpenSharePublic, onGoToVueComp
   const [lifecycleSaving, setLifecycleSaving] = useState(false);
 
   const priority = useClientPriorityAction(client, followUps);
+  // Chantier Refonte onglet Actions — bloc RDV premium (2026-04-26) :
+  // activeFollowUp calculé ici pour passer à ActionsRdvBlock (prop alignée
+  // avec ce que ClientDetailPage utilise déjà via getClientActiveFollowUp).
+  const activeFollowUp: FollowUp | null = useMemo(
+    () => (client ? getClientActiveFollowUp(client, followUps) : null),
+    [client, followUps],
+  );
 
   // Programme actuel + count bilans pour le header
   const initialAssessment = client.assessments?.find((a) => a.type === "initial");
-  const assessmentsCount = client.assessments?.length ?? 0;
-  const memberSinceStr = formatDateShort(client.startDate ?? initialAssessment?.date ?? null);
+  // assessmentsCount + memberSinceStr supprimés (utilisés par BLOC 1 Header
+  // identité, retiré dans la refonte RDV premium 2026-04-26).
 
   const currentStatus: LifecycleStatus =
     client.lifecycleStatus ?? (client.started ? "active" : "not_started");
@@ -333,94 +338,17 @@ export function ActionsTab({ client, onEditRdv, onOpenSharePublic, onGoToVueComp
         }
       `}</style>
 
-      {/* ═══ BLOC 1 — HEADER IDENTITÉ ═══════════════════════════════════ */}
-      <div
-        className="at-card"
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 14,
-          padding: "18px 22px",
-          marginBottom: 12,
-        }}
-      >
-        <div
-          aria-hidden="true"
-          style={{
-            width: 46,
-            height: 46,
-            borderRadius: "50%",
-            background: "linear-gradient(135deg, #F1EFE8, #E8E5DB)",
-            border: "0.5px solid rgba(211,209,199,0.8)",
-            color: "#5F5E5A",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontSize: 14,
-            fontWeight: 500,
-            flexShrink: 0,
-          }}
-        >
-          {initialsOf(client.firstName, client.lastName)}
-        </div>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 10,
-              flexWrap: "wrap",
-            }}
-          >
-            <div
-              style={{
-                fontSize: 16,
-                fontWeight: 500,
-                color: "var(--ls-actions-text)",
-              }}
-            >
-              {client.firstName} {client.lastName}
-            </div>
-            <StatusPill status={currentStatus} />
-          </div>
-          <div
-            style={{
-              fontSize: 11,
-              color: "var(--ls-actions-text-muted)",
-              marginTop: 3,
-            }}
-          >
-            {client.currentProgram || "Programme à confirmer"}
-            {" · "}
-            {client.city ?? "ville non renseignée"}
-            {" · "}
-            {assessmentsCount} bilan{assessmentsCount > 1 ? "s" : ""}
-            {" · depuis "}
-            {memberSinceStr}
-          </div>
-        </div>
-        <button
-          type="button"
-          onClick={() => navigate(`/clients/${client.id}/follow-up/new`)}
-          style={{
-            padding: "9px 16px",
-            fontSize: 12,
-            borderRadius: 9,
-            background: "#0F6E56",
-            color: "#fff",
-            border: "none",
-            fontWeight: 500,
-            letterSpacing: "0.01em",
-            cursor: "pointer",
-            flexShrink: 0,
-          }}
-        >
-          + Nouveau bilan
-        </button>
-      </div>
 
       {/* ═══ BLOC 2 — CARTE "À FAIRE MAINTENANT" ═════════════════════════ */}
-      <PriorityCard priority={priority} onClick={() => void handlePriorityCta()} />
+      <ActionsRdvBlock
+        priority={priority}
+        activeFollowUp={activeFollowUp}
+        clientFirstName={client.firstName}
+        clientLastName={client.lastName}
+        clientPhone={client.phone}
+        onPriorityCta={() => void handlePriorityCta()}
+        onEditRdv={onEditRdv}
+      />
 
       {/* ═══ GRID 2 COLONNES ═════════════════════════════════════════════ */}
       <div
@@ -972,24 +900,9 @@ export function ActionsTab({ client, onEditRdv, onOpenSharePublic, onGoToVueComp
 // Sous-composants
 // ═══════════════════════════════════════════════════════════════════════
 
-function StatusPill({ status }: { status: LifecycleStatus }) {
-  const styles = LIFECYCLE_PILL_STYLES[status];
-  return (
-    <span
-      style={{
-        fontSize: 10,
-        padding: "3px 9px",
-        borderRadius: 999,
-        background: styles.background,
-        color: styles.color,
-        fontWeight: 500,
-      }}
-    >
-      {status === "active" ? "● " : ""}
-      {LIFECYCLE_LABELS[status]}
-    </span>
-  );
-}
+// StatusPill supprimé (utilisé uniquement par BLOC 1 Header identité
+// retiré dans la refonte RDV premium 2026-04-26). LIFECYCLE_PILL_STYLES
+// reste utilisé par LifecyclePill ci-dessous.
 
 const LIFECYCLE_PILL_STYLES: Record<
   LifecycleStatus,
@@ -1179,129 +1092,8 @@ function RowClickable({
   );
 }
 
-function PriorityCard({
-  priority,
-  onClick,
-}: {
-  priority: ReturnType<typeof useClientPriorityAction>;
-  onClick: () => void;
-}) {
-  const isGold = priority.colorScheme === "gold";
-  return (
-    <div
-      style={{
-        background: isGold
-          ? "linear-gradient(135deg, rgba(250,199,117,0.18), rgba(239,159,39,0.02))"
-          : "linear-gradient(135deg, rgba(29,158,117,0.12), rgba(15,110,86,0.02))",
-        border: isGold
-          ? "0.5px solid rgba(239,159,39,0.4)"
-          : "0.5px solid rgba(29,158,117,0.4)",
-        borderRadius: 14,
-        padding: "16px 20px",
-        position: "relative",
-        overflow: "hidden",
-        marginBottom: 12,
-      }}
-    >
-      <div
-        aria-hidden="true"
-        style={{
-          position: "absolute",
-          top: 0,
-          right: 0,
-          width: 120,
-          height: 120,
-          background: isGold
-            ? "radial-gradient(circle, rgba(239,159,39,0.12), transparent 70%)"
-            : "radial-gradient(circle, rgba(29,158,117,0.08), transparent 70%)",
-          pointerEvents: "none",
-        }}
-      />
-      <div
-        style={{
-          position: "relative",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: 16,
-          flexWrap: "wrap",
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: 14, flex: 1, minWidth: 0 }}>
-          <div
-            aria-hidden="true"
-            style={{
-              width: 40,
-              height: 40,
-              borderRadius: 11,
-              background: "var(--ls-actions-card)",
-              boxShadow: "0 1px 3px rgba(186,117,23,0.12)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: 16,
-              flexShrink: 0,
-            }}
-          >
-            {priority.icon}
-          </div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div
-              style={{
-                fontSize: 10,
-                color: isGold ? "var(--ls-actions-gold-text)" : "var(--ls-actions-teal-text)",
-                letterSpacing: "0.1em",
-                fontWeight: 500,
-                textTransform: "uppercase",
-              }}
-            >
-              À FAIRE MAINTENANT
-            </div>
-            <div
-              style={{
-                fontSize: 14,
-                fontWeight: 500,
-                color: "var(--ls-actions-text)",
-                marginTop: 3,
-              }}
-            >
-              {priority.title}
-            </div>
-            <div
-              style={{
-                fontSize: 11,
-                color: "var(--ls-actions-text-muted)",
-                marginTop: 2,
-              }}
-            >
-              {priority.meta}
-            </div>
-          </div>
-        </div>
-        <button
-          type="button"
-          onClick={onClick}
-          style={{
-            padding: "9px 16px",
-            fontSize: 12,
-            borderRadius: 9,
-            background: isGold
-              ? "linear-gradient(135deg, #EF9F27, #BA7517)"
-              : "#0F6E56",
-            color: "#fff",
-            border: "none",
-            fontWeight: 500,
-            boxShadow: isGold ? "0 1px 3px rgba(186,117,23,0.25)" : "none",
-            cursor: "pointer",
-            flexShrink: 0,
-          }}
-        >
-          {priority.ctaLabel}
-        </button>
-      </div>
-    </div>
-  );
-}
+// PriorityCard supprimé (2026-04-26) : la priorité est maintenant rendue
+// par ActionsRdvBlock (fusion intelligente priorités + état RDV).
 
 function SharePublicPill({ client }: { client: Client }) {
   if (!client.publicShareConsent || client.publicShareRevokedAt) {
