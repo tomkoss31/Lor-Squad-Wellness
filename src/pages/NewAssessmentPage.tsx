@@ -20,6 +20,7 @@ import { MilkConsumptionToggle } from "../components/assessment/MilkConsumptionT
 import { ProgramChoiceCard } from "../components/assessment/ProgramChoiceCard";
 import { RoutineMatinList } from "../components/assessment/RoutineMatinList";
 import { ProgrammeTicket, type TicketAddOn } from "../components/assessment/ProgrammeTicket";
+import { SelectableProductCard } from "../components/assessment/SelectableProductCard";
 import { PROGRAM_CHOICES, getProgramById, BOOSTERS, type ProgramChoiceId } from "../data/programs";
 import { FelicitationsStep } from "../components/assessment/FelicitationsStep";
 import { NotesPanel } from "../components/assessment/NotesPanel";
@@ -2055,8 +2056,9 @@ export function NewAssessmentPage() {
                       </div>
                       <div className="grid gap-3">
                         {recommendationPlan.optionalUpsells.map((product) => (
-                          <SuggestedProductCard
+                          <SelectableProductCard
                             key={`upsell-${product.id}`}
+                            id={product.id}
                             name={product.name}
                             shortBenefit={product.shortBenefit}
                             pv={product.pv}
@@ -2727,8 +2729,9 @@ function NeedProductGroup({
         </div>
         <div className="grid gap-3">
           {products.map((product) => (
-            <SuggestedProductCard
+            <SelectableProductCard
               key={product.id}
+              id={product.id}
               name={product.name}
               shortBenefit={product.shortBenefit}
               pv={product.pv}
@@ -2745,71 +2748,9 @@ function NeedProductGroup({
   );
 }
 
-function SuggestedProductCard({
-  name,
-  shortBenefit,
-  pv,
-  prixPublic,
-  dureeReferenceJours,
-  quantityLabel,
-  selected,
-  onToggle
-}: {
-  name: string;
-  shortBenefit: string;
-  pv: number;
-  prixPublic: number;
-  dureeReferenceJours: number;
-  quantityLabel?: string;
-  selected: boolean;
-  onToggle: () => void;
-}) {
-  return (
-    <div
-      className={`rounded-[20px] p-3.5 transition ${
-        selected
-          ? "border border-[rgba(45,212,191,0.25)] bg-[rgba(45,212,191,0.09)]"
-          : "bg-[var(--ls-surface2)]"
-      }`}
-    >
-      <div className="flex h-full flex-col gap-3">
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0 space-y-1.5">
-            <p className="text-lg font-semibold text-white">{name}</p>
-            <p className="text-sm leading-6 text-[var(--ls-text-muted)]">{shortBenefit}</p>
-          </div>
-          <button
-            type="button"
-            onClick={onToggle}
-            className={`inline-flex min-h-[34px] shrink-0 items-center justify-center rounded-full px-3.5 py-1.5 text-sm font-semibold transition ${
-              selected
-                ? "bg-white text-[#0B0D11]"
-                : "border border-white/10 bg-[var(--ls-surface2)] text-white hover:bg-white/[0.08]"
-            }`}
-          >
-            {selected ? "Retenu" : "Retenir"}
-          </button>
-        </div>
-        <div className="mt-auto flex flex-wrap items-center gap-2">
-          {quantityLabel ? (
-            <span className="rounded-full bg-[var(--ls-surface2)] px-3 py-1 text-sm font-medium text-[var(--ls-text)]">
-              {quantityLabel}
-            </span>
-          ) : null}
-          <span className="rounded-full bg-[var(--ls-surface2)] px-3 py-1 text-sm font-medium text-[var(--ls-text)]">
-            {dureeReferenceJours} jours
-          </span>
-          <span className="rounded-full bg-[rgba(45,212,191,0.1)] px-3 py-1 text-sm font-semibold text-[#2DD4BF]">
-            {formatPriceEuro(prixPublic)}
-          </span>
-          <span className="rounded-full bg-[rgba(45,212,191,0.1)] px-3 py-1 text-sm font-semibold text-[#2DD4BF]">
-            {formatPv(pv)}
-          </span>
-        </div>
-      </div>
-    </div>
-  );
-}
+// Chantier Boosters cliquables + Quantités (2026-04-24) : ancien
+// `SuggestedProductCard` inline retiré, remplacé par le composant partagé
+// `SelectableProductCard` (src/components/assessment/SelectableProductCard.tsx).
 
 function TimelineChoiceField({
   label,
@@ -2920,14 +2861,9 @@ function formatEditableNumber(value: number) {
   return asString.endsWith(".0") ? asString.slice(0, -2) : asString;
 }
 
-function formatPriceEuro(value: number) {
-  return `${value.toFixed(2)} EUR`;
-}
-
-function formatPv(value: number) {
-  return `${value.toFixed(2)} PV`;
-}
-
+// formatPriceEuro / formatPv retirés — utilisés uniquement par l'ancien
+// SuggestedProductCard inline (Chantier Boosters cliquables + Quantités
+// 2026-04-24). Le nouveau SelectableProductCard gère son propre formatage.
 // formatValue / formatSignedValue retirés — alimentaient comparaisons
 // de l'étape supprimée. Chantier nettoyage bilan (2026-04-20).
 
