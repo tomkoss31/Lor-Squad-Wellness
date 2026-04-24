@@ -12,6 +12,7 @@
 // touch targets ≥ 44px, mobile-first.
 
 import { QuantityStepper } from "./QuantityStepper";
+import "./SelectableProductCard.css";
 
 export interface SelectableProductCardProps {
   id: string;
@@ -30,6 +31,14 @@ export interface SelectableProductCardProps {
   onQuantityChange?: (q: number) => void;
   minQuantity?: number;
   maxQuantity?: number;
+  /**
+   * Variant d'affichage (2026-04-27).
+   * - `default` (omis) : rendu historique Tailwind, utilisé pour "besoins
+   *   détectés" et "upsells optionnels".
+   * - `compact` : rendu grille compacte 3 états (neutre/recommandé/sélectionné),
+   *   utilisé exclusivement pour les boosters sport de l'étape Programme.
+   */
+  variant?: "default" | "compact";
 }
 
 function formatPriceEuro(value: number) {
@@ -55,11 +64,71 @@ export function SelectableProductCard({
   onQuantityChange,
   minQuantity = 1,
   maxQuantity = 10,
+  variant = "default",
 }: SelectableProductCardProps) {
   const isRec = Boolean(highlight);
   const showStepper =
     typeof quantity === "number" && typeof onQuantityChange === "function" && selected;
 
+  // ─── Variant compact (2026-04-27) : grille 2-3 colonnes avec 3 états
+  // visuels distincts. Rendu séparé pour ne pas impacter les 2 autres
+  // usages (besoins détectés + upsells) qui gardent le rendu Tailwind.
+  if (variant === "compact") {
+    const stateClass = selected
+      ? "spc-compact--selected"
+      : isRec
+        ? "spc-compact--recommended"
+        : "spc-compact--neutral";
+    const ctaClass = selected
+      ? "spc-compact__cta--selected"
+      : isRec
+        ? "spc-compact__cta--recommended"
+        : "spc-compact__cta--neutral";
+    const ctaLabel = selected
+      ? "✓ Retenu"
+      : isRec
+        ? "Retenir ★"
+        : "Retenir";
+    return (
+      <div className={`spc-compact ${stateClass}`}>
+        {isRec ? (
+          <span className="spc-compact__star" aria-hidden="true">
+            ★
+          </span>
+        ) : null}
+        <div className="spc-compact__content">
+          <p className="spc-compact__title">{name}</p>
+          <p className="spc-compact__subtitle">{shortBenefit}</p>
+          <p className="spc-compact__price">+{formatPriceEuro(prixPublic)}</p>
+          {isRec && !selected && highlight?.reason ? (
+            <p className="spc-compact__reason">{highlight.reason}</p>
+          ) : null}
+        </div>
+        <div className="spc-compact__actions">
+          {showStepper ? (
+            <div className="spc-compact__stepper-wrap">
+              <QuantityStepper
+                value={quantity as number}
+                min={minQuantity}
+                max={maxQuantity}
+                onChange={onQuantityChange as (n: number) => void}
+              />
+            </div>
+          ) : null}
+          <button
+            type="button"
+            onClick={onToggle}
+            aria-pressed={selected}
+            className={`spc-compact__cta ${ctaClass}`}
+          >
+            {ctaLabel}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ─── Variant default (rendu historique Tailwind, inchangé) ───────────
   return (
     <div
       className={`rounded-[20px] p-3.5 transition ${
