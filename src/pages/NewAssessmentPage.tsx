@@ -49,6 +49,7 @@ import {
 import { buildAssessmentRecommendationPlan } from "../lib/assessmentRecommendations";
 import type { BiologicalSex, BreakfastAnalysis, CurrentIntake, DecisionClient, MessageALaisser, Objective, RecommendationLead, SportProfile, TypeDeSuite } from "../types/domain";
 import { SportProfileStep } from "../components/assessment/SportProfileStep";
+import { CurrentIntakeStep } from "../components/assessment/CurrentIntakeStep";
 import { BreakfastStorySlider, DEFAULT_BREAKFAST_ANALYSIS } from "../components/education/BreakfastStorySlider";
 
 type AssessmentForm = {
@@ -1548,6 +1549,15 @@ export function NewAssessmentPage() {
             <SportProfileStep
               value={form.sportProfile}
               onChange={(v) => update("sportProfile", v)}
+            />
+          )}
+
+          {currentStepId === 'current-intake' && (
+            <CurrentIntakeStep
+              value={form.currentIntake}
+              onChange={(v) => update("currentIntake", v)}
+              weightKg={form.weight}
+              subObjective={form.sportProfile?.subObjective ?? "mass-gain"}
             />
           )}
 
