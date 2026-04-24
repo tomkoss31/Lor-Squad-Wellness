@@ -7,7 +7,6 @@ import { useEffect } from "react";
 import { useRef } from "react";
 import { Component, type ErrorInfo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { ClientAccessModal } from "../components/client/ClientAccessModal";
 import { getSupabaseClient } from "../services/supabaseClient";
 import { BodyFatInsightCard } from "../components/body-scan/BodyFatInsightCard";
 import { MuscleMassInsightCard } from "../components/body-scan/MuscleMassInsightCard";
@@ -451,13 +450,10 @@ export function NewAssessmentPage() {
   // Chantier Félicitations (2026-04-20) : le bouton "Enregistrer et terminer"
   // montre un état "Enregistrement…" pendant handleSaveAssessment.
   const [saving, setSaving] = useState(false);
-  const [recapClientName, setRecapClientName] = useState("");
-  // Chantier Client access unification (2026-04-24) : après validation
-  // du bilan, on ouvre la modale d'envoi d'accès (QR + WhatsApp +
-  // Copier) à la place du RecapModal hybride qui mélangeait rapport +
-  // app client.
-  const [accessModalOpen, setAccessModalOpen] = useState(false);
-  const [savedClientId, setSavedClientId] = useState<string | null>(null);
+  // États recapClientName / accessModalOpen / savedClientId supprimés
+  // (2026-04-27) : la modale ClientAccessModal post-bilan a été remplacée
+  // par la navigation vers /clients/:id/bilan-termine. Plus besoin de
+  // stocker ces états dans le wizard.
   const [assignedUserId, setAssignedUserId] = useState("");
   const [draftReady, setDraftReady] = useState(false);
   // Chantier Prospects : suivi des champs pré-remplis par le prospect (surlignés en vert
@@ -1082,13 +1078,17 @@ export function NewAssessmentPage() {
           if (recapData?.token) {
             clearAssessmentDraft();
             clearCoachNotesDraft(prospectId);
-            // Chantier Client access unification (2026-04-24) : ouvre
-            // la modale unifiée au lieu du RecapModal hybride. QR visible
-            // par défaut pour scan en présentiel fin de bilan.
-            setSavedClientId(clientId);
-            setRecapClientName(`${form.firstName?.trim()} ${form.lastName?.trim()}`);
-            setAccessModalOpen(true);
-            return; // la modale gère la navigation via onClose
+            // Chantier Page remerciement post-bilan (2026-04-27) :
+            // remplace l'ouverture de ClientAccessModal par une navigation
+            // vers la page plein écran /bilan-termine (dark premium, QR,
+            // partage, parrainage, avis). La modale reste accessible
+            // depuis la fiche coach pour les usages hors-bilan.
+            const tokenParam = encodeURIComponent(recapData.token);
+            const firstNameParam = encodeURIComponent(form.firstName?.trim() ?? "");
+            navigate(
+              `/clients/${clientId}/bilan-termine?token=${tokenParam}&firstName=${firstNameParam}`,
+            );
+            return;
           }
         }
 
@@ -2313,24 +2313,11 @@ export function NewAssessmentPage() {
       </div>
       </div>
 
-      {/* Modale unifiée ClientAccessModal (V2 Client access unification
-          2026-04-24) : remplace l'ancien RecapModal hybride. Fin de
-          bilan → QR visible par défaut pour scan en présentiel.
-          onClose → navigation vers la fiche client. */}
-      {accessModalOpen && savedClientId ? (
-        <ClientAccessModal
-          open={accessModalOpen}
-          onClose={() => {
-            setAccessModalOpen(false);
-            navigate(`/clients/${savedClientId}`);
-          }}
-          clientId={savedClientId}
-          clientFirstName={form.firstName?.trim() ?? recapClientName}
-          clientLastName={form.lastName?.trim() ?? ""}
-          clientPhone={form.phone}
-          qrDefault={true}
-        />
-      ) : null}
+      {/* ClientAccessModal supprimé du flow post-bilan (2026-04-27) :
+          remplacé par la redirection vers /clients/:id/bilan-termine
+          (page remerciement plein écran dark premium). La modale reste
+          accessible depuis la fiche coach (ActionsTab + ClientDetailPage)
+          pour les usages hors-bilan. */}
 
       <SportAlertsDialog
         alerts={sportAlerts}
