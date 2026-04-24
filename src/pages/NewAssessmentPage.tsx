@@ -50,6 +50,7 @@ import { buildAssessmentRecommendationPlan, recommendBoosters } from "../lib/ass
 import type { BiologicalSex, BreakfastAnalysis, CurrentIntake, DecisionClient, MessageALaisser, Objective, RecommendationLead, SportProfile, TypeDeSuite } from "../types/domain";
 import { SportProfileStep } from "../components/assessment/SportProfileStep";
 import { CurrentIntakeStep } from "../components/assessment/CurrentIntakeStep";
+import { SportAlertsDialog, detectSportAlerts, type SportAlert } from "../components/assessment/SportAlertsDialog";
 import { BreakfastStorySlider, DEFAULT_BREAKFAST_ANALYSIS } from "../components/education/BreakfastStorySlider";
 
 type AssessmentForm = {
@@ -472,6 +473,10 @@ export function NewAssessmentPage() {
     return readCoachNotesDraft(prospectId);
   });
   const [showValidationBanner, setShowValidationBanner] = useState(false);
+  // Chantier Prise de masse (2026-04-24) : alertes sport style Apple Health.
+  const [sportAlerts, setSportAlerts] = useState<SportAlert[]>([]);
+  const [sportAlertsOpen, setSportAlertsOpen] = useState(false);
+  const [sportAlertsAcknowledged, setSportAlertsAcknowledged] = useState(false);
   const [showMobileNotes, setShowMobileNotes] = useState(false);
 
   // Si prospectId change (navigation entre bilans), on reset les notes
@@ -814,6 +819,26 @@ export function NewAssessmentPage() {
 
   async function handleSaveAssessment() {
     if (saving) return;
+
+    // Chantier Prise de masse (2026-04-24) : check alertes sport avant save.
+    if (form.objective === "sport" && !sportAlertsAcknowledged) {
+      const alerts = detectSportAlerts({
+        profile: form.sportProfile,
+        intake: form.currentIntake,
+        weightKg: form.weight,
+        muscleMassPercent: form.muscleMass || null,
+        sleepHours: form.sleepHours || null,
+        waterIntakeLiters: form.waterIntake || null,
+        snackingFrequency: form.snackingFrequency || null,
+        reportedTypes: form.sportProfile?.types,
+      });
+      if (alerts.length > 0) {
+        setSportAlerts(alerts);
+        setSportAlertsOpen(true);
+        return;
+      }
+    }
+
     if (!form.firstName.trim() || !form.lastName.trim()) {
       setSaveError("Renseigne au minimum le prenom et le nom du client.");
       goToStep(0);
@@ -2273,6 +2298,15 @@ export function NewAssessmentPage() {
         />
       ) : null}
 
+      <SportAlertsDialog
+        alerts={sportAlerts}
+        open={sportAlertsOpen}
+        onClose={() => {
+          setSportAlertsOpen(false);
+          setSportAlertsAcknowledged(true);
+          void handleSaveAssessment();
+        }}
+      />
     </div>
     );
   }
