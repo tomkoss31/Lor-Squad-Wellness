@@ -1,4 +1,4 @@
-﻿import { useState, type ReactNode } from "react";
+﻿import { useState, useMemo, type ReactNode } from "react";
 // lazy retiré — Chantier nettoyage bilan (2026-04-20)
 // Chantier nettoyage bilan (2026-04-20) : Suspense retiré — LazyMorningRoutineCard
 // supprimé de l'étape "Notre concept" qui n'affiche plus que l'image.
@@ -311,7 +311,7 @@ function readAssessmentDraft(): AssessmentDraftPayload | null {
       },
       currentStep:
         typeof parsed.currentStep === "number"
-          ? Math.min(Math.max(parsed.currentStep, 0), steps.length - 1)
+          ? Math.min(Math.max(parsed.currentStep, 0), MAX_STEPS_COUNT - 1)
           : 0,
       assignedUserId: parsed.assignedUserId ?? "",
       savedAt: parsed.savedAt ?? new Date().toISOString()
@@ -355,21 +355,54 @@ function clearAssessmentDraft() {
 // - Supprimé "Références de suivi"
 // - Supprimé "Reconnaissance"
 // Total étapes : 13 (0-12).
-const steps = [
-  "Informations client",             // 0
-  "Habitudes de vie et repas",       // 1
-  "Qualité alimentaire et boissons", // 2
-  "Santé, objectif, activité et freins", // 3
-  "Composition des repas",           // 4
-  "Body scan",                       // 5
-  "Dégustation",                     // 6  (déplacée avant les reco : le client goûte en premier, lit les reco pendant qu'il boit)
-  "Recommandations",                 // 7
-  "Petit-déjeuner",                  // 8
-  "Notre concept de rééquilibrage alimentaire", // 9  (ex 11, sans LazyMorningRoutineCard)
-  "Programme proposé",               // 10 (ex 12)
-  "Suite du suivi",                  // 11 (ex 13)
-  "Félicitations"                    // 12 (remplace "Résumé du rendez-vous" — 2026-04-20)
+// Chantier Prise de masse (2026-04-24) : steps en tableau d'objets avec flag
+// `visible(form)` pour masquer dynamiquement les 2 étapes sport (sport-profile,
+// current-intake) quand l'objectif n'est pas "sport".
+export type StepId =
+  | 'client-info'
+  | 'habits'
+  | 'food-quality'
+  | 'health-objective'
+  | 'meal-composition'
+  | 'sport-profile'
+  | 'current-intake'
+  | 'body-scan'
+  | 'tasting'
+  | 'recommendations'
+  | 'breakfast'
+  | 'concept'
+  | 'program'
+  | 'follow-up'
+  | 'felicitations';
+
+export interface StepDef {
+  id: StepId;
+  label: string;
+  visible: (form: AssessmentForm) => boolean;
+}
+
+const ALL_STEPS: StepDef[] = [
+  { id: 'client-info', label: "Informations client", visible: () => true },
+  { id: 'habits', label: "Habitudes de vie et repas", visible: () => true },
+  { id: 'food-quality', label: "Qualité alimentaire et boissons", visible: () => true },
+  { id: 'health-objective', label: "Santé, objectif, activité et freins", visible: () => true },
+  { id: 'meal-composition', label: "Composition des repas", visible: () => true },
+  { id: 'sport-profile', label: "Parle-moi de ton sport", visible: (f) => f.objective === 'sport' },
+  { id: 'current-intake', label: "Tes apports actuels", visible: (f) => f.objective === 'sport' },
+  { id: 'body-scan', label: "Body scan", visible: () => true },
+  { id: 'tasting', label: "Dégustation", visible: () => true },
+  { id: 'recommendations', label: "Recommandations", visible: () => true },
+  { id: 'breakfast', label: "Petit-déjeuner", visible: () => true },
+  { id: 'concept', label: "Notre concept de rééquilibrage alimentaire", visible: () => true },
+  { id: 'program', label: "Programme proposé", visible: () => true },
+  { id: 'follow-up', label: "Suite du suivi", visible: () => true },
+  { id: 'felicitations', label: "Félicitations", visible: () => true },
 ];
+
+// Fallback pour `steps.length` usages hors du composant (draft clamp + initial
+// bounds). On se base sur le MAX possible (15 étapes) — la clampification
+// dynamique via `visibleSteps` se fait dans le composant.
+const MAX_STEPS_COUNT = ALL_STEPS.length;
 
 const timelineOptions = [
   "1 mois",
@@ -449,8 +482,7 @@ export function NewAssessmentPage() {
     form.typeDeSuite === "suivi_libre" ||
     (!!form.typeDeSuite && form.nextFollowUp.trim().length > 0);
 
-  // Panneau notes visible sur étapes 0-4 (1-5 humain) et 12 (13 humain).
-  const notesVisible = currentStep <= 4 || currentStep === 12;
+  // (notesVisible est calculé plus bas, après currentStepId)
 
   useEffect(() => {
     const draft = readAssessmentDraft();
@@ -485,9 +517,27 @@ export function NewAssessmentPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [prospectId]);
 
+  // Chantier Prise de masse (2026-04-24) : steps dynamiques selon form.objective.
+  const visibleSteps = useMemo(() => ALL_STEPS.filter((s) => s.visible(form)), [form]);
+  const steps = useMemo(() => visibleSteps.map((s) => s.label), [visibleSteps]);
+  const stepIds = useMemo(() => visibleSteps.map((s) => s.id), [visibleSteps]);
+  const currentStepId = stepIds[currentStep] ?? 'client-info';
+
   const goToStep = (nextStep: number) => {
     setCurrentStep(Math.min(Math.max(nextStep, 0), steps.length - 1));
   };
+
+  const goToStepId = (id: StepId) => {
+    const idx = stepIds.indexOf(id);
+    if (idx >= 0) goToStep(idx);
+  };
+
+  // Panneau notes visible sur étapes "amont" (avant body-scan) + final.
+  const NOTES_VISIBLE_IDS = new Set<StepId>([
+    'client-info', 'habits', 'food-quality', 'health-objective', 'meal-composition',
+    'sport-profile', 'current-intake', 'felicitations',
+  ]);
+  const notesVisible = NOTES_VISIBLE_IDS.has(currentStepId);
 
   const goToPreviousStep = () => {
     goToStep(currentStep - 1);
@@ -510,8 +560,8 @@ export function NewAssessmentPage() {
       }
     }
 
-    // Validation étape 5 — body scan (poids minimum)
-    if (currentStep === 5) {
+    // Validation étape body scan (poids minimum)
+    if (currentStepId === 'body-scan') {
       if (!form.weight || form.weight <= 0) {
         setStepWarning("Le poids est nécessaire pour le body scan. Tu peux le compléter plus tard si besoin.");
       }
@@ -633,7 +683,7 @@ export function NewAssessmentPage() {
   );
 
   useEffect(() => {
-    if (currentStep !== 10) {
+    if (currentStepId !== 'program') {
       return;
     }
 
@@ -642,7 +692,7 @@ export function NewAssessmentPage() {
     }
 
     update("selectedProductIds", defaultSuggestedProductIds);
-  }, [currentStep, defaultSuggestedProductIds, form.selectedProductIds.length]);
+  }, [currentStepId, defaultSuggestedProductIds, form.selectedProductIds.length]);
 
 
 
@@ -1122,7 +1172,7 @@ export function NewAssessmentPage() {
             />
           </div>
 
-          {currentStep === 0 && (
+          {currentStepId === 'client-info' && (
               <div className="space-y-4">
                 <div className="grid gap-4 md:grid-cols-2">
                   <Field label="Prenom" value={form.firstName} onChange={(v) => update("firstName", v)} prefilled={prefilledFields.firstName} />
@@ -1252,7 +1302,7 @@ export function NewAssessmentPage() {
               </div>
             )}
 
-          {currentStep === 1 && (
+          {currentStepId === 'habits' && (
             <div className="space-y-4">
               <SectionBlock title="Bloc 1 - Rythme de vie" description="Comprendre le rythme reel avant de parler alimentation.">
                 <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -1337,7 +1387,7 @@ export function NewAssessmentPage() {
             </div>
           )}
 
-          {currentStep === 2 && (
+          {currentStepId === 'food-quality' && (
             <div className="space-y-4">
               <SectionBlock title="Bloc 4 - Qualite alimentaire" description="Faire decrire rapidement le midi et le soir puis evaluer les bases.">
                 <div className="grid gap-4 md:grid-cols-2">
@@ -1375,7 +1425,7 @@ export function NewAssessmentPage() {
             </div>
           )}
 
-          {currentStep === 3 && (
+          {currentStepId === 'health-objective' && (
               <div className="space-y-4">
               <SectionBlock title="Bloc 7 - Allergies, transit et contexte pathologique" description="Ajouter seulement les points sante utiles pour cadrer l'accompagnement.">
                 <div className="grid gap-4 md:grid-cols-2">
@@ -1422,7 +1472,7 @@ export function NewAssessmentPage() {
               </div>
             )}
 
-          {currentStep === 4 && (() => {
+          {currentStepId === 'meal-composition' && (() => {
             const mealConfigs: Record<string, { title: string; legumes: number; proteines: number; glucides: number; message: string }> = {
               'weight-loss': { title: 'Assiette perte de poids', legumes: 50, proteines: 25, glucides: 25, message: 'La moitié de ton assiette en légumes te donnera du volume et de la satiété sans excès de calories.' },
               'sport': { title: 'Assiette prise de masse', legumes: 30, proteines: 40, glucides: 30, message: 'Plus de protéines et de glucides pour nourrir la croissance musculaire. Les légumes restent présents pour la récupération.' },
@@ -1486,7 +1536,7 @@ export function NewAssessmentPage() {
             )
           })()}
 
-          {currentStep === 5 && (
+          {currentStepId === 'body-scan' && (
             <div className="space-y-4">
               {/* Saisie body scan — grille claire */}
               <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
@@ -1594,7 +1644,7 @@ export function NewAssessmentPage() {
 
           {/* ─── Étape 6 : Dégustation — déplacée avant Recommandations (2026-04-20).
                 Le client goûte d'abord, puis lit les recos pendant qu'il boit. ─── */}
-          {currentStep === 6 && (
+          {currentStepId === 'tasting' && (
             <VisualStepBoundary title="Place à la dégustation">
               <Card className="space-y-5">
                 <div>
@@ -1649,7 +1699,7 @@ export function NewAssessmentPage() {
           )}
 
           {/* ─── Étape 7 : Recommandations (déplacée après Dégustation — 2026-04-20) ─── */}
-          {currentStep === 7 && (
+          {currentStepId === 'recommendations' && (
             <RecommendationStepCard
               recommendations={form.recommendations}
               recommendationsContacted={form.recommendationsContacted}
@@ -1661,7 +1711,7 @@ export function NewAssessmentPage() {
           {/* Étape "Reconnaissance" supprimée — Chantier nettoyage bilan (2026-04-20) */}
 
           {/* ─── Étape 8 : Petit-déjeuner ─── */}
-          {currentStep === 8 && (
+          {currentStepId === 'breakfast' && (
             <VisualStepBoundary title="Petit-dejeuner">
               <BreakfastStorySlider
                 breakfastContent={form.breakfastContent}
@@ -1675,7 +1725,7 @@ export function NewAssessmentPage() {
                 Contenu = uniquement l'image de référence. L'ancien
                 LazyMorningRoutineCard (titre "Routine matin Lor'Squad") a
                 été retiré — Chantier nettoyage bilan (2026-04-20) ─── */}
-          {currentStep === 9 && (
+          {currentStepId === 'concept' && (
             <VisualStepBoundary title="Notre concept de rééquilibrage alimentaire">
               <div style={{ display: "flex", justifyContent: "center" }}>
                 {/* WebP primary (118 KB) + PNG fallback (513 KB) — Chantier
@@ -1695,7 +1745,7 @@ export function NewAssessmentPage() {
             </VisualStepBoundary>
           )}
 
-          {currentStep === 10 && (() => {
+          {currentStepId === 'program' && (() => {
             // Chantier refonte étape 11 (2026-04-20) — tunnel de vente structuré.
             const chosenProgram = getProgramById(form.programChoice);
             const ticketAddOns: TicketAddOn[] = addOnProducts.map((p) => ({
@@ -1926,7 +1976,7 @@ export function NewAssessmentPage() {
 
           {/* Ancien step Hydratation supprimé — Chantier bilan updates (2026-04-20) */}
 
-          {currentStep === 11 && (
+          {currentStepId === 'follow-up' && (
             <div className="space-y-4">
               {/* Mini-résumé bilan pour contexte */}
               <div className="rounded-[16px] border border-[rgba(201,168,76,0.15)] bg-[rgba(201,168,76,0.04)] p-4">
@@ -2032,13 +2082,13 @@ export function NewAssessmentPage() {
 
           {/* ─── Étape 12 : Félicitations (remplace l'ancienne "Conclusion du
                 rendez-vous" — Chantier Félicitations 2026-04-20) ─── */}
-          {currentStep === 12 && (
+          {currentStepId === 'felicitations' && (
             <>
               {showValidationBanner && !hasFollowUpPlanned ? (
                 <ValidationBlockedBanner
                   onBack={() => {
                     setShowValidationBanner(false);
-                    goToStep(11);
+                    goToStepId('follow-up');
                   }}
                 />
               ) : null}
