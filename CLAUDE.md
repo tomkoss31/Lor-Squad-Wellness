@@ -5,6 +5,61 @@ reproduire les régressions passées. Relire avant tout gros chantier.
 
 ---
 
+## Page remerciement post-bilan (2026-04-27)
+
+### Route dédiée
+
+`/clients/:clientId/bilan-termine?token=<recap_token>&firstName=<prénom>`
+
+Page plein écran (`BilanTermineePage` → `ThankYouStep`) qui s'affiche
+automatiquement après "Enregistrer et terminer le bilan". Remplace
+l'ouverture de `ClientAccessModal` qui était utilisée pour ce flow.
+
+### Contenu (6 sections)
+
+1. **Header héro** — logo gold, titre Syne 32px "Félicitations, [Prénom] !"
+2. **QR code** — `QRCodeSVG` (qrcode.react) 240×240 sur card blanche
+   + bouton copie URL tronquée + toast "Lien copié"
+3. **Partage multi-canal** — WhatsApp (`wa.me`) + SMS (protocole `sms:`) +
+   Telegram (`t.me/share/url`)
+4. **Parrainage** — card teal avec CTA gold "Recommander à un ami" →
+   ouvre WhatsApp avec message de parrainage
+5. **Avis Google** — bouton étoiles → lien Google Reviews (TODO Thomas :
+   remplacer la constante `GOOGLE_REVIEW_URL` dans `ThankYouStep.tsx`)
+6. **Retour discret** — lien "Retour à la fiche client"
+
+### Règle visuelle : respect du thème actif
+
+Toutes les couleurs passent par `var(--ls-*)` → la page suit le toggle
+clair/sombre de l'app coach. Le QR code reste sur **fond blanc** dans les
+2 modes (scannabilité obligatoire). En mode sombre, un **glow gold**
+subtil entoure la card QR pour l'effet wow.
+
+**Astuce coach** : pour un effet maximal en RDV, basculer l'app en mode
+sombre juste avant de cliquer "Enregistrer et terminer le bilan". La page
+remerciement s'affiche en dark premium, le QR ressort spectaculairement,
+bascule retour en clair après le RDV.
+
+### Modale `ClientAccessModal` (toujours utile)
+
+La modale reste importée par `ActionsTab` et `ClientDetailPage` pour :
+- Bouton "Envoyer l'accès" dans la fiche coach
+- Usage hors-bilan (follow-up, régénération accès, etc.)
+
+Elle n'est plus utilisée dans le flow post-save du bilan initial.
+
+### Contrat query params
+
+- `token` : `client_recaps.token` (uuid) — renvoyé par l'insert
+  `client_recaps` dans `handleSaveAssessment`
+- `firstName` : `form.firstName` (utilisé pour "Félicitations [Prénom]")
+- Les 2 params sont URL-encodés via `encodeURIComponent`
+
+Si absents (permalink, refresh) : fallback via `AppContext.getClientById`
+pour récupérer le prénom, `window.location.origin` pour construire l'URL.
+
+---
+
 ## Architecture data app client (2026-04-26)
 
 ### Principe
