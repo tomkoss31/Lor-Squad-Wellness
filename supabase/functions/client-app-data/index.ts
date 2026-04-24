@@ -95,11 +95,14 @@ serve(async (req) => {
     const clientId = account.client_id as string;
     console.log(`[client-app-data] token resolved → clientId=${clientId} (type=${typeof clientId})`);
 
-    // ─── 2. Fetch des 3 sources en parallèle (service_role = RLS bypass) ─
-    const [clientRes, followUpRes, productsRes] = await Promise.all([
+    // ─── 2. Fetch des sources en parallèle (service_role = RLS bypass) ─
+    // Chantier Conseils (2026-04-24) : ajout assessments_history (limit 20),
+    // latest assessment (pour sport_profile / current_intake / coach_advice
+    // / recommendations), recompute sport_alerts + recommendations_not_taken.
+    const [clientRes, followUpRes, productsRes, assessmentsRes] = await Promise.all([
       supabase
         .from("clients")
-        .select("current_program, notes")
+        .select("current_program, notes, objective")
         .eq("id", clientId)
         .maybeSingle(),
 
@@ -121,6 +124,15 @@ serve(async (req) => {
         .eq("client_id", clientId)
         .eq("active", true)
         .order("start_date", { ascending: false }),
+
+      supabase
+        .from("assessments")
+        .select(
+          "id, date, type, objective, program_title, body_scan, questionnaire, sport_frequency, sport_types, sport_sub_objective, current_intake, coach_notes_initial",
+        )
+        .eq("client_id", clientId)
+        .order("date", { ascending: true })
+        .limit(20),
     ]);
 
     if (clientRes.error) {
@@ -132,8 +144,280 @@ serve(async (req) => {
     if (productsRes.error) {
       console.error("[client-app-data] products select error", productsRes.error);
     }
+    if (assessmentsRes.error) {
+      console.error("[client-app-data] assessments select error", assessmentsRes.error);
+    }
 
-    // ─── 3. Normalisation + response ──────────────────────────────────
+    // ─── 3. Dérivations Conseils (assessment history + recos + alerts) ─
+    // Format assessment_history : tableau normalisé (date + métriques
+    // principales du body_scan). On reste permissif (champs optionnels).
+    const rawAssessments = (assessmentsRes.data ?? []) as Array<Record<string, unknown>>;
+    interface AssessmentRow {
+      id?: string;
+      date?: string | null;
+      type?: string | null;
+      objective?: string | null;
+      program_title?: string | null;
+      body_scan?: Record<string, unknown> | null;
+      questionnaire?: Record<string, unknown> | null;
+      sport_frequency?: string | null;
+      sport_types?: unknown;
+      sport_sub_objective?: string | null;
+      current_intake?: Record<string, unknown> | null;
+      coach_notes_initial?: string | null;
+    }
+    const typedAssessments = rawAssessments as AssessmentRow[];
+
+    const assessment_history = typedAssessments.map((a) => {
+      const bs = (a.body_scan ?? {}) as Record<string, unknown>;
+      const num = (v: unknown): number | null =>
+        typeof v === "number" && Number.isFinite(v)
+          ? v
+          : typeof v === "string" && v !== "" && Number.isFinite(Number(v))
+            ? Number(v)
+            : null;
+      return {
+        id: a.id ?? null,
+        date: a.date ?? null,
+        type: a.type ?? null,
+        weight: num(bs.weight),
+        bodyFat: num(bs.bodyFat),
+        muscleMass: num(bs.muscleMass),
+        hydration: num(bs.hydration),
+        visceralFat: num(bs.visceralFat),
+        metabolicAge: num(bs.metabolicAge),
+        boneMass: num(bs.boneMass),
+        bmr: num(bs.bmr),
+      };
+    });
+
+    const latestAssessment = typedAssessments.length
+      ? typedAssessments[typedAssessments.length - 1]
+      : null;
+
+    // Latest recommendations (from questionnaire.recommendations if present)
+    const latestRecommendations: Array<{ ref?: string; name?: string; shortBenefit?: string; publicPrice?: number }> =
+      (() => {
+        if (!latestAssessment?.questionnaire) return [];
+        const q = latestAssessment.questionnaire as Record<string, unknown>;
+        const recs = q.recommendations;
+        if (!Array.isArray(recs)) return [];
+        return recs as Array<{ ref?: string; name?: string; shortBenefit?: string; publicPrice?: number }>;
+      })();
+
+    // recommendations_not_taken : diff latestRecommendations \ current_products
+    const currentProductIds = new Set(
+      (productsRes.data ?? []).map((p: { product_id?: string }) => (p.product_id ?? "").toLowerCase()),
+    );
+    const currentProductNames = new Set(
+      (productsRes.data ?? []).map((p: { product_name?: string }) =>
+        (p.product_name ?? "").toLowerCase().trim(),
+      ),
+    );
+    const recommendations_not_taken = latestRecommendations
+      .filter((r) => {
+        const refLower = (r.ref ?? "").toLowerCase();
+        const nameLower = (r.name ?? "").toLowerCase().trim();
+        if (refLower && currentProductIds.has(refLower)) return false;
+        if (nameLower && currentProductNames.has(nameLower)) return false;
+        return true;
+      })
+      .map((r) => ({
+        productId: r.ref ?? "",
+        name: r.name ?? "",
+        price: typeof r.publicPrice === "number" ? r.publicPrice : undefined,
+        reason: r.shortBenefit ?? undefined,
+      }));
+
+    // sport_profile from latest assessment
+    let sport_profile: {
+      frequency: string;
+      types: string[];
+      subObjective: string;
+      otherTypeLabel?: string;
+    } | null = null;
+    if (latestAssessment && latestAssessment.sport_frequency && latestAssessment.sport_sub_objective) {
+      const typesRaw = latestAssessment.sport_types;
+      const types: string[] = Array.isArray(typesRaw)
+        ? typesRaw.filter((t): t is string => typeof t === "string")
+        : [];
+      sport_profile = {
+        frequency: latestAssessment.sport_frequency,
+        types,
+        subObjective: latestAssessment.sport_sub_objective,
+      };
+    }
+
+    const current_intake = latestAssessment?.current_intake ?? null;
+    // coach_advice : notes figées du bilan (coach_notes_initial), utilisées
+    // telles quelles. Choix : notes validées (pas le draft) pour éviter de
+    // remonter un brouillon au client.
+    const coach_advice = latestAssessment?.coach_notes_initial ?? "";
+
+    // ─── Sport alerts (re-implementation of detectSportAlerts) ─────────
+    interface SportAlert {
+      id:
+        | "hydration-low"
+        | "protein-low"
+        | "sleep-low"
+        | "muscle-low"
+        | "no-snack"
+        | "frequency-mismatch";
+      icon: string;
+      title: string;
+      detail: string;
+      advice: string;
+    }
+    const sport_alerts: SportAlert[] = [];
+    if (sport_profile && latestAssessment) {
+      const bs = (latestAssessment.body_scan ?? {}) as Record<string, unknown>;
+      const weightKg = typeof bs.weight === "number" ? bs.weight : 0;
+      const muscleKg = typeof bs.muscleMass === "number" ? bs.muscleMass : null;
+      const musclePct = muscleKg != null && weightKg > 0 ? (muscleKg / weightKg) * 100 : null;
+
+      const q = (latestAssessment.questionnaire ?? {}) as Record<string, unknown>;
+      const sleepHours =
+        typeof q.sleepHours === "number"
+          ? q.sleepHours
+          : typeof q.sleep_hours === "number"
+            ? q.sleep_hours
+            : null;
+      const waterIntakeLiters =
+        typeof q.waterIntakeLiters === "number"
+          ? q.waterIntakeLiters
+          : typeof q.water_intake === "number"
+            ? q.water_intake
+            : null;
+      const snackingFrequency =
+        typeof q.snackingFrequency === "string"
+          ? q.snackingFrequency
+          : typeof q.snacking === "string"
+            ? q.snacking
+            : null;
+
+      const sub = sport_profile.subObjective;
+      const freq = sport_profile.frequency;
+
+      // Water target sport
+      const waterMultipliers: Record<string, number> = {
+        none: 1,
+        occasional: 1.1,
+        regular: 1.25,
+        intensive: 1.4,
+      };
+      const waterTargetML = Math.max(
+        2000,
+        Math.min(5000, Math.round(weightKg * 33 * (waterMultipliers[freq] ?? 1))),
+      );
+
+      // 1. Hydration low
+      if (weightKg > 0 && waterIntakeLiters != null) {
+        const actualML = waterIntakeLiters * 1000;
+        if (actualML < waterTargetML * 0.7) {
+          sport_alerts.push({
+            id: "hydration-low",
+            icon: "💧",
+            title: "Hydratation insuffisante",
+            detail: `Tu bois ~${Math.round(actualML / 100) / 10} L/j, cible ${Math.round(waterTargetML / 100) / 10} L/j.`,
+            advice:
+              "Vise 33 ml/kg/j minimum, plus selon l'intensité. Un rappel visuel (gourde graduée) aide.",
+          });
+        }
+      }
+
+      // 2. Protein low (qualitative only — quantitative per-moment not remapped server-side for simplicity)
+      if (weightKg > 0 && latestAssessment.current_intake) {
+        const intakeObj = latestAssessment.current_intake as Record<string, unknown>;
+        const qualMap: Record<string, number> = { "0": 0, "1": 5, "2": 15, "3": 25, "4": 35 };
+        let currentProtein = 0;
+        for (const moment of Object.values(intakeObj)) {
+          if (!moment || typeof moment !== "object") continue;
+          const m = moment as { mode?: string; level?: number; proteinGrams?: number };
+          if (m.mode === "qualitative" && m.level != null) {
+            currentProtein += qualMap[String(m.level)] ?? 0;
+          } else if (m.mode === "quantitative" && typeof m.proteinGrams === "number") {
+            currentProtein += m.proteinGrams;
+          }
+        }
+        const proteinRanges: Record<string, [number, number]> = {
+          "mass-gain": [1.8, 2.2],
+          strength: [1.8, 2.2],
+          cutting: [2.2, 2.6],
+          endurance: [1.4, 1.8],
+          fitness: [1.4, 1.6],
+          competition: [2.0, 2.5],
+        };
+        const range = proteinRanges[sub] ?? [1.6, 2.0];
+        const proteinMin = Math.round(weightKg * range[0]);
+        if (currentProtein < proteinMin) {
+          sport_alerts.push({
+            id: "protein-low",
+            icon: "🥩",
+            title: "Apport protéique sous la cible",
+            detail: `Estimé ~${currentProtein} g/j, cible min ${proteinMin} g/j pour « ${sub} ».`,
+            advice:
+              "Ajoute 1 collation protéinée (Rebuild / skyr / œufs) post-entraînement pour combler l'écart.",
+          });
+        }
+      }
+
+      // 3. Sleep low
+      if (sleepHours != null && sleepHours > 0 && sleepHours < 7) {
+        sport_alerts.push({
+          id: "sleep-low",
+          icon: "😴",
+          title: "Sommeil insuffisant",
+          detail: `${sleepHours} h/nuit — la récupération musculaire démarre pendant la nuit.`,
+          advice: "Vise au moins 7h. Night Mode peut aider à améliorer la qualité du sommeil profond.",
+        });
+      }
+
+      // 4. Muscle low
+      if (
+        musclePct != null &&
+        (sub === "mass-gain" || sub === "strength") &&
+        musclePct < 35
+      ) {
+        sport_alerts.push({
+          id: "muscle-low",
+          icon: "💪",
+          title: "Masse musculaire basse",
+          detail: `Masse musculaire à ${musclePct.toFixed(1)}% — plan structuré conseillé.`,
+          advice:
+            "Protéines 1.8-2.2 g/kg + entraînement progressif 3-4 séances/sem. On ajuste ensemble au prochain bilan.",
+        });
+      }
+
+      // 5. No snack
+      if (sub === "mass-gain" && snackingFrequency && /jamais|rare|aucune/i.test(snackingFrequency)) {
+        sport_alerts.push({
+          id: "no-snack",
+          icon: "🍎",
+          title: "Pas de collation",
+          detail: "Pour gagner en masse, les collations sont un levier simple.",
+          advice: "2 × 20-30 g de protéines entre les repas (Achieve, yaourt grec, barre protéinée).",
+        });
+      }
+
+      // 6. Frequency mismatch
+      if (
+        freq === "intensive" &&
+        sport_profile.types.length &&
+        !sport_profile.types.some((t) =>
+          ["musculation", "crossfit-hiit", "combat-sport"].includes(t),
+        )
+      ) {
+        sport_alerts.push({
+          id: "frequency-mismatch",
+          icon: "⚡",
+          title: "Fréquence à préciser",
+          detail: "5+ séances/sem annoncées mais sans type haute intensité identifié.",
+          advice: "On ajuste le plan ensemble pour que le volume colle à tes types d'entraînement réels.",
+        });
+      }
+    }
+
+    // ─── 4. Normalisation + response ──────────────────────────────────
     const nextFollowUpIso = followUpRes.data?.due_date
       ? toIsoOrNull(followUpRes.data.due_date)
       : null;
@@ -141,8 +425,9 @@ serve(async (req) => {
     const payload = {
       client: clientRes.data
         ? {
-            current_program: clientRes.data.current_program ?? null,
-            notes: clientRes.data.notes ?? null,
+            current_program: (clientRes.data as { current_program?: string | null }).current_program ?? null,
+            notes: (clientRes.data as { notes?: string | null }).notes ?? null,
+            objective: (clientRes.data as { objective?: string | null }).objective ?? null,
           }
         : null,
       next_follow_up: followUpRes.data
@@ -154,6 +439,13 @@ serve(async (req) => {
           }
         : null,
       current_products: productsRes.data ?? [],
+      // Chantier Conseils (2026-04-24) : nouvelles clés sans toucher à l'existant.
+      assessment_history,
+      recommendations_not_taken,
+      sport_alerts,
+      sport_profile,
+      current_intake,
+      coach_advice,
       fetched_at: new Date().toISOString(),
     };
 
