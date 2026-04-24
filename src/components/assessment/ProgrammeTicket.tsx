@@ -5,6 +5,11 @@ export interface TicketAddOn {
   name: string;
   price: number;
   pv: number;
+  /**
+   * Chantier Boosters cliquables + Quantités (D-urgent, 2026-04-24).
+   * Quantité retenue pour ce produit dans le ticket. Défaut implicite = 1.
+   */
+  quantity: number;
 }
 
 interface Props {
@@ -20,8 +25,8 @@ interface Props {
  * pour ne pas bouffer l'écran).
  */
 export function ProgrammeTicket({ program, addOns }: Props) {
-  const addOnsTotal = addOns.reduce((sum, a) => sum + a.price, 0);
-  const addOnsPv = addOns.reduce((sum, a) => sum + a.pv, 0);
+  const addOnsTotal = addOns.reduce((sum, a) => sum + a.price * a.quantity, 0);
+  const addOnsPv = addOns.reduce((sum, a) => sum + a.pv * a.quantity, 0);
   const total = program.price + addOnsTotal;
 
   return (
@@ -120,10 +125,10 @@ export function ProgrammeTicket({ program, addOns }: Props) {
                 }}
               >
                 <span style={{ color: "#04342C", fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                  {addOn.name}
+                  {addOn.quantity > 1 ? `${addOn.name} × ${addOn.quantity}` : addOn.name}
                 </span>
                 <span style={{ color: "#04342C", fontWeight: 600, flexShrink: 0, marginLeft: 8 }}>
-                  {addOn.price.toFixed(2)}€
+                  {(addOn.price * addOn.quantity).toFixed(2)}€
                 </span>
               </div>
             ))}

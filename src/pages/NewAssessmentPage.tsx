@@ -20,6 +20,7 @@ import { MilkConsumptionToggle } from "../components/assessment/MilkConsumptionT
 import { ProgramChoiceCard } from "../components/assessment/ProgramChoiceCard";
 import { RoutineMatinList } from "../components/assessment/RoutineMatinList";
 import { ProgrammeTicket, type TicketAddOn } from "../components/assessment/ProgrammeTicket";
+import { SelectableProductCard } from "../components/assessment/SelectableProductCard";
 import { PROGRAM_CHOICES, getProgramById, BOOSTERS, type ProgramChoiceId } from "../data/programs";
 import { FelicitationsStep } from "../components/assessment/FelicitationsStep";
 import { NotesPanel } from "../components/assessment/NotesPanel";
@@ -47,7 +48,7 @@ import {
   computeProteinTarget,
 } from "../lib/calculations";
 import { buildAssessmentRecommendationPlan, recommendBoosters } from "../lib/assessmentRecommendations";
-import type { BiologicalSex, BreakfastAnalysis, CurrentIntake, DecisionClient, MessageALaisser, Objective, RecommendationLead, SportProfile, TypeDeSuite } from "../types/domain";
+import type { BiologicalSex, BreakfastAnalysis, CurrentIntake, DecisionClient, MessageALaisser, Objective, QuantityMap, RecommendationLead, SportProfile, TypeDeSuite } from "../types/domain";
 import { SportProfileStep } from "../components/assessment/SportProfileStep";
 import { CurrentIntakeStep } from "../components/assessment/CurrentIntakeStep";
 import { SportAlertsDialog, detectSportAlerts, type SportAlert } from "../components/assessment/SportAlertsDialog";
@@ -137,6 +138,8 @@ type AssessmentForm = {
   recommendationsContacted: boolean;
   detectedNeedIds: string[];
   selectedProductIds: string[];
+  /** Chantier Boosters cliquables + Quantités (D-urgent, 2026-04-24). */
+  selectedProductQuantities: QuantityMap;
   // Étape 13 — Chantier 1
   decisionClient: DecisionClient | null;
   typeDeSuite: TypeDeSuite | null;
@@ -279,6 +282,7 @@ const initialForm: AssessmentForm = {
   recommendationsContacted: false,
   detectedNeedIds: [],
   selectedProductIds: [],
+  selectedProductQuantities: {},
   decisionClient: null,
   typeDeSuite: "rdv_fixe",
   messageALaisser: null,
@@ -741,6 +745,22 @@ export function NewAssessmentPage() {
     });
   }
 
+  // Chantier Boosters cliquables + Quantités (D-urgent, 2026-04-24).
+  // getQty / setQty : champ parallèle à selectedProductIds. Borné 1-10.
+  function getQty(id: string): number {
+    return form.selectedProductQuantities[id] ?? 1;
+  }
+  function setQty(id: string, q: number) {
+    const clamped = Math.max(1, Math.min(10, Math.round(q)));
+    setForm((prev) => ({
+      ...prev,
+      selectedProductQuantities: {
+        ...prev.selectedProductQuantities,
+        [id]: clamped,
+      },
+    }));
+  }
+
 
   function updateObjectiveFocus(value: string) {
     update("objectiveFocus", value);
@@ -755,6 +775,11 @@ export function NewAssessmentPage() {
       targetClothingSize: form.targetClothingSize || undefined,
       detectedNeedIds: recommendationPlan.needs.map((need) => need.id),
       selectedProductIds: effectiveSelectedProductIds,
+      // Chantier Boosters cliquables + Quantités (D-urgent, 2026-04-24).
+      // Champ parallèle (non-breaking). `selectedProductIds` reste intact.
+      // Le flux d'édition (EditInitialAssessmentPage) hydratera ce champ
+      // en prompt E — hors scope D-urgent.
+      selectedProductQuantities: form.selectedProductQuantities,
       healthStatus: form.healthStatus,
       healthNotes: form.healthNotes,
       allergies: form.allergies,
@@ -1798,11 +1823,27 @@ export function NewAssessmentPage() {
           {currentStepId === 'program' && (() => {
             // Chantier refonte étape 11 (2026-04-20) — tunnel de vente structuré.
             const chosenProgram = getProgramById(form.programChoice);
-            const ticketAddOns: TicketAddOn[] = addOnProducts.map((p) => ({
+            // Chantier Boosters cliquables + Quantités (2026-04-24) :
+            // les boosters sport sélectionnés alimentent aussi le ticket.
+            // BOOSTERS n'ont pas de PV dans le référentiel actuel (hors scope),
+            // on force pv=0 côté ticket — à enrichir si BOOSTERS gagne un champ pv.
+            const selectedBoostersForTicket = BOOSTERS
+              .filter((b) => effectiveSelectedProductIds.includes(b.id))
+              .map((b) => ({
+                id: b.id,
+                name: b.title,
+                prixPublic: b.price,
+                pv: 0,
+              }));
+            const combinedAddOns = [...addOnProducts, ...selectedBoostersForTicket].filter(
+              (v, i, arr) => arr.findIndex((x) => x.id === v.id) === i
+            );
+            const ticketAddOns: TicketAddOn[] = combinedAddOns.map((p) => ({
               id: p.id,
               name: p.name,
               price: p.prixPublic,
               pv: p.pv,
+              quantity: getQty(p.id),
             }));
             return (
               <div className="grid gap-4 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
@@ -1917,7 +1958,15 @@ export function NewAssessmentPage() {
                   {/* Bloc 2 — Routine matin */}
                   <RoutineMatinList program={chosenProgram} />
 
-                  {/* Bloc Boosters (sport uniquement) — Chantier Prise de masse (2026-04-24) */}
+                  {/* Bloc Boosters (sport uniquement)
+                      — Chantier Prise de masse (2026-04-24) : bloc initial
+                      décoratif.
+                      — Chantier Boosters cliquables + Quantités (2026-04-24) :
+                        passage à SelectableProductCard. Chaque booster est
+                        désormais cliquable (toggle partagé avec besoins/
+                        upsells) et, s'il est sélectionné, apparaît dans le
+                        ticket sticky à droite.
+                      BOOSTERS n'ont pas de PV — pv=0 documenté côté mapping. */}
                   {form.objective === "sport" ? (() => {
                     const recs = recommendBoosters(form.sportProfile, form.age);
                     const recById = new Map(recs.map((r) => [r.productId, r]));
@@ -1926,51 +1975,24 @@ export function NewAssessmentPage() {
                         <p className="eyebrow-label" style={{ marginBottom: 10 }}>
                           + Boosters optionnels
                         </p>
-                        <div className="grid gap-2" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))" }}>
+                        <div className="grid gap-3">
                           {BOOSTERS.map((b) => {
                             const rec = recById.get(b.id);
                             const isRec = !!rec?.recommended;
                             return (
-                              <div
+                              <SelectableProductCard
                                 key={b.id}
-                                style={{
-                                  position: "relative",
-                                  padding: "12px 14px",
-                                  borderRadius: 12,
-                                  border: isRec
-                                    ? "2px solid var(--ls-teal)"
-                                    : "1px solid var(--ls-border)",
-                                  background: isRec
-                                    ? "color-mix(in srgb, var(--ls-teal) 8%, #fff)"
-                                    : "#fff",
-                                  fontFamily: "'DM Sans', sans-serif",
-                                }}
-                              >
-                                {isRec ? (
-                                  <span
-                                    style={{
-                                      position: "absolute",
-                                      top: 6,
-                                      right: 8,
-                                      fontSize: 14,
-                                      color: "var(--ls-gold)",
-                                    }}
-                                    aria-label="Recommandé"
-                                  >
-                                    ⭐
-                                  </span>
-                                ) : null}
-                                <div style={{ fontSize: 14, fontWeight: 600, color: "var(--ls-text)" }}>{b.title}</div>
-                                <div style={{ fontSize: 11, color: "var(--ls-text-muted)", marginTop: 4 }}>{b.shortContent}</div>
-                                <div style={{ fontSize: 12, color: "var(--ls-gold)", fontWeight: 600, marginTop: 6 }}>
-                                  +{b.price.toFixed(2).replace(".", ",")}€
-                                </div>
-                                {isRec && rec?.reason ? (
-                                  <div style={{ fontSize: 11, color: "var(--ls-teal)", marginTop: 6, fontStyle: "italic" }}>
-                                    {rec.reason}
-                                  </div>
-                                ) : null}
-                              </div>
+                                id={b.id}
+                                name={b.title}
+                                shortBenefit={b.shortContent}
+                                prixPublic={b.price}
+                                pv={0}
+                                highlight={isRec ? { reason: rec?.reason } : undefined}
+                                selected={effectiveSelectedProductIds.includes(b.id)}
+                                onToggle={() => toggleSelectedProduct(b.id)}
+                                quantity={getQty(b.id)}
+                                onQuantityChange={(q) => setQty(b.id, q)}
+                              />
                             );
                           })}
                         </div>
@@ -2032,6 +2054,8 @@ export function NewAssessmentPage() {
                             products={need.products}
                             selectedProductIds={effectiveSelectedProductIds}
                             onToggleProduct={toggleSelectedProduct}
+                            getQty={getQty}
+                            setQty={setQty}
                           />
                         ))}
                       </div>
@@ -2055,8 +2079,9 @@ export function NewAssessmentPage() {
                       </div>
                       <div className="grid gap-3">
                         {recommendationPlan.optionalUpsells.map((product) => (
-                          <SuggestedProductCard
+                          <SelectableProductCard
                             key={`upsell-${product.id}`}
+                            id={product.id}
                             name={product.name}
                             shortBenefit={product.shortBenefit}
                             pv={product.pv}
@@ -2065,6 +2090,8 @@ export function NewAssessmentPage() {
                             quantityLabel={product.quantityLabel}
                             selected={effectiveSelectedProductIds.includes(product.id)}
                             onToggle={() => toggleSelectedProduct(product.id)}
+                            quantity={getQty(product.id)}
+                            onQuantityChange={(q) => setQty(product.id, q)}
                           />
                         ))}
                       </div>
@@ -2688,7 +2715,9 @@ function NeedProductGroup({
   reasonLabel,
   products,
   selectedProductIds,
-  onToggleProduct
+  onToggleProduct,
+  getQty,
+  setQty,
   }: {
     title: string;
     summary: string;
@@ -2705,6 +2734,8 @@ function NeedProductGroup({
     }>;
     selectedProductIds: string[];
     onToggleProduct: (productId: string) => void;
+    getQty: (id: string) => number;
+    setQty: (id: string, q: number) => void;
 }) {
   if (!products.length) {
     return null;
@@ -2727,8 +2758,9 @@ function NeedProductGroup({
         </div>
         <div className="grid gap-3">
           {products.map((product) => (
-            <SuggestedProductCard
+            <SelectableProductCard
               key={product.id}
+              id={product.id}
               name={product.name}
               shortBenefit={product.shortBenefit}
               pv={product.pv}
@@ -2737,6 +2769,8 @@ function NeedProductGroup({
               quantityLabel={product.quantityLabel}
               selected={selectedProductIds.includes(product.id)}
               onToggle={() => onToggleProduct(product.id)}
+              quantity={getQty(product.id)}
+              onQuantityChange={(q) => setQty(product.id, q)}
             />
           ))}
         </div>
@@ -2745,71 +2779,9 @@ function NeedProductGroup({
   );
 }
 
-function SuggestedProductCard({
-  name,
-  shortBenefit,
-  pv,
-  prixPublic,
-  dureeReferenceJours,
-  quantityLabel,
-  selected,
-  onToggle
-}: {
-  name: string;
-  shortBenefit: string;
-  pv: number;
-  prixPublic: number;
-  dureeReferenceJours: number;
-  quantityLabel?: string;
-  selected: boolean;
-  onToggle: () => void;
-}) {
-  return (
-    <div
-      className={`rounded-[20px] p-3.5 transition ${
-        selected
-          ? "border border-[rgba(45,212,191,0.25)] bg-[rgba(45,212,191,0.09)]"
-          : "bg-[var(--ls-surface2)]"
-      }`}
-    >
-      <div className="flex h-full flex-col gap-3">
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0 space-y-1.5">
-            <p className="text-lg font-semibold text-white">{name}</p>
-            <p className="text-sm leading-6 text-[var(--ls-text-muted)]">{shortBenefit}</p>
-          </div>
-          <button
-            type="button"
-            onClick={onToggle}
-            className={`inline-flex min-h-[34px] shrink-0 items-center justify-center rounded-full px-3.5 py-1.5 text-sm font-semibold transition ${
-              selected
-                ? "bg-white text-[#0B0D11]"
-                : "border border-white/10 bg-[var(--ls-surface2)] text-white hover:bg-white/[0.08]"
-            }`}
-          >
-            {selected ? "Retenu" : "Retenir"}
-          </button>
-        </div>
-        <div className="mt-auto flex flex-wrap items-center gap-2">
-          {quantityLabel ? (
-            <span className="rounded-full bg-[var(--ls-surface2)] px-3 py-1 text-sm font-medium text-[var(--ls-text)]">
-              {quantityLabel}
-            </span>
-          ) : null}
-          <span className="rounded-full bg-[var(--ls-surface2)] px-3 py-1 text-sm font-medium text-[var(--ls-text)]">
-            {dureeReferenceJours} jours
-          </span>
-          <span className="rounded-full bg-[rgba(45,212,191,0.1)] px-3 py-1 text-sm font-semibold text-[#2DD4BF]">
-            {formatPriceEuro(prixPublic)}
-          </span>
-          <span className="rounded-full bg-[rgba(45,212,191,0.1)] px-3 py-1 text-sm font-semibold text-[#2DD4BF]">
-            {formatPv(pv)}
-          </span>
-        </div>
-      </div>
-    </div>
-  );
-}
+// Chantier Boosters cliquables + Quantités (2026-04-24) : ancien
+// `SuggestedProductCard` inline retiré, remplacé par le composant partagé
+// `SelectableProductCard` (src/components/assessment/SelectableProductCard.tsx).
 
 function TimelineChoiceField({
   label,
@@ -2920,14 +2892,9 @@ function formatEditableNumber(value: number) {
   return asString.endsWith(".0") ? asString.slice(0, -2) : asString;
 }
 
-function formatPriceEuro(value: number) {
-  return `${value.toFixed(2)} EUR`;
-}
-
-function formatPv(value: number) {
-  return `${value.toFixed(2)} PV`;
-}
-
+// formatPriceEuro / formatPv retirés — utilisés uniquement par l'ancien
+// SuggestedProductCard inline (Chantier Boosters cliquables + Quantités
+// 2026-04-24). Le nouveau SelectableProductCard gère son propre formatage.
 // formatValue / formatSignedValue retirés — alimentaient comparaisons
 // de l'étape supprimée. Chantier nettoyage bilan (2026-04-20).
 

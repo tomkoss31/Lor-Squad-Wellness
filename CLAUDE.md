@@ -272,3 +272,54 @@ Clés ajoutées au payload JSON (sans retirer l'existant) :
   de remonter un brouillon au client).
 - `client.objective` ajouté au sous-objet `client` pour les règles de
   coloration Évolution / assiette.
+
+## Étape Programme du bilan — Boosters cliquables + Quantités (D-urgent, 2026-04-24)
+
+### Composant `SelectableProductCard`
+Source : `src/components/assessment/SelectableProductCard.tsx`. Unifié
+pour les 3 rendus produit de l'étape Programme (`NewAssessmentPage.tsx`) :
+- besoins détectés (`NeedProductGroup`),
+- upsells optionnels,
+- boosters sport (désormais cliquables, plus seulement décoratifs).
+
+Props clés :
+- `selected` + `onToggle` — pattern « Retenu / Retenir » identique à
+  l'ancien `SuggestedProductCard` inline (retiré).
+- `highlight?: { reason?: string }` — ⭐ + bordure `var(--ls-teal)` +
+  fond `color-mix(in srgb, var(--ls-teal) 8%, var(--ls-surface2))`.
+  Visuel uniquement, le toggle reste manuel (pas d'auto-ajout au ticket).
+- `quantity` + `onQuantityChange` — active le stepper (cf. ci-dessous)
+  quand le produit est `selected`.
+
+### Composant `QuantityStepper`
+Source : `src/components/assessment/QuantityStepper.tsx`. Stepper
+− / [value] / + minimaliste, bornes par défaut 1-10, touch target
+≥ 44 × 44, a11y complète (`aria-label`, `role="spinbutton"`,
+`aria-valuenow/min/max`). Tokens `var(--ls-*)` uniquement, Syne pour la
+valeur, radius 10.
+
+### Champ parallèle `selectedProductQuantities`
+Ajouté à `AssessmentQuestionnaire` (`src/types/domain.ts`) comme
+`QuantityMap = Record<string, number>` optionnel. Pattern **non-breaking** :
+- `selectedProductIds` reste la source de vérité de la SÉLECTION,
+- `selectedProductQuantities[id]` porte la quantité, défaut 1
+  (`getQty(id) = map[id] ?? 1`).
+- `setQty` borne 1-10, round entier.
+- Persisté en jsonb dans `assessments.questionnaire` (pas de migration).
+- Les 9 consumers de `selectedProductIds` restent inchangés.
+
+### Ticket du jour — `ProgrammeTicket`
+`TicketAddOn` gagne un champ `quantity: number`. Les totaux sont
+`Σ price * quantity` et `Σ pv * quantity`. La ligne d'ajout affiche
+`Nom × N` + le prix total `(price × quantity).toFixed(2)€` quand
+`quantity > 1`, sinon le nom seul.
+
+### Boosters sport — PV = 0
+`BOOSTERS` (dans `src/data/programs.ts`) n'a pas encore de champ `pv` —
+on force `pv: 0` côté mapping ticket. À enrichir si/quand le référentiel
+gagne un vrai PV booster.
+
+### Hydratation flow édition (out of scope)
+Le flow d'édition (`EditInitialAssessmentPage`) et le flow suivi
+(`NewFollowUpPage`) ne relisent pas encore `selectedProductQuantities`
+depuis un bilan existant. Hydratation reportée au prompt E.
