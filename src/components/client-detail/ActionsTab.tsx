@@ -23,6 +23,7 @@ import { useClientPriorityAction } from "../../hooks/useClientPriorityAction";
 import { ActionsRdvBlock } from "./ActionsRdvBlock";
 import { FollowUpProtocolCard } from "../follow-up/FollowUpProtocolCard";
 import { getClientActiveFollowUp } from "../../lib/portfolio";
+import { isClientProgramStarted } from "../../lib/calculations";
 import type { Client, FollowUp, LifecycleStatus } from "../../types/domain";
 import { LIFECYCLE_LABELS } from "../../types/domain";
 
@@ -104,8 +105,11 @@ export function ActionsTab({ client, onEditRdv, onOpenSharePublic, onGoToVueComp
   // assessmentsCount + memberSinceStr supprimés (utilisés par BLOC 1 Header
   // identité, retiré dans la refonte RDV premium 2026-04-26).
 
+  // Fix bug #3 (2026-04-27) : fallback sur isClientProgramStarted pour
+  // refléter l'état réel du programme (bilan existant = démarré de facto)
+  // même si client.started=false / startDate=null en DB.
   const currentStatus: LifecycleStatus =
-    client.lifecycleStatus ?? (client.started ? "active" : "not_started");
+    client.lifecycleStatus ?? (isClientProgramStarted(client) ? "active" : "not_started");
 
   const lifecycleUpdatedDays = daysSince(client.lifecycleUpdatedAt);
 

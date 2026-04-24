@@ -9,7 +9,7 @@ import {
   getPortfolioMetrics,
   isRelanceFollowUp,
 } from "../lib/portfolio";
-import { formatDateTime } from "../lib/calculations";
+import { formatDateTime, isClientProgramStarted } from "../lib/calculations";
 import type { User, Client, LifecycleStatus } from "../types/domain";
 import { LIFECYCLE_LABELS, LIFECYCLE_TONES } from "../types/domain";
 
@@ -95,7 +95,7 @@ export function ClientsPage() {
     const filtered = visibleClients.filter((client) => {
       const matchesOwner =
         ownerFilter === "all" || (selectedOwnerIds ? selectedOwnerIds.has(client.distributorId) : false);
-      const effectiveLifecycle: LifecycleStatus = client.lifecycleStatus ?? (client.started ? "active" : "not_started");
+      const effectiveLifecycle: LifecycleStatus = client.lifecycleStatus ?? (isClientProgramStarted(client) ? "active" : "not_started");
       const matchesStatus =
         statusFilter === "all"
           ? true
@@ -588,7 +588,7 @@ const LIFECYCLE_TONE_TO_COLORS: Record<"teal" | "gold" | "muted" | "coral", { bg
 
 function getClientStatusInfo(client: Client, nextFollowUp: string | undefined) {
   // Priorité 1 : lifecycle stopped/lost → label direct
-  const lifecycle: LifecycleStatus = client.lifecycleStatus ?? (client.started ? "active" : "not_started");
+  const lifecycle: LifecycleStatus = client.lifecycleStatus ?? (isClientProgramStarted(client) ? "active" : "not_started");
   if (lifecycle === "stopped" || lifecycle === "lost" || lifecycle === "paused") {
     const colors = LIFECYCLE_TONE_TO_COLORS[LIFECYCLE_TONES[lifecycle]];
     return { label: LIFECYCLE_LABELS[lifecycle], bg: colors.bg, color: colors.color };

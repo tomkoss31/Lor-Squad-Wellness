@@ -567,3 +567,45 @@ function clampTimelineDays(days: number) {
 function formatDurationNumber(value: number) {
   return Number.isInteger(value) ? String(value) : value.toFixed(1);
 }
+
+// ═══════════════════════════════════════════════════════════════════════
+// Détection "programme démarré" (Fix bug #3 — 2026-04-27)
+// ═══════════════════════════════════════════════════════════════════════
+// Problème historique : `clients.started` + `clients.start_date` ne sont
+// renseignés que si le coach coche "démarre maintenant" à la fin du bilan
+// initial. Les clients créés sans cette coche ont :
+//   started = false, start_date = null
+// même s'ils ont déjà un bilan initial + un programme assigné. Résultat :
+//   - Hero fiche client : "Programme non démarré" (L217 ClientDetailPage)
+//   - LifecycleBadge par défaut : "not_started"
+// alors que le dashboard Co-pilote, le scheduler de suivi J+X, et l'app
+// client considèrent le programme comme démarré dès le bilan initial.
+//
+// Ces 2 helpers normalisent la détection côté UI :
+//   - isClientProgramStarted(client) : true dès qu'il y a un signe tangible
+//     (lifecycle actif/pause, flag started, startDate, OU bilan initial
+//     avec poids > 0 ce qui indique que le scan a bien été fait).
+//   - getClientEffectiveStartDate(client) : retourne startDate sinon la
+//     date du bilan initial (alignée avec followUpProtocolScheduler).
+//
+// ⚠️ Ces helpers NE modifient PAS la DB ni la sémantique des champs. Ils
+// servent uniquement à l'affichage UI pour éviter l'incohérence visuelle
+// "dashboard voit J+1, fiche dit pas démarré".
+
+export function isClientProgramStarted(client: Client): boolean {
+  if (client.started === true) return true;
+  if (typeof client.startDate === "string" && client.startDate.length > 0) return true;
+  if (client.lifecycleStatus === "active" || client.lifecycleStatus === "paused") return true;
+  const initial = client.assessments?.find((a) => a.type === "initial");
+  if (initial?.bodyScan?.weight && initial.bodyScan.weight > 0) return true;
+  return false;
+}
+
+export function getClientEffectiveStartDate(client: Client): string | null {
+  if (typeof client.startDate === "string" && client.startDate.length > 0) {
+    return client.startDate;
+  }
+  const initial = client.assessments?.find((a) => a.type === "initial");
+  if (initial?.date) return initial.date;
+  return null;
+}

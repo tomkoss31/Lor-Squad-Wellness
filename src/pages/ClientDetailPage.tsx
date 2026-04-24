@@ -31,11 +31,13 @@ import { getAccessibleOwnerIds, isAdmin, isRéférent } from "../lib/auth";
 import { getClientActiveFollowUp } from "../lib/portfolio";
 import {
   formatDate,
+  getClientEffectiveStartDate,
   getFirstAssessment,
   getLatestAssessment,
   getLatestBodyScan,
   getLatestQuestionnaire,
-  getPreviousAssessment
+  getPreviousAssessment,
+  isClientProgramStarted,
 } from "../lib/calculations";
 import type { LifecycleStatus } from "../types/domain";
 import { LIFECYCLE_LABELS, LIFECYCLE_TONES } from "../types/domain";
@@ -202,7 +204,7 @@ export function ClientDetailPage() {
                 <h1 style={{ fontFamily: 'Syne, sans-serif', fontSize: 22, fontWeight: 800, color: 'var(--ls-text)', margin: 0 }}>
                   {client.firstName} {client.lastName}
                 </h1>
-                <LifecycleBadge status={client.lifecycleStatus ?? (client.started ? "active" : "not_started")} />
+                <LifecycleBadge status={client.lifecycleStatus ?? (isClientProgramStarted(client) ? "active" : "not_started")} />
                 {client.isFragile && <FragileBadge />}
                 {client.freeFollowUp && <FreeFollowUpBadge />}
                 <StatusBadge
@@ -214,7 +216,15 @@ export function ClientDetailPage() {
                 {client.currentProgram || "Programme à confirmer"} · {client.city ?? "Ville non renseignée"} · <Link to={`/distributors/${client.distributorId}`} className="font-medium text-[#C9A84C] transition hover:text-[#2DD4BF]">{client.distributorName}</Link>
               </p>
               <p className="mt-1 text-[11px] text-[var(--ls-text-hint)]">
-                {client.startDate ? `Client depuis ${formatDate(client.startDate)}` : "Programme non démarré"} · {client.assessments.length} bilan{client.assessments.length > 1 ? 's' : ''}
+                {(() => {
+                  // Fix bug #3 (2026-04-27) : utiliser getClientEffectiveStartDate
+                  // pour fallback sur la date du bilan initial si startDate est null.
+                  // Évite "Programme non démarré" alors que le bilan a été fait.
+                  const effectiveStart = getClientEffectiveStartDate(client);
+                  return effectiveStart
+                    ? `Client depuis ${formatDate(effectiveStart)}`
+                    : "Programme non démarré";
+                })()} · {client.assessments.length} bilan{client.assessments.length > 1 ? 's' : ''}
               </p>
             </div>
           </div>
