@@ -11,9 +11,7 @@
 // Règles visuelles : var(--ls-*) uniquement, Syne + DM Sans, radius 14/12/10,
 // touch targets ≥ 44px, mobile-first.
 
-// QuantityStepper importé en commit #3 et branché en commit #4. Pour
-// l'instant, le stepper est rendu uniquement si `quantity` + `onQuantityChange`
-// sont fournis ET si le composant est en place (sinon no-op silencieux).
+import { QuantityStepper } from "./QuantityStepper";
 
 export interface SelectableProductCardProps {
   id: string;
@@ -53,15 +51,14 @@ export function SelectableProductCard({
   highlight,
   selected,
   onToggle,
-  // quantity/onQuantityChange/minQuantity/maxQuantity : API publique déjà
-  // définie mais non consommée avant commit #4 (stepper branché via QuantityStepper
-  // créé en commit #3). Préfixage `_` pour éviter le warning ESLint.
-  quantity: _quantity,
-  onQuantityChange: _onQuantityChange,
-  minQuantity: _minQuantity = 1,
-  maxQuantity: _maxQuantity = 10,
+  quantity,
+  onQuantityChange,
+  minQuantity = 1,
+  maxQuantity = 10,
 }: SelectableProductCardProps) {
   const isRec = Boolean(highlight);
+  const showStepper =
+    typeof quantity === "number" && typeof onQuantityChange === "function" && selected;
 
   return (
     <div
@@ -149,7 +146,16 @@ export function SelectableProductCard({
               {formatPv(pv)}
             </span>
           ) : null}
-          {/* Stepper branché au commit #4 via QuantityStepper (commit #3). */}
+          {showStepper ? (
+            <div style={{ marginLeft: "auto" }}>
+              <QuantityStepper
+                value={quantity as number}
+                min={minQuantity}
+                max={maxQuantity}
+                onChange={onQuantityChange as (n: number) => void}
+              />
+            </div>
+          ) : null}
         </div>
       </div>
     </div>

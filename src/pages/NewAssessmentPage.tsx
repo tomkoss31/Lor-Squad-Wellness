@@ -138,6 +138,8 @@ type AssessmentForm = {
   recommendationsContacted: boolean;
   detectedNeedIds: string[];
   selectedProductIds: string[];
+  /** Chantier Boosters cliquables + Quantités (D-urgent, 2026-04-24). */
+  selectedProductQuantities: Record<string, number>;
   // Étape 13 — Chantier 1
   decisionClient: DecisionClient | null;
   typeDeSuite: TypeDeSuite | null;
@@ -280,6 +282,7 @@ const initialForm: AssessmentForm = {
   recommendationsContacted: false,
   detectedNeedIds: [],
   selectedProductIds: [],
+  selectedProductQuantities: {},
   decisionClient: null,
   typeDeSuite: "rdv_fixe",
   messageALaisser: null,
@@ -742,6 +745,22 @@ export function NewAssessmentPage() {
     });
   }
 
+  // Chantier Boosters cliquables + Quantités (D-urgent, 2026-04-24).
+  // getQty / setQty : champ parallèle à selectedProductIds. Borné 1-10.
+  function getQty(id: string): number {
+    return form.selectedProductQuantities[id] ?? 1;
+  }
+  function setQty(id: string, q: number) {
+    const clamped = Math.max(1, Math.min(10, Math.round(q)));
+    setForm((prev) => ({
+      ...prev,
+      selectedProductQuantities: {
+        ...prev.selectedProductQuantities,
+        [id]: clamped,
+      },
+    }));
+  }
+
 
   function updateObjectiveFocus(value: string) {
     update("objectiveFocus", value);
@@ -756,6 +775,11 @@ export function NewAssessmentPage() {
       targetClothingSize: form.targetClothingSize || undefined,
       detectedNeedIds: recommendationPlan.needs.map((need) => need.id),
       selectedProductIds: effectiveSelectedProductIds,
+      // Chantier Boosters cliquables + Quantités (D-urgent, 2026-04-24).
+      // Champ parallèle (non-breaking). `selectedProductIds` reste intact.
+      // Le flux d'édition (EditInitialAssessmentPage) hydratera ce champ
+      // en prompt E — hors scope D-urgent.
+      selectedProductQuantities: form.selectedProductQuantities,
       healthStatus: form.healthStatus,
       healthNotes: form.healthNotes,
       allergies: form.allergies,
@@ -1819,6 +1843,7 @@ export function NewAssessmentPage() {
               name: p.name,
               price: p.prixPublic,
               pv: p.pv,
+              quantity: getQty(p.id),
             }));
             return (
               <div className="grid gap-4 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
@@ -1965,6 +1990,8 @@ export function NewAssessmentPage() {
                                 highlight={isRec ? { reason: rec?.reason } : undefined}
                                 selected={effectiveSelectedProductIds.includes(b.id)}
                                 onToggle={() => toggleSelectedProduct(b.id)}
+                                quantity={getQty(b.id)}
+                                onQuantityChange={(q) => setQty(b.id, q)}
                               />
                             );
                           })}
@@ -2027,6 +2054,8 @@ export function NewAssessmentPage() {
                             products={need.products}
                             selectedProductIds={effectiveSelectedProductIds}
                             onToggleProduct={toggleSelectedProduct}
+                            getQty={getQty}
+                            setQty={setQty}
                           />
                         ))}
                       </div>
@@ -2061,6 +2090,8 @@ export function NewAssessmentPage() {
                             quantityLabel={product.quantityLabel}
                             selected={effectiveSelectedProductIds.includes(product.id)}
                             onToggle={() => toggleSelectedProduct(product.id)}
+                            quantity={getQty(product.id)}
+                            onQuantityChange={(q) => setQty(product.id, q)}
                           />
                         ))}
                       </div>
@@ -2684,7 +2715,9 @@ function NeedProductGroup({
   reasonLabel,
   products,
   selectedProductIds,
-  onToggleProduct
+  onToggleProduct,
+  getQty,
+  setQty,
   }: {
     title: string;
     summary: string;
@@ -2701,6 +2734,8 @@ function NeedProductGroup({
     }>;
     selectedProductIds: string[];
     onToggleProduct: (productId: string) => void;
+    getQty: (id: string) => number;
+    setQty: (id: string, q: number) => void;
 }) {
   if (!products.length) {
     return null;
@@ -2734,6 +2769,8 @@ function NeedProductGroup({
               quantityLabel={product.quantityLabel}
               selected={selectedProductIds.includes(product.id)}
               onToggle={() => onToggleProduct(product.id)}
+              quantity={getQty(product.id)}
+              onQuantityChange={(q) => setQty(product.id, q)}
             />
           ))}
         </div>

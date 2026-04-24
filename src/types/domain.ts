@@ -208,6 +208,14 @@ export interface AssessmentQuestionnaire {
   consumesMilk?: "yes" | "sometimes" | "no";
   /** Programme choisi par le client dans le tunnel de vente étape 11. */
   programChoice?: "discovery" | "premium" | "booster1" | "booster2" | "unit" | "sport-discovery" | "sport-premium";
+  /**
+   * Chantier Boosters cliquables + Quantités (D-urgent, 2026-04-24).
+   * Map id produit → quantité retenue. Champ parallèle à
+   * `selectedProductIds` (qui reste la source de vérité de la SÉLECTION) :
+   * ne jamais muter `selectedProductIds` pour dériver une quantité.
+   * Helper : getQty(id) = selectedProductQuantities[id] ?? 1.
+   */
+  selectedProductQuantities?: Record<string, number>;
 }
 
 export interface AssessmentRecord {
