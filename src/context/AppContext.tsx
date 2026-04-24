@@ -7,7 +7,7 @@ import {
   type PropsWithChildren
 } from "react";
 import { pvProductCatalog, resolvePvProgram } from "../data/pvCatalog";
-import { mockPrograms } from "../data/mockPrograms";
+import { PROGRAMS_LEGACY } from "../data/programs";
 import { canAccessClient, getVisibleClients, getVisibleFollowUps } from "../lib/auth";
 import {
   getStoredActivityLogs,
@@ -801,7 +801,7 @@ export function AppProvider({ children }: PropsWithChildren) {
       activityLogs,
       pvClientProducts,
       pvTransactions,
-      programs: mockPrograms,
+      programs: PROGRAMS_LEGACY,
       clientMessages: currentUser
         ? clientMessages.filter(m => m.distributor_id === currentUser.id || m.distributor_id === currentUser.name || currentUser.role === 'admin')
         : [],

@@ -20,7 +20,7 @@ import { MilkConsumptionToggle } from "../components/assessment/MilkConsumptionT
 import { ProgramChoiceCard } from "../components/assessment/ProgramChoiceCard";
 import { RoutineMatinList } from "../components/assessment/RoutineMatinList";
 import { ProgrammeTicket, type TicketAddOn } from "../components/assessment/ProgrammeTicket";
-import { PROGRAM_CHOICES, getProgramById } from "../data/programs";
+import { PROGRAM_CHOICES, getProgramById, type ProgramChoiceId } from "../data/programs";
 import { FelicitationsStep } from "../components/assessment/FelicitationsStep";
 import { NotesPanel } from "../components/assessment/NotesPanel";
 import { ValidationBlockedBanner } from "../components/assessment/ValidationBlockedBanner";
@@ -113,7 +113,7 @@ type AssessmentForm = {
   preferredFlavor: string;
   /** Chantier refonte étape 11 (2026-04-20). */
   consumesMilk: "yes" | "sometimes" | "no" | "";
-  programChoice: "discovery" | "premium" | "booster1" | "booster2" | "unit";
+  programChoice: ProgramChoiceId;
   targetWeight: number;
   motivation: number;
   desiredTimeline: string;
@@ -252,7 +252,7 @@ const initialForm: AssessmentForm = {
   snacksFastFoodPerWeek: null,
   preferredFlavor: "",
   consumesMilk: "" as "yes" | "sometimes" | "no" | "",
-  programChoice: "premium" as "discovery" | "premium" | "booster1" | "booster2" | "unit",
+  programChoice: "premium" as ProgramChoiceId,
   targetWeight: 0,
   motivation: 0,
   desiredTimeline: "3 mois",
@@ -1835,14 +1835,16 @@ export function NewAssessmentPage() {
                       className="grid gap-2"
                       style={{ gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))" }}
                     >
-                      {PROGRAM_CHOICES.map((p) => (
-                        <ProgramChoiceCard
-                          key={p.id}
-                          program={p}
-                          active={form.programChoice === p.id}
-                          onSelect={() => update("programChoice", p.id)}
-                        />
-                      ))}
+                      {PROGRAM_CHOICES
+                        .filter((p) => p.category === form.objective || p.category === "unit")
+                        .map((p) => (
+                          <ProgramChoiceCard
+                            key={p.id}
+                            program={p}
+                            active={form.programChoice === p.id}
+                            onSelect={() => update("programChoice", p.id)}
+                          />
+                        ))}
                     </div>
                     <div
                       style={{
