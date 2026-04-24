@@ -5,6 +5,29 @@ reproduire les régressions passées. Relire avant tout gros chantier.
 
 ---
 
+## Workflow Dev/Prod (depuis 27/04/2026)
+
+Lor'Squad utilise 2 branches actives :
+
+- `claude/focused-pike` = **PRODUCTION** (Mélanie + équipe coach + clients)
+- `dev/thomas-test` = **DEV/TEST** (Thomas uniquement, preview Vercel séparée)
+
+**Pour toute nouvelle feature** :
+- Créer `feat/X` depuis `dev/thomas-test` (PAS depuis `claude/focused-pike`)
+- Tester sur l'URL dev Vercel, valider, puis merger en prod
+
+**Pour tout fix urgent** (régression bloquante) :
+- Créer `fix/X` depuis `claude/focused-pike`
+- Merger direct en prod, puis sync vers `dev/thomas-test` pour rester aligné
+
+**Base Supabase partagée** : les 2 environnements parlent à la même DB.
+Les migrations impactent donc **les 2 environnements**. Coordonner avant
+toute migration.
+
+Workflow complet : `docs/DEV_WORKFLOW.md`
+
+---
+
 ## Page remerciement post-bilan (2026-04-27)
 
 ### Route dédiée
