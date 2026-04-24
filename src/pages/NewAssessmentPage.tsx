@@ -1975,7 +1975,13 @@ export function NewAssessmentPage() {
                         <p className="eyebrow-label" style={{ marginBottom: 10 }}>
                           + Boosters optionnels
                         </p>
-                        <div className="grid gap-3">
+                        {/* Chantier Boosters grid compact (2026-04-27) :
+                            variant="compact" + wrapper .boosters-grid pour
+                            un layout 2-3 colonnes avec 3 états visuels
+                            (neutre / recommandé / sélectionné). Les autres
+                            sections (besoins, upsells) gardent le rendu
+                            par défaut du composant. */}
+                        <div className="boosters-grid">
                           {BOOSTERS.map((b) => {
                             const rec = recById.get(b.id);
                             const isRec = !!rec?.recommended;
@@ -1992,6 +1998,7 @@ export function NewAssessmentPage() {
                                 onToggle={() => toggleSelectedProduct(b.id)}
                                 quantity={getQty(b.id)}
                                 onQuantityChange={(q) => setQty(b.id, q)}
+                                variant="compact"
                               />
                             );
                           })}
