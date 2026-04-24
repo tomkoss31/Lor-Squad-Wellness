@@ -67,6 +67,11 @@ const EditClientSchedulePage = lazy(() =>
     default: module.EditClientSchedulePage
   }))
 );
+const BilanTermineePage = lazy(() =>
+  import("./pages/BilanTermineePage").then((module) => ({
+    default: module.BilanTermineePage,
+  })),
+);
 const NewAssessmentPage = lazy(() =>
   import("./pages/NewAssessmentPage").then((module) => ({
     default: module.NewAssessmentPage
@@ -263,6 +268,11 @@ export default function App() {
               />
               <Route path="clients/:clientId/follow-up/new" element={<NewFollowUpPage />} />
               <Route path="clients/:clientId/schedule/edit" element={<EditClientSchedulePage />} />
+              {/* Chantier Page remerciement post-bilan (2026-04-27) :
+                  page plein écran avec QR + partage + parrainage, affichée
+                  après "Enregistrer et terminer le bilan". Query params :
+                  ?token=<recap_token>&firstName=<prénom>. */}
+              <Route path="clients/:clientId/bilan-termine" element={<BilanTermineePage />} />
               <Route path="assessments/new" element={<NewAssessmentPage />} />
             </Route>
           </Route>
