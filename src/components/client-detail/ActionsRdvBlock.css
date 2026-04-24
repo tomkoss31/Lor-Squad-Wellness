@@ -1,0 +1,502 @@
+/* Chantier Refonte onglet Actions — bloc RDV premium (2026-04-26).
+   Styles dédiés pour ActionsRdvBlock. Toutes les couleurs passent par les
+   variables CSS Lor'Squad (var(--ls-*)) pour l'adaptation thème clair/sombre.
+   Seuls les logos tiers (Google, WhatsApp) gardent leurs hex de marque.
+
+   Polices : Syne (titres, chiffres, dates) / DM Sans (corps, labels, hints).
+*/
+
+.arb-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   BLOC BEIGE — "Planifier un rendez-vous" (état "pas de RDV")
+   ═══════════════════════════════════════════════════════════════════ */
+
+.arb-empty {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 20px;
+  background: var(--ls-actions-gold-bg, rgba(239, 159, 39, 0.1));
+  border: 0.5px solid rgba(239, 159, 39, 0.35);
+  border-radius: 14px;
+}
+
+.arb-empty__icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 11px;
+  background: var(--ls-actions-card, #fff);
+  box-shadow: 0 1px 3px rgba(186, 117, 23, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ls-actions-gold-text, #854f0b);
+  flex-shrink: 0;
+}
+
+.arb-empty__content {
+  flex: 1;
+  min-width: 0;
+}
+
+.arb-empty__label {
+  font-family: "DM Sans", sans-serif;
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--ls-actions-gold-text, #854f0b);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.arb-empty__title {
+  font-family: "Syne", sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ls-actions-text, #2c2c2a);
+  margin-top: 3px;
+}
+
+.arb-empty__hint {
+  font-family: "DM Sans", sans-serif;
+  font-size: 11px;
+  color: var(--ls-actions-text-muted, #888780);
+  margin-top: 2px;
+}
+
+.arb-empty__cta {
+  min-height: 44px;
+  padding: 9px 16px;
+  border-radius: 9px;
+  background: linear-gradient(135deg, #ef9f27, #ba7517);
+  color: #fff;
+  font-family: "DM Sans", sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  border: none;
+  box-shadow: 0 1px 3px rgba(186, 117, 23, 0.25);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: opacity 0.2s ease, transform 0.12s ease;
+}
+
+.arb-empty__cta:hover {
+  opacity: 0.92;
+}
+
+.arb-empty__cta:active {
+  transform: scale(0.98);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   BANNER PRIORITÉ (complete_initial, send_followup, share_consent, ok)
+   ═══════════════════════════════════════════════════════════════════ */
+
+.arb-priority {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 20px;
+  border-radius: 14px;
+  position: relative;
+  overflow: hidden;
+}
+
+.arb-priority--gold {
+  background: linear-gradient(135deg, rgba(250, 199, 117, 0.18), rgba(239, 159, 39, 0.02));
+  border: 0.5px solid rgba(239, 159, 39, 0.4);
+}
+
+.arb-priority--teal {
+  background: linear-gradient(135deg, rgba(29, 158, 117, 0.12), rgba(15, 110, 86, 0.02));
+  border: 0.5px solid rgba(29, 158, 117, 0.4);
+}
+
+.arb-priority__icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 11px;
+  background: var(--ls-actions-card, #fff);
+  box-shadow: 0 1px 3px rgba(186, 117, 23, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.arb-priority__content {
+  flex: 1;
+  min-width: 0;
+}
+
+.arb-priority__label {
+  font-family: "DM Sans", sans-serif;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.arb-priority--gold .arb-priority__label {
+  color: var(--ls-actions-gold-text, #854f0b);
+}
+
+.arb-priority--teal .arb-priority__label {
+  color: var(--ls-actions-teal-text, #085041);
+}
+
+.arb-priority__title {
+  font-family: "Syne", sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ls-actions-text, #2c2c2a);
+  margin-top: 3px;
+}
+
+.arb-priority__hint {
+  font-family: "DM Sans", sans-serif;
+  font-size: 11px;
+  color: var(--ls-actions-text-muted, #888780);
+  margin-top: 2px;
+}
+
+.arb-priority__cta {
+  min-height: 44px;
+  padding: 9px 16px;
+  border-radius: 9px;
+  color: #fff;
+  font-family: "DM Sans", sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: opacity 0.2s ease, transform 0.12s ease;
+}
+
+.arb-priority--gold .arb-priority__cta {
+  background: linear-gradient(135deg, #ef9f27, #ba7517);
+  box-shadow: 0 1px 3px rgba(186, 117, 23, 0.25);
+}
+
+.arb-priority--teal .arb-priority__cta {
+  background: #0f6e56;
+  box-shadow: 0 1px 3px rgba(15, 110, 86, 0.25);
+}
+
+.arb-priority__cta:hover {
+  opacity: 0.92;
+}
+
+.arb-priority__cta:active {
+  transform: scale(0.98);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   CARD "PROCHAIN RDV" PREMIUM (état prestige : ok + RDV existe)
+   ═══════════════════════════════════════════════════════════════════ */
+
+.arb-rdv-card {
+  background: var(--ls-actions-card, #fff);
+  border: 0.5px solid var(--ls-actions-border, rgba(211, 209, 199, 0.6));
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.arb-rdv-card__header {
+  padding: 14px 20px 14px;
+  background: var(--ls-actions-soft, #fbf9f4);
+  border-bottom: 0.5px solid var(--ls-actions-border, rgba(211, 209, 199, 0.6));
+}
+
+.arb-rdv-card__badge {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.arb-rdv-card__badge-icon {
+  width: 22px;
+  height: 22px;
+  padding: 4px;
+  border-radius: 6px;
+  background: linear-gradient(135deg, #ef9f27, #ba7517);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+.arb-rdv-card__badge > span:last-child {
+  font-family: "DM Sans", sans-serif;
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--ls-actions-text-muted, #888780);
+  letter-spacing: 0.1em;
+}
+
+.arb-rdv-card__date-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.arb-rdv-card__date {
+  font-family: "Syne", sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--ls-actions-text, #2c2c2a);
+  letter-spacing: -0.01em;
+}
+
+.arb-rdv-card__countdown {
+  font-family: "DM Sans", sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ls-actions-gold-text, #ef9f27);
+}
+
+.arb-rdv-card__menu {
+  padding: 4px 0 6px;
+}
+
+.arb-rdv-card__menu-label {
+  padding: 10px 20px 6px;
+  font-family: "DM Sans", sans-serif;
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--ls-actions-text-hint, #b4b2a9);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.arb-rdv-card__menu-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  min-height: 56px;
+  padding: 10px 20px;
+  background: transparent;
+  border: none;
+  border-top: 0.5px solid var(--ls-actions-border-soft, rgba(211, 209, 199, 0.4));
+  cursor: pointer;
+  text-align: left;
+  text-decoration: none;
+  color: inherit;
+  font-family: inherit;
+  transition: background 0.15s ease;
+}
+
+.arb-rdv-card__menu-item:first-of-type {
+  border-top: none;
+}
+
+.arb-rdv-card__menu-item:hover {
+  background: var(--ls-actions-soft, #fbf9f4);
+}
+
+.arb-rdv-card__menu-item--disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.arb-rdv-card__menu-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.arb-rdv-card__menu-icon--google {
+  background: #e8f0fe;
+}
+
+.arb-rdv-card__menu-icon--apple {
+  background: var(--ls-actions-soft, #fbf9f4);
+  color: var(--ls-actions-text, #2c2c2a);
+  border: 0.5px solid var(--ls-actions-border, rgba(211, 209, 199, 0.6));
+}
+
+.arb-rdv-card__menu-icon--edit {
+  background: var(--ls-actions-teal-bg, #e1f5ee);
+  color: var(--ls-actions-teal-text, #0f6e56);
+}
+
+.arb-rdv-card__menu-icon--whatsapp {
+  background: #dcf8c6;
+}
+
+.arb-rdv-card__menu-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.arb-rdv-card__menu-title {
+  font-family: "DM Sans", sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ls-actions-text, #2c2c2a);
+}
+
+.arb-rdv-card__menu-hint {
+  font-family: "DM Sans", sans-serif;
+  font-size: 11px;
+  color: var(--ls-actions-text-muted, #888780);
+  margin-top: 2px;
+}
+
+.arb-rdv-card__menu-chevron {
+  color: var(--ls-actions-text-hint, #b4b2a9);
+  font-size: 18px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   CARD RDV COMPACTE (sous une priorité non-RDV + RDV existe)
+   ═══════════════════════════════════════════════════════════════════ */
+
+.arb-rdv-compact {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--ls-actions-card, #fff);
+  border: 0.5px solid var(--ls-actions-border, rgba(211, 209, 199, 0.6));
+  border-radius: 12px;
+}
+
+.arb-rdv-compact__main {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+}
+
+.arb-rdv-compact__badge {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, rgba(239, 159, 39, 0.14), rgba(186, 117, 23, 0.05));
+  color: var(--ls-actions-gold-text, #854f0b);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.arb-rdv-compact__text {
+  min-width: 0;
+}
+
+.arb-rdv-compact__label {
+  font-family: "DM Sans", sans-serif;
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ls-actions-text-muted, #888780);
+}
+
+.arb-rdv-compact__date {
+  font-family: "Syne", sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ls-actions-text, #2c2c2a);
+  margin-top: 2px;
+}
+
+.arb-rdv-compact__countdown {
+  color: var(--ls-actions-text-muted, #888780);
+  font-weight: 500;
+  font-family: "DM Sans", sans-serif;
+  font-size: 11px;
+}
+
+.arb-rdv-compact__actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.arb-rdv-compact__btn {
+  min-width: 36px;
+  min-height: 36px;
+  padding: 8px;
+  border-radius: 8px;
+  background: transparent;
+  border: 0.5px solid var(--ls-actions-border-soft, rgba(211, 209, 199, 0.4));
+  color: var(--ls-actions-text-tertiary, #5f5e5a);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.arb-rdv-compact__btn:hover {
+  background: var(--ls-actions-soft, #fbf9f4);
+  border-color: var(--ls-actions-border, rgba(211, 209, 199, 0.6));
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   RESPONSIVE mobile (< 480px)
+   ═══════════════════════════════════════════════════════════════════ */
+
+@media (max-width: 480px) {
+  .arb-empty,
+  .arb-priority {
+    flex-wrap: wrap;
+  }
+
+  .arb-empty__cta,
+  .arb-priority__cta {
+    width: 100%;
+    order: 3;
+  }
+
+  .arb-rdv-card__header {
+    padding: 12px 16px;
+  }
+
+  .arb-rdv-card__date {
+    font-size: 16px;
+  }
+
+  .arb-rdv-card__menu-item,
+  .arb-rdv-card__menu-label {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .arb-rdv-compact {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .arb-rdv-compact__actions {
+    justify-content: space-between;
+  }
+
+  .arb-rdv-compact__btn {
+    flex: 1;
+  }
+}
