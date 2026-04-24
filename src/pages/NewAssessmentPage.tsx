@@ -1799,7 +1799,22 @@ export function NewAssessmentPage() {
           {currentStepId === 'program' && (() => {
             // Chantier refonte étape 11 (2026-04-20) — tunnel de vente structuré.
             const chosenProgram = getProgramById(form.programChoice);
-            const ticketAddOns: TicketAddOn[] = addOnProducts.map((p) => ({
+            // Chantier Boosters cliquables + Quantités (2026-04-24) :
+            // les boosters sport sélectionnés alimentent aussi le ticket.
+            // BOOSTERS n'ont pas de PV dans le référentiel actuel (hors scope),
+            // on force pv=0 côté ticket — à enrichir si BOOSTERS gagne un champ pv.
+            const selectedBoostersForTicket = BOOSTERS
+              .filter((b) => effectiveSelectedProductIds.includes(b.id))
+              .map((b) => ({
+                id: b.id,
+                name: b.title,
+                prixPublic: b.price,
+                pv: 0,
+              }));
+            const combinedAddOns = [...addOnProducts, ...selectedBoostersForTicket].filter(
+              (v, i, arr) => arr.findIndex((x) => x.id === v.id) === i
+            );
+            const ticketAddOns: TicketAddOn[] = combinedAddOns.map((p) => ({
               id: p.id,
               name: p.name,
               price: p.prixPublic,
@@ -1918,7 +1933,15 @@ export function NewAssessmentPage() {
                   {/* Bloc 2 — Routine matin */}
                   <RoutineMatinList program={chosenProgram} />
 
-                  {/* Bloc Boosters (sport uniquement) — Chantier Prise de masse (2026-04-24) */}
+                  {/* Bloc Boosters (sport uniquement)
+                      — Chantier Prise de masse (2026-04-24) : bloc initial
+                      décoratif.
+                      — Chantier Boosters cliquables + Quantités (2026-04-24) :
+                        passage à SelectableProductCard. Chaque booster est
+                        désormais cliquable (toggle partagé avec besoins/
+                        upsells) et, s'il est sélectionné, apparaît dans le
+                        ticket sticky à droite.
+                      BOOSTERS n'ont pas de PV — pv=0 documenté côté mapping. */}
                   {form.objective === "sport" ? (() => {
                     const recs = recommendBoosters(form.sportProfile, form.age);
                     const recById = new Map(recs.map((r) => [r.productId, r]));
@@ -1927,51 +1950,22 @@ export function NewAssessmentPage() {
                         <p className="eyebrow-label" style={{ marginBottom: 10 }}>
                           + Boosters optionnels
                         </p>
-                        <div className="grid gap-2" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))" }}>
+                        <div className="grid gap-3">
                           {BOOSTERS.map((b) => {
                             const rec = recById.get(b.id);
                             const isRec = !!rec?.recommended;
                             return (
-                              <div
+                              <SelectableProductCard
                                 key={b.id}
-                                style={{
-                                  position: "relative",
-                                  padding: "12px 14px",
-                                  borderRadius: 12,
-                                  border: isRec
-                                    ? "2px solid var(--ls-teal)"
-                                    : "1px solid var(--ls-border)",
-                                  background: isRec
-                                    ? "color-mix(in srgb, var(--ls-teal) 8%, #fff)"
-                                    : "#fff",
-                                  fontFamily: "'DM Sans', sans-serif",
-                                }}
-                              >
-                                {isRec ? (
-                                  <span
-                                    style={{
-                                      position: "absolute",
-                                      top: 6,
-                                      right: 8,
-                                      fontSize: 14,
-                                      color: "var(--ls-gold)",
-                                    }}
-                                    aria-label="Recommandé"
-                                  >
-                                    ⭐
-                                  </span>
-                                ) : null}
-                                <div style={{ fontSize: 14, fontWeight: 600, color: "var(--ls-text)" }}>{b.title}</div>
-                                <div style={{ fontSize: 11, color: "var(--ls-text-muted)", marginTop: 4 }}>{b.shortContent}</div>
-                                <div style={{ fontSize: 12, color: "var(--ls-gold)", fontWeight: 600, marginTop: 6 }}>
-                                  +{b.price.toFixed(2).replace(".", ",")}€
-                                </div>
-                                {isRec && rec?.reason ? (
-                                  <div style={{ fontSize: 11, color: "var(--ls-teal)", marginTop: 6, fontStyle: "italic" }}>
-                                    {rec.reason}
-                                  </div>
-                                ) : null}
-                              </div>
+                                id={b.id}
+                                name={b.title}
+                                shortBenefit={b.shortContent}
+                                prixPublic={b.price}
+                                pv={0}
+                                highlight={isRec ? { reason: rec?.reason } : undefined}
+                                selected={effectiveSelectedProductIds.includes(b.id)}
+                                onToggle={() => toggleSelectedProduct(b.id)}
+                              />
                             );
                           })}
                         </div>
