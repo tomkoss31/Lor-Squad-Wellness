@@ -1,0 +1,387 @@
+/* Chantier Page remerciement post-bilan (2026-04-27).
+   Styles de ThankYouStep. Suivent le thème actif de l'app coach via les
+   variables CSS globales (var(--ls-*)). Le QR code garde un fond blanc
+   dans les 2 modes pour scannabilité optimale.
+
+   Polices : Syne (titres, chiffres) / DM Sans (corps).
+*/
+
+.thank-you-root {
+  min-height: 100vh;
+  background: var(--ls-bg, #fbf9f4);
+  color: var(--ls-text, #1a1a1a);
+  padding: 40px 24px 60px;
+  font-family: "DM Sans", sans-serif;
+  transition: background 0.3s ease, color 0.3s ease;
+}
+
+.thank-you-container {
+  max-width: 680px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+  animation: thank-you-fade-in 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes thank-you-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   S1 — Header héro
+   ═══════════════════════════════════════════════════════════════════ */
+
+.thank-you-header {
+  text-align: center;
+}
+
+.thank-you-logo {
+  width: 60px;
+  height: 60px;
+  margin: 0 auto 16px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, var(--ls-gold, #b8922a), #7a5f1a);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  box-shadow: 0 4px 16px rgba(184, 146, 42, 0.3);
+}
+
+.thank-you-title {
+  font-family: "Syne", sans-serif;
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--ls-text, #1a1a1a);
+  margin: 0 0 8px;
+  letter-spacing: -0.01em;
+  line-height: 1.15;
+}
+
+.thank-you-subtitle {
+  font-size: 16px;
+  color: var(--ls-gold, #b8922a);
+  margin: 0;
+  opacity: 0.95;
+}
+
+.thank-you-divider {
+  width: 60px;
+  height: 2px;
+  background: var(--ls-gold, #b8922a);
+  margin: 24px auto 0;
+  border-radius: 2px;
+  opacity: 0.8;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   S2 — QR code card
+   ═══════════════════════════════════════════════════════════════════ */
+
+.thank-you-qr-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+.thank-you-qr-card {
+  background: #ffffff; /* Toujours blanc pour scannabilité */
+  border: 0.5px solid var(--ls-border, rgba(0, 0, 0, 0.1));
+  border-radius: 20px;
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  position: relative;
+  z-index: 1;
+}
+
+.thank-you-qr-svg-wrap {
+  width: 240px;
+  height: 240px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.thank-you-qr-svg-wrap svg {
+  width: 100%;
+  height: 100%;
+}
+
+.thank-you-qr-label {
+  font-family: "DM Sans", sans-serif;
+  font-size: 14px;
+  color: #444;
+  margin: 0;
+  text-align: center;
+}
+
+.thank-you-url-button {
+  padding: 10px 18px;
+  background: transparent;
+  color: var(--ls-text, #1a1a1a);
+  border: 0.5px solid var(--ls-border, rgba(0, 0, 0, 0.12));
+  border-radius: 10px;
+  font-family: "DM Sans", sans-serif;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.thank-you-url-button:hover {
+  background: var(--ls-surface2, rgba(0, 0, 0, 0.04));
+  border-color: var(--ls-gold, #b8922a);
+}
+
+/* Glow gold subtil autour de la card QR — mode sombre uniquement */
+html[data-theme="dark"] .thank-you-qr-card::before {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  border-radius: 24px;
+  background: radial-gradient(
+    circle at 50% 50%,
+    rgba(184, 146, 42, 0.35),
+    rgba(29, 158, 117, 0.12) 60%,
+    transparent 80%
+  );
+  filter: blur(16px);
+  opacity: 0.7;
+  z-index: -1;
+  pointer-events: none;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   Sections génériques
+   ═══════════════════════════════════════════════════════════════════ */
+
+.thank-you-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.thank-you-section-title {
+  font-family: "DM Sans", sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ls-gold, #b8922a);
+  letter-spacing: 0.12em;
+  text-align: center;
+  text-transform: uppercase;
+  margin: 0 0 4px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   S3 — Partage multi-canal
+   ═══════════════════════════════════════════════════════════════════ */
+
+.thank-you-share-grid {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.thank-you-share-btn {
+  width: 88px;
+  min-height: 96px;
+  padding: 14px 10px;
+  background: var(--ls-surface, #fff);
+  border: 0.5px solid var(--ls-border, rgba(0, 0, 0, 0.12));
+  border-radius: 16px;
+  color: var(--ls-text, #1a1a1a);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  font-family: "DM Sans", sans-serif;
+  transition: transform 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+}
+
+.thank-you-share-btn:hover {
+  background: var(--ls-surface2, rgba(0, 0, 0, 0.04));
+  transform: translateY(-2px);
+  border-color: var(--ls-gold, #b8922a);
+}
+
+.thank-you-share-btn:active {
+  transform: scale(0.98);
+}
+
+.thank-you-share-btn-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ls-text, #1a1a1a);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   S4 — Parrainage
+   ═══════════════════════════════════════════════════════════════════ */
+
+.thank-you-referral {
+  background: var(--ls-surface, #fff);
+  border: 0.5px solid var(--ls-teal, #0d9488);
+  border-radius: 16px;
+  padding: 24px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.thank-you-referral::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 140px;
+  height: 140px;
+  background: radial-gradient(circle, rgba(13, 148, 136, 0.15), transparent 70%);
+  pointer-events: none;
+}
+
+.thank-you-referral-title {
+  font-family: "Syne", sans-serif;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--ls-text, #1a1a1a);
+  margin: 0 0 8px;
+  line-height: 1.3;
+  position: relative;
+}
+
+.thank-you-referral-subtitle {
+  font-size: 13px;
+  color: var(--ls-text-muted, #666);
+  margin: 0 0 18px;
+  position: relative;
+}
+
+.thank-you-referral-cta {
+  min-height: 48px;
+  padding: 12px 24px;
+  background: linear-gradient(135deg, var(--ls-gold, #b8922a), #8a6d18);
+  color: #ffffff;
+  border: none;
+  border-radius: 12px;
+  font-family: "DM Sans", sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.2s ease, transform 0.1s ease;
+  box-shadow: 0 2px 8px rgba(184, 146, 42, 0.25);
+  position: relative;
+}
+
+.thank-you-referral-cta:hover {
+  opacity: 0.92;
+}
+
+.thank-you-referral-cta:active {
+  transform: scale(0.98);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   S5 — Avis Google
+   ═══════════════════════════════════════════════════════════════════ */
+
+.thank-you-google-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 48px;
+  padding: 14px 20px;
+  background: var(--ls-surface, #fff);
+  border: 0.5px solid var(--ls-border, rgba(0, 0, 0, 0.12));
+  border-radius: 12px;
+  color: var(--ls-text, #1a1a1a);
+  font-family: "DM Sans", sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  width: 100%;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.thank-you-google-btn:hover {
+  background: var(--ls-surface2, rgba(0, 0, 0, 0.04));
+  border-color: var(--ls-gold, #b8922a);
+}
+
+.thank-you-google-btn-stars {
+  color: #ffb800;
+  font-size: 16px;
+  letter-spacing: 1px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   S6 — Retour discret
+   ═══════════════════════════════════════════════════════════════════ */
+
+.thank-you-back {
+  text-align: center;
+  margin-top: 8px;
+}
+
+.thank-you-back button {
+  background: transparent;
+  border: none;
+  color: var(--ls-text-muted, #888);
+  font-family: "DM Sans", sans-serif;
+  font-size: 13px;
+  cursor: pointer;
+  padding: 10px 18px;
+  border-radius: 8px;
+  transition: color 0.2s ease, background 0.2s ease;
+}
+
+.thank-you-back button:hover {
+  color: var(--ls-text, #1a1a1a);
+  background: var(--ls-surface2, rgba(0, 0, 0, 0.04));
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   Responsive mobile
+   ═══════════════════════════════════════════════════════════════════ */
+
+@media (max-width: 480px) {
+  .thank-you-root {
+    padding: 24px 16px 40px;
+  }
+  .thank-you-container {
+    gap: 28px;
+  }
+  .thank-you-title {
+    font-size: 26px;
+  }
+  .thank-you-qr-svg-wrap {
+    width: 200px;
+    height: 200px;
+  }
+  .thank-you-qr-card {
+    padding: 22px;
+  }
+  .thank-you-share-grid {
+    gap: 10px;
+  }
+  .thank-you-share-btn {
+    width: 80px;
+    min-height: 88px;
+    padding: 12px 8px;
+  }
+}
