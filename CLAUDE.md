@@ -149,3 +149,54 @@ avec `supabase functions deploy <name>`.
 | `new-message-notifier` | trigger Postgres | Notif nouveau message |
 
 Toute nouvelle edge function = ajouter ici.
+
+---
+
+## Chantier Prise de masse (2026-04-24)
+
+Logique "prise de masse / sport" de bout en bout dans le bilan.
+
+### Étapes de bilan dynamiques
+`src/pages/NewAssessmentPage.tsx` : `ALL_STEPS: StepDef[]` avec
+`visible(form)` par étape. 2 étapes sport-only : `sport-profile` (parle-moi
+de ton sport) et `current-intake` (tes apports actuels). Masquées si
+`form.objective !== 'sport'`. Chaque JSX render bloc est adressé par
+`currentStepId` (type `StepId`, jamais par index).
+
+### Types et modèle
+`src/types/domain.ts` : widening `Objective` avec 6 sous-objectifs sport
+(mass-gain / strength / cutting / endurance / fitness / competition).
+Nouveaux types : `SportFrequency`, `SportType`, `SportSubObjective`,
+`IntakeMoment`, `IntakeValue`, `CurrentIntake`, `SportProfile`. Champs
+optionnels `sportProfile` et `currentIntake` sur `AssessmentRecord`.
+
+### Calculs
+`src/lib/calculations.ts` :
+- `computeProteinTargetSport(weightKg, subObjective)` → {min, max, target}
+- `computeWaterTargetSport(weightKg, frequency)` → mL/jour clampé 2000-5000
+- `estimateCurrentProteinIntake(currentIntake)` → g/jour
+
+### Recommandation de boosters
+`src/lib/assessmentRecommendations.ts::recommendBoosters(profile, age)`.
+6 règles métier déterministes (collations, liftoff, cr7, hydrate,
+créatine, collagène). Marqués d'une étoile + fond teal dans le step
+"Programme proposé" quand objective === 'sport'.
+
+### Alertes sport (Apple Health-style)
+`src/components/assessment/SportAlertsDialog.tsx` :
+`detectSportAlerts({ profile, intake, weightKg, ... })` → 6 alertes
+(hydration-low, protein-low, sleep-low, muscle-low, no-snack,
+frequency-mismatch). Popup bloque `handleSaveAssessment` tant que non
+acquittée (acknowledged).
+
+### Résumé sport sur fiche client
+`src/components/client-detail/SportSummarySection.tsx` inséré dans
+l'onglet Actions (tab 5). 3 cards : Besoins (4 stats), Plan journée
+(toggle sport/repos), Programme + boosters + lien WhatsApp.
+
+### Migrations Supabase
+- `20260424120000_sport_fields.sql` : élargit CHECK `objective` sur
+  `clients` + `assessments`, ajoute colonnes `sport_frequency`,
+  `sport_types`, `sport_sub_objective`, `current_intake`.
+- `20260424130000_seed_sport_products.sql` : seed 8 produits sport/
+  accessoire dans `pv_products`.
