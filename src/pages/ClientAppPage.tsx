@@ -871,6 +871,10 @@ export function ClientAppPage() {
               productDetails={PRODUCT_DETAILS}
               onAskCoach={openProductAskModal}
               liveProducts={liveData?.current_products ?? null}
+              liveRecommendationsNotTaken={
+                (liveData as unknown as { recommendations_not_taken?: Array<{ productId: string; name: string; price?: number; reason?: string }> } | null)
+                  ?.recommendations_not_taken ?? null
+              }
             />
           </div>
         )}

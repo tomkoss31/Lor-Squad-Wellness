@@ -37,6 +37,11 @@ interface Props {
   // le fetch legacy qui ne marche plus (RLS drop 25/04). Si non fournie
   // (ex: loading), fallback silencieux sur le fetch legacy + empty state.
   liveProducts?: PvCurrentProduct[] | null;
+  // Chantier Conseils (2026-04-24) : produits proposés lors du dernier
+  // bilan mais non intégrés au programme actuel. Priorité à la source
+  // server-side (live). Fallback : computed client-side depuis
+  // recommendedProducts \ currentProducts.
+  liveRecommendationsNotTaken?: Array<{ productId: string; name: string; price?: number; reason?: string }> | null;
 }
 
 const CATEGORIES: Array<{ key: HerbalifeProduct["category"]; label: string; icon: string }> = [
@@ -70,6 +75,7 @@ export function ClientProductsTab({
   productDetails,
   onAskCoach,
   liveProducts,
+  liveRecommendationsNotTaken,
 }: Props) {
   // Source des produits en cours :
   //   1. liveProducts (Edge Function client-app-data) — prioritaire
@@ -125,6 +131,25 @@ export function ClientProductsTab({
     () => new Set(currentProducts.map((p) => p.product_id)),
     [currentProducts],
   );
+
+  // Chantier Conseils (2026-04-24) : produits recommandés non pris.
+  // Source live prioritaire, fallback calcul client-side.
+  const recommendationsNotTaken = useMemo(() => {
+    if (liveRecommendationsNotTaken && liveRecommendationsNotTaken.length >= 0) {
+      return liveRecommendationsNotTaken;
+    }
+    const takenNames = new Set(
+      currentProducts.map((p) => (p.product_name || "").toLowerCase().trim()),
+    );
+    return recommendedProducts
+      .filter((r) => !currentProductIds.has(r.ref) && !takenNames.has(r.name.toLowerCase().trim()))
+      .map((r) => ({
+        productId: r.ref,
+        name: r.name,
+        price: r.publicPrice,
+        reason: r.shortBenefit,
+      }));
+  }, [liveRecommendationsNotTaken, recommendedProducts, currentProducts, currentProductIds]);
 
   // Filtre catalogue par recherche
   const filteredByCategory = useCallback(
@@ -299,6 +324,130 @@ export function ClientProductsTab({
           </div>
         )}
       </section>
+
+      {/* ─── [2b] RECOMMANDÉS POUR TA PROGRESSION (Chantier Conseils 2026-04-24) ─ */}
+      {recommendationsNotTaken.length > 0 ? (
+        <section className="prod-section" style={{ animationDelay: "140ms" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+            <span aria-hidden="true" style={{ fontSize: 16 }}>💡</span>
+            <h2
+              style={{
+                fontFamily: "Syne, sans-serif",
+                fontSize: 16,
+                fontWeight: 700,
+                margin: 0,
+                color: "#111827",
+              }}
+            >
+              Recommandés pour ta progression
+            </h2>
+          </div>
+          <p style={{ fontSize: 12, color: "#6B7280", margin: "0 0 12px", lineHeight: 1.5 }}>
+            Produits proposés lors de ton dernier bilan que tu n&apos;as pas encore intégrés
+          </p>
+          <div style={{ display: "grid", gap: 10 }}>
+            {recommendationsNotTaken.map((r) => {
+              const digits = (coachWhatsapp ?? "").replace(/\D/g, "");
+              const waHref = digits
+                ? `https://wa.me/${digits}?text=${encodeURIComponent(`Salut ${coachFirstName}, je m'intéresse au produit "${r.name}" qu'on a vu pendant mon bilan. Est-ce que tu peux m'en dire plus ?`)}`
+                : null;
+              const refOrProductId = r.productId;
+              return (
+                <div
+                  key={refOrProductId}
+                  style={{
+                    display: "flex",
+                    alignItems: "flex-start",
+                    gap: 12,
+                    padding: "14px 16px",
+                    borderRadius: 12,
+                    background: "rgba(212,83,126,0.08)",
+                    border: "0.5px solid rgba(212,83,126,0.4)",
+                  }}
+                >
+                  <div style={{ fontSize: 18, flexShrink: 0, lineHeight: 1 }} aria-hidden="true">⭐</div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: "flex", alignItems: "flex-start", gap: 8, justifyContent: "space-between" }}>
+                      <div
+                        style={{
+                          fontFamily: "Syne, sans-serif",
+                          fontWeight: 700,
+                          fontSize: 15,
+                          color: "#111827",
+                          lineHeight: 1.3,
+                        }}
+                      >
+                        {r.name}
+                      </div>
+                      {typeof r.price === "number" && r.price > 0 ? (
+                        <div
+                          style={{
+                            fontFamily: "Syne, sans-serif",
+                            fontWeight: 700,
+                            fontSize: 15,
+                            color: "#B8922A",
+                            flexShrink: 0,
+                          }}
+                        >
+                          {r.price.toFixed(2)}€
+                        </div>
+                      ) : null}
+                    </div>
+                    <div
+                      style={{
+                        fontFamily: "DM Sans, sans-serif",
+                        fontSize: 12,
+                        color: "#9CA3AF",
+                        marginTop: 2,
+                      }}
+                    >
+                      Réf. {refOrProductId}
+                    </div>
+                    {r.reason ? (
+                      <div
+                        style={{
+                          fontFamily: "DM Sans, sans-serif",
+                          fontSize: 13,
+                          color: "#0F6E56",
+                          marginTop: 6,
+                          lineHeight: 1.5,
+                        }}
+                      >
+                        {r.reason}
+                      </div>
+                    ) : null}
+                    {waHref ? (
+                      <a
+                        href={waHref}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: 6,
+                          marginTop: 10,
+                          padding: "9px 14px",
+                          background: "linear-gradient(135deg, #EF9F27, #BA7517)",
+                          color: "#FFFFFF",
+                          borderRadius: 10,
+                          textDecoration: "none",
+                          fontSize: 12,
+                          fontWeight: 700,
+                          fontFamily: "DM Sans, sans-serif",
+                          minHeight: 44,
+                          boxSizing: "border-box",
+                        }}
+                      >
+                        En parler à {coachFirstName} → WhatsApp
+                      </a>
+                    ) : null}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      ) : null}
 
       {/* ─── [3] CATALOGUE COMPLET (repliable, fermé par défaut) ──────── */}
       <section className="prod-section" style={{ animationDelay: "180ms" }}>
