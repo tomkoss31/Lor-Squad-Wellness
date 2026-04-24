@@ -727,3 +727,73 @@ export function buildAssessmentRecommendationPlan(
     recommendedProgramReason: getProgramReason(recommendedProgramId, detectedNeeds)
   };
 }
+
+// ─── Chantier Prise de masse (2026-04-24) ───────────────────────────────
+// Recommandation automatique des 6 boosters sport optionnels selon le
+// profil sport du client (sous-objectif + fréquence + types). Chaque règle
+// ci-dessous retourne {recommended, reason}. L'UI marque les boosters
+// recommandés d'une étoile et d'un surlignage teal.
+
+import type { SportProfile, SportType } from "../types/domain";
+
+export type BoosterRecommendation = {
+  productId: string;
+  recommended: boolean;
+  reason: string;
+};
+
+const BOOSTER_PRODUCT_IDS = {
+  proteinSnack: "p-sport-boost-protein-snack",
+  liftoff: "p-sport-boost-liftoff",
+  cr7: "p-sport-boost-cr7",
+  hydrate: "p-sport-boost-hydration",
+  creatine: "p-sport-boost-creatine",
+  collagen: "p-sport-boost-collagen",
+} as const;
+
+function hasAny<T>(list: T[], targets: T[]): boolean {
+  return list.some((v) => targets.includes(v));
+}
+
+export function recommendBoosters(
+  profile: SportProfile | null | undefined,
+  clientAge: number
+): BoosterRecommendation[] {
+  const p: SportProfile = profile ?? { frequency: "regular", types: [], subObjective: "mass-gain" };
+  const types = p.types;
+
+  // 1. Collations protéinées
+  const proteinSnackRec = p.subObjective === "mass-gain" || p.subObjective === "strength";
+
+  // 2. Liftoff : fréquence régulière/intensive + type musculation/crossfit/combat
+  const liftoffRec =
+    (p.frequency === "regular" || p.frequency === "intensive") &&
+    hasAny<SportType>(types, ["musculation", "crossfit-hiit", "combat-sport"]);
+
+  // 3. CR7 Drive : cardio / endurance-long / team-sport / crossfit-hiit
+  const cr7Rec = hasAny<SportType>(types, ["cardio", "endurance-long", "team-sport", "crossfit-hiit"]);
+
+  // 4. Hydrate : intensif OR crossfit/combat/team
+  const hydrateRec =
+    p.frequency === "intensive" ||
+    hasAny<SportType>(types, ["crossfit-hiit", "combat-sport", "team-sport"]);
+
+  // 5. Créatine : mass-gain / strength
+  const creatineRec = p.subObjective === "mass-gain" || p.subObjective === "strength";
+
+  // 6. Collagène : age ≥ 35 OR sport à impact
+  const collagenImpact = hasAny<SportType>(types, ["cardio", "crossfit-hiit", "combat-sport", "endurance-long"]);
+  const collagenRec = clientAge >= 35 || collagenImpact;
+  const collagenReason = clientAge >= 35
+    ? "Articulations à partir de 35 ans"
+    : "Sport à impact = usure articulaire";
+
+  return [
+    { productId: BOOSTER_PRODUCT_IDS.proteinSnack, recommended: proteinSnackRec, reason: "Apport protéines facile entre repas" },
+    { productId: BOOSTER_PRODUCT_IDS.liftoff, recommended: liftoffRec, reason: "Énergie pré-workout pour séances intenses" },
+    { productId: BOOSTER_PRODUCT_IDS.cr7, recommended: cr7Rec, reason: "Hydratation + énergie pendant effort prolongé" },
+    { productId: BOOSTER_PRODUCT_IDS.hydrate, recommended: hydrateRec, reason: "Électrolytes pour séances intenses" },
+    { productId: BOOSTER_PRODUCT_IDS.creatine, recommended: creatineRec, reason: "Gain force et volume musculaire prouvé" },
+    { productId: BOOSTER_PRODUCT_IDS.collagen, recommended: collagenRec, reason: collagenReason },
+  ];
+}

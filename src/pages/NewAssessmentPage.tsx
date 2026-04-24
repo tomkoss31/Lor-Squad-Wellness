@@ -20,7 +20,7 @@ import { MilkConsumptionToggle } from "../components/assessment/MilkConsumptionT
 import { ProgramChoiceCard } from "../components/assessment/ProgramChoiceCard";
 import { RoutineMatinList } from "../components/assessment/RoutineMatinList";
 import { ProgrammeTicket, type TicketAddOn } from "../components/assessment/ProgrammeTicket";
-import { PROGRAM_CHOICES, getProgramById, type ProgramChoiceId } from "../data/programs";
+import { PROGRAM_CHOICES, getProgramById, BOOSTERS, type ProgramChoiceId } from "../data/programs";
 import { FelicitationsStep } from "../components/assessment/FelicitationsStep";
 import { NotesPanel } from "../components/assessment/NotesPanel";
 import { ValidationBlockedBanner } from "../components/assessment/ValidationBlockedBanner";
@@ -46,7 +46,7 @@ import {
   computeWaterTarget,
   computeProteinTarget,
 } from "../lib/calculations";
-import { buildAssessmentRecommendationPlan } from "../lib/assessmentRecommendations";
+import { buildAssessmentRecommendationPlan, recommendBoosters } from "../lib/assessmentRecommendations";
 import type { BiologicalSex, BreakfastAnalysis, CurrentIntake, DecisionClient, MessageALaisser, Objective, RecommendationLead, SportProfile, TypeDeSuite } from "../types/domain";
 import { SportProfileStep } from "../components/assessment/SportProfileStep";
 import { CurrentIntakeStep } from "../components/assessment/CurrentIntakeStep";
@@ -1891,6 +1891,67 @@ export function NewAssessmentPage() {
 
                   {/* Bloc 2 — Routine matin */}
                   <RoutineMatinList program={chosenProgram} />
+
+                  {/* Bloc Boosters (sport uniquement) — Chantier Prise de masse (2026-04-24) */}
+                  {form.objective === "sport" ? (() => {
+                    const recs = recommendBoosters(form.sportProfile, form.age);
+                    const recById = new Map(recs.map((r) => [r.productId, r]));
+                    return (
+                      <div>
+                        <p className="eyebrow-label" style={{ marginBottom: 10 }}>
+                          + Boosters optionnels
+                        </p>
+                        <div className="grid gap-2" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))" }}>
+                          {BOOSTERS.map((b) => {
+                            const rec = recById.get(b.id);
+                            const isRec = !!rec?.recommended;
+                            return (
+                              <div
+                                key={b.id}
+                                style={{
+                                  position: "relative",
+                                  padding: "12px 14px",
+                                  borderRadius: 12,
+                                  border: isRec
+                                    ? "2px solid var(--ls-teal)"
+                                    : "1px solid var(--ls-border)",
+                                  background: isRec
+                                    ? "color-mix(in srgb, var(--ls-teal) 8%, #fff)"
+                                    : "#fff",
+                                  fontFamily: "'DM Sans', sans-serif",
+                                }}
+                              >
+                                {isRec ? (
+                                  <span
+                                    style={{
+                                      position: "absolute",
+                                      top: 6,
+                                      right: 8,
+                                      fontSize: 14,
+                                      color: "var(--ls-gold)",
+                                    }}
+                                    aria-label="Recommandé"
+                                  >
+                                    ⭐
+                                  </span>
+                                ) : null}
+                                <div style={{ fontSize: 14, fontWeight: 600, color: "var(--ls-text)" }}>{b.title}</div>
+                                <div style={{ fontSize: 11, color: "var(--ls-text-muted)", marginTop: 4 }}>{b.shortContent}</div>
+                                <div style={{ fontSize: 12, color: "var(--ls-gold)", fontWeight: 600, marginTop: 6 }}>
+                                  +{b.price.toFixed(2).replace(".", ",")}€
+                                </div>
+                                {isRec && rec?.reason ? (
+                                  <div style={{ fontSize: 11, color: "var(--ls-teal)", marginTop: 6, fontStyle: "italic" }}>
+                                    {rec.reason}
+                                  </div>
+                                ) : null}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })() : null}
 
                   {/* Bloc "Suite après le bilan" — EXISTANT conservé */}
                   <Card className="space-y-4">
