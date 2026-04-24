@@ -92,8 +92,17 @@ export function computePriorityAction(
   // ─── 3. send_followup ────────────────────────────────────────────────
   // Points clés protocole : J+1 (message bienvenue), J+3 (ressentis),
   // J+7 (VIP), J+10 (check-in énergie), J+14 (RDV confirmation).
-  if (!client.freeFollowUp && client.startDate) {
-    const startDate = new Date(client.startDate);
+  //
+  // Fix 2026-04-27 : ancre alignée sur `initialAssessment.date` (même ancre
+  // que `followUpProtocolScheduler.getInitialAssessmentDate`). Avant,
+  // `client.startDate` était utilisé, mais ce champ n'est rempli que quand
+  // le coach coche "démarre maintenant" dans le bilan initial. Résultat :
+  // pour un client avec un bilan mais sans cette coche, le scheduler
+  // détectait J+X (via assessment.date) alors que ce hook sautait la
+  // branche send_followup → incohérence dashboard Co-pilote ↔ fiche.
+  const startAnchorDate = initialAssessment?.date ?? client.startDate;
+  if (!client.freeFollowUp && startAnchorDate) {
+    const startDate = new Date(startAnchorDate);
     const daysSinceStart = daysBetween(startDate, now);
     const checkpoints = [1, 3, 7, 10, 14];
     const overduePoints = checkpoints.filter((day) => daysSinceStart > day + 2);

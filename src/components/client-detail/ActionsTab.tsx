@@ -21,6 +21,7 @@ import { ClientAccessModal } from "../client/ClientAccessModal";
 import { refreshClientRecap } from "../../services/supabaseService";
 import { useClientPriorityAction } from "../../hooks/useClientPriorityAction";
 import { ActionsRdvBlock } from "./ActionsRdvBlock";
+import { FollowUpProtocolCard } from "../follow-up/FollowUpProtocolCard";
 import { getClientActiveFollowUp } from "../../lib/portfolio";
 import type { Client, FollowUp, LifecycleStatus } from "../../types/domain";
 import { LIFECYCLE_LABELS } from "../../types/domain";
@@ -151,8 +152,15 @@ export function ActionsTab({ client, onEditRdv, onOpenSharePublic, onGoToVueComp
     } else if (priority.type === "complete_initial") {
       navigate(`/clients/${client.id}/start-assessment/edit`);
     } else if (priority.type === "send_followup") {
-      // Scroll vers l'onglet Vue complète — on laisse l'utilisateur gérer
-      onGoToVueComplete?.();
+      // Fix 2026-04-27 : FollowUpProtocolCard est maintenant rendu dans le
+      // même onglet Actions juste sous le bloc RDV (cf. BLOC 2bis). Scroll
+      // smooth vers l'ancre au lieu de switcher vers Vue complète (qui ne
+      // contient plus le protocole depuis la refonte du 25/04).
+      if (typeof document !== "undefined") {
+        document
+          .getElementById("follow-up-protocol-anchor")
+          ?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
     } else if (priority.type === "request_share_consent") {
       onOpenSharePublic?.();
       pushToast({
@@ -349,6 +357,16 @@ export function ActionsTab({ client, onEditRdv, onOpenSharePublic, onGoToVueComp
         onPriorityCta={() => void handlePriorityCta()}
         onEditRdv={onEditRdv}
       />
+
+      {/* ═══ BLOC 2bis — PROTOCOLE DE SUIVI J+1 / J+3 / J+7 / J+10 / J+14
+          Restauré (2026-04-27) après régression du commit 3b3604e du 25/04
+          qui l'avait retiré de ClientDetailPage lors de l'extraction en
+          ActionsTab. Le composant gère sa propre modale d'envoi + log DB.
+          L'ancre id permet au handlePriorityCta de scroller directement
+          ici quand priority.type === 'send_followup'. */}
+      <div id="follow-up-protocol-anchor" style={{ marginTop: 12 }}>
+        <FollowUpProtocolCard client={client} />
+      </div>
 
       {/* ═══ GRID 2 COLONNES ═════════════════════════════════════════════ */}
       <div
