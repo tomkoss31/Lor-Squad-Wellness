@@ -10,6 +10,7 @@ import { InstallPwaBanner } from '../components/pwa/InstallPwaBanner'
 import { BreakfastStorySlider, DEFAULT_BREAKFAST_ANALYSIS } from '../components/education/BreakfastStorySlider'
 import { ClientMeasurementsSection } from '../features/measurements/ClientMeasurementsSection'
 import { ClientProductsTab } from '../components/client-app/ClientProductsTab'
+import { EnrichedAssessmentHistory } from '../components/client-app/EnrichedAssessmentHistory'
 import type { BreakfastAnalysis } from '../types/domain'
 import { useOnboardingState } from '../features/onboarding/hooks/useOnboardingState'
 import { useClientLiveData } from '../hooks/useClientLiveData'
@@ -792,39 +793,12 @@ export function ClientAppPage() {
                   ))}
                 </div>
 
-                {/* 2. Tableau compact */}
-                <div style={{ fontSize: 9, letterSpacing: '2px', textTransform: 'uppercase', color: '#9CA3AF', fontWeight: 500, marginTop: 4 }}>Historique de tes bilans</div>
-                <div style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.07)', borderRadius: 14, overflow: 'hidden' }}>
-                  <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
-                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 10, minWidth: 480 }}>
-                      <thead>
-                        <tr style={{ borderBottom: '1px solid rgba(0,0,0,0.07)' }}>
-                          {['Date', 'Poids', 'MG %', 'MG kg', 'Muscle', 'Eau', 'Viscéral'].map((h) => (
-                            <th key={h} style={{ padding: '8px 6px', textAlign: 'left', fontSize: 8, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 500 }}>{h}</th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {metrics.map((row, i) => {
-                          const mgKg = row.weight && row.bodyFat ? (row.weight * row.bodyFat / 100).toFixed(1) : '-'
-                          return (
-                            <tr key={i} style={{ borderBottom: i < metrics.length - 1 ? '1px solid rgba(0,0,0,0.05)' : 'none', background: i % 2 === 0 ? '#FAFAF9' : '#fff' }}>
-                              <td style={{ padding: '8px 6px', color: '#6B7280', fontSize: 9, whiteSpace: 'nowrap' }}>
-                                {new Date(row.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
-                              </td>
-                              <td style={{ padding: '8px 6px', fontWeight: 600, color: '#B8922A', fontSize: 11 }}>{row.weight?.toFixed(1)}</td>
-                              <td style={{ padding: '8px 6px', color: (row.bodyFat ?? 0) > 30 ? '#DC2626' : '#111827', fontSize: 11 }}>{row.bodyFat?.toFixed(1)}%</td>
-                              <td style={{ padding: '8px 6px', color: '#6B7280', fontSize: 11 }}>{mgKg}</td>
-                              <td style={{ padding: '8px 6px', color: '#0D9488', fontSize: 11 }}>{row.muscleMass?.toFixed(1)}</td>
-                              <td style={{ padding: '8px 6px', color: (row.hydration ?? 100) < 50 ? '#DC2626' : '#7C3AED', fontSize: 11 }}>{row.hydration?.toFixed(0)}%</td>
-                              <td style={{ padding: '8px 6px', color: (row.visceralFat ?? 0) >= 9 ? '#DC2626' : '#111827', fontSize: 11 }}>{row.visceralFat}</td>
-                            </tr>
-                          )
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
+                {/* 2. Historique enrichi — Départ + 5 derniers (Chantier Conseils 2026-04-24) */}
+                <EnrichedAssessmentHistory
+                  metrics={metrics}
+                  programTitle={data.program_title}
+                  liveClientProgram={liveData?.client?.current_program ?? null}
+                />
 
                 {/* 3. Mini graphiques */}
                 {metrics.length >= 2 && (
