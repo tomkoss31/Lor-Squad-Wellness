@@ -1096,7 +1096,7 @@ function StartingPointWeightCard({
   currentDate,
   currentWeight
 }: {
-  objective: "weight-loss" | "sport";
+  objective: import("../types/domain").Objective;
   startDate: string;
   startWeight: number;
   latestDate: string;

@@ -1,0 +1,110 @@
+/* Chantier Prise de masse (2026-04-24) — Apple Health style popup */
+
+.sport-alerts-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 16px;
+}
+
+.sport-alerts-dialog {
+  max-width: 560px;
+  width: 100%;
+  border-radius: 20px;
+  overflow: hidden;
+  background: #fff;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+  font-family: "DM Sans", sans-serif;
+}
+
+.sport-alerts-header {
+  background: var(--ls-coral);
+  color: #fff;
+  padding: 24px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.sport-alerts-header__icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.18);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  flex-shrink: 0;
+}
+
+.sport-alerts-header__title {
+  font-family: "Syne", sans-serif;
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.sport-alerts-body {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.sport-alert-item {
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--ls-border);
+}
+
+.sport-alert-item:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.sport-alert-item__title {
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--ls-text);
+  margin-bottom: 4px;
+}
+
+.sport-alert-item__message {
+  font-size: 13px;
+  color: var(--ls-text-muted);
+  line-height: 1.5;
+}
+
+.sport-alerts-footer {
+  padding: 20px;
+  border-top: 1px solid var(--ls-border);
+}
+
+.sport-alerts-cta {
+  width: 100%;
+  min-height: 52px;
+  background: var(--ls-gold);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 700;
+  font-family: "DM Sans", sans-serif;
+  cursor: pointer;
+}
+
+@media (max-width: 480px) {
+  .sport-alerts-header__icon {
+    width: 40px;
+    height: 40px;
+  }
+  .sport-alerts-header__title {
+    font-size: 19px;
+  }
+}

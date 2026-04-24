@@ -43,7 +43,57 @@ export interface BreakfastAnalysis {
   fibres: number;       // 0-100
 }
 
-export type Objective = "weight-loss" | "sport";
+// Chantier Prise de masse (2026-04-24) : widening avec 6 sous-objectifs sport.
+export type Objective =
+  | "weight-loss"
+  | "sport"
+  | "mass-gain"
+  | "strength"
+  | "cutting"
+  | "endurance"
+  | "fitness"
+  | "competition";
+
+export type SportFrequency = "none" | "occasional" | "regular" | "intensive";
+
+export type SportType =
+  | "musculation"
+  | "cardio"
+  | "crossfit-hiit"
+  | "team-sport"
+  | "combat-sport"
+  | "endurance-long"
+  | "other";
+
+export type SportSubObjective =
+  | "mass-gain"
+  | "strength"
+  | "cutting"
+  | "endurance"
+  | "fitness"
+  | "competition";
+
+export type IntakeMoment =
+  | "morning"
+  | "snackAM"
+  | "lunch"
+  | "preWO"
+  | "postWO"
+  | "snackPM"
+  | "dinner";
+
+export type IntakeValue =
+  | { mode: "qualitative"; level: 0 | 1 | 2 | 3 | 4 }
+  | { mode: "quantitative"; proteinGrams: number };
+
+export type CurrentIntake = Record<IntakeMoment, IntakeValue | null>;
+
+export interface SportProfile {
+  frequency: SportFrequency;
+  types: SportType[];
+  otherTypeLabel?: string;
+  subObjective: SportSubObjective;
+}
 
 export type ProgramCategory = "weight-loss" | "sport";
 
@@ -157,7 +207,7 @@ export interface AssessmentQuestionnaire {
   /** Consommation de lait (animal ou végétal) — oriente le distri sur PDM. */
   consumesMilk?: "yes" | "sometimes" | "no";
   /** Programme choisi par le client dans le tunnel de vente étape 11. */
-  programChoice?: "discovery" | "premium" | "booster1" | "booster2" | "unit";
+  programChoice?: "discovery" | "premium" | "booster1" | "booster2" | "unit" | "sport-discovery" | "sport-premium";
 }
 
 export interface AssessmentRecord {
@@ -182,6 +232,9 @@ export interface AssessmentRecord {
   // `coachNotesInitial` à la validation (affiché en lecture seule sur la fiche).
   coachNotesDraft?: string | null;
   coachNotesInitial?: string | null;
+  // Chantier Prise de masse (2026-04-24) : profil sport et apports actuels.
+  sportProfile?: SportProfile | null;
+  currentIntake?: CurrentIntake | null;
 }
 
 export interface Client {

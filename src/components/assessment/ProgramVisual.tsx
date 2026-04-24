@@ -46,6 +46,8 @@ const PROGRAM_BG: Record<ProgramChoiceId, string> = {
   booster1: "#FFEBEE",  // coral-50 / rose-50
   booster2: "#FFECB3",  // amber-100
   unit: "#F5F5F5",      // gray-100 (pas de programme)
+  "sport-discovery": "#E3F2FD", // blue-50
+  "sport-premium": "#E8EAF6",   // indigo-50
 };
 
 const PROGRAM_LABEL_COLOR: Record<ProgramChoiceId, string> = {
@@ -54,6 +56,8 @@ const PROGRAM_LABEL_COLOR: Record<ProgramChoiceId, string> = {
   booster1: "#C2414B",
   booster2: "#B8922A",
   unit: "#6B6F7A",
+  "sport-discovery": "#1565C0",
+  "sport-premium": "#3949AB",
 };
 
 /** Bouteille shake Formula 1 — grande, centre ou gauche. */

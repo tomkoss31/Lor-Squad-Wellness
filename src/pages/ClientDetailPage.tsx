@@ -20,6 +20,7 @@ import { refreshClientRecap } from "../services/supabaseService";
 import { ErrorBoundary } from "../components/ErrorBoundary";
 import { ClientAccessModal } from "../components/client/ClientAccessModal";
 import { ActionsTab } from "../components/client-detail/ActionsTab";
+import { SportSummarySection } from "../components/client-detail/SportSummarySection";
 import { ClientAppPreviewButton } from "../components/client/ClientAppPreviewButton";
 import { SharePublicButton } from "../components/client/SharePublicButton";
 import { buildReportData, generateProductRecommendations } from "../lib/evolutionReport";
@@ -782,6 +783,8 @@ export function ClientDetailPage() {
             onEditRdv={() => setShowScheduleModal(true)}
             onGoToVueComplete={() => setActiveTab(0)}
           />
+          {/* Chantier Prise de masse (2026-04-24) : résumé sport inline sous Actions */}
+          <SportSummarySection client={client} />
         </ErrorBoundary>
       )}
 
