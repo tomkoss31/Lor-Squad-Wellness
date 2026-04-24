@@ -11,10 +11,46 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
+export interface ClientLiveAssessmentRow {
+  id: string | null;
+  date: string | null;
+  type: string | null;
+  weight: number | null;
+  bodyFat: number | null;
+  muscleMass: number | null;
+  hydration: number | null;
+  visceralFat: number | null;
+  metabolicAge: number | null;
+  boneMass: number | null;
+  bmr: number | null;
+}
+
+export interface ClientSportAlert {
+  id:
+    | "hydration-low"
+    | "protein-low"
+    | "sleep-low"
+    | "muscle-low"
+    | "no-snack"
+    | "frequency-mismatch";
+  icon: string;
+  title: string;
+  detail: string;
+  advice: string;
+}
+
+export interface ClientSportProfile {
+  frequency: string;
+  types: string[];
+  subObjective: string;
+  otherTypeLabel?: string;
+}
+
 export interface ClientLiveData {
   client: {
     current_program: string | null;
     notes: string | null;
+    objective?: string | null;
   } | null;
   next_follow_up: {
     id: string;
@@ -33,6 +69,13 @@ export interface ClientLiveData {
     start_date: string | null;
     active: boolean;
   }>;
+  // Chantier Conseils client (2026-04-24) : enrichissements payload.
+  assessment_history?: ClientLiveAssessmentRow[];
+  recommendations_not_taken?: Array<{ productId: string; name: string; price?: number; reason?: string }>;
+  sport_alerts?: ClientSportAlert[];
+  sport_profile?: ClientSportProfile | null;
+  current_intake?: Record<string, unknown> | null;
+  coach_advice?: string;
   fetched_at: string;
 }
 
