@@ -1,0 +1,241 @@
+/* Chantier Conseils client (2026-04-24) — styles du nouvel onglet. */
+
+.conseils-root {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  font-family: "DM Sans", sans-serif;
+  padding-bottom: 24px;
+}
+
+.conseils-section-title {
+  font-family: "Syne", sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 10px;
+}
+
+.conseils-section-sub {
+  font-size: 12px;
+  color: #6B7280;
+  margin: -4px 0 10px;
+}
+
+/* ─── 1. Points d'attention ─────────────────────────────────────────── */
+.conseils-alert-card {
+  background: #FFFFFF;
+  border: 0.5px solid rgba(212, 83, 126, 0.45);
+  border-radius: 14px;
+  padding: 14px 16px;
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+.conseils-alert-icon {
+  font-size: 22px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.conseils-alert-title {
+  font-family: "Syne", sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 4px;
+}
+.conseils-alert-detail {
+  font-family: "DM Sans", sans-serif;
+  font-size: 14px;
+  color: #6B7280;
+  line-height: 1.5;
+  margin: 0;
+}
+.conseils-alert-advice {
+  font-family: "DM Sans", sans-serif;
+  font-size: 14px;
+  color: #0F6E56;
+  line-height: 1.5;
+  margin: 6px 0 0;
+}
+.conseils-placeholder {
+  background: rgba(15, 110, 86, 0.05);
+  border: 1px dashed rgba(15, 110, 86, 0.3);
+  border-radius: 12px;
+  padding: 14px 16px;
+  font-size: 13px;
+  color: #374151;
+  line-height: 1.5;
+}
+
+/* ─── 2. Assiette idéale ─────────────────────────────────────────────── */
+.conseils-plate-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  background: #FFFFFF;
+  border: 1px solid rgba(0, 0, 0, 0.07);
+  border-radius: 14px;
+  padding: 16px;
+}
+.conseils-plate-svg { width: 180px; height: 180px; }
+.conseils-plate-legend {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+  width: 100%;
+}
+.conseils-plate-item {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  font-size: 13px;
+}
+.conseils-plate-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-top: 5px;
+  flex-shrink: 0;
+}
+.conseils-plate-item strong {
+  font-family: "Syne", sans-serif;
+  font-weight: 700;
+}
+
+/* ─── 3. Routine ─────────────────────────────────────────────────────── */
+.conseils-routine-toggle {
+  display: inline-flex;
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 999px;
+  padding: 4px;
+  margin-bottom: 10px;
+}
+.conseils-routine-toggle button {
+  padding: 8px 16px;
+  border: none;
+  background: transparent;
+  border-radius: 999px;
+  font-family: "DM Sans", sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: #6B7280;
+  cursor: pointer;
+  min-height: 36px;
+}
+.conseils-routine-toggle button.active {
+  background: #FFFFFF;
+  color: #0F6E56;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+.conseils-routine-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.conseils-routine-item {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  background: #FFFFFF;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 12px;
+  padding: 12px 14px;
+}
+.conseils-routine-emoji {
+  font-size: 28px;
+  flex-shrink: 0;
+  line-height: 1;
+}
+.conseils-routine-time {
+  font-family: "Syne", sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: #B8922A;
+  flex-shrink: 0;
+  min-width: 52px;
+}
+.conseils-routine-body {
+  flex: 1;
+  min-width: 0;
+}
+.conseils-routine-title {
+  font-family: "Syne", sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0;
+}
+.conseils-routine-sub {
+  font-family: "DM Sans", sans-serif;
+  font-size: 13px;
+  color: #6B7280;
+  margin: 2px 0 0;
+  line-height: 1.4;
+}
+
+/* ─── 4. Coach quote ─────────────────────────────────────────────────── */
+.conseils-quote {
+  background: linear-gradient(180deg, rgba(15, 110, 86, 0.06) 0%, rgba(255, 255, 255, 0) 100%);
+  border: 1px solid rgba(15, 110, 86, 0.22);
+  border-radius: 14px;
+  padding: 16px 18px;
+}
+.conseils-quote-head {
+  font-family: "Syne", sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: #0F6E56;
+  margin: 0 0 8px;
+}
+.conseils-quote-body {
+  font-family: "DM Sans", sans-serif;
+  font-size: 14px;
+  color: #111827;
+  font-style: italic;
+  line-height: 1.6;
+  margin: 0;
+}
+.conseils-quote-foot {
+  font-family: "DM Sans", sans-serif;
+  font-size: 12px;
+  color: #6B7280;
+  margin: 10px 0 0;
+}
+
+/* Mobile-first : tailles +, grid plate legend colonne unique.
+   Desktop >= 640px : plate legend 3 col. */
+@media (min-width: 640px) {
+  .conseils-plate-legend { grid-template-columns: repeat(3, 1fr); }
+}
+
+/* Dark mode — inputs / textes restent lisibles. */
+:root[data-theme="dark"] .conseils-alert-card,
+html.dark .conseils-alert-card,
+:root[data-theme="dark"] .conseils-plate-wrap,
+html.dark .conseils-plate-wrap,
+:root[data-theme="dark"] .conseils-routine-item,
+html.dark .conseils-routine-item {
+  background: #1C1B19;
+  border-color: rgba(255, 255, 255, 0.08);
+}
+:root[data-theme="dark"] .conseils-alert-title,
+html.dark .conseils-alert-title,
+:root[data-theme="dark"] .conseils-routine-title,
+html.dark .conseils-routine-title,
+:root[data-theme="dark"] .conseils-section-title,
+html.dark .conseils-section-title,
+:root[data-theme="dark"] .conseils-quote-body,
+html.dark .conseils-quote-body {
+  color: #F0EDE8;
+}
+:root[data-theme="dark"] .conseils-placeholder,
+html.dark .conseils-placeholder {
+  background: rgba(15, 110, 86, 0.12);
+  color: #D1D5DB;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .conseils-root * { animation: none !important; transition: none !important; }
+}

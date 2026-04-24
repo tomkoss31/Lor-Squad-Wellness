@@ -10,6 +10,8 @@ import { InstallPwaBanner } from '../components/pwa/InstallPwaBanner'
 import { BreakfastStorySlider, DEFAULT_BREAKFAST_ANALYSIS } from '../components/education/BreakfastStorySlider'
 import { ClientMeasurementsSection } from '../features/measurements/ClientMeasurementsSection'
 import { ClientProductsTab } from '../components/client-app/ClientProductsTab'
+import { ClientConseilsTab } from '../components/client-app/ClientConseilsTab'
+import { EnrichedAssessmentHistory } from '../components/client-app/EnrichedAssessmentHistory'
 import type { BreakfastAnalysis } from '../types/domain'
 import { useOnboardingState } from '../features/onboarding/hooks/useOnboardingState'
 import { useClientLiveData } from '../hooks/useClientLiveData'
@@ -792,39 +794,12 @@ export function ClientAppPage() {
                   ))}
                 </div>
 
-                {/* 2. Tableau compact */}
-                <div style={{ fontSize: 9, letterSpacing: '2px', textTransform: 'uppercase', color: '#9CA3AF', fontWeight: 500, marginTop: 4 }}>Historique de tes bilans</div>
-                <div style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.07)', borderRadius: 14, overflow: 'hidden' }}>
-                  <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
-                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 10, minWidth: 480 }}>
-                      <thead>
-                        <tr style={{ borderBottom: '1px solid rgba(0,0,0,0.07)' }}>
-                          {['Date', 'Poids', 'MG %', 'MG kg', 'Muscle', 'Eau', 'Viscéral'].map((h) => (
-                            <th key={h} style={{ padding: '8px 6px', textAlign: 'left', fontSize: 8, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 500 }}>{h}</th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {metrics.map((row, i) => {
-                          const mgKg = row.weight && row.bodyFat ? (row.weight * row.bodyFat / 100).toFixed(1) : '-'
-                          return (
-                            <tr key={i} style={{ borderBottom: i < metrics.length - 1 ? '1px solid rgba(0,0,0,0.05)' : 'none', background: i % 2 === 0 ? '#FAFAF9' : '#fff' }}>
-                              <td style={{ padding: '8px 6px', color: '#6B7280', fontSize: 9, whiteSpace: 'nowrap' }}>
-                                {new Date(row.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
-                              </td>
-                              <td style={{ padding: '8px 6px', fontWeight: 600, color: '#B8922A', fontSize: 11 }}>{row.weight?.toFixed(1)}</td>
-                              <td style={{ padding: '8px 6px', color: (row.bodyFat ?? 0) > 30 ? '#DC2626' : '#111827', fontSize: 11 }}>{row.bodyFat?.toFixed(1)}%</td>
-                              <td style={{ padding: '8px 6px', color: '#6B7280', fontSize: 11 }}>{mgKg}</td>
-                              <td style={{ padding: '8px 6px', color: '#0D9488', fontSize: 11 }}>{row.muscleMass?.toFixed(1)}</td>
-                              <td style={{ padding: '8px 6px', color: (row.hydration ?? 100) < 50 ? '#DC2626' : '#7C3AED', fontSize: 11 }}>{row.hydration?.toFixed(0)}%</td>
-                              <td style={{ padding: '8px 6px', color: (row.visceralFat ?? 0) >= 9 ? '#DC2626' : '#111827', fontSize: 11 }}>{row.visceralFat}</td>
-                            </tr>
-                          )
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
+                {/* 2. Historique enrichi — Départ + 5 derniers (Chantier Conseils 2026-04-24) */}
+                <EnrichedAssessmentHistory
+                  metrics={metrics}
+                  programTitle={data.program_title}
+                  liveClientProgram={liveData?.client?.current_program ?? null}
+                />
 
                 {/* 3. Mini graphiques */}
                 {metrics.length >= 2 && (
@@ -897,32 +872,39 @@ export function ClientAppPage() {
               productDetails={PRODUCT_DETAILS}
               onAskCoach={openProductAskModal}
               liveProducts={liveData?.current_products ?? null}
+              liveRecommendationsNotTaken={
+                (liveData as unknown as { recommendations_not_taken?: Array<{ productId: string; name: string; price?: number; reason?: string }> } | null)
+                  ?.recommendations_not_taken ?? null
+              }
             />
           </div>
         )}
 
         {/* ══════════════════════════════════════════════════════════════ */}
-        {/* ONGLET COACHING — story petit-déjeuner (Chantier 6)             */}
+        {/* ONGLET CONSEILS (Chantier Conseils client 2026-04-24)           */}
+        {/* Rename de "Coaching" + contenu riche remplaçant le placeholder  */}
+        {/* petit-déj. Story petit-déj conservée sous la Conseils content.  */}
         {/* ══════════════════════════════════════════════════════════════ */}
         {activeTab === 'coaching' && (
           <div className="ls-coaching-tab">
+            <ClientConseilsTab
+              liveData={liveData}
+              clientAppAccount={{
+                client_first_name: data.client_first_name,
+                coach_name: data.coach_name,
+                program_title: data.program_title,
+              }}
+            />
             {coachingData ? (
-              <BreakfastStorySlider
-                breakfastContent={coachingData.breakfastContent}
-                analysis={coachingData.breakfastAnalysis}
-                onAnalysisChange={() => { /* readOnly — no-op */ }}
-                readOnly
-              />
-            ) : (
-              <div className="ls-coaching-empty">
-                <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 16, color: '#111827' }}>
-                  Ton coaching personnalisé
-                </div>
-                <div>
-                  Ton coaching personnalisé arrive après ton prochain bilan avec&nbsp;{data.coach_name}.
-                </div>
+              <div style={{ marginTop: 18 }}>
+                <BreakfastStorySlider
+                  breakfastContent={coachingData.breakfastContent}
+                  analysis={coachingData.breakfastAnalysis}
+                  onAnalysisChange={() => { /* readOnly — no-op */ }}
+                  readOnly
+                />
               </div>
-            )}
+            ) : null}
           </div>
         )}
 
@@ -1157,7 +1139,7 @@ export function ClientAppPage() {
           { key: 'home' as const, label: 'Accueil', icon: (<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="7" height="7" rx="1.5" /><rect x="14" y="3" width="7" height="7" rx="1.5" /><rect x="3" y="14" width="7" height="7" rx="1.5" /><rect x="14" y="14" width="7" height="7" rx="1.5" /></svg>) },
           { key: 'evolution' as const, label: 'Évolution', icon: (<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12" /></svg>) },
           { key: 'products' as const, label: 'Produits', icon: (<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></svg>) },
-          { key: 'coaching' as const, label: 'Coaching', icon: (<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18h6" /><path d="M10 22h4" /><path d="M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.2 1 2V17h6v-.3c0-.8.4-1.5 1-2A7 7 0 0 0 12 2z" /></svg>) },
+          { key: 'coaching' as const, label: 'Conseils', icon: (<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18h6" /><path d="M10 22h4" /><path d="M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.2 1 2V17h6v-.3c0-.8.4-1.5 1-2A7 7 0 0 0 12 2z" /></svg>) },
           { key: 'messages' as const, label: 'Messages', icon: (<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" /></svg>) },
           { key: 'refer' as const, label: 'Recommander', icon: (<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><line x1="23" y1="11" x2="17" y2="11" /><line x1="20" y1="8" x2="20" y2="14" /></svg>) },
         ]).map(({ key, label, icon }) => {

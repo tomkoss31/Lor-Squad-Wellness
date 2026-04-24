@@ -60,13 +60,6 @@ const MOTIVATION_QUOTES = [
   "Progrès > perfection.",
 ];
 
-function greetingFor(date: Date, firstName: string): string {
-  const h = date.getHours();
-  if (h >= 5 && h < 12) return `Bonjour ${firstName}`;
-  if (h >= 12 && h < 18) return `Bon après-midi ${firstName}`;
-  return `Bonsoir ${firstName}`;
-}
-
 function formatRdvDate(iso: string): { main: string; time: string; countdown: string; isImminent: boolean } {
   const d = new Date(iso);
   const now = Date.now();
@@ -131,8 +124,6 @@ export function ClientHomeTab({
     }
   }, [data.client_id]);
 
-  const now = new Date();
-  const greeting = greetingFor(now, data.client_first_name);
   const rdvInfo = data.next_follow_up ? formatRdvDate(data.next_follow_up) : null;
   const coachFirstName = (data.coach_name ?? "").split(/\s+/)[0] || "ton coach";
   const assessmentDate = metrics[0]?.date ?? null;
@@ -150,8 +141,7 @@ export function ClientHomeTab({
     return MOTIVATION_QUOTES[idx];
   }, []);
 
-  const programLabel = data.program_title ?? "Pas de programme · vente à l'unité";
-  const isUnitOnly = !data.program_title || /unit|unité/i.test(data.program_title);
+  // programLabel / isUnitOnly retirés avec le HERO doublon (Chantier Conseils 2026-04-24).
 
   function handleAskProduct(p: HerbalifeProduct) {
     openProductAskModal(p);
@@ -236,26 +226,9 @@ export function ClientHomeTab({
         </div>
       ) : null}
 
-      {/* 1. HERO */}
-      <div>
-        <div
-          style={{
-            fontFamily: "Syne, sans-serif",
-            fontSize: 22,
-            fontWeight: 700,
-            color: "#111827",
-            letterSpacing: "-0.01em",
-          }}
-        >
-          {greeting} !
-        </div>
-        <div style={{ fontSize: 12, color: "#6B7280", marginTop: 2 }}>
-          {data.assessments_count && data.assessments_count > 0
-            ? `${data.assessments_count} bilan${data.assessments_count > 1 ? "s" : ""}`
-            : "Bienvenue chez Lor'Squad"}
-          {programLabel && !isUnitOnly ? ` · ${programLabel}` : ""}
-        </div>
-      </div>
+      {/* 1. HERO — supprimé (doublon avec le bandeau gold en haut de
+          ClientAppPage qui contient déjà avatar + salutation + meta programme).
+          Voir chantier Conseils 2026-04-24. */}
 
       {/* 2. CARTE RDV */}
       {rdvInfo ? (
