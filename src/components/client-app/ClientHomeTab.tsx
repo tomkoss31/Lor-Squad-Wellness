@@ -119,11 +119,13 @@ export function ClientHomeTab({
   onSeeEvolution,
   measurements = [],
 }: Props) {
-  // totalCmLost prop conservé pour rétro-compat avec d'éventuels callers
-  // mais ClientAppHomeHero recalcule lui-même via measurements.
+  // Props rétro-compat conservés pour ne pas casser les callers,
+  // mais inutilisés depuis le refactor v2 (2026-04-25).
   void totalCmLost;
+  void latest;
+  void recommendedProducts;
+  void openProductAskModal;
   const [rdvEditOpen, setRdvEditOpen] = useState(false);
-  const [showAllValues, setShowAllValues] = useState(false);
 
   // Confettis premier login
   const [showConfetti, setShowConfetti] = useState(false);
@@ -143,34 +145,12 @@ export function ClientHomeTab({
 
   const rdvInfo = data.next_follow_up ? formatRdvDate(data.next_follow_up) : null;
   const coachFirstName = (data.coach_name ?? "").split(/\s+/)[0] || "ton coach";
-  const assessmentDate = metrics[0]?.date ?? null;
-  const hasMultiple = metrics.length >= 2;
-
-  // Évolution
-  const deltaWeight =
-    hasMultiple && first && latest && first.weight != null && latest.weight != null
-      ? latest.weight - first.weight
-      : null;
 
   // Quote rotative (change chaque ouverture)
   const quote = useMemo(() => {
     const idx = Math.floor(Math.random() * MOTIVATION_QUOTES.length);
     return MOTIVATION_QUOTES[idx];
   }, []);
-
-  // programLabel / isUnitOnly retirés avec le HERO doublon (Chantier Conseils 2026-04-24).
-
-  function handleAskProduct(p: HerbalifeProduct) {
-    openProductAskModal(p);
-  }
-
-  function detectTelegramInstallUrl(): string {
-    if (typeof window === "undefined") return "https://desktop.telegram.org/";
-    const ua = window.navigator.userAgent.toLowerCase();
-    if (/iphone|ipad|ipod/.test(ua)) return "https://apps.apple.com/app/telegram-messenger/id686449807";
-    if (/android/.test(ua)) return "https://play.google.com/store/apps/details?id=org.telegram.messenger";
-    return "https://desktop.telegram.org/";
-  }
 
   return (
     <div className="home-premium">
@@ -272,164 +252,72 @@ export function ClientHomeTab({
       />
       <ClientAppDailyAction onAction={() => undefined} />
 
-      {/* 2. CARTE RDV */}
+      {/* 2. CARTE RDV (compact teal v2 — 2026-04-25) */}
       {rdvInfo ? (
-        <div
-          className={rdvInfo.isImminent ? "home-rdv-imminent" : undefined}
-          style={{
-            background: "linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)",
-            color: "#FFFFFF",
-            borderRadius: 18,
-            padding: "18px 20px",
-            boxShadow: "0 4px 16px rgba(186,117,23,0.32)",
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, marginBottom: 8 }}>
-            <div style={{ fontSize: 10, letterSpacing: "0.14em", textTransform: "uppercase", fontWeight: 700, opacity: 0.85 }}>
-              Prochain RDV
+        <div style={{
+          background: "#FFFFFF",
+          borderRadius: 12,
+          padding: 14,
+          marginBottom: 12,
+          borderLeft: "4px solid #1D9E75",
+        }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+            <div style={{ fontSize: 10, color: "#1D9E75", letterSpacing: "1.5px", fontWeight: 500 }}>
+              📅 PROCHAIN RDV
             </div>
-            <div
-              style={{
-                padding: "3px 10px",
-                borderRadius: 999,
-                background: "rgba(0,0,0,0.2)",
-                fontSize: 10,
-                fontWeight: 700,
-                letterSpacing: "0.04em",
-              }}
-            >
+            <div style={{ background: "#1D9E75", color: "white", fontSize: 11, padding: "3px 10px", borderRadius: 999, fontWeight: 500 }}>
               {rdvInfo.countdown}
             </div>
           </div>
-          <div style={{ fontFamily: "Syne, sans-serif", fontSize: 20, fontWeight: 800, lineHeight: 1.15 }}>
+          <div style={{ fontSize: 16, color: "#444", fontWeight: 500 }}>
             {rdvInfo.main} · {rdvInfo.time}
           </div>
-          <div style={{ fontSize: 12, marginTop: 4, opacity: 0.9 }}>
-            Avec <strong>{coachFirstName}</strong> · La Base — Verdun
+          <div style={{ fontSize: 11, color: "#888", marginTop: 2 }}>
+            Avec {coachFirstName} · La Base — Verdun
           </div>
-          <div style={{ display: "flex", gap: 8, marginTop: 14, flexWrap: "wrap" }}>
-            <a
-              href={getGoogleCalendarUrl()}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                padding: "9px 14px",
-                background: "rgba(255,255,255,0.22)",
-                color: "#FFFFFF",
-                borderRadius: 10,
-                textDecoration: "none",
-                fontSize: 12,
-                fontWeight: 600,
-                border: "1px solid rgba(255,255,255,0.3)",
-              }}
-            >
-              📅 Ajouter au calendrier
-            </a>
-            <a
-              href={GOOGLE_MAPS_LA_BASE}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                padding: "9px 14px",
-                background: "rgba(0,0,0,0.15)",
-                color: "#FFFFFF",
-                borderRadius: 10,
-                textDecoration: "none",
-                fontSize: 12,
-                fontWeight: 600,
-              }}
-            >
-              📍 Itinéraire
-            </a>
-            <button
-              type="button"
-              onClick={() => setRdvEditOpen((v) => !v)}
-              style={{
-                padding: "9px 14px",
-                background: "rgba(0,0,0,0.15)",
-                color: "#FFFFFF",
-                borderRadius: 10,
-                border: "none",
-                fontSize: 12,
-                fontWeight: 600,
-                cursor: "pointer",
-              }}
-            >
-              Modifier
-            </button>
+          <div style={{ display: "flex", gap: 6, marginTop: 10, flexWrap: "wrap" }}>
+            <a href={getGoogleCalendarUrl()} target="_blank" rel="noopener noreferrer" style={{
+              padding: "6px 10px", background: "#FAEEDA", color: "#854F0B", borderRadius: 8,
+              textDecoration: "none", fontSize: 11, fontWeight: 500,
+            }}>📅 Calendrier</a>
+            <a href={GOOGLE_MAPS_LA_BASE} target="_blank" rel="noopener noreferrer" style={{
+              padding: "6px 10px", background: "#F4F4F4", color: "#444", borderRadius: 8,
+              textDecoration: "none", fontSize: 11, fontWeight: 500,
+            }}>📍 Itinéraire</a>
+            <button type="button" onClick={() => setRdvEditOpen((v) => !v)} style={{
+              padding: "6px 10px", background: "#F4F4F4", color: "#444", borderRadius: 8,
+              border: "none", fontSize: 11, fontWeight: 500, cursor: "pointer",
+            }}>Modifier</button>
+            {data.next_follow_up ? (
+              <a href={createIcsDataUri({
+                title: `Rendez-vous avec ${coachFirstName}`,
+                description: `Rendez-vous Lor'Squad Wellness avec ${coachFirstName} à La Base — Verdun.`,
+                startDate: new Date(data.next_follow_up),
+                location: "La Base Shakes and drinks, Verdun",
+                organizerName: coachFirstName,
+              })} download={`rdv-labase-${data.next_follow_up.slice(0, 10)}.ics`} style={{
+                padding: "6px 10px", background: "#F4F4F4", color: "#444", borderRadius: 8,
+                textDecoration: "none", fontSize: 11, fontWeight: 500,
+              }}>📅 .ics</a>
+            ) : null}
           </div>
-          {/* Secondary CTA : téléchargement .ics universel (Apple Cal / Outlook / etc.) */}
-          {data.next_follow_up ? (
-            <div style={{ marginTop: 10 }}>
-              <a
-                href={createIcsDataUri({
-                  title: `Rendez-vous avec ${coachFirstName}`,
-                  description: `Rendez-vous Lor'Squad Wellness avec ${coachFirstName} à La Base — Verdun.`,
-                  startDate: new Date(data.next_follow_up),
-                  location: "La Base Shakes and drinks, Verdun",
-                  organizerName: coachFirstName,
-                })}
-                download={`rdv-labase-${data.next_follow_up.slice(0, 10)}.ics`}
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: 6,
-                  padding: "7px 12px",
-                  background: "transparent",
-                  color: "#E7FFF4",
-                  borderRadius: 8,
-                  textDecoration: "none",
-                  fontSize: 11,
-                  fontWeight: 600,
-                  border: "1px solid rgba(29,158,117,0.6)",
-                  opacity: 0.92,
-                }}
-              >
-                📅 Ajouter à mon calendrier (.ics)
-              </a>
-            </div>
-          ) : null}
           {rdvEditOpen ? (
-            <div style={{ marginTop: 12, padding: 12, background: "rgba(255,255,255,0.12)", borderRadius: 10 }}>
+            <div style={{ marginTop: 10, padding: 10, background: "#F8F8F8", borderRadius: 8 }}>
               {rdvSent ? (
-                <div style={{ fontSize: 12, fontWeight: 600 }}>✓ Message envoyé à {coachFirstName}</div>
+                <div style={{ fontSize: 12, fontWeight: 500, color: "#1D9E75" }}>✓ Message envoyé à {coachFirstName}</div>
               ) : (
                 <>
-                  <textarea
-                    value={rdvMessage}
-                    onChange={(e) => setRdvMessage(e.target.value)}
-                    placeholder={`Ex : Je préfèrerais un autre créneau...`}
+                  <textarea value={rdvMessage} onChange={(e) => setRdvMessage(e.target.value)}
+                    placeholder="Ex : Je préfèrerais un autre créneau..."
                     rows={2}
-                    style={{
-                      width: "100%",
-                      padding: "9px 10px",
-                      background: "rgba(0,0,0,0.25)",
-                      color: "#FFFFFF",
-                      border: "1px solid rgba(255,255,255,0.18)",
-                      borderRadius: 9,
-                      fontSize: 12,
-                      fontFamily: "DM Sans, sans-serif",
-                      outline: "none",
-                      resize: "none",
-                      marginBottom: 8,
-                      boxSizing: "border-box",
-                    }}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => void sendRdvChangeRequest()}
-                    style={{
-                      padding: "8px 14px",
-                      background: "#FFFFFF",
-                      color: "#BA7517",
-                      border: "none",
-                      borderRadius: 8,
-                      fontSize: 12,
-                      fontWeight: 700,
-                      cursor: "pointer",
-                    }}
-                  >
-                    Envoyer à {coachFirstName}
+                    style={{ width: "100%", padding: "8px 10px", background: "#FFFFFF",
+                      color: "#444", border: "1px solid #ddd", borderRadius: 8, fontSize: 12,
+                      fontFamily: "DM Sans, sans-serif", outline: "none", resize: "none",
+                      marginBottom: 8, boxSizing: "border-box" }} />
+                  <button type="button" onClick={() => void sendRdvChangeRequest()}
+                    style={{ padding: "7px 12px", background: "#1D9E75", color: "white",
+                      border: "none", borderRadius: 8, fontSize: 12, fontWeight: 500, cursor: "pointer" }}>
+                    Envoyer la demande
                   </button>
                 </>
               )}
@@ -437,394 +325,74 @@ export function ClientHomeTab({
           ) : null}
         </div>
       ) : (
-        <div
-          style={{
-            background: "linear-gradient(135deg, #1D9E75 0%, #0F6E56 100%)",
-            color: "#FFFFFF",
-            borderRadius: 18,
-            padding: "18px 20px",
-            boxShadow: "0 4px 16px rgba(15,110,86,0.3)",
-          }}
-        >
-          <div style={{ fontSize: 10, letterSpacing: "0.14em", textTransform: "uppercase", fontWeight: 700, opacity: 0.85, marginBottom: 6 }}>
-            Prochain RDV
+        <div style={{
+          background: "#FFFFFF",
+          borderRadius: 12,
+          padding: 14,
+          marginBottom: 12,
+          borderLeft: "4px solid #BA7517",
+        }}>
+          <div style={{ fontSize: 10, color: "#BA7517", letterSpacing: "1.5px", fontWeight: 500, marginBottom: 8 }}>
+            📅 PROCHAIN RDV
           </div>
-          <div style={{ fontFamily: "Syne, sans-serif", fontSize: 18, fontWeight: 700 }}>
+          <div style={{ fontSize: 14, color: "#444", fontWeight: 500 }}>
             Aucun RDV planifié
           </div>
-          <div style={{ fontSize: 12, marginTop: 4, opacity: 0.9, marginBottom: 12 }}>
-            Demande à {coachFirstName} un nouveau rendez-vous pour poursuivre ton suivi.
+          <div style={{ fontSize: 11, color: "#888", marginTop: 2 }}>
+            Demande à {coachFirstName} un nouveau rendez-vous.
           </div>
-          <button
-            type="button"
-            onClick={() => setRecoAskOpen(true)}
-            style={{
-              padding: "10px 16px",
-              background: "#FFFFFF",
-              color: "#0F6E56",
-              borderRadius: 10,
-              border: "none",
-              fontSize: 13,
-              fontWeight: 700,
-              cursor: "pointer",
-              fontFamily: "Syne, sans-serif",
-            }}
-          >
-            💬 Contacter {coachFirstName}
-          </button>
         </div>
       )}
 
-      {/* 3. POINT DE DÉPART */}
-      {latest ? (
-        <div
-          style={{
-            background: "#FFFFFF",
-            border: "1px solid rgba(15,110,86,0.18)",
-            borderRadius: 16,
-            padding: "16px 18px",
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12, flexWrap: "wrap" }}>
-            <span aria-hidden="true" style={{ fontSize: 14 }}>📍</span>
-            <span style={{ fontSize: 10, letterSpacing: "0.12em", textTransform: "uppercase", fontWeight: 700, color: "#0F6E56" }}>
-              {hasMultiple ? "Ton évolution" : "Ton point de départ"}
-            </span>
-            {assessmentDate ? (
-              <span style={{ fontSize: 10, color: "#9CA3AF", marginLeft: "auto" }}>
-                {new Date(assessmentDate).toLocaleDateString("fr-FR", { day: "2-digit", month: "short" })}
-              </span>
-            ) : null}
-          </div>
-
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
-            {[
-              { label: "Poids", field: "weight", unit: "kg" },
-              { label: "Graisse", field: "bodyFat", unit: "%" },
-              { label: "Hydratation", field: "hydration", unit: "%" },
-            ].map((m) => {
-              const val = latest[m.field as keyof typeof latest] as number | undefined;
-              return (
-                <div key={m.field} style={{ textAlign: "center" }}>
-                  <div style={{ fontFamily: "Syne, sans-serif", fontWeight: 800, fontSize: 20, color: "#0F6E56", lineHeight: 1 }}>
-                    {typeof val === "number" ? val.toFixed(1) : "—"}
-                  </div>
-                  <div style={{ fontSize: 10, color: "#6B7280", marginTop: 4, fontWeight: 500 }}>
-                    {m.unit}
-                  </div>
-                  <div style={{ fontSize: 9, color: "#9CA3AF", letterSpacing: "0.04em", textTransform: "uppercase", marginTop: 3 }}>
-                    {m.label}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          {hasMultiple && deltaWeight != null && deltaWeight < 0 ? (
-            <div
-              style={{
-                marginTop: 14,
-                padding: "10px 12px",
-                background: "rgba(29,158,117,0.1)",
-                borderRadius: 10,
-                fontSize: 12,
-                color: "#0F6E56",
-                fontWeight: 700,
-                textAlign: "center",
-              }}
-            >
-              🎉 −{Math.abs(deltaWeight).toFixed(1)} kg depuis le départ
+      {/* 5. COMMUNAUTÉ CHALLENGERS — compact 1 ligne (v2 2026-04-25) */}
+      <div style={{
+        background: "#FFFFFF",
+        borderRadius: 12,
+        padding: "12px 14px",
+        marginBottom: 12,
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <div style={{
+            width: 36, height: 36, borderRadius: "50%",
+            background: "#E6F1FB", display: "flex", alignItems: "center",
+            justifyContent: "center", fontSize: 18,
+          }}>💬</div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 13, color: "#444", fontWeight: 500 }}>
+              Rejoins les Challengers
             </div>
-          ) : null}
-
-          <button
-            type="button"
-            onClick={() => setShowAllValues(true)}
-            style={{
-              marginTop: 12,
-              padding: "8px 0",
-              background: "transparent",
-              border: "none",
-              color: "#0F6E56",
-              fontSize: 12,
-              fontWeight: 600,
-              cursor: "pointer",
-              width: "100%",
-              textAlign: "center",
-            }}
-          >
-            Voir toutes mes valeurs →
-          </button>
-
-          {/* Modale toutes valeurs */}
-          {showAllValues ? (
-            <div
-              role="button"
-              tabIndex={0}
-              aria-label="Fermer"
-              onClick={() => setShowAllValues(false)}
-              onKeyDown={(e) => { if (e.key === "Escape") setShowAllValues(false); }}
-              style={{
-                position: "fixed",
-                inset: 0,
-                background: "rgba(0,0,0,0.5)",
-                zIndex: 9999,
-                display: "flex",
-                alignItems: "flex-end",
-                justifyContent: "center",
-              }}
-            >
-              <div
-                onClick={(e) => e.stopPropagation()}
-                onKeyDown={(e) => e.stopPropagation()}
-                role="dialog"
-                aria-modal="true"
-                style={{
-                  background: "#FFFFFF",
-                  width: "100%",
-                  maxWidth: 480,
-                  borderTopLeftRadius: 20,
-                  borderTopRightRadius: 20,
-                  padding: 20,
-                  maxHeight: "80vh",
-                  overflowY: "auto",
-                }}
-              >
-                <div style={{ fontFamily: "Syne, sans-serif", fontSize: 17, fontWeight: 700, marginBottom: 14 }}>
-                  Toutes tes valeurs
-                </div>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-                  {([
-                    { label: "Poids", field: "weight", unit: "kg" },
-                    { label: "Masse grasse", field: "bodyFat", unit: "%" },
-                    { label: "Masse musculaire", field: "muscleMass", unit: "kg" },
-                    { label: "Hydratation", field: "hydration", unit: "%" },
-                    { label: "Graisse viscérale", field: "visceralFat", unit: "" },
-                    { label: "Masse osseuse", field: "boneMass", unit: "kg" },
-                    { label: "Âge métabolique", field: "metabolicAge", unit: "ans" },
-                    { label: "BMR", field: "bmr", unit: "kcal" },
-                  ] as const).map((m) => {
-                    const val = latest[m.field] as number | undefined;
-                    return (
-                      <div
-                        key={m.field}
-                        style={{
-                          padding: 12,
-                          background: "#F7F5F0",
-                          borderRadius: 10,
-                        }}
-                      >
-                        <div style={{ fontSize: 10, color: "#6B7280", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 4 }}>
-                          {m.label}
-                        </div>
-                        <div style={{ fontFamily: "Syne, sans-serif", fontWeight: 700, fontSize: 17, color: "#0F6E56" }}>
-                          {typeof val === "number" ? val.toFixed(1) : "—"}
-                          <span style={{ fontSize: 11, color: "#6B7280", marginLeft: 4 }}>{m.unit}</span>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setShowAllValues(false)}
-                  style={{
-                    marginTop: 16,
-                    width: "100%",
-                    padding: 12,
-                    background: "#0F6E56",
-                    color: "#FFFFFF",
-                    border: "none",
-                    borderRadius: 10,
-                    fontWeight: 600,
-                    cursor: "pointer",
-                  }}
-                >
-                  Fermer
-                </button>
-              </div>
+            <div style={{ fontSize: 10, color: "#888" }}>
+              Communauté Telegram
             </div>
-          ) : null}
-        </div>
-      ) : null}
-
-      {/* 4. RECOMMANDÉ SELON BODY SCAN */}
-      {recommendedProducts.length > 0 ? (
-        <div
-          style={{
-            background: "#FAEEDA",
-            border: "1px solid #EF9F27",
-            borderRadius: 16,
-            padding: "14px 16px",
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
-            <span aria-hidden="true" style={{ fontSize: 14 }}>⭐</span>
-            <span style={{ fontSize: 10, letterSpacing: "0.12em", textTransform: "uppercase", fontWeight: 700, color: "#854F0B" }}>
-              Recommandé selon ton body scan
-            </span>
           </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {recommendedProducts.slice(0, 3).map((p) => (
-              <div
-                key={p.ref}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 10,
-                  padding: "10px 12px",
-                  background: "#FFFFFF",
-                  borderRadius: 10,
-                }}
-              >
-                <div
-                  style={{
-                    width: 36,
-                    height: 36,
-                    borderRadius: 8,
-                    background: "#FAEEDA",
-                    color: "#BA7517",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    flexShrink: 0,
-                    fontSize: 16,
-                  }}
-                >
-                  💊
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: "#111827" }}>{p.name}</div>
-                  <div style={{ fontSize: 11, color: "#6B7280", marginTop: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                    {p.shortBenefit ?? "Recommandé pour toi"}
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => handleAskProduct(p)}
-                  style={{
-                    padding: "7px 12px",
-                    background: "linear-gradient(135deg, #EF9F27, #BA7517)",
-                    color: "#FFFFFF",
-                    border: "none",
-                    borderRadius: 8,
-                    fontSize: 11,
-                    fontWeight: 600,
-                    cursor: "pointer",
-                    flexShrink: 0,
-                  }}
-                >
-                  En parler
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
-      ) : null}
-
-      {/* 5. COMMUNAUTÉ CHALLENGERS */}
-      <div
-        style={{
-          background: "#FFFFFF",
-          borderLeft: "4px solid #0F6E56",
-          borderRadius: 14,
-          padding: "14px 16px",
-          boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="#0088CC">
-            <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.568 8.16l-1.81 8.521c-.138.614-.503.764-1.02.476l-2.814-2.074-1.358 1.306c-.152.152-.278.278-.566.278l.202-2.89L15.597 9.3c.234-.206-.054-.323-.36-.117l-6.502 4.094-2.805-.876c-.608-.19-.622-.608.126-.9l10.966-4.226c.51-.18.954.126.784.885z" />
-          </svg>
-          <div style={{ fontFamily: "Syne, sans-serif", fontWeight: 700, fontSize: 15, color: "#111827" }}>
-            Rejoins les Challengers
-          </div>
-        </div>
-        <div style={{ fontSize: 12, color: "#6B7280", marginBottom: 12, lineHeight: 1.5 }}>
-          Communauté Telegram pour t&apos;inspirer et progresser ensemble.
-        </div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-          <a
-            href={detectTelegramInstallUrl()}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{
-              padding: "10px 12px",
-              background: "transparent",
-              color: "#0088CC",
-              border: "1px solid rgba(0,136,204,0.4)",
-              borderRadius: 10,
-              textDecoration: "none",
-              fontSize: 12,
-              fontWeight: 600,
-              textAlign: "center",
-            }}
-          >
-            Installer Telegram
+          <a href={TELEGRAM_GROUP_URL} target="_blank" rel="noopener noreferrer" style={{
+            background: "#B8922A", color: "white", fontSize: 11,
+            padding: "6px 12px", borderRadius: 8,
+            fontWeight: 500, textDecoration: "none",
+          }}>
+            Rejoindre
           </a>
-          <a
-            href={TELEGRAM_GROUP_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{
-              padding: "10px 12px",
-              background: "linear-gradient(135deg, #EF9F27, #BA7517)",
-              color: "#FFFFFF",
-              border: "none",
-              borderRadius: 10,
-              textDecoration: "none",
-              fontSize: 12,
-              fontWeight: 700,
-              textAlign: "center",
-              fontFamily: "Syne, sans-serif",
-            }}
-          >
-            Rejoindre le groupe
-          </a>
-        </div>
-        <div style={{ fontSize: 10, color: "#9CA3AF", marginTop: 10, textAlign: "center" }}>
-          Communauté ouverte à tous les clients de l&apos;équipe Lor&apos;Squad
         </div>
       </div>
 
-      {/* 6. MENSURATIONS RAPIDE */}
-      <div
-        style={{
-          background: "#FFFFFF",
-          border: "1px solid rgba(0,0,0,0.06)",
-          borderRadius: 14,
-          padding: "14px 16px",
-          display: "flex",
-          alignItems: "center",
-          gap: 14,
-        }}
-      >
-        <div
-          aria-hidden="true"
-          style={{
-            width: 52,
-            height: 52,
-            borderRadius: 12,
-            background: "rgba(29,158,117,0.12)",
-            color: "#0F6E56",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontSize: 24,
-            flexShrink: 0,
-          }}
-        >
-          📏
-        </div>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontFamily: "Syne, sans-serif", fontWeight: 700, fontSize: 14, color: "#111827" }}>
-            Tes mensurations
-          </div>
-          <div style={{ fontSize: 11, color: "#6B7280", marginTop: 2 }}>
-            Prends tes mesures et suis ton évolution
-          </div>
-        </div>
-        <span style={{ color: "#0F6E56", fontSize: 18 }}>→</span>
+      {/* 6. MENSURATIONS / RECO — grid 2 cols (v2 2026-04-25) */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 12 }}>
+        <button type="button" onClick={() => onSeeEvolution?.()} style={{
+          background: "#FFFFFF", border: "none", borderRadius: 12, padding: 14,
+          textAlign: "center", cursor: "pointer",
+        }}>
+          <div style={{ fontSize: 22, marginBottom: 6 }}>📏</div>
+          <div style={{ fontSize: 12, color: "#444", fontWeight: 500 }}>Mes mensurations</div>
+          <div style={{ fontSize: 10, color: "#888", marginTop: 2 }}>Suis ton évolution</div>
+        </button>
+        <button type="button" onClick={() => setRecoAskOpen(true)} style={{
+          background: "#FFFFFF", border: "none", borderRadius: 12, padding: 14,
+          textAlign: "center", cursor: "pointer",
+        }}>
+          <div style={{ fontSize: 22, marginBottom: 6 }}>🎁</div>
+          <div style={{ fontSize: 12, color: "#444", fontWeight: 500 }}>Recommander</div>
+          <div style={{ fontSize: 10, color: "#888", marginTop: 2 }}>Parraine un ami</div>
+        </button>
       </div>
 
       {/* 7. CTA DEMANDER UNE RECO */}
