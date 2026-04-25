@@ -12,6 +12,7 @@
 
 import { useMemo } from "react";
 import type { Client, FollowUp } from "../types/domain";
+import { RDV_GRACE_PERIOD_MS } from "../lib/timeConstants";
 
 export type PriorityActionType =
   | "plan_rdv"
@@ -45,11 +46,14 @@ export function computePriorityAction(
   )[0];
 
   // ─── 1. plan_rdv ─────────────────────────────────────────────────────
+  // Chantier RDV grâce (2026-04-27) : un RDV reste "upcoming" jusqu'à
+  // 15 min après son heure prévue → empêche le bandeau "Planifier un RDV"
+  // d'apparaître alors que le coach est en train de faire le RDV.
   const upcomingRdv = followUps.find(
     (f) =>
       f.clientId === client.id &&
       (f.status === "scheduled" || f.status === "pending") &&
-      new Date(f.dueDate).getTime() > now.getTime(),
+      new Date(f.dueDate).getTime() + RDV_GRACE_PERIOD_MS > now.getTime(),
   );
 
   const lastContactDate = latestAssessment?.date
