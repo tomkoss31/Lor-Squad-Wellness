@@ -103,40 +103,98 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, serviceKey);
 
     // ─── 1. Validation token + récupération client_id ─────────────────
-    // Source canonique d'auth : client_app_accounts.token (uuid).
-    // Les tables client_recaps / client_evolution_reports ont aussi un token
-    // mais sont des snapshots legacy, pas des sources d'auth.
-    const { data: account, error: accountError } = await supabase
-      .from("client_app_accounts")
-      .select("client_id, expires_at, program_title, next_follow_up")
-      .eq("token", token)
-      .maybeSingle();
+    // Chantier 3 (2026-04-25) : résolution en CASCADE sur 3 tables.
+    //   1. client_app_accounts (canonique, créé via "Envoyer l'accès")
+    //   2. client_recaps (snapshot post-bilan, lien partagé en RDV)
+    //   3. client_evolution_reports (rapport d'évolution legacy)
+    // Avant ce fix, seule la table 1 était inspectée → ~85% des clients
+    // qui ouvraient l'app via un lien recap/évolution recevaient
+    // "invalid_token" puis le front fallback sur snapshot figé
+    // (cas Angélique Carlu, 8 bilans coach mais 1 visible côté client).
+    let resolvedClientId: string | null = null;
+    let resolvedTable: string | null = null;
+    let resolvedExpiresAt: string | null = null;
 
-    if (accountError) {
-      log("error", "account_lookup_error", {
-        tokenHash,
-        message: accountError.message,
-        code: (accountError as { code?: string }).code,
-      });
-      return jsonError("lookup_error", 500);
+    // 1a. client_app_accounts
+    {
+      const { data, error } = await supabase
+        .from("client_app_accounts")
+        .select("client_id, expires_at")
+        .eq("token", token)
+        .maybeSingle();
+      if (error) {
+        log("error", "account_lookup_error", {
+          tokenHash,
+          table: "client_app_accounts",
+          message: error.message,
+          code: (error as { code?: string }).code,
+        });
+      } else if (data) {
+        resolvedClientId = data.client_id as string;
+        resolvedTable = "client_app_accounts";
+        resolvedExpiresAt = (data.expires_at as string | null) ?? null;
+      }
     }
-    if (!account) {
+
+    // 1b. client_recaps (fallback)
+    if (!resolvedClientId) {
+      const { data, error } = await supabase
+        .from("client_recaps")
+        .select("client_id, expires_at")
+        .eq("token", token)
+        .maybeSingle();
+      if (error) {
+        log("error", "recaps_lookup_error", {
+          tokenHash,
+          message: error.message,
+          code: (error as { code?: string }).code,
+        });
+      } else if (data) {
+        resolvedClientId = data.client_id as string;
+        resolvedTable = "client_recaps";
+        resolvedExpiresAt = (data.expires_at as string | null) ?? null;
+      }
+    }
+
+    // 1c. client_evolution_reports (fallback)
+    if (!resolvedClientId) {
+      const { data, error } = await supabase
+        .from("client_evolution_reports")
+        .select("client_id, expires_at")
+        .eq("token", token)
+        .maybeSingle();
+      if (error) {
+        log("error", "evolution_reports_lookup_error", {
+          tokenHash,
+          message: error.message,
+          code: (error as { code?: string }).code,
+        });
+      } else if (data) {
+        resolvedClientId = data.client_id as string;
+        resolvedTable = "client_evolution_reports";
+        resolvedExpiresAt = (data.expires_at as string | null) ?? null;
+      }
+    }
+
+    if (!resolvedClientId) {
       log("warn", "invalid_token", { tokenHash });
       return jsonError("invalid_token", 401);
     }
 
-    // Expiration (expires_at default = now() + 1 year à la création)
-    if (account.expires_at && new Date(account.expires_at).getTime() < Date.now()) {
-      log("warn", "token_expired", { tokenHash, expiresAt: account.expires_at });
+    // Expiration commune aux 3 tables (expires_at par défaut = now() + 1 an)
+    if (resolvedExpiresAt && new Date(resolvedExpiresAt).getTime() < Date.now()) {
+      log("warn", "token_expired", {
+        tokenHash,
+        table: resolvedTable,
+        expiresAt: resolvedExpiresAt,
+      });
       return jsonError("token_expired", 401);
     }
 
-    // client_app_accounts.client_id est TEXT, clients.id est UUID.
-    // Postgres cast implicitement mais log pour monitoring pendant les tests.
-    const clientId = account.client_id as string;
+    const clientId = resolvedClientId;
     log("info", "token_resolved", {
       tokenHash,
-      table: "client_app_accounts",
+      table: resolvedTable,
       clientId,
       clientIdType: typeof clientId,
     });
