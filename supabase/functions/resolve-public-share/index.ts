@@ -16,6 +16,11 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
+// Salt secret stocké dans Supabase Functions secrets (env IP_HASH_SALT).
+// Empêche l'attaque par rainbow tables sur les IP hashées (RGPD strict).
+// Si la variable n'est pas définie (ex: dev), fallback sur chaîne vide.
+const IP_HASH_SALT = Deno.env.get("IP_HASH_SALT") ?? "";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
@@ -31,7 +36,7 @@ function json(payload: unknown, status = 200): Response {
 }
 
 async function sha256(input: string): Promise<string> {
-  const buf = new TextEncoder().encode(input);
+  const buf = new TextEncoder().encode(IP_HASH_SALT + input);
   const hash = await crypto.subtle.digest("SHA-256", buf);
   return Array.from(new Uint8Array(hash))
     .map((b) => b.toString(16).padStart(2, "0"))
