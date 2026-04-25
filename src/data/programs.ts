@@ -198,3 +198,18 @@ export const PROGRAMS_LEGACY: Program[] = [
   ...PROGRAM_CHOICES.filter((c) => c.category !== "unit").map(programFromChoice),
   ...BOOSTERS.map(programFromBooster),
 ];
+
+// Mapping des produits inclus par programme (clé = id legacy `p-${choice.id}`).
+// Source de vérité unique pour éviter les divergences entre composants.
+// Couvre TOUS les programmes (weight-loss + sport + unit).
+// Audit Bug #5 — sport-discovery / sport-premium étaient absents,
+// le coach choisissant "Premium Sport" récupérait une routine matin vide.
+export const PROGRAM_INCLUDED_PRODUCT_IDS: Record<string, string[]> = {
+  "p-discovery": ["aloe-vera", "the-51g", "formula-1"],
+  "p-premium": ["aloe-vera", "the-51g", "formula-1", "pdm"],
+  "p-booster1": ["aloe-vera", "the-51g", "formula-1", "pdm", "multifibres"],
+  "p-booster2": ["aloe-vera", "the-51g", "formula-1", "pdm", "phyto-brule-graisse"],
+  "p-sport-discovery": ["formula-1", "barres-proteinees-achieve"],
+  "p-sport-premium": ["formula-1", "barres-proteinees-achieve", "rebuild-strength", "cr7-drive"],
+  "p-unit": [],
+};

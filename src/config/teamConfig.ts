@@ -13,14 +13,25 @@
 import type { User } from "../types/domain";
 
 /**
- * IDs Supabase des 2 comptes couple. Tu peux :
- *  - laisser vide → résolution automatique par nom ("Thomas Houbert"
- *    et "Mélanie") sur la liste `users` de l'AppContext.
- *  - renseigner les UUIDs → priorité absolue (plus stable).
+ * UUIDs hardcodés des 2 comptes couple Thomas + Mélanie.
+ *
+ * Si vide, fallback sur résolution par nom (fragile : casse silencieusement
+ * si un nom est modifié en DB — ajout nom de famille, accent supprimé,
+ * orthographe différente, etc.).
+ *
+ * À renseigner avec les vrais UUIDs récupérés depuis Supabase Studio :
+ *
+ *   SELECT id, full_name FROM users
+ *   WHERE full_name ILIKE '%thomas%' OR full_name ILIKE '%mélanie%';
+ *
+ * Une fois renseigné, la fusion couple devient stable même si les noms
+ * changent en DB. Priorité absolue sur la résolution par nom.
+ *
+ * Audit Bug #6 — résolution couple par nom fragile.
  */
 export const COUPLE_USER_IDS_HARDCODED: string[] = [
-  // "uuid-thomas-here",
-  // "uuid-melanie-here",
+  // "uuid-thomas-a-renseigner",
+  // "uuid-melanie-a-renseigner",
 ];
 
 /**
