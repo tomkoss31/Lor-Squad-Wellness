@@ -20,7 +20,7 @@ import { ProgramChoiceCard } from "../components/assessment/ProgramChoiceCard";
 import { RoutineMatinList } from "../components/assessment/RoutineMatinList";
 import { ProgrammeTicket, type TicketAddOn } from "../components/assessment/ProgrammeTicket";
 import { SelectableProductCard } from "../components/assessment/SelectableProductCard";
-import { PROGRAM_CHOICES, getProgramById, BOOSTERS, type ProgramChoiceId } from "../data/programs";
+import { PROGRAM_CHOICES, PROGRAM_INCLUDED_PRODUCT_IDS, getProgramById, BOOSTERS, type ProgramChoiceId } from "../data/programs";
 import { FelicitationsStep } from "../components/assessment/FelicitationsStep";
 import { NotesPanel } from "../components/assessment/NotesPanel";
 import { ValidationBlockedBanner } from "../components/assessment/ValidationBlockedBanner";
@@ -427,12 +427,8 @@ const timelineOptions = [
   "9 mois"
 ];
 
-const PROGRAM_INCLUDED_PRODUCT_IDS: Record<string, string[]> = {
-  "p-discovery": ["aloe-vera", "the-51g", "formula-1"],
-  "p-premium": ["aloe-vera", "the-51g", "formula-1", "pdm"],
-  "p-booster-1": ["aloe-vera", "the-51g", "formula-1", "pdm", "multifibres"],
-  "p-booster-2": ["aloe-vera", "the-51g", "formula-1", "pdm", "phyto-brule-graisse"]
-};
+// Mapping centralisé dans data/programs.ts (source de vérité unique
+// couvrant aussi les programmes sport — Audit Bug #5).
 
 
 
