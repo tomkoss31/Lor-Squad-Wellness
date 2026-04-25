@@ -23,6 +23,36 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
 };
 
+// Chantier observabilité (2026-04-25) : logs JSON structurés pour
+// faciliter le filtre dans Supabase Dashboard → Functions → Logs.
+// Aucun token complet ni PII (email, nom, téléphone) ne doit fuiter ici.
+type LogLevel = "info" | "warn" | "error";
+function log(level: LogLevel, event: string, data?: Record<string, unknown>) {
+  console.log(
+    JSON.stringify({
+      ts: new Date().toISOString(),
+      level,
+      fn: "client-app-data",
+      event,
+      ...data,
+    }),
+  );
+}
+
+/** Hash 8-char d'un secret pour log privacy-safe. */
+async function shortHash(value: string): Promise<string> {
+  try {
+    const buf = new TextEncoder().encode(value);
+    const digest = await crypto.subtle.digest("SHA-256", buf);
+    return Array.from(new Uint8Array(digest))
+      .slice(0, 4)
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join("");
+  } catch {
+    return "hash-err";
+  }
+}
+
 function jsonError(code: string, status: number) {
   return new Response(JSON.stringify({ error: code }), {
     status,
@@ -50,18 +80,23 @@ serve(async (req) => {
     return new Response("ok", { headers: corsHeaders });
   }
 
+  const t0 = Date.now();
   try {
     const url = new URL(req.url);
     const token = url.searchParams.get("token");
 
     if (!token) {
+      log("warn", "missing_token");
       return jsonError("missing_token", 400);
     }
+
+    const tokenHash = await shortHash(token);
+    log("info", "entry", { tokenHash, method: req.method });
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     if (!supabaseUrl || !serviceKey) {
-      console.error("[client-app-data] missing env SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY");
+      log("error", "server_misconfigured", { tokenHash });
       return jsonError("server_misconfigured", 500);
     }
 
@@ -78,22 +113,33 @@ serve(async (req) => {
       .maybeSingle();
 
     if (accountError) {
-      console.error("[client-app-data] account lookup error", accountError);
+      log("error", "account_lookup_error", {
+        tokenHash,
+        message: accountError.message,
+        code: (accountError as { code?: string }).code,
+      });
       return jsonError("lookup_error", 500);
     }
     if (!account) {
+      log("warn", "invalid_token", { tokenHash });
       return jsonError("invalid_token", 401);
     }
 
     // Expiration (expires_at default = now() + 1 year à la création)
     if (account.expires_at && new Date(account.expires_at).getTime() < Date.now()) {
+      log("warn", "token_expired", { tokenHash, expiresAt: account.expires_at });
       return jsonError("token_expired", 401);
     }
 
     // client_app_accounts.client_id est TEXT, clients.id est UUID.
     // Postgres cast implicitement mais log pour monitoring pendant les tests.
     const clientId = account.client_id as string;
-    console.log(`[client-app-data] token resolved → clientId=${clientId} (type=${typeof clientId})`);
+    log("info", "token_resolved", {
+      tokenHash,
+      table: "client_app_accounts",
+      clientId,
+      clientIdType: typeof clientId,
+    });
 
     // ─── 2. Fetch des sources en parallèle (service_role = RLS bypass) ─
     // Chantier Conseils (2026-04-24) : ajout assessments_history (limit 20),
@@ -136,17 +182,40 @@ serve(async (req) => {
     ]);
 
     if (clientRes.error) {
-      console.error("[client-app-data] client select error", clientRes.error);
+      log("error", "client_select_error", {
+        clientId,
+        message: clientRes.error.message,
+        code: (clientRes.error as { code?: string }).code,
+      });
     }
     if (followUpRes.error) {
-      console.error("[client-app-data] follow_ups select error", followUpRes.error);
+      log("error", "follow_ups_select_error", {
+        clientId,
+        message: followUpRes.error.message,
+        code: (followUpRes.error as { code?: string }).code,
+      });
     }
     if (productsRes.error) {
-      console.error("[client-app-data] products select error", productsRes.error);
+      log("error", "products_select_error", {
+        clientId,
+        message: productsRes.error.message,
+        code: (productsRes.error as { code?: string }).code,
+      });
     }
     if (assessmentsRes.error) {
-      console.error("[client-app-data] assessments select error", assessmentsRes.error);
+      log("error", "assessments_select_error", {
+        clientId,
+        message: assessmentsRes.error.message,
+        code: (assessmentsRes.error as { code?: string }).code,
+      });
     }
+    log("info", "data_loaded", {
+      clientId,
+      clientFound: !!clientRes.data,
+      nextFollowUp: !!followUpRes.data,
+      productsCount: productsRes.data?.length ?? 0,
+      assessmentsCount: assessmentsRes.data?.length ?? 0,
+    });
 
     // ─── 3. Dérivations Conseils (assessment history + recos + alerts) ─
     // Format assessment_history : tableau normalisé (date + métriques
@@ -449,7 +518,16 @@ serve(async (req) => {
       fetched_at: new Date().toISOString(),
     };
 
-    return new Response(JSON.stringify(payload), {
+    const body = JSON.stringify(payload);
+    log("info", "success", {
+      clientId,
+      durationMs: Date.now() - t0,
+      payloadKb: Math.round(body.length / 1024),
+      sportAlerts: sport_alerts.length,
+      recommendationsNotTaken: recommendations_not_taken.length,
+    });
+
+    return new Response(body, {
       status: 200,
       headers: {
         ...corsHeaders,
@@ -460,7 +538,13 @@ serve(async (req) => {
       },
     });
   } catch (err) {
-    console.error("[client-app-data] uncaught error", err);
+    const msg = err instanceof Error ? err.message : String(err);
+    const stack = err instanceof Error ? err.stack : undefined;
+    log("error", "uncaught", {
+      durationMs: Date.now() - t0,
+      message: msg,
+      stack: stack ? stack.split("\n").slice(0, 5).join(" | ") : undefined,
+    });
     return jsonError("internal_error", 500);
   }
 });
