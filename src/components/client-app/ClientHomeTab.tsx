@@ -6,6 +6,9 @@ import { useEffect, useMemo, useState } from "react";
 import type { HerbalifeProduct } from "../../data/herbalifeCatalog";
 import { ClientPublicShareConsent } from "./ClientPublicShareConsent";
 import { createIcsDataUri } from "../../lib/googleCalendar";
+import { ClientAppHomeHero } from "./ClientAppHomeHero";
+import { ClientAppDailyAction } from "./ClientAppDailyAction";
+import { calculateDelta } from "../../lib/clientAppData";
 
 interface MetricEntry {
   date: string;
@@ -44,6 +47,10 @@ interface Props {
   getGoogleCalendarUrl: () => string;
   setRecoAskOpen: (v: boolean) => void;
   openProductAskModal: (product: HerbalifeProduct) => void;
+  /** Total cm perdus (mensurations). Optionnel V1 — défaut 0. */
+  totalCmLost?: number;
+  /** Callback passage onglet Évolution. Optionnel V1 — défaut noop. */
+  onSeeEvolution?: () => void;
 }
 
 const TELEGRAM_GROUP_URL = "https://t.me/+ul1vgYs-uS0yNmFk";
@@ -104,6 +111,8 @@ export function ClientHomeTab({
   getGoogleCalendarUrl,
   setRecoAskOpen,
   openProductAskModal,
+  totalCmLost = 0,
+  onSeeEvolution,
 }: Props) {
   const [rdvEditOpen, setRdvEditOpen] = useState(false);
   const [showAllValues, setShowAllValues] = useState(false);
@@ -229,6 +238,18 @@ export function ClientHomeTab({
       {/* 1. HERO — supprimé (doublon avec le bandeau gold en haut de
           ClientAppPage qui contient déjà avatar + salutation + meta programme).
           Voir chantier Conseils 2026-04-24. */}
+
+      {/* Refonte v2 (2026-04-25) : Hero transformation + action du jour
+          injectés en haut de l'onglet Accueil. */}
+      <ClientAppHomeHero
+        totalKgLost={calculateDelta(latest?.weight, first?.weight)}
+        totalCmLost={totalCmLost}
+        assessmentsCount={metrics.length}
+        firstAssessmentDate={first?.date ?? null}
+        programTitle={data.program_title ?? null}
+        onSeeEvolution={onSeeEvolution}
+      />
+      <ClientAppDailyAction />
 
       {/* 2. CARTE RDV */}
       {rdvInfo ? (
