@@ -15,6 +15,7 @@ import { EnrichedAssessmentHistory } from '../components/client-app/EnrichedAsse
 import type { BreakfastAnalysis } from '../types/domain'
 import { useOnboardingState } from '../features/onboarding/hooks/useOnboardingState'
 import { useClientLiveData } from '../hooks/useClientLiveData'
+import { ClientAppFallbackBanner } from '../components/client-app/ClientAppFallbackBanner'
 
 // Chantier Tuto interactif client (2026-04-24) : lazy-load pour ne pas
 // alourdir le bundle initial de ClientAppPage.
@@ -202,7 +203,7 @@ export function ClientAppPage() {
   // Fetch des données live (programme / RDV / produits) via
   // client-app-data. Priorité : liveData > snapshot. Refresh on focus
   // debounced 5s. Si l'edge function fail, on garde le snapshot.
-  const { liveData } = useClientLiveData(token)
+  const { liveData, dataSource } = useClientLiveData(token)
 
   // Merge liveData dans data dès qu'on a les 2 (snapshot + live fetchés).
   // Live gagne sur snapshot (snapshot = figé, live = source de vérité DB).
@@ -739,6 +740,15 @@ export function ClientAppPage() {
           coachFirstName={(data.coach_name ?? '').split(/\s+/)[0] || 'Ton coach'}
         />
       ) : null}
+
+      {/* Chantier observabilité (2026-04-25) : bandeau orange visible
+          UNIQUEMENT si l'edge function client-app-data a échoué et que
+          l'app affiche le snapshot figé. Permet au client de comprendre
+          que ses données ne sont pas fraîches et au coach de remonter le
+          bug (vu côté UI = bug visible, plus de fail silencieux). */}
+      {dataSource === 'snapshot' && (
+        <ClientAppFallbackBanner onContact={() => setActiveTab('messages')} />
+      )}
 
       <div style={{ padding: '12px 14px' }}>
         {/* ══════════════════════════════════════════════════════════════ */}

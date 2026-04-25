@@ -81,10 +81,22 @@ export interface ClientLiveData {
 
 const FOCUS_DEBOUNCE_MS = 5000;
 
+/**
+ * Origine actuelle des données rendues par l'app client.
+ * - "edge"     : fetch edge function client-app-data réussi (données fraîches)
+ * - "snapshot" : fetch a échoué → fallback sur le snapshot figé (DB)
+ * - "unknown"  : avant le 1er fetch (ou no-token)
+ *
+ * Permet d'afficher un bandeau UI quand "snapshot" pour rendre visible un
+ * éventuel bug d'edge function (chantier observabilité 2026-04-25).
+ */
+export type ClientDataSource = "edge" | "snapshot" | "unknown";
+
 export function useClientLiveData(token: string | null | undefined) {
   const [liveData, setLiveData] = useState<ClientLiveData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [dataSource, setDataSource] = useState<ClientDataSource>("unknown");
   const lastFetchRef = useRef<number>(0);
 
   const fetchLiveData = useCallback(
@@ -123,10 +135,15 @@ export function useClientLiveData(token: string | null | undefined) {
         }
         const json = (await res.json()) as ClientLiveData;
         setLiveData(json);
+        setDataSource("edge");
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
         console.warn("[useClientLiveData] fetch failed, fallback snapshot:", msg);
         setError(msg);
+        // Pas de liveData → l'UI consomme le snapshot DB. On le signale
+        // explicitement pour que le bandeau ClientAppFallbackBanner
+        // s'affiche (chantier observabilité 2026-04-25).
+        setDataSource("snapshot");
       } finally {
         setLoading(false);
       }
@@ -153,5 +170,11 @@ export function useClientLiveData(token: string | null | undefined) {
     };
   }, [token, fetchLiveData]);
 
-  return { liveData, loading, error, refetch: () => fetchLiveData({ force: true }) };
+  return {
+    liveData,
+    loading,
+    error,
+    dataSource,
+    refetch: () => fetchLiveData({ force: true }),
+  };
 }
