@@ -13,6 +13,7 @@ import {
   daysRemainingInMonth,
   conversionRatePercent,
 } from "../lib/utils/copiloteHelpers";
+import { RDV_GRACE_PERIOD_MS } from "../lib/timeConstants";
 
 const DEFAULT_MONTHLY_PV_TARGET = 13_000;
 
@@ -214,7 +215,13 @@ export function useCopiloteData(now: Date, globalView: boolean = false): Copilot
 
     // ─── Hero : prochain RDV SINON 1er suivi SINON null ────────────────────
     let nextAction: CopiloteNextAction | null = null;
-    const upcomingToday = todayAgendaRaw.filter((a) => a.time.getTime() >= now.getTime());
+    // Chantier RDV grâce (2026-04-27) : un RDV reste "upcoming" jusqu'à
+    // 15 min après son heure prévue. Permet au coach d'avoir le hero
+    // "prochain RDV" toujours actif pendant le RDV en cours (retard client,
+    // RDV démarré depuis quelques minutes, etc.).
+    const upcomingToday = todayAgendaRaw.filter(
+      (a) => a.time.getTime() + RDV_GRACE_PERIOD_MS >= now.getTime(),
+    );
     if (upcomingToday.length > 0) {
       const first = upcomingToday[0];
       nextAction = {
