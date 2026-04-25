@@ -1,194 +1,207 @@
-// Hero Accueil refondu (Chantier Refonte Accueil + Évolution v2, 2026-04-25).
-// Affiche soit la transformation chiffrée (>=2 bilans), soit un bienvenue.
+// Chantier MEGA app client v2 (2026-04-25).
+// Hero Accueil — spec figée validée Thomas. Code chirurgical, pas
+// d'interprétation ni d'amélioration. Si besoin d'évolution : nouvelle
+// itération explicite.
+
+import type { Assessment, Measurement } from "../../lib/clientAppData";
+import {
+  calculateWeightLost,
+  calculateTotalCmLost,
+  formatLongDate,
+} from "../../lib/clientAppData";
 
 interface Props {
-  totalKgLost: number | null;
-  totalCmLost: number;
-  assessmentsCount: number;
-  firstAssessmentDate: string | null;
-  programTitle: string | null;
-  onSeeEvolution?: () => void;
-}
-
-const GOLD = "#B8922A";
-const TEAL = "#1D9E75";
-const TEXT = "#444";
-const MUTED = "#888";
-
-function formatDateLong(iso: string): string {
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "—";
-  return d.toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit", year: "numeric" });
+  assessments: Assessment[];
+  measurements: Measurement[];
+  programLabel: string;
+  startDate: string;
+  onSeeEvolution: () => void;
 }
 
 export function ClientAppHomeHero({
-  totalKgLost,
-  totalCmLost,
-  assessmentsCount,
-  firstAssessmentDate,
-  programTitle,
+  assessments,
+  measurements,
+  programLabel,
+  startDate,
   onSeeEvolution,
 }: Props) {
-  const multi = assessmentsCount >= 2 && totalKgLost != null;
+  const hasMultipleBilans = assessments.length >= 2;
 
-  if (multi && totalKgLost != null) {
-    const formatted = (totalKgLost < 0 ? "- " : "+ ") + Math.abs(totalKgLost).toFixed(1);
+  if (!hasMultipleBilans) {
     return (
       <div
         style={{
           background: "#FFFFFF",
-          borderLeft: `4px solid ${GOLD}`,
-          padding: 20,
-          borderRadius: 12,
-          fontFamily: '"DM Sans", sans-serif',
+          borderRadius: "12px",
+          padding: "1.25rem",
+          marginBottom: "12px",
+          borderLeft: "4px solid #B8922A",
         }}
       >
         <div
           style={{
-            fontSize: 10,
-            color: GOLD,
-            letterSpacing: 1.5,
+            fontSize: "10px",
+            color: "#B8922A",
+            letterSpacing: "1.5px",
             fontWeight: 500,
-            textTransform: "uppercase",
-            marginBottom: 12,
+            marginBottom: "10px",
           }}
         >
-          🎯 TA TRANSFORMATION
+          ✨ BIENVENUE DANS L'AVENTURE
         </div>
-
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-          <div
-            style={{
-              background: TEAL,
-              borderRadius: 8,
-              padding: 14,
-              color: "#FFFFFF",
-            }}
-          >
-            <div style={{ fontFamily: '"Syne", serif', fontSize: 28, lineHeight: 1.1 }}>
-              {formatted}
-            </div>
-            <div style={{ fontSize: 11, opacity: 0.85, marginTop: 4 }}>
-              kg depuis le départ
-            </div>
-          </div>
-
-          <div
-            style={{
-              background: GOLD,
-              borderRadius: 8,
-              padding: 14,
-              color: "#FFFFFF",
-            }}
-          >
-            <div style={{ fontFamily: '"Syne", serif', fontSize: 28, lineHeight: 1.1 }}>
-              - {totalCmLost}
-            </div>
-            <div style={{ fontSize: 11, opacity: 0.85, marginTop: 4 }}>
-              cm en moins
-            </div>
-          </div>
+        <div
+          style={{
+            fontSize: "20px",
+            color: "#2C2C2A",
+            fontFamily: "var(--font-serif)",
+            fontWeight: 500,
+            marginBottom: "8px",
+          }}
+        >
+          Bienvenue dans l'aventure 💫
         </div>
-
-        {/* Mini courbe descendante stylisée */}
-        <div style={{ marginTop: 12, display: "flex", justifyContent: "center" }}>
-          <svg width="100%" height="50" viewBox="0 0 240 50" preserveAspectRatio="none" aria-hidden="true">
-            <polyline
-              points="0,12 40,18 80,22 120,28 160,34 200,40 240,44"
-              fill="none"
-              stroke={GOLD}
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
+        <div style={{ fontSize: "13px", color: "#888", marginBottom: "16px" }}>
+          Premier bilan le {formatLongDate(startDate)}
         </div>
-
+        <div
+          style={{
+            background: "#B8922A",
+            color: "white",
+            padding: "12px",
+            borderRadius: "8px",
+            textAlign: "center",
+            fontWeight: 500,
+            fontSize: "14px",
+            marginBottom: "12px",
+          }}
+        >
+          {programLabel} activé
+        </div>
         <button
           type="button"
           onClick={onSeeEvolution}
           style={{
             display: "block",
             width: "100%",
-            marginTop: 8,
-            padding: "8px 0",
+            textAlign: "center",
             background: "transparent",
             border: "none",
-            color: GOLD,
-            fontSize: 13,
-            fontWeight: 600,
+            color: "#B8922A",
+            fontSize: "13px",
+            fontWeight: 500,
+            padding: "8px",
             cursor: "pointer",
-            textAlign: "center",
-            fontFamily: '"DM Sans", sans-serif',
           }}
         >
-          Voir toute mon évolution →
+          Voir mon point de départ →
         </button>
       </div>
     );
   }
 
-  // Cas 1 seul bilan
+  const kgLost = calculateWeightLost(assessments);
+  const cmLost = calculateTotalCmLost(measurements);
+  const showCmBadge = cmLost > 0;
+
   return (
     <div
       style={{
         background: "#FFFFFF",
-        borderLeft: `4px solid ${GOLD}`,
-        padding: 20,
-        borderRadius: 12,
-        fontFamily: '"DM Sans", sans-serif',
+        borderRadius: "12px",
+        padding: "1.25rem",
+        marginBottom: "12px",
+        borderLeft: "4px solid #B8922A",
       }}
     >
       <div
         style={{
-          fontSize: 10,
-          color: GOLD,
-          letterSpacing: 1.5,
+          fontSize: "10px",
+          color: "#B8922A",
+          letterSpacing: "1.5px",
           fontWeight: 500,
-          textTransform: "uppercase",
-          marginBottom: 8,
+          marginBottom: "12px",
         }}
       >
-        💫 BIENVENUE DANS L&apos;AVENTURE
+        🎯 TA TRANSFORMATION
       </div>
-      <div style={{ fontFamily: '"Syne", serif', fontSize: 18, color: TEXT, marginBottom: 4 }}>
-        Bienvenue dans l&apos;aventure 💫
-      </div>
-      <div style={{ fontSize: 12, color: MUTED, marginBottom: 12 }}>
-        Premier bilan le {firstAssessmentDate ? formatDateLong(firstAssessmentDate) : "—"}
-      </div>
+
       <div
         style={{
-          background: GOLD,
-          borderRadius: 8,
-          padding: 14,
-          color: "#FFFFFF",
-          textAlign: "center",
-          fontFamily: '"Syne", serif',
-          fontSize: 15,
+          display: "grid",
+          gridTemplateColumns: showCmBadge ? "1fr 1fr" : "1fr",
+          gap: "8px",
+          marginBottom: "12px",
         }}
       >
-        Programme {programTitle ?? "—"} activé
+        <div
+          style={{
+            background: "#1D9E75",
+            color: "white",
+            padding: "14px 12px",
+            borderRadius: "8px",
+            textAlign: "center",
+          }}
+        >
+          <div
+            style={{
+              fontSize: "26px",
+              fontWeight: 500,
+              fontFamily: "var(--font-serif)",
+              lineHeight: 1,
+            }}
+          >
+            {kgLost > 0
+              ? `- ${kgLost.toFixed(1)}`
+              : `+ ${Math.abs(kgLost).toFixed(1)}`}
+          </div>
+          <div style={{ fontSize: "10px", opacity: 0.9, marginTop: "4px" }}>
+            kg {kgLost > 0 ? "perdus" : "pris"}
+          </div>
+        </div>
+        {showCmBadge ? (
+          <div
+            style={{
+              background: "#B8922A",
+              color: "white",
+              padding: "14px 12px",
+              borderRadius: "8px",
+              textAlign: "center",
+            }}
+          >
+            <div
+              style={{
+                fontSize: "26px",
+                fontWeight: 500,
+                fontFamily: "var(--font-serif)",
+                lineHeight: 1,
+              }}
+            >
+              - {cmLost}
+            </div>
+            <div style={{ fontSize: "10px", opacity: 0.9, marginTop: "4px" }}>
+              cm en moins
+            </div>
+          </div>
+        ) : null}
       </div>
+
       <button
         type="button"
         onClick={onSeeEvolution}
         style={{
           display: "block",
           width: "100%",
-          marginTop: 10,
-          padding: "8px 0",
+          textAlign: "center",
           background: "transparent",
           border: "none",
-          color: GOLD,
-          fontSize: 13,
-          fontWeight: 600,
+          color: "#B8922A",
+          fontSize: "12px",
+          fontWeight: 500,
+          padding: "8px",
           cursor: "pointer",
-          textAlign: "center",
-          fontFamily: '"DM Sans", sans-serif',
         }}
       >
-        Voir mon point de départ →
+        Voir toute mon évolution →
       </button>
     </div>
   );
