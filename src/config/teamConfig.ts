@@ -30,8 +30,8 @@ import type { User } from "../types/domain";
  * Audit Bug #6 — résolution couple par nom fragile.
  */
 export const COUPLE_USER_IDS_HARDCODED: string[] = [
-  // "uuid-thomas-a-renseigner",
-  // "uuid-melanie-a-renseigner",
+  "656dcf35-4859-4a70-9d20-990104813423", // Thomas
+  "6e552738-3fe5-4cdb-a4c8-15c5d7dca036", // Mélanie
 ];
 
 /**
