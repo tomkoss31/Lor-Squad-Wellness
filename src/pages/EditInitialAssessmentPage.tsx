@@ -7,8 +7,10 @@ import { StatusBadge } from "../components/ui/StatusBadge";
 import { useAppContext } from "../context/AppContext";
 import { useToast, buildSupabaseErrorToast } from "../context/ToastContext";
 import { getFirstAssessment, normalizeDateTimeLocalInputValue } from "../lib/calculations";
+import { calculateAge, formatBirthDate } from "../lib/age";
 import { pvProductCatalog } from "../data/pvCatalog";
 import { refreshClientRecap } from "../services/supabaseService";
+import { getSupabaseClient } from "../services/supabaseClient";
 import type { AssessmentQuestionnaire, AssessmentRecord } from "../types/domain";
 
 const timelineOptions = [
@@ -211,6 +213,9 @@ export function EditInitialAssessmentPage() {
   // (taille + âge) depuis la page Modifier bilan de départ — corrige les
   // imports manuels Supabase où height=0 / age=0.
   const [clientAge, setClientAge] = useState<number>(client?.age ?? 0);
+  // Chantier birth_date (2026-04-25) : date de naissance optionnelle.
+  // Si remplie, l'âge est calculé dynamiquement (priorité sur clients.age).
+  const [clientBirthDate, setClientBirthDate] = useState<string>(client?.birthDate ?? "");
   const [clientHeight, setClientHeight] = useState<number>(client?.height ?? 0);
   const [error, setError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
@@ -235,6 +240,7 @@ export function EditInitialAssessmentPage() {
     setNotes(targetAssessment.notes);
     // Profil client live — pas dans le draft (colonne clients.* pas bilan)
     setClientAge(client.age ?? 0);
+    setClientBirthDate(client.birthDate ?? "");
     setClientHeight(client.height ?? 0);
 
     const draft = readEditAssessmentDraft(client.id, targetAssessment.id);
@@ -335,6 +341,9 @@ export function EditInitialAssessmentPage() {
     // Chantier edit height/age (2026-04-25) : validation profil client.
     const ageChanged = clientAge !== (client.age ?? 0);
     const heightChanged = clientHeight !== (client.height ?? 0);
+    const normalizedBirthDate = clientBirthDate ? clientBirthDate : null;
+    const previousBirthDate = client.birthDate ?? null;
+    const birthDateChanged = normalizedBirthDate !== previousBirthDate;
     if (heightChanged && (clientHeight < 100 || clientHeight > 230)) {
       setError("Taille invalide (doit être entre 100 et 230 cm).");
       pushToast({
@@ -391,14 +400,32 @@ export function EditInitialAssessmentPage() {
       // RLS clients UPDATE vérifie can_access_owner(distributor_id) →
       // admin + distri propriétaire seulement. Un distri non-owner aura
       // une erreur Postgres, affichée via toast.
-      if (ageChanged || heightChanged) {
+      if (ageChanged || heightChanged || birthDateChanged) {
         const oldAge = client.age ?? 0;
         const oldHeight = client.height ?? 0;
+        const oldBirthDate = previousBirthDate;
         try {
-          await updateClientInfo(targetClient.id, {
-            ...(ageChanged ? { age: clientAge } : {}),
-            ...(heightChanged ? { height: clientHeight } : {}),
-          });
+          if (ageChanged || heightChanged) {
+            await updateClientInfo(targetClient.id, {
+              ...(ageChanged ? { age: clientAge } : {}),
+              ...(heightChanged ? { height: clientHeight } : {}),
+            });
+          }
+          // Chantier birth_date (2026-04-25) : updateClientInfo n'accepte pas
+          // encore birth_date dans son type côté AppContext (file interdit
+          // ce sprint). On persiste birth_date en direct via Supabase pour
+          // ne pas toucher AppContext. À fusionner dans updateClientInfo
+          // dès qu'AppContext sera ouvert au refacto.
+          if (birthDateChanged) {
+            const sb = await getSupabaseClient();
+            if (sb) {
+              const { error: birthErr } = await sb
+                .from('clients')
+                .update({ birth_date: normalizedBirthDate })
+                .eq('id', targetClient.id);
+              if (birthErr) throw birthErr;
+            }
+          }
           // Audit trail console (la table activity_logs attend des actions
           // typées — on garde un log console dev-friendly ici, suffisant
           // pour tracer les modifs manuelles pendant la phase de
@@ -413,6 +440,7 @@ export function EditInitialAssessmentPage() {
               changes: {
                 ...(ageChanged ? { age: { from: oldAge, to: clientAge } } : {}),
                 ...(heightChanged ? { height: { from: oldHeight, to: clientHeight } } : {}),
+                ...(birthDateChanged ? { birthDate: { from: oldBirthDate, to: normalizedBirthDate } } : {}),
               },
               at: new Date().toISOString(),
             },
@@ -514,16 +542,42 @@ export function EditInitialAssessmentPage() {
                 <input type="text" value={targetClient.sex === "female" ? "Femme" : "Homme"} readOnly disabled />
               </div>
               <div className="space-y-2">
-                <label className="ls-field-label">Âge (années)</label>
+                <label className="ls-field-label">Date de naissance</label>
+                <input
+                  type="date"
+                  value={clientBirthDate}
+                  max={new Date().toISOString().split("T")[0]}
+                  onChange={(e) => setClientBirthDate(e.target.value)}
+                />
+                {clientBirthDate ? (
+                  <p className="text-[11px] text-[var(--ls-teal)]">
+                    Âge calculé : <strong>{calculateAge(clientBirthDate) ?? "?"} ans</strong>
+                  </p>
+                ) : null}
+                {clientBirthDate !== (targetClient.birthDate ?? "") ? (
+                  <p className="text-[11px] text-[var(--ls-gold)]">
+                    Modifié · était {targetClient.birthDate ? formatBirthDate(targetClient.birthDate) : "non renseignée"}
+                  </p>
+                ) : null}
+              </div>
+              <div className="space-y-2">
+                <label className="ls-field-label">
+                  Âge (années){clientBirthDate ? " · auto" : ""}
+                </label>
                 <input
                   type="number"
                   min={14}
                   max={100}
                   step={1}
-                  value={clientAge}
+                  value={clientBirthDate ? (calculateAge(clientBirthDate) ?? clientAge) : clientAge}
+                  readOnly={!!clientBirthDate}
                   onChange={(e) => setClientAge(Number(e.target.value))}
                 />
-                {clientAge !== (targetClient.age ?? 0) ? (
+                {clientBirthDate ? (
+                  <p className="text-[11px] text-[var(--ls-text-hint)]">
+                    Calculé depuis la date de naissance.
+                  </p>
+                ) : clientAge !== (targetClient.age ?? 0) ? (
                   <p className="text-[11px] text-[var(--ls-gold)]">
                     Modifié · était {targetClient.age ?? 0}
                   </p>

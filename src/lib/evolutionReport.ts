@@ -1,5 +1,6 @@
 import type { Client, AssessmentRecord } from '../types/domain'
 import { generateProductRecommendations } from './productRecommendations'
+import { getEffectiveAge } from './age'
 
 // ─── TYPES ───────────────────────────────────────────────────────────────────
 
@@ -134,7 +135,8 @@ export function generateInsights(
   }
 
   // ÂGE MÉTABOLIQUE
-  const realAge = client.age ?? 35
+  // Chantier birth_date (2026-04-25) : priorité birth_date calculé > age legacy.
+  const realAge = getEffectiveAge(client) ?? 35
   if (latestScan.metabolicAge > realAge + 10) {
     insights.push({
       type: 'warning', icon: '🧬', title: 'Âge métabolique à améliorer',

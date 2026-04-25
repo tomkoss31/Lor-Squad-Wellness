@@ -259,6 +259,10 @@ export interface Client {
   phone: string;
   email: string;
   age: number;
+  /** Date de naissance ISO (AAAA-MM-JJ). Optionnelle — si remplie, l'âge
+   *  est calculé dynamiquement via lib/age.getEffectiveAge. Champ age
+   *  conservé pour rétrocompatibilité. Chantier birth_date 2026-04-25. */
+  birthDate?: string | null;
   height: number;
   job: string;
   city?: string;
