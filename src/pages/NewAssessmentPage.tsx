@@ -686,13 +686,11 @@ export function NewAssessmentPage() {
         effectiveSelectedProductIds.includes(product.id) &&
         array.findIndex((item) => item.id === product.id) === index
     );
-  const recommendedProgram =
-    mainPrograms.find((program) => program.id === recommendationPlan.recommendedProgramId) ??
-    null;
-  const activeProgram = selectedProgram ?? recommendedProgram;
   // displayedProgramPrice* + addOnProductsTotalPrice retirés avec le résumé
   // administratif (Chantier Félicitations 2026-04-20). selectedProgram reste
   // utilisé pour le titre programme dans handleSaveAssessment.
+  // `activeProgram` et `recommendedProgram` supprimés en 2026-04-27 avec
+  // le retrait du filtre includedProgramProductIds (plus consommés).
   // Chantier fix bugs panier (2026-04-27) : on retire le filtre
   // `includedProgramProductIds` qui exclut auparavant tout produit déjà
   // inclus dans le programme de base. Conséquence du filtre : Formula 1,
