@@ -1,0 +1,20 @@
+[
+  {
+    "id": "837bbdf6-5952-4b38-b2d3-418eda09c2c8",
+    "user_id": "aa28c3b6-b46b-4f67-823e-07097024249e",
+    "endpoint": "https://fcm.googleapis.com/wp/eBzdJ7y0ou4:APA91bEuxbzx4YRYKgSQoh7smol2dday3wsRn3YE80UNGlNAP0hbY9MS0soxMa14RG4xwitDdXAKcfPdASk8K6usW83sg20GMF8ccRViObd2SKIq9g3_eS8JQY-BcmCf2NePWaQmKSxG",
+    "p256dh": "BGiwegurwr4PZs3343r3X16eWDr78zpb2wh0IQZDRm2SmKNAGqrX2itfdnOHZq9Jj_VjhVBOzK4k9UC6qCs5lbY",
+    "auth": "qWFdTgCMhYtQA43JUhCJkA",
+    "user_name": "Léa Monfort",
+    "updated_at": "2026-04-18T09:04:22.332+00:00"
+  },
+  {
+    "id": "edfde5ff-2e16-4bef-b84d-c4cc2de1aaa9",
+    "user_id": "656dcf35-4859-4a70-9d20-990104813423",
+    "endpoint": "https://web.push.apple.com/QE6Egp_LQdcu7opaN48UjgTLraEjauAM-T3zLxyhMUuqxqY4Lva4ZzKB7hrn800QLU7J1fMOPnWuDsX2j9GSL6UrRUuvcfFs0mICkGwm9b3PODVomTyP05ERNQzdxF6XzMy5yRI0Z45QjHEkFfMKz9giFJpaVqvUZe83af6i3nA",
+    "p256dh": "BHvYhrAadA2ko84H1JNfnirkDjepC4p1XEgBtzz_R3BIMIeEyzu7wCRN9kTZy9MJGZbt-sr_NeO1AmDoOZRbP3U",
+    "auth": "joCt5mMt5gqh3ZrAsO9e8g",
+    "user_name": "Thomas",
+    "updated_at": "2026-04-21T10:50:33.969+00:00"
+  }
+]
