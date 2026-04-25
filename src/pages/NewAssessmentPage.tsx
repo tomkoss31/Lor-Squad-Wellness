@@ -20,7 +20,7 @@ import { ProgramChoiceCard } from "../components/assessment/ProgramChoiceCard";
 import { RoutineMatinList } from "../components/assessment/RoutineMatinList";
 import { ProgrammeTicket, type TicketAddOn } from "../components/assessment/ProgrammeTicket";
 import { SelectableProductCard } from "../components/assessment/SelectableProductCard";
-import { PROGRAM_CHOICES, PROGRAM_INCLUDED_PRODUCT_IDS, getProgramById, BOOSTERS, type ProgramChoiceId } from "../data/programs";
+import { PROGRAM_CHOICES, getProgramById, BOOSTERS, type ProgramChoiceId } from "../data/programs";
 import { FelicitationsStep } from "../components/assessment/FelicitationsStep";
 import { NotesPanel } from "../components/assessment/NotesPanel";
 import { ValidationBlockedBanner } from "../components/assessment/ValidationBlockedBanner";
@@ -440,6 +440,11 @@ export function NewAssessmentPage() {
   const prospectId = searchParams.get("prospectId");
   const sourceProspect = prospectId ? prospects.find((p) => p.id === prospectId) : undefined;
   const stepRailRef = useRef<HTMLDivElement | null>(null);
+  // Chantier fix bugs panier (2026-04-27) : flag pour init UNIQUE des
+  // suggestions par défaut à l'entrée de l'étape "program". Sans ce flag,
+  // l'useEffect réinjectait les défauts à chaque fois que l'utilisateur
+  // vidait le panier (auto-sélection forcée).
+  const programInitRef = useRef(false);
   const [form, setForm] = useState(initialForm);
   const [currentStep, setCurrentStep] = useState(0);
   const [saveError, setSaveError] = useState("");
@@ -666,8 +671,11 @@ export function NewAssessmentPage() {
   const defaultSuggestedProductIds = recommendationPlan.needs
     .flatMap((need) => need.products.slice(0, 1).map((product) => product.id))
     .filter((productId, index, array) => array.indexOf(productId) === index);
-  const effectiveSelectedProductIds =
-    form.selectedProductIds.length > 0 ? form.selectedProductIds : defaultSuggestedProductIds;
+  // Chantier fix bugs panier (2026-04-27) : plus de fallback render-time
+  // vers defaultSuggestedProductIds. Si l'utilisateur a tout désélectionné,
+  // le panier reste vide (comportement attendu). L'initialisation des
+  // recommandations se fait via useEffect ref-guardé ci-dessous.
+  const effectiveSelectedProductIds = form.selectedProductIds;
   const allRecommendableProducts = [
     ...recommendationPlan.needs.flatMap((need) => need.products),
     ...recommendationPlan.optionalUpsells,
@@ -678,30 +686,40 @@ export function NewAssessmentPage() {
         effectiveSelectedProductIds.includes(product.id) &&
         array.findIndex((item) => item.id === product.id) === index
     );
-  const recommendedProgram =
-    mainPrograms.find((program) => program.id === recommendationPlan.recommendedProgramId) ??
-    null;
-  const activeProgram = selectedProgram ?? recommendedProgram;
   // displayedProgramPrice* + addOnProductsTotalPrice retirés avec le résumé
   // administratif (Chantier Félicitations 2026-04-20). selectedProgram reste
   // utilisé pour le titre programme dans handleSaveAssessment.
-  const includedProgramProductIds = activeProgram
-    ? new Set(PROGRAM_INCLUDED_PRODUCT_IDS[activeProgram.id] ?? [])
-    : new Set<string>();
-  const addOnProducts = selectedRecommendationProducts.filter(
-    (product) => !includedProgramProductIds.has(product.id)
-  );
+  // `activeProgram` et `recommendedProgram` supprimés en 2026-04-27 avec
+  // le retrait du filtre includedProgramProductIds (plus consommés).
+  // Chantier fix bugs panier (2026-04-27) : on retire le filtre
+  // `includedProgramProductIds` qui exclut auparavant tout produit déjà
+  // inclus dans le programme de base. Conséquence du filtre : Formula 1,
+  // PDM, Mélange Boisson Protéinée etc. cochés "Retenu" dans les sections
+  // besoins restaient invisibles dans le total. Désormais : si l'utilisateur
+  // coche "Retenir" sur un produit, il apparaît toujours dans les ajouts
+  // (avec sa quantité), même si le programme inclut déjà 1 unité. Le coach
+  // pilote le stockage explicitement via le stepper.
+  const addOnProducts = selectedRecommendationProducts;
 
   useEffect(() => {
+    // Reset le flag dès qu'on quitte l'étape program → permet une nouvelle
+    // initialisation propre si l'utilisateur revient en arrière puis avance.
     if (currentStepId !== 'program') {
+      programInitRef.current = false;
       return;
     }
 
-    if (form.selectedProductIds.length || !defaultSuggestedProductIds.length) {
+    // Garde-fou : init UNE SEULE fois par entrée dans l'étape. Sans ça,
+    // toute désélection complète relance le pré-remplissage automatique
+    // (= bug "auto-sélection forcée" remonté le 27/04).
+    if (programInitRef.current) {
       return;
     }
+    programInitRef.current = true;
 
-    update("selectedProductIds", defaultSuggestedProductIds);
+    if (defaultSuggestedProductIds.length && !form.selectedProductIds.length) {
+      update("selectedProductIds", defaultSuggestedProductIds);
+    }
   }, [currentStepId, defaultSuggestedProductIds, form.selectedProductIds.length]);
 
 
