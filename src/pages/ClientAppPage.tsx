@@ -156,19 +156,48 @@ export function ClientAppPage() {
 
   // Merge liveData dans data dès qu'on a les 2 (snapshot + live fetchés).
   // Live gagne sur snapshot (snapshot = figé, live = source de vérité DB).
+  // Chantier diagnostic (2026-04-25) : on sync AUSSI assessment_history →
+  // metrics_history. Avant ce fix, le snapshot (1 seul bilan dans
+  // client_recaps/client_evolution_reports) écrasait les 8 bilans live →
+  // tous les composants v2 voyaient 1 entrée → "Bienvenue dans l'aventure"
+  // + indicateurs "—" alors que les data sont bien là.
   useEffect(() => {
     if (!liveData || !data) return
     const nextProgramTitle = liveData.client?.current_program ?? data.program_title
     const nextFollowUpIso = liveData.next_follow_up?.due_date ?? data.next_follow_up
-    // Ne déclenche un setData que si au moins une valeur change (évite
-    // une boucle render si liveData re-fetch au focus avec les mêmes data).
+
+    // assessment_history (live) prioritaire sur metrics_history (snapshot).
+    // Shape déjà flat compatible (date + weight/bodyFat/muscleMass/hydration/...).
+    let nextMetrics = data.metrics_history
+    let nextAssessmentsCount = data.assessments_count
+    if (liveData.assessment_history && liveData.assessment_history.length > 0) {
+      nextMetrics = liveData.assessment_history.map((a) => ({
+        date: a.date ?? '',
+        weight: a.weight ?? 0,
+        bodyFat: a.bodyFat ?? 0,
+        muscleMass: a.muscleMass ?? 0,
+        hydration: a.hydration ?? 0,
+        visceralFat: a.visceralFat ?? 0,
+        metabolicAge: a.metabolicAge ?? 0,
+        bmr: a.bmr ?? 0,
+      })) as unknown as ClientAppData['metrics_history']
+      nextAssessmentsCount = Math.max(
+        nextAssessmentsCount ?? 0,
+        liveData.assessment_history.length,
+      )
+    }
+
     const programChanged = nextProgramTitle !== data.program_title
     const rdvChanged = nextFollowUpIso !== data.next_follow_up
-    if (!programChanged && !rdvChanged) return
+    const metricsChanged = nextMetrics !== data.metrics_history
+    const countChanged = nextAssessmentsCount !== data.assessments_count
+    if (!programChanged && !rdvChanged && !metricsChanged && !countChanged) return
     setData({
       ...data,
       program_title: nextProgramTitle ?? undefined,
       next_follow_up: nextFollowUpIso ?? undefined,
+      metrics_history: nextMetrics,
+      assessments_count: nextAssessmentsCount,
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [liveData])
