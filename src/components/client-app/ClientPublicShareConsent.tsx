@@ -105,12 +105,18 @@ export function ClientPublicShareConsent({ clientId, clientFirstName }: Props) {
         .update({ public_share_revoked_at: now })
         .eq("id", clientId);
       if (upErr) throw upErr;
-      // Révoquer tous les tokens actifs (cascade)
-      await sb
+      // Révocation en batch : 1 seule requête atomique côté Postgres.
+      // Filtre par client_id ET tokens non encore révoqués (idempotent —
+      // si re-clic révoquer, n'écrase pas les revoked_at existants).
+      // Audit Bug #3 — cascade revocation performance + atomicité.
+      const { error: revokeErr } = await sb
         .from("client_public_share_tokens")
         .update({ revoked_at: now })
         .eq("client_id", clientId)
         .is("revoked_at", null);
+      if (revokeErr) {
+        console.error("[share-consent] revoke tokens failed", revokeErr);
+      }
       await load();
     } catch (e) {
       setErr(e instanceof Error ? e.message : "Erreur.");

@@ -16,6 +16,11 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
+// Salt secret stocké dans Supabase Functions secrets (env IP_HASH_SALT).
+// Empêche l'attaque par rainbow tables sur les IP hashées (RGPD strict).
+// Si la variable n'est pas définie (ex: dev), fallback sur chaîne vide.
+const IP_HASH_SALT = Deno.env.get("IP_HASH_SALT") ?? "";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
@@ -30,8 +35,21 @@ function json(payload: unknown, status = 200): Response {
   });
 }
 
+/**
+ * Classifie un user-agent en device class (mobile/desktop/bot/unknown).
+ * RGPD : stocker juste la classe au lieu du UA brut limite l'exposition
+ * de données techniques (device, OS, version) tout en gardant l'utilité
+ * statistique (compteur de vues par type).
+ */
+function classifyUserAgent(ua: string | null | undefined): string {
+  if (!ua) return "unknown";
+  if (/Bot|Crawler|Spider|HeadlessChrome/i.test(ua)) return "bot";
+  if (/Mobile|Android|iPhone|iPad|Tablet/i.test(ua)) return "mobile";
+  return "desktop";
+}
+
 async function sha256(input: string): Promise<string> {
-  const buf = new TextEncoder().encode(input);
+  const buf = new TextEncoder().encode(IP_HASH_SALT + input);
   const hash = await crypto.subtle.digest("SHA-256", buf);
   return Array.from(new Uint8Array(hash))
     .map((b) => b.toString(16).padStart(2, "0"))
@@ -190,7 +208,7 @@ serve(async (req) => {
         req.headers.get("x-real-ip") ??
         "unknown";
       const ipHash = rawIp !== "unknown" ? await sha256(rawIp) : null;
-      const userAgent = req.headers.get("user-agent")?.slice(0, 500) ?? null;
+      const userAgent = classifyUserAgent(req.headers.get("user-agent"));
 
       await sb.from("client_public_share_views").insert({
         token_id: t.id,
