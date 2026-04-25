@@ -69,6 +69,15 @@ export interface ClientLiveData {
     start_date: string | null;
     active: boolean;
   }>;
+  // Chantier MEGA app client v2 (2026-04-25) : mensurations normalisées
+  // (cm, avg gauche/droite côté edge pour thigh/arm).
+  measurements?: Array<{
+    measured_at: string;
+    waist_cm?: number;
+    hips_cm?: number;
+    thigh_cm?: number;
+    arm_cm?: number;
+  }>;
   // Chantier Conseils client (2026-04-24) : enrichissements payload.
   assessment_history?: ClientLiveAssessmentRow[];
   recommendations_not_taken?: Array<{ productId: string; name: string; price?: number; reason?: string }>;

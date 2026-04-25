@@ -203,7 +203,7 @@ serve(async (req) => {
     // Chantier Conseils (2026-04-24) : ajout assessments_history (limit 20),
     // latest assessment (pour sport_profile / current_intake / coach_advice
     // / recommendations), recompute sport_alerts + recommendations_not_taken.
-    const [clientRes, followUpRes, productsRes, assessmentsRes] = await Promise.all([
+    const [clientRes, followUpRes, productsRes, assessmentsRes, measurementsRes] = await Promise.all([
       supabase
         .from("clients")
         .select("current_program, notes, objective")
@@ -237,6 +237,17 @@ serve(async (req) => {
         .eq("client_id", clientId)
         .order("date", { ascending: true })
         .limit(20),
+
+      // Chantier MEGA app client v2 (2026-04-25) : ajout mensurations.
+      // Schema réel : waist, hips, thigh_left/right, arm_left/right.
+      // On normalise vers waist_cm/hips_cm/thigh_cm/arm_cm pour le payload
+      // (avg gauche/droite quand pertinent) — les composants front utilisent
+      // ces noms normalisés, indépendamment du schema DB.
+      supabase
+        .from("client_measurements")
+        .select("measured_at, waist, hips, thigh_left, thigh_right, arm_left, arm_right")
+        .eq("client_id", clientId)
+        .order("measured_at", { ascending: true }),
     ]);
 
     if (clientRes.error) {
@@ -267,13 +278,47 @@ serve(async (req) => {
         code: (assessmentsRes.error as { code?: string }).code,
       });
     }
+    if (measurementsRes.error) {
+      log("error", "measurements_select_error", {
+        clientId,
+        message: measurementsRes.error.message,
+        code: (measurementsRes.error as { code?: string }).code,
+      });
+    }
     log("info", "data_loaded", {
       clientId,
       clientFound: !!clientRes.data,
       nextFollowUp: !!followUpRes.data,
       productsCount: productsRes.data?.length ?? 0,
       assessmentsCount: assessmentsRes.data?.length ?? 0,
+      measurementsCount: measurementsRes.data?.length ?? 0,
     });
+
+    // Normalisation mensurations → schéma payload uniforme.
+    interface RawMeasurement {
+      measured_at: string;
+      waist?: number | null;
+      hips?: number | null;
+      thigh_left?: number | null;
+      thigh_right?: number | null;
+      arm_left?: number | null;
+      arm_right?: number | null;
+    }
+    const avgPair = (a: number | null | undefined, b: number | null | undefined): number | undefined => {
+      const aN = typeof a === "number" ? a : null;
+      const bN = typeof b === "number" ? b : null;
+      if (aN != null && bN != null) return Math.round(((aN + bN) / 2) * 10) / 10;
+      if (aN != null) return aN;
+      if (bN != null) return bN;
+      return undefined;
+    };
+    const measurementsPayload = ((measurementsRes.data ?? []) as RawMeasurement[]).map((m) => ({
+      measured_at: m.measured_at,
+      waist_cm: typeof m.waist === "number" ? m.waist : undefined,
+      hips_cm: typeof m.hips === "number" ? m.hips : undefined,
+      thigh_cm: avgPair(m.thigh_left, m.thigh_right),
+      arm_cm: avgPair(m.arm_left, m.arm_right),
+    }));
 
     // ─── 3. Dérivations Conseils (assessment history + recos + alerts) ─
     // Format assessment_history : tableau normalisé (date + métriques
@@ -566,6 +611,8 @@ serve(async (req) => {
           }
         : null,
       current_products: productsRes.data ?? [],
+      // Chantier MEGA app client v2 (2026-04-25) : mensurations normalisées.
+      measurements: measurementsPayload,
       // Chantier Conseils (2026-04-24) : nouvelles clés sans toucher à l'existant.
       assessment_history,
       recommendations_not_taken,
