@@ -1,74 +1,50 @@
-// Evolution Hero (Chantier Refonte Accueil + Évolution v2, 2026-04-25).
-// Affiche départ → aujourd'hui + 2 badges récap kg / cm.
+// Chantier MEGA app client v2 (2026-04-25).
+// Hero Évolution — spec figée Thomas. Code chirurgical, copie mockup.
+
+import type { Assessment, Measurement } from "../../lib/clientAppData";
+import {
+  getStartingAssessment,
+  getCurrentAssessment,
+  calculateWeightLost,
+  calculateTotalCmLost,
+  formatLongDate,
+} from "../../lib/clientAppData";
 
 interface Props {
-  startWeight: number | null;
-  currentWeight: number | null;
-  startDate: string | null;
-  currentDate: string | null;
-  totalCmLost: number;
+  assessments: Assessment[];
+  measurements: Measurement[];
 }
 
-const GOLD = "#B8922A";
-const TEAL = "#1D9E75";
-const MUTED = "#888";
+export function ClientAppEvolutionHero({ assessments, measurements }: Props) {
+  const start = getStartingAssessment(assessments);
+  const current = getCurrentAssessment(assessments);
+  const kgLost = calculateWeightLost(assessments);
+  const cmLost = calculateTotalCmLost(measurements);
 
-function formatShort(iso: string | null): string {
-  if (!iso) return "—";
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "—";
-  const s = d.toLocaleDateString("fr-FR", { day: "2-digit", month: "short" });
-  return s.replace(/\.$/, "."); // garde le "."
-}
-
-export function ClientAppEvolutionHero({
-  startWeight,
-  currentWeight,
-  startDate,
-  currentDate,
-  totalCmLost,
-}: Props) {
-  if (startWeight == null || currentWeight == null) {
-    return (
-      <div
-        style={{
-          background: "#FFFFFF",
-          padding: "24px 20px",
-          borderRadius: 12,
-          border: "1px solid #eee",
-          textAlign: "center",
-          fontStyle: "italic",
-          fontSize: 13,
-          color: MUTED,
-          fontFamily: '"DM Sans", sans-serif',
-        }}
-      >
-        Encore un peu de patience, ta courbe se construit avec chaque bilan.
-      </div>
-    );
+  if (!start || !current) {
+    return null;
   }
 
-  const kgLost = startWeight - currentWeight; // typically positive when client lost weight
+  const startWeight = start.bodyScan?.weight ?? 0;
+  const currentWeight = current.bodyScan?.weight ?? 0;
+  const isSamePoint = assessments.length < 2;
 
   return (
     <div
       style={{
         background: "#FFFFFF",
-        padding: "24px 20px",
-        borderRadius: 12,
-        border: "1px solid #eee",
-        fontFamily: '"DM Sans", sans-serif',
+        borderRadius: "12px",
+        padding: "1.5rem 1.25rem",
+        marginBottom: "12px",
       }}
     >
       <div
         style={{
-          fontSize: 10,
-          color: GOLD,
-          letterSpacing: 1.5,
+          fontSize: "11px",
+          color: "#B8922A",
+          letterSpacing: "1.5px",
           fontWeight: 500,
-          textTransform: "uppercase",
-          textAlign: "center",
-          marginBottom: 16,
+          marginBottom: "16px",
         }}
       >
         📊 MA TRANSFORMATION
@@ -78,85 +54,128 @@ export function ClientAppEvolutionHero({
         style={{
           display: "grid",
           gridTemplateColumns: "1fr auto 1fr",
+          gap: "16px",
           alignItems: "center",
-          gap: 8,
         }}
       >
         <div style={{ textAlign: "center" }}>
-          <div style={{ fontSize: 9, color: MUTED, letterSpacing: 1, textTransform: "uppercase" }}>
+          <div
+            style={{
+              fontSize: "9px",
+              color: "#888",
+              letterSpacing: "1px",
+              fontWeight: 500,
+              marginBottom: "6px",
+            }}
+          >
             DÉPART
           </div>
           <div
             style={{
-              fontFamily: '"Syne", serif',
-              fontSize: 30,
-              color: MUTED,
-              lineHeight: 1.1,
-              marginTop: 4,
+              fontSize: "30px",
+              color: "#888",
+              fontWeight: 500,
+              fontFamily: "var(--font-serif)",
+              lineHeight: 1,
             }}
           >
             {startWeight.toFixed(1)}
           </div>
-          <div style={{ fontSize: 10, color: MUTED, marginTop: 4 }}>
-            {formatShort(startDate)}
+          <div style={{ fontSize: "10px", color: "#888", marginTop: "4px" }}>
+            {formatLongDate(start.date)}
           </div>
         </div>
 
-        <div style={{ fontSize: 22, color: GOLD, textAlign: "center" }} aria-hidden="true">→</div>
+        <div style={{ fontSize: "22px", color: "#B8922A" }}>→</div>
 
         <div style={{ textAlign: "center" }}>
-          <div style={{ fontSize: 9, color: GOLD, letterSpacing: 1, textTransform: "uppercase" }}>
-            AUJOURD&apos;HUI
+          <div
+            style={{
+              fontSize: "9px",
+              color: "#B8922A",
+              letterSpacing: "1px",
+              fontWeight: 500,
+              marginBottom: "6px",
+            }}
+          >
+            AUJOURD'HUI
           </div>
           <div
             style={{
-              fontFamily: '"Syne", serif',
-              fontSize: 38,
-              color: TEAL,
-              lineHeight: 1.1,
-              marginTop: 4,
+              fontSize: "38px",
+              color: isSamePoint ? "#888" : "#1D9E75",
+              fontWeight: 500,
+              fontFamily: "var(--font-serif)",
+              lineHeight: 1,
             }}
           >
             {currentWeight.toFixed(1)}
           </div>
-          <div style={{ fontSize: 10, color: TEAL, marginTop: 4 }}>
-            {formatShort(currentDate)}
+          <div style={{ fontSize: "10px", color: "#888", marginTop: "4px" }}>
+            {formatLongDate(current.date)}
           </div>
         </div>
       </div>
 
-      <div style={{ borderTop: "1px solid #eee", marginTop: 16, paddingTop: 12 }}>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+      {kgLost !== 0 || cmLost > 0 ? (
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: "8px",
+            marginTop: "16px",
+            paddingTop: "14px",
+            borderTop: "1px solid rgba(0,0,0,0.06)",
+          }}
+        >
           <div
             style={{
-              background: "#E1F5EE",
-              color: "#0F6E56",
-              borderRadius: 8,
-              padding: 12,
+              background: "#1D9E75",
+              color: "white",
+              padding: "10px 12px",
+              borderRadius: "8px",
               textAlign: "center",
             }}
           >
-            <div style={{ fontFamily: '"Syne", serif', fontSize: 18 }}>
-              - {Math.abs(kgLost).toFixed(1)} kg
+            <div
+              style={{
+                fontSize: "18px",
+                fontWeight: 500,
+                fontFamily: "var(--font-serif)",
+              }}
+            >
+              {kgLost > 0
+                ? `- ${kgLost.toFixed(1)} kg`
+                : `${kgLost.toFixed(1)} kg`}
             </div>
-            <div style={{ fontSize: 10, marginTop: 2 }}>poids perdu</div>
+            <div style={{ fontSize: "10px", opacity: 0.9, marginTop: "2px" }}>
+              {kgLost > 0 ? "poids perdu" : "évolution"}
+            </div>
           </div>
           <div
             style={{
-              background: "#FAEEDA",
-              color: "#854F0B",
-              borderRadius: 8,
-              padding: 12,
+              background: "#B8922A",
+              color: "white",
+              padding: "10px 12px",
+              borderRadius: "8px",
               textAlign: "center",
             }}
           >
-            <div style={{ fontFamily: '"Syne", serif', fontSize: 18 }}>
-              - {totalCmLost} cm
+            <div
+              style={{
+                fontSize: "18px",
+                fontWeight: 500,
+                fontFamily: "var(--font-serif)",
+              }}
+            >
+              - {cmLost} cm
             </div>
-            <div style={{ fontSize: 10, marginTop: 2 }}>centimètres en moins</div>
+            <div style={{ fontSize: "10px", opacity: 0.9, marginTop: "2px" }}>
+              centimètres en moins
+            </div>
           </div>
         </div>
-      </div>
+      ) : null}
     </div>
   );
 }
