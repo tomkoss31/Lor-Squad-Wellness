@@ -11,7 +11,11 @@ import { BreakfastStorySlider, DEFAULT_BREAKFAST_ANALYSIS } from '../components/
 import { ClientMeasurementsSection } from '../features/measurements/ClientMeasurementsSection'
 import { ClientProductsTab } from '../components/client-app/ClientProductsTab'
 import { ClientConseilsTab } from '../components/client-app/ClientConseilsTab'
-import { EnrichedAssessmentHistory } from '../components/client-app/EnrichedAssessmentHistory'
+import { ClientAppEvolutionHero } from '../components/client-app/ClientAppEvolutionHero'
+import { ClientAppKeyMetricsGrid } from '../components/client-app/ClientAppKeyMetricsGrid'
+import { ClientAppWeightChart } from '../components/client-app/ClientAppWeightChart'
+import { ClientAppMotivationMessage } from '../components/client-app/ClientAppMotivationMessage'
+import { getNextRdvDays, type BodyScanLite } from '../lib/clientAppData'
 import type { BreakfastAnalysis } from '../types/domain'
 import { useOnboardingState } from '../features/onboarding/hooks/useOnboardingState'
 import { useClientLiveData } from '../hooks/useClientLiveData'
@@ -73,64 +77,8 @@ interface ClientAppData {
   insights?: Array<{ type?: string; title: string; message: string }>
 }
 
-// ─── Mini graphique SVG ────────────────────────────────────────────────────
-function MiniLineChart({
-  data, field, color, label, unit,
-}: {
-  data: Array<Record<string, number> & { date: string }>
-  field: string
-  color: string
-  label: string
-  unit: string
-}) {
-  const values = data.map((d) => d[field]).filter((v): v is number => typeof v === 'number' && !Number.isNaN(v))
-  if (values.length < 2) return null
-
-  const min = Math.min(...values)
-  const max = Math.max(...values)
-  const range = max - min || 1
-  const W = 280, H = 56, PAD = 8
-
-  const pts = data
-    .filter((d) => typeof d[field] === 'number')
-    .map((d, i, arr) => ({
-      x: PAD + (i / (arr.length - 1)) * (W - PAD * 2),
-      y: H - PAD - ((d[field] - min) / range) * (H - PAD * 2),
-      val: d[field],
-      date: new Date(d.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }),
-    }))
-
-  const pathD = pts.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(' ')
-  const last = values[values.length - 1]
-
-  return (
-    <div style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.07)', borderRadius: 12, padding: '12px 14px', marginBottom: 10 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-        <div style={{ fontSize: 9, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 500 }}>{label}</div>
-        <div style={{ fontFamily: 'Syne, sans-serif', fontSize: 13, fontWeight: 700, color }}>
-          {last.toFixed(1)}{unit}
-        </div>
-      </div>
-      <svg width="100%" viewBox={`0 0 ${W} ${H}`} style={{ overflow: 'visible' }}>
-        <path d={pathD} fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-        {pts.map((p, i) => (
-          <g key={i}>
-            <circle cx={p.x} cy={p.y} r="3" fill={color} />
-            {(i === 0 || i === pts.length - 1) && (
-              <text x={p.x} y={p.y - 7} textAnchor={i === 0 ? 'start' : 'end'} fontSize="8" fill="#9CA3AF">
-                {p.val.toFixed(1)}{unit}
-              </text>
-            )}
-          </g>
-        ))}
-      </svg>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4 }}>
-        <span style={{ fontSize: 8, color: '#9CA3AF' }}>{pts[0]?.date}</span>
-        <span style={{ fontSize: 8, color: '#9CA3AF' }}>{pts[pts.length - 1]?.date}</span>
-      </div>
-    </div>
-  )
-}
+// MiniLineChart retiré (Refonte v2, 2026-04-25) : remplacé par
+// ClientAppWeightChart côté onglet Évolution.
 
 // ProductCard refactoré (2026-04-25) dans ClientProductsTab — l'onglet
 // Produits côté client utilise désormais des cards dédiées (Recommended /
@@ -472,79 +420,14 @@ export function ClientAppPage() {
   const latest = metrics[metrics.length - 1] as (Record<string, number> & { date: string }) | undefined
   const first = metrics[0] as (Record<string, number> & { date: string }) | undefined
 
-  const latestWeight = latest?.weight
-  const latestBodyFatPct = latest?.bodyFat
-  const latestBodyFatKg = latest && latestWeight ? (latestWeight * latest.bodyFat / 100) : null
-  const latestMusclePct = latest && latestWeight ? (latest.muscleMass / latestWeight * 100) : null
-  const latestMuscleKg = latest?.muscleMass
-  const latestVisceral = latest?.visceralFat ?? 0
-
-  const dWeight = first && latest ? (latest.weight - first.weight) : null
-  const dBodyFatKg = first && latest && first.weight && latest.weight
-    ? (latest.weight * latest.bodyFat / 100) - (first.weight * first.bodyFat / 100)
-    : null
-  const dMuscleKg = first && latest ? (latest.muscleMass - first.muscleMass) : null
-  const dVisceral = first && latest ? ((latest.visceralFat ?? 0) - (first.visceralFat ?? 0)) : null
-
-  const visceralColor = latestVisceral >= 13 ? '#DC2626' : latestVisceral >= 9 ? '#F59E0B' : '#0D9488'
-  const visceralLabel = latestVisceral >= 13 ? 'Élevée' : latestVisceral >= 9 ? 'Modérée' : 'Normale'
-
   // ─── Produits recommandés ──────────────────────────────────────────────
   const recoList = data.recommendations ?? []
   const recommendedProducts = HERBALIFE_PRODUCTS.filter((p) =>
     recoList.some((r) => (r.ref && r.ref === p.ref) || (r.name && (r.name === p.name || r.name === p.shortName)))
   )
 
-  // ─── Type local pour les cards métriques ───────────────────────────────
-  type MetricCard = {
-    label: string
-    main: string
-    sub?: string | null
-    subColor?: string
-    delta: number | null
-    unit: string
-    color: string
-    inverse: boolean
-  }
-
-  const metricCards: MetricCard[] = [
-    {
-      label: 'Poids',
-      main: latestWeight !== undefined ? `${latestWeight.toFixed(1)} kg` : '—',
-      delta: dWeight,
-      unit: 'kg',
-      color: '#B8922A',
-      inverse: false,
-    },
-    {
-      label: 'Masse grasse',
-      main: latestBodyFatPct !== undefined ? `${latestBodyFatPct.toFixed(1)} %` : '—',
-      sub: latestBodyFatKg !== null ? `soit ${latestBodyFatKg.toFixed(1)} kg` : null,
-      delta: dBodyFatKg,
-      unit: 'kg de graisse',
-      color: '#DC2626',
-      inverse: false,
-    },
-    {
-      label: 'Muscle',
-      main: latestMuscleKg !== undefined ? `${latestMuscleKg.toFixed(1)} kg` : '—',
-      sub: latestMusclePct !== null ? `${latestMusclePct.toFixed(0)}% du poids` : null,
-      delta: dMuscleKg,
-      unit: 'kg',
-      color: '#0D9488',
-      inverse: true,
-    },
-    {
-      label: 'Graisse viscérale',
-      main: `${latestVisceral}`,
-      sub: visceralLabel,
-      subColor: visceralColor,
-      delta: dVisceral,
-      unit: 'points',
-      color: latestVisceral >= 9 ? '#DC2626' : '#0D9488',
-      inverse: false,
-    },
-  ]
+  // Refonte v2 (2026-04-25) : metricCards inline retiré au profit de
+  // ClientAppKeyMetricsGrid, qui calcule deltas et formats côté composant.
 
   return (
     <div style={{ minHeight: '100vh', background: '#F7F5F0', fontFamily: 'DM Sans, sans-serif', color: '#111827', paddingBottom: 80, position: 'relative', overflow: 'hidden' }}>
@@ -768,105 +651,68 @@ export function ClientAppPage() {
             getGoogleCalendarUrl={getGoogleCalendarUrl}
             setRecoAskOpen={setRecoAskOpen}
             openProductAskModal={openProductAskModal}
+            totalCmLost={0}
+            onSeeEvolution={() => setActiveTab('evolution')}
           />
         )}
 
         {/* ══════════════════════════════════════════════════════════════ */}
         {/* ONGLET ÉVOLUTION                                                */}
         {/* ══════════════════════════════════════════════════════════════ */}
-        {activeTab === 'evolution' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            {metrics.length === 0 ? (
-              <div style={{ textAlign: 'center', color: '#9CA3AF', fontSize: 13, padding: 40 }}>Pas encore de données d'évolution</div>
-            ) : (
-              <>
-                {/* 1. Grid 2x2 métriques avec double valeur */}
-                <div style={{ fontSize: 9, letterSpacing: '2px', textTransform: 'uppercase', color: '#9CA3AF', fontWeight: 500 }}>Tes chiffres clés</div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                  {metricCards.map((card) => (
-                    <div key={card.label} style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.07)', borderRadius: 12, padding: 12, borderTop: `2px solid ${card.color}` }}>
-                      <div style={{ fontSize: 9, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 4 }}>{card.label}</div>
-                      <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 20, color: card.color, lineHeight: 1 }}>{card.main}</div>
-                      {card.sub && (
-                        <div style={{ fontSize: 10, color: card.subColor ?? '#9CA3AF', marginTop: 3 }}>{card.sub}</div>
-                      )}
-                      {card.delta !== null && (
-                        <div style={{
-                          fontSize: 10,
-                          color: (card.inverse ? card.delta > 0 : card.delta < 0) ? '#0D9488' : card.delta === 0 ? '#9CA3AF' : '#DC2626',
-                          marginTop: 4,
-                          fontWeight: 500,
-                        }}>
-                          {card.delta > 0 ? '+' : ''}{card.delta.toFixed(1)} {card.unit} depuis le début
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
+        {activeTab === 'evolution' && (() => {
+          const firstWeightOrNull =
+            first && typeof first.weight === 'number' && !Number.isNaN(first.weight) && first.weight > 0
+              ? first.weight
+              : null
+          const latestWeightOrNull =
+            latest && typeof latest.weight === 'number' && !Number.isNaN(latest.weight) && latest.weight > 0
+              ? latest.weight
+              : null
+          const firstDateOrNull = first?.date ?? null
+          const latestDateOrNull = latest?.date ?? null
 
-                {/* 2. Historique enrichi — Départ + 5 derniers (Chantier Conseils 2026-04-24) */}
-                <EnrichedAssessmentHistory
-                  metrics={metrics}
-                  programTitle={data.program_title}
-                  liveClientProgram={liveData?.client?.current_program ?? null}
-                />
+          const toBodyScan = (m: (Record<string, number> & { date: string }) | undefined): BodyScanLite | null => {
+            if (!m) return null
+            return {
+              weight: typeof m.weight === 'number' ? m.weight : null,
+              bodyFat: typeof m.bodyFat === 'number' ? m.bodyFat : null,
+              muscleMass: typeof m.muscleMass === 'number' ? m.muscleMass : null,
+              hydration: typeof m.hydration === 'number' ? m.hydration : null,
+              visceralFat: typeof m.visceralFat === 'number' ? m.visceralFat : null,
+              metabolicAge: typeof m.metabolicAge === 'number' ? m.metabolicAge : null,
+              bmr: typeof m.bmr === 'number' ? m.bmr : null,
+            }
+          }
 
-                {/* 3. Mini graphiques */}
-                {metrics.length >= 2 && (
-                  <>
-                    <div style={{ fontSize: 9, letterSpacing: '2px', textTransform: 'uppercase', color: '#9CA3AF', fontWeight: 500, marginTop: 4 }}>Courbes</div>
-                    <MiniLineChart data={metrics} field="weight" color="#B8922A" label="Poids" unit=" kg" />
-                    <MiniLineChart data={metrics} field="bodyFat" color="#DC2626" label="Masse grasse" unit="%" />
-                    <MiniLineChart data={metrics} field="muscleMass" color="#0D9488" label="Masse musculaire" unit=" kg" />
-                  </>
-                )}
+          const currentBodyScan = toBodyScan(latest)
+          const startingBodyScan = toBodyScan(first)
+          const weightHistoryFiltered = metrics
+            .filter((m) => typeof m.weight === 'number' && !Number.isNaN(m.weight) && m.weight > 0)
+            .map((m) => ({ date: m.date, weight: m.weight }))
+          const totalCmLost = 0
+          const nextRdvDays = data.next_follow_up ? getNextRdvDays(data.next_follow_up) : null
 
-                {/* 4. Explication hydratation */}
-                {latest?.hydration != null && (
-                  <div style={{ background: 'rgba(124,58,237,0.05)', border: '1px solid rgba(124,58,237,0.12)', borderRadius: 12, padding: '12px 14px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                      <div style={{ fontSize: 12, fontWeight: 600, color: '#7C3AED' }}>Hydratation</div>
-                      <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 16, color: '#7C3AED' }}>
-                        {latest.hydration.toFixed(0)}%
-                      </div>
-                    </div>
-                    <div style={{ fontSize: 11, color: '#6B7280', lineHeight: 1.6 }}>
-                      {latest.hydration < 45
-                        ? "Hydratation insuffisante. Boire 2L d'eau par jour minimum. L'aloe vera peut aider à améliorer l'absorption."
-                        : latest.hydration < 55
-                        ? "Hydratation correcte. Continue à bien t'hydrater tout au long de la journée."
-                        : "Excellente hydratation. Ton corps est bien hydraté, c'est un atout pour la récupération."}
-                    </div>
-                  </div>
-                )}
-
-                {/* 5. Insights (gardés) */}
-                {(data.insights ?? []).length > 0 && (
-                  <>
-                    <div style={{ fontSize: 9, letterSpacing: '2px', textTransform: 'uppercase', color: '#9CA3AF', fontWeight: 500, marginTop: 4 }}>Ce qui évolue</div>
-                    {(data.insights ?? []).slice(0, 3).map((insight, i) => {
-                      const borderColor = insight.type === 'positive' ? '#0D9488' : insight.type === 'warning' ? '#DC2626' : '#B8922A'
-                      return (
-                        <div key={i} style={{ background: '#fff', border: `1px solid ${borderColor}20`, borderLeft: `3px solid ${borderColor}`, borderRadius: '0 12px 12px 0', padding: '12px 14px' }}>
-                          <div style={{ fontSize: 12, fontWeight: 600, color: borderColor, marginBottom: 3 }}>{insight.title}</div>
-                          <div style={{ fontSize: 11, color: '#6B7280', lineHeight: 1.6 }}>{insight.message}</div>
-                        </div>
-                      )
-                    })}
-                  </>
-                )}
-              </>
-            )}
-
-            {/* Section Mesures — Chantier Module Mensurations (2026-04-24) */}
-            <div style={{ marginTop: 20 }}>
-              <ClientMeasurementsSection
-                clientId={data.client_id}
-                coachFirstName={data.coach_name?.split(" ")[0]}
+          return (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <ClientAppEvolutionHero
+                startWeight={firstWeightOrNull}
+                currentWeight={latestWeightOrNull}
+                startDate={firstDateOrNull}
+                currentDate={latestDateOrNull}
+                totalCmLost={totalCmLost}
               />
+              <ClientAppKeyMetricsGrid current={currentBodyScan} starting={startingBodyScan} />
+              <ClientAppWeightChart history={weightHistoryFiltered} />
+              <div style={{ marginTop: 8 }}>
+                <ClientMeasurementsSection
+                  clientId={data.client_id}
+                  coachFirstName={data.coach_name?.split(" ")[0]}
+                />
+              </div>
+              <ClientAppMotivationMessage nextRdvDays={nextRdvDays} />
             </div>
-          </div>
-        )}
+          )
+        })()}
 
         {/* ══════════════════════════════════════════════════════════════ */}
         {/* ONGLET PRODUITS — refonte 2026-04-25 (ClientProductsTab)       */}
