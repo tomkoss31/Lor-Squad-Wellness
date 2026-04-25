@@ -8,7 +8,7 @@ import { ClientPublicShareConsent } from "./ClientPublicShareConsent";
 import { createIcsDataUri } from "../../lib/googleCalendar";
 import { ClientAppHomeHero } from "./ClientAppHomeHero";
 import { ClientAppDailyAction } from "./ClientAppDailyAction";
-import { calculateDelta } from "../../lib/clientAppData";
+import type { Assessment, Measurement } from "../../lib/clientAppData";
 
 interface MetricEntry {
   date: string;
@@ -47,10 +47,14 @@ interface Props {
   getGoogleCalendarUrl: () => string;
   setRecoAskOpen: (v: boolean) => void;
   openProductAskModal: (product: HerbalifeProduct) => void;
-  /** Total cm perdus (mensurations). Optionnel V1 — défaut 0. */
+  /** Total cm perdus (mensurations) — conservé pour compat, désormais
+   *  recalculé directement depuis `measurements` par ClientAppHomeHero. */
   totalCmLost?: number;
   /** Callback passage onglet Évolution. Optionnel V1 — défaut noop. */
   onSeeEvolution?: () => void;
+  /** Mensurations normalisées (cm) issues de l'edge client-app-data.
+   *  Chantier MEGA v2 (2026-04-25) : pilote l'affichage du badge -cm. */
+  measurements?: Measurement[];
 }
 
 const TELEGRAM_GROUP_URL = "https://t.me/+ul1vgYs-uS0yNmFk";
@@ -113,7 +117,11 @@ export function ClientHomeTab({
   openProductAskModal,
   totalCmLost = 0,
   onSeeEvolution,
+  measurements = [],
 }: Props) {
+  // totalCmLost prop conservé pour rétro-compat avec d'éventuels callers
+  // mais ClientAppHomeHero recalcule lui-même via measurements.
+  void totalCmLost;
   const [rdvEditOpen, setRdvEditOpen] = useState(false);
   const [showAllValues, setShowAllValues] = useState(false);
 
@@ -239,17 +247,30 @@ export function ClientHomeTab({
           ClientAppPage qui contient déjà avatar + salutation + meta programme).
           Voir chantier Conseils 2026-04-24. */}
 
-      {/* Refonte v2 (2026-04-25) : Hero transformation + action du jour
-          injectés en haut de l'onglet Accueil. */}
+      {/* Chantier MEGA v2 (2026-04-25) : Hero transformation + action du jour.
+          Mapping metrics (flat) → Assessment[] (nested bodyScan) attendu
+          par ClientAppHomeHero. Le composant gère lui-même le cas
+          1 bilan vs 2+, et masque le badge -cm si totalCmLost === 0. */}
       <ClientAppHomeHero
-        totalKgLost={calculateDelta(latest?.weight, first?.weight)}
-        totalCmLost={totalCmLost}
-        assessmentsCount={metrics.length}
-        firstAssessmentDate={first?.date ?? null}
-        programTitle={data.program_title ?? null}
-        onSeeEvolution={onSeeEvolution}
+        assessments={metrics.map<Assessment>((m) => ({
+          date: m.date,
+          type: "follow-up",
+          bodyScan: {
+            weight: m.weight,
+            bodyFat: m.bodyFat,
+            muscleMass: m.muscleMass,
+            hydration: m.hydration,
+            visceralFat: m.visceralFat,
+            metabolicAge: m.metabolicAge,
+            bmr: m.bmr,
+          },
+        }))}
+        measurements={measurements}
+        programLabel={data.program_title ?? "Programme"}
+        startDate={first?.date ?? metrics[0]?.date ?? new Date().toISOString()}
+        onSeeEvolution={onSeeEvolution ?? (() => undefined)}
       />
-      <ClientAppDailyAction />
+      <ClientAppDailyAction onAction={() => undefined} />
 
       {/* 2. CARTE RDV */}
       {rdvInfo ? (

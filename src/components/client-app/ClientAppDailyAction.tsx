@@ -1,98 +1,69 @@
-// Action du jour (Chantier Refonte Accueil + Évolution v2, 2026-04-25).
+// Chantier MEGA app client v2 (2026-04-25).
+// Action du jour Accueil — bandeau coral border-left, icône ronde,
+// titre+sous-titre, bouton "Faire". Spec figée, code chirurgical.
 
 interface Props {
-  done?: boolean;
-  onDo?: () => void;
+  onAction: () => void;
 }
 
-const CORAL = "#D85A30";
-const TEAL = "#1D9E75";
-const TEXT = "#444";
-const MUTED = "#888";
-
-export function ClientAppDailyAction({ done = false, onDo }: Props) {
-  if (done) {
-    return (
-      <div
-        style={{
-          background: "#FFFFFF",
-          borderLeft: `4px solid ${CORAL}`,
-          padding: 16,
-          borderRadius: 12,
-          fontFamily: '"DM Sans", sans-serif',
-          display: "flex",
-          alignItems: "center",
-          gap: 8,
-        }}
-      >
-        <div style={{ fontSize: 13, fontWeight: 600, color: TEAL }}>
-          ✅ Action du jour terminée
-        </div>
-      </div>
-    );
-  }
-
+export function ClientAppDailyAction({ onAction }: Props) {
   return (
     <div
       style={{
         background: "#FFFFFF",
-        borderLeft: `4px solid ${CORAL}`,
-        padding: 16,
-        borderRadius: 12,
-        fontFamily: '"DM Sans", sans-serif',
+        borderRadius: "12px",
+        padding: "14px",
+        marginBottom: "12px",
+        borderLeft: "4px solid #D85A30",
       }}
     >
       <div
         style={{
-          fontSize: 10,
-          color: CORAL,
-          letterSpacing: 1.5,
+          fontSize: "10px",
+          color: "#D85A30",
+          letterSpacing: "1.5px",
           fontWeight: 500,
-          textTransform: "uppercase",
-          marginBottom: 10,
+          marginBottom: "8px",
         }}
       >
         ⚡ TON ACTION DU JOUR
       </div>
-      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
         <div
-          aria-hidden="true"
           style={{
-            width: 40,
-            height: 40,
-            borderRadius: 999,
-            background: "rgba(216,90,48,0.10)",
-            color: CORAL,
+            width: "40px",
+            height: "40px",
+            borderRadius: "50%",
+            background: "#FAECE7",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            fontSize: 18,
+            fontSize: "20px",
             flexShrink: 0,
           }}
         >
-          📊
+          ⚖️
         </div>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 14, fontWeight: 600, color: TEXT }}>
+        <div style={{ flex: 1 }}>
+          <div style={{ fontSize: "14px", color: "#444", fontWeight: 500 }}>
             Fais ta pesée du jour
           </div>
-          <div style={{ fontSize: 12, color: MUTED, marginTop: 2 }}>
+          <div style={{ fontSize: "11px", color: "#888", marginTop: "2px" }}>
             Note ton poids pour suivre ta courbe
           </div>
         </div>
         <button
           type="button"
-          onClick={onDo}
+          onClick={onAction}
           style={{
-            background: CORAL,
-            color: "#FFFFFF",
-            padding: "8px 14px",
-            borderRadius: 8,
+            background: "#D85A30",
+            color: "white",
             border: "none",
-            fontWeight: 600,
-            fontSize: 12,
+            padding: "8px 14px",
+            borderRadius: "8px",
+            fontSize: "12px",
+            fontWeight: 500,
             cursor: "pointer",
-            fontFamily: '"DM Sans", sans-serif',
             flexShrink: 0,
           }}
         >

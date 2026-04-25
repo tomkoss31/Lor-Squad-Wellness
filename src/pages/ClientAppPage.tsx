@@ -15,7 +15,8 @@ import { ClientAppEvolutionHero } from '../components/client-app/ClientAppEvolut
 import { ClientAppKeyMetricsGrid } from '../components/client-app/ClientAppKeyMetricsGrid'
 import { ClientAppWeightChart } from '../components/client-app/ClientAppWeightChart'
 import { ClientAppMotivationMessage } from '../components/client-app/ClientAppMotivationMessage'
-import { getNextRdvDays, type BodyScanLite } from '../lib/clientAppData'
+import { ClientAppMeasurementsBlock } from '../components/client-app/ClientAppMeasurementsBlock'
+import { getDaysUntilRdv, type Assessment, type Measurement } from '../lib/clientAppData'
 import type { BreakfastAnalysis } from '../types/domain'
 import { useOnboardingState } from '../features/onboarding/hooks/useOnboardingState'
 import { useClientLiveData } from '../hooks/useClientLiveData'
@@ -653,6 +654,7 @@ export function ClientAppPage() {
             openProductAskModal={openProductAskModal}
             totalCmLost={0}
             onSeeEvolution={() => setActiveTab('evolution')}
+            measurements={liveData?.measurements ?? []}
           />
         )}
 
@@ -660,56 +662,49 @@ export function ClientAppPage() {
         {/* ONGLET ÉVOLUTION                                                */}
         {/* ══════════════════════════════════════════════════════════════ */}
         {activeTab === 'evolution' && (() => {
-          const firstWeightOrNull =
-            first && typeof first.weight === 'number' && !Number.isNaN(first.weight) && first.weight > 0
-              ? first.weight
-              : null
-          const latestWeightOrNull =
-            latest && typeof latest.weight === 'number' && !Number.isNaN(latest.weight) && latest.weight > 0
-              ? latest.weight
-              : null
-          const firstDateOrNull = first?.date ?? null
-          const latestDateOrNull = latest?.date ?? null
-
-          const toBodyScan = (m: (Record<string, number> & { date: string }) | undefined): BodyScanLite | null => {
-            if (!m) return null
-            return {
-              weight: typeof m.weight === 'number' ? m.weight : null,
-              bodyFat: typeof m.bodyFat === 'number' ? m.bodyFat : null,
-              muscleMass: typeof m.muscleMass === 'number' ? m.muscleMass : null,
-              hydration: typeof m.hydration === 'number' ? m.hydration : null,
-              visceralFat: typeof m.visceralFat === 'number' ? m.visceralFat : null,
-              metabolicAge: typeof m.metabolicAge === 'number' ? m.metabolicAge : null,
-              bmr: typeof m.bmr === 'number' ? m.bmr : null,
-            }
-          }
-
-          const currentBodyScan = toBodyScan(latest)
-          const startingBodyScan = toBodyScan(first)
-          const weightHistoryFiltered = metrics
-            .filter((m) => typeof m.weight === 'number' && !Number.isNaN(m.weight) && m.weight > 0)
-            .map((m) => ({ date: m.date, weight: m.weight }))
-          const totalCmLost = 0
-          const nextRdvDays = data.next_follow_up ? getNextRdvDays(data.next_follow_up) : null
+          // Chantier MEGA v2 (2026-04-25) : map metrics flat → Assessment[]
+          // (nested bodyScan) attendu par les nouveaux composants.
+          const assessments: Assessment[] = metrics.map((m) => ({
+            date: m.date,
+            type: 'follow-up' as const,
+            bodyScan: {
+              weight: typeof m.weight === 'number' ? m.weight : undefined,
+              bodyFat: typeof m.bodyFat === 'number' ? m.bodyFat : undefined,
+              muscleMass: typeof m.muscleMass === 'number' ? m.muscleMass : undefined,
+              hydration: typeof m.hydration === 'number' ? m.hydration : undefined,
+              visceralFat: typeof m.visceralFat === 'number' ? m.visceralFat : undefined,
+              metabolicAge: typeof m.metabolicAge === 'number' ? m.metabolicAge : undefined,
+              bmr: typeof m.bmr === 'number' ? m.bmr : undefined,
+            },
+          }))
+          const measurementsLive: Measurement[] = liveData?.measurements ?? []
+          const daysUntilRdv = data.next_follow_up ? getDaysUntilRdv(data.next_follow_up) : null
 
           return (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              <ClientAppEvolutionHero
-                startWeight={firstWeightOrNull}
-                currentWeight={latestWeightOrNull}
-                startDate={firstDateOrNull}
-                currentDate={latestDateOrNull}
-                totalCmLost={totalCmLost}
+              <ClientAppEvolutionHero assessments={assessments} measurements={measurementsLive} />
+              <ClientAppKeyMetricsGrid assessments={assessments} />
+              <ClientAppWeightChart assessments={assessments} />
+              <ClientAppMeasurementsBlock
+                measurements={measurementsLive}
+                onAddFirst={() => {
+                  // Scroll vers la section saisie (ClientMeasurementsSection)
+                  // qui reste affichée sous le block pour la silhouette interactive.
+                  if (typeof document !== 'undefined') {
+                    const el = document.getElementById('client-measurements-section')
+                    if (el && typeof el.scrollIntoView === 'function') {
+                      el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                    }
+                  }
+                }}
               />
-              <ClientAppKeyMetricsGrid current={currentBodyScan} starting={startingBodyScan} />
-              <ClientAppWeightChart history={weightHistoryFiltered} />
-              <div style={{ marginTop: 8 }}>
+              <div id="client-measurements-section" style={{ marginTop: 8 }}>
                 <ClientMeasurementsSection
                   clientId={data.client_id}
-                  coachFirstName={data.coach_name?.split(" ")[0]}
+                  coachFirstName={data.coach_name?.split(' ')[0]}
                 />
               </div>
-              <ClientAppMotivationMessage nextRdvDays={nextRdvDays} />
+              <ClientAppMotivationMessage daysUntilRdv={daysUntilRdv} />
             </div>
           )
         })()}
