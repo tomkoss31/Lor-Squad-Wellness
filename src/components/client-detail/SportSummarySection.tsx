@@ -13,6 +13,7 @@ import {
   type ProgramChoiceId,
 } from "../../data/programs";
 import { recommendBoosters } from "../../lib/assessmentRecommendations";
+import { getEffectiveAge } from "../../lib/age";
 
 interface Props {
   client: Client;
@@ -56,7 +57,7 @@ export function SportSummarySection({ client }: Props) {
   const programId = (latest?.programId as ProgramChoiceId | undefined) ?? "sport-premium";
   const program = getProgramById(programId);
 
-  const recs = recommendBoosters(sportProfile, client.age);
+  const recs = recommendBoosters(sportProfile, getEffectiveAge(client) ?? client.age);
   const recommendedBoosters = BOOSTERS.filter((b) =>
     recs.find((r) => r.productId === b.id && r.recommended)
   );

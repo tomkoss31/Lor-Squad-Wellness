@@ -77,6 +77,8 @@ type ClientRow = {
   phone: string;
   email: string;
   age: number;
+  /** Chantier birth_date 2026-04-25 — date de naissance optionnelle. */
+  birth_date?: string | null;
   height: number;
   job: string;
   city?: string | null;
@@ -370,6 +372,7 @@ function mapClient(row: ClientRow): Client {
     phone: row.phone,
     email: row.email,
     age: row.age,
+    birthDate: row.birth_date ?? null,
     height: row.height,
     job: row.job,
     city: row.city ?? undefined,
@@ -738,6 +741,7 @@ export async function createSupabaseClientWithInitialAssessment(payload: {
       phone: payload.client.phone,
       email: payload.client.email,
       age: payload.client.age,
+      birth_date: payload.client.birthDate ?? null,
       height: payload.client.height,
       job: payload.client.job,
       city: payload.client.city ?? null,
