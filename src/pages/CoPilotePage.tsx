@@ -22,6 +22,7 @@ import { TodayAgendaCard } from "../components/copilote/TodayAgendaCard";
 import { PendingFollowupsCard } from "../components/copilote/PendingFollowupsCard";
 import { PvGaugeBand } from "../components/copilote/PvGaugeBand";
 import { InboxWidget } from "../components/copilote/InboxWidget";
+import { BirthdayBlock } from "../components/copilote/BirthdayBlock";
 
 function useLiveClock(): Date {
   const [now, setNow] = useState(() => new Date());
@@ -33,7 +34,7 @@ function useLiveClock(): Date {
 }
 
 export function CoPilotePage() {
-  const { currentUser } = useAppContext();
+  const { currentUser, clients } = useAppContext();
   const { push: pushToast } = useToast();
   const now = useLiveClock();
 
@@ -85,6 +86,18 @@ export function CoPilotePage() {
 
       {/* Zone 2 — Hero action */}
       <HeroActionCard nextAction={data.nextAction} now={now} />
+
+      {/* Chantier birthday (2026-04-25) : bloc anniversaires des clients
+          (aujourd'hui + 7 prochains jours). Scope sur les clients du distri
+          en mode normal, sur tous en mode global admin (alignement avec
+          la logique useCopiloteData). */}
+      <BirthdayBlock
+        clients={
+          isAdmin && globalView === "global"
+            ? clients
+            : clients.filter((c) => c.distributorId === currentUser.id)
+        }
+      />
 
       {/* Widget messages (chantier 5) — conservé car complémentaire : Hero
           et Duo montrent RDV/suivis, l'Inbox montre les demandes clients. */}
