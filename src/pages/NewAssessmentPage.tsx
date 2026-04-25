@@ -20,7 +20,7 @@ import { ProgramChoiceCard } from "../components/assessment/ProgramChoiceCard";
 import { RoutineMatinList } from "../components/assessment/RoutineMatinList";
 import { ProgrammeTicket, type TicketAddOn } from "../components/assessment/ProgrammeTicket";
 import { SelectableProductCard } from "../components/assessment/SelectableProductCard";
-import { PROGRAM_CHOICES, PROGRAM_INCLUDED_PRODUCT_IDS, getProgramById, BOOSTERS, type ProgramChoiceId } from "../data/programs";
+import { PROGRAM_CHOICES, getProgramById, BOOSTERS, type ProgramChoiceId } from "../data/programs";
 import { FelicitationsStep } from "../components/assessment/FelicitationsStep";
 import { NotesPanel } from "../components/assessment/NotesPanel";
 import { ValidationBlockedBanner } from "../components/assessment/ValidationBlockedBanner";
@@ -685,12 +685,15 @@ export function NewAssessmentPage() {
   // displayedProgramPrice* + addOnProductsTotalPrice retirés avec le résumé
   // administratif (Chantier Félicitations 2026-04-20). selectedProgram reste
   // utilisé pour le titre programme dans handleSaveAssessment.
-  const includedProgramProductIds = activeProgram
-    ? new Set(PROGRAM_INCLUDED_PRODUCT_IDS[activeProgram.id] ?? [])
-    : new Set<string>();
-  const addOnProducts = selectedRecommendationProducts.filter(
-    (product) => !includedProgramProductIds.has(product.id)
-  );
+  // Chantier fix bugs panier (2026-04-27) : on retire le filtre
+  // `includedProgramProductIds` qui exclut auparavant tout produit déjà
+  // inclus dans le programme de base. Conséquence du filtre : Formula 1,
+  // PDM, Mélange Boisson Protéinée etc. cochés "Retenu" dans les sections
+  // besoins restaient invisibles dans le total. Désormais : si l'utilisateur
+  // coche "Retenir" sur un produit, il apparaît toujours dans les ajouts
+  // (avec sa quantité), même si le programme inclut déjà 1 unité. Le coach
+  // pilote le stockage explicitement via le stepper.
+  const addOnProducts = selectedRecommendationProducts;
 
   useEffect(() => {
     if (currentStepId !== 'program') {
