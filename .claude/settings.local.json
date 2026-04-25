@@ -89,7 +89,21 @@
       "Bash(grep -cE \"og:image|twitter:card|application/ld\\\\\\\\+json\" index.html)",
       "Bash(gh pr create --base claude/focused-pike --head feat/ics-calendar-button --title 'feat\\(client-app\\): bouton .ics sous CTA RDV' --body ' *)",
       "Bash(awk 'NR>=1016 && NR<=1100' src/pages/ClientAppPage.tsx)",
-      "Bash(awk '/^      {activeTab === 5 && \\\\\\(/,/^      \\\\\\)}$/' src/pages/ClientDetailPage.tsx)"
+      "Bash(awk '/^      {activeTab === 5 && \\\\\\(/,/^      \\\\\\)}$/' src/pages/ClientDetailPage.tsx)",
+      "Bash(git fetch *)",
+      "Bash(git stash *)",
+      "Bash(git checkout *)",
+      "Bash(git pull *)",
+      "Bash(git merge *)",
+      "Bash(git reset *)",
+      "Bash(gh pr create --base dev/thomas-test --head feat/top5-audit-fixes --title 'Top 5 fixes audit \\(Bug #5, #4, #11, #6, #3\\)' --body ' *)",
+      "Bash(gh pr *)",
+      "Bash(supabase secrets *)",
+      "Bash(npx vercel *)",
+      "Bash(cat)",
+      "Bash(cp /tmp/audit_report.md \"C:/Users/tomko/Documents/Lor'Squad Wellness/docs/AUDIT_CLIENT_APP_25042026.md\")",
+      "Bash(python3)",
+      "Bash(echo \"EXIT=$?\")"
     ]
   }
 }
