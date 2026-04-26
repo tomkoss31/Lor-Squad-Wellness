@@ -93,7 +93,7 @@ export function CoPilotePage() {
           la logique useCopiloteData). */}
       <BirthdayBlock
         clients={
-          isAdmin && globalView === "global"
+          isAdmin && globalView
             ? clients
             : clients.filter((c) => c.distributorId === currentUser.id)
         }
