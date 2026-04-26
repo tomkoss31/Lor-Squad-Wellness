@@ -3,11 +3,36 @@
 // Thomas. Couleurs hardcodees palette Lor'Squad. Le contenu interactif
 // par section arrive en Phase 2.
 
+import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useAcademyProgress } from "../features/academy/hooks/useAcademyProgress";
 import { ACADEMY_SECTIONS, type AcademySection } from "../features/academy/sections";
+import { ConfettiBurst } from "../features/academy/components/ConfettiBurst";
 
 export function AcademyOverviewPage() {
   const { view, goToSection, restartSection } = useAcademyProgress();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const justCompletedId = searchParams.get("completed");
+  const [confettiActive, setConfettiActive] = useState(false);
+  const [pulseSectionId, setPulseSectionId] = useState<string | null>(null);
+
+  // Polish ludique (2026-04-27) : retour de section terminee → pulse
+  // vert sur la row + confetti fullscreen si Academy 100% completee.
+  useEffect(() => {
+    if (!justCompletedId || !view.loaded) return;
+    setPulseSectionId(justCompletedId);
+    if (view.isCompleted) {
+      setConfettiActive(true);
+    }
+    // Cleanup query param sans push history
+    const next = new URLSearchParams(searchParams);
+    next.delete("completed");
+    setSearchParams(next, { replace: true });
+    // Pulse termine apres 1500ms
+    const t = window.setTimeout(() => setPulseSectionId(null), 1500);
+    return () => window.clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [justCompletedId, view.loaded, view.isCompleted]);
 
   if (!view.loaded) {
     return (
@@ -70,6 +95,7 @@ export function AcademyOverviewPage() {
               strokeDasharray={ringCircumference}
               strokeDashoffset={ringDashoffset}
               transform="rotate(-90 42 42)"
+              style={{ transition: "stroke-dashoffset 800ms cubic-bezier(0.4, 0, 0.2, 1)" }}
             />
             <text
               x="42"
@@ -144,6 +170,7 @@ export function AcademyOverviewPage() {
                 index={idx}
                 section={section}
                 state={isDone ? "done" : isCurrent ? "current" : "todo"}
+                pulse={pulseSectionId === section.id}
                 onContinue={isCurrent ? () => goToSection(section.id) : undefined}
                 onRestart={
                   isDone
@@ -158,6 +185,42 @@ export function AcademyOverviewPage() {
           })}
         </div>
       </div>
+      {confettiActive ? (
+        <ConfettiBurst onComplete={() => setConfettiActive(false)} count={80} durationMs={4500} />
+      ) : null}
+      {/* Keyframes pulse + bandeau celebration injectes ici pour rester
+          self-contained (pas de fichier CSS externe). */}
+      <style>{`
+        @keyframes ls-academy-pulse {
+          0% { box-shadow: 0 0 0 0 rgba(29,158,117,0.55), 0 0 0 0 rgba(29,158,117,0.0); }
+          50% { box-shadow: 0 0 0 8px rgba(29,158,117,0.18), 0 0 22px 4px rgba(29,158,117,0.35); }
+          100% { box-shadow: 0 0 0 0 rgba(29,158,117,0), 0 0 0 0 rgba(29,158,117,0); }
+        }
+      `}</style>
+      {confettiActive ? (
+        <div
+          role="status"
+          style={{
+            position: "fixed",
+            top: 24,
+            left: "50%",
+            transform: "translateX(-50%)",
+            zIndex: 99998,
+            background: "linear-gradient(135deg, #1D9E75, #0F6E56)",
+            color: "white",
+            padding: "14px 24px",
+            borderRadius: 14,
+            fontFamily: "var(--ls-font-serif, Georgia, serif)",
+            fontSize: 17,
+            fontWeight: 500,
+            boxShadow: "0 12px 30px rgba(29,158,117,0.4)",
+            letterSpacing: "0.01em",
+            animation: "ls-academy-pulse 2s ease-out",
+          }}
+        >
+          🎉 Academy complétée — bravo !
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -184,11 +247,18 @@ interface SectionRowProps {
   index: number;
   section: AcademySection;
   state: "done" | "current" | "todo";
+  /** Si true, anime un pulse vert sur la row (1.5s). Polish ludique. */
+  pulse?: boolean;
   onContinue?: () => void;
   onRestart?: () => void;
 }
 
-function SectionRow({ index, section, state, onContinue, onRestart }: SectionRowProps) {
+function SectionRow({ index, section, state, pulse, onContinue, onRestart }: SectionRowProps) {
+  // Style anim pulse partage entre les 3 variantes (done/current/todo).
+  const pulseStyle: React.CSSProperties = pulse
+    ? { animation: "ls-academy-pulse 1.5s ease-out", borderColor: "#1D9E75" }
+    : {};
+
   if (state === "done") {
     return (
       <div
@@ -200,6 +270,7 @@ function SectionRow({ index, section, state, onContinue, onRestart }: SectionRow
           padding: "12px 14px",
           borderRadius: 10,
           border: "0.5px solid #E5DFCF",
+          ...pulseStyle,
         }}
       >
         <div
@@ -267,6 +338,7 @@ function SectionRow({ index, section, state, onContinue, onRestart }: SectionRow
           padding: 14,
           borderRadius: 10,
           border: "1.5px solid #B8922A",
+          ...pulseStyle,
         }}
       >
         <div

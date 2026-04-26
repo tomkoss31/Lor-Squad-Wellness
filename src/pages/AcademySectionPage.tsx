@@ -40,8 +40,12 @@ export function AcademySectionPage() {
           } catch (err) {
             console.warn("[AcademySectionPage] markSectionDone failed", err);
           }
+          // Polish ludique (2026-04-27) : query param pour declencher
+          // l animation de celebration + confetti cote overview.
+          navigate(`/academy?completed=${encodeURIComponent(section.id)}`);
+        } else {
+          navigate("/academy");
         }
-        navigate("/academy");
       },
     });
 
