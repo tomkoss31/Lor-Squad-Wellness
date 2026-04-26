@@ -31,6 +31,7 @@ export type ProtocolIneligibilityReason =
   | "no_initial_assessment"
   | "too_old" // bilan initial > PROTOCOL_MAX_DAYS_ELIGIBLE jours
   | "lifecycle_inactive" // stopped / lost / paused
+  | "not_started" // client pas encore démarré (started=false / lifecycle=not_started)
   | "no_program" // pas de programId ni de selectedProductIds
   | "no_body_scan"; // pas de poids mesuré > 0
 
@@ -51,6 +52,24 @@ export function evaluateProtocolEligibility(
   const maxDays = options?.maxDays ?? PROTOCOL_MAX_DAYS_ELIGIBLE;
   const now = options?.now ?? new Date();
   const reasons: ProtocolIneligibilityReason[] = [];
+
+  // Garde-fou (Chantier O, 2026-04-26) : client doit être démarré.
+  // 3 signaux possibles selon le pattern existant — on est permissif :
+  //   - started === true : flag explicite poussé par le bilan
+  //   - lifecycleStatus === "active" / "completed" : statut métier OK
+  //   - startDate présent : date de démarrage saisie
+  // Si AUCUN n'est positif → client "Programme à confirmer" → on coupe
+  // tôt, avant même de tester bilan/programme/body scan. Cela évite que
+  // les J+X polluent le dashboard pour des prospects pas encore engagés.
+  const hasStartDate = typeof client.startDate === "string" && client.startDate.trim().length > 0;
+  const isStarted =
+    client.started === true ||
+    client.lifecycleStatus === "active" ||
+    hasStartDate;
+  if (!isStarted) {
+    reasons.push("not_started");
+    return { eligible: false, reasons };
+  }
 
   // Filtre 1 : Date récente
   const initialDate = getInitialAssessmentDate(client);
@@ -109,6 +128,8 @@ export function labelForIneligibilityReason(reason: ProtocolIneligibilityReason)
       return `Bilan initial il y a plus de ${PROTOCOL_MAX_DAYS_ELIGIBLE} jours`;
     case "lifecycle_inactive":
       return "Client inactif (stoppé, perdu ou en pause)";
+    case "not_started":
+      return "Client pas encore démarré (programme à confirmer)";
     case "no_program":
       return "Pas de programme nutrition assigné";
     case "no_body_scan":
