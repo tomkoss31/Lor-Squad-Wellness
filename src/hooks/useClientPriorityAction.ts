@@ -13,6 +13,7 @@
 import { useMemo } from "react";
 import type { Client, FollowUp } from "../types/domain";
 import { RDV_GRACE_PERIOD_MS } from "../lib/timeConstants";
+import { isClientProgramStarted } from "../lib/calculations";
 
 export type PriorityActionType =
   | "plan_rdv"
@@ -41,6 +42,13 @@ export function computePriorityAction(
   const now = new Date();
   const assessmentsCount = client.assessments?.length ?? 0;
   const initialAssessment = client.assessments?.find((a) => a.type === "initial");
+  // Garde-fou (Chantier 2026-04-27) : aligne sur evaluateProtocolEligibility.
+  // Les cas complete_initial / send_followup / request_share_consent n'ont
+  // de sens QUE si le client est démarré. Sinon, le bloc "Action prioritaire"
+  // affichait à tort "J+3 · Ressentis" pour des prospects "Programme à
+  // confirmer" (cas Ethan Feron). plan_rdv reste actif (légitime de planifier
+  // un RDV même pour un client non démarré).
+  const isStarted = isClientProgramStarted(client);
   const latestAssessment = [...(client.assessments ?? [])].sort(
     (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
   )[0];
@@ -82,7 +90,7 @@ export function computePriorityAction(
   if (!initialAssessment?.bodyScan?.weight || initialAssessment.bodyScan.weight === 0) {
     missingFields.push("poids initial");
   }
-  if (missingFields.length > 0) {
+  if (isStarted && missingFields.length > 0) {
     return {
       type: "complete_initial",
       icon: "⚠️",
@@ -105,7 +113,7 @@ export function computePriorityAction(
   // détectait J+X (via assessment.date) alors que ce hook sautait la
   // branche send_followup → incohérence dashboard Co-pilote ↔ fiche.
   const startAnchorDate = initialAssessment?.date ?? client.startDate;
-  if (!client.freeFollowUp && startAnchorDate) {
+  if (isStarted && !client.freeFollowUp && startAnchorDate) {
     const startDate = new Date(startAnchorDate);
     const daysSinceStart = daysBetween(startDate, now);
     const checkpoints = [1, 3, 7, 10, 14];
@@ -125,7 +133,7 @@ export function computePriorityAction(
   }
 
   // ─── 4. request_share_consent ────────────────────────────────────────
-  if (!client.publicShareConsent && assessmentsCount >= 2) {
+  if (isStarted && !client.publicShareConsent && assessmentsCount >= 2) {
     return {
       type: "request_share_consent",
       icon: "📤",
