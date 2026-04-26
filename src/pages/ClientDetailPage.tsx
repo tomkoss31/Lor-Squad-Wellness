@@ -237,6 +237,7 @@ export function ClientDetailPage() {
             <button
               type="button"
               onClick={() => setAccessModalOpen(true)}
+              data-tour-id="client-send-access"
               className="inline-flex min-h-[40px] items-center gap-2 rounded-[12px] px-4 py-2 text-sm font-semibold text-white transition"
               style={{
                 background: 'linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)',
@@ -702,7 +703,7 @@ export function ClientDetailPage() {
           </div>
 
           {/* Produits en possession */}
-          <Card className="space-y-4">
+          <Card className="space-y-4" data-tour-id="program-recommendations">
             <div className="flex items-center justify-between">
               <div>
                 <p className="eyebrow-label">Programme actuel</p>

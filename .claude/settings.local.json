@@ -95,7 +95,9 @@
       "Bash(grep -n \"import.*useAppContext\\\\|from \\\\\"\\\\\\\\.\\\\\\\\./context\\\\\\\\|from \\\\\"\\\\\\\\.\\\\\\\\./\\\\\\\\.\\\\\\\\./context\" src/features/onboarding/hooks/useTourProgress.ts)",
       "Bash(grep -rn \"from \\\\\"\\\\\\\\.\\\\\\\\./.*supabaseClient\\\\|getSupabaseClient\" src/features --include=\"*.ts\" --include=\"*.tsx\")",
       "Bash(grep -n \"return\\\\|<\\\\\\\\\\\\\\\\?>\\\\|</section>\\\\|</main>\\\\|^}\" src/pages/DistributorPortfolioPage.tsx)",
-      "Bash(grep -n \"</div>$\\\\|</div>\\\\\\\\s*$\\\\|</section>\\\\\\\\s*$\" src/pages/DistributorPortfolioPage.tsx)"
+      "Bash(grep -n \"</div>$\\\\|</div>\\\\\\\\s*$\\\\|</section>\\\\\\\\s*$\" src/pages/DistributorPortfolioPage.tsx)",
+      "Bash(sed -n '440,450p' src/pages/AgendaPage.tsx)",
+      "Bash(sed -n '243,250p' src/pages/ClientDetailPage.tsx)"
     ]
   }
 }

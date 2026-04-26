@@ -440,7 +440,7 @@ export function AgendaPage() {
             Voir mes priorités →
           </Link>
         </div>
-        <Button onClick={() => { setEditing(undefined); setShowForm(true); }}>
+        <Button onClick={() => { setEditing(undefined); setShowForm(true); }} data-tour-id="agenda-new-rdv">
           + Nouveau RDV
         </Button>
       </div>
