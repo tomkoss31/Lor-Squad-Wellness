@@ -89,7 +89,9 @@
       "Bash(grep -cE \"og:image|twitter:card|application/ld\\\\\\\\+json\" index.html)",
       "Bash(gh pr create --base claude/focused-pike --head feat/ics-calendar-button --title 'feat\\(client-app\\): bouton .ics sous CTA RDV' --body ' *)",
       "Bash(awk 'NR>=1016 && NR<=1100' src/pages/ClientAppPage.tsx)",
-      "Bash(awk '/^      {activeTab === 5 && \\\\\\(/,/^      \\\\\\)}$/' src/pages/ClientDetailPage.tsx)"
+      "Bash(awk '/^      {activeTab === 5 && \\\\\\(/,/^      \\\\\\)}$/' src/pages/ClientDetailPage.tsx)",
+      "Bash(npm test *)",
+      "Bash(node -e \"import\\('./src/features/academy/sections.ts'\\).then\\(m => console.log\\('ACADEMY_TOTAL_DURATION_MINUTES =', m.ACADEMY_TOTAL_DURATION_MINUTES, '| count =', m.ACADEMY_SECTION_COUNT\\)\\)\")"
     ]
   }
 }

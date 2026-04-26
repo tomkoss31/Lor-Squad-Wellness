@@ -17,6 +17,9 @@ const NAV_ICONS: Record<string, JSX.Element> = {
   "/co-pilote": (
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
   ),
+  "/academy": (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+  ),
   "/agenda": (
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
   ),
@@ -90,8 +93,11 @@ export function AppLayout() {
   // Accueil → Co-pilote, suppression Recommandations/Nouveau bilan (FAB
   // top-right à la place), fusion Guide RDV + Guide suivi → Centre de
   // formation, ajout Paramètres en bas. Ordre exact validé avec Thomas.
-  const navigation = [
+  const navigation: Array<{ label: string; path: string; badge: number; tourId?: string }> = [
     { label: "Co-pilote", path: "/co-pilote", badge: 0 },
+    // Chantier Lor'Squad Academy Phase 1 (2026-04-26) : insere entre
+    // Co-pilote et Agenda. data-tour-id pour la Phase 2 (tour distri).
+    { label: "Academy", path: "/academy", badge: 0, tourId: "nav-academy" },
     { label: "Agenda", path: "/agenda", badge: todayProspectsCount },
     { label: "Messagerie", path: "/messages", badge: unreadMessageCount ?? 0 },
     { label: "Dossiers clients", path: "/clients", badge: 0 },
@@ -203,7 +209,8 @@ export function AppLayout() {
                 (item.path === "/co-pilote" && location.pathname === "/dashboard") ||
                 (item.path === "/clients" && location.pathname.startsWith("/clients/")) ||
                 (item.path === "/pv" && location.pathname.startsWith("/pv")) ||
-                (item.path === "/formation" && location.pathname.startsWith("/guide"));
+                (item.path === "/formation" && location.pathname.startsWith("/guide")) ||
+                (item.path === "/academy" && location.pathname.startsWith("/academy/"));
 
               // Chantier Mini-fix V2 Co-pilote (2026-04-24) : bouton
               // "+ Nouveau bilan" déplacé du FAB top-right vers la sidebar,
@@ -255,6 +262,7 @@ export function AppLayout() {
                   ) : null}
                   <NavLink
                     to={item.path}
+                    data-tour-id={item.tourId}
                     className="flex items-center gap-3 rounded-r-[12px] text-[13px] transition"
                     style={{
                       padding: '9px 12px 9px 14px',

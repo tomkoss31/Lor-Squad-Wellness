@@ -160,6 +160,19 @@ const CoPilotePage = lazy(() =>
     default: module.CoPilotePage
   }))
 );
+// Chantier Lor'Squad Academy Phase 1 (2026-04-26) : parcours onboarding
+// distri en 8 sections. Overview = liste + progression, /academy/:sectionId
+// = page de section (placeholder Phase 1, tutoriel interactif Phase 2).
+const AcademyOverviewPage = lazy(() =>
+  import("./pages/AcademyOverviewPage").then((module) => ({
+    default: module.AcademyOverviewPage
+  }))
+);
+const AcademySectionPage = lazy(() =>
+  import("./pages/AcademySectionPage").then((module) => ({
+    default: module.AcademySectionPage
+  }))
+);
 // Chantier Centre de Formation V1 (2026-04-23) : la home /formation est
 // FormationPage (catalogue avec progression), /formation/:slug pointe
 // vers FormationCategoryPage.
@@ -233,6 +246,9 @@ export default function App() {
                   /dashboard redirige pour ne pas casser les liens existants. */}
               <Route path="co-pilote" element={<CoPilotePage />} />
               <Route path="dashboard" element={<Navigate to="/co-pilote" replace />} />
+              {/* Lor'Squad Academy Phase 1 (2026-04-26) */}
+              <Route path="academy" element={<AcademyOverviewPage />} />
+              <Route path="academy/:sectionId" element={<AcademySectionPage />} />
               <Route path="formation" element={<FormationPage />} />
               <Route path="formation/:slug" element={<FormationCategoryPage />} />
               {/* /settings (non-admin) reste accessible comme placeholder profil léger.

@@ -1,0 +1,112 @@
+// Chantier Refactor onboarding additif (2026-04-26).
+// Composant SpotlightOverlay extrait de OnboardingTutorial.tsx pour
+// permettre la reutilisation par TourRunner (Academy) sans dupliquer
+// la logique des 4 bandes + ring gold.
+//
+// Comportement strictement identique a la version inline d origine :
+//   - targetRect null  → overlay plein ecran sans decoupe
+//   - targetRect fourni → 4 bandes fixes autour + ring gold #EF9F27
+
+import type { CSSProperties } from "react";
+
+export interface SpotlightOverlayProps {
+  targetRect: DOMRect | null;
+  /** z-index du dim. Le ring gold est dessine au meme niveau. Defaut 10000. */
+  zIndex?: number;
+}
+
+export function SpotlightOverlay({
+  targetRect,
+  zIndex = 10000,
+}: SpotlightOverlayProps) {
+  // Si pas de rect (stage modale), overlay plein. Sinon, decoupe via
+  // 4 rectangles autour de la cible pour laisser passer le spotlight.
+  if (!targetRect) {
+    return (
+      <div
+        role="presentation"
+        style={{
+          position: "fixed",
+          inset: 0,
+          background: "rgba(10, 15, 25, 0.6)",
+          backdropFilter: "blur(2px)",
+          zIndex,
+        }}
+      />
+    );
+  }
+  const pad = 8;
+  return (
+    <>
+      {/* 4 bandes autour du rect */}
+      <OverlayBand
+        zIndex={zIndex}
+        style={{ top: 0, left: 0, right: 0, height: Math.max(0, targetRect.top - pad) }}
+      />
+      <OverlayBand
+        zIndex={zIndex}
+        style={{
+          top: Math.max(0, targetRect.top - pad),
+          left: 0,
+          width: Math.max(0, targetRect.left - pad),
+          height: targetRect.height + pad * 2,
+        }}
+      />
+      <OverlayBand
+        zIndex={zIndex}
+        style={{
+          top: Math.max(0, targetRect.top - pad),
+          left: Math.min(window.innerWidth, targetRect.right + pad),
+          right: 0,
+          height: targetRect.height + pad * 2,
+        }}
+      />
+      <OverlayBand
+        zIndex={zIndex}
+        style={{
+          top: Math.min(window.innerHeight, targetRect.bottom + pad),
+          left: 0,
+          right: 0,
+          bottom: 0,
+        }}
+      />
+      {/* Ring gold autour du target */}
+      <div
+        style={{
+          position: "fixed",
+          top: targetRect.top - pad,
+          left: targetRect.left - pad,
+          width: targetRect.width + pad * 2,
+          height: targetRect.height + pad * 2,
+          border: "2px solid #EF9F27",
+          borderRadius: 12,
+          zIndex,
+          pointerEvents: "none",
+          boxShadow: "0 0 0 2px rgba(239,159,39,0.25)",
+        }}
+      />
+    </>
+  );
+}
+
+function OverlayBand({
+  style,
+  zIndex,
+}: {
+  style: CSSProperties;
+  zIndex: number;
+}) {
+  return (
+    <div
+      role="presentation"
+      aria-hidden
+      style={{
+        position: "fixed",
+        background: "rgba(10, 15, 25, 0.6)",
+        backdropFilter: "blur(2px)",
+        zIndex,
+        ...style,
+      }}
+    />
+  );
+}
