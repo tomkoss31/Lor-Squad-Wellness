@@ -99,14 +99,14 @@ export function AppLayout() {
   // top-right à la place), fusion Guide RDV + Guide suivi → Centre de
   // formation, ajout Paramètres en bas. Ordre exact validé avec Thomas.
   const navigation: Array<{ label: string; path: string; badge: number; tourId?: string }> = [
-    { label: "Co-pilote", path: "/co-pilote", badge: 0 },
+    { label: "Co-pilote", path: "/co-pilote", badge: 0, tourId: "nav-copilote" },
     // Chantier Lor'Squad Academy Phase 1 (2026-04-26) : insere entre
     // Co-pilote et Agenda. data-tour-id pour la Phase 2 (tour distri).
     { label: "Academy", path: "/academy", badge: 0, tourId: "nav-academy" },
-    { label: "Agenda", path: "/agenda", badge: todayProspectsCount },
-    { label: "Messagerie", path: "/messages", badge: unreadMessageCount ?? 0 },
-    { label: "Dossiers clients", path: "/clients", badge: 0 },
-    { label: "Suivi PV", path: "/pv", badge: pvOverdueCount },
+    { label: "Agenda", path: "/agenda", badge: todayProspectsCount, tourId: "nav-agenda" },
+    { label: "Messagerie", path: "/messages", badge: unreadMessageCount ?? 0, tourId: "nav-messagerie" },
+    { label: "Dossiers clients", path: "/clients", badge: 0, tourId: "nav-clients" },
+    { label: "Suivi PV", path: "/pv", badge: pvOverdueCount, tourId: "nav-pv" },
     ...(currentUser.role === "admin" ? [{ label: "Mon équipe", path: "/team", badge: 0 }] : []),
     { label: "Centre de formation", path: "/formation", badge: 0 },
     // Chantier Paramètres Admin (2026-04-23) : /parametres full UI pour
@@ -228,6 +228,7 @@ export function AppLayout() {
                     <NavLink
                       key="new-bilan-cta"
                       to="/assessments/new"
+                      data-tour-id="nav-new-bilan"
                       aria-label="Nouveau bilan"
                       className="flex items-center gap-2 text-[13px] transition"
                       style={{

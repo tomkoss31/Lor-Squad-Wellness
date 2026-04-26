@@ -6,6 +6,7 @@
 import { useNavigate, useParams } from "react-router-dom";
 import { useAcademyProgress } from "../features/academy/hooks/useAcademyProgress";
 import { getAcademySectionById } from "../features/academy/sections";
+import { TourRunner } from "../features/onboarding/TourRunner";
 
 export function AcademySectionPage() {
   const { sectionId } = useParams<{ sectionId: string }>();
@@ -13,6 +14,22 @@ export function AcademySectionPage() {
   const { markSectionDone } = useAcademyProgress();
 
   const section = sectionId ? getAcademySectionById(sectionId) : undefined;
+
+  // Si la section a des steps, on lance le TourRunner. Sinon (Phase 1
+  // sections vides), on retombe sur le placeholder ci-dessous.
+  if (section && section.steps.length > 0) {
+    return (
+      <TourRunner
+        steps={section.steps}
+        onClose={(reason) => {
+          if (reason === "completed") {
+            markSectionDone(section.id);
+          }
+          navigate("/academy");
+        }}
+      />
+    );
+  }
 
   if (!section) {
     return (
