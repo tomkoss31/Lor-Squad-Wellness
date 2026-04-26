@@ -3,57 +3,64 @@
 // Phase 1, c est un placeholder informatif — le tutoriel interactif
 // arrive en Phase 2 (un chantier par section).
 
+import { useEffect, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAcademyProgress } from "../features/academy/hooks/useAcademyProgress";
 import { getAcademySectionById } from "../features/academy/sections";
-import { TourRunner } from "../features/onboarding/TourRunner";
+import { useActiveTour } from "../features/onboarding/ActiveTourContext";
 
 export function AcademySectionPage() {
   const { sectionId } = useParams<{ sectionId: string }>();
   const navigate = useNavigate();
   const { markSectionDone } = useAcademyProgress();
+  const { startTour } = useActiveTour();
 
   const section = sectionId ? getAcademySectionById(sectionId) : undefined;
 
-  // Si la section a des steps, on lance le TourRunner. Sinon (Phase 1
-  // sections vides), on retombe sur le placeholder ci-dessous.
+  // Chantier Academy section 1 fix runtime (2026-04-27) : on demarre le
+  // tour via le contexte global (rendu par AppLayout) puis on navigue
+  // immediatement a la 1ere route du tour. AcademySectionPage peut alors
+  // unmount sans tuer le tour.
+  const startedRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!section || section.steps.length === 0) return;
+    if (startedRef.current === section.id) return;
+    startedRef.current = section.id;
+
+    startTour({
+      id: section.id,
+      steps: section.steps,
+      onClose: (reason) => {
+        if (reason === "completed") {
+          markSectionDone(section.id);
+        }
+        navigate("/academy");
+      },
+    });
+
+    // Si la 1ere step a une route, naviguer immediatement vers elle
+    // (sinon on attend que TourRunner le fasse — mais comme cette page
+    // sera unmount des le navigate, on prefere etre proactif).
+    const firstRoute = section.steps[0]?.route;
+    if (firstRoute) {
+      navigate(firstRoute);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [section?.id]);
+
+  // Pendant que le tour s active et navigue, afficher un fond neutre.
   if (section && section.steps.length > 0) {
     return (
-      <>
-        {/* Bouton retour discret pendant le tour. zIndex au-dessus du
-            tooltip pour rester accessible meme en cas de bug overlay. */}
-        <button
-          type="button"
-          onClick={() => navigate("/academy")}
-          style={{
-            position: "fixed",
-            top: 12,
-            left: 12,
-            zIndex: 10003,
-            background: "rgba(255,255,255,0.95)",
-            color: "#5F5E5A",
-            border: "0.5px solid #C9C2AB",
-            padding: "6px 12px",
-            borderRadius: 8,
-            fontSize: 12,
-            fontWeight: 500,
-            cursor: "pointer",
-            fontFamily: "var(--ls-font-sans, system-ui, sans-serif)",
-            boxShadow: "0 2px 6px rgba(0,0,0,0.1)",
-          }}
-        >
-          ← Toutes les sections
-        </button>
-        <TourRunner
-          steps={section.steps}
-          onClose={(reason) => {
-            if (reason === "completed") {
-              markSectionDone(section.id);
-            }
-            navigate("/academy");
-          }}
-        />
-      </>
+      <div
+        style={{
+          padding: 40,
+          textAlign: "center",
+          color: "#6B6B62",
+          fontFamily: "var(--ls-font-sans, system-ui, sans-serif)",
+        }}
+      >
+        Lancement du tutoriel…
+      </div>
     );
   }
 

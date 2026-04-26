@@ -209,6 +209,7 @@ const ConversationView = lazy(() =>
 import { useTheme } from './hooks/useTheme'
 import { useAutoNotifications } from './hooks/useAutoNotifications'
 import { useAppContext } from './context/AppContext'
+import { ActiveTourProvider } from './features/onboarding/ActiveTourContext'
 
 export default function App() {
   useTheme()
@@ -223,6 +224,7 @@ export default function App() {
 
   return (
     <BrowserRouter>
+      <ActiveTourProvider>
       <Suspense fallback={<RouteLoadingScreen />}>
         <ErrorBoundary>
         <Routes>
@@ -310,6 +312,7 @@ export default function App() {
         </ErrorBoundary>
       </Suspense>
       <ToastHost />
+      </ActiveTourProvider>
     </BrowserRouter>
   );
 }

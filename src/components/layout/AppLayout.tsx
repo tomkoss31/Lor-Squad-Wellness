@@ -13,6 +13,8 @@ import { getRoleLabel } from "../../lib/auth";
 import { useAcademyAutoTrigger } from "../../features/academy/hooks/useAcademyAutoTrigger";
 import { AcademyReminderDialog } from "../../features/academy/components/AcademyReminderDialog";
 import { CoachInstallPwaButton } from "../pwa/CoachInstallPwaButton";
+import { useActiveTour } from "../../features/onboarding/ActiveTourContext";
+import { TourRunner } from "../../features/onboarding/TourRunner";
 
 // Chantier Refonte Navigation (2026-04-22) : sidebar simplifiée +
 // renommage Accueil → Co-pilote. Ajout /formation et /settings.
@@ -84,6 +86,10 @@ export function AppLayout() {
   // Chantier Academy Phase 1 (2026-04-26) : popup auto-trigger 1×/jour
   // pour distributeurs n ayant pas encore termine la formation.
   const academyTrigger = useAcademyAutoTrigger();
+  // Chantier Academy section 1 fix runtime (2026-04-27) : TourRunner
+  // monte au niveau AppLayout pour survivre aux changements de route
+  // pendant un tour (ex : navigate /academy/welcome -> /parametres).
+  const { activeTour, closeTour } = useActiveTour();
 
   if (!currentUser) {
     return null;
@@ -534,6 +540,13 @@ export function AppLayout() {
       <BottomNav />
       {academyTrigger.isOpen ? (
         <AcademyReminderDialog onClose={academyTrigger.close} />
+      ) : null}
+      {activeTour ? (
+        <TourRunner
+          key={activeTour.id}
+          steps={activeTour.steps}
+          onClose={(reason) => closeTour(reason)}
+        />
       ) : null}
     </div>
   );
