@@ -152,7 +152,7 @@ export function ClientAppPage() {
   // Fetch des données live (programme / RDV / produits) via
   // client-app-data. Priorité : liveData > snapshot. Refresh on focus
   // debounced 5s. Si l'edge function fail, on garde le snapshot.
-  const { liveData, dataSource } = useClientLiveData(token)
+  const { liveData, dataSource, refetch: refetchLive } = useClientLiveData(token)
 
   // Merge liveData dans data dès qu'on a les 2 (snapshot + live fetchés).
   // Live gagne sur snapshot (snapshot = figé, live = source de vérité DB).
@@ -684,6 +684,10 @@ export function ClientAppPage() {
             totalCmLost={0}
             onSeeEvolution={() => setActiveTab('evolution')}
             measurements={liveData?.measurements ?? []}
+            clientToken={token}
+            nextFollowUpId={liveData?.next_follow_up?.id ?? null}
+            nextFollowUpAddedToCalendarAt={liveData?.next_follow_up?.added_to_calendar_at ?? null}
+            onCalendarConfirmed={() => { void refetchLive() }}
           />
         )}
 
