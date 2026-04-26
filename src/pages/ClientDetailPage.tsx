@@ -67,7 +67,12 @@ export function ClientDetailPage() {
   const [reportUrl, setReportUrl] = useState<string | null>(null);
   const [generatingReport, setGeneratingReport] = useState(false);
   // Chantier Client access unification (2026-04-24)
-  const [accessModalOpen, setAccessModalOpen] = useState(false);
+  // Academy polish (2026-04-27) : auto-open via ?openAccessModal=true
+  // pour permettre au tour Academy de pointer le QR + share buttons.
+  const [accessModalOpen, setAccessModalOpen] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return new URLSearchParams(window.location.search).get("openAccessModal") === "true";
+  });
   // Refonte Actions Tab (2026-04-26) : les states editPhone/editEmail/
   // editCity/transferFeedback/nextOwnerId et les handlers handleDelete/
   // handleTransfer sont désormais internes à ActionsTab.tsx.

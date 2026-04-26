@@ -349,7 +349,7 @@ export function MessagesPage() {
       />
 
       {/* Tabs */}
-      <div style={{ display: 'flex', gap: 6, background: 'var(--ls-surface)', border: '1px solid var(--ls-border)', borderRadius: 12, padding: 4, width: 'fit-content', flexWrap: 'wrap' }}>
+      <div data-tour-id="messages-tabs" style={{ display: 'flex', gap: 6, background: 'var(--ls-surface)', border: '1px solid var(--ls-border)', borderRadius: 12, padding: 4, width: 'fit-content', flexWrap: 'wrap' }}>
         {([
           { key: 'clients' as Tab, label: 'Demandes clients', count: unreadClients, icon: '📅' },
           { key: 'products' as Tab, label: 'Demandes produits', count: unreadProducts, icon: '🛒' },

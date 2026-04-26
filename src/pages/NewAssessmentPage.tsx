@@ -1273,7 +1273,7 @@ export function NewAssessmentPage() {
           </div>
 
           {currentStepId === 'client-info' && (
-              <div className="space-y-4">
+              <div className="space-y-4" data-tour-id="bilan-client-info">
                 <div className="grid gap-4 md:grid-cols-2">
                   <Field label="Prenom" value={form.firstName} onChange={(v) => update("firstName", v)} prefilled={prefilledFields.firstName} />
                   <Field label="Nom" value={form.lastName} onChange={(v) => update("lastName", v)} prefilled={prefilledFields.lastName} />
@@ -1526,7 +1526,7 @@ export function NewAssessmentPage() {
           )}
 
           {currentStepId === 'health-objective' && (
-              <div className="space-y-4">
+              <div className="space-y-4" data-tour-id="bilan-objective">
               <SectionBlock title="Bloc 7 - Allergies, transit et contexte pathologique" description="Ajouter seulement les points sante utiles pour cadrer l'accompagnement.">
                 <div className="grid gap-4 md:grid-cols-2">
                   <Field
@@ -1653,7 +1653,7 @@ export function NewAssessmentPage() {
           )}
 
           {currentStepId === 'body-scan' && (
-            <div className="space-y-4">
+            <div className="space-y-4" data-tour-id="bilan-body-scan">
               {/* Saisie body scan — grille claire */}
               <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
                 {[
@@ -2308,7 +2308,7 @@ export function NewAssessmentPage() {
               Etape precedente
             </Button>
             <div className="flex flex-wrap gap-3">
-              <Button variant="secondary" onClick={() => void handleSaveAssessment()}>
+              <Button variant="secondary" onClick={() => void handleSaveAssessment()} data-tour-id="bilan-submit">
                 Enregistrer le bilan
               </Button>
               <Button onClick={goToNextStep} disabled={currentStep === steps.length - 1}>

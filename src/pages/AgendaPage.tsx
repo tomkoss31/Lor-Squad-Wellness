@@ -478,7 +478,8 @@ export function AgendaPage() {
       )}
 
       {/* Onglets entité (Chantier Agenda unifié 2026-04-20) */}
-      <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+      <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }} data-tour-id="agenda-filters">
+
         <EntityTab
           label="Tous"
           count={entityCounts.all}

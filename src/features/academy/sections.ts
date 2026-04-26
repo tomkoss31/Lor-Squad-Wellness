@@ -11,6 +11,12 @@ async function routeToClientFiche(): Promise<string> {
   return id ? `/clients/${id}` : "/clients";
 }
 
+/** Builder qui ouvre la fiche client + auto-open ClientAccessModal. */
+async function routeToClientFicheWithAccessModal(): Promise<string> {
+  const id = await getDemoClientId();
+  return id ? `/clients/${id}?openAccessModal=true` : "/clients";
+}
+
 /**
  * Identifiant utilise par useTourProgress et user_tour_progress.tour_key
  * pour scoper la progression du parcours Academy.
@@ -192,27 +198,36 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
       },
       {
         id: "client-info",
+        target: '[data-tour-id="bilan-client-info"]',
+        placement: "bottom",
+        route: "/assessments/new?demo=academy",
         title: "Étape 1 — Qui est ton client ?",
         body: "Prénom, nom, téléphone, email, sexe, âge. Si la personne existe déjà dans ta base (téléphone reconnu), Lor'Squad t'ouvre sa fiche et tu fais un suivi au lieu d'un bilan initial. Sinon création auto. Le téléphone sert ensuite à envoyer le récap par WhatsApp en 1 clic.",
-        placement: "center",
+        manualAdvance: true,
       },
       {
         id: "body-scan",
+        target: '[data-tour-id="bilan-body-scan"]',
+        placement: "bottom",
         title: "Le body scan — 4 chiffres qui parlent",
         body: "Poids, masse grasse, hydratation, masse musculaire. Ces 4 indicateurs deviennent ton tableau de bord pour montrer les progrès dans le temps. Source idéale : balance Tanita ou impédancemètre (mais l'estimation visuelle marche pour démarrer). Bonus : âge métabolique, masse osseuse et graisse viscérale si la balance les donne.",
-        placement: "center",
+        manualAdvance: true,
       },
       {
         id: "objective",
+        target: '[data-tour-id="bilan-objective"]',
+        placement: "bottom",
         title: "L'objectif change tout le programme",
         body: "Deux univers : perte de poids (programme nutrition standard) ou sport (6 sous-objectifs : prise de masse, force, sèche, endurance, fitness, compétition). Pour le sport, 2 étapes en plus arrivent : profil sport (fréquence, types) et apports actuels (protéines par moment de la journée). Toutes les recommandations produits qui suivent sont calibrées sur ce choix.",
-        placement: "center",
+        manualAdvance: true,
       },
       {
         id: "submit",
+        target: '[data-tour-id="bilan-submit"]',
+        placement: "top",
         title: "Le programme se génère tout seul",
         body: "Lor'Squad propose les bons produits selon le bilan : Formula 1, CR7 Drive, Rebuild Strength, créatine, collagène, hydrate, plus les boosters cliquables (avec stepper de quantité par produit). Détection automatique de 6 alertes (hydratation faible, protéines basses, sommeil court, masse musculaire, snack manquant, fréquence sport incohérente) qu'il faut acquitter avant validation. Pas de bilan validé sans alertes lues.",
-        placement: "center",
+        manualAdvance: true,
       },
       {
         id: "outro",
@@ -307,13 +322,19 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
         manualAdvance: true,
       },
       {
-        id: "upcoming",
-        target: '[data-tour-id="agenda-upcoming"]',
-        placement: "top",
+        id: "filters",
+        target: '[data-tour-id="agenda-filters"]',
+        placement: "bottom",
         route: "/agenda",
+        title: "Filtres entité — 4 vues en 1 clic",
+        body: "Les pills en haut de page filtrent ton agenda par type : Tous (vue mixte), Clients (RDV programmés), Prospects (1ers contacts à travailler), Suivis (relances protocole en attente). Chaque pill affiche un compteur live et un point coloré pour reconnaître le type d'un coup d'œil (gold = clients, purple = prospects, teal = suivis).",
+        manualAdvance: true,
+      },
+      {
+        id: "client-export",
         title: "Côté client : Google Agenda + .ics",
         body: "Sur la card RDV de son app, le client a 4 actions : « Ajouter au calendrier » (lien Google Calendar direct, ouvre l'agenda du téléphone), « Fichier .ics » (téléchargement universel iOS/Android/Outlook), « Itinéraire » (Google Maps La Base) et « Modifier » (envoie une demande de changement). Une checkbox « Ajouté à mon agenda » permet au client de confirmer — tu vois la confirmation côté fiche coach.",
-        manualAdvance: true,
+        placement: "center",
       },
       {
         id: "follow-up",
@@ -349,8 +370,26 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
         id: "messages-tab",
         target: '[data-tour-id="nav-messagerie"]',
         placement: "bottom",
-        title: "Messagerie — 3 inbox + compose",
-        body: "3 onglets : Demandes clients (RDV, questions), Demandes produits (commandes), Recommandations (clients qui te recommandent à un proche). Le CTA gold « + Démarrer une conversation » initie un échange en 2 clics. Notifs push automatiques sur ton téléphone via Web Push (3 types : nouveau message, RDV imminent à 5 min, digest matin à 7h).",
+        title: "Messagerie — onglet sidebar",
+        body: "L'onglet Messagerie centralise toutes les demandes reçues depuis l'app cliente. Compteur rouge sur l'icône = messages non lus. Notifs push automatiques sur ton téléphone via Web Push (3 types : nouveau message, RDV imminent à 5 min, digest matin à 7h).",
+        manualAdvance: true,
+      },
+      {
+        id: "messages-tabs",
+        target: '[data-tour-id="messages-tabs"]',
+        placement: "bottom",
+        route: "/messages",
+        title: "3 inbox spécialisés",
+        body: "Sur la page Messagerie, les pills en haut séparent les types de demandes : Demandes clients (questions, RDV, ressentis), Demandes produits (commandes en attente), Recommandations (clients qui te recommandent à un proche). Chaque pill affiche son compteur de non-lus en temps réel.",
+        manualAdvance: true,
+      },
+      {
+        id: "compose",
+        target: '[data-tour-id="messages-compose"]',
+        placement: "bottom",
+        route: "/messages",
+        title: "Démarrer une conversation",
+        body: "Le CTA gold en haut de Messagerie ouvre une modale compose : tu sélectionnes un client dans ta base + tu rédiges ton message + Envoyer. Le client reçoit une push notif et le message s'affiche dans son onglet « Coach » de l'app. Pratique pour relancer ou féliciter sans attendre qu'il écrive.",
         manualAdvance: true,
       },
       {
@@ -407,6 +446,23 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
         routeBuilder: routeToClientFiche,
         title: "« Envoyer l'accès » — bouton gold",
         body: "Sur la fiche client, ce CTA gold lance la génération d'un token UUID unique (valide 1 an). Il ouvre une modale unifiée avec 4 canaux : QR code (scan en RDV), WhatsApp (lien préformaté), SMS (lien court), Copier-coller (paste manuel). Tu peux régénérer le token à tout moment si compromis.",
+        manualAdvance: true,
+      },
+      {
+        id: "qr-code",
+        target: '[data-tour-id="client-access-qr"]',
+        placement: "bottom",
+        routeBuilder: routeToClientFicheWithAccessModal,
+        title: "Le QR code — démo en RDV",
+        body: "Quand tu cliques « Envoyer l'accès », la modale s'ouvre avec un QR code 180×180. En RDV physique, ton client le scanne avec l'appareil photo de son téléphone — l'app s'ouvre instantanément sur son espace personnel, prêt à être ajouté à l'écran d'accueil. Effet wahou garanti.",
+        manualAdvance: true,
+      },
+      {
+        id: "share-buttons",
+        target: '[data-tour-id="client-access-share"]',
+        placement: "top",
+        title: "WhatsApp / SMS — partage à distance",
+        body: "Si pas de RDV physique, deux boutons : WhatsApp (vert, ouvre une conversation pré-rempllie avec le lien et un message), SMS (teal, native iOS/Android avec le lien). Le bouton gold « Copier le lien » couvre tous les autres canaux (Telegram, Messenger, mail). Le client clique, son app s'ouvre, ton job est fait.",
         manualAdvance: true,
       },
       {
