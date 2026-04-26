@@ -263,6 +263,10 @@ export interface Client {
    *  est calculé dynamiquement via lib/age.getEffectiveAge. Champ age
    *  conservé pour rétrocompatibilité. Chantier birth_date 2026-04-25. */
   birthDate?: string | null;
+  /** Timestamp ISO du dernier message anniversaire envoye au client.
+   *  NULL = jamais envoye. Utilise pour exclure du bloc 🎂 les clients
+   *  deja notifies cette annee. Chantier N (2026-04-26). */
+  birthdaySentAt?: string | null;
   height: number;
   job: string;
   city?: string;
