@@ -7,7 +7,7 @@ import { useAcademyProgress } from "../features/academy/hooks/useAcademyProgress
 import { ACADEMY_SECTIONS, type AcademySection } from "../features/academy/sections";
 
 export function AcademyOverviewPage() {
-  const { view, goToSection } = useAcademyProgress();
+  const { view, goToSection, restartSection } = useAcademyProgress();
 
   if (!view.loaded) {
     return (
@@ -145,6 +145,14 @@ export function AcademyOverviewPage() {
                 section={section}
                 state={isDone ? "done" : isCurrent ? "current" : "todo"}
                 onContinue={isCurrent ? () => goToSection(section.id) : undefined}
+                onRestart={
+                  isDone
+                    ? () => {
+                        restartSection(section.id);
+                        goToSection(section.id);
+                      }
+                    : undefined
+                }
               />
             );
           })}
@@ -177,9 +185,10 @@ interface SectionRowProps {
   section: AcademySection;
   state: "done" | "current" | "todo";
   onContinue?: () => void;
+  onRestart?: () => void;
 }
 
-function SectionRow({ index, section, state, onContinue }: SectionRowProps) {
+function SectionRow({ index, section, state, onContinue, onRestart }: SectionRowProps) {
   if (state === "done") {
     return (
       <div
@@ -224,6 +233,25 @@ function SectionRow({ index, section, state, onContinue }: SectionRowProps) {
             {section.estimatedDurationMinutes} min · Terminé
           </p>
         </div>
+        {onRestart ? (
+          <button
+            type="button"
+            onClick={onRestart}
+            style={{
+              background: "transparent",
+              border: "0.5px solid #C9C2AB",
+              color: "#6B6B62",
+              padding: "5px 10px",
+              borderRadius: 6,
+              fontSize: 11,
+              fontWeight: 500,
+              cursor: "pointer",
+              flexShrink: 0,
+            }}
+          >
+            ↻ Recommencer
+          </button>
+        ) : null}
       </div>
     );
   }

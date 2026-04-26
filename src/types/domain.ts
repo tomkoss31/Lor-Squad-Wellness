@@ -120,6 +120,10 @@ export interface User {
   telegram?: string;
   createdAt?: string;
   lastAccessAt?: string;
+  /** ID Herbalife officiel. Chantier Academy refonte (2026-04-27). */
+  herbalifeId?: string | null;
+  /** ID du coach interne qui suit ce user. Chantier Academy (2026-04-27). */
+  coachReferentUserId?: string | null;
 }
 
 export interface AuthSession {

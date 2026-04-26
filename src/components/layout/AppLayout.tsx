@@ -12,6 +12,7 @@ import { useTheme } from "../../hooks/useTheme";
 import { getRoleLabel } from "../../lib/auth";
 import { useAcademyAutoTrigger } from "../../features/academy/hooks/useAcademyAutoTrigger";
 import { AcademyReminderDialog } from "../../features/academy/components/AcademyReminderDialog";
+import { CoachInstallPwaButton } from "../pwa/CoachInstallPwaButton";
 
 // Chantier Refonte Navigation (2026-04-22) : sidebar simplifiée +
 // renommage Accueil → Co-pilote. Ajout /formation et /settings.
@@ -331,6 +332,8 @@ export function AppLayout() {
               gap: 10,
             }}
           >
+            {/* Bouton install PWA — visible si le navigateur expose le prompt */}
+            <CoachInstallPwaButton />
             {/* Ligne profil + bouton Sortir inline */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <div style={{

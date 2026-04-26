@@ -31,11 +31,20 @@ function formatDate(iso?: string | null): string {
 }
 
 export function ProfilTab() {
-  const { currentUser, logout } = useAppContext();
+  const { currentUser, logout, users } = useAppContext();
   const { push: pushToast } = useToast();
   const navigate = useNavigate();
 
   const [name, setName] = useState(currentUser?.name ?? "");
+  const [herbalifeId, setHerbalifeId] = useState(currentUser?.herbalifeId ?? "");
+  const [sponsorId, setSponsorId] = useState(currentUser?.sponsorId ?? "");
+  const [coachReferentUserId, setCoachReferentUserId] = useState(
+    currentUser?.coachReferentUserId ?? "",
+  );
+  const coachOptions = useMemo(
+    () => users.filter((u) => u.role === "admin" || u.role === "referent"),
+    [users],
+  );
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -73,7 +82,12 @@ export function ProfilTab() {
       if (!sb) throw new Error("Service indisponible.");
       const { error: updateErr } = await sb
         .from("users")
-        .update({ name: trimmed })
+        .update({
+          name: trimmed,
+          herbalife_id: herbalifeId.trim() || null,
+          sponsor_id: sponsorId.trim() || null,
+          coach_referent_user_id: coachReferentUserId || null,
+        })
         .eq("id", currentUser!.id);
       if (updateErr) throw new Error(updateErr.message);
       pushToast({
@@ -197,6 +211,73 @@ export function ProfilTab() {
             >
               {currentUser.email}
             </div>
+          </LabeledField>
+          <LabeledField label="Ton ID Herbalife">
+            <input
+              value={herbalifeId}
+              onChange={(e) => setHerbalifeId(e.target.value)}
+              disabled={saving}
+              placeholder="Ton identifiant officiel (8 chiffres)"
+              data-tour-id="profile-herbalife-id"
+              style={{
+                width: "100%",
+                padding: "10px 12px",
+                borderRadius: 10,
+                border: "1px solid var(--ls-border)",
+                background: "var(--ls-surface2)",
+                color: "var(--ls-text)",
+                fontSize: 14,
+                fontFamily: "DM Sans, sans-serif",
+                outline: "none",
+              }}
+            />
+          </LabeledField>
+          <LabeledField label="ID de ton sponsor">
+            <input
+              value={sponsorId}
+              onChange={(e) => setSponsorId(e.target.value)}
+              disabled={saving}
+              placeholder="La personne qui t'a parrainé"
+              data-tour-id="profile-sponsor"
+              style={{
+                width: "100%",
+                padding: "10px 12px",
+                borderRadius: 10,
+                border: "1px solid var(--ls-border)",
+                background: "var(--ls-surface2)",
+                color: "var(--ls-text)",
+                fontSize: 14,
+                fontFamily: "DM Sans, sans-serif",
+                outline: "none",
+              }}
+            />
+          </LabeledField>
+          <LabeledField label="Ton coach référent">
+            <select
+              value={coachReferentUserId}
+              onChange={(e) => setCoachReferentUserId(e.target.value)}
+              disabled={saving}
+              data-tour-id="profile-coach-referent"
+              style={{
+                width: "100%",
+                padding: "10px 12px",
+                borderRadius: 10,
+                border: "1px solid var(--ls-border)",
+                background: "var(--ls-surface2)",
+                color: "var(--ls-text)",
+                fontSize: 14,
+                fontFamily: "DM Sans, sans-serif",
+                outline: "none",
+                cursor: "pointer",
+              }}
+            >
+              <option value="">— Aucun —</option>
+              {coachOptions.map((u) => (
+                <option key={u.id} value={u.id}>
+                  {u.name}
+                </option>
+              ))}
+            </select>
           </LabeledField>
           <LabeledField label="Rôle">
             <div

@@ -25,8 +25,9 @@ export interface TourRunnerProps {
   onStepChange?: (stepIndex: number) => void;
 }
 
-/** Delai max d attente d apparition d une cible avant skip auto. */
-const TARGET_TIMEOUT_MS = 3000;
+/** Delai max d attente d apparition d une cible avant skip auto.
+ *  Augmente a 6s (Vague 0.3) pour les transitions cross-route lentes. */
+const TARGET_TIMEOUT_MS = 6000;
 /** Periode du recompute rect (rescroll-safe, async-safe). */
 const RECT_POLL_MS = 500;
 

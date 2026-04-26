@@ -544,6 +544,7 @@ export function AgendaPage() {
       </Card>
 
       {/* Liste groupée — rendu unifié clients + prospects */}
+      <div data-tour-id="agenda-upcoming">
       {grouped.length === 0 ? (
         <Card>
           <div style={{ textAlign: "center", padding: "32px 0" }}>
@@ -615,6 +616,7 @@ export function AgendaPage() {
           </div>
         ))
       )}
+      </div>
 
       {/* Form modal */}
       {showForm && (

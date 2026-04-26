@@ -143,5 +143,17 @@ export function useAcademyProgress() {
     markAcademySkipped: state.loaded ? markSkipped : NOOP,
     markReminderDismissedToday: state.loaded ? markDismissedToday : NOOP,
     resetForReplay,
+    /**
+     * Restart section : remet le last_step Academy a l index de la
+     * section visee. Utile pour le bouton "Recommencer" sur
+     * AcademySectionPage. Si la section visee est apres lastStep
+     * actuel, on n avance PAS (sinon on saute des sections non vues) ;
+     * on remet juste a l index de la section pour la "rouvrir".
+     */
+    restartSection: (sectionId: string) => {
+      const idx = getAcademySectionIndex(sectionId);
+      if (idx < 0) return;
+      markStep(idx);
+    },
   };
 }
