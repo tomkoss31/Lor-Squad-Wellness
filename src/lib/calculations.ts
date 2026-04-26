@@ -593,9 +593,14 @@ function formatDurationNumber(value: number) {
 // "dashboard voit J+1, fiche dit pas démarré".
 
 export function isClientProgramStarted(client: Client): boolean {
+  // Chantier "lifecycle primaire" (2026-04-26) : lifecycle_status est un
+  // champ manuel coach et fait foi. Si "not_started" → on respecte cette
+  // décision peu importe les autres signaux DB (started, startDate, weight)
+  // qui peuvent être remplis automatiquement par le flow bilan initial.
+  if (client.lifecycleStatus === "not_started") return false;
+  if (client.lifecycleStatus === "active" || client.lifecycleStatus === "paused") return true;
   if (client.started === true) return true;
   if (typeof client.startDate === "string" && client.startDate.length > 0) return true;
-  if (client.lifecycleStatus === "active" || client.lifecycleStatus === "paused") return true;
   const initial = client.assessments?.find((a) => a.type === "initial");
   if (initial?.bodyScan?.weight && initial.bodyScan.weight > 0) return true;
   return false;

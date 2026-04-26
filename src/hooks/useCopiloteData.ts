@@ -179,6 +179,11 @@ export function useCopiloteData(now: Date, globalView: boolean = false): Copilot
     const PROTOCOL_DAYS = [1, 3, 7, 10] as const;
 
     for (const client of myClients) {
+      // Garde-fou (Chantier "lifecycle primaire", 2026-04-26) : un client
+      // marque manuellement "Pas demarre" par le coach ne doit pas polluer
+      // le dashboard avec des suivis J+X, meme si started=true / startDate
+      // sont remplis automatiquement par le flow bilan initial.
+      if (client.lifecycleStatus === "not_started") continue;
       // Prend la date du bilan initial (ou le plus ancien).
       const initial =
         client.assessments?.find((a) => a.type === "initial") ??
