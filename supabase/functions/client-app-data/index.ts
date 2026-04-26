@@ -212,7 +212,7 @@ serve(async (req) => {
 
       supabase
         .from("follow_ups")
-        .select("id, due_date, status, type")
+        .select("id, due_date, status, type, added_to_calendar_at")
         .eq("client_id", clientId)
         .in("status", ["scheduled", "pending"])
         .gte("due_date", new Date().toISOString())
@@ -608,6 +608,8 @@ serve(async (req) => {
             due_date: nextFollowUpIso,
             status: (followUpRes.data as { status: string }).status,
             type: (followUpRes.data as { type?: string | null }).type ?? null,
+            added_to_calendar_at:
+              (followUpRes.data as { added_to_calendar_at?: string | null }).added_to_calendar_at ?? null,
           }
         : null,
       current_products: productsRes.data ?? [],

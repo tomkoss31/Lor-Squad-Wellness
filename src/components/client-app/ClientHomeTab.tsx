@@ -55,6 +55,15 @@ interface Props {
   /** Mensurations normalisées (cm) issues de l'edge client-app-data.
    *  Chantier MEGA v2 (2026-04-25) : pilote l'affichage du badge -cm. */
   measurements?: Measurement[];
+  /** Chantier J (2026-04-26) : checkbox "Ajouté à mon agenda".
+   *  Token client (uuid) pour appeler client-app-confirm-calendar. */
+  clientToken?: string | null;
+  /** Id du follow_up affiché — requis pour confirmer côté serveur. */
+  nextFollowUpId?: string | null;
+  /** Timestamp ISO de confirmation client (ou null si pas confirmé). */
+  nextFollowUpAddedToCalendarAt?: string | null;
+  /** Callback appelé après confirmation réussie (refetch live data). */
+  onCalendarConfirmed?: () => void;
 }
 
 const TELEGRAM_GROUP_URL = "https://t.me/+ul1vgYs-uS0yNmFk";
@@ -118,6 +127,10 @@ export function ClientHomeTab({
   totalCmLost = 0,
   onSeeEvolution,
   measurements = [],
+  clientToken,
+  nextFollowUpId,
+  nextFollowUpAddedToCalendarAt,
+  onCalendarConfirmed,
 }: Props) {
   // Props rétro-compat conservés pour ne pas casser les callers,
   // mais inutilisés depuis le refactor v2 (2026-04-25).
@@ -126,6 +139,47 @@ export function ClientHomeTab({
   void recommendedProducts;
   void openProductAskModal;
   const [rdvEditOpen, setRdvEditOpen] = useState(false);
+
+  // Chantier J (2026-04-26) : confirmation "Ajouté à mon agenda".
+  // Optimistic UI : on flip localement dès le clic, on rollback si l'edge
+  // function échoue. Le refetch via onCalendarConfirmed() resync ensuite.
+  const [calendarConfirmedLocal, setCalendarConfirmedLocal] = useState<boolean>(
+    !!nextFollowUpAddedToCalendarAt,
+  );
+  const [calendarConfirmLoading, setCalendarConfirmLoading] = useState(false);
+  useEffect(() => {
+    setCalendarConfirmedLocal(!!nextFollowUpAddedToCalendarAt);
+  }, [nextFollowUpAddedToCalendarAt]);
+
+  const handleConfirmCalendar = async () => {
+    if (calendarConfirmedLocal || calendarConfirmLoading) return;
+    if (!clientToken || !nextFollowUpId) return;
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined;
+    const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
+    if (!supabaseUrl || !anonKey) return;
+    setCalendarConfirmLoading(true);
+    setCalendarConfirmedLocal(true); // optimistic
+    try {
+      const res = await fetch(
+        `${supabaseUrl}/functions/v1/client-app-confirm-calendar`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${anonKey}`,
+          },
+          body: JSON.stringify({ token: clientToken, followUpId: nextFollowUpId }),
+        },
+      );
+      if (!res.ok) throw new Error(`status ${res.status}`);
+      onCalendarConfirmed?.();
+    } catch (err) {
+      console.warn("[rdv] confirm calendar failed", err);
+      setCalendarConfirmedLocal(false); // rollback
+    } finally {
+      setCalendarConfirmLoading(false);
+    }
+  };
 
   // Confettis premier login
   const [showConfetti, setShowConfetti] = useState(false);
@@ -301,6 +355,34 @@ export function ClientHomeTab({
               }}>📅 .ics</a>
             ) : null}
           </div>
+          {nextFollowUpId && clientToken ? (
+            <div style={{ marginTop: 10, display: "flex", alignItems: "center", gap: 8 }}>
+              <input
+                type="checkbox"
+                id="rdv-added-to-calendar"
+                checked={calendarConfirmedLocal}
+                disabled={calendarConfirmedLocal || calendarConfirmLoading}
+                onChange={(e) => {
+                  if (e.target.checked) void handleConfirmCalendar();
+                }}
+                style={{ width: 16, height: 16, cursor: calendarConfirmedLocal ? "default" : "pointer" }}
+              />
+              <label
+                htmlFor="rdv-added-to-calendar"
+                style={{
+                  fontSize: 12,
+                  color: calendarConfirmedLocal ? "#1D9E75" : "#888",
+                  fontWeight: 500,
+                  cursor: calendarConfirmedLocal ? "default" : "pointer",
+                  userSelect: "none",
+                }}
+              >
+                {calendarConfirmedLocal
+                  ? "✅ Ajouté à mon agenda"
+                  : "Confirmer l'ajout à mon agenda"}
+              </label>
+            </div>
+          ) : null}
           {rdvEditOpen ? (
             <div style={{ marginTop: 10, padding: 10, background: "#F8F8F8", borderRadius: 8 }}>
               {rdvSent ? (

@@ -57,6 +57,7 @@ export interface ClientLiveData {
     due_date: string | null; // ISO 8601
     status: string;
     type: string | null;
+    added_to_calendar_at?: string | null;
   } | null;
   current_products: Array<{
     id: string;
