@@ -263,6 +263,12 @@ export default function App() {
               <Route path="messagerie/conversation/:messageId" element={<ConversationView />} />
               <Route path="agenda" element={<AgendaPage />} />
               <Route path="clients" element={<ClientsPage />} />
+              {/* Chantier Academy section 1 (2026-04-27) : /parametres
+                  desormais accessible a TOUS les users authentifies (pas
+                  seulement admin) car le profil est une page perso. La
+                  page elle-meme cache les onglets admin-only via les
+                  checks role internes. */}
+              <Route path="parametres" element={<ParametresPage />} />
               <Route element={<RoleRoute allowedRoles={["admin"]} />}>
                 <Route path="users" element={<UsersPage />} />
                 {/* Chantier Team Tree (2026-04-25) : nouvelle fiche équipe
@@ -271,9 +277,6 @@ export default function App() {
                 <Route path="team" element={<TeamPage />} />
                 <Route path="pv/team" element={<PvTeamPage />} />
                 <Route path="debug/notifications" element={<DebugNotificationsPage />} />
-                {/* Chantier Paramètres Admin (2026-04-23) : /parametres admin-only.
-                    /settings redirige pour compat avec la placeholder du chantier 2. */}
-                <Route path="parametres" element={<ParametresPage />} />
               </Route>
               <Route path="distributors/:distributorId" element={<DistributorPortfolioPage />} />
               <Route path="clients/:clientId" element={<ClientDetailPage />} />

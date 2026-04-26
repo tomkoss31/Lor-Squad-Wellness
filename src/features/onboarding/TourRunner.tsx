@@ -107,6 +107,10 @@ export function TourRunner({
     } catch (err) {
       console.warn("[TourRunner] onEnter threw", err);
     }
+    // Debug log par step transition (2026-04-27).
+    console.log(
+      `[TourRunner] step ${currentStepIndex + 1}/${steps.length} id=${currentStep.id} route=${currentStep.route ?? "—"} target=${currentStep.target ?? "—"}`,
+    );
     previousStepRef.current = currentStepIndex;
     onStepChange?.(currentStepIndex);
     // eslint-disable-next-line react-hooks/exhaustive-deps

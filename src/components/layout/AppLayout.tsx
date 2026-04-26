@@ -110,11 +110,12 @@ export function AppLayout() {
     { label: "Suivi PV", path: "/pv", badge: pvOverdueCount, tourId: "nav-pv" },
     ...(currentUser.role === "admin" ? [{ label: "Mon équipe", path: "/team", badge: 0 }] : []),
     { label: "Centre de formation", path: "/formation", badge: 0 },
-    // Chantier Paramètres Admin (2026-04-23) : /parametres full UI pour
-    // les admins, /settings placeholder profil pour les autres.
+    // Chantier Academy section 1 (2026-04-27) : /parametres pour tous
+    // les users authentifies (la page gere elle-meme la visibilite des
+    // onglets admin-only via checks internes).
     {
       label: "Paramètres",
-      path: currentUser.role === "admin" ? "/parametres" : "/settings",
+      path: "/parametres",
       badge: 0,
     },
   ];
