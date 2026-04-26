@@ -137,12 +137,22 @@ export function useTourProgress(tourKey: string) {
 
         const row = (progressRes.data as DbRow | null) ?? null;
         if (row) {
+          // Fix race condition (2026-04-27) : MERGE localStorage + DB en
+          // gardant le MAX de progression. Si l upsert DB precedent est
+          // lent, le localStorage peut avoir lastStep plus haut que la
+          // DB. On ne doit JAMAIS regresser (lastStep DB=0 alors que
+          // local=1 → on garde 1).
+          const local = readLocal(tourKey, userId);
+          const localStep = local.lastStep ?? 0;
+          const dbStep = row.last_step ?? 0;
           const next: TourProgressState = {
             loaded: true,
-            startedAt: row.started_at ?? null,
-            completedAt: row.completed_at ?? null,
-            skippedAt: row.skipped_at ?? null,
-            lastStep: row.last_step ?? 0,
+            // Timestamps : prefere DB si renseigne, sinon local.
+            startedAt: row.started_at ?? local.startedAt ?? null,
+            completedAt: row.completed_at ?? local.completedAt ?? null,
+            skippedAt: row.skipped_at ?? local.skippedAt ?? null,
+            // lastStep : on garde le MAX pour ne jamais regresser.
+            lastStep: Math.max(localStep, dbStep),
           };
           setState(next);
           writeLocal(tourKey, userId, {
@@ -152,6 +162,7 @@ export function useTourProgress(tourKey: string) {
             lastStep: next.lastStep,
           });
         } else {
+          // Pas de row DB : on garde localStorage tel quel, on flag loaded.
           setState((s) => ({ ...s, loaded: true }));
         }
 
