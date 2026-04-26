@@ -8,6 +8,7 @@
 // Ne fait AUCUN fetch direct — tout passe par useTourProgress.
 
 import { useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { useTourProgress } from "../../onboarding/hooks/useTourProgress";
 import {
   ACADEMY_SECTIONS,
@@ -50,6 +51,7 @@ const NOOP = () => {
 };
 
 export function useAcademyProgress() {
+  const navigate = useNavigate();
   const tour = useTourProgress(ACADEMY_TOUR_KEY);
   const {
     state,
@@ -122,7 +124,10 @@ export function useAcademyProgress() {
     view,
     goToSection: (sectionId: string) => {
       const idx = getAcademySectionIndex(sectionId);
-      if (idx >= 0) markStep(idx);
+      if (idx >= 0) {
+        markStep(idx);
+        navigate(`/academy/${sectionId}`);
+      }
     },
     markSectionDone: (sectionId: string) => {
       const idx = getAcademySectionIndex(sectionId);

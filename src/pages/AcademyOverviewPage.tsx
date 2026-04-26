@@ -3,13 +3,10 @@
 // Thomas. Couleurs hardcodees palette Lor'Squad. Le contenu interactif
 // par section arrive en Phase 2.
 
-import { useNavigate } from "react-router-dom";
 import { useAcademyProgress } from "../features/academy/hooks/useAcademyProgress";
 import { ACADEMY_SECTIONS, type AcademySection } from "../features/academy/sections";
 
 export function AcademyOverviewPage() {
-  const navigate = useNavigate();
-  void navigate;
   const { view, goToSection } = useAcademyProgress();
 
   if (!view.loaded) {
@@ -162,10 +159,17 @@ type AcademyView = ReturnType<typeof useAcademyProgress>["view"];
 function renderHeroSubtitle(view: AcademyView): string {
   if (view.isCompleted) return "Tu as terminé toute la formation. Bravo.";
   if (view.isSkipped) return "Tu peux reprendre quand tu veux.";
+
+  const sectionWord = view.totalCount > 1 ? "sections" : "section";
+  const minuteWord = view.remainingMinutes > 1 ? "minutes" : "minute";
+
   if (!view.hasStarted) {
-    return `${view.totalCount} sections — environ ${view.remainingMinutes} minutes au total.`;
+    return `${view.totalCount} ${sectionWord} — environ ${view.remainingMinutes} ${minuteWord} au total.`;
   }
-  return `${view.completedCount} sections sur ${view.totalCount} terminées — il te reste environ ${view.remainingMinutes} minutes.`;
+
+  const completedWord = view.completedCount > 1 ? "sections" : "section";
+  const completedSuffix = view.completedCount > 1 ? "terminées" : "terminée";
+  return `${view.completedCount} ${completedWord} sur ${view.totalCount} ${completedSuffix} — il te reste environ ${view.remainingMinutes} ${minuteWord}.`;
 }
 
 interface SectionRowProps {
