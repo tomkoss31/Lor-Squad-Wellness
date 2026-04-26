@@ -373,6 +373,7 @@ function mapClient(row: ClientRow): Client {
     email: row.email,
     age: row.age,
     birthDate: row.birth_date ?? null,
+    birthdaySentAt: (row as { birthday_sent_at?: string | null }).birthday_sent_at ?? null,
     height: row.height,
     job: row.job,
     city: row.city ?? undefined,

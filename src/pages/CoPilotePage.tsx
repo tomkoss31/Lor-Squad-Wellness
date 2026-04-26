@@ -97,6 +97,7 @@ export function CoPilotePage() {
             ? clients
             : clients.filter((c) => c.distributorId === currentUser.id)
         }
+        coachFirstName={firstName || "ton coach"}
       />
 
       {/* Widget messages (chantier 5) — conservé car complémentaire : Hero
