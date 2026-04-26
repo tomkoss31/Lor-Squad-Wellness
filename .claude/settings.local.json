@@ -91,7 +91,8 @@
       "Bash(awk 'NR>=1016 && NR<=1100' src/pages/ClientAppPage.tsx)",
       "Bash(awk '/^      {activeTab === 5 && \\\\\\(/,/^      \\\\\\)}$/' src/pages/ClientDetailPage.tsx)",
       "Bash(npm test *)",
-      "Bash(node -e \"import\\('./src/features/academy/sections.ts'\\).then\\(m => console.log\\('ACADEMY_TOTAL_DURATION_MINUTES =', m.ACADEMY_TOTAL_DURATION_MINUTES, '| count =', m.ACADEMY_SECTION_COUNT\\)\\)\")"
+      "Bash(node -e \"import\\('./src/features/academy/sections.ts'\\).then\\(m => console.log\\('ACADEMY_TOTAL_DURATION_MINUTES =', m.ACADEMY_TOTAL_DURATION_MINUTES, '| count =', m.ACADEMY_SECTION_COUNT\\)\\)\")",
+      "Bash(grep -n \"import.*useAppContext\\\\|from \\\\\"\\\\\\\\.\\\\\\\\./context\\\\\\\\|from \\\\\"\\\\\\\\.\\\\\\\\./\\\\\\\\.\\\\\\\\./context\" src/features/onboarding/hooks/useTourProgress.ts)"
     ]
   }
 }

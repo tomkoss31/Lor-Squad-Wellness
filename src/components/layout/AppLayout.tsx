@@ -10,6 +10,8 @@ import { useRealtimeMessages } from "../../hooks/useRealtimeMessages";
 import { getInitials } from "../../lib/utils/getInitials";
 import { useTheme } from "../../hooks/useTheme";
 import { getRoleLabel } from "../../lib/auth";
+import { useAcademyAutoTrigger } from "../../features/academy/hooks/useAcademyAutoTrigger";
+import { AcademyReminderDialog } from "../../features/academy/components/AcademyReminderDialog";
 
 // Chantier Refonte Navigation (2026-04-22) : sidebar simplifiée +
 // renommage Accueil → Co-pilote. Ajout /formation et /settings.
@@ -78,6 +80,9 @@ export function AppLayout() {
   const { canPromptInstall, isIos, isMobile, isStandalone, promptInstall } = useInstallPrompt();
   const location = useLocation();
   const navigate = useNavigate();
+  // Chantier Academy Phase 1 (2026-04-26) : popup auto-trigger 1×/jour
+  // pour distributeurs n ayant pas encore termine la formation.
+  const academyTrigger = useAcademyAutoTrigger();
 
   if (!currentUser) {
     return null;
@@ -521,6 +526,9 @@ export function AppLayout() {
         </main>
       </div>
       <BottomNav />
+      {academyTrigger.isOpen ? (
+        <AcademyReminderDialog onClose={academyTrigger.close} />
+      ) : null}
     </div>
   );
 }
