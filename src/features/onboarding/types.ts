@@ -36,4 +36,10 @@ export interface TutorialStep {
    * Patch 2 (2026-04-26).
    */
   manualAdvance?: boolean;
+  /**
+   * Builder de route async, prend precedence sur `route` si present.
+   * Utile pour construire des routes dynamiques /clients/:id avec un
+   * id resolu au moment ou le step devient actif. Vague finale (2026-04-27).
+   */
+  routeBuilder?: () => Promise<string>;
 }

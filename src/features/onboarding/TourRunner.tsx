@@ -100,20 +100,44 @@ export function TourRunner({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentStepIndex]);
 
-  // ─── Cross-route : navigate si step.route different ─────────────────────
+  // ─── Cross-route : navigate si step.route ou routeBuilder different ─────
+  // Vague finale (2026-04-27) : support routeBuilder async qui prend
+  // precedence sur route si present. Resolu a chaque step active.
+  const [resolvedRoute, setResolvedRoute] = useState<string | null>(null);
   useEffect(() => {
-    if (!currentStep?.route) return;
-    if (location.pathname !== currentStep.route) {
-      navigate(currentStep.route);
+    if (!currentStep) {
+      setResolvedRoute(null);
+      return;
     }
+    let cancelled = false;
+    void (async () => {
+      let target: string | null = currentStep.route ?? null;
+      if (currentStep.routeBuilder) {
+        try {
+          target = await currentStep.routeBuilder();
+        } catch (err) {
+          console.warn("[TourRunner] routeBuilder threw", err);
+          target = currentStep.route ?? null;
+        }
+      }
+      if (cancelled) return;
+      setResolvedRoute(target);
+      if (target && target !== location.pathname) {
+        navigate(target);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentStepIndex, currentStep?.route]);
+  }, [currentStepIndex]);
 
   // ─── Resolution de la cible spotlight ───────────────────────────────────
   const targetSelector = currentStep?.target;
   const stepWaitsForRoute = useMemo(() => {
-    return !!currentStep?.route && location.pathname !== currentStep.route;
-  }, [currentStep?.route, location.pathname]);
+    if (!resolvedRoute) return false;
+    return resolvedRoute !== location.pathname;
+  }, [resolvedRoute, location.pathname]);
 
   useEffect(() => {
     setTargetRect(null);

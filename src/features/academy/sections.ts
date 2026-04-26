@@ -4,6 +4,13 @@
 // en Phase 2 (un chantier par section).
 
 import type { TutorialStep } from "../onboarding/types";
+import { getDemoClientId } from "./utils/getDemoClientId";
+
+/** Builder partage : ouvre la fiche du 1er client dispo, sinon /clients. */
+async function routeToClientFiche(): Promise<string> {
+  const id = await getDemoClientId();
+  return id ? `/clients/${id}` : "/clients";
+}
 
 /**
  * Identifiant utilise par useTourProgress et user_tour_progress.tour_key
@@ -236,6 +243,7 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
         id: "recommendations",
         target: '[data-tour-id="program-recommendations"]',
         placement: "top",
+        routeBuilder: routeToClientFiche,
         title: "Les produits recommandés",
         body: "Sur la fiche du client, ce bloc liste sa sélection actuelle. Lor'Squad la propose selon son objectif et son body scan.",
         manualAdvance: true,
@@ -383,6 +391,7 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
         id: "send-access",
         target: '[data-tour-id="client-send-access"]',
         placement: "bottom",
+        routeBuilder: routeToClientFiche,
         title: "Active le partage",
         body: "Le bouton gold Envoyer l'accès à l'app génère un lien personnel pour le client.",
         manualAdvance: true,

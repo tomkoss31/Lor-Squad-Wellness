@@ -19,15 +19,41 @@ export function AcademySectionPage() {
   // sections vides), on retombe sur le placeholder ci-dessous.
   if (section && section.steps.length > 0) {
     return (
-      <TourRunner
-        steps={section.steps}
-        onClose={(reason) => {
-          if (reason === "completed") {
-            markSectionDone(section.id);
-          }
-          navigate("/academy");
-        }}
-      />
+      <>
+        {/* Bouton retour discret pendant le tour. zIndex au-dessus du
+            tooltip pour rester accessible meme en cas de bug overlay. */}
+        <button
+          type="button"
+          onClick={() => navigate("/academy")}
+          style={{
+            position: "fixed",
+            top: 12,
+            left: 12,
+            zIndex: 10003,
+            background: "rgba(255,255,255,0.95)",
+            color: "#5F5E5A",
+            border: "0.5px solid #C9C2AB",
+            padding: "6px 12px",
+            borderRadius: 8,
+            fontSize: 12,
+            fontWeight: 500,
+            cursor: "pointer",
+            fontFamily: "var(--ls-font-sans, system-ui, sans-serif)",
+            boxShadow: "0 2px 6px rgba(0,0,0,0.1)",
+          }}
+        >
+          ← Toutes les sections
+        </button>
+        <TourRunner
+          steps={section.steps}
+          onClose={(reason) => {
+            if (reason === "completed") {
+              markSectionDone(section.id);
+            }
+            navigate("/academy");
+          }}
+        />
+      </>
     );
   }
 
