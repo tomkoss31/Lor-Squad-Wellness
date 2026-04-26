@@ -92,7 +92,10 @@
       "Bash(awk '/^      {activeTab === 5 && \\\\\\(/,/^      \\\\\\)}$/' src/pages/ClientDetailPage.tsx)",
       "Bash(npm test *)",
       "Bash(node -e \"import\\('./src/features/academy/sections.ts'\\).then\\(m => console.log\\('ACADEMY_TOTAL_DURATION_MINUTES =', m.ACADEMY_TOTAL_DURATION_MINUTES, '| count =', m.ACADEMY_SECTION_COUNT\\)\\)\")",
-      "Bash(grep -n \"import.*useAppContext\\\\|from \\\\\"\\\\\\\\.\\\\\\\\./context\\\\\\\\|from \\\\\"\\\\\\\\.\\\\\\\\./\\\\\\\\.\\\\\\\\./context\" src/features/onboarding/hooks/useTourProgress.ts)"
+      "Bash(grep -n \"import.*useAppContext\\\\|from \\\\\"\\\\\\\\.\\\\\\\\./context\\\\\\\\|from \\\\\"\\\\\\\\.\\\\\\\\./\\\\\\\\.\\\\\\\\./context\" src/features/onboarding/hooks/useTourProgress.ts)",
+      "Bash(grep -rn \"from \\\\\"\\\\\\\\.\\\\\\\\./.*supabaseClient\\\\|getSupabaseClient\" src/features --include=\"*.ts\" --include=\"*.tsx\")",
+      "Bash(grep -n \"return\\\\|<\\\\\\\\\\\\\\\\?>\\\\|</section>\\\\|</main>\\\\|^}\" src/pages/DistributorPortfolioPage.tsx)",
+      "Bash(grep -n \"</div>$\\\\|</div>\\\\\\\\s*$\\\\|</section>\\\\\\\\s*$\" src/pages/DistributorPortfolioPage.tsx)"
     ]
   }
 }
