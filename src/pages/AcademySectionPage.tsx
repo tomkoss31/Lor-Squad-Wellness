@@ -30,9 +30,16 @@ export function AcademySectionPage() {
     startTour({
       id: section.id,
       steps: section.steps,
-      onClose: (reason) => {
+      onClose: async (reason) => {
+        // Fix race condition (2026-04-27) : await la persistance DB avant
+        // de naviguer. Sans ca, AcademyOverviewPage mountait et fetchait
+        // une DB stale (lastStep=0) car l upsert n etait pas termine.
         if (reason === "completed") {
-          markSectionDone(section.id);
+          try {
+            await markSectionDone(section.id);
+          } catch (err) {
+            console.warn("[AcademySectionPage] markSectionDone failed", err);
+          }
         }
         navigate("/academy");
       },

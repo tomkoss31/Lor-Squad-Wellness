@@ -219,11 +219,11 @@ export function useTourProgress(tourKey: string) {
   );
 
   const markStep = useCallback(
-    (step: number) => {
+    async (step: number): Promise<void> => {
       // Au premier step (0 ou 1), on initialise startedAt si pas encore set.
       const startedAt =
         state.startedAt ?? new Date().toISOString();
-      void persist({
+      await persist({
         lastStep: step,
         startedAt: state.startedAt ? undefined : startedAt,
       });
@@ -231,12 +231,12 @@ export function useTourProgress(tourKey: string) {
     [persist, state.startedAt],
   );
 
-  const markCompleted = useCallback(() => {
-    void persist({ completedAt: new Date().toISOString() });
+  const markCompleted = useCallback(async (): Promise<void> => {
+    await persist({ completedAt: new Date().toISOString() });
   }, [persist]);
 
-  const markSkipped = useCallback(() => {
-    void persist({ skippedAt: new Date().toISOString() });
+  const markSkipped = useCallback(async (): Promise<void> => {
+    await persist({ skippedAt: new Date().toISOString() });
   }, [persist]);
 
   const markDismissedToday = useCallback(() => {
@@ -279,9 +279,9 @@ export function useTourProgress(tourKey: string) {
   if (!userId) {
     return {
       state: EMPTY_STATE,
-      markStep: NOOP as (step: number) => void,
-      markCompleted: NOOP,
-      markSkipped: NOOP,
+      markStep: (async () => {}) as (step: number) => Promise<void>,
+      markCompleted: (async () => {}) as () => Promise<void>,
+      markSkipped: (async () => {}) as () => Promise<void>,
       markDismissedToday: NOOP,
       hasDismissedToday: false,
       resetForReplay: NOOP,

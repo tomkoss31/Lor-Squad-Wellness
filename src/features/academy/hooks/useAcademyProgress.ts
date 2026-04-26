@@ -129,14 +129,14 @@ export function useAcademyProgress() {
         navigate(`/academy/${sectionId}`);
       }
     },
-    markSectionDone: (sectionId: string) => {
+    markSectionDone: async (sectionId: string): Promise<void> => {
       const idx = getAcademySectionIndex(sectionId);
       if (idx < 0) return;
       // Si c etait la derniere section, mark academy complete.
       if (idx >= ACADEMY_SECTIONS.length - 1) {
-        markCompleted();
+        await markCompleted();
       } else {
-        markStep(idx + 1);
+        await markStep(idx + 1);
       }
     },
     markAcademyCompleted: state.loaded ? markCompleted : NOOP,
