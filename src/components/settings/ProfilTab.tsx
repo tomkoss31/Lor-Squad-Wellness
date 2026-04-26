@@ -169,6 +169,7 @@ export function ProfilTab() {
               value={name}
               onChange={(e) => setName(e.target.value)}
               disabled={saving}
+              data-tour-id="profile-name"
               className="ls-input"
               style={{
                 width: "100%",
@@ -262,7 +263,7 @@ export function ProfilTab() {
         ) : null}
 
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          <Button onClick={() => void handleSaveProfile()} disabled={saving}>
+          <Button onClick={() => void handleSaveProfile()} disabled={saving} data-tour-id="profile-save">
             {saving ? "Sauvegarde…" : "Enregistrer les modifications"}
           </Button>
           <Button variant="secondary" onClick={() => setPwModal(true)}>

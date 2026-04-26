@@ -58,6 +58,7 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
         placement: "bottom",
         title: "Le Co-pilote",
         body: "Ton tableau de bord. Tu retrouves ici tes RDV du jour, tes anniversaires de clients et ton suivi de volume PV.",
+        manualAdvance: true,
       },
       {
         id: "agenda",
@@ -65,6 +66,7 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
         placement: "bottom",
         title: "L'agenda",
         body: "Tous tes rendez-vous. Tu peux y caler un nouveau RDV, voir ceux à venir et marquer ceux qui sont passés.",
+        manualAdvance: true,
       },
       {
         id: "messagerie",
@@ -72,6 +74,7 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
         placement: "bottom",
         title: "La messagerie",
         body: "Tes échanges avec tes clients. Le compteur rouge indique les messages non lus.",
+        manualAdvance: true,
       },
       {
         id: "clients",
@@ -79,6 +82,7 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
         placement: "bottom",
         title: "Les dossiers clients",
         body: "Ta base clients : leurs bilans, leur progression, leurs RDV à venir. C'est ton outil de travail principal.",
+        manualAdvance: true,
       },
       {
         id: "pv",
@@ -86,6 +90,7 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
         placement: "bottom",
         title: "Le suivi PV",
         body: "Ton volume de points Herbalife. Tu vois ce qu'il te reste à faire pour atteindre ton seuil mensuel.",
+        manualAdvance: true,
       },
       {
         id: "new-bilan",
@@ -94,6 +99,8 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
         title: "Le bouton qui sert tous les jours",
         body: "Crée un nouveau bilan client en un clic. Tu verras ça en détail dans les prochaines sections.",
         isLast: true,
+        manualAdvance: true,
+        nextLabel: "Section terminée",
       },
     ],
   },

@@ -77,6 +77,7 @@ export function BottomNav() {
     active: boolean,
     badge?: number,
     highlight?: boolean,
+    tourId?: string,
   ) {
     const color = active
       ? highlight ? "#BA7517" : "var(--ls-gold)"
@@ -85,6 +86,7 @@ export function BottomNav() {
       <NavLink
         key={path}
         to={path}
+        data-tour-id={tourId}
         style={{
           flex: 1,
           maxWidth: 80,
@@ -177,14 +179,20 @@ export function BottomNav() {
           padding: "0 4px env(safe-area-inset-bottom, 0px)",
         }}
       >
-        {/* 5 items identiques, compact tab bar — inspiration iOS native */}
-        {renderItem(PRIMARY_ITEMS[0].path, PRIMARY_ITEMS[0].label, PRIMARY_ITEMS[0].icon, isActive(PRIMARY_ITEMS[0].path))}
+        {/* 5 items identiques, compact tab bar — inspiration iOS native.
+            Patch 1 mobile (2026-04-26) : data-tour-id propages depuis la
+            sidebar desktop pour que TourRunner trouve une cible visible
+            sur mobile (findVisibleTarget filtre l element rect-zero de
+            la sidebar cachee). */}
+        {renderItem(PRIMARY_ITEMS[0].path, PRIMARY_ITEMS[0].label, PRIMARY_ITEMS[0].icon, isActive(PRIMARY_ITEMS[0].path), undefined, false, "nav-copilote")}
         {renderItem(
           PRIMARY_ITEMS[1].path,
           PRIMARY_ITEMS[1].label,
           PRIMARY_ITEMS[1].icon,
           isActive(PRIMARY_ITEMS[1].path),
           unreadMessageCount,
+          false,
+          "nav-messagerie",
         )}
         {/* Bilan = item gold mais SANS FAB qui dépasse */}
         {renderItem(
@@ -199,8 +207,9 @@ export function BottomNav() {
           location.pathname.includes("/assessments/new"),
           undefined,
           true, // highlight gold
+          "nav-new-bilan",
         )}
-        {renderItem(PRIMARY_ITEMS[2].path, PRIMARY_ITEMS[2].label, PRIMARY_ITEMS[2].icon, isActive(PRIMARY_ITEMS[2].path))}
+        {renderItem(PRIMARY_ITEMS[2].path, PRIMARY_ITEMS[2].label, PRIMARY_ITEMS[2].icon, isActive(PRIMARY_ITEMS[2].path), undefined, false, "nav-clients")}
 
         {/* Plus — même format */}
         <button

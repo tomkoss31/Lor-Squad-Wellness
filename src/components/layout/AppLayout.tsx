@@ -497,6 +497,7 @@ export function AppLayout() {
                   <NavLink
                     key={item.path}
                     to={item.path}
+                    data-tour-id={item.tourId}
                     className={`whitespace-nowrap rounded-full px-4 py-2.5 text-[13px] font-medium transition ${
                       isActive
                         ? "bg-[rgba(201,168,76,0.16)] text-white"

@@ -28,4 +28,12 @@ export interface TutorialStep {
   onEnter?: () => void;
   /** Hook a la sortie du step (ex: close un menu). */
   onExit?: () => void;
+  /**
+   * Si true, le clic sur le target est INTERCEPTE (preventDefault +
+   * stopPropagation) et le tour n avance pas — le user doit utiliser
+   * le bouton "Suivant" pour progresser. Utile quand cliquer sur le
+   * target naviguerait ailleurs et casserait le tour. Defaut false.
+   * Patch 2 (2026-04-26).
+   */
+  manualAdvance?: boolean;
 }

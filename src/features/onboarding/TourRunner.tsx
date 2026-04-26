@@ -30,6 +30,32 @@ const TARGET_TIMEOUT_MS = 3000;
 /** Periode du recompute rect (rescroll-safe, async-safe). */
 const RECT_POLL_MS = 500;
 
+/**
+ * Patch 1 mobile (2026-04-26) : retourne le PREMIER element matching le
+ * selector qui est REELLEMENT visible (rect non-zero + pas display:none /
+ * visibility:hidden / opacity:0). Necessaire car la sidebar desktop reste
+ * dans le DOM sur mobile (avec display:none via Tailwind xl:flex) — un
+ * simple querySelector la prendrait avec un rect 0×0 → spotlight invisible.
+ */
+function findVisibleTarget(selector: string): HTMLElement | null {
+  if (typeof document === "undefined") return null;
+  const elements = document.querySelectorAll<HTMLElement>(selector);
+  for (const el of elements) {
+    const rect = el.getBoundingClientRect();
+    if (rect.width <= 0 || rect.height <= 0) continue;
+    const style = window.getComputedStyle(el);
+    if (
+      style.display === "none" ||
+      style.visibility === "hidden" ||
+      style.opacity === "0"
+    ) {
+      continue;
+    }
+    return el;
+  }
+  return null;
+}
+
 export function TourRunner({
   steps,
   initialStep = 0,
@@ -42,6 +68,7 @@ export function TourRunner({
   const safeInitial = Math.min(Math.max(0, initialStep), Math.max(0, steps.length - 1));
   const [currentStepIndex, setCurrentStepIndex] = useState<number>(safeInitial);
   const [targetRect, setTargetRect] = useState<DOMRect | null>(null);
+  const [targetEl, setTargetEl] = useState<HTMLElement | null>(null);
   const rafRef = useRef<number | null>(null);
   const previousStepRef = useRef<number | null>(null);
 
@@ -89,6 +116,7 @@ export function TourRunner({
 
   useEffect(() => {
     setTargetRect(null);
+    setTargetEl(null);
     if (!targetSelector || stepWaitsForRoute) return;
 
     const startedAt = Date.now();
@@ -96,7 +124,7 @@ export function TourRunner({
     let timeoutId: number | null = null;
 
     const compute = () => {
-      const el = document.querySelector(targetSelector);
+      const el = findVisibleTarget(targetSelector);
       if (!el) {
         if (Date.now() - startedAt > TARGET_TIMEOUT_MS && !cleared) {
           cleared = true;
@@ -116,8 +144,9 @@ export function TourRunner({
       }
       const rect = el.getBoundingClientRect();
       setTargetRect(rect);
+      setTargetEl(el);
       try {
-        (el as HTMLElement).scrollIntoView({ behavior: "smooth", block: "center" });
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
       } catch {
         // no-op
       }
@@ -140,6 +169,43 @@ export function TourRunner({
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [targetSelector, stepWaitsForRoute, currentStepIndex, totalSteps]);
+
+  // ─── Click-on-target : avance ou intercept selon manualAdvance ──────────
+  // Patch 2 (2026-04-26). Si target visible :
+  //   - manualAdvance === true  → preventDefault + stopPropagation, le tour
+  //     reste sur le step. User doit utiliser "Suivant".
+  //   - manualAdvance falsy     → laisse l action native s executer ET
+  //     avance au step suivant (ou complete si dernier).
+  useEffect(() => {
+    if (!targetEl || stepWaitsForRoute) return;
+    const manualAdvance = currentStep?.manualAdvance === true;
+
+    const handleClick = (e: Event) => {
+      if (manualAdvance) {
+        e.preventDefault();
+        e.stopPropagation();
+        return;
+      }
+      // Laisser l action native passer. Avance ensuite (timeout 0 pour
+      // laisser le bubbling se faire avant le re-render).
+      window.setTimeout(() => {
+        setCurrentStepIndex((idx) => {
+          if (idx + 1 >= totalSteps) {
+            onClose("completed");
+            return idx;
+          }
+          return idx + 1;
+        });
+      }, 0);
+    };
+
+    // Capture phase pour intercepter avant les handlers React du target
+    // (necessaire pour preventDefault d un NavLink en mode manualAdvance).
+    targetEl.addEventListener("click", handleClick, true);
+    return () => {
+      targetEl.removeEventListener("click", handleClick, true);
+    };
+  }, [targetEl, stepWaitsForRoute, currentStep, totalSteps, onClose]);
 
   // ─── Cleanup onExit du dernier step au unmount ──────────────────────────
   useEffect(() => {
@@ -198,21 +264,16 @@ export function TourRunner({
 
   return (
     <>
-      {/* Overlay : avec decoupe si on a un rect, sinon plein ecran cliquable */}
-      <div
-        onClick={dismiss}
-        role="button"
-        aria-label="Fermer le tutoriel"
-        tabIndex={0}
-        style={{
-          position: "fixed",
-          inset: 0,
-          zIndex: showSpotlight ? -1 : 9999,
-          cursor: "pointer",
-          background: showSpotlight ? "transparent" : "transparent",
-        }}
+      {/* Patch 2 (2026-04-26) : SpotlightOverlay porte desormais le click
+          dismiss directement sur ses 4 bandes dim (quand showSpotlight) ou
+          sur l overlay plein (mode modale center). Plus de click-catcher
+          full-screen au-dessus → les clicks sur le target hole arrivent
+          naturellement sur le target, et un click listener (effect plus
+          haut) gere advance / intercept selon manualAdvance. */}
+      <SpotlightOverlay
+        targetRect={showSpotlight ? targetRect : null}
+        onDismiss={dismiss}
       />
-      <SpotlightOverlay targetRect={showSpotlight ? targetRect : null} />
 
       <TutorialTooltip
         stepIndex={currentStepIndex}
