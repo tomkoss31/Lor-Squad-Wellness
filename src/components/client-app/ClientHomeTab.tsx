@@ -329,34 +329,119 @@ export function ClientHomeTab({
           <div style={{ fontSize: 11, color: "#888", marginTop: 2 }}>
             Avec {coachFirstName} · La Base — Verdun
           </div>
-          <div style={{ display: "flex", gap: 6, marginTop: 10, flexWrap: "wrap" }}>
-            <a href={getGoogleCalendarUrl()} target="_blank" rel="noopener noreferrer" style={{
-              padding: "6px 10px", background: "#FAEEDA", color: "#854F0B", borderRadius: 8,
-              textDecoration: "none", fontSize: 11, fontWeight: 500,
-            }}>📅 Calendrier</a>
-            <a href={GOOGLE_MAPS_LA_BASE} target="_blank" rel="noopener noreferrer" style={{
-              padding: "6px 10px", background: "#F4F4F4", color: "#444", borderRadius: 8,
-              textDecoration: "none", fontSize: 11, fontWeight: 500,
-            }}>📍 Itinéraire</a>
-            <button type="button" onClick={() => setRdvEditOpen((v) => !v)} style={{
-              padding: "6px 10px", background: "#F4F4F4", color: "#444", borderRadius: 8,
-              border: "none", fontSize: 11, fontWeight: 500, cursor: "pointer",
-            }}>Modifier</button>
+          {/* Chantier P (2026-04-26) : grid 2x2 hierarchique
+              Row 1 (primary + secondary) : Calendrier gold plein + Itineraire blanc
+              Row 2 (tertiary discret)    : Modifier + .ics                          */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginTop: 12 }}>
+            <a
+              href={getGoogleCalendarUrl()}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                background: "#B8922A",
+                color: "white",
+                border: "none",
+                padding: "10px 12px",
+                borderRadius: 8,
+                fontSize: 12,
+                fontWeight: 500,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 6,
+                textDecoration: "none",
+              }}
+            >
+              <span style={{ fontSize: 14 }}>📅</span>
+              Ajouter au calendrier
+            </a>
+            <a
+              href={GOOGLE_MAPS_LA_BASE}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                background: "white",
+                color: "#444441",
+                border: "0.5px solid rgba(0,0,0,0.15)",
+                padding: "10px 12px",
+                borderRadius: 8,
+                fontSize: 12,
+                fontWeight: 500,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 6,
+                textDecoration: "none",
+              }}
+            >
+              <span style={{ fontSize: 14 }}>📍</span>
+              Itinéraire
+            </a>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginTop: 8 }}>
+            <button
+              type="button"
+              onClick={() => setRdvEditOpen((v) => !v)}
+              style={{
+                background: "white",
+                color: "#888",
+                border: "0.5px solid rgba(0,0,0,0.15)",
+                padding: "8px 12px",
+                borderRadius: 8,
+                fontSize: 11,
+                fontWeight: 400,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 6,
+                cursor: "pointer",
+              }}
+            >
+              <span style={{ fontSize: 12 }}>✏️</span>
+              Modifier
+            </button>
             {data.next_follow_up ? (
-              <a href={createIcsDataUri({
-                title: `Rendez-vous avec ${coachFirstName}`,
-                description: `Rendez-vous Lor'Squad Wellness avec ${coachFirstName} à La Base — Verdun.`,
-                startDate: new Date(data.next_follow_up),
-                location: "La Base Shakes and drinks, Verdun",
-                organizerName: coachFirstName,
-              })} download={`rdv-labase-${data.next_follow_up.slice(0, 10)}.ics`} style={{
-                padding: "6px 10px", background: "#F4F4F4", color: "#444", borderRadius: 8,
-                textDecoration: "none", fontSize: 11, fontWeight: 500,
-              }}>📅 .ics</a>
-            ) : null}
+              <a
+                href={createIcsDataUri({
+                  title: `Rendez-vous avec ${coachFirstName}`,
+                  description: `Rendez-vous Lor'Squad Wellness avec ${coachFirstName} à La Base — Verdun.`,
+                  startDate: new Date(data.next_follow_up),
+                  location: "La Base Shakes and drinks, Verdun",
+                  organizerName: coachFirstName,
+                })}
+                download={`rdv-labase-${data.next_follow_up.slice(0, 10)}.ics`}
+                style={{
+                  background: "white",
+                  color: "#888",
+                  border: "0.5px solid rgba(0,0,0,0.15)",
+                  padding: "8px 12px",
+                  borderRadius: 8,
+                  fontSize: 11,
+                  fontWeight: 400,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 6,
+                  textDecoration: "none",
+                }}
+              >
+                <span style={{ fontSize: 12 }}>📥</span>
+                Fichier .ics
+              </a>
+            ) : (
+              <span />
+            )}
           </div>
           {nextFollowUpId && clientToken ? (
-            <div style={{ marginTop: 10, display: "flex", alignItems: "center", gap: 8 }}>
+            <div style={{
+              marginTop: 12,
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+              padding: "10px 12px",
+              background: "#FAF6E8",
+              borderRadius: 8,
+            }}>
               <input
                 type="checkbox"
                 id="rdv-added-to-calendar"
@@ -365,13 +450,18 @@ export function ClientHomeTab({
                 onChange={(e) => {
                   if (e.target.checked) void handleConfirmCalendar();
                 }}
-                style={{ width: 16, height: 16, cursor: calendarConfirmedLocal ? "default" : "pointer" }}
+                style={{
+                  width: 16,
+                  height: 16,
+                  accentColor: "#1D9E75",
+                  cursor: calendarConfirmedLocal ? "default" : "pointer",
+                }}
               />
               <label
                 htmlFor="rdv-added-to-calendar"
                 style={{
-                  fontSize: 12,
-                  color: calendarConfirmedLocal ? "#1D9E75" : "#888",
+                  fontSize: 11,
+                  color: calendarConfirmedLocal ? "#0F6E56" : "#888",
                   fontWeight: 500,
                   cursor: calendarConfirmedLocal ? "default" : "pointer",
                   userSelect: "none",
