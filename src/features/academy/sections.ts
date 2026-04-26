@@ -5,11 +5,18 @@
 
 import type { TutorialStep } from "../onboarding/types";
 import { getDemoClientId } from "./utils/getDemoClientId";
+import { getCurrentUserRole } from "./utils/getCurrentUserRole";
 
 /** Builder partage : ouvre la fiche du 1er client dispo, sinon /clients. */
 async function routeToClientFiche(): Promise<string> {
   const id = await getDemoClientId();
   return id ? `/clients/${id}` : "/clients";
+}
+
+/** Route vers la page profil selon le role : /parametres pour admin, /settings sinon. */
+async function routeToProfile(): Promise<string> {
+  const role = await getCurrentUserRole();
+  return role === "admin" ? "/parametres" : "/settings";
 }
 
 /**
@@ -40,23 +47,23 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
     id: "welcome",
     title: "Bienvenue & profil distri",
     shortLabel: "Profil",
-    description: "Renseigne ton ID Herbalife, ton sponsor et ton coach référent.",
+    description: "Renseigne ton profil pour que ton coach et ton équipe te reconnaissent.",
     estimatedDurationMinutes: 2,
     icon: "👋",
     steps: [
       {
         id: "intro",
-        title: "Bienvenue dans Lor'Squad",
-        body: "On va remplir ton profil ensemble. Ça permettra à ton coach et à ton équipe de te reconnaître.",
+        title: "Bienvenue dans Lor'Squad 👋",
+        body: "On va remplir ton profil ensemble. Ces infos servent à relier ton compte à ton équipe Herbalife et à ton coach. Compte 2 minutes.",
         placement: "center",
-        route: "/settings",
       },
       {
         id: "name",
         target: '[data-tour-id="profile-name"]',
         placement: "bottom",
+        routeBuilder: routeToProfile,
         title: "Ton nom",
-        body: "Vérifie qu'il est bien orthographié. C'est ce que tes clients verront en haut de leur app.",
+        body: "Vérifie l'orthographe. C'est le nom que tes clients verront en haut de leur app personnelle.",
         manualAdvance: true,
       },
       {
@@ -64,31 +71,34 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
         target: '[data-tour-id="profile-herbalife-id"]',
         placement: "bottom",
         title: "Ton ID Herbalife",
-        body: "Ton identifiant officiel (8 chiffres). Il relie ton compte à l'écosystème Herbalife.",
+        body: "Ton identifiant officiel à 10 caractères : 2 chiffres + 1 lettre + 7 chiffres (ex : 21Y0103610). Tu le trouves sur ton compte MyHerbalife.",
         manualAdvance: true,
+        requiredRole: "distributor",
       },
       {
         id: "sponsor",
         target: '[data-tour-id="profile-sponsor"]',
         placement: "bottom",
-        title: "Ton sponsor",
-        body: "La personne qui t'a fait découvrir Herbalife. Indique son ID pour relier ton lignage.",
+        title: "L'ID de ton sponsor Herbalife",
+        body: "Même format que ton ID. C'est l'identifiant de la personne qui t'a parrainé chez Herbalife. Indispensable pour ton lignage officiel.",
         manualAdvance: true,
+        requiredRole: "distributor",
       },
       {
         id: "coach-referent",
         target: '[data-tour-id="profile-coach-referent"]',
         placement: "bottom",
-        title: "Ton coach référent",
-        body: "Le coach interne qui te suit. C'est lui qu'on contactera si tu as besoin d'aide.",
+        title: "Ton coach référent dans Lor'Squad",
+        body: "C'est la personne qui te suit au quotidien dans l'app. Souvent ton sponsor, mais pas obligé. C'est elle qu'on contactera pour t'aider si besoin.",
         manualAdvance: true,
+        requiredRole: "distributor",
       },
       {
         id: "save",
         target: '[data-tour-id="profile-save"]',
         placement: "top",
-        title: "Sauvegarde ton profil",
-        body: "Pense à enregistrer avant de partir. Tu peux revenir modifier à tout moment.",
+        title: "Sauvegarde et passe à la suite",
+        body: "Ton profil est complet. Pense à enregistrer avant de quitter.",
         manualAdvance: true,
         isLast: true,
         nextLabel: "Section terminée",

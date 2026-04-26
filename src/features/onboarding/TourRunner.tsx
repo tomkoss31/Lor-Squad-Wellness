@@ -12,6 +12,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { TutorialTooltip } from "./components/TutorialTooltip";
 import { SpotlightOverlay } from "./components/SpotlightOverlay";
+import { useAppContext } from "../../context/AppContext";
 import type { TutorialStep } from "./types";
 
 export type TourCloseReason = "completed" | "skipped" | "dismissed";
@@ -58,13 +59,24 @@ function findVisibleTarget(selector: string): HTMLElement | null {
 }
 
 export function TourRunner({
-  steps,
+  steps: rawSteps,
   initialStep = 0,
   onClose,
   onStepChange,
 }: TourRunnerProps) {
   const navigate = useNavigate();
   const location = useLocation();
+  const { currentUser } = useAppContext();
+
+  // Travail 2 (2026-04-27) : filtrage par role. Les steps avec
+  // requiredRole defini ne sont gardes que si le role match.
+  const steps = useMemo(
+    () =>
+      rawSteps.filter(
+        (s) => !s.requiredRole || s.requiredRole === currentUser?.role,
+      ),
+    [rawSteps, currentUser?.role],
+  );
 
   const safeInitial = Math.min(Math.max(0, initialStep), Math.max(0, steps.length - 1));
   const [currentStepIndex, setCurrentStepIndex] = useState<number>(safeInitial);

@@ -41,10 +41,16 @@ export function ProfilTab() {
   const [coachReferentUserId, setCoachReferentUserId] = useState(
     currentUser?.coachReferentUserId ?? "",
   );
+  // Travail 3 (2026-04-27) : tous les users actifs sont eligibles, sauf
+  // soi-meme. Un distri peut choisir un autre distri (sponsor) comme
+  // coach referent.
   const coachOptions = useMemo(
-    () => users.filter((u) => u.role === "admin" || u.role === "referent"),
-    [users],
+    () => users.filter((u) => u.active && u.id !== currentUser?.id),
+    [users, currentUser?.id],
   );
+
+  /** Format ID Herbalife reel : 2 chiffres + 1 lettre + 7 chiffres. */
+  const HERBALIFE_ID_REGEX = /^\d{2}[A-Z]\d{7}$/;
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -76,6 +82,18 @@ export function ProfilTab() {
       setError("Le nom ne peut pas être vide.");
       return;
     }
+    // Validation ID Herbalife (Travail 1, 2026-04-27) : format reel
+    // 2 chiffres + 1 lettre majuscule + 7 chiffres. Vide = OK.
+    const herbalifeNormalized = herbalifeId.trim().toUpperCase();
+    if (herbalifeNormalized && !HERBALIFE_ID_REGEX.test(herbalifeNormalized)) {
+      setError("Format ID Herbalife invalide. Exemple : 21Y0103610");
+      return;
+    }
+    const sponsorNormalized = sponsorId.trim().toUpperCase();
+    if (sponsorNormalized && !HERBALIFE_ID_REGEX.test(sponsorNormalized)) {
+      setError("Format ID sponsor invalide. Exemple : 21Y0103610");
+      return;
+    }
     setSaving(true);
     try {
       const sb = await getSupabaseClient();
@@ -84,8 +102,8 @@ export function ProfilTab() {
         .from("users")
         .update({
           name: trimmed,
-          herbalife_id: herbalifeId.trim() || null,
-          sponsor_id: sponsorId.trim() || null,
+          herbalife_id: herbalifeNormalized || null,
+          sponsor_id: sponsorNormalized || null,
           coach_referent_user_id: coachReferentUserId || null,
         })
         .eq("id", currentUser!.id);
@@ -212,73 +230,103 @@ export function ProfilTab() {
               {currentUser.email}
             </div>
           </LabeledField>
-          <LabeledField label="Ton ID Herbalife">
-            <input
-              value={herbalifeId}
-              onChange={(e) => setHerbalifeId(e.target.value)}
-              disabled={saving}
-              placeholder="Ton identifiant officiel (8 chiffres)"
-              data-tour-id="profile-herbalife-id"
-              style={{
-                width: "100%",
-                padding: "10px 12px",
-                borderRadius: 10,
-                border: "1px solid var(--ls-border)",
-                background: "var(--ls-surface2)",
-                color: "var(--ls-text)",
-                fontSize: 14,
-                fontFamily: "DM Sans, sans-serif",
-                outline: "none",
-              }}
-            />
-          </LabeledField>
-          <LabeledField label="ID de ton sponsor">
-            <input
-              value={sponsorId}
-              onChange={(e) => setSponsorId(e.target.value)}
-              disabled={saving}
-              placeholder="La personne qui t'a parrainé"
-              data-tour-id="profile-sponsor"
-              style={{
-                width: "100%",
-                padding: "10px 12px",
-                borderRadius: 10,
-                border: "1px solid var(--ls-border)",
-                background: "var(--ls-surface2)",
-                color: "var(--ls-text)",
-                fontSize: 14,
-                fontFamily: "DM Sans, sans-serif",
-                outline: "none",
-              }}
-            />
-          </LabeledField>
-          <LabeledField label="Ton coach référent">
-            <select
-              value={coachReferentUserId}
-              onChange={(e) => setCoachReferentUserId(e.target.value)}
-              disabled={saving}
-              data-tour-id="profile-coach-referent"
-              style={{
-                width: "100%",
-                padding: "10px 12px",
-                borderRadius: 10,
-                border: "1px solid var(--ls-border)",
-                background: "var(--ls-surface2)",
-                color: "var(--ls-text)",
-                fontSize: 14,
-                fontFamily: "DM Sans, sans-serif",
-                outline: "none",
-                cursor: "pointer",
-              }}
-            >
-              <option value="">— Aucun —</option>
-              {coachOptions.map((u) => (
-                <option key={u.id} value={u.id}>
-                  {u.name}
-                </option>
-              ))}
-            </select>
-          </LabeledField>
+          {/* Travail 2 (2026-04-27) : champs herbalife/sponsor/coach
+              referent caches pour les admins (Thomas, Mel) — ils n en ont
+              pas besoin (ce sont eux les coachs). Affiches pour referents
+              et distributors. */}
+          {currentUser.role !== "admin" ? (
+            <>
+              <LabeledField label="Ton ID Herbalife">
+                <input
+                  value={herbalifeId}
+                  onChange={(e) => setHerbalifeId(e.target.value)}
+                  disabled={saving}
+                  placeholder="21Y0103610"
+                  pattern="^\d{2}[A-Z]\d{7}$"
+                  maxLength={10}
+                  inputMode="text"
+                  autoCapitalize="characters"
+                  data-tour-id="profile-herbalife-id"
+                  style={{
+                    width: "100%",
+                    padding: "10px 12px",
+                    borderRadius: 10,
+                    border: "1px solid var(--ls-border)",
+                    background: "var(--ls-surface2)",
+                    color: "var(--ls-text)",
+                    fontSize: 14,
+                    fontFamily: "DM Sans, sans-serif",
+                    outline: "none",
+                  }}
+                />
+                <div style={{ fontSize: 11, color: "var(--ls-text-muted)", marginTop: 4 }}>
+                  Format : 2 chiffres + 1 lettre + 7 chiffres (ex : 21Y0103610)
+                </div>
+              </LabeledField>
+              <LabeledField label="ID de ton sponsor Herbalife">
+                <input
+                  value={sponsorId}
+                  onChange={(e) => setSponsorId(e.target.value)}
+                  disabled={saving}
+                  placeholder="21Y0103610"
+                  pattern="^\d{2}[A-Z]\d{7}$"
+                  maxLength={10}
+                  inputMode="text"
+                  autoCapitalize="characters"
+                  data-tour-id="profile-sponsor"
+                  style={{
+                    width: "100%",
+                    padding: "10px 12px",
+                    borderRadius: 10,
+                    border: "1px solid var(--ls-border)",
+                    background: "var(--ls-surface2)",
+                    color: "var(--ls-text)",
+                    fontSize: 14,
+                    fontFamily: "DM Sans, sans-serif",
+                    outline: "none",
+                  }}
+                />
+                <div style={{ fontSize: 11, color: "var(--ls-text-muted)", marginTop: 4 }}>
+                  L&apos;identifiant Herbalife de la personne qui t&apos;a parrainé.
+                </div>
+              </LabeledField>
+              <LabeledField label="Ton coach référent">
+                <select
+                  value={coachReferentUserId}
+                  onChange={(e) => setCoachReferentUserId(e.target.value)}
+                  disabled={saving}
+                  data-tour-id="profile-coach-referent"
+                  style={{
+                    width: "100%",
+                    padding: "10px 12px",
+                    borderRadius: 10,
+                    border: "1px solid var(--ls-border)",
+                    background: "var(--ls-surface2)",
+                    color: "var(--ls-text)",
+                    fontSize: 14,
+                    fontFamily: "DM Sans, sans-serif",
+                    outline: "none",
+                    cursor: "pointer",
+                  }}
+                >
+                  <option value="">— Aucun —</option>
+                  {coachOptions.map((u) => (
+                    <option key={u.id} value={u.id}>
+                      {u.name}
+                      {u.role === "admin"
+                        ? " (admin)"
+                        : u.role === "referent"
+                          ? " (coach)"
+                          : ""}
+                    </option>
+                  ))}
+                </select>
+                <div style={{ fontSize: 11, color: "var(--ls-text-muted)", marginTop: 4 }}>
+                  La personne qui te suit au quotidien dans Lor&apos;Squad. Souvent ton sponsor.
+                </div>
+              </LabeledField>
+            </>
+          ) : null}
           <LabeledField label="Rôle">
             <div
               style={{

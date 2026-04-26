@@ -42,4 +42,10 @@ export interface TutorialStep {
    * id resolu au moment ou le step devient actif. Vague finale (2026-04-27).
    */
   routeBuilder?: () => Promise<string>;
+  /**
+   * Ne montrer ce step qu aux users de ce role. Si absent, montre a tous.
+   * Travail 2 (2026-04-27) : utile pour la section welcome ou les champs
+   * Herbalife/sponsor/coach-referent ne sont visibles qu aux distri.
+   */
+  requiredRole?: "distributor" | "admin" | "referent";
 }
