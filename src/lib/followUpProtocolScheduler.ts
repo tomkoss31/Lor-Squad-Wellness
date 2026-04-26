@@ -15,6 +15,7 @@
 
 import type { Client, FollowUpProtocolLog, FollowUpProtocolStepId } from "../types/domain";
 import { FOLLOW_UP_PROTOCOL } from "../data/followUpProtocol";
+import { isClientProgramStarted } from "./calculations";
 
 // ─── Garde-fou éligibilité (Hotfix 2026-04-20) ───────────────────────────
 // Le protocole est conçu pour le nurturing J+1 → J+10. Au-delà, un client
@@ -53,20 +54,12 @@ export function evaluateProtocolEligibility(
   const now = options?.now ?? new Date();
   const reasons: ProtocolIneligibilityReason[] = [];
 
-  // Garde-fou (Chantier O, 2026-04-26) : client doit être démarré.
-  // 3 signaux possibles selon le pattern existant — on est permissif :
-  //   - started === true : flag explicite poussé par le bilan
-  //   - lifecycleStatus === "active" / "completed" : statut métier OK
-  //   - startDate présent : date de démarrage saisie
-  // Si AUCUN n'est positif → client "Programme à confirmer" → on coupe
-  // tôt, avant même de tester bilan/programme/body scan. Cela évite que
-  // les J+X polluent le dashboard pour des prospects pas encore engagés.
-  const hasStartDate = typeof client.startDate === "string" && client.startDate.trim().length > 0;
-  const isStarted =
-    client.started === true ||
-    client.lifecycleStatus === "active" ||
-    hasStartDate;
-  if (!isStarted) {
+  // Garde-fou (Chantier "lifecycle primaire", 2026-04-26) :
+  // delegue a isClientProgramStarted pour cohérence dans tout le code.
+  // Cette fonction donne priorité absolue à lifecycle_status="not_started"
+  // (champ manuel coach), ce qui neutralise les flags started/startDate
+  // potentiellement faux positifs remplis par le flow bilan initial.
+  if (!isClientProgramStarted(client)) {
     reasons.push("not_started");
     return { eligible: false, reasons };
   }
