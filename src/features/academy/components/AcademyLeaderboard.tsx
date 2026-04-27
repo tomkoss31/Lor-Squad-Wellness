@@ -3,6 +3,7 @@
 // avec leur progression Academy, classes par % complete desc.
 
 import { useAcademyLeaderboard } from "../hooks/useAcademyLeaderboard";
+import { ACADEMY_SECTIONS } from "../sections";
 
 function relativeTime(date: Date | null): string {
   if (!date) return "—";
@@ -30,6 +31,18 @@ function statusLabel(row: ReturnType<typeof useAcademyLeaderboard>["rows"][numbe
     return { label: `${row.percentComplete} %`, color: "#5C4A0F", bg: "rgba(184,146,42,0.12)" };
   }
   return { label: "Pas commencé", color: "#888780", bg: "rgba(0,0,0,0.04)" };
+}
+
+/** Direction 10 (2026-04-28) : nom de la section actuelle pour un row. */
+function currentSectionLabel(
+  row: ReturnType<typeof useAcademyLeaderboard>["rows"][number],
+): string | null {
+  if (row.completedAt) return null;
+  if (row.skippedAt) return null;
+  if (!row.startedAt) return null;
+  const idx = Math.min(Math.max(0, row.lastStep), ACADEMY_SECTIONS.length - 1);
+  const section = ACADEMY_SECTIONS[idx];
+  return section?.shortLabel ?? null;
 }
 
 export function AcademyLeaderboard() {
@@ -175,7 +188,7 @@ export function AcademyLeaderboard() {
                 {idx === 0 ? "🥇" : idx === 1 ? "🥈" : idx === 2 ? "🥉" : `#${idx + 1}`}
               </div>
 
-              {/* Nom + role */}
+              {/* Nom + role + section actuelle */}
               <div style={{ flex: 1, minWidth: 0 }}>
                 <p
                   style={{
@@ -196,9 +209,26 @@ export function AcademyLeaderboard() {
                     : row.userRole === "referent"
                       ? "Coach référent"
                       : "Distributeur"}
-                  {" · Dernière activité "}
+                  {" · "}
                   {relativeTime(row.lastActiveAt)}
                 </p>
+                {(() => {
+                  const sectionLabel = currentSectionLabel(row);
+                  if (!sectionLabel) return null;
+                  return (
+                    <p
+                      style={{
+                        margin: "3px 0 0",
+                        fontSize: 11,
+                        color: "#B8922A",
+                        fontWeight: 600,
+                        fontFamily: "DM Sans, sans-serif",
+                      }}
+                    >
+                      📍 En cours : {sectionLabel}
+                    </p>
+                  );
+                })()}
               </div>
 
               {/* Barre progression mini */}
