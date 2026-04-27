@@ -1,6 +1,7 @@
-import { useDeferredValue, useMemo, useState } from "react";
+import { useDeferredValue, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { PageHeading } from "../components/ui/PageHeading";
+import { QuickFiltersBar } from "../components/clients/QuickFiltersBar";
 import { useAppContext } from "../context/AppContext";
 import { getAccessibleOwnerIds } from "../lib/auth";
 import {
@@ -9,6 +10,12 @@ import {
   getPortfolioMetrics,
   isRelanceFollowUp,
 } from "../lib/portfolio";
+import {
+  applyQuickFilter,
+  loadStoredQuickFilter,
+  saveStoredQuickFilter,
+  type QuickFilterId,
+} from "../lib/clientQuickFilters";
 import { formatDateTime, isClientProgramStarted } from "../lib/calculations";
 import type { User, Client, LifecycleStatus } from "../types/domain";
 import { LIFECYCLE_LABELS, LIFECYCLE_TONES } from "../types/domain";
@@ -24,6 +31,19 @@ export function ClientsPage() {
   const [statusFilter, setStatusFilter] = useState<"all" | LifecycleStatus | "fragile">("all");
   const [ownerFilter, setOwnerFilter] = useState("all");
   const deferredSearch = useDeferredValue(search);
+
+  // Chantier C.1 filtres rapides (2026-04-29) : chips de presets metier
+  // (a relancer / au cap / inactifs / sans RDV / etc.). Persiste dans
+  // localStorage pour retrouver l etat au refresh.
+  const [quickFilter, setQuickFilter] = useState<QuickFilterId>("all");
+  // Charge la valeur stockee au mount cote client (evite SSR mismatch).
+  useEffect(() => {
+    setQuickFilter(loadStoredQuickFilter());
+  }, []);
+  function handleQuickFilterChange(id: QuickFilterId) {
+    setQuickFilter(id);
+    saveStoredQuickFilter(id);
+  }
 
   // Chantier 5 — Batch lifecycle
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -91,6 +111,9 @@ export function ClientsPage() {
       : null;
 
   const normalizedSearch = deferredSearch.trim().toLowerCase();
+  // Chantier C.1 (2026-04-29) : on memoize le `now` pour que le predicat
+  // quickFilter soit stable (sinon il recalcule a chaque render).
+  const quickFilterNow = useMemo(() => new Date(), []);
   const filteredClients = useMemo(() => {
     const filtered = visibleClients.filter((client) => {
       const matchesOwner =
@@ -110,18 +133,23 @@ export function ClientsPage() {
       return matchesOwner && matchesStatus && matchesSearch;
     });
 
+    // Applique le quick filter par dessus (compose avec les autres filtres).
+    const afterQuick = quickFilter === "all"
+      ? filtered
+      : applyQuickFilter(quickFilter, filtered, { followUps: visibleFollowUps, now: quickFilterNow });
+
     // Chantier tri priorité (2026-04-24) : admin → ses clients en premier.
     // Tri secondaire par nom de famille alphabétique.
     if (isAdmin && currentUser?.id) {
-      return [...filtered].sort((a, b) => {
+      return [...afterQuick].sort((a, b) => {
         const aMine = a.distributorId === currentUser.id ? 0 : 1;
         const bMine = b.distributorId === currentUser.id ? 0 : 1;
         if (aMine !== bMine) return aMine - bMine;
         return (a.lastName || "").localeCompare(b.lastName || "", "fr");
       });
     }
-    return filtered;
-  }, [normalizedSearch, ownerFilter, selectedOwnerIds, statusFilter, visibleClients, isAdmin, currentUser?.id]);
+    return afterQuick;
+  }, [normalizedSearch, ownerFilter, selectedOwnerIds, statusFilter, visibleClients, isAdmin, currentUser?.id, quickFilter, visibleFollowUps, quickFilterNow]);
 
   // Relances visibles pour le filtre courant
   const visibleRelanceCount = useMemo(() => {
@@ -167,6 +195,14 @@ export function ClientsPage() {
           </div>
         ))}
       </div>
+
+      {/* CHIPS FILTRES RAPIDES (Chantier C.1, 2026-04-29) */}
+      <QuickFiltersBar
+        activeFilter={quickFilter}
+        onChange={handleQuickFilterChange}
+        clients={visibleClients}
+        followUps={visibleFollowUps}
+      />
 
       {/* BARRE RECHERCHE + FILTRE STATUT */}
       <div className="clients-search-bar" style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
