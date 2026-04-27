@@ -549,7 +549,9 @@ export function AppLayout() {
         <TourRunner
           key={activeTour.id}
           steps={activeTour.steps}
+          initialStep={activeTour.initialStep}
           onClose={(reason) => closeTour(reason)}
+          onStepChange={activeTour.onStepChange}
         />
       ) : null}
       {activeQuiz ? (

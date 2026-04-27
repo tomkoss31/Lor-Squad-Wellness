@@ -22,6 +22,10 @@ export interface ActiveTour {
   steps: TutorialStep[];
   /** Callback appele a la fermeture du tour, quelle que soit la raison. */
   onClose: (reason: TourCloseReason) => void;
+  /** Direction 4 (2026-04-28) : step de depart pour reprise. Defaut 0. */
+  initialStep?: number;
+  /** Callback appele a chaque changement de step (utile pour persistance). */
+  onStepChange?: (stepIndex: number) => void;
 }
 
 interface ActiveTourContextValue {

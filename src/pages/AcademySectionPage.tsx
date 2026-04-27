@@ -9,6 +9,11 @@ import { useAcademyProgress } from "../features/academy/hooks/useAcademyProgress
 import { getAcademySectionById } from "../features/academy/sections";
 import { useActiveTour } from "../features/onboarding/ActiveTourContext";
 import { useActiveQuiz } from "../features/academy/ActiveQuizContext";
+import {
+  clearResumeStep,
+  getResumeStep,
+  setResumeStep,
+} from "../features/academy/utils/resumeStep";
 
 export function AcademySectionPage() {
   const { sectionId } = useParams<{ sectionId: string }>();
@@ -29,9 +34,18 @@ export function AcademySectionPage() {
     if (startedRef.current === section.id) return;
     startedRef.current = section.id;
 
+    // Direction 4 (2026-04-28) : reprise au step exact si l user a skip
+    // une section a mi-parcours.
+    const resumeAt = getResumeStep(section.id);
+
     startTour({
       id: section.id,
       steps: section.steps,
+      initialStep: resumeAt,
+      onStepChange: (stepIndex) => {
+        // Sauvegarde le step courant pour reprise ulterieure.
+        setResumeStep(section.id, stepIndex);
+      },
       onClose: async (reason) => {
         // Fix race condition (2026-04-27) : await la persistance DB avant
         // de naviguer. Sans ca, AcademyOverviewPage mountait et fetchait
@@ -42,6 +56,8 @@ export function AcademySectionPage() {
           } catch (err) {
             console.warn("[AcademySectionPage] markSectionDone failed", err);
           }
+          // Reset du resume step puisque la section est terminee.
+          clearResumeStep(section.id);
           // Direction 2 (2026-04-28) : si la section a un quiz, on le
           // lance avant de naviguer vers /academy. Le quiz est rendu au
           // niveau AppLayout via ActiveQuizContext donc il survit au
