@@ -222,6 +222,13 @@ const ConversationView = lazy(() =>
     default: module.ConversationView
   }))
 );
+// Chantier D Analytics admin (2026-04-29) : pilotage business KPI + funnel
+// + top produits + top distri + tendance 12 mois + alertes operationnelles.
+const AnalyticsPage = lazy(() =>
+  import("./pages/AnalyticsPage").then((module) => ({
+    default: module.AnalyticsPage
+  }))
+);
 
 import { useTheme } from './hooks/useTheme'
 import { useAutoNotifications } from './hooks/useAutoNotifications'
@@ -301,6 +308,8 @@ export default function App() {
                     accessible pour l'admin legacy (créer compte, réparer). */}
                 <Route path="team" element={<TeamPage />} />
                 <Route path="pv/team" element={<PvTeamPage />} />
+                {/* Chantier D Analytics admin (2026-04-29) */}
+                <Route path="analytics" element={<AnalyticsPage />} />
                 <Route path="debug/notifications" element={<DebugNotificationsPage />} />
               </Route>
               <Route path="distributors/:distributorId" element={<DistributorPortfolioPage />} />
