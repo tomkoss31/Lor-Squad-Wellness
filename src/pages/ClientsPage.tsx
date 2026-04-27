@@ -2,6 +2,8 @@ import { useDeferredValue, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { PageHeading } from "../components/ui/PageHeading";
 import { QuickFiltersBar } from "../components/clients/QuickFiltersBar";
+import { ClientsKanban } from "../components/clients/ClientsKanban";
+import { EmptyState } from "../components/ui/EmptyState";
 import { useAppContext } from "../context/AppContext";
 import { getAccessibleOwnerIds } from "../lib/auth";
 import {
@@ -43,6 +45,28 @@ export function ClientsPage() {
   function handleQuickFilterChange(id: QuickFilterId) {
     setQuickFilter(id);
     saveStoredQuickFilter(id);
+  }
+
+  // Chantier C.2 vue kanban (2026-04-29) : toggle list <-> kanban,
+  // persiste aussi en localStorage.
+  const [viewMode, setViewMode] = useState<"list" | "kanban">("list");
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const stored = window.localStorage.getItem("ls.clients.viewMode");
+    if (stored === "list" || stored === "kanban") setViewMode(stored);
+  }, []);
+  function handleViewModeChange(mode: "list" | "kanban") {
+    setViewMode(mode);
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem("ls.clients.viewMode", mode);
+    }
+  }
+  async function handleMoveClient(clientId: string, status: LifecycleStatus) {
+    try {
+      await setClientLifecycleStatus(clientId, status);
+    } catch (err) {
+      console.warn("[ClientsKanban] move failed:", err);
+    }
   }
 
   // Chantier 5 — Batch lifecycle
@@ -196,13 +220,59 @@ export function ClientsPage() {
         ))}
       </div>
 
-      {/* CHIPS FILTRES RAPIDES (Chantier C.1, 2026-04-29) */}
-      <QuickFiltersBar
-        activeFilter={quickFilter}
-        onChange={handleQuickFilterChange}
-        clients={visibleClients}
-        followUps={visibleFollowUps}
-      />
+      {/* CHIPS FILTRES RAPIDES + TOGGLE VUE (Chantier C.1+C.2, 2026-04-29) */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, flexWrap: "wrap" }}>
+        <div style={{ flex: 1, minWidth: 280 }}>
+          <QuickFiltersBar
+            activeFilter={quickFilter}
+            onChange={handleQuickFilterChange}
+            clients={visibleClients}
+            followUps={visibleFollowUps}
+          />
+        </div>
+        <div style={{ display: "flex", gap: 4, padding: 3, background: "var(--ls-surface2)", borderRadius: 10, border: "0.5px solid var(--ls-border)", marginTop: 18 }}>
+          <button
+            type="button"
+            onClick={() => handleViewModeChange("list")}
+            aria-pressed={viewMode === "list"}
+            title="Vue liste"
+            style={{
+              padding: "6px 12px",
+              borderRadius: 7,
+              border: "none",
+              fontSize: 11,
+              fontWeight: 500,
+              fontFamily: "DM Sans, sans-serif",
+              cursor: "pointer",
+              background: viewMode === "list" ? "var(--ls-surface)" : "transparent",
+              color: viewMode === "list" ? "var(--ls-text)" : "var(--ls-text-muted)",
+              boxShadow: viewMode === "list" ? "0 1px 3px rgba(0,0,0,0.06)" : "none",
+            }}
+          >
+            ☰ Liste
+          </button>
+          <button
+            type="button"
+            onClick={() => handleViewModeChange("kanban")}
+            aria-pressed={viewMode === "kanban"}
+            title="Vue kanban"
+            style={{
+              padding: "6px 12px",
+              borderRadius: 7,
+              border: "none",
+              fontSize: 11,
+              fontWeight: 500,
+              fontFamily: "DM Sans, sans-serif",
+              cursor: "pointer",
+              background: viewMode === "kanban" ? "var(--ls-surface)" : "transparent",
+              color: viewMode === "kanban" ? "var(--ls-text)" : "var(--ls-text-muted)",
+              boxShadow: viewMode === "kanban" ? "0 1px 3px rgba(0,0,0,0.06)" : "none",
+            }}
+          >
+            ⚏ Kanban
+          </button>
+        </div>
+      </div>
 
       {/* BARRE RECHERCHE + FILTRE STATUT */}
       <div className="clients-search-bar" style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
@@ -400,20 +470,27 @@ export function ClientsPage() {
         </div>
       )}
 
-      {/* TABLEAU CLIENTS */}
+      {/* TABLEAU CLIENTS (vue liste) ou KANBAN (vue kanban) */}
       {filteredClients.length === 0 ? (
-        <div style={{
-          background: "var(--ls-surface)", border: "1px solid var(--ls-border)",
-          borderRadius: 14, padding: "40px 20px",
-          textAlign: "center", color: "var(--ls-text-hint)", fontSize: 13,
-        }}>
-          Aucun client sur ce filtre.
-          <div style={{ marginTop: 12 }}>
-            <Link to="/assessments/new" style={{ color: "var(--ls-gold)", textDecoration: "none", fontWeight: 600, fontSize: 13 }}>
-              → Lancer un premier bilan
-            </Link>
-          </div>
+        <div style={{ background: "var(--ls-surface)", border: "1px solid var(--ls-border)", borderRadius: 14 }}>
+          <EmptyState
+            emoji={visibleClients.length === 0 ? "🌱" : "🔍"}
+            title={visibleClients.length === 0 ? "Pas encore de client" : "Aucun client sur ce filtre"}
+            description={
+              visibleClients.length === 0
+                ? "Lance ton premier bilan pour démarrer un dossier client. Toute l'expérience Lor'Squad démarre ici."
+                : "Essaie de retirer un filtre ou changer la recherche pour voir plus de clients."
+            }
+            ctaLabel={visibleClients.length === 0 ? "→ Lancer un bilan" : undefined}
+            ctaHref={visibleClients.length === 0 ? "/assessments/new" : undefined}
+          />
         </div>
+      ) : viewMode === "kanban" ? (
+        <ClientsKanban
+          clients={filteredClients}
+          users={users}
+          onMoveClient={handleMoveClient}
+        />
       ) : (
         <div style={{ background: "var(--ls-surface)", border: "1px solid var(--ls-border)", borderRadius: 14, overflow: "hidden" }}>
           {/* Header */}
