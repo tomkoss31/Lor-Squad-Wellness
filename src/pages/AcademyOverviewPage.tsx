@@ -10,6 +10,7 @@ import { ACADEMY_SECTIONS, type AcademySection } from "../features/academy/secti
 import { ConfettiBurst } from "../features/academy/components/ConfettiBurst";
 import { AcademyTimeline } from "../features/academy/components/AcademyTimeline";
 import { useAcademyTeamStats } from "../features/academy/hooks/useAcademyTeamStats";
+import { AcademyBadges } from "../features/academy/components/AcademyBadges";
 
 export function AcademyOverviewPage() {
   const { view, goToSection, restartSection } = useAcademyProgress();
@@ -163,6 +164,12 @@ export function AcademyOverviewPage() {
             )}
           </div>
         </div>
+
+        {/* Badges progression (Direction 5 — 2026-04-28) */}
+        <AcademyBadges
+          completedCount={view.completedCount}
+          isCompleted={view.isCompleted}
+        />
 
         {/* Timeline horizontale (Polish D 2026-04-28) */}
         <AcademyTimeline
