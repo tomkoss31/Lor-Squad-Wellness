@@ -23,6 +23,7 @@ import { PendingFollowupsCard } from "../components/copilote/PendingFollowupsCar
 import { PvGaugeBand } from "../components/copilote/PvGaugeBand";
 import { InboxWidget } from "../components/copilote/InboxWidget";
 import { StreakBadge } from "../features/gamification/components/StreakBadge";
+import { WeeklyQuestsCard } from "../features/gamification/components/WeeklyQuestsCard";
 
 function useLiveClock(): Date {
   const [now, setNow] = useState(() => new Date());
@@ -125,6 +126,9 @@ export function CoPilotePage() {
         todayAppointmentsCount={data.todayAppointmentsCount}
         conversionRate={data.conversionRate}
       />
+
+      {/* Gamification 3 (2026-04-29) : quetes hebdo automatiques. */}
+      <WeeklyQuestsCard />
     </div>
   );
 }
