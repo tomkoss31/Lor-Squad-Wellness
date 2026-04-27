@@ -77,7 +77,7 @@ export function TutorialTooltip({
       style={{
         position: "fixed",
         zIndex: 10001,
-        maxWidth: placement === "center" ? 440 : 400,
+        maxWidth: placement === "center" ? 480 : 400,
         width: placement === "center" ? "calc(100% - 32px)" : "min(420px, calc(100% - 24px))",
         background: "#FFFFFF",
         borderRadius: 14,

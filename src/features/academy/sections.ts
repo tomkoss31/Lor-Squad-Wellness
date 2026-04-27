@@ -236,7 +236,7 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
         placement: "center",
         isLast: true,
         nextLabel: "Section terminée",
-        illustrationKey: "qr-share",
+        illustrationKey: "mockup-thank-you",
       },
     ],
   },
@@ -253,7 +253,7 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
         title: "Le Programme — recommandation auto",
         body: "Lor'Squad génère le programme produits du client selon 6 règles métier déterministes (collations, liftoff, CR7, hydrate, créatine, collagène) déclenchées par son objectif et son body scan. Tu valides, tu ajustes les quantités, tu envoies. Pas de feuille Excel, pas de catalogue à apprendre par cœur.",
         placement: "center",
-        illustrationKey: "shopping-bag",
+        illustrationKey: "mockup-program-card",
       },
       {
         id: "open-program",
@@ -283,7 +283,7 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
         title: "Détection auto de 6 alertes sport",
         body: "Le wizard détecte automatiquement : hydratation faible, protéines basses, sommeil court, masse musculaire insuffisante, snack manquant, fréquence sport incohérente. Une popup style Apple Health bloque la validation tant que tu n'as pas acquitté chaque alerte (avec un commentaire si pertinent). Évite de valider un programme bancal sans s'en rendre compte.",
         placement: "center",
-        illustrationKey: "alert-shield",
+        illustrationKey: "mockup-sport-alerts",
       },
       {
         id: "generate",
@@ -315,7 +315,7 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
         title: "L'agenda, ton GPS",
         body: "Bilans, suivis et prospects sur un calendrier unique. Tu filtres par type (clients / prospects / suivis), par date (aujourd'hui, semaine, mois) et par statut. La page liste tous tes prochains rendez-vous classés par date — tu vois en un coup d'œil ce qui arrive.",
         placement: "center",
-        illustrationKey: "calendar-glow",
+        illustrationKey: "mockup-agenda-list",
       },
       {
         id: "new-rdv",

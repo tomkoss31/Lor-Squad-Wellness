@@ -68,4 +68,9 @@ export type TutorialIllustrationKind =
   | "sparkles"
   | "ring-progress"
   | "alert-shield"
-  | "qr-share";
+  | "qr-share"
+  // Polish E (2026-04-28) : mini-screenshots annotes des vrais ecrans
+  | "mockup-thank-you"
+  | "mockup-program-card"
+  | "mockup-agenda-list"
+  | "mockup-sport-alerts";
