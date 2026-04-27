@@ -112,14 +112,10 @@ export default async function handler(req: any, res: any) {
       perPage: 500
     });
 
-    const usersList = (listedUsers.data?.users ?? []) as Array<{
-      id: string;
-      email?: string | null;
-    }>;
     authUser =
-      (usersList.find((item) => item.email?.toLowerCase() === email) as
-        | typeof authUser
-        | null) ?? null;
+      listedUsers.data.users.find(
+        (item) => item.email?.toLowerCase() === email
+      ) ?? null;
   }
 
   if (!authUser?.id || !authUser.email) {

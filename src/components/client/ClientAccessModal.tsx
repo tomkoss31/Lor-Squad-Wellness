@@ -375,16 +375,14 @@ export function ClientAccessModal({
                   marginBottom: 12,
                 }}
               >
-                <div data-tour-id="client-access-qr">
-                  <QRCodeSVG
-                    value={url}
-                    size={180}
-                    level="M"
-                    includeMargin={false}
-                    fgColor="#0B0D11"
-                    bgColor="#FFFFFF"
-                  />
-                </div>
+                <QRCodeSVG
+                  value={url}
+                  size={180}
+                  level="M"
+                  includeMargin={false}
+                  fgColor="#0B0D11"
+                  bgColor="#FFFFFF"
+                />
                 <div style={{ fontSize: 11, color: "#6b6f7a", textAlign: "center" }}>
                   Scan par {clientFirstName} pour ouvrir le lien directement
                 </div>
@@ -410,7 +408,7 @@ export function ClientAccessModal({
               {showQr ? "Masquer le QR code" : "📱 Afficher le QR code (présentiel)"}
             </button>
 
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 10 }} data-tour-id="client-access-share">
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 10 }}>
               <button
                 type="button"
                 onClick={shareWhatsApp}

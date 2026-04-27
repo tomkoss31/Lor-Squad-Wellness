@@ -15,7 +15,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { TutorialTooltip } from "./components/TutorialTooltip";
 import { MetricGauge } from "./components/MetricGauge";
-import { SpotlightOverlay as SharedSpotlightOverlay } from "./components/SpotlightOverlay";
 import {
   BODY_FAT_RANGES,
   HYDRATATION_RANGES,
@@ -229,10 +228,6 @@ export function OnboardingTutorial({
 }
 
 // ─── Spotlight overlay ─────────────────────────────────────────────────────
-// Thin adapter qui conserve l'ancienne API (`rect` + `onClick`) attendue par
-// les call sites de ce composant, et delegue le rendu visuel a
-// SharedSpotlightOverlay (`./components/SpotlightOverlay`). L'extraction
-// permet a TourRunner (Academy) de reutiliser le rendu sans dupliquer.
 
 function SpotlightOverlay({
   rect,
@@ -241,25 +236,102 @@ function SpotlightOverlay({
   rect: DOMRect | null;
   onClick?: () => void;
 }) {
+  // Si pas de rect (stage modale), overlay plein. Sinon, découpe via
+  // 4 rectangles autour de la cible pour laisser passer le spotlight.
+  if (!rect) {
+    return (
+      <div
+        onClick={onClick}
+        role={onClick ? "button" : "presentation"}
+        aria-label={onClick ? "Fermer le tutoriel" : undefined}
+        tabIndex={onClick ? 0 : undefined}
+        style={{
+          position: "fixed",
+          inset: 0,
+          background: "rgba(10, 15, 25, 0.6)",
+          backdropFilter: "blur(2px)",
+          zIndex: 10000,
+          cursor: onClick ? "pointer" : "default",
+        }}
+      />
+    );
+  }
+  const pad = 8;
   return (
     <>
-      <SharedSpotlightOverlay targetRect={rect} />
-      {onClick ? (
-        <div
-          onClick={onClick}
-          role="button"
-          aria-label="Fermer le tutoriel"
-          tabIndex={0}
-          style={{
-            position: "fixed",
-            inset: 0,
-            zIndex: 10000,
-            background: "transparent",
-            cursor: "pointer",
-          }}
-        />
-      ) : null}
+      {/* 4 bandes autour du rect */}
+      <OverlayBand
+        style={{ top: 0, left: 0, right: 0, height: Math.max(0, rect.top - pad) }}
+        onClick={onClick}
+      />
+      <OverlayBand
+        style={{
+          top: Math.max(0, rect.top - pad),
+          left: 0,
+          width: Math.max(0, rect.left - pad),
+          height: rect.height + pad * 2,
+        }}
+        onClick={onClick}
+      />
+      <OverlayBand
+        style={{
+          top: Math.max(0, rect.top - pad),
+          left: Math.min(window.innerWidth, rect.right + pad),
+          right: 0,
+          height: rect.height + pad * 2,
+        }}
+        onClick={onClick}
+      />
+      <OverlayBand
+        style={{
+          top: Math.min(window.innerHeight, rect.bottom + pad),
+          left: 0,
+          right: 0,
+          bottom: 0,
+        }}
+        onClick={onClick}
+      />
+      {/* Ring gold autour du target */}
+      <div
+        style={{
+          position: "fixed",
+          top: rect.top - pad,
+          left: rect.left - pad,
+          width: rect.width + pad * 2,
+          height: rect.height + pad * 2,
+          border: "2px solid #EF9F27",
+          borderRadius: 12,
+          zIndex: 10000,
+          pointerEvents: "none",
+          boxShadow: "0 0 0 2px rgba(239,159,39,0.25)",
+        }}
+      />
     </>
+  );
+}
+
+function OverlayBand({
+  style,
+  onClick,
+}: {
+  style: React.CSSProperties;
+  onClick?: () => void;
+}) {
+  return (
+    <div
+      onClick={onClick}
+      role={onClick ? "button" : "presentation"}
+      tabIndex={onClick ? 0 : undefined}
+      aria-hidden={!onClick}
+      style={{
+        position: "fixed",
+        background: "rgba(10, 15, 25, 0.6)",
+        backdropFilter: "blur(2px)",
+        zIndex: 10000,
+        cursor: onClick ? "pointer" : "default",
+        ...style,
+      }}
+    />
   );
 }
 

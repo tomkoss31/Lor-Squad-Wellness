@@ -11,7 +11,6 @@ import { Button } from "../ui/Button";
 import { useAppContext } from "../../context/AppContext";
 import { useToast } from "../../context/ToastContext";
 import { getSupabaseClient } from "../../services/supabaseClient";
-import { XpProgressCard } from "../../features/gamification/components/XpProgressCard";
 
 function daysSince(iso?: string | null): number | null {
   if (!iso) return null;
@@ -32,7 +31,7 @@ function formatDate(iso?: string | null): string {
 }
 
 export function ProfilTab() {
-  const { currentUser, logout, users } = useAppContext();
+  const { currentUser, logout } = useAppContext();
   const { push: pushToast } = useToast();
   const navigate = useNavigate();
 
@@ -182,9 +181,6 @@ export function ProfilTab() {
 
   return (
     <div className="space-y-4">
-      {/* Gamification 5 (2026-04-29) : niveau + XP en haut du profil. */}
-      <XpProgressCard />
-
       <Card className="space-y-5">
         <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
           <div
@@ -224,7 +220,6 @@ export function ProfilTab() {
               value={name}
               onChange={(e) => setName(e.target.value)}
               disabled={saving}
-              data-tour-id="profile-name"
               className="ls-input"
               style={{
                 width: "100%",
@@ -253,103 +248,6 @@ export function ProfilTab() {
               {currentUser.email}
             </div>
           </LabeledField>
-          {/* Travail 2 (2026-04-27) : champs herbalife/sponsor/coach
-              referent caches pour les admins (Thomas, Mel) — ils n en ont
-              pas besoin (ce sont eux les coachs). Affiches pour referents
-              et distributors. */}
-          {currentUser.role !== "admin" ? (
-            <>
-              <LabeledField label="Ton ID Herbalife">
-                <input
-                  value={herbalifeId}
-                  onChange={(e) => setHerbalifeId(e.target.value)}
-                  disabled={saving}
-                  placeholder="21Y0103610"
-                  pattern="^\d{2}[A-Z]\d{7}$"
-                  maxLength={10}
-                  inputMode="text"
-                  autoCapitalize="characters"
-                  data-tour-id="profile-herbalife-id"
-                  style={{
-                    width: "100%",
-                    padding: "10px 12px",
-                    borderRadius: 10,
-                    border: "1px solid var(--ls-border)",
-                    background: "var(--ls-surface2)",
-                    color: "var(--ls-text)",
-                    fontSize: 14,
-                    fontFamily: "DM Sans, sans-serif",
-                    outline: "none",
-                  }}
-                />
-                <div style={{ fontSize: 11, color: "var(--ls-text-muted)", marginTop: 4 }}>
-                  Format : 2 chiffres + 1 lettre + 7 chiffres (ex : 21Y0103610)
-                </div>
-              </LabeledField>
-              <LabeledField label="ID de ton sponsor Herbalife">
-                <input
-                  value={sponsorId}
-                  onChange={(e) => setSponsorId(e.target.value)}
-                  disabled={saving}
-                  placeholder="21Y0103610"
-                  pattern="^\d{2}[A-Z]\d{7}$"
-                  maxLength={10}
-                  inputMode="text"
-                  autoCapitalize="characters"
-                  data-tour-id="profile-sponsor"
-                  style={{
-                    width: "100%",
-                    padding: "10px 12px",
-                    borderRadius: 10,
-                    border: "1px solid var(--ls-border)",
-                    background: "var(--ls-surface2)",
-                    color: "var(--ls-text)",
-                    fontSize: 14,
-                    fontFamily: "DM Sans, sans-serif",
-                    outline: "none",
-                  }}
-                />
-                <div style={{ fontSize: 11, color: "var(--ls-text-muted)", marginTop: 4 }}>
-                  L&apos;identifiant Herbalife de la personne qui t&apos;a parrainé.
-                </div>
-              </LabeledField>
-              <LabeledField label="Ton coach référent">
-                <select
-                  value={coachReferentUserId}
-                  onChange={(e) => setCoachReferentUserId(e.target.value)}
-                  disabled={saving}
-                  data-tour-id="profile-coach-referent"
-                  style={{
-                    width: "100%",
-                    padding: "10px 12px",
-                    borderRadius: 10,
-                    border: "1px solid var(--ls-border)",
-                    background: "var(--ls-surface2)",
-                    color: "var(--ls-text)",
-                    fontSize: 14,
-                    fontFamily: "DM Sans, sans-serif",
-                    outline: "none",
-                    cursor: "pointer",
-                  }}
-                >
-                  <option value="">— Aucun —</option>
-                  {coachOptions.map((u) => (
-                    <option key={u.id} value={u.id}>
-                      {u.name}
-                      {u.role === "admin"
-                        ? " (admin)"
-                        : u.role === "referent"
-                          ? " (coach)"
-                          : ""}
-                    </option>
-                  ))}
-                </select>
-                <div style={{ fontSize: 11, color: "var(--ls-text-muted)", marginTop: 4 }}>
-                  La personne qui te suit au quotidien dans Lor&apos;Squad. Souvent ton sponsor.
-                </div>
-              </LabeledField>
-            </>
-          ) : null}
           <LabeledField label="Rôle">
             <div
               style={{
@@ -459,7 +357,7 @@ export function ProfilTab() {
         ) : null}
 
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          <Button onClick={() => void handleSaveProfile()} disabled={saving} data-tour-id="profile-save">
+          <Button onClick={() => void handleSaveProfile()} disabled={saving}>
             {saving ? "Sauvegarde…" : "Enregistrer les modifications"}
           </Button>
           <Button variant="secondary" onClick={() => setPwModal(true)}>

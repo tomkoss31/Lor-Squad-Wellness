@@ -12,7 +12,6 @@ import {
 } from "../lib/portfolio";
 import { formatDate, formatDateTime, getFirstAssessment } from "../lib/calculations";
 import type { Client, FollowUp, User } from "../types/domain";
-import { AcademyAdminPanel } from "../features/academy/components/AcademyAdminPanel";
 
 const statusTone: Record<string, { label: string; tone: "active" | "pending" | "follow-up" }> = {
   active: { label: "Actif", tone: "active" },
@@ -177,19 +176,6 @@ export function DistributorPortfolioPage() {
           ))
         )}
       </div>
-
-      {/* Chantier Academy Phase 1 (2026-04-26) : panel progression Academy
-          du distri, reserve aux admins. La RPC sous-jacente verifie elle-meme
-          is_admin() — le check ici evite juste l affichage UI inutile pour les
-          referents/distributeurs. */}
-      {currentUser.role === "admin" ? (
-        <div style={{ marginTop: 24 }}>
-          <AcademyAdminPanel
-            userId={portfolioUser.id}
-            displayName={portfolioUser.name}
-          />
-        </div>
-      ) : null}
     </div>
   );
 }

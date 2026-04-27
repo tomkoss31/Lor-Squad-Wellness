@@ -3,10 +3,8 @@
 // par l'orchestrateur selon le rect de la cible (getBoundingClientRect).
 // Gère aussi le mode "center" (modale centrée pour Welcome/Final).
 
-import { useEffect, useRef, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import { TutorialProgress } from "./TutorialProgress";
-import { TutorialIllustration } from "./TutorialIllustration";
-import type { TutorialIllustrationKind } from "../types";
 
 export interface TutorialTooltipProps {
   stepIndex: number; // 0-based
@@ -21,8 +19,6 @@ export interface TutorialTooltipProps {
   onClose?: () => void;
   nextLabel?: string;
   isLast?: boolean;
-  /** Polish C (2026-04-28) : illustration SVG inline au-dessus du titre. */
-  illustrationKey?: TutorialIllustrationKind;
 }
 
 export function TutorialTooltip({
@@ -38,62 +34,18 @@ export function TutorialTooltip({
   onClose,
   nextLabel,
   isLast = false,
-  illustrationKey,
 }: TutorialTooltipProps) {
   const positionedStyle = computePosition(placement, targetRect);
 
-  // Direction 8 (2026-04-28) : focus management. Au mount du tooltip
-  // (et donc a chaque step grace au key={step.id} cote TourRunner),
-  // on focus le dialog pour que le screen reader annonce le contenu
-  // et que la nav clavier soit utilisable des le step.
-  const dialogRef = useRef<HTMLDivElement | null>(null);
-  useEffect(() => {
-    const node = dialogRef.current;
-    if (!node) return;
-    // tabIndex=-1 + focus() -> reader annonce le titre/body, sans
-    // ajouter le dialog dans la tab order naturelle.
-    node.focus({ preventScroll: true });
-  }, []);
-
   return (
-    <>
-      {/* Polish B (2026-04-28) : keyframes inline pour fade-in entre steps
-          + hover lift sur le bouton Suivant gold. */}
-      <style>{`
-        @keyframes ls-tooltip-fade-in {
-          0% {
-            opacity: 0;
-            transform: ${placement === "center" ? "translate(-50%, -50%) scale(0.94)" : "translate3d(0, 6px, 0) scale(0.97)"};
-          }
-          100% {
-            opacity: 1;
-            transform: ${placement === "center" ? "translate(-50%, -50%) scale(1)" : "translate3d(0, 0, 0) scale(1)"};
-          }
-        }
-        .ls-tutorial-next-btn {
-          transition: transform 160ms ease-out, box-shadow 160ms ease-out, filter 160ms ease-out;
-        }
-        .ls-tutorial-next-btn:hover {
-          transform: translateY(-1px);
-          box-shadow: 0 6px 16px rgba(186,117,23,0.35);
-          filter: brightness(1.05);
-        }
-        .ls-tutorial-next-btn:active {
-          transform: translateY(0);
-          box-shadow: 0 2px 6px rgba(186,117,23,0.25);
-        }
-      `}</style>
     <div
-      ref={dialogRef}
       role="dialog"
       aria-modal="true"
-      aria-labelledby="ls-tutorial-title"
-      aria-describedby="ls-tutorial-body"
-      tabIndex={-1}
+      aria-label={title}
       style={{
         position: "fixed",
         zIndex: 10001,
-        maxWidth: placement === "center" ? 480 : 400,
+        maxWidth: placement === "center" ? 440 : 400,
         width: placement === "center" ? "calc(100% - 32px)" : "min(420px, calc(100% - 24px))",
         background: "#FFFFFF",
         borderRadius: 14,
@@ -101,9 +53,6 @@ export function TutorialTooltip({
         boxShadow: "0 12px 40px rgba(0,0,0,0.25)",
         color: "#111827",
         fontFamily: "DM Sans, sans-serif",
-        animation: "ls-tooltip-fade-in 220ms cubic-bezier(0.2, 0.8, 0.2, 1) both",
-        willChange: "transform, opacity",
-        outline: "none",
         ...positionedStyle,
       }}
     >
@@ -126,7 +75,6 @@ export function TutorialTooltip({
           <button
             type="button"
             onClick={onSkip}
-            aria-label="Passer le tutoriel (raccourci Échap)"
             style={{
               marginLeft: "auto",
               padding: "4px 8px",
@@ -163,12 +111,8 @@ export function TutorialTooltip({
         ) : null}
       </div>
 
-      {/* Illustration SVG inline (Polish C 2026-04-28) */}
-      {illustrationKey ? <TutorialIllustration kind={illustrationKey} /> : null}
-
       {/* Titre */}
       <p
-        id="ls-tutorial-title"
         style={{
           fontFamily: "Syne, sans-serif",
           fontSize: 17,
@@ -181,13 +125,8 @@ export function TutorialTooltip({
         {title}
       </p>
 
-      {/* Body — aria-live polite pour annonce screen reader a chaque step */}
-      <div
-        id="ls-tutorial-body"
-        aria-live="polite"
-        aria-atomic="true"
-        style={{ fontSize: 13, lineHeight: 1.55, color: "#374151" }}
-      >
+      {/* Body */}
+      <div style={{ fontSize: 13, lineHeight: 1.55, color: "#374151" }}>
         {children}
       </div>
 
@@ -207,7 +146,6 @@ export function TutorialTooltip({
             <button
               type="button"
               onClick={onPrev}
-              aria-label="Étape précédente (raccourci flèche gauche)"
               style={{
                 padding: "8px 12px",
                 borderRadius: 8,
@@ -227,8 +165,6 @@ export function TutorialTooltip({
             <button
               type="button"
               onClick={onNext}
-              aria-label={isLast ? "Terminer le tutoriel" : "Étape suivante (raccourci flèche droite)"}
-              className="ls-tutorial-next-btn"
               style={{
                 padding: "8px 14px",
                 borderRadius: 8,
@@ -240,7 +176,6 @@ export function TutorialTooltip({
                 cursor: "pointer",
                 fontFamily: "DM Sans, sans-serif",
                 letterSpacing: 0.2,
-                boxShadow: "0 2px 6px rgba(186,117,23,0.25)",
               }}
             >
               {nextLabel ?? (isLast ? "Terminer le tuto 🎉" : "Suivant →")}
@@ -249,7 +184,6 @@ export function TutorialTooltip({
         </div>
       </div>
     </div>
-    </>
   );
 }
 
