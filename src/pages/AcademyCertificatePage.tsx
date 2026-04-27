@@ -235,21 +235,6 @@ export function AcademyCertificatePage() {
           >
             📱 Story Instagram
           </button>
-          <span
-            style={{
-              alignSelf: "center",
-              background: "rgba(216,90,48,0.15)",
-              color: "#993556",
-              padding: "4px 10px",
-              borderRadius: 999,
-              fontSize: 10,
-              fontWeight: 700,
-              letterSpacing: "0.06em",
-              textTransform: "uppercase",
-            }}
-          >
-            🚧 Mode beta
-          </span>
         </div>
       </div>
 
@@ -601,7 +586,7 @@ function CertificateA4({ userName, completedDate }: CertProps) {
       {/* Logo réel + eyebrow */}
       <div
         style={{
-          marginTop: 70,
+          marginTop: 56,
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
@@ -610,11 +595,18 @@ function CertificateA4({ userName, completedDate }: CertProps) {
         <img
           src={LOGO_URL}
           alt="Lor'Squad"
-          style={{ width: 72, height: 72, objectFit: "contain" }}
+          style={{
+            width: "auto",
+            height: 110,
+            maxWidth: 130,
+            objectFit: "contain",
+            display: "block",
+            background: "transparent",
+          }}
         />
         <div
           style={{
-            marginTop: 12,
+            marginTop: 14,
             fontFamily: "system-ui, sans-serif",
             fontSize: 10,
             letterSpacing: "0.32em",
@@ -815,13 +807,20 @@ function CertificateStory({ userName, completedDate }: CertProps) {
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
-          marginTop: 20,
+          marginTop: 16,
         }}
       >
         <img
           src={LOGO_URL}
           alt="Lor'Squad"
-          style={{ width: 56, height: 56, objectFit: "contain" }}
+          style={{
+            width: "auto",
+            height: 84,
+            maxWidth: 100,
+            objectFit: "contain",
+            display: "block",
+            background: "transparent",
+          }}
         />
         <div
           style={{
