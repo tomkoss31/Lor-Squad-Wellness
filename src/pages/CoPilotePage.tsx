@@ -22,6 +22,7 @@ import { TodayAgendaCard } from "../components/copilote/TodayAgendaCard";
 import { PendingFollowupsCard } from "../components/copilote/PendingFollowupsCard";
 import { PvGaugeBand } from "../components/copilote/PvGaugeBand";
 import { InboxWidget } from "../components/copilote/InboxWidget";
+import { StreakBadge } from "../features/gamification/components/StreakBadge";
 
 function useLiveClock(): Date {
   const [now, setNow] = useState(() => new Date());
@@ -82,6 +83,11 @@ export function CoPilotePage() {
         appointmentsToday={data.todayAppointmentsCount}
         followupsToday={data.todayFollowupsCount}
       />
+
+      {/* Gamification 1 (2026-04-29) : streak de connexion juste sous l horloge. */}
+      <div style={{ display: "flex", justifyContent: "flex-start", marginTop: -6 }}>
+        <StreakBadge />
+      </div>
 
       {/* Zone 2 — Hero action */}
       <HeroActionCard nextAction={data.nextAction} now={now} />
