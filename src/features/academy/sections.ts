@@ -277,9 +277,12 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
       },
       {
         id: "boosters",
-        title: "Les boosters cliquables (objectif sport)",
-        body: "Au step Programme du bilan, jusqu'à 6 boosters apparaissent en card avec étoile et fond teal : Formula 1 collations, Liftoff énergie, CR7 Drive, H24 Hydrate, créatine, collagène. Clic = sélection (avec stepper de quantité 1-10). Chaque booster a son PV et son prix qui se cumulent dans le ticket du jour à droite.",
-        placement: "center",
+        target: '[data-tour-id="program-sport-summary"]',
+        placement: "bottom",
+        route: DEMO_FICHE_CLIENT_ROUTE,
+        title: "Sport Summary — 3 cards live",
+        body: "Pour les clients en objectif sport, ce bloc apparaît automatiquement avec 3 cards : Besoins (protéines/eau/sommeil calculés sur son poids), Plan jour (les bons produits avant/après séance), Boosters recommandés (CR7, créatine, etc. selon sous-objectif). Tu peux ajouter les boosters cliquables au programme depuis le bilan en 1 clic.",
+        manualAdvance: true,
       },
       {
         id: "alerts",
@@ -287,6 +290,15 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
         body: "Le wizard détecte automatiquement : hydratation faible, protéines basses, sommeil court, masse musculaire insuffisante, snack manquant, fréquence sport incohérente. Une popup style Apple Health bloque la validation tant que tu n'as pas acquitté chaque alerte (avec un commentaire si pertinent). Évite de valider un programme bancal sans s'en rendre compte.",
         placement: "center",
         illustrationKey: "mockup-sport-alerts",
+      },
+      {
+        id: "recommended",
+        target: '[data-tour-id="program-recommended-not-taken"]',
+        placement: "top",
+        route: DEMO_FICHE_CLIENT_ROUTE,
+        title: "Recommandés non pris",
+        body: "Lor'Squad détecte automatiquement les produits recommandés par son objectif que le client n'a PAS encore. Bouton WhatsApp gold avec message pré-rempli pour les proposer en 1 clic. C'est ton outil d'upsell auto — basé sur les vrais besoins du client, pas du push commercial.",
+        manualAdvance: true,
       },
       {
         id: "generate",
@@ -534,9 +546,12 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
       },
       {
         id: "mini-stats",
-        title: "Les 3 mini-stats à côté du PV",
-        body: "Toujours sur Co-pilote, à côté de la jauge : Clients actifs (avec delta vs mois dernier en + ou –), Semaine (nombre de RDV programmés sur 7 jours glissants), Conversion (% de prospects transformés en clients sur le mois). Ces 3 chiffres te disent en 5 secondes si ton activité est en santé ou si tu dois pousser.",
-        placement: "center",
+        target: '[data-tour-id="pv-mini-stats"]',
+        placement: "top",
+        route: "/co-pilote",
+        title: "3 mini-stats — santé de ton activité",
+        body: "À côté de la jauge PV, 3 chiffres clés : Clients actifs (avec delta vs mois dernier en + ou –), RDV cette semaine (sur 7 jours glissants + nombre du jour), Conversion (% de prospects transformés en clients ce mois). Ces 3 chiffres te disent en 5 secondes si ton activité est en santé ou si tu dois pousser.",
+        manualAdvance: true,
       },
       {
         id: "pv-detail",

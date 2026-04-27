@@ -301,6 +301,255 @@ export function DemoFicheClient() {
         </div>
       </div>
 
+      {/* Sport Summary mockee (TARGET program-sport-summary) */}
+      <div
+        data-tour-id="program-sport-summary"
+        style={{
+          background: "var(--ls-surface)",
+          border: "1px solid var(--ls-border)",
+          borderRadius: 16,
+          padding: 20,
+        }}
+      >
+        <div style={{ marginBottom: 14 }}>
+          <p
+            style={{
+              fontSize: 11,
+              color: "var(--ls-text-muted)",
+              textTransform: "uppercase",
+              letterSpacing: "0.06em",
+              margin: 0,
+            }}
+          >
+            Sport Summary
+          </p>
+          <h2
+            style={{
+              fontFamily: "Syne, serif",
+              fontSize: 18,
+              fontWeight: 500,
+              color: "var(--ls-text)",
+              margin: "4px 0 0",
+            }}
+          >
+            Plan jour & besoins
+          </h2>
+        </div>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
+            gap: 10,
+          }}
+        >
+          <div
+            style={{
+              background: "rgba(29,158,117,0.08)",
+              border: "1px solid rgba(29,158,117,0.25)",
+              borderRadius: 10,
+              padding: 12,
+            }}
+          >
+            <p
+              style={{
+                fontSize: 10,
+                color: "#1D9E75",
+                textTransform: "uppercase",
+                letterSpacing: "0.05em",
+                margin: 0,
+              }}
+            >
+              Besoins
+            </p>
+            <p
+              style={{
+                fontFamily: "Syne, serif",
+                fontSize: 15,
+                fontWeight: 600,
+                color: "var(--ls-text)",
+                margin: "4px 0 2px",
+              }}
+            >
+              130 g protéines
+            </p>
+            <p style={{ fontSize: 11, color: "var(--ls-text-muted)", margin: 0 }}>
+              2.5 L eau · 7 h sommeil
+            </p>
+          </div>
+          <div
+            style={{
+              background: "rgba(216,90,48,0.08)",
+              border: "1px solid rgba(216,90,48,0.25)",
+              borderRadius: 10,
+              padding: 12,
+            }}
+          >
+            <p
+              style={{
+                fontSize: 10,
+                color: "#D85A30",
+                textTransform: "uppercase",
+                letterSpacing: "0.05em",
+                margin: 0,
+              }}
+            >
+              Plan jour sport
+            </p>
+            <p
+              style={{
+                fontFamily: "Syne, serif",
+                fontSize: 15,
+                fontWeight: 600,
+                color: "var(--ls-text)",
+                margin: "4px 0 2px",
+              }}
+            >
+              F1 + Rebuild
+            </p>
+            <p style={{ fontSize: 11, color: "var(--ls-text-muted)", margin: 0 }}>
+              Avant + après séance
+            </p>
+          </div>
+          <div
+            style={{
+              background: "rgba(184,146,42,0.10)",
+              border: "1px solid rgba(184,146,42,0.30)",
+              borderRadius: 10,
+              padding: 12,
+            }}
+          >
+            <p
+              style={{
+                fontSize: 10,
+                color: "#B8922A",
+                textTransform: "uppercase",
+                letterSpacing: "0.05em",
+                margin: 0,
+              }}
+            >
+              Boosters ⭐
+            </p>
+            <p
+              style={{
+                fontFamily: "Syne, serif",
+                fontSize: 15,
+                fontWeight: 600,
+                color: "var(--ls-text)",
+                margin: "4px 0 2px",
+              }}
+            >
+              CR7 · Créatine
+            </p>
+            <p style={{ fontSize: 11, color: "var(--ls-text-muted)", margin: 0 }}>
+              Recommandés objectif
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Recommandés non pris (TARGET program-recommended-not-taken) */}
+      <div
+        data-tour-id="program-recommended-not-taken"
+        style={{
+          background: "rgba(216,90,48,0.06)",
+          border: "0.5px solid rgba(216,90,48,0.30)",
+          borderRadius: 14,
+          padding: 18,
+        }}
+      >
+        <p
+          style={{
+            fontFamily: "Syne, serif",
+            fontSize: 15,
+            fontWeight: 600,
+            color: "var(--ls-text)",
+            margin: 0,
+            marginBottom: 4,
+          }}
+        >
+          💡 Recommandés pour sa progression
+        </p>
+        <p style={{ fontSize: 12, color: "var(--ls-text-muted)", margin: "0 0 12px" }}>
+          Sarah n&apos;a pas encore ces produits — bon moment pour proposer.
+        </p>
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 12,
+              padding: "10px 12px",
+              background: "white",
+              borderRadius: 10,
+              border: "0.5px solid #E5DFCF",
+            }}
+          >
+            <span style={{ fontSize: 18 }}>💧</span>
+            <div style={{ flex: 1 }}>
+              <p style={{ fontSize: 13, fontWeight: 500, color: "var(--ls-text)", margin: 0 }}>
+                H24 Hydrate
+              </p>
+              <p style={{ fontSize: 11, color: "#1D9E75", margin: "2px 0 0" }}>
+                Hydratation pendant l&apos;effort
+              </p>
+            </div>
+            <button
+              type="button"
+              style={{
+                background: "#25D366",
+                color: "white",
+                border: "none",
+                padding: "6px 12px",
+                borderRadius: 8,
+                fontSize: 11,
+                fontWeight: 600,
+                cursor: "pointer",
+                fontFamily: "DM Sans, sans-serif",
+              }}
+            >
+              💬 Proposer
+            </button>
+          </div>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 12,
+              padding: "10px 12px",
+              background: "white",
+              borderRadius: 10,
+              border: "0.5px solid #E5DFCF",
+            }}
+          >
+            <span style={{ fontSize: 18 }}>💪</span>
+            <div style={{ flex: 1 }}>
+              <p style={{ fontSize: 13, fontWeight: 500, color: "var(--ls-text)", margin: 0 }}>
+                Rebuild Strength
+              </p>
+              <p style={{ fontSize: 11, color: "#1D9E75", margin: "2px 0 0" }}>
+                Récup musculaire post-séance
+              </p>
+            </div>
+            <button
+              type="button"
+              style={{
+                background: "#25D366",
+                color: "white",
+                border: "none",
+                padding: "6px 12px",
+                borderRadius: 8,
+                fontSize: 11,
+                fontWeight: 600,
+                cursor: "pointer",
+                fontFamily: "DM Sans, sans-serif",
+              }}
+            >
+              💬 Proposer
+            </button>
+          </div>
+        </div>
+      </div>
+
       {/* Modale d'accès fake */}
       {accessModalOpen ? (
         <FakeAccessModal

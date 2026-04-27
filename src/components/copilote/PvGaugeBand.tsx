@@ -139,6 +139,7 @@ export function PvGaugeBand({
 
       {/* Partie droite : 3 mini-stats */}
       <div
+        data-tour-id="pv-mini-stats"
         style={{
           display: "grid",
           gridTemplateColumns: "repeat(3, 1fr)",
