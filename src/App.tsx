@@ -173,6 +173,11 @@ const AcademySectionPage = lazy(() =>
     default: module.AcademySectionPage
   }))
 );
+const AcademyCertificatePage = lazy(() =>
+  import("./pages/AcademyCertificatePage").then((module) => ({
+    default: module.AcademyCertificatePage
+  }))
+);
 // Pages démo Academy (2026-04-28) : mockups visuels avec données fictives
 // pour les tours, sans dépendre de l'état réel de la base.
 const DemoFicheClient = lazy(() =>
@@ -264,6 +269,7 @@ export default function App() {
               <Route path="dashboard" element={<Navigate to="/co-pilote" replace />} />
               {/* Lor'Squad Academy Phase 1 (2026-04-26) */}
               <Route path="academy" element={<AcademyOverviewPage />} />
+              <Route path="academy/certificat" element={<AcademyCertificatePage />} />
               <Route path="academy/:sectionId" element={<AcademySectionPage />} />
               {/* Pages démo Academy (2026-04-28) — mockups pour les tours */}
               <Route path="academy/demo/fiche-client" element={<DemoFicheClient />} />

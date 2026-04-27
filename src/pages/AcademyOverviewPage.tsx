@@ -4,7 +4,7 @@
 // par section arrive en Phase 2.
 
 import { useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAcademyProgress } from "../features/academy/hooks/useAcademyProgress";
 import { ACADEMY_SECTIONS, type AcademySection } from "../features/academy/sections";
 import { ConfettiBurst } from "../features/academy/components/ConfettiBurst";
@@ -15,6 +15,7 @@ import { AcademyBadges } from "../features/academy/components/AcademyBadges";
 export function AcademyOverviewPage() {
   const { view, goToSection, restartSection } = useAcademyProgress();
   const teamStats = useAcademyTeamStats();
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const justCompletedId = searchParams.get("completed");
   const [confettiActive, setConfettiActive] = useState(false);
@@ -149,18 +150,38 @@ export function AcademyOverviewPage() {
                 {view.hasStarted ? "Reprendre la formation" : "Démarrer la formation"}
               </button>
             ) : (
-              <span
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: 6,
-                  fontSize: 13,
-                  color: "#1D9E75",
-                  fontWeight: 500,
-                }}
-              >
-                ✓ Formation terminée
-              </span>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
+                <span
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 6,
+                    fontSize: 13,
+                    color: "#1D9E75",
+                    fontWeight: 500,
+                  }}
+                >
+                  ✓ Formation terminée
+                </span>
+                <button
+                  type="button"
+                  onClick={() => navigate("/academy/certificat")}
+                  style={{
+                    background: "linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)",
+                    color: "white",
+                    border: "none",
+                    padding: "8px 16px",
+                    borderRadius: 8,
+                    fontSize: 12,
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    fontFamily: "DM Sans, sans-serif",
+                    boxShadow: "0 2px 6px rgba(186,117,23,0.25)",
+                  }}
+                >
+                  📜 Voir mon certificat
+                </button>
+              </div>
             )}
           </div>
         </div>
