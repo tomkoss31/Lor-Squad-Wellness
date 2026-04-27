@@ -14,6 +14,7 @@ import { PageHeading } from "../components/ui/PageHeading";
 import { AcademyLeaderboard } from "../features/academy/components/AcademyLeaderboard";
 import { WeeklyBilansChallenge } from "../features/gamification/components/WeeklyBilansChallenge";
 import { MonthlySeasonCard } from "../features/gamification/components/MonthlySeasonCard";
+import { WeeklyRecapCard } from "../features/gamification/components/WeeklyRecapCard";
 import { useAppContext } from "../context/AppContext";
 import {
   useTeamTree,
@@ -321,6 +322,9 @@ export function TeamPage() {
 
       {/* Saison mensuelle (Gamification 4 — 2026-04-29) */}
       <MonthlySeasonCard />
+
+      {/* Recap semaine derniere partageable (Gamification 6 — 2026-04-29) */}
+      <WeeklyRecapCard />
     </div>
   );
 }

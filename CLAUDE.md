@@ -401,3 +401,49 @@ gagne un vrai PV booster.
 Le flow d'édition (`EditInitialAssessmentPage`) et le flow suivi
 (`NewFollowUpPage`) ne relisent pas encore `selectedProductQuantities`
 depuis un bilan existant. Hydratation reportée au prompt E.
+
+---
+
+## Roadmap branding & monétisation (note 2026-04-29)
+
+### Renommage potentiel : Noaly (non validé)
+
+Le projet pourrait être renommé **Noaly** (à confirmer par Thomas).
+Si validé, prévoir une passe globale :
+- Remplacement texte "Lor'Squad" / "LorSquad" / "lor-squad" → "Noaly" (ou
+  variante : "Lor'Squad by Noaly" en transition).
+- Nouveaux assets logo Noaly à intégrer dans `public/icons/` et
+  `src/assets/logos/`.
+- Mise à jour `index.html` (title, meta description, favicons).
+- Mise à jour PWA manifest `public/manifest.webmanifest` + service worker
+  cache version.
+- Mise à jour copies Academy (sections.ts mentionne "Lor'Squad" partout
+  → templater via une const NOM_APP ?).
+- Le certificat Academy mentionne "Lor'Squad Wellness" — à templater.
+
+### Multi-clubs (monétisation B2B)
+
+À terme, l'app pourra être proposée à d'autres clubs Herbalife sous une
+identité co-brandée. Le schéma data prévoit déjà partiellement le
+multi-tenant (champs `users.role`, structure de parrainage `sponsor_id`),
+mais rien de scopé par "club".
+
+À prévoir le moment venu :
+- Table `clubs` (id, name, logo_url, primary_color, owner_user_id).
+- Colonne `users.club_id` (FK vers clubs).
+- RLS scopé par club_id partout (pour que club A ne voit pas les clients
+  de club B).
+- Logo + couleur primaire dynamiques selon le club courant (lu via
+  useAppContext().currentClub).
+- Page admin Lor'Squad pour créer / gérer les clubs.
+- Tarification par club (table billing_subscriptions ?).
+
+### Mémoire pour les chantiers futurs
+
+Quand on touche à une feature pouvant être affectée par ces 2 directions :
+- Noaly : éviter de hardcoder "Lor'Squad" dans des copies user-facing.
+  Préférer une const `APP_NAME` réutilisable.
+- Multi-clubs : préférer des data filtrées par club_id quand on ajoute
+  des nouvelles tables ou nouveaux endpoints (même si club_id n'existe
+  pas encore — laisser un commentaire `// TODO multi-clubs` pour repérer
+  les endroits à scoper plus tard).
