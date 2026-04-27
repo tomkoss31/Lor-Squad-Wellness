@@ -8,6 +8,7 @@ import { useSearchParams } from "react-router-dom";
 import { useAcademyProgress } from "../features/academy/hooks/useAcademyProgress";
 import { ACADEMY_SECTIONS, type AcademySection } from "../features/academy/sections";
 import { ConfettiBurst } from "../features/academy/components/ConfettiBurst";
+import { AcademyTimeline } from "../features/academy/components/AcademyTimeline";
 
 export function AcademyOverviewPage() {
   const { view, goToSection, restartSection } = useAcademyProgress();
@@ -157,6 +158,22 @@ export function AcademyOverviewPage() {
             )}
           </div>
         </div>
+
+        {/* Timeline horizontale (Polish D 2026-04-28) */}
+        <AcademyTimeline
+          completedCount={view.completedCount}
+          currentSectionIndex={view.currentSectionIndex}
+          isCompleted={view.isCompleted}
+          onSectionClick={(sectionId) => {
+            // Si la section a deja ete faite, on relance (restart + go).
+            // Sinon on y va direct.
+            const idx = ACADEMY_SECTIONS.findIndex((s) => s.id === sectionId);
+            if (idx < view.completedCount) {
+              restartSection(sectionId);
+            }
+            goToSection(sectionId);
+          }}
+        />
 
         {/* Sections list */}
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
