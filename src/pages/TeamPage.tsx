@@ -12,6 +12,7 @@ import { Link } from "react-router-dom";
 import { Card } from "../components/ui/Card";
 import { PageHeading } from "../components/ui/PageHeading";
 import { AcademyLeaderboard } from "../features/academy/components/AcademyLeaderboard";
+import { WeeklyBilansChallenge } from "../features/gamification/components/WeeklyBilansChallenge";
 import { useAppContext } from "../context/AppContext";
 import {
   useTeamTree,
@@ -313,6 +314,9 @@ export function TeamPage() {
 
       {/* Leaderboard Academy (Direction 7 — 2026-04-28) */}
       <AcademyLeaderboard />
+
+      {/* Challenge hebdo bilans (Gamification 2 — 2026-04-29) */}
+      <WeeklyBilansChallenge />
     </div>
   );
 }
