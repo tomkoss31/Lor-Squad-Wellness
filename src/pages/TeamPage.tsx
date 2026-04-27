@@ -13,6 +13,7 @@ import { Card } from "../components/ui/Card";
 import { PageHeading } from "../components/ui/PageHeading";
 import { AcademyLeaderboard } from "../features/academy/components/AcademyLeaderboard";
 import { WeeklyBilansChallenge } from "../features/gamification/components/WeeklyBilansChallenge";
+import { MonthlySeasonCard } from "../features/gamification/components/MonthlySeasonCard";
 import { useAppContext } from "../context/AppContext";
 import {
   useTeamTree,
@@ -317,6 +318,9 @@ export function TeamPage() {
 
       {/* Challenge hebdo bilans (Gamification 2 — 2026-04-29) */}
       <WeeklyBilansChallenge />
+
+      {/* Saison mensuelle (Gamification 4 — 2026-04-29) */}
+      <MonthlySeasonCard />
     </div>
   );
 }
