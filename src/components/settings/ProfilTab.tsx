@@ -11,6 +11,7 @@ import { Button } from "../ui/Button";
 import { useAppContext } from "../../context/AppContext";
 import { useToast } from "../../context/ToastContext";
 import { getSupabaseClient } from "../../services/supabaseClient";
+import { XpProgressCard } from "../../features/gamification/components/XpProgressCard";
 
 function daysSince(iso?: string | null): number | null {
   if (!iso) return null;
@@ -162,6 +163,9 @@ export function ProfilTab() {
 
   return (
     <div className="space-y-4">
+      {/* Gamification 5 (2026-04-29) : niveau + XP en haut du profil. */}
+      <XpProgressCard />
+
       <Card className="space-y-5">
         <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
           <div
