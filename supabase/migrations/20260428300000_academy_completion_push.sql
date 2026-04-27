@@ -28,7 +28,7 @@ security definer
 as $$
 declare
   target_url text;
-  service_key text;
+  service_key text;  -- injecte post-deploiement, pas en commit
   coach_id uuid;
   finisher_name text;
   finisher_first_name text;
@@ -51,8 +51,14 @@ begin
 
   finisher_first_name := split_part(coalesce(finisher_name, 'Un distri'), ' ', 1);
 
-  target_url := current_setting('app.settings.supabase_url', true) || '/functions/v1/send-push';
-  service_key := current_setting('app.settings.service_role_key', true);
+  -- Sur Supabase managed, current_setting('app.settings.*') n est pas dispo
+  -- (besoin de superuser pour ALTER DATABASE SET). On hardcode l URL (non
+  -- secrete) et la service_role_key est injectee via une commande SQL
+  -- post-deploiement (cf. README ops). En attendant un mecanisme propre
+  -- type Vault, ces 2 valeurs sont a modifier MANUELLEMENT en prod, pas
+  -- en commit.
+  target_url := 'https://gqxnndwrdbghxflwmfxy.supabase.co/functions/v1/send-push';
+  service_key := 'REPLACE_ME_AT_DEPLOY';  -- injecter via Studio apres push migration
 
   perform net.http_post(
     url := target_url,

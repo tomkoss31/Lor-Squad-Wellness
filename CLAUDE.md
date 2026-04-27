@@ -5,6 +5,24 @@ reproduire les régressions passées. Relire avant tout gros chantier.
 
 ---
 
+## Règle datetime — `timestamptz` partout (depuis 29/04/2026)
+
+**Toutes les colonnes datetime des tables métier sont en `timestamptz`.**
+Migration de référence : `20260429160000_datetime_to_timestamptz.sql`
+(convertit `clients.next_follow_up`, `assessments.next_follow_up`,
+`follow_ups.due_date` en supposant que les valeurs existantes étaient
+en heure Paris).
+
+Front : toujours envoyer un ISO 8601 avec offset (`new Date(...).toISOString()`
+produit du `Z`). La fonction utilitaire `serializeDateTimeForStorage`
+dans `src/lib/calculations.ts` gère ça.
+
+❌ **NE JAMAIS créer une nouvelle colonne datetime en `timestamp`** (sans
+tz). Postgres l'interprète comme heure locale serveur, ce qui drift
+selon le DST et le navigateur. `timestamptz` toujours.
+
+---
+
 ## Workflow Dev/Prod (depuis 27/04/2026)
 
 Lor'Squad utilise 2 branches actives :
