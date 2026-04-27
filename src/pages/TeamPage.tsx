@@ -71,10 +71,16 @@ function initialsOf(name: string): string {
 }
 
 // ═══ Composant principal ═════════════════════════════════════════════════
+type TeamTab = "team" | "gamification";
+
 export function TeamPage() {
   const { currentUser, users, clients, prospects } = useAppContext();
   const [period, setPeriod] = useState<Period>("month");
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  // Split visuel /team en 2 onglets pour eviter la surcharge (chantier
+  // gamification 2026-04-29) : 'team' = arbre + activite + Academy
+  // leaderboard ; 'gamification' = challenge bilans + saison + recap.
+  const [activeTab, setActiveTab] = useState<TeamTab>("team");
 
   // Chantier Team Couple Display (2026-04-26) : si Thomas + Mélanie sont
   // résolus dans `users`, on bascule en "couple mode" — 1 seule card
@@ -229,6 +235,53 @@ export function TeamPage() {
         description="Arborescence de parrainage, stats par distri et classement du mois."
       />
 
+      {/* Tabs split (2026-04-29) — equipe vs gamification */}
+      <div
+        style={{
+          display: "flex",
+          gap: 6,
+          background: "var(--ls-surface)",
+          border: "1px solid var(--ls-border)",
+          borderRadius: 12,
+          padding: 4,
+          width: "fit-content",
+          flexWrap: "wrap",
+        }}
+      >
+        {([
+          { key: "team" as TeamTab, label: "Équipe", icon: "👥" },
+          { key: "gamification" as TeamTab, label: "Gamification & Challenges", icon: "🎮" },
+        ]).map((t) => (
+          <button
+            key={t.key}
+            type="button"
+            onClick={() => setActiveTab(t.key)}
+            style={{
+              padding: "8px 14px",
+              borderRadius: 8,
+              border: "none",
+              cursor: "pointer",
+              fontSize: 13,
+              fontFamily: "DM Sans, sans-serif",
+              fontWeight: activeTab === t.key ? 600 : 400,
+              background: activeTab === t.key ? "var(--ls-surface2)" : "transparent",
+              color: activeTab === t.key ? "var(--ls-text)" : "var(--ls-text-muted)",
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              transition: "all 0.15s",
+            }}
+          >
+            <span aria-hidden="true">{t.icon}</span>
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {/* ═══ Onglet Équipe (defaut) — arbre + activite + Academy LB ═════ */}
+      {activeTab === "team" ? (
+        <>
+
       {treeError ? (
         <div
           role="alert"
@@ -317,14 +370,22 @@ export function TeamPage() {
       {/* Leaderboard Academy (Direction 7 — 2026-04-28) */}
       <AcademyLeaderboard />
 
-      {/* Challenge hebdo bilans (Gamification 2 — 2026-04-29) */}
-      <WeeklyBilansChallenge />
+        </>
+      ) : null}
 
-      {/* Saison mensuelle (Gamification 4 — 2026-04-29) */}
-      <MonthlySeasonCard />
+      {/* ═══ Onglet Gamification — challenges + saison + recap ═════════ */}
+      {activeTab === "gamification" ? (
+        <>
+          {/* Recap semaine derniere partageable — bilan equipe top du tab */}
+          <WeeklyRecapCard />
 
-      {/* Recap semaine derniere partageable (Gamification 6 — 2026-04-29) */}
-      <WeeklyRecapCard />
+          {/* Challenge hebdo bilans — focus court terme */}
+          <WeeklyBilansChallenge />
+
+          {/* Saison mensuelle — focus moyen terme */}
+          <MonthlySeasonCard />
+        </>
+      ) : null}
     </div>
   );
 }
