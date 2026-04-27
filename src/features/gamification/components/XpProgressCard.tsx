@@ -2,6 +2,10 @@
 // Card affichee sur la fiche profil (ParametresPage > onglet Profil)
 // avec le niveau global du user, sa barre XP et le breakdown des
 // sources (Academy / Bilans / RDV / Messages).
+//
+// Polish 2026-04-28 : ajout panel "Comment ca marche ?" pliable qui
+// explicite les XP gagnees par action + les seuils de niveaux.
+// Migration des couleurs hardcodees vers var(--ls-*) pour dark mode.
 
 import { useEffect, useState } from "react";
 import { useAppContext } from "../../../context/AppContext";
@@ -29,6 +33,48 @@ const LEVEL_TITLES: Record<number, string> = {
   7: "Légende",
 };
 
+// Synchro avec migration 20260429140000_user_xp_system.sql.
+// Source de verite : la RPC get_user_xp(). Ces constantes servent
+// uniquement a expliciter les regles dans l UI "Comment ca marche".
+const XP_RULES = [
+  {
+    emoji: "🎓",
+    label: "Section Academy complétée",
+    xp: 50,
+    cap: "max 8 sections = 400 XP",
+  },
+  {
+    emoji: "📋",
+    label: "Bilan initial créé",
+    xp: 10,
+    cap: "par client créé",
+  },
+  {
+    emoji: "📅",
+    label: "RDV planifié",
+    xp: 5,
+    cap: "par follow-up scheduled",
+  },
+  {
+    emoji: "💬",
+    label: "Message coach envoyé",
+    xp: 2,
+    cap: "par message dans la messagerie interne",
+  },
+];
+
+// Niveaux : level = floor(sqrt(xp / 100)) + 1.
+// Seuil pour atteindre niveau N = (N - 1)² × 100.
+const LEVEL_THRESHOLDS = [
+  { level: 1, title: "Apprenti", from: 0, hint: "Tu démarres ton parcours" },
+  { level: 2, title: "Distributeur actif", from: 100, hint: "Tu connais l'app" },
+  { level: 3, title: "Coach confirmé", from: 400, hint: "Tu suis tes premiers clients" },
+  { level: 4, title: "Mentor", from: 900, hint: "Tu inspires ton équipe" },
+  { level: 5, title: "Expert", from: 1600, hint: "Tu maîtrises tous les flows" },
+  { level: 6, title: "Pilier", from: 2500, hint: "Tu portes le club" },
+  { level: 7, title: "Légende", from: 3600, hint: "Référence du réseau" },
+];
+
 function levelTitle(level: number): string {
   return LEVEL_TITLES[level] ?? `Niveau ${level}`;
 }
@@ -36,6 +82,7 @@ function levelTitle(level: number): string {
 export function XpProgressCard() {
   const { currentUser } = useAppContext();
   const userId = currentUser?.id ?? null;
+  const [showHelp, setShowHelp] = useState(false);
   const [data, setData] = useState<XpData>({
     loading: true,
     error: null,
@@ -100,10 +147,10 @@ export function XpProgressCard() {
   const percentInLevel = Math.min(100, Math.max(0, Math.round((xpInLevel / xpRange) * 100)));
 
   const sources = [
-    { label: "Academy", emoji: "🎓", value: data.academyXp, color: "#B8922A" },
-    { label: "Bilans créés", emoji: "📋", value: data.bilansXp, color: "#1D9E75" },
-    { label: "RDV", emoji: "📅", value: data.rdvXp, color: "#7F77DD" },
-    { label: "Messages", emoji: "💬", value: data.messagesXp, color: "#D85A30" },
+    { label: "Academy", emoji: "🎓", value: data.academyXp, color: "var(--ls-gold)" },
+    { label: "Bilans créés", emoji: "📋", value: data.bilansXp, color: "var(--ls-teal)" },
+    { label: "RDV", emoji: "📅", value: data.rdvXp, color: "var(--ls-purple)" },
+    { label: "Messages", emoji: "💬", value: data.messagesXp, color: "var(--ls-coral)" },
   ];
 
   return (
@@ -230,7 +277,7 @@ export function XpProgressCard() {
           <div
             key={s.label}
             style={{
-              background: "white",
+              background: "var(--ls-surface)",
               border: "0.5px solid var(--ls-border)",
               borderRadius: 10,
               padding: "10px 12px",
@@ -263,6 +310,252 @@ export function XpProgressCard() {
             </p>
           </div>
         ))}
+      </div>
+
+      {/* Panel "Comment ca marche" — pliable, default ferme. */}
+      <div
+        style={{
+          marginTop: 14,
+          paddingTop: 12,
+          borderTop: "0.5px dashed var(--ls-border)",
+        }}
+      >
+        <button
+          type="button"
+          onClick={() => setShowHelp((v) => !v)}
+          aria-expanded={showHelp}
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 6,
+            background: "transparent",
+            border: "none",
+            color: "var(--ls-text-muted)",
+            fontSize: 12,
+            fontFamily: "DM Sans, sans-serif",
+            fontWeight: 600,
+            cursor: "pointer",
+            padding: 0,
+          }}
+        >
+          <span>ℹ️ Comment ça marche ?</span>
+          <span style={{ fontSize: 9, opacity: 0.7 }}>{showHelp ? "▲" : "▼"}</span>
+        </button>
+
+        {showHelp ? (
+          <div
+            style={{
+              marginTop: 12,
+              display: "flex",
+              flexDirection: "column",
+              gap: 14,
+            }}
+          >
+            {/* Block 1 : Comment gagner des XP */}
+            <div>
+              <p
+                style={{
+                  fontSize: 10,
+                  letterSpacing: 1.2,
+                  textTransform: "uppercase",
+                  color: "var(--ls-text-hint)",
+                  fontWeight: 700,
+                  margin: "0 0 8px",
+                }}
+              >
+                Comment gagner des XP
+              </p>
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 6,
+                }}
+              >
+                {XP_RULES.map((rule) => (
+                  <div
+                    key={rule.label}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 10,
+                      padding: "8px 10px",
+                      background: "var(--ls-surface2)",
+                      border: "0.5px solid var(--ls-border)",
+                      borderRadius: 8,
+                    }}
+                  >
+                    <span style={{ fontSize: 18, flexShrink: 0 }}>{rule.emoji}</span>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div
+                        style={{
+                          fontSize: 12,
+                          fontWeight: 600,
+                          color: "var(--ls-text)",
+                          fontFamily: "DM Sans, sans-serif",
+                        }}
+                      >
+                        {rule.label}
+                      </div>
+                      <div
+                        style={{
+                          fontSize: 10,
+                          color: "var(--ls-text-muted)",
+                          marginTop: 1,
+                        }}
+                      >
+                        {rule.cap}
+                      </div>
+                    </div>
+                    <span
+                      style={{
+                        fontFamily: "Syne, serif",
+                        fontSize: 14,
+                        fontWeight: 700,
+                        color: "var(--ls-gold)",
+                        flexShrink: 0,
+                      }}
+                    >
+                      +{rule.xp} XP
+                    </span>
+                  </div>
+                ))}
+              </div>
+              <p
+                style={{
+                  fontSize: 10,
+                  color: "var(--ls-text-hint)",
+                  margin: "8px 0 0",
+                  lineHeight: 1.5,
+                  fontStyle: "italic",
+                }}
+              >
+                Les XP sont recalculés en live à chaque action — pas de stockage,
+                pas de drift. Refresh la page pour voir l'update après un bilan,
+                un RDV ou un message.
+              </p>
+            </div>
+
+            {/* Block 2 : Les niveaux */}
+            <div>
+              <p
+                style={{
+                  fontSize: 10,
+                  letterSpacing: 1.2,
+                  textTransform: "uppercase",
+                  color: "var(--ls-text-hint)",
+                  fontWeight: 700,
+                  margin: "0 0 8px",
+                }}
+              >
+                Les 7 niveaux
+              </p>
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 4,
+                }}
+              >
+                {LEVEL_THRESHOLDS.map((lv) => {
+                  const isCurrent = lv.level === data.level;
+                  const isReached = data.totalXp >= lv.from;
+                  return (
+                    <div
+                      key={lv.level}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 10,
+                        padding: "6px 10px",
+                        background: isCurrent
+                          ? "color-mix(in srgb, var(--ls-gold) 14%, transparent)"
+                          : "var(--ls-surface2)",
+                        border: isCurrent
+                          ? "0.5px solid var(--ls-gold)"
+                          : "0.5px solid var(--ls-border)",
+                        borderRadius: 8,
+                        opacity: isReached ? 1 : 0.55,
+                      }}
+                    >
+                      <span
+                        style={{
+                          fontFamily: "Syne, serif",
+                          fontSize: 12,
+                          fontWeight: 700,
+                          color: isCurrent ? "var(--ls-gold)" : "var(--ls-text-muted)",
+                          width: 24,
+                          flexShrink: 0,
+                        }}
+                      >
+                        L{lv.level}
+                      </span>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div
+                          style={{
+                            fontSize: 12,
+                            fontWeight: 600,
+                            color: "var(--ls-text)",
+                          }}
+                        >
+                          {lv.title}
+                          {isCurrent ? (
+                            <span
+                              style={{
+                                marginLeft: 8,
+                                fontSize: 9,
+                                fontWeight: 700,
+                                letterSpacing: 0.4,
+                                padding: "1px 6px",
+                                borderRadius: 4,
+                                background: "var(--ls-gold)",
+                                color: "var(--ls-bg)",
+                              }}
+                            >
+                              TON NIVEAU
+                            </span>
+                          ) : null}
+                        </div>
+                        <div
+                          style={{
+                            fontSize: 10,
+                            color: "var(--ls-text-muted)",
+                            marginTop: 1,
+                          }}
+                        >
+                          {lv.hint}
+                        </div>
+                      </div>
+                      <span
+                        style={{
+                          fontSize: 10,
+                          color: "var(--ls-text-hint)",
+                          fontFamily: "DM Sans, sans-serif",
+                          fontWeight: 600,
+                          flexShrink: 0,
+                        }}
+                      >
+                        {lv.from.toLocaleString("fr-FR")} XP
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+              <p
+                style={{
+                  fontSize: 10,
+                  color: "var(--ls-text-hint)",
+                  margin: "8px 0 0",
+                  lineHeight: 1.5,
+                  fontStyle: "italic",
+                }}
+              >
+                Formule : seuil pour atteindre le niveau N = (N − 1)² × 100. Plus
+                tu montes, plus l'écart se creuse — la régularité paie.
+              </p>
+            </div>
+          </div>
+        ) : null}
       </div>
     </div>
   );
