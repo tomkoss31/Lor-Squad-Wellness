@@ -4,18 +4,15 @@
 // en Phase 2 (un chantier par section).
 
 import type { TutorialStep } from "../onboarding/types";
-import { getDemoClientId } from "./utils/getDemoClientId";
-/** Builder partage : ouvre la fiche du 1er client dispo, sinon /clients. */
-async function routeToClientFiche(): Promise<string> {
-  const id = await getDemoClientId();
-  return id ? `/clients/${id}` : "/clients";
-}
-
-/** Builder qui ouvre la fiche client + auto-open ClientAccessModal. */
-async function routeToClientFicheWithAccessModal(): Promise<string> {
-  const id = await getDemoClientId();
-  return id ? `/clients/${id}?openAccessModal=true` : "/clients";
-}
+/**
+ * Pages démo Academy (2026-04-28) : on utilise des mockups dédiés
+ * (/academy/demo/*) au lieu de pointer la vraie data du user.
+ * Avantages : pas de risque de pollution DB, expérience identique pour
+ * tous les users (même sans clients), spotlights toujours alignés.
+ */
+const DEMO_FICHE_CLIENT_ROUTE = "/academy/demo/fiche-client";
+const DEMO_FICHE_CLIENT_WITH_ACCESS_MODAL = "/academy/demo/fiche-client?openAccessModal=true";
+const DEMO_AGENDA_ROUTE = "/academy/demo/agenda";
 
 /**
  * Identifiant utilise par useTourProgress et user_tour_progress.tour_key
@@ -265,7 +262,7 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
         id: "recommendations",
         target: '[data-tour-id="program-recommendations"]',
         placement: "top",
-        routeBuilder: routeToClientFiche,
+        route: DEMO_FICHE_CLIENT_ROUTE,
         title: "Le bloc Programme actuel",
         body: "Sur la fiche client, ce bloc liste les produits que le client utilise actuellement (avec quantités, durée de stock, points volume). Tu peux ajouter / retirer / modifier directement. Pour les sportifs, une section « Sport Summary » apparaît avec 3 cards : Besoins (protéines, eau, sommeil), Plan jour (sport vs repos) et Programme + boosters + lien WhatsApp pré-rempli.",
         manualAdvance: true,
@@ -316,7 +313,7 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
         id: "new-rdv",
         target: '[data-tour-id="agenda-new-rdv"]',
         placement: "bottom",
-        route: "/agenda",
+        route: DEMO_AGENDA_ROUTE,
         title: "Cale un RDV en 30 secondes",
         body: "Choisis un client + une date + une heure. Le lieu (La Base — Verdun) est pré-rempli. Au save, le client reçoit une notif push + un rappel automatique 24h avant. Côté coach, tu reçois aussi un push 5 minutes avant chaque RDV (cron rdv-imminent-notifier).",
         manualAdvance: true,
@@ -325,7 +322,7 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
         id: "filters",
         target: '[data-tour-id="agenda-filters"]',
         placement: "bottom",
-        route: "/agenda",
+        route: DEMO_AGENDA_ROUTE,
         title: "Filtres entité — 4 vues en 1 clic",
         body: "Les pills en haut de page filtrent ton agenda par type : Tous (vue mixte), Clients (RDV programmés), Prospects (1ers contacts à travailler), Suivis (relances protocole en attente). Chaque pill affiche un compteur live et un point coloré pour reconnaître le type d'un coup d'œil (gold = clients, purple = prospects, teal = suivis).",
         manualAdvance: true,
@@ -443,7 +440,7 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
         id: "send-access",
         target: '[data-tour-id="client-send-access"]',
         placement: "bottom",
-        routeBuilder: routeToClientFiche,
+        route: DEMO_FICHE_CLIENT_ROUTE,
         title: "« Envoyer l'accès » — bouton gold",
         body: "Sur la fiche client, ce CTA gold lance la génération d'un token UUID unique (valide 1 an). Il ouvre une modale unifiée avec 4 canaux : QR code (scan en RDV), WhatsApp (lien préformaté), SMS (lien court), Copier-coller (paste manuel). Tu peux régénérer le token à tout moment si compromis.",
         manualAdvance: true,
@@ -452,7 +449,7 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
         id: "qr-code",
         target: '[data-tour-id="client-access-qr"]',
         placement: "bottom",
-        routeBuilder: routeToClientFicheWithAccessModal,
+        route: DEMO_FICHE_CLIENT_WITH_ACCESS_MODAL,
         title: "Le QR code — démo en RDV",
         body: "Quand tu cliques « Envoyer l'accès », la modale s'ouvre avec un QR code 180×180. En RDV physique, ton client le scanne avec l'appareil photo de son téléphone — l'app s'ouvre instantanément sur son espace personnel, prêt à être ajouté à l'écran d'accueil. Effet wahou garanti.",
         manualAdvance: true,

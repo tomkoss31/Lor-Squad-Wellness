@@ -173,6 +173,18 @@ const AcademySectionPage = lazy(() =>
     default: module.AcademySectionPage
   }))
 );
+// Pages démo Academy (2026-04-28) : mockups visuels avec données fictives
+// pour les tours, sans dépendre de l'état réel de la base.
+const DemoFicheClient = lazy(() =>
+  import("./pages/academy-demo/DemoFicheClient").then((module) => ({
+    default: module.DemoFicheClient
+  }))
+);
+const DemoAgenda = lazy(() =>
+  import("./pages/academy-demo/DemoAgenda").then((module) => ({
+    default: module.DemoAgenda
+  }))
+);
 // Chantier Centre de Formation V1 (2026-04-23) : la home /formation est
 // FormationPage (catalogue avec progression), /formation/:slug pointe
 // vers FormationCategoryPage.
@@ -251,6 +263,9 @@ export default function App() {
               {/* Lor'Squad Academy Phase 1 (2026-04-26) */}
               <Route path="academy" element={<AcademyOverviewPage />} />
               <Route path="academy/:sectionId" element={<AcademySectionPage />} />
+              {/* Pages démo Academy (2026-04-28) — mockups pour les tours */}
+              <Route path="academy/demo/fiche-client" element={<DemoFicheClient />} />
+              <Route path="academy/demo/agenda" element={<DemoAgenda />} />
               <Route path="formation" element={<FormationPage />} />
               <Route path="formation/:slug" element={<FormationCategoryPage />} />
               {/* /settings (non-admin) reste accessible comme placeholder profil léger.
