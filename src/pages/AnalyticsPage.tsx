@@ -14,6 +14,19 @@
 // tendance. Loading skeleton pendant le fetch.
 // =============================================================================
 
+import {
+  ResponsiveContainer,
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  Tooltip,
+  CartesianGrid,
+  BarChart,
+  Bar,
+  Cell,
+  type TooltipProps,
+} from "recharts";
 import { PageHeading } from "../components/ui/PageHeading";
 import {
   useAdminAnalytics,
@@ -345,69 +358,131 @@ function TendanceChart({ data }: { data: { month_start: string; bilans: number }
   if (data.length === 0) {
     return <EmptyHint text="Pas encore de données." />;
   }
-  const max = Math.max(1, ...data.map((d) => d.bilans));
-  const barWidth = 100 / data.length;
+
+  const formatted = data.map((d) => ({
+    month: formatMonthLabel(d.month_start),
+    bilans: d.bilans,
+    rawDate: d.month_start,
+  }));
 
   return (
-    <div style={{ width: "100%" }}>
-      <svg viewBox={`0 0 100 40`} width="100%" height={120} preserveAspectRatio="none">
-        {data.map((d, i) => {
-          const h = (d.bilans / max) * 36;
-          const y = 38 - h;
-          return (
-            <rect
-              key={d.month_start}
-              x={i * barWidth + 0.5}
-              y={y}
-              width={barWidth - 1}
-              height={Math.max(h, 0.5)}
-              fill="var(--ls-gold)"
-              opacity={0.85}
-              rx={0.5}
-            >
-              <title>{`${d.month_start} : ${d.bilans} bilan${d.bilans > 1 ? "s" : ""}`}</title>
-            </rect>
-          );
-        })}
-      </svg>
-      <div style={{ display: "flex", justifyContent: "space-between", marginTop: 6, fontSize: 9, color: "var(--ls-text-hint)" }}>
-        <span>{formatMonthLabel(data[0]?.month_start)}</span>
-        <span>{formatMonthLabel(data[Math.floor(data.length / 2)]?.month_start)}</span>
-        <span>{formatMonthLabel(data[data.length - 1]?.month_start)}</span>
+    <div style={{ width: "100%", height: 220 }}>
+      <ResponsiveContainer width="100%" height="100%">
+        <AreaChart data={formatted} margin={{ top: 10, right: 12, left: -8, bottom: 0 }}>
+          <defs>
+            <linearGradient id="goldGradient" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#B8922A" stopOpacity={0.5} />
+              <stop offset="100%" stopColor="#B8922A" stopOpacity={0.04} />
+            </linearGradient>
+          </defs>
+          <CartesianGrid strokeDasharray="2 4" stroke="var(--ls-border)" vertical={false} />
+          <XAxis
+            dataKey="month"
+            tick={{ fontSize: 10, fill: "var(--ls-text-hint)" }}
+            axisLine={false}
+            tickLine={false}
+          />
+          <YAxis
+            allowDecimals={false}
+            tick={{ fontSize: 10, fill: "var(--ls-text-hint)" }}
+            axisLine={false}
+            tickLine={false}
+            width={32}
+          />
+          <Tooltip content={<ChartTooltip />} cursor={{ stroke: "var(--ls-gold)", strokeOpacity: 0.3 }} />
+          <Area
+            type="monotone"
+            dataKey="bilans"
+            stroke="#B8922A"
+            strokeWidth={2.5}
+            fill="url(#goldGradient)"
+            dot={{ fill: "#B8922A", r: 3, strokeWidth: 0 }}
+            activeDot={{ r: 5, stroke: "#fff", strokeWidth: 2 }}
+          />
+        </AreaChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
+
+function ChartTooltip(props: TooltipProps<number, string>) {
+  // Recharts 3.x : on cast via unknown pour bypass la signature readonly.
+  const cast = props as unknown as {
+    active?: boolean;
+    payload?: ReadonlyArray<{ value: number; payload?: { month?: string } }>;
+  };
+  const { active, payload } = cast;
+  if (!active || !payload || payload.length === 0) return null;
+  const item = payload[0];
+  return (
+    <div
+      style={{
+        background: "var(--ls-surface)",
+        border: "0.5px solid var(--ls-border)",
+        borderRadius: 8,
+        padding: "8px 12px",
+        boxShadow: "0 6px 16px rgba(0,0,0,0.08)",
+        fontSize: 12,
+        fontFamily: "DM Sans, sans-serif",
+      }}
+    >
+      <div style={{ color: "var(--ls-text-muted)", marginBottom: 2 }}>{item.payload?.month}</div>
+      <div style={{ color: "var(--ls-gold)", fontWeight: 600, fontFamily: "Syne, serif", fontSize: 14 }}>
+        {item.value} bilan{Number(item.value) > 1 ? "s" : ""}
       </div>
     </div>
   );
 }
 
 function FunnelView({ funnel }: { funnel: { bilans: number; inscrits: number; actifs: number; actifs_30d: number } }) {
-  const max = Math.max(1, funnel.bilans, funnel.inscrits, funnel.actifs, funnel.actifs_30d);
-  const rows = [
-    { label: "Bilans réalisés", value: funnel.bilans, color: "var(--ls-gold)" },
-    { label: "Clients inscrits", value: funnel.inscrits, color: "var(--ls-teal)" },
-    { label: "Actifs", value: funnel.actifs, color: "var(--ls-purple)" },
-    { label: "Actifs ≥30j", value: funnel.actifs_30d, color: "var(--ls-coral)" },
+  const data = [
+    { name: "Bilans", value: funnel.bilans, color: "#B8922A" },
+    { name: "Inscrits", value: funnel.inscrits, color: "#0D9488" },
+    { name: "Actifs", value: funnel.actifs, color: "#A78BFA" },
+    { name: "≥30j", value: funnel.actifs_30d, color: "#FB7185" },
   ];
+
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-      {rows.map((r) => (
-        <div key={r.label}>
-          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, marginBottom: 3 }}>
-            <span style={{ color: "var(--ls-text-muted)" }}>{r.label}</span>
-            <span style={{ color: "var(--ls-text)", fontWeight: 600 }}>{r.value}</span>
-          </div>
-          <div style={{ height: 8, background: "var(--ls-surface2)", borderRadius: 4, overflow: "hidden" }}>
-            <div
-              style={{
-                width: `${(r.value / max) * 100}%`,
-                height: "100%",
-                background: r.color,
-                opacity: 0.8,
-                transition: "width 250ms ease",
-              }}
-            />
-          </div>
-        </div>
-      ))}
+    <div style={{ width: "100%", height: 200 }}>
+      <ResponsiveContainer width="100%" height="100%">
+        <BarChart data={data} layout="vertical" margin={{ top: 5, right: 30, left: 0, bottom: 0 }}>
+          <XAxis type="number" hide allowDecimals={false} />
+          <YAxis
+            type="category"
+            dataKey="name"
+            tick={{ fontSize: 11, fill: "var(--ls-text-muted)" }}
+            axisLine={false}
+            tickLine={false}
+            width={70}
+          />
+          <Tooltip
+            content={(props) => {
+              const cast = props as unknown as { active?: boolean; payload?: ReadonlyArray<{ value: number; payload?: { name?: string } }> };
+              const { active, payload } = cast;
+              if (!active || !payload || payload.length === 0) return null;
+              const item = payload[0];
+              return (
+                <div style={{
+                  background: "var(--ls-surface)",
+                  border: "0.5px solid var(--ls-border)",
+                  borderRadius: 8,
+                  padding: "6px 10px",
+                  fontSize: 12,
+                  boxShadow: "0 4px 12px rgba(0,0,0,0.06)",
+                }}>
+                  <strong>{item.payload?.name}</strong> : {item.value}
+                </div>
+              );
+            }}
+            cursor={{ fill: "transparent" }}
+          />
+          <Bar dataKey="value" radius={[0, 6, 6, 0]} barSize={22}>
+            {data.map((entry) => (
+              <Cell key={entry.name} fill={entry.color} fillOpacity={0.85} />
+            ))}
+          </Bar>
+        </BarChart>
+      </ResponsiveContainer>
     </div>
   );
 }
