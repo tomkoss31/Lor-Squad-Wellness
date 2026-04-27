@@ -25,6 +25,13 @@ export function ToastHost() {
         pointerEvents: "none",
       }}
     >
+      {/* Polish #6 (2026-04-29) : keyframe slide-in unique pour les toasts. */}
+      <style>{`
+        @keyframes ls-toast-enter {
+          0% { opacity: 0; transform: translateY(16px) scale(0.96); }
+          100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+      `}</style>
       {toasts.map((t) => (
         <ToastCard key={t.id} toast={t} onDismiss={() => dismiss(t.id)} />
       ))}
@@ -38,6 +45,12 @@ function ToastCard({ toast, onDismiss }: { toast: Toast; onDismiss: () => void }
     warning: "var(--ls-gold)",
     success: "var(--ls-teal)",
     info: "var(--ls-text-muted)",
+  };
+  const toneIcon: Record<Toast["tone"], string> = {
+    error: "⚠️",
+    warning: "🔔",
+    success: "✓",
+    info: "ℹ️",
   };
 
   return (
@@ -57,8 +70,21 @@ function ToastCard({ toast, onDismiss }: { toast: Toast; onDismiss: () => void }
         marginLeft: "auto",
         boxShadow: "0 8px 24px rgba(0,0,0,0.2)",
         fontFamily: "'DM Sans', sans-serif",
+        animation: "ls-toast-enter 240ms cubic-bezier(0.2, 0.8, 0.2, 1)",
       }}
     >
+      <span
+        aria-hidden="true"
+        style={{
+          flexShrink: 0,
+          fontSize: toast.tone === "success" ? 16 : 14,
+          color: toneBorder[toast.tone],
+          fontWeight: 700,
+          lineHeight: 1.3,
+        }}
+      >
+        {toneIcon[toast.tone]}
+      </span>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div
           style={{

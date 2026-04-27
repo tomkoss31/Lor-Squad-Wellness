@@ -2286,3 +2286,80 @@ button, a, [role="button"] { min-height: 44px; }
     --conv-offset: 140px;
   }
 }
+
+/* =============================================================================
+   Polish #8 — Micro-animations (2026-04-29)
+   ============================================================================= */
+
+/* Boutons gold : hover lift + glow doux. S'applique aux btn avec
+   class ls-btn-gold OU style background var(--ls-gold). Animation discrete
+   pour ne pas distraire. */
+.ls-btn-gold,
+button.ls-btn-gold {
+  transition: transform 160ms ease, box-shadow 160ms ease, filter 160ms ease;
+  will-change: transform;
+}
+.ls-btn-gold:hover:not(:disabled),
+button.ls-btn-gold:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px color-mix(in srgb, var(--ls-gold) 26%, transparent);
+  filter: brightness(1.04);
+}
+.ls-btn-gold:active:not(:disabled) {
+  transform: translateY(0);
+  filter: brightness(0.98);
+}
+
+/* Inputs : focus ring teal smooth — supercharge l'experience par defaut.
+   Touche les input/textarea/select sans class explicite (utilise les
+   selecteurs structurels). */
+input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: none;
+  border-color: var(--ls-teal) !important;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ls-teal) 22%, transparent);
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+
+/* Cards interactives : on rajoute la classe ls-hoverable pour opt-in
+   sur les cards qui peuvent etre cliquees. */
+.ls-hoverable {
+  transition: transform 200ms cubic-bezier(0.2, 0.8, 0.2, 1),
+              box-shadow 200ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  will-change: transform;
+}
+.ls-hoverable:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.12);
+}
+html.theme-light .ls-hoverable:hover {
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.08);
+}
+
+/* Save success burst : keyframe utilisable via animation: ls-save-burst
+   sur n importe quel element. Court (700ms) pour signaler "enregistre". */
+@keyframes ls-save-burst {
+  0%   { transform: scale(1);   filter: brightness(1); }
+  20%  { transform: scale(1.06); filter: brightness(1.15); }
+  60%  { transform: scale(0.99); filter: brightness(1); }
+  100% { transform: scale(1); }
+}
+.ls-save-burst {
+  animation: ls-save-burst 700ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* Reduced motion : on coupe tout pour les users avec prefers-reduced-motion. */
+@media (prefers-reduced-motion: reduce) {
+  .ls-btn-gold,
+  .ls-hoverable,
+  .ls-save-burst {
+    transition: none !important;
+    animation: none !important;
+    transform: none !important;
+  }
+  .ls-btn-gold:hover,
+  .ls-hoverable:hover {
+    transform: none !important;
+  }
+}

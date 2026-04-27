@@ -88,11 +88,12 @@ export function BirthdayBlock({ clients, coachFirstName = "Thomas" }: Props) {
     <>
       <div
         style={{
-          background: "#FFFFFF",
+          background: "var(--ls-surface)",
           borderRadius: 12,
           padding: 16,
           marginBottom: 16,
-          borderLeft: "4px solid #B8922A",
+          borderLeft: "4px solid var(--ls-gold)",
+          border: "0.5px solid var(--ls-border)",
         }}
       >
         <div

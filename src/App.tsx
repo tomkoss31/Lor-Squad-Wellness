@@ -4,6 +4,7 @@ import { ProtectedRoute, PublicRoute, RoleRoute } from "./components/auth/RouteG
 import { AppLayout } from "./components/layout/AppLayout";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { ToastHost } from "./components/ui/ToastHost";
+import { CommandPalette } from "./components/ui/CommandPalette";
 
 // CoPilotePage remplace définitivement l'ancien DashboardPage (retiré
 // au chantier cleanup-post-audit 2026-04-23).
@@ -351,6 +352,7 @@ export default function App() {
         </ErrorBoundary>
       </Suspense>
       <ToastHost />
+      <CommandPalette />
       </ActiveQuizProvider>
       </ActiveTourProvider>
     </BrowserRouter>
