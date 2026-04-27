@@ -20,17 +20,21 @@ import { LeadsTab } from "../components/settings/LeadsTab";
 
 type TabKey = "profil" | "equipe" | "leads" | "transferts" | "stats" | "debug";
 
-const TABS: Array<{ key: TabKey; label: string; icon: string }> = [
+const ALL_TABS: Array<{ key: TabKey; label: string; icon: string; adminOnly?: boolean }> = [
   { key: "profil", label: "Profil", icon: "👤" },
-  { key: "equipe", label: "Équipe", icon: "👥" },
-  { key: "leads", label: "Leads", icon: "🔥" },
-  { key: "transferts", label: "Transferts", icon: "🔀" },
-  { key: "stats", label: "Statistiques", icon: "📊" },
-  { key: "debug", label: "Debug", icon: "🔧" },
+  { key: "equipe", label: "Équipe", icon: "👥", adminOnly: true },
+  { key: "leads", label: "Leads", icon: "🔥", adminOnly: true },
+  { key: "transferts", label: "Transferts", icon: "🔀", adminOnly: true },
+  { key: "stats", label: "Statistiques", icon: "📊", adminOnly: true },
+  { key: "debug", label: "Debug", icon: "🔧", adminOnly: true },
 ];
 
 export function ParametresPage() {
   const { currentUser } = useAppContext();
+  // Chantier Academy section 1 (2026-04-27) : /parametres ouverte aux
+  // non-admins, mais seul l onglet "Profil" est visible pour eux.
+  const isAdmin = currentUser?.role === "admin";
+  const TABS = ALL_TABS.filter((t) => isAdmin || !t.adminOnly);
   const [tab, setTab] = useState<TabKey>(() => {
     if (typeof window === "undefined") return "profil";
     const fromQuery = new URLSearchParams(window.location.search).get("tab") as TabKey;
