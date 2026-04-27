@@ -11,6 +11,7 @@ import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Card } from "../components/ui/Card";
 import { PageHeading } from "../components/ui/PageHeading";
+import { AcademyLeaderboard } from "../features/academy/components/AcademyLeaderboard";
 import { useAppContext } from "../context/AppContext";
 import {
   useTeamTree,
@@ -309,6 +310,9 @@ export function TeamPage() {
           })()}
         />
       ) : null}
+
+      {/* Leaderboard Academy (Direction 7 — 2026-04-28) */}
+      <AcademyLeaderboard />
     </div>
   );
 }
