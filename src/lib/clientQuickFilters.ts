@@ -70,28 +70,6 @@ function getFirstAssessmentDate(client: Client): string | null {
     ?.date ?? null;
 }
 
-function hasUpcomingFollowUp(client: Client, ctx: QuickFilterContext): boolean {
-  if (client.nextFollowUp) {
-    const t = new Date(client.nextFollowUp).getTime();
-    if (!Number.isNaN(t) && t > ctx.now.getTime()) return true;
-  }
-  return ctx.followUps.some(
-    (fu) =>
-      fu.clientId === client.id
-      && fu.status === "scheduled"
-      && new Date(fu.dueDate).getTime() > ctx.now.getTime(),
-  );
-}
-
-function hasOverdueFollowUp(client: Client, ctx: QuickFilterContext): boolean {
-  return ctx.followUps.some(
-    (fu) =>
-      fu.clientId === client.id
-      && fu.status === "scheduled"
-      && new Date(fu.dueDate).getTime() < ctx.now.getTime(),
-  );
-}
-
 // ─── Definitions des filtres ──────────────────────────────────────────────────
 
 export const QUICK_FILTERS: QuickFilter[] = [
