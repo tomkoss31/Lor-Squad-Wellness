@@ -229,43 +229,74 @@ export function QuizModal({ quiz, sectionTitle, onComplete }: Props) {
               })}
             </div>
 
-            {/* Explication après réponse */}
-            {selectedIndex !== null ? (
-              <div
-                style={{
-                  background: selectedIndex === currentQuestion.correctIndex
-                    ? "rgba(29,158,117,0.08)"
-                    : "rgba(184,146,42,0.08)",
-                  border: `1px solid ${selectedIndex === currentQuestion.correctIndex ? "rgba(29,158,117,0.25)" : "rgba(184,146,42,0.25)"}`,
-                  borderRadius: 10,
-                  padding: "12px 14px",
-                  marginBottom: 14,
-                }}
-              >
-                <p
+            {/* Explication après réponse — Quiz V2 (2026-04-29) :
+                feedback ciblé par mauvaise réponse + explanation générale. */}
+            {selectedIndex !== null ? (() => {
+              const isCorrectAnswer = selectedIndex === currentQuestion.correctIndex;
+              const targetedHint = !isCorrectAnswer
+                ? currentQuestion.wrongAnswerHints?.[selectedIndex]
+                : undefined;
+              return (
+                <div
                   style={{
-                    fontSize: 11,
-                    color: selectedIndex === currentQuestion.correctIndex ? "#0F6E56" : "#854F0B",
-                    textTransform: "uppercase",
-                    letterSpacing: "0.05em",
-                    margin: 0,
-                    fontWeight: 600,
+                    background: isCorrectAnswer
+                      ? "rgba(29,158,117,0.08)"
+                      : "rgba(184,146,42,0.08)",
+                    border: `1px solid ${isCorrectAnswer ? "rgba(29,158,117,0.25)" : "rgba(184,146,42,0.25)"}`,
+                    borderRadius: 10,
+                    padding: "12px 14px",
+                    marginBottom: 14,
                   }}
                 >
-                  {selectedIndex === currentQuestion.correctIndex ? "✓ Bonne réponse" : "💡 À retenir"}
-                </p>
-                <p
-                  style={{
-                    fontSize: 13,
-                    color: "#2C2C2A",
-                    margin: "4px 0 0",
-                    lineHeight: 1.5,
-                  }}
-                >
-                  {currentQuestion.explanation}
-                </p>
-              </div>
-            ) : null}
+                  <p
+                    style={{
+                      fontSize: 11,
+                      color: isCorrectAnswer ? "#0F6E56" : "#854F0B",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.05em",
+                      margin: 0,
+                      fontWeight: 600,
+                    }}
+                  >
+                    {isCorrectAnswer ? "✓ Bonne réponse" : "💡 Pas tout à fait"}
+                  </p>
+                  {targetedHint ? (
+                    <p
+                      style={{
+                        fontSize: 13,
+                        color: "#854F0B",
+                        margin: "6px 0 0",
+                        lineHeight: 1.5,
+                        fontWeight: 500,
+                      }}
+                    >
+                      {targetedHint}
+                    </p>
+                  ) : null}
+                  <p
+                    style={{
+                      fontSize: 13,
+                      color: "#2C2C2A",
+                      margin: targetedHint ? "8px 0 0" : "4px 0 0",
+                      paddingTop: targetedHint ? 8 : 0,
+                      borderTop: targetedHint ? "1px dashed rgba(184,146,42,0.25)" : "none",
+                      lineHeight: 1.5,
+                    }}
+                  >
+                    <strong style={{ color: isCorrectAnswer ? "#0F6E56" : "#854F0B" }}>
+                      {isCorrectAnswer ? "À retenir : " : "La bonne réponse : "}
+                    </strong>
+                    {!isCorrectAnswer ? (
+                      <em style={{ color: "#1D9E75", fontStyle: "normal", fontWeight: 600 }}>
+                        {currentQuestion.answers[currentQuestion.correctIndex]}
+                        {" — "}
+                      </em>
+                    ) : null}
+                    {currentQuestion.explanation}
+                  </p>
+                </div>
+              );
+            })() : null}
 
             {/* Bouton Suivant / Voir score */}
             {selectedIndex !== null ? (
@@ -292,9 +323,11 @@ export function QuizModal({ quiz, sectionTitle, onComplete }: Props) {
           </>
         ) : (
           <>
-            {/* Écran final score */}
+            {/* Écran final score — Quiz V2 (2026-04-29) avec badge perfect */}
             <div style={{ textAlign: "center", padding: "10px 0 6px" }}>
-              <div style={{ fontSize: 56, marginBottom: 4 }}>{passed ? "🎯" : "💪"}</div>
+              <div style={{ fontSize: 56, marginBottom: 4 }}>
+                {score === total ? "🌟" : passed ? "🎯" : "💪"}
+              </div>
               <p
                 style={{
                   fontFamily: "Syne, serif",
@@ -304,16 +337,44 @@ export function QuizModal({ quiz, sectionTitle, onComplete }: Props) {
                   margin: "8px 0 4px",
                 }}
               >
-                {passed ? "Bien joué !" : "Pas mal, mais tu peux mieux"}
+                {score === total
+                  ? "Quiz parfait !"
+                  : passed
+                    ? "Bien joué !"
+                    : "Pas mal, mais tu peux mieux"}
               </p>
+              {score === total ? (
+                <div
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 6,
+                    margin: "8px 0 4px",
+                    padding: "5px 12px",
+                    borderRadius: 999,
+                    background: "linear-gradient(135deg, #FFE873 0%, #C9A84C 100%)",
+                    color: "#5C4A0F",
+                    fontSize: 11,
+                    fontWeight: 700,
+                    letterSpacing: "0.06em",
+                    fontFamily: "DM Sans, sans-serif",
+                    textTransform: "uppercase",
+                    boxShadow: "0 2px 8px rgba(184,146,42,0.35)",
+                  }}
+                >
+                  ⭐ {total}/{total} — Sans aucune erreur
+                </div>
+              ) : null}
               <p style={{ fontSize: 14, color: "#5F5E5A", margin: 0 }}>
                 Score : <strong style={{ color: passed ? "#1D9E75" : "#B8922A" }}>{score} / {total}</strong>{" "}
                 ({finalPercent} %)
               </p>
               <p style={{ fontSize: 13, color: "#6B6B62", margin: "12px 0 0", lineHeight: 1.5 }}>
-                {passed
-                  ? "Tu as bien compris l'essentiel de cette section. La validation est confirmée."
-                  : "Tu peux relancer cette section depuis /academy quand tu veux pour réviser. La validation est quand même comptée."}
+                {score === total
+                  ? "Tu maîtrises cette section sans aucune hésitation. Le réflexe est ancré."
+                  : passed
+                    ? "Tu as bien compris l'essentiel de cette section. La validation est confirmée."
+                    : "Tu peux relancer cette section depuis /academy quand tu veux pour réviser. La validation est quand même comptée."}
               </p>
             </div>
             <button

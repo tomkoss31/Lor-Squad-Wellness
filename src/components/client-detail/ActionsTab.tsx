@@ -373,6 +373,21 @@ export function ActionsTab({ client, onEditRdv, onOpenSharePublic, onGoToVueComp
         <FollowUpProtocolCard client={client} />
       </div>
 
+      {/* Messages rapides — hoisted en haut (Polish 2026-04-29) :
+          le CTA gold est tjr visible direct, plus enterre en bas sur mobile. */}
+      <div className="at-card" style={{ marginTop: 12 }}>
+        <div className="at-label" style={{ marginBottom: 10 }}>
+          Messages rapides
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          <MessageTemplatesButton client={client} />
+          <div style={{ fontSize: 10, color: "var(--ls-text-hint)", lineHeight: 1.4 }}>
+            Templates pré-rédigés (rappel RDV, félicitation perte poids, relance douce…)
+            — édite et envoie via WhatsApp, SMS, Telegram ou copie.
+          </div>
+        </div>
+      </div>
+
       {/* ═══ GRID 2 COLONNES ═════════════════════════════════════════════ */}
       <div
         className="at-grid-2"
@@ -506,20 +521,6 @@ export function ActionsTab({ client, onEditRdv, onOpenSharePublic, onGoToVueComp
 
         {/* ─── COLONNE DROITE ─── */}
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          {/* Bloc 4A0 : Templates messages WhatsApp (Chantier E, 2026-04-29) */}
-          <div className="at-card">
-            <div className="at-label" style={{ marginBottom: 10 }}>
-              Messages rapides
-            </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              <MessageTemplatesButton client={client} />
-              <div style={{ fontSize: 10, color: "var(--ls-text-hint)", lineHeight: 1.4 }}>
-                Templates pré-rédigés (rappel RDV, félicitation perte poids, relance douce…)
-                — copie + ouvre WhatsApp avec le numéro pré-rempli.
-              </div>
-            </div>
-          </div>
-
           {/* Bloc 4A : Accès client */}
           <div className="at-card">
             <div className="at-label" style={{ marginBottom: 12 }}>

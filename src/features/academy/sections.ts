@@ -44,7 +44,15 @@ export interface AcademyQuizQuestion {
   question: string;
   answers: string[];
   correctIndex: number;
+  /** Explication pédagogique toujours affichée après la réponse. */
   explanation: string;
+  /**
+   * Hint ciblé par mauvaise réponse (Chantier Quiz V2 — 2026-04-29).
+   * Clé = index de la mauvaise réponse, valeur = correction explicative.
+   * Exemple : { 0: "Pas tout à fait — la ZA c'est le mois 1, pas la semaine 1." }
+   * Si défini pour la réponse choisie : affiché AVANT explanation.
+   */
+  wrongAnswerHints?: Record<number, string>;
 }
 
 export interface AcademyQuiz {
@@ -123,6 +131,96 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
         nextLabel: "Section terminée",
       },
     ],
+    quiz: {
+      passThreshold: 0.8,
+      questions: [
+        {
+          id: "q1",
+          question: "Quelle est la différence entre ton sponsor Herbalife et ton coach référent Lor'Squad ?",
+          answers: [
+            "Aucune, c'est la même personne par définition",
+            "Le sponsor c'est l'arbre Herbalife (commissions), le coach c'est qui te suit dans Lor'Squad",
+            "Le sponsor c'est facultatif, le coach c'est obligatoire",
+            "Le sponsor est interne à Lor'Squad, le coach est externe",
+          ],
+          correctIndex: 1,
+          wrongAnswerHints: {
+            0: "Souvent c'est la même personne, mais pas toujours — d'où la distinction dans les champs.",
+            2: "Inversement : le sponsor structure ton lignage Herbalife (obligatoire pour les commissions), le coach c'est ton suivi quotidien.",
+            3: "Le sponsor est externe (Herbalife corporate), le coach est interne (Lor'Squad).",
+          },
+          explanation: "Sponsor = arbre Herbalife pour les commissions (ID format 21Y0103610). Coach référent = qui te suit dans Lor'Squad (notifié si tu décroches). Souvent identiques mais on sépare pour les cas où non.",
+        },
+        {
+          id: "q2",
+          question: "Format d'un ID Herbalife valide ?",
+          answers: [
+            "10 chiffres uniquement",
+            "2 chiffres + 1 lettre majuscule + 7 chiffres",
+            "Lettres et chiffres mélangés sans format",
+            "Adresse email du distri",
+          ],
+          correctIndex: 1,
+          wrongAnswerHints: {
+            0: "Pas tout à fait — il y a une lettre au milieu, pas que des chiffres.",
+            2: "Non, le format est strict — c'est un identifiant officiel Herbalife.",
+            3: "L'email c'est ton login Lor'Squad, pas l'ID Herbalife.",
+          },
+          explanation: "Format ID Herbalife : 2 chiffres + 1 lettre majuscule + 7 chiffres (ex : 21Y0103610). Tu le trouves sur MyHerbalife → Mon profil. Lor'Squad valide le format à la saisie.",
+        },
+        {
+          id: "q3",
+          question: "Si tu ne renseignes pas ton coach référent, que se passe-t-il ?",
+          answers: [
+            "Ton compte est désactivé",
+            "Personne n'est notifié si tu décroches, et ton coach perd la visibilité team",
+            "Tu ne peux pas faire de bilan",
+            "Tu perds tes commissions Herbalife",
+          ],
+          correctIndex: 1,
+          wrongAnswerHints: {
+            0: "Non, ton compte fonctionne — c'est juste un manque de suivi.",
+            2: "Si si, tu peux faire des bilans. C'est la relation team qui souffre, pas l'usage.",
+            3: "Les commissions dépendent de Herbalife (sponsor), pas du coach Lor'Squad.",
+          },
+          explanation: "Sans coach référent, tu fonctionnes mais tu n'apparais sur la fiche team de personne. Si tu galères, personne n'est alerté. C'est le maillon humain qui te garde dans la dynamique du club.",
+        },
+        {
+          id: "q4",
+          question: "Qui voit ton statut Academy + ID Herbalife côté admin Lor'Squad ?",
+          answers: [
+            "Personne, c'est totalement privé",
+            "Tous les utilisateurs",
+            "Admin (Thomas, Mélanie) + ton coach référent + ton sponsor s'il est dans Lor'Squad",
+            "Uniquement Herbalife corporate",
+          ],
+          correctIndex: 2,
+          wrongAnswerHints: {
+            0: "Pas privé : c'est ce qui permet à ton équipe de t'aider.",
+            1: "Faux — Lor'Squad respecte les rôles. Un autre distri ne voit pas ton ID.",
+            3: "Herbalife n'a aucun accès à Lor'Squad — c'est un outil tiers du club.",
+          },
+          explanation: "Visibilité scope team : admin Lor'Squad du club + ton coach référent + ton sponsor (s'il est inscrit Lor'Squad). Les autres distri du club ne voient rien de personnel.",
+        },
+        {
+          id: "q5",
+          question: "Pourquoi Lor'Squad a besoin de ton ID Herbalife ?",
+          answers: [
+            "Pour faire de la pub à Herbalife",
+            "Pour tracer ton lignage et permettre les rapports PV/commissions par branche",
+            "Pour partager tes données avec d'autres clubs",
+            "Aucune raison, c'est juste un champ optionnel",
+          ],
+          correctIndex: 1,
+          wrongAnswerHints: {
+            0: "Lor'Squad ne fait pas de pub — c'est un outil interne au club.",
+            2: "Au contraire : tes données sont scopées à ton club uniquement (RLS Supabase).",
+            3: "Pas optionnel — c'est ce qui structure les rapports d'équipe.",
+          },
+          explanation: "L'ID Herbalife relie ton compte Lor'Squad à ton lignage officiel. Permet les rapports PV par branche, les détections de transferts de parrain, et la cohérence avec les données Herbalife corporate.",
+        },
+      ],
+    },
   },
   {
     id: "app-tour",
@@ -176,7 +274,7 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
         target: '[data-tour-id="nav-pv"]',
         placement: "bottom",
         title: "Suivi PV — ton volume Herbalife",
-        body: "Compteur de points volume du mois en cours, projection sur la fin du mois, historique mensuel. Seuil par défaut 13 000 PV — éditable dans tes paramètres si tu vises un palier supérieur. Badge rouge si tu as des produits en retard à renouveler.",
+        body: "Compteur de points volume du mois en cours, projection sur la fin du mois, historique mensuel. Seuil par défaut 2 500 PV — éditable dans Paramètres > Profil > Objectif PV mensuel quand tu veux viser plus haut. Badge rouge si tu as des produits en retard à renouveler.",
         manualAdvance: true,
       },
       {
@@ -190,6 +288,86 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
         nextLabel: "Section terminée",
       },
     ],
+    quiz: {
+      passThreshold: 0.8,
+      questions: [
+        {
+          id: "q1",
+          question: "Le Co-pilote, c'est quoi exactement ?",
+          answers: [
+            "Une page de configuration",
+            "Le dashboard principal avec jauge PV, mini-stats et accès rapide",
+            "Un mode pilote automatique qui répond aux clients",
+            "L'onglet d'aide en ligne",
+          ],
+          correctIndex: 1,
+          wrongAnswerHints: {
+            0: "Non, la config c'est dans Paramètres.",
+            2: "Faux — pas d'IA qui répond aux clients à ta place. C'est toi le coach.",
+            3: "Le guide est ailleurs (/guide). Le co-pilote c'est ton tableau de bord.",
+          },
+          explanation: "Le Co-pilote est ton dashboard quotidien : jauge PV mensuelle, 3 mini-stats (clients actifs / RDV semaine / conversion), CTAs rapides. C'est la page que tu regardes le matin avec ton café.",
+        },
+        {
+          id: "q2",
+          question: "Dans la sidebar, où trouves-tu rapidement tous tes RDV à venir ?",
+          answers: ["Onglet Clients", "Onglet Messagerie", "Onglet Agenda", "Paramètres"],
+          correctIndex: 2,
+          wrongAnswerHints: {
+            0: "Clients liste tes clients, pas les RDV planifiés.",
+            1: "La messagerie c'est les conversations, pas les RDV.",
+            3: "Paramètres c'est ton profil + admin du club, rien à voir.",
+          },
+          explanation: "L'Agenda centralise tous tes RDV (vue jour/semaine/mois) avec filtres par client. Les RDV imminents génèrent aussi des push notif via le cron rdv-imminent-notifier toutes les 5 min.",
+        },
+        {
+          id: "q3",
+          question: "Le bouton « + Nouveau bilan » fait quoi en un seul flow ?",
+          answers: [
+            "Crée juste un client vide",
+            "Crée client + bilan initial + programme + lien d'app personnelle",
+            "Envoie un mail à ton coach",
+            "Réserve un RDV pour toi",
+          ],
+          correctIndex: 1,
+          wrongAnswerHints: {
+            0: "Trop limité — le wizard fait bien plus que créer un client.",
+            2: "Aucun email envoyé à ton coach lors d'un bilan.",
+            3: "Le RDV se fixe APRÈS le bilan, pas pendant.",
+          },
+          explanation: "« + Nouveau bilan » est ton geste central. Un seul wizard guidé crée le client + son bilan + son programme + son lien d'app perso (auto-login token). C'est le sujet entier de la section « Premier bilan ».",
+        },
+        {
+          id: "q4",
+          question: "L'onglet Messagerie a combien de sous-onglets pour organiser les conversations ?",
+          answers: ["1 (Toutes)", "2 (Toutes / Non-lues)", "3 (Inbox / À traiter / Archive)", "5"],
+          correctIndex: 2,
+          wrongAnswerHints: {
+            0: "Trop simple — au-delà de 10 conversations on noie l'info.",
+            1: "Proche, mais Lor'Squad sépare en plus les conversations à traiter (besoin d'une réponse).",
+            3: "Trop fragmenté, on n'a pas besoin de 5 onglets.",
+          },
+          explanation: "3 sous-onglets : Inbox (tout) / À traiter (où le client attend ta réponse) / Archive (terminé). Le badge sur l'onglet montre le nombre de non-lues.",
+        },
+        {
+          id: "q5",
+          question: "Sur l'onglet Suivi PV, quel signal d'alerte rouge dois-tu surveiller ?",
+          answers: [
+            "Quand tu dépasses 50 % de la jauge",
+            "Quand un client a un produit en retard de renouvellement",
+            "Quand tu reçois un nouveau message",
+            "Quand l'équipe atteint son objectif",
+          ],
+          correctIndex: 1,
+          wrongAnswerHints: {
+            0: "À 50 % tu es en zone ambre saine — pas une alerte.",
+            2: "Les nouveaux messages sont dans la Messagerie, pas Suivi PV.",
+            3: "Atteindre l'objectif est une bonne nouvelle, pas une alerte rouge.",
+          },
+          explanation: "Le badge rouge sur l'onglet Suivi PV indique qu'un client a un produit en retard de renouvellement (sa cure devrait être finie depuis X jours). Signal pour le contacter avant qu'il décroche.",
+        },
+      ],
+    },
   },
   {
     id: "first-bilan",
@@ -259,12 +437,18 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
       },
     ],
     quiz: {
+      passThreshold: 0.8,
       questions: [
         {
           id: "q1",
           question: "Combien d'étapes le wizard de bilan contient-il pour un client en objectif sport ?",
           answers: ["8 étapes", "11 étapes", "13 étapes", "15 étapes"],
           correctIndex: 2,
+          wrongAnswerHints: {
+            0: "Trop court — un bilan complet va bien au-delà de 8 étapes pour cadrer le client correctement.",
+            1: "C'est le nombre par défaut, mais tu oublies les 2 étapes ajoutées en mode sport.",
+            3: "Trop long — le wizard reste sous les 15 min pour ne pas fatiguer le client.",
+          },
           explanation: "Le wizard a 11 étapes par défaut, +2 pour le sport (profil sport + apports actuels) = 13 au total.",
         },
         {
@@ -277,7 +461,63 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
             "Pour facturer",
           ],
           correctIndex: 1,
-          explanation: "Le téléphone permet d'envoyer le lien d'accès et le récap par WhatsApp depuis la page remerciement, en 1 clic.",
+          wrongAnswerHints: {
+            0: "Indirect — la vraie utilité opérationnelle est l'envoi WhatsApp post-bilan.",
+            2: "Pas faux mais trop rare. Le téléphone sert d'abord à l'usage régulier WhatsApp.",
+            3: "Lor'Squad ne facture pas — c'est ton activité distri Herbalife à part.",
+          },
+          explanation: "Le téléphone permet d'envoyer le lien d'accès et le récap par WhatsApp depuis la page remerciement, en 1 clic. Sans tél = friction post-bilan.",
+        },
+        {
+          id: "q3",
+          question: "Pendant le body scan, qu'est-ce qui est strictement obligatoire pour valider l'étape ?",
+          answers: [
+            "Poids + taille + âge",
+            "Tour de taille uniquement",
+            "Photo avant",
+            "Composition corporelle (% gras / muscle)",
+          ],
+          correctIndex: 0,
+          wrongAnswerHints: {
+            1: "Le tour de taille est utile mais optionnel — on peut faire le bilan sans.",
+            2: "La photo avant booste l'engagement client mais n'est pas bloquante.",
+            3: "La composition corporelle nécessite une balance impédancemètre — ce n'est pas exigé.",
+          },
+          explanation: "Le bilan exige juste poids + taille + âge pour calculer IMC, eau cible et protéines. Tout le reste est bonus pour enrichir le suivi.",
+        },
+        {
+          id: "q4",
+          question: "Si le client choisit l'objectif « Sport / prise de masse », que se passe-t-il dans le wizard ?",
+          answers: [
+            "Rien, le wizard est identique",
+            "Le programme propose Formula 1 Vanille en priorité",
+            "2 étapes sport-only s'ajoutent (profil sport + apports actuels)",
+            "Le bilan est plus court car il y a moins de questions nutrition",
+          ],
+          correctIndex: 2,
+          wrongAnswerHints: {
+            0: "Erreur classique — le wizard est dynamique, il s'adapte à l'objectif.",
+            1: "Au contraire : pour le sport on propose plutôt Formula 1 Sport + boosters protéines.",
+            3: "C'est l'inverse : le bilan sport est plus long, pas plus court.",
+          },
+          explanation: "L'objectif sport déclenche 2 étapes supplémentaires (sport-profile + current-intake) qui alimentent les calculs protéines/hydratation et les alertes sport.",
+        },
+        {
+          id: "q5",
+          question: "Une fois le bilan validé, où arrive le client immédiatement ?",
+          answers: [
+            "Sur sa fiche client coté coach",
+            "Sur une page de remerciement plein écran avec QR code",
+            "Sur l'agenda pour fixer le suivi",
+            "Sur la liste des produits",
+          ],
+          correctIndex: 1,
+          wrongAnswerHints: {
+            0: "Non — la fiche client te concerne, toi le coach. Le client a sa propre expérience post-bilan.",
+            2: "L'agenda c'est pour toi, pas pour le client. Le suivi se fixe APRÈS la page remerciement.",
+            3: "Pas directement. Les produits sont dans son app perso, accessibles via le QR.",
+          },
+          explanation: "Après validation, ouverture automatique de la page « Bilan terminé » avec QR code + boutons WhatsApp/SMS/Telegram + lien parrainage. C'est ton moment WAOUH en RDV.",
         },
       ],
     },
@@ -356,20 +596,82 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
       },
     ],
     quiz: {
+      passThreshold: 0.8,
       questions: [
         {
           id: "q1",
           question: "Combien d'alertes Sport peuvent bloquer la validation du bilan ?",
           answers: ["3 alertes", "4 alertes", "6 alertes", "8 alertes"],
           correctIndex: 2,
-          explanation: "Lor'Squad détecte 6 alertes : hydratation faible, protéines basses, sommeil court, masse musculaire, snack manquant, fréquence sport incohérente.",
+          wrongAnswerHints: {
+            0: "Trop peu — Lor'Squad couvre plus largement la santé sportive du client.",
+            1: "Tu en oublies 2. Pense aux 6 axes : hydratation, protéines, sommeil, masse, snacks, fréquence.",
+            3: "Trop — on évite la sur-alerte qui ferait fuir le client.",
+          },
+          explanation: "Lor'Squad détecte 6 alertes : hydratation faible, protéines basses, sommeil court, masse musculaire, snack manquant, fréquence sport incohérente. Acquittement obligatoire avant validation.",
         },
         {
           id: "q2",
           question: "Pour un client en prise de masse, quel booster recommander en priorité ?",
           answers: ["Aloe Vera", "Formula 1 Vanille", "Rebuild Strength", "Liftoff"],
           correctIndex: 2,
-          explanation: "Rebuild Strength est conçu pour la récupération musculaire et la prise de masse. À prendre après l'entraînement.",
+          wrongAnswerHints: {
+            0: "Aloe c'est confort digestif, pas prise de masse — c'est plutôt pour le bien-être global.",
+            1: "Formula 1 c'est la base, mais en sport on prend la version Sport (chocolat) — pas la vanille standard.",
+            3: "Liftoff c'est le pré-entraînement (focus + énergie), pas la récup musculaire.",
+          },
+          explanation: "Rebuild Strength est conçu pour la récupération musculaire et la prise de masse. À prendre dans les 30 min après l'entraînement, mélangé à de l'eau ou du lait.",
+        },
+        {
+          id: "q3",
+          question: "Quelle est la différence entre les boosters proposés et les produits standards dans le ticket bilan ?",
+          answers: [
+            "Aucune, tous sont au même tarif",
+            "Les boosters ont une étoile + fond teal et sont marqués \"recommandés\"",
+            "Les boosters sont obligatoires",
+            "Les boosters sont gratuits le premier mois",
+          ],
+          correctIndex: 1,
+          wrongAnswerHints: {
+            0: "Visuellement ils sont distingués — c'est exprès, pour orienter ton choix de coach.",
+            2: "Aucun produit n'est obligatoire — tu coches selon le profil et le budget.",
+            3: "Faux. Aucun produit n'est offert dans le programme.",
+          },
+          explanation: "Les boosters apparaissent avec une étoile ⭐ + fond teal pour signaler que la recommandation vient des règles métier (sport, hydratation, etc.). Ça t'aide à les expliquer au client : « voilà pourquoi je te le propose ».",
+        },
+        {
+          id: "q4",
+          question: "Le ticket du jour à droite du Programme affiche quoi en temps réel ?",
+          answers: [
+            "Juste le total prix",
+            "Le total prix + le total PV",
+            "Uniquement les produits cochés sans calcul",
+            "Le poids du client",
+          ],
+          correctIndex: 1,
+          wrongAnswerHints: {
+            0: "Tu rates l'info essentielle pour toi : le PV — c'est ce qui te qualifie chaque mois.",
+            2: "Si si, ça calcule. Sinon ce ne serait pas un vrai ticket pro.",
+            3: "Le poids n'a rien à faire dans le ticket — il est dans le body scan.",
+          },
+          explanation: "Le ticket affiche prix total ET PV total qui s'actualisent à chaque ajout / retrait. Indispensable pour suivre ton volume PV mensuel en direct pendant le RDV.",
+        },
+        {
+          id: "q5",
+          question: "Sur un produit retenu, tu peux ajuster quoi avant de générer le programme ?",
+          answers: [
+            "Le prix unitaire",
+            "La couleur du packaging",
+            "La quantité (stepper − / + entre 1 et 10)",
+            "Rien, c'est figé",
+          ],
+          correctIndex: 2,
+          wrongAnswerHints: {
+            0: "Les prix sont fixes (catalogue Herbalife) — tu ne négocies pas dans Lor'Squad.",
+            1: "C'est de la déco, pas du fonctionnel.",
+            3: "Si si, la quantité est ajustable depuis le chantier D-urgent (avril 2026).",
+          },
+          explanation: "Chaque produit retenu a un stepper de quantité 1-10. Le total prix et PV du ticket recalcule automatiquement. Persisté en jsonb dans questionnaire.selectedProductQuantities.",
         },
       ],
     },
@@ -429,6 +731,86 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
         illustrationKey: "rocket",
       },
     ],
+    quiz: {
+      passThreshold: 0.8,
+      questions: [
+        {
+          id: "q1",
+          question: "Le protocole de suivi automatique pose 4 checkpoints — lesquels ?",
+          answers: [
+            "J+1, J+7, J+30, J+90",
+            "J+1, J+3, J+7, J+10",
+            "Tous les jours pendant 10 jours",
+            "Aucun, c'est manuel",
+          ],
+          correctIndex: 1,
+          wrongAnswerHints: {
+            0: "Trop espacé — sur 90 jours tu perds le client en route.",
+            2: "Trop intrusif — un message par jour fatigue le client.",
+            3: "Si si, c'est automatisé. Lor'Squad pousse les bons rappels au bon moment.",
+          },
+          explanation: "Les 4 checkpoints J+1 / J+3 / J+7 / J+10 couvrent les jours critiques : bienvenue, premiers ressentis, accompagnement VIP, check énergie. Calibrés pour maximiser la rétention sans spam.",
+        },
+        {
+          id: "q2",
+          question: "À quelle heure tombe le digest matin avec les actions du jour ?",
+          answers: ["6h", "7h", "9h", "12h"],
+          correctIndex: 1,
+          wrongAnswerHints: {
+            0: "Trop tôt — la majorité des coachs dorment encore.",
+            2: "Trop tard pour anticiper la journée.",
+            3: "C'est le déjeuner — la journée est déjà bien lancée.",
+          },
+          explanation: "Le cron morning-suivis-digest tourne à 7h00 (Europe/Paris) et envoie une push notif avec les actions du jour : RDV imminents, follow-ups en retard, clients à contacter.",
+        },
+        {
+          id: "q3",
+          question: "La période de grâce d'un RDV (durée pendant laquelle il reste « actif » après l'heure prévue) ?",
+          answers: ["5 min", "15 min", "30 min", "1 heure"],
+          correctIndex: 1,
+          wrongAnswerHints: {
+            0: "Trop court — un client en retard de transport, c'est plus de 5 min.",
+            2: "Trop long — au-delà de 15 min on considère que le RDV est manqué.",
+            3: "Beaucoup trop long, l'agenda serait incohérent.",
+          },
+          explanation: "Période de grâce de 15 min : un RDV reste « actif » 15 minutes après l'heure prévue. Utile si le client est en retard ou si tu es en RDV avec un autre. Au-delà → marqué manqué.",
+        },
+        {
+          id: "q4",
+          question: "Un client marqué « Pas démarré » dans le protocole de suivi, ça veut dire quoi ?",
+          answers: [
+            "Il reçoit toutes les relances automatiques",
+            "Il est exclu du protocole automatique (pas de spam relance)",
+            "Son compte est suspendu",
+            "Il est facturé en double",
+          ],
+          correctIndex: 1,
+          wrongAnswerHints: {
+            0: "L'inverse — c'est justement pour ne PAS le harceler de relances.",
+            2: "Aucun client n'est suspendu, c'est juste un statut de suivi.",
+            3: "Lor'Squad ne facture rien — c'est un outil interne club.",
+          },
+          explanation: "« Pas démarré » = le client n'a pas commencé le programme. On l'exclut automatiquement du protocole pour éviter les relances « Comment ça s'est passé ? » alors qu'il n'a rien fait.",
+        },
+        {
+          id: "q5",
+          question: "Tu peux exporter un client (sa fiche complète) — pour quel usage principal ?",
+          answers: [
+            "Pour le supprimer définitivement",
+            "Pour transmettre la fiche à un autre coach (transfert) ou archive locale",
+            "Pour le facturer",
+            "Pour copier ses données chez un concurrent",
+          ],
+          correctIndex: 1,
+          wrongAnswerHints: {
+            0: "L'export ne supprime rien — c'est une copie.",
+            2: "Pas de facturation dans Lor'Squad.",
+            3: "Pas l'objectif — et juridiquement risqué (RGPD).",
+          },
+          explanation: "L'export client génère un fichier complet (bilans, programme, suivis) pour transfert intra-club ou archive personnelle. Utile quand un client change de coach référent ou pour ses propres archives.",
+        },
+      ],
+    },
   },
   {
     id: "messages-and-clients",
@@ -496,6 +878,96 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
         illustrationKey: "rocket",
       },
     ],
+    quiz: {
+      passThreshold: 0.8,
+      questions: [
+        {
+          id: "q1",
+          question: "Pour supprimer définitivement un client qui ne suit plus, tu fais quoi ?",
+          answers: [
+            "Bouton Supprimer en haut de la fiche",
+            "Tu le passes en Arrêté ou Perdu via le sélecteur lifecycle (il reste en base)",
+            "Tu écris à l'admin pour le retirer",
+            "Tu changes son numéro de téléphone",
+          ],
+          correctIndex: 1,
+          wrongAnswerHints: {
+            0: "Pas de bouton supprimer dans Lor'Squad — l'historique est précieux.",
+            2: "Pas besoin — le sélecteur lifecycle suffit, accessible depuis ta fiche client.",
+            3: "Aucun rapport — modifier le tel ne supprime rien.",
+          },
+          explanation: "Lor'Squad n'a pas de suppression brutale (l'historique a de la valeur). Tu marques le client en Arrêté ou Perdu via lifecycle → il sort des digests, du dashboard et du protocole. Réactivable à tout moment.",
+        },
+        {
+          id: "q2",
+          question: "Sur l'onglet À traiter de la messagerie, qu'est-ce qui apparaît ?",
+          answers: [
+            "Toutes les conversations sans exception",
+            "Uniquement les conversations où le client attend ta réponse",
+            "Uniquement les conversations archivées",
+            "Tes messages envoyés",
+          ],
+          correctIndex: 1,
+          wrongAnswerHints: {
+            0: "Trop large — c'est l'onglet Inbox qui montre tout.",
+            2: "L'archive est dans son propre onglet, pas À traiter.",
+            3: "Tes envois sont dans Inbox aussi, mais marqués « lus ».",
+          },
+          explanation: "L'onglet À traiter filtre les conversations où c'est ton tour de répondre (dernier message = client, non lu par toi). Vue prioritaire pour ne jamais laisser un client en attente.",
+        },
+        {
+          id: "q3",
+          question: "Tu veux relancer tous les clients « En pause » d'un seul coup. Comment fais-tu ?",
+          answers: [
+            "Tu copies-colles à la main pour chaque client",
+            "Tu filtres par statut « En pause » dans Clients, puis utilises Messages rapides ou WhatsApp groupé",
+            "Tu attends qu'ils reviennent d'eux-mêmes",
+            "Impossible, Lor'Squad ne permet pas",
+          ],
+          correctIndex: 1,
+          wrongAnswerHints: {
+            0: "Sloweur — le filtre + templates fait gagner 80 % du temps.",
+            2: "Stratégie passive qui te coûte des clients.",
+            3: "Au contraire, c'est exactement le cas d'usage prévu.",
+          },
+          explanation: "Filtre rapide « En pause » sur la page Clients → ouvre la fiche → bouton « Envoyer un message » → template Relance douce + canal WhatsApp/SMS/Telegram. Conçu pour ce cas précis.",
+        },
+        {
+          id: "q4",
+          question: "Le bouton « Envoyer un message » sur la fiche client offre quels canaux ?",
+          answers: [
+            "WhatsApp uniquement",
+            "WhatsApp + SMS",
+            "WhatsApp + SMS + Telegram + Copier",
+            "Email",
+          ],
+          correctIndex: 2,
+          wrongAnswerHints: {
+            0: "Pas que. Tous tes clients ne sont pas sur WhatsApp.",
+            1: "Il manque les 2 autres canaux qui couvrent les cas restants.",
+            3: "Pas d'email pour les messages quotidiens — trop formel pour le coaching.",
+          },
+          explanation: "4 canaux : 📱 WhatsApp (par défaut, numéro pré-rempli), 💬 SMS (fallback iPhone vieux), ✈️ Telegram (clients sensibles à la confidentialité), 📋 Copier (canal libre).",
+        },
+        {
+          id: "q5",
+          question: "Les templates de message rapides s'adaptent au contexte du client. Combien y en a-t-il et qu'est-ce qui détermine leur pertinence ?",
+          answers: [
+            "1 template universel",
+            "5 templates avec un prédicat applicable() qui détecte si pertinent (RDV imminent, perte poids, silence prolongé, etc.)",
+            "10 templates au hasard",
+            "Aucun, tu écris tout à la main",
+          ],
+          correctIndex: 1,
+          wrongAnswerHints: {
+            0: "Trop simple — un seul template ne couvre pas tous les contextes coaching.",
+            2: "Pas au hasard — chaque template a une logique métier précise.",
+            3: "Sans templates tu perds 30 min/jour à rédiger les mêmes messages.",
+          },
+          explanation: "5 templates : confirmation RDV imminent, félicitation perte poids, relance douce silence ≥14j, rappel commande produit, anniversaire programme (1/3/6 mois). Chacun a un applicable(client, ctx) qui détermine la pertinence. Badge PERTINENT affiché si applicable.",
+        },
+      ],
+    },
   },
   {
     id: "client-app",
@@ -568,6 +1040,96 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
         illustrationKey: "rocket",
       },
     ],
+    quiz: {
+      passThreshold: 0.8,
+      questions: [
+        {
+          id: "q1",
+          question: "Le QR code dans la modale d'accès client, c'est utile quand ?",
+          answers: [
+            "Jamais, c'est juste pour faire joli",
+            "En RDV physique : le client scanne avec son téléphone et son app s'ouvre",
+            "Pour vérifier ton ID Herbalife",
+            "Pour valider tes commissions",
+          ],
+          correctIndex: 1,
+          wrongAnswerHints: {
+            0: "Pas du tout — c'est l'effet WAOUH du RDV physique.",
+            2: "Aucun rapport avec ton ID Herbalife.",
+            3: "Aucun rapport avec les commissions.",
+          },
+          explanation: "QR code 180×180 dans la modale Accès client : en RDV physique, le client scanne avec son appareil photo, son app s'ouvre instantanément sur son espace perso. Moment WAOUH qui ferme la vente sur le service.",
+        },
+        {
+          id: "q2",
+          question: "Côté client dans son app, qu'est-ce qu'il voit en priorité sur l'onglet Accueil ?",
+          answers: [
+            "Un compteur de PV",
+            "Un hero personnalisé + card RDV avec 4 actions (Calendar, ICS, Maps, Modifier)",
+            "Un formulaire de feedback",
+            "Une pub Herbalife",
+          ],
+          correctIndex: 1,
+          wrongAnswerHints: {
+            0: "Le PV c'est ton compteur côté distri, pas côté client.",
+            2: "Le feedback est ailleurs (avis Google), pas en page d'accueil.",
+            3: "Aucune pub — Lor'Squad respecte l'expérience client.",
+          },
+          explanation: "Hero perso (« Bonjour Sarah ») + card RDV gold avec 4 CTAs : Ajouter à Google Calendar, télécharger .ics, ouvrir Maps, contacter pour modifier. C'est ce qui rend le RDV vivant pour le client.",
+        },
+        {
+          id: "q3",
+          question: "L'app client utilise quelle stratégie data pour ne pas casser les RLS ?",
+          answers: [
+            "Elle fait des SELECT directs sur les tables Supabase",
+            "Elle passe par l'edge function client-app-data avec service_role + token uuid",
+            "Elle stocke tout en local sur l'appareil",
+            "Elle copie les données depuis l'app coach",
+          ],
+          correctIndex: 1,
+          wrongAnswerHints: {
+            0: "Dangereux — c'est la frayeur RLS d'avril 2026 qu'on ne refait pas.",
+            2: "Pas viable — les données changent côté coach et doivent remonter.",
+            3: "Aucune copie — l'app client est autonome.",
+          },
+          explanation: "L'edge function client-app-data valide le token uuid (client_app_accounts.token), fait les SELECT en service_role (bypass RLS propre), et renvoie un payload normalisé. Aucun SELECT direct côté front client.",
+        },
+        {
+          id: "q4",
+          question: "Si l'edge function client-app-data plante, qu'est-ce qui se passe côté client ?",
+          answers: [
+            "L'app crash et affiche une erreur 500",
+            "L'app fallback silencieusement sur les snapshots de client_app_accounts",
+            "Le client est déconnecté",
+            "Tous les coachs sont notifiés",
+          ],
+          correctIndex: 1,
+          wrongAnswerHints: {
+            0: "Pas de crash — Lor'Squad est résilient aux pannes back.",
+            2: "L'auto-login fonctionne sur le token, pas sur l'edge — il reste connecté.",
+            3: "Pas de notif systémique pour ce cas (overkill).",
+          },
+          explanation: "Fallback snapshot : si l'edge plante, l'app affiche les snapshots figés de client_app_accounts (program_title, next_follow_up). Bandeau orange en haut pour signaler le mode dégradé. UX préservée.",
+        },
+        {
+          id: "q5",
+          question: "Le bouton « Laisser un avis Google » côté client est placé à quel moment optimal ?",
+          answers: [
+            "Dès l'ouverture de l'app (avant qu'il voie son programme)",
+            "Sur la page remerciement post-bilan ET menu profil — après qu'il ait vu sa progression",
+            "Une fois par jour en pop-up",
+            "Jamais, c'est tabou",
+          ],
+          correctIndex: 1,
+          wrongAnswerHints: {
+            0: "Trop tôt — il n'a rien vu, il ne peut pas avoir d'avis fondé.",
+            2: "Trop intrusif — un pop-up quotidien fait fuir le client.",
+            3: "Au contraire, c'est une stratégie de croissance organique majeure.",
+          },
+          explanation: "Timing optimal : page remerciement post-bilan (effet WAOUH) + menu profil après plusieurs semaines (transformation visible). Pas de pop-up intrusif. Plus tes clients progressent, plus tu collectes d'avis 5★ → meilleur référencement local.",
+        },
+      ],
+    },
   },
   {
     id: "rituals",
@@ -580,7 +1142,7 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
       {
         id: "intro",
         title: "Tes rituels quotidiens",
-        body: "Deux habitudes prises dès le départ font 80 % du résultat : avoir Lor'Squad sous la main comme une app native, et regarder ton volume PV chaque matin pour piloter ton mois. C'est l'objet de cette dernière section.",
+        body: "Le métier de distri Herbalife, ce n'est pas un sprint, c'est un rythme. Deux habitudes prises dès le départ font 80 % du résultat : 1) avoir Lor'Squad sous la main comme une app native (3 secondes pour répondre à un client), 2) regarder ton volume PV chaque matin pour piloter ton mois sans surprise. Ces 2 réflexes sont ce qui sépare un distri qui galère de celui qui monte les paliers tranquillement. Cette section te les installe.",
         placement: "center",
         illustrationKey: "sparkles",
       },
@@ -589,7 +1151,7 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
         target: '[data-tour-id="pwa-install"]',
         placement: "top",
         title: "Installe l'app native (PWA)",
-        body: "Le bouton « Installer Lor'Squad » dans la sidebar ajoute l'icône à ton écran d'accueil — l'app s'ouvre alors en plein écran sans barre navigateur, avec notifs push activées. Chrome / Edge : 1 clic. iPhone Safari : Partage → Sur l'écran d'accueil. Une fois installé, tu lances Lor'Squad comme WhatsApp ou Instagram.",
+        body: "Le bouton « Installer Lor'Squad » dans la sidebar ajoute l'icône à ton écran d'accueil — l'app s'ouvre alors en plein écran sans barre navigateur, avec notifs push activées. Chrome / Edge : 1 clic. iPhone Safari : Partage → Sur l'écran d'accueil. Une fois installé, tu lances Lor'Squad comme WhatsApp ou Instagram. Pourquoi c'est important : un client qui t'envoie un message attend une réponse en quelques minutes, pas en quelques heures. Avec la PWA + push notif, tu vois la notif sur ton home screen et tu réponds en 1 tap. C'est ça qui fait la différence entre « il m'a calculé » et « je sens qu'il est dispo pour moi ».",
         manualAdvance: true,
       },
       {
@@ -597,8 +1159,8 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
         target: '[data-tour-id="pv-gauge"]',
         placement: "top",
         route: "/co-pilote",
-        title: "La jauge PV mensuelle",
-        body: "Sur ton Co-pilote, le bloc PV affiche ta jauge circulaire avec couleur graduée : rouge (< 40 % du seuil), ambre (40-60 %), vert (≥ 60 %). Seuil par défaut 13 000 PV — éditable dans Paramètres si tu vises un palier supérieur. La jauge se met à jour en temps réel à chaque commande client validée.",
+        title: "La jauge PV mensuelle — ton tableau de bord",
+        body: "Sur ton Co-pilote, le bloc PV affiche ta jauge circulaire avec couleur graduée : rouge (< 40 % du seuil), ambre (40-60 %), vert (≥ 60 %). Seuil par défaut 2 500 PV (palier Success Builder qualifiant) — éditable dans Paramètres > Profil > Objectif PV mensuel quand tu veux passer à 4 000 (Supervisor) puis plus haut. La jauge se met à jour en temps réel à chaque commande client validée. Ouvre-la le matin avec ton café : 5 secondes pour savoir où tu en es. Si tu es en rouge le 20 du mois, tu sais que tu dois pousser sur 2-3 relances clients dans la semaine. Si tu es en vert le 10, tu sais que tu peux investir ton temps sur la prospection plutôt que la pression PV.",
         manualAdvance: true,
       },
       {
@@ -606,22 +1168,22 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
         target: '[data-tour-id="pv-mini-stats"]',
         placement: "top",
         route: "/co-pilote",
-        title: "3 mini-stats — santé de ton activité",
-        body: "À côté de la jauge PV, 3 chiffres clés : Clients actifs (avec delta vs mois dernier en + ou –), RDV cette semaine (sur 7 jours glissants + nombre du jour), Conversion (% de prospects transformés en clients ce mois). Ces 3 chiffres te disent en 5 secondes si ton activité est en santé ou si tu dois pousser.",
+        title: "3 mini-stats — la santé de ton activité",
+        body: "À côté de la jauge PV, 3 chiffres clés : Clients actifs (avec delta vs mois dernier en + ou −), RDV cette semaine (sur 7 jours glissants + nombre du jour), Conversion (% de prospects transformés en clients ce mois). Ces 3 chiffres te disent en 5 secondes si ton activité est en bonne santé ou si tu dois corriger : un PV qui monte mais avec 0 nouveau client, c'est un signal d'alerte (tu pompes ta base actuelle, pas durable). Une conversion qui chute, c'est souvent que tu prospectes trop large ou pas le bon profil. Lis ces stats comme un médecin lit une prise de sang — pas pour stresser, pour ajuster.",
         manualAdvance: true,
       },
       {
         id: "pv-detail",
         target: '[data-tour-id="nav-pv"]',
         placement: "bottom",
-        title: "L'onglet Suivi PV — le détail",
-        body: "Pour creuser : historique mensuel, projection sur la fin du mois (en fonction du rythme actuel), liste des produits actifs par client (durée de stock restante, dates de relance auto). Si un client n'a pas reçu sa commande renouvelée à temps, il apparaît en alerte rouge — c'est ton signal pour le contacter avant qu'il décroche.",
+        title: "L'onglet Suivi PV — le détail produit par produit",
+        body: "Pour creuser : historique mensuel, projection sur la fin du mois (en fonction du rythme actuel), liste des produits actifs par client (durée de stock restante, dates de relance auto). Si un client n'a pas reçu sa commande renouvelée à temps, il apparaît en alerte rouge — c'est ton signal pour le contacter AVANT qu'il décroche. C'est aussi cet onglet qui te dit quels produits tournent le mieux dans ta base : si tu vois 80 % de Formula 1 et 0 % de boosters sport, tu sais que tu rates un upsell évident sur tes clients sportifs. La régularité PV se construit ici, pas dans la prospection — fidéliser un client coûte 5× moins que d'en trouver un nouveau.",
         manualAdvance: true,
       },
       {
         id: "monthly-rhythm",
         title: "Le rythme mensuel = paliers Herbalife",
-        body: "Vise ton seuil PV chaque mois sans exception. La régularité est ce qui fait monter ton rang Herbalife (Senior Consultant → Success Builder → Supervisor → World Team → GET → Millionaire). Ton coach référent voit aussi ta progression Academy + ton PV — il peut te coacher au bon moment.",
+        body: "Vise ton seuil PV chaque mois sans exception. La régularité est ce qui fait monter ton rang Herbalife (Senior Consultant → Success Builder → Supervisor → World Team → GET → Millionaire). Ne te demande pas si tu peux faire un gros mois exceptionnel — demande-toi si tu peux faire 12 mois honnêtes d'affilée. C'est la combinaison qui débloque les niveaux. Ton coach référent voit aussi ta progression Academy + ton PV en temps réel sur sa fiche team — il peut te coacher au bon moment, pas juste en fin de mois quand c'est trop tard. Mets-toi un point toi-même chaque dimanche soir : 5 minutes pour regarder ta jauge, anticiper la semaine suivante, planifier 2-3 relances. Ce rituel hebdo de 5 min vaut plus que 3h de prospection le 28 du mois en panique.",
         placement: "center",
       },
       {
@@ -635,20 +1197,77 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
       },
     ],
     quiz: {
+      passThreshold: 0.8,
       questions: [
         {
           id: "q1",
-          question: "Quel est le seuil PV mensuel par défaut dans Lor'Squad ?",
-          answers: ["5 000 PV", "10 000 PV", "13 000 PV", "20 000 PV"],
-          correctIndex: 2,
-          explanation: "Le seuil par défaut est 13 000 PV / mois. Tu peux le modifier dans Paramètres si tu vises un palier supérieur.",
+          question: "Quel est le seuil PV mensuel par défaut dans Lor'Squad pour démarrer ?",
+          answers: ["1 000 PV", "2 500 PV", "5 000 PV", "13 000 PV"],
+          correctIndex: 1,
+          wrongAnswerHints: {
+            0: "Trop bas pour un objectif structurant — Lor'Squad démarre à 2 500.",
+            2: "C'est l'étape d'après — vise d'abord 2 500 régulier avant d'augmenter.",
+            3: "C'est un palier avancé — pas le seuil de démarrage par défaut.",
+          },
+          explanation: "Le seuil par défaut est 2 500 PV / mois — un palier réaliste pour démarrer et progresser sans pression. Modifiable dans Paramètres > Profil > Objectif PV mensuel quand tu veux viser plus haut.",
         },
         {
           id: "q2",
           question: "À quelle heure tombe le digest matin de tes suivis ?",
           answers: ["6h", "7h", "8h", "9h"],
           correctIndex: 1,
-          explanation: "Le cron morning-suivis-digest tourne à 7h00 chaque matin et envoie une push notif avec les actions du jour.",
+          wrongAnswerHints: {
+            0: "Trop tôt — la majorité des coachs ne veulent pas être notifiés avant leur réveil.",
+            2: "Trop tard — l'idée est d'arriver dans la fenêtre café-matin (7h-8h).",
+            3: "Trop tard, la journée est déjà lancée.",
+          },
+          explanation: "Le cron morning-suivis-digest tourne à 7h00 chaque matin (Europe/Paris) et envoie une push notif avec les actions du jour : RDV imminent, follow-ups en retard.",
+        },
+        {
+          id: "q3",
+          question: "Tu installes l'app comme une PWA. Quel bénéfice opérationnel principal tu gagnes ?",
+          answers: [
+            "L'app prend moins de place sur ton téléphone",
+            "Notifs push activées + lancement direct depuis l'écran d'accueil",
+            "Les données sont stockées en clair sur ton appareil",
+            "Tu n'as plus besoin d'internet",
+          ],
+          correctIndex: 1,
+          wrongAnswerHints: {
+            0: "Marginal. Le vrai gain n'est pas la place, c'est la réactivité.",
+            2: "Faux et dangereux — Lor'Squad ne stocke rien en clair, tout passe par Supabase.",
+            3: "Faux. Internet reste nécessaire pour la messagerie et les RDV — il y a juste un cache offline limité.",
+          },
+          explanation: "PWA = notifs push (tu vois la notif dès que ton client t'écrit) + accès 1 tap depuis le home screen. Tu réponds en 1 minute au lieu de 1 heure → c'est ça qui fait sentir ton client suivi.",
+        },
+        {
+          id: "q4",
+          question: "Sur la jauge PV, à quel pourcentage la couleur passe au vert ?",
+          answers: ["≥ 40 %", "≥ 50 %", "≥ 60 %", "≥ 80 %"],
+          correctIndex: 2,
+          wrongAnswerHints: {
+            0: "Trop tôt pour passer en vert — à 40 % tu es encore en zone ambre.",
+            1: "Pas tout à fait. Le seuil est calé un cran au-dessus pour rester exigeant.",
+            3: "Trop strict — la jauge serait toujours rouge/ambre, pas motivant.",
+          },
+          explanation: "Code couleur jauge PV : rouge < 40 %, ambre 40-60 %, vert ≥ 60 %. À 60 % du seuil, tu es sur une trajectoire saine pour finir le mois qualifié.",
+        },
+        {
+          id: "q5",
+          question: "Le rituel hebdo recommandé par Lor'Squad, c'est quoi ?",
+          answers: [
+            "Faire le bilan PV chaque dimanche soir (5 min)",
+            "Appeler chaque client une fois par semaine",
+            "Renvoyer un message à tous les prospects le lundi",
+            "Mettre à jour son catalogue Herbalife",
+          ],
+          correctIndex: 0,
+          wrongAnswerHints: {
+            1: "Trop intrusif — un appel hebdo par client = tu tues la relation. Mieux vaut quand c'est utile.",
+            2: "Spam — relance ciblée > relance massive. Lor'Squad propose les relances pertinentes.",
+            3: "Pas un rituel hebdo — le catalogue ne bouge pas tous les 7 jours.",
+          },
+          explanation: "Le rituel-clé : 5 minutes le dimanche soir pour regarder ta jauge PV, anticiper la semaine, planifier 2-3 relances ciblées. Plus efficace que 3h de prospection en panique le 28 du mois.",
         },
       ],
     },

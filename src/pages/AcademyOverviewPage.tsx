@@ -186,6 +186,69 @@ export function AcademyOverviewPage() {
           </div>
         </div>
 
+        {/* CTA Mode pratique — sandbox interactif (2026-04-29 v2) */}
+        <button
+          type="button"
+          onClick={() => navigate("/academy/sandbox")}
+          style={{
+            width: "100%",
+            display: "flex",
+            alignItems: "center",
+            gap: 14,
+            padding: "16px 18px",
+            marginBottom: 18,
+            background: "linear-gradient(135deg, #FFF5C4 0%, #F5E0A0 100%)",
+            border: "0.5px solid #C9A84C",
+            borderRadius: 14,
+            cursor: "pointer",
+            textAlign: "left",
+            fontFamily: "inherit",
+            transition: "transform 160ms ease, box-shadow 160ms ease",
+            boxShadow: "0 4px 14px rgba(184,146,42,0.18)",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = "translateY(-2px)";
+            e.currentTarget.style.boxShadow = "0 8px 22px rgba(184,146,42,0.28)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = "translateY(0)";
+            e.currentTarget.style.boxShadow = "0 4px 14px rgba(184,146,42,0.18)";
+          }}
+        >
+          <span style={{ fontSize: 32, flexShrink: 0 }}>🎮</span>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div
+              style={{
+                fontFamily: "var(--ls-font-serif, Georgia, serif)",
+                fontSize: 16,
+                fontWeight: 600,
+                color: "#5C4A0F",
+                marginBottom: 2,
+              }}
+            >
+              Mode pratique — Bilan d&apos;essai
+            </div>
+            <div style={{ fontSize: 12, color: "#6B6B62", lineHeight: 1.4 }}>
+              Simule un bilan complet en 2 min · sans toucher à la base · pour
+              ressentir le flow avant ton premier vrai RDV.
+            </div>
+          </div>
+          <span
+            style={{
+              fontSize: 11,
+              fontWeight: 700,
+              letterSpacing: 0.5,
+              padding: "5px 10px",
+              borderRadius: 6,
+              background: "#B8922A",
+              color: "white",
+              flexShrink: 0,
+            }}
+          >
+            LANCER →
+          </span>
+        </button>
+
         {/* Badges progression (Direction 5 — 2026-04-28) */}
         <AcademyBadges
           completedCount={view.completedCount}

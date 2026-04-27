@@ -178,6 +178,12 @@ const AcademyCertificatePage = lazy(() =>
     default: module.AcademyCertificatePage
   }))
 );
+// Mode pratique Academy (2026-04-29 v2) : bac à sable interactif 4 étapes.
+const AcademySandboxPage = lazy(() =>
+  import("./pages/AcademySandboxPage").then((module) => ({
+    default: module.AcademySandboxPage
+  }))
+);
 // Pages démo Academy (2026-04-28) : mockups visuels avec données fictives
 // pour les tours, sans dépendre de l'état réel de la base.
 const DemoFicheClient = lazy(() =>
@@ -277,6 +283,7 @@ export default function App() {
               {/* Lor'Squad Academy Phase 1 (2026-04-26) */}
               <Route path="academy" element={<AcademyOverviewPage />} />
               <Route path="academy/certificat" element={<AcademyCertificatePage />} />
+              <Route path="academy/sandbox" element={<AcademySandboxPage />} />
               <Route path="academy/:sectionId" element={<AcademySectionPage />} />
               {/* Pages démo Academy (2026-04-28) — mockups pour les tours */}
               <Route path="academy/demo/fiche-client" element={<DemoFicheClient />} />

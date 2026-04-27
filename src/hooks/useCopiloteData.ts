@@ -15,7 +15,9 @@ import {
 } from "../lib/utils/copiloteHelpers";
 import { RDV_GRACE_PERIOD_MS } from "../lib/timeConstants";
 
-const DEFAULT_MONTHLY_PV_TARGET = 13_000;
+// Seuil de demarrage realiste (palier Success Builder qualifiant). Le user
+// peut monter cette cible dans Parametres > Profil > Objectif PV mensuel.
+const DEFAULT_MONTHLY_PV_TARGET = 2_500;
 
 export interface CopiloteNextAction {
   kind: "rdv" | "followup" | "none";

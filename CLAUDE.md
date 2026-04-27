@@ -5,6 +5,37 @@ reproduire les régressions passées. Relire avant tout gros chantier.
 
 ---
 
+## Chantier futur : Stratégie d'action PV (mémo 2026-04-29)
+
+L'utilisateur a noté l'objectif PV mensuel comme un levier qu'on ne
+travaille qu'à moitié. La colonne `users.monthly_pv_target` existe
+maintenant (migration `20260429180000`) et l'éditeur est dans
+**Paramètres > Profil**. La jauge Co-pilote la consomme déjà.
+
+**À faire dans un futur chantier (pas encore prioritaire)** : à partir
+de la cible PV + de l'historique 3 derniers mois, générer une
+stratégie d'action concrète au matin :
+
+- Si PV en retard vs prorata mois → suggérer X relances clients
+  prioritaires (top consommateurs de la base, basés sur
+  `pv_transactions` historique).
+- Si PV en avance → suggérer prospection ou build (recruter / monter
+  en grade).
+- Afficher un widget "Plan du jour PV" sur Co-pilote qui chuchote :
+  "Tu es à 4 200 / 13 000 PV au 15 du mois. Plan : 3 relances clients
+  identifiés (Marie, Karim, Lila), gain attendu ~1 800 PV."
+
+Mécanique probable : RPC `get_pv_action_plan(user_id)` qui regroupe
+historique PV / clients dormants / projection. UI : nouvelle card sur
+Co-pilote, sous la jauge, déclenchable manuellement (bouton "Plan
+d'action").
+
+Le quiz Academy `q1` ("Quel est le seuil PV mensuel par défaut ?")
+reste valable mais peut être enrichi en V2 avec une question
+contextuelle sur la stratégie.
+
+---
+
 ## Règle datetime — `timestamptz` partout (depuis 29/04/2026)
 
 **Toutes les colonnes datetime des tables métier sont en `timestamptz`.**

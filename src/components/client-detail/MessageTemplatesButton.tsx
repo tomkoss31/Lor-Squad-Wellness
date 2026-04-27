@@ -1,32 +1,33 @@
 // =============================================================================
-// MessageTemplatesButton — bouton + dropdown de templates pour /clients/:id
-// (Chantier E, 2026-04-29)
+// MessageTemplatesButton — CTA gold qui ouvre MessageTemplatesModal
+// (Refonte 2026-04-29 : ancien dropdown remplace par modal popup)
 // =============================================================================
 //
-// Affiche un bouton "Templates messages" qui ouvre un menu listant les
-// templates pertinents pour le client courant. Click sur un template :
-//   1. Construit le texte interpole avec les donnees client
-//   2. Copie dans le presse-papier
-//   3. Ouvre WhatsApp avec le numero pre-rempli
+// Bouton visible et premium dans l onglet Actions. Click -> ouvre la modal
+// multi-canal (WhatsApp / SMS / Telegram / Copier).
 // =============================================================================
 
 import { useMemo, useState } from "react";
 import { useAppContext } from "../../context/AppContext";
-import {
-  buildWhatsAppLink,
-  getApplicableTemplates,
-  MESSAGE_TEMPLATES,
-} from "../../lib/messageTemplates";
+import { getApplicableTemplates } from "../../lib/messageTemplates";
 import type { Client } from "../../types/domain";
+import { MessageTemplatesModal } from "./MessageTemplatesModal";
 
 interface MessageTemplatesButtonProps {
   client: Client;
+  /** Pre-selectionne un template a l ouverture (ex: relance-douce). */
+  preselectedTemplateId?: string;
+  /** Variante d affichage : full = CTA gold large, compact = chip discret. */
+  variant?: "full" | "compact";
 }
 
-export function MessageTemplatesButton({ client }: MessageTemplatesButtonProps) {
+export function MessageTemplatesButton({
+  client,
+  preselectedTemplateId,
+  variant = "full",
+}: MessageTemplatesButtonProps) {
   const { currentUser, visibleFollowUps } = useAppContext();
   const [open, setOpen] = useState(false);
-  const [copiedId, setCopiedId] = useState<string | null>(null);
 
   const ctx = useMemo(
     () => ({
@@ -37,182 +38,136 @@ export function MessageTemplatesButton({ client }: MessageTemplatesButtonProps) 
     [currentUser, visibleFollowUps],
   );
 
-  const applicable = useMemo(() => getApplicableTemplates(client, ctx), [client, ctx]);
+  const applicable = useMemo(
+    () => getApplicableTemplates(client, ctx),
+    [client, ctx],
+  );
 
-  // Si aucun template pertinent, on affiche tous les templates en mode "manuel"
-  const templatesToShow = applicable.length > 0 ? applicable : MESSAGE_TEMPLATES;
+  const suggestionCount = applicable.length;
 
-  function handleSelect(templateId: string) {
-    const template = MESSAGE_TEMPLATES.find((t) => t.id === templateId);
-    if (!template) return;
-    const text = template.render(client, ctx);
-    if (typeof navigator !== "undefined" && navigator.clipboard) {
-      navigator.clipboard.writeText(text).catch(() => {});
-    }
-    const url = buildWhatsAppLink(client.phone, text);
-    if (typeof window !== "undefined") {
-      window.open(url, "_blank", "noopener,noreferrer");
-    }
-    setCopiedId(templateId);
-    setTimeout(() => {
-      setCopiedId(null);
-      setOpen(false);
-    }, 1200);
+  if (variant === "compact") {
+    return (
+      <>
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 6,
+            padding: "8px 14px",
+            background: "var(--ls-surface)",
+            border: "0.5px solid var(--ls-border)",
+            borderRadius: 10,
+            color: "var(--ls-text)",
+            fontSize: 12,
+            fontFamily: "DM Sans, sans-serif",
+            cursor: "pointer",
+          }}
+        >
+          💬 Envoyer un message
+          {suggestionCount > 0 && (
+            <span
+              style={{
+                fontSize: 9,
+                padding: "1px 6px",
+                borderRadius: 4,
+                background: "color-mix(in srgb, var(--ls-teal) 18%, transparent)",
+                color: "var(--ls-teal)",
+                fontWeight: 700,
+              }}
+            >
+              {suggestionCount}
+            </span>
+          )}
+        </button>
+        <MessageTemplatesModal
+          client={client}
+          open={open}
+          onClose={() => setOpen(false)}
+          preselectedTemplateId={preselectedTemplateId}
+        />
+      </>
+    );
   }
 
   return (
-    <div style={{ position: "relative", display: "inline-block" }}>
+    <>
       <button
         type="button"
-        onClick={() => setOpen((v) => !v)}
-        aria-label="Templates messages"
-        aria-expanded={open}
+        onClick={() => setOpen(true)}
         style={{
-          display: "inline-flex",
+          display: "flex",
           alignItems: "center",
-          gap: 6,
-          padding: "8px 14px",
-          background: "var(--ls-surface)",
-          border: "0.5px solid var(--ls-border)",
-          borderRadius: 10,
-          color: "var(--ls-text-muted)",
-          fontSize: 12,
-          fontFamily: "DM Sans, sans-serif",
+          justifyContent: "space-between",
+          gap: 10,
+          width: "100%",
+          padding: "12px 14px",
+          background:
+            "linear-gradient(135deg, color-mix(in srgb, var(--ls-gold) 18%, var(--ls-surface)), color-mix(in srgb, var(--ls-gold) 8%, var(--ls-surface)))",
+          border: "0.5px solid color-mix(in srgb, var(--ls-gold) 45%, transparent)",
+          borderRadius: 12,
           cursor: "pointer",
+          fontFamily: "DM Sans, sans-serif",
+          textAlign: "left",
+          transition: "transform 120ms ease, box-shadow 120ms ease",
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.transform = "translateY(-1px)";
+          e.currentTarget.style.boxShadow =
+            "0 6px 18px color-mix(in srgb, var(--ls-gold) 22%, transparent)";
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.transform = "translateY(0)";
+          e.currentTarget.style.boxShadow = "none";
         }}
       >
-        💬 Templates message
-        <span style={{ fontSize: 9, opacity: 0.6 }}>{open ? "▲" : "▼"}</span>
-      </button>
-
-      {open && (
-        <>
-          <div
-            onClick={() => setOpen(false)}
-            style={{ position: "fixed", inset: 0, zIndex: 30 }}
-          />
-          <div
-            style={{
-              position: "absolute",
-              top: "calc(100% + 6px)",
-              left: 0,
-              zIndex: 31,
-              minWidth: 280,
-              maxWidth: 360,
-              background: "var(--ls-surface)",
-              border: "0.5px solid var(--ls-border)",
-              borderRadius: 12,
-              padding: 6,
-              boxShadow: "0 12px 32px rgba(0,0,0,0.12)",
-              display: "flex",
-              flexDirection: "column",
-              gap: 2,
-            }}
-          >
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <span style={{ fontSize: 22 }}>💬</span>
+          <div>
             <div
               style={{
-                padding: "8px 10px",
-                fontSize: 9,
-                letterSpacing: 1.5,
-                textTransform: "uppercase",
-                color: "var(--ls-text-hint)",
+                fontSize: 13,
                 fontWeight: 600,
+                color: "var(--ls-text)",
               }}
             >
-              {applicable.length > 0 ? `${applicable.length} suggestion${applicable.length > 1 ? "s" : ""}` : "Tous les templates"}
+              Envoyer un message
             </div>
-            {templatesToShow.map((template) => {
-              const isApplicable = applicable.some((a) => a.id === template.id);
-              const isCopied = copiedId === template.id;
-              return (
-                <button
-                  key={template.id}
-                  type="button"
-                  onClick={() => handleSelect(template.id)}
-                  style={{
-                    display: "flex",
-                    alignItems: "flex-start",
-                    gap: 10,
-                    padding: "10px 12px",
-                    background: "transparent",
-                    border: "none",
-                    borderRadius: 8,
-                    cursor: "pointer",
-                    textAlign: "left",
-                    width: "100%",
-                    fontFamily: "DM Sans, sans-serif",
-                    transition: "background 120ms ease",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = "var(--ls-surface2)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = "transparent";
-                  }}
-                >
-                  <span style={{ fontSize: 18, flexShrink: 0 }}>{template.emoji}</span>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                      <span
-                        style={{
-                          fontSize: 13,
-                          fontWeight: 500,
-                          color: "var(--ls-text)",
-                        }}
-                      >
-                        {template.label}
-                      </span>
-                      {isApplicable && (
-                        <span
-                          style={{
-                            fontSize: 9,
-                            padding: "1px 6px",
-                            borderRadius: 4,
-                            background: "color-mix(in srgb, var(--ls-teal) 15%, transparent)",
-                            color: "var(--ls-teal)",
-                            fontWeight: 600,
-                          }}
-                        >
-                          PERTINENT
-                        </span>
-                      )}
-                      {isCopied && (
-                        <span
-                          style={{
-                            fontSize: 9,
-                            padding: "1px 6px",
-                            borderRadius: 4,
-                            background: "color-mix(in srgb, var(--ls-gold) 15%, transparent)",
-                            color: "var(--ls-gold)",
-                            fontWeight: 600,
-                          }}
-                        >
-                          ✓ COPIÉ
-                        </span>
-                      )}
-                    </div>
-                    <div style={{ fontSize: 11, color: "var(--ls-text-muted)", marginTop: 2, lineHeight: 1.4 }}>
-                      {template.description}
-                    </div>
-                  </div>
-                </button>
-              );
-            })}
             <div
               style={{
-                padding: "8px 10px",
                 fontSize: 10,
-                color: "var(--ls-text-hint)",
-                borderTop: "0.5px solid var(--ls-border)",
-                marginTop: 4,
-                paddingTop: 8,
+                color: "var(--ls-text-muted)",
+                marginTop: 1,
               }}
             >
-              💡 Le message est copié + WhatsApp s'ouvre avec le numéro pré-rempli
+              WhatsApp · SMS · Telegram · Copier
             </div>
           </div>
-        </>
-      )}
-    </div>
+        </div>
+        {suggestionCount > 0 && (
+          <span
+            style={{
+              fontSize: 9,
+              fontWeight: 700,
+              letterSpacing: 0.5,
+              padding: "3px 8px",
+              borderRadius: 6,
+              background: "color-mix(in srgb, var(--ls-teal) 22%, transparent)",
+              color: "var(--ls-teal)",
+              flexShrink: 0,
+            }}
+          >
+            {suggestionCount} SUGGESTION{suggestionCount > 1 ? "S" : ""}
+          </span>
+        )}
+      </button>
+      <MessageTemplatesModal
+        client={client}
+        open={open}
+        onClose={() => setOpen(false)}
+        preselectedTemplateId={preselectedTemplateId}
+      />
+    </>
   );
 }

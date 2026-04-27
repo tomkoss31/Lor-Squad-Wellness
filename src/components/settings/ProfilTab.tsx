@@ -42,6 +42,13 @@ export function ProfilTab() {
   const [coachReferentUserId, setCoachReferentUserId] = useState(
     currentUser?.coachReferentUserId ?? "",
   );
+  // Objectif PV mensuel (Chantier 2026-04-29). Lu par useCopiloteData pour
+  // alimenter la jauge PV. Default 13000 si la colonne est null cote DB.
+  const [monthlyPvTarget, setMonthlyPvTarget] = useState(
+    typeof currentUser?.monthly_pv_target === "number"
+      ? String(currentUser.monthly_pv_target)
+      : "13000",
+  );
   // Travail 3 (2026-04-27) : tous les users actifs sont eligibles, sauf
   // soi-meme. Un distri peut choisir un autre distri (sponsor) comme
   // coach referent.
@@ -95,6 +102,17 @@ export function ProfilTab() {
       setError("Format ID sponsor invalide. Exemple : 21Y0103610");
       return;
     }
+    // Validation objectif PV : entier positif raisonnable (1000 - 100000).
+    const pvTargetNum = Number(monthlyPvTarget);
+    if (
+      !Number.isFinite(pvTargetNum)
+      || !Number.isInteger(pvTargetNum)
+      || pvTargetNum < 1000
+      || pvTargetNum > 100000
+    ) {
+      setError("Objectif PV invalide (entre 1000 et 100000).");
+      return;
+    }
     setSaving(true);
     try {
       const sb = await getSupabaseClient();
@@ -106,6 +124,7 @@ export function ProfilTab() {
           herbalife_id: herbalifeNormalized || null,
           sponsor_id: sponsorNormalized || null,
           coach_referent_user_id: coachReferentUserId || null,
+          monthly_pv_target: pvTargetNum,
         })
         .eq("id", currentUser!.id);
       if (updateErr) throw new Error(updateErr.message);
@@ -363,6 +382,50 @@ export function ProfilTab() {
               }}
             >
               {daysWith === null ? "—" : `${daysWith} jour${daysWith > 1 ? "s" : ""}`}
+            </div>
+          </LabeledField>
+          {/* Objectif PV mensuel (2026-04-29) — visible pour tous les roles, alimente la jauge Co-pilote. */}
+          <LabeledField label="Objectif PV mensuel">
+            <div style={{ position: "relative" }}>
+              <input
+                type="number"
+                min={1000}
+                max={100000}
+                step={500}
+                value={monthlyPvTarget}
+                onChange={(e) => setMonthlyPvTarget(e.target.value)}
+                disabled={saving}
+                inputMode="numeric"
+                style={{
+                  width: "100%",
+                  padding: "10px 44px 10px 12px",
+                  borderRadius: 10,
+                  border: "1px solid var(--ls-border)",
+                  background: "var(--ls-surface2)",
+                  color: "var(--ls-text)",
+                  fontSize: 14,
+                  fontFamily: "DM Sans, sans-serif",
+                  outline: "none",
+                  boxSizing: "border-box",
+                }}
+              />
+              <span
+                style={{
+                  position: "absolute",
+                  right: 12,
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  fontSize: 12,
+                  fontWeight: 600,
+                  color: "var(--ls-gold)",
+                  pointerEvents: "none",
+                }}
+              >
+                PV
+              </span>
+            </div>
+            <div style={{ fontSize: 11, color: "var(--ls-text-muted)", marginTop: 4 }}>
+              Seuil affiché dans ta jauge Co-pilote. Default 13 000 (Senior Consultant).
             </div>
           </LabeledField>
           <LabeledField label="Date d'inscription">
