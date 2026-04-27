@@ -25,6 +25,9 @@ const NAV_ICONS: Record<string, JSX.Element> = {
   "/co-pilote": (
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
   ),
+  "/academy": (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+  ),
   "/agenda": (
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
   ),
@@ -83,6 +86,15 @@ export function AppLayout() {
   const { canPromptInstall, isIos, isMobile, isStandalone, promptInstall } = useInstallPrompt();
   const location = useLocation();
   const navigate = useNavigate();
+  // Chantier Academy Phase 1 (2026-04-26) : popup auto-trigger 1×/jour
+  // pour distributeurs n ayant pas encore termine la formation.
+  const academyTrigger = useAcademyAutoTrigger();
+  // Chantier Academy section 1 fix runtime (2026-04-27) : TourRunner
+  // monte au niveau AppLayout pour survivre aux changements de route
+  // pendant un tour (ex : navigate /academy/welcome -> /parametres).
+  const { activeTour, closeTour } = useActiveTour();
+  // Direction 2 (2026-04-28) : QuizModal idem au niveau AppLayout.
+  const { activeQuiz, closeQuiz } = useActiveQuiz();
 
   if (!currentUser) {
     return null;
@@ -100,10 +112,8 @@ export function AppLayout() {
   // formation, ajout Paramètres en bas. Ordre exact validé avec Thomas.
   const navigation: Array<{ label: string; path: string; badge: number; tourId?: string }> = [
     { label: "Co-pilote", path: "/co-pilote", badge: 0, tourId: "nav-copilote" },
-    // Chantier Lor'Squad Academy Phase 1 (2026-04-26) : insere entre
-    // Co-pilote et Agenda. data-tour-id pour la Phase 2 (tour distri).
-    // Migration prod 2026-04-28 : visible UNIQUEMENT pour les admins
-    // tant que l Academy est en finalisation. Lever ce gate quand prete.
+    // Migration prod 2026-04-28 : Academy admin only tant que la
+    // formation est en finalisation. Lever ce gate quand prete.
     ...(currentUser.role === "admin"
       ? [{ label: "Academy", path: "/academy", badge: 0, tourId: "nav-academy" }]
       : []),
@@ -113,11 +123,12 @@ export function AppLayout() {
     { label: "Suivi PV", path: "/pv", badge: pvOverdueCount, tourId: "nav-pv" },
     ...(currentUser.role === "admin" ? [{ label: "Mon équipe", path: "/team", badge: 0 }] : []),
     { label: "Centre de formation", path: "/formation", badge: 0 },
-    // Chantier Paramètres Admin (2026-04-23) : /parametres full UI pour
-    // les admins, /settings placeholder profil pour les autres.
+    // Chantier Academy section 1 (2026-04-27) : /parametres pour tous
+    // les users authentifies (la page gere elle-meme la visibilite des
+    // onglets admin-only via checks internes).
     {
       label: "Paramètres",
-      path: currentUser.role === "admin" ? "/parametres" : "/settings",
+      path: "/parametres",
       badge: 0,
     },
   ];
@@ -218,7 +229,8 @@ export function AppLayout() {
                 (item.path === "/co-pilote" && location.pathname === "/dashboard") ||
                 (item.path === "/clients" && location.pathname.startsWith("/clients/")) ||
                 (item.path === "/pv" && location.pathname.startsWith("/pv")) ||
-                (item.path === "/formation" && location.pathname.startsWith("/guide"));
+                (item.path === "/formation" && location.pathname.startsWith("/guide")) ||
+                (item.path === "/academy" && location.pathname.startsWith("/academy/"));
 
               // Chantier Mini-fix V2 Co-pilote (2026-04-24) : bouton
               // "+ Nouveau bilan" déplacé du FAB top-right vers la sidebar,
@@ -231,6 +243,7 @@ export function AppLayout() {
                     <NavLink
                       key="new-bilan-cta"
                       to="/assessments/new"
+                      data-tour-id="nav-new-bilan"
                       aria-label="Nouveau bilan"
                       className="flex items-center gap-2 text-[13px] transition"
                       style={{
@@ -270,6 +283,7 @@ export function AppLayout() {
                   ) : null}
                   <NavLink
                     to={item.path}
+                    data-tour-id={item.tourId}
                     className="flex items-center gap-3 rounded-r-[12px] text-[13px] transition"
                     style={{
                       padding: '9px 12px 9px 14px',
@@ -502,6 +516,7 @@ export function AppLayout() {
                   <NavLink
                     key={item.path}
                     to={item.path}
+                    data-tour-id={item.tourId}
                     className={`whitespace-nowrap rounded-full px-4 py-2.5 text-[13px] font-medium transition ${
                       isActive
                         ? "bg-[rgba(201,168,76,0.16)] text-white"
@@ -532,8 +547,7 @@ export function AppLayout() {
         </main>
       </div>
       <BottomNav />
-      {/* Migration prod 2026-04-28 : rappel Academy visible admin only
-          tant que la formation est en finalisation. */}
+      {/* Migration prod 2026-04-28 : rappel Academy admin only. */}
       {academyTrigger.isOpen && currentUser?.role === "admin" ? (
         <AcademyReminderDialog onClose={academyTrigger.close} />
       ) : null}
