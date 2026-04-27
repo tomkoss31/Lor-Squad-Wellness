@@ -61,6 +61,33 @@ export function FollowUpProtocolCard({ client }: Props) {
     return Math.floor(diff / (1000 * 60 * 60 * 24));
   }, [initialAssessmentDate]);
 
+  // Visibility rule (Polish 2026-04-29) — l Accompagnement 14j ne sert que
+  // dans la fenetre de demarrage (15 jours apres le DERNIER bilan, pour
+  // gerer les cas de restart via un follow-up assessment). Au-dela, la
+  // card disparait pour laisser de la place a Messages rapides en haut.
+  // - Nouveau client (bilan initial recent <= 15j) : visible
+  // - Client qui a refait un follow-up dans les 15 derniers jours : visible
+  // - Client actif > 15j post-dernier-bilan : cache
+  // - Client non eligible (paused/stopped/lost ou autres exclusions) : cache
+  const lastAssessmentDate = useMemo(() => {
+    if (!client.assessments?.length) return null;
+    return (
+      [...client.assessments].sort(
+        (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
+      )[0]?.date ?? null
+    );
+  }, [client.assessments]);
+
+  const daysSinceLastAssessment = useMemo(() => {
+    if (!lastAssessmentDate) return null;
+    return Math.floor(
+      (Date.now() - new Date(lastAssessmentDate).getTime()) / (1000 * 60 * 60 * 24),
+    );
+  }, [lastAssessmentDate]);
+
+  const isInStartingWindow =
+    daysSinceLastAssessment !== null && daysSinceLastAssessment <= 15;
+
   // Helpers
   const logsByStep = useMemo(() => {
     const map = new Map<string, FollowUpProtocolLog>();
@@ -118,6 +145,18 @@ export function FollowUpProtocolCard({ client }: Props) {
   // Rendu
   if (!initialAssessmentDate) {
     // Pas de bilan initial → on n'affiche pas le bloc (pas d'ancre temporelle).
+    return null;
+  }
+
+  // Hide rule (Polish 2026-04-29) — hors fenetre de demarrage OU non eligible.
+  if (!isInStartingWindow) {
+    return null;
+  }
+  if (!eligibility.eligible) {
+    // Avant : on affichait une banniere "Ce client n'apparait plus dans les
+    // suivis automatiques" + les 5 etapes en lecture seule. Maintenant on
+    // cache entierement la card (la regle est deja appliquee cote dashboard
+    // / agenda, pas besoin de polluer la fiche client).
     return null;
   }
 

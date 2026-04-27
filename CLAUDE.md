@@ -5,6 +5,55 @@ reproduire les régressions passées. Relire avant tout gros chantier.
 
 ---
 
+## Chantier futur : Stratégie d'action PV (mémo 2026-04-29)
+
+L'utilisateur a noté l'objectif PV mensuel comme un levier qu'on ne
+travaille qu'à moitié. La colonne `users.monthly_pv_target` existe
+maintenant (migration `20260429180000`) et l'éditeur est dans
+**Paramètres > Profil**. La jauge Co-pilote la consomme déjà.
+
+**À faire dans un futur chantier (pas encore prioritaire)** : à partir
+de la cible PV + de l'historique 3 derniers mois, générer une
+stratégie d'action concrète au matin :
+
+- Si PV en retard vs prorata mois → suggérer X relances clients
+  prioritaires (top consommateurs de la base, basés sur
+  `pv_transactions` historique).
+- Si PV en avance → suggérer prospection ou build (recruter / monter
+  en grade).
+- Afficher un widget "Plan du jour PV" sur Co-pilote qui chuchote :
+  "Tu es à 4 200 / 13 000 PV au 15 du mois. Plan : 3 relances clients
+  identifiés (Marie, Karim, Lila), gain attendu ~1 800 PV."
+
+Mécanique probable : RPC `get_pv_action_plan(user_id)` qui regroupe
+historique PV / clients dormants / projection. UI : nouvelle card sur
+Co-pilote, sous la jauge, déclenchable manuellement (bouton "Plan
+d'action").
+
+Le quiz Academy `q1` ("Quel est le seuil PV mensuel par défaut ?")
+reste valable mais peut être enrichi en V2 avec une question
+contextuelle sur la stratégie.
+
+---
+
+## Règle datetime — `timestamptz` partout (depuis 29/04/2026)
+
+**Toutes les colonnes datetime des tables métier sont en `timestamptz`.**
+Migration de référence : `20260429160000_datetime_to_timestamptz.sql`
+(convertit `clients.next_follow_up`, `assessments.next_follow_up`,
+`follow_ups.due_date` en supposant que les valeurs existantes étaient
+en heure Paris).
+
+Front : toujours envoyer un ISO 8601 avec offset (`new Date(...).toISOString()`
+produit du `Z`). La fonction utilitaire `serializeDateTimeForStorage`
+dans `src/lib/calculations.ts` gère ça.
+
+❌ **NE JAMAIS créer une nouvelle colonne datetime en `timestamp`** (sans
+tz). Postgres l'interprète comme heure locale serveur, ce qui drift
+selon le DST et le navigateur. `timestamptz` toujours.
+
+---
+
 ## Workflow Dev/Prod (depuis 27/04/2026)
 
 Lor'Squad utilise 2 branches actives :

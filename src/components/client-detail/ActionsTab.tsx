@@ -18,6 +18,7 @@ import { useNavigate } from "react-router-dom";
 import { useAppContext } from "../../context/AppContext";
 import { useToast, buildSupabaseErrorToast } from "../../context/ToastContext";
 import { ClientAccessModal } from "../client/ClientAccessModal";
+import { MessageTemplatesButton } from "./MessageTemplatesButton";
 import { refreshClientRecap } from "../../services/supabaseService";
 import { useClientPriorityAction } from "../../hooks/useClientPriorityAction";
 import { ActionsRdvBlock } from "./ActionsRdvBlock";
@@ -370,6 +371,21 @@ export function ActionsTab({ client, onEditRdv, onOpenSharePublic, onGoToVueComp
           ici quand priority.type === 'send_followup'. */}
       <div id="follow-up-protocol-anchor" style={{ marginTop: 12 }}>
         <FollowUpProtocolCard client={client} />
+      </div>
+
+      {/* Messages rapides — hoisted en haut (Polish 2026-04-29) :
+          le CTA gold est tjr visible direct, plus enterre en bas sur mobile. */}
+      <div className="at-card" style={{ marginTop: 12 }}>
+        <div className="at-label" style={{ marginBottom: 10 }}>
+          Messages rapides
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          <MessageTemplatesButton client={client} />
+          <div style={{ fontSize: 10, color: "var(--ls-text-hint)", lineHeight: 1.4 }}>
+            Templates pré-rédigés (rappel RDV, félicitation perte poids, relance douce…)
+            — édite et envoie via WhatsApp, SMS, Telegram ou copie.
+          </div>
+        </div>
       </div>
 
       {/* ═══ GRID 2 COLONNES ═════════════════════════════════════════════ */}

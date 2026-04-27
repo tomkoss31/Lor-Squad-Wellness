@@ -4,6 +4,7 @@ import { ProtectedRoute, PublicRoute, RoleRoute } from "./components/auth/RouteG
 import { AppLayout } from "./components/layout/AppLayout";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { ToastHost } from "./components/ui/ToastHost";
+import { CommandPalette } from "./components/ui/CommandPalette";
 
 // CoPilotePage remplace définitivement l'ancien DashboardPage (retiré
 // au chantier cleanup-post-audit 2026-04-23).
@@ -160,6 +161,42 @@ const CoPilotePage = lazy(() =>
     default: module.CoPilotePage
   }))
 );
+// Chantier Lor'Squad Academy Phase 1 (2026-04-26) : parcours onboarding
+// distri en 8 sections. Overview = liste + progression, /academy/:sectionId
+// = page de section (placeholder Phase 1, tutoriel interactif Phase 2).
+const AcademyOverviewPage = lazy(() =>
+  import("./pages/AcademyOverviewPage").then((module) => ({
+    default: module.AcademyOverviewPage
+  }))
+);
+const AcademySectionPage = lazy(() =>
+  import("./pages/AcademySectionPage").then((module) => ({
+    default: module.AcademySectionPage
+  }))
+);
+const AcademyCertificatePage = lazy(() =>
+  import("./pages/AcademyCertificatePage").then((module) => ({
+    default: module.AcademyCertificatePage
+  }))
+);
+// Mode pratique Academy (2026-04-29 v2) : bac à sable interactif 4 étapes.
+const AcademySandboxPage = lazy(() =>
+  import("./pages/AcademySandboxPage").then((module) => ({
+    default: module.AcademySandboxPage
+  }))
+);
+// Pages démo Academy (2026-04-28) : mockups visuels avec données fictives
+// pour les tours, sans dépendre de l'état réel de la base.
+const DemoFicheClient = lazy(() =>
+  import("./pages/academy-demo/DemoFicheClient").then((module) => ({
+    default: module.DemoFicheClient
+  }))
+);
+const DemoAgenda = lazy(() =>
+  import("./pages/academy-demo/DemoAgenda").then((module) => ({
+    default: module.DemoAgenda
+  }))
+);
 // Chantier Centre de Formation V1 (2026-04-23) : la home /formation est
 // FormationPage (catalogue avec progression), /formation/:slug pointe
 // vers FormationCategoryPage.
@@ -190,6 +227,13 @@ const ParametresPage = lazy(() =>
 const ConversationView = lazy(() =>
   import("./pages/ConversationView").then((module) => ({
     default: module.ConversationView
+  }))
+);
+// Chantier D Analytics admin (2026-04-29) : pilotage business KPI + funnel
+// + top produits + top distri + tendance 12 mois + alertes operationnelles.
+const AnalyticsPage = lazy(() =>
+  import("./pages/AnalyticsPage").then((module) => ({
+    default: module.AnalyticsPage
   }))
 );
 
@@ -233,6 +277,20 @@ export default function App() {
                   /dashboard redirige pour ne pas casser les liens existants. */}
               <Route path="co-pilote" element={<CoPilotePage />} />
               <Route path="dashboard" element={<Navigate to="/co-pilote" replace />} />
+              {/* Lor'Squad Academy Phase 1 (2026-04-26) — gated admin
+                  only depuis migration prod 2026-04-28 (en finalisation,
+                  on leve le voile quand prete). Defense en profondeur :
+                  RoleRoute redirige vers /co-pilote si non-admin tape
+                  l URL manuellement. */}
+              <Route element={<RoleRoute allowedRoles={["admin"]} />}>
+                <Route path="academy" element={<AcademyOverviewPage />} />
+                <Route path="academy/certificat" element={<AcademyCertificatePage />} />
+                <Route path="academy/sandbox" element={<AcademySandboxPage />} />
+                <Route path="academy/:sectionId" element={<AcademySectionPage />} />
+                {/* Pages démo Academy (2026-04-28) — mockups pour les tours */}
+                <Route path="academy/demo/fiche-client" element={<DemoFicheClient />} />
+                <Route path="academy/demo/agenda" element={<DemoAgenda />} />
+              </Route>
               <Route path="formation" element={<FormationPage />} />
               <Route path="formation/:slug" element={<FormationCategoryPage />} />
               {/* /settings (non-admin) reste accessible comme placeholder profil léger.
@@ -254,6 +312,8 @@ export default function App() {
                     accessible pour l'admin legacy (créer compte, réparer). */}
                 <Route path="team" element={<TeamPage />} />
                 <Route path="pv/team" element={<PvTeamPage />} />
+                {/* Chantier D Analytics admin (2026-04-29) */}
+                <Route path="analytics" element={<AnalyticsPage />} />
                 <Route path="debug/notifications" element={<DebugNotificationsPage />} />
                 {/* Chantier Paramètres Admin (2026-04-23) : /parametres admin-only.
                     /settings redirige pour compat avec la placeholder du chantier 2. */}
@@ -291,6 +351,9 @@ export default function App() {
         </ErrorBoundary>
       </Suspense>
       <ToastHost />
+      <CommandPalette />
+      </ActiveQuizProvider>
+      </ActiveTourProvider>
     </BrowserRouter>
   );
 }

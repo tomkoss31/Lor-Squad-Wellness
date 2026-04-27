@@ -10,6 +10,14 @@ import { useRealtimeMessages } from "../../hooks/useRealtimeMessages";
 import { getInitials } from "../../lib/utils/getInitials";
 import { useTheme } from "../../hooks/useTheme";
 import { getRoleLabel } from "../../lib/auth";
+import { useAcademyAutoTrigger } from "../../features/academy/hooks/useAcademyAutoTrigger";
+import { AcademyReminderDialog } from "../../features/academy/components/AcademyReminderDialog";
+import { CoachInstallPwaButton } from "../pwa/CoachInstallPwaButton";
+import { SidebarStreakBadge } from "./SidebarStreakBadge";
+import { useActiveTour } from "../../features/onboarding/ActiveTourContext";
+import { TourRunner } from "../../features/onboarding/TourRunner";
+import { useActiveQuiz } from "../../features/academy/ActiveQuizContext";
+import { QuizModal } from "../../features/academy/components/QuizModal";
 
 // Chantier Refonte Navigation (2026-04-22) : sidebar simplifiée +
 // renommage Accueil → Co-pilote. Ajout /formation et /settings.
@@ -90,12 +98,19 @@ export function AppLayout() {
   // Accueil → Co-pilote, suppression Recommandations/Nouveau bilan (FAB
   // top-right à la place), fusion Guide RDV + Guide suivi → Centre de
   // formation, ajout Paramètres en bas. Ordre exact validé avec Thomas.
-  const navigation = [
-    { label: "Co-pilote", path: "/co-pilote", badge: 0 },
-    { label: "Agenda", path: "/agenda", badge: todayProspectsCount },
-    { label: "Messagerie", path: "/messages", badge: unreadMessageCount ?? 0 },
-    { label: "Dossiers clients", path: "/clients", badge: 0 },
-    { label: "Suivi PV", path: "/pv", badge: pvOverdueCount },
+  const navigation: Array<{ label: string; path: string; badge: number; tourId?: string }> = [
+    { label: "Co-pilote", path: "/co-pilote", badge: 0, tourId: "nav-copilote" },
+    // Chantier Lor'Squad Academy Phase 1 (2026-04-26) : insere entre
+    // Co-pilote et Agenda. data-tour-id pour la Phase 2 (tour distri).
+    // Migration prod 2026-04-28 : visible UNIQUEMENT pour les admins
+    // tant que l Academy est en finalisation. Lever ce gate quand prete.
+    ...(currentUser.role === "admin"
+      ? [{ label: "Academy", path: "/academy", badge: 0, tourId: "nav-academy" }]
+      : []),
+    { label: "Agenda", path: "/agenda", badge: todayProspectsCount, tourId: "nav-agenda" },
+    { label: "Messagerie", path: "/messages", badge: unreadMessageCount ?? 0, tourId: "nav-messagerie" },
+    { label: "Dossiers clients", path: "/clients", badge: 0, tourId: "nav-clients" },
+    { label: "Suivi PV", path: "/pv", badge: pvOverdueCount, tourId: "nav-pv" },
     ...(currentUser.role === "admin" ? [{ label: "Mon équipe", path: "/team", badge: 0 }] : []),
     { label: "Centre de formation", path: "/formation", badge: 0 },
     // Chantier Paramètres Admin (2026-04-23) : /parametres full UI pour
@@ -317,6 +332,10 @@ export function AppLayout() {
               gap: 10,
             }}
           >
+            {/* Bouton install PWA — visible si le navigateur expose le prompt */}
+            <CoachInstallPwaButton />
+            {/* Polish 2026-04-29 : badge streak en haut du footer sidebar */}
+            <SidebarStreakBadge />
             {/* Ligne profil + bouton Sortir inline */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <div style={{
@@ -513,6 +532,27 @@ export function AppLayout() {
         </main>
       </div>
       <BottomNav />
+      {/* Migration prod 2026-04-28 : rappel Academy visible admin only
+          tant que la formation est en finalisation. */}
+      {academyTrigger.isOpen && currentUser?.role === "admin" ? (
+        <AcademyReminderDialog onClose={academyTrigger.close} />
+      ) : null}
+      {activeTour ? (
+        <TourRunner
+          key={activeTour.id}
+          steps={activeTour.steps}
+          initialStep={activeTour.initialStep}
+          onClose={(reason) => closeTour(reason)}
+          onStepChange={activeTour.onStepChange}
+        />
+      ) : null}
+      {activeQuiz ? (
+        <QuizModal
+          quiz={activeQuiz.quiz}
+          sectionTitle={activeQuiz.sectionTitle}
+          onComplete={(passed, scorePercent) => closeQuiz(passed, scorePercent)}
+        />
+      ) : null}
     </div>
   );
 }

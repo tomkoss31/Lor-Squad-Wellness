@@ -120,6 +120,12 @@ export interface User {
   telegram?: string;
   createdAt?: string;
   lastAccessAt?: string;
+  /** ID Herbalife officiel. Chantier Academy refonte (2026-04-27). */
+  herbalifeId?: string | null;
+  /** ID du coach interne qui suit ce user. Chantier Academy (2026-04-27). */
+  coachReferentUserId?: string | null;
+  /** Objectif PV mensuel (jauge Co-pilote). Default 13000. Chantier 2026-04-29. */
+  monthly_pv_target?: number;
 }
 
 export interface AuthSession {

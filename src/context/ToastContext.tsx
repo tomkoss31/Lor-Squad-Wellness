@@ -19,7 +19,16 @@ interface ToastContextValue {
 
 const ToastContext = createContext<ToastContextValue | null>(null);
 
-const AUTO_DISMISS_MS = 6000;
+// Durations par tone (Polish #6 — 2026-04-29). Standardisation :
+//   success / info  = 4s (lecture rapide, message court)
+//   warning         = 5s (un peu plus pour le contexte)
+//   error           = 6s (plus long pour relire le message d erreur)
+const AUTO_DISMISS_MS_BY_TONE: Record<ToastTone, number> = {
+  success: 4000,
+  info: 4000,
+  warning: 5000,
+  error: 6000,
+};
 
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
@@ -36,11 +45,11 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 
   const clear = useCallback(() => setToasts([]), []);
 
-  // Auto-dismiss après AUTO_DISMISS_MS
+  // Auto-dismiss : duration depend du tone du toast.
   useEffect(() => {
     if (toasts.length === 0) return;
     const timers = toasts.map((t) =>
-      window.setTimeout(() => dismiss(t.id), AUTO_DISMISS_MS)
+      window.setTimeout(() => dismiss(t.id), AUTO_DISMISS_MS_BY_TONE[t.tone]),
     );
     return () => timers.forEach(window.clearTimeout);
   }, [toasts, dismiss]);

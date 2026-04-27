@@ -1,0 +1,50 @@
+id,report_token,client_id,client_name,distributor_id,message_type,product_name,message,client_contact,read,created_at,sender,sender_id,read_at,archived_at,resolved_at
+6d78a2a9-1a50-4085-b26d-798216ee4588,,4fa9f211-9d7c-4375-a5df-ad03bee4d583,Test Beta,656dcf35-4859-4a70-9d20-990104813423,coach_reply,,ok on en parle,,false,2026-04-22T19:27:26.827689+00:00,coach,656dcf35-4859-4a70-9d20-990104813423,,,
+0647d4ac-3b83-48e7-9b2d-57831a08da6f,,4fa9f211-9d7c-4375-a5df-ad03bee4d583,Test Beta,,product_request,Night Mode,"Bonjour test Distri, j'ai une question sur Night Mode :",,true,2026-04-22T19:26:04.612149+00:00,client,,2026-04-22T19:27:34.128+00:00,,
+98ca7c13-8e58-447e-b6d1-7070314f4499,,4fa9f211-9d7c-4375-a5df-ad03bee4d583,Test Beta,,product_request,Phyto Complete,"Bonjour test Distri, j'ai une question sur Phyto Complete :",,true,2026-04-22T19:26:13.111182+00:00,client,,2026-04-22T19:27:34.128+00:00,,
+d5628958-4e82-4c5f-9c6c-a8ff48781c30,,4fa9f211-9d7c-4375-a5df-ad03bee4d583,Test Beta,656dcf35-4859-4a70-9d20-990104813423,coach_reply,,ok super viens demain,,false,2026-04-22T19:27:48.641804+00:00,coach,656dcf35-4859-4a70-9d20-990104813423,,,
+892c620f-e4bb-43f3-8947-6a5f24fa2a77,,4fa9f211-9d7c-4375-a5df-ad03bee4d583,Test Beta,656dcf35-4859-4a70-9d20-990104813423,coach_reply,,achete le  oui,,false,2026-04-22T19:51:07.918124+00:00,coach,656dcf35-4859-4a70-9d20-990104813423,,,
+1bb81ae7-219f-445d-a60a-e54bbe7d069a,,b8ee0393-99f6-435f-b47c-5edd24d5b942,test thomas,656dcf35-4859-4a70-9d20-990104813423,coach_reply,,pti con,,false,2026-04-22T20:11:25.090907+00:00,coach,656dcf35-4859-4a70-9d20-990104813423,,,
+12d63bc0-5b86-4d03-9c72-66352d3e7b1a,,b8ee0393-99f6-435f-b47c-5edd24d5b942,test thomas,6e552738-3fe5-4cdb-a4c8-15c5d7dca036,coach_reply,,ET TOI CLAUDIUS?,,false,2026-04-22T20:23:03.060057+00:00,coach,6e552738-3fe5-4cdb-a4c8-15c5d7dca036,,,
+65becf05-ab2a-457b-82da-840c2e9528f7,,f2609c99-47a9-4a87-8d6f-d8e68d1147d1,Clément Clotte,656dcf35-4859-4a70-9d20-990104813423,coach_reply,,"Salut Clément ! 🎉
+
+Merci pour ce super bilan. Notre prochain RDV est confirmé :
+📅 lundi 06 avril
+⏰ 17:45
+
+À très vite pour ton suivi ! 💪
+Thomas",,false,2026-04-23T09:44:42.904494+00:00,coach,656dcf35-4859-4a70-9d20-990104813423,,,
+565e38bd-a250-44d6-ae77-30b80ce23c5f,,f2609c99-47a9-4a87-8d6f-d8e68d1147d1,Clément Clotte,656dcf35-4859-4a70-9d20-990104813423,coach_reply,,ok,,false,2026-04-23T09:48:57.392681+00:00,coach,656dcf35-4859-4a70-9d20-990104813423,,,
+2c5d87e8-f800-4e78-b93d-a88a6ab64245,,e4830e22-18e4-496b-9396-32c813779586,Mariska GIROT,6e552738-3fe5-4cdb-a4c8-15c5d7dca036,coach_reply,,"Salut Mariska ! 🎉
+
+Merci pour ce super bilan. Notre prochain RDV est confirmé :
+📅 jeudi 07 mai
+⏰ 10:00
+
+À très vite pour ton suivi ! 💪
+Mélanie",,false,2026-04-23T10:04:24.556821+00:00,coach,6e552738-3fe5-4cdb-a4c8-15c5d7dca036,,,
+9a4347e4-7f06-412e-9c1d-581c6de99c9a,,82e14498-b94b-4c80-9441-524f6cb3670d,Ethan Feron,656dcf35-4859-4a70-9d20-990104813423,coach_reply,,"Salut Ethan ! 🎉
+
+Merci pour ce super bilan. Notre prochain RDV est confirmé :
+📅 mardi 05 mai
+⏰ 10:00
+
+À très vite pour ton suivi ! 💪
+Thomas",,false,2026-04-24T13:53:31.056931+00:00,coach,656dcf35-4859-4a70-9d20-990104813423,,,
+c44edee7-b972-4c60-9818-f4b2ef3a06d2,,eeee5744-2d22-4f6b-ac30-fe6fcf4df120,test beta beta,656dcf35-4859-4a70-9d20-990104813423,coach_reply,,"Salut test beta ! 🎉
+
+Merci pour ce super bilan. Notre prochain RDV est confirmé :
+📅 vendredi 08 mai
+⏰ 10:00
+
+À très vite pour ton suivi ! 💪
+Thomas",,false,2026-04-24T21:16:00.20406+00:00,coach,656dcf35-4859-4a70-9d20-990104813423,,,
+af9108c5-c622-4f2a-bb06-1e0e6b99f0d7,,6c719e12-b1e3-4de1-8059-646d20976848,Tom Doguet,656dcf35-4859-4a70-9d20-990104813423,coach_reply,,ok,,false,2026-04-25T09:25:23.291623+00:00,coach,656dcf35-4859-4a70-9d20-990104813423,,,
+73346f8c-d11b-4862-8f72-1ad3e4539ab1,,562af8f3-656d-45f0-890b-489819ac53ca,Victoria Cavalec,f5285ea5-9521-4e0d-8e09-523e310c494f,coach_reply,,"Salut Victoria ! 🎉
+
+Merci pour ce super bilan. Notre prochain RDV est confirmé :
+📅 samedi 09 mai
+⏰ 10:00
+
+À très vite pour ton suivi ! 💪
+Mandy",,false,2026-04-25T15:26:47.966893+00:00,coach,f5285ea5-9521-4e0d-8e09-523e310c494f,,,
