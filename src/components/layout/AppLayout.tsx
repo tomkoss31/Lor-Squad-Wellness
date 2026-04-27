@@ -13,6 +13,7 @@ import { getRoleLabel } from "../../lib/auth";
 import { useAcademyAutoTrigger } from "../../features/academy/hooks/useAcademyAutoTrigger";
 import { AcademyReminderDialog } from "../../features/academy/components/AcademyReminderDialog";
 import { CoachInstallPwaButton } from "../pwa/CoachInstallPwaButton";
+import { SidebarStreakBadge } from "./SidebarStreakBadge";
 import { useActiveTour } from "../../features/onboarding/ActiveTourContext";
 import { TourRunner } from "../../features/onboarding/TourRunner";
 import { useActiveQuiz } from "../../features/academy/ActiveQuizContext";
@@ -345,6 +346,8 @@ export function AppLayout() {
           >
             {/* Bouton install PWA — visible si le navigateur expose le prompt */}
             <CoachInstallPwaButton />
+            {/* Polish 2026-04-29 : badge streak en haut du footer sidebar */}
+            <SidebarStreakBadge />
             {/* Ligne profil + bouton Sortir inline */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <div style={{
