@@ -8,12 +8,14 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useAcademyProgress } from "../features/academy/hooks/useAcademyProgress";
 import { getAcademySectionById } from "../features/academy/sections";
 import { useActiveTour } from "../features/onboarding/ActiveTourContext";
+import { useActiveQuiz } from "../features/academy/ActiveQuizContext";
 
 export function AcademySectionPage() {
   const { sectionId } = useParams<{ sectionId: string }>();
   const navigate = useNavigate();
   const { markSectionDone } = useAcademyProgress();
   const { startTour } = useActiveTour();
+  const { startQuiz } = useActiveQuiz();
 
   const section = sectionId ? getAcademySectionById(sectionId) : undefined;
 
@@ -40,9 +42,23 @@ export function AcademySectionPage() {
           } catch (err) {
             console.warn("[AcademySectionPage] markSectionDone failed", err);
           }
-          // Polish ludique (2026-04-27) : query param pour declencher
-          // l animation de celebration + confetti cote overview.
-          navigate(`/academy?completed=${encodeURIComponent(section.id)}`);
+          // Direction 2 (2026-04-28) : si la section a un quiz, on le
+          // lance avant de naviguer vers /academy. Le quiz est rendu au
+          // niveau AppLayout via ActiveQuizContext donc il survit au
+          // unmount de cette page.
+          if (section.quiz) {
+            startQuiz({
+              quiz: section.quiz,
+              sectionTitle: section.title,
+              onComplete: () => {
+                navigate(`/academy?completed=${encodeURIComponent(section.id)}`);
+              },
+            });
+          } else {
+            // Polish ludique (2026-04-27) : query param pour declencher
+            // l animation de celebration + confetti cote overview.
+            navigate(`/academy?completed=${encodeURIComponent(section.id)}`);
+          }
         } else {
           navigate("/academy");
         }

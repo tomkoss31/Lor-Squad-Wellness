@@ -15,6 +15,8 @@ import { AcademyReminderDialog } from "../../features/academy/components/Academy
 import { CoachInstallPwaButton } from "../pwa/CoachInstallPwaButton";
 import { useActiveTour } from "../../features/onboarding/ActiveTourContext";
 import { TourRunner } from "../../features/onboarding/TourRunner";
+import { useActiveQuiz } from "../../features/academy/ActiveQuizContext";
+import { QuizModal } from "../../features/academy/components/QuizModal";
 
 // Chantier Refonte Navigation (2026-04-22) : sidebar simplifiée +
 // renommage Accueil → Co-pilote. Ajout /formation et /settings.
@@ -90,6 +92,8 @@ export function AppLayout() {
   // monte au niveau AppLayout pour survivre aux changements de route
   // pendant un tour (ex : navigate /academy/welcome -> /parametres).
   const { activeTour, closeTour } = useActiveTour();
+  // Direction 2 (2026-04-28) : QuizModal idem au niveau AppLayout.
+  const { activeQuiz, closeQuiz } = useActiveQuiz();
 
   if (!currentUser) {
     return null;
@@ -546,6 +550,13 @@ export function AppLayout() {
           key={activeTour.id}
           steps={activeTour.steps}
           onClose={(reason) => closeTour(reason)}
+        />
+      ) : null}
+      {activeQuiz ? (
+        <QuizModal
+          quiz={activeQuiz.quiz}
+          sectionTitle={activeQuiz.sectionTitle}
+          onComplete={(passed, scorePercent) => closeQuiz(passed, scorePercent)}
         />
       ) : null}
     </div>

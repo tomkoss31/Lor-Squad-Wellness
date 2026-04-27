@@ -35,6 +35,22 @@ export interface AcademySection {
   icon: string;
   /** Etapes du tutoriel interactif. Vide en Phase 1, rempli en Phase 2. */
   steps: TutorialStep[];
+  /** Polish direction 2 (2026-04-28) : quiz post-section pour memorisation. */
+  quiz?: AcademyQuiz;
+}
+
+export interface AcademyQuizQuestion {
+  id: string;
+  question: string;
+  answers: string[];
+  correctIndex: number;
+  explanation: string;
+}
+
+export interface AcademyQuiz {
+  questions: AcademyQuizQuestion[];
+  /** Seuil pour considerer le quiz reussi. Defaut 60%. */
+  passThreshold?: number;
 }
 
 export const ACADEMY_SECTIONS: AcademySection[] = [
@@ -242,6 +258,29 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
         illustrationKey: "mockup-thank-you",
       },
     ],
+    quiz: {
+      questions: [
+        {
+          id: "q1",
+          question: "Combien d'étapes le wizard de bilan contient-il pour un client en objectif sport ?",
+          answers: ["8 étapes", "11 étapes", "13 étapes", "15 étapes"],
+          correctIndex: 2,
+          explanation: "Le wizard a 11 étapes par défaut, +2 pour le sport (profil sport + apports actuels) = 13 au total.",
+        },
+        {
+          id: "q2",
+          question: "Le téléphone du client est obligatoire pour quelle raison principale ?",
+          answers: [
+            "Pour vérifier qu'il est joignable",
+            "Pour envoyer le récap par WhatsApp en 1 clic",
+            "Pour le contacter en cas d'urgence",
+            "Pour facturer",
+          ],
+          correctIndex: 1,
+          explanation: "Le téléphone permet d'envoyer le lien d'accès et le récap par WhatsApp depuis la page remerciement, en 1 clic.",
+        },
+      ],
+    },
   },
   {
     id: "program",
@@ -316,6 +355,24 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
         illustrationKey: "sparkles",
       },
     ],
+    quiz: {
+      questions: [
+        {
+          id: "q1",
+          question: "Combien d'alertes Sport peuvent bloquer la validation du bilan ?",
+          answers: ["3 alertes", "4 alertes", "6 alertes", "8 alertes"],
+          correctIndex: 2,
+          explanation: "Lor'Squad détecte 6 alertes : hydratation faible, protéines basses, sommeil court, masse musculaire, snack manquant, fréquence sport incohérente.",
+        },
+        {
+          id: "q2",
+          question: "Pour un client en prise de masse, quel booster recommander en priorité ?",
+          answers: ["Aloe Vera", "Formula 1 Vanille", "Rebuild Strength", "Liftoff"],
+          correctIndex: 2,
+          explanation: "Rebuild Strength est conçu pour la récupération musculaire et la prise de masse. À prendre après l'entraînement.",
+        },
+      ],
+    },
   },
   {
     id: "agenda",
@@ -577,6 +634,24 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
         nextLabel: "Terminer l'Academy",
       },
     ],
+    quiz: {
+      questions: [
+        {
+          id: "q1",
+          question: "Quel est le seuil PV mensuel par défaut dans Lor'Squad ?",
+          answers: ["5 000 PV", "10 000 PV", "13 000 PV", "20 000 PV"],
+          correctIndex: 2,
+          explanation: "Le seuil par défaut est 13 000 PV / mois. Tu peux le modifier dans Paramètres si tu vises un palier supérieur.",
+        },
+        {
+          id: "q2",
+          question: "À quelle heure tombe le digest matin de tes suivis ?",
+          answers: ["6h", "7h", "8h", "9h"],
+          correctIndex: 1,
+          explanation: "Le cron morning-suivis-digest tourne à 7h00 chaque matin et envoie une push notif avec les actions du jour.",
+        },
+      ],
+    },
   },
 ];
 
