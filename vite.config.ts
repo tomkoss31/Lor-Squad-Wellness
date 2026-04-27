@@ -34,6 +34,16 @@ export default defineConfig({
             return "jspdf";
           }
 
+          // Chantier C.2 v2 + D v2 (2026-04-29) : recharts (~100KB) et
+          // dnd-kit (~50KB) chargees uniquement sur les pages concernees
+          // (AnalyticsPage et ClientsPage en mode kanban) -> chunks dedies.
+          if (id.includes("recharts") || id.includes("d3-")) {
+            return "charts";
+          }
+          if (id.includes("@dnd-kit")) {
+            return "dnd-kit";
+          }
+
           if (id.includes("react-dom") || id.includes("react")) {
             return "react-vendor";
           }

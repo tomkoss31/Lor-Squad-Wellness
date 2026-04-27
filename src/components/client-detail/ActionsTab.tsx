@@ -18,6 +18,7 @@ import { useNavigate } from "react-router-dom";
 import { useAppContext } from "../../context/AppContext";
 import { useToast, buildSupabaseErrorToast } from "../../context/ToastContext";
 import { ClientAccessModal } from "../client/ClientAccessModal";
+import { MessageTemplatesButton } from "./MessageTemplatesButton";
 import { refreshClientRecap } from "../../services/supabaseService";
 import { useClientPriorityAction } from "../../hooks/useClientPriorityAction";
 import { ActionsRdvBlock } from "./ActionsRdvBlock";
@@ -505,6 +506,20 @@ export function ActionsTab({ client, onEditRdv, onOpenSharePublic, onGoToVueComp
 
         {/* ─── COLONNE DROITE ─── */}
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          {/* Bloc 4A0 : Templates messages WhatsApp (Chantier E, 2026-04-29) */}
+          <div className="at-card">
+            <div className="at-label" style={{ marginBottom: 10 }}>
+              Messages rapides
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              <MessageTemplatesButton client={client} />
+              <div style={{ fontSize: 10, color: "var(--ls-text-hint)", lineHeight: 1.4 }}>
+                Templates pré-rédigés (rappel RDV, félicitation perte poids, relance douce…)
+                — copie + ouvre WhatsApp avec le numéro pré-rempli.
+              </div>
+            </div>
+          </div>
+
           {/* Bloc 4A : Accès client */}
           <div className="at-card">
             <div className="at-label" style={{ marginBottom: 12 }}>
