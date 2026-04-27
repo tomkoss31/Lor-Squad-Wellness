@@ -13,6 +13,10 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { TutorialTooltip } from "./components/TutorialTooltip";
 import { SpotlightOverlay } from "./components/SpotlightOverlay";
 import { useAppContext } from "../../context/AppContext";
+import {
+  buildTemplateVars,
+  substituteTemplate,
+} from "./utils/substituteTemplate";
 import type { TutorialStep } from "./types";
 
 export type TourCloseReason = "completed" | "skipped" | "dismissed";
@@ -66,7 +70,14 @@ export function TourRunner({
 }: TourRunnerProps) {
   const navigate = useNavigate();
   const location = useLocation();
-  const { currentUser } = useAppContext();
+  const { currentUser, users } = useAppContext();
+
+  // Direction 3 (2026-04-28) : variables de substitution pour les
+  // copies des steps. Resolu une fois par render via les hooks.
+  const templateVars = useMemo(
+    () => buildTemplateVars(currentUser ?? null, users ?? []),
+    [currentUser, users],
+  );
 
   // Travail 2 (2026-04-27) : filtrage par role. Les steps avec
   // requiredRole defini ne sont gardes que si le role match.
@@ -85,7 +96,22 @@ export function TourRunner({
   const rafRef = useRef<number | null>(null);
   const previousStepRef = useRef<number | null>(null);
 
-  const currentStep: TutorialStep | null = steps[currentStepIndex] ?? null;
+  const rawCurrentStep: TutorialStep | null = steps[currentStepIndex] ?? null;
+
+  // Substitution des variables {firstName} / {coachName} / {sponsorName}
+  // dans title et body (si body est string). Recalcule a chaque render
+  // si les vars changent.
+  const currentStep: TutorialStep | null = useMemo(() => {
+    if (!rawCurrentStep) return null;
+    return {
+      ...rawCurrentStep,
+      title: substituteTemplate(rawCurrentStep.title, templateVars),
+      body:
+        typeof rawCurrentStep.body === "string"
+          ? substituteTemplate(rawCurrentStep.body, templateVars)
+          : rawCurrentStep.body,
+    };
+  }, [rawCurrentStep, templateVars]);
   const totalSteps = steps.length;
   const isLast =
     currentStep?.isLast === true || currentStepIndex === totalSteps - 1;

@@ -64,8 +64,8 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
     steps: [
       {
         id: "intro",
-        title: "Bienvenue dans Lor'Squad 👋",
-        body: "On commence par ton profil. C'est ce qui relie ton compte à ton lignage Herbalife (pour les commissions) ET à ton coach référent dans Lor'Squad (pour le suivi opérationnel). Deux choses différentes, on les sépare ici. Compte 2 minutes.",
+        title: "Bienvenue {firstName} 👋",
+        body: "{firstName}, on commence par ton profil. C'est ce qui relie ton compte à ton lignage Herbalife (pour les commissions) ET à ton coach référent dans Lor'Squad (pour le suivi opérationnel). Deux choses différentes, on les sépare ici. Compte 2 minutes.",
         placement: "center",
         route: "/parametres",
         illustrationKey: "wave",
@@ -106,8 +106,8 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
         target: '[data-tour-id="profile-coach-referent"]',
         placement: "bottom",
         route: "/parametres",
-        title: "Ton coach référent (suivi Lor'Squad)",
-        body: "C'est la personne qui te suit au quotidien dans l'app — tes questions, tes blocages, tes premières ventes. Souvent c'est ton sponsor Herbalife, mais pas obligé : tu choisis dans la liste de tous les utilisateurs actifs (admin, coach ou autre distri). C'est ce contact qui sera notifié si tu décroches.",
+        title: "Ton coach référent dans Lor'Squad",
+        body: "C'est la personne qui te suit au quotidien dans l'app — tes questions, tes blocages, tes premières ventes. {coachName} apparaît déjà dans ce select si tu l'as déjà renseigné. Sinon, choisis dans la liste de tous les utilisateurs actifs. C'est ce contact qui sera notifié si tu décroches.",
         manualAdvance: true,
         requiredRole: "distributor",
       },
@@ -134,7 +134,7 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
     steps: [
       {
         id: "intro",
-        title: "Lor'Squad en 60 secondes",
+        title: "Lor'Squad en 60 secondes, {firstName}",
         body: "Tour rapide des 6 sections principales et du CTA gold. À la fin tu sauras où chaque chose vit. Skip possible à tout moment, on revient quand tu veux via /academy.",
         placement: "center",
         illustrationKey: "ring-progress",
@@ -626,8 +626,8 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
       },
       {
         id: "outro",
-        title: "Tu es prêt 🎉",
-        body: "Bravo, tu as terminé l'Academy Lor'Squad. Tu connais le bilan, le programme, l'agenda, la messagerie, l'app client et tes rituels PV. Tu peux relancer n'importe quelle section quand tu veux via /academy. Maintenant : ton premier vrai bilan client.",
+        title: "{firstName}, tu es prêt 🎉",
+        body: "Bravo {firstName}, tu as terminé l'Academy Lor'Squad. Tu connais le bilan, le programme, l'agenda, la messagerie, l'app client et tes rituels PV. {coachName} verra ta complétion sur sa fiche team. Tu peux relancer n'importe quelle section via /academy. Maintenant : ton premier vrai bilan client.",
         placement: "center",
         illustrationKey: "trophy",
         isLast: true,
