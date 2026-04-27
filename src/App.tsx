@@ -178,6 +178,13 @@ const AcademyCertificatePage = lazy(() =>
     default: module.AcademyCertificatePage
   }))
 );
+// Chantier Academy section 9 sandbox (2026-04-29) : wizard auto-portant
+// pour le mode pratique (creation de bilan fictif sans toucher la base).
+const AcademySandboxPage = lazy(() =>
+  import("./pages/AcademySandboxPage").then((module) => ({
+    default: module.AcademySandboxPage
+  }))
+);
 // Pages démo Academy (2026-04-28) : mockups visuels avec données fictives
 // pour les tours, sans dépendre de l'état réel de la base.
 const DemoFicheClient = lazy(() =>
@@ -270,6 +277,10 @@ export default function App() {
               {/* Lor'Squad Academy Phase 1 (2026-04-26) */}
               <Route path="academy" element={<AcademyOverviewPage />} />
               <Route path="academy/certificat" element={<AcademyCertificatePage />} />
+              {/* Section 9 sandbox (2026-04-29) : route AVANT /:sectionId
+                  pour que /academy/sandbox match cette page-ci, pas le
+                  param dynamique generique. */}
+              <Route path="academy/sandbox" element={<AcademySandboxPage />} />
               <Route path="academy/:sectionId" element={<AcademySectionPage />} />
               {/* Pages démo Academy (2026-04-28) — mockups pour les tours */}
               <Route path="academy/demo/fiche-client" element={<DemoFicheClient />} />

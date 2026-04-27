@@ -653,6 +653,21 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
       ],
     },
   },
+  // ─── Section 9 : Mode pratique sandbox (2026-04-29) ─────────────────────
+  // Section bonus interactive ou le distri cree un faux client + bilan
+  // complet sans toucher a la base. Wizard auto-portant rendu par
+  // AcademySandboxPage. Steps[] vide = AcademySectionPage redirige
+  // immediatement vers /academy/sandbox.
+  {
+    id: "sandbox",
+    title: "À toi de jouer — pratique en mode bac à sable",
+    shortLabel: "Pratique",
+    description:
+      "Crée un client fictif et fais ton premier bilan complet, sans risque de polluer la base. Apprentissage par la pratique en 5 minutes.",
+    estimatedDurationMinutes: 5,
+    icon: "🎮",
+    steps: [],
+  },
 ];
 
 // ============================================================================

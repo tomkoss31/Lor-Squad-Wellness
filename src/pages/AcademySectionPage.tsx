@@ -24,6 +24,14 @@ export function AcademySectionPage() {
 
   const section = sectionId ? getAcademySectionById(sectionId) : undefined;
 
+  // Section 9 sandbox (2026-04-29) : redirige vers le wizard auto-portant
+  // /academy/sandbox des qu on arrive sur /academy/sandbox via l overview.
+  useEffect(() => {
+    if (sectionId === "sandbox") {
+      navigate("/academy/sandbox", { replace: true });
+    }
+  }, [sectionId, navigate]);
+
   // Chantier Academy section 1 fix runtime (2026-04-27) : on demarre le
   // tour via le contexte global (rendu par AppLayout) puis on navigue
   // immediatement a la 1ere route du tour. AcademySectionPage peut alors

@@ -46,6 +46,26 @@ Workflow complet : `docs/DEV_WORKFLOW.md`
 
 ---
 
+## Roadmap Academy V2 — différée (note 2026-04-29)
+
+Idées validées par Thomas pour plus tard :
+
+### Tier S #1 — Narration vocale par step
+Audio 5-10s enregistré par Thomas pour chaque step Academy. Player
+inline avec play auto + replay. Storage : Supabase Storage bucket
+`academy-audio/`. Effet "Thomas est avec eux" — chaud humain.
+
+### Tier S #2 — Vidéo intro 90s avant section 1
+Vidéo plein écran shot pro (Thomas studio). Skipable. Pose le ton
+"club premium" dès le premier contact avec l'Academy. Storage :
+Vimeo ou Mux pour le streaming, embed in `AcademyOverviewPage`.
+
+Quand on les attaque : créer `feat/academy-narration` depuis
+`dev/thomas-test`. Prévoir migration `academy_audio_steps` (table
+mapping step_id → url_audio) et hook `useStepAudio`.
+
+---
+
 ## Page remerciement post-bilan (2026-04-27)
 
 ### Route dédiée
