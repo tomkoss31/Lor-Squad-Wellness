@@ -19,6 +19,7 @@ import { useToast, buildSupabaseErrorToast } from "../context/ToastContext";
 import { refreshClientRecap } from "../services/supabaseService";
 import { ErrorBoundary } from "../components/ErrorBoundary";
 import { ClientAccessModal } from "../components/client/ClientAccessModal";
+import { PresentationClientButton } from "../features/academy/components/PresentationClientButton";
 import { ActionsTab } from "../components/client-detail/ActionsTab";
 import { SportSummarySection } from "../components/client-detail/SportSummarySection";
 import { ClientAppPreviewButton } from "../components/client/ClientAppPreviewButton";
@@ -252,6 +253,7 @@ export function ClientDetailPage() {
             >
               🔗 Envoyer l'accès à l'app
             </button>
+            <PresentationClientButton onShowQr={() => setAccessModalOpen(true)} />
             <ClientAppPreviewButton
               clientId={client.id}
               clientFirstName={client.firstName}
