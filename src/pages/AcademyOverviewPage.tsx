@@ -9,9 +9,11 @@ import { useAcademyProgress } from "../features/academy/hooks/useAcademyProgress
 import { ACADEMY_SECTIONS, type AcademySection } from "../features/academy/sections";
 import { ConfettiBurst } from "../features/academy/components/ConfettiBurst";
 import { AcademyTimeline } from "../features/academy/components/AcademyTimeline";
+import { useAcademyTeamStats } from "../features/academy/hooks/useAcademyTeamStats";
 
 export function AcademyOverviewPage() {
   const { view, goToSection, restartSection } = useAcademyProgress();
+  const teamStats = useAcademyTeamStats();
   const [searchParams, setSearchParams] = useSearchParams();
   const justCompletedId = searchParams.get("completed");
   const [confettiActive, setConfettiActive] = useState(false);
@@ -63,6 +65,9 @@ export function AcademyOverviewPage() {
         fontFamily: "var(--ls-font-sans, system-ui, sans-serif)",
       }}
     >
+      {/* Bandeau motivation social (Polish K 2026-04-28) */}
+      {teamStats.loaded ? <MotivationBanner stats={teamStats} viewIsCompleted={view.isCompleted} /> : null}
+
       <div
         style={{
           background: "#FAF6E8",
@@ -243,6 +248,69 @@ export function AcademyOverviewPage() {
 }
 
 type AcademyView = ReturnType<typeof useAcademyProgress>["view"];
+
+function MotivationBanner({
+  stats,
+  viewIsCompleted,
+}: {
+  stats: ReturnType<typeof useAcademyTeamStats>;
+  viewIsCompleted: boolean;
+}) {
+  // Choix de copy selon le contexte le plus motivant
+  const copy = (() => {
+    if (viewIsCompleted) {
+      return {
+        emoji: "🏆",
+        text: `Tu fais partie des ${stats.totalCompleted} distri qui ont fini l'Academy. Ton équipe progresse grâce à toi.`,
+      };
+    }
+    if (stats.completedThisMonth > 0) {
+      const next = stats.completedThisMonth + 1;
+      return {
+        emoji: "🔥",
+        text: `${stats.completedThisMonth} distri ont fini l'Academy ce mois — sois le ${next}ème.`,
+      };
+    }
+    if (stats.startedThisWeek > 1) {
+      return {
+        emoji: "💪",
+        text: `${stats.startedThisWeek} distri ont commencé l'Academy cette semaine. Le mouvement est lancé.`,
+      };
+    }
+    if (stats.totalStarted > 0) {
+      return {
+        emoji: "🚀",
+        text: `${stats.totalStarted} distri ont déjà entamé leur Academy. Rejoins le mouvement.`,
+      };
+    }
+    return {
+      emoji: "✨",
+      text: "Tu fais partie des premiers à découvrir Lor'Squad Academy. Pose la barre haute pour ton équipe.",
+    };
+  })();
+
+  return (
+    <div
+      style={{
+        background:
+          "linear-gradient(135deg, rgba(184,146,42,0.10), rgba(29,158,117,0.08))",
+        border: "0.5px solid rgba(184,146,42,0.25)",
+        borderRadius: 12,
+        padding: "12px 18px",
+        marginBottom: 14,
+        display: "flex",
+        alignItems: "center",
+        gap: 12,
+        fontFamily: "var(--ls-font-sans, system-ui, sans-serif)",
+      }}
+    >
+      <span style={{ fontSize: 22, flexShrink: 0 }}>{copy.emoji}</span>
+      <p style={{ fontSize: 13, color: "#5C4A0F", margin: 0, fontWeight: 500, lineHeight: 1.45 }}>
+        {copy.text}
+      </p>
+    </div>
+  );
+}
 
 function renderHeroSubtitle(view: AcademyView): string {
   if (view.isCompleted) return "Tu as terminé toute la formation. Bravo.";

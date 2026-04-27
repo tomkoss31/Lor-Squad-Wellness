@@ -98,7 +98,8 @@
       "Bash(grep -n \"</div>$\\\\|</div>\\\\\\\\s*$\\\\|</section>\\\\\\\\s*$\" src/pages/DistributorPortfolioPage.tsx)",
       "Bash(sed -n '440,450p' src/pages/AgendaPage.tsx)",
       "Bash(sed -n '243,250p' src/pages/ClientDetailPage.tsx)",
-      "Bash(git worktree *)"
+      "Bash(git worktree *)",
+      "Bash(grep -n \"const { view, goToSection, restartSection\" src/pages/AcademyOverviewPage.tsx)"
     ]
   }
 }
