@@ -5,7 +5,7 @@
 // Visible uniquement si view.isCompleted === true. Sinon redirect
 // vers /academy.
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAcademyProgress } from "../features/academy/hooks/useAcademyProgress";
 import { useAppContext } from "../context/AppContext";
@@ -13,11 +13,104 @@ import { useAppContext } from "../context/AppContext";
 const LOGO_URL = "/icons/lor-squad-icon-180.png";
 type CertFormat = "a4" | "story";
 
+/** Convertit un nom user en slug fichier safe. */
+function slugify(name: string): string {
+  return (name || "certificat")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 40);
+}
+
+/** Capture un element HTML en canvas haute resolution via html2canvas. */
+async function captureNode(node: HTMLElement): Promise<HTMLCanvasElement> {
+  // Lazy import pour ne pas alourdir le chunk initial.
+  const html2canvas = (await import("html2canvas")).default;
+  return html2canvas(node, {
+    scale: 2.5, // x2.5 pour un rendu print-quality
+    backgroundColor: null,
+    useCORS: true,
+    logging: false,
+  });
+}
+
+async function downloadPng(node: HTMLElement, filename: string) {
+  const canvas = await captureNode(node);
+  canvas.toBlob((blob) => {
+    if (!blob) return;
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  }, "image/png");
+}
+
+async function downloadJpeg(node: HTMLElement, filename: string) {
+  const canvas = await captureNode(node);
+  canvas.toBlob(
+    (blob) => {
+      if (!blob) return;
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+    },
+    "image/jpeg",
+    0.95,
+  );
+}
+
+async function downloadPdf(node: HTMLElement, filename: string, format: CertFormat) {
+  const canvas = await captureNode(node);
+  const { default: jsPDF } = await import("jspdf");
+  // Dimensions PDF selon format
+  // A4 portrait : 210x297mm. Story 9/16 : 90x160mm (taille custom mais
+  // ratio respecte, imprimable a 100% sans deformer).
+  const pdfWidth = format === "a4" ? 210 : 90;
+  const pdfHeight = format === "a4" ? 297 : 160;
+  const pdf = new jsPDF({
+    orientation: "portrait",
+    unit: "mm",
+    format: format === "a4" ? "a4" : [pdfWidth, pdfHeight],
+    compress: true,
+  });
+  const imgData = canvas.toDataURL("image/jpeg", 0.92);
+  pdf.addImage(imgData, "JPEG", 0, 0, pdfWidth, pdfHeight, undefined, "FAST");
+  pdf.save(filename);
+}
+
 export function AcademyCertificatePage() {
   const navigate = useNavigate();
   const { view } = useAcademyProgress();
   const { currentUser } = useAppContext();
   const [format, setFormat] = useState<CertFormat>("a4");
+  const [downloading, setDownloading] = useState<null | "png" | "jpeg" | "pdf">(null);
+  const certRef = useRef<HTMLDivElement | null>(null);
+
+  async function handleDownload(kind: "png" | "jpeg" | "pdf") {
+    const node = certRef.current;
+    if (!node) return;
+    const slug = slugify(currentUser?.name ?? "certificat");
+    const fmtSuffix = format === "a4" ? "a4" : "story";
+    const base = `certificat-academy-${slug}-${fmtSuffix}`;
+    setDownloading(kind);
+    try {
+      if (kind === "png") await downloadPng(node, `${base}.png`);
+      else if (kind === "jpeg") await downloadJpeg(node, `${base}.jpg`);
+      else await downloadPdf(node, `${base}.pdf`, format);
+    } catch (err) {
+      console.warn("[AcademyCertificate] download failed", err);
+      alert("Téléchargement impossible. Réessaie ou utilise Imprimer.");
+    } finally {
+      setDownloading(null);
+    }
+  }
 
   if (!view.loaded) {
     return (
@@ -52,14 +145,26 @@ export function AcademyCertificatePage() {
     >
       <style>{`
         @media print {
-          body, html { background: white !important; margin: 0 !important; padding: 0 !important; }
-          .ls-cert-header, .ls-cert-actions { display: none !important; }
-          .ls-cert-wrapper { background: white !important; padding: 0 !important; }
+          /* Technique radicale : on cache TOUT le DOM, puis on rend visible
+             uniquement la page certif. Cible n importe quel layout parent
+             (sidebar, bottom nav, headers, etc.) sans avoir a les nommer. */
+          body * { visibility: hidden !important; }
+          .ls-cert-page, .ls-cert-page * { visibility: visible !important; }
+          html, body {
+            background: white !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            height: auto !important;
+          }
           .ls-cert-page {
+            position: absolute !important;
+            top: 0 !important;
+            left: 50% !important;
+            transform: translateX(-50%) !important;
             box-shadow: none !important;
-            margin: 0 auto !important;
             page-break-inside: avoid;
           }
+          .ls-cert-page::before, .ls-cert-page::after { visibility: visible !important; }
           @page { size: A4; margin: 0; }
         }
       `}</style>
@@ -148,12 +253,14 @@ export function AcademyCertificatePage() {
         </div>
       </div>
 
-      {/* Render conditionnel A4 ou Story */}
-      {format === "a4" ? (
-        <CertificateA4 userName={userName} completedDate={dateLabel} />
-      ) : (
-        <CertificateStory userName={userName} completedDate={dateLabel} />
-      )}
+      {/* Render conditionnel A4 ou Story — ref sur le wrapper pour download */}
+      <div ref={certRef}>
+        {format === "a4" ? (
+          <CertificateA4 userName={userName} completedDate={dateLabel} />
+        ) : (
+          <CertificateStory userName={userName} completedDate={dateLabel} />
+        )}
+      </div>
 
       {/* Boutons actions (caché impression) */}
       <div
@@ -169,7 +276,8 @@ export function AcademyCertificatePage() {
       >
         <button
           type="button"
-          onClick={() => window.print()}
+          onClick={() => handleDownload("pdf")}
+          disabled={downloading !== null}
           style={{
             background: "linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)",
             color: "white",
@@ -178,29 +286,87 @@ export function AcademyCertificatePage() {
             borderRadius: 12,
             fontSize: 14,
             fontWeight: 600,
-            cursor: "pointer",
+            cursor: downloading ? "wait" : "pointer",
             fontFamily: "DM Sans, sans-serif",
             boxShadow: "0 4px 12px rgba(186,117,23,0.30)",
+            opacity: downloading && downloading !== "pdf" ? 0.5 : 1,
           }}
         >
-          🖨️ {format === "a4" ? "Imprimer / Exporter PDF" : "Télécharger Story"}
+          {downloading === "pdf" ? "📄 Génération…" : "📄 Télécharger PDF"}
+        </button>
+        <button
+          type="button"
+          onClick={() => handleDownload("png")}
+          disabled={downloading !== null}
+          style={{
+            background: "white",
+            color: "#5C4A0F",
+            border: "1px solid #B8922A",
+            padding: "12px 18px",
+            borderRadius: 12,
+            fontSize: 14,
+            fontWeight: 600,
+            cursor: downloading ? "wait" : "pointer",
+            fontFamily: "DM Sans, sans-serif",
+            opacity: downloading && downloading !== "png" ? 0.5 : 1,
+          }}
+        >
+          {downloading === "png" ? "🖼️ Génération…" : "🖼️ Télécharger PNG"}
+        </button>
+        <button
+          type="button"
+          onClick={() => handleDownload("jpeg")}
+          disabled={downloading !== null}
+          style={{
+            background: "white",
+            color: "#5C4A0F",
+            border: "1px solid #B8922A",
+            padding: "12px 18px",
+            borderRadius: 12,
+            fontSize: 14,
+            fontWeight: 600,
+            cursor: downloading ? "wait" : "pointer",
+            fontFamily: "DM Sans, sans-serif",
+            opacity: downloading && downloading !== "jpeg" ? 0.5 : 1,
+          }}
+        >
+          {downloading === "jpeg" ? "📷 Génération…" : "📷 Télécharger JPEG"}
+        </button>
+        <button
+          type="button"
+          onClick={() => window.print()}
+          disabled={downloading !== null}
+          style={{
+            background: "transparent",
+            color: "#5F5E5A",
+            border: "0.5px solid #C9C2AB",
+            padding: "12px 18px",
+            borderRadius: 12,
+            fontSize: 13,
+            fontWeight: 500,
+            cursor: downloading ? "wait" : "pointer",
+            fontFamily: "DM Sans, sans-serif",
+          }}
+        >
+          🖨️ Imprimer
         </button>
         <button
           type="button"
           onClick={() => navigate("/academy")}
+          disabled={downloading !== null}
           style={{
-            background: "white",
+            background: "transparent",
             color: "#5F5E5A",
             border: "0.5px solid #C9C2AB",
-            padding: "12px 22px",
+            padding: "12px 18px",
             borderRadius: 12,
-            fontSize: 14,
+            fontSize: 13,
             fontWeight: 500,
-            cursor: "pointer",
+            cursor: downloading ? "wait" : "pointer",
             fontFamily: "DM Sans, sans-serif",
           }}
         >
-          Retour à l&apos;Academy
+          ← Academy
         </button>
       </div>
     </div>
