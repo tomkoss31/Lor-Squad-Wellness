@@ -240,6 +240,8 @@ const AnalyticsPage = lazy(() =>
 import { useTheme } from './hooks/useTheme'
 import { useAutoNotifications } from './hooks/useAutoNotifications'
 import { useAppContext } from './context/AppContext'
+import { ActiveTourProvider } from './features/onboarding/ActiveTourContext'
+import { ActiveQuizProvider } from './features/academy/ActiveQuizContext'
 
 export default function App() {
   useTheme()
@@ -254,6 +256,8 @@ export default function App() {
 
   return (
     <BrowserRouter>
+      <ActiveTourProvider>
+      <ActiveQuizProvider>
       <Suspense fallback={<RouteLoadingScreen />}>
         <ErrorBoundary>
         <Routes>
