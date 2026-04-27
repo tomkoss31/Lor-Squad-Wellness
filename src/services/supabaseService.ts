@@ -47,6 +47,8 @@ type UserRow = {
   title: string;
   created_at?: string | null;
   last_access_at?: string | null;
+  herbalife_id?: string | null;
+  coach_referent_user_id?: string | null;
 };
 
 type AssessmentRow = {
@@ -296,7 +298,9 @@ function mapUser(row: UserRow): User {
     active: row.active,
     title: row.title,
     createdAt: row.created_at ?? undefined,
-    lastAccessAt: row.last_access_at ?? undefined
+    lastAccessAt: row.last_access_at ?? undefined,
+    herbalifeId: row.herbalife_id ?? null,
+    coachReferentUserId: row.coach_referent_user_id ?? null
   };
 }
 

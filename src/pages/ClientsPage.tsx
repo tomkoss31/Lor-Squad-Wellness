@@ -192,6 +192,7 @@ export function ClientsPage() {
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value as "all" | LifecycleStatus | "fragile")}
+          data-tour-id="clients-filter-active"
           style={{
             padding: "11px 14px", border: "1px solid var(--ls-border)",
             borderRadius: 10, fontFamily: "DM Sans, sans-serif", fontSize: 13,
