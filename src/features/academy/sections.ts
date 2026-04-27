@@ -816,8 +816,8 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
     id: "messages-and-clients",
     title: "Messagerie & dossiers clients",
     shortLabel: "Messages",
-    description: "Envoie un message, filtre tes clients, archive ceux qui ne suivent plus.",
-    estimatedDurationMinutes: 2,
+    description: "Envoie un message multi-canal, filtre tes clients, archive ceux qui ne suivent plus.",
+    estimatedDurationMinutes: 3,
     icon: "💬",
     steps: [
       {
@@ -852,6 +852,20 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
         title: "Démarrer une conversation",
         body: "Le CTA gold en haut de Messagerie ouvre une modale compose : tu sélectionnes un client dans ta base + tu rédiges ton message + Envoyer. Le client reçoit une push notif et le message s'affiche dans son onglet « Coach » de l'app. Pratique pour relancer ou féliciter sans attendre qu'il écrive.",
         manualAdvance: true,
+      },
+      {
+        id: "quick-templates-cta",
+        title: "Messages rapides — le canal externe (WhatsApp / SMS / Telegram)",
+        body: "La messagerie interne c'est puissant pour les clients déjà installés sur l'app Lor'Squad. Mais 80 % de tes échanges quotidiens passent par WhatsApp / SMS / Telegram — c'est là que tes clients vivent. Sur chaque fiche client, en haut de l'onglet Actions, le bouton gold « 💬 Envoyer un message » te donne un raccourci direct vers ces canaux externes, avec des templates pré-rédigés intelligents.",
+        placement: "center",
+        illustrationKey: "sparkles",
+      },
+      {
+        id: "quick-templates-modal",
+        title: "5 templates intelligents + 4 canaux d'envoi",
+        body: "Click sur le CTA gold → modale popup. À gauche : 5 templates (Confirmation RDV imminent, Félicitation perte de poids, Relance douce ≥14j, Rappel commande, Anniversaire programme). Les pertinents pour CE client sont en tête avec un badge teal « PERTINENT » (ex : la félicitation perte de poids n'apparaît PERTINENT que si une perte est constatée entre 2 bilans). À droite : aperçu du message déjà personnalisé avec son prénom, ses chiffres, ton nom de coach — éditable. En bas : 4 boutons d'envoi (📱 WhatsApp / 💬 SMS / ✈️ Telegram / 📋 Copier). Tu choisis le canal, ton message s'envoie pré-rempli avec son numéro. 30 secondes au lieu de 5 minutes par client.",
+        placement: "center",
+        illustrationKey: "rocket",
       },
       {
         id: "filter-clients",

@@ -96,6 +96,7 @@ export function MessageTemplatesButton({
       <button
         type="button"
         onClick={() => setOpen(true)}
+        data-tour-id="messages-quick-templates-cta"
         style={{
           display: "flex",
           alignItems: "center",
