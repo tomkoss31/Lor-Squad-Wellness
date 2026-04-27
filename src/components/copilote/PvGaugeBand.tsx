@@ -44,7 +44,6 @@ export function PvGaugeBand({
   return (
     <div
       className="pv-gauge-band"
-      data-tour-id="pv-gauge"
       style={{
         padding: 16,
         borderRadius: 16,
@@ -139,7 +138,6 @@ export function PvGaugeBand({
 
       {/* Partie droite : 3 mini-stats */}
       <div
-        data-tour-id="pv-mini-stats"
         style={{
           display: "grid",
           gridTemplateColumns: "repeat(3, 1fr)",

@@ -23,17 +23,6 @@ export default defineConfig({
             return "supabase-vendor";
           }
 
-          // Academy certificat — libs lourdes lazy-loadees via dynamic
-          // import dans AcademyCertificatePage. Chunks dedies pour pas
-          // polluer le vendor principal (chargees uniquement quand le
-          // user clique download PNG/JPEG/PDF).
-          if (id.includes("html2canvas")) {
-            return "html2canvas";
-          }
-          if (id.includes("jspdf")) {
-            return "jspdf";
-          }
-
           if (id.includes("react-dom") || id.includes("react")) {
             return "react-vendor";
           }

@@ -138,6 +138,3 @@ dist
 # Les backups Supabase SONT versionnés (commit automatique par GitHub Actions)
 # Ne PAS ignorer backups/
 # backups/
-
-# Claude Code worktrees (jamais commit)
-.claude/worktrees/

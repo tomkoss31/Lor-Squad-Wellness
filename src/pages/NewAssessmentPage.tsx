@@ -1133,35 +1133,8 @@ export function NewAssessmentPage() {
   }
 
 
-  // Chantier Academy refonte (2026-04-27) : mode demo. Si ?demo=academy
-  // dans l URL, on affiche un banner discret + on bypasse l insert DB
-  // au submit final (handle dans handleSubmit / handleSaveAssessment).
-  const isDemoMode = searchParams.get("demo") === "academy";
-
   return (
     <div className="flex flex-col xl:flex-row xl:gap-6">
-      {isDemoMode ? (
-        <div
-          style={{
-            position: "fixed",
-            top: 12,
-            left: "50%",
-            transform: "translateX(-50%)",
-            zIndex: 999,
-            background: "linear-gradient(135deg, #FAEEDA, #F0DBB0)",
-            color: "#5C3A05",
-            border: "1px solid rgba(186,117,23,0.35)",
-            padding: "8px 16px",
-            borderRadius: 999,
-            fontSize: 12,
-            fontWeight: 500,
-            fontFamily: "DM Sans, sans-serif",
-            boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
-          }}
-        >
-          🎓 Mode démo Academy — aucune donnée ne sera enregistrée
-        </div>
-      ) : null}
       {/* Chantier refonte bilan (2026-04-24) : panneau notes desktop visible
           uniquement sur étapes 0-4 et 12. Remplace la sidebar gauche. */}
       {notesVisible ? (
@@ -1273,7 +1246,7 @@ export function NewAssessmentPage() {
           </div>
 
           {currentStepId === 'client-info' && (
-              <div className="space-y-4" data-tour-id="bilan-client-info">
+              <div className="space-y-4">
                 <div className="grid gap-4 md:grid-cols-2">
                   <Field label="Prenom" value={form.firstName} onChange={(v) => update("firstName", v)} prefilled={prefilledFields.firstName} />
                   <Field label="Nom" value={form.lastName} onChange={(v) => update("lastName", v)} prefilled={prefilledFields.lastName} />
@@ -1526,7 +1499,7 @@ export function NewAssessmentPage() {
           )}
 
           {currentStepId === 'health-objective' && (
-              <div className="space-y-4" data-tour-id="bilan-objective">
+              <div className="space-y-4">
               <SectionBlock title="Bloc 7 - Allergies, transit et contexte pathologique" description="Ajouter seulement les points sante utiles pour cadrer l'accompagnement.">
                 <div className="grid gap-4 md:grid-cols-2">
                   <Field
@@ -1653,7 +1626,7 @@ export function NewAssessmentPage() {
           )}
 
           {currentStepId === 'body-scan' && (
-            <div className="space-y-4" data-tour-id="bilan-body-scan">
+            <div className="space-y-4">
               {/* Saisie body scan — grille claire */}
               <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
                 {[
@@ -2308,7 +2281,7 @@ export function NewAssessmentPage() {
               Etape precedente
             </Button>
             <div className="flex flex-wrap gap-3">
-              <Button variant="secondary" onClick={() => void handleSaveAssessment()} data-tour-id="bilan-submit">
+              <Button variant="secondary" onClick={() => void handleSaveAssessment()}>
                 Enregistrer le bilan
               </Button>
               <Button onClick={goToNextStep} disabled={currentStep === steps.length - 1}>

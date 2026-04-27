@@ -160,36 +160,6 @@ const CoPilotePage = lazy(() =>
     default: module.CoPilotePage
   }))
 );
-// Chantier Lor'Squad Academy Phase 1 (2026-04-26) : parcours onboarding
-// distri en 8 sections. Overview = liste + progression, /academy/:sectionId
-// = page de section (placeholder Phase 1, tutoriel interactif Phase 2).
-const AcademyOverviewPage = lazy(() =>
-  import("./pages/AcademyOverviewPage").then((module) => ({
-    default: module.AcademyOverviewPage
-  }))
-);
-const AcademySectionPage = lazy(() =>
-  import("./pages/AcademySectionPage").then((module) => ({
-    default: module.AcademySectionPage
-  }))
-);
-const AcademyCertificatePage = lazy(() =>
-  import("./pages/AcademyCertificatePage").then((module) => ({
-    default: module.AcademyCertificatePage
-  }))
-);
-// Pages démo Academy (2026-04-28) : mockups visuels avec données fictives
-// pour les tours, sans dépendre de l'état réel de la base.
-const DemoFicheClient = lazy(() =>
-  import("./pages/academy-demo/DemoFicheClient").then((module) => ({
-    default: module.DemoFicheClient
-  }))
-);
-const DemoAgenda = lazy(() =>
-  import("./pages/academy-demo/DemoAgenda").then((module) => ({
-    default: module.DemoAgenda
-  }))
-);
 // Chantier Centre de Formation V1 (2026-04-23) : la home /formation est
 // FormationPage (catalogue avec progression), /formation/:slug pointe
 // vers FormationCategoryPage.
@@ -226,8 +196,6 @@ const ConversationView = lazy(() =>
 import { useTheme } from './hooks/useTheme'
 import { useAutoNotifications } from './hooks/useAutoNotifications'
 import { useAppContext } from './context/AppContext'
-import { ActiveTourProvider } from './features/onboarding/ActiveTourContext'
-import { ActiveQuizProvider } from './features/academy/ActiveQuizContext'
 
 export default function App() {
   useTheme()
@@ -242,8 +210,6 @@ export default function App() {
 
   return (
     <BrowserRouter>
-      <ActiveTourProvider>
-      <ActiveQuizProvider>
       <Suspense fallback={<RouteLoadingScreen />}>
         <ErrorBoundary>
         <Routes>
@@ -267,13 +233,6 @@ export default function App() {
                   /dashboard redirige pour ne pas casser les liens existants. */}
               <Route path="co-pilote" element={<CoPilotePage />} />
               <Route path="dashboard" element={<Navigate to="/co-pilote" replace />} />
-              {/* Lor'Squad Academy Phase 1 (2026-04-26) */}
-              <Route path="academy" element={<AcademyOverviewPage />} />
-              <Route path="academy/certificat" element={<AcademyCertificatePage />} />
-              <Route path="academy/:sectionId" element={<AcademySectionPage />} />
-              {/* Pages démo Academy (2026-04-28) — mockups pour les tours */}
-              <Route path="academy/demo/fiche-client" element={<DemoFicheClient />} />
-              <Route path="academy/demo/agenda" element={<DemoAgenda />} />
               <Route path="formation" element={<FormationPage />} />
               <Route path="formation/:slug" element={<FormationCategoryPage />} />
               {/* /settings (non-admin) reste accessible comme placeholder profil léger.
@@ -288,12 +247,6 @@ export default function App() {
               <Route path="messagerie/conversation/:messageId" element={<ConversationView />} />
               <Route path="agenda" element={<AgendaPage />} />
               <Route path="clients" element={<ClientsPage />} />
-              {/* Chantier Academy section 1 (2026-04-27) : /parametres
-                  desormais accessible a TOUS les users authentifies (pas
-                  seulement admin) car le profil est une page perso. La
-                  page elle-meme cache les onglets admin-only via les
-                  checks role internes. */}
-              <Route path="parametres" element={<ParametresPage />} />
               <Route element={<RoleRoute allowedRoles={["admin"]} />}>
                 <Route path="users" element={<UsersPage />} />
                 {/* Chantier Team Tree (2026-04-25) : nouvelle fiche équipe
@@ -302,6 +255,9 @@ export default function App() {
                 <Route path="team" element={<TeamPage />} />
                 <Route path="pv/team" element={<PvTeamPage />} />
                 <Route path="debug/notifications" element={<DebugNotificationsPage />} />
+                {/* Chantier Paramètres Admin (2026-04-23) : /parametres admin-only.
+                    /settings redirige pour compat avec la placeholder du chantier 2. */}
+                <Route path="parametres" element={<ParametresPage />} />
               </Route>
               <Route path="distributors/:distributorId" element={<DistributorPortfolioPage />} />
               <Route path="clients/:clientId" element={<ClientDetailPage />} />
@@ -335,8 +291,6 @@ export default function App() {
         </ErrorBoundary>
       </Suspense>
       <ToastHost />
-      </ActiveQuizProvider>
-      </ActiveTourProvider>
     </BrowserRouter>
   );
 }

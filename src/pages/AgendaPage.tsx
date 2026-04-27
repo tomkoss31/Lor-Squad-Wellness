@@ -440,7 +440,7 @@ export function AgendaPage() {
             Voir mes priorités →
           </Link>
         </div>
-        <Button onClick={() => { setEditing(undefined); setShowForm(true); }} data-tour-id="agenda-new-rdv">
+        <Button onClick={() => { setEditing(undefined); setShowForm(true); }}>
           + Nouveau RDV
         </Button>
       </div>
@@ -478,8 +478,7 @@ export function AgendaPage() {
       )}
 
       {/* Onglets entité (Chantier Agenda unifié 2026-04-20) */}
-      <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }} data-tour-id="agenda-filters">
-
+      <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
         <EntityTab
           label="Tous"
           count={entityCounts.all}
@@ -545,7 +544,6 @@ export function AgendaPage() {
       </Card>
 
       {/* Liste groupée — rendu unifié clients + prospects */}
-      <div data-tour-id="agenda-upcoming">
       {grouped.length === 0 ? (
         <Card>
           <div style={{ textAlign: "center", padding: "32px 0" }}>
@@ -617,7 +615,6 @@ export function AgendaPage() {
           </div>
         ))
       )}
-      </div>
 
       {/* Form modal */}
       {showForm && (
