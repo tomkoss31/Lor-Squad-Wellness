@@ -87,7 +87,21 @@ export function SpotlightOverlay({
           bottom: 0,
         }}
       />
-      {/* Ring gold autour du target */}
+      {/* Ring gold autour du target — animation breathe (Polish B 2026-04-28) */}
+      <style>{`
+        @keyframes ls-spotlight-breathe {
+          0%, 100% {
+            box-shadow:
+              0 0 0 2px rgba(239,159,39,0.30),
+              0 0 18px 0 rgba(239,159,39,0.15);
+          }
+          50% {
+            box-shadow:
+              0 0 0 7px rgba(239,159,39,0.10),
+              0 0 28px 4px rgba(239,159,39,0.40);
+          }
+        }
+      `}</style>
       <div
         style={{
           position: "fixed",
@@ -99,7 +113,7 @@ export function SpotlightOverlay({
           borderRadius: 12,
           zIndex,
           pointerEvents: "none",
-          boxShadow: "0 0 0 2px rgba(239,159,39,0.25)",
+          animation: "ls-spotlight-breathe 2.4s ease-in-out infinite",
         }}
       />
     </>

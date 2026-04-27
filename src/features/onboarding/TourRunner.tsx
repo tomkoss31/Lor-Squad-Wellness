@@ -317,6 +317,7 @@ export function TourRunner({
       />
 
       <TutorialTooltip
+        key={currentStep.id}
         stepIndex={currentStepIndex}
         totalSteps={totalSteps}
         title={currentStep.title}

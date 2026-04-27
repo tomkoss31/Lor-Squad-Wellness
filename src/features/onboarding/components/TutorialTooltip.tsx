@@ -38,6 +38,33 @@ export function TutorialTooltip({
   const positionedStyle = computePosition(placement, targetRect);
 
   return (
+    <>
+      {/* Polish B (2026-04-28) : keyframes inline pour fade-in entre steps
+          + hover lift sur le bouton Suivant gold. */}
+      <style>{`
+        @keyframes ls-tooltip-fade-in {
+          0% {
+            opacity: 0;
+            transform: ${placement === "center" ? "translate(-50%, -50%) scale(0.94)" : "translate3d(0, 6px, 0) scale(0.97)"};
+          }
+          100% {
+            opacity: 1;
+            transform: ${placement === "center" ? "translate(-50%, -50%) scale(1)" : "translate3d(0, 0, 0) scale(1)"};
+          }
+        }
+        .ls-tutorial-next-btn {
+          transition: transform 160ms ease-out, box-shadow 160ms ease-out, filter 160ms ease-out;
+        }
+        .ls-tutorial-next-btn:hover {
+          transform: translateY(-1px);
+          box-shadow: 0 6px 16px rgba(186,117,23,0.35);
+          filter: brightness(1.05);
+        }
+        .ls-tutorial-next-btn:active {
+          transform: translateY(0);
+          box-shadow: 0 2px 6px rgba(186,117,23,0.25);
+        }
+      `}</style>
     <div
       role="dialog"
       aria-modal="true"
@@ -53,6 +80,8 @@ export function TutorialTooltip({
         boxShadow: "0 12px 40px rgba(0,0,0,0.25)",
         color: "#111827",
         fontFamily: "DM Sans, sans-serif",
+        animation: "ls-tooltip-fade-in 220ms cubic-bezier(0.2, 0.8, 0.2, 1) both",
+        willChange: "transform, opacity",
         ...positionedStyle,
       }}
     >
@@ -165,6 +194,7 @@ export function TutorialTooltip({
             <button
               type="button"
               onClick={onNext}
+              className="ls-tutorial-next-btn"
               style={{
                 padding: "8px 14px",
                 borderRadius: 8,
@@ -176,6 +206,7 @@ export function TutorialTooltip({
                 cursor: "pointer",
                 fontFamily: "DM Sans, sans-serif",
                 letterSpacing: 0.2,
+                boxShadow: "0 2px 6px rgba(186,117,23,0.25)",
               }}
             >
               {nextLabel ?? (isLast ? "Terminer le tuto 🎉" : "Suivant →")}
@@ -184,6 +215,7 @@ export function TutorialTooltip({
         </div>
       </div>
     </div>
+    </>
   );
 }
 
