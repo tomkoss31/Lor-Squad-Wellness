@@ -34,15 +34,10 @@ export default defineConfig({
             return "jspdf";
           }
 
-          // Chantier C.2 v2 + D v2 (2026-04-29) : recharts (~100KB) et
-          // dnd-kit (~50KB) chargees uniquement sur les pages concernees
-          // (AnalyticsPage et ClientsPage en mode kanban) -> chunks dedies.
-          if (id.includes("recharts") || id.includes("d3-")) {
-            return "charts";
-          }
-          if (id.includes("@dnd-kit")) {
-            return "dnd-kit";
-          }
+          // Note 2026-04-29 : recharts/dnd-kit retires des manualChunks
+          // car causaient une race condition "Cannot read useState of undefined"
+          // (chunks chargeaient avant react-vendor). Vite les regroupe dans
+          // vendor proprement maintenant.
 
           if (id.includes("react-dom") || id.includes("react")) {
             return "react-vendor";
