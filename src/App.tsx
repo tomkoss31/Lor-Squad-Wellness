@@ -281,14 +281,20 @@ export default function App() {
                   /dashboard redirige pour ne pas casser les liens existants. */}
               <Route path="co-pilote" element={<CoPilotePage />} />
               <Route path="dashboard" element={<Navigate to="/co-pilote" replace />} />
-              {/* Lor'Squad Academy Phase 1 (2026-04-26) */}
-              <Route path="academy" element={<AcademyOverviewPage />} />
-              <Route path="academy/certificat" element={<AcademyCertificatePage />} />
-              <Route path="academy/sandbox" element={<AcademySandboxPage />} />
-              <Route path="academy/:sectionId" element={<AcademySectionPage />} />
-              {/* Pages démo Academy (2026-04-28) — mockups pour les tours */}
-              <Route path="academy/demo/fiche-client" element={<DemoFicheClient />} />
-              <Route path="academy/demo/agenda" element={<DemoAgenda />} />
+              {/* Lor'Squad Academy Phase 1 (2026-04-26) — gated admin
+                  only depuis migration prod 2026-04-28 (en finalisation,
+                  on leve le voile quand prete). Defense en profondeur :
+                  RoleRoute redirige vers /co-pilote si non-admin tape
+                  l URL manuellement. */}
+              <Route element={<RoleRoute allowedRoles={["admin"]} />}>
+                <Route path="academy" element={<AcademyOverviewPage />} />
+                <Route path="academy/certificat" element={<AcademyCertificatePage />} />
+                <Route path="academy/sandbox" element={<AcademySandboxPage />} />
+                <Route path="academy/:sectionId" element={<AcademySectionPage />} />
+                {/* Pages démo Academy (2026-04-28) — mockups pour les tours */}
+                <Route path="academy/demo/fiche-client" element={<DemoFicheClient />} />
+                <Route path="academy/demo/agenda" element={<DemoAgenda />} />
+              </Route>
               <Route path="formation" element={<FormationPage />} />
               <Route path="formation/:slug" element={<FormationCategoryPage />} />
               {/* /settings (non-admin) reste accessible comme placeholder profil léger.

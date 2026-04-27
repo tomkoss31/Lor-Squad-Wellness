@@ -114,7 +114,11 @@ export function AppLayout() {
     { label: "Co-pilote", path: "/co-pilote", badge: 0, tourId: "nav-copilote" },
     // Chantier Lor'Squad Academy Phase 1 (2026-04-26) : insere entre
     // Co-pilote et Agenda. data-tour-id pour la Phase 2 (tour distri).
-    { label: "Academy", path: "/academy", badge: 0, tourId: "nav-academy" },
+    // Migration prod 2026-04-28 : visible UNIQUEMENT pour les admins
+    // tant que l Academy est en finalisation. Lever ce gate quand prete.
+    ...(currentUser.role === "admin"
+      ? [{ label: "Academy", path: "/academy", badge: 0, tourId: "nav-academy" }]
+      : []),
     { label: "Agenda", path: "/agenda", badge: todayProspectsCount, tourId: "nav-agenda" },
     { label: "Messagerie", path: "/messages", badge: unreadMessageCount ?? 0, tourId: "nav-messagerie" },
     { label: "Dossiers clients", path: "/clients", badge: 0, tourId: "nav-clients" },
@@ -545,7 +549,9 @@ export function AppLayout() {
         </main>
       </div>
       <BottomNav />
-      {academyTrigger.isOpen ? (
+      {/* Migration prod 2026-04-28 : rappel Academy visible admin only
+          tant que la formation est en finalisation. */}
+      {academyTrigger.isOpen && currentUser?.role === "admin" ? (
         <AcademyReminderDialog onClose={academyTrigger.close} />
       ) : null}
       {activeTour ? (
