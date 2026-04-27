@@ -19,6 +19,7 @@
 // =============================================================================
 
 import type { Client, FollowUp } from "../types/domain";
+import { getClientActiveFollowUp, isRelanceFollowUp } from "./portfolio";
 
 export type QuickFilterId =
   | "all"
@@ -107,16 +108,13 @@ export const QUICK_FILTERS: QuickFilter[] = [
     emoji: "🔥",
     label: "À relancer",
     description:
-      "RDV en retard ou dernier contact > 7j sans RDV programme.",
+      "Client avec RDV en retard ou en attente (meme definition que la stat Relances).",
     tone: "coral",
     predicate: (client, ctx) => {
-      if (client.lifecycleStatus === "lost") return false;
-      if (hasOverdueFollowUp(client, ctx)) return true;
-      // Sinon : pas de RDV futur ET dernier contact > 7j
-      if (hasUpcomingFollowUp(client, ctx)) return false;
-      const lastDate = getLastAssessmentDate(client);
-      if (!lastDate) return true; // jamais bilan + pas de RDV = a relancer
-      return daysSince(lastDate, ctx.now) > 7;
+      // Utilise la meme definition que le reste de l app (cf. portfolio.ts).
+      // getClientActiveFollowUp exclut deja lost/stopped/paused/freeFollowUp.
+      const active = getClientActiveFollowUp(client, ctx.followUps);
+      return active !== null && isRelanceFollowUp(active);
     },
   },
   {
@@ -124,12 +122,11 @@ export const QUICK_FILTERS: QuickFilter[] = [
     emoji: "🎯",
     label: "Au cap",
     description:
-      "Client actif avec au moins 1 bilan et un RDV programme dans le futur.",
+      "Client actif (lifecycle=active) avec au moins 1 bilan complet.",
     tone: "teal",
-    predicate: (client, ctx) => {
+    predicate: (client) => {
       if (client.lifecycleStatus !== "active") return false;
-      if (!client.assessments || client.assessments.length === 0) return false;
-      return hasUpcomingFollowUp(client, ctx);
+      return (client.assessments?.length ?? 0) >= 1;
     },
   },
   {
@@ -137,12 +134,13 @@ export const QUICK_FILTERS: QuickFilter[] = [
     emoji: "💤",
     label: "Inactifs >30j",
     description:
-      "Aucun bilan depuis plus de 30 jours et pas marque comme perdu.",
+      "Actif mais aucun bilan depuis plus de 30 jours.",
     tone: "purple",
     predicate: (client, ctx) => {
-      if (client.lifecycleStatus === "lost") return false;
+      // On filtre uniquement parmi les actifs (pas pause/stopped/lost).
+      if (client.lifecycleStatus && client.lifecycleStatus !== "active") return false;
       const lastDate = getLastAssessmentDate(client);
-      if (!lastDate) return false; // jamais de bilan = couvert par "Bilan incomplet"
+      if (!lastDate) return false;
       return daysSince(lastDate, ctx.now) > 30;
     },
   },
@@ -150,11 +148,14 @@ export const QUICK_FILTERS: QuickFilter[] = [
     id: "no-rdv",
     emoji: "📭",
     label: "Sans RDV",
-    description: "Aucun RDV programme dans le futur (hors lost).",
+    description: "Client actif sans RDV programme dans le futur.",
     tone: "gold",
     predicate: (client, ctx) => {
-      if (client.lifecycleStatus === "lost") return false;
-      return !hasUpcomingFollowUp(client, ctx);
+      // On filtre uniquement parmi les actifs.
+      if (client.lifecycleStatus && client.lifecycleStatus !== "active") return false;
+      // getClientActiveFollowUp = null si pas de RDV scheduled futur valide.
+      const active = getClientActiveFollowUp(client, ctx.followUps);
+      return active === null;
     },
   },
   {

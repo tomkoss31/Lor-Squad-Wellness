@@ -138,8 +138,12 @@ export function ClientsPage() {
   // Chantier C.1 (2026-04-29) : on memoize le `now` pour que le predicat
   // quickFilter soit stable (sinon il recalcule a chaque render).
   const quickFilterNow = useMemo(() => new Date(), []);
-  const filteredClients = useMemo(() => {
-    const filtered = visibleClients.filter((client) => {
+
+  // Etape 1 : applique search + owner + statut, SANS le quick filter.
+  // Cette liste sert pour compter les chips de quick filter (count
+  // coherent avec ce qui sera reellement affiche).
+  const clientsBeforeQuickFilter = useMemo(() => {
+    return visibleClients.filter((client) => {
       const matchesOwner =
         ownerFilter === "all" || (selectedOwnerIds ? selectedOwnerIds.has(client.distributorId) : false);
       const effectiveLifecycle: LifecycleStatus = client.lifecycleStatus ?? (isClientProgramStarted(client) ? "active" : "not_started");
@@ -156,11 +160,13 @@ export function ClientsPage() {
           .includes(normalizedSearch);
       return matchesOwner && matchesStatus && matchesSearch;
     });
+  }, [normalizedSearch, ownerFilter, selectedOwnerIds, statusFilter, visibleClients]);
 
+  const filteredClients = useMemo(() => {
     // Applique le quick filter par dessus (compose avec les autres filtres).
     const afterQuick = quickFilter === "all"
-      ? filtered
-      : applyQuickFilter(quickFilter, filtered, { followUps: visibleFollowUps, now: quickFilterNow });
+      ? clientsBeforeQuickFilter
+      : applyQuickFilter(quickFilter, clientsBeforeQuickFilter, { followUps: visibleFollowUps, now: quickFilterNow });
 
     // Chantier tri priorité (2026-04-24) : admin → ses clients en premier.
     // Tri secondaire par nom de famille alphabétique.
@@ -173,7 +179,7 @@ export function ClientsPage() {
       });
     }
     return afterQuick;
-  }, [normalizedSearch, ownerFilter, selectedOwnerIds, statusFilter, visibleClients, isAdmin, currentUser?.id, quickFilter, visibleFollowUps, quickFilterNow]);
+  }, [clientsBeforeQuickFilter, isAdmin, currentUser?.id, quickFilter, visibleFollowUps, quickFilterNow]);
 
   // Relances visibles pour le filtre courant
   const visibleRelanceCount = useMemo(() => {
@@ -226,7 +232,7 @@ export function ClientsPage() {
           <QuickFiltersBar
             activeFilter={quickFilter}
             onChange={handleQuickFilterChange}
-            clients={visibleClients}
+            clients={clientsBeforeQuickFilter}
             followUps={visibleFollowUps}
           />
         </div>
