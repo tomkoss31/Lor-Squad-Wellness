@@ -101,7 +101,8 @@
       "Bash(git worktree *)",
       "Bash(grep -n \"const { view, goToSection, restartSection\" src/pages/AcademyOverviewPage.tsx)",
       "Bash(grep -n \"^export function TeamPage\\\\|^      </div>$\\\\|return \\(\" src/pages/TeamPage.tsx)",
-      "Bash(awk 'NR>=220 && /^}$/ {print NR; exit}' src/pages/TeamPage.tsx)"
+      "Bash(awk 'NR>=220 && /^}$/ {print NR; exit}' src/pages/TeamPage.tsx)",
+      "Bash(grep -n 'Passer$' src/features/onboarding/components/TutorialTooltip.tsx)"
     ]
   }
 }

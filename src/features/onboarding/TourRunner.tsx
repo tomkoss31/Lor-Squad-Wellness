@@ -350,14 +350,37 @@ export function TourRunner({
     onClose("dismissed");
   }, [onClose]);
 
-  // Escape = skip
+  // Keyboard nav (Direction 8 — accessibilite 2026-04-28) :
+  //   Escape : skip
+  //   ArrowLeft : Precedent (si pas le 1er step)
+  //   ArrowRight : Suivant
+  // Ignore les touches si l user est en train de taper dans un input/
+  // textarea/select pour pas casser les advanceOn input listeners.
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (e.key === "Escape") skip();
+      const target = e.target as HTMLElement | null;
+      const tag = target?.tagName?.toLowerCase();
+      const isTyping =
+        tag === "input" ||
+        tag === "textarea" ||
+        tag === "select" ||
+        target?.isContentEditable;
+      if (isTyping) {
+        // Seul Escape passe meme en typing (pour skip d urgence)
+        if (e.key === "Escape") skip();
+        return;
+      }
+      if (e.key === "Escape") {
+        skip();
+      } else if (e.key === "ArrowLeft" && currentStepIndex > 0) {
+        goPrev();
+      } else if (e.key === "ArrowRight") {
+        goNext();
+      }
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [skip]);
+  }, [skip, goPrev, goNext, currentStepIndex]);
 
   if (!currentStep) return null;
 
