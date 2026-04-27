@@ -54,6 +54,21 @@ export interface TutorialStep {
    * Voir TutorialIllustration.tsx pour la liste des kinds disponibles.
    */
   illustrationKey?: TutorialIllustrationKind;
+  /**
+   * Polish G (2026-04-28) : avance auto sur interaction DOM reelle.
+   * Si defini, TourRunner ecoute event sur target. Quand declenche
+   * (et valueMatch passe si fourni), le tour avance au step suivant.
+   * Exemple: advanceOn={ event: "input", valueMatch: ".+" } -> avance
+   * des que le user tape quelque chose. Combine avec manualAdvance:
+   * input/change ne sont pas interceptes (seul click l est).
+   */
+  advanceOn?: {
+    event: "click" | "input" | "change";
+    /** Regex (string) que la valeur doit matcher pour avancer. */
+    valueMatch?: string;
+    /** Delai apres l evenement avant d avancer. Defaut 600ms (debounce typing). */
+    debounceMs?: number;
+  };
 }
 
 export type TutorialIllustrationKind =

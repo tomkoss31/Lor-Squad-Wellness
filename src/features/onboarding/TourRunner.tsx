@@ -211,42 +211,80 @@ export function TourRunner({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [targetSelector, stepWaitsForRoute, currentStepIndex, totalSteps]);
 
+  // Helper avance commun (Polish G 2026-04-28).
+  const advance = useCallback(() => {
+    setCurrentStepIndex((idx) => {
+      if (idx + 1 >= totalSteps) {
+        onClose("completed");
+        return idx;
+      }
+      return idx + 1;
+    });
+  }, [totalSteps, onClose]);
+
   // ─── Click-on-target : avance ou intercept selon manualAdvance ──────────
-  // Patch 2 (2026-04-26). Si target visible :
-  //   - manualAdvance === true  → preventDefault + stopPropagation, le tour
-  //     reste sur le step. User doit utiliser "Suivant".
-  //   - manualAdvance falsy     → laisse l action native s executer ET
-  //     avance au step suivant (ou complete si dernier).
+  // Patch 2 (2026-04-26) + Polish G (2026-04-28). Si target visible :
+  //   - manualAdvance && pas d advanceOn click → preventDefault, user doit
+  //     utiliser "Suivant".
+  //   - advanceOn?.event === "click" → laisse passer, le listener advanceOn
+  //     gere l avance.
+  //   - sinon (action native autorisee) → laisse passer + setTimeout advance.
   useEffect(() => {
     if (!targetEl || stepWaitsForRoute) return;
     const manualAdvance = currentStep?.manualAdvance === true;
+    const advanceOnClick = currentStep?.advanceOn?.event === "click";
 
     const handleClick = (e: Event) => {
-      if (manualAdvance) {
+      if (manualAdvance && !advanceOnClick) {
         e.preventDefault();
         e.stopPropagation();
         return;
       }
-      // Laisser l action native passer. Avance ensuite (timeout 0 pour
-      // laisser le bubbling se faire avant le re-render).
-      window.setTimeout(() => {
-        setCurrentStepIndex((idx) => {
-          if (idx + 1 >= totalSteps) {
-            onClose("completed");
-            return idx;
-          }
-          return idx + 1;
-        });
-      }, 0);
+      if (advanceOnClick) return; // listener advanceOn s en charge
+      window.setTimeout(advance, 0);
     };
 
-    // Capture phase pour intercepter avant les handlers React du target
-    // (necessaire pour preventDefault d un NavLink en mode manualAdvance).
+    // Capture phase pour intercepter avant les handlers React du target.
     targetEl.addEventListener("click", handleClick, true);
     return () => {
       targetEl.removeEventListener("click", handleClick, true);
     };
-  }, [targetEl, stepWaitsForRoute, currentStep, totalSteps, onClose]);
+  }, [targetEl, stepWaitsForRoute, currentStep, advance]);
+
+  // ─── Auto-advance sur interaction DOM (Polish G 2026-04-28) ─────────────
+  // Si step.advanceOn defini, ecoute l event sur le target. Avance auto
+  // quand l event firee (et valueMatch passe si fourni). Debounce
+  // configurable (defaut 600ms pour les inputs typing).
+  useEffect(() => {
+    if (!targetEl || stepWaitsForRoute) return;
+    const advanceOn = currentStep?.advanceOn;
+    if (!advanceOn) return;
+
+    const { event, valueMatch, debounceMs } = advanceOn;
+    const regex = valueMatch ? new RegExp(valueMatch) : null;
+    const debounce = debounceMs ?? 600;
+    let timeoutId: number | null = null;
+
+    const handler = (e: Event) => {
+      let valueOk = true;
+      if (event === "input" || event === "change") {
+        const target = e.target as HTMLInputElement | HTMLSelectElement | null;
+        const value = target?.value ?? "";
+        valueOk = !regex || regex.test(value);
+      }
+      if (!valueOk) return;
+      if (timeoutId !== null) window.clearTimeout(timeoutId);
+      timeoutId = window.setTimeout(() => {
+        advance();
+      }, debounce);
+    };
+
+    targetEl.addEventListener(event, handler);
+    return () => {
+      targetEl.removeEventListener(event, handler);
+      if (timeoutId !== null) window.clearTimeout(timeoutId);
+    };
+  }, [targetEl, stepWaitsForRoute, currentStep, advance]);
 
   // ─── Cleanup onExit du dernier step au unmount ──────────────────────────
   useEffect(() => {
