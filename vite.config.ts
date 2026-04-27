@@ -15,18 +15,15 @@ export default defineConfig({
             return undefined;
           }
 
-          if (id.includes("react-router-dom")) {
-            return "router-vendor";
-          }
+          // Note 2026-04-29 : on ne split QUE les libs qui sont
+          // chargees lazy (via dynamic import dans le code applicatif).
+          // Tout le reste (react, react-dom, recharts, dnd-kit, etc.)
+          // va dans le chunk par defaut pour eviter les circular deps
+          // qui causent "Cannot read useState of undefined".
 
-          if (id.includes("@supabase/supabase-js")) {
-            return "supabase-vendor";
-          }
-
-          // Academy certificat — libs lourdes lazy-loadees via dynamic
-          // import dans AcademyCertificatePage. Chunks dedies pour pas
-          // polluer le vendor principal (chargees uniquement quand le
-          // user clique download PNG/JPEG/PDF).
+          // html2canvas + jspdf : chargees lazy par AcademyCertificatePage
+          // (dynamic import quand l user click download). Chunks dedies
+          // pour ne pas polluer le bundle initial.
           if (id.includes("html2canvas")) {
             return "html2canvas";
           }
@@ -34,16 +31,21 @@ export default defineConfig({
             return "jspdf";
           }
 
-          // Note 2026-04-29 : recharts/dnd-kit retires des manualChunks
-          // car causaient une race condition "Cannot read useState of undefined"
-          // (chunks chargeaient avant react-vendor). Vite les regroupe dans
-          // vendor proprement maintenant.
-
-          if (id.includes("react-dom") || id.includes("react")) {
-            return "react-vendor";
+          // supabase-js : import statique global mais relativement gros.
+          // Chunk dedie pour cache long-terme (ne change pas souvent).
+          if (id.includes("@supabase/supabase-js")) {
+            return "supabase-vendor";
           }
 
-          return "vendor";
+          // react-router-dom : import statique global, chunk dedie pour
+          // cache long-terme.
+          if (id.includes("react-router-dom")) {
+            return "router-vendor";
+          }
+
+          // Tout le reste va dans le chunk par defaut (vendor) sans
+          // distinction. Vite optimise les imports automatiquement.
+          return undefined;
         }
       }
     }
