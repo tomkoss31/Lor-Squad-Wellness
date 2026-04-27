@@ -48,4 +48,24 @@ export interface TutorialStep {
    * Herbalife/sponsor/coach-referent ne sont visibles qu aux distri.
    */
   requiredRole?: "distributor" | "admin" | "referent";
+  /**
+   * Cle d illustration SVG inline a afficher au-dessus du titre.
+   * Polish C (2026-04-28) : rend les modales center plus engageantes.
+   * Voir TutorialIllustration.tsx pour la liste des kinds disponibles.
+   */
+  illustrationKey?: TutorialIllustrationKind;
 }
+
+export type TutorialIllustrationKind =
+  | "wave"
+  | "rocket"
+  | "person-card"
+  | "calendar-glow"
+  | "chat-bubble"
+  | "shopping-bag"
+  | "phone-pwa"
+  | "trophy"
+  | "sparkles"
+  | "ring-progress"
+  | "alert-shield"
+  | "qr-share";

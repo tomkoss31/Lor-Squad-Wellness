@@ -52,6 +52,7 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
         body: "On commence par ton profil. C'est ce qui relie ton compte à ton lignage Herbalife (pour les commissions) ET à ton coach référent dans Lor'Squad (pour le suivi opérationnel). Deux choses différentes, on les sépare ici. Compte 2 minutes.",
         placement: "center",
         route: "/parametres",
+        illustrationKey: "wave",
       },
       {
         id: "name",
@@ -118,6 +119,7 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
         title: "Lor'Squad en 60 secondes",
         body: "Tour rapide des 6 sections principales et du CTA gold. À la fin tu sauras où chaque chose vit. Skip possible à tout moment, on revient quand tu veux via /academy.",
         placement: "center",
+        illustrationKey: "ring-progress",
       },
       {
         id: "copilote",
@@ -184,6 +186,7 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
         title: "Le bilan, ta porte d'entrée",
         body: "Le bilan, c'est le rituel central de ton activité. Il crée le client ET son premier état des lieux en un seul parcours guidé. 13 étapes dynamiques qui s'adaptent à l'objectif (les sportifs ont 2 étapes en plus). Compte 8 à 12 minutes en RDV réel — Lor'Squad fait tout le boulot administratif, toi tu te concentres sur l'écoute.",
         placement: "center",
+        illustrationKey: "person-card",
       },
       {
         id: "open-form",
@@ -233,6 +236,7 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
         placement: "center",
         isLast: true,
         nextLabel: "Section terminée",
+        illustrationKey: "qr-share",
       },
     ],
   },
@@ -249,6 +253,7 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
         title: "Le Programme — recommandation auto",
         body: "Lor'Squad génère le programme produits du client selon 6 règles métier déterministes (collations, liftoff, CR7, hydrate, créatine, collagène) déclenchées par son objectif et son body scan. Tu valides, tu ajustes les quantités, tu envoies. Pas de feuille Excel, pas de catalogue à apprendre par cœur.",
         placement: "center",
+        illustrationKey: "shopping-bag",
       },
       {
         id: "open-program",
@@ -278,6 +283,7 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
         title: "Détection auto de 6 alertes sport",
         body: "Le wizard détecte automatiquement : hydratation faible, protéines basses, sommeil court, masse musculaire insuffisante, snack manquant, fréquence sport incohérente. Une popup style Apple Health bloque la validation tant que tu n'as pas acquitté chaque alerte (avec un commentaire si pertinent). Évite de valider un programme bancal sans s'en rendre compte.",
         placement: "center",
+        illustrationKey: "alert-shield",
       },
       {
         id: "generate",
@@ -292,6 +298,7 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
         placement: "center",
         isLast: true,
         nextLabel: "Section terminée",
+        illustrationKey: "sparkles",
       },
     ],
   },
@@ -308,6 +315,7 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
         title: "L'agenda, ton GPS",
         body: "Bilans, suivis et prospects sur un calendrier unique. Tu filtres par type (clients / prospects / suivis), par date (aujourd'hui, semaine, mois) et par statut. La page liste tous tes prochains rendez-vous classés par date — tu vois en un coup d'œil ce qui arrive.",
         placement: "center",
+        illustrationKey: "calendar-glow",
       },
       {
         id: "new-rdv",
@@ -346,6 +354,7 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
         placement: "center",
         isLast: true,
         nextLabel: "Section terminée",
+        illustrationKey: "rocket",
       },
     ],
   },
@@ -362,6 +371,7 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
         title: "Communication & gestion — duo gagnant",
         body: "Deux outils qui marchent ensemble : la messagerie centralise les échanges (avec push notif temps réel), les dossiers clients organisent ta base par lifecycle. Le résultat : plus de Post-it, plus de WhatsApp perdus, plus de clients oubliés en pause.",
         placement: "center",
+        illustrationKey: "chat-bubble",
       },
       {
         id: "messages-tab",
@@ -411,6 +421,7 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
         placement: "center",
         isLast: true,
         nextLabel: "Section terminée",
+        illustrationKey: "rocket",
       },
     ],
   },
@@ -427,6 +438,7 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
         title: "L'app client — vitrine premium PWA",
         body: "Chaque client a sa propre Progressive Web App, installable sur l'écran d'accueil sans passer par un store. Il y voit son bilan, son évolution body scan dans le temps, ses RDV avec export Google Calendar / .ics, ses produits actifs, ses conseils sport personnalisés et un onglet Mensurations pour photos avant/après. C'est ton meilleur outil de fidélisation et de référencement (avis Google intégré).",
         placement: "center",
+        illustrationKey: "phone-pwa",
       },
       {
         id: "open-clients",
@@ -481,6 +493,7 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
         placement: "center",
         isLast: true,
         nextLabel: "Section terminée",
+        illustrationKey: "rocket",
       },
     ],
   },
@@ -497,6 +510,7 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
         title: "Tes rituels quotidiens",
         body: "Deux habitudes prises dès le départ font 80 % du résultat : avoir Lor'Squad sous la main comme une app native, et regarder ton volume PV chaque matin pour piloter ton mois. C'est l'objet de cette dernière section.",
         placement: "center",
+        illustrationKey: "sparkles",
       },
       {
         id: "pwa-install",
@@ -540,6 +554,7 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
         title: "Tu es prêt 🎉",
         body: "Bravo, tu as terminé l'Academy Lor'Squad. Tu connais le bilan, le programme, l'agenda, la messagerie, l'app client et tes rituels PV. Tu peux relancer n'importe quelle section quand tu veux via /academy. Maintenant : ton premier vrai bilan client.",
         placement: "center",
+        illustrationKey: "trophy",
         isLast: true,
         nextLabel: "Terminer l'Academy",
       },

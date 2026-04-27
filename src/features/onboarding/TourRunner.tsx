@@ -328,6 +328,7 @@ export function TourRunner({
         onSkip={skip}
         nextLabel={currentStep.nextLabel}
         isLast={isLast}
+        illustrationKey={currentStep.illustrationKey}
       >
         {currentStep.body}
       </TutorialTooltip>

@@ -5,6 +5,8 @@
 
 import type { ReactNode } from "react";
 import { TutorialProgress } from "./TutorialProgress";
+import { TutorialIllustration } from "./TutorialIllustration";
+import type { TutorialIllustrationKind } from "../types";
 
 export interface TutorialTooltipProps {
   stepIndex: number; // 0-based
@@ -19,6 +21,8 @@ export interface TutorialTooltipProps {
   onClose?: () => void;
   nextLabel?: string;
   isLast?: boolean;
+  /** Polish C (2026-04-28) : illustration SVG inline au-dessus du titre. */
+  illustrationKey?: TutorialIllustrationKind;
 }
 
 export function TutorialTooltip({
@@ -34,6 +38,7 @@ export function TutorialTooltip({
   onClose,
   nextLabel,
   isLast = false,
+  illustrationKey,
 }: TutorialTooltipProps) {
   const positionedStyle = computePosition(placement, targetRect);
 
@@ -139,6 +144,9 @@ export function TutorialTooltip({
           </button>
         ) : null}
       </div>
+
+      {/* Illustration SVG inline (Polish C 2026-04-28) */}
+      {illustrationKey ? <TutorialIllustration kind={illustrationKey} /> : null}
 
       {/* Titre */}
       <p
