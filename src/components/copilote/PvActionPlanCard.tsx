@@ -1,0 +1,435 @@
+// =============================================================================
+// PvActionPlanCard — widget Plan du jour PV sur Co-pilote (2026-04-28)
+// =============================================================================
+//
+// Affiche le status PV (delayed / on_track / ahead) + 3 categories de
+// suggestions client (top dormants, restock imminent, silent active) +
+// gain attendu si toutes les relances aboutissent.
+//
+// Click sur un client → navigate /clients/<id> directement.
+// 100 % var(--ls-*).
+// =============================================================================
+
+import { useMemo, useState } from "react";
+import { Link } from "react-router-dom";
+import { usePvActionPlan, type PvStatus } from "../../hooks/usePvActionPlan";
+
+interface Props {
+  userId: string | null | undefined;
+}
+
+const STATUS_META: Record<PvStatus, { label: string; tone: string; icon: string; hint: string }> = {
+  delayed: {
+    label: "En retard",
+    tone: "var(--ls-coral)",
+    icon: "🔴",
+    hint: "Tu es sous le prorata jour. Voici 3 leviers concrets pour rattraper.",
+  },
+  on_track: {
+    label: "Au cap",
+    tone: "var(--ls-gold)",
+    icon: "🟡",
+    hint: "Tu suis ton rythme. Consolide en activant les leviers ci-dessous.",
+  },
+  ahead: {
+    label: "En avance",
+    tone: "var(--ls-teal)",
+    icon: "🟢",
+    hint: "Bravo, tu es au-dessus du prorata. Profite pour prospecter.",
+  },
+};
+
+export function PvActionPlanCard({ userId }: Props) {
+  const { data, loading, error, reload } = usePvActionPlan(userId);
+  const [showAll, setShowAll] = useState(false);
+
+  const totalSuggestions = useMemo(() => {
+    if (!data) return 0;
+    return (
+      (data.top_dormant?.length ?? 0)
+      + (data.restock_due?.length ?? 0)
+      + (data.silent_active?.length ?? 0)
+    );
+  }, [data]);
+
+  if (loading && !data) {
+    return (
+      <div
+        style={{
+          padding: 16,
+          background: "var(--ls-surface)",
+          border: "0.5px solid var(--ls-border)",
+          borderRadius: 14,
+          fontSize: 12,
+          color: "var(--ls-text-muted)",
+          fontFamily: "DM Sans, sans-serif",
+        }}
+      >
+        Chargement du plan PV…
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div
+        style={{
+          padding: 12,
+          background: "color-mix(in srgb, var(--ls-coral) 6%, transparent)",
+          border: "0.5px solid color-mix(in srgb, var(--ls-coral) 30%, transparent)",
+          borderRadius: 12,
+          fontSize: 11,
+          color: "var(--ls-coral)",
+          fontFamily: "DM Sans, sans-serif",
+        }}
+      >
+        ⚠ Plan PV indisponible : {error}
+      </div>
+    );
+  }
+
+  if (!data) return null;
+
+  const meta = STATUS_META[data.status];
+
+  return (
+    <div
+      style={{
+        background: "var(--ls-surface)",
+        border: "0.5px solid var(--ls-border)",
+        borderTop: `2px solid ${meta.tone}`,
+        borderRadius: 14,
+        padding: 16,
+        fontFamily: "DM Sans, sans-serif",
+      }}
+    >
+      {/* Header */}
+      <div style={{ display: "flex", alignItems: "flex-start", gap: 10, marginBottom: 12 }}>
+        <span style={{ fontSize: 22, lineHeight: 1, flexShrink: 0 }}>🎯</span>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div
+            style={{
+              fontSize: 10,
+              letterSpacing: 1.6,
+              textTransform: "uppercase",
+              fontWeight: 700,
+              color: meta.tone,
+              marginBottom: 2,
+            }}
+          >
+            Plan du jour PV · {meta.icon} {meta.label}
+          </div>
+          <div
+            style={{
+              fontFamily: "Syne, sans-serif",
+              fontSize: 16,
+              fontWeight: 700,
+              color: "var(--ls-text)",
+            }}
+          >
+            {data.current_pv.toLocaleString("fr-FR")} / {data.target_pv.toLocaleString("fr-FR")} PV
+            <span
+              style={{
+                fontSize: 11,
+                fontWeight: 500,
+                color: "var(--ls-text-muted)",
+                marginLeft: 8,
+              }}
+            >
+              · J{data.day_of_month}/{data.days_in_month}
+            </span>
+          </div>
+          <div
+            style={{
+              fontSize: 11,
+              color: "var(--ls-text-muted)",
+              marginTop: 2,
+            }}
+          >
+            Prorata jour : {data.prorata_pv.toLocaleString("fr-FR")} PV
+            {data.delta_pv !== 0 ? (
+              <span
+                style={{
+                  marginLeft: 6,
+                  color: data.delta_pv >= 0 ? "var(--ls-teal)" : "var(--ls-coral)",
+                  fontWeight: 600,
+                }}
+              >
+                ({data.delta_pv >= 0 ? "+" : ""}
+                {data.delta_pv} PV)
+              </span>
+            ) : null}
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={() => void reload()}
+          aria-label="Actualiser"
+          title="Actualiser"
+          style={{
+            background: "transparent",
+            border: "none",
+            color: "var(--ls-text-hint)",
+            fontSize: 12,
+            cursor: "pointer",
+            padding: 4,
+            flexShrink: 0,
+          }}
+        >
+          ↻
+        </button>
+      </div>
+
+      {/* Hint */}
+      <p
+        style={{
+          fontSize: 11,
+          color: "var(--ls-text-muted)",
+          margin: "0 0 12px",
+          lineHeight: 1.5,
+          fontStyle: "italic",
+        }}
+      >
+        {meta.hint}
+      </p>
+
+      {/* Suggestions */}
+      {totalSuggestions === 0 ? (
+        <div
+          style={{
+            padding: "10px 12px",
+            background: "var(--ls-surface2)",
+            borderRadius: 10,
+            fontSize: 12,
+            color: "var(--ls-text-muted)",
+            textAlign: "center",
+            fontStyle: "italic",
+          }}
+        >
+          Aucune suggestion automatique pour aujourd&apos;hui — explore ta base !
+        </div>
+      ) : (
+        <>
+          {/* Top dormants */}
+          {data.top_dormant && data.top_dormant.length > 0 ? (
+            <Section title="🥇 Top consumers à relancer" tone="gold">
+              {data.top_dormant.slice(0, showAll ? undefined : 3).map((c) => (
+                <SuggestionRow
+                  key={`dormant-${c.client_id}`}
+                  clientId={c.client_id}
+                  name={c.client_name}
+                  detail={`${c.monthly_avg_pv} PV/mois en moyenne · ${c.days_since}j sans commande`}
+                  pvHint={`+${Math.round(c.monthly_avg_pv * 0.6)} PV potentiel`}
+                  tone="gold"
+                />
+              ))}
+            </Section>
+          ) : null}
+
+          {/* Restock imminent */}
+          {data.restock_due && data.restock_due.length > 0 ? (
+            <Section title="📦 Réassort imminent" tone="teal">
+              {data.restock_due.slice(0, showAll ? undefined : 3).map((c) => (
+                <SuggestionRow
+                  key={`restock-${c.client_id}-${c.product_name}`}
+                  clientId={c.client_id}
+                  name={c.client_name}
+                  detail={`${c.product_name} · ${
+                    c.days_left < 0 ? `cure terminée il y a ${Math.abs(c.days_left)}j` : `cure finie dans ${c.days_left}j`
+                  }`}
+                  pvHint={`+${Math.round(c.pv_estimated * 0.7)} PV potentiel`}
+                  tone="teal"
+                />
+              ))}
+            </Section>
+          ) : null}
+
+          {/* Silent active */}
+          {data.silent_active && data.silent_active.length > 0 ? (
+            <Section title="💬 Silencieux à recontacter" tone="purple">
+              {data.silent_active.slice(0, showAll ? undefined : 2).map((c) => (
+                <SuggestionRow
+                  key={`silent-${c.client_id}`}
+                  clientId={c.client_id}
+                  name={c.client_name}
+                  detail={`${c.days_silent}j sans message`}
+                  tone="purple"
+                />
+              ))}
+            </Section>
+          ) : null}
+
+          {/* Show all toggle */}
+          {totalSuggestions > 8 ? (
+            <button
+              type="button"
+              onClick={() => setShowAll((v) => !v)}
+              style={{
+                width: "100%",
+                marginTop: 8,
+                padding: "8px 10px",
+                background: "transparent",
+                border: "0.5px dashed var(--ls-border)",
+                borderRadius: 8,
+                fontSize: 11,
+                color: "var(--ls-text-muted)",
+                fontFamily: "DM Sans, sans-serif",
+                cursor: "pointer",
+              }}
+            >
+              {showAll ? "Réduire" : `Voir tout (${totalSuggestions})`}
+            </button>
+          ) : null}
+        </>
+      )}
+
+      {/* Gain attendu */}
+      {data.expected_gain > 0 ? (
+        <div
+          style={{
+            marginTop: 12,
+            padding: "10px 12px",
+            background:
+              "linear-gradient(135deg, color-mix(in srgb, var(--ls-gold) 10%, var(--ls-surface)), color-mix(in srgb, var(--ls-teal) 6%, var(--ls-surface)))",
+            border: "0.5px solid color-mix(in srgb, var(--ls-gold) 30%, transparent)",
+            borderRadius: 10,
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+          }}
+        >
+          <span style={{ fontSize: 18 }}>✨</span>
+          <div style={{ flex: 1, fontSize: 12, color: "var(--ls-text)" }}>
+            <strong>Si tu actives ces leviers</strong> : gain attendu{" "}
+            <span
+              style={{
+                fontFamily: "Syne, sans-serif",
+                fontWeight: 700,
+                color: "var(--ls-gold)",
+              }}
+            >
+              ~{data.expected_gain.toLocaleString("fr-FR")} PV
+            </span>
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+// ─── Sous-composants ─────────────────────────────────────────────────────────
+
+function Section({
+  title,
+  tone,
+  children,
+}: {
+  title: string;
+  tone: "gold" | "teal" | "purple";
+  children: React.ReactNode;
+}) {
+  return (
+    <div style={{ marginBottom: 10 }}>
+      <div
+        style={{
+          fontSize: 9,
+          letterSpacing: 1.4,
+          textTransform: "uppercase",
+          fontWeight: 700,
+          color: `var(--ls-${tone})`,
+          marginBottom: 6,
+        }}
+      >
+        {title}
+      </div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>{children}</div>
+    </div>
+  );
+}
+
+function SuggestionRow({
+  clientId,
+  name,
+  detail,
+  pvHint,
+  tone,
+}: {
+  clientId: string;
+  name: string;
+  detail: string;
+  pvHint?: string;
+  tone: "gold" | "teal" | "purple";
+}) {
+  return (
+    <Link
+      to={`/clients/${clientId}`}
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 10,
+        padding: "8px 10px",
+        background: `color-mix(in srgb, var(--ls-${tone}) 6%, var(--ls-surface2))`,
+        border: `0.5px solid color-mix(in srgb, var(--ls-${tone}) 25%, transparent)`,
+        borderRadius: 8,
+        textDecoration: "none",
+        fontFamily: "DM Sans, sans-serif",
+        transition: "background 120ms ease",
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.background = `color-mix(in srgb, var(--ls-${tone}) 14%, var(--ls-surface2))`;
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.background = `color-mix(in srgb, var(--ls-${tone}) 6%, var(--ls-surface2))`;
+      }}
+    >
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div
+          style={{
+            fontSize: 12,
+            fontWeight: 600,
+            color: "var(--ls-text)",
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+          }}
+        >
+          {name}
+        </div>
+        <div
+          style={{
+            fontSize: 10,
+            color: "var(--ls-text-muted)",
+            marginTop: 1,
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+          }}
+        >
+          {detail}
+        </div>
+      </div>
+      {pvHint ? (
+        <span
+          style={{
+            fontSize: 10,
+            fontWeight: 700,
+            color: `var(--ls-${tone})`,
+            flexShrink: 0,
+            fontFamily: "Syne, sans-serif",
+          }}
+        >
+          {pvHint}
+        </span>
+      ) : null}
+      <span
+        style={{
+          fontSize: 12,
+          color: "var(--ls-text-hint)",
+          flexShrink: 0,
+        }}
+      >
+        →
+      </span>
+    </Link>
+  );
+}

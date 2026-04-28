@@ -21,6 +21,7 @@ import { HeroActionCard } from "../components/copilote/HeroActionCard";
 import { TodayAgendaCard } from "../components/copilote/TodayAgendaCard";
 import { PendingFollowupsCard } from "../components/copilote/PendingFollowupsCard";
 import { PvGaugeBand } from "../components/copilote/PvGaugeBand";
+import { PvActionPlanCard } from "../components/copilote/PvActionPlanCard";
 import { InboxWidget } from "../components/copilote/InboxWidget";
 import { BirthdayBlock } from "../components/copilote/BirthdayBlock";
 import { StreakBadge } from "../features/gamification/components/StreakBadge";
@@ -140,6 +141,11 @@ export function CoPilotePage() {
         todayAppointmentsCount={data.todayAppointmentsCount}
         conversionRate={data.conversionRate}
       />
+
+      {/* Strategie PV (2026-04-28) : Plan du jour PV avec status + 3 categories
+          de suggestions client (top dormants / restock / silencieux) +
+          gain attendu si toutes les relances aboutissent. */}
+      {currentUser?.id ? <PvActionPlanCard userId={currentUser.id} /> : null}
 
       {/* Gamification 3 (2026-04-29) : quetes hebdo automatiques. */}
       <WeeklyQuestsCard />
