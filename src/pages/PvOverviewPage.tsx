@@ -5,6 +5,8 @@ import { formatDate } from "../lib/calculations";
 import { PvModuleHeader } from "../components/pv/PvModuleHeader";
 import { PvClientFullPage } from "../components/pv/PvClientFullPage";
 import { PvActionPlanCard } from "../components/copilote/PvActionPlanCard";
+import { PvKanban } from "../components/pv/PvKanban";
+import { usePvActionPlan } from "../hooks/usePvActionPlan";
 import { useAppContext } from "../context/AppContext";
 import type { PvClientTrackingRecord } from "../types/pv";
 
@@ -19,6 +21,23 @@ export function PvOverviewPage() {
   const [selectedClientId, setSelectedClientId] = useState<string | null>(
     searchParams.get("client")
   );
+
+  // Toggle Liste / Kanban (2026-04-29) — persiste en localStorage
+  const [viewMode, setViewMode] = useState<"list" | "kanban">(() => {
+    if (typeof window === "undefined") return "list";
+    const stored = window.localStorage.getItem("lor-squad-pv-view-mode");
+    return stored === "kanban" ? "kanban" : "list";
+  });
+  function handleViewModeChange(mode: "list" | "kanban") {
+    setViewMode(mode);
+    try {
+      window.localStorage.setItem("lor-squad-pv-view-mode", mode);
+    } catch {
+      // ignore quota errors
+    }
+  }
+  // Plan PV (utile a la fois pour l'encart en haut + pour categoriser le kanban)
+  const planQuery = usePvActionPlan(currentUser?.id ?? null);
 
   // Hooks AVANT l'early return (rules-of-hooks / chantier nuit 2026-04-20).
   const isAdmin = currentUser?.role === "admin";
@@ -153,22 +172,86 @@ export function PvOverviewPage() {
             </div>
           )}
 
-          <PvSearchFilters
-            search={search}
-            onSearchChange={setSearch}
-            status={statusFilter}
-            onStatusChange={(v) => setStatusFilter(v as typeof statusFilter)}
-          />
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+            <PvSearchFilters
+              search={search}
+              onSearchChange={setSearch}
+              status={statusFilter}
+              onStatusChange={(v) => setStatusFilter(v as typeof statusFilter)}
+            />
+            {/* Toggle Liste / Kanban (2026-04-29) */}
+            <div
+              style={{
+                display: "inline-flex",
+                gap: 2,
+                padding: 3,
+                background: "var(--ls-surface2)",
+                border: "0.5px solid var(--ls-border)",
+                borderRadius: 10,
+                flexShrink: 0,
+              }}
+            >
+              <button
+                type="button"
+                onClick={() => handleViewModeChange("list")}
+                aria-pressed={viewMode === "list"}
+                title="Vue liste"
+                style={{
+                  padding: "6px 12px",
+                  borderRadius: 7,
+                  border: "none",
+                  fontSize: 11,
+                  fontWeight: 500,
+                  cursor: "pointer",
+                  background: viewMode === "list" ? "var(--ls-surface)" : "transparent",
+                  color: viewMode === "list" ? "var(--ls-text)" : "var(--ls-text-muted)",
+                  boxShadow: viewMode === "list" ? "0 1px 3px rgba(0,0,0,0.06)" : "none",
+                  fontFamily: "DM Sans, sans-serif",
+                }}
+              >
+                ☰ Liste
+              </button>
+              <button
+                type="button"
+                onClick={() => handleViewModeChange("kanban")}
+                aria-pressed={viewMode === "kanban"}
+                title="Vue Kanban"
+                style={{
+                  padding: "6px 12px",
+                  borderRadius: 7,
+                  border: "none",
+                  fontSize: 11,
+                  fontWeight: 500,
+                  cursor: "pointer",
+                  background: viewMode === "kanban" ? "var(--ls-surface)" : "transparent",
+                  color: viewMode === "kanban" ? "var(--ls-text)" : "var(--ls-text-muted)",
+                  boxShadow: viewMode === "kanban" ? "0 1px 3px rgba(0,0,0,0.06)" : "none",
+                  fontFamily: "DM Sans, sans-serif",
+                }}
+              >
+                ⚏ Kanban
+              </button>
+            </div>
+          </div>
 
-          <PvClientsTable
-            records={filteredRecords}
-            selectedId={selectedClientId}
-            onSelect={setSelectedClientId}
-            isAdmin={isAdmin}
-            currentUserId={currentUser?.id ?? null}
-          />
+          {viewMode === "list" ? (
+            <PvClientsTable
+              records={filteredRecords}
+              selectedId={selectedClientId}
+              onSelect={setSelectedClientId}
+              isAdmin={isAdmin}
+              currentUserId={currentUser?.id ?? null}
+            />
+          ) : (
+            <PvKanban
+              records={filteredRecords}
+              plan={planQuery.data}
+              isAdmin={isAdmin}
+              currentUserId={currentUser?.id ?? null}
+            />
+          )}
 
-          {filteredRecords.length === 0 && (
+          {viewMode === "list" && filteredRecords.length === 0 && (
             <div style={{ padding: "32px 20px", textAlign: "center", color: "var(--ls-text-hint)", fontSize: 13, background: "var(--ls-surface)", border: "1px solid var(--ls-border)", borderRadius: 14 }}>
               Aucun client ne correspond aux filtres en cours.
             </div>
