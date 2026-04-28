@@ -1654,7 +1654,42 @@ export function NewAssessmentPage() {
           )}
 
           {currentStepId === 'body-scan' && (
-            <div className="space-y-4">
+            <div className="space-y-4" data-tour-id="bilan-body-scan">
+              {/* Rappel age + taille pour saisie sur la balance Tanita (2026-04-29) */}
+              {(form.age > 0 || form.height > 0) && (
+                <div
+                  style={{
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    alignItems: 'center',
+                    gap: 14,
+                    padding: '14px 18px',
+                    background: 'color-mix(in srgb, var(--ls-gold) 8%, var(--ls-surface))',
+                    border: '0.5px solid color-mix(in srgb, var(--ls-gold) 40%, transparent)',
+                    borderLeft: '3px solid var(--ls-gold)',
+                    borderRadius: 12,
+                  }}
+                >
+                  <span style={{ fontSize: 18 }}>⚖️</span>
+                  <span style={{ fontSize: 12, color: 'var(--ls-text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1.2 }}>
+                    À saisir sur la balance
+                  </span>
+                  {form.age > 0 && (
+                    <span style={{ fontSize: 13, color: 'var(--ls-text)' }}>
+                      Âge : <strong style={{ fontFamily: 'Syne, serif', fontSize: 17, color: 'var(--ls-gold)' }}>{form.age}</strong> ans
+                    </span>
+                  )}
+                  {form.height > 0 && (
+                    <span style={{ fontSize: 13, color: 'var(--ls-text)' }}>
+                      Taille : <strong style={{ fontFamily: 'Syne, serif', fontSize: 17, color: 'var(--ls-gold)' }}>{form.height}</strong> cm
+                    </span>
+                  )}
+                  <span style={{ fontSize: 13, color: 'var(--ls-text)' }}>
+                    Sexe : <strong style={{ fontFamily: 'Syne, serif', fontSize: 15, color: 'var(--ls-gold)' }}>{form.sex === 'male' ? 'Homme' : 'Femme'}</strong>
+                  </span>
+                </div>
+              )}
+
               {/* Saisie body scan — grille claire */}
               <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
                 {[
@@ -1835,6 +1870,62 @@ export function NewAssessmentPage() {
                 analysis={form.breakfastAnalysis}
                 onAnalysisChange={(next) => update("breakfastAnalysis", next)}
               />
+
+              {/* Cibles nutritionnelles affichees ici aussi (2026-04-29) pour
+                  pitcher la nutrition au client pendant qu on parle du petit-dej.
+                  Memes valeurs que sur l etape 11 (Programme propose). */}
+              {form.weight > 0 ? (
+                <div
+                  style={{
+                    marginTop: 16,
+                    padding: "14px 18px",
+                    borderRadius: 14,
+                    background:
+                      "linear-gradient(135deg, color-mix(in srgb, var(--ls-teal) 10%, transparent), color-mix(in srgb, var(--ls-gold) 6%, transparent))",
+                    border: "1px solid color-mix(in srgb, var(--ls-teal) 25%, transparent)",
+                  }}
+                >
+                  <p className="eyebrow-label" style={{ marginBottom: 8 }}>
+                    🎯 Tes objectifs nutritionnels (à présenter au client)
+                  </p>
+                  <div style={{ display: "grid", gap: 12, gridTemplateColumns: "1fr 1fr" }}>
+                    <div>
+                      <div style={{ fontSize: 11, color: "var(--ls-text-muted)", marginBottom: 2 }}>
+                        💧 Hydratation cible
+                      </div>
+                      <div
+                        style={{
+                          fontFamily: "Syne, sans-serif",
+                          fontSize: 22,
+                          fontWeight: 800,
+                          color: "var(--ls-text)",
+                        }}
+                      >
+                        {computeWaterTarget(form.weight).toFixed(1)} L / jour
+                      </div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 11, color: "var(--ls-text-muted)", marginBottom: 2 }}>
+                        🥩 Protéines cible
+                      </div>
+                      <div
+                        style={{
+                          fontFamily: "Syne, sans-serif",
+                          fontSize: 22,
+                          fontWeight: 800,
+                          color: "var(--ls-text)",
+                        }}
+                      >
+                        {computeProteinTarget(form.weight, form.objective)} g / jour
+                      </div>
+                    </div>
+                  </div>
+                  <div style={{ fontSize: 11, color: "var(--ls-text-muted)", marginTop: 8 }}>
+                    Calculé selon le poids actuel ({form.weight.toFixed(1)} kg) et
+                    l&apos;objectif « {form.objective === "sport" ? "Sport / masse" : "Perte de poids"} ».
+                  </div>
+                </div>
+              ) : null}
             </VisualStepBoundary>
           )}
 
