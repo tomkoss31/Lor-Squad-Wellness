@@ -17,6 +17,73 @@ function formatDateShort(d: Date): string {
   });
 }
 
+// Gradient saisonnier de la journee (2026-04-29) — la couleur du prenom
+// + de l'heure suit le cycle solaire/lunaire pour un effet vivant.
+//
+//   05-08h : aube (rose-orange chaud)
+//   08-11h : matin (gold lumineux)
+//   11-14h : midi (gold + teal solaire)
+//   14-17h : apres-midi (gold sature)
+//   17-20h : crepuscule (coral + purple)
+//   20-23h : soir (purple + dark gold)
+//   23-05h : nuit (purple + bleu silver)
+function getTimeGradient(hour: number): { greeting: string; time: string; sparkleColor: string } {
+  if (hour >= 5 && hour < 8) {
+    // Aube — rose orange
+    return {
+      greeting: "linear-gradient(135deg, #FFB088 0%, #FF8866 50%, #EF9F27 100%)",
+      time: "linear-gradient(135deg, var(--ls-text) 0%, #FFB088 60%, #EF9F27 100%)",
+      sparkleColor: "#FF8866",
+    };
+  }
+  if (hour >= 8 && hour < 11) {
+    // Matin — gold lumineux
+    return {
+      greeting: "linear-gradient(135deg, #FFD56B 0%, #EF9F27 60%, #BA7517 100%)",
+      time: "linear-gradient(135deg, var(--ls-text) 0%, #EF9F27 70%, #BA7517 100%)",
+      sparkleColor: "#EF9F27",
+    };
+  }
+  if (hour >= 11 && hour < 14) {
+    // Midi — gold + teal solaire
+    return {
+      greeting: "linear-gradient(135deg, #EF9F27 0%, #BA7517 50%, #0D9488 100%)",
+      time: "linear-gradient(135deg, var(--ls-text) 0%, #EF9F27 60%, #0D9488 100%)",
+      sparkleColor: "#0D9488",
+    };
+  }
+  if (hour >= 14 && hour < 17) {
+    // Apres-midi — gold sature
+    return {
+      greeting: "linear-gradient(135deg, #EF9F27 0%, #BA7517 60%, #5C3A05 100%)",
+      time: "linear-gradient(135deg, var(--ls-text) 0%, #BA7517 60%, #5C3A05 100%)",
+      sparkleColor: "#BA7517",
+    };
+  }
+  if (hour >= 17 && hour < 20) {
+    // Crepuscule — coral + purple
+    return {
+      greeting: "linear-gradient(135deg, #FF6B6B 0%, #BA7517 40%, #7C3AED 100%)",
+      time: "linear-gradient(135deg, var(--ls-text) 0%, #FF8866 50%, #7C3AED 100%)",
+      sparkleColor: "#FF6B6B",
+    };
+  }
+  if (hour >= 20 && hour < 23) {
+    // Soir — purple dark gold
+    return {
+      greeting: "linear-gradient(135deg, #C084FC 0%, #7C3AED 50%, #BA7517 100%)",
+      time: "linear-gradient(135deg, var(--ls-text) 0%, #C084FC 60%, #7C3AED 100%)",
+      sparkleColor: "#C084FC",
+    };
+  }
+  // Nuit (23-05h) — purple + bleu silver
+  return {
+    greeting: "linear-gradient(135deg, #A5B4FC 0%, #818CF8 40%, #7C3AED 100%)",
+    time: "linear-gradient(135deg, var(--ls-text) 0%, #A5B4FC 60%, #7C3AED 100%)",
+    sparkleColor: "#A5B4FC",
+  };
+}
+
 export function ClockHeader({
   now,
   userFirstName,
@@ -30,7 +97,9 @@ export function ClockHeader({
 }) {
   const total = appointmentsToday + followupsToday;
   const { label: moodLabel } = moodForLoad(total);
-  const greeting = greetingFor(now.getHours());
+  const hour = now.getHours();
+  const greeting = greetingFor(hour);
+  const gradient = getTimeGradient(hour);
 
   return (
     <div
@@ -117,7 +186,7 @@ export function ClockHeader({
       <span
         className="ls-sparkle-1"
         aria-hidden="true"
-        style={{ position: "absolute", top: 18, right: "30%", fontSize: 12, color: "var(--ls-gold)" }}
+        style={{ position: "absolute", top: 18, right: "30%", fontSize: 12, color: gradient.sparkleColor, transition: "color 1s ease" }}
       >
         ✦
       </span>
@@ -131,7 +200,7 @@ export function ClockHeader({
       <span
         className="ls-sparkle-3"
         aria-hidden="true"
-        style={{ position: "absolute", top: 38, left: "42%", fontSize: 10, color: "var(--ls-purple)" }}
+        style={{ position: "absolute", top: 38, left: "42%", fontSize: 10, color: gradient.sparkleColor, transition: "color 1s ease", opacity: 0.7 }}
       >
         ✦
       </span>
@@ -178,11 +247,12 @@ export function ClockHeader({
             {userFirstName ? (
               <span
                 style={{
-                  background: "linear-gradient(135deg, #EF9F27 0%, #BA7517 60%, #5C3A05 100%)",
+                  background: gradient.greeting,
                   WebkitBackgroundClip: "text",
                   WebkitTextFillColor: "transparent",
                   backgroundClip: "text",
                   fontWeight: 800,
+                  transition: "background 1s ease",
                 }}
               >
                 {" "}
@@ -250,15 +320,15 @@ export function ClockHeader({
               fontSize: 56,
               fontWeight: 700,
               letterSpacing: "-0.05em",
-              background:
-                "linear-gradient(135deg, var(--ls-text) 0%, color-mix(in srgb, var(--ls-gold) 100%, transparent) 80%, #BA7517 100%)",
+              background: gradient.time,
               WebkitBackgroundClip: "text",
               WebkitTextFillColor: "transparent",
               backgroundClip: "text",
               lineHeight: 1,
               padding: "8px 16px",
               borderRadius: 16,
-              textShadow: "0 0 30px rgba(239,159,39,0.15)",
+              textShadow: `0 0 30px ${gradient.sparkleColor}33`,
+              transition: "background 1s ease, text-shadow 1s ease",
             }}
           >
             {formatTime(now)}
