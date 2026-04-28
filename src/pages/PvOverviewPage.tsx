@@ -113,10 +113,38 @@ export function PvOverviewPage() {
     };
   }, [records]);
 
-  const selectedRecord = useMemo(
-    () => records.find((r) => r.clientId === selectedClientId) ?? null,
-    [records, selectedClientId]
-  );
+  // Record synthetique fallback (2026-04-29) : si le client est dans la base
+  // mais sans record (pas started / pas de programme) — typiquement ceux de
+  // la section "Silencieux a recontacter" du Plan PV — on construit un record
+  // vide pour que PvClientFullPage puisse s'ouvrir et permettre une 1ere
+  // commande quand meme.
+  const selectedRecord = useMemo<PvClientTrackingRecord | null>(() => {
+    if (!selectedClientId) return null;
+    const found = records.find((r) => r.clientId === selectedClientId);
+    if (found) return found;
+    // Fallback : cherche le client dans la base
+    const client = clients.find((c) => c.id === selectedClientId);
+    if (!client) return null;
+    return {
+      clientId: client.id,
+      clientName: `${client.firstName} ${client.lastName}`,
+      responsibleId: client.distributorId,
+      responsibleName: client.distributorName,
+      programId: "",
+      program: client.currentProgram || "Pas encore demarre",
+      status: "ok" as const,
+      startDate: client.startDate ?? new Date().toISOString(),
+      lastFollowUpDate: new Date().toISOString(),
+      lastOrderDate: client.startDate ?? new Date().toISOString(),
+      daysSinceStart: 0,
+      estimatedRemainingDays: 0,
+      nextProbableOrderDate: new Date().toISOString(),
+      pvCumulative: 0,
+      monthlyPv: 0,
+      activeProducts: [],
+      transactions: [],
+    };
+  }, [records, clients, selectedClientId]);
 
   // Sync ?client= avec selectedClientId
   useEffect(() => {
