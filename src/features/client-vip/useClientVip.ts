@@ -275,7 +275,15 @@ export function useClientVipStatusByToken(token: string | null | undefined) {
       setData(result as VipStatus);
     } catch (err) {
       console.warn("[useClientVipStatusByToken] failed:", err);
-      setError(err instanceof Error ? err.message : "unknown");
+      // PostgrestError (objet Supabase) vs Error vs autre — on extrait
+      // le max d'info pour debug visuel cote client.
+      const e = err as { message?: string; code?: string; details?: string; hint?: string };
+      const parts = [
+        e?.message,
+        e?.code ? `code=${e.code}` : null,
+        e?.hint,
+      ].filter(Boolean);
+      setError(parts.length > 0 ? parts.join(" · ") : "unknown");
     } finally {
       setLoading(false);
     }
