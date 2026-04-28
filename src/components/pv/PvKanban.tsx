@@ -116,23 +116,12 @@ export function PvKanban({ records, plan, isAdmin, currentUserId, onSelectClient
       }
     }
 
-    // Ajout des silent_active qui ne sont pas dans records (clients sans
-    // produit actif mais quand meme silencieux — cas rare mais possible).
-    if (plan?.silent_active) {
-      const knownIds = new Set(records.map((r) => r.clientId));
-      for (const s of plan.silent_active) {
-        if (knownIds.has(s.client_id)) continue;
-        silent.push({
-          clientId: s.client_id,
-          clientName: s.client_name,
-          responsibleName: "—",
-          responsibleId: "",
-          reasonBadges: [{ label: `${s.days_silent}j sans msg`, tone: "purple" }],
-          pvCumulative: 0,
-          daysSinceStart: 0,
-        });
-      }
-    }
+    // ⚠ Pas de cartes fantomes (2026-04-29) : on n'ajoute QUE les clients
+    // qui ont un record dans le Suivi PV (= produit actif tracke). Si un
+    // client est silencieux mais sans produit actif, il n'est pas affiche
+    // dans le kanban car il n'aurait pas de fiche PvClientFullPage clicable.
+    // Pour les voir, le coach va sur /clients (Dossiers) ou utilise la
+    // section "Silencieux a recontacter" du Plan PV en haut de page.
 
     return [
       {
