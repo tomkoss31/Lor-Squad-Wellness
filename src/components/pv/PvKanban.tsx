@@ -312,27 +312,46 @@ function PvKanbanCard({
         background: "var(--ls-surface)",
         border: "0.5px solid var(--ls-border)",
         borderRadius: 10,
-        padding: "10px 12px",
+        padding: "9px 11px",
         cursor: "pointer",
         transition: "all 0.15s",
         fontFamily: "DM Sans, sans-serif",
+        position: "relative",
       }}
       onMouseEnter={(e) => {
         e.currentTarget.style.transform = "translateY(-1px)";
-        e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.06)";
+        e.currentTarget.style.boxShadow = "0 3px 10px color-mix(in srgb, var(--ls-gold) 14%, transparent)";
+        e.currentTarget.style.borderColor = "color-mix(in srgb, var(--ls-gold) 30%, var(--ls-border))";
       }}
       onMouseLeave={(e) => {
         e.currentTarget.style.transform = "none";
         e.currentTarget.style.boxShadow = "none";
+        e.currentTarget.style.borderColor = "var(--ls-border)";
       }}
     >
+      {/* Verrou en coin top-right (discret, hors flow) */}
+      {card.isLocked ? (
+        <span
+          title="Colonne forcée manuellement (override 7j)"
+          style={{
+            position: "absolute",
+            top: 6,
+            right: 6,
+            fontSize: 10,
+            opacity: 0.7,
+            pointerEvents: "none",
+          }}
+        >
+          🔒
+        </span>
+      ) : null}
       <div
         style={{
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
           gap: 6,
-          marginBottom: 6,
+          marginBottom: 5,
         }}
       >
         <div
@@ -385,21 +404,6 @@ function PvKanbanCard({
               MIEN
             </span>
           ) : null}
-          {card.isLocked ? (
-            <span
-              title="Colonne forcée manuellement (override 7 jours)"
-              style={{
-                padding: "1px 5px",
-                borderRadius: 6,
-                fontSize: 9,
-                background: "rgba(124,58,237,0.14)",
-                color: "var(--ls-purple)",
-                letterSpacing: "0.04em",
-              }}
-            >
-              🔒
-            </span>
-          ) : null}
         </div>
       </div>
 
@@ -424,57 +428,51 @@ function PvKanbanCard({
         </div>
       ) : null}
 
+      {/* Footer compact : info à gauche, action discrète à droite */}
       <div
         style={{
           display: "flex",
-          alignItems: "baseline",
+          alignItems: "center",
           justifyContent: "space-between",
           gap: 6,
-          fontSize: 10,
-          color: "var(--ls-text-hint)",
-          marginBottom: 8,
         }}
       >
-        <span>
-          {card.pvCumulative > 0
-            ? `${card.pvCumulative.toFixed(0)} PV cumul`
-            : "Pas de PV cumul"}
-        </span>
-        {card.daysSinceStart > 0 ? <span>{card.daysSinceStart}j</span> : null}
-      </div>
+        <div
+          style={{
+            fontSize: 9.5,
+            color: "var(--ls-text-hint)",
+            display: "flex",
+            gap: 6,
+          }}
+        >
+          {card.pvCumulative > 0 ? (
+            <span>{card.pvCumulative.toFixed(0)} PV</span>
+          ) : null}
+          {card.daysSinceStart > 0 ? <span>· {card.daysSinceStart}j</span> : null}
+        </div>
 
-      {/* Actions overrides (2026-04-29) — boutons rapides pour deplacer
-          la card sans drag & drop. Click sur la card ouvre toujours la
-          fiche, donc on stoppe la propagation. */}
-      <div
-        style={{
-          display: "flex",
-          gap: 4,
-          paddingTop: 6,
-          borderTop: "0.5px dashed var(--ls-border)",
-        }}
-      >
+        {/* Action override compact - aligne droite, pas full width */}
         {card.isLocked ? (
           <button
             type="button"
-            title="Annuler l'override (revenir au calcul auto)"
+            title="Annuler l'override — revenir au calcul auto"
             onClick={(e) => {
               e.stopPropagation();
               onClearOverride();
             }}
-            style={overrideBtnStyle("purple")}
+            style={overrideChipStyle("purple")}
           >
             ↩️ Auto
           </button>
         ) : columnKey !== "ok" ? (
           <button
             type="button"
-            title="Marquer en OK (j'ai géré, sors de ma liste critique)"
+            title="J'ai géré — passer en OK (verrou 7 jours)"
             onClick={(e) => {
               e.stopPropagation();
               onForceOk();
             }}
-            style={overrideBtnStyle("teal")}
+            style={overrideChipStyle("teal")}
           >
             ✓ OK
           </button>
@@ -484,19 +482,20 @@ function PvKanbanCard({
   );
 }
 
-function overrideBtnStyle(tone: "teal" | "purple"): React.CSSProperties {
+function overrideChipStyle(tone: "teal" | "purple"): React.CSSProperties {
   const color = `var(--ls-${tone})`;
   return {
-    flex: 1,
-    padding: "5px 8px",
-    background: `color-mix(in srgb, ${color} 8%, transparent)`,
-    border: `0.5px solid color-mix(in srgb, ${color} 30%, transparent)`,
-    borderRadius: 7,
+    padding: "3px 9px",
+    background: `color-mix(in srgb, ${color} 10%, transparent)`,
+    border: `0.5px solid color-mix(in srgb, ${color} 35%, transparent)`,
+    borderRadius: 999,
     fontSize: 10,
     fontWeight: 700,
     color,
     cursor: "pointer",
     fontFamily: "DM Sans, sans-serif",
+    letterSpacing: 0.2,
+    flexShrink: 0,
   };
 }
 
