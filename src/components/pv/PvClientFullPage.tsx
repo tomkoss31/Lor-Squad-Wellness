@@ -1,21 +1,89 @@
-import { useState } from "react";
+// =============================================================================
+// PvClientFullPage — fiche client Suivi PV (refonte premium 2026-04-29)
+// =============================================================================
+//
+// Architecture :
+//   - Header gradient gold + stats chips (produits, PV mois, dernière cmd)
+//   - Tabs Produits actifs / Historique
+//   - Bouton "Nouvelle commande" gold premium → ouvre PremiumOrderBuilder
+//   - PremiumOrderBuilder : catalogue cards visuel avec catégories + panier
+//     en bas avec total live + bouton gradient "Enregistrer"
+//   - Active products affichés avec progress bar de cure
+//   - Confettis émojis à la confirmation commande
+// =============================================================================
+
+import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import type { PvClientTrackingRecord, PvProductUsage, PvClientTransaction, PvTransactionType } from "../../types/pv";
+import type {
+  PvClientTrackingRecord,
+  PvProductUsage,
+  PvClientTransaction,
+  PvTransactionType,
+} from "../../types/pv";
 import { useAppContext } from "../../context/AppContext";
+import { useToast } from "../../context/ToastContext";
 import { pvProductCatalog, getPvTypeLabel } from "../../data/pvCatalog";
 
 type Tab = "products" | "history";
 
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
 function formatDateLocal(d: string | Date | null | undefined) {
   if (!d) return "—";
   try {
-    return new Date(d).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" });
+    return new Date(d).toLocaleDateString("fr-FR", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
   } catch {
     return "—";
   }
 }
 
-export function PvClientFullPage({ record, onClose }: { record: PvClientTrackingRecord; onClose: () => void }) {
+function relativeDays(d: string | Date | null | undefined): string {
+  if (!d) return "—";
+  const date = new Date(d);
+  if (Number.isNaN(date.getTime())) return "—";
+  const ms = Date.now() - date.getTime();
+  const days = Math.floor(ms / (1000 * 60 * 60 * 24));
+  if (days <= 0) return "aujourd'hui";
+  if (days === 1) return "hier";
+  if (days < 30) return `il y a ${days}j`;
+  if (days < 365) return `il y a ${Math.floor(days / 30)} mois`;
+  return `il y a ${Math.floor(days / 365)} an${Math.floor(days / 365) > 1 ? "s" : ""}`;
+}
+
+// Catégorisation des produits du catalogue avec emoji + ordre d'affichage.
+const CATEGORY_GROUPS: Array<{ id: string; label: string; emoji: string; matches: (cat: string) => boolean }> = [
+  { id: "shake", label: "Shakes & repas", emoji: "🥤", matches: (c) => c.includes("shake") || c.includes("repas") },
+  { id: "proteine", label: "Protéines", emoji: "💪", matches: (c) => c.includes("prot") },
+  { id: "energie", label: "Énergie", emoji: "⚡", matches: (c) => c.includes("energ") || c.includes("énerg") || c.includes("concentration") },
+  { id: "hydratation", label: "Hydratation", emoji: "💧", matches: (c) => c.includes("hydrat") },
+  { id: "digestif", label: "Digestif & fibres", emoji: "🌿", matches: (c) => c.includes("digest") || c.includes("fibres") || c.includes("visceral") },
+  { id: "sport", label: "Sport & muscle", emoji: "🏋️", matches: (c) => c.includes("sport") || c.includes("muscle") },
+  { id: "encas", label: "En-cas", emoji: "🍫", matches: (c) => c.includes("encas") || c.includes("en-cas") },
+  { id: "sommeil", label: "Sommeil & calme", emoji: "🌙", matches: (c) => c.includes("sommeil") },
+  { id: "autres", label: "Autres", emoji: "✨", matches: () => true },
+];
+
+function categorize(catLabel: string): { id: string; emoji: string } {
+  const c = (catLabel ?? "").toLowerCase();
+  for (const g of CATEGORY_GROUPS) {
+    if (g.matches(c)) return { id: g.id, emoji: g.emoji };
+  }
+  return { id: "autres", emoji: "✨" };
+}
+
+// ─── Composant principal ─────────────────────────────────────────────────────
+
+export function PvClientFullPage({
+  record,
+  onClose,
+}: {
+  record: PvClientTrackingRecord;
+  onClose: () => void;
+}) {
   const [activeTab, setActiveTab] = useState<Tab>("products");
   const [showOrderForm, setShowOrderForm] = useState(false);
 
@@ -23,17 +91,43 @@ export function PvClientFullPage({ record, onClose }: { record: PvClientTracking
   const firstName = nameParts[0] ?? "";
   const lastName = nameParts.slice(1).join(" ") || "";
 
+  const productsCount = record.activeProducts?.length ?? 0;
+
+  // PV cumulés ce mois (sum transactions du mois en cours)
+  const pvThisMonth = useMemo(() => {
+    const start = new Date();
+    start.setDate(1);
+    start.setHours(0, 0, 0, 0);
+    return (record.transactions ?? [])
+      .filter((tx) => new Date(tx.date) >= start)
+      .reduce((sum, tx) => sum + (tx.pv ?? 0), 0);
+  }, [record.transactions]);
+
+  const lastOrderDate = useMemo(() => {
+    if (!record.transactions || record.transactions.length === 0) return null;
+    const sorted = [...record.transactions].sort(
+      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
+    );
+    return sorted[0]?.date ?? null;
+  }, [record.transactions]);
+
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: 16, fontFamily: "DM Sans, sans-serif" }}>
       {/* Bouton retour */}
       <button
         onClick={onClose}
         style={{
-          display: "flex", alignItems: "center", gap: 8,
-          padding: "9px 14px", borderRadius: 9,
-          border: "1px solid var(--ls-border)", background: "var(--ls-surface)",
-          color: "var(--ls-text-muted)", fontSize: 12, cursor: "pointer",
-          fontFamily: "DM Sans, sans-serif", alignSelf: "flex-start",
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
+          padding: "9px 14px",
+          borderRadius: 9,
+          border: "1px solid var(--ls-border)",
+          background: "var(--ls-surface)",
+          color: "var(--ls-text-muted)",
+          fontSize: 12,
+          cursor: "pointer",
+          alignSelf: "flex-start",
         }}
       >
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -42,63 +136,157 @@ export function PvClientFullPage({ record, onClose }: { record: PvClientTracking
         Retour à la liste
       </button>
 
-      {/* Header client */}
-      <div className="pv-fullpage-header" style={{
-        background: "var(--ls-surface)", border: "1px solid var(--ls-border)",
-        borderRadius: 14, padding: "18px 20px",
-        display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap",
-      }}>
-        <div style={{
-          width: 52, height: 52, borderRadius: "50%",
-          background: "rgba(184,146,42,0.15)",
-          border: "2px solid rgba(184,146,42,0.25)",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          fontFamily: "Syne, sans-serif", fontWeight: 800, fontSize: 16,
-          color: "var(--ls-gold)", flexShrink: 0,
-        }}>
-          {firstName[0]}{lastName[0]}
-        </div>
-        <div style={{ flex: 1, minWidth: 180 }}>
-          <div style={{ fontFamily: "Syne, sans-serif", fontWeight: 800, fontSize: 20, color: "var(--ls-text)" }}>
-            {record.clientName}
-          </div>
-          <div style={{ fontSize: 12, color: "var(--ls-text-hint)", marginTop: 2 }}>
-            {record.program ?? "Programme"} · Coach {record.responsibleName ?? "—"}
-          </div>
-        </div>
-        <Link
-          to={`/clients/${record.clientId}`}
+      {/* Header premium gradient gold */}
+      <div
+        style={{
+          background:
+            "linear-gradient(135deg, color-mix(in srgb, var(--ls-gold) 12%, var(--ls-surface)) 0%, var(--ls-surface) 60%)",
+          border: "0.5px solid color-mix(in srgb, var(--ls-gold) 35%, var(--ls-border))",
+          borderRadius: 18,
+          padding: "20px 22px",
+          boxShadow: "0 4px 20px rgba(184,146,42,0.10)",
+          position: "relative",
+          overflow: "hidden",
+        }}
+      >
+        {/* Glow gold subtil top-right */}
+        <div
+          aria-hidden="true"
           style={{
-            padding: "9px 14px", borderRadius: 10,
-            border: "1px solid var(--ls-border)", background: "var(--ls-surface2)",
-            color: "var(--ls-text-muted)", fontSize: 12, fontWeight: 500,
-            textDecoration: "none", fontFamily: "DM Sans, sans-serif",
+            position: "absolute",
+            top: -40,
+            right: -40,
+            width: 160,
+            height: 160,
+            background: "radial-gradient(circle, rgba(184,146,42,0.18) 0%, transparent 70%)",
+            pointerEvents: "none",
+          }}
+        />
+
+        <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 14, position: "relative", flexWrap: "wrap" }}>
+          {/* Avatar */}
+          <div
+            style={{
+              width: 60,
+              height: 60,
+              borderRadius: 16,
+              background: "linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontFamily: "Syne, serif",
+              fontWeight: 800,
+              fontSize: 22,
+              color: "white",
+              boxShadow: "0 4px 14px rgba(186,117,23,0.40)",
+              flexShrink: 0,
+            }}
+          >
+            {(firstName[0] ?? "") + (lastName[0] ?? "")}
+          </div>
+          {/* Nom + meta */}
+          <div style={{ flex: 1, minWidth: 200 }}>
+            <h1
+              style={{
+                fontFamily: "Syne, serif",
+                fontWeight: 800,
+                fontSize: 24,
+                color: "var(--ls-text)",
+                margin: 0,
+                lineHeight: 1.1,
+              }}
+            >
+              {record.clientName}
+            </h1>
+            <div style={{ fontSize: 12, color: "var(--ls-text-muted)", marginTop: 4 }}>
+              {record.program ?? "Programme"} · Coach {record.responsibleName ?? "—"}
+            </div>
+          </div>
+          {/* Lien vers fiche client */}
+          <Link
+            to={`/clients/${record.clientId}`}
+            style={{
+              padding: "9px 14px",
+              borderRadius: 10,
+              border: "0.5px solid var(--ls-border)",
+              background: "var(--ls-surface)",
+              color: "var(--ls-text-muted)",
+              fontSize: 12,
+              fontWeight: 500,
+              textDecoration: "none",
+            }}
+          >
+            Dossier complet →
+          </Link>
+        </div>
+
+        {/* Stats chips */}
+        <div
+          style={{
+            display: "flex",
+            flexWrap: "wrap",
+            gap: 8,
+            position: "relative",
           }}
         >
-          Ouvrir dossier complet →
-        </Link>
+          <StatChip
+            label="Produits actifs"
+            value={String(productsCount)}
+            tone="teal"
+          />
+          <StatChip
+            label="PV ce mois"
+            value={pvThisMonth.toFixed(1)}
+            tone="gold"
+          />
+          <StatChip
+            label="Dernière commande"
+            value={lastOrderDate ? relativeDays(lastOrderDate) : "—"}
+            tone="purple"
+          />
+        </div>
       </div>
 
-      {/* Card onglets + contenu */}
-      <div style={{ background: "var(--ls-surface)", border: "1px solid var(--ls-border)", borderRadius: 14, overflow: "hidden" }}>
-        <div style={{ display: "flex", borderBottom: "1px solid var(--ls-border)" }}>
+      {/* Tabs */}
+      <div
+        style={{
+          background: "var(--ls-surface)",
+          border: "0.5px solid var(--ls-border)",
+          borderRadius: 14,
+          overflow: "hidden",
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            borderBottom: "1px solid var(--ls-border)",
+            background: "var(--ls-surface2)",
+          }}
+        >
           {(
             [
-              { key: "products", label: "Produits actifs" },
-              { key: "history", label: "Historique" },
-            ] as const
-          ).map(({ key, label }) => {
-            const isActive = activeTab === key;
+              { id: "products" as Tab, label: "Produits actifs" },
+              { id: "history" as Tab, label: "Historique" },
+            ]
+          ).map(({ id, label }) => {
+            const isActive = activeTab === id;
             return (
               <button
-                key={key}
-                onClick={() => setActiveTab(key)}
+                key={id}
+                onClick={() => setActiveTab(id)}
                 style={{
-                  flex: 1, padding: "14px", border: "none", background: "transparent",
+                  flex: 1,
+                  padding: "14px 16px",
+                  background: "transparent",
+                  border: "none",
+                  cursor: "pointer",
+                  fontSize: 13,
+                  fontWeight: isActive ? 700 : 500,
                   color: isActive ? "var(--ls-gold)" : "var(--ls-text-muted)",
-                  fontSize: 13, fontWeight: isActive ? 600 : 400, cursor: "pointer",
                   borderBottom: isActive ? "2px solid var(--ls-gold)" : "2px solid transparent",
-                  marginBottom: -1, fontFamily: "DM Sans, sans-serif", transition: "all 0.15s",
+                  marginBottom: -1,
+                  fontFamily: "Syne, serif",
+                  transition: "all 0.15s",
                 }}
               >
                 {label}
@@ -111,7 +299,7 @@ export function PvClientFullPage({ record, onClose }: { record: PvClientTracking
           <ProductsTab
             record={record}
             showOrderForm={showOrderForm}
-            onToggleOrderForm={() => setShowOrderForm(!showOrderForm)}
+            onToggleOrderForm={() => setShowOrderForm((v) => !v)}
           />
         )}
         {activeTab === "history" && <HistoryTab record={record} />}
@@ -120,7 +308,51 @@ export function PvClientFullPage({ record, onClose }: { record: PvClientTracking
   );
 }
 
-// ─── ONGLET PRODUITS ─────────────────────────────────────────────────────
+// ─── StatChip ────────────────────────────────────────────────────────────────
+
+function StatChip({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: string;
+  tone: "gold" | "teal" | "purple";
+}) {
+  const colorVar = `var(--ls-${tone})`;
+  return (
+    <div
+      style={{
+        padding: "8px 14px",
+        background: "var(--ls-surface)",
+        border: `0.5px solid color-mix(in srgb, ${colorVar} 35%, transparent)`,
+        borderRadius: 10,
+        display: "flex",
+        flexDirection: "column",
+        gap: 2,
+        minWidth: 110,
+      }}
+    >
+      <span style={{ fontSize: 9, letterSpacing: 1.4, textTransform: "uppercase", color: "var(--ls-text-hint)", fontWeight: 600 }}>
+        {label}
+      </span>
+      <span
+        style={{
+          fontFamily: "Syne, serif",
+          fontSize: 16,
+          fontWeight: 800,
+          color: colorVar,
+          lineHeight: 1,
+        }}
+      >
+        {value}
+      </span>
+    </div>
+  );
+}
+
+// ─── ONGLET PRODUITS ─────────────────────────────────────────────────────────
+
 function ProductsTab({
   record,
   showOrderForm,
@@ -133,37 +365,67 @@ function ProductsTab({
   const products = record.activeProducts ?? [];
 
   return (
-    <div style={{ padding: 18 }}>
+    <div style={{ padding: 20 }}>
       {!showOrderForm ? (
         <button
           onClick={onToggleOrderForm}
           style={{
-            width: "100%", padding: "12px", borderRadius: 11, border: "none",
-            background: "var(--ls-gold)", color: "#fff",
-            fontSize: 13, fontWeight: 700, cursor: "pointer",
-            fontFamily: "Syne, sans-serif", marginBottom: 14,
-            display: "flex", alignItems: "center", justifyContent: "center", gap: 7,
-            boxShadow: "0 2px 8px rgba(184,146,42,0.25)",
+            width: "100%",
+            padding: "14px 18px",
+            borderRadius: 12,
+            border: "none",
+            background: "linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)",
+            color: "#fff",
+            fontSize: 14,
+            fontWeight: 700,
+            cursor: "pointer",
+            fontFamily: "Syne, serif",
+            marginBottom: 16,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 8,
+            boxShadow: "0 4px 14px rgba(186,117,23,0.40)",
+            transition: "transform 0.15s, box-shadow 0.15s",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = "translateY(-1px)";
+            e.currentTarget.style.boxShadow = "0 6px 18px rgba(186,117,23,0.50)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = "none";
+            e.currentTarget.style.boxShadow = "0 4px 14px rgba(186,117,23,0.40)";
           }}
         >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <line x1="12" y1="5" x2="12" y2="19" />
-            <line x1="5" y1="12" x2="19" y2="12" />
-          </svg>
+          <span style={{ fontSize: 16 }}>🛒</span>
           Nouvelle commande pour ce client
         </button>
       ) : (
-        <InlineOrderForm record={record} onClose={onToggleOrderForm} />
+        <PremiumOrderBuilder record={record} onClose={onToggleOrderForm} />
       )}
 
       {products.length === 0 ? (
-        <div style={{ padding: "40px 20px", textAlign: "center", color: "var(--ls-text-hint)", fontSize: 13 }}>
-          Aucun produit actif pour ce client.
+        <div
+          style={{
+            padding: "40px 20px",
+            textAlign: "center",
+            color: "var(--ls-text-hint)",
+            fontSize: 13,
+            background: "var(--ls-surface2)",
+            borderRadius: 12,
+            border: "0.5px dashed var(--ls-border)",
+          }}
+        >
+          🌱 Aucun produit actif pour ce client.
+          <br />
+          <span style={{ fontSize: 11, marginTop: 4, display: "inline-block" }}>
+            Enregistre une 1ère commande pour commencer le suivi.
+          </span>
         </div>
       ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           {products.map((p) => (
-            <ProductCard key={p.id} p={p} />
+            <ActiveProductCard key={p.id} p={p} />
           ))}
         </div>
       )}
@@ -171,128 +433,236 @@ function ProductsTab({
   );
 }
 
-function ProductCard({ p }: { p: PvProductUsage }) {
+// ─── Card produit actif avec progress bar de cure ────────────────────────────
+
+function ActiveProductCard({ p }: { p: PvProductUsage }) {
   const remaining = p.estimatedRemainingDays;
-  const color =
-    remaining < 0 ? "var(--ls-coral)" : remaining < 7 ? "var(--ls-gold)" : "var(--ls-teal)";
-  const bg =
-    remaining < 0 ? "rgba(220,38,38,0.1)" : remaining < 7 ? "rgba(184,146,42,0.1)" : "rgba(13,148,136,0.1)";
+  const total = p.durationReferenceDays ?? 21;
+  const elapsed = Math.max(0, total - Math.max(0, remaining));
+  const ratio = total > 0 ? Math.min(1, Math.max(0, elapsed / total)) : 0;
+
+  const tone = remaining < 0 ? "coral" : remaining < 7 ? "gold" : "teal";
+  const color = `var(--ls-${tone})`;
+  const bg = `color-mix(in srgb, ${color} 10%, transparent)`;
   const label = remaining < 0 ? "Dépassé" : remaining < 7 ? "Bientôt fini" : "OK";
+  // PvProductUsage n'a pas de category — on la cherche dans le catalogue
+  const catalogProduct = pvProductCatalog.find((c) => c.id === p.productId);
+  const cat = categorize(catalogProduct?.category ?? "");
 
   return (
-    <div style={{
-      background: "var(--ls-surface2)", border: "1px solid var(--ls-border)",
-      borderRadius: 12, padding: 14,
-    }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10, flexWrap: "wrap" }}>
-        <div style={{ width: 8, height: 8, borderRadius: "50%", background: color, flexShrink: 0 }} />
+    <div
+      style={{
+        background: "var(--ls-surface)",
+        border: `0.5px solid color-mix(in srgb, ${color} 30%, var(--ls-border))`,
+        borderLeft: `3px solid ${color}`,
+        borderRadius: 14,
+        padding: 16,
+        transition: "transform 0.15s, box-shadow 0.15s",
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.transform = "translateY(-1px)";
+        e.currentTarget.style.boxShadow = `0 4px 14px color-mix(in srgb, ${color} 18%, transparent)`;
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.transform = "none";
+        e.currentTarget.style.boxShadow = "none";
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 10, flexWrap: "wrap" }}>
+        <div
+          style={{
+            width: 38,
+            height: 38,
+            borderRadius: 10,
+            background: bg,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: 18,
+            flexShrink: 0,
+          }}
+        >
+          {cat.emoji}
+        </div>
         <div style={{ flex: 1, minWidth: 140 }}>
-          <div style={{ fontSize: 13, fontWeight: 600, color: "var(--ls-text)" }}>{p.productName}</div>
+          <div style={{ fontSize: 14, fontWeight: 700, color: "var(--ls-text)", fontFamily: "Syne, serif" }}>
+            {p.productName}
+          </div>
           <div style={{ fontSize: 11, color: "var(--ls-text-hint)", marginTop: 2 }}>
             {p.quantityStart} {p.quantiteLabel ? `· ${p.quantiteLabel}` : ""} · Démarré le {formatDateLocal(p.startDate)}
           </div>
         </div>
-        <span style={{
-          display: "inline-flex", padding: "3px 10px", borderRadius: 10,
-          fontSize: 10, fontWeight: 600, background: bg, color,
-        }}>
+        <span
+          style={{
+            display: "inline-flex",
+            padding: "4px 11px",
+            borderRadius: 999,
+            fontSize: 10,
+            fontWeight: 700,
+            background: bg,
+            color,
+            textTransform: "uppercase",
+            letterSpacing: 0.6,
+          }}
+        >
           {label}
         </span>
       </div>
 
+      {/* Progress bar de cure */}
+      <div style={{ marginBottom: 10 }}>
+        <div
+          style={{
+            height: 8,
+            background: "color-mix(in srgb, var(--ls-border) 70%, transparent)",
+            borderRadius: 4,
+            overflow: "hidden",
+            position: "relative",
+          }}
+        >
+          <div
+            style={{
+              width: `${Math.round(ratio * 100)}%`,
+              height: "100%",
+              background: `linear-gradient(90deg, ${color} 0%, color-mix(in srgb, ${color} 70%, white) 100%)`,
+              transition: "width 600ms cubic-bezier(0.4, 0, 0.2, 1)",
+            }}
+          />
+        </div>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            fontSize: 10,
+            color: "var(--ls-text-hint)",
+            marginTop: 4,
+          }}
+        >
+          <span>{Math.round(ratio * 100)}% de cure consommée</span>
+          <span>
+            {remaining >= 0 ? `${remaining}j restants` : `${Math.abs(remaining)}j de retard`}
+          </span>
+        </div>
+      </div>
+
+      {/* Footer reste / next */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 10, fontSize: 11 }}>
         <div>
-          <div style={{ color: "var(--ls-text-hint)", marginBottom: 2 }}>Reste estimé</div>
-          <div style={{ fontWeight: 600, color: "var(--ls-text)" }}>
+          <div style={{ color: "var(--ls-text-hint)", marginBottom: 2, fontSize: 9, letterSpacing: 1.2, textTransform: "uppercase", fontWeight: 600 }}>
+            Reste estimé
+          </div>
+          <div style={{ fontWeight: 700, color: "var(--ls-text)", fontFamily: "Syne, serif", fontSize: 13 }}>
             {remaining} jour{Math.abs(remaining) > 1 ? "s" : ""}
           </div>
         </div>
         <div>
-          <div style={{ color: "var(--ls-text-hint)", marginBottom: 2 }}>Prochaine commande</div>
-          <div style={{ fontWeight: 600, color: "var(--ls-gold)" }}>{formatDateLocal(p.nextProbableOrderDate)}</div>
+          <div style={{ color: "var(--ls-text-hint)", marginBottom: 2, fontSize: 9, letterSpacing: 1.2, textTransform: "uppercase", fontWeight: 600 }}>
+            Prochaine commande
+          </div>
+          <div style={{ fontWeight: 700, color: "var(--ls-gold)", fontFamily: "Syne, serif", fontSize: 13 }}>
+            {formatDateLocal(p.nextProbableOrderDate)}
+          </div>
         </div>
       </div>
     </div>
   );
 }
 
-// ─── FORMULAIRE INLINE COMMANDE ─────────────────────────────────────────
-// Chantier bilan updates (2026-04-20) : jusqu'à 6 lignes produits par
-// commande. Chaque ligne = produit + quantité. Date + type communs à
-// toute la commande. Submit = boucle addPvTransaction pour chaque ligne.
-const MAX_ORDER_LINES = 6;
+// ─── PREMIUM ORDER BUILDER (panier visuel) ───────────────────────────────────
 
-interface OrderLine {
-  id: string;
+const MAX_ORDER_LINES = 12; // augmenté de 6 à 12 dans la refonte
+
+interface CartLine {
   productId: string;
-  quantity: string;
+  quantity: number;
 }
 
-function createEmptyLine(initialProductId: string): OrderLine {
-  return {
-    id: `line-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-    productId: initialProductId,
-    quantity: "1",
-  };
-}
-
-function InlineOrderForm({ record, onClose }: { record: PvClientTrackingRecord; onClose: () => void }) {
+function PremiumOrderBuilder({
+  record,
+  onClose,
+}: {
+  record: PvClientTrackingRecord;
+  onClose: () => void;
+}) {
   const { addPvTransaction } = useAppContext();
-  const initialProduct = pvProductCatalog.find((p) => p.active) ?? pvProductCatalog[0];
+  const { push: pushToast } = useToast();
+
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [type, setType] = useState<PvTransactionType>("commande");
-  const [lines, setLines] = useState<OrderLine[]>(() => [createEmptyLine(initialProduct?.id ?? "")]);
+  const [cart, setCart] = useState<CartLine[]>([]);
+  const [activeCategory, setActiveCategory] = useState<string>("all");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string>("");
+  const [confettiVisible, setConfettiVisible] = useState(false);
 
-  function updateLine(lineId: string, patch: Partial<OrderLine>) {
-    setLines((prev) => prev.map((l) => (l.id === lineId ? { ...l, ...patch } : l)));
+  const activeProducts = useMemo(() => pvProductCatalog.filter((p) => p.active), []);
+
+  const productsByCategory = useMemo(() => {
+    const map = new Map<string, typeof activeProducts>();
+    for (const p of activeProducts) {
+      const cat = categorize(p.category ?? "").id;
+      if (!map.has(cat)) map.set(cat, []);
+      map.get(cat)!.push(p);
+    }
+    return map;
+  }, [activeProducts]);
+
+  const visibleProducts = useMemo(() => {
+    if (activeCategory === "all") return activeProducts;
+    return productsByCategory.get(activeCategory) ?? [];
+  }, [activeCategory, activeProducts, productsByCategory]);
+
+  // ─── Cart actions ─────────────────────────────────────────────────────────
+  function addToCart(productId: string) {
+    setCart((prev) => {
+      const existing = prev.find((l) => l.productId === productId);
+      if (existing) {
+        return prev.map((l) =>
+          l.productId === productId ? { ...l, quantity: Math.min(99, l.quantity + 1) } : l,
+        );
+      }
+      if (prev.length >= MAX_ORDER_LINES) return prev;
+      return [...prev, { productId, quantity: 1 }];
+    });
   }
-  function removeLine(lineId: string) {
-    setLines((prev) => (prev.length > 1 ? prev.filter((l) => l.id !== lineId) : prev));
-  }
-  function addLine() {
-    setLines((prev) =>
-      prev.length < MAX_ORDER_LINES ? [...prev, createEmptyLine(initialProduct?.id ?? "")] : prev
+  function setQuantity(productId: string, delta: number) {
+    setCart((prev) =>
+      prev
+        .map((l) =>
+          l.productId === productId ? { ...l, quantity: Math.max(0, Math.min(99, l.quantity + delta)) } : l,
+        )
+        .filter((l) => l.quantity > 0),
     );
   }
+  function removeFromCart(productId: string) {
+    setCart((prev) => prev.filter((l) => l.productId !== productId));
+  }
 
-  // Totaux agrégés sur toutes les lignes
-  const { totalPv, totalPrice } = (() => {
+  const totals = useMemo(() => {
     let pv = 0;
     let price = 0;
-    for (const line of lines) {
-      const product = pvProductCatalog.find((p) => p.id === line.productId);
-      const qty = Number(line.quantity || 0);
-      if (!product || !qty) continue;
-      pv += product.pv * qty;
-      price += product.pricePublic * qty;
-    }
-    return { totalPv: Number(pv.toFixed(2)), totalPrice: Number(price.toFixed(2)) };
-  })();
-
-  async function handleSubmit() {
-    // Validation : au moins 1 ligne avec qty > 0
-    const valid: Array<{ line: OrderLine; product: (typeof pvProductCatalog)[number]; qty: number }> = [];
-    for (const line of lines) {
-      const qty = Number(line.quantity);
-      if (!qty || qty <= 0) continue;
+    for (const line of cart) {
       const product = pvProductCatalog.find((p) => p.id === line.productId);
       if (!product) continue;
-      valid.push({ line, product, qty });
+      pv += product.pv * line.quantity;
+      price += product.pricePublic * line.quantity;
     }
-    if (valid.length === 0) {
-      setError("Ajoute au moins un produit avec une quantité > 0.");
+    return { pv: Number(pv.toFixed(2)), price: Number(price.toFixed(2)) };
+  }, [cart]);
+
+  // ─── Submit ──────────────────────────────────────────────────────────────
+  async function handleSubmit() {
+    if (cart.length === 0) {
+      setError("Sélectionne au moins un produit dans le catalogue.");
       return;
     }
-
     setError("");
     setSubmitting(true);
     try {
-      // Boucle d'INSERT — on incrémente un nano-offset pour l'id local afin
-      // d'éviter les doublons.
-      for (let i = 0; i < valid.length; i += 1) {
-        const { product, qty } = valid[i];
+      for (let i = 0; i < cart.length; i += 1) {
+        const line = cart[i];
+        const product = pvProductCatalog.find((p) => p.id === line.productId);
+        if (!product) continue;
         const tx: PvClientTransaction = {
           id: `local-${Date.now()}-${i}`,
           date,
@@ -302,215 +672,590 @@ function InlineOrderForm({ record, onClose }: { record: PvClientTrackingRecord; 
           responsibleName: record.responsibleName,
           productId: product.id,
           productName: product.name,
-          quantity: qty,
-          pv: Number((product.pv * qty).toFixed(2)),
-          price: Number((product.pricePublic * qty).toFixed(2)),
+          quantity: line.quantity,
+          pv: Number((product.pv * line.quantity).toFixed(2)),
+          price: Number((product.pricePublic * line.quantity).toFixed(2)),
           type,
-          note: type === "commande"
-            ? `Commande multi-produits (${valid.length} ligne${valid.length > 1 ? "s" : ""}) depuis la fiche client`
-            : `Reprise sur place (${valid.length} ligne${valid.length > 1 ? "s" : ""}) depuis la fiche client`,
+          note:
+            type === "commande"
+              ? `Commande multi-produits (${cart.length} ligne${cart.length > 1 ? "s" : ""}) depuis la fiche PV`
+              : `Reprise sur place (${cart.length} ligne${cart.length > 1 ? "s" : ""}) depuis la fiche PV`,
         };
         await addPvTransaction(tx);
       }
-      onClose();
+      // Confettis + toast premium
+      setConfettiVisible(true);
+      pushToast({
+        tone: "success",
+        title: `+${totals.pv.toFixed(1)} PV enregistrés 🎉`,
+        message: `${cart.length} produit${cart.length > 1 ? "s" : ""} pour ${record.clientName}`,
+      });
+      // Laisse les confettis tourner 1.2s avant de fermer
+      window.setTimeout(() => {
+        setConfettiVisible(false);
+        onClose();
+      }, 1200);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Impossible d'enregistrer la commande.");
-    } finally {
       setSubmitting(false);
     }
   }
 
   return (
-    <div style={{
-      background: "var(--ls-surface2)", border: "1.5px solid var(--ls-gold)",
-      borderRadius: 12, padding: 16, marginBottom: 14,
-    }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
-        <div style={{ fontFamily: "Syne, sans-serif", fontWeight: 700, fontSize: 14, color: "var(--ls-text)" }}>
-          Nouvelle commande ({lines.length}/{MAX_ORDER_LINES} ligne{lines.length > 1 ? "s" : ""})
+    <div
+      style={{
+        background:
+          "linear-gradient(180deg, color-mix(in srgb, var(--ls-gold) 4%, var(--ls-surface2)) 0%, var(--ls-surface2) 100%)",
+        border: "1px solid color-mix(in srgb, var(--ls-gold) 30%, var(--ls-border))",
+        borderRadius: 14,
+        padding: 18,
+        marginBottom: 18,
+        position: "relative",
+        overflow: "hidden",
+      }}
+    >
+      {confettiVisible ? <ConfettiOverlay /> : null}
+
+      {/* Header form */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+        <div>
+          <div
+            style={{
+              fontFamily: "Syne, serif",
+              fontWeight: 800,
+              fontSize: 18,
+              color: "var(--ls-text)",
+            }}
+          >
+            🛒 Nouvelle commande
+          </div>
+          <div style={{ fontSize: 11, color: "var(--ls-text-muted)", marginTop: 2 }}>
+            Pour {record.clientName} · sélectionne dans le catalogue
+          </div>
         </div>
         <button
           onClick={onClose}
-          style={{ background: "transparent", border: "none", color: "var(--ls-text-hint)", fontSize: 22, cursor: "pointer", padding: 0, lineHeight: 1 }}
+          style={{
+            background: "transparent",
+            border: "none",
+            color: "var(--ls-text-hint)",
+            fontSize: 24,
+            cursor: "pointer",
+            padding: 4,
+            lineHeight: 1,
+          }}
           aria-label="Fermer"
         >
           ×
         </button>
       </div>
 
-      {/* Date + Type (communs) */}
-      <div className="pv-form-grid" style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 10, marginBottom: 12 }}>
-        <FormField label="Date">
-          <input type="date" value={date} onChange={(e) => setDate(e.target.value)} style={inputStyle} />
-        </FormField>
-        <FormField label="Type">
-          <select value={type} onChange={(e) => setType(e.target.value as PvTransactionType)} style={inputStyle}>
-            <option value="commande">Commande</option>
-            <option value="reprise-sur-place">Reprise sur place</option>
-          </select>
-        </FormField>
+      {/* Date + Type chips */}
+      <div style={{ display: "flex", gap: 12, marginBottom: 14, flexWrap: "wrap", alignItems: "center" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <span style={{ fontSize: 11, color: "var(--ls-text-muted)" }}>📅</span>
+          <input
+            type="date"
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+            style={{
+              padding: "8px 10px",
+              border: "0.5px solid var(--ls-border)",
+              borderRadius: 8,
+              fontFamily: "DM Sans, sans-serif",
+              fontSize: 13,
+              background: "var(--ls-surface)",
+              color: "var(--ls-text)",
+              outline: "none",
+            }}
+          />
+        </div>
+        <div style={{ display: "inline-flex", gap: 4, padding: 3, background: "var(--ls-surface)", borderRadius: 10, border: "0.5px solid var(--ls-border)" }}>
+          {(["commande", "reprise-sur-place"] as PvTransactionType[]).map((t) => {
+            const active = type === t;
+            return (
+              <button
+                key={t}
+                type="button"
+                onClick={() => setType(t)}
+                style={{
+                  padding: "6px 12px",
+                  border: "none",
+                  background: active ? "var(--ls-gold)" : "transparent",
+                  color: active ? "white" : "var(--ls-text-muted)",
+                  fontSize: 11,
+                  fontWeight: 600,
+                  borderRadius: 7,
+                  cursor: "pointer",
+                  fontFamily: "DM Sans, sans-serif",
+                }}
+              >
+                {t === "commande" ? "🛒 Commande" : "🏪 Sur place"}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
-      {/* Lignes produits */}
-      <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 10 }}>
-        {lines.map((line, idx) => (
-          <div
-            key={line.id}
-            style={{
-              display: "grid",
-              gridTemplateColumns: "minmax(0, 1fr) 90px auto",
-              gap: 8,
-              alignItems: "center",
-              padding: 10,
-              borderRadius: 9,
-              background: "var(--ls-surface)",
-              border: "1px solid var(--ls-border)",
-            }}
-          >
-            <select
-              value={line.productId}
-              onChange={(e) => updateLine(line.id, { productId: e.target.value })}
-              style={inputStyle}
-              aria-label={`Produit ligne ${idx + 1}`}
-            >
-              {pvProductCatalog.filter((p) => p.active).map((p) => (
-                <option key={p.id} value={p.id}>{p.name}</option>
-              ))}
-            </select>
-            <input
-              type="number"
-              min="1"
-              value={line.quantity}
-              onChange={(e) => updateLine(line.id, { quantity: e.target.value })}
-              style={inputStyle}
-              aria-label={`Quantité ligne ${idx + 1}`}
-            />
-            <button
-              type="button"
-              onClick={() => removeLine(line.id)}
-              disabled={lines.length === 1}
-              aria-label={`Supprimer ligne ${idx + 1}`}
-              style={{
-                background: "transparent",
-                border: "1px solid var(--ls-border)",
-                color: lines.length === 1 ? "var(--ls-text-hint)" : "var(--ls-coral)",
-                borderRadius: 8,
-                padding: "6px 10px",
-                fontSize: 14,
-                cursor: lines.length === 1 ? "not-allowed" : "pointer",
-                opacity: lines.length === 1 ? 0.5 : 1,
-              }}
-            >
-              ×
-            </button>
-          </div>
+      {/* Catégories */}
+      <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 12 }}>
+        <CategoryChip label="✨ Tout" active={activeCategory === "all"} onClick={() => setActiveCategory("all")} count={activeProducts.length} />
+        {CATEGORY_GROUPS.filter((g) => g.id !== "autres" && (productsByCategory.get(g.id)?.length ?? 0) > 0).map((g) => (
+          <CategoryChip
+            key={g.id}
+            label={`${g.emoji} ${g.label}`}
+            active={activeCategory === g.id}
+            onClick={() => setActiveCategory(g.id)}
+            count={productsByCategory.get(g.id)?.length ?? 0}
+          />
         ))}
       </div>
 
-      {/* Ajouter ligne */}
-      {lines.length < MAX_ORDER_LINES && (
-        <button
-          type="button"
-          onClick={addLine}
-          style={{
-            width: "100%",
-            padding: 10,
-            borderRadius: 9,
-            border: "1.5px dashed var(--ls-border2)",
-            background: "transparent",
-            color: "var(--ls-gold)",
-            fontSize: 12,
-            fontWeight: 600,
-            cursor: "pointer",
-            fontFamily: "'DM Sans', sans-serif",
-            marginBottom: 14,
-          }}
-        >
-          + Ajouter une ligne produit
-        </button>
-      )}
-      {lines.length >= MAX_ORDER_LINES && (
-        <p style={{ fontSize: 11, color: "var(--ls-text-hint)", textAlign: "center", margin: "0 0 14px" }}>
-          Maximum {MAX_ORDER_LINES} produits par commande.
-        </p>
-      )}
-
-      {/* Totaux live */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 10, marginBottom: 14, padding: 10, background: "var(--ls-surface)", borderRadius: 9 }}>
-        <div style={{ fontSize: 11, color: "var(--ls-text-hint)" }}>
-          PV total : <strong style={{ color: "var(--ls-gold)", fontSize: 13 }}>{totalPv.toFixed(2)} PV</strong>
-        </div>
-        <div style={{ fontSize: 11, color: "var(--ls-text-hint)" }}>
-          Prix total : <strong style={{ color: "var(--ls-text)", fontSize: 13 }}>{totalPrice.toFixed(2)} €</strong>
-        </div>
+      {/* Catalogue grid */}
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fill, minmax(170px, 1fr))",
+          gap: 10,
+          marginBottom: 16,
+          maxHeight: 380,
+          overflowY: "auto",
+          padding: 4,
+        }}
+      >
+        {visibleProducts.map((p) => {
+          const inCart = cart.find((l) => l.productId === p.id);
+          const cat = categorize(p.category ?? "");
+          return (
+            <button
+              key={p.id}
+              type="button"
+              onClick={() => addToCart(p.id)}
+              style={{
+                position: "relative",
+                background: inCart ? "color-mix(in srgb, var(--ls-gold) 8%, var(--ls-surface))" : "var(--ls-surface)",
+                border: inCart
+                  ? "1.5px solid var(--ls-gold)"
+                  : "0.5px solid var(--ls-border)",
+                borderRadius: 12,
+                padding: "12px 12px 10px",
+                cursor: "pointer",
+                textAlign: "left",
+                fontFamily: "DM Sans, sans-serif",
+                transition: "transform 0.12s, box-shadow 0.12s",
+                display: "flex",
+                flexDirection: "column",
+                gap: 6,
+                minHeight: 110,
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = "translateY(-2px)";
+                e.currentTarget.style.boxShadow = "0 6px 16px rgba(0,0,0,0.06)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = "none";
+                e.currentTarget.style.boxShadow = "none";
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6 }}>
+                <span style={{ fontSize: 22 }}>{cat.emoji}</span>
+                {inCart ? (
+                  <span
+                    style={{
+                      fontSize: 10,
+                      fontWeight: 700,
+                      padding: "2px 8px",
+                      borderRadius: 999,
+                      background: "var(--ls-gold)",
+                      color: "white",
+                      fontFamily: "Syne, serif",
+                    }}
+                  >
+                    ×{inCart.quantity}
+                  </span>
+                ) : null}
+              </div>
+              <div
+                style={{
+                  fontSize: 12,
+                  fontWeight: 700,
+                  color: "var(--ls-text)",
+                  lineHeight: 1.25,
+                  fontFamily: "Syne, serif",
+                }}
+              >
+                {p.name}
+              </div>
+              <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginTop: "auto" }}>
+                <span
+                  style={{
+                    fontFamily: "Syne, serif",
+                    fontWeight: 800,
+                    fontSize: 14,
+                    color: "var(--ls-gold)",
+                  }}
+                >
+                  {p.pv.toFixed(1)} PV
+                </span>
+                <span style={{ fontSize: 11, color: "var(--ls-text-muted)" }}>
+                  {p.pricePublic.toFixed(0)}€
+                </span>
+              </div>
+            </button>
+          );
+        })}
       </div>
 
-      {error && (
-        <div style={{ padding: "8px 12px", borderRadius: 9, background: "rgba(220,38,38,0.08)", border: "1px solid rgba(220,38,38,0.2)", color: "var(--ls-coral)", fontSize: 12, marginBottom: 10 }}>
-          {error}
+      {/* Panier */}
+      {cart.length > 0 ? (
+        <div
+          style={{
+            background: "var(--ls-surface)",
+            border: "1px solid color-mix(in srgb, var(--ls-gold) 30%, var(--ls-border))",
+            borderRadius: 12,
+            padding: 14,
+            marginBottom: 12,
+          }}
+        >
+          <div
+            style={{
+              fontSize: 10,
+              letterSpacing: 1.4,
+              textTransform: "uppercase",
+              color: "var(--ls-text-hint)",
+              fontWeight: 700,
+              marginBottom: 10,
+            }}
+          >
+            🛍️ Panier — {cart.length} produit{cart.length > 1 ? "s" : ""}
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {cart.map((line) => {
+              const product = pvProductCatalog.find((p) => p.id === line.productId);
+              if (!product) return null;
+              const cat = categorize(product.category ?? "");
+              return (
+                <div
+                  key={line.productId}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 10,
+                    padding: "10px 12px",
+                    background: "var(--ls-surface2)",
+                    borderRadius: 10,
+                    border: "0.5px solid var(--ls-border)",
+                  }}
+                >
+                  <span style={{ fontSize: 18 }}>{cat.emoji}</span>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 12.5, fontWeight: 600, color: "var(--ls-text)" }}>
+                      {product.name}
+                    </div>
+                    <div style={{ fontSize: 10, color: "var(--ls-text-hint)", marginTop: 1 }}>
+                      {(product.pv * line.quantity).toFixed(1)} PV ·{" "}
+                      {(product.pricePublic * line.quantity).toFixed(2)}€
+                    </div>
+                  </div>
+                  {/* Stepper qty */}
+                  <div style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+                    <button
+                      type="button"
+                      onClick={() => setQuantity(line.productId, -1)}
+                      aria-label="Diminuer"
+                      style={stepperBtnStyle}
+                    >
+                      −
+                    </button>
+                    <span
+                      style={{
+                        minWidth: 28,
+                        textAlign: "center",
+                        fontFamily: "Syne, serif",
+                        fontWeight: 800,
+                        fontSize: 14,
+                        color: "var(--ls-text)",
+                      }}
+                    >
+                      {line.quantity}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setQuantity(line.productId, +1)}
+                      aria-label="Augmenter"
+                      style={stepperBtnStyle}
+                    >
+                      +
+                    </button>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => removeFromCart(line.productId)}
+                    aria-label="Retirer"
+                    style={{
+                      background: "transparent",
+                      border: "none",
+                      color: "var(--ls-coral)",
+                      fontSize: 18,
+                      cursor: "pointer",
+                      padding: 4,
+                      lineHeight: 1,
+                    }}
+                  >
+                    ×
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Totals */}
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginTop: 12,
+              padding: "10px 12px",
+              background:
+                "linear-gradient(90deg, color-mix(in srgb, var(--ls-gold) 8%, transparent) 0%, transparent 100%)",
+              borderRadius: 10,
+              border: "0.5px dashed color-mix(in srgb, var(--ls-gold) 35%, transparent)",
+            }}
+          >
+            <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+              <span style={{ fontSize: 9, letterSpacing: 1.2, textTransform: "uppercase", color: "var(--ls-text-hint)", fontWeight: 600 }}>
+                Total
+              </span>
+              <div style={{ display: "flex", alignItems: "baseline", gap: 10 }}>
+                <span style={{ fontFamily: "Syne, serif", fontWeight: 800, fontSize: 22, color: "var(--ls-gold)" }}>
+                  {totals.pv.toFixed(1)} PV
+                </span>
+                <span style={{ fontSize: 13, color: "var(--ls-text-muted)" }}>
+                  {totals.price.toFixed(2)} €
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div
+          style={{
+            padding: "16px 14px",
+            background: "var(--ls-surface)",
+            border: "0.5px dashed var(--ls-border)",
+            borderRadius: 12,
+            textAlign: "center",
+            fontSize: 12,
+            color: "var(--ls-text-hint)",
+            marginBottom: 12,
+            fontStyle: "italic",
+          }}
+        >
+          🛍️ Panier vide — clique sur les produits du catalogue pour les ajouter
         </div>
       )}
 
-      <div style={{ display: "flex", gap: 8 }}>
+      {/* Error */}
+      {error ? (
+        <div
+          style={{
+            padding: "10px 14px",
+            borderRadius: 10,
+            background: "color-mix(in srgb, var(--ls-coral) 8%, transparent)",
+            border: "0.5px solid color-mix(in srgb, var(--ls-coral) 30%, transparent)",
+            color: "var(--ls-coral)",
+            fontSize: 12,
+            marginBottom: 10,
+          }}
+        >
+          {error}
+        </div>
+      ) : null}
+
+      {/* Actions */}
+      <div style={{ display: "flex", gap: 10 }}>
         <button
           onClick={onClose}
           style={{
-            flex: 1, padding: "10px", borderRadius: 9,
-            border: "1px solid var(--ls-border)", background: "transparent",
-            color: "var(--ls-text-muted)", fontSize: 12, cursor: "pointer",
+            flex: 1,
+            padding: "12px",
+            borderRadius: 10,
+            border: "0.5px solid var(--ls-border)",
+            background: "transparent",
+            color: "var(--ls-text-muted)",
+            fontSize: 13,
+            cursor: "pointer",
             fontFamily: "DM Sans, sans-serif",
+            fontWeight: 500,
           }}
         >
           Annuler
         </button>
         <button
           onClick={() => void handleSubmit()}
-          disabled={submitting}
+          disabled={submitting || cart.length === 0}
           style={{
-            flex: 2, padding: "10px", borderRadius: 9, border: "none",
-            background: "var(--ls-gold)", color: "#fff",
-            fontSize: 12, fontWeight: 700,
-            cursor: submitting ? "wait" : "pointer",
-            fontFamily: "Syne, sans-serif", opacity: submitting ? 0.7 : 1,
+            flex: 2,
+            padding: "12px",
+            borderRadius: 10,
+            border: "none",
+            background:
+              cart.length === 0
+                ? "var(--ls-border)"
+                : "linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)",
+            color: "#fff",
+            fontSize: 13,
+            fontWeight: 700,
+            cursor: submitting ? "wait" : cart.length === 0 ? "not-allowed" : "pointer",
+            fontFamily: "Syne, serif",
+            opacity: submitting ? 0.7 : 1,
+            boxShadow: cart.length > 0 ? "0 4px 14px rgba(186,117,23,0.40)" : "none",
+            transition: "all 0.15s",
           }}
         >
-          {submitting ? "Enregistrement..." : "Enregistrer la commande"}
+          {submitting ? "Enregistrement…" : `Enregistrer ${cart.length > 0 ? `(${totals.pv.toFixed(1)} PV)` : ""}`}
         </button>
       </div>
     </div>
   );
 }
 
-const inputStyle: React.CSSProperties = {
-  width: "100%",
-  padding: "9px 11px",
-  border: "1px solid var(--ls-border)",
+const stepperBtnStyle: React.CSSProperties = {
+  width: 28,
+  height: 28,
   borderRadius: 8,
-  fontFamily: "DM Sans, sans-serif",
-  fontSize: 14,
+  border: "0.5px solid var(--ls-border)",
   background: "var(--ls-surface)",
   color: "var(--ls-text)",
-  outline: "none",
+  fontSize: 16,
+  fontWeight: 700,
+  cursor: "pointer",
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  padding: 0,
+  lineHeight: 1,
+  fontFamily: "Syne, serif",
 };
 
-function FormField({ label, children }: { label: string; children: React.ReactNode }) {
+// ─── Confetti overlay (simple emoji rain) ────────────────────────────────────
+
+function ConfettiOverlay() {
+  const emojis = useMemo(() => {
+    const items: { e: string; left: number; delay: number; rot: number }[] = [];
+    const set = ["🎉", "✨", "💰", "🎊", "⭐"];
+    for (let i = 0; i < 24; i += 1) {
+      items.push({
+        e: set[i % set.length],
+        left: Math.random() * 100,
+        delay: Math.random() * 400,
+        rot: Math.random() * 360,
+      });
+    }
+    return items;
+  }, []);
   return (
-    <div>
-      <div style={{ fontSize: 9, letterSpacing: "1.5px", textTransform: "uppercase", color: "var(--ls-text-hint)", fontWeight: 500, marginBottom: 5, fontFamily: "DM Sans, sans-serif" }}>
-        {label}
-      </div>
-      {children}
+    <div
+      aria-hidden="true"
+      style={{
+        position: "absolute",
+        inset: 0,
+        pointerEvents: "none",
+        overflow: "hidden",
+        zIndex: 5,
+      }}
+    >
+      {emojis.map((c, i) => (
+        <span
+          key={i}
+          style={{
+            position: "absolute",
+            top: -20,
+            left: `${c.left}%`,
+            fontSize: 22 + (i % 3) * 4,
+            transform: `rotate(${c.rot}deg)`,
+            animation: `pv-confetti-fall 1100ms ease-in ${c.delay}ms forwards`,
+          }}
+        >
+          {c.e}
+        </span>
+      ))}
+      <style>
+        {`@keyframes pv-confetti-fall {
+          0% { transform: translateY(-20px) rotate(0deg); opacity: 1; }
+          100% { transform: translateY(420px) rotate(540deg); opacity: 0; }
+        }`}
+      </style>
     </div>
   );
 }
 
-// ─── ONGLET HISTORIQUE ──────────────────────────────────────────────────
+// ─── Category chip ───────────────────────────────────────────────────────────
+
+function CategoryChip({
+  label,
+  active,
+  onClick,
+  count,
+}: {
+  label: string;
+  active: boolean;
+  onClick: () => void;
+  count: number;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      style={{
+        padding: "6px 12px",
+        borderRadius: 999,
+        border: active ? "0.5px solid var(--ls-gold)" : "0.5px solid var(--ls-border)",
+        background: active ? "color-mix(in srgb, var(--ls-gold) 12%, var(--ls-surface))" : "var(--ls-surface)",
+        color: active ? "var(--ls-gold)" : "var(--ls-text-muted)",
+        fontSize: 11,
+        fontWeight: active ? 700 : 500,
+        cursor: "pointer",
+        fontFamily: "DM Sans, sans-serif",
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 5,
+        transition: "all 0.12s",
+      }}
+    >
+      {label}
+      <span
+        style={{
+          fontSize: 9,
+          padding: "1px 6px",
+          borderRadius: 999,
+          background: active ? "var(--ls-gold)" : "var(--ls-surface2)",
+          color: active ? "white" : "var(--ls-text-hint)",
+          fontWeight: 700,
+        }}
+      >
+        {count}
+      </span>
+    </button>
+  );
+}
+
+// ─── ONGLET HISTORIQUE ───────────────────────────────────────────────────────
+
 function HistoryTab({ record }: { record: PvClientTrackingRecord }) {
   const transactions = record.transactions ?? [];
   if (transactions.length === 0) {
     return (
-      <div style={{ padding: "40px 20px", textAlign: "center", color: "var(--ls-text-hint)", fontSize: 13 }}>
-        Aucune transaction pour ce client.
+      <div
+        style={{
+          padding: "40px 20px",
+          textAlign: "center",
+          color: "var(--ls-text-hint)",
+          fontSize: 13,
+        }}
+      >
+        📭 Aucune transaction pour ce client.
       </div>
     );
   }
@@ -521,7 +1266,10 @@ function HistoryTab({ record }: { record: PvClientTrackingRecord }) {
           key={tx.id ?? i}
           className="pv-history-row"
           style={{
-            display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap",
+            display: "flex",
+            alignItems: "center",
+            gap: 12,
+            flexWrap: "wrap",
             padding: "14px 18px",
             borderBottom: i < transactions.length - 1 ? "1px solid var(--ls-border)" : "none",
           }}
@@ -530,13 +1278,25 @@ function HistoryTab({ record }: { record: PvClientTrackingRecord }) {
             {formatDateLocal(tx.date)}
           </div>
           <div style={{ flex: 1, minWidth: 140 }}>
-            <div style={{ fontSize: 13, fontWeight: 500, color: "var(--ls-text)" }}>{tx.productName}</div>
+            <div style={{ fontSize: 13, fontWeight: 500, color: "var(--ls-text)" }}>
+              {tx.productName}
+            </div>
             <div style={{ fontSize: 10, color: "var(--ls-text-hint)" }}>
               {getPvTypeLabel(tx.type)} · Qté {tx.quantity}
             </div>
           </div>
-          <div style={{ fontFamily: "Syne, sans-serif", fontSize: 14, fontWeight: 700, color: "var(--ls-gold)" }}>
+          <div
+            style={{
+              fontFamily: "Syne, sans-serif",
+              fontSize: 14,
+              fontWeight: 700,
+              color: "var(--ls-gold)",
+            }}
+          >
             {tx.pv?.toFixed(2)} PV
+          </div>
+          <div style={{ fontSize: 11, color: "var(--ls-text-muted)", width: 60, textAlign: "right" }}>
+            {tx.price?.toFixed(2)} €
           </div>
         </div>
       ))}
