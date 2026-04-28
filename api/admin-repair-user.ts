@@ -112,9 +112,15 @@ export default async function handler(req: any, res: any) {
       perPage: 500
     });
 
+    // Fix TS2339 (2026-04-28) : listedUsers.data peut etre null si error
+    // → TS infere users[] comme never[]. On guard explicitement et on
+    // type le param du find pour eviter l erreur "Property 'email' does
+    // not exist on type 'never'".
+    const users = listedUsers.data?.users ?? [];
     authUser =
-      listedUsers.data.users.find(
-        (item) => item.email?.toLowerCase() === email
+      users.find(
+        (item: { email?: string | null }) =>
+          item.email?.toLowerCase() === email,
       ) ?? null;
   }
 
