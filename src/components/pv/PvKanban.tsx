@@ -14,7 +14,6 @@
 // =============================================================================
 
 import { useMemo } from "react";
-import { useNavigate } from "react-router-dom";
 import type { PvClientTrackingRecord } from "../../types/pv";
 import type { PvActionPlan } from "../../hooks/usePvActionPlan";
 
@@ -23,6 +22,9 @@ interface Props {
   plan: PvActionPlan | null;
   isAdmin: boolean;
   currentUserId: string | null;
+  /** Callback au clic sur une card -> ouvre la fiche PvClientFullPage
+      (meme comportement que le clic dans la vue liste). 2026-04-29. */
+  onSelectClient: (clientId: string) => void;
 }
 
 interface KanbanCard {
@@ -46,8 +48,7 @@ interface Column {
   cards: KanbanCard[];
 }
 
-export function PvKanban({ records, plan, isAdmin, currentUserId }: Props) {
-  const navigate = useNavigate();
+export function PvKanban({ records, plan, isAdmin, currentUserId, onSelectClient }: Props) {
 
   const columns: Column[] = useMemo(() => {
     const overdueIds = new Set(plan?.restock_due?.map((r) => r.client_id) ?? []);
@@ -115,23 +116,12 @@ export function PvKanban({ records, plan, isAdmin, currentUserId }: Props) {
       }
     }
 
-    // Ajout des silent_active qui ne sont pas dans records (clients sans
-    // produit actif mais quand meme silencieux — cas rare mais possible).
-    if (plan?.silent_active) {
-      const knownIds = new Set(records.map((r) => r.clientId));
-      for (const s of plan.silent_active) {
-        if (knownIds.has(s.client_id)) continue;
-        silent.push({
-          clientId: s.client_id,
-          clientName: s.client_name,
-          responsibleName: "—",
-          responsibleId: "",
-          reasonBadges: [{ label: `${s.days_silent}j sans msg`, tone: "purple" }],
-          pvCumulative: 0,
-          daysSinceStart: 0,
-        });
-      }
-    }
+    // ⚠ Pas de cartes fantomes (2026-04-29) : on n'ajoute QUE les clients
+    // qui ont un record dans le Suivi PV (= produit actif tracke). Si un
+    // client est silencieux mais sans produit actif, il n'est pas affiche
+    // dans le kanban car il n'aurait pas de fiche PvClientFullPage clicable.
+    // Pour les voir, le coach va sur /clients (Dossiers) ou utilise la
+    // section "Silencieux a recontacter" du Plan PV en haut de page.
 
     return [
       {
@@ -251,7 +241,7 @@ export function PvKanban({ records, plan, isAdmin, currentUserId }: Props) {
                 key={card.clientId}
                 card={card}
                 isMine={isAdmin && card.responsibleId === currentUserId}
-                onClick={() => navigate(`/clients/${card.clientId}`)}
+                onClick={() => onSelectClient(card.clientId)}
               />
             ))
           )}
