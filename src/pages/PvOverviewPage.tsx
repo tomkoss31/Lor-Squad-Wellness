@@ -2,7 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { buildPvTrackingRecords } from "../data/pvCatalog";
 import { formatDate } from "../lib/calculations";
-import { PvModuleHeader } from "../components/pv/PvModuleHeader";
+// PvModuleHeader remplace par PremiumHero (2026-04-29)
+import { PremiumHero } from "../components/ui/PremiumHero";
 import { PvClientFullPage } from "../components/pv/PvClientFullPage";
 import { PvActionPlanCard } from "../components/copilote/PvActionPlanCard";
 import { PvKanban } from "../components/pv/PvKanban";
@@ -188,10 +189,12 @@ export function PvOverviewPage() {
 
   return (
     <div style={{ padding: "clamp(16px, 4vw, 28px)", maxWidth: 1200, margin: "0 auto", display: "flex", flexDirection: "column", gap: 20 }}>
-      <PvModuleHeader
-        currentUser={currentUser}
-        title="Suivi PV"
-        description="Vue globale des clients actifs, de leurs produits et commandes."
+      <PremiumHero
+        identity="gold"
+        eyebrow={`Suivi PV · ${stats.totalClients} client${stats.totalClients > 1 ? "s" : ""} actif${stats.totalClients > 1 ? "s" : ""}`}
+        titleAccent="Ton suivi"
+        titleSuffix=" PV 🎯"
+        subtitle="Gere les commandes, les cures et les relances client par client."
       />
 
       {/* Plan d'action PV (déplacé du Co-pilote, 2026-04-29) — toujours

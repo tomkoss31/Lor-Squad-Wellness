@@ -10,7 +10,8 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Card } from "../components/ui/Card";
-import { PageHeading } from "../components/ui/PageHeading";
+// PageHeading remplace par PremiumHero (2026-04-29)
+import { PremiumHero } from "../components/ui/PremiumHero";
 import { AcademyLeaderboard } from "../features/academy/components/AcademyLeaderboard";
 import { WeeklyBilansChallenge } from "../features/gamification/components/WeeklyBilansChallenge";
 import { MonthlySeasonCard } from "../features/gamification/components/MonthlySeasonCard";
@@ -230,10 +231,12 @@ export function TeamPage() {
 
   return (
     <div className="space-y-5">
-      <PageHeading
-        eyebrow="Ton organisation"
-        title="Mon équipe"
-        description="Arborescence de parrainage, stats par distri et classement du mois."
+      <PremiumHero
+        identity="teal"
+        eyebrow="Mon équipe · ton organisation"
+        titleAccent="Ton équipe"
+        titleSuffix=" 👥"
+        subtitle="Arborescence de parrainage, stats par distri et classement du mois."
       />
 
       {/* Tabs split (2026-04-29) — equipe vs gamification */}
