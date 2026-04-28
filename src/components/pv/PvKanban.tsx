@@ -25,6 +25,8 @@ interface Props {
   /** Callback au clic sur une card -> ouvre la fiche PvClientFullPage
       (meme comportement que le clic dans la vue liste). 2026-04-29. */
   onSelectClient: (clientId: string) => void;
+  /** Predicat "deja verifie cette semaine" (localStorage). 2026-04-29. */
+  isChecked: (clientId: string) => boolean;
 }
 
 interface KanbanCard {
@@ -48,7 +50,7 @@ interface Column {
   cards: KanbanCard[];
 }
 
-export function PvKanban({ records, plan, isAdmin, currentUserId, onSelectClient }: Props) {
+export function PvKanban({ records, plan, isAdmin, currentUserId, onSelectClient, isChecked }: Props) {
 
   const columns: Column[] = useMemo(() => {
     const overdueIds = new Set(plan?.restock_due?.map((r) => r.client_id) ?? []);
@@ -241,6 +243,7 @@ export function PvKanban({ records, plan, isAdmin, currentUserId, onSelectClient
                 key={card.clientId}
                 card={card}
                 isMine={isAdmin && card.responsibleId === currentUserId}
+                isChecked={isChecked(card.clientId)}
                 onClick={() => onSelectClient(card.clientId)}
               />
             ))
@@ -254,10 +257,12 @@ export function PvKanban({ records, plan, isAdmin, currentUserId, onSelectClient
 function PvKanbanCard({
   card,
   isMine,
+  isChecked,
   onClick,
 }: {
   card: KanbanCard;
   isMine: boolean;
+  isChecked: boolean;
   onClick: () => void;
 }) {
   return (
@@ -312,23 +317,43 @@ function PvKanbanCard({
         >
           {card.clientName}
         </div>
-        {isMine ? (
-          <span
-            title="Ton client"
-            style={{
-              padding: "1px 5px",
-              borderRadius: 6,
-              fontSize: 8,
-              fontWeight: 700,
-              background: "rgba(239,159,39,0.14)",
-              color: "#BA7517",
-              flexShrink: 0,
-              letterSpacing: "0.04em",
-            }}
-          >
-            MIEN
-          </span>
-        ) : null}
+        <div style={{ display: "flex", gap: 4, flexShrink: 0 }}>
+          {isChecked ? (
+            <span
+              title="Vérifié récemment (< 7j)"
+              style={{
+                padding: "1px 5px",
+                borderRadius: 6,
+                fontSize: 8,
+                fontWeight: 700,
+                background: "rgba(13,148,136,0.14)",
+                color: "var(--ls-teal)",
+                letterSpacing: "0.04em",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 2,
+              }}
+            >
+              ✓ VU
+            </span>
+          ) : null}
+          {isMine ? (
+            <span
+              title="Ton client"
+              style={{
+                padding: "1px 5px",
+                borderRadius: 6,
+                fontSize: 8,
+                fontWeight: 700,
+                background: "rgba(239,159,39,0.14)",
+                color: "#BA7517",
+                letterSpacing: "0.04em",
+              }}
+            >
+              MIEN
+            </span>
+          ) : null}
+        </div>
       </div>
 
       {card.reasonBadges.length > 0 ? (
