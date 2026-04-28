@@ -592,7 +592,7 @@ function PremiumOrderBuilder({
   record: PvClientTrackingRecord;
   onClose: () => void;
 }) {
-  const { addPvTransaction } = useAppContext();
+  const { addPvTransaction, currentUser } = useAppContext();
   const { push: pushToast } = useToast();
 
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
@@ -685,6 +685,25 @@ function PremiumOrderBuilder({
     }
     setError("");
     setSubmitting(true);
+
+    // Fallback responsable (2026-04-29) : si record synthetique sans
+    // distributorId valide (cas Sylvie Chaumont sans tracking actif),
+    // on utilise currentUser pour ne pas faire planter l'INSERT.
+    const safeResponsibleId =
+      record.responsibleId && record.responsibleId.length > 0
+        ? record.responsibleId
+        : currentUser?.id ?? "";
+    const safeResponsibleName =
+      record.responsibleName && record.responsibleName.length > 0
+        ? record.responsibleName
+        : currentUser?.name ?? "Coach";
+
+    if (!safeResponsibleId) {
+      setError("Impossible d'identifier le coach responsable. Reconnecte-toi puis réessaie.");
+      setSubmitting(false);
+      return;
+    }
+
     try {
       for (let i = 0; i < cart.length; i += 1) {
         const line = cart[i];
@@ -695,8 +714,8 @@ function PremiumOrderBuilder({
           date,
           clientId: record.clientId,
           clientName: record.clientName,
-          responsibleId: record.responsibleId,
-          responsibleName: record.responsibleName,
+          responsibleId: safeResponsibleId,
+          responsibleName: safeResponsibleName,
           productId: product.id,
           productName: product.name,
           quantity: line.quantity,
@@ -726,8 +745,17 @@ function PremiumOrderBuilder({
         onClose();
       }, 1200);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Impossible d'enregistrer la commande.");
+      const msg = e instanceof Error ? e.message : "Impossible d'enregistrer la commande.";
+      setError(msg);
       setSubmitting(false);
+      // Toast aussi pour qu'on voie l'erreur meme sans scroller (2026-04-29).
+      pushToast({
+        tone: "error",
+        title: "Échec enregistrement commande",
+        message: msg,
+      });
+      // Log console pour diagnostic
+      console.warn("[PvClientFullPage] addPvTransaction failed:", e);
     }
   }
 
