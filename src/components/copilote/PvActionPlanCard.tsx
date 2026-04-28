@@ -6,7 +6,8 @@
 // suggestions client (top dormants, restock imminent, silent active) +
 // gain attendu si toutes les relances aboutissent.
 //
-// Click sur un client → navigate /clients/<id> directement.
+// Click sur un client → /pv?client=<id> pour ouvrir directement la fiche
+// PV avec form d'ajout commande (PvClientFullPage). 2026-04-29.
 // 100 % var(--ls-*).
 // =============================================================================
 
@@ -362,7 +363,7 @@ function SuggestionRow({
 }) {
   return (
     <Link
-      to={`/clients/${clientId}`}
+      to={`/pv?client=${encodeURIComponent(clientId)}`}
       style={{
         display: "flex",
         alignItems: "center",

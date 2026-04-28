@@ -106,7 +106,8 @@
       "Bash(echo \"EXIT=$?\")",
       "Bash(awk '/^export interface Client \\\\{/,/^\\\\}/' \"C:/Users/tomko/Documents/Lor'Squad Wellness/src/types/domain.ts\")",
       "Bash(git ls-tree *)",
-      "Bash(grep -n \"^    </div>$\\\\|<\\\\/div>$\" src/features/client-vip/ClientVipCoachPanel.tsx)"
+      "Bash(grep -n \"^    </div>$\\\\|<\\\\/div>$\" src/features/client-vip/ClientVipCoachPanel.tsx)",
+      "Bash(grep -rn 'to={`/clients/${.*Id\\\\|to={\"/clients/' src/components/copilote/ src/components/pv/ src/pages/PvOverviewPage.tsx)"
     ]
   }
 }
