@@ -270,6 +270,15 @@ export function AgendaPage() {
     return GROUP_ORDER.filter((g) => map.has(g)).map((g) => ({ label: g, items: map.get(g)! }));
   }, [agendaEntries]);
 
+  // Prochain RDV imminent (2026-04-29) — pour le hero countdown card
+  const nextRdv = useMemo(() => {
+    const now = Date.now();
+    const future = agendaEntries
+      .filter((e) => new Date(e.date).getTime() > now)
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    return future[0] ?? null;
+  }, [agendaEntries]);
+
   // Compteurs pour les onglets — scopés et filtrés par date mais pas par status
   // (le status filter est "prospect-only", on ne veut pas qu'il fausse le compte client).
   const entityCounts = useMemo(() => {
@@ -448,6 +457,18 @@ export function AgendaPage() {
         @keyframes ls-agenda-fade-in {
           from { opacity: 0; transform: translateY(8px); }
           to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes ls-pulse-imminent {
+          0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255,107,107,0.5); }
+          50% { transform: scale(1.04); box-shadow: 0 0 0 4px rgba(255,107,107,0); }
+        }
+        @keyframes ls-rdv-card-in {
+          from { opacity: 0; transform: translateX(-8px); }
+          to { opacity: 1; transform: translateX(0); }
+        }
+        .ls-rdv-card { animation: ls-rdv-card-in 380ms cubic-bezier(0.16, 1, 0.3, 1) both; }
+        @media (prefers-reduced-motion: reduce) {
+          .ls-rdv-card, .ls-pulse-imminent { animation: none !important; }
         }
         .ls-agenda-hero {
           position: relative;
@@ -671,6 +692,130 @@ export function AgendaPage() {
           ))}
         </div>
       </div>
+
+      {/* Prochain RDV countdown V2 (2026-04-29) — hero card flottant si <12h */}
+      {nextRdv && (() => {
+        const ms = new Date(nextRdv.date).getTime() - Date.now();
+        if (ms <= 0 || ms > 12 * 60 * 60 * 1000) return null; // <12h only
+        const h = Math.floor(ms / (60 * 60 * 1000));
+        const m = Math.floor((ms % (60 * 60 * 1000)) / (60 * 1000));
+        const labelTime = h > 0 ? `${h}h ${m}m` : `${m} min`;
+        const name = nextRdv.kind === "client"
+          ? `${nextRdv.client.firstName} ${nextRdv.client.lastName}`
+          : nextRdv.kind === "prospect"
+            ? `${nextRdv.prospect.firstName} ${nextRdv.prospect.lastName}`
+            : `${nextRdv.due.client.firstName} ${nextRdv.due.client.lastName}`;
+        const subtitle = nextRdv.kind === "client"
+          ? (nextRdv.followUp.type || "Suivi")
+          : nextRdv.kind === "prospect"
+            ? "Prospect · 1er contact"
+            : `${nextRdv.due.stepIconEmoji} ${nextRdv.due.stepShortTitle}`;
+        const initials = name.split(" ").map((n) => n[0]).slice(0, 2).join("").toUpperCase();
+        const targetUrl = nextRdv.kind === "client"
+          ? `/clients/${nextRdv.client.id}`
+          : nextRdv.kind === "protocol"
+            ? `/clients/${nextRdv.due.client.id}`
+            : "#";
+        return (
+          <Link
+            to={targetUrl}
+            style={{
+              position: "relative",
+              display: "flex",
+              alignItems: "center",
+              gap: 16,
+              padding: "16px 22px",
+              background: "linear-gradient(135deg, color-mix(in srgb, var(--ls-coral) 14%, var(--ls-surface)) 0%, color-mix(in srgb, var(--ls-gold) 8%, var(--ls-surface)) 100%)",
+              border: "0.5px solid color-mix(in srgb, var(--ls-coral) 40%, var(--ls-border))",
+              borderRadius: 18,
+              textDecoration: "none",
+              color: "inherit",
+              boxShadow: "0 8px 24px -10px rgba(255,107,107,0.30)",
+              overflow: "hidden",
+            }}
+          >
+            <div
+              aria-hidden="true"
+              style={{
+                position: "absolute",
+                top: -50,
+                right: -50,
+                width: 180,
+                height: 180,
+                background: "radial-gradient(circle, rgba(255,107,107,0.25) 0%, transparent 70%)",
+                pointerEvents: "none",
+              }}
+            />
+            <div
+              style={{
+                fontSize: 32,
+                animation: "ls-pulse-imminent 2s ease-in-out infinite",
+              }}
+            >
+              ⏰
+            </div>
+            <div
+              style={{
+                width: 50,
+                height: 50,
+                borderRadius: 14,
+                background: "linear-gradient(135deg, #FF6B6B 0%, #BA7517 100%)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color: "white",
+                fontFamily: "Syne, serif",
+                fontWeight: 800,
+                fontSize: 16,
+                flexShrink: 0,
+                boxShadow: "0 4px 14px rgba(255,107,107,0.40)",
+              }}
+            >
+              {initials}
+            </div>
+            <div style={{ flex: 1, minWidth: 0, position: "relative" }}>
+              <div
+                style={{
+                  fontSize: 9.5,
+                  letterSpacing: 1.6,
+                  textTransform: "uppercase",
+                  fontWeight: 800,
+                  color: "var(--ls-coral)",
+                  marginBottom: 2,
+                }}
+              >
+                🔥 Prochain RDV · dans {labelTime}
+              </div>
+              <div
+                style={{
+                  fontFamily: "Syne, serif",
+                  fontSize: 20,
+                  fontWeight: 800,
+                  color: "var(--ls-text)",
+                  letterSpacing: "-0.02em",
+                  lineHeight: 1.1,
+                }}
+              >
+                {name}
+              </div>
+              <div style={{ fontSize: 12, color: "var(--ls-text-muted)", marginTop: 2 }}>
+                {subtitle} · {new Date(nextRdv.date).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}
+              </div>
+            </div>
+            <span
+              style={{
+                fontSize: 16,
+                color: "var(--ls-coral)",
+                fontWeight: 800,
+                opacity: 0.7,
+                flexShrink: 0,
+              }}
+            >
+              →
+            </span>
+          </Link>
+        );
+      })()}
 
       {/* Dropdown distributeur — admin only — refonte premium 2026-04-29 */}
       {currentUser?.role === "admin" && (
@@ -1017,81 +1162,198 @@ function ProtocolAgendaCard({
       ? `En retard ${item.daysLate}j`
       : null;
 
+  // Premium V2 (2026-04-29) — gradient teal, hover lift, avatar
+  const initials = (item.client.firstName?.[0] ?? "") + (item.client.lastName?.[0] ?? "");
+  const accentColor = isLate ? "var(--ls-coral)" : "var(--ls-teal)";
+  const accentGlow = isLate ? "rgba(220,38,38,0.30)" : "rgba(13,148,136,0.30)";
+  const accentBg = isLate
+    ? "linear-gradient(135deg, color-mix(in srgb, var(--ls-coral) 5%, var(--ls-surface)) 0%, var(--ls-surface) 60%)"
+    : "linear-gradient(135deg, color-mix(in srgb, var(--ls-teal) 5%, var(--ls-surface)) 0%, var(--ls-surface) 60%)";
+  const accentGradient = isLate
+    ? "linear-gradient(180deg, #FF6B6B 0%, #DC2626 100%)"
+    : "linear-gradient(180deg, #2DD4BF 0%, #0D9488 100%)";
+
   return (
-    <div style={{ display: "flex", alignItems: "stretch" }}>
+    <button
+      type="button"
+      onClick={onOpen}
+      className="ls-rdv-card"
+      style={{
+        position: "relative",
+        width: "100%",
+        display: "flex",
+        alignItems: "center",
+        gap: 14,
+        padding: "14px 16px 14px 18px",
+        background: accentBg,
+        border: `0.5px solid color-mix(in srgb, ${accentColor} 30%, var(--ls-border))`,
+        borderRadius: 16,
+        color: "inherit",
+        cursor: "pointer",
+        fontFamily: "DM Sans, sans-serif",
+        textAlign: "left",
+        overflow: "hidden",
+        transition: "transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease",
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.transform = "translateY(-2px)";
+        e.currentTarget.style.boxShadow = `0 8px 22px -10px ${accentGlow}`;
+        e.currentTarget.style.borderColor = `color-mix(in srgb, ${accentColor} 60%, var(--ls-border))`;
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.transform = "none";
+        e.currentTarget.style.boxShadow = "none";
+        e.currentTarget.style.borderColor = `color-mix(in srgb, ${accentColor} 30%, var(--ls-border))`;
+      }}
+    >
+      {/* Border-left gradient */}
       <div
+        aria-hidden="true"
         style={{
-          width: 3,
-          borderRadius: "3px 0 0 3px",
-          background: isLate ? "var(--ls-coral)" : "var(--ls-teal)",
-          flexShrink: 0,
+          position: "absolute",
+          left: 0,
+          top: 0,
+          bottom: 0,
+          width: 4,
+          background: accentGradient,
+          borderRadius: "16px 0 0 16px",
         }}
       />
-      <button
-        type="button"
-        onClick={onOpen}
+
+      {/* Date pill */}
+      <div
         style={{
-          flex: 1,
-          minWidth: 0,
+          minWidth: 64,
+          textAlign: "center",
+          flexShrink: 0,
+          padding: "8px 6px",
+          background: `color-mix(in srgb, ${accentColor} 8%, var(--ls-surface2))`,
+          border: `0.5px solid color-mix(in srgb, ${accentColor} 30%, transparent)`,
+          borderRadius: 10,
+        }}
+      >
+        <div
+          style={{
+            fontFamily: "Syne, serif",
+            fontWeight: 800,
+            fontSize: 14,
+            color: accentColor,
+            lineHeight: 1.1,
+            letterSpacing: "-0.02em",
+          }}
+        >
+          J+{item.dayOffset}
+        </div>
+        {showDate && (
+          <div style={{ fontSize: 10, color: "var(--ls-text-hint)", marginTop: 2, fontWeight: 500 }}>
+            {timeLabel}
+          </div>
+        )}
+      </div>
+
+      {/* Avatar gradient teal/coral */}
+      <div
+        style={{
+          width: 38,
+          height: 38,
+          borderRadius: 12,
+          background: accentGradient,
           display: "flex",
           alignItems: "center",
-          gap: 14,
-          padding: "12px 16px",
-          background: "var(--ls-surface)",
-          border: "1px solid var(--ls-border)",
-          borderLeft: "none",
-          borderRadius: "0 14px 14px 0",
-          color: "inherit",
-          cursor: "pointer",
-          fontFamily: "'DM Sans', sans-serif",
-          textAlign: "left",
-          transition: "border-color 0.15s",
+          justifyContent: "center",
+          color: "white",
+          fontFamily: "Syne, serif",
+          fontWeight: 800,
+          fontSize: 13,
+          flexShrink: 0,
+          boxShadow: `0 2px 8px ${accentGlow}`,
+          letterSpacing: "-0.02em",
         }}
-        onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--ls-teal)"; }}
-        onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--ls-border)"; }}
       >
-        <div style={{ minWidth: 60, textAlign: "center", flexShrink: 0 }}>
-          <div style={{ fontFamily: "Syne, sans-serif", fontWeight: 700, fontSize: 14, color: "var(--ls-text)" }}>
-            J+{item.dayOffset}
-          </div>
-          {showDate && (
-            <div style={{ fontSize: 11, color: "var(--ls-text-hint)", marginTop: 2 }}>
-              {timeLabel}
-            </div>
+        {initials.toUpperCase()}
+      </div>
+
+      {/* Infos */}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
+            fontSize: 14,
+            fontWeight: 700,
+            color: "var(--ls-text)",
+            marginBottom: 2,
+            fontFamily: "Syne, serif",
+            letterSpacing: "-0.01em",
+            flexWrap: "wrap",
+          }}
+        >
+          <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            {item.client.firstName} {item.client.lastName}
+          </span>
+          {lateLabel && (
+            <span
+              style={{
+                padding: "2px 7px",
+                borderRadius: 999,
+                fontSize: 9,
+                fontWeight: 800,
+                background: "linear-gradient(135deg, #FF6B6B 0%, #DC2626 100%)",
+                color: "white",
+                letterSpacing: 0.4,
+                animation: "ls-pulse-imminent 2s ease-in-out infinite",
+              }}
+            >
+              ⚠ {lateLabel.toUpperCase()}
+            </span>
           )}
         </div>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 14, fontWeight: 600, color: "var(--ls-text)", marginBottom: 2, display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-            <span>{item.client.firstName} {item.client.lastName}</span>
-            {lateLabel && (
-              <span
-                style={{
-                  padding: "1px 7px",
-                  borderRadius: 6,
-                  fontSize: 10,
-                  fontWeight: 700,
-                  background: "rgba(220,38,38,0.1)",
-                  color: "var(--ls-coral)",
-                  letterSpacing: "0.02em",
-                }}
-              >
-                {lateLabel}
-              </span>
-            )}
-          </div>
-          <div style={{ fontSize: 11, color: "var(--ls-text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-            {item.stepIconEmoji} {item.stepShortTitle}
-          </div>
-        </div>
-        <span
-          className="ls-badge"
-          data-tone="teal"
-          style={{ flexShrink: 0 }}
+        <div
+          style={{
+            fontSize: 11,
+            color: "var(--ls-text-muted)",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+          }}
         >
-          Suivi
-        </span>
-      </button>
-    </div>
+          {item.stepIconEmoji} {item.stepShortTitle}
+        </div>
+      </div>
+
+      {/* Badge */}
+      <span
+        style={{
+          flexShrink: 0,
+          padding: "3px 9px",
+          borderRadius: 999,
+          fontSize: 9.5,
+          fontWeight: 800,
+          letterSpacing: 0.4,
+          background: `color-mix(in srgb, ${accentColor} 12%, transparent)`,
+          color: accentColor,
+          border: `0.5px solid color-mix(in srgb, ${accentColor} 35%, transparent)`,
+          textTransform: "uppercase",
+        }}
+      >
+        Suivi
+      </span>
+
+      {/* Chevron */}
+      <span
+        aria-hidden="true"
+        style={{
+          fontSize: 14,
+          color: "var(--ls-text-hint)",
+          opacity: 0.5,
+          flexShrink: 0,
+          marginLeft: 2,
+        }}
+      >
+        →
+      </span>
+    </button>
   );
 }
 
@@ -1185,7 +1447,7 @@ function EntityTab({
   );
 }
 
-// ─── Carte RDV client (agenda unifié) ─────────────────────────────────────
+// ─── Carte RDV client (agenda unifié) — V2 PREMIUM 2026-04-29 ──────────────
 function ClientFollowUpCard({
   followUp, client, ownerName, showDate,
 }: {
@@ -1207,54 +1469,211 @@ function ClientFollowUpCard({
     } catch { return "—"; }
   })();
 
+  // Detection imminent (<24h) ou aujourd'hui pour badge "🔥"
+  const dueDate = new Date(followUp.dueDate);
+  const now = new Date();
+  const isToday = dueDate.toDateString() === now.toDateString();
+  const isImminent = !Number.isNaN(dueDate.getTime()) && (dueDate.getTime() - now.getTime()) < 24 * 60 * 60 * 1000 && (dueDate.getTime() - now.getTime()) > 0;
+  const initials = (client.firstName?.[0] ?? "") + (client.lastName?.[0] ?? "");
+
   return (
-    <div style={{ display: "flex", alignItems: "stretch" }}>
-      <div style={{ width: 3, borderRadius: "3px 0 0 3px", background: "var(--ls-gold)", flexShrink: 0 }} />
-      <Link
-        to={`/clients/${client.id}`}
+    <Link
+      to={`/clients/${client.id}`}
+      className="ls-rdv-card ls-rdv-card-client"
+      style={{
+        position: "relative",
+        display: "flex",
+        alignItems: "center",
+        gap: 14,
+        padding: "14px 16px 14px 18px",
+        background:
+          "linear-gradient(135deg, color-mix(in srgb, var(--ls-gold) 5%, var(--ls-surface)) 0%, var(--ls-surface) 60%)",
+        border: "0.5px solid color-mix(in srgb, var(--ls-gold) 30%, var(--ls-border))",
+        borderRadius: 16,
+        textDecoration: "none",
+        color: "inherit",
+        cursor: "pointer",
+        overflow: "hidden",
+        transition: "transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease",
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.transform = "translateY(-2px)";
+        e.currentTarget.style.boxShadow = "0 8px 22px -10px rgba(184,146,42,0.35)";
+        e.currentTarget.style.borderColor = "color-mix(in srgb, var(--ls-gold) 60%, var(--ls-border))";
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.transform = "none";
+        e.currentTarget.style.boxShadow = "none";
+        e.currentTarget.style.borderColor = "color-mix(in srgb, var(--ls-gold) 30%, var(--ls-border))";
+      }}
+    >
+      {/* Border-left gold gradient */}
+      <div
+        aria-hidden="true"
         style={{
-          flex: 1, minWidth: 0,
-          display: "flex", alignItems: "center", gap: 14, padding: "12px 16px",
-          background: "var(--ls-surface)", border: "1px solid var(--ls-border)",
-          borderLeft: "none", borderRadius: "0 14px 14px 0",
-          textDecoration: "none", color: "inherit", cursor: "pointer",
-          transition: "border-color 0.15s",
+          position: "absolute",
+          left: 0,
+          top: 0,
+          bottom: 0,
+          width: 4,
+          background: "linear-gradient(180deg, #EF9F27 0%, #BA7517 100%)",
+          borderRadius: "16px 0 0 16px",
         }}
-        onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--ls-gold)"; }}
-        onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--ls-border)"; }}
+      />
+
+      {/* Date/heure pill */}
+      <div
+        style={{
+          minWidth: 64,
+          textAlign: "center",
+          flexShrink: 0,
+          padding: "8px 6px",
+          background: "color-mix(in srgb, var(--ls-gold) 8%, var(--ls-surface2))",
+          border: "0.5px solid color-mix(in srgb, var(--ls-gold) 30%, transparent)",
+          borderRadius: 10,
+        }}
       >
-        {/* Colonne heure/date */}
-        <div style={{ minWidth: 60, textAlign: "center", flexShrink: 0 }}>
-          <div style={{ fontFamily: "Syne, sans-serif", fontWeight: 700, fontSize: 14, color: "var(--ls-text)" }}>
-            {showDate ? dateLabel : timeLabel}
+        <div
+          style={{
+            fontFamily: "Syne, serif",
+            fontWeight: 800,
+            fontSize: 14,
+            color: "var(--ls-gold)",
+            lineHeight: 1.1,
+            letterSpacing: "-0.02em",
+          }}
+        >
+          {showDate ? dateLabel : timeLabel}
+        </div>
+        {showDate && (
+          <div style={{ fontSize: 10, color: "var(--ls-text-hint)", marginTop: 2, fontWeight: 500 }}>
+            {timeLabel}
           </div>
-          {showDate && (
-            <div style={{ fontSize: 11, color: "var(--ls-text-hint)", marginTop: 2 }}>
-              {timeLabel}
-            </div>
+        )}
+      </div>
+
+      {/* Avatar gradient gold */}
+      <div
+        style={{
+          width: 38,
+          height: 38,
+          borderRadius: 12,
+          background: "linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          color: "white",
+          fontFamily: "Syne, serif",
+          fontWeight: 800,
+          fontSize: 13,
+          flexShrink: 0,
+          boxShadow: "0 2px 8px rgba(186,117,23,0.30)",
+          letterSpacing: "-0.02em",
+        }}
+      >
+        {initials.toUpperCase()}
+      </div>
+
+      {/* Infos */}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
+            fontSize: 14,
+            fontWeight: 700,
+            color: "var(--ls-text)",
+            marginBottom: 2,
+            fontFamily: "Syne, serif",
+            letterSpacing: "-0.01em",
+          }}
+        >
+          <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            {client.firstName} {client.lastName}
+          </span>
+          {isToday && (
+            <span
+              style={{
+                fontSize: 9,
+                fontWeight: 800,
+                padding: "2px 7px",
+                borderRadius: 999,
+                background: "linear-gradient(135deg, #FF6B6B 0%, #BA7517 100%)",
+                color: "white",
+                letterSpacing: 0.4,
+                flexShrink: 0,
+                animation: "ls-pulse-imminent 2s ease-in-out infinite",
+              }}
+            >
+              🔥 AUJOURD&apos;HUI
+            </span>
+          )}
+          {!isToday && isImminent && (
+            <span
+              style={{
+                fontSize: 9,
+                fontWeight: 800,
+                padding: "2px 7px",
+                borderRadius: 999,
+                background: "rgba(255,107,107,0.14)",
+                color: "var(--ls-coral)",
+                letterSpacing: 0.4,
+                flexShrink: 0,
+              }}
+            >
+              ⏰ &lt;24H
+            </span>
           )}
         </div>
-        {/* Colonne infos */}
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 14, fontWeight: 600, color: "var(--ls-text)", marginBottom: 2 }}>
-            {client.firstName} {client.lastName}
-          </div>
-          <div style={{ fontSize: 11, color: "var(--ls-text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-            {followUp.type || "Suivi"}
-            {followUp.programTitle ? ` · ${followUp.programTitle}` : ""}
-            {ownerName ? ` · ${ownerName}` : ""}
-          </div>
-        </div>
-        {/* Badge Client */}
-        <span
-          className="ls-badge"
-          data-tone="gold"
-          style={{ flexShrink: 0 }}
+        <div
+          style={{
+            fontSize: 11,
+            color: "var(--ls-text-muted)",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+          }}
         >
-          Client
-        </span>
-      </Link>
-    </div>
+          {followUp.type || "Suivi"}
+          {followUp.programTitle ? ` · ${followUp.programTitle}` : ""}
+          {ownerName ? ` · ${ownerName}` : ""}
+        </div>
+      </div>
+
+      {/* Badge type */}
+      <span
+        style={{
+          flexShrink: 0,
+          padding: "3px 9px",
+          borderRadius: 999,
+          fontSize: 9.5,
+          fontWeight: 800,
+          letterSpacing: 0.4,
+          background: "rgba(184,146,42,0.14)",
+          color: "var(--ls-gold)",
+          border: "0.5px solid color-mix(in srgb, var(--ls-gold) 35%, transparent)",
+          textTransform: "uppercase",
+          fontFamily: "DM Sans, sans-serif",
+        }}
+      >
+        Client
+      </span>
+
+      {/* Chevron */}
+      <span
+        aria-hidden="true"
+        style={{
+          fontSize: 14,
+          color: "var(--ls-text-hint)",
+          opacity: 0.5,
+          flexShrink: 0,
+          marginLeft: 2,
+        }}
+      >
+        →
+      </span>
+    </Link>
   );
 }
 
