@@ -20,9 +20,11 @@ import type { Client } from "../../types/domain";
 import { ClientVipBadge } from "./ClientVipBadge";
 import {
   getVipMeta,
+  updateIntentionStatus,
   useClientVipIntentions,
   useClientVipStatus,
   useClientVipTree,
+  type VipIntention,
   type VipTreeNode,
 } from "./useClientVip";
 
@@ -506,64 +508,171 @@ export function ClientVipCoachPanel({ client }: Props) {
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
             {intentions.data.map((it) => (
-              <div
-                key={it.id}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 8,
-                  padding: "7px 10px",
-                  background: "var(--ls-surface2)",
-                  border: "0.5px solid var(--ls-border)",
-                  borderRadius: 8,
-                }}
-              >
-                <span
-                  style={{
-                    fontSize: 12,
-                    fontWeight: 600,
-                    color: "var(--ls-text)",
-                  }}
-                >
-                  {it.prospect_first_name}
-                </span>
-                {it.relationship ? (
-                  <span style={{ fontSize: 10, color: "var(--ls-text-muted)" }}>
-                    · {RELATION_LABELS[it.relationship] ?? it.relationship}
-                  </span>
-                ) : null}
-                <span
-                  style={{
-                    marginLeft: "auto",
-                    fontSize: 9,
-                    fontWeight: 700,
-                    letterSpacing: 0.5,
-                    padding: "2px 6px",
-                    borderRadius: 5,
-                    background:
-                      it.status === "converted"
-                        ? "color-mix(in srgb, var(--ls-teal) 18%, transparent)"
-                        : it.status === "contacted"
-                          ? "color-mix(in srgb, var(--ls-gold) 18%, transparent)"
-                          : it.status === "lost"
-                            ? "color-mix(in srgb, var(--ls-coral) 18%, transparent)"
-                            : "rgba(0,0,0,0.05)",
-                    color:
-                      it.status === "converted"
-                        ? "var(--ls-teal)"
-                        : it.status === "contacted"
-                          ? "var(--ls-gold)"
-                          : it.status === "lost"
-                            ? "var(--ls-coral)"
-                            : "var(--ls-text-muted)",
-                    textTransform: "uppercase",
-                  }}
-                >
-                  {STATUS_LABELS[it.status] ?? it.status}
-                </span>
-              </div>
+              <IntentionRow key={it.id} intention={it} onChanged={() => void intentions.reload()} />
             ))}
           </div>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+// ─── Sous-composant : ligne d intention avec boutons status (V2) ────────────
+
+function IntentionRow({
+  intention,
+  onChanged,
+}: {
+  intention: VipIntention;
+  onChanged: () => void;
+}) {
+  const { push: pushToast } = useToast();
+  const [updating, setUpdating] = useState(false);
+  const [showActions, setShowActions] = useState(false);
+
+  async function changeStatus(newStatus: VipIntention["status"]) {
+    if (updating) return;
+    setUpdating(true);
+    try {
+      const result = await updateIntentionStatus(intention.id, newStatus);
+      if (result.success) {
+        pushToast({
+          tone: "success",
+          title: "Statut mis à jour",
+          message: `${intention.prospect_first_name} → ${STATUS_LABELS[newStatus]}`,
+        });
+        onChanged();
+        setShowActions(false);
+      } else {
+        pushToast({
+          tone: "error",
+          title: "Erreur",
+          message: result.error ?? "Mise à jour impossible",
+        });
+      }
+    } finally {
+      setUpdating(false);
+    }
+  }
+
+  return (
+    <div
+      style={{
+        background: "var(--ls-surface2)",
+        border: "0.5px solid var(--ls-border)",
+        borderRadius: 8,
+        overflow: "hidden",
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
+          padding: "7px 10px",
+        }}
+      >
+        <span style={{ fontSize: 12, fontWeight: 600, color: "var(--ls-text)" }}>
+          {intention.prospect_first_name}
+        </span>
+        {intention.relationship ? (
+          <span style={{ fontSize: 10, color: "var(--ls-text-muted)" }}>
+            · {RELATION_LABELS[intention.relationship] ?? intention.relationship}
+          </span>
+        ) : null}
+        <span
+          style={{
+            marginLeft: "auto",
+            fontSize: 9,
+            fontWeight: 700,
+            letterSpacing: 0.5,
+            padding: "2px 6px",
+            borderRadius: 5,
+            background:
+              intention.status === "converted"
+                ? "color-mix(in srgb, var(--ls-teal) 18%, transparent)"
+                : intention.status === "contacted"
+                  ? "color-mix(in srgb, var(--ls-gold) 18%, transparent)"
+                  : intention.status === "lost"
+                    ? "color-mix(in srgb, var(--ls-coral) 18%, transparent)"
+                    : "rgba(0,0,0,0.05)",
+            color:
+              intention.status === "converted"
+                ? "var(--ls-teal)"
+                : intention.status === "contacted"
+                  ? "var(--ls-gold)"
+                  : intention.status === "lost"
+                    ? "var(--ls-coral)"
+                    : "var(--ls-text-muted)",
+            textTransform: "uppercase",
+          }}
+        >
+          {STATUS_LABELS[intention.status] ?? intention.status}
+        </span>
+        <button
+          type="button"
+          onClick={() => setShowActions((v) => !v)}
+          style={{
+            background: "transparent",
+            border: "none",
+            color: "var(--ls-text-hint)",
+            fontSize: 11,
+            cursor: "pointer",
+            padding: 2,
+            flexShrink: 0,
+          }}
+        >
+          {showActions ? "▲" : "▼"}
+        </button>
+      </div>
+      {showActions ? (
+        <div
+          style={{
+            display: "flex",
+            gap: 5,
+            padding: "0 10px 8px",
+            flexWrap: "wrap",
+          }}
+        >
+          {intention.notes ? (
+            <div
+              style={{
+                width: "100%",
+                fontSize: 11,
+                color: "var(--ls-text-muted)",
+                fontStyle: "italic",
+                marginBottom: 5,
+              }}
+            >
+              💬 {intention.notes}
+            </div>
+          ) : null}
+          {(["pending", "contacted", "converted", "lost"] as const).map((st) => {
+            const isCurrent = intention.status === st;
+            return (
+              <button
+                key={st}
+                type="button"
+                onClick={() => void changeStatus(st)}
+                disabled={updating || isCurrent}
+                style={{
+                  padding: "4px 9px",
+                  background: isCurrent
+                    ? "var(--ls-surface)"
+                    : "transparent",
+                  border: "0.5px solid var(--ls-border)",
+                  borderRadius: 6,
+                  fontSize: 10,
+                  fontWeight: 600,
+                  color: isCurrent ? "var(--ls-text-hint)" : "var(--ls-text)",
+                  cursor: isCurrent || updating ? "not-allowed" : "pointer",
+                  fontFamily: "DM Sans, sans-serif",
+                }}
+              >
+                {STATUS_LABELS[st]}
+              </button>
+            );
+          })}
         </div>
       ) : null}
     </div>

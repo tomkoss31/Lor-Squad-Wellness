@@ -43,7 +43,8 @@ export function ClientVipHomeSection({ token, coachName = "Coach", coachHerbalif
 
   function openSandbox() {
     setSandboxOpen(true);
-    void recordClientXp(token, "tutorial_completed"); // proxy XP for now, on peut creer une action dediee plus tard
+    // V2 (2026-04-28) : action XP dediee vip_sandbox_completed (+20 XP, lifetime).
+    void recordClientXp(token, "vip_sandbox_completed");
   }
 
   function openSponsorLink() {

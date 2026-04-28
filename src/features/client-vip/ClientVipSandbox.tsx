@@ -118,11 +118,10 @@ export function ClientVipSandbox({
       for (const p of valid) {
         await recordVipIntention(token, p.firstName, p.relationship, p.notes);
       }
-      // +30 XP si au moins 3 prospects renseignes (action proxy via mood_checkin)
+      // V2 (2026-04-28) : +30 XP si au moins 3 prospects renseignes
+      // (action dediee vip_intentions_filled, cap lifetime).
       if (valid.length >= 3) {
-        // Pour l instant on utilise mood_checkin comme placeholder XP (5 XP cap 1/jour)
-        // Idealement on creerait une action vip_intentions_filled cote SQL
-        void recordClientXp(token, "mood_checkin");
+        void recordClientXp(token, "vip_intentions_filled");
       }
       setStep("done");
     } catch (err) {

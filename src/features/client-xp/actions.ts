@@ -35,7 +35,14 @@ export type ClientXpActionKey =
   // 1x/semaine
   | "weekly_weigh_in"
   // no cap
-  | "photo_uploaded";
+  | "photo_uploaded"
+  // VIP V2 (2026-04-28) — actions du programme Client Privilegie
+  | "vip_sandbox_completed"
+  | "vip_intentions_filled"
+  | "vip_first_referral"
+  | "vip_silver_reached"
+  | "vip_gold_reached"
+  | "vip_ambassador_reached";
 
 export type ClientXpCapStrategy = "lifetime" | "daily" | "weekly" | "none";
 
@@ -226,6 +233,62 @@ export const CLIENT_XP_ACTIONS: ClientXpActionDef[] = [
     label: "Laisser un avis Google",
     hint: "Cadeau pour ton coach",
     xp: 200,
+    cap: "lifetime",
+    category: "milestone",
+  },
+
+  // ─── VIP V2 (2026-04-28) — Programme Client Privilegie ───────────────────
+  {
+    key: "vip_sandbox_completed",
+    emoji: "🎮",
+    label: "Découvrir le programme VIP",
+    hint: "Lance le calculateur de remise",
+    xp: 20,
+    cap: "lifetime",
+    category: "discover",
+  },
+  {
+    key: "vip_intentions_filled",
+    emoji: "📋",
+    label: "Lister 3+ prospects à recommander",
+    hint: "Aide ton coach à grandir avec toi",
+    xp: 30,
+    cap: "lifetime",
+    category: "engage",
+  },
+  {
+    key: "vip_first_referral",
+    emoji: "🎯",
+    label: "1er filleul confirmé",
+    hint: "Ton 1er ami démarre Herbalife",
+    xp: 100,
+    cap: "lifetime",
+    category: "milestone",
+  },
+  {
+    key: "vip_silver_reached",
+    emoji: "🥈",
+    label: "Atteindre Silver (-25 %)",
+    hint: "100 pts cumulés",
+    xp: 200,
+    cap: "lifetime",
+    category: "milestone",
+  },
+  {
+    key: "vip_gold_reached",
+    emoji: "🥇",
+    label: "Atteindre Gold (-35 %)",
+    hint: "500 pts cumulés — top client",
+    xp: 500,
+    cap: "lifetime",
+    category: "milestone",
+  },
+  {
+    key: "vip_ambassador_reached",
+    emoji: "💎",
+    label: "Atteindre Ambassadeur (-42 %)",
+    hint: "1 000 pts en 3 mois",
+    xp: 1000,
     cap: "lifetime",
     category: "milestone",
   },

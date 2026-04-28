@@ -286,6 +286,33 @@ export function useClientVipStatusByToken(token: string | null | undefined) {
   return { data, loading, error, reload: fetchStatus };
 }
 
+// ─── Helper : update intention status (cote coach) ─────────────────────────
+
+export async function updateIntentionStatus(
+  intentionId: string,
+  newStatus: VipIntention["status"],
+  convertedClientId?: string,
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const sb = await getSupabaseClient();
+    if (!sb) return { success: false, error: "no_supabase" };
+    const { data, error } = await sb.rpc("update_referral_intention_status", {
+      p_intention_id: intentionId,
+      p_new_status: newStatus,
+      p_converted_client_id: convertedClientId ?? null,
+    });
+    if (error) return { success: false, error: error.message };
+    const payload = (data ?? {}) as { success?: boolean; error?: string };
+    if (payload.error) return { success: false, error: payload.error };
+    return { success: true };
+  } catch (err) {
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : "unknown",
+    };
+  }
+}
+
 // ─── Helper : record intention (cote client app) ────────────────────────────
 
 export async function recordVipIntention(
