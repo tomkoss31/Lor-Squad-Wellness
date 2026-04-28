@@ -30,6 +30,8 @@ export interface VipStatus {
   direct_referrals_count: number;
   is_ambassador_eligible: boolean;
   computed_at: string;
+  /** Ajustement manuel saisi par le coach (myherbalife historique). 2026-04-29. */
+  pv_manual_adjustment?: number;
 }
 
 export interface VipTreeNode {

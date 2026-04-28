@@ -596,8 +596,8 @@ export function ClientVipCoachPanel({ client }: Props) {
                 color: "var(--ls-text)",
               }}
             >
-              {(status.data as { pv_manual_adjustment?: number } | null)?.pv_manual_adjustment
-                ? `${(status.data as { pv_manual_adjustment: number }).pv_manual_adjustment} PV ajustés`
+              {status.data?.pv_manual_adjustment
+                ? `${status.data.pv_manual_adjustment} PV ajustés`
                 : "Aucun ajustement (cumul = somme des commandes en base)"}
             </span>
             <button
@@ -605,7 +605,7 @@ export function ClientVipCoachPanel({ client }: Props) {
               onClick={() => {
                 setPvAdjustment(
                   String(
-                    (status.data as { pv_manual_adjustment?: number } | null)?.pv_manual_adjustment ??
+                    status.data?.pv_manual_adjustment ??
                       0,
                   ),
                 );
