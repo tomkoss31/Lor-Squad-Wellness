@@ -191,46 +191,116 @@ export function ClientDetailPage() {
 
   return (
     <div className="space-y-6">
-      {/* Hero header client */}
-      <div className="glass-panel rounded-[24px] p-5 sm:p-6" style={{ position: 'relative', overflow: 'hidden' }}>
-        <div style={{ position: 'absolute', top: -40, right: -40, width: 180, height: 180, borderRadius: '50%', background: 'rgba(201,168,76,0.06)', pointerEvents: 'none' }} />
+      {/* Hero header client — refonte premium V2 (2026-04-29) */}
+      <style>{`
+        @keyframes ls-cli-mesh-shift {
+          0% { transform: translate(0, 0) scale(1); }
+          50% { transform: translate(-10px, 6px) scale(1.04); }
+          100% { transform: translate(8px, -4px) scale(1); }
+        }
+        @keyframes ls-cli-shine {
+          0%, 100% { transform: translateX(-50%); opacity: 0; }
+          50% { transform: translateX(150%); opacity: 0.5; }
+        }
+        .ls-cli-hero {
+          position: relative;
+          overflow: hidden;
+          padding: 24px 26px;
+          border-radius: 24px;
+          background: var(--ls-surface);
+          border: 0.5px solid color-mix(in srgb, var(--ls-gold) 25%, var(--ls-border));
+          box-shadow: 0 1px 0 0 rgba(201,168,76,0.10), 0 12px 36px -12px rgba(0,0,0,0.10);
+        }
+        .ls-cli-mesh {
+          position: absolute; inset: -20%; opacity: 0.55; pointer-events: none;
+          animation: ls-cli-mesh-shift 24s ease-in-out infinite alternate;
+          background:
+            radial-gradient(circle at 0% 0%, rgba(239,159,39,0.18) 0%, transparent 45%),
+            radial-gradient(circle at 100% 100%, rgba(13,148,136,0.10) 0%, transparent 50%),
+            radial-gradient(circle at 100% 0%, rgba(186,117,23,0.14) 0%, transparent 60%);
+        }
+        .ls-cli-shine {
+          position: absolute; top: 0; height: 100%; width: 50%; left: 0;
+          background: linear-gradient(90deg, transparent, rgba(255,255,255,0.10), transparent);
+          animation: ls-cli-shine 10s ease-in-out infinite;
+          pointer-events: none;
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .ls-cli-mesh, .ls-cli-shine { animation: none !important; }
+        }
+      `}</style>
+      <div className="ls-cli-hero">
+        <div className="ls-cli-mesh" aria-hidden="true" />
+        <div className="ls-cli-shine" aria-hidden="true" />
+
         <div className="flex flex-wrap items-center justify-between gap-4" style={{ position: 'relative' }}>
           <div className="flex items-center gap-4">
             <div style={{
-              width: 56, height: 56, borderRadius: '50%', flexShrink: 0,
-              background: 'var(--ls-gold-bg)', color: '#C9A84C',
-              border: '2px solid rgba(201,168,76,0.3)',
+              width: 64, height: 64, borderRadius: 18, flexShrink: 0,
+              background: 'linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)',
+              color: 'white',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontFamily: 'Syne, sans-serif', fontSize: 20, fontWeight: 700
+              fontFamily: 'Syne, serif', fontSize: 22, fontWeight: 800,
+              letterSpacing: '-0.02em',
+              boxShadow: '0 6px 20px rgba(186,117,23,0.40), inset 0 1px 0 rgba(255,255,255,0.20)',
             }}>
-              {client.firstName?.[0] ?? "?"}{client.lastName?.[0] ?? ""}
+              {(client.firstName?.[0] ?? "?")}{(client.lastName?.[0] ?? "")}
             </div>
             <div>
-              <div className="flex items-center gap-3 flex-wrap">
-                <h1 style={{ fontFamily: 'Syne, sans-serif', fontSize: 22, fontWeight: 800, color: 'var(--ls-text)', margin: 0 }}>
-                  {client.firstName} {client.lastName}
+              <div
+                style={{
+                  fontSize: 10,
+                  letterSpacing: 1.6,
+                  textTransform: 'uppercase',
+                  fontWeight: 700,
+                  color: 'var(--ls-gold)',
+                  marginBottom: 4,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                }}
+              >
+                <span
+                  style={{
+                    display: 'inline-block', width: 6, height: 6, borderRadius: 999,
+                    background: 'var(--ls-gold)', boxShadow: '0 0 8px rgba(239,159,39,0.50)',
+                  }}
+                />
+                Fiche client · {(() => {
+                  const effectiveStart = getClientEffectiveStartDate(client);
+                  return effectiveStart ? `depuis ${formatDate(effectiveStart)}` : "non démarré";
+                })()}
+              </div>
+              <div className="flex items-center gap-3 flex-wrap" style={{ marginBottom: 4 }}>
+                <h1 style={{
+                  fontFamily: 'Syne, serif', fontSize: 28, fontWeight: 800,
+                  color: 'var(--ls-text)', margin: 0, letterSpacing: '-0.02em', lineHeight: 1.05,
+                }}>
+                  <span
+                    style={{
+                      background: 'linear-gradient(135deg, #EF9F27 0%, #BA7517 60%, #5C3A05 100%)',
+                      WebkitBackgroundClip: 'text',
+                      WebkitTextFillColor: 'transparent',
+                      backgroundClip: 'text',
+                    }}
+                  >
+                    {client.firstName}
+                  </span>{' '}
+                  {client.lastName}
                 </h1>
+              </div>
+              <div className="flex items-center gap-2 flex-wrap" style={{ marginBottom: 4 }}>
                 <LifecycleBadge status={client.lifecycleStatus ?? (isClientProgramStarted(client) ? "active" : "not_started")} />
                 {client.isFragile && <FragileBadge />}
                 {client.freeFollowUp && <FreeFollowUpBadge />}
                 <StatusBadge
-                  label={client.objective === "sport" ? "Sport" : "Perte de poids"}
+                  label={client.objective === "sport" ? "🏋️ Sport" : "🎯 Perte de poids"}
                   tone={client.objective === "sport" ? "green" : "blue"}
                 />
               </div>
-              <p className="mt-1 text-sm text-[var(--ls-text-muted)]">
-                {client.currentProgram || "Programme à confirmer"} · {client.city ?? "Ville non renseignée"} · <Link to={`/distributors/${client.distributorId}`} className="font-medium text-[#C9A84C] transition hover:text-[#2DD4BF]">{client.distributorName}</Link>
-              </p>
-              <p className="mt-1 text-[11px] text-[var(--ls-text-hint)]">
-                {(() => {
-                  // Fix bug #3 (2026-04-27) : utiliser getClientEffectiveStartDate
-                  // pour fallback sur la date du bilan initial si startDate est null.
-                  // Évite "Programme non démarré" alors que le bilan a été fait.
-                  const effectiveStart = getClientEffectiveStartDate(client);
-                  return effectiveStart
-                    ? `Client depuis ${formatDate(effectiveStart)}`
-                    : "Programme non démarré";
-                })()} · {client.assessments.length} bilan{client.assessments.length > 1 ? 's' : ''}
+              <p className="text-sm text-[var(--ls-text-muted)]" style={{ margin: 0, fontFamily: 'DM Sans, sans-serif' }}>
+                {client.currentProgram || "Programme à confirmer"} · {client.city ?? "Ville non renseignée"} · <Link to={`/distributors/${client.distributorId}`} className="font-semibold text-[#C9A84C] transition hover:text-[#2DD4BF]">{client.distributorName}</Link>
+                {' · '}{client.assessments.length} bilan{client.assessments.length > 1 ? 's' : ''}
               </p>
             </div>
           </div>
@@ -303,37 +373,62 @@ export function ClientDetailPage() {
 
       {/* Tab bar + bandeau Prochain RDV (Chantier V3 2026-04-24) */}
       <div className="flex flex-wrap items-center justify-between gap-3">
-      <div className="client-tabs flex gap-1 rounded-[14px] border border-[var(--ls-border)] bg-[var(--ls-surface)] p-1" style={{ width: 'fit-content', maxWidth: '100%' }}>
-        {[
-          { label: 'Vue complète', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg> },
-          { label: 'Body Scan', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>, count: client.assessments.filter(a => a.bodyScan?.weight).length },
-          { label: 'Mensurations', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M4 4h16v6H4z"/><path d="M4 10v10h16V10"/><path d="M8 10v3M12 10v5M16 10v3"/></svg> },
-          { label: 'Historique', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>, count: client.assessments.length },
-          { label: 'Produits', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>, count: retainedProducts.length },
-          { label: 'Actions', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><polyline points="13 2 13 9 20 9"/><polyline points="11 22 11 15 4 15"/><path d="M3 3l18 18"/></svg> },
-        ].map((tab, i) => (
+      <div className="client-tabs" style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+        {([
+          { label: 'Vue', emoji: '🏠', color: 'var(--ls-gold)' },
+          { label: 'Body Scan', emoji: '⚡', color: 'var(--ls-coral)', count: client.assessments.filter(a => a.bodyScan?.weight).length },
+          { label: 'Mensurations', emoji: '📐', color: 'var(--ls-teal)' },
+          { label: 'Historique', emoji: '📊', color: 'var(--ls-purple)', count: client.assessments.length },
+          { label: 'Produits', emoji: '💊', color: 'var(--ls-gold)', count: retainedProducts.length },
+          { label: 'Actions', emoji: '🎯', color: 'var(--ls-teal)' },
+        ]).map((tab, i) => {
+          const isActive = activeTab === i;
+          return (
           <button
             key={tab.label}
             onClick={() => setActiveTab(i)}
-            className="client-tab transition-all duration-150"
+            className="client-tab"
             style={{
-              padding: '7px 14px', borderRadius: 8, border: 'none', cursor: 'pointer',
-              fontSize: 13, fontFamily: 'DM Sans, sans-serif', fontWeight: activeTab === i ? 500 : 400,
-              background: activeTab === i ? 'var(--ls-surface2)' : 'transparent',
-              color: activeTab === i ? 'var(--ls-text)' : 'var(--ls-text-muted)',
+              padding: '8px 14px', borderRadius: 999, cursor: 'pointer',
+              fontSize: 12.5, fontFamily: 'DM Sans, sans-serif',
+              fontWeight: isActive ? 700 : 500,
+              background: isActive
+                ? `linear-gradient(135deg, color-mix(in srgb, ${tab.color} 14%, var(--ls-surface)) 0%, var(--ls-surface) 100%)`
+                : 'var(--ls-surface)',
+              border: isActive
+                ? `0.5px solid color-mix(in srgb, ${tab.color} 50%, transparent)`
+                : '0.5px solid var(--ls-border)',
+              color: isActive ? tab.color : 'var(--ls-text-muted)',
               display: 'flex', alignItems: 'center', gap: 6,
+              transition: 'transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease',
+              boxShadow: isActive ? `0 4px 12px -4px color-mix(in srgb, ${tab.color} 30%, transparent)` : 'none',
+            }}
+            onMouseEnter={(e) => {
+              if (!isActive) {
+                e.currentTarget.style.transform = 'translateY(-1px)';
+                e.currentTarget.style.borderColor = `color-mix(in srgb, ${tab.color} 30%, var(--ls-border))`;
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (!isActive) {
+                e.currentTarget.style.transform = 'none';
+                e.currentTarget.style.borderColor = 'var(--ls-border)';
+              }
             }}
           >
-            {tab.icon} {tab.label}
+            <span style={{ fontSize: 14 }}>{tab.emoji}</span> {tab.label}
             {tab.count !== undefined && tab.count > 0 && (
               <span style={{
-                fontSize: 10, padding: '1px 6px', borderRadius: 10,
-                background: activeTab === i ? 'rgba(201,168,76,0.2)' : 'var(--ls-border)',
-                color: activeTab === i ? '#C9A84C' : 'var(--ls-text-hint)'
+                fontSize: 10, padding: '1px 7px', borderRadius: 999,
+                fontWeight: 800, fontFamily: 'Syne, serif',
+                background: isActive ? 'var(--ls-bg)' : 'var(--ls-surface2)',
+                color: isActive ? tab.color : 'var(--ls-text-muted)',
+                border: isActive ? `0.5px solid ${tab.color}` : '0.5px solid transparent',
               }}>{tab.count}</span>
             )}
           </button>
-        ))}
+          );
+        })}
         {/* Bouton rapport inline avec les onglets */}
         {(client.assessments?.length ?? 0) >= 2 && (
           <button onClick={() => void generateReport()} disabled={generatingReport}
