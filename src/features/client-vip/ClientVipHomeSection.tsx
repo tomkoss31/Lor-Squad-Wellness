@@ -26,8 +26,34 @@ export function ClientVipHomeSection({ token, coachName = "Coach", coachHerbalif
   const status = useClientVipStatusByToken(token);
   const [sandboxOpen, setSandboxOpen] = useState(false);
 
-  if (status.loading || !status.data) {
+  if (status.loading) {
     return null;
+  }
+
+  // Debug visible (2026-04-29) : si la RPC plante silencieusement, on affiche
+  // un encart pour que le coach voie qu'il y a un probleme au lieu de rien.
+  if (!status.data) {
+    return (
+      <div
+        style={{
+          background: "rgba(252, 229, 193, 0.4)",
+          border: "0.5px dashed rgba(184,146,42,0.6)",
+          borderRadius: 12,
+          padding: 12,
+          marginBottom: 16,
+          fontSize: 12,
+          color: "#5C4A0F",
+          fontFamily: "DM Sans, sans-serif",
+        }}
+      >
+        ⭐ Programme Client Privilégié indisponible.
+        {status.error ? (
+          <div style={{ fontSize: 10, marginTop: 4, opacity: 0.7 }}>
+            ({status.error})
+          </div>
+        ) : null}
+      </div>
+    );
   }
 
   const meta = getVipMeta(status.data.level);
