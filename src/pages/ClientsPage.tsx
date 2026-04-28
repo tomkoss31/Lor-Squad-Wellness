@@ -1,6 +1,7 @@
 import { useDeferredValue, useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { PageHeading } from "../components/ui/PageHeading";
+// PageHeading remplace par PremiumHero (2026-04-29)
+import { PremiumHero } from "../components/ui/PremiumHero";
 import { QuickFiltersBar } from "../components/clients/QuickFiltersBar";
 import { ClientsKanban } from "../components/clients/ClientsKanban";
 import { BulkMessageModal } from "../components/clients/BulkMessageModal";
@@ -301,10 +302,12 @@ export function ClientsPage() {
       maxWidth: 1200, margin: "0 auto",
       display: "flex", flexDirection: "column", gap: 18,
     }}>
-      <PageHeading
-        eyebrow="Clients"
-        title="Base clients"
-        description={`${filteredClients.length} dossier${filteredClients.length > 1 ? "s" : ""} · recherche, responsables et fiche détaillée.`}
+      <PremiumHero
+        identity="teal"
+        eyebrow={`Dossiers clients · ${filteredClients.length} visible${filteredClients.length > 1 ? "s" : ""}`}
+        titleAccent="Ta base"
+        titleSuffix=" clients 👥"
+        subtitle="Recherche, responsables, lifecycle, fiche détaillée."
       />
 
       {/* STATS PREMIUM V3 BENTO (2026-04-29) — card principale 2x + 2 mini */}
