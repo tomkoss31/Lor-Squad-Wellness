@@ -9,6 +9,8 @@ import { createIcsDataUri } from "../../lib/googleCalendar";
 import { ClientAppHomeHero } from "./ClientAppHomeHero";
 import { ClientAppDailyAction } from "./ClientAppDailyAction";
 import type { Assessment, Measurement } from "../../lib/clientAppData";
+import { ClientXpBanner } from "../../features/client-xp/ClientXpBanner";
+import { recordClientXp } from "../../features/client-xp/useClientXp";
 
 interface MetricEntry {
   date: string;
@@ -139,6 +141,13 @@ export function ClientHomeTab({
   void recommendedProducts;
   void openProductAskModal;
   const [rdvEditOpen, setRdvEditOpen] = useState(false);
+
+  // Premium Client XP (Tier B 2026-04-28) : declenche +50 XP au 1er login.
+  // Idempotent grace au dedup_key SQL.
+  useEffect(() => {
+    if (!clientToken) return;
+    void recordClientXp(clientToken, "first_login");
+  }, [clientToken]);
 
   // Chantier J (2026-04-26) : confirmation "Ajouté à mon agenda".
   // Optimistic UI : on flip localement dès le clic, on rollback si l'edge
@@ -280,6 +289,10 @@ export function ClientHomeTab({
       {/* 1. HERO — supprimé (doublon avec le bandeau gold en haut de
           ClientAppPage qui contient déjà avatar + salutation + meta programme).
           Voir chantier Conseils 2026-04-24. */}
+
+      {/* Premium Client XP — Tier B (2026-04-28) : bandeau gold avec niveau,
+          XP total, barre progression vers le niveau suivant. */}
+      {clientToken ? <ClientXpBanner token={clientToken} /> : null}
 
       {/* Chantier MEGA v2 (2026-04-25) : Hero transformation + action du jour.
           Mapping metrics (flat) → Assessment[] (nested bodyScan) attendu
@@ -537,11 +550,20 @@ export function ClientHomeTab({
               Communauté Telegram
             </div>
           </div>
-          <a href={TELEGRAM_GROUP_URL} target="_blank" rel="noopener noreferrer" style={{
-            background: "#B8922A", color: "white", fontSize: 11,
-            padding: "6px 12px", borderRadius: 8,
-            fontWeight: 500, textDecoration: "none",
-          }}>
+          <a
+            href={TELEGRAM_GROUP_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={() => {
+              // Premium Client XP (Tier B 2026-04-28) : +30 XP one-shot
+              if (clientToken) void recordClientXp(clientToken, "telegram_joined");
+            }}
+            style={{
+              background: "#B8922A", color: "white", fontSize: 11,
+              padding: "6px 12px", borderRadius: 8,
+              fontWeight: 500, textDecoration: "none",
+            }}
+          >
             Rejoindre
           </a>
         </div>

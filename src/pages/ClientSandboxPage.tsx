@@ -19,6 +19,7 @@
 
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { recordClientXp } from "../features/client-xp/useClientXp";
 
 type QuestId = 1 | 2 | 3 | 4;
 
@@ -122,6 +123,8 @@ export function ClientSandboxPage() {
     if (nextId <= 4) {
       setTimeout(() => setActiveQuest(nextId), 600);
     } else {
+      // Premium Client XP : +100 XP a la completion totale du sandbox.
+      if (token) void recordClientXp(token, "sandbox_completed");
       setTimeout(() => setShowFinal(true), 800);
     }
   }
