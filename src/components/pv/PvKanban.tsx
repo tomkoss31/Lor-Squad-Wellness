@@ -16,6 +16,7 @@
 import { useMemo } from "react";
 import type { PvClientTrackingRecord } from "../../types/pv";
 import type { PvActionPlan } from "../../hooks/usePvActionPlan";
+import type { PvColumnKey } from "../../hooks/usePvColumnOverride";
 
 interface Props {
   records: PvClientTrackingRecord[];
@@ -27,6 +28,10 @@ interface Props {
   onSelectClient: (clientId: string) => void;
   /** Predicat "deja verifie cette semaine" (localStorage). 2026-04-29. */
   isChecked: (clientId: string) => boolean;
+  /** Override manuel des colonnes (2026-04-29). */
+  getOverride: (clientId: string) => PvColumnKey | null;
+  setOverride: (clientId: string, col: PvColumnKey) => void;
+  clearOverride: (clientId: string) => void;
 }
 
 interface KanbanCard {
@@ -37,6 +42,8 @@ interface KanbanCard {
   reasonBadges: { label: string; tone: "coral" | "gold" | "purple" | "teal" }[];
   pvCumulative: number;
   daysSinceStart: number;
+  /** True si la colonne actuelle vient d'un override manuel (2026-04-29). */
+  isLocked: boolean;
 }
 
 type ColumnKey = "overdue" | "watch" | "silent" | "ok";
@@ -50,7 +57,7 @@ interface Column {
   cards: KanbanCard[];
 }
 
-export function PvKanban({ records, plan, isAdmin, currentUserId, onSelectClient, isChecked }: Props) {
+export function PvKanban({ records, plan, isAdmin, currentUserId, onSelectClient, isChecked, getOverride, setOverride, clearOverride }: Props) {
 
   const columns: Column[] = useMemo(() => {
     const overdueIds = new Set(plan?.restock_due?.map((r) => r.client_id) ?? []);
@@ -96,6 +103,11 @@ export function PvKanban({ records, plan, isAdmin, currentUserId, onSelectClient
         reasonBadges.push({ label: "Silencieux", tone: "purple" });
       }
 
+      // Override manuel (2026-04-29) : si le coach a force une colonne
+      // (ex: Christine -> "OK" parce que la commande arrive bientot),
+      // on respecte ce choix au lieu du calcul auto.
+      const overrideCol = getOverride(r.clientId);
+
       const card: KanbanCard = {
         clientId: r.clientId,
         clientName: r.clientName,
@@ -104,7 +116,17 @@ export function PvKanban({ records, plan, isAdmin, currentUserId, onSelectClient
         reasonBadges,
         pvCumulative: r.pvCumulative ?? 0,
         daysSinceStart: r.daysSinceStart ?? 0,
+        isLocked: overrideCol !== null,
       };
+
+      // Si override manuel actif, on respecte le choix du coach.
+      if (overrideCol) {
+        if (overrideCol === "overdue") overdue.push(card);
+        else if (overrideCol === "watch") watch.push(card);
+        else if (overrideCol === "silent") silent.push(card);
+        else ok.push(card);
+        continue;
+      }
 
       // Routage prioritaire (un client = une colonne)
       if (isOverdueStatus || isInRestockPlan) {
@@ -159,7 +181,8 @@ export function PvKanban({ records, plan, isAdmin, currentUserId, onSelectClient
         cards: ok,
       },
     ];
-  }, [records, plan]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [records, plan, getOverride]);
 
   return (
     <div
@@ -242,9 +265,12 @@ export function PvKanban({ records, plan, isAdmin, currentUserId, onSelectClient
               <PvKanbanCard
                 key={card.clientId}
                 card={card}
+                columnKey={col.key}
                 isMine={isAdmin && card.responsibleId === currentUserId}
                 isChecked={isChecked(card.clientId)}
                 onClick={() => onSelectClient(card.clientId)}
+                onForceOk={() => setOverride(card.clientId, "ok")}
+                onClearOverride={() => clearOverride(card.clientId)}
               />
             ))
           )}
@@ -256,14 +282,20 @@ export function PvKanban({ records, plan, isAdmin, currentUserId, onSelectClient
 
 function PvKanbanCard({
   card,
+  columnKey,
   isMine,
   isChecked,
   onClick,
+  onForceOk,
+  onClearOverride,
 }: {
   card: KanbanCard;
+  columnKey: ColumnKey;
   isMine: boolean;
   isChecked: boolean;
   onClick: () => void;
+  onForceOk: () => void;
+  onClearOverride: () => void;
 }) {
   return (
     <div
@@ -280,27 +312,46 @@ function PvKanbanCard({
         background: "var(--ls-surface)",
         border: "0.5px solid var(--ls-border)",
         borderRadius: 10,
-        padding: "10px 12px",
+        padding: "9px 11px",
         cursor: "pointer",
         transition: "all 0.15s",
         fontFamily: "DM Sans, sans-serif",
+        position: "relative",
       }}
       onMouseEnter={(e) => {
         e.currentTarget.style.transform = "translateY(-1px)";
-        e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.06)";
+        e.currentTarget.style.boxShadow = "0 3px 10px color-mix(in srgb, var(--ls-gold) 14%, transparent)";
+        e.currentTarget.style.borderColor = "color-mix(in srgb, var(--ls-gold) 30%, var(--ls-border))";
       }}
       onMouseLeave={(e) => {
         e.currentTarget.style.transform = "none";
         e.currentTarget.style.boxShadow = "none";
+        e.currentTarget.style.borderColor = "var(--ls-border)";
       }}
     >
+      {/* Verrou en coin top-right (discret, hors flow) */}
+      {card.isLocked ? (
+        <span
+          title="Colonne forcée manuellement (override 7j)"
+          style={{
+            position: "absolute",
+            top: 6,
+            right: 6,
+            fontSize: 10,
+            opacity: 0.7,
+            pointerEvents: "none",
+          }}
+        >
+          🔒
+        </span>
+      ) : null}
       <div
         style={{
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
           gap: 6,
-          marginBottom: 6,
+          marginBottom: 5,
         }}
       >
         <div
@@ -377,25 +428,75 @@ function PvKanbanCard({
         </div>
       ) : null}
 
+      {/* Footer compact : info à gauche, action discrète à droite */}
       <div
         style={{
           display: "flex",
-          alignItems: "baseline",
+          alignItems: "center",
           justifyContent: "space-between",
           gap: 6,
-          fontSize: 10,
-          color: "var(--ls-text-hint)",
         }}
       >
-        <span>
-          {card.pvCumulative > 0
-            ? `${card.pvCumulative.toFixed(0)} PV cumul`
-            : "Pas de PV cumul"}
-        </span>
-        {card.daysSinceStart > 0 ? <span>{card.daysSinceStart}j</span> : null}
+        <div
+          style={{
+            fontSize: 9.5,
+            color: "var(--ls-text-hint)",
+            display: "flex",
+            gap: 6,
+          }}
+        >
+          {card.pvCumulative > 0 ? (
+            <span>{card.pvCumulative.toFixed(0)} PV</span>
+          ) : null}
+          {card.daysSinceStart > 0 ? <span>· {card.daysSinceStart}j</span> : null}
+        </div>
+
+        {/* Action override compact - aligne droite, pas full width */}
+        {card.isLocked ? (
+          <button
+            type="button"
+            title="Annuler l'override — revenir au calcul auto"
+            onClick={(e) => {
+              e.stopPropagation();
+              onClearOverride();
+            }}
+            style={overrideChipStyle("purple")}
+          >
+            ↩️ Auto
+          </button>
+        ) : columnKey !== "ok" ? (
+          <button
+            type="button"
+            title="J'ai géré — passer en OK (verrou 7 jours)"
+            onClick={(e) => {
+              e.stopPropagation();
+              onForceOk();
+            }}
+            style={overrideChipStyle("teal")}
+          >
+            ✓ OK
+          </button>
+        ) : null}
       </div>
     </div>
   );
+}
+
+function overrideChipStyle(tone: "teal" | "purple"): React.CSSProperties {
+  const color = `var(--ls-${tone})`;
+  return {
+    padding: "3px 9px",
+    background: `color-mix(in srgb, ${color} 10%, transparent)`,
+    border: `0.5px solid color-mix(in srgb, ${color} 35%, transparent)`,
+    borderRadius: 999,
+    fontSize: 10,
+    fontWeight: 700,
+    color,
+    cursor: "pointer",
+    fontFamily: "DM Sans, sans-serif",
+    letterSpacing: 0.2,
+    flexShrink: 0,
+  };
 }
 
 function toneBg(tone: "coral" | "gold" | "purple" | "teal"): string {
