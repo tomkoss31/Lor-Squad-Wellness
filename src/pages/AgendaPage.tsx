@@ -2,12 +2,12 @@ import { startTransition, useCallback, useEffect, useMemo, useState } from "reac
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
-import { PageHeading } from "../components/ui/PageHeading";
+// PageHeading remplace par le hero premium (2026-04-29)
 import { ProspectCard } from "../components/prospect/ProspectCard";
 import { ProspectFormModal } from "../components/prospect/ProspectFormModal";
 import { useAppContext } from "../context/AppContext";
 import { useGlobalView } from "../hooks/useGlobalView";
-import { GlobalViewToggle } from "../components/ui/GlobalViewToggle";
+// GlobalViewToggle retire 2026-04-29 — toggle inutile en haut d'agenda
 import { useToast, buildSupabaseErrorToast } from "../context/ToastContext";
 import { createGoogleCalendarLink } from "../lib/googleCalendar";
 import type { Client, FollowUp, Prospect, ProspectStatus } from "../types/domain";
@@ -406,43 +406,270 @@ export function AgendaPage() {
     }
   }, [deleteProspect, pushToast]);
 
+  // Gradient time-of-day pour le hero (refonte premium 2026-04-29).
+  // Reuse meme logique que ClockHeader pour coherence visuelle.
+  const heroHour = new Date().getHours();
+  const heroGradient = (() => {
+    if (heroHour >= 5 && heroHour < 8)
+      return { primary: "#FFB088", secondary: "#FF8866", tertiary: "#EF9F27", glow: "rgba(255,176,136,0.30)" };
+    if (heroHour >= 8 && heroHour < 11)
+      return { primary: "#FFD56B", secondary: "#EF9F27", tertiary: "#BA7517", glow: "rgba(239,159,39,0.28)" };
+    if (heroHour >= 11 && heroHour < 14)
+      return { primary: "#EF9F27", secondary: "#BA7517", tertiary: "#0D9488", glow: "rgba(13,148,136,0.22)" };
+    if (heroHour >= 14 && heroHour < 17)
+      return { primary: "#EF9F27", secondary: "#BA7517", tertiary: "#5C3A05", glow: "rgba(186,117,23,0.28)" };
+    if (heroHour >= 17 && heroHour < 20)
+      return { primary: "#FF6B6B", secondary: "#BA7517", tertiary: "#7C3AED", glow: "rgba(255,107,107,0.25)" };
+    if (heroHour >= 20 && heroHour < 23)
+      return { primary: "#C084FC", secondary: "#7C3AED", tertiary: "#BA7517", glow: "rgba(192,132,252,0.25)" };
+    return { primary: "#A5B4FC", secondary: "#818CF8", tertiary: "#7C3AED", glow: "rgba(165,180,252,0.25)" };
+  })();
+
+  // Counts pour le hero header (calcules apres les useMemo des filtres)
+  const heroTodayCount = entityCounts.all > 0 ? entityCounts.all : 0;
+
   return (
     <div className="space-y-5">
-      {/* Chantier Quick Wins : toggle Vue globale admin en tête */}
-      <GlobalViewToggle
-        personalLabel="Vue personnelle (mon agenda)"
-        globalLabel="Vue équipe (tout l'agenda)"
-      />
+      {/* Hero PREMIUM AGENDA V1 (2026-04-29) — gradient time-of-day + stats inline + CTA glow */}
+      <style>{`
+        @keyframes ls-agenda-hero-mesh {
+          0% { transform: translate(0, 0) scale(1); }
+          50% { transform: translate(-10px, 6px) scale(1.05); }
+          100% { transform: translate(8px, -4px) scale(1); }
+        }
+        @keyframes ls-agenda-hero-shine {
+          0%, 100% { transform: translateX(-50%); opacity: 0; }
+          50% { transform: translateX(150%); opacity: 0.6; }
+        }
+        @keyframes ls-agenda-cta-glow {
+          0%, 100% { box-shadow: 0 4px 16px rgba(186,117,23,0.30); }
+          50% { box-shadow: 0 6px 24px rgba(186,117,23,0.55), 0 0 0 4px rgba(239,159,39,0.10); }
+        }
+        @keyframes ls-agenda-fade-in {
+          from { opacity: 0; transform: translateY(8px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .ls-agenda-hero {
+          position: relative;
+          overflow: hidden;
+          padding: 26px 28px;
+          border-radius: 24px;
+          background: var(--ls-surface);
+          border: 0.5px solid var(--ls-border);
+          box-shadow: 0 1px 0 0 ${heroGradient.glow}, 0 12px 36px -12px rgba(0,0,0,0.10);
+        }
+        .ls-agenda-mesh {
+          position: absolute; inset: -20%; opacity: 0.55; pointer-events: none;
+          animation: ls-agenda-hero-mesh 20s ease-in-out infinite alternate;
+          background:
+            radial-gradient(circle at 0% 0%, ${heroGradient.glow} 0%, transparent 45%),
+            radial-gradient(circle at 100% 100%, ${heroGradient.glow} 0%, transparent 50%),
+            radial-gradient(circle at 100% 0%, color-mix(in srgb, ${heroGradient.tertiary} 25%, transparent) 0%, transparent 60%);
+        }
+        .ls-agenda-shine {
+          position: absolute; top: 0; height: 100%; width: 50%; left: 0;
+          background: linear-gradient(90deg, transparent, rgba(255,255,255,0.10), transparent);
+          animation: ls-agenda-hero-shine 8s ease-in-out infinite;
+          pointer-events: none;
+        }
+        .ls-agenda-cta {
+          position: relative;
+          background: linear-gradient(135deg, ${heroGradient.primary} 0%, ${heroGradient.secondary} 100%);
+          color: white !important;
+          border: none !important;
+          padding: 14px 22px !important;
+          border-radius: 12px !important;
+          font-size: 14px !important;
+          font-weight: 700 !important;
+          font-family: "Syne", serif !important;
+          letter-spacing: 0.3px;
+          cursor: pointer;
+          animation: ls-agenda-cta-glow 4s ease-in-out infinite;
+          transition: transform 0.18s ease;
+        }
+        .ls-agenda-cta:hover { transform: translateY(-2px); }
+        .ls-agenda-stat {
+          animation: ls-agenda-fade-in 480ms cubic-bezier(0.16, 1, 0.3, 1) both;
+          transition: transform 0.18s ease, box-shadow 0.18s ease;
+        }
+        .ls-agenda-stat:hover { transform: translateY(-2px); }
+        .ls-agenda-stat:nth-child(1) { animation-delay: 50ms; }
+        .ls-agenda-stat:nth-child(2) { animation-delay: 130ms; }
+        .ls-agenda-stat:nth-child(3) { animation-delay: 210ms; }
+        @media (prefers-reduced-motion: reduce) {
+          .ls-agenda-mesh, .ls-agenda-shine, .ls-agenda-cta, .ls-agenda-stat {
+            animation: none !important;
+            transition: none !important;
+          }
+        }
+      `}</style>
 
-      <div className="flex items-start justify-between gap-4 flex-wrap">
-        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-          <PageHeading
-            eyebrow="Agenda"
-            title="Agenda unifié"
-            description="Tous tes RDV clients (suivis) et prospects sur la même vue."
-          />
-          {/* Chantier Nav (2026-04-20) : raccourci discret vers le dashboard */}
-          <Link
-            to="/"
-            style={{
-              display: "inline-flex", alignItems: "center", gap: 6,
-              padding: "6px 12px", borderRadius: 9,
-              background: "color-mix(in srgb, var(--ls-teal) 7%, transparent)",
-              border: "1px solid color-mix(in srgb, var(--ls-teal) 20%, transparent)",
-              color: "var(--ls-teal)",
-              fontSize: 12, fontWeight: 500, fontFamily: "'DM Sans', sans-serif",
-              textDecoration: "none", width: "fit-content",
-            }}
-          >
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M3 3h7v7H3zM14 3h7v5h-7zM14 12h7v9h-7zM3 14h7v7H3z" />
-            </svg>
-            Voir mes priorités →
-          </Link>
+      <div className="ls-agenda-hero">
+        <div className="ls-agenda-mesh" aria-hidden="true" />
+        <div className="ls-agenda-shine" aria-hidden="true" />
+
+        <div style={{ position: "relative", display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 24, flexWrap: "wrap", marginBottom: 18 }}>
+          <div style={{ flex: 1, minWidth: 240 }}>
+            <div
+              style={{
+                fontSize: 10,
+                letterSpacing: 2,
+                textTransform: "uppercase",
+                fontWeight: 700,
+                color: heroGradient.secondary,
+                marginBottom: 6,
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+              }}
+            >
+              <span
+                style={{
+                  display: "inline-block",
+                  width: 6,
+                  height: 6,
+                  borderRadius: 999,
+                  background: heroGradient.primary,
+                  boxShadow: `0 0 8px ${heroGradient.glow}`,
+                }}
+              />
+              Agenda · {new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })}
+            </div>
+            <h1
+              style={{
+                fontFamily: "Syne, serif",
+                fontSize: 32,
+                fontWeight: 800,
+                color: "var(--ls-text)",
+                lineHeight: 1.05,
+                letterSpacing: "-0.02em",
+                margin: 0,
+              }}
+            >
+              <span
+                style={{
+                  background: `linear-gradient(135deg, ${heroGradient.primary} 0%, ${heroGradient.secondary} 60%, ${heroGradient.tertiary} 100%)`,
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  backgroundClip: "text",
+                }}
+              >
+                Tes RDV
+              </span>{" "}
+              du moment ✨
+            </h1>
+            <p
+              style={{
+                fontSize: 13,
+                color: "var(--ls-text-muted)",
+                marginTop: 6,
+                marginBottom: 0,
+                fontFamily: "DM Sans, sans-serif",
+              }}
+            >
+              {heroTodayCount} entrée{heroTodayCount > 1 ? "s" : ""} dans l&apos;agenda · clients, prospects, suivis sur une seule vue.
+            </p>
+          </div>
+
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 8, position: "relative" }}>
+            <button
+              type="button"
+              onClick={() => { setEditing(undefined); setShowForm(true); }}
+              data-tour-id="agenda-new-rdv"
+              className="ls-agenda-cta"
+            >
+              ✨ + Nouveau RDV
+            </button>
+            <Link
+              to="/"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 5,
+                padding: "5px 10px",
+                borderRadius: 8,
+                background: "color-mix(in srgb, var(--ls-teal) 7%, transparent)",
+                border: "0.5px solid color-mix(in srgb, var(--ls-teal) 20%, transparent)",
+                color: "var(--ls-teal)",
+                fontSize: 11,
+                fontWeight: 500,
+                textDecoration: "none",
+                fontFamily: "DM Sans, sans-serif",
+              }}
+            >
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M3 3h7v7H3zM14 3h7v5h-7zM14 12h7v9h-7zM3 14h7v7H3z" />
+              </svg>
+              Voir mes priorités →
+            </Link>
+          </div>
         </div>
-        <Button onClick={() => { setEditing(undefined); setShowForm(true); }} data-tour-id="agenda-new-rdv">
-          + Nouveau RDV
-        </Button>
+
+        {/* 3 stats horizontaux dans le hero */}
+        <div
+          style={{
+            position: "relative",
+            display: "grid",
+            gridTemplateColumns: "repeat(3, 1fr)",
+            gap: 10,
+          }}
+        >
+          {[
+            { icon: "📅", label: "Aujourd'hui", value: prospects.filter((p) => {
+              const d = new Date(p.rdvDate);
+              const t = new Date();
+              return d.toDateString() === t.toDateString();
+            }).length + clients.filter((c) => {
+              if (!c.nextFollowUp) return false;
+              const d = new Date(c.nextFollowUp);
+              const t = new Date();
+              return d.toDateString() === t.toDateString();
+            }).length, color: heroGradient.primary },
+            { icon: "📆", label: "Cette semaine", value: entityCounts.all, color: heroGradient.secondary },
+            { icon: "🎯", label: "Suivis", value: entityCounts.followups, color: heroGradient.tertiary },
+          ].map((s) => (
+            <div
+              key={s.label}
+              className="ls-agenda-stat"
+              style={{
+                background: "color-mix(in srgb, var(--ls-surface) 95%, transparent)",
+                border: `0.5px solid color-mix(in srgb, ${s.color} 25%, var(--ls-border))`,
+                borderRadius: 14,
+                padding: "10px 14px",
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+                backdropFilter: "blur(8px)",
+                WebkitBackdropFilter: "blur(8px)",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.boxShadow = `0 6px 18px -8px ${heroGradient.glow}`;
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.boxShadow = "none";
+              }}
+            >
+              <span style={{ fontSize: 22 }}>{s.icon}</span>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 9, letterSpacing: 1.4, textTransform: "uppercase", color: "var(--ls-text-hint)", fontWeight: 700 }}>
+                  {s.label}
+                </div>
+                <div
+                  style={{
+                    fontFamily: "Syne, serif",
+                    fontSize: 22,
+                    fontWeight: 800,
+                    color: s.color,
+                    lineHeight: 1,
+                    letterSpacing: "-0.02em",
+                  }}
+                >
+                  {s.value}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Dropdown distributeur — admin only */}
@@ -813,18 +1040,59 @@ function EntityTab({
   onClick: () => void;
   dot: string | null;
 }) {
+  // Premium V2 (2026-04-29) : chip pill avec gradient subtil quand actif,
+  // counter pill colore, hover lift, anim d'apparition.
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`ls-pill${active ? " ls-pill--selected" : ""}`}
-      style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "8px 14px", fontSize: 13 }}
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 8,
+        padding: "9px 16px",
+        fontSize: 13,
+        fontWeight: active ? 700 : 500,
+        fontFamily: "DM Sans, sans-serif",
+        cursor: "pointer",
+        background: active && dot
+          ? `linear-gradient(135deg, color-mix(in srgb, ${dot} 14%, var(--ls-surface)) 0%, var(--ls-surface) 100%)`
+          : active
+            ? "linear-gradient(135deg, color-mix(in srgb, var(--ls-gold) 14%, var(--ls-surface)) 0%, var(--ls-surface) 100%)"
+            : "var(--ls-surface)",
+        border: active && dot
+          ? `0.5px solid color-mix(in srgb, ${dot} 50%, transparent)`
+          : active
+            ? "0.5px solid color-mix(in srgb, var(--ls-gold) 50%, transparent)"
+            : "0.5px solid var(--ls-border)",
+        borderRadius: 999,
+        color: active ? (dot ?? "var(--ls-gold)") : "var(--ls-text-muted)",
+        transition: "transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease",
+        boxShadow: active && dot ? `0 4px 12px -4px color-mix(in srgb, ${dot} 30%, transparent)` : "none",
+      }}
+      onMouseEnter={(e) => {
+        if (!active) {
+          e.currentTarget.style.transform = "translateY(-1px)";
+          e.currentTarget.style.borderColor = "color-mix(in srgb, var(--ls-gold) 30%, var(--ls-border))";
+        }
+      }}
+      onMouseLeave={(e) => {
+        if (!active) {
+          e.currentTarget.style.transform = "none";
+          e.currentTarget.style.borderColor = "var(--ls-border)";
+        }
+      }}
     >
       {dot && (
         <span
           style={{
-            width: 8, height: 8, borderRadius: "50%", background: dot,
-            flexShrink: 0, display: "inline-block",
+            width: 8,
+            height: 8,
+            borderRadius: "50%",
+            background: dot,
+            flexShrink: 0,
+            display: "inline-block",
+            boxShadow: active ? `0 0 0 3px color-mix(in srgb, ${dot} 20%, transparent)` : "none",
           }}
         />
       )}
@@ -832,13 +1100,19 @@ function EntityTab({
       <span
         style={{
           fontSize: 11,
-          padding: "1px 7px",
-          borderRadius: 10,
-          fontWeight: 600,
-          background: active ? "rgba(0,0,0,0.08)" : "var(--ls-surface2)",
-          color: active ? "var(--ls-bg)" : "var(--ls-text-muted)",
-          minWidth: 18,
+          padding: "2px 8px",
+          borderRadius: 999,
+          fontWeight: 800,
+          fontFamily: "Syne, serif",
+          background: active && dot
+            ? dot
+            : active
+              ? "var(--ls-gold)"
+              : "var(--ls-surface2)",
+          color: active ? "white" : "var(--ls-text-muted)",
+          minWidth: 22,
           textAlign: "center",
+          letterSpacing: -0.2,
         }}
       >
         {count}
@@ -921,12 +1195,40 @@ function ClientFollowUpCard({
 }
 
 function FilterPill({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
+  // Premium V2 FilterPill (2026-04-29) — gold subtle hover gradient
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`ls-pill${active ? " ls-pill--selected" : ""}`}
-      style={{ fontSize: 12, padding: "6px 12px" }}
+      style={{
+        fontSize: 12,
+        padding: "7px 14px",
+        background: active
+          ? "linear-gradient(135deg, color-mix(in srgb, var(--ls-gold) 12%, var(--ls-surface)) 0%, var(--ls-surface) 100%)"
+          : "var(--ls-surface)",
+        border: active
+          ? "0.5px solid color-mix(in srgb, var(--ls-gold) 50%, transparent)"
+          : "0.5px solid var(--ls-border)",
+        color: active ? "var(--ls-gold)" : "var(--ls-text-muted)",
+        fontWeight: active ? 700 : 500,
+        fontFamily: "DM Sans, sans-serif",
+        borderRadius: 999,
+        cursor: "pointer",
+        boxShadow: active ? "0 2px 8px -3px rgba(184,146,42,0.30)" : "none",
+        transition: "transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease",
+      }}
+      onMouseEnter={(e) => {
+        if (!active) {
+          e.currentTarget.style.transform = "translateY(-1px)";
+          e.currentTarget.style.borderColor = "color-mix(in srgb, var(--ls-gold) 30%, var(--ls-border))";
+        }
+      }}
+      onMouseLeave={(e) => {
+        if (!active) {
+          e.currentTarget.style.transform = "none";
+          e.currentTarget.style.borderColor = "var(--ls-border)";
+        }
+      }}
     >
       {label}
     </button>
