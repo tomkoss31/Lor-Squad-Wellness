@@ -47,6 +47,7 @@ import {
   computeProteinTarget,
 } from "../lib/calculations";
 import { buildAssessmentRecommendationPlan, recommendBoosters } from "../lib/assessmentRecommendations";
+import { calculateAge } from "../lib/age";
 import type { BiologicalSex, BreakfastAnalysis, CurrentIntake, DecisionClient, MessageALaisser, Objective, QuantityMap, RecommendationLead, SportProfile, TypeDeSuite } from "../types/domain";
 import { SportProfileStep } from "../components/assessment/SportProfileStep";
 import { CurrentIntakeStep } from "../components/assessment/CurrentIntakeStep";
@@ -62,6 +63,8 @@ type AssessmentForm = {
   email: string;
   sex: BiologicalSex;
   age: number;
+  /** Chantier birth_date bilan initial (2026-04-29) — date de naissance optionnelle, calcule l'age automatiquement. */
+  birthDate: string;
   height: number;
   job: string;
   currentClothingSize: string;
@@ -210,6 +213,7 @@ const initialForm: AssessmentForm = {
   email: "",
   sex: "female",
   age: 0,
+  birthDate: "",
   height: 0,
   job: "",
   currentClothingSize: "",
@@ -974,6 +978,7 @@ export function NewAssessmentPage() {
           phone: form.phone.trim(),
           email: form.email.trim().toLowerCase(),
           age: form.age,
+          birthDate: form.birthDate || null,
           height: form.height,
           job: form.job.trim() || "Non renseigné",
           city: form.city.trim() || undefined,
@@ -1288,7 +1293,30 @@ export function NewAssessmentPage() {
                     onChange={(v) => update("sex", v as BiologicalSex)}
                     formatOption={(option) => (option === "male" ? "Homme" : "Femme")}
                   />
-                  <Field label="Age" type="number" value={form.age} onChange={(v) => update("age", Number(v))} />
+                  {/* Chantier birth_date bilan initial (2026-04-29) : date de naissance => age auto. */}
+                  <div className="flex flex-col gap-1">
+                    <Field
+                      label="Date de naissance"
+                      type="date"
+                      value={form.birthDate}
+                      onChange={(v) => {
+                        update("birthDate", v);
+                        const computed = calculateAge(v);
+                        if (computed !== null) update("age", computed);
+                      }}
+                    />
+                    {form.birthDate && form.age > 0 ? (
+                      <p className="text-xs text-[var(--ls-text-muted)]">
+                        Âge : <strong>{form.age} ans</strong> (calculé auto)
+                      </p>
+                    ) : null}
+                  </div>
+                  <Field
+                    label="Age (saisie manuelle si pas de date)"
+                    type="number"
+                    value={form.age}
+                    onChange={(v) => update("age", Number(v))}
+                  />
                   <Field label="Taille (cm)" type="number" value={form.height} onChange={(v) => update("height", Number(v))} />
                   <Field label="Profession" value={form.job} onChange={(v) => update("job", v)} />
                   <Field label="Ville" value={form.city} onChange={(v) => update("city", v)} />

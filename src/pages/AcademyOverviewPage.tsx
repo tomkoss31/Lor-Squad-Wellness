@@ -3,14 +3,15 @@
 // Thomas. Couleurs hardcodees palette Lor'Squad. Le contenu interactif
 // par section arrive en Phase 2.
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAcademyProgress } from "../features/academy/hooks/useAcademyProgress";
-import { ACADEMY_SECTIONS, type AcademySection } from "../features/academy/sections";
+import { ACADEMY_SECTIONS, getAcademySectionById, type AcademySection } from "../features/academy/sections";
 import { ConfettiBurst } from "../features/academy/components/ConfettiBurst";
 import { AcademyTimeline } from "../features/academy/components/AcademyTimeline";
 import { useAcademyTeamStats } from "../features/academy/hooks/useAcademyTeamStats";
 import { AcademyBadges } from "../features/academy/components/AcademyBadges";
+import { SectionFeedbackModal } from "../features/academy/components/SectionFeedbackModal";
 
 export function AcademyOverviewPage() {
   const { view, goToSection, restartSection } = useAcademyProgress();
@@ -18,8 +19,21 @@ export function AcademyOverviewPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const justCompletedId = searchParams.get("completed");
+  const feedbackSectionId = searchParams.get("feedback");
   const [confettiActive, setConfettiActive] = useState(false);
   const [pulseSectionId, setPulseSectionId] = useState<string | null>(null);
+
+  // Tier B #9 (2026-04-28) : section pour laquelle on demande un feedback.
+  const feedbackSection = useMemo(
+    () => (feedbackSectionId ? getAcademySectionById(feedbackSectionId) : null),
+    [feedbackSectionId],
+  );
+
+  function closeFeedback() {
+    const next = new URLSearchParams(searchParams);
+    next.delete("feedback");
+    setSearchParams(next, { replace: true });
+  }
 
   // Polish ludique (2026-04-27) : retour de section terminee → pulse
   // vert sur la row + confetti fullscreen si Academy 100% completee.
@@ -181,6 +195,25 @@ export function AcademyOverviewPage() {
                 >
                   📜 Voir mon certificat
                 </button>
+                {/* Tier B #7 (2026-04-28) : CTA Playbook PDF personnalise. */}
+                <button
+                  type="button"
+                  onClick={() => navigate("/academy/playbook")}
+                  style={{
+                    background: "linear-gradient(135deg, #FFE873 0%, #C9A84C 100%)",
+                    color: "#5C4A0F",
+                    border: "none",
+                    padding: "8px 16px",
+                    borderRadius: 8,
+                    fontSize: 12,
+                    fontWeight: 700,
+                    cursor: "pointer",
+                    fontFamily: "DM Sans, sans-serif",
+                    boxShadow: "0 2px 6px rgba(184,146,42,0.30)",
+                  }}
+                >
+                  📄 Mon playbook
+                </button>
               </div>
             )}
           </div>
@@ -333,6 +366,15 @@ export function AcademyOverviewPage() {
         >
           🎉 Academy complétée — bravo !
         </div>
+      ) : null}
+
+      {/* Tier B #9 (2026-04-28) : modale feedback post-section. */}
+      {feedbackSection ? (
+        <SectionFeedbackModal
+          sectionId={feedbackSection.id}
+          sectionTitle={feedbackSection.title}
+          onClose={closeFeedback}
+        />
       ) : null}
     </div>
   );

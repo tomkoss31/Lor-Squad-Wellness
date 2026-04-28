@@ -19,6 +19,7 @@ import { useAppContext } from "../../context/AppContext";
 import { useToast, buildSupabaseErrorToast } from "../../context/ToastContext";
 import { ClientAccessModal } from "../client/ClientAccessModal";
 import { MessageTemplatesButton } from "./MessageTemplatesButton";
+import { ClientVipCoachPanel } from "../../features/client-vip/ClientVipCoachPanel";
 import { refreshClientRecap } from "../../services/supabaseService";
 import { useClientPriorityAction } from "../../hooks/useClientPriorityAction";
 import { ActionsRdvBlock } from "./ActionsRdvBlock";
@@ -386,6 +387,12 @@ export function ActionsTab({ client, onEditRdv, onOpenSharePublic, onGoToVueComp
             — édite et envoie via WhatsApp, SMS, Telegram ou copie.
           </div>
         </div>
+      </div>
+
+      {/* ⭐ Programme Client VIP Herbalife (Tier B 2026-04-28) :
+          status + ID + parrain + arbre filleuls + intentions clients. */}
+      <div style={{ marginTop: 12 }}>
+        <ClientVipCoachPanel client={client} />
       </div>
 
       {/* ═══ GRID 2 COLONNES ═════════════════════════════════════════════ */}

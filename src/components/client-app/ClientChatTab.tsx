@@ -104,6 +104,12 @@ export function ClientChatTab({ token, clientFirstName, coachFirstName }: Client
         p_message_type: "general",
       });
       if (rpcErr) throw new Error(rpcErr.message);
+      // Premium Client XP (Tier B 2026-04-28) : +15 XP pour message envoye
+      // (cap 1×/jour cote SQL).
+      if (token) {
+        const xpMod = await import("../../features/client-xp/useClientXp");
+        void xpMod.recordClientXp(token, "message_sent");
+      }
       setInput("");
       await refresh();
     } catch (err) {

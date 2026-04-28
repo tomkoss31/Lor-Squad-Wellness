@@ -98,6 +98,12 @@ const ClientAppPage = lazy(() =>
     default: module.ClientAppPage
   }))
 );
+// Tier B Livraison B (2026-04-28) : sandbox client interactif 4 quetes.
+const ClientSandboxPage = lazy(() =>
+  import("./pages/ClientSandboxPage").then((module) => ({
+    default: module.ClientSandboxPage
+  }))
+);
 const MessagesPage = lazy(() =>
   import("./pages/MessagesPage").then((module) => ({
     default: module.MessagesPage
@@ -183,6 +189,12 @@ const AcademyCertificatePage = lazy(() =>
 const AcademySandboxPage = lazy(() =>
   import("./pages/AcademySandboxPage").then((module) => ({
     default: module.AcademySandboxPage
+  }))
+);
+// Tier B #7 (2026-04-28) : Playbook PDF personnalise post-completion.
+const AcademyPlaybookPage = lazy(() =>
+  import("./pages/AcademyPlaybookPage").then((module) => ({
+    default: module.AcademyPlaybookPage
   }))
 );
 // Pages démo Academy (2026-04-28) : mockups visuels avec données fictives
@@ -281,17 +293,15 @@ export default function App() {
                   /dashboard redirige pour ne pas casser les liens existants. */}
               <Route path="co-pilote" element={<CoPilotePage />} />
               <Route path="dashboard" element={<Navigate to="/co-pilote" replace />} />
-              {/* Lor'Squad Academy Phase 1 (2026-04-26) — gated admin
-                  only depuis migration prod 2026-04-28 (en finalisation,
-                  on leve le voile quand prete). Defense en profondeur :
-                  RoleRoute redirige vers /co-pilote si non-admin tape
-                  l URL manuellement. */}
+              {/* Lor'Squad Academy Phase 1 (2026-04-26) — gated admin only
+                  en prod (RoleRoute). Defense en profondeur : RoleRoute
+                  redirige vers /co-pilote si non-admin tape l URL manuelle. */}
               <Route element={<RoleRoute allowedRoles={["admin"]} />}>
                 <Route path="academy" element={<AcademyOverviewPage />} />
                 <Route path="academy/certificat" element={<AcademyCertificatePage />} />
+                <Route path="academy/playbook" element={<AcademyPlaybookPage />} />
                 <Route path="academy/sandbox" element={<AcademySandboxPage />} />
                 <Route path="academy/:sectionId" element={<AcademySectionPage />} />
-                {/* Pages démo Academy (2026-04-28) — mockups pour les tours */}
                 <Route path="academy/demo/fiche-client" element={<DemoFicheClient />} />
                 <Route path="academy/demo/agenda" element={<DemoAgenda />} />
               </Route>
@@ -344,6 +354,7 @@ export default function App() {
           <Route path="/recap/:token" element={<RecapPage />} />
           <Route path="/rapport/:token" element={<EvolutionReportPage />} />
           <Route path="/client/:token" element={<ClientAppPage />} />
+          <Route path="/client/:token/sandbox" element={<ClientSandboxPage />} />
           {/* Chantier invitation client app (2026-04-21) : page publique
               pour que le client crée son accès via le lien magique envoyé
               par le coach. Pas besoin d'être authentifié. */}

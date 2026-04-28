@@ -21,8 +21,10 @@ import { HeroActionCard } from "../components/copilote/HeroActionCard";
 import { TodayAgendaCard } from "../components/copilote/TodayAgendaCard";
 import { PendingFollowupsCard } from "../components/copilote/PendingFollowupsCard";
 import { PvGaugeBand } from "../components/copilote/PvGaugeBand";
+import { PvActionPlanAlert } from "../components/copilote/PvActionPlanAlert";
 import { InboxWidget } from "../components/copilote/InboxWidget";
 import { BirthdayBlock } from "../components/copilote/BirthdayBlock";
+import { WeeklyQuestsCard } from "../features/gamification/components/WeeklyQuestsCard";
 
 function useLiveClock(): Date {
   const [now, setNow] = useState(() => new Date());
@@ -133,6 +135,13 @@ export function CoPilotePage() {
         todayAppointmentsCount={data.todayAppointmentsCount}
         conversionRate={data.conversionRate}
       />
+
+      {/* Strategie PV (2026-04-29) : alerte conditionnelle PV — n'apparait
+          QUE si delayed. Le plan complet est sur /pv. */}
+      {currentUser?.id ? <PvActionPlanAlert userId={currentUser.id} /> : null}
+
+      {/* Gamification 3 (2026-04-29) : quetes hebdo automatiques. */}
+      <WeeklyQuestsCard />
     </div>
   );
 }

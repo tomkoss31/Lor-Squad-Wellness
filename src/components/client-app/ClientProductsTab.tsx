@@ -293,17 +293,8 @@ export function ClientProductsTab({
                     </div>
                   ) : null}
                 </div>
-                <div
-                  style={{
-                    fontFamily: "Syne, sans-serif",
-                    fontSize: 13,
-                    fontWeight: 700,
-                    color: "#0F6E56",
-                    flexShrink: 0,
-                  }}
-                >
-                  {(p.price_public_per_unit ?? 0).toFixed(2)}€
-                </div>
+                {/* Prix retire (2026-04-28) : non pertinent cote client.
+                    Le prix reste dans le payload mais on ne l affiche pas. */}
               </div>
             ))}
           </div>
@@ -379,19 +370,7 @@ export function ClientProductsTab({
                       >
                         {r.name}
                       </div>
-                      {typeof r.price === "number" && r.price > 0 ? (
-                        <div
-                          style={{
-                            fontFamily: "Syne, sans-serif",
-                            fontWeight: 700,
-                            fontSize: 15,
-                            color: "#B8922A",
-                            flexShrink: 0,
-                          }}
-                        >
-                          {r.price.toFixed(2)}€
-                        </div>
-                      ) : null}
+                      {/* Prix retire (2026-04-28) : non pertinent cote client. */}
                     </div>
                     <div
                       style={{

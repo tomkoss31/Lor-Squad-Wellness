@@ -5,6 +5,89 @@ reproduire les régressions passées. Relire avant tout gros chantier.
 
 ---
 
+## Roadmap chantiers à venir (mémo 2026-04-28)
+
+Status à date des 5 chantiers brainstormés (A → E) :
+
+### 🟢 C. Refonte page /clients — V2 livrée
+**Fait** : chips filtres rapides, vue Kanban DnD, lifecycle badges,
+sélection multiple, bulk lifecycle change, **bulk message multi-canal**,
+**tri par colonne** (intelligent / nom / dernier bilan), **export CSV**
+de la sélection.
+
+**Reste à faire (V3 si besoin)** :
+- Tri par PV mois (nécessite agrégation côté front depuis pvTransactions)
+- Sélection persistée entre navigations (localStorage)
+- Filtre par owner via query param (`?owner=<userId>`) déjà passé depuis
+  AnalyticsPage drill-down → ClientsPage doit le lire et pré-sélectionner
+
+### 🟢 D. Analytics admin — V2 livrée
+**Fait** : KPIs (bilans/clients/PV/conversion), funnel, top produits,
+top distri, tendance 12 mois, alertes ops, **delta vs M-1** (bilans +
+clients_actifs + PV), **drill-down distri** (modale détaillée avec PV
+6 mois + lifecycle + top clients).
+
+**Reste à faire** :
+- **Export PDF** du rapport mensuel (réutilise pattern certificat /
+  playbook : html2canvas + jsPDF). Cible : 1 page A4 résumé pour Mel.
+- **Alertes signaux faibles** plus fines : "Distri X a chuté de 60 % en
+  PV ce mois" (déjà compute en SQL via delta% per distri).
+- **Drill-down produit** : cliquer sur un Top produit → modale avec liste
+  clients qui l'ont commandé + tendance achats 6 mois.
+
+### 🟢 E. Templates messages WhatsApp — V1 livrée (sans IA)
+**Fait** : 5 templates avec `applicable()` + interpolation contextuelle,
+modale popup multi-canal (WhatsApp/SMS/Telegram/Copier), aperçu éditable,
+**bulk message multi-clients** (cf. C V2).
+
+**Reste à faire (V2 avec IA)** :
+- Bouton "✨ Suggérer par IA" qui appelle Claude API avec contexte client
+  → réponse personnalisée non-templatée (rejoint chantier B).
+- Templates personnalisables par coach (ajout / édition / favoris).
+- Historique d'envois par client (table `client_message_log`).
+
+### 🔴 A. Onboarding CLIENT (PWA) — PAS FAIT
+3-4 sections courtes (~30 sec chacune) côté app client `/client/:token` :
+1. "Bienvenue [Prénom]" — Hero + RDV + ce qu'on y fait
+2. "Comment lire ton évolution" — graphique poids, points de départ
+3. "Tes conseils du jour" — alertes sport, assiette idéale, routine
+4. "Comment me parler" — onglet Coach Messagerie
+
+**Implémentation** :
+- Réutilise pattern TourRunner mais simplifié pour mobile / PWA
+- Auto-démarrage 1ère visite, skippable, persisté via
+  `client_app_accounts.onboarded_at`
+- Migration SQL : ajouter colonne `onboarded_at timestamptz null`
+
+**Effort** : 1.5-2 jours. ROI rétention élevé.
+
+### 🔴 B. Lor'Squad AI (Assistant IA intégré) — PAS FAIT
+**Vision** : FAB en bas à droite app coach → modale chat type ChatGPT
+avec contexte automatique du client courant.
+
+**Cas d'usage** :
+- "Comment je gère un client qui veut arrêter ?"
+- "Suggère un programme pour Marie objectif perte de poids + sport"
+- "Rédige un message de relance douce client en pause depuis 20j"
+
+**Architecture** :
+- Edge function `lor-squad-ai` : reçoit `{ message, contextClient?,
+  contextRoute }` → appelle Claude API (Anthropic) → renvoie réponse
+  markdown.
+- Anthropic API key dans secrets Supabase.
+- Composant `AICoachAssistant` : FAB + modal chat + suggestions rapides.
+- Système de prompts : prompt de base "Tu es Lor'Squad AI…" + injection
+  du contexte client en JSON.
+- Cost tracking : table `ai_usage_log` (user_id, tokens, cost_eur) +
+  monthly cap par distri.
+- V2 optional : RAG sur base de connaissance Herbalife (PDF programmes,
+  scripts ventes…).
+
+**Effort** : 3-4 jours. Différentiateur produit majeur. À planifier
+quand prêt à signer compte Anthropic API + monitorer coûts récurrents.
+
+---
+
 ## Chantier futur : Stratégie d'action PV (mémo 2026-04-29)
 
 L'utilisateur a noté l'objectif PV mensuel comme un levier qu'on ne

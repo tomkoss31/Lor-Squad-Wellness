@@ -103,7 +103,11 @@
       "Bash(cat)",
       "Bash(cp /tmp/audit_report.md \"C:/Users/tomko/Documents/Lor'Squad Wellness/docs/AUDIT_CLIENT_APP_25042026.md\")",
       "Bash(python3)",
-      "Bash(echo \"EXIT=$?\")"
+      "Bash(echo \"EXIT=$?\")",
+      "Bash(awk '/^export interface Client \\\\{/,/^\\\\}/' \"C:/Users/tomko/Documents/Lor'Squad Wellness/src/types/domain.ts\")",
+      "Bash(git ls-tree *)",
+      "Bash(grep -n \"^    </div>$\\\\|<\\\\/div>$\" src/features/client-vip/ClientVipCoachPanel.tsx)",
+      "Bash(grep -rn *)"
     ]
   }
 }
