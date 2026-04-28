@@ -2,12 +2,12 @@ import { startTransition, useCallback, useEffect, useMemo, useState } from "reac
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
-import { PageHeading } from "../components/ui/PageHeading";
+// PageHeading remplace par le hero premium (2026-04-29)
 import { ProspectCard } from "../components/prospect/ProspectCard";
 import { ProspectFormModal } from "../components/prospect/ProspectFormModal";
 import { useAppContext } from "../context/AppContext";
 import { useGlobalView } from "../hooks/useGlobalView";
-import { GlobalViewToggle } from "../components/ui/GlobalViewToggle";
+// GlobalViewToggle retire 2026-04-29 — toggle inutile en haut d'agenda
 import { useToast, buildSupabaseErrorToast } from "../context/ToastContext";
 import { createGoogleCalendarLink } from "../lib/googleCalendar";
 import type { Client, FollowUp, Prospect, ProspectStatus } from "../types/domain";
@@ -270,6 +270,15 @@ export function AgendaPage() {
     return GROUP_ORDER.filter((g) => map.has(g)).map((g) => ({ label: g, items: map.get(g)! }));
   }, [agendaEntries]);
 
+  // Prochain RDV imminent (2026-04-29) — pour le hero countdown card
+  const nextRdv = useMemo(() => {
+    const now = Date.now();
+    const future = agendaEntries
+      .filter((e) => new Date(e.date).getTime() > now)
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    return future[0] ?? null;
+  }, [agendaEntries]);
+
   // Compteurs pour les onglets — scopés et filtrés par date mais pas par status
   // (le status filter est "prospect-only", on ne veut pas qu'il fausse le compte client).
   const entityCounts = useMemo(() => {
@@ -406,66 +415,457 @@ export function AgendaPage() {
     }
   }, [deleteProspect, pushToast]);
 
+  // Gradient time-of-day pour le hero (refonte premium 2026-04-29).
+  // Reuse meme logique que ClockHeader pour coherence visuelle.
+  const heroHour = new Date().getHours();
+  const heroGradient = (() => {
+    if (heroHour >= 5 && heroHour < 8)
+      return { primary: "#FFB088", secondary: "#FF8866", tertiary: "#EF9F27", glow: "rgba(255,176,136,0.30)" };
+    if (heroHour >= 8 && heroHour < 11)
+      return { primary: "#FFD56B", secondary: "#EF9F27", tertiary: "#BA7517", glow: "rgba(239,159,39,0.28)" };
+    if (heroHour >= 11 && heroHour < 14)
+      return { primary: "#EF9F27", secondary: "#BA7517", tertiary: "#0D9488", glow: "rgba(13,148,136,0.22)" };
+    if (heroHour >= 14 && heroHour < 17)
+      return { primary: "#EF9F27", secondary: "#BA7517", tertiary: "#5C3A05", glow: "rgba(186,117,23,0.28)" };
+    if (heroHour >= 17 && heroHour < 20)
+      return { primary: "#FF6B6B", secondary: "#BA7517", tertiary: "#7C3AED", glow: "rgba(255,107,107,0.25)" };
+    if (heroHour >= 20 && heroHour < 23)
+      return { primary: "#C084FC", secondary: "#7C3AED", tertiary: "#BA7517", glow: "rgba(192,132,252,0.25)" };
+    return { primary: "#A5B4FC", secondary: "#818CF8", tertiary: "#7C3AED", glow: "rgba(165,180,252,0.25)" };
+  })();
+
+  // Counts pour le hero header (calcules apres les useMemo des filtres)
+  const heroTodayCount = entityCounts.all > 0 ? entityCounts.all : 0;
+
   return (
     <div className="space-y-5">
-      {/* Chantier Quick Wins : toggle Vue globale admin en tête */}
-      <GlobalViewToggle
-        personalLabel="Vue personnelle (mon agenda)"
-        globalLabel="Vue équipe (tout l'agenda)"
-      />
+      {/* Hero PREMIUM AGENDA V1 (2026-04-29) — gradient time-of-day + stats inline + CTA glow */}
+      <style>{`
+        @keyframes ls-agenda-hero-mesh {
+          0% { transform: translate(0, 0) scale(1); }
+          50% { transform: translate(-10px, 6px) scale(1.05); }
+          100% { transform: translate(8px, -4px) scale(1); }
+        }
+        @keyframes ls-agenda-hero-shine {
+          0%, 100% { transform: translateX(-50%); opacity: 0; }
+          50% { transform: translateX(150%); opacity: 0.6; }
+        }
+        @keyframes ls-agenda-cta-glow {
+          0%, 100% { box-shadow: 0 4px 16px rgba(186,117,23,0.30); }
+          50% { box-shadow: 0 6px 24px rgba(186,117,23,0.55), 0 0 0 4px rgba(239,159,39,0.10); }
+        }
+        @keyframes ls-agenda-fade-in {
+          from { opacity: 0; transform: translateY(8px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes ls-pulse-imminent {
+          0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255,107,107,0.5); }
+          50% { transform: scale(1.04); box-shadow: 0 0 0 4px rgba(255,107,107,0); }
+        }
+        @keyframes ls-rdv-card-in {
+          from { opacity: 0; transform: translateX(-8px); }
+          to { opacity: 1; transform: translateX(0); }
+        }
+        .ls-rdv-card { animation: ls-rdv-card-in 380ms cubic-bezier(0.16, 1, 0.3, 1) both; }
+        @media (prefers-reduced-motion: reduce) {
+          .ls-rdv-card, .ls-pulse-imminent { animation: none !important; }
+        }
+        .ls-agenda-hero {
+          position: relative;
+          overflow: hidden;
+          padding: 26px 28px;
+          border-radius: 24px;
+          background: var(--ls-surface);
+          border: 0.5px solid var(--ls-border);
+          box-shadow: 0 1px 0 0 ${heroGradient.glow}, 0 12px 36px -12px rgba(0,0,0,0.10);
+        }
+        .ls-agenda-mesh {
+          position: absolute; inset: -20%; opacity: 0.55; pointer-events: none;
+          animation: ls-agenda-hero-mesh 20s ease-in-out infinite alternate;
+          background:
+            radial-gradient(circle at 0% 0%, ${heroGradient.glow} 0%, transparent 45%),
+            radial-gradient(circle at 100% 100%, ${heroGradient.glow} 0%, transparent 50%),
+            radial-gradient(circle at 100% 0%, color-mix(in srgb, ${heroGradient.tertiary} 25%, transparent) 0%, transparent 60%);
+        }
+        .ls-agenda-shine {
+          position: absolute; top: 0; height: 100%; width: 50%; left: 0;
+          background: linear-gradient(90deg, transparent, rgba(255,255,255,0.10), transparent);
+          animation: ls-agenda-hero-shine 8s ease-in-out infinite;
+          pointer-events: none;
+        }
+        .ls-agenda-cta {
+          position: relative;
+          background: linear-gradient(135deg, ${heroGradient.primary} 0%, ${heroGradient.secondary} 100%);
+          color: white !important;
+          border: none !important;
+          padding: 14px 22px !important;
+          border-radius: 12px !important;
+          font-size: 14px !important;
+          font-weight: 700 !important;
+          font-family: "Syne", serif !important;
+          letter-spacing: 0.3px;
+          cursor: pointer;
+          animation: ls-agenda-cta-glow 4s ease-in-out infinite;
+          transition: transform 0.18s ease;
+        }
+        .ls-agenda-cta:hover { transform: translateY(-2px); }
+        .ls-agenda-stat {
+          animation: ls-agenda-fade-in 480ms cubic-bezier(0.16, 1, 0.3, 1) both;
+          transition: transform 0.18s ease, box-shadow 0.18s ease;
+        }
+        .ls-agenda-stat:hover { transform: translateY(-2px); }
+        .ls-agenda-stat:nth-child(1) { animation-delay: 50ms; }
+        .ls-agenda-stat:nth-child(2) { animation-delay: 130ms; }
+        .ls-agenda-stat:nth-child(3) { animation-delay: 210ms; }
+        @media (prefers-reduced-motion: reduce) {
+          .ls-agenda-mesh, .ls-agenda-shine, .ls-agenda-cta, .ls-agenda-stat {
+            animation: none !important;
+            transition: none !important;
+          }
+        }
+      `}</style>
 
-      <div className="flex items-start justify-between gap-4 flex-wrap">
-        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-          <PageHeading
-            eyebrow="Agenda"
-            title="Agenda unifié"
-            description="Tous tes RDV clients (suivis) et prospects sur la même vue."
-          />
-          {/* Chantier Nav (2026-04-20) : raccourci discret vers le dashboard */}
-          <Link
-            to="/"
-            style={{
-              display: "inline-flex", alignItems: "center", gap: 6,
-              padding: "6px 12px", borderRadius: 9,
-              background: "color-mix(in srgb, var(--ls-teal) 7%, transparent)",
-              border: "1px solid color-mix(in srgb, var(--ls-teal) 20%, transparent)",
-              color: "var(--ls-teal)",
-              fontSize: 12, fontWeight: 500, fontFamily: "'DM Sans', sans-serif",
-              textDecoration: "none", width: "fit-content",
-            }}
-          >
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M3 3h7v7H3zM14 3h7v5h-7zM14 12h7v9h-7zM3 14h7v7H3z" />
-            </svg>
-            Voir mes priorités →
-          </Link>
+      <div className="ls-agenda-hero">
+        <div className="ls-agenda-mesh" aria-hidden="true" />
+        <div className="ls-agenda-shine" aria-hidden="true" />
+
+        <div style={{ position: "relative", display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 24, flexWrap: "wrap", marginBottom: 18 }}>
+          <div style={{ flex: 1, minWidth: 240 }}>
+            <div
+              style={{
+                fontSize: 10,
+                letterSpacing: 2,
+                textTransform: "uppercase",
+                fontWeight: 700,
+                color: heroGradient.secondary,
+                marginBottom: 6,
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+              }}
+            >
+              <span
+                style={{
+                  display: "inline-block",
+                  width: 6,
+                  height: 6,
+                  borderRadius: 999,
+                  background: heroGradient.primary,
+                  boxShadow: `0 0 8px ${heroGradient.glow}`,
+                }}
+              />
+              Agenda · {new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })}
+            </div>
+            <h1
+              style={{
+                fontFamily: "Syne, serif",
+                fontSize: 32,
+                fontWeight: 800,
+                color: "var(--ls-text)",
+                lineHeight: 1.05,
+                letterSpacing: "-0.02em",
+                margin: 0,
+              }}
+            >
+              <span
+                style={{
+                  background: `linear-gradient(135deg, ${heroGradient.primary} 0%, ${heroGradient.secondary} 60%, ${heroGradient.tertiary} 100%)`,
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  backgroundClip: "text",
+                }}
+              >
+                Tes RDV
+              </span>{" "}
+              du moment ✨
+            </h1>
+            <p
+              style={{
+                fontSize: 13,
+                color: "var(--ls-text-muted)",
+                marginTop: 6,
+                marginBottom: 0,
+                fontFamily: "DM Sans, sans-serif",
+              }}
+            >
+              {heroTodayCount} entrée{heroTodayCount > 1 ? "s" : ""} dans l&apos;agenda · clients, prospects, suivis sur une seule vue.
+            </p>
+          </div>
+
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 8, position: "relative" }}>
+            <button
+              type="button"
+              onClick={() => { setEditing(undefined); setShowForm(true); }}
+              data-tour-id="agenda-new-rdv"
+              className="ls-agenda-cta"
+            >
+              ✨ + Nouveau RDV
+            </button>
+            <Link
+              to="/"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 5,
+                padding: "5px 10px",
+                borderRadius: 8,
+                background: "color-mix(in srgb, var(--ls-teal) 7%, transparent)",
+                border: "0.5px solid color-mix(in srgb, var(--ls-teal) 20%, transparent)",
+                color: "var(--ls-teal)",
+                fontSize: 11,
+                fontWeight: 500,
+                textDecoration: "none",
+                fontFamily: "DM Sans, sans-serif",
+              }}
+            >
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M3 3h7v7H3zM14 3h7v5h-7zM14 12h7v9h-7zM3 14h7v7H3z" />
+              </svg>
+              Voir mes priorités →
+            </Link>
+          </div>
         </div>
-        <Button onClick={() => { setEditing(undefined); setShowForm(true); }} data-tour-id="agenda-new-rdv">
-          + Nouveau RDV
-        </Button>
+
+        {/* 3 stats horizontaux dans le hero */}
+        <div
+          style={{
+            position: "relative",
+            display: "grid",
+            gridTemplateColumns: "repeat(3, 1fr)",
+            gap: 10,
+          }}
+        >
+          {[
+            { icon: "📅", label: "Aujourd'hui", value: prospects.filter((p) => {
+              const d = new Date(p.rdvDate);
+              const t = new Date();
+              return d.toDateString() === t.toDateString();
+            }).length + clients.filter((c) => {
+              if (!c.nextFollowUp) return false;
+              const d = new Date(c.nextFollowUp);
+              const t = new Date();
+              return d.toDateString() === t.toDateString();
+            }).length, color: heroGradient.primary },
+            { icon: "📆", label: "Cette semaine", value: entityCounts.all, color: heroGradient.secondary },
+            { icon: "🎯", label: "Suivis", value: entityCounts.followups, color: heroGradient.tertiary },
+          ].map((s) => (
+            <div
+              key={s.label}
+              className="ls-agenda-stat"
+              style={{
+                background: "color-mix(in srgb, var(--ls-surface) 95%, transparent)",
+                border: `0.5px solid color-mix(in srgb, ${s.color} 25%, var(--ls-border))`,
+                borderRadius: 14,
+                padding: "10px 14px",
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+                backdropFilter: "blur(8px)",
+                WebkitBackdropFilter: "blur(8px)",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.boxShadow = `0 6px 18px -8px ${heroGradient.glow}`;
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.boxShadow = "none";
+              }}
+            >
+              <span style={{ fontSize: 22 }}>{s.icon}</span>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 9, letterSpacing: 1.4, textTransform: "uppercase", color: "var(--ls-text-hint)", fontWeight: 700 }}>
+                  {s.label}
+                </div>
+                <div
+                  style={{
+                    fontFamily: "Syne, serif",
+                    fontSize: 22,
+                    fontWeight: 800,
+                    color: s.color,
+                    lineHeight: 1,
+                    letterSpacing: "-0.02em",
+                  }}
+                >
+                  {s.value}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
 
-      {/* Dropdown distributeur — admin only */}
+      {/* Prochain RDV countdown V2 (2026-04-29) — hero card flottant si <12h */}
+      {nextRdv && (() => {
+        const ms = new Date(nextRdv.date).getTime() - Date.now();
+        if (ms <= 0 || ms > 12 * 60 * 60 * 1000) return null; // <12h only
+        const h = Math.floor(ms / (60 * 60 * 1000));
+        const m = Math.floor((ms % (60 * 60 * 1000)) / (60 * 1000));
+        const labelTime = h > 0 ? `${h}h ${m}m` : `${m} min`;
+        const name = nextRdv.kind === "client"
+          ? `${nextRdv.client.firstName} ${nextRdv.client.lastName}`
+          : nextRdv.kind === "prospect"
+            ? `${nextRdv.prospect.firstName} ${nextRdv.prospect.lastName}`
+            : `${nextRdv.due.client.firstName} ${nextRdv.due.client.lastName}`;
+        const subtitle = nextRdv.kind === "client"
+          ? (nextRdv.followUp.type || "Suivi")
+          : nextRdv.kind === "prospect"
+            ? "Prospect · 1er contact"
+            : `${nextRdv.due.stepIconEmoji} ${nextRdv.due.stepShortTitle}`;
+        const initials = name.split(" ").map((n) => n[0]).slice(0, 2).join("").toUpperCase();
+        const targetUrl = nextRdv.kind === "client"
+          ? `/clients/${nextRdv.client.id}`
+          : nextRdv.kind === "protocol"
+            ? `/clients/${nextRdv.due.client.id}`
+            : "#";
+        return (
+          <Link
+            to={targetUrl}
+            style={{
+              position: "relative",
+              display: "flex",
+              alignItems: "center",
+              gap: 16,
+              padding: "16px 22px",
+              background: "linear-gradient(135deg, color-mix(in srgb, var(--ls-coral) 14%, var(--ls-surface)) 0%, color-mix(in srgb, var(--ls-gold) 8%, var(--ls-surface)) 100%)",
+              border: "0.5px solid color-mix(in srgb, var(--ls-coral) 40%, var(--ls-border))",
+              borderRadius: 18,
+              textDecoration: "none",
+              color: "inherit",
+              boxShadow: "0 8px 24px -10px rgba(255,107,107,0.30)",
+              overflow: "hidden",
+            }}
+          >
+            <div
+              aria-hidden="true"
+              style={{
+                position: "absolute",
+                top: -50,
+                right: -50,
+                width: 180,
+                height: 180,
+                background: "radial-gradient(circle, rgba(255,107,107,0.25) 0%, transparent 70%)",
+                pointerEvents: "none",
+              }}
+            />
+            <div
+              style={{
+                fontSize: 32,
+                animation: "ls-pulse-imminent 2s ease-in-out infinite",
+              }}
+            >
+              ⏰
+            </div>
+            <div
+              style={{
+                width: 50,
+                height: 50,
+                borderRadius: 14,
+                background: "linear-gradient(135deg, #FF6B6B 0%, #BA7517 100%)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color: "white",
+                fontFamily: "Syne, serif",
+                fontWeight: 800,
+                fontSize: 16,
+                flexShrink: 0,
+                boxShadow: "0 4px 14px rgba(255,107,107,0.40)",
+              }}
+            >
+              {initials}
+            </div>
+            <div style={{ flex: 1, minWidth: 0, position: "relative" }}>
+              <div
+                style={{
+                  fontSize: 9.5,
+                  letterSpacing: 1.6,
+                  textTransform: "uppercase",
+                  fontWeight: 800,
+                  color: "var(--ls-coral)",
+                  marginBottom: 2,
+                }}
+              >
+                🔥 Prochain RDV · dans {labelTime}
+              </div>
+              <div
+                style={{
+                  fontFamily: "Syne, serif",
+                  fontSize: 20,
+                  fontWeight: 800,
+                  color: "var(--ls-text)",
+                  letterSpacing: "-0.02em",
+                  lineHeight: 1.1,
+                }}
+              >
+                {name}
+              </div>
+              <div style={{ fontSize: 12, color: "var(--ls-text-muted)", marginTop: 2 }}>
+                {subtitle} · {new Date(nextRdv.date).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}
+              </div>
+            </div>
+            <span
+              style={{
+                fontSize: 16,
+                color: "var(--ls-coral)",
+                fontWeight: 800,
+                opacity: 0.7,
+                flexShrink: 0,
+              }}
+            >
+              →
+            </span>
+          </Link>
+        );
+      })()}
+
+      {/* Dropdown distributeur — admin only — refonte premium 2026-04-29 */}
       {currentUser?.role === "admin" && (
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--ls-text-muted)" strokeWidth="1.5">
-            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-            <circle cx="12" cy="7" r="4" />
-          </svg>
-          <label style={{ fontSize: 12, color: "var(--ls-text-muted)", fontFamily: "'DM Sans', sans-serif", fontWeight: 500 }}>
-            Vue :
-          </label>
+        <div
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 8,
+            padding: "8px 12px 8px 14px",
+            background: "var(--ls-surface)",
+            border: "0.5px solid var(--ls-border)",
+            borderRadius: 999,
+            width: "fit-content",
+          }}
+        >
+          <span
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 5,
+              fontSize: 11,
+              fontWeight: 700,
+              letterSpacing: 1.4,
+              textTransform: "uppercase",
+              color: "var(--ls-text-hint)",
+              fontFamily: "DM Sans, sans-serif",
+            }}
+          >
+            👁️ Vue
+          </span>
           <select
             value={agendaFilter}
             onChange={(e) => setAgendaFilter(e.target.value)}
-            className="ls-input-time"
-            style={{ minWidth: 180, padding: "8px 12px" }}
+            style={{
+              border: "none",
+              background: "transparent",
+              fontSize: 12.5,
+              fontWeight: 600,
+              fontFamily: "DM Sans, sans-serif",
+              color: "var(--ls-text)",
+              cursor: "pointer",
+              outline: "none",
+              padding: "2px 6px",
+            }}
           >
-            <option value="mine">Mes RDV</option>
-            <option value="all">Toute l'équipe</option>
+            <option value="mine">🏠 Mes RDV</option>
+            <option value="all">👥 Toute l&apos;équipe</option>
             {users.filter((u) => u.active && u.id !== currentUser.id).map((u) => (
               <option key={u.id} value={u.id}>
-                {u.name} · {u.role === "admin" ? "Admin" : u.role === "referent" ? "Référent" : "Distri"}
+                👤 {u.name} · {u.role === "admin" ? "Admin" : u.role === "referent" ? "Référent" : "Distri"}
               </option>
             ))}
           </select>
@@ -510,39 +910,76 @@ export function AgendaPage() {
         />
       </div>
 
-      {/* Filtres */}
-      <Card className="space-y-3">
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-          {([
-            { key: "today" as DateFilter, label: "Aujourd'hui" },
-            { key: "week"  as DateFilter, label: "Cette semaine" },
-            { key: "all"   as DateFilter, label: "Tous" },
-          ]).map((f) => (
-            <FilterPill
-              key={f.key}
-              label={f.label}
-              active={dateFilter === f.key}
-              onClick={() => setDateFilter(f.key)}
-            />
-          ))}
-          <div style={{ width: 1, background: "var(--ls-border)", margin: "0 6px" }} />
-          {([
-            { key: "upcoming"    as StatusFilter, label: "À venir" },
-            { key: "done"        as StatusFilter, label: "Effectués" },
-            { key: "converted"   as StatusFilter, label: "Convertis" },
-            { key: "cold"        as StatusFilter, label: "❄️ En pause" },
-            { key: "lost_no_show" as StatusFilter, label: "Pas venus / Pas intéressés" },
-            { key: "all"         as StatusFilter, label: "Tous statuts" },
-          ]).map((f) => (
-            <FilterPill
-              key={f.key}
-              label={f.label}
-              active={statusFilter === f.key}
-              onClick={() => setStatusFilter(f.key)}
-            />
-          ))}
+      {/* Filtres refonte premium (2026-04-29) — 2 sections labellees, pas de
+          conteneur Card lourd. Eyebrows uppercase + chips compacts. */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+        <div>
+          <div
+            style={{
+              fontSize: 9.5,
+              letterSpacing: 1.6,
+              textTransform: "uppercase",
+              fontWeight: 700,
+              color: "var(--ls-text-hint)",
+              marginBottom: 8,
+              display: "flex",
+              alignItems: "center",
+              gap: 5,
+            }}
+          >
+            <span style={{ fontSize: 11 }}>📅</span> Période
+          </div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+            {([
+              { key: "today" as DateFilter, label: "Aujourd'hui" },
+              { key: "week"  as DateFilter, label: "Cette semaine" },
+              { key: "all"   as DateFilter, label: "Tous" },
+            ]).map((f) => (
+              <FilterPill
+                key={f.key}
+                label={f.label}
+                active={dateFilter === f.key}
+                onClick={() => setDateFilter(f.key)}
+              />
+            ))}
+          </div>
         </div>
-      </Card>
+
+        <div>
+          <div
+            style={{
+              fontSize: 9.5,
+              letterSpacing: 1.6,
+              textTransform: "uppercase",
+              fontWeight: 700,
+              color: "var(--ls-text-hint)",
+              marginBottom: 8,
+              display: "flex",
+              alignItems: "center",
+              gap: 5,
+            }}
+          >
+            <span style={{ fontSize: 11 }}>📊</span> Statut
+          </div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+            {([
+              { key: "upcoming"    as StatusFilter, label: "À venir" },
+              { key: "done"        as StatusFilter, label: "Effectués" },
+              { key: "converted"   as StatusFilter, label: "Convertis" },
+              { key: "cold"        as StatusFilter, label: "❄️ En pause" },
+              { key: "lost_no_show" as StatusFilter, label: "Pas venus / Pas intéressés" },
+              { key: "all"         as StatusFilter, label: "Tous statuts" },
+            ]).map((f) => (
+              <FilterPill
+                key={f.key}
+                label={f.label}
+                active={statusFilter === f.key}
+                onClick={() => setStatusFilter(f.key)}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
 
       {/* Liste groupée — rendu unifié clients + prospects */}
       <div data-tour-id="agenda-upcoming">
@@ -725,81 +1162,198 @@ function ProtocolAgendaCard({
       ? `En retard ${item.daysLate}j`
       : null;
 
+  // Premium V2 (2026-04-29) — gradient teal, hover lift, avatar
+  const initials = (item.client.firstName?.[0] ?? "") + (item.client.lastName?.[0] ?? "");
+  const accentColor = isLate ? "var(--ls-coral)" : "var(--ls-teal)";
+  const accentGlow = isLate ? "rgba(220,38,38,0.30)" : "rgba(13,148,136,0.30)";
+  const accentBg = isLate
+    ? "linear-gradient(135deg, color-mix(in srgb, var(--ls-coral) 5%, var(--ls-surface)) 0%, var(--ls-surface) 60%)"
+    : "linear-gradient(135deg, color-mix(in srgb, var(--ls-teal) 5%, var(--ls-surface)) 0%, var(--ls-surface) 60%)";
+  const accentGradient = isLate
+    ? "linear-gradient(180deg, #FF6B6B 0%, #DC2626 100%)"
+    : "linear-gradient(180deg, #2DD4BF 0%, #0D9488 100%)";
+
   return (
-    <div style={{ display: "flex", alignItems: "stretch" }}>
+    <button
+      type="button"
+      onClick={onOpen}
+      className="ls-rdv-card"
+      style={{
+        position: "relative",
+        width: "100%",
+        display: "flex",
+        alignItems: "center",
+        gap: 14,
+        padding: "14px 16px 14px 18px",
+        background: accentBg,
+        border: `0.5px solid color-mix(in srgb, ${accentColor} 30%, var(--ls-border))`,
+        borderRadius: 16,
+        color: "inherit",
+        cursor: "pointer",
+        fontFamily: "DM Sans, sans-serif",
+        textAlign: "left",
+        overflow: "hidden",
+        transition: "transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease",
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.transform = "translateY(-2px)";
+        e.currentTarget.style.boxShadow = `0 8px 22px -10px ${accentGlow}`;
+        e.currentTarget.style.borderColor = `color-mix(in srgb, ${accentColor} 60%, var(--ls-border))`;
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.transform = "none";
+        e.currentTarget.style.boxShadow = "none";
+        e.currentTarget.style.borderColor = `color-mix(in srgb, ${accentColor} 30%, var(--ls-border))`;
+      }}
+    >
+      {/* Border-left gradient */}
       <div
+        aria-hidden="true"
         style={{
-          width: 3,
-          borderRadius: "3px 0 0 3px",
-          background: isLate ? "var(--ls-coral)" : "var(--ls-teal)",
-          flexShrink: 0,
+          position: "absolute",
+          left: 0,
+          top: 0,
+          bottom: 0,
+          width: 4,
+          background: accentGradient,
+          borderRadius: "16px 0 0 16px",
         }}
       />
-      <button
-        type="button"
-        onClick={onOpen}
+
+      {/* Date pill */}
+      <div
         style={{
-          flex: 1,
-          minWidth: 0,
+          minWidth: 64,
+          textAlign: "center",
+          flexShrink: 0,
+          padding: "8px 6px",
+          background: `color-mix(in srgb, ${accentColor} 8%, var(--ls-surface2))`,
+          border: `0.5px solid color-mix(in srgb, ${accentColor} 30%, transparent)`,
+          borderRadius: 10,
+        }}
+      >
+        <div
+          style={{
+            fontFamily: "Syne, serif",
+            fontWeight: 800,
+            fontSize: 14,
+            color: accentColor,
+            lineHeight: 1.1,
+            letterSpacing: "-0.02em",
+          }}
+        >
+          J+{item.dayOffset}
+        </div>
+        {showDate && (
+          <div style={{ fontSize: 10, color: "var(--ls-text-hint)", marginTop: 2, fontWeight: 500 }}>
+            {timeLabel}
+          </div>
+        )}
+      </div>
+
+      {/* Avatar gradient teal/coral */}
+      <div
+        style={{
+          width: 38,
+          height: 38,
+          borderRadius: 12,
+          background: accentGradient,
           display: "flex",
           alignItems: "center",
-          gap: 14,
-          padding: "12px 16px",
-          background: "var(--ls-surface)",
-          border: "1px solid var(--ls-border)",
-          borderLeft: "none",
-          borderRadius: "0 14px 14px 0",
-          color: "inherit",
-          cursor: "pointer",
-          fontFamily: "'DM Sans', sans-serif",
-          textAlign: "left",
-          transition: "border-color 0.15s",
+          justifyContent: "center",
+          color: "white",
+          fontFamily: "Syne, serif",
+          fontWeight: 800,
+          fontSize: 13,
+          flexShrink: 0,
+          boxShadow: `0 2px 8px ${accentGlow}`,
+          letterSpacing: "-0.02em",
         }}
-        onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--ls-teal)"; }}
-        onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--ls-border)"; }}
       >
-        <div style={{ minWidth: 60, textAlign: "center", flexShrink: 0 }}>
-          <div style={{ fontFamily: "Syne, sans-serif", fontWeight: 700, fontSize: 14, color: "var(--ls-text)" }}>
-            J+{item.dayOffset}
-          </div>
-          {showDate && (
-            <div style={{ fontSize: 11, color: "var(--ls-text-hint)", marginTop: 2 }}>
-              {timeLabel}
-            </div>
+        {initials.toUpperCase()}
+      </div>
+
+      {/* Infos */}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
+            fontSize: 14,
+            fontWeight: 700,
+            color: "var(--ls-text)",
+            marginBottom: 2,
+            fontFamily: "Syne, serif",
+            letterSpacing: "-0.01em",
+            flexWrap: "wrap",
+          }}
+        >
+          <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            {item.client.firstName} {item.client.lastName}
+          </span>
+          {lateLabel && (
+            <span
+              style={{
+                padding: "2px 7px",
+                borderRadius: 999,
+                fontSize: 9,
+                fontWeight: 800,
+                background: "linear-gradient(135deg, #FF6B6B 0%, #DC2626 100%)",
+                color: "white",
+                letterSpacing: 0.4,
+                animation: "ls-pulse-imminent 2s ease-in-out infinite",
+              }}
+            >
+              ⚠ {lateLabel.toUpperCase()}
+            </span>
           )}
         </div>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 14, fontWeight: 600, color: "var(--ls-text)", marginBottom: 2, display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-            <span>{item.client.firstName} {item.client.lastName}</span>
-            {lateLabel && (
-              <span
-                style={{
-                  padding: "1px 7px",
-                  borderRadius: 6,
-                  fontSize: 10,
-                  fontWeight: 700,
-                  background: "rgba(220,38,38,0.1)",
-                  color: "var(--ls-coral)",
-                  letterSpacing: "0.02em",
-                }}
-              >
-                {lateLabel}
-              </span>
-            )}
-          </div>
-          <div style={{ fontSize: 11, color: "var(--ls-text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-            {item.stepIconEmoji} {item.stepShortTitle}
-          </div>
-        </div>
-        <span
-          className="ls-badge"
-          data-tone="teal"
-          style={{ flexShrink: 0 }}
+        <div
+          style={{
+            fontSize: 11,
+            color: "var(--ls-text-muted)",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+          }}
         >
-          Suivi
-        </span>
-      </button>
-    </div>
+          {item.stepIconEmoji} {item.stepShortTitle}
+        </div>
+      </div>
+
+      {/* Badge */}
+      <span
+        style={{
+          flexShrink: 0,
+          padding: "3px 9px",
+          borderRadius: 999,
+          fontSize: 9.5,
+          fontWeight: 800,
+          letterSpacing: 0.4,
+          background: `color-mix(in srgb, ${accentColor} 12%, transparent)`,
+          color: accentColor,
+          border: `0.5px solid color-mix(in srgb, ${accentColor} 35%, transparent)`,
+          textTransform: "uppercase",
+        }}
+      >
+        Suivi
+      </span>
+
+      {/* Chevron */}
+      <span
+        aria-hidden="true"
+        style={{
+          fontSize: 14,
+          color: "var(--ls-text-hint)",
+          opacity: 0.5,
+          flexShrink: 0,
+          marginLeft: 2,
+        }}
+      >
+        →
+      </span>
+    </button>
   );
 }
 
@@ -813,18 +1367,59 @@ function EntityTab({
   onClick: () => void;
   dot: string | null;
 }) {
+  // Premium V2 (2026-04-29) : chip pill avec gradient subtil quand actif,
+  // counter pill colore, hover lift, anim d'apparition.
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`ls-pill${active ? " ls-pill--selected" : ""}`}
-      style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "8px 14px", fontSize: 13 }}
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 8,
+        padding: "9px 16px",
+        fontSize: 13,
+        fontWeight: active ? 700 : 500,
+        fontFamily: "DM Sans, sans-serif",
+        cursor: "pointer",
+        background: active && dot
+          ? `linear-gradient(135deg, color-mix(in srgb, ${dot} 14%, var(--ls-surface)) 0%, var(--ls-surface) 100%)`
+          : active
+            ? "linear-gradient(135deg, color-mix(in srgb, var(--ls-gold) 14%, var(--ls-surface)) 0%, var(--ls-surface) 100%)"
+            : "var(--ls-surface)",
+        border: active && dot
+          ? `0.5px solid color-mix(in srgb, ${dot} 50%, transparent)`
+          : active
+            ? "0.5px solid color-mix(in srgb, var(--ls-gold) 50%, transparent)"
+            : "0.5px solid var(--ls-border)",
+        borderRadius: 999,
+        color: active ? (dot ?? "var(--ls-gold)") : "var(--ls-text-muted)",
+        transition: "transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease",
+        boxShadow: active && dot ? `0 4px 12px -4px color-mix(in srgb, ${dot} 30%, transparent)` : "none",
+      }}
+      onMouseEnter={(e) => {
+        if (!active) {
+          e.currentTarget.style.transform = "translateY(-1px)";
+          e.currentTarget.style.borderColor = "color-mix(in srgb, var(--ls-gold) 30%, var(--ls-border))";
+        }
+      }}
+      onMouseLeave={(e) => {
+        if (!active) {
+          e.currentTarget.style.transform = "none";
+          e.currentTarget.style.borderColor = "var(--ls-border)";
+        }
+      }}
     >
       {dot && (
         <span
           style={{
-            width: 8, height: 8, borderRadius: "50%", background: dot,
-            flexShrink: 0, display: "inline-block",
+            width: 8,
+            height: 8,
+            borderRadius: "50%",
+            background: dot,
+            flexShrink: 0,
+            display: "inline-block",
+            boxShadow: active ? `0 0 0 3px color-mix(in srgb, ${dot} 20%, transparent)` : "none",
           }}
         />
       )}
@@ -832,13 +1427,18 @@ function EntityTab({
       <span
         style={{
           fontSize: 11,
-          padding: "1px 7px",
-          borderRadius: 10,
-          fontWeight: 600,
-          background: active ? "rgba(0,0,0,0.08)" : "var(--ls-surface2)",
-          color: active ? "var(--ls-bg)" : "var(--ls-text-muted)",
-          minWidth: 18,
+          padding: "2px 9px",
+          borderRadius: 999,
+          fontWeight: 800,
+          fontFamily: "Syne, serif",
+          background: active
+            ? "var(--ls-bg)"
+            : "var(--ls-surface2)",
+          color: active ? (dot ?? "var(--ls-gold)") : "var(--ls-text-muted)",
+          border: active ? `0.5px solid ${dot ?? "var(--ls-gold)"}` : "0.5px solid transparent",
+          minWidth: 22,
           textAlign: "center",
+          letterSpacing: -0.2,
         }}
       >
         {count}
@@ -847,7 +1447,7 @@ function EntityTab({
   );
 }
 
-// ─── Carte RDV client (agenda unifié) ─────────────────────────────────────
+// ─── Carte RDV client (agenda unifié) — V2 PREMIUM 2026-04-29 ──────────────
 function ClientFollowUpCard({
   followUp, client, ownerName, showDate,
 }: {
@@ -869,64 +1469,249 @@ function ClientFollowUpCard({
     } catch { return "—"; }
   })();
 
+  // Detection imminent (<24h) ou aujourd'hui pour badge "🔥"
+  const dueDate = new Date(followUp.dueDate);
+  const now = new Date();
+  const isToday = dueDate.toDateString() === now.toDateString();
+  const isImminent = !Number.isNaN(dueDate.getTime()) && (dueDate.getTime() - now.getTime()) < 24 * 60 * 60 * 1000 && (dueDate.getTime() - now.getTime()) > 0;
+  const initials = (client.firstName?.[0] ?? "") + (client.lastName?.[0] ?? "");
+
   return (
-    <div style={{ display: "flex", alignItems: "stretch" }}>
-      <div style={{ width: 3, borderRadius: "3px 0 0 3px", background: "var(--ls-gold)", flexShrink: 0 }} />
-      <Link
-        to={`/clients/${client.id}`}
+    <Link
+      to={`/clients/${client.id}`}
+      className="ls-rdv-card ls-rdv-card-client"
+      style={{
+        position: "relative",
+        display: "flex",
+        alignItems: "center",
+        gap: 14,
+        padding: "14px 16px 14px 18px",
+        background:
+          "linear-gradient(135deg, color-mix(in srgb, var(--ls-gold) 5%, var(--ls-surface)) 0%, var(--ls-surface) 60%)",
+        border: "0.5px solid color-mix(in srgb, var(--ls-gold) 30%, var(--ls-border))",
+        borderRadius: 16,
+        textDecoration: "none",
+        color: "inherit",
+        cursor: "pointer",
+        overflow: "hidden",
+        transition: "transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease",
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.transform = "translateY(-2px)";
+        e.currentTarget.style.boxShadow = "0 8px 22px -10px rgba(184,146,42,0.35)";
+        e.currentTarget.style.borderColor = "color-mix(in srgb, var(--ls-gold) 60%, var(--ls-border))";
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.transform = "none";
+        e.currentTarget.style.boxShadow = "none";
+        e.currentTarget.style.borderColor = "color-mix(in srgb, var(--ls-gold) 30%, var(--ls-border))";
+      }}
+    >
+      {/* Border-left gold gradient */}
+      <div
+        aria-hidden="true"
         style={{
-          flex: 1, minWidth: 0,
-          display: "flex", alignItems: "center", gap: 14, padding: "12px 16px",
-          background: "var(--ls-surface)", border: "1px solid var(--ls-border)",
-          borderLeft: "none", borderRadius: "0 14px 14px 0",
-          textDecoration: "none", color: "inherit", cursor: "pointer",
-          transition: "border-color 0.15s",
+          position: "absolute",
+          left: 0,
+          top: 0,
+          bottom: 0,
+          width: 4,
+          background: "linear-gradient(180deg, #EF9F27 0%, #BA7517 100%)",
+          borderRadius: "16px 0 0 16px",
         }}
-        onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--ls-gold)"; }}
-        onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--ls-border)"; }}
+      />
+
+      {/* Date/heure pill */}
+      <div
+        style={{
+          minWidth: 64,
+          textAlign: "center",
+          flexShrink: 0,
+          padding: "8px 6px",
+          background: "color-mix(in srgb, var(--ls-gold) 8%, var(--ls-surface2))",
+          border: "0.5px solid color-mix(in srgb, var(--ls-gold) 30%, transparent)",
+          borderRadius: 10,
+        }}
       >
-        {/* Colonne heure/date */}
-        <div style={{ minWidth: 60, textAlign: "center", flexShrink: 0 }}>
-          <div style={{ fontFamily: "Syne, sans-serif", fontWeight: 700, fontSize: 14, color: "var(--ls-text)" }}>
-            {showDate ? dateLabel : timeLabel}
+        <div
+          style={{
+            fontFamily: "Syne, serif",
+            fontWeight: 800,
+            fontSize: 14,
+            color: "var(--ls-gold)",
+            lineHeight: 1.1,
+            letterSpacing: "-0.02em",
+          }}
+        >
+          {showDate ? dateLabel : timeLabel}
+        </div>
+        {showDate && (
+          <div style={{ fontSize: 10, color: "var(--ls-text-hint)", marginTop: 2, fontWeight: 500 }}>
+            {timeLabel}
           </div>
-          {showDate && (
-            <div style={{ fontSize: 11, color: "var(--ls-text-hint)", marginTop: 2 }}>
-              {timeLabel}
-            </div>
+        )}
+      </div>
+
+      {/* Avatar gradient gold */}
+      <div
+        style={{
+          width: 38,
+          height: 38,
+          borderRadius: 12,
+          background: "linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          color: "white",
+          fontFamily: "Syne, serif",
+          fontWeight: 800,
+          fontSize: 13,
+          flexShrink: 0,
+          boxShadow: "0 2px 8px rgba(186,117,23,0.30)",
+          letterSpacing: "-0.02em",
+        }}
+      >
+        {initials.toUpperCase()}
+      </div>
+
+      {/* Infos */}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
+            fontSize: 14,
+            fontWeight: 700,
+            color: "var(--ls-text)",
+            marginBottom: 2,
+            fontFamily: "Syne, serif",
+            letterSpacing: "-0.01em",
+          }}
+        >
+          <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            {client.firstName} {client.lastName}
+          </span>
+          {isToday && (
+            <span
+              style={{
+                fontSize: 9,
+                fontWeight: 800,
+                padding: "2px 7px",
+                borderRadius: 999,
+                background: "linear-gradient(135deg, #FF6B6B 0%, #BA7517 100%)",
+                color: "white",
+                letterSpacing: 0.4,
+                flexShrink: 0,
+                animation: "ls-pulse-imminent 2s ease-in-out infinite",
+              }}
+            >
+              🔥 AUJOURD&apos;HUI
+            </span>
+          )}
+          {!isToday && isImminent && (
+            <span
+              style={{
+                fontSize: 9,
+                fontWeight: 800,
+                padding: "2px 7px",
+                borderRadius: 999,
+                background: "rgba(255,107,107,0.14)",
+                color: "var(--ls-coral)",
+                letterSpacing: 0.4,
+                flexShrink: 0,
+              }}
+            >
+              ⏰ &lt;24H
+            </span>
           )}
         </div>
-        {/* Colonne infos */}
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 14, fontWeight: 600, color: "var(--ls-text)", marginBottom: 2 }}>
-            {client.firstName} {client.lastName}
-          </div>
-          <div style={{ fontSize: 11, color: "var(--ls-text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-            {followUp.type || "Suivi"}
-            {followUp.programTitle ? ` · ${followUp.programTitle}` : ""}
-            {ownerName ? ` · ${ownerName}` : ""}
-          </div>
-        </div>
-        {/* Badge Client */}
-        <span
-          className="ls-badge"
-          data-tone="gold"
-          style={{ flexShrink: 0 }}
+        <div
+          style={{
+            fontSize: 11,
+            color: "var(--ls-text-muted)",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+          }}
         >
-          Client
-        </span>
-      </Link>
-    </div>
+          {followUp.type || "Suivi"}
+          {followUp.programTitle ? ` · ${followUp.programTitle}` : ""}
+          {ownerName ? ` · ${ownerName}` : ""}
+        </div>
+      </div>
+
+      {/* Badge type */}
+      <span
+        style={{
+          flexShrink: 0,
+          padding: "3px 9px",
+          borderRadius: 999,
+          fontSize: 9.5,
+          fontWeight: 800,
+          letterSpacing: 0.4,
+          background: "rgba(184,146,42,0.14)",
+          color: "var(--ls-gold)",
+          border: "0.5px solid color-mix(in srgb, var(--ls-gold) 35%, transparent)",
+          textTransform: "uppercase",
+          fontFamily: "DM Sans, sans-serif",
+        }}
+      >
+        Client
+      </span>
+
+      {/* Chevron */}
+      <span
+        aria-hidden="true"
+        style={{
+          fontSize: 14,
+          color: "var(--ls-text-hint)",
+          opacity: 0.5,
+          flexShrink: 0,
+          marginLeft: 2,
+        }}
+      >
+        →
+      </span>
+    </Link>
   );
 }
 
 function FilterPill({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
+  // Premium V2 FilterPill (2026-04-29) — gold subtle hover gradient
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`ls-pill${active ? " ls-pill--selected" : ""}`}
-      style={{ fontSize: 12, padding: "6px 12px" }}
+      style={{
+        fontSize: 12,
+        padding: "7px 14px",
+        background: active
+          ? "linear-gradient(135deg, color-mix(in srgb, var(--ls-gold) 12%, var(--ls-surface)) 0%, var(--ls-surface) 100%)"
+          : "var(--ls-surface)",
+        border: active
+          ? "0.5px solid color-mix(in srgb, var(--ls-gold) 50%, transparent)"
+          : "0.5px solid var(--ls-border)",
+        color: active ? "var(--ls-gold)" : "var(--ls-text-muted)",
+        fontWeight: active ? 700 : 500,
+        fontFamily: "DM Sans, sans-serif",
+        borderRadius: 999,
+        cursor: "pointer",
+        boxShadow: active ? "0 2px 8px -3px rgba(184,146,42,0.30)" : "none",
+        transition: "transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease",
+      }}
+      onMouseEnter={(e) => {
+        if (!active) {
+          e.currentTarget.style.transform = "translateY(-1px)";
+          e.currentTarget.style.borderColor = "color-mix(in srgb, var(--ls-gold) 30%, var(--ls-border))";
+        }
+      }}
+      onMouseLeave={(e) => {
+        if (!active) {
+          e.currentTarget.style.transform = "none";
+          e.currentTarget.style.borderColor = "var(--ls-border)";
+        }
+      }}
     >
       {label}
     </button>
