@@ -15,7 +15,7 @@ import { useAppContext } from "../context/AppContext";
 import { useToast } from "../context/ToastContext";
 import { useCopiloteData } from "../hooks/useCopiloteData";
 import { useGlobalView } from "../hooks/useGlobalView";
-import { GlobalViewToggle } from "../components/ui/GlobalViewToggle";
+// GlobalViewToggle retire 2026-04-29 — toggle inutile sur /co-pilote
 import { ClockHeader } from "../components/copilote/ClockHeader";
 import { HeroActionCard } from "../components/copilote/HeroActionCard";
 import { TodayAgendaCard } from "../components/copilote/TodayAgendaCard";
@@ -73,11 +73,8 @@ export function CoPilotePage() {
 
   return (
     <div className="space-y-5">
-      {/* Toggle admin Vue globale (partagé via useGlobalView). */}
-      <GlobalViewToggle
-        personalLabel="Vue personnelle (mes RDV uniquement)"
-        globalLabel="Vue équipe (toute l'équipe)"
-      />
+      {/* Toggle GlobalView retire de /co-pilote (2026-04-29) — l'admin voit
+          desormais ses propres data par defaut, sans toggle inutile en haut. */}
 
       {/* Zone 1 — Horloge + salutation */}
       <ClockHeader
