@@ -248,6 +248,7 @@ export function PvOverviewPage() {
               plan={planQuery.data}
               isAdmin={isAdmin}
               currentUserId={currentUser?.id ?? null}
+              onSelectClient={setSelectedClientId}
             />
           )}
 
