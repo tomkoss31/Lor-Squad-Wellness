@@ -307,27 +307,76 @@ export function ClientsPage() {
         description={`${filteredClients.length} dossier${filteredClients.length > 1 ? "s" : ""} · recherche, responsables et fiche détaillée.`}
       />
 
-      {/* 3 STATS COMPACTES */}
-      <div className="clients-stats-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }}>
+      {/* 3 STATS PREMIUM V2 (2026-04-29) — gradient + icones + hover lift */}
+      <style>{`
+        @keyframes ls-stat-fade-in {
+          from { opacity: 0; transform: translateY(6px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .clients-stat-card {
+          animation: ls-stat-fade-in 480ms cubic-bezier(0.16, 1, 0.3, 1) both;
+          transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+        }
+        .clients-stat-card:hover {
+          transform: translateY(-2px);
+        }
+        .clients-stat-card:nth-child(1) { animation-delay: 0ms; }
+        .clients-stat-card:nth-child(2) { animation-delay: 80ms; }
+        .clients-stat-card:nth-child(3) { animation-delay: 160ms; }
+        @media (prefers-reduced-motion: reduce) {
+          .clients-stat-card { animation: none !important; transition: none !important; }
+        }
+      `}</style>
+      <div className="clients-stats-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12 }}>
         {[
-          { label: "Visibles", value: filteredClients.length, borderColor: "#0D9488", textColor: "var(--ls-teal)", sub: "Résultat du filtre" },
-          { label: "Responsables", value: ownerTabs.length, borderColor: "#B8922A", textColor: "var(--ls-gold)", sub: "Portefeuilles actifs" },
-          { label: "Relances", value: visibleRelanceCount, borderColor: "#DC2626", textColor: "var(--ls-coral)", sub: "À reprendre" },
-        ].map(({ label, value, borderColor, textColor, sub }) => (
-          <div key={label} style={{
-            background: "var(--ls-surface)",
-            border: "1px solid var(--ls-border)",
-            borderTop: `2px solid ${borderColor}`,
-            borderRadius: 14,
-            padding: "14px 16px",
-          }}>
-            <div style={{ fontSize: 9, letterSpacing: "2px", textTransform: "uppercase", color: "var(--ls-text-hint)", fontWeight: 500, marginBottom: 6, fontFamily: "DM Sans, sans-serif" }}>
-              {label}
+          { icon: "👥", label: "Visibles", value: filteredClients.length, color: "var(--ls-teal)", colorRgb: "13,148,136", sub: "Résultat du filtre" },
+          { icon: "🎯", label: "Responsables", value: ownerTabs.length, color: "var(--ls-gold)", colorRgb: "184,146,42", sub: "Portefeuilles actifs" },
+          { icon: "🔥", label: "Relances", value: visibleRelanceCount, color: "var(--ls-coral)", colorRgb: "220,38,38", sub: "À reprendre" },
+        ].map(({ icon, label, value, color, colorRgb, sub }) => (
+          <div
+            key={label}
+            className="clients-stat-card"
+            style={{
+              position: "relative",
+              background: `linear-gradient(135deg, color-mix(in srgb, ${color} 6%, var(--ls-surface)) 0%, var(--ls-surface) 60%)`,
+              border: `0.5px solid color-mix(in srgb, ${color} 25%, var(--ls-border))`,
+              borderRadius: 16,
+              padding: "16px 18px",
+              overflow: "hidden",
+              boxShadow: `0 1px 0 0 color-mix(in srgb, ${color} 8%, transparent)`,
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.boxShadow = `0 8px 24px -8px rgba(${colorRgb},0.18)`;
+              e.currentTarget.style.borderColor = `color-mix(in srgb, ${color} 50%, var(--ls-border))`;
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.boxShadow = `0 1px 0 0 color-mix(in srgb, ${color} 8%, transparent)`;
+              e.currentTarget.style.borderColor = `color-mix(in srgb, ${color} 25%, var(--ls-border))`;
+            }}
+          >
+            {/* Glow décoratif coin top-right */}
+            <div
+              aria-hidden="true"
+              style={{
+                position: "absolute",
+                top: -30,
+                right: -30,
+                width: 100,
+                height: 100,
+                background: `radial-gradient(circle, color-mix(in srgb, ${color} 20%, transparent) 0%, transparent 70%)`,
+                pointerEvents: "none",
+              }}
+            />
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6, position: "relative" }}>
+              <span style={{ fontSize: 9, letterSpacing: "2px", textTransform: "uppercase", color: "var(--ls-text-hint)", fontWeight: 700, fontFamily: "DM Sans, sans-serif" }}>
+                {label}
+              </span>
+              <span style={{ fontSize: 18, opacity: 0.9 }}>{icon}</span>
             </div>
-            <div style={{ fontFamily: "Syne, sans-serif", fontWeight: 800, fontSize: 22, color: textColor, lineHeight: 1, marginBottom: 4 }}>
+            <div style={{ fontFamily: "Syne, serif", fontWeight: 800, fontSize: 28, color, lineHeight: 1, marginBottom: 4, letterSpacing: "-0.02em", position: "relative" }}>
               {value}
             </div>
-            <div style={{ fontSize: 10, color: "var(--ls-text-hint)" }}>{sub}</div>
+            <div style={{ fontSize: 11, color: "var(--ls-text-hint)", position: "relative" }}>{sub}</div>
           </div>
         ))}
       </div>
@@ -745,16 +794,27 @@ export function ClientsPage() {
                   flex: 1,
                   display: "flex", alignItems: "center",
                   padding: "14px 16px 14px 0",
-                  cursor: "pointer", transition: "all 0.15s",
+                  cursor: "pointer",
+                  transition: "background 0.18s ease, padding-left 0.18s ease, border-left-color 0.18s ease",
                   background: "transparent",
                   textDecoration: "none", color: "inherit",
                   gap: 8, flexWrap: "wrap",
+                  borderLeft: `3px solid ${(() => {
+                    const tone = LIFECYCLE_TONES[client.lifecycleStatus ?? "active"];
+                    if (tone === "teal") return "var(--ls-teal)";
+                    if (tone === "gold") return "var(--ls-gold)";
+                    if (tone === "coral") return "var(--ls-coral)";
+                    return "var(--ls-border)";
+                  })()}`,
+                  paddingLeft: 4,
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.background = "rgba(184,146,42,0.06)";
+                  e.currentTarget.style.background = "linear-gradient(90deg, color-mix(in srgb, var(--ls-gold) 8%, transparent) 0%, transparent 100%)";
+                  e.currentTarget.style.paddingLeft = "10px";
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.background = "transparent";
+                  e.currentTarget.style.paddingLeft = "4px";
                 }}
               >
                 {/* Client */}

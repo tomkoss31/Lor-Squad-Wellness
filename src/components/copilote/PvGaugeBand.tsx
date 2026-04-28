@@ -184,14 +184,27 @@ export function PvGaugeBand({
 }
 
 function Gauge({ percent }: { percent: number }) {
-  const size = 72;
-  const stroke = 6;
+  const size = 80;
+  const stroke = 7;
   const r = (size - stroke) / 2;
   const c = 2 * Math.PI * r;
   const dash = (percent / 100) * c;
 
   return (
     <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-hidden="true">
+      <defs>
+        <linearGradient id="pv-gauge-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#EF9F27" />
+          <stop offset="100%" stopColor="#BA7517" />
+        </linearGradient>
+        <filter id="pv-gauge-glow" x="-30%" y="-30%" width="160%" height="160%">
+          <feGaussianBlur stdDeviation="2" result="blur" />
+          <feMerge>
+            <feMergeNode in="blur" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
+        </filter>
+      </defs>
       <circle
         cx={size / 2}
         cy={size / 2}
@@ -199,27 +212,31 @@ function Gauge({ percent }: { percent: number }) {
         fill="none"
         stroke="var(--ls-border)"
         strokeWidth={stroke}
+        opacity={0.6}
       />
       <circle
         cx={size / 2}
         cy={size / 2}
         r={r}
         fill="none"
-        stroke="#BA7517"
+        stroke="url(#pv-gauge-gradient)"
         strokeWidth={stroke}
         strokeLinecap="round"
         strokeDasharray={`${dash} ${c - dash}`}
         strokeDashoffset={c / 4}
         transform={`rotate(-90 ${size / 2} ${size / 2})`}
+        filter="url(#pv-gauge-glow)"
+        style={{ transition: "stroke-dasharray 800ms cubic-bezier(0.16, 1, 0.3, 1)" }}
       />
       <text
         x={size / 2}
-        y={size / 2 + 4}
+        y={size / 2 + 5}
         textAnchor="middle"
-        fontSize="15"
-        fontWeight={700}
+        fontSize="17"
+        fontWeight={800}
         fontFamily="Syne, sans-serif"
         fill="var(--ls-text)"
+        letterSpacing="-0.02em"
       >
         {percent}%
       </text>
