@@ -53,6 +53,12 @@ export function ClientVipCoachPanel({ client }: Props) {
   const [savingId, setSavingId] = useState(false);
   const [savingSponsor, setSavingSponsor] = useState(false);
 
+  // ─── Edition ajustement PV manuel (2026-04-29) ────────────────────────────
+  // Permet de saisir le cumul PV historique recupere depuis myherbalife.com.
+  const [editingPv, setEditingPv] = useState(false);
+  const [pvAdjustment, setPvAdjustment] = useState<string>("");
+  const [savingPv, setSavingPv] = useState(false);
+
   // Sponsor candidates : tous les autres clients du coach.
   const sponsorCandidates = useMemo(
     () => clients.filter((c) => c.id !== client.id),
@@ -91,6 +97,45 @@ export function ClientVipCoachPanel({ client }: Props) {
       });
     } finally {
       setSavingId(false);
+    }
+  }
+
+  async function savePvAdjustment() {
+    const value = Number(pvAdjustment);
+    if (Number.isNaN(value) || value < 0) {
+      pushToast({
+        tone: "warning",
+        title: "Valeur invalide",
+        message: "Saisis un nombre positif (ex: 1250).",
+      });
+      return;
+    }
+    setSavingPv(true);
+    try {
+      const sb = await getSupabaseClient();
+      if (!sb) throw new Error("Service indisponible");
+      const { data, error } = await sb.rpc("set_client_vip_pv_adjustment", {
+        p_client_id: client.id,
+        p_adjustment: value,
+      });
+      if (error) throw error;
+      const payload = (data ?? {}) as { error?: string };
+      if (payload.error) throw new Error(payload.error);
+      pushToast({
+        tone: "success",
+        title: "Cumul PV ajusté",
+        message: `${value} PV enregistrés (cumul historique).`,
+      });
+      setEditingPv(false);
+      void status.reload();
+    } catch (err) {
+      pushToast({
+        tone: "error",
+        title: "Erreur",
+        message: err instanceof Error ? err.message : "Impossible d'enregistrer",
+      });
+    } finally {
+      setSavingPv(false);
     }
   }
 
@@ -470,6 +515,141 @@ export function ClientVipCoachPanel({ client }: Props) {
             </button>
           </div>
         )}
+      </div>
+
+      {/* Ajustement manuel PV lifetime (2026-04-29) */}
+      <div style={{ marginBottom: 14 }}>
+        <div
+          style={{
+            fontSize: 10,
+            letterSpacing: 1.4,
+            textTransform: "uppercase",
+            fontWeight: 700,
+            color: "var(--ls-text-hint)",
+            marginBottom: 4,
+          }}
+        >
+          Cumul PV historique (myherbalife)
+        </div>
+        {editingPv ? (
+          <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+            <input
+              type="number"
+              min={0}
+              step={1}
+              value={pvAdjustment}
+              onChange={(e) => setPvAdjustment(e.target.value)}
+              placeholder="Ex: 1250"
+              style={{
+                flex: 1,
+                padding: "8px 10px",
+                fontSize: 13,
+                fontFamily: "DM Sans, sans-serif",
+                background: "var(--ls-surface2)",
+                border: "0.5px solid var(--ls-border)",
+                borderRadius: 8,
+                color: "var(--ls-text)",
+                outline: "none",
+              }}
+            />
+            <button
+              type="button"
+              onClick={() => void savePvAdjustment()}
+              disabled={savingPv}
+              style={{
+                padding: "8px 14px",
+                background: "var(--ls-gold)",
+                color: "white",
+                border: "none",
+                borderRadius: 8,
+                fontSize: 12,
+                fontWeight: 700,
+                fontFamily: "Syne, serif",
+                cursor: savingPv ? "wait" : "pointer",
+              }}
+            >
+              {savingPv ? "…" : "OK"}
+            </button>
+            <button
+              type="button"
+              onClick={() => setEditingPv(false)}
+              style={{
+                padding: "8px 12px",
+                background: "transparent",
+                color: "var(--ls-text-muted)",
+                border: "0.5px solid var(--ls-border)",
+                borderRadius: 8,
+                fontSize: 12,
+                cursor: "pointer",
+                fontFamily: "DM Sans, sans-serif",
+              }}
+            >
+              Annuler
+            </button>
+          </div>
+        ) : (
+          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+            <span
+              style={{
+                fontSize: 13,
+                fontFamily: "DM Sans, sans-serif",
+                color: "var(--ls-text)",
+              }}
+            >
+              {(status.data as { pv_manual_adjustment?: number } | null)?.pv_manual_adjustment
+                ? `${(status.data as { pv_manual_adjustment: number }).pv_manual_adjustment} PV ajustés`
+                : "Aucun ajustement (cumul = somme des commandes en base)"}
+            </span>
+            <button
+              type="button"
+              onClick={() => {
+                setPvAdjustment(
+                  String(
+                    (status.data as { pv_manual_adjustment?: number } | null)?.pv_manual_adjustment ??
+                      0,
+                  ),
+                );
+                setEditingPv(true);
+              }}
+              style={{
+                padding: "4px 10px",
+                background: "transparent",
+                color: "var(--ls-teal)",
+                border: "0.5px solid color-mix(in srgb, var(--ls-teal) 40%, transparent)",
+                borderRadius: 7,
+                fontSize: 11,
+                fontWeight: 600,
+                cursor: "pointer",
+                fontFamily: "DM Sans, sans-serif",
+              }}
+            >
+              Modifier
+            </button>
+            <a
+              href="https://www.myherbalife.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                fontSize: 11,
+                color: "var(--ls-text-muted)",
+                textDecoration: "underline",
+              }}
+            >
+              Vérifier sur myherbalife
+            </a>
+          </div>
+        )}
+        <p
+          style={{
+            fontSize: 10,
+            color: "var(--ls-text-muted)",
+            marginTop: 4,
+            fontStyle: "italic",
+          }}
+        >
+          Pour migrer un client VIP existant : récupère son cumul PV sur
+          myherbalife.com et saisis-le ici. S'ajoute au cumul calculé en base.
+        </p>
       </div>
 
       {/* Arbre des filleuls */}
