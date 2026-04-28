@@ -11,6 +11,7 @@ import { ClientAppDailyAction } from "./ClientAppDailyAction";
 import type { Assessment, Measurement } from "../../lib/clientAppData";
 import { ClientXpBanner } from "../../features/client-xp/ClientXpBanner";
 import { recordClientXp } from "../../features/client-xp/useClientXp";
+import { ClientMoodCheckIn } from "./ClientMoodCheckIn";
 
 interface MetricEntry {
   date: string;
@@ -293,6 +294,11 @@ export function ClientHomeTab({
       {/* Premium Client XP — Tier B (2026-04-28) : bandeau gold avec niveau,
           XP total, barre progression vers le niveau suivant. */}
       {clientToken ? <ClientXpBanner token={clientToken} /> : null}
+
+      {/* Mood check-in du jour (Tier B Module 2 — 2026-04-28) : 5 emojis,
+          stocke en DB + +5 XP au 1er click. Si "tired" / "tough" → CTA
+          messagerie. */}
+      {clientToken ? <ClientMoodCheckIn token={clientToken} /> : null}
 
       {/* Chantier MEGA v2 (2026-04-25) : Hero transformation + action du jour.
           Mapping metrics (flat) → Assessment[] (nested bodyScan) attendu

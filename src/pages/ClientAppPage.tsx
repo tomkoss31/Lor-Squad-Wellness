@@ -7,6 +7,7 @@ import { ClientChatTab } from '../components/client-app/ClientChatTab'
 import { ClientHomeTab } from '../components/client-app/ClientHomeTab'
 import { ClientXpToast } from '../features/client-xp/ClientXpToast'
 import { recordClientXp } from '../features/client-xp/useClientXp'
+import { ClientFaqChatbot } from '../components/client-app/ClientFaqChatbot'
 import { ClientPushOptIn } from '../components/client-app/ClientPushOptIn'
 import { InstallPwaBanner } from '../components/pwa/InstallPwaBanner'
 import { BreakfastStorySlider, DEFAULT_BREAKFAST_ANALYSIS } from '../components/education/BreakfastStorySlider'
@@ -1070,6 +1071,16 @@ export function ClientAppPage() {
 
       {/* Premium Client XP (Tier B 2026-04-28) : toast slide-in apres gain XP. */}
       <ClientXpToast />
+
+      {/* Premium Client FAQ Chatbot (Tier B Module 3, 2026-04-28) :
+          FAB en bas a droite + popup avec 6 questions frequentes +
+          routage messagerie. */}
+      {token ? (
+        <ClientFaqChatbot
+          token={token}
+          coachFirstName={(data.coach_name ?? '').split(/\s+/)[0] || 'Coach'}
+        />
+      ) : null}
     </div>
   )
 }
