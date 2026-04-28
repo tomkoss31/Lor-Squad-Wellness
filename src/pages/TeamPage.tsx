@@ -11,7 +11,12 @@ import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Card } from "../components/ui/Card";
 import { PageHeading } from "../components/ui/PageHeading";
+import { AcademyLeaderboard } from "../features/academy/components/AcademyLeaderboard";
+import { WeeklyBilansChallenge } from "../features/gamification/components/WeeklyBilansChallenge";
+import { MonthlySeasonCard } from "../features/gamification/components/MonthlySeasonCard";
+import { WeeklyRecapCard } from "../features/gamification/components/WeeklyRecapCard";
 import { useAppContext } from "../context/AppContext";
+import type { Client, Prospect } from "../types/domain";
 import {
   useTeamTree,
   useDistributorStats,
@@ -67,10 +72,16 @@ function initialsOf(name: string): string {
 }
 
 // ═══ Composant principal ═════════════════════════════════════════════════
+type TeamTab = "team" | "gamification";
+
 export function TeamPage() {
   const { currentUser, users, clients, prospects } = useAppContext();
   const [period, setPeriod] = useState<Period>("month");
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  // Split visuel /team en 2 onglets pour eviter la surcharge (chantier
+  // gamification 2026-04-29) : 'team' = arbre + activite + Academy
+  // leaderboard ; 'gamification' = challenge bilans + saison + recap.
+  const [activeTab, setActiveTab] = useState<TeamTab>("team");
 
   // Chantier Team Couple Display (2026-04-26) : si Thomas + Mélanie sont
   // résolus dans `users`, on bascule en "couple mode" — 1 seule card
@@ -225,6 +236,66 @@ export function TeamPage() {
         description="Arborescence de parrainage, stats par distri et classement du mois."
       />
 
+      {/* Tabs split (2026-04-29) — equipe vs gamification */}
+      <div
+        style={{
+          display: "flex",
+          gap: 6,
+          background: "var(--ls-surface)",
+          border: "1px solid var(--ls-border)",
+          borderRadius: 12,
+          padding: 4,
+          width: "fit-content",
+          flexWrap: "wrap",
+        }}
+      >
+        {([
+          { key: "team" as TeamTab, label: "Équipe", icon: "👥" },
+          { key: "gamification" as TeamTab, label: "Gamification & Challenges", icon: "🎮" },
+        ]).map((t) => (
+          <button
+            key={t.key}
+            type="button"
+            onClick={() => setActiveTab(t.key)}
+            style={{
+              padding: "8px 14px",
+              borderRadius: 8,
+              border: "none",
+              cursor: "pointer",
+              fontSize: 13,
+              fontFamily: "DM Sans, sans-serif",
+              fontWeight: activeTab === t.key ? 600 : 400,
+              background: activeTab === t.key ? "var(--ls-surface2)" : "transparent",
+              color: activeTab === t.key ? "var(--ls-text)" : "var(--ls-text-muted)",
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              transition: "all 0.15s",
+            }}
+          >
+            <span aria-hidden="true">{t.icon}</span>
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {/* ═══ Onglet Équipe (defaut) — arbre + activite + Academy LB ═════ */}
+      {activeTab === "team" ? (
+        <>
+
+      {/* Hero stats équipe (premium dashboard 2026-04-29) */}
+      <TeamHeroStats
+        membersCount={rows.length}
+        teamClients={(() => {
+          const memberIds = new Set(rows.map((r) => r.user_id));
+          return clients.filter((c) => memberIds.has(c.distributorId));
+        })()}
+        teamProspects={(() => {
+          const memberIds = new Set(rows.map((r) => r.user_id));
+          return prospects.filter((p) => memberIds.has(p.distributorId));
+        })()}
+      />
+
       {treeError ? (
         <div
           role="alert"
@@ -308,6 +379,26 @@ export function TeamPage() {
               .slice(0, 5);
           })()}
         />
+      ) : null}
+
+      {/* Leaderboard Academy (Direction 7 — 2026-04-28) */}
+      <AcademyLeaderboard />
+
+        </>
+      ) : null}
+
+      {/* ═══ Onglet Gamification — challenges + saison + recap ═════════ */}
+      {activeTab === "gamification" ? (
+        <>
+          {/* Recap semaine derniere partageable — bilan equipe top du tab */}
+          <WeeklyRecapCard />
+
+          {/* Challenge hebdo bilans — focus court terme */}
+          <WeeklyBilansChallenge />
+
+          {/* Saison mensuelle — focus moyen terme */}
+          <MonthlySeasonCard />
+        </>
       ) : null}
     </div>
   );
@@ -1074,6 +1165,125 @@ function RankingRow({ rank, entry }: { rank: number; entry: TeamRankingEntry }) 
       <div style={{ fontSize: 11, color: "var(--ls-text-muted)" }}>
         {metric}
         {retention}
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// TeamHeroStats — bandeau dashboard premium en haut de l'onglet Équipe
+// ═══════════════════════════════════════════════════════════════════════
+
+function TeamHeroStats({
+  membersCount,
+  teamClients,
+  teamProspects,
+}: {
+  membersCount: number;
+  teamClients: Client[];
+  teamProspects: Prospect[];
+}) {
+  const activeClients = teamClients.filter((c) => c.lifecycleStatus === "active").length;
+  const fragileClients = teamClients.filter((c) => c.lifecycleStatus === "paused" || c.lifecycleStatus === "stopped").length;
+  const upcomingProspects = teamProspects.filter((p) => p.status === "scheduled").length;
+
+  const stats: Array<{ label: string; value: number | string; emoji: string; color: string }> = [
+    { label: "Membres équipe", value: membersCount, emoji: "👥", color: "#B8922A" },
+    { label: "Clients actifs", value: activeClients, emoji: "🌱", color: "#1D9E75" },
+    { label: "Prospects programmés", value: upcomingProspects, emoji: "🎯", color: "#7F77DD" },
+    { label: "À ré-engager", value: fragileClients, emoji: "⚡", color: "#D85A30" },
+  ];
+
+  return (
+    <div
+      style={{
+        background: "linear-gradient(135deg, rgba(184,146,42,0.10) 0%, rgba(127,119,221,0.06) 100%)",
+        border: "0.5px solid rgba(184,146,42,0.30)",
+        borderRadius: 16,
+        padding: 22,
+      }}
+    >
+      <div style={{ marginBottom: 16 }}>
+        <p
+          style={{
+            fontSize: 11,
+            color: "var(--ls-text-muted)",
+            textTransform: "uppercase",
+            letterSpacing: "0.06em",
+            margin: 0,
+            fontWeight: 600,
+          }}
+        >
+          🎯 Vue d&apos;ensemble équipe
+        </p>
+        <h2
+          style={{
+            fontFamily: "Syne, sans-serif",
+            fontSize: 22,
+            fontWeight: 500,
+            margin: "4px 0 0",
+            color: "var(--ls-text)",
+          }}
+        >
+          Ton équipe en chiffres
+        </h2>
+      </div>
+
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
+          gap: 12,
+        }}
+      >
+        {stats.map((s) => (
+          <div
+            key={s.label}
+            style={{
+              background: "var(--ls-surface)",
+              border: "0.5px solid var(--ls-border)",
+              borderRadius: 12,
+              padding: "14px 16px",
+              transition: "transform 200ms ease-out, box-shadow 200ms ease-out",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = "translateY(-2px)";
+              e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.08)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = "translateY(0)";
+              e.currentTarget.style.boxShadow = "none";
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+              <span style={{ fontSize: 18 }}>{s.emoji}</span>
+              <span
+                style={{
+                  fontSize: 10,
+                  color: "var(--ls-text-muted)",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.05em",
+                  fontWeight: 600,
+                  fontFamily: "DM Sans, sans-serif",
+                }}
+              >
+                {s.label}
+              </span>
+            </div>
+            <p
+              style={{
+                fontFamily: "Syne, sans-serif",
+                fontSize: 28,
+                fontWeight: 600,
+                color: s.color,
+                margin: 0,
+                lineHeight: 1,
+              }}
+            >
+              {s.value}
+            </p>
+          </div>
+        ))}
       </div>
     </div>
   );
