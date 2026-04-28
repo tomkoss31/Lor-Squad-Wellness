@@ -109,7 +109,8 @@
       "Bash(grep -n \"^    </div>$\\\\|<\\\\/div>$\" src/features/client-vip/ClientVipCoachPanel.tsx)",
       "Bash(grep -rn 'to={`/clients/${.*Id\\\\|to={\"/clients/' src/components/copilote/ src/components/pv/ src/pages/PvOverviewPage.tsx)",
       "Bash(grep -n \"      </button>$\\\\|^    </div>$\" src/pages/AgendaPage.tsx)",
-      "Bash(git gc *)"
+      "Bash(git gc *)",
+      "Bash(grep -n \"          </button>$\" src/pages/ClientDetailPage.tsx)"
     ]
   }
 }
