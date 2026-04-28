@@ -8,6 +8,7 @@ import { PvActionPlanCard } from "../components/copilote/PvActionPlanCard";
 import { PvKanban } from "../components/pv/PvKanban";
 import { usePvActionPlan } from "../hooks/usePvActionPlan";
 import { usePvCheckedTracker } from "../hooks/usePvCheckedTracker";
+import { usePvColumnOverride } from "../hooks/usePvColumnOverride";
 import { useAppContext } from "../context/AppContext";
 import type { PvClientTrackingRecord } from "../types/pv";
 
@@ -60,6 +61,10 @@ export function PvOverviewPage() {
   // Tracker "verifie PV" (2026-04-29) : marque chaque ouverture de fiche
   // pour afficher un badge "vu" sur la liste + kanban.
   const { isChecked, markChecked } = usePvCheckedTracker();
+
+  // Override manuel des colonnes Kanban (2026-04-29) : permet de forcer
+  // un client en "OK" meme si le calcul auto dit "A relancer".
+  const { getOverride, setOverride, clearOverride } = usePvColumnOverride();
   useEffect(() => {
     if (selectedClientId) markChecked(selectedClientId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -305,6 +310,9 @@ export function PvOverviewPage() {
               currentUserId={currentUser?.id ?? null}
               onSelectClient={setSelectedClientId}
               isChecked={isChecked}
+              getOverride={getOverride}
+              setOverride={setOverride}
+              clearOverride={clearOverride}
             />
           )}
 
