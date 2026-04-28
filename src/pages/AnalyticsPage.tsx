@@ -14,6 +14,8 @@
 // tendance. Loading skeleton pendant le fetch.
 // =============================================================================
 
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   ResponsiveContainer,
   AreaChart,
@@ -32,6 +34,7 @@ import {
   useAdminAnalytics,
   type AdminAnalyticsPayload,
 } from "../hooks/useAdminAnalytics";
+import { DistriDrillDownModal } from "../components/analytics/DistriDrillDownModal";
 
 export function AnalyticsPage() {
   const { data, loading, error, reload } = useAdminAnalytics();
@@ -112,6 +115,12 @@ function AnalyticsSkeleton() {
 
 function AnalyticsContent({ data }: { data: AdminAnalyticsPayload }) {
   const { kpi, funnel, top_produits, top_distri, tendance_12_mois, alertes } = data;
+  const navigate = useNavigate();
+  // D V2 (2026-04-28) : drill-down distri.
+  const [drillDownDistri, setDrillDownDistri] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
 
   return (
     <>
@@ -134,12 +143,23 @@ function AnalyticsContent({ data }: { data: AdminAnalyticsPayload }) {
         <KpiCard
           label="Clients actifs"
           value={kpi.clients_actifs}
+          delta={
+            kpi.clients_actifs_prev > 0
+              ? Math.round(
+                  (100 * (kpi.clients_actifs - kpi.clients_actifs_prev)) /
+                    kpi.clients_actifs_prev * 10,
+                ) / 10
+              : null
+          }
+          deltaSuffix="vs M-1"
           tone="teal"
           emoji="🔥"
         />
         <KpiCard
           label="PV ce mois"
           value={Math.round(kpi.pv_mois).toLocaleString("fr-FR")}
+          delta={kpi.pv_delta_pct ?? null}
+          deltaSuffix="vs M-1"
           tone="purple"
           emoji="💎"
           isText
@@ -204,7 +224,60 @@ function AnalyticsContent({ data }: { data: AdminAnalyticsPayload }) {
             <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 8 }}>
               {top_distri.map((d, i) => {
                 const medals = ["🥇", "🥈", "🥉"];
-                return (
+                const clickable = !!d.id;
+                const inner = (
+                  <>
+                    <span style={{ fontSize: 16 }}>{medals[i] ?? "·"}</span>
+                    <span style={{ color: "var(--ls-text)", flex: 1, textAlign: "left" }}>{d.name}</span>
+                    <span style={{ color: "var(--ls-teal)", fontWeight: 600 }}>
+                      {d.bilans} bilan{d.bilans > 1 ? "s" : ""}
+                    </span>
+                    {clickable ? (
+                      <span
+                        style={{
+                          fontSize: 10,
+                          color: "var(--ls-text-hint)",
+                          marginLeft: 4,
+                        }}
+                        aria-hidden="true"
+                      >
+                        →
+                      </span>
+                    ) : null}
+                  </>
+                );
+                return clickable ? (
+                  <li key={d.id} style={{ listStyle: "none", margin: 0, padding: 0 }}>
+                    <button
+                      type="button"
+                      onClick={() => setDrillDownDistri({ id: d.id!, name: d.name })}
+                      title={`Voir le détail de ${d.name}`}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 10,
+                        width: "100%",
+                        padding: "8px 12px",
+                        background: "var(--ls-surface2)",
+                        border: "0.5px solid var(--ls-border)",
+                        borderRadius: 8,
+                        fontSize: 13,
+                        cursor: "pointer",
+                        fontFamily: "inherit",
+                        transition: "background 120ms ease",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background =
+                          "color-mix(in srgb, var(--ls-gold) 6%, var(--ls-surface2))";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = "var(--ls-surface2)";
+                      }}
+                    >
+                      {inner}
+                    </button>
+                  </li>
+                ) : (
                   <li
                     key={d.name}
                     style={{
@@ -217,11 +290,7 @@ function AnalyticsContent({ data }: { data: AdminAnalyticsPayload }) {
                       fontSize: 13,
                     }}
                   >
-                    <span style={{ fontSize: 16 }}>{medals[i] ?? "·"}</span>
-                    <span style={{ color: "var(--ls-text)", flex: 1 }}>{d.name}</span>
-                    <span style={{ color: "var(--ls-teal)", fontWeight: 600 }}>
-                      {d.bilans} bilan{d.bilans > 1 ? "s" : ""}
-                    </span>
+                    {inner}
                   </li>
                 );
               })}
@@ -253,6 +322,20 @@ function AnalyticsContent({ data }: { data: AdminAnalyticsPayload }) {
           </div>
         </Card>
       )}
+
+      {/* D V2 (2026-04-28) : modale drill-down distri. */}
+      {drillDownDistri ? (
+        <DistriDrillDownModal
+          distriId={drillDownDistri.id}
+          distriName={drillDownDistri.name}
+          onClose={() => setDrillDownDistri(null)}
+          onGoToClients={() => {
+            const id = drillDownDistri.id;
+            setDrillDownDistri(null);
+            navigate(`/clients?owner=${encodeURIComponent(id)}`);
+          }}
+        />
+      ) : null}
     </>
   );
 }

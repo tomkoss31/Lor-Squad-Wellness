@@ -20,6 +20,9 @@ export interface AnalyticsKpi {
   clients_actifs: number;
   clients_actifs_prev: number;
   pv_mois: number;
+  /** D V2 (2026-04-28) : PV mois precedent + delta pour comparaison vs M-1. */
+  pv_prev_mois?: number;
+  pv_delta_pct?: number | null;
   conversion_pct: number;
 }
 
@@ -37,6 +40,9 @@ export interface AnalyticsProduct {
 }
 
 export interface AnalyticsDistri {
+  /** D V2 (2026-04-28) : id user pour drill-down detail. Optionnel pour
+   * compat retroactive (RPC anterieure ne renvoyait que name + bilans). */
+  id?: string;
   name: string;
   bilans: number;
 }
