@@ -764,7 +764,9 @@ export function AppProvider({ children }: PropsWithChildren) {
       productId: transaction.productId,
       productName: transaction.productName,
       quantityStart: transaction.quantity,
-      startDate: transaction.date,
+      // Delai reception (2026-04-29) : si l'override est fourni, la cure
+      // demarre a la date de livraison estimee, pas a la date commande.
+      startDate: transaction.startDateOverride ?? transaction.date,
       durationReferenceDays:
         existingProduct?.durationReferenceDays ?? catalogProduct?.dureeReferenceJours ?? 21,
       pvPerUnit:

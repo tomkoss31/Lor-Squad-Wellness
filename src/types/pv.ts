@@ -83,6 +83,13 @@ export interface PvClientTransaction {
   price: number;
   type: PvTransactionType;
   note: string;
+  /**
+   * Date effective de demarrage de la cure si differente de la date de
+   * commande (typiquement = date livraison estimee). Utilisee pour
+   * pv_client_products.startDate. Optionnel — fallback sur `date`.
+   * Chantier delai reception (2026-04-29).
+   */
+  startDateOverride?: string;
 }
 
 export interface PvClientTrackingRecord {
