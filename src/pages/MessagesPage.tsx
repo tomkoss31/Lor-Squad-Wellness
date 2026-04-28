@@ -2,9 +2,9 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAppContext } from '../context/AppContext'
 import { useGlobalView } from '../hooks/useGlobalView'
-import { GlobalViewToggle } from '../components/ui/GlobalViewToggle'
+// GlobalViewToggle retire 2026-04-29 (toggle inutile en haut de page)
 import { Card } from '../components/ui/Card'
-import { PageHeading } from '../components/ui/PageHeading'
+// PageHeading remplace par hero premium (2026-04-29)
 import { ReplyMessageModal } from '../components/messaging/ReplyMessageModal'
 import { StartConversationModal } from '../components/messages/StartConversationModal'
 import {
@@ -106,23 +106,65 @@ function MessageCard({
   const badge = typeBadge(msg.message_type)
   const timeAgo = getTimeAgo(msg.created_at)
 
+  // Premium V2 (2026-04-29) — gradient subtil quand unread, hover lift,
+  // avatar gradient purple/teal premium.
+  const isHot = isUnread && !isArchived;
+
   return (
-    <div style={{
-      background: isUnread && !isArchived ? 'var(--ls-surface)' : 'var(--ls-surface2)',
-      border: `1px solid ${isUnread && !isArchived ? 'rgba(124,58,237,0.2)' : 'var(--ls-border)'}`,
-      borderLeft: isUnread && !isArchived ? '3px solid var(--ls-purple)' : '1px solid var(--ls-border)',
-      borderRadius: isUnread && !isArchived ? '0 12px 12px 0' : 12,
-      padding: '14px 16px',
-      transition: 'all 0.15s',
-      opacity: isArchived ? 0.55 : isResolved ? 0.78 : 1,
-    }}>
+    <div
+      className="ls-msg-card"
+      style={{
+        position: 'relative',
+        background: isHot
+          ? 'linear-gradient(135deg, color-mix(in srgb, var(--ls-purple) 7%, var(--ls-surface)) 0%, var(--ls-surface) 60%)'
+          : 'var(--ls-surface2)',
+        border: `0.5px solid ${isHot ? 'color-mix(in srgb, var(--ls-purple) 30%, var(--ls-border))' : 'var(--ls-border)'}`,
+        borderRadius: 16,
+        padding: '14px 16px 14px 18px',
+        transition: 'transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease',
+        opacity: isArchived ? 0.55 : isResolved ? 0.78 : 1,
+        overflow: 'hidden',
+      }}
+      onMouseEnter={(e) => {
+        if (!isArchived) {
+          e.currentTarget.style.transform = 'translateY(-2px)';
+          e.currentTarget.style.boxShadow = isHot
+            ? '0 8px 22px -10px rgba(124,58,237,0.30)'
+            : '0 4px 12px -6px rgba(0,0,0,0.08)';
+        }
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.transform = 'none';
+        e.currentTarget.style.boxShadow = 'none';
+      }}
+    >
+      {/* Border-left gradient si unread */}
+      {isHot ? (
+        <div
+          aria-hidden="true"
+          style={{
+            position: 'absolute',
+            left: 0,
+            top: 0,
+            bottom: 0,
+            width: 4,
+            background: 'linear-gradient(180deg, #C084FC 0%, #7C3AED 100%)',
+            borderRadius: '16px 0 0 16px',
+          }}
+        />
+      ) : null}
+
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
         <div style={{
-          width: 36, height: 36, borderRadius: '50%', flexShrink: 0,
-          background: isUnread && !isArchived ? 'rgba(124,58,237,0.12)' : 'var(--ls-surface2)',
+          width: 38, height: 38, borderRadius: 12, flexShrink: 0,
+          background: isHot
+            ? 'linear-gradient(135deg, #C084FC 0%, #7C3AED 100%)'
+            : 'var(--ls-surface2)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: 11, fontWeight: 700, fontFamily: 'Syne, sans-serif',
-          color: isUnread && !isArchived ? 'var(--ls-purple)' : 'var(--ls-text-hint)',
+          fontSize: 13, fontWeight: 800, fontFamily: 'Syne, serif',
+          color: isHot ? 'white' : 'var(--ls-text-hint)',
+          letterSpacing: '-0.02em',
+          boxShadow: isHot ? '0 2px 8px rgba(124,58,237,0.30)' : 'none',
         }}>
           {getInitials(msg.client_name)}
         </div>
@@ -309,70 +351,290 @@ export function MessagesPage() {
   const unreadClients = useMemo(() => clientAskMessages.filter(m => !m.read && !m.archived_at).length, [clientAskMessages])
   const unreadActive = tab === 'products' ? unreadProducts : tab === 'recommendations' ? unreadRecos : unreadClients
 
+  // Gradient time-of-day teinte purple (messagerie = communication = purple)
+  const heroHour = new Date().getHours();
+  const heroGradient = (() => {
+    if (heroHour >= 5 && heroHour < 8)
+      return { primary: "#FFB088", secondary: "#C084FC", tertiary: "#7C3AED", glow: "rgba(192,132,252,0.30)" };
+    if (heroHour >= 8 && heroHour < 14)
+      return { primary: "#C084FC", secondary: "#A78BFA", tertiary: "#7C3AED", glow: "rgba(124,58,237,0.28)" };
+    if (heroHour >= 14 && heroHour < 17)
+      return { primary: "#A78BFA", secondary: "#7C3AED", tertiary: "#5B21B6", glow: "rgba(124,58,237,0.30)" };
+    if (heroHour >= 17 && heroHour < 20)
+      return { primary: "#FF6B6B", secondary: "#C084FC", tertiary: "#7C3AED", glow: "rgba(192,132,252,0.30)" };
+    if (heroHour >= 20 && heroHour < 23)
+      return { primary: "#C084FC", secondary: "#7C3AED", tertiary: "#A78BFA", glow: "rgba(124,58,237,0.32)" };
+    return { primary: "#A5B4FC", secondary: "#818CF8", tertiary: "#7C3AED", glow: "rgba(165,180,252,0.30)" };
+  })();
+  const totalUnread = unreadClients + unreadProducts + unreadRecos;
+  void globalView; // var deja declaree en haut, on l'utilise plus avec le toggle UI
+
   return (
     <div className="space-y-5">
-      <PageHeading
-        eyebrow="Communication"
-        title="Messagerie"
-        description="Demandes clients, produits et recommandations — filtre, traite, archive."
-      />
+      {/* Hero MESSAGES PREMIUM V2 (2026-04-29) — gradient time-of-day purple */}
+      <style>{`
+        @keyframes ls-msg-hero-mesh {
+          0% { transform: translate(0, 0) scale(1); }
+          50% { transform: translate(-10px, 6px) scale(1.05); }
+          100% { transform: translate(8px, -4px) scale(1); }
+        }
+        @keyframes ls-msg-hero-shine {
+          0%, 100% { transform: translateX(-50%); opacity: 0; }
+          50% { transform: translateX(150%); opacity: 0.6; }
+        }
+        @keyframes ls-msg-cta-glow {
+          0%, 100% { box-shadow: 0 4px 16px ${heroGradient.glow}; }
+          50% { box-shadow: 0 6px 26px ${heroGradient.glow}, 0 0 0 4px color-mix(in srgb, ${heroGradient.primary} 14%, transparent); }
+        }
+        @keyframes ls-msg-fade-in {
+          from { opacity: 0; transform: translateY(8px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes ls-msg-card-in {
+          from { opacity: 0; transform: translateX(-8px); }
+          to { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes ls-msg-pulse {
+          0%, 100% { box-shadow: 0 0 0 0 rgba(124,58,237,0.5); }
+          50% { box-shadow: 0 0 0 6px rgba(124,58,237,0); }
+        }
+        .ls-msg-hero {
+          position: relative;
+          overflow: hidden;
+          padding: 26px 28px;
+          border-radius: 24px;
+          background: var(--ls-surface);
+          border: 0.5px solid var(--ls-border);
+          box-shadow: 0 1px 0 0 ${heroGradient.glow}, 0 12px 36px -12px rgba(0,0,0,0.10);
+        }
+        .ls-msg-mesh {
+          position: absolute; inset: -20%; opacity: 0.55; pointer-events: none;
+          animation: ls-msg-hero-mesh 22s ease-in-out infinite alternate;
+          background:
+            radial-gradient(circle at 0% 0%, ${heroGradient.glow} 0%, transparent 45%),
+            radial-gradient(circle at 100% 100%, ${heroGradient.glow} 0%, transparent 50%),
+            radial-gradient(circle at 100% 0%, color-mix(in srgb, ${heroGradient.tertiary} 25%, transparent) 0%, transparent 60%);
+        }
+        .ls-msg-shine {
+          position: absolute; top: 0; height: 100%; width: 50%; left: 0;
+          background: linear-gradient(90deg, transparent, rgba(255,255,255,0.10), transparent);
+          animation: ls-msg-hero-shine 9s ease-in-out infinite;
+          pointer-events: none;
+        }
+        .ls-msg-cta {
+          position: relative;
+          background: linear-gradient(135deg, ${heroGradient.primary} 0%, ${heroGradient.secondary} 100%);
+          color: white !important;
+          border: none !important;
+          padding: 14px 22px !important;
+          border-radius: 12px !important;
+          font-size: 14px !important;
+          font-weight: 700 !important;
+          font-family: "Syne", serif !important;
+          letter-spacing: 0.3px;
+          cursor: pointer;
+          animation: ls-msg-cta-glow 4s ease-in-out infinite;
+          transition: transform 0.18s ease;
+        }
+        .ls-msg-cta:hover { transform: translateY(-2px); }
+        .ls-msg-stat {
+          animation: ls-msg-fade-in 480ms cubic-bezier(0.16, 1, 0.3, 1) both;
+          transition: transform 0.18s ease, box-shadow 0.18s ease;
+        }
+        .ls-msg-stat:hover { transform: translateY(-2px); }
+        .ls-msg-stat:nth-child(1) { animation-delay: 50ms; }
+        .ls-msg-stat:nth-child(2) { animation-delay: 130ms; }
+        .ls-msg-stat:nth-child(3) { animation-delay: 210ms; }
+        .ls-msg-card {
+          animation: ls-msg-card-in 380ms cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
+        .ls-msg-unread-dot {
+          animation: ls-msg-pulse 2s ease-in-out infinite;
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .ls-msg-mesh, .ls-msg-shine, .ls-msg-cta, .ls-msg-stat,
+          .ls-msg-card, .ls-msg-unread-dot {
+            animation: none !important;
+            transition: none !important;
+          }
+        }
+      `}</style>
 
-      {/* Chantier Academy refonte (2026-04-27) : CTA Demarrer une conversation
-          pour permettre au coach d initier l echange (avant : reactif uniquement). */}
-      <div style={{ display: "flex", justifyContent: "flex-end" }}>
-        <button
-          type="button"
-          onClick={() => setComposeOpen(true)}
-          data-tour-id="messages-compose"
+      <div className="ls-msg-hero">
+        <div className="ls-msg-mesh" aria-hidden="true" />
+        <div className="ls-msg-shine" aria-hidden="true" />
+
+        <div style={{ position: "relative", display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 24, flexWrap: "wrap", marginBottom: 18 }}>
+          <div style={{ flex: 1, minWidth: 240 }}>
+            <div
+              style={{
+                fontSize: 10,
+                letterSpacing: 2,
+                textTransform: "uppercase",
+                fontWeight: 700,
+                color: heroGradient.secondary,
+                marginBottom: 6,
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+              }}
+            >
+              <span
+                style={{
+                  display: "inline-block",
+                  width: 6,
+                  height: 6,
+                  borderRadius: 999,
+                  background: heroGradient.primary,
+                  boxShadow: `0 0 8px ${heroGradient.glow}`,
+                }}
+              />
+              Messagerie · {totalUnread} non lu{totalUnread > 1 ? "s" : ""}
+            </div>
+            <h1
+              style={{
+                fontFamily: "Syne, serif",
+                fontSize: 32,
+                fontWeight: 800,
+                color: "var(--ls-text)",
+                lineHeight: 1.05,
+                letterSpacing: "-0.02em",
+                margin: 0,
+              }}
+            >
+              <span
+                style={{
+                  background: `linear-gradient(135deg, ${heroGradient.primary} 0%, ${heroGradient.secondary} 60%, ${heroGradient.tertiary} 100%)`,
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  backgroundClip: "text",
+                }}
+              >
+                Tes messages
+              </span>{" "}
+              💬
+            </h1>
+            <p
+              style={{
+                fontSize: 13,
+                color: "var(--ls-text-muted)",
+                marginTop: 6,
+                marginBottom: 0,
+                fontFamily: "DM Sans, sans-serif",
+              }}
+            >
+              Demandes clients, produits et recommandations · filtre, traite, archive.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setComposeOpen(true)}
+            data-tour-id="messages-compose"
+            className="ls-msg-cta"
+          >
+            ✨ + Démarrer une conversation
+          </button>
+        </div>
+
+        {/* 3 stats inline dans le hero */}
+        <div
           style={{
-            background: "linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)",
-            color: "white",
-            border: "none",
-            padding: "10px 16px",
-            borderRadius: 10,
-            fontSize: 13,
-            fontWeight: 600,
-            cursor: "pointer",
-            fontFamily: "DM Sans, sans-serif",
-            boxShadow: "0 2px 6px rgba(186,117,23,0.25)",
+            position: "relative",
+            display: "grid",
+            gridTemplateColumns: "repeat(3, 1fr)",
+            gap: 10,
           }}
         >
-          + Démarrer une conversation
-        </button>
+          {[
+            { icon: "📅", label: "Demandes clients", value: unreadClients, total: clientAskMessages.length, color: heroGradient.primary, key: "clients" as Tab },
+            { icon: "🛒", label: "Demandes produits", value: unreadProducts, total: productMessages.length, color: heroGradient.secondary, key: "products" as Tab },
+            { icon: "👥", label: "Recommandations", value: unreadRecos, total: recoMessages.length, color: heroGradient.tertiary, key: "recommendations" as Tab },
+          ].map((s) => {
+            const isActive = tab === s.key;
+            return (
+              <button
+                key={s.label}
+                type="button"
+                onClick={() => setTab(s.key)}
+                className="ls-msg-stat"
+                style={{
+                  background: isActive
+                    ? `linear-gradient(135deg, color-mix(in srgb, ${s.color} 18%, var(--ls-surface)) 0%, var(--ls-surface) 100%)`
+                    : "color-mix(in srgb, var(--ls-surface) 95%, transparent)",
+                  border: `0.5px solid color-mix(in srgb, ${s.color} ${isActive ? 50 : 25}%, var(--ls-border))`,
+                  borderRadius: 14,
+                  padding: "10px 14px",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 10,
+                  cursor: "pointer",
+                  textAlign: "left",
+                  fontFamily: "DM Sans, sans-serif",
+                  backdropFilter: "blur(8px)",
+                  WebkitBackdropFilter: "blur(8px)",
+                  boxShadow: isActive ? `0 6px 18px -8px ${heroGradient.glow}` : "none",
+                  position: "relative",
+                }}
+                onMouseEnter={(e) => {
+                  if (!isActive) {
+                    e.currentTarget.style.boxShadow = `0 6px 18px -8px ${heroGradient.glow}`;
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!isActive) {
+                    e.currentTarget.style.boxShadow = "none";
+                  }
+                }}
+              >
+                <span style={{ fontSize: 22 }}>{s.icon}</span>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 9, letterSpacing: 1.4, textTransform: "uppercase", color: "var(--ls-text-hint)", fontWeight: 700 }}>
+                    {s.label}
+                  </div>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "baseline",
+                      gap: 6,
+                    }}
+                  >
+                    <span
+                      style={{
+                        fontFamily: "Syne, serif",
+                        fontSize: 22,
+                        fontWeight: 800,
+                        color: s.color,
+                        lineHeight: 1,
+                        letterSpacing: "-0.02em",
+                      }}
+                    >
+                      {s.value}
+                    </span>
+                    <span style={{ fontSize: 10, color: "var(--ls-text-hint)" }}>
+                      / {s.total}
+                    </span>
+                  </div>
+                </div>
+                {s.value > 0 && !isActive ? (
+                  <span
+                    className="ls-msg-unread-dot"
+                    style={{
+                      width: 8,
+                      height: 8,
+                      borderRadius: 999,
+                      background: s.color,
+                      flexShrink: 0,
+                    }}
+                  />
+                ) : null}
+              </button>
+            );
+          })}
+        </div>
       </div>
+
       {composeOpen ? <StartConversationModal onClose={() => setComposeOpen(false)} /> : null}
-
-      {/* Chantier 5 bugs : toggle Vue globale admin */}
-      <GlobalViewToggle
-        personalLabel="Vue personnelle (mes messages clients)"
-        globalLabel="Vue équipe (tous les messages)"
-      />
-
-      {/* Tabs */}
-      <div data-tour-id="messages-tabs" style={{ display: 'flex', gap: 6, background: 'var(--ls-surface)', border: '1px solid var(--ls-border)', borderRadius: 12, padding: 4, width: 'fit-content', flexWrap: 'wrap' }}>
-        {([
-          { key: 'clients' as Tab, label: 'Demandes clients', count: unreadClients, icon: '📅' },
-          { key: 'products' as Tab, label: 'Demandes produits', count: unreadProducts, icon: '🛒' },
-          { key: 'recommendations' as Tab, label: 'Recommandations', count: unreadRecos, icon: '👥' },
-        ]).map(t => (
-          <button key={t.key} onClick={() => setTab(t.key)}
-            style={{
-              padding: '8px 16px', borderRadius: 8, border: 'none', cursor: 'pointer',
-              fontSize: 13, fontFamily: 'DM Sans, sans-serif',
-              fontWeight: tab === t.key ? 600 : 400,
-              background: tab === t.key ? 'var(--ls-surface2)' : 'transparent',
-              color: tab === t.key ? 'var(--ls-text)' : 'var(--ls-text-muted)',
-              display: 'flex', alignItems: 'center', gap: 6, transition: 'all 0.15s',
-            }}>
-            {t.icon} {t.label}
-            {t.count > 0 && (
-              <span style={{ fontSize: 9, padding: '2px 6px', borderRadius: 10, background: 'rgba(124,58,237,0.12)', color: 'var(--ls-purple)', fontWeight: 700 }}>
-                {t.count}
-              </span>
-            )}
-          </button>
-        ))}
-      </div>
 
       {/* Filtres */}
       <MessageFilters
