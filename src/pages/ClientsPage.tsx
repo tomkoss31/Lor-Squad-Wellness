@@ -1,8 +1,9 @@
 import { useDeferredValue, useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { PageHeading } from "../components/ui/PageHeading";
 import { QuickFiltersBar } from "../components/clients/QuickFiltersBar";
 import { ClientsKanban } from "../components/clients/ClientsKanban";
+import { BulkMessageModal } from "../components/clients/BulkMessageModal";
 import { EmptyState } from "../components/ui/EmptyState";
 import { useAppContext } from "../context/AppContext";
 import { getAccessibleOwnerIds } from "../lib/auth";
@@ -23,7 +24,10 @@ import type { User, Client, LifecycleStatus } from "../types/domain";
 import { LIFECYCLE_LABELS, LIFECYCLE_TONES } from "../types/domain";
 
 export function ClientsPage() {
-  const { currentUser, users, visibleClients, visibleFollowUps, setClientLifecycleStatus } = useAppContext();
+  const { currentUser, users, visibleClients, visibleFollowUps, pvTransactions, setClientLifecycleStatus } = useAppContext();
+  // C V3 (2026-04-28) : lecture du ?owner=<id> depuis URL pour pre-selectionner
+  // un distributeur (utile quand on arrive depuis Analytics drill-down).
+  const [searchParams] = useSearchParams();
   // Chantier tri priorite (2026-04-24) : l'admin voit TOUS les clients
   // de l'arborescence, mais ses clients perso sont tries EN PREMIER
   // (tri intelligent, pas filtrage). Plus de toggle.
@@ -31,7 +35,14 @@ export function ClientsPage() {
 
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | LifecycleStatus | "fragile">("all");
-  const [ownerFilter, setOwnerFilter] = useState("all");
+  // C V3 : ownerFilter init depuis URL (?owner=<id>) si present, sinon "all".
+  const [ownerFilter, setOwnerFilter] = useState(() => searchParams.get("owner") ?? "all");
+  // Sync : si l URL change (ex: navigate depuis Analytics drill-down),
+  // mettre a jour le filtre.
+  useEffect(() => {
+    const paramOwner = searchParams.get("owner");
+    if (paramOwner) setOwnerFilter(paramOwner);
+  }, [searchParams]);
   const deferredSearch = useDeferredValue(search);
 
   // Chantier C.1 filtres rapides (2026-04-29) : chips de presets metier
@@ -70,10 +81,51 @@ export function ClientsPage() {
   }
 
   // Chantier 5 — Batch lifecycle
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  // C V3 (2026-04-28) : selection persistee en localStorage pour survivre
+  // aux refresh / changements de page. Cle distincte par admin (au cas ou
+  // plusieurs comptes sur le meme device).
+  const SELECTION_STORAGE_KEY = "ls.clients.selectedIds";
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(() => {
+    if (typeof window === "undefined") return new Set();
+    try {
+      const raw = window.localStorage.getItem(SELECTION_STORAGE_KEY);
+      if (!raw) return new Set();
+      const arr = JSON.parse(raw) as string[];
+      return new Set(Array.isArray(arr) ? arr : []);
+    } catch {
+      return new Set();
+    }
+  });
+  // Persist a chaque update.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      window.localStorage.setItem(
+        SELECTION_STORAGE_KEY,
+        JSON.stringify(Array.from(selectedIds)),
+      );
+    } catch {
+      // localStorage indispo (mode prive, quota), silent fail.
+    }
+  }, [selectedIds]);
   const [bulkStatus, setBulkStatus] = useState<LifecycleStatus>("stopped");
   const [bulkApplying, setBulkApplying] = useState(false);
   const [bulkFeedback, setBulkFeedback] = useState<string>("");
+
+  // C V2 (2026-04-28) : modale bulk message multi-clients.
+  const [bulkMessageOpen, setBulkMessageOpen] = useState(false);
+
+  // C V2 (2026-04-28) : tri par colonne. Default : "smart" = ordre actuel
+  // (admin sees their clients first, alphabetical secondary).
+  // C V3 (2026-04-28) : ajout pv-month-desc (clients qui consomment le plus
+  // ce mois) — utile pour identifier les VIP a relancer en priorite.
+  type SortKey =
+    | "smart"
+    | "name-asc"
+    | "last-bilan-desc"
+    | "last-bilan-asc"
+    | "pv-month-desc";
+  const [sortKey, setSortKey] = useState<SortKey>("smart");
 
   function toggleClient(id: string) {
     setSelectedIds((prev) => {
@@ -162,11 +214,58 @@ export function ClientsPage() {
     });
   }, [normalizedSearch, ownerFilter, selectedOwnerIds, statusFilter, visibleClients]);
 
+  // C V3 (2026-04-28) : map clientId → PV total ce mois (pour tri pv-month-desc).
+  const pvByClientThisMonth = useMemo(() => {
+    const monthStart = new Date();
+    monthStart.setDate(1);
+    monthStart.setHours(0, 0, 0, 0);
+    const map = new Map<string, number>();
+    for (const t of pvTransactions) {
+      if (!t.clientId) continue;
+      const d = new Date(t.date);
+      if (d < monthStart) continue;
+      map.set(t.clientId, (map.get(t.clientId) ?? 0) + (t.pv ?? 0));
+    }
+    return map;
+  }, [pvTransactions]);
+
   const filteredClients = useMemo(() => {
     // Applique le quick filter par dessus (compose avec les autres filtres).
     const afterQuick = quickFilter === "all"
       ? clientsBeforeQuickFilter
       : applyQuickFilter(quickFilter, clientsBeforeQuickFilter, { followUps: visibleFollowUps, now: quickFilterNow });
+
+    // C V2 (2026-04-28) : tri par colonne explicite si selectionne.
+    if (sortKey !== "smart") {
+      const sorted = [...afterQuick];
+      if (sortKey === "name-asc") {
+        sorted.sort((a, b) =>
+          `${a.firstName} ${a.lastName}`.localeCompare(
+            `${b.firstName} ${b.lastName}`,
+            "fr",
+          ),
+        );
+      } else if (sortKey === "last-bilan-desc" || sortKey === "last-bilan-asc") {
+        const dir = sortKey === "last-bilan-desc" ? -1 : 1;
+        sorted.sort((a, b) => {
+          const aDate = getLastAssessmentTime(a);
+          const bDate = getLastAssessmentTime(b);
+          if (aDate === bDate) return 0;
+          // Sans bilan = au bout (toujours en queue).
+          if (aDate === null) return 1;
+          if (bDate === null) return -1;
+          return dir * (aDate - bDate);
+        });
+      } else if (sortKey === "pv-month-desc") {
+        // C V3 : tri par PV consomme ce mois (descending). 0 PV en queue.
+        sorted.sort((a, b) => {
+          const aPv = pvByClientThisMonth.get(a.id) ?? 0;
+          const bPv = pvByClientThisMonth.get(b.id) ?? 0;
+          return bPv - aPv;
+        });
+      }
+      return sorted;
+    }
 
     // Chantier tri priorité (2026-04-24) : admin → ses clients en premier.
     // Tri secondaire par nom de famille alphabétique.
@@ -179,7 +278,7 @@ export function ClientsPage() {
       });
     }
     return afterQuick;
-  }, [clientsBeforeQuickFilter, isAdmin, currentUser?.id, quickFilter, visibleFollowUps, quickFilterNow]);
+  }, [clientsBeforeQuickFilter, isAdmin, currentUser?.id, quickFilter, visibleFollowUps, quickFilterNow, sortKey, pvByClientThisMonth]);
 
   // Relances visibles pour le filtre courant
   const visibleRelanceCount = useMemo(() => {
@@ -279,6 +378,48 @@ export function ClientsPage() {
           </button>
         </div>
       </div>
+
+      {/* C V2 (2026-04-28) : sort selector pour la vue liste. */}
+      {viewMode === "list" && (
+        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+          <span style={{ fontSize: 11, color: "var(--ls-text-muted)", letterSpacing: 0.4 }}>
+            Trier :
+          </span>
+          {[
+            { id: "smart", label: "Intelligent" },
+            { id: "name-asc", label: "Nom A→Z" },
+            { id: "last-bilan-desc", label: "Dernier bilan ↓" },
+            { id: "last-bilan-asc", label: "Dernier bilan ↑" },
+            { id: "pv-month-desc", label: "PV ce mois ↓" },
+          ].map((opt) => {
+            const active = sortKey === opt.id;
+            return (
+              <button
+                key={opt.id}
+                type="button"
+                onClick={() => setSortKey(opt.id as SortKey)}
+                style={{
+                  padding: "5px 11px",
+                  border: active
+                    ? "0.5px solid var(--ls-gold)"
+                    : "0.5px solid var(--ls-border)",
+                  background: active
+                    ? "color-mix(in srgb, var(--ls-gold) 12%, transparent)"
+                    : "var(--ls-surface)",
+                  color: active ? "var(--ls-gold)" : "var(--ls-text-muted)",
+                  borderRadius: 7,
+                  fontSize: 11,
+                  fontFamily: "DM Sans, sans-serif",
+                  fontWeight: active ? 700 : 500,
+                  cursor: "pointer",
+                }}
+              >
+                {opt.label}
+              </button>
+            );
+          })}
+        </div>
+      )}
 
       {/* BARRE RECHERCHE + FILTRE STATUT */}
       <div className="clients-search-bar" style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
@@ -441,6 +582,45 @@ export function ClientsPage() {
             }}
           >
             {bulkApplying ? "Application..." : "Appliquer"}
+          </button>
+          {/* C V2 (2026-04-28) : bouton bulk message multi-canal. */}
+          <button
+            type="button"
+            onClick={() => setBulkMessageOpen(true)}
+            style={{
+              padding: "8px 14px",
+              border: "0.5px solid color-mix(in srgb, var(--ls-teal) 40%, transparent)",
+              background: "color-mix(in srgb, var(--ls-teal) 12%, var(--ls-surface))",
+              color: "var(--ls-teal)",
+              borderRadius: 9,
+              fontSize: 12,
+              fontWeight: 700,
+              cursor: "pointer",
+              fontFamily: "DM Sans, sans-serif",
+            }}
+          >
+            💬 Envoyer un message
+          </button>
+          {/* C V2 (2026-04-28) : export CSV de la selection. */}
+          <button
+            type="button"
+            onClick={() => {
+              const selectedClients = filteredClients.filter((c) => selectedIds.has(c.id));
+              exportClientsCsv(selectedClients);
+            }}
+            style={{
+              padding: "8px 12px",
+              border: "0.5px solid var(--ls-border)",
+              background: "transparent",
+              color: "var(--ls-text)",
+              borderRadius: 9,
+              fontSize: 12,
+              fontWeight: 600,
+              cursor: "pointer",
+              fontFamily: "DM Sans, sans-serif",
+            }}
+          >
+            📥 Export CSV
           </button>
           <button
             type="button"
@@ -674,6 +854,14 @@ export function ClientsPage() {
           })}
         </div>
       )}
+
+      {/* C V2 (2026-04-28) : modale bulk message. */}
+      {bulkMessageOpen ? (
+        <BulkMessageModal
+          clients={filteredClients.filter((c) => selectedIds.has(c.id))}
+          onClose={() => setBulkMessageOpen(false)}
+        />
+      ) : null}
     </div>
   );
 }
@@ -748,4 +936,68 @@ function getRelativeTime(dateStr: string | undefined): string {
   if (days < 30) return `dans ${days} jours`;
   const months = Math.floor(days / 30);
   return `dans ${months} mois`;
+}
+
+// C V2 (2026-04-28) : timestamp du dernier bilan (any type) pour tri.
+function getLastAssessmentTime(client: Client): number | null {
+  if (!client.assessments || client.assessments.length === 0) return null;
+  let max = 0;
+  for (const a of client.assessments) {
+    const t = new Date(a.date).getTime();
+    if (!Number.isNaN(t) && t > max) max = t;
+  }
+  return max > 0 ? max : null;
+}
+
+// C V2 (2026-04-28) : export CSV des clients filtres. Genere un fichier
+// avec colonnes : Prenom, Nom, Tel, Email, Ville, Statut, Programme,
+// Dernier bilan, Created. Telechargement direct via Blob + anchor.
+export function exportClientsCsv(clients: Client[]) {
+  if (clients.length === 0) return;
+  const header = [
+    "Prénom",
+    "Nom",
+    "Téléphone",
+    "Email",
+    "Ville",
+    "Statut",
+    "Programme",
+    "Dernier bilan",
+  ];
+  const rows = clients.map((c) => {
+    const lastAt = getLastAssessmentTime(c);
+    const lastDate = lastAt ? new Date(lastAt).toISOString().slice(0, 10) : "";
+    return [
+      c.firstName ?? "",
+      c.lastName ?? "",
+      c.phone ?? "",
+      c.email ?? "",
+      c.city ?? "",
+      c.lifecycleStatus ?? "",
+      c.currentProgram ?? "",
+      lastDate,
+    ];
+  });
+  const csv = [header, ...rows]
+    .map((row) =>
+      row
+        .map((cell) => {
+          const s = String(cell ?? "");
+          if (s.includes(",") || s.includes('"') || s.includes("\n")) {
+            return `"${s.replace(/"/g, '""')}"`;
+          }
+          return s;
+        })
+        .join(","),
+    )
+    .join("\n");
+  // BOM pour Excel reconnaisse l UTF-8 + accents.
+  const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  const datestamp = new Date().toISOString().slice(0, 10);
+  a.download = `clients-export-${datestamp}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
 }

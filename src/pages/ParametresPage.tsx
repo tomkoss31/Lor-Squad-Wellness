@@ -17,16 +17,20 @@ import { TransfertsTab } from "../components/settings/TransfertsTab";
 import { StatistiquesTab } from "../components/settings/StatistiquesTab";
 import { DebugTab } from "../components/settings/DebugTab";
 import { LeadsTab } from "../components/settings/LeadsTab";
+import { VipProgramTab } from "../components/settings/VipProgramTab";
 
-type TabKey = "profil" | "equipe" | "leads" | "transferts" | "stats" | "debug";
+type TabKey = "profil" | "vip" | "equipe" | "leads" | "transferts" | "stats" | "debug";
 
-const TABS: Array<{ key: TabKey; label: string; icon: string }> = [
+const TABS: Array<{ key: TabKey; label: string; icon: string; adminOnly?: boolean }> = [
   { key: "profil", label: "Profil", icon: "👤" },
-  { key: "equipe", label: "Équipe", icon: "👥" },
-  { key: "leads", label: "Leads", icon: "🔥" },
-  { key: "transferts", label: "Transferts", icon: "🔀" },
-  { key: "stats", label: "Statistiques", icon: "📊" },
-  { key: "debug", label: "Debug", icon: "🔧" },
+  // Tier B Premium VIP (2026-04-28) : doc programme Client Privilegie pour
+  // tous les coachs (distri/referent/admin). Pas adminOnly.
+  { key: "vip", label: "Programme VIP", icon: "⭐" },
+  { key: "equipe", label: "Équipe", icon: "👥", adminOnly: true },
+  { key: "leads", label: "Leads", icon: "🔥", adminOnly: true },
+  { key: "transferts", label: "Transferts", icon: "🔀", adminOnly: true },
+  { key: "stats", label: "Statistiques", icon: "📊", adminOnly: true },
+  { key: "debug", label: "Debug", icon: "🔧", adminOnly: true },
 ];
 
 export function ParametresPage() {
@@ -89,6 +93,7 @@ export function ParametresPage() {
 
       {/* Contenu conditionnel */}
       {tab === "profil" ? <ProfilTab /> : null}
+      {tab === "vip" ? <VipProgramTab /> : null}
       {tab === "equipe" ? <EquipeTab /> : null}
       {tab === "leads" ? <LeadsTab /> : null}
       {tab === "transferts" ? <TransfertsTab /> : null}

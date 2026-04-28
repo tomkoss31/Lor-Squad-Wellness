@@ -163,6 +163,20 @@ export const MESSAGE_TEMPLATES: MessageTemplate[] = [
       return `${firstName(client)}, c'est jour J : ça fait ${milestone} aujourd'hui que tu as commencé ton programme avec nous 🎂\n\nT'as déjà fait du chemin, et c'est en grande partie grâce à toi (oui oui). On fait le point cette semaine pour célébrer ?\n\nÀ très vite,\n${ctx.coachFirstName}`;
     },
   },
+  {
+    id: "vip-privilege-pitch",
+    emoji: "⭐",
+    label: "Devenir Client Privilégié Herbalife",
+    description:
+      "Pitch les 3 paliers (Bronze -15% / Silver -25% / Gold -35%) + parrainage.",
+    // Toujours applicable : tu peux pitcher le programme à n'importe quel client actif.
+    applicable: (client) =>
+      !client.vipHerbalifeId
+      && (client.lifecycleStatus === "active" || client.lifecycleStatus === undefined),
+    render: (client, ctx) => {
+      return `Salut ${firstName(client)} 👋\n\nJ'ai un programme à te proposer qui pourrait clairement te faire plaisir : devenir Client Privilégié Herbalife. Concrètement :\n\n🥉 Bronze · -15% dès ta 1ère commande + 2 cadeaux de bienvenue\n🥈 Silver · -25% à partir de 100 pts cumulés\n🥇 Gold · -35% à partir de 500 pts (max client privilégié)\n💎 Ambassadeur · -42% si 1 000 pts en 3 mois\n\nLes points = PV de tes commandes + celles de tes proches que tu sponsorises (famille, collègues, amis). Plus tu fais découvrir, plus ta remise grimpe. Pour activer : www.myherbalife.com — je t'envoie mon ID sponsor en privé pour la création de compte.\n\nÇa te dit qu'on regarde ensemble ?\n\n${ctx.coachFirstName}`;
+    },
+  },
 ];
 
 // ─── Helpers de rendu ──────────────────────────────────────────────────────────

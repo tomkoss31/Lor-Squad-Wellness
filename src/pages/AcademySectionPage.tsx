@@ -62,18 +62,22 @@ export function AcademySectionPage() {
           // lance avant de naviguer vers /academy. Le quiz est rendu au
           // niveau AppLayout via ActiveQuizContext donc il survit au
           // unmount de cette page.
+          // Tier B #9 (2026-04-28) : on ajoute &feedback=<sectionId> au
+          // query param pour declencher la modale feedback cote
+          // AcademyOverviewPage. Combine avec ?completed=... existant.
+          const overviewUrl = `/academy?completed=${encodeURIComponent(section.id)}&feedback=${encodeURIComponent(section.id)}`;
           if (section.quiz) {
             startQuiz({
               quiz: section.quiz,
               sectionTitle: section.title,
               onComplete: () => {
-                navigate(`/academy?completed=${encodeURIComponent(section.id)}`);
+                navigate(overviewUrl);
               },
             });
           } else {
             // Polish ludique (2026-04-27) : query param pour declencher
             // l animation de celebration + confetti cote overview.
-            navigate(`/academy?completed=${encodeURIComponent(section.id)}`);
+            navigate(overviewUrl);
           }
         } else {
           navigate("/academy");

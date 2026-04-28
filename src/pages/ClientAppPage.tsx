@@ -5,6 +5,9 @@ import { HERBALIFE_PRODUCTS, type HerbalifeProduct } from '../data/herbalifeCata
 import { ClientMessageModal } from '../components/client-app/ClientMessageModal'
 import { ClientChatTab } from '../components/client-app/ClientChatTab'
 import { ClientHomeTab } from '../components/client-app/ClientHomeTab'
+import { ClientXpToast } from '../features/client-xp/ClientXpToast'
+import { recordClientXp } from '../features/client-xp/useClientXp'
+import { ClientFaqChatbot } from '../components/client-app/ClientFaqChatbot'
 import { ClientPushOptIn } from '../components/client-app/ClientPushOptIn'
 import { InstallPwaBanner } from '../components/pwa/InstallPwaBanner'
 import { BreakfastStorySlider, DEFAULT_BREAKFAST_ANALYSIS } from '../components/education/BreakfastStorySlider'
@@ -1004,7 +1007,11 @@ export function ClientAppPage() {
               nextRdv: '[data-tuto="next-rdv"]',
               program: '[data-tuto="program"]',
               messaging: '[data-tuto="messaging"]',
+              tabEvolution: '[data-tuto="tab-evolution"]',
+              tabConseils: '[data-tuto="tab-conseils"]',
+              tabProduits: '[data-tuto="tab-produits"]',
             }}
+            sandboxHref={token ? `/client/${token}/sandbox` : undefined}
             onClose={(reason) => {
               setTutorialOpen(false)
               if (reason === 'completed') {
@@ -1028,8 +1035,32 @@ export function ClientAppPage() {
           { key: 'refer' as const, label: 'Recommander', icon: (<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><line x1="23" y1="11" x2="17" y2="11" /><line x1="20" y1="8" x2="20" y2="14" /></svg>) },
         ]).map(({ key, label, icon }) => {
           const isActive = activeTab === key
+          // Tier B (2026-04-28) : data-tuto pour spotlights tuto.
+          const tutoAttr =
+            key === 'evolution'
+              ? 'tab-evolution'
+              : key === 'coaching'
+                ? 'tab-conseils'
+                : key === 'products'
+                  ? 'tab-produits'
+                  : undefined
+          // Premium Client XP (Tier B 2026-04-28) : map tab key → action XP key.
+          const xpKey: import('../features/client-xp/actions').ClientXpActionKey | null =
+            key === 'evolution' ? 'tab_evolution'
+            : key === 'coaching' ? 'tab_conseils'
+            : key === 'products' ? 'tab_pv'
+            : null
           return (
-            <button key={key} onClick={() => setActiveTab(key)}
+            <button
+              key={key}
+              onClick={() => {
+                setActiveTab(key)
+                // Trigger XP +5 sur clic onglet (cap 1×/jour cote SQL).
+                if (xpKey && token) {
+                  void recordClientXp(token, xpKey)
+                }
+              }}
+              data-tuto={tutoAttr}
               style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, padding: '8px 4px', border: 'none', background: 'transparent', color: isActive ? '#B8922A' : '#9CA3AF', fontSize: 9, cursor: 'pointer', fontFamily: 'DM Sans, sans-serif' }}>
               {icon}
               {label}
@@ -1037,6 +1068,19 @@ export function ClientAppPage() {
           )
         })}
       </div>
+
+      {/* Premium Client XP (Tier B 2026-04-28) : toast slide-in apres gain XP. */}
+      <ClientXpToast />
+
+      {/* Premium Client FAQ Chatbot (Tier B Module 3, 2026-04-28) :
+          FAB en bas a droite + popup avec 6 questions frequentes +
+          routage messagerie. */}
+      {token ? (
+        <ClientFaqChatbot
+          token={token}
+          coachFirstName={(data.coach_name ?? '').split(/\s+/)[0] || 'Coach'}
+        />
+      ) : null}
     </div>
   )
 }

@@ -23,6 +23,12 @@ export interface TutorialTooltipProps {
   isLast?: boolean;
   /** Polish C (2026-04-28) : illustration SVG inline au-dessus du titre. */
   illustrationKey?: TutorialIllustrationKind;
+  /**
+   * Tier B #8 (2026-04-28) : chips "Voir aussi" sous le body. Click
+   * → onCrossRef(sectionId, stepId).
+   */
+  crossRefs?: Array<{ label: string; sectionId: string; stepId?: string }>;
+  onCrossRef?: (sectionId: string, stepId?: string) => void;
 }
 
 export function TutorialTooltip({
@@ -39,6 +45,8 @@ export function TutorialTooltip({
   nextLabel,
   isLast = false,
   illustrationKey,
+  crossRefs,
+  onCrossRef,
 }: TutorialTooltipProps) {
   const positionedStyle = computePosition(placement, targetRect);
 
@@ -190,6 +198,61 @@ export function TutorialTooltip({
       >
         {children}
       </div>
+
+      {/* Tier B #8 (2026-04-28) : chips "Voir aussi" pour cross-refs. */}
+      {crossRefs && crossRefs.length > 0 ? (
+        <div
+          style={{
+            marginTop: 12,
+            paddingTop: 10,
+            borderTop: "0.5px dashed #E5DFCF",
+            display: "flex",
+            flexWrap: "wrap",
+            gap: 6,
+            alignItems: "center",
+          }}
+        >
+          <span
+            style={{
+              fontSize: 10,
+              letterSpacing: "0.12em",
+              textTransform: "uppercase",
+              color: "#6B6B62",
+              fontWeight: 600,
+              marginRight: 4,
+            }}
+          >
+            🔗 Voir aussi
+          </span>
+          {crossRefs.map((ref, idx) => (
+            <button
+              key={`${ref.sectionId}-${ref.stepId ?? idx}`}
+              type="button"
+              onClick={() => onCrossRef?.(ref.sectionId, ref.stepId)}
+              style={{
+                padding: "4px 10px",
+                background: "rgba(184,146,42,0.10)",
+                border: "0.5px solid rgba(184,146,42,0.40)",
+                borderRadius: 999,
+                fontSize: 11,
+                fontFamily: "DM Sans, sans-serif",
+                fontWeight: 600,
+                color: "#5C4A0F",
+                cursor: "pointer",
+                transition: "background 120ms ease",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = "rgba(184,146,42,0.20)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "rgba(184,146,42,0.10)";
+              }}
+            >
+              {ref.label} →
+            </button>
+          ))}
+        </div>
+      ) : null}
 
       {/* Footer : progress + actions */}
       <div

@@ -2363,3 +2363,16 @@ html.theme-light .ls-hoverable:hover {
     transform: none !important;
   }
 }
+
+/* Kanban PV — scroll horizontal sur mobile (2026-04-29) */
+@media (max-width: 720px) {
+  .pv-kanban {
+    grid-template-columns: repeat(4, minmax(220px, 1fr)) !important;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    padding-bottom: 8px;
+  }
+  .pv-kanban > div {
+    scroll-snap-align: start;
+  }
+}
