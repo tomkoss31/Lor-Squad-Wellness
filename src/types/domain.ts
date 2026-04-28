@@ -314,6 +314,18 @@ export interface Client {
   publicShareConsent?: boolean;
   publicShareConsentAt?: string;
   publicShareRevokedAt?: string;
+  // Programme Client Privilégié Herbalife (Tier B Premium VIP — 2026-04-28).
+  /** ID Herbalife format 21XY1234567 (11 chars). Saisi manuellement par
+   *  le coach après inscription du client sur myherbalife.com. */
+  vipHerbalifeId?: string | null;
+  /** Le client (autre client de la base) qui a parrainé ce client.
+   *  Permet de construire l arbre récursif. NULL = pas de parrainage
+   *  (le coach a inscrit le client directement). */
+  vipSponsorClientId?: string | null;
+  /** Date d activation du compte client privilégié. */
+  vipStartedAt?: string | null;
+  /** Cache du niveau VIP courant (recalculé live via RPC get_client_vip_status). */
+  vipStatus?: "none" | "bronze" | "silver" | "gold" | "ambassador";
 }
 
 export interface FollowUp {

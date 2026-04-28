@@ -12,6 +12,7 @@ import type { Assessment, Measurement } from "../../lib/clientAppData";
 import { ClientXpBanner } from "../../features/client-xp/ClientXpBanner";
 import { recordClientXp } from "../../features/client-xp/useClientXp";
 import { ClientMoodCheckIn } from "./ClientMoodCheckIn";
+import { ClientVipHomeSection } from "../../features/client-vip/ClientVipHomeSection";
 
 interface MetricEntry {
   date: string;
@@ -299,6 +300,19 @@ export function ClientHomeTab({
           stocke en DB + +5 XP au 1er click. Si "tired" / "tough" → CTA
           messagerie. */}
       {clientToken ? <ClientMoodCheckIn token={clientToken} /> : null}
+
+      {/* ⭐ Programme Client Privilégié VIP (Tier B Premium VIP — 2026-04-28) :
+          bandeau gold avec niveau + barre + CTA sandbox interactif + form
+          prospects. */}
+      {clientToken ? (
+        <ClientVipHomeSection
+          token={clientToken}
+          coachName={(data.coach_name ?? "").split(/\s+/)[0] || "Coach"}
+          coachHerbalifeId={
+            (data as { coach_herbalife_id?: string | null }).coach_herbalife_id ?? null
+          }
+        />
+      ) : null}
 
       {/* Chantier MEGA v2 (2026-04-25) : Hero transformation + action du jour.
           Mapping metrics (flat) → Assessment[] (nested bodyScan) attendu

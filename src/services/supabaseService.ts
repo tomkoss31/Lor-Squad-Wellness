@@ -109,6 +109,11 @@ type ClientRow = {
   public_share_consent?: boolean | null;
   public_share_consent_at?: string | null;
   public_share_revoked_at?: string | null;
+  // Programme Client VIP Herbalife (Tier B 2026-04-28).
+  vip_herbalife_id?: string | null;
+  vip_sponsor_client_id?: string | null;
+  vip_started_at?: string | null;
+  vip_status?: string | null;
   assessments?: AssessmentRow[] | null;
 };
 
@@ -404,6 +409,11 @@ function mapClient(row: ClientRow): Client {
     publicShareConsent: row.public_share_consent ?? false,
     publicShareConsentAt: row.public_share_consent_at ?? undefined,
     publicShareRevokedAt: row.public_share_revoked_at ?? undefined,
+    // Tier B Premium VIP (2026-04-28) : programme client privilégié Herbalife.
+    vipHerbalifeId: row.vip_herbalife_id ?? null,
+    vipSponsorClientId: row.vip_sponsor_client_id ?? null,
+    vipStartedAt: row.vip_started_at ?? null,
+    vipStatus: (row.vip_status as Client["vipStatus"]) ?? "none",
     assessments: (row.assessments ?? []).map(mapAssessment)
   };
 }
