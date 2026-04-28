@@ -21,7 +21,7 @@ import { VipProgramTab } from "../components/settings/VipProgramTab";
 
 type TabKey = "profil" | "vip" | "equipe" | "leads" | "transferts" | "stats" | "debug";
 
-const TABS: Array<{ key: TabKey; label: string; icon: string; adminOnly?: boolean }> = [
+const ALL_TABS: Array<{ key: TabKey; label: string; icon: string; adminOnly?: boolean }> = [
   { key: "profil", label: "Profil", icon: "👤" },
   // Tier B Premium VIP (2026-04-28) : doc programme Client Privilegie pour
   // tous les coachs (distri/referent/admin). Pas adminOnly.
@@ -35,6 +35,10 @@ const TABS: Array<{ key: TabKey; label: string; icon: string; adminOnly?: boolea
 
 export function ParametresPage() {
   const { currentUser } = useAppContext();
+  // Chantier Academy section 1 (2026-04-27) : /parametres ouverte aux
+  // non-admins, mais seul l onglet "Profil" est visible pour eux.
+  const isAdmin = currentUser?.role === "admin";
+  const TABS = ALL_TABS.filter((t) => isAdmin || !t.adminOnly);
   const [tab, setTab] = useState<TabKey>(() => {
     if (typeof window === "undefined") return "profil";
     const fromQuery = new URLSearchParams(window.location.search).get("tab") as TabKey;

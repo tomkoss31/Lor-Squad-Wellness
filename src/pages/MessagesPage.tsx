@@ -6,6 +6,7 @@ import { GlobalViewToggle } from '../components/ui/GlobalViewToggle'
 import { Card } from '../components/ui/Card'
 import { PageHeading } from '../components/ui/PageHeading'
 import { ReplyMessageModal } from '../components/messaging/ReplyMessageModal'
+import { StartConversationModal } from '../components/messages/StartConversationModal'
 import {
   MessageFilters,
   readFiltersFromSearch,
@@ -261,6 +262,7 @@ export function MessagesPage() {
   const [tab, setTab] = useState<Tab>('clients')
   const [replyTarget, setReplyTarget] = useState<ClientMessage | null>(null)
   const [filters, setFilters] = useState<MessageFiltersState>(() => readFiltersFromSearch(location.search))
+  const [composeOpen, setComposeOpen] = useState(false)
 
   // Chantier 5 bugs (2026-04-24) : admin voit ses propres messages
   // clients par défaut. Toggle partagé Vue globale.
@@ -315,6 +317,31 @@ export function MessagesPage() {
         description="Demandes clients, produits et recommandations — filtre, traite, archive."
       />
 
+      {/* Chantier Academy refonte (2026-04-27) : CTA Demarrer une conversation
+          pour permettre au coach d initier l echange (avant : reactif uniquement). */}
+      <div style={{ display: "flex", justifyContent: "flex-end" }}>
+        <button
+          type="button"
+          onClick={() => setComposeOpen(true)}
+          data-tour-id="messages-compose"
+          style={{
+            background: "linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)",
+            color: "white",
+            border: "none",
+            padding: "10px 16px",
+            borderRadius: 10,
+            fontSize: 13,
+            fontWeight: 600,
+            cursor: "pointer",
+            fontFamily: "DM Sans, sans-serif",
+            boxShadow: "0 2px 6px rgba(186,117,23,0.25)",
+          }}
+        >
+          + Démarrer une conversation
+        </button>
+      </div>
+      {composeOpen ? <StartConversationModal onClose={() => setComposeOpen(false)} /> : null}
+
       {/* Chantier 5 bugs : toggle Vue globale admin */}
       <GlobalViewToggle
         personalLabel="Vue personnelle (mes messages clients)"
@@ -322,7 +349,7 @@ export function MessagesPage() {
       />
 
       {/* Tabs */}
-      <div style={{ display: 'flex', gap: 6, background: 'var(--ls-surface)', border: '1px solid var(--ls-border)', borderRadius: 12, padding: 4, width: 'fit-content', flexWrap: 'wrap' }}>
+      <div data-tour-id="messages-tabs" style={{ display: 'flex', gap: 6, background: 'var(--ls-surface)', border: '1px solid var(--ls-border)', borderRadius: 12, padding: 4, width: 'fit-content', flexWrap: 'wrap' }}>
         {([
           { key: 'clients' as Tab, label: 'Demandes clients', count: unreadClients, icon: '📅' },
           { key: 'products' as Tab, label: 'Demandes produits', count: unreadProducts, icon: '🛒' },

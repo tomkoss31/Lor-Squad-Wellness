@@ -14,6 +14,7 @@ import { useMemo } from "react";
 import type { Client, FollowUp } from "../types/domain";
 import { RDV_GRACE_PERIOD_MS } from "../lib/timeConstants";
 import { isClientProgramStarted } from "../lib/calculations";
+import { getClientActiveFollowUp } from "../lib/portfolio";
 
 export type PriorityActionType =
   | "plan_rdv"
@@ -57,12 +58,20 @@ export function computePriorityAction(
   // Chantier RDV grâce (2026-04-27) : un RDV reste "upcoming" jusqu'à
   // 15 min après son heure prévue → empêche le bandeau "Planifier un RDV"
   // d'apparaître alors que le coach est en train de faire le RDV.
-  const upcomingRdv = followUps.find(
-    (f) =>
-      f.clientId === client.id &&
-      (f.status === "scheduled" || f.status === "pending") &&
-      new Date(f.dueDate).getTime() + RDV_GRACE_PERIOD_MS > now.getTime(),
-  );
+  //
+  // Fix doublon RDV (2026-04-27) : on délègue à getClientActiveFollowUp
+  // qui couvre à la fois les rows réelles `follow_ups` ET le fallback
+  // synthétique sur `client.nextFollowUp`. Avant, ce hook ne lisait que
+  // les rows → divergence avec la card "PROCHAIN RDV" affichée par
+  // ActionsRdvBlock (qui passe par getClientActiveFollowUp). Résultat :
+  // un client avec `clients.next_follow_up` renseigné mais aucune row
+  // active dans `follow_ups` voyait le bandeau "Planifier un RDV"
+  // s'afficher EN MÊME TEMPS que la card "PROCHAIN RDV demain".
+  const active = getClientActiveFollowUp(client, followUps);
+  const upcomingRdv =
+    active && new Date(active.dueDate).getTime() + RDV_GRACE_PERIOD_MS > now.getTime()
+      ? active
+      : null;
 
   const lastContactDate = latestAssessment?.date
     ? new Date(latestAssessment.date)
