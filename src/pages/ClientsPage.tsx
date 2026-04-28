@@ -682,35 +682,86 @@ export function ClientsPage() {
         </select>
       </div>
 
-      {/* PILLS RESPONSABLES */}
+      {/* PILLS RESPONSABLES — refonte premium 2026-04-29 */}
       {ownerTabs.length > 0 && (
         <div>
-          <div style={{ fontSize: 9, letterSpacing: "2px", textTransform: "uppercase", color: "var(--ls-text-hint)", fontWeight: 500, marginBottom: 8, fontFamily: "DM Sans, sans-serif" }}>
-            Filtrer par responsable
+          <div
+            style={{
+              fontSize: 9.5,
+              letterSpacing: 1.6,
+              textTransform: "uppercase",
+              color: "var(--ls-text-hint)",
+              fontWeight: 700,
+              marginBottom: 8,
+              fontFamily: "DM Sans, sans-serif",
+              display: "flex",
+              alignItems: "center",
+              gap: 5,
+            }}
+          >
+            <span style={{ fontSize: 11 }}>👥</span> Filtrer par responsable
           </div>
           <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-            {/* Pill "Toute la base" */}
             <button
               onClick={() => setOwnerFilter("all")}
               style={{
-                display: "inline-flex", alignItems: "center", gap: 6,
-                padding: "7px 12px", borderRadius: 20,
-                background: ownerFilter === "all" ? "rgba(184,146,42,0.08)" : "var(--ls-surface)",
-                border: ownerFilter === "all" ? "1px solid var(--ls-gold)" : "1px solid var(--ls-border)",
-                color: ownerFilter === "all" ? "var(--ls-gold)" : "var(--ls-text-muted)",
-                fontSize: 11, fontWeight: ownerFilter === "all" ? 600 : 400,
-                cursor: "pointer", whiteSpace: "nowrap", fontFamily: "DM Sans, sans-serif",
-                transition: "all 0.15s",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 6,
+                padding: "7px 14px",
+                borderRadius: 999,
+                background:
+                  ownerFilter === "all"
+                    ? "linear-gradient(135deg, color-mix(in srgb, var(--ls-teal) 14%, var(--ls-surface)) 0%, var(--ls-surface) 100%)"
+                    : "var(--ls-surface)",
+                border:
+                  ownerFilter === "all"
+                    ? "0.5px solid color-mix(in srgb, var(--ls-teal) 50%, transparent)"
+                    : "0.5px solid var(--ls-border)",
+                color: ownerFilter === "all" ? "var(--ls-teal)" : "var(--ls-text-muted)",
+                fontSize: 11.5,
+                fontWeight: ownerFilter === "all" ? 700 : 500,
+                cursor: "pointer",
+                whiteSpace: "nowrap",
+                fontFamily: "DM Sans, sans-serif",
+                transition: "transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease",
+                boxShadow: ownerFilter === "all" ? "0 2px 8px -3px rgba(13,148,136,0.30)" : "none",
+              }}
+              onMouseEnter={(e) => {
+                if (ownerFilter !== "all") {
+                  e.currentTarget.style.transform = "translateY(-1px)";
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (ownerFilter !== "all") e.currentTarget.style.transform = "none";
               }}
             >
-              Toute la base · {visibleClients.length}
+              🌐 Toute la base
+              <span
+                style={{
+                  fontSize: 10,
+                  padding: "1px 7px",
+                  borderRadius: 999,
+                  fontWeight: 800,
+                  fontFamily: "Syne, serif",
+                  background:
+                    ownerFilter === "all" ? "var(--ls-bg)" : "var(--ls-surface2)",
+                  color: ownerFilter === "all" ? "var(--ls-teal)" : "var(--ls-text-muted)",
+                  border: ownerFilter === "all" ? "0.5px solid var(--ls-teal)" : "0.5px solid transparent",
+                }}
+              >
+                {visibleClients.length}
+              </span>
             </button>
 
             {ownerTabs.map((owner) => {
               const isActive = ownerFilter === owner.id;
               const ownerMetrics = getPortfolioMetrics(
-                owner, visibleClients, visibleFollowUps, users,
-                owner.role === "referent" ? "network" : "personal"
+                owner,
+                visibleClients,
+                visibleFollowUps,
+                users,
+                owner.role === "referent" ? "network" : "personal",
               );
               const avatar = getOwnerAvatarColors(owner.role);
               return (
@@ -718,25 +769,67 @@ export function ClientsPage() {
                   key={owner.id}
                   onClick={() => setOwnerFilter(owner.id)}
                   style={{
-                    display: "inline-flex", alignItems: "center", gap: 7,
-                    padding: "6px 12px 6px 6px", borderRadius: 20,
-                    background: isActive ? "rgba(184,146,42,0.08)" : "var(--ls-surface)",
-                    border: isActive ? "1px solid var(--ls-gold)" : "1px solid var(--ls-border)",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 7,
+                    padding: "5px 14px 5px 5px",
+                    borderRadius: 999,
+                    background: isActive
+                      ? "linear-gradient(135deg, color-mix(in srgb, var(--ls-gold) 14%, var(--ls-surface)) 0%, var(--ls-surface) 100%)"
+                      : "var(--ls-surface)",
+                    border: isActive
+                      ? "0.5px solid color-mix(in srgb, var(--ls-gold) 50%, transparent)"
+                      : "0.5px solid var(--ls-border)",
                     color: isActive ? "var(--ls-gold)" : "var(--ls-text-muted)",
-                    fontSize: 11, fontWeight: isActive ? 600 : 400,
-                    cursor: "pointer", whiteSpace: "nowrap", fontFamily: "DM Sans, sans-serif",
-                    transition: "all 0.15s",
+                    fontSize: 11.5,
+                    fontWeight: isActive ? 700 : 500,
+                    cursor: "pointer",
+                    whiteSpace: "nowrap",
+                    fontFamily: "DM Sans, sans-serif",
+                    transition: "transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease",
+                    boxShadow: isActive ? "0 2px 8px -3px rgba(184,146,42,0.30)" : "none",
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isActive) e.currentTarget.style.transform = "translateY(-1px)";
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isActive) e.currentTarget.style.transform = "none";
                   }}
                 >
-                  <span style={{
-                    width: 22, height: 22, borderRadius: "50%",
-                    background: avatar.bg, color: avatar.text,
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    fontFamily: "Syne, sans-serif", fontWeight: 800, fontSize: 9,
-                  }}>
+                  <span
+                    style={{
+                      width: 26,
+                      height: 26,
+                      borderRadius: "50%",
+                      background: avatar.bg,
+                      color: avatar.text,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontFamily: "Syne, serif",
+                      fontWeight: 800,
+                      fontSize: 10,
+                      letterSpacing: "-0.02em",
+                      boxShadow: isActive ? "0 0 0 2px color-mix(in srgb, var(--ls-gold) 30%, transparent)" : "none",
+                    }}
+                  >
                     {getInitials(owner.name)}
                   </span>
-                  {owner.name} · {ownerMetrics.clients.length}
+                  {owner.name}
+                  <span
+                    style={{
+                      fontSize: 10,
+                      padding: "1px 7px",
+                      borderRadius: 999,
+                      fontWeight: 800,
+                      fontFamily: "Syne, serif",
+                      background: isActive ? "var(--ls-bg)" : "var(--ls-surface2)",
+                      color: isActive ? "var(--ls-gold)" : "var(--ls-text-muted)",
+                      border: isActive ? "0.5px solid var(--ls-gold)" : "0.5px solid transparent",
+                    }}
+                  >
+                    {ownerMetrics.clients.length}
+                  </span>
                 </button>
               );
             })}
