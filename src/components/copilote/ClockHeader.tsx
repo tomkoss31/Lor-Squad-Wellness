@@ -1,6 +1,7 @@
-// Chantier Co-pilote V5 PREMIUM (2026-04-29).
-// Refonte design : gradient mesh anime gold/teal subtil + typographie
-// hierarchie raffinee + chips stats compacts + micro-anims time digits.
+// Chantier Co-pilote V6 PREMIUM EXPERT (2026-04-29).
+// Design ultra premium : conic gradient holographique anime + heure 56px
+// avec text-shadow gold neon + greeting avec wave emoji anime + chips
+// neumorphic + sparkles decoratifs.
 
 import { greetingFor, moodForLoad } from "../../lib/utils/copiloteHelpers";
 
@@ -35,141 +36,229 @@ export function ClockHeader({
     <div
       style={{
         position: "relative",
-        padding: "22px 24px",
-        borderRadius: 20,
+        padding: "26px 28px",
+        borderRadius: 24,
         background: "var(--ls-surface)",
         border: "0.5px solid var(--ls-border)",
         overflow: "hidden",
         boxShadow:
-          "0 1px 0 0 color-mix(in srgb, var(--ls-gold) 8%, transparent), 0 8px 24px -8px rgba(0,0,0,0.06)",
+          "0 1px 0 0 color-mix(in srgb, var(--ls-gold) 12%, transparent), 0 12px 36px -12px rgba(0,0,0,0.10), inset 0 1px 0 0 rgba(255,255,255,0.04)",
       }}
     >
-      {/* Gradient mesh anime — gold + teal, subtil, en arriere-plan */}
-      <div
-        aria-hidden="true"
-        style={{
-          position: "absolute",
-          inset: 0,
-          opacity: 0.55,
-          pointerEvents: "none",
-          background: `
-            radial-gradient(circle at 0% 0%, color-mix(in srgb, var(--ls-gold) 22%, transparent) 0%, transparent 40%),
-            radial-gradient(circle at 100% 100%, color-mix(in srgb, var(--ls-teal) 14%, transparent) 0%, transparent 50%),
-            radial-gradient(circle at 100% 0%, color-mix(in srgb, var(--ls-purple) 10%, transparent) 0%, transparent 60%)
-          `,
-          animation: "ls-mesh-shift 18s ease-in-out infinite alternate",
-        }}
-      />
-
       <style>{`
-        @keyframes ls-mesh-shift {
-          0% { transform: translate(0, 0) scale(1); }
-          50% { transform: translate(8px, -4px) scale(1.04); }
-          100% { transform: translate(-4px, 6px) scale(1); }
+        @keyframes ls-conic-rotate {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
         }
-        @keyframes ls-time-fade {
-          from { opacity: 0; transform: translateY(2px); }
-          to { opacity: 1; transform: translateY(0); }
+        @keyframes ls-wave {
+          0%, 60%, 100% { transform: rotate(0deg); }
+          10% { transform: rotate(14deg); }
+          20% { transform: rotate(-8deg); }
+          30% { transform: rotate(14deg); }
+          40% { transform: rotate(-4deg); }
+          50% { transform: rotate(10deg); }
         }
-        .ls-time-digits {
-          animation: ls-time-fade 280ms ease-out;
+        @keyframes ls-sparkle {
+          0%, 100% { opacity: 0; transform: scale(0.5) rotate(0deg); }
+          50% { opacity: 1; transform: scale(1.2) rotate(180deg); }
+        }
+        @keyframes ls-time-flip {
+          from { opacity: 0; transform: translateY(10px) scaleY(0.6); filter: blur(2px); }
+          to { opacity: 1; transform: translateY(0) scaleY(1); filter: blur(0); }
+        }
+        @keyframes ls-glow-pulse {
+          0%, 100% { box-shadow: 0 0 20px rgba(239,159,39,0.0), inset 0 0 0 0 rgba(255,255,255,0.04); }
+          50% { box-shadow: 0 0 32px rgba(239,159,39,0.18), inset 0 0 0 0 rgba(255,255,255,0.04); }
+        }
+        .ls-clock-conic {
+          position: absolute;
+          inset: -50%;
+          background: conic-gradient(
+            from 0deg,
+            transparent 0deg,
+            rgba(239,159,39,0.18) 60deg,
+            transparent 120deg,
+            rgba(13,148,136,0.14) 180deg,
+            transparent 240deg,
+            rgba(124,58,237,0.12) 300deg,
+            transparent 360deg
+          );
+          animation: ls-conic-rotate 28s linear infinite;
+          opacity: 0.6;
+          pointer-events: none;
+          filter: blur(40px);
+        }
+        .ls-wave-emoji {
+          display: inline-block;
+          transform-origin: 70% 70%;
+          animation: ls-wave 2.4s ease-in-out infinite;
+        }
+        .ls-sparkle-1 { animation: ls-sparkle 3.2s ease-in-out infinite; }
+        .ls-sparkle-2 { animation: ls-sparkle 4.1s ease-in-out 0.6s infinite; }
+        .ls-sparkle-3 { animation: ls-sparkle 3.7s ease-in-out 1.4s infinite; }
+        .ls-time-digits-v3 {
+          animation: ls-time-flip 360ms cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .ls-clock-card {
+          animation: ls-glow-pulse 6s ease-in-out infinite;
         }
         @media (prefers-reduced-motion: reduce) {
-          .ls-time-digits, [aria-hidden="true"][style*="ls-mesh-shift"] {
+          .ls-clock-conic, .ls-wave-emoji, .ls-sparkle-1, .ls-sparkle-2,
+          .ls-sparkle-3, .ls-time-digits-v3, .ls-clock-card {
             animation: none !important;
           }
         }
       `}</style>
 
-      <div style={{ position: "relative", display: "flex", alignItems: "center", gap: 24, flexWrap: "wrap" }}>
-        {/* Bloc gauche : eyebrow + greeting + chips stats */}
-        <div style={{ flex: 1, minWidth: 220 }}>
+      {/* Conic gradient anime en arriere-plan */}
+      <div className="ls-clock-conic" aria-hidden="true" />
+
+      {/* Sparkles decoratifs */}
+      <span
+        className="ls-sparkle-1"
+        aria-hidden="true"
+        style={{ position: "absolute", top: 18, right: "30%", fontSize: 12, color: "var(--ls-gold)" }}
+      >
+        ✦
+      </span>
+      <span
+        className="ls-sparkle-2"
+        aria-hidden="true"
+        style={{ position: "absolute", bottom: 22, right: "8%", fontSize: 9, color: "var(--ls-teal)" }}
+      >
+        ✦
+      </span>
+      <span
+        className="ls-sparkle-3"
+        aria-hidden="true"
+        style={{ position: "absolute", top: 38, left: "42%", fontSize: 10, color: "var(--ls-purple)" }}
+      >
+        ✦
+      </span>
+
+      <div style={{ position: "relative", display: "flex", alignItems: "center", gap: 28, flexWrap: "wrap" }}>
+        {/* Bloc gauche */}
+        <div style={{ flex: 1, minWidth: 240 }}>
           <div
             style={{
               fontSize: 10,
-              letterSpacing: 1.6,
+              letterSpacing: 2,
               textTransform: "uppercase",
               fontWeight: 700,
               color: "color-mix(in srgb, var(--ls-gold) 90%, transparent)",
-              marginBottom: 4,
+              marginBottom: 6,
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
             }}
           >
+            <span
+              style={{
+                display: "inline-block",
+                width: 6,
+                height: 6,
+                borderRadius: 999,
+                background: "var(--ls-gold)",
+                boxShadow: "0 0 8px rgba(239,159,39,0.6)",
+              }}
+            />
             {formatDateShort(now)}
           </div>
           <div
             style={{
               fontFamily: "Syne, serif",
-              fontSize: 26,
-              fontWeight: 700,
+              fontSize: 30,
+              fontWeight: 800,
               color: "var(--ls-text)",
               lineHeight: 1.05,
-              letterSpacing: "-0.01em",
+              letterSpacing: "-0.02em",
             }}
           >
             {greeting}
             {userFirstName ? (
-              <span style={{ color: "var(--ls-gold)" }}> {userFirstName}</span>
-            ) : null}
-            <span style={{ color: "var(--ls-text-muted)" }}> ✨</span>
+              <span
+                style={{
+                  background: "linear-gradient(135deg, #EF9F27 0%, #BA7517 60%, #5C3A05 100%)",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  backgroundClip: "text",
+                  fontWeight: 800,
+                }}
+              >
+                {" "}
+                {userFirstName}
+              </span>
+            ) : null}{" "}
+            <span className="ls-wave-emoji" style={{ fontSize: 26 }}>
+              👋
+            </span>
           </div>
 
-          {/* Chips stats compact */}
-          <div
-            style={{
-              display: "flex",
-              gap: 6,
-              marginTop: 12,
-              flexWrap: "wrap",
-            }}
-          >
-            <StatChip
-              icon="📅"
-              label={`${appointmentsToday} RDV`}
-              tone="teal"
-            />
-            <StatChip
+          {/* Chips neumorphic */}
+          <div style={{ display: "flex", gap: 8, marginTop: 14, flexWrap: "wrap" }}>
+            <NeoChip icon="📅" label={`${appointmentsToday} RDV`} tone="teal" />
+            <NeoChip
               icon="🎯"
               label={`${followupsToday} suivi${followupsToday > 1 ? "s" : ""}`}
               tone="gold"
             />
-            <StatChip icon="🧘" label={moodLabel} tone="muted" />
+            <NeoChip icon="🧘" label={moodLabel} tone="muted" />
           </div>
         </div>
 
-        {/* Horloge digital premium */}
+        {/* Horloge digitale geante avec gold neon */}
         <div
           style={{
             display: "flex",
             flexDirection: "column",
             alignItems: "flex-end",
             flexShrink: 0,
+            position: "relative",
           }}
         >
           <div
             style={{
               fontSize: 9,
-              letterSpacing: 1.8,
+              letterSpacing: 2,
               textTransform: "uppercase",
               fontWeight: 700,
               color: "var(--ls-text-hint)",
-              marginBottom: 2,
+              marginBottom: 4,
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
             }}
           >
-            Heure locale
+            <span
+              style={{
+                display: "inline-block",
+                width: 5,
+                height: 5,
+                borderRadius: 999,
+                background: "#10b981",
+                boxShadow: "0 0 6px rgba(16,185,129,0.8)",
+                animation: "ls-glow-pulse 2s ease-in-out infinite",
+              }}
+            />
+            Live
           </div>
           <div
             key={formatTime(now)}
-            className="ls-time-digits"
+            className="ls-time-digits-v3 ls-clock-card"
             style={{
               fontFamily: "Syne, serif",
-              fontSize: 44,
-              fontWeight: 600,
-              letterSpacing: "-0.04em",
-              background: "linear-gradient(135deg, var(--ls-text) 0%, color-mix(in srgb, var(--ls-gold) 80%, var(--ls-text)) 100%)",
+              fontSize: 56,
+              fontWeight: 700,
+              letterSpacing: "-0.05em",
+              background:
+                "linear-gradient(135deg, var(--ls-text) 0%, color-mix(in srgb, var(--ls-gold) 100%, transparent) 80%, #BA7517 100%)",
               WebkitBackgroundClip: "text",
               WebkitTextFillColor: "transparent",
               backgroundClip: "text",
               lineHeight: 1,
+              padding: "8px 16px",
+              borderRadius: 16,
+              textShadow: "0 0 30px rgba(239,159,39,0.15)",
             }}
           >
             {formatTime(now)}
@@ -180,7 +269,7 @@ export function ClockHeader({
   );
 }
 
-function StatChip({
+function NeoChip({
   icon,
   label,
   tone,
@@ -189,21 +278,24 @@ function StatChip({
   label: string;
   tone: "teal" | "gold" | "muted";
 }) {
-  const colors: Record<typeof tone, { bg: string; fg: string; border: string }> = {
+  const colors: Record<typeof tone, { bg: string; fg: string; shadow: string }> = {
     teal: {
-      bg: "color-mix(in srgb, var(--ls-teal) 8%, var(--ls-surface))",
+      bg: "linear-gradient(135deg, color-mix(in srgb, var(--ls-teal) 8%, var(--ls-surface)) 0%, var(--ls-surface) 100%)",
       fg: "var(--ls-teal)",
-      border: "color-mix(in srgb, var(--ls-teal) 30%, transparent)",
+      shadow:
+        "inset 0 1px 0 0 rgba(255,255,255,0.06), 0 1px 2px rgba(13,148,136,0.10), 0 0 0 0.5px color-mix(in srgb, var(--ls-teal) 30%, transparent)",
     },
     gold: {
-      bg: "color-mix(in srgb, var(--ls-gold) 10%, var(--ls-surface))",
+      bg: "linear-gradient(135deg, color-mix(in srgb, var(--ls-gold) 10%, var(--ls-surface)) 0%, var(--ls-surface) 100%)",
       fg: "var(--ls-gold)",
-      border: "color-mix(in srgb, var(--ls-gold) 30%, transparent)",
+      shadow:
+        "inset 0 1px 0 0 rgba(255,255,255,0.06), 0 1px 2px rgba(184,146,42,0.12), 0 0 0 0.5px color-mix(in srgb, var(--ls-gold) 30%, transparent)",
     },
     muted: {
       bg: "var(--ls-surface)",
       fg: "var(--ls-text-muted)",
-      border: "var(--ls-border)",
+      shadow:
+        "inset 0 1px 0 0 rgba(255,255,255,0.04), 0 1px 2px rgba(0,0,0,0.05), 0 0 0 0.5px var(--ls-border)",
     },
   };
   const c = colors[tone];
@@ -212,18 +304,19 @@ function StatChip({
       style={{
         display: "inline-flex",
         alignItems: "center",
-        gap: 4,
-        padding: "5px 10px",
+        gap: 5,
+        padding: "6px 12px",
         background: c.bg,
-        border: `0.5px solid ${c.border}`,
         borderRadius: 999,
         fontSize: 11,
-        fontWeight: 600,
+        fontWeight: 700,
         color: c.fg,
         fontFamily: "DM Sans, sans-serif",
+        boxShadow: c.shadow,
+        letterSpacing: 0.2,
       }}
     >
-      <span style={{ fontSize: 12 }}>{icon}</span>
+      <span style={{ fontSize: 13 }}>{icon}</span>
       {label}
     </span>
   );

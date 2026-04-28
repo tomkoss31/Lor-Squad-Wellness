@@ -307,78 +307,238 @@ export function ClientsPage() {
         description={`${filteredClients.length} dossier${filteredClients.length > 1 ? "s" : ""} · recherche, responsables et fiche détaillée.`}
       />
 
-      {/* 3 STATS PREMIUM V2 (2026-04-29) — gradient + icones + hover lift */}
+      {/* STATS PREMIUM V3 BENTO (2026-04-29) — card principale 2x + 2 mini */}
       <style>{`
-        @keyframes ls-stat-fade-in {
-          from { opacity: 0; transform: translateY(6px); }
-          to { opacity: 1; transform: translateY(0); }
+        @keyframes ls-stat-zoom-in {
+          from { opacity: 0; transform: scale(0.92) translateY(8px); }
+          to { opacity: 1; transform: scale(1) translateY(0); }
         }
-        .clients-stat-card {
-          animation: ls-stat-fade-in 480ms cubic-bezier(0.16, 1, 0.3, 1) both;
-          transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+        @keyframes ls-stat-shine {
+          0%, 100% { transform: translateX(-100%); }
+          50% { transform: translateX(200%); }
         }
-        .clients-stat-card:hover {
-          transform: translateY(-2px);
+        @keyframes ls-stat-conic {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
         }
-        .clients-stat-card:nth-child(1) { animation-delay: 0ms; }
-        .clients-stat-card:nth-child(2) { animation-delay: 80ms; }
-        .clients-stat-card:nth-child(3) { animation-delay: 160ms; }
+        .clients-stat-card-v3 {
+          animation: ls-stat-zoom-in 560ms cubic-bezier(0.16, 1, 0.3, 1) both;
+          transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
+          position: relative;
+          overflow: hidden;
+        }
+        .clients-stat-card-v3:hover {
+          transform: translateY(-3px);
+        }
+        .clients-stat-card-v3:nth-child(1) { animation-delay: 0ms; }
+        .clients-stat-card-v3:nth-child(2) { animation-delay: 100ms; }
+        .clients-stat-card-v3:nth-child(3) { animation-delay: 200ms; }
+        .clients-stat-shine {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 50%;
+          height: 100%;
+          background: linear-gradient(90deg, transparent, rgba(255,255,255,0.10), transparent);
+          animation: ls-stat-shine 6s ease-in-out infinite;
+          pointer-events: none;
+        }
+        .clients-stat-conic {
+          position: absolute;
+          width: 220px;
+          height: 220px;
+          background: conic-gradient(
+            from 0deg,
+            transparent,
+            rgba(239,159,39,0.10),
+            transparent
+          );
+          animation: ls-stat-conic 12s linear infinite;
+          pointer-events: none;
+          top: -50%;
+          right: -30%;
+          filter: blur(20px);
+        }
         @media (prefers-reduced-motion: reduce) {
-          .clients-stat-card { animation: none !important; transition: none !important; }
+          .clients-stat-card-v3, .clients-stat-shine, .clients-stat-conic {
+            animation: none !important;
+            transition: none !important;
+          }
         }
       `}</style>
-      <div className="clients-stats-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12 }}>
-        {[
-          { icon: "👥", label: "Visibles", value: filteredClients.length, color: "var(--ls-teal)", colorRgb: "13,148,136", sub: "Résultat du filtre" },
-          { icon: "🎯", label: "Responsables", value: ownerTabs.length, color: "var(--ls-gold)", colorRgb: "184,146,42", sub: "Portefeuilles actifs" },
-          { icon: "🔥", label: "Relances", value: visibleRelanceCount, color: "var(--ls-coral)", colorRgb: "220,38,38", sub: "À reprendre" },
-        ].map(({ icon, label, value, color, colorRgb, sub }) => (
+      <div
+        className="clients-stats-grid"
+        style={{
+          display: "grid",
+          gridTemplateColumns: "1.6fr 1fr 1fr",
+          gridTemplateRows: "auto",
+          gap: 14,
+        }}
+      >
+        {/* Card principale BENTO — Visibles (plus grosse) */}
+        <div
+          className="clients-stat-card-v3"
+          style={{
+            background:
+              "linear-gradient(135deg, color-mix(in srgb, var(--ls-teal) 14%, var(--ls-surface)) 0%, color-mix(in srgb, var(--ls-gold) 6%, var(--ls-surface)) 100%)",
+            border: "0.5px solid color-mix(in srgb, var(--ls-teal) 35%, var(--ls-border))",
+            borderRadius: 20,
+            padding: "22px 24px",
+            boxShadow:
+              "0 1px 0 0 rgba(13,148,136,0.10), 0 12px 32px -12px rgba(13,148,136,0.18), inset 0 1px 0 0 rgba(255,255,255,0.06)",
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "space-between",
+            minHeight: 130,
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.boxShadow =
+              "0 1px 0 0 rgba(13,148,136,0.12), 0 16px 40px -12px rgba(13,148,136,0.28), inset 0 1px 0 0 rgba(255,255,255,0.06)";
+            e.currentTarget.style.borderColor = "color-mix(in srgb, var(--ls-teal) 60%, var(--ls-border))";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.boxShadow =
+              "0 1px 0 0 rgba(13,148,136,0.10), 0 12px 32px -12px rgba(13,148,136,0.18), inset 0 1px 0 0 rgba(255,255,255,0.06)";
+            e.currentTarget.style.borderColor = "color-mix(in srgb, var(--ls-teal) 35%, var(--ls-border))";
+          }}
+        >
+          <div className="clients-stat-conic" aria-hidden="true" />
+          <div className="clients-stat-shine" aria-hidden="true" />
+          <div style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <div style={{ fontSize: 10, letterSpacing: 2, textTransform: "uppercase", color: "var(--ls-text-hint)", fontWeight: 700, fontFamily: "DM Sans, sans-serif" }}>
+              👥 Clients visibles
+            </div>
+            <div
+              style={{
+                padding: "4px 10px",
+                background: "color-mix(in srgb, var(--ls-teal) 14%, transparent)",
+                border: "0.5px solid color-mix(in srgb, var(--ls-teal) 35%, transparent)",
+                borderRadius: 999,
+                fontSize: 10,
+                fontWeight: 700,
+                color: "var(--ls-teal)",
+                fontFamily: "DM Sans, sans-serif",
+              }}
+            >
+              ✓ Filtré
+            </div>
+          </div>
+          <div style={{ position: "relative", display: "flex", alignItems: "baseline", gap: 12 }}>
+            <div
+              style={{
+                fontFamily: "Syne, serif",
+                fontWeight: 800,
+                fontSize: 56,
+                lineHeight: 1,
+                background: "linear-gradient(135deg, var(--ls-teal) 0%, color-mix(in srgb, var(--ls-teal) 70%, #5C3A05) 100%)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                backgroundClip: "text",
+                letterSpacing: "-0.04em",
+              }}
+            >
+              {filteredClients.length}
+            </div>
+            <div style={{ fontSize: 13, color: "var(--ls-text-muted)", fontWeight: 500 }}>
+              dossier{filteredClients.length > 1 ? "s" : ""}
+            </div>
+          </div>
+        </div>
+
+        {/* Card 2 — Responsables */}
+        <div
+          className="clients-stat-card-v3"
+          style={{
+            background:
+              "linear-gradient(135deg, color-mix(in srgb, var(--ls-gold) 12%, var(--ls-surface)) 0%, var(--ls-surface) 100%)",
+            border: "0.5px solid color-mix(in srgb, var(--ls-gold) 35%, var(--ls-border))",
+            borderRadius: 20,
+            padding: "18px 20px",
+            boxShadow:
+              "0 1px 0 0 rgba(184,146,42,0.10), 0 8px 24px -10px rgba(184,146,42,0.20), inset 0 1px 0 0 rgba(255,255,255,0.06)",
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "space-between",
+            minHeight: 130,
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.boxShadow =
+              "0 1px 0 0 rgba(184,146,42,0.14), 0 12px 32px -10px rgba(184,146,42,0.30), inset 0 1px 0 0 rgba(255,255,255,0.06)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.boxShadow =
+              "0 1px 0 0 rgba(184,146,42,0.10), 0 8px 24px -10px rgba(184,146,42,0.20), inset 0 1px 0 0 rgba(255,255,255,0.06)";
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <div style={{ fontSize: 9.5, letterSpacing: 2, textTransform: "uppercase", color: "var(--ls-text-hint)", fontWeight: 700 }}>
+              🎯 Responsables
+            </div>
+            <span style={{ fontSize: 22, opacity: 0.4 }}>👑</span>
+          </div>
           <div
-            key={label}
-            className="clients-stat-card"
             style={{
-              position: "relative",
-              background: `linear-gradient(135deg, color-mix(in srgb, ${color} 6%, var(--ls-surface)) 0%, var(--ls-surface) 60%)`,
-              border: `0.5px solid color-mix(in srgb, ${color} 25%, var(--ls-border))`,
-              borderRadius: 16,
-              padding: "16px 18px",
-              overflow: "hidden",
-              boxShadow: `0 1px 0 0 color-mix(in srgb, ${color} 8%, transparent)`,
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.boxShadow = `0 8px 24px -8px rgba(${colorRgb},0.18)`;
-              e.currentTarget.style.borderColor = `color-mix(in srgb, ${color} 50%, var(--ls-border))`;
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.boxShadow = `0 1px 0 0 color-mix(in srgb, ${color} 8%, transparent)`;
-              e.currentTarget.style.borderColor = `color-mix(in srgb, ${color} 25%, var(--ls-border))`;
+              fontFamily: "Syne, serif",
+              fontWeight: 800,
+              fontSize: 38,
+              lineHeight: 1,
+              background: "linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              backgroundClip: "text",
+              letterSpacing: "-0.03em",
             }}
           >
-            {/* Glow décoratif coin top-right */}
-            <div
-              aria-hidden="true"
-              style={{
-                position: "absolute",
-                top: -30,
-                right: -30,
-                width: 100,
-                height: 100,
-                background: `radial-gradient(circle, color-mix(in srgb, ${color} 20%, transparent) 0%, transparent 70%)`,
-                pointerEvents: "none",
-              }}
-            />
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6, position: "relative" }}>
-              <span style={{ fontSize: 9, letterSpacing: "2px", textTransform: "uppercase", color: "var(--ls-text-hint)", fontWeight: 700, fontFamily: "DM Sans, sans-serif" }}>
-                {label}
-              </span>
-              <span style={{ fontSize: 18, opacity: 0.9 }}>{icon}</span>
-            </div>
-            <div style={{ fontFamily: "Syne, serif", fontWeight: 800, fontSize: 28, color, lineHeight: 1, marginBottom: 4, letterSpacing: "-0.02em", position: "relative" }}>
-              {value}
-            </div>
-            <div style={{ fontSize: 11, color: "var(--ls-text-hint)", position: "relative" }}>{sub}</div>
+            {ownerTabs.length}
           </div>
-        ))}
+          <div style={{ fontSize: 11, color: "var(--ls-text-hint)" }}>portefeuilles actifs</div>
+        </div>
+
+        {/* Card 3 — Relances */}
+        <div
+          className="clients-stat-card-v3"
+          style={{
+            background:
+              visibleRelanceCount > 0
+                ? "linear-gradient(135deg, color-mix(in srgb, var(--ls-coral) 12%, var(--ls-surface)) 0%, var(--ls-surface) 100%)"
+                : "linear-gradient(135deg, color-mix(in srgb, var(--ls-teal) 6%, var(--ls-surface)) 0%, var(--ls-surface) 100%)",
+            border: `0.5px solid color-mix(in srgb, ${visibleRelanceCount > 0 ? "var(--ls-coral)" : "var(--ls-teal)"} 35%, var(--ls-border))`,
+            borderRadius: 20,
+            padding: "18px 20px",
+            boxShadow:
+              visibleRelanceCount > 0
+                ? "0 1px 0 0 rgba(220,38,38,0.10), 0 8px 24px -10px rgba(220,38,38,0.20), inset 0 1px 0 0 rgba(255,255,255,0.06)"
+                : "0 1px 0 0 rgba(13,148,136,0.10), 0 8px 24px -10px rgba(13,148,136,0.18), inset 0 1px 0 0 rgba(255,255,255,0.06)",
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "space-between",
+            minHeight: 130,
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <div style={{ fontSize: 9.5, letterSpacing: 2, textTransform: "uppercase", color: "var(--ls-text-hint)", fontWeight: 700 }}>
+              {visibleRelanceCount > 0 ? "🔥 Relances" : "✓ À jour"}
+            </div>
+            <span style={{ fontSize: 22, opacity: 0.4 }}>
+              {visibleRelanceCount > 0 ? "⚠️" : "🎉"}
+            </span>
+          </div>
+          <div
+            style={{
+              fontFamily: "Syne, serif",
+              fontWeight: 800,
+              fontSize: 38,
+              lineHeight: 1,
+              color: visibleRelanceCount > 0 ? "var(--ls-coral)" : "var(--ls-teal)",
+              letterSpacing: "-0.03em",
+            }}
+          >
+            {visibleRelanceCount}
+          </div>
+          <div style={{ fontSize: 11, color: "var(--ls-text-hint)" }}>
+            {visibleRelanceCount > 0 ? "à reprendre" : "tout est calé"}
+          </div>
+        </div>
       </div>
 
       {/* CHIPS FILTRES RAPIDES + TOGGLE VUE (Chantier C.1+C.2, 2026-04-29) */}
