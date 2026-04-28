@@ -14,7 +14,7 @@
 // tendance. Loading skeleton pendant le fetch.
 // =============================================================================
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   ResponsiveContainer,
@@ -35,9 +35,56 @@ import {
   type AdminAnalyticsPayload,
 } from "../hooks/useAdminAnalytics";
 import { DistriDrillDownModal } from "../components/analytics/DistriDrillDownModal";
+import { AnalyticsPdfReport } from "../components/analytics/AnalyticsPdfReport";
 
 export function AnalyticsPage() {
   const { data, loading, error, reload } = useAdminAnalytics();
+  // D V3 (2026-04-28) : ref vers le rapport PDF off-screen + state download.
+  const pdfRef = useRef<HTMLDivElement | null>(null);
+  const [exporting, setExporting] = useState(false);
+
+  async function handleExportPdf() {
+    if (!data || !pdfRef.current || exporting) return;
+    setExporting(true);
+    try {
+      const html2canvas = (await import("html2canvas")).default;
+      const { default: jsPDF } = await import("jspdf");
+      const canvas = await html2canvas(pdfRef.current, {
+        scale: 2,
+        backgroundColor: "#ffffff",
+        useCORS: true,
+        logging: false,
+      });
+      const pdf = new jsPDF({
+        orientation: "portrait",
+        unit: "mm",
+        format: "a4",
+        compress: true,
+      });
+      // A4 = 210x297mm. On garde l aspect, possible multipage si trop long.
+      const pdfWidth = 210;
+      const imgHeight = (canvas.height * pdfWidth) / canvas.width;
+      const pageHeight = 297;
+      let position = 0;
+      const imgData = canvas.toDataURL("image/jpeg", 0.92);
+      // Premiere page
+      pdf.addImage(imgData, "JPEG", 0, position, pdfWidth, imgHeight, undefined, "FAST");
+      let heightLeft = imgHeight - pageHeight;
+      while (heightLeft > 0) {
+        position = -(imgHeight - heightLeft);
+        pdf.addPage();
+        pdf.addImage(imgData, "JPEG", 0, position, pdfWidth, imgHeight, undefined, "FAST");
+        heightLeft -= pageHeight;
+      }
+      const stamp = new Date().toISOString().slice(0, 7); // YYYY-MM
+      pdf.save(`lorsquad-analytics-${stamp}.pdf`);
+    } catch (err) {
+      console.error("[AnalyticsPdf] export failed:", err);
+      alert("Impossible de générer le PDF. Réessaie.");
+    } finally {
+      setExporting(false);
+    }
+  }
 
   return (
     <div className="space-y-5">
@@ -47,25 +94,63 @@ export function AnalyticsPage() {
           title="Pilotage business"
           description="KPI, conversions, top produits & distri (admin only)."
         />
-        <button
-          type="button"
-          onClick={reload}
-          disabled={loading}
+        <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+          <button
+            type="button"
+            onClick={() => void handleExportPdf()}
+            disabled={loading || exporting || !data}
+            style={{
+              padding: "8px 16px",
+              border: "none",
+              borderRadius: 10,
+              background:
+                loading || !data
+                  ? "var(--ls-surface2)"
+                  : "linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)",
+              color: loading || !data ? "var(--ls-text-hint)" : "white",
+              fontSize: 12,
+              fontFamily: "DM Sans, sans-serif",
+              fontWeight: 700,
+              cursor: exporting ? "wait" : loading || !data ? "not-allowed" : "pointer",
+              boxShadow: loading || !data ? "none" : "0 2px 8px rgba(186,117,23,0.30)",
+            }}
+          >
+            {exporting ? "Génération…" : "📄 Export PDF"}
+          </button>
+          <button
+            type="button"
+            onClick={reload}
+            disabled={loading}
+            style={{
+              padding: "8px 14px",
+              border: "0.5px solid var(--ls-border)",
+              borderRadius: 10,
+              background: "var(--ls-surface)",
+              color: "var(--ls-text-muted)",
+              fontSize: 12,
+              fontFamily: "DM Sans, sans-serif",
+              cursor: loading ? "wait" : "pointer",
+            }}
+          >
+            {loading ? "..." : "↻ Actualiser"}
+          </button>
+        </div>
+      </div>
+
+      {/* D V3 : layout PDF off-screen pour capture html2canvas. */}
+      {data ? (
+        <div
+          aria-hidden="true"
           style={{
-            padding: "8px 14px",
-            border: "0.5px solid var(--ls-border)",
-            borderRadius: 10,
-            background: "var(--ls-surface)",
-            color: "var(--ls-text-muted)",
-            fontSize: 12,
-            fontFamily: "DM Sans, sans-serif",
-            cursor: loading ? "wait" : "pointer",
-            marginTop: 8,
+            position: "fixed",
+            top: -99999,
+            left: -99999,
+            pointerEvents: "none",
           }}
         >
-          {loading ? "..." : "↻ Actualiser"}
-        </button>
-      </div>
+          <AnalyticsPdfReport ref={pdfRef} data={data} generatedAt={new Date()} />
+        </div>
+      ) : null}
 
       {error && (
         <div
@@ -115,6 +200,7 @@ function AnalyticsSkeleton() {
 
 function AnalyticsContent({ data }: { data: AdminAnalyticsPayload }) {
   const { kpi, funnel, top_produits, top_distri, tendance_12_mois, alertes } = data;
+  const signalsDrops = data.signals_distri_drops ?? [];
   const navigate = useNavigate();
   // D V2 (2026-04-28) : drill-down distri.
   const [drillDownDistri, setDrillDownDistri] = useState<{
@@ -298,6 +384,104 @@ function AnalyticsContent({ data }: { data: AdminAnalyticsPayload }) {
           )}
         </Card>
       </div>
+
+      {/* D V3 (2026-04-28) : signaux faibles distri (chute PV >=50% vs M-1). */}
+      {signalsDrops.length > 0 && (
+        <Card title="📉 Signaux faibles · distri en chute">
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {signalsDrops.map((s) => (
+              <button
+                key={s.id}
+                type="button"
+                onClick={() => setDrillDownDistri({ id: s.id, name: s.name })}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 12,
+                  padding: "10px 14px",
+                  background: "color-mix(in srgb, var(--ls-coral) 8%, var(--ls-surface))",
+                  border: "0.5px solid color-mix(in srgb, var(--ls-coral) 35%, transparent)",
+                  borderRadius: 10,
+                  cursor: "pointer",
+                  fontFamily: "inherit",
+                  textAlign: "left",
+                  width: "100%",
+                  transition: "background 120ms ease",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background =
+                    "color-mix(in srgb, var(--ls-coral) 14%, var(--ls-surface))";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background =
+                    "color-mix(in srgb, var(--ls-coral) 8%, var(--ls-surface))";
+                }}
+              >
+                <span style={{ fontSize: 22, flexShrink: 0 }}>📉</span>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div
+                    style={{
+                      fontSize: 13,
+                      fontWeight: 700,
+                      color: "var(--ls-text)",
+                      fontFamily: "Syne, serif",
+                    }}
+                  >
+                    {s.name}
+                  </div>
+                  <div
+                    style={{
+                      fontSize: 11,
+                      color: "var(--ls-text-muted)",
+                      marginTop: 2,
+                    }}
+                  >
+                    {Math.round(s.pv_curr).toLocaleString("fr-FR")} PV ce mois ·{" "}
+                    {Math.round(s.pv_prev).toLocaleString("fr-FR")} PV M-1
+                  </div>
+                </div>
+                <div style={{ flexShrink: 0, textAlign: "right" }}>
+                  <div
+                    style={{
+                      fontFamily: "Syne, serif",
+                      fontSize: 16,
+                      fontWeight: 700,
+                      color: "var(--ls-coral)",
+                      lineHeight: 1,
+                    }}
+                  >
+                    {s.delta_pct > 0 ? "+" : ""}
+                    {s.delta_pct}%
+                  </div>
+                  <div
+                    style={{
+                      fontSize: 9,
+                      color: "var(--ls-text-hint)",
+                      letterSpacing: 0.5,
+                      textTransform: "uppercase",
+                      marginTop: 2,
+                    }}
+                  >
+                    vs M-1
+                  </div>
+                </div>
+              </button>
+            ))}
+          </div>
+          <p
+            style={{
+              fontSize: 11,
+              color: "var(--ls-text-hint)",
+              fontStyle: "italic",
+              margin: "10px 0 0",
+            }}
+          >
+            💡 Click sur un nom pour voir le détail (drill-down). Une chute de 50 %
+            mérite un appel — c&apos;est souvent un signal de découragement avant un
+            décrochage complet.
+          </p>
+        </Card>
+      )}
 
       {/* Alertes */}
       {(alertes.distri_sans_bilan_14j > 0 || alertes.clients_pause_60j > 0) && (

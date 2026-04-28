@@ -1,5 +1,5 @@
 import { useDeferredValue, useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { PageHeading } from "../components/ui/PageHeading";
 import { QuickFiltersBar } from "../components/clients/QuickFiltersBar";
 import { ClientsKanban } from "../components/clients/ClientsKanban";
@@ -24,7 +24,10 @@ import type { User, Client, LifecycleStatus } from "../types/domain";
 import { LIFECYCLE_LABELS, LIFECYCLE_TONES } from "../types/domain";
 
 export function ClientsPage() {
-  const { currentUser, users, visibleClients, visibleFollowUps, setClientLifecycleStatus } = useAppContext();
+  const { currentUser, users, visibleClients, visibleFollowUps, pvTransactions, setClientLifecycleStatus } = useAppContext();
+  // C V3 (2026-04-28) : lecture du ?owner=<id> depuis URL pour pre-selectionner
+  // un distributeur (utile quand on arrive depuis Analytics drill-down).
+  const [searchParams] = useSearchParams();
   // Chantier tri priorite (2026-04-24) : l'admin voit TOUS les clients
   // de l'arborescence, mais ses clients perso sont tries EN PREMIER
   // (tri intelligent, pas filtrage). Plus de toggle.
@@ -32,7 +35,14 @@ export function ClientsPage() {
 
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | LifecycleStatus | "fragile">("all");
-  const [ownerFilter, setOwnerFilter] = useState("all");
+  // C V3 : ownerFilter init depuis URL (?owner=<id>) si present, sinon "all".
+  const [ownerFilter, setOwnerFilter] = useState(() => searchParams.get("owner") ?? "all");
+  // Sync : si l URL change (ex: navigate depuis Analytics drill-down),
+  // mettre a jour le filtre.
+  useEffect(() => {
+    const paramOwner = searchParams.get("owner");
+    if (paramOwner) setOwnerFilter(paramOwner);
+  }, [searchParams]);
   const deferredSearch = useDeferredValue(search);
 
   // Chantier C.1 filtres rapides (2026-04-29) : chips de presets metier
@@ -71,7 +81,33 @@ export function ClientsPage() {
   }
 
   // Chantier 5 — Batch lifecycle
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  // C V3 (2026-04-28) : selection persistee en localStorage pour survivre
+  // aux refresh / changements de page. Cle distincte par admin (au cas ou
+  // plusieurs comptes sur le meme device).
+  const SELECTION_STORAGE_KEY = "ls.clients.selectedIds";
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(() => {
+    if (typeof window === "undefined") return new Set();
+    try {
+      const raw = window.localStorage.getItem(SELECTION_STORAGE_KEY);
+      if (!raw) return new Set();
+      const arr = JSON.parse(raw) as string[];
+      return new Set(Array.isArray(arr) ? arr : []);
+    } catch {
+      return new Set();
+    }
+  });
+  // Persist a chaque update.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      window.localStorage.setItem(
+        SELECTION_STORAGE_KEY,
+        JSON.stringify(Array.from(selectedIds)),
+      );
+    } catch {
+      // localStorage indispo (mode prive, quota), silent fail.
+    }
+  }, [selectedIds]);
   const [bulkStatus, setBulkStatus] = useState<LifecycleStatus>("stopped");
   const [bulkApplying, setBulkApplying] = useState(false);
   const [bulkFeedback, setBulkFeedback] = useState<string>("");
@@ -81,7 +117,14 @@ export function ClientsPage() {
 
   // C V2 (2026-04-28) : tri par colonne. Default : "smart" = ordre actuel
   // (admin sees their clients first, alphabetical secondary).
-  type SortKey = "smart" | "name-asc" | "last-bilan-desc" | "last-bilan-asc";
+  // C V3 (2026-04-28) : ajout pv-month-desc (clients qui consomment le plus
+  // ce mois) — utile pour identifier les VIP a relancer en priorite.
+  type SortKey =
+    | "smart"
+    | "name-asc"
+    | "last-bilan-desc"
+    | "last-bilan-asc"
+    | "pv-month-desc";
   const [sortKey, setSortKey] = useState<SortKey>("smart");
 
   function toggleClient(id: string) {
@@ -171,6 +214,21 @@ export function ClientsPage() {
     });
   }, [normalizedSearch, ownerFilter, selectedOwnerIds, statusFilter, visibleClients]);
 
+  // C V3 (2026-04-28) : map clientId → PV total ce mois (pour tri pv-month-desc).
+  const pvByClientThisMonth = useMemo(() => {
+    const monthStart = new Date();
+    monthStart.setDate(1);
+    monthStart.setHours(0, 0, 0, 0);
+    const map = new Map<string, number>();
+    for (const t of pvTransactions) {
+      if (!t.clientId) continue;
+      const d = new Date(t.date);
+      if (d < monthStart) continue;
+      map.set(t.clientId, (map.get(t.clientId) ?? 0) + (t.pv ?? 0));
+    }
+    return map;
+  }, [pvTransactions]);
+
   const filteredClients = useMemo(() => {
     // Applique le quick filter par dessus (compose avec les autres filtres).
     const afterQuick = quickFilter === "all"
@@ -198,6 +256,13 @@ export function ClientsPage() {
           if (bDate === null) return -1;
           return dir * (aDate - bDate);
         });
+      } else if (sortKey === "pv-month-desc") {
+        // C V3 : tri par PV consomme ce mois (descending). 0 PV en queue.
+        sorted.sort((a, b) => {
+          const aPv = pvByClientThisMonth.get(a.id) ?? 0;
+          const bPv = pvByClientThisMonth.get(b.id) ?? 0;
+          return bPv - aPv;
+        });
       }
       return sorted;
     }
@@ -213,7 +278,7 @@ export function ClientsPage() {
       });
     }
     return afterQuick;
-  }, [clientsBeforeQuickFilter, isAdmin, currentUser?.id, quickFilter, visibleFollowUps, quickFilterNow, sortKey]);
+  }, [clientsBeforeQuickFilter, isAdmin, currentUser?.id, quickFilter, visibleFollowUps, quickFilterNow, sortKey, pvByClientThisMonth]);
 
   // Relances visibles pour le filtre courant
   const visibleRelanceCount = useMemo(() => {
@@ -325,6 +390,7 @@ export function ClientsPage() {
             { id: "name-asc", label: "Nom A→Z" },
             { id: "last-bilan-desc", label: "Dernier bilan ↓" },
             { id: "last-bilan-asc", label: "Dernier bilan ↑" },
+            { id: "pv-month-desc", label: "PV ce mois ↓" },
           ].map((opt) => {
             const active = sortKey === opt.id;
             return (

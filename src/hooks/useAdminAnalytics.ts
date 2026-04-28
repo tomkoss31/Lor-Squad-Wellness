@@ -57,6 +57,15 @@ export interface AnalyticsAlertes {
   clients_pause_60j: number;
 }
 
+/** D V3 (2026-04-28) : signaux faibles — distri avec PV en chute >=50% vs M-1. */
+export interface AnalyticsSignalDrop {
+  id: string;
+  name: string;
+  pv_curr: number;
+  pv_prev: number;
+  delta_pct: number;
+}
+
 export interface AdminAnalyticsPayload {
   kpi: AnalyticsKpi;
   funnel: AnalyticsFunnel;
@@ -64,6 +73,9 @@ export interface AdminAnalyticsPayload {
   top_distri: AnalyticsDistri[];
   tendance_12_mois: AnalyticsTendance[];
   alertes: AnalyticsAlertes;
+  /** D V3 (2026-04-28) : top 5 distri avec PV chute >=50% vs M-1.
+   *  Optionnel pour compat retroactive (RPC anterieure ne renvoyait pas). */
+  signals_distri_drops?: AnalyticsSignalDrop[];
   computed_at: string;
 }
 
