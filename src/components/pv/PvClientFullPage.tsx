@@ -55,15 +55,23 @@ function relativeDays(d: string | Date | null | undefined): string {
 }
 
 // Catégorisation des produits du catalogue avec emoji + ordre d'affichage.
+// 2026-04-29 : élargi pour matcher le catalogue PDF Herbalife mars 2026
+// (gels, vitamines, kids, packs, oméga, etc).
 const CATEGORY_GROUPS: Array<{ id: string; label: string; emoji: string; matches: (cat: string) => boolean }> = [
   { id: "shake", label: "Shakes & repas", emoji: "🥤", matches: (c) => c.includes("shake") || c.includes("repas") },
   { id: "proteine", label: "Protéines", emoji: "💪", matches: (c) => c.includes("prot") },
+  { id: "aloe", label: "Aloe Vera", emoji: "🌵", matches: (c) => c.includes("aloe") },
+  { id: "hydratation", label: "Hydratation & thé", emoji: "💧", matches: (c) => c.includes("hydrat") || c.includes("routine") },
   { id: "energie", label: "Énergie", emoji: "⚡", matches: (c) => c.includes("energ") || c.includes("énerg") || c.includes("concentration") },
-  { id: "hydratation", label: "Hydratation", emoji: "💧", matches: (c) => c.includes("hydrat") },
-  { id: "digestif", label: "Digestif & fibres", emoji: "🌿", matches: (c) => c.includes("digest") || c.includes("fibres") || c.includes("visceral") },
-  { id: "sport", label: "Sport & muscle", emoji: "🏋️", matches: (c) => c.includes("sport") || c.includes("muscle") },
+  { id: "sport", label: "Sport & muscle", emoji: "🏋️", matches: (c) => c.includes("sport") || c.includes("muscle") || c.includes("collagen") },
   { id: "encas", label: "En-cas", emoji: "🍫", matches: (c) => c.includes("encas") || c.includes("en-cas") },
+  { id: "digestif", label: "Digestif & fibres", emoji: "🌿", matches: (c) => c.includes("digest") || c.includes("fibres") || c.includes("visceral") },
   { id: "sommeil", label: "Sommeil & calme", emoji: "🌙", matches: (c) => c.includes("sommeil") },
+  { id: "kids", label: "Enfants", emoji: "🧒", matches: (c) => c.includes("kids") },
+  { id: "vitamines", label: "Vitamines & gels", emoji: "💊", matches: (c) => c.includes("vitamines") || c.includes("gels") || c.includes("mineraux") || c.includes("minéraux") || c.includes("omega") || c.includes("vasculaire") || c.includes("complements") || c.includes("compléments") },
+  { id: "gelules", label: "Gélules & phyto", emoji: "🌱", matches: (c) => c.includes("gelule") || c.includes("gélule") || c.includes("phyto") || c.includes("immunit") },
+  { id: "calcium", label: "Calcium", emoji: "🦴", matches: (c) => c.includes("calcium") },
+  { id: "packs", label: "Packs", emoji: "🎁", matches: (c) => c.includes("pack") || c.includes("découverte") || c.includes("decouverte") },
   { id: "autres", label: "Autres", emoji: "✨", matches: () => true },
 ];
 
