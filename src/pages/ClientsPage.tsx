@@ -35,8 +35,15 @@ export function ClientsPage() {
 
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | LifecycleStatus | "fragile">("all");
-  // C V3 : ownerFilter init depuis URL (?owner=<id>) si present, sinon "all".
-  const [ownerFilter, setOwnerFilter] = useState(() => searchParams.get("owner") ?? "all");
+  // C V3 : ownerFilter init depuis URL (?owner=<id>) si present.
+  // 2026-04-29 : sinon admin = filtre par defaut sur LUI-MEME (Thomas voit
+  // Thomas direct au lieu de tout l'arbre). Override via "Tous" ou autre owner.
+  const [ownerFilter, setOwnerFilter] = useState(() => {
+    const fromQuery = searchParams.get("owner");
+    if (fromQuery) return fromQuery;
+    if (currentUser?.role === "admin") return currentUser?.id ?? "all";
+    return "all";
+  });
   // Sync : si l URL change (ex: navigate depuis Analytics drill-down),
   // mettre a jour le filtre.
   useEffect(() => {

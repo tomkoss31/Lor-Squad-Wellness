@@ -595,6 +595,25 @@ function PremiumOrderBuilder({
   const [error, setError] = useState<string>("");
   const [confettiVisible, setConfettiVisible] = useState(false);
 
+  // Delai de reception (2026-04-29) : la cure demarre N jours apres la date
+  // de commande. 0 = aujourd'hui (livraison instantanee = sur place), 3-7j
+  // = livraison standard. "custom" = pickadate dedie.
+  const [deliveryDelay, setDeliveryDelay] = useState<number>(0);
+  const [customStartDate, setCustomStartDate] = useState<string>("");
+
+  // Calcule la date de demarrage effective (= date commande + delai).
+  // Si customStartDate est defini (mode custom), c'est lui qui gagne.
+  const effectiveStartDate = useMemo(() => {
+    if (customStartDate) return customStartDate;
+    if (deliveryDelay <= 0) return date;
+    const d = new Date(date);
+    if (Number.isNaN(d.getTime())) return date;
+    d.setDate(d.getDate() + deliveryDelay);
+    return d.toISOString().slice(0, 10);
+  }, [date, deliveryDelay, customStartDate]);
+
+  const isStartDateDifferent = effectiveStartDate !== date;
+
   const activeProducts = useMemo(() => pvProductCatalog.filter((p) => p.active), []);
 
   const productsByCategory = useMemo(() => {
@@ -678,8 +697,11 @@ function PremiumOrderBuilder({
           type,
           note:
             type === "commande"
-              ? `Commande multi-produits (${cart.length} ligne${cart.length > 1 ? "s" : ""}) depuis la fiche PV`
+              ? `Commande multi-produits (${cart.length} ligne${cart.length > 1 ? "s" : ""}) depuis la fiche PV${isStartDateDifferent ? ` · cure demarre le ${effectiveStartDate}` : ""}`
               : `Reprise sur place (${cart.length} ligne${cart.length > 1 ? "s" : ""}) depuis la fiche PV`,
+          // Delai reception (2026-04-29) : la cure demarre a la livraison, pas
+          // a la commande. Si pas de delai, fallback sur date dans AppContext.
+          ...(isStartDateDifferent ? { startDateOverride: effectiveStartDate } : {}),
         };
         await addPvTransaction(tx);
       }
@@ -838,6 +860,119 @@ function PremiumOrderBuilder({
           })}
         </div>
       </div>
+
+      {/* Delai reception (2026-04-29) — la cure demarre a la livraison */}
+      {type === "commande" ? (
+        <div
+          style={{
+            background: "var(--ls-surface)",
+            border: "0.5px solid var(--ls-border)",
+            borderRadius: 12,
+            padding: "10px 14px",
+            marginBottom: 14,
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: 10,
+              flexWrap: "wrap",
+              marginBottom: 8,
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <span style={{ fontSize: 14 }}>🚚</span>
+              <span
+                style={{
+                  fontSize: 10,
+                  letterSpacing: 1.4,
+                  textTransform: "uppercase",
+                  color: "var(--ls-text-hint)",
+                  fontWeight: 700,
+                }}
+              >
+                Délai de réception
+              </span>
+            </div>
+            {isStartDateDifferent ? (
+              <span
+                style={{
+                  fontSize: 11,
+                  color: "var(--ls-teal)",
+                  fontFamily: "Syne, serif",
+                  fontWeight: 700,
+                }}
+              >
+                Cure démarre le{" "}
+                {new Date(effectiveStartDate).toLocaleDateString("fr-FR", {
+                  day: "numeric",
+                  month: "short",
+                })}
+              </span>
+            ) : null}
+          </div>
+          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+            {[
+              { value: 0, label: "🏠 Aujourd'hui" },
+              { value: 3, label: "+3 jours" },
+              { value: 5, label: "+5 jours" },
+              { value: 7, label: "+7 jours" },
+            ].map((opt) => {
+              const active = !customStartDate && deliveryDelay === opt.value;
+              return (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => {
+                    setDeliveryDelay(opt.value);
+                    setCustomStartDate("");
+                  }}
+                  style={{
+                    padding: "6px 12px",
+                    borderRadius: 999,
+                    border: active ? "0.5px solid var(--ls-teal)" : "0.5px solid var(--ls-border)",
+                    background: active
+                      ? "color-mix(in srgb, var(--ls-teal) 12%, var(--ls-surface))"
+                      : "var(--ls-surface)",
+                    color: active ? "var(--ls-teal)" : "var(--ls-text-muted)",
+                    fontSize: 11,
+                    fontWeight: active ? 700 : 500,
+                    cursor: "pointer",
+                    fontFamily: "DM Sans, sans-serif",
+                  }}
+                >
+                  {opt.label}
+                </button>
+              );
+            })}
+            <input
+              type="date"
+              value={customStartDate}
+              min={date}
+              onChange={(e) => {
+                setCustomStartDate(e.target.value);
+                setDeliveryDelay(0);
+              }}
+              style={{
+                padding: "6px 10px",
+                borderRadius: 999,
+                border: customStartDate
+                  ? "0.5px solid var(--ls-teal)"
+                  : "0.5px solid var(--ls-border)",
+                background: customStartDate
+                  ? "color-mix(in srgb, var(--ls-teal) 12%, var(--ls-surface))"
+                  : "var(--ls-surface)",
+                color: customStartDate ? "var(--ls-teal)" : "var(--ls-text-muted)",
+                fontSize: 11,
+                fontFamily: "DM Sans, sans-serif",
+                outline: "none",
+              }}
+            />
+          </div>
+        </div>
+      ) : null}
 
       {/* Catégories */}
       <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 12 }}>

@@ -7,6 +7,7 @@ import { PvClientFullPage } from "../components/pv/PvClientFullPage";
 import { PvActionPlanCard } from "../components/copilote/PvActionPlanCard";
 import { PvKanban } from "../components/pv/PvKanban";
 import { usePvActionPlan } from "../hooks/usePvActionPlan";
+import { usePvCheckedTracker } from "../hooks/usePvCheckedTracker";
 import { useAppContext } from "../context/AppContext";
 import type { PvClientTrackingRecord } from "../types/pv";
 
@@ -15,9 +16,15 @@ export function PvOverviewPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "ok" | "relaunch" | "overdue">("all");
-  const [responsibleFilter, setResponsibleFilter] = useState(
-    currentUser?.role === "admin" ? searchParams.get("responsable") ?? "all" : "all"
-  );
+  // Filtre responsable (2026-04-29) : par defaut admin filtre sur LUI-MEME
+  // (= "Thomas voit Thomas direct, pas tout l'arbre"). Override possible via
+  // query param ?responsable=X (drilldown Analytics) ou via le selecteur UI.
+  const [responsibleFilter, setResponsibleFilter] = useState(() => {
+    const fromQuery = searchParams.get("responsable");
+    if (fromQuery) return fromQuery;
+    if (currentUser?.role === "admin") return currentUser?.id ?? "all";
+    return "all"; // distri normaux ne voient deja que les leurs (visibleClients)
+  });
   const [selectedClientId, setSelectedClientId] = useState<string | null>(
     searchParams.get("client")
   );
@@ -49,6 +56,14 @@ export function PvOverviewPage() {
   }
   // Plan PV (utile a la fois pour l'encart en haut + pour categoriser le kanban)
   const planQuery = usePvActionPlan(currentUser?.id ?? null);
+
+  // Tracker "verifie PV" (2026-04-29) : marque chaque ouverture de fiche
+  // pour afficher un badge "vu" sur la liste + kanban.
+  const { isChecked, markChecked } = usePvCheckedTracker();
+  useEffect(() => {
+    if (selectedClientId) markChecked(selectedClientId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedClientId]);
 
   // Hooks AVANT l'early return (rules-of-hooks / chantier nuit 2026-04-20).
   const isAdmin = currentUser?.role === "admin";
@@ -280,6 +295,7 @@ export function PvOverviewPage() {
               onSelect={setSelectedClientId}
               isAdmin={isAdmin}
               currentUserId={currentUser?.id ?? null}
+              isChecked={isChecked}
             />
           ) : (
             <PvKanban
@@ -288,6 +304,7 @@ export function PvOverviewPage() {
               isAdmin={isAdmin}
               currentUserId={currentUser?.id ?? null}
               onSelectClient={setSelectedClientId}
+              isChecked={isChecked}
             />
           )}
 
@@ -374,7 +391,7 @@ function PvSearchFilters({ search, onSearchChange, status, onStatusChange }: { s
   );
 }
 
-function PvClientsTable({ records, selectedId, onSelect, isAdmin, currentUserId }: { records: PvClientTrackingRecord[]; selectedId: string | null; onSelect: (id: string) => void; isAdmin: boolean; currentUserId: string | null }) {
+function PvClientsTable({ records, selectedId, onSelect, isAdmin, currentUserId, isChecked }: { records: PvClientTrackingRecord[]; selectedId: string | null; onSelect: (id: string) => void; isAdmin: boolean; currentUserId: string | null; isChecked: (clientId: string) => boolean }) {
   return (
     <div style={{ background: "var(--ls-surface)", border: "1px solid var(--ls-border)", borderRadius: 14, overflow: "hidden" }}>
       <div className="pv-table-header" style={{ display: "flex", padding: "12px 16px", borderBottom: "1px solid var(--ls-border)", background: "var(--ls-surface2)" }}>
@@ -432,6 +449,27 @@ function PvClientsTable({ records, selectedId, onSelect, isAdmin, currentUserId 
                     }}
                   >
                     MIEN
+                  </span>
+                ) : null}
+                {/* Badge "vu" PV (2026-04-29) : checke depuis localStorage <7j */}
+                {isChecked(r.clientId) ? (
+                  <span
+                    title="Vérifié récemment (< 7j)"
+                    style={{
+                      padding: "1px 7px",
+                      borderRadius: 8,
+                      fontSize: 9,
+                      fontWeight: 700,
+                      background: "rgba(13,148,136,0.14)",
+                      color: "var(--ls-teal)",
+                      flexShrink: 0,
+                      letterSpacing: "0.04em",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 3,
+                    }}
+                  >
+                    ✓ VU
                   </span>
                 ) : null}
               </div>
