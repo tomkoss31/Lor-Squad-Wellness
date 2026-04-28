@@ -24,6 +24,7 @@ import { PvGaugeBand } from "../components/copilote/PvGaugeBand";
 import { PvActionPlanAlert } from "../components/copilote/PvActionPlanAlert";
 import { InboxWidget } from "../components/copilote/InboxWidget";
 import { BirthdayBlock } from "../components/copilote/BirthdayBlock";
+import { StreakBadge } from "../features/gamification/components/StreakBadge";
 import { WeeklyQuestsCard } from "../features/gamification/components/WeeklyQuestsCard";
 
 function useLiveClock(): Date {
@@ -86,6 +87,11 @@ export function CoPilotePage() {
         followupsToday={data.todayFollowupsCount}
       />
 
+      {/* Gamification 1 (2026-04-29) : streak de connexion juste sous l horloge. */}
+      <div style={{ display: "flex", justifyContent: "flex-start", marginTop: -6 }}>
+        <StreakBadge />
+      </div>
+
       {/* Zone 2 — Hero action */}
       <HeroActionCard nextAction={data.nextAction} now={now} />
 
@@ -136,8 +142,9 @@ export function CoPilotePage() {
         conversionRate={data.conversionRate}
       />
 
-      {/* Strategie PV (2026-04-29) : alerte conditionnelle PV — n'apparait
-          QUE si delayed. Le plan complet est sur /pv. */}
+      {/* Strategie PV (2026-04-28) : Plan du jour PV avec status + 3 categories
+          de suggestions client (top dormants / restock / silencieux) +
+          gain attendu si toutes les relances aboutissent. */}
       {currentUser?.id ? <PvActionPlanAlert userId={currentUser.id} /> : null}
 
       {/* Gamification 3 (2026-04-29) : quetes hebdo automatiques. */}

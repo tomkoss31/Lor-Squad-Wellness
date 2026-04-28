@@ -19,6 +19,7 @@ import { useToast, buildSupabaseErrorToast } from "../context/ToastContext";
 import { refreshClientRecap } from "../services/supabaseService";
 import { ErrorBoundary } from "../components/ErrorBoundary";
 import { ClientAccessModal } from "../components/client/ClientAccessModal";
+import { PresentationClientButton } from "../features/academy/components/PresentationClientButton";
 import { ActionsTab } from "../components/client-detail/ActionsTab";
 import { SportSummarySection } from "../components/client-detail/SportSummarySection";
 import { ClientAppPreviewButton } from "../components/client/ClientAppPreviewButton";
@@ -67,7 +68,12 @@ export function ClientDetailPage() {
   const [reportUrl, setReportUrl] = useState<string | null>(null);
   const [generatingReport, setGeneratingReport] = useState(false);
   // Chantier Client access unification (2026-04-24)
-  const [accessModalOpen, setAccessModalOpen] = useState(false);
+  // Academy polish (2026-04-27) : auto-open via ?openAccessModal=true
+  // pour permettre au tour Academy de pointer le QR + share buttons.
+  const [accessModalOpen, setAccessModalOpen] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return new URLSearchParams(window.location.search).get("openAccessModal") === "true";
+  });
   // Refonte Actions Tab (2026-04-26) : les states editPhone/editEmail/
   // editCity/transferFeedback/nextOwnerId et les handlers handleDelete/
   // handleTransfer sont désormais internes à ActionsTab.tsx.
@@ -237,6 +243,7 @@ export function ClientDetailPage() {
             <button
               type="button"
               onClick={() => setAccessModalOpen(true)}
+              data-tour-id="client-send-access"
               className="inline-flex min-h-[40px] items-center gap-2 rounded-[12px] px-4 py-2 text-sm font-semibold text-white transition"
               style={{
                 background: 'linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)',
@@ -246,6 +253,7 @@ export function ClientDetailPage() {
             >
               🔗 Envoyer l'accès à l'app
             </button>
+            <PresentationClientButton onShowQr={() => setAccessModalOpen(true)} />
             <ClientAppPreviewButton
               clientId={client.id}
               clientFirstName={client.firstName}
@@ -702,7 +710,7 @@ export function ClientDetailPage() {
           </div>
 
           {/* Produits en possession */}
-          <Card className="space-y-4">
+          <Card className="space-y-4" data-tour-id="program-recommendations">
             <div className="flex items-center justify-between">
               <div>
                 <p className="eyebrow-label">Programme actuel</p>

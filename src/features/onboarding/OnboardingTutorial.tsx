@@ -306,26 +306,6 @@ function SpotlightOverlay({
   rect: DOMRect | null;
   onClick?: () => void;
 }) {
-  // Si pas de rect (stage modale), overlay plein. Sinon, découpe via
-  // 4 rectangles autour de la cible pour laisser passer le spotlight.
-  if (!rect) {
-    return (
-      <div
-        onClick={onClick}
-        role={onClick ? "button" : "presentation"}
-        aria-label={onClick ? "Fermer le tutoriel" : undefined}
-        tabIndex={onClick ? 0 : undefined}
-        style={{
-          position: "fixed",
-          inset: 0,
-          background: "rgba(10, 15, 25, 0.6)",
-          backdropFilter: "blur(2px)",
-          zIndex: 10000,
-          cursor: onClick ? "pointer" : "default",
-        }}
-      />
-    );
-  }
   return (
     <>
       <SharedSpotlightOverlay targetRect={rect} />
@@ -353,8 +333,9 @@ function SpotlightOverlay({
 
 // ─── Welcome stage REFONDU premium (Tier B 2026-04-28) ────────────────────
 //
-// Modale centree avec gradient gold anime + preview des 5 onglets en grille
-// + indicateur "10 minutes" + bouton C'est parti gold premium + sub-text
+// Avant : modale centree blanche basique avec 👋 + texte + 2 boutons.
+// Apres : gradient gold anime + preview des 5 onglets en grille +
+// indicateur "10 minutes" + bouton C'est parti gold premium + sub-text
 // "Tu pourras relancer ce tuto a tout moment".
 
 const ONBOARDING_PREVIEW_TABS = [
