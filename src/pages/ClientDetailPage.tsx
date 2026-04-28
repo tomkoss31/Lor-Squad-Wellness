@@ -689,7 +689,7 @@ export function ClientDetailPage() {
         <div className="space-y-4">
           {/* Lien rapide vers suivi PV */}
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            <Link to={`/pv/clients?responsable=${encodeURIComponent(client.distributorId)}&client=${encodeURIComponent(client.id)}`}
+            <Link to={`/pv?responsable=${encodeURIComponent(client.distributorId)}&client=${encodeURIComponent(client.id)}`}
               style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px', borderRadius: 10, background: 'rgba(13,148,136,0.08)', border: '1px solid rgba(13,148,136,0.2)', color: 'var(--ls-teal)', textDecoration: 'none', fontSize: 13, fontWeight: 600 }}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
               Suivi PV / Réassort
