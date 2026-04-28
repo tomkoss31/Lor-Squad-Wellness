@@ -9,6 +9,7 @@
 
 import { useState } from "react";
 import { recordClientXp } from "../client-xp/useClientXp";
+import { ClientVipExplainModal } from "./ClientVipExplainModal";
 import { ClientVipSandbox } from "./ClientVipSandbox";
 import {
   getVipMeta,
@@ -25,6 +26,7 @@ interface Props {
 export function ClientVipHomeSection({ token, coachName = "Coach", coachHerbalifeId }: Props) {
   const status = useClientVipStatusByToken(token);
   const [sandboxOpen, setSandboxOpen] = useState(false);
+  const [explainOpen, setExplainOpen] = useState(false);
 
   if (status.loading) {
     return null;
@@ -276,6 +278,25 @@ export function ClientVipHomeSection({ token, coachName = "Coach", coachHerbalif
               ✨ M&apos;inscrire (myherbalife.com)
             </button>
           ) : null}
+          <button
+            type="button"
+            onClick={() => setExplainOpen(true)}
+            style={{
+              flex: 1,
+              minWidth: 140,
+              padding: "12px 16px",
+              background: "rgba(252,229,193,0.5)",
+              color: "#5C4A0F",
+              border: "0.5px solid rgba(184,146,42,0.30)",
+              borderRadius: 12,
+              fontSize: 13,
+              fontWeight: 700,
+              fontFamily: "Syne, serif",
+              cursor: "pointer",
+            }}
+          >
+            📖 Comment ça marche ?
+          </button>
         </div>
 
         {coachHerbalifeId && isNone ? (
@@ -301,6 +322,17 @@ export function ClientVipHomeSection({ token, coachName = "Coach", coachHerbalif
           coachName={coachName}
           coachHerbalifeId={coachHerbalifeId}
           onClose={() => setSandboxOpen(false)}
+        />
+      ) : null}
+
+      {/* Explain modal (2026-04-29) */}
+      {explainOpen ? (
+        <ClientVipExplainModal
+          onClose={() => setExplainOpen(false)}
+          onOpenSandbox={openSandbox}
+          onOpenSponsorLink={openSponsorLink}
+          coachHerbalifeId={coachHerbalifeId}
+          coachName={coachName}
         />
       ) : null}
     </>

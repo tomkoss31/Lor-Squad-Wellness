@@ -18,6 +18,7 @@ import { useToast } from "../../context/ToastContext";
 import { getSupabaseClient } from "../../services/supabaseClient";
 import type { Client } from "../../types/domain";
 import { ClientVipBadge } from "./ClientVipBadge";
+import { VipProgramHelpModal } from "./VipProgramHelpModal";
 import {
   getVipMeta,
   updateIntentionStatus,
@@ -58,6 +59,9 @@ export function ClientVipCoachPanel({ client }: Props) {
   const [editingPv, setEditingPv] = useState(false);
   const [pvAdjustment, setPvAdjustment] = useState<string>("");
   const [savingPv, setSavingPv] = useState(false);
+
+  // ─── Modale doc VIP (2026-04-29) ──────────────────────────────────────────
+  const [helpOpen, setHelpOpen] = useState(false);
 
   // Sponsor candidates : tous les autres clients du coach.
   const sponsorCandidates = useMemo(
@@ -176,6 +180,7 @@ export function ClientVipCoachPanel({ client }: Props) {
   }, [status.data]);
 
   return (
+    <>
     <div
       className="at-card"
       style={{
@@ -196,7 +201,33 @@ export function ClientVipCoachPanel({ client }: Props) {
           marginBottom: 12,
         }}
       >
-        <div className="at-label">⭐ Programme Client Privilégié</div>
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <div className="at-label">⭐ Programme Client Privilégié</div>
+          <button
+            type="button"
+            onClick={() => setHelpOpen(true)}
+            aria-label="Comment ça marche"
+            title="Comment ça marche"
+            style={{
+              width: 22,
+              height: 22,
+              borderRadius: "50%",
+              border: "0.5px solid var(--ls-border)",
+              background: "var(--ls-surface2)",
+              color: "var(--ls-teal)",
+              fontSize: 11,
+              fontWeight: 700,
+              cursor: "pointer",
+              fontFamily: "DM Sans, sans-serif",
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: 0,
+            }}
+          >
+            ?
+          </button>
+        </div>
         {status.data && status.data.level !== "none" ? (
           <ClientVipBadge level={status.data.level} size="full" showDiscount />
         ) : (
@@ -694,6 +725,8 @@ export function ClientVipCoachPanel({ client }: Props) {
         </div>
       ) : null}
     </div>
+    {helpOpen ? <VipProgramHelpModal onClose={() => setHelpOpen(false)} /> : null}
+    </>
   );
 }
 
