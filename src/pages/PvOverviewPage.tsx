@@ -4,6 +4,7 @@ import { buildPvTrackingRecords } from "../data/pvCatalog";
 import { formatDate } from "../lib/calculations";
 import { PvModuleHeader } from "../components/pv/PvModuleHeader";
 import { PvClientFullPage } from "../components/pv/PvClientFullPage";
+import { PvActionPlanCard } from "../components/copilote/PvActionPlanCard";
 import { useAppContext } from "../context/AppContext";
 import type { PvClientTrackingRecord } from "../types/pv";
 
@@ -114,6 +115,13 @@ export function PvOverviewPage() {
         title="Suivi PV"
         description="Vue globale des clients actifs, de leurs produits et commandes."
       />
+
+      {/* Plan d'action PV (déplacé du Co-pilote, 2026-04-29) — toujours
+          visible ici car c'est l'endroit naturel pour piloter le volume.
+          Sur le dashboard, seul un bandeau alerte conditionnel subsiste. */}
+      {!selectedClientId && currentUser?.id ? (
+        <PvActionPlanCard userId={currentUser.id} />
+      ) : null}
 
       {/* Vue FICHE pleine page */}
       {selectedClientId && selectedRecord && (
