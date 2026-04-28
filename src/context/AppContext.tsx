@@ -755,6 +755,13 @@ export function AppProvider({ children }: PropsWithChildren) {
     );
     const catalogProduct = pvProductCatalog.find((item) => item.id === transaction.productId);
 
+    // Calcul cure (2026-04-29) : la duree depend de la QUANTITE commandee.
+    // Ex: 1 pot F1 = 21 jours, 2 pots = 42 jours, 1 Aloe XXL = 84 jours, etc.
+    // On multiplie la duree de reference catalogue par la qty.
+    const baseDuration = catalogProduct?.dureeReferenceJours ?? 21;
+    const qty = transaction.quantity > 0 ? transaction.quantity : 1;
+    const totalDuration = baseDuration * qty;
+
     await upsertSupabasePvClientProduct({
       id: existingProduct?.id ?? `pv-seed-${transaction.clientId}-${transaction.productId}`,
       clientId: transaction.clientId,
@@ -767,8 +774,8 @@ export function AppProvider({ children }: PropsWithChildren) {
       // Delai reception (2026-04-29) : si l'override est fourni, la cure
       // demarre a la date de livraison estimee, pas a la date commande.
       startDate: transaction.startDateOverride ?? transaction.date,
-      durationReferenceDays:
-        existingProduct?.durationReferenceDays ?? catalogProduct?.dureeReferenceJours ?? 21,
+      // Multiplie par la quantite pour respecter la logique 2 pots = 42j.
+      durationReferenceDays: totalDuration,
       pvPerUnit:
         transaction.quantity > 0 ? Number((transaction.pv / transaction.quantity).toFixed(2)) : transaction.pv,
       pricePublicPerUnit:
