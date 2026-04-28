@@ -1004,7 +1004,11 @@ export function ClientAppPage() {
               nextRdv: '[data-tuto="next-rdv"]',
               program: '[data-tuto="program"]',
               messaging: '[data-tuto="messaging"]',
+              tabEvolution: '[data-tuto="tab-evolution"]',
+              tabConseils: '[data-tuto="tab-conseils"]',
+              tabProduits: '[data-tuto="tab-produits"]',
             }}
+            sandboxHref={token ? `/client/${token}/sandbox` : undefined}
             onClose={(reason) => {
               setTutorialOpen(false)
               if (reason === 'completed') {
@@ -1028,8 +1032,20 @@ export function ClientAppPage() {
           { key: 'refer' as const, label: 'Recommander', icon: (<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><line x1="23" y1="11" x2="17" y2="11" /><line x1="20" y1="8" x2="20" y2="14" /></svg>) },
         ]).map(({ key, label, icon }) => {
           const isActive = activeTab === key
+          // Tier B (2026-04-28) : data-tuto pour spotlights tuto.
+          const tutoAttr =
+            key === 'evolution'
+              ? 'tab-evolution'
+              : key === 'coaching'
+                ? 'tab-conseils'
+                : key === 'products'
+                  ? 'tab-produits'
+                  : undefined
           return (
-            <button key={key} onClick={() => setActiveTab(key)}
+            <button
+              key={key}
+              onClick={() => setActiveTab(key)}
+              data-tuto={tutoAttr}
               style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, padding: '8px 4px', border: 'none', background: 'transparent', color: isActive ? '#B8922A' : '#9CA3AF', fontSize: 9, cursor: 'pointer', fontFamily: 'DM Sans, sans-serif' }}>
               {icon}
               {label}

@@ -98,6 +98,12 @@ const ClientAppPage = lazy(() =>
     default: module.ClientAppPage
   }))
 );
+// Tier B Livraison B (2026-04-28) : sandbox client interactif 4 quetes.
+const ClientSandboxPage = lazy(() =>
+  import("./pages/ClientSandboxPage").then((module) => ({
+    default: module.ClientSandboxPage
+  }))
+);
 const MessagesPage = lazy(() =>
   import("./pages/MessagesPage").then((module) => ({
     default: module.MessagesPage
@@ -348,6 +354,7 @@ export default function App() {
           <Route path="/recap/:token" element={<RecapPage />} />
           <Route path="/rapport/:token" element={<EvolutionReportPage />} />
           <Route path="/client/:token" element={<ClientAppPage />} />
+          <Route path="/client/:token/sandbox" element={<ClientSandboxPage />} />
           {/* Chantier invitation client app (2026-04-21) : page publique
               pour que le client crée son accès via le lien magique envoyé
               par le coach. Pas besoin d'être authentifié. */}
