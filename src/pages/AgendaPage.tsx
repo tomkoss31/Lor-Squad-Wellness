@@ -672,27 +672,55 @@ export function AgendaPage() {
         </div>
       </div>
 
-      {/* Dropdown distributeur — admin only */}
+      {/* Dropdown distributeur — admin only — refonte premium 2026-04-29 */}
       {currentUser?.role === "admin" && (
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--ls-text-muted)" strokeWidth="1.5">
-            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-            <circle cx="12" cy="7" r="4" />
-          </svg>
-          <label style={{ fontSize: 12, color: "var(--ls-text-muted)", fontFamily: "'DM Sans', sans-serif", fontWeight: 500 }}>
-            Vue :
-          </label>
+        <div
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 8,
+            padding: "8px 12px 8px 14px",
+            background: "var(--ls-surface)",
+            border: "0.5px solid var(--ls-border)",
+            borderRadius: 999,
+            width: "fit-content",
+          }}
+        >
+          <span
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 5,
+              fontSize: 11,
+              fontWeight: 700,
+              letterSpacing: 1.4,
+              textTransform: "uppercase",
+              color: "var(--ls-text-hint)",
+              fontFamily: "DM Sans, sans-serif",
+            }}
+          >
+            👁️ Vue
+          </span>
           <select
             value={agendaFilter}
             onChange={(e) => setAgendaFilter(e.target.value)}
-            className="ls-input-time"
-            style={{ minWidth: 180, padding: "8px 12px" }}
+            style={{
+              border: "none",
+              background: "transparent",
+              fontSize: 12.5,
+              fontWeight: 600,
+              fontFamily: "DM Sans, sans-serif",
+              color: "var(--ls-text)",
+              cursor: "pointer",
+              outline: "none",
+              padding: "2px 6px",
+            }}
           >
-            <option value="mine">Mes RDV</option>
-            <option value="all">Toute l'équipe</option>
+            <option value="mine">🏠 Mes RDV</option>
+            <option value="all">👥 Toute l&apos;équipe</option>
             {users.filter((u) => u.active && u.id !== currentUser.id).map((u) => (
               <option key={u.id} value={u.id}>
-                {u.name} · {u.role === "admin" ? "Admin" : u.role === "referent" ? "Référent" : "Distri"}
+                👤 {u.name} · {u.role === "admin" ? "Admin" : u.role === "referent" ? "Référent" : "Distri"}
               </option>
             ))}
           </select>
@@ -737,39 +765,76 @@ export function AgendaPage() {
         />
       </div>
 
-      {/* Filtres */}
-      <Card className="space-y-3">
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-          {([
-            { key: "today" as DateFilter, label: "Aujourd'hui" },
-            { key: "week"  as DateFilter, label: "Cette semaine" },
-            { key: "all"   as DateFilter, label: "Tous" },
-          ]).map((f) => (
-            <FilterPill
-              key={f.key}
-              label={f.label}
-              active={dateFilter === f.key}
-              onClick={() => setDateFilter(f.key)}
-            />
-          ))}
-          <div style={{ width: 1, background: "var(--ls-border)", margin: "0 6px" }} />
-          {([
-            { key: "upcoming"    as StatusFilter, label: "À venir" },
-            { key: "done"        as StatusFilter, label: "Effectués" },
-            { key: "converted"   as StatusFilter, label: "Convertis" },
-            { key: "cold"        as StatusFilter, label: "❄️ En pause" },
-            { key: "lost_no_show" as StatusFilter, label: "Pas venus / Pas intéressés" },
-            { key: "all"         as StatusFilter, label: "Tous statuts" },
-          ]).map((f) => (
-            <FilterPill
-              key={f.key}
-              label={f.label}
-              active={statusFilter === f.key}
-              onClick={() => setStatusFilter(f.key)}
-            />
-          ))}
+      {/* Filtres refonte premium (2026-04-29) — 2 sections labellees, pas de
+          conteneur Card lourd. Eyebrows uppercase + chips compacts. */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+        <div>
+          <div
+            style={{
+              fontSize: 9.5,
+              letterSpacing: 1.6,
+              textTransform: "uppercase",
+              fontWeight: 700,
+              color: "var(--ls-text-hint)",
+              marginBottom: 8,
+              display: "flex",
+              alignItems: "center",
+              gap: 5,
+            }}
+          >
+            <span style={{ fontSize: 11 }}>📅</span> Période
+          </div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+            {([
+              { key: "today" as DateFilter, label: "Aujourd'hui" },
+              { key: "week"  as DateFilter, label: "Cette semaine" },
+              { key: "all"   as DateFilter, label: "Tous" },
+            ]).map((f) => (
+              <FilterPill
+                key={f.key}
+                label={f.label}
+                active={dateFilter === f.key}
+                onClick={() => setDateFilter(f.key)}
+              />
+            ))}
+          </div>
         </div>
-      </Card>
+
+        <div>
+          <div
+            style={{
+              fontSize: 9.5,
+              letterSpacing: 1.6,
+              textTransform: "uppercase",
+              fontWeight: 700,
+              color: "var(--ls-text-hint)",
+              marginBottom: 8,
+              display: "flex",
+              alignItems: "center",
+              gap: 5,
+            }}
+          >
+            <span style={{ fontSize: 11 }}>📊</span> Statut
+          </div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+            {([
+              { key: "upcoming"    as StatusFilter, label: "À venir" },
+              { key: "done"        as StatusFilter, label: "Effectués" },
+              { key: "converted"   as StatusFilter, label: "Convertis" },
+              { key: "cold"        as StatusFilter, label: "❄️ En pause" },
+              { key: "lost_no_show" as StatusFilter, label: "Pas venus / Pas intéressés" },
+              { key: "all"         as StatusFilter, label: "Tous statuts" },
+            ]).map((f) => (
+              <FilterPill
+                key={f.key}
+                label={f.label}
+                active={statusFilter === f.key}
+                onClick={() => setStatusFilter(f.key)}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
 
       {/* Liste groupée — rendu unifié clients + prospects */}
       <div data-tour-id="agenda-upcoming">
@@ -1100,16 +1165,15 @@ function EntityTab({
       <span
         style={{
           fontSize: 11,
-          padding: "2px 8px",
+          padding: "2px 9px",
           borderRadius: 999,
           fontWeight: 800,
           fontFamily: "Syne, serif",
-          background: active && dot
-            ? dot
-            : active
-              ? "var(--ls-gold)"
-              : "var(--ls-surface2)",
-          color: active ? "white" : "var(--ls-text-muted)",
+          background: active
+            ? "var(--ls-bg)"
+            : "var(--ls-surface2)",
+          color: active ? (dot ?? "var(--ls-gold)") : "var(--ls-text-muted)",
+          border: active ? `0.5px solid ${dot ?? "var(--ls-gold)"}` : "0.5px solid transparent",
           minWidth: 22,
           textAlign: "center",
           letterSpacing: -0.2,
