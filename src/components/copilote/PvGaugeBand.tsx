@@ -184,46 +184,129 @@ export function PvGaugeBand({
 }
 
 function Gauge({ percent }: { percent: number }) {
-  const size = 72;
-  const stroke = 6;
+  const size = 96;
+  const stroke = 8;
   const r = (size - stroke) / 2;
+  const rInner = r - 6;
   const c = 2 * Math.PI * r;
+  const cInner = 2 * Math.PI * rInner;
   const dash = (percent / 100) * c;
+  const dashInner = (percent / 100) * cInner;
 
   return (
-    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-hidden="true">
-      <circle
-        cx={size / 2}
-        cy={size / 2}
-        r={r}
-        fill="none"
-        stroke="var(--ls-border)"
-        strokeWidth={stroke}
-      />
-      <circle
-        cx={size / 2}
-        cy={size / 2}
-        r={r}
-        fill="none"
-        stroke="#BA7517"
-        strokeWidth={stroke}
-        strokeLinecap="round"
-        strokeDasharray={`${dash} ${c - dash}`}
-        strokeDashoffset={c / 4}
-        transform={`rotate(-90 ${size / 2} ${size / 2})`}
-      />
-      <text
-        x={size / 2}
-        y={size / 2 + 4}
-        textAnchor="middle"
-        fontSize="15"
-        fontWeight={700}
-        fontFamily="Syne, sans-serif"
-        fill="var(--ls-text)"
-      >
-        {percent}%
-      </text>
-    </svg>
+    <div style={{ position: "relative", width: size, height: size }}>
+      <style>{`
+        @keyframes pv-gauge-rotate {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+        @keyframes pv-gauge-pulse {
+          0%, 100% { transform: scale(1); opacity: 0.4; }
+          50% { transform: scale(1.06); opacity: 0.7; }
+        }
+        .pv-gauge-particles {
+          position: absolute;
+          inset: -4px;
+          border-radius: 50%;
+          background: conic-gradient(
+            from 0deg,
+            transparent 0deg,
+            rgba(239,159,39,0.35) 30deg,
+            transparent 60deg,
+            transparent 360deg
+          );
+          animation: pv-gauge-rotate 8s linear infinite;
+          opacity: 0.5;
+          filter: blur(3px);
+          pointer-events: none;
+        }
+        .pv-gauge-glow-bg {
+          position: absolute;
+          inset: 8px;
+          border-radius: 50%;
+          background: radial-gradient(circle, rgba(239,159,39,0.2) 0%, transparent 70%);
+          animation: pv-gauge-pulse 3s ease-in-out infinite;
+          pointer-events: none;
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .pv-gauge-particles, .pv-gauge-glow-bg { animation: none !important; }
+        }
+      `}</style>
+      <div className="pv-gauge-particles" aria-hidden="true" />
+      <div className="pv-gauge-glow-bg" aria-hidden="true" />
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-hidden="true" style={{ position: "relative" }}>
+        <defs>
+          <linearGradient id="pv-gauge-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#FFD56B" />
+            <stop offset="40%" stopColor="#EF9F27" />
+            <stop offset="100%" stopColor="#BA7517" />
+          </linearGradient>
+          <linearGradient id="pv-gauge-gradient-inner" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="rgba(239,159,39,0.4)" />
+            <stop offset="100%" stopColor="rgba(186,117,23,0.4)" />
+          </linearGradient>
+          <filter id="pv-gauge-glow" x="-30%" y="-30%" width="160%" height="160%">
+            <feGaussianBlur stdDeviation="2" result="blur" />
+            <feMerge>
+              <feMergeNode in="blur" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+        </defs>
+        {/* Track outer */}
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={r}
+          fill="none"
+          stroke="var(--ls-border)"
+          strokeWidth={stroke}
+          opacity={0.5}
+        />
+        {/* Track inner subtle */}
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={rInner}
+          fill="none"
+          stroke="url(#pv-gauge-gradient-inner)"
+          strokeWidth={2}
+          strokeLinecap="round"
+          strokeDasharray={`${dashInner} ${cInner - dashInner}`}
+          strokeDashoffset={cInner / 4}
+          transform={`rotate(-90 ${size / 2} ${size / 2})`}
+          opacity={0.7}
+          style={{ transition: "stroke-dasharray 1000ms cubic-bezier(0.16, 1, 0.3, 1)" }}
+        />
+        {/* Main stroke */}
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={r}
+          fill="none"
+          stroke="url(#pv-gauge-gradient)"
+          strokeWidth={stroke}
+          strokeLinecap="round"
+          strokeDasharray={`${dash} ${c - dash}`}
+          strokeDashoffset={c / 4}
+          transform={`rotate(-90 ${size / 2} ${size / 2})`}
+          filter="url(#pv-gauge-glow)"
+          style={{ transition: "stroke-dasharray 1000ms cubic-bezier(0.16, 1, 0.3, 1)" }}
+        />
+        <text
+          x={size / 2}
+          y={size / 2 + 6}
+          textAnchor="middle"
+          fontSize="22"
+          fontWeight={800}
+          fontFamily="Syne, sans-serif"
+          fill="var(--ls-text)"
+          letterSpacing="-0.04em"
+        >
+          {percent}%
+        </text>
+      </svg>
+    </div>
   );
 }
 
