@@ -10,7 +10,8 @@
 
 import { useState } from "react";
 import { useAppContext } from "../context/AppContext";
-import { PageHeading } from "../components/ui/PageHeading";
+// PageHeading remplace par PremiumHero (2026-04-29)
+import { PremiumHero } from "../components/ui/PremiumHero";
 import { ProfilTab } from "../components/settings/ProfilTab";
 import { EquipeTab } from "../components/settings/EquipeTab";
 import { TransfertsTab } from "../components/settings/TransfertsTab";
@@ -49,10 +50,12 @@ export function ParametresPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeading
-        eyebrow="Administration"
-        title="Paramètres"
-        description="Profil, équipe, transferts, statistiques et outils techniques."
+      <PremiumHero
+        identity="neutral"
+        eyebrow="Paramètres · espace admin"
+        titleAccent="Tes réglages"
+        titleSuffix=" ⚙️"
+        subtitle="Profil, équipe, transferts, statistiques et outils techniques."
       />
 
       {/* Tabs pills */}
