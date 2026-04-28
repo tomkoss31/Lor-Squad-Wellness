@@ -118,6 +118,9 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
         body: "C'est la personne qui te suit au quotidien dans l'app — tes questions, tes blocages, tes premières ventes. {coachName} apparaît déjà dans ce select si tu l'as déjà renseigné. Sinon, choisis dans la liste de tous les utilisateurs actifs. C'est ce contact qui sera notifié si tu décroches.",
         manualAdvance: true,
         requiredRole: "distributor",
+        crossRefs: [
+          { label: "Lui écrire via Messagerie", sectionId: "messages-and-clients" },
+        ],
       },
       {
         id: "save",
@@ -276,6 +279,9 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
         title: "Suivi PV — ton volume Herbalife",
         body: "Compteur de points volume du mois en cours, projection sur la fin du mois, historique mensuel. Seuil par défaut 2 500 PV — éditable dans Paramètres > Profil > Objectif PV mensuel quand tu veux viser plus haut. Badge rouge si tu as des produits en retard à renouveler.",
         manualAdvance: true,
+        crossRefs: [
+          { label: "Comment lire la jauge PV", sectionId: "rituals" },
+        ],
       },
       {
         id: "new-bilan",
@@ -569,6 +575,9 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
         body: "Le wizard détecte automatiquement : hydratation faible, protéines basses, sommeil court, masse musculaire insuffisante, snack manquant, fréquence sport incohérente. Une popup style Apple Health bloque la validation tant que tu n'as pas acquitté chaque alerte (avec un commentaire si pertinent). Évite de valider un programme bancal sans s'en rendre compte.",
         placement: "center",
         illustrationKey: "mockup-sport-alerts",
+        crossRefs: [
+          { label: "Profil sport saisi en bilan", sectionId: "first-bilan" },
+        ],
       },
       {
         id: "recommended",
@@ -720,6 +729,9 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
         title: "Le suivi automatique J+1 → J+10",
         body: "Après chaque bilan, Lor'Squad note 4 checkpoints sur ton dashboard Co-pilote : J+1 (message bienvenue), J+3 (ressentis), J+7 (VIP), J+10 (check-in énergie). Tu reçois un digest tous les matins à 7h (cron morning-suivis-digest) avec les actions du jour. Les clients « Pas démarré » sont automatiquement exclus du protocole — pas de spam de relances. Période de grâce de 15 min : un RDV reste « actif » 15 minutes après l'heure prévue (utile si le client est en retard ou si tu es en RDV).",
         placement: "center",
+        crossRefs: [
+          { label: "Templates messages multi-canal", sectionId: "messages-and-clients" },
+        ],
       },
       {
         id: "outro",
@@ -1052,6 +1064,9 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
         isLast: true,
         nextLabel: "Section terminée",
         illustrationKey: "rocket",
+        crossRefs: [
+          { label: "Comment installer la PWA côté coach", sectionId: "rituals" },
+        ],
       },
     ],
     quiz: {

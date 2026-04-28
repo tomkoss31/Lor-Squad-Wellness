@@ -69,6 +69,21 @@ export interface TutorialStep {
     /** Delai apres l evenement avant d avancer. Defaut 600ms (debounce typing). */
     debounceMs?: number;
   };
+  /**
+   * Tier B #8 (2026-04-28) : cross-references vers d autres concepts
+   * deja vus dans le parcours. Affiche en bas du body sous forme de
+   * chips cliquables "🔗 Voir aussi". Le user clique → on l envoie
+   * directement sur la section/step reference (avec resume position
+   * sauvegardee). Renforce l ancrage memoire.
+   */
+  crossRefs?: Array<{
+    /** Label affiche dans le chip (ex : "PV mensuel"). */
+    label: string;
+    /** ID de la section Academy cible (ex : "rituals"). */
+    sectionId: string;
+    /** ID du step specifique cible (optionnel — si absent, demarre la section). */
+    stepId?: string;
+  }>;
 }
 
 export type TutorialIllustrationKind =

@@ -416,6 +416,14 @@ export function TourRunner({
         nextLabel={currentStep.nextLabel}
         isLast={isLast}
         illustrationKey={currentStep.illustrationKey}
+        crossRefs={currentStep.crossRefs}
+        onCrossRef={(sectionId, _stepId) => {
+          // Tier B #8 (2026-04-28) : ferme le tour actuel (resume
+          // position deja sauvee via onStepChange existant) puis navigue
+          // vers la section cible. User peut revenir via /academy.
+          onClose("dismissed");
+          navigate(`/academy/${sectionId}`);
+        }}
       >
         {currentStep.body}
       </TutorialTooltip>

@@ -185,6 +185,12 @@ const AcademySandboxPage = lazy(() =>
     default: module.AcademySandboxPage
   }))
 );
+// Tier B #7 (2026-04-28) : Playbook PDF personnalise post-completion.
+const AcademyPlaybookPage = lazy(() =>
+  import("./pages/AcademyPlaybookPage").then((module) => ({
+    default: module.AcademyPlaybookPage
+  }))
+);
 // Pages démo Academy (2026-04-28) : mockups visuels avec données fictives
 // pour les tours, sans dépendre de l'état réel de la base.
 const DemoFicheClient = lazy(() =>
@@ -284,6 +290,7 @@ export default function App() {
               {/* Lor'Squad Academy Phase 1 (2026-04-26) */}
               <Route path="academy" element={<AcademyOverviewPage />} />
               <Route path="academy/certificat" element={<AcademyCertificatePage />} />
+              <Route path="academy/playbook" element={<AcademyPlaybookPage />} />
               <Route path="academy/sandbox" element={<AcademySandboxPage />} />
               <Route path="academy/:sectionId" element={<AcademySectionPage />} />
               {/* Pages démo Academy (2026-04-28) — mockups pour les tours */}
