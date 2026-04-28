@@ -239,47 +239,56 @@ export function TeamPage() {
         subtitle="Arborescence de parrainage, stats par distri et classement du mois."
       />
 
-      {/* Tabs split (2026-04-29) — equipe vs gamification */}
-      <div
-        style={{
-          display: "flex",
-          gap: 6,
-          background: "var(--ls-surface)",
-          border: "1px solid var(--ls-border)",
-          borderRadius: 12,
-          padding: 4,
-          width: "fit-content",
-          flexWrap: "wrap",
-        }}
-      >
+      {/* Tabs split (2026-04-29) — refonte premium V2 chips pill */}
+      <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
         {([
-          { key: "team" as TeamTab, label: "Équipe", icon: "👥" },
-          { key: "gamification" as TeamTab, label: "Gamification & Challenges", icon: "🎮" },
-        ]).map((t) => (
-          <button
-            key={t.key}
-            type="button"
-            onClick={() => setActiveTab(t.key)}
-            style={{
-              padding: "8px 14px",
-              borderRadius: 8,
-              border: "none",
-              cursor: "pointer",
-              fontSize: 13,
-              fontFamily: "DM Sans, sans-serif",
-              fontWeight: activeTab === t.key ? 600 : 400,
-              background: activeTab === t.key ? "var(--ls-surface2)" : "transparent",
-              color: activeTab === t.key ? "var(--ls-text)" : "var(--ls-text-muted)",
-              display: "flex",
-              alignItems: "center",
-              gap: 6,
-              transition: "all 0.15s",
-            }}
-          >
-            <span aria-hidden="true">{t.icon}</span>
-            {t.label}
-          </button>
-        ))}
+          { key: "team" as TeamTab, label: "Équipe", icon: "👥", color: "var(--ls-teal)" },
+          { key: "gamification" as TeamTab, label: "Gamification & Challenges", icon: "🎮", color: "var(--ls-gold)" },
+        ]).map((t) => {
+          const isActive = activeTab === t.key;
+          return (
+            <button
+              key={t.key}
+              type="button"
+              onClick={() => setActiveTab(t.key)}
+              style={{
+                padding: "9px 16px",
+                borderRadius: 999,
+                border: isActive
+                  ? `0.5px solid color-mix(in srgb, ${t.color} 50%, transparent)`
+                  : "0.5px solid var(--ls-border)",
+                background: isActive
+                  ? `linear-gradient(135deg, color-mix(in srgb, ${t.color} 14%, var(--ls-surface)) 0%, var(--ls-surface) 100%)`
+                  : "var(--ls-surface)",
+                cursor: "pointer",
+                fontSize: 13,
+                fontFamily: "DM Sans, sans-serif",
+                fontWeight: isActive ? 700 : 500,
+                color: isActive ? t.color : "var(--ls-text-muted)",
+                display: "flex",
+                alignItems: "center",
+                gap: 7,
+                transition: "transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease",
+                boxShadow: isActive ? `0 4px 12px -4px color-mix(in srgb, ${t.color} 30%, transparent)` : "none",
+              }}
+              onMouseEnter={(e) => {
+                if (!isActive) {
+                  e.currentTarget.style.transform = "translateY(-1px)";
+                  e.currentTarget.style.borderColor = `color-mix(in srgb, ${t.color} 30%, var(--ls-border))`;
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!isActive) {
+                  e.currentTarget.style.transform = "none";
+                  e.currentTarget.style.borderColor = "var(--ls-border)";
+                }
+              }}
+            >
+              <span aria-hidden="true" style={{ fontSize: 14 }}>{t.icon}</span>
+              {t.label}
+            </button>
+          );
+        })}
       </div>
 
       {/* ═══ Onglet Équipe (defaut) — arbre + activite + Academy LB ═════ */}
