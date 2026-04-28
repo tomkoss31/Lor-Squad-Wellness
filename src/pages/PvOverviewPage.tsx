@@ -22,6 +22,17 @@ export function PvOverviewPage() {
     searchParams.get("client")
   );
 
+  // Sync inverse (2026-04-29) : si l'URL change vers /pv?client=X via un Link
+  // interne (ex: depuis Plan PV en haut), on update selectedClientId pour
+  // ouvrir la fiche. Sans ca, le composant ne re-mount pas et state reste null.
+  useEffect(() => {
+    const fromUrl = searchParams.get("client");
+    if (fromUrl !== selectedClientId) {
+      setSelectedClientId(fromUrl);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
+
   // Toggle Liste / Kanban (2026-04-29) — persiste en localStorage
   const [viewMode, setViewMode] = useState<"list" | "kanban">(() => {
     if (typeof window === "undefined") return "list";

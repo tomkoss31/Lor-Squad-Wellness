@@ -703,6 +703,7 @@ function PremiumOrderBuilder({
 
   return (
     <div
+      className="pv-order-builder"
       style={{
         background:
           "linear-gradient(180deg, color-mix(in srgb, var(--ls-gold) 4%, var(--ls-surface2)) 0%, var(--ls-surface2) 100%)",
@@ -714,6 +715,47 @@ function PremiumOrderBuilder({
         overflow: "hidden",
       }}
     >
+      {/* Polish CSS injecte (2026-04-29) : slide-in du builder, pulse du badge
+          panier, shimmer sur le bouton submit, bounce sur le total. */}
+      <style>{`
+        .pv-order-builder { animation: pv-slide-in 360ms cubic-bezier(0.4, 0, 0.2, 1); }
+        @keyframes pv-slide-in {
+          from { opacity: 0; transform: translateY(-12px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .pv-cart-badge { animation: pv-pulse 320ms ease-out; }
+        @keyframes pv-pulse {
+          0% { transform: scale(1); }
+          50% { transform: scale(1.25); box-shadow: 0 0 0 6px rgba(184,146,42,0.25); }
+          100% { transform: scale(1); }
+        }
+        .pv-cart-total { animation: pv-bounce 280ms cubic-bezier(0.2, 0.8, 0.2, 1); }
+        @keyframes pv-bounce {
+          0% { transform: scale(1); }
+          40% { transform: scale(1.06); }
+          100% { transform: scale(1); }
+        }
+        .pv-submit-glow {
+          position: relative;
+          overflow: hidden;
+        }
+        .pv-submit-glow::before {
+          content: '';
+          position: absolute;
+          top: 0; left: -100%;
+          width: 100%; height: 100%;
+          background: linear-gradient(90deg, transparent, rgba(255,255,255,0.35), transparent);
+          animation: pv-shimmer 2400ms ease-in-out infinite;
+        }
+        @keyframes pv-shimmer {
+          0% { left: -100%; }
+          50% { left: 100%; }
+          100% { left: 100%; }
+        }
+        .pv-catalog-card { transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s; }
+        .pv-catalog-card:hover { transform: translateY(-2px) scale(1.02); }
+        .pv-catalog-card.is-selected { border-color: var(--ls-gold) !important; box-shadow: 0 0 0 2px color-mix(in srgb, var(--ls-gold) 25%, transparent); }
+      `}</style>
       {confettiVisible ? <ConfettiOverlay /> : null}
 
       {/* Header form */}
@@ -831,36 +873,28 @@ function PremiumOrderBuilder({
               key={p.id}
               type="button"
               onClick={() => addToCart(p.id)}
+              className={`pv-catalog-card${inCart ? " is-selected" : ""}`}
               style={{
                 position: "relative",
                 background: inCart ? "color-mix(in srgb, var(--ls-gold) 8%, var(--ls-surface))" : "var(--ls-surface)",
-                border: inCart
-                  ? "1.5px solid var(--ls-gold)"
-                  : "0.5px solid var(--ls-border)",
+                border: "0.5px solid var(--ls-border)",
                 borderRadius: 12,
                 padding: "12px 12px 10px",
                 cursor: "pointer",
                 textAlign: "left",
                 fontFamily: "DM Sans, sans-serif",
-                transition: "transform 0.12s, box-shadow 0.12s",
                 display: "flex",
                 flexDirection: "column",
                 gap: 6,
                 minHeight: 110,
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = "translateY(-2px)";
-                e.currentTarget.style.boxShadow = "0 6px 16px rgba(0,0,0,0.06)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = "none";
-                e.currentTarget.style.boxShadow = "none";
               }}
             >
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6 }}>
                 <span style={{ fontSize: 22 }}>{cat.emoji}</span>
                 {inCart ? (
                   <span
+                    key={`badge-${inCart.quantity}`}
+                    className="pv-cart-badge"
                     style={{
                       fontSize: 10,
                       fontWeight: 700,
@@ -869,9 +903,12 @@ function PremiumOrderBuilder({
                       background: "var(--ls-gold)",
                       color: "white",
                       fontFamily: "Syne, serif",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 3,
                     }}
                   >
-                    ×{inCart.quantity}
+                    ✓ ×{inCart.quantity}
                   </span>
                 ) : null}
               </div>
@@ -1027,7 +1064,11 @@ function PremiumOrderBuilder({
               <span style={{ fontSize: 9, letterSpacing: 1.2, textTransform: "uppercase", color: "var(--ls-text-hint)", fontWeight: 600 }}>
                 Total
               </span>
-              <div style={{ display: "flex", alignItems: "baseline", gap: 10 }}>
+              <div
+                key={`total-${totals.pv}`}
+                className="pv-cart-total"
+                style={{ display: "flex", alignItems: "baseline", gap: 10 }}
+              >
                 <span style={{ fontFamily: "Syne, serif", fontWeight: 800, fontSize: 22, color: "var(--ls-gold)" }}>
                   {totals.pv.toFixed(1)} PV
                 </span>
@@ -1095,6 +1136,7 @@ function PremiumOrderBuilder({
         <button
           onClick={() => void handleSubmit()}
           disabled={submitting || cart.length === 0}
+          className={cart.length > 0 && !submitting ? "pv-submit-glow" : ""}
           style={{
             flex: 2,
             padding: "12px",
@@ -1112,9 +1154,13 @@ function PremiumOrderBuilder({
             opacity: submitting ? 0.7 : 1,
             boxShadow: cart.length > 0 ? "0 4px 14px rgba(186,117,23,0.40)" : "none",
             transition: "all 0.15s",
+            position: "relative",
+            zIndex: 1,
           }}
         >
-          {submitting ? "Enregistrement…" : `Enregistrer ${cart.length > 0 ? `(${totals.pv.toFixed(1)} PV)` : ""}`}
+          <span style={{ position: "relative", zIndex: 2 }}>
+            {submitting ? "Enregistrement…" : `Enregistrer ${cart.length > 0 ? `(${totals.pv.toFixed(1)} PV)` : ""}`}
+          </span>
         </button>
       </div>
     </div>
