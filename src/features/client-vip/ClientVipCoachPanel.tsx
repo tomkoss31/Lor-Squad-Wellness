@@ -63,6 +63,12 @@ export function ClientVipCoachPanel({ client }: Props) {
   // ─── Modale doc VIP (2026-04-29) ──────────────────────────────────────────
   const [helpOpen, setHelpOpen] = useState(false);
 
+  // ─── Activation manuelle VIP (2026-04-29) ─────────────────────────────────
+  const [togglingActivation, setTogglingActivation] = useState(false);
+  const vipActive = Boolean(
+    (client as Client & { vipStartedAt?: string | null }).vipStartedAt,
+  );
+
   // Sponsor candidates : tous les autres clients du coach.
   const sponsorCandidates = useMemo(
     () => clients.filter((c) => c.id !== client.id),
@@ -83,11 +89,13 @@ export function ClientVipCoachPanel({ client }: Props) {
     try {
       const sb = await getSupabaseClient();
       if (!sb) throw new Error("Service indisponible");
+      // Decouplage activation VIP / ID Herbalife (2026-04-29) : ne plus
+      // toucher a vip_started_at automatiquement. Le coach active le
+      // programme via le bouton dedie "Activer le programme VIP".
       const { error } = await sb
         .from("clients")
         .update({
           vip_herbalife_id: trimmed || null,
-          vip_started_at: trimmed ? new Date().toISOString() : null,
         })
         .eq("id", client.id);
       if (error) throw error;
@@ -101,6 +109,41 @@ export function ClientVipCoachPanel({ client }: Props) {
       });
     } finally {
       setSavingId(false);
+    }
+  }
+
+  async function toggleVipActivation() {
+    if (togglingActivation) return;
+    setTogglingActivation(true);
+    try {
+      const sb = await getSupabaseClient();
+      if (!sb) throw new Error("Service indisponible");
+      const newValue = vipActive ? null : new Date().toISOString();
+      const { error } = await sb
+        .from("clients")
+        .update({ vip_started_at: newValue })
+        .eq("id", client.id);
+      if (error) throw error;
+      pushToast({
+        tone: "success",
+        title: vipActive
+          ? "Programme VIP désactivé"
+          : "🎉 Programme VIP activé",
+        message: vipActive
+          ? "Les PV ne comptent plus pour le palier VIP."
+          : `Les PV à partir d'aujourd'hui compteront pour ${client.firstName}.`,
+      });
+      void status.reload();
+      // Le client n'est pas refresh dans clients[] tant que AppContext
+      // ne fait pas un refetch. En pratique c'est rapide via realtime.
+    } catch (err) {
+      pushToast({
+        tone: "error",
+        title: "Erreur",
+        message: err instanceof Error ? err.message : "Impossible d'activer/désactiver",
+      });
+    } finally {
+      setTogglingActivation(false);
     }
   }
 
@@ -234,6 +277,135 @@ export function ClientVipCoachPanel({ client }: Props) {
           <ClientVipBadge level="none" />
         )}
       </div>
+
+      {/* Toggle activation manuelle (2026-04-29) — seulement visible quand
+          inactif. Une fois actif, on affiche un petit chip "Programme actif
+          depuis le X" + bouton discret pour desactiver (en bas du panel). */}
+      {!vipActive ? (
+        <div
+          style={{
+            background: "linear-gradient(135deg, color-mix(in srgb, var(--ls-gold) 8%, var(--ls-surface)) 0%, var(--ls-surface) 100%)",
+            border: "0.5px solid color-mix(in srgb, var(--ls-gold) 35%, var(--ls-border))",
+            borderRadius: 14,
+            padding: "14px 16px",
+            marginBottom: 14,
+            position: "relative",
+            overflow: "hidden",
+          }}
+        >
+          <div
+            aria-hidden="true"
+            style={{
+              position: "absolute",
+              top: -30,
+              right: -30,
+              width: 100,
+              height: 100,
+              background: "radial-gradient(circle, rgba(184,146,42,0.18) 0%, transparent 70%)",
+              pointerEvents: "none",
+            }}
+          />
+          <div style={{ position: "relative" }}>
+            <div
+              style={{
+                fontSize: 10,
+                letterSpacing: 1.4,
+                textTransform: "uppercase",
+                fontWeight: 700,
+                color: "var(--ls-gold)",
+                marginBottom: 6,
+              }}
+            >
+              ⭐ Programme VIP non activé
+            </div>
+            <p
+              style={{
+                fontSize: 12,
+                color: "var(--ls-text-muted)",
+                lineHeight: 1.5,
+                margin: "0 0 12px",
+              }}
+            >
+              Tant que tu n&apos;as pas activé manuellement, les commandes
+              n&apos;incrementent pas le compteur VIP. Active le programme une
+              fois que <strong>{client.firstName}</strong> a payé son pack
+              avantage et est inscrit sur myherbalife.com.
+            </p>
+            <button
+              type="button"
+              onClick={() => void toggleVipActivation()}
+              disabled={togglingActivation}
+              style={{
+                width: "100%",
+                padding: "12px 16px",
+                background: "linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)",
+                color: "white",
+                border: "none",
+                borderRadius: 10,
+                fontSize: 13,
+                fontWeight: 700,
+                fontFamily: "Syne, serif",
+                cursor: togglingActivation ? "wait" : "pointer",
+                boxShadow: "0 4px 14px rgba(186,117,23,0.35)",
+                opacity: togglingActivation ? 0.7 : 1,
+              }}
+            >
+              {togglingActivation ? "Activation…" : "🚀 Activer le programme VIP"}
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 10,
+            padding: "8px 12px",
+            background: "color-mix(in srgb, var(--ls-teal) 8%, transparent)",
+            border: "0.5px solid color-mix(in srgb, var(--ls-teal) 30%, transparent)",
+            borderRadius: 10,
+            marginBottom: 14,
+            fontSize: 11,
+            color: "var(--ls-teal)",
+          }}
+        >
+          <span>
+            ✓ Programme actif depuis le{" "}
+            <strong>
+              {(() => {
+                const d = (client as Client & { vipStartedAt?: string | null }).vipStartedAt;
+                if (!d) return "—";
+                return new Date(d).toLocaleDateString("fr-FR", {
+                  day: "numeric",
+                  month: "short",
+                  year: "numeric",
+                });
+              })()}
+            </strong>
+          </span>
+          <button
+            type="button"
+            onClick={() => {
+              if (window.confirm("Désactiver le programme VIP ? Les PV ne compteront plus pour le palier.")) {
+                void toggleVipActivation();
+              }
+            }}
+            disabled={togglingActivation}
+            style={{
+              background: "transparent",
+              border: "none",
+              color: "var(--ls-text-hint)",
+              fontSize: 10,
+              cursor: "pointer",
+              textDecoration: "underline",
+              fontFamily: "DM Sans, sans-serif",
+            }}
+          >
+            Désactiver
+          </button>
+        </div>
+      )}
 
       {/* Status + barre progression */}
       {status.loading && !status.data ? (
