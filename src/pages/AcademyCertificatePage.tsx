@@ -9,6 +9,7 @@ import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAcademyProgress } from "../features/academy/hooks/useAcademyProgress";
 import { useAppContext } from "../context/AppContext";
+import { APP_NAME, APP_FALLBACK_DISTRI } from "../lib/branding";
 
 const LOGO_URL = "/icons/lor-squad-icon-180.png";
 type CertFormat = "a4" | "story";
@@ -125,7 +126,7 @@ export function AcademyCertificatePage() {
     return null;
   }
 
-  const userName = currentUser?.name ?? "Distributeur Lor'Squad";
+  const userName = currentUser?.name ?? APP_FALLBACK_DISTRI;
   const completedAt = new Date();
   const dateLabel = completedAt.toLocaleDateString("fr-FR", {
     day: "numeric",
@@ -853,7 +854,7 @@ function CertificateStory({ userName, completedDate }: CertProps) {
         <div style={{ height: 0.5, width: 28, background: "#B8922A" }} />
       </div>
 
-      {/* Titre Lor'Squad Academy */}
+      {/* Titre {APP_NAME} Academy — templater pour rebrand futur */}
       <h1
         style={{
           fontFamily: "Georgia, serif",
@@ -867,7 +868,7 @@ function CertificateStory({ userName, completedDate }: CertProps) {
           letterSpacing: "0.01em",
         }}
       >
-        Lor&apos;Squad
+        {APP_NAME}
         <br />
         Academy
       </h1>

@@ -52,8 +52,8 @@ export function AcademyBadges({ completedCount, isCompleted }: Props) {
   return (
     <div
       style={{
-        background: "white",
-        border: "0.5px solid #E5DFCF",
+        background: "var(--ls-surface2)",
+        border: "0.5px solid var(--ls-border)",
         borderRadius: 14,
         padding: "16px 18px",
         marginBottom: 16,
@@ -80,7 +80,7 @@ export function AcademyBadges({ completedCount, isCompleted }: Props) {
         <p
           style={{
             fontSize: 11,
-            color: "#6B6B62",
+            color: "var(--ls-text-muted)",
             textTransform: "uppercase",
             letterSpacing: "0.06em",
             margin: 0,
@@ -92,7 +92,7 @@ export function AcademyBadges({ completedCount, isCompleted }: Props) {
         <span
           style={{
             fontSize: 11,
-            color: "#B8922A",
+            color: "var(--ls-gold)",
             fontWeight: 600,
             fontFamily: "DM Sans, sans-serif",
           }}
@@ -121,8 +121,10 @@ export function AcademyBadges({ completedCount, isCompleted }: Props) {
                 gap: 6,
                 padding: "10px 6px",
                 borderRadius: 10,
-                background: unlocked ? "linear-gradient(135deg, #FAF6E8, white)" : "#F8F6EC",
-                border: unlocked ? "1px solid rgba(184,146,42,0.30)" : "0.5px solid #E5DFCF",
+                background: unlocked
+                  ? "linear-gradient(135deg, color-mix(in srgb, var(--ls-gold) 12%, var(--ls-surface)), var(--ls-surface))"
+                  : "var(--ls-surface)",
+                border: unlocked ? "1px solid color-mix(in srgb, var(--ls-gold) 30%, transparent)" : "0.5px solid var(--ls-border)",
                 opacity: unlocked ? 1 : 0.45,
                 transition: "opacity 300ms",
               }}
@@ -141,7 +143,7 @@ export function AcademyBadges({ completedCount, isCompleted }: Props) {
                   fontFamily: "DM Sans, sans-serif",
                   fontSize: 10,
                   fontWeight: unlocked ? 600 : 500,
-                  color: unlocked ? "#5C4A0F" : "#888780",
+                  color: unlocked ? "var(--ls-gold)" : "var(--ls-text-hint)",
                   textAlign: "center",
                   letterSpacing: "0.02em",
                 }}

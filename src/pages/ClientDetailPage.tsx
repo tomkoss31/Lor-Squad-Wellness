@@ -788,94 +788,370 @@ export function ClientDetailPage() {
             const totalPv = allProducts.reduce((s, p) => s + (p?.pv ?? 0), 0);
             const totalPrice = allProducts.reduce((s, p) => s + (p?.pricePublic ?? 0), 0);
 
+            // Helper emoji par produit (mapping reutilise — V2 polish 2026-04-29)
+            const getEmoji = (name: string): string => {
+              const n = name.toLowerCase();
+              if (/formula\s*1|f1\b|boisson nutritionnelle/.test(n)) return "🥛";
+              if (/melange.*proteine|formula\s*3|ppp|pdm/.test(n)) return "💪";
+              if (/formula\s*2|multivit/.test(n)) return "💊";
+              if (/aloe/.test(n)) return "🌿";
+              if (/\bthe\b|tea\b/.test(n)) return "🍵";
+              if (/hydrate/.test(n)) return "💧";
+              if (/calcium|xtra[-\s]?cal/.test(n)) return "🦴";
+              if (/collag/.test(n)) return "✨";
+              if (/liftoff/.test(n)) return "⚡";
+              if (/cr7|n-r-g|nrg/.test(n)) return "🏆";
+              if (/cell.*activ/.test(n)) return "🧬";
+              if (/niteworks|night/.test(n)) return "🌙";
+              if (/omega|fish/.test(n)) return "🐟";
+              if (/iron|roseguard|immun/.test(n)) return "🛡️";
+              if (/skin|beaut/.test(n)) return "💎";
+              if (/chips|barre/.test(n)) return "🍫";
+              if (/phyto|brule|graisse/.test(n)) return "🔥";
+              return "💊";
+            };
             return (
         <div className="space-y-4">
-          {/* Lien rapide vers suivi PV */}
+          {/* Quick links — V2 polish chips premium */}
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            <Link to={`/pv?responsable=${encodeURIComponent(client.distributorId)}&client=${encodeURIComponent(client.id)}`}
-              style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px', borderRadius: 10, background: 'rgba(13,148,136,0.08)', border: '1px solid rgba(13,148,136,0.2)', color: 'var(--ls-teal)', textDecoration: 'none', fontSize: 13, fontWeight: 600 }}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-              Suivi PV / Réassort
+            <Link
+              to={`/pv?responsable=${encodeURIComponent(client.distributorId)}&client=${encodeURIComponent(client.id)}`}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 8,
+                padding: '10px 16px',
+                borderRadius: 999,
+                background: 'linear-gradient(135deg, color-mix(in srgb, var(--ls-teal) 14%, var(--ls-surface)) 0%, var(--ls-surface) 100%)',
+                border: '0.5px solid color-mix(in srgb, var(--ls-teal) 40%, transparent)',
+                color: 'var(--ls-teal)',
+                textDecoration: 'none',
+                fontSize: 13,
+                fontWeight: 700,
+                fontFamily: 'DM Sans, sans-serif',
+                boxShadow: '0 4px 12px -4px rgba(45,212,191,0.25)',
+                transition: 'transform 0.15s ease, box-shadow 0.15s ease',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-1px)';
+                e.currentTarget.style.boxShadow = '0 6px 16px -4px rgba(45,212,191,0.35)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'none';
+                e.currentTarget.style.boxShadow = '0 4px 12px -4px rgba(45,212,191,0.25)';
+              }}
+            >
+              💰 Suivi PV / Réassort
             </Link>
-            <Link to={`/clients/${client.id}/start-assessment/edit`}
-              style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px', borderRadius: 10, background: 'var(--ls-surface2)', border: '1px solid var(--ls-border)', color: 'var(--ls-text-muted)', textDecoration: 'none', fontSize: 13 }}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-              Modifier les produits du bilan
+            <Link
+              to={`/clients/${client.id}/start-assessment/edit`}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 8,
+                padding: '10px 16px',
+                borderRadius: 999,
+                background: 'var(--ls-surface)',
+                border: '0.5px solid var(--ls-border)',
+                color: 'var(--ls-text-muted)',
+                textDecoration: 'none',
+                fontSize: 13,
+                fontWeight: 600,
+                fontFamily: 'DM Sans, sans-serif',
+                transition: 'transform 0.15s ease, border-color 0.15s ease, color 0.15s ease',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-1px)';
+                e.currentTarget.style.borderColor = 'color-mix(in srgb, var(--ls-gold) 35%, var(--ls-border))';
+                e.currentTarget.style.color = 'var(--ls-text)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'none';
+                e.currentTarget.style.borderColor = 'var(--ls-border)';
+                e.currentTarget.style.color = 'var(--ls-text-muted)';
+              }}
+            >
+              ✏️ Modifier les produits du bilan
             </Link>
           </div>
 
-          {/* Produits en possession */}
-          <Card className="space-y-4" data-tour-id="program-recommendations">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="eyebrow-label">Programme actuel</p>
-                <h2 className="mt-2 text-xl font-bold" style={{ fontFamily: 'Syne, sans-serif', color: 'var(--ls-text)' }}>
-                  Produits du client
-                </h2>
-                <p className="mt-1 text-sm" style={{ color: 'var(--ls-text-muted)' }}>
+          {/* Produits en possession — refonte premium V2 */}
+          <div
+            data-tour-id="program-recommendations"
+            style={{
+              padding: '18px 20px',
+              borderRadius: 18,
+              background: 'var(--ls-surface)',
+              border: '0.5px solid color-mix(in srgb, var(--ls-teal) 25%, var(--ls-border))',
+              borderLeft: '3px solid var(--ls-teal)',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14, flexWrap: 'wrap' }}>
+              <div
+                style={{
+                  width: 44, height: 44, flexShrink: 0,
+                  borderRadius: 12,
+                  background: 'linear-gradient(135deg, color-mix(in srgb, var(--ls-teal) 22%, var(--ls-surface2)) 0%, var(--ls-surface2) 100%)',
+                  border: '0.5px solid color-mix(in srgb, var(--ls-teal) 35%, transparent)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: 22,
+                }}
+              >
+                💊
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase', fontWeight: 700, color: 'var(--ls-teal)', fontFamily: 'DM Sans, sans-serif' }}>
+                  Programme actuel
+                </div>
+                <div style={{ fontFamily: 'Syne, serif', fontSize: 17, fontWeight: 700, color: 'var(--ls-text)', marginTop: 2, letterSpacing: '-0.01em' }}>
                   {client.currentProgram || 'Programme à confirmer'}
-                </p>
+                </div>
+                <div style={{ fontSize: 11.5, color: 'var(--ls-text-muted)', marginTop: 2, fontFamily: 'DM Sans, sans-serif' }}>
+                  {allProducts.length} produit{allProducts.length > 1 ? 's' : ''} retenu{allProducts.length > 1 ? 's' : ''}
+                </div>
               </div>
               {totalPv > 0 && (
-                <div style={{ textAlign: 'right' }}>
-                  <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--ls-gold)', fontFamily: 'Syne, sans-serif' }}>{totalPv.toFixed(1)} PV</div>
-                  <div style={{ fontSize: 11, color: 'var(--ls-text-hint)' }}>{totalPrice.toFixed(2)} €</div>
+                <div
+                  style={{
+                    textAlign: 'right',
+                    padding: '8px 14px',
+                    borderRadius: 12,
+                    background: 'color-mix(in srgb, var(--ls-gold) 8%, var(--ls-surface2))',
+                    border: '0.5px solid color-mix(in srgb, var(--ls-gold) 30%, transparent)',
+                  }}
+                >
+                  <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--ls-gold)', fontFamily: 'Syne, serif', letterSpacing: '-0.02em' }}>
+                    {totalPv.toFixed(1)}<span style={{ fontSize: 11, marginLeft: 2, opacity: 0.75 }}>PV</span>
+                  </div>
+                  <div style={{ fontSize: 11, color: 'var(--ls-text-muted)', fontFamily: 'DM Sans, sans-serif' }}>
+                    {totalPrice.toFixed(2)} €
+                  </div>
                 </div>
               )}
             </div>
+
             {allProducts.length > 0 ? (
-              <div className="grid gap-2">
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {allProducts.map((product, idx) => (
-                  <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderRadius: 12, background: 'var(--ls-surface2)', border: '1px solid var(--ls-border)' }}>
-                    <div style={{ width: 32, height: 32, borderRadius: 8, background: 'rgba(13,148,136,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ls-teal)" strokeWidth="1.5"><polyline points="20 6 9 17 4 12"/></svg>
+                  <div
+                    key={idx}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 12,
+                      padding: '12px 14px',
+                      borderRadius: 14,
+                      background: 'linear-gradient(135deg, color-mix(in srgb, var(--ls-teal) 6%, var(--ls-surface)) 0%, var(--ls-surface) 100%)',
+                      border: '0.5px solid var(--ls-border)',
+                      borderLeft: '3px solid var(--ls-teal)',
+                      transition: 'transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = 'translateY(-1px)';
+                      e.currentTarget.style.boxShadow = '0 4px 12px -6px rgba(45,212,191,0.25)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = 'none';
+                      e.currentTarget.style.boxShadow = 'none';
+                    }}
+                  >
+                    {/* Avatar emoji premium */}
+                    <div
+                      style={{
+                        width: 44, height: 44, flexShrink: 0,
+                        borderRadius: 12,
+                        background: 'linear-gradient(135deg, var(--ls-teal) 0%, color-mix(in srgb, var(--ls-teal) 70%, #000) 100%)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontSize: 22,
+                        boxShadow: '0 4px 10px -3px rgba(45,212,191,0.40), inset 0 1px 0 rgba(255,255,255,0.20)',
+                      }}
+                    >
+                      {getEmoji(product.name)}
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--ls-text)' }}>{product.name}</div>
-                      <div style={{ fontSize: 11, color: 'var(--ls-text-muted)', marginTop: 2 }}>Réf. {product.id} · {product.pv} PV · {product.pricePublic.toFixed(2)} €</div>
+                      <div style={{ fontFamily: 'Syne, serif', fontSize: 14, fontWeight: 700, color: 'var(--ls-text)', letterSpacing: '-0.01em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {product.name}
+                      </div>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginTop: 4 }}>
+                        <span
+                          style={{
+                            fontSize: 10.5, fontWeight: 700,
+                            padding: '2px 8px', borderRadius: 999,
+                            background: 'color-mix(in srgb, var(--ls-gold) 14%, transparent)',
+                            color: 'var(--ls-gold)',
+                            border: '0.5px solid color-mix(in srgb, var(--ls-gold) 30%, transparent)',
+                          }}
+                        >
+                          {product.pricePublic.toFixed(2)}€
+                        </span>
+                        <span
+                          style={{
+                            fontSize: 10, fontWeight: 700,
+                            padding: '2px 8px', borderRadius: 999,
+                            background: 'color-mix(in srgb, var(--ls-teal) 12%, transparent)',
+                            color: 'var(--ls-teal)',
+                            border: '0.5px solid color-mix(in srgb, var(--ls-teal) 25%, transparent)',
+                          }}
+                        >
+                          {product.pv.toFixed(1)} PV
+                        </span>
+                        {product.dureeReferenceJours > 0 && (
+                          <span
+                            style={{
+                              fontSize: 10, fontWeight: 600,
+                              padding: '2px 8px', borderRadius: 999,
+                              background: 'color-mix(in srgb, var(--ls-purple) 12%, transparent)',
+                              color: 'var(--ls-purple)',
+                              border: '0.5px solid color-mix(in srgb, var(--ls-purple) 25%, transparent)',
+                            }}
+                          >
+                            📅 {product.dureeReferenceJours}j
+                          </span>
+                        )}
+                      </div>
                     </div>
-                    <div style={{ fontSize: 12, color: 'var(--ls-teal)', fontWeight: 600, flexShrink: 0 }}>En cours</div>
+                    <div style={{
+                      fontSize: 10.5,
+                      fontWeight: 800,
+                      padding: '4px 10px',
+                      borderRadius: 999,
+                      background: 'color-mix(in srgb, var(--ls-teal) 16%, transparent)',
+                      color: 'var(--ls-teal)',
+                      border: '0.5px solid color-mix(in srgb, var(--ls-teal) 35%, transparent)',
+                      flexShrink: 0,
+                      letterSpacing: 0.5,
+                      textTransform: 'uppercase',
+                      fontFamily: 'DM Sans, sans-serif',
+                    }}>
+                      ✓ En cours
+                    </div>
                   </div>
                 ))}
               </div>
             ) : (
-              <div style={{ padding: '24px 0', textAlign: 'center', color: 'var(--ls-text-hint)', fontSize: 13 }}>
-                Aucun produit sélectionné. Modifie le bilan initial pour ajouter les produits.
+              <div
+                style={{
+                  padding: '32px 16px',
+                  textAlign: 'center',
+                  borderRadius: 14,
+                  border: '1px dashed var(--ls-border)',
+                  background: 'var(--ls-surface2)',
+                }}
+              >
+                <div style={{ fontSize: 36, marginBottom: 8, opacity: 0.6 }}>📦</div>
+                <div style={{ fontFamily: 'Syne, serif', fontSize: 14, fontWeight: 700, color: 'var(--ls-text)', marginBottom: 4 }}>
+                  Aucun produit sélectionné
+                </div>
+                <div style={{ fontSize: 12, color: 'var(--ls-text-muted)', fontFamily: 'DM Sans, sans-serif' }}>
+                  Modifie le bilan initial pour ajouter les produits du programme.
+                </div>
               </div>
             )}
 
             {/* Ajouter un produit (upsell) */}
-            <ProductAdder
-              clientId={client.id}
-              existingIds={existingIds}
-              onAdded={() => window.location.reload()}
-            />
-          </Card>
+            <div style={{ marginTop: 14, paddingTop: 14, borderTop: '0.5px dashed var(--ls-border)' }}>
+              <ProductAdder
+                clientId={client.id}
+                existingIds={existingIds}
+                onAdded={() => window.location.reload()}
+              />
+            </div>
+          </div>
 
-          {/* Produits recommandés */}
+          {/* Produits recommandés — refonte premium V2 */}
           {upsells.length > 0 && (
-            <Card className="space-y-4">
-              <div>
-                <p className="eyebrow-label" style={{ color: 'var(--ls-gold)' }}>Recommandations</p>
-                <h2 className="mt-2 text-xl font-bold" style={{ fontFamily: 'Syne, sans-serif', color: 'var(--ls-text)' }}>
-                  Produits conseillés
-                </h2>
-                <p className="mt-1 text-sm" style={{ color: 'var(--ls-text-muted)' }}>Basés sur les derniers résultats body scan</p>
+            <div
+              style={{
+                padding: '18px 20px',
+                borderRadius: 18,
+                background: 'var(--ls-surface)',
+                border: '0.5px solid color-mix(in srgb, var(--ls-gold) 25%, var(--ls-border))',
+                borderLeft: '3px solid var(--ls-gold)',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
+                <div
+                  style={{
+                    width: 44, height: 44, flexShrink: 0,
+                    borderRadius: 12,
+                    background: 'linear-gradient(135deg, color-mix(in srgb, var(--ls-gold) 22%, var(--ls-surface2)) 0%, var(--ls-surface2) 100%)',
+                    border: '0.5px solid color-mix(in srgb, var(--ls-gold) 35%, transparent)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: 22,
+                  }}
+                >
+                  ✨
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase', fontWeight: 700, color: 'var(--ls-gold)', fontFamily: 'DM Sans, sans-serif' }}>
+                    Recommandations
+                  </div>
+                  <div style={{ fontFamily: 'Syne, serif', fontSize: 17, fontWeight: 700, color: 'var(--ls-text)', marginTop: 2, letterSpacing: '-0.01em' }}>
+                    Produits conseillés
+                  </div>
+                  <div style={{ fontSize: 11.5, color: 'var(--ls-text-muted)', marginTop: 2, fontFamily: 'DM Sans, sans-serif' }}>
+                    Basés sur les derniers résultats body scan
+                  </div>
+                </div>
+                <span
+                  style={{
+                    fontSize: 11, fontWeight: 800, fontFamily: 'Syne, serif',
+                    padding: '3px 10px', borderRadius: 999,
+                    background: 'color-mix(in srgb, var(--ls-gold) 14%, transparent)',
+                    color: 'var(--ls-gold)',
+                    border: '0.5px solid color-mix(in srgb, var(--ls-gold) 40%, transparent)',
+                  }}
+                >
+                  {upsells.length}
+                </span>
               </div>
-              <div className="grid gap-2">
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {upsells.map((r, idx) => (
-                  <div key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '12px 14px', borderRadius: 12, background: 'var(--ls-surface2)', border: '1px solid var(--ls-border)' }}>
-                    <div style={{ width: 32, height: 32, borderRadius: 8, background: 'var(--ls-gold-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ls-gold)" strokeWidth="1.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                  <div
+                    key={idx}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'flex-start',
+                      gap: 12,
+                      padding: '12px 14px',
+                      borderRadius: 14,
+                      background: 'linear-gradient(135deg, color-mix(in srgb, var(--ls-gold) 6%, var(--ls-surface)) 0%, var(--ls-surface) 100%)',
+                      border: '0.5px solid color-mix(in srgb, var(--ls-gold) 25%, transparent)',
+                      transition: 'transform 0.15s ease, box-shadow 0.15s ease',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = 'translateY(-1px)';
+                      e.currentTarget.style.boxShadow = '0 4px 12px -6px rgba(239,159,39,0.25)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = 'none';
+                      e.currentTarget.style.boxShadow = 'none';
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: 44, height: 44, flexShrink: 0,
+                        borderRadius: 12,
+                        background: 'linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontSize: 22,
+                        boxShadow: '0 4px 10px -3px rgba(186,117,23,0.40), inset 0 1px 0 rgba(255,255,255,0.20)',
+                      }}
+                    >
+                      {getEmoji(r.name)}
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--ls-text)' }}>{r.name}</div>
-                      <div style={{ fontSize: 11, color: 'var(--ls-text-muted)', lineHeight: 1.5, marginTop: 2 }}>{r.reason}</div>
+                      <div style={{ fontFamily: 'Syne, serif', fontSize: 14, fontWeight: 700, color: 'var(--ls-text)', letterSpacing: '-0.01em' }}>
+                        {r.name}
+                      </div>
+                      <div style={{ fontSize: 11.5, color: 'var(--ls-text-muted)', lineHeight: 1.5, marginTop: 4, fontFamily: 'DM Sans, sans-serif', fontStyle: 'italic' }}>
+                        💡 {r.reason}
+                      </div>
                     </div>
                   </div>
                 ))}
               </div>
-            </Card>
+            </div>
           )}
         </div>
         );

@@ -537,8 +537,9 @@ export function MessagesPage() {
           </button>
         </div>
 
-        {/* 3 stats inline dans le hero */}
+        {/* 3 stats inline dans le hero — data-tour-id pour Academy section Messages */}
         <div
+          data-tour-id="messages-tabs"
           style={{
             position: "relative",
             display: "grid",
