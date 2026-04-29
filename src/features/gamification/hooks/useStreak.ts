@@ -93,13 +93,24 @@ export function useStreak(): StreakData {
           }
         }
 
-        // 2. Update si changement
+        // 2. Update si changement (= nouveau jour detecte)
+        // V2 (2026-04-29) : on incremente aussi lifetime_login_count pour
+        // calculer le XP daily_login (+5 XP par jour, never resets).
         if (shouldUpdate) {
+          // Lire lifetime current pour increment atomic
+          const { data: liveRow } = await sb
+            .from("users")
+            .select("lifetime_login_count")
+            .eq("id", userId)
+            .maybeSingle();
+          const currentLifetime = (liveRow as { lifetime_login_count?: number } | null)?.lifetime_login_count ?? 0;
+
           const { error: upErr } = await sb
             .from("users")
             .update({
               streak_count: newCount,
               streak_last_active: ymd(today),
+              lifetime_login_count: currentLifetime + 1,
             })
             .eq("id", userId);
           if (upErr) {

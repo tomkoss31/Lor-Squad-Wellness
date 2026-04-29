@@ -13,6 +13,7 @@ import {
 import { formatDate, formatDateTime, getFirstAssessment } from "../lib/calculations";
 import type { Client, FollowUp, User } from "../types/domain";
 import { AcademyAdminPanel } from "../features/academy/components/AcademyAdminPanel";
+import { UserActivityPanel } from "../features/gamification/components/UserActivityPanel";
 
 const statusTone: Record<string, { label: string; tone: "active" | "pending" | "follow-up" }> = {
   active: { label: "Actif", tone: "active" },
@@ -28,6 +29,8 @@ export function DistributorPortfolioPage() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "pending" | "follow-up">("all");
   const deferredSearch = useDeferredValue(search);
+  // Onglets fiche distri (V3 — 2026-04-29) : 2 onglets pour eviter surcharge.
+  const [activeTab, setActiveTab] = useState<"overview" | "activity">("overview");
 
   if (!currentUser || !distributorId) return null;
 
@@ -130,6 +133,68 @@ export function DistributorPortfolioPage() {
         </Link>
       </Card>
 
+      {/* Onglets fiche distri — V3 2026-04-29 (admin uniquement pour Activite) */}
+      {currentUser.role === "admin" ? (
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 4 }}>
+          {([
+            { key: "overview" as const, label: "Vue d'ensemble", emoji: "📋", color: "var(--ls-gold)" },
+            { key: "activity" as const, label: "Activité", emoji: "📊", color: "var(--ls-teal)" },
+          ]).map((t) => {
+            const isActive = activeTab === t.key;
+            return (
+              <button
+                key={t.key}
+                type="button"
+                onClick={() => setActiveTab(t.key)}
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 7,
+                  padding: "9px 16px",
+                  borderRadius: 999,
+                  border: isActive
+                    ? `0.5px solid color-mix(in srgb, ${t.color} 50%, transparent)`
+                    : "0.5px solid var(--ls-border)",
+                  background: isActive
+                    ? `linear-gradient(135deg, color-mix(in srgb, ${t.color} 14%, var(--ls-surface)) 0%, var(--ls-surface) 100%)`
+                    : "var(--ls-surface)",
+                  color: isActive ? t.color : "var(--ls-text-muted)",
+                  fontSize: 13,
+                  fontFamily: "DM Sans, sans-serif",
+                  fontWeight: isActive ? 700 : 500,
+                  cursor: "pointer",
+                  transition: "transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease",
+                  boxShadow: isActive ? `0 4px 12px -4px color-mix(in srgb, ${t.color} 30%, transparent)` : "none",
+                }}
+                onMouseEnter={(e) => {
+                  if (!isActive) e.currentTarget.style.transform = "translateY(-1px)";
+                }}
+                onMouseLeave={(e) => {
+                  if (!isActive) e.currentTarget.style.transform = "none";
+                }}
+              >
+                <span aria-hidden style={{ fontSize: 14 }}>{t.emoji}</span>
+                {t.label}
+              </button>
+            );
+          })}
+        </div>
+      ) : null}
+
+      {/* Onglet ACTIVITE (admin only) ─────────────────────────────────────── */}
+      {activeTab === "activity" && currentUser.role === "admin" ? (
+        <div style={{ display: "flex", flexDirection: "column", gap: 14, marginTop: 4 }}>
+          <UserActivityPanel userId={portfolioUser.id} />
+          <AcademyAdminPanel
+            userId={portfolioUser.id}
+            displayName={portfolioUser.name}
+          />
+        </div>
+      ) : null}
+
+      {/* Onglet VUE D'ENSEMBLE (defaut, ou si non-admin) ────────────────── */}
+      {(activeTab === "overview" || currentUser.role !== "admin") && (
+      <>
       {/* 3. Barre filtres : pills + search */}
       <div className="ls-portfolio-filters">
         <FilterPill label="Tous" count={counts.all} active={statusFilter === "all"} tone="gold" onClick={() => setStatusFilter("all")} />
@@ -178,18 +243,10 @@ export function DistributorPortfolioPage() {
         )}
       </div>
 
-      {/* Chantier Academy Phase 1 (2026-04-26) : panel progression Academy
-          du distri, reserve aux admins. La RPC sous-jacente verifie elle-meme
-          is_admin() — le check ici evite juste l affichage UI inutile pour les
-          referents/distributeurs. */}
-      {currentUser.role === "admin" ? (
-        <div style={{ marginTop: 24 }}>
-          <AcademyAdminPanel
-            userId={portfolioUser.id}
-            displayName={portfolioUser.name}
-          />
-        </div>
-      ) : null}
+      </>
+      )}
+      {/* AcademyAdminPanel deplace dans l'onglet Activite (V3 2026-04-29).
+          Reserve admin via le check du onglet activeTab===activity ci-dessus. */}
     </div>
   );
 }

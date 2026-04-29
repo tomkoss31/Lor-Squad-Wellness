@@ -21,6 +21,8 @@ interface XpData {
   bilansXp: number;
   rdvXp: number;
   messagesXp: number;
+  // Daily login XP (V2 — 2026-04-29) : lifetime_login_count * 5
+  dailyXp: number;
 }
 
 const LEVEL_TITLES: Record<number, string> = {
@@ -61,6 +63,12 @@ const XP_RULES = [
     xp: 2,
     cap: "par message dans la messagerie interne",
   },
+  {
+    emoji: "🔥",
+    label: "Connexion quotidienne",
+    xp: 5,
+    cap: "1 fois par jour, jamais reset",
+  },
 ];
 
 // Niveaux : level = floor(sqrt(xp / 100)) + 1.
@@ -93,6 +101,7 @@ export function XpProgressCard() {
     bilansXp: 0,
     rdvXp: 0,
     messagesXp: 0,
+    dailyXp: 0,
   });
 
   useEffect(() => {
@@ -123,6 +132,7 @@ export function XpProgressCard() {
           bilansXp: (row as { bilans_xp?: number }).bilans_xp ?? 0,
           rdvXp: (row as { rdv_xp?: number }).rdv_xp ?? 0,
           messagesXp: (row as { messages_xp?: number }).messages_xp ?? 0,
+          dailyXp: (row as { daily_xp?: number }).daily_xp ?? 0,
         });
       } catch (err) {
         if (!cancelled) {
@@ -151,6 +161,7 @@ export function XpProgressCard() {
     { label: "Bilans créés", emoji: "📋", value: data.bilansXp, color: "var(--ls-teal)" },
     { label: "RDV", emoji: "📅", value: data.rdvXp, color: "var(--ls-purple)" },
     { label: "Messages", emoji: "💬", value: data.messagesXp, color: "var(--ls-coral)" },
+    { label: "Connexions", emoji: "🔥", value: data.dailyXp, color: "var(--ls-gold)" },
   ];
 
   return (
