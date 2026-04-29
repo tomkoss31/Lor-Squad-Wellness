@@ -19,6 +19,12 @@ interface Props {
   clients: Client[];
   followUps: FollowUp[];
   onClose: () => void;
+  /**
+   * Mode couple (Thomas + Melanie virtual node) : si fournie, affiche un
+   * switch pour basculer entre les membres. Toutes les data se rafraichissent
+   * pour le membre selectionne. Si non fournie ou 1 seul, mode classique.
+   */
+  coupleMembers?: User[];
 }
 
 interface XpData {
@@ -67,21 +73,36 @@ function statusInfo(lastActiveAt: Date | null): {
   return { label: "Inactif >1 sem", color: "#DC2626", emoji: "🔴" };
 }
 
-export function DistriQuickModal({ user, clients, followUps, onClose }: Props) {
+export function DistriQuickModal({ user, clients, followUps, onClose, coupleMembers }: Props) {
   const { currentUser } = useAppContext();
   const isAdmin = currentUser?.role === "admin";
-  const stats = useUserActivityStats(isAdmin ? user.id : null);
+
+  // Mode couple : switch entre les membres si fournis (≥ 2)
+  const hasCoupleSwitch = !!coupleMembers && coupleMembers.length >= 2;
+  const [selectedMemberId, setSelectedMemberId] = useState<string>(
+    hasCoupleSwitch ? coupleMembers![0].id : user.id,
+  );
+  // Le user "actif" pour les data — soit le membre selectionne, soit le user de base
+  const activeUser = useMemo(() => {
+    if (hasCoupleSwitch) {
+      return coupleMembers!.find((m) => m.id === selectedMemberId) ?? coupleMembers![0];
+    }
+    return user;
+  }, [hasCoupleSwitch, coupleMembers, selectedMemberId, user]);
+
+  const stats = useUserActivityStats(isAdmin ? activeUser.id : null);
   const [xp, setXp] = useState<XpData | null>(null);
 
-  // Fetch XP via RPC
+  // Fetch XP via RPC (refetch au switch couple)
   useEffect(() => {
     if (!isAdmin) return;
     let cancelled = false;
+    setXp(null); // reset au switch
     void (async () => {
       try {
         const sb = await getSupabaseClient();
         if (!sb) return;
-        const { data, error } = await sb.rpc("get_user_xp", { p_user_id: user.id });
+        const { data, error } = await sb.rpc("get_user_xp", { p_user_id: activeUser.id });
         if (cancelled || error) return;
         const row = Array.isArray(data) && data[0] ? data[0] : null;
         if (!row) return;
@@ -97,11 +118,11 @@ export function DistriQuickModal({ user, clients, followUps, onClose }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [user.id, isAdmin]);
+  }, [activeUser.id, isAdmin]);
 
-  // Stats clients/bilans
+  // Stats clients/bilans (depend du activeUser)
   const distri = useMemo(() => {
-    const myClients = clients.filter((c) => c.distributorId === user.id);
+    const myClients = clients.filter((c) => c.distributorId === activeUser.id);
     const activeClients = myClients.filter((c) => c.status === "active").length;
     const bilansCount = myClients.reduce((sum, c) => sum + (c.assessments?.length ?? 0), 0);
     const upcomingFollowUps = followUps.filter(
@@ -113,7 +134,7 @@ export function DistriQuickModal({ user, clients, followUps, onClose }: Props) {
       bilansCount,
       upcomingFollowUps,
     };
-  }, [user.id, clients, followUps]);
+  }, [activeUser.id, clients, followUps]);
 
   // ESC + body scroll lock
   useEffect(() => {
@@ -215,11 +236,11 @@ export function DistriQuickModal({ user, clients, followUps, onClose }: Props) {
                   backdropFilter: "blur(6px)",
                 }}
               >
-                {getInitials(user.name)}
+                {getInitials(activeUser.name)}
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: 10, letterSpacing: 1.6, textTransform: "uppercase", fontWeight: 800, color: "rgba(255,255,255,0.90)" }}>
-                  {user.role === "admin" ? "Admin" : user.role === "referent" ? "Coach référent" : "Distributeur"}
+                  {activeUser.role === "admin" ? "Admin" : activeUser.role === "referent" ? "Coach référent" : "Distributeur"}
                 </div>
                 <h2
                   id="ls-distri-title"
@@ -230,7 +251,7 @@ export function DistriQuickModal({ user, clients, followUps, onClose }: Props) {
                     overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
                   }}
                 >
-                  {user.name}
+                  {activeUser.name}
                 </h2>
               </div>
               <button
@@ -255,6 +276,76 @@ export function DistriQuickModal({ user, clients, followUps, onClose }: Props) {
               </button>
             </div>
           </div>
+
+          {/* COUPLE SWITCH (Thomas/Mélanie) — V3 2026-04-29 */}
+          {hasCoupleSwitch && (
+            <div
+              style={{
+                padding: "10px 18px",
+                background: "color-mix(in srgb, var(--ls-teal) 8%, var(--ls-surface))",
+                borderBottom: "0.5px solid var(--ls-border)",
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                flexWrap: "wrap",
+              }}
+            >
+              <span
+                style={{
+                  fontSize: 10,
+                  letterSpacing: 1.4,
+                  textTransform: "uppercase",
+                  fontWeight: 700,
+                  color: "var(--ls-text-muted)",
+                  fontFamily: "DM Sans, sans-serif",
+                }}
+              >
+                Voir
+              </span>
+              <div
+                style={{
+                  display: "inline-flex",
+                  gap: 4,
+                  padding: 3,
+                  borderRadius: 999,
+                  background: "var(--ls-surface2)",
+                  border: "0.5px solid var(--ls-border)",
+                }}
+              >
+                {coupleMembers!.map((member) => {
+                  const isActive = selectedMemberId === member.id;
+                  return (
+                    <button
+                      key={member.id}
+                      type="button"
+                      onClick={() => setSelectedMemberId(member.id)}
+                      style={{
+                        padding: "6px 14px",
+                        borderRadius: 999,
+                        border: "none",
+                        cursor: "pointer",
+                        fontSize: 12,
+                        fontFamily: "DM Sans, sans-serif",
+                        fontWeight: isActive ? 700 : 500,
+                        background: isActive
+                          ? "linear-gradient(135deg, var(--ls-teal) 0%, color-mix(in srgb, var(--ls-teal) 70%, #000) 100%)"
+                          : "transparent",
+                        color: isActive ? "#FFFFFF" : "var(--ls-text-muted)",
+                        boxShadow: isActive ? "0 2px 6px -2px rgba(45,212,191,0.40)" : "none",
+                        transition: "all 0.15s ease",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 5,
+                      }}
+                    >
+                      <span style={{ fontSize: 13 }}>{getInitials(member.name)}</span>
+                      <span>{member.name.split(/\s+/)[0]}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           {/* BODY */}
           <div style={{ padding: 18, display: "flex", flexDirection: "column", gap: 14 }}>
@@ -407,7 +498,7 @@ export function DistriQuickModal({ user, clients, followUps, onClose }: Props) {
                 Fermer
               </button>
               <Link
-                to={`/distributors/${user.id}`}
+                to={`/distributors/${activeUser.id}`}
                 onClick={onClose}
                 style={{
                   flex: 1.4,
