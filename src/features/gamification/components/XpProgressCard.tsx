@@ -114,6 +114,8 @@ export function XpProgressCard() {
         const { data: rows, error } = await sb.rpc("get_user_xp", { p_user_id: userId });
         if (cancelled) return;
         if (error) {
+          // V3 (2026-04-29) : log l'erreur pour debug (avant elle etait silencieuse)
+          console.warn("[XpProgressCard] RPC get_user_xp failed:", error.message);
           setData((d) => ({ ...d, loading: false, error: error.message }));
           return;
         }
@@ -149,7 +151,43 @@ export function XpProgressCard() {
     };
   }, [userId]);
 
-  if (!userId || data.loading || data.error) return null;
+  if (!userId) return null;
+  if (data.loading) {
+    return (
+      <div
+        style={{
+          padding: 20,
+          background: "linear-gradient(135deg, rgba(184,146,42,0.06), rgba(127,119,221,0.04))",
+          border: "1px solid rgba(184,146,42,0.20)",
+          borderRadius: 14,
+          fontSize: 13,
+          color: "var(--ls-text-muted)",
+          textAlign: "center",
+          fontFamily: "DM Sans, sans-serif",
+        }}
+      >
+        Chargement de tes XP…
+      </div>
+    );
+  }
+  // V3 (2026-04-29) : afficher l'erreur au lieu de cacher silencieusement.
+  if (data.error) {
+    return (
+      <div
+        style={{
+          padding: 16,
+          background: "color-mix(in srgb, var(--ls-coral) 8%, transparent)",
+          border: "0.5px solid color-mix(in srgb, var(--ls-coral) 35%, transparent)",
+          borderRadius: 12,
+          color: "var(--ls-coral)",
+          fontSize: 12.5,
+          fontFamily: "DM Sans, sans-serif",
+        }}
+      >
+        ⚠️ Impossible de charger tes XP : {data.error}
+      </div>
+    );
+  }
 
   const prevLevelThreshold = (data.level - 1) * (data.level - 1) * 100;
   const xpInLevel = data.totalXp - prevLevelThreshold;
