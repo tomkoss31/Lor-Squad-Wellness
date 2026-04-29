@@ -32,8 +32,8 @@ export function AcademyTimeline({
   return (
     <div
       style={{
-        background: "#FAF6E8",
-        border: "0.5px solid #E5DFCF",
+        background: "var(--ls-surface2)",
+        border: "0.5px solid var(--ls-border)",
         borderRadius: 14,
         padding: "20px 8px 16px",
         marginBottom: 16,
@@ -78,7 +78,7 @@ export function AcademyTimeline({
             left: `calc(16px + 18px)`,
             right: `calc(16px + 18px)`,
             height: 3,
-            background: "#E5DFCF",
+            background: "var(--ls-border)",
             borderRadius: 2,
             zIndex: 0,
           }}
@@ -102,14 +102,14 @@ export function AcademyTimeline({
         {ACADEMY_SECTIONS.map((section, idx) => {
           const isDone = idx < completedCount;
           const isCurrent = !isCompleted && idx === currentSectionIndex;
-          const stateColor = isDone ? "#1D9E75" : isCurrent ? "#B8922A" : "#C9C2AB";
-          const dotBg = isDone ? "#1D9E75" : isCurrent ? "#B8922A" : "white";
-          const dotColor = isDone || isCurrent ? "white" : "#888780";
+          const stateColor = isDone ? "var(--ls-teal)" : isCurrent ? "var(--ls-gold)" : "var(--ls-text-hint)";
+          const dotBg = isDone ? "var(--ls-teal)" : isCurrent ? "var(--ls-gold)" : "var(--ls-surface)";
+          const dotColor = isDone || isCurrent ? "white" : "var(--ls-text-hint)";
           const dotBorder = isDone
             ? "none"
             : isCurrent
               ? "none"
-              : "1.5px solid #C9C2AB";
+              : "1.5px solid var(--ls-border)";
 
           return (
             <button

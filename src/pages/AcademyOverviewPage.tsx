@@ -86,10 +86,10 @@ export function AcademyOverviewPage() {
 
       <div
         style={{
-          background: "#FAF6E8",
+          background: "var(--ls-surface)",
           borderRadius: 16,
           padding: 28,
-          border: "0.5px solid #E5DFCF",
+          border: "0.5px solid var(--ls-border)",
         }}
       >
         {/* Hero */}
@@ -101,11 +101,11 @@ export function AcademyOverviewPage() {
             gap: 24,
             marginBottom: 28,
             paddingBottom: 24,
-            borderBottom: "0.5px solid #E5DFCF",
+            borderBottom: "0.5px solid var(--ls-border)",
           }}
         >
           <svg width="92" height="92" viewBox="0 0 84 84" style={{ flexShrink: 0 }}>
-            <circle cx="42" cy="42" r={ringRadius} fill="none" stroke="#E5DFCF" strokeWidth="6" />
+            <circle cx="42" cy="42" r={ringRadius} fill="none" stroke="var(--ls-border)" strokeWidth="6" />
             <circle
               cx="42"
               cy="42"
@@ -126,7 +126,7 @@ export function AcademyOverviewPage() {
               fontFamily="var(--ls-font-serif, Georgia, serif)"
               fontSize="20"
               fontWeight="500"
-              fill="#5C4A0F"
+              fill="var(--ls-gold)"
             >
               {view.percentComplete}%
             </text>
@@ -138,12 +138,12 @@ export function AcademyOverviewPage() {
                 fontSize: 26,
                 fontWeight: 500,
                 margin: "0 0 6px 0",
-                color: "#2C2C2A",
+                color: "var(--ls-text)",
               }}
             >
               Lor&apos;Squad Academy
             </h1>
-            <p style={{ fontSize: 14, color: "#6B6B62", margin: "0 0 14px 0" }}>
+            <p style={{ fontSize: 14, color: "var(--ls-text-muted)", margin: "0 0 14px 0" }}>
               {renderHeroSubtitle(view)}
             </p>
             {!view.isCompleted ? (
@@ -230,8 +230,8 @@ export function AcademyOverviewPage() {
             gap: 14,
             padding: "16px 18px",
             marginBottom: 18,
-            background: "linear-gradient(135deg, #FFF5C4 0%, #F5E0A0 100%)",
-            border: "0.5px solid #C9A84C",
+            background: "linear-gradient(135deg, color-mix(in srgb, var(--ls-gold) 16%, var(--ls-surface)) 0%, color-mix(in srgb, var(--ls-gold) 8%, var(--ls-surface)) 100%)",
+            border: "0.5px solid color-mix(in srgb, var(--ls-gold) 40%, transparent)",
             borderRadius: 14,
             cursor: "pointer",
             textAlign: "left",
@@ -255,13 +255,13 @@ export function AcademyOverviewPage() {
                 fontFamily: "var(--ls-font-serif, Georgia, serif)",
                 fontSize: 16,
                 fontWeight: 600,
-                color: "#5C4A0F",
+                color: "var(--ls-gold)",
                 marginBottom: 2,
               }}
             >
               Mode pratique — Bilan d&apos;essai
             </div>
-            <div style={{ fontSize: 12, color: "#6B6B62", lineHeight: 1.4 }}>
+            <div style={{ fontSize: 12, color: "var(--ls-text-muted)", lineHeight: 1.4 }}>
               Simule un bilan complet en 2 min · sans toucher à la base · pour
               ressentir le flow avant ton premier vrai RDV.
             </div>
@@ -438,7 +438,7 @@ function MotivationBanner({
       }}
     >
       <span style={{ fontSize: 22, flexShrink: 0 }}>{copy.emoji}</span>
-      <p style={{ fontSize: 13, color: "#5C4A0F", margin: 0, fontWeight: 500, lineHeight: 1.45 }}>
+      <p style={{ fontSize: 13, color: "var(--ls-gold)", margin: 0, fontWeight: 500, lineHeight: 1.45 }}>
         {copy.text}
       </p>
     </div>
@@ -484,10 +484,10 @@ function SectionRow({ index, section, state, pulse, onContinue, onRestart }: Sec
           display: "flex",
           alignItems: "center",
           gap: 12,
-          background: "white",
+          background: "var(--ls-surface2)",
           padding: "12px 14px",
           borderRadius: 10,
-          border: "0.5px solid #E5DFCF",
+          border: "0.5px solid var(--ls-border)",
           ...pulseStyle,
         }}
       >
@@ -496,7 +496,7 @@ function SectionRow({ index, section, state, pulse, onContinue, onRestart }: Sec
             width: 28,
             height: 28,
             borderRadius: "50%",
-            background: "#1D9E75",
+            background: "var(--ls-teal)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -515,10 +515,10 @@ function SectionRow({ index, section, state, pulse, onContinue, onRestart }: Sec
           </svg>
         </div>
         <div style={{ flex: 1 }}>
-          <p style={{ margin: 0, fontSize: 14, fontWeight: 500, color: "#2C2C2A" }}>
+          <p style={{ margin: 0, fontSize: 14, fontWeight: 500, color: "var(--ls-text)" }}>
             {section.title}
           </p>
-          <p style={{ margin: "2px 0 0 0", fontSize: 12, color: "#6B6B62" }}>
+          <p style={{ margin: "2px 0 0 0", fontSize: 12, color: "var(--ls-text-muted)" }}>
             {section.estimatedDurationMinutes} min · Terminé
           </p>
         </div>
@@ -528,8 +528,8 @@ function SectionRow({ index, section, state, pulse, onContinue, onRestart }: Sec
             onClick={onRestart}
             style={{
               background: "transparent",
-              border: "0.5px solid #C9C2AB",
-              color: "#6B6B62",
+              border: "0.5px solid var(--ls-border)",
+              color: "var(--ls-text-muted)",
               padding: "5px 10px",
               borderRadius: 6,
               fontSize: 11,
@@ -552,10 +552,10 @@ function SectionRow({ index, section, state, pulse, onContinue, onRestart }: Sec
           display: "flex",
           alignItems: "center",
           gap: 12,
-          background: "#FCF5E1",
+          background: "color-mix(in srgb, var(--ls-gold) 10%, var(--ls-surface))",
           padding: 14,
           borderRadius: 10,
-          border: "1.5px solid #B8922A",
+          border: "1.5px solid var(--ls-gold)",
           ...pulseStyle,
         }}
       >
@@ -564,7 +564,7 @@ function SectionRow({ index, section, state, pulse, onContinue, onRestart }: Sec
             width: 30,
             height: 30,
             borderRadius: "50%",
-            background: "#B8922A",
+            background: "var(--ls-gold)",
             color: "white",
             display: "flex",
             alignItems: "center",
@@ -577,10 +577,10 @@ function SectionRow({ index, section, state, pulse, onContinue, onRestart }: Sec
           {index + 1}
         </div>
         <div style={{ flex: 1 }}>
-          <p style={{ margin: 0, fontSize: 14, fontWeight: 500, color: "#2C2C2A" }}>
+          <p style={{ margin: 0, fontSize: 14, fontWeight: 500, color: "var(--ls-text)" }}>
             {section.title}
           </p>
-          <p style={{ margin: "2px 0 0 0", fontSize: 12, color: "#B8922A", fontWeight: 500 }}>
+          <p style={{ margin: "2px 0 0 0", fontSize: 12, color: "var(--ls-gold)", fontWeight: 500 }}>
             {section.estimatedDurationMinutes} min · {section.description}
           </p>
         </div>
@@ -589,7 +589,7 @@ function SectionRow({ index, section, state, pulse, onContinue, onRestart }: Sec
             type="button"
             onClick={onContinue}
             style={{
-              background: "#B8922A",
+              background: "var(--ls-gold)",
               color: "white",
               border: "none",
               padding: "6px 12px",
@@ -614,10 +614,10 @@ function SectionRow({ index, section, state, pulse, onContinue, onRestart }: Sec
         display: "flex",
         alignItems: "center",
         gap: 12,
-        background: "white",
+        background: "var(--ls-surface2)",
         padding: "12px 14px",
         borderRadius: 10,
-        border: "0.5px solid #E5DFCF",
+        border: "0.5px solid var(--ls-border)",
       }}
     >
       <div
@@ -626,8 +626,8 @@ function SectionRow({ index, section, state, pulse, onContinue, onRestart }: Sec
           height: 28,
           borderRadius: "50%",
           background: "transparent",
-          border: "1.5px solid #C9C2AB",
-          color: "#888780",
+          border: "1.5px solid var(--ls-border)",
+          color: "var(--ls-text-hint)",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -639,10 +639,10 @@ function SectionRow({ index, section, state, pulse, onContinue, onRestart }: Sec
         {index + 1}
       </div>
       <div style={{ flex: 1 }}>
-        <p style={{ margin: 0, fontSize: 14, fontWeight: 500, color: "#5F5E5A" }}>
+        <p style={{ margin: 0, fontSize: 14, fontWeight: 500, color: "var(--ls-text-muted)" }}>
           {section.title}
         </p>
-        <p style={{ margin: "2px 0 0 0", fontSize: 12, color: "#888780" }}>
+        <p style={{ margin: "2px 0 0 0", fontSize: 12, color: "var(--ls-text-hint)" }}>
           {section.estimatedDurationMinutes} min · À faire
         </p>
       </div>

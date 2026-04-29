@@ -1241,6 +1241,25 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
           explanation: "Le seuil par défaut est 2 500 PV / mois — un palier réaliste pour démarrer et progresser sans pression. Modifiable dans Paramètres > Profil > Objectif PV mensuel quand tu veux viser plus haut.",
         },
         {
+          id: "q1b",
+          question:
+            "Tu es à 1 200 PV le 18 du mois sur un objectif de 2 500. Quelle est la meilleure stratégie ?",
+          answers: [
+            "Attendre le 28 et lancer une promo flash dernière minute",
+            "Identifier 2-3 clients actifs prêts à renouveler et les relancer cette semaine",
+            "Démarrer une grosse campagne de prospection nouvelle pour rattraper",
+            "Baisser ton objectif à 1 500 pour ce mois pour ne pas avoir la pression",
+          ],
+          correctIndex: 1,
+          wrongAnswerHints: {
+            0: "Trop tard et trop court — fin de mois en panique = bad mood et résultats moyens.",
+            2: "La prospection a un cycle long (2-4 semaines avant 1er bilan) — ça ne ratrappe pas le mois en cours, mais c'est utile pour le suivant.",
+            3: "Baisser l'objectif n'est pas une stratégie — la régularité fait le rang Herbalife.",
+          },
+          explanation:
+            "À mi-mois, le levier le plus rapide est la base existante : qui consomme un produit avec une cure qui se termine dans 7-10 j ? Une relance bienveillante (« tu en es où sur ton F1 ? ») suffit souvent à déclencher un réassort. 2-3 relances = ~600-1200 PV récupérés en quelques jours. C'est la stratégie « chaque dimanche soir » : 5 min de regard sur la jauge + planifier la semaine.",
+        },
+        {
           id: "q2",
           question: "À quelle heure tombe le digest matin de tes suivis ?",
           answers: ["6h", "7h", "8h", "9h"],

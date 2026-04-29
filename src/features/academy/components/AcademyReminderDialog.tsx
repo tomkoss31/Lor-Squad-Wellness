@@ -8,6 +8,7 @@
 
 import { useNavigate } from "react-router-dom";
 import { useAcademyProgress } from "../hooks/useAcademyProgress";
+import { APP_NAME_ACADEMY } from "../../../lib/branding";
 
 type AcademyView = ReturnType<typeof useAcademyProgress>["view"];
 
@@ -96,7 +97,7 @@ export function AcademyReminderDialog({ onClose }: { onClose: () => void }) {
             textAlign: "center",
           }}
         >
-          {isFirstTime ? "Bienvenue dans Lor'Squad Academy" : "On continue ta formation ?"}
+          {isFirstTime ? `Bienvenue dans ${APP_NAME_ACADEMY}` : "On continue ta formation ?"}
         </h2>
 
         <p
