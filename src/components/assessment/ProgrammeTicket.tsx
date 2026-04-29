@@ -23,6 +23,8 @@ export interface TicketAddOn {
 interface Props {
   program: ProgramChoice;
   addOns: TicketAddOn[];
+  /** Callback bouton "+ Catalogue" (ouvre la sandbox catalogue complet) */
+  onOpenCatalog?: () => void;
 }
 
 /**
@@ -59,7 +61,7 @@ function getEmoji(name: string): string {
   return "💊";
 }
 
-export function ProgrammeTicket({ program, addOns }: Props) {
+export function ProgrammeTicket({ program, addOns, onOpenCatalog }: Props) {
   const addOnsTotal = addOns.reduce((sum, a) => sum + a.price * a.quantity, 0);
   const addOnsPv = addOns.reduce((sum, a) => sum + a.pv * a.quantity, 0);
   const total = program.price + addOnsTotal;
@@ -483,6 +485,48 @@ export function ProgrammeTicket({ program, addOns }: Props) {
             >
               + {addOnsPv.toFixed(1)} PV ajouts
             </div>
+          )}
+
+          {/* CTA "+ Ajouter du catalogue" — sandbox produits complete */}
+          {onOpenCatalog && (
+            <button
+              type="button"
+              onClick={onOpenCatalog}
+              style={{
+                marginTop: 14,
+                width: "100%",
+                padding: "11px 16px",
+                borderRadius: 12,
+                border: "0.5px dashed color-mix(in srgb, var(--ls-gold) 50%, transparent)",
+                background: "color-mix(in srgb, var(--ls-gold) 6%, var(--ls-surface))",
+                color: "var(--ls-gold)",
+                fontSize: 12.5,
+                fontWeight: 700,
+                fontFamily: "DM Sans, sans-serif",
+                cursor: "pointer",
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 7,
+                transition: "transform 0.15s ease, background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease",
+                letterSpacing: "-0.005em",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = "translateY(-1px)";
+                e.currentTarget.style.background = "color-mix(in srgb, var(--ls-gold) 12%, var(--ls-surface))";
+                e.currentTarget.style.borderColor = "var(--ls-gold)";
+                e.currentTarget.style.boxShadow = "0 4px 12px -4px rgba(239,159,39,0.30)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = "none";
+                e.currentTarget.style.background = "color-mix(in srgb, var(--ls-gold) 6%, var(--ls-surface))";
+                e.currentTarget.style.borderColor = "color-mix(in srgb, var(--ls-gold) 50%, transparent)";
+                e.currentTarget.style.boxShadow = "none";
+              }}
+            >
+              <span style={{ fontSize: 14 }}>🛍️</span>
+              Ajouter un produit du catalogue
+            </button>
           )}
         </div>
       </aside>

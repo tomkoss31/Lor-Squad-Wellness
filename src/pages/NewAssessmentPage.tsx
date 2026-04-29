@@ -55,6 +55,8 @@ import { SportAlertsDialog, detectSportAlerts, type SportAlert } from "../compon
 import { BreakfastStorySlider, DEFAULT_BREAKFAST_ANALYSIS } from "../components/education/BreakfastStorySlider";
 import { ConfettiBurst } from "../features/academy/components/ConfettiBurst";
 import { BilanSectionDivider } from "../components/assessment/BilanSectionDivider";
+import { ProductCatalogModal } from "../components/assessment/ProductCatalogModal";
+import { pvProductCatalog } from "../data/pvCatalog";
 
 type AssessmentForm = {
   assessmentDate: string;
@@ -459,6 +461,8 @@ export function NewAssessmentPage() {
   const [saving, setSaving] = useState(false);
   // Confetti sur step Félicitations (Bilan PRO V2 — 2026-04-29)
   const [showFelicitationsConfetti, setShowFelicitationsConfetti] = useState(false);
+  // Sandbox catalogue produits (Bilan PRO V3.2 — 2026-04-29)
+  const [showCatalogModal, setShowCatalogModal] = useState(false);
   // États recapClientName / accessModalOpen / savedClientId supprimés
   // (2026-04-27) : la modale ClientAccessModal post-bilan a été remplacée
   // par la navigation vers /clients/:id/bilan-termine. Plus besoin de
@@ -709,26 +713,18 @@ export function NewAssessmentPage() {
   // pilote le stockage explicitement via le stepper.
   const addOnProducts = selectedRecommendationProducts;
 
-  useEffect(() => {
-    // Reset le flag dès qu'on quitte l'étape program → permet une nouvelle
-    // initialisation propre si l'utilisateur revient en arrière puis avance.
-    if (currentStepId !== 'program') {
-      programInitRef.current = false;
-      return;
-    }
-
-    // Garde-fou : init UNE SEULE fois par entrée dans l'étape. Sans ça,
-    // toute désélection complète relance le pré-remplissage automatique
-    // (= bug "auto-sélection forcée" remonté le 27/04).
-    if (programInitRef.current) {
-      return;
-    }
-    programInitRef.current = true;
-
-    if (defaultSuggestedProductIds.length && !form.selectedProductIds.length) {
-      update("selectedProductIds", defaultSuggestedProductIds);
-    }
-  }, [currentStepId, defaultSuggestedProductIds, form.selectedProductIds.length]);
+  // Chantier UX coach (2026-04-29) : SUPPRESSION de l'auto-pre-selection
+  // des produits "besoin detecte" sur entree step Programme.
+  // Avant : Xtra-Cal et Formula 1 etaient automatiquement dans le panier
+  // selon les besoins detectes. Le coach devait deselectionner les indesires.
+  // Maintenant : panier strictement vide d'addons par defaut. Le coach
+  // ajoute manuellement les produits via les cards "Retenir" / "+ Ajouter"
+  // ou via la sandbox catalogue complet (bouton sous le panier).
+  // Le `highlight={recommended}` reste visuel sur les cards (etoile + reason)
+  // pour guider sans imposer.
+  // void programInitRef si tu veux le re-utiliser pour autre chose plus tard.
+  void defaultSuggestedProductIds;
+  void programInitRef;
 
   // Trigger confetti une seule fois à l'entrée sur la dernière étape (PRO V2 2026-04-29)
   useEffect(() => {
@@ -2177,7 +2173,24 @@ export function NewAssessmentPage() {
                 prixPublic: b.price,
                 pv: 0,
               }));
-            const combinedAddOns = [...addOnProducts, ...selectedBoostersForTicket].filter(
+            // Sandbox catalogue (V3.2 — 2026-04-29) : produits ajoutes via la
+            // modale catalogue qui ne sont ni dans les besoins detectes ni
+            // dans les boosters. Lookup dans pvProductCatalog.
+            const knownIds = new Set([
+              ...addOnProducts.map((p) => p.id),
+              ...selectedBoostersForTicket.map((b) => b.id),
+            ]);
+            const catalogExtraIds = effectiveSelectedProductIds.filter((id) => !knownIds.has(id));
+            const catalogExtraForTicket = catalogExtraIds
+              .map((id) => pvProductCatalog.find((p) => p.id === id))
+              .filter((p): p is NonNullable<typeof p> => !!p)
+              .map((p) => ({
+                id: p.id,
+                name: p.name,
+                prixPublic: p.pricePublic,
+                pv: p.pv,
+              }));
+            const combinedAddOns = [...addOnProducts, ...selectedBoostersForTicket, ...catalogExtraForTicket].filter(
               (v, i, arr) => arr.findIndex((x) => x.id === v.id) === i
             );
             const ticketAddOns: TicketAddOn[] = combinedAddOns.map((p) => ({
@@ -2847,7 +2860,11 @@ export function NewAssessmentPage() {
                     height: "fit-content",
                   }}
                 >
-                  <ProgrammeTicket program={chosenProgram} addOns={ticketAddOns} />
+                  <ProgrammeTicket
+                    program={chosenProgram}
+                    addOns={ticketAddOns}
+                    onOpenCatalog={() => setShowCatalogModal(true)}
+                  />
                 </div>
               </div>
               </>
@@ -3166,6 +3183,18 @@ export function NewAssessmentPage() {
           (page remerciement plein écran dark premium). La modale reste
           accessible depuis la fiche coach (ActionsTab + ClientDetailPage)
           pour les usages hors-bilan. */}
+
+      {/* Sandbox catalogue produits (V3.2 — 2026-04-29) */}
+      <ProductCatalogModal
+        open={showCatalogModal}
+        onClose={() => setShowCatalogModal(false)}
+        selectedIds={form.selectedProductIds}
+        onAddProduct={(productId) => {
+          if (!form.selectedProductIds.includes(productId)) {
+            toggleSelectedProduct(productId);
+          }
+        }}
+      />
 
       <SportAlertsDialog
         alerts={sportAlerts}
