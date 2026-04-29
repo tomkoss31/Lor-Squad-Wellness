@@ -53,6 +53,7 @@ import { SportProfileStep } from "../components/assessment/SportProfileStep";
 import { CurrentIntakeStep } from "../components/assessment/CurrentIntakeStep";
 import { SportAlertsDialog, detectSportAlerts, type SportAlert } from "../components/assessment/SportAlertsDialog";
 import { BreakfastStorySlider, DEFAULT_BREAKFAST_ANALYSIS } from "../components/education/BreakfastStorySlider";
+import { ConfettiBurst } from "../features/academy/components/ConfettiBurst";
 
 type AssessmentForm = {
   assessmentDate: string;
@@ -455,6 +456,8 @@ export function NewAssessmentPage() {
   // Chantier Félicitations (2026-04-20) : le bouton "Enregistrer et terminer"
   // montre un état "Enregistrement…" pendant handleSaveAssessment.
   const [saving, setSaving] = useState(false);
+  // Confetti sur step Félicitations (Bilan PRO V2 — 2026-04-29)
+  const [showFelicitationsConfetti, setShowFelicitationsConfetti] = useState(false);
   // États recapClientName / accessModalOpen / savedClientId supprimés
   // (2026-04-27) : la modale ClientAccessModal post-bilan a été remplacée
   // par la navigation vers /clients/:id/bilan-termine. Plus besoin de
@@ -726,7 +729,12 @@ export function NewAssessmentPage() {
     }
   }, [currentStepId, defaultSuggestedProductIds, form.selectedProductIds.length]);
 
-
+  // Trigger confetti une seule fois à l'entrée sur la dernière étape (PRO V2 2026-04-29)
+  useEffect(() => {
+    if (currentStepId === 'felicitations') {
+      setShowFelicitationsConfetti(true);
+    }
+  }, [currentStepId]);
 
 
   function update<K extends keyof AssessmentForm>(key: K, value: AssessmentForm[K]) {
@@ -1264,18 +1272,68 @@ export function NewAssessmentPage() {
         <StepRail currentStep={currentStep} steps={steps} onStepClick={goToStep} />
       </div>
 
+      <style>{`
+        @keyframes ls-step-fade-in {
+          0%   { opacity: 0; transform: translateY(8px); }
+          100% { opacity: 1; transform: translateY(0); }
+        }
+        .ls-step-fade {
+          animation: ls-step-fade-in 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .ls-step-fade { animation: none !important; }
+        }
+      `}</style>
       <div className="grid gap-4">
         <Card className="space-y-5">
           <div className="hidden md:flex flex-wrap items-center justify-between gap-3">
             <div>
-              <p className="eyebrow-label">Étape {currentStep + 1} / {steps.length}</p>
-              <h2 className="mt-3 text-3xl md:text-4xl">{steps[currentStep]}</h2>
+              <p
+                className="eyebrow-label"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  color: 'var(--ls-gold)',
+                  fontWeight: 700,
+                }}
+              >
+                <span
+                  style={{
+                    display: 'inline-block', width: 6, height: 6, borderRadius: 999,
+                    background: 'var(--ls-gold)', boxShadow: '0 0 8px rgba(239,159,39,0.50)',
+                  }}
+                />
+                Étape {currentStep + 1} sur {steps.length}
+              </p>
+              <h2
+                className="mt-3 text-3xl md:text-4xl"
+                style={{
+                  fontFamily: 'Syne, serif',
+                  fontWeight: 800,
+                  letterSpacing: '-0.02em',
+                  lineHeight: 1.1,
+                }}
+              >
+                <span
+                  style={{
+                    background: 'linear-gradient(135deg, #EF9F27 0%, #BA7517 60%, #5C3A05 100%)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    backgroundClip: 'text',
+                  }}
+                >
+                  {steps[currentStep]}
+                </span>
+              </h2>
             </div>
             <StatusBadge
-              label={form.objective === "sport" ? "Parcours sport" : "Parcours accompagnement"}
+              label={form.objective === "sport" ? "🏋️ Parcours sport" : "🎯 Parcours accompagnement"}
               tone={form.objective === "sport" ? "green" : "blue"}
             />
           </div>
+
+          <div key={currentStepId} className="ls-step-fade space-y-5">
 
           {currentStepId === 'client-info' && (
               <div className="space-y-4" data-tour-id="bilan-client-info">
@@ -1745,6 +1803,126 @@ export function NewAssessmentPage() {
                 ))}
               </div>
 
+              {/* Scan completion celebration (2026-04-29) — pulse premium quand 8/8 saisies */}
+              {(() => {
+                const fields = [form.weight, form.bodyFat, form.muscleMass, form.hydration, form.boneMass, form.visceralFat, form.bmr, form.metabolicAge];
+                const filled = fields.filter((v) => Number(v) > 0).length;
+                const total = fields.length;
+                const isComplete = filled === total;
+                if (filled === 0) return null;
+                return (
+                  <div
+                    style={{
+                      position: 'relative',
+                      overflow: 'hidden',
+                      padding: '14px 18px',
+                      borderRadius: 14,
+                      background: isComplete
+                        ? 'linear-gradient(135deg, color-mix(in srgb, var(--ls-teal) 14%, var(--ls-surface)) 0%, color-mix(in srgb, var(--ls-gold) 12%, var(--ls-surface)) 100%)'
+                        : 'var(--ls-surface)',
+                      border: isComplete
+                        ? '0.5px solid color-mix(in srgb, var(--ls-teal) 50%, transparent)'
+                        : '0.5px solid var(--ls-border)',
+                      boxShadow: isComplete
+                        ? '0 0 0 0 rgba(45,212,191,0.45), 0 8px 24px -12px rgba(45,212,191,0.40)'
+                        : 'none',
+                      animation: isComplete ? 'ls-scan-complete-pulse 2.4s ease-in-out infinite' : undefined,
+                      transition: 'background 0.4s ease, border 0.4s ease',
+                    }}
+                  >
+                    <style>{`
+                      @keyframes ls-scan-complete-pulse {
+                        0%, 100% { box-shadow: 0 0 0 0 rgba(45,212,191,0), 0 8px 24px -12px rgba(45,212,191,0.40); }
+                        50%      { box-shadow: 0 0 0 6px rgba(45,212,191,0.18), 0 12px 32px -10px rgba(45,212,191,0.55); }
+                      }
+                      @keyframes ls-scan-shine {
+                        0%, 100% { transform: translateX(-30%); opacity: 0; }
+                        50%      { transform: translateX(180%); opacity: 0.4; }
+                      }
+                      @media (prefers-reduced-motion: reduce) {
+                        [data-scan-shine], [data-scan-pulse] { animation: none !important; }
+                      }
+                    `}</style>
+                    {isComplete && (
+                      <div
+                        data-scan-shine
+                        style={{
+                          position: 'absolute', top: 0, left: 0, height: '100%', width: '30%',
+                          background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.30), transparent)',
+                          animation: 'ls-scan-shine 2.8s ease-in-out infinite',
+                          pointerEvents: 'none',
+                        }}
+                      />
+                    )}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, position: 'relative' }}>
+                      <span style={{ fontSize: 22 }}>{isComplete ? '✨' : '⚡'}</span>
+                      <div style={{ flex: 1 }}>
+                        <div
+                          style={{
+                            fontSize: 10,
+                            letterSpacing: 1.4,
+                            textTransform: 'uppercase',
+                            fontWeight: 700,
+                            color: isComplete ? 'var(--ls-teal)' : 'var(--ls-gold)',
+                            fontFamily: 'DM Sans, sans-serif',
+                          }}
+                        >
+                          {isComplete ? 'Body scan complet' : 'Scan en cours'}
+                        </div>
+                        <div
+                          style={{
+                            fontFamily: 'Syne, serif',
+                            fontWeight: 700,
+                            fontSize: 16,
+                            color: 'var(--ls-text)',
+                            marginTop: 2,
+                            letterSpacing: '-0.01em',
+                          }}
+                        >
+                          {isComplete
+                            ? '8 valeurs saisies — analyse prête à être commentée'
+                            : `${filled} / ${total} valeurs saisies`}
+                        </div>
+                      </div>
+                      <div
+                        style={{
+                          fontFamily: 'Syne, serif',
+                          fontWeight: 800,
+                          fontSize: 28,
+                          letterSpacing: '-0.03em',
+                          color: isComplete ? 'var(--ls-teal)' : 'var(--ls-gold)',
+                        }}
+                      >
+                        {filled}/{total}
+                      </div>
+                    </div>
+                    {/* Mini progress bar */}
+                    <div
+                      style={{
+                        marginTop: 10,
+                        height: 4,
+                        background: 'var(--ls-surface2)',
+                        borderRadius: 999,
+                        overflow: 'hidden',
+                      }}
+                    >
+                      <div
+                        style={{
+                          height: '100%',
+                          width: `${(filled / total) * 100}%`,
+                          background: isComplete
+                            ? 'linear-gradient(90deg, var(--ls-teal), var(--ls-gold))'
+                            : 'linear-gradient(90deg, var(--ls-gold), #BA7517)',
+                          borderRadius: 999,
+                          transition: 'width 0.5s cubic-bezier(0.22, 1, 0.36, 1)',
+                          boxShadow: isComplete ? '0 0 8px rgba(45,212,191,0.55)' : '0 0 6px rgba(239,159,39,0.45)',
+                        }}
+                      />
+                    </div>
+                  </div>
+                );
+              })()}
+
               {/* Résumé rapide calculé */}
               {form.weight > 0 && (
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, padding: '14px 0' }}>
@@ -2006,6 +2184,136 @@ export function NewAssessmentPage() {
               quantity: getQty(p.id),
             }));
             return (
+              <>
+              {/* Hero gold premium sales pitch (2026-04-29) — moment cle commercial */}
+              <div
+                style={{
+                  position: 'relative',
+                  overflow: 'hidden',
+                  padding: '20px 24px',
+                  borderRadius: 20,
+                  background: 'linear-gradient(135deg, #EF9F27 0%, #BA7517 50%, #5C3A05 100%)',
+                  border: '0.5px solid color-mix(in srgb, var(--ls-gold) 60%, transparent)',
+                  boxShadow: '0 12px 32px -8px rgba(186,117,23,0.50), inset 0 1px 0 rgba(255,255,255,0.20)',
+                  marginBottom: 4,
+                }}
+              >
+                <style>{`
+                  @keyframes ls-program-hero-shine {
+                    0%, 100% { transform: translateX(-30%); opacity: 0; }
+                    50%      { transform: translateX(180%); opacity: 0.45; }
+                  }
+                  @keyframes ls-program-hero-mesh {
+                    0% { transform: translate(0, 0) scale(1); }
+                    50% { transform: translate(-12px, 8px) scale(1.06); }
+                    100% { transform: translate(8px, -4px) scale(1); }
+                  }
+                  @media (prefers-reduced-motion: reduce) {
+                    [data-program-shine], [data-program-mesh] { animation: none !important; }
+                  }
+                `}</style>
+                {/* Mesh radial subtle */}
+                <div
+                  data-program-mesh
+                  aria-hidden="true"
+                  style={{
+                    position: 'absolute', inset: -40, opacity: 0.65,
+                    background:
+                      'radial-gradient(circle at 0% 0%, rgba(255,255,255,0.20) 0%, transparent 45%), radial-gradient(circle at 100% 100%, rgba(0,0,0,0.20) 0%, transparent 50%)',
+                    animation: 'ls-program-hero-mesh 18s ease-in-out infinite alternate',
+                    pointerEvents: 'none',
+                  }}
+                />
+                {/* Shine sweep */}
+                <div
+                  data-program-shine
+                  aria-hidden="true"
+                  style={{
+                    position: 'absolute', top: 0, left: 0, height: '100%', width: '30%',
+                    background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.45), transparent)',
+                    animation: 'ls-program-hero-shine 5s ease-in-out infinite',
+                    pointerEvents: 'none',
+                  }}
+                />
+                <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+                  <div
+                    style={{
+                      width: 56, height: 56, borderRadius: 16, flexShrink: 0,
+                      background: 'rgba(255,255,255,0.18)',
+                      border: '1px solid rgba(255,255,255,0.35)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontSize: 28,
+                      backdropFilter: 'blur(8px)',
+                      WebkitBackdropFilter: 'blur(8px)',
+                      boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.30)',
+                    }}
+                  >
+                    🎯
+                  </div>
+                  <div style={{ flex: 1, minWidth: 220 }}>
+                    <div
+                      style={{
+                        fontSize: 10.5,
+                        letterSpacing: 1.8,
+                        textTransform: 'uppercase',
+                        fontWeight: 800,
+                        color: 'rgba(255,255,255,0.85)',
+                        marginBottom: 4,
+                        fontFamily: 'DM Sans, sans-serif',
+                      }}
+                    >
+                      ✨ Programme personnalisé
+                    </div>
+                    <div
+                      style={{
+                        fontFamily: 'Syne, serif',
+                        fontWeight: 800,
+                        fontSize: 22,
+                        color: '#FFFFFF',
+                        letterSpacing: '-0.02em',
+                        lineHeight: 1.15,
+                        textShadow: '0 1px 2px rgba(0,0,0,0.20)',
+                      }}
+                    >
+                      {form.firstName ? `Le programme de ${form.firstName}` : 'Programme proposé'}
+                    </div>
+                    <div
+                      style={{
+                        fontFamily: 'DM Sans, sans-serif',
+                        fontSize: 13,
+                        color: 'rgba(255,255,255,0.85)',
+                        marginTop: 4,
+                        lineHeight: 1.45,
+                      }}
+                    >
+                      {chosenProgram
+                        ? `Sélectionné : ${chosenProgram.title} · construis ton ticket et présente la valeur globale.`
+                        : 'Choisis le programme adapté + ajoute les boosters · présente la valeur globale.'}
+                    </div>
+                  </div>
+                  {chosenProgram?.price && (
+                    <div
+                      style={{
+                        textAlign: 'right',
+                        background: 'rgba(255,255,255,0.18)',
+                        border: '1px solid rgba(255,255,255,0.35)',
+                        borderRadius: 14,
+                        padding: '10px 16px',
+                        backdropFilter: 'blur(8px)',
+                        WebkitBackdropFilter: 'blur(8px)',
+                      }}
+                    >
+                      <div style={{ fontSize: 9.5, letterSpacing: 1.4, textTransform: 'uppercase', fontWeight: 700, color: 'rgba(255,255,255,0.85)', fontFamily: 'DM Sans, sans-serif' }}>
+                        Prix programme
+                      </div>
+                      <div style={{ fontFamily: 'Syne, serif', fontWeight: 800, fontSize: 22, color: '#FFFFFF', letterSpacing: '-0.02em' }}>
+                        {chosenProgram.price}€
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
               <div className="grid gap-4 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
                 {/* ─── Colonne principale ─────────────────────────────── */}
                 <div className="space-y-5">
@@ -2278,6 +2586,7 @@ export function NewAssessmentPage() {
                   <ProgrammeTicket program={chosenProgram} addOns={ticketAddOns} />
                 </div>
               </div>
+              </>
             );
           })()}
 
@@ -2391,6 +2700,13 @@ export function NewAssessmentPage() {
                 rendez-vous" — Chantier Félicitations 2026-04-20) ─── */}
           {currentStepId === 'felicitations' && (
             <>
+              {showFelicitationsConfetti ? (
+                <ConfettiBurst
+                  count={80}
+                  durationMs={4200}
+                  onComplete={() => setShowFelicitationsConfetti(false)}
+                />
+              ) : null}
               {showValidationBanner && !hasFollowUpPlanned ? (
                 <ValidationBlockedBanner
                   onBack={() => {
@@ -2468,6 +2784,7 @@ export function NewAssessmentPage() {
               {saveError}
             </div>
           ) : null}
+          </div>{/* /ls-step-fade */}
         </Card>
 
       </div>
