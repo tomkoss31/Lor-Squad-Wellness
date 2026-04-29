@@ -1,3 +1,15 @@
+// ProgrammeTicket V2 PREMIUM SANDBOX (2026-04-29).
+// Refonte graphique du panier sticky droit dans le step Programme.
+// Largeur identique (1fr de la grid 2/1), mais identite visuelle premium :
+//   - Header gradient gold "PANIER" + counter produits + couronne
+//   - Item programme avec avatar gold + emoji
+//   - Items addons avec avatar gold tonal + emoji contextual
+//   - Animations fade-in sur ajout
+//   - Total grand format Syne 28px gradient + ligne sub PV
+//   - Theme-aware : var(--ls-*) uniquement, fonctionne light + dark
+//
+// La logique reste identique : program.price + sum(addOns price * qty).
+
 import type { ProgramChoice } from "../../data/programs";
 
 export interface TicketAddOn {
@@ -5,10 +17,6 @@ export interface TicketAddOn {
   name: string;
   price: number;
   pv: number;
-  /**
-   * Chantier Boosters cliquables + Quantités (D-urgent, 2026-04-24).
-   * Quantité retenue pour ce produit dans le ticket. Défaut implicite = 1.
-   */
   quantity: number;
 }
 
@@ -18,157 +26,466 @@ interface Props {
 }
 
 /**
- * Chantier refonte étape 11 (2026-04-20) — ticket sticky à droite.
- * Base (programme) + Ajouts (upsells retenus) + Total (EUR + PV).
- * Sur desktop : position sticky top 16px. Sur mobile : layout natif,
- * tombe naturellement sous les blocs principaux (pas de sticky mobile
- * pour ne pas bouffer l'écran).
+ * Mapping emoji -> nom produit (memes regles que SelectableProductCard).
+ * Duplique ici pour autonomie du composant.
  */
+const PRODUCT_EMOJI_MAP: Array<{ match: RegExp; emoji: string }> = [
+  { match: /formula\s*1|f1\b|boisson nutritionnelle/i, emoji: "🥛" },
+  { match: /melange.*proteine|formula\s*3|ppp\b/i, emoji: "💪" },
+  { match: /formula\s*2|multivit/i, emoji: "💊" },
+  { match: /aloe/i, emoji: "🌿" },
+  { match: /\bthe\b|tea\b/i, emoji: "🍵" },
+  { match: /hydrate/i, emoji: "💧" },
+  { match: /calcium|xtra[-\s]?cal/i, emoji: "🦴" },
+  { match: /collag/i, emoji: "✨" },
+  { match: /liftoff/i, emoji: "⚡" },
+  { match: /cr7|n-r-g|nrg/i, emoji: "🏆" },
+  { match: /cell.*activ/i, emoji: "🧬" },
+  { match: /niteworks/i, emoji: "🌙" },
+  { match: /omega|fish/i, emoji: "🐟" },
+  { match: /iron|roseguard/i, emoji: "🛡️" },
+  { match: /skin|beaut/i, emoji: "💎" },
+  { match: /snack|barre|bar\b/i, emoji: "🍫" },
+  { match: /soup|soupe/i, emoji: "🍲" },
+  { match: /fibre|cell.*u.*loss/i, emoji: "🌾" },
+  { match: /shaker|gourde/i, emoji: "🥤" },
+  { match: /creatine/i, emoji: "💥" },
+];
+
+function getEmoji(name: string): string {
+  for (const { match, emoji } of PRODUCT_EMOJI_MAP) {
+    if (match.test(name)) return emoji;
+  }
+  return "💊";
+}
+
 export function ProgrammeTicket({ program, addOns }: Props) {
   const addOnsTotal = addOns.reduce((sum, a) => sum + a.price * a.quantity, 0);
   const addOnsPv = addOns.reduce((sum, a) => sum + a.pv * a.quantity, 0);
   const total = program.price + addOnsTotal;
+  const totalItems = 1 + addOns.reduce((s, a) => s + a.quantity, 0);
 
   return (
-    <aside
-      aria-label="Ticket du jour"
-      style={{
-        background: "#E1F5EE",
-        border: "1px solid color-mix(in srgb, #0F6E56 22%, transparent)",
-        borderRadius: 16,
-        padding: 16,
-        display: "flex",
-        flexDirection: "column",
-        gap: 14,
-        fontFamily: "'DM Sans', sans-serif",
-        color: "#04342C",
-      }}
-    >
-      <div>
-        <p
-          style={{
-            fontSize: 10,
-            letterSpacing: "2px",
-            textTransform: "uppercase",
-            color: "#065F46",
-            fontWeight: 700,
-            margin: 0,
-          }}
-        >
-          Ticket du jour
-        </p>
-        <p style={{ fontSize: 12, color: "#065F46", margin: "4px 0 0", opacity: 0.85 }}>
-          Programme + ajouts
-        </p>
-      </div>
-
-      <section>
-        <p
-          style={{
-            fontSize: 9,
-            letterSpacing: "2px",
-            textTransform: "uppercase",
-            color: "#065F46",
-            fontWeight: 700,
-            margin: "0 0 6px",
-          }}
-        >
-          Base
-        </p>
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            padding: "10px 12px",
-            background: "#FFFFFF",
-            borderRadius: 10,
-          }}
-        >
-          <span style={{ fontSize: 13, fontWeight: 600, color: "#04342C" }}>{program.title}</span>
-          <span style={{ fontSize: 13, fontWeight: 700, color: "#04342C", fontFamily: "'Syne', sans-serif" }}>
-            {program.price}€
-          </span>
-        </div>
-      </section>
-
-      <section>
-        <p
-          style={{
-            fontSize: 9,
-            letterSpacing: "2px",
-            textTransform: "uppercase",
-            color: "#065F46",
-            fontWeight: 700,
-            margin: "0 0 6px",
-          }}
-        >
-          Ajouts ({addOns.length})
-        </p>
-        {addOns.length === 0 ? (
-          <p style={{ fontSize: 11, color: "#065F46", opacity: 0.75, margin: 0, fontStyle: "italic" }}>
-            Aucun ajout retenu pour l'instant.
-          </p>
-        ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-            {addOns.map((addOn) => (
-              <div
-                key={addOn.id}
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  padding: "8px 12px",
-                  background: "#FFFFFF",
-                  borderRadius: 10,
-                  fontSize: 12,
-                }}
-              >
-                <span style={{ color: "#04342C", fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                  {addOn.quantity > 1 ? `${addOn.name} × ${addOn.quantity}` : addOn.name}
-                </span>
-                <span style={{ color: "#04342C", fontWeight: 600, flexShrink: 0, marginLeft: 8 }}>
-                  {(addOn.price * addOn.quantity).toFixed(2)}€
-                </span>
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
-
-      <div
+    <>
+      <style>{`
+        @keyframes ls-ticket-shine {
+          0%, 100% { transform: translateX(-30%); opacity: 0; }
+          50%      { transform: translateX(180%); opacity: 0.45; }
+        }
+        @keyframes ls-ticket-mesh {
+          0%   { transform: translate(0, 0) scale(1); }
+          50%  { transform: translate(-8px, 4px) scale(1.04); }
+          100% { transform: translate(6px, -2px) scale(1); }
+        }
+        @keyframes ls-ticket-item-in {
+          from { opacity: 0; transform: translateY(6px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        .ls-ticket-item-anim {
+          animation: ls-ticket-item-in 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .ls-ticket-shine, .ls-ticket-mesh, .ls-ticket-item-anim { animation: none !important; }
+        }
+      `}</style>
+      <aside
+        aria-label="Panier"
         style={{
-          padding: "14px 14px",
-          background: "#FFFFFF",
-          borderRadius: 12,
+          background: "var(--ls-surface)",
+          border: "0.5px solid color-mix(in srgb, var(--ls-gold) 30%, var(--ls-border))",
+          borderRadius: 20,
+          padding: 0,
+          display: "flex",
+          flexDirection: "column",
+          fontFamily: "'DM Sans', sans-serif",
+          color: "var(--ls-text)",
+          overflow: "hidden",
+          boxShadow:
+            "0 1px 0 0 rgba(239,159,39,0.10), 0 12px 32px -16px rgba(186,117,23,0.30)",
         }}
       >
-        <p
-          style={{
-            fontSize: 9,
-            letterSpacing: "2px",
-            textTransform: "uppercase",
-            color: "#065F46",
-            fontWeight: 700,
-            margin: "0 0 4px",
-          }}
-        >
-          Total
-        </p>
+        {/* HEADER GRADIENT GOLD */}
         <div
           style={{
-            fontSize: 18,
-            fontWeight: 800,
-            color: "#04342C",
-            fontFamily: "'Syne', sans-serif",
+            position: "relative",
+            overflow: "hidden",
+            padding: "16px 18px",
+            background:
+              "linear-gradient(135deg, #EF9F27 0%, #BA7517 60%, #5C3A05 100%)",
+            color: "#FFFFFF",
           }}
         >
-          {total.toFixed(2)}€
+          {/* Mesh anim subtil */}
+          <div
+            className="ls-ticket-mesh"
+            aria-hidden="true"
+            style={{
+              position: "absolute",
+              inset: -30,
+              opacity: 0.6,
+              pointerEvents: "none",
+              background:
+                "radial-gradient(circle at 0% 0%, rgba(255,255,255,0.20) 0%, transparent 45%), radial-gradient(circle at 100% 100%, rgba(0,0,0,0.18) 0%, transparent 50%)",
+              animation: "ls-ticket-mesh 18s ease-in-out infinite alternate",
+            }}
+          />
+          {/* Shine sweep */}
+          <div
+            className="ls-ticket-shine"
+            aria-hidden="true"
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              height: "100%",
+              width: "30%",
+              background:
+                "linear-gradient(90deg, transparent, rgba(255,255,255,0.40), transparent)",
+              animation: "ls-ticket-shine 6s ease-in-out infinite",
+              pointerEvents: "none",
+            }}
+          />
+          <div style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+            <div>
+              <div
+                style={{
+                  fontSize: 10,
+                  letterSpacing: 1.6,
+                  textTransform: "uppercase",
+                  fontWeight: 800,
+                  color: "rgba(255,255,255,0.90)",
+                  marginBottom: 2,
+                }}
+              >
+                🛒 Ton panier
+              </div>
+              <div
+                style={{
+                  fontFamily: "Syne, serif",
+                  fontWeight: 800,
+                  fontSize: 19,
+                  letterSpacing: "-0.02em",
+                  textShadow: "0 1px 2px rgba(0,0,0,0.18)",
+                }}
+              >
+                {totalItems} produit{totalItems > 1 ? "s" : ""}
+              </div>
+            </div>
+            <div
+              style={{
+                width: 42,
+                height: 42,
+                borderRadius: 14,
+                background: "rgba(255,255,255,0.18)",
+                border: "1px solid rgba(255,255,255,0.32)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: 22,
+                backdropFilter: "blur(8px)",
+                WebkitBackdropFilter: "blur(8px)",
+                boxShadow: "inset 0 1px 0 rgba(255,255,255,0.30)",
+              }}
+            >
+              👑
+            </div>
+          </div>
         </div>
-        <p style={{ fontSize: 11, color: "#065F46", margin: "2px 0 0", opacity: 0.85 }}>
-          {(program.price + addOnsPv).toFixed(1)} PV routine matin · {addOnsPv.toFixed(1)} PV ajouts
-        </p>
-      </div>
-    </aside>
+
+        {/* CORPS — items */}
+        <div style={{ padding: "14px 16px", display: "flex", flexDirection: "column", gap: 12 }}>
+          {/* Programme = item premium */}
+          <div>
+            <div
+              style={{
+                fontSize: 9,
+                letterSpacing: 1.6,
+                textTransform: "uppercase",
+                color: "var(--ls-gold)",
+                fontWeight: 700,
+                marginBottom: 6,
+                display: "flex",
+                alignItems: "center",
+                gap: 5,
+              }}
+            >
+              <span style={{ width: 5, height: 5, borderRadius: 999, background: "var(--ls-gold)", boxShadow: "0 0 6px rgba(239,159,39,0.50)" }} />
+              Programme
+            </div>
+            <div
+              className="ls-ticket-item-anim"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+                padding: "10px 12px",
+                background:
+                  "linear-gradient(135deg, color-mix(in srgb, var(--ls-gold) 10%, var(--ls-surface2)) 0%, var(--ls-surface2) 100%)",
+                borderRadius: 12,
+                border: "0.5px solid color-mix(in srgb, var(--ls-gold) 30%, transparent)",
+              }}
+            >
+              <div
+                style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: 10,
+                  background:
+                    "linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: 18,
+                  flexShrink: 0,
+                  boxShadow: "0 3px 8px -3px rgba(186,117,23,0.45), inset 0 1px 0 rgba(255,255,255,0.20)",
+                }}
+              >
+                ⭐
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div
+                  style={{
+                    fontFamily: "Syne, serif",
+                    fontSize: 14,
+                    fontWeight: 700,
+                    color: "var(--ls-text)",
+                    letterSpacing: "-0.01em",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {program.title}
+                </div>
+                <div
+                  style={{
+                    fontSize: 10.5,
+                    color: "var(--ls-text-muted)",
+                    marginTop: 1,
+                  }}
+                >
+                  Programme cœur
+                </div>
+              </div>
+              <div
+                style={{
+                  fontFamily: "Syne, serif",
+                  fontWeight: 800,
+                  fontSize: 16,
+                  color: "var(--ls-gold)",
+                  letterSpacing: "-0.02em",
+                  flexShrink: 0,
+                }}
+              >
+                {program.price}€
+              </div>
+            </div>
+          </div>
+
+          {/* Ajouts */}
+          <div>
+            <div
+              style={{
+                fontSize: 9,
+                letterSpacing: 1.6,
+                textTransform: "uppercase",
+                color: "var(--ls-teal)",
+                fontWeight: 700,
+                marginBottom: 6,
+                display: "flex",
+                alignItems: "center",
+                gap: 5,
+              }}
+            >
+              <span style={{ width: 5, height: 5, borderRadius: 999, background: "var(--ls-teal)", boxShadow: "0 0 6px rgba(45,212,191,0.50)" }} />
+              Ajouts {addOns.length > 0 ? `(${addOns.length})` : ""}
+            </div>
+            {addOns.length === 0 ? (
+              <div
+                style={{
+                  padding: "12px 14px",
+                  borderRadius: 12,
+                  border: "1px dashed var(--ls-border)",
+                  background: "var(--ls-surface2)",
+                  fontSize: 11.5,
+                  color: "var(--ls-text-hint)",
+                  fontStyle: "italic",
+                  textAlign: "center",
+                }}
+              >
+                Aucun ajout retenu pour l&apos;instant
+              </div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                {addOns.map((addOn) => {
+                  const emoji = getEmoji(addOn.name);
+                  return (
+                    <div
+                      key={addOn.id}
+                      className="ls-ticket-item-anim"
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 10,
+                        padding: "8px 10px",
+                        background: "var(--ls-surface2)",
+                        borderRadius: 10,
+                        border: "0.5px solid var(--ls-border)",
+                        transition: "border-color 0.15s ease, background 0.15s ease",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.borderColor = "color-mix(in srgb, var(--ls-teal) 40%, var(--ls-border))";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.borderColor = "var(--ls-border)";
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: 28,
+                          height: 28,
+                          borderRadius: 8,
+                          background:
+                            "linear-gradient(135deg, color-mix(in srgb, var(--ls-teal) 18%, var(--ls-surface)) 0%, var(--ls-surface) 100%)",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          fontSize: 14,
+                          flexShrink: 0,
+                          border: "0.5px solid color-mix(in srgb, var(--ls-teal) 25%, transparent)",
+                        }}
+                      >
+                        {emoji}
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div
+                          style={{
+                            fontSize: 12,
+                            fontWeight: 600,
+                            color: "var(--ls-text)",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap",
+                            fontFamily: "DM Sans, sans-serif",
+                          }}
+                        >
+                          {addOn.name}
+                        </div>
+                        {addOn.quantity > 1 && (
+                          <div
+                            style={{
+                              fontSize: 10.5,
+                              color: "var(--ls-text-muted)",
+                              marginTop: 1,
+                            }}
+                          >
+                            × {addOn.quantity}
+                          </div>
+                        )}
+                      </div>
+                      <div
+                        style={{
+                          fontFamily: "Syne, serif",
+                          fontWeight: 700,
+                          fontSize: 13,
+                          color: "var(--ls-text)",
+                          letterSpacing: "-0.01em",
+                          flexShrink: 0,
+                        }}
+                      >
+                        {(addOn.price * addOn.quantity).toFixed(2)}€
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* TOTAL */}
+        <div
+          style={{
+            padding: "14px 18px 16px",
+            borderTop: "0.5px dashed var(--ls-border)",
+            background:
+              "linear-gradient(180deg, var(--ls-surface) 0%, color-mix(in srgb, var(--ls-gold) 4%, var(--ls-surface)) 100%)",
+          }}
+        >
+          {/* Sub-totals */}
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+            <span style={{ fontSize: 11, color: "var(--ls-text-muted)", fontFamily: "DM Sans, sans-serif" }}>
+              Programme
+            </span>
+            <span style={{ fontSize: 12, fontWeight: 600, color: "var(--ls-text)", fontFamily: "DM Sans, sans-serif" }}>
+              {program.price.toFixed(2)}€
+            </span>
+          </div>
+          {addOns.length > 0 && (
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+              <span style={{ fontSize: 11, color: "var(--ls-text-muted)", fontFamily: "DM Sans, sans-serif" }}>
+                Ajouts × {addOns.length}
+              </span>
+              <span style={{ fontSize: 12, fontWeight: 600, color: "var(--ls-text)", fontFamily: "DM Sans, sans-serif" }}>
+                {addOnsTotal.toFixed(2)}€
+              </span>
+            </div>
+          )}
+
+          {/* Trait separateur subtil */}
+          <div
+            style={{
+              height: 1,
+              background:
+                "linear-gradient(90deg, transparent 0%, var(--ls-border) 30%, var(--ls-border) 70%, transparent 100%)",
+              margin: "8px 0 10px",
+            }}
+          />
+
+          {/* Total big */}
+          <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 10 }}>
+            <div
+              style={{
+                fontSize: 10,
+                letterSpacing: 1.8,
+                textTransform: "uppercase",
+                fontWeight: 800,
+                color: "var(--ls-gold)",
+                fontFamily: "DM Sans, sans-serif",
+              }}
+            >
+              Total
+            </div>
+            <div
+              style={{
+                fontFamily: "Syne, serif",
+                fontWeight: 800,
+                fontSize: 28,
+                letterSpacing: "-0.03em",
+                color: "var(--ls-text)",
+              }}
+            >
+              {total.toFixed(2)}
+              <span style={{ color: "var(--ls-gold)", fontSize: 22, marginLeft: 1 }}>€</span>
+            </div>
+          </div>
+
+          {/* PV info ligne sub */}
+          {addOnsPv > 0 && (
+            <div
+              style={{
+                fontSize: 10.5,
+                color: "var(--ls-text-hint)",
+                marginTop: 6,
+                fontFamily: "DM Sans, sans-serif",
+                textAlign: "right",
+              }}
+            >
+              + {addOnsPv.toFixed(1)} PV ajouts
+            </div>
+          )}
+        </div>
+      </aside>
+    </>
   );
 }

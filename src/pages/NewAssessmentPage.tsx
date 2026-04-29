@@ -1287,6 +1287,8 @@ export function NewAssessmentPage() {
       `}</style>
       <div className="grid gap-4">
         <Card className="space-y-5">
+          {/* Header step interne — masqué sur 'program' (le hero gold suffit, sinon doublon) */}
+          {currentStepId !== 'program' && (
           <div className="hidden md:flex flex-wrap items-center justify-between gap-3">
             <div>
               <p
@@ -1333,6 +1335,7 @@ export function NewAssessmentPage() {
               tone={form.objective === "sport" ? "green" : "blue"}
             />
           </div>
+          )}
 
           <div key={currentStepId} className="ls-step-fade space-y-5">
 
@@ -2276,7 +2279,7 @@ export function NewAssessmentPage() {
                         textShadow: '0 1px 2px rgba(0,0,0,0.20)',
                       }}
                     >
-                      {form.firstName ? `Le programme de ${form.firstName}` : 'Programme proposé'}
+                      {form.firstName ? `Le programme de ${form.firstName}` : 'Ton programme personnalisé'}
                     </div>
                     <div
                       style={{
@@ -2840,17 +2843,124 @@ export function NewAssessmentPage() {
             </div>
           )}
 
-          <div className="hidden items-center justify-between gap-3 border-t border-white/10 pt-4 md:flex">
-            <Button variant="ghost" onClick={goToPreviousStep} disabled={currentStep === 0}>
-              Etape precedente
-            </Button>
-            <div className="flex flex-wrap gap-3">
-              <Button variant="secondary" onClick={() => void handleSaveAssessment()} data-tour-id="bilan-submit">
-                Enregistrer le bilan
-              </Button>
-              <Button onClick={goToNextStep} disabled={currentStep === steps.length - 1}>
-                Etape suivante
-              </Button>
+          {/* Footer navigation desktop — refonte premium V2 (2026-04-29) */}
+          <div
+            className="hidden items-center justify-between gap-3 md:flex"
+            style={{
+              marginTop: 24,
+              paddingTop: 18,
+              borderTop: '0.5px dashed var(--ls-border)',
+            }}
+          >
+            <button
+              type="button"
+              onClick={goToPreviousStep}
+              disabled={currentStep === 0}
+              style={{
+                padding: '10px 18px 10px 14px',
+                borderRadius: 999,
+                border: '0.5px solid var(--ls-border)',
+                background: 'var(--ls-surface)',
+                color: currentStep === 0 ? 'var(--ls-text-hint)' : 'var(--ls-text-muted)',
+                fontSize: 13,
+                fontWeight: 600,
+                fontFamily: 'DM Sans, sans-serif',
+                cursor: currentStep === 0 ? 'not-allowed' : 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 8,
+                transition: 'transform 0.15s ease, border-color 0.15s ease, color 0.15s ease',
+                opacity: currentStep === 0 ? 0.45 : 1,
+              }}
+              onMouseEnter={(e) => {
+                if (currentStep > 0) {
+                  e.currentTarget.style.transform = 'translateX(-2px)';
+                  e.currentTarget.style.borderColor = 'color-mix(in srgb, var(--ls-gold) 30%, var(--ls-border))';
+                  e.currentTarget.style.color = 'var(--ls-text)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'none';
+                e.currentTarget.style.borderColor = 'var(--ls-border)';
+                e.currentTarget.style.color = currentStep === 0 ? 'var(--ls-text-hint)' : 'var(--ls-text-muted)';
+              }}
+            >
+              <span aria-hidden style={{ fontSize: 14 }}>←</span>
+              Précédente
+            </button>
+
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center' }}>
+              <button
+                type="button"
+                onClick={() => void handleSaveAssessment()}
+                data-tour-id="bilan-submit"
+                style={{
+                  padding: '10px 18px',
+                  borderRadius: 999,
+                  border: '0.5px solid color-mix(in srgb, var(--ls-teal) 40%, transparent)',
+                  background: 'color-mix(in srgb, var(--ls-teal) 10%, var(--ls-surface))',
+                  color: 'var(--ls-teal)',
+                  fontSize: 13,
+                  fontWeight: 700,
+                  fontFamily: 'DM Sans, sans-serif',
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 7,
+                  transition: 'transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-1px)';
+                  e.currentTarget.style.boxShadow = '0 4px 12px -4px rgba(45,212,191,0.30)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'none';
+                  e.currentTarget.style.boxShadow = 'none';
+                }}
+              >
+                💾 Enregistrer
+              </button>
+
+              <button
+                type="button"
+                onClick={goToNextStep}
+                disabled={currentStep === steps.length - 1}
+                style={{
+                  padding: '11px 22px 11px 20px',
+                  borderRadius: 999,
+                  border: 'none',
+                  background: currentStep === steps.length - 1
+                    ? 'var(--ls-surface2)'
+                    : 'linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)',
+                  color: currentStep === steps.length - 1 ? 'var(--ls-text-hint)' : '#FFFFFF',
+                  fontSize: 13.5,
+                  fontWeight: 700,
+                  fontFamily: 'DM Sans, sans-serif',
+                  cursor: currentStep === steps.length - 1 ? 'not-allowed' : 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  letterSpacing: '-0.005em',
+                  boxShadow: currentStep === steps.length - 1
+                    ? 'none'
+                    : '0 6px 16px -4px rgba(186,117,23,0.45), inset 0 1px 0 rgba(255,255,255,0.20)',
+                  transition: 'transform 0.15s ease, filter 0.15s ease, box-shadow 0.15s ease',
+                  opacity: currentStep === steps.length - 1 ? 0.55 : 1,
+                }}
+                onMouseEnter={(e) => {
+                  if (currentStep < steps.length - 1) {
+                    e.currentTarget.style.transform = 'translateY(-1px)';
+                    e.currentTarget.style.filter = 'brightness(1.08)';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'none';
+                  e.currentTarget.style.filter = 'none';
+                }}
+              >
+                Étape suivante
+                <span aria-hidden style={{ fontSize: 14 }}>→</span>
+              </button>
             </div>
           </div>
           <div className="sticky bottom-20 lg:bottom-3 z-20 -mx-1 mt-2 rounded-[24px] p-3 md:hidden" style={{ background: 'var(--ls-surface)', borderTop: '1px solid var(--ls-border)', color: 'var(--ls-text)', boxShadow: '0 -4px 16px rgba(0,0,0,0.08)' }}>
