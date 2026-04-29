@@ -170,14 +170,22 @@ begin
   from days d
   left join totals t on t.d = d.d;
 
-  -- Streak + lifetime
-  select u.streak_count, u.streak_last_active, u.lifetime_login_count
-  into streak_count, streak_last_active, lifetime_login_count
-  from public.users u
-  where u.id = p_user_id;
+  -- Streak + lifetime (utilise vars temp pour eviter ambiguite avec
+  -- les colonnes du return type qui ont les memes noms).
+  declare
+    v_streak_count int;
+    v_streak_last_active date;
+    v_lifetime int;
+  begin
+    select u.streak_count, u.streak_last_active, u.lifetime_login_count
+    into v_streak_count, v_streak_last_active, v_lifetime
+    from public.users u
+    where u.id = p_user_id;
 
-  streak_count := coalesce(streak_count, 0);
-  lifetime_login_count := coalesce(lifetime_login_count, 0);
+    streak_count := coalesce(v_streak_count, 0);
+    streak_last_active := v_streak_last_active;
+    lifetime_login_count := coalesce(v_lifetime, 0);
+  end;
 
   -- Total sessions
   select coalesce(count(*), 0)::int into total_sessions
