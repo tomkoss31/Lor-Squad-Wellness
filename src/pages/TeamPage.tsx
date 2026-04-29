@@ -360,8 +360,9 @@ export function TeamPage() {
               selectedId={effectiveSelectedId}
               onSelect={(id) => {
                 setSelectedId(id);
-                // Quick modal au click si admin et que ce n'est pas la couple virtuelle
-                if (currentUser?.role === "admin" && !isCoupleVirtualId(id)) {
+                // Quick modal au click si admin (V3.1 — 2026-04-29 :
+                // ouvre AUSSI sur la couple virtuelle, le modal gere le switch).
+                if (currentUser?.role === "admin") {
                   setQuickModalUserId(id);
                 }
               }}
@@ -422,8 +423,26 @@ export function TeamPage() {
         </>
       ) : null}
 
-      {/* Quick modal au click sur un distri (admin only) — V3 2026-04-29 */}
+      {/* Quick modal au click sur un distri (admin only) — V3.1 2026-04-29
+          Si couple virtuelle, on passe les 2 membres pour le switch interne. */}
       {quickModalUserId && (() => {
+        // Cas couple virtuelle : recuperer Thomas + Melanie depuis coupleMemberIds
+        if (isCoupleVirtualId(quickModalUserId)) {
+          const members = coupleMemberIds
+            .map((mid) => users.find((u) => u.id === mid))
+            .filter((u): u is NonNullable<typeof u> => !!u);
+          if (members.length === 0) return null;
+          // user = 1er membre par defaut, mais le modal gere le switch
+          return (
+            <DistriQuickModal
+              user={members[0]}
+              clients={clients}
+              followUps={followUps}
+              onClose={() => setQuickModalUserId(null)}
+              coupleMembers={members}
+            />
+          );
+        }
         const targetUser = users.find((u) => u.id === quickModalUserId);
         if (!targetUser) return null;
         return (
