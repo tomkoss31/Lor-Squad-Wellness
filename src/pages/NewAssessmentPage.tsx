@@ -54,6 +54,7 @@ import { CurrentIntakeStep } from "../components/assessment/CurrentIntakeStep";
 import { SportAlertsDialog, detectSportAlerts, type SportAlert } from "../components/assessment/SportAlertsDialog";
 import { BreakfastStorySlider, DEFAULT_BREAKFAST_ANALYSIS } from "../components/education/BreakfastStorySlider";
 import { ConfettiBurst } from "../features/academy/components/ConfettiBurst";
+import { BilanSectionDivider } from "../components/assessment/BilanSectionDivider";
 
 type AssessmentForm = {
   assessmentDate: string;
@@ -2315,84 +2316,116 @@ export function NewAssessmentPage() {
               </div>
 
               <div className="grid gap-4 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
-                {/* ─── Colonne principale ─────────────────────────────── */}
-                <div className="space-y-5">
-                  {/* Bloc Nutri — Objectifs hydratation + protéines
-                      (Chantier Recommandations 2026-04-25). Calculés
-                      depuis form.weight + form.objective. */}
-                  {form.weight > 0 ? (
-                    <div
-                      style={{
-                        padding: "14px 16px",
-                        borderRadius: 14,
-                        background:
-                          "linear-gradient(135deg, color-mix(in srgb, var(--ls-teal) 10%, transparent), color-mix(in srgb, var(--ls-gold) 6%, transparent))",
-                        border:
-                          "1px solid color-mix(in srgb, var(--ls-teal) 25%, transparent)",
-                      }}
-                    >
-                      <p className="eyebrow-label" style={{ marginBottom: 8 }}>
-                        Objectifs nutritionnels
-                      </p>
+                {/* ─── Colonne principale — REFONTE PRO V2 (2026-04-29) ───
+                     4 sections numerotees uniformes avec BilanSectionDivider.
+                     Structure narrative claire : besoins → programme → ajouts → suite. */}
+                <div className="space-y-7">
+
+                  {/* ═══════════════════════════════════════════════════════
+                      § 1 · TES BESOINS DETECTES (teal)
+                      ═══════════════════════════════════════════════════════ */}
+                  {form.weight > 0 && (
+                    <section className="space-y-3">
+                      <BilanSectionDivider
+                        number={1}
+                        eyebrow="Tes besoins detectes"
+                        title="Ce que ton corps demande"
+                        description={form.objective === "sport"
+                          ? "Hydratation, proteines et profil sportif personnalise."
+                          : "Hydratation et proteines calculees sur ton poids actuel."}
+                        color="teal"
+                      />
+
                       <div
                         style={{
-                          display: "grid",
-                          gap: 12,
-                          gridTemplateColumns: "1fr 1fr",
+                          padding: "16px 18px",
+                          borderRadius: 16,
+                          background: "var(--ls-surface)",
+                          border: "0.5px solid var(--ls-border)",
+                          borderLeft: "3px solid var(--ls-teal)",
                         }}
                       >
-                        <div>
-                          <div style={{ fontSize: 11, color: "var(--ls-text-muted)", marginBottom: 2 }}>
-                            💧 Hydratation cible
+                        <div
+                          style={{
+                            display: "grid",
+                            gap: 14,
+                            gridTemplateColumns: form.objective === "sport" ? "1fr 1fr 1fr" : "1fr 1fr",
+                          }}
+                        >
+                          <div>
+                            <div style={{ fontSize: 11, color: "var(--ls-text-muted)", marginBottom: 4, fontFamily: "DM Sans, sans-serif", letterSpacing: 0.3 }}>
+                              💧 Hydratation cible
+                            </div>
+                            <div
+                              style={{
+                                fontFamily: "Syne, serif",
+                                fontSize: 22,
+                                fontWeight: 800,
+                                color: "var(--ls-text)",
+                                letterSpacing: "-0.02em",
+                              }}
+                            >
+                              {computeWaterTarget(form.weight).toFixed(1)}<span style={{ fontSize: 14, fontWeight: 600, color: "var(--ls-text-muted)", marginLeft: 3 }}>L/j</span>
+                            </div>
                           </div>
-                          <div
-                            style={{
-                              fontFamily: "Syne, sans-serif",
-                              fontSize: 20,
-                              fontWeight: 800,
-                              color: "var(--ls-text)",
-                            }}
-                          >
-                            {computeWaterTarget(form.weight).toFixed(1)} L / jour
+                          <div>
+                            <div style={{ fontSize: 11, color: "var(--ls-text-muted)", marginBottom: 4, fontFamily: "DM Sans, sans-serif", letterSpacing: 0.3 }}>
+                              🥩 Proteines cible
+                            </div>
+                            <div
+                              style={{
+                                fontFamily: "Syne, serif",
+                                fontSize: 22,
+                                fontWeight: 800,
+                                color: "var(--ls-text)",
+                                letterSpacing: "-0.02em",
+                              }}
+                            >
+                              {computeProteinTarget(form.weight, form.objective)}<span style={{ fontSize: 14, fontWeight: 600, color: "var(--ls-text-muted)", marginLeft: 3 }}>g/j</span>
+                            </div>
                           </div>
+                          {form.objective === "sport" && form.sportProfile && (
+                            <div>
+                              <div style={{ fontSize: 11, color: "var(--ls-text-muted)", marginBottom: 4, fontFamily: "DM Sans, sans-serif", letterSpacing: 0.3 }}>
+                                🏋️ Profil sport
+                              </div>
+                              <div
+                                style={{
+                                  fontFamily: "Syne, serif",
+                                  fontSize: 14,
+                                  fontWeight: 700,
+                                  color: "var(--ls-text)",
+                                  letterSpacing: "-0.01em",
+                                  lineHeight: 1.25,
+                                }}
+                              >
+                                {form.sportProfile.frequency} · {form.sportProfile.subObjective}
+                              </div>
+                            </div>
+                          )}
                         </div>
-                        <div>
-                          <div style={{ fontSize: 11, color: "var(--ls-text-muted)", marginBottom: 2 }}>
-                            🥩 Protéines cible
-                          </div>
-                          <div
-                            style={{
-                              fontFamily: "Syne, sans-serif",
-                              fontSize: 20,
-                              fontWeight: 800,
-                              color: "var(--ls-text)",
-                            }}
-                          >
-                            {computeProteinTarget(form.weight, form.objective)} g / jour
-                          </div>
+                        <div style={{ fontSize: 11, color: "var(--ls-text-hint)", marginTop: 12, fontFamily: "DM Sans, sans-serif" }}>
+                          Calcule sur ton poids actuel ({form.weight.toFixed(1)} kg) et l&apos;objectif « {form.objective === "sport" ? "Sport / prise de masse" : "Perte de poids"} ».
                         </div>
                       </div>
-                      <div style={{ fontSize: 11, color: "var(--ls-text-muted)", marginTop: 8 }}>
-                        Calculé selon le poids actuel ({form.weight.toFixed(1)} kg) et
-                        l&apos;objectif « {form.objective === "sport" ? "Sport / masse" : "Perte de poids"} ».
-                      </div>
-                    </div>
-                  ) : null}
+                    </section>
+                  )}
 
-                  {/* Bloc 0 — Curseur lait */}
-                  <MilkConsumptionToggle
-                    value={form.consumesMilk}
-                    onChange={(v) => update("consumesMilk", v)}
-                  />
+                  {/* ═══════════════════════════════════════════════════════
+                      § 2 · LE PROGRAMME COEUR (gold)
+                      ═══════════════════════════════════════════════════════ */}
+                  <section className="space-y-3">
+                    <BilanSectionDivider
+                      number={2}
+                      eyebrow="Le programme coeur"
+                      title={chosenProgram ? `Programme : ${chosenProgram.title}` : "Choisis le programme adapte"}
+                      description="La base nutritionnelle qui structure ta journee. 4 niveaux pour s&apos;adapter a ton mode de vie."
+                      color="gold"
+                    />
 
-                  {/* Bloc 1 — 4 cards programmes */}
-                  <div>
-                    <p className="eyebrow-label" style={{ marginBottom: 10 }}>
-                      Choix du programme
-                    </p>
                     <div
-                      className="grid gap-2"
-                      style={{ gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))" }}
+                      className="grid gap-3"
+                      style={{ gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))" }}
                     >
                       {PROGRAM_CHOICES
                         .filter((p) => p.category === form.objective || p.category === "unit")
@@ -2405,173 +2438,242 @@ export function NewAssessmentPage() {
                           />
                         ))}
                     </div>
+
+                    {/* Banner confirmation programme */}
                     <div
                       style={{
-                        marginTop: 10,
-                        padding: "10px 14px",
-                        borderRadius: 10,
-                        background: "color-mix(in srgb, var(--ls-gold) 10%, transparent)",
-                        border: "1px solid color-mix(in srgb, var(--ls-gold) 30%, transparent)",
+                        padding: "12px 16px",
+                        borderRadius: 12,
+                        background: "color-mix(in srgb, var(--ls-gold) 10%, var(--ls-surface))",
+                        border: "0.5px solid color-mix(in srgb, var(--ls-gold) 35%, transparent)",
+                        borderLeft: "3px solid var(--ls-gold)",
                         color: "var(--ls-text)",
                         fontSize: 13,
                         fontFamily: "'DM Sans', sans-serif",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        flexWrap: "wrap",
+                        gap: 8,
                       }}
                     >
-                      ✓ Programme{" "}
-                      <strong style={{ color: "var(--ls-gold)" }}>{chosenProgram.title}</strong>{" "}
-                      sélectionné · <strong>{chosenProgram.price}€</strong>
+                      <span>
+                        ✓ Programme{" "}
+                        <strong style={{ color: "var(--ls-gold)" }}>{chosenProgram.title}</strong>{" "}
+                        selectionne
+                      </span>
+                      <span style={{ fontFamily: "Syne, serif", fontWeight: 800, fontSize: 16, color: "var(--ls-gold)", letterSpacing: "-0.02em" }}>
+                        {chosenProgram.price}€
+                      </span>
                     </div>
-                  </div>
 
-                  {/* Bloc 2 — Routine matin */}
-                  <RoutineMatinList program={chosenProgram} />
+                    {/* Curseur lait — option du programme */}
+                    <MilkConsumptionToggle
+                      value={form.consumesMilk}
+                      onChange={(v) => update("consumesMilk", v)}
+                    />
 
-                  {/* Bloc Boosters (sport uniquement)
-                      — Chantier Prise de masse (2026-04-24) : bloc initial
-                      décoratif.
-                      — Chantier Boosters cliquables + Quantités (2026-04-24) :
-                        passage à SelectableProductCard. Chaque booster est
-                        désormais cliquable (toggle partagé avec besoins/
-                        upsells) et, s'il est sélectionné, apparaît dans le
-                        ticket sticky à droite.
-                      BOOSTERS n'ont pas de PV — pv=0 documenté côté mapping. */}
-                  {form.objective === "sport" ? (() => {
-                    const recs = recommendBoosters(form.sportProfile, form.age);
-                    const recById = new Map(recs.map((r) => [r.productId, r]));
-                    return (
-                      <div>
-                        <p className="eyebrow-label" style={{ marginBottom: 10 }}>
-                          + Boosters optionnels
-                        </p>
-                        {/* Chantier Boosters grid compact (2026-04-27) :
-                            variant="compact" + wrapper .boosters-grid pour
-                            un layout 2-3 colonnes avec 3 états visuels
-                            (neutre / recommandé / sélectionné). Les autres
-                            sections (besoins, upsells) gardent le rendu
-                            par défaut du composant. */}
-                        <div className="boosters-grid">
-                          {BOOSTERS.map((b) => {
-                            const rec = recById.get(b.id);
-                            const isRec = !!rec?.recommended;
-                            return (
-                              <SelectableProductCard
-                                key={b.id}
-                                id={b.id}
-                                name={b.title}
-                                shortBenefit={b.shortContent}
-                                prixPublic={b.price}
-                                pv={0}
-                                highlight={isRec ? { reason: rec?.reason } : undefined}
-                                selected={effectiveSelectedProductIds.includes(b.id)}
-                                onToggle={() => toggleSelectedProduct(b.id)}
-                                quantity={getQty(b.id)}
-                                onQuantityChange={(q) => setQty(b.id, q)}
-                                variant="compact"
-                              />
-                            );
-                          })}
-                        </div>
-                      </div>
-                    );
-                  })() : null}
+                    {/* Routine matin */}
+                    <RoutineMatinList program={chosenProgram} />
+                  </section>
 
-                  {/* Bloc "Suite après le bilan" — EXISTANT conservé */}
-                  <Card className="space-y-4">
-                    <div className="flex flex-wrap items-center justify-between gap-3">
-                      <div>
-                        <p className="eyebrow-label">Suite après le bilan</p>
-                        <p className="mt-2 text-2xl text-white">La personne démarre maintenant ou revient plus tard ?</p>
-                      </div>
-                      <StatusBadge
-                        label={startsImmediately ? "Demarrage maintenant" : "Bilan sans demarrage"}
-                        tone={startsImmediately ? "green" : "amber"}
+                  {/* ═══════════════════════════════════════════════════════
+                      § 3 · POUR ALLER PLUS LOIN (coral)
+                      Boosters sport + besoins detectes + upsells.
+                      Affichee meme en perte de poids (pour besoins + upsells).
+                      ═══════════════════════════════════════════════════════ */}
+                  {(form.objective === "sport" ||
+                    recommendationPlan.needs.length > 0 ||
+                    recommendationPlan.optionalUpsells.length > 0) && (
+                    <section className="space-y-3">
+                      <BilanSectionDivider
+                        number={3}
+                        eyebrow="Pour aller plus loin"
+                        title="Ce qu&apos;on peut ajouter au programme"
+                        description="Boosters, besoins detectes par le bilan, options. Tout est optionnel."
+                        color="coral"
                       />
-                    </div>
-                    <ChoiceGroup
-                      label="Décision du jour"
-                      value={form.afterAssessmentAction}
-                      options={["Demarrage maintenant", "A relancer / ne demarre pas aujourd'hui"]}
-                      onChange={(value) =>
-                        update(
-                          "afterAssessmentAction",
-                          value === "Demarrage maintenant" ? "started" : "pending"
-                        )
+
+                      {/* Boosters (sport uniquement) */}
+                      {form.objective === "sport" && (() => {
+                        const recs = recommendBoosters(form.sportProfile, form.age);
+                        const recById = new Map(recs.map((r) => [r.productId, r]));
+                        return (
+                          <div
+                            style={{
+                              padding: "14px 16px",
+                              borderRadius: 14,
+                              background: "var(--ls-surface)",
+                              border: "0.5px solid var(--ls-border)",
+                            }}
+                          >
+                            <div style={{ fontSize: 10, letterSpacing: 1.4, textTransform: "uppercase", fontWeight: 700, color: "var(--ls-coral)", marginBottom: 10, fontFamily: "DM Sans, sans-serif" }}>
+                              ⚡ Boosters sport optionnels
+                            </div>
+                            <div className="boosters-grid">
+                              {BOOSTERS.map((b) => {
+                                const rec = recById.get(b.id);
+                                const isRec = !!rec?.recommended;
+                                return (
+                                  <SelectableProductCard
+                                    key={b.id}
+                                    id={b.id}
+                                    name={b.title}
+                                    shortBenefit={b.shortContent}
+                                    prixPublic={b.price}
+                                    pv={0}
+                                    highlight={isRec ? { reason: rec?.reason } : undefined}
+                                    selected={effectiveSelectedProductIds.includes(b.id)}
+                                    onToggle={() => toggleSelectedProduct(b.id)}
+                                    quantity={getQty(b.id)}
+                                    onQuantityChange={(q) => setQty(b.id, q)}
+                                    variant="compact"
+                                  />
+                                );
+                              })}
+                            </div>
+                          </div>
+                        );
+                      })()}
+
+                      {/* Lecture besoins detectes */}
+                      <div
+                        style={{
+                          padding: "16px 18px",
+                          borderRadius: 14,
+                          background: "var(--ls-surface)",
+                          border: "0.5px solid var(--ls-border)",
+                        }}
+                      >
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12, gap: 8, flexWrap: "wrap" }}>
+                          <div>
+                            <div style={{ fontSize: 10, letterSpacing: 1.4, textTransform: "uppercase", fontWeight: 700, color: "var(--ls-coral)", fontFamily: "DM Sans, sans-serif" }}>
+                              🎯 Besoins detectes par le bilan
+                            </div>
+                            <div style={{ fontFamily: "Syne, serif", fontSize: 15, fontWeight: 700, color: "var(--ls-text)", marginTop: 2, letterSpacing: "-0.01em" }}>
+                              Ce que le bilan fait ressortir en priorite
+                            </div>
+                          </div>
+                          <StatusBadge
+                            label={`${recommendationPlan.needs.length} besoin${recommendationPlan.needs.length > 1 ? "s" : ""}`}
+                            tone={recommendationPlan.needs.length ? "green" : "blue"}
+                          />
+                        </div>
+                        {recommendationPlan.needs.length ? (
+                          <div className="space-y-4">
+                            {recommendationPlan.needs.map((need) => (
+                              <NeedProductGroup
+                                key={`products-${need.id}`}
+                                title={need.label}
+                                summary={need.summary}
+                                reasonLabel={need.reasonLabel}
+                                products={need.products}
+                                selectedProductIds={effectiveSelectedProductIds}
+                                onToggleProduct={toggleSelectedProduct}
+                                getQty={getQty}
+                                setQty={setQty}
+                              />
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="rounded-[12px] bg-[var(--ls-surface2)] p-4 text-sm leading-7 text-[var(--ls-text-muted)]">
+                            Le bilan ne fait pas ressortir une priorite forte. On peut partir sur la base simple,
+                            puis personnaliser au premier suivi.
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Upsells */}
+                      {recommendationPlan.optionalUpsells.length > 0 && (
+                        <div
+                          style={{
+                            padding: "16px 18px",
+                            borderRadius: 14,
+                            background: "var(--ls-surface)",
+                            border: "0.5px solid var(--ls-border)",
+                          }}
+                        >
+                          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12, gap: 8, flexWrap: "wrap" }}>
+                            <div>
+                              <div style={{ fontSize: 10, letterSpacing: 1.4, textTransform: "uppercase", fontWeight: 700, color: "var(--ls-coral)", fontFamily: "DM Sans, sans-serif" }}>
+                                ✨ Options en plus
+                              </div>
+                              <div style={{ fontFamily: "Syne, serif", fontSize: 15, fontWeight: 700, color: "var(--ls-text)", marginTop: 2, letterSpacing: "-0.01em" }}>
+                                Quelques ajouts utiles
+                              </div>
+                            </div>
+                            <StatusBadge label={`${recommendationPlan.optionalUpsells.length} option${recommendationPlan.optionalUpsells.length > 1 ? "s" : ""}`} tone="blue" />
+                          </div>
+                          <div className="grid gap-3">
+                            {recommendationPlan.optionalUpsells.map((product) => (
+                              <SelectableProductCard
+                                key={`upsell-${product.id}`}
+                                id={product.id}
+                                name={product.name}
+                                shortBenefit={product.shortBenefit}
+                                pv={product.pv}
+                                prixPublic={product.prixPublic}
+                                dureeReferenceJours={product.dureeReferenceJours}
+                                quantityLabel={product.quantityLabel}
+                                selected={effectiveSelectedProductIds.includes(product.id)}
+                                onToggle={() => toggleSelectedProduct(product.id)}
+                                quantity={getQty(product.id)}
+                                onQuantityChange={(q) => setQty(product.id, q)}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </section>
+                  )}
+
+                  {/* ═══════════════════════════════════════════════════════
+                      § 4 · SUITE APRES LE BILAN (purple)
+                      ═══════════════════════════════════════════════════════ */}
+                  <section className="space-y-3">
+                    <BilanSectionDivider
+                      number={4}
+                      eyebrow="Suite apres le bilan"
+                      title="La personne demarre maintenant ou revient plus tard ?"
+                      description="Choix du jour : demarrage immediat ou bilan sans demarrage (a relancer plus tard)."
+                      color="purple"
+                      rightSlot={
+                        <StatusBadge
+                          label={startsImmediately ? "Demarrage maintenant" : "A relancer"}
+                          tone={startsImmediately ? "green" : "amber"}
+                        />
                       }
                     />
-                    {!startsImmediately ? (
-                      <p className="text-sm leading-6 text-[var(--ls-text-muted)]">
-                        Le bilan sera enregistre, la personne apparaitra en attente dans les dossiers,
-                        et elle ne comptera pas dans le module PV tant qu&apos;aucun programme n&apos;est demarre.
-                      </p>
-                    ) : null}
-                  </Card>
 
-                  {/* Bloc 3 — Ce que le bilan fait ressortir (EXISTANT, nettoyé) */}
-                  <Card className="space-y-5">
-                    <div className="flex flex-wrap items-center justify-between gap-3">
-                      <div>
-                        <p className="eyebrow-label">Lecture besoins</p>
-                        <p className="mt-2 text-2xl text-white">Ce que le bilan fait ressortir en priorité</p>
-                      </div>
-                      <StatusBadge
-                        label={`${recommendationPlan.needs.length} besoin${recommendationPlan.needs.length > 1 ? "s" : ""}`}
-                        tone={recommendationPlan.needs.length ? "green" : "blue"}
+                    <div
+                      style={{
+                        padding: "16px 18px",
+                        borderRadius: 14,
+                        background: "var(--ls-surface)",
+                        border: "0.5px solid var(--ls-border)",
+                        borderLeft: "3px solid var(--ls-purple)",
+                      }}
+                    >
+                      <ChoiceGroup
+                        label="Decision du jour"
+                        value={form.afterAssessmentAction}
+                        options={["Demarrage maintenant", "A relancer / ne demarre pas aujourd'hui"]}
+                        onChange={(value) =>
+                          update(
+                            "afterAssessmentAction",
+                            value === "Demarrage maintenant" ? "started" : "pending"
+                          )
+                        }
                       />
+                      {!startsImmediately && (
+                        <p className="text-sm leading-6 text-[var(--ls-text-muted)] mt-3" style={{ fontFamily: "DM Sans, sans-serif" }}>
+                          Le bilan sera enregistre, la personne apparaitra en attente dans les dossiers,
+                          et elle ne comptera pas dans le module PV tant qu&apos;aucun programme n&apos;est demarre.
+                        </p>
+                      )}
                     </div>
-                    {recommendationPlan.needs.length ? (
-                      <div className="space-y-4">
-                        {recommendationPlan.needs.map((need) => (
-                          <NeedProductGroup
-                            key={`products-${need.id}`}
-                            title={need.label}
-                            summary={need.summary}
-                            reasonLabel={need.reasonLabel}
-                            products={need.products}
-                            selectedProductIds={effectiveSelectedProductIds}
-                            onToggleProduct={toggleSelectedProduct}
-                            getQty={getQty}
-                            setQty={setQty}
-                          />
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="rounded-[24px] bg-[var(--ls-surface2)] p-5 text-sm leading-7 text-[var(--ls-text-muted)]">
-                        Le bilan ne fait pas encore ressortir une priorité forte. On peut partir sur une
-                        base simple, puis personnaliser au premier suivi.
-                      </div>
-                    )}
-                  </Card>
+                  </section>
 
-                  {/* Bloc 4 — Options en plus si besoin (EXISTANT) */}
-                  {recommendationPlan.optionalUpsells.length ? (
-                    <Card className="space-y-4">
-                      <div className="flex flex-wrap items-center justify-between gap-3">
-                        <div>
-                          <p className="eyebrow-label">Options en plus si besoin</p>
-                          <p className="mt-2 text-2xl text-white">Quelques ajouts utiles sans alourdir la base</p>
-                        </div>
-                        <StatusBadge label={`${recommendationPlan.optionalUpsells.length} option${recommendationPlan.optionalUpsells.length > 1 ? "s" : ""}`} tone="blue" />
-                      </div>
-                      <div className="grid gap-3">
-                        {recommendationPlan.optionalUpsells.map((product) => (
-                          <SelectableProductCard
-                            key={`upsell-${product.id}`}
-                            id={product.id}
-                            name={product.name}
-                            shortBenefit={product.shortBenefit}
-                            pv={product.pv}
-                            prixPublic={product.prixPublic}
-                            dureeReferenceJours={product.dureeReferenceJours}
-                            quantityLabel={product.quantityLabel}
-                            selected={effectiveSelectedProductIds.includes(product.id)}
-                            onToggle={() => toggleSelectedProduct(product.id)}
-                            quantity={getQty(product.id)}
-                            onQuantityChange={(q) => setQty(product.id, q)}
-                          />
-                        ))}
-                      </div>
-                    </Card>
-                  ) : null}
                 </div>
 
                 {/* ─── Colonne ticket sticky ──────────────────────────── */}
