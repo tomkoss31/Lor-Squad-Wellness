@@ -315,8 +315,9 @@ export interface Client {
   publicShareConsentAt?: string;
   publicShareRevokedAt?: string;
   // Programme Client Privilégié Herbalife (Tier B Premium VIP — 2026-04-28).
-  /** ID Herbalife format 21XY1234567 (11 chars). Saisi manuellement par
-   *  le coach après inscription du client sur myherbalife.com. */
+  /** ID Herbalife format 21XY010361 (10 chars : 2 chiffres + 2 lettres + 6 chiffres).
+   *  Saisi manuellement par le coach après inscription du client sur myherbalife.com.
+   *  Different du format distri (21Y0103610 = 2 chiffres + 1 lettre + 7 chiffres). */
   vipHerbalifeId?: string | null;
   /** Le client (autre client de la base) qui a parrainé ce client.
    *  Permet de construire l arbre récursif. NULL = pas de parrainage

@@ -4,7 +4,7 @@
 //
 // Affiche cote coach (sur ClientDetailPage / ActionsTab) :
 //   - Status VIP du client (niveau + remise + PV cumule)
-//   - Champ saisie ID Herbalife client (21XY1234567)
+//   - Champ saisie ID Herbalife client (21XY123456 — 2 chiffres + 2 lettres + 6 chiffres)
 //   - Champ "Parraine par" (autre client de la base)
 //   - Vue arbre récursif des descendants (qui ce client a parraine)
 //   - Liste des prospects renseignes par le client (form sandbox)
@@ -33,7 +33,10 @@ interface Props {
   client: Client;
 }
 
-const HERBALIFE_VIP_ID_REGEX = /^\d{2}[A-Z]{2}\d{7}$/;
+// Format ID VIP client Herbalife : 2 chiffres + 2 lettres + 6 chiffres
+// (10 caracteres total, ex: 21XY010361). Different du format distri qui est
+// 2 chiffres + 1 lettre + 7 chiffres (ex: 21Y0103610).
+const HERBALIFE_VIP_ID_REGEX = /^\d{2}[A-Z]{2}\d{6}$/;
 
 export function ClientVipCoachPanel({ client }: Props) {
   const { clients } = useAppContext();
@@ -81,7 +84,7 @@ export function ClientVipCoachPanel({ client }: Props) {
       pushToast({
         tone: "warning",
         title: "Format ID invalide",
-        message: "Format attendu : 21XY1234567 (2 chiffres + 2 lettres + 7 chiffres)",
+        message: "Format attendu : 21XY010361 (2 chiffres + 2 lettres + 6 chiffres)",
       });
       return;
     }
@@ -520,7 +523,7 @@ export function ClientVipCoachPanel({ client }: Props) {
               type="text"
               value={vipId}
               onChange={(e) => setVipId(e.target.value.toUpperCase())}
-              placeholder="21XY1234567"
+              placeholder="21XY010361"
               maxLength={11}
               style={{
                 flex: 1,
