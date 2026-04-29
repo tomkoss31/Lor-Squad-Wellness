@@ -2295,26 +2295,9 @@ export function NewAssessmentPage() {
                         : 'Choisis le programme adapté + ajoute les boosters · présente la valeur globale.'}
                     </div>
                   </div>
-                  {chosenProgram?.price && (
-                    <div
-                      style={{
-                        textAlign: 'right',
-                        background: 'rgba(255,255,255,0.18)',
-                        border: '1px solid rgba(255,255,255,0.35)',
-                        borderRadius: 14,
-                        padding: '10px 16px',
-                        backdropFilter: 'blur(8px)',
-                        WebkitBackdropFilter: 'blur(8px)',
-                      }}
-                    >
-                      <div style={{ fontSize: 9.5, letterSpacing: 1.4, textTransform: 'uppercase', fontWeight: 700, color: 'rgba(255,255,255,0.85)', fontFamily: 'DM Sans, sans-serif' }}>
-                        Prix programme
-                      </div>
-                      <div style={{ fontFamily: 'Syne, serif', fontWeight: 800, fontSize: 22, color: '#FFFFFF', letterSpacing: '-0.02em' }}>
-                        {chosenProgram.price}€
-                      </div>
-                    </div>
-                  )}
+                  {/* Prix programme retire du hero (2026-04-29) :
+                      le panier sticky a droite affiche deja le total avec
+                      details Programme + Ajouts. Pas de doublon. */}
                 </div>
               </div>
 
@@ -2442,33 +2425,9 @@ export function NewAssessmentPage() {
                         ))}
                     </div>
 
-                    {/* Banner confirmation programme */}
-                    <div
-                      style={{
-                        padding: "12px 16px",
-                        borderRadius: 12,
-                        background: "color-mix(in srgb, var(--ls-gold) 10%, var(--ls-surface))",
-                        border: "0.5px solid color-mix(in srgb, var(--ls-gold) 35%, transparent)",
-                        borderLeft: "3px solid var(--ls-gold)",
-                        color: "var(--ls-text)",
-                        fontSize: 13,
-                        fontFamily: "'DM Sans', sans-serif",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        flexWrap: "wrap",
-                        gap: 8,
-                      }}
-                    >
-                      <span>
-                        ✓ Programme{" "}
-                        <strong style={{ color: "var(--ls-gold)" }}>{chosenProgram.title}</strong>{" "}
-                        selectionne
-                      </span>
-                      <span style={{ fontFamily: "Syne, serif", fontWeight: 800, fontSize: 16, color: "var(--ls-gold)", letterSpacing: "-0.02em" }}>
-                        {chosenProgram.price}€
-                      </span>
-                    </div>
+                    {/* Banner confirmation supprime (2026-04-29) — le hero
+                        gold affiche deja le programme dans le title et le
+                        panier sticky le repete. Triple redondance retiree. */}
 
                     {/* Curseur lait — option du programme */}
                     <MilkConsumptionToggle
@@ -2497,21 +2456,64 @@ export function NewAssessmentPage() {
                         color="coral"
                       />
 
-                      {/* Boosters (sport uniquement) */}
+                      {/* ─── Sub-block helper inline (modernize 2026-04-29) ─── */}
+                      {/* Sub-blocks de § 3 sont des cards avec emoji avatar +
+                          counter chip + headers premium uniformes. */}
+
+                      {/* SOUS-BLOC 1 — Boosters sport (sport uniquement) */}
                       {form.objective === "sport" && (() => {
                         const recs = recommendBoosters(form.sportProfile, form.age);
                         const recById = new Map(recs.map((r) => [r.productId, r]));
+                        const selectedCount = BOOSTERS.filter((b) => effectiveSelectedProductIds.includes(b.id)).length;
                         return (
                           <div
                             style={{
-                              padding: "14px 16px",
-                              borderRadius: 14,
+                              padding: "16px 18px",
+                              borderRadius: 16,
                               background: "var(--ls-surface)",
                               border: "0.5px solid var(--ls-border)",
+                              borderLeft: "3px solid var(--ls-coral)",
+                              transition: "border-color 0.2s ease, box-shadow 0.2s ease",
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.boxShadow = "0 4px 14px -8px rgba(251,113,133,0.30)";
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.boxShadow = "none";
                             }}
                           >
-                            <div style={{ fontSize: 10, letterSpacing: 1.4, textTransform: "uppercase", fontWeight: 700, color: "var(--ls-coral)", marginBottom: 10, fontFamily: "DM Sans, sans-serif" }}>
-                              ⚡ Boosters sport optionnels
+                            <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }}>
+                              <div
+                                style={{
+                                  width: 42, height: 42, flexShrink: 0,
+                                  borderRadius: 12,
+                                  background: "linear-gradient(135deg, color-mix(in srgb, var(--ls-coral) 22%, var(--ls-surface2)) 0%, var(--ls-surface2) 100%)",
+                                  border: "0.5px solid color-mix(in srgb, var(--ls-coral) 35%, transparent)",
+                                  display: "flex", alignItems: "center", justifyContent: "center",
+                                  fontSize: 22,
+                                }}
+                              >
+                                ⚡
+                              </div>
+                              <div style={{ flex: 1, minWidth: 0 }}>
+                                <div style={{ fontSize: 10, letterSpacing: 1.4, textTransform: "uppercase", fontWeight: 700, color: "var(--ls-coral)", fontFamily: "DM Sans, sans-serif" }}>
+                                  Boosters sport
+                                </div>
+                                <div style={{ fontFamily: "Syne, serif", fontSize: 16, fontWeight: 700, color: "var(--ls-text)", marginTop: 2, letterSpacing: "-0.01em" }}>
+                                  Pour pousser tes performances
+                                </div>
+                              </div>
+                              {selectedCount > 0 && (
+                                <span style={{
+                                  fontSize: 11, fontWeight: 800, fontFamily: "Syne, serif",
+                                  padding: "3px 10px", borderRadius: 999,
+                                  background: "color-mix(in srgb, var(--ls-coral) 14%, transparent)",
+                                  color: "var(--ls-coral)",
+                                  border: "0.5px solid color-mix(in srgb, var(--ls-coral) 40%, transparent)",
+                                }}>
+                                  {selectedCount} retenu{selectedCount > 1 ? "s" : ""}
+                                </span>
+                              )}
                             </div>
                             <div className="boosters-grid">
                               {BOOSTERS.map((b) => {
@@ -2539,28 +2541,55 @@ export function NewAssessmentPage() {
                         );
                       })()}
 
-                      {/* Lecture besoins detectes */}
+                      {/* SOUS-BLOC 2 — Besoins detectes par le bilan */}
                       <div
                         style={{
                           padding: "16px 18px",
-                          borderRadius: 14,
+                          borderRadius: 16,
                           background: "var(--ls-surface)",
                           border: "0.5px solid var(--ls-border)",
+                          borderLeft: "3px solid var(--ls-coral)",
+                          transition: "box-shadow 0.2s ease",
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.boxShadow = "0 4px 14px -8px rgba(251,113,133,0.30)";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.boxShadow = "none";
                         }}
                       >
-                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12, gap: 8, flexWrap: "wrap" }}>
-                          <div>
+                        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }}>
+                          <div
+                            style={{
+                              width: 42, height: 42, flexShrink: 0,
+                              borderRadius: 12,
+                              background: "linear-gradient(135deg, color-mix(in srgb, var(--ls-coral) 22%, var(--ls-surface2)) 0%, var(--ls-surface2) 100%)",
+                              border: "0.5px solid color-mix(in srgb, var(--ls-coral) 35%, transparent)",
+                              display: "flex", alignItems: "center", justifyContent: "center",
+                              fontSize: 22,
+                            }}
+                          >
+                            🎯
+                          </div>
+                          <div style={{ flex: 1, minWidth: 0 }}>
                             <div style={{ fontSize: 10, letterSpacing: 1.4, textTransform: "uppercase", fontWeight: 700, color: "var(--ls-coral)", fontFamily: "DM Sans, sans-serif" }}>
-                              🎯 Besoins detectes par le bilan
+                              Besoins detectes
                             </div>
-                            <div style={{ fontFamily: "Syne, serif", fontSize: 15, fontWeight: 700, color: "var(--ls-text)", marginTop: 2, letterSpacing: "-0.01em" }}>
+                            <div style={{ fontFamily: "Syne, serif", fontSize: 16, fontWeight: 700, color: "var(--ls-text)", marginTop: 2, letterSpacing: "-0.01em" }}>
                               Ce que le bilan fait ressortir en priorite
                             </div>
                           </div>
-                          <StatusBadge
-                            label={`${recommendationPlan.needs.length} besoin${recommendationPlan.needs.length > 1 ? "s" : ""}`}
-                            tone={recommendationPlan.needs.length ? "green" : "blue"}
-                          />
+                          {recommendationPlan.needs.length > 0 && (
+                            <span style={{
+                              fontSize: 11, fontWeight: 800, fontFamily: "Syne, serif",
+                              padding: "3px 10px", borderRadius: 999,
+                              background: "color-mix(in srgb, var(--ls-coral) 14%, transparent)",
+                              color: "var(--ls-coral)",
+                              border: "0.5px solid color-mix(in srgb, var(--ls-coral) 40%, transparent)",
+                            }}>
+                              {recommendationPlan.needs.length} besoin{recommendationPlan.needs.length > 1 ? "s" : ""}
+                            </span>
+                          )}
                         </div>
                         {recommendationPlan.needs.length ? (
                           <div className="space-y-4">
@@ -2586,26 +2615,54 @@ export function NewAssessmentPage() {
                         )}
                       </div>
 
-                      {/* Upsells */}
+                      {/* SOUS-BLOC 3 — Options en plus (upsells) */}
                       {recommendationPlan.optionalUpsells.length > 0 && (
                         <div
                           style={{
                             padding: "16px 18px",
-                            borderRadius: 14,
+                            borderRadius: 16,
                             background: "var(--ls-surface)",
                             border: "0.5px solid var(--ls-border)",
+                            borderLeft: "3px solid var(--ls-coral)",
+                            transition: "box-shadow 0.2s ease",
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.boxShadow = "0 4px 14px -8px rgba(251,113,133,0.30)";
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.boxShadow = "none";
                           }}
                         >
-                          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12, gap: 8, flexWrap: "wrap" }}>
-                            <div>
+                          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }}>
+                            <div
+                              style={{
+                                width: 42, height: 42, flexShrink: 0,
+                                borderRadius: 12,
+                                background: "linear-gradient(135deg, color-mix(in srgb, var(--ls-coral) 22%, var(--ls-surface2)) 0%, var(--ls-surface2) 100%)",
+                                border: "0.5px solid color-mix(in srgb, var(--ls-coral) 35%, transparent)",
+                                display: "flex", alignItems: "center", justifyContent: "center",
+                                fontSize: 22,
+                              }}
+                            >
+                              ✨
+                            </div>
+                            <div style={{ flex: 1, minWidth: 0 }}>
                               <div style={{ fontSize: 10, letterSpacing: 1.4, textTransform: "uppercase", fontWeight: 700, color: "var(--ls-coral)", fontFamily: "DM Sans, sans-serif" }}>
-                                ✨ Options en plus
+                                Options en plus
                               </div>
-                              <div style={{ fontFamily: "Syne, serif", fontSize: 15, fontWeight: 700, color: "var(--ls-text)", marginTop: 2, letterSpacing: "-0.01em" }}>
+                              <div style={{ fontFamily: "Syne, serif", fontSize: 16, fontWeight: 700, color: "var(--ls-text)", marginTop: 2, letterSpacing: "-0.01em" }}>
                                 Quelques ajouts utiles
                               </div>
                             </div>
-                            <StatusBadge label={`${recommendationPlan.optionalUpsells.length} option${recommendationPlan.optionalUpsells.length > 1 ? "s" : ""}`} tone="blue" />
+                            <span style={{
+                              fontSize: 11, fontWeight: 800, fontFamily: "Syne, serif",
+                              padding: "3px 10px", borderRadius: 999,
+                              background: "color-mix(in srgb, var(--ls-coral) 14%, transparent)",
+                              color: "var(--ls-coral)",
+                              border: "0.5px solid color-mix(in srgb, var(--ls-coral) 40%, transparent)",
+                            }}>
+                              {recommendationPlan.optionalUpsells.length} option{recommendationPlan.optionalUpsells.length > 1 ? "s" : ""}
+                            </span>
                           </div>
                           <div className="grid gap-3">
                             {recommendationPlan.optionalUpsells.map((product) => (
@@ -2650,29 +2707,131 @@ export function NewAssessmentPage() {
 
                     <div
                       style={{
-                        padding: "16px 18px",
-                        borderRadius: 14,
+                        padding: "20px 22px",
+                        borderRadius: 16,
                         background: "var(--ls-surface)",
                         border: "0.5px solid var(--ls-border)",
                         borderLeft: "3px solid var(--ls-purple)",
+                        transition: "box-shadow 0.2s ease",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.boxShadow = "0 4px 14px -8px rgba(167,139,250,0.30)";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.boxShadow = "none";
                       }}
                     >
-                      <ChoiceGroup
-                        label="Decision du jour"
-                        value={form.afterAssessmentAction}
-                        options={["Demarrage maintenant", "A relancer / ne demarre pas aujourd'hui"]}
-                        onChange={(value) =>
-                          update(
-                            "afterAssessmentAction",
-                            value === "Demarrage maintenant" ? "started" : "pending"
-                          )
-                        }
-                      />
+                      <div style={{ fontSize: 10, letterSpacing: 1.4, textTransform: "uppercase", fontWeight: 700, color: "var(--ls-purple)", fontFamily: "DM Sans, sans-serif", marginBottom: 12 }}>
+                        Decision du jour
+                      </div>
+                      <div style={{ display: "grid", gap: 10, gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))" }}>
+                        {[
+                          { value: "started" as const, label: "Demarrage maintenant", subtitle: "Le programme commence aujourd'hui", emoji: "🚀", color: "#2DD4BF" },
+                          { value: "pending" as const, label: "A relancer plus tard", subtitle: "Bilan sans demarrage immediat", emoji: "⏳", color: "#A78BFA" },
+                        ].map((opt) => {
+                          const isActive = form.afterAssessmentAction === opt.value;
+                          return (
+                            <button
+                              key={opt.value}
+                              type="button"
+                              onClick={() => update("afterAssessmentAction", opt.value)}
+                              style={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 12,
+                                padding: "12px 14px",
+                                borderRadius: 14,
+                                cursor: "pointer",
+                                fontFamily: "DM Sans, sans-serif",
+                                textAlign: "left",
+                                background: isActive
+                                  ? `linear-gradient(135deg, color-mix(in srgb, ${opt.color} 14%, var(--ls-surface)) 0%, var(--ls-surface) 100%)`
+                                  : "var(--ls-surface)",
+                                border: isActive
+                                  ? `0.5px solid ${opt.color}`
+                                  : "0.5px solid var(--ls-border)",
+                                boxShadow: isActive
+                                  ? `0 4px 14px -6px ${opt.color}66, inset 0 0 0 1px ${opt.color}40`
+                                  : "none",
+                                transition: "transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease",
+                              }}
+                              onMouseEnter={(e) => {
+                                if (!isActive) {
+                                  e.currentTarget.style.transform = "translateY(-2px)";
+                                  e.currentTarget.style.borderColor = `color-mix(in srgb, ${opt.color} 40%, var(--ls-border))`;
+                                }
+                              }}
+                              onMouseLeave={(e) => {
+                                if (!isActive) {
+                                  e.currentTarget.style.transform = "none";
+                                  e.currentTarget.style.borderColor = "var(--ls-border)";
+                                }
+                              }}
+                            >
+                              <div
+                                style={{
+                                  width: 42, height: 42, flexShrink: 0,
+                                  borderRadius: 12,
+                                  background: isActive
+                                    ? `linear-gradient(135deg, ${opt.color} 0%, color-mix(in srgb, ${opt.color} 70%, #000) 100%)`
+                                    : `linear-gradient(135deg, color-mix(in srgb, ${opt.color} 18%, var(--ls-surface2)) 0%, var(--ls-surface2) 100%)`,
+                                  display: "flex", alignItems: "center", justifyContent: "center",
+                                  fontSize: 22,
+                                  border: isActive ? "none" : `0.5px solid color-mix(in srgb, ${opt.color} 28%, transparent)`,
+                                  boxShadow: isActive
+                                    ? `0 4px 12px -4px ${opt.color}80, inset 0 1px 0 rgba(255,255,255,0.20)`
+                                    : "none",
+                                  transition: "background 0.2s ease, transform 0.2s ease",
+                                }}
+                              >
+                                {opt.emoji}
+                              </div>
+                              <div style={{ flex: 1, minWidth: 0 }}>
+                                <div style={{ fontSize: 14, fontWeight: 700, color: isActive ? opt.color : "var(--ls-text)", fontFamily: "Syne, serif", letterSpacing: "-0.01em" }}>
+                                  {opt.label}
+                                </div>
+                                <div style={{ fontSize: 11.5, color: "var(--ls-text-muted)", marginTop: 2, lineHeight: 1.35 }}>
+                                  {opt.subtitle}
+                                </div>
+                              </div>
+                              {/* Check radio premium */}
+                              <div
+                                style={{
+                                  width: 22, height: 22, flexShrink: 0,
+                                  borderRadius: 999,
+                                  border: isActive ? `2px solid ${opt.color}` : "1.5px solid var(--ls-border)",
+                                  background: isActive ? opt.color : "transparent",
+                                  display: "flex", alignItems: "center", justifyContent: "center",
+                                  transition: "all 0.2s ease",
+                                }}
+                              >
+                                {isActive && (
+                                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                                    <polyline points="20 6 9 17 4 12" />
+                                  </svg>
+                                )}
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
                       {!startsImmediately && (
-                        <p className="text-sm leading-6 text-[var(--ls-text-muted)] mt-3" style={{ fontFamily: "DM Sans, sans-serif" }}>
-                          Le bilan sera enregistre, la personne apparaitra en attente dans les dossiers,
+                        <div
+                          style={{
+                            marginTop: 14,
+                            padding: "10px 14px",
+                            borderRadius: 12,
+                            background: "color-mix(in srgb, var(--ls-purple) 8%, var(--ls-surface2))",
+                            border: "0.5px dashed color-mix(in srgb, var(--ls-purple) 40%, transparent)",
+                            fontSize: 12.5,
+                            color: "var(--ls-text-muted)",
+                            fontFamily: "DM Sans, sans-serif",
+                            lineHeight: 1.5,
+                          }}
+                        >
+                          ℹ️ Le bilan sera enregistre, la personne apparaitra en attente dans les dossiers,
                           et elle ne comptera pas dans le module PV tant qu&apos;aucun programme n&apos;est demarre.
-                        </p>
+                        </div>
                       )}
                     </div>
                   </section>

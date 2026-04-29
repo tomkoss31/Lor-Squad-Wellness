@@ -121,7 +121,7 @@ export function BilanSectionDivider({
                 } as React.CSSProperties
               }
             />
-            § {number} · {eyebrow}
+            {eyebrow}
           </div>
           <div
             style={{
