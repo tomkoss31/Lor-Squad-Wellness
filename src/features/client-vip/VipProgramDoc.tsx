@@ -233,7 +233,7 @@ export function VipProgramDoc() {
           />
           <FaqItem
             q="Comment le client s'inscrit ?"
-            a="Sur www.myherbalife.com avec ton ID sponsor (format 21Y0103610) + les 3 premières lettres de ton nom. Une fois inscrit, le client reçoit son propre ID 21XY1234567 que tu saisis dans Lor'Squad sur sa fiche."
+            a="Sur www.myherbalife.com avec ton ID sponsor (format 21Y0103610) + les 3 premières lettres de ton nom. Une fois inscrit, le client reçoit son propre ID 21XY010361 que tu saisis dans Lor'Squad sur sa fiche."
           />
           <FaqItem
             q="C'est compatible avec le statut distributeur ?"
