@@ -103,11 +103,18 @@ export function TutorialTooltip({
         zIndex: 10001,
         maxWidth: placement === "center" ? 480 : 400,
         width: placement === "center" ? "calc(100% - 32px)" : "min(420px, calc(100% - 24px))",
-        background: "#FFFFFF",
+        // Constraint vertical (V3.4 — 2026-04-29) : ne deborde plus du viewport
+        // sur les longs contenus. Scroll interne au popup si necessaire.
+        maxHeight: "calc(100vh - 24px)",
+        overflowY: "auto",
+        WebkitOverflowScrolling: "touch",
+        // Theme-aware (V3.4 — 2026-04-29) : avant en hardcoded #FFFFFF + #111827
+        background: "var(--ls-surface)",
+        color: "var(--ls-text)",
+        border: "0.5px solid var(--ls-border)",
         borderRadius: 14,
         padding: 18,
-        boxShadow: "0 12px 40px rgba(0,0,0,0.25)",
-        color: "#111827",
+        boxShadow: "0 12px 40px rgba(0,0,0,0.40), 0 0 0 1px rgba(239,159,39,0.10)",
         fontFamily: "DM Sans, sans-serif",
         animation: "ls-tooltip-fade-in 220ms cubic-bezier(0.2, 0.8, 0.2, 1) both",
         willChange: "transform, opacity",
@@ -121,11 +128,12 @@ export function TutorialTooltip({
           style={{
             padding: "3px 8px",
             borderRadius: 6,
-            background: "rgba(186,117,23,0.12)",
-            color: "#BA7517",
+            background: "color-mix(in srgb, var(--ls-gold) 14%, transparent)",
+            color: "var(--ls-gold)",
             fontSize: 10,
             fontWeight: 700,
             letterSpacing: "0.05em",
+            border: "0.5px solid color-mix(in srgb, var(--ls-gold) 30%, transparent)",
           }}
         >
           {stepIndex + 1}/{totalSteps}
@@ -141,7 +149,7 @@ export function TutorialTooltip({
               border: "none",
               background: "transparent",
               fontSize: 11,
-              color: "#9CA3AF",
+              color: "var(--ls-text-muted)",
               cursor: "pointer",
               fontFamily: "DM Sans, sans-serif",
             }}
@@ -161,7 +169,7 @@ export function TutorialTooltip({
               border: "none",
               background: "transparent",
               fontSize: 16,
-              color: "#9CA3AF",
+              color: "var(--ls-text-muted)",
               cursor: "pointer",
               lineHeight: 1,
             }}
@@ -183,7 +191,7 @@ export function TutorialTooltip({
           fontWeight: 500,
           margin: 0,
           marginBottom: 8,
-          color: "#111827",
+          color: "var(--ls-text)",
         }}
       >
         {title}
@@ -194,7 +202,7 @@ export function TutorialTooltip({
         id="ls-tutorial-body"
         aria-live="polite"
         aria-atomic="true"
-        style={{ fontSize: 13, lineHeight: 1.55, color: "#374151" }}
+        style={{ fontSize: 13, lineHeight: 1.55, color: "var(--ls-text-muted)" }}
       >
         {children}
       </div>
@@ -217,7 +225,7 @@ export function TutorialTooltip({
               fontSize: 10,
               letterSpacing: "0.12em",
               textTransform: "uppercase",
-              color: "#6B6B62",
+              color: "var(--ls-text-muted)",
               fontWeight: 600,
               marginRight: 4,
             }}
@@ -231,21 +239,21 @@ export function TutorialTooltip({
               onClick={() => onCrossRef?.(ref.sectionId, ref.stepId)}
               style={{
                 padding: "4px 10px",
-                background: "rgba(184,146,42,0.10)",
-                border: "0.5px solid rgba(184,146,42,0.40)",
+                background: "color-mix(in srgb, var(--ls-gold) 10%, transparent)",
+                border: "0.5px solid color-mix(in srgb, var(--ls-gold) 40%, transparent)",
                 borderRadius: 999,
                 fontSize: 11,
                 fontFamily: "DM Sans, sans-serif",
                 fontWeight: 600,
-                color: "#5C4A0F",
+                color: "var(--ls-gold)",
                 cursor: "pointer",
                 transition: "background 120ms ease",
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.background = "rgba(184,146,42,0.20)";
+                e.currentTarget.style.background = "color-mix(in srgb, var(--ls-gold) 20%, transparent)";
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.background = "rgba(184,146,42,0.10)";
+                e.currentTarget.style.background = "color-mix(in srgb, var(--ls-gold) 10%, transparent)";
               }}
             >
               {ref.label} →
@@ -274,9 +282,9 @@ export function TutorialTooltip({
               style={{
                 padding: "8px 12px",
                 borderRadius: 8,
-                border: "1px solid rgba(0,0,0,0.12)",
-                background: "#FFFFFF",
-                color: "#6B7280",
+                border: "0.5px solid var(--ls-border)",
+                background: "var(--ls-surface2)",
+                color: "var(--ls-text-muted)",
                 fontSize: 12,
                 fontWeight: 500,
                 cursor: "pointer",
@@ -330,10 +338,37 @@ function computePosition(
   const margin = 12;
   const viewportW = typeof window !== "undefined" ? window.innerWidth : 800;
   const viewportH = typeof window !== "undefined" ? window.innerHeight : 600;
-  const preferBottom = targetRect.bottom + 320 < viewportH;
-  const top = preferBottom
-    ? Math.min(targetRect.bottom + margin, viewportH - 280)
-    : Math.max(margin, targetRect.top - 280);
+
+  // Estimation popup height (vraie taille calculee au render via maxHeight).
+  // On utilise 360 comme valeur safe par defaut. Le popup a maxHeight: 100vh - 24px
+  // donc si le contenu deborde il scrollera dedans, mais on essaye de positionner
+  // au mieux pour eviter d'avoir a scroller.
+  const popupH = 360;
+
+  const spaceBelow = viewportH - targetRect.bottom - margin;
+  const spaceAbove = targetRect.top - margin;
+
+  // Place le popup la ou il y a le plus de place (V3.4 — 2026-04-29).
+  // Avant : prefer bottom systematique avec calcul fixe → debordait sur les
+  // pages ou le target est en milieu/bas (PV gauge sur Co-pilote, etc).
+  let top: number;
+  if (placement === "top") {
+    // Force au-dessus si possible
+    top = Math.max(margin, targetRect.top - popupH - margin);
+  } else if (placement === "bottom" && spaceBelow >= popupH) {
+    top = targetRect.bottom + margin;
+  } else if (spaceAbove >= popupH) {
+    // Pas assez de place en dessous → bascule au-dessus
+    top = Math.max(margin, targetRect.top - popupH - margin);
+  } else if (spaceBelow >= spaceAbove) {
+    // Force en dessous mais clamp pour que le bottom ne sorte pas
+    top = Math.min(targetRect.bottom + margin, viewportH - popupH - margin);
+    top = Math.max(margin, top);
+  } else {
+    // Force au-dessus avec clamp
+    top = Math.max(margin, targetRect.top - popupH - margin);
+  }
+
   const centerX = targetRect.left + targetRect.width / 2;
   const left = Math.max(
     margin,
