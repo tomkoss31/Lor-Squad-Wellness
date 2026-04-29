@@ -54,6 +54,9 @@ import { CurrentIntakeStep } from "../components/assessment/CurrentIntakeStep";
 import { SportAlertsDialog, detectSportAlerts, type SportAlert } from "../components/assessment/SportAlertsDialog";
 import { BreakfastStorySlider, DEFAULT_BREAKFAST_ANALYSIS } from "../components/education/BreakfastStorySlider";
 import { ConfettiBurst } from "../features/academy/components/ConfettiBurst";
+import { BilanSectionDivider } from "../components/assessment/BilanSectionDivider";
+import { ProductCatalogModal } from "../components/assessment/ProductCatalogModal";
+import { pvProductCatalog } from "../data/pvCatalog";
 
 type AssessmentForm = {
   assessmentDate: string;
@@ -458,6 +461,8 @@ export function NewAssessmentPage() {
   const [saving, setSaving] = useState(false);
   // Confetti sur step Félicitations (Bilan PRO V2 — 2026-04-29)
   const [showFelicitationsConfetti, setShowFelicitationsConfetti] = useState(false);
+  // Sandbox catalogue produits (Bilan PRO V3.2 — 2026-04-29)
+  const [showCatalogModal, setShowCatalogModal] = useState(false);
   // États recapClientName / accessModalOpen / savedClientId supprimés
   // (2026-04-27) : la modale ClientAccessModal post-bilan a été remplacée
   // par la navigation vers /clients/:id/bilan-termine. Plus besoin de
@@ -708,26 +713,18 @@ export function NewAssessmentPage() {
   // pilote le stockage explicitement via le stepper.
   const addOnProducts = selectedRecommendationProducts;
 
-  useEffect(() => {
-    // Reset le flag dès qu'on quitte l'étape program → permet une nouvelle
-    // initialisation propre si l'utilisateur revient en arrière puis avance.
-    if (currentStepId !== 'program') {
-      programInitRef.current = false;
-      return;
-    }
-
-    // Garde-fou : init UNE SEULE fois par entrée dans l'étape. Sans ça,
-    // toute désélection complète relance le pré-remplissage automatique
-    // (= bug "auto-sélection forcée" remonté le 27/04).
-    if (programInitRef.current) {
-      return;
-    }
-    programInitRef.current = true;
-
-    if (defaultSuggestedProductIds.length && !form.selectedProductIds.length) {
-      update("selectedProductIds", defaultSuggestedProductIds);
-    }
-  }, [currentStepId, defaultSuggestedProductIds, form.selectedProductIds.length]);
+  // Chantier UX coach (2026-04-29) : SUPPRESSION de l'auto-pre-selection
+  // des produits "besoin detecte" sur entree step Programme.
+  // Avant : Xtra-Cal et Formula 1 etaient automatiquement dans le panier
+  // selon les besoins detectes. Le coach devait deselectionner les indesires.
+  // Maintenant : panier strictement vide d'addons par defaut. Le coach
+  // ajoute manuellement les produits via les cards "Retenir" / "+ Ajouter"
+  // ou via la sandbox catalogue complet (bouton sous le panier).
+  // Le `highlight={recommended}` reste visuel sur les cards (etoile + reason)
+  // pour guider sans imposer.
+  // void programInitRef si tu veux le re-utiliser pour autre chose plus tard.
+  void defaultSuggestedProductIds;
+  void programInitRef;
 
   // Trigger confetti une seule fois à l'entrée sur la dernière étape (PRO V2 2026-04-29)
   useEffect(() => {
@@ -1286,6 +1283,8 @@ export function NewAssessmentPage() {
       `}</style>
       <div className="grid gap-4">
         <Card className="space-y-5">
+          {/* Header step interne — masqué sur 'program' (le hero gold suffit, sinon doublon) */}
+          {currentStepId !== 'program' && (
           <div className="hidden md:flex flex-wrap items-center justify-between gap-3">
             <div>
               <p
@@ -1332,6 +1331,7 @@ export function NewAssessmentPage() {
               tone={form.objective === "sport" ? "green" : "blue"}
             />
           </div>
+          )}
 
           <div key={currentStepId} className="ls-step-fade space-y-5">
 
@@ -2173,7 +2173,24 @@ export function NewAssessmentPage() {
                 prixPublic: b.price,
                 pv: 0,
               }));
-            const combinedAddOns = [...addOnProducts, ...selectedBoostersForTicket].filter(
+            // Sandbox catalogue (V3.2 — 2026-04-29) : produits ajoutes via la
+            // modale catalogue qui ne sont ni dans les besoins detectes ni
+            // dans les boosters. Lookup dans pvProductCatalog.
+            const knownIds = new Set([
+              ...addOnProducts.map((p) => p.id),
+              ...selectedBoostersForTicket.map((b) => b.id),
+            ]);
+            const catalogExtraIds = effectiveSelectedProductIds.filter((id) => !knownIds.has(id));
+            const catalogExtraForTicket = catalogExtraIds
+              .map((id) => pvProductCatalog.find((p) => p.id === id))
+              .filter((p): p is NonNullable<typeof p> => !!p)
+              .map((p) => ({
+                id: p.id,
+                name: p.name,
+                prixPublic: p.pricePublic,
+                pv: p.pv,
+              }));
+            const combinedAddOns = [...addOnProducts, ...selectedBoostersForTicket, ...catalogExtraForTicket].filter(
               (v, i, arr) => arr.findIndex((x) => x.id === v.id) === i
             );
             const ticketAddOns: TicketAddOn[] = combinedAddOns.map((p) => ({
@@ -2275,7 +2292,7 @@ export function NewAssessmentPage() {
                         textShadow: '0 1px 2px rgba(0,0,0,0.20)',
                       }}
                     >
-                      {form.firstName ? `Le programme de ${form.firstName}` : 'Programme proposé'}
+                      {form.firstName ? `Le programme de ${form.firstName}` : 'Ton programme personnalisé'}
                     </div>
                     <div
                       style={{
@@ -2291,108 +2308,123 @@ export function NewAssessmentPage() {
                         : 'Choisis le programme adapté + ajoute les boosters · présente la valeur globale.'}
                     </div>
                   </div>
-                  {chosenProgram?.price && (
-                    <div
-                      style={{
-                        textAlign: 'right',
-                        background: 'rgba(255,255,255,0.18)',
-                        border: '1px solid rgba(255,255,255,0.35)',
-                        borderRadius: 14,
-                        padding: '10px 16px',
-                        backdropFilter: 'blur(8px)',
-                        WebkitBackdropFilter: 'blur(8px)',
-                      }}
-                    >
-                      <div style={{ fontSize: 9.5, letterSpacing: 1.4, textTransform: 'uppercase', fontWeight: 700, color: 'rgba(255,255,255,0.85)', fontFamily: 'DM Sans, sans-serif' }}>
-                        Prix programme
-                      </div>
-                      <div style={{ fontFamily: 'Syne, serif', fontWeight: 800, fontSize: 22, color: '#FFFFFF', letterSpacing: '-0.02em' }}>
-                        {chosenProgram.price}€
-                      </div>
-                    </div>
-                  )}
+                  {/* Prix programme retire du hero (2026-04-29) :
+                      le panier sticky a droite affiche deja le total avec
+                      details Programme + Ajouts. Pas de doublon. */}
                 </div>
               </div>
 
               <div className="grid gap-4 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
-                {/* ─── Colonne principale ─────────────────────────────── */}
-                <div className="space-y-5">
-                  {/* Bloc Nutri — Objectifs hydratation + protéines
-                      (Chantier Recommandations 2026-04-25). Calculés
-                      depuis form.weight + form.objective. */}
-                  {form.weight > 0 ? (
-                    <div
-                      style={{
-                        padding: "14px 16px",
-                        borderRadius: 14,
-                        background:
-                          "linear-gradient(135deg, color-mix(in srgb, var(--ls-teal) 10%, transparent), color-mix(in srgb, var(--ls-gold) 6%, transparent))",
-                        border:
-                          "1px solid color-mix(in srgb, var(--ls-teal) 25%, transparent)",
-                      }}
-                    >
-                      <p className="eyebrow-label" style={{ marginBottom: 8 }}>
-                        Objectifs nutritionnels
-                      </p>
+                {/* ─── Colonne principale — REFONTE PRO V2 (2026-04-29) ───
+                     4 sections numerotees uniformes avec BilanSectionDivider.
+                     Structure narrative claire : besoins → programme → ajouts → suite. */}
+                <div className="space-y-7">
+
+                  {/* ═══════════════════════════════════════════════════════
+                      § 1 · TES BESOINS DETECTES (teal)
+                      ═══════════════════════════════════════════════════════ */}
+                  {form.weight > 0 && (
+                    <section className="space-y-3">
+                      <BilanSectionDivider
+                        number={1}
+                        eyebrow="Tes besoins detectes"
+                        title="Ce que ton corps demande"
+                        description={form.objective === "sport"
+                          ? "Hydratation, proteines et profil sportif personnalise."
+                          : "Hydratation et proteines calculees sur ton poids actuel."}
+                        color="teal"
+                      />
+
                       <div
                         style={{
-                          display: "grid",
-                          gap: 12,
-                          gridTemplateColumns: "1fr 1fr",
+                          padding: "16px 18px",
+                          borderRadius: 16,
+                          background: "var(--ls-surface)",
+                          border: "0.5px solid var(--ls-border)",
+                          borderLeft: "3px solid var(--ls-teal)",
                         }}
                       >
-                        <div>
-                          <div style={{ fontSize: 11, color: "var(--ls-text-muted)", marginBottom: 2 }}>
-                            💧 Hydratation cible
+                        <div
+                          style={{
+                            display: "grid",
+                            gap: 14,
+                            gridTemplateColumns: form.objective === "sport" ? "1fr 1fr 1fr" : "1fr 1fr",
+                          }}
+                        >
+                          <div>
+                            <div style={{ fontSize: 11, color: "var(--ls-text-muted)", marginBottom: 4, fontFamily: "DM Sans, sans-serif", letterSpacing: 0.3 }}>
+                              💧 Hydratation cible
+                            </div>
+                            <div
+                              style={{
+                                fontFamily: "Syne, serif",
+                                fontSize: 22,
+                                fontWeight: 800,
+                                color: "var(--ls-text)",
+                                letterSpacing: "-0.02em",
+                              }}
+                            >
+                              {computeWaterTarget(form.weight).toFixed(1)}<span style={{ fontSize: 14, fontWeight: 600, color: "var(--ls-text-muted)", marginLeft: 3 }}>L/j</span>
+                            </div>
                           </div>
-                          <div
-                            style={{
-                              fontFamily: "Syne, sans-serif",
-                              fontSize: 20,
-                              fontWeight: 800,
-                              color: "var(--ls-text)",
-                            }}
-                          >
-                            {computeWaterTarget(form.weight).toFixed(1)} L / jour
+                          <div>
+                            <div style={{ fontSize: 11, color: "var(--ls-text-muted)", marginBottom: 4, fontFamily: "DM Sans, sans-serif", letterSpacing: 0.3 }}>
+                              🥩 Proteines cible
+                            </div>
+                            <div
+                              style={{
+                                fontFamily: "Syne, serif",
+                                fontSize: 22,
+                                fontWeight: 800,
+                                color: "var(--ls-text)",
+                                letterSpacing: "-0.02em",
+                              }}
+                            >
+                              {computeProteinTarget(form.weight, form.objective)}<span style={{ fontSize: 14, fontWeight: 600, color: "var(--ls-text-muted)", marginLeft: 3 }}>g/j</span>
+                            </div>
                           </div>
+                          {form.objective === "sport" && form.sportProfile && (
+                            <div>
+                              <div style={{ fontSize: 11, color: "var(--ls-text-muted)", marginBottom: 4, fontFamily: "DM Sans, sans-serif", letterSpacing: 0.3 }}>
+                                🏋️ Profil sport
+                              </div>
+                              <div
+                                style={{
+                                  fontFamily: "Syne, serif",
+                                  fontSize: 14,
+                                  fontWeight: 700,
+                                  color: "var(--ls-text)",
+                                  letterSpacing: "-0.01em",
+                                  lineHeight: 1.25,
+                                }}
+                              >
+                                {form.sportProfile.frequency} · {form.sportProfile.subObjective}
+                              </div>
+                            </div>
+                          )}
                         </div>
-                        <div>
-                          <div style={{ fontSize: 11, color: "var(--ls-text-muted)", marginBottom: 2 }}>
-                            🥩 Protéines cible
-                          </div>
-                          <div
-                            style={{
-                              fontFamily: "Syne, sans-serif",
-                              fontSize: 20,
-                              fontWeight: 800,
-                              color: "var(--ls-text)",
-                            }}
-                          >
-                            {computeProteinTarget(form.weight, form.objective)} g / jour
-                          </div>
+                        <div style={{ fontSize: 11, color: "var(--ls-text-hint)", marginTop: 12, fontFamily: "DM Sans, sans-serif" }}>
+                          Calcule sur ton poids actuel ({form.weight.toFixed(1)} kg) et l&apos;objectif « {form.objective === "sport" ? "Sport / prise de masse" : "Perte de poids"} ».
                         </div>
                       </div>
-                      <div style={{ fontSize: 11, color: "var(--ls-text-muted)", marginTop: 8 }}>
-                        Calculé selon le poids actuel ({form.weight.toFixed(1)} kg) et
-                        l&apos;objectif « {form.objective === "sport" ? "Sport / masse" : "Perte de poids"} ».
-                      </div>
-                    </div>
-                  ) : null}
+                    </section>
+                  )}
 
-                  {/* Bloc 0 — Curseur lait */}
-                  <MilkConsumptionToggle
-                    value={form.consumesMilk}
-                    onChange={(v) => update("consumesMilk", v)}
-                  />
+                  {/* ═══════════════════════════════════════════════════════
+                      § 2 · LE PROGRAMME COEUR (gold)
+                      ═══════════════════════════════════════════════════════ */}
+                  <section className="space-y-3">
+                    <BilanSectionDivider
+                      number={2}
+                      eyebrow="Le programme coeur"
+                      title={chosenProgram ? `Programme : ${chosenProgram.title}` : "Choisis le programme adapte"}
+                      description="La base nutritionnelle qui structure ta journee. 4 niveaux pour s&apos;adapter a ton mode de vie."
+                      color="gold"
+                    />
 
-                  {/* Bloc 1 — 4 cards programmes */}
-                  <div>
-                    <p className="eyebrow-label" style={{ marginBottom: 10 }}>
-                      Choix du programme
-                    </p>
                     <div
-                      className="grid gap-2"
-                      style={{ gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))" }}
+                      className="grid gap-3"
+                      style={{ gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))" }}
                     >
                       {PROGRAM_CHOICES
                         .filter((p) => p.category === form.objective || p.category === "unit")
@@ -2405,173 +2437,418 @@ export function NewAssessmentPage() {
                           />
                         ))}
                     </div>
-                    <div
-                      style={{
-                        marginTop: 10,
-                        padding: "10px 14px",
-                        borderRadius: 10,
-                        background: "color-mix(in srgb, var(--ls-gold) 10%, transparent)",
-                        border: "1px solid color-mix(in srgb, var(--ls-gold) 30%, transparent)",
-                        color: "var(--ls-text)",
-                        fontSize: 13,
-                        fontFamily: "'DM Sans', sans-serif",
-                      }}
-                    >
-                      ✓ Programme{" "}
-                      <strong style={{ color: "var(--ls-gold)" }}>{chosenProgram.title}</strong>{" "}
-                      sélectionné · <strong>{chosenProgram.price}€</strong>
-                    </div>
-                  </div>
 
-                  {/* Bloc 2 — Routine matin */}
-                  <RoutineMatinList program={chosenProgram} />
+                    {/* Banner confirmation supprime (2026-04-29) — le hero
+                        gold affiche deja le programme dans le title et le
+                        panier sticky le repete. Triple redondance retiree. */}
 
-                  {/* Bloc Boosters (sport uniquement)
-                      — Chantier Prise de masse (2026-04-24) : bloc initial
-                      décoratif.
-                      — Chantier Boosters cliquables + Quantités (2026-04-24) :
-                        passage à SelectableProductCard. Chaque booster est
-                        désormais cliquable (toggle partagé avec besoins/
-                        upsells) et, s'il est sélectionné, apparaît dans le
-                        ticket sticky à droite.
-                      BOOSTERS n'ont pas de PV — pv=0 documenté côté mapping. */}
-                  {form.objective === "sport" ? (() => {
-                    const recs = recommendBoosters(form.sportProfile, form.age);
-                    const recById = new Map(recs.map((r) => [r.productId, r]));
-                    return (
-                      <div>
-                        <p className="eyebrow-label" style={{ marginBottom: 10 }}>
-                          + Boosters optionnels
-                        </p>
-                        {/* Chantier Boosters grid compact (2026-04-27) :
-                            variant="compact" + wrapper .boosters-grid pour
-                            un layout 2-3 colonnes avec 3 états visuels
-                            (neutre / recommandé / sélectionné). Les autres
-                            sections (besoins, upsells) gardent le rendu
-                            par défaut du composant. */}
-                        <div className="boosters-grid">
-                          {BOOSTERS.map((b) => {
-                            const rec = recById.get(b.id);
-                            const isRec = !!rec?.recommended;
-                            return (
-                              <SelectableProductCard
-                                key={b.id}
-                                id={b.id}
-                                name={b.title}
-                                shortBenefit={b.shortContent}
-                                prixPublic={b.price}
-                                pv={0}
-                                highlight={isRec ? { reason: rec?.reason } : undefined}
-                                selected={effectiveSelectedProductIds.includes(b.id)}
-                                onToggle={() => toggleSelectedProduct(b.id)}
-                                quantity={getQty(b.id)}
-                                onQuantityChange={(q) => setQty(b.id, q)}
-                                variant="compact"
-                              />
-                            );
-                          })}
-                        </div>
-                      </div>
-                    );
-                  })() : null}
+                    {/* Curseur lait — option du programme */}
+                    <MilkConsumptionToggle
+                      value={form.consumesMilk}
+                      onChange={(v) => update("consumesMilk", v)}
+                    />
 
-                  {/* Bloc "Suite après le bilan" — EXISTANT conservé */}
-                  <Card className="space-y-4">
-                    <div className="flex flex-wrap items-center justify-between gap-3">
-                      <div>
-                        <p className="eyebrow-label">Suite après le bilan</p>
-                        <p className="mt-2 text-2xl text-white">La personne démarre maintenant ou revient plus tard ?</p>
-                      </div>
-                      <StatusBadge
-                        label={startsImmediately ? "Demarrage maintenant" : "Bilan sans demarrage"}
-                        tone={startsImmediately ? "green" : "amber"}
+                    {/* Routine matin */}
+                    <RoutineMatinList program={chosenProgram} />
+                  </section>
+
+                  {/* ═══════════════════════════════════════════════════════
+                      § 3 · POUR ALLER PLUS LOIN (coral)
+                      Boosters sport + besoins detectes + upsells.
+                      Affichee meme en perte de poids (pour besoins + upsells).
+                      ═══════════════════════════════════════════════════════ */}
+                  {(form.objective === "sport" ||
+                    recommendationPlan.needs.length > 0 ||
+                    recommendationPlan.optionalUpsells.length > 0) && (
+                    <section className="space-y-3">
+                      <BilanSectionDivider
+                        number={3}
+                        eyebrow="Pour aller plus loin"
+                        title="Ce qu&apos;on peut ajouter au programme"
+                        description="Boosters, besoins detectes par le bilan, options. Tout est optionnel."
+                        color="coral"
                       />
-                    </div>
-                    <ChoiceGroup
-                      label="Décision du jour"
-                      value={form.afterAssessmentAction}
-                      options={["Demarrage maintenant", "A relancer / ne demarre pas aujourd'hui"]}
-                      onChange={(value) =>
-                        update(
-                          "afterAssessmentAction",
-                          value === "Demarrage maintenant" ? "started" : "pending"
-                        )
+
+                      {/* ─── Sub-block helper inline (modernize 2026-04-29) ─── */}
+                      {/* Sub-blocks de § 3 sont des cards avec emoji avatar +
+                          counter chip + headers premium uniformes. */}
+
+                      {/* SOUS-BLOC 1 — Boosters sport (sport uniquement) */}
+                      {form.objective === "sport" && (() => {
+                        const recs = recommendBoosters(form.sportProfile, form.age);
+                        const recById = new Map(recs.map((r) => [r.productId, r]));
+                        const selectedCount = BOOSTERS.filter((b) => effectiveSelectedProductIds.includes(b.id)).length;
+                        return (
+                          <div
+                            style={{
+                              padding: "16px 18px",
+                              borderRadius: 16,
+                              background: "var(--ls-surface)",
+                              border: "0.5px solid var(--ls-border)",
+                              borderLeft: "3px solid var(--ls-coral)",
+                              transition: "border-color 0.2s ease, box-shadow 0.2s ease",
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.boxShadow = "0 4px 14px -8px rgba(251,113,133,0.30)";
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.boxShadow = "none";
+                            }}
+                          >
+                            <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }}>
+                              <div
+                                style={{
+                                  width: 42, height: 42, flexShrink: 0,
+                                  borderRadius: 12,
+                                  background: "linear-gradient(135deg, color-mix(in srgb, var(--ls-coral) 22%, var(--ls-surface2)) 0%, var(--ls-surface2) 100%)",
+                                  border: "0.5px solid color-mix(in srgb, var(--ls-coral) 35%, transparent)",
+                                  display: "flex", alignItems: "center", justifyContent: "center",
+                                  fontSize: 22,
+                                }}
+                              >
+                                ⚡
+                              </div>
+                              <div style={{ flex: 1, minWidth: 0 }}>
+                                <div style={{ fontSize: 10, letterSpacing: 1.4, textTransform: "uppercase", fontWeight: 700, color: "var(--ls-coral)", fontFamily: "DM Sans, sans-serif" }}>
+                                  Boosters sport
+                                </div>
+                                <div style={{ fontFamily: "Syne, serif", fontSize: 16, fontWeight: 700, color: "var(--ls-text)", marginTop: 2, letterSpacing: "-0.01em" }}>
+                                  Pour pousser tes performances
+                                </div>
+                              </div>
+                              {selectedCount > 0 && (
+                                <span style={{
+                                  fontSize: 11, fontWeight: 800, fontFamily: "Syne, serif",
+                                  padding: "3px 10px", borderRadius: 999,
+                                  background: "color-mix(in srgb, var(--ls-coral) 14%, transparent)",
+                                  color: "var(--ls-coral)",
+                                  border: "0.5px solid color-mix(in srgb, var(--ls-coral) 40%, transparent)",
+                                }}>
+                                  {selectedCount} retenu{selectedCount > 1 ? "s" : ""}
+                                </span>
+                              )}
+                            </div>
+                            <div className="boosters-grid">
+                              {BOOSTERS.map((b) => {
+                                const rec = recById.get(b.id);
+                                const isRec = !!rec?.recommended;
+                                return (
+                                  <SelectableProductCard
+                                    key={b.id}
+                                    id={b.id}
+                                    name={b.title}
+                                    shortBenefit={b.shortContent}
+                                    prixPublic={b.price}
+                                    pv={0}
+                                    highlight={isRec ? { reason: rec?.reason } : undefined}
+                                    selected={effectiveSelectedProductIds.includes(b.id)}
+                                    onToggle={() => toggleSelectedProduct(b.id)}
+                                    quantity={getQty(b.id)}
+                                    onQuantityChange={(q) => setQty(b.id, q)}
+                                    variant="compact"
+                                  />
+                                );
+                              })}
+                            </div>
+                          </div>
+                        );
+                      })()}
+
+                      {/* SOUS-BLOC 2 — Besoins detectes par le bilan */}
+                      <div
+                        style={{
+                          padding: "16px 18px",
+                          borderRadius: 16,
+                          background: "var(--ls-surface)",
+                          border: "0.5px solid var(--ls-border)",
+                          borderLeft: "3px solid var(--ls-coral)",
+                          transition: "box-shadow 0.2s ease",
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.boxShadow = "0 4px 14px -8px rgba(251,113,133,0.30)";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.boxShadow = "none";
+                        }}
+                      >
+                        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }}>
+                          <div
+                            style={{
+                              width: 42, height: 42, flexShrink: 0,
+                              borderRadius: 12,
+                              background: "linear-gradient(135deg, color-mix(in srgb, var(--ls-coral) 22%, var(--ls-surface2)) 0%, var(--ls-surface2) 100%)",
+                              border: "0.5px solid color-mix(in srgb, var(--ls-coral) 35%, transparent)",
+                              display: "flex", alignItems: "center", justifyContent: "center",
+                              fontSize: 22,
+                            }}
+                          >
+                            🎯
+                          </div>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontSize: 10, letterSpacing: 1.4, textTransform: "uppercase", fontWeight: 700, color: "var(--ls-coral)", fontFamily: "DM Sans, sans-serif" }}>
+                              Besoins detectes
+                            </div>
+                            <div style={{ fontFamily: "Syne, serif", fontSize: 16, fontWeight: 700, color: "var(--ls-text)", marginTop: 2, letterSpacing: "-0.01em" }}>
+                              Ce que le bilan fait ressortir en priorite
+                            </div>
+                          </div>
+                          {recommendationPlan.needs.length > 0 && (
+                            <span style={{
+                              fontSize: 11, fontWeight: 800, fontFamily: "Syne, serif",
+                              padding: "3px 10px", borderRadius: 999,
+                              background: "color-mix(in srgb, var(--ls-coral) 14%, transparent)",
+                              color: "var(--ls-coral)",
+                              border: "0.5px solid color-mix(in srgb, var(--ls-coral) 40%, transparent)",
+                            }}>
+                              {recommendationPlan.needs.length} besoin{recommendationPlan.needs.length > 1 ? "s" : ""}
+                            </span>
+                          )}
+                        </div>
+                        {recommendationPlan.needs.length ? (
+                          <div className="space-y-4">
+                            {recommendationPlan.needs.map((need) => (
+                              <NeedProductGroup
+                                key={`products-${need.id}`}
+                                title={need.label}
+                                summary={need.summary}
+                                reasonLabel={need.reasonLabel}
+                                products={need.products}
+                                selectedProductIds={effectiveSelectedProductIds}
+                                onToggleProduct={toggleSelectedProduct}
+                                getQty={getQty}
+                                setQty={setQty}
+                              />
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="rounded-[12px] bg-[var(--ls-surface2)] p-4 text-sm leading-7 text-[var(--ls-text-muted)]">
+                            Le bilan ne fait pas ressortir une priorite forte. On peut partir sur la base simple,
+                            puis personnaliser au premier suivi.
+                          </div>
+                        )}
+                      </div>
+
+                      {/* SOUS-BLOC 3 — Options en plus (upsells) */}
+                      {recommendationPlan.optionalUpsells.length > 0 && (
+                        <div
+                          style={{
+                            padding: "16px 18px",
+                            borderRadius: 16,
+                            background: "var(--ls-surface)",
+                            border: "0.5px solid var(--ls-border)",
+                            borderLeft: "3px solid var(--ls-coral)",
+                            transition: "box-shadow 0.2s ease",
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.boxShadow = "0 4px 14px -8px rgba(251,113,133,0.30)";
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.boxShadow = "none";
+                          }}
+                        >
+                          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }}>
+                            <div
+                              style={{
+                                width: 42, height: 42, flexShrink: 0,
+                                borderRadius: 12,
+                                background: "linear-gradient(135deg, color-mix(in srgb, var(--ls-coral) 22%, var(--ls-surface2)) 0%, var(--ls-surface2) 100%)",
+                                border: "0.5px solid color-mix(in srgb, var(--ls-coral) 35%, transparent)",
+                                display: "flex", alignItems: "center", justifyContent: "center",
+                                fontSize: 22,
+                              }}
+                            >
+                              ✨
+                            </div>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{ fontSize: 10, letterSpacing: 1.4, textTransform: "uppercase", fontWeight: 700, color: "var(--ls-coral)", fontFamily: "DM Sans, sans-serif" }}>
+                                Options en plus
+                              </div>
+                              <div style={{ fontFamily: "Syne, serif", fontSize: 16, fontWeight: 700, color: "var(--ls-text)", marginTop: 2, letterSpacing: "-0.01em" }}>
+                                Quelques ajouts utiles
+                              </div>
+                            </div>
+                            <span style={{
+                              fontSize: 11, fontWeight: 800, fontFamily: "Syne, serif",
+                              padding: "3px 10px", borderRadius: 999,
+                              background: "color-mix(in srgb, var(--ls-coral) 14%, transparent)",
+                              color: "var(--ls-coral)",
+                              border: "0.5px solid color-mix(in srgb, var(--ls-coral) 40%, transparent)",
+                            }}>
+                              {recommendationPlan.optionalUpsells.length} option{recommendationPlan.optionalUpsells.length > 1 ? "s" : ""}
+                            </span>
+                          </div>
+                          <div className="grid gap-3">
+                            {recommendationPlan.optionalUpsells.map((product) => (
+                              <SelectableProductCard
+                                key={`upsell-${product.id}`}
+                                id={product.id}
+                                name={product.name}
+                                shortBenefit={product.shortBenefit}
+                                pv={product.pv}
+                                prixPublic={product.prixPublic}
+                                dureeReferenceJours={product.dureeReferenceJours}
+                                quantityLabel={product.quantityLabel}
+                                selected={effectiveSelectedProductIds.includes(product.id)}
+                                onToggle={() => toggleSelectedProduct(product.id)}
+                                quantity={getQty(product.id)}
+                                onQuantityChange={(q) => setQty(product.id, q)}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </section>
+                  )}
+
+                  {/* ═══════════════════════════════════════════════════════
+                      § 4 · SUITE APRES LE BILAN (purple)
+                      ═══════════════════════════════════════════════════════ */}
+                  <section className="space-y-3">
+                    <BilanSectionDivider
+                      number={4}
+                      eyebrow="Suite apres le bilan"
+                      title="La personne demarre maintenant ou revient plus tard ?"
+                      description="Choix du jour : demarrage immediat ou bilan sans demarrage (a relancer plus tard)."
+                      color="purple"
+                      rightSlot={
+                        <StatusBadge
+                          label={startsImmediately ? "Demarrage maintenant" : "A relancer"}
+                          tone={startsImmediately ? "green" : "amber"}
+                        />
                       }
                     />
-                    {!startsImmediately ? (
-                      <p className="text-sm leading-6 text-[var(--ls-text-muted)]">
-                        Le bilan sera enregistre, la personne apparaitra en attente dans les dossiers,
-                        et elle ne comptera pas dans le module PV tant qu&apos;aucun programme n&apos;est demarre.
-                      </p>
-                    ) : null}
-                  </Card>
 
-                  {/* Bloc 3 — Ce que le bilan fait ressortir (EXISTANT, nettoyé) */}
-                  <Card className="space-y-5">
-                    <div className="flex flex-wrap items-center justify-between gap-3">
-                      <div>
-                        <p className="eyebrow-label">Lecture besoins</p>
-                        <p className="mt-2 text-2xl text-white">Ce que le bilan fait ressortir en priorité</p>
+                    <div
+                      style={{
+                        padding: "20px 22px",
+                        borderRadius: 16,
+                        background: "var(--ls-surface)",
+                        border: "0.5px solid var(--ls-border)",
+                        borderLeft: "3px solid var(--ls-purple)",
+                        transition: "box-shadow 0.2s ease",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.boxShadow = "0 4px 14px -8px rgba(167,139,250,0.30)";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.boxShadow = "none";
+                      }}
+                    >
+                      <div style={{ fontSize: 10, letterSpacing: 1.4, textTransform: "uppercase", fontWeight: 700, color: "var(--ls-purple)", fontFamily: "DM Sans, sans-serif", marginBottom: 12 }}>
+                        Decision du jour
                       </div>
-                      <StatusBadge
-                        label={`${recommendationPlan.needs.length} besoin${recommendationPlan.needs.length > 1 ? "s" : ""}`}
-                        tone={recommendationPlan.needs.length ? "green" : "blue"}
-                      />
-                    </div>
-                    {recommendationPlan.needs.length ? (
-                      <div className="space-y-4">
-                        {recommendationPlan.needs.map((need) => (
-                          <NeedProductGroup
-                            key={`products-${need.id}`}
-                            title={need.label}
-                            summary={need.summary}
-                            reasonLabel={need.reasonLabel}
-                            products={need.products}
-                            selectedProductIds={effectiveSelectedProductIds}
-                            onToggleProduct={toggleSelectedProduct}
-                            getQty={getQty}
-                            setQty={setQty}
-                          />
-                        ))}
+                      <div style={{ display: "grid", gap: 10, gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))" }}>
+                        {[
+                          { value: "started" as const, label: "Demarrage maintenant", subtitle: "Le programme commence aujourd'hui", emoji: "🚀", color: "#2DD4BF" },
+                          { value: "pending" as const, label: "A relancer plus tard", subtitle: "Bilan sans demarrage immediat", emoji: "⏳", color: "#A78BFA" },
+                        ].map((opt) => {
+                          const isActive = form.afterAssessmentAction === opt.value;
+                          return (
+                            <button
+                              key={opt.value}
+                              type="button"
+                              onClick={() => update("afterAssessmentAction", opt.value)}
+                              style={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 12,
+                                padding: "12px 14px",
+                                borderRadius: 14,
+                                cursor: "pointer",
+                                fontFamily: "DM Sans, sans-serif",
+                                textAlign: "left",
+                                background: isActive
+                                  ? `linear-gradient(135deg, color-mix(in srgb, ${opt.color} 14%, var(--ls-surface)) 0%, var(--ls-surface) 100%)`
+                                  : "var(--ls-surface)",
+                                border: isActive
+                                  ? `0.5px solid ${opt.color}`
+                                  : "0.5px solid var(--ls-border)",
+                                boxShadow: isActive
+                                  ? `0 4px 14px -6px ${opt.color}66, inset 0 0 0 1px ${opt.color}40`
+                                  : "none",
+                                transition: "transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease",
+                              }}
+                              onMouseEnter={(e) => {
+                                if (!isActive) {
+                                  e.currentTarget.style.transform = "translateY(-2px)";
+                                  e.currentTarget.style.borderColor = `color-mix(in srgb, ${opt.color} 40%, var(--ls-border))`;
+                                }
+                              }}
+                              onMouseLeave={(e) => {
+                                if (!isActive) {
+                                  e.currentTarget.style.transform = "none";
+                                  e.currentTarget.style.borderColor = "var(--ls-border)";
+                                }
+                              }}
+                            >
+                              <div
+                                style={{
+                                  width: 42, height: 42, flexShrink: 0,
+                                  borderRadius: 12,
+                                  background: isActive
+                                    ? `linear-gradient(135deg, ${opt.color} 0%, color-mix(in srgb, ${opt.color} 70%, #000) 100%)`
+                                    : `linear-gradient(135deg, color-mix(in srgb, ${opt.color} 18%, var(--ls-surface2)) 0%, var(--ls-surface2) 100%)`,
+                                  display: "flex", alignItems: "center", justifyContent: "center",
+                                  fontSize: 22,
+                                  border: isActive ? "none" : `0.5px solid color-mix(in srgb, ${opt.color} 28%, transparent)`,
+                                  boxShadow: isActive
+                                    ? `0 4px 12px -4px ${opt.color}80, inset 0 1px 0 rgba(255,255,255,0.20)`
+                                    : "none",
+                                  transition: "background 0.2s ease, transform 0.2s ease",
+                                }}
+                              >
+                                {opt.emoji}
+                              </div>
+                              <div style={{ flex: 1, minWidth: 0 }}>
+                                <div style={{ fontSize: 14, fontWeight: 700, color: isActive ? opt.color : "var(--ls-text)", fontFamily: "Syne, serif", letterSpacing: "-0.01em" }}>
+                                  {opt.label}
+                                </div>
+                                <div style={{ fontSize: 11.5, color: "var(--ls-text-muted)", marginTop: 2, lineHeight: 1.35 }}>
+                                  {opt.subtitle}
+                                </div>
+                              </div>
+                              {/* Check radio premium */}
+                              <div
+                                style={{
+                                  width: 22, height: 22, flexShrink: 0,
+                                  borderRadius: 999,
+                                  border: isActive ? `2px solid ${opt.color}` : "1.5px solid var(--ls-border)",
+                                  background: isActive ? opt.color : "transparent",
+                                  display: "flex", alignItems: "center", justifyContent: "center",
+                                  transition: "all 0.2s ease",
+                                }}
+                              >
+                                {isActive && (
+                                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                                    <polyline points="20 6 9 17 4 12" />
+                                  </svg>
+                                )}
+                              </div>
+                            </button>
+                          );
+                        })}
                       </div>
-                    ) : (
-                      <div className="rounded-[24px] bg-[var(--ls-surface2)] p-5 text-sm leading-7 text-[var(--ls-text-muted)]">
-                        Le bilan ne fait pas encore ressortir une priorité forte. On peut partir sur une
-                        base simple, puis personnaliser au premier suivi.
-                      </div>
-                    )}
-                  </Card>
-
-                  {/* Bloc 4 — Options en plus si besoin (EXISTANT) */}
-                  {recommendationPlan.optionalUpsells.length ? (
-                    <Card className="space-y-4">
-                      <div className="flex flex-wrap items-center justify-between gap-3">
-                        <div>
-                          <p className="eyebrow-label">Options en plus si besoin</p>
-                          <p className="mt-2 text-2xl text-white">Quelques ajouts utiles sans alourdir la base</p>
+                      {!startsImmediately && (
+                        <div
+                          style={{
+                            marginTop: 14,
+                            padding: "10px 14px",
+                            borderRadius: 12,
+                            background: "color-mix(in srgb, var(--ls-purple) 8%, var(--ls-surface2))",
+                            border: "0.5px dashed color-mix(in srgb, var(--ls-purple) 40%, transparent)",
+                            fontSize: 12.5,
+                            color: "var(--ls-text-muted)",
+                            fontFamily: "DM Sans, sans-serif",
+                            lineHeight: 1.5,
+                          }}
+                        >
+                          ℹ️ Le bilan sera enregistre, la personne apparaitra en attente dans les dossiers,
+                          et elle ne comptera pas dans le module PV tant qu&apos;aucun programme n&apos;est demarre.
                         </div>
-                        <StatusBadge label={`${recommendationPlan.optionalUpsells.length} option${recommendationPlan.optionalUpsells.length > 1 ? "s" : ""}`} tone="blue" />
-                      </div>
-                      <div className="grid gap-3">
-                        {recommendationPlan.optionalUpsells.map((product) => (
-                          <SelectableProductCard
-                            key={`upsell-${product.id}`}
-                            id={product.id}
-                            name={product.name}
-                            shortBenefit={product.shortBenefit}
-                            pv={product.pv}
-                            prixPublic={product.prixPublic}
-                            dureeReferenceJours={product.dureeReferenceJours}
-                            quantityLabel={product.quantityLabel}
-                            selected={effectiveSelectedProductIds.includes(product.id)}
-                            onToggle={() => toggleSelectedProduct(product.id)}
-                            quantity={getQty(product.id)}
-                            onQuantityChange={(q) => setQty(product.id, q)}
-                          />
-                        ))}
-                      </div>
-                    </Card>
-                  ) : null}
+                      )}
+                    </div>
+                  </section>
+
                 </div>
 
                 {/* ─── Colonne ticket sticky ──────────────────────────── */}
@@ -2583,7 +2860,18 @@ export function NewAssessmentPage() {
                     height: "fit-content",
                   }}
                 >
-                  <ProgrammeTicket program={chosenProgram} addOns={ticketAddOns} />
+                  <ProgrammeTicket
+                    program={chosenProgram}
+                    addOns={ticketAddOns}
+                    onOpenCatalog={() => setShowCatalogModal(true)}
+                    onRemoveAddOn={(productId) => {
+                      // Toggle off : retire l'id de selectedProductIds.
+                      // Marche pour les 3 sources (besoins / boosters / catalogue).
+                      if (form.selectedProductIds.includes(productId)) {
+                        toggleSelectedProduct(productId);
+                      }
+                    }}
+                  />
                 </div>
               </div>
               </>
@@ -2738,17 +3026,124 @@ export function NewAssessmentPage() {
             </div>
           )}
 
-          <div className="hidden items-center justify-between gap-3 border-t border-white/10 pt-4 md:flex">
-            <Button variant="ghost" onClick={goToPreviousStep} disabled={currentStep === 0}>
-              Etape precedente
-            </Button>
-            <div className="flex flex-wrap gap-3">
-              <Button variant="secondary" onClick={() => void handleSaveAssessment()} data-tour-id="bilan-submit">
-                Enregistrer le bilan
-              </Button>
-              <Button onClick={goToNextStep} disabled={currentStep === steps.length - 1}>
-                Etape suivante
-              </Button>
+          {/* Footer navigation desktop — refonte premium V2 (2026-04-29) */}
+          <div
+            className="hidden items-center justify-between gap-3 md:flex"
+            style={{
+              marginTop: 24,
+              paddingTop: 18,
+              borderTop: '0.5px dashed var(--ls-border)',
+            }}
+          >
+            <button
+              type="button"
+              onClick={goToPreviousStep}
+              disabled={currentStep === 0}
+              style={{
+                padding: '10px 18px 10px 14px',
+                borderRadius: 999,
+                border: '0.5px solid var(--ls-border)',
+                background: 'var(--ls-surface)',
+                color: currentStep === 0 ? 'var(--ls-text-hint)' : 'var(--ls-text-muted)',
+                fontSize: 13,
+                fontWeight: 600,
+                fontFamily: 'DM Sans, sans-serif',
+                cursor: currentStep === 0 ? 'not-allowed' : 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 8,
+                transition: 'transform 0.15s ease, border-color 0.15s ease, color 0.15s ease',
+                opacity: currentStep === 0 ? 0.45 : 1,
+              }}
+              onMouseEnter={(e) => {
+                if (currentStep > 0) {
+                  e.currentTarget.style.transform = 'translateX(-2px)';
+                  e.currentTarget.style.borderColor = 'color-mix(in srgb, var(--ls-gold) 30%, var(--ls-border))';
+                  e.currentTarget.style.color = 'var(--ls-text)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'none';
+                e.currentTarget.style.borderColor = 'var(--ls-border)';
+                e.currentTarget.style.color = currentStep === 0 ? 'var(--ls-text-hint)' : 'var(--ls-text-muted)';
+              }}
+            >
+              <span aria-hidden style={{ fontSize: 14 }}>←</span>
+              Précédente
+            </button>
+
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center' }}>
+              <button
+                type="button"
+                onClick={() => void handleSaveAssessment()}
+                data-tour-id="bilan-submit"
+                style={{
+                  padding: '10px 18px',
+                  borderRadius: 999,
+                  border: '0.5px solid color-mix(in srgb, var(--ls-teal) 40%, transparent)',
+                  background: 'color-mix(in srgb, var(--ls-teal) 10%, var(--ls-surface))',
+                  color: 'var(--ls-teal)',
+                  fontSize: 13,
+                  fontWeight: 700,
+                  fontFamily: 'DM Sans, sans-serif',
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 7,
+                  transition: 'transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-1px)';
+                  e.currentTarget.style.boxShadow = '0 4px 12px -4px rgba(45,212,191,0.30)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'none';
+                  e.currentTarget.style.boxShadow = 'none';
+                }}
+              >
+                💾 Enregistrer
+              </button>
+
+              <button
+                type="button"
+                onClick={goToNextStep}
+                disabled={currentStep === steps.length - 1}
+                style={{
+                  padding: '11px 22px 11px 20px',
+                  borderRadius: 999,
+                  border: 'none',
+                  background: currentStep === steps.length - 1
+                    ? 'var(--ls-surface2)'
+                    : 'linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)',
+                  color: currentStep === steps.length - 1 ? 'var(--ls-text-hint)' : '#FFFFFF',
+                  fontSize: 13.5,
+                  fontWeight: 700,
+                  fontFamily: 'DM Sans, sans-serif',
+                  cursor: currentStep === steps.length - 1 ? 'not-allowed' : 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  letterSpacing: '-0.005em',
+                  boxShadow: currentStep === steps.length - 1
+                    ? 'none'
+                    : '0 6px 16px -4px rgba(186,117,23,0.45), inset 0 1px 0 rgba(255,255,255,0.20)',
+                  transition: 'transform 0.15s ease, filter 0.15s ease, box-shadow 0.15s ease',
+                  opacity: currentStep === steps.length - 1 ? 0.55 : 1,
+                }}
+                onMouseEnter={(e) => {
+                  if (currentStep < steps.length - 1) {
+                    e.currentTarget.style.transform = 'translateY(-1px)';
+                    e.currentTarget.style.filter = 'brightness(1.08)';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'none';
+                  e.currentTarget.style.filter = 'none';
+                }}
+              >
+                Étape suivante
+                <span aria-hidden style={{ fontSize: 14 }}>→</span>
+              </button>
             </div>
           </div>
           <div className="sticky bottom-20 lg:bottom-3 z-20 -mx-1 mt-2 rounded-[24px] p-3 md:hidden" style={{ background: 'var(--ls-surface)', borderTop: '1px solid var(--ls-border)', color: 'var(--ls-text)', boxShadow: '0 -4px 16px rgba(0,0,0,0.08)' }}>
@@ -2795,6 +3190,18 @@ export function NewAssessmentPage() {
           (page remerciement plein écran dark premium). La modale reste
           accessible depuis la fiche coach (ActionsTab + ClientDetailPage)
           pour les usages hors-bilan. */}
+
+      {/* Sandbox catalogue produits (V3.2 — 2026-04-29) */}
+      <ProductCatalogModal
+        open={showCatalogModal}
+        onClose={() => setShowCatalogModal(false)}
+        selectedIds={form.selectedProductIds}
+        onAddProduct={(productId) => {
+          if (!form.selectedProductIds.includes(productId)) {
+            toggleSelectedProduct(productId);
+          }
+        }}
+      />
 
       <SportAlertsDialog
         alerts={sportAlerts}

@@ -116,11 +116,11 @@ export function StepRail({ currentStep, steps, onStepClick }: StepRailProps) {
                 fontFamily: "Syne, serif",
                 fontWeight: 800,
                 fontSize: 18,
-                color: phase.color,
+                color: "var(--ls-text)",
                 letterSpacing: "-0.02em",
               }}
             >
-              {progressPct}%
+              {progressPct}<span style={{ color: phase.color, marginLeft: 1 }}>%</span>
             </div>
           </div>
 
@@ -245,15 +245,16 @@ export function StepRail({ currentStep, steps, onStepClick }: StepRailProps) {
                 style={{
                   fontFamily: "Syne, serif",
                   fontWeight: 800,
-                  fontSize: 26,
+                  fontSize: 28,
                   letterSpacing: "-0.03em",
-                  background: `linear-gradient(135deg, #EF9F27 0%, ${phase.color} 100%)`,
-                  WebkitBackgroundClip: "text",
-                  WebkitTextFillColor: "transparent",
-                  backgroundClip: "text",
+                  color: "var(--ls-text)",
+                  display: "inline-flex",
+                  alignItems: "baseline",
+                  gap: 2,
                 }}
               >
-                {progressPct}%
+                {progressPct}
+                <span style={{ color: phase.color, fontSize: 20, fontWeight: 700 }}>%</span>
               </span>
               <span
                 style={{
