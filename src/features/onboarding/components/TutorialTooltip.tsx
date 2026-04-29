@@ -339,6 +339,22 @@ function computePosition(
   const viewportW = typeof window !== "undefined" ? window.innerWidth : 800;
   const viewportH = typeof window !== "undefined" ? window.innerHeight : 600;
 
+  // Mobile (Mel iPhone — V3.6 2026-04-29) : bottom sheet style.
+  // Sur ecran < 640px, le popup fait toute la largeur dispo et s'ancre
+  // en bas pour ne JAMAIS chevaucher la cible (qui est generalement en
+  // haut/milieu de l'ecran). Plus de calcul "left/right of target" qui
+  // debordait sur les bords (capture 4 Mel).
+  if (viewportW < 640) {
+    return {
+      left: margin,
+      right: margin,
+      bottom: margin,
+      top: "auto",
+      width: "auto",
+      maxHeight: "65vh",
+    };
+  }
+
   // Estimation popup height (vraie taille calculee au render via maxHeight).
   // On utilise 360 comme valeur safe par defaut. Le popup a maxHeight: 100vh - 24px
   // donc si le contenu deborde il scrollera dedans, mais on essaye de positionner

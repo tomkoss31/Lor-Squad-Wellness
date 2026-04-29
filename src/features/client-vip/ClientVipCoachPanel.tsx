@@ -19,6 +19,7 @@ import { getSupabaseClient } from "../../services/supabaseClient";
 import type { Client } from "../../types/domain";
 import { ClientVipBadge } from "./ClientVipBadge";
 import { VipProgramHelpModal } from "./VipProgramHelpModal";
+import { HERBALIFE_ID_UNIFIED_REGEX, HERBALIFE_ID_HELP } from "../../lib/herbalifeId";
 import {
   getVipMeta,
   updateIntentionStatus,
@@ -33,10 +34,11 @@ interface Props {
   client: Client;
 }
 
-// Format ID VIP client Herbalife : 2 chiffres + 2 lettres + 6 chiffres
-// (10 caracteres total, ex: 21XY010361). Different du format distri qui est
-// 2 chiffres + 1 lettre + 7 chiffres (ex: 21Y0103610).
-const HERBALIFE_VIP_ID_REGEX = /^\d{2}[A-Z]{2}\d{6}$/;
+// Format ID Herbalife unifie (note Mel 2026-04-29) :
+// On accepte les 2 formats officiels — un client VIP qui devient distri
+// garde son ID 21XY... d'origine. Source de verite : src/lib/herbalifeId.ts
+// - Distri : 2 chiffres + 1 lettre + 7 chiffres (ex: 21Y0103610)
+// - VIP    : 2 chiffres + 2 lettres + 6 chiffres (ex: 21XY010361)
 
 export function ClientVipCoachPanel({ client }: Props) {
   const { clients } = useAppContext();
@@ -80,11 +82,11 @@ export function ClientVipCoachPanel({ client }: Props) {
 
   async function saveVipId() {
     const trimmed = vipId.trim().toUpperCase();
-    if (trimmed && !HERBALIFE_VIP_ID_REGEX.test(trimmed)) {
+    if (trimmed && !HERBALIFE_ID_UNIFIED_REGEX.test(trimmed)) {
       pushToast({
         tone: "warning",
         title: "Format ID invalide",
-        message: "Format attendu : 21XY010361 (2 chiffres + 2 lettres + 6 chiffres)",
+        message: HERBALIFE_ID_HELP,
       });
       return;
     }
