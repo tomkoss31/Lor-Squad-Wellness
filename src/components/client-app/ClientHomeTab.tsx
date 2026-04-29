@@ -389,41 +389,99 @@ export function ClientHomeTab({
             boxShadow: "0 4px 12px -6px rgba(29,158,117,0.18)",
           }}
         >
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-            <div style={{ fontSize: 10, color: "#1D9E75", letterSpacing: "1.5px", fontWeight: 500 }}>
-              📅 PROCHAIN RDV
+          {/* Eyebrow + countdown — V3 polish */}
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+            <div
+              style={{
+                fontSize: 9.5,
+                color: "#1D9E75",
+                letterSpacing: "1.6px",
+                textTransform: "uppercase",
+                fontWeight: 700,
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 5,
+                fontFamily: "DM Sans, sans-serif",
+              }}
+            >
+              <span style={{ display: "inline-block", width: 5, height: 5, borderRadius: 999, background: "#1D9E75", boxShadow: "0 0 6px rgba(29,158,117,0.50)" }} />
+              Prochain RDV
             </div>
-            <div style={{ background: "#1D9E75", color: "white", fontSize: 11, padding: "3px 10px", borderRadius: 999, fontWeight: 500 }}>
+            <div
+              style={{
+                background: rdvInfo.isImminent
+                  ? "linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)"
+                  : "linear-gradient(135deg, #1D9E75 0%, #0F6E56 100%)",
+                color: "white",
+                fontSize: 11,
+                padding: "4px 12px",
+                borderRadius: 999,
+                fontWeight: 700,
+                fontFamily: "DM Sans, sans-serif",
+                letterSpacing: "-0.005em",
+                boxShadow: rdvInfo.isImminent
+                  ? "0 4px 10px -3px rgba(186,117,23,0.40)"
+                  : "0 4px 10px -3px rgba(29,158,117,0.40)",
+              }}
+            >
               {rdvInfo.countdown}
             </div>
           </div>
-          <div style={{ fontSize: 16, color: "#444", fontWeight: 500 }}>
-            {rdvInfo.main} · {rdvInfo.time}
+          {/* Date + heure premium */}
+          <div
+            style={{
+              fontFamily: "Syne, serif",
+              fontSize: 18,
+              color: "#2C2C2A",
+              fontWeight: 700,
+              letterSpacing: "-0.01em",
+              lineHeight: 1.25,
+            }}
+          >
+            {rdvInfo.main}
+            {' '}·{' '}
+            <span style={{ color: "#0F6E56" }}>{rdvInfo.time}</span>
           </div>
-          <div style={{ fontSize: 11, color: "#888", marginTop: 2 }}>
-            Avec {coachFirstName} · La Base — Verdun
+          <div
+            style={{
+              fontSize: 11.5,
+              color: "#888780",
+              marginTop: 4,
+              fontFamily: "DM Sans, sans-serif",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 5,
+            }}
+          >
+            <span aria-hidden>👤</span>
+            Avec {coachFirstName} · La Base, Verdun
           </div>
           {/* Chantier P (2026-04-26) : grid 2x2 hierarchique
               Row 1 (primary + secondary) : Calendrier gold plein + Itineraire blanc
               Row 2 (tertiary discret)    : Modifier + .ics                          */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginTop: 12 }}>
+          {/* CTAs principaux — V3 polish 2026-04-29 (pill premium gold) */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginTop: 14 }}>
             <a
               href={getGoogleCalendarUrl()}
               target="_blank"
               rel="noopener noreferrer"
+              className="ls-client-cta-gold"
               style={{
-                background: "#B8922A",
-                color: "white",
+                background: "linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)",
+                color: "#FFFFFF",
                 border: "none",
-                padding: "10px 12px",
-                borderRadius: 8,
-                fontSize: 12,
-                fontWeight: 500,
+                padding: "11px 14px",
+                borderRadius: 999,
+                fontSize: 12.5,
+                fontWeight: 700,
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
                 gap: 6,
                 textDecoration: "none",
+                fontFamily: "DM Sans, sans-serif",
+                boxShadow: "0 4px 12px -3px rgba(186,117,23,0.40), inset 0 1px 0 rgba(255,255,255,0.20)",
+                letterSpacing: "-0.005em",
               }}
             >
               <span style={{ fontSize: 14 }}>📅</span>
@@ -433,45 +491,49 @@ export function ClientHomeTab({
               href={GOOGLE_MAPS_LA_BASE}
               target="_blank"
               rel="noopener noreferrer"
+              className="ls-client-cta-link"
               style={{
-                background: "white",
-                color: "#444441",
-                border: "0.5px solid rgba(0,0,0,0.15)",
-                padding: "10px 12px",
-                borderRadius: 8,
-                fontSize: 12,
-                fontWeight: 500,
+                background: "#FFFFFF",
+                color: "#2C2C2A",
+                border: "0.5px solid rgba(184,146,42,0.25)",
+                padding: "11px 14px",
+                borderRadius: 999,
+                fontSize: 12.5,
+                fontWeight: 600,
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
                 gap: 6,
                 textDecoration: "none",
+                fontFamily: "DM Sans, sans-serif",
               }}
             >
               <span style={{ fontSize: 14 }}>📍</span>
               Itinéraire
             </a>
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginTop: 8 }}>
+          {/* Actions secondaires — chips ghost discrets V3 */}
+          <div style={{ display: "flex", gap: 8, marginTop: 8, flexWrap: "wrap" }}>
             <button
               type="button"
               onClick={() => setRdvEditOpen((v) => !v)}
+              className="ls-client-cta-link"
               style={{
-                background: "white",
-                color: "#888",
-                border: "0.5px solid rgba(0,0,0,0.15)",
-                padding: "8px 12px",
-                borderRadius: 8,
+                background: "transparent",
+                color: "#888780",
+                border: "0.5px solid rgba(0,0,0,0.10)",
+                padding: "7px 14px",
+                borderRadius: 999,
                 fontSize: 11,
-                fontWeight: 400,
-                display: "flex",
+                fontWeight: 600,
+                display: "inline-flex",
                 alignItems: "center",
-                justifyContent: "center",
-                gap: 6,
+                gap: 5,
                 cursor: "pointer",
+                fontFamily: "DM Sans, sans-serif",
               }}
             >
-              <span style={{ fontSize: 12 }}>✏️</span>
+              <span aria-hidden style={{ fontSize: 11 }}>✏️</span>
               Modifier
             </button>
             {data.next_follow_up ? (
@@ -484,27 +546,26 @@ export function ClientHomeTab({
                   organizerName: coachFirstName,
                 })}
                 download={`rdv-labase-${data.next_follow_up.slice(0, 10)}.ics`}
+                className="ls-client-cta-link"
                 style={{
-                  background: "white",
-                  color: "#888",
-                  border: "0.5px solid rgba(0,0,0,0.15)",
-                  padding: "8px 12px",
-                  borderRadius: 8,
+                  background: "transparent",
+                  color: "#888780",
+                  border: "0.5px solid rgba(0,0,0,0.10)",
+                  padding: "7px 14px",
+                  borderRadius: 999,
                   fontSize: 11,
-                  fontWeight: 400,
-                  display: "flex",
+                  fontWeight: 600,
+                  display: "inline-flex",
                   alignItems: "center",
-                  justifyContent: "center",
-                  gap: 6,
+                  gap: 5,
                   textDecoration: "none",
+                  fontFamily: "DM Sans, sans-serif",
                 }}
               >
-                <span style={{ fontSize: 12 }}>📥</span>
+                <span aria-hidden style={{ fontSize: 11 }}>📥</span>
                 Fichier .ics
               </a>
-            ) : (
-              <span />
-            )}
+            ) : null}
           </div>
           {nextFollowUpId && clientToken ? (
             <div style={{
@@ -576,43 +637,85 @@ export function ClientHomeTab({
           style={{
             background: "linear-gradient(135deg, #FFFFFF 0%, #FAF6E8 100%)",
             borderRadius: 14,
-            padding: 14,
+            padding: "16px 18px",
             marginBottom: 12,
-            borderLeft: "4px solid #BA7517",
+            borderLeft: "3px solid #BA7517",
             boxShadow: "0 4px 12px -6px rgba(186,117,23,0.16)",
+            display: "flex",
+            alignItems: "center",
+            gap: 14,
           }}
         >
-          <div style={{ fontSize: 10, color: "#BA7517", letterSpacing: "1.5px", fontWeight: 500, marginBottom: 8 }}>
-            📅 PROCHAIN RDV
+          <div
+            aria-hidden
+            style={{
+              width: 48, height: 48, flexShrink: 0,
+              borderRadius: 14,
+              background: "linear-gradient(135deg, rgba(184,146,42,0.18), rgba(184,146,42,0.06))",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: 24,
+              border: "0.5px solid rgba(184,146,42,0.25)",
+            }}
+          >
+            📅
           </div>
-          <div style={{ fontSize: 14, color: "#444", fontWeight: 500 }}>
-            Aucun RDV planifié
-          </div>
-          <div style={{ fontSize: 11, color: "#888", marginTop: 2 }}>
-            Demande à {coachFirstName} un nouveau rendez-vous.
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div
+              style={{
+                fontSize: 9.5,
+                color: "#BA7517",
+                letterSpacing: "1.6px",
+                textTransform: "uppercase",
+                fontWeight: 700,
+                marginBottom: 3,
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 5,
+                fontFamily: "DM Sans, sans-serif",
+              }}
+            >
+              <span style={{ display: "inline-block", width: 5, height: 5, borderRadius: 999, background: "#BA7517" }} />
+              Prochain RDV
+            </div>
+            <div style={{ fontFamily: "Syne, serif", fontSize: 15, color: "#2C2C2A", fontWeight: 700, letterSpacing: "-0.01em" }}>
+              Pas encore de RDV
+            </div>
+            <div style={{ fontSize: 11, color: "#888780", marginTop: 2, fontFamily: "DM Sans, sans-serif", lineHeight: 1.4 }}>
+              Demande à {coachFirstName} un nouveau rendez-vous via la messagerie.
+            </div>
           </div>
         </div>
       )}
 
-      {/* 5. COMMUNAUTÉ CHALLENGERS — compact 1 ligne (v2 2026-04-25) */}
-      <div style={{
-        background: "#FFFFFF",
-        borderRadius: 12,
-        padding: "12px 14px",
-        marginBottom: 12,
-      }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <div style={{
-            width: 36, height: 36, borderRadius: "50%",
-            background: "#E6F1FB", display: "flex", alignItems: "center",
-            justifyContent: "center", fontSize: 18,
-          }}>💬</div>
-          <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 13, color: "#444", fontWeight: 500 }}>
+      {/* 5. COMMUNAUTÉ CHALLENGERS — polish V3 2026-04-29 */}
+      <div
+        className="ls-client-card"
+        style={{
+          background: "linear-gradient(135deg, #FFFFFF 0%, #F0F8FF 100%)",
+          border: "0.5px solid rgba(0,136,204,0.18)",
+          borderRadius: 14,
+          padding: "12px 14px",
+          marginBottom: 12,
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <div
+            style={{
+              width: 42, height: 42, borderRadius: 12, flexShrink: 0,
+              background: "linear-gradient(135deg, #0088CC 0%, #006699 100%)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: 22,
+              boxShadow: "0 4px 10px -3px rgba(0,136,204,0.40), inset 0 1px 0 rgba(255,255,255,0.20)",
+            }}
+          >
+            💬
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontFamily: "Syne, serif", fontSize: 14, color: "#2C2C2A", fontWeight: 700, letterSpacing: "-0.01em" }}>
               Rejoins les Challengers
             </div>
-            <div style={{ fontSize: 10, color: "#888" }}>
-              Communauté Telegram
+            <div style={{ fontSize: 10.5, color: "#888780", marginTop: 2, fontFamily: "DM Sans, sans-serif" }}>
+              Communauté Telegram · motivation quotidienne
             </div>
           </div>
           <a
@@ -620,13 +723,21 @@ export function ClientHomeTab({
             target="_blank"
             rel="noopener noreferrer"
             onClick={() => {
-              // Premium Client XP (Tier B 2026-04-28) : +30 XP one-shot
               if (clientToken) void recordClientXp(clientToken, "telegram_joined");
             }}
+            className="ls-client-cta-gold"
             style={{
-              background: "#B8922A", color: "white", fontSize: 11,
-              padding: "6px 12px", borderRadius: 8,
-              fontWeight: 500, textDecoration: "none",
+              background: "linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)",
+              color: "#FFFFFF",
+              fontSize: 11.5,
+              padding: "7px 14px",
+              borderRadius: 999,
+              fontWeight: 700,
+              textDecoration: "none",
+              fontFamily: "DM Sans, sans-serif",
+              flexShrink: 0,
+              boxShadow: "0 4px 10px -3px rgba(186,117,23,0.40), inset 0 1px 0 rgba(255,255,255,0.20)",
+              letterSpacing: "-0.005em",
             }}
           >
             Rejoindre
@@ -770,21 +881,57 @@ export function ClientHomeTab({
         clientFirstName={data.client_first_name}
       />
 
-      {/* 9. FOOTER QUOTE */}
+      {/* 9. FOOTER QUOTE — polish V3 2026-04-29 */}
       <div
         style={{
+          position: "relative",
           textAlign: "center",
-          padding: "20px 8px 8px",
-          fontSize: 13,
-          color: "#6B7280",
-          fontStyle: "italic",
-          fontFamily: "Syne, sans-serif",
-          lineHeight: 1.5,
+          padding: "28px 16px 16px",
+          marginTop: 4,
         }}
       >
-        « {quote} »
-        <div style={{ fontSize: 10, color: "#9CA3AF", marginTop: 10, fontStyle: "normal" }}>
-          Propulsé par <strong style={{ color: "#BA7517" }}>Lor&apos;Squad</strong> · La Base Verdun
+        {/* Trait décoratif gold */}
+        <div
+          aria-hidden
+          style={{
+            width: 60,
+            height: 1,
+            background: "linear-gradient(90deg, transparent, rgba(186,117,23,0.35), transparent)",
+            margin: "0 auto 14px",
+          }}
+        />
+        <div
+          style={{
+            fontSize: 14,
+            color: "#5C4A0F",
+            fontStyle: "italic",
+            fontFamily: "Syne, serif",
+            lineHeight: 1.6,
+            fontWeight: 500,
+            letterSpacing: "-0.005em",
+            maxWidth: 380,
+            margin: "0 auto",
+          }}
+        >
+          « {quote} »
+        </div>
+        <div
+          style={{
+            fontSize: 10.5,
+            color: "#888780",
+            marginTop: 14,
+            fontStyle: "normal",
+            fontFamily: "DM Sans, sans-serif",
+            letterSpacing: "0.5px",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 6,
+          }}
+        >
+          <span aria-hidden style={{ width: 4, height: 4, borderRadius: 999, background: "#BA7517" }} />
+          Propulsé par <strong style={{ color: "#BA7517", fontWeight: 700 }}>Lor&apos;Squad</strong>
+          <span aria-hidden style={{ opacity: 0.4 }}>·</span>
+          La Base Verdun
         </div>
       </div>
     </div>
