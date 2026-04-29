@@ -2864,6 +2864,13 @@ export function NewAssessmentPage() {
                     program={chosenProgram}
                     addOns={ticketAddOns}
                     onOpenCatalog={() => setShowCatalogModal(true)}
+                    onRemoveAddOn={(productId) => {
+                      // Toggle off : retire l'id de selectedProductIds.
+                      // Marche pour les 3 sources (besoins / boosters / catalogue).
+                      if (form.selectedProductIds.includes(productId)) {
+                        toggleSelectedProduct(productId);
+                      }
+                    }}
                   />
                 </div>
               </div>

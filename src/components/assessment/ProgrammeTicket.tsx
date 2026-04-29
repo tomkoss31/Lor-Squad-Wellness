@@ -25,6 +25,8 @@ interface Props {
   addOns: TicketAddOn[];
   /** Callback bouton "+ Catalogue" (ouvre la sandbox catalogue complet) */
   onOpenCatalog?: () => void;
+  /** Callback supprimer un addon du panier (V3.3 — 2026-04-29) */
+  onRemoveAddOn?: (productId: string) => void;
 }
 
 /**
@@ -61,7 +63,7 @@ function getEmoji(name: string): string {
   return "💊";
 }
 
-export function ProgrammeTicket({ program, addOns, onOpenCatalog }: Props) {
+export function ProgrammeTicket({ program, addOns, onOpenCatalog, onRemoveAddOn }: Props) {
   const addOnsTotal = addOns.reduce((sum, a) => sum + a.price * a.quantity, 0);
   const addOnsPv = addOns.reduce((sum, a) => sum + a.pv * a.quantity, 0);
   const total = program.price + addOnsTotal;
@@ -88,6 +90,10 @@ export function ProgrammeTicket({ program, addOns, onOpenCatalog }: Props) {
         }
         @media (prefers-reduced-motion: reduce) {
           .ls-ticket-shine, .ls-ticket-mesh, .ls-ticket-item-anim { animation: none !important; }
+        }
+        /* Sur mobile/tablet : pas de hover, le bouton remove reste toujours visible */
+        @media (hover: none), (max-width: 768px) {
+          .ls-ticket-row .ls-ticket-remove { opacity: 1 !important; }
         }
       `}</style>
       <aside
@@ -324,8 +330,9 @@ export function ProgrammeTicket({ program, addOns, onOpenCatalog }: Props) {
                   return (
                     <div
                       key={addOn.id}
-                      className="ls-ticket-item-anim"
+                      className="ls-ticket-item-anim ls-ticket-row"
                       style={{
+                        position: "relative",
                         display: "flex",
                         alignItems: "center",
                         gap: 10,
@@ -337,9 +344,13 @@ export function ProgrammeTicket({ program, addOns, onOpenCatalog }: Props) {
                       }}
                       onMouseEnter={(e) => {
                         e.currentTarget.style.borderColor = "color-mix(in srgb, var(--ls-teal) 40%, var(--ls-border))";
+                        const rm = e.currentTarget.querySelector<HTMLButtonElement>("[data-ls-remove]");
+                        if (rm) rm.style.opacity = "1";
                       }}
                       onMouseLeave={(e) => {
                         e.currentTarget.style.borderColor = "var(--ls-border)";
+                        const rm = e.currentTarget.querySelector<HTMLButtonElement>("[data-ls-remove]");
+                        if (rm) rm.style.opacity = "0";
                       }}
                     >
                       <div
@@ -397,6 +408,49 @@ export function ProgrammeTicket({ program, addOns, onOpenCatalog }: Props) {
                       >
                         {(addOn.price * addOn.quantity).toFixed(2)}€
                       </div>
+                      {/* Remove button — visible au hover desktop, toujours sur mobile */}
+                      {onRemoveAddOn && (
+                        <button
+                          type="button"
+                          data-ls-remove
+                          onClick={(ev) => {
+                            ev.stopPropagation();
+                            onRemoveAddOn(addOn.id);
+                          }}
+                          aria-label={`Retirer ${addOn.name} du panier`}
+                          className="ls-ticket-remove"
+                          style={{
+                            flexShrink: 0,
+                            width: 24,
+                            height: 24,
+                            borderRadius: 999,
+                            border: "0.5px solid color-mix(in srgb, var(--ls-coral) 40%, transparent)",
+                            background: "color-mix(in srgb, var(--ls-coral) 12%, var(--ls-surface))",
+                            color: "var(--ls-coral)",
+                            cursor: "pointer",
+                            fontSize: 12,
+                            fontWeight: 700,
+                            display: "inline-flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            opacity: 0,
+                            transition: "opacity 0.15s ease, transform 0.15s ease, background 0.15s ease",
+                            padding: 0,
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.transform = "scale(1.1)";
+                            e.currentTarget.style.background = "var(--ls-coral)";
+                            e.currentTarget.style.color = "#FFFFFF";
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.transform = "none";
+                            e.currentTarget.style.background = "color-mix(in srgb, var(--ls-coral) 12%, var(--ls-surface))";
+                            e.currentTarget.style.color = "var(--ls-coral)";
+                          }}
+                        >
+                          ✕
+                        </button>
+                      )}
                     </div>
                   );
                 })}

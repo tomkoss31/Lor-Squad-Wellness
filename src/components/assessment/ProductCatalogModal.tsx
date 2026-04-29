@@ -104,21 +104,101 @@ export function ProductCatalogModal({
     []
   );
 
-  const categories = useMemo(() => {
-    const set = new Set<string>();
-    activeProducts.forEach((p) => set.add(p.category));
-    return Array.from(set).sort();
-  }, [activeProducts]);
+  // Macro sections inspirees du PDF catalogue Herbalife (V3.3 — 2026-04-29).
+  // Au lieu de 15+ categories techniques eclatees, on regroupe en 6 grandes
+  // familles claires pour le coach et le client.
+  const MACRO_SECTIONS: Array<{
+    id: string;
+    label: string;
+    emoji: string;
+    color: string;
+    matches: RegExp[];
+  }> = useMemo(
+    () => [
+      {
+        id: "petit-dejeuner",
+        label: "Petit-déjeuner & Repas",
+        emoji: "🥛",
+        color: "var(--ls-gold)",
+        matches: [/shake/i, /repas/i, /proteine/i, /protéine/i, /fibre/i],
+      },
+      {
+        id: "snacks",
+        label: "Snacks & En-cas",
+        emoji: "🍫",
+        color: "var(--ls-coral)",
+        matches: [/encas/i, /en-cas/i, /chips/i, /barre/i, /bar\b/i],
+      },
+      {
+        id: "hydratation",
+        label: "Hydratation",
+        emoji: "💧",
+        color: "var(--ls-purple)",
+        matches: [/hydratation/i, /aloe/i],
+      },
+      {
+        id: "sport",
+        label: "Sport & Énergie",
+        emoji: "💪",
+        color: "var(--ls-teal)",
+        matches: [/sport/i, /muscle/i, /énergie/i, /energie/i, /concentration/i, /creatine/i],
+      },
+      {
+        id: "vitalite",
+        label: "Vitalité & Compléments",
+        emoji: "🛡️",
+        color: "var(--ls-gold)",
+        matches: [/calcium/i, /immunité/i, /immunite/i, /gelule/i, /digestif/i, /sommeil/i, /visceral/i],
+      },
+      {
+        id: "beaute",
+        label: "Beauté & Bien-être",
+        emoji: "💎",
+        color: "var(--ls-coral)",
+        matches: [/collag/i, /skin/i, /beaut/i, /night/i],
+      },
+    ],
+    [],
+  );
 
-  const filtered = useMemo(() => {
+  function getProductSection(category: string): typeof MACRO_SECTIONS[number] {
+    for (const section of MACRO_SECTIONS) {
+      if (section.matches.some((rx) => rx.test(category))) return section;
+    }
+    // Fallback : range dans Vitalite si rien ne match
+    return MACRO_SECTIONS[4];
+  }
+
+  // Index produits par section macro
+  const productsBySection = useMemo(() => {
+    const map = new Map<string, typeof activeProducts>();
+    MACRO_SECTIONS.forEach((s) => map.set(s.id, []));
+    for (const p of activeProducts) {
+      const section = getProductSection(p.category);
+      const list = map.get(section.id);
+      if (list) list.push(p);
+    }
+    return map;
+  }, [activeProducts, MACRO_SECTIONS]);
+
+  // Filtre actif (section macro + search). On rend par section.
+  const sectionsToRender = useMemo(() => {
     const q = search.trim().toLowerCase();
-    return activeProducts.filter((p) => {
-      if (activeCategory !== "all" && p.category !== activeCategory) return false;
-      if (!q) return true;
-      const haystack = `${p.name} ${p.category} ${p.noteMetier ?? ""}`.toLowerCase();
-      return haystack.includes(q);
+    return MACRO_SECTIONS.map((section) => {
+      const all = productsBySection.get(section.id) ?? [];
+      const filtered = all.filter((p) => {
+        if (!q) return true;
+        const hay = `${p.name} ${p.category} ${p.noteMetier ?? ""}`.toLowerCase();
+        return hay.includes(q);
+      });
+      return { ...section, products: filtered, totalCount: all.length };
+    }).filter((s) => {
+      if (activeCategory === "all") return s.products.length > 0;
+      return s.id === activeCategory && s.products.length > 0;
     });
-  }, [activeProducts, search, activeCategory]);
+  }, [MACRO_SECTIONS, productsBySection, search, activeCategory]);
+
+  const totalFilteredCount = sectionsToRender.reduce((s, sec) => s + sec.products.length, 0);
 
   if (!open) return null;
 
@@ -142,6 +222,34 @@ export function ProductCatalogModal({
         }
         .ls-cat-panel {
           animation: ls-cat-slide-up 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        /* Cache la scrollbar horizontale du chips bar (firefox + chrome) */
+        .ls-cat-chips::-webkit-scrollbar { display: none; }
+        .ls-cat-chips { scrollbar-width: none; }
+        /* Mobile : modale full screen, padding reduit, grid 1 colonne */
+        @media (max-width: 640px) {
+          .ls-cat-overlay {
+            padding: 0 !important;
+          }
+          .ls-cat-panel {
+            max-height: 100vh !important;
+            max-height: 100dvh !important;
+            height: 100% !important;
+            border-radius: 0 !important;
+            max-width: 100% !important;
+          }
+          .ls-cat-body {
+            padding: 14px 14px 18px !important;
+          }
+          .ls-cat-grid {
+            grid-template-columns: 1fr !important;
+          }
+        }
+        /* Tablet : grid 2 colonnes */
+        @media (min-width: 641px) and (max-width: 900px) {
+          .ls-cat-grid {
+            grid-template-columns: 1fr 1fr !important;
+          }
         }
       `}</style>
       <div
@@ -323,36 +431,86 @@ export function ProductCatalogModal({
               />
             </div>
 
-            {/* Category chips */}
-            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-              {[{ key: "all", label: "Tout", count: activeProducts.length }, ...categories.map((c) => ({ key: c, label: c, count: activeProducts.filter((p) => p.category === c).length }))].map((cat) => {
-                const isActive = activeCategory === cat.key;
+            {/* Macro section chips (V3.3 — 2026-04-29) */}
+            <div
+              className="ls-cat-chips"
+              style={{
+                display: "flex",
+                gap: 6,
+                flexWrap: "wrap",
+                overflowX: "auto",
+                WebkitOverflowScrolling: "touch",
+                paddingBottom: 2,
+              }}
+            >
+              <button
+                type="button"
+                onClick={() => setActiveCategory("all")}
+                style={{
+                  padding: "7px 13px",
+                  borderRadius: 999,
+                  border: activeCategory === "all"
+                    ? "0.5px solid color-mix(in srgb, var(--ls-gold) 50%, transparent)"
+                    : "0.5px solid var(--ls-border)",
+                  background: activeCategory === "all"
+                    ? "linear-gradient(135deg, color-mix(in srgb, var(--ls-gold) 14%, var(--ls-surface)) 0%, var(--ls-surface) 100%)"
+                    : "var(--ls-surface)",
+                  color: activeCategory === "all" ? "var(--ls-gold)" : "var(--ls-text-muted)",
+                  fontSize: 12,
+                  fontWeight: activeCategory === "all" ? 700 : 500,
+                  fontFamily: "DM Sans, sans-serif",
+                  cursor: "pointer",
+                  whiteSpace: "nowrap",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 6,
+                  flexShrink: 0,
+                  boxShadow: activeCategory === "all" ? "0 2px 8px -3px rgba(239,159,39,0.30)" : "none",
+                }}
+              >
+                ✨ Tout
+                <span
+                  style={{
+                    fontSize: 10, fontWeight: 800, fontFamily: "Syne, serif",
+                    padding: "1px 6px", borderRadius: 999,
+                    background: activeCategory === "all" ? "var(--ls-bg)" : "var(--ls-surface2)",
+                    color: activeCategory === "all" ? "var(--ls-gold)" : "var(--ls-text-hint)",
+                    border: activeCategory === "all" ? "0.5px solid var(--ls-gold)" : "0.5px solid transparent",
+                  }}
+                >
+                  {activeProducts.length}
+                </span>
+              </button>
+              {MACRO_SECTIONS.map((section) => {
+                const count = (productsBySection.get(section.id) ?? []).length;
+                if (count === 0) return null;
+                const isActive = activeCategory === section.id;
                 return (
                   <button
-                    key={cat.key}
+                    key={section.id}
                     type="button"
-                    onClick={() => setActiveCategory(cat.key)}
+                    onClick={() => setActiveCategory(section.id)}
                     style={{
-                      padding: "6px 12px",
+                      padding: "7px 13px",
                       borderRadius: 999,
                       border: isActive
-                        ? "0.5px solid color-mix(in srgb, var(--ls-gold) 50%, transparent)"
+                        ? `0.5px solid color-mix(in srgb, ${section.color} 50%, transparent)`
                         : "0.5px solid var(--ls-border)",
                       background: isActive
-                        ? "linear-gradient(135deg, color-mix(in srgb, var(--ls-gold) 14%, var(--ls-surface)) 0%, var(--ls-surface) 100%)"
+                        ? `linear-gradient(135deg, color-mix(in srgb, ${section.color} 14%, var(--ls-surface)) 0%, var(--ls-surface) 100%)`
                         : "var(--ls-surface)",
-                      color: isActive ? "var(--ls-gold)" : "var(--ls-text-muted)",
-                      fontSize: 11.5,
+                      color: isActive ? section.color : "var(--ls-text-muted)",
+                      fontSize: 12,
                       fontWeight: isActive ? 700 : 500,
                       fontFamily: "DM Sans, sans-serif",
                       cursor: "pointer",
-                      transition: "transform 0.15s ease, border-color 0.15s ease",
                       whiteSpace: "nowrap",
                       display: "inline-flex",
                       alignItems: "center",
                       gap: 6,
-                      textTransform: "capitalize",
-                      boxShadow: isActive ? "0 2px 8px -3px rgba(239,159,39,0.30)" : "none",
+                      flexShrink: 0,
+                      boxShadow: isActive ? `0 2px 8px -3px ${section.color}50` : "none",
+                      transition: "transform 0.15s ease, border-color 0.15s ease",
                     }}
                     onMouseEnter={(e) => {
                       if (!isActive) e.currentTarget.style.transform = "translateY(-1px)";
@@ -361,17 +519,18 @@ export function ProductCatalogModal({
                       if (!isActive) e.currentTarget.style.transform = "none";
                     }}
                   >
-                    {cat.label}
+                    <span style={{ fontSize: 14 }}>{section.emoji}</span>
+                    {section.label}
                     <span
                       style={{
                         fontSize: 10, fontWeight: 800, fontFamily: "Syne, serif",
                         padding: "1px 6px", borderRadius: 999,
                         background: isActive ? "var(--ls-bg)" : "var(--ls-surface2)",
-                        color: isActive ? "var(--ls-gold)" : "var(--ls-text-hint)",
-                        border: isActive ? "0.5px solid var(--ls-gold)" : "0.5px solid transparent",
+                        color: isActive ? section.color : "var(--ls-text-hint)",
+                        border: isActive ? `0.5px solid ${section.color}` : "0.5px solid transparent",
                       }}
                     >
-                      {cat.count}
+                      {count}
                     </span>
                   </button>
                 );
@@ -379,15 +538,17 @@ export function ProductCatalogModal({
             </div>
           </div>
 
-          {/* GRID PRODUITS — scrollable */}
+          {/* GRID PRODUITS — par sections macro, scrollable */}
           <div
+            className="ls-cat-body"
             style={{
               flex: 1,
               overflowY: "auto",
-              padding: "16px 22px 22px",
+              WebkitOverflowScrolling: "touch",
+              padding: "18px 22px 22px",
             }}
           >
-            {filtered.length === 0 ? (
+            {totalFilteredCount === 0 ? (
               <div
                 style={{
                   textAlign: "center",
@@ -398,23 +559,82 @@ export function ProductCatalogModal({
                 }}
               >
                 <div style={{ fontSize: 40, marginBottom: 8 }}>🤷‍♂️</div>
-                Aucun produit trouve avec ces filtres.
+                Aucun produit trouvé avec ces filtres.
               </div>
             ) : (
-              <div
-                style={{
-                  display: "grid",
-                  gap: 12,
-                  gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
-                }}
-              >
-                {filtered.map((p) => (
-                  <CatalogCard
-                    key={p.id}
-                    product={p}
-                    isInCart={selectedIds.includes(p.id)}
-                    onAdd={() => onAddProduct(p.id)}
-                  />
+              <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+                {sectionsToRender.map((section) => (
+                  <section key={section.id}>
+                    {/* Section header */}
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 10,
+                        marginBottom: 12,
+                        paddingBottom: 8,
+                        borderBottom: `0.5px solid color-mix(in srgb, ${section.color} 25%, var(--ls-border))`,
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: 36, height: 36, flexShrink: 0,
+                          borderRadius: 12,
+                          background: `linear-gradient(135deg, color-mix(in srgb, ${section.color} 22%, var(--ls-surface2)) 0%, var(--ls-surface2) 100%)`,
+                          border: `0.5px solid color-mix(in srgb, ${section.color} 35%, transparent)`,
+                          display: "flex", alignItems: "center", justifyContent: "center",
+                          fontSize: 18,
+                        }}
+                      >
+                        {section.emoji}
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div
+                          style={{
+                            fontFamily: "Syne, serif",
+                            fontSize: 15,
+                            fontWeight: 800,
+                            color: "var(--ls-text)",
+                            letterSpacing: "-0.01em",
+                            lineHeight: 1.2,
+                          }}
+                        >
+                          {section.label}
+                        </div>
+                        <div
+                          style={{
+                            fontSize: 10,
+                            color: "var(--ls-text-hint)",
+                            fontFamily: "DM Sans, sans-serif",
+                            letterSpacing: 0.5,
+                            textTransform: "uppercase",
+                            fontWeight: 600,
+                          }}
+                        >
+                          {section.products.length} produit{section.products.length > 1 ? "s" : ""}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Grid produits de la section */}
+                    <div
+                      className="ls-cat-grid"
+                      style={{
+                        display: "grid",
+                        gap: 10,
+                        gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))",
+                      }}
+                    >
+                      {section.products.map((p) => (
+                        <CatalogCard
+                          key={p.id}
+                          product={p}
+                          isInCart={selectedIds.includes(p.id)}
+                          onAdd={() => onAddProduct(p.id)}
+                        />
+                      ))}
+                    </div>
+                  </section>
                 ))}
               </div>
             )}
