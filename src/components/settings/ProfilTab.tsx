@@ -12,6 +12,11 @@ import { useAppContext } from "../../context/AppContext";
 import { useToast } from "../../context/ToastContext";
 import { getSupabaseClient } from "../../services/supabaseClient";
 import { XpProgressCard } from "../../features/gamification/components/XpProgressCard";
+import {
+  HERBALIFE_ID_UNIFIED_REGEX,
+  HERBALIFE_ID_PATTERN,
+  HERBALIFE_ID_HELP,
+} from "../../lib/herbalifeId";
 
 function daysSince(iso?: string | null): number | null {
   if (!iso) return null;
@@ -57,8 +62,10 @@ export function ProfilTab() {
     [users, currentUser?.id],
   );
 
-  /** Format ID Herbalife reel : 2 chiffres + 1 lettre + 7 chiffres. */
-  const HERBALIFE_ID_REGEX = /^\d{2}[A-Z]\d{7}$/;
+  // Note Mel 2026-04-29 : un client VIP qui devient distri garde son ID 21XY...
+  // Donc on accepte les 2 formats officiels (distri 2-1-7 OU vip 2-2-6).
+  // Centralise dans src/lib/herbalifeId.ts.
+  const HERBALIFE_ID_REGEX = HERBALIFE_ID_UNIFIED_REGEX;
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -94,12 +101,12 @@ export function ProfilTab() {
     // 2 chiffres + 1 lettre majuscule + 7 chiffres. Vide = OK.
     const herbalifeNormalized = herbalifeId.trim().toUpperCase();
     if (herbalifeNormalized && !HERBALIFE_ID_REGEX.test(herbalifeNormalized)) {
-      setError("Format ID Herbalife invalide. Exemple : 21Y0103610");
+      setError(`Format ID Herbalife invalide. ${HERBALIFE_ID_HELP}`);
       return;
     }
     const sponsorNormalized = sponsorId.trim().toUpperCase();
     if (sponsorNormalized && !HERBALIFE_ID_REGEX.test(sponsorNormalized)) {
-      setError("Format ID sponsor invalide. Exemple : 21Y0103610");
+      setError(`Format ID sponsor invalide. ${HERBALIFE_ID_HELP}`);
       return;
     }
     // Validation objectif PV : entier positif raisonnable (1000 - 100000).
@@ -265,7 +272,7 @@ export function ProfilTab() {
                   onChange={(e) => setHerbalifeId(e.target.value)}
                   disabled={saving}
                   placeholder="21Y0103610"
-                  pattern="^\d{2}[A-Z]\d{7}$"
+                  pattern={HERBALIFE_ID_PATTERN}
                   maxLength={10}
                   inputMode="text"
                   autoCapitalize="characters"
@@ -292,7 +299,7 @@ export function ProfilTab() {
                   onChange={(e) => setSponsorId(e.target.value)}
                   disabled={saving}
                   placeholder="21Y0103610"
-                  pattern="^\d{2}[A-Z]\d{7}$"
+                  pattern={HERBALIFE_ID_PATTERN}
                   maxLength={10}
                   inputMode="text"
                   autoCapitalize="characters"
