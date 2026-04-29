@@ -7,6 +7,7 @@ import { StatusBadge } from "../ui/StatusBadge";
 import { BottomNav } from "./BottomNav";
 import { ThemeToggle } from "./ThemeToggle";
 import { useRealtimeMessages } from "../../hooks/useRealtimeMessages";
+import { useSessionTracker } from "../../features/gamification/hooks/useSessionTracker";
 import { getInitials } from "../../lib/utils/getInitials";
 import { useTheme } from "../../hooks/useTheme";
 import { getRoleLabel } from "../../lib/auth";
@@ -59,6 +60,8 @@ export function AppLayout() {
   // l'app (les routes publiques /client/:token, /recap/:token, etc.
   // ne passent pas par AppLayout donc n'activent pas ce hook).
   useRealtimeMessages();
+  // Tracking session pour stats activite admin (2026-04-29)
+  useSessionTracker();
   const urgentRelanceCount = followUps.filter(f => f.status === "pending").length;
   const pvOverdueCount = (() => {
     if (!pvClientProducts) return 0;
