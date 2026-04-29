@@ -245,6 +245,43 @@ export function ClientHomeTab({
           50% { box-shadow: 0 6px 26px rgba(239,159,39,0.55); }
         }
         .home-rdv-imminent { animation: rdv-pulse 2.2s ease-in-out infinite; }
+
+        /* Polish V2 (2026-04-29) — hover/lift consistant sur les cards interactives */
+        .ls-client-card {
+          transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+        }
+        .ls-client-card:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 8px 22px -8px rgba(0,0,0,0.14);
+        }
+        .ls-client-tile {
+          transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+        }
+        .ls-client-tile:hover {
+          transform: translateY(-2px);
+          background: linear-gradient(135deg, #FFFFFF 0%, #FAF6E8 100%);
+          box-shadow: 0 6px 18px -6px rgba(186,117,23,0.18);
+        }
+        .ls-client-cta-gold {
+          transition: transform 0.18s ease, filter 0.18s ease, box-shadow 0.18s ease;
+        }
+        .ls-client-cta-gold:hover {
+          transform: translateY(-1px);
+          filter: brightness(1.05);
+          box-shadow: 0 6px 16px -4px rgba(186,117,23,0.45);
+        }
+        .ls-client-cta-link {
+          transition: transform 0.18s ease, background 0.18s ease;
+        }
+        .ls-client-cta-link:hover {
+          transform: translateY(-1px);
+          background: rgba(184,146,42,0.06);
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .ls-client-card, .ls-client-tile, .ls-client-cta-gold, .ls-client-cta-link {
+            transition: none !important;
+          }
+        }
         @keyframes confetti-fall {
           0% { transform: translateY(-20vh) rotate(0deg); opacity: 1; }
           100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
@@ -339,15 +376,19 @@ export function ClientHomeTab({
       />
       <ClientAppDailyAction onAction={() => undefined} />
 
-      {/* 2. CARTE RDV (compact teal v2 — 2026-04-25) */}
+      {/* 2. CARTE RDV (compact teal v2 — polish V3 2026-04-29) */}
       {rdvInfo ? (
-        <div style={{
-          background: "#FFFFFF",
-          borderRadius: 12,
-          padding: 14,
-          marginBottom: 12,
-          borderLeft: "4px solid #1D9E75",
-        }}>
+        <div
+          className="ls-client-card"
+          style={{
+            background: "linear-gradient(135deg, #FFFFFF 0%, #F7FCFA 100%)",
+            borderRadius: 14,
+            padding: 14,
+            marginBottom: 12,
+            borderLeft: "4px solid #1D9E75",
+            boxShadow: "0 4px 12px -6px rgba(29,158,117,0.18)",
+          }}
+        >
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
             <div style={{ fontSize: 10, color: "#1D9E75", letterSpacing: "1.5px", fontWeight: 500 }}>
               📅 PROCHAIN RDV
@@ -530,13 +571,17 @@ export function ClientHomeTab({
           ) : null}
         </div>
       ) : (
-        <div style={{
-          background: "#FFFFFF",
-          borderRadius: 12,
-          padding: 14,
-          marginBottom: 12,
-          borderLeft: "4px solid #BA7517",
-        }}>
+        <div
+          className="ls-client-card"
+          style={{
+            background: "linear-gradient(135deg, #FFFFFF 0%, #FAF6E8 100%)",
+            borderRadius: 14,
+            padding: 14,
+            marginBottom: 12,
+            borderLeft: "4px solid #BA7517",
+            boxShadow: "0 4px 12px -6px rgba(186,117,23,0.16)",
+          }}
+        >
           <div style={{ fontSize: 10, color: "#BA7517", letterSpacing: "1.5px", fontWeight: 500, marginBottom: 8 }}>
             📅 PROCHAIN RDV
           </div>
@@ -589,30 +634,55 @@ export function ClientHomeTab({
         </div>
       </div>
 
-      {/* 6. MENSURATIONS / RECO — grid 2 cols (v2 2026-04-25) */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 12 }}>
-        <button type="button" onClick={() => onSeeEvolution?.()} style={{
-          background: "#FFFFFF", border: "none", borderRadius: 12, padding: 14,
-          textAlign: "center", cursor: "pointer",
-        }}>
-          <div style={{ fontSize: 22, marginBottom: 6 }}>📏</div>
-          <div style={{ fontSize: 12, color: "#444", fontWeight: 500 }}>Mes mensurations</div>
-          <div style={{ fontSize: 10, color: "#888", marginTop: 2 }}>Suis ton évolution</div>
+      {/* 6. MENSURATIONS / RECO — grid 2 cols (polish V3 2026-04-29) */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 12 }}>
+        <button
+          type="button"
+          onClick={() => onSeeEvolution?.()}
+          className="ls-client-tile"
+          style={{
+            background: "#FFFFFF",
+            border: "0.5px solid rgba(184,146,42,0.18)",
+            borderRadius: 14,
+            padding: 16,
+            textAlign: "center",
+            cursor: "pointer",
+            fontFamily: "DM Sans, sans-serif",
+          }}
+        >
+          <div style={{ fontSize: 26, marginBottom: 6, lineHeight: 1 }}>📏</div>
+          <div style={{ fontSize: 13, color: "#2C2C2A", fontWeight: 700, fontFamily: "Syne, serif", letterSpacing: "-0.01em" }}>
+            Mes mensurations
+          </div>
+          <div style={{ fontSize: 10.5, color: "#888780", marginTop: 3 }}>Suis ton évolution</div>
         </button>
-        <button type="button" onClick={() => setRecoAskOpen(true)} style={{
-          background: "#FFFFFF", border: "none", borderRadius: 12, padding: 14,
-          textAlign: "center", cursor: "pointer",
-        }}>
-          <div style={{ fontSize: 22, marginBottom: 6 }}>🎁</div>
-          <div style={{ fontSize: 12, color: "#444", fontWeight: 500 }}>Recommander</div>
-          <div style={{ fontSize: 10, color: "#888", marginTop: 2 }}>Parraine un ami</div>
+        <button
+          type="button"
+          onClick={() => setRecoAskOpen(true)}
+          className="ls-client-tile"
+          style={{
+            background: "#FFFFFF",
+            border: "0.5px solid rgba(184,146,42,0.18)",
+            borderRadius: 14,
+            padding: 16,
+            textAlign: "center",
+            cursor: "pointer",
+            fontFamily: "DM Sans, sans-serif",
+          }}
+        >
+          <div style={{ fontSize: 26, marginBottom: 6, lineHeight: 1 }}>🎁</div>
+          <div style={{ fontSize: 13, color: "#2C2C2A", fontWeight: 700, fontFamily: "Syne, serif", letterSpacing: "-0.01em" }}>
+            Recommander
+          </div>
+          <div style={{ fontSize: 10.5, color: "#888780", marginTop: 3 }}>Parraine un ami</div>
         </button>
       </div>
 
-      {/* 7. CTA DEMANDER UNE RECO */}
+      {/* 7. CTA DEMANDER UNE RECO — polish V3 */}
       <button
         type="button"
         onClick={() => setRecoAskOpen(true)}
+        className="ls-client-cta-gold"
         style={{
           display: "flex",
           alignItems: "center",
@@ -625,21 +695,23 @@ export function ClientHomeTab({
           textAlign: "left",
           cursor: "pointer",
           fontFamily: "DM Sans, sans-serif",
+          boxShadow: "0 4px 12px -4px rgba(186,117,23,0.20)",
         }}
       >
         <div
           aria-hidden="true"
           style={{
-            width: 38,
-            height: 38,
-            borderRadius: 10,
-            background: "#B8922A",
+            width: 42,
+            height: 42,
+            borderRadius: 12,
+            background: "linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)",
             color: "#FFFFFF",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            fontSize: 18,
+            fontSize: 20,
             flexShrink: 0,
+            boxShadow: "0 4px 10px -3px rgba(186,117,23,0.45), inset 0 1px 0 rgba(255,255,255,0.20)",
           }}
         >
           🎁
@@ -657,23 +729,24 @@ export function ClientHomeTab({
         </svg>
       </button>
 
-      {/* 8. AVIS GOOGLE */}
+      {/* 8. AVIS GOOGLE — polish V3 */}
       <a
         href={GOOGLE_MAPS_LA_BASE}
         target="_blank"
         rel="noopener noreferrer"
+        className="ls-client-cta-link"
         style={{
           display: "flex",
           alignItems: "center",
           gap: 10,
           background: "#FFFFFF",
-          border: "1px solid rgba(184,146,42,0.2)",
+          border: "0.5px solid rgba(184,146,42,0.20)",
           borderRadius: 14,
           padding: "12px 16px",
           textDecoration: "none",
         }}
       >
-        <div style={{ width: 36, height: 36, background: "rgba(184,146,42,0.1)", borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+        <div style={{ width: 38, height: 38, background: "linear-gradient(135deg, rgba(184,146,42,0.16), rgba(184,146,42,0.06))", borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, border: "0.5px solid rgba(184,146,42,0.25)" }}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="#B8922A">
             <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
           </svg>
