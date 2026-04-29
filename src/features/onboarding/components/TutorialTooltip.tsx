@@ -369,11 +369,37 @@ function computePosition(
     top = Math.max(margin, targetRect.top - popupH - margin);
   }
 
-  const centerX = targetRect.left + targetRect.width / 2;
-  const left = Math.max(
-    margin,
-    Math.min(viewportW - 420 - margin, centerX - 210),
-  );
+  // Calcul X (V3.5 — 2026-04-29) : si la cible est sur un bord (sidebar
+  // gauche, panier sticky droit, etc), centrer le popup sur la cible le
+  // ferait chevaucher la cible elle-meme. On detecte ce cas et on place
+  // le popup a cote (a droite si cible a gauche, a gauche si cible a droite).
+  const popupW = 420;
+  const targetCenterX = targetRect.left + targetRect.width / 2;
+  const isLeftEdge = targetRect.right < viewportW * 0.35;  // cible dans 1/3 gauche
+  const isRightEdge = targetRect.left > viewportW * 0.65;  // cible dans 1/3 droite
+
+  let left: number;
+  if (isLeftEdge && targetRect.right + margin + popupW <= viewportW - margin) {
+    // Place a droite de la cible (pas en dessous)
+    left = targetRect.right + margin;
+  } else if (isRightEdge && targetRect.left - margin - popupW >= margin) {
+    // Place a gauche de la cible
+    left = targetRect.left - margin - popupW;
+  } else {
+    // Cas normal : centre sur la cible (avec clamp dans le viewport)
+    left = Math.max(
+      margin,
+      Math.min(viewportW - popupW - margin, targetCenterX - popupW / 2),
+    );
+  }
+
+  // Si on a place le popup a cote (gauche/droite), on aligne verticalement
+  // avec le centre de la cible plutot que dessus/dessous.
+  if (isLeftEdge || isRightEdge) {
+    const targetCenterY = targetRect.top + targetRect.height / 2;
+    top = Math.max(margin, Math.min(viewportH - popupH - margin, targetCenterY - popupH / 2));
+  }
+
   return {
     top,
     left,
