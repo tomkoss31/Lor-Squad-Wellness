@@ -18,6 +18,7 @@ import { MonthlySeasonCard } from "../features/gamification/components/MonthlySe
 import { WeeklyRecapCard } from "../features/gamification/components/WeeklyRecapCard";
 import { useAppContext } from "../context/AppContext";
 import type { Client, Prospect } from "../types/domain";
+import { DistriQuickModal } from "../components/team/DistriQuickModal";
 import {
   useTeamTree,
   useDistributorStats,
@@ -76,9 +77,11 @@ function initialsOf(name: string): string {
 type TeamTab = "team" | "gamification";
 
 export function TeamPage() {
-  const { currentUser, users, clients, prospects } = useAppContext();
+  const { currentUser, users, clients, prospects, followUps } = useAppContext();
   const [period, setPeriod] = useState<Period>("month");
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  // Quick modal au click sur un distri (Thomas demande UX simplifiee 2026-04-29)
+  const [quickModalUserId, setQuickModalUserId] = useState<string | null>(null);
   // Split visuel /team en 2 onglets pour eviter la surcharge (chantier
   // gamification 2026-04-29) : 'team' = arbre + activite + Academy
   // leaderboard ; 'gamification' = challenge bilans + saison + recap.
@@ -355,7 +358,13 @@ export function TeamPage() {
               node={tree}
               isRoot
               selectedId={effectiveSelectedId}
-              onSelect={setSelectedId}
+              onSelect={(id) => {
+                setSelectedId(id);
+                // Quick modal au click si admin et que ce n'est pas la couple virtuelle
+                if (currentUser?.role === "admin" && !isCoupleVirtualId(id)) {
+                  setQuickModalUserId(id);
+                }
+              }}
             />
           </div>
         ) : (
@@ -412,6 +421,20 @@ export function TeamPage() {
           <MonthlySeasonCard />
         </>
       ) : null}
+
+      {/* Quick modal au click sur un distri (admin only) — V3 2026-04-29 */}
+      {quickModalUserId && (() => {
+        const targetUser = users.find((u) => u.id === quickModalUserId);
+        if (!targetUser) return null;
+        return (
+          <DistriQuickModal
+            user={targetUser}
+            clients={clients}
+            followUps={followUps}
+            onClose={() => setQuickModalUserId(null)}
+          />
+        );
+      })()}
     </div>
   );
 }
