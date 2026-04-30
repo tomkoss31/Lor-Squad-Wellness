@@ -10,6 +10,7 @@
 //   respectent prefers-reduced-motion.
 
 import { Component, type ReactNode } from 'react'
+import { ERROR_TIPS } from './error-boundary/errorTips'
 
 interface Props {
   children: ReactNode
@@ -27,22 +28,10 @@ interface State {
   tipIndex: number
 }
 
-// 12 phrases rotatives — mix astuces business + culture produit + humour
-// distri. Toutes user-facing FR, ton bienveillant et leger.
-const TIPS: Array<{ emoji: string; text: string }> = [
-  { emoji: '💡', text: "Pendant qu'on relance, le saviez-vous ? Un client recontacté à 7 jours fidélise 3× mieux." },
-  { emoji: '🌿', text: "Astuce : un Liftoff = 30 % d'énergie en plus, sans le crash du café 4ème tasse." },
-  { emoji: '🎯', text: "Pro tip : tes meilleurs clients sont ceux qui t'ont donné un avis Google. Demande-leur." },
-  { emoji: '💪', text: "Reminder : ton meilleur outil de vente, c'est ton sourire et ton shake du matin." },
-  { emoji: '🚀', text: "Fact : 90 % des distributeurs au top font leur shake matin avant 9h. Coïncidence ?" },
-  { emoji: '📲', text: "Tu réponds à un client en moins de 2h ? Tu multiplies par 3 sa probabilité d'achat." },
-  { emoji: '✨', text: "Chaque bug que tu remontes = une feature de plus la semaine d'après. Promis." },
-  { emoji: '🥤', text: "Le Formula 1 cookies-cream + un peu de PPP + lait d'amande = goûter qui ferme la porte au grignotage." },
-  { emoji: '🔥', text: "Un client en pause depuis 20 jours, c'est pas perdu. C'est juste qu'il attend ton message." },
-  { emoji: '🧠', text: "Le savais-tu ? Le sommeil est le 4ème pilier. Pas de résultat sans 7h minimum." },
-  { emoji: '🏆', text: "L'Ambassadeur VIP, c'est 3 mois consécutifs > 1000 PV. Pas plus, pas moins." },
-  { emoji: '🌱', text: "Une recommandation = 5× plus de conversion qu'une prospection à froid. Demande-la." },
-]
+// Source unique de tips — voir error-boundary/errorTips.ts (~60 tips
+// classes en 8 categories). On utilise ERROR_TIPS directement pour la
+// rotation tip de l ecran de crash.
+const TIPS = ERROR_TIPS
 
 export class ErrorBoundary extends Component<Props, State> {
   state: State = { hasError: false, error: null, tipIndex: 0 }

@@ -25,6 +25,7 @@ import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppContext } from "../context/AppContext";
 import { useInstallPrompt } from "../context/InstallPromptContext";
+import { getRandomTip } from "../components/error-boundary/errorTips";
 
 const LAST_EMAIL_KEY = "ls_last_login_email";
 const LAST_FIRSTNAME_KEY = "ls_last_login_firstname";
@@ -87,25 +88,8 @@ function getDayPhase(date: Date): DayPhase {
   };
 }
 
-// ─── Quotes rotatifs ────────────────────────────────────────────────────────
-const QUOTES: Array<{ text: string; sign: string }> = [
-  { text: "La discipline pèse en grammes. Le regret pèse en tonnes.", sign: "T." },
-  { text: "Un client qui revient coûte 5× moins cher qu'un client à conquérir.", sign: "T." },
-  { text: "Le secret n'est pas l'intensité. C'est la régularité.", sign: "T." },
-  { text: "Ton meilleur coach, c'est celui d'il y a 6 mois. Sois fier de la marche.", sign: "T." },
-  { text: "Le shake parfait, c'est celui que tu prends.", sign: "T." },
-  { text: "Tu n'as pas besoin de plus. Tu as besoin de mieux.", sign: "T." },
-  { text: "Personne ne perd 5 kilos. On perd 100 grammes, 50 fois.", sign: "T." },
-  { text: "Un message à 21h vaut plus qu'une story à midi.", sign: "T." },
-  { text: "Le succès, c'est la somme des petits efforts répétés jour après jour.", sign: "T." },
-  { text: "Tes clients ne se souviennent pas de tes conseils. Ils se souviennent de comment tu les as fait sentir.", sign: "T." },
-  { text: "Une recommandation = 5× plus de conversion qu'une prospection à froid.", sign: "T." },
-  { text: "Le sommeil est le 4ème pilier. Pas de transformation sans 7h minimum.", sign: "T." },
-];
-
-function pickQuote(): typeof QUOTES[0] {
-  return QUOTES[Math.floor(Math.random() * QUOTES.length)];
-}
+// Quote = tip aleatoire depuis errorTips.ts (source unique de verite,
+// ~60 tips coachs). Signature "— T." ajoutee a l affichage.
 
 // ─── Compteur live deterministe ─────────────────────────────────────────────
 function getLiveCoachCount(date: Date): number {
@@ -170,7 +154,7 @@ export function LoginPage() {
 
   // Heure-adaptatif (calcule 1 fois au mount, garde stable pour la session)
   const [phase] = useState(() => getDayPhase(new Date()));
-  const [quote] = useState(() => pickQuote());
+  const [quote] = useState(() => getRandomTip());
 
   // Compteur live qui re-tick toutes les 30s pour donner sensation de vie
   const [liveCount, setLiveCount] = useState(() => getLiveCoachCount(new Date()));
@@ -859,8 +843,8 @@ export function LoginPage() {
             t'attend.
           </h2>
           <div className="lp-quote-block">
-            <p className="lp-quote-text">« {quote.text} »</p>
-            <span className="lp-quote-sign">— {quote.sign}</span>
+            <p className="lp-quote-text">{quote.emoji} « {quote.text} »</p>
+            <span className="lp-quote-sign">— T.</span>
           </div>
           <div className="lp-live">
             <span className="lp-live-dot" aria-hidden="true" />
