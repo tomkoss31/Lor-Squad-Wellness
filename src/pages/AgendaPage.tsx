@@ -2,6 +2,7 @@ import { startTransition, useCallback, useEffect, useMemo, useState } from "reac
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
+import { EmptyState } from "../components/ui/EmptyState";
 // PageHeading remplace par le hero premium (2026-04-29)
 import { ProspectCard } from "../components/prospect/ProspectCard";
 import { ProspectFormModal } from "../components/prospect/ProspectFormModal";
@@ -985,28 +986,39 @@ export function AgendaPage() {
       {/* Liste groupée — rendu unifié clients + prospects */}
       <div data-tour-id="agenda-upcoming">
       {grouped.length === 0 ? (
-        <Card>
-          <div style={{ textAlign: "center", padding: "32px 0" }}>
-            <div style={{ fontSize: 32, marginBottom: 12, opacity: 0.4 }}>📅</div>
-            <div style={{ fontSize: 14, color: "var(--ls-text-muted)", marginBottom: 4 }}>
-              Aucun RDV pour cette période.
-            </div>
-            <div style={{ fontSize: 12, color: "var(--ls-text-hint)", marginBottom: 16, maxWidth: 360, margin: "0 auto 16px", lineHeight: 1.55 }}>
-              {entityFilter === "clients"
-                ? "Pas de suivi client programmé sur la période choisie."
-                : entityFilter === "prospects"
-                ? "Pas de RDV prospect à venir. Crée-en un via « + Nouveau RDV »."
-                : entityFilter === "followups"
-                ? "Aucun suivi en cours. Les suivis démarrent après un bilan initial avec programme nutrition et body scan — jusqu'à 10 jours maximum."
-                : "Change de période ou crée un RDV prospect via « + Nouveau RDV »."}
-            </div>
-            {entityFilter !== "clients" && entityFilter !== "followups" && (
-              <Button onClick={() => { setEditing(undefined); setShowForm(true); }}>
-                + Nouveau RDV
-              </Button>
-            )}
-          </div>
-        </Card>
+        <EmptyState
+          emoji={
+            entityFilter === "clients" ? "🌿"
+            : entityFilter === "prospects" ? "🎯"
+            : entityFilter === "followups" ? "📋"
+            : "☀️"
+          }
+          title={
+            entityFilter === "clients" ? "Pas de suivi client programmé"
+            : entityFilter === "prospects" ? "Aucun RDV prospect à venir"
+            : entityFilter === "followups" ? "Aucun suivi en cours"
+            : "Agenda libre — profite ou prospecte 😏"
+          }
+          description={
+            entityFilter === "clients"
+              ? "Tes clients sont à jour sur cette période. Profites-en pour relancer un dormant ou écrire un message d'encouragement."
+              : entityFilter === "prospects"
+              ? "Pas de prospect au planning. Un nouveau RDV = une chance de plus de transformer ton CA ce mois-ci."
+              : entityFilter === "followups"
+              ? "Les suivis démarrent automatiquement après un bilan initial avec programme + body scan, jusqu'à 10 jours."
+              : "Aucun RDV sur cette période. Change de filtre, ou crée un RDV prospect maintenant."
+          }
+          ctaLabel={
+            entityFilter !== "clients" && entityFilter !== "followups"
+              ? "+ Nouveau RDV"
+              : undefined
+          }
+          onCta={
+            entityFilter !== "clients" && entityFilter !== "followups"
+              ? () => { setEditing(undefined); setShowForm(true); }
+              : undefined
+          }
+        />
       ) : (
         grouped.map(({ label, items }) => (
           <div key={label} className="space-y-2">
