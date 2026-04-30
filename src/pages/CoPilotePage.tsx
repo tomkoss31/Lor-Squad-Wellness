@@ -15,6 +15,7 @@ import { useAppContext } from "../context/AppContext";
 import { useToast } from "../context/ToastContext";
 import { useCopiloteData } from "../hooks/useCopiloteData";
 import { useGlobalView } from "../hooks/useGlobalView";
+import { LegalFooter } from "../components/ui/LegalFooter";
 // GlobalViewToggle retire 2026-04-29 — toggle inutile sur /co-pilote
 import { ClockHeader } from "../components/copilote/ClockHeader";
 import { HeroActionCard } from "../components/copilote/HeroActionCard";
@@ -146,6 +147,9 @@ export function CoPilotePage() {
 
       {/* Gamification 3 (2026-04-29) : quetes hebdo automatiques. */}
       <WeeklyQuestsCard />
+
+      {/* Footer legal in-page (V2 RGPD — 2026-04-30) */}
+      <LegalFooter />
     </div>
   );
 }

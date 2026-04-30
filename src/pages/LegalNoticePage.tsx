@@ -3,6 +3,13 @@
 // Style theme-aware var(--ls-*) coherent avec le reste de l'app.
 
 import { Link } from "react-router-dom";
+import {
+  APP_NAME_FULL,
+  COMPANY_NAME,
+  COMPANY_ADDRESS,
+  COMPANY_DIRECTOR,
+  COMPANY_EMAIL,
+} from "../lib/branding";
 
 export default function LegalNoticePage() {
   return (
@@ -52,16 +59,16 @@ export default function LegalNoticePage() {
 
         <Section title="Éditeur">
           <p>
-            <strong>SAS HTM FITLIFE</strong>
+            <strong>{COMPANY_NAME}</strong>
             <br />
-            6 lotissement Bellevue, 55100 Vacherauville, France
+            {COMPANY_ADDRESS}
             <br />
             Email :{" "}
-            <a href="mailto:lavaserdun@gmail.com" style={linkStyle}>
-              lavaserdun@gmail.com
+            <a href={`mailto:${COMPANY_EMAIL}`} style={linkStyle}>
+              {COMPANY_EMAIL}
             </a>
             <br />
-            Directeur de la publication : Thomas Houbert
+            Directeur de la publication : {COMPANY_DIRECTOR}
           </p>
         </Section>
 
@@ -73,13 +80,13 @@ export default function LegalNoticePage() {
 
         <Section title="Propriété intellectuelle">
           <p>
-            L'ensemble des éléments du site (textes, images, logos, code) est la propriété de la SAS HTM FITLIFE. Toute reproduction sans autorisation écrite préalable est interdite.
+            L'ensemble des éléments du site (textes, images, logos, code) est la propriété de la {COMPANY_NAME}. Toute reproduction sans autorisation écrite préalable est interdite.
           </p>
         </Section>
 
         <Section title="Limitation de responsabilité">
           <p>
-            <strong>Lor'Squad Wellness</strong> est un outil d'accompagnement bien-être destiné aux distributeurs Herbalife indépendants. Les recommandations produites par l'application n'ont pas de valeur médicale et ne remplacent pas un avis professionnel de santé.
+            <strong>{APP_NAME_FULL}</strong> est un outil d'accompagnement bien-être destiné aux distributeurs Herbalife indépendants. Les recommandations produites par l'application n'ont pas de valeur médicale et ne remplacent pas un avis professionnel de santé.
           </p>
         </Section>
 

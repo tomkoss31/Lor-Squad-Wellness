@@ -19,14 +19,17 @@ import { StatistiquesTab } from "../components/settings/StatistiquesTab";
 import { DebugTab } from "../components/settings/DebugTab";
 import { LeadsTab } from "../components/settings/LeadsTab";
 import { VipProgramTab } from "../components/settings/VipProgramTab";
+import { LegalTab } from "../components/settings/LegalTab";
 
-type TabKey = "profil" | "vip" | "equipe" | "leads" | "transferts" | "stats" | "debug";
+type TabKey = "profil" | "vip" | "legal" | "equipe" | "leads" | "transferts" | "stats" | "debug";
 
 const ALL_TABS: Array<{ key: TabKey; label: string; icon: string; adminOnly?: boolean }> = [
   { key: "profil", label: "Profil", icon: "👤" },
   // Tier B Premium VIP (2026-04-28) : doc programme Client Privilegie pour
   // tous les coachs (distri/referent/admin). Pas adminOnly.
   { key: "vip", label: "Programme VIP", icon: "⭐" },
+  // RGPD Phase 1 (2026-04-30) : tous users peuvent voir
+  { key: "legal", label: "Confidentialité & RGPD", icon: "🛡️" },
   { key: "equipe", label: "Équipe", icon: "👥", adminOnly: true },
   { key: "leads", label: "Leads", icon: "🔥", adminOnly: true },
   { key: "transferts", label: "Transferts", icon: "🔀", adminOnly: true },
@@ -101,6 +104,7 @@ export function ParametresPage() {
       {/* Contenu conditionnel */}
       {tab === "profil" ? <ProfilTab /> : null}
       {tab === "vip" ? <VipProgramTab /> : null}
+      {tab === "legal" ? <LegalTab /> : null}
       {tab === "equipe" ? <EquipeTab /> : null}
       {tab === "leads" ? <LeadsTab /> : null}
       {tab === "transferts" ? <TransfertsTab /> : null}
