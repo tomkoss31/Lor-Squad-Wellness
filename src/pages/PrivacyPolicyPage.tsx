@@ -2,6 +2,13 @@
 // Accessible publiquement (sans auth). Theme-aware var(--ls-*).
 
 import { Link } from "react-router-dom";
+import {
+  APP_NAME_FULL,
+  COMPANY_NAME,
+  COMPANY_ADDRESS,
+  COMPANY_DIRECTOR,
+  COMPANY_EMAIL,
+} from "../lib/branding";
 
 export default function PrivacyPolicyPage() {
   return (
@@ -61,16 +68,16 @@ export default function PrivacyPolicyPage() {
 
         <Section title="1. Responsable du traitement">
           <p>
-            <strong>SAS HTM FITLIFE</strong>, 6 lotissement Bellevue 55100 Vacherauville, représentée par Thomas Houbert. Contact RGPD :{" "}
-            <a href="mailto:lavaserdun@gmail.com" style={linkStyle}>
-              lavaserdun@gmail.com
+            <strong>{COMPANY_NAME}</strong>, {COMPANY_ADDRESS}, représentée par {COMPANY_DIRECTOR}. Contact RGPD :{" "}
+            <a href={`mailto:${COMPANY_EMAIL}`} style={linkStyle}>
+              {COMPANY_EMAIL}
             </a>
             .
           </p>
         </Section>
 
         <Section title="2. Données collectées">
-          <p>L'application Lor'Squad Wellness collecte deux catégories de données :</p>
+          <p>L'application {APP_NAME_FULL} collecte deux catégories de données :</p>
           <ul style={listStyle}>
             <li>
               <strong>Données d'identification</strong> : prénom, nom, email, téléphone, ville, date de naissance, photo de profil.
@@ -106,7 +113,7 @@ export default function PrivacyPolicyPage() {
           <ul style={listStyle}>
             <li>Ton coach Herbalife indépendant (qui a créé ton dossier)</li>
             <li>Le sponsor direct de ton coach (chaîne d'accompagnement Herbalife)</li>
-            <li>Les administrateurs techniques de Lor'Squad (Thomas Houbert, Mélanie Houbert) pour la maintenance et le support</li>
+            <li>Les administrateurs techniques de {APP_NAME_FULL} ({COMPANY_DIRECTOR}, Mélanie Houbert) pour la maintenance et le support</li>
           </ul>
           <p>
             Tes données ne sont <strong>jamais vendues ni cédées</strong> à des tiers commerciaux.
@@ -149,8 +156,8 @@ export default function PrivacyPolicyPage() {
           </ul>
           <p>
             Pour exercer ces droits, contacte :{" "}
-            <a href="mailto:lavaserdun@gmail.com" style={linkStyle}>
-              lavaserdun@gmail.com
+            <a href={`mailto:${COMPANY_EMAIL}`} style={linkStyle}>
+              {COMPANY_EMAIL}
             </a>
             .
           </p>
@@ -189,8 +196,8 @@ export default function PrivacyPolicyPage() {
         <Section title="12. Contact">
           <p>
             Pour toute question relative à cette politique :{" "}
-            <a href="mailto:lavaserdun@gmail.com" style={linkStyle}>
-              lavaserdun@gmail.com
+            <a href={`mailto:${COMPANY_EMAIL}`} style={linkStyle}>
+              {COMPANY_EMAIL}
             </a>
             .
           </p>
