@@ -10,6 +10,7 @@ interface Prefs {
   notif_messages: boolean;
   notif_rdv_imminent: boolean;
   notif_morning_digest: boolean;
+  notif_coach_tips: boolean;
   notif_quiet_hours: boolean;
   notif_message_batching_min: number;
 }
@@ -18,6 +19,7 @@ const DEFAULTS: Prefs = {
   notif_messages: true,
   notif_rdv_imminent: true,
   notif_morning_digest: true,
+  notif_coach_tips: true,
   notif_quiet_hours: false,
   notif_message_batching_min: 5,
 };
@@ -38,7 +40,7 @@ export function NotificationsTab() {
         if (!sb) return;
         const { data, error } = await sb
           .from("users")
-          .select("notif_messages, notif_rdv_imminent, notif_morning_digest, notif_quiet_hours, notif_message_batching_min")
+          .select("notif_messages, notif_rdv_imminent, notif_morning_digest, notif_coach_tips, notif_quiet_hours, notif_message_batching_min")
           .eq("id", currentUser.id)
           .maybeSingle();
         if (cancelled) return;
@@ -49,6 +51,7 @@ export function NotificationsTab() {
             notif_messages: (data as { notif_messages?: boolean }).notif_messages ?? true,
             notif_rdv_imminent: (data as { notif_rdv_imminent?: boolean }).notif_rdv_imminent ?? true,
             notif_morning_digest: (data as { notif_morning_digest?: boolean }).notif_morning_digest ?? true,
+            notif_coach_tips: (data as { notif_coach_tips?: boolean }).notif_coach_tips ?? true,
             notif_quiet_hours: (data as { notif_quiet_hours?: boolean }).notif_quiet_hours ?? false,
             notif_message_batching_min: (data as { notif_message_batching_min?: number }).notif_message_batching_min ?? 5,
           });
@@ -174,7 +177,13 @@ export function NotificationsTab() {
           subtitle="Récap quotidien à 7h00 (RDV, suivis à faire, alertes)"
           checked={prefs.notif_morning_digest}
           onChange={(v) => setPrefs((p) => ({ ...p, notif_morning_digest: v }))}
-          last={prefs.notif_messages || prefs.notif_rdv_imminent ? false : true}
+        />
+        <ToggleRow
+          emoji="✨"
+          label="Tip du jour intelligent"
+          subtitle="1 conseil coach matin 8h, choisi selon ton contexte (PV en retard, anniv client, 0 RDV…)"
+          checked={prefs.notif_coach_tips}
+          onChange={(v) => setPrefs((p) => ({ ...p, notif_coach_tips: v }))}
         />
         <ToggleRow
           emoji="🌙"
