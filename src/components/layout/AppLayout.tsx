@@ -412,6 +412,53 @@ export function AppLayout() {
 
             {/* Toggle thème — compact en dessous */}
             <ThemeToggle />
+
+            {/* Footer legal RGPD (Phase 1 — 2026-04-30) */}
+            <div
+              style={{
+                marginTop: 8,
+                paddingTop: 10,
+                borderTop: "0.5px solid var(--ls-border)",
+                display: "flex",
+                flexDirection: "column",
+                gap: 4,
+                fontSize: 10.5,
+                color: "var(--ls-text-hint)",
+                fontFamily: "DM Sans, sans-serif",
+              }}
+            >
+              <NavLink
+                to="/legal/mentions"
+                style={{
+                  color: "var(--ls-text-muted)",
+                  textDecoration: "none",
+                  fontSize: 11,
+                  padding: "2px 0",
+                  transition: "color 0.15s ease",
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.color = "var(--ls-gold)"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.color = "var(--ls-text-muted)"; }}
+              >
+                Mentions légales
+              </NavLink>
+              <NavLink
+                to="/legal/confidentialite"
+                style={{
+                  color: "var(--ls-text-muted)",
+                  textDecoration: "none",
+                  fontSize: 11,
+                  padding: "2px 0",
+                  transition: "color 0.15s ease",
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.color = "var(--ls-gold)"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.color = "var(--ls-text-muted)"; }}
+              >
+                Confidentialité
+              </NavLink>
+              <span style={{ fontSize: 10, color: "var(--ls-text-hint)", marginTop: 2 }}>
+                SAS HTM FITLIFE
+              </span>
+            </div>
           </div>
         </aside>
         )}

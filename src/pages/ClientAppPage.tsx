@@ -718,6 +718,42 @@ export function ClientAppPage() {
 
           return (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {/* RGPD Phase 1 (2026-04-30) : bandeau rassurance donnees sante */}
+              <div
+                style={{
+                  padding: '10px 14px',
+                  background: 'color-mix(in srgb, #1D9E75 8%, var(--ls-surface))',
+                  border: '0.5px solid rgba(29,158,117,0.25)',
+                  borderLeft: '3px solid #1D9E75',
+                  borderRadius: 12,
+                  fontSize: 12,
+                  color: '#0F6E56',
+                  fontFamily: 'DM Sans, sans-serif',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  flexWrap: 'wrap',
+                }}
+              >
+                <span aria-hidden style={{ fontSize: 14 }}>🛡️</span>
+                <span style={{ flex: 1, minWidth: 0 }}>
+                  Tes données de santé sont protégées et hébergées en Europe.
+                </span>
+                <a
+                  href="/legal/confidentialite"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    color: '#0F6E56',
+                    textDecoration: 'none',
+                    fontWeight: 700,
+                    fontSize: 11.5,
+                    flexShrink: 0,
+                  }}
+                >
+                  En savoir plus →
+                </a>
+              </div>
               <ClientAppEvolutionHero assessments={assessments} measurements={measurementsLive} />
               <ClientAppKeyMetricsGrid assessments={assessments} />
               <ClientAppWeightChart assessments={assessments} />
@@ -1081,6 +1117,41 @@ export function ClientAppPage() {
           coachFirstName={(data.coach_name ?? '').split(/\s+/)[0] || 'Coach'}
         />
       ) : null}
+
+      {/* Footer RGPD legal (Phase 1 — 2026-04-30) — permanent en bas */}
+      <footer
+        style={{
+          padding: '14px 16px 90px', // bottom margin pour ne pas chevaucher la bottom nav
+          borderTop: '0.5px solid rgba(184, 146, 42, 0.18)',
+          textAlign: 'center',
+          fontSize: 11,
+          color: '#888780',
+          fontFamily: 'DM Sans, sans-serif',
+        }}
+      >
+        <div style={{ marginBottom: 6, display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+          <span aria-hidden>🛡️</span> Tes données sont hébergées en Europe (Irlande)
+        </div>
+        <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+          <a
+            href="/legal/mentions"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ color: '#B8922A', textDecoration: 'none', fontWeight: 600 }}
+          >
+            Mentions légales
+          </a>
+          <span aria-hidden style={{ opacity: 0.4 }}>·</span>
+          <a
+            href="/legal/confidentialite"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ color: '#B8922A', textDecoration: 'none', fontWeight: 600 }}
+          >
+            Confidentialité
+          </a>
+        </div>
+      </footer>
     </div>
   )
 }
