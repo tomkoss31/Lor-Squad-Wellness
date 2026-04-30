@@ -48,13 +48,14 @@ import {
 } from "../lib/calculations";
 import { buildAssessmentRecommendationPlan, recommendBoosters } from "../lib/assessmentRecommendations";
 import { calculateAge } from "../lib/age";
-import type { BiologicalSex, BreakfastAnalysis, CurrentIntake, DecisionClient, MessageALaisser, Objective, QuantityMap, RecommendationLead, SportProfile, TypeDeSuite } from "../types/domain";
+import type { BiologicalSex, BreakfastAnalysis, Client, CurrentIntake, DecisionClient, MessageALaisser, Objective, QuantityMap, RecommendationLead, SportProfile, TypeDeSuite } from "../types/domain";
 import { SportProfileStep } from "../components/assessment/SportProfileStep";
 import { CurrentIntakeStep } from "../components/assessment/CurrentIntakeStep";
 import { SportAlertsDialog, detectSportAlerts, type SportAlert } from "../components/assessment/SportAlertsDialog";
 import { BreakfastStorySlider, DEFAULT_BREAKFAST_ANALYSIS } from "../components/education/BreakfastStorySlider";
 import { ConfettiBurst } from "../features/academy/components/ConfettiBurst";
 import { BilanSectionDivider } from "../components/assessment/BilanSectionDivider";
+import { ConsentDialog, recordConsentInsert } from "../components/consent/ConsentDialog";
 import { ProductCatalogModal } from "../components/assessment/ProductCatalogModal";
 import { pvProductCatalog } from "../data/pvCatalog";
 
@@ -463,6 +464,10 @@ export function NewAssessmentPage() {
   const [showFelicitationsConfetti, setShowFelicitationsConfetti] = useState(false);
   // Sandbox catalogue produits (Bilan PRO V3.2 — 2026-04-29)
   const [showCatalogModal, setShowCatalogModal] = useState(false);
+  // RGPD consent gate (Phase 1 — 2026-04-30) : popup obligatoire au mount.
+  // Bilan initial = client cree au save donc on stocke localement, et on
+  // INSERT la row client_consents apres le save (avec le clientId retourne).
+  const [consentGiven, setConsentGiven] = useState(false);
   // États recapClientName / accessModalOpen / savedClientId supprimés
   // (2026-04-27) : la modale ClientAccessModal post-bilan a été remplacée
   // par la navigation vers /clients/:id/bilan-termine. Plus besoin de
@@ -1012,6 +1017,13 @@ export function NewAssessmentPage() {
         freeFollowUp: isFreeFollowUp
       });
 
+      // RGPD Phase 1 (2026-04-30) : INSERT du consentement attestee par
+      // le coach a l'ouverture (popup ConsentDialog). On le fait ICI parce
+      // que le clientId vient juste d'etre cree.
+      if (consentGiven && currentUser?.id && clientId) {
+        await recordConsentInsert({ clientId, coachId: currentUser.id });
+      }
+
       setSaveError("");
 
       // Chantier Prospects : si le bilan provient d'un prospect, on le convertit.
@@ -1147,6 +1159,26 @@ export function NewAssessmentPage() {
   // dans l URL, on affiche un banner discret + on bypasse l insert DB
   // au submit final (handle dans handleSubmit / handleSaveAssessment).
   const isDemoMode = searchParams.get("demo") === "academy";
+
+  // RGPD Phase 1 (2026-04-30) : popup obligatoire au mount, sauf demo Academy.
+  // Le consentement local debloque le wizard. INSERT differe au save
+  // (handleSaveAssessment) avec le clientId.
+  if (!isDemoMode && !consentGiven) {
+    const fakeClient = {
+      id: "pending",
+      firstName: form.firstName.trim() || "ton client·e",
+      lastName: form.lastName.trim() || "",
+    } as Client;
+    return (
+      <ConsentDialog
+        client={fakeClient}
+        open={true}
+        skipDbInsert
+        onConsented={() => setConsentGiven(true)}
+        onCancel={() => navigate("/clients")}
+      />
+    );
+  }
 
   return (
     <div className="flex flex-col xl:flex-row xl:gap-6">

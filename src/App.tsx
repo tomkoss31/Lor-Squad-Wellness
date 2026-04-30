@@ -149,6 +149,8 @@ const SharePage = lazy(() =>
     default: module.SharePage,
   })),
 );
+const LegalNoticePage = lazy(() => import("./pages/LegalNoticePage"));
+const PrivacyPolicyPage = lazy(() => import("./pages/PrivacyPolicyPage"));
 const BienvenuePage = lazy(() =>
   import("./pages/BienvenuePage").then((module) => ({
     default: module.BienvenuePage
@@ -283,6 +285,9 @@ export default function App() {
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
           <Route path="/partage/:token" element={<SharePage />} />
+          {/* Pages legales (RGPD Phase 1 — 2026-04-30) — accessibles sans auth */}
+          <Route path="/legal/mentions" element={<LegalNoticePage />} />
+          <Route path="/legal/confidentialite" element={<PrivacyPolicyPage />} />
           <Route element={<PublicRoute />}>
             <Route path="/login" element={<LoginPage />} />
           </Route>
