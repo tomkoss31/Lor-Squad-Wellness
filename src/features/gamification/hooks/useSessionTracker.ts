@@ -58,6 +58,16 @@ export function useSessionTracker() {
         }
         if (cancelled) return;
 
+        // Cleanup auto des sessions stale du user (audit 2026-04-30) :
+        // ferme les sessions sans ended_at vieilles de > 30 min pour
+        // eviter l inflation des stats "today_seconds" (cap 4h par session).
+        try {
+          await sb.rpc("cleanup_stale_sessions", { p_user_id: userId });
+        } catch (err) {
+          console.warn("[useSessionTracker] cleanup_stale_sessions skipped:", err);
+        }
+        if (cancelled) return;
+
         // Anti-spam court : si une session a ete demarree il y a < 5s par cet onglet,
         // on ne re-cree pas (cas refresh / navigation rapide).
         const lastStartStr = sessionStorage.getItem("ls-last-session-start");
