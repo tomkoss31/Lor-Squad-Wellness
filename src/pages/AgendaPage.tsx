@@ -1,7 +1,6 @@
 import { startTransition, useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "../components/ui/Button";
-import { Card } from "../components/ui/Card";
 import { EmptyState } from "../components/ui/EmptyState";
 // PageHeading remplace par le hero premium (2026-04-29)
 import { ProspectCard } from "../components/prospect/ProspectCard";
