@@ -126,6 +126,10 @@ export interface User {
   coachReferentUserId?: string | null;
   /** Objectif PV mensuel (jauge Co-pilote). Default 13000. Chantier 2026-04-29. */
   monthly_pv_target?: number;
+  /** URL avatar (bucket user-avatars). Chantier 2026-04-30. */
+  avatarUrl?: string | null;
+  /** Bio courte (max 200 chars). Chantier 2026-04-30. */
+  bio?: string | null;
 }
 
 export interface AuthSession {

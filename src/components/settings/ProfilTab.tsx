@@ -13,6 +13,7 @@ import { useToast } from "../../context/ToastContext";
 import { getSupabaseClient } from "../../services/supabaseClient";
 import { XpProgressCard } from "../../features/gamification/components/XpProgressCard";
 import { UserActivityPanel } from "../../features/gamification/components/UserActivityPanel";
+import { AvatarUploader } from "./AvatarUploader";
 import {
   HERBALIFE_ID_UNIFIED_REGEX,
   HERBALIFE_ID_PATTERN,
@@ -55,6 +56,9 @@ export function ProfilTab() {
       ? String(currentUser.monthly_pv_target)
       : "13000",
   );
+  // Avatar + bio (V2 — 2026-04-30)
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(currentUser?.avatarUrl ?? null);
+  const [bio, setBio] = useState(currentUser?.bio ?? "");
   // Travail 3 (2026-04-27) : tous les users actifs sont eligibles, sauf
   // soi-meme. Un distri peut choisir un autre distri (sponsor) comme
   // coach referent.
@@ -133,6 +137,8 @@ export function ProfilTab() {
           sponsor_id: sponsorNormalized || null,
           coach_referent_user_id: coachReferentUserId || null,
           monthly_pv_target: pvTargetNum,
+          // V2 (2026-04-30) : bio (avatar_url est save par AvatarUploader directement)
+          bio: bio.trim() || null,
         })
         .eq("id", currentUser!.id);
       if (updateErr) throw new Error(updateErr.message);
@@ -199,35 +205,81 @@ export function ProfilTab() {
       {currentUser?.id ? <UserActivityPanel userId={currentUser.id} /> : null}
 
       <Card className="space-y-5">
-        <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-          <div
+        {/* Avatar uploader (V2 — 2026-04-30) */}
+        <AvatarUploader
+          currentUrl={avatarUrl}
+          initials={initials}
+          onUploaded={(url) => setAvatarUrl(url)}
+          onRemoved={() => setAvatarUrl(null)}
+        />
+
+        <div style={{ borderTop: "0.5px dashed var(--ls-border)", paddingTop: 14 }}>
+          <p style={{ fontFamily: "Syne, sans-serif", fontSize: 18, fontWeight: 700, margin: 0 }}>
+            {currentUser.name}
+          </p>
+          <p style={{ fontSize: 12, color: "var(--ls-text-muted)", margin: 0, marginTop: 2 }}>
+            {currentUser.role === "admin"
+              ? "Administrateur"
+              : currentUser.role === "referent"
+                ? "Référent"
+                : "Distributeur"}
+          </p>
+        </div>
+
+        {/* Bio (V2 — 2026-04-30) */}
+        <div>
+          <label
             style={{
-              width: 54,
-              height: 54,
-              borderRadius: "50%",
-              background: "linear-gradient(135deg, #2DD4BF, #0D9488)",
-              color: "#FFFFFF",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontFamily: "Syne, sans-serif",
+              display: "block",
+              fontSize: 11,
               fontWeight: 700,
-              fontSize: 20,
+              color: "var(--ls-text-muted)",
+              textTransform: "uppercase",
+              letterSpacing: 1.2,
+              marginBottom: 6,
+              fontFamily: "DM Sans, sans-serif",
             }}
           >
-            {initials}
-          </div>
-          <div style={{ minWidth: 0, flex: 1 }}>
-            <p style={{ fontFamily: "Syne, sans-serif", fontSize: 18, fontWeight: 700, margin: 0 }}>
-              {currentUser.name}
-            </p>
-            <p style={{ fontSize: 12, color: "var(--ls-text-muted)", margin: 0, marginTop: 2 }}>
-              {currentUser.role === "admin"
-                ? "Administrateur"
-                : currentUser.role === "referent"
-                  ? "Référent"
-                  : "Distributeur"}
-            </p>
+            Bio courte (max 200 caractères)
+          </label>
+          <textarea
+            value={bio}
+            onChange={(e) => setBio(e.target.value.slice(0, 200))}
+            placeholder="Ex: Coach Herbalife passionnée par le bien-être. J'accompagne mes clients depuis 2020..."
+            rows={3}
+            style={{
+              width: "100%",
+              padding: "10px 12px",
+              background: "var(--ls-surface2)",
+              border: "0.5px solid var(--ls-border)",
+              borderRadius: 12,
+              fontSize: 13,
+              fontFamily: "DM Sans, sans-serif",
+              color: "var(--ls-text)",
+              resize: "vertical",
+              outline: "none",
+              minHeight: 70,
+              boxSizing: "border-box",
+            }}
+            onFocus={(e) => {
+              e.currentTarget.style.borderColor = "color-mix(in srgb, var(--ls-gold) 50%, transparent)";
+              e.currentTarget.style.boxShadow = "0 0 0 3px color-mix(in srgb, var(--ls-gold) 14%, transparent)";
+            }}
+            onBlur={(e) => {
+              e.currentTarget.style.borderColor = "var(--ls-border)";
+              e.currentTarget.style.boxShadow = "none";
+            }}
+          />
+          <div
+            style={{
+              fontSize: 10.5,
+              color: bio.length > 180 ? "var(--ls-coral)" : "var(--ls-text-hint)",
+              marginTop: 4,
+              fontFamily: "DM Sans, sans-serif",
+              textAlign: "right",
+            }}
+          >
+            {bio.length} / 200
           </div>
         </div>
 
