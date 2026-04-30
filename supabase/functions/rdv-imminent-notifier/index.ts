@@ -35,8 +35,11 @@ serve(async (req) => {
 
   const sb = getServiceClient();
   const now = new Date();
-  const windowStart = new Date(now.getTime() + 55 * 60 * 1000).toISOString();
-  const windowEnd = new Date(now.getTime() + 65 * 60 * 1000).toISOString();
+  // Hotfix I/O budget (2026-04-30) : fenetre elargie [+30min, +90min] pour
+  // accompagner le cron passe de 5 min -> 30 min (cf migration 20260430220000).
+  // Coach recoit sa notif entre 30 min et 1h30 avant le RDV.
+  const windowStart = new Date(now.getTime() + 30 * 60 * 1000).toISOString();
+  const windowEnd = new Date(now.getTime() + 90 * 60 * 1000).toISOString();
 
   try {
     // ─── 1. Follow-ups clients ────────────────────────────────────────────
