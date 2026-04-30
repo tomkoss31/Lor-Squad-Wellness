@@ -21,6 +21,7 @@ import { useNavigate } from "react-router-dom";
 import { ExplainerModal } from "../components/bienvenue/ExplainerModal";
 import { MagicLinkFallback } from "../components/bienvenue/MagicLinkFallback";
 import { InstallPwaInstructions } from "../components/pwa/InstallPwaInstructions";
+import { InstallPwaTutorialModal } from "../components/pwa/InstallPwaTutorialModal";
 import { isStandalonePwa } from "../lib/utils/detectDevice";
 import { getSupabaseClient } from "../services/supabaseClient";
 
@@ -417,6 +418,9 @@ function InstallPwaStep({
   onContinue: () => void;
   clientPhone?: string | null;
 }) {
+  // V2 (2026-04-30) : ajout tuto modale pas-a-pas avec illustrations SVG.
+  // Mendy a galere a installer la PWA — ce tuto guide visuellement.
+  const [showTutorial, setShowTutorial] = useState(false);
   return (
     <div
       style={{
@@ -451,6 +455,51 @@ function InstallPwaStep({
         <strong>installe l'app sur ton téléphone</strong>. Comme ça, tu la
         retrouves en 1 clic, comme une vraie appli.
       </p>
+
+      {/* CTA tuto guide visuel (V2 2026-04-30) — recommande pour les
+          users qui ne savent pas installer une PWA */}
+      <button
+        type="button"
+        onClick={() => setShowTutorial(true)}
+        style={{
+          width: "100%",
+          padding: "14px 18px",
+          marginBottom: 14,
+          borderRadius: 14,
+          border: "0.5px solid rgba(255,255,255,0.30)",
+          background:
+            "linear-gradient(135deg, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0.08) 100%)",
+          color: "#FDECC0",
+          fontFamily: "DM Sans, sans-serif",
+          fontSize: 14,
+          fontWeight: 700,
+          cursor: "pointer",
+          display: "inline-flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 10,
+          transition: "transform 0.15s ease, background 0.15s ease",
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.transform = "translateY(-1px)";
+          e.currentTarget.style.background =
+            "linear-gradient(135deg, rgba(255,255,255,0.28) 0%, rgba(255,255,255,0.12) 100%)";
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.transform = "none";
+          e.currentTarget.style.background =
+            "linear-gradient(135deg, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0.08) 100%)";
+        }}
+      >
+        🎬 Voir le tuto guidé pas-à-pas
+      </button>
+      {showTutorial && (
+        <InstallPwaTutorialModal
+          open={true}
+          onClose={() => setShowTutorial(false)}
+          firstName={firstName}
+        />
+      )}
 
       <div
         style={{
