@@ -36,8 +36,9 @@ const SUB_TITLE_STYLE: React.CSSProperties = {
 };
 
 export function SportSummarySection({ client }: Props) {
-  if (client.objective !== "sport") return null;
-
+  // Audit 2026-04-30 : early return DEPLACE apres les hooks (rules-of-hooks).
+  // Avant : le if/return etait avant useMemo/useState → React crash en cas
+  // de basculement client.objective entre 2 renders.
   const latest = useMemo(() => {
     if (!client.assessments?.length) return null;
     return [...client.assessments].sort(
@@ -53,6 +54,9 @@ export function SportSummarySection({ client }: Props) {
   const waterML = weight > 0 ? computeWaterTargetSport(weight, freq) : 0;
 
   const [trainingDay, setTrainingDay] = useState<"sport" | "repos">("sport");
+
+  // Garde-fou apres hooks (etait avant les hooks → bug rules-of-hooks).
+  if (client.objective !== "sport") return null;
 
   const programId = (latest?.programId as ProgramChoiceId | undefined) ?? "sport-premium";
   const program = getProgramById(programId);

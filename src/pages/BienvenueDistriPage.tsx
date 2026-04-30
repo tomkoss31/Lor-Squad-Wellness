@@ -7,6 +7,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getSupabaseClient } from "../services/supabaseClient";
+import { extractFunctionError } from "../lib/utils/extractFunctionError";
 
 type Step = 0 | 1 | 2;
 
@@ -182,10 +183,10 @@ export function BienvenueDistriPage() {
       });
 
       if (error || !data?.success) {
-        const msg =
-          (data?.error as string | undefined) ??
-          error?.message ??
-          "Impossible de créer ton accès.";
+        // Hotfix 2026-04-30 : extraction body via helper (supabase-js v2.101+
+        // ne renvoie plus le body dans data quand status est 4xx/5xx).
+        const msg = await extractFunctionError(data, error, "Impossible de créer ton accès.");
+        console.warn("[BienvenueDistriPage] consume failed:", { data, error, msg });
         setFormError(msg);
         return;
       }
