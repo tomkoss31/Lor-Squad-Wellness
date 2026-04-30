@@ -12,6 +12,7 @@ import { useAppContext } from "../../context/AppContext";
 import { useToast } from "../../context/ToastContext";
 import { getSupabaseClient } from "../../services/supabaseClient";
 import { XpProgressCard } from "../../features/gamification/components/XpProgressCard";
+import { UserActivityPanel } from "../../features/gamification/components/UserActivityPanel";
 import {
   HERBALIFE_ID_UNIFIED_REGEX,
   HERBALIFE_ID_PATTERN,
@@ -191,6 +192,11 @@ export function ProfilTab() {
     <div className="space-y-4">
       {/* Gamification 5 (2026-04-29) : niveau + XP en haut du profil. */}
       <XpProgressCard />
+
+      {/* V2 ProfilTab (2026-04-30) : panel activite (sessions, streak,
+          temps passe) inline pour que chaque distri voie ses propres stats
+          sans aller dans /team. */}
+      {currentUser?.id ? <UserActivityPanel userId={currentUser.id} /> : null}
 
       <Card className="space-y-5">
         <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
