@@ -77,10 +77,17 @@ export function ClientVipSandbox({
     // Total cumul
     const totalPv = myPvTotal + friendsPvTotal;
 
-    // Determine niveau
+    // Determine niveau (V2 fix Thomas — 2026-04-30)
+    // Avant : 'totalPv >= 1000 && monthsCount <= 3' bloquait Ambassador sur
+    // les simulations longues. Faux car le palier Ambassador Herbalife =
+    // 1000 PV sur 3 mois consecutifs (rythme mensuel x 3 >= 1000).
+    // Maintenant : on teste le rythme mensuel projete sur 3 mois.
+    const monthlyPvAvg = monthsCount > 0 ? totalPv / monthsCount : 0;
+    const projected3m = monthlyPvAvg * 3;
+
     let level: VipLevel = "bronze"; // au moins bronze car >0
     let discount = 15;
-    if (totalPv >= 1000 && monthsCount <= 3) {
+    if (projected3m >= 1000) {
       level = "ambassador";
       discount = 42;
     } else if (totalPv >= 500) {
@@ -651,6 +658,27 @@ function ResultPanel({
           </div>
         </div>
       </div>
+
+      {/* Mention 50% distri actif (V2 — 2026-04-30) */}
+      {calc.level === "ambassador" && (
+        <div
+          style={{
+            marginTop: 12,
+            padding: "10px 12px",
+            background: "rgba(124, 58, 237, 0.08)",
+            border: "0.5px dashed rgba(124, 58, 237, 0.40)",
+            borderRadius: 10,
+            fontSize: 11.5,
+            color: "#5B21B6",
+            lineHeight: 1.5,
+          }}
+        >
+          <strong>💎 Tu peux aller plus loin :</strong> en devenant{" "}
+          <strong>distributeur actif</strong>, ta remise passe à{" "}
+          <strong>-50 %</strong> + tu gagnes des commissions sur tes filleuls.
+          Parle-en à ton coach.
+        </div>
+      )}
     </div>
   );
 }
