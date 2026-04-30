@@ -14,6 +14,8 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { usePvActionPlan, type PvStatus } from "../../hooks/usePvActionPlan";
+import { useAppContext } from "../../context/AppContext";
+import { MessageTemplatesModal } from "../client-detail/MessageTemplatesModal";
 
 interface Props {
   userId: string | null | undefined;
@@ -43,6 +45,10 @@ const STATUS_META: Record<PvStatus, { label: string; tone: string; icon: string;
 export function PvActionPlanCard({ userId }: Props) {
   const { data, loading, error, reload } = usePvActionPlan(userId);
   const [showAll, setShowAll] = useState(false);
+  // Relance multi-canal au click bouton (V2 — 2026-04-30)
+  const { getClientById } = useAppContext();
+  const [relanceClientId, setRelanceClientId] = useState<string | null>(null);
+  const relanceClient = relanceClientId ? getClientById(relanceClientId) ?? null : null;
 
   const totalSuggestions = useMemo(() => {
     if (!data) return 0;
@@ -222,6 +228,7 @@ export function PvActionPlanCard({ userId }: Props) {
                   detail={`${c.monthly_avg_pv} PV/mois en moyenne · ${c.days_since}j sans commande`}
                   pvHint={`+${Math.round(c.monthly_avg_pv * 0.6)} PV potentiel`}
                   tone="gold"
+                  onRelance={() => setRelanceClientId(c.client_id)}
                 />
               ))}
             </Section>
@@ -240,6 +247,7 @@ export function PvActionPlanCard({ userId }: Props) {
                   }`}
                   pvHint={`+${Math.round(c.pv_estimated * 0.7)} PV potentiel`}
                   tone="teal"
+                  onRelance={() => setRelanceClientId(c.client_id)}
                 />
               ))}
             </Section>
@@ -255,6 +263,7 @@ export function PvActionPlanCard({ userId }: Props) {
                   name={c.client_name}
                   detail={`${c.days_silent}j sans message`}
                   tone="purple"
+                  onRelance={() => setRelanceClientId(c.client_id)}
                 />
               ))}
             </Section>
@@ -314,6 +323,15 @@ export function PvActionPlanCard({ userId }: Props) {
           </div>
         </div>
       ) : null}
+      {/* Modale relance multi-canal (V2 — 2026-04-30) */}
+      {relanceClient && (
+        <MessageTemplatesModal
+          client={relanceClient}
+          open={true}
+          onClose={() => setRelanceClientId(null)}
+          preselectedTemplateId="relance-douce"
+        />
+      )}
     </div>
   );
 }
@@ -354,25 +372,25 @@ function SuggestionRow({
   detail,
   pvHint,
   tone,
+  onRelance,
 }: {
   clientId: string;
   name: string;
   detail: string;
   pvHint?: string;
   tone: "gold" | "teal" | "purple";
+  onRelance?: () => void;
 }) {
   return (
-    <Link
-      to={`/pv?client=${encodeURIComponent(clientId)}`}
+    <div
       style={{
         display: "flex",
         alignItems: "center",
-        gap: 10,
+        gap: 8,
         padding: "8px 10px",
         background: `color-mix(in srgb, var(--ls-${tone}) 6%, var(--ls-surface2))`,
         border: `0.5px solid color-mix(in srgb, var(--ls-${tone}) 25%, transparent)`,
         borderRadius: 8,
-        textDecoration: "none",
         fontFamily: "DM Sans, sans-serif",
         transition: "background 120ms ease",
       }}
@@ -383,54 +401,95 @@ function SuggestionRow({
         e.currentTarget.style.background = `color-mix(in srgb, var(--ls-${tone}) 6%, var(--ls-surface2))`;
       }}
     >
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div
-          style={{
-            fontSize: 12,
-            fontWeight: 600,
-            color: "var(--ls-text)",
-            whiteSpace: "nowrap",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-          }}
-        >
-          {name}
-        </div>
-        <div
-          style={{
-            fontSize: 10,
-            color: "var(--ls-text-muted)",
-            marginTop: 1,
-            whiteSpace: "nowrap",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-          }}
-        >
-          {detail}
-        </div>
-      </div>
-      {pvHint ? (
-        <span
-          style={{
-            fontSize: 10,
-            fontWeight: 700,
-            color: `var(--ls-${tone})`,
-            flexShrink: 0,
-            fontFamily: "Syne, sans-serif",
-          }}
-        >
-          {pvHint}
-        </span>
-      ) : null}
-      <span
+      <Link
+        to={`/pv?client=${encodeURIComponent(clientId)}`}
         style={{
-          fontSize: 12,
-          color: "var(--ls-text-hint)",
-          flexShrink: 0,
+          flex: 1,
+          minWidth: 0,
+          textDecoration: "none",
+          color: "inherit",
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
         }}
       >
-        →
-      </span>
-    </Link>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div
+            style={{
+              fontSize: 12,
+              fontWeight: 600,
+              color: "var(--ls-text)",
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+            }}
+          >
+            {name}
+          </div>
+          <div
+            style={{
+              fontSize: 10,
+              color: "var(--ls-text-muted)",
+              marginTop: 1,
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+            }}
+          >
+            {detail}
+          </div>
+        </div>
+        {pvHint ? (
+          <span
+            style={{
+              fontSize: 10,
+              fontWeight: 700,
+              color: `var(--ls-${tone})`,
+              flexShrink: 0,
+              fontFamily: "Syne, sans-serif",
+            }}
+          >
+            {pvHint}
+          </span>
+        ) : null}
+      </Link>
+      {/* Bouton Relancer (V2 — 2026-04-30) — ouvre modale message multi-canal */}
+      {onRelance && (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onRelance();
+          }}
+          aria-label={`Relancer ${name}`}
+          title="Envoyer un message"
+          style={{
+            flexShrink: 0,
+            width: 28, height: 28,
+            borderRadius: 999,
+            border: `0.5px solid color-mix(in srgb, var(--ls-${tone}) 40%, transparent)`,
+            background: `color-mix(in srgb, var(--ls-${tone}) 14%, transparent)`,
+            color: `var(--ls-${tone})`,
+            cursor: "pointer",
+            fontSize: 12,
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            transition: "transform 0.15s ease, background 0.15s ease",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = "scale(1.1)";
+            e.currentTarget.style.background = `color-mix(in srgb, var(--ls-${tone}) 28%, transparent)`;
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = "none";
+            e.currentTarget.style.background = `color-mix(in srgb, var(--ls-${tone}) 14%, transparent)`;
+          }}
+        >
+          💬
+        </button>
+      )}
+    </div>
   );
 }
