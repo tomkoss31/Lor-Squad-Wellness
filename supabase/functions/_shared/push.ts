@@ -60,7 +60,8 @@ export type EntityType =
   | "followup"
   | "prospect_meeting"
   | "client_message"
-  | "morning_digest";
+  | "morning_digest"
+  | "coach_tip";
 
 export interface SendPushOptions {
   userId: string;
