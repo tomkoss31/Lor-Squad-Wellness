@@ -42,6 +42,7 @@ export function PvGaugeBand({
   const convColor = conversionTone(conversionRate);
 
   return (
+    // eslint-disable-next-line jsx-a11y/no-static-element-interactions -- Hover effect on band, no onClick at root
     <div
       className="pv-gauge-band"
       data-tour-id="pv-gauge"

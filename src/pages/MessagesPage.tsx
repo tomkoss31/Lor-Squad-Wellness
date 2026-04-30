@@ -112,6 +112,7 @@ function MessageCard({
   const isHot = isUnread && !isArchived;
 
   return (
+    // eslint-disable-next-line jsx-a11y/no-static-element-interactions -- Hover effect only, button/link inside handle interaction
     <div
       className="ls-msg-card"
       style={{

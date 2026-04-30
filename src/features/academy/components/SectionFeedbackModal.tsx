@@ -93,6 +93,8 @@ export function SectionFeedbackModal({
 
   return (
     <div
+      role="presentation"
+      aria-hidden="true"
       onClick={skip}
       style={{
         position: "fixed",
@@ -106,6 +108,7 @@ export function SectionFeedbackModal({
         padding: 16,
       }}
     >
+      {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events -- stopPropagation only, dialog role on element */}
       <div
         role="dialog"
         aria-modal="true"

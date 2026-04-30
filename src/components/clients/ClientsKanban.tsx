@@ -291,7 +291,15 @@ function ClientCardPresentation({
 
   return (
     <div
+      role="button"
+      tabIndex={0}
       onClick={onCardClick}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onCardClick?.();
+        }
+      }}
       onMouseEnter={(e) => {
         if (!isDragging) {
           e.currentTarget.style.transform = "translateY(-1px)";

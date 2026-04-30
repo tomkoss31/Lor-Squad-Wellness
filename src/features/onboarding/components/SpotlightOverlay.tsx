@@ -32,11 +32,15 @@ export function SpotlightOverlay({
   // 4 rectangles autour de la cible pour laisser passer le spotlight.
   if (!targetRect) {
     return (
+      // eslint-disable-next-line jsx-a11y/no-static-element-interactions -- Dynamic role (button when onDismiss, presentation otherwise)
       <div
         role={onDismiss ? "button" : "presentation"}
         aria-label={onDismiss ? "Fermer" : undefined}
         tabIndex={onDismiss ? 0 : undefined}
         onClick={onDismiss}
+        onKeyDown={onDismiss ? (e) => {
+          if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onDismiss(); }
+        } : undefined}
         style={{
           position: "fixed",
           inset: 0,
@@ -130,12 +134,16 @@ function OverlayBand({
   onDismiss?: () => void;
 }) {
   return (
+    // eslint-disable-next-line jsx-a11y/no-static-element-interactions -- Dynamic role (button when onDismiss, presentation otherwise)
     <div
       role={onDismiss ? "button" : "presentation"}
       aria-label={onDismiss ? "Fermer le tutoriel" : undefined}
       tabIndex={onDismiss ? 0 : undefined}
       aria-hidden={!onDismiss}
       onClick={onDismiss}
+      onKeyDown={onDismiss ? (e) => {
+        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onDismiss(); }
+      } : undefined}
       style={{
         position: "fixed",
         background: "rgba(10, 15, 25, 0.6)",

@@ -80,6 +80,7 @@ export function InstallPwaTutorialModal({ open, onClose, deviceOverride, firstNa
           .ls-pwa-pulse, .ls-pwa-bounce { animation: none !important; }
         }
       `}</style>
+      {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events -- Backdrop click, ESC at dialog level */}
       <div
         className="ls-pwa-overlay"
         role="dialog"

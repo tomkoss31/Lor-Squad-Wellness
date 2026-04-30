@@ -1291,6 +1291,7 @@ function TeamHeroStats({
         }}
       >
         {stats.map((s) => (
+          // eslint-disable-next-line jsx-a11y/no-static-element-interactions -- Hover effect only
           <div
             key={s.label}
             style={{

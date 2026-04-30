@@ -205,6 +205,7 @@ export function ClientPublicShareConsent({ clientId, clientFirstName }: Props) {
       </div>
 
       {modalOpen ? (
+        // eslint-disable-next-line jsx-a11y/click-events-have-key-events -- Backdrop, ESC at dialog level
         <div
           role="dialog"
           aria-modal="true"
@@ -220,6 +221,7 @@ export function ClientPublicShareConsent({ clientId, clientFirstName }: Props) {
             padding: 16,
           }}
         >
+          {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- stopPropagation only */}
           <div
             onClick={(e) => e.stopPropagation()}
             style={{

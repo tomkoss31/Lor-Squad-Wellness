@@ -131,7 +131,10 @@ export function MessageTemplatesModal({
   const fname = (client.firstName || "").trim() || "ce client";
 
   return (
+    // Audit a11y 2026-04-30 : backdrop souris (ESC clavier au niveau dialog).
     <div
+      role="presentation"
+      aria-hidden="true"
       onClick={onClose}
       style={{
         position: "fixed",
@@ -145,6 +148,7 @@ export function MessageTemplatesModal({
         padding: 16,
       }}
     >
+      {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- stopPropagation only */}
       <div
         onClick={(e) => e.stopPropagation()}
         style={{

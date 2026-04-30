@@ -270,6 +270,10 @@ function ToggleRow({
 }) {
   return (
     <div
+      role="switch"
+      tabIndex={0}
+      aria-checked={checked}
+      aria-label={label}
       style={{
         padding: "14px 18px",
         display: "flex",
@@ -279,6 +283,12 @@ function ToggleRow({
         cursor: "pointer",
       }}
       onClick={() => onChange(!checked)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onChange(!checked);
+        }
+      }}
     >
       <span style={{ fontSize: 22, flexShrink: 0 }}>{emoji}</span>
       <div style={{ flex: 1, minWidth: 0 }}>

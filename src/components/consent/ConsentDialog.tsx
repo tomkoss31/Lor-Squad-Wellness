@@ -159,6 +159,7 @@ export function ConsentDialog({ client, open, onConsented, onCancel, skipDbInser
           .ls-consent-overlay, .ls-consent-panel, .ls-consent-shake { animation: none !important; }
         }
       `}</style>
+      {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events -- Backdrop, ESC handled at dialog level */}
       <div
         className="ls-consent-overlay"
         role="dialog"
@@ -370,13 +371,23 @@ export function ConsentDialog({ client, open, onConsented, onCancel, skipDbInser
               ⚠️ Lor'Squad Wellness n'est pas un service médical. Les conseils prodigués par ton coach Herbalife indépendant ne remplacent pas un avis professionnel de santé.
             </p>
 
-            {/* Case a cocher */}
+            {/* Case a cocher (audit a11y 2026-04-30 : role checkbox + keyboard) */}
             <div
               ref={checkboxRef}
+              role="checkbox"
+              aria-checked={checked}
+              tabIndex={0}
               className={showError ? "ls-consent-shake" : ""}
               onClick={() => {
                 setChecked((v) => !v);
                 setShowError(false);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === " " || e.key === "Enter") {
+                  e.preventDefault();
+                  setChecked((v) => !v);
+                  setShowError(false);
+                }
               }}
               style={{
                 padding: "14px 16px",

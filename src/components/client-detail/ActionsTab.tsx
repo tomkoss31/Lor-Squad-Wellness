@@ -1198,6 +1198,7 @@ function EditCoordinatesModal({
   }
 
   return (
+    // eslint-disable-next-line jsx-a11y/click-events-have-key-events -- Backdrop, ESC at dialog level
     <div
       role="dialog"
       aria-modal="true"
@@ -1213,6 +1214,7 @@ function EditCoordinatesModal({
         zIndex: 1000,
       }}
     >
+      {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- stopPropagation only */}
       <div
         onClick={(e) => e.stopPropagation()}
         style={{

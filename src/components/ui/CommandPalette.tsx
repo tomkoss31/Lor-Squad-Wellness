@@ -236,6 +236,8 @@ export function CommandPalette() {
 
   return (
     <div
+      role="presentation"
+      aria-hidden="true"
       onClick={() => setOpen(false)}
       style={{
         position: "fixed",
@@ -249,6 +251,7 @@ export function CommandPalette() {
         padding: "12vh 16px 16px",
       }}
     >
+      {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events -- stopPropagation only, dialog role on element */}
       <div
         onClick={(e) => e.stopPropagation()}
         role="dialog"

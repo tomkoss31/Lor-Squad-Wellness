@@ -933,6 +933,7 @@ export function ClientDetailPage() {
             {allProducts.length > 0 ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {allProducts.map((product, idx) => (
+                  // eslint-disable-next-line jsx-a11y/no-static-element-interactions -- Hover effect only, not keyboard-interactive
                   <div
                     key={idx}
                     style={{
@@ -1107,6 +1108,7 @@ export function ClientDetailPage() {
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {upsells.map((r, idx) => (
+                  // eslint-disable-next-line jsx-a11y/no-static-element-interactions -- Hover effect only, not keyboard-interactive
                   <div
                     key={idx}
                     style={{

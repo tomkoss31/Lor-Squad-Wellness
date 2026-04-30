@@ -414,6 +414,7 @@ function SuggestionRow({
   onRelance?: () => void;
 }) {
   return (
+    // eslint-disable-next-line jsx-a11y/no-static-element-interactions -- Hover effect only, Link inside handles navigation
     <div
       style={{
         display: "flex",

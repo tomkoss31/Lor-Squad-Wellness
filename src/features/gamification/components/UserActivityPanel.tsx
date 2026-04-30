@@ -485,6 +485,7 @@ function DayDetailModal({
           to   { opacity: 1; transform: translateY(0) scale(1); }
         }
       `}</style>
+      {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events -- Backdrop click, ESC handled at dialog level */}
       <div
         role="dialog"
         aria-modal="true"

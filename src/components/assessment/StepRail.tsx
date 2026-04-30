@@ -305,6 +305,7 @@ export function StepRail({ currentStep, steps, onStepClick }: StepRailProps) {
               const interactive = !!onStepClick;
 
               return (
+                // eslint-disable-next-line jsx-a11y/no-static-element-interactions -- Hover/decorative, conditional click via interactive
                 <div
                   key={step + index}
                   style={{
