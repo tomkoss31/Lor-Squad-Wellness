@@ -1,6 +1,7 @@
 import { startTransition, useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "../components/ui/Button";
+import { ConfirmDialog } from "../components/ui/ConfirmDialog";
 import { EmptyState } from "../components/ui/EmptyState";
 // PageHeading remplace par le hero premium (2026-04-29)
 import { ProspectCard } from "../components/prospect/ProspectCard";
@@ -402,11 +403,11 @@ export function AgendaPage() {
     }
   }, [updateProspect, pushToast]);
 
-  const handleDelete = useCallback(async (prospect: Prospect) => {
-    // TODO (perf/UX) : remplacer window.confirm (bloque le thread principal
-    // synchrone) par une modale custom ou une toast annulable. Pour l'instant
-    // on garde le confirm natif — coûteux seulement sur l'action delete.
-    if (!window.confirm(`Supprimer le RDV avec ${prospect.firstName} ${prospect.lastName} ?`)) return;
+  // Audit 2026-04-30 : remplacement window.confirm par ConfirmDialog
+  // (modale custom theme-aware, ne bloque plus le thread principal).
+  const [confirmDelete, setConfirmDelete] = useState<Prospect | null>(null);
+
+  const performDelete = useCallback(async (prospect: Prospect) => {
     try {
       await deleteProspect(prospect.id);
       pushToast({ tone: "success", title: "RDV supprimé" });
@@ -415,6 +416,10 @@ export function AgendaPage() {
       pushToast(buildSupabaseErrorToast(err, "Impossible de supprimer ce prospect."));
     }
   }, [deleteProspect, pushToast]);
+
+  const handleDelete = useCallback((prospect: Prospect) => {
+    setConfirmDelete(prospect);
+  }, []);
 
   // Gradient time-of-day pour le hero (refonte premium 2026-04-29).
   // Reuse meme logique que ClockHeader pour coherence visuelle.
@@ -1067,6 +1072,23 @@ export function AgendaPage() {
         ))
       )}
       </div>
+
+      {/* Audit 2026-04-30 : ConfirmDialog remplace window.confirm pour le delete prospect */}
+      <ConfirmDialog
+        open={confirmDelete !== null}
+        title={confirmDelete ? `Supprimer le RDV de ${confirmDelete.firstName} ${confirmDelete.lastName} ?` : ""}
+        message="Cette action est irréversible. Le prospect et ses notes seront perdus."
+        confirmLabel="Supprimer"
+        cancelLabel="Annuler"
+        tone="danger"
+        onConfirm={() => {
+          if (confirmDelete) {
+            void performDelete(confirmDelete);
+            setConfirmDelete(null);
+          }
+        }}
+        onCancel={() => setConfirmDelete(null)}
+      />
 
       {/* Form modal */}
       {showForm && (

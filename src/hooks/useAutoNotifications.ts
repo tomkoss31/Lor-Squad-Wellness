@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { useAppContext } from '../context/AppContext'
 import { getSupabaseClient } from '../services/supabaseClient'
+import { extractFunctionError } from '../lib/utils/extractFunctionError'
 import { getPortfolioMetrics } from '../lib/portfolio'
 
 const NOTIF_CHECK_KEY = 'lor-notif-last-check'
@@ -77,9 +78,15 @@ export function useAutoNotifications() {
     try {
       const sb = await getSupabaseClient()
       if (sb) {
-        await sb.functions.invoke('send-push', {
+        const { data, error } = await sb.functions.invoke('send-push', {
           body: { user_id: currentUser.id, title, body, url, type }
         })
+        // Audit 2026-04-30 : log le vrai message d erreur si la function fail.
+        if (error) {
+          const msg = await extractFunctionError(data, error, "send-push failed")
+          console.warn(`[useAutoNotifications] ${type}:`, msg)
+          throw new Error(msg)
+        }
       }
     } catch {
       // Edge function pas encore déployée — fallback notif locale
