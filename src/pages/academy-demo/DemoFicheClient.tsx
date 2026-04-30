@@ -638,6 +638,8 @@ function FakeAccessModal({
 }) {
   return (
     <div
+      role="presentation"
+      aria-hidden="true"
       onClick={onClose}
       style={{
         position: "fixed",
@@ -650,6 +652,7 @@ function FakeAccessModal({
         padding: 16,
       }}
     >
+      {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events -- stopPropagation only, dialog role on element */}
       <div
         onClick={(e) => e.stopPropagation()}
         role="dialog"

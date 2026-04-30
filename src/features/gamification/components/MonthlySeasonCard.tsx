@@ -231,6 +231,7 @@ export function MonthlySeasonCard() {
                 {rest.map((r) => {
                   const isCurrentUser = currentUser?.id === r.userId;
                   return (
+                    // eslint-disable-next-line jsx-a11y/no-static-element-interactions -- Hover effect only
                     <div
                       key={r.userId}
                       style={{

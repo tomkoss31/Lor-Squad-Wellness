@@ -501,7 +501,6 @@ export function NewAssessmentPage() {
   // pour éviter toute fuite visuelle avant le prochain fetch.
   useEffect(() => {
     setCoachNotes(readCoachNotesDraft(prospectId));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [prospectId]);
 
   const persistCoachNotesLocal = (value: string) => {
@@ -2511,6 +2510,7 @@ export function NewAssessmentPage() {
                         const recById = new Map(recs.map((r) => [r.productId, r]));
                         const selectedCount = BOOSTERS.filter((b) => effectiveSelectedProductIds.includes(b.id)).length;
                         return (
+                          // eslint-disable-next-line jsx-a11y/no-static-element-interactions -- Hover effect only, buttons inside
                           <div
                             style={{
                               padding: "16px 18px",
@@ -2587,6 +2587,7 @@ export function NewAssessmentPage() {
                       })()}
 
                       {/* SOUS-BLOC 2 — Besoins detectes par le bilan */}
+                      {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions -- Hover effect only */}
                       <div
                         style={{
                           padding: "16px 18px",
@@ -2662,6 +2663,7 @@ export function NewAssessmentPage() {
 
                       {/* SOUS-BLOC 3 — Options en plus (upsells) */}
                       {recommendationPlan.optionalUpsells.length > 0 && (
+                        // eslint-disable-next-line jsx-a11y/no-static-element-interactions -- Hover effect only
                         <div
                           style={{
                             padding: "16px 18px",
@@ -2750,6 +2752,7 @@ export function NewAssessmentPage() {
                       }
                     />
 
+                    {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions -- Hover effect only */}
                     <div
                       style={{
                         padding: "20px 22px",

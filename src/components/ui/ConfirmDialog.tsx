@@ -60,9 +60,8 @@ export function ConfirmDialog({
 
   return (
     // Backdrop : a11y compatible — onClick pour souris + ESC global handler
-    // pour clavier (cf useEffect plus haut). role="presentation" indique que
-    // le backdrop lui-meme n est pas un control interactif semantique.
-    // eslint-disable-next-line jsx-a11y/click-events-have-key-events -- ESC handler at dialog level
+    // pour clavier (cf useEffect plus haut). role="presentation" silencie
+    // les warnings a11y sur cet element (non-interactif semantiquement).
     <div
       role="presentation"
       aria-hidden="true"
@@ -94,6 +93,7 @@ export function ConfirmDialog({
           .ls-confirm-card { animation: none !important; }
         }
       `}</style>
+      {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events -- stopPropagation only, dialog role on element */}
       <div
         className="ls-confirm-card"
         role="dialog"

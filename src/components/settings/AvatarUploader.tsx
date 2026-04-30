@@ -141,7 +141,16 @@ export function AvatarUploader({ currentUrl, initials, onUploaded, onRemoved }: 
     <div style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
       {/* Avatar preview */}
       <div
+        role="button"
+        tabIndex={0}
+        aria-label="Changer l'avatar"
         onClick={() => !uploading && inputRef.current?.click()}
+        onKeyDown={(e) => {
+          if ((e.key === "Enter" || e.key === " ") && !uploading) {
+            e.preventDefault();
+            inputRef.current?.click();
+          }
+        }}
         style={{
           position: "relative",
           width: 96,

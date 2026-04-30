@@ -380,6 +380,7 @@ export function ClientsPage() {
         }}
       >
         {/* Card principale BENTO — Visibles (plus grosse) */}
+        {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions -- Hover effect only, no onClick */}
         <div
           className="clients-stat-card-v3"
           style={{
@@ -450,6 +451,7 @@ export function ClientsPage() {
         </div>
 
         {/* Card 2 — Responsables */}
+        {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions -- Hover effect only, no onClick */}
         <div
           className="clients-stat-card-v3"
           style={{

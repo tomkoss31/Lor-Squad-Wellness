@@ -34,6 +34,8 @@ export function AcademyReminderDialog({ onClose }: { onClose: () => void }) {
 
   return (
     <div
+      role="presentation"
+      aria-hidden="true"
       onClick={handleLater}
       style={{
         position: "fixed",
@@ -46,6 +48,7 @@ export function AcademyReminderDialog({ onClose }: { onClose: () => void }) {
         padding: 16,
       }}
     >
+      {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events -- stopPropagation only, dialog role on element */}
       <div
         onClick={(e) => e.stopPropagation()}
         role="dialog"

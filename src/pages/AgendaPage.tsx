@@ -655,6 +655,7 @@ export function AgendaPage() {
             { icon: "📆", label: "Cette semaine", value: entityCounts.all, color: heroGradient.secondary },
             { icon: "🎯", label: "Suivis", value: entityCounts.followups, color: heroGradient.tertiary },
           ].map((s) => (
+            // eslint-disable-next-line jsx-a11y/no-static-element-interactions -- Hover effect only
             <div
               key={s.label}
               className="ls-agenda-stat"
