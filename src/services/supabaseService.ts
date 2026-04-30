@@ -1347,7 +1347,10 @@ export async function updateSupabaseUserAccess(
     body: JSON.stringify({
       userId,
       role: payload.role,
-      sponsorId: payload.role === "distributor" ? payload.sponsorId ?? null : null,
+      // Fix Thomas (2026-04-30) : referent peut aussi avoir un sponsor (chaine
+      // Herbalife). Avant : seulement les distributeurs. Resultat : passer un
+      // distri en referent supprimait son rattachement.
+      sponsorId: payload.role !== "admin" ? payload.sponsorId ?? null : null,
       title: getDefaultUserTitle(payload.role)
     })
   });
