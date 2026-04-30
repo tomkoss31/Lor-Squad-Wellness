@@ -25,6 +25,7 @@ import { PvGaugeBand } from "../components/copilote/PvGaugeBand";
 import { PvActionPlanAlert } from "../components/copilote/PvActionPlanAlert";
 import { InboxWidget } from "../components/copilote/InboxWidget";
 import { BirthdayBlock } from "../components/copilote/BirthdayBlock";
+import { CoachTipOfDayCard } from "../components/copilote/CoachTipOfDayCard";
 import { StreakBadge } from "../features/gamification/components/StreakBadge";
 import { WeeklyQuestsCard } from "../features/gamification/components/WeeklyQuestsCard";
 
@@ -105,6 +106,11 @@ export function CoPilotePage() {
         }
         coachFirstName={firstName || "ton coach"}
       />
+
+      {/* Tip du jour (2026-04-30) : 1 tip rotatif par jour deterministe.
+          Place ici (apres Birthday, avant Inbox) pour etre dans la zone
+          "ambient" sans concurrencer Hero/Action. */}
+      <CoachTipOfDayCard />
 
       {/* Widget messages (chantier 5) — conservé car complémentaire : Hero
           et Duo montrent RDV/suivis, l'Inbox montre les demandes clients. */}
