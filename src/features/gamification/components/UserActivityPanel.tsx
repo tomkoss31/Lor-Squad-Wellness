@@ -346,6 +346,74 @@ export function UserActivityPanel({ userId, variant = "full" }: Props) {
         </div>
       )}
 
+      {/* Device breakdown — V3 (2026-04-30) : split PC/Mobile/Tablet */}
+      {(stats.deviceBreakdown.desktop || stats.deviceBreakdown.mobile || stats.deviceBreakdown.tablet) && (
+        <div
+          style={{
+            padding: "12px 14px",
+            background: "var(--ls-surface2)",
+            borderRadius: 12,
+            border: "0.5px solid var(--ls-border)",
+            display: "flex",
+            gap: 8,
+            flexWrap: "wrap",
+            marginTop: 4,
+          }}
+        >
+          <div
+            style={{
+              fontSize: 10,
+              letterSpacing: 1.4,
+              textTransform: "uppercase",
+              fontWeight: 700,
+              color: "var(--ls-text-muted)",
+              fontFamily: "DM Sans, sans-serif",
+              width: "100%",
+              marginBottom: 2,
+            }}
+          >
+            Répartition par appareil
+          </div>
+          {([
+            { key: "desktop", emoji: "💻", label: "PC" },
+            { key: "mobile", emoji: "📱", label: "Mobile" },
+            { key: "tablet", emoji: "📱", label: "Tablette" },
+          ] as const).map((d) => {
+            const data = stats.deviceBreakdown[d.key];
+            if (!data || data.last_7d_seconds === 0) return null;
+            return (
+              <div
+                key={d.key}
+                style={{
+                  flex: "1 1 110px",
+                  padding: "8px 12px",
+                  background: "var(--ls-surface)",
+                  borderRadius: 10,
+                  border: "0.5px solid var(--ls-border)",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  minWidth: 0,
+                }}
+              >
+                <span style={{ fontSize: 18, flexShrink: 0 }}>{d.emoji}</span>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 10, color: "var(--ls-text-muted)", fontFamily: "DM Sans, sans-serif", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5 }}>
+                    {d.label}
+                  </div>
+                  <div style={{ fontFamily: "Syne, serif", fontSize: 14, fontWeight: 800, color: "var(--ls-text)", letterSpacing: "-0.01em" }}>
+                    {formatDuration(data.last_7d_seconds)}
+                  </div>
+                  <div style={{ fontSize: 10, color: "var(--ls-text-hint)", fontFamily: "DM Sans, sans-serif" }}>
+                    {data.sessions} session{data.sessions > 1 ? "s" : ""}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
       {/* Bonus : Lifetime + XP daily */}
       <div
         style={{
