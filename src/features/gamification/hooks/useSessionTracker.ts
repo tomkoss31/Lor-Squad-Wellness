@@ -18,7 +18,10 @@ import { useAppContext } from "../../../context/AppContext";
 import { getSupabaseClient } from "../../../services/supabaseClient";
 
 const MIN_NEW_SESSION_GAP_MS = 5_000; // 5s anti-spam (V2 reduit de 30s)
-const HEARTBEAT_INTERVAL_MS = 60_000; // 1 min pour update duration_seconds en live
+// Hotfix I/O budget Supabase (2026-04-30 soir) : passe de 1 min a 5 min
+// pour reduire 5x les ecritures sur user_sessions. Le user voit ses
+// stats update toutes les 5 min au lieu de 1 min — impact UX nul.
+const HEARTBEAT_INTERVAL_MS = 5 * 60_000; // 5 min
 
 /**
  * Detection device_type via navigator.userAgent (V3 — 2026-04-30).
