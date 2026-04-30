@@ -10,6 +10,15 @@ export interface DailyBreakdownEntry {
   seconds: number;
 }
 
+export interface DeviceBreakdownEntry {
+  today_seconds: number;
+  last_7d_seconds: number;
+  last_30d_seconds: number;
+  sessions: number;
+}
+
+export type DeviceType = "desktop" | "mobile" | "tablet";
+
 export interface UserActivityStats {
   loaded: boolean;
   error: string | null;
@@ -22,6 +31,8 @@ export interface UserActivityStats {
   streakCount: number;
   streakLastActive: string | null;
   totalSessions: number;
+  /** V3 (2026-04-30) : breakdown par device (desktop / mobile / tablet) */
+  deviceBreakdown: Partial<Record<DeviceType, DeviceBreakdownEntry>>;
 }
 
 const EMPTY: UserActivityStats = {
@@ -36,6 +47,7 @@ const EMPTY: UserActivityStats = {
   streakCount: 0,
   streakLastActive: null,
   totalSessions: 0,
+  deviceBreakdown: {},
 };
 
 export function useUserActivityStats(userId: string | null | undefined): UserActivityStats {
@@ -74,6 +86,7 @@ export function useUserActivityStats(userId: string | null | undefined): UserAct
           streak_count: number;
           streak_last_active: string | null;
           total_sessions: number;
+          device_breakdown: Partial<Record<DeviceType, DeviceBreakdownEntry>> | null;
         };
         setData({
           loaded: true,
@@ -87,6 +100,7 @@ export function useUserActivityStats(userId: string | null | undefined): UserAct
           streakCount: r.streak_count ?? 0,
           streakLastActive: r.streak_last_active ?? null,
           totalSessions: r.total_sessions ?? 0,
+          deviceBreakdown: (r.device_breakdown ?? {}) as Partial<Record<DeviceType, DeviceBreakdownEntry>>,
         });
       } catch (err) {
         if (cancelled) return;
