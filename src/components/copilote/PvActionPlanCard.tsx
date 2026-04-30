@@ -19,6 +19,10 @@ import { MessageTemplatesModal } from "../client-detail/MessageTemplatesModal";
 
 interface Props {
   userId: string | null | undefined;
+  /** Si true, masque le widget en cas d erreur (pas de bandeau rouge moche
+   *  qui pollue la page). Default false (affiche un message discret).
+   *  Utile quand le widget est un "bonus" non critique (page /pv). */
+  hideOnError?: boolean;
 }
 
 const STATUS_META: Record<PvStatus, { label: string; tone: string; icon: string; hint: string }> = {
@@ -42,7 +46,7 @@ const STATUS_META: Record<PvStatus, { label: string; tone: string; icon: string;
   },
 };
 
-export function PvActionPlanCard({ userId }: Props) {
+export function PvActionPlanCard({ userId, hideOnError = false }: Props) {
   const { data, loading, error, reload } = usePvActionPlan(userId);
   const [showAll, setShowAll] = useState(false);
   // Relance multi-canal au click bouton (V2 — 2026-04-30)
@@ -78,19 +82,47 @@ export function PvActionPlanCard({ userId }: Props) {
   }
 
   if (error) {
+    // Mode silencieux (page /pv) — on n affiche RIEN si le widget plante,
+    // l utilisateur n a pas besoin de voir un bandeau rouge sur une page
+    // dont le widget est juste un bonus.
+    if (hideOnError) return null;
+    // Mode visible (Co-pilote) — message discret + bouton retry.
     return (
       <div
         style={{
-          padding: 12,
-          background: "color-mix(in srgb, var(--ls-coral) 6%, transparent)",
-          border: "0.5px solid color-mix(in srgb, var(--ls-coral) 30%, transparent)",
-          borderRadius: 12,
-          fontSize: 11,
-          color: "var(--ls-coral)",
+          padding: "10px 12px",
+          background: "var(--ls-surface)",
+          border: "0.5px dashed var(--ls-border)",
+          borderRadius: 10,
+          fontSize: 11.5,
+          color: "var(--ls-text-muted)",
           fontFamily: "DM Sans, sans-serif",
+          display: "flex",
+          alignItems: "center",
+          gap: 10,
         }}
       >
-        ⚠ Plan PV indisponible : {error}
+        <span style={{ fontSize: 14, opacity: 0.6 }}>🎯</span>
+        <span style={{ flex: 1, lineHeight: 1.45 }}>
+          Plan PV pas dispo pour l'instant — {error}
+        </span>
+        <button
+          type="button"
+          onClick={() => void reload()}
+          style={{
+            padding: "4px 10px",
+            background: "transparent",
+            border: "0.5px solid var(--ls-border)",
+            borderRadius: 6,
+            fontSize: 11,
+            color: "var(--ls-text)",
+            cursor: "pointer",
+            fontFamily: "DM Sans, sans-serif",
+            whiteSpace: "nowrap",
+          }}
+        >
+          ↻ Réessayer
+        </button>
       </div>
     );
   }

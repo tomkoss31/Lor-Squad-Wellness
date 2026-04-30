@@ -202,7 +202,7 @@ export function PvOverviewPage() {
           visible ici car c'est l'endroit naturel pour piloter le volume.
           Sur le dashboard, seul un bandeau alerte conditionnel subsiste. */}
       {!selectedClientId && currentUser?.id ? (
-        <PvActionPlanCard userId={currentUser.id} />
+        <PvActionPlanCard userId={currentUser.id} hideOnError />
       ) : null}
 
       {/* Vue FICHE pleine page */}
