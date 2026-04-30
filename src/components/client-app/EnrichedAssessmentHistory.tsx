@@ -94,7 +94,7 @@ export function EnrichedAssessmentHistory({ metrics, programTitle, liveClientPro
     const dM = row.muscleMass - departure.muscleMass;
     const colW = getEvolutionColor(dW, "weight", objective);
     const colM = getEvolutionColor(dM, "muscle", objective);
-    const primaryDelta = objective === "sport-mass-gain" ? dM : dW;
+    // Audit 2026-04-30 : primaryDelta + void unreachable retires (dead code).
     const primaryCol = objective === "sport-mass-gain" ? colM : colW;
     const primaryLabel = objective === "sport-mass-gain" ? "Muscle" : "Poids";
     const primary = deltaString(
@@ -106,7 +106,6 @@ export function EnrichedAssessmentHistory({ metrics, programTitle, liveClientPro
         {primary}
       </span>
     );
-    void primaryDelta;
   }
 
   // ─── Mobile card render ─────────────────────────────────────────────

@@ -23,6 +23,7 @@ import { MagicLinkFallback } from "../components/bienvenue/MagicLinkFallback";
 import { InstallPwaInstructions } from "../components/pwa/InstallPwaInstructions";
 import { InstallPwaTutorialModal } from "../components/pwa/InstallPwaTutorialModal";
 import { isStandalonePwa } from "../lib/utils/detectDevice";
+import { extractFunctionError } from "../lib/utils/extractFunctionError";
 import { getSupabaseClient } from "../services/supabaseClient";
 
 type ValidationState =
@@ -135,9 +136,8 @@ export function BienvenuePage() {
       }
 
       // Hotfix 2026-04-30 : supabase-js v2.101+ ne renvoie plus le body
-      // d erreur dans `data` quand status est 4xx/5xx. Le body contient
-      // pourtant notre message clair { success: false, error: "..." }.
-      // On l extrait via error.context.response.json() avant fallback.
+      // d erreur dans `data` quand status est 4xx/5xx. On extrait via le
+      // helper extractFunctionError qui gere data.error / error.context.
       const { data, error } = await sb.functions.invoke("consume-invitation-token", {
         body: {
           token,
@@ -147,23 +147,7 @@ export function BienvenuePage() {
       });
 
       if (error || !data?.success) {
-        let msg = (data?.error as string | undefined);
-        if (!msg && error) {
-          // Tente de re-parser le body JSON de l erreur
-          try {
-            const ctx = (error as { context?: { response?: Response } }).context;
-            if (ctx?.response) {
-              const cloned = ctx.response.clone();
-              const body = await cloned.json().catch(() => null);
-              if (body && typeof body.error === "string") {
-                msg = body.error;
-              }
-            }
-          } catch { /* ignore */ }
-          if (!msg) msg = error.message;
-        }
-        if (!msg) msg = "Impossible de créer ton accès pour le moment.";
-        // Log pour Thomas en console pour debug fin
+        const msg = await extractFunctionError(data, error, "Impossible de créer ton accès pour le moment.");
         console.warn("[BienvenuePage] consume-invitation-token failed:", { data, error, msg });
         setFormError(msg);
         return;

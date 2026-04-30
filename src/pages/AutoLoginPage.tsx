@@ -7,6 +7,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getSupabaseClient } from "../services/supabaseClient";
+import { extractFunctionError } from "../lib/utils/extractFunctionError";
 
 type Phase =
   | { kind: "loading" }
@@ -36,9 +37,10 @@ export function AutoLoginPage() {
         const { data, error } = await sb.functions.invoke("consume-auto-login-token", {
           body: { token },
         });
-        if (error) throw new Error(error.message);
-        if (!data?.success) {
-          throw new Error((data?.error as string) || "Lien invalide.");
+        // Hotfix 2026-04-30 : extraction body avec helper (cas 4xx/5xx).
+        if (error || !data?.success) {
+          const msg = await extractFunctionError(data, error, "Lien invalide.");
+          throw new Error(msg);
         }
 
         const hashedToken = (data.hashed_token as string | null) ?? null;

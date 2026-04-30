@@ -50,7 +50,11 @@ export function InstallPwaInstructions({
   device?: DeviceKind;
   compact?: boolean;
 }) {
-  const resolvedDevice = device ?? useMemo(() => detectDevice(), []);
+  // Audit 2026-04-30 : useMemo etait appele conditionnellement via ??
+  // → rules-of-hooks. On l appelle TOUJOURS, et on prend `device` en
+  // override apres si fourni.
+  const detected = useMemo(() => detectDevice(), []);
+  const resolvedDevice = device ?? detected;
   const copy = COPY[resolvedDevice];
 
   return (
