@@ -43,6 +43,17 @@ export default defineConfig({
             return "router-vendor";
           }
 
+          // Audit 2026-04-30 : split de recharts et @dnd-kit qui sont des
+          // libs lourdes utilisees uniquement sur des pages lazy
+          // (AnalyticsPage, PvKanban, ClientsPage). Permet de retirer
+          // ~400 KB du bundle initial vendor.
+          if (id.includes("recharts")) {
+            return "recharts-vendor";
+          }
+          if (id.includes("@dnd-kit") || id.includes("@hello-pangea/dnd")) {
+            return "dnd-vendor";
+          }
+
           // Tout le reste va dans le chunk par defaut (vendor) sans
           // distinction. Vite optimise les imports automatiquement.
           return undefined;
