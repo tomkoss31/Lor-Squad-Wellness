@@ -1,4 +1,4 @@
-// useSessionTracker (2026-04-29) — tracking duree des sessions user.
+// useSessionTracker V2 (2026-04-30) — tracking duree des sessions user.
 //
 // Au mount du AppLayout :
 //   - Insert une row dans user_sessions (started_at = now())
@@ -7,16 +7,17 @@
 // Au unmount / blur / hidden :
 //   - Update la row avec ended_at = now() + duration_seconds calcule
 //
-// Anti-spam : on ne cree pas de nouvelle session si une est active
-// depuis moins de 30 secondes (= refresh navigation interne).
-//
-// Note : sur PWA, les events visibilitychange + beforeunload se complementent.
+// V2 (2026-04-30) :
+//   - Anti-spam reduit a 5s (au lieu de 30s) pour eviter les "trous" si
+//     un insert echoue
+//   - Logs explicites en cas d'erreur RLS / fetch
+//   - Verification que la session inseree existe avant heartbeat
 
 import { useEffect, useRef } from "react";
 import { useAppContext } from "../../../context/AppContext";
 import { getSupabaseClient } from "../../../services/supabaseClient";
 
-const MIN_NEW_SESSION_GAP_MS = 30_000; // 30s anti-spam refresh
+const MIN_NEW_SESSION_GAP_MS = 5_000; // 5s anti-spam (V2 reduit de 30s)
 const HEARTBEAT_INTERVAL_MS = 60_000; // 1 min pour update duration_seconds en live
 
 export function useSessionTracker() {
@@ -26,21 +27,37 @@ export function useSessionTracker() {
   const startedAtRef = useRef<number>(Date.now());
 
   useEffect(() => {
-    if (!userId) return;
+    if (!userId) {
+      console.info("[useSessionTracker] no userId yet, skipping");
+      return;
+    }
     let cancelled = false;
     let heartbeatTimer: number | null = null;
 
     async function startSession() {
       try {
-        // Anti-spam : si une session a ete demarree il y a < 30s par cet onglet,
+        const sb = await getSupabaseClient();
+        if (!sb) {
+          console.warn("[useSessionTracker] supabase client unavailable");
+          return;
+        }
+        if (cancelled) return;
+
+        // Anti-spam court : si une session a ete demarree il y a < 5s par cet onglet,
         // on ne re-cree pas (cas refresh / navigation rapide).
         const lastStartStr = sessionStorage.getItem("ls-last-session-start");
-        if (lastStartStr) {
+        const lastIdStr = sessionStorage.getItem("ls-last-session-id");
+        if (lastStartStr && lastIdStr) {
           const lastStart = parseInt(lastStartStr, 10);
           if (Date.now() - lastStart < MIN_NEW_SESSION_GAP_MS) {
-            // Reuse la session existante
-            const lastIdStr = sessionStorage.getItem("ls-last-session-id");
-            if (lastIdStr) {
+            // Verifier que la session existe encore en DB avant de reutiliser
+            const { data: existing } = await sb
+              .from("user_sessions")
+              .select("id")
+              .eq("id", lastIdStr)
+              .maybeSingle();
+            if (existing && !cancelled) {
+              console.info("[useSessionTracker] reuse session", lastIdStr);
               sessionIdRef.current = lastIdStr;
               startedAtRef.current = lastStart;
               return;
@@ -48,24 +65,25 @@ export function useSessionTracker() {
           }
         }
 
-        const sb = await getSupabaseClient();
-        if (!sb || cancelled) return;
+        // Insert nouvelle session
         const { data, error } = await sb
           .from("user_sessions")
           .insert({ user_id: userId })
           .select("id, started_at")
           .single();
         if (error) {
-          console.warn("[useSessionTracker] insert failed:", error.message);
+          console.error("[useSessionTracker] INSERT FAILED:", error.message, error);
           return;
         }
-        if (cancelled) return;
-        sessionIdRef.current = (data as { id: string }).id;
-        startedAtRef.current = new Date((data as { started_at: string }).started_at).getTime();
-        sessionStorage.setItem("ls-last-session-id", sessionIdRef.current);
+        if (cancelled || !data) return;
+        const inserted = data as { id: string; started_at: string };
+        sessionIdRef.current = inserted.id;
+        startedAtRef.current = new Date(inserted.started_at).getTime();
+        sessionStorage.setItem("ls-last-session-id", inserted.id);
         sessionStorage.setItem("ls-last-session-start", String(startedAtRef.current));
+        console.info("[useSessionTracker] new session created", inserted.id);
       } catch (err) {
-        console.warn("[useSessionTracker] start exception:", err);
+        console.error("[useSessionTracker] start exception:", err);
       }
     }
 
@@ -77,16 +95,18 @@ export function useSessionTracker() {
         if (!sb) return;
         const now = new Date();
         const duration = Math.max(1, Math.floor((now.getTime() - startedAtRef.current) / 1000));
-        await sb
+        const { error } = await sb
           .from("user_sessions")
           .update({
             ended_at: now.toISOString(),
             duration_seconds: duration,
           })
           .eq("id", id);
-        // Note : on ne nettoie pas sessionStorage ici car l onglet peut
-        // revenir actif (visibilitychange show) et on veut reutiliser.
-        void reason;
+        if (error) {
+          console.warn("[useSessionTracker] end UPDATE failed:", error.message);
+        } else {
+          console.info(`[useSessionTracker] session ended (${reason}, ${duration}s)`);
+        }
       } catch (err) {
         console.warn("[useSessionTracker] end exception:", err);
       }
@@ -100,11 +120,13 @@ export function useSessionTracker() {
         if (!sb) return;
         const now = Date.now();
         const duration = Math.max(1, Math.floor((now - startedAtRef.current) / 1000));
-        // On update duration_seconds sans poser ended_at (la session est toujours active)
-        await sb
+        const { error } = await sb
           .from("user_sessions")
           .update({ duration_seconds: duration })
           .eq("id", id);
+        if (error) {
+          console.warn("[useSessionTracker] heartbeat UPDATE failed:", error.message);
+        }
       } catch (err) {
         console.warn("[useSessionTracker] heartbeat exception:", err);
       }
@@ -117,33 +139,18 @@ export function useSessionTracker() {
       void heartbeat();
     }, HEARTBEAT_INTERVAL_MS);
 
-    // Visibility change : fermer quand l onglet devient hidden
+    // Visibility change : update duration quand l onglet devient hidden
     const handleVisibility = () => {
       if (document.visibilityState === "hidden") {
-        void endSession("visibility-hidden");
+        void heartbeat(); // update sans set ended_at (l onglet peut revenir)
+      } else if (document.visibilityState === "visible" && sessionIdRef.current === null) {
+        // Si l'onglet redevient visible et qu'on a pas de session, on recree
+        void startSession();
       }
     };
-    // beforeunload : fermer quand le user ferme l onglet / navigate away
+    // beforeunload : finaliser duration_seconds
     const handleBeforeUnload = () => {
-      // Synchronous final update avec navigator.sendBeacon si dispo
-      const id = sessionIdRef.current;
-      if (!id) return;
-      const now = Date.now();
-      const duration = Math.max(1, Math.floor((now - startedAtRef.current) / 1000));
-      // sendBeacon est plus fiable que fetch pendant un unload
-      try {
-        const blob = new Blob(
-          [JSON.stringify({ ended_at: new Date().toISOString(), duration_seconds: duration })],
-          { type: "application/json" },
-        );
-        // Pas d API direct sur Supabase pour update via beacon → on tente l update normal
-        // qui peut etre coupe, mais ca passe la majorite du temps. Le heartbeat
-        // a aussi maintenu duration_seconds a jour avant.
-        void blob;
-        void endSession("beforeunload");
-      } catch {
-        // ignore
-      }
+      void endSession("beforeunload");
     };
 
     document.addEventListener("visibilitychange", handleVisibility);
