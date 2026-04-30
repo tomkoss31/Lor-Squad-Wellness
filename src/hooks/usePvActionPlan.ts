@@ -82,7 +82,16 @@ export function usePvActionPlan(userId: string | null | undefined): UsePvActionP
       if (rpcError) throw rpcError;
       setData(result as PvActionPlan);
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Erreur inconnue";
+      // Extraction d erreur robuste — PostgrestError n est PAS une instance
+      // d Error donc err.message etait toujours undefined → "Erreur inconnue"
+      // Hotfix 2026-04-30 : on sniff toutes les formes possibles.
+      const errObj = err as { message?: string; details?: string; hint?: string; code?: string } | null;
+      const msg =
+        (errObj && typeof errObj.message === "string" && errObj.message.trim()) ||
+        (errObj && typeof errObj.details === "string" && errObj.details.trim()) ||
+        (errObj && typeof errObj.hint === "string" && errObj.hint.trim()) ||
+        (errObj && typeof errObj.code === "string" && `Code ${errObj.code}`) ||
+        "Service indisponible — réessaie dans 30s.";
       console.warn("[usePvActionPlan] fetch failed:", err);
       setError(msg);
     } finally {
