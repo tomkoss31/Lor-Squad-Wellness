@@ -98,9 +98,9 @@ function getClientReferenceDate(client: Client) {
     return client.startDate;
   }
 
-  const firstAssessment = [...client.assessments]
-    .sort((left, right) => new Date(left.date).getTime() - new Date(right.date).getTime())
-    [0];
+  const firstAssessment = [...client.assessments].sort(
+    (left, right) => new Date(left.date).getTime() - new Date(right.date).getTime(),
+  )[0];
 
   return firstAssessment?.date ?? client.nextFollowUp;
 }

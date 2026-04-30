@@ -4,6 +4,7 @@
 
 import { useEffect, useState } from "react";
 import { getSupabaseClient } from "../../services/supabaseClient";
+import { extractFunctionError } from "../../lib/utils/extractFunctionError";
 
 interface Props {
   open: boolean;
@@ -52,13 +53,14 @@ export function ProspectFormModal({ open, onClose }: Props) {
       const { data, error } = await sb.functions.invoke("submit-prospect-lead", {
         body: { first_name: firstName.trim(), phone: phone.trim(), city: city.trim() || undefined },
       });
-      if (error) throw new Error(error.message);
-      if (!data?.success) {
-        const msg =
-          data?.error === "rate_limited"
-            ? "Trop de tentatives — merci de réessayer dans une heure."
-            : (data?.error as string) || "Erreur inconnue.";
-        throw new Error(msg);
+      // Hotfix 2026-04-30 : extraction body via helper (cas 4xx/5xx
+      // supabase-js v2.101+).
+      if (error || !data?.success) {
+        const raw = await extractFunctionError(data, error, "Erreur inconnue.");
+        const friendly = raw === "rate_limited"
+          ? "Trop de tentatives — merci de réessayer dans une heure."
+          : raw;
+        throw new Error(friendly);
       }
       setPhase("success");
     } catch (e) {
