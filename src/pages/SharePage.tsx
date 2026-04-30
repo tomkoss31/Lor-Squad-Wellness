@@ -13,6 +13,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { getSupabaseClient } from "../services/supabaseClient";
+import { extractFunctionError } from "../lib/utils/extractFunctionError";
 
 interface ResolvedData {
   client_first_name: string;
@@ -80,10 +81,15 @@ export function SharePage() {
       const { data: resp, error: err } = await sb.functions.invoke("resolve-public-share", {
         body: { token },
       });
-      if (err) throw err;
-      const r = resp as { valid: boolean; reason?: string; data?: ResolvedData };
-      if (!r.valid || !r.data) {
-        setError(reasonToMessage(r.reason ?? null));
+      // Audit 2026-04-30 : extraction body via helper (cas 4xx/5xx).
+      const r = (resp ?? {}) as { valid?: boolean; reason?: string; data?: ResolvedData };
+      if (err || !r.valid || !r.data) {
+        if (r.reason) {
+          setError(reasonToMessage(r.reason));
+          return;
+        }
+        const msg = await extractFunctionError(resp, err, "Lien non valide.");
+        setError(msg);
         return;
       }
       setData(r.data);

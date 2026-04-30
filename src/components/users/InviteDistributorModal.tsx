@@ -5,6 +5,7 @@
 import { useEffect, useState } from "react";
 import { getSupabaseClient } from "../../services/supabaseClient";
 import { useToast } from "../../context/ToastContext";
+import { extractFunctionError } from "../../lib/utils/extractFunctionError";
 
 interface Props {
   open: boolean;
@@ -70,8 +71,11 @@ export function InviteDistributorModal({ open, onClose, onCreated }: Props) {
       const { data, error } = await sb.functions.invoke("generate-distributor-invite-token", {
         body: { first_name: firstName.trim(), phone: phone.trim() },
       });
-      if (error) throw new Error(error.message || "Erreur serveur.");
-      if (!data?.token) throw new Error((data?.error as string) || "Réponse invalide.");
+      // Audit 2026-04-30 : extraction body via helper (cas 4xx/5xx).
+      if (error || !data?.token) {
+        const msg = await extractFunctionError(data, error, "Réponse invalide.");
+        throw new Error(msg);
+      }
       setGenerated({ token: data.token, expires_at: data.expires_at });
       onCreated?.();
     } catch (e) {

@@ -10,6 +10,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { getSupabaseClient } from "../../services/supabaseClient";
 import { useToast } from "../../context/ToastContext";
+import { extractFunctionError } from "../../lib/utils/extractFunctionError";
 
 interface Props {
   clientId: string;
@@ -84,20 +85,21 @@ export function SharePublicButton({
           const { data, error } = await sb.functions.invoke("create-public-share-token", {
             body: { client_id: clientId },
           });
-          if (error) throw error;
-          const r = data as {
-            success: boolean;
+          // Audit 2026-04-30 : extraction body via helper (cas 4xx/5xx).
+          const r = (data ?? {}) as {
+            success?: boolean;
             token?: string;
             expires_at?: string;
             view_count?: number;
             error?: string;
             reason?: string;
           };
-          if (!r.success || !r.token || !r.expires_at) {
+          if (error || !r.success || !r.token || !r.expires_at) {
             if (r.reason === "client_did_not_consent") {
               throw new Error("Consentement client manquant ou révoqué.");
             }
-            throw new Error(r.error ?? "Création du lien impossible.");
+            const msg = await extractFunctionError(data, error, "Création du lien impossible.");
+            throw new Error(msg);
           }
           tokenRow = {
             token: r.token,
