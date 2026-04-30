@@ -16,6 +16,7 @@ import { getFollowUpsDue, type FollowUpDueItem } from "../lib/followUpProtocolSc
 import { FOLLOW_UP_PROTOCOL, type FollowUpStep } from "../data/followUpProtocol";
 import { logSupabaseFollowUpProtocolStep } from "../services/supabaseService";
 import { FollowUpStepModal } from "../components/follow-up/FollowUpStepModal";
+import { LegalFooter } from "../components/ui/LegalFooter";
 
 type DateFilter = "today" | "week" | "all";
 type StatusFilter = "upcoming" | "done" | "converted" | "cold" | "lost_no_show" | "all";
@@ -1134,6 +1135,7 @@ export function AgendaPage() {
           />
         );
       })()}
+      <LegalFooter />
     </div>
   );
 }

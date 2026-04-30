@@ -4,6 +4,7 @@ import { useAppContext } from '../context/AppContext'
 import { useGlobalView } from '../hooks/useGlobalView'
 // GlobalViewToggle retire 2026-04-29 (toggle inutile en haut de page)
 import { Card } from '../components/ui/Card'
+import { LegalFooter } from '../components/ui/LegalFooter'
 // PageHeading remplace par hero premium (2026-04-29)
 import { ReplyMessageModal } from '../components/messaging/ReplyMessageModal'
 import { StartConversationModal } from '../components/messages/StartConversationModal'
@@ -696,6 +697,7 @@ export function MessagesPage() {
         onClose={() => setReplyTarget(null)}
         parent={replyTarget}
       />
+      <LegalFooter />
     </div>
   )
 }

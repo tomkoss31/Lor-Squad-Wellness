@@ -6,6 +6,7 @@ import { QuickFiltersBar } from "../components/clients/QuickFiltersBar";
 import { ClientsKanban } from "../components/clients/ClientsKanban";
 import { BulkMessageModal } from "../components/clients/BulkMessageModal";
 import { EmptyState } from "../components/ui/EmptyState";
+import { LegalFooter } from "../components/ui/LegalFooter";
 import { useAppContext } from "../context/AppContext";
 import { getAccessibleOwnerIds } from "../lib/auth";
 import {
@@ -1186,6 +1187,7 @@ export function ClientsPage() {
           onClose={() => setBulkMessageOpen(false)}
         />
       ) : null}
+      <LegalFooter />
     </div>
   );
 }
