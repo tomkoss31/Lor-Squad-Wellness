@@ -50,6 +50,8 @@ type UserRow = {
   herbalife_id?: string | null;
   coach_referent_user_id?: string | null;
   monthly_pv_target?: number | null;
+  avatar_url?: string | null;
+  bio?: string | null;
 };
 
 type AssessmentRow = {
@@ -307,7 +309,9 @@ function mapUser(row: UserRow): User {
     lastAccessAt: row.last_access_at ?? undefined,
     herbalifeId: row.herbalife_id ?? null,
     coachReferentUserId: row.coach_referent_user_id ?? null,
-    monthly_pv_target: row.monthly_pv_target ?? undefined
+    monthly_pv_target: row.monthly_pv_target ?? undefined,
+    avatarUrl: row.avatar_url ?? null,
+    bio: row.bio ?? null,
   };
 }
 
