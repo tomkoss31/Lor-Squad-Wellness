@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAppContext } from '../context/AppContext'
 import { useGlobalView } from '../hooks/useGlobalView'
 // GlobalViewToggle retire 2026-04-29 (toggle inutile en haut de page)
-import { Card } from '../components/ui/Card'
+import { EmptyState } from '../components/ui/EmptyState'
 import { LegalFooter } from '../components/ui/LegalFooter'
 // PageHeading remplace par hero premium (2026-04-29)
 import { ReplyMessageModal } from '../components/messaging/ReplyMessageModal'
@@ -647,29 +647,42 @@ export function MessagesPage() {
 
       {/* Messages */}
       {activeMessages.length === 0 ? (
-        <Card>
-          <div style={{ textAlign: 'center', padding: '32px 0' }}>
-            <div style={{ fontSize: 32, marginBottom: 12, opacity: 0.4 }}>
-              {tab === 'products' ? '🛒' : tab === 'recommendations' ? '👥' : '📅'}
-            </div>
-            <div style={{ fontSize: 14, color: 'var(--ls-text-muted)', marginBottom: 4 }}>
-              {filters.query.trim()
-                ? `Aucun résultat pour « ${filters.query} ».`
-                : filters.status === 'archived'
-                  ? 'Aucun message archivé.'
-                  : filters.status === 'resolved'
-                    ? 'Aucun message traité.'
-                    : tab === 'products'
-                      ? 'Aucune demande de produit'
-                      : tab === 'recommendations'
-                        ? 'Aucune recommandation'
-                        : 'Aucune demande client'}
-            </div>
-            <div style={{ fontSize: 12, color: 'var(--ls-text-hint)' }}>
-              {filters.query.trim() ? 'Essaie une autre recherche.' : 'Les nouveaux messages apparaîtront ici.'}
-            </div>
-          </div>
-        </Card>
+        <EmptyState
+          emoji={
+            filters.query.trim() ? '🔍'
+            : filters.status === 'archived' ? '🗄️'
+            : filters.status === 'resolved' ? '✅'
+            : tab === 'products' ? '🛒'
+            : tab === 'recommendations' ? '🤝'
+            : '💬'
+          }
+          title={
+            filters.query.trim()
+              ? `Aucun résultat pour « ${filters.query} »`
+              : filters.status === 'archived'
+                ? "Aucun message archivé"
+                : filters.status === 'resolved'
+                  ? "Tu es à jour 🎉"
+                  : tab === 'products'
+                    ? "Aucune demande produit"
+                    : tab === 'recommendations'
+                      ? "Aucune recommandation"
+                      : "Boîte de réception vide"
+          }
+          description={
+            filters.query.trim()
+              ? "Essaie une autre recherche, ou enlève le filtre actif pour élargir."
+              : filters.status === 'archived'
+                ? "Les messages archivés s'empilent ici. Tant qu'il n'y en a pas, c'est bon signe."
+                : filters.status === 'resolved'
+                  ? "Tous tes messages sont traités. Profite-en pour relancer un client dormant ou poster une story."
+                  : tab === 'products'
+                    ? "Tes clients commanderont via leur app, et les demandes apparaîtront ici en temps réel."
+                    : tab === 'recommendations'
+                      ? "Les contacts recommandés par tes clients arriveront ici. Pense à demander 1 reco par RDV."
+                      : "Aucun nouveau message côté client. Profite de ce calme pour bosser ta routine."
+          }
+        />
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {activeMessages.map(msg => {
