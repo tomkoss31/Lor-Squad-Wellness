@@ -1,8 +1,9 @@
-// UserActivityPanel (2026-04-29) — bloc activite distri pour vue admin.
-// Affiche : statut connexion, dernière connexion, streak, temps passe (today
-// + 7j + 30j) et mini-graph 7 jours.
+// UserActivityPanel V2 (2026-04-30) — bloc activite distri pour vue admin.
+// Click sur une barre du graph -> popup detail du jour (sessions + durees).
 
+import { useEffect, useState } from "react";
 import { useUserActivityStats } from "../hooks/useUserActivityStats";
+import { getSupabaseClient } from "../../../services/supabaseClient";
 
 interface Props {
   userId: string;
@@ -58,8 +59,70 @@ function statusInfo(stats: ReturnType<typeof useUserActivityStats>): {
   return { label: "Inactif depuis 1 sem+", color: "#DC2626", emoji: "🔴" };
 }
 
+interface DaySession {
+  id: string;
+  started_at: string;
+  ended_at: string | null;
+  duration_seconds: number | null;
+}
+
 export function UserActivityPanel({ userId, variant = "full" }: Props) {
   const stats = useUserActivityStats(userId);
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [daySessions, setDaySessions] = useState<DaySession[]>([]);
+  const [dayLoading, setDayLoading] = useState(false);
+
+  // Fetch sessions du jour selectionne
+  useEffect(() => {
+    if (!selectedDate || !userId) {
+      setDaySessions([]);
+      return;
+    }
+    let cancelled = false;
+    setDayLoading(true);
+    void (async () => {
+      try {
+        const sb = await getSupabaseClient();
+        if (!sb) return;
+        const startISO = `${selectedDate}T00:00:00Z`;
+        const endISO = `${selectedDate}T23:59:59Z`;
+        const { data, error } = await sb
+          .from("user_sessions")
+          .select("id, started_at, ended_at, duration_seconds")
+          .eq("user_id", userId)
+          .gte("started_at", startISO)
+          .lte("started_at", endISO)
+          .order("started_at", { ascending: true });
+        if (cancelled) return;
+        if (error) {
+          console.warn("[UserActivityPanel] day sessions fetch failed:", error.message);
+          setDaySessions([]);
+        } else {
+          setDaySessions((data ?? []) as DaySession[]);
+        }
+      } finally {
+        if (!cancelled) setDayLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedDate, userId]);
+
+  // ESC ferme la modale + body scroll lock
+  useEffect(() => {
+    if (!selectedDate) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setSelectedDate(null);
+    };
+    window.addEventListener("keydown", handler);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      window.removeEventListener("keydown", handler);
+      document.body.style.overflow = prev;
+    };
+  }, [selectedDate]);
 
   if (!stats.loaded) {
     return (
@@ -219,11 +282,28 @@ export function UserActivityPanel({ userId, variant = "full" }: Props) {
               const heightPct = maxSeconds > 0 ? (day.seconds / maxSeconds) * 100 : 0;
               const isToday = day.date === new Date().toISOString().slice(0, 10);
               const dateLabel = new Date(day.date).toLocaleDateString("fr-FR", { weekday: "short" });
+              const isClickable = day.seconds > 0;
               return (
-                <div
+                <button
                   key={day.date}
-                  style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 6, minWidth: 0 }}
-                  title={`${dateLabel} : ${formatDuration(day.seconds)}`}
+                  type="button"
+                  onClick={() => isClickable && setSelectedDate(day.date)}
+                  disabled={!isClickable}
+                  style={{
+                    flex: 1, display: "flex", flexDirection: "column",
+                    alignItems: "center", gap: 6, minWidth: 0,
+                    background: "transparent", border: "none", padding: 0,
+                    cursor: isClickable ? "pointer" : "default",
+                    fontFamily: "inherit",
+                    transition: "transform 0.15s ease",
+                  }}
+                  onMouseEnter={(e) => {
+                    if (isClickable) e.currentTarget.style.transform = "translateY(-2px)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = "none";
+                  }}
+                  title={isClickable ? `${dateLabel} : ${formatDuration(day.seconds)} — clique pour le détail` : `${dateLabel} : aucune activité`}
                 >
                   <div
                     style={{
@@ -259,7 +339,7 @@ export function UserActivityPanel({ userId, variant = "full" }: Props) {
                   >
                     {dateLabel.slice(0, 3)}
                   </div>
-                </div>
+                </button>
               );
             })}
           </div>
@@ -297,7 +377,229 @@ export function UserActivityPanel({ userId, variant = "full" }: Props) {
           +{stats.lifetimeLoginCount * 5} XP
         </div>
       </div>
+
+      {/* Modale detail jour (V2 — 2026-04-30) */}
+      {selectedDate && (
+        <DayDetailModal
+          date={selectedDate}
+          sessions={daySessions}
+          loading={dayLoading}
+          onClose={() => setSelectedDate(null)}
+        />
+      )}
     </div>
+  );
+}
+
+function DayDetailModal({
+  date, sessions, loading, onClose,
+}: {
+  date: string;
+  sessions: DaySession[];
+  loading: boolean;
+  onClose: () => void;
+}) {
+  const totalSec = sessions.reduce((sum, s) => {
+    const dur = s.duration_seconds ?? (s.ended_at ? Math.floor((new Date(s.ended_at).getTime() - new Date(s.started_at).getTime()) / 1000) : 0);
+    return sum + (dur > 0 ? dur : 0);
+  }, 0);
+
+  const dateLabel = new Date(date).toLocaleDateString("fr-FR", {
+    weekday: "long", day: "numeric", month: "long", year: "numeric",
+  });
+
+  return (
+    <>
+      <style>{`
+        @keyframes ls-day-fade-in { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes ls-day-slide-up {
+          from { opacity: 0; transform: translateY(16px) scale(0.96); }
+          to   { opacity: 1; transform: translateY(0) scale(1); }
+        }
+      `}</style>
+      <div
+        role="dialog"
+        aria-modal="true"
+        onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+        style={{
+          position: "fixed",
+          inset: 0,
+          zIndex: 6000,
+          background: "color-mix(in srgb, var(--ls-bg) 75%, transparent)",
+          backdropFilter: "blur(6px)",
+          WebkitBackdropFilter: "blur(6px)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: 16,
+          fontFamily: "DM Sans, sans-serif",
+          animation: "ls-day-fade-in 0.18s ease-out",
+        }}
+      >
+        <div
+          style={{
+            background: "var(--ls-surface)",
+            border: "0.5px solid color-mix(in srgb, var(--ls-teal) 30%, var(--ls-border))",
+            borderRadius: 18,
+            width: "100%",
+            maxWidth: 440,
+            maxHeight: "calc(100vh - 32px)",
+            overflowY: "auto",
+            WebkitOverflowScrolling: "touch",
+            boxShadow: "0 24px 64px -16px rgba(0,0,0,0.40)",
+            animation: "ls-day-slide-up 0.32s cubic-bezier(0.22,1,0.36,1)",
+          }}
+        >
+          {/* HEADER */}
+          <div
+            style={{
+              padding: "16px 20px",
+              background: "linear-gradient(135deg, var(--ls-teal) 0%, color-mix(in srgb, var(--ls-teal) 70%, #000) 100%)",
+              color: "#FFFFFF",
+              display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12,
+            }}
+          >
+            <div style={{ minWidth: 0 }}>
+              <div style={{ fontSize: 10, letterSpacing: 1.6, textTransform: "uppercase", fontWeight: 800, color: "rgba(255,255,255,0.90)" }}>
+                Détail du jour
+              </div>
+              <div style={{ fontFamily: "Syne, serif", fontSize: 18, fontWeight: 800, marginTop: 2, letterSpacing: "-0.01em", textTransform: "capitalize" }}>
+                {dateLabel}
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="Fermer"
+              style={{
+                width: 32, height: 32, flexShrink: 0,
+                borderRadius: 999,
+                border: "1px solid rgba(255,255,255,0.30)",
+                background: "rgba(255,255,255,0.18)",
+                color: "#FFFFFF",
+                cursor: "pointer",
+                fontSize: 16,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                transition: "transform 0.15s ease",
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.transform = "rotate(90deg)"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.transform = "none"; }}
+            >
+              ✕
+            </button>
+          </div>
+
+          {/* BODY */}
+          <div style={{ padding: 18 }}>
+            {/* Total + sessions count */}
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr",
+                gap: 10,
+                marginBottom: 14,
+              }}
+            >
+              <div style={{ padding: "12px 14px", borderRadius: 12, background: "var(--ls-surface2)", border: "0.5px solid var(--ls-border)", borderLeft: "3px solid var(--ls-teal)" }}>
+                <div style={{ fontSize: 10, letterSpacing: 1, textTransform: "uppercase", color: "var(--ls-text-muted)", fontWeight: 600, marginBottom: 4 }}>
+                  ⏱️ Total
+                </div>
+                <div style={{ fontFamily: "Syne, serif", fontSize: 22, fontWeight: 800, color: "var(--ls-text)", letterSpacing: "-0.02em" }}>
+                  {formatDuration(totalSec)}
+                </div>
+              </div>
+              <div style={{ padding: "12px 14px", borderRadius: 12, background: "var(--ls-surface2)", border: "0.5px solid var(--ls-border)", borderLeft: "3px solid var(--ls-purple)" }}>
+                <div style={{ fontSize: 10, letterSpacing: 1, textTransform: "uppercase", color: "var(--ls-text-muted)", fontWeight: 600, marginBottom: 4 }}>
+                  🔢 Sessions
+                </div>
+                <div style={{ fontFamily: "Syne, serif", fontSize: 22, fontWeight: 800, color: "var(--ls-text)", letterSpacing: "-0.02em" }}>
+                  {sessions.length}
+                </div>
+              </div>
+            </div>
+
+            {/* Liste sessions */}
+            <div style={{ fontSize: 10, letterSpacing: 1.4, textTransform: "uppercase", fontWeight: 700, color: "var(--ls-text-muted)", marginBottom: 8, fontFamily: "DM Sans, sans-serif" }}>
+              Sessions de la journée
+            </div>
+            {loading ? (
+              <div style={{ padding: 16, textAlign: "center", color: "var(--ls-text-muted)", fontSize: 13 }}>
+                Chargement…
+              </div>
+            ) : sessions.length === 0 ? (
+              <div
+                style={{
+                  padding: "16px 14px",
+                  textAlign: "center",
+                  background: "var(--ls-surface2)",
+                  borderRadius: 10,
+                  border: "0.5px dashed var(--ls-border)",
+                  fontSize: 12,
+                  color: "var(--ls-text-muted)",
+                }}
+              >
+                Aucune session enregistrée ce jour.
+              </div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                {sessions.map((s, idx) => {
+                  const start = new Date(s.started_at);
+                  const end = s.ended_at ? new Date(s.ended_at) : null;
+                  const dur = s.duration_seconds ?? (end ? Math.floor((end.getTime() - start.getTime()) / 1000) : 0);
+                  const startTime = start.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+                  const endTime = end ? end.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }) : "en cours";
+                  return (
+                    <div
+                      key={s.id}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 10,
+                        padding: "10px 12px",
+                        background: "var(--ls-surface2)",
+                        borderRadius: 10,
+                        border: "0.5px solid var(--ls-border)",
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: 26, height: 26, flexShrink: 0,
+                          borderRadius: 999,
+                          background: "color-mix(in srgb, var(--ls-teal) 18%, var(--ls-surface))",
+                          color: "var(--ls-teal)",
+                          display: "flex", alignItems: "center", justifyContent: "center",
+                          fontSize: 11, fontWeight: 800,
+                          fontFamily: "Syne, serif",
+                        }}
+                      >
+                        {idx + 1}
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 12.5, fontWeight: 600, color: "var(--ls-text)", fontFamily: "DM Sans, sans-serif" }}>
+                          {startTime} → {endTime}
+                        </div>
+                      </div>
+                      <div
+                        style={{
+                          fontFamily: "Syne, serif",
+                          fontSize: 14,
+                          fontWeight: 800,
+                          color: "var(--ls-teal)",
+                          letterSpacing: "-0.02em",
+                          flexShrink: 0,
+                        }}
+                      >
+                        {formatDuration(dur)}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </>
   );
 }
 
