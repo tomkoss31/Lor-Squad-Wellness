@@ -37,7 +37,7 @@ const TIPS: Array<{ emoji: string; text: string }> = [
   { emoji: '🚀', text: "Fact : 90 % des distributeurs au top font leur shake matin avant 9h. Coïncidence ?" },
   { emoji: '📲', text: "Tu réponds à un client en moins de 2h ? Tu multiplies par 3 sa probabilité d'achat." },
   { emoji: '✨', text: "Chaque bug que tu remontes = une feature de plus la semaine d'après. Promis." },
-  { emoji: '🥤', text: "Le Formula 1 vanille + une cuillère de PDM chocolat = combo qui change la vie." },
+  { emoji: '🥤', text: "Le Formula 1 cookies-cream + un peu de PPP + lait d'amande = goûter qui ferme la porte au grignotage." },
   { emoji: '🔥', text: "Un client en pause depuis 20 jours, c'est pas perdu. C'est juste qu'il attend ton message." },
   { emoji: '🧠', text: "Le savais-tu ? Le sommeil est le 4ème pilier. Pas de résultat sans 7h minimum." },
   { emoji: '🏆', text: "L'Ambassadeur VIP, c'est 3 mois consécutifs > 1000 PV. Pas plus, pas moins." },
