@@ -165,7 +165,7 @@ const BienvenueDistriPage = lazy(() =>
 );
 // Chantier Refonte Navigation (2026-04-22) : nouveau dashboard + placeholders.
 const CoPilotePage = lazy(() =>
-  import("./pages/CopilotePage").then((module) => ({
+  import("./pages/CoPilotePage").then((module) => ({
     default: module.CoPilotePage
   }))
 );

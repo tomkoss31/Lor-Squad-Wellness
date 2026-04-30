@@ -755,9 +755,13 @@ function UserInlineAttachmentForm({
     setSaving(true);
     setFeedback(null);
     try {
+      // Fix Thomas (2026-04-30) : permettre aux REFERENTS d'avoir un sponsor
+      // (chaine Herbalife). Avant : seulement distributeurs. Resultat : un
+      // referent passe en grade perdait son rattachement et disparaissait
+      // de l'arbre 'Mon equipe' du sponsor.
       const result = await onSave({
         role,
-        sponsorId: role === "distributor" ? sponsorId || undefined : undefined,
+        sponsorId: role !== "admin" ? sponsorId || undefined : undefined,
       });
       if (result.ok) {
         setFeedback({ type: "ok", msg: "Enregistré" });
@@ -793,17 +797,17 @@ function UserInlineAttachmentForm({
         <select
           value={sponsorId}
           onChange={(e) => setSponsorId(e.target.value)}
-          disabled={role !== "distributor"}
+          disabled={role === "admin"}
           style={{
             padding: "8px 10px",
             border: "1px solid var(--ls-border)",
             borderRadius: 8,
             fontSize: 12,
-            background: role !== "distributor" ? "var(--ls-surface2)" : "var(--ls-surface)",
+            background: role === "admin" ? "var(--ls-surface2)" : "var(--ls-surface)",
             color: "var(--ls-text)",
             outline: "none",
             fontFamily: "DM Sans, sans-serif",
-            opacity: role !== "distributor" ? 0.5 : 1,
+            opacity: role === "admin" ? 0.5 : 1,
           }}
         >
           <option value="">— Choisir un sponsor —</option>
