@@ -194,6 +194,9 @@ export function BienvenuePage() {
           sur direction Welcome/Login. Mesh gradient + grain + stagger
           animations. */}
       <style>{`
+        /* Hotfix theme (2026-04-30) : default = DARK, html.theme-light = LIGHT
+           pour suivre la convention Lor'Squad et eviter "tout noir en mode
+           clair" sur l app installee. */
         .bienvenue-root {
           min-height: 100vh;
           min-height: 100dvh;
@@ -207,6 +210,36 @@ export function BienvenuePage() {
           overflow: hidden;
           font-family: 'DM Sans', sans-serif;
         }
+        html.theme-light .bienvenue-root {
+          background: #F7F5F0;
+          color: #0B0D11;
+        }
+        html.theme-light .bienvenue-blob-teal { opacity: 0.55; }
+        html.theme-light .bienvenue-blob-gold { opacity: 0.48; }
+        html.theme-light .bienvenue-grain { opacity: 0.035; }
+        /* Inputs FieldLarge — fallback theme-aware via class */
+        .bienvenue-field-input {
+          padding: 16px 16px;
+          border-radius: 12px;
+          background: rgba(255,255,255,0.04);
+          border: 1px solid rgba(201,168,76,0.22);
+          color: #F4E9CF;
+          font-size: 16px;
+          font-family: 'DM Sans', sans-serif;
+          outline: none;
+          transition: border-color 0.18s, box-shadow 0.18s, background 0.18s;
+        }
+        .bienvenue-field-input:focus {
+          border-color: rgba(239,159,39,0.6);
+          box-shadow: 0 0 0 4px rgba(239,159,39,0.12);
+        }
+        html.theme-light .bienvenue-field-input {
+          background: rgba(255,255,255,0.85);
+          border: 1px solid rgba(11,13,17,0.1);
+          color: #0B0D11;
+        }
+        .bienvenue-field-label { color: rgba(244,233,207,0.8); }
+        html.theme-light .bienvenue-field-label { color: rgba(11,13,17,0.65); }
         .bienvenue-blob {
           position: absolute;
           border-radius: 50%;
@@ -605,12 +638,8 @@ function FieldLarge({
   return (
     <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
       <span
-        style={{
-          fontSize: 13,
-          fontWeight: 500,
-          color: "rgba(244,233,207,0.8)",
-          letterSpacing: 0.3,
-        }}
+        className="bienvenue-field-label"
+        style={{ fontSize: 13, fontWeight: 500, letterSpacing: 0.3 }}
       >
         {label}
       </span>
@@ -620,16 +649,7 @@ function FieldLarge({
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         autoComplete={autoComplete}
-        style={{
-          padding: "16px 16px",
-          borderRadius: 12,
-          background: "rgba(255,255,255,0.04)",
-          border: "1px solid rgba(201,168,76,0.22)",
-          color: "#F4E9CF",
-          fontSize: 16,
-          fontFamily: "DM Sans, sans-serif",
-          outline: "none",
-        }}
+        className="bienvenue-field-input"
       />
     </label>
   );

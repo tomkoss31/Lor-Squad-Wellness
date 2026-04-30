@@ -48,12 +48,11 @@ export function ForgotPasswordPage() {
           padding: 32px 20px;
           position: relative;
           overflow: hidden;
-          background: #F7F5F0;
-          color: #0B0D11;
+          background: #0A0D0F;
+          color: #F0EDE8;
           font-family: 'DM Sans', sans-serif;
         }
-        :root[data-theme="dark"] .forgot-root,
-        html.dark .forgot-root { background: #0A0D0F; color: #F0EDE8; }
+        html.theme-light .forgot-root { background: #F7F5F0; color: #0B0D11; }
         .forgot-blob {
           position: absolute; border-radius: 50%;
           filter: blur(90px); pointer-events: none; will-change: transform;
@@ -72,10 +71,10 @@ export function ForgotPasswordPage() {
           opacity: 0.3;
           animation: forgot-f2 36s ease-in-out infinite alternate;
         }
-        :root[data-theme="dark"] .forgot-blob-teal,
-        html.dark .forgot-blob-teal { opacity: 0.3; }
-        :root[data-theme="dark"] .forgot-blob-gold,
-        html.dark .forgot-blob-gold { opacity: 0.26; }
+        :root:not(.theme-light) .forgot-blob-teal,
+        html:not(.theme-light) .forgot-blob-teal { opacity: 0.3; }
+        :root:not(.theme-light) .forgot-blob-gold,
+        html:not(.theme-light) .forgot-blob-gold { opacity: 0.26; }
         @keyframes forgot-f1 {
           0% { transform: translate(0,0) scale(1); }
           100% { transform: translate(60px, 40px) scale(1.12); }
@@ -101,8 +100,8 @@ export function ForgotPasswordPage() {
           margin-bottom: 20px;
           transition: color 0.15s, transform 0.15s;
         }
-        :root[data-theme="dark"] .forgot-back,
-        html.dark .forgot-back { color: rgba(240,237,232,0.5); }
+        :root:not(.theme-light) .forgot-back,
+        html:not(.theme-light) .forgot-back { color: rgba(240,237,232,0.5); }
         .forgot-back:hover { color: #EF9F27; transform: translateX(-2px); }
         .forgot-card {
           background: rgba(255,255,255,0.78);
@@ -113,8 +112,8 @@ export function ForgotPasswordPage() {
           padding: 28px 24px;
           box-shadow: 0 1px 2px rgba(11,13,17,0.04), 0 8px 24px rgba(11,13,17,0.04);
         }
-        :root[data-theme="dark"] .forgot-card,
-        html.dark .forgot-card {
+        :root:not(.theme-light) .forgot-card,
+        html:not(.theme-light) .forgot-card {
           background: rgba(255,255,255,0.04);
           border: 1px solid rgba(255,255,255,0.08);
           box-shadow: 0 4px 24px rgba(0,0,0,0.2);
@@ -132,15 +131,15 @@ export function ForgotPasswordPage() {
           line-height: 1.55;
           margin: 0 0 20px;
         }
-        :root[data-theme="dark"] .forgot-sub,
-        html.dark .forgot-sub { color: rgba(240,237,232,0.6); }
+        :root:not(.theme-light) .forgot-sub,
+        html:not(.theme-light) .forgot-sub { color: rgba(240,237,232,0.6); }
         .forgot-label {
           display: block; font-size: 11px; font-weight: 700;
           letter-spacing: 0.12em; text-transform: uppercase;
           color: rgba(11,13,17,0.52); margin-bottom: 6px;
         }
-        :root[data-theme="dark"] .forgot-label,
-        html.dark .forgot-label { color: rgba(240,237,232,0.5); }
+        :root:not(.theme-light) .forgot-label,
+        html:not(.theme-light) .forgot-label { color: rgba(240,237,232,0.5); }
         .forgot-input {
           width: 100%; box-sizing: border-box;
           background: rgba(255,255,255,0.6);
@@ -153,8 +152,8 @@ export function ForgotPasswordPage() {
           outline: none;
           transition: border-color 0.2s, box-shadow 0.2s;
         }
-        :root[data-theme="dark"] .forgot-input,
-        html.dark .forgot-input {
+        :root:not(.theme-light) .forgot-input,
+        html:not(.theme-light) .forgot-input {
           background: rgba(255,255,255,0.04);
           border: 1px solid rgba(255,255,255,0.08);
         }

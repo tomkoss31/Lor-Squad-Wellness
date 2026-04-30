@@ -5,6 +5,14 @@
 //
 // Conserve toute la logique existante (loginWithCredentials, redirect
 // selon kind coach/client, install PWA, lien retour).
+//
+// Hotfix theme + a11y (2026-04-30) :
+//  - Convention theme : default = DARK (cohérence app), html.theme-light =
+//    LIGHT. Le selecteur html.dark / data-theme=dark utilise avant ne
+//    matchait JAMAIS la convention reelle (html.theme-light) → la page
+//    restait coincee en clair.
+//  - Padding-left inputs 42 → 52px pour que le placeholder n'apparaisse
+//    plus tronque derriere l icone (bug visuel sur la capture).
 
 import { useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
@@ -58,6 +66,7 @@ export function LoginPage() {
     <div className="login-root">
       <style>{`
         /* ─── Base layout ───────────────────────────────────────────── */
+        /* Default = DARK (convention Lor'Squad : html.theme-light = LIGHT) */
         .login-root {
           min-height: 100vh;
           min-height: 100dvh;
@@ -68,13 +77,12 @@ export function LoginPage() {
           position: relative;
           overflow: hidden;
           font-family: 'DM Sans', sans-serif;
-          background: #F7F5F0;
-          color: #0B0D11;
-        }
-        :root[data-theme="dark"] .login-root,
-        html.dark .login-root {
           background: #0A0D0F;
           color: #F0EDE8;
+        }
+        html.theme-light .login-root {
+          background: #F7F5F0;
+          color: #0B0D11;
         }
 
         /* ─── Mesh gradient animé (cohérence avec Welcome) ────────────── */
@@ -103,10 +111,10 @@ export function LoginPage() {
           animation: login-float-2 38s ease-in-out infinite alternate;
           opacity: 0.48;
         }
-        :root[data-theme="dark"] .login-blob-teal,
-        html.dark .login-blob-teal { opacity: 0.35; }
-        :root[data-theme="dark"] .login-blob-gold,
-        html.dark .login-blob-gold { opacity: 0.26; }
+        :root:not(.theme-light) .login-blob-teal,
+        html:not(.theme-light) .login-blob-teal { opacity: 0.35; }
+        :root:not(.theme-light) .login-blob-gold,
+        html:not(.theme-light) .login-blob-gold { opacity: 0.26; }
 
         @keyframes login-float-1 {
           0%   { transform: translate(0, 0) scale(1); }
@@ -126,8 +134,8 @@ export function LoginPage() {
           mix-blend-mode: overlay;
           background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
         }
-        :root[data-theme="dark"] .login-grain,
-        html.dark .login-grain { opacity: 0.06; }
+        :root:not(.theme-light) .login-grain,
+        html:not(.theme-light) .login-grain { opacity: 0.06; }
 
         /* ─── Bouton retour minimal ──────────────────────────────────── */
         .login-back-home {
@@ -150,8 +158,8 @@ export function LoginPage() {
           transition: color 0.15s ease, transform 0.15s ease;
           animation: login-in 0.5s ease-out 0.1s both;
         }
-        :root[data-theme="dark"] .login-back-home,
-        html.dark .login-back-home { color: rgba(240, 237, 232, 0.45); }
+        :root:not(.theme-light) .login-back-home,
+        html:not(.theme-light) .login-back-home { color: rgba(240, 237, 232, 0.45); }
         .login-back-home:hover {
           color: #EF9F27;
           transform: translateX(-3px);
@@ -209,8 +217,8 @@ export function LoginPage() {
           color: #0B0D11;
           font-weight: 600;
         }
-        :root[data-theme="dark"] .login-title-greeting,
-        html.dark .login-title-greeting { color: #F0EDE8; }
+        :root:not(.theme-light) .login-title-greeting,
+        html:not(.theme-light) .login-title-greeting { color: #F0EDE8; }
         .login-title-brand {
           background: linear-gradient(135deg, #EF9F27 0%, #BA7517 100%);
           -webkit-background-clip: text;
@@ -219,8 +227,8 @@ export function LoginPage() {
           color: transparent;
           font-weight: 800;
         }
-        :root[data-theme="dark"] .login-title-brand,
-        html.dark .login-title-brand {
+        :root:not(.theme-light) .login-title-brand,
+        html:not(.theme-light) .login-title-brand {
           background: linear-gradient(135deg, #F5B847 0%, #EF9F27 100%);
           -webkit-background-clip: text;
           background-clip: text;
@@ -233,8 +241,8 @@ export function LoginPage() {
           line-height: 1.5;
           animation: login-in 0.9s cubic-bezier(0.16,1,0.3,1) 0.3s both;
         }
-        :root[data-theme="dark"] .login-tagline,
-        html.dark .login-tagline { color: rgba(240, 237, 232, 0.6); }
+        :root:not(.theme-light) .login-tagline,
+        html:not(.theme-light) .login-tagline { color: rgba(240, 237, 232, 0.6); }
 
         /* ─── Form card (glassmorphism) ────────────────────────────────── */
         .login-card {
@@ -247,8 +255,8 @@ export function LoginPage() {
           box-shadow: 0 1px 2px rgba(11,13,17,0.04), 0 8px 24px rgba(11,13,17,0.04);
           animation: login-in 0.9s cubic-bezier(0.16,1,0.3,1) 0.4s both;
         }
-        :root[data-theme="dark"] .login-card,
-        html.dark .login-card {
+        :root:not(.theme-light) .login-card,
+        html:not(.theme-light) .login-card {
           background: rgba(255, 255, 255, 0.04);
           border: 1px solid rgba(255, 255, 255, 0.08);
           box-shadow: 0 4px 24px rgba(0,0,0,0.2), 0 1px 2px rgba(0,0,0,0.15);
@@ -263,8 +271,8 @@ export function LoginPage() {
           font-weight: 700;
           color: rgba(11, 13, 17, 0.52);
         }
-        :root[data-theme="dark"] .login-label,
-        html.dark .login-label { color: rgba(240, 237, 232, 0.5); }
+        :root:not(.theme-light) .login-label,
+        html:not(.theme-light) .login-label { color: rgba(240, 237, 232, 0.5); }
 
         .login-input-wrap {
           position: relative;
@@ -273,12 +281,12 @@ export function LoginPage() {
         }
         .login-input-icon {
           position: absolute;
-          left: 14px;
+          left: 16px;
           pointer-events: none;
           color: rgba(11, 13, 17, 0.38);
         }
-        :root[data-theme="dark"] .login-input-icon,
-        html.dark .login-input-icon { color: rgba(240, 237, 232, 0.36); }
+        :root:not(.theme-light) .login-input-icon,
+        html:not(.theme-light) .login-input-icon { color: rgba(240, 237, 232, 0.36); }
 
         .login-input {
           width: 100%;
@@ -286,15 +294,15 @@ export function LoginPage() {
           background: rgba(255, 255, 255, 0.6);
           border: 1px solid rgba(11, 13, 17, 0.08);
           border-radius: 12px;
-          padding: 13px 14px 13px 42px;
+          padding: 13px 14px 13px 48px;
           font-size: 14px;
           font-family: 'DM Sans', sans-serif;
           color: #0B0D11;
           outline: none;
           transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
         }
-        :root[data-theme="dark"] .login-input,
-        html.dark .login-input {
+        :root:not(.theme-light) .login-input,
+        html:not(.theme-light) .login-input {
           background: rgba(255, 255, 255, 0.04);
           border: 1px solid rgba(255, 255, 255, 0.08);
           color: #F0EDE8;
@@ -304,13 +312,13 @@ export function LoginPage() {
           box-shadow: 0 0 0 4px rgba(239, 159, 39, 0.12);
           background: rgba(255, 255, 255, 0.85);
         }
-        :root[data-theme="dark"] .login-input:focus,
-        html.dark .login-input:focus {
+        :root:not(.theme-light) .login-input:focus,
+        html:not(.theme-light) .login-input:focus {
           background: rgba(255, 255, 255, 0.06);
         }
         .login-input::placeholder { color: rgba(11,13,17,0.35); }
-        :root[data-theme="dark"] .login-input::placeholder,
-        html.dark .login-input::placeholder { color: rgba(240,237,232,0.32); }
+        :root:not(.theme-light) .login-input::placeholder,
+        html:not(.theme-light) .login-input::placeholder { color: rgba(240,237,232,0.32); }
 
         .login-password-toggle {
           background: none;
@@ -325,8 +333,8 @@ export function LoginPage() {
           transition: color 0.15s;
           align-self: flex-start;
         }
-        :root[data-theme="dark"] .login-password-toggle,
-        html.dark .login-password-toggle { color: rgba(240, 237, 232, 0.5); }
+        :root:not(.theme-light) .login-password-toggle,
+        html:not(.theme-light) .login-password-toggle { color: rgba(240, 237, 232, 0.5); }
         .login-password-toggle:hover { color: #EF9F27; }
 
         /* ─── Error ─────────────────────────────────────────────────── */
@@ -381,11 +389,11 @@ export function LoginPage() {
           line-height: 1.6;
           animation: login-in 0.8s cubic-bezier(0.16,1,0.3,1) 0.6s both;
         }
-        :root[data-theme="dark"] .login-secondary,
-        html.dark .login-secondary { color: rgba(240, 237, 232, 0.5); }
+        :root:not(.theme-light) .login-secondary,
+        html:not(.theme-light) .login-secondary { color: rgba(240, 237, 232, 0.5); }
         .login-secondary a { color: #BA7517; text-decoration: none; font-weight: 600; }
-        :root[data-theme="dark"] .login-secondary a,
-        html.dark .login-secondary a { color: #F5B847; }
+        :root:not(.theme-light) .login-secondary a,
+        html:not(.theme-light) .login-secondary a { color: #F5B847; }
         .login-secondary a:hover { text-decoration: underline; }
 
         .login-pwa-card {
@@ -404,15 +412,15 @@ export function LoginPage() {
           font-weight: 700;
           margin-bottom: 6px;
         }
-        :root[data-theme="dark"] .login-pwa-head,
-        html.dark .login-pwa-head { color: #F5B847; }
+        :root:not(.theme-light) .login-pwa-head,
+        html:not(.theme-light) .login-pwa-head { color: #F5B847; }
         .login-pwa-body {
           font-size: 13px;
           color: rgba(11, 13, 17, 0.72);
           line-height: 1.5;
         }
-        :root[data-theme="dark"] .login-pwa-body,
-        html.dark .login-pwa-body { color: rgba(240, 237, 232, 0.7); }
+        :root:not(.theme-light) .login-pwa-body,
+        html:not(.theme-light) .login-pwa-body { color: rgba(240, 237, 232, 0.7); }
         .login-pwa-btn {
           margin-top: 10px;
           background: #FFFFFF;
@@ -426,8 +434,8 @@ export function LoginPage() {
           cursor: pointer;
           transition: all 0.15s ease;
         }
-        :root[data-theme="dark"] .login-pwa-btn,
-        html.dark .login-pwa-btn {
+        :root:not(.theme-light) .login-pwa-btn,
+        html:not(.theme-light) .login-pwa-btn {
           background: rgba(255, 255, 255, 0.08);
           color: #F5B847;
           border-color: rgba(255,255,255,0.1);
@@ -448,8 +456,8 @@ export function LoginPage() {
           color: rgba(11, 13, 17, 0.42);
           animation: login-in 0.8s cubic-bezier(0.16,1,0.3,1) 0.8s both;
         }
-        :root[data-theme="dark"] .login-trust,
-        html.dark .login-trust { color: rgba(240, 237, 232, 0.35); }
+        :root:not(.theme-light) .login-trust,
+        html:not(.theme-light) .login-trust { color: rgba(240, 237, 232, 0.35); }
 
         /* ─── Animation fade + slide up ─────────────────────────────── */
         @keyframes login-in {
