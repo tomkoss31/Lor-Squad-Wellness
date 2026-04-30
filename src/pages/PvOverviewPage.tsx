@@ -4,6 +4,7 @@ import { buildPvTrackingRecords } from "../data/pvCatalog";
 import { formatDate } from "../lib/calculations";
 // PvModuleHeader remplace par PremiumHero (2026-04-29)
 import { PremiumHero } from "../components/ui/PremiumHero";
+import { LegalFooter } from "../components/ui/LegalFooter";
 import { PvClientFullPage } from "../components/pv/PvClientFullPage";
 import { PvActionPlanCard } from "../components/copilote/PvActionPlanCard";
 import { PvKanban } from "../components/pv/PvKanban";
@@ -326,6 +327,7 @@ export function PvOverviewPage() {
           )}
         </>
       )}
+      <LegalFooter />
     </div>
   );
 }
