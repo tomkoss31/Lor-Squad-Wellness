@@ -1218,6 +1218,7 @@ function QuestCard({
   children: React.ReactNode;
 }) {
   return (
+    // eslint-disable-next-line jsx-a11y/click-events-have-key-events -- Sandbox demo, button inside
     <div
       style={{
         background: done

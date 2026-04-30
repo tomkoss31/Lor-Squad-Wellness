@@ -168,6 +168,7 @@ export function DistriQuickModal({ user, clients, followUps, onClose, coupleMemb
         .ls-distri-overlay { animation: ls-distri-fade-in 0.18s ease-out; }
         .ls-distri-panel   { animation: ls-distri-slide-up 0.32s cubic-bezier(0.22,1,0.36,1); }
       `}</style>
+      {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events -- Backdrop, ESC at dialog level */}
       <div
         className="ls-distri-overlay"
         role="dialog"

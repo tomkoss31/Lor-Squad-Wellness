@@ -181,7 +181,6 @@ export function PvKanban({ records, plan, isAdmin, currentUserId, onSelectClient
         cards: ok,
       },
     ];
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [records, plan, getOverride]);
 
   return (

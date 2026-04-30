@@ -328,6 +328,7 @@ export function ProgrammeTicket({ program, addOns, onOpenCatalog, onRemoveAddOn 
                 {addOns.map((addOn) => {
                   const emoji = getEmoji(addOn.name);
                   return (
+                    // eslint-disable-next-line jsx-a11y/no-static-element-interactions -- Hover effect only
                     <div
                       key={addOn.id}
                       className="ls-ticket-item-anim ls-ticket-row"

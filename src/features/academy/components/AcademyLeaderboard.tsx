@@ -296,6 +296,7 @@ export function AcademyLeaderboard() {
               const sectionLabel = currentSectionLabel(row);
               const isCurrentUser = currentUser?.id === row.userId;
               return (
+                // eslint-disable-next-line jsx-a11y/no-static-element-interactions -- Hover effect only
                 <div
                   key={row.userId}
                   style={{

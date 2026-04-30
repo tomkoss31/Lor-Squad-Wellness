@@ -166,6 +166,7 @@ export function SelectableProductCard({
   const accentHex = selected ? "#2DD4BF" : isRec ? "#EF9F27" : "transparent";
 
   return (
+    // eslint-disable-next-line jsx-a11y/no-static-element-interactions -- Hover effect only, button inside handles selection
     <div
       style={{
         position: "relative",

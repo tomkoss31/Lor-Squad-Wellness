@@ -458,6 +458,7 @@ function ActiveProductCard({ p }: { p: PvProductUsage }) {
   const cat = categorize(catalogProduct?.category ?? "");
 
   return (
+    // eslint-disable-next-line jsx-a11y/no-static-element-interactions -- Hover effect only
     <div
       style={{
         background: "var(--ls-surface)",

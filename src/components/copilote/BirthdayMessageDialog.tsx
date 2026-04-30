@@ -55,7 +55,10 @@ export function BirthdayMessageDialog({ client, coachFirstName, onClose, onMarkS
   const smsUrl = client.phone ? buildBirthdaySmsUrl(client.phone, message) : null;
 
   return (
+    // Audit a11y 2026-04-30 : backdrop souris (ESC clavier au niveau dialog).
     <div
+      role="presentation"
+      aria-hidden="true"
       onClick={onClose}
       style={{
         position: "fixed",
@@ -68,6 +71,7 @@ export function BirthdayMessageDialog({ client, coachFirstName, onClose, onMarkS
         padding: "16px",
       }}
     >
+      {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events -- stopPropagation only, dialog role on element */}
       <div
         onClick={(e) => e.stopPropagation()}
         role="dialog"

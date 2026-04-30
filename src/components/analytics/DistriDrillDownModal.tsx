@@ -122,7 +122,10 @@ export function DistriDrillDownModal({
   }, [pvTransactions, distriId, distriClients]);
 
   return (
+    // Audit a11y 2026-04-30 : backdrop souris (ESC clavier au niveau dialog).
     <div
+      role="presentation"
+      aria-hidden="true"
       onClick={onClose}
       style={{
         position: "fixed",
@@ -136,6 +139,7 @@ export function DistriDrillDownModal({
         padding: 16,
       }}
     >
+      {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events -- stopPropagation only, dialog role on element */}
       <div
         onClick={(e) => e.stopPropagation()}
         role="dialog"

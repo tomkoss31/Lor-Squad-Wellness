@@ -252,6 +252,7 @@ export function ProductCatalogModal({
           }
         }
       `}</style>
+      {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events -- Backdrop, ESC at dialog level */}
       <div
         className="ls-cat-overlay"
         role="dialog"
@@ -654,6 +655,7 @@ interface CatalogCardProps {
 function CatalogCard({ product, isInCart, onAdd }: CatalogCardProps) {
   const emoji = getEmoji(product.name, product.category);
   return (
+    // eslint-disable-next-line jsx-a11y/no-static-element-interactions -- Hover effect only, button inside handles interaction
     <div
       style={{
         display: "flex",

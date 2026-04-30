@@ -64,6 +64,7 @@ export function EvolutionReportModal({ reportUrl, clientName, onClose }: Props) 
         .ls-erm-panel   { animation: ls-erm-slide-up 0.32s cubic-bezier(0.22,1,0.36,1); }
       `}</style>
 
+      {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events -- Backdrop click, ESC handled at dialog */}
       <div
         className="ls-erm-overlay"
         role="dialog"

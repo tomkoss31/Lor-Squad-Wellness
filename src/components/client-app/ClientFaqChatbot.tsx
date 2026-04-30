@@ -177,6 +177,8 @@ export function ClientFaqChatbot({ token, coachFirstName }: Props) {
       {/* Modal */}
       {open ? (
         <div
+          role="presentation"
+          aria-hidden="true"
           onClick={() => setOpen(false)}
           style={{
             position: "fixed",
@@ -190,6 +192,7 @@ export function ClientFaqChatbot({ token, coachFirstName }: Props) {
             padding: 0,
           }}
         >
+          {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events -- stopPropagation only, dialog role on element */}
           <div
             onClick={(e) => e.stopPropagation()}
             role="dialog"

@@ -470,6 +470,7 @@ export function NotesPanel({
           if (e.key === "Escape" && onClose) onClose();
         }}
       >
+        {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions -- Wrapper for stopPropagation, dialog role inside */}
         <div
           onClick={(e) => e.stopPropagation()}
           onKeyDown={(e) => e.stopPropagation()}
