@@ -357,12 +357,14 @@ export function AppLayout() {
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <div style={{
                 width: 30, height: 30, borderRadius: '50%',
-                background: 'linear-gradient(135deg, #2DD4BF, #0D9488)',
+                background: currentUser.avatarUrl
+                  ? `url(${currentUser.avatarUrl}) center/cover`
+                  : 'linear-gradient(135deg, #2DD4BF, #0D9488)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontSize: 11, fontWeight: 700, color: '#FFFFFF',
                 fontFamily: 'Syne, sans-serif', flexShrink: 0,
               }}>
-                {getInitials(currentUser.name)}
+                {!currentUser.avatarUrl && getInitials(currentUser.name)}
               </div>
               <div style={{ minWidth: 0, flex: 1 }}>
                 <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--ls-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
