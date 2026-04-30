@@ -97,20 +97,25 @@ function formatRdvDate(iso: string): { main: string; time: string; countdown: st
   dDay.setHours(0, 0, 0, 0);
   const daysDiff = Math.round((dDay.getTime() - today.getTime()) / (24 * 60 * 60 * 1000));
 
-  let main = "";
-  if (daysDiff === 0) main = "Aujourd'hui";
-  else if (daysDiff === 1) main = "Demain";
-  else if (daysDiff < 7) main = d.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" });
-  else main = d.toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
+  // Audit 2026-04-30 : refactor en const + IIFE pour eviter le warning
+  // ESLint no-useless-assignment (le let "" + reassignement etait valide
+  // mais reporte comme dead code par eslint).
+  const main = (() => {
+    if (daysDiff === 0) return "Aujourd'hui";
+    if (daysDiff === 1) return "Demain";
+    if (daysDiff < 7) return d.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" });
+    return d.toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
+  })();
 
   const time = d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
 
-  let countdown = "";
-  if (diffMs < 0) countdown = "Passé";
-  else if (diffH < 1) countdown = `Dans ${Math.round(diffMs / (60 * 1000))} min`;
-  else if (diffH < 24) countdown = `Dans ${Math.round(diffH)}h`;
-  else if (diffD < 7) countdown = `Dans ${Math.ceil(diffD)} jour${Math.ceil(diffD) > 1 ? "s" : ""}`;
-  else countdown = `Dans ${Math.ceil(diffD)} jours`;
+  const countdown = (() => {
+    if (diffMs < 0) return "Passé";
+    if (diffH < 1) return `Dans ${Math.round(diffMs / (60 * 1000))} min`;
+    if (diffH < 24) return `Dans ${Math.round(diffH)}h`;
+    if (diffD < 7) return `Dans ${Math.ceil(diffD)} jour${Math.ceil(diffD) > 1 ? "s" : ""}`;
+    return `Dans ${Math.ceil(diffD)} jours`;
+  })();
 
   return { main, time, countdown, isImminent: diffH >= 0 && diffH < 24 };
 }

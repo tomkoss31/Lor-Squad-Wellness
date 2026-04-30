@@ -12,6 +12,7 @@ import { PageHeading } from "../components/ui/PageHeading";
 import { StatusBadge } from "../components/ui/StatusBadge";
 import { useAppContext } from "../context/AppContext";
 import { getAnonKeyFormat, getSupabaseClient, type AnonKeyFormat } from "../services/supabaseClient";
+import { extractFunctionError } from "../lib/utils/extractFunctionError";
 
 interface SentLog {
   id: string;
@@ -86,7 +87,7 @@ export function DebugNotificationsPage() {
       const sb = await getSupabaseClient();
       if (!sb) throw new Error("Supabase indisponible");
 
-      const { error } = await sb.functions.invoke("send-push", {
+      const { data, error } = await sb.functions.invoke("send-push", {
         body: {
           user_id: currentUser.id,
           title: "🧪 Notification test",
@@ -96,7 +97,11 @@ export function DebugNotificationsPage() {
         },
       });
 
-      if (error) throw error;
+      // Audit 2026-04-30 : extraction body via helper (cas 4xx/5xx).
+      if (error) {
+        const msg = await extractFunctionError(data, error, "Erreur envoi push.");
+        throw new Error(msg);
+      }
       setFeedback("Notif test envoyée. Check ton device.");
       setFeedbackTone("ok");
       setTimeout(() => void refresh(), 800);

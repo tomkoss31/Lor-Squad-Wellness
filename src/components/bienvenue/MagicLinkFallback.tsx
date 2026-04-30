@@ -5,6 +5,7 @@
 
 import { useState } from "react";
 import { getSupabaseClient } from "../../services/supabaseClient";
+import { extractFunctionError } from "../../lib/utils/extractFunctionError";
 
 interface Props {
   firstName: string;
@@ -44,8 +45,11 @@ export function MagicLinkFallback({ firstName, clientPhone }: Props) {
       const { data, error } = await sb.functions.invoke("generate-auto-login-token", {
         body: {},
       });
-      if (error) throw new Error(error.message);
-      if (!data?.token) throw new Error("Génération impossible.");
+      // Audit 2026-04-30 : extraction body via helper (cas 4xx/5xx).
+      if (error || !data?.token) {
+        const msg = await extractFunctionError(data, error, "Génération impossible.");
+        throw new Error(msg);
+      }
 
       const url = buildMagicUrl(data.token as string);
       setMagicUrl(url);
