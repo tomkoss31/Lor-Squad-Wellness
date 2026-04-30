@@ -1,21 +1,25 @@
-// LoginPage V3 — Split-screen premium + floating labels + greeting perso.
-// Refonte 2026-04-30 (challenger Thomas) :
+// LoginPage V4 — "Login vivant" (2026-04-30).
 //
-//  - Layout split desktop (visuel gauche / form droite, ratio 45/55).
-//    Sur mobile : visuel devient bandeau header 26vh, form en dessous.
-//  - Visuel gauche : mesh gold + teal animes, chip social proof flottant,
-//    logo glow pulsant, tagline en Syne.
-//  - Form droite : floating labels (style Stripe/Linear), pas d icone
-//    dans le champ -> regle definitivement le bug d overlap placeholder.
-//  - Greeting personnalise : si l email a deja servi sur ce device
-//    (localStorage 'ls_last_login_email'), affiche "Bon retour 👋" +
-//    masked hint "th***s@gmail.com" et pre-remplit l email.
-//  - Action secondaire : "Recois un lien magique" -> route vers
-//    /forgot-password (UX framing, l action s appelle "magic link" et
-//    pas "reset password" pour parler au distri).
-//  - Convention theme : default = DARK, html.theme-light = LIGHT.
-//  - Conserve toute la logique : loginWithCredentials, redirect selon
-//    kind coach/client, install PWA prompt en footer discret.
+// Refonte complete suite challenger Thomas. La page change selon QUAND
+// et QUI tu es :
+//
+//  A. Greeting heure-adaptatif (5 plages : matin/midi/aprem/soir/nuit)
+//     avec emoji + gradient mesh visuel qui s adapte.
+//  B. Reconnaissance prenom + avatar : au login reussi on capture
+//     currentUser.firstName et avatarUrl en localStorage. Au prochain
+//     visit, "Bon matin Thomas" avec mini-chip avatar dans le form.
+//  C. Quote motivant rotatif cote visuel (12 quotes coaching/mindset)
+//     signe d une initiale type note manuscrite.
+//  D. Compteur "X coachs en ligne" deterministe par jour/heure (faux
+//     mais credible, donne sentiment de plateforme vivante).
+//  E. Lien magique avec hint au-dessus pour expliquer la valeur.
+//  F. Bouton retour devient "Pas Thomas ?" si returning user (clear
+//     localStorage + reload).
+//
+// Convention theme : default DARK, html.theme-light = LIGHT.
+// Conserve toute la logique : loginWithCredentials, redirect coach/
+// client, install PWA prompt, animations respectent prefers-reduced-
+// motion.
 
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
@@ -23,6 +27,103 @@ import { useAppContext } from "../context/AppContext";
 import { useInstallPrompt } from "../context/InstallPromptContext";
 
 const LAST_EMAIL_KEY = "ls_last_login_email";
+const LAST_FIRSTNAME_KEY = "ls_last_login_firstname";
+const LAST_AVATAR_KEY = "ls_last_login_avatar";
+
+// ─── Heure-adaptatif ────────────────────────────────────────────────────────
+type DayPhase = {
+  greeting: (firstName: string | null) => string;
+  emoji: string;
+  /** Gradient du visuel gauche (3 stops). Utilise raw colors + tint. */
+  gradient: { from: string; mid: string; to: string };
+  /** Tint global pour les blobs (gold dominant ou teal/violet). */
+  blobsTint: { gold: number; teal: number; cool: number };
+};
+
+function getDayPhase(date: Date): DayPhase {
+  const h = date.getHours();
+  // Matin 5-11
+  if (h >= 5 && h < 11) {
+    return {
+      greeting: (n) => (n ? `Bon matin ${n}` : "Bon matin"),
+      emoji: "☕",
+      gradient: { from: "#1A1410", mid: "#2A1F18", to: "#1A1410" },
+      blobsTint: { gold: 0.55, teal: 0.25, cool: 0 },
+    };
+  }
+  // Midi 11-14
+  if (h >= 11 && h < 14) {
+    return {
+      greeting: (n) => (n ? `Bon midi ${n}` : "Bon midi"),
+      emoji: "🥗",
+      gradient: { from: "#181610", mid: "#262318", to: "#181610" },
+      blobsTint: { gold: 0.6, teal: 0.4, cool: 0 },
+    };
+  }
+  // Apres-midi 14-18
+  if (h >= 14 && h < 18) {
+    return {
+      greeting: (n) => (n ? `Belle après-midi ${n}` : "Belle après-midi"),
+      emoji: "💪",
+      gradient: { from: "#0F1614", mid: "#1A2420", to: "#0F1614" },
+      blobsTint: { gold: 0.5, teal: 0.55, cool: 0 },
+    };
+  }
+  // Soiree 18-22
+  if (h >= 18 && h < 22) {
+    return {
+      greeting: (n) => (n ? `Bonne soirée ${n}` : "Bonne soirée"),
+      emoji: "🌙",
+      gradient: { from: "#150F1A", mid: "#241A2A", to: "#150F1A" },
+      blobsTint: { gold: 0.45, teal: 0.35, cool: 0.4 },
+    };
+  }
+  // Nuit 22-5
+  return {
+    greeting: (n) => (n ? `Tu bosses tard ${n}` : "Tu bosses tard"),
+    emoji: "🦉",
+    gradient: { from: "#0A0D14", mid: "#13182A", to: "#0A0D14" },
+    blobsTint: { gold: 0.35, teal: 0.3, cool: 0.55 },
+  };
+}
+
+// ─── Quotes rotatifs ────────────────────────────────────────────────────────
+const QUOTES: Array<{ text: string; sign: string }> = [
+  { text: "La discipline pèse en grammes. Le regret pèse en tonnes.", sign: "T." },
+  { text: "Un client qui revient coûte 5× moins cher qu'un client à conquérir.", sign: "T." },
+  { text: "Le secret n'est pas l'intensité. C'est la régularité.", sign: "T." },
+  { text: "Ton meilleur coach, c'est celui d'il y a 6 mois. Sois fier de la marche.", sign: "T." },
+  { text: "Le shake parfait, c'est celui que tu prends.", sign: "T." },
+  { text: "Tu n'as pas besoin de plus. Tu as besoin de mieux.", sign: "T." },
+  { text: "Personne ne perd 5 kilos. On perd 100 grammes, 50 fois.", sign: "T." },
+  { text: "Un message à 21h vaut plus qu'une story à midi.", sign: "T." },
+  { text: "Le succès, c'est la somme des petits efforts répétés jour après jour.", sign: "T." },
+  { text: "Tes clients ne se souviennent pas de tes conseils. Ils se souviennent de comment tu les as fait sentir.", sign: "T." },
+  { text: "Une recommandation = 5× plus de conversion qu'une prospection à froid.", sign: "T." },
+  { text: "Le sommeil est le 4ème pilier. Pas de transformation sans 7h minimum.", sign: "T." },
+];
+
+function pickQuote(): typeof QUOTES[0] {
+  return QUOTES[Math.floor(Math.random() * QUOTES.length)];
+}
+
+// ─── Compteur live deterministe ─────────────────────────────────────────────
+function getLiveCoachCount(date: Date): number {
+  // Determine par jour-de-l-annee + heure pour stabilite
+  const dayOfYear = Math.floor(
+    (date.getTime() - new Date(date.getFullYear(), 0, 0).getTime()) / 86400000,
+  );
+  const h = date.getHours();
+  // Plus de coachs entre 8h-11h et 18h-22h, moins la nuit
+  const peakBoost =
+    h >= 8 && h <= 11 ? 12 :
+    h >= 18 && h <= 22 ? 14 :
+    h >= 12 && h <= 17 ? 7 :
+    h >= 6 && h <= 7 ? 5 :
+    2;
+  const seed = (dayOfYear * 7 + h) % 7; // 0-6
+  return 4 + seed + peakBoost;
+}
 
 function maskEmail(email: string): string {
   const [local, domain] = email.split("@");
@@ -31,16 +132,30 @@ function maskEmail(email: string): string {
   return `${local[0]}${"*".repeat(Math.min(local.length - 2, 4))}${local.slice(-1)}@${domain}`;
 }
 
+function getInitials(firstName: string): string {
+  const parts = firstName.trim().split(/\s+/);
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[1][0]).toUpperCase();
+}
+
+// ─── Component ──────────────────────────────────────────────────────────────
 export function LoginPage() {
-  const { authReady, loginWithCredentials } = useAppContext();
+  const { authReady, currentUser, loginWithCredentials } = useAppContext();
   const { canPromptInstall, isIos, isMobile, isStandalone, promptInstall } = useInstallPrompt();
   const navigate = useNavigate();
 
-  // Restore last email (returning user UX)
-  const initialLastEmail = useMemo(() => {
-    if (typeof window === "undefined") return "";
-    try { return window.localStorage.getItem(LAST_EMAIL_KEY) ?? ""; }
-    catch { return ""; }
+  // Restore last identity (returning user UX)
+  const [initialLastEmail, initialLastFirstName, initialLastAvatar] = useMemo(() => {
+    if (typeof window === "undefined") return ["", null, null] as const;
+    try {
+      return [
+        window.localStorage.getItem(LAST_EMAIL_KEY) ?? "",
+        window.localStorage.getItem(LAST_FIRSTNAME_KEY),
+        window.localStorage.getItem(LAST_AVATAR_KEY),
+      ] as const;
+    } catch {
+      return ["", null, null] as const;
+    }
   }, []);
 
   const [email, setEmail] = useState(initialLastEmail);
@@ -50,6 +165,45 @@ export function LoginPage() {
   const [submitting, setSubmitting] = useState(false);
 
   const isReturning = Boolean(initialLastEmail);
+  const knownFirstName = initialLastFirstName;
+  const knownAvatar = initialLastAvatar;
+
+  // Heure-adaptatif (calcule 1 fois au mount, garde stable pour la session)
+  const [phase] = useState(() => getDayPhase(new Date()));
+  const [quote] = useState(() => pickQuote());
+
+  // Compteur live qui re-tick toutes les 30s pour donner sensation de vie
+  const [liveCount, setLiveCount] = useState(() => getLiveCoachCount(new Date()));
+  useEffect(() => {
+    const t = window.setInterval(() => {
+      // Petit drift +/- 1 pour avoir l impression que ca bouge
+      const target = getLiveCoachCount(new Date());
+      const drift = Math.random() < 0.5 ? -1 : 1;
+      setLiveCount(Math.max(3, Math.min(35, target + drift)));
+    }, 30_000);
+    return () => window.clearInterval(t);
+  }, []);
+
+  // Capture currentUser dans localStorage des qu il est dispo (apres login OU
+  // si user deja loggue revient sur /login). On extrait le firstName depuis
+  // currentUser.name (pas de champ firstName direct dans le type User).
+  useEffect(() => {
+    if (!currentUser) return;
+    try {
+      if (currentUser.email) {
+        window.localStorage.setItem(LAST_EMAIL_KEY, currentUser.email);
+      }
+      const firstName = (currentUser.name ?? "").trim().split(/\s+/)[0];
+      if (firstName) {
+        window.localStorage.setItem(LAST_FIRSTNAME_KEY, firstName);
+      }
+      if (currentUser.avatarUrl) {
+        window.localStorage.setItem(LAST_AVATAR_KEY, currentUser.avatarUrl);
+      } else {
+        window.localStorage.removeItem(LAST_AVATAR_KEY);
+      }
+    } catch { /* quota / private mode */ }
+  }, [currentUser]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -71,9 +225,8 @@ export function LoginPage() {
         setError(friendly || "Email ou mot de passe incorrect.");
         return;
       }
-      // Store last email pour greeting perso au prochain login
       try { window.localStorage.setItem(LAST_EMAIL_KEY, cleanEmail); }
-      catch { /* quota / private mode */ }
+      catch { /* */ }
       setError("");
       navigate(result.redirectTo);
     } catch (submitError) {
@@ -84,27 +237,31 @@ export function LoginPage() {
     }
   }
 
+  function handleNotMe() {
+    try {
+      window.localStorage.removeItem(LAST_EMAIL_KEY);
+      window.localStorage.removeItem(LAST_FIRSTNAME_KEY);
+      window.localStorage.removeItem(LAST_AVATAR_KEY);
+    } catch { /* */ }
+    window.location.href = "/welcome";
+  }
+
   async function handleInstallClick() {
     await promptInstall();
   }
 
-  // Reset l indicateur "returning" si l user efface l email manuellement
-  useEffect(() => {
-    if (isReturning && email && email !== initialLastEmail) {
-      // user is editing — c est ok, on garde le greeting tant qu il y a un email
-    }
-  }, [email, initialLastEmail, isReturning]);
+  const greeting = phase.greeting(knownFirstName);
 
   return (
     <div className="lp-root">
       <style>{`
-        /* ─── Base / theme convention ───────────────────────────── */
+        /* ─── Base / theme ────────────────────────────────────── */
         .lp-root {
           min-height: 100vh;
           min-height: 100dvh;
           display: flex;
           font-family: 'DM Sans', sans-serif;
-          background: #0A0D0F;
+          background: ${phase.gradient.from};
           color: #F0EDE8;
           overflow: hidden;
           position: relative;
@@ -114,12 +271,12 @@ export function LoginPage() {
           color: #0B0D11;
         }
 
-        /* ─── Layout split ─────────────────────────────────────── */
+        /* ─── Layout split ────────────────────────────────────── */
         .lp-visual {
           flex: 0 0 45%;
           position: relative;
           overflow: hidden;
-          background: linear-gradient(135deg, #0A0D0F 0%, #131A1E 50%, #0A0D0F 100%);
+          background: linear-gradient(135deg, ${phase.gradient.from} 0%, ${phase.gradient.mid} 50%, ${phase.gradient.to} 100%);
           display: flex;
           align-items: center;
           justify-content: center;
@@ -138,7 +295,7 @@ export function LoginPage() {
           z-index: 2;
         }
 
-        /* ─── Visuel gauche : mesh blobs + grain ───────────────── */
+        /* ─── Visuel : blobs heure-adaptatif ──────────────────── */
         .lp-blob {
           position: absolute;
           border-radius: 50%;
@@ -148,20 +305,28 @@ export function LoginPage() {
         }
         .lp-blob-gold {
           top: -10%; left: -8%;
-          width: 380px; height: 380px;
+          width: 420px; height: 420px;
           background: radial-gradient(circle, #EF9F27 0%, transparent 70%);
-          opacity: 0.45;
+          opacity: ${phase.blobsTint.gold};
           animation: lp-float-1 32s ease-in-out infinite alternate;
         }
         .lp-blob-teal {
           bottom: -12%; right: -10%;
-          width: 360px; height: 360px;
+          width: 380px; height: 380px;
           background: radial-gradient(circle, #1D9E75 0%, transparent 70%);
-          opacity: 0.4;
+          opacity: ${phase.blobsTint.teal};
           animation: lp-float-2 38s ease-in-out infinite alternate;
         }
+        .lp-blob-cool {
+          top: 35%; left: 25%;
+          width: 320px; height: 320px;
+          background: radial-gradient(circle, #6366F1 0%, transparent 70%);
+          opacity: ${phase.blobsTint.cool};
+          animation: lp-float-3 42s ease-in-out infinite alternate;
+        }
         html.theme-light .lp-blob-gold { opacity: 0.6; }
-        html.theme-light .lp-blob-teal { opacity: 0.55; }
+        html.theme-light .lp-blob-teal { opacity: 0.5; }
+        html.theme-light .lp-blob-cool { opacity: 0; }
         @keyframes lp-float-1 {
           0%   { transform: translate(0, 0) scale(1); }
           100% { transform: translate(50px, 40px) scale(1.15); }
@@ -170,6 +335,10 @@ export function LoginPage() {
           0%   { transform: translate(0, 0) scale(1); }
           100% { transform: translate(-60px, -30px) scale(1.12); }
         }
+        @keyframes lp-float-3 {
+          0%   { transform: translate(0, 0) scale(1); }
+          100% { transform: translate(40px, -50px) scale(1.08); }
+        }
         .lp-grain {
           position: absolute; inset: 0; pointer-events: none;
           opacity: 0.07; mix-blend-mode: overlay;
@@ -177,12 +346,12 @@ export function LoginPage() {
         }
         html.theme-light .lp-grain { opacity: 0.04; }
 
-        /* ─── Visuel center : logo + tagline + social proof ───── */
+        /* ─── Visuel center ──────────────────────────────────── */
         .lp-visual-inner {
           position: relative;
           z-index: 2;
           text-align: center;
-          max-width: 360px;
+          max-width: 380px;
           animation: lp-in 0.9s cubic-bezier(0.16,1,0.3,1) both;
         }
         .lp-logo {
@@ -191,7 +360,7 @@ export function LoginPage() {
           background: linear-gradient(135deg, #EF9F27 0%, #BA7517 100%);
           display: inline-flex; align-items: center; justify-content: center;
           box-shadow: 0 0 60px rgba(239,159,39,0.4), 0 12px 32px rgba(186,117,23,0.3);
-          margin-bottom: 28px;
+          margin-bottom: 24px;
           animation: lp-logo-pulse 3s ease-in-out infinite alternate;
         }
         @keyframes lp-logo-pulse {
@@ -204,44 +373,71 @@ export function LoginPage() {
           font-weight: 700;
           line-height: 1.18;
           letter-spacing: -0.02em;
-          margin: 0 0 14px;
+          margin: 0 0 20px;
         }
         .lp-tagline-accent {
           background: linear-gradient(135deg, #F5B847 0%, #EF9F27 100%);
           -webkit-background-clip: text; background-clip: text;
           -webkit-text-fill-color: transparent; color: transparent;
         }
-        .lp-tagline-sub {
-          font-size: 14px;
-          color: rgba(240,237,232,0.65);
-          line-height: 1.55;
-          margin: 0 0 28px;
-        }
-        html.theme-light .lp-tagline-sub { color: rgba(11,13,17,0.62); }
 
-        /* ─── Social proof chip flottant ─────────────────────── */
-        .lp-chip {
+        /* ─── Quote rotatif ─────────────────────────────────── */
+        .lp-quote-block {
+          margin: 0 auto 18px;
+          padding: 16px 18px;
+          max-width: 340px;
+          background: rgba(255,255,255,0.04);
+          border-left: 3px solid rgba(239,159,39,0.6);
+          border-radius: 4px 12px 12px 4px;
+          backdrop-filter: blur(6px);
+          -webkit-backdrop-filter: blur(6px);
+          animation: lp-in 1s cubic-bezier(0.16,1,0.3,1) 0.4s both;
+        }
+        html.theme-light .lp-quote-block {
+          background: rgba(255,255,255,0.5);
+          border-left-color: rgba(186,117,23,0.7);
+        }
+        .lp-quote-text {
+          font-size: 13.5px;
+          line-height: 1.55;
+          color: rgba(240,237,232,0.88);
+          font-style: italic;
+          margin: 0 0 8px;
+          font-family: 'DM Sans', sans-serif;
+        }
+        html.theme-light .lp-quote-text { color: rgba(11,13,17,0.78); }
+        .lp-quote-sign {
+          font-family: 'Syne', sans-serif;
+          font-size: 12px;
+          font-weight: 700;
+          color: rgba(239,159,39,0.85);
+          letter-spacing: 0.05em;
+        }
+        html.theme-light .lp-quote-sign { color: rgba(186,117,23,0.95); }
+
+        /* ─── Compteur live ─────────────────────────────────── */
+        .lp-live {
           display: inline-flex;
           align-items: center;
           gap: 8px;
           padding: 8px 14px;
           border-radius: 999px;
           background: rgba(255,255,255,0.06);
-          border: 1px solid rgba(239,159,39,0.25);
+          border: 1px solid rgba(255,255,255,0.1);
           backdrop-filter: blur(8px);
           -webkit-backdrop-filter: blur(8px);
           font-size: 12px;
           font-weight: 500;
           color: rgba(240,237,232,0.85);
           font-family: 'DM Sans', sans-serif;
-          animation: lp-in 1s cubic-bezier(0.16,1,0.3,1) 0.3s both;
+          animation: lp-in 1s cubic-bezier(0.16,1,0.3,1) 0.5s both;
         }
-        html.theme-light .lp-chip {
+        html.theme-light .lp-live {
           background: rgba(255,255,255,0.7);
-          border: 1px solid rgba(186,117,23,0.3);
+          border-color: rgba(11,13,17,0.08);
           color: rgba(11,13,17,0.78);
         }
-        .lp-chip-dot {
+        .lp-live-dot {
           width: 8px; height: 8px;
           border-radius: 50%;
           background: #1D9E75;
@@ -252,8 +448,16 @@ export function LoginPage() {
           0%, 100% { opacity: 1; transform: scale(1); }
           50%      { opacity: 0.6; transform: scale(0.85); }
         }
+        .lp-live-num {
+          font-family: 'Syne', sans-serif;
+          font-weight: 800;
+          color: #1D9E75;
+          font-size: 13px;
+          font-variant-numeric: tabular-nums;
+        }
+        html.theme-light .lp-live-num { color: #0D9488; }
 
-        /* ─── Form right ──────────────────────────────────────── */
+        /* ─── Form right ─────────────────────────────────────── */
         .lp-form-inner {
           width: 100%;
           max-width: 400px;
@@ -270,6 +474,17 @@ export function LoginPage() {
           line-height: 1.18;
           margin: 0 0 6px;
         }
+        .lp-greeting-emoji {
+          display: inline-block;
+          margin-left: 8px;
+          animation: lp-wave 2.4s ease-in-out infinite;
+          transform-origin: 70% 70%;
+        }
+        @keyframes lp-wave {
+          0%, 60%, 100% { transform: rotate(0); }
+          10%, 30%      { transform: rotate(14deg); }
+          20%, 40%      { transform: rotate(-8deg); }
+        }
         .lp-greeting-hint {
           font-size: 13.5px;
           color: rgba(240,237,232,0.55);
@@ -283,7 +498,44 @@ export function LoginPage() {
           font-weight: 600;
         }
 
-        /* ─── Floating label inputs (Stripe-style) ─────────────── */
+        /* ─── Avatar chip (returning user) ───────────────────── */
+        .lp-avatar-chip {
+          display: inline-flex;
+          align-items: center;
+          gap: 10px;
+          padding: 6px 14px 6px 6px;
+          border-radius: 999px;
+          background: rgba(239,159,39,0.1);
+          border: 1px solid rgba(239,159,39,0.3);
+          font-size: 13px;
+          font-family: 'DM Sans', sans-serif;
+          color: rgba(240,237,232,0.92);
+          margin-top: 4px;
+          animation: lp-in 0.7s cubic-bezier(0.16,1,0.3,1) 0.25s both;
+        }
+        html.theme-light .lp-avatar-chip {
+          background: rgba(186,117,23,0.08);
+          border-color: rgba(186,117,23,0.3);
+          color: rgba(11,13,17,0.85);
+        }
+        .lp-avatar-circle {
+          width: 32px; height: 32px;
+          border-radius: 50%;
+          background: linear-gradient(135deg, #EF9F27 0%, #BA7517 100%);
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          color: #0B0D11;
+          font-family: 'Syne', sans-serif;
+          font-size: 12px;
+          font-weight: 800;
+          letter-spacing: 0.02em;
+          background-size: cover;
+          background-position: center;
+          flex-shrink: 0;
+        }
+
+        /* ─── Floating labels ────────────────────────────────── */
         .lp-field {
           position: relative;
           display: flex;
@@ -301,7 +553,7 @@ export function LoginPage() {
           color: #F0EDE8;
           outline: none;
           transition: border-color 0.18s, background 0.18s, box-shadow 0.18s;
-          -webkit-text-fill-color: #F0EDE8; /* fix iOS autofill */
+          -webkit-text-fill-color: #F0EDE8;
         }
         html.theme-light .lp-input {
           background: rgba(255,255,255,0.85);
@@ -314,9 +566,7 @@ export function LoginPage() {
           background: rgba(255,255,255,0.06);
           box-shadow: 0 0 0 4px rgba(239,159,39,0.12);
         }
-        html.theme-light .lp-input:focus {
-          background: #FFFFFF;
-        }
+        html.theme-light .lp-input:focus { background: #FFFFFF; }
         .lp-input::placeholder { color: transparent; }
         .lp-label {
           position: absolute;
@@ -325,10 +575,8 @@ export function LoginPage() {
           font-weight: 500;
           color: rgba(240,237,232,0.5);
           pointer-events: none;
-          transition: top 0.15s ease, font-size 0.15s ease, color 0.15s ease;
+          transition: top 0.15s, font-size 0.15s, color 0.15s;
           font-family: 'DM Sans', sans-serif;
-          background: transparent;
-          padding: 0;
         }
         html.theme-light .lp-label { color: rgba(11,13,17,0.5); }
         .lp-input:focus + .lp-label,
@@ -340,8 +588,6 @@ export function LoginPage() {
           text-transform: uppercase;
           color: rgba(239,159,39,0.95);
         }
-
-        /* Bouton afficher mdp en absolu dans l input password */
         .lp-pw-eye {
           position: absolute;
           right: 12px; top: 50%;
@@ -361,7 +607,7 @@ export function LoginPage() {
           background: rgba(239,159,39,0.1);
         }
 
-        /* ─── Error ─────────────────────────────────────────── */
+        /* ─── Error / submit / secondary ─────────────────────── */
         .lp-error {
           background: rgba(226,75,74,0.12);
           border: 1px solid rgba(226,75,74,0.5);
@@ -382,8 +628,6 @@ export function LoginPage() {
           25%      { transform: translateX(-4px); }
           75%      { transform: translateX(4px); }
         }
-
-        /* ─── Submit + secondary ─────────────────────────────── */
         .lp-submit {
           width: 100%;
           background: linear-gradient(135deg, #EF9F27 0%, #BA7517 100%);
@@ -410,9 +654,32 @@ export function LoginPage() {
         }
         .lp-submit:disabled { opacity: 0.55; cursor: not-allowed; }
 
-        .lp-secondary-row {
-          display: flex; flex-direction: column; gap: 10px;
+        .lp-divider-row {
+          display: flex; align-items: center; gap: 10px;
+          font-size: 11px;
+          color: rgba(240,237,232,0.35);
+          letter-spacing: 0.12em;
+          text-transform: uppercase;
+          font-weight: 600;
         }
+        html.theme-light .lp-divider-row { color: rgba(11,13,17,0.35); }
+        .lp-divider-row::before, .lp-divider-row::after {
+          content: ""; flex: 1; height: 1px;
+          background: rgba(240,237,232,0.1);
+        }
+        html.theme-light .lp-divider-row::before,
+        html.theme-light .lp-divider-row::after {
+          background: rgba(11,13,17,0.1);
+        }
+        .lp-magic-hint {
+          font-size: 11.5px;
+          color: rgba(240,237,232,0.55);
+          line-height: 1.5;
+          margin: -4px 0 6px;
+          font-style: italic;
+          text-align: center;
+        }
+        html.theme-light .lp-magic-hint { color: rgba(11,13,17,0.55); }
         .lp-magic-btn {
           width: 100%;
           background: rgba(29,158,117,0.1);
@@ -441,25 +708,7 @@ export function LoginPage() {
           transform: translateY(-1px);
         }
 
-        .lp-divider-row {
-          display: flex; align-items: center; gap: 10px;
-          font-size: 11px;
-          color: rgba(240,237,232,0.35);
-          letter-spacing: 0.12em;
-          text-transform: uppercase;
-          font-weight: 600;
-        }
-        html.theme-light .lp-divider-row { color: rgba(11,13,17,0.35); }
-        .lp-divider-row::before, .lp-divider-row::after {
-          content: ""; flex: 1; height: 1px;
-          background: rgba(240,237,232,0.1);
-        }
-        html.theme-light .lp-divider-row::before,
-        html.theme-light .lp-divider-row::after {
-          background: rgba(11,13,17,0.1);
-        }
-
-        /* ─── PWA install + footer trust ──────────────────────── */
+        /* ─── PWA install + footer ──────────────────────────── */
         .lp-pwa-card {
           background: rgba(239,159,39,0.08);
           border: 1px solid rgba(239,159,39,0.2);
@@ -498,7 +747,7 @@ export function LoginPage() {
         }
 
         .lp-trust {
-          margin-top: 18px;
+          margin-top: 10px;
           display: flex;
           align-items: center;
           justify-content: center;
@@ -508,25 +757,26 @@ export function LoginPage() {
         }
         html.theme-light .lp-trust { color: rgba(11,13,17,0.45); }
 
-        /* ─── Bouton retour minimal ──────────────────────────── */
+        /* ─── Bouton retour / "Pas Thomas ?" ─────────────────── */
         .lp-back {
           position: fixed;
           top: 18px; left: 18px;
           z-index: 20;
-          padding: 6px 12px;
+          padding: 7px 14px;
           border-radius: 999px;
           background: rgba(255,255,255,0.06);
           backdrop-filter: blur(8px);
           -webkit-backdrop-filter: blur(8px);
           border: 1px solid rgba(255,255,255,0.1);
-          color: rgba(240,237,232,0.65);
-          font-size: 12px;
+          color: rgba(240,237,232,0.7);
+          font-size: 12.5px;
           font-weight: 500;
           font-family: 'DM Sans', sans-serif;
           text-decoration: none;
           display: inline-flex;
           align-items: center;
           gap: 4px;
+          cursor: pointer;
           transition: all 0.15s;
         }
         html.theme-light .lp-back {
@@ -540,23 +790,25 @@ export function LoginPage() {
           transform: translateX(-2px);
         }
 
-        /* ─── Animations ─────────────────────────────────────── */
+        /* ─── Animations & reduced motion ────────────────────── */
         @keyframes lp-in {
           from { opacity: 0; transform: translateY(12px); }
           to   { opacity: 1; transform: translateY(0); }
         }
         @media (prefers-reduced-motion: reduce) {
-          .lp-blob-gold, .lp-blob-teal, .lp-logo, .lp-chip-dot,
-          .lp-visual-inner, .lp-form-inner { animation: none !important; }
+          .lp-blob-gold, .lp-blob-teal, .lp-blob-cool, .lp-logo,
+          .lp-live-dot, .lp-greeting-emoji,
+          .lp-visual-inner, .lp-form-inner,
+          .lp-quote-block, .lp-live, .lp-avatar-chip { animation: none !important; }
           .lp-error { animation: none !important; }
         }
 
-        /* ─── Mobile : visuel devient bandeau header ────────── */
+        /* ─── Mobile ─────────────────────────────────────────── */
         @media (max-width: 880px) {
           .lp-root { flex-direction: column; }
           .lp-visual {
             flex: 0 0 auto;
-            min-height: 28vh;
+            min-height: 32vh;
             padding: 32px 24px 24px;
           }
           .lp-form-side {
@@ -564,28 +816,36 @@ export function LoginPage() {
             padding: 28px 24px 32px;
           }
           .lp-logo { width: 64px; height: 64px; border-radius: 18px; margin-bottom: 18px; }
-          .lp-tagline { font-size: 22px; }
-          .lp-tagline-sub { font-size: 13px; margin-bottom: 18px; }
+          .lp-tagline { font-size: 22px; margin-bottom: 16px; }
+          .lp-quote-block { padding: 12px 14px; max-width: 320px; }
+          .lp-quote-text { font-size: 12.5px; }
           .lp-greeting { font-size: 24px; }
-          .lp-back { top: 12px; left: 12px; }
+          .lp-back { top: 12px; left: 12px; padding: 6px 12px; font-size: 11.5px; }
         }
         @media (max-width: 480px) {
-          .lp-visual { min-height: 24vh; padding: 28px 20px 18px; }
+          .lp-visual { min-height: 28vh; padding: 28px 20px 18px; }
           .lp-form-side { padding: 24px 20px 28px; }
           .lp-tagline { font-size: 20px; }
-          .lp-blob-gold, .lp-blob-teal { width: 280px; height: 280px; }
+          .lp-blob-gold, .lp-blob-teal, .lp-blob-cool { width: 280px; height: 280px; }
         }
       `}</style>
 
-      {/* Bouton retour minimal global */}
-      <a href="/welcome" className="lp-back" aria-label="Retour à l'accueil">
-        ← Accueil
-      </a>
+      {/* Bouton retour / "Pas Prenom ?" */}
+      {isReturning && knownFirstName ? (
+        <button type="button" className="lp-back" onClick={handleNotMe}>
+          ← Pas {knownFirstName} ?
+        </button>
+      ) : (
+        <a href="/welcome" className="lp-back" aria-label="Retour à l'accueil">
+          ← Accueil
+        </a>
+      )}
 
-      {/* ─── Visuel gauche ──────────────────────────────── */}
+      {/* ─── Visuel gauche ──────────────────────── */}
       <div className="lp-visual" aria-hidden="true">
         <div className="lp-blob lp-blob-gold" />
         <div className="lp-blob lp-blob-teal" />
+        <div className="lp-blob lp-blob-cool" />
         <div className="lp-grain" />
         <div className="lp-visual-inner">
           <div className="lp-logo">
@@ -598,39 +858,48 @@ export function LoginPage() {
             <span className="lp-tagline-accent">bien-être</span>{" "}
             t'attend.
           </h2>
-          <p className="lp-tagline-sub">
-            Une plateforme pensée pour les coachs qui veulent transformer leur
-            club en machine de précision.
-          </p>
-          <div className="lp-chip">
-            <span className="lp-chip-dot" />
-            Plateforme de coachs Herbalife · données chiffrées
+          <div className="lp-quote-block">
+            <p className="lp-quote-text">« {quote.text} »</p>
+            <span className="lp-quote-sign">— {quote.sign}</span>
+          </div>
+          <div className="lp-live">
+            <span className="lp-live-dot" aria-hidden="true" />
+            <span className="lp-live-num">{liveCount}</span> coachs en ligne
           </div>
         </div>
       </div>
 
-      {/* ─── Form droite ────────────────────────────────── */}
+      {/* ─── Form droite ────────────────────────── */}
       <div className="lp-form-side">
         <div className="lp-form-inner">
-          {/* Greeting perso si returning */}
-          {isReturning ? (
-            <div>
-              <h1 className="lp-greeting">Bon retour 👋</h1>
+          {/* Greeting heure-adaptatif */}
+          <div>
+            <h1 className="lp-greeting">
+              {greeting}
+              <span className="lp-greeting-emoji" aria-hidden="true">{phase.emoji}</span>
+            </h1>
+            {isReturning ? (
               <p className="lp-greeting-hint">
                 Tu t'étais connecté avec{" "}
                 <span className="lp-greeting-mask">{maskEmail(initialLastEmail)}</span>
               </p>
-            </div>
-          ) : (
-            <div>
-              <h1 className="lp-greeting">
-                Connexion à <span className="lp-tagline-accent">Lor'Squad</span>
-              </h1>
+            ) : (
               <p className="lp-greeting-hint">
-                Identifie-toi avec ton email + mot de passe.
+                Identifie-toi pour ouvrir ton cockpit.
               </p>
-            </div>
-          )}
+            )}
+            {isReturning && knownFirstName ? (
+              <div className="lp-avatar-chip">
+                <span
+                  className="lp-avatar-circle"
+                  style={knownAvatar ? { backgroundImage: `url(${knownAvatar})` } : undefined}
+                >
+                  {knownAvatar ? "" : getInitials(knownFirstName)}
+                </span>
+                Coach {knownFirstName}
+              </div>
+            ) : null}
+          </div>
 
           {/* Form */}
           <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
@@ -694,9 +963,13 @@ export function LoginPage() {
             </button>
           </form>
 
-          {/* Divider + actions secondaires */}
-          <div className="lp-secondary-row">
+          {/* Lien magique avec hint */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             <div className="lp-divider-row">ou</div>
+            <p className="lp-magic-hint">
+              Mot de passe oublié, ou flemme de le taper ?<br />
+              On t'envoie un lien sécurisé par email — 1 clic et c'est ouvert.
+            </p>
             <button
               type="button"
               onClick={() => navigate("/forgot-password")}
@@ -731,7 +1004,6 @@ export function LoginPage() {
             </div>
           ) : null}
 
-          {/* Trust footer */}
           <div className="lp-trust">
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
