@@ -104,8 +104,11 @@ export default async function handler(req: any, res: any) {
     return;
   }
 
+  // Fix Thomas (2026-04-30) : referent peut avoir un sponsor (chaine Herbalife).
+  // Avant : seulement distributor. Maintenant : tout sauf admin (admin=racine).
   let sponsorName: string | null = null;
-  if (role === "distributor" && sponsorId) {
+  const canHaveSponsor = role !== "admin";
+  if (canHaveSponsor && sponsorId) {
     const { data: sponsor } = await admin
       .from("users")
       .select("id, name, role, active")
@@ -127,8 +130,8 @@ export default async function handler(req: any, res: any) {
     .from("users")
     .update({
       role,
-      sponsor_id: role === "distributor" ? sponsorId || null : null,
-      sponsor_name: role === "distributor" ? sponsorName : null,
+      sponsor_id: canHaveSponsor ? sponsorId || null : null,
+      sponsor_name: canHaveSponsor ? sponsorName : null,
       title: title || null
     })
     .eq("id", userId);
@@ -147,7 +150,7 @@ export default async function handler(req: any, res: any) {
   await admin.auth.admin.updateUserById(userId, {
     user_metadata: {
       role,
-      sponsor_id: role === "distributor" ? sponsorId || null : null
+      sponsor_id: canHaveSponsor ? sponsorId || null : null
     }
   });
 
