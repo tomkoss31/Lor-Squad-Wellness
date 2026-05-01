@@ -12,7 +12,7 @@
 //   - resetLevel(levelId) : remise a zero d un niveau
 // =============================================================================
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   FORMATION_LEVELS,
   getFormationLevelById,
@@ -141,11 +141,14 @@ export function useFormationProgress(): UseFormationProgressResult {
     [state],
   );
 
-  const stats: Record<FormationLevelId, FormationLevelStats> = {
-    demarrer: computeStats("demarrer"),
-    construire: computeStats("construire"),
-    dupliquer: computeStats("dupliquer"),
-  };
+  const stats = useMemo<Record<FormationLevelId, FormationLevelStats>>(
+    () => ({
+      demarrer: computeStats("demarrer"),
+      construire: computeStats("construire"),
+      dupliquer: computeStats("dupliquer"),
+    }),
+    [computeStats],
+  );
 
   const isLevelLocked = useCallback(
     (levelId: FormationLevelId): boolean => stats[levelId].isLocked,
