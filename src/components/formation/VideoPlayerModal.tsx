@@ -1,6 +1,10 @@
 // Chantier Centre de Formation V1 (2026-04-23).
 // Modale YouTube embed + bouton "J'ai terminé" qui marque la ressource
 // comme vue via le hook useTraining.markCompleted.
+//
+// Refactor theme-aware (2026-04-30) : couleurs hardcodees blanches/grises
+// remplacees par les tokens var(--ls-*). Pattern a11y backdrop unifie
+// (role="presentation" + ESC handler).
 
 import { useEffect, useMemo } from "react";
 import { Button } from "../ui/Button";
@@ -75,6 +79,8 @@ export function VideoPlayerModal({
         position: "fixed",
         inset: 0,
         background: "rgba(0,0,0,0.7)",
+        backdropFilter: "blur(4px)",
+        WebkitBackdropFilter: "blur(4px)",
         zIndex: 10000,
         display: "flex",
         alignItems: "center",
@@ -89,7 +95,8 @@ export function VideoPlayerModal({
         onClick={(e) => e.stopPropagation()}
         onKeyDown={(e) => e.stopPropagation()}
         style={{
-          background: "#FFFFFF",
+          background: "var(--ls-surface)",
+          border: "0.5px solid var(--ls-border)",
           borderRadius: 14,
           maxWidth: 820,
           width: "100%",
@@ -103,7 +110,7 @@ export function VideoPlayerModal({
             alignItems: "center",
             justifyContent: "space-between",
             padding: "12px 16px",
-            borderBottom: "1px solid rgba(0,0,0,0.08)",
+            borderBottom: "0.5px solid var(--ls-border)",
           }}
         >
           <p
@@ -111,7 +118,7 @@ export function VideoPlayerModal({
               fontFamily: "Syne, sans-serif",
               fontSize: 14,
               fontWeight: 700,
-              color: "#111827",
+              color: "var(--ls-text)",
               margin: 0,
             }}
           >
@@ -127,7 +134,7 @@ export function VideoPlayerModal({
               borderRadius: 8,
               border: "none",
               background: "transparent",
-              color: "#6B7280",
+              color: "var(--ls-text-muted)",
               cursor: "pointer",
               fontSize: 18,
               lineHeight: 1,
@@ -178,7 +185,7 @@ export function VideoPlayerModal({
             display: "flex",
             justifyContent: "flex-end",
             gap: 8,
-            borderTop: "1px solid rgba(0,0,0,0.08)",
+            borderTop: "0.5px solid var(--ls-border)",
           }}
         >
           <Button variant="secondary" onClick={onClose}>

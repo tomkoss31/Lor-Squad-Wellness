@@ -1,13 +1,22 @@
 // Chantier Centre de Formation V1 (2026-04-23).
 // Card ressource dans la page catégorie.
+//
+// Refactor theme-aware (2026-04-30) : couleurs Tailwind-like remplacees
+// par les tokens var(--ls-*) qui suivent le toggle clair/sombre.
 
 import type { TrainingResource } from "../../types/training";
 
-const TYPE_PALETTES = {
-  video: { bg: "#FCEBEB", color: "#A32D2D", label: "Vidéo" },
-  pdf: { bg: "#FAEEDA", color: "#854F0B", label: "PDF" },
-  guide: { bg: "#E1F5EE", color: "#0F6E56", label: "Guide" },
-  external: { bg: "#EEEDFE", color: "#534AB7", label: "Externe" },
+interface TypePalette {
+  /** Token CSS de la couleur d accent. */
+  accentVar: string;
+  label: string;
+}
+
+const TYPE_PALETTES: Record<string, TypePalette> = {
+  video: { accentVar: "var(--ls-coral)", label: "Vidéo" },
+  pdf: { accentVar: "var(--ls-gold)", label: "PDF" },
+  guide: { accentVar: "var(--ls-teal)", label: "Guide" },
+  external: { accentVar: "var(--ls-purple)", label: "Externe" },
 } as const;
 
 function TypeIcon({ type, color }: { type: keyof typeof TYPE_PALETTES; color: string }) {
@@ -85,14 +94,14 @@ export function ResourceCard({
           width: 44,
           height: 44,
           borderRadius: 10,
-          background: palette.bg,
+          background: `color-mix(in srgb, ${palette.accentVar} 14%, transparent)`,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
           flexShrink: 0,
         }}
       >
-        <TypeIcon type={resource.resource_type} color={palette.color} />
+        <TypeIcon type={resource.resource_type} color={palette.accentVar} />
       </div>
 
       <div style={{ flex: 1, minWidth: 0 }}>
@@ -101,8 +110,8 @@ export function ResourceCard({
             style={{
               padding: "1px 7px",
               borderRadius: 6,
-              background: palette.bg,
-              color: palette.color,
+              background: `color-mix(in srgb, ${palette.accentVar} 14%, transparent)`,
+              color: palette.accentVar,
               fontSize: 10,
               fontWeight: 700,
               letterSpacing: "0.03em",
@@ -120,8 +129,8 @@ export function ResourceCard({
               style={{
                 padding: "1px 7px",
                 borderRadius: 6,
-                background: "#A32D2D",
-                color: "#FFFFFF",
+                background: "var(--ls-coral)",
+                color: "var(--ls-coral-contrast, #FFFFFF)",
                 fontSize: 9,
                 fontWeight: 700,
                 letterSpacing: "0.05em",
@@ -148,7 +157,7 @@ export function ResourceCard({
           width: 28,
           height: 28,
           borderRadius: "50%",
-          background: isCompleted ? "#0F6E56" : "transparent",
+          background: isCompleted ? "var(--ls-teal)" : "transparent",
           border: isCompleted ? "none" : "2px solid var(--ls-border)",
           display: "flex",
           alignItems: "center",
@@ -156,7 +165,7 @@ export function ResourceCard({
         }}
       >
         {isCompleted ? (
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2.5">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ls-teal-contrast, #FFFFFF)" strokeWidth="2.5">
             <polyline points="20 6 9 17 4 12" />
           </svg>
         ) : null}

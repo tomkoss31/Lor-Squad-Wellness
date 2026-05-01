@@ -1,16 +1,23 @@
 // Chantier Centre de Formation V1 (2026-04-23).
 // Card catégorie affichée sur la home /formation.
+//
+// Refactor theme-aware (2026-04-30) : couleurs Tailwind-like remplacees
+// par les tokens var(--ls-*) qui suivent le toggle clair/sombre. Palette
+// alignee sur la charte Lor'Squad : teal, gold, purple.
 
 import { Link } from "react-router-dom";
 import type { TrainingCategoryStats } from "../../types/training";
 
-const COLOR_PALETTES: Record<
-  string,
-  { bg: string; icon: string; iconBg: string; label: string }
-> = {
-  teal: { bg: "#E1F5EE", icon: "#0F6E56", iconBg: "rgba(13,110,86,0.15)", label: "DÉBUTANT" },
-  amber: { bg: "#FAEEDA", icon: "#854F0B", iconBg: "rgba(133,79,11,0.15)", label: "INTERMÉDIAIRE" },
-  purple: { bg: "#EEEDFE", icon: "#534AB7", iconBg: "rgba(83,74,183,0.15)", label: "AVANCÉ" },
+interface Palette {
+  /** Token CSS de la couleur d accent (var(--ls-teal), etc.). */
+  accentVar: string;
+  label: string;
+}
+
+const COLOR_PALETTES: Record<string, Palette> = {
+  teal: { accentVar: "var(--ls-teal)", label: "DÉBUTANT" },
+  amber: { accentVar: "var(--ls-gold)", label: "INTERMÉDIAIRE" },
+  purple: { accentVar: "var(--ls-purple)", label: "AVANCÉ" },
 };
 
 const ICONS: Record<string, JSX.Element> = {
@@ -58,7 +65,7 @@ export function CategoryCard({ stats }: { stats: TrainingCategoryStats }) {
       }}
       onMouseEnter={(e) => {
         e.currentTarget.style.transform = "translateY(-1px)";
-        e.currentTarget.style.boxShadow = "0 8px 24px rgba(0,0,0,0.08)";
+        e.currentTarget.style.boxShadow = `0 8px 24px color-mix(in srgb, ${palette.accentVar} 18%, transparent)`;
       }}
       onMouseLeave={(e) => {
         e.currentTarget.style.transform = "translateY(0)";
@@ -73,8 +80,8 @@ export function CategoryCard({ stats }: { stats: TrainingCategoryStats }) {
             right: 10,
             padding: "2px 8px",
             borderRadius: 8,
-            background: "#A32D2D",
-            color: "#FFFFFF",
+            background: "var(--ls-coral)",
+            color: "var(--ls-coral-contrast, #FFFFFF)",
             fontSize: 9,
             fontWeight: 700,
             letterSpacing: "0.05em",
@@ -91,8 +98,8 @@ export function CategoryCard({ stats }: { stats: TrainingCategoryStats }) {
             width: 40,
             height: 40,
             borderRadius: 10,
-            background: palette.bg,
-            color: palette.icon,
+            background: `color-mix(in srgb, ${palette.accentVar} 14%, transparent)`,
+            color: palette.accentVar,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -107,7 +114,7 @@ export function CategoryCard({ stats }: { stats: TrainingCategoryStats }) {
               fontSize: 10,
               letterSpacing: "0.08em",
               fontWeight: 700,
-              color: palette.icon,
+              color: palette.accentVar,
               marginBottom: 2,
             }}
           >
@@ -137,7 +144,7 @@ export function CategoryCard({ stats }: { stats: TrainingCategoryStats }) {
         <div style={{ fontSize: 11, color: "var(--ls-text-muted)" }}>
           {completed} / {total} ressource{total > 1 ? "s" : ""}
         </div>
-        <div style={{ fontSize: 12, fontWeight: 700, color: palette.icon }}>
+        <div style={{ fontSize: 12, fontWeight: 700, color: palette.accentVar }}>
           {percent}%
         </div>
       </div>
@@ -155,7 +162,7 @@ export function CategoryCard({ stats }: { stats: TrainingCategoryStats }) {
           style={{
             width: `${percent}%`,
             height: "100%",
-            background: palette.icon,
+            background: palette.accentVar,
             transition: "width 0.3s",
           }}
         />
