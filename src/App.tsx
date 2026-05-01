@@ -224,6 +224,13 @@ const FormationCategoryPage = lazy(() =>
     default: module.FormationCategoryPage
   }))
 );
+// Phase 2 chantier formation (2026-04-30) : page module parcours guide
+// (placeholder en attendant le contenu Notion en Phase 3).
+const FormationModulePage = lazy(() =>
+  import("./pages/FormationModulePage").then((module) => ({
+    default: module.FormationModulePage
+  }))
+);
 const SettingsPage = lazy(() =>
   import("./pages/SettingsPage").then((module) => ({
     default: module.SettingsPage
@@ -308,6 +315,7 @@ export default function App() {
               <Route path="academy/demo/fiche-client" element={<DemoFicheClient />} />
               <Route path="academy/demo/agenda" element={<DemoAgenda />} />
               <Route path="formation" element={<FormationPage />} />
+              <Route path="formation/parcours/:levelSlug" element={<FormationModulePage />} />
               <Route path="formation/:slug" element={<FormationCategoryPage />} />
               {/* /settings (non-admin) reste accessible comme placeholder profil léger.
                   Les admins ont /parametres avec la version complète. */}
