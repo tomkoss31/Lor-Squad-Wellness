@@ -23,3 +23,8 @@ export { useFormationReviewQueue } from "./hooks/useFormationReviewQueue";
 export { useFormationAdminQueue } from "./hooks/useFormationAdminQueue";
 export { useFormationReviewThread } from "./hooks/useFormationReviewThread";
 export { useFormationActions } from "./hooks/useFormationActions";
+export { useFormationAdminKpis } from "./hooks/useFormationAdminKpis";
+export type {
+  FormationAdminKpis,
+  FormationSponsorDropoff,
+} from "./hooks/useFormationAdminKpis";

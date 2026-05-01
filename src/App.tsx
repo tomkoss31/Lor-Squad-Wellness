@@ -238,6 +238,12 @@ const FormationMyTeamPage = lazy(() =>
     default: module.FormationMyTeamPage
   }))
 );
+// Phase D chantier formation pyramide : page admin pilotage Formation.
+const FormationAdminPage = lazy(() =>
+  import("./pages/FormationAdminPage").then((module) => ({
+    default: module.FormationAdminPage
+  }))
+);
 const SettingsPage = lazy(() =>
   import("./pages/SettingsPage").then((module) => ({
     default: module.SettingsPage
@@ -323,6 +329,7 @@ export default function App() {
               <Route path="academy/demo/agenda" element={<DemoAgenda />} />
               <Route path="formation" element={<FormationPage />} />
               <Route path="formation/mon-equipe" element={<FormationMyTeamPage />} />
+              <Route path="formation/admin" element={<FormationAdminPage />} />
               <Route path="formation/parcours/:levelSlug" element={<FormationModulePage />} />
               <Route path="formation/:slug" element={<FormationCategoryPage />} />
               {/* /settings (non-admin) reste accessible comme placeholder profil léger.
