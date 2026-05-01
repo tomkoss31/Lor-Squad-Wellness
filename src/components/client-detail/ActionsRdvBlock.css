@@ -391,7 +391,7 @@
 .arb-rdv-compact__badge {
   width: 32px;
   height: 32px;
-  border-radius: 8px;
+  border-radius: var(--ls-radius);
   background: linear-gradient(135deg, rgba(239, 159, 39, 0.14), rgba(186, 117, 23, 0.05));
   color: var(--ls-actions-gold-text, #854f0b);
   display: flex;
@@ -439,7 +439,7 @@
   min-width: 36px;
   min-height: 36px;
   padding: 8px;
-  border-radius: 8px;
+  border-radius: var(--ls-radius);
   background: transparent;
   border: 0.5px solid var(--ls-actions-border-soft, rgba(211, 209, 199, 0.4));
   color: var(--ls-actions-text-tertiary, #5f5e5a);
