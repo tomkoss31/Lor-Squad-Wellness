@@ -297,12 +297,30 @@ function BlockRenderer({ block }: { block: Block }) {
       );
     case "table":
       return (
-        <div style={{ overflowX: "auto", margin: "12px 0" }}>
+        <div
+          style={{
+            overflowX: "auto",
+            margin: "12px 0",
+            border: "0.5px solid var(--ls-border)",
+            borderRadius: 10,
+            // Indicateur scroll mobile via gradient sur les bords
+            backgroundImage:
+              "linear-gradient(to right, var(--ls-surface), var(--ls-surface)), " +
+              "linear-gradient(to right, var(--ls-surface), var(--ls-surface)), " +
+              "linear-gradient(to right, color-mix(in srgb, var(--ls-text) 8%, transparent), transparent), " +
+              "linear-gradient(to left, color-mix(in srgb, var(--ls-text) 8%, transparent), transparent)",
+            backgroundPosition: "left center, right center, left center, right center",
+            backgroundRepeat: "no-repeat",
+            backgroundSize: "20px 100%, 20px 100%, 10px 100%, 10px 100%",
+            backgroundAttachment: "local, local, scroll, scroll",
+          }}
+        >
           <table
             style={{
               width: "100%",
               borderCollapse: "collapse",
               fontSize: 13,
+              minWidth: 320,
             }}
           >
             <thead>

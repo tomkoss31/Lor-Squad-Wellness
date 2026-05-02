@@ -110,9 +110,23 @@ export function FormationModuleDetailPage() {
         levelAccent={accentVar}
       />
 
+      <style>{`
+        @keyframes ls-formation-fade-in {
+          from { opacity: 0; transform: translateY(6px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .ls-formation-mode-section { animation: none !important; }
+        }
+      `}</style>
+
       {/* Mode quiz : QuizRunner au-dessus des lecons */}
       {mode === "quiz" ? (
-        <section>
+        <section
+          key="quiz"
+          className="ls-formation-mode-section"
+          style={{ animation: "ls-formation-fade-in 0.32s cubic-bezier(0.16,1,0.3,1)" }}
+        >
           <QuizRunner
             module={module}
             levelSlug={level.slug}
@@ -123,7 +137,16 @@ export function FormationModuleDetailPage() {
 
       {/* Lecons */}
       {mode === "lecture" ? (
-        <section style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        <section
+          key="lecture"
+          className="ls-formation-mode-section"
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: 12,
+            animation: "ls-formation-fade-in 0.32s cubic-bezier(0.16,1,0.3,1)",
+          }}
+        >
           {module.lessons.map((lesson, idx) => (
             <LessonCard key={lesson.id} lesson={lesson} index={idx} />
           ))}
@@ -135,15 +158,16 @@ export function FormationModuleDetailPage() {
         <AncrageActionPanel ancrage={module.ancrage} action={module.action} />
       ) : null}
 
-      {/* CTA quiz (bas de page lecture) */}
+      {/* CTA quiz (bas de page lecture) — safe-area pour iOS PWA */}
       {mode === "lecture" && module.quiz ? (
         <div
           style={{
             position: "sticky",
-            bottom: 16,
+            bottom: "max(16px, env(safe-area-inset-bottom, 16px))",
             display: "flex",
             justifyContent: "center",
             zIndex: 5,
+            paddingInline: 8,
           }}
         >
           <button
@@ -165,6 +189,8 @@ export function FormationModuleDetailPage() {
               boxShadow: `0 10px 24px -6px color-mix(in srgb, ${accentVar} 50%, transparent)`,
               letterSpacing: "0.01em",
               transition: "transform 0.18s, filter 0.18s",
+              maxWidth: "100%",
+              textAlign: "center",
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.transform = "translateY(-2px)";
