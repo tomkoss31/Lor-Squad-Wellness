@@ -3,9 +3,8 @@
 //
 // Route /formation/parcours/:levelSlug. Affiche les modules d un niveau.
 //
-// Phase 2 : modules vides → empty state propre + retour /formation.
-// Phase 3 : liste des modules avec progression, debloquage sequentiel,
-//          quiz validation. Sera enrichi avec le contenu Notion.
+// Phase F-UI (2026-05-02) : liste vivante des modules avec status DB
+// (formation_user_progress) + click → page detail module.
 // =============================================================================
 
 import { Link, useNavigate, useParams } from "react-router-dom";
@@ -14,8 +13,11 @@ import {
   FORMATION_LEVELS,
   getFormationLevelBySlug,
   type FormationLevelAccent,
+  type FormationModule,
 } from "../data/formation";
 import { useFormationProgress } from "../hooks/useFormationProgress";
+import { useMyFormationProgress } from "../features/formation";
+import { FormationStatusBadge } from "../components/formation/FormationStatusBadge";
 
 const ACCENT_TOKEN: Record<FormationLevelAccent, string> = {
   gold: "var(--ls-gold)",
@@ -27,6 +29,7 @@ export function FormationModulePage() {
   const { levelSlug } = useParams<{ levelSlug: string }>();
   const navigate = useNavigate();
   const { stats } = useFormationProgress();
+  const { getByModuleId } = useMyFormationProgress();
 
   const level = levelSlug ? getFormationLevelBySlug(levelSlug) : undefined;
 
@@ -144,7 +147,16 @@ export function FormationModulePage() {
         <EmptyModuleState accentVar={accentVar} levelTitle={level.title} />
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          {/* Phase 3 : liste des modules ici */}
+          {level.modules.map((mod, idx) => (
+            <ModuleRow
+              key={mod.id}
+              module={mod}
+              index={idx}
+              accentVar={accentVar}
+              levelSlug={level.slug}
+              progressStatus={getByModuleId(mod.id)?.status}
+            />
+          ))}
         </div>
       )}
 
@@ -193,6 +205,136 @@ export function FormationModulePage() {
         </div>
       </div>
     </div>
+  );
+}
+
+// ─── ModuleRow ────────────────────────────────────────────────────────────
+
+function ModuleRow({
+  module,
+  accentVar,
+  levelSlug,
+  progressStatus,
+}: {
+  module: FormationModule;
+  index: number;
+  accentVar: string;
+  levelSlug: string;
+  progressStatus?: string;
+}) {
+  const totalLessons = module.lessons.length;
+  const isValidated = progressStatus === "validated";
+  return (
+    <Link
+      to={`/formation/parcours/${levelSlug}/${module.slug}`}
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 14,
+        padding: "14px 18px",
+        background: isValidated
+          ? `linear-gradient(135deg, color-mix(in srgb, var(--ls-teal) 6%, var(--ls-surface)) 0%, var(--ls-surface) 100%)`
+          : "var(--ls-surface)",
+        border: isValidated
+          ? "0.5px solid color-mix(in srgb, var(--ls-teal) 30%, transparent)"
+          : "0.5px solid var(--ls-border)",
+        borderLeft: `3px solid ${isValidated ? "var(--ls-teal)" : accentVar}`,
+        borderRadius: 14,
+        textDecoration: "none",
+        color: "var(--ls-text)",
+        fontFamily: "DM Sans, sans-serif",
+        transition: "transform 0.18s, box-shadow 0.18s",
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.transform = "translateY(-1px)";
+        e.currentTarget.style.boxShadow = `0 6px 16px -8px color-mix(in srgb, ${accentVar} 30%, transparent)`;
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.transform = "none";
+        e.currentTarget.style.boxShadow = "none";
+      }}
+    >
+      <div
+        aria-hidden="true"
+        style={{
+          width: 44,
+          height: 44,
+          borderRadius: 12,
+          background: `color-mix(in srgb, ${accentVar} 14%, transparent)`,
+          color: accentVar,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          fontSize: 22,
+          flexShrink: 0,
+        }}
+      >
+        {module.icon}
+      </div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ display: "flex", alignItems: "baseline", gap: 8, flexWrap: "wrap" }}>
+          <span
+            style={{
+              fontFamily: "Syne, serif",
+              fontSize: 11,
+              fontWeight: 800,
+              color: accentVar,
+              letterSpacing: "0.04em",
+            }}
+          >
+            M{module.number}
+          </span>
+          <h3
+            style={{
+              fontFamily: "Syne, serif",
+              fontSize: 14.5,
+              fontWeight: 700,
+              margin: 0,
+              color: "var(--ls-text)",
+              letterSpacing: "-0.01em",
+            }}
+          >
+            {module.title}
+          </h3>
+        </div>
+        <div
+          style={{
+            fontSize: 12,
+            color: "var(--ls-text-muted)",
+            marginTop: 2,
+            display: "-webkit-box",
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: "vertical",
+            overflow: "hidden",
+          }}
+        >
+          {module.description}
+        </div>
+        <div
+          style={{
+            display: "flex",
+            gap: 12,
+            marginTop: 6,
+            flexWrap: "wrap",
+            fontSize: 11,
+            color: "var(--ls-text-hint)",
+            alignItems: "center",
+          }}
+        >
+          <span>⏱ {module.durationMin} min</span>
+          <span>📚 {totalLessons} leçon{totalLessons > 1 ? "s" : ""}</span>
+          {module.quiz ? (
+            <span>✓ {module.quiz.questions.length} questions</span>
+          ) : null}
+        </div>
+      </div>
+      {progressStatus && progressStatus !== "not_started" ? (
+        <div style={{ flexShrink: 0 }}>
+          <FormationStatusBadge status={progressStatus as never} />
+        </div>
+      ) : null}
+      <span style={{ color: "var(--ls-text-muted)", fontSize: 18, flexShrink: 0 }}>→</span>
+    </Link>
   );
 }
 
