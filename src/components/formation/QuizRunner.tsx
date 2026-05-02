@@ -15,7 +15,7 @@
 //   5. Sinon → toast (gere par useFormationActions) + reload progression
 // =============================================================================
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useFormationActions } from "../../features/formation";
 import type { FormationModule } from "../../data/formation";
@@ -24,6 +24,39 @@ import type {
   FormationQcmQuestion,
 } from "../../data/formation/types";
 import { ConfettiBurst } from "../../features/academy/components/ConfettiBurst";
+
+// ─── Anti-perte : sauvegarde brouillon free_text en localStorage ───────────
+const DRAFT_STORAGE_PREFIX = "ls_formation_quiz_draft_";
+
+function readDraft(moduleId: string): { qcm: Record<string, number>; free: Record<string, string> } {
+  if (typeof window === "undefined") return { qcm: {}, free: {} };
+  try {
+    const raw = window.localStorage.getItem(DRAFT_STORAGE_PREFIX + moduleId);
+    if (!raw) return { qcm: {}, free: {} };
+    const parsed = JSON.parse(raw);
+    return { qcm: parsed.qcm ?? {}, free: parsed.free ?? {} };
+  } catch {
+    return { qcm: {}, free: {} };
+  }
+}
+
+function writeDraft(moduleId: string, data: { qcm: Record<string, number>; free: Record<string, string> }): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(DRAFT_STORAGE_PREFIX + moduleId, JSON.stringify(data));
+  } catch {
+    /* quota / private */
+  }
+}
+
+function clearDraft(moduleId: string): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.removeItem(DRAFT_STORAGE_PREFIX + moduleId);
+  } catch {
+    /* noop */
+  }
+}
 
 interface Props {
   module: FormationModule;
@@ -39,13 +72,22 @@ type FreeTextAnswerMap = Record<string, string>;
 export function QuizRunner({ module, levelSlug, onSubmitDone }: Props) {
   const navigate = useNavigate();
   const { submitModule, busy } = useFormationActions();
-  const [qcmAnswers, setQcmAnswers] = useState<QcmAnswerMap>({});
-  const [freeTextAnswers, setFreeTextAnswers] = useState<FreeTextAnswerMap>({});
+
+  // Restaure le brouillon des reponses si refresh / retour arriere
+  const initialDraft = useMemo(() => readDraft(module.id), [module.id]);
+  const [qcmAnswers, setQcmAnswers] = useState<QcmAnswerMap>(initialDraft.qcm);
+  const [freeTextAnswers, setFreeTextAnswers] = useState<FreeTextAnswerMap>(initialDraft.free);
   const [showConfetti, setShowConfetti] = useState(false);
   const [submittedResult, setSubmittedResult] = useState<null | {
     autoValidated: boolean;
     score: number;
   }>(null);
+
+  // Persiste le brouillon en localStorage a chaque modif (debounce-free,
+  // setItem est rapide).
+  useEffect(() => {
+    writeDraft(module.id, { qcm: qcmAnswers, free: freeTextAnswers });
+  }, [module.id, qcmAnswers, freeTextAnswers]);
 
   // Memos doivent etre AVANT tout early return (rules-of-hooks).
   const questions = module.quiz?.questions ?? [];
@@ -112,6 +154,8 @@ export function QuizRunner({ module, levelSlug, onSubmitDone }: Props) {
     if (!result) return;
 
     setSubmittedResult({ autoValidated: result.autoValidated, score: quizScore });
+    // Cleanup brouillon apres soumission reussie
+    clearDraft(module.id);
     if (result.autoValidated) {
       setShowConfetti(true);
     } else {
@@ -226,6 +270,16 @@ export function QuizRunner({ module, levelSlug, onSubmitDone }: Props) {
   }
 
   // ─── Rendu formulaire principal ─────────────────────────────────────────
+  // Compteurs de progression
+  const qcmAnsweredCount = qcmQuestions.filter((q) => qcmAnswers[q.id] !== undefined).length;
+  const freeTextValidCount = freeQuestions.filter((q) => {
+    const ans = (freeTextAnswers[q.id] ?? "").trim();
+    return ans.length >= (q.minChars ?? 1);
+  }).length;
+  const totalCount = qcmQuestions.length + freeQuestions.length;
+  const filledCount = qcmAnsweredCount + freeTextValidCount;
+  const progressPct = totalCount > 0 ? Math.round((filledCount / totalCount) * 100) : 0;
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 14, fontFamily: "DM Sans, sans-serif" }}>
       <div
@@ -242,6 +296,49 @@ export function QuizRunner({ module, levelSlug, onSubmitDone }: Props) {
         💡 <strong style={{ color: "var(--ls-gold)" }}>Comment ça marche :</strong> les QCM
         comptent dans ton score. Les réponses libres ne comptent pas mais sont obligatoires —
         ton sponsor les lira. Si tu fais 100% des QCM = validation auto + félicitations 🎉
+      </div>
+
+      {/* Indicateur progression quiz */}
+      <div
+        style={{
+          padding: "10px 14px",
+          background: "var(--ls-surface)",
+          border: "0.5px solid var(--ls-border)",
+          borderRadius: 12,
+          fontSize: 12,
+          fontFamily: "DM Sans, sans-serif",
+        }}
+      >
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+          <span style={{ color: "var(--ls-text-muted)", fontWeight: 600 }}>
+            Ta progression
+          </span>
+          <span
+            style={{
+              fontFamily: "Syne, serif",
+              fontWeight: 800,
+              color: progressPct === 100 ? "var(--ls-teal)" : "var(--ls-gold)",
+              fontVariantNumeric: "tabular-nums",
+            }}
+          >
+            {filledCount} / {totalCount}
+          </span>
+        </div>
+        <div style={{ height: 4, borderRadius: 2, background: "var(--ls-surface2)", overflow: "hidden" }}>
+          <div
+            style={{
+              width: `${progressPct}%`,
+              height: "100%",
+              background: progressPct === 100 ? "var(--ls-teal)" : "var(--ls-gold)",
+              transition: "width 0.4s ease",
+            }}
+          />
+        </div>
+        {progressPct < 100 ? (
+          <div style={{ fontSize: 10.5, color: "var(--ls-text-hint)", marginTop: 6 }}>
+            ✏️ Brouillon sauvegardé automatiquement — tu peux fermer et revenir plus tard.
+          </div>
+        ) : null}
       </div>
 
       {/* QCM */}
