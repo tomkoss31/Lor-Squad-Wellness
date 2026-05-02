@@ -1827,13 +1827,13 @@ export function NewAssessmentPage() {
                     </div>
                   )
                 })() : null}
-                <ChoiceGroup label="Sieste en journee" value={form.napFrequency} options={["Jamais", "Parfois", "Souvent"]} onChange={(v) => update("napFrequency", v)} />
+                <ChoiceGroup label="Sieste en journée" value={form.napFrequency} options={["Jamais", "Parfois", "Souvent"]} onChange={(v) => update("napFrequency", v)} />
               </SectionBlock>
 
               <SectionBlock title="Bloc 2 · Petit-déjeuner" description="Faire ressortir si le matin soutient vraiment la journée.">
                 <div className="grid gap-4 md:grid-cols-2">
-                  <ChoiceGroup label="Petit-dejeuner tous les jours" value={form.breakfastFrequency} options={["Oui", "Non", "Parfois"]} onChange={(v) => update("breakfastFrequency", v)} />
-                  <Field label="Heure du petit-dejeuner" type="time" value={form.breakfastTime} onChange={(v) => update("breakfastTime", v)} />
+                  <ChoiceGroup label="Petit-déjeuner tous les jours" value={form.breakfastFrequency} options={["Oui", "Non", "Parfois"]} onChange={(v) => update("breakfastFrequency", v)} />
+                  <Field label="Heure du petit-déjeuner" type="time" value={form.breakfastTime} onChange={(v) => update("breakfastTime", v)} />
                   <AreaField label="Que consommes-tu le matin ?" value={form.breakfastContent} onChange={(v) => update("breakfastContent", v)} />
                   <ChoiceGroup label="Tient jusqu'au repas suivant" value={form.breakfastSatiety} options={["Oui", "Non", "Pas toujours"]} onChange={(v) => update("breakfastSatiety", v)} />
                 </div>
@@ -1844,9 +1844,9 @@ export function NewAssessmentPage() {
                   <ChoiceGroup label="Repas par jour" value={String(form.mealsPerDay)} options={["1", "2", "3", "4 ou plus"]} onChange={(v) => update("mealsPerDay", v === "4 ou plus" ? 4 : Number(v))} />
                   <Field label="Premier vrai repas" type="time" value={form.firstMealTime} onChange={(v) => update("firstMealTime", v)} />
                   <ChoiceGroup label="Heures régulières" value={form.regularMealTimes} options={["Oui", "Non", "Pas toujours"]} onChange={(v) => update("regularMealTimes", v)} />
-                  <ChoiceGroup label="Midi" value={form.lunchLocation} options={["A la maison", "Au travail", "Au restaurant", "Sur le pouce"]} onChange={(v) => update("lunchLocation", v)} />
+                  <ChoiceGroup label="Midi" value={form.lunchLocation} options={["À la maison", "Au travail", "Au restaurant", "Sur le pouce"]} onChange={(v) => update("lunchLocation", v)} />
                 </div>
-                <ChoiceGroup label="Le soir" value={form.dinnerTiming} options={["Tot", "Normalement", "Tard"]} onChange={(v) => update("dinnerTiming", v)} />
+                <ChoiceGroup label="Le soir" value={form.dinnerTiming} options={["Tôt", "Normalement", "Tard"]} onChange={(v) => update("dinnerTiming", v)} />
                 {/* Chantier bilan updates (2026-04-20) : snacks/fast-food/resto — budget alim */}
                 <div className="space-y-2">
                   <label className="ls-field-label">Nombre de snacks / fast-food / resto par semaine</label>
@@ -1879,7 +1879,7 @@ export function NewAssessmentPage() {
                 <div className="grid gap-4 md:grid-cols-2">
                   <AreaField label="Repas type du midi" value={form.lunchExample} onChange={(v) => update("lunchExample", v)} />
                   <AreaField label="Repas type du soir" value={form.dinnerExample} onChange={(v) => update("dinnerExample", v)} />
-                  <ChoiceGroup label="Legumes chaque jour" value={form.vegetablesDaily} options={["Oui", "Non", "Pas assez"]} onChange={(v) => update("vegetablesDaily", v)} />
+                  <ChoiceGroup label="Légumes chaque jour" value={form.vegetablesDaily} options={["Oui", "Non", "Pas assez"]} onChange={(v) => update("vegetablesDaily", v)} />
                   <ChoiceGroup label="Protéines à chaque repas" value={form.proteinEachMeal} options={["Oui", "Non", "Pas toujours"]} onChange={(v) => update("proteinEachMeal", v)} />
                 </div>
                 <ChoiceGroup
@@ -1893,17 +1893,17 @@ export function NewAssessmentPage() {
               <SectionBlock title="Bloc 5 · Grignotage et fringales" description="Faire ressortir le vrai moment de craquage et la cause la plus fréquente.">
                 <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
                   <ChoiceGroup label="Grignotage" value={form.snackingFrequency} options={["Jamais", "Parfois", "Souvent"]} onChange={(v) => update("snackingFrequency", v)} />
-                  <ChoiceGroup label="Moment" value={form.snackingMoment} options={["Matin", "Apres-midi", "Soir", "Nuit"]} onChange={(v) => update("snackingMoment", v)} />
+                  <ChoiceGroup label="Moment" value={form.snackingMoment} options={["Matin", "Après-midi", "Soir", "Nuit"]} onChange={(v) => update("snackingMoment", v)} />
                   <ChoiceGroup label="Attirance" value={form.cravingsPreference} options={["Sucré", "Salé", "Les deux"]} onChange={(v) => update("cravingsPreference", v)} />
-                  <ChoiceGroup label="Cause frequente" value={form.snackingTrigger} options={["Faim", "Stress", "Habitude", "Fatigue", "Ennui", "Emotions"]} onChange={(v) => update("snackingTrigger", v)} />
+                  <ChoiceGroup label="Cause fréquente" value={form.snackingTrigger} options={["Faim", "Stress", "Habitude", "Fatigue", "Ennui", "Émotions"]} onChange={(v) => update("snackingTrigger", v)} />
                 </div>
               </SectionBlock>
 
               <SectionBlock title="Bloc 6 · Hydratation et boissons" description="Rester sur les volumes et les habitudes qui changent vraiment la lecture.">
                 <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
                   <Field label="Eau par jour (L)" type="number" step="0.1" value={form.waterIntake} onChange={(v) => update("waterIntake", Number(v))} />
-                  <ChoiceGroup label="Cafe" value={form.drinksCoffee} options={["Oui", "Non"]} onChange={(v) => update("drinksCoffee", v)} />
-                  <Field label="Cafes par jour" type="number" value={form.coffeePerDay} onChange={(v) => update("coffeePerDay", Number(v))} />
+                  <ChoiceGroup label="Café" value={form.drinksCoffee} options={["Oui", "Non"]} onChange={(v) => update("drinksCoffee", v)} />
+                  <Field label="Cafés par jour" type="number" value={form.coffeePerDay} onChange={(v) => update("coffeePerDay", Number(v))} />
                   <ChoiceGroup label="Boissons sucrées" value={form.sweetDrinks} options={["Jamais", "Parfois", "Souvent"]} onChange={(v) => update("sweetDrinks", v)} />
                 </div>
                 <ChoiceGroup label="Alcool" value={form.alcohol} options={["Jamais", "Occasionnellement", "Chaque semaine", "Souvent"]} onChange={(v) => update("alcohol", v)} />
@@ -1916,14 +1916,14 @@ export function NewAssessmentPage() {
               <SectionBlock title="Bloc 7 · Allergies, transit et contexte pathologique" description="Ajouter seulement les points santé utiles pour cadrer l'accompagnement.">
                 <div className="grid gap-4 md:grid-cols-2">
                   <Field
-                    label="Allergies / intolerances"
+                    label="Allergies / intolérances"
                     value={form.allergies}
                     onChange={(v) => update("allergies", v)}
                   />
                   <ChoiceGroup
                     label="Niveau du transit"
                     value={form.transitStatus}
-                    options={["Normal", "Lent", "Irregulier", "Sensible"]}
+                    options={["Normal", "Lent", "Irrégulier", "Sensible"]}
                     onChange={(v) => update("transitStatus", v)}
                   />
                   <AreaField
@@ -1932,7 +1932,7 @@ export function NewAssessmentPage() {
                     onChange={(v) => update("pathologyContext", v)}
                   />
                   <AreaField
-                    label="Point sante a surveiller"
+                    label="Point santé à surveiller"
                     value={form.healthNotes}
                     onChange={(v) => update("healthNotes", v)}
                   />
@@ -1943,14 +1943,14 @@ export function NewAssessmentPage() {
                 <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
                   <ChoiceGroup label="Activité physique" value={form.physicalActivity} options={["Oui", "Non"]} onChange={(v) => update("physicalActivity", v)} />
                   <Field label="Si oui, laquelle ?" value={form.activityType} onChange={(v) => update("activityType", v)} />
-                  <Field label="Seances / semaine" type="number" value={form.sessionsPerWeek} onChange={(v) => update("sessionsPerWeek", Number(v))} />
+                  <Field label="Séances / semaine" type="number" value={form.sessionsPerWeek} onChange={(v) => update("sessionsPerWeek", Number(v))} />
                   <ChoiceGroup label="Niveau d'énergie" value={form.energyLevel} options={["Très bon", "Bon", "Moyen", "Faible"]} onChange={(v) => update("energyLevel", v)} />
                 </div>
               </SectionBlock>
 
               <SectionBlock title="Bloc 9 · Historique et blocages" description="Faire apparaître ce qui a déjà été tenté et ce qui bloque aujourd'hui.">
                 <div className="grid gap-4 md:grid-cols-2">
-                  <AreaField label="Tentatives passees" value={form.pastAttempts} onChange={(v) => update("pastAttempts", v)} />
+                  <AreaField label="Tentatives passées" value={form.pastAttempts} onChange={(v) => update("pastAttempts", v)} />
                   <AreaField label="Le plus difficile jusqu'ici" value={form.hardestPart} onChange={(v) => update("hardestPart", v)} />
                 </div>
                 <ChoiceGroup label="Blocage principal" value={form.mainBlocker} options={["Manque de temps", "Motivation", "Organisation", "Grignotage", "Fatigue", "Manque de repères", "Autre"]} onChange={(v) => update("mainBlocker", v)} />
