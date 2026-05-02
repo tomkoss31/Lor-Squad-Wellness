@@ -69,6 +69,12 @@ const XP_RULES = [
     xp: 5,
     cap: "1 fois par jour, jamais reset",
   },
+  {
+    emoji: "📚",
+    label: "Module Formation validé",
+    xp: 10,
+    cap: "+50 bonus si quiz QCM 100% (validation auto)",
+  },
 ];
 
 // Niveaux : level = floor(sqrt(xp / 100)) + 1.
