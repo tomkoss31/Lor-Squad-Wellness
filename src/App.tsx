@@ -224,6 +224,33 @@ const FormationCategoryPage = lazy(() =>
     default: module.FormationCategoryPage
   }))
 );
+// Phase 2 chantier formation (2026-04-30) : page module parcours guide
+// (placeholder en attendant le contenu Notion en Phase 3).
+const FormationModulePage = lazy(() =>
+  import("./pages/FormationModulePage").then((module) => ({
+    default: module.FormationModulePage
+  }))
+);
+// Phase C chantier formation pyramide (2026-11-01) : page Mon equipe
+// Formation pour les sponsors (recrues directes + alerte validation).
+const FormationMyTeamPage = lazy(() =>
+  import("./pages/FormationMyTeamPage").then((module) => ({
+    default: module.FormationMyTeamPage
+  }))
+);
+// Phase F-UI chantier formation pyramide : page detail d un module
+// (lecons + ancrage + action + quiz).
+const FormationModuleDetailPage = lazy(() =>
+  import("./pages/FormationModuleDetailPage").then((module) => ({
+    default: module.FormationModuleDetailPage
+  }))
+);
+// Phase D chantier formation pyramide : page admin pilotage Formation.
+const FormationAdminPage = lazy(() =>
+  import("./pages/FormationAdminPage").then((module) => ({
+    default: module.FormationAdminPage
+  }))
+);
 const SettingsPage = lazy(() =>
   import("./pages/SettingsPage").then((module) => ({
     default: module.SettingsPage
@@ -311,6 +338,10 @@ export default function App() {
                 <Route path="academy/demo/agenda" element={<DemoAgenda />} />
               </Route>
               <Route path="formation" element={<FormationPage />} />
+              <Route path="formation/mon-equipe" element={<FormationMyTeamPage />} />
+              <Route path="formation/admin" element={<FormationAdminPage />} />
+              <Route path="formation/parcours/:levelSlug" element={<FormationModulePage />} />
+              <Route path="formation/parcours/:levelSlug/:moduleSlug" element={<FormationModuleDetailPage />} />
               <Route path="formation/:slug" element={<FormationCategoryPage />} />
               {/* /settings (non-admin) reste accessible comme placeholder profil léger.
                   Les admins ont /parametres avec la version complète. */}

@@ -18,7 +18,6 @@ var config = {
                     surface: '#13161C',
                     surface2: '#1A1E27',
                     gold: '#C9A84C',
-                    gold2: '#F0C96A',
                     teal: '#2DD4BF',
                     purple: '#A78BFA',
                     coral: '#FB7185',

@@ -125,7 +125,7 @@ export function AppLayout() {
     { label: "Dossiers clients", path: "/clients", badge: 0, tourId: "nav-clients" },
     { label: "Suivi PV", path: "/pv", badge: pvOverdueCount, tourId: "nav-pv" },
     ...(currentUser.role === "admin" ? [{ label: "Mon équipe", path: "/team", badge: 0 }] : []),
-    { label: "Centre de formation", path: "/formation", badge: 0 },
+    { label: "Formation", path: "/formation", badge: 0 },
     // Chantier Academy section 1 (2026-04-27) : /parametres pour tous
     // les users authentifies (la page gere elle-meme la visibilite des
     // onglets admin-only via checks internes).
@@ -143,7 +143,7 @@ export function AppLayout() {
     location.pathname === "/dashboard" || location.pathname === "/co-pilote"
       ? ""
       : location.pathname === "/guide" || location.pathname === "/formation"
-        ? "Centre de formation"
+        ? "Formation"
         : location.pathname.startsWith("/pv")
           ? "Pilotage simple des clients, commandes et points volume"
           : location.pathname === "/clients"
@@ -237,7 +237,7 @@ export function AppLayout() {
 
               // Chantier Mini-fix V2 Co-pilote (2026-04-24) : bouton
               // "+ Nouveau bilan" déplacé du FAB top-right vers la sidebar,
-              // inséré juste avant "Centre de formation".
+              // inséré juste avant "Formation".
               const insertNewBilanBefore = item.path === "/formation";
 
               return (
