@@ -331,6 +331,16 @@ export interface Client {
   vipStartedAt?: string | null;
   /** Cache du niveau VIP courant (recalculé live via RPC get_client_vip_status). */
   vipStatus?: "none" | "bronze" | "silver" | "gold" | "ambassador";
+  // Pop-up business bilan (2026-11-03) — interet pour un complement de revenu.
+  /** Reponse a la question legere etape 1 du bilan. NULL = pas demande. */
+  businessCuriosity?: "never" | "sometimes" | "often" | null;
+  /** Montant mensuel souhaite en €/mois (0 = decline, 100/300/500/1000 ou autre).
+   *  NULL = pas atteint l etape business-ambition. */
+  businessInterestAmount?: number | null;
+  /** Date de capture de business_interest_amount (relances). */
+  businessInterestDate?: string | null;
+  /** Champ libre si "Plus" choisi (precision sur l ambition). */
+  businessInterestNote?: string | null;
 }
 
 export interface FollowUp {

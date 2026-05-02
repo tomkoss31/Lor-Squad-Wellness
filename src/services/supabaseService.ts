@@ -116,6 +116,11 @@ type ClientRow = {
   vip_sponsor_client_id?: string | null;
   vip_started_at?: string | null;
   vip_status?: string | null;
+  // Pop-up business bilan (2026-11-03)
+  business_curiosity?: string | null;
+  business_interest_amount?: number | null;
+  business_interest_date?: string | null;
+  business_interest_note?: string | null;
   assessments?: AssessmentRow[] | null;
 };
 
@@ -418,6 +423,11 @@ function mapClient(row: ClientRow): Client {
     vipSponsorClientId: row.vip_sponsor_client_id ?? null,
     vipStartedAt: row.vip_started_at ?? null,
     vipStatus: (row.vip_status as Client["vipStatus"]) ?? "none",
+    // Pop-up business bilan (2026-11-03)
+    businessCuriosity: (row.business_curiosity as Client["businessCuriosity"]) ?? null,
+    businessInterestAmount: row.business_interest_amount ?? null,
+    businessInterestDate: row.business_interest_date ?? null,
+    businessInterestNote: row.business_interest_note ?? null,
     assessments: (row.assessments ?? []).map(mapAssessment)
   };
 }
