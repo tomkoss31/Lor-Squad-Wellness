@@ -34,8 +34,8 @@ export function FormationTabContent() {
     return (
       <EmptyState
         emoji="🎓"
-        title="Tout est à jour côté Formation"
-        description="Aucune validation de module en attente. Tu peux profiter pour relancer un client dormant ou féliciter une recrue."
+        title="Aucune validation en attente"
+        description="Tes recrues sont à jour ou n'ont rien soumis pour l'instant. Profite-en pour leur écrire un mot d'encouragement, ou pose un nouveau RDV avec un client dormant."
       />
     );
   }

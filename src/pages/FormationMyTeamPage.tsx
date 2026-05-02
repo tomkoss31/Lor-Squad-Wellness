@@ -83,9 +83,9 @@ export function FormationMyTeamPage() {
         />
         <EmptyState
           emoji="🌱"
-          title="Pas encore de recrue"
-          description="Quand tu parraineras tes premiers distri, ils apparaîtront ici. C'est ton rôle de leader : faire AVEC, laisser FAIRE, corriger."
-          ctaLabel="Inviter un distri"
+          title="Bientôt ton équipe"
+          description="Tes premières recrues apparaîtront ici dès que tu en parraineras une. C'est le moment où tu passes de coach à leader : faire AVEC, laisser FAIRE, corriger."
+          ctaLabel="Inviter ma première recrue"
           ctaHref="/parametres?tab=equipe"
         />
       </div>

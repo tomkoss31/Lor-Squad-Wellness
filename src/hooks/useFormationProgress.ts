@@ -1,15 +1,18 @@
 // =============================================================================
 // useFormationProgress — progression Formation cote user (2026-04-30)
 //
-// Phase 2 : stockage localStorage uniquement (cle 'ls_formation_progress').
-// Phase 3 : sera remplace par un fetch table formation_user_progress, en
-// gardant la meme API publique pour un swap transparent.
+// Phase 2 : stockage localStorage uniquement.
+// Phase F-polish (2026-05-03) : source primaire = DB (formation_user_progress
+// via useMyFormationProgress). LocalStorage devient cache secondaire pour
+// les sessions hors-ligne / pre-login. Verrouillage N2 strict si N1
+// pas 100 % valide DB.
 //
 // Expose :
-//   - levelProgress : pour chaque niveau, modules valides + pct
+//   - stats : pour chaque niveau, modules valides + pct + isLocked
 //   - isLevelLocked(id) : true si prerequis pas atteint
-//   - markModuleDone(levelId, moduleId) : valide un module
-//   - resetLevel(levelId) : remise a zero d un niveau
+//   - markModuleDone(levelId, moduleId) : marque local (sera ecrase par DB
+//     a la prochaine reload)
+//   - resetLevel(levelId) : remise a zero d un niveau (local only)
 // =============================================================================
 
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -20,6 +23,7 @@ import {
   type FormationLevelProgress,
   type FormationProgressState,
 } from "../data/formation";
+import { useMyFormationProgress } from "../features/formation";
 
 const STORAGE_KEY = "ls_formation_progress";
 
@@ -94,6 +98,8 @@ export interface UseFormationProgressResult {
 
 export function useFormationProgress(): UseFormationProgressResult {
   const [state, setState] = useState<FormationProgressState>(() => readState());
+  // Phase F-polish : source primaire = DB. Si DB indispo, fallback localStorage.
+  const { rows: dbRows } = useMyFormationProgress();
 
   // Synchro inter-onglets via storage event
   useEffect(() => {
@@ -107,25 +113,54 @@ export function useFormationProgress(): UseFormationProgressResult {
     return () => window.removeEventListener("storage", handler);
   }, []);
 
+  // Helper : pour chaque niveau, retourne la liste des module IDs valides
+  // dans la DB (status='validated'). Source primaire pour les stats.
+  const dbCompletedByLevel = useMemo<Record<FormationLevelId, string[]>>(() => {
+    const map: Record<FormationLevelId, string[]> = {
+      demarrer: [],
+      construire: [],
+      dupliquer: [],
+    };
+    for (const row of dbRows) {
+      if (row.status !== "validated") continue;
+      // Trouve a quel niveau appartient ce module_id
+      for (const level of FORMATION_LEVELS) {
+        if (level.modules.some((m) => m.id === row.module_id)) {
+          map[level.id].push(row.module_id);
+          break;
+        }
+      }
+    }
+    return map;
+  }, [dbRows]);
+
   const computeStats = useCallback(
     (levelId: FormationLevelId): FormationLevelStats => {
       const level = getFormationLevelById(levelId);
       const totalCount = level?.modules.length ?? 0;
       const levelProg = state.levels[levelId];
-      const completedCount = levelProg.completedModules.length;
+
+      // Source primaire = DB si dispo. Fallback localStorage.
+      const dbCompleted = dbCompletedByLevel[levelId];
+      const completedModules = dbCompleted.length > 0 ? dbCompleted : levelProg.completedModules;
+      const completedCount = completedModules.length;
+
       const percent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
       const isComplete = totalCount > 0 && completedCount >= totalCount;
       const hasStarted = completedCount > 0 || levelProg.lastSeenAt !== null;
 
       // Verrouillage : si unlockedBy defini, verifier le niveau prerequis
+      // (source DB en priorite)
       let isLocked = false;
       if (level?.unlockedBy) {
-        const prereqProg = state.levels[level.unlockedBy];
         const prereqLevel = getFormationLevelById(level.unlockedBy);
         const prereqTotal = prereqLevel?.modules.length ?? 0;
-        // Si le prereq n a aucun module (Phase 2), on ne verrouille pas
-        // (sinon tout serait bloque). Phase 3 : strict.
-        isLocked = prereqTotal > 0 && prereqProg.completedModules.length < prereqTotal;
+        const prereqDbCompleted = dbCompletedByLevel[level.unlockedBy];
+        const prereqLocalCompleted = state.levels[level.unlockedBy].completedModules;
+        const prereqCompleted = prereqDbCompleted.length > 0 ? prereqDbCompleted : prereqLocalCompleted;
+        // Phase F-polish : verrouillage strict (modules N1 doivent etre 100%
+        // valides en DB pour debloquer N2, idem N2 -> N3).
+        isLocked = prereqTotal > 0 && prereqCompleted.length < prereqTotal;
       }
 
       return {
@@ -138,7 +173,7 @@ export function useFormationProgress(): UseFormationProgressResult {
         isLocked,
       };
     },
-    [state],
+    [state, dbCompletedByLevel],
   );
 
   const stats = useMemo<Record<FormationLevelId, FormationLevelStats>>(

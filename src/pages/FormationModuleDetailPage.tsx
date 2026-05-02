@@ -38,23 +38,30 @@ const ACCENT_TOKEN: Record<FormationLevelAccent, string> = {
 export function FormationModuleDetailPage() {
   const { levelSlug, moduleSlug } = useParams<{ levelSlug: string; moduleSlug: string }>();
   const navigate = useNavigate();
-  const { getByModuleId, reload: reloadProgress } = useMyFormationProgress();
+  const { getByModuleId, reload: reloadProgress, loading: progressLoading } = useMyFormationProgress();
   const { users } = useAppContext();
   const [mode, setMode] = useState<"lecture" | "quiz">("lecture");
+  const [initLoading, setInitLoading] = useState(true);
 
   const level = levelSlug ? getFormationLevelBySlug(levelSlug) : undefined;
   const module = level?.modules.find((m) => m.slug === moduleSlug);
 
   // Au mount, cree la row in_progress si pas existante
   useEffect(() => {
-    if (!module) return;
+    if (!module) {
+      setInitLoading(false);
+      return;
+    }
     let cancelled = false;
+    setInitLoading(true);
     void (async () => {
       try {
         await fetchOrCreateModuleProgress(module.id);
         if (!cancelled) void reloadProgress();
       } catch (err) {
         console.warn("[FormationModuleDetailPage] init progress failed:", err);
+      } finally {
+        if (!cancelled) setInitLoading(false);
       }
     })();
     return () => {
@@ -73,6 +80,55 @@ export function FormationModuleDetailPage() {
           ctaLabel="Retour à la formation"
           ctaHref="/formation"
         />
+      </div>
+    );
+  }
+
+  // Skeleton loader pendant le fetch initial de la progression
+  if (initLoading || progressLoading) {
+    return (
+      <div className="space-y-5">
+        <style>{`
+          @keyframes ls-skeleton-pulse {
+            0%, 100% { opacity: 0.55; }
+            50%      { opacity: 0.85; }
+          }
+          @media (prefers-reduced-motion: reduce) {
+            .ls-skeleton { animation: none !important; }
+          }
+        `}</style>
+        {/* Breadcrumb skeleton */}
+        <div
+          className="ls-skeleton"
+          style={{
+            width: 180, height: 22, borderRadius: 8,
+            background: "var(--ls-surface2)",
+            animation: "ls-skeleton-pulse 1.4s ease-in-out infinite",
+          }}
+        />
+        {/* Hero skeleton */}
+        <div
+          className="ls-skeleton"
+          style={{
+            height: 220, borderRadius: 18,
+            background: "linear-gradient(135deg, color-mix(in srgb, var(--ls-gold) 6%, var(--ls-surface)) 0%, var(--ls-surface) 70%)",
+            border: "0.5px solid var(--ls-border)",
+            animation: "ls-skeleton-pulse 1.4s ease-in-out infinite",
+          }}
+        />
+        {/* Lessons skeleton */}
+        {[0, 1, 2].map((i) => (
+          <div
+            key={i}
+            className="ls-skeleton"
+            style={{
+              height: 140, borderRadius: 14,
+              background: "var(--ls-surface)",
+              border: "0.5px solid var(--ls-border)",
+              animation: `ls-skeleton-pulse 1.4s ease-in-out ${i * 0.15}s infinite`,
+            }}
+          />
+        ))}
       </div>
     );
   }
