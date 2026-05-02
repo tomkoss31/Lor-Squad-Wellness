@@ -26,6 +26,8 @@ import { ModuleHeaderHero } from "../components/formation/ModuleHeaderHero";
 import { LessonCard } from "../components/formation/LessonCard";
 import { AncrageActionPanel } from "../components/formation/AncrageActionPanel";
 import { QuizRunner } from "../components/formation/QuizRunner";
+import { ReviewThreadPanel } from "../components/formation/ReviewThreadPanel";
+import { useAppContext } from "../context/AppContext";
 
 const ACCENT_TOKEN: Record<FormationLevelAccent, string> = {
   gold: "var(--ls-gold)",
@@ -37,6 +39,7 @@ export function FormationModuleDetailPage() {
   const { levelSlug, moduleSlug } = useParams<{ levelSlug: string; moduleSlug: string }>();
   const navigate = useNavigate();
   const { getByModuleId, reload: reloadProgress } = useMyFormationProgress();
+  const { users } = useAppContext();
   const [mode, setMode] = useState<"lecture" | "quiz">("lecture");
 
   const level = levelSlug ? getFormationLevelBySlug(levelSlug) : undefined;
@@ -77,6 +80,11 @@ export function FormationModuleDetailPage() {
   const accentVar = ACCENT_TOKEN[level.accent];
   const progressRow = getByModuleId(module.id);
   const status = progressRow?.status;
+  const sponsorId = progressRow?.reviewed_by ?? null;
+  const sponsorName = sponsorId ? users?.find((u) => u.id === sponsorId)?.name ?? null : null;
+  const showFeedbackBanner = (status === "rejected" || status === "pending_review_sponsor") && progressRow?.feedback;
+  const isValidated = status === "validated";
+  const showThread = !!progressRow && (status === "rejected" || status === "validated" || status === "pending_review_sponsor" || status === "pending_review_admin");
 
   return (
     <div className="space-y-5">
@@ -109,6 +117,107 @@ export function FormationModuleDetailPage() {
         levelOrder={level.order}
         levelAccent={accentVar}
       />
+
+      {/* Banner feedback sponsor (si rejected ou pending avec feedback) */}
+      {showFeedbackBanner && progressRow ? (
+        <div
+          style={{
+            padding: "14px 16px",
+            background:
+              status === "rejected"
+                ? "color-mix(in srgb, var(--ls-coral) 8%, var(--ls-surface))"
+                : "color-mix(in srgb, var(--ls-gold) 8%, var(--ls-surface))",
+            border:
+              status === "rejected"
+                ? "0.5px solid color-mix(in srgb, var(--ls-coral) 30%, transparent)"
+                : "0.5px solid color-mix(in srgb, var(--ls-gold) 30%, transparent)",
+            borderLeft:
+              status === "rejected"
+                ? "3px solid var(--ls-coral)"
+                : "3px solid var(--ls-gold)",
+            borderRadius: 14,
+            fontFamily: "DM Sans, sans-serif",
+            display: "flex",
+            gap: 12,
+          }}
+        >
+          <span style={{ fontSize: 22, flexShrink: 0 }} aria-hidden="true">
+            {status === "rejected" ? "🔄" : "💬"}
+          </span>
+          <div style={{ flex: 1 }}>
+            <div
+              style={{
+                fontSize: 9.5,
+                letterSpacing: "0.12em",
+                textTransform: "uppercase",
+                fontWeight: 700,
+                color: status === "rejected" ? "var(--ls-coral)" : "var(--ls-gold)",
+                marginBottom: 4,
+              }}
+            >
+              {status === "rejected"
+                ? `Feedback ${sponsorName ?? "sponsor"} — refais le module`
+                : `Demande ${sponsorName ?? "sponsor"} en attente`}
+            </div>
+            <p
+              style={{
+                fontSize: 13,
+                color: "var(--ls-text)",
+                lineHeight: 1.55,
+                margin: 0,
+                fontStyle: "italic",
+              }}
+            >
+              « {progressRow.feedback} »
+            </p>
+            {status === "rejected" ? (
+              <div style={{ fontSize: 11.5, color: "var(--ls-text-muted)", marginTop: 6 }}>
+                💡 Tu peux refaire le module avec ce feedback. Les modules sont refaisables à l'infini.
+              </div>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
+
+      {/* Banner validated */}
+      {isValidated && progressRow ? (
+        <div
+          style={{
+            padding: "14px 16px",
+            background: "color-mix(in srgb, var(--ls-teal) 8%, var(--ls-surface))",
+            border: "0.5px solid color-mix(in srgb, var(--ls-teal) 30%, transparent)",
+            borderLeft: "3px solid var(--ls-teal)",
+            borderRadius: 14,
+            fontFamily: "DM Sans, sans-serif",
+            display: "flex",
+            gap: 12,
+          }}
+        >
+          <span style={{ fontSize: 22, flexShrink: 0 }} aria-hidden="true">✅</span>
+          <div style={{ flex: 1 }}>
+            <div
+              style={{
+                fontSize: 9.5,
+                letterSpacing: "0.12em",
+                textTransform: "uppercase",
+                fontWeight: 700,
+                color: "var(--ls-teal)",
+                marginBottom: 4,
+              }}
+            >
+              Module validé
+              {progressRow.validation_path === "auto" ? " · auto 100%" : null}
+              {progressRow.validation_path === "sponsor" && sponsorName
+                ? ` · par ${sponsorName}`
+                : null}
+              {progressRow.validation_path === "admin_relay" ? " · admin relay" : null}
+            </div>
+            <div style={{ fontSize: 12, color: "var(--ls-text-muted)" }}>
+              Tu peux toujours revisiter ce module ou le refaire pour ancrer.
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       <style>{`
         @keyframes ls-formation-fade-in {
@@ -226,6 +335,36 @@ export function FormationModuleDetailPage() {
             ← Revoir les leçons
           </button>
         </div>
+      ) : null}
+
+      {/* Thread historique de la progression (si soumise) */}
+      {showThread && progressRow ? (
+        <details
+          style={{
+            background: "var(--ls-surface)",
+            border: "0.5px solid var(--ls-border)",
+            borderRadius: 14,
+            padding: "12px 16px",
+            fontFamily: "DM Sans, sans-serif",
+          }}
+        >
+          <summary
+            style={{
+              cursor: "pointer",
+              fontSize: 13,
+              fontWeight: 600,
+              color: "var(--ls-text)",
+              fontFamily: "Syne, serif",
+              listStyle: "none",
+              outline: "none",
+            }}
+          >
+            💬 Historique de discussion
+          </summary>
+          <div style={{ marginTop: 12 }}>
+            <ReviewThreadPanel progressId={progressRow.id} />
+          </div>
+        </details>
       ) : null}
 
       {/* Lien autres modules niveau */}
