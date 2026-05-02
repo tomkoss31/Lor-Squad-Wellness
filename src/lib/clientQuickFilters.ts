@@ -30,7 +30,8 @@ export type QuickFilterId =
   | "incomplete"
   | "vip"
   | "new"
-  | "fragile";
+  | "fragile"
+  | "business";
 
 export interface QuickFilter {
   id: QuickFilterId;
@@ -180,6 +181,17 @@ export const QUICK_FILTERS: QuickFilter[] = [
     description: "Marques manuellement comme fragiles par le coach.",
     tone: "coral",
     predicate: (client) => client.isFragile === true,
+  },
+  {
+    id: "business",
+    emoji: "🌟",
+    label: "Ouverts business",
+    description:
+      "Clients ayant exprime un interet pour un complement de revenu (etape business du bilan).",
+    tone: "gold",
+    predicate: (client) =>
+      typeof client.businessInterestAmount === "number" &&
+      (client.businessInterestAmount ?? 0) > 0,
   },
 ];
 

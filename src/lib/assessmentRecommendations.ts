@@ -112,18 +112,18 @@ const NEED_PRIORITY_RANK = NEED_PRIORITY_ORDER.reduce<Record<AssessmentNeedId, n
 const NEED_DEFINITIONS: Record<AssessmentNeedId, NeedDefinition> = {
   hydration: {
     label: "Hydratation",
-    summary: "Remettre de l'eau et une routine simple au centre de la journee."
+    summary: "Remettre de l'eau et une routine simple au centre de la journée."
   },
   energy: {
-    label: "Energie",
-    summary: "Redonner un elan plus stable au matin et aux heures creuses."
+    label: "Énergie",
+    summary: "Redonner un élan plus stable au matin et aux heures creuses."
   },
   sleep: {
     label: "Sommeil / routine du soir",
-    summary: "Aider la recuperation et une routine du soir plus calme."
+    summary: "Aider la récupération et une routine du soir plus calme."
   },
   breakfast_structure: {
-    label: "Petit-dejeuner structure / faim",
+    label: "Petit-déjeuner structuré / faim",
     summary: "Poser un matin plus cale et plus simple a tenir."
   },
   protein_muscle: {
