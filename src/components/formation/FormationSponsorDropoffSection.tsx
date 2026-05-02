@@ -1,5 +1,5 @@
 // =============================================================================
-// FormationSponsorDropoffSection — sponsors decrocheées (Phase D)
+// FormationSponsorDropoffSection — sponsors decrochéss (Phase D)
 //
 // Liste des sponsors qui ont >=1 recrue en admin_relay (= ils n ont pas
 // reagi sous 48h, l admin a pris le relais). Permet d envoyer un rappel

@@ -90,7 +90,7 @@ export function QuizRunner({ module, levelSlug, onSubmitDone }: Props) {
   }, [module.id, qcmAnswers, freeTextAnswers]);
 
   // Memos doivent etre AVANT tout early return (rules-of-hooks).
-  const questions = module.quiz?.questions ?? [];
+  const questions = useMemo(() => module.quiz?.questions ?? [], [module.quiz]);
   const qcmQuestions = useMemo(
     () => questions.filter((q): q is FormationQcmQuestion => q.kind === "qcm"),
     [questions],

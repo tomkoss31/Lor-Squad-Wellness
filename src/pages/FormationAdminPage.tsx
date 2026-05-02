@@ -4,7 +4,7 @@
 // Route /formation/admin. Admin only. 4 zones empilees :
 //   1. KPIs globaux (5 cards : actifs / pending / relay / validated total / today)
 //   2. File admin_relay (FormationReviewCard avec isAdminRelay=true)
-//   3. Sponsors decrocheées (>=1 recrue en relay)
+//   3. Sponsors decrochés (>=1 recrue en relay)
 //   4. Lien rapide vers /team pour la vue arborescence complete
 // =============================================================================
 
@@ -100,7 +100,7 @@ export function FormationAdminPage() {
         )}
       </section>
 
-      {/* Zone 3 : Sponsors decrocheées */}
+      {/* Zone 3 : Sponsors decrochés */}
       <section>
         <SectionHeader
           icon="📉"
