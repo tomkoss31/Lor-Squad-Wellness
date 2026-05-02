@@ -18,6 +18,7 @@ export {
   rejectModule,
   addThreadMessage,
 } from "./service";
+export type { FormationFreeTextAnswer } from "./service";
 export { useMyFormationProgress } from "./hooks/useMyFormationProgress";
 export { useFormationReviewQueue } from "./hooks/useFormationReviewQueue";
 export { useFormationAdminQueue } from "./hooks/useFormationAdminQueue";

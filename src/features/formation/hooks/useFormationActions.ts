@@ -14,6 +14,7 @@ import {
   startModule as svcStartModule,
   submitModule as svcSubmitModule,
   validateModule as svcValidateModule,
+  type FormationFreeTextAnswer,
 } from "../service";
 import type {
   FormationProgressRow,
@@ -28,11 +29,15 @@ export interface UseFormationActionsResult {
   /**
    * Soumet un quiz. Si score 100 → auto-validated + retour autoValidated=true
    * (l UI peut declencher confetti + felicitations).
+   *
+   * Phase F : quizScore = % QCM uniquement. Les freeTextAnswers sont
+   * postees automatiquement dans le thread sponsor par le service.
    */
   submitModule: (params: {
     moduleId: string;
     quizScore: number;
     quizAnswers?: unknown[];
+    freeTextAnswers?: FormationFreeTextAnswer[];
   }) => Promise<SubmitModuleResult | null>;
   /** Sponsor / admin valide un module en attente. */
   validateModule: (params: { progressId: string; feedback?: string }) => Promise<boolean>;
@@ -77,6 +82,7 @@ export function useFormationActions(): UseFormationActionsResult {
     moduleId: string;
     quizScore: number;
     quizAnswers?: unknown[];
+    freeTextAnswers?: FormationFreeTextAnswer[];
   }) {
     setBusy(true);
     try {

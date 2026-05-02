@@ -1,12 +1,12 @@
 // =============================================================================
-// Formation — parcours guide (2026-04-30)
+// Formation — parcours guide (2026-04-30, contenu importe Phase F 2026-05-02)
 //
 // 3 niveaux empiles : Démarrer (0->500 PV) / Construire (500->4000 PV) /
 // Dupliquer (Leader & royalties).
 //
-// Phase 2 : modules a vide (shells). Le contenu Notion est en cours de
-// rangement par Thomas — sera importe en Phase 3 dans des tables
-// formation_modules / formation_lessons.
+// Phase F (2026-05-02) : modules importes depuis parcours-content.ts (livre
+// par l atelier Notion Thomas). Format : 5 N1 + 4 N2 + 4 N3 modules avec
+// idee_force / ancrage / action + lecons text + quiz QCM/free_text.
 //
 // Hierarchie de deblocage :
 //   - N1 toujours debloque
@@ -15,6 +15,7 @@
 // =============================================================================
 
 import type { FormationLevel } from "./types";
+import { N1_MODULES, N2_MODULES, N3_MODULES } from "./parcours-content";
 
 export const FORMATION_LEVELS: FormationLevel[] = [
   {
@@ -26,9 +27,7 @@ export const FORMATION_LEVELS: FormationLevel[] = [
     description: "Tes 30 premiers jours. Comprendre l'opportunité, faire ton 1er bilan, signer ton 1er client.",
     icon: "🌱",
     accent: "gold",
-    modules: [
-      // Phase 3 : sera rempli avec M1.1 → M1.5 (Notion)
-    ],
+    modules: N1_MODULES,
     unlockedBy: undefined,
   },
   {
@@ -40,9 +39,7 @@ export const FORMATION_LEVELS: FormationLevel[] = [
     description: "Passer du loisir au business. Tunnel marketing 7 étapes, plan d'action quotidien, recrutement.",
     icon: "🚀",
     accent: "teal",
-    modules: [
-      // Phase 3 : sera rempli avec M2.1 → M2.4 (Notion)
-    ],
+    modules: N2_MODULES,
     unlockedBy: "demarrer",
   },
   {
@@ -54,9 +51,7 @@ export const FORMATION_LEVELS: FormationLevel[] = [
     description: "Devenir leader. Coacher tes distri, animer les events, atteindre les royalties.",
     icon: "👑",
     accent: "purple",
-    modules: [
-      // Phase 3 : sera rempli avec M3.1 → M3.4 (Notion)
-    ],
+    modules: N3_MODULES,
     unlockedBy: "construire",
   },
 ];

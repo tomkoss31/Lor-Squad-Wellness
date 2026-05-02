@@ -20,6 +20,12 @@
 // =============================================================================
 
 import type { FormationCategory } from "./types";
+import {
+  BIBLIO_PROSPECTION,
+  BIBLIO_BILAN,
+  BIBLIO_SUIVI,
+  BIBLIO_BUSINESS,
+} from "./parcours-content";
 
 export const FORMATION_CATEGORIES: FormationCategory[] = [
   {
@@ -28,7 +34,7 @@ export const FORMATION_CATEGORIES: FormationCategory[] = [
     emoji: "🎯",
     accent: "gold",
     description: "Trouver des prospects, inviter sans presser, transformer un client en distri.",
-    resources: [],
+    resources: BIBLIO_PROSPECTION,
   },
   {
     slug: "bilan",
@@ -36,7 +42,7 @@ export const FORMATION_CATEGORIES: FormationCategory[] = [
     emoji: "📊",
     accent: "teal",
     description: "Le bilan en 10 points clés. Ton format pro, scripts d'accroche, lecture body scan.",
-    resources: [],
+    resources: BIBLIO_BILAN,
   },
   {
     slug: "suivi",
@@ -44,7 +50,7 @@ export const FORMATION_CATEGORIES: FormationCategory[] = [
     emoji: "💪",
     accent: "purple",
     description: "Ton 1er closing, demander des recos, réveiller un client dormant, follow-up J+3 / J+7.",
-    resources: [],
+    resources: BIBLIO_SUIVI,
   },
   {
     slug: "business",
@@ -52,7 +58,7 @@ export const FORMATION_CATEGORIES: FormationCategory[] = [
     emoji: "🚀",
     accent: "coral",
     description: "Méthode 8-4-1, pilotage quotidien, calculateur d'objectifs, vers les royalties.",
-    resources: [],
+    resources: BIBLIO_BUSINESS,
   },
 ];
 

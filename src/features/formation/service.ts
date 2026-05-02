@@ -122,18 +122,38 @@ export async function startModule(moduleId: string): Promise<FormationProgressRo
 }
 
 /**
+ * Reponse a une question free_text (pour la soumission). Permet au front
+ * de transmettre ses reponses libres en plus du score QCM.
+ */
+export interface FormationFreeTextAnswer {
+  questionId: string;
+  question: string;
+  answer: string;
+}
+
+/**
  * Soumet un module pour validation.
  *  - Si quiz_score = 100 → auto-validated (validation_path='auto')
  *  - Sinon → pending_review_sponsor
+ *
+ * Phase F (2026-05-02) : quiz_score est calcule cote front sur les QCM
+ * uniquement (les free_text ne comptent pas). Les reponses free_text
+ * sont passees via freeTextAnswers et auto-postees dans le thread sponsor
+ * en kind='answer' pour que le sponsor les lise post-validation
+ * (que le module soit auto-valide ou en attente).
  *
  * Retourne le statut final + XP attribue.
  */
 export async function submitModule(params: {
   moduleId: string;
+  /** Pourcentage QCM corrects (0-100). Calcule cote front sur QCM uniquement. */
   quizScore: number;
+  /** Reponses brutes (pour stockage / audit). */
   quizAnswers?: unknown[];
+  /** Reponses free_text a poster en thread (Phase F). */
+  freeTextAnswers?: FormationFreeTextAnswer[];
 }): Promise<SubmitModuleResult> {
-  const { moduleId, quizScore, quizAnswers = [] } = params;
+  const { moduleId, quizScore, quizAnswers = [], freeTextAnswers = [] } = params;
   const sb = await getSupabaseClient();
   if (!sb) throw new Error("Supabase indisponible");
   const { data: session } = await sb.auth.getUser();
@@ -164,16 +184,32 @@ export async function submitModule(params: {
     .eq("id", existing.id);
   if (error) throw error;
 
-  // Insert thread auto avec les reponses (kind=answer)
+  // Insert thread principal (resume submission)
   const threadContent = isPerfect
-    ? `Quiz validé à 100 % — module auto-validé 🎉`
-    : `Quiz soumis (${quizScore}%) — en attente de revue sponsor`;
+    ? `Quiz QCM validé à 100 % — module auto-validé 🎉`
+    : `Quiz soumis (QCM ${quizScore}%) — en attente de revue sponsor`;
   await sb.from("formation_review_threads").insert({
     progress_id: existing.id,
     sender_id: uid,
     kind: "answer" satisfies FormationThreadKind,
     content: threadContent,
   });
+
+  // Phase F : insert chaque reponse free_text comme thread separe pour
+  // que le sponsor les lise individuellement (matiere coaching).
+  if (freeTextAnswers.length > 0) {
+    const threadRows = freeTextAnswers
+      .filter((a) => a.answer.trim().length > 0)
+      .map((a) => ({
+        progress_id: existing.id,
+        sender_id: uid,
+        kind: "answer" satisfies FormationThreadKind,
+        content: `**${a.question}**\n\n${a.answer.trim()}`,
+      }));
+    if (threadRows.length > 0) {
+      await sb.from("formation_review_threads").insert(threadRows);
+    }
+  }
 
   // XP : Phase B note l attribution attendue (l agregation reelle viendra
   // en Phase D quand on etendra get_user_xp pour inclure formation_xp).

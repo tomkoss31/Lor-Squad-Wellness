@@ -58,9 +58,27 @@ export interface FormationModule {
   durationMin: number;
   /** Emoji ou icone. */
   icon: string;
-  /** Lecons du module (Phase 3). */
+  /**
+   * Phrase clé du module (callout en haut). Phase F (2026-05-02) :
+   * issu du contenu Notion ("idee force"). Permet d affirmer l idée
+   * dominante avant de plonger dans les lecons.
+   */
+  ideeForce?: string;
+  /**
+   * Citation/proverbe (affichage en bas du module). Phase F : issu du
+   * contenu Notion ("ancrage"). Permet de marquer l esprit avec une
+   * formule courte memorable.
+   */
+  ancrage?: string;
+  /**
+   * Action concrete a faire apres le module (markdown court). Phase F :
+   * issu du contenu Notion ("action"). Convertit la theorie en pratique
+   * immediate.
+   */
+  action?: string;
+  /** Lecons du module. */
   lessons: FormationLesson[];
-  /** Quiz optionnel post-module (Phase 3). */
+  /** Quiz optionnel post-module. */
   quiz?: FormationQuiz;
 }
 
@@ -87,18 +105,47 @@ export interface FormationLesson {
 
 export interface FormationQuiz {
   id: string;
-  /** Score minimum pour valider (sur N questions). */
+  /**
+   * Score minimum pour valider — calcule UNIQUEMENT sur les questions
+   * QCM (les free_text ne comptent pas dans le score). Passe le seuil
+   * = quiz reussi en 100 % auto. Phase F (2026-05-02) : voir
+   * service.submitModule pour le calcul exact.
+   */
   passingScore: number;
   questions: FormationQuizQuestion[];
 }
 
-export interface FormationQuizQuestion {
+/**
+ * Question quiz : QCM standard OU free_text (réponse libre).
+ * Phase F (2026-05-02) : discriminated union pour supporter le coaching
+ * pyramidal. Les QCM comptent dans le score, les free_text ne comptent
+ * PAS mais leur reponse est obligatoire et passe automatiquement dans
+ * le thread sponsor (kind='answer') a la submission.
+ */
+export type FormationQuizQuestion =
+  | FormationQcmQuestion
+  | FormationFreeTextQuestion;
+
+export interface FormationQcmQuestion {
+  kind: "qcm";
   id: string;
   question: string;
   answers: string[];
   correctIndex: number;
-  /** Explication pédagogique post-réponse. */
+  /** Explication pedagogique toujours affichee post-reponse. */
   explanation: string;
+}
+
+export interface FormationFreeTextQuestion {
+  kind: "free_text";
+  id: string;
+  question: string;
+  /** Consigne / format attendu de la reponse libre. */
+  prompt: string;
+  /** Note interne pour le sponsor : sur quoi vérifier la qualité de la reponse. */
+  sponsorCheckHint: string;
+  /** Nombre minimum de caracteres pour empecher les "ok" / "vu". */
+  minChars?: number;
 }
 
 // ─── BIBLIOTHEQUE PAR THEME ───────────────────────────────────────────────
