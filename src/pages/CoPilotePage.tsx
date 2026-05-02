@@ -26,6 +26,7 @@ import { PvActionPlanAlert } from "../components/copilote/PvActionPlanAlert";
 import { InboxWidget } from "../components/copilote/InboxWidget";
 import { BirthdayBlock } from "../components/copilote/BirthdayBlock";
 import { CoachTipOfDayCard } from "../components/copilote/CoachTipOfDayCard";
+import { BusinessOpportunitiesCard } from "../components/copilote/BusinessOpportunitiesCard";
 import { StreakBadge } from "../features/gamification/components/StreakBadge";
 import { WeeklyQuestsCard } from "../features/gamification/components/WeeklyQuestsCard";
 
@@ -150,6 +151,18 @@ export function CoPilotePage() {
           de suggestions client (top dormants / restock / silencieux) +
           gain attendu si toutes les relances aboutissent. */}
       {currentUser?.id ? <PvActionPlanAlert userId={currentUser.id} /> : null}
+
+      {/* Pop-up business bilan (2026-11-03) : clients qui ont coche un montant
+          a l etape business-ambition. Masquee si aucun candidat. Scope
+          identique a BirthdayBlock (ses clients en mode normal, tous en
+          mode global admin). */}
+      <BusinessOpportunitiesCard
+        clients={
+          isAdmin && globalView
+            ? clients
+            : clients.filter((c) => c.distributorId === currentUser.id)
+        }
+      />
 
       {/* Gamification 3 (2026-04-29) : quetes hebdo automatiques. */}
       <WeeklyQuestsCard />

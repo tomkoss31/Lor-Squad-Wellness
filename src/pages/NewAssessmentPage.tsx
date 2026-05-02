@@ -3,6 +3,7 @@
 // Chantier nettoyage bilan (2026-04-20) : Suspense retiré — LazyMorningRoutineCard
 // supprimé de l'étape "Notre concept" qui n'affiche plus que l'image.
 import { StepRail } from "../components/assessment/StepRail";
+import { BusinessAmbitionStep } from "../components/assessment/BusinessAmbitionStep";
 import { useEffect } from "react";
 import { useRef } from "react";
 import { Component, type ErrorInfo } from "react";
@@ -156,6 +157,13 @@ type AssessmentForm = {
   // Chantier Prise de masse (2026-04-24) : étapes sport.
   sportProfile: SportProfile | null;
   currentIntake: CurrentIntake;
+  // Pop-up business bilan (2026-11-03) — interet pour un complement de revenu.
+  /** Reponse a la question legere etape 1 (sous Profession). */
+  businessCuriosity: "never" | "sometimes" | "often" | "";
+  /** Montant choisi a l etape business-ambition. 0 = decline. null = pas atteint. */
+  businessInterestAmount: number | null;
+  /** Champ libre si "Plus" choisi. */
+  businessInterestNote: string;
 };
 
 interface AssessmentDraftPayload {
@@ -299,6 +307,9 @@ const initialForm: AssessmentForm = {
   currentIntake: {
     morning: null, snackAM: null, lunch: null, preWO: null, postWO: null, snackPM: null, dinner: null,
   },
+  businessCuriosity: "",
+  businessInterestAmount: null,
+  businessInterestNote: "",
 };
 
 function readAssessmentDraft(): AssessmentDraftPayload | null {
@@ -393,6 +404,7 @@ export type StepId =
   | 'recommendations'
   | 'breakfast'
   | 'concept'
+  | 'business-ambition'
   | 'program'
   | 'follow-up'
   | 'felicitations';
@@ -416,6 +428,14 @@ const ALL_STEPS: StepDef[] = [
   { id: 'recommendations', label: "Recommandations", visible: () => true },
   { id: 'breakfast', label: "Petit-déjeuner", visible: () => true },
   { id: 'concept', label: "Notre concept de rééquilibrage alimentaire", visible: () => true },
+  // Pop-up business bilan (2026-11-03) : visible uniquement si la curiosite
+  // captee a l etape 1 est "sometimes" ou "often". On evite de spammer ceux
+  // qui ont dit "Jamais".
+  {
+    id: 'business-ambition',
+    label: "Et au-dela de ta sante ?",
+    visible: (f) => f.businessCuriosity === 'sometimes' || f.businessCuriosity === 'often',
+  },
   { id: 'program', label: "Programme proposé", visible: () => true },
   { id: 'follow-up', label: "Suite du suivi", visible: () => true },
   { id: 'felicitations', label: "Félicitations", visible: () => true },
@@ -1023,6 +1043,35 @@ export function NewAssessmentPage() {
         await recordConsentInsert({ clientId, coachId: currentUser.id });
       }
 
+      // Pop-up business bilan (2026-11-03) — persiste curiosite + ambition.
+      // Best-effort, non bloquant : si l UPDATE plante on log seulement.
+      if (clientId && (form.businessCuriosity || form.businessInterestAmount !== null)) {
+        try {
+          const sbBiz = await getSupabaseClient();
+          if (sbBiz) {
+            const update: Record<string, unknown> = {};
+            if (form.businessCuriosity) {
+              update.business_curiosity = form.businessCuriosity;
+            }
+            if (form.businessInterestAmount !== null) {
+              // -1 (Plus) -> null en DB + on garde la note libre. Sinon montant
+              // direct (0 = decline explicite, 100/300/500/1000).
+              update.business_interest_amount =
+                form.businessInterestAmount === -1 ? null : form.businessInterestAmount;
+              update.business_interest_date = new Date().toISOString();
+              if (form.businessInterestNote.trim()) {
+                update.business_interest_note = form.businessInterestNote.trim();
+              }
+            }
+            if (Object.keys(update).length > 0) {
+              await sbBiz.from("clients").update(update).eq("id", clientId);
+            }
+          }
+        } catch (bizErr) {
+          console.warn("[business-interest] persist failed (non-blocking):", bizErr);
+        }
+      }
+
       setSaveError("");
 
       // Chantier Prospects : si le bilan provient d'un prospect, on le convertit.
@@ -1436,6 +1485,69 @@ export function NewAssessmentPage() {
                   <Field label="Taille (cm)" type="number" value={form.height} onChange={(v) => update("height", Number(v))} />
                   <Field label="Profession" value={form.job} onChange={(v) => update("job", v)} />
                   <Field label="Ville" value={form.city} onChange={(v) => update("city", v)} />
+                </div>
+
+                {/* Pop-up business bilan (2026-11-03) — question legere etape 1.
+                    Captee discretement sous Profession, ouvre l etape
+                    business-ambition plus tard si la reponse n est pas "Jamais". */}
+                <div
+                  className="rounded-2xl p-4"
+                  style={{
+                    background: "color-mix(in srgb, var(--ls-teal) 5%, var(--ls-surface2))",
+                    border: "0.5px solid color-mix(in srgb, var(--ls-teal) 22%, var(--ls-border))",
+                  }}
+                >
+                  <p
+                    className="text-sm"
+                    style={{
+                      fontFamily: "DM Sans, sans-serif",
+                      color: "var(--ls-text)",
+                      fontWeight: 600,
+                      marginBottom: 4,
+                    }}
+                  >
+                    💭 Au-delà de ton job, t'arrive-t-il de penser à un complément de revenu ?
+                  </p>
+                  <p
+                    className="text-xs"
+                    style={{ color: "var(--ls-text-muted)", marginBottom: 12 }}
+                  >
+                    Une question ouverte, sans engagement. Juste pour mieux te connaître.
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {([
+                      { value: "never", label: "Jamais" },
+                      { value: "sometimes", label: "Parfois" },
+                      { value: "often", label: "Oui souvent" },
+                    ] as const).map((opt) => {
+                      const active = form.businessCuriosity === opt.value;
+                      return (
+                        <button
+                          key={opt.value}
+                          type="button"
+                          onClick={() => update("businessCuriosity", opt.value)}
+                          style={{
+                            padding: "8px 16px",
+                            borderRadius: 999,
+                            fontFamily: "DM Sans, sans-serif",
+                            fontSize: 13,
+                            fontWeight: active ? 700 : 500,
+                            background: active
+                              ? "var(--ls-teal)"
+                              : "var(--ls-surface)",
+                            color: active ? "#fff" : "var(--ls-text)",
+                            border: active
+                              ? "1px solid var(--ls-teal)"
+                              : "0.5px solid var(--ls-border)",
+                            cursor: "pointer",
+                            transition: "all 150ms ease",
+                          }}
+                        >
+                          {opt.label}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
 
                 <SectionBlock
@@ -2187,6 +2299,17 @@ export function NewAssessmentPage() {
                 </picture>
               </div>
             </VisualStepBoundary>
+          )}
+
+          {/* Pop-up business bilan (2026-11-03) — etape immersive entre concept et program */}
+          {currentStepId === 'business-ambition' && (
+            <BusinessAmbitionStep
+              firstName={form.firstName}
+              amount={form.businessInterestAmount}
+              note={form.businessInterestNote}
+              onAmountChange={(v) => update("businessInterestAmount", v)}
+              onNoteChange={(v) => update("businessInterestNote", v)}
+            />
           )}
 
           {currentStepId === 'program' && (() => {

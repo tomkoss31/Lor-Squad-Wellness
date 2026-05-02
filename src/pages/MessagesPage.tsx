@@ -18,9 +18,14 @@ import { useMessageActions } from '../hooks/useMessageActions'
 import { getInitials } from '../lib/utils/getInitials'
 import type { ClientMessage } from '../types/domain'
 
+import { FormationTabContent } from '../components/formation/FormationTabContent'
+import { useFormationReviewQueue, useFormationAdminQueue } from '../features/formation'
+
 // Chantier Messagerie bidirectionnelle (2026-04-22) : +tab 'clients'.
 // Chantier Messagerie finalisée (2026-04-23) : filtres + actions + persist URL.
-type Tab = 'products' | 'recommendations' | 'clients'
+// Chantier Formation pyramide Phase C (2026-11-01) : +tab 'formation' pour
+// les sponsors qui ont des recrues + admin (file admin_relay).
+type Tab = 'products' | 'recommendations' | 'clients' | 'formation'
 
 function ContactLinks({ phone, email, name }: { phone?: string; email?: string; name: string }) {
   const pre = encodeURIComponent(`Bonjour ${name}, suite à votre intérêt pour Lor'Squad Wellness.`)
@@ -298,12 +303,32 @@ function filterAndSort(messages: ClientMessage[], filters: MessageFiltersState):
 }
 
 export function MessagesPage() {
-  const { clientMessages, markMessageRead, deleteMessage, getClientById, currentUser } = useAppContext()
+  const { clientMessages, markMessageRead, deleteMessage, getClientById, currentUser, users } = useAppContext()
   const actions = useMessageActions()
   const navigate = useNavigate()
   const location = useLocation()
 
-  const [tab, setTab] = useState<Tab>('clients')
+  // Chantier Formation pyramide Phase C : on affiche l onglet "Formation"
+  // si le user a au moins 1 recrue directe OU s il est admin.
+  const hasRecruits = useMemo(
+    () => Boolean(users?.some((u) => u.sponsorId === currentUser?.id && u.id !== currentUser?.id)),
+    [users, currentUser?.id],
+  )
+  const isAdminUser = currentUser?.role === 'admin'
+  const showFormationTab = hasRecruits || isAdminUser
+  const { pendingCount: formationPendingCount } = useFormationReviewQueue()
+  const { relayCount: formationRelayCount } = useFormationAdminQueue()
+  const formationBadgeCount = formationPendingCount + formationRelayCount
+
+  // Deep-link ?tab=formation (Phase C : depuis FormationMyTeamPage / push notif)
+  const [tab, setTab] = useState<Tab>(() => {
+    if (typeof window === 'undefined') return 'clients'
+    const fromQuery = new URLSearchParams(window.location.search).get('tab')
+    if (fromQuery === 'formation' || fromQuery === 'products' || fromQuery === 'recommendations' || fromQuery === 'clients') {
+      return fromQuery
+    }
+    return 'clients'
+  })
   const [replyTarget, setReplyTarget] = useState<ClientMessage | null>(null)
   const [filters, setFilters] = useState<MessageFiltersState>(() => readFiltersFromSearch(location.search))
   const [composeOpen, setComposeOpen] = useState(false)
@@ -539,21 +564,34 @@ export function MessagesPage() {
           </button>
         </div>
 
-        {/* 3 stats inline dans le hero — data-tour-id pour Academy section Messages */}
+        {/* Stats inline dans le hero — data-tour-id pour Academy section Messages.
+            +1 onglet "Formation" si le user a une lignee ou est admin (Phase C). */}
         <div
           data-tour-id="messages-tabs"
           style={{
             position: "relative",
             display: "grid",
-            gridTemplateColumns: "repeat(3, 1fr)",
+            gridTemplateColumns: showFormationTab
+              ? "repeat(auto-fit, minmax(140px, 1fr))"
+              : "repeat(3, 1fr)",
             gap: 10,
           }}
         >
-          {[
+          {([
             { icon: "📅", label: "Demandes clients", value: unreadClients, total: clientAskMessages.length, color: heroGradient.primary, key: "clients" as Tab },
             { icon: "🛒", label: "Demandes produits", value: unreadProducts, total: productMessages.length, color: heroGradient.secondary, key: "products" as Tab },
             { icon: "👥", label: "Recommandations", value: unreadRecos, total: recoMessages.length, color: heroGradient.tertiary, key: "recommendations" as Tab },
-          ].map((s) => {
+            ...(showFormationTab
+              ? [{
+                  icon: "🎓",
+                  label: "Formation lignée",
+                  value: formationBadgeCount,
+                  total: formationBadgeCount,
+                  color: "var(--ls-gold)",
+                  key: "formation" as Tab,
+                }]
+              : []),
+          ]).map((s) => {
             const isActive = tab === s.key;
             return (
               <button
@@ -639,15 +677,21 @@ export function MessagesPage() {
 
       {composeOpen ? <StartConversationModal onClose={() => setComposeOpen(false)} /> : null}
 
-      {/* Filtres */}
-      <MessageFilters
-        state={filters}
-        onChange={(patch) => setFilters(s => ({ ...s, ...patch }))}
-        unreadCount={unreadActive}
-      />
+      {/* Onglet Formation : rendu dedie qui shortcut le filtre et la liste
+          messages clients (les progressions ne sont pas des ClientMessage). */}
+      {tab === 'formation' ? (
+        <FormationTabContent />
+      ) : (
+        <>
+          {/* Filtres */}
+          <MessageFilters
+            state={filters}
+            onChange={(patch) => setFilters(s => ({ ...s, ...patch }))}
+            unreadCount={unreadActive}
+          />
 
-      {/* Messages */}
-      {activeMessages.length === 0 ? (
+          {/* Messages */}
+          {activeMessages.length === 0 ? (
         <EmptyState
           emoji={
             filters.query.trim() ? '🔍'
@@ -704,6 +748,8 @@ export function MessagesPage() {
             )
           })}
         </div>
+      )}
+        </>
       )}
 
       <ReplyMessageModal
