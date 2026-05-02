@@ -417,27 +417,27 @@ export interface StepDef {
 
 const ALL_STEPS: StepDef[] = [
   { id: 'client-info', label: "Informations client", visible: () => true },
-  { id: 'habits', label: "Habitudes de vie et repas", visible: () => true },
-  { id: 'food-quality', label: "Qualité alimentaire et boissons", visible: () => true },
-  { id: 'health-objective', label: "Santé, objectif, activité et freins", visible: () => true },
+  { id: 'habits', label: "Habitudes de vie & repas", visible: () => true },
+  { id: 'food-quality', label: "Qualité alimentaire & boissons", visible: () => true },
+  { id: 'health-objective', label: "Santé, objectif, activité & freins", visible: () => true },
   { id: 'meal-composition', label: "Composition des repas", visible: () => true },
   { id: 'sport-profile', label: "Parle-moi de ton sport", visible: (f) => f.objective === 'sport' },
   { id: 'current-intake', label: "Tes apports actuels", visible: (f) => f.objective === 'sport' },
   { id: 'body-scan', label: "Body scan", visible: () => true },
-  { id: 'tasting', label: "Dégustation", visible: () => true },
+  { id: 'tasting', label: "Place à la dégustation", visible: () => true },
   { id: 'recommendations', label: "Recommandations", visible: () => true },
-  { id: 'breakfast', label: "Petit-déjeuner", visible: () => true },
-  { id: 'concept', label: "Notre concept de rééquilibrage alimentaire", visible: () => true },
+  { id: 'breakfast', label: "Petit-déjeuner Lor'Squad", visible: () => true },
+  { id: 'concept', label: "Notre concept de rééquilibrage", visible: () => true },
   // Pop-up business bilan (2026-11-03) : visible uniquement si la curiosite
   // captee a l etape 1 est "sometimes" ou "often". On evite de spammer ceux
   // qui ont dit "Jamais".
   {
     id: 'business-ambition',
-    label: "Et au-dela de ta sante ?",
+    label: "Et au-delà de ta santé ?",
     visible: (f) => f.businessCuriosity === 'sometimes' || f.businessCuriosity === 'often',
   },
-  { id: 'program', label: "Programme proposé", visible: () => true },
-  { id: 'follow-up', label: "Suite du suivi", visible: () => true },
+  { id: 'program', label: "Le programme proposé", visible: () => true },
+  { id: 'follow-up', label: "La suite du suivi", visible: () => true },
   { id: 'felicitations', label: "Félicitations", visible: () => true },
 ];
 
@@ -445,6 +445,80 @@ const ALL_STEPS: StepDef[] = [
 // bounds). On se base sur le MAX possible (15 étapes) — la clampification
 // dynamique via `visibleSteps` se fait dans le composant.
 const MAX_STEPS_COUNT = ALL_STEPS.length;
+
+// =============================================================================
+// Whispers contextuels par etape (Refonte visuelle bilan, 2026-11-04).
+//
+// Chaque etape gagne une "voix coach" courte qui s affiche sous le titre.
+// Objectif : transformer le bilan en experience guidee, pas en formulaire.
+// L emoji eyebrow remplace le bullet gold generique pour un accent emotionnel.
+// =============================================================================
+const STEP_WHISPERS: Record<StepId, { eyebrow: string; whisper: string }> = {
+  'client-info': {
+    eyebrow: '✦ On apprend à se connaître',
+    whisper: "Pose le cap dès maintenant — qui tu accompagnes, vers où, et avec quel cadre santé.",
+  },
+  'habits': {
+    eyebrow: '🌿 Le rythme avant l\'assiette',
+    whisper: "Comprends d'abord la vie quotidienne. C'est sur ce socle que tout le reste se construit.",
+  },
+  'food-quality': {
+    eyebrow: '🥗 Lecture de l\'assiette',
+    whisper: "Pas un jugement — une photo honnête. On regarde ce qui passe vraiment dans une journée.",
+  },
+  'health-objective': {
+    eyebrow: '🎯 Santé, énergie, blocages',
+    whisper: "Là où le client a déjà essayé, ce qui l'a freiné. Le vrai matériau du coaching.",
+  },
+  'meal-composition': {
+    eyebrow: '🍽️ Composition des repas',
+    whisper: "On affine la lecture : quelles proportions, quels réflexes, quelles habitudes ancrées.",
+  },
+  'sport-profile': {
+    eyebrow: '🏋️ Parle-moi de ton sport',
+    whisper: "Fréquence, types, sous-objectif. Tout ça oriente les besoins en protéines et en récupération.",
+  },
+  'current-intake': {
+    eyebrow: '⚡ Tes apports actuels',
+    whisper: "Pas de calculs douloureux — juste un repère qualitatif moment par moment.",
+  },
+  'body-scan': {
+    eyebrow: '📊 Le scan, ta photo de départ',
+    whisper: "Les chiffres ne définissent pas le client. Ils définissent par où on commence.",
+  },
+  'tasting': {
+    eyebrow: '🥤 Place à la dégustation',
+    whisper: "Le moment où la théorie devient concrète. Goûter, choisir sa saveur, ressentir l'effet.",
+  },
+  'recommendations': {
+    eyebrow: '💛 Faire grandir le cercle',
+    whisper: "Trois personnes qui pourraient avoir besoin d'un cadre comme celui-ci. Sans pression.",
+  },
+  'breakfast': {
+    eyebrow: '☀️ Le petit-déjeuner, point de bascule',
+    whisper: "Visualiser une vraie matinée Lor'Squad — sucres, protéines, hydratation, fibres.",
+  },
+  'concept': {
+    eyebrow: '🌟 Notre concept en une image',
+    whisper: "Le rééquilibrage Lor'Squad expliqué simplement — ce qui change vraiment au quotidien.",
+  },
+  'business-ambition': {
+    eyebrow: '✦ Et au-delà de ta santé ?',
+    whisper: "Une question ouverte sur l'avenir. Aucun engagement, juste écouter ce qui résonne.",
+  },
+  'program': {
+    eyebrow: '🎁 Le programme proposé',
+    whisper: "Le moment du sur-mesure. On assemble ce dont le client a vraiment besoin pour avancer.",
+  },
+  'follow-up': {
+    eyebrow: '📅 La suite du suivi',
+    whisper: "Sans suite, pas de transformation. On pose la prochaine étape avant de se quitter.",
+  },
+  'felicitations': {
+    eyebrow: '🎉 Félicitations',
+    whisper: "Un bilan complet, posé, validé. Maintenant la vraie aventure commence.",
+  },
+};
 
 const timelineOptions = [
   "1 mois",
@@ -1363,55 +1437,138 @@ export function NewAssessmentPage() {
       `}</style>
       <div className="grid gap-4">
         <Card className="space-y-5">
-          {/* Header step interne — masqué sur 'program' (le hero gold suffit, sinon doublon) */}
-          {currentStepId !== 'program' && (
-          <div className="hidden md:flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <p
-                className="eyebrow-label"
+          {/* Hero step premium (Refonte visuelle bilan, 2026-11-04) — masque
+              sur 'program' (le hero gold dedie suffit, sinon doublon).
+              Inclut : eyebrow contextuel + titre Syne + whisper coach +
+              progression numerique + parcours badge. Gradient ambient
+              gold->teal en arriere-plan pour la profondeur. */}
+          {currentStepId !== 'program' && (() => {
+            const whisper = STEP_WHISPERS[currentStepId];
+            return (
+              <div
+                className="ls-step-hero"
                 style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 6,
-                  color: 'var(--ls-gold)',
-                  fontWeight: 700,
+                  position: 'relative',
+                  padding: '20px 22px 22px',
+                  borderRadius: 22,
+                  overflow: 'hidden',
+                  background:
+                    'linear-gradient(135deg, color-mix(in srgb, var(--ls-gold) 6%, var(--ls-surface)) 0%, color-mix(in srgb, var(--ls-teal) 4%, var(--ls-surface)) 100%)',
+                  border:
+                    '0.5px solid color-mix(in srgb, var(--ls-gold) 22%, var(--ls-border))',
                 }}
               >
-                <span
+                {/* Glow ambient en haut a droite */}
+                <div
+                  aria-hidden="true"
                   style={{
-                    display: 'inline-block', width: 6, height: 6, borderRadius: 999,
-                    background: 'var(--ls-gold)', boxShadow: '0 0 8px rgba(239,159,39,0.50)',
+                    position: 'absolute',
+                    top: -50,
+                    right: -50,
+                    width: 180,
+                    height: 180,
+                    borderRadius: '50%',
+                    background:
+                      'color-mix(in srgb, var(--ls-gold) 14%, transparent)',
+                    filter: 'blur(48px)',
+                    pointerEvents: 'none',
                   }}
                 />
-                Étape {currentStep + 1} sur {steps.length}
-              </p>
-              <h2
-                className="mt-3 text-3xl md:text-4xl"
-                style={{
-                  fontFamily: 'Syne, serif',
-                  fontWeight: 800,
-                  letterSpacing: '-0.02em',
-                  lineHeight: 1.1,
-                }}
-              >
-                <span
+                <div
                   style={{
-                    background: 'linear-gradient(135deg, #EF9F27 0%, #BA7517 60%, #5C3A05 100%)',
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent',
-                    backgroundClip: 'text',
+                    position: 'relative',
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    alignItems: 'flex-start',
+                    justifyContent: 'space-between',
+                    gap: 16,
                   }}
                 >
-                  {steps[currentStep]}
-                </span>
-              </h2>
-            </div>
-            <StatusBadge
-              label={form.objective === "sport" ? "🏋️ Parcours sport" : "🎯 Parcours accompagnement"}
-              tone={form.objective === "sport" ? "green" : "blue"}
-            />
-          </div>
-          )}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p
+                      style={{
+                        fontFamily: 'DM Sans, sans-serif',
+                        fontSize: 11,
+                        fontWeight: 700,
+                        letterSpacing: '0.18em',
+                        textTransform: 'uppercase',
+                        color: 'var(--ls-gold)',
+                        margin: 0,
+                        marginBottom: 6,
+                      }}
+                    >
+                      {whisper?.eyebrow ?? `Étape ${currentStep + 1} sur ${steps.length}`}
+                    </p>
+                    <h2
+                      style={{
+                        fontFamily: 'Syne, serif',
+                        fontWeight: 800,
+                        fontSize: 'clamp(22px, 3.6vw, 32px)',
+                        letterSpacing: '-0.02em',
+                        lineHeight: 1.12,
+                        margin: 0,
+                      }}
+                    >
+                      <span
+                        style={{
+                          background:
+                            'linear-gradient(135deg, var(--ls-gold) 0%, color-mix(in srgb, var(--ls-gold) 60%, var(--ls-teal) 40%) 100%)',
+                          WebkitBackgroundClip: 'text',
+                          WebkitTextFillColor: 'transparent',
+                          backgroundClip: 'text',
+                        }}
+                      >
+                        {steps[currentStep]}
+                      </span>
+                    </h2>
+                    {whisper?.whisper ? (
+                      <p
+                        style={{
+                          fontFamily: 'DM Sans, sans-serif',
+                          fontSize: 13.5,
+                          lineHeight: 1.55,
+                          color: 'var(--ls-text-muted)',
+                          margin: '10px 0 0',
+                          maxWidth: 620,
+                        }}
+                      >
+                        {whisper.whisper}
+                      </p>
+                    ) : null}
+                    <div
+                      style={{
+                        marginTop: 12,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 8,
+                        fontFamily: 'DM Sans, sans-serif',
+                        fontSize: 11,
+                        color: 'var(--ls-text-muted)',
+                      }}
+                    >
+                      <span
+                        style={{
+                          display: 'inline-block',
+                          width: 6,
+                          height: 6,
+                          borderRadius: 999,
+                          background: 'var(--ls-gold)',
+                          boxShadow: '0 0 8px rgba(239,159,39,0.50)',
+                        }}
+                      />
+                      <span style={{ fontWeight: 600 }}>
+                        Étape {currentStep + 1} / {steps.length}
+                      </span>
+                    </div>
+                  </div>
+                  <StatusBadge
+                    label={form.objective === 'sport' ? '🏋️ Parcours sport' : '🎯 Parcours accompagnement'}
+                    tone={form.objective === 'sport' ? 'green' : 'blue'}
+                  />
+                </div>
+              </div>
+            );
+          })()}
 
           <div key={currentStepId} className="ls-step-fade space-y-5">
 
@@ -1551,18 +1708,18 @@ export function NewAssessmentPage() {
                 </div>
 
                 <SectionBlock
-                  title="Bloc 0 - Objectif et antecedents"
-                  description="Poser le cap des le debut et noter tout point sante a respecter."
+                  title="Bloc 0 · Objectif et antécédents"
+                  description="Poser le cap dès le début et noter tout point santé à respecter."
                 >
                   <div className="grid gap-4 md:grid-cols-2">
                     <ChoiceGroup
                       label="Objectif principal"
                       value={form.objectiveFocus}
-                      options={["Perte de poids", "Prise de masse", "Energie", "Remise en forme", "Autre"]}
+                      options={["Perte de poids", "Prise de masse", "Énergie", "Remise en forme", "Autre"]}
                       onChange={updateObjectiveFocus}
                     />
                     <TimelineChoiceField
-                      label="Delai souhaite"
+                      label="Délai souhaité"
                       value={form.desiredTimeline}
                       options={timelineOptions}
                       onChange={(v) => update("desiredTimeline", v)}
@@ -1578,13 +1735,13 @@ export function NewAssessmentPage() {
                   )}
                   <div className="grid gap-4 md:grid-cols-2">
                     <ChoiceGroup
-                      label="Sante / traitement"
+                      label="Santé / traitement"
                       value={form.healthStatus}
-                      options={["RAS", "Traitement en cours", "Pathologie connue", "Avis medical a respecter"]}
+                      options={["RAS", "Traitement en cours", "Pathologie connue", "Avis médical à respecter"]}
                       onChange={(v) => update("healthStatus", v)}
                     />
                     <AreaField
-                      label="Antecedents / precision utile"
+                      label="Antécédents / précision utile"
                       value={form.healthNotes}
                       onChange={(v) => update("healthNotes", v)}
                     />
@@ -1633,7 +1790,7 @@ export function NewAssessmentPage() {
 
           {currentStepId === 'habits' && (
             <div className="space-y-4">
-              <SectionBlock title="Bloc 1 - Rythme de vie" description="Comprendre le rythme reel avant de parler alimentation.">
+              <SectionBlock title="Bloc 1 · Rythme de vie" description="Comprendre le rythme réel avant de parler alimentation.">
                 <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
                   <Field label="Heure de lever" type="time" value={form.wakeUpTime} onChange={(v) => update("wakeUpTime", v)} />
                   <Field label="Heure de coucher" type="time" value={form.bedTime} onChange={(v) => update("bedTime", v)} />
@@ -1670,26 +1827,26 @@ export function NewAssessmentPage() {
                     </div>
                   )
                 })() : null}
-                <ChoiceGroup label="Sieste en journee" value={form.napFrequency} options={["Jamais", "Parfois", "Souvent"]} onChange={(v) => update("napFrequency", v)} />
+                <ChoiceGroup label="Sieste en journée" value={form.napFrequency} options={["Jamais", "Parfois", "Souvent"]} onChange={(v) => update("napFrequency", v)} />
               </SectionBlock>
 
-              <SectionBlock title="Bloc 2 - Petit-dejeuner" description="Faire ressortir si le matin soutient vraiment la journee.">
+              <SectionBlock title="Bloc 2 · Petit-déjeuner" description="Faire ressortir si le matin soutient vraiment la journée.">
                 <div className="grid gap-4 md:grid-cols-2">
-                  <ChoiceGroup label="Petit-dejeuner tous les jours" value={form.breakfastFrequency} options={["Oui", "Non", "Parfois"]} onChange={(v) => update("breakfastFrequency", v)} />
-                  <Field label="Heure du petit-dejeuner" type="time" value={form.breakfastTime} onChange={(v) => update("breakfastTime", v)} />
+                  <ChoiceGroup label="Petit-déjeuner tous les jours" value={form.breakfastFrequency} options={["Oui", "Non", "Parfois"]} onChange={(v) => update("breakfastFrequency", v)} />
+                  <Field label="Heure du petit-déjeuner" type="time" value={form.breakfastTime} onChange={(v) => update("breakfastTime", v)} />
                   <AreaField label="Que consommes-tu le matin ?" value={form.breakfastContent} onChange={(v) => update("breakfastContent", v)} />
                   <ChoiceGroup label="Tient jusqu'au repas suivant" value={form.breakfastSatiety} options={["Oui", "Non", "Pas toujours"]} onChange={(v) => update("breakfastSatiety", v)} />
                 </div>
               </SectionBlock>
 
-              <SectionBlock title="Bloc 3 - Organisation des repas" description="Chercher la regularite sans entrer dans trop de detail.">
+              <SectionBlock title="Bloc 3 · Organisation des repas" description="Chercher la régularité sans entrer dans trop de détail.">
                 <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
                   <ChoiceGroup label="Repas par jour" value={String(form.mealsPerDay)} options={["1", "2", "3", "4 ou plus"]} onChange={(v) => update("mealsPerDay", v === "4 ou plus" ? 4 : Number(v))} />
                   <Field label="Premier vrai repas" type="time" value={form.firstMealTime} onChange={(v) => update("firstMealTime", v)} />
                   <ChoiceGroup label="Heures régulières" value={form.regularMealTimes} options={["Oui", "Non", "Pas toujours"]} onChange={(v) => update("regularMealTimes", v)} />
-                  <ChoiceGroup label="Midi" value={form.lunchLocation} options={["A la maison", "Au travail", "Au restaurant", "Sur le pouce"]} onChange={(v) => update("lunchLocation", v)} />
+                  <ChoiceGroup label="Midi" value={form.lunchLocation} options={["À la maison", "Au travail", "Au restaurant", "Sur le pouce"]} onChange={(v) => update("lunchLocation", v)} />
                 </div>
-                <ChoiceGroup label="Le soir" value={form.dinnerTiming} options={["Tot", "Normalement", "Tard"]} onChange={(v) => update("dinnerTiming", v)} />
+                <ChoiceGroup label="Le soir" value={form.dinnerTiming} options={["Tôt", "Normalement", "Tard"]} onChange={(v) => update("dinnerTiming", v)} />
                 {/* Chantier bilan updates (2026-04-20) : snacks/fast-food/resto — budget alim */}
                 <div className="space-y-2">
                   <label className="ls-field-label">Nombre de snacks / fast-food / resto par semaine</label>
@@ -1718,11 +1875,11 @@ export function NewAssessmentPage() {
 
           {currentStepId === 'food-quality' && (
             <div className="space-y-4">
-              <SectionBlock title="Bloc 4 - Qualite alimentaire" description="Faire decrire rapidement le midi et le soir puis evaluer les bases.">
+              <SectionBlock title="Bloc 4 · Qualité alimentaire" description="Faire décrire rapidement le midi et le soir, puis évaluer les bases.">
                 <div className="grid gap-4 md:grid-cols-2">
                   <AreaField label="Repas type du midi" value={form.lunchExample} onChange={(v) => update("lunchExample", v)} />
                   <AreaField label="Repas type du soir" value={form.dinnerExample} onChange={(v) => update("dinnerExample", v)} />
-                  <ChoiceGroup label="Legumes chaque jour" value={form.vegetablesDaily} options={["Oui", "Non", "Pas assez"]} onChange={(v) => update("vegetablesDaily", v)} />
+                  <ChoiceGroup label="Légumes chaque jour" value={form.vegetablesDaily} options={["Oui", "Non", "Pas assez"]} onChange={(v) => update("vegetablesDaily", v)} />
                   <ChoiceGroup label="Protéines à chaque repas" value={form.proteinEachMeal} options={["Oui", "Non", "Pas toujours"]} onChange={(v) => update("proteinEachMeal", v)} />
                 </div>
                 <ChoiceGroup
@@ -1733,20 +1890,20 @@ export function NewAssessmentPage() {
                 />
               </SectionBlock>
 
-              <SectionBlock title="Bloc 5 - Grignotage et fringales" description="Faire ressortir le vrai moment de craquage et la cause la plus frequente.">
+              <SectionBlock title="Bloc 5 · Grignotage et fringales" description="Faire ressortir le vrai moment de craquage et la cause la plus fréquente.">
                 <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
                   <ChoiceGroup label="Grignotage" value={form.snackingFrequency} options={["Jamais", "Parfois", "Souvent"]} onChange={(v) => update("snackingFrequency", v)} />
-                  <ChoiceGroup label="Moment" value={form.snackingMoment} options={["Matin", "Apres-midi", "Soir", "Nuit"]} onChange={(v) => update("snackingMoment", v)} />
+                  <ChoiceGroup label="Moment" value={form.snackingMoment} options={["Matin", "Après-midi", "Soir", "Nuit"]} onChange={(v) => update("snackingMoment", v)} />
                   <ChoiceGroup label="Attirance" value={form.cravingsPreference} options={["Sucré", "Salé", "Les deux"]} onChange={(v) => update("cravingsPreference", v)} />
-                  <ChoiceGroup label="Cause frequente" value={form.snackingTrigger} options={["Faim", "Stress", "Habitude", "Fatigue", "Ennui", "Emotions"]} onChange={(v) => update("snackingTrigger", v)} />
+                  <ChoiceGroup label="Cause fréquente" value={form.snackingTrigger} options={["Faim", "Stress", "Habitude", "Fatigue", "Ennui", "Émotions"]} onChange={(v) => update("snackingTrigger", v)} />
                 </div>
               </SectionBlock>
 
-              <SectionBlock title="Bloc 6 - Hydratation et boissons" description="Rester sur les volumes et les habitudes qui changent vraiment la lecture.">
+              <SectionBlock title="Bloc 6 · Hydratation et boissons" description="Rester sur les volumes et les habitudes qui changent vraiment la lecture.">
                 <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
                   <Field label="Eau par jour (L)" type="number" step="0.1" value={form.waterIntake} onChange={(v) => update("waterIntake", Number(v))} />
-                  <ChoiceGroup label="Cafe" value={form.drinksCoffee} options={["Oui", "Non"]} onChange={(v) => update("drinksCoffee", v)} />
-                  <Field label="Cafes par jour" type="number" value={form.coffeePerDay} onChange={(v) => update("coffeePerDay", Number(v))} />
+                  <ChoiceGroup label="Café" value={form.drinksCoffee} options={["Oui", "Non"]} onChange={(v) => update("drinksCoffee", v)} />
+                  <Field label="Cafés par jour" type="number" value={form.coffeePerDay} onChange={(v) => update("coffeePerDay", Number(v))} />
                   <ChoiceGroup label="Boissons sucrées" value={form.sweetDrinks} options={["Jamais", "Parfois", "Souvent"]} onChange={(v) => update("sweetDrinks", v)} />
                 </div>
                 <ChoiceGroup label="Alcool" value={form.alcohol} options={["Jamais", "Occasionnellement", "Chaque semaine", "Souvent"]} onChange={(v) => update("alcohol", v)} />
@@ -1756,17 +1913,17 @@ export function NewAssessmentPage() {
 
           {currentStepId === 'health-objective' && (
               <div className="space-y-4" data-tour-id="bilan-objective">
-              <SectionBlock title="Bloc 7 - Allergies, transit et contexte pathologique" description="Ajouter seulement les points sante utiles pour cadrer l'accompagnement.">
+              <SectionBlock title="Bloc 7 · Allergies, transit et contexte pathologique" description="Ajouter seulement les points santé utiles pour cadrer l'accompagnement.">
                 <div className="grid gap-4 md:grid-cols-2">
                   <Field
-                    label="Allergies / intolerances"
+                    label="Allergies / intolérances"
                     value={form.allergies}
                     onChange={(v) => update("allergies", v)}
                   />
                   <ChoiceGroup
                     label="Niveau du transit"
                     value={form.transitStatus}
-                    options={["Normal", "Lent", "Irregulier", "Sensible"]}
+                    options={["Normal", "Lent", "Irrégulier", "Sensible"]}
                     onChange={(v) => update("transitStatus", v)}
                   />
                   <AreaField
@@ -1775,25 +1932,25 @@ export function NewAssessmentPage() {
                     onChange={(v) => update("pathologyContext", v)}
                   />
                   <AreaField
-                    label="Point sante a surveiller"
+                    label="Point santé à surveiller"
                     value={form.healthNotes}
                     onChange={(v) => update("healthNotes", v)}
                   />
                 </div>
               </SectionBlock>
 
-              <SectionBlock title="Bloc 8 - Activité et forme" description="Chercher le niveau réel d'activité et d'énergie.">
+              <SectionBlock title="Bloc 8 · Activité et forme" description="Chercher le niveau réel d'activité et d'énergie.">
                 <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
                   <ChoiceGroup label="Activité physique" value={form.physicalActivity} options={["Oui", "Non"]} onChange={(v) => update("physicalActivity", v)} />
                   <Field label="Si oui, laquelle ?" value={form.activityType} onChange={(v) => update("activityType", v)} />
-                  <Field label="Seances / semaine" type="number" value={form.sessionsPerWeek} onChange={(v) => update("sessionsPerWeek", Number(v))} />
+                  <Field label="Séances / semaine" type="number" value={form.sessionsPerWeek} onChange={(v) => update("sessionsPerWeek", Number(v))} />
                   <ChoiceGroup label="Niveau d'énergie" value={form.energyLevel} options={["Très bon", "Bon", "Moyen", "Faible"]} onChange={(v) => update("energyLevel", v)} />
                 </div>
               </SectionBlock>
 
-              <SectionBlock title="Bloc 9 - Historique et blocages" description="Faire apparaître ce qui a déjà été tenté et ce qui bloque aujourd'hui.">
+              <SectionBlock title="Bloc 9 · Historique et blocages" description="Faire apparaître ce qui a déjà été tenté et ce qui bloque aujourd'hui.">
                 <div className="grid gap-4 md:grid-cols-2">
-                  <AreaField label="Tentatives passees" value={form.pastAttempts} onChange={(v) => update("pastAttempts", v)} />
+                  <AreaField label="Tentatives passées" value={form.pastAttempts} onChange={(v) => update("pastAttempts", v)} />
                   <AreaField label="Le plus difficile jusqu'ici" value={form.hardestPart} onChange={(v) => update("hardestPart", v)} />
                 </div>
                 <ChoiceGroup label="Blocage principal" value={form.mainBlocker} options={["Manque de temps", "Motivation", "Organisation", "Grignotage", "Fatigue", "Manque de repères", "Autre"]} onChange={(v) => update("mainBlocker", v)} />
@@ -2212,7 +2369,7 @@ export function NewAssessmentPage() {
 
           {/* ─── Étape 8 : Petit-déjeuner ─── */}
           {currentStepId === 'breakfast' && (
-            <VisualStepBoundary title="Petit-dejeuner">
+            <VisualStepBoundary title="Petit-déjeuner">
               <BreakfastStorySlider
                 breakfastContent={form.breakfastContent}
                 analysis={form.breakfastAnalysis}
@@ -3888,10 +4045,20 @@ function TimelineChoiceField({
 }
 
 function SectionBlock({ title, description, children }: { title: string; description: string; children: ReactNode; }) {
+  // Refonte visuelle bilan (2026-11-04) : accent gold subtil sur le titre +
+  // micro-divider doré sous le titre pour structurer visuellement les blocs
+  // sans alourdir.
   return (
-    <div className="rounded-[24px] bg-[var(--ls-surface2)] p-5">
-      <h3 className="ls-block-title">{title}</h3>
-      <p className="ls-block-desc">{description}</p>
+    <div
+      className="rounded-[24px] bg-[var(--ls-surface2)] p-5"
+      style={{
+        border: '0.5px solid color-mix(in srgb, var(--ls-gold) 8%, var(--ls-border))',
+      }}
+    >
+      <div style={{ marginBottom: 16, paddingBottom: 12, borderBottom: '0.5px dashed color-mix(in srgb, var(--ls-gold) 18%, transparent)' }}>
+        <h3 className="ls-block-title" style={{ marginBottom: 4 }}>{title}</h3>
+        <p className="ls-block-desc" style={{ margin: 0 }}>{description}</p>
+      </div>
       <div className="space-y-4">{children}</div>
     </div>
   );

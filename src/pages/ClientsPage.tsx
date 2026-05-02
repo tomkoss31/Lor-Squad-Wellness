@@ -59,9 +59,18 @@ export function ClientsPage() {
   // localStorage pour retrouver l etat au refresh.
   const [quickFilter, setQuickFilter] = useState<QuickFilterId>("all");
   // Charge la valeur stockee au mount cote client (evite SSR mismatch).
+  // Si ?filter=<id> est present dans l URL, il prend priorite (deep-link
+  // depuis Co-pilote BusinessOpportunitiesCard, Analytics, etc.).
   useEffect(() => {
-    setQuickFilter(loadStoredQuickFilter());
-  }, []);
+    const paramFilter = searchParams.get("filter");
+    if (paramFilter) {
+      setQuickFilter(paramFilter as QuickFilterId);
+      saveStoredQuickFilter(paramFilter as QuickFilterId);
+    } else {
+      setQuickFilter(loadStoredQuickFilter());
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
   function handleQuickFilterChange(id: QuickFilterId) {
     setQuickFilter(id);
     saveStoredQuickFilter(id);
