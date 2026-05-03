@@ -19,7 +19,7 @@ import { useState } from "react";
 import type { HerbalifeRank } from "../../types/domain";
 import { RANK_LABELS } from "../../types/domain";
 
-export type RankPinSize = "sm" | "md" | "lg" | "xl";
+export type RankPinSize = "xs" | "sm" | "md" | "lg" | "xl";
 
 interface Props {
   rank: HerbalifeRank;
@@ -77,6 +77,7 @@ const SHORT_LABEL: Record<HerbalifeRank, string> = {
 };
 
 const SIZE_PX: Record<RankPinSize, number> = {
+  xs: 24,
   sm: 40,
   md: 64,
   lg: 96,
@@ -92,7 +93,7 @@ export function RankPinBadge({
 }: Props) {
   const [imgError, setImgError] = useState(false);
   const px = SIZE_PX[size];
-  const labelFontSize = size === "xl" ? 12 : size === "lg" ? 11 : size === "md" ? 9 : 8;
+  const labelFontSize = size === "xl" ? 12 : size === "lg" ? 11 : size === "md" ? 9 : size === "sm" ? 8 : 7;
   const src = PIN_FILE[rank];
   const label = RANK_LABELS[rank];
 
