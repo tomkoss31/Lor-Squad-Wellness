@@ -16,6 +16,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { PageHeading } from "../components/ui/PageHeading";
+import { FlexHistoryCard } from "../components/flex/FlexHistoryCard";
 import { useAppContext } from "../context/AppContext";
 import { getSupabaseClient } from "../services/supabaseClient";
 import type {
@@ -299,6 +300,9 @@ export function FlexDashboardPage() {
           {weekCheckins.length} check-in{weekCheckins.length > 1 ? "s" : ""} sur {currentDayOfWeek()} jours cette semaine
         </p>
       </Card>
+
+      {/* Phase D : récap 4 semaines + cumul mensuel via RPC. */}
+      <FlexHistoryCard userId={userId!} />
 
       <button type="button" onClick={handleReset} disabled={archiving} style={btnGhost}>
         {archiving ? "Archivage…" : "↺ Recommencer mon plan"}
