@@ -24,6 +24,7 @@ import {
   type FormationProgressState,
 } from "../data/formation";
 import { useMyFormationProgress } from "../features/formation";
+import { useAppContext } from "../context/AppContext";
 
 const STORAGE_KEY = "ls_formation_progress";
 
@@ -100,6 +101,11 @@ export function useFormationProgress(): UseFormationProgressResult {
   const [state, setState] = useState<FormationProgressState>(() => readState());
   // Phase F-polish : source primaire = DB. Si DB indispo, fallback localStorage.
   const { rows: dbRows } = useMyFormationProgress();
+  // Bypass admin (2026-11-04) : Thomas + Mel doivent pouvoir lire toutes les
+  // sections meme N2/N3 verrouilles (relecture rapide en mode test).
+  // L evolution sera reset avant le launch distri.
+  const { currentUser } = useAppContext();
+  const isAdminBypass = currentUser?.role === "admin";
 
   // Synchro inter-onglets via storage event
   useEffect(() => {
@@ -150,9 +156,9 @@ export function useFormationProgress(): UseFormationProgressResult {
       const hasStarted = completedCount > 0 || levelProg.lastSeenAt !== null;
 
       // Verrouillage : si unlockedBy defini, verifier le niveau prerequis
-      // (source DB en priorite)
+      // (source DB en priorite). Bypass admin pour relecture test.
       let isLocked = false;
-      if (level?.unlockedBy) {
+      if (level?.unlockedBy && !isAdminBypass) {
         const prereqLevel = getFormationLevelById(level.unlockedBy);
         const prereqTotal = prereqLevel?.modules.length ?? 0;
         const prereqDbCompleted = dbCompletedByLevel[level.unlockedBy];
@@ -173,7 +179,7 @@ export function useFormationProgress(): UseFormationProgressResult {
         isLocked,
       };
     },
-    [state, dbCompletedByLevel],
+    [state, dbCompletedByLevel, isAdminBypass],
   );
 
   const stats = useMemo<Record<FormationLevelId, FormationLevelStats>>(
