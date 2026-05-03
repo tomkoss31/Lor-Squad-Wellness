@@ -1958,12 +1958,18 @@ export function NewAssessmentPage() {
             )}
 
           {currentStepId === 'habits' && (
-            <div className="space-y-4">
-              <SectionBlock title="Bloc 1 · Rythme de vie" description="Comprendre le rythme réel avant de parler alimentation.">
+            <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+              <AssessmentSectionV2
+                emoji="🌙"
+                eyebrow="Bloc 1 · Rythme de vie"
+                title="Comprendre le rythme avant l'assiette"
+                description="Le sommeil et le rythme du quotidien posent les fondations. Sans ça, l'alimentation reste un emplâtre."
+                accent="teal"
+              >
                 <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-                  <Field label="Heure de lever" type="time" value={form.wakeUpTime} onChange={(v) => update("wakeUpTime", v)} />
-                  <Field label="Heure de coucher" type="time" value={form.bedTime} onChange={(v) => update("bedTime", v)} />
-                  <Field label="Heures de sommeil" type="number" step="0.5" value={form.sleepHours} onChange={(v) => update("sleepHours", Number(v))} />
+                  <AssessmentFieldV2 label="Heure de lever" icon="☀️" type="time" value={form.wakeUpTime} onChange={(v) => update("wakeUpTime", v)} />
+                  <AssessmentFieldV2 label="Heure de coucher" icon="🌙" type="time" value={form.bedTime} onChange={(v) => update("bedTime", v)} />
+                  <AssessmentFieldV2 label="Heures de sommeil" icon="💤" type="number" step="0.5" value={form.sleepHours} onChange={(v) => update("sleepHours", Number(v))} />
                   <ChoiceGroup label="Qualité du sommeil" value={form.sleepQuality} options={["Très bonne", "Bonne", "Moyenne", "Mauvaise"]} onChange={(v) => update("sleepQuality", v)} />
                 </div>
                 {/* Calculateur sommeil auto */}
@@ -1997,54 +2003,64 @@ export function NewAssessmentPage() {
                   )
                 })() : null}
                 <ChoiceGroup label="Sieste en journée" value={form.napFrequency} options={["Jamais", "Parfois", "Souvent"]} onChange={(v) => update("napFrequency", v)} />
-              </SectionBlock>
+              </AssessmentSectionV2>
 
-              <SectionBlock title="Bloc 2 · Petit-déjeuner" description="Faire ressortir si le matin soutient vraiment la journée.">
+              <AssessmentSectionV2
+                emoji="🥐"
+                eyebrow="Bloc 2 · Le matin"
+                title="Le petit-déjeuner soutient-il la journée ?"
+                description="Le matin donne le ton. On regarde la fréquence, l'heure, le contenu et la sensation de satiété."
+                accent="teal"
+              >
                 <div className="grid gap-4 md:grid-cols-2">
                   <ChoiceGroup label="Petit-déjeuner tous les jours" value={form.breakfastFrequency} options={["Oui", "Non", "Parfois"]} onChange={(v) => update("breakfastFrequency", v)} />
-                  <Field label="Heure du petit-déjeuner" type="time" value={form.breakfastTime} onChange={(v) => update("breakfastTime", v)} />
+                  <AssessmentFieldV2 label="Heure du petit-déjeuner" icon="🕐" type="time" value={form.breakfastTime} onChange={(v) => update("breakfastTime", v)} />
                   <AreaField label="Que consommes-tu le matin ?" value={form.breakfastContent} onChange={(v) => update("breakfastContent", v)} />
                   <ChoiceGroup label="Tient jusqu'au repas suivant" value={form.breakfastSatiety} options={["Oui", "Non", "Pas toujours"]} onChange={(v) => update("breakfastSatiety", v)} />
                 </div>
-              </SectionBlock>
+              </AssessmentSectionV2>
 
-              <SectionBlock title="Bloc 3 · Organisation des repas" description="Chercher la régularité sans entrer dans trop de détail.">
+              <AssessmentSectionV2
+                emoji="🍽️"
+                eyebrow="Bloc 3 · Organisation des repas"
+                title="La régularité avant tout"
+                description="Combien de repas, à quels moments, où. La régularité fait souvent plus que la qualité au début."
+                accent="teal"
+              >
                 <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
                   <ChoiceGroup label="Repas par jour" value={String(form.mealsPerDay)} options={["1", "2", "3", "4 ou plus"]} onChange={(v) => update("mealsPerDay", v === "4 ou plus" ? 4 : Number(v))} />
-                  <Field label="Premier vrai repas" type="time" value={form.firstMealTime} onChange={(v) => update("firstMealTime", v)} />
+                  <AssessmentFieldV2 label="Premier vrai repas" icon="🕐" type="time" value={form.firstMealTime} onChange={(v) => update("firstMealTime", v)} />
                   <ChoiceGroup label="Heures régulières" value={form.regularMealTimes} options={["Oui", "Non", "Pas toujours"]} onChange={(v) => update("regularMealTimes", v)} />
                   <ChoiceGroup label="Midi" value={form.lunchLocation} options={["À la maison", "Au travail", "Au restaurant", "Sur le pouce"]} onChange={(v) => update("lunchLocation", v)} />
                 </div>
                 <ChoiceGroup label="Le soir" value={form.dinnerTiming} options={["Tôt", "Normalement", "Tard"]} onChange={(v) => update("dinnerTiming", v)} />
-                {/* Chantier bilan updates (2026-04-20) : snacks/fast-food/resto — budget alim */}
-                <div className="space-y-2">
-                  <label className="ls-field-label">Nombre de snacks / fast-food / resto par semaine</label>
-                  <input
-                    type="number"
-                    min={0}
-                    max={30}
-                    placeholder="Ex : 3"
-                    value={form.snacksFastFoodPerWeek ?? ""}
-                    onChange={(event) => {
-                      const str = event.target.value.trim();
-                      if (str === "") { update("snacksFastFoodPerWeek", null); return; }
-                      const n = Number(str);
-                      if (Number.isNaN(n) || n < 0) { update("snacksFastFoodPerWeek", null); return; }
-                      update("snacksFastFoodPerWeek", Math.min(30, Math.max(0, n)));
-                    }}
-                    className="ls-input"
-                  />
-                  <p style={{ fontSize: 11, color: "var(--ls-text-hint)", margin: 0 }}>
-                    Nous servira à calculer ton budget alimentation plus tard.
-                  </p>
-                </div>
-              </SectionBlock>
+                <AssessmentFieldV2
+                  label="Snacks / fast-food / resto par semaine"
+                  icon="🍔"
+                  type="number"
+                  value={form.snacksFastFoodPerWeek ?? 0}
+                  onChange={(v) => {
+                    const str = v.trim();
+                    if (str === "") { update("snacksFastFoodPerWeek", null); return; }
+                    const n = Number(str);
+                    if (Number.isNaN(n) || n < 0) { update("snacksFastFoodPerWeek", null); return; }
+                    update("snacksFastFoodPerWeek", Math.min(30, Math.max(0, n)));
+                  }}
+                  helper="Servira à calculer le budget alimentation plus tard."
+                />
+              </AssessmentSectionV2>
             </div>
           )}
 
           {currentStepId === 'food-quality' && (
-            <div className="space-y-4">
-              <SectionBlock title="Bloc 4 · Qualité alimentaire" description="Faire décrire rapidement le midi et le soir, puis évaluer les bases.">
+            <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+              <AssessmentSectionV2
+                emoji="🥗"
+                eyebrow="Bloc 4 · Qualité alimentaire"
+                title="Lecture honnête de l'assiette"
+                description="Pas un audit, juste une photo. On regarde le midi, le soir et les bases (légumes, protéines, sucres)."
+                accent="teal"
+              >
                 <div className="grid gap-4 md:grid-cols-2">
                   <AreaField label="Repas type du midi" value={form.lunchExample} onChange={(v) => update("lunchExample", v)} />
                   <AreaField label="Repas type du soir" value={form.dinnerExample} onChange={(v) => update("dinnerExample", v)} />
@@ -2052,78 +2068,109 @@ export function NewAssessmentPage() {
                   <ChoiceGroup label="Protéines à chaque repas" value={form.proteinEachMeal} options={["Oui", "Non", "Pas toujours"]} onChange={(v) => update("proteinEachMeal", v)} />
                 </div>
                 <ChoiceGroup
-                  label="À quelle fréquence consommes-tu des produits sucrés ou ultra-transformés ? (sodas, plats préparés, bonbons)"
+                  label="Produits sucrés ou ultra-transformés ? (sodas, plats préparés, bonbons)"
                   value={form.sugaryProducts}
                   options={["Rarement", "Parfois", "Souvent", "Très souvent"]}
                   onChange={(v) => update("sugaryProducts", v)}
                 />
-              </SectionBlock>
+              </AssessmentSectionV2>
 
-              <SectionBlock title="Bloc 5 · Grignotage et fringales" description="Faire ressortir le vrai moment de craquage et la cause la plus fréquente.">
+              <AssessmentSectionV2
+                emoji="🍫"
+                eyebrow="Bloc 5 · Grignotage et fringales"
+                title="Le vrai moment de craquage"
+                description="On cherche le pattern : à quel moment, vers quoi, et pourquoi. C'est là que se cachent les vraies leviers."
+                accent="teal"
+              >
                 <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
                   <ChoiceGroup label="Grignotage" value={form.snackingFrequency} options={["Jamais", "Parfois", "Souvent"]} onChange={(v) => update("snackingFrequency", v)} />
                   <ChoiceGroup label="Moment" value={form.snackingMoment} options={["Matin", "Après-midi", "Soir", "Nuit"]} onChange={(v) => update("snackingMoment", v)} />
                   <ChoiceGroup label="Attirance" value={form.cravingsPreference} options={["Sucré", "Salé", "Les deux"]} onChange={(v) => update("cravingsPreference", v)} />
                   <ChoiceGroup label="Cause fréquente" value={form.snackingTrigger} options={["Faim", "Stress", "Habitude", "Fatigue", "Ennui", "Émotions"]} onChange={(v) => update("snackingTrigger", v)} />
                 </div>
-              </SectionBlock>
+              </AssessmentSectionV2>
 
-              <SectionBlock title="Bloc 6 · Hydratation et boissons" description="Rester sur les volumes et les habitudes qui changent vraiment la lecture.">
+              <AssessmentSectionV2
+                emoji="💧"
+                eyebrow="Bloc 6 · Hydratation et boissons"
+                title="Les volumes qui changent la lecture"
+                description="Eau, café, boissons sucrées, alcool. Pas un jugement — juste ce qui passe vraiment."
+                accent="teal"
+              >
                 <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-                  <Field label="Eau par jour (L)" type="number" step="0.1" value={form.waterIntake} onChange={(v) => update("waterIntake", Number(v))} />
+                  <AssessmentFieldV2 label="Eau par jour" icon="💧" type="number" step="0.1" value={form.waterIntake} onChange={(v) => update("waterIntake", Number(v))} helper="en litres" />
                   <ChoiceGroup label="Café" value={form.drinksCoffee} options={["Oui", "Non"]} onChange={(v) => update("drinksCoffee", v)} />
-                  <Field label="Cafés par jour" type="number" value={form.coffeePerDay} onChange={(v) => update("coffeePerDay", Number(v))} />
+                  <AssessmentFieldV2 label="Cafés par jour" icon="☕" type="number" value={form.coffeePerDay} onChange={(v) => update("coffeePerDay", Number(v))} />
                   <ChoiceGroup label="Boissons sucrées" value={form.sweetDrinks} options={["Jamais", "Parfois", "Souvent"]} onChange={(v) => update("sweetDrinks", v)} />
                 </div>
                 <ChoiceGroup label="Alcool" value={form.alcohol} options={["Jamais", "Occasionnellement", "Chaque semaine", "Souvent"]} onChange={(v) => update("alcohol", v)} />
-              </SectionBlock>
+              </AssessmentSectionV2>
             </div>
           )}
 
           {currentStepId === 'health-objective' && (
-              <div className="space-y-4" data-tour-id="bilan-objective">
-              <SectionBlock title="Bloc 7 · Allergies, transit et contexte pathologique" description="Ajouter seulement les points santé utiles pour cadrer l'accompagnement.">
-                <div className="grid gap-4 md:grid-cols-2">
-                  <Field
-                    label="Allergies / intolérances"
-                    value={form.allergies}
-                    onChange={(v) => update("allergies", v)}
-                  />
-                  <ChoiceGroup
-                    label="Niveau du transit"
-                    value={form.transitStatus}
-                    options={["Normal", "Lent", "Irrégulier", "Sensible"]}
-                    onChange={(v) => update("transitStatus", v)}
-                  />
-                  <AreaField
-                    label="Contexte pathologique utile"
-                    value={form.pathologyContext}
-                    onChange={(v) => update("pathologyContext", v)}
-                  />
-                  <AreaField
-                    label="Point santé à surveiller"
-                    value={form.healthNotes}
-                    onChange={(v) => update("healthNotes", v)}
-                  />
-                </div>
-              </SectionBlock>
+              <div data-tour-id="bilan-objective" style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+                <AssessmentSectionV2
+                  emoji="🏥"
+                  eyebrow="Bloc 7 · Santé & contexte"
+                  title="Les points qui cadrent l'accompagnement"
+                  description="Allergies, transit, traitements en cours. Uniquement ce qui est utile pour adapter le programme — sans empiéter sur le médical."
+                  accent="teal"
+                >
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <AssessmentFieldV2
+                      label="Allergies / intolérances"
+                      icon="🚫"
+                      value={form.allergies}
+                      onChange={(v) => update("allergies", v)}
+                    />
+                    <ChoiceGroup
+                      label="Niveau du transit"
+                      value={form.transitStatus}
+                      options={["Normal", "Lent", "Irrégulier", "Sensible"]}
+                      onChange={(v) => update("transitStatus", v)}
+                    />
+                    <AreaField
+                      label="Contexte pathologique utile"
+                      value={form.pathologyContext}
+                      onChange={(v) => update("pathologyContext", v)}
+                    />
+                    <AreaField
+                      label="Point santé à surveiller"
+                      value={form.healthNotes}
+                      onChange={(v) => update("healthNotes", v)}
+                    />
+                  </div>
+                </AssessmentSectionV2>
 
-              <SectionBlock title="Bloc 8 · Activité et forme" description="Chercher le niveau réel d'activité et d'énergie.">
-                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-                  <ChoiceGroup label="Activité physique" value={form.physicalActivity} options={["Oui", "Non"]} onChange={(v) => update("physicalActivity", v)} />
-                  <Field label="Si oui, laquelle ?" value={form.activityType} onChange={(v) => update("activityType", v)} />
-                  <Field label="Séances / semaine" type="number" value={form.sessionsPerWeek} onChange={(v) => update("sessionsPerWeek", Number(v))} />
-                  <ChoiceGroup label="Niveau d'énergie" value={form.energyLevel} options={["Très bon", "Bon", "Moyen", "Faible"]} onChange={(v) => update("energyLevel", v)} />
-                </div>
-              </SectionBlock>
+                <AssessmentSectionV2
+                  emoji="⚡"
+                  eyebrow="Bloc 8 · Activité & forme"
+                  title="Le niveau réel d'énergie"
+                  description="Quelle activité physique, quelle fréquence, et surtout — quelle énergie au quotidien."
+                  accent="teal"
+                >
+                  <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                    <ChoiceGroup label="Activité physique" value={form.physicalActivity} options={["Oui", "Non"]} onChange={(v) => update("physicalActivity", v)} />
+                    <AssessmentFieldV2 label="Si oui, laquelle ?" icon="🏃" value={form.activityType} onChange={(v) => update("activityType", v)} />
+                    <AssessmentFieldV2 label="Séances / semaine" icon="📊" type="number" value={form.sessionsPerWeek} onChange={(v) => update("sessionsPerWeek", Number(v))} />
+                    <ChoiceGroup label="Niveau d'énergie" value={form.energyLevel} options={["Très bon", "Bon", "Moyen", "Faible"]} onChange={(v) => update("energyLevel", v)} />
+                  </div>
+                </AssessmentSectionV2>
 
-              <SectionBlock title="Bloc 9 · Historique et blocages" description="Faire apparaître ce qui a déjà été tenté et ce qui bloque aujourd'hui.">
-                <div className="grid gap-4 md:grid-cols-2">
-                  <AreaField label="Tentatives passées" value={form.pastAttempts} onChange={(v) => update("pastAttempts", v)} />
-                  <AreaField label="Le plus difficile jusqu'ici" value={form.hardestPart} onChange={(v) => update("hardestPart", v)} />
-                </div>
-                <ChoiceGroup label="Blocage principal" value={form.mainBlocker} options={["Manque de temps", "Motivation", "Organisation", "Grignotage", "Fatigue", "Manque de repères", "Autre"]} onChange={(v) => update("mainBlocker", v)} />
-              </SectionBlock>
+                <AssessmentSectionV2
+                  emoji="🧗"
+                  eyebrow="Bloc 9 · Historique & blocages"
+                  title="Ce qui a déjà été tenté"
+                  description="Le matériau coaching le plus précieux. Ce qui a marché, ce qui a échoué, et ce qui bloque aujourd'hui."
+                  accent="teal"
+                >
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <AreaField label="Tentatives passées" value={form.pastAttempts} onChange={(v) => update("pastAttempts", v)} />
+                    <AreaField label="Le plus difficile jusqu'ici" value={form.hardestPart} onChange={(v) => update("hardestPart", v)} />
+                  </div>
+                  <ChoiceGroup label="Blocage principal" value={form.mainBlocker} options={["Manque de temps", "Motivation", "Organisation", "Grignotage", "Fatigue", "Manque de repères", "Autre"]} onChange={(v) => update("mainBlocker", v)} />
+                </AssessmentSectionV2>
               </div>
             )}
 
