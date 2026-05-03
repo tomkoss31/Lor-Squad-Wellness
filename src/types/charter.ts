@@ -24,6 +24,9 @@ export interface DistributorCharter {
   cosigner_signature_data_url: string | null;
   cosigned_at: string | null;
 
+  /** Template visuel choisi par le distri. Default 'officielle'. */
+  preferred_template: CharterTemplate;
+
   created_at: string;
   updated_at: string;
 }
@@ -40,6 +43,14 @@ export type CharterDraft = Pick<
  *  - print    : version optimisée pour PDF (sans inputs, sans modale)
  */
 export type CharterDisplayMode = "preview" | "fillable" | "print";
+
+/**
+ * Template visuel choisi pour le rendu de la charte.
+ *  - officielle : A4 paper crème classique (5 cards engagements)
+ *  - manifeste  : A4 paper, serment poétique 100% Lor'Squad
+ *  - story      : 9:16 dark luxury, partage Instagram
+ */
+export type CharterTemplate = "officielle" | "manifeste" | "story";
 
 export interface CharterPersonInfo {
   firstName: string;
