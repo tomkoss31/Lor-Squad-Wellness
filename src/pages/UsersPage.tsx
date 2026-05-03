@@ -509,6 +509,16 @@ export function UsersPage() {
                             <UserInlineRankForm user={user} />
                           </div>
 
+                          {/* Beta access formation (2026-11-05) — toggle
+                              pour ouvrir /formation à un distri/référent
+                              spécifique avant l'ouverture générale. */}
+                          <div>
+                            <div style={{ fontSize: 9, letterSpacing: "2px", textTransform: "uppercase", color: "var(--ls-text)", fontWeight: 500, marginBottom: 8, fontFamily: "DM Sans, sans-serif" }}>
+                              Accès beta formation
+                            </div>
+                            <UserInlineFormationBetaToggle user={user} />
+                          </div>
+
                           {/* Actions */}
                           <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", paddingTop: 4, borderTop: "1px solid var(--ls-border)", marginTop: 4 }}>
                             <Link
@@ -1145,3 +1155,82 @@ const USERS_PAGE_RANK_OPTIONS: HerbalifeRank[] = [
   "millionaire_50",
   "presidents_50",
 ];
+
+// ─── Beta access formation toggle (2026-11-05) ────────────────────────────
+function UserInlineFormationBetaToggle({ user }: { user: User }) {
+  const [enabled, setEnabled] = useState<boolean>(user.formationBetaAccess === true);
+  const [saving, setSaving] = useState(false);
+  const [feedback, setFeedback] = useState<{ type: "ok" | "err"; msg: string } | null>(null);
+
+  async function toggle() {
+    setSaving(true);
+    setFeedback(null);
+    const next = !enabled;
+    try {
+      const sb = await getSupabaseClient();
+      if (!sb) throw new Error("Service indisponible");
+      const { error: e } = await sb
+        .from("users")
+        .update({ formation_beta_access: next })
+        .eq("id", user.id);
+      if (e) throw new Error(e.message);
+      setEnabled(next);
+      setFeedback({ type: "ok", msg: next ? "Formation ouverte" : "Formation fermée" });
+      setTimeout(() => setFeedback(null), 2500);
+    } catch (err) {
+      setFeedback({ type: "err", msg: err instanceof Error ? err.message : "Erreur" });
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+      <button
+        type="button"
+        onClick={() => void toggle()}
+        disabled={saving}
+        aria-pressed={enabled}
+        style={{
+          width: 44,
+          height: 24,
+          borderRadius: 999,
+          border: "none",
+          padding: 2,
+          background: enabled ? "var(--ls-teal)" : "var(--ls-border)",
+          cursor: saving ? "wait" : "pointer",
+          position: "relative",
+          transition: "background 0.18s",
+        }}
+      >
+        <span
+          aria-hidden="true"
+          style={{
+            display: "block",
+            width: 20,
+            height: 20,
+            borderRadius: "50%",
+            background: "#fff",
+            transform: enabled ? "translateX(20px)" : "translateX(0)",
+            transition: "transform 0.18s",
+            boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
+          }}
+        />
+      </button>
+      <span style={{ fontSize: 12, color: "var(--ls-text-muted)", fontFamily: "DM Sans, sans-serif" }}>
+        {enabled ? "Voit /formation" : "Voit page chantier"}
+      </span>
+      {feedback && (
+        <span
+          style={{
+            fontSize: 11,
+            color: feedback.type === "ok" ? "var(--ls-teal)" : "var(--ls-coral)",
+            fontFamily: "DM Sans, sans-serif",
+          }}
+        >
+          {feedback.msg}
+        </span>
+      )}
+    </div>
+  );
+}

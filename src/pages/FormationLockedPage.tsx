@@ -142,12 +142,18 @@ export function FormationLockedPage() {
 }
 
 /**
- * Gate wrapper : si l user n est pas admin, retourne FormationLockedPage.
- * Sinon laisse passer le children (la vraie Formation).
+ * Gate wrapper : si l user n est ni admin ni beta-tester formation,
+ * retourne FormationLockedPage. Sinon laisse passer.
+ *
+ * Phase beta (2026-11-05) : flag users.formation_beta_access permet
+ * d ouvrir la formation à des distri/référents ciblés (ex. Mandy +
+ * son équipe pour récolter du feedback) sans encore l ouvrir à tous.
  */
 export function FormationAdminGate({ children }: { children: React.ReactNode }) {
   const { currentUser } = useAppContext();
-  if (currentUser?.role !== "admin") {
+  const isAdmin = currentUser?.role === "admin";
+  const hasBeta = currentUser?.formationBetaAccess === true;
+  if (!isAdmin && !hasBeta) {
     return <FormationLockedPage />;
   }
   return <>{children}</>;

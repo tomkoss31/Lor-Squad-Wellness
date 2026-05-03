@@ -138,6 +138,9 @@ export interface User {
   currentRank?: HerbalifeRank;
   /** Timestamp où le distri a confirmé son rang. NULL = jamais rempli → force pop-up. */
   rankSetAt?: string | null;
+  /** Accès beta formation (opt-in admin). Default false. Quand true,
+   *  le user voit /formation même s'il n'est pas admin. */
+  formationBetaAccess?: boolean;
 }
 
 /** Rangs Herbalife (8 niveaux) — détermine la marge retail dans FLEX. */
