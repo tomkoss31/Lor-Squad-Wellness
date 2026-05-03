@@ -84,9 +84,40 @@ export interface FormationLevelStats {
   isLocked: boolean;
 }
 
+export interface FormationNextStep {
+  /** Niveau du prochain module a faire. */
+  levelId: FormationLevelId;
+  /** Slug niveau pour URL. */
+  levelSlug: string;
+  /** Titre court du niveau (ex: "Démarrer"). */
+  levelTitle: string;
+  /** Numero du niveau (1, 2, 3). */
+  levelOrder: 1 | 2 | 3;
+  /** Couleur d accent du niveau. */
+  levelAccent: string;
+  /** ID du module prochain. */
+  moduleId: string;
+  /** Slug module pour URL. */
+  moduleSlug: string;
+  /** Numero du module (ex: "M1.4"). */
+  moduleNumber: string;
+  /** Titre du module. */
+  moduleTitle: string;
+  /** Duree estimee en minutes. */
+  durationMin: number;
+  /** Icon emoji. */
+  icon: string;
+  /** Position du module dans le niveau (1-indexed) sur le total. */
+  positionInLevel: { current: number; total: number };
+}
+
 export interface UseFormationProgressResult {
   /** Stats agregees par niveau (3 entrees). */
   stats: Record<FormationLevelId, FormationLevelStats>;
+  /** Le prochain module a faire (cross-niveaux). null si tout fini ou tout locked. */
+  nextStep: FormationNextStep | null;
+  /** Vrai si tous les niveaux sont 100% complete. */
+  isAllComplete: boolean;
   /** True si l ID du niveau est verrouille. */
   isLevelLocked: (levelId: FormationLevelId) => boolean;
   /** Marque un module comme complete dans son niveau. */
@@ -238,11 +269,49 @@ export function useFormationProgress(): UseFormationProgressResult {
     setState(DEFAULT_STATE);
   }, []);
 
-  // Avoid unused-var warning sur FORMATION_LEVELS (re-export pour autocomplete)
-  void FORMATION_LEVELS;
+  // Compute nextStep : prochain module a faire (cross-niveaux).
+  // Strategie : itere FORMATION_LEVELS dans l ordre N1->N2->N3, prend le
+  // premier non-locked et non-complete, et dedans le 1er module non valide.
+  const nextStep = useMemo<FormationNextStep | null>(() => {
+    const accentMap: Record<FormationLevelId, string> = {
+      demarrer: "var(--ls-gold)",
+      construire: "var(--ls-teal)",
+      dupliquer: "var(--ls-purple)",
+    };
+    for (const level of FORMATION_LEVELS) {
+      const levelStats = stats[level.id];
+      if (levelStats.isLocked || levelStats.isComplete) continue;
+      const completed = dbCompletedByLevel[level.id].length > 0
+        ? dbCompletedByLevel[level.id]
+        : state.levels[level.id].completedModules;
+      const completedSet = new Set(completed);
+      const moduleIndex = level.modules.findIndex((m) => !completedSet.has(m.id));
+      if (moduleIndex === -1) continue;
+      const module = level.modules[moduleIndex];
+      return {
+        levelId: level.id,
+        levelSlug: level.slug,
+        levelTitle: level.title,
+        levelOrder: level.order,
+        levelAccent: accentMap[level.id],
+        moduleId: module.id,
+        moduleSlug: module.slug,
+        moduleNumber: module.number,
+        moduleTitle: module.title,
+        durationMin: module.durationMin,
+        icon: module.icon,
+        positionInLevel: { current: moduleIndex + 1, total: level.modules.length },
+      };
+    }
+    return null;
+  }, [stats, dbCompletedByLevel, state]);
+
+  const isAllComplete = stats.demarrer.isComplete && stats.construire.isComplete && stats.dupliquer.isComplete;
 
   return {
     stats,
+    nextStep,
+    isAllComplete,
     isLevelLocked,
     markModuleDone,
     resetLevel,

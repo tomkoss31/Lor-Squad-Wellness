@@ -16,6 +16,7 @@
 import { Link } from "react-router-dom";
 import { PageHeading } from "../components/ui/PageHeading";
 import { ParcoursLevelCard } from "../components/formation/ParcoursLevelCard";
+import { FormationRoadmapCard } from "../components/formation/FormationRoadmapCard";
 import {
   FORMATION_CATEGORIES,
   FORMATION_LEVELS,
@@ -31,7 +32,17 @@ const CATEGORY_ACCENT: Record<FormationCategoryAccent, string> = {
 };
 
 export function FormationPage() {
-  const { stats } = useFormationProgress();
+  const { stats, nextStep, isAllComplete } = useFormationProgress();
+
+  // Compteurs cross-niveaux pour le roadmap card
+  const totalCompleted =
+    stats.demarrer.completedCount +
+    stats.construire.completedCount +
+    stats.dupliquer.completedCount;
+  const totalModules =
+    stats.demarrer.totalCount +
+    stats.construire.totalCount +
+    stats.dupliquer.totalCount;
 
   return (
     <div className="space-y-6">
@@ -39,6 +50,14 @@ export function FormationPage() {
         eyebrow="Formation · ton parcours métier"
         title="Deviens un distributeur qui réussit"
         description="Du premier RDV jusqu'aux royalties — étape par étape, à ton rythme."
+      />
+
+      {/* Quick win #2 (2026-11-04) : Roadmap visuelle "Reprendre M1.X" en haut */}
+      <FormationRoadmapCard
+        nextStep={nextStep}
+        isAllComplete={isAllComplete}
+        totalCompleted={totalCompleted}
+        totalModules={totalModules}
       />
 
       {/* ─── Zone 1 : Mon parcours guide ────────────────────────────── */}
