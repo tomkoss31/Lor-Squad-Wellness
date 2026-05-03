@@ -25,9 +25,9 @@ import { PvGaugeBand } from "../components/copilote/PvGaugeBand";
 import { PvActionPlanAlert } from "../components/copilote/PvActionPlanAlert";
 import { InboxWidget } from "../components/copilote/InboxWidget";
 import { BirthdayBlock } from "../components/copilote/BirthdayBlock";
-import { CoachTipOfDayCard } from "../components/copilote/CoachTipOfDayCard";
 import { BusinessOpportunitiesCard } from "../components/copilote/BusinessOpportunitiesCard";
 import { DistriOnboardingChecklist } from "../components/formation/DistriOnboardingChecklist";
+import { FlexTodayWidget } from "../components/copilote/FlexTodayWidget";
 import { StreakBadge } from "../features/gamification/components/StreakBadge";
 import { WeeklyQuestsCard } from "../features/gamification/components/WeeklyQuestsCard";
 
@@ -98,6 +98,11 @@ export function CoPilotePage() {
           cochees. Visible avant le Hero pour ne pas etre louee. */}
       <DistriOnboardingChecklist />
 
+      {/* FLEX Lor'Squad (2026-11-05) — moteur de pilotage quotidien :
+          cibles + check-in du jour visibles direct sur Co-pilote. Cliquer
+          la card mène à /flex pour le détail complet. */}
+      <FlexTodayWidget />
+
       {/* Zone 2 — Hero action */}
       <HeroActionCard nextAction={data.nextAction} now={now} />
 
@@ -113,11 +118,6 @@ export function CoPilotePage() {
         }
         coachFirstName={firstName || "ton coach"}
       />
-
-      {/* Tip du jour (2026-04-30) : 1 tip rotatif par jour deterministe.
-          Place ici (apres Birthday, avant Inbox) pour etre dans la zone
-          "ambient" sans concurrencer Hero/Action. */}
-      <CoachTipOfDayCard />
 
       {/* Widget messages (chantier 5) — conservé car complémentaire : Hero
           et Duo montrent RDV/suivis, l'Inbox montre les demandes clients. */}

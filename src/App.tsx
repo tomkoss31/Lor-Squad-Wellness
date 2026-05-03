@@ -261,6 +261,21 @@ const FormationCertificatePage = lazy(() =>
   }))
 );
 // Feature #7 (2026-11-04) : Strategy Plan Calculator (formule 5-3-1).
+const FlexOnboardingPage = lazy(() =>
+  import("./pages/FlexOnboardingPage").then((module) => ({
+    default: module.FlexOnboardingPage,
+  })),
+);
+const FlexDashboardPage = lazy(() =>
+  import("./pages/FlexDashboardPage").then((module) => ({
+    default: module.FlexDashboardPage,
+  })),
+);
+const FlexTeamPage = lazy(() =>
+  import("./pages/FlexTeamPage").then((module) => ({
+    default: module.FlexTeamPage,
+  })),
+);
 const FormationCalculatorPage = lazy(() =>
   import("./pages/FormationCalculatorPage").then((module) => ({
     default: module.FormationCalculatorPage
@@ -276,6 +291,23 @@ const FormationCharterPage = lazy(() =>
 const FormationGlossaryPage = lazy(() =>
   import("./pages/FormationGlossaryPage").then((module) => ({
     default: module.FormationGlossaryPage
+  }))
+);
+// Boite a outils Lor'Squad (2026-11-04) : 16 outils premium.
+const FormationToolkitPage = lazy(() =>
+  import("./pages/FormationToolkitPage").then((module) => ({
+    default: module.FormationToolkitPage
+  }))
+);
+const FormationToolkitDetailPage = lazy(() =>
+  import("./pages/FormationToolkitDetailPage").then((module) => ({
+    default: module.FormationToolkitDetailPage
+  }))
+);
+// Feuille de Reconnaissance interactive (2026-11-04).
+const FormationRecognitionPage = lazy(() =>
+  import("./pages/FormationRecognitionPage").then((module) => ({
+    default: module.FormationRecognitionPage
   }))
 );
 const SettingsPage = lazy(() =>
@@ -352,6 +384,12 @@ export default function App() {
                   /dashboard redirige pour ne pas casser les liens existants. */}
               <Route path="co-pilote" element={<CoPilotePage />} />
               <Route path="dashboard" element={<Navigate to="/co-pilote" replace />} />
+              {/* FLEX Lor'Squad Phase B (2026-11-05) — moteur de pilotage
+                  quotidien du distri. /flex = dashboard, /flex/onboarding =
+                  wizard 5 questions. */}
+              <Route path="flex" element={<FlexDashboardPage />} />
+              <Route path="flex/onboarding" element={<FlexOnboardingPage />} />
+              <Route path="flex/equipe" element={<FlexTeamPage />} />
               {/* Lor'Squad Academy Phase 1 (2026-04-26) — gated admin only
                   en prod (RoleRoute). Defense en profondeur : RoleRoute
                   redirige vers /co-pilote si non-admin tape l URL manuelle. */}
@@ -375,6 +413,9 @@ export default function App() {
               <Route path="formation/calculateur" element={<FormationAdminGate><FormationCalculatorPage /></FormationAdminGate>} />
               <Route path="formation/charte" element={<FormationAdminGate><FormationCharterPage /></FormationAdminGate>} />
               <Route path="formation/glossaire" element={<FormationAdminGate><FormationGlossaryPage /></FormationAdminGate>} />
+              <Route path="formation/boite-a-outils" element={<FormationAdminGate><FormationToolkitPage /></FormationAdminGate>} />
+              <Route path="formation/boite-a-outils/:slug" element={<FormationAdminGate><FormationToolkitDetailPage /></FormationAdminGate>} />
+              <Route path="formation/reconnaissance" element={<FormationAdminGate><FormationRecognitionPage /></FormationAdminGate>} />
               <Route path="formation/parcours/:levelSlug" element={<FormationAdminGate><FormationModulePage /></FormationAdminGate>} />
               <Route path="formation/parcours/:levelSlug/:moduleSlug" element={<FormationAdminGate><FormationModuleDetailPage /></FormationAdminGate>} />
               <Route path="formation/:slug" element={<FormationAdminGate><FormationCategoryPage /></FormationAdminGate>} />

@@ -1,15 +1,52 @@
-// Chantier Onboarding distributeur complet (2026-04-24) — commit 3/4.
+// Chantier Onboarding distributeur complet (2026-04-24, refonte FLEX 2026-11-05).
 //
 // Route publique /bienvenue-distri?token=XYZ.
-// Wizard 3 étapes (Welcome / Password / Profil) pour un nouveau
-// distributeur invité par son parrain.
+// Wizard 5 étapes pour un nouveau distributeur invité par son parrain :
+//   0 — Welcome
+//   1 — Auth (email + password)
+//   2 — Profil (nom, prénom, tél, ville, herbalife_id, avatar)
+//   3 — Statut Herbalife (rang, marge retail) — FLEX V3 Option A
+//   4 — Ambitions (revenu mensuel + panier moyen + deadline) → crée le
+//       plan d'action FLEX automatiquement
+//
+// Après step 4 : redirect /co-pilote avec rang posé + plan FLEX actif +
+// FlexTodayWidget en mode "cibles du jour" + checklist J0-J7 visible.
+// Le distri n'a plus besoin de naviguer vers /flex/onboarding ou de
+// confirmer son rang via la pop-up : tout est déjà fait.
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getSupabaseClient } from "../services/supabaseClient";
 import { extractFunctionError } from "../lib/utils/extractFunctionError";
+import {
+  RANK_LABELS,
+  RANK_MARGINS,
+  type HerbalifeRank,
+} from "../types/domain";
+import {
+  computeFlexTargets,
+  FLEX_DEFAULT_BASKET,
+} from "../lib/flexCalculations";
+import type { DistributorActionPlanInsert } from "../types/flex";
 
-type Step = 0 | 1 | 2;
+type Step = 0 | 1 | 2 | 3 | 4;
+
+const RANK_LIST: HerbalifeRank[] = [
+  "distributor_25",
+  "senior_consultant_35",
+  "success_builder_42",
+  "supervisor_50",
+  "world_team_50",
+  "get_team_50",
+  "millionaire_50",
+  "presidents_50",
+];
+
+function ymdInDays(days: number): string {
+  const d = new Date();
+  d.setDate(d.getDate() + days);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
 
 type ValidationState =
   | { status: "loading" }
@@ -43,8 +80,27 @@ export function BienvenueDistriPage() {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [avatarUploading, setAvatarUploading] = useState(false);
 
+  // FLEX V3 Option A — étapes 3 & 4
+  const [createdUserId, setCreatedUserId] = useState<string | null>(null);
+  const [currentRank, setCurrentRank] = useState<HerbalifeRank>("distributor_25");
+  const [revenueTarget, setRevenueTarget] = useState<number>(1500);
+  const [averageBasket, setAverageBasket] = useState<number>(FLEX_DEFAULT_BASKET);
+  const [deadline, setDeadline] = useState<string>(ymdInDays(90));
+
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState("");
+
+  // Calcul live des cibles pour la step 4 (préview avant insert)
+  const flexBreakdown = useMemo(
+    () =>
+      computeFlexTargets({
+        monthlyRevenueTarget: revenueTarget,
+        averageBasket,
+        rank: currentRank,
+        startingClients: 0,
+      }),
+    [revenueTarget, averageBasket, currentRank],
+  );
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -201,7 +257,12 @@ export function BienvenueDistriPage() {
           // non bloquant
         }
       }
-      navigate(`/co-pilote?welcome=distri`, { replace: true });
+      // FLEX V3 Option A : on ne redirige PLUS direct vers /co-pilote.
+      // Le compte est créé, on passe à la step 3 (rang) puis 4 (ambitions).
+      // Le user_id est renvoyé par l'edge function pour les inserts FLEX.
+      const newUserId = (data.user_id ?? data.userId ?? null) as string | null;
+      if (newUserId) setCreatedUserId(newUserId);
+      setStep(3);
     } catch (err) {
       setFormError(err instanceof Error ? err.message : "Erreur inattendue.");
     } finally {
@@ -213,12 +274,78 @@ export function BienvenueDistriPage() {
     firstName,
     herbalifeId,
     lastName,
-    navigate,
     password,
     passwordConfirm,
     phone,
     token,
     validation,
+  ]);
+
+  /**
+   * Step 4 — finalisation : pose le rang Herbalife + crée le plan FLEX
+   * + redirige vers /co-pilote. Le user est déjà authentifié depuis la
+   * step 2 (setSession après consume-distributor-invite-token).
+   */
+  const handleFinishOnboarding = useCallback(async () => {
+    setFormError("");
+    setSubmitting(true);
+    try {
+      const sb = await getSupabaseClient();
+      if (!sb) throw new Error("Service indisponible");
+
+      // Récupère l'auth user (au cas où setCreatedUserId n'a pas pu se
+      // poser — fallback robuste).
+      let userId = createdUserId;
+      if (!userId) {
+        const { data: authData } = await sb.auth.getUser();
+        userId = authData.user?.id ?? null;
+      }
+      if (!userId) throw new Error("Session perdue, reconnecte-toi.");
+
+      // 1. Update users : rang + rank_set_at (skip pop-up Rank à la connexion)
+      const { error: userErr } = await sb
+        .from("users")
+        .update({
+          current_rank: currentRank,
+          rank_set_at: new Date().toISOString(),
+        })
+        .eq("id", userId);
+      if (userErr) throw new Error(userErr.message);
+
+      // 2. Insert distributor_action_plan
+      const planInsert: DistributorActionPlanInsert = {
+        user_id: userId,
+        monthly_revenue_target: revenueTarget,
+        daily_time_minutes: 60,
+        starting_clients_count: 0,
+        available_slots: [],
+        average_basket: averageBasket,
+        target_deadline_date: deadline,
+        daily_invitations_target: flexBreakdown.daily_invitations_target,
+        daily_conversations_target: flexBreakdown.daily_conversations_target,
+        weekly_bilans_target: flexBreakdown.weekly_bilans_target,
+        weekly_closings_target: flexBreakdown.weekly_closings_target,
+        monthly_active_clients_target: flexBreakdown.monthly_active_clients_target,
+      };
+      const { error: planErr } = await sb
+        .from("distributor_action_plan")
+        .insert(planInsert);
+      if (planErr) throw new Error(planErr.message);
+
+      navigate(`/co-pilote?welcome=distri`, { replace: true });
+    } catch (err) {
+      setFormError(err instanceof Error ? err.message : "Erreur inattendue.");
+    } finally {
+      setSubmitting(false);
+    }
+  }, [
+    averageBasket,
+    createdUserId,
+    currentRank,
+    deadline,
+    flexBreakdown,
+    navigate,
+    revenueTarget,
   ]);
 
   // ─── Rendu ───────────────────────────────────────────────────────────────
@@ -382,6 +509,32 @@ export function BienvenueDistriPage() {
                 onSubmit={() => void handleSubmit()}
               />
             ) : null}
+
+            {step === 3 ? (
+              <RankStep
+                firstName={firstName}
+                rank={currentRank}
+                onChange={setCurrentRank}
+                onContinue={() => setStep(4)}
+              />
+            ) : null}
+
+            {step === 4 ? (
+              <AmbitionStep
+                rank={currentRank}
+                revenue={revenueTarget}
+                basket={averageBasket}
+                deadline={deadline}
+                breakdown={flexBreakdown}
+                onRevenueChange={setRevenueTarget}
+                onBasketChange={setAverageBasket}
+                onDeadlineChange={setDeadline}
+                onBack={() => setStep(3)}
+                submitting={submitting}
+                error={formError}
+                onSubmit={() => void handleFinishOnboarding()}
+              />
+            ) : null}
           </>
         )}
       </div>
@@ -394,7 +547,7 @@ export function BienvenueDistriPage() {
 function ProgressBar({ step }: { step: Step }) {
   return (
     <div style={{ display: "flex", justifyContent: "center", gap: 10, marginBottom: 24 }}>
-      {[0, 1, 2].map((i) => {
+      {[0, 1, 2, 3, 4].map((i) => {
         const isActive = step === i;
         const isDone = step > i;
         return (
@@ -915,3 +1068,281 @@ const inputStyle: React.CSSProperties = {
   outline: "none",
   boxSizing: "border-box",
 };
+
+// ─── FLEX V3 Option A — RankStep + AmbitionStep ─────────────────────────────
+
+function RankStep({
+  firstName,
+  rank,
+  onChange,
+  onContinue,
+}: {
+  firstName: string;
+  rank: HerbalifeRank;
+  onChange: (r: HerbalifeRank) => void;
+  onContinue: () => void;
+}) {
+  return (
+    <div>
+      <div style={{ fontSize: 11, letterSpacing: 1.4, textTransform: "uppercase", color: "#BA7517", marginBottom: 8, fontFamily: "DM Sans, sans-serif" }}>
+        Étape 4 sur 5 · Plan marketing Herbalife
+      </div>
+      <h2 style={{ fontFamily: "Syne, sans-serif", fontSize: 26, color: "#111827", margin: 0, fontWeight: 700 }}>
+        Quel est ton statut, {firstName || "toi"} ?
+      </h2>
+      <p style={{ margin: "10px 0 22px 0", fontSize: 14, color: "#4B5563", lineHeight: 1.55, fontFamily: "DM Sans, sans-serif" }}>
+        Ton rang Herbalife détermine ta marge retail (25 → 50 %). On l'utilise
+        ensuite pour calibrer tes objectifs réalistes. Tu peux le changer
+        plus tard dans Paramètres.
+      </p>
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        {RANK_LIST.map((r) => {
+          const active = rank === r;
+          const margin = Math.round((RANK_MARGINS[r] ?? 0) * 100);
+          return (
+            <button
+              key={r}
+              type="button"
+              onClick={() => onChange(r)}
+              style={{
+                textAlign: "left",
+                padding: "14px 16px",
+                borderRadius: 12,
+                border: active ? "2px solid #BA7517" : "1px solid rgba(0,0,0,0.1)",
+                background: active ? "rgba(186,117,23,0.08)" : "#FAFAFA",
+                cursor: "pointer",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                fontFamily: "DM Sans, sans-serif",
+                color: "#111827",
+                fontSize: 14,
+                transition: "all 0.15s",
+              }}
+            >
+              <span style={{ fontWeight: active ? 600 : 400 }}>{RANK_LABELS[r]}</span>
+              <span style={{ fontFamily: "Syne, sans-serif", fontWeight: 700, color: active ? "#BA7517" : "#6B7280" }}>
+                {margin}%
+              </span>
+            </button>
+          );
+        })}
+      </div>
+      <button
+        type="button"
+        onClick={onContinue}
+        style={{
+          marginTop: 22,
+          width: "100%",
+          padding: "14px 20px",
+          borderRadius: 12,
+          border: "none",
+          background: "linear-gradient(135deg, #BA7517, #D89849)",
+          color: "#fff",
+          fontFamily: "Syne, sans-serif",
+          fontSize: 15,
+          fontWeight: 700,
+          cursor: "pointer",
+        }}
+      >
+        Suivant — mes ambitions →
+      </button>
+    </div>
+  );
+}
+
+function AmbitionStep({
+  rank,
+  revenue,
+  basket,
+  deadline,
+  breakdown,
+  onRevenueChange,
+  onBasketChange,
+  onDeadlineChange,
+  onBack,
+  submitting,
+  error,
+  onSubmit,
+}: {
+  rank: HerbalifeRank;
+  revenue: number;
+  basket: number;
+  deadline: string;
+  breakdown: ReturnType<typeof computeFlexTargets>;
+  onRevenueChange: (v: number) => void;
+  onBasketChange: (v: number) => void;
+  onDeadlineChange: (v: string) => void;
+  onBack: () => void;
+  submitting: boolean;
+  error: string;
+  onSubmit: () => void;
+}) {
+  return (
+    <div>
+      <div style={{ fontSize: 11, letterSpacing: 1.4, textTransform: "uppercase", color: "#0F6E56", marginBottom: 8, fontFamily: "DM Sans, sans-serif" }}>
+        Étape 5 sur 5 · Tes ambitions
+      </div>
+      <h2 style={{ fontFamily: "Syne, sans-serif", fontSize: 26, color: "#111827", margin: 0, fontWeight: 700 }}>
+        On pose ton plan d'action 🚀
+      </h2>
+      <p style={{ margin: "10px 0 20px 0", fontSize: 14, color: "#4B5563", lineHeight: 1.55, fontFamily: "DM Sans, sans-serif" }}>
+        Avec ton rang <strong>{RANK_LABELS[rank]}</strong>, tu gagnes{" "}
+        <strong style={{ color: "#BA7517" }}>{breakdown.net_per_client.toFixed(2)} € net</strong> par client.
+        Calibrons ensemble tes cibles quotidiennes.
+      </p>
+
+      {/* Revenu mensuel */}
+      <div style={{ marginBottom: 18 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
+          <span style={{ fontSize: 12, color: "#6B7280", textTransform: "uppercase", letterSpacing: 0.5, fontFamily: "DM Sans, sans-serif" }}>
+            Objectif revenu mensuel
+          </span>
+        </div>
+        <div style={{ fontFamily: "Syne, sans-serif", fontSize: 32, fontWeight: 700, color: "#BA7517", textAlign: "center", marginBottom: 8 }}>
+          {revenue.toLocaleString("fr-FR")} €
+        </div>
+        <input
+          type="range"
+          min={100}
+          max={5000}
+          step={50}
+          value={revenue}
+          onChange={(e) => onRevenueChange(Number(e.target.value))}
+          style={{ width: "100%", accentColor: "#BA7517" }}
+        />
+      </div>
+
+      {/* Panier moyen */}
+      <div style={{ marginBottom: 18 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
+          <span style={{ fontSize: 12, color: "#6B7280", textTransform: "uppercase", letterSpacing: 0.5, fontFamily: "DM Sans, sans-serif" }}>
+            Panier moyen client (retail)
+          </span>
+        </div>
+        <div style={{ fontFamily: "Syne, sans-serif", fontSize: 24, fontWeight: 700, color: "#0F6E56", textAlign: "center", marginBottom: 8 }}>
+          {basket} €
+        </div>
+        <input
+          type="range"
+          min={50}
+          max={500}
+          step={5}
+          value={basket}
+          onChange={(e) => onBasketChange(Number(e.target.value))}
+          style={{ width: "100%", accentColor: "#0F6E56" }}
+        />
+      </div>
+
+      {/* Deadline */}
+      <div style={{ marginBottom: 18 }}>
+        <span style={{ fontSize: 12, color: "#6B7280", textTransform: "uppercase", letterSpacing: 0.5, fontFamily: "DM Sans, sans-serif", display: "block", marginBottom: 8 }}>
+          Date d'objectif
+        </span>
+        <input
+          type="date"
+          value={deadline}
+          min={ymdInDays(14)}
+          max={ymdInDays(365)}
+          onChange={(e) => onDeadlineChange(e.target.value)}
+          style={{
+            width: "100%",
+            padding: "12px 14px",
+            borderRadius: 10,
+            border: "1px solid rgba(0,0,0,0.1)",
+            background: "#FAFAFA",
+            fontSize: 15,
+            fontFamily: "DM Sans, sans-serif",
+            color: "#111827",
+            outline: "none",
+            boxSizing: "border-box",
+          }}
+        />
+      </div>
+
+      {/* Summary cibles */}
+      <div
+        style={{
+          background: "linear-gradient(135deg, rgba(186,117,23,0.08), rgba(15,110,86,0.08))",
+          border: "1px solid #BA7517",
+          borderRadius: 14,
+          padding: 16,
+          marginBottom: 18,
+        }}
+      >
+        <div style={{ fontSize: 10, letterSpacing: 1.2, textTransform: "uppercase", color: "#BA7517", marginBottom: 10, fontFamily: "DM Sans, sans-serif" }}>
+          Tes cibles quotidiennes calculées
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8 }}>
+          <Tile label="Invit / jour" value={breakdown.daily_invitations_target} />
+          <Tile label="Conv / jour" value={breakdown.daily_conversations_target} />
+          <Tile label="Bilans / sem" value={breakdown.weekly_bilans_target} />
+          <Tile label="Clos / sem" value={breakdown.weekly_closings_target} />
+        </div>
+        <p style={{ margin: "10px 0 0 0", fontSize: 11, color: "#6B7280", fontFamily: "DM Sans, sans-serif", textAlign: "center" }}>
+          ~{breakdown.needed_new_clients_per_month} nouveaux clients / mois
+        </p>
+      </div>
+
+      {error && (
+        <div style={{ color: "#DC2626", fontSize: 13, marginBottom: 12, fontFamily: "DM Sans, sans-serif" }}>
+          {error}
+        </div>
+      )}
+
+      <div style={{ display: "flex", gap: 8 }}>
+        <button
+          type="button"
+          onClick={onBack}
+          disabled={submitting}
+          style={{
+            padding: "14px 18px",
+            borderRadius: 12,
+            border: "1px solid rgba(0,0,0,0.1)",
+            background: "transparent",
+            color: "#4B5563",
+            fontFamily: "DM Sans, sans-serif",
+            fontSize: 13,
+            cursor: submitting ? "wait" : "pointer",
+          }}
+        >
+          ← Retour
+        </button>
+        <button
+          type="button"
+          onClick={onSubmit}
+          disabled={submitting}
+          style={{
+            flex: 1,
+            padding: "14px 20px",
+            borderRadius: 12,
+            border: "none",
+            background: submitting
+              ? "rgba(0,0,0,0.15)"
+              : "linear-gradient(135deg, #BA7517, #D89849)",
+            color: "#fff",
+            fontFamily: "Syne, sans-serif",
+            fontSize: 15,
+            fontWeight: 700,
+            cursor: submitting ? "wait" : "pointer",
+          }}
+        >
+          {submitting ? "Création de ton plan…" : "🚀 Lancer mon aventure"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function Tile({ label, value }: { label: string; value: number }) {
+  return (
+    <div style={{ textAlign: "center" }}>
+      <div style={{ fontFamily: "Syne, sans-serif", fontSize: 22, fontWeight: 700, color: "#111827" }}>
+        {value}
+      </div>
+      <div style={{ fontSize: 9, color: "#6B7280", textTransform: "uppercase", letterSpacing: 0.4, marginTop: 2, fontFamily: "DM Sans, sans-serif" }}>
+        {label}
+      </div>
+    </div>
+  );
+}

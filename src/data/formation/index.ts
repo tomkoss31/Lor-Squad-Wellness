@@ -22,3 +22,11 @@ export {
   formatModulePosition,
   formatModuleRefInternal,
 } from "./labels";
+export {
+  FORMATION_TOOLKIT,
+  TOOLKIT_PROSPECTION,
+  TOOLKIT_BILAN,
+  TOOLKIT_SUIVI,
+  TOOLKIT_BUSINESS,
+  getToolkitItemBySlug,
+} from "./boite-a-outils-content";

@@ -8,6 +8,7 @@ import { ClientHomeTab } from '../components/client-app/ClientHomeTab'
 import { ClientXpToast } from '../features/client-xp/ClientXpToast'
 import { recordClientXp } from '../features/client-xp/useClientXp'
 import { ClientFaqChatbot } from '../components/client-app/ClientFaqChatbot'
+import { ClientOnboardingTour } from '../components/client-app/ClientOnboardingTour'
 import { ClientPushOptIn } from '../components/client-app/ClientPushOptIn'
 import { InstallPwaBanner } from '../components/pwa/InstallPwaBanner'
 import { BreakfastStorySlider, DEFAULT_BREAKFAST_ANALYSIS } from '../components/education/BreakfastStorySlider'
@@ -136,6 +137,10 @@ export function ClientAppPage() {
     return 'home' as const
   })()
   const [activeTab, setActiveTab] = useState<'home' | 'evolution' | 'products' | 'coaching' | 'refer' | 'messages'>(initialTab)
+  // Chantier C — Onboarding client PWA (2026-11-04) : tour d accueil
+  // 4 slides au 1er login. NULL = jamais fait → on affiche. Set au
+  // "Terminer" / "Skip" via edge function client-app-mark-onboarded.
+  const [onboardingDone, setOnboardingDone] = useState<boolean | null>(null)
   // Chantier Messagerie client ↔ coach (2026-04-21) : 2 modales pour parler
   // au coach depuis l'app — question produit OU demande de reco générique.
   const [productAskModal, setProductAskModal] = useState<HerbalifeProduct | null>(null)
@@ -370,6 +375,25 @@ export function ClientAppPage() {
       }
       if (!snapshot) { setLoading(false); return }
 
+      // Chantier C — Onboarding client PWA (2026-11-04) : detecte si le
+      // tour d accueil a deja ete fait. Si snapshot vient de
+      // client_app_accounts on a directement onboarded_at. Sinon fetch
+      // separate.
+      try {
+        let onboardedAt = (snapshot as { onboarded_at?: string | null }).onboarded_at
+        if (onboardedAt === undefined) {
+          const { data: acc } = await sb
+            .from('client_app_accounts')
+            .select('onboarded_at')
+            .eq('token', token)
+            .maybeSingle()
+          onboardedAt = (acc as { onboarded_at?: string | null } | null)?.onboarded_at ?? null
+        }
+        setOnboardingDone(onboardedAt !== null && onboardedAt !== undefined)
+      } catch {
+        setOnboardingDone(true) // safe default — on cache si on sait pas
+      }
+
       // Chantier Migration RLS Edge Function (2026-04-26) : les 3 SELECT
       // live directs (clients.current_program, follow_ups, pv_client_products)
       // ont été retirés d'ici. Ils sont remplacés par l'Edge Function
@@ -447,6 +471,21 @@ export function ClientAppPage() {
 
   if (!data)
     return <div style={{ minHeight: '100vh', background: '#F4F2EE', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'DM Sans, sans-serif', color: '#DC2626' }}>Lien introuvable ou expiré.</div>
+
+  // Chantier C — Onboarding client PWA (2026-11-04) : tour 4 slides au
+  // 1er login. onboardingDone === false strictement (null = pas encore
+  // determine, ne pas afficher tant qu on sait pas).
+  const showOnboardingTour = onboardingDone === false && token
+  if (showOnboardingTour) {
+    return (
+      <ClientOnboardingTour
+        token={token}
+        firstName={data.client_first_name ?? ''}
+        coachName={data.coach_name ?? ''}
+        onComplete={() => setOnboardingDone(true)}
+      />
+    )
+  }
 
   // ─── Calculs métriques ─────────────────────────────────────────────────
   const metrics = data.metrics_history ?? []

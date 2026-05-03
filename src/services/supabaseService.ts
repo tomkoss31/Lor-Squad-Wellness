@@ -52,6 +52,8 @@ type UserRow = {
   monthly_pv_target?: number | null;
   avatar_url?: string | null;
   bio?: string | null;
+  current_rank?: string | null;
+  rank_set_at?: string | null;
 };
 
 type AssessmentRow = {
@@ -317,6 +319,8 @@ function mapUser(row: UserRow): User {
     monthly_pv_target: row.monthly_pv_target ?? undefined,
     avatarUrl: row.avatar_url ?? null,
     bio: row.bio ?? null,
+    currentRank: (row.current_rank ?? "distributor_25") as User["currentRank"],
+    rankSetAt: row.rank_set_at ?? null,
   };
 }
 

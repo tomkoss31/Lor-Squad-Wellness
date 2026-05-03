@@ -19,6 +19,18 @@ import {
   HERBALIFE_ID_PATTERN,
   HERBALIFE_ID_HELP,
 } from "../../lib/herbalifeId";
+import { RANK_LABELS, type HerbalifeRank } from "../../types/domain";
+
+const RANK_OPTIONS: HerbalifeRank[] = [
+  "distributor_25",
+  "senior_consultant_35",
+  "success_builder_42",
+  "supervisor_50",
+  "world_team_50",
+  "get_team_50",
+  "millionaire_50",
+  "presidents_50",
+];
 
 function daysSince(iso?: string | null): number | null {
   if (!iso) return null;
@@ -59,6 +71,11 @@ export function ProfilTab() {
   // Avatar + bio (V2 — 2026-04-30)
   const [avatarUrl, setAvatarUrl] = useState<string | null>(currentUser?.avatarUrl ?? null);
   const [bio, setBio] = useState(currentUser?.bio ?? "");
+  // Rang Herbalife (FLEX rank-aware, 2026-11-05). Détermine la marge retail
+  // utilisée pour calculer les cibles FLEX. Modifiable ici par le distri lui-même.
+  const [currentRank, setCurrentRank] = useState<HerbalifeRank>(
+    (currentUser?.currentRank as HerbalifeRank | undefined) ?? "distributor_25",
+  );
   // Travail 3 (2026-04-27) : tous les users actifs sont eligibles, sauf
   // soi-meme. Un distri peut choisir un autre distri (sponsor) comme
   // coach referent.
@@ -139,6 +156,10 @@ export function ProfilTab() {
           monthly_pv_target: pvTargetNum,
           // V2 (2026-04-30) : bio (avatar_url est save par AvatarUploader directement)
           bio: bio.trim() || null,
+          // FLEX rank-aware (2026-11-05) : update rank + set rank_set_at
+          // (peut être déjà rempli, on le maintient en sync à chaque save).
+          current_rank: currentRank,
+          rank_set_at: new Date().toISOString(),
         })
         .eq("id", currentUser!.id);
       if (updateErr) throw new Error(updateErr.message);
@@ -491,6 +512,37 @@ export function ProfilTab() {
             </div>
             <div style={{ fontSize: 11, color: "var(--ls-text-muted)", marginTop: 4 }}>
               Seuil affiché dans ta jauge Co-pilote. Default 13 000 (Senior Consultant).
+            </div>
+          </LabeledField>
+          {/* FLEX rank-aware (2026-11-05) — rang Herbalife = marge retail
+              utilisée pour calculer les cibles FLEX. */}
+          <LabeledField label="Rang Herbalife (plan marketing)">
+            <select
+              value={currentRank}
+              onChange={(e) => setCurrentRank(e.target.value as HerbalifeRank)}
+              disabled={saving}
+              style={{
+                width: "100%",
+                padding: "10px 12px",
+                borderRadius: 10,
+                border: "1px solid var(--ls-border)",
+                background: "var(--ls-surface2)",
+                color: "var(--ls-text)",
+                fontSize: 14,
+                fontFamily: "DM Sans, sans-serif",
+                outline: "none",
+                boxSizing: "border-box",
+                cursor: saving ? "wait" : "pointer",
+              }}
+            >
+              {RANK_OPTIONS.map((r) => (
+                <option key={r} value={r}>
+                  {RANK_LABELS[r]}
+                </option>
+              ))}
+            </select>
+            <div style={{ fontSize: 11, color: "var(--ls-text-muted)", marginTop: 4 }}>
+              Détermine ta marge retail (25 → 50 %) utilisée par FLEX pour calibrer tes cibles.
             </div>
           </LabeledField>
           <LabeledField label="Date d'inscription">
