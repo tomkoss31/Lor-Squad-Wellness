@@ -4,6 +4,7 @@
 // supprimé de l'étape "Notre concept" qui n'affiche plus que l'image.
 import { StepRail } from "../components/assessment/StepRail";
 import { BusinessAmbitionStep } from "../components/assessment/BusinessAmbitionStep";
+import { BodyMetricCard, type MetricRange } from "../components/assessment/BodyMetricCard";
 import { useEffect } from "react";
 import { useRef } from "react";
 import { Component, type ErrorInfo } from "react";
@@ -2108,33 +2109,77 @@ export function NewAssessmentPage() {
                 </div>
               )}
 
-              {/* Saisie body scan — grille claire */}
-              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-                {[
-                  { label: 'Poids (kg)', key: 'weight', icon: '⚖️', color: 'var(--ls-gold)' },
-                  { label: 'Masse grasse (%)', key: 'bodyFat', icon: '🔥', color: 'var(--ls-coral)', step: '0.1' },
-                  { label: 'Masse musculaire (kg)', key: 'muscleMass', icon: '💪', color: 'var(--ls-teal)', step: '0.1' },
-                  { label: 'Hydratation (%)', key: 'hydration', icon: '💧', color: 'var(--ls-purple)', step: '0.1' },
-                  { label: 'Masse osseuse (kg)', key: 'boneMass', icon: '🦴', color: 'var(--ls-text-muted)', step: '0.1' },
-                  { label: 'Graisse viscérale', key: 'visceralFat', icon: '🫀', color: 'var(--ls-coral)' },
-                  { label: 'BMR (kcal)', key: 'bmr', icon: '⚡', color: 'var(--ls-gold)' },
-                  { label: 'Âge métabolique', key: 'metabolicAge', icon: '🧬', color: 'var(--ls-purple)' },
-                ].map(({ label, key, icon, color, step }) => (
-                  <div key={key} style={{ background: 'var(--ls-surface)', border: '1px solid var(--ls-border)', borderTop: `2px solid ${color}`, borderRadius: 14, padding: '14px 16px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-                      <span style={{ fontSize: 16 }}>{icon}</span>
-                      <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--ls-text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{label}</span>
-                    </div>
-                    <div className="body-scan-big-input">
-                      <DecimalInput
-                        value={(form as Record<string, unknown>)[key] as number || 0}
-                        onChange={(v) => update(key as keyof typeof form, Number(v) as never)}
-                        step={step}
-                      />
-                    </div>
+              {/* Saisie body scan — Refonte 2026-11-04 (etape 3/6 chantier visuel) :
+                  BodyMetricCard avec barre de progression relative aux plages
+                  saines + dot indicateur de zone (vert si dans, accent sinon).
+                  Plages : ranges sex-aware pour bodyFat / hydration / muscle %. */}
+              {(() => {
+                const isMale = form.sex === 'male';
+                // Plages "saines" indicatives basees sur Tanita standards adultes.
+                // healthyMin/Max = zone optimale, scaleMax = max visuel barre.
+                const bodyFatRange: MetricRange = isMale
+                  ? { healthyMin: 8, healthyMax: 20, scaleMax: 40 }
+                  : { healthyMin: 18, healthyMax: 28, scaleMax: 45 };
+                const hydrationRange: MetricRange = isMale
+                  ? { healthyMin: 55, healthyMax: 65, scaleMax: 75 }
+                  : { healthyMin: 50, healthyMax: 60, scaleMax: 70 };
+                const muscleRange: MetricRange = isMale
+                  ? { healthyMin: 35, healthyMax: 60, scaleMax: 80 }
+                  : { healthyMin: 25, healthyMax: 45, scaleMax: 65 };
+                const visceralRange: MetricRange = { healthyMin: 1, healthyMax: 9, scaleMax: 30 };
+                const weightRange: MetricRange = { healthyMin: 50, healthyMax: 90, scaleMax: 130 };
+                const boneRange: MetricRange = isMale
+                  ? { healthyMin: 2.8, healthyMax: 3.8, scaleMax: 5 }
+                  : { healthyMin: 2.0, healthyMax: 2.8, scaleMax: 4 };
+                const bmrRange: MetricRange = { healthyMin: 1200, healthyMax: 2200, scaleMax: 3000 };
+                const ageMetaRange: MetricRange = form.age > 0
+                  ? { healthyMin: Math.max(15, form.age - 8), healthyMax: form.age, scaleMax: form.age + 25 }
+                  : { healthyMin: 20, healthyMax: 40, scaleMax: 70 };
+
+                const metrics: Array<{
+                  label: string;
+                  key: keyof typeof form;
+                  icon: string;
+                  color: string;
+                  step?: string;
+                  range: MetricRange;
+                  unit?: string;
+                }> = [
+                  { label: 'Poids', key: 'weight', icon: '⚖️', color: 'var(--ls-gold)', step: '0.1', range: weightRange, unit: 'kg' },
+                  { label: 'Masse grasse', key: 'bodyFat', icon: '🔥', color: 'var(--ls-coral)', step: '0.1', range: bodyFatRange, unit: '%' },
+                  { label: 'Masse musculaire', key: 'muscleMass', icon: '💪', color: 'var(--ls-teal)', step: '0.1', range: muscleRange, unit: 'kg' },
+                  { label: 'Hydratation', key: 'hydration', icon: '💧', color: 'var(--ls-purple)', step: '0.1', range: hydrationRange, unit: '%' },
+                  { label: 'Masse osseuse', key: 'boneMass', icon: '🦴', color: 'var(--ls-text-muted)', step: '0.1', range: boneRange, unit: 'kg' },
+                  { label: 'Graisse viscérale', key: 'visceralFat', icon: '🫀', color: 'var(--ls-coral)', range: visceralRange },
+                  { label: 'BMR', key: 'bmr', icon: '⚡', color: 'var(--ls-gold)', range: bmrRange, unit: 'kcal' },
+                  { label: 'Âge métabolique', key: 'metabolicAge', icon: '🧬', color: 'var(--ls-purple)', range: ageMetaRange, unit: 'ans' },
+                ];
+
+                return (
+                  <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                    {metrics.map(({ label, key, icon, color, step, range, unit }) => {
+                      const value = (form as Record<string, unknown>)[key] as number || 0;
+                      return (
+                        <BodyMetricCard
+                          key={key}
+                          label={label}
+                          icon={icon}
+                          accentColor={color}
+                          value={value}
+                          range={range}
+                          unit={unit}
+                        >
+                          <DecimalInput
+                            value={value}
+                            onChange={(v) => update(key, Number(v) as never)}
+                            step={step}
+                          />
+                        </BodyMetricCard>
+                      );
+                    })}
                   </div>
-                ))}
-              </div>
+                );
+              })()}
 
               {/* Scan completion celebration (2026-04-29) — pulse premium quand 8/8 saisies */}
               {(() => {
