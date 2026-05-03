@@ -218,101 +218,136 @@ export function FormationCharterPage() {
           </div>
         </div>
 
-        {/* Charter document */}
+        {/* Charter document — refonte parchemin (2026-05-03) */}
         <div
           ref={charterRef}
           className="ls-charter-page"
           style={{
             width: "100%",
-            background: "#0d0d0d",
-            color: "#F5EFDC",
-            border: "1px solid #B8922A55",
-            borderRadius: 14,
-            padding: "44px 38px",
+            background:
+              "radial-gradient(ellipse at top, #FAF3DD 0%, #F2E8C9 65%, #EAD9A8 100%)",
+            color: "#3A2E20",
+            border: "1px solid #C9A84C",
+            borderRadius: 8,
+            padding: "60px 56px 48px",
             position: "relative",
-            boxShadow: "0 8px 32px rgba(0,0,0,0.30)",
+            boxShadow:
+              "0 12px 48px rgba(140, 105, 30, 0.18), inset 0 0 0 6px rgba(184, 146, 42, 0.08)",
+            overflow: "hidden",
+            fontFamily: "'DM Sans', 'Helvetica', sans-serif",
           }}
         >
-          {/* Header */}
-          <div style={{ textAlign: "center", marginBottom: 28 }}>
+          {/* ── Swoosh gold ample (inspiration capture Herbalife) ──── */}
+          <GoldSwooshTop />
+          <GoldFlourishBottomRight />
+
+          {/* ── Ornements coins gold (Art Deco subtle) ─────────────── */}
+          <CornerOrnament position="top-left" />
+          <CornerOrnament position="top-right" />
+          <CornerOrnament position="bottom-left" />
+          <CornerOrnament position="bottom-right" />
+
+          {/* ── Feuilles sage green décoratives (en arrière-plan) ─── */}
+          <DecorativeLeaf position="top" />
+          <DecorativeLeaf position="bottom" />
+
+          {/* ── Header ──────────────────────────────────────────── */}
+          <div style={{ textAlign: "center", marginBottom: 36, position: "relative" }}>
             <div
               style={{
                 fontSize: 10,
-                letterSpacing: "0.32em",
+                letterSpacing: "0.34em",
                 textTransform: "uppercase",
-                color: "#B8922A",
+                color: "#8B6F1A",
                 fontWeight: 700,
-                marginBottom: 8,
+                marginBottom: 14,
               }}
             >
               ✦ Lor&apos;Squad Wellness · Engagement Distributeur
             </div>
             <h1
               style={{
-                fontFamily: "Syne, serif",
-                fontWeight: 800,
-                fontSize: 28,
-                color: "#F5EFDC",
+                fontFamily: "'Playfair Display', Georgia, serif",
+                fontWeight: 900,
+                fontSize: 48,
+                color: "#B8922A",
                 margin: 0,
-                letterSpacing: "-0.02em",
-                lineHeight: 1.15,
+                letterSpacing: "0.01em",
+                lineHeight: 1.05,
+                textShadow: "0 1px 0 rgba(255, 245, 210, 0.8)",
               }}
             >
               Charte du Distributeur
             </h1>
-            <div
-              style={{
-                width: 60,
-                height: 2,
-                background: "linear-gradient(90deg, #B8922A 0%, #1D9E75 100%)",
-                margin: "12px auto",
-              }}
-            />
+            {/* Underline gold filigree */}
+            <svg
+              width="200"
+              height="14"
+              viewBox="0 0 200 14"
+              style={{ display: "block", margin: "10px auto 16px" }}
+              aria-hidden="true"
+            >
+              <line x1="20" y1="7" x2="180" y2="7" stroke="#B8922A" strokeWidth="0.6" />
+              <circle cx="100" cy="7" r="3" fill="#B8922A" />
+              <circle cx="100" cy="7" r="1.2" fill="#FAF3DD" />
+              <line x1="0" y1="7" x2="14" y2="7" stroke="#B8922A" strokeWidth="0.6" />
+              <line x1="186" y1="7" x2="200" y2="7" stroke="#B8922A" strokeWidth="0.6" />
+            </svg>
             <p
               style={{
-                fontSize: 12.5,
-                color: "#C9C2AB",
+                fontSize: 13,
+                color: "#5C4A2E",
                 margin: 0,
                 fontStyle: "italic",
-                lineHeight: 1.6,
-                maxWidth: 540,
+                lineHeight: 1.7,
+                maxWidth: 520,
                 marginInline: "auto",
+                fontFamily: "'Playfair Display', Georgia, serif",
               }}
             >
-              Une signature transforme une intention en engagement. Cette charte n&apos;est
-              pas un contrat — c&apos;est une boussole. Tu la signes pour toi.
+              Une signature transforme une intention en engagement. Cette charte
+              n&apos;est pas un contrat — c&apos;est une boussole. Tu la signes pour toi.
             </p>
           </div>
 
-          {/* Engagements */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 14, marginBottom: 26 }}>
+          {/* ── 3 Engagements (cards parchemin) ─────────────────── */}
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: 18,
+              marginBottom: 28,
+              position: "relative",
+            }}
+          >
             {ENGAGEMENTS.map((e) => (
               <div
                 key={e.title}
                 style={{
-                  padding: "16px 18px",
-                  background: "#161616",
-                  border: "0.5px solid #B8922A33",
+                  padding: "20px 22px 20px 26px",
+                  background: "rgba(255, 250, 232, 0.55)",
+                  border: "0.5px solid rgba(184, 146, 42, 0.35)",
                   borderLeft: "3px solid #B8922A",
-                  borderRadius: 10,
+                  borderRadius: 4,
+                  boxShadow: "0 2px 8px rgba(140, 105, 30, 0.06)",
                 }}
               >
                 <div
                   style={{
                     display: "flex",
                     alignItems: "center",
-                    gap: 10,
-                    marginBottom: 6,
+                    gap: 12,
+                    marginBottom: 8,
                   }}
                 >
-                  <span style={{ fontSize: 18 }}>{e.icon}</span>
+                  <span style={{ fontSize: 22 }} aria-hidden="true">{e.icon}</span>
                   <div
                     style={{
-                      fontFamily: "Syne, serif",
+                      fontFamily: "'Playfair Display', Georgia, serif",
                       fontWeight: 700,
-                      fontSize: 15,
-                      color: "#F5EFDC",
-                      letterSpacing: "-0.01em",
+                      fontSize: 19,
+                      color: "#3A2E20",
+                      letterSpacing: "0.005em",
                     }}
                   >
                     {e.title}
@@ -320,10 +355,11 @@ export function FormationCharterPage() {
                 </div>
                 <p
                   style={{
-                    fontSize: 12.5,
-                    color: "#C9C2AB",
+                    fontSize: 13.5,
+                    color: "#5C4A2E",
                     margin: 0,
-                    lineHeight: 1.6,
+                    lineHeight: 1.65,
+                    fontFamily: "'DM Sans', sans-serif",
                   }}
                 >
                   {e.text}
@@ -331,38 +367,39 @@ export function FormationCharterPage() {
               </div>
             ))}
 
-            {/* Pourquoi (editable) */}
+            {/* ── Pourquoi (editable) ─────────────────────────── */}
             <div
               style={{
-                padding: "16px 18px",
-                background: "#161616",
-                border: "0.5px solid #1D9E7544",
-                borderLeft: "3px solid #1D9E75",
-                borderRadius: 10,
+                padding: "22px 22px 22px 26px",
+                background: "rgba(220, 232, 211, 0.45)",
+                border: "0.5px solid rgba(140, 175, 110, 0.5)",
+                borderLeft: "3px solid #6B8E5A",
+                borderRadius: 4,
+                boxShadow: "0 2px 8px rgba(140, 175, 110, 0.08)",
               }}
             >
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 10,
-                  marginBottom: 8,
-                }}
-              >
-                <span style={{ fontSize: 18 }}>💛</span>
+              <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 8 }}>
+                <span style={{ fontSize: 22 }} aria-hidden="true">💛</span>
                 <div
                   style={{
-                    fontFamily: "Syne, serif",
+                    fontFamily: "'Playfair Display', Georgia, serif",
                     fontWeight: 700,
-                    fontSize: 15,
-                    color: "#F5EFDC",
-                    letterSpacing: "-0.01em",
+                    fontSize: 19,
+                    color: "#3A2E20",
                   }}
                 >
                   Mon « pourquoi »
                 </div>
               </div>
-              <p style={{ fontSize: 11.5, color: "#888", margin: "0 0 10px", fontStyle: "italic" }}>
+              <p
+                style={{
+                  fontSize: 12,
+                  color: "#7A6A52",
+                  margin: "0 0 12px",
+                  fontStyle: "italic",
+                  fontFamily: "'Playfair Display', Georgia, serif",
+                }}
+              >
                 Pourquoi je fais ça. Ce que je veux changer pour moi, mes proches, ou ma vie.
               </p>
               <textarea
@@ -372,52 +409,54 @@ export function FormationCharterPage() {
                 rows={3}
                 style={{
                   width: "100%",
-                  padding: "10px 12px",
-                  borderRadius: 8,
-                  background: "#0d0d0d",
-                  border: "0.5px solid #B8922A33",
-                  color: "#F5EFDC",
-                  fontFamily: "DM Sans, sans-serif",
-                  fontSize: 13,
-                  lineHeight: 1.55,
+                  padding: "12px 14px",
+                  borderRadius: 4,
+                  background: "rgba(255, 252, 240, 0.85)",
+                  border: "0.5px solid rgba(140, 175, 110, 0.4)",
+                  color: "#3A2E20",
+                  fontFamily: "'Caveat', 'Brush Script MT', cursive",
+                  fontSize: 18,
+                  lineHeight: 1.45,
                   resize: "vertical",
                   outline: "none",
+                  boxSizing: "border-box",
                 }}
               />
             </div>
 
-            {/* Objectif 12 mois (editable) */}
+            {/* ── Objectif 12 mois (editable) ──────────────────── */}
             <div
               style={{
-                padding: "16px 18px",
-                background: "#161616",
-                border: "0.5px solid #B8922A55",
+                padding: "22px 22px 22px 26px",
+                background: "rgba(255, 245, 215, 0.55)",
+                border: "0.5px solid rgba(184, 146, 42, 0.4)",
                 borderLeft: "3px solid #B8922A",
-                borderRadius: 10,
+                borderRadius: 4,
+                boxShadow: "0 2px 8px rgba(184, 146, 42, 0.08)",
               }}
             >
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 10,
-                  marginBottom: 8,
-                }}
-              >
-                <span style={{ fontSize: 18 }}>🎯</span>
+              <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 8 }}>
+                <span style={{ fontSize: 22 }} aria-hidden="true">🎯</span>
                 <div
                   style={{
-                    fontFamily: "Syne, serif",
+                    fontFamily: "'Playfair Display', Georgia, serif",
                     fontWeight: 700,
-                    fontSize: 15,
-                    color: "#F5EFDC",
-                    letterSpacing: "-0.01em",
+                    fontSize: 19,
+                    color: "#3A2E20",
                   }}
                 >
                   Mon objectif 12 mois
                 </div>
               </div>
-              <p style={{ fontSize: 11.5, color: "#888", margin: "0 0 10px", fontStyle: "italic" }}>
+              <p
+                style={{
+                  fontSize: 12,
+                  color: "#7A6A52",
+                  margin: "0 0 12px",
+                  fontStyle: "italic",
+                  fontFamily: "'Playfair Display', Georgia, serif",
+                }}
+              >
                 Une cible chiffrée + une cible humaine. Sois précis·e.
               </p>
               <textarea
@@ -427,60 +466,65 @@ export function FormationCharterPage() {
                 rows={3}
                 style={{
                   width: "100%",
-                  padding: "10px 12px",
-                  borderRadius: 8,
-                  background: "#0d0d0d",
-                  border: "0.5px solid #B8922A33",
-                  color: "#F5EFDC",
-                  fontFamily: "DM Sans, sans-serif",
-                  fontSize: 13,
-                  lineHeight: 1.55,
+                  padding: "12px 14px",
+                  borderRadius: 4,
+                  background: "rgba(255, 252, 240, 0.85)",
+                  border: "0.5px solid rgba(184, 146, 42, 0.4)",
+                  color: "#3A2E20",
+                  fontFamily: "'Caveat', 'Brush Script MT', cursive",
+                  fontSize: 18,
+                  lineHeight: 1.45,
                   resize: "vertical",
                   outline: "none",
+                  boxSizing: "border-box",
                 }}
               />
             </div>
           </div>
 
-          {/* Signatures */}
+          {/* ── Signatures (style diplôme) ──────────────────────── */}
           <div
             style={{
               display: "grid",
               gridTemplateColumns: "1fr 1fr",
-              gap: 18,
-              padding: "22px 4px 8px",
-              borderTop: "0.5px dashed #B8922A55",
+              gap: 32,
+              padding: "32px 12px 18px",
+              borderTop: "0.5px solid rgba(184, 146, 42, 0.4)",
+              position: "relative",
             }}
           >
-            <div>
+            <div style={{ textAlign: "center" }}>
               <div
                 style={{
                   fontSize: 9,
-                  letterSpacing: "0.18em",
+                  letterSpacing: "0.22em",
                   textTransform: "uppercase",
-                  color: "#888",
-                  marginBottom: 6,
-                  fontWeight: 600,
+                  color: "#8B6F1A",
+                  marginBottom: 12,
+                  fontWeight: 700,
+                  fontFamily: "'DM Sans', sans-serif",
                 }}
               >
                 Signature distributeur
               </div>
               <div
                 style={{
-                  fontFamily: "'Brush Script MT', cursive",
-                  fontSize: 22,
+                  fontFamily: "'Caveat', 'Brush Script MT', cursive",
+                  fontSize: 36,
                   color: "#B8922A",
-                  marginBottom: 4,
-                  minHeight: 28,
+                  marginBottom: 6,
+                  minHeight: 44,
+                  lineHeight: 1,
                 }}
               >
-                {userName}
+                {userName.split(/\s+/)[0]}
               </div>
               <div
                 style={{
-                  fontSize: 10,
-                  color: "#C9C2AB",
-                  fontStyle: signedAtIso ? "normal" : "italic",
+                  fontSize: 10.5,
+                  color: signedAtIso ? "#5C4A2E" : "#A89272",
+                  fontStyle: "italic",
+                  fontFamily: "'Playfair Display', Georgia, serif",
                 }}
               >
                 {signedAtIso
@@ -488,45 +532,88 @@ export function FormationCharterPage() {
                   : "Non signée"}
               </div>
             </div>
-            <div>
+            <div style={{ textAlign: "center" }}>
               <div
                 style={{
                   fontSize: 9,
-                  letterSpacing: "0.18em",
+                  letterSpacing: "0.22em",
                   textTransform: "uppercase",
-                  color: "#888",
-                  marginBottom: 6,
-                  fontWeight: 600,
+                  color: "#8B6F1A",
+                  marginBottom: 12,
+                  fontWeight: 700,
+                  fontFamily: "'DM Sans', sans-serif",
                 }}
               >
                 Signature coach
               </div>
               <div
                 style={{
-                  fontFamily: "'Brush Script MT', cursive",
-                  fontSize: 22,
-                  color: "#1D9E75",
-                  marginBottom: 4,
-                  minHeight: 28,
+                  fontFamily: "'Caveat', 'Brush Script MT', cursive",
+                  fontSize: 36,
+                  color: "#6B8E5A",
+                  marginBottom: 6,
+                  minHeight: 44,
+                  lineHeight: 1,
                 }}
               >
                 Thomas Houbert
               </div>
-              <div style={{ fontSize: 10, color: "#C9C2AB", fontStyle: "italic" }}>
+              <div
+                style={{
+                  fontSize: 10.5,
+                  color: "#5C4A2E",
+                  fontStyle: "italic",
+                  fontFamily: "'Playfair Display', Georgia, serif",
+                }}
+              >
                 Fondateur · Lor&apos;Squad Wellness
               </div>
             </div>
           </div>
 
-          {/* Footer date */}
+          {/* ── Sceau Lor'Squad ────────────────────────────────── */}
           <div
             style={{
-              marginTop: 18,
+              position: "absolute",
+              bottom: 22,
+              left: 22,
+              width: 56,
+              height: 56,
+              borderRadius: "50%",
+              background:
+                "radial-gradient(circle at 30% 30%, #D4B860 0%, #B8922A 60%, #8B6F1A 100%)",
+              border: "2px solid #B8922A",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              boxShadow: "0 3px 10px rgba(184, 146, 42, 0.4)",
+            }}
+            aria-hidden="true"
+          >
+            <span
+              style={{
+                fontFamily: "'Playfair Display', Georgia, serif",
+                fontSize: 22,
+                color: "#FAF3DD",
+                fontWeight: 900,
+                letterSpacing: "-0.04em",
+              }}
+            >
+              L✦S
+            </span>
+          </div>
+
+          {/* ── Footer date ────────────────────────────────────── */}
+          <div
+            style={{
+              marginTop: 22,
               textAlign: "center",
               fontSize: 9,
-              letterSpacing: "0.16em",
+              letterSpacing: "0.18em",
               textTransform: "uppercase",
-              color: "#666",
+              color: "#8B6F1A",
+              fontWeight: 600,
+              fontFamily: "'DM Sans', sans-serif",
             }}
           >
             Établi le {today} · Lor&apos;Squad Wellness 2026
@@ -585,5 +672,175 @@ export function FormationCharterPage() {
         )}
       </div>
     </div>
+  );
+}
+
+// ─── Helpers décoratifs SVG (parchemin, ornements gold) ─────────────────
+
+/** Coin Art Deco : petites lignes croisées + cercle, en gold. */
+function CornerOrnament({
+  position,
+}: {
+  position: "top-left" | "top-right" | "bottom-left" | "bottom-right";
+}) {
+  const isTop = position.startsWith("top");
+  const isLeft = position.endsWith("left");
+  const transform = `${isLeft ? "" : "scaleX(-1)"} ${isTop ? "" : "scaleY(-1)"}`.trim();
+  return (
+    <svg
+      width="80"
+      height="80"
+      viewBox="0 0 80 80"
+      style={{
+        position: "absolute",
+        top: isTop ? 18 : "auto",
+        bottom: isTop ? "auto" : 18,
+        left: isLeft ? 18 : "auto",
+        right: isLeft ? "auto" : 18,
+        transform,
+        opacity: 0.85,
+        pointerEvents: "none",
+      }}
+      aria-hidden="true"
+    >
+      <line x1="0" y1="0" x2="50" y2="0" stroke="#B8922A" strokeWidth="0.8" />
+      <line x1="0" y1="0" x2="0" y2="50" stroke="#B8922A" strokeWidth="0.8" />
+      <line x1="0" y1="6" x2="38" y2="6" stroke="#B8922A" strokeWidth="0.4" opacity="0.6" />
+      <line x1="6" y1="0" x2="6" y2="38" stroke="#B8922A" strokeWidth="0.4" opacity="0.6" />
+      <circle cx="50" cy="0" r="2.5" fill="#B8922A" />
+      <circle cx="0" cy="50" r="2.5" fill="#B8922A" />
+      <circle cx="14" cy="14" r="1.6" fill="#B8922A" />
+    </svg>
+  );
+}
+
+/** Feuille sage green décorative (très subtile, en background). */
+function DecorativeLeaf({ position }: { position: "top" | "bottom" }) {
+  const isTop = position === "top";
+  return (
+    <svg
+      width="180"
+      height="180"
+      viewBox="0 0 180 180"
+      style={{
+        position: "absolute",
+        top: isTop ? -20 : "auto",
+        bottom: isTop ? "auto" : -30,
+        left: isTop ? -30 : "auto",
+        right: isTop ? "auto" : -40,
+        opacity: 0.18,
+        pointerEvents: "none",
+        transform: isTop ? "rotate(-15deg)" : "rotate(155deg)",
+      }}
+      aria-hidden="true"
+    >
+      <path
+        d="M 90 10 Q 130 40 130 90 Q 130 140 90 170 Q 50 140 50 90 Q 50 40 90 10 Z"
+        fill="#9CAF88"
+      />
+      <path
+        d="M 90 10 L 90 170"
+        stroke="#6B8E5A"
+        strokeWidth="1.5"
+        opacity="0.6"
+      />
+    </svg>
+  );
+}
+
+/** Swoosh gold ample en haut (inspiration certificat Herbalife). */
+function GoldSwooshTop() {
+  return (
+    <svg
+      width="100%"
+      height="100"
+      viewBox="0 0 800 100"
+      preserveAspectRatio="none"
+      style={{
+        position: "absolute",
+        top: 0,
+        left: 0,
+        right: 0,
+        opacity: 0.65,
+        pointerEvents: "none",
+      }}
+      aria-hidden="true"
+    >
+      <defs>
+        <linearGradient id="goldSwoosh" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stopColor="#B8922A" stopOpacity="0" />
+          <stop offset="20%" stopColor="#D4B860" stopOpacity="0.6" />
+          <stop offset="50%" stopColor="#B8922A" stopOpacity="0.9" />
+          <stop offset="80%" stopColor="#D4B860" stopOpacity="0.6" />
+          <stop offset="100%" stopColor="#B8922A" stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      {/* Curve principale */}
+      <path
+        d="M 0 80 Q 200 10 400 25 Q 600 40 800 5"
+        stroke="url(#goldSwoosh)"
+        strokeWidth="2.2"
+        fill="none"
+      />
+      {/* Curve secondaire plus fine */}
+      <path
+        d="M 0 70 Q 200 20 400 35 Q 600 50 800 18"
+        stroke="#B8922A"
+        strokeWidth="0.6"
+        opacity="0.4"
+        fill="none"
+      />
+    </svg>
+  );
+}
+
+/** Flourish + feuilles gold en bas-droite (capture Herbalife). */
+function GoldFlourishBottomRight() {
+  return (
+    <svg
+      width="160"
+      height="160"
+      viewBox="0 0 160 160"
+      style={{
+        position: "absolute",
+        bottom: 0,
+        right: 0,
+        opacity: 0.5,
+        pointerEvents: "none",
+      }}
+      aria-hidden="true"
+    >
+      <defs>
+        <linearGradient id="goldLeaf" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#D4B860" />
+          <stop offset="100%" stopColor="#8B6F1A" />
+        </linearGradient>
+      </defs>
+      {/* Tige courbe */}
+      <path
+        d="M 160 160 Q 100 100 60 60"
+        stroke="url(#goldLeaf)"
+        strokeWidth="1.5"
+        fill="none"
+      />
+      {/* Feuille 1 */}
+      <path
+        d="M 90 90 Q 110 70 130 80 Q 120 100 90 90 Z"
+        fill="url(#goldLeaf)"
+        opacity="0.85"
+      />
+      {/* Feuille 2 */}
+      <path
+        d="M 110 110 Q 130 90 145 105 Q 135 125 110 110 Z"
+        fill="url(#goldLeaf)"
+        opacity="0.7"
+      />
+      {/* Feuille 3 plus petite */}
+      <path
+        d="M 70 70 Q 80 55 90 62 Q 85 75 70 70 Z"
+        fill="url(#goldLeaf)"
+        opacity="0.6"
+      />
+    </svg>
   );
 }
