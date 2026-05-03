@@ -19,6 +19,7 @@ import { PageHeading } from "../components/ui/PageHeading";
 import { FlexHistoryCard } from "../components/flex/FlexHistoryCard";
 import { FlexMidpointRecalcCard } from "../components/flex/FlexMidpointRecalcCard";
 import { FlexRoyaltiesInfoCard } from "../components/flex/FlexRoyaltiesInfoCard";
+import { RankPinBadge } from "../components/rank/RankPinBadge";
 import { useAppContext } from "../context/AppContext";
 import type { HerbalifeRank } from "../types/domain";
 import { getSupabaseClient } from "../services/supabaseClient";
@@ -270,11 +271,20 @@ export function FlexDashboardPage() {
 
   return (
     <div className="space-y-6" style={{ paddingBottom: 60 }}>
-      <PageHeading
-        eyebrow="FLEX Lor'Squad"
-        title="Ton pilotage du jour"
-        description={`Objectif ${plan.monthly_revenue_target.toLocaleString("fr-FR")} €/mois · échéance dans ${Math.max(0, daysUntilDeadline)} jours${streak > 0 ? ` · 🔥 ${streak} jour${streak > 1 ? "s" : ""} consécutif${streak > 1 ? "s" : ""}` : ""}`}
-      />
+      <div style={{ display: "flex", alignItems: "center", gap: 18, flexWrap: "wrap" }}>
+        <RankPinBadge
+          rank={(currentUser?.currentRank as HerbalifeRank | undefined) ?? "distributor_25"}
+          size="lg"
+          glow
+        />
+        <div style={{ flex: 1, minWidth: 240 }}>
+          <PageHeading
+            eyebrow="FLEX Lor'Squad"
+            title="Ton pilotage du jour"
+            description={`Objectif ${plan.monthly_revenue_target.toLocaleString("fr-FR")} €/mois · échéance dans ${Math.max(0, daysUntilDeadline)} jours${streak > 0 ? ` · 🔥 ${streak} jour${streak > 1 ? "s" : ""} consécutif${streak > 1 ? "s" : ""}` : ""}`}
+          />
+        </div>
+      </div>
 
       {/* V2.1 — Banner mi-parcours (auto-affiché entre 40-70% durée écoulée). */}
       <FlexMidpointRecalcCard
