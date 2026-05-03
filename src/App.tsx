@@ -254,6 +254,30 @@ const FormationAdminPage = lazy(() =>
     default: module.FormationAdminPage
   }))
 );
+// Quick win #5 (2026-11-04) : certificat fin de niveau Formation.
+const FormationCertificatePage = lazy(() =>
+  import("./pages/FormationCertificatePage").then((module) => ({
+    default: module.FormationCertificatePage
+  }))
+);
+// Feature #7 (2026-11-04) : Strategy Plan Calculator (formule 5-3-1).
+const FormationCalculatorPage = lazy(() =>
+  import("./pages/FormationCalculatorPage").then((module) => ({
+    default: module.FormationCalculatorPage
+  }))
+);
+// Feature #9 (2026-11-04) : Charte distributeur PDF.
+const FormationCharterPage = lazy(() =>
+  import("./pages/FormationCharterPage").then((module) => ({
+    default: module.FormationCharterPage
+  }))
+);
+// Glossaire termes Herbalife (2026-11-04).
+const FormationGlossaryPage = lazy(() =>
+  import("./pages/FormationGlossaryPage").then((module) => ({
+    default: module.FormationGlossaryPage
+  }))
+);
 const SettingsPage = lazy(() =>
   import("./pages/SettingsPage").then((module) => ({
     default: module.SettingsPage
@@ -347,6 +371,10 @@ export default function App() {
               <Route path="formation" element={<FormationAdminGate><FormationPage /></FormationAdminGate>} />
               <Route path="formation/mon-equipe" element={<FormationAdminGate><FormationMyTeamPage /></FormationAdminGate>} />
               <Route path="formation/admin" element={<FormationAdminGate><FormationAdminPage /></FormationAdminGate>} />
+              <Route path="formation/certificat" element={<FormationAdminGate><FormationCertificatePage /></FormationAdminGate>} />
+              <Route path="formation/calculateur" element={<FormationAdminGate><FormationCalculatorPage /></FormationAdminGate>} />
+              <Route path="formation/charte" element={<FormationAdminGate><FormationCharterPage /></FormationAdminGate>} />
+              <Route path="formation/glossaire" element={<FormationAdminGate><FormationGlossaryPage /></FormationAdminGate>} />
               <Route path="formation/parcours/:levelSlug" element={<FormationAdminGate><FormationModulePage /></FormationAdminGate>} />
               <Route path="formation/parcours/:levelSlug/:moduleSlug" element={<FormationAdminGate><FormationModuleDetailPage /></FormationAdminGate>} />
               <Route path="formation/:slug" element={<FormationAdminGate><FormationCategoryPage /></FormationAdminGate>} />

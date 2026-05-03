@@ -27,6 +27,7 @@ import { InboxWidget } from "../components/copilote/InboxWidget";
 import { BirthdayBlock } from "../components/copilote/BirthdayBlock";
 import { CoachTipOfDayCard } from "../components/copilote/CoachTipOfDayCard";
 import { BusinessOpportunitiesCard } from "../components/copilote/BusinessOpportunitiesCard";
+import { DistriOnboardingChecklist } from "../components/formation/DistriOnboardingChecklist";
 import { StreakBadge } from "../features/gamification/components/StreakBadge";
 import { WeeklyQuestsCard } from "../features/gamification/components/WeeklyQuestsCard";
 
@@ -91,6 +92,11 @@ export function CoPilotePage() {
       <div style={{ display: "flex", justifyContent: "flex-start", marginTop: -6 }}>
         <StreakBadge />
       </div>
+
+      {/* Feature #10 (2026-11-04) : checklist onboarding J0-J7 pour les
+          nouveaux distri. Auto-cache si > 14j ou si toutes les etapes
+          cochees. Visible avant le Hero pour ne pas etre louee. */}
+      <DistriOnboardingChecklist />
 
       {/* Zone 2 — Hero action */}
       <HeroActionCard nextAction={data.nextAction} now={now} />

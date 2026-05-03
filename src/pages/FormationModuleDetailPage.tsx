@@ -25,6 +25,7 @@ import {
 import { ModuleHeaderHero } from "../components/formation/ModuleHeaderHero";
 import { LessonCard } from "../components/formation/LessonCard";
 import { AncrageActionPanel } from "../components/formation/AncrageActionPanel";
+import { ModuleNotesPanel } from "../components/formation/ModuleNotesPanel";
 import { QuizRunner } from "../components/formation/QuizRunner";
 import { ReviewThreadPanel } from "../components/formation/ReviewThreadPanel";
 import { useAppContext } from "../context/AppContext";
@@ -321,6 +322,12 @@ export function FormationModuleDetailPage() {
       {/* Ancrage + action */}
       {mode === "lecture" ? (
         <AncrageActionPanel ancrage={module.ancrage} action={module.action} />
+      ) : null}
+
+      {/* Quick win #3 (2026-11-04) : notes personnelles par module
+          (localStorage par user). Visible en mode lecture uniquement. */}
+      {mode === "lecture" ? (
+        <ModuleNotesPanel moduleId={module.id} moduleNumber={module.number} />
       ) : null}
 
       {/* CTA quiz (bas de page lecture) — safe-area pour iOS PWA */}

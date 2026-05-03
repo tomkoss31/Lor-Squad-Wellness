@@ -12,6 +12,7 @@ import { PageHeading } from "../components/ui/PageHeading";
 import {
   FORMATION_LEVELS,
   getFormationLevelBySlug,
+  formatModuleShort,
   type FormationLevelAccent,
   type FormationModule,
 } from "../data/formation";
@@ -282,7 +283,7 @@ function ModuleRow({
               letterSpacing: "0.04em",
             }}
           >
-            M{module.number}
+            {formatModuleShort(module.number)}
           </span>
           <h3
             style={{

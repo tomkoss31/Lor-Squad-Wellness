@@ -16,7 +16,7 @@
 //   💪 Suivi & Fidelisation
 //      <- M1.4 (closing) + M1.5 (recos) + F4 (follow-up) + relance
 //   🚀 Business & 100 clubs
-//      <- F16 (8-4-1) + F10 + N3 complet + Pilotage P1-P6 + Engagement
+//      <- F16 (5-3-1) + F10 + N3 complet + Pilotage P1-P6 + Engagement
 // =============================================================================
 
 import type { FormationCategory } from "./types";
@@ -57,7 +57,7 @@ export const FORMATION_CATEGORIES: FormationCategory[] = [
     title: "Business & 100 clubs",
     emoji: "🚀",
     accent: "coral",
-    description: "Méthode 8-4-1, pilotage quotidien, calculateur d'objectifs, vers les royalties.",
+    description: "Méthode 5-3-1, pilotage quotidien, calculateur d'objectifs, vers les royalties.",
     resources: BIBLIO_BUSINESS,
   },
 ];

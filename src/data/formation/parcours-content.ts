@@ -10,7 +10,7 @@
 //   - passingScore = nombre total de QCM (les free_text ne comptent pas).
 //   - Les free_text passent automatiquement dans le thread sponsor en kind:'answer'
 //     (logique côté service.ts.submitModule, déjà validée par Claude Code).
-//   - Calibrage France : 1 VP = 1,50 € · marge Sup 50% · panier 75 VP · DMO 8-4-1.
+//   - Calibrage France : 1 VP = 1,50 € · marge Sup 50% · panier 75 VP · DMO 5-3-1.
 //
 // Livré par Claude (atelier Notion) le 02/05/2026.
 // =============================================================================
@@ -138,10 +138,10 @@ Et c'est **uniquement** la marge perso. Derrière viennent les **royalties** qua
           kind: "qcm",
           id: "Q3",
           question: "La formule mensuelle Lor'Squad de référence est :",
-          answers: ["5-3-1", "8-4-1", "10-5-2", "12-6-3"],
+          answers: ["3-2-1", "5-3-1", "8-4-1", "10-5-2"],
           correctIndex: 1,
           explanation:
-            "8-4-1 : 8 nouveaux clients + 4 récurrents + 1 nouveau coach par mois. Tenue 12 mois, cette formule te conduit mathématiquement vers le President's Team."
+            "5-3-1 : 5 nouveaux clients + 3 récurrents + 1 nouveau coach par mois. Une cadence accessible qui, tenue 12 mois, te conduit progressivement vers les rangs supérieurs."
         },
         {
           kind: "free_text",
@@ -866,43 +866,43 @@ export const N2_MODULES: FormationModule[] = [
   },
 
   // ───────────────────────────────────────────────────────────────────────────
-  // M2.2 — Mon plan d'action quotidien (DMO 8-4-1)
+  // M2.2 — Mon plan d'action quotidien (DMO 5-3-1)
   // ───────────────────────────────────────────────────────────────────────────
   {
     id: "M2.2",
     slug: "plan-action-quotidien-dmo",
     number: "2.2",
     title: "Mon plan d'action quotidien",
-    description: "Le DMO 8-4-1 : ta formule mécanique pour aller au President's Team en 12 mois.",
+    description: "Le DMO 5-3-1 : ta formule mécanique pour progresser vers les rangs supérieurs.",
     durationMin: 8,
     icon: "📅",
     ideeForce:
-      "Un distri qui n'a pas de DMO (Daily Method of Operation) compte sur la chance et l'inspiration. Un distri qui en a un construit un système. La méthode 8-4-1 est ta formule chimique : suivie 12 mois, elle t'amène mathématiquement au sommet.",
+      "Un distri qui n'a pas de DMO (Daily Method of Operation = méthode quotidienne d'opération) compte sur la chance et l'inspiration. Un distri qui en a un construit un système. La méthode 5-3-1 est ta formule chimique : suivie 12 mois, elle t'amène progressivement vers les rangs supérieurs.",
     ancrage: "« Pas de DMO = tu travailles dur. Avec un DMO = tu travailles juste. »",
     action:
       "Bloque DEMAIN MATIN ton premier créneau prime time IPA (même 30 min). Ouvre ton agenda. Mets un événement récurrent. Pas négociable. 5 jours sur 5, même quand tu n'en as pas envie.",
     lessons: [
       {
         id: "M2.2-L1",
-        slug: "formule-841",
-        title: "La formule 8-4-1 décodée",
+        slug: "formule-531",
+        title: "La formule 5-3-1 décodée",
         kind: "text",
         durationMin: 2,
         contentMarkdown: `## Le système chimique
 
-**8 nouveaux clients** dans le mois
-**+ 4 récurrents** (ils re-commandent)
+**5 nouveaux clients** dans le mois
+**+ 3 récurrents** (ils re-commandent)
 **+ 1 nouveau coach** recruté
 
 Répété **12 mois**.
 
 **Résultat mathématique** :
-- ~96 nouveaux clients/an
-- Ton équipe de coachs grandit
-- Tu deviens **Sup au mois 4-6**
-- Tu vises **President's Team à M+12**
+- ~60 nouveaux clients/an
+- Ton équipe de coachs grandit progressivement
+- Tu deviens **Sup au mois 5-7**
+- Tu vises **GET / Millionaire** sur ton 2ᵉ exercice
 
-Pas magie, mathématique.`
+Pas magie, mathématique. Plus accessible que le 8-4-1, plus durable dans le temps.`
       },
       {
         id: "M2.2-L2",
@@ -983,21 +983,21 @@ Si ces chiffres ne montent pas, ton revenu ne monte pas.
           answers: ["3", "5", "10", "Autant que possible"],
           correctIndex: 1,
           explanation:
-            "5 invitations qualitatives par jour. C'est le seuil minimum pour générer assez de bilans, donc assez de clients, pour atteindre 8-4-1."
+            "5 invitations qualitatives par jour. C'est le seuil minimum pour générer assez de bilans, donc assez de clients, pour atteindre 5-3-1."
         },
         {
           kind: "qcm",
           id: "Q3",
-          question: "La formule 8-4-1 répétée 12 mois t'amène en moyenne à :",
+          question: "La formule 5-3-1 répétée 12 mois t'amène en moyenne à :",
           answers: [
             "Senior Consultant",
             "Supervisor",
-            "President's Team",
-            "GET Team"
+            "GET Team",
+            "World Team"
           ],
           correctIndex: 2,
           explanation:
-            "President's Team. C'est mathématique — 96 nouveaux clients/an + 12 nouveaux coachs/an + duplication = top 1% mondial Herbalife à M+12."
+            "GET Team. C'est mathématique — ~60 nouveaux clients/an + 12 nouveaux coachs/an + duplication = palier GET vise sur 12-18 mois. Le 5-3-1 prend plus de temps que le 8-4-1 mais reste tenable."
         },
         {
           kind: "free_text",
@@ -1903,9 +1903,9 @@ Le 4ème, le 5ème, le 6ème viennent ensuite naturellement parce que tu as appr
         durationMin: 2,
         contentMarkdown: `## Pas de promesse magique
 
-**Avec la formule 8-4-1 (M2.2) tenue 12 mois** : tu vises President's Team à M+12.
+**Avec la formule 5-3-1 (M2.2) tenue 12 mois** : tu vises GET Team à M+12.
 
-**Avec un rythme moitié moins intense (4-2-1 sur 24 mois)** : tu vises GET Team à M+18.
+**Avec un rythme plus intense (8-4-1 sur 12 mois, plus dur à tenir)** : tu vises President's Team à M+12.
 
 > Personne n'arrive à President's en 6 mois sauf cas exceptionnels avec gros réseau initial.
 
@@ -2083,8 +2083,8 @@ export const BIBLIO_SUIVI: FormationCategory["resources"] = [
 export const BIBLIO_BUSINESS: FormationCategory["resources"] = [
   {
     id: "biblio-business-01",
-    title: "Mon plan d'action quotidien (DMO 8-4-1)",
-    description: "8 nouveaux + 4 récurrents + 1 coach par mois = President's Team en 12 mois.",
+    title: "Mon plan d'action quotidien (DMO 5-3-1)",
+    description: "5 nouveaux + 3 récurrents + 1 coach par mois = progression vers GET Team en 12 mois.",
     kind: "module-link",
     moduleId: "M2.2",
     durationMin: 8,

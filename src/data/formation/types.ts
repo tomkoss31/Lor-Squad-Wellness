@@ -87,7 +87,8 @@ export type FormationLessonKind =
   | "video"
   | "school-link"
   | "checklist"
-  | "interactive";
+  | "interactive"
+  | "audio";
 
 export interface FormationLesson {
   id: string;
@@ -95,12 +96,17 @@ export interface FormationLesson {
   title: string;
   kind: FormationLessonKind;
   durationMin: number;
-  /** Contenu markdown pour kind=text. */
+  /** Contenu markdown pour kind=text ou checklist. */
   contentMarkdown?: string;
   /** URL YouTube/Vimeo pour kind=video. */
   videoUrl?: string;
   /** URL Herbalife School pour kind=school-link. */
   schoolUrl?: string;
+  /** URL audio (mp3/m4a) pour kind=audio (feature #8 — 2026-11-04). */
+  audioUrl?: string;
+  /** Items checklist explicites pour kind=checklist (feature #8). Si absent,
+   *  on parse contentMarkdown pour extraire les lignes "- [ ] item". */
+  checklistItems?: Array<{ id: string; label: string }>;
 }
 
 export interface FormationQuiz {
