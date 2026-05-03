@@ -20,13 +20,7 @@
 // Theme-aware total via var(--ls-*) + color-mix.
 // =============================================================================
 
-import { type ReactNode } from "react";
-import type {
-  DecisionClient,
-  TypeDeSuite,
-  MessageALaisser,
-  Objective,
-} from "../../types/domain";
+import type { TypeDeSuite, Objective } from "../../types/domain";
 import { AssessmentSectionV2 } from "./AssessmentSectionV2";
 
 export interface FollowUpStepV2Props {
@@ -35,16 +29,12 @@ export interface FollowUpStepV2Props {
   afterAssessmentAction: "started" | "pending";
   clientFirstName: string;
   // Form values
-  decisionClient: DecisionClient | null;
   typeDeSuite: TypeDeSuite | null;
-  messageALaisser: MessageALaisser | null;
   nextFollowUp: string;
   comment: string;
   // Setters
   onAfterAssessmentAction: (v: "started" | "pending") => void;
-  onDecisionClient: (v: DecisionClient) => void;
   onTypeDeSuite: (v: TypeDeSuite) => void;
-  onMessageALaisser: (v: MessageALaisser) => void;
   onNextFollowUp: (v: string) => void;
   onComment: (v: string) => void;
 }
@@ -53,15 +43,11 @@ export function FollowUpStepV2({
   objective,
   afterAssessmentAction,
   clientFirstName,
-  decisionClient,
   typeDeSuite,
-  messageALaisser,
   nextFollowUp,
   comment,
   onAfterAssessmentAction,
-  onDecisionClient,
   onTypeDeSuite,
-  onMessageALaisser,
   onNextFollowUp,
   onComment,
 }: FollowUpStepV2Props) {
@@ -76,6 +62,19 @@ export function FollowUpStepV2({
   const startsImmediately = afterAssessmentAction === "started";
   const firstName = clientFirstName.trim() || "ton client";
   const suiviLibre = typeDeSuite === "suivi_libre";
+
+  // Helper : auto-set typeDeSuite quand la decision change. Si "Demarrage
+  // maintenant" -> rdv_fixe (pour creer un RDV ferme dans l agenda). Si
+  // "A relancer plus tard" -> message_rappel (pour le lifecycle pending).
+  // Le coach peut overrider depuis la fiche client si besoin (cycle de vie).
+  function pickDecision(value: "started" | "pending") {
+    onAfterAssessmentAction(value);
+    if (value === "started" && typeDeSuite !== "rdv_fixe") {
+      onTypeDeSuite("rdv_fixe");
+    } else if (value === "pending" && typeDeSuite !== "message_rappel" && typeDeSuite !== "relance_douce") {
+      onTypeDeSuite("message_rappel");
+    }
+  }
 
   // Promesse adaptee selon objectif
   const promises = isSport
@@ -191,7 +190,7 @@ export function FollowUpStepV2({
               <button
                 key={opt.value}
                 type="button"
-                onClick={() => onAfterAssessmentAction(opt.value)}
+                onClick={() => pickDecision(opt.value)}
                 style={{
                   display: "flex",
                   alignItems: "center",
@@ -504,59 +503,11 @@ export function FollowUpStepV2({
         ) : null}
       </div>
 
-      {/* ─── 3. Cadrage du suivi (3 ChoiceGroup compactes) ─── */}
-      <AssessmentSectionV2
-        emoji="🎯"
-        eyebrow="Cadrage · ton du suivi"
-        title="Comment on cadre la suite"
-        description="Trois lectures rapides : où en est le client, comment on suit, et avec quel ton on revient."
-        accent="gold"
-      >
-        <div className="grid gap-5 md:grid-cols-3">
-          {/* Decision */}
-          <PillsGroup
-            label="Décision client"
-            options={[
-              { value: "partant", label: "Partant", emoji: "🔥" },
-              { value: "a_rassurer", label: "À rassurer", emoji: "🤝" },
-              { value: "a_confirmer", label: "À confirmer", emoji: "💭" },
-            ]}
-            value={decisionClient}
-            onChange={(v) => onDecisionClient(v as DecisionClient)}
-          />
-          <PillsGroup
-            label="Type de suite"
-            options={[
-              { value: "rdv_fixe", label: "RDV fixe", emoji: "📅" },
-              { value: "message_rappel", label: "Message rappel", emoji: "💬" },
-              { value: "relance_douce", label: "Relance douce", emoji: "🌿" },
-              { value: "suivi_libre", label: "Suivi libre", emoji: "🪶" },
-            ]}
-            value={typeDeSuite}
-            onChange={(v) => onTypeDeSuite(v as TypeDeSuite)}
-          />
-          <PillsGroup
-            label="Message à laisser"
-            options={[
-              { value: "simple", label: "Simple", emoji: "✨" },
-              { value: "progressif", label: "Progressif", emoji: "📈" },
-              { value: "cadre_clair", label: "Cadre clair", emoji: "🎯" },
-            ]}
-            value={messageALaisser}
-            onChange={(v) => onMessageALaisser(v as MessageALaisser)}
-          />
-        </div>
-        <p
-          style={{
-            fontSize: 11.5,
-            color: "var(--ls-text-muted)",
-            margin: 0,
-            fontFamily: "DM Sans, sans-serif",
-          }}
-        >
-          Ce choix affecte le statut du client dans ta base (actif / pas démarré / fragile).
-        </p>
-      </AssessmentSectionV2>
+      {/* ─── 3. Cadrage supprime (2026-11-04 v2) — redondant avec Decision du
+              jour. typeDeSuite + decisionClient + messageALaisser sont
+              maintenant gerees automatiquement (cf. logique d auto-set
+              dans le caller) ou via le commentaire libre.
+              Si besoin de re-exposer ces 3 champs, voir commit 67b7e56. */}
 
       {/* ─── 4. Promesse d accompagnement (adaptee objectif) ─── */}
       <AssessmentSectionV2
@@ -806,50 +757,4 @@ function PromiseCard({
   );
 }
 
-function PillsGroup<T extends string>({
-  label,
-  options,
-  value,
-  onChange,
-}: {
-  label: string;
-  options: Array<{ value: T; label: string; emoji: string }>;
-  value: T | null;
-  onChange: (v: T) => void;
-}): ReactNode {
-  return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-      <label
-        style={{
-          fontFamily: "DM Sans, sans-serif",
-          fontSize: 12,
-          fontWeight: 600,
-          color: "var(--ls-text)",
-          letterSpacing: "-0.005em",
-        }}
-      >
-        {label}
-      </label>
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-        {options.map((opt) => {
-          const active = value === opt.value;
-          return (
-            <button
-              key={opt.value}
-              type="button"
-              onClick={() => onChange(opt.value)}
-              className={`ls-pill${active ? " ls-pill--selected" : ""}`}
-              style={{ fontSize: 12, padding: "6px 12px", gap: 4 }}
-              aria-pressed={active}
-            >
-              <span aria-hidden="true" style={{ fontSize: 13 }}>
-                {opt.emoji}
-              </span>
-              {opt.label}
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
+// PillsGroup supprime (2026-11-04 v2) — bloc cadrage retire.

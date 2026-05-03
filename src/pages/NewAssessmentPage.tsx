@@ -3563,15 +3563,11 @@ export function NewAssessmentPage() {
               objective={form.objective}
               afterAssessmentAction={form.afterAssessmentAction}
               clientFirstName={form.firstName}
-              decisionClient={form.decisionClient}
               typeDeSuite={form.typeDeSuite}
-              messageALaisser={form.messageALaisser}
               nextFollowUp={form.nextFollowUp}
               comment={form.comment}
               onAfterAssessmentAction={(v) => update("afterAssessmentAction", v)}
-              onDecisionClient={(v) => update("decisionClient", v)}
               onTypeDeSuite={(v) => update("typeDeSuite", v)}
-              onMessageALaisser={(v) => update("messageALaisser", v)}
               onNextFollowUp={(v) => update("nextFollowUp", v)}
               onComment={(v) => update("comment", v)}
             />
