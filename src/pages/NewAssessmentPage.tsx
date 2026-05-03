@@ -3568,6 +3568,7 @@ export function NewAssessmentPage() {
               messageALaisser={form.messageALaisser}
               nextFollowUp={form.nextFollowUp}
               comment={form.comment}
+              onAfterAssessmentAction={(v) => update("afterAssessmentAction", v)}
               onDecisionClient={(v) => update("decisionClient", v)}
               onTypeDeSuite={(v) => update("typeDeSuite", v)}
               onMessageALaisser={(v) => update("messageALaisser", v)}

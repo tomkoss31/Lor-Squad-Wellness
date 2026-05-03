@@ -41,6 +41,7 @@ export interface FollowUpStepV2Props {
   nextFollowUp: string;
   comment: string;
   // Setters
+  onAfterAssessmentAction: (v: "started" | "pending") => void;
   onDecisionClient: (v: DecisionClient) => void;
   onTypeDeSuite: (v: TypeDeSuite) => void;
   onMessageALaisser: (v: MessageALaisser) => void;
@@ -57,6 +58,7 @@ export function FollowUpStepV2({
   messageALaisser,
   nextFollowUp,
   comment,
+  onAfterAssessmentAction,
   onDecisionClient,
   onTypeDeSuite,
   onMessageALaisser,
@@ -94,28 +96,211 @@ export function FollowUpStepV2({
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
-      {/* ─── 1. Mini-pill demarrage (discret en haut) ─── */}
-      <div style={{ display: "flex", justifyContent: "center" }}>
+      {/* ─── 1. Decision du jour (validation en haut, pattern etape 11) ─── */}
+      <div
+        style={{
+          padding: "20px 22px",
+          borderRadius: 18,
+          background: "var(--ls-surface)",
+          border: "0.5px solid var(--ls-border)",
+          borderLeft: "3px solid var(--ls-purple)",
+          transition: "box-shadow 0.2s ease",
+        }}
+      >
         <div
           style={{
-            display: "inline-flex",
+            display: "flex",
             alignItems: "center",
-            gap: 8,
-            padding: "6px 14px",
-            borderRadius: 999,
-            background: startsImmediately
-              ? "color-mix(in srgb, var(--ls-teal) 12%, var(--ls-surface))"
-              : "color-mix(in srgb, var(--ls-gold) 12%, var(--ls-surface))",
-            border: `0.5px solid color-mix(in srgb, ${startsImmediately ? "var(--ls-teal)" : "var(--ls-gold)"} 40%, transparent)`,
-            fontFamily: "DM Sans, sans-serif",
-            fontSize: 11.5,
-            fontWeight: 600,
-            color: startsImmediately ? "var(--ls-teal)" : "var(--ls-gold)",
-            letterSpacing: "0.04em",
+            justifyContent: "space-between",
+            gap: 12,
+            marginBottom: 14,
+            flexWrap: "wrap",
           }}
         >
-          <span aria-hidden="true">{startsImmediately ? "✦" : "⏸"}</span>
-          {startsImmediately ? "Démarrage immédiat" : "À relancer plus tard"}
+          <div>
+            <div
+              style={{
+                fontSize: 10,
+                letterSpacing: 1.4,
+                textTransform: "uppercase",
+                fontWeight: 700,
+                color: "var(--ls-purple)",
+                fontFamily: "DM Sans, sans-serif",
+                marginBottom: 6,
+              }}
+            >
+              ✦ Décision du jour
+            </div>
+            <div
+              style={{
+                fontFamily: "Syne, serif",
+                fontWeight: 700,
+                fontSize: 16,
+                color: "var(--ls-text)",
+                letterSpacing: "-0.012em",
+                lineHeight: 1.2,
+              }}
+            >
+              {firstName} démarre maintenant ou revient plus tard ?
+            </div>
+          </div>
+          <div
+            style={{
+              padding: "5px 12px",
+              borderRadius: 999,
+              background: startsImmediately
+                ? "color-mix(in srgb, var(--ls-teal) 16%, transparent)"
+                : "color-mix(in srgb, var(--ls-gold) 16%, transparent)",
+              border: `0.5px solid color-mix(in srgb, ${startsImmediately ? "var(--ls-teal)" : "var(--ls-gold)"} 40%, transparent)`,
+              fontSize: 10,
+              fontWeight: 700,
+              fontFamily: "DM Sans, sans-serif",
+              color: startsImmediately ? "var(--ls-teal)" : "var(--ls-gold)",
+              textTransform: "uppercase",
+              letterSpacing: 1.2,
+            }}
+          >
+            {startsImmediately ? "Démarrage maintenant" : "À relancer"}
+          </div>
+        </div>
+        <div
+          style={{
+            display: "grid",
+            gap: 10,
+            gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+          }}
+        >
+          {[
+            {
+              value: "started" as const,
+              label: "Démarrage maintenant",
+              subtitle: "Le programme commence aujourd'hui",
+              emoji: "🚀",
+              color: "#2DD4BF",
+            },
+            {
+              value: "pending" as const,
+              label: "À relancer plus tard",
+              subtitle: "Bilan sans démarrage immédiat",
+              emoji: "⏳",
+              color: "#A78BFA",
+            },
+          ].map((opt) => {
+            const isActive = afterAssessmentAction === opt.value;
+            return (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => onAfterAssessmentAction(opt.value)}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 12,
+                  padding: "14px 16px",
+                  borderRadius: 14,
+                  cursor: "pointer",
+                  fontFamily: "DM Sans, sans-serif",
+                  textAlign: "left",
+                  background: isActive
+                    ? `linear-gradient(135deg, color-mix(in srgb, ${opt.color} 14%, var(--ls-surface)) 0%, var(--ls-surface) 100%)`
+                    : "var(--ls-surface)",
+                  border: isActive ? `0.5px solid ${opt.color}` : "0.5px solid var(--ls-border)",
+                  boxShadow: isActive
+                    ? `0 4px 14px -6px ${opt.color}66, inset 0 0 0 1px ${opt.color}40`
+                    : "none",
+                  transition: "transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease",
+                }}
+                onMouseEnter={(e) => {
+                  if (!isActive) {
+                    e.currentTarget.style.transform = "translateY(-2px)";
+                    e.currentTarget.style.borderColor = `color-mix(in srgb, ${opt.color} 40%, var(--ls-border))`;
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!isActive) {
+                    e.currentTarget.style.transform = "none";
+                    e.currentTarget.style.borderColor = "var(--ls-border)";
+                  }
+                }}
+              >
+                <div
+                  style={{
+                    width: 46,
+                    height: 46,
+                    flexShrink: 0,
+                    borderRadius: 12,
+                    background: isActive
+                      ? `linear-gradient(135deg, ${opt.color} 0%, color-mix(in srgb, ${opt.color} 70%, #000) 100%)`
+                      : `linear-gradient(135deg, color-mix(in srgb, ${opt.color} 18%, var(--ls-surface2)) 0%, var(--ls-surface2) 100%)`,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: 24,
+                    border: isActive ? "none" : `0.5px solid color-mix(in srgb, ${opt.color} 28%, transparent)`,
+                    boxShadow: isActive
+                      ? `0 4px 12px -4px ${opt.color}80, inset 0 1px 0 rgba(255,255,255,0.20)`
+                      : "none",
+                    transition: "background 0.2s ease, transform 0.2s ease",
+                  }}
+                >
+                  {opt.emoji}
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div
+                    style={{
+                      fontSize: 14.5,
+                      fontWeight: 700,
+                      color: isActive ? opt.color : "var(--ls-text)",
+                      fontFamily: "Syne, serif",
+                      letterSpacing: "-0.01em",
+                    }}
+                  >
+                    {opt.label}
+                  </div>
+                  <div
+                    style={{
+                      fontSize: 12,
+                      color: "var(--ls-text-muted)",
+                      marginTop: 3,
+                      lineHeight: 1.4,
+                    }}
+                  >
+                    {opt.subtitle}
+                  </div>
+                </div>
+                {/* Check radio premium */}
+                <div
+                  style={{
+                    width: 22,
+                    height: 22,
+                    flexShrink: 0,
+                    borderRadius: 999,
+                    border: isActive ? `2px solid ${opt.color}` : "1.5px solid var(--ls-border)",
+                    background: isActive ? opt.color : "transparent",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    transition: "all 0.2s ease",
+                  }}
+                >
+                  {isActive && (
+                    <svg
+                      width="12"
+                      height="12"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="#FFFFFF"
+                      strokeWidth="3"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                  )}
+                </div>
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -241,27 +426,62 @@ export function FollowUpStepV2({
           />
         </div>
 
-        {/* 2 promesses automatiques */}
-        <div
-          style={{
-            position: "relative",
-            display: "grid",
-            gap: 10,
-            gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-          }}
-        >
-          <AutoActionCard
-            emoji="📅"
-            title="Ajouté à ton agenda"
-            desc="Le RDV apparaît automatiquement dans ton calendrier Lor'Squad et tes rappels."
-            color="var(--ls-teal)"
-          />
-          <AutoActionCard
-            emoji="📲"
-            title="Envoyé sur son téléphone"
-            desc="Le client reçoit l'invitation et le lien d'accès à son espace après validation du bilan."
-            color="var(--ls-gold)"
-          />
+        {/* Section "Ce qui se passe quand tu valides" — accent agenda renforcé */}
+        <div style={{ position: "relative", marginTop: 20 }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              marginBottom: 12,
+              fontFamily: "DM Sans, sans-serif",
+              fontSize: 11,
+              fontWeight: 700,
+              letterSpacing: "0.18em",
+              textTransform: "uppercase",
+              color: "var(--ls-text-muted)",
+            }}
+          >
+            <span
+              style={{
+                flex: 1,
+                height: 1,
+                background:
+                  "linear-gradient(90deg, transparent 0%, color-mix(in srgb, var(--ls-gold) 30%, transparent) 50%, transparent 100%)",
+              }}
+            />
+            <span>✦ Ce qui se passe automatiquement</span>
+            <span
+              style={{
+                flex: 1,
+                height: 1,
+                background:
+                  "linear-gradient(90deg, transparent 0%, color-mix(in srgb, var(--ls-gold) 30%, transparent) 50%, transparent 100%)",
+              }}
+            />
+          </div>
+          <div
+            style={{
+              display: "grid",
+              gap: 12,
+              gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
+            }}
+          >
+            <AutoActionCard
+              emoji="📅"
+              eyebrow="Côté coach"
+              title="Ajouté à ton agenda"
+              desc="Le RDV apparaît dans ton calendrier Lor'Squad. Rappel push 30 min avant. Tu n'as rien à reprogrammer."
+              color="var(--ls-teal)"
+            />
+            <AutoActionCard
+              emoji="📲"
+              eyebrow="Côté client"
+              title="Invitation envoyée"
+              desc={`${firstName} reçoit la date par notification + l'accès à son espace personnel après validation du bilan.`}
+              color="var(--ls-gold)"
+            />
+          </div>
         </div>
 
         {suiviLibre ? (
@@ -400,11 +620,13 @@ export function FollowUpStepV2({
 
 function AutoActionCard({
   emoji,
+  eyebrow,
   title,
   desc,
   color,
 }: {
   emoji: string;
+  eyebrow: string;
   title: string;
   desc: string;
   color: string;
@@ -412,40 +634,84 @@ function AutoActionCard({
   return (
     <div
       style={{
-        padding: "14px 16px",
-        borderRadius: 14,
-        background: `color-mix(in srgb, ${color} 6%, var(--ls-surface))`,
-        border: `0.5px solid color-mix(in srgb, ${color} 28%, var(--ls-border))`,
+        padding: "18px 18px 16px",
+        borderRadius: 16,
+        background: `linear-gradient(135deg, color-mix(in srgb, ${color} 10%, var(--ls-surface)) 0%, color-mix(in srgb, ${color} 4%, var(--ls-surface)) 100%)`,
+        border: `0.5px solid color-mix(in srgb, ${color} 32%, var(--ls-border))`,
+        boxShadow: `0 6px 18px -10px color-mix(in srgb, ${color} 35%, transparent)`,
         display: "flex",
-        gap: 12,
+        gap: 14,
         alignItems: "flex-start",
+        position: "relative",
+        overflow: "hidden",
+        transition:
+          "transform 240ms cubic-bezier(0.4, 0, 0.2, 1), box-shadow 240ms cubic-bezier(0.4, 0, 0.2, 1)",
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.transform = "translateY(-2px)";
+        e.currentTarget.style.boxShadow = `0 10px 24px -10px color-mix(in srgb, ${color} 50%, transparent)`;
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.transform = "none";
+        e.currentTarget.style.boxShadow = `0 6px 18px -10px color-mix(in srgb, ${color} 35%, transparent)`;
       }}
     >
+      {/* Glow décoratif */}
+      <div
+        aria-hidden="true"
+        style={{
+          position: "absolute",
+          top: -30,
+          right: -30,
+          width: 100,
+          height: 100,
+          borderRadius: "50%",
+          background: `color-mix(in srgb, ${color} 22%, transparent)`,
+          filter: "blur(32px)",
+          pointerEvents: "none",
+        }}
+      />
+      {/* Icône premium */}
       <div
         style={{
-          width: 38,
-          height: 38,
-          borderRadius: 10,
+          width: 52,
+          height: 52,
+          borderRadius: 14,
           background: `linear-gradient(135deg, ${color} 0%, color-mix(in srgb, ${color} 70%, var(--ls-bg)) 100%)`,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          fontSize: 18,
-          boxShadow: `0 2px 8px color-mix(in srgb, ${color} 30%, transparent)`,
+          fontSize: 26,
+          boxShadow: `0 4px 14px color-mix(in srgb, ${color} 40%, transparent), inset 0 1px 0 rgba(255,255,255,0.30)`,
           flexShrink: 0,
+          position: "relative",
         }}
       >
         {emoji}
       </div>
-      <div style={{ flex: 1, minWidth: 0 }}>
+      <div style={{ flex: 1, minWidth: 0, position: "relative" }}>
+        <div
+          style={{
+            fontFamily: "DM Sans, sans-serif",
+            fontSize: 9.5,
+            fontWeight: 700,
+            letterSpacing: "0.18em",
+            textTransform: "uppercase",
+            color: color,
+            marginBottom: 4,
+          }}
+        >
+          {eyebrow}
+        </div>
         <div
           style={{
             fontFamily: "Syne, serif",
             fontWeight: 700,
-            fontSize: 13.5,
+            fontSize: 15,
             color: "var(--ls-text)",
-            letterSpacing: "-0.01em",
-            marginBottom: 3,
+            letterSpacing: "-0.012em",
+            marginBottom: 5,
+            lineHeight: 1.18,
           }}
         >
           {title}
@@ -453,7 +719,7 @@ function AutoActionCard({
         <div
           style={{
             fontFamily: "DM Sans, sans-serif",
-            fontSize: 11.5,
+            fontSize: 12,
             color: "var(--ls-text-muted)",
             lineHeight: 1.5,
           }}
