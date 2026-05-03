@@ -24,6 +24,9 @@ export interface DistributorCharter {
   cosigner_signature_data_url: string | null;
   cosigned_at: string | null;
 
+  /** Template visuel choisi par le distri. Default 'officielle'. */
+  preferred_template: CharterTemplate;
+
   created_at: string;
   updated_at: string;
 }
