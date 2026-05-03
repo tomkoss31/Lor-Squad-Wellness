@@ -26,6 +26,9 @@ const NAV_ICONS: Record<string, JSX.Element> = {
   "/co-pilote": (
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
   ),
+  "/flex": (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="13,2 3,14 12,14 11,22 21,10 12,10"/></svg>
+  ),
   "/academy": (
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
   ),
@@ -115,6 +118,7 @@ export function AppLayout() {
   // formation, ajout Paramètres en bas. Ordre exact validé avec Thomas.
   const navigation: Array<{ label: string; path: string; badge: number; tourId?: string }> = [
     { label: "Co-pilote", path: "/co-pilote", badge: 0, tourId: "nav-copilote" },
+    { label: "FLEX", path: "/flex", badge: 0, tourId: "nav-flex" },
     // Migration prod 2026-04-28 : Academy admin only tant que la
     // formation est en finalisation. Lever ce gate quand prete.
     ...(currentUser.role === "admin"
