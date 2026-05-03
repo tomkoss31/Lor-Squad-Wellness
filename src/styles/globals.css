@@ -2,6 +2,29 @@
 @tailwind components;
 @tailwind utilities;
 
+/* =============================================================================
+ * Theme system Lor'Squad (note 2026-11-04)
+ *
+ * 2 themes live :
+ *   - :root            = Dark Premium (defaut) — gold/teal sur surface sombre
+ *   - html.theme-light = Light Premium         — gold/teal sur surface claire
+ *
+ * Pour ajouter un theme (ex: "Ocean", "Sunset", "Forest") :
+ *   1. Ajouter un nouveau bloc html.theme-<name> { ... } qui override les
+ *      tokens --ls-gold, --ls-teal, --ls-bg, --ls-surface, etc.
+ *   2. Ajouter le toggle dans src/hooks/useTheme.ts (cycler entre 3+ themes
+ *      au lieu de juste light/dark).
+ *   3. UI selector dans Parametres pour choisir le theme actif
+ *      (persiste localStorage).
+ *
+ * Templates futurs (commentes) en bas du fichier ('html.theme-ocean',
+ * 'html.theme-sunset'). Decommenter quand pret.
+ *
+ * IMPORTANT : tous les composants doivent utiliser var(--ls-*) — jamais
+ * de couleur hardcodee. Si tu vois un #HEXVALUE dans un .tsx, c est un
+ * bug pour le theme system.
+ * ============================================================================= */
+
 :root {
   --ls-bg: #0B0D11;
   --ls-surface: #13161C;
@@ -2465,3 +2488,67 @@ html.theme-light .ls-hoverable:hover {
     scroll-snap-align: start;
   }
 }
+
+/* =============================================================================
+ * Themes alternatifs (templates futurs — 2026-11-04)
+ *
+ * Decommente quand pret a activer. Necessite aussi une mise a jour de
+ * useTheme.ts pour cycler entre les themes.
+ * ============================================================================= */
+
+/* Ocean — palette teal/azure sur surface deep blue */
+/*
+html.theme-ocean {
+  --ls-bg: #0A1828;
+  --ls-surface: #102B43;
+  --ls-surface2: #1B3A56;
+  --ls-border: rgba(255,255,255,0.08);
+  --ls-text: #E8F1FA;
+  --ls-text-muted: #7B9BB8;
+  --ls-text-hint: #4A6B85;
+  --ls-gold: #4FD1C5;
+  --ls-teal: #38BDF8;
+  --ls-coral: #F472B6;
+  --ls-purple: #818CF8;
+  --ls-input-bg: #1B3A56;
+  --ls-sidebar-bg: #102B43;
+}
+*/
+
+/* Sunset — palette warm orange/pink sur surface charcoal */
+/*
+html.theme-sunset {
+  --ls-bg: #1A0F0A;
+  --ls-surface: #2B1812;
+  --ls-surface2: #3D2419;
+  --ls-border: rgba(255,255,255,0.08);
+  --ls-text: #F5E6D3;
+  --ls-text-muted: #B89888;
+  --ls-text-hint: #8B6F5A;
+  --ls-gold: #F97316;
+  --ls-teal: #FB7185;
+  --ls-coral: #DC2626;
+  --ls-purple: #C084FC;
+  --ls-input-bg: #3D2419;
+  --ls-sidebar-bg: #2B1812;
+}
+*/
+
+/* Forest — palette green/cream sur surface earthy */
+/*
+html.theme-forest {
+  --ls-bg: #0F1E14;
+  --ls-surface: #1A2E20;
+  --ls-surface2: #243D2E;
+  --ls-border: rgba(255,255,255,0.08);
+  --ls-text: #E8F0E3;
+  --ls-text-muted: #88A88F;
+  --ls-text-hint: #5C7A66;
+  --ls-gold: #D4A574;
+  --ls-teal: #4ADE80;
+  --ls-coral: #F87171;
+  --ls-purple: #A78BFA;
+  --ls-input-bg: #243D2E;
+  --ls-sidebar-bg: #1A2E20;
+}
+*/
