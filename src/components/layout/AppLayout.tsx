@@ -19,6 +19,9 @@ import { useActiveTour } from "../../features/onboarding/ActiveTourContext";
 import { TourRunner } from "../../features/onboarding/TourRunner";
 import { useActiveQuiz } from "../../features/academy/ActiveQuizContext";
 import { QuizModal } from "../../features/academy/components/QuizModal";
+import { RankSelectorModal } from "../rank/RankSelectorModal";
+import { useState } from "react";
+import type { HerbalifeRank } from "../../types/domain";
 
 // Chantier Refonte Navigation (2026-04-22) : sidebar simplifiée +
 // renommage Accueil → Co-pilote. Ajout /formation et /settings.
@@ -185,6 +188,18 @@ export function AppLayout() {
   const isAssessmentPage =
     location.pathname === "/assessments/new" ||
     /^\/clients\/[^/]+\/follow-up\/new$/.test(location.pathname);
+
+  // FLEX rank-aware (2026-11-05) : pop-up forcé "Confirme ton rang
+  // Herbalife" tant que rank_set_at est NULL. Bloque l'app sur tous les
+  // users (existants + nouveaux). Skip si on est déjà sur l'onboarding
+  // distri (où le rang est demandé inline).
+  const [rankConfirmed, setRankConfirmed] = useState(false);
+  const needsRankConfirmation =
+    !rankConfirmed &&
+    !currentUser.rankSetAt &&
+    !location.pathname.startsWith("/welcome") &&
+    !location.pathname.startsWith("/bienvenue-distri") &&
+    !location.pathname.startsWith("/auto-login");
 
   return (
     <div className="min-h-screen bg-hero-mesh">
@@ -580,6 +595,13 @@ export function AppLayout() {
           quiz={activeQuiz.quiz}
           sectionTitle={activeQuiz.sectionTitle}
           onComplete={(passed, scorePercent) => closeQuiz(passed, scorePercent)}
+        />
+      ) : null}
+      {needsRankConfirmation ? (
+        <RankSelectorModal
+          userId={currentUser.id}
+          initialRank={(currentUser.currentRank as HerbalifeRank | undefined) ?? "distributor_25"}
+          onConfirmed={() => setRankConfirmed(true)}
         />
       ) : null}
     </div>
