@@ -261,6 +261,16 @@ const FormationCertificatePage = lazy(() =>
   }))
 );
 // Feature #7 (2026-11-04) : Strategy Plan Calculator (formule 5-3-1).
+const FlexOnboardingPage = lazy(() =>
+  import("./pages/FlexOnboardingPage").then((module) => ({
+    default: module.FlexOnboardingPage,
+  })),
+);
+const FlexDashboardPage = lazy(() =>
+  import("./pages/FlexDashboardPage").then((module) => ({
+    default: module.FlexDashboardPage,
+  })),
+);
 const FormationCalculatorPage = lazy(() =>
   import("./pages/FormationCalculatorPage").then((module) => ({
     default: module.FormationCalculatorPage
@@ -369,6 +379,11 @@ export default function App() {
                   /dashboard redirige pour ne pas casser les liens existants. */}
               <Route path="co-pilote" element={<CoPilotePage />} />
               <Route path="dashboard" element={<Navigate to="/co-pilote" replace />} />
+              {/* FLEX Lor'Squad Phase B (2026-11-05) — moteur de pilotage
+                  quotidien du distri. /flex = dashboard, /flex/onboarding =
+                  wizard 5 questions. */}
+              <Route path="flex" element={<FlexDashboardPage />} />
+              <Route path="flex/onboarding" element={<FlexOnboardingPage />} />
               {/* Lor'Squad Academy Phase 1 (2026-04-26) — gated admin only
                   en prod (RoleRoute). Defense en profondeur : RoleRoute
                   redirige vers /co-pilote si non-admin tape l URL manuelle. */}
