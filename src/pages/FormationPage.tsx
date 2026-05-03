@@ -290,7 +290,7 @@ export function FormationPage() {
       >
         💡 <strong style={{ color: "var(--ls-gold)" }}>Le contenu arrive bientôt.</strong> Thomas
         finalise les modules de formation. La boîte à outils est déjà 100% utilisable. Pour les
-        modules N1/N2/N3, encore quelques jours de patience.
+        modules Démarrer / Construire / Dupliquer, encore quelques jours de patience.
       </div>
 
       {/* Footer : glossaire */}
