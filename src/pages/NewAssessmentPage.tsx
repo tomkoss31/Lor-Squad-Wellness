@@ -8,6 +8,7 @@ import { BodyMetricCard, type MetricRange } from "../components/assessment/BodyM
 import { AssessmentSectionV2 } from "../components/assessment/AssessmentSectionV2";
 import { AssessmentFieldV2 } from "../components/assessment/AssessmentFieldV2";
 import { BusinessCuriosityCard } from "../components/assessment/BusinessCuriosityCard";
+import { RecommendationStepV2 } from "../components/assessment/RecommendationStepV2";
 import { useEffect } from "react";
 import { useRef } from "react";
 import { Component, type ErrorInfo } from "react";
@@ -2615,9 +2616,11 @@ export function NewAssessmentPage() {
             </VisualStepBoundary>
           )}
 
-          {/* ─── Étape 7 : Recommandations (déplacée après Dégustation — 2026-04-20) ─── */}
+          {/* ─── Étape 10 : Recommandations — refonte V2 (2026-11-04, pattern VIP).
+                Hero progression + 2 paliers debloques visuellement + lignes
+                compactes pas-de-pavé. */}
           {currentStepId === 'recommendations' && (
-            <RecommendationStepCard
+            <RecommendationStepV2
               recommendations={form.recommendations}
               recommendationsContacted={form.recommendationsContacted}
               onChange={updateRecommendation}
@@ -3941,135 +3944,10 @@ class VisualStepBoundary extends Component<
   }
 }
 
-function RecommendationStepCard({
-  recommendations,
-  recommendationsContacted,
-  onChange,
-  onToggleContacted
-}: {
-  recommendations: RecommendationLead[];
-  recommendationsContacted: boolean;
-  onChange: (index: number, field: keyof RecommendationLead, value: string) => void;
-  onToggleContacted: (value: boolean) => void;
-}) {
-  const filledRecommendations = recommendations.filter(
-    (item) => item.name.trim() || item.contact.trim()
-  ).length;
-
-    return (
-        <div className="space-y-5">
-          <Card className="space-y-5 bg-[linear-gradient(180deg,rgba(15,23,42,0.24),rgba(15,23,42,0.56))]">
-            <div className="max-w-4xl">
-              <p className="eyebrow-label">Moment smoothie & recommandations</p>
-              <h2 className="mt-3 max-w-3xl text-2xl leading-tight text-white md:text-[2.5rem]">
-                A qui aimerais-tu offrir ce moment bien-etre et nutrition ?
-              </h2>
-            </div>
-          </Card>
-
-        <Card className="space-y-5">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <p className="eyebrow-label">Liste nominative</p>
-              <p className="mt-2 text-3xl text-white">Les personnes a qui offrir l&apos;experience</p>
-              <p className="mt-2 max-w-3xl text-sm leading-7 text-[var(--ls-text-muted)]">
-                Note simplement un prenom et un contact par ligne.
-              </p>
-            </div>
-            <StatusBadge label={`${filledRecommendations}/10`} tone="amber" />
-          </div>
-
-          <label className="flex items-center justify-between gap-3 rounded-[22px] border border-white/10 bg-[var(--ls-surface2)] px-4 py-4">
-            <div>
-              <p className="text-sm font-medium text-white">Recommandations contactées</p>
-              <p className="mt-1 text-sm text-[var(--ls-text-muted)]">
-                Coche ici quand les contacts de ce bilan ont déjà été repris.
-              </p>
-            </div>
-            <input
-              type="checkbox"
-              className="h-5 w-5 rounded border-white/15 bg-slate-950/30"
-              checked={recommendationsContacted}
-              onChange={(event) => onToggleContacted(event.target.checked)}
-            />
-          </label>
-
-          <div className="grid gap-3 md:grid-cols-2">
-            <div className="rounded-[22px] bg-amber-400/[0.08] px-5 py-4">
-              <p className="eyebrow-label text-amber-100/70">Palier cadeau 1</p>
-              <p className="mt-2 text-xl text-white">A partir de 5 noms</p>
-              <p className="mt-2 text-sm leading-6 text-[var(--ls-text-muted)]">Premier repère cadeau.</p>
-            </div>
-            <div className="rounded-[22px] bg-[rgba(201,168,76,0.08)] px-5 py-4">
-              <p className="eyebrow-label text-[#2DD4BF]/70">Palier cadeau 2</p>
-              <p className="mt-2 text-xl text-white">A partir de 10 noms</p>
-              <p className="mt-2 text-sm leading-6 text-[var(--ls-text-muted)]">Deuxieme repère cadeau.</p>
-            </div>
-          </div>
-
-        <div className="grid gap-4">
-          {recommendations.map((item, index) => (
-            <div key={`recommendation-${index}`} className="space-y-4">
-              {(index === 5 || index === 9) && (
-                <div
-                  className={`rounded-[20px] px-4 py-3 text-sm ${
-                    index === 5
-                      ? "bg-amber-400/[0.08] text-amber-50"
-                      : "bg-[rgba(201,168,76,0.08)] text-[#F0C96A]"
-                  }`}
-                  >
-                    {index === 5
-                      ? "Palier cadeau 1 atteint."
-                      : "Palier cadeau 2 atteint."}
-                  </div>
-                )}
-              <div className="grid gap-4 rounded-[26px] bg-[linear-gradient(180deg,rgba(2,6,23,0.4),rgba(15,23,42,0.28))] p-5 lg:grid-cols-[110px_1.1fr_1.3fr]">
-                <div className="flex min-h-[72px] items-center justify-center rounded-[20px] bg-[var(--ls-surface2)] px-4 py-3 text-base font-semibold text-white">
-                  Reco {index + 1}
-                </div>
-                <RecommendationLineField
-                  label="Nom / prenom"
-                  value={item.name}
-                  onChange={(value) => onChange(index, "name", value)}
-                />
-                <RecommendationLineField
-                  label="Numero de telephone ou reseau"
-                  value={item.contact}
-                  onChange={(value) => onChange(index, "contact", value)}
-                />
-              </div>
-            </div>
-          ))}
-        </div>
-      </Card>
-    </div>
-  );
-}
-
-function RecommendationLineField({
-  label,
-  value,
-  onChange
-}: {
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-}) {
-  return (
-    <label className="block space-y-3">
-      <span className="text-sm font-medium text-[var(--ls-text-muted)]">{label}</span>
-      <div className="relative rounded-[20px] bg-white/[0.02] px-4 py-4">
-        <input
-          value={value}
-          onChange={(event) => onChange(event.target.value)}
-          className="w-full border-0 bg-transparent px-0 pb-2 text-base text-white placeholder:text-[var(--ls-text-hint)] focus:outline-none focus:ring-0"
-          placeholder="Noter ici"
-        />
-        <div className="pointer-events-none absolute bottom-3 left-4 right-4 h-px bg-[linear-gradient(90deg,rgba(255,255,255,0.25),rgba(255,255,255,0.06))]" />
-      </div>
-    </label>
-  );
-}
+// RecommendationStepCard + RecommendationLineField supprimes (2026-11-04) —
+// migres vers RecommendationStepV2 avec pattern VIP (tier dynamique +
+// progress bar + lignes compactes). Voir
+// src/components/assessment/RecommendationStepV2.tsx.
 
 function Field({
   label,
