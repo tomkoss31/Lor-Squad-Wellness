@@ -5,6 +5,66 @@ reproduire les régressions passées. Relire avant tout gros chantier.
 
 ---
 
+## Theme system (note 2026-11-04)
+
+Lor'Squad utilise un système de tokens CSS dans `src/styles/globals.css` :
+
+- `:root` = thème **Dark Premium** (défaut) — gold #C9A84C / teal #2DD4BF
+- `html.theme-light` = thème **Light Premium** — gold #B8922A / teal #0D9488
+
+**Règle absolue** : **tous les composants UI** doivent utiliser
+`var(--ls-*)` pour les couleurs. **Jamais** de `#HEXVALUE` hardcodé dans
+un `.tsx`. Si tu en vois un, c'est un bug pour le theme system.
+
+### Préparer multi-thèmes (Ocean / Sunset / Forest)
+
+3 templates commentés sont prêts en bas de `globals.css`. Pour activer :
+1. Décommenter le bloc `html.theme-ocean { ... }` (ou autre)
+2. Étendre `useTheme.ts` pour cycler entre 3+ thèmes au lieu de
+   light/dark
+3. Ajouter un selector de thème dans `/parametres`
+4. Persister le choix en localStorage
+
+### Audit theme-awareness (à faire si bug visuel signalé)
+
+Recherche `grep -r "#[0-9A-F]" src/` pour traquer les couleurs
+hardcodées. Refonte 2026-11-04 a déjà fixé les inputs default
+(`@layer base` n'utilisait pas les tokens → corrigé).
+
+---
+
+## Chantier visuel bilan (2026-11-04, 6 étapes)
+
+Refonte profonde de `NewAssessmentPage` — la page coeur de l'app, vue
+par les distri ET par les clients pendant les RDV.
+
+| # | Livré | Commit |
+|---|-------|--------|
+| 1 | **Polish atomiques** Field + ChoiceGroup (delight + theme fix) | `084b239` |
+| 2 | **Slide horizontal directionnel** entre étapes (forward/back) | `818b106` |
+| 3 | **Body Scan** : `BodyMetricCard` avec progress bars relatives aux plages saines (sex-aware ranges Tanita) + dot zone status | `d1abd6f` |
+| 4 | **Concept step** : framing premium (gradient + glow + badge "Signature Lor'Squad" + tagline gradient) | `9f7d51a` |
+| 5 | **StepHero v2** : glow flottant + dot pulse + entrance staggered | `5d15f44` |
+| 6 | **Theme system docs** + 3 templates futurs (ocean/sunset/forest) | en cours |
+
+### Composants créés
+
+- `src/components/assessment/BodyMetricCard.tsx` — wrap input body-scan
+  avec progress bar 0→scaleMax + dot zone status (in / under / over)
+- Hero avec animations CSS keyframes : `ls-hero-glow-float`,
+  `ls-hero-dot-pulse`, `ls-hero-fade-up` (stagger 80ms)
+
+### Patterns à reproduire (multi-thèmes safe)
+
+- `color-mix(in srgb, var(--ls-gold) X%, transparent)` pour les
+  backgrounds tintés
+- Animations CSS pures (pas de framer-motion ajouté → pas de bundle
+  bloat)
+- `@media (prefers-reduced-motion: reduce)` pour désactiver
+- Tous les emojis sont `aria-hidden="true"`
+
+---
+
 ## Roadmap chantiers à venir (mémo 2026-04-28)
 
 Status à date des 5 chantiers brainstormés (A → E) :
