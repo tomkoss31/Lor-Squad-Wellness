@@ -19,19 +19,10 @@ import {
   HERBALIFE_ID_PATTERN,
   HERBALIFE_ID_HELP,
 } from "../../lib/herbalifeId";
-import { RANK_LABELS, type HerbalifeRank } from "../../types/domain";
+import { RANK_LABELS, RANK_ORDER, type HerbalifeRank } from "../../types/domain";
 import { RankPinBadge } from "../rank/RankPinBadge";
 
-const RANK_OPTIONS: HerbalifeRank[] = [
-  "distributor_25",
-  "senior_consultant_35",
-  "success_builder_42",
-  "supervisor_50",
-  "world_team_50",
-  "get_team_50",
-  "millionaire_50",
-  "presidents_50",
-];
+const RANK_OPTIONS: HerbalifeRank[] = RANK_ORDER;
 
 function daysSince(iso?: string | null): number | null {
   if (!iso) return null;
