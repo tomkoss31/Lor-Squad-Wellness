@@ -135,12 +135,14 @@ export function FlexTeamPage() {
       }));
       setMembers(built);
 
-      // Drift list (admin only)
-      if (isAdmin) {
-        const driftRes = await sb.rpc("list_flex_drift_distri");
-        if (!cancelled && !driftRes.error && driftRes.data) {
-          setDrift(driftRes.data as FlexDriftDistri[]);
-        }
+      // Drift list :
+      //   - admin : list_flex_drift_distri (all distri)
+      //   - sponsor non-admin : list_flex_drift_for_sponsor (downline direct)
+      const driftRes = await sb.rpc(
+        isAdmin ? "list_flex_drift_distri" : "list_flex_drift_for_sponsor",
+      );
+      if (!cancelled && !driftRes.error && driftRes.data) {
+        setDrift(driftRes.data as FlexDriftDistri[]);
       }
 
       setLoading(false);
@@ -195,8 +197,8 @@ export function FlexTeamPage() {
         </div>
       )}
 
-      {/* Section admin — drift list */}
-      {isAdmin && (
+      {/* Drift list — admin voit tout, sponsor voit sa downline directe */}
+      {(isAdmin || drift.length > 0) && (
         <div
           style={{
             background: "var(--ls-surface)",
@@ -214,7 +216,8 @@ export function FlexTeamPage() {
               color: "var(--ls-coral)",
             }}
           >
-            ⚠️ Distri en dérive (&gt; 2 semaines sans check-in)
+            ⚠️ {isAdmin ? "Distri en dérive" : "Distri de ton équipe en dérive"}{" "}
+            (&gt; 2 semaines sans check-in)
           </h2>
           {drift.length === 0 ? (
             <p style={{ color: "var(--ls-text-muted)", fontSize: 13, margin: 0 }}>

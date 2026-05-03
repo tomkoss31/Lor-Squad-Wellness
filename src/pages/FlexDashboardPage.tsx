@@ -84,6 +84,7 @@ export function FlexDashboardPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [archiving, setArchiving] = useState(false);
+  const [togglingPause, setTogglingPause] = useState(false);
 
   useEffect(() => {
     if (!userId) return;
@@ -225,6 +226,34 @@ export function FlexDashboardPage() {
     navigate("/flex/onboarding", { replace: true });
   }
 
+  async function handleTogglePause() {
+    if (!plan) return;
+    setTogglingPause(true);
+    setError(null);
+    const sb = await getSupabaseClient();
+    if (!sb) {
+      setTogglingPause(false);
+      setError("Connexion Supabase indisponible");
+      return;
+    }
+    const newPaused = !plan.is_paused;
+    const { data, error: e } = await sb
+      .from("distributor_action_plan")
+      .update({
+        is_paused: newPaused,
+        paused_at: newPaused ? new Date().toISOString() : null,
+      })
+      .eq("id", plan.id)
+      .select()
+      .single();
+    setTogglingPause(false);
+    if (e) {
+      setError(e.message);
+      return;
+    }
+    if (data) setPlan(data as DistributorActionPlan);
+  }
+
   if (loading) {
     return <div style={{ padding: 40, color: "var(--ls-text-muted)" }}>Chargement…</div>;
   }
@@ -313,9 +342,40 @@ export function FlexDashboardPage() {
       {/* Phase D : récap 4 semaines + cumul mensuel via RPC. */}
       <FlexHistoryCard userId={userId!} />
 
-      <button type="button" onClick={handleReset} disabled={archiving} style={btnGhost}>
-        {archiving ? "Archivage…" : "↺ Recommencer mon plan"}
-      </button>
+      <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+        <button
+          type="button"
+          onClick={handleTogglePause}
+          disabled={togglingPause}
+          style={btnGhost}
+          title={plan.is_paused ? "Reprendre ton plan FLEX" : "Mettre ton plan en pause (vacances, etc.)"}
+        >
+          {togglingPause ? "…" : plan.is_paused ? "▶ Reprendre mon plan" : "⏸ Mettre en pause"}
+        </button>
+        <button type="button" onClick={handleReset} disabled={archiving} style={btnGhost}>
+          {archiving ? "Archivage…" : "↺ Recommencer mon plan"}
+        </button>
+      </div>
+      {plan.is_paused && (
+        <div
+          style={{
+            background: "color-mix(in srgb, var(--ls-text-muted) 8%, transparent)",
+            border: "0.5px dashed var(--ls-border)",
+            borderRadius: 12,
+            padding: "10px 14px",
+            color: "var(--ls-text-muted)",
+            fontSize: 12,
+            fontFamily: "DM Sans, sans-serif",
+          }}
+        >
+          ⏸ Plan en pause depuis le{" "}
+          {plan.paused_at
+            ? new Date(plan.paused_at).toLocaleDateString("fr-FR")
+            : "—"}
+          . Tu ne reçois plus les notifs FLEX et tu n'apparais pas dans la
+          drift list. Reprends quand tu veux.
+        </div>
+      )}
     </div>
   );
 }
