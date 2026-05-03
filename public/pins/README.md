@@ -3,26 +3,37 @@
 Le composant `src/components/rank/RankPinBadge.tsx` affiche le pin
 correspondant au rang Herbalife du distri.
 
-## Fichiers attendus (8 PNG carrés, fond transparent recommandé)
+## Mapping principal (8 paliers, current_rank → fichier)
 
-Mapping `users.current_rank` → fichier :
-
-| Rang DB | Fichier attendu |
+| Rang DB | Fichier |
 |---|---|
-| `distributor_25` | `pins/distributor.png` |
-| `senior_consultant_35` | `pins/senior-consultant.png` |
-| `success_builder_42` | `pins/success-builder.png` |
-| `supervisor_50` | `pins/supervisor.png` |
-| `world_team_50` | `pins/world-team.png` |
-| `get_team_50` | `pins/get-team.png` |
-| `millionaire_50` | `pins/millionaire-team.png` |
-| `presidents_50` | `pins/presidents-team.png` |
+| `distributor_25` | `distributor.webp` |
+| `senior_consultant_35` | `senior-consultant.webp` |
+| `success_builder_42` | `success-builder.webp` |
+| `supervisor_50` | `supervisor.webp` |
+| `world_team_50` | `world-team.webp` |
+| `get_team_50` | `get-team.webp` |
+| `millionaire_50` | `millionaire-team.webp` |
+| `presidents_50` | `presidents-team.webp` ⚠️ manque |
 
-## Format recommandé
+## Pins extras (paliers RO intermédiaires, déjà déposés)
 
-- PNG, fond transparent
-- 256×256 px minimum (le composant scale en sm 40 / md 64 / lg 96 / xl 128)
-- Pin Herbalife officiel (collection 2026 ou plus récente)
+Ces 3 fichiers sont dans `/public/pins/` mais ne sont **pas encore
+mappés à un rang DB** (la colonne `users.current_rank` n'a que les 8
+valeurs ci-dessus). Ils sont exportés via `PIN_FILE_EXTRA` pour usage
+ultérieur (extension du type HerbalifeRank avec sous-paliers).
+
+| Pin | Fichier | Mapping futur potentiel |
+|---|---|---|
+| Active Supervisor | `active-supervisor.webp` | `supervisor_active_50` |
+| G.E.T. 2500 | `get-team-2500.webp` | `get_team_2500_50` |
+| Millionaire 7500 | `millionaire-team-7500.webp` | `millionaire_team_7500_50` |
+
+## Format
+
+- WebP, fond transparent (plus léger que PNG, mêmes capacités)
+- ~256×256 minimum (le composant scale en sm 40 / md 64 / lg 96 / xl 128)
+- Pins Herbalife officiels (collection 2026)
 
 ## Fallback
 
