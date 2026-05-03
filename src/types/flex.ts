@@ -39,6 +39,8 @@ export interface DistributorActionPlan {
   daily_time_minutes: FlexDailyTimeMinutes;
   starting_clients_count: number;
   available_slots: FlexAvailableSlot[];
+  /** Panier moyen retail (€) saisi à l'onboarding. Combiné au rank pour calc net/client. */
+  average_basket: number;
   /** ISO date "YYYY-MM-DD". */
   target_deadline_date: string;
 

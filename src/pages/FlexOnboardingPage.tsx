@@ -1,15 +1,20 @@
 // =============================================================================
 // FlexOnboardingPage — FLEX Lor'Squad Phase B (2026-11-05)
 //
-// Onboarding 5 questions du moteur de pilotage du distri. À la validation,
+// Onboarding 6 questions du moteur de pilotage du distri. À la validation,
 // insert dans distributor_action_plan + redirect vers /flex (dashboard).
 //
-// 5 questions :
+// 6 questions :
 //   1. Objectif revenu mensuel (slider 100→5000€, default 1500)
-//   2. Temps dispo/jour (radio 15/30/45/60/90/-1)
-//   3. Combien de clients actifs aujourd'hui (number 0-200)
-//   4. Tes créneaux dispo de la semaine (chips multi-jours, optionnel)
-//   5. Date d'objectif (date picker, default +90j)
+//   2. Panier moyen retail (slider 50→500€, default 150) — sert au calc net
+//   3. Temps dispo/jour (radio 15/30/45/60/90/-1)
+//   4. Combien de clients actifs aujourd'hui (number 0-200)
+//   5. Tes créneaux dispo de la semaine (chips multi-jours, optionnel)
+//   6. Date d'objectif (date picker, default +90j)
+//
+// Le rang Herbalife est lu depuis currentUser.currentRank (rempli via le
+// pop-up RankSelectorModal forcé à la connexion). Combiné au panier, il
+// donne le net par client (panier × marge 25/35/42/50%).
 //
 // Summary card sticky en bas : KPI calculés live via computeFlexTargets.
 //
@@ -26,13 +31,14 @@ import { getSupabaseClient } from "../services/supabaseClient";
 import {
   computeFlexTargets,
   estimateFlexDailyMinutes,
-  FLEX_NET_PER_CLIENT,
+  FLEX_DEFAULT_BASKET,
 } from "../lib/flexCalculations";
 import type {
   DistributorActionPlanInsert,
   FlexAvailableSlot,
   FlexDailyTimeMinutes,
 } from "../types/flex";
+import { RANK_LABELS, type HerbalifeRank } from "../types/domain";
 
 const TIME_OPTIONS: Array<{ value: FlexDailyTimeMinutes; label: string }> = [
   { value: 15, label: "15 min" },
@@ -65,6 +71,7 @@ export function FlexOnboardingPage() {
   const userId = currentUser?.id ?? null;
 
   const [revenue, setRevenue] = useState<number>(1500);
+  const [averageBasket, setAverageBasket] = useState<number>(FLEX_DEFAULT_BASKET);
   const [dailyTime, setDailyTime] = useState<FlexDailyTimeMinutes>(60);
   const [startingClients, setStartingClients] = useState<number>(0);
   const [slots, setSlots] = useState<FlexAvailableSlot[]>([]);
@@ -105,9 +112,18 @@ export function FlexOnboardingPage() {
     };
   }, [userId, navigate]);
 
+  const userRank: HerbalifeRank =
+    (currentUser?.currentRank as HerbalifeRank | undefined) ?? "distributor_25";
+
   const breakdown = useMemo(
-    () => computeFlexTargets(revenue, startingClients),
-    [revenue, startingClients],
+    () =>
+      computeFlexTargets({
+        monthlyRevenueTarget: revenue,
+        averageBasket,
+        rank: userRank,
+        startingClients,
+      }),
+    [revenue, averageBasket, userRank, startingClients],
   );
 
   const estimateMin = useMemo(
@@ -150,6 +166,7 @@ export function FlexOnboardingPage() {
       daily_time_minutes: dailyTime,
       starting_clients_count: startingClients,
       available_slots: slots,
+      average_basket: averageBasket,
       target_deadline_date: deadline,
       daily_invitations_target: breakdown.daily_invitations_target,
       daily_conversations_target: breakdown.daily_conversations_target,
@@ -188,14 +205,14 @@ export function FlexOnboardingPage() {
       <PageHeading
         eyebrow="FLEX Lor'Squad"
         title="Construis ton plan d'action"
-        description="5 questions pour calibrer tes cibles quotidiennes. On utilise la formule 5-3-1 (5 invitations → 3 conversations → 1 bilan)."
+        description={`6 questions pour calibrer tes cibles quotidiennes (formule 5-3-1). Ton rang actuel : ${RANK_LABELS[userRank]}.`}
       />
 
       {/* Question 1 — Objectif revenu */}
       <SectionCard
         index={1}
         title="Quel revenu mensuel tu vises ?"
-        hint="Net dans ta poche, après marge retail (~50 % du panier)."
+        hint="Net dans ta poche, après marge retail (selon ton rang)."
       >
         <div style={{ display: "flex", alignItems: "baseline", gap: 12, marginBottom: 16 }}>
           <span style={{ fontFamily: "Syne, sans-serif", fontSize: 40, fontWeight: 700, color: "var(--ls-gold)" }}>
@@ -218,9 +235,36 @@ export function FlexOnboardingPage() {
         </div>
       </SectionCard>
 
-      {/* Question 2 — Temps dispo */}
+      {/* Question 2 — Panier moyen */}
       <SectionCard
         index={2}
+        title="Ton panier moyen client (retail) ?"
+        hint={`Ce que ton client paie en moyenne / mois. Avec ta marge ${breakdown.margin_pct}%, tu gagnes ${breakdown.net_per_client.toFixed(2)} € net / client.`}
+      >
+        <div style={{ display: "flex", alignItems: "baseline", gap: 12, marginBottom: 16 }}>
+          <span style={{ fontFamily: "Syne, sans-serif", fontSize: 40, fontWeight: 700, color: "var(--ls-teal)" }}>
+            {averageBasket.toLocaleString("fr-FR")}
+          </span>
+          <span style={{ color: "var(--ls-text-muted)", fontSize: 18 }}>€ retail</span>
+        </div>
+        <input
+          type="range"
+          min={50}
+          max={500}
+          step={5}
+          value={averageBasket}
+          onChange={(e) => setAverageBasket(Number(e.target.value))}
+          style={{ width: "100%", accentColor: "var(--ls-teal)" }}
+        />
+        <div style={{ display: "flex", justifyContent: "space-between", color: "var(--ls-text-muted)", fontSize: 11, marginTop: 4 }}>
+          <span>50 €</span>
+          <span>500 €</span>
+        </div>
+      </SectionCard>
+
+      {/* Question 3 — Temps dispo */}
+      <SectionCard
+        index={3}
         title="Combien de temps tu peux y consacrer par jour ?"
         hint="Sois réaliste — l'app calibre les cibles selon ce temps."
       >
@@ -253,9 +297,9 @@ export function FlexOnboardingPage() {
         </div>
       </SectionCard>
 
-      {/* Question 3 — Clients actuels */}
+      {/* Question 4 — Clients actuels */}
       <SectionCard
-        index={3}
+        index={4}
         title="Combien de clients actifs aujourd'hui ?"
         hint="Ceux qui consomment encore régulièrement (commande au moins 1×/mois)."
       >
@@ -280,9 +324,9 @@ export function FlexOnboardingPage() {
         />
       </SectionCard>
 
-      {/* Question 4 — Créneaux dispo */}
+      {/* Question 5 — Créneaux dispo */}
       <SectionCard
-        index={4}
+        index={5}
         title="Tes créneaux dispo dans la semaine"
         hint="Optionnel — sert à programmer les bilans. Tu peux ajuster plus tard."
       >
@@ -363,9 +407,9 @@ export function FlexOnboardingPage() {
         )}
       </SectionCard>
 
-      {/* Question 5 — Deadline */}
+      {/* Question 6 — Deadline */}
       <SectionCard
-        index={5}
+        index={6}
         title="D'ici quand tu veux atteindre cet objectif ?"
         hint="On recalcule les cibles à mi-parcours automatiquement."
       >
@@ -529,6 +573,5 @@ function KpiTile({ label, value }: { label: string; value: number }) {
   );
 }
 
-// Note pour V2 : FLEX_NET_PER_CLIENT pourra être réajusté si on dérive
-// le panier moyen depuis les pv_transactions du distri (3 derniers mois).
-void FLEX_NET_PER_CLIENT;
+// Note pour V2 : averageBasket pourra être pré-rempli depuis les
+// pv_transactions du distri (moyenne 3 derniers mois) au lieu du défaut.

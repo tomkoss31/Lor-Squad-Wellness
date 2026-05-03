@@ -1,29 +1,24 @@
 // =============================================================================
-// FLEX Lor'Squad — Calculs de cibles 5-3-1
+// FLEX Lor'Squad — Calculs de cibles 5-3-1 (rank-aware, 2026-11-05)
 //
-// À partir de l'objectif revenu mensuel et des clients de départ, derive les
-// 5 cibles KPI du plan d'action :
-//   - daily_invitations_target
-//   - daily_conversations_target
-//   - weekly_bilans_target
-//   - weekly_closings_target
-//   - monthly_active_clients_target
+// Le revenu net par client dépend de DEUX paramètres saisis par le distri :
+//   - panier moyen retail (€) → ce que le client paie / mois
+//   - rang Herbalife          → détermine la marge (25/35/42/50%)
 //
-// Ratio 5-3-1 (refonte 2026-11-04) :
-//   5 invitations  →  3 conversations  →  1 bilan  →  ~33% closings
+// Le calcul de cibles 5-3-1 est ensuite dérivé du nb de clients nécessaires.
 //
-// Calibrage France (aligné FormationCalculatorPage) :
-//   - Panier moyen 75€
-//   - Marge retail Supervisor 50%
-//   - Net moyen par client 37,5€/mois
+// Ratio 5-3-1 :
+//   5 invitations → 3 conversations → 1 bilan → ~33% closings
 //
-// V2 future : computeFlexTargetsFromHistory(userId) qui regarde les
-// 3 derniers mois de pv_transactions pour ajuster panier réel.
+// Exemple Thomas :
+//   panier 234€ × Supervisor 50% = 117€ net/client
+//   Objectif 200€/mois → 200 / 117 = 1,7 → 2 clients (vs 6 dans la V1
+//   bidon avec panier 75€ × 50%).
 // =============================================================================
 
-export const FLEX_AVG_BASKET = 75;
-export const FLEX_RETAIL_MARGIN = 0.5;
-export const FLEX_NET_PER_CLIENT = FLEX_AVG_BASKET * FLEX_RETAIL_MARGIN; // 37.5
+import { RANK_MARGINS, type HerbalifeRank } from "../types/domain";
+
+export const FLEX_DEFAULT_BASKET = 150; // €
 export const FLEX_BILANS_PER_CLOSE = 3; // ~33% conversion bilans → close
 export const FLEX_INVITATIONS_PER_BILAN = 5; // 5-3-1
 export const FLEX_CONVERSATIONS_PER_BILAN = 3; // 5-3-1
@@ -38,22 +33,33 @@ export interface FlexTargets {
 }
 
 export interface FlexTargetsBreakdown extends FlexTargets {
-  /** Nb de nouveaux clients/mois nécessaires pour atteindre l'objectif. */
   needed_new_clients_per_month: number;
-  /** Net moyen utilisé pour le calcul (€/client/mois). */
   net_per_client: number;
+  margin_pct: number;
 }
 
-export function computeFlexTargets(
-  monthlyRevenueTarget: number,
-  startingClients: number = 0,
-): FlexTargetsBreakdown {
+export interface ComputeFlexParams {
+  monthlyRevenueTarget: number;
+  averageBasket: number;
+  rank: HerbalifeRank;
+  startingClients?: number;
+}
+
+export function computeFlexTargets({
+  monthlyRevenueTarget,
+  averageBasket,
+  rank,
+  startingClients = 0,
+}: ComputeFlexParams): FlexTargetsBreakdown {
   const safeRevenue = Math.max(0, Math.round(monthlyRevenueTarget));
+  const safeBasket = Math.max(30, Math.round(averageBasket));
   const safeStarting = Math.max(0, Math.round(startingClients));
+  const margin = RANK_MARGINS[rank] ?? 0.25;
+  const netPerClient = safeBasket * margin;
 
   const neededNewClients = Math.max(
     1,
-    Math.ceil(safeRevenue / FLEX_NET_PER_CLIENT),
+    Math.ceil(safeRevenue / Math.max(1, netPerClient)),
   );
 
   const weeklyClosings = Math.max(
@@ -79,13 +85,13 @@ export function computeFlexTargets(
     weekly_closings_target: weeklyClosings,
     monthly_active_clients_target: safeStarting + neededNewClients,
     needed_new_clients_per_month: neededNewClients,
-    net_per_client: FLEX_NET_PER_CLIENT,
+    net_per_client: Math.round(netPerClient * 10) / 10,
+    margin_pct: Math.round(margin * 100),
   };
 }
 
-/** Estimation grossière du temps quotidien nécessaire vs cible (en min). */
+/** Estimation grossière du temps quotidien nécessaire (min). */
 export function estimateFlexDailyMinutes(targets: FlexTargets): number {
-  // Heuristique : 2 min / invitation + 4 min / conversation + 30 min / bilan/7
   const inviteMin = targets.daily_invitations_target * 2;
   const convMin = targets.daily_conversations_target * 4;
   const bilanMin = (targets.weekly_bilans_target / 7) * 30;
