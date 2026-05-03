@@ -200,7 +200,7 @@ export function FormationModulePage() {
                 fontFamily: "DM Sans, sans-serif",
               }}
             >
-              {l.icon} N{l.order} — {l.title}
+              {l.icon} {l.title}
             </Link>
           ))}
         </div>

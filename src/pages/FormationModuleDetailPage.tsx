@@ -164,7 +164,7 @@ export function FormationModuleDetailPage() {
           fontFamily: "DM Sans, sans-serif",
         }}
       >
-        ← Retour Niveau {level.order} {level.title}
+        ← Retour {level.title}
       </button>
 
       {/* Header hero */}

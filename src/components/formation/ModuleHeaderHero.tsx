@@ -20,7 +20,7 @@ interface Props {
   levelAccent: string; // var(--ls-gold) etc.
 }
 
-export function ModuleHeaderHero({ module, status, levelTitle, levelOrder, levelAccent }: Props) {
+export function ModuleHeaderHero({ module, status, levelTitle, levelOrder: _levelOrder, levelAccent }: Props) {
   const totalLessons = module.lessons.length;
   const totalQcm = module.quiz?.questions.filter((q) => q.kind === "qcm").length ?? 0;
   const totalFreeText = module.quiz?.questions.filter((q) => q.kind === "free_text").length ?? 0;
@@ -72,7 +72,7 @@ export function ModuleHeaderHero({ module, status, levelTitle, levelOrder, level
             color: levelAccent,
           }}
         >
-          Niveau {levelOrder} · {levelTitle} · {formatModuleShort(module.number)}
+          {levelTitle} · {formatModuleShort(module.number)}
         </span>
         {status ? <FormationStatusBadge status={status} /> : null}
       </div>

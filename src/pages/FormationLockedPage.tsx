@@ -103,7 +103,7 @@ export function FormationLockedPage() {
           >
             Le centre de formation est en cours de finalisation. Encore quelques
             heures de patience et tu auras accès à un parcours pyramidal
-            complet — modules N1 / N2 / N3, validations sponsor, certifications.
+            complet — Démarrer / Construire / Dupliquer, validations sponsor, certifications.
           </p>
           <p
             style={{
