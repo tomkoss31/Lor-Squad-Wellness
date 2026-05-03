@@ -5,6 +5,9 @@
 import { StepRail } from "../components/assessment/StepRail";
 import { BusinessAmbitionStep } from "../components/assessment/BusinessAmbitionStep";
 import { BodyMetricCard, type MetricRange } from "../components/assessment/BodyMetricCard";
+import { AssessmentSectionV2 } from "../components/assessment/AssessmentSectionV2";
+import { AssessmentFieldV2 } from "../components/assessment/AssessmentFieldV2";
+import { BusinessCuriosityCard } from "../components/assessment/BusinessCuriosityCard";
 import { useEffect } from "react";
 import { useRef } from "react";
 import { Component, type ErrorInfo } from "react";
@@ -1672,143 +1675,167 @@ export function NewAssessmentPage() {
           >
 
           {currentStepId === 'client-info' && (
-              <div className="space-y-4" data-tour-id="bilan-client-info">
-                <div className="grid gap-4 md:grid-cols-2">
-                  <Field label="Prenom" value={form.firstName} onChange={(v) => update("firstName", v)} prefilled={prefilledFields.firstName} />
-                  <Field label="Nom" value={form.lastName} onChange={(v) => update("lastName", v)} prefilled={prefilledFields.lastName} />
-                  <Field label="Téléphone *" value={form.phone} onChange={(v) => update("phone", v)} prefilled={prefilledFields.phone} />
-                  <Field label="Email *" value={form.email} onChange={(v) => update("email", v)} prefilled={prefilledFields.email} />
-                  <Field label="Invité par / recommandé par" value={form.referredByName} onChange={(v) => update("referredByName", v)} />
-                  <Field
-                    label="Date et heure du bilan initial"
-                    type="datetime-local"
-                    value={form.assessmentDate}
-                    onChange={(v) => update("assessmentDate", v)}
-                  />
-                  {currentUser?.role === "admin" ? (
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-[var(--ls-text-muted)]">
-                        Responsable du dossier
-                      </label>
-                      <select
-                        value={assignedUserId}
-                        onChange={(event) => setAssignedUserId(event.target.value)}
-                      >
-                        {assignableOwners.map((user) => (
-                          <option key={user.id} value={user.id}>
-                            {user.name} - {getRoleLabel(user.role)}
-                          </option>
-                        ))}
-                      </select>
-                      {!isAdmin(currentUser) ? (
-                        <p className="text-xs leading-6 text-[var(--ls-text-muted)]">
-                          Tu peux attribuer le dossier a toi-meme ou a un distributeur de ton equipe.
-                        </p>
-                      ) : null}
-                    </div>
-                  ) : null}
-                  <ChoiceGroup
-                    label="Sexe"
-                    value={form.sex}
-                    options={["female", "male"]}
-                    onChange={(v) => update("sex", v as BiologicalSex)}
-                    formatOption={(option) => (option === "male" ? "Homme" : "Femme")}
-                  />
-                  {/* Chantier birth_date bilan initial (2026-04-29) : date de naissance => age auto. */}
-                  <div className="flex flex-col gap-1">
-                    <Field
+              <div data-tour-id="bilan-client-info" style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+                {/* ─── Section 1 · Identite client (refonte v2 — 2026-11-04) ─── */}
+                <AssessmentSectionV2
+                  emoji="👤"
+                  eyebrow="Identité · qui on accompagne"
+                  title="Faisons connaissance"
+                  description="Les bases administratives et le contexte du client. Tout ce qu'il faut pour ouvrir un dossier propre."
+                  accent="gold"
+                >
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <AssessmentFieldV2
+                      label="Prénom"
+                      icon="✦"
+                      value={form.firstName}
+                      onChange={(v) => update("firstName", v)}
+                      prefilled={prefilledFields.firstName}
+                    />
+                    <AssessmentFieldV2
+                      label="Nom"
+                      icon="✦"
+                      value={form.lastName}
+                      onChange={(v) => update("lastName", v)}
+                      prefilled={prefilledFields.lastName}
+                    />
+                    <AssessmentFieldV2
+                      label="Téléphone"
+                      icon="📞"
+                      required
+                      value={form.phone}
+                      onChange={(v) => update("phone", v)}
+                      prefilled={prefilledFields.phone}
+                    />
+                    <AssessmentFieldV2
+                      label="Email"
+                      icon="✉️"
+                      required
+                      type="email"
+                      value={form.email}
+                      onChange={(v) => update("email", v)}
+                      prefilled={prefilledFields.email}
+                    />
+                    <AssessmentFieldV2
+                      label="Invité par / recommandé par"
+                      icon="🤝"
+                      value={form.referredByName}
+                      onChange={(v) => update("referredByName", v)}
+                    />
+                    <AssessmentFieldV2
+                      label="Date et heure du bilan"
+                      icon="📅"
+                      type="datetime-local"
+                      value={form.assessmentDate}
+                      onChange={(v) => update("assessmentDate", v)}
+                    />
+                    {currentUser?.role === "admin" ? (
+                      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                          <span aria-hidden="true" style={{ fontSize: 13 }}>👥</span>
+                          <label
+                            style={{
+                              fontFamily: "DM Sans, sans-serif",
+                              fontSize: 13,
+                              fontWeight: 500,
+                              color: "var(--ls-text)",
+                            }}
+                          >
+                            Responsable du dossier
+                          </label>
+                        </div>
+                        <select
+                          value={assignedUserId}
+                          onChange={(event) => setAssignedUserId(event.target.value)}
+                        >
+                          {assignableOwners.map((user) => (
+                            <option key={user.id} value={user.id}>
+                              {user.name} — {getRoleLabel(user.role)}
+                            </option>
+                          ))}
+                        </select>
+                        {!isAdmin(currentUser) ? (
+                          <p
+                            style={{
+                              fontFamily: "DM Sans, sans-serif",
+                              fontSize: 11.5,
+                              color: "var(--ls-text-hint)",
+                              margin: 0,
+                              lineHeight: 1.5,
+                            }}
+                          >
+                            Tu peux attribuer le dossier à toi-même ou à un distributeur de ton équipe.
+                          </p>
+                        ) : null}
+                      </div>
+                    ) : null}
+                    <ChoiceGroup
+                      label="Sexe"
+                      value={form.sex}
+                      options={["female", "male"]}
+                      onChange={(v) => update("sex", v as BiologicalSex)}
+                      formatOption={(option) => (option === "male" ? "Homme" : "Femme")}
+                    />
+                    <AssessmentFieldV2
                       label="Date de naissance"
+                      icon="🎂"
                       type="date"
-                      value={form.birthDate}
+                      value={form.birthDate ?? ""}
                       onChange={(v) => {
                         update("birthDate", v);
                         const computed = calculateAge(v);
                         if (computed !== null) update("age", computed);
                       }}
+                      helper={
+                        form.birthDate && form.age > 0
+                          ? `Âge calculé : ${form.age} ans`
+                          : undefined
+                      }
                     />
-                    {form.birthDate && form.age > 0 ? (
-                      <p className="text-xs text-[var(--ls-text-muted)]">
-                        Âge : <strong>{form.age} ans</strong> (calculé auto)
-                      </p>
-                    ) : null}
+                    <AssessmentFieldV2
+                      label="Âge"
+                      icon="⌛"
+                      type="number"
+                      value={form.age}
+                      onChange={(v) => update("age", Number(v))}
+                      helper="Saisie manuelle si pas de date de naissance"
+                    />
+                    <AssessmentFieldV2
+                      label="Taille"
+                      icon="📏"
+                      type="number"
+                      value={form.height}
+                      onChange={(v) => update("height", Number(v))}
+                      helper="en cm"
+                    />
+                    <AssessmentFieldV2
+                      label="Profession"
+                      icon="💼"
+                      value={form.job}
+                      onChange={(v) => update("job", v)}
+                    />
+                    <AssessmentFieldV2
+                      label="Ville"
+                      icon="📍"
+                      value={form.city ?? ""}
+                      onChange={(v) => update("city", v)}
+                    />
                   </div>
-                  <Field
-                    label="Age (saisie manuelle si pas de date)"
-                    type="number"
-                    value={form.age}
-                    onChange={(v) => update("age", Number(v))}
-                  />
-                  <Field label="Taille (cm)" type="number" value={form.height} onChange={(v) => update("height", Number(v))} />
-                  <Field label="Profession" value={form.job} onChange={(v) => update("job", v)} />
-                  <Field label="Ville" value={form.city} onChange={(v) => update("city", v)} />
-                </div>
+                </AssessmentSectionV2>
 
-                {/* Pop-up business bilan (2026-11-03) — question legere etape 1.
-                    Captee discretement sous Profession, ouvre l etape
-                    business-ambition plus tard si la reponse n est pas "Jamais". */}
-                <div
-                  className="rounded-2xl p-4"
-                  style={{
-                    background: "color-mix(in srgb, var(--ls-teal) 5%, var(--ls-surface2))",
-                    border: "0.5px solid color-mix(in srgb, var(--ls-teal) 22%, var(--ls-border))",
-                  }}
-                >
-                  <p
-                    className="text-sm"
-                    style={{
-                      fontFamily: "DM Sans, sans-serif",
-                      color: "var(--ls-text)",
-                      fontWeight: 600,
-                      marginBottom: 4,
-                    }}
-                  >
-                    💭 Au-delà de ton job, t'arrive-t-il de penser à un complément de revenu ?
-                  </p>
-                  <p
-                    className="text-xs"
-                    style={{ color: "var(--ls-text-muted)", marginBottom: 12 }}
-                  >
-                    Une question ouverte, sans engagement. Juste pour mieux te connaître.
-                  </p>
-                  <div className="flex flex-wrap gap-2">
-                    {([
-                      { value: "never", label: "Jamais" },
-                      { value: "sometimes", label: "Parfois" },
-                      { value: "often", label: "Oui souvent" },
-                    ] as const).map((opt) => {
-                      const active = form.businessCuriosity === opt.value;
-                      return (
-                        <button
-                          key={opt.value}
-                          type="button"
-                          onClick={() => update("businessCuriosity", opt.value)}
-                          style={{
-                            padding: "8px 16px",
-                            borderRadius: 999,
-                            fontFamily: "DM Sans, sans-serif",
-                            fontSize: 13,
-                            fontWeight: active ? 700 : 500,
-                            background: active
-                              ? "var(--ls-teal)"
-                              : "var(--ls-surface)",
-                            color: active ? "#fff" : "var(--ls-text)",
-                            border: active
-                              ? "1px solid var(--ls-teal)"
-                              : "0.5px solid var(--ls-border)",
-                            cursor: "pointer",
-                            transition: "all 150ms ease",
-                          }}
-                        >
-                          {opt.label}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
+                {/* ─── Section 2 · Curiosite business (teal accent) ─── */}
+                <BusinessCuriosityCard
+                  value={form.businessCuriosity}
+                  onChange={(v) => update("businessCuriosity", v)}
+                />
 
-                <SectionBlock
-                  title="Bloc 0 · Objectif et antécédents"
-                  description="Poser le cap dès le début et noter tout point santé à respecter."
+                {/* ─── Section 3 · Objectif & antecedents (refonte v2) ─── */}
+                <AssessmentSectionV2
+                  emoji="🎯"
+                  eyebrow="Bloc 0 · Cap & cadre santé"
+                  title="Pose le cap dès le départ"
+                  description="L'objectif principal, le délai souhaité, et tout point santé à respecter pour cadrer l'accompagnement."
+                  accent="gold"
                 >
                   <div className="grid gap-4 md:grid-cols-2">
                     <ChoiceGroup
@@ -1824,7 +1851,6 @@ export function NewAssessmentPage() {
                       onChange={(v) => update("desiredTimeline", v)}
                     />
                   </div>
-                  {/* Chantier bilan updates (2026-04-20) : texte libre si "Autre" */}
                   {form.objectiveFocus === "Autre" && (
                     <AreaField
                       label="Précise ton objectif"
@@ -1846,16 +1872,16 @@ export function NewAssessmentPage() {
                     />
                   </div>
                   {form.objective === "weight-loss" && (
-                    <Field
-                      label="Poids cible (kg)"
+                    <AssessmentFieldV2
+                      label="Poids cible"
+                      icon="⚖️"
                       type="number"
                       step="0.1"
                       value={form.targetWeight}
                       onChange={(v) => update("targetWeight", Number(v))}
+                      helper="en kg — où le client veut aller"
                     />
                   )}
-                  {/* Chantier bilan updates (2026-04-20) : taille vêtement déplacée
-                      après le poids cible (ordre visuel plus logique). */}
                   <div className="grid gap-4 md:grid-cols-2">
                     <ClothingSizeSelect
                       label="Taille vêtement actuelle"
@@ -1870,10 +1896,54 @@ export function NewAssessmentPage() {
                       onChange={(v) => update("targetClothingSize", v)}
                     />
                   </div>
-                  <div className="space-y-3 rounded-[24px] bg-[var(--ls-surface2)] p-4">
-                    <div className="flex items-center justify-between gap-3">
-                      <label className="text-sm font-medium text-[var(--ls-text-muted)]">Motivation</label>
-                      <span className="text-sm font-semibold text-white">{form.motivation}/10</span>
+                  {/* Motivation slider — refonte premium avec gradient gold */}
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 12,
+                      padding: "16px 18px",
+                      borderRadius: 14,
+                      background:
+                        "linear-gradient(135deg, color-mix(in srgb, var(--ls-gold) 5%, var(--ls-surface2)) 0%, var(--ls-surface2) 100%)",
+                      border: "0.5px solid color-mix(in srgb, var(--ls-gold) 14%, var(--ls-border))",
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        gap: 12,
+                      }}
+                    >
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <span aria-hidden="true" style={{ fontSize: 14 }}>🔥</span>
+                        <label
+                          style={{
+                            fontFamily: "DM Sans, sans-serif",
+                            fontSize: 13,
+                            fontWeight: 600,
+                            color: "var(--ls-text)",
+                          }}
+                        >
+                          Motivation
+                        </label>
+                      </div>
+                      <span
+                        style={{
+                          fontFamily: "Syne, serif",
+                          fontWeight: 800,
+                          fontSize: 22,
+                          letterSpacing: "-0.02em",
+                          color: "var(--ls-gold)",
+                        }}
+                      >
+                        {form.motivation}
+                        <span style={{ fontSize: 13, color: "var(--ls-text-muted)", fontWeight: 500 }}>
+                          /10
+                        </span>
+                      </span>
                     </div>
                     <input
                       type="range"
@@ -1883,7 +1953,7 @@ export function NewAssessmentPage() {
                       onChange={(event) => update("motivation", Number(event.target.value))}
                     />
                   </div>
-                </SectionBlock>
+                </AssessmentSectionV2>
               </div>
             )}
 
