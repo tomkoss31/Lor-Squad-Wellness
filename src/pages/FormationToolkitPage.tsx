@@ -63,6 +63,13 @@ export function FormationToolkitPage() {
   }, [activeCategory, activeProfile]);
 
   function handleItemClick(item: FormationToolkitItem) {
+    // Si externalRoute defini, on redirige vers la vraie page interactive
+    // (Charte / Calculateur / Reconnaissance / etc.) plutot que d ouvrir
+    // le popup ou la page detail markdown.
+    if (item.externalRoute) {
+      navigate(item.externalRoute);
+      return;
+    }
     if (item.format === "popup") {
       setPopupItem(item);
     } else {

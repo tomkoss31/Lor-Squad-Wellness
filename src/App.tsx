@@ -289,6 +289,12 @@ const FormationToolkitDetailPage = lazy(() =>
     default: module.FormationToolkitDetailPage
   }))
 );
+// Feuille de Reconnaissance interactive (2026-11-04).
+const FormationRecognitionPage = lazy(() =>
+  import("./pages/FormationRecognitionPage").then((module) => ({
+    default: module.FormationRecognitionPage
+  }))
+);
 const SettingsPage = lazy(() =>
   import("./pages/SettingsPage").then((module) => ({
     default: module.SettingsPage
@@ -388,6 +394,7 @@ export default function App() {
               <Route path="formation/glossaire" element={<FormationAdminGate><FormationGlossaryPage /></FormationAdminGate>} />
               <Route path="formation/boite-a-outils" element={<FormationAdminGate><FormationToolkitPage /></FormationAdminGate>} />
               <Route path="formation/boite-a-outils/:slug" element={<FormationAdminGate><FormationToolkitDetailPage /></FormationAdminGate>} />
+              <Route path="formation/reconnaissance" element={<FormationAdminGate><FormationRecognitionPage /></FormationAdminGate>} />
               <Route path="formation/parcours/:levelSlug" element={<FormationAdminGate><FormationModulePage /></FormationAdminGate>} />
               <Route path="formation/parcours/:levelSlug/:moduleSlug" element={<FormationAdminGate><FormationModuleDetailPage /></FormationAdminGate>} />
               <Route path="formation/:slug" element={<FormationAdminGate><FormationCategoryPage /></FormationAdminGate>} />

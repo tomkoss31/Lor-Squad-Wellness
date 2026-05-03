@@ -17,6 +17,7 @@
 
 import { useEffect, useState } from "react";
 import type { FormationToolkitItem } from "../../data/formation";
+import { useAppContext } from "../../context/AppContext";
 import { MarkdownRenderer } from "./MarkdownRenderer";
 
 const CATEGORY_ACCENT: Record<FormationToolkitItem["category"], string> = {
@@ -282,9 +283,16 @@ export function ToolkitItemPopup({ item, onClose }: ToolkitItemPopupProps) {
         <div style={{ padding: "24px 32px 32px", position: "relative" }}>
           {/* Markdown intro */}
           {item.contentMarkdown ? (
-            <div style={{ marginBottom: item.scripts && item.scripts.length > 0 ? 28 : 0 }}>
+            <div style={{ marginBottom: 24 }}>
               <MarkdownRenderer content={item.contentMarkdown} />
             </div>
+          ) : null}
+
+          {/* Checklist interactive (kind === "checklist") — items "- [ ]"
+              extraits du markdown, persistes par user/item/jour pour reset
+              quotidien automatique. */}
+          {item.kind === "checklist" ? (
+            <InteractiveChecklist itemId={item.id} markdown={item.contentMarkdown} accent={accent} />
           ) : null}
 
           {/* Scripts pack */}
@@ -424,5 +432,214 @@ export function ToolkitItemPopup({ item, onClose }: ToolkitItemPopupProps) {
         </div>
       </div>
     </div>
+  );
+}
+
+// ─── InteractiveChecklist (kind=checklist) ────────────────────────────────
+//
+// Parse les lignes "- [ ] item" du markdown et les rend en vraies checkbox
+// cochables persistees localStorage par user + item + jour. Reset chaque
+// jour automatique (cle YMD). Affiche barre de progression + compteur.
+
+const CHECKLIST_PREFIX = "ls-toolkit-checklist-";
+
+function ymdUtc(d: Date): string {
+  const y = d.getUTCFullYear();
+  const m = String(d.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(d.getUTCDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+function parseChecklistItemsFromMd(md: string): string[] {
+  const lines = md.split("\n");
+  const items: string[] = [];
+  for (const line of lines) {
+    const match = line.match(/^[\s-]*\[\s\]\s+(.+)$/);
+    if (match) items.push(match[1].trim());
+  }
+  return items;
+}
+
+interface InteractiveChecklistProps {
+  itemId: string;
+  markdown: string;
+  accent: string;
+}
+
+function InteractiveChecklist({ itemId, markdown, accent }: InteractiveChecklistProps) {
+  const { currentUser } = useAppContext();
+  const userId = currentUser?.id ?? null;
+  const today = ymdUtc(new Date());
+  const storageKey = userId ? `${CHECKLIST_PREFIX}${userId}-${itemId}-${today}` : null;
+
+  const items = parseChecklistItemsFromMd(markdown);
+  const [checked, setChecked] = useState<Record<number, boolean>>({});
+
+  useEffect(() => {
+    if (!storageKey) return;
+    try {
+      const raw = window.localStorage.getItem(storageKey);
+      if (raw) setChecked(JSON.parse(raw) as Record<number, boolean>);
+      else setChecked({});
+    } catch {
+      setChecked({});
+    }
+  }, [storageKey]);
+
+  function toggle(idx: number) {
+    if (!storageKey) return;
+    setChecked((prev) => {
+      const next = { ...prev, [idx]: !prev[idx] };
+      try {
+        window.localStorage.setItem(storageKey, JSON.stringify(next));
+      } catch {
+        /* quota */
+      }
+      return next;
+    });
+  }
+
+  if (items.length === 0 || !userId) return null;
+
+  const doneCount = items.filter((_, i) => checked[i]).length;
+  const allDone = doneCount === items.length;
+
+  return (
+    <section
+      style={{
+        marginTop: 20,
+        padding: "16px 18px",
+        borderRadius: 14,
+        background: `color-mix(in srgb, ${accent} 6%, var(--ls-surface2))`,
+        border: `0.5px solid color-mix(in srgb, ${accent} 28%, var(--ls-border))`,
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 12,
+          marginBottom: 12,
+          flexWrap: "wrap",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <span style={{ fontSize: 16 }} aria-hidden="true">
+            ✅
+          </span>
+          <h3
+            style={{
+              fontFamily: "Syne, serif",
+              fontWeight: 700,
+              fontSize: 14,
+              margin: 0,
+              color: accent,
+              letterSpacing: "-0.01em",
+            }}
+          >
+            Coche au quotidien · aujourd&apos;hui
+          </h3>
+        </div>
+        <span
+          style={{
+            fontSize: 11,
+            fontWeight: 700,
+            color: allDone ? "var(--ls-teal)" : "var(--ls-text-muted)",
+            fontFamily: "DM Sans, sans-serif",
+          }}
+        >
+          {doneCount}/{items.length} {allDone ? "✓ tout fait !" : "fait"}
+        </span>
+      </div>
+
+      {/* Mini progress bar */}
+      <div
+        style={{
+          height: 4,
+          background: "var(--ls-surface2)",
+          borderRadius: 999,
+          overflow: "hidden",
+          marginBottom: 14,
+        }}
+      >
+        <div
+          style={{
+            width: `${(doneCount / items.length) * 100}%`,
+            height: "100%",
+            background: allDone
+              ? "var(--ls-teal)"
+              : `linear-gradient(90deg, ${accent}, color-mix(in srgb, ${accent} 70%, var(--ls-teal)))`,
+            transition: "width 320ms ease, background 280ms ease",
+          }}
+        />
+      </div>
+
+      {/* Items */}
+      <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 8 }}>
+        {items.map((label, idx) => {
+          const isOn = !!checked[idx];
+          return (
+            <li key={idx}>
+              <label
+                style={{
+                  display: "flex",
+                  alignItems: "flex-start",
+                  gap: 10,
+                  padding: "10px 12px",
+                  borderRadius: 10,
+                  background: isOn
+                    ? "color-mix(in srgb, var(--ls-teal) 8%, var(--ls-surface))"
+                    : "var(--ls-surface)",
+                  border: isOn
+                    ? "0.5px solid color-mix(in srgb, var(--ls-teal) 40%, transparent)"
+                    : "0.5px solid var(--ls-border)",
+                  cursor: "pointer",
+                  transition: "all 200ms ease",
+                  fontFamily: "DM Sans, sans-serif",
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={isOn}
+                  onChange={() => toggle(idx)}
+                  style={{
+                    width: 18,
+                    height: 18,
+                    accentColor: "var(--ls-teal)",
+                    flexShrink: 0,
+                    marginTop: 1,
+                  }}
+                />
+                <span
+                  style={{
+                    fontSize: 13.5,
+                    color: isOn ? "var(--ls-text-muted)" : "var(--ls-text)",
+                    textDecoration: isOn ? "line-through" : "none",
+                    lineHeight: 1.5,
+                  }}
+                  // Keep markdown bold/italic markers visible (simple plain text)
+                >
+                  {label.replace(/\*\*/g, "")}
+                </span>
+              </label>
+            </li>
+          );
+        })}
+      </ul>
+
+      <p
+        style={{
+          fontSize: 10.5,
+          color: "var(--ls-text-hint)",
+          marginTop: 12,
+          fontStyle: "italic",
+          fontFamily: "DM Sans, sans-serif",
+          textAlign: "center",
+        }}
+      >
+        🔒 Tes coches reset chaque jour à minuit. Sauvegarde locale par appareil.
+      </p>
+    </section>
   );
 }

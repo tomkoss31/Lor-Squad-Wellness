@@ -1256,13 +1256,15 @@ Plus accessible que le 8-4-1 historique, plus tenable dans la durée. Pas magie,
     slug: "charte-distributeur",
     category: "business",
     title: "Charte du Distributeur — à signer en J+1",
-    description: "Le rituel d'engagement : signature distri + signature coach. PDF nominatif imprimable.",
+    description: "Le rituel d'engagement : 5 engagements + ton pourquoi + objectif 12 mois. Page interactive avec signature + export PDF.",
     kind: "page",
     format: "page",
     profile: "nouveau",
     icon: "📜",
     durationMin: 10,
     tag: "Engagement",
+    // Redirige vers la vraie page interactive (textareas + signature + PDF)
+    externalRoute: "/formation/charte",
     contentMarkdown: `## Pourquoi cette charte
 
 > *Une charte non signée n'engage personne. Une charte signée devient une chaîne positive qui te tient quand vient la tempête.*
@@ -1351,13 +1353,15 @@ m'engage solennellement, à partir de ce jour le [date], à :
     slug: "feuille-reconnaissance",
     category: "business",
     title: "Feuille de Reconnaissance — paliers + récompenses",
-    description: "Pour chaque palier atteint, une récompense pré-définie. Le moteur intime qui te fait tenir 12 mois.",
+    description: "11 paliers à dater + récompense personnelle. Marque-les comme atteints au fil de ton parcours. Page interactive avec progression visuelle.",
     kind: "page",
     format: "page",
     profile: "tous",
     icon: "🏆",
     durationMin: 10,
     tag: "Engagement",
+    // Redirige vers la vraie page interactive (paliers remplissables + persistance)
+    externalRoute: "/formation/reconnaissance",
     contentMarkdown: `## Tu obtiens ce que tu traques
 
 > *Tu ne te fatigues pas à atteindre des objectifs. Tu te fatigues à atteindre des objectifs **sans récompense prévue**.*
@@ -1426,13 +1430,15 @@ Une vision board avec **5 photos** représentant tes 5 plus grandes récompenses
     slug: "calculateur-strategy-plan",
     category: "business",
     title: "Calculateur Strategy Plan — projection 12 mois",
-    description: "Combien d'invits / bilans / clients pour atteindre +300 €, +1000 €, ou +3000 €/mois ? Calcul direct.",
+    description: "Sliders revenus / clients / coachs. Projection mois par mois + rangs débloqués + revenu cumulé. Formule 5-3-1.",
     kind: "page",
     format: "page",
     profile: "sup_plus",
     icon: "🧮",
     durationMin: 8,
     tag: "Calculateur",
+    // Redirige vers le vrai calculateur interactif (sliders + chart Recharts)
+    externalRoute: "/formation/calculateur",
     contentMarkdown: `## Ton GPS chiffré sur 12 mois
 
 > Arrête de te demander *« combien d'invits par jour ? »*. Demande-toi d'abord *« je veux gagner combien ? »*. Le reste se calcule.

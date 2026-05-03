@@ -251,6 +251,11 @@ export interface FormationToolkitItem {
   contentMarkdown: string;
   /** Scripts copiables (optionnel) — pour kind=phrase-pack ou script. */
   scripts?: FormationToolkitScript[];
+  /** Route externe optionnelle. Si presente, le click sur la card de la boite
+   *  a outils redirige vers cette route au lieu d ouvrir le popup ou la page
+   *  detail markdown. Utile quand un outil a deja une vraie page interactive
+   *  (ex: /formation/charte, /formation/calculateur, /formation/reconnaissance). */
+  externalRoute?: string;
 }
 
 // ─── PROGRESSION USER ─────────────────────────────────────────────────────
