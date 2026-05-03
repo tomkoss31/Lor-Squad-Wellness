@@ -134,7 +134,46 @@ export interface User {
   avatarUrl?: string | null;
   /** Bio courte (max 200 chars). Chantier 2026-04-30. */
   bio?: string | null;
+  /** Rang Herbalife auto-déclaré. Détermine marge retail FLEX (25/35/42/50). Default distributor_25. */
+  currentRank?: HerbalifeRank;
+  /** Timestamp où le distri a confirmé son rang. NULL = jamais rempli → force pop-up. */
+  rankSetAt?: string | null;
 }
+
+/** Rangs Herbalife (8 niveaux) — détermine la marge retail dans FLEX. */
+export type HerbalifeRank =
+  | "distributor_25"
+  | "senior_consultant_35"
+  | "success_builder_42"
+  | "supervisor_50"
+  | "world_team_50"
+  | "get_team_50"
+  | "millionaire_50"
+  | "presidents_50";
+
+/** Marge retail effective par rang (proportion 0-1). */
+export const RANK_MARGINS: Record<HerbalifeRank, number> = {
+  distributor_25: 0.25,
+  senior_consultant_35: 0.35,
+  success_builder_42: 0.42,
+  supervisor_50: 0.5,
+  world_team_50: 0.5,
+  get_team_50: 0.5,
+  millionaire_50: 0.5,
+  presidents_50: 0.5,
+};
+
+/** Libellé court FR pour UI. */
+export const RANK_LABELS: Record<HerbalifeRank, string> = {
+  distributor_25: "Distributor (25%)",
+  senior_consultant_35: "Senior Consultant (35%)",
+  success_builder_42: "Success Builder (42%)",
+  supervisor_50: "Supervisor (50%)",
+  world_team_50: "World Team (50%)",
+  get_team_50: "GET Team (50%)",
+  millionaire_50: "Millionaire Team (50%)",
+  presidents_50: "President's Team (50%)",
+};
 
 export interface AuthSession {
   userId: string;

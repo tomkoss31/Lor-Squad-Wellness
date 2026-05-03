@@ -201,6 +201,63 @@ export interface FormationResource {
   isNew?: boolean;
 }
 
+// ─── BOÎTE À OUTILS (chantier toolkit, 2026-11-04) ────────────────────────
+//
+// La boite a outils est differente du parcours guide (modules N1/N2/N3
+// qui apprend la theorie). Ici on PASSE A L ACTE : scripts copier-coller,
+// fiches premium, checklists actionnables.
+//
+// Differents types de format :
+//   - phrase-pack : pack de scripts copiables (popup sandbox)
+//   - script      : 1 script unique avec relances (popup)
+//   - page        : fiche premium markdown (route /boite-a-outils/:slug)
+//   - checklist   : liste cochable (popup)
+//
+// Profils cibles : nouveau (J0-J90), relance (reactivation), sup_plus
+// (apres rang Sup), tous (universel).
+
+export type FormationToolkitCategory = "prospection" | "bilan" | "suivi" | "business";
+export type FormationToolkitKind = "phrase-pack" | "script" | "page" | "checklist";
+export type FormationToolkitFormat = "popup" | "page";
+export type FormationToolkitProfile = "tous" | "nouveau" | "relance" | "sup_plus";
+
+export interface FormationToolkitScript {
+  /** Label du script (ex: "🔥 Contact CHAUD — direct"). */
+  label: string;
+  /** Texte du script copier-coller. */
+  text: string;
+  /** Note explicative pour le distri (italic, sous le texte). */
+  note?: string;
+}
+
+export interface FormationToolkitItem {
+  id: string;
+  /** Slug pour URL (/formation/boite-a-outils/:slug si format=page). */
+  slug: string;
+  category: FormationToolkitCategory;
+  title: string;
+  description: string;
+  kind: FormationToolkitKind;
+  /** Format d'affichage : popup (modal) ou page (route dédiée). */
+  format: FormationToolkitFormat;
+  profile: FormationToolkitProfile;
+  /** Emoji icon en pill. */
+  icon: string;
+  /** Durée estimée en minutes. */
+  durationMin: number;
+  /** Tag court ("Scripts", "Démarrage", "Pièce maîtresse", etc.). */
+  tag: string;
+  /** Markdown principal (intro, méthode, contexte). */
+  contentMarkdown: string;
+  /** Scripts copiables (optionnel) — pour kind=phrase-pack ou script. */
+  scripts?: FormationToolkitScript[];
+  /** Route externe optionnelle. Si presente, le click sur la card de la boite
+   *  a outils redirige vers cette route au lieu d ouvrir le popup ou la page
+   *  detail markdown. Utile quand un outil a deja une vraie page interactive
+   *  (ex: /formation/charte, /formation/calculateur, /formation/reconnaissance). */
+  externalRoute?: string;
+}
+
 // ─── PROGRESSION USER ─────────────────────────────────────────────────────
 
 /**
