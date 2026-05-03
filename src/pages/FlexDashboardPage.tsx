@@ -18,6 +18,7 @@ import { useNavigate } from "react-router-dom";
 import { PageHeading } from "../components/ui/PageHeading";
 import { FlexHistoryCard } from "../components/flex/FlexHistoryCard";
 import { FlexMidpointRecalcCard } from "../components/flex/FlexMidpointRecalcCard";
+import { FlexRoyaltiesInfoCard } from "../components/flex/FlexRoyaltiesInfoCard";
 import { useAppContext } from "../context/AppContext";
 import type { HerbalifeRank } from "../types/domain";
 import { getSupabaseClient } from "../services/supabaseClient";
@@ -341,6 +342,11 @@ export function FlexDashboardPage() {
 
       {/* Phase D : récap 4 semaines + cumul mensuel via RPC. */}
       <FlexHistoryCard userId={userId!} />
+
+      {/* V3.b : info passive royalties pour Sup+ (hidden si SC/SB/Distri). */}
+      <FlexRoyaltiesInfoCard
+        rank={(currentUser?.currentRank as HerbalifeRank | undefined) ?? "distributor_25"}
+      />
 
       <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
         <button

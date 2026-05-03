@@ -55,6 +55,60 @@ function ymdParisToday(): string {
   return fmt.format(new Date());
 }
 
+/** Heure courante (0-23) en heure de Paris. Tient compte DST automatique. */
+function parisHourNow(): number {
+  const fmt = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Europe/Paris",
+    hour: "2-digit",
+    hour12: false,
+  });
+  return Number(fmt.format(new Date()));
+}
+
+/** Jour de la semaine (0 = dim, 6 = sam) en heure de Paris. */
+function parisDayOfWeek(): number {
+  const fmt = new Intl.DateTimeFormat("en-US", {
+    timeZone: "Europe/Paris",
+    weekday: "short",
+  });
+  const day = fmt.format(new Date());
+  return ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].indexOf(day);
+}
+
+/**
+ * V3.a (2026-11-05) : DST-aware gating. Le cron pg_cron tire 2 fois (1h
+ * d'intervalle) pour couvrir été ET hiver, et la function ne dispatche
+ * QUE si l'heure Paris correspond à la cible attendue.
+ *
+ * Bypass via ?force=true en query (debug / test admin).
+ */
+function shouldDispatchAtThisHour(mode: FlexMode, force: boolean): {
+  ok: boolean;
+  reason?: string;
+} {
+  if (force) return { ok: true };
+  const hour = parisHourNow();
+  const dow = parisDayOfWeek();
+
+  // evening = 20h Paris quel que soit DST
+  if (mode === "evening") {
+    if (hour !== 20) return { ok: false, reason: `paris_hour_is_${hour}_expected_20` };
+    return { ok: true };
+  }
+  // evening_late = 22h Paris
+  if (mode === "evening_late") {
+    if (hour !== 22) return { ok: false, reason: `paris_hour_is_${hour}_expected_22` };
+    return { ok: true };
+  }
+  // weekly_recap = dimanche 20h Paris
+  if (mode === "weekly_recap") {
+    if (dow !== 0) return { ok: false, reason: `not_sunday` };
+    if (hour !== 20) return { ok: false, reason: `paris_hour_is_${hour}_expected_20` };
+    return { ok: true };
+  }
+  return { ok: false, reason: "unknown_mode" };
+}
+
 async function dispatch(mode: FlexMode, dry: boolean): Promise<DispatchResult> {
   const sb = getServiceClient();
   const result: DispatchResult = {
@@ -214,8 +268,16 @@ serve(async (req: Request) => {
     const url = new URL(req.url);
     const modeRaw = url.searchParams.get("mode") ?? "evening";
     const dry = url.searchParams.get("dry") === "true";
+    const force = url.searchParams.get("force") === "true";
     if (!["evening", "evening_late", "weekly_recap"].includes(modeRaw)) {
       return jsonResponse({ error: "invalid_mode" }, 400);
+    }
+    // V3.a — DST gate : on ne dispatche que si l'heure Paris matche la
+    // target. Le cron tire 2 fois (1h d'écart) pour couvrir été+hiver.
+    const gate = shouldDispatchAtThisHour(modeRaw as FlexMode, force);
+    if (!gate.ok) {
+      console.log(`[flex-notifier] gate skipped: ${gate.reason}`);
+      return jsonResponse({ skipped: gate.reason, mode: modeRaw });
     }
     const result = await dispatch(modeRaw as FlexMode, dry);
     console.log("[flex-notifier] result:", JSON.stringify(result));
