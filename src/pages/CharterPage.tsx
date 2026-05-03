@@ -35,7 +35,7 @@ export function CharterPage() {
     const node = charterRef.current;
     if (!node) return;
     const slug = slugifyForFilename(currentUser?.name ?? "charte", "charte");
-    const base = `charte-distri-${slug}`;
+    const base = `charte-${currentTemplate}-${slug}`;
     setDownloading(kind);
     try {
       // Attendre que les fonts Google soient prêtes pour éviter fallback
@@ -149,22 +149,37 @@ export function CharterPage() {
           >
             {saving ? "Sauvegarde…" : charter?.signed_at ? "✓ Signée" : "Brouillon"}
           </span>
-          <button
-            type="button"
-            onClick={() => void handleDownload("pdf")}
-            disabled={downloading !== null}
-            style={btnGold}
-          >
-            {downloading === "pdf" ? "⏳" : "📥"} PDF
-          </button>
-          <button
-            type="button"
-            onClick={() => void handleDownload("png")}
-            disabled={downloading !== null}
-            style={btnGoldGhost}
-          >
-            {downloading === "png" ? "⏳" : "🖼️"} PNG
-          </button>
+          {currentTemplate === "story" ? (
+            // Story = format vertical pensé partage Insta → PNG seul.
+            <button
+              type="button"
+              onClick={() => void handleDownload("png")}
+              disabled={downloading !== null}
+              style={btnGold}
+            >
+              {downloading === "png" ? "⏳" : "📱"} Sauver en image
+            </button>
+          ) : (
+            // Officielle / Manifeste = A4 imprimable → PDF + PNG.
+            <>
+              <button
+                type="button"
+                onClick={() => void handleDownload("pdf")}
+                disabled={downloading !== null}
+                style={btnGold}
+              >
+                {downloading === "pdf" ? "⏳" : "📥"} PDF
+              </button>
+              <button
+                type="button"
+                onClick={() => void handleDownload("png")}
+                disabled={downloading !== null}
+                style={btnGoldGhost}
+              >
+                {downloading === "png" ? "⏳" : "🖼️"} PNG
+              </button>
+            </>
+          )}
         </div>
       </div>
 
