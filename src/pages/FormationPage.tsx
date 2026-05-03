@@ -384,6 +384,38 @@ export function FormationPage() {
         débloquer le Niveau 1 dans quelques jours. En attendant, profite-en
         pour bosser ta routine matin.
       </div>
+
+      {/* Lien glossaire (footer Formation, 2026-11-04) */}
+      <Link
+        to="/formation/glossaire"
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 8,
+          padding: "12px 16px",
+          background: "var(--ls-surface)",
+          border: "0.5px dashed color-mix(in srgb, var(--ls-purple) 30%, var(--ls-border))",
+          borderRadius: 12,
+          textDecoration: "none",
+          color: "var(--ls-purple)",
+          fontFamily: "DM Sans, sans-serif",
+          fontSize: 12.5,
+          fontWeight: 600,
+          transition: "all 200ms ease",
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.background =
+            "color-mix(in srgb, var(--ls-purple) 6%, var(--ls-surface))";
+          e.currentTarget.style.borderStyle = "solid";
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.background = "var(--ls-surface)";
+          e.currentTarget.style.borderStyle = "dashed";
+        }}
+      >
+        📖 Tu butes sur un terme ? Consulte le glossaire (VP, RO, DMO, Sup…) →
+      </Link>
     </div>
   );
 }

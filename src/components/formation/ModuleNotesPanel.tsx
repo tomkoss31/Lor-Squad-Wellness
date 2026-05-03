@@ -19,6 +19,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useAppContext } from "../../context/AppContext";
+import { formatModuleShort } from "../../data/formation";
 
 const STORAGE_PREFIX = "ls-formation-notes-";
 const SAVE_DEBOUNCE_MS = 600;
@@ -181,7 +182,7 @@ export function ModuleNotesPanel({ moduleId, moduleNumber }: ModuleNotesPanelPro
               color: "var(--ls-purple)",
             }}
           >
-            ✦ Mes notes · {moduleNumber ?? "ce module"}
+            ✦ Mes notes · {moduleNumber ? formatModuleShort(moduleNumber) : "ce module"}
           </span>
         </div>
         <div

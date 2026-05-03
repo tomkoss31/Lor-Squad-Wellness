@@ -17,6 +17,7 @@
 
 import { Link } from "react-router-dom";
 import type { FormationNextStep } from "../../hooks/useFormationProgress";
+import { formatModuleShort } from "../../data/formation";
 
 export interface FormationRoadmapCardProps {
   nextStep: FormationNextStep | null;
@@ -212,7 +213,7 @@ export function FormationRoadmapCard({
               margin: 0,
             }}
           >
-            {nextStep.moduleNumber}
+            {formatModuleShort(nextStep.moduleNumber)}
             <span style={{ color: "var(--ls-text-muted)", margin: "0 8px" }}>·</span>
             {nextStep.moduleTitle}
           </h2>

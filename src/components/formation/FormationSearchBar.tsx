@@ -15,7 +15,7 @@
 
 import { useMemo, useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { FORMATION_LEVELS, FORMATION_CATEGORIES } from "../../data/formation";
+import { FORMATION_LEVELS, FORMATION_CATEGORIES, formatModuleShort } from "../../data/formation";
 
 interface SearchResult {
   type: "module" | "resource";
@@ -106,7 +106,7 @@ export function FormationSearchBar() {
           out.push({
             type: "module",
             id: m.id,
-            title: `${m.number} · ${m.title}`,
+            title: `${formatModuleShort(m.number)} · ${m.title}`,
             context: `N${level.order} · ${level.title}`,
             snippet: makeSnippet(fullText, words),
             href: `/formation/parcours/${level.slug}/${m.slug}`,

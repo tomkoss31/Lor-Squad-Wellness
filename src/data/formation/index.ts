@@ -16,3 +16,9 @@ export {
   FORMATION_CATEGORIES,
   getFormationCategoryBySlug,
 } from "./bibliotheque";
+export {
+  formatModuleShort,
+  formatModuleLong,
+  formatModulePosition,
+  formatModuleRefInternal,
+} from "./labels";

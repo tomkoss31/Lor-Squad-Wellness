@@ -272,6 +272,12 @@ const FormationCharterPage = lazy(() =>
     default: module.FormationCharterPage
   }))
 );
+// Glossaire termes Herbalife (2026-11-04).
+const FormationGlossaryPage = lazy(() =>
+  import("./pages/FormationGlossaryPage").then((module) => ({
+    default: module.FormationGlossaryPage
+  }))
+);
 const SettingsPage = lazy(() =>
   import("./pages/SettingsPage").then((module) => ({
     default: module.SettingsPage
@@ -368,6 +374,7 @@ export default function App() {
               <Route path="formation/certificat" element={<FormationAdminGate><FormationCertificatePage /></FormationAdminGate>} />
               <Route path="formation/calculateur" element={<FormationAdminGate><FormationCalculatorPage /></FormationAdminGate>} />
               <Route path="formation/charte" element={<FormationAdminGate><FormationCharterPage /></FormationAdminGate>} />
+              <Route path="formation/glossaire" element={<FormationAdminGate><FormationGlossaryPage /></FormationAdminGate>} />
               <Route path="formation/parcours/:levelSlug" element={<FormationAdminGate><FormationModulePage /></FormationAdminGate>} />
               <Route path="formation/parcours/:levelSlug/:moduleSlug" element={<FormationAdminGate><FormationModuleDetailPage /></FormationAdminGate>} />
               <Route path="formation/:slug" element={<FormationAdminGate><FormationCategoryPage /></FormationAdminGate>} />
