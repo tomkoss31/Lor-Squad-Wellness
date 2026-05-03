@@ -315,7 +315,11 @@ export function MessagesPage() {
     [users, currentUser?.id],
   )
   const isAdminUser = currentUser?.role === 'admin'
-  const showFormationTab = hasRecruits || isAdminUser
+  // Formation gate (2026-11-04) : tant que le contenu n est pas finalise pour
+  // les distri, on n affiche l onglet Formation que pour les admins. Reactivable
+  // simplement en remettant `hasRecruits || isAdminUser`.
+  void hasRecruits;
+  const showFormationTab = isAdminUser
   const { pendingCount: formationPendingCount } = useFormationReviewQueue()
   const { relayCount: formationRelayCount } = useFormationAdminQueue()
   const formationBadgeCount = formationPendingCount + formationRelayCount
