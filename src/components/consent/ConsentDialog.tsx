@@ -352,7 +352,7 @@ export function ConsentDialog({ client, open, onConsented, onCancel, skipDbInser
                 <strong style={{ color: "var(--ls-text)" }}>Tes droits</strong> : accès, rectification, effacement, retrait à tout moment
               </li>
               <li>
-                <strong style={{ color: "var(--ls-text)" }}>Contact</strong> : lavaserdun@gmail.com (SAS HTM FITLIFE)
+                <strong style={{ color: "var(--ls-text)" }}>Contact</strong> : labaseverdun@gmail.com (SAS HTM FITLIFE)
               </li>
             </ul>
             <p

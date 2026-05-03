@@ -2,6 +2,29 @@
 @tailwind components;
 @tailwind utilities;
 
+/* =============================================================================
+ * Theme system Lor'Squad (note 2026-11-04)
+ *
+ * 2 themes live :
+ *   - :root            = Dark Premium (defaut) — gold/teal sur surface sombre
+ *   - html.theme-light = Light Premium         — gold/teal sur surface claire
+ *
+ * Pour ajouter un theme (ex: "Ocean", "Sunset", "Forest") :
+ *   1. Ajouter un nouveau bloc html.theme-<name> { ... } qui override les
+ *      tokens --ls-gold, --ls-teal, --ls-bg, --ls-surface, etc.
+ *   2. Ajouter le toggle dans src/hooks/useTheme.ts (cycler entre 3+ themes
+ *      au lieu de juste light/dark).
+ *   3. UI selector dans Parametres pour choisir le theme actif
+ *      (persiste localStorage).
+ *
+ * Templates futurs (commentes) en bas du fichier ('html.theme-ocean',
+ * 'html.theme-sunset'). Decommenter quand pret.
+ *
+ * IMPORTANT : tous les composants doivent utiliser var(--ls-*) — jamais
+ * de couleur hardcodee. Si tu vois un #HEXVALUE dans un .tsx, c est un
+ * bug pour le theme system.
+ * ============================================================================= */
+
 :root {
   --ls-bg: #0B0D11;
   --ls-surface: #13161C;
@@ -799,43 +822,80 @@ main, .main-content {
   ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
   ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.18); }
 
+  /* Refonte 2026-11-04 : inputs default theme-aware (var(--ls-*)) +
+     focus halo teal anime + lift subtil. Avant : hardcoded #1A1E27 / #F0EDE8
+     -> les inputs n etaient pas adaptes au theme clair. */
   input:not([type="range"]):not([type="checkbox"]):not([type="radio"]),
   textarea, select {
     width: 100%;
-    background: #1A1E27;
-    border: 1px solid rgba(255,255,255,0.08);
+    background: var(--ls-input-bg, var(--ls-surface));
+    border: 1.5px solid var(--ls-border);
     border-radius: 12px;
     padding: 12px 16px;
     font-size: 14px;
-    color: #F0EDE8;
+    color: var(--ls-text);
     font-family: 'DM Sans', sans-serif;
     outline: none;
-    transition: border-color 0.2s;
+    transition:
+      border-color 180ms cubic-bezier(0.4, 0, 0.2, 1),
+      box-shadow 180ms cubic-bezier(0.4, 0, 0.2, 1),
+      background 180ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  input:not([type="range"]):not([type="checkbox"]):not([type="radio"]):hover:not(:focus):not(:disabled),
+  textarea:hover:not(:focus):not(:disabled),
+  select:hover:not(:focus):not(:disabled) {
+    border-color: color-mix(in srgb, var(--ls-teal) 35%, var(--ls-border));
   }
 
   input:not([type="range"]):not([type="checkbox"]):not([type="radio"]):focus,
   textarea:focus, select:focus {
-    border-color: rgba(201,168,76,0.45);
+    border-color: var(--ls-teal);
+    background: color-mix(in srgb, var(--ls-teal) 3%, var(--ls-input-bg, var(--ls-surface)));
+    box-shadow:
+      0 0 0 4px color-mix(in srgb, var(--ls-teal) 16%, transparent),
+      0 2px 8px color-mix(in srgb, var(--ls-teal) 12%, transparent);
   }
 
-  input::placeholder, textarea::placeholder { color: #4A5068; }
+  input::placeholder, textarea::placeholder {
+    color: var(--ls-text-hint);
+    transition: color 180ms ease-out;
+  }
+  input:focus::placeholder, textarea:focus::placeholder {
+    color: color-mix(in srgb, var(--ls-text-hint) 60%, transparent);
+  }
 
-  select option { background: #1A1E27; color: #F0EDE8; }
+  select option {
+    background: var(--ls-surface);
+    color: var(--ls-text);
+  }
 
   input[type="range"] {
     -webkit-appearance: none; height: 5px; border-radius: 3px;
-    background: #1A1E27; outline: none; cursor: pointer;
+    background: var(--ls-surface2); outline: none; cursor: pointer;
+    transition: background 200ms ease-out;
   }
   input[type="range"]::-webkit-slider-thumb {
-    -webkit-appearance: none; width: 18px; height: 18px;
-    border-radius: 50%; background: #C9A84C; cursor: pointer;
-    border: 2px solid #0B0D11;
+    -webkit-appearance: none; width: 20px; height: 20px;
+    border-radius: 50%; background: var(--ls-gold); cursor: pointer;
+    border: 2px solid var(--ls-bg);
+    box-shadow: 0 2px 8px color-mix(in srgb, var(--ls-gold) 35%, transparent);
+    transition:
+      transform 180ms cubic-bezier(0.34, 1.56, 0.64, 1),
+      box-shadow 180ms ease-out;
+  }
+  input[type="range"]::-webkit-slider-thumb:hover {
+    transform: scale(1.15);
+    box-shadow: 0 4px 14px color-mix(in srgb, var(--ls-gold) 55%, transparent);
+  }
+  input[type="range"]::-webkit-slider-thumb:active {
+    transform: scale(1.05);
   }
 
   input[type="checkbox"] {
     width: 18px; height: 18px; border-radius: 4px;
-    border: 1px solid rgba(255,255,255,0.15);
-    background: #1A1E27; accent-color: #C9A84C; cursor: pointer;
+    border: 1px solid var(--ls-border);
+    background: var(--ls-surface); accent-color: var(--ls-gold); cursor: pointer;
   }
 }
 
@@ -2058,7 +2118,12 @@ button, a, [role="button"] { min-height: 44px; }
 /* + hiérarchie typo renforcée. Classes réutilisables pour tout le bilan.  */
 /* ─────────────────────────────────────────────────────────────────────── */
 
-/* Pills sélectionnables (ChoiceGroup, préréglages, type de suite, etc.) */
+/* Pills sélectionnables (ChoiceGroup, préréglages, type de suite, etc.).
+   Refonte 2026-11-04 : ajout micro-interactions premium —
+   - Selection : scale 1.03 + inner glow gold + check qui pop
+   - Hover : lift translateY(-1px) + halo subtil
+   - Cubic-bezier spring sur transitions
+   Theme-aware : tous les couleurs via var(--ls-*). */
 .ls-pill {
   display: inline-flex;
   align-items: center;
@@ -2072,14 +2137,26 @@ button, a, [role="button"] { min-height: 44px; }
   font-size: 13px;
   font-weight: 400;
   cursor: pointer;
-  transition: border-color 150ms ease-out, background 150ms ease-out, color 150ms ease-out;
+  transition:
+    border-color 200ms cubic-bezier(0.4, 0, 0.2, 1),
+    background 200ms cubic-bezier(0.4, 0, 0.2, 1),
+    color 200ms cubic-bezier(0.4, 0, 0.2, 1),
+    transform 200ms cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow 200ms cubic-bezier(0.4, 0, 0.2, 1);
   -webkit-appearance: none;
   appearance: none;
+  will-change: transform;
 }
 .ls-pill:hover:not(.ls-pill--selected):not(:disabled) {
   border-color: var(--ls-gold);
-  background: color-mix(in srgb, var(--ls-gold) 8%, transparent);
+  background: color-mix(in srgb, var(--ls-gold) 10%, transparent);
   color: var(--ls-text);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--ls-gold) 14%, transparent);
+}
+.ls-pill:active:not(:disabled) {
+  transform: scale(0.97);
+  transition-duration: 80ms;
 }
 .ls-pill:focus-visible {
   outline: none;
@@ -2088,18 +2165,35 @@ button, a, [role="button"] { min-height: 44px; }
 }
 .ls-pill--selected {
   border-color: transparent;
-  background: var(--ls-gold);
+  background: linear-gradient(135deg, var(--ls-gold) 0%, color-mix(in srgb, var(--ls-gold) 80%, var(--ls-teal)) 100%);
   color: var(--ls-bg);
-  font-weight: 500;
-  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08);
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  box-shadow:
+    inset 0 0 0 1px rgba(0, 0, 0, 0.08),
+    0 4px 14px color-mix(in srgb, var(--ls-gold) 30%, transparent);
+  transform: scale(1.03);
 }
 .ls-pill--selected:hover:not(:disabled) {
-  background: var(--ls-gold);
+  transform: scale(1.04) translateY(-1px);
+  box-shadow:
+    inset 0 0 0 1px rgba(0, 0, 0, 0.08),
+    0 6px 18px color-mix(in srgb, var(--ls-gold) 38%, transparent);
 }
 .ls-pill__check {
   display: inline-flex;
   width: 14px;
   height: 14px;
+  animation: ls-pill-check-pop 280ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes ls-pill-check-pop {
+  0%   { transform: scale(0) rotate(-30deg); opacity: 0; }
+  60%  { transform: scale(1.15) rotate(0deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ls-pill__check { animation: none; }
+  .ls-pill, .ls-pill--selected, .ls-pill:hover { transform: none !important; transition-duration: 100ms !important; }
 }
 .ls-pill:disabled {
   opacity: 0.45;
@@ -2167,7 +2261,9 @@ button, a, [role="button"] { min-height: 44px; }
 /* ─────────────────────────────────────────────────────────────────────── */
 
 /* Input générique (text, number, date, email, tel, search) — pendant direct
-   de .ls-input-time pour les autres types. Halo focus teal + transition douce. */
+   de .ls-input-time pour les autres types. Refonte 2026-11-04 :
+   focus halo teal anime + bordure plus douce + lift subtil sur focus.
+   Theme-aware via var(--ls-*). */
 .ls-input {
   width: 100%;
   box-sizing: border-box;
@@ -2180,19 +2276,30 @@ button, a, [role="button"] { min-height: 44px; }
   font-size: 14px;
   font-weight: 400;
   line-height: 1.4;
-  transition: border-color 120ms ease-out, box-shadow 120ms ease-out, background 120ms ease-out;
+  transition:
+    border-color 180ms cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 180ms cubic-bezier(0.4, 0, 0.2, 1),
+    background 180ms cubic-bezier(0.4, 0, 0.2, 1);
   outline: none;
 }
 .ls-input::placeholder {
   color: var(--ls-text-hint);
+  transition: color 180ms ease-out;
 }
 .ls-input:hover:not(:disabled):not(:focus) {
-  border-color: color-mix(in srgb, var(--ls-teal) 35%, var(--ls-border));
+  border-color: color-mix(in srgb, var(--ls-teal) 40%, var(--ls-border));
+  background: color-mix(in srgb, var(--ls-teal) 2%, var(--ls-input-bg));
 }
 .ls-input:focus {
   outline: none;
   border-color: var(--ls-teal);
-  box-shadow: 0 0 0 3px rgba(var(--ls-teal-rgb), 0.18);
+  background: color-mix(in srgb, var(--ls-teal) 3%, var(--ls-input-bg));
+  box-shadow:
+    0 0 0 4px color-mix(in srgb, var(--ls-teal) 16%, transparent),
+    0 2px 8px color-mix(in srgb, var(--ls-teal) 12%, transparent);
+}
+.ls-input:focus::placeholder {
+  color: color-mix(in srgb, var(--ls-text-hint) 60%, transparent);
 }
 .ls-input:disabled {
   opacity: 0.55;
@@ -2202,7 +2309,12 @@ button, a, [role="button"] { min-height: 44px; }
   border-color: var(--ls-coral);
 }
 .ls-input[aria-invalid="true"]:focus {
-  box-shadow: 0 0 0 3px rgba(var(--ls-coral-rgb), 0.18);
+  box-shadow:
+    0 0 0 4px color-mix(in srgb, var(--ls-coral) 16%, transparent),
+    0 2px 8px color-mix(in srgb, var(--ls-coral) 12%, transparent);
+}
+@media (prefers-reduced-motion: reduce) {
+  .ls-input { transition-duration: 80ms !important; }
 }
 
 /* Pills — hover lift ajouté (design spec point 1 : translateY -1px) */
@@ -2376,3 +2488,67 @@ html.theme-light .ls-hoverable:hover {
     scroll-snap-align: start;
   }
 }
+
+/* =============================================================================
+ * Themes alternatifs (templates futurs — 2026-11-04)
+ *
+ * Decommente quand pret a activer. Necessite aussi une mise a jour de
+ * useTheme.ts pour cycler entre les themes.
+ * ============================================================================= */
+
+/* Ocean — palette teal/azure sur surface deep blue */
+/*
+html.theme-ocean {
+  --ls-bg: #0A1828;
+  --ls-surface: #102B43;
+  --ls-surface2: #1B3A56;
+  --ls-border: rgba(255,255,255,0.08);
+  --ls-text: #E8F1FA;
+  --ls-text-muted: #7B9BB8;
+  --ls-text-hint: #4A6B85;
+  --ls-gold: #4FD1C5;
+  --ls-teal: #38BDF8;
+  --ls-coral: #F472B6;
+  --ls-purple: #818CF8;
+  --ls-input-bg: #1B3A56;
+  --ls-sidebar-bg: #102B43;
+}
+*/
+
+/* Sunset — palette warm orange/pink sur surface charcoal */
+/*
+html.theme-sunset {
+  --ls-bg: #1A0F0A;
+  --ls-surface: #2B1812;
+  --ls-surface2: #3D2419;
+  --ls-border: rgba(255,255,255,0.08);
+  --ls-text: #F5E6D3;
+  --ls-text-muted: #B89888;
+  --ls-text-hint: #8B6F5A;
+  --ls-gold: #F97316;
+  --ls-teal: #FB7185;
+  --ls-coral: #DC2626;
+  --ls-purple: #C084FC;
+  --ls-input-bg: #3D2419;
+  --ls-sidebar-bg: #2B1812;
+}
+*/
+
+/* Forest — palette green/cream sur surface earthy */
+/*
+html.theme-forest {
+  --ls-bg: #0F1E14;
+  --ls-surface: #1A2E20;
+  --ls-surface2: #243D2E;
+  --ls-border: rgba(255,255,255,0.08);
+  --ls-text: #E8F0E3;
+  --ls-text-muted: #88A88F;
+  --ls-text-hint: #5C7A66;
+  --ls-gold: #D4A574;
+  --ls-teal: #4ADE80;
+  --ls-coral: #F87171;
+  --ls-purple: #A78BFA;
+  --ls-input-bg: #243D2E;
+  --ls-sidebar-bg: #1A2E20;
+}
+*/
