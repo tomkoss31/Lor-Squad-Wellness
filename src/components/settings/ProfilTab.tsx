@@ -20,6 +20,7 @@ import {
   HERBALIFE_ID_HELP,
 } from "../../lib/herbalifeId";
 import { RANK_LABELS, type HerbalifeRank } from "../../types/domain";
+import { RankPinBadge } from "../rank/RankPinBadge";
 
 const RANK_OPTIONS: HerbalifeRank[] = [
   "distributor_25",
@@ -517,32 +518,37 @@ export function ProfilTab() {
           {/* FLEX rank-aware (2026-11-05) — rang Herbalife = marge retail
               utilisée pour calculer les cibles FLEX. */}
           <LabeledField label="Rang Herbalife (plan marketing)">
-            <select
-              value={currentRank}
-              onChange={(e) => setCurrentRank(e.target.value as HerbalifeRank)}
-              disabled={saving}
-              style={{
-                width: "100%",
-                padding: "10px 12px",
-                borderRadius: 10,
-                border: "1px solid var(--ls-border)",
-                background: "var(--ls-surface2)",
-                color: "var(--ls-text)",
-                fontSize: 14,
-                fontFamily: "DM Sans, sans-serif",
-                outline: "none",
-                boxSizing: "border-box",
-                cursor: saving ? "wait" : "pointer",
-              }}
-            >
-              {RANK_OPTIONS.map((r) => (
-                <option key={r} value={r}>
-                  {RANK_LABELS[r]}
-                </option>
-              ))}
-            </select>
-            <div style={{ fontSize: 11, color: "var(--ls-text-muted)", marginTop: 4 }}>
-              Détermine ta marge retail (25 → 50 %) utilisée par FLEX pour calibrer tes cibles.
+            <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 10 }}>
+              <RankPinBadge rank={currentRank} size="lg" glow />
+              <div style={{ flex: 1 }}>
+                <select
+                  value={currentRank}
+                  onChange={(e) => setCurrentRank(e.target.value as HerbalifeRank)}
+                  disabled={saving}
+                  style={{
+                    width: "100%",
+                    padding: "10px 12px",
+                    borderRadius: 10,
+                    border: "1px solid var(--ls-border)",
+                    background: "var(--ls-surface2)",
+                    color: "var(--ls-text)",
+                    fontSize: 14,
+                    fontFamily: "DM Sans, sans-serif",
+                    outline: "none",
+                    boxSizing: "border-box",
+                    cursor: saving ? "wait" : "pointer",
+                  }}
+                >
+                  {RANK_OPTIONS.map((r) => (
+                    <option key={r} value={r}>
+                      {RANK_LABELS[r]}
+                    </option>
+                  ))}
+                </select>
+                <div style={{ fontSize: 11, color: "var(--ls-text-muted)", marginTop: 4 }}>
+                  Détermine ta marge retail (25 → 50 %) utilisée par FLEX pour calibrer tes cibles.
+                </div>
+              </div>
             </div>
           </LabeledField>
           <LabeledField label="Date d'inscription">

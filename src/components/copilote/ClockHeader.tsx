@@ -4,6 +4,9 @@
 // neumorphic + sparkles decoratifs.
 
 import { greetingFor, moodForLoad } from "../../lib/utils/copiloteHelpers";
+import { useAppContext } from "../../context/AppContext";
+import { RankPinBadge } from "../rank/RankPinBadge";
+import type { HerbalifeRank } from "../../types/domain";
 
 function formatTime(d: Date): string {
   return d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
@@ -97,6 +100,8 @@ export function ClockHeader({
 }) {
   const total = appointmentsToday + followupsToday;
   const { label: moodLabel } = moodForLoad(total);
+  const { currentUser } = useAppContext();
+  const userRank = (currentUser?.currentRank as HerbalifeRank | undefined) ?? "distributor_25";
   const hour = now.getHours();
   const greeting = greetingFor(hour);
   const gradient = getTimeGradient(hour);
@@ -261,6 +266,10 @@ export function ClockHeader({
             ) : null}{" "}
             <span className="ls-wave-emoji" style={{ fontSize: 26 }}>
               👋
+            </span>
+            {/* Pin Herbalife (rang actuel) — visible juste après le prénom. */}
+            <span style={{ marginLeft: 10, verticalAlign: "middle", display: "inline-block" }}>
+              <RankPinBadge rank={userRank} size="sm" />
             </span>
           </div>
 

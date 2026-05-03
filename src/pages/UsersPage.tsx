@@ -10,6 +10,7 @@ import { getPortfolioMetrics } from "../lib/portfolio";
 import type { User, HerbalifeRank } from "../types/domain";
 import { RANK_LABELS } from "../types/domain";
 import { getSupabaseClient } from "../services/supabaseClient";
+import { RankPinBadge } from "../components/rank/RankPinBadge";
 
 type TabKey = "members" | "new" | "repair";
 type RoleFilter = "all" | "admin" | "referent" | "distributor";
@@ -442,6 +443,11 @@ export function UsersPage() {
                             <span style={{ display: "inline-flex", alignItems: "center", padding: "3px 9px", borderRadius: 10, fontSize: 10, fontWeight: 600, background: rc.chipBg, color: rc.chipText }}>
                               {rc.label}
                             </span>
+                            {/* Pin Herbalife actuel (rang) — visible inline */}
+                            <RankPinBadge
+                              rank={(user.currentRank as HerbalifeRank | undefined) ?? "distributor_25"}
+                              size="sm"
+                            />
                             <span
                               style={{
                                 display: "inline-flex",
