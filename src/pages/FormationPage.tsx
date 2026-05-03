@@ -69,6 +69,14 @@ export function FormationPage() {
         totalModules={totalModules}
       />
 
+      {/* Features #7 + #9 (2026-11-04) : 2 outils premium en row */}
+      <div
+        style={{
+          display: "grid",
+          gap: 12,
+          gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+        }}
+      >
       {/* Feature #7 (2026-11-04) : Lien vers le Strategy Plan Calculator */}
       <Link
         to="/formation/calculateur"
@@ -149,6 +157,88 @@ export function FormationPage() {
         </div>
         <span style={{ color: "var(--ls-gold)", fontSize: 18, flexShrink: 0 }}>→</span>
       </Link>
+
+      {/* Feature #9 (2026-11-04) : Charte distributeur */}
+      <Link
+        to="/formation/charte"
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 14,
+          padding: "16px 18px",
+          background:
+            "linear-gradient(135deg, color-mix(in srgb, var(--ls-coral) 10%, var(--ls-surface)) 0%, color-mix(in srgb, var(--ls-purple) 6%, var(--ls-surface)) 100%)",
+          border: "0.5px solid color-mix(in srgb, var(--ls-coral) 32%, var(--ls-border))",
+          borderRadius: 16,
+          textDecoration: "none",
+          color: "var(--ls-text)",
+          fontFamily: "DM Sans, sans-serif",
+          transition: "transform 200ms ease, box-shadow 200ms ease",
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.transform = "translateY(-2px)";
+          e.currentTarget.style.boxShadow = "0 8px 22px -10px color-mix(in srgb, var(--ls-coral) 35%, transparent)";
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.transform = "none";
+          e.currentTarget.style.boxShadow = "none";
+        }}
+      >
+        <div
+          style={{
+            width: 46,
+            height: 46,
+            borderRadius: 12,
+            background: "linear-gradient(135deg, var(--ls-coral) 0%, color-mix(in srgb, var(--ls-coral) 70%, var(--ls-purple)) 100%)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: 22,
+            boxShadow: "0 4px 14px color-mix(in srgb, var(--ls-coral) 35%, transparent)",
+            flexShrink: 0,
+          }}
+        >
+          ✍️
+        </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div
+            style={{
+              fontSize: 10,
+              fontWeight: 700,
+              letterSpacing: "0.18em",
+              textTransform: "uppercase",
+              color: "var(--ls-coral)",
+              marginBottom: 3,
+            }}
+          >
+            ✦ Engagement · Rituel
+          </div>
+          <div
+            style={{
+              fontFamily: "Syne, serif",
+              fontWeight: 700,
+              fontSize: 16,
+              color: "var(--ls-text)",
+              letterSpacing: "-0.012em",
+              lineHeight: 1.2,
+            }}
+          >
+            Signe ta charte de distributeur
+          </div>
+          <div
+            style={{
+              fontSize: 11.5,
+              color: "var(--ls-text-muted)",
+              marginTop: 3,
+              lineHeight: 1.4,
+            }}
+          >
+            5 engagements + ton pourquoi + objectif 12 mois. Imprime, signe, accroche.
+          </div>
+        </div>
+        <span style={{ color: "var(--ls-coral)", fontSize: 18, flexShrink: 0 }}>→</span>
+      </Link>
+      </div>
 
       {/* ─── Zone 1 : Mon parcours guide ────────────────────────────── */}
       <section>
