@@ -9,6 +9,7 @@ import { AssessmentSectionV2 } from "../components/assessment/AssessmentSectionV
 import { AssessmentFieldV2 } from "../components/assessment/AssessmentFieldV2";
 import { BusinessCuriosityCard } from "../components/assessment/BusinessCuriosityCard";
 import { RecommendationStepV2 } from "../components/assessment/RecommendationStepV2";
+import { FollowUpStepV2 } from "../components/assessment/FollowUpStepV2";
 import { useEffect } from "react";
 import { useRef } from "react";
 import { Component, type ErrorInfo } from "react";
@@ -3558,107 +3559,21 @@ export function NewAssessmentPage() {
           {/* Ancien step Hydratation supprimé — Chantier bilan updates (2026-04-20) */}
 
           {currentStepId === 'follow-up' && (
-            <div className="space-y-4">
-              {/* Mini-résumé bilan pour contexte */}
-              <div className="rounded-[16px] border border-[rgba(201,168,76,0.15)] bg-[rgba(201,168,76,0.04)] p-4">
-                <div className="mb-3 text-[10px] font-semibold uppercase tracking-[0.15em] text-[#C9A84C]">✦ Résumé du bilan</div>
-                <div className="flex flex-wrap gap-4">
-                  {form.objectiveFocus && (
-                    <div><span className="text-[11px] text-[var(--ls-text-hint)]">Objectif</span><p className="text-sm font-semibold text-[var(--ls-text)]">{form.objectiveFocus}</p></div>
-                  )}
-                  {form.weight > 0 && (
-                    <div><span className="text-[11px] text-[var(--ls-text-hint)]">Poids</span><p className="text-sm font-semibold text-[#C9A84C]">{form.weight} kg</p></div>
-                  )}
-                  {form.targetWeight > 0 && (
-                    <div><span className="text-[11px] text-[var(--ls-text-hint)]">Objectif poids</span><p className="text-sm font-semibold text-[#2DD4BF]">{form.targetWeight} kg</p></div>
-                  )}
-                  {form.selectedProgramId && (
-                    <div><span className="text-[11px] text-[var(--ls-text-hint)]">Programme</span><p className="text-sm font-semibold text-[var(--ls-text)]">{form.selectedProgramId}</p></div>
-                  )}
-                  {form.afterAssessmentAction && (
-                    <div><span className="text-[11px] text-[var(--ls-text-hint)]">Démarrage</span><p className="text-sm font-semibold" style={{ color: form.afterAssessmentAction === 'started' ? '#2DD4BF' : '#C9A84C' }}>{form.afterAssessmentAction === 'started' ? 'Immédiat' : 'À relancer'}</p></div>
-                  )}
-                </div>
-              </div>
-
-              <div className="grid gap-4 md:grid-cols-3">
-                <ChoiceGroup
-                  label="Décision client"
-                  value={form.decisionClient === "partant" ? "Partant" : form.decisionClient === "a_rassurer" ? "A rassurer" : form.decisionClient === "a_confirmer" ? "A confirmer" : ""}
-                  options={["Partant", "A rassurer", "A confirmer"]}
-                  onChange={(v) =>
-                    update(
-                      "decisionClient",
-                      v === "Partant" ? "partant" : v === "A rassurer" ? "a_rassurer" : "a_confirmer"
-                    )
-                  }
-                />
-                <ChoiceGroup
-                  label="Type de suite"
-                  value={
-                    form.typeDeSuite === "rdv_fixe" ? "Rendez-vous fixe" :
-                    form.typeDeSuite === "message_rappel" ? "Message de rappel" :
-                    form.typeDeSuite === "relance_douce" ? "Relance douce" :
-                    form.typeDeSuite === "suivi_libre" ? "Suivi libre" : ""
-                  }
-                  options={["Rendez-vous fixe", "Message de rappel", "Relance douce", "Suivi libre"]}
-                  onChange={(v) =>
-                    update(
-                      "typeDeSuite",
-                      v === "Rendez-vous fixe" ? "rdv_fixe" :
-                      v === "Message de rappel" ? "message_rappel" :
-                      v === "Relance douce" ? "relance_douce" :
-                      "suivi_libre"
-                    )
-                  }
-                />
-                <ChoiceGroup
-                  label="Message à laisser"
-                  value={form.messageALaisser === "simple" ? "Simple" : form.messageALaisser === "progressif" ? "Progressif" : form.messageALaisser === "cadre_clair" ? "Cadre clair" : ""}
-                  options={["Simple", "Progressif", "Cadre clair"]}
-                  onChange={(v) =>
-                    update(
-                      "messageALaisser",
-                      v === "Simple" ? "simple" : v === "Progressif" ? "progressif" : "cadre_clair"
-                    )
-                  }
-                />
-              </div>
-              <p className="text-[11px] text-[var(--ls-text-muted)]">
-                Ce choix affecte le statut du client dans ta base (actif / pas démarré / fragile).
-              </p>
-              {form.typeDeSuite === "suivi_libre" && (
-                <div
-                  style={{
-                    padding: "10px 14px",
-                    borderRadius: 12,
-                    background: "color-mix(in srgb, var(--ls-gold) 8%, transparent)",
-                    border: "1px solid color-mix(in srgb, var(--ls-gold) 25%, transparent)",
-                    fontSize: 12,
-                    color: "var(--ls-text)",
-                    lineHeight: 1.5,
-                  }}
-                >
-                  <strong style={{ color: "var(--ls-gold)" }}>✦ Suivi libre sélectionné.</strong>{" "}
-                  Ce client sera actif mais sans rappel automatique dans ton agenda.
-                  Tu pourras le rebasculer en suivi planifié depuis sa fiche (onglet Actions → Cycle de vie).
-                </div>
-              )}
-              <div className="grid gap-4 md:grid-cols-2">
-                <Field
-                  label={form.typeDeSuite === "suivi_libre" ? "Prochain rendez-vous (facultatif)" : "Prochain rendez-vous"}
-                  type="datetime-local"
-                  value={form.nextFollowUp}
-                  onChange={(v) => update("nextFollowUp", v)}
-                  disabled={form.typeDeSuite === "suivi_libre"}
-                />
-                <AreaField
-                  label="Commentaire libre"
-                  value={form.comment}
-                  onChange={(v) => update("comment", v)}
-                />
-              </div>
-            </div>
+            <FollowUpStepV2
+              objective={form.objective}
+              afterAssessmentAction={form.afterAssessmentAction}
+              clientFirstName={form.firstName}
+              decisionClient={form.decisionClient}
+              typeDeSuite={form.typeDeSuite}
+              messageALaisser={form.messageALaisser}
+              nextFollowUp={form.nextFollowUp}
+              comment={form.comment}
+              onDecisionClient={(v) => update("decisionClient", v)}
+              onTypeDeSuite={(v) => update("typeDeSuite", v)}
+              onMessageALaisser={(v) => update("messageALaisser", v)}
+              onNextFollowUp={(v) => update("nextFollowUp", v)}
+              onComment={(v) => update("comment", v)}
+            />
           )}
 
           {/* ─── Étape 12 : Félicitations (remplace l'ancienne "Conclusion du
@@ -3949,55 +3864,9 @@ class VisualStepBoundary extends Component<
 // progress bar + lignes compactes). Voir
 // src/components/assessment/RecommendationStepV2.tsx.
 
-function Field({
-  label,
-  value,
-  onChange,
-  type = "text",
-  step,
-  disabled = false,
-  prefilled = false
-}: {
-  label: string;
-  value: string | number;
-  onChange: (value: string) => void;
-  type?: string;
-  step?: string;
-  disabled?: boolean;
-  prefilled?: boolean;
-}) {
-  // Chantier Prospects : style vert visible pour les champs pré-remplis depuis
-  // un prospect. Se dissipe dès que le coach édite le champ (prefilledFields[key]→false).
-  const prefillStyle: React.CSSProperties | undefined = prefilled
-    ? {
-        background: "color-mix(in srgb, var(--ls-teal) 14%, transparent)",
-        color: "var(--ls-teal)",
-        border: "1px solid var(--ls-teal)",
-        fontWeight: 600,
-      }
-    : undefined;
-  const inputClassName = type === "time" ? "ls-input-time" : undefined;
-  return (
-    <div className="space-y-2" style={disabled ? { opacity: 0.5 } : undefined}>
-      <label className="ls-field-label">
-        {label}{prefilled && <span style={{ marginLeft: 6, fontSize: 10, color: "var(--ls-teal)" }}>✦ pré-rempli</span>}
-      </label>
-      {type === "number" ? (
-        <DecimalInput value={Number(value) || 0} onChange={onChange} step={step} />
-      ) : (
-        <input
-          type={type}
-          step={step}
-          value={value}
-          disabled={disabled}
-          onChange={(event) => onChange(event.target.value)}
-          className={inputClassName}
-          style={prefillStyle}
-        />
-      )}
-    </div>
-  );
-}
+// Field supprime (2026-11-04) — toutes les etapes du bilan ont migre vers
+// AssessmentFieldV2 (icones contextuelles + helper text + chip prefilled).
+// Voir src/components/assessment/AssessmentFieldV2.tsx.
 
 function ClothingSizeSelect({
   label,
