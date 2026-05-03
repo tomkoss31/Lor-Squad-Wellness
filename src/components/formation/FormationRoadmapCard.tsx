@@ -200,7 +200,7 @@ export function FormationRoadmapCard({
               marginBottom: 4,
             }}
           >
-            ✦ Reprendre · N{nextStep.levelOrder} {nextStep.levelTitle}
+            ✦ Reprendre · {nextStep.levelTitle}
           </div>
           <h2
             style={{
@@ -232,7 +232,7 @@ export function FormationRoadmapCard({
               ⏱ {nextStep.durationMin} min
             </span>
             <span>
-              📍 Module {nextStep.positionInLevel.current}/{nextStep.positionInLevel.total} de N{nextStep.levelOrder}
+              📍 Module {nextStep.positionInLevel.current}/{nextStep.positionInLevel.total} · {nextStep.levelTitle}
             </span>
             <span>
               🎯 {totalCompleted}/{totalModules} validés au total
