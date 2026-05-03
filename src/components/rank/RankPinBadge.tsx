@@ -33,15 +33,30 @@ interface Props {
 }
 
 const PIN_FILE: Record<HerbalifeRank, string> = {
-  distributor_25: "/pins/distributor.png",
-  senior_consultant_35: "/pins/senior-consultant.png",
-  success_builder_42: "/pins/success-builder.png",
-  supervisor_50: "/pins/supervisor.png",
-  world_team_50: "/pins/world-team.png",
-  get_team_50: "/pins/get-team.png",
-  millionaire_50: "/pins/millionaire-team.png",
-  presidents_50: "/pins/presidents-team.png",
+  distributor_25: "/pins/distributor.webp",
+  senior_consultant_35: "/pins/senior-consultant.webp",
+  success_builder_42: "/pins/success-builder.webp",
+  supervisor_50: "/pins/supervisor.webp",
+  world_team_50: "/pins/world-team.webp",
+  get_team_50: "/pins/get-team.webp",
+  millionaire_50: "/pins/millionaire-team.webp",
+  // President's Team : pas encore de fichier dans /public/pins/.
+  // Fallback initiales s'affiche tant que pas de fichier.
+  presidents_50: "/pins/presidents-team.webp",
 };
+
+/**
+ * Pins "upgrade" intermédiaires Herbalife (mêmes 50% de marge mais
+ * paliers RO différents). Disponibles dans /public/pins/ mais pas
+ * encore mappés à des rangs DB. À utiliser plus tard si on étend
+ * HerbalifeRank avec des sous-paliers (ex. supervisor_active_50,
+ * get_team_2500, millionaire_team_7500).
+ */
+export const PIN_FILE_EXTRA = {
+  active_supervisor: "/pins/active-supervisor.webp",
+  get_team_2500: "/pins/get-team-2500.webp",
+  millionaire_team_7500: "/pins/millionaire-team-7500.webp",
+} as const;
 
 const SHORT_LABEL: Record<HerbalifeRank, string> = {
   distributor_25: "Distributor",
