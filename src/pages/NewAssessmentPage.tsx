@@ -4403,25 +4403,9 @@ function TimelineChoiceField({
   );
 }
 
-function SectionBlock({ title, description, children }: { title: string; description: string; children: ReactNode; }) {
-  // Refonte visuelle bilan (2026-11-04) : accent gold subtil sur le titre +
-  // micro-divider doré sous le titre pour structurer visuellement les blocs
-  // sans alourdir.
-  return (
-    <div
-      className="rounded-[24px] bg-[var(--ls-surface2)] p-5"
-      style={{
-        border: '0.5px solid color-mix(in srgb, var(--ls-gold) 8%, var(--ls-border))',
-      }}
-    >
-      <div style={{ marginBottom: 16, paddingBottom: 12, borderBottom: '0.5px dashed color-mix(in srgb, var(--ls-gold) 18%, transparent)' }}>
-        <h3 className="ls-block-title" style={{ marginBottom: 4 }}>{title}</h3>
-        <p className="ls-block-desc" style={{ margin: 0 }}>{description}</p>
-      </div>
-      <div className="space-y-4">{children}</div>
-    </div>
-  );
-}
+// SectionBlock supprime (2026-11-04) — toutes les etapes du bilan ont migre
+// vers AssessmentSectionV2 (mini-hero pattern premium). Si besoin de revenir
+// en arriere : voir commit 198e818 ou anterieurs pour l ancien composant.
 
 
 
