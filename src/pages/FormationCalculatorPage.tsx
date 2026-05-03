@@ -29,6 +29,8 @@
 
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { RankPinBadge } from "../components/rank/RankPinBadge";
+import { RANK_LABELS, type HerbalifeRank } from "../types/domain";
 import {
   Bar,
   CartesianGrid,
@@ -63,19 +65,30 @@ const VISION_MULTIPLIERS = [
   { label: "3x", value: 3 },
 ];
 
-const RANK_LADDER: Array<{ name: string; isElite: boolean }> = [
-  { name: "Supervisor", isElite: false },
-  { name: "World Team", isElite: false },
-  { name: "GET", isElite: true },
-  { name: "Millionaire", isElite: true },
-  { name: "President's", isElite: true },
+/**
+ * Échelle des paliers Herbalife affichés sous le chart, dans l'ordre
+ * de progression. Refonte 2026-05-03 : passage de 5 → 9 paliers avec
+ * pins officiels (Active Sup, Active WT, GET 2500, Millionaire 7500
+ * en plus). Le pin de chaque palier est rendu via RankPinBadge.
+ */
+const RANK_LADDER: HerbalifeRank[] = [
+  "success_builder_42", // 1000 PV qualifiant
+  "supervisor_50", // 2500 PV + m≥2
+  "active_supervisor_50", // Sup + maintien
+  "world_team_50", // 1+ downline Sup + m≥3
+  "active_world_team_50", // WT + downline solide
+  "get_team_50", // 1000 RO
+  "get_team_2500_50", // 2500 RO
+  "millionaire_50", // 4000 RO
+  "millionaire_7500_50", // 7500 RO
+  "presidents_50", // 10 000 RO+
 ];
 
 interface MonthData {
   m: number;
   vp: number;
   ro: number;
-  rank: string;
+  rank: HerbalifeRank;
   revenue: number;
   sups: number;
 }
@@ -108,13 +121,19 @@ function compute(p: ComputeParams): MonthData[] {
     const royaltyRevenue = ro * RO_VALUE;
     const revenue = Math.round(retailRevenue + royaltyRevenue);
 
-    let rank = "Member";
-    if (personalVP >= 1000) rank = "QP";
-    if (personalVP >= 2500 && m >= 2) rank = "Supervisor";
-    if (m >= 3 && totalSups >= 1) rank = "World Team";
-    if (ro >= 1000) rank = "GET";
-    if (ro >= 4000) rank = "Millionaire";
-    if (ro >= 10000) rank = "President's";
+    // Logique progression Herbalife (validée Thomas) :
+    // chaque palier override le précédent si conditions remplies.
+    let rank: HerbalifeRank = "distributor_25";
+    if (personalVP >= 1000) rank = "success_builder_42";
+    if (personalVP >= 2500 && m >= 2) rank = "supervisor_50";
+    if (personalVP >= 2500 && m >= 4) rank = "active_supervisor_50";
+    if (m >= 3 && totalSups >= 1) rank = "world_team_50";
+    if (m >= 5 && totalSups >= 2) rank = "active_world_team_50";
+    if (ro >= 1000) rank = "get_team_50";
+    if (ro >= 2500) rank = "get_team_2500_50";
+    if (ro >= 4000) rank = "millionaire_50";
+    if (ro >= 7500) rank = "millionaire_7500_50";
+    if (ro >= 10000) rank = "presidents_50";
 
     months.push({ m, vp: Math.round(personalVP), ro, rank, revenue, sups: totalSups });
     cumulRec += recC;
@@ -157,19 +176,18 @@ export function FormationCalculatorPage() {
   const last = data[11];
   const cumul = useMemo(() => data.reduce((a, b) => a + b.revenue, 0), [data]);
 
-  const reachedRanks = useMemo<Set<string>>(() => {
-    const reached = new Set(data.map((d) => d.rank));
-    if (reached.has("President's")) {
-      ["Millionaire", "GET", "World Team", "Supervisor"].forEach((r) => reached.add(r));
-    }
-    if (reached.has("Millionaire")) {
-      ["GET", "World Team", "Supervisor"].forEach((r) => reached.add(r));
-    }
-    if (reached.has("GET")) {
-      ["World Team", "Supervisor"].forEach((r) => reached.add(r));
-    }
-    if (reached.has("World Team")) {
-      reached.add("Supervisor");
+  const reachedRanks = useMemo<Set<HerbalifeRank>>(() => {
+    const reached = new Set<HerbalifeRank>(data.map((d) => d.rank));
+    // Downward unlock : si on atteint un haut palier, tous les paliers
+    // précédents sont considérés atteints (logique cumulative).
+    const idxMax = Math.max(
+      ...data.map((d) => RANK_LADDER.indexOf(d.rank)).filter((i) => i >= 0),
+      -1,
+    );
+    if (idxMax >= 0) {
+      for (let i = 0; i <= idxMax; i++) {
+        reached.add(RANK_LADDER[i]);
+      }
     }
     return reached;
   }, [data]);
@@ -340,50 +358,56 @@ export function FormationCalculatorPage() {
             <Stat label="Cumul 12 mois*" value={formatEur(cumul)} sub="€ total" tone="gold" />
           </div>
 
-          {/* Badges rangs */}
+          {/* Badges rangs : pins Herbalife officiels selon progression
+              calculée. Refonte 2026-05-03 : 10 paliers (vs 5) + pins visuels. */}
           <div
             style={{
               display: "flex",
-              gap: 7,
+              gap: 6,
               flexWrap: "wrap",
               justifyContent: "center",
-              margin: "10px 0 22px",
+              margin: "14px 0 22px",
+              padding: "14px 10px",
+              background: "var(--ls-surface)",
+              border: "0.5px solid var(--ls-border)",
+              borderRadius: 14,
             }}
           >
-            {RANK_LADDER.map((r) => {
-              const on = reachedRanks.has(r.name);
-              const useGold = on && r.isElite;
+            {RANK_LADDER.map((rank, idx) => {
+              const on = reachedRanks.has(rank);
               return (
-                <span
-                  key={r.name}
+                <div
+                  key={rank}
                   style={{
-                    padding: "8px 14px",
-                    borderRadius: 999,
-                    fontSize: 11.5,
-                    fontWeight: 600,
-                    letterSpacing: "0.02em",
-                    fontFamily: "DM Sans, sans-serif",
-                    background: useGold
-                      ? "var(--ls-gold)"
-                      : on
-                        ? "var(--ls-teal)"
-                        : "var(--ls-surface2)",
-                    color: useGold
-                      ? "var(--ls-bg)"
-                      : on
-                        ? "#fff"
-                        : "var(--ls-text-hint)",
-                    border: on
-                      ? `0.5px solid ${useGold ? "var(--ls-gold)" : "var(--ls-teal)"}`
-                      : "0.5px solid var(--ls-border)",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    gap: 4,
+                    padding: "4px 6px",
+                    borderRadius: 10,
+                    opacity: on ? 1 : 0.32,
+                    filter: on ? "none" : "grayscale(0.6)",
                     transition: "all 400ms ease",
-                    boxShadow: on
-                      ? `0 4px 12px color-mix(in srgb, ${useGold ? "var(--ls-gold)" : "var(--ls-teal)"} 25%, transparent)`
-                      : "none",
+                    minWidth: 64,
                   }}
                 >
-                  {r.name}
-                </span>
+                  <RankPinBadge rank={rank} size="sm" glow={on && idx === RANK_LADDER.findIndex((r) => reachedRanks.has(r) === false) - 1} />
+                  <div
+                    style={{
+                      fontSize: 8.5,
+                      letterSpacing: 0.4,
+                      textTransform: "uppercase",
+                      fontFamily: "DM Sans, sans-serif",
+                      fontWeight: 700,
+                      color: on ? "var(--ls-text)" : "var(--ls-text-hint)",
+                      textAlign: "center",
+                      lineHeight: 1.15,
+                      maxWidth: 64,
+                    }}
+                  >
+                    {RANK_LABELS[rank].replace(/\s*\(\d+%\)\s*$/, "").replace(/^Millionaire 7 500 RO$/, "Mil. 7500").replace(/^G\.E\.T\. 2 500 RO$/, "GET 2500")}
+                  </div>
+                </div>
               );
             })}
           </div>
@@ -564,7 +588,10 @@ export function FormationCalculatorPage() {
                         fontSize: 10.5,
                       }}
                     >
-                      {d.rank}
+                      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                        <RankPinBadge rank={d.rank} size="xs" />
+                        <span>{RANK_LABELS[d.rank].replace(/\s*\(\d+%\)\s*$/, "")}</span>
+                      </div>
                     </td>
                     <td
                       style={{
