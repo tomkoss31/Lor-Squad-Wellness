@@ -7,7 +7,9 @@ import { canSponsorDistributors, getRoleLabel } from "../lib/auth";
 import { InviteDistributorModal } from "../components/users/InviteDistributorModal";
 import { PendingInvitationsList } from "../components/users/PendingInvitationsList";
 import { getPortfolioMetrics } from "../lib/portfolio";
-import type { User } from "../types/domain";
+import type { User, HerbalifeRank } from "../types/domain";
+import { RANK_LABELS } from "../types/domain";
+import { getSupabaseClient } from "../services/supabaseClient";
 
 type TabKey = "members" | "new" | "repair";
 type RoleFilter = "all" | "admin" | "referent" | "distributor";
@@ -496,6 +498,16 @@ export function UsersPage() {
                               />
                             </div>
                           )}
+
+                          {/* FLEX rank-aware (2026-11-05) — admin override
+                              du rang Herbalife du distri (utilisé par FLEX
+                              pour calculer les cibles). */}
+                          <div>
+                            <div style={{ fontSize: 9, letterSpacing: "2px", textTransform: "uppercase", color: "var(--ls-text)", fontWeight: 500, marginBottom: 8, fontFamily: "DM Sans, sans-serif" }}>
+                              Rang Herbalife
+                            </div>
+                            <UserInlineRankForm user={user} />
+                          </div>
 
                           {/* Actions */}
                           <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", paddingTop: 4, borderTop: "1px solid var(--ls-border)", marginTop: 4 }}>
@@ -1039,3 +1051,97 @@ function PasswordChangeModal({
     </div>
   );
 }
+
+// ─── FLEX rank-aware (2026-11-05) — admin override du rang Herbalife ──────
+function UserInlineRankForm({ user }: { user: User }) {
+  const [rank, setRank] = useState<HerbalifeRank>(
+    (user.currentRank as HerbalifeRank | undefined) ?? "distributor_25",
+  );
+  const [saving, setSaving] = useState(false);
+  const [feedback, setFeedback] = useState<{ type: "ok" | "err"; msg: string } | null>(null);
+
+  async function handleSave() {
+    setSaving(true);
+    setFeedback(null);
+    try {
+      const sb = await getSupabaseClient();
+      if (!sb) throw new Error("Service indisponible");
+      const { error: e } = await sb
+        .from("users")
+        .update({ current_rank: rank, rank_set_at: new Date().toISOString() })
+        .eq("id", user.id);
+      if (e) throw new Error(e.message);
+      setFeedback({ type: "ok", msg: "Enregistré" });
+      setTimeout(() => setFeedback(null), 2000);
+    } catch (err) {
+      setFeedback({ type: "err", msg: err instanceof Error ? err.message : "Erreur" });
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 8, alignItems: "end" }}>
+      <select
+        value={rank}
+        onChange={(e) => setRank(e.target.value as HerbalifeRank)}
+        style={{
+          padding: "8px 10px",
+          border: "1px solid var(--ls-border)",
+          borderRadius: 8,
+          fontSize: 12,
+          background: "var(--ls-surface)",
+          color: "var(--ls-text)",
+          outline: "none",
+          fontFamily: "DM Sans, sans-serif",
+        }}
+      >
+        {USERS_PAGE_RANK_OPTIONS.map((r) => (
+          <option key={r} value={r}>
+            {RANK_LABELS[r]}
+          </option>
+        ))}
+      </select>
+      <button
+        type="button"
+        onClick={() => void handleSave()}
+        disabled={saving}
+        style={{
+          padding: "8px 14px",
+          border: "none",
+          background: saving ? "var(--ls-border)" : "var(--ls-gold)",
+          color: "#fff",
+          borderRadius: 8,
+          fontSize: 12,
+          fontWeight: 600,
+          cursor: saving ? "wait" : "pointer",
+          fontFamily: "DM Sans, sans-serif",
+        }}
+      >
+        {saving ? "…" : "OK"}
+      </button>
+      {feedback && (
+        <span
+          style={{
+            gridColumn: "1 / -1",
+            fontSize: 11,
+            color: feedback.type === "ok" ? "var(--ls-teal)" : "var(--ls-coral)",
+          }}
+        >
+          {feedback.msg}
+        </span>
+      )}
+    </div>
+  );
+}
+
+const USERS_PAGE_RANK_OPTIONS: HerbalifeRank[] = [
+  "distributor_25",
+  "senior_consultant_35",
+  "success_builder_42",
+  "supervisor_50",
+  "world_team_50",
+  "get_team_50",
+  "millionaire_50",
+  "presidents_50",
+];
