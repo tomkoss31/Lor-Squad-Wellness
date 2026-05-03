@@ -369,107 +369,190 @@ export const TOOLKIT_BILAN: FormationToolkitItem[] = [
     id: "tk-bilan-01",
     slug: "bases-presentiel",
     category: "bilan",
-    title: "Bilan en présentiel — les 6 indispensables",
-    description: "L'app gère le contenu. Toi, tu gères l'expérience humaine. Voici les bases physiques à ne JAMAIS oublier.",
+    title: "Le bilan EBE — les 10 étapes pro",
+    description: "Le déroulé complet d'une Étude Bien-Être réussie en 60 min. L'app pilote la trame, toi tu pilotes l'expérience humaine.",
     kind: "page",
     format: "page",
     profile: "tous",
     icon: "🏠",
-    durationMin: 10,
+    durationMin: 12,
     tag: "Présentiel",
     contentMarkdown: `## L'app fait le bilan. Toi tu fais l'EXPÉRIENCE.
 
 > 90% des distri pensent que le bilan c'est *« suivre la trame »*. Faux. La trame, l'app la fait.
 > **Toi, ton vrai job** : faire vivre une expérience qui transforme une personne en 60 minutes.
 
-Voici les 6 indispensables physiques à préparer **AVANT** que la personne arrive.
+🎯 **Objectif** : que **n'importe quel distri** puisse suivre ces 10 étapes et faire une EBE pro, simple et agréable. L'app pilote le bilan technique — toi, tu portes l'humain.
 
 ---
 
-### 1. ☕ La boisson d'accueil
+### 1. 🧰 Préparation avant l'arrivée
 
-**Quoi** : Eau pétillante au citron OU Aloe Concentrate dilué (en mini-verre, joli).
+- Sois **à l'heure** (même en avance).
+- Sois **propre**, souriant·e, présentable.
+- Le club / ton espace est **rangé**, propre, accueillant.
+- **Tablette ou téléphone chargés à 100%** — l'app Lor'Squad sera ton coéquipier pendant le bilan.
+- Balance (Tanita allumée + pile vérifiée la veille), mètre ruban, stylo prêts.
+- Bouteille d'eau fermée + 2 verres + shaker + Formula 1 + lait/lait végétal sortis.
 
-**Comment** : Servi **dès l'arrivée**, pas au milieu. Verre propre, pas un gobelet plastique pourri.
+> Quand la personne arrive, elle doit sentir qu'on l'attendait **pour elle**, pas qu'elle dérange.
 
-**Pourquoi** : tu signales que c'est un **rendez-vous pro**, pas un coup de tél. La personne se sent invitée, pas démarchée.
+---
+
+### 2. 😊 Accueil sourire (et prénom)
+
+- Accueille **avec le sourire** et utilise le **prénom**.
+- Phrase de bienvenue type :
+
+> *« Bienvenue {Prénom}, installe-toi, tu vas voir, on va passer un bon moment 😊 »*
+
+- Ambiance voulue : **cool + pro**. Tu n'es pas chez le médecin, mais tu n'es pas chez le copain non plus.
+- Évite à tout prix : *« Bonjour, asseyez-vous, on commence ! »*
+
+---
+
+### 3. 🥤 Proposer une boisson d'accueil
+
+- Demande d'abord : *« Tu préfères une boisson chaude ou froide ? »*
+- Propose de l'**eau pétillante au citron** (la base safe) ou ton best-seller du moment.
+- Verre propre, jamais un gobelet plastique pourri. **Belle présentation**, pas radin·e.
+- **Prends aussi ta boisson** → moment partagé, pas démarchage.
 
 > ⚠️ Si tu reçois chez toi : range ce qui doit être rangé. La cuisine sale derrière toi en visio, c'est mort.
 
 ---
 
-### 2. 🥤 Le shake offert (le moment WOW)
+### 4. 📱 Lance l'app pendant la préparation
 
-**Quoi** : 1 shake Formula 1 préparé devant elle, parfum au choix (vanille classique = safe).
+Pendant que tu prépares la boisson :
 
-**Comment** : Mixé **en sa présence** dans ton blender. Goûté ensemble.
+- **Sors ta tablette** ou ton téléphone, ouvre l'app Lor'Squad.
+- Crée le nouveau bilan, mets le prénom du client.
+- L'app va te guider sur les 13 étapes — tu n'as plus à improviser.
 
-**Pourquoi** : c'est l'instant où elle goûte le produit principal **sans avoir à acheter**. La preuve par le palais.
+> Aujourd'hui, l'app **remplace la fiche papier**. Tu gardes une fiche papier en backup au cas où ça rame, mais c'est l'app qui pilote.
 
-> 💡 Si elle adore le goût : *« Imagine ça chaque matin, tu t'y vois ? »*. Si elle est mitigée : *« Y'a 12 parfums, on trouvera le tien. »*
-
----
-
-### 3. 🧘 Ta posture (avant qu'elle arrive)
-
-**Quoi** : 5 minutes de respiration / silence avant qu'elle sonne.
-
-**Comment** : Tu poses ton téléphone, tu prends 5 grandes inspirations, tu te recentres.
-
-**Pourquoi** : ton énergie est **contagieuse**. Si t'arrives stressé.e du boulot, elle va le sentir et ça va plomber le bilan.
-
-> Avant chaque bilan : *« Je suis là pour cette personne, pas pour mes objectifs. »*. Tu reviens à l'autre, pas à toi.
+**Avantages** : gain de temps, structure pro, le client voit que c'est sérieux et organisé.
 
 ---
 
-### 4. 🪑 L'environnement (pièce + lumière)
+### 5. 🫶 Pause « boisson & discussion »
 
-**Quoi** : Pièce calme, sans bruit, **lumière douce** (pas néon hôpital).
+- Assieds-toi avec elle, laisse **goûter tranquillement**.
+- Observe la réaction.
+- **Ne plonge pas direct dans l'app**. Donne 2-3 minutes d'humain avant.
 
-**Comment** : Table propre, balance + mètre + fiche prêts. Téléphone en silencieux. Animaux dans une autre pièce. Enfants chez les voisins.
+Phrase d'ouverture :
 
-**Pourquoi** : si elle est dérangée pendant le bilan (sonnette, chien, gamin qui crie), tu **perds** le moment WOW. Pas de 2ème chance.
+> *« Comment tu t'es senti·e en venant aujourd'hui ? »*
 
-> Petit + : une bougie / un diffuseur d'huiles essentielles légères. Tu joues sur 4 sens en même temps.
-
----
-
-### 5. 🎒 Le matériel à avoir sous la main
-
-- ✅ Balance (à pile vérifiée la veille)
-- ✅ Mètre ruban
-- ✅ Fiche bilan papier (au cas où l'app rame)
-- ✅ Stylo
-- ✅ Eau bouteille fermée + 2 verres
-- ✅ Shaker + Formula 1 + lait/lait végétal/eau au choix
-- ✅ 1 produit secondaire à montrer (Aloe ou Tisane Thermojetics)
-- ✅ Ta tablette ou téléphone chargés à 100% pour l'app
-
-> Si tu galères pendant le bilan parce que tu cherches ta pile, t'as déjà perdu.
+(silence, écoute, sourire — 60-90 secondes minimum sans parler business)
 
 ---
 
-### 6. 🎙️ L'ouverture (les 90 premières secondes)
+### 6. 👂 Écoute active & empathie
 
-**Quoi dire** : *« Bienvenue ! Comment tu t'es senti.e en venant aujourd'hui ? »*
+Tu passes en mode **coach humain**, pas vendeur. Questions ouvertes :
 
-**Comment** : Sourire, eau servie, asseyez-vous. Tu écoutes 60-90 secondes **sans parler business**.
+- *« Qu'est-ce qui t'a donné envie de venir ? »*
+- *« Tu aimerais changer quoi aujourd'hui ? »*
+- *« Qu'est-ce qui est le plus difficile en ce moment ? »*
+- *« Qu'est-ce qui se passerait si dans 3 mois rien n'avait changé ? »*
 
-**Pourquoi** : tu fais passer la personne de *« je viens voir »* à *« je suis bien ici »*. Si la confiance n'est pas là dans les 2 premières minutes, **le bilan part de travers**.
+**Écoute sans juger** et **reformule**.
 
-> Évite à tout prix : *« Bonjour, asseyez-vous, on commence ! »*. Tu n'es pas chez le médecin.
+> Tu cherches le **VRAI pourquoi** (santé / image / énergie / business), pas le *« je veux perdre 3 kg »* de surface.
+
+C'est aussi le moment où l'app te demande de remplir l'**étape 1** (informations client). Saisis pendant qu'elle parle.
 
 ---
 
-### ✅ Ta checklist 30 min avant
+### 7. ⚖️ Body scan + bilan via l'app — sans jugement
 
-- [ ] Pièce propre + rangée
-- [ ] Boisson + verre prêts
-- [ ] Shaker + ingrédients prêts
-- [ ] Balance + mètre + fiche papier sortis
-- [ ] Téléphone/tablette chargés + en silencieux
-- [ ] Animaux/enfants gérés
-- [ ] 5 minutes respiration faites
+Avance dans l'app jusqu'à l'étape **Body Scan**. Phrase de cadrage :
+
+> *« Maintenant on va faire un body scan complet — pas juste le poids, mais ta masse musculaire, ton hydratation, ta graisse viscérale, ton âge métabolique. Tu vas voir des chiffres que tu n'as jamais vus. Pas pour te juger — pour comprendre. »*
+
+**Pendant le scan** :
+
+- L'app calcule tout. Tu commentes calmement, factuellement.
+- Pas de drama, pas de *« oh là là c'est grave »*.
+- Exemples :
+  > *« Ton hydratation est à 47%, idéal c'est 55-60%. Ça explique probablement ta fatigue / tes fringales. »*
+  > *« Ta masse musculaire est correcte, on la garde. C'est ton vrai capital. »*
+
+> *« Ce qui compte, ce n'est pas où tu es aujourd'hui, c'est ce qu'on va construire dans les prochaines semaines. »*
+
+---
+
+### 8. 🥛 Le shake F1 — le moment WOW
+
+C'est l'étape la plus puissante de tout le bilan. **Ne la zappe jamais**.
+
+- Présente **Formula 1** comme base de repas équilibré (25g de protéines, 21 vitamines, < 200 kcal).
+- Mixe le shake **devant elle** (pas pré-fait dans la cuisine).
+- Belle texture, beau verre, parfum au choix (vanille = safe par défaut).
+- Goûte avec elle.
+
+Phrases qui scellent :
+
+> Si elle adore : *« Imagine ça chaque matin, tu t'y vois ? »*
+> Si mitigée : *« Y'a 12 parfums, on trouvera le tien. »*
+
+**Objectif** : qu'elle se dise *« je pourrais manger ça tous les jours »*.
+
+---
+
+### 9. 🧩 Programme & closing — guidé par l'app
+
+L'app a déjà préparé l'étape **Programme proposé** avec les produits adaptés à son profil. Toi, tu portes la voix :
+
+1. **Reformule** l'objectif : *« Si je résume, tu veux X, Y, Z ? »*
+2. **Présente max 3 produits** (pas un catalogue) :
+   - Formula 1 (matin) → bénéfice X
+   - Aloe Concentrate (eau) → bénéfice Y
+   - 3ème produit ciblé selon son besoin
+3. **Closing à choix limité** :
+
+> *« Tu préfères qu'on attaque par 4 semaines ou 1 mois complet ? »*
+
+(silence — tu te TAIS, même si ça dure 30 secondes)
+
+> JAMAIS *« tu veux démarrer ? »* (oui/non).
+> Toujours un choix entre 2 options qui mènent au OUI.
+
+---
+
+### 10. 🎁 Recommandations — la reco fun
+
+À la fin du bilan, l'app te propose une **étape Recommandations**. Saisis-la avec elle, en direct.
+
+Phrase magique :
+
+> *« Avant que tu partes : qui dans ton entourage aurait besoin du même regard que je viens de te donner ? »*
+
+(silence, attendre **3 noms minimum**)
+
+> *« Et qui d'autre tu vois ? »*
+
+**Système de paliers** (visible dans l'app) :
+- 🎁 **5 noms** → premier cadeau débloqué
+- 🌟 **10 noms** → cadeau premium
+- *Bonus fun en équipe* : à 50 recos cumulées sur l'année → tour en Ferrari avec Thomas 😄
+
+But : rendre la reco **normale**, partager l'expérience, préparer le **Pack Ambassadeur**.
+
+---
+
+### ✅ Ta checklist 30 min avant chaque bilan
+
+- [ ] Pièce propre + rangée + lumière douce (pas néon hôpital)
+- [ ] Boisson + verres prêts
+- [ ] Shaker + Formula 1 + ingrédients prêts
+- [ ] Balance + mètre prêts
+- [ ] **Tablette / téléphone chargés à 100% + app Lor'Squad lancée**
+- [ ] Téléphone perso en silencieux, animaux/enfants gérés
+- [ ] 5 minutes respiration faites — *« je suis là pour cette personne, pas pour mes objectifs »*
 
 > Tu coches les 7 cases avant chaque bilan. C'est ton rituel pro.
 
