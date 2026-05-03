@@ -328,18 +328,22 @@ export default function App() {
                   /dashboard redirige pour ne pas casser les liens existants. */}
               <Route path="co-pilote" element={<CoPilotePage />} />
               <Route path="dashboard" element={<Navigate to="/co-pilote" replace />} />
-              {/* Lor'Squad Academy Phase 1 (2026-04-26) */}
-              <Route path="academy" element={<AcademyOverviewPage />} />
-              <Route path="academy/certificat" element={<AcademyCertificatePage />} />
-              <Route path="academy/playbook" element={<AcademyPlaybookPage />} />
-              <Route path="academy/sandbox" element={<AcademySandboxPage />} />
-              <Route path="academy/:sectionId" element={<AcademySectionPage />} />
-              {/* Pages démo Academy (2026-04-28) — mockups pour les tours */}
-              <Route path="academy/demo/fiche-client" element={<DemoFicheClient />} />
-              <Route path="academy/demo/agenda" element={<DemoAgenda />} />
+              {/* Lor'Squad Academy Phase 1 (2026-04-26) — gated admin only
+                  en prod (RoleRoute). Defense en profondeur : RoleRoute
+                  redirige vers /co-pilote si non-admin tape l URL manuelle. */}
+              <Route element={<RoleRoute allowedRoles={["admin"]} />}>
+                <Route path="academy" element={<AcademyOverviewPage />} />
+                <Route path="academy/certificat" element={<AcademyCertificatePage />} />
+                <Route path="academy/playbook" element={<AcademyPlaybookPage />} />
+                <Route path="academy/sandbox" element={<AcademySandboxPage />} />
+                <Route path="academy/:sectionId" element={<AcademySectionPage />} />
+                <Route path="academy/demo/fiche-client" element={<DemoFicheClient />} />
+                <Route path="academy/demo/agenda" element={<DemoAgenda />} />
+              </Route>
               {/* Formation gate (2026-11-04) : admin-only tant que le contenu
                   n est pas finalise pour les distri. Distri qui tape /formation
-                  en direct atterrit sur FormationLockedPage. */}
+                  en direct atterrit sur FormationLockedPage (hero "chantier en
+                  cours" plus chaleureux qu un redirect sec). */}
               <Route path="formation" element={<FormationAdminGate><FormationPage /></FormationAdminGate>} />
               <Route path="formation/mon-equipe" element={<FormationAdminGate><FormationMyTeamPage /></FormationAdminGate>} />
               <Route path="formation/admin" element={<FormationAdminGate><FormationAdminPage /></FormationAdminGate>} />
@@ -358,12 +362,6 @@ export default function App() {
               <Route path="messagerie/conversation/:messageId" element={<ConversationView />} />
               <Route path="agenda" element={<AgendaPage />} />
               <Route path="clients" element={<ClientsPage />} />
-              {/* Chantier Academy section 1 (2026-04-27) : /parametres
-                  desormais accessible a TOUS les users authentifies (pas
-                  seulement admin) car le profil est une page perso. La
-                  page elle-meme cache les onglets admin-only via les
-                  checks role internes. */}
-              <Route path="parametres" element={<ParametresPage />} />
               <Route element={<RoleRoute allowedRoles={["admin"]} />}>
                 <Route path="users" element={<UsersPage />} />
                 {/* Chantier Team Tree (2026-04-25) : nouvelle fiche équipe
@@ -374,6 +372,9 @@ export default function App() {
                 {/* Chantier D Analytics admin (2026-04-29) */}
                 <Route path="analytics" element={<AnalyticsPage />} />
                 <Route path="debug/notifications" element={<DebugNotificationsPage />} />
+                {/* Chantier Paramètres Admin (2026-04-23) : /parametres admin-only.
+                    /settings redirige pour compat avec la placeholder du chantier 2. */}
+                <Route path="parametres" element={<ParametresPage />} />
               </Route>
               <Route path="distributors/:distributorId" element={<DistributorPortfolioPage />} />
               <Route path="clients/:clientId" element={<ClientDetailPage />} />
