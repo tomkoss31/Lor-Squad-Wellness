@@ -2518,20 +2518,119 @@ export function NewAssessmentPage() {
                 été retiré — Chantier nettoyage bilan (2026-04-20) ─── */}
           {currentStepId === 'concept' && (
             <VisualStepBoundary title="Notre concept de rééquilibrage alimentaire">
-              <div style={{ display: "flex", justifyContent: "center" }}>
-                {/* WebP primary (118 KB) + PNG fallback (513 KB) — Chantier
-                    optimize-bilan-images (2026-04-20). */}
-                <picture>
-                  <source srcSet="/images/assessment/petit-dejeuner-concept.webp" type="image/webp" />
-                  <img
-                    src="/images/assessment/petit-dejeuner-concept.png"
-                    alt="Notre concept de rééquilibrage alimentaire"
-                    loading="lazy"
-                    decoding="async"
-                    style={{ maxWidth: 900, width: "100%", height: "auto", borderRadius: 14, display: "block" }}
-                    onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+              {/* Refonte 2026-11-04 (etape 4/6 chantier visuel) : frame premium
+                  gradient gold + glow ambient + badge signature + tagline.
+                  L image n est plus un simple visuel, c est une signature de marque. */}
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  gap: 18,
+                  padding: "8px 4px",
+                }}
+              >
+                <div
+                  style={{
+                    position: "relative",
+                    width: "100%",
+                    maxWidth: 920,
+                    padding: 12,
+                    borderRadius: 22,
+                    background:
+                      "linear-gradient(135deg, color-mix(in srgb, var(--ls-gold) 12%, var(--ls-surface)) 0%, color-mix(in srgb, var(--ls-teal) 6%, var(--ls-surface)) 100%)",
+                    border:
+                      "0.5px solid color-mix(in srgb, var(--ls-gold) 30%, var(--ls-border))",
+                    boxShadow:
+                      "0 12px 40px -16px color-mix(in srgb, var(--ls-gold) 30%, transparent)",
+                    overflow: "hidden",
+                  }}
+                >
+                  {/* Glow ambient en arriere-plan */}
+                  <div
+                    aria-hidden="true"
+                    style={{
+                      position: "absolute",
+                      top: -60,
+                      right: -60,
+                      width: 220,
+                      height: 220,
+                      borderRadius: "50%",
+                      background: "color-mix(in srgb, var(--ls-gold) 18%, transparent)",
+                      filter: "blur(64px)",
+                      pointerEvents: "none",
+                    }}
                   />
-                </picture>
+                  {/* Badge signature flottant */}
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: 22,
+                      left: 22,
+                      zIndex: 2,
+                      padding: "6px 12px",
+                      borderRadius: 999,
+                      background: "color-mix(in srgb, var(--ls-gold) 90%, var(--ls-bg))",
+                      color: "var(--ls-bg)",
+                      fontFamily: "DM Sans, sans-serif",
+                      fontSize: 10,
+                      fontWeight: 700,
+                      letterSpacing: "0.14em",
+                      textTransform: "uppercase",
+                      boxShadow: "0 4px 14px color-mix(in srgb, var(--ls-gold) 35%, transparent)",
+                    }}
+                  >
+                    ✦ Signature Lor'Squad
+                  </div>
+                  {/* WebP primary (118 KB) + PNG fallback (513 KB). */}
+                  <picture>
+                    <source srcSet="/images/assessment/petit-dejeuner-concept.webp" type="image/webp" />
+                    <img
+                      src="/images/assessment/petit-dejeuner-concept.png"
+                      alt="Notre concept de rééquilibrage alimentaire"
+                      loading="lazy"
+                      decoding="async"
+                      style={{
+                        width: "100%",
+                        height: "auto",
+                        borderRadius: 14,
+                        display: "block",
+                        position: "relative",
+                        zIndex: 1,
+                      }}
+                      onError={(e) => {
+                        (e.currentTarget as HTMLImageElement).style.display = "none";
+                      }}
+                    />
+                  </picture>
+                </div>
+                {/* Tagline coach */}
+                <p
+                  style={{
+                    fontFamily: "Syne, serif",
+                    fontWeight: 600,
+                    fontSize: "clamp(14px, 2.4vw, 18px)",
+                    color: "var(--ls-text)",
+                    textAlign: "center",
+                    margin: 0,
+                    maxWidth: 640,
+                    letterSpacing: "-0.01em",
+                    lineHeight: 1.5,
+                  }}
+                >
+                  <span
+                    style={{
+                      background:
+                        "linear-gradient(90deg, var(--ls-gold) 0%, var(--ls-teal) 100%)",
+                      WebkitBackgroundClip: "text",
+                      WebkitTextFillColor: "transparent",
+                      backgroundClip: "text",
+                    }}
+                  >
+                    Pas un régime.
+                  </span>{" "}
+                  Une nouvelle façon de manger qui te suit toute la vie.
+                </p>
               </div>
             </VisualStepBoundary>
           )}
