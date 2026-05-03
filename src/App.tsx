@@ -276,17 +276,24 @@ const FlexTeamPage = lazy(() =>
     default: module.FlexTeamPage,
   })),
 );
+const CharterPage = lazy(() =>
+  import("./pages/CharterPage").then((module) => ({
+    default: module.CharterPage,
+  })),
+);
+const AdminDistributorCharterPage = lazy(() =>
+  import("./pages/AdminDistributorCharterPage").then((module) => ({
+    default: module.AdminDistributorCharterPage,
+  })),
+);
 const FormationCalculatorPage = lazy(() =>
   import("./pages/FormationCalculatorPage").then((module) => ({
     default: module.FormationCalculatorPage
   }))
 );
-// Feature #9 (2026-11-04) : Charte distributeur PDF.
-const FormationCharterPage = lazy(() =>
-  import("./pages/FormationCharterPage").then((module) => ({
-    default: module.FormationCharterPage
-  }))
-);
+// Charte v1 (FormationCharterPage) déprécié 2026-05-03 — remplacée par
+// CharterPage à /charte (refonte premium art déco). L'import reste retiré
+// pour éviter le code mort dans le bundle.
 // Glossaire termes Herbalife (2026-11-04).
 const FormationGlossaryPage = lazy(() =>
   import("./pages/FormationGlossaryPage").then((module) => ({
@@ -390,6 +397,12 @@ export default function App() {
               <Route path="flex" element={<FlexDashboardPage />} />
               <Route path="flex/onboarding" element={<FlexOnboardingPage />} />
               <Route path="flex/equipe" element={<FlexTeamPage />} />
+              {/* Charte du Distributeur (2026-05-03) — refonte premium
+                  art déco. /charte = perso distri (signable). Ancienne
+                  route /formation/charte redirige ici. */}
+              <Route path="charte" element={<CharterPage />} />
+              <Route path="distributors/:id/charte" element={<AdminDistributorCharterPage />} />
+              <Route path="formation/charte" element={<Navigate to="/charte" replace />} />
               {/* Lor'Squad Academy Phase 1 (2026-04-26) — gated admin only
                   en prod (RoleRoute). Defense en profondeur : RoleRoute
                   redirige vers /co-pilote si non-admin tape l URL manuelle. */}
@@ -411,7 +424,6 @@ export default function App() {
               <Route path="formation/admin" element={<FormationAdminGate><FormationAdminPage /></FormationAdminGate>} />
               <Route path="formation/certificat" element={<FormationAdminGate><FormationCertificatePage /></FormationAdminGate>} />
               <Route path="formation/calculateur" element={<FormationAdminGate><FormationCalculatorPage /></FormationAdminGate>} />
-              <Route path="formation/charte" element={<FormationAdminGate><FormationCharterPage /></FormationAdminGate>} />
               <Route path="formation/glossaire" element={<FormationAdminGate><FormationGlossaryPage /></FormationAdminGate>} />
               <Route path="formation/boite-a-outils" element={<FormationAdminGate><FormationToolkitPage /></FormationAdminGate>} />
               <Route path="formation/boite-a-outils/:slug" element={<FormationAdminGate><FormationToolkitDetailPage /></FormationAdminGate>} />

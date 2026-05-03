@@ -49,7 +49,7 @@ const STEPS: OnboardingStep[] = [
     title: "Signe ta charte distributeur",
     description:
       "Ta charte = ta boussole. 5 engagements + ton « pourquoi » + objectif 12 mois. Imprime-la, accroche-la.",
-    cta: { label: "Signer ma charte", to: "/formation/charte" },
+    cta: { label: "Signer ma charte", to: "/charte" },
   },
   {
     day: 2,

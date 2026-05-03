@@ -131,6 +131,27 @@ export function DistributorPortfolioPage() {
         <Link to="/clients" className="ls-portfolio-hero__cta">
           Voir base ↗
         </Link>
+        {/* Charte (2026-05-03) — accès direct depuis la fiche distri */}
+        <Link
+          to={`/distributors/${portfolioUser.id}/charte`}
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 6,
+            padding: "8px 14px",
+            background: "rgba(184, 146, 42, 0.14)",
+            border: "1px solid rgba(184, 146, 42, 0.4)",
+            color: "#B8922A",
+            borderRadius: 8,
+            fontSize: 12,
+            fontFamily: "DM Sans, sans-serif",
+            fontWeight: 600,
+            textDecoration: "none",
+            marginLeft: 8,
+          }}
+        >
+          ✦ Charte
+        </Link>
       </Card>
 
       {/* Onglets fiche distri — V3 2026-04-29 (admin uniquement pour Activite) */}
