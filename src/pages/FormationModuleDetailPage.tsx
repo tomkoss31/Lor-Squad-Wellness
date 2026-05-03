@@ -18,6 +18,7 @@ import {
   getFormationLevelBySlug,
   type FormationLevelAccent,
 } from "../data/formation";
+import { getToolkitItemBySlug } from "../data/formation/boite-a-outils-content";
 import {
   fetchOrCreateModuleProgress,
   useMyFormationProgress,
@@ -450,7 +451,7 @@ export function FormationModuleDetailPage() {
             fontFamily: "DM Sans, sans-serif",
           }}
         >
-          Autres modules N{level.order}
+          Autres modules du parcours
         </div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           {level.modules
@@ -460,22 +461,86 @@ export function FormationModuleDetailPage() {
                 key={m.id}
                 to={`/formation/parcours/${level.slug}/${m.slug}`}
                 style={{
-                  padding: "6px 12px",
+                  padding: "8px 14px",
                   borderRadius: 999,
                   background: "var(--ls-surface2)",
                   border: "0.5px solid var(--ls-border)",
                   color: "var(--ls-text)",
                   textDecoration: "none",
-                  fontSize: 12,
+                  fontSize: 13,
                   fontWeight: 500,
                   fontFamily: "DM Sans, sans-serif",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 6,
                 }}
               >
-                {m.icon} M{m.number} — {m.title}
+                <span aria-hidden="true">{m.icon}</span>
+                {m.title}
               </Link>
             ))}
         </div>
       </div>
+
+      {/* Cross-link Boîte à outils (refonte 2026-05-03) — au lieu de
+          répéter les modules, on pointe sur les outils opérationnels
+          pertinents pour ce module. */}
+      {module.relatedToolkitSlugs && module.relatedToolkitSlugs.length > 0 && (
+        <div
+          style={{
+            background: "color-mix(in srgb, var(--ls-teal) 8%, var(--ls-surface))",
+            border: "1px solid color-mix(in srgb, var(--ls-teal) 35%, transparent)",
+            borderRadius: 16,
+            padding: 18,
+          }}
+        >
+          <div
+            style={{
+              fontSize: 10,
+              letterSpacing: "0.08em",
+              textTransform: "uppercase",
+              color: "var(--ls-teal)",
+              fontWeight: 700,
+              marginBottom: 10,
+              fontFamily: "DM Sans, sans-serif",
+            }}
+          >
+            🛠️ Outils pratiques liés
+          </div>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            {module.relatedToolkitSlugs.map((slug) => {
+              const tool = getToolkitItemBySlug(slug);
+              if (!tool) return null;
+              return (
+                <Link
+                  key={slug}
+                  to={`/formation/boite-a-outils/${slug}`}
+                  style={{
+                    padding: "10px 14px",
+                    borderRadius: 12,
+                    background: "var(--ls-surface)",
+                    border: "0.5px solid var(--ls-teal)",
+                    color: "var(--ls-text)",
+                    textDecoration: "none",
+                    fontSize: 13,
+                    fontFamily: "DM Sans, sans-serif",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 8,
+                    maxWidth: 280,
+                  }}
+                >
+                  <span aria-hidden="true" style={{ fontSize: 18 }}>{tool.icon ?? "📦"}</span>
+                  <span style={{ fontWeight: 600 }}>{tool.title}</span>
+                </Link>
+              );
+            })}
+          </div>
+          <p style={{ margin: "10px 0 0 0", fontSize: 11, color: "var(--ls-text-muted)", fontFamily: "DM Sans, sans-serif" }}>
+            Le déroulé pas-à-pas, les scripts et les checklists vivent dans la boîte à outils — pour ne pas dédoubler le contenu.
+          </p>
+        </div>
+      )}
     </div>
   );
 }
