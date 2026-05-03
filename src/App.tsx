@@ -271,6 +271,11 @@ const FlexDashboardPage = lazy(() =>
     default: module.FlexDashboardPage,
   })),
 );
+const FlexTeamPage = lazy(() =>
+  import("./pages/FlexTeamPage").then((module) => ({
+    default: module.FlexTeamPage,
+  })),
+);
 const FormationCalculatorPage = lazy(() =>
   import("./pages/FormationCalculatorPage").then((module) => ({
     default: module.FormationCalculatorPage
@@ -384,6 +389,7 @@ export default function App() {
                   wizard 5 questions. */}
               <Route path="flex" element={<FlexDashboardPage />} />
               <Route path="flex/onboarding" element={<FlexOnboardingPage />} />
+              <Route path="flex/equipe" element={<FlexTeamPage />} />
               {/* Lor'Squad Academy Phase 1 (2026-04-26) — gated admin only
                   en prod (RoleRoute). Defense en profondeur : RoleRoute
                   redirige vers /co-pilote si non-admin tape l URL manuelle. */}
