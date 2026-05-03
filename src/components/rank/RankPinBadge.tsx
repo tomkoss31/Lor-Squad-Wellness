@@ -39,15 +39,27 @@ const PIN_FILE: Record<HerbalifeRank, string> = {
   supervisor_50: "/pins/supervisor.webp",
   active_supervisor_50: "/pins/active-supervisor.webp",
   world_team_50: "/pins/world-team.webp",
-  // Active World Team : pas encore de fichier (à déposer par Thomas).
   active_world_team_50: "/pins/active-world-team.webp",
   get_team_50: "/pins/get-team.webp",
   get_team_2500_50: "/pins/get-team-2500.webp",
   millionaire_50: "/pins/millionaire-team.webp",
   millionaire_7500_50: "/pins/millionaire-team-7500.webp",
-  // President's Team : pas encore de fichier (à déposer par Thomas).
-  presidents_50: "/pins/presidents-team.webp",
+  // Note : Thomas a nommé le fichier "president-team" (singulier) au
+  // lieu de "presidents-team" comme prévu initialement. On suit ses
+  // fichiers, pas la spec.
+  presidents_50: "/pins/president-team.webp",
 };
+
+/**
+ * Pins décoratifs/branding additionnels disponibles (non-rang).
+ * Réutilisables pour les certificats, hero pages, ou autres éléments
+ * visuels qui ont besoin d'un emblème Herbalife générique.
+ */
+export const PIN_DECORATIVE = {
+  fleur: "/pins/fleur.webp",
+  herbalife_logo: "/pins/herbalife.webp",
+  live_your_best_life: "/pins/live-your-best-life.webp",
+} as const;
 
 const SHORT_LABEL: Record<HerbalifeRank, string> = {
   distributor_25: "Distributor",
