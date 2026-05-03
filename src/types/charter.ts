@@ -41,6 +41,14 @@ export type CharterDraft = Pick<
  */
 export type CharterDisplayMode = "preview" | "fillable" | "print";
 
+/**
+ * Template visuel choisi pour le rendu de la charte.
+ *  - officielle : A4 paper crème classique (5 cards engagements)
+ *  - manifeste  : A4 paper, serment poétique 100% Lor'Squad
+ *  - story      : 9:16 dark luxury, partage Instagram
+ */
+export type CharterTemplate = "officielle" | "manifeste" | "story";
+
 export interface CharterPersonInfo {
   firstName: string;
   lastName: string;
