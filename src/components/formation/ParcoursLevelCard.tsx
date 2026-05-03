@@ -225,6 +225,44 @@ export function ParcoursLevelCard({ level, stats }: Props) {
       >
         {cta}
       </div>
+
+      {/* Quick win #5 (2026-11-04) : CTA "Obtenir mon certificat" si niveau
+          100% complete. Sub-link en bas de card, ne pollue pas le CTA principal. */}
+      {isComplete ? (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            window.location.href = `/formation/certificat?level=${level.id}`;
+          }}
+          style={{
+            marginTop: 10,
+            padding: "8px 12px",
+            borderRadius: 10,
+            background: `color-mix(in srgb, ${accentVar} 14%, var(--ls-surface))`,
+            border: `0.5px solid color-mix(in srgb, ${accentVar} 35%, transparent)`,
+            color: accentVar,
+            fontFamily: "DM Sans, sans-serif",
+            fontSize: 12,
+            fontWeight: 600,
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 6,
+            transition: "all 200ms ease",
+          }}
+          onMouseEnter={(ev) => {
+            ev.currentTarget.style.background = `color-mix(in srgb, ${accentVar} 22%, var(--ls-surface))`;
+          }}
+          onMouseLeave={(ev) => {
+            ev.currentTarget.style.background = `color-mix(in srgb, ${accentVar} 14%, var(--ls-surface))`;
+          }}
+        >
+          🏆 Obtenir mon certificat
+        </button>
+      ) : null}
     </Link>
   );
 }

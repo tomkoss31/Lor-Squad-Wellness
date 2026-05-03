@@ -16,6 +16,9 @@
 import { Link } from "react-router-dom";
 import { PageHeading } from "../components/ui/PageHeading";
 import { ParcoursLevelCard } from "../components/formation/ParcoursLevelCard";
+import { FormationRoadmapCard } from "../components/formation/FormationRoadmapCard";
+import { FormationStreakBadge } from "../components/formation/FormationStreakBadge";
+import { FormationSearchBar } from "../components/formation/FormationSearchBar";
 import {
   FORMATION_CATEGORIES,
   FORMATION_LEVELS,
@@ -31,7 +34,17 @@ const CATEGORY_ACCENT: Record<FormationCategoryAccent, string> = {
 };
 
 export function FormationPage() {
-  const { stats } = useFormationProgress();
+  const { stats, nextStep, isAllComplete } = useFormationProgress();
+
+  // Compteurs cross-niveaux pour le roadmap card
+  const totalCompleted =
+    stats.demarrer.completedCount +
+    stats.construire.completedCount +
+    stats.dupliquer.completedCount;
+  const totalModules =
+    stats.demarrer.totalCount +
+    stats.construire.totalCount +
+    stats.dupliquer.totalCount;
 
   return (
     <div className="space-y-6">
@@ -40,6 +53,192 @@ export function FormationPage() {
         title="Deviens un distributeur qui réussit"
         description="Du premier RDV jusqu'aux royalties — étape par étape, à ton rythme."
       />
+
+      {/* Quick win #4 (2026-11-04) : Recherche texte libre modules + biblio */}
+      <FormationSearchBar />
+
+      {/* Quick win #1 (2026-11-04) : Streak Formation (jours consecutifs avec
+          >= 1 module valide). Cache si 0 jours et jamais ping. */}
+      <FormationStreakBadge />
+
+      {/* Quick win #2 (2026-11-04) : Roadmap visuelle "Reprendre M1.X" en haut */}
+      <FormationRoadmapCard
+        nextStep={nextStep}
+        isAllComplete={isAllComplete}
+        totalCompleted={totalCompleted}
+        totalModules={totalModules}
+      />
+
+      {/* Features #7 + #9 (2026-11-04) : 2 outils premium en row */}
+      <div
+        style={{
+          display: "grid",
+          gap: 12,
+          gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+        }}
+      >
+      {/* Feature #7 (2026-11-04) : Lien vers le Strategy Plan Calculator */}
+      <Link
+        to="/formation/calculateur"
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 14,
+          padding: "16px 18px",
+          background:
+            "linear-gradient(135deg, color-mix(in srgb, var(--ls-gold) 10%, var(--ls-surface)) 0%, color-mix(in srgb, var(--ls-teal) 6%, var(--ls-surface)) 100%)",
+          border: "0.5px solid color-mix(in srgb, var(--ls-gold) 32%, var(--ls-border))",
+          borderRadius: 16,
+          textDecoration: "none",
+          color: "var(--ls-text)",
+          fontFamily: "DM Sans, sans-serif",
+          transition: "transform 200ms ease, box-shadow 200ms ease",
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.transform = "translateY(-2px)";
+          e.currentTarget.style.boxShadow = "0 8px 22px -10px color-mix(in srgb, var(--ls-gold) 35%, transparent)";
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.transform = "none";
+          e.currentTarget.style.boxShadow = "none";
+        }}
+      >
+        <div
+          style={{
+            width: 46,
+            height: 46,
+            borderRadius: 12,
+            background: "linear-gradient(135deg, var(--ls-gold) 0%, color-mix(in srgb, var(--ls-gold) 70%, var(--ls-teal)) 100%)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: 22,
+            boxShadow: "0 4px 14px color-mix(in srgb, var(--ls-gold) 35%, transparent)",
+            flexShrink: 0,
+          }}
+        >
+          📊
+        </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div
+            style={{
+              fontSize: 10,
+              fontWeight: 700,
+              letterSpacing: "0.18em",
+              textTransform: "uppercase",
+              color: "var(--ls-gold)",
+              marginBottom: 3,
+            }}
+          >
+            ✦ Strategy Plan · Formule 5-3-1
+          </div>
+          <div
+            style={{
+              fontFamily: "Syne, serif",
+              fontWeight: 700,
+              fontSize: 16,
+              color: "var(--ls-text)",
+              letterSpacing: "-0.012em",
+              lineHeight: 1.2,
+            }}
+          >
+            Projecte tes 12 prochains mois en 30 secondes
+          </div>
+          <div
+            style={{
+              fontSize: 11.5,
+              color: "var(--ls-text-muted)",
+              marginTop: 3,
+              lineHeight: 1.4,
+            }}
+          >
+            Sliders revenus / clients / coachs → projection mois par mois + rangs débloqués + revenu cumulé.
+          </div>
+        </div>
+        <span style={{ color: "var(--ls-gold)", fontSize: 18, flexShrink: 0 }}>→</span>
+      </Link>
+
+      {/* Feature #9 (2026-11-04) : Charte distributeur */}
+      <Link
+        to="/formation/charte"
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 14,
+          padding: "16px 18px",
+          background:
+            "linear-gradient(135deg, color-mix(in srgb, var(--ls-coral) 10%, var(--ls-surface)) 0%, color-mix(in srgb, var(--ls-purple) 6%, var(--ls-surface)) 100%)",
+          border: "0.5px solid color-mix(in srgb, var(--ls-coral) 32%, var(--ls-border))",
+          borderRadius: 16,
+          textDecoration: "none",
+          color: "var(--ls-text)",
+          fontFamily: "DM Sans, sans-serif",
+          transition: "transform 200ms ease, box-shadow 200ms ease",
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.transform = "translateY(-2px)";
+          e.currentTarget.style.boxShadow = "0 8px 22px -10px color-mix(in srgb, var(--ls-coral) 35%, transparent)";
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.transform = "none";
+          e.currentTarget.style.boxShadow = "none";
+        }}
+      >
+        <div
+          style={{
+            width: 46,
+            height: 46,
+            borderRadius: 12,
+            background: "linear-gradient(135deg, var(--ls-coral) 0%, color-mix(in srgb, var(--ls-coral) 70%, var(--ls-purple)) 100%)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: 22,
+            boxShadow: "0 4px 14px color-mix(in srgb, var(--ls-coral) 35%, transparent)",
+            flexShrink: 0,
+          }}
+        >
+          ✍️
+        </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div
+            style={{
+              fontSize: 10,
+              fontWeight: 700,
+              letterSpacing: "0.18em",
+              textTransform: "uppercase",
+              color: "var(--ls-coral)",
+              marginBottom: 3,
+            }}
+          >
+            ✦ Engagement · Rituel
+          </div>
+          <div
+            style={{
+              fontFamily: "Syne, serif",
+              fontWeight: 700,
+              fontSize: 16,
+              color: "var(--ls-text)",
+              letterSpacing: "-0.012em",
+              lineHeight: 1.2,
+            }}
+          >
+            Signe ta charte de distributeur
+          </div>
+          <div
+            style={{
+              fontSize: 11.5,
+              color: "var(--ls-text-muted)",
+              marginTop: 3,
+              lineHeight: 1.4,
+            }}
+          >
+            5 engagements + ton pourquoi + objectif 12 mois. Imprime, signe, accroche.
+          </div>
+        </div>
+        <span style={{ color: "var(--ls-coral)", fontSize: 18, flexShrink: 0 }}>→</span>
+      </Link>
+      </div>
 
       {/* ─── Zone 1 : Mon parcours guide ────────────────────────────── */}
       <section>
@@ -185,6 +384,38 @@ export function FormationPage() {
         débloquer le Niveau 1 dans quelques jours. En attendant, profite-en
         pour bosser ta routine matin.
       </div>
+
+      {/* Lien glossaire (footer Formation, 2026-11-04) */}
+      <Link
+        to="/formation/glossaire"
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 8,
+          padding: "12px 16px",
+          background: "var(--ls-surface)",
+          border: "0.5px dashed color-mix(in srgb, var(--ls-purple) 30%, var(--ls-border))",
+          borderRadius: 12,
+          textDecoration: "none",
+          color: "var(--ls-purple)",
+          fontFamily: "DM Sans, sans-serif",
+          fontSize: 12.5,
+          fontWeight: 600,
+          transition: "all 200ms ease",
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.background =
+            "color-mix(in srgb, var(--ls-purple) 6%, var(--ls-surface))";
+          e.currentTarget.style.borderStyle = "solid";
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.background = "var(--ls-surface)";
+          e.currentTarget.style.borderStyle = "dashed";
+        }}
+      >
+        📖 Tu butes sur un terme ? Consulte le glossaire (VP, RO, DMO, Sup…) →
+      </Link>
     </div>
   );
 }

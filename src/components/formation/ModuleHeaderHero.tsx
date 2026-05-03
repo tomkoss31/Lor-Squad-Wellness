@@ -7,6 +7,7 @@
 // =============================================================================
 
 import type { FormationModule } from "../../data/formation";
+import { formatModuleShort } from "../../data/formation";
 import { FormationStatusBadge } from "./FormationStatusBadge";
 import type { FormationProgressStatus } from "../../features/formation/types-db";
 
@@ -71,7 +72,7 @@ export function ModuleHeaderHero({ module, status, levelTitle, levelOrder, level
             color: levelAccent,
           }}
         >
-          Niveau {levelOrder} · {levelTitle} · M{module.number}
+          Niveau {levelOrder} · {levelTitle} · {formatModuleShort(module.number)}
         </span>
         {status ? <FormationStatusBadge status={status} /> : null}
       </div>
