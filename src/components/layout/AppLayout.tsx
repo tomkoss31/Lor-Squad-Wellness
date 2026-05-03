@@ -135,7 +135,11 @@ export function AppLayout() {
     // Chantier Formation pyramide (2026-11) : visible admin only tant que le
     // contenu n est pas finalise pour les distributeurs. Distri qui essaie
     // /formation en direct atterrit sur la page "chantier en cours".
-    ...(currentUser.role === "admin" ? [{ label: "Formation", path: "/formation", badge: 0 }] : []),
+    // Beta access (2026-11-05) : un distri/référent avec
+    // formation_beta_access=true voit aussi le lien (ex. Mandy + équipe).
+    ...(currentUser.role === "admin" || currentUser.formationBetaAccess
+      ? [{ label: "Formation", path: "/formation", badge: 0 }]
+      : []),
     // Chantier Academy section 1 (2026-04-27) : /parametres pour tous
     // les users authentifies (la page gere elle-meme la visibilite des
     // onglets admin-only via checks internes).
