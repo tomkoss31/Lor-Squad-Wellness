@@ -13,6 +13,19 @@
 //   - Calibrage France : 1 VP = 1,50 € · marge Sup 50% · panier 75 VP · DMO 5-3-1.
 //
 // Livré par Claude (atelier Notion) le 02/05/2026.
+//
+// LEXIQUE Lor'Squad (validé Thomas, 2026-05-03) :
+//   - EBE   = Évaluation Bien-Être : bilan client 1-1 ~60 min. L'app
+//             pilote la trame. C'est la scène signature du distri.
+//             ⚠️ Ne JAMAIS utiliser EBE pour parler d'un événement groupe.
+//   - HOM   = House Opportunity Meeting : mini-soirée business chez
+//             quelqu'un, 8-15 personnes, prospects tièdes, intime.
+//   - Apéro Healthy = soirée business mensuelle 25-50 personnes,
+//             prospects + équipe, focus opportunité business.
+//   - Quick Start = pack démarrage / formation accélérée pour distri
+//             débutants (1-2h).
+//   - Fin de Challenge = clôture rituel groupe après un défi 21j/30j.
+//   - Refonte 2026-05-03 : tous les "EBE-event" passés en "apéro healthy".
 // =============================================================================
 
 import type { FormationModule } from "./types";
@@ -38,6 +51,7 @@ export const N1_MODULES: FormationModule[] = [
     ancrage: "« Tu ne vends pas des produits. Tu vends une transformation. »",
     action:
       "Prends un papier et écris ton « pourquoi » personnel en 3 lignes. Affiche-le sur ton bureau ou en fond d'écran téléphone. Tu le verras tous les jours quand viendront les moments durs.",
+    relatedToolkitSlugs: ["charte-distributeur", "feuille-reconnaissance", "calculateur-strategy-plan"],
     lessons: [
       {
         id: "M1.1-L1",
@@ -173,6 +187,7 @@ Et c'est **uniquement** la marge perso. Derrière viennent les **royalties** qua
     ancrage: "« Ta liste est un puits sans fond. Tant que tu en sors des seaux, l'eau remonte. »",
     action:
       "Ouvre ton téléphone MAINTENANT. Écris au moins 50 noms aujourd'hui. Cible 100 d'ici 7 jours. Garde la liste vivante — ajoute les nouveaux contacts au fil de l'eau, ne la « termine » jamais.",
+    relatedToolkitSlugs: ["liste-100-methode-frank", "scripts-invitation"],
     lessons: [
       {
         id: "M1.2-L1",
@@ -289,97 +304,129 @@ L'or se cache dans ta liste B — ceux que tu éliminerais d'office. Mets-les TO
   },
 
   // ───────────────────────────────────────────────────────────────────────────
-  // M1.3 — Faire un bilan pro
+  // M1.3 — Faire un EBE qui te grandit
+  // ⚠️ Refonte 2026-05-03 : ce module ne dédouble plus le pas-à-pas
+  // technique du bilan (qui vit dans la Boîte à outils → tk-bilan-01).
+  // Il se concentre sur le MINDSET, la posture, et les 4 micro-décisions
+  // qui distinguent un bilan moyen d'un bilan signature.
   // ───────────────────────────────────────────────────────────────────────────
   {
     id: "M1.3",
     slug: "bilan-pro",
     number: "1.3",
-    title: "Faire un bilan pro",
-    description: "Le moment où tu deviens crédible. 10 points pour ne jamais le bâcler.",
-    durationMin: 10,
+    title: "Faire un EBE qui te grandit",
+    description: "Le mindset et les micro-décisions qui distinguent un bilan moyen d'un bilan signature. (Le pas-à-pas technique vit dans la boîte à outils.)",
+    durationMin: 8,
     icon: "📊",
     ideeForce:
-      "Le bilan, c'est ta scène. C'est le moment où tu passes de « vendeur » à « pro de la santé ». Un bilan bâclé te coûte 1 client. Un bilan bien fait t'amène 3 recos derrière. La différence ne tient pas à ton talent — elle tient au fait de ne JAMAIS sauter d'étape.",
-    ancrage: "« Un bilan bâclé te coûte 1 client. Un bilan bien fait t'amène 3 recos. »",
+      "L'app pilote la trame du bilan EBE. Toi, tu portes l'humain. La différence entre un distri médiocre et un distri signature ne tient pas à la maîtrise des 10 étapes (que l'app gère pour toi) — elle tient à 4 micro-décisions invisibles : ta posture avant, ton silence pendant, ta vérité au moment du body scan, et ta phrase de recos.",
+    ancrage: "« L'app fait le bilan technique. Toi tu fais l'expérience humaine. »",
     action:
-      "Fais ton 1ᵉʳ bilan AVEC ton sponsor cette semaine — tu observes, tu prends des notes, tu poses des questions après. Le 2ᵉ bilan, tu l'animes toi-même, ton sponsor observe.",
+      "Fais ton 1ᵉʳ EBE AVEC ton sponsor cette semaine. Tu observes, tu prends des notes sur les 4 micro-décisions ci-dessous, tu poses des questions après. Le 2ᵉ EBE, tu l'animes toi-même, ton sponsor observe.",
+    relatedToolkitSlugs: ["bases-presentiel", "phrases-cles-bilan", "phrase-magique-recos"],
     lessons: [
       {
         id: "M1.3-L1",
-        slug: "preparation",
-        title: "Préparation matérielle et mentale",
+        slug: "app-vs-toi",
+        title: "L'app pilote la trame, toi tu portes l'humain",
         kind: "text",
         durationMin: 2,
-        contentMarkdown: `## Avant l'arrivée
+        contentMarkdown: `## La séparation des rôles qui change tout
 
-**Matériel prêt** : balance, mètre, fiche bilan, eau, shake échantillon.
+**Ce que l'app fait** :
+- Trame des 10 étapes
+- Calculs body scan + cibles
+- Recommandations produits
+- Génération du récap client (PDF / lien)
 
-**Environnement** : table propre, pièce calme, lumière douce.
+**Ce que TU fais** (et que l'app ne fera jamais) :
+- Lire le silence quand la personne hésite
+- Reformuler son vrai pourquoi
+- Choisir le tempo (ralentir au body scan, accélérer au closing)
+- Demander les recos sans paraître quémandeur
 
-**Posture** : tu es pro, pas en survêt. Tu accueilles, tu ne reçois pas.
+> 90 % des distri pensent que le bilan c'est *« suivre la trame »*. Faux. La trame, l'app la fait. **Toi, ton vrai job c'est l'expérience.**
 
-**Préparation mentale** : 5 min de respiration avant. Tu dois être présent à 100%.`
+📦 **Le déroulé pas-à-pas des 10 étapes vit dans ta Boîte à outils** → outil "Le bilan EBE — 10 étapes pro". Cite-le quand tu te demandes "comment je fais quoi". Ce module-ci ne le redouble pas.`
       },
       {
         id: "M1.3-L2",
-        slug: "accueil",
-        title: "Accueil et confiance (90 secondes)",
+        slug: "posture-avant",
+        title: "Micro-décision n°1 : ta posture avant l'arrivée",
         kind: "text",
         durationMin: 2,
-        contentMarkdown: `## Les 90 premières secondes
+        contentMarkdown: `## 5 min de prep mentale > 30 min de prep matérielle
 
-Tu as 90 secondes pour faire passer la personne de « je viens voir » à « je suis bien ici ».
+La plupart des distri stressent sur le matériel : *« j'ai bien la balance ? le shake ? la fiche ? »*. L'app a déjà la fiche. Tu ne stresses pour rien.
 
-- Sourire, eau offerte, asseyez-vous.
-- Une vraie question : *« Comment tu t'es senti(e) en venant aujourd'hui ? »*
-- Écoute. Ne parle pas business.
+**Ce qui fait vraiment la différence** : 5 min de respiration avant que la personne sonne.
 
-Tout commence ici. Si la confiance n'est pas là dans les 2 premières minutes, le bilan part de travers.`
+- Posé, pas hyperventilé.
+- Présent, pas dans tes 12 derniers messages WhatsApp.
+- Disponible, pas en train de penser à ton CA du mois.
+
+**Test simple** : si tu n'es pas capable de t'arrêter 5 min avant, c'est que tu n'es pas prêt à recevoir cette personne. Reporte plutôt que bâcler.`
       },
       {
         id: "M1.3-L3",
-        slug: "diagnostic",
-        title: "Diagnostic — les bonnes questions",
+        slug: "silence-diagnostic",
+        title: "Micro-décision n°2 : ton silence pendant le diagnostic",
         kind: "text",
         durationMin: 2,
-        contentMarkdown: `## Pas de questionnaire qui se répond par oui/non
+        contentMarkdown: `## Le pouvoir du « ... » de 4 secondes
 
-Questions ouvertes :
-- *« Qu'est-ce qui t'amène ? »*
-- *« Depuis combien de temps tu y penses ? »*
-- *« Qu'est-ce qui se passerait si dans 3 mois rien n'avait changé ? »*
+Quand tu poses : *« Qu'est-ce qui se passerait si dans 3 mois rien n'avait changé ? »* — la personne répond souvent un truc surface (« ben ce serait dommage »).
 
-Tu cherches le **vrai** POURQUOI, pas le « je veux perdre 3 kg » de surface.`
+**90 % des distri enchaînent** sur la question suivante. Erreur.
+
+**La bonne pratique** : tu te tais 4 secondes après sa réponse. Tu hoches la tête. Tu attends.
+
+**Ce qui se passe** : 80 % du temps, la personne reprend la parole et dit la VRAIE chose qu'elle pensait pas oser dire. Le vrai pourquoi.
+
+> Le silence est ton outil le plus puissant. L'app ne te le donnera jamais — c'est toi qui le poses.`
       },
       {
         id: "M1.3-L4",
-        slug: "body-scan",
-        title: "Body scan — le moment WOW",
+        slug: "vérité-body-scan",
+        title: "Micro-décision n°3 : ta vérité au body scan",
         kind: "text",
-        durationMin: 2,
-        contentMarkdown: `## L'instant qui rend tout crédible
+        durationMin: 1,
+        contentMarkdown: `## Le moment WOW se joue à ton ton de voix
 
-Masse grasse, masse musculaire, hydratation, masse osseuse, âge métabolique, graisse viscérale.
+Le body scan révèle masse grasse, hydratation, âge métabolique. **L'app affiche les chiffres.** Toi, tu décides comment tu les commentes.
 
-Tu commentes calmement, sans drama. La personne découvre des chiffres qu'elle n'a jamais eus. **C'est là que la confiance bascule.**
+**❌ Le piège** : commenter avec drama (« 32 % de masse grasse ! aïe ! »). La personne se ferme.
 
-Ne saute jamais cette étape, même si la personne dit « je connais déjà mon poids ». Le body scan révèle ce qu'elle ne voit pas dans son miroir.`
+**❌ L'autre piège** : commenter avec déni (« c'est pas grave, on va arranger ça »). La personne sent que tu mens.
+
+**✅ La bonne pratique** : ton calme + 1 vraie information.
+
+> *« Tu es à 32 % de masse grasse. La zone saine pour toi se situe entre 22 et 28. On a quelque chose à faire ensemble — pas dramatique, juste à faire. »*
+
+C'est cette voix qui transforme une mesure en prise de conscience. Sans drame. Sans déni. Juste vraie.`
       },
       {
         id: "M1.3-L5",
-        slug: "closing-recos",
-        title: "Closing + recos immédiates",
+        slug: "recos-sans-quemandage",
+        title: "Micro-décision n°4 : tes recos sans paraître quémandeur",
         kind: "text",
-        durationMin: 2,
-        contentMarkdown: `## La phrase qui change tout
+        durationMin: 1,
+        contentMarkdown: `## La phrase magique des recos
 
-En fin de bilan : *« Mon rôle n'est pas de te vendre des produits. Mon rôle, c'est que dans 30 jours, tu sois fier(e) de toi. »* — et tu te tais.
+📦 **Le script complet est dans ta Boîte à outils** → outil "La phrase magique pour 3 recos". Ce module ne le re-cite pas.
 
-**Avant qu'elle parte**, demande les recos à chaud :
-*« Avant que tu partes : qui dans ton entourage aurait besoin du même regard que je viens de te donner ? »*
+**Ici on parle de la POSTURE** au moment où tu la dis :
 
-Demande **3 noms minimum**.`
+- Pas en fin de bilan en mode "ah au fait..." (= quémandage)
+- Mais juste après le body scan, quand la personne est en bascule émotionnelle
+- Sans quitter ses yeux
+- Et tu te TAIS après. Pas de "tu en as au moins 1 hein" qui annule la magie.
+
+**Le piège n°1** : la pose. Si tu poses la question avec gêne, la personne sent ton inconfort et te donne 1 nom mou.
+
+**Le piège n°2** : enchaîner. Si après les 3 noms tu dis "ah merci, du coup pour ton programme..." tu casses la séquence émotionnelle.
+
+> Demande les recos pendant le moment de bascule, pas après. C'est une question de **timing**, pas de courage.`
       }
     ],
     quiz: {
@@ -389,49 +436,54 @@ Demande **3 noms minimum**.`
         {
           kind: "qcm",
           id: "Q1",
-          question: "Le bilan dure idéalement combien de temps ?",
-          answers: ["30 min", "60 min", "90 min", "2h"],
+          question: "Pendant l'EBE, qu'est-ce que l'app fait pour toi ?",
+          answers: [
+            "Rien, tu remplis tout à la main",
+            "La trame des 10 étapes + body scan + recos produits",
+            "Seulement le body scan",
+            "Seulement le récap PDF"
+          ],
           correctIndex: 1,
           explanation:
-            "60 min, c'est l'équilibre parfait : assez pour aller en profondeur, pas trop pour fatiguer. Au-delà tu perds l'attention, en-dessous tu bâcles."
+            "L'app pilote la trame complète, calcule le body scan et propose les recommandations produits. Ton job, c'est l'expérience humaine — pas la mécanique. Le pas-à-pas détaillé vit dans la Boîte à outils (tk-bilan-01)."
         },
         {
           kind: "qcm",
           id: "Q2",
-          question: "Quel est le moment WOW du bilan ?",
+          question: "Après une question diagnostique forte (ex : « si rien ne change dans 3 mois ? »), tu fais quoi ?",
           answers: [
-            "Le pesage initial",
-            "Le body scan complet",
-            "La présentation du programme",
-            "Le closing"
+            "Tu enchaînes sur la question suivante",
+            "Tu te tais 4 secondes et tu attends",
+            "Tu reformules pour qu'elle réponde mieux",
+            "Tu commentes sa réponse avec empathie"
           ],
           correctIndex: 1,
           explanation:
-            "Le body scan complet — c'est l'instant où la personne découvre des chiffres qu'elle n'a jamais eus. La confiance bascule à ce moment-là."
+            "Tu te tais. 80 % du temps, la personne reprend la parole et dit la VRAIE chose qu'elle pensait pas oser dire. Le silence est ton outil le plus puissant — l'app ne te le donnera jamais."
         },
         {
           kind: "qcm",
           id: "Q3",
-          question: "Tu dois proposer un produit dès la 1ʳᵉ minute du bilan ?",
+          question: "Au moment du body scan, ton ton de voix idéal est :",
           answers: [
-            "Oui, gagner du temps",
-            "Non, jamais avant le diagnostic",
-            "Seulement si la personne demande",
-            "Après 5 minutes"
+            "Dramatique pour marquer les esprits",
+            "Calme + 1 vraie info, sans drame ni déni",
+            "Empathique pour rassurer",
+            "Neutre comme une lecture de chiffres"
           ],
           correctIndex: 1,
           explanation:
-            "Jamais avant le diagnostic. Tu n'es pas un vendeur — tu es un pro de la santé. Tu écoutes d'abord, tu proposes ensuite."
+            "Calme + 1 vraie info. Le drame ferme la personne. Le déni la fait fuir. La vérité posée transforme une mesure en prise de conscience."
         },
         {
           kind: "free_text",
           id: "Q4",
-          question: "Ton accueil chez toi",
+          question: "Ton EBE shadow avec ton sponsor",
           prompt:
-            "Décris comment tu accueilleras ton 1ᵉʳ prospect chez toi (ou en RDV extérieur) en 3 lignes. Que dis-tu ? Que fais-tu en premier ?",
+            "Tu vas observer ton sponsor faire un EBE cette semaine. Liste en 3 lignes les 3 choses précises que tu vas observer (au-delà de la trame technique) — celles qui font la différence entre un EBE moyen et un EBE signature.",
           sponsorCheckHint:
-            "Vérifier que la réponse contient une intention de mise à l'aise (eau, sourire, vraie question), pas un « bonjour, asseyez-vous, on commence » robotique. Si trop transactionnel, demander à humaniser.",
-          minChars: 80
+            "Vérifier que la réponse cible des comportements humains (silence, ton de voix, posture, transition entre étapes, gestion d'objection en live) et PAS la mécanique technique (qui est dans la boîte à outils). Si la réponse parle de trame ou de checklist, demander de re-cibler sur l'humain.",
+          minChars: 100
         }
       ]
     }
@@ -453,6 +505,7 @@ Demande **3 noms minimum**.`
     ancrage: "« Le silence après une proposition vaut de l'or. Ne le gâche jamais. »",
     action:
       "Prépare 3 réponses-types apprises par cœur aux 3 objections les plus courantes : « C'est cher », « Je dois réfléchir », « Je dois en parler à mon conjoint ». Teste-les en role-play avec ton sponsor avant de les utiliser en réel.",
+    relatedToolkitSlugs: ["objections-reponses", "presentation-programme-script"],
     lessons: [
       {
         id: "M1.4-L1",
@@ -595,6 +648,7 @@ La question est fermée mais cadre vers le OUI. La personne choisit le **format*
     ancrage: "« Un client satisfait sans reco = un client à moitié servi. »",
     action:
       "Demande 3 recos à ton 1ᵉʳ client (ou client en cours de programme avec un résultat visible) cette semaine. Si tu n'as pas encore de client : prépare ta phrase et apprends-la par cœur.",
+    relatedToolkitSlugs: ["phrase-magique-recos", "templates-suivi-jours"],
     lessons: [
       {
         id: "M1.5-L1",
@@ -741,6 +795,7 @@ export const N2_MODULES: FormationModule[] = [
     ancrage: "« Pas d'étape, pas de business. Avec le tunnel, tu sais toujours où tu en es. »",
     action:
       "Imprime le schéma du tunnel et affiche-le dans ton espace de travail. Pour chaque prospect/client en cours, marque l'étape où il est aujourd'hui. Tu vas voir : tu pilotes mieux instantanément.",
+    relatedToolkitSlugs: ["scripts-invitation", "hooks-reseaux-sociaux", "reveiller-contact-froid"],
     lessons: [
       {
         id: "M2.1-L1",
@@ -881,6 +936,7 @@ export const N2_MODULES: FormationModule[] = [
     ancrage: "« Pas de DMO = tu travailles dur. Avec un DMO = tu travailles juste. »",
     action:
       "Bloque DEMAIN MATIN ton premier créneau prime time IPA (même 30 min). Ouvre ton agenda. Mets un événement récurrent. Pas négociable. 5 jours sur 5, même quand tu n'en as pas envie.",
+    relatedToolkitSlugs: ["dmo-checklist-quotidienne", "calculateur-strategy-plan"],
     lessons: [
       {
         id: "M2.2-L1",
@@ -1029,6 +1085,7 @@ Si ces chiffres ne montent pas, ton revenu ne monte pas.
     ancrage: "« Une objection prévue n'est plus une objection. C'est juste une étape. »",
     action:
       "Écris TES 7 réponses-types aux 7 objections. Apprends-les par cœur cette semaine. Teste-les en role-play avec ton sponsor avant de les utiliser en réel. Range-les dans ton dossier « Scripts ».",
+    relatedToolkitSlugs: ["objections-reponses"],
     lessons: [
       {
         id: "M2.3-L1",
@@ -1158,46 +1215,52 @@ Bloque **30 min/semaine** avec ton sponsor pour faire des role-plays d'objection
   },
 
   // ───────────────────────────────────────────────────────────────────────────
-  // M2.4 — Inviter à l'EBE et au Quick Start
+  // M2.4 — Inviter à l'Apéro Healthy et au Quick Start
+  // ⚠️ Refonte 2026-05-03 : EBE n'est plus utilisé pour un événement
+  //    groupe (cf. lexique en haut du fichier). Le "EBE" historique
+  //    est devenu "Apéro Healthy".
   // ───────────────────────────────────────────────────────────────────────────
   {
     id: "M2.4",
     slug: "inviter-ebe-quickstart",
     number: "2.4",
-    title: "Inviter à l'EBE et au Quick Start",
+    title: "Inviter à l'Apéro Healthy et au Quick Start",
     description: "Tes événements sont tes amplificateurs — sache les utiliser.",
     durationMin: 8,
     icon: "📣",
     ideeForce:
-      "Tes événements (EBE, Quick Start, HOM) sont tes amplificateurs. Un prospect en présence d'autres distri qui réussissent, c'est 10x plus efficace que ton meilleur pitch en duo. La preuve sociale fait le boulot que ton talk ne peut pas faire seul.",
-    ancrage: "« Tu ne vends pas l'EBE. Tu vends l'expérience d'y être. »",
+      "Tes événements (Apéro Healthy, HOM, Quick Start) sont tes amplificateurs. Un prospect en présence d'autres distri qui réussissent, c'est 10x plus efficace que ton meilleur pitch en bilan EBE solo. La preuve sociale fait le boulot que ton talk ne peut pas faire seul.",
+    ancrage: "« Tu ne vends pas l'apéro. Tu vends l'expérience d'y être. »",
     action:
-      "Invite 3 personnes au prochain EBE de l'équipe cette semaine. Confirme-les la veille. Note le taux de présence réel. Compare à ce que tu pensais.",
+      "Invite 3 personnes au prochain apéro healthy de l'équipe cette semaine. Confirme-les la veille. Note le taux de présence réel. Compare à ce que tu pensais.",
+    relatedToolkitSlugs: ["scripts-invitation"],
     lessons: [
       {
         id: "M2.4-L1",
         slug: "ebe-vs-qs-vs-hom",
-        title: "Différence EBE vs Quick Start vs HOM",
+        title: "Apéro Healthy vs HOM vs Quick Start",
         kind: "text",
         durationMin: 2,
         contentMarkdown: `## 3 events, 3 publics, 3 objectifs
 
-**EBE (Extra Business Event)**
-- Public : **PROSPECTS** business
-- Format : soirée ~50-150 personnes
-- Objectif : présenter l'opportunité économique
+⚠️ **À ne pas confondre avec l'EBE** (Évaluation Bien-Être = ton bilan client 1-1 ~60 min, piloté par l'app). Ici on parle d'événements de **groupe**.
+
+**Apéro Healthy** (soirée business mensuelle)
+- Public : **PROSPECTS business + équipe**
+- Format : soirée ~25-50 personnes
+- Objectif : présenter l'opportunité économique en preuve sociale
+
+**HOM (House Opportunity Meeting)**
+- Public : **PROSPECTS tièdes**
+- Format : mini-soirée chez quelqu'un, 8-15 personnes
+- Objectif : intime, conversion personnelle
 
 **Quick Start**
 - Public : **DISTRI débutants**
 - Format : formation 1h-2h
 - Objectif : transmettre les compétences de démarrage
 
-**HOM (House Opportunity Meeting)**
-- Public : **PROSPECTS tièdes**
-- Format : mini-EBE chez quelqu'un, 8-15 personnes
-- Objectif : intime, conversion personnelle
-
-> Ne les confonds pas. Chaque event a son rôle.`
+> Ne les confonds pas. Chaque event a son rôle. Et **aucun** d'eux n'est un EBE — l'EBE c'est ton bilan client 1-1.`
       },
       {
         id: "M2.4-L2",
@@ -1263,21 +1326,21 @@ Même quand la personne dit oui, **elle oublie**.
         {
           kind: "qcm",
           id: "Q1",
-          question: "EBE signifie :",
+          question: "EBE signifie (lexique Lor'Squad) :",
           answers: [
-            "Extra Business Event",
-            "Easy Business Entry",
+            "Évaluation Bien-Être (bilan client 1-1)",
+            "Extra Business Event (soirée business)",
             "Express Bilan Express",
             "Energy Boost Event"
           ],
           correctIndex: 0,
           explanation:
-            "Extra Business Event. C'est l'événement business mensuel qui présente l'opportunité économique aux prospects + distri en duplication."
+            "Évaluation Bien-Être : ton bilan client 1-1 ~60 min piloté par l'app. C'est la scène signature du distri. Pour les soirées business groupe, on parle d'**Apéro Healthy** (25-50 pers) ou de **HOM** (8-15 pers chez quelqu'un)."
         },
         {
           kind: "qcm",
           id: "Q2",
-          question: "Faut-il pré-pitcher avant d'inviter à un EBE ?",
+          question: "Faut-il pré-pitcher avant d'inviter à un apéro healthy ?",
           answers: [
             "Oui, pour préparer le terrain",
             "Non, juste créer la curiosité",
@@ -1338,6 +1401,7 @@ export const N3_MODULES: FormationModule[] = [
     ancrage: "« Un Sup épuisé est juste un distri qui en fait trop. Un Leader reposé est un Sup qui a appris à déléguer. »",
     action:
       "Ce dimanche soir, écris dans ton agenda les 7 prochains jours en mode Leader : 30% temps client perso bloqué, 70% temps coaching/event/recrutement. Si tu n'as PAS encore d'équipe, bloque les créneaux quand même — ça te force à recruter pour les remplir.",
+    relatedToolkitSlugs: ["templates-suivi-jours", "reveiller-client-pause", "visio-a-3-protocole"],
     lessons: [
       {
         id: "M3.1-L1",
@@ -1405,7 +1469,7 @@ Ton rôle : les amener à 80% en 90 jours, pas exiger 100% au jour 1.`
 |---|---|
 | **Lundi** | Revue chiffres équipe |
 | **Mardi** | 1:1 distri prioritaires |
-| **Mercredi** | Event/EBE |
+| **Mercredi** | Apéro Healthy / HOM |
 | **Jeudi** | 1:1 distri suite |
 | **Vendredi** | Prospection perso |
 | **Samedi** | Coaching collectif équipe |
@@ -1442,7 +1506,7 @@ Pose-toi cette question chaque dimanche soir. Identifie 1 personne. Donne-lui 80
             "Le chiffre d'affaires perso",
             "Le nombre de distri qu'il a fait grandir",
             "Le nombre de bilans réalisés",
-            "Le nombre d'EBE animés"
+            "Le nombre d'apéros healthy animés"
           ],
           correctIndex: 1,
           explanation:
@@ -1501,6 +1565,7 @@ Pose-toi cette question chaque dimanche soir. Identifie 1 personne. Donne-lui 80
     ancrage: "« Un distri qui se sent vu ne lâche pas. Un distri qui se sent géré, oui. »",
     action:
       "Cette semaine, ajoute dans tous tes 1:1 distri une question du « réservoir » (Leçon 3). Observe ce que ça change. Tu vas voir : la conversation prend une autre profondeur, et la confiance grimpe d'un cran.",
+    relatedToolkitSlugs: ["dmo-checklist-quotidienne", "visio-a-3-protocole"],
     lessons: [
       {
         id: "M3.2-L1",
@@ -1660,15 +1725,16 @@ Pas de jugement. Pas de pression chiffres. Juste de l'humain.
     id: "M3.3",
     slug: "animer-evenements",
     number: "3.3",
-    title: "Animer les événements",
-    description: "EBE, HOM, calls équipe — la mécanique qui démultiplie ton activité.",
+    title: "Animer les événements groupe",
+    description: "Apéro Healthy, HOM, fin de challenge, calls équipe — la mécanique qui démultiplie ton activité (à ne pas confondre avec ton bilan EBE 1-1).",
     durationMin: 9,
     icon: "🎤",
     ideeForce:
-      "Un leader sans événements est un leader plafonné. Les events sont ton démultiplicateur : 1 EBE bien fait = 5 nouveaux distri prospects + 3 distri qui se réveillent + 2 closings que tu n'aurais pas eu en 1:1. Animer un event ce n'est pas savoir parler en public — c'est savoir scénariser une expérience qui transforme les gens entre 19h et 21h.",
-    ancrage: "« Un événement bien fait fait en 2h ce qu'1 mois de bilans solo ne fera jamais. »",
+      "Un leader sans événements groupe est un leader plafonné. Les events sont ton démultiplicateur : 1 apéro healthy bien fait = 5 nouveaux distri prospects + 3 distri qui se réveillent + 2 closings que tu n'aurais pas eu en bilan EBE solo. Animer un event ce n'est pas savoir parler en public — c'est savoir scénariser une expérience qui transforme les gens entre 19h et 21h.",
+    ancrage: "« Un événement bien fait fait en 2h ce qu'1 mois de bilans EBE solo ne fera jamais. »",
     action:
-      "Programme TON premier EBE (ou rejoins celui de ton équipe en mode « shadow » = tu observes pour apprendre). Date dans l'agenda dans les 30 prochains jours. Sans date posée, ça n'arrivera jamais.",
+      "Programme TON premier apéro healthy (ou rejoins celui de ton équipe en mode « shadow » = tu observes pour apprendre). Date dans l'agenda dans les 30 prochains jours. Sans date posée, ça n'arrivera jamais.",
+    relatedToolkitSlugs: ["scripts-invitation"],
     lessons: [
       {
         id: "M3.3-L1",
@@ -1676,12 +1742,14 @@ Pas de jugement. Pas de pression chiffres. Juste de l'humain.
         title: "Les 3 events à animer (rythme mensuel)",
         kind: "text",
         durationMin: 2,
-        contentMarkdown: `## Ta machine à 3 rituels
+        contentMarkdown: `## Ta machine à 3 rituels groupe
 
-**1. EBE mensuel** (1ère semaine du mois)
+⚠️ Rien à voir avec ton **bilan EBE** (1-1 client). Ici on parle d'événements **collectifs** qui amplifient ce que tu fais en bilan.
+
+**1. Apéro Healthy mensuel** (1ère semaine du mois)
 - 25-50 personnes
 - Prospects + équipe
-- Focus opportunité business
+- Focus opportunité business + témoignages clients transformés
 
 **2. HOM hebdo** (chaque mardi)
 - 8-15 personnes chez quelqu'un
@@ -1691,12 +1759,14 @@ Pas de jugement. Pas de pression chiffres. Juste de l'humain.
 - 100% équipe
 - Apprentissage + célébrations
 
-> Ces 3 rituels font ta machine. Aucun n'est optionnel.`
+**Bonus rituel** : **Fin de Challenge** (clôture défi 21j/30j) — célébration des transformations, super moment pour proposer la suite.
+
+> Ces 3 rituels (+1) font ta machine. Aucun n'est optionnel.`
       },
       {
         id: "M3.3-L2",
         slug: "anatomie-ebe",
-        title: "Anatomie d'un EBE qui marche",
+        title: "Anatomie d'un apéro healthy qui marche",
         kind: "text",
         durationMin: 3,
         contentMarkdown: `## Le timing minute par minute
@@ -1738,15 +1808,15 @@ Pas de jugement. Pas de pression chiffres. Juste de l'humain.
         title: "Le call to action de fin (CTA)",
         kind: "text",
         durationMin: 1,
-        contentMarkdown: `## Ne finis JAMAIS un EBE par « voilà, à bientôt »
+        contentMarkdown: `## Ne finis JAMAIS un apéro healthy par « voilà, à bientôt »
 
 **Termine TOUJOURS par 2 propositions concrètes** :
 
-1. *« Pour ceux qui veulent essayer le programme client → on prend RDV bilan tout de suite »*
+1. *« Pour ceux qui veulent essayer le programme client → on prend RDV pour un EBE (bilan ~60 min) tout de suite »*
 2. *« Pour ceux qui veulent en savoir plus sur le business → on cale un café cette semaine »*
 
 **Sans CTA chiffré** : l'event ne convertit pas.
-**Avec CTA** : 5-10 bilans calés + 2-3 cafés business par EBE.`
+**Avec CTA** : 5-10 EBE calés + 2-3 cafés business par apéro.`
       },
       {
         id: "M3.3-L5",
@@ -1775,7 +1845,7 @@ Call équipe **30 min** :
         {
           kind: "qcm",
           id: "Q1",
-          question: "Durée idéale d'un EBE ?",
+          question: "Durée idéale d'un apéro healthy ?",
           answers: ["1h", "2h", "3h", "4h"],
           correctIndex: 1,
           explanation:
@@ -1784,7 +1854,7 @@ Call équipe **30 min** :
         {
           kind: "qcm",
           id: "Q2",
-          question: "Dans un EBE, les témoignages doivent occuper environ :",
+          question: "Dans un apéro healthy, les témoignages doivent occuper environ :",
           answers: [
             "20% du temps utile",
             "50%",
@@ -1800,7 +1870,7 @@ Call équipe **30 min** :
           id: "Q3",
           question: "Le rituel le plus négligé par les leaders débutants est :",
           answers: [
-            "L'EBE mensuel",
+            "L'apéro healthy mensuel",
             "Le débrief post-event",
             "Le HOM hebdo",
             "Le call équipe"
@@ -1812,9 +1882,9 @@ Call équipe **30 min** :
         {
           kind: "free_text",
           id: "Q4",
-          question: "Plan EBE J-21",
+          question: "Plan Apéro Healthy J-21",
           prompt:
-            "Imagine que tu animes ton premier EBE dans 3 semaines. Décris en 5 lignes ton plan d'action des 21 prochains jours pour t'assurer d'avoir 25-50 participants ET 2 témoignages briefés.",
+            "Imagine que tu animes ton premier apéro healthy dans 3 semaines. Décris en 5 lignes ton plan d'action des 21 prochains jours pour t'assurer d'avoir 25-50 participants ET 2 témoignages briefés.",
           sponsorCheckHint:
             "Vérifier que la réponse comprend (a) un planning précis d'invitations (qui invite qui, combien, quand), (b) une logique de confirmation (la veille minimum), (c) un brief des 2 intervenants au moins 7j avant. Si la réponse est vague (« je vais inviter du monde »), demander un plan jour par jour.",
           minChars: 150
@@ -1839,6 +1909,7 @@ Call équipe **30 min** :
     ancrage: "« Les royalties ne sont pas un cadeau. C'est le retour sur investissement de 12-24 mois de duplication systématique. »",
     action:
       "Écris ta projection 12 mois sur une feuille : palier visé + 3 personnes cibles à amener Sup + revenu mensuel cible. Affiche-la avec ta vision board (M1.1 / Feuille de Reconnaissance). Tu la verras chaque jour. C'est ton GPS sur 12 mois.",
+    relatedToolkitSlugs: ["calculateur-strategy-plan", "feuille-reconnaissance"],
     lessons: [
       {
         id: "M3.4-L1",
@@ -2011,8 +2082,8 @@ export const BIBLIO_PROSPECTION: FormationCategory["resources"] = [
   },
   {
     id: "biblio-prospection-03",
-    title: "Inviter à l'EBE et au Quick Start",
-    description: "Tes événements sont tes amplificateurs. Invitation sans pré-pitcher.",
+    title: "Inviter à l'Apéro Healthy et au Quick Start",
+    description: "Tes événements groupe sont tes amplificateurs. Invitation sans pré-pitcher.",
     kind: "module-link",
     moduleId: "M2.4",
     durationMin: 8,
@@ -2101,8 +2172,8 @@ export const BIBLIO_BUSINESS: FormationCategory["resources"] = [
   },
   {
     id: "biblio-business-03",
-    title: "Animer les événements",
-    description: "EBE, HOM, calls équipe. Anatomie d'un EBE qui marche en 2h.",
+    title: "Animer les événements groupe",
+    description: "Apéro Healthy, HOM, fin de challenge, calls équipe. Anatomie d'un apéro qui marche en 2h. (Pas le bilan EBE 1-1.)",
     kind: "module-link",
     moduleId: "M3.3",
     durationMin: 9,
