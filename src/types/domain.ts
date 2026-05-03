@@ -104,6 +104,10 @@ export type BiologicalSex = "female" | "male";
 export interface RecommendationLead {
   name: string;
   contact: string;
+  /** Categorie du prospect (chantier RecoStepV3 — 2026-11-04). Permet
+   *  de typer rapidement la recommandation pour adapter l approche.
+   *  Optional : les anciennes recommandations sans categorie restent valides. */
+  category?: "famille" | "travail" | "sport" | "ami" | "autre";
 }
 
 export interface User {
