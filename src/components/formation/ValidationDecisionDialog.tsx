@@ -13,6 +13,7 @@
 import { useState } from "react";
 import { useFormationActions } from "../../features/formation";
 import { ReviewThreadPanel } from "./ReviewThreadPanel";
+import { QuizAnswersDetailPanel } from "./QuizAnswersDetailPanel";
 
 type Mode = "menu" | "validate" | "request" | "reject";
 
@@ -151,6 +152,32 @@ export function ValidationDecisionDialog({
           </button>
         </div>
 
+        {/* Détail du quiz QCM (refonte 2026-05-03 — visibilité erreurs sponsor) */}
+        <div style={{ padding: "12px 20px", borderBottom: "0.5px solid var(--ls-border)" }}>
+          <div
+            style={{
+              fontSize: 10,
+              letterSpacing: "0.1em",
+              textTransform: "uppercase",
+              fontWeight: 700,
+              color: "var(--ls-gold)",
+              marginBottom: 8,
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+            }}
+          >
+            <span aria-hidden="true">📝</span>
+            Détail du quiz
+            {quizScore != null ? (
+              <span style={{ marginLeft: "auto", color: "var(--ls-text-muted)", letterSpacing: 0 }}>
+                Score : {Math.round(quizScore)}%
+              </span>
+            ) : null}
+          </div>
+          <QuizAnswersDetailPanel progressId={progressId} moduleId={moduleId} />
+        </div>
+
         {/* Discussion historique */}
         <div style={{ padding: "12px 20px" }}>
           <div
@@ -163,7 +190,7 @@ export function ValidationDecisionDialog({
               marginBottom: 8,
             }}
           >
-            Historique
+            Historique (réponse libre + thread)
           </div>
           <ReviewThreadPanel progressId={progressId} compact />
         </div>
