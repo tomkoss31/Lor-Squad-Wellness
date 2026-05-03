@@ -80,6 +80,14 @@ export interface FormationModule {
   lessons: FormationLesson[];
   /** Quiz optionnel post-module. */
   quiz?: FormationQuiz;
+  /**
+   * Slugs des items de la boîte à outils liés à ce module (cross-link).
+   * Phase formation refonte (2026-05-03) : remplace les chips cryptiques
+   * "M1.1 — ..." en footer par des liens vers des outils pratiques
+   * pertinents, pour éviter la redondance entre formation théorique et
+   * outils opérationnels.
+   */
+  relatedToolkitSlugs?: string[];
 }
 
 export type FormationLessonKind =
