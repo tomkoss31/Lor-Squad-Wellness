@@ -1477,6 +1477,7 @@ export function NewAssessmentPage() {
             const whisper = STEP_WHISPERS[currentStepId];
             return (
               <div
+                key={`hero-${currentStepId}`}
                 className="ls-step-hero"
                 style={{
                   position: 'relative',
@@ -1489,9 +1490,48 @@ export function NewAssessmentPage() {
                     '0.5px solid color-mix(in srgb, var(--ls-gold) 22%, var(--ls-border))',
                 }}
               >
-                {/* Glow ambient en haut a droite */}
+                {/* Refonte StepHero v2 (etape 5/6 chantier visuel, 2026-11-04) :
+                    glow flottant + dot pulse + entrance staggered. */}
+                <style>{`
+                  @keyframes ls-hero-glow-float {
+                    0%, 100% { transform: translate(0, 0) scale(1); }
+                    50%      { transform: translate(-12px, 8px) scale(1.08); }
+                  }
+                  @keyframes ls-hero-dot-pulse {
+                    0%, 100% { transform: scale(1); box-shadow: 0 0 8px rgba(239,159,39,0.50); }
+                    50%      { transform: scale(1.18); box-shadow: 0 0 14px rgba(239,159,39,0.80); }
+                  }
+                  @keyframes ls-hero-fade-up {
+                    0%   { opacity: 0; transform: translateY(6px); }
+                    100% { opacity: 1; transform: translateY(0); }
+                  }
+                  .ls-hero-eyebrow {
+                    animation: ls-hero-fade-up 380ms cubic-bezier(0.22, 1, 0.36, 1) both;
+                  }
+                  .ls-hero-title {
+                    animation: ls-hero-fade-up 480ms 80ms cubic-bezier(0.22, 1, 0.36, 1) both;
+                  }
+                  .ls-hero-whisper {
+                    animation: ls-hero-fade-up 520ms 160ms cubic-bezier(0.22, 1, 0.36, 1) both;
+                  }
+                  .ls-hero-counter {
+                    animation: ls-hero-fade-up 560ms 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
+                  }
+                  .ls-hero-glow {
+                    animation: ls-hero-glow-float 7s ease-in-out infinite;
+                  }
+                  .ls-hero-dot {
+                    animation: ls-hero-dot-pulse 2.4s ease-in-out infinite;
+                  }
+                  @media (prefers-reduced-motion: reduce) {
+                    .ls-hero-eyebrow, .ls-hero-title, .ls-hero-whisper, .ls-hero-counter,
+                    .ls-hero-glow, .ls-hero-dot { animation: none !important; }
+                  }
+                `}</style>
+                {/* Glow ambient en haut a droite (anime) */}
                 <div
                   aria-hidden="true"
+                  className="ls-hero-glow"
                   style={{
                     position: 'absolute',
                     top: -50,
@@ -1503,6 +1543,27 @@ export function NewAssessmentPage() {
                       'color-mix(in srgb, var(--ls-gold) 14%, transparent)',
                     filter: 'blur(48px)',
                     pointerEvents: 'none',
+                    willChange: 'transform',
+                  }}
+                />
+                {/* Glow secondaire teal en bas a gauche */}
+                <div
+                  aria-hidden="true"
+                  className="ls-hero-glow"
+                  style={{
+                    position: 'absolute',
+                    bottom: -40,
+                    left: -40,
+                    width: 140,
+                    height: 140,
+                    borderRadius: '50%',
+                    background:
+                      'color-mix(in srgb, var(--ls-teal) 10%, transparent)',
+                    filter: 'blur(56px)',
+                    pointerEvents: 'none',
+                    animationDelay: '1.5s',
+                    animationDirection: 'reverse',
+                    willChange: 'transform',
                   }}
                 />
                 <div
@@ -1517,6 +1578,7 @@ export function NewAssessmentPage() {
                 >
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <p
+                      className="ls-hero-eyebrow"
                       style={{
                         fontFamily: 'DM Sans, sans-serif',
                         fontSize: 11,
@@ -1531,6 +1593,7 @@ export function NewAssessmentPage() {
                       {whisper?.eyebrow ?? `Étape ${currentStep + 1} sur ${steps.length}`}
                     </p>
                     <h2
+                      className="ls-hero-title"
                       style={{
                         fontFamily: 'Syne, serif',
                         fontWeight: 800,
@@ -1554,6 +1617,7 @@ export function NewAssessmentPage() {
                     </h2>
                     {whisper?.whisper ? (
                       <p
+                        className="ls-hero-whisper"
                         style={{
                           fontFamily: 'DM Sans, sans-serif',
                           fontSize: 13.5,
@@ -1567,6 +1631,7 @@ export function NewAssessmentPage() {
                       </p>
                     ) : null}
                     <div
+                      className="ls-hero-counter"
                       style={{
                         marginTop: 12,
                         display: 'flex',
@@ -1578,13 +1643,13 @@ export function NewAssessmentPage() {
                       }}
                     >
                       <span
+                        className="ls-hero-dot"
                         style={{
                           display: 'inline-block',
                           width: 6,
                           height: 6,
                           borderRadius: 999,
                           background: 'var(--ls-gold)',
-                          boxShadow: '0 0 8px rgba(239,159,39,0.50)',
                         }}
                       />
                       <span style={{ fontWeight: 600 }}>
