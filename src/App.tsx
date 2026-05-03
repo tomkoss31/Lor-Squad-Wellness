@@ -260,6 +260,12 @@ const FormationCertificatePage = lazy(() =>
     default: module.FormationCertificatePage
   }))
 );
+// Feature #7 (2026-11-04) : Strategy Plan Calculator (formule 5-3-1).
+const FormationCalculatorPage = lazy(() =>
+  import("./pages/FormationCalculatorPage").then((module) => ({
+    default: module.FormationCalculatorPage
+  }))
+);
 const SettingsPage = lazy(() =>
   import("./pages/SettingsPage").then((module) => ({
     default: module.SettingsPage
@@ -354,6 +360,7 @@ export default function App() {
               <Route path="formation/mon-equipe" element={<FormationAdminGate><FormationMyTeamPage /></FormationAdminGate>} />
               <Route path="formation/admin" element={<FormationAdminGate><FormationAdminPage /></FormationAdminGate>} />
               <Route path="formation/certificat" element={<FormationAdminGate><FormationCertificatePage /></FormationAdminGate>} />
+              <Route path="formation/calculateur" element={<FormationAdminGate><FormationCalculatorPage /></FormationAdminGate>} />
               <Route path="formation/parcours/:levelSlug" element={<FormationAdminGate><FormationModulePage /></FormationAdminGate>} />
               <Route path="formation/parcours/:levelSlug/:moduleSlug" element={<FormationAdminGate><FormationModuleDetailPage /></FormationAdminGate>} />
               <Route path="formation/:slug" element={<FormationAdminGate><FormationCategoryPage /></FormationAdminGate>} />
