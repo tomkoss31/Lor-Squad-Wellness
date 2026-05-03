@@ -28,6 +28,45 @@ import { FormationSearchBar } from "../components/formation/FormationSearchBar";
 import { FORMATION_LEVELS } from "../data/formation";
 import { useFormationProgress } from "../hooks/useFormationProgress";
 
+// Stages dynamiques bases sur la progression reelle (2026-11-04)
+// Pas de toggle manuel : la formation est sequentielle (N1 verrouille N2,
+// N2 verrouille N3), donc l etat de progression est la vraie source de
+// verite pour adapter le discours.
+type FormationStage = "decouverte" | "en-cours" | "leader" | "complete";
+
+interface StageWording {
+  eyebrow: string;
+  title: string;
+  description: string;
+}
+
+const STAGE_WORDING: Record<FormationStage, StageWording> = {
+  decouverte: {
+    eyebrow: "Formation · découvre l'aventure",
+    title: "Bienvenue dans Lor'Squad",
+    description:
+      "Tu débutes ? On y va à ton rythme. 1 étape à la fois — découvre Herbalife, l'app, et ton métier de coach bien-être.",
+  },
+  "en-cours": {
+    eyebrow: "Formation · ton parcours en cours",
+    title: "Continue sur ta lancée",
+    description:
+      "Tu progresses bien. Reprends là où tu t'es arrêté·e — chaque module te rapproche du palier suivant.",
+  },
+  leader: {
+    eyebrow: "Formation · mode leader",
+    title: "Tes outils de leader",
+    description:
+      "Tu connais le terrain. On accélère : duplique, coache ton équipe, vise GET et au-delà.",
+  },
+  complete: {
+    eyebrow: "Formation · parcours complet",
+    title: "Tu as tout validé. Bravo.",
+    description:
+      "Reviens piocher dans la boîte à outils quand tu as besoin d'un script ou d'une fiche. Tu peux aussi refaire un module à tout moment.",
+  },
+};
+
 export function FormationPage() {
   const { stats, nextStep, isAllComplete } = useFormationProgress();
 
@@ -36,12 +75,25 @@ export function FormationPage() {
   const totalModules =
     stats.demarrer.totalCount + stats.construire.totalCount + stats.dupliquer.totalCount;
 
+  // Determine le stage selon progression reelle
+  const stage: FormationStage = (() => {
+    if (isAllComplete) return "complete";
+    // Leader = N3 entame OU N2 valide a 100%
+    if (stats.dupliquer.hasStarted || stats.construire.isComplete) return "leader";
+    // En cours = au moins 1 module valide quelque part
+    if (totalCompleted > 0 || stats.demarrer.hasStarted) return "en-cours";
+    // Sinon : decouverte (0 module touche)
+    return "decouverte";
+  })();
+
+  const heading = STAGE_WORDING[stage];
+
   return (
     <div className="space-y-6">
       <PageHeading
-        eyebrow="Formation · ton parcours métier"
-        title="Du débutant au leader"
-        description="Un parcours en 3 niveaux + des outils prêts à l'emploi pour passer à l'acte chaque jour."
+        eyebrow={heading.eyebrow}
+        title={heading.title}
+        description={heading.description}
       />
 
       {/* Recherche transversale — modules + biblio */}
