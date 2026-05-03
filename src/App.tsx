@@ -278,6 +278,17 @@ const FormationGlossaryPage = lazy(() =>
     default: module.FormationGlossaryPage
   }))
 );
+// Boite a outils Lor'Squad (2026-11-04) : 16 outils premium.
+const FormationToolkitPage = lazy(() =>
+  import("./pages/FormationToolkitPage").then((module) => ({
+    default: module.FormationToolkitPage
+  }))
+);
+const FormationToolkitDetailPage = lazy(() =>
+  import("./pages/FormationToolkitDetailPage").then((module) => ({
+    default: module.FormationToolkitDetailPage
+  }))
+);
 const SettingsPage = lazy(() =>
   import("./pages/SettingsPage").then((module) => ({
     default: module.SettingsPage
@@ -375,6 +386,8 @@ export default function App() {
               <Route path="formation/calculateur" element={<FormationAdminGate><FormationCalculatorPage /></FormationAdminGate>} />
               <Route path="formation/charte" element={<FormationAdminGate><FormationCharterPage /></FormationAdminGate>} />
               <Route path="formation/glossaire" element={<FormationAdminGate><FormationGlossaryPage /></FormationAdminGate>} />
+              <Route path="formation/boite-a-outils" element={<FormationAdminGate><FormationToolkitPage /></FormationAdminGate>} />
+              <Route path="formation/boite-a-outils/:slug" element={<FormationAdminGate><FormationToolkitDetailPage /></FormationAdminGate>} />
               <Route path="formation/parcours/:levelSlug" element={<FormationAdminGate><FormationModulePage /></FormationAdminGate>} />
               <Route path="formation/parcours/:levelSlug/:moduleSlug" element={<FormationAdminGate><FormationModuleDetailPage /></FormationAdminGate>} />
               <Route path="formation/:slug" element={<FormationAdminGate><FormationCategoryPage /></FormationAdminGate>} />

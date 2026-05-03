@@ -69,6 +69,110 @@ export function FormationPage() {
         totalModules={totalModules}
       />
 
+      {/* Boite a outils (2026-11-04) — 16 outils prets a l emploi.
+          Card pleine largeur en premier (avant calculator/charte) car
+          c est l outil le plus utilise au quotidien. */}
+      <Link
+        to="/formation/boite-a-outils"
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 16,
+          padding: "20px 22px",
+          background:
+            "linear-gradient(135deg, color-mix(in srgb, var(--ls-gold) 12%, var(--ls-surface)) 0%, color-mix(in srgb, var(--ls-teal) 8%, var(--ls-surface)) 50%, color-mix(in srgb, var(--ls-purple) 6%, var(--ls-surface)) 100%)",
+          border: "0.5px solid color-mix(in srgb, var(--ls-gold) 32%, var(--ls-border))",
+          borderRadius: 18,
+          textDecoration: "none",
+          color: "var(--ls-text)",
+          fontFamily: "DM Sans, sans-serif",
+          boxShadow: "0 6px 22px -12px color-mix(in srgb, var(--ls-gold) 30%, transparent)",
+          transition: "transform 240ms cubic-bezier(0.4, 0, 0.2, 1), box-shadow 240ms ease",
+          position: "relative",
+          overflow: "hidden",
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.transform = "translateY(-2px)";
+          e.currentTarget.style.boxShadow = "0 12px 30px -12px color-mix(in srgb, var(--ls-gold) 45%, transparent)";
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.transform = "none";
+          e.currentTarget.style.boxShadow = "0 6px 22px -12px color-mix(in srgb, var(--ls-gold) 30%, transparent)";
+        }}
+      >
+        {/* Glow ambient */}
+        <div
+          aria-hidden="true"
+          style={{
+            position: "absolute",
+            top: -40,
+            right: -40,
+            width: 160,
+            height: 160,
+            borderRadius: "50%",
+            background: "color-mix(in srgb, var(--ls-gold) 18%, transparent)",
+            filter: "blur(56px)",
+            pointerEvents: "none",
+          }}
+        />
+        {/* Icon */}
+        <div
+          style={{
+            width: 56,
+            height: 56,
+            borderRadius: 16,
+            background: "linear-gradient(135deg, var(--ls-gold) 0%, var(--ls-teal) 100%)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: 28,
+            boxShadow: "0 4px 14px color-mix(in srgb, var(--ls-gold) 35%, transparent), inset 0 1px 0 rgba(255,255,255,0.40)",
+            flexShrink: 0,
+            position: "relative",
+          }}
+        >
+          🛠️
+        </div>
+        {/* Texte */}
+        <div style={{ flex: 1, minWidth: 0, position: "relative" }}>
+          <div
+            style={{
+              fontSize: 10,
+              fontWeight: 700,
+              letterSpacing: "0.18em",
+              textTransform: "uppercase",
+              color: "var(--ls-gold)",
+              marginBottom: 4,
+            }}
+          >
+            ✦ Pièce maîtresse · Matière exécutable
+          </div>
+          <div
+            style={{
+              fontFamily: "Syne, serif",
+              fontWeight: 800,
+              fontSize: "clamp(16px, 2vw, 19px)",
+              color: "var(--ls-text)",
+              letterSpacing: "-0.018em",
+              lineHeight: 1.2,
+              marginBottom: 4,
+            }}
+          >
+            Boîte à outils Lor&apos;Squad
+          </div>
+          <div
+            style={{
+              fontSize: 12.5,
+              color: "var(--ls-text-muted)",
+              lineHeight: 1.5,
+            }}
+          >
+            16 outils prêts à l&apos;emploi : scripts d&apos;invitation, méthode FRANK, Visio à 3, templates de suivi, objections… Différent du parcours guidé — ici on passe à l&apos;acte.
+          </div>
+        </div>
+        <span style={{ color: "var(--ls-gold)", fontSize: 22, flexShrink: 0, position: "relative" }}>→</span>
+      </Link>
+
       {/* Features #7 + #9 (2026-11-04) : 2 outils premium en row */}
       <div
         style={{
