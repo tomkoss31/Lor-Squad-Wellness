@@ -11,8 +11,9 @@ import { useNavigate } from "react-router-dom";
 import { useAppContext } from "../context/AppContext";
 import { CharteDistributeur } from "../components/charter/CharteDistributeur";
 import { SignatureCanvasModal } from "../components/charter/SignatureCanvasModal";
+import { CharterTemplateSelector } from "../components/charter/CharterTemplateSelector";
 import { useCharter } from "../hooks/useCharter";
-import type { CharterPersonInfo } from "../types/charter";
+import type { CharterPersonInfo, CharterTemplate } from "../types/charter";
 import {
   downloadCertPdf,
   downloadCertPng,
@@ -23,8 +24,10 @@ export function CharterPage() {
   const navigate = useNavigate();
   const { currentUser, users } = useAppContext();
   const userId = currentUser?.id ?? null;
-  const { charter, loading, saving, updateField, signAsDistri } = useCharter(userId);
+  const { charter, loading, saving, updateField, setTemplate, signAsDistri } =
+    useCharter(userId);
   const [signOpen, setSignOpen] = useState(false);
+  const currentTemplate: CharterTemplate = charter?.preferred_template ?? "officielle";
   const [downloading, setDownloading] = useState<null | "pdf" | "png">(null);
   const charterRef = useRef<HTMLDivElement>(null);
 
@@ -32,7 +35,7 @@ export function CharterPage() {
     const node = charterRef.current;
     if (!node) return;
     const slug = slugifyForFilename(currentUser?.name ?? "charte", "charte");
-    const base = `charte-distri-${slug}`;
+    const base = `charte-${currentTemplate}-${slug}`;
     setDownloading(kind);
     try {
       // Attendre que les fonts Google soient prêtes pour éviter fallback
@@ -146,28 +149,52 @@ export function CharterPage() {
           >
             {saving ? "Sauvegarde…" : charter?.signed_at ? "✓ Signée" : "Brouillon"}
           </span>
-          <button
-            type="button"
-            onClick={() => void handleDownload("pdf")}
-            disabled={downloading !== null}
-            style={btnGold}
-          >
-            {downloading === "pdf" ? "⏳" : "📥"} PDF
-          </button>
-          <button
-            type="button"
-            onClick={() => void handleDownload("png")}
-            disabled={downloading !== null}
-            style={btnGoldGhost}
-          >
-            {downloading === "png" ? "⏳" : "🖼️"} PNG
-          </button>
+          {currentTemplate === "story" ? (
+            // Story = format vertical pensé partage Insta → PNG seul.
+            <button
+              type="button"
+              onClick={() => void handleDownload("png")}
+              disabled={downloading !== null}
+              style={btnGold}
+            >
+              {downloading === "png" ? "⏳" : "📱"} Sauver en image
+            </button>
+          ) : (
+            // Officielle / Manifeste = A4 imprimable → PDF + PNG.
+            <>
+              <button
+                type="button"
+                onClick={() => void handleDownload("pdf")}
+                disabled={downloading !== null}
+                style={btnGold}
+              >
+                {downloading === "pdf" ? "⏳" : "📥"} PDF
+              </button>
+              <button
+                type="button"
+                onClick={() => void handleDownload("png")}
+                disabled={downloading !== null}
+                style={btnGoldGhost}
+              >
+                {downloading === "png" ? "⏳" : "🖼️"} PNG
+              </button>
+            </>
+          )}
         </div>
+      </div>
+
+      {/* Sélecteur de template (3 thumbnails) */}
+      <div style={{ maxWidth: 794, margin: "0 auto" }}>
+        <CharterTemplateSelector
+          current={currentTemplate}
+          onChange={(t) => void setTemplate(t)}
+        />
       </div>
 
       {/* Document */}
       <CharteDistributeur
         ref={charterRef}
+        template={currentTemplate}
         distributeur={distributeur}
         cosigner={cosigner}
         pourquoiText={charter?.pourquoi_text ?? ""}

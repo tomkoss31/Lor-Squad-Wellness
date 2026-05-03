@@ -10,7 +10,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { getSupabaseClient } from "../services/supabaseClient";
-import type { DistributorCharter } from "../types/charter";
+import type { CharterTemplate, DistributorCharter } from "../types/charter";
 
 interface UseCharterResult {
   charter: DistributorCharter | null;
@@ -19,6 +19,8 @@ interface UseCharterResult {
   saving: boolean;
   /** Update pourquoi/objectif (debounced 600ms via auto-save). */
   updateField: (field: "pourquoi_text" | "objectif_12_mois", value: string) => void;
+  /** Set immédiat du template préféré du distri (pas de debounce). */
+  setTemplate: (template: CharterTemplate) => Promise<void>;
   /** Sauvegarde immédiate de la signature distri. */
   signAsDistri: (signatureDataUrl: string) => Promise<void>;
   /** Sauvegarde immédiate de la co-signature (sponsor ou admin). */
@@ -191,6 +193,34 @@ export function useCharter(targetUserId: string | null): UseCharterResult {
     [targetUserId],
   );
 
+  const setTemplate = useCallback(
+    async (template: CharterTemplate) => {
+      if (!targetUserId) return;
+      setSaving(true);
+      setError(null);
+      const sb = await getSupabaseClient();
+      if (!sb) {
+        setSaving(false);
+        return;
+      }
+      const { data, error: e } = await sb
+        .from("distributor_charters")
+        .upsert(
+          { user_id: targetUserId, preferred_template: template },
+          { onConflict: "user_id" },
+        )
+        .select()
+        .single();
+      setSaving(false);
+      if (e) {
+        setError(e.message);
+        return;
+      }
+      if (data) setCharter(data as DistributorCharter);
+    },
+    [targetUserId],
+  );
+
   return {
     charter: charter
       ? { ...charter, pourquoi_text: localPourquoi, objectif_12_mois: localObjectif }
@@ -199,6 +229,7 @@ export function useCharter(targetUserId: string | null): UseCharterResult {
     error,
     saving,
     updateField,
+    setTemplate,
     signAsDistri,
     cosign,
     refetch: fetchCharter,

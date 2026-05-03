@@ -16,8 +16,9 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useAppContext } from "../context/AppContext";
 import { CharteDistributeur } from "../components/charter/CharteDistributeur";
 import { SignatureCanvasModal } from "../components/charter/SignatureCanvasModal";
+import { CharterTemplateSelector } from "../components/charter/CharterTemplateSelector";
 import { useCharter } from "../hooks/useCharter";
-import type { CharterPersonInfo } from "../types/charter";
+import type { CharterPersonInfo, CharterTemplate } from "../types/charter";
 
 export function AdminDistributorCharterPage() {
   const navigate = useNavigate();
@@ -25,6 +26,11 @@ export function AdminDistributorCharterPage() {
   const { currentUser, users } = useAppContext();
   const { charter, loading, saving, cosign } = useCharter(targetUserId ?? null);
   const [signOpen, setSignOpen] = useState(false);
+  // Le template affiché est celui choisi par le distri par défaut.
+  // L'admin peut switcher en local pour preview (sans persister).
+  const distriTemplate: CharterTemplate = charter?.preferred_template ?? "officielle";
+  const [previewTemplate, setPreviewTemplate] = useState<CharterTemplate | null>(null);
+  const currentTemplate: CharterTemplate = previewTemplate ?? distriTemplate;
 
   const targetUser = useMemo(
     () => (targetUserId ? users.find((u) => u.id === targetUserId) ?? null : null),
@@ -194,8 +200,37 @@ export function AdminDistributorCharterPage() {
         </div>
       )}
 
+      {/* Sélecteur preview-only (ne persiste pas — c'est le choix du distri
+          qui prime, l'admin switch juste pour visualiser). */}
+      <div style={{ maxWidth: 794, margin: "0 auto" }}>
+        <CharterTemplateSelector
+          current={currentTemplate}
+          onChange={(t) => setPreviewTemplate(t === distriTemplate ? null : t)}
+        />
+        {previewTemplate && previewTemplate !== distriTemplate && (
+          <div
+            style={{
+              maxWidth: 794,
+              margin: "0 auto 14px",
+              padding: "8px 14px",
+              background: "rgba(212, 169, 55, 0.12)",
+              border: "0.5px dashed rgba(212, 169, 55, 0.45)",
+              borderRadius: 8,
+              color: "#E5C476",
+              fontSize: 11,
+              fontFamily: "DM Sans, sans-serif",
+              fontStyle: "italic",
+              textAlign: "center",
+            }}
+          >
+            Preview admin : tu vois le template <strong>{previewTemplate}</strong>, mais le distri a choisi <strong>{distriTemplate}</strong> (pas modifié).
+          </div>
+        )}
+      </div>
+
       {/* Document en preview (lecture seule pour les champs distri) */}
       <CharteDistributeur
+        template={currentTemplate}
         distributeur={distributeur}
         cosigner={cosigner}
         pourquoiText={charter?.pourquoi_text ?? ""}
