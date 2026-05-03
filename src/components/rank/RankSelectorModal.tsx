@@ -17,19 +17,11 @@ import { getSupabaseClient } from "../../services/supabaseClient";
 import {
   RANK_LABELS,
   RANK_MARGINS,
+  RANK_ORDER,
   type HerbalifeRank,
 } from "../../types/domain";
 
-const RANKS: HerbalifeRank[] = [
-  "distributor_25",
-  "senior_consultant_35",
-  "success_builder_42",
-  "supervisor_50",
-  "world_team_50",
-  "get_team_50",
-  "millionaire_50",
-  "presidents_50",
-];
+const RANKS: HerbalifeRank[] = RANK_ORDER;
 
 interface RankSelectorModalProps {
   userId: string;

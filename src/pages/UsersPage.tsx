@@ -8,7 +8,7 @@ import { InviteDistributorModal } from "../components/users/InviteDistributorMod
 import { PendingInvitationsList } from "../components/users/PendingInvitationsList";
 import { getPortfolioMetrics } from "../lib/portfolio";
 import type { User, HerbalifeRank } from "../types/domain";
-import { RANK_LABELS } from "../types/domain";
+import { RANK_LABELS, RANK_ORDER } from "../types/domain";
 import { getSupabaseClient } from "../services/supabaseClient";
 import { RankPinBadge } from "../components/rank/RankPinBadge";
 
@@ -1151,16 +1151,7 @@ function UserInlineRankForm({ user }: { user: User }) {
   );
 }
 
-const USERS_PAGE_RANK_OPTIONS: HerbalifeRank[] = [
-  "distributor_25",
-  "senior_consultant_35",
-  "success_builder_42",
-  "supervisor_50",
-  "world_team_50",
-  "get_team_50",
-  "millionaire_50",
-  "presidents_50",
-];
+const USERS_PAGE_RANK_OPTIONS: HerbalifeRank[] = RANK_ORDER;
 
 // ─── Beta access formation toggle (2026-11-05) ────────────────────────────
 function UserInlineFormationBetaToggle({ user }: { user: User }) {
