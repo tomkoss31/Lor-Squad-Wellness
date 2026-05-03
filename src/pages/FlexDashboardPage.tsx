@@ -17,7 +17,9 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { PageHeading } from "../components/ui/PageHeading";
 import { FlexHistoryCard } from "../components/flex/FlexHistoryCard";
+import { FlexMidpointRecalcCard } from "../components/flex/FlexMidpointRecalcCard";
 import { useAppContext } from "../context/AppContext";
+import type { HerbalifeRank } from "../types/domain";
 import { getSupabaseClient } from "../services/supabaseClient";
 import type {
   DailyActionCheckin,
@@ -242,6 +244,13 @@ export function FlexDashboardPage() {
         eyebrow="FLEX Lor'Squad"
         title="Ton pilotage du jour"
         description={`Objectif ${plan.monthly_revenue_target.toLocaleString("fr-FR")} €/mois · échéance dans ${Math.max(0, daysUntilDeadline)} jours${streak > 0 ? ` · 🔥 ${streak} jour${streak > 1 ? "s" : ""} consécutif${streak > 1 ? "s" : ""}` : ""}`}
+      />
+
+      {/* V2.1 — Banner mi-parcours (auto-affiché entre 40-70% durée écoulée). */}
+      <FlexMidpointRecalcCard
+        plan={plan}
+        userRank={(currentUser?.currentRank as HerbalifeRank | undefined) ?? "distributor_25"}
+        onUpdated={(updated) => setPlan(updated)}
       />
 
       {/* AUJOURD'HUI : check-in */}
