@@ -6,13 +6,18 @@
 // faite plus tard par le sponsor direct ou un admin via /distributeurs/:id/charte.
 // =============================================================================
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppContext } from "../context/AppContext";
 import { CharteDistributeur } from "../components/charter/CharteDistributeur";
 import { SignatureCanvasModal } from "../components/charter/SignatureCanvasModal";
 import { useCharter } from "../hooks/useCharter";
 import type { CharterPersonInfo } from "../types/charter";
+import {
+  downloadCertPdf,
+  downloadCertPng,
+  slugifyForFilename,
+} from "../lib/certificateExport";
 
 export function CharterPage() {
   const navigate = useNavigate();
@@ -20,6 +25,30 @@ export function CharterPage() {
   const userId = currentUser?.id ?? null;
   const { charter, loading, saving, updateField, signAsDistri } = useCharter(userId);
   const [signOpen, setSignOpen] = useState(false);
+  const [downloading, setDownloading] = useState<null | "pdf" | "png">(null);
+  const charterRef = useRef<HTMLDivElement>(null);
+
+  async function handleDownload(kind: "pdf" | "png") {
+    const node = charterRef.current;
+    if (!node) return;
+    const slug = slugifyForFilename(currentUser?.name ?? "charte", "charte");
+    const base = `charte-distri-${slug}`;
+    setDownloading(kind);
+    try {
+      // Attendre que les fonts Google soient prêtes pour éviter fallback
+      // dans le PDF.
+      if (typeof document !== "undefined" && (document as Document).fonts) {
+        await (document as Document).fonts.ready;
+      }
+      if (kind === "pdf") await downloadCertPdf(node, `${base}.pdf`, "a4");
+      else await downloadCertPng(node, `${base}.png`);
+    } catch (err) {
+      console.warn("[CharterPage] download failed", err);
+      alert("Téléchargement impossible. Réessaie.");
+    } finally {
+      setDownloading(null);
+    }
+  }
 
   // Déterminer le sponsor direct (cosigner pré-rempli)
   const sponsor = useMemo(() => {
@@ -105,21 +134,40 @@ export function CharterPage() {
         >
           ← Retour
         </button>
-        <div
-          style={{
-            fontSize: 11,
-            color: "rgba(245, 222, 179, 0.7)",
-            fontFamily: "'Cinzel', serif",
-            letterSpacing: 2,
-            textTransform: "uppercase",
-          }}
-        >
-          {saving ? "Sauvegarde…" : charter?.signed_at ? "✓ Signée" : "Brouillon"}
+        <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+          <span
+            style={{
+              fontSize: 11,
+              color: "rgba(245, 222, 179, 0.7)",
+              fontFamily: "'Cinzel', serif",
+              letterSpacing: 2,
+              textTransform: "uppercase",
+            }}
+          >
+            {saving ? "Sauvegarde…" : charter?.signed_at ? "✓ Signée" : "Brouillon"}
+          </span>
+          <button
+            type="button"
+            onClick={() => void handleDownload("pdf")}
+            disabled={downloading !== null}
+            style={btnGold}
+          >
+            {downloading === "pdf" ? "⏳" : "📥"} PDF
+          </button>
+          <button
+            type="button"
+            onClick={() => void handleDownload("png")}
+            disabled={downloading !== null}
+            style={btnGoldGhost}
+          >
+            {downloading === "png" ? "⏳" : "🖼️"} PNG
+          </button>
         </div>
       </div>
 
       {/* Document */}
       <CharteDistributeur
+        ref={charterRef}
         distributeur={distributeur}
         cosigner={cosigner}
         pourquoiText={charter?.pourquoi_text ?? ""}
@@ -144,3 +192,32 @@ export function CharterPage() {
     </div>
   );
 }
+
+const btnGold: React.CSSProperties = {
+  padding: "8px 14px",
+  background: "linear-gradient(135deg, #B8922A, #8B6F1F)",
+  color: "#FFF8E0",
+  border: "none",
+  borderRadius: 8,
+  fontFamily: "'Cinzel', serif",
+  fontSize: 11,
+  fontWeight: 700,
+  letterSpacing: 1.2,
+  textTransform: "uppercase",
+  cursor: "pointer",
+  boxShadow: "0 4px 14px rgba(184, 146, 42, 0.35)",
+};
+
+const btnGoldGhost: React.CSSProperties = {
+  padding: "8px 14px",
+  background: "rgba(184, 146, 42, 0.1)",
+  border: "1px solid #B8922A",
+  color: "#E5C476",
+  borderRadius: 8,
+  fontFamily: "'Cinzel', serif",
+  fontSize: 11,
+  fontWeight: 600,
+  letterSpacing: 1.2,
+  textTransform: "uppercase",
+  cursor: "pointer",
+};

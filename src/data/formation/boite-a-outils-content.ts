@@ -1264,7 +1264,7 @@ Plus accessible que le 8-4-1 historique, plus tenable dans la durée. Pas magie,
     durationMin: 10,
     tag: "Engagement",
     // Redirige vers la vraie page interactive (textareas + signature + PDF)
-    externalRoute: "/formation/charte",
+    externalRoute: "/charte",
     contentMarkdown: `## Pourquoi cette charte
 
 > *Une charte non signée n'engage personne. Une charte signée devient une chaîne positive qui te tient quand vient la tempête.*
