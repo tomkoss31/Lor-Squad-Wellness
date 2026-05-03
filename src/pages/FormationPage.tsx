@@ -17,6 +17,7 @@ import { Link } from "react-router-dom";
 import { PageHeading } from "../components/ui/PageHeading";
 import { ParcoursLevelCard } from "../components/formation/ParcoursLevelCard";
 import { FormationRoadmapCard } from "../components/formation/FormationRoadmapCard";
+import { FormationStreakBadge } from "../components/formation/FormationStreakBadge";
 import {
   FORMATION_CATEGORIES,
   FORMATION_LEVELS,
@@ -51,6 +52,10 @@ export function FormationPage() {
         title="Deviens un distributeur qui réussit"
         description="Du premier RDV jusqu'aux royalties — étape par étape, à ton rythme."
       />
+
+      {/* Quick win #1 (2026-11-04) : Streak Formation (jours consecutifs avec
+          >= 1 module valide). Cache si 0 jours et jamais ping. */}
+      <FormationStreakBadge />
 
       {/* Quick win #2 (2026-11-04) : Roadmap visuelle "Reprendre M1.X" en haut */}
       <FormationRoadmapCard

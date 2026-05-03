@@ -25,6 +25,7 @@ import {
 } from "../data/formation";
 import { useMyFormationProgress } from "../features/formation";
 import { useAppContext } from "../context/AppContext";
+import { pingFormationStreak } from "./useFormationStreak";
 
 const STORAGE_KEY = "ls_formation_progress";
 
@@ -138,6 +139,16 @@ export function useFormationProgress(): UseFormationProgressResult {
   const { currentUser } = useAppContext();
   const isAdminBypass = currentUser?.role === "admin";
 
+  // Quick win #1 (2026-11-04) : ping streak Formation a chaque nouveau
+  // module valide en DB. Idempotent par jour (cf. pingFormationStreak).
+  const validatedCountInDb = dbRows.filter((r) => r.status === "validated").length;
+  useEffect(() => {
+    if (currentUser?.id && validatedCountInDb > 0) {
+      pingFormationStreak(currentUser.id);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [validatedCountInDb, currentUser?.id]);
+
   // Synchro inter-onglets via storage event
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -247,8 +258,13 @@ export function useFormationProgress(): UseFormationProgressResult {
         writeState(next);
         return next;
       });
+      // Quick win #1 (2026-11-04) : ping le streak Formation a chaque
+      // module valide (idempotent par jour).
+      if (currentUser?.id) {
+        pingFormationStreak(currentUser.id);
+      }
     },
-    [],
+    [currentUser?.id],
   );
 
   const resetLevel = useCallback((levelId: FormationLevelId) => {
