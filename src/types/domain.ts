@@ -143,26 +143,53 @@ export interface User {
   formationBetaAccess?: boolean;
 }
 
-/** Rangs Herbalife (8 niveaux) — détermine la marge retail dans FLEX. */
+/** Rangs Herbalife (12 paliers) — détermine la marge retail dans FLEX.
+ *  Ordre = progression Herbalife officielle (Distributor → President's). */
 export type HerbalifeRank =
   | "distributor_25"
   | "senior_consultant_35"
   | "success_builder_42"
   | "supervisor_50"
+  | "active_supervisor_50"
   | "world_team_50"
+  | "active_world_team_50"
   | "get_team_50"
+  | "get_team_2500_50"
   | "millionaire_50"
+  | "millionaire_7500_50"
   | "presidents_50";
 
-/** Marge retail effective par rang (proportion 0-1). */
+/** Ordre de progression (du plus bas au plus haut). Sert au tri UI. */
+export const RANK_ORDER: HerbalifeRank[] = [
+  "distributor_25",
+  "senior_consultant_35",
+  "success_builder_42",
+  "supervisor_50",
+  "active_supervisor_50",
+  "world_team_50",
+  "active_world_team_50",
+  "get_team_50",
+  "get_team_2500_50",
+  "millionaire_50",
+  "millionaire_7500_50",
+  "presidents_50",
+];
+
+/** Marge retail effective par rang (proportion 0-1).
+ *  Tous les paliers ≥ Supervisor restent à 50% (la différence se joue
+ *  sur les Royalty Override + bonus, pas sur la marge retail). */
 export const RANK_MARGINS: Record<HerbalifeRank, number> = {
   distributor_25: 0.25,
   senior_consultant_35: 0.35,
   success_builder_42: 0.42,
   supervisor_50: 0.5,
+  active_supervisor_50: 0.5,
   world_team_50: 0.5,
+  active_world_team_50: 0.5,
   get_team_50: 0.5,
+  get_team_2500_50: 0.5,
   millionaire_50: 0.5,
+  millionaire_7500_50: 0.5,
   presidents_50: 0.5,
 };
 
@@ -172,9 +199,13 @@ export const RANK_LABELS: Record<HerbalifeRank, string> = {
   senior_consultant_35: "Senior Consultant (35%)",
   success_builder_42: "Success Builder (42%)",
   supervisor_50: "Supervisor (50%)",
+  active_supervisor_50: "Active Supervisor (50%)",
   world_team_50: "World Team (50%)",
-  get_team_50: "GET Team (50%)",
+  active_world_team_50: "Active World Team (50%)",
+  get_team_50: "G.E.T. Team (50%)",
+  get_team_2500_50: "G.E.T. 2 500 RO (50%)",
   millionaire_50: "Millionaire Team (50%)",
+  millionaire_7500_50: "Millionaire 7 500 RO (50%)",
   presidents_50: "President's Team (50%)",
 };
 

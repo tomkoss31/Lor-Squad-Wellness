@@ -21,6 +21,7 @@ import { extractFunctionError } from "../lib/utils/extractFunctionError";
 import {
   RANK_LABELS,
   RANK_MARGINS,
+  RANK_ORDER,
   type HerbalifeRank,
 } from "../types/domain";
 import {
@@ -31,16 +32,7 @@ import type { DistributorActionPlanInsert } from "../types/flex";
 
 type Step = 0 | 1 | 2 | 3 | 4;
 
-const RANK_LIST: HerbalifeRank[] = [
-  "distributor_25",
-  "senior_consultant_35",
-  "success_builder_42",
-  "supervisor_50",
-  "world_team_50",
-  "get_team_50",
-  "millionaire_50",
-  "presidents_50",
-];
+const RANK_LIST: HerbalifeRank[] = RANK_ORDER;
 
 function ymdInDays(days: number): string {
   const d = new Date();
