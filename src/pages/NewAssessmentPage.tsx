@@ -550,6 +550,18 @@ export function NewAssessmentPage() {
   const programInitRef = useRef(false);
   const [form, setForm] = useState(initialForm);
   const [currentStep, setCurrentStep] = useState(0);
+  // Refonte transitions slide (2026-11-04) : track direction navigation
+  // pour animer slide-in-right (forward) ou slide-in-left (back).
+  const [stepDirection, setStepDirection] = useState<"forward" | "back">("forward");
+  const prevStepRef = useRef(0);
+  useEffect(() => {
+    if (currentStep > prevStepRef.current) {
+      setStepDirection("forward");
+    } else if (currentStep < prevStepRef.current) {
+      setStepDirection("back");
+    }
+    prevStepRef.current = currentStep;
+  }, [currentStep]);
   const [saveError, setSaveError] = useState("");
   // Chantier Félicitations (2026-04-20) : le bouton "Enregistrer et terminer"
   // montre un état "Enregistrement…" pendant handleSaveAssessment.
@@ -1424,14 +1436,32 @@ export function NewAssessmentPage() {
       </div>
 
       <style>{`
-        @keyframes ls-step-fade-in {
-          0%   { opacity: 0; transform: translateY(8px); }
-          100% { opacity: 1; transform: translateY(0); }
+        /* Refonte transitions bilan (2026-11-04) :
+           slide horizontal subtil + fade. Direction selon nav (forward = depuis
+           droite, back = depuis gauche). 380ms cubic-bezier feel premium. */
+        @keyframes ls-step-slide-in-right {
+          0%   { opacity: 0; transform: translateX(24px); }
+          60%  { opacity: 1; }
+          100% { opacity: 1; transform: translateX(0); }
         }
+        @keyframes ls-step-slide-in-left {
+          0%   { opacity: 0; transform: translateX(-24px); }
+          60%  { opacity: 1; }
+          100% { opacity: 1; transform: translateX(0); }
+        }
+        .ls-step-slide-forward {
+          animation: ls-step-slide-in-right 380ms cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        .ls-step-slide-back {
+          animation: ls-step-slide-in-left 380ms cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        /* Fallback compat ancien selecteur (StepHero existant l utilise) */
         .ls-step-fade {
-          animation: ls-step-fade-in 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+          animation: ls-step-slide-in-right 380ms cubic-bezier(0.22, 1, 0.36, 1);
         }
         @media (prefers-reduced-motion: reduce) {
+          .ls-step-slide-forward,
+          .ls-step-slide-back,
           .ls-step-fade { animation: none !important; }
         }
       `}</style>
@@ -1570,7 +1600,10 @@ export function NewAssessmentPage() {
             );
           })()}
 
-          <div key={currentStepId} className="ls-step-fade space-y-5">
+          <div
+            key={currentStepId}
+            className={`${stepDirection === "back" ? "ls-step-slide-back" : "ls-step-slide-forward"} space-y-5`}
+          >
 
           {currentStepId === 'client-info' && (
               <div className="space-y-4" data-tour-id="bilan-client-info">
