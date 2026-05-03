@@ -281,6 +281,11 @@ const CharterPage = lazy(() =>
     default: module.CharterPage,
   })),
 );
+const AdminDistributorCharterPage = lazy(() =>
+  import("./pages/AdminDistributorCharterPage").then((module) => ({
+    default: module.AdminDistributorCharterPage,
+  })),
+);
 const FormationCalculatorPage = lazy(() =>
   import("./pages/FormationCalculatorPage").then((module) => ({
     default: module.FormationCalculatorPage
@@ -396,6 +401,7 @@ export default function App() {
                   art déco. /charte = perso distri (signable). Ancienne
                   route /formation/charte redirige ici. */}
               <Route path="charte" element={<CharterPage />} />
+              <Route path="distributors/:id/charte" element={<AdminDistributorCharterPage />} />
               <Route path="formation/charte" element={<Navigate to="/charte" replace />} />
               {/* Lor'Squad Academy Phase 1 (2026-04-26) — gated admin only
                   en prod (RoleRoute). Defense en profondeur : RoleRoute
