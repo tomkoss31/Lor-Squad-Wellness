@@ -125,7 +125,10 @@ export function AppLayout() {
     { label: "Dossiers clients", path: "/clients", badge: 0, tourId: "nav-clients" },
     { label: "Suivi PV", path: "/pv", badge: pvOverdueCount, tourId: "nav-pv" },
     ...(currentUser.role === "admin" ? [{ label: "Mon équipe", path: "/team", badge: 0 }] : []),
-    { label: "Formation", path: "/formation", badge: 0 },
+    // Chantier Formation pyramide (2026-11) : visible admin only tant que le
+    // contenu n est pas finalise pour les distributeurs. Distri qui essaie
+    // /formation en direct atterrit sur la page "chantier en cours".
+    ...(currentUser.role === "admin" ? [{ label: "Formation", path: "/formation", badge: 0 }] : []),
     // Chantier Academy section 1 (2026-04-27) : /parametres pour tous
     // les users authentifies (la page gere elle-meme la visibilite des
     // onglets admin-only via checks internes).

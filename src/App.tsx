@@ -219,6 +219,9 @@ const FormationPage = lazy(() =>
     default: module.FormationPage
   }))
 );
+// Formation gate (2026-11-04) : direct import (lightweight) pour l afficher
+// sans Suspense supplementaire au cas ou un distri tente d acceder.
+import { FormationAdminGate } from "./pages/FormationLockedPage";
 const FormationCategoryPage = lazy(() =>
   import("./pages/FormationCategoryPage").then((module) => ({
     default: module.FormationCategoryPage
@@ -337,12 +340,16 @@ export default function App() {
                 <Route path="academy/demo/fiche-client" element={<DemoFicheClient />} />
                 <Route path="academy/demo/agenda" element={<DemoAgenda />} />
               </Route>
-              <Route path="formation" element={<FormationPage />} />
-              <Route path="formation/mon-equipe" element={<FormationMyTeamPage />} />
-              <Route path="formation/admin" element={<FormationAdminPage />} />
-              <Route path="formation/parcours/:levelSlug" element={<FormationModulePage />} />
-              <Route path="formation/parcours/:levelSlug/:moduleSlug" element={<FormationModuleDetailPage />} />
-              <Route path="formation/:slug" element={<FormationCategoryPage />} />
+              {/* Formation gate (2026-11-04) : admin-only tant que le contenu
+                  n est pas finalise pour les distri. Distri qui tape /formation
+                  en direct atterrit sur FormationLockedPage (hero "chantier en
+                  cours" plus chaleureux qu un redirect sec). */}
+              <Route path="formation" element={<FormationAdminGate><FormationPage /></FormationAdminGate>} />
+              <Route path="formation/mon-equipe" element={<FormationAdminGate><FormationMyTeamPage /></FormationAdminGate>} />
+              <Route path="formation/admin" element={<FormationAdminGate><FormationAdminPage /></FormationAdminGate>} />
+              <Route path="formation/parcours/:levelSlug" element={<FormationAdminGate><FormationModulePage /></FormationAdminGate>} />
+              <Route path="formation/parcours/:levelSlug/:moduleSlug" element={<FormationAdminGate><FormationModuleDetailPage /></FormationAdminGate>} />
+              <Route path="formation/:slug" element={<FormationAdminGate><FormationCategoryPage /></FormationAdminGate>} />
               {/* /settings (non-admin) reste accessible comme placeholder profil léger.
                   Les admins ont /parametres avec la version complète. */}
               <Route path="settings" element={<SettingsPage />} />
