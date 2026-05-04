@@ -49,12 +49,15 @@ export function LessonCard({ lesson, index }: Props) {
 
   return (
     <article
+      className="ls-lesson-card"
       style={{
         background: "var(--ls-surface)",
         border: "0.5px solid var(--ls-border)",
         borderRadius: 14,
         padding: "18px 20px",
         fontFamily: "DM Sans, sans-serif",
+        animation: `ls-lesson-fade-up 0.45s cubic-bezier(0.16, 1, 0.3, 1) ${index * 80}ms backwards`,
+        transition: "transform 0.18s ease, box-shadow 0.18s ease",
       }}
     >
       <header
@@ -154,6 +157,19 @@ export function LessonCard({ lesson, index }: Props) {
           🎓 Ouvrir sur Herbalife School →
         </a>
       ) : null}
+      <style>{`
+        @keyframes ls-lesson-fade-up {
+          from { opacity: 0; transform: translateY(10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .ls-lesson-card:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 6px 18px color-mix(in srgb, var(--ls-text) 6%, transparent);
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .ls-lesson-card { animation: none !important; transition: none !important; }
+        }
+      `}</style>
     </article>
   );
 }
