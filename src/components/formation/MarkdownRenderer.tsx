@@ -41,6 +41,8 @@ export function MarkdownRenderer({ content }: Props) {
 
 // ─── Types blocks ───────────────────────────────────────────────────────────
 
+type CalloutVariant = "gold" | "teal" | "phrase-cle" | "product-card";
+
 type Block =
   | { type: "h2"; text: string }
   | { type: "h3"; text: string }
@@ -48,7 +50,8 @@ type Block =
   | { type: "quote"; text: string }
   | { type: "ul"; items: string[] }
   | { type: "ol"; items: string[] }
-  | { type: "table"; headers: string[]; rows: string[][] };
+  | { type: "table"; headers: string[]; rows: string[][] }
+  | { type: "callout"; variant: CalloutVariant; text: string };
 
 // ─── Parsing ────────────────────────────────────────────────────────────────
 
@@ -63,6 +66,22 @@ function parseBlocks(md: string): Block[] {
     // Ligne vide → skip
     if (!trimmed) {
       i++;
+      continue;
+    }
+
+    // Callouts custom (:::variant ... :::)
+    // Variants supportés : gold, teal, phrase-cle, product-card
+    const calloutMatch = /^:::(gold|teal|phrase-cle|product-card)\s*$/.exec(trimmed);
+    if (calloutMatch) {
+      const variant = calloutMatch[1] as CalloutVariant;
+      const buf: string[] = [];
+      i++;
+      while (i < lines.length && lines[i].trim() !== ":::") {
+        buf.push(lines[i]);
+        i++;
+      }
+      i++; // skip closing :::
+      blocks.push({ type: "callout", variant, text: buf.join("\n") });
       continue;
     }
 
@@ -170,8 +189,10 @@ function splitTableRow(line: string): string[] {
 
 function renderInline(text: string): ReactNode[] {
   const tokens: ReactNode[] = [];
-  // Pattern : **bold** | *italic* | `code` | autre
-  const regex = /(\*\*[^*]+\*\*|\*[^*]+\*|`[^`]+`)/g;
+  // Pattern : [link](url) | **bold** | *italic* | `code` | autre
+  // Liens cliquables ajoutés 2026-05-04 — important pour cross-link
+  // formation → boîte à outils sans friction.
+  const regex = /(\[[^\]]+\]\([^)]+\)|\*\*[^*]+\*\*|\*[^*]+\*|`[^`]+`)/g;
   let lastIndex = 0;
   let match: RegExpExecArray | null;
   let key = 0;
@@ -180,7 +201,34 @@ function renderInline(text: string): ReactNode[] {
       tokens.push(text.slice(lastIndex, match.index));
     }
     const m = match[0];
-    if (m.startsWith("**") && m.endsWith("**")) {
+    // Lien markdown [texte](url)
+    if (m.startsWith("[") && m.includes("](")) {
+      const linkMatch = /^\[([^\]]+)\]\(([^)]+)\)$/.exec(m);
+      if (linkMatch) {
+        const [, label, url] = linkMatch;
+        const isInternal = url.startsWith("/");
+        tokens.push(
+          <a
+            key={`l${key++}`}
+            href={url}
+            target={isInternal ? undefined : "_blank"}
+            rel={isInternal ? undefined : "noopener noreferrer"}
+            style={{
+              color: "var(--ls-gold)",
+              fontWeight: 600,
+              textDecoration: "underline",
+              textUnderlineOffset: 3,
+              textDecorationThickness: 1,
+              textDecorationColor: "color-mix(in srgb, var(--ls-gold) 50%, transparent)",
+            }}
+          >
+            {label}
+          </a>,
+        );
+      } else {
+        tokens.push(m);
+      }
+    } else if (m.startsWith("**") && m.endsWith("**")) {
       tokens.push(
         <strong key={`b${key++}`} style={{ fontWeight: 700, color: "var(--ls-text)" }}>
           {m.slice(2, -2)}
@@ -363,7 +411,98 @@ function BlockRenderer({ block }: { block: Block }) {
           </table>
         </div>
       );
+    case "callout":
+      return <CalloutBlock variant={block.variant} text={block.text} />;
     default:
       return null;
   }
+}
+
+// ─── CalloutBlock ──────────────────────────────────────────────────────────
+
+function CalloutBlock({ variant, text }: { variant: CalloutVariant; text: string }) {
+  // Parse les sous-blocks du contenu (header H3, paragraphes, listes…)
+  const innerBlocks = useMemo(() => parseBlocks(text), [text]);
+
+  if (variant === "phrase-cle") {
+    return (
+      <div
+        style={{
+          margin: "18px 0",
+          padding: "20px 24px",
+          background:
+            "linear-gradient(135deg, color-mix(in srgb, var(--ls-gold) 10%, var(--ls-surface)) 0%, color-mix(in srgb, var(--ls-gold) 4%, var(--ls-surface2)) 100%)",
+          border: "0.5px solid var(--ls-gold)",
+          borderLeft: "4px solid var(--ls-gold)",
+          borderRadius: 12,
+          fontFamily: "Syne, serif",
+          fontSize: 17,
+          fontStyle: "italic",
+          fontWeight: 500,
+          color: "var(--ls-text)",
+          lineHeight: 1.6,
+          textAlign: "center",
+          boxShadow: "0 4px 12px color-mix(in srgb, var(--ls-gold) 12%, transparent)",
+        }}
+      >
+        <div
+          style={{
+            fontSize: 9,
+            letterSpacing: 2,
+            textTransform: "uppercase",
+            color: "var(--ls-gold)",
+            fontWeight: 700,
+            marginBottom: 10,
+            fontFamily: "DM Sans, sans-serif",
+            fontStyle: "normal",
+          }}
+        >
+          ✦ Phrase à apprendre par cœur ✦
+        </div>
+        {innerBlocks.map((b, idx) => (
+          <BlockRenderer key={idx} block={b} />
+        ))}
+      </div>
+    );
+  }
+
+  if (variant === "product-card") {
+    return (
+      <div
+        style={{
+          margin: "12px 0",
+          padding: "16px 18px",
+          background: "var(--ls-surface)",
+          border: "0.5px solid var(--ls-border)",
+          borderLeft: "3px solid var(--ls-teal)",
+          borderRadius: 10,
+          boxShadow: "0 2px 6px rgba(0,0,0,0.08)",
+        }}
+      >
+        {innerBlocks.map((b, idx) => (
+          <BlockRenderer key={idx} block={b} />
+        ))}
+      </div>
+    );
+  }
+
+  const isGold = variant === "gold";
+  return (
+    <div
+      style={{
+        margin: "14px 0",
+        padding: "14px 16px",
+        background: isGold
+          ? "color-mix(in srgb, var(--ls-gold) 10%, var(--ls-surface))"
+          : "color-mix(in srgb, var(--ls-teal) 10%, var(--ls-surface))",
+        border: `0.5px solid ${isGold ? "var(--ls-gold)" : "var(--ls-teal)"}`,
+        borderLeft: `3px solid ${isGold ? "var(--ls-gold)" : "var(--ls-teal)"}`,
+        borderRadius: 10,
+      }}
+    >
+      {innerBlocks.map((b, idx) => (
+        <BlockRenderer key={idx} block={b} />
+      ))}
+    </div>
+  );
 }

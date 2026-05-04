@@ -714,7 +714,179 @@ Juste pour t'aider à réfléchir : qu'est-ce qui te fait douter ? Le prix, le t
         note: "« Je vais réfléchir » cache toujours une vraie objection. Demande-la directement, sans agressivité."
       }
     ]
-  }
+  },
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // tk-bilan-04 — Mon protocole 21 jours cobaye (NEW 2026-05-04)
+  // ─────────────────────────────────────────────────────────────────────────
+  {
+    id: "tk-bilan-04",
+    slug: "protocole-21-jours-cobaye",
+    category: "bilan",
+    title: "Mon protocole 21 jours cobaye",
+    description: "Le rituel quotidien F1+Aloe+Thé+PDM avec grille photos J0/J7/J14/J21 + journal ressentis. Ton matériau de témoignage.",
+    kind: "page",
+    format: "page",
+    profile: "tous",
+    icon: "🥤",
+    durationMin: 7,
+    tag: "Démarrage",
+    contentMarkdown: `## La règle Mark Hughes : tu consommes avant de vendre
+
+21 jours = le minimum pour ressentir une vraie différence (énergie, peau, sommeil) et avoir un témoignage crédible. Sans 21 jours cobaye, tu pitches du vent.
+
+---
+
+## 🕒 Ton rituel quotidien (max simple)
+
+### 🌅 Matin (5-7 min)
+1. **1 verre d'Aloe** (15 ml dans 250 ml d'eau) — 5 min après le réveil
+2. **1 shake F1** (250 ml lait/eau + 2 cuillères F1) — en remplacement du petit-déj
+3. *(optionnel sport)* +1 dose **PDM** dans le shake = +15 g protéines
+
+### ☕ Toute la journée
+4. **1 Thé Thermojetics** chaud ou froid (à la place du café n°2 ou 3 de l'après-midi)
+5. **1,5L à 2L d'eau** total
+
+### 🌙 Soir
+6. Petit dîner normal — **mange vrai**, pas de shake. Le soir on revient au format classique.
+
+---
+
+## 📸 Tracking obligatoire
+
+| Jour | Action |
+|---|---|
+| **J0** (avant 1er shake) | Photo face + profil. Notes : poids, énergie matin/aprèm, sommeil, peau, appétit. |
+| **J7** | Photo face + profil. Notes : ce qui a changé / pas changé. |
+| **J14** | Photo face + profil. Notes : ressentis nouveaux. |
+| **J21** | Photo face + profil. Notes finales : top 3 changements. |
+
+> 📱 Garde toutes les photos dans un album Lor'Squad sur ton téléphone. Tu vas en avoir besoin **toute ta carrière** : témoignages story Insta, présentation à un prospect, ouverture d'apéro Healthy.
+
+---
+
+## 📝 Journal ressentis (note téléphone)
+
+Crée une note "Mes 21j cobaye" et écris **chaque soir 2 lignes** :
+
+\`\`\`
+J3 - Énergie 7/10. Plus de coup de barre 15h. Aloe : un peu acide
+au début, je m'habitue. Sommeil : je m'endors plus vite.
+
+J7 - Pèse-personne : -1.4 kg. Pas attendu. F1 chocolat = mon préféré.
+
+J14 - Ma peau est nette. Mon mari l'a remarqué.
+
+J21 - Récap : -2.8 kg, énergie stable, peau OK, j'ai juste arrêté
+le 2e café. Je continue 30j de plus.
+\`\`\`
+
+---
+
+## 💎 Ton témoignage post-J21 (à apprendre par cœur)
+
+À J21, tu auras 1 ou 2 vraies choses à dire. **Pas 10. Pas de baratin.**
+
+**Structure 4 lignes** :
+1. *« Avant, j'avais [X problème] »*
+2. *« J'ai testé [F1 + Aloe + Thé] pendant 21 jours »*
+3. *« Aujourd'hui, je [Y résultat concret] »*
+4. *« Et ce qui m'a surpris, c'est [Z détail inattendu] »*
+
+> Tu vas raconter cette histoire ~50 fois cette année. Apprends-la par cœur. C'est ton **meilleur argument de vente** — pas le packaging, pas les chiffres, **ton corps**.`,
+  },
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // tk-bilan-05 — Mémo 5 produits Lor'Squad (NEW 2026-05-04)
+  // ─────────────────────────────────────────────────────────────────────────
+  {
+    id: "tk-bilan-05",
+    slug: "memo-5-produits",
+    category: "bilan",
+    title: "Mémo 5 produits — carte récap imprimable",
+    description: "F1, PDM, Aloe, Thé, HLSkin. Phrase clé + pour qui en 1 carte poche/fond d'écran. Ton arme rapide en bilan.",
+    kind: "page",
+    format: "page",
+    profile: "tous",
+    icon: "🌿",
+    durationMin: 5,
+    tag: "Bilan",
+    contentMarkdown: `## Tes 5 produits stars — à connaître par cœur
+
+Pour chaque produit : **phrase clé** + **pour qui**. Apprends-les. Si tu hésites au moment du bilan, tu perds en crédibilité.
+
+---
+
+### 🥤 1. Formula 1 (F1) — le shake repas
+
+> *« Le repas malin du matin ou du midi quand t'as pas le temps. »*
+
+**Pour qui** : perte de poids · saute son petit-déj · sportif (repas pratique avant/après)
+
+220 cal · 25 % protéines · 25 vitamines & minéraux · multiples saveurs
+
+---
+
+### 💪 2. Protein Drink Mix (PDM) — le boost protéines
+
+> *« +15 g de protéines pour rester rassasié plus longtemps. »*
+
+**Pour qui** : faim 2h après le shake (à ajouter dans F1) · sportif sèche/prise de masse · senior (maintien masse musculaire)
+
+15 g protéines végétales · goût neutre · à mixer
+
+---
+
+### 🌿 3. Aloe Vera Concentré — l'allié digestion
+
+> *« Mon réveil-corps : 1 verre le matin, ça nettoie. »*
+
+**Pour qui** : tout le monde (digestion lente, ballonnements) · sportif (hydratation+) · à mettre dans son eau de la journée
+
+4 saveurs · à diluer · 15 ml par prise
+
+---
+
+### 🍵 4. Thé Thermojetics — l'énergie sans café
+
+> *« Le coup de boost de l'aprèm sans le coup de barre du café. »*
+
+**Pour qui** : anti-fatigue 15h-18h · qui veut réduire son café · hydratation goutue (mieux qu'un soda)
+
+6-10 cal/cup · chaud ou froid · 4-6 saveurs
+
+---
+
+### ✨ 5. Coffret HLSkin — la routine beauté complète
+
+> *« Une routine simple matin & soir. Tu testes 14 jours, ta peau parle. »*
+
+**Pour qui** : femme/homme qui veut une routine claire · cliente après programme F1 (poursuite transfo) · cadeau « bilan beauté »
+
+Plusieurs gammes : Soothing Aloe, Radiant C, Anti-âge
+
+---
+
+## 💎 Le pack starter Lor'Squad
+
+**F1 + PDM + Aloe + Thé = 100 PV = 234 € retail** (prix client)
+
+C'est le pack que tu proposes à 80 % de tes prospects. Le coffret HLSkin se rajoute en 2ᵉ commande après les 21 premiers jours.
+
+---
+
+## 🖨️ À faire
+
+1. **Imprime cette page** (Ctrl+P) en format paysage
+2. Plie en 4 → format poche
+3. Glisse dans ton agenda / sac de bilan
+4. **Ou** : prends en photo et mets en fond d'écran de ton téléphone
+
+> Tu dois pouvoir pitcher **n'importe lequel des 5 produits en 5 secondes**, à n'importe qui, à n'importe quel moment. Sans hésiter sur la phrase clé.`,
+  },
+
+  // ─────────────────────────────────────────────────────────────────────────
 ];
 
 // =============================================================================
@@ -1003,7 +1175,114 @@ Juste pour t'aider — qu'est-ce qui te fait douter exactement ? Le prix, le tim
         note: "« Je vais réfléchir » cache toujours une vraie objection. Demande-la directement. C'est ELLE qui te répond, pas toi qui devines."
       }
     ]
-  }
+  },
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // tk-suivi-05 — Mon protocole J+1 obligatoire (NEW 2026-05-04)
+  // ─────────────────────────────────────────────────────────────────────────
+  {
+    id: "tk-suivi-05",
+    slug: "protocole-j1-obligatoire",
+    category: "suivi",
+    title: "Mon protocole J+1 obligatoire",
+    description: "Le coup de fil du lendemain qui fait passer ton client de 50 % d'abandon à 80 % de fidélisation. Script + checklist.",
+    kind: "page",
+    format: "page",
+    profile: "tous",
+    icon: "📞",
+    durationMin: 6,
+    tag: "Suivi",
+    contentMarkdown: `## L'arme secrète que 90 % des distri oublient
+
+**Tu as fait un super EBE.** La personne a dit oui. Elle est repartie avec son pack. Tu jubiles 🎉.
+
+⚠️ **Sans appel J+1 dans les 24h** : 50 % des clients abandonnent à J+7. Au mieux : remboursement à J+3. Au pire : elle ne re-commande jamais.
+
+**Ce qui se passe à J+1 dans la tête du client** :
+- *« J'ai bien fait ? »*
+- *« Mon mari va dire quoi ? »*
+- *« Le shake a un drôle de goût »*
+- *« 234 €, c'est cher quand même »*
+
+Ton coup de fil **rassure** + **installe le rendez-vous J+7** + **encourage**. C'est tout.
+
+---
+
+## 🕒 Ton timing : appel ou message vocal entre 9h et 12h le lendemain
+
+**Pourquoi le matin** :
+- La personne vient de faire son 1er shake → ressenti chaud
+- Elle est encore engagée émotionnellement
+- Tu casses les doutes nocturnes
+
+**Pourquoi appel ou vocal** (pas SMS) :
+- Voix = chaleur humaine = pas commercial
+- Vocal WhatsApp si pas le temps d'appeler
+- SMS = trop formel, ne rassure pas
+
+---
+
+## 📞 Le script J+1 (4 temps, 5-10 min)
+
+### 1. Salut chaleureux (15 sec)
+
+> *« Salut [prénom], c'est [toi]. Je voulais juste prendre 5 min pour voir comment tu te sens ce matin. T'as fait ton 1er shake ? »*
+
+### 2. Écoute active (1-2 min)
+
+Laisse-la parler. Note ses retours :
+- Goût du shake (chocolat / vanille / fraise → s'adapte si besoin)
+- Quantité d'eau / lait
+- Heure de prise (matin idéal, midi OK, soir non)
+- Premières impressions
+
+### 3. Réponses techniques (2-3 min)
+
+Réponds aux 2-3 questions techniques classiques :
+
+**« Le shake a un drôle de goût »**
+> *« Normal au 1er. Essaye dans du lait d'amande, ou ajoute 1 banane. Donne-toi 3 jours, ça change. »*
+
+**« J'ai faim 2h après »**
+> *« Top que tu me le dis. On peut ajouter du PDM dans ton shake = +15 g protéines, ça t'aide à tenir 4-5h. Tu veux qu'on ajoute à ta prochaine commande ? »*
+
+**« Mon mari trouve ça cher »**
+> *« Je comprends. C'est 234 € pour 1 mois complet, soit ~7 €/jour, soit le prix d'un repas resto. Et tu ressentiras la différence à J+10 — il verra le résultat sur toi. Donne-toi 30 jours avant de juger, OK ? »*
+
+### 4. Ancrage J+7 (30 sec)
+
+> *« On se voit dimanche matin pour faire un point ensemble ? Je t'envoie l'heure ce soir. Tu vas voir, J+3 c'est un cap psychologique, après ça roule tout seul. Bonne journée [prénom] ! »*
+
+---
+
+## ✅ Checklist J+1 (à cocher après chaque appel)
+
+- [ ] Appel/vocal envoyé dans les 24h ✓
+- [ ] Au moins 5 min d'écoute (pas juste 1 min express)
+- [ ] J'ai répondu à au moins 1 question technique
+- [ ] J'ai installé le RDV J+7 (date + heure précises)
+- [ ] J'ai encouragé en fin d'appel ("J+3 c'est un cap")
+- [ ] Note dans la fiche client : ressenti J+1 + objections soulevées + nouveau RDV
+
+---
+
+## 📊 Résultats observés (équipe Lor'Squad)
+
+| Suivi | Taux client tient à J+30 | Taux re-commande |
+|---|---|---|
+| Pas de J+1 | 50 % | 30 % |
+| **Avec J+1** | **80 %** | **65 %** |
+
+> 10 min/jour de J+1 systématiques = 30 % de fidélisation en plus = 30 % de revenu en plus. **C'est l'investissement le plus rentable de ta journée.**
+
+---
+
+## 🔗 Relations avec les autres outils
+
+- [Templates J+1 / J+3 / J+7 / J+14 / J+30 →](/formation/boite-a-outils/templates-suivi-jours) — pour les messages écrits qui prolongent l'appel
+- [7 objections + réponses pré-câblées →](/formation/boite-a-outils/objections-reponses) — si tu fais face à une objection forte au J+1
+- [La Visio à 3 →](/formation/boite-a-outils/visio-a-3-protocole) — si l'objection au J+1 est trop forte → tu actives ton sponsor`,
+  },
 ];
 
 // =============================================================================
