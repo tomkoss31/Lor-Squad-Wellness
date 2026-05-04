@@ -1320,20 +1320,36 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
       ],
     },
   },
-  // ─── Section Académie : nouveaux outils Lor'Squad (2026-05-04) ─────────
-  // Forme à toutes les features livrées en mai 2026 : Hub Développement,
-  // Cahier de bord (21j cobaye + Liste 100 + Journal EBE), Simulateur EBE,
-  // connexions cahier↔CRM, système Spotlights/Nouveautés.
-  // Quiz solide 8 QCM, seuil 75 % (6/8 bonnes réponses).
+  // ─── Sections Académie nouveaux outils (mai 2026) ──────────────────────
+  // Splitté en 4 sections distinctes pour rendre chaque feature visible
+  // dans le parcours Academy (au lieu d'1 seule section globale).
+  //
+  // 1. new-tools-2026 (overview)
+  // 2. cahier-de-bord-tour
+  // 3. simulateur-ebe-tour
+  // 4. liste-100-agenda-tour
+  //
+  // Chaque section : 1 step intro ciblé + quiz court 3-4 QCM + ancrage
+  // pédagogique. Validation = 75 % (3/4 ou 2/3).
   {
     id: "new-tools-2026",
-    title: "Tes nouveaux outils Lor'Squad",
+    title: "Tes nouveaux outils — vue d'ensemble",
     shortLabel: "Nouveaux outils",
     description:
-      "Cahier de bord, Simulateur EBE, Liste 100, hub Développement : tous les outils sortis en mai 2026 et comment les utiliser.",
-    estimatedDurationMinutes: 12,
+      "Découvre les 4 features livrées en mai 2026 : Hub Développement, Cahier de bord, Simulateur EBE, connexion Liste 100 → Agenda. Vue d'ensemble + quiz overview.",
+    estimatedDurationMinutes: 5,
     icon: "🛠️",
-    steps: [],
+    steps: [
+      {
+        id: "intro",
+        title: "4 nouveaux outils livrés en mai 2026",
+        body:
+          "Lor'Squad a sorti 4 features majeures ce mois-ci. Avant de les explorer une par une dans les sections suivantes, voici le panorama : 1) Hub Développement = ton point d'entrée centralisé pour apprendre. 2) Cahier de bord = ton journal perso 21j + liste 100 + EBE. 3) Simulateur EBE = entraînement scripté avant un vrai RDV. 4) Connexion Liste 100 → Agenda = un contact passe en RDV calé, le prospect est créé automatiquement. Cette section te valide en 4 questions overview ; les sections suivantes plongent dans chaque feature.",
+        placement: "center",
+        route: "/developpement",
+        illustrationKey: "wave",
+      },
+    ],
     quiz: {
       passThreshold: 0.75,
       questions: [
@@ -1359,7 +1375,89 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
         {
           id: "q2",
           question:
-            "Le protocole 21 jours cobaye, c'est quoi ?",
+            "Une nouvelle feature est livrée. Comment je suis informé ?",
+          answers: [
+            "Cloche dans le header avec compteur + popup auto à la 1ère ouverture + page /developpement/nouveautes",
+            "Email automatique de Mélanie à toute l'équipe",
+            "Message WhatsApp dans le groupe distri",
+            "Je dois suivre le compte LinkedIn Lor'Squad",
+          ],
+          correctIndex: 0,
+          wrongAnswerHints: {
+            1: "Pas d'email auto. Mel peut écrire si besoin mais ce n'est pas le canal officiel.",
+            2: "Le WhatsApp existe mais c'est pas le canal officiel — risque de scroll/oubli.",
+            3: "Pas dédié à l'app interne.",
+          },
+          explanation:
+            "Spotlights officiels : 🔔 cloche header avec unread, ✨ popup auto à la 1ère ouverture (max 1×/jour/annonce), 📰 page /developpement/nouveautes. Aucune feature ne passe inaperçue.",
+        },
+        {
+          id: "q3",
+          question:
+            "Les 4 features livrées en mai 2026 sont :",
+          answers: [
+            "Hub Développement, Cahier de bord, Simulateur EBE, Liste 100 → Agenda",
+            "Hub Développement, Bilan v3, Statistiques avancées, Notifications push",
+            "Refonte UI, Refonte sidebar, Refonte agenda, Refonte messagerie",
+            "Cahier coach, Cahier client, Cahier équipe, Cahier sponsor",
+          ],
+          correctIndex: 0,
+          wrongAnswerHints: {
+            1: "Pas Bilan v3 ni Stats avancées — d'autres chantiers, pas mai 2026.",
+            2: "La sidebar a bien été refondue (Option B) mais le reste n'a pas changé.",
+            3: "Il n'y a qu'UN cahier de bord — perso au distri.",
+          },
+          explanation:
+            "4 features mai 2026 : (1) Hub Développement consolide la sidebar, (2) Cahier de bord = 21j cobaye + liste 100 + journal EBE, (3) Simulateur EBE pour s'entraîner, (4) Liste 100 → Agenda automatique au passage 'RDV calé'.",
+        },
+        {
+          id: "q4",
+          question:
+            "Pour vraiment maîtriser ces 4 features, l'idéal c'est de :",
+          answers: [
+            "Faire les 3 sections Academy suivantes (Cahier, Simulateur, Liste 100→Agenda)",
+            "Lire 2-3 fois cette section overview et c'est bon",
+            "Attendre que mon coach m'explique tout en visio",
+            "Tester en production directement avec un vrai client",
+          ],
+          correctIndex: 0,
+          wrongAnswerHints: {
+            1: "L'overview ne suffit pas — chaque feature a ses subtilités.",
+            2: "Ton coach a aussi ses limites de temps. Autonomie d'abord.",
+            3: "Mauvaise idée — entraîne-toi sur le Simulateur d'abord.",
+          },
+          explanation:
+            "Plan recommandé : finir cette section overview, puis enchaîner les 3 sections suivantes (Cahier de bord, Simulateur EBE, Liste 100 → Agenda). 5-7 minutes par section, quiz de validation à la fin de chaque.",
+        },
+      ],
+    },
+  },
+  // ─── Section : Cahier de bord (2026-05-04) ─────────────────────────────
+  {
+    id: "cahier-de-bord-tour",
+    title: "Le Cahier de bord — 21j cobaye + Liste 100 + Journal EBE",
+    shortLabel: "Cahier de bord",
+    description:
+      "Ton journal personnel : tracker 21 jours cobaye, méthode FRANK pour ta liste 100, journal EBE post-bilan. Strictement perso (admin peut voir pour t'accompagner).",
+    estimatedDurationMinutes: 5,
+    icon: "📔",
+    steps: [
+      {
+        id: "intro",
+        title: "Bienvenue dans ton Cahier de bord",
+        body:
+          "Le Cahier de bord (/cahier-de-bord) regroupe 3 outils que TOUT distri Lor'Squad utilise :\n\n📅 **Onglet Cobaye 21j** : tu testes les produits sur toi pendant 21 jours, tu notes chaque jour ton énergie / sommeil / poids. Résultat : tu parles de TON vécu, pas d'un argumentaire creux.\n\n📒 **Onglet Liste 100** : tes 100 connaissances classées en méthode FRANK (Famille / Réseau / Amis / Nouveaux / Konnaissances), avec température (chaud/tiède/froid) et statut tunnel (non contacté → client).\n\n📊 **Onglet Journal EBE** : ton ressenti après chaque RDV bilan. Une entrée est auto-créée à la fin de chaque bilan, tu la complètes plus tard avec self_score + ce qui a marché + ce qu'il faut ajuster.",
+        placement: "center",
+        route: "/cahier-de-bord",
+        illustrationKey: "wave",
+      },
+    ],
+    quiz: {
+      passThreshold: 0.75,
+      questions: [
+        {
+          id: "q1",
+          question: "Le protocole 21 jours cobaye, c'est quoi ?",
           answers: [
             "Tester moi-même les produits 21 jours pour parler en vérité aux prospects",
             "Un essai gratuit que je propose au client avant qu'il achète",
@@ -1368,53 +1466,78 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
           ],
           correctIndex: 0,
           wrongAnswerHints: {
-            1: "Ce n'est pas un essai gratuit client — c'est un essai TOI sur TOI.",
-            2: "Aucune dimension médicale officielle. C'est un test perso, sans encadrement.",
-            3: "Pas une obligation Herbalife. C'est une bonne pratique Lor'Squad.",
+            1: "Ce n'est pas un essai client — c'est un essai TOI sur TOI.",
+            2: "Aucune dimension médicale officielle. C'est un test perso.",
+            3: "Pas une obligation Herbalife. Bonne pratique Lor'Squad.",
           },
           explanation:
-            "Le 21j cobaye = je teste les produits sur moi pendant 21 jours, je note chaque jour mon énergie/sommeil/poids dans /cahier-de-bord onglet Cobaye. Résultat : je parle de mon vécu réel aux prospects, pas d'un argumentaire commercial creux.",
+            "21j cobaye = je teste les produits sur moi pendant 21 jours, je note chaque jour mon énergie/sommeil/poids dans /cahier-de-bord onglet Cobaye. Résultat : je parle de mon vécu réel aux prospects.",
+        },
+        {
+          id: "q2",
+          question: "FRANK signifie...",
+          answers: [
+            "Famille / Réseau / Amis / Nouveaux / Konnaissances",
+            "Famille / Recommandations / Anciens / Nouveaux / Klients",
+            "Le prénom du créateur de la méthode chez Herbalife",
+            "Une marque de carnet utilisée par les coachs",
+          ],
+          correctIndex: 0,
+          wrongAnswerHints: {
+            1: "Anciens et Klients ne sont pas dans le mnémo officiel.",
+            2: "Légende urbaine — c'est juste un acronyme.",
+            3: "Aucun rapport produit.",
+          },
+          explanation:
+            "FRANK = Famille / Réseau / Amis / Nouveaux / Konnaissances. Sélecteur disponible dans /cahier-de-bord onglet Liste 100 quand tu ajoutes un contact.",
         },
         {
           id: "q3",
           question:
-            "Méthode FRANK pour la liste 100, ça veut dire quoi ?",
+            "Tu termines un vrai bilan client (NewAssessmentPage). Que se passe-t-il côté Journal EBE ?",
           answers: [
-            "Famille, Réseau, Amis, Nouveaux, Konnaissances",
-            "Famille, Réseau, Anciens, Nouveaux, Klients",
-            "Une marque de carnet utilisée par les coachs Herbalife",
-            "Le prénom du créateur de la méthode (Frank Smith, Herbalife USA)",
+            "Une entrée est auto-créée avec prospect_name pré-rempli, je la complète plus tard",
+            "Rien — il faut créer manuellement l'entrée Journal EBE",
+            "Une popup me demande si je veux remplir le journal maintenant",
+            "L'entrée est créée seulement si je coche 'Sauver dans mon journal'",
           ],
           correctIndex: 0,
           wrongAnswerHints: {
-            1: "Presque — mais 'Anciens' et 'Klients' ne sont pas dans le mnémo officiel.",
-            2: "Aucun rapport — c'est un mnémonique pédagogique, pas un produit.",
-            3: "Légende urbaine — c'est juste un acronyme mnémotechnique, sans inventeur identifié.",
+            1: "Avant mai 2026 c'était le cas — 90 % oubliaient. Maintenant c'est auto.",
+            2: "Pas de popup — l'entrée est créée silencieusement, tu la complètes quand tu veux.",
+            3: "Pas de case à cocher — c'est automatique dans le save flow.",
           },
           explanation:
-            "FRANK = Famille / Réseau / Amis / Nouveaux / Konnaissances. Mnémonique qui aide à structurer ta liste 100 par catégories d'origine. Disponible dans /cahier-de-bord onglet Liste 100, sélecteur de catégorie au moment d'ajouter un contact.",
+            "Auto-journal EBE post-bilan : à chaque save dans handleSaveAssessment, une row ebe_journal_entries est créée avec assessment_id + prospect_name. Tu retrouves l'entrée dans /cahier-de-bord onglet EBE, prête à compléter (self_score, what_went_well, what_to_improve, recos_count).",
         },
+      ],
+    },
+  },
+  // ─── Section : Simulateur EBE (2026-05-04) ─────────────────────────────
+  {
+    id: "simulateur-ebe-tour",
+    title: "Le Simulateur EBE — entraîne-toi sans risque",
+    shortLabel: "Simulateur EBE",
+    description:
+      "Mène un EBE complet face à un faux prospect scripté : 6 étapes, 3 choix par étape, scoring sur 60 et debrief par étape. Idéal avant un vrai RDV.",
+    estimatedDurationMinutes: 5,
+    icon: "🎯",
+    steps: [
+      {
+        id: "intro",
+        title: "Le Simulateur EBE en 30 secondes",
+        body:
+          "Sur /simulateur-ebe tu choisis un scénario (Sophie sceptique perte de poids OU Karim sportif prise de masse). Tu enchaînes 6 étapes (Accueil → Découverte → Body scan → Solution → Closing → Recos). À chaque étape, le prospect te dit quelque chose et tu choisis 1 réponse parmi 3 (excellent 10pts / moyen 5pts / faux 0pt). Feedback immédiat. À la fin : score /60 + debrief par étape + bouton 'Sauvegarder dans mon journal EBE' qui auto-tag [Simulation].",
+        placement: "center",
+        route: "/simulateur-ebe",
+        illustrationKey: "wave",
+      },
+    ],
+    quiz: {
+      passThreshold: 0.66,
+      questions: [
         {
-          id: "q4",
-          question:
-            "Tu changes le statut d'un contact Liste 100 de 'Contacté' à 'RDV calé'. Que se passe-t-il ?",
-          answers: [
-            "Une popup propose de créer un prospect agenda pré-rempli (nom, tel, source)",
-            "Rien d'autre — il faut aller manuellement dans Agenda pour créer le RDV",
-            "Le contact disparaît automatiquement de la liste 100",
-            "Une notification est envoyée au sponsor pour valider le RDV",
-          ],
-          correctIndex: 0,
-          wrongAnswerHints: {
-            1: "Avant mai 2026 c'était le cas. Depuis la connexion Liste 100 → Agenda, c'est automatisé.",
-            2: "Le contact reste dans la liste 100 (avec son nouveau statut) — il n'est PAS supprimé. Il continue à apparaître pour suivi.",
-            3: "Pas de notification sponsor — c'est ta liste perso, pas du collectif.",
-          },
-          explanation:
-            "Connexion Liste 100 → Agenda : le passage en 'RDV calé' déclenche une modale ProspectFormModal pré-remplie (firstName/lastName splités, tel, email, source 'Bouche à oreille', sourceDetail 'Liste 100'). 1 clic et c'est dans ton agenda. Tu peux toujours fermer si tu veux pas créer le prospect tout de suite.",
-        },
-        {
-          id: "q5",
+          id: "q1",
           question:
             "Combien d'étapes a la trame d'un EBE Lor'Squad (et donc le Simulateur) ?",
           answers: [
@@ -1427,67 +1550,131 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
           wrongAnswerHints: {
             1: "Trop court — tu sautes la découverte et les recos. C'est ce qui plante 80 % des EBE.",
             2: "Pas dans la trame Lor'Squad — la signature et le programme sont des conséquences, pas des étapes.",
-            3: "Au contraire, la trame est FIXE pour ne rien oublier. C'est sa rigueur qui la rend efficace.",
+            3: "Au contraire, la trame est FIXE pour ne rien oublier.",
           },
           explanation:
-            "Trame fixe en 6 étapes : 1) Accueil & rapport, 2) Découverte besoin, 3) Body scan/Tanita, 4) Présentation solution, 5) Closing & objections, 6) Recommandations. Le Simulateur EBE (/simulateur-ebe) suit exactement cette trame avec 2 scénarios (Sophie sceptique, Karim sportif).",
+            "Trame fixe en 6 étapes : 1) Accueil & rapport, 2) Découverte besoin, 3) Body scan/Tanita, 4) Présentation solution, 5) Closing & objections, 6) Recommandations.",
         },
         {
-          id: "q6",
+          id: "q2",
           question:
-            "Dans le Simulateur EBE, tu fais 50/60 points. Quel est ton verdict ?",
+            "Tu fais 50/60 points dans le Simulateur. Quel est ton verdict ?",
           answers: [
             "Maître EBE 🏆 — tu peux closer en RDV réel sans hésiter",
-            "EBE solide ✅ — tu maîtrises la trame, encore quelques détails à polir",
-            "À retravailler 📝 — relis le module M1.6 EBE",
-            "Reprendre les bases 🔄 — refais le tuto avant de retenter",
+            "EBE solide ✅ — encore quelques détails à polir",
+            "À retravailler 📝 — relis les modules EBE",
+            "Reprendre les bases 🔄 — refais avant de retenter",
           ],
           correctIndex: 0,
           wrongAnswerHints: {
-            1: "Solide commence à 35/60 et finit à 49/60. À 50, tu es passé en Maître.",
-            2: "À retravailler c'est entre 20 et 34/60. À 50 tu es bien au-dessus.",
-            3: "Reprendre les bases c'est moins de 20. À 50 tu es vraiment top.",
+            1: "Solide finit à 49/60. À 50, tu es passé en Maître.",
+            2: "À retravailler c'est entre 20 et 34/60.",
+            3: "Reprendre les bases c'est moins de 20.",
           },
           explanation:
-            "Bandes Simulateur EBE : ≥ 50 Maître EBE 🏆 / ≥ 35 Solide ✅ / ≥ 20 À retravailler 📝 / < 20 Reprendre les bases 🔄. Score sur 60 max (6 étapes × 10pts). À la fin, bouton 'Sauvegarder dans mon journal EBE' qui auto-tag '[Simulation]' dans /cahier-de-bord.",
+            "Bandes : ≥ 50 Maître 🏆 / ≥ 35 Solide ✅ / ≥ 20 À retravailler 📝 / < 20 Reprendre les bases 🔄. Score sur 60 max (6 étapes × 10pts).",
         },
         {
-          id: "q7",
+          id: "q3",
           question:
-            "Tu termines un vrai bilan client (NewAssessmentPage). Que se passe-t-il côté Cahier de bord ?",
+            "Quand utiliser le Simulateur EBE ?",
           answers: [
-            "Une entrée Journal EBE est auto-créée avec le prospect_name pré-rempli, je la complète plus tard",
-            "Rien — il faut aller créer manuellement l'entrée Journal EBE",
-            "L'entrée est créée seulement si je coche une case 'Sauver dans mon journal'",
-            "Une notification me demande si je veux remplir le journal maintenant",
+            "Avant un RDV réel pour me chauffer + après pour identifier mes erreurs récurrentes",
+            "Une seule fois, pour valider que je connais la trame",
+            "Jamais — l'entraînement c'est en RDV réel uniquement",
+            "Seulement si mon coach me le demande explicitement",
           ],
           correctIndex: 0,
           wrongAnswerHints: {
-            1: "Avant mai 2026 c'était le cas et 90 % des distri oubliaient de remplir leur journal.",
-            2: "Pas de case à cocher — c'est automatique dans le flow de save bilan.",
-            3: "Pas de notification immédiate — l'entrée est créée silencieusement, tu la complètes quand tu veux dans /cahier-de-bord.",
+            1: "Tu progresses en répétant — pas en passant 1 fois.",
+            2: "Faux — tu ne mets en risque personne en t'entraînant scripté.",
+            3: "Autonomie d'abord. Le coach intervient sur ce que tu n'arrives pas à débloquer.",
           },
           explanation:
-            "Auto-journal EBE post-bilan : à chaque save dans handleSaveAssessment, on crée silencieusement une row ebe_journal_entries avec assessment_id lié + prospect_name pré-rempli. Tu retrouves l'entrée dans /cahier-de-bord onglet EBE, prête à compléter (self_score, what_went_well, what_to_improve, recos_count).",
+            "Le Simulateur n'est pas un test ponctuel. Tu le lances avant chaque RDV important pour te chauffer ET après chaque RDV raté pour identifier ce que tu as zappé. Coût marginal : 5 minutes. ROI : énorme.",
+        },
+      ],
+    },
+  },
+  // ─── Section : Liste 100 → Agenda (2026-05-04) ──────────────────────────
+  {
+    id: "liste-100-agenda-tour",
+    title: "Connexion Liste 100 → Agenda",
+    shortLabel: "Liste 100 → Agenda",
+    description:
+      "Comment ta liste 100 connaissances alimente automatiquement ton agenda dès qu'un contact passe en 'RDV calé'. Le funnel Lor'Squad expliqué.",
+    estimatedDurationMinutes: 4,
+    icon: "🔗",
+    steps: [
+      {
+        id: "intro",
+        title: "Liste 100 et Agenda : un seul funnel",
+        body:
+          "Avant : ta liste 100 et ton agenda étaient 2 silos séparés. Tu devais re-saisir le nom du prospect quand il acceptait un RDV.\n\nMaintenant : dans /cahier-de-bord onglet Liste 100, quand tu changes le statut d'un contact de 'Contacté' à 'RDV calé', une popup s'ouvre automatiquement avec le formulaire prospect agenda **pré-rempli** (firstName/lastName splités, tel, email, source 'Bouche à oreille', sourceDetail 'Liste 100'). 1 clic et c'est dans /agenda.\n\nLe contact RESTE dans la liste 100 (avec son nouveau statut), il ne disparaît pas. Tu vois en 1 vue qui en est où dans le funnel.",
+        placement: "center",
+        route: "/cahier-de-bord",
+        illustrationKey: "wave",
+      },
+    ],
+    quiz: {
+      passThreshold: 0.66,
+      questions: [
+        {
+          id: "q1",
+          question:
+            "Tu changes le statut d'un contact Liste 100 de 'Contacté' à 'RDV calé'. Que se passe-t-il ?",
+          answers: [
+            "Une popup propose de créer un prospect agenda pré-rempli (nom, tel, source)",
+            "Rien d'autre — il faut aller manuellement dans Agenda pour créer le RDV",
+            "Le contact disparaît automatiquement de la liste 100",
+            "Une notification est envoyée au sponsor pour valider le RDV",
+          ],
+          correctIndex: 0,
+          wrongAnswerHints: {
+            1: "Avant mai 2026 c'était le cas. Depuis la connexion, c'est automatisé.",
+            2: "Le contact RESTE dans la liste 100 avec son nouveau statut.",
+            3: "Pas de notification sponsor — c'est ta liste perso.",
+          },
+          explanation:
+            "Connexion Liste 100 → Agenda : passage en 'RDV calé' déclenche une modale ProspectFormModal pré-remplie. 1 clic et c'est dans ton agenda. Tu peux toujours fermer si tu veux pas créer le prospect tout de suite.",
         },
         {
-          id: "q8",
+          id: "q2",
           question:
-            "Une nouvelle feature est livrée. Comment je suis informé ?",
+            "Quel est l'ordre logique du funnel Lor'Squad ?",
           answers: [
-            "Une cloche dans le header avec compteur + popup auto à la 1ère ouverture, plus la page /developpement/nouveautes",
-            "Un email automatique de Mélanie à toute l'équipe",
-            "Un message WhatsApp dans le groupe distri",
-            "Rien — je dois suivre le compte LinkedIn Lor'Squad",
+            "Liste 100 → Contacté → RDV calé (=Prospect Agenda) → EBE fait → Client",
+            "Prospect Agenda → Liste 100 → EBE fait → Client",
+            "Liste 100 → EBE fait → Client → RDV calé",
+            "Tout fonctionne en parallèle, pas d'ordre",
           ],
           correctIndex: 0,
           wrongAnswerHints: {
-            1: "Pas d'email auto — Mel est libre d'écrire si besoin mais ce n'est pas le canal officiel.",
-            2: "Le groupe WhatsApp existe mais ce n'est pas le canal officiel des nouveautés app — risque de scroll/oubli.",
-            3: "LinkedIn, Insta : ces comptes existent peut-être mais ce n'est pas dédié aux nouveautés app interne.",
+            1: "L'agenda vient APRÈS la liste 100, pas avant. La liste 100 = mes connaissances, l'agenda = les RDV calés.",
+            2: "L'EBE vient avant le client (l'EBE est ce qui CONVERTIT le prospect en client).",
+            3: "Faux — il y a un ordre clair, c'est ce qui fait l'efficacité du funnel.",
           },
           explanation:
-            "Système Spotlights officiel : 🔔 cloche header (mobile + sidebar) avec compteur unread, ✨ popup auto à la 1ère ouverture après publication (skippable, max 1×/jour/annonce), 📰 page /developpement/nouveautes pour l'historique complet. Garantie : aucune feature ne passe inaperçue.",
+            "Funnel : (1) Liste 100 = toutes mes connaissances. (2) 'Contacté' = je lui ai écrit. (3) 'RDV calé' = il a accepté un EBE → devient prospect dans /agenda. (4) 'EBE fait' = je l'ai mené, en attente décision. (5) 'Client' = il a signé un programme.",
+        },
+        {
+          id: "q3",
+          question:
+            "Tu cliques 'RDV calé' par erreur sur un contact. Comment annuler la création du prospect agenda ?",
+          answers: [
+            "Je ferme la popup — le statut Liste 100 reste mais aucun prospect n'est créé en agenda",
+            "Impossible — la création est instantanée, il faut supprimer manuellement le prospect dans /agenda",
+            "Je dois rebasculer le statut sur 'Contacté' pour annuler",
+            "Je clique sur Echap, ça remet tout à zéro y compris le statut",
+          ],
+          correctIndex: 0,
+          wrongAnswerHints: {
+            1: "Pas instantanée — la popup propose, tu valides ou tu fermes.",
+            2: "Le rebasculement de statut ne supprime pas un prospect déjà créé.",
+            3: "Echap ferme la popup mais ne change pas le statut Liste 100.",
+          },
+          explanation:
+            "La popup ProspectFormModal te DEMANDE de valider la création. Si tu fermes, le statut Liste 100 reste sur 'RDV calé' (tu peux le changer manuellement) mais aucun prospect agenda n'est créé. Logique 'opt-in' explicite.",
         },
       ],
     },

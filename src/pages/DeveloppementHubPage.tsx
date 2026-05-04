@@ -35,10 +35,10 @@ const CARDS: HubCard[] = [
   {
     id: "academy",
     emoji: "🎓",
-    title: "Mes parcours",
+    title: "Apprendre l'app Lor'Squad",
     description:
-      "3 niveaux guidés Lor'Squad : démarrer, fidéliser, dupliquer. Modules + quiz + ancrages.",
-    cta: "Reprendre mes parcours",
+      "Tour guidé pas à pas + Academy interactive pour maîtriser tous les outils de l'app : Co-pilote, Agenda, Bilan, Messagerie, Cahier de bord, Simulateur EBE.",
+    cta: "Apprendre l'app",
     path: "/academy",
     accent: "var(--ls-purple)",
     requireRole: "admin",
@@ -46,10 +46,10 @@ const CARDS: HubCard[] = [
   {
     id: "formation",
     emoji: "📚",
-    title: "Modules de formation",
+    title: "Formation distributeur Herbalife",
     description:
-      "Toutes les leçons Lor'Squad par catégorie : prospection, bilan, suivi, business.",
-    cta: "Explorer les modules",
+      "La méthode complète Lor'Squad pour construire ton activité Herbalife : 3 niveaux progressifs (Démarrer / Construire / Dupliquer) avec modules, leçons et quiz.",
+    cta: "Démarrer la formation",
     path: "/formation",
     accent: "var(--ls-gold)",
   },
