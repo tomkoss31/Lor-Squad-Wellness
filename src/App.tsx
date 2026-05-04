@@ -297,6 +297,12 @@ const CahierDeBordPage = lazy(() =>
     default: module.CahierDeBordPage,
   })),
 );
+// Simulateur EBE (2026-05-04) — entraînement face à un faux prospect scripté.
+const SimulateurEbePage = lazy(() =>
+  import("./pages/SimulateurEbePage").then((module) => ({
+    default: module.SimulateurEbePage,
+  })),
+);
 const FormationCalculatorPage = lazy(() =>
   import("./pages/FormationCalculatorPage").then((module) => ({
     default: module.FormationCalculatorPage
@@ -420,6 +426,8 @@ export default function App() {
               {/* Cahier de bord du distri (2026-05-04) — 21j cobaye, liste 100,
                   journal EBE perso. Strictement perso (RLS own + admin). */}
               <Route path="cahier-de-bord" element={<CahierDeBordPage />} />
+              {/* Simulateur EBE (2026-05-04) — entraînement scripté. */}
+              <Route path="simulateur-ebe" element={<SimulateurEbePage />} />
               {/* Lor'Squad Academy Phase 1 (2026-04-26) — gated admin only
                   en prod (RoleRoute). Defense en profondeur : RoleRoute
                   redirige vers /co-pilote si non-admin tape l URL manuelle. */}
