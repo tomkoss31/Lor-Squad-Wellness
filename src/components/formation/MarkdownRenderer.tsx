@@ -35,6 +35,38 @@ export function MarkdownRenderer({ content }: Props) {
       {blocks.map((block, idx) => (
         <BlockRenderer key={idx} block={block} />
       ))}
+      <style>{`
+        @keyframes ls-callout-fade-up {
+          from { opacity: 0; transform: translateY(8px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes ls-phrase-cle-shimmer {
+          0%, 100% { box-shadow: 0 4px 12px color-mix(in srgb, var(--ls-gold) 12%, transparent); }
+          50% { box-shadow: 0 8px 24px color-mix(in srgb, var(--ls-gold) 22%, transparent); }
+        }
+        .ls-callout-product, .ls-callout-gold, .ls-callout-teal, .ls-callout-phrase-cle {
+          animation: ls-callout-fade-up 0.35s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+        }
+        .ls-callout-product:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+          border-left-width: 5px !important;
+        }
+        .ls-callout-gold:hover, .ls-callout-teal:hover {
+          transform: translateY(-1px);
+          box-shadow: 0 4px 14px color-mix(in srgb, var(--ls-text) 8%, transparent);
+        }
+        .ls-callout-phrase-cle {
+          animation: ls-callout-fade-up 0.4s cubic-bezier(0.16, 1, 0.3, 1) backwards,
+                     ls-phrase-cle-shimmer 4s ease-in-out 0.4s infinite;
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .ls-callout-product, .ls-callout-gold, .ls-callout-teal, .ls-callout-phrase-cle {
+            animation: none;
+            transition: none;
+          }
+        }
+      `}</style>
     </div>
   );
 }
@@ -427,6 +459,7 @@ function CalloutBlock({ variant, text }: { variant: CalloutVariant; text: string
   if (variant === "phrase-cle") {
     return (
       <div
+        className="ls-callout-phrase-cle"
         style={{
           margin: "18px 0",
           padding: "20px 24px",
@@ -469,6 +502,7 @@ function CalloutBlock({ variant, text }: { variant: CalloutVariant; text: string
   if (variant === "product-card") {
     return (
       <div
+        className="ls-callout-product"
         style={{
           margin: "12px 0",
           padding: "16px 18px",
@@ -477,6 +511,7 @@ function CalloutBlock({ variant, text }: { variant: CalloutVariant; text: string
           borderLeft: "3px solid var(--ls-teal)",
           borderRadius: 10,
           boxShadow: "0 2px 6px rgba(0,0,0,0.08)",
+          transition: "transform 0.18s ease, box-shadow 0.18s ease, border-left-width 0.18s ease",
         }}
       >
         {innerBlocks.map((b, idx) => (
@@ -489,6 +524,7 @@ function CalloutBlock({ variant, text }: { variant: CalloutVariant; text: string
   const isGold = variant === "gold";
   return (
     <div
+      className={isGold ? "ls-callout-gold" : "ls-callout-teal"}
       style={{
         margin: "14px 0",
         padding: "14px 16px",
@@ -498,6 +534,7 @@ function CalloutBlock({ variant, text }: { variant: CalloutVariant; text: string
         border: `0.5px solid ${isGold ? "var(--ls-gold)" : "var(--ls-teal)"}`,
         borderLeft: `3px solid ${isGold ? "var(--ls-gold)" : "var(--ls-teal)"}`,
         borderRadius: 10,
+        transition: "transform 0.18s ease, box-shadow 0.18s ease",
       }}
     >
       {innerBlocks.map((b, idx) => (
