@@ -5,6 +5,78 @@ reproduire les régressions passées. Relire avant tout gros chantier.
 
 ---
 
+## ⚠️ Règle du livrable complet (2026-05-04)
+
+**Une feature N'EST PAS livrée tant que :**
+
+1. ✅ Le code est déployé en prod
+2. ✅ Une entrée `app_announcements` est créée pour annoncer la nouveauté
+   aux distri (titre + body + emoji + accent + link_path vers la feature)
+3. ✅ Si la feature a une UX non-évidente : une fiche dans le hub
+   `/developpement` (Academy onglet ou nouvelle page tuto type
+   `/developpement/flex-explique`)
+
+**Pourquoi** : sans annonce, les distri (et toi dans 3 mois) ignorent que
+la feature existe. C'est le piège classique du "j'ai poussé, je verrai
+plus tard pour le tuto". Résultat : feature morte.
+
+### Comment ajouter un changelog distri
+
+Soit via une migration SQL (pour seed initial / push contrôlé) :
+```sql
+insert into public.app_announcements
+  (title, body, emoji, accent, link_path, link_label, audience, published_at)
+values
+  ('Titre court', 'Description claire 1-2 phrases.', '🎯', 'gold',
+   '/ma-nouvelle-route', 'Découvrir', 'all', now())
+on conflict do nothing;
+```
+
+Soit via un script admin (à venir, page `/admin/announcements`).
+
+### Tables impliquées
+
+- `app_announcements` : les annonces (title, body, emoji, accent, link)
+- `user_announcement_reads` : tracking (user_id, announcement_id, read_at)
+- RLS : lecture publique selon audience, write = admin only
+
+### UI auto-câblée
+
+- 🔔 Cloche dans header sidebar + mobile (compteur unread)
+- ✨ Popup auto à la 1ère ouverture après publication (max 1×/jour/annonce
+  via `localStorage.ls-spotlight-shown-<id>`)
+- 📰 Page `/developpement/nouveautes` qui liste l'historique complet
+
+Composants : `AnnouncementBell`, `AnnouncementSpotlight`, `NouveautesPage`.
+
+---
+
+## Hub développement (sidebar Option B, 2026-05-04)
+
+La sidebar suit le pattern **Option B** : 1 entrée "Mon développement"
+qui regroupe Academy / Formation / Boîte à outils / Cahier de bord /
+Simulateur EBE / FLEX expliqué / Nouveautés. Toutes les routes existantes
+restent intactes (`/academy`, `/formation`, `/cahier-de-bord`, etc.) — le
+hub `/developpement` est juste un point d'entrée centralisé en cards.
+
+**Quand on ajoute une nouvelle feature éducative ou perso distri** :
+ajouter une card dans `src/pages/DeveloppementHubPage.tsx::CARDS[]`.
+Ne PAS ajouter de nouvelle entrée sidebar (sinon on retombe dans le
+problème "11 items illisibles").
+
+**Sidebar finale** (7-9 items selon rôle) :
+1. Co-pilote
+2. FLEX
+3. Agenda
+4. Messagerie
+5. Dossiers clients
+6. Suivi PV
+7. Mon équipe (admin only)
+8. Mon développement
+9. Paramètres
+
+---
+
 ## Theme system (note 2026-11-04)
 
 Lor'Squad utilise un système de tokens CSS dans `src/styles/globals.css` :

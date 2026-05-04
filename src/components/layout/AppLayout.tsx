@@ -20,6 +20,8 @@ import { TourRunner } from "../../features/onboarding/TourRunner";
 import { useActiveQuiz } from "../../features/academy/ActiveQuizContext";
 import { QuizModal } from "../../features/academy/components/QuizModal";
 import { RankSelectorModal } from "../rank/RankSelectorModal";
+import { AnnouncementBell } from "../announcements/AnnouncementBell";
+import { AnnouncementSpotlight } from "../announcements/AnnouncementSpotlight";
 import { useState } from "react";
 import type { HerbalifeRank } from "../../types/domain";
 
@@ -50,14 +52,8 @@ const NAV_ICONS: Record<string, JSX.Element> = {
   "/users": (
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="23" y1="11" x2="17" y2="11"/><line x1="20" y1="8" x2="20" y2="14"/></svg>
   ),
-  "/formation": (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
-  ),
-  "/cahier-de-bord": (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M4 4h12a4 4 0 0 1 4 4v12H8a4 4 0 0 1-4-4V4z"/><line x1="8" y1="9" x2="16" y2="9"/><line x1="8" y1="13" x2="14" y2="13"/></svg>
-  ),
-  "/simulateur-ebe": (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="9"/><path d="M9 9h.01"/><path d="M15 9h.01"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/></svg>
+  "/developpement": (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
   ),
   "/settings": (
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
@@ -128,33 +124,16 @@ export function AppLayout() {
   const navigation: Array<{ label: string; path: string; badge: number; tourId?: string }> = [
     { label: "Co-pilote", path: "/co-pilote", badge: 0, tourId: "nav-copilote" },
     { label: "FLEX", path: "/flex", badge: 0, tourId: "nav-flex" },
-    // Migration prod 2026-04-28 : Academy admin only tant que la
-    // formation est en finalisation. Lever ce gate quand prete.
-    ...(currentUser.role === "admin"
-      ? [{ label: "Academy", path: "/academy", badge: 0, tourId: "nav-academy" }]
-      : []),
     { label: "Agenda", path: "/agenda", badge: todayProspectsCount, tourId: "nav-agenda" },
     { label: "Messagerie", path: "/messages", badge: unreadMessageCount ?? 0, tourId: "nav-messagerie" },
     { label: "Dossiers clients", path: "/clients", badge: 0, tourId: "nav-clients" },
     { label: "Suivi PV", path: "/pv", badge: pvOverdueCount, tourId: "nav-pv" },
     ...(currentUser.role === "admin" ? [{ label: "Mon équipe", path: "/team", badge: 0 }] : []),
-    // Chantier Formation pyramide (2026-11) : visible admin only tant que le
-    // contenu n est pas finalise pour les distributeurs. Distri qui essaie
-    // /formation en direct atterrit sur la page "chantier en cours".
-    // Beta access (2026-11-05) : un distri/référent avec
-    // formation_beta_access=true voit aussi le lien (ex. Mandy + équipe).
-    ...(currentUser.role === "admin" || currentUser.formationBetaAccess
-      ? [{ label: "Formation", path: "/formation", badge: 0 }]
-      : []),
-    // Cahier de bord du distri (2026-05-04) : 21j cobaye + liste 100 + EBE.
-    // Visible admin + beta access pour l'instant (cohérent avec /formation).
-    ...(currentUser.role === "admin" || currentUser.formationBetaAccess
-      ? [{ label: "Cahier de bord", path: "/cahier-de-bord", badge: 0 }]
-      : []),
-    // Simulateur EBE (2026-05-04) : entraînement scripté pour distri.
-    ...(currentUser.role === "admin" || currentUser.formationBetaAccess
-      ? [{ label: "Simulateur EBE", path: "/simulateur-ebe", badge: 0 }]
-      : []),
+    // Chantier Hub Développement (2026-05-04) : 1 seule entrée qui regroupe
+    // Academy + Formation + Boîte à outils + Cahier de bord + Simulateur EBE
+    // + tuto FLEX + journal nouveautés. Sidebar passe de 11 à 7 items.
+    // Visible admin + tous distri (l'admin voit en plus l'onglet Parcours).
+    { label: "Mon développement", path: "/developpement", badge: 0, tourId: "nav-developpement" },
     // Chantier Academy section 1 (2026-04-27) : /parametres pour tous
     // les users authentifies (la page gere elle-meme la visibilite des
     // onglets admin-only via checks internes).
@@ -455,8 +434,11 @@ export function AppLayout() {
               </button>
             </div>
 
-            {/* Toggle thème — compact en dessous */}
-            <ThemeToggle />
+            {/* Toggle thème + cloche nouveautés — compact en dessous */}
+            <div className="flex items-center justify-between gap-2">
+              <ThemeToggle />
+              <AnnouncementBell />
+            </div>
             {/* Footer legal RGPD retire du sidebar (V2 — 2026-04-30) :
                 deplace dans Parametres > Confidentialite & RGPD pour
                 un acces propre + footer in-page sur Co-pilote/Agenda/PV */}
@@ -502,6 +484,7 @@ export function AppLayout() {
                 </div>
               </div>
               <div className="flex items-center gap-2">
+                <AnnouncementBell />
                 <button
                   onClick={toggleTheme}
                   aria-label={isDark ? 'Passer au mode clair' : 'Passer au mode sombre'}
@@ -623,6 +606,9 @@ export function AppLayout() {
           onConfirmed={() => setRankConfirmed(true)}
         />
       ) : null}
+      {/* Spotlight nouveautés (2026-05-04) : popup auto-affiché à la 1ère
+          ouverture après publication d'une annonce non lue. Skippable. */}
+      <AnnouncementSpotlight />
     </div>
   );
 }
