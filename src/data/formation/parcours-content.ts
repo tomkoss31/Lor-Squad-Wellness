@@ -1115,7 +1115,7 @@ Tu as fait un super EBE, présenté le programme, la personne a dit oui, elle es
 ];
 
 // =============================================================================
-// NIVEAU 2 — CONSTRUIRE (4 modules · 500 → 4 000 PV / Supervisor)
+// NIVEAU 2 — CONSTRUIRE (5 modules · 500 → 4 000 PV / Supervisor)
 // =============================================================================
 
 export const N2_MODULES: FormationModule[] = [
@@ -1717,6 +1717,139 @@ Même quand la personne dit oui, **elle oublie**.
         }
       ]
     }
+  },
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // M2.5 — La Visio à 3 avec mon sponsor (NEW 2026-05-04)
+  // ───────────────────────────────────────────────────────────────────────────
+  {
+    id: "M2.5",
+    slug: "visio-a-3-sponsor",
+    number: "2.5",
+    title: "La Visio à 3 avec mon sponsor",
+    description: "Le multiplicateur de force des distri qui décollent. Ton sponsor t'aide à closer en visio sur les prospects qui hésitent.",
+    durationMin: 7,
+    icon: "📞",
+    ideeForce:
+      "Quand un prospect hésite, tu n'es pas seul·e. Tu actives une visio à 3 voix avec ton sponsor : il valide ce que tu as dit, ajoute la profondeur d'expérience, lève l'objection finale. Taux de closing en visio à 3 vs 1-1 : 70 % vs 30 %. C'est l'arme secrète des distri qui passent Sup en 90 jours. Et ça te forme par la même occasion.",
+    ancrage: "« Seul·e on va plus vite. À deux on va plus loin. À trois en visio, on closingne. »",
+    action:
+      "Identifie 1 prospect actuellement en « je dois réfléchir ». Demande à ton sponsor une visio à 3 cette semaine. Pré-brief ton sponsor (10 min) sur le profil prospect + son objection. Lance la visio, observe, prends des notes. Tu auras appris en 30 min ce que tu apprends en 6 mois solo.",
+    relatedToolkitSlugs: ["visio-a-3-protocole", "objections-reponses"],
+    lessons: [
+      {
+        id: "M2.5-L1",
+        slug: "pourquoi-visio-a-3",
+        title: "Pourquoi la visio à 3 multiplie ton closing × 3",
+        kind: "text",
+        durationMin: 2,
+        contentMarkdown: `## Le ratio qui change tout
+
+**Closing solo (toi seul·e avec le prospect)** : taux ~30 %.
+**Closing en visio à 3 (toi + sponsor + prospect)** : taux ~70 %.
+
+**Pourquoi ce gap énorme ?**
+
+1. **Validation sociale** : ton sponsor confirme ce que tu as dit. Le prospect entend la même chose 2 fois, par 2 personnes différentes → crédibilité × 2.
+
+2. **Profondeur d'expérience** : ton sponsor a 5 ans / 200 clients de plus que toi. Il peut citer 3 cas similaires (« J'ai eu Sophie qui avait exactement le même blocage… ») → tu ne pouvais pas.
+
+3. **Pression sociale positive** : le prospect ne peut pas dire « je vais réfléchir » devant 2 personnes engagées qui prennent du temps pour lui. Il sent qu'il doit répondre vraiment.
+
+4. **Tu apprends en live** : tu observes ton sponsor répondre, tu prends des notes mentales, tu réutilises ses formulations le lendemain.
+
+> 💡 La visio à 3 n'est PAS un signe de faiblesse. C'est ton arme #1 quand tu démarres. Les meilleurs distri continuent à l'utiliser à vie sur les gros closings.`,
+      },
+      {
+        id: "M2.5-L2",
+        slug: "quand-activer",
+        title: "Quand activer la visio à 3 (et quand NE PAS)",
+        kind: "text",
+        durationMin: 2,
+        contentMarkdown: `## Les 3 moments idéaux
+
+✅ **Activer la visio à 3 si** :
+1. Le prospect a dit « je dois réfléchir » en sortant de l'EBE → relance J+3 → si re-bloqué → visio à 3
+2. Le prospect a une objection technique forte (santé, famille, finance) que tu ne sais pas gérer
+3. Le prospect a un fort potentiel business (cadre supérieur, réseau, libération de temps recherchée) → ton sponsor mérite de le rencontrer
+
+❌ **Ne PAS activer la visio à 3 si** :
+- Premier contact / 1er message → trop tôt, ça te grille
+- Le prospect dit clairement non → respecte, demande recos
+- Tu as juste la flemme de faire ton suivi (la visio n'est pas un raccourci)
+
+**Règle** : la visio à 3 se mérite. Le prospect doit déjà avoir manifesté un intérêt + une objection. Pas avant.`,
+      },
+      {
+        id: "M2.5-L3",
+        slug: "protocole-visio",
+        title: "Le protocole en 3 temps : pré-brief / live / post-brief",
+        kind: "text",
+        durationMin: 2,
+        contentMarkdown: `## Comment activer ton sponsor sans le perdre
+
+**📋 Pré-brief (10 min, la veille ou le matin)** — message vocal ou appel :
+- Profil prospect : prénom, âge, métier, situation perso
+- Son objectif (ce qu'il a dit en EBE)
+- Son objection principale (la VRAIE, celle qui le bloque)
+- Ce que toi tu as déjà répondu / proposé
+
+> Ex : *« Mon prospect c'est Marie, 38 ans, prof, 2 enfants. Elle veut perdre 8 kg avant l'été. Son objection : son mari trouve que 234 € c'est cher. Je lui ai déjà parlé de la valeur 30j vs un coach gym à 80 €/mois. Tu peux la rassurer côté budget familial ? »*
+
+**📞 La visio (30 min max)** :
+- Tu présentes ton sponsor en 30 sec : *« Marie, je te présente Thomas, c'est mon mentor depuis [X] mois, il accompagne [Y] familles. »*
+- Tu redonnes le contexte en 1 min
+- **Tu te tais ensuite.** Ton sponsor prend la main.
+- Tu observes, tu prends des notes mentales
+
+**📝 Post-brief (5 min, après la visio)** — appel à ton sponsor :
+- Qu'est-ce qui a marché / pas marché ?
+- Quelle phrase tu vas réutiliser dans tes prochains closings ?
+- Si la visio a closingé : tu remercies + tu actives J+1 dès le lendemain
+- Si elle a échoué : qu'est-ce que ton sponsor a senti que toi tu n'avais pas senti ?
+
+> 📦 **Le protocole détaillé est dans la Boîte à outils** → outil "La Visio à 3 — le multiplicateur de force". Imprime-le, garde-le sous les yeux pour ta première fois.`,
+      },
+    ],
+    quiz: {
+      id: "M2.5-quiz",
+      passingScore: 2,
+      questions: [
+        {
+          kind: "qcm",
+          id: "Q1",
+          question: "La visio à 3 augmente ton taux de closing à environ :",
+          answers: ["20 %", "40 %", "70 %", "90 %"],
+          correctIndex: 2,
+          explanation:
+            "70 % en visio à 3 vs ~30 % en solo. Pourquoi : validation sociale + profondeur d'expérience + pression sociale positive + tu apprends en live. Le multiplicateur le plus puissant de l'arsenal du distri débutant.",
+        },
+        {
+          kind: "qcm",
+          id: "Q2",
+          question: "Quand NE PAS activer la visio à 3 ?",
+          answers: [
+            "Sur un prospect qui hésite après l'EBE",
+            "Sur un cadre supérieur fort potentiel business",
+            "Sur un premier contact / 1er message",
+            "Sur une objection technique que tu ne sais pas gérer",
+          ],
+          correctIndex: 2,
+          explanation:
+            "Premier contact = trop tôt. Le prospect ne te connaît pas encore, activer un sponsor inconnu te grille. La visio à 3 se mérite : intérêt + objection manifestés d'abord.",
+        },
+        {
+          kind: "free_text",
+          id: "Q3",
+          question: "Ton pré-brief en mode réel",
+          prompt:
+            "Choisis 1 prospect actuellement en « je dois réfléchir ». Écris ton pré-brief sponsor (4 lignes) : profil + objectif + objection + ce que tu as déjà fait. C'est le message vocal que tu envoies à ton sponsor avant la visio.",
+          sponsorCheckHint:
+            "Vérifier que le pré-brief contient (a) profil identifiable (prénom, âge, situation), (b) objectif clair (ce que le prospect veut), (c) objection précise (pas « il hésite » mais la vraie raison), (d) action déjà tentée. Si trop vague, demander à reformuler.",
+          minChars: 100,
+        },
+      ],
+    },
   }
 ];
 
