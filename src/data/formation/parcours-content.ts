@@ -105,25 +105,26 @@ C'est un **VRAI** métier. Pas magique, pas passif, pas d'argent facile.
       },
       {
         id: "M1.1-L4",
-        slug: "calcul-simple",
-        title: "Le calcul simple",
+        slug: "ton-premier-objectif",
+        title: "Ton 1er objectif : 5 cobayes proches",
         kind: "text",
         durationMin: 2,
-        contentMarkdown: `## Le calcul qui parle vrai
+        contentMarkdown: `## Pas de pression. Pas de calculs.
 
-**1 client moyen** = 75 VP/mois ≈ 110 € retail.
+Pour tes 30 premiers jours, **on oublie les chiffres compliqués**. Ton seul objectif :
 
-Avec **50% de marge Supervisor** = **55 € de bénéfice net** sur 1 seul client par mois.
+> 🎯 **Trouver 5 personnes proches de toi qui acceptent de tester un programme avec toi.**
 
-| Clients fidélisés | Marge mensuelle |
-|---|---|
-| 5 clients | ~275 € |
-| 10 clients | ~550 € |
-| 20 clients | ~1 100 € |
+Pas vendre. Pas convaincre. **Tester.**
 
-Et c'est **uniquement** la marge perso. Derrière viennent les **royalties** quand tu construis une équipe.
+**Pourquoi 5 ?**
+- 5 témoignages réels qui valident ce que tu fais
+- 5 retours qui te donnent confiance
+- 5 personnes qui peuvent te recommander quelqu'un d'autre
 
-> Pour ~5h/semaine régulières, 10 clients = 550 €/mois. Pas mal.`
+Chacun de ces 5 cobayes peut devenir un client régulier ensuite. Et c'est ça qui crée ton premier vrai revenu — pas les calculs sophistiqués que tu verras plus tard quand tu seras Supervisor.
+
+> 💡 **Calcul simple** : 5 cobayes × 1 programme = ton démarrage. Pas plus, pas moins.`
       }
     ],
     quiz: {
@@ -142,20 +143,25 @@ Et c'est **uniquement** la marge perso. Derrière viennent les **royalties** qua
         {
           kind: "qcm",
           id: "Q2",
-          question: "1 VP équivaut à combien d'€ retail en France ?",
-          answers: ["1 €", "1,50 €", "2 €", "Variable selon le produit"],
-          correctIndex: 1,
+          question: "Quel est ton 1er objectif sur tes 30 premiers jours ?",
+          answers: [
+            "Recruter 5 distributeurs",
+            "Faire 1 000 PV en perso",
+            "Trouver 5 cobayes proches qui testent un programme avec toi",
+            "Comprendre tout le plan marketing par cœur",
+          ],
+          correctIndex: 2,
           explanation:
-            "1 VP = 1,50 € retail en France (calibrage officiel Herbalife). Ce ratio te permet de calculer ton chiffre depuis n'importe quel volume PV."
+            "5 cobayes proches qui testent un programme. Pas vendre, pas convaincre, pas calculer ton CA — juste créer 5 transformations réelles autour de toi. C'est de là que tout part.",
         },
         {
           kind: "qcm",
           id: "Q3",
-          question: "La formule mensuelle Lor'Squad de référence est :",
-          answers: ["3-2-1", "5-3-1", "8-4-1", "10-5-2"],
+          question: "Combien d'heures/semaine il faut pour gagner « un complément confortable » ?",
+          answers: ["2h", "5-10h", "20h", "30h+"],
           correctIndex: 1,
           explanation:
-            "5-3-1 : 5 nouveaux clients + 3 récurrents + 1 nouveau coach par mois. Une cadence accessible qui, tenue 12 mois, te conduit progressivement vers les rangs supérieurs."
+            "5 à 10h/semaine si tu travailles avec méthode (DMO 5-3-1, suivi régulier). En-dessous tu n'es pas dans l'action, au-dessus c'est devenu un vrai business à plein temps.",
         },
         {
           kind: "free_text",
@@ -172,12 +178,337 @@ Et c'est **uniquement** la marge perso. Derrière viennent les **royalties** qua
   },
 
   // ───────────────────────────────────────────────────────────────────────────
+  // M1.A — Mes 21 jours cobaye (NEW 2026-05-04)
+  // ───────────────────────────────────────────────────────────────────────────
+  {
+    id: "M1.A",
+    slug: "vingt-et-un-jours-cobaye",
+    number: "1.2",
+    title: "Mes 21 jours cobaye",
+    description: "Tu consommes avant de vendre. 21 jours pour ressentir, photographier, raconter. La règle d'or de Mark Hughes.",
+    durationMin: 6,
+    icon: "🥤",
+    ideeForce:
+      "Mark Hughes a posé la règle dès les années 80 : tu consommes les produits 21 jours avant d'oser en parler. Pourquoi ? Parce que ton meilleur argument de vente, ce ne sont pas les chiffres ni le packaging — c'est TON corps et TON expérience. Sans 21 jours cobaye, tu pitches du vent. Avec 21 jours derrière toi, tu racontes ta vie.",
+    ancrage: "« Tu ne vends pas un produit. Tu partages une expérience que tu as vécue. »",
+    action:
+      "Si tu n'as pas encore ton pack starter (F1 + PDM + Aloe + Thé), commande-le aujourd'hui. Démarre demain matin avec ton 1er shake. Photographie-toi avant + chaque semaine + à J21. Tu auras ton 1er « avant/après » à raconter en cobaye crédible.",
+    relatedToolkitSlugs: ["bases-presentiel"],
+    lessons: [
+      {
+        id: "M1.A-L1",
+        slug: "pourquoi-21-jours",
+        title: "Pourquoi 21 jours, pas 7 ni 30",
+        kind: "text",
+        durationMin: 2,
+        contentMarkdown: `## La règle posée par le fondateur
+
+**Mark Hughes** (fondateur Herbalife, 1980) a posé une règle simple : *tu consommes 21 jours avant de parler des produits*.
+
+**Pourquoi 21 ?**
+- 7 jours = trop peu pour ressentir une vraie différence
+- 21 jours = le temps qu'il faut au corps pour s'adapter, à la peau pour briller, à l'énergie pour s'installer
+- 30+ jours = bien, mais on attend pas pour démarrer
+
+**Pourquoi cobaye ?**
+- Tu n'es pas un expert. Tu es un humain qui teste.
+- Si ça marche pour toi, tu peux le partager.
+- Si ça ne marche pas, tu ajustes ou tu changes — tu n'es pas obligé de pitcher.
+
+> Tu ne vendrais jamais une voiture sans l'avoir conduite. Pareil pour Herbalife. Conduis-la 21 jours, ensuite tu en parles avec autorité.`,
+      },
+      {
+        id: "M1.A-L2",
+        slug: "ton-protocole-21j",
+        title: "Ton protocole 21 jours",
+        kind: "text",
+        durationMin: 2,
+        contentMarkdown: `## Le rituel quotidien (max simple)
+
+**🌅 Matin** :
+1. 1 verre d'**Aloe** + eau (5 min après le réveil)
+2. 1 **shake F1** (250 ml lait/eau + 2 cuillères) en remplacement du petit-déj
+3. (Sport) +1 dose **PDM** dans le shake
+
+**☕ Toute la journée** :
+4. 1 **Thé Thermojetics** chaud ou froid (à la place du café n°2 ou 3)
+5. 1,5L à 2L d'eau
+
+**🌙 Soir** :
+6. Petit dîner normal (pas de shake — mange vrai)
+
+**📸 Tracking** :
+- Photo **avant** (J0) face + profil
+- Photo **chaque dimanche** (J7, J14, J21)
+- Note ton ressenti dans une note téléphone : énergie, humeur, sommeil, appétit
+
+> Le tracking, c'est ton matériau de témoignage. Sans photo, pas de transformation visible. Sans note, pas de récit.`,
+      },
+      {
+        id: "M1.A-L3",
+        slug: "raconter-ton-experience",
+        title: "Comment raconter ton avant/après",
+        kind: "text",
+        durationMin: 2,
+        contentMarkdown: `## La structure du témoignage qui fonctionne
+
+À J21, tu auras 1 ou 2 vraies choses à dire. Pas 10. **Pas de baratin.**
+
+**Structure simple en 4 lignes** :
+1. *« Avant, j'avais [X problème] »*
+2. *« J'ai testé [F1 + Aloe + Thé] pendant 21 jours »*
+3. *« Aujourd'hui, je [Y résultat concret] »*
+4. *« Et ce qui m'a surpris, c'est [Z détail inattendu] »*
+
+**Exemple Thomas** :
+> *« Avant, j'avais des coups de barre tous les jours à 15h. J'ai testé le shake F1 le matin et le thé l'après-midi pendant 21 jours. Aujourd'hui, mes après-midi sont stables. Ce qui m'a surpris, c'est que ma peau est nette en plus. »*
+
+**Ce qui fait que ça marche** :
+- Tu parles de TOI, pas du produit
+- Tu donnes 1 résultat concret, pas 5
+- Tu termines par une surprise (humanisé, pas marketing)
+
+> Garde cette histoire prête. Tu vas la raconter ~50 fois cette année. Apprends-la par cœur.`,
+      },
+    ],
+    quiz: {
+      id: "M1.A-quiz",
+      passingScore: 2,
+      questions: [
+        {
+          kind: "qcm",
+          id: "Q1",
+          question: "Pourquoi 21 jours et pas 7 ?",
+          answers: [
+            "C'est arbitraire, le marketing Herbalife",
+            "Le temps pour le corps de s'adapter et l'expérience de devenir crédible",
+            "C'est la durée du programme client",
+            "C'est 3 semaines, plus court que 30 jours",
+          ],
+          correctIndex: 1,
+          explanation:
+            "21 jours = le minimum pour ressentir une vraie différence (énergie, peau, sommeil) et avoir un témoignage crédible. 7 jours = pas assez. C'est aussi le temps psychologique pour installer une nouvelle habitude.",
+        },
+        {
+          kind: "qcm",
+          id: "Q2",
+          question: "Ton meilleur argument de vente, c'est :",
+          answers: [
+            "Les ingrédients du F1 par cœur",
+            "Le prix compétitif vs autres marques",
+            "Ton corps et ton expérience perso",
+            "Les diplômes des labos Herbalife",
+          ],
+          correctIndex: 2,
+          explanation:
+            "Ton expérience perso. Les chiffres et les ingrédients personne ne s'en souvient. Une histoire vraie « avant/après toi » s'installe immédiatement dans la tête de la personne.",
+        },
+        {
+          kind: "free_text",
+          id: "Q3",
+          question: "Ton avant à J0",
+          prompt:
+            "Décris en 3 lignes ton ressenti AUJOURD'HUI (J0 ou avant de démarrer) : énergie, sommeil, peau, humeur, appétit. Tu compareras à J21 — c'est ta base de référence.",
+          sponsorCheckHint:
+            "Vérifier que la réponse contient des observations concrètes (ex. « coup de barre à 15h », « j'ai du mal à m'endormir », « peau terne ») et pas des généralités. Si trop vague, demander de préciser 2-3 choses observables.",
+          minChars: 100,
+        },
+      ],
+    },
+  },
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // M1.B — Connaître mes produits (NEW 2026-05-04)
+  // ───────────────────────────────────────────────────────────────────────────
+  {
+    id: "M1.B",
+    slug: "connaitre-mes-produits",
+    number: "1.3",
+    title: "Connaître mes produits",
+    description: "5 produits stars Herbalife. Ce que chacun fait, pour qui, et comment en parler en 1 phrase claire.",
+    durationMin: 6,
+    icon: "🌿",
+    ideeForce:
+      "Tu n'as pas besoin de connaître les 200 références Herbalife. Tu as besoin de maîtriser 5 produits stars. Si tu sais répondre à « ça fait quoi ? » et « c'est pour qui ? » en 1 phrase pour chacun, tu es opérationnel. Le reste, tu apprendras avec l'expérience.",
+    ancrage: "« Mes 5 produits, c'est ma boîte à outils de base. Je les connais comme mes 10 doigts. »",
+    action:
+      "Apprends par cœur la phrase clé de chaque produit (ci-dessous). Teste-toi : referme la page, dis-les à voix haute. Si tu hésites sur un, refais le module. À la fin, tu sais pitcher chacun en 5 secondes.",
+    relatedToolkitSlugs: ["bases-presentiel", "presentation-programme-script"],
+    lessons: [
+      {
+        id: "M1.B-L1",
+        slug: "les-5-stars",
+        title: "Les 5 produits que tu dois maîtriser",
+        kind: "text",
+        durationMin: 3,
+        contentMarkdown: `## Les 5 stars Herbalife à connaître par cœur
+
+Pour chaque produit : **ce que c'est** + **phrase clé** + **pour qui**.
+
+---
+
+### 🥤 1. Formula 1 (F1) — le shake repas
+
+**Ce que c'est** : un repas équilibré en poudre. 220 cal, 25 % protéines, 25 vitamines & minéraux. Multiples saveurs (vanille, chocolat, fraise, cookies&cream…).
+
+**Phrase clé** : *« Le repas malin du matin ou du midi quand t'as pas le temps. »*
+
+**Pour qui** :
+- Quelqu'un qui veut perdre du poids → remplace 1 ou 2 repas
+- Quelqu'un qui saute son petit-déj → c'est le 1er pas
+- Sportif qui veut un repas pratique avant/après séance
+
+---
+
+### 💪 2. Protein Drink Mix (PDM) — le boost protéines
+
+**Ce que c'est** : 15 g de protéines végétales en poudre, ajoutables au shake F1 ou à part. Goût neutre, parfait à mixer.
+
+**Phrase clé** : *« +15 g de protéines pour rester rassasié plus longtemps. »*
+
+**Pour qui** :
+- Personne qui a faim 2h après le shake → on ajoute du PDM dans le F1
+- Sportif en sèche / prise de masse → augmente l'apport sans calories vides
+- Senior → maintien de la masse musculaire
+
+---
+
+### 🌿 3. Aloe Vera Concentré — l'allié digestion
+
+**Ce que c'est** : concentré d'aloe vera buvable, à diluer dans l'eau. 4 saveurs (mangue, original, fraise, citron-citron vert).
+
+**Phrase clé** : *« Mon réveil-corps : 1 verre le matin, ça nettoie. »*
+
+**Pour qui** :
+- Tout le monde, surtout digestion lente / ballonnements
+- Sportif → hydratation + apport
+- Tu peux en mettre dans ton eau de la journée
+
+---
+
+### 🍵 4. Thé Thermojetics — l'énergie sans café
+
+**Ce que c'est** : poudre de thé concentré (vert, hibiscus, citron…). Se prépare chaud ou froid. 6-10 cal/cup.
+
+**Phrase clé** : *« Le coup de boost de l'aprèm sans le coup de barre du café. »*
+
+**Pour qui** :
+- Anti-fatigue 15h-18h
+- Quelqu'un qui veut réduire son café
+- Hydratation goutue (mieux qu'un soda)
+
+---
+
+### ✨ 5. Coffret HLSkin — la routine beauté complète
+
+**Ce que c'est** : routine soin du visage Herbalife — nettoyage, hydratation, soin ciblé. Plusieurs gammes (Soothing Aloe, Radiant C, Anti-âge…).
+
+**Phrase clé** : *« Une routine simple matin & soir. Tu testes 14 jours, ta peau parle. »*
+
+**Pour qui** :
+- Femme (ou homme) qui veut une routine claire au lieu de 12 produits
+- Cliente après un programme F1 → on poursuit la transformation par la peau
+- Cadeau parfait à offrir comme « bilan beauté »
+
+---
+
+### 💡 Le pack starter Lor'Squad
+
+**F1 + PDM + Aloe + Thé** = **100 PV** = **234 € retail** (prix client).
+
+C'est le pack que tu vas proposer à 80 % de tes prospects. **Apprends-le par cœur** : tu peux pitcher dans n'importe quelle conversation en 5 secondes.
+
+> Le coffret HLSkin se rajoute en seconde commande quand le client est en confiance après les 21 premiers jours.`,
+      },
+      {
+        id: "M1.B-L2",
+        slug: "pas-confondre-marques",
+        title: "Pourquoi tu ne dois PAS confondre avec d'autres marques",
+        kind: "text",
+        durationMin: 1,
+        contentMarkdown: `## Tes prospects vont comparer
+
+*« Mon ami fait du Plenny / du Feed / du Yfood, c'est pareil ? »*
+
+**Réponse simple** :
+- Plenny / Feed / Yfood = repas substitut **occasionnel**, on dépanne
+- F1 = **programme structuré** avec accompagnement coach, ajustements personnalisés, suivi 30j
+
+**La différence** : *toi*. Pas le produit, mais l'**accompagnement humain** que tu donnes.
+
+> Tu ne vends pas un shake. Tu vends une transformation accompagnée pendant 30+ jours.`,
+      },
+      {
+        id: "M1.B-L3",
+        slug: "ne-pas-jouer-medecin",
+        title: "Tu n'es pas médecin (rappel important)",
+        kind: "text",
+        durationMin: 1,
+        contentMarkdown: `## Limites éthiques
+
+⚠️ **Ne dis JAMAIS** :
+- *« Ça soigne »*
+- *« Ça guérit »*
+- *« C'est meilleur qu'un médicament »*
+
+Les produits Herbalife sont des **compléments alimentaires**, pas des médicaments. Le respect de cette ligne est obligatoire (pour toi, pour la marque, pour la santé du prospect).
+
+**Les bonnes formulations** :
+- *« Ça m'a aidé à… »* (témoignage perso)
+- *« Tu pourrais ressentir… »* (suggestion)
+- *« Demande l'avis de ton médecin si tu prends un traitement »* (responsable)
+
+> Si un prospect a une condition médicale (diabète, grossesse, allergie sévère) → renvoie systématiquement vers son médecin avant de proposer un programme.`,
+      },
+    ],
+    quiz: {
+      id: "M1.B-quiz",
+      passingScore: 2,
+      questions: [
+        {
+          kind: "qcm",
+          id: "Q1",
+          question: "Le pack starter F1 + PDM + Aloe + Thé représente :",
+          answers: ["50 PV / 117 €", "75 PV / 175 €", "100 PV / 234 €", "150 PV / 350 €"],
+          correctIndex: 2,
+          explanation:
+            "100 PV = 234 € retail. C'est le pack que tu proposes à 80 % de tes prospects en démarrage. Apprends ce chiffre par cœur — tu vas le citer souvent.",
+        },
+        {
+          kind: "qcm",
+          id: "Q2",
+          question: "La phrase clé du Thé Thermojetics est :",
+          answers: [
+            "Le shake repas malin",
+            "Le coup de boost de l'aprèm sans le coup de barre du café",
+            "+15 g de protéines pour rester rassasié",
+            "1 verre le matin, ça nettoie",
+          ],
+          correctIndex: 1,
+          explanation:
+            "Le thé est l'anti-fatigue 15h-18h. Tu remplaces le 2e ou 3e café de la journée. Le client ressent l'énergie sans le pic-puis-chute du café.",
+        },
+        {
+          kind: "free_text",
+          id: "Q3",
+          question: "Pitche-moi le F1",
+          prompt:
+            "Imagine que tu rencontres un copain qui te demande « c'est quoi ton truc Herbalife ? ». Pitche-lui le F1 en 3 phrases max, avec ton ton à toi.",
+          sponsorCheckHint:
+            "Vérifier que la réponse cite : (a) ce que c'est en simple (shake repas), (b) à qui c'est utile (perte poids / saute petit-déj / sportif), (c) sans jouer médecin. Si trop technique ou si évoque guérison/maladie, demander de simplifier.",
+          minChars: 80,
+        },
+      ],
+    },
+  },
+
+  // ───────────────────────────────────────────────────────────────────────────
   // M1.2 — Ma liste de connaissances
   // ───────────────────────────────────────────────────────────────────────────
   {
     id: "M1.2",
     slug: "liste-connaissances",
-    number: "1.2",
+    number: "1.4",
     title: "Ma liste de connaissances",
     description: "Ton stock de prospects est déjà dans ton téléphone. Encore faut-il oser y penser.",
     durationMin: 7,
@@ -304,6 +635,146 @@ L'or se cache dans ta liste B — ceux que tu éliminerais d'office. Mets-les TO
   },
 
   // ───────────────────────────────────────────────────────────────────────────
+  // M1.C — Mon premier message (NEW 2026-05-04)
+  // ───────────────────────────────────────────────────────────────────────────
+  {
+    id: "M1.C",
+    slug: "mon-premier-message",
+    number: "1.5",
+    title: "Mon premier message",
+    description: "Le 1er message à un proche : pas un pitch, une invitation. Scripts copier-coller dans la boîte à outils.",
+    durationMin: 5,
+    icon: "💬",
+    ideeForce:
+      "L'erreur n°1 d'un débutant : pitcher dans le 1er message. *« Salut machin, je vends un truc super, tu veux essayer ? »* → ignored. Ce qui marche : une question + une invitation. Pas de produit, pas de promesse. Tu invites quelqu'un à un café, pas à acheter.",
+    ancrage: "« Tu n'envoies pas un pitch. Tu envoies une invitation à un café. »",
+    action:
+      "Choisis 5 personnes dans ta liste de connaissances. Ouvre la boîte à outils → Scripts d'invitation → adapte 1 message à ton ton. Envoie aujourd'hui à ces 5 personnes. Note les réponses dans ta liste.",
+    relatedToolkitSlugs: ["scripts-invitation", "hooks-reseaux-sociaux"],
+    lessons: [
+      {
+        id: "M1.C-L1",
+        slug: "pas-de-pitch",
+        title: "Pourquoi pas de pitch dans le 1er message",
+        kind: "text",
+        durationMin: 2,
+        contentMarkdown: `## L'erreur qui ferme toutes les portes
+
+❌ *« Salut Marie ! Je viens de découvrir un truc génial, des shakes qui font perdre du poids. Ça t'intéresse ? »*
+
+→ Marie lit ça. Elle pense :
+- *« Encore un MLM qui vend du vent »*
+- *« Pourquoi Sophie m'envoie ça à moi »*
+- *« Ça pue le pyramidal »*
+- → ignore + bloque dans sa tête
+
+**Pourquoi ça ferme** :
+1. Tu pitches un PRODUIT (alors qu'elle ne t'a rien demandé)
+2. Tu fais une PROMESSE (perdre du poids → tu sais pas si elle veut)
+3. Tu termines par une QUESTION FERMÉE (oui/non = elle a envie de dire non par défaut)
+
+**Le 1er message n'est PAS un pitch. C'est une invitation à parler.**`,
+      },
+      {
+        id: "M1.C-L2",
+        slug: "structure-3-lignes",
+        title: "La structure en 3 lignes qui marche",
+        kind: "text",
+        durationMin: 2,
+        contentMarkdown: `## La formule simple : Curiosité → Invitation → Question ouverte
+
+**Ligne 1 — Reprise du lien** : *« Salut [prénom], j'espère que tu vas bien. »*
+
+**Ligne 2 — Curiosité (pas de pitch)** : *« Je voulais te poser une question, je teste un truc qui m'aide en ce moment. »*
+
+**Ligne 3 — Invitation à parler** : *« On peut se prendre un café 15 min cette semaine ? »*
+
+**Pourquoi ça marche** :
+- Pas de produit cité → pas de filtre "MLM"
+- "Te poser une question" → flatterie subtile + curiosité
+- "15 min" → engagement faible → oui plus facile
+- "Café" → format humain → pas un Zoom commercial
+
+**Ce qui ne marche PAS** :
+- *« Quand t'as 5 min on peut s'appeler ? »* → trop vague
+- *« Je vends du Herbalife, ça t'intéresse ? »* → tué d'emblée
+- *« Je voudrais te montrer une opportunité business »* → ferme tout
+
+> 📦 **Les 10 messages prêts à copier sont dans ta Boîte à outils** → outil "Scripts d'invitation". Choisis-en 1, adapte 2-3 mots à ton ton, envoie.`,
+      },
+      {
+        id: "M1.C-L3",
+        slug: "cafe-apero-bilan",
+        title: "Café, apéro healthy ou bilan ? Choisir le bon format",
+        kind: "text",
+        durationMin: 1,
+        contentMarkdown: `## 3 niveaux d'invitation selon la personne
+
+**☕ Café (15-20 min)** — pour les TIÈDES
+- Personnes que tu connais peu ou avec qui tu n'as plus parlé
+- *« On se prend un café, je te raconte ce que je teste »*
+- Format conversationnel, pas commercial
+
+**🍷 Apéro Healthy (2h, soirée)** — pour les CURIEUX
+- Personnes qui aiment les sorties + l'opportunité de connaître du monde
+- *« Je participe à une soirée bien-être mardi soir, je t'en garde une place ? »*
+- Preuve sociale (autres distri + témoignages)
+
+**🥗 Bilan / EBE (60 min, sérieux)** — pour les MOTIVÉS
+- Personnes qui ont déjà exprimé un objectif (perte poids, énergie, etc.)
+- *« On fait un bilan ensemble pour comprendre ce qui te manque »*
+- Format engagé, structuré
+
+> **Règle** : commence toujours par un **café** pour les froids/tièdes. Ne propose un bilan QUE si la personne demande explicitement « comment je peux essayer tes trucs ».`,
+      },
+    ],
+    quiz: {
+      id: "M1.C-quiz",
+      passingScore: 2,
+      questions: [
+        {
+          kind: "qcm",
+          id: "Q1",
+          question: "Le 1er message à un proche doit contenir :",
+          answers: [
+            "Une description claire du produit",
+            "Une promesse de résultats",
+            "De la curiosité + une invitation à un café",
+            "Le prix du programme",
+          ],
+          correctIndex: 2,
+          explanation:
+            "Curiosité + invitation. Pas de produit cité, pas de promesse. Tu invites quelqu'un à parler, pas à acheter. Le pitch viendra plus tard, en face à face.",
+        },
+        {
+          kind: "qcm",
+          id: "Q2",
+          question: "Pour un contact tiède (que tu n'as plus parlé depuis longtemps), tu proposes :",
+          answers: [
+            "Un EBE direct (gain de temps)",
+            "Un apéro healthy (preuve sociale)",
+            "Un café 15 min (format humain)",
+            "Un appel téléphonique commercial",
+          ],
+          correctIndex: 2,
+          explanation:
+            "Café 15 min. Format humain, engagement faible, conversationnel. L'EBE et l'apéro arrivent ensuite quand le contact est réchauffé.",
+        },
+        {
+          kind: "free_text",
+          id: "Q3",
+          question: "Ton 1er message envoyé",
+          prompt:
+            "Choisis 1 personne dans ta liste, écris-lui le message en 3 lignes (Curiosité → Invitation café → Question ouverte). Copie-colle ton message ici (avec son prénom).",
+          sponsorCheckHint:
+            "Vérifier que le message ne pitche PAS le produit, contient une question ouverte (pas oui/non), propose un format léger (café 15 min). Si c'est un pitch direct, demander de re-écrire en suivant la structure 3 lignes.",
+          minChars: 100,
+        },
+      ],
+    },
+  },
+
+  // ───────────────────────────────────────────────────────────────────────────
   // M1.3 — Faire un EBE qui te grandit
   // ⚠️ Refonte 2026-05-03 : ce module ne dédouble plus le pas-à-pas
   // technique du bilan (qui vit dans la Boîte à outils → tk-bilan-01).
@@ -313,7 +784,7 @@ L'or se cache dans ta liste B — ceux que tu éliminerais d'office. Mets-les TO
   {
     id: "M1.3",
     slug: "bilan-pro",
-    number: "1.3",
+    number: "1.6",
     title: "Faire un EBE qui te grandit",
     description: "Le mindset et les micro-décisions qui distinguent un bilan moyen d'un bilan signature. (Le pas-à-pas technique vit dans la boîte à outils.)",
     durationMin: 8,
@@ -490,288 +961,157 @@ C'est cette voix qui transforme une mesure en prise de conscience. Sans drame. S
   },
 
   // ───────────────────────────────────────────────────────────────────────────
-  // M1.4 — Mon premier closing
+  // M1.D — Présenter et closer mon 1er client (NEW 2026-05-04)
   // ───────────────────────────────────────────────────────────────────────────
   {
-    id: "M1.4",
-    slug: "premier-closing",
-    number: "1.4",
-    title: "Mon premier closing",
-    description: "Closer ce n'est pas forcer. C'est aider quelqu'un à décider quand il hésite.",
+    id: "M1.D",
+    slug: "presenter-closer-premier-client",
+    number: "1.7",
+    title: "Présenter et closer mon 1er client",
+    description: "Le moment où tu transformes un EBE en programme signé. Script copier-coller + suivi J+1 obligatoire.",
     durationMin: 7,
     icon: "🤝",
     ideeForce:
-      "80% des distri perdent au moment du closing. Pas par manque de talent — par manque de méthode et par peur de « forcer ». Closer, c'est un ACTE DE SERVICE. Si tu crois à ton produit et à ton accompagnement, ne pas closer = laisser la personne dans son problème.",
-    ancrage: "« Le silence après une proposition vaut de l'or. Ne le gâche jamais. »",
+      "À la fin de l'EBE, tu présentes le programme. Pas un catalogue, pas 5 options. Un programme structuré qui répond à CE que tu as entendu pendant le bilan. Le closing n'est pas une technique de vente — c'est une recommandation honnête : « voici ce que je ferais à ta place ». Ensuite, le suivi J+1 obligatoire fait la différence entre 50 % et 80 % de fidélisation.",
+    ancrage: "« Tu ne fermes pas une vente. Tu ouvres une transformation. »",
     action:
-      "Prépare 3 réponses-types apprises par cœur aux 3 objections les plus courantes : « C'est cher », « Je dois réfléchir », « Je dois en parler à mon conjoint ». Teste-les en role-play avec ton sponsor avant de les utiliser en réel.",
-    relatedToolkitSlugs: ["objections-reponses", "presentation-programme-script"],
-    lessons: [
-      {
-        id: "M1.4-L1",
-        slug: "pourquoi-on-perd",
-        title: "Pourquoi 80% perdent au closing",
-        kind: "text",
-        durationMin: 2,
-        contentMarkdown: `## Les 5 pièges classiques
-
-1. **Ils parlent.** Ils ont peur du silence.
-2. **Ils ajoutent des arguments.** Sans qu'on leur demande.
-3. **Ils baissent le prix.** Avant qu'on ne demande.
-4. **Ils proposent « penser jusqu'à demain ».** Trahison personnelle.
-5. **Ils ne reposent jamais la question.**
-
-Résultat : la personne sort sans s'engager, et 90% du temps, ne revient pas.`
-      },
-      {
-        id: "M1.4-L2",
-        slug: "regle-silence",
-        title: "La règle du silence",
-        kind: "text",
-        durationMin: 2,
-        contentMarkdown: `## Le pouvoir du silence
-
-Quand tu poses la question (« On démarre quand ? »), tu te **TAIS**.
-
-Même si le silence dure 30 secondes. Même si tu as envie de meubler.
-
-Le premier qui parle « perd » :
-- Si **toi** tu parles, tu reprends la pression sur tes épaules.
-- Si **la personne** parle, elle révèle sa vraie objection — et tu peux la traiter.
-
-> Compte mentalement jusqu'à 30. Tu ne lâches pas avant.`
-      },
-      {
-        id: "M1.4-L3",
-        slug: "trois-non",
-        title: "Les 3 types de « non »",
-        kind: "text",
-        durationMin: 2,
-        contentMarkdown: `## Tous les « non » ne se valent pas
-
-**1. Le VRAI non** : la personne n'est pas concernée, ne sera jamais cliente. Tu remercies, tu libères, tu n'insistes pas.
-
-**2. Le « pas maintenant »** : timing, argent, ménage à convaincre. Tu reprogrammes.
-
-**3. Le « j'ai peur » déguisé en non** : la personne veut, mais a peur d'échouer. Tu rassures avec des cas concrets de ton équipe.
-
-**80% des « non » sont du type 2 ou 3.** Apprends à les distinguer.`
-      },
-      {
-        id: "M1.4-L4",
-        slug: "choix-limite",
-        title: "1 mois ou 4 semaines : choix limité",
-        kind: "text",
-        durationMin: 1,
-        contentMarkdown: `## Comment poser la question
-
-Ne demande **JAMAIS** « tu veux démarrer ? » (oui/non).
-
-Demande « **tu préfères qu'on attaque par 4 semaines ou 1 mois complet ?** ».
-
-La question est fermée mais cadre vers le OUI. La personne choisit le **format**, pas l'engagement. Plus elle se projette, plus elle dit oui.`
-      }
+      "Apprends par cœur la phrase de proposition (Leçon 2). Mets dans ton agenda un rappel J+1 systématique pour chaque bilan que tu fais. Le J+1, c'est l'arme secrète de fidélisation que 90 % des distri oublient.",
+    relatedToolkitSlugs: [
+      "presentation-programme-script",
+      "templates-suivi-jours",
+      "objections-reponses",
     ],
-    quiz: {
-      id: "M1.4-quiz",
-      passingScore: 3,
-      questions: [
-        {
-          kind: "qcm",
-          id: "Q1",
-          question: "Après ta proposition de programme, tu fais quoi ?",
-          answers: [
-            "Tu ajoutes des arguments",
-            "Tu te tais et tu attends",
-            "Tu re-pitch en résumant",
-            "Tu baisses le prix"
-          ],
-          correctIndex: 1,
-          explanation:
-            "Tu te tais. Le silence après une proposition vaut de l'or. Le premier qui parle « perd » — laisse la personne révéler son vrai blocage."
-        },
-        {
-          kind: "qcm",
-          id: "Q2",
-          question: "Combien de types de « non » existent en réalité ?",
-          answers: [
-            "1",
-            "3 (vrai non / pas maintenant / j'ai peur)",
-            "5",
-            "10"
-          ],
-          correctIndex: 1,
-          explanation:
-            "3 types : le vrai non (rare), le « pas maintenant » (timing), le « j'ai peur » déguisé. 80% des « non » sont en réalité des 2 ou 3."
-        },
-        {
-          kind: "qcm",
-          id: "Q3",
-          question: "Une bonne question de closing, c'est :",
-          answers: [
-            "« Tu veux démarrer ? » (oui/non)",
-            "« Tu préfères 4 semaines ou 1 mois complet ? » (choix limité)",
-            "« Quand penses-tu y réfléchir ? »",
-            "« Tu hors budget ou intéressé ? »"
-          ],
-          correctIndex: 1,
-          explanation:
-            "Choix limité. La question cadre vers le OUI. La personne choisit le format, pas l'engagement. Plus elle se projette, plus elle dit oui."
-        },
-        {
-          kind: "free_text",
-          id: "Q4",
-          question: "Réponse à l'objection « C'est cher »",
-          prompt:
-            "Le prospect te dit « C'est cher pour moi en ce moment ». Que réponds-tu en 3 lignes max, sans baisser le prix ?",
-          sponsorCheckHint:
-            "Vérifier que la réponse reformule l'objection en valeur (coût mensualisé, coût vs résultat, coût de NE PAS agir) plutôt que de capituler. Pas de « je peux te faire un prix ».",
-          minChars: 80
-        }
-      ]
-    }
-  },
-
-  // ───────────────────────────────────────────────────────────────────────────
-  // M1.5 — Demander mes premières recos
-  // ───────────────────────────────────────────────────────────────────────────
-  {
-    id: "M1.5",
-    slug: "premieres-recos",
-    number: "1.5",
-    title: "Demander mes premières recos",
-    description: "Une reco vaut 10 prospects froids. Quand et comment la demander.",
-    durationMin: 6,
-    icon: "🌟",
-    ideeForce:
-      "Une reco vaut 10 prospects froids. C'est l'or massif de ton activité. Pourtant 90% des distri n'en demandent jamais — par peur de « déranger », par oubli, ou par mauvais timing. Le moment juste : à chaud, dès le 1ᵉʳ résultat visible. Jamais en posture mendiante.",
-    ancrage: "« Un client satisfait sans reco = un client à moitié servi. »",
-    action:
-      "Demande 3 recos à ton 1ᵉʳ client (ou client en cours de programme avec un résultat visible) cette semaine. Si tu n'as pas encore de client : prépare ta phrase et apprends-la par cœur.",
-    relatedToolkitSlugs: ["phrase-magique-recos", "templates-suivi-jours"],
     lessons: [
       {
-        id: "M1.5-L1",
-        slug: "bon-timing",
-        title: "Le bon timing",
+        id: "M1.D-L1",
+        slug: "anatomie-presentation",
+        title: "Anatomie d'une présentation programme qui marche",
         kind: "text",
         durationMin: 2,
-        contentMarkdown: `## Quand demander la reco ?
+        contentMarkdown: `## La structure en 4 temps (10 min max)
 
-Au moment du **1ᵉʳ résultat visible**. Généralement **J+7 ou J+14** — quand le client a perdu ses premiers kilos, dort mieux, a plus d'énergie.
+À la fin de l'EBE, tu enchaînes. Pas de transition gênante.
 
-C'est là qu'il **EST** l'argument vivant.
+**1. Récap de ce que tu as entendu (1 min)**
+- *« Donc si je résume bien : tu veux X, tu as essayé Y, ce qui te bloque c'est Z »*
+- La personne acquiesce → tu valides ton diagnostic
 
-- **Avant** : il n'a rien à dire.
-- **Après l'effet WOW retombé** : il oublie de te recommander.
+**2. Ta recommandation (3 min)**
+- *« Ce que je te propose, c'est de tester [pack F1 + PDM + Aloe + Thé] pendant 30 jours »*
+- Tu décris simple : 1 shake matin, 1 verre d'aloe, 1 thé l'aprèm
+- Tu donnes le **prix net** : *« 234 € pour le starter complet »*
+- Pas de salade. Pas de promo. Pas de "spécial pour toi".
 
-Ne rate pas la fenêtre.`
+**3. Le silence stratégique (30 sec - 1 min)**
+- Tu as posé ta proposition. **Tu te tais.**
+- 90 % des distri parlent à ce moment-là par malaise → ils tuent leur vente
+- Le silence laisse la personne réfléchir et formuler sa réponse
+
+**4. La réponse (3 min)**
+- Si oui → tu prends la commande
+- Si "je vais réfléchir" → *« Pas de souci. Sur quoi tu veux réfléchir précisément ? »* (objection à creuser, pas à fuir)
+- Si non → tu n'insistes pas, tu demandes les recos
+
+> 📦 **Le script complet est dans la Boîte à outils** → outil "Script de présentation programme — version 4 semaines". Apprends-le, adapte ton ton, mais ne change pas la structure.`,
       },
       {
-        id: "M1.5-L2",
-        slug: "phrase-magique",
-        title: "La phrase magique",
+        id: "M1.D-L2",
+        slug: "phrase-de-proposition",
+        title: "La phrase qui change tout",
         kind: "text",
         durationMin: 2,
-        contentMarkdown: `## Comment formuler
+        contentMarkdown: `## La phrase de proposition à apprendre par cœur
 
-> *« Qui dans ton entourage aurait besoin du même résultat que tu vis là ? »*
+Une seule phrase, **dite avec ton ton et ta vraie voix** :
+
+> *« Mon rôle n'est pas de te vendre des produits. Mon rôle, c'est que dans 30 jours, tu sois fier·e de toi. Je te propose de tester avec moi pendant 30 jours, et au bout de ces 30 jours, on regarde ensemble. Ça te parle ? »*
 
 **Pourquoi ça marche** :
-- Pas « tu connais quelqu'un que ça intéresserait ? » (vague)
-- Pas « tu peux me démarcher tes potes ? » (mendiant)
+- *« Mon rôle n'est pas de te vendre »* → casse l'objection préventive "tu veux me vendre"
+- *« Que dans 30 jours tu sois fier·e »* → projection émotionnelle vers le résultat
+- *« Tester avec moi »* → engagement faible (test, pas achat à vie)
+- *« Au bout de 30 jours on regarde »* → pas piégé·e à long terme
+- *« Ça te parle ? »* → question ouverte (pas oui/non sec)
 
-La phrase magique cible le **résultat**, pas le produit. Le client se sent investi d'une mission de transmettre, pas obligé de te rendre service.`
+**Apprends-la PAR CŒUR**. Tu vas la dire 100 fois cette année. Si tu hésites, tu perds. Si tu la dis avec naturel, tu closingnes 3 sur 5 EBE.`,
       },
       {
-        id: "M1.5-L3",
-        slug: "trois-noms-min",
-        title: "3 noms minimum",
+        id: "M1.D-L3",
+        slug: "suivi-j1-obligatoire",
+        title: "Le suivi J+1 obligatoire (l'arme secrète)",
         kind: "text",
-        durationMin: 1,
-        contentMarkdown: `## La règle du 3 + 1
+        durationMin: 2,
+        contentMarkdown: `## Pourquoi 90 % des distri perdent leur client en J+1
 
-Ne te contente JAMAIS d'1 nom. Demande **3**.
+Tu as fait un super EBE, présenté le programme, la personne a dit oui, elle est partie avec son pack.
 
-> *« Donne-moi les 3 personnes que tu vois en premier. »*
+**Ce qui se passe à J+1 dans sa tête** :
+- *« J'ai bien fait ? »*
+- *« Mon mari va dire quoi ? »*
+- *« Le shake a un drôle de goût »*
+- *« 234 €, c'est cher quand même »*
 
-Si la personne en donne 1, attends. Re-demande : *« Et qui d'autre ? »*.
+→ Si tu ne l'appelles pas dans les **24h**, elle va remettre en question son achat. Au mieux : remboursement à J+3. Au pire : elle ne re-commande jamais.
 
-Le **2ᵉ nom est souvent le meilleur** (le 1ᵉʳ est réflexe, le 2ᵉ est réflexion).`
+**Ce que tu fais à J+1 (10 min max)** :
+1. Appel ou message vocal *« Salut [prénom], comment tu te sens ce matin ? »*
+2. Réponds aux 2-3 questions techniques (mélange, dosage, goût)
+3. Rappelle le rendez-vous J+7 *« On se voit dimanche pour faire un point ? »*
+4. **Termine par un encouragement** *« Tu vas voir, J+3 c'est un cap, après ça roule tout seul »*
+
+**Résultats observés** :
+- Sans J+1 : 50 % des clients abandonnent à J+7
+- Avec J+1 : **80 %** des clients tiennent à J+30 et re-commandent
+
+> 📦 **Les 5 templates J+1 / J+3 / J+7 / J+14 / J+30 sont dans ta Boîte à outils** → outil "Templates de suivi". Bloque-toi 10 min par jour pour les envoyer systématiquement.`,
       },
-      {
-        id: "M1.5-L4",
-        slug: "activer-trois",
-        title: "Activer la reco à trois",
-        kind: "text",
-        durationMin: 1,
-        contentMarkdown: `## Le top du top
-
-C'est ton client qui appelle SA reco devant toi, te passe le téléphone, et te présente.
-
-> *« Je te passe Marie, c'est ma coach, elle veut juste te dire bonjour. »*
-
-Tu prends 30 secondes, tu cales un café.
-
-Si appel impossible : message vocal commun par WhatsApp, à 3 voix.
-
-> Une reco activée à chaud = 80% de RDV calé. Une reco non activée = 20%.`
-      }
     ],
     quiz: {
-      id: "M1.5-quiz",
-      passingScore: 3,
+      id: "M1.D-quiz",
+      passingScore: 2,
       questions: [
         {
           kind: "qcm",
           id: "Q1",
-          question: "Quand demander la reco à un client ?",
+          question: "Après ta proposition de programme, qu'est-ce que tu fais en premier ?",
           answers: [
-            "Avant qu'il ait des résultats",
-            "Après le 1ᵉʳ résultat visible (J+7 ou J+14)",
-            "En fin de programme uniquement",
-            "Quand il re-commande pour la 3ᵉ fois"
+            "Tu enchaînes sur les bénéfices",
+            "Tu te tais et tu attends",
+            "Tu donnes une promo si elle hésite",
+            "Tu rappelles le prix",
           ],
           correctIndex: 1,
           explanation:
-            "À chaud, après le 1ᵉʳ résultat visible. Le client EST l'argument vivant à ce moment-là. Avant il n'a rien à dire, après l'effet WOW retombe."
+            "Le silence. Tu as posé. Tu attends. La personne a besoin de temps pour formuler sa réponse. Si tu parles, tu tues ton closing. Le silence stratégique = ton meilleur outil.",
         },
         {
           kind: "qcm",
           id: "Q2",
-          question: "Combien de noms demander minimum ?",
-          answers: ["1", "3", "5", "10"],
-          correctIndex: 1,
-          explanation:
-            "3 minimum. Le 2ᵉ nom est souvent le meilleur — le 1ᵉʳ est réflexe, le 2ᵉ est réflexion. Si tu te contentes d'1 nom, tu rates la pépite."
-        },
-        {
-          kind: "qcm",
-          id: "Q3",
-          question: "Qui doit appeler la reco idéalement ?",
+          question: "Pourquoi le suivi J+1 est-il obligatoire ?",
           answers: [
-            "Toi seule en envoyant un message inconnu",
-            "Ton client seul",
-            "Vous ensemble : ton client appelle, te passe le tél, te présente",
-            "Tu attends qu'elle vienne d'elle-même"
+            "C'est la politique Herbalife",
+            "Pour faire de l'upsell",
+            "Parce que sans J+1, 50 % des clients abandonnent à J+7",
+            "Pour faire de la pression à re-commander",
           ],
           correctIndex: 2,
           explanation:
-            "Le top : reco activée à 3 voix. Ton client appelle, te passe le téléphone, te présente. Taux de RDV calé : 80% vs 20% pour une reco non activée."
+            "50 % d'abandon en J+7 sans suivi vs 20 % avec J+1. La nuit qui suit l'achat, le client doute. Ton coup de fil rassure et installe le rendez-vous J+7. Sans ça, ton EBE = perdu.",
         },
         {
           kind: "free_text",
-          id: "Q4",
-          question: "Ta phrase EXACTE",
+          id: "Q3",
+          question: "Ta phrase de proposition adaptée à ton ton",
           prompt:
-            "Écris la phrase EXACTE que tu utiliseras pour demander tes recos à ton 1ᵉʳ client cette semaine. Pas une généralité — ta phrase à toi.",
+            "Réécris la phrase de proposition (« Mon rôle n'est pas de te vendre… ») dans TON ton, ta vraie voix. Ce que tu dirais réellement, pas un script robotique.",
           sponsorCheckHint:
-            "Vérifier que la phrase contient l'angle résultat (« le même résultat que toi ») et pas l'angle produit (« les produits »). Vérifier qu'elle est tutoyée/personnelle, pas robotique.",
-          minChars: 60
-        }
-      ]
-    }
-  }
+            "Vérifier que la phrase contient les 4 ingrédients : (a) ce n'est pas vendre, (b) projection 30j positive, (c) tester avec toi (engagement faible), (d) question ouverte. Si trop commercial ou si manque l'engagement faible, demander à reformuler.",
+          minChars: 100,
+        },
+      ],
+    },
+  },
+
 ];
 
 // =============================================================================
