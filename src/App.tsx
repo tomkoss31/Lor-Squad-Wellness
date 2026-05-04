@@ -286,6 +286,11 @@ const AdminDistributorCharterPage = lazy(() =>
     default: module.AdminDistributorCharterPage,
   })),
 );
+const AdminCharterThumbsPage = lazy(() =>
+  import("./pages/AdminCharterThumbsPage").then((module) => ({
+    default: module.AdminCharterThumbsPage,
+  })),
+);
 const FormationCalculatorPage = lazy(() =>
   import("./pages/FormationCalculatorPage").then((module) => ({
     default: module.FormationCalculatorPage
@@ -403,6 +408,9 @@ export default function App() {
               <Route path="charte" element={<CharterPage />} />
               <Route path="distributors/:id/charte" element={<AdminDistributorCharterPage />} />
               <Route path="formation/charte" element={<Navigate to="/charte" replace />} />
+              {/* Outil admin : génération des PNG thumbnails du sélecteur de
+                  template charte. Admin only (vérif côté composant). */}
+              <Route path="admin/charter-thumbs" element={<AdminCharterThumbsPage />} />
               {/* Lor'Squad Academy Phase 1 (2026-04-26) — gated admin only
                   en prod (RoleRoute). Defense en profondeur : RoleRoute
                   redirige vers /co-pilote si non-admin tape l URL manuelle. */}
