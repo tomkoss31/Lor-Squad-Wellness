@@ -14,15 +14,28 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppContext } from "../context/AppContext";
 import { useCahierDeBord } from "../hooks/useCahierDeBord";
+import { ProspectFormModal } from "../components/prospect/ProspectFormModal";
 import {
   LISTE_100_FRANK_META,
   LISTE_100_STATUS_META,
   LISTE_100_TEMP_META,
   type EbeOutcome,
+  type Liste100Contact,
   type Liste100FrankCategory,
   type Liste100Status,
   type Liste100Temperature,
 } from "../types/cahier";
+
+/** Split "Karim Ben" → { firstName: "Karim", lastName: "Ben" }. */
+function splitFullName(full: string): { firstName: string; lastName: string } {
+  const parts = full.trim().split(/\s+/);
+  if (parts.length === 0) return { firstName: "", lastName: "" };
+  if (parts.length === 1) return { firstName: parts[0], lastName: "" };
+  return {
+    firstName: parts[0],
+    lastName: parts.slice(1).join(" "),
+  };
+}
 
 type Tab = "cobaye" | "liste" | "ebe";
 
@@ -375,6 +388,18 @@ function ListeSection({ cahier }: { cahier: ReturnType<typeof useCahierDeBord> }
   });
   const [filterTemp, setFilterTemp] = useState<Liste100Temperature | "all">("all");
   const [filterStatus, setFilterStatus] = useState<Liste100Status | "all">("all");
+  /** Connexion Liste 100 → Agenda (2026-05-04) : quand un contact passe en
+      `rdv_cale`, on propose de créer un prospect agenda pré-rempli. */
+  const [prospectModalContact, setProspectModalContact] = useState<Liste100Contact | null>(null);
+
+  async function handleStatusChange(contact: Liste100Contact, newStatus: Liste100Status) {
+    // Toujours persister le nouveau statut sur le contact
+    await cahier.updateContact(contact.id, { status: newStatus });
+    // Si on passe en `rdv_cale`, proposer la création d'un prospect agenda
+    if (newStatus === "rdv_cale" && contact.status !== "rdv_cale") {
+      setProspectModalContact(contact);
+    }
+  }
 
   async function handleAdd() {
     if (!draft.full_name.trim()) return;
@@ -565,7 +590,7 @@ function ListeSection({ cahier }: { cahier: ReturnType<typeof useCahierDeBord> }
                 </div>
                 <select
                   value={c.status}
-                  onChange={(e) => void cahier.updateContact(c.id, { status: e.target.value as Liste100Status })}
+                  onChange={(e) => void handleStatusChange(c, e.target.value as Liste100Status)}
                   style={{
                     padding: "4px 8px",
                     fontSize: 11,
@@ -604,6 +629,25 @@ function ListeSection({ cahier }: { cahier: ReturnType<typeof useCahierDeBord> }
             );
           })}
         </div>
+      )}
+
+      {/* Connexion Liste 100 → Agenda (2026-05-04) : quand un contact passe
+          en rdv_cale, on propose la création d'un prospect agenda. Le modal
+          est pré-rempli avec firstName/lastName splités + tel + source
+          "Bouche à oreille" (cohérent avec liste 100 = mes connaissances). */}
+      {prospectModalContact && (
+        <ProspectFormModal
+          prefill={{
+            ...splitFullName(prospectModalContact.full_name),
+            phone: prospectModalContact.contact_phone ?? undefined,
+            email: prospectModalContact.contact_email ?? undefined,
+            source: "Bouche à oreille",
+            sourceDetail: "Liste 100",
+            note: prospectModalContact.note ?? undefined,
+          }}
+          onClose={() => setProspectModalContact(null)}
+          onSaved={() => setProspectModalContact(null)}
+        />
       )}
     </div>
   );
