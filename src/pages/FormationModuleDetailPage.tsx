@@ -346,6 +346,7 @@ export function FormationModuleDetailPage() {
         >
           <button
             type="button"
+            className="ls-quiz-cta"
             onClick={() => {
               setMode("quiz");
               window.scrollTo({ top: 0, behavior: "smooth" });
@@ -360,23 +361,38 @@ export function FormationModuleDetailPage() {
               fontWeight: 800,
               fontSize: 15,
               cursor: "pointer",
-              boxShadow: `0 10px 24px -6px color-mix(in srgb, ${accentVar} 50%, transparent)`,
               letterSpacing: "0.01em",
-              transition: "transform 0.18s, filter 0.18s",
               maxWidth: "100%",
               textAlign: "center",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = "translateY(-2px)";
-              e.currentTarget.style.filter = "brightness(1.06)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = "none";
-              e.currentTarget.style.filter = "none";
+              ["--ls-quiz-cta-accent" as string]: accentVar,
             }}
           >
             ✅ Faire le quiz du module ({module.quiz.questions.length} question{module.quiz.questions.length > 1 ? "s" : ""})
           </button>
+          <style>{`
+            .ls-quiz-cta {
+              transition: transform 0.18s, filter 0.18s, box-shadow 0.18s;
+              animation: ls-quiz-cta-pulse 2.4s ease-in-out infinite;
+              box-shadow: 0 10px 24px -6px color-mix(in srgb, var(--ls-quiz-cta-accent) 50%, transparent);
+            }
+            .ls-quiz-cta:hover {
+              transform: translateY(-2px);
+              filter: brightness(1.06);
+              animation: none;
+              box-shadow: 0 14px 32px -6px color-mix(in srgb, var(--ls-quiz-cta-accent) 65%, transparent);
+            }
+            @keyframes ls-quiz-cta-pulse {
+              0%, 100% {
+                box-shadow: 0 10px 24px -6px color-mix(in srgb, var(--ls-quiz-cta-accent) 50%, transparent);
+              }
+              50% {
+                box-shadow: 0 14px 32px -6px color-mix(in srgb, var(--ls-quiz-cta-accent) 75%, transparent);
+              }
+            }
+            @media (prefers-reduced-motion: reduce) {
+              .ls-quiz-cta { animation: none; }
+            }
+          `}</style>
         </div>
       ) : null}
 
