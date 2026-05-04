@@ -193,7 +193,7 @@ Chacun de ces 5 cobayes peut devenir un client régulier ensuite. Et c'est ça q
     ancrage: "« Tu ne vends pas un produit. Tu partages une expérience que tu as vécue. »",
     action:
       "Si tu n'as pas encore ton pack starter (F1 + PDM + Aloe + Thé), commande-le aujourd'hui. Démarre demain matin avec ton 1er shake. Photographie-toi avant + chaque semaine + à J21. Tu auras ton 1er « avant/après » à raconter en cobaye crédible.",
-    relatedToolkitSlugs: ["bases-presentiel"],
+    relatedToolkitSlugs: ["bases-presentiel", "templates-suivi-jours"],
     lessons: [
       {
         id: "M1.A-L1",
@@ -254,11 +254,13 @@ Chacun de ces 5 cobayes peut devenir un client régulier ensuite. Et c'est ça q
 
 À J21, tu auras 1 ou 2 vraies choses à dire. Pas 10. **Pas de baratin.**
 
+:::gold
 **Structure simple en 4 lignes** :
-1. *« Avant, j'avais [X problème] »*
-2. *« J'ai testé [F1 + Aloe + Thé] pendant 21 jours »*
-3. *« Aujourd'hui, je [Y résultat concret] »*
-4. *« Et ce qui m'a surpris, c'est [Z détail inattendu] »*
+1. « Avant, j'avais **[X problème]** »
+2. « J'ai testé **[F1 + Aloe + Thé]** pendant 21 jours »
+3. « Aujourd'hui, je **[Y résultat concret]** »
+4. « Et ce qui m'a surpris, c'est **[Z détail inattendu]** »
+:::
 
 **Exemple Thomas** :
 > *« Avant, j'avais des coups de barre tous les jours à 15h. J'ai testé le shake F1 le matin et le thé l'après-midi pendant 21 jours. Aujourd'hui, mes après-midi sont stables. Ce qui m'a surpris, c'est que ma peau est nette en plus. »*
@@ -345,80 +347,65 @@ Chacun de ces 5 cobayes peut devenir un client régulier ensuite. Et c'est ça q
 
 Pour chaque produit : **ce que c'est** + **phrase clé** + **pour qui**.
 
----
-
-### 🥤 1. Formula 1 (F1) — le shake repas
+:::product-card
+### 🥤 Formula 1 (F1) — le shake repas
 
 **Ce que c'est** : un repas équilibré en poudre. 220 cal, 25 % protéines, 25 vitamines & minéraux. Multiples saveurs (vanille, chocolat, fraise, cookies&cream…).
 
 **Phrase clé** : *« Le repas malin du matin ou du midi quand t'as pas le temps. »*
 
-**Pour qui** :
-- Quelqu'un qui veut perdre du poids → remplace 1 ou 2 repas
-- Quelqu'un qui saute son petit-déj → c'est le 1er pas
-- Sportif qui veut un repas pratique avant/après séance
+**Pour qui** : perte de poids (remplace 1-2 repas) · saute son petit-déj · sportif (repas pratique avant/après séance)
+:::
 
----
-
-### 💪 2. Protein Drink Mix (PDM) — le boost protéines
+:::product-card
+### 💪 Protein Drink Mix (PDM) — le boost protéines
 
 **Ce que c'est** : 15 g de protéines végétales en poudre, ajoutables au shake F1 ou à part. Goût neutre, parfait à mixer.
 
 **Phrase clé** : *« +15 g de protéines pour rester rassasié plus longtemps. »*
 
-**Pour qui** :
-- Personne qui a faim 2h après le shake → on ajoute du PDM dans le F1
-- Sportif en sèche / prise de masse → augmente l'apport sans calories vides
-- Senior → maintien de la masse musculaire
+**Pour qui** : faim 2h après le shake → ajout dans F1 · sportif sèche/prise de masse · senior (maintien masse musculaire)
+:::
 
----
-
-### 🌿 3. Aloe Vera Concentré — l'allié digestion
+:::product-card
+### 🌿 Aloe Vera Concentré — l'allié digestion
 
 **Ce que c'est** : concentré d'aloe vera buvable, à diluer dans l'eau. 4 saveurs (mangue, original, fraise, citron-citron vert).
 
 **Phrase clé** : *« Mon réveil-corps : 1 verre le matin, ça nettoie. »*
 
-**Pour qui** :
-- Tout le monde, surtout digestion lente / ballonnements
-- Sportif → hydratation + apport
-- Tu peux en mettre dans ton eau de la journée
+**Pour qui** : tout le monde (digestion lente, ballonnements) · sportif (hydratation+) · à mettre dans son eau de la journée
+:::
 
----
-
-### 🍵 4. Thé Thermojetics — l'énergie sans café
+:::product-card
+### 🍵 Thé Thermojetics — l'énergie sans café
 
 **Ce que c'est** : poudre de thé concentré (vert, hibiscus, citron…). Se prépare chaud ou froid. 6-10 cal/cup.
 
 **Phrase clé** : *« Le coup de boost de l'aprèm sans le coup de barre du café. »*
 
-**Pour qui** :
-- Anti-fatigue 15h-18h
-- Quelqu'un qui veut réduire son café
-- Hydratation goutue (mieux qu'un soda)
+**Pour qui** : anti-fatigue 15h-18h · réduire son café · hydratation goutue (mieux qu'un soda)
+:::
 
----
-
-### ✨ 5. Coffret HLSkin — la routine beauté complète
+:::product-card
+### ✨ Coffret HLSkin — la routine beauté complète
 
 **Ce que c'est** : routine soin du visage Herbalife — nettoyage, hydratation, soin ciblé. Plusieurs gammes (Soothing Aloe, Radiant C, Anti-âge…).
 
 **Phrase clé** : *« Une routine simple matin & soir. Tu testes 14 jours, ta peau parle. »*
 
-**Pour qui** :
-- Femme (ou homme) qui veut une routine claire au lieu de 12 produits
-- Cliente après un programme F1 → on poursuit la transformation par la peau
-- Cadeau parfait à offrir comme « bilan beauté »
+**Pour qui** : femme/homme qui veut une routine claire (pas 12 produits) · cliente après programme F1 (poursuit la transfo) · cadeau « bilan beauté »
+:::
 
----
-
+:::gold
 ### 💡 Le pack starter Lor'Squad
 
-**F1 + PDM + Aloe + Thé** = **100 PV** = **234 € retail** (prix client).
+**F1 + PDM + Aloe + Thé = 100 PV = 234 € retail** (prix client).
 
-C'est le pack que tu vas proposer à 80 % de tes prospects. **Apprends-le par cœur** : tu peux pitcher dans n'importe quelle conversation en 5 secondes.
+C'est le pack que tu proposes à 80 % de tes prospects. **Apprends-le par cœur** — tu peux le pitcher dans n'importe quelle conversation en 5 secondes.
 
-> Le coffret HLSkin se rajoute en seconde commande quand le client est en confiance après les 21 premiers jours.`,
+Le coffret HLSkin se rajoute en seconde commande quand le client est en confiance après les 21 premiers jours.
+:::`,
       },
       {
         id: "M1.B-L2",
@@ -650,7 +637,7 @@ L'or se cache dans ta liste B — ceux que tu éliminerais d'office. Mets-les TO
     ancrage: "« Tu n'envoies pas un pitch. Tu envoies une invitation à un café. »",
     action:
       "Choisis 5 personnes dans ta liste de connaissances. Ouvre la boîte à outils → Scripts d'invitation → adapte 1 message à ton ton. Envoie aujourd'hui à ces 5 personnes. Note les réponses dans ta liste.",
-    relatedToolkitSlugs: ["scripts-invitation", "hooks-reseaux-sociaux"],
+    relatedToolkitSlugs: ["scripts-invitation", "hooks-reseaux-sociaux", "reveiller-contact-froid"],
     lessons: [
       {
         id: "M1.C-L1",
@@ -700,7 +687,7 @@ L'or se cache dans ta liste B — ceux que tu éliminerais d'office. Mets-les TO
 - *« Je vends du Herbalife, ça t'intéresse ? »* → tué d'emblée
 - *« Je voudrais te montrer une opportunité business »* → ferme tout
 
-> 📦 **Les 10 messages prêts à copier sont dans ta Boîte à outils** → outil "Scripts d'invitation". Choisis-en 1, adapte 2-3 mots à ton ton, envoie.`,
+> 📦 **Les 10 messages prêts à copier sont dans ta Boîte à outils** → [Scripts d'invitation →](/formation/boite-a-outils/scripts-invitation). Choisis-en 1, adapte 2-3 mots à ton ton, envoie.`,
       },
       {
         id: "M1.C-L3",
@@ -818,7 +805,7 @@ L'or se cache dans ta liste B — ceux que tu éliminerais d'office. Mets-les TO
 
 > 90 % des distri pensent que le bilan c'est *« suivre la trame »*. Faux. La trame, l'app la fait. **Toi, ton vrai job c'est l'expérience.**
 
-📦 **Le déroulé pas-à-pas des 10 étapes vit dans ta Boîte à outils** → outil "Le bilan EBE — 10 étapes pro". Cite-le quand tu te demandes "comment je fais quoi". Ce module-ci ne le redouble pas.`
+📦 **Le déroulé pas-à-pas des 10 étapes vit dans ta Boîte à outils** → [Le bilan EBE — 10 étapes pro →](/formation/boite-a-outils/bases-presentiel). Cite-le quand tu te demandes "comment je fais quoi". Ce module-ci ne le redouble pas.`
       },
       {
         id: "M1.3-L2",
@@ -884,7 +871,7 @@ C'est cette voix qui transforme une mesure en prise de conscience. Sans drame. S
         durationMin: 1,
         contentMarkdown: `## La phrase magique des recos
 
-📦 **Le script complet est dans ta Boîte à outils** → outil "La phrase magique pour 3 recos". Ce module ne le re-cite pas.
+📦 **Le script complet est dans ta Boîte à outils** → [La phrase magique pour 3 recos →](/formation/boite-a-outils/phrase-magique-recos). Ce module ne le re-cite pas.
 
 **Ici on parle de la POSTURE** au moment où tu la dis :
 
@@ -980,6 +967,7 @@ C'est cette voix qui transforme une mesure en prise de conscience. Sans drame. S
       "presentation-programme-script",
       "templates-suivi-jours",
       "objections-reponses",
+      "phrase-magique-recos",
     ],
     lessons: [
       {
@@ -1012,7 +1000,7 @@ C'est cette voix qui transforme une mesure en prise de conscience. Sans drame. S
 - Si "je vais réfléchir" → *« Pas de souci. Sur quoi tu veux réfléchir précisément ? »* (objection à creuser, pas à fuir)
 - Si non → tu n'insistes pas, tu demandes les recos
 
-> 📦 **Le script complet est dans la Boîte à outils** → outil "Script de présentation programme — version 4 semaines". Apprends-le, adapte ton ton, mais ne change pas la structure.`,
+> 📦 **Le script complet est dans la Boîte à outils** → [Script de présentation programme — 4 semaines →](/formation/boite-a-outils/presentation-programme-script). Apprends-le, adapte ton ton, mais ne change pas la structure.`,
       },
       {
         id: "M1.D-L2",
@@ -1024,7 +1012,9 @@ C'est cette voix qui transforme une mesure en prise de conscience. Sans drame. S
 
 Une seule phrase, **dite avec ton ton et ta vraie voix** :
 
-> *« Mon rôle n'est pas de te vendre des produits. Mon rôle, c'est que dans 30 jours, tu sois fier·e de toi. Je te propose de tester avec moi pendant 30 jours, et au bout de ces 30 jours, on regarde ensemble. Ça te parle ? »*
+:::phrase-cle
+Mon rôle n'est pas de te vendre des produits. Mon rôle, c'est que dans 30 jours, tu sois fier·e de toi. Je te propose de tester avec moi pendant 30 jours, et au bout de ces 30 jours, on regarde ensemble. Ça te parle ?
+:::
 
 **Pourquoi ça marche** :
 - *« Mon rôle n'est pas de te vendre »* → casse l'objection préventive "tu veux me vendre"
@@ -1063,7 +1053,7 @@ Tu as fait un super EBE, présenté le programme, la personne a dit oui, elle es
 - Sans J+1 : 50 % des clients abandonnent à J+7
 - Avec J+1 : **80 %** des clients tiennent à J+30 et re-commandent
 
-> 📦 **Les 5 templates J+1 / J+3 / J+7 / J+14 / J+30 sont dans ta Boîte à outils** → outil "Templates de suivi". Bloque-toi 10 min par jour pour les envoyer systématiquement.`,
+> 📦 **Les 5 templates J+1 / J+3 / J+7 / J+14 / J+30 sont dans ta Boîte à outils** → [Templates de suivi →](/formation/boite-a-outils/templates-suivi-jours). Bloque-toi 10 min par jour pour les envoyer systématiquement.`,
       },
     ],
     quiz: {
@@ -1808,7 +1798,7 @@ Même quand la personne dit oui, **elle oublie**.
 - Si la visio a closingé : tu remercies + tu actives J+1 dès le lendemain
 - Si elle a échoué : qu'est-ce que ton sponsor a senti que toi tu n'avais pas senti ?
 
-> 📦 **Le protocole détaillé est dans la Boîte à outils** → outil "La Visio à 3 — le multiplicateur de force". Imprime-le, garde-le sous les yeux pour ta première fois.`,
+> 📦 **Le protocole détaillé est dans la Boîte à outils** → [La Visio à 3 — le multiplicateur de force →](/formation/boite-a-outils/visio-a-3-protocole). Imprime-le, garde-le sous les yeux pour ta première fois.`,
       },
     ],
     quiz: {
