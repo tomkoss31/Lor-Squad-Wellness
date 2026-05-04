@@ -142,17 +142,22 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
           question: "Sponsor Herbalife et coach référent Lor'Squad : quelle est la différence ?",
           answers: [
             "Aucune, c'est forcément la même personne",
-            "Le sponsor te paie tes commissions Herbalife · le coach te suit au quotidien dans Lor'Squad",
+            "Le sponsor structure mon lignage Herbalife (Herbalife le rémunère via des bonus de leadership) · le coach m'accompagne au quotidien dans Lor'Squad",
             "Le sponsor est optionnel, le coach est obligatoire",
             "Le sponsor est dans Lor'Squad, le coach est externe",
           ],
           correctIndex: 1,
           wrongAnswerHints: {
             0: "C'est souvent la même personne, mais pas toujours — d'où les 2 champs séparés.",
-            2: "Inverse : le sponsor structure ton lignage Herbalife (obligatoire pour toucher tes commissions). Le coach, lui, c'est ton suivi humain quotidien.",
+            2: "Inverse : le sponsor structure ton lignage Herbalife (obligatoire à l'inscription). Le coach Lor'Squad, lui, c'est ton suivi humain quotidien.",
             3: "L'inverse : le sponsor vient d'Herbalife (corporate), le coach est interne au club Lor'Squad.",
           },
-          explanation: "👉 Sponsor = arbre Herbalife pour les commissions (ID format 21Y0103610 ou 21XY010361). 👉 Coach référent = qui te suit dans Lor'Squad au quotidien (notifié si tu décroches). Le plus souvent c'est la même personne, mais on garde 2 champs pour les cas où non.",
+          // ⚠️ JURIDIQUE (2026-05-04) : Herbalife paie CHAQUE distri
+          // directement. Le sponsor ne reverse JAMAIS de commissions à
+          // ses filleuls — sinon ce serait une vente pyramidale illégale.
+          // Le sponsor touche ses propres bonus de leadership versés par
+          // Herbalife en cascade selon le plan marketing officiel.
+          explanation: "👉 Sponsor = parrain dans l'arbre Herbalife (ID format 21Y0103610 ou 21XY010361). Herbalife te paie directement TES commissions, et verse à ton sponsor SES propres bonus de leadership selon le plan marketing — il ne te reverse jamais rien lui-même. 👉 Coach référent = qui te suit dans Lor'Squad au quotidien (notifié si tu décroches). Le plus souvent c'est la même personne, mais on garde 2 champs pour les cas où non.",
         },
         {
           id: "q2",
