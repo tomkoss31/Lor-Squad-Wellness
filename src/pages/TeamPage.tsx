@@ -19,6 +19,13 @@ import { WeeklyRecapCard } from "../features/gamification/components/WeeklyRecap
 import { useAppContext } from "../context/AppContext";
 import type { Client, Prospect } from "../types/domain";
 import { DistriQuickModal } from "../components/team/DistriQuickModal";
+// Hub équipe centralisé (2026-05-04) — 5 onglets : Vue d'ensemble (XP),
+// Engagement, Apprentissage, Arbre lignée, Gamification.
+import { useTeamEngagement } from "../hooks/useTeamEngagement";
+import { XpPodium } from "../components/team/XpPodium";
+import { EngagementTable } from "../components/team/EngagementTable";
+import { LearningGrid } from "../components/team/LearningGrid";
+import { TeamMemberDrilldownModal } from "../components/team/TeamMemberDrilldownModal";
 import {
   useTeamTree,
   useDistributorStats,
@@ -74,7 +81,10 @@ function initialsOf(name: string): string {
 }
 
 // ═══ Composant principal ═════════════════════════════════════════════════
-type TeamTab = "team" | "gamification";
+// Hub équipe (2026-05-04) : ajout de 3 onglets pour centraliser le pilotage
+// (overview XP, engagement par distri, apprentissage Academy + Formation).
+// Les 2 anciens onglets (team = arbre, gamification) restent compatibles.
+type TeamTab = "overview" | "engagement" | "learning" | "team" | "gamification";
 
 export function TeamPage() {
   const { currentUser, users, clients, prospects, followUps } = useAppContext();
@@ -82,10 +92,11 @@ export function TeamPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   // Quick modal au click sur un distri (Thomas demande UX simplifiee 2026-04-29)
   const [quickModalUserId, setQuickModalUserId] = useState<string | null>(null);
-  // Split visuel /team en 2 onglets pour eviter la surcharge (chantier
-  // gamification 2026-04-29) : 'team' = arbre + activite + Academy
-  // leaderboard ; 'gamification' = challenge bilans + saison + recap.
-  const [activeTab, setActiveTab] = useState<TeamTab>("team");
+  // Hub équipe (2026-05-04) : 5 onglets, défaut "overview" pour donner la
+  // vue d'ensemble en premier (KPIs + podium XP).
+  const [activeTab, setActiveTab] = useState<TeamTab>("overview");
+  // Drill-down modale au click sur un membre (depuis n'importe quel onglet).
+  const [drilldownMemberId, setDrilldownMemberId] = useState<string | null>(null);
 
   // Chantier Team Couple Display (2026-04-26) : si Thomas + Mélanie sont
   // résolus dans `users`, on bascule en "couple mode" — 1 seule card
@@ -224,6 +235,15 @@ export function TeamPage() {
     return [merged, ...otherEntries].sort((a, b) => b.score - a.score).slice(0, 3);
   }, [useCoupleMode, rawRanking, coupleMemberIds]);
 
+  // Hub équipe (2026-05-04) : engagement aggregé pour tous les membres du
+  // sous-arbre. Sert pour onglets Vue d'ensemble, Engagement, Apprentissage.
+  const engagementRootId = useCoupleMode ? coupleMemberIds[0] ?? rootId : rootId;
+  const { members: engagementMembers, loading: engagementLoading } =
+    useTeamEngagement(engagementRootId);
+  const drilldownMember = drilldownMemberId
+    ? engagementMembers.find((m) => m.user_id === drilldownMemberId) ?? null
+    : null;
+
   if (!currentUser || !rootUser) {
     return (
       <Card>
@@ -242,11 +262,14 @@ export function TeamPage() {
         subtitle="Arborescence de parrainage, stats par distri et classement du mois."
       />
 
-      {/* Tabs split (2026-04-29) — refonte premium V2 chips pill */}
+      {/* Tabs hub équipe (2026-05-04) — 5 onglets pour centraliser le pilotage */}
       <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
         {([
-          { key: "team" as TeamTab, label: "Équipe", icon: "👥", color: "var(--ls-teal)" },
-          { key: "gamification" as TeamTab, label: "Gamification & Challenges", icon: "🎮", color: "var(--ls-gold)" },
+          { key: "overview" as TeamTab, label: "Vue d'ensemble", icon: "🏆", color: "var(--ls-gold)" },
+          { key: "engagement" as TeamTab, label: "Engagement", icon: "🔥", color: "var(--ls-coral)" },
+          { key: "learning" as TeamTab, label: "Apprentissage", icon: "🎓", color: "var(--ls-purple)" },
+          { key: "team" as TeamTab, label: "Arbre lignée", icon: "🌳", color: "var(--ls-teal)" },
+          { key: "gamification" as TeamTab, label: "Gamification", icon: "🎮", color: "var(--ls-gold)" },
         ]).map((t) => {
           const isActive = activeTab === t.key;
           return (
@@ -294,7 +317,106 @@ export function TeamPage() {
         })}
       </div>
 
-      {/* ═══ Onglet Équipe (defaut) — arbre + activite + Academy LB ═════ */}
+      {/* ═══ Onglet Vue d'ensemble (NEW 2026-05-04) — KPIs + podium XP ════ */}
+      {activeTab === "overview" ? (
+        <>
+          <TeamHeroStats
+            membersCount={rows.length}
+            teamClients={(() => {
+              const memberIds = new Set(rows.map((r) => r.user_id));
+              return clients.filter((c) => memberIds.has(c.distributorId));
+            })()}
+            teamProspects={(() => {
+              const memberIds = new Set(rows.map((r) => r.user_id));
+              return prospects.filter((p) => memberIds.has(p.distributorId));
+            })()}
+          />
+
+          <Card className="space-y-4">
+            <div>
+              <p className="eyebrow-label">🏆 Top 3 engagement</p>
+              <h2 className="mt-2 text-xl font-bold text-white" style={{ fontFamily: "Syne, sans-serif" }}>
+                Le podium XP de ton équipe
+              </h2>
+              <p style={{ marginTop: 6, fontSize: 13, color: "var(--ls-text-muted)" }}>
+                Classement par XP totaux : Academy + bilans + RDV + messages + formation + connexions quotidiennes.
+                Click sur un membre pour le détail complet.
+              </p>
+            </div>
+            {engagementLoading ? (
+              <div style={{ padding: "30px 20px", textAlign: "center", color: "var(--ls-text-muted)", fontSize: 13 }}>
+                Chargement…
+              </div>
+            ) : (
+              <XpPodium
+                members={engagementMembers}
+                excludeRootId={engagementRootId}
+                onMemberClick={setDrilldownMemberId}
+              />
+            )}
+          </Card>
+        </>
+      ) : null}
+
+      {/* ═══ Onglet Engagement (NEW 2026-05-04) — table sortable ══════════ */}
+      {activeTab === "engagement" ? (
+        <Card className="space-y-4">
+          <div>
+            <p className="eyebrow-label">🔥 Pilotage engagement</p>
+            <h2 className="mt-2 text-xl font-bold text-white" style={{ fontFamily: "Syne, sans-serif" }}>
+              Qui se connecte, qui agit, qui décroche
+            </h2>
+            <p style={{ marginTop: 6, fontSize: 13, color: "var(--ls-text-muted)" }}>
+              Filtre par statut, trie par colonne. Click sur une ligne pour voir le détail complet du membre.
+            </p>
+          </div>
+          {engagementLoading ? (
+            <div style={{ padding: "30px 20px", textAlign: "center", color: "var(--ls-text-muted)", fontSize: 13 }}>
+              Chargement…
+            </div>
+          ) : (
+            <EngagementTable
+              members={engagementMembers}
+              excludeRootId={engagementRootId}
+              onMemberClick={setDrilldownMemberId}
+            />
+          )}
+        </Card>
+      ) : null}
+
+      {/* ═══ Onglet Apprentissage (NEW 2026-05-04) — Academy + Formation ══ */}
+      {activeTab === "learning" ? (
+        <>
+          <Card className="space-y-4">
+            <div>
+              <p className="eyebrow-label">🎓 Progression de l'équipe</p>
+              <h2 className="mt-2 text-xl font-bold text-white" style={{ fontFamily: "Syne, sans-serif" }}>
+                Academy & Formation par membre
+              </h2>
+              <p style={{ marginTop: 6, fontSize: 13, color: "var(--ls-text-muted)" }}>
+                Visualise en 1 vue la progression Academy (12 sections) et Formation pyramide (N1/N2/N3).
+                Click sur une carte pour voir le détail XP + activité.
+              </p>
+            </div>
+            {engagementLoading ? (
+              <div style={{ padding: "30px 20px", textAlign: "center", color: "var(--ls-text-muted)", fontSize: 13 }}>
+                Chargement…
+              </div>
+            ) : (
+              <LearningGrid
+                members={engagementMembers}
+                excludeRootId={engagementRootId}
+                onMemberClick={setDrilldownMemberId}
+              />
+            )}
+          </Card>
+
+          {/* Leaderboard Academy classique (déplacé depuis l'onglet Équipe). */}
+          <AcademyLeaderboard />
+        </>
+      ) : null}
+
+      {/* ═══ Onglet Arbre lignée — arbre + fiche détail (existant) ══════ */}
       {activeTab === "team" ? (
         <>
 
@@ -403,8 +525,8 @@ export function TeamPage() {
         />
       ) : null}
 
-      {/* Leaderboard Academy (Direction 7 — 2026-04-28) */}
-      <AcademyLeaderboard />
+      {/* Note 2026-05-04 : AcademyLeaderboard déplacé dans l'onglet
+          Apprentissage (cohérence pédagogique). */}
 
         </>
       ) : null}
@@ -454,6 +576,14 @@ export function TeamPage() {
           />
         );
       })()}
+
+      {/* Drill-down membre (2026-05-04) — déclenché depuis Vue d'ensemble,
+          Engagement ou Apprentissage. Affiche XP breakdown + Academy +
+          Formation + Activité + Engagement + CTA fiche complète. */}
+      <TeamMemberDrilldownModal
+        member={drilldownMember}
+        onClose={() => setDrilldownMemberId(null)}
+      />
     </div>
   );
 }
