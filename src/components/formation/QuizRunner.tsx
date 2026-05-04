@@ -24,6 +24,7 @@ import type {
   FormationQcmQuestion,
 } from "../../data/formation/types";
 import { ConfettiBurst } from "../../features/academy/components/ConfettiBurst";
+import { QuizAnswersDetailRenderer } from "./QuizAnswersDetailRenderer";
 
 // ─── Anti-perte : sauvegarde brouillon free_text en localStorage ───────────
 const DRAFT_STORAGE_PREFIX = "ls_formation_quiz_draft_";
@@ -235,36 +236,94 @@ export function QuizRunner({ module, levelSlug, onSubmitDone }: Props) {
 
   // ─── Rendu post-submission (pending sponsor) ────────────────────────────
   if (submittedResult && !submittedResult.autoValidated) {
+    // Reconstitue les réponses pour le renderer (pas besoin de fetch DB).
+    const localAnswers = qcmQuestions.map((q) => ({
+      questionId: q.id,
+      chosenIndex: qcmAnswers[q.id],
+      correctIndex: q.correctIndex,
+      isCorrect: qcmAnswers[q.id] === q.correctIndex,
+    }));
     return (
-      <div
-        style={{
-          padding: 28,
-          textAlign: "center",
-          fontFamily: "DM Sans, sans-serif",
-          background: "var(--ls-surface)",
-          border: "0.5px solid var(--ls-border)",
-          borderTop: "3px solid var(--ls-gold)",
-          borderRadius: 18,
-        }}
-      >
-        <div style={{ fontSize: 44, marginBottom: 12 }} aria-hidden="true">
-          📬
-        </div>
-        <h2
+      <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+        <div
           style={{
-            fontFamily: "Syne, serif",
-            fontSize: 22,
-            fontWeight: 800,
-            margin: "0 0 8px",
-            color: "var(--ls-text)",
+            padding: 28,
+            textAlign: "center",
+            fontFamily: "DM Sans, sans-serif",
+            background: "var(--ls-surface)",
+            border: "0.5px solid var(--ls-border)",
+            borderTop: "3px solid var(--ls-gold)",
+            borderRadius: 18,
           }}
         >
-          Soumis pour validation
-        </h2>
-        <p style={{ fontSize: 13.5, color: "var(--ls-text-muted)", margin: 0, lineHeight: 1.55 }}>
-          QCM {submittedResult.score}% — ton sponsor va relire tes réponses et te répondre sous 48h.
-          Tu seras notifié.
-        </p>
+          <div style={{ fontSize: 44, marginBottom: 12 }} aria-hidden="true">
+            📬
+          </div>
+          <h2
+            style={{
+              fontFamily: "Syne, serif",
+              fontSize: 22,
+              fontWeight: 800,
+              margin: "0 0 8px",
+              color: "var(--ls-text)",
+            }}
+          >
+            Soumis pour validation
+          </h2>
+          <p style={{ fontSize: 13.5, color: "var(--ls-text-muted)", margin: 0, lineHeight: 1.55 }}>
+            QCM {submittedResult.score}% — ton sponsor va relire tes réponses libres et te répondre sous 48h. En attendant, profite-en pour relire ci-dessous les bonnes réponses.
+          </p>
+        </div>
+
+        {/* Détail des QCM (visible distri pour apprentissage) */}
+        <div
+          style={{
+            padding: "16px 18px",
+            background: "var(--ls-surface)",
+            border: "0.5px solid var(--ls-border)",
+            borderRadius: 14,
+            fontFamily: "DM Sans, sans-serif",
+          }}
+        >
+          <div
+            style={{
+              fontSize: 10,
+              letterSpacing: "0.1em",
+              textTransform: "uppercase",
+              fontWeight: 700,
+              color: "var(--ls-gold)",
+              marginBottom: 10,
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+            }}
+          >
+            <span aria-hidden="true">📝</span> Tu peux relire tes erreurs
+          </div>
+          <QuizAnswersDetailRenderer
+            qcmQuestions={qcmQuestions}
+            answers={localAnswers}
+            audience="distri"
+          />
+        </div>
+
+        <button
+          type="button"
+          onClick={() => navigate(`/formation/parcours/${levelSlug}`)}
+          style={{
+            alignSelf: "center",
+            padding: "10px 22px",
+            borderRadius: 999,
+            border: "0.5px solid var(--ls-border)",
+            background: "transparent",
+            color: "var(--ls-text-muted)",
+            fontFamily: "DM Sans, sans-serif",
+            fontSize: 13,
+            cursor: "pointer",
+          }}
+        >
+          ← Retour au parcours
+        </button>
       </div>
     );
   }
