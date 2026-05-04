@@ -52,13 +52,27 @@ export function AnnouncementSpotlight() {
     currentUser?.id ?? null,
   );
 
+  // Bug fix Mélanie (2026-05-04) : "Plus tard" rouvrait instantanément le
+  // popup parce que useMemo gardait le même candidate (cache) et useEffect
+  // détectait open=false → ré-ouvrait. La croix enchaînait sur l'annonce
+  // suivante (markRead → readIds change → candidate devient le suivant).
+  //
+  // Solution : 1 popup MAX par session. Toute action (Découvrir / Plus tard
+  // / Croix) verrouille définitivement le système pour la session courante.
+  // L'utilisateur retrouve les autres nouveautés via la cloche dans le
+  // header ou la page /developpement/nouveautes. Persistance localStorage
+  // (ls-spotlight-shown-<id>) gère la non-réouverture J+1 max 1 popup/jour.
+  const [dismissedThisSession, setDismissedThisSession] = useState<Set<string>>(new Set());
+
   const candidate: AppAnnouncement | null = useMemo(() => {
     if (loading) return null;
-    // 1ère annonce non lue ET pas déjà spotlightée aujourd'hui
+    // Verrou session : si on a déjà dismissé une annonce ce mount, on
+    // n'enchaîne plus → pas de bombardement.
+    if (dismissedThisSession.size > 0) return null;
     return (
       announcements.find((a) => !readIds.has(a.id) && !spotlightShownToday(a.id)) ?? null
     );
-  }, [announcements, readIds, loading]);
+  }, [announcements, readIds, loading, dismissedThisSession]);
 
   const [open, setOpen] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -72,25 +86,42 @@ export function AnnouncementSpotlight() {
     }
   }, [candidate, open]);
 
+  /** Action commune à toutes les fermetures : verrouille la session +
+      ferme le popup. Si markAsRead, écrit aussi en DB pour faire
+      disparaître l'annonce de la cloche. */
+  const closeForSession = (currentId: string, markAsRead: boolean) => {
+    setDismissedThisSession((prev) => {
+      const next = new Set(prev);
+      next.add(currentId);
+      return next;
+    });
+    setOpen(false);
+    if (markAsRead) {
+      void markRead(currentId);
+    }
+  };
+
   if (!open || !activeId) return null;
   const ann = announcements.find((a) => a.id === activeId);
   if (!ann) return null;
 
   const accent = ACCENT_TO_TOKEN[ann.accent];
 
-  const handleDiscover = async () => {
-    await markRead(ann.id);
-    setOpen(false);
+  const handleDiscover = () => {
+    closeForSession(ann.id, true);
     if (ann.link_path) navigate(ann.link_path);
   };
 
   const handleLater = () => {
-    setOpen(false);
+    // "Plus tard" = pas markRead (l'annonce reste dans la cloche pour
+    // que l'user puisse y revenir). Mais on verrouille la session pour
+    // ne pas réouvrir le popup tout de suite.
+    closeForSession(ann.id, false);
   };
 
-  const handleDismiss = async () => {
-    await markRead(ann.id);
-    setOpen(false);
+  const handleDismiss = () => {
+    // Croix = markRead (l'user a vu, on considère que c'est lu).
+    closeForSession(ann.id, true);
   };
 
   return (
