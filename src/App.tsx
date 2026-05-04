@@ -291,6 +291,12 @@ const AdminCharterThumbsPage = lazy(() =>
     default: module.AdminCharterThumbsPage,
   })),
 );
+// Cahier de bord du distri (2026-05-04) — 21j cobaye + liste 100 + journal EBE.
+const CahierDeBordPage = lazy(() =>
+  import("./pages/CahierDeBordPage").then((module) => ({
+    default: module.CahierDeBordPage,
+  })),
+);
 const FormationCalculatorPage = lazy(() =>
   import("./pages/FormationCalculatorPage").then((module) => ({
     default: module.FormationCalculatorPage
@@ -411,6 +417,9 @@ export default function App() {
               {/* Outil admin : génération des PNG thumbnails du sélecteur de
                   template charte. Admin only (vérif côté composant). */}
               <Route path="admin/charter-thumbs" element={<AdminCharterThumbsPage />} />
+              {/* Cahier de bord du distri (2026-05-04) — 21j cobaye, liste 100,
+                  journal EBE perso. Strictement perso (RLS own + admin). */}
+              <Route path="cahier-de-bord" element={<CahierDeBordPage />} />
               {/* Lor'Squad Academy Phase 1 (2026-04-26) — gated admin only
                   en prod (RoleRoute). Defense en profondeur : RoleRoute
                   redirige vers /co-pilote si non-admin tape l URL manuelle. */}
