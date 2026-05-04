@@ -65,12 +65,14 @@ interface Props {
   levelSlug: string;
   /** Callback quand le quiz est soumis avec succes (parent peut reload progression). */
   onSubmitDone?: () => void;
+  /** Callback "annuler / retour aux leçons" depuis le quiz. */
+  onCancel?: () => void;
 }
 
 type QcmAnswerMap = Record<string, number>;
 type FreeTextAnswerMap = Record<string, string>;
 
-export function QuizRunner({ module, levelSlug, onSubmitDone }: Props) {
+export function QuizRunner({ module, levelSlug, onSubmitDone, onCancel }: Props) {
   const navigate = useNavigate();
   const { submitModule, busy } = useFormationActions();
 
@@ -83,6 +85,16 @@ export function QuizRunner({ module, levelSlug, onSubmitDone }: Props) {
     autoValidated: boolean;
     score: number;
   }>(null);
+
+  // UX safety (2026-05-03) : écran intro de confirmation avant que les
+  // questions s'affichent. Évite les clics par erreur (cf. retour Mandy
+  // "j'ai cliqué sans faire exprès et n'arrivais pas à faire retour").
+  // Si un brouillon existe déjà → on saute l'intro (l'user reprend là
+  // où il en était).
+  const hasDraft =
+    Object.keys(initialDraft.qcm).length > 0 ||
+    Object.values(initialDraft.free).some((v) => v.trim().length > 0);
+  const [started, setStarted] = useState(hasDraft);
 
   // Persiste le brouillon en localStorage a chaque modif (debounce-free,
   // setItem est rapide).
@@ -328,6 +340,98 @@ export function QuizRunner({ module, levelSlug, onSubmitDone }: Props) {
     );
   }
 
+  // ─── Écran intro (avant démarrage) ──────────────────────────────────────
+  // UX safety : oblige le user à confirmer avant de voir les questions.
+  if (!started) {
+    return (
+      <div
+        style={{
+          padding: 28,
+          textAlign: "center",
+          fontFamily: "DM Sans, sans-serif",
+          background:
+            "linear-gradient(135deg, color-mix(in srgb, var(--ls-gold) 8%, var(--ls-surface)) 0%, var(--ls-surface) 100%)",
+          border: "0.5px solid color-mix(in srgb, var(--ls-gold) 30%, var(--ls-border))",
+          borderTop: "3px solid var(--ls-gold)",
+          borderRadius: 18,
+        }}
+      >
+        <div style={{ fontSize: 44, marginBottom: 12 }} aria-hidden="true">
+          ✦
+        </div>
+        <h2
+          style={{
+            fontFamily: "Syne, serif",
+            fontSize: 22,
+            fontWeight: 800,
+            margin: "0 0 10px",
+            color: "var(--ls-text)",
+            letterSpacing: "-0.01em",
+          }}
+        >
+          Tu es prêt·e ?
+        </h2>
+        <p
+          style={{
+            fontSize: 13.5,
+            color: "var(--ls-text-muted)",
+            margin: "0 0 20px",
+            lineHeight: 1.6,
+            maxWidth: 460,
+            marginInline: "auto",
+          }}
+        >
+          {qcmQuestions.length} question{qcmQuestions.length > 1 ? "s" : ""} QCM
+          {freeQuestions.length > 0
+            ? ` + ${freeQuestions.length} réponse${freeQuestions.length > 1 ? "s" : ""} libre${freeQuestions.length > 1 ? "s" : ""}`
+            : ""}
+          . Prends ton temps pour bien lire chaque question. Pas de stress —
+          tant que tu n'as pas cliqué « Soumettre », tu peux annuler et
+          revenir aux leçons.
+        </p>
+        <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
+          <button
+            type="button"
+            onClick={() => onCancel?.()}
+            disabled={!onCancel}
+            style={{
+              padding: "12px 22px",
+              borderRadius: 999,
+              border: "0.5px solid var(--ls-border)",
+              background: "transparent",
+              color: "var(--ls-text-muted)",
+              fontFamily: "DM Sans, sans-serif",
+              fontSize: 13,
+              cursor: onCancel ? "pointer" : "default",
+              opacity: onCancel ? 1 : 0.4,
+            }}
+          >
+            ← Revenir aux leçons
+          </button>
+          <button
+            type="button"
+            onClick={() => setStarted(true)}
+            style={{
+              padding: "12px 28px",
+              borderRadius: 999,
+              border: "none",
+              background:
+                "linear-gradient(135deg, var(--ls-gold) 0%, color-mix(in srgb, var(--ls-gold) 70%, var(--ls-coral)) 100%)",
+              color: "var(--ls-bg)",
+              fontFamily: "Syne, serif",
+              fontWeight: 700,
+              fontSize: 14,
+              cursor: "pointer",
+              boxShadow: "0 6px 16px -4px color-mix(in srgb, var(--ls-gold) 35%, transparent)",
+            }}
+          >
+            🚀 Lancer le quiz
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   // ─── Rendu formulaire principal ─────────────────────────────────────────
   // Compteurs de progression
   const qcmAnsweredCount = qcmQuestions.filter((q) => qcmAnswers[q.id] !== undefined).length;
@@ -356,6 +460,32 @@ export function QuizRunner({ module, levelSlug, onSubmitDone }: Props) {
         comptent dans ton score. Les réponses libres ne comptent pas mais sont obligatoires —
         ton sponsor les lira. Si tu fais 100% des QCM = validation auto + félicitations 🎉
       </div>
+
+      {/* Bouton "Revenir aux leçons" toujours visible (UX safety 2026-05-03) */}
+      {onCancel && (
+        <button
+          type="button"
+          onClick={() => {
+            const confirmExit = window.confirm(
+              "Quitter le quiz ?\n\nTes réponses en cours seront sauvegardées. Tu pourras reprendre quand tu veux.",
+            );
+            if (confirmExit) onCancel();
+          }}
+          style={{
+            alignSelf: "flex-start",
+            padding: "6px 14px",
+            borderRadius: 999,
+            border: "0.5px solid var(--ls-border)",
+            background: "transparent",
+            color: "var(--ls-text-muted)",
+            fontFamily: "DM Sans, sans-serif",
+            fontSize: 11.5,
+            cursor: "pointer",
+          }}
+        >
+          ← Revenir aux leçons
+        </button>
+      )}
 
       {/* Indicateur progression quiz */}
       <div

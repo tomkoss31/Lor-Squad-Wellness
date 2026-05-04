@@ -298,6 +298,7 @@ export function FormationModuleDetailPage() {
             module={module}
             levelSlug={level.slug}
             onSubmitDone={() => void reloadProgress()}
+            onCancel={() => setMode("lecture")}
           />
         </section>
       ) : null}
