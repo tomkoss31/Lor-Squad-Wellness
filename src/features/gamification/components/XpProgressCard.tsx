@@ -43,7 +43,7 @@ const XP_RULES = [
     emoji: "🎓",
     label: "Section Academy complétée",
     xp: 50,
-    cap: "max 8 sections = 400 XP",
+    cap: "max 12 sections = 600 XP",
   },
   {
     emoji: "📋",
