@@ -110,6 +110,7 @@ export function CahierDeBordPage() {
           <button
             key={t.key}
             type="button"
+            data-tour-id={`cahier-tab-${t.key}`}
             onClick={() => setTab(t.key)}
             style={{
               padding: "10px 18px",

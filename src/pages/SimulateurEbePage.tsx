@@ -272,7 +272,7 @@ export function SimulateurEbePage() {
         subtitle="Mène un EBE complet face à un prospect scripté. 6 étapes, des choix scorés, un debrief sans pitié."
       />
 
-      <div style={{ display: "grid", gap: 14, marginTop: 20 }}>
+      <div data-tour-id="simulateur-scenarios" style={{ display: "grid", gap: 14, marginTop: 20 }}>
         {EBE_SCENARIOS.map((sc) => (
           <button key={sc.id} type="button" onClick={() => setScenarioId(sc.id)} style={scenarioCard(sc.accent)}>
             <div style={{ display: "flex", alignItems: "flex-start", gap: 14 }}>

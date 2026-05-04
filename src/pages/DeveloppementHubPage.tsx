@@ -134,6 +134,7 @@ export function DeveloppementHubPage() {
           <button
             key={card.id}
             type="button"
+            data-tour-id={`hub-card-${card.id}`}
             onClick={() => navigate(card.path)}
             style={{
               ...cardStyle(card.accent),
