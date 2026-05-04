@@ -12,7 +12,11 @@ import { useCallback, useEffect, useState } from "react";
 import { useAppContext } from "../../../context/AppContext";
 import { getSupabaseClient } from "../../../services/supabaseClient";
 
-const LS_PREFIX = "lorsquad-tour-";
+// Bump v2 (2026-05-04) : reset Academy + ajout 4 sections invalide les
+// caches locaux. L'ancien prefix "lorsquad-tour-" reste orphelin dans le
+// localStorage des users (encombrement minime), mais ne sert plus —
+// chaque tour re-sync depuis la DB au prochain load (source de verite).
+const LS_PREFIX = "lorsquad-tour-v2-";
 
 export interface TourProgressState {
   loaded: boolean;
