@@ -1320,6 +1320,178 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
       ],
     },
   },
+  // ─── Section Académie : nouveaux outils Lor'Squad (2026-05-04) ─────────
+  // Forme à toutes les features livrées en mai 2026 : Hub Développement,
+  // Cahier de bord (21j cobaye + Liste 100 + Journal EBE), Simulateur EBE,
+  // connexions cahier↔CRM, système Spotlights/Nouveautés.
+  // Quiz solide 8 QCM, seuil 75 % (6/8 bonnes réponses).
+  {
+    id: "new-tools-2026",
+    title: "Tes nouveaux outils Lor'Squad",
+    shortLabel: "Nouveaux outils",
+    description:
+      "Cahier de bord, Simulateur EBE, Liste 100, hub Développement : tous les outils sortis en mai 2026 et comment les utiliser.",
+    estimatedDurationMinutes: 12,
+    icon: "🛠️",
+    steps: [],
+    quiz: {
+      passThreshold: 0.75,
+      questions: [
+        {
+          id: "q1",
+          question:
+            "Tu cherches Academy, Formation, Cahier de bord, Simulateur EBE et le tuto FLEX. Où vas-tu maintenant ?",
+          answers: [
+            "Dans la sidebar, rubrique 'Mon développement'",
+            "Dans Paramètres, onglet 'Apprentissage'",
+            "Sur Co-pilote, en scrollant tout en bas",
+            "Chaque outil a son entrée séparée dans la sidebar",
+          ],
+          correctIndex: 0,
+          wrongAnswerHints: {
+            1: "Pas dans Paramètres — Paramètres est pour ton compte/profil/RGPD.",
+            2: "Co-pilote est pour ton pilotage business du jour, pas pour apprendre.",
+            3: "C'était l'ancien comportement (11 items en sidebar). Depuis mai 2026, tout est centralisé dans 'Mon développement' (1 seul item).",
+          },
+          explanation:
+            "La sidebar suit la règle 'Option B' : 1 entrée 'Mon développement' qui regroupe Academy + Formation + Boîte à outils + Cahier + Simulateur + tuto FLEX + Nouveautés. Sidebar passe de 11 à 8 items, plus claire pour les nouveaux.",
+        },
+        {
+          id: "q2",
+          question:
+            "Le protocole 21 jours cobaye, c'est quoi ?",
+          answers: [
+            "Tester moi-même les produits 21 jours pour parler en vérité aux prospects",
+            "Un essai gratuit que je propose au client avant qu'il achète",
+            "Un protocole médical encadré par un médecin agréé Herbalife",
+            "Une période d'essai obligatoire imposée par Herbalife à l'inscription",
+          ],
+          correctIndex: 0,
+          wrongAnswerHints: {
+            1: "Ce n'est pas un essai gratuit client — c'est un essai TOI sur TOI.",
+            2: "Aucune dimension médicale officielle. C'est un test perso, sans encadrement.",
+            3: "Pas une obligation Herbalife. C'est une bonne pratique Lor'Squad.",
+          },
+          explanation:
+            "Le 21j cobaye = je teste les produits sur moi pendant 21 jours, je note chaque jour mon énergie/sommeil/poids dans /cahier-de-bord onglet Cobaye. Résultat : je parle de mon vécu réel aux prospects, pas d'un argumentaire commercial creux.",
+        },
+        {
+          id: "q3",
+          question:
+            "Méthode FRANK pour la liste 100, ça veut dire quoi ?",
+          answers: [
+            "Famille, Réseau, Amis, Nouveaux, Konnaissances",
+            "Famille, Réseau, Anciens, Nouveaux, Klients",
+            "Une marque de carnet utilisée par les coachs Herbalife",
+            "Le prénom du créateur de la méthode (Frank Smith, Herbalife USA)",
+          ],
+          correctIndex: 0,
+          wrongAnswerHints: {
+            1: "Presque — mais 'Anciens' et 'Klients' ne sont pas dans le mnémo officiel.",
+            2: "Aucun rapport — c'est un mnémonique pédagogique, pas un produit.",
+            3: "Légende urbaine — c'est juste un acronyme mnémotechnique, sans inventeur identifié.",
+          },
+          explanation:
+            "FRANK = Famille / Réseau / Amis / Nouveaux / Konnaissances. Mnémonique qui aide à structurer ta liste 100 par catégories d'origine. Disponible dans /cahier-de-bord onglet Liste 100, sélecteur de catégorie au moment d'ajouter un contact.",
+        },
+        {
+          id: "q4",
+          question:
+            "Tu changes le statut d'un contact Liste 100 de 'Contacté' à 'RDV calé'. Que se passe-t-il ?",
+          answers: [
+            "Une popup propose de créer un prospect agenda pré-rempli (nom, tel, source)",
+            "Rien d'autre — il faut aller manuellement dans Agenda pour créer le RDV",
+            "Le contact disparaît automatiquement de la liste 100",
+            "Une notification est envoyée au sponsor pour valider le RDV",
+          ],
+          correctIndex: 0,
+          wrongAnswerHints: {
+            1: "Avant mai 2026 c'était le cas. Depuis la connexion Liste 100 → Agenda, c'est automatisé.",
+            2: "Le contact reste dans la liste 100 (avec son nouveau statut) — il n'est PAS supprimé. Il continue à apparaître pour suivi.",
+            3: "Pas de notification sponsor — c'est ta liste perso, pas du collectif.",
+          },
+          explanation:
+            "Connexion Liste 100 → Agenda : le passage en 'RDV calé' déclenche une modale ProspectFormModal pré-remplie (firstName/lastName splités, tel, email, source 'Bouche à oreille', sourceDetail 'Liste 100'). 1 clic et c'est dans ton agenda. Tu peux toujours fermer si tu veux pas créer le prospect tout de suite.",
+        },
+        {
+          id: "q5",
+          question:
+            "Combien d'étapes a la trame d'un EBE Lor'Squad (et donc le Simulateur) ?",
+          answers: [
+            "6 : accueil → découverte → body scan → solution → closing → recos",
+            "4 : présentation produit → prix → objection → closing",
+            "8 : avec en plus signature contrat et programme alimentaire",
+            "Variable selon le profil du prospect (entre 3 et 10)",
+          ],
+          correctIndex: 0,
+          wrongAnswerHints: {
+            1: "Trop court — tu sautes la découverte et les recos. C'est ce qui plante 80 % des EBE.",
+            2: "Pas dans la trame Lor'Squad — la signature et le programme sont des conséquences, pas des étapes.",
+            3: "Au contraire, la trame est FIXE pour ne rien oublier. C'est sa rigueur qui la rend efficace.",
+          },
+          explanation:
+            "Trame fixe en 6 étapes : 1) Accueil & rapport, 2) Découverte besoin, 3) Body scan/Tanita, 4) Présentation solution, 5) Closing & objections, 6) Recommandations. Le Simulateur EBE (/simulateur-ebe) suit exactement cette trame avec 2 scénarios (Sophie sceptique, Karim sportif).",
+        },
+        {
+          id: "q6",
+          question:
+            "Dans le Simulateur EBE, tu fais 50/60 points. Quel est ton verdict ?",
+          answers: [
+            "Maître EBE 🏆 — tu peux closer en RDV réel sans hésiter",
+            "EBE solide ✅ — tu maîtrises la trame, encore quelques détails à polir",
+            "À retravailler 📝 — relis le module M1.6 EBE",
+            "Reprendre les bases 🔄 — refais le tuto avant de retenter",
+          ],
+          correctIndex: 0,
+          wrongAnswerHints: {
+            1: "Solide commence à 35/60 et finit à 49/60. À 50, tu es passé en Maître.",
+            2: "À retravailler c'est entre 20 et 34/60. À 50 tu es bien au-dessus.",
+            3: "Reprendre les bases c'est moins de 20. À 50 tu es vraiment top.",
+          },
+          explanation:
+            "Bandes Simulateur EBE : ≥ 50 Maître EBE 🏆 / ≥ 35 Solide ✅ / ≥ 20 À retravailler 📝 / < 20 Reprendre les bases 🔄. Score sur 60 max (6 étapes × 10pts). À la fin, bouton 'Sauvegarder dans mon journal EBE' qui auto-tag '[Simulation]' dans /cahier-de-bord.",
+        },
+        {
+          id: "q7",
+          question:
+            "Tu termines un vrai bilan client (NewAssessmentPage). Que se passe-t-il côté Cahier de bord ?",
+          answers: [
+            "Une entrée Journal EBE est auto-créée avec le prospect_name pré-rempli, je la complète plus tard",
+            "Rien — il faut aller créer manuellement l'entrée Journal EBE",
+            "L'entrée est créée seulement si je coche une case 'Sauver dans mon journal'",
+            "Une notification me demande si je veux remplir le journal maintenant",
+          ],
+          correctIndex: 0,
+          wrongAnswerHints: {
+            1: "Avant mai 2026 c'était le cas et 90 % des distri oubliaient de remplir leur journal.",
+            2: "Pas de case à cocher — c'est automatique dans le flow de save bilan.",
+            3: "Pas de notification immédiate — l'entrée est créée silencieusement, tu la complètes quand tu veux dans /cahier-de-bord.",
+          },
+          explanation:
+            "Auto-journal EBE post-bilan : à chaque save dans handleSaveAssessment, on crée silencieusement une row ebe_journal_entries avec assessment_id lié + prospect_name pré-rempli. Tu retrouves l'entrée dans /cahier-de-bord onglet EBE, prête à compléter (self_score, what_went_well, what_to_improve, recos_count).",
+        },
+        {
+          id: "q8",
+          question:
+            "Une nouvelle feature est livrée. Comment je suis informé ?",
+          answers: [
+            "Une cloche dans le header avec compteur + popup auto à la 1ère ouverture, plus la page /developpement/nouveautes",
+            "Un email automatique de Mélanie à toute l'équipe",
+            "Un message WhatsApp dans le groupe distri",
+            "Rien — je dois suivre le compte LinkedIn Lor'Squad",
+          ],
+          correctIndex: 0,
+          wrongAnswerHints: {
+            1: "Pas d'email auto — Mel est libre d'écrire si besoin mais ce n'est pas le canal officiel.",
+            2: "Le groupe WhatsApp existe mais ce n'est pas le canal officiel des nouveautés app — risque de scroll/oubli.",
+            3: "LinkedIn, Insta : ces comptes existent peut-être mais ce n'est pas dédié aux nouveautés app interne.",
+          },
+          explanation:
+            "Système Spotlights officiel : 🔔 cloche header (mobile + sidebar) avec compteur unread, ✨ popup auto à la 1ère ouverture après publication (skippable, max 1×/jour/annonce), 📰 page /developpement/nouveautes pour l'historique complet. Garantie : aucune feature ne passe inaperçue.",
+        },
+      ],
+    },
+  },
 ];
 
 // ============================================================================
