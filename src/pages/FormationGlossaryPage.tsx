@@ -123,7 +123,27 @@ const TERMS: GlossaryTerm[] = [
     term: "EBE",
     expansion: "Étude Bien-Être",
     category: "activite",
-    short: "Le format de bilan Herbalife (90 min) : objectif + body scan + plan.",
+    short: "Le format de bilan Herbalife (~60 min) : objectif + body scan + plan. L'app pilote la trame, toi tu portes l'humain.",
+    long: "⚠️ EBE désigne UNIQUEMENT le bilan client 1-1. Pour les événements groupe, on parle d'Apéro Healthy (25-50 personnes), HOM (8-15 chez quelqu'un) ou Fin de Challenge (clôture défi).",
+  },
+  {
+    term: "Apéro Healthy",
+    category: "activite",
+    short: "Soirée business mensuelle 25-50 personnes : prospects + équipe + opportunité.",
+    long: "Anciennement appelé EBE (terme abandonné car ambigu avec le bilan client). 1ʳᵉ semaine du mois, 2h, témoignages 80% du temps utile, CTA chiffré obligatoire en clôture.",
+  },
+  {
+    term: "HOM",
+    expansion: "House Opportunity Meeting",
+    category: "activite",
+    short: "Mini-soirée business 8-15 personnes chez quelqu'un. Intime, prospects tièdes.",
+    long: "Format hebdomadaire (souvent mardi). Plus chaleureux que l'apéro healthy, conversion personnelle 1-1 forte.",
+  },
+  {
+    term: "Fin de Challenge",
+    category: "activite",
+    short: "Clôture rituel d'un défi groupe (21j, 30j…). Célébration des transformations.",
+    long: "Excellent moment pour proposer la suite (programme client, opportunité business). Les transformations sont fraîches dans les têtes, l'émotion est haute.",
   },
   {
     term: "Quick Start",
