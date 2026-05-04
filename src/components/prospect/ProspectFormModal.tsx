@@ -6,6 +6,18 @@ import { Button } from "../ui/Button";
 
 interface ProspectFormModalProps {
   initial?: Prospect;                 // si fourni → mode édition
+  /** Pré-remplissage en mode création (ignoré si `initial` fourni).
+      Utilisé par exemple par la connexion Cahier Liste 100 → Agenda
+      (2026-05-04) pour pré-remplir le nom + tel + source du contact. */
+  prefill?: {
+    firstName?: string;
+    lastName?: string;
+    phone?: string;
+    email?: string;
+    source?: ProspectSource;
+    sourceDetail?: string;
+    note?: string;
+  };
   onClose: () => void;
   onSaved?: (prospect: Prospect) => void;
 }
@@ -43,19 +55,19 @@ function filterAssignableUsers(currentUser: User | null, users: User[]): User[] 
   return users.filter((u) => u.active && u.id === currentUser.id);
 }
 
-export function ProspectFormModal({ initial, onClose, onSaved }: ProspectFormModalProps) {
+export function ProspectFormModal({ initial, prefill, onClose, onSaved }: ProspectFormModalProps) {
   const { currentUser, users, createProspect, updateProspect } = useAppContext();
 
-  const [firstName, setFirstName] = useState(initial?.firstName ?? "");
-  const [lastName, setLastName] = useState(initial?.lastName ?? "");
-  const [phone, setPhone] = useState(initial?.phone ?? "");
-  const [email, setEmail] = useState(initial?.email ?? "");
+  const [firstName, setFirstName] = useState(initial?.firstName ?? prefill?.firstName ?? "");
+  const [lastName, setLastName] = useState(initial?.lastName ?? prefill?.lastName ?? "");
+  const [phone, setPhone] = useState(initial?.phone ?? prefill?.phone ?? "");
+  const [email, setEmail] = useState(initial?.email ?? prefill?.email ?? "");
   const [rdvDate, setRdvDate] = useState(
     initial?.rdvDate ? toDateTimeLocal(initial.rdvDate) : defaultRdvDate()
   );
-  const [source, setSource] = useState<ProspectSource>(initial?.source ?? "Instagram");
-  const [sourceDetail, setSourceDetail] = useState(initial?.sourceDetail ?? "");
-  const [note, setNote] = useState(initial?.note ?? "");
+  const [source, setSource] = useState<ProspectSource>(initial?.source ?? prefill?.source ?? "Instagram");
+  const [sourceDetail, setSourceDetail] = useState(initial?.sourceDetail ?? prefill?.sourceDetail ?? "");
+  const [note, setNote] = useState(initial?.note ?? prefill?.note ?? "");
   const [distributorId, setDistributorId] = useState(initial?.distributorId ?? currentUser?.id ?? "");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);

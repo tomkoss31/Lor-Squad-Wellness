@@ -1102,6 +1102,566 @@ Tu as fait un super EBE, présenté le programme, la personne a dit oui, elle es
     },
   },
 
+  // ───────────────────────────────────────────────────────────────────────────
+  // M1.E — Méthode FRANK & ma Liste 100 (NEW 2026-05-04)
+  // ───────────────────────────────────────────────────────────────────────────
+  {
+    id: "M1.E",
+    slug: "methode-frank-liste-100",
+    number: "1.E",
+    title: "Méthode FRANK & ma Liste 100",
+    description:
+      "Comment construire ta liste 100 connaissances sans rien oublier, et la faire vivre comme un funnel de prospection chaude.",
+    durationMin: 12,
+    icon: "📒",
+    ideeForce:
+      "Ta liste 100 n'est pas une liste de prospects à harceler. C'est ton cercle d'influence cartographié. La méthode FRANK te garantit de n'oublier personne — et statistiquement, tes 5 premiers clients sortent à 80 % de cette liste, pas de prospects froids.",
+    ancrage:
+      "« Je ne pars pas de zéro. Je connais déjà 100 personnes qui peuvent transformer ma vie — j'ai juste besoin de m'en souvenir et de leur en parler. »",
+    action:
+      "Bloque 30 minutes ce week-end. Ouvre /cahier-de-bord onglet Liste 100. Liste 100 prénoms en suivant FRANK — sans filtrer, sans juger « il dirait non ». Juste tous les noms qui te viennent. Tu jugeras après.",
+    relatedToolkitSlugs: ["script-prospection-chaud", "tk-prospection-01"],
+    lessons: [
+      {
+        id: "M1.E-L1",
+        slug: "pourquoi-liste-100",
+        title: "Pourquoi 100 ? Pourquoi pas 30 ou 200 ?",
+        kind: "text",
+        durationMin: 2,
+        contentMarkdown: `## Pourquoi exactement 100 ?
+
+Le chiffre 100 n'est pas magique — c'est **pédagogique**.
+
+- **30 noms**, c'est trop peu : tu auto-censures, tu ne listes que ceux que tu penses « possibles ». Erreur fatale : tu écartes 70 % des futurs clients.
+- **200 noms**, c'est trop : tu deviens noyé, tu ne contactes plus personne par paralysie.
+- **100 noms**, c'est la zone sweet spot : assez large pour ne pas auto-censurer, assez serré pour rester actionnable.
+
+> 💡 **Statistique Lor'Squad** : sur 100 noms FRANK, en moyenne **5 deviennent clients** dans tes 90 premiers jours. Pas 30, pas 50. **5.** Mais ces 5-là sont solides et te recommandent à leur tour.
+
+**La règle d'or** : tu lists tout le monde, **sans filtrer**. C'est l'écriture qui débloque la mémoire. Tu jugeras après.`,
+      },
+      {
+        id: "M1.E-L2",
+        slug: "frank-decortique",
+        title: "FRANK décortiqué : 5 catégories, 0 oubli",
+        kind: "text",
+        durationMin: 3,
+        contentMarkdown: `## FRANK = Famille / Réseau / Amis / Nouveaux / Konnaissances
+
+Mnémonique mondial Herbalife. Chaque lettre = un cercle d'influence.
+
+### 👪 F · Famille (objectif : 15-25 noms)
+Parents, frères/sœurs, cousins, oncles/tantes, beaux-parents, grands-parents (vivants), enfants adultes, neveux/nièces.
+
+> ⚠️ **Piège classique** : « Ma famille ne va pas vouloir. » → Tu juges à leur place. Liste-les TOUS, tu décideras de l'approche après.
+
+### 🤝 R · Réseau (objectif : 15-30 noms)
+Anciens collègues, anciens patrons, partenaires pro, fournisseurs, clients d'avant ce métier, contacts LinkedIn proches, voisins de bureau.
+
+### 🫂 A · Amis (objectif : 20-30 noms)
+Tes potes proches, copains de fac, amis d'enfance, gang du sport, du quartier, de la salle, de l'asso, de la copro.
+
+### 🌱 N · Nouveaux (objectif : 5-15 noms)
+Personnes rencontrées récemment (3 derniers mois) : événements, mariages, formations, voyages, voisins fraîchement installés, nouveaux parents à l'école des enfants.
+
+### 👋 K · Konnaissances (objectif : 15-25 noms)
+La boulangère, le coiffeur, le prof de yoga, l'esthéticienne, le banquier, le médecin, l'infirmier, le mécanicien. Ceux à qui tu dis bonjour mais que tu ne « comptes » pas dans tes amis.
+
+> 💡 **Cette catégorie est LA mine d'or** : ils ont un cercle d'influence énorme (boulangère = 200 clients/jour) et tu n'y penses jamais.`,
+      },
+      {
+        id: "M1.E-L3",
+        slug: "froid-tiede-chaud",
+        title: "Tiède / Chaud / Froid : le tag de température",
+        kind: "text",
+        durationMin: 2,
+        contentMarkdown: `## Comment tagger chaque contact
+
+Une fois ta liste 100 faite, tu attribues une **température** à chaque nom.
+
+### 🔥 Chaud (10-20 % de ta liste)
+- Vous parlez régulièrement (≥ 1 fois / mois)
+- Confiance mutuelle bien établie
+- Tu peux lui envoyer un message direct sans friction
+- **Exemple** : ton meilleur ami, ta sœur, ton collègue préféré
+
+### 🌤 Tiède (40-60 % de ta liste)
+- Vous vous connaissez bien mais ne vous parlez pas chaque semaine
+- Échange cordial, pas de gêne mais pas d'intimité
+- Tu dois prendre 30 secondes pour relancer la convo
+- **Exemple** : un ancien collègue, un cousin éloigné, un parent d'élève sympa
+
+### ❄️ Froid (20-40 % de ta liste)
+- Tu connais le prénom mais pas grand-chose
+- Pas parlé depuis longtemps, ou jamais vraiment de discussion personnelle
+- Risque de paraître intéressé si tu écris du jour au lendemain
+- **Exemple** : un voisin que tu salues mais sans plus, un ami d'ami croisé 1 fois
+
+> 🎯 **Stratégie** : tu travailles **chaud → tiède → froid** dans cet ordre. Pas l'inverse. Les chauds te donnent confiance et te génèrent les premières recos pour aller chercher les tièdes/froids.`,
+      },
+      {
+        id: "M1.E-L4",
+        slug: "statut-tunnel",
+        title: "Le statut tunnel : où en est chaque contact",
+        kind: "text",
+        durationMin: 2,
+        contentMarkdown: `## Faire vivre ta liste comme un funnel
+
+Chaque contact a un **statut** qui évolue dans le temps. Lor'Squad gère 6 statuts dans /cahier-de-bord onglet Liste 100 :
+
+| Statut | Emoji | Quand passer dessus |
+|---|---|---|
+| Non contacté | ⚪ | Statut par défaut, tu ne lui as pas encore parlé |
+| Contacté | 💬 | Tu lui as envoyé un 1er message, en attente de réponse |
+| RDV calé | 📅 | Il a accepté un EBE, date fixée → ⚡ déclenche modale Agenda auto-remplie |
+| EBE fait | 📊 | Tu as mené l'EBE, en attente décision |
+| Client | ✅ | Il a signé un programme |
+| Refus | ❌ | Pas intéressé, à mettre en froid 6 mois |
+
+### Connexion automatique avec ton agenda
+Dès que tu passes un contact en **RDV calé**, Lor'Squad te propose une popup pour créer le prospect agenda **pré-rempli** (nom, tel, source). 1 clic et c'est dans /agenda.
+
+> 💡 **Règle d'hygiène** : revisite ta liste 100 une fois par semaine. Combien sont en « contacté » sans réponse depuis 7 jours ? → relance. Combien en « RDV calé » mais pas de date ? → urgence.`,
+      },
+      {
+        id: "M1.E-L5",
+        slug: "premier-message",
+        title: "Le 1er message à un contact tiède",
+        kind: "text",
+        durationMin: 3,
+        contentMarkdown: `## Comment ouvrir une conversation sans pitcher
+
+Le piège : envoyer un copier-coller commercial à 100 personnes. Résultat : tu te brûles ta liste en 1 jour.
+
+### La règle d'or : **3 réveils avant la proposition**
+
+#### Message 1 — Réveil personnel (semaine 1)
+> *« Hey [Prénom] ! Ça fait long. Comment tu vas, qu'est-ce qui s'est passé pour toi ces derniers mois ? »*
+
+**But** : remettre du contact humain. Ne PARLE PAS d'Herbalife.
+
+#### Message 2 — Échange & écoute (semaine 1)
+Tu réponds à son message, tu poses des questions. Tu RÉAPPRENDS qui il est aujourd'hui. Sa santé, ses projets, ses galères.
+
+**But** : recréer la confiance. Toujours pas d'Herbalife.
+
+#### Message 3 — Ouverture douce (semaine 2)
+> *« D'ailleurs, je voulais te dire — moi j'ai démarré un truc côté nutrition / sport / accompagnement bien-être qui me rend hyper enthousiaste. Si un jour ça te dit qu'on en parle 30 minutes autour d'un café, je serais ravi de te montrer. Pas pour te vendre quoi que ce soit, juste pour partager. »*
+
+**But** : poser la graine. Pas de RDV forcé.
+
+### Pourquoi ça marche
+
+- Tu **redonnes** avant de demander
+- Tu **écoutes** avant de proposer
+- Tu **rassures** sur le « pas pour vendre »
+- Tu **proposes** une rencontre courte (30 min) à faible engagement
+
+### Pourquoi le copier-coller ne marche pas
+
+> ❌ *« Hey ! J'ai démarré Herbalife, super opportunité, on en parle ? »*
+
+→ Trop direct, perçu comme intéressé/transactionnel, brûle le contact pour 6 mois minimum.`,
+      },
+    ],
+    quiz: {
+      id: "M1.E-quiz",
+      passingScore: 3,
+      questions: [
+        {
+          kind: "qcm",
+          id: "Q1",
+          question: "FRANK signifie...",
+          answers: [
+            "Famille / Recommandations / Anciens / Nouveaux / Konnaissances",
+            "Famille / Réseau / Amis / Nouveaux / Konnaissances",
+            "Friends / Relatives / Acquaintances / Network / Konnections",
+            "Le prénom du créateur de la méthode",
+          ],
+          correctIndex: 1,
+          explanation:
+            "FRANK = Famille / Réseau / Amis / Nouveaux / Konnaissances. Mnémonique pédagogique pour ne rien oublier dans ta liste 100. Disponible dans /cahier-de-bord onglet Liste 100 au moment d'ajouter un contact.",
+        },
+        {
+          kind: "qcm",
+          id: "Q2",
+          question:
+            "Tu fais ta liste 100 ce week-end. Combien de noms vises-tu pour la catégorie « Konnaissances » (boulangère, coiffeur, etc.) ?",
+          answers: ["0-5 noms", "5-10 noms", "15-25 noms", "30-50 noms"],
+          correctIndex: 2,
+          explanation:
+            "15-25 noms en Konnaissances. C'est LA catégorie qu'on oublie et c'est la mine d'or : ces personnes ont des cercles d'influence énormes (la boulangère = 200 clients/jour qui passent au comptoir).",
+        },
+        {
+          kind: "qcm",
+          id: "Q3",
+          question:
+            "Sur ta liste 100, dans quel ordre tu travailles les contacts ?",
+          answers: [
+            "Chaud → Tiède → Froid (les chauds donnent confiance et générent les recos)",
+            "Froid → Tiède → Chaud (pour s'entraîner d'abord sur les moins risqués)",
+            "Au hasard (peu importe l'ordre, l'important c'est de bouger)",
+            "Par ordre alphabétique",
+          ],
+          correctIndex: 0,
+          explanation:
+            "Toujours Chaud → Tiède → Froid. Les chauds te donnent confiance, tes premiers clients/témoins, et te génèrent les recommandations qui réchauffent tes tièdes/froids. L'inverse (commencer par les froids) brûle ta liste sans confiance bâtie.",
+        },
+        {
+          kind: "qcm",
+          id: "Q4",
+          question:
+            "Tu changes le statut d'un contact Liste 100 de 'Contacté' à 'RDV calé'. Que se passe-t-il automatiquement ?",
+          answers: [
+            "Rien — il faut aller manuellement dans Agenda pour créer le RDV",
+            "Le contact disparaît automatiquement de la liste 100",
+            "Une notification est envoyée au sponsor",
+            "Une modale ProspectFormModal s'ouvre pré-remplie pour créer le RDV dans /agenda",
+          ],
+          correctIndex: 3,
+          explanation:
+            "Connexion Liste 100 → Agenda : passage en 'RDV calé' déclenche une popup ProspectFormModal pré-remplie (firstName/lastName splités, tel, email, source 'Bouche à oreille', sourceDetail 'Liste 100'). 1 clic et c'est dans ton agenda. Le contact RESTE dans la liste 100 avec son nouveau statut.",
+        },
+        {
+          kind: "free_text",
+          id: "Q5",
+          question: "Ton 1er message à un contact tiède",
+          prompt:
+            "Rédige le 1er message que tu enverrais à un ancien collègue tiède (que tu n'as pas vu depuis 6 mois). Respecte la règle d'or : 3 réveils avant la proposition. Écris uniquement le MESSAGE 1 (réveil personnel). Pas plus de 4 lignes.",
+          sponsorCheckHint:
+            "Vérifier que le message (a) ne mentionne PAS Herbalife/produits/business, (b) pose une question ouverte sur lui, (c) montre un vrai intérêt humain, (d) reste court (≤ 4 lignes). Si copier-coller commercial ou pitch direct, demander de réécrire avec la règle d'or.",
+          minChars: 80,
+        },
+      ],
+    },
+  },
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // M1.F — La trame EBE en 6 étapes (NEW 2026-05-04)
+  // ───────────────────────────────────────────────────────────────────────────
+  {
+    id: "M1.F",
+    slug: "trame-ebe-6-etapes",
+    number: "1.F",
+    title: "La trame EBE en 6 étapes",
+    description:
+      "La séquence rigoureuse qui transforme un RDV bilan en client signé. La même trame que dans le Simulateur EBE, ici expliquée pas à pas.",
+    durationMin: 18,
+    icon: "🎯",
+    ideeForce:
+      "Un EBE n'est pas une discussion libre. C'est une trame en 6 étapes que tu suis dans l'ordre. La rigueur de la trame est ce qui te permet d'être à l'aise — tu sais toujours où tu en es et où tu vas. Sans trame : tu improvises, tu oublies des étapes, tu rates 70 % de tes closings.",
+    ancrage:
+      "« La structure libère. Quand je sais où je vais, je peux écouter le prospect au lieu de chercher quoi dire. »",
+    action:
+      "Avant ton prochain EBE réel : fais le Simulateur EBE (/simulateur-ebe) avec les 2 scénarios (Sophie sceptique + Karim sportif). Vise au moins « EBE solide » (35/60). Si tu fais moins, refais avec les leçons apprises avant le RDV réel.",
+    relatedToolkitSlugs: ["tk-bilan-01", "tk-bilan-04", "tk-bilan-05", "tk-suivi-05"],
+    lessons: [
+      {
+        id: "M1.F-L1",
+        slug: "vue-ensemble",
+        title: "Vue d'ensemble : pourquoi 6 étapes (et pas 4 ou 8)",
+        kind: "text",
+        durationMin: 2,
+        contentMarkdown: `## La trame Lor'Squad EBE
+
+| # | Étape | Durée | But |
+|---|---|---|---|
+| 1 | Accueil & rapport | 5 min | Mettre à l'aise, créer la confiance |
+| 2 | Découverte | 10 min | Comprendre le vrai besoin |
+| 3 | Body scan / Tanita | 10 min | Mesurer le présent objectivement |
+| 4 | Présentation solution | 10 min | Connecter besoin → programme |
+| 5 | Closing & objections | 10 min | Engager sur une décision |
+| 6 | Recommandations | 5 min | Générer 2-3 prénoms qualifiés |
+
+**Total : 45 min - 1h.** Pas plus. Au-delà, tu épuises le prospect et tu dévalues ton temps.
+
+> ⚠️ **Erreur classique** : sauter l'étape 1 (« on n'a pas le temps ») ou l'étape 6 (« il vient de signer, je le laisse partir »). Ces 2 étapes sont **les plus rentables** de toute la séquence.`,
+      },
+      {
+        id: "M1.F-L2",
+        slug: "etape-1-accueil",
+        title: "Étape 1 — Accueil & rapport (5 min)",
+        kind: "text",
+        durationMin: 3,
+        contentMarkdown: `## L'étape qu'on saute toujours et qui détermine le closing
+
+### Objectif
+**Faire baisser la garde.** Pas vendre. Pas pitcher. Pas commencer le bilan. **Juste être humain.**
+
+### Le rituel
+1. Te lever pour accueillir physiquement (poignée de main, sourire, bienvenue)
+2. Proposer un thé / verre d'eau (geste d'hospitalité = baisse de garde immédiate)
+3. Question ouverte non-business : « Raconte-moi, qu'est-ce que tu fais dans la vie ? Comment ça se passe en ce moment ? »
+
+### Ce qu'il NE FAUT PAS dire en étape 1
+- ❌ « Bon allez, on commence ? Pas de temps à perdre. »
+- ❌ « Mes produits ont fait perdre 8 kg à plein de gens. »
+- ❌ « Tes objectifs c'est quoi ? »
+
+### Ce qu'il FAUT dire
+- ✅ « Super sympa de prendre 30 min pour toi. Avant tout, raconte-moi… »
+- ✅ « Comment t'as connu Lor'Squad ? Qui t'a parlé de moi ? »
+
+> 💡 **Test simple** : à la fin de l'étape 1, le prospect doit avoir parlé **plus** que toi. Si c'est l'inverse, tu as raté l'étape.`,
+      },
+      {
+        id: "M1.F-L3",
+        slug: "etape-2-decouverte",
+        title: "Étape 2 — Découverte (10 min)",
+        kind: "text",
+        durationMin: 3,
+        contentMarkdown: `## La vraie clé de tout l'EBE
+
+### Objectif
+**Comprendre le « pourquoi » derrière le « quoi ».** Le prospect arrive avec un objectif de surface (« perdre 5 kg »). Toi tu cherches la vraie raison (mariage dans 6 mois ? complexe corporel ? alerte santé du médecin ?).
+
+### 3 questions clés à poser (dans cet ordre)
+
+#### 1. Le quoi
+> *« Qu'est-ce qui t'amène à venir me voir aujourd'hui ? »*
+
+→ Laisse-le parler 2-3 minutes. Note ce qu'il dit avec ses propres mots.
+
+#### 2. Le pourquoi profond
+> *« D'accord, et pourquoi maintenant ? Pourquoi ce n'est pas il y a 6 mois ou dans 6 mois ? »*
+
+→ C'est cette question qui révèle l'urgence. Sans urgence, pas de closing.
+
+#### 3. Le coût de l'inaction
+> *« Et si tu ne fais rien, qu'est-ce qui se passe dans 6 mois ? »*
+
+→ Le prospect verbalise lui-même la douleur. Tu n'as plus rien à vendre, tu as juste à proposer une solution.
+
+### Erreurs à éviter
+
+- ❌ Enchaîner sur la Tanita avant d'avoir le pourquoi profond
+- ❌ Critiquer ses essais passés (« Weight Watchers c'est de la merde »)
+- ❌ Pré-supposer son objectif (« donc tu veux perdre du poids » sans qu'il l'ait dit)`,
+      },
+      {
+        id: "M1.F-L4",
+        slug: "etape-3-bodyscan",
+        title: "Étape 3 — Body scan / Tanita (10 min)",
+        kind: "text",
+        durationMin: 3,
+        contentMarkdown: `## La technologie au service de la prise de conscience
+
+### Objectif
+**Donner un point de départ chiffré et émotionnellement neutre.** La Tanita ne ment pas — c'est un objet, pas un jugement. Bien présentée, elle débloque la conscience.
+
+### Le cadrage indispensable AVANT de monter sur la balance
+
+> *« Avant qu'on regarde les chiffres, je tiens à te dire 3 choses :
+> 1. Le but n'est pas de te juger, c'est d'avoir un point de départ pour mesurer tes progrès dans 21 jours.
+> 2. Tout ce qu'on voit ici reste entre toi et moi.
+> 3. Le chiffre qu'on va voir ne te définit pas — c'est juste une photo à un instant T. »*
+
+→ 90 % des prospects sont anxieux à monter sur la balance. Ce cadrage transforme l'anxiété en projet.
+
+### Les 4 mesures clés à expliquer (dans cet ordre)
+
+| Mesure | Ce que ça raconte | Ce que tu dis au prospect |
+|---|---|---|
+| Poids | Photo brute | « Le poids seul est un mauvais indicateur. On va surtout regarder en-dessous. » |
+| % masse grasse | Vraie alerte santé | « Voilà la vraie info — c'est la masse grasse qui détermine ton risque cardiovasculaire. » |
+| % masse musculaire | Métabolisme | « Plus tu as de muscle, plus tu brûles de calories au repos. C'est ton moteur. » |
+| % hydratation | État cellulaire | « Si tu es sous 50 %, ton corps ne fonctionne pas à plein régime. » |
+
+### Ce qu'il NE FAUT PAS faire
+
+- ❌ « Allez monte, c'est juste un chiffre. » (déni de l'émotion)
+- ❌ Réagir avec un faciès choqué devant le résultat
+- ❌ Lire toutes les 12 mesures Tanita d'un coup (overdose info)`,
+      },
+      {
+        id: "M1.F-L5",
+        slug: "etape-4-presentation",
+        title: "Étape 4 — Présentation de la solution (10 min)",
+        kind: "text",
+        durationMin: 2,
+        contentMarkdown: `## Ne JAMAIS faire un catalogue de produits
+
+### La règle d'or
+**Chaque produit que tu cites doit être connecté à UN besoin précis du prospect** identifié en étape 2.
+
+### Mauvaise présentation (catalogue mort)
+> ❌ *« Alors on a Formula 1 vanille fraise chocolat, PDM 25g protéines, Aloe digestion, Thé brûleur, Liftoff energy… Tu prends quoi ? »*
+
+→ Décrochage en 10 secondes. Le prospect ne sait pas comment lier ces produits à sa vie.
+
+### Bonne présentation (sur mesure)
+> ✅ *« Sur la base de ce que tu m'as dit — fatigue à 14h, craquages le soir, échecs de 3 régimes — je te propose un programme nutrition complet :
+> - **Un petit-déjeuner Formula 1** qui te tient jusqu'à midi (fini la fatigue de 14h)
+> - **Une protéine PDM** qui coupe la faim du soir (fini les craquages)
+> - **Un thé qui booste ton énergie** l'après-midi (effet immédiat dès J1)
+>
+> Tu veux qu'on regarde ensemble comment ça se passe concrètement ? »*
+
+→ Le prospect se voit DANS la solution. Le programme n'est plus une liste, c'est SA liste.
+
+### Le pack starter Lor'Squad
+
+Le combo F1 + PDM + Aloe + Thé = **234 € pour 21 jours = 100 PV**. C'est ton produit phare. Tu peux ajouter des boosters selon profil sport/perte poids/sénior.
+
+> 💡 **Piège prix** : ne donne JAMAIS le prix avant d'avoir construit la valeur. Sinon tu invites l'objection « c'est cher ».`,
+      },
+      {
+        id: "M1.F-L6",
+        slug: "etape-5-closing",
+        title: "Étape 5 — Closing & objections (10 min)",
+        kind: "text",
+        durationMin: 3,
+        contentMarkdown: `## Le moment de vérité
+
+### Closing = inviter à une décision
+
+Le closing n'est pas « pousser à acheter ». C'est **proposer un chemin clair**. Le prospect a le droit de dire non. Mais il doit dire OUI ou NON, pas « je vais réfléchir ».
+
+### Les 3 closings testés et validés
+
+#### Closing A — Le choix binaire (le plus simple)
+> *« Pour démarrer, tu as deux options : tu pars sur le programme starter à 234 € pour 21 jours, ou tu démarres avec juste Formula 1 à 50 € pour tester. Lequel te parle le plus ? »*
+
+→ Tu n'offres pas le choix « oui / non », tu offres le choix « A / B ». Statistiquement, 70 % des prospects choisissent A ou B au lieu de partir.
+
+#### Closing B — Le coût/jour
+> *« 234 € pour 21 jours, ça fait 11 € par jour, le prix d'un sandwich + boisson midi. Sauf que là tu remplaces ce sandwich par un repas qui te fait perdre du poids ET te donne de l'énergie. »*
+
+→ Reformule la valeur en unité comparable au quotidien.
+
+#### Closing C — La garantie testable
+> *« Si tu suis le protocole exactement pendant 21 jours, on se revoit, on remesure ton % muscle/% gras. Si tu n'as pas progressé, je te rembourse les produits non utilisés. Deal ? »*
+
+→ Garantie binaire et testable. Bétonne pour les sportifs/profils analytiques.
+
+### Les 3 objections les plus courantes
+
+| Objection | Mauvaise réponse | Bonne réponse |
+|---|---|---|
+| « C'est cher » | « Y'a une promo cette semaine » (casse la marge) | Reformuler en coût/jour + valeur |
+| « Je vais en parler à mon mari » | « Pas de souci, rappelle-moi » (lead perdu) | « Avant qu'il ait toutes les infos : 234€ = 11€/jour. On cale notre prochain RDV mardi ou jeudi pour signer ? » |
+| « Je vais réfléchir » | « OK » (lead perdu) | « Sur quoi exactement tu veux réfléchir ? Le prix, le programme, le timing ? Aide-moi à comprendre. » |
+
+> ⚠️ **Règle absolue** : ne jamais proposer une promo pour conclure. Tu casses ta marge ET tu dévalorises le programme. Si ton prospect dit « si y'a une promo j'y vais », il dira « si y'a une plus grosse promo j'y vais ailleurs » plus tard.`,
+      },
+      {
+        id: "M1.F-L7",
+        slug: "etape-6-recos",
+        title: "Étape 6 — Recommandations (5 min)",
+        kind: "text",
+        durationMin: 2,
+        contentMarkdown: `## L'étape oubliée par 90 % des distri
+
+### Le contexte
+Le prospect vient de signer (ou de partir content même sans signer). C'est **LE moment** de demander des recommandations, pas plus tard, pas par message après.
+
+### La phrase qui marche
+
+> *« Avec plaisir [Prénom] ! Dis-moi, tu connais 2-3 personnes autour de toi qui aimeraient aussi retrouver leur énergie / perdre quelques kilos / construire du muscle ? Pas besoin de leur vendre, juste leur prénom et je m'en occupe avec ton accord. »*
+
+### Pourquoi ça marche
+
+1. **« 2-3 personnes »** → quantité précise, ni 1 (trop peu) ni 10 (paralysie)
+2. **« Pas besoin de leur vendre »** → réduit la friction (sinon le prospect dit non par peur de gêner ses proches)
+3. **« Juste leur prénom »** → engagement minimal demandé
+4. **« Avec ton accord »** → tu te positionnes comme respectueux, pas comme spammeur
+
+### Ce qu'il NE FAUT PAS faire
+
+- ❌ Demander par WhatsApp 2 jours après (taux de retour : 5 %)
+- ❌ « Si tu connais des gens dis-moi hein ! » (trop vague)
+- ❌ Demander une liste de 10 prénoms (paralysie de Robert)
+- ❌ Sauter l'étape (mais c'est la plus rentable !)
+
+### Statistique Lor'Squad
+
+> 📊 Les distri qui demandent **systématiquement** des recos en étape 6 ont en moyenne **3× plus de RDV bilans** par mois que ceux qui zappent.
+
+**3× plus**, pas 30 % de plus. **3 fois plus.**`,
+      },
+    ],
+    quiz: {
+      id: "M1.F-quiz",
+      passingScore: 4,
+      questions: [
+        {
+          kind: "qcm",
+          id: "Q1",
+          question: "Combien d'étapes a la trame EBE Lor'Squad ?",
+          answers: ["4 étapes", "5 étapes", "6 étapes", "8 étapes"],
+          correctIndex: 2,
+          explanation:
+            "6 étapes : Accueil → Découverte → Body scan → Présentation → Closing → Recommandations. Pas 4 (tu sautes la découverte, fatal), pas 8 (tu épuises le prospect).",
+        },
+        {
+          kind: "qcm",
+          id: "Q2",
+          question:
+            "À la fin de l'étape 1 (Accueil), quel est le bon test pour savoir si tu l'as réussie ?",
+          answers: [
+            "Le prospect a déjà accepté de monter sur la Tanita",
+            "Le prospect a parlé plus que toi",
+            "Tu as présenté tous les produits du pack starter",
+            "Le prospect t'a déjà donné son budget cible",
+          ],
+          correctIndex: 1,
+          explanation:
+            "Si à la fin de l'étape 1 le prospect a parlé plus que toi, tu as réussi à faire baisser la garde et créer le rapport. Si c'est l'inverse, tu as déjà commencé à pitcher trop tôt.",
+        },
+        {
+          kind: "qcm",
+          id: "Q3",
+          question:
+            "Le prospect dit « C'est cher ». Quelle est la BONNE réponse ?",
+          answers: [
+            "Si tu prends aujourd'hui je te fais une promo de 20 €",
+            "OK pas de souci, t'as mon numéro, hésite pas à me rappeler",
+            "234 € pour 21 jours = 11 €/jour, le prix d'un sandwich midi. Sauf que là tu remplaces ce sandwich par un repas qui te fait perdre du poids ET te donne de l'énergie",
+            "Tu sais, beaucoup de gens trouvent ça cher au début mais après ils ne reviendraient pas en arrière",
+          ],
+          correctIndex: 2,
+          explanation:
+            "Reformule en coût/jour + valeur comparable. Jamais de promo (tu casses ta marge ET dévalorises le programme). Jamais de lâché passif (« rappelle-moi » = lead perdu). Jamais d'argument vague (« beaucoup de gens »).",
+        },
+        {
+          kind: "qcm",
+          id: "Q4",
+          question:
+            "Sur 100 EBE menés, combien de distri sautent l'étape 6 (recommandations) ?",
+          answers: ["10 %", "30 %", "60 %", "90 %"],
+          correctIndex: 3,
+          explanation:
+            "90 % des distri sautent l'étape Recos. C'est pour ça qu'elle est la plus rentable : ceux qui la font systématiquement ont 3× plus de RDV bilans par mois. Le moment de demander = juste après la signature, pas par message 2 jours après.",
+        },
+        {
+          kind: "qcm",
+          id: "Q5",
+          question:
+            "Tu veux t'entraîner à mener un EBE complet sans risque réel. Que fais-tu ?",
+          answers: [
+            "Tu lis et relis ce module dans ta tête",
+            "Tu lances le Simulateur EBE (/simulateur-ebe) avec les 2 scénarios disponibles",
+            "Tu fais un faux RDV avec ton conjoint à la maison",
+            "Tu attends d'avoir un vrai prospect pour pratiquer en conditions réelles",
+          ],
+          correctIndex: 1,
+          explanation:
+            "Le Simulateur EBE (/simulateur-ebe) propose 2 scénarios scriptés (Sophie sceptique perte poids + Karim sportif prise masse). Chaque étape : 3 choix scorés (excellent 10pts / moyen 5pts / faux 0pt) avec feedback inline. Score final /60 + debrief par étape. Vise au moins 35/60 (« EBE solide ») avant un RDV réel.",
+        },
+        {
+          kind: "free_text",
+          id: "Q6",
+          question: "Ton plus gros levier d'amélioration",
+          prompt:
+            "Après avoir lu les 6 étapes, identifie LA seule étape sur laquelle tu sais que tu vas avoir du mal (ou que tu sautes déjà aujourd'hui). Explique pourquoi en 3 phrases ET liste 1 action concrète que tu vas tester à ton prochain EBE pour la travailler.",
+          sponsorCheckHint:
+            "Vérifier que la réponse identifie une étape précise (pas « je suis nul partout »), explique honnêtement le blocage, ET propose une action testable au prochain EBE. Si la réponse est trop vague ou trop optimiste (« j'ai tout compris c'est ok »), demander une auto-évaluation plus honnête.",
+          minChars: 150,
+        },
+      ],
+    },
+  },
+
 ];
 
 // =============================================================================

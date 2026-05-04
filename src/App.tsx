@@ -303,6 +303,24 @@ const SimulateurEbePage = lazy(() =>
     default: module.SimulateurEbePage,
   })),
 );
+// Hub développement (2026-05-04) — point d'entrée centralisé apprentissage.
+const DeveloppementHubPage = lazy(() =>
+  import("./pages/DeveloppementHubPage").then((module) => ({
+    default: module.DeveloppementHubPage,
+  })),
+);
+// FLEX expliqué (2026-05-04) — tuto pédagogique 5-3-1.
+const FlexExpliquePage = lazy(() =>
+  import("./pages/FlexExpliquePage").then((module) => ({
+    default: module.FlexExpliquePage,
+  })),
+);
+// Nouveautés app (2026-05-04) — journal des annonces / changelog distri.
+const NouveautesPage = lazy(() =>
+  import("./pages/NouveautesPage").then((module) => ({
+    default: module.NouveautesPage,
+  })),
+);
 const FormationCalculatorPage = lazy(() =>
   import("./pages/FormationCalculatorPage").then((module) => ({
     default: module.FormationCalculatorPage
@@ -428,6 +446,11 @@ export default function App() {
               <Route path="cahier-de-bord" element={<CahierDeBordPage />} />
               {/* Simulateur EBE (2026-05-04) — entraînement scripté. */}
               <Route path="simulateur-ebe" element={<SimulateurEbePage />} />
+              {/* Hub Développement (2026-05-04) — regroupe academy/formation/
+                  cahier/simulateur/flex-explique/nouveautés. Sidebar Option B. */}
+              <Route path="developpement" element={<DeveloppementHubPage />} />
+              <Route path="developpement/flex-explique" element={<FlexExpliquePage />} />
+              <Route path="developpement/nouveautes" element={<NouveautesPage />} />
               {/* Lor'Squad Academy Phase 1 (2026-04-26) — gated admin only
                   en prod (RoleRoute). Defense en profondeur : RoleRoute
                   redirige vers /co-pilote si non-admin tape l URL manuelle. */}
