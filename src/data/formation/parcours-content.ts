@@ -1273,12 +1273,12 @@ Tu réponds à son message, tu poses des questions. Tu RÉAPPRENDS qui il est au
           id: "Q1",
           question: "FRANK signifie...",
           answers: [
-            "Famille / Réseau / Amis / Nouveaux / Konnaissances",
             "Famille / Recommandations / Anciens / Nouveaux / Konnaissances",
+            "Famille / Réseau / Amis / Nouveaux / Konnaissances",
             "Friends / Relatives / Acquaintances / Network / Konnections",
             "Le prénom du créateur de la méthode",
           ],
-          correctIndex: 0,
+          correctIndex: 1,
           explanation:
             "FRANK = Famille / Réseau / Amis / Nouveaux / Konnaissances. Mnémonique pédagogique pour ne rien oublier dans ta liste 100. Disponible dans /cahier-de-bord onglet Liste 100 au moment d'ajouter un contact.",
         },
@@ -1298,12 +1298,12 @@ Tu réponds à son message, tu poses des questions. Tu RÉAPPRENDS qui il est au
           question:
             "Sur ta liste 100, dans quel ordre tu travailles les contacts ?",
           answers: [
-            "Froid → Tiède → Chaud (pour s'entraîner d'abord sur les moins risqués)",
             "Chaud → Tiède → Froid (les chauds donnent confiance et générent les recos)",
+            "Froid → Tiède → Chaud (pour s'entraîner d'abord sur les moins risqués)",
             "Au hasard (peu importe l'ordre, l'important c'est de bouger)",
             "Par ordre alphabétique",
           ],
-          correctIndex: 1,
+          correctIndex: 0,
           explanation:
             "Toujours Chaud → Tiède → Froid. Les chauds te donnent confiance, tes premiers clients/témoins, et te génèrent les recommandations qui réchauffent tes tièdes/froids. L'inverse (commencer par les froids) brûle ta liste sans confiance bâtie.",
         },
@@ -1313,12 +1313,12 @@ Tu réponds à son message, tu poses des questions. Tu RÉAPPRENDS qui il est au
           question:
             "Tu changes le statut d'un contact Liste 100 de 'Contacté' à 'RDV calé'. Que se passe-t-il automatiquement ?",
           answers: [
-            "Une modale ProspectFormModal s'ouvre pré-remplie pour créer le RDV dans /agenda",
             "Rien — il faut aller manuellement dans Agenda pour créer le RDV",
             "Le contact disparaît automatiquement de la liste 100",
             "Une notification est envoyée au sponsor",
+            "Une modale ProspectFormModal s'ouvre pré-remplie pour créer le RDV dans /agenda",
           ],
-          correctIndex: 0,
+          correctIndex: 3,
           explanation:
             "Connexion Liste 100 → Agenda : passage en 'RDV calé' déclenche une popup ProspectFormModal pré-remplie (firstName/lastName splités, tel, email, source 'Bouche à oreille', sourceDetail 'Liste 100'). 1 clic et c'est dans ton agenda. Le contact RESTE dans la liste 100 avec son nouveau statut.",
         },

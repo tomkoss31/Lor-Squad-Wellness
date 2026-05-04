@@ -1395,15 +1395,15 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
           question:
             "Tu cherches Academy, Formation, Cahier de bord, Simulateur EBE et le tuto FLEX. Où vas-tu maintenant ?",
           answers: [
-            "Dans la sidebar, rubrique 'Mon développement'",
             "Dans Paramètres, onglet 'Apprentissage'",
             "Sur Co-pilote, en scrollant tout en bas",
+            "Dans la sidebar, rubrique 'Mon développement'",
             "Chaque outil a son entrée séparée dans la sidebar",
           ],
-          correctIndex: 0,
+          correctIndex: 2,
           wrongAnswerHints: {
-            1: "Pas dans Paramètres — Paramètres est pour ton compte/profil/RGPD.",
-            2: "Co-pilote est pour ton pilotage business du jour, pas pour apprendre.",
+            0: "Pas dans Paramètres — Paramètres est pour ton compte/profil/RGPD.",
+            1: "Co-pilote est pour ton pilotage business du jour, pas pour apprendre.",
             3: "C'était l'ancien comportement (11 items en sidebar). Depuis mai 2026, tout est centralisé dans 'Mon développement' (1 seul item).",
           },
           explanation:
@@ -1414,14 +1414,14 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
           question:
             "Une nouvelle feature est livrée. Comment je suis informé ?",
           answers: [
-            "Cloche dans le header avec compteur + popup auto à la 1ère ouverture + page /developpement/nouveautes",
             "Email automatique de Mélanie à toute l'équipe",
+            "Cloche dans le header avec compteur + popup auto à la 1ère ouverture + page /developpement/nouveautes",
             "Message WhatsApp dans le groupe distri",
             "Je dois suivre le compte LinkedIn Lor'Squad",
           ],
-          correctIndex: 0,
+          correctIndex: 1,
           wrongAnswerHints: {
-            1: "Pas d'email auto. Mel peut écrire si besoin mais ce n'est pas le canal officiel.",
+            0: "Pas d'email auto. Mel peut écrire si besoin mais ce n'est pas le canal officiel.",
             2: "Le WhatsApp existe mais c'est pas le canal officiel — risque de scroll/oubli.",
             3: "Pas dédié à l'app interne.",
           },
@@ -1433,16 +1433,16 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
           question:
             "Les 4 features livrées en mai 2026 sont :",
           answers: [
-            "Hub Développement, Cahier de bord, Simulateur EBE, Liste 100 → Agenda",
             "Hub Développement, Bilan v3, Statistiques avancées, Notifications push",
             "Refonte UI, Refonte sidebar, Refonte agenda, Refonte messagerie",
             "Cahier coach, Cahier client, Cahier équipe, Cahier sponsor",
+            "Hub Développement, Cahier de bord, Simulateur EBE, Liste 100 → Agenda",
           ],
-          correctIndex: 0,
+          correctIndex: 3,
           wrongAnswerHints: {
-            1: "Pas Bilan v3 ni Stats avancées — d'autres chantiers, pas mai 2026.",
-            2: "La sidebar a bien été refondue (Option B) mais le reste n'a pas changé.",
-            3: "Il n'y a qu'UN cahier de bord — perso au distri.",
+            0: "Pas Bilan v3 ni Stats avancées — d'autres chantiers, pas mai 2026.",
+            1: "La sidebar a bien été refondue (Option B) mais le reste n'a pas changé.",
+            2: "Il n'y a qu'UN cahier de bord — perso au distri.",
           },
           explanation:
             "4 features mai 2026 : (1) Hub Développement consolide la sidebar, (2) Cahier de bord = 21j cobaye + liste 100 + journal EBE, (3) Simulateur EBE pour s'entraîner, (4) Liste 100 → Agenda automatique au passage 'RDV calé'.",
@@ -1533,14 +1533,14 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
           id: "q1",
           question: "Le protocole 21 jours cobaye, c'est quoi ?",
           answers: [
-            "Tester moi-même les produits 21 jours pour parler en vérité aux prospects",
             "Un essai gratuit que je propose au client avant qu'il achète",
+            "Tester moi-même les produits 21 jours pour parler en vérité aux prospects",
             "Un protocole médical encadré par un médecin agréé Herbalife",
             "Une période d'essai obligatoire imposée par Herbalife à l'inscription",
           ],
-          correctIndex: 0,
+          correctIndex: 1,
           wrongAnswerHints: {
-            1: "Ce n'est pas un essai client — c'est un essai TOI sur TOI.",
+            0: "Ce n'est pas un essai client — c'est un essai TOI sur TOI.",
             2: "Aucune dimension médicale officielle. C'est un test perso.",
             3: "Pas une obligation Herbalife. Bonne pratique Lor'Squad.",
           },
@@ -1551,16 +1551,16 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
           id: "q2",
           question: "FRANK signifie...",
           answers: [
-            "Famille / Réseau / Amis / Nouveaux / Konnaissances",
             "Famille / Recommandations / Anciens / Nouveaux / Klients",
             "Le prénom du créateur de la méthode chez Herbalife",
             "Une marque de carnet utilisée par les coachs",
+            "Famille / Réseau / Amis / Nouveaux / Konnaissances",
           ],
-          correctIndex: 0,
+          correctIndex: 3,
           wrongAnswerHints: {
-            1: "Anciens et Klients ne sont pas dans le mnémo officiel.",
-            2: "Légende urbaine — c'est juste un acronyme.",
-            3: "Aucun rapport produit.",
+            0: "Anciens et Klients ne sont pas dans le mnémo officiel.",
+            1: "Légende urbaine — c'est juste un acronyme.",
+            2: "Aucun rapport produit.",
           },
           explanation:
             "FRANK = Famille / Réseau / Amis / Nouveaux / Konnaissances. Sélecteur disponible dans /cahier-de-bord onglet Liste 100 quand tu ajoutes un contact.",
@@ -1652,15 +1652,15 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
           question:
             "Combien d'étapes a la trame d'un EBE Lor'Squad (et donc le Simulateur) ?",
           answers: [
-            "6 : accueil → découverte → body scan → solution → closing → recos",
             "4 : présentation produit → prix → objection → closing",
             "8 : avec en plus signature contrat et programme alimentaire",
+            "6 : accueil → découverte → body scan → solution → closing → recos",
             "Variable selon le profil du prospect (entre 3 et 10)",
           ],
-          correctIndex: 0,
+          correctIndex: 2,
           wrongAnswerHints: {
-            1: "Trop court — tu sautes la découverte et les recos. C'est ce qui plante 80 % des EBE.",
-            2: "Pas dans la trame Lor'Squad — la signature et le programme sont des conséquences, pas des étapes.",
+            0: "Trop court — tu sautes la découverte et les recos. C'est ce qui plante 80 % des EBE.",
+            1: "Pas dans la trame Lor'Squad — la signature et le programme sont des conséquences, pas des étapes.",
             3: "Au contraire, la trame est FIXE pour ne rien oublier.",
           },
           explanation:
@@ -1671,14 +1671,14 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
           question:
             "Tu fais 50/60 points dans le Simulateur. Quel est ton verdict ?",
           answers: [
-            "Maître EBE 🏆 — tu peux closer en RDV réel sans hésiter",
             "EBE solide ✅ — encore quelques détails à polir",
+            "Maître EBE 🏆 — tu peux closer en RDV réel sans hésiter",
             "À retravailler 📝 — relis les modules EBE",
             "Reprendre les bases 🔄 — refais avant de retenter",
           ],
-          correctIndex: 0,
+          correctIndex: 1,
           wrongAnswerHints: {
-            1: "Solide finit à 49/60. À 50, tu es passé en Maître.",
+            0: "Solide finit à 49/60. À 50, tu es passé en Maître.",
             2: "À retravailler c'est entre 20 et 34/60.",
             3: "Reprendre les bases c'est moins de 20.",
           },
@@ -1690,16 +1690,16 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
           question:
             "Quand utiliser le Simulateur EBE ?",
           answers: [
-            "Avant un RDV réel pour me chauffer + après pour identifier mes erreurs récurrentes",
             "Une seule fois, pour valider que je connais la trame",
             "Jamais — l'entraînement c'est en RDV réel uniquement",
             "Seulement si mon coach me le demande explicitement",
+            "Avant un RDV réel pour me chauffer + après pour identifier mes erreurs récurrentes",
           ],
-          correctIndex: 0,
+          correctIndex: 3,
           wrongAnswerHints: {
-            1: "Tu progresses en répétant — pas en passant 1 fois.",
-            2: "Faux — tu ne mets en risque personne en t'entraînant scripté.",
-            3: "Autonomie d'abord. Le coach intervient sur ce que tu n'arrives pas à débloquer.",
+            0: "Tu progresses en répétant — pas en passant 1 fois.",
+            1: "Faux — tu ne mets en risque personne en t'entraînant scripté.",
+            2: "Autonomie d'abord. Le coach intervient sur ce que tu n'arrives pas à débloquer.",
           },
           explanation:
             "Le Simulateur n'est pas un test ponctuel. Tu le lances avant chaque RDV important pour te chauffer ET après chaque RDV raté pour identifier ce que tu as zappé. Coût marginal : 5 minutes. ROI : énorme.",
@@ -1772,15 +1772,15 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
           question:
             "Tu changes le statut d'un contact Liste 100 de 'Contacté' à 'RDV calé'. Que se passe-t-il ?",
           answers: [
-            "Une popup propose de créer un prospect agenda pré-rempli (nom, tel, source)",
             "Rien d'autre — il faut aller manuellement dans Agenda pour créer le RDV",
             "Le contact disparaît automatiquement de la liste 100",
+            "Une popup propose de créer un prospect agenda pré-rempli (nom, tel, source)",
             "Une notification est envoyée au sponsor pour valider le RDV",
           ],
-          correctIndex: 0,
+          correctIndex: 2,
           wrongAnswerHints: {
-            1: "Avant mai 2026 c'était le cas. Depuis la connexion, c'est automatisé.",
-            2: "Le contact RESTE dans la liste 100 avec son nouveau statut.",
+            0: "Avant mai 2026 c'était le cas. Depuis la connexion, c'est automatisé.",
+            1: "Le contact RESTE dans la liste 100 avec son nouveau statut.",
             3: "Pas de notification sponsor — c'est ta liste perso.",
           },
           explanation:
@@ -1791,14 +1791,14 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
           question:
             "Quel est l'ordre logique du funnel Lor'Squad ?",
           answers: [
-            "Liste 100 → Contacté → RDV calé (=Prospect Agenda) → EBE fait → Client",
             "Prospect Agenda → Liste 100 → EBE fait → Client",
+            "Liste 100 → Contacté → RDV calé (=Prospect Agenda) → EBE fait → Client",
             "Liste 100 → EBE fait → Client → RDV calé",
             "Tout fonctionne en parallèle, pas d'ordre",
           ],
-          correctIndex: 0,
+          correctIndex: 1,
           wrongAnswerHints: {
-            1: "L'agenda vient APRÈS la liste 100, pas avant. La liste 100 = mes connaissances, l'agenda = les RDV calés.",
+            0: "L'agenda vient APRÈS la liste 100, pas avant. La liste 100 = mes connaissances, l'agenda = les RDV calés.",
             2: "L'EBE vient avant le client (l'EBE est ce qui CONVERTIT le prospect en client).",
             3: "Faux — il y a un ordre clair, c'est ce qui fait l'efficacité du funnel.",
           },
@@ -1810,16 +1810,16 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
           question:
             "Tu cliques 'RDV calé' par erreur sur un contact. Comment annuler la création du prospect agenda ?",
           answers: [
-            "Je ferme la popup — le statut Liste 100 reste mais aucun prospect n'est créé en agenda",
             "Impossible — la création est instantanée, il faut supprimer manuellement le prospect dans /agenda",
             "Je dois rebasculer le statut sur 'Contacté' pour annuler",
             "Je clique sur Echap, ça remet tout à zéro y compris le statut",
+            "Je ferme la popup — le statut Liste 100 reste mais aucun prospect n'est créé en agenda",
           ],
-          correctIndex: 0,
+          correctIndex: 3,
           wrongAnswerHints: {
-            1: "Pas instantanée — la popup propose, tu valides ou tu fermes.",
-            2: "Le rebasculement de statut ne supprime pas un prospect déjà créé.",
-            3: "Echap ferme la popup mais ne change pas le statut Liste 100.",
+            0: "Pas instantanée — la popup propose, tu valides ou tu fermes.",
+            1: "Le rebasculement de statut ne supprime pas un prospect déjà créé.",
+            2: "Echap ferme la popup mais ne change pas le statut Liste 100.",
           },
           explanation:
             "La popup ProspectFormModal te DEMANDE de valider la création. Si tu fermes, le statut Liste 100 reste sur 'RDV calé' (tu peux le changer manuellement) mais aucun prospect agenda n'est créé. Logique 'opt-in' explicite.",
