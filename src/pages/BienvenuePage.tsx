@@ -385,7 +385,7 @@ export function BienvenuePage() {
               />
 
               {formError ? (
-                <p
+                <div
                   style={{
                     background: "rgba(251,113,133,0.12)",
                     border: "1px solid rgba(251,113,133,0.3)",
@@ -396,8 +396,27 @@ export function BienvenuePage() {
                     lineHeight: 1.5,
                   }}
                 >
-                  {formError}
-                </p>
+                  <p style={{ margin: 0 }}>{formError}</p>
+                  {/* Lien "Mot de passe oublie" si l'erreur contient
+                      "deja un compte" -> guide le client vers le reset
+                      Supabase standard (envoi email). 2026-05-05. */}
+                  {(formError.toLowerCase().includes("deja un compte") ||
+                    formError.toLowerCase().includes("déjà un compte") ||
+                    formError.toLowerCase().includes("mot de passe")) ? (
+                    <a
+                      href="/forgot-password"
+                      style={{
+                        display: "inline-block",
+                        marginTop: 8,
+                        color: "#FFD66B",
+                        fontWeight: 600,
+                        textDecoration: "underline",
+                      }}
+                    >
+                      → Mot de passe oublié ? Reset par email
+                    </a>
+                  ) : null}
+                </div>
               ) : null}
 
               <button
