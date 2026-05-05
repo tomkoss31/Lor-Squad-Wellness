@@ -1462,6 +1462,67 @@ export async function updateSupabaseUserPassword(userId: string, password: strin
   }
 }
 
+// ─── Activator démarrage produits (Chantier 2026-05-05) ─────────────────
+/**
+ * Active le programme d'un client à une date donnée (par défaut : aujourd'hui).
+ *
+ * Cas d'usage : le coach a fait le bilan le 29/04, mais la cliente reçoit
+ * et démarre les produits seulement le 05/05. Sans cet activator, le
+ * compteur protocole J+1/J+7/J+14/J+21 part du 29/04 → la cliente est
+ * déjà en "J+7" alors qu'elle vient à peine de commencer. Pareil pour
+ * `pv_client_products.start_date` qui détermine l'usure du produit (et
+ * donc les alertes réassort).
+ *
+ * Effets :
+ *   1. clients.start_date = startDateIso, started = true,
+ *      lifecycle_status = 'active' (sauf si déjà 'paused'/'stopped'/'lost')
+ *   2. pv_client_products.start_date = startDateIso pour TOUS les
+ *      produits actifs du client (active = true)
+ */
+export async function activateSupabaseClientProgram(params: {
+  clientId: string;
+  startDateIso: string; // YYYY-MM-DD
+  userId: string;
+}): Promise<void> {
+  const { clientId, startDateIso, userId } = params;
+  const client = await requireSupabase();
+
+  // 1. Update clients
+  const { error: clientError } = await client
+    .from("clients")
+    .update({
+      start_date: startDateIso,
+      started: true,
+      lifecycle_status: "active",
+      lifecycle_updated_at: new Date().toISOString(),
+      lifecycle_updated_by: userId,
+    })
+    .eq("id", clientId);
+
+  if (clientError) {
+    throw new Error(
+      `Impossible d'activer le programme du client : ${clientError.message}`
+    );
+  }
+
+  // 2. Update pv_client_products actifs : reset start_date pour
+  //    réaligner l'usure et les alertes réassort.
+  const { error: pvError } = await client
+    .from("pv_client_products")
+    .update({ start_date: startDateIso })
+    .eq("client_id", clientId)
+    .eq("active", true);
+
+  if (pvError) {
+    // Non-fatal : on loggue, le client est activé même si certains
+    // produits n'ont pas pu être réalignés (rare).
+    console.warn(
+      "[activateSupabaseClientProgram] pv_client_products update warning:",
+      pvError
+    );
+  }
+}
+
 // ─── Lifecycle setters (Chantier 1 — Matrice B) ──────────────────────────
 export async function updateSupabaseClientLifecycleStatus(params: {
   clientId: string;

@@ -614,3 +614,36 @@ export function getClientEffectiveStartDate(client: Client): string | null {
   if (initial?.date) return initial.date;
   return null;
 }
+
+/**
+ * Date de référence du protocole de suivi (J0). Chantier "activator
+ * démarrage produits" 2026-05-05 :
+ *
+ * Quand un coach fait le bilan le 29/04 mais la cliente reçoit ses
+ * produits seulement le 05/05, on veut que le compteur J+1 / J+7 /
+ * J+14 / J+21 parte du 05/05, pas du 29/04. Pareil pour l'usure des
+ * `pv_client_products` (réassort déclenché trop tôt sinon).
+ *
+ * Règle :
+ *   - Si `clients.start_date` est rempli → c'est lui (= moment où la
+ *     cliente a vraiment commencé)
+ *   - Sinon fallback sur la date du bilan initial (cas legacy : pas
+ *     d'activator cliqué)
+ *
+ * Fonction symétrique côté Date plutôt que string ISO (utilisée
+ * directement par le scheduler).
+ */
+export function getProtocolStartDate(client: Client): Date | null {
+  if (typeof client.startDate === "string" && client.startDate.length > 0) {
+    const d = new Date(client.startDate);
+    if (!Number.isNaN(d.getTime())) return d;
+  }
+  const initial =
+    client.assessments?.find((a) => a.type === "initial") ??
+    [...(client.assessments ?? [])].sort(
+      (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+    )[0];
+  if (!initial) return null;
+  const d = new Date(initial.date);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
