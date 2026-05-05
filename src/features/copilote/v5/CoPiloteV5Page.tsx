@@ -34,7 +34,6 @@ import { SideStack } from "./components/SideStack";
 
 import { DistriOnboardingChecklist } from "../../../components/formation/DistriOnboardingChecklist";
 import { PvActionPlanAlert } from "../../../components/copilote/PvActionPlanAlert";
-import { WeeklyQuestsCard } from "../../gamification/components/WeeklyQuestsCard";
 import { LegalFooter } from "../../../components/ui/LegalFooter";
 import { AnnouncementBell } from "../../../components/announcements/AnnouncementBell";
 import { WeatherPopup } from "./components/WeatherPopup";
@@ -200,9 +199,6 @@ export function CoPiloteV5Page() {
         <TodayTimeline />
         <SideStack />
       </section>
-
-      {/* Quêtes hebdo (gamification conservé) */}
-      <WeeklyQuestsCard />
 
       {/* Footer légal */}
       <LegalFooter />
