@@ -74,7 +74,7 @@ export function HeroEditorial({ pvAlertActive = false }: HeroEditorialProps) {
       ? "Prochaine action"
       : action.kind === "followup"
         ? "Suivi à faire"
-        : "Suggestion du moment";
+        : "Prochaine action";
 
   // CTAs : varient selon le mode
   const handlePrimary = () => {
@@ -210,12 +210,25 @@ export function HeroEditorial({ pvAlertActive = false }: HeroEditorialProps) {
             </div>
           </div>
         ) : (
-          // Pas de countdown (idle / followup) → bloc placeholder élégant
+          // Pas de countdown (idle / followup) → bloc minimaliste élégant.
+          // Plus d'emoji boisson ni "Mode tranquille" (validation Thomas
+          // 2026-05-05 : visuel jugé moche). À la place : juste un cadre
+          // typographique avec date du jour en JetBrains Mono pour ancrer
+          // visuellement la zone droite sans la surcharger.
           <div style={countdownBlockStyle}>
-            <div style={countdownLabelStyle}>{timeContext.label}</div>
-            <div style={countdownEmojiStyle}>{timeContext.emoji}</div>
+            <div style={countdownLabelStyle}>Aujourd'hui</div>
+            <div style={countdownDateStyle} className="v5-mono">
+              {new Intl.DateTimeFormat("fr-FR", {
+                day: "2-digit",
+                month: "2-digit",
+              })
+                .format(new Date())
+                .replace("/", " · ")}
+            </div>
             <div style={countdownSubStyle}>
-              {action.kind === "idle" ? "Mode tranquille" : "Pas de RDV imminent"}
+              {action.kind === "idle"
+                ? "Pas de RDV imminent — profite-en pour préparer."
+                : "Suivi à faire dans la journée"}
             </div>
           </div>
         )}
@@ -427,10 +440,14 @@ const colonStyle: React.CSSProperties = {
   display: "inline-block",
 };
 
-const countdownEmojiStyle: React.CSSProperties = {
-  fontSize: 56,
+const countdownDateStyle: React.CSSProperties = {
+  fontFamily: "'JetBrains Mono', monospace",
+  fontSize: 44,
+  fontWeight: 700,
+  color: "#F5DEB3",
+  letterSpacing: -1.5,
   lineHeight: 1,
-  marginBottom: 8,
+  marginTop: 4,
 };
 
 const countdownSubStyle: React.CSSProperties = {

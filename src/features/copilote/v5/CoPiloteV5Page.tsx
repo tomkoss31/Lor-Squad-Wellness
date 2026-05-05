@@ -25,7 +25,6 @@ import { useState, useEffect, useMemo } from "react";
 import { useAppContext } from "../../../context/AppContext";
 import { useGlobalView } from "../../../hooks/useGlobalView";
 import { useCopiloteData } from "../../../hooks/useCopiloteData";
-import { useTimeContext } from "./hooks/useTimeContext";
 
 import { HeroEditorial } from "./components/HeroEditorial";
 import { RentabJourney } from "./components/RentabJourney";
@@ -45,7 +44,6 @@ export function CoPiloteV5Page() {
   const [globalView] = useGlobalView();
   const [now, setNow] = useState(new Date());
   const data = useCopiloteData(now, globalView);
-  const timeContext = useTimeContext();
 
   // Refresh `now` toutes les minutes pour la date display
   useEffect(() => {
@@ -103,19 +101,28 @@ export function CoPiloteV5Page() {
             <span style={liveDotStyle} className="v5-pulse" />
             {dateDisplay}
           </div>
+          {/* Greeting fixe "Bonjour [Prénom] 👋" — alignement pixel-perfect
+              avec le HTML de réf. timeContext sert uniquement en interne
+              (Daily Boost catégorie + suggestion proactive idle). */}
           <h1 style={greetingStyle}>
-            {timeContext.greeting}{" "}
-            <span style={greetingAccentStyle}>{firstName}</span>{" "}
-            <span aria-hidden="true">{timeContext.emoji}</span>
+            Bonjour <span style={greetingAccentStyle}>{firstName}</span>{" "}
+            <span aria-hidden="true" role="img">👋</span>
           </h1>
         </div>
 
         <div style={topBarRightStyle}>
+          {/* Weather pill mock (V5 MVP — branchement API météo en V6 si besoin) */}
           <div style={weatherPillStyle}>
-            <span aria-hidden="true">{timeContext.emoji}</span>
-            <span style={{ fontFamily: "'JetBrains Mono', monospace", fontWeight: 700 }}>
-              {timeContext.label}
+            <span aria-hidden="true">🌤</span>
+            <span
+              style={{
+                fontFamily: "'JetBrains Mono', monospace",
+                fontWeight: 700,
+              }}
+            >
+              13°
             </span>
+            <span style={{ color: "#7A6F5C", fontSize: 11 }}>Nuageux</span>
           </div>
 
           {/* Search ⌘K stub (validation Thomas Q4 — non fonctionnel V5) */}
