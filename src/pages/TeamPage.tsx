@@ -237,7 +237,11 @@ export function TeamPage() {
 
   // Hub équipe (2026-05-04) : engagement aggregé pour tous les membres du
   // sous-arbre. Sert pour onglets Vue d'ensemble, Engagement, Apprentissage.
-  const engagementRootId = useCoupleMode ? coupleMemberIds[0] ?? rootId : rootId;
+  // Fix bug 2026-05-05 : on utilise TOUJOURS rootId (= admin courant) pour
+  // le team tree, jamais coupleMemberIds[0] qui pouvait pointer vers Mel
+  // (sub-tree solo) au lieu de Thomas (sub-tree complet 4 distri). Le couple
+  // mode reste pertinent uniquement pour l'agrégation rentabilité/clients.
+  const engagementRootId = rootId;
   const { members: engagementMembers, loading: engagementLoading } =
     useTeamEngagement(engagementRootId);
   const drilldownMember = drilldownMemberId
