@@ -63,6 +63,9 @@ export function ProfilTab() {
   // Avatar + bio (V2 — 2026-04-30)
   const [avatarUrl, setAvatarUrl] = useState<string | null>(currentUser?.avatarUrl ?? null);
   const [bio, setBio] = useState(currentUser?.bio ?? "");
+  // Ville (Chantier D météo 2026-05-05). Source pour la pill météo Co-pilote V5.
+  const [city, setCity] = useState<string>(currentUser?.city ?? "");
+  const [geoLoading, setGeoLoading] = useState(false);
   // Rang Herbalife (FLEX rank-aware, 2026-11-05). Détermine la marge retail
   // utilisée pour calculer les cibles FLEX. Modifiable ici par le distri lui-même.
   const [currentRank, setCurrentRank] = useState<HerbalifeRank>(
@@ -148,6 +151,8 @@ export function ProfilTab() {
           monthly_pv_target: pvTargetNum,
           // V2 (2026-04-30) : bio (avatar_url est save par AvatarUploader directement)
           bio: bio.trim() || null,
+          // Chantier D météo (2026-05-05) : ville pour Co-pilote V5
+          city: city.trim() || null,
           // FLEX rank-aware (2026-11-05) : update rank + set rank_set_at
           // (peut être déjà rempli, on le maintient en sync à chaque save).
           current_rank: currentRank,
@@ -293,6 +298,128 @@ export function ProfilTab() {
             }}
           >
             {bio.length} / 200
+          </div>
+        </div>
+
+        {/* Ville (Chantier D météo 2026-05-05) — alimente la météo Co-pilote V5 */}
+        <div>
+          <label
+            style={{
+              display: "block",
+              fontSize: 11,
+              fontWeight: 700,
+              color: "var(--ls-text-muted)",
+              textTransform: "uppercase",
+              letterSpacing: 1.2,
+              marginBottom: 6,
+              fontFamily: "DM Sans, sans-serif",
+            }}
+          >
+            Ville (météo Co-pilote)
+          </label>
+          <div style={{ display: "flex", gap: 8 }}>
+            <input
+              value={city}
+              onChange={(e) => setCity(e.target.value)}
+              placeholder="Ex: Paris, Lyon, Marseille…"
+              style={{
+                flex: 1,
+                padding: "10px 12px",
+                borderRadius: 10,
+                border: "1px solid var(--ls-border)",
+                background: "var(--ls-surface2)",
+                color: "var(--ls-text)",
+                fontSize: 14,
+                fontFamily: "DM Sans, sans-serif",
+                outline: "none",
+              }}
+            />
+            <button
+              type="button"
+              onClick={async () => {
+                if (geoLoading) return;
+                if (!navigator.geolocation) {
+                  pushToast({
+                    tone: "warning",
+                    title: "Géolocalisation indisponible",
+                    message: "Saisis ta ville manuellement.",
+                  });
+                  return;
+                }
+                setGeoLoading(true);
+                navigator.geolocation.getCurrentPosition(
+                  async (pos) => {
+                    try {
+                      const { latitude, longitude } = pos.coords;
+                      const res = await fetch(
+                        `https://geocoding-api.open-meteo.com/v1/reverse?latitude=${latitude}&longitude=${longitude}&language=fr&format=json`,
+                      );
+                      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                      const json = await res.json();
+                      const cityName: string | undefined =
+                        json?.results?.[0]?.name;
+                      if (cityName) {
+                        setCity(cityName);
+                        pushToast({
+                          tone: "success",
+                          title: `Ville détectée : ${cityName}`,
+                        });
+                      } else {
+                        pushToast({
+                          tone: "warning",
+                          title: "Ville introuvable",
+                          message:
+                            "Impossible de retrouver ta ville depuis ta position. Saisis-la manuellement.",
+                        });
+                      }
+                    } catch {
+                      pushToast({
+                        tone: "warning",
+                        title: "Erreur géocodage",
+                        message: "Saisis ta ville manuellement.",
+                      });
+                    } finally {
+                      setGeoLoading(false);
+                    }
+                  },
+                  () => {
+                    setGeoLoading(false);
+                    pushToast({
+                      tone: "warning",
+                      title: "Permission refusée",
+                      message: "Saisis ta ville manuellement.",
+                    });
+                  },
+                  { enableHighAccuracy: false, timeout: 8000 },
+                );
+              }}
+              disabled={geoLoading}
+              style={{
+                background: "var(--ls-surface2)",
+                color: "var(--ls-text)",
+                border: "1px solid var(--ls-border)",
+                padding: "10px 14px",
+                borderRadius: 10,
+                fontWeight: 600,
+                fontSize: 13,
+                cursor: geoLoading ? "wait" : "pointer",
+                fontFamily: "DM Sans, sans-serif",
+                whiteSpace: "nowrap",
+              }}
+              title="Détecter ma ville automatiquement"
+            >
+              {geoLoading ? "📡 Localisation…" : "📍 Auto-détecter"}
+            </button>
+          </div>
+          <div
+            style={{
+              fontSize: 10.5,
+              color: "var(--ls-text-hint)",
+              marginTop: 4,
+              fontFamily: "DM Sans, sans-serif",
+            }}
+          >
+            Utilisée par la météo 5 jours sur le Co-pilote.
           </div>
         </div>
 
