@@ -3,7 +3,34 @@
 @tailwind utilities;
 
 /* =============================================================================
- * Theme system Lor'Squad (note 2026-11-04)
+ * La Base 360 — Design Tokens (Rebrand 2026-05-05)
+ * G3 Vital Fusion : Emerald -> Cyan -> Violet
+ *
+ * Ces tokens --lb360-* coexistent avec --ls-* pour permettre une migration
+ * progressive composant par composant. Les --ls-* sont @deprecated mais
+ * conserves pour ne pas casser les pages non-encore-rebrand.
+ * ============================================================================= */
+:root {
+  --lb360-emerald:   #10B981;
+  --lb360-cyan:      #06B6D4;
+  --lb360-violet:    #8B5CF6;
+  --lb360-gradient:  linear-gradient(135deg, #10B981 0%, #06B6D4 50%, #8B5CF6 100%);
+  --lb360-gradient-soft: linear-gradient(135deg, #F0FDF4 0%, #ECFEFF 50%, #F5F3FF 100%);
+
+  --lb360-white:     #FFFFFF;
+  --lb360-mist:      #F8FAFC;
+  --lb360-ink-deep:  #0F172A;
+  --lb360-ink-soft:  #475569;
+  --lb360-border:    #E2E8F0;
+
+  --lb360-success:   #10B981;
+  --lb360-warning:   #F59E0B;
+  --lb360-danger:    #EF4444;
+  --lb360-info:      #06B6D4;
+}
+
+/* =============================================================================
+ * @deprecated Theme system Lor'Squad (note 2026-11-04, deprecated 2026-05-05)
  *
  * 2 themes live :
  *   - :root            = Dark Premium (defaut) — gold/teal sur surface sombre
