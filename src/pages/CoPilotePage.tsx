@@ -28,6 +28,7 @@ import { BirthdayBlock } from "../components/copilote/BirthdayBlock";
 import { BusinessOpportunitiesCard } from "../components/copilote/BusinessOpportunitiesCard";
 import { DistriOnboardingChecklist } from "../components/formation/DistriOnboardingChecklist";
 import { FlexTodayWidget } from "../components/copilote/FlexTodayWidget";
+import { RentabilityWidget } from "../components/rentability/RentabilityWidget";
 import { StreakBadge } from "../features/gamification/components/StreakBadge";
 import { WeeklyQuestsCard } from "../features/gamification/components/WeeklyQuestsCard";
 
@@ -97,6 +98,11 @@ export function CoPilotePage() {
           nouveaux distri. Auto-cache si > 14j ou si toutes les etapes
           cochees. Visible avant le Hero pour ne pas etre louee. */}
       <DistriOnboardingChecklist />
+
+      {/* Rentabilité Phase A (2026-05-05) — jauge €/mois en haut, premier
+          écran du matin = combien tu as gagné ce mois. Click = breakdown
+          complet. ROI émotionnel max. */}
+      <RentabilityWidget />
 
       {/* FLEX Lor'Squad (2026-11-05) — moteur de pilotage quotidien :
           cibles + check-in du jour visibles direct sur Co-pilote. Cliquer
