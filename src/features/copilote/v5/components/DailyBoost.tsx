@@ -65,7 +65,8 @@ export function DailyBoost({ quote, dimmed = false, isPreview = false }: DailyBo
 // ─── Styles inline-scoped ──────────────────────────────────────────────────
 
 const wrapperStyle: React.CSSProperties = {
-  borderTop: "1px solid rgba(245, 222, 179, 0.12)",
+  // Validation Thomas 2026-05-05 : virer la borderTop au-dessus du
+  // Daily Boost, le pin AWT respire mieux sans la barre qui le coupe.
   paddingTop: 18,
   background: "transparent",
 };
