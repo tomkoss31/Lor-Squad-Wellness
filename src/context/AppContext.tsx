@@ -39,6 +39,7 @@ import {
   updateSupabaseAssessment,
   updateSupabaseClientSchedule,
   updateSupabaseClientLifecycleStatus,
+  activateSupabaseClientProgram,
   updateSupabaseClientFragileFlag,
   updateSupabaseClientFreeFollowUp,
   updateSupabaseClientFreePvTracking,
@@ -108,6 +109,9 @@ interface AppContextValue {
   deleteMessage: (id: string) => Promise<void>;
   updateClientInfo: (clientId: string, data: { phone?: string; email?: string; city?: string; age?: number; height?: number }) => Promise<void>;
   setClientLifecycleStatus: (clientId: string, newStatus: LifecycleStatus) => Promise<void>;
+  /** Active le programme : start_date = aujourd'hui (ou date donnée) +
+   *  réaligne pv_client_products. Chantier activator 2026-05-05. */
+  activateClientProgram: (clientId: string, startDateIso?: string) => Promise<void>;
   setClientFragileFlag: (clientId: string, isFragile: boolean) => Promise<void>;
   setClientFreeFollowUp: (clientId: string, freeFollowUp: boolean) => Promise<void>;
   // Free PV tracking (2026-04-20) : toggle exclusion des listes de réassort
@@ -971,6 +975,39 @@ export function AppProvider({ children }: PropsWithChildren) {
         setClients(prev => prev.map(c =>
           c.id === clientId ? { ...c, isFragile } : c
         ));
+      },
+      activateClientProgram: async (clientId: string, startDateIso?: string) => {
+        if (!currentUser?.id) throw new Error("Not authenticated");
+        const isoDate = startDateIso ?? new Date().toISOString().slice(0, 10);
+        await activateSupabaseClientProgram({
+          clientId,
+          startDateIso: isoDate,
+          userId: currentUser.id,
+        });
+        // Optimistic update local : aligne le state pour que la fiche
+        // affiche immédiatement le nouveau J+0 sans refetch.
+        setClients(prev =>
+          prev.map(c =>
+            c.id === clientId
+              ? {
+                  ...c,
+                  startDate: isoDate,
+                  started: true,
+                  lifecycleStatus: "active" as LifecycleStatus,
+                  lifecycleUpdatedAt: new Date().toISOString(),
+                  lifecycleUpdatedBy: currentUser.id,
+                }
+              : c
+          )
+        );
+        // Aligne aussi pv_client_products actifs du client en mémoire
+        setPvClientProducts(prev =>
+          prev.map(p =>
+            p.clientId === clientId && p.active
+              ? { ...p, startDate: isoDate }
+              : p
+          )
+        );
       },
       setClientFreeFollowUp: async (clientId: string, freeFollowUp: boolean) => {
         // Sujet C : si on active le suivi libre, les follow-ups ouverts passent

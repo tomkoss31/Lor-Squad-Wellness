@@ -15,7 +15,7 @@
 
 import type { Client, FollowUpProtocolLog, FollowUpProtocolStepId } from "../types/domain";
 import { FOLLOW_UP_PROTOCOL } from "../data/followUpProtocol";
-import { isClientProgramStarted } from "./calculations";
+import { isClientProgramStarted, getProtocolStartDate } from "./calculations";
 
 // ─── Garde-fou éligibilité (Hotfix 2026-04-20) ───────────────────────────
 // Le protocole est conçu pour le nurturing J+1 → J+10. Au-delà, un client
@@ -64,8 +64,9 @@ export function evaluateProtocolEligibility(
     return { eligible: false, reasons };
   }
 
-  // Filtre 1 : Date récente
-  const initialDate = getInitialAssessmentDate(client);
+  // Filtre 1 : Date récente — utilise getProtocolStartDate (priorité
+  // start_date sur date bilan, chantier activator 2026-05-05).
+  const initialDate = getProtocolStartDate(client);
   const initialAssessment =
     client.assessments?.find((a) => a.type === "initial") ??
     [...(client.assessments ?? [])].sort(
@@ -213,7 +214,13 @@ export function getFollowUpsDue(
     const eligibility = evaluateProtocolEligibility(client, { now });
     if (!eligibility.eligible) continue;
 
-    const initialDate = getInitialAssessmentDate(client);
+    // Chantier "activator démarrage produits" 2026-05-05 :
+    // On utilise getProtocolStartDate (priorité clients.start_date sur
+    // la date du bilan initial). Avant : compteur partait du bilan, ce
+    // qui décalait quand la cliente recevait ses produits X jours plus
+    // tard. Maintenant : si le coach clique "Démarrer auj." dans
+    // ActionsTab, start_date écrase le bilan comme ancre J0.
+    const initialDate = getProtocolStartDate(client);
     if (!initialDate) continue;
 
     const daysSince = computeDaysSinceInitial(initialDate, now);
