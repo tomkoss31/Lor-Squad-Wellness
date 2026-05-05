@@ -321,6 +321,12 @@ const NouveautesPage = lazy(() =>
     default: module.NouveautesPage,
   })),
 );
+// Rentabilité Phase A (2026-05-05) — jauge €/mois + détail breakdown.
+const RentabilitePage = lazy(() =>
+  import("./pages/RentabilitePage").then((module) => ({
+    default: module.RentabilitePage,
+  })),
+);
 const FormationCalculatorPage = lazy(() =>
   import("./pages/FormationCalculatorPage").then((module) => ({
     default: module.FormationCalculatorPage
@@ -455,6 +461,8 @@ export default function App() {
               <Route path="developpement" element={<DeveloppementHubPage />} />
               <Route path="developpement/flex-explique" element={<FlexExpliquePage />} />
               <Route path="developpement/nouveautes" element={<NouveautesPage />} />
+              {/* Rentabilité Phase A (2026-05-05) — jauge €/mois + breakdown. */}
+              <Route path="rentabilite" element={<RentabilitePage />} />
               {/* Lor'Squad Academy Phase 1 (2026-04-26) — gated admin only
                   en prod (RoleRoute). Defense en profondeur : RoleRoute
                   redirige vers /co-pilote si non-admin tape l URL manuelle. */}
