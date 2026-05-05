@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Coach 21h — Hauts volumes PV : les 3 leviers</title>
+<style>
+  @page {
+    size: A4;
+    margin: 14mm 16mm;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Helvetica Neue', Georgia, serif;
+    color: #1a1a1a;
+    font-size: 11pt;
+    line-height: 1.55;
+    background: white;
+  }
+
+  :root {
+    --gold: #B8922A;
+    --teal: #0D9488;
+    --coral: #DC6B5C;
+    --purple: #7C3AED;
+    --bg-soft: #FAF7EF;
+    --bg-soft2: #F5EFE0;
+    --border: #D8D3C5;
+    --text-muted: #6B6655;
+  }
+
+  /* ─── Header ─── */
+  .header {
+    border-bottom: 3px solid var(--gold);
+    padding-bottom: 6mm;
+    margin-bottom: 8mm;
+  }
+  .eyebrow {
+    color: var(--gold);
+    font-size: 9pt;
+    text-transform: uppercase;
+    letter-spacing: 1.5pt;
+    font-weight: 700;
+    margin-bottom: 3mm;
+  }
+  .title {
+    font-size: 24pt;
+    font-weight: 800;
+    margin: 0;
+    color: #1a1a1a;
+    letter-spacing: -0.5pt;
+    line-height: 1.15;
+  }
+  .subtitle {
+    font-size: 12pt;
+    color: var(--text-muted);
+    margin: 4mm 0 0 0;
+    font-style: italic;
+    line-height: 1.4;
+  }
+
+  /* ─── Ouverture cadre ─── */
+  .cadre {
+    background: var(--bg-soft);
+    border-left: 3mm solid var(--gold);
+    padding: 6mm 7mm;
+    margin: 6mm 0;
+    border-radius: 0 3mm 3mm 0;
+  }
+  .cadre p {
+    margin: 0;
+    font-size: 12pt;
+    line-height: 1.55;
+  }
+  .cadre p + p { margin-top: 4mm; }
+  .cadre strong { color: var(--gold); }
+
+  /* ─── Levier section ─── */
+  .levier {
+    margin: 9mm 0;
+    page-break-inside: avoid;
+  }
+  .levier-header {
+    display: flex;
+    align-items: baseline;
+    gap: 4mm;
+    margin-bottom: 4mm;
+    padding-bottom: 3mm;
+    border-bottom: 1.5mm solid;
+  }
+  .levier.teal .levier-header { border-bottom-color: var(--teal); }
+  .levier.gold .levier-header { border-bottom-color: var(--gold); }
+  .levier.coral .levier-header { border-bottom-color: var(--coral); }
+
+  .levier-num {
+    font-size: 28pt;
+    font-weight: 800;
+    line-height: 1;
+    font-family: Georgia, serif;
+  }
+  .levier.teal .levier-num { color: var(--teal); }
+  .levier.gold .levier-num { color: var(--gold); }
+  .levier.coral .levier-num { color: var(--coral); }
+
+  .levier-titles {
+    flex: 1;
+  }
+  .levier-tag {
+    font-size: 8.5pt;
+    text-transform: uppercase;
+    letter-spacing: 1.2pt;
+    color: var(--text-muted);
+    font-weight: 700;
+    margin-bottom: 1mm;
+  }
+  .levier-name {
+    font-size: 18pt;
+    font-weight: 800;
+    margin: 0;
+    line-height: 1.1;
+  }
+  .levier.teal .levier-name { color: var(--teal); }
+  .levier.gold .levier-name { color: var(--gold); }
+  .levier.coral .levier-name { color: var(--coral); }
+
+  .levier-body p {
+    margin: 0 0 4mm 0;
+    font-size: 11pt;
+    line-height: 1.55;
+  }
+  .levier-body p strong { color: #1a1a1a; }
+
+  /* ─── Quote / phrase à dire ─── */
+  .phrase-box {
+    background: white;
+    border: 1px solid;
+    border-left: 3mm solid;
+    padding: 4mm 5mm;
+    margin: 4mm 0;
+    border-radius: 0 2mm 2mm 0;
+    font-size: 11pt;
+    line-height: 1.5;
+    font-style: italic;
+    color: #1a1a1a;
+  }
+  .phrase-box::before {
+    content: "💬 À DIRE";
+    display: block;
+    font-size: 7.5pt;
+    font-weight: 700;
+    color: var(--gold);
+    letter-spacing: 1pt;
+    margin-bottom: 2mm;
+    font-style: normal;
+  }
+  .levier.teal .phrase-box { border-color: var(--teal); }
+  .levier.gold .phrase-box { border-color: var(--gold); }
+  .levier.coral .phrase-box { border-color: var(--coral); }
+  .levier.teal .phrase-box::before { color: var(--teal); }
+  .levier.coral .phrase-box::before { color: var(--coral); }
+
+  /* ─── Stat box ─── */
+  .stat-box {
+    background: var(--bg-soft2);
+    padding: 4mm 5mm;
+    border-radius: 2mm;
+    margin: 4mm 0;
+    font-size: 10.5pt;
+    line-height: 1.5;
+  }
+  .stat-box::before {
+    content: "📊 LE CHIFFRE";
+    display: block;
+    font-size: 7.5pt;
+    font-weight: 700;
+    color: var(--gold);
+    letter-spacing: 1pt;
+    margin-bottom: 2mm;
+  }
+  .stat-box strong {
+    color: var(--gold);
+    font-size: 12pt;
+  }
+
+  /* ─── Exemple réel placeholder ─── */
+  .exemple-box {
+    background: white;
+    border: 0.5mm dashed var(--purple);
+    padding: 4mm 5mm;
+    border-radius: 2mm;
+    margin: 4mm 0;
+    font-size: 10pt;
+    line-height: 1.5;
+  }
+  .exemple-box::before {
+    content: "🎯 EXEMPLE RÉEL — À COMPLÉTER";
+    display: block;
+    font-size: 7.5pt;
+    font-weight: 700;
+    color: var(--purple);
+    letter-spacing: 1pt;
+    margin-bottom: 2mm;
+  }
+  .exemple-box .placeholder {
+    color: var(--text-muted);
+    font-style: italic;
+  }
+
+  /* ─── Section title (pour pages 2-3) ─── */
+  .section-title {
+    font-size: 18pt;
+    font-weight: 800;
+    margin: 8mm 0 4mm 0;
+    color: #1a1a1a;
+    border-bottom: 1.5mm solid var(--gold);
+    padding-bottom: 2mm;
+  }
+
+  /* ─── Math cumulée ─── */
+  .math-intro {
+    font-size: 11pt;
+    margin: 0 0 5mm 0;
+    line-height: 1.55;
+  }
+  .math-intro strong { color: var(--gold); }
+
+  table.cumul {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 9.5pt;
+    margin: 4mm 0;
+  }
+  table.cumul th {
+    background: var(--purple);
+    color: white;
+    padding: 2.5mm 3mm;
+    text-align: center;
+    font-weight: 700;
+    font-size: 8.5pt;
+    text-transform: uppercase;
+    letter-spacing: 0.6pt;
+  }
+  table.cumul td {
+    padding: 2.5mm 3mm;
+    text-align: center;
+    border: 0.3mm solid var(--border);
+    font-variant-numeric: tabular-nums;
+  }
+  table.cumul tr:nth-child(even) td { background: var(--bg-soft); }
+  table.cumul .month-label {
+    text-align: left;
+    font-weight: 700;
+    background: var(--bg-soft2) !important;
+    color: #1a1a1a;
+  }
+  table.cumul .pv-cell {
+    background: color-mix(in srgb, var(--gold) 18%, white) !important;
+    font-weight: 800;
+    color: var(--gold);
+    font-size: 10.5pt;
+  }
+  table.cumul .clients-cell {
+    font-weight: 700;
+    color: var(--teal);
+  }
+  table.cumul .milestone {
+    background: color-mix(in srgb, var(--purple) 15%, white) !important;
+    font-weight: 800;
+    color: var(--purple);
+  }
+
+  .math-key {
+    background: var(--bg-soft);
+    border-left: 3mm solid var(--gold);
+    padding: 4mm 5mm;
+    border-radius: 0 2mm 2mm 0;
+    margin: 5mm 0;
+    font-size: 10.5pt;
+    line-height: 1.55;
+  }
+  .math-key strong { color: var(--gold); }
+
+  /* ─── Phrases-clés ─── */
+  .phrases-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 3mm;
+    margin: 4mm 0;
+  }
+  .phrase-final {
+    background: white;
+    border: 1px solid var(--gold);
+    border-left: 3mm solid var(--gold);
+    border-radius: 2mm;
+    padding: 4mm 5mm;
+    font-size: 11pt;
+    line-height: 1.5;
+    font-style: italic;
+  }
+  .phrase-final strong { color: var(--gold); font-weight: 800; font-style: normal; }
+  .phrase-final .num {
+    display: inline-block;
+    width: 7mm;
+    height: 7mm;
+    line-height: 7mm;
+    text-align: center;
+    background: var(--gold);
+    color: white;
+    border-radius: 50%;
+    font-size: 8pt;
+    font-weight: 800;
+    margin-right: 3mm;
+    font-style: normal;
+    vertical-align: middle;
+  }
+
+  /* ─── Erreurs ─── */
+  .errors-box {
+    background: #FEF0EE;
+    border: 0.5mm solid var(--coral);
+    border-radius: 2mm;
+    padding: 5mm 6mm;
+    margin: 6mm 0;
+  }
+  .errors-box .errors-title {
+    font-size: 13pt;
+    font-weight: 800;
+    color: var(--coral);
+    margin: 0 0 3mm 0;
+  }
+  .errors-box ul {
+    margin: 0;
+    padding-left: 5mm;
+  }
+  .errors-box li {
+    font-size: 10.5pt;
+    margin-bottom: 2mm;
+    line-height: 1.45;
+  }
+
+  /* ─── Footer ─── */
+  .footer {
+    margin-top: 8mm;
+    padding-top: 4mm;
+    border-top: 1mm solid var(--gold);
+    text-align: center;
+    font-size: 9pt;
+    color: var(--text-muted);
+    font-style: italic;
+  }
+  .footer strong { color: var(--gold); font-style: normal; }
+
+  .page-break { page-break-before: always; }
+
+  @media print {
+    body { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<!-- ═══ PAGE 1 — Cadre + Levier 1 (Rétention) ═════════════════════════ -->
+<!-- ════════════════════════════════════════════════════════════════════ -->
+
+<header class="header">
+  <div class="eyebrow">✦ Lor'Squad · Coach 21h · Lundi 4 Mai</div>
+  <h1 class="title">Développer des hauts volumes PV</h1>
+  <p class="subtitle">Notre force chez Lor'Squad : retenir, upseller, attirer les bons. <br>Trois leviers — pas un sprint, une mécanique cumulative.</p>
+</header>
+
+<!-- ═══ CADRE D'OUVERTURE ═══ -->
+<div class="cadre">
+  <p>Le piège quand on parle <strong>haut volume PV</strong>, c'est de penser : <em>"il faut prospecter plus."</em> C'est faux. Les distributeurs qui font 4 000, 10 000 ou 25 000 PV ne prospectent pas davantage. Ils retiennent mieux, ils upsellent mieux, et ils duppliquent mieux.</p>
+
+  <p>Si tu as <strong>10 clients à 100 PV</strong> qui re-commandent chaque mois, tu démarres ton mois avec <strong>1 000 PV passifs</strong>. C'est cette base récurrente qui change la donne — pas le sprint du 28 du mois.</p>
+
+  <p>Ce soir on regarde les <strong>3 leviers</strong> que tu peux activer dès demain pour faire grimper ton volume sans courir partout : <strong>Rétention · Upsell · Acquisition qualifiée</strong>.</p>
+</div>
+
+<!-- ═══ LEVIER 1 — RÉTENTION ═══ -->
+<div class="levier teal">
+  <div class="levier-header">
+    <div class="levier-num">1</div>
+    <div class="levier-titles">
+      <div class="levier-tag">Levier 1 · Notre force</div>
+      <h2 class="levier-name">🔁 La Rétention</h2>
+    </div>
+  </div>
+
+  <div class="levier-body">
+    <p>Chez Lor'Squad, c'est notre signature. On garde nos clients parce qu'on a un système, pas parce qu'on a de la chance. Le distri moyen, dans le marché, oublie environ <strong>30 % de ses clients dans les 60 jours après la vente</strong>. Pas par mauvaise volonté — par manque d'organisation. Nous, on a verrouillé ce trou.</p>
+
+    <p>Quatre choses font que nos clients restent. D'abord, le <strong>J+1 obligatoire</strong> : un message dans les 24 heures qui suivent la vente, jamais skippé. Pas un message standard — un message qui demande « comment tu te sens, tu as ouvert le pack ? » Ce simple geste change tout : il dit au client qu'il n'est pas un numéro, qu'on l'accompagne vraiment.</p>
+
+    <p>Ensuite, on a <strong>vécu le programme nous-mêmes</strong> via le 21 jours cobaye. Quand un client te raconte sa fatigue à 14h, tu sais. Tu l'as vécue. Tu réponds avec ta vérité, pas avec un argumentaire commercial creux. C'est ça qui crée la confiance durable.</p>
+
+    <p>Troisième pilier : <strong>l'app client</strong>. Le client a son programme visible, ses conseils du jour, sa messagerie directe avec toi. Il ne se sent pas seul entre deux RDV — il a un coach dans la poche. C'est un levier de rétention qu'aucun de nos concurrents directs n'a au même niveau.</p>
+
+    <p>Enfin, on plante les <strong>follow-ups dans l'agenda AVANT que la cure se termine</strong>. Pas après. Avant. Comme ça on ne court jamais derrière un client qui « disparaît » — on a toujours une raison naturelle de reprendre contact.</p>
+
+    <div class="phrase-box">
+      « Le distri moyen oublie 30 % de ses clients dans les 60 jours. Pas par mauvaise volonté — par manque de système. Nous, on a corrigé ça. C'est pour ça que nos clients reviennent. »
+    </div>
+
+    <div class="stat-box">
+      Un client retenu coûte <strong>7× moins cher</strong> qu'un client à acquérir. Si tu rates 1 client par mois, tu rates 100 PV récurrents — soit <strong>1 200 PV sur l'année</strong>. La rétention n'est pas une option, c'est ton premier vrai levier de croissance.
+    </div>
+
+    <div class="exemple-box">
+      <div class="placeholder">[À développer en visio : ton exemple Lor'Squad d'un client retenu 6+ mois — qui c'est, comment tu l'as gardé, combien de PV cumulés.]</div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<!-- ═══ PAGE 2 — Levier 2 (Upsell) + Levier 3 (Acquisition) ═══════════ -->
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<div class="page-break"></div>
+
+<!-- ═══ LEVIER 2 — UPSELL ═══ -->
+<div class="levier gold">
+  <div class="levier-header">
+    <div class="levier-num">2</div>
+    <div class="levier-titles">
+      <div class="levier-tag">Levier 2 · Sous-exploité</div>
+      <h2 class="levier-name">🎯 L'Upsell</h2>
+    </div>
+  </div>
+
+  <div class="levier-body">
+    <p>L'upsell, c'est le levier que <strong>presque personne n'active à fond</strong>. Pourtant c'est le moins coûteux : pas besoin de prospection, pas besoin de RDV bilan complet. Tu travailles avec un client que tu as déjà.</p>
+
+    <p>Concrètement, voilà la math. Un client qui démarre <strong>Formula 1 seule</strong>, c'est 50 PV par mois. Le même client en <strong>pack complet</strong> — F1 + PDM + Aloe + Thé — c'est 100 PV par mois. Tu doubles ton volume sur ce client sans avoir investi plus de temps coach. C'est le retour sur investissement maximal de ton activité.</p>
+
+    <p>La question n'est pas <em>est-ce qu'on doit upseller</em>, mais <strong>quand</strong>. Trois moments parfaits dans la vie d'un client.</p>
+
+    <p><strong>Premier moment : après J21</strong>, si la transformation est visible. Le client sent l'énergie revenir, dort mieux, a perdu ses 2-3 premiers kilos. C'est là qu'il est OUVERT. Pas avant — avant, tu déclencheras une objection prix automatique. À J21, tu déclenches une envie de continuer.</p>
+
+    <p><strong>Deuxième moment : au passage d'objectif</strong>. Le client a perdu ses 5 kg, il passe en phase maintien — ou il décide de se mettre au sport pour solidifier. C'est une nouvelle saison de sa transformation. Tu ne lui vends pas plus de produits, tu lui proposes la <strong>bonne nutrition pour sa nouvelle phase</strong>.</p>
+
+    <p><strong>Troisième moment : quand il ramène une recommandation</strong>. Il te présente sa sœur ou son collègue. Magie : il s'engage publiquement dans la marque. C'est le moment idéal pour proposer un pack groupé ou pour qu'il passe au pack famille. Il dira oui plus facilement qu'à n'importe quel autre moment de l'année.</p>
+
+    <div class="phrase-box">
+      « Marie, t'as les premiers résultats. Maintenant on solidifie pour que ça tienne dans le temps. Voilà ce que je te propose pour les 21 prochains jours… »
+    </div>
+
+    <div class="stat-box">
+      Pour <strong>30 minutes de discussion</strong> avec un client existant, tu peux <strong>doubler son volume mensuel</strong>. Aucun acte commercial n'a un meilleur ratio temps/PV que l'upsell bien timé.
+    </div>
+
+    <div class="exemple-box">
+      <div class="placeholder">[À développer : exemple d'upsell Lor'Squad qui a marché — quel client, quel timing, le passage de quoi vers quoi, l'effet sur ton PV mensuel.]</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ LEVIER 3 — ACQUISITION ═══ -->
+<div class="levier coral">
+  <div class="levier-header">
+    <div class="levier-num">3</div>
+    <div class="levier-titles">
+      <div class="levier-tag">Levier 3 · Qualité plutôt que quantité</div>
+      <h2 class="levier-name">🌱 L'Acquisition de nouveaux</h2>
+    </div>
+  </div>
+
+  <div class="levier-body">
+    <p>L'erreur classique : prospecter à froid sur Instagram avec des messages copiés-collés. Tu brûles ton compte, tu fatigues ta motivation, et tu signes très peu. Ce n'est pas que les réseaux ne marchent pas — c'est que <strong>le froid pur est le plus mauvais ratio effort/résultat</strong> de toute l'activité distri.</p>
+
+    <p>Chez Lor'Squad, on attaque l'acquisition <strong>par la liste 100 méthode FRANK</strong>. C'est ton cercle d'influence cartographié : <em>Famille, Réseau, Amis, Nouveaux, Konnaissances</em>. Tu ne pars jamais de zéro — tu pars de gens qui te connaissent déjà, à qui tu inspires confiance, et qui ont eux-mêmes des cercles à leur tour.</p>
+
+    <p>La règle d'or : tu travailles <strong>chaud → tiède → froid</strong>, jamais l'inverse. Pourquoi ? Parce que les chauds te donnent ta confiance, ils deviennent tes premiers témoins concrets, et surtout ils te <strong>génèrent des recommandations</strong> qui réchauffent les autres. Si tu commences par les froids, tu te brûles avant d'avoir construit ta crédibilité.</p>
+
+    <p>Et puis il y a la règle des <strong>3 réveils avant la proposition</strong>. Tu ne pitches jamais en premier message. Message 1 : tu prends des nouvelles, sincèrement. Message 2 : tu écoutes, tu poses des questions sur sa vie aujourd'hui. C'est seulement au message 3, en semaine 2, que tu poses la graine — sans forcer. <em>« D'ailleurs j'ai démarré un truc qui me passionne, si un jour ça t'intéresse on en parle 30 min autour d'un café. »</em> Voilà. Pas plus.</p>
+
+    <p>Dernière mécanique, et c'est <strong>celle que 90 % des distri zappent</strong> : la recommandation systématique en fin d'EBE. Le prospect vient de signer, il est content, il est dans l'élan. C'est <strong>LE</strong> moment de demander 2-3 prénoms autour de lui — pas par message 2 jours après, pas <em>« si tu connais des gens dis-moi »</em>. Maintenant, en face de lui, avec une phrase précise.</p>
+
+    <div class="phrase-box">
+      « Avec plaisir [Prénom] ! Dis-moi, tu connais 2-3 personnes autour de toi qui aimeraient aussi retrouver leur énergie ou perdre quelques kilos avant l'été ? Pas besoin de leur vendre, juste leur prénom et je m'en occupe avec ton accord. »
+    </div>
+
+    <div class="stat-box">
+      Les distri qui demandent <strong>SYSTÉMATIQUEMENT</strong> des recos en fin d'EBE ont en moyenne <strong>3× plus de RDV bilans</strong> par mois que ceux qui zappent. Pas 30 % de plus. <strong>3 fois.</strong>
+    </div>
+
+    <div class="exemple-box">
+      <div class="placeholder">[À développer : ton meilleur exemple de chaîne de recommandations — un client a recommandé X qui a recommandé Y qui est devenu client.]</div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<!-- ═══ PAGE 3 — Math 5-3-1 cumulée + Phrases-clés + Erreurs ═════════ -->
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<div class="page-break"></div>
+
+<!-- ═══ MATH CUMULÉE 6-12 MOIS ═══ -->
+<h2 class="section-title">📈 La méthode 5-3-1 sur 6 → 12 mois (l'effet cumulé)</h2>
+
+<p class="math-intro">
+La formule <strong>5-3-1</strong>, c'est la statistique testée et calibrée France : <strong>5 invitations</strong> qualifiées par jour génèrent <strong>3 conversations</strong> qualifiées, qui génèrent <strong>1 RDV bilan</strong> calé. Et 3 RDV bilans donnent en moyenne 1 nouveau client (~30 % de closing).
+</p>
+
+<p class="math-intro">
+Ce qui rend le modèle puissant, ce n'est pas le rythme journalier — c'est le <strong>cumul</strong>. Chaque nouveau client retenu vient s'ajouter aux précédents. À M1 tu as quelques clients. À M6 tu en as 30. À M12 tu en as 60+. <strong>Tu n'as pas augmenté ton effort de prospection — tu as juste tenu la régularité.</strong>
+</p>
+
+<table class="cumul">
+  <thead>
+    <tr>
+      <th>Mois</th>
+      <th>Effort 5-3-1<br>(Invit / Conv / RDV)</th>
+      <th>Nouveaux<br>clients</th>
+      <th>Clients<br>actifs cumulés</th>
+      <th>PV perso<br>mensuel</th>
+      <th>Étape</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td class="month-label">M1</td><td>5 / 3 / 5 sem</td><td>4</td><td class="clients-cell">4</td><td class="pv-cell">~600 PV</td><td>Démarrage</td></tr>
+    <tr><td class="month-label">M2</td><td>5 / 3 / 5 sem</td><td>5</td><td class="clients-cell">8</td><td class="pv-cell">~1 100 PV</td><td>Stabiliser</td></tr>
+    <tr><td class="month-label">M3</td><td>5 / 3 / 5 sem</td><td>5</td><td class="clients-cell">12</td><td class="pv-cell">~1 700 PV</td><td>Premier upsell</td></tr>
+    <tr><td class="month-label">M4</td><td>6 / 4 / 6 sem</td><td>6</td><td class="clients-cell">17</td><td class="pv-cell">~2 400 PV</td><td>Approche Sup</td></tr>
+    <tr><td class="month-label milestone" colspan="6">🏆 M5-M6 — Qualification SUPERVISOR (4 000 PV mois consécutifs)</td></tr>
+    <tr><td class="month-label">M5</td><td>6 / 4 / 6 sem</td><td>6</td><td class="clients-cell">22</td><td class="pv-cell">~3 100 PV</td><td>Ramp Sup</td></tr>
+    <tr><td class="month-label">M6</td><td>7 / 4 / 7 sem</td><td>7</td><td class="clients-cell">28</td><td class="pv-cell">~4 000 PV</td><td>SUPERVISOR ✅</td></tr>
+    <tr><td class="month-label">M9</td><td>7 / 5 / 7 sem</td><td>7</td><td class="clients-cell">45</td><td class="pv-cell">~5 500 PV</td><td>2-3 lignes Sup</td></tr>
+    <tr><td class="month-label milestone" colspan="6">👑 M10-M12 — GET TEAM (5 lignes Sup actives + production équipe)</td></tr>
+    <tr><td class="month-label">M12</td><td>7 / 5 / 7 sem</td><td>7</td><td class="clients-cell">60+</td><td class="pv-cell">~7 000+ PV</td><td>GET TEAM ✅</td></tr>
+  </tbody>
+</table>
+
+<div class="math-key">
+  <strong>L'effet cumulé, c'est ce que personne ne voit au M1.</strong> À M1 tu fais 600 PV, tu te dis <em>« c'est lent »</em>. À M6 tu fais <strong>4 000 PV — 6× plus avec exactement le même effort journalier</strong>. À M12, tu fais 7 000+ PV et tu deviens GET Team. Le secret n'est pas dans l'intensité du sprint, il est dans la <strong>régularité de la marche</strong>. C'est mathématique : la rétention transforme chaque mois passé en levier pour le mois suivant.
+</div>
+
+<!-- ═══ PHRASES-CLÉS ═══ -->
+<h2 class="section-title">🔑 Tes 6 phrases-clés pour ce soir</h2>
+
+<div class="phrases-grid">
+  <div class="phrase-final"><span class="num">1</span> « Le haut volume PV, c'est <strong>pas prospecter plus</strong>. C'est garder mieux et duppliquer. »</div>
+  <div class="phrase-final"><span class="num">2</span> « <strong>1 client retenu vaut 7 nouveaux</strong> à acquérir. La rétention est le premier vrai levier. »</div>
+  <div class="phrase-final"><span class="num">3</span> « On ne sprint pas le 28 du mois — <strong>on construit chaque jour</strong>. La régularité bat l'intensité. »</div>
+  <div class="phrase-final"><span class="num">4</span> « <strong>4 000 PV à M6, ce sont 28 clients récurrents + un système</strong>, pas 40 prospects froids. »</div>
+  <div class="phrase-final"><span class="num">5</span> « Reco systématique en fin d'EBE = <strong>3× plus de RDV bilans</strong>. C'est l'étape oubliée par 90 % des distri. »</div>
+  <div class="phrase-final"><span class="num">6</span> « Sans Lor'Squad tu vends. <strong>Avec, tu construis.</strong> »</div>
+</div>
+
+<!-- ═══ ERREURS ═══ -->
+<div class="errors-box">
+  <h2 class="errors-title">⚠️ Trois choses à NE PAS dire (perçu MLM ringard)</h2>
+  <ul>
+    <li>❌ <strong>« Recrute, recrute, recrute »</strong> — les distri sérieux savent que duppliquer n'est pas recruter en masse. C'est former des leaders capables de tenir 4 000 PV eux-mêmes.</li>
+    <li>❌ <strong>« Le sponsor te paye tes commissions »</strong> — juridiquement faux. C'est <strong>Herbalife qui paie chaque distri directement</strong>. Le sponsor touche ses propres bonus de leadership versés par Herbalife en cascade. Sinon ce serait une vente pyramidale illégale.</li>
+    <li>❌ <strong>« Si tu y mets le cœur, ça marche »</strong> — trop vague. Donne du concret : la méthode FRANK, les chiffres 5-3-1, l'effet cumulé sur 12 mois.</li>
+  </ul>
+</div>
+
+<footer class="footer">
+  <strong>Lor'Squad Wellness</strong> · Solide · Calme · Factuel · 21h · Bonne réunion 🙏
+</footer>
+
+</body>
+</html>
