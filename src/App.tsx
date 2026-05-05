@@ -441,10 +441,13 @@ export default function App() {
               <Route index element={<Navigate to="/co-pilote" replace />} />
               {/* Chantier Refonte Navigation (2026-04-22) : /co-pilote = dashboard.
                   /dashboard redirige pour ne pas casser les liens existants. */}
-              <Route path="co-pilote" element={<CoPilotePage />} />
-              {/* V5 Editoriale preview (2026-05-05) — parallele tant que
-                  pas valide. Remplace /co-pilote quand Thomas dit OK. */}
-              <Route path="co-pilote-v5" element={<CoPiloteV5Page />} />
+              {/* V5 Editoriale = route principale depuis 2026-05-05
+                  (validation Thomas). L'ancien CoPilotePage reste
+                  accessible sur /co-pilote-legacy pour rollback rapide
+                  si bug bloquant — sera retiré quand V5 stable 2 semaines. */}
+              <Route path="co-pilote" element={<CoPiloteV5Page />} />
+              <Route path="co-pilote-v5" element={<Navigate to="/co-pilote" replace />} />
+              <Route path="co-pilote-legacy" element={<CoPilotePage />} />
               <Route path="dashboard" element={<Navigate to="/co-pilote" replace />} />
               {/* FLEX Lor'Squad Phase B (2026-11-05) — moteur de pilotage
                   quotidien du distri. /flex = dashboard, /flex/onboarding =
