@@ -29,6 +29,7 @@ import { BusinessOpportunitiesCard } from "../components/copilote/BusinessOpport
 import { DistriOnboardingChecklist } from "../components/formation/DistriOnboardingChecklist";
 import { FlexTodayWidget } from "../components/copilote/FlexTodayWidget";
 import { RentabilityWidget } from "../components/rentability/RentabilityWidget";
+import { DormantClientsWidget } from "../components/dormant/DormantClientsWidget";
 import { StreakBadge } from "../features/gamification/components/StreakBadge";
 import { WeeklyQuestsCard } from "../features/gamification/components/WeeklyQuestsCard";
 
@@ -103,6 +104,10 @@ export function CoPilotePage() {
           écran du matin = combien tu as gagné ce mois. Click = breakdown
           complet. ROI émotionnel max. */}
       <RentabilityWidget />
+
+      {/* Phase B Relances dormants (2026-05-05) — spotlight matin avec
+          PV potentiels. Skippe si aucun dormant (pas de pollution). */}
+      <DormantClientsWidget />
 
       {/* FLEX Lor'Squad (2026-11-05) — moteur de pilotage quotidien :
           cibles + check-in du jour visibles direct sur Co-pilote. Cliquer
