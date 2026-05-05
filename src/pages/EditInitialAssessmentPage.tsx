@@ -9,6 +9,7 @@ import { useToast, buildSupabaseErrorToast } from "../context/ToastContext";
 import { getFirstAssessment, normalizeDateTimeLocalInputValue } from "../lib/calculations";
 import { calculateAge, formatBirthDate } from "../lib/age";
 import { pvProductCatalog } from "../data/pvCatalog";
+import { PROGRAM_CHOICES } from "../data/programs";
 import { refreshClientRecap } from "../services/supabaseService";
 import { getSupabaseClient } from "../services/supabaseClient";
 import type { AssessmentQuestionnaire, AssessmentRecord } from "../types/domain";
@@ -613,7 +614,7 @@ export function EditInitialAssessmentPage() {
                 value={assessmentDate}
                 onChange={setAssessmentDate}
               />
-              <TextField label="Programme retenu" value={programTitle} onChange={setProgramTitle} />
+              <ProgramSelectField label="Programme retenu" value={programTitle} onChange={setProgramTitle} />
               <MetricField label="Poids (kg)" value={weight} onChange={(value) => setWeight(Number(value))} />
               <MetricField label="Masse grasse (%)" value={bodyFat} onChange={(value) => setBodyFat(Number(value))} />
               <MetricField label="Masse musculaire (kg)" value={muscleMass} onChange={(value) => setMuscleMass(Number(value))} />
@@ -1058,6 +1059,106 @@ function TextField({
     <div className="space-y-2">
       <label className="text-sm font-medium text-[var(--ls-text-muted)]">{label}</label>
       <input value={value} onChange={(event) => onChange(event.target.value)} />
+    </div>
+  );
+}
+
+/**
+ * ProgramSelectField — dropdown des programmes officiels (PROGRAM_CHOICES)
+ * + option "Autre…" qui révèle un input libre pour les cas legacy /
+ * programme custom. Chantier 2026-05-05.
+ *
+ * Les valeurs stockées en DB restent des STRINGS (programTitle), mais
+ * le coach choisit dans une liste guidée pour éviter les fautes de
+ * frappe ("Programme a c" devient "Premium" en 2 clics).
+ */
+function ProgramSelectField({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  // On match la valeur courante contre les titres du catalogue. Si elle
+  // matche → la liste est ouverte sur ce programme. Sinon → mode "Autre"
+  // avec input libre pré-rempli (pour préserver la donnée legacy).
+  const isInCatalog = PROGRAM_CHOICES.some((p) => p.title === value);
+  const [mode, setMode] = useState<"select" | "custom">(
+    !value || isInCatalog ? "select" : "custom",
+  );
+
+  return (
+    <div className="space-y-2">
+      <label className="text-sm font-medium text-[var(--ls-text-muted)]">
+        {label}
+      </label>
+      {mode === "select" ? (
+        <select
+          value={isInCatalog ? value : ""}
+          onChange={(event) => {
+            const v = event.target.value;
+            if (v === "__custom__") {
+              setMode("custom");
+              return;
+            }
+            onChange(v);
+          }}
+          style={{
+            width: "100%",
+            padding: "9px 12px",
+            borderRadius: 10,
+            border: "1px solid var(--ls-border)",
+            background: "var(--ls-surface2)",
+            color: "var(--ls-text)",
+            fontSize: 14,
+            fontFamily: "DM Sans, sans-serif",
+            outline: "none",
+            cursor: "pointer",
+          }}
+        >
+          <option value="">— Choisir un programme —</option>
+          {PROGRAM_CHOICES.map((p) => (
+            <option key={p.id} value={p.title}>
+              {p.title}
+              {p.price > 0 ? ` · ${p.price} €` : ""}
+              {p.shortContent ? ` · ${p.shortContent}` : ""}
+            </option>
+          ))}
+          <option value="__custom__">✏️ Autre / programme libre…</option>
+        </select>
+      ) : (
+        <div style={{ display: "flex", gap: 8 }}>
+          <input
+            value={value}
+            onChange={(event) => onChange(event.target.value)}
+            placeholder="Nom du programme"
+            style={{ flex: 1 }}
+          />
+          <button
+            type="button"
+            onClick={() => {
+              setMode("select");
+              onChange("");
+            }}
+            style={{
+              padding: "8px 12px",
+              borderRadius: 8,
+              border: "1px solid var(--ls-border)",
+              background: "var(--ls-surface2)",
+              color: "var(--ls-text-muted)",
+              fontSize: 12,
+              cursor: "pointer",
+              fontFamily: "DM Sans, sans-serif",
+              whiteSpace: "nowrap",
+            }}
+            title="Revenir à la liste"
+          >
+            ← Liste
+          </button>
+        </div>
+      )}
     </div>
   );
 }
