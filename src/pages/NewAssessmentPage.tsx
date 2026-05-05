@@ -762,8 +762,19 @@ export function NewAssessmentPage() {
   const mainPrograms = currentPrograms.filter((program) => program.kind !== "booster");
   // boosterPrograms retiré — l'étape 11 est refactorée, les "boosters" sont
   // gérés via les programmes Booster 1 / Booster 2 dans programs.ts.
+  // Fix bug 2026-05-05 : avant on cherchait par form.selectedProgramId qui
+  // n'etait jamais set (ancien field obsolete) -> selectedProgram = null
+  // -> "Programme a confirmer" + 0 PV systematique. Maintenant on resout
+  // depuis form.programChoice (l'ID utilise par ProgramChoiceCard) en
+  // matchant sur l'ID legacy `p-${choice}` que PROGRAMS_LEGACY genere.
+  // Fallback secondaire : ancien selectedProgramId pour retrocompat
+  // d'un draft persiste avant ce fix.
   const selectedProgram =
-    mainPrograms.find((program) => program.id === form.selectedProgramId) ?? null;
+    mainPrograms.find(
+      (program) =>
+        program.id === `p-${form.programChoice}` ||
+        program.id === form.selectedProgramId,
+    ) ?? null;
   const startsImmediately = form.afterAssessmentAction === "started";
   const bodyFatKg = estimateBodyFatKg(form.weight, form.bodyFat);
   const musclePercent = estimateMuscleMassPercent(form.weight, form.muscleMass);
@@ -899,8 +910,13 @@ export function NewAssessmentPage() {
 
   function updateObjectiveFocus(value: string) {
     update("objectiveFocus", value);
-    update("objective", value === "Prise de masse" ? "sport" : "weight-loss");
+    const newObjective = value === "Prise de masse" ? "sport" : "weight-loss";
+    update("objective", newObjective);
     update("selectedProgramId", "");
+    // Fix bug 2026-05-05 : le programme par defaut doit aussi se reset
+    // selon l'objectif. Avant : programChoice restait sur "premium" meme
+    // en passant en sport, ce qui faisait planter le mapping.
+    update("programChoice", newObjective === "sport" ? "sport-premium" : "premium");
   }
 
   function buildQuestionnaire() {
