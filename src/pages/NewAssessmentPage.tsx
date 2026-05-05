@@ -1271,6 +1271,37 @@ export function NewAssessmentPage() {
             clearAssessmentDraft();
             clearCoachNotesDraft(prospectId);
 
+            // Chantier unification acces client (2026-05-05) : on genere
+            // ICI le magic link PWA (client_invitation_tokens) pour que
+            // la page Felicitations affiche un QR auto-login PWA, pas un
+            // QR vers le recap HTML public. Avant : le client devait
+            // entrer email + password apres scan -> compte inexistant
+            // -> "Token invalide". Maintenant : scan -> /bienvenue?token=
+            // -> auto-login PWA direct.
+            //
+            // Best-effort : si l'insert plante (RLS, reseau, table
+            // absente), on retombe sur le recap token (ancien comportement).
+            let magicToken: string | null = null;
+            try {
+              const bytes = new Uint8Array(24);
+              crypto.getRandomValues(bytes);
+              const generatedToken = Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
+              const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+              const { error: tokenErr } = await sb.from("client_invitation_tokens").insert({
+                client_id: clientId,
+                token: generatedToken,
+                created_by: currentUser?.id,
+                expires_at: expiresAt,
+              });
+              if (!tokenErr) {
+                magicToken = generatedToken;
+              } else {
+                console.warn("[NewAssessment] client_invitation_tokens insert failed:", tokenErr);
+              }
+            } catch (magicErr) {
+              console.warn("[NewAssessment] magic link gen skip:", magicErr);
+            }
+
             // Chantier Auto-journal EBE post-bilan (2026-05-04) : à chaque
             // bilan validé, on pré-crée silencieusement une entrée dans
             // ebe_journal_entries avec assessment_id lié et prospect_name
@@ -1299,10 +1330,15 @@ export function NewAssessmentPage() {
             // vers la page plein écran /bilan-termine (dark premium, QR,
             // partage, parrainage, avis). La modale reste accessible
             // depuis la fiche coach pour les usages hors-bilan.
-            const tokenParam = encodeURIComponent(recapData.token);
+            // On passe en priorite le magic token (auto-login PWA),
+            // sinon fallback sur le recap token. La BilanTermineePage
+            // saura distinguer via le param ?accessKind=.
+            const useToken = magicToken ?? recapData.token;
+            const accessKind = magicToken ? "magic" : "recap";
+            const tokenParam = encodeURIComponent(useToken);
             const firstNameParam = encodeURIComponent(form.firstName?.trim() ?? "");
             navigate(
-              `/clients/${clientId}/bilan-termine?token=${tokenParam}&firstName=${firstNameParam}`,
+              `/clients/${clientId}/bilan-termine?token=${tokenParam}&firstName=${firstNameParam}&accessKind=${accessKind}`,
             );
             return;
           }

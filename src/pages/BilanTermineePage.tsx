@@ -22,6 +22,13 @@ export function BilanTermineePage() {
 
   const tokenFromQuery = searchParams.get("token");
   const firstNameFromQuery = searchParams.get("firstName");
+  // Chantier unification acces client (2026-05-05) :
+  //   - accessKind === "magic" -> token client_invitation_tokens, URL
+  //     /bienvenue?token=... -> auto-login PWA direct (le client n'a
+  //     PAS a saisir email + password).
+  //   - accessKind === "recap" (default fallback) -> ancien comportement,
+  //     token client_recaps, URL /client/<token> (recap HTML public).
+  const accessKind = searchParams.get("accessKind") ?? "recap";
 
   // Fallback : si firstName pas en query, lire depuis AppContext
   const client = clientId ? getClientById(clientId) : undefined;
@@ -30,12 +37,13 @@ export function BilanTermineePage() {
 
   const appUrl = useMemo(() => {
     if (tokenFromQuery && typeof window !== "undefined") {
+      if (accessKind === "magic") {
+        return `${window.location.origin}/bienvenue?token=${tokenFromQuery}`;
+      }
       return `${window.location.origin}/client/${tokenFromQuery}`;
     }
-    // Pas de token : on ne génère pas de QR invalide. Le ThankYou
-    // continuera de s'afficher mais le QR pointera vers la page d'accueil.
     return typeof window !== "undefined" ? window.location.origin : "";
-  }, [tokenFromQuery]);
+  }, [tokenFromQuery, accessKind]);
 
   const coachName = currentUser?.name?.split(/\s+/)[0] ?? "Ton coach";
 
