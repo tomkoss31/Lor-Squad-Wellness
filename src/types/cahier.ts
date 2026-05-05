@@ -88,10 +88,20 @@ export const LISTE_100_TEMP_META: Record<Liste100Temperature, { label: string; c
   froid: { label: "Froid", color: "var(--ls-teal)", emoji: "❄️" },
 };
 
+// Acronyme officiel FRANK (validation Thomas 2026-05-05) :
+//   F = Family       (liens de sang, alliance, beaux-parents, cousins)
+//   R = Relations    (collègues actuels/anciens, voisins, contacts pro)
+//   A = Amis         (amis d'enfance, fac, sportifs, soirées)
+//   N = Network      (followers actifs, LinkedIn, groupes WhatsApp)
+//   K = Kids' parents (parents d'amis de tes enfants, profs, club, asso)
+//
+// Note : les VALEURS DB internes (reseau / nouveaux / connaissances) sont
+// conservées pour éviter une migration de données existantes. Seuls les
+// LABELS affichés sont mis à jour.
 export const LISTE_100_FRANK_META: Record<Liste100FrankCategory, { label: string; emoji: string }> = {
-  famille: { label: "Famille", emoji: "👪" },
-  reseau: { label: "Réseau", emoji: "🤝" },
+  famille: { label: "Family", emoji: "👪" },
+  reseau: { label: "Relations", emoji: "🤝" },
   amis: { label: "Amis", emoji: "🫂" },
-  nouveaux: { label: "Nouveaux", emoji: "🌱" },
-  connaissances: { label: "Connaissances", emoji: "👋" },
+  nouveaux: { label: "Network", emoji: "🌐" },
+  connaissances: { label: "Kids' parents", emoji: "👨‍👩‍👧" },
 };

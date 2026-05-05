@@ -25,7 +25,6 @@ import { useNextAction } from "../hooks/useNextAction";
 import { useCountdown } from "../hooks/useCountdown";
 import { useTimeContext } from "../hooks/useTimeContext";
 import { useDailyBoost } from "../hooks/useDailyBoost";
-import { useStreak } from "../../../gamification/hooks/useStreak";
 import { PinAWTCinematic } from "./PinAWTCinematic";
 import { DailyBoost } from "./DailyBoost";
 
@@ -39,7 +38,6 @@ export function HeroEditorial({ pvAlertActive = false }: HeroEditorialProps) {
   const { action, loading } = useNextAction();
   const timeContext = useTimeContext();
   const { quote, isPreview } = useDailyBoost(timeContext.dailyBoostCategory);
-  const streak = useStreak();
 
   const targetDate = useMemo<Date | null>(() => {
     if (action.kind === "rdv" && action.time) return action.time;
@@ -195,22 +193,10 @@ export function HeroEditorial({ pvAlertActive = false }: HeroEditorialProps) {
             </div>
           </div>
         ) : (
-          // Mode idle / followup : afficher la STREAK du distri (info utile,
-          // cohérence gamification existante). Format : 9 🔥 jours d'affilée.
-          // Validation Thomas 2026-05-05 : remplace l'ancien "05·05 +
-          // mode tranquille" jugé moche.
-          <div style={countdownBlockStyle}>
-            <div style={countdownLabelStyle}>Ma série</div>
-            <div style={streakValueStyle} className="v5-mono">
-              {streak.count}
-              <span style={streakFlameStyle} aria-hidden="true">🔥</span>
-            </div>
-            <div style={countdownSubStyle}>
-              {streak.count > 0
-                ? `${streak.count} jour${streak.count > 1 ? "s" : ""} d'affilée — garde la chaîne`
-                : "Lance ta 1ère journée — chaque jour compte"}
-            </div>
-          </div>
+          // Validation Thomas 2026-05-05 : mode idle/followup → ne pas
+          // afficher de bloc en haut. Le pin AWT reste visible en
+          // filigrane et le DailyBoost prend toute la hauteur.
+          <div aria-hidden="true" />
         )}
 
         <DailyBoost quote={quote} dimmed={pvAlertActive} isPreview={isPreview} />
@@ -360,9 +346,12 @@ const btnPrimaryStyle: React.CSSProperties = {
 };
 
 const btnSecondaryStyle: React.CSSProperties = {
-  background: "rgba(255, 255, 255, 0.08)",
-  color: "#FAF6E8",
-  border: "1px solid rgba(245, 222, 179, 0.25)",
+  // Validation Thomas 2026-05-05 : virer le rendu blanc en mode clair.
+  // On utilise un teal accent (cohérent avec la palette app) qui pop
+  // contre le hero dark sans virer "fantôme blanc".
+  background: "rgba(45, 212, 191, 0.12)",
+  color: "#5EEAD4",
+  border: "1px solid rgba(45, 212, 191, 0.45)",
   padding: "12px 18px",
   borderRadius: 12,
   fontWeight: 600,
@@ -408,25 +397,6 @@ const countdownValueStyle: React.CSSProperties = {
 const colonStyle: React.CSSProperties = {
   color: "#D4A937",
   display: "inline-block",
-};
-
-const streakValueStyle: React.CSSProperties = {
-  fontFamily: "'JetBrains Mono', monospace",
-  fontSize: 60,
-  fontWeight: 700,
-  color: "#F5DEB3",
-  letterSpacing: -2,
-  lineHeight: 1,
-  marginTop: 4,
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "flex-end",
-  gap: 8,
-};
-
-const streakFlameStyle: React.CSSProperties = {
-  fontSize: 36,
-  marginLeft: 4,
 };
 
 const countdownSubStyle: React.CSSProperties = {

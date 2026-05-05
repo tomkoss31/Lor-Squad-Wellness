@@ -64,13 +64,15 @@ export function CoPiloteV5Page() {
       month: "long",
       year: "numeric",
     }).format(now);
-    const time = new Intl.DateTimeFormat("fr-FR", {
+    return date.charAt(0).toUpperCase() + date.slice(1);
+  }, [now]);
+
+  const clockDisplay = useMemo(() => {
+    return new Intl.DateTimeFormat("fr-FR", {
       hour: "2-digit",
       minute: "2-digit",
       hour12: false,
     }).format(now);
-    const cap = date.charAt(0).toUpperCase() + date.slice(1);
-    return `${cap} · Édition du jour · ${time}`;
   }, [now]);
 
   if (!currentUser) {
@@ -126,11 +128,17 @@ export function CoPiloteV5Page() {
             <span style={{ color: "#7A6F5C", fontSize: 11 }}>Nuageux</span>
           </div>
 
-          {/* Search ⌘K stub (validation Thomas Q4 — non fonctionnel V5) */}
-          <div style={searchBoxStyle} role="search" aria-label="Recherche (à venir)">
-            <span aria-hidden="true">🔍</span>
-            <span style={{ flex: 1, color: "#7A6F5C" }}>Rechercher…</span>
-            <span style={shortcutStyle}>⌘K</span>
+          {/* Horloge live (remplace search box — validation Thomas 2026-05-05) */}
+          <div style={clockPillStyle} aria-label="Heure courante">
+            <span aria-hidden="true">🕒</span>
+            <span
+              style={{
+                fontFamily: "'JetBrains Mono', monospace",
+                fontWeight: 700,
+              }}
+            >
+              {clockDisplay}
+            </span>
           </div>
 
           {/* Cloche réelle (validation Thomas 2026-05-05) — composant
@@ -259,7 +267,7 @@ const weatherPillStyle: React.CSSProperties = {
   fontFamily: "DM Sans, sans-serif",
 };
 
-const searchBoxStyle: React.CSSProperties = {
+const clockPillStyle: React.CSSProperties = {
   display: "flex",
   alignItems: "center",
   gap: 8,
@@ -267,22 +275,10 @@ const searchBoxStyle: React.CSSProperties = {
   border: "1px solid #EFE8D6",
   borderRadius: 12,
   padding: "9px 14px",
-  fontSize: 12.5,
-  color: "#7A6F5C",
-  width: 220,
-  cursor: "default",
-  opacity: 0.8,
-};
-
-const shortcutStyle: React.CSSProperties = {
-  marginLeft: "auto",
-  background: "#F8F5EC",
-  padding: "2px 6px",
-  borderRadius: 5,
-  fontSize: 10,
-  fontFamily: "'JetBrains Mono', monospace",
-  fontWeight: 700,
-  color: "#7A6F5C",
+  fontSize: 13,
+  fontWeight: 600,
+  color: "#4A3F2A",
+  fontFamily: "DM Sans, sans-serif",
 };
 
 // Note 2026-05-05 : notifBtnStyle supprimé (remplacé par AnnouncementBell).

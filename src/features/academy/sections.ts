@@ -1559,7 +1559,7 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
         route: "/cahier-de-bord",
         title: "Onglet 2 — Liste 100 connaissances 📒",
         body:
-          "Tes 100 connaissances classées en méthode FRANK (Famille / Réseau / Amis / Nouveaux / Konnaissances). Pour chacune tu choisis :\n\n• Une température : 🔥 Chaud / 🌤 Tiède / ❄️ Froid (selon ta proximité)\n• Un statut tunnel : non contacté → contacté → RDV calé → EBE fait → Client / Refus\n\nLes stats en haut t'affichent combien tu as de chauds, tièdes, froids, et tu peux filtrer la liste.",
+          "Tes 100 contacts classés en méthode FRANK (Family / Relations / Amis / Network / Kids' parents). Pour chacun tu choisis :\n\n• Une température : 🔥 Chaud / 🌤 Tiède / ❄️ Froid (selon ta proximité)\n• Un statut tunnel : non contacté → contacté → RDV calé → EBE fait → Client / Refus\n\nLes stats en haut t'affichent combien tu as de chauds, tièdes, froids, et tu peux filtrer la liste.",
       },
       {
         id: "tab-ebe",
@@ -1609,16 +1609,16 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
             "Famille / Recommandations / Anciens / Nouveaux / Klients",
             "Le prénom du créateur de la méthode chez Herbalife",
             "Une marque de carnet utilisée par les coachs",
-            "Famille / Réseau / Amis / Nouveaux / Konnaissances",
+            "Family / Relations / Amis / Network / Kids' parents",
           ],
           correctIndex: 3,
           wrongAnswerHints: {
-            0: "Anciens et Klients ne sont pas dans le mnémo officiel.",
+            0: "Pas dans le mnémo officiel Lor'Squad.",
             1: "Légende urbaine — c'est juste un acronyme.",
             2: "Aucun rapport produit.",
           },
           explanation:
-            "FRANK = Famille / Réseau / Amis / Nouveaux / Konnaissances. Sélecteur disponible dans /cahier-de-bord onglet Liste 100 quand tu ajoutes un contact.",
+            "FRANK = Family / Relations / Amis / Network / Kids' parents. Mnémonique officiel Lor'Squad, sélecteur dispo dans /cahier-de-bord onglet Liste 100 quand tu ajoutes un contact.",
         },
         {
           id: "q3",
