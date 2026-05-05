@@ -75,6 +75,7 @@ export function ActionsTab({ client, onEditRdv, onOpenSharePublic, onGoToVueComp
     reassignClientOwner,
     updateClientInfo,
     setClientLifecycleStatus,
+    activateClientProgram,
     setClientFragileFlag,
     setClientFreeFollowUp,
     setClientFreePvTracking,
@@ -92,6 +93,12 @@ export function ActionsTab({ client, onEditRdv, onOpenSharePublic, onGoToVueComp
   const [togglingFreeFollow, setTogglingFreeFollow] = useState(false);
   const [togglingFreePv, setTogglingFreePv] = useState(false);
   const [lifecycleSaving, setLifecycleSaving] = useState(false);
+  // Activator démarrage produits (chantier 2026-05-05)
+  const [activatorOpen, setActivatorOpen] = useState(false);
+  const [activatorDate, setActivatorDate] = useState<string>(
+    () => new Date().toISOString().slice(0, 10),
+  );
+  const [activatorSaving, setActivatorSaving] = useState(false);
 
   const priority = useClientPriorityAction(client, followUps);
   // Chantier Refonte onglet Actions — bloc RDV premium (2026-04-26) :
@@ -177,6 +184,33 @@ export function ActionsTab({ client, onEditRdv, onOpenSharePublic, onGoToVueComp
       });
     } else {
       onGoToVueComplete?.();
+    }
+  }
+
+  async function handleActivateProgram() {
+    if (activatorSaving) return;
+    setActivatorSaving(true);
+    try {
+      await activateClientProgram(client.id, activatorDate);
+      const formatted = new Date(activatorDate).toLocaleDateString("fr-FR", {
+        day: "numeric",
+        month: "long",
+      });
+      pushToast({
+        tone: "success",
+        title: "Programme démarré",
+        message: `Date de départ alignée au ${formatted}. Suivis et produits réajustés.`,
+      });
+      setActivatorOpen(false);
+    } catch (e) {
+      pushToast(
+        buildSupabaseErrorToast(
+          e,
+          "Impossible d'activer le programme pour le moment.",
+        ),
+      );
+    } finally {
+      setActivatorSaving(false);
     }
   }
 
@@ -449,6 +483,218 @@ export function ActionsTab({ client, onEditRdv, onOpenSharePublic, onGoToVueComp
               />
             </div>
           </div>
+
+          {/* Bloc 3A-bis : Activator démarrage programme (chantier 2026-05-05).
+              Cas Mandy : bilan le 29/04 mais cliente reçoit produits le 05/05.
+              Sans cet activator, J+7 et usure produits partent du 29/04
+              → décalage en réalité. Click "Démarrer le programme" pose la
+              date de départ et ré-aligne pv_client_products + protocole. */}
+          {(() => {
+            const initialDate = initialAssessment?.date ?? null;
+            const startDateIso = client.startDate ?? null;
+            const lifecycleClosed =
+              currentStatus === "stopped" || currentStatus === "lost";
+            // On masque le bloc si client mort/perdu (pas pertinent).
+            if (lifecycleClosed) return null;
+            // On masque aussi si pas de bilan initial (pas de programme à démarrer).
+            if (!initialDate) return null;
+
+            const daysSinceStart = daysSince(startDateIso ?? initialDate);
+            const initialDateFormatted = formatDateShort(initialDate);
+            const startDateFormatted = startDateIso
+              ? formatDateShort(startDateIso)
+              : null;
+            const isMisaligned =
+              !!initialDate &&
+              !startDateIso &&
+              daysSince(initialDate) !== null &&
+              (daysSince(initialDate) ?? 0) >= 1;
+
+            return (
+              <div
+                className="at-card"
+                style={{
+                  borderLeft: isMisaligned
+                    ? "3px solid var(--ls-coral)"
+                    : undefined,
+                }}
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    marginBottom: 10,
+                    gap: 12,
+                  }}
+                >
+                  <div className="at-label">
+                    🚀 Démarrage du programme
+                  </div>
+                  {startDateFormatted ? (
+                    <div
+                      style={{
+                        fontSize: 11,
+                        color: "var(--ls-text-muted)",
+                        fontWeight: 600,
+                      }}
+                    >
+                      Démarré le {startDateFormatted} · J+
+                      {daysSinceStart ?? 0}
+                    </div>
+                  ) : null}
+                </div>
+
+                {!startDateIso ? (
+                  <p
+                    style={{
+                      fontSize: 13,
+                      color: "var(--ls-text-muted)",
+                      margin: "0 0 10px",
+                      lineHeight: 1.5,
+                    }}
+                  >
+                    {isMisaligned ? (
+                      <>
+                        ⚠️ Bilan fait le <strong>{initialDateFormatted}</strong>
+                        {" "}({daysSince(initialDate)} j) mais aucune date de
+                        démarrage produits enregistrée. Le compteur J+1/J+7/J+14
+                        et l'usure des produits partent donc du bilan.
+                        Activer ici pour réaligner sur le vrai départ.
+                      </>
+                    ) : (
+                      <>
+                        Marque le départ effectif des produits — le compteur
+                        J+1/J+7/J+14/J+21 et l'usure des produits partent
+                        de cette date.
+                      </>
+                    )}
+                  </p>
+                ) : (
+                  <p
+                    style={{
+                      fontSize: 13,
+                      color: "var(--ls-text-muted)",
+                      margin: "0 0 10px",
+                      lineHeight: 1.5,
+                    }}
+                  >
+                    Si la cliente a redémarré ou si la date est mauvaise, tu
+                    peux la corriger ici. Bilan initial :
+                    {" "}
+                    <strong>{initialDateFormatted}</strong>.
+                  </p>
+                )}
+
+                {!activatorOpen ? (
+                  <button
+                    type="button"
+                    onClick={() => setActivatorOpen(true)}
+                    style={{
+                      background: !startDateIso
+                        ? "linear-gradient(180deg, #EF9F27, #BA7517)"
+                        : "var(--ls-surface2)",
+                      color: !startDateIso ? "white" : "var(--ls-text)",
+                      border: !startDateIso
+                        ? "none"
+                        : "1px solid var(--ls-border)",
+                      padding: "10px 16px",
+                      borderRadius: 10,
+                      fontWeight: 700,
+                      fontSize: 13,
+                      cursor: "pointer",
+                      fontFamily: "DM Sans, sans-serif",
+                    }}
+                  >
+                    {!startDateIso
+                      ? "Démarrer le programme"
+                      : "Modifier la date de départ"}
+                  </button>
+                ) : (
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 8,
+                      background: "var(--ls-surface2)",
+                      padding: 12,
+                      borderRadius: 10,
+                      border: "1px solid var(--ls-border)",
+                    }}
+                  >
+                    <label
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: 4,
+                        fontSize: 12,
+                        color: "var(--ls-text-muted)",
+                        fontWeight: 600,
+                      }}
+                    >
+                      Date de démarrage effectif
+                      <input
+                        type="date"
+                        value={activatorDate}
+                        max={new Date().toISOString().slice(0, 10)}
+                        onChange={(e) => setActivatorDate(e.target.value)}
+                        style={{
+                          padding: "8px 10px",
+                          borderRadius: 8,
+                          border: "1px solid var(--ls-border)",
+                          fontSize: 14,
+                          fontFamily: "DM Sans, sans-serif",
+                          background: "var(--ls-surface)",
+                          color: "var(--ls-text)",
+                        }}
+                      />
+                    </label>
+                    <div style={{ display: "flex", gap: 8 }}>
+                      <button
+                        type="button"
+                        onClick={() => void handleActivateProgram()}
+                        disabled={activatorSaving}
+                        style={{
+                          flex: 1,
+                          background:
+                            "linear-gradient(180deg, #EF9F27, #BA7517)",
+                          color: "white",
+                          border: "none",
+                          padding: "10px 12px",
+                          borderRadius: 8,
+                          fontWeight: 700,
+                          fontSize: 13,
+                          cursor: activatorSaving ? "not-allowed" : "pointer",
+                          opacity: activatorSaving ? 0.6 : 1,
+                          fontFamily: "DM Sans, sans-serif",
+                        }}
+                      >
+                        {activatorSaving ? "Activation…" : "Confirmer"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setActivatorOpen(false)}
+                        disabled={activatorSaving}
+                        style={{
+                          background: "transparent",
+                          color: "var(--ls-text-muted)",
+                          border: "1px solid var(--ls-border)",
+                          padding: "10px 12px",
+                          borderRadius: 8,
+                          fontWeight: 600,
+                          fontSize: 13,
+                          cursor: "pointer",
+                          fontFamily: "DM Sans, sans-serif",
+                        }}
+                      >
+                        Annuler
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
 
           {/* Bloc 3B : Cycle de vie + toggles */}
           <div className="at-card">
