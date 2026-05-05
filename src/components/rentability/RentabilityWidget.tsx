@@ -15,7 +15,7 @@ import { RentabilityDetailModal } from "./RentabilityDetailModal";
 export function RentabilityWidget() {
   const navigate = useNavigate();
   const { currentUser } = useAppContext();
-  const { data, loading, isCoupleAggregated } = useUserRentability(currentUser?.id ?? null);
+  const { data, loading, error, isCoupleAggregated } = useUserRentability(currentUser?.id ?? null);
   const [open, setOpen] = useState(false);
 
   if (!currentUser) return null;
@@ -26,7 +26,33 @@ export function RentabilityWidget() {
       </div>
     );
   }
-  if (!data) return null;
+  // Si erreur ou pas de data, on affiche quand même un fallback minimal au
+  // lieu de skip silencieusement. Évite que la rentabilité "disparaisse"
+  // sans signal utilisateur (cas Thomas 2026-05-05).
+  if (!data) {
+    return (
+      <div style={cardStyle}>
+        <div style={leftStyle}>
+          <div style={eyebrowStyle}>💎 Ma rentabilité</div>
+          <h3 style={titleStyle}>Données indisponibles</h3>
+          <p style={subStyle}>
+            {error
+              ? `Erreur : ${error}`
+              : "Aucune donnée pour ce mois. Crée ton premier bilan client → la jauge s'allume."}
+          </p>
+          <div style={ctaRowStyle}>
+            <button
+              type="button"
+              onClick={() => navigate("/rentabilite")}
+              style={ctaBtnGhost}
+            >
+              Voir la page complète
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // Sub-text : on tient TOUT en 1 ligne max + projection inline (pas de
   // doublon vertical avec le widget). Couple : on précise.

@@ -127,12 +127,17 @@ export function useUserRentability(
       p_month: monthIso ?? null,
     });
     if (e) {
+      // Log explicite pour diagnostic (si la RPC plante côté SQL on doit le voir)
+      console.error("[useUserRentability] RPC error:", e, { userIds, monthIso });
       setError(e.message);
       setData(null);
       setLoading(false);
       return;
     }
     const row = Array.isArray(rows) && rows.length > 0 ? (rows[0] as RentabilityData) : null;
+    if (!row) {
+      console.warn("[useUserRentability] RPC returned empty rows", { userIds, monthIso });
+    }
     setData(row);
     setLoading(false);
   }, [userId, userIds, monthIso]);
