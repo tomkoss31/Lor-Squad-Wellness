@@ -14,6 +14,7 @@ import { useUserRentability } from "../hooks/useUserRentability";
 import { useTeamEngagement } from "../hooks/useTeamEngagement";
 import { RentabilityGauge } from "../components/rentability/RentabilityGauge";
 import { RentabilityDetailModal } from "../components/rentability/RentabilityDetailModal";
+import { resolveCoupleUserIds } from "../config/teamConfig";
 
 function initialsOf(name: string): string {
   if (!name) return "?";
@@ -24,8 +25,8 @@ function initialsOf(name: string): string {
 
 export function RentabilitePage() {
   const navigate = useNavigate();
-  const { currentUser } = useAppContext();
-  const { data: ownData, loading: ownLoading } = useUserRentability(currentUser?.id ?? null);
+  const { currentUser, users } = useAppContext();
+  const { data: ownData, loading: ownLoading, isCoupleAggregated } = useUserRentability(currentUser?.id ?? null);
   const { members } = useTeamEngagement(currentUser?.id ?? null);
 
   const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
@@ -35,11 +36,15 @@ export function RentabilitePage() {
 
   const isAdminOrRef = currentUser?.role === "admin" || currentUser?.role === "referent";
 
-  // Liste des autres membres (sans soi)
+  // Liste des autres membres (sans soi NI le partenaire couple si applicable)
+  // Évite que Mélanie apparaisse "à côté" de Thomas dans la liste équipe
+  // alors qu'elle est déjà agrégée dans la jauge perso.
   const otherMembers = useMemo(() => {
     if (!isAdminOrRef || !currentUser) return [];
-    return members.filter((m) => m.user_id !== currentUser.id);
-  }, [members, isAdminOrRef, currentUser]);
+    const coupleIds = isCoupleAggregated ? resolveCoupleUserIds(users) : [currentUser.id];
+    const excludeSet = new Set(coupleIds);
+    return members.filter((m) => !excludeSet.has(m.user_id));
+  }, [members, isAdminOrRef, currentUser, isCoupleAggregated, users]);
 
   if (!currentUser) return null;
 

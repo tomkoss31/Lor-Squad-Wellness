@@ -1,18 +1,16 @@
 // =============================================================================
-// RentabilityDetailModal — popup détail rentabilité (2026-05-05)
+// RentabilityDetailModal — popup détail rentabilité V2 (2026-05-05)
 //
-// Click sur la jauge → affiche tout le breakdown :
-//   - Big total + zone label
-//   - Calcul détaillé (revenus × marge%)
-//   - Projection fin de mois vs réel actuel
-//   - Top 5 programmes vendus du mois
-//   - Comparaison vs mois précédent (delta % et €)
-//   - Rang actuel + marge appliquée
+// Refonte après feedback Thomas :
+//   - Top CLIENTS au lieu de produits (plus parlant)
+//   - Section split Public vs VIP (avec calcul correct par tier)
+//   - Badge VIP tier coloré sur les clients VIP du top
 // =============================================================================
 
 import {
   rentabilityZone,
   type RentabilityData,
+  type RentabilityTopClient,
 } from "../../hooks/useUserRentability";
 import { RentabilityGauge } from "./RentabilityGauge";
 
@@ -25,6 +23,13 @@ const ZONE_COLOR: Record<string, string> = {
   red: "var(--ls-coral)",
   orange: "var(--ls-gold)",
   green: "var(--ls-teal)",
+};
+
+const VIP_META: Record<string, { label: string; color: string; emoji: string; discount: number }> = {
+  bronze: { label: "Bronze", color: "#A87132", emoji: "🥉", discount: 15 },
+  silver: { label: "Silver", color: "#9CA3AF", emoji: "🥈", discount: 25 },
+  gold: { label: "Gold", color: "var(--ls-gold)", emoji: "🥇", discount: 35 },
+  ambassador: { label: "Ambassadeur", color: "var(--ls-purple)", emoji: "👑", discount: 42 },
 };
 
 function formatEur(n: number): string {
@@ -48,6 +53,8 @@ export function RentabilityDetailModal({ data, onClose }: RentabilityDetailModal
   const deltaPct =
     data.prev_month_eur > 0 ? Math.round((delta / data.prev_month_eur) * 100) : null;
 
+  const hasVipClients = data.clients_vip_count > 0;
+
   return (
     <div style={overlayStyle} onClick={onClose} role="dialog" aria-modal="true">
       <div style={modalStyle} onClick={(e) => e.stopPropagation()}>
@@ -56,13 +63,13 @@ export function RentabilityDetailModal({ data, onClose }: RentabilityDetailModal
         {/* Header */}
         <div style={headerStyle}>
           <div style={eyebrowStyle}>💎 Ma rentabilité · {monthLabel(data.month_start)}</div>
-          <h2 style={titleStyle}>{data.user_name}</h2>
+          <h2 style={titleStyle}>{data.scope_label}</h2>
           <div style={rankPillStyle}>
             👑 {data.rank_label} · marge perso <strong>{data.margin_pct}%</strong>
           </div>
         </div>
 
-        {/* Big jauge centrée */}
+        {/* Big jauge */}
         <div style={{ display: "flex", justifyContent: "center", marginBottom: 8 }}>
           <RentabilityGauge data={data} size="hero" delay={100} />
         </div>
@@ -83,16 +90,55 @@ export function RentabilityDetailModal({ data, onClose }: RentabilityDetailModal
             color="var(--ls-text-muted)"
           />
           <CalcRow
-            label="= Marge brute"
+            label="= Marge brute nette"
             value={formatEur(data.margin_eur)}
-            sub={data.products_count > 0 ? "ton revenu net du mois" : "aucune vente trackée"}
+            sub={data.products_count > 0 ? "ton revenu net du mois (clients VIP inclus)" : "aucune vente trackée"}
             color={zoneColor}
             highlight
           />
         </div>
 
+        {/* Split Public vs VIP */}
+        {data.products_count > 0 && (
+          <>
+            <SectionTitle>🎯 Split par type de client</SectionTitle>
+            <div style={twoColStyle}>
+              <SplitCard
+                label="Clients publics"
+                emoji="👥"
+                clientsCount={data.clients_public_count}
+                revenue={data.revenue_public}
+                margin={data.margin_public_eur}
+                marginPct={data.margin_pct}
+                color="var(--ls-teal)"
+                note={`Marge complète : ${data.margin_pct}%`}
+              />
+              <SplitCard
+                label="Clients VIP"
+                emoji="💎"
+                clientsCount={data.clients_vip_count}
+                revenue={data.revenue_vip}
+                margin={data.margin_vip_eur}
+                marginPct={data.margin_pct}
+                color="var(--ls-gold)"
+                note={
+                  hasVipClients
+                    ? "Marge nette = marge perso − remise VIP"
+                    : "Aucun VIP ce mois"
+                }
+              />
+            </div>
+            {hasVipClients && (
+              <div style={vipNoteStyle}>
+                ℹ️ Les clients VIP paient moins cher (remise selon tier : bronze 15 % → ambassadeur 42 %).
+                Ta marge nette = ta marge perso ({data.margin_pct} %) − remise VIP du client.
+              </div>
+            )}
+          </>
+        )}
+
         {/* Projection vs mois précédent */}
-        <SectionTitle>🎯 Projection & comparaison</SectionTitle>
+        <SectionTitle>📈 Projection & comparaison</SectionTitle>
         <div style={twoColStyle}>
           <ProjectionCard
             title="Fin de mois"
@@ -118,24 +164,13 @@ export function RentabilityDetailModal({ data, onClose }: RentabilityDetailModal
           />
         </div>
 
-        {/* Top programmes */}
-        {data.top_programs && data.top_programs.length > 0 && (
+        {/* Top CLIENTS (au lieu de top produits) */}
+        {data.top_clients && data.top_clients.length > 0 && (
           <>
-            <SectionTitle>🏆 Top programmes vendus</SectionTitle>
-            <ul style={programsListStyle}>
-              {data.top_programs.map((p, i) => (
-                <li key={`${p.product_name}-${i}`} style={programRowStyle(i)}>
-                  <span style={rankBadgeStyle(i)}>#{i + 1}</span>
-                  <span style={{ flex: 1, fontWeight: 600, color: "var(--ls-text)" }}>
-                    {p.product_name}
-                  </span>
-                  <span style={{ fontSize: 11, color: "var(--ls-text-muted)" }}>
-                    × {p.qty}
-                  </span>
-                  <span style={{ fontFamily: "Syne, sans-serif", fontWeight: 700, color: "var(--ls-text)", minWidth: 64, textAlign: "right" }}>
-                    {formatEur(p.revenue)}
-                  </span>
-                </li>
+            <SectionTitle>🏆 Top clients ce mois</SectionTitle>
+            <ul style={clientsListStyle}>
+              {data.top_clients.map((c, i) => (
+                <TopClientRow key={c.client_id} client={c} rank={i} />
               ))}
             </ul>
           </>
@@ -144,7 +179,7 @@ export function RentabilityDetailModal({ data, onClose }: RentabilityDetailModal
         {/* Note méthodologie */}
         <div style={methodoStyle}>
           ℹ️ Calcul basé sur les programmes trackés dans l'app Lor'Squad (commandes via fiche client).
-          Les commandes hors-fiche (perso, club, Bizworks) ne sont pas incluses dans cette V1.
+          Les commandes hors-fiche (perso, club, Bizworks direct) ne sont pas incluses dans cette V1.
         </div>
 
         <button type="button" onClick={onClose} style={ghostBtnStyle}>
@@ -154,6 +189,8 @@ export function RentabilityDetailModal({ data, onClose }: RentabilityDetailModal
     </div>
   );
 }
+
+// ─── Sous-composants ─────────────────────────────────────────────────────
 
 function SectionTitle({ children }: { children: React.ReactNode }) {
   return <h3 style={sectionTitleStyle}>{children}</h3>;
@@ -173,6 +210,47 @@ function CalcRow({ label, value, sub, color, highlight }: { label: string; value
   );
 }
 
+function SplitCard({
+  label,
+  emoji,
+  clientsCount,
+  revenue,
+  margin,
+  color,
+  note,
+}: {
+  label: string;
+  emoji: string;
+  clientsCount: number;
+  revenue: number;
+  margin: number;
+  marginPct: number;
+  color: string;
+  note: string;
+}) {
+  const isEmpty = clientsCount === 0;
+  return (
+    <div style={splitCardStyle(color, isEmpty)}>
+      <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginBottom: 6 }}>
+        <span style={{ fontSize: 14 }}>{emoji}</span>
+        <span style={{ fontFamily: "DM Sans, sans-serif", fontSize: 12, fontWeight: 700, color: "var(--ls-text)" }}>
+          {label}
+        </span>
+        <span style={{ fontSize: 11, color: "var(--ls-text-muted)" }}>
+          · {clientsCount} client{clientsCount > 1 ? "s" : ""}
+        </span>
+      </div>
+      <div style={{ fontFamily: "Syne, sans-serif", fontSize: 22, fontWeight: 800, color, marginBottom: 4 }}>
+        {formatEur(margin)}
+      </div>
+      <div style={{ fontSize: 11, color: "var(--ls-text-muted)", marginBottom: 4 }}>
+        sur {formatEur(revenue)} de CA
+      </div>
+      <div style={{ fontSize: 10, color: "var(--ls-text-muted)", fontStyle: "italic" }}>{note}</div>
+    </div>
+  );
+}
+
 function ProjectionCard({ title, value, sub, color }: { title: string; value: string; sub: string; color: string }) {
   return (
     <div style={projectionCardStyle(color)}>
@@ -180,6 +258,37 @@ function ProjectionCard({ title, value, sub, color }: { title: string; value: st
       <div style={{ fontFamily: "Syne, sans-serif", fontSize: 22, fontWeight: 800, color, marginTop: 4 }}>{value}</div>
       <div style={{ fontSize: 11, color: "var(--ls-text-muted)", marginTop: 4 }}>{sub}</div>
     </div>
+  );
+}
+
+function TopClientRow({ client, rank }: { client: RentabilityTopClient; rank: number }) {
+  const vipMeta = client.vip_status && client.vip_status !== "none" ? VIP_META[client.vip_status] : null;
+  const products = client.products?.slice(0, 2).join(" · ") ?? "";
+  const moreProducts = (client.products?.length ?? 0) > 2 ? ` (+${client.products.length - 2})` : "";
+
+  return (
+    <li style={clientRowStyle(rank)}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+        <span style={rankBadgeStyle(rank)}>#{rank + 1}</span>
+        <span style={{ fontFamily: "Syne, sans-serif", fontWeight: 700, fontSize: 14, color: "var(--ls-text)", flex: 1 }}>
+          {client.client_name}
+        </span>
+        {vipMeta && (
+          <span style={vipBadgeStyle(vipMeta.color)}>
+            {vipMeta.emoji} {vipMeta.label} −{vipMeta.discount}%
+          </span>
+        )}
+        <span style={{ fontFamily: "Syne, sans-serif", fontWeight: 700, fontSize: 14, color: "var(--ls-text)", whiteSpace: "nowrap" }}>
+          {formatEur(client.revenue)}
+        </span>
+      </div>
+      <div style={{ fontSize: 11, color: "var(--ls-text-muted)", paddingLeft: 32 }}>
+        {client.items_count} produit{client.items_count > 1 ? "s" : ""}
+        {products && ` · ${products}${moreProducts}`}
+        {" · "}
+        <strong style={{ color: "var(--ls-gold)" }}>marge {formatEur(client.margin)}</strong>
+      </div>
+    </li>
   );
 }
 
@@ -194,12 +303,11 @@ const overlayStyle: React.CSSProperties = {
 };
 
 const modalStyle: React.CSSProperties = {
-  position: "relative", width: "100%", maxWidth: 560,
+  position: "relative", width: "100%", maxWidth: 580,
   maxHeight: "calc(100vh - 40px)", overflowY: "auto",
   background: "var(--ls-surface)",
   border: "0.5px solid var(--ls-border)",
-  borderRadius: 22,
-  padding: "26px 24px",
+  borderRadius: 22, padding: "26px 24px",
   boxShadow: "0 24px 80px color-mix(in srgb, var(--ls-text) 24%, transparent)",
 };
 
@@ -259,19 +367,37 @@ const twoColStyle: React.CSSProperties = {
   display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10,
 };
 
+const splitCardStyle = (color: string, isEmpty: boolean): React.CSSProperties => ({
+  background: isEmpty
+    ? "var(--ls-surface2)"
+    : `color-mix(in srgb, ${color} 6%, var(--ls-surface))`,
+  border: isEmpty ? "0.5px dashed var(--ls-border)" : `0.5px solid ${color}`,
+  borderRadius: 12, padding: "12px 14px",
+  opacity: isEmpty ? 0.6 : 1,
+});
+
 const projectionCardStyle = (color: string): React.CSSProperties => ({
   background: `color-mix(in srgb, ${color} 6%, var(--ls-surface))`,
   border: `0.5px solid ${color}`,
   borderRadius: 12, padding: "14px 16px",
 });
 
-const programsListStyle: React.CSSProperties = {
+const vipNoteStyle: React.CSSProperties = {
+  marginTop: 8,
+  padding: "8px 12px",
+  background: "color-mix(in srgb, var(--ls-gold) 6%, var(--ls-surface2))",
+  border: "0.5px solid color-mix(in srgb, var(--ls-gold) 28%, transparent)",
+  borderRadius: 10,
+  fontSize: 11, color: "var(--ls-text-muted)",
+  lineHeight: 1.5,
+};
+
+const clientsListStyle: React.CSSProperties = {
   margin: 0, padding: 0, listStyle: "none",
   display: "flex", flexDirection: "column", gap: 6,
 };
 
-const programRowStyle = (idx: number): React.CSSProperties => ({
-  display: "flex", alignItems: "center", gap: 10,
+const clientRowStyle = (idx: number): React.CSSProperties => ({
   padding: "10px 12px",
   background: idx === 0
     ? "color-mix(in srgb, var(--ls-gold) 6%, var(--ls-surface))"
@@ -281,12 +407,27 @@ const programRowStyle = (idx: number): React.CSSProperties => ({
 });
 
 const rankBadgeStyle = (idx: number): React.CSSProperties => {
-  const colors = ["var(--ls-gold)", "#9CA3AF", "#A87132", "var(--ls-text-muted)"];
+  const colors = ["var(--ls-gold)", "#9CA3AF", "#A87132", "var(--ls-text-muted)", "var(--ls-text-muted)"];
   return {
-    fontFamily: "Syne, sans-serif", fontWeight: 800, fontSize: 12,
-    color: colors[Math.min(idx, 3)], minWidth: 24,
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    minWidth: 24,
+    height: 22,
+    fontFamily: "Syne, sans-serif", fontWeight: 800, fontSize: 11,
+    color: colors[Math.min(idx, 4)],
   };
 };
+
+const vipBadgeStyle = (color: string): React.CSSProperties => ({
+  fontSize: 9,
+  fontFamily: "DM Sans, sans-serif", fontWeight: 700,
+  padding: "2px 7px",
+  borderRadius: 6,
+  background: `color-mix(in srgb, ${color} 14%, transparent)`,
+  color, border: `0.5px solid ${color}`,
+  whiteSpace: "nowrap",
+});
 
 const methodoStyle: React.CSSProperties = {
   marginTop: 18, padding: "10px 12px",

@@ -29,6 +29,8 @@ import { BusinessOpportunitiesCard } from "../components/copilote/BusinessOpport
 import { DistriOnboardingChecklist } from "../components/formation/DistriOnboardingChecklist";
 import { FlexTodayWidget } from "../components/copilote/FlexTodayWidget";
 import { RentabilityWidget } from "../components/rentability/RentabilityWidget";
+// Note 2026-05-05 : DormantClientsWidget DÉPLACÉ vers Suivi PV (/pv)
+// pour ne pas surcharger Co-pilote (Thomas a raison, c'est trop).
 import { StreakBadge } from "../features/gamification/components/StreakBadge";
 import { WeeklyQuestsCard } from "../features/gamification/components/WeeklyQuestsCard";
 

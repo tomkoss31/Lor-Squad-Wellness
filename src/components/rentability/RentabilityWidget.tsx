@@ -15,7 +15,7 @@ import { RentabilityDetailModal } from "./RentabilityDetailModal";
 export function RentabilityWidget() {
   const navigate = useNavigate();
   const { currentUser } = useAppContext();
-  const { data, loading } = useUserRentability(currentUser?.id ?? null);
+  const { data, loading, error, isCoupleAggregated } = useUserRentability(currentUser?.id ?? null);
   const [open, setOpen] = useState(false);
 
   if (!currentUser) return null;
@@ -26,21 +26,62 @@ export function RentabilityWidget() {
       </div>
     );
   }
-  if (!data) return null;
+  // Si erreur ou pas de data, on affiche quand même un fallback minimal au
+  // lieu de skip silencieusement. Évite que la rentabilité "disparaisse"
+  // sans signal utilisateur (cas Thomas 2026-05-05).
+  if (!data) {
+    return (
+      <div style={cardStyle}>
+        <div style={leftStyle}>
+          <div style={eyebrowStyle}>💎 Ma rentabilité</div>
+          <h3 style={titleStyle}>Données indisponibles</h3>
+          <p style={subStyle}>
+            {error
+              ? `Erreur : ${error}`
+              : "Aucune donnée pour ce mois. Crée ton premier bilan client → la jauge s'allume."}
+          </p>
+          <div style={ctaRowStyle}>
+            <button
+              type="button"
+              onClick={() => navigate("/rentabilite")}
+              style={ctaBtnGhost}
+            >
+              Voir la page complète
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Sub-text : on tient TOUT en 1 ligne max + projection inline (pas de
+  // doublon vertical avec le widget). Couple : on précise.
+  const subParts: string[] = [];
+  if (data.products_count > 0) {
+    subParts.push(
+      `${data.products_count} programme${data.products_count > 1 ? "s" : ""} · marge ${data.margin_pct}%`,
+    );
+  }
+  if (data.projection_eur > data.margin_eur) {
+    subParts.push(`projection ${Math.round(data.projection_eur).toLocaleString("fr-FR")} € fin de mois`);
+  }
+  if (isCoupleAggregated) {
+    subParts.push("agrégé Thomas + Mélanie");
+  }
+  const subText =
+    data.products_count === 0
+      ? "Vends ton premier programme pour démarrer 🚀"
+      : subParts.join(" · ");
 
   return (
     <>
       <div style={cardStyle}>
         <div style={leftStyle}>
-          <div style={eyebrowStyle}>💎 Ma rentabilité</div>
+          <div style={eyebrowStyle}>💎 Ma rentabilité · {monthLabel(data.month_start)}</div>
           <h3 style={titleStyle}>
             Tu gagnes <span style={{ color: "var(--ls-gold)" }}>{Math.round(data.margin_eur).toLocaleString("fr-FR")} €</span> ce mois
           </h3>
-          <p style={subStyle}>
-            {data.products_count > 0
-              ? `${data.products_count} programme${data.products_count > 1 ? "s" : ""} vendu${data.products_count > 1 ? "s" : ""} · marge ${data.margin_pct}%`
-              : "Vends ton premier programme pour démarrer 🚀"}
-          </p>
+          <p style={subStyle}>{subText}</p>
           <div style={ctaRowStyle}>
             <button
               type="button"
@@ -59,13 +100,28 @@ export function RentabilityWidget() {
           </div>
         </div>
         <div style={rightStyle}>
-          <RentabilityGauge data={data} size="compact" onClick={() => setOpen(true)} />
+          {/* Compact 140 px sans labels (les labels sont déjà dans le widget) */}
+          <RentabilityGauge
+            data={data}
+            size="compact"
+            onClick={() => setOpen(true)}
+            showLabels={false}
+          />
         </div>
       </div>
 
       {open && <RentabilityDetailModal data={data} onClose={() => setOpen(false)} />}
     </>
   );
+}
+
+function monthLabel(iso: string): string {
+  try {
+    const d = new Date(iso + "T12:00:00Z");
+    return new Intl.DateTimeFormat("fr-FR", { month: "long" }).format(d);
+  } catch {
+    return "";
+  }
 }
 
 // ─── Styles ────────────────────────────────────────────────────────────────

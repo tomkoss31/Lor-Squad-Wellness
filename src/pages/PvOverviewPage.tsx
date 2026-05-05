@@ -13,6 +13,7 @@ import { usePvCheckedTracker } from "../hooks/usePvCheckedTracker";
 import { usePvColumnOverride } from "../hooks/usePvColumnOverride";
 import { useAppContext } from "../context/AppContext";
 import type { PvClientTrackingRecord } from "../types/pv";
+import { DormantClientsWidget } from "../components/dormant/DormantClientsWidget";
 
 export function PvOverviewPage() {
   const { currentUser, clients, visibleClients, pvTransactions, pvClientProducts } = useAppContext();
@@ -204,6 +205,11 @@ export function PvOverviewPage() {
       {!selectedClientId && currentUser?.id ? (
         <PvActionPlanCard userId={currentUser.id} hideOnError />
       ) : null}
+
+      {/* Plan de relance dormants (déplacé du Co-pilote 2026-05-05) —
+          ici à sa vraie place, à côté du suivi PV. Skippe silencieusement
+          si aucun dormant. Pas de pollution sur Co-pilote. */}
+      {!selectedClientId && <DormantClientsWidget />}
 
       {/* Vue FICHE pleine page */}
       {selectedClientId && selectedRecord && (

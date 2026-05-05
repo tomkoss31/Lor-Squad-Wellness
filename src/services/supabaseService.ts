@@ -55,6 +55,7 @@ type UserRow = {
   current_rank?: string | null;
   rank_set_at?: string | null;
   formation_beta_access?: boolean | null;
+  city?: string | null;
 };
 
 type AssessmentRow = {
@@ -323,6 +324,7 @@ function mapUser(row: UserRow): User {
     currentRank: (row.current_rank ?? "distributor_25") as User["currentRank"],
     rankSetAt: row.rank_set_at ?? null,
     formationBetaAccess: row.formation_beta_access ?? false,
+    city: row.city ?? null,
   };
 }
 
