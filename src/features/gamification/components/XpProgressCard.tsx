@@ -23,6 +23,8 @@ interface XpData {
   messagesXp: number;
   // Daily login XP (V2 — 2026-04-29) : lifetime_login_count * 5
   dailyXp: number;
+  // Formation XP (Phase F-polish 2026-11-01, fix display 2026-05-05)
+  formationXp: number;
 }
 
 const LEVEL_TITLES: Record<number, string> = {
@@ -108,6 +110,7 @@ export function XpProgressCard() {
     rdvXp: 0,
     messagesXp: 0,
     dailyXp: 0,
+    formationXp: 0,
   });
 
   useEffect(() => {
@@ -141,6 +144,7 @@ export function XpProgressCard() {
           rdvXp: (row as { rdv_xp?: number }).rdv_xp ?? 0,
           messagesXp: (row as { messages_xp?: number }).messages_xp ?? 0,
           dailyXp: (row as { daily_xp?: number }).daily_xp ?? 0,
+          formationXp: (row as { formation_xp?: number }).formation_xp ?? 0,
         });
       } catch (err) {
         if (!cancelled) {
@@ -202,6 +206,7 @@ export function XpProgressCard() {
 
   const sources = [
     { label: "Academy", emoji: "🎓", value: data.academyXp, color: "var(--ls-gold)" },
+    { label: "Formation", emoji: "📚", value: data.formationXp, color: "var(--ls-teal)" },
     { label: "Bilans créés", emoji: "📋", value: data.bilansXp, color: "var(--ls-teal)" },
     { label: "RDV", emoji: "📅", value: data.rdvXp, color: "var(--ls-purple)" },
     { label: "Messages", emoji: "💬", value: data.messagesXp, color: "var(--ls-coral)" },
