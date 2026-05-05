@@ -1,5 +1,6 @@
 {
-  "name": "lor-squad-wellness",
+  "name": "labase360-app",
+  "description": "La Base 360 — The wellness nutrition club",
   "private": true,
   "version": "0.1.0",
   "type": "module",

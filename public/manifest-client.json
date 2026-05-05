@@ -1,22 +1,36 @@
 {
-  "name": "Lor'Squad Wellness",
-  "short_name": "Lor'Squad",
-  "description": "Mon espace bien-être personnalisé",
+  "name": "La Base 360",
+  "short_name": "La Base 360",
+  "description": "Mon espace bien-être personnalisé · The wellness nutrition club",
   "start_url": "/client/",
   "display": "standalone",
-  "background_color": "#F4F2EE",
-  "theme_color": "#B8922A",
+  "background_color": "#FFFFFF",
+  "theme_color": "#10B981",
   "orientation": "portrait",
   "icons": [
     {
-      "src": "/icons/lor-squad-icon-192.png",
+      "src": "/brand/labase360/pwa-192.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
     },
     {
-      "src": "/icons/lor-squad-icon-512.png",
+      "src": "/brand/labase360/pwa-512.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/brand/labase360/pwa-maskable-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/brand/labase360/pwa-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ]
 }
