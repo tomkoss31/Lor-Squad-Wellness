@@ -121,6 +121,45 @@
   }
 }
 
+/* ─── Responsive (mobile-first, breakpoints 1200/900) ──────────────────── */
+
+/* >= 1200px : layout V5 desktop complet (default, déjà inline) */
+
+/* 900-1199px : stats en 2 cols, hero stacké si trop serré */
+@media (max-width: 1199px) {
+  /* Hero : on garde split tant que c'est lisible, sinon stack. */
+  /* Les overrides inline sont prioritaires donc on ajoute des règles
+     spécifiques sur les éléments scopés .copilote-v5. */
+  .copilote-v5 [data-v5-hero] {
+    grid-template-columns: 1fr !important;
+  }
+  .copilote-v5 [data-v5-hero-right] {
+    border-left: none !important;
+    border-top: 1px solid rgba(245, 222, 179, 0.12);
+  }
+  .copilote-v5 [data-v5-stats] {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+
+/* < 900px : tout en colonne, sidebar masquée par AppLayout (BottomNav) */
+@media (max-width: 899px) {
+  .copilote-v5 [data-v5-stats] {
+    grid-template-columns: 1fr !important;
+  }
+  .copilote-v5 [data-v5-row-bottom] {
+    grid-template-columns: 1fr !important;
+  }
+  /* Pin AWT : trop lourd sur mobile, on masque */
+  .copilote-v5 .v5-pin-rotate {
+    display: none;
+  }
+  /* Countdown 60px → 36px (validation Thomas mobile) */
+  .copilote-v5 [data-v5-countdown] {
+    font-size: 36px !important;
+  }
+}
+
 /* ─── Daily Boost guillemets décoratifs ────────────────────────────────── */
 .copilote-v5 .v5-daily-quote::before {
   content: '«';

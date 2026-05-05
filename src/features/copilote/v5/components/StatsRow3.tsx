@@ -40,7 +40,7 @@ export function StatsRow3({
   const programs = rentab?.products_count ?? 0;
 
   return (
-    <section style={rowStyle}>
+    <section style={rowStyle} data-v5-stats>
       <button
         type="button"
         onClick={() => navigate("/messages")}

@@ -169,6 +169,13 @@ const CoPilotePage = lazy(() =>
     default: module.CoPilotePage
   }))
 );
+// Co-pilote V5 Editoriale Premium (2026-05-05) — preview parallele,
+// remplace /co-pilote quand validation Thomas.
+const CoPiloteV5Page = lazy(() =>
+  import("./features/copilote/v5/CoPiloteV5Page").then((module) => ({
+    default: module.CoPiloteV5Page,
+  }))
+);
 // Chantier Lor'Squad Academy Phase 1 (2026-04-26) : parcours onboarding
 // distri en 8 sections. Overview = liste + progression, /academy/:sectionId
 // = page de section (placeholder Phase 1, tutoriel interactif Phase 2).
@@ -435,6 +442,9 @@ export default function App() {
               {/* Chantier Refonte Navigation (2026-04-22) : /co-pilote = dashboard.
                   /dashboard redirige pour ne pas casser les liens existants. */}
               <Route path="co-pilote" element={<CoPilotePage />} />
+              {/* V5 Editoriale preview (2026-05-05) — parallele tant que
+                  pas valide. Remplace /co-pilote quand Thomas dit OK. */}
+              <Route path="co-pilote-v5" element={<CoPiloteV5Page />} />
               <Route path="dashboard" element={<Navigate to="/co-pilote" replace />} />
               {/* FLEX Lor'Squad Phase B (2026-11-05) — moteur de pilotage
                   quotidien du distri. /flex = dashboard, /flex/onboarding =

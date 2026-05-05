@@ -131,7 +131,7 @@ export function HeroEditorial({ pvAlertActive = false }: HeroEditorialProps) {
   }
 
   return (
-    <section style={heroStyle}>
+    <section style={heroStyle} data-v5-hero>
       {/* Pin AWT cinématique en filigrane */}
       <PinAWTCinematic />
 
@@ -176,11 +176,11 @@ export function HeroEditorial({ pvAlertActive = false }: HeroEditorialProps) {
       </div>
 
       {/* RIGHT — countdown + Daily Boost */}
-      <div style={rightSectionStyle}>
+      <div style={rightSectionStyle} data-v5-hero-right>
         {targetDate && !countdown.isElapsed ? (
           <div style={countdownBlockStyle}>
             <div style={countdownLabelStyle}>Dans</div>
-            <div style={countdownValueStyle} className="v5-mono">
+            <div style={countdownValueStyle} className="v5-mono" data-v5-countdown>
               {countdown.hours >= 1 ? (
                 <>
                   {String(countdown.hours).padStart(2, "0")}
