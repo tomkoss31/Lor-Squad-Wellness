@@ -1906,6 +1906,17 @@ function ProspectDetailModal({
               Planifier un RDV →
             </Button>
           )}
+          {/* Re-qualifier prospect (Chantier 2026-05-05) : si le client
+              répond après un no-show / pas intéressé / annulé, on doit
+              pouvoir lui re-proposer un RDV. Réutilise handleReactivate
+              qui repasse le statut à "scheduled" + ouvre le form d'édition. */}
+          {(prospect.status === "no_show" ||
+            prospect.status === "lost" ||
+            prospect.status === "cancelled") && (
+            <Button onClick={onReactivate} className="flex-1">
+              Re-qualifier · planifier un nouveau RDV →
+            </Button>
+          )}
         </div>
 
         {/* CTA secondaire teal — Ajouter à mon agenda Google (RDV futurs uniquement).
