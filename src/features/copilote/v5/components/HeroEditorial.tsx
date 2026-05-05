@@ -25,6 +25,7 @@ import { useNextAction } from "../hooks/useNextAction";
 import { useCountdown } from "../hooks/useCountdown";
 import { useTimeContext } from "../hooks/useTimeContext";
 import { useDailyBoost } from "../hooks/useDailyBoost";
+import { useStreak } from "../../../gamification/hooks/useStreak";
 import { PinAWTCinematic } from "./PinAWTCinematic";
 import { DailyBoost } from "./DailyBoost";
 
@@ -38,6 +39,7 @@ export function HeroEditorial({ pvAlertActive = false }: HeroEditorialProps) {
   const { action, loading } = useNextAction();
   const timeContext = useTimeContext();
   const { quote, isPreview } = useDailyBoost(timeContext.dailyBoostCategory);
+  const streak = useStreak();
 
   const targetDate = useMemo<Date | null>(() => {
     if (action.kind === "rdv" && action.time) return action.time;
@@ -63,9 +65,10 @@ export function HeroEditorial({ pvAlertActive = false }: HeroEditorialProps) {
       if (action.subtitle) list.push(action.subtitle);
       return list;
     }
-    // idle : pas de chips (le titre proactive parle déjà)
-    return [`${timeContext.emoji} ${timeContext.label}`];
-  }, [action, timeContext]);
+    // idle : aucun chip (le titre proactive parle déjà — pas besoin de
+    // pollution avec "Aloe time" ou autre).
+    return [];
+  }, [action]);
 
   const heroTitle = action.kind === "idle" ? action.title : action.title;
 
@@ -104,23 +107,6 @@ export function HeroEditorial({ pvAlertActive = false }: HeroEditorialProps) {
     action.kind === "rdv" || action.kind === "followup"
       ? "Préparer l'agenda"
       : "Plus tard";
-
-  // Date display "Mardi 5 mai 2026 · 14:32"
-  const dateDisplay = useMemo(() => {
-    const now = new Date();
-    const date = new Intl.DateTimeFormat("fr-FR", {
-      weekday: "long",
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-    }).format(now);
-    const time = new Intl.DateTimeFormat("fr-FR", {
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: false,
-    }).format(now);
-    return `${date.charAt(0).toUpperCase() + date.slice(1)} · ${time}`;
-  }, []);
 
   if (loading) {
     return (
@@ -170,9 +156,8 @@ export function HeroEditorial({ pvAlertActive = false }: HeroEditorialProps) {
             {secondaryLabel}
           </button>
         </div>
-
-        {/* Date discrete en bas pour ancrage temporel */}
-        <div style={dateLineStyle}>{dateDisplay}</div>
+        {/* Note 2026-05-05 : dateLineStyle supprimée (doublon avec topbar
+            meta qui affiche déjà MARDI 5 MAI · ÉDITION DU JOUR · HH:MM). */}
       </div>
 
       {/* RIGHT — countdown + Daily Boost */}
@@ -210,25 +195,20 @@ export function HeroEditorial({ pvAlertActive = false }: HeroEditorialProps) {
             </div>
           </div>
         ) : (
-          // Pas de countdown (idle / followup) → bloc minimaliste élégant.
-          // Plus d'emoji boisson ni "Mode tranquille" (validation Thomas
-          // 2026-05-05 : visuel jugé moche). À la place : juste un cadre
-          // typographique avec date du jour en JetBrains Mono pour ancrer
-          // visuellement la zone droite sans la surcharger.
+          // Mode idle / followup : afficher la STREAK du distri (info utile,
+          // cohérence gamification existante). Format : 9 🔥 jours d'affilée.
+          // Validation Thomas 2026-05-05 : remplace l'ancien "05·05 +
+          // mode tranquille" jugé moche.
           <div style={countdownBlockStyle}>
-            <div style={countdownLabelStyle}>Aujourd'hui</div>
-            <div style={countdownDateStyle} className="v5-mono">
-              {new Intl.DateTimeFormat("fr-FR", {
-                day: "2-digit",
-                month: "2-digit",
-              })
-                .format(new Date())
-                .replace("/", " · ")}
+            <div style={countdownLabelStyle}>Ma série</div>
+            <div style={streakValueStyle} className="v5-mono">
+              {streak.count}
+              <span style={streakFlameStyle} aria-hidden="true">🔥</span>
             </div>
             <div style={countdownSubStyle}>
-              {action.kind === "idle"
-                ? "Pas de RDV imminent — profite-en pour préparer."
-                : "Suivi à faire dans la journée"}
+              {streak.count > 0
+                ? `${streak.count} jour${streak.count > 1 ? "s" : ""} d'affilée — garde la chaîne`
+                : "Lance ta 1ère journée — chaque jour compte"}
             </div>
           </div>
         )}
@@ -391,16 +371,6 @@ const btnSecondaryStyle: React.CSSProperties = {
   fontFamily: "DM Sans, sans-serif",
 };
 
-const dateLineStyle: React.CSSProperties = {
-  marginTop: 16,
-  fontSize: 10.5,
-  letterSpacing: 1.4,
-  color: "rgba(245, 222, 179, 0.45)",
-  textTransform: "uppercase",
-  fontFamily: "DM Sans, sans-serif",
-  fontWeight: 500,
-};
-
 const rightSectionStyle: React.CSSProperties = {
   position: "relative",
   zIndex: 2,
@@ -440,14 +410,23 @@ const colonStyle: React.CSSProperties = {
   display: "inline-block",
 };
 
-const countdownDateStyle: React.CSSProperties = {
+const streakValueStyle: React.CSSProperties = {
   fontFamily: "'JetBrains Mono', monospace",
-  fontSize: 44,
+  fontSize: 60,
   fontWeight: 700,
   color: "#F5DEB3",
-  letterSpacing: -1.5,
+  letterSpacing: -2,
   lineHeight: 1,
   marginTop: 4,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "flex-end",
+  gap: 8,
+};
+
+const streakFlameStyle: React.CSSProperties = {
+  fontSize: 36,
+  marginLeft: 4,
 };
 
 const countdownSubStyle: React.CSSProperties = {

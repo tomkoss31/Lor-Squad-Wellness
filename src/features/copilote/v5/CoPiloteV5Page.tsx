@@ -36,6 +36,7 @@ import { DistriOnboardingChecklist } from "../../../components/formation/DistriO
 import { PvActionPlanAlert } from "../../../components/copilote/PvActionPlanAlert";
 import { WeeklyQuestsCard } from "../../gamification/components/WeeklyQuestsCard";
 import { LegalFooter } from "../../../components/ui/LegalFooter";
+import { AnnouncementBell } from "../../../components/announcements/AnnouncementBell";
 
 import "./copilote-v5.css";
 
@@ -132,9 +133,9 @@ export function CoPiloteV5Page() {
             <span style={shortcutStyle}>⌘K</span>
           </div>
 
-          <button type="button" style={notifBtnStyle} aria-label="Notifications">
-            🔔
-          </button>
+          {/* Cloche réelle (validation Thomas 2026-05-05) — composant
+              AnnouncementBell existant : badge unread + dropdown annonces. */}
+          <AnnouncementBell />
         </div>
       </div>
 
@@ -284,19 +285,7 @@ const shortcutStyle: React.CSSProperties = {
   color: "#7A6F5C",
 };
 
-const notifBtnStyle: React.CSSProperties = {
-  width: 38,
-  height: 38,
-  background: "white",
-  border: "1px solid #EFE8D6",
-  borderRadius: 11,
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  fontSize: 16,
-  position: "relative",
-  cursor: "pointer",
-};
+// Note 2026-05-05 : notifBtnStyle supprimé (remplacé par AnnouncementBell).
 
 const rowBottomStyle: React.CSSProperties = {
   display: "grid",

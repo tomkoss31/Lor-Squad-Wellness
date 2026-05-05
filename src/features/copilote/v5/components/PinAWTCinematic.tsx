@@ -1,33 +1,66 @@
 // =============================================================================
-// PinAWTCinematic — pin Active World Team décoratif (2026-05-05)
+// PinAWTCinematic — pin Active World Team réel selon rang (2026-05-05)
 //
-// SVG inline 480×480 (resize via prop si besoin). Rotation lente 60s linear
-// infinite, opacity 18 % par défaut, position absolue à droite du hero
-// éditorial. GPU-accelerated via `will-change: transform`.
+// Refonte 2026-05-05 : utilise les vrais .webp dans /public/pins/ selon le
+// `current_rank` du user, au lieu d'un SVG dessiné générique. Fond
+// transparent natif des webp. Rotation lente 60s, opacity 0.18.
 //
-// Sur mobile (< 480px), masqué pour économiser CPU/batterie.
+// Mapping rang Herbalife → fichier :
+//   distributor_25         → distributor.webp
+//   senior_consultant_35   → senior-consultant.webp
+//   success_builder_42     → success-builder.webp
+//   supervisor_50          → supervisor.webp
+//   active_supervisor_50   → active-supervisor.webp
+//   world_team_50          → world-team.webp
+//   active_world_team_50   → active-world-team.webp
+//   get_team_50            → get-team.webp
+//   get_team_2500_50       → get-team-2500.webp
+//   millionaire_50         → millionaire-team.webp
+//   millionaire_7500_50    → millionaire-team-7500.webp
+//   presidents_50          → president-team.webp
+//
+// Sur mobile (<480px), masqué automatiquement via CSS scopé (perf).
 // =============================================================================
 
+import { useAppContext } from "../../../../context/AppContext";
+
 interface PinAWTCinematicProps {
-  /** Taille en px (défaut 480, peut réduire pour mobile / variantes). */
   size?: number;
-  /** Opacité 0-1 (défaut 0.18 — discret en filigrane). */
   opacity?: number;
-  /** Année affichée au centre du pin. Défaut 2026. */
-  year?: number;
-  /** Texte courbé en haut de l'arc. Défaut "ACTIVE WORLD TEAM". */
-  title?: string;
-  /** Position absolue : si false, le composant est inline (utile pour preview). */
   positioned?: boolean;
+  /** Override le rang détecté depuis currentUser (pour preview / tests). */
+  rankOverride?: string;
 }
+
+// Mapping centralisé rang → nom de fichier .webp
+const RANK_TO_PIN: Record<string, string> = {
+  distributor_25: "distributor.webp",
+  senior_consultant_35: "senior-consultant.webp",
+  success_builder_42: "success-builder.webp",
+  supervisor_50: "supervisor.webp",
+  active_supervisor_50: "active-supervisor.webp",
+  world_team_50: "world-team.webp",
+  active_world_team_50: "active-world-team.webp",
+  get_team_50: "get-team.webp",
+  get_team_2500_50: "get-team-2500.webp",
+  millionaire_50: "millionaire-team.webp",
+  millionaire_7500_50: "millionaire-team-7500.webp",
+  presidents_50: "president-team.webp",
+};
+
+const DEFAULT_PIN = "active-world-team.webp"; // fallback élégant
 
 export function PinAWTCinematic({
   size = 480,
   opacity = 0.18,
-  year = 2026,
-  title = "ACTIVE WORLD TEAM",
   positioned = true,
+  rankOverride,
 }: PinAWTCinematicProps) {
+  const { currentUser } = useAppContext();
+  const rank = rankOverride ?? currentUser?.currentRank ?? null;
+  const fileName = (rank && RANK_TO_PIN[rank]) ?? DEFAULT_PIN;
+  const src = `/pins/${fileName}`;
+
   const containerStyle: React.CSSProperties = positioned
     ? {
         position: "absolute",
@@ -48,74 +81,20 @@ export function PinAWTCinematic({
 
   return (
     <div className="v5-pin-rotate" style={containerStyle} aria-hidden="true">
-      <svg viewBox="0 0 480 480" xmlns="http://www.w3.org/2000/svg" width={size} height={size}>
-        <defs>
-          <radialGradient id="pinHeroV5Cinematic" cx="35%" cy="30%">
-            <stop offset="0%" stopColor="#F8DDA0" />
-            <stop offset="40%" stopColor="#D4A937" />
-            <stop offset="100%" stopColor="#5A4612" />
-          </radialGradient>
-        </defs>
-
-        {/* Disque principal avec gradient gold */}
-        <circle
-          cx="240"
-          cy="240"
-          r="235"
-          fill="url(#pinHeroV5Cinematic)"
-          stroke="#5A4612"
-          strokeWidth="2"
-        />
-
-        {/* Cercle anneau intérieur */}
-        <circle cx="240" cy="240" r="200" fill="none" stroke="#1A1612" strokeWidth="3" />
-
-        {/* Disque sombre central pour relief */}
-        <circle cx="240" cy="240" r="170" fill="#1A1612" opacity="0.18" />
-
-        {/* Texte courbé en haut */}
-        <path id="topArcV5Cinematic" d="M 100 240 A 140 140 0 0 1 380 240" fill="none" />
-        <text
-          fontFamily="DM Sans, sans-serif"
-          fontSize="22"
-          fontWeight="800"
-          fill="#F8DDA0"
-          letterSpacing="5"
-        >
-          <textPath href="#topArcV5Cinematic" startOffset="50%" textAnchor="middle">
-            {title}
-          </textPath>
-        </text>
-
-        {/* Année */}
-        <text
-          x="240"
-          y="105"
-          fontFamily="DM Sans, sans-serif"
-          fontSize="22"
-          fontWeight="800"
-          fill="#F8DDA0"
-          textAnchor="middle"
-          letterSpacing="4"
-        >
-          {year}
-        </text>
-
-        {/* Flamme stylisée centre (tear drop) */}
-        <g transform="translate(240, 250)">
-          <path
-            d="M 0 -55 Q -34 -15 -38 38 Q -12 28 0 28 Q 12 28 38 38 Q 34 -15 0 -55 Z"
-            fill="#F8DDA0"
-          />
-          <path
-            d="M 0 -38 Q -10 -8 0 30"
-            stroke="#1A1612"
-            strokeWidth="1.5"
-            fill="none"
-            opacity="0.5"
-          />
-        </g>
-      </svg>
+      <img
+        src={src}
+        alt=""
+        width={size}
+        height={size}
+        loading="lazy"
+        style={{
+          width: "100%",
+          height: "100%",
+          objectFit: "contain",
+          // Fond transparent du webp respecté
+          background: "transparent",
+        }}
+      />
     </div>
   );
 }

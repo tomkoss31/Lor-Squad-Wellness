@@ -13,6 +13,22 @@
    applique que dans .copilote-v5 et descendants. */
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;0,800;1,500;1,600;1,700&family=Cinzel:wght@500;600;700&family=DM+Sans:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap');
 
+/* ─── Force LIGHT pour V5 même en mode sombre app ──────────────────────── */
+/* La V5 est éditoriale clair par design (cf. HTML de réf). On override les
+   tokens --ls-* de l'app dans le scope pour neutraliser un éventuel dark.
+   Décision Thomas 2026-05-05 : V5 force light, refonte dark V5 en V6. */
+.copilote-v5 {
+  /* Override tokens app pour forcer une base claire — fonts/cards stay light */
+  --ls-bg: #F8F5EC;
+  --ls-surface: #FFFFFF;
+  --ls-surface2: #F8F5EC;
+  --ls-text: #1A1612;
+  --ls-text-muted: #4A3F2A;
+  --ls-text-hint: #7A6F5C;
+  --ls-border: #EFE8D6;
+  --ls-border2: #D8D3C5;
+}
+
 /* ─── Tokens éditoriaux V5 ─────────────────────────────────────────────── */
 .copilote-v5 {
   /* Gold rich palette */
