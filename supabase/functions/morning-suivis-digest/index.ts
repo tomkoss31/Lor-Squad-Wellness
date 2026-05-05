@@ -198,7 +198,7 @@ serve(async (req) => {
         payload: {
           title: `🌅 ${dueCount} ${suivisLabel} à faire aujourd'hui`,
           body: "Ouvre l'app pour les envoyer en 2 clics.",
-          url: "/",
+          url: "/co-pilote",
           type: "morning_digest",
         },
         dedupe: {
