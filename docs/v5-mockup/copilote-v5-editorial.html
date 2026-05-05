@@ -1,0 +1,1489 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Co-pilote · V5 Éditoriale</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;0,800;1,500;1,600;1,700&family=Cinzel:wght@500;600;700&family=DM+Sans:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --gold-light: #F5DEB3;
+  --gold-shimmer: #F8DDA0;
+  --gold: #D4A937;
+  --gold-mid: #B8922A;
+  --gold-deep: #8B6F1F;
+  --gold-shadow: #5A4612;
+  --gold-cta-start: #EF9F27;
+  --gold-cta-end: #BA7517;
+  --teal: #1D9E75;
+  --teal-light: #6FD4AE;
+  --teal-soft: #E6F3EE;
+  --teal-deep: #14704F;
+  --coral: #D85A30;
+  --coral-soft: #FFE5DC;
+  --purple: #7F77DD;
+  --purple-soft: #F0EEFF;
+  --cream: #FAF6E8;
+  --paper: #FBF7E9;
+  --ink: #1A1612;
+  --ink-soft: #4A3F2A;
+  --ink-light: #7A6F5C;
+  --bg: #F8F5EC;
+  --card-bg: #FFFFFF;
+  --border-soft: #EFE8D6;
+  --charcoal: #1A1612;
+  --charcoal-deep: #0D0906;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: linear-gradient(135deg, #2A2419 0%, #1A1410 100%);
+  font-family: 'DM Sans', sans-serif;
+  padding: 30px 16px 40px;
+  min-height: 100vh;
+  color: var(--ink);
+}
+
+.intro {
+  max-width: 1440px;
+  margin: 0 auto 22px;
+  text-align: center;
+  color: var(--cream);
+}
+
+.intro h1 {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 38px;
+  font-style: italic;
+  font-weight: 600;
+  background: linear-gradient(180deg, #F8DDA0, #D4A937, #8B6F1F);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 4px;
+}
+
+.intro p {
+  color: rgba(245, 222, 179, 0.6);
+  font-size: 12px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   APP
+═══════════════════════════════════════════════════════════════ */
+.app {
+  max-width: 1440px;
+  margin: 0 auto;
+  background: var(--bg);
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  min-height: 920px;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SIDEBAR — bien rangée avec icônes
+═══════════════════════════════════════════════════════════════ */
+.sidebar {
+  background: white;
+  padding: 22px 14px 20px;
+  border-right: 1px solid var(--border-soft);
+  display: flex;
+  flex-direction: column;
+}
+
+.logo-row {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 6px 10px;
+  margin-bottom: 24px;
+}
+
+.logo-tile {
+  width: 38px;
+  height: 38px;
+  border-radius: 9px;
+  background: linear-gradient(135deg, #FFF4D4, var(--gold), var(--gold-deep));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ink);
+  font-size: 17px;
+  font-weight: 800;
+  box-shadow: 0 3px 10px rgba(184, 146, 42, 0.3);
+}
+
+.logo-text {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 19px;
+  font-weight: 700;
+  font-style: italic;
+  color: var(--ink);
+  line-height: 1;
+}
+
+.logo-sub {
+  font-size: 9px;
+  letter-spacing: 1.5px;
+  color: var(--ink-light);
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-top: 3px;
+}
+
+.nav-section {
+  font-size: 9.5px;
+  letter-spacing: 1.5px;
+  color: var(--ink-light);
+  text-transform: uppercase;
+  font-weight: 700;
+  padding: 0 10px;
+  margin-bottom: 8px;
+  margin-top: 14px;
+}
+
+.nav-section:first-of-type { margin-top: 0; }
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 10px 12px;
+  border-radius: 9px;
+  margin-bottom: 2px;
+  color: var(--ink-soft);
+  font-size: 13.5px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.nav-item:hover { background: var(--bg); }
+
+.nav-item.active {
+  background: linear-gradient(135deg, #FFFCF5, #FFF8E8);
+  color: var(--ink);
+  font-weight: 700;
+  box-shadow: inset 3px 0 0 var(--gold);
+}
+
+.nav-item .icon {
+  font-size: 15px;
+  width: 20px;
+  text-align: center;
+}
+
+.nav-item .badge {
+  margin-left: auto;
+  background: rgba(216, 90, 48, 0.15);
+  color: var(--coral);
+  padding: 2px 7px;
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.nav-item .badge.teal {
+  background: rgba(29, 158, 117, 0.15);
+  color: var(--teal-deep);
+}
+
+.spacer { flex: 1; }
+
+.streak-card {
+  background: linear-gradient(135deg, #FFF4E5, #FFE4C2);
+  border-radius: 12px;
+  padding: 11px 13px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+  border: 1px solid rgba(239, 159, 39, 0.3);
+}
+
+.streak-flame {
+  font-size: 18px;
+}
+
+.streak-info { flex: 1; }
+
+.streak-days {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--ink);
+  line-height: 1;
+}
+
+.streak-lvl {
+  font-size: 10px;
+  color: var(--gold-deep);
+  margin-top: 3px;
+  font-weight: 600;
+}
+
+.user-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: var(--bg);
+}
+
+.user-avatar-ring {
+  position: relative;
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+}
+
+.user-avatar {
+  position: absolute;
+  inset: 3px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--gold), var(--coral));
+}
+
+.user-avatar-ring svg {
+  position: absolute;
+  inset: 0;
+  transform: rotate(-90deg);
+}
+
+.user-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink);
+  line-height: 1.1;
+}
+
+.user-role {
+  font-size: 10px;
+  color: var(--ink-light);
+  margin-top: 2px;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   MAIN
+═══════════════════════════════════════════════════════════════ */
+.main {
+  padding: 22px 26px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  overflow: hidden;
+}
+
+/* TOP BAR */
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.topbar-left {
+  display: flex;
+  flex-direction: column;
+}
+
+.topbar-meta {
+  font-size: 10px;
+  letter-spacing: 1.8px;
+  color: var(--ink-light);
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.topbar-meta .live-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--teal);
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.3); }
+}
+
+.topbar-greet {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 30px;
+  font-weight: 800;
+  color: var(--ink);
+  letter-spacing: -1.5px;
+  line-height: 1;
+}
+
+.topbar-greet .accent {
+  background: linear-gradient(180deg, #EF9F27, #BA7517);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-style: italic;
+}
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.search-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: white;
+  border: 1px solid var(--border-soft);
+  border-radius: 12px;
+  padding: 9px 14px;
+  font-size: 12.5px;
+  color: var(--ink-light);
+  width: 220px;
+}
+
+.search-box .shortcut {
+  margin-left: auto;
+  background: var(--bg);
+  padding: 2px 6px;
+  border-radius: 5px;
+  font-size: 10px;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+  color: var(--ink-light);
+}
+
+.notif-btn {
+  width: 38px;
+  height: 38px;
+  background: white;
+  border: 1px solid var(--border-soft);
+  border-radius: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  position: relative;
+  cursor: pointer;
+}
+
+.notif-btn::after {
+  content: '';
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--coral);
+  border: 2px solid white;
+}
+
+.weather-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: white;
+  border: 1px solid var(--border-soft);
+  border-radius: 12px;
+  padding: 9px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+
+.weather-pill .temp {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   HERO ÉDITORIAL — split partagé pin AWT cinématique
+═══════════════════════════════════════════════════════════════ */
+.hero-editorial {
+  background: linear-gradient(135deg, #1A1612 0%, #2A2419 50%, #1A1612 100%);
+  color: var(--cream);
+  border-radius: 22px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  min-height: 280px;
+}
+
+/* Pin AWT cinématique au centre-droite */
+.hero-pin-cinematic {
+  position: absolute;
+  right: -60px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 480px;
+  height: 480px;
+  pointer-events: none;
+  opacity: 0.18;
+  animation: rotateSlow 60s linear infinite;
+}
+
+@keyframes rotateSlow {
+  0% { transform: translateY(-50%) rotate(0deg); }
+  100% { transform: translateY(-50%) rotate(360deg); }
+}
+
+/* Glow effects */
+.hero-glow-1 {
+  position: absolute;
+  top: -60%;
+  left: -10%;
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, rgba(212, 169, 55, 0.15), transparent 60%);
+  pointer-events: none;
+}
+
+.hero-glow-2 {
+  position: absolute;
+  bottom: -40%;
+  right: -10%;
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(circle, rgba(216, 90, 48, 0.10), transparent 60%);
+  pointer-events: none;
+}
+
+/* HERO LEFT - Action principale */
+.hero-left-section {
+  position: relative;
+  z-index: 2;
+  padding: 30px 32px 28px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.hero-edition {
+  font-family: 'Cinzel', serif;
+  font-size: 9.5px;
+  letter-spacing: 4px;
+  color: var(--gold-light);
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.hero-edition::before, .hero-edition::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(245, 222, 179, 0.4), transparent);
+  max-width: 30px;
+}
+
+.hero-overline {
+  font-size: 10px;
+  letter-spacing: 2.5px;
+  color: var(--gold-light);
+  text-transform: uppercase;
+  font-weight: 700;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.hero-pulse-dot {
+  width: 7px;
+  height: 7px;
+  background: var(--teal-light);
+  border-radius: 50%;
+  animation: pulse 2s infinite;
+}
+
+.hero-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 38px;
+  font-weight: 700;
+  font-style: italic;
+  letter-spacing: -0.5px;
+  line-height: 1.05;
+  margin-bottom: 10px;
+  color: white;
+}
+
+.hero-meta {
+  font-size: 13.5px;
+  color: rgba(245, 222, 179, 0.75);
+  margin-bottom: 18px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.hero-meta .chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 11px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(245, 222, 179, 0.18);
+  border-radius: 18px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--gold-light);
+}
+
+.hero-cta {
+  display: flex;
+  gap: 10px;
+}
+
+.btn-primary {
+  background: linear-gradient(180deg, var(--gold-cta-start), var(--gold-cta-end));
+  color: white;
+  border: none;
+  padding: 12px 22px;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 13.5px;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(186, 117, 23, 0.4);
+}
+
+.btn-secondary-dark {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--cream);
+  border: 1px solid rgba(245, 222, 179, 0.25);
+  padding: 12px 18px;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 13.5px;
+  cursor: pointer;
+}
+
+/* HERO RIGHT - Countdown + Quote */
+.hero-right-section {
+  position: relative;
+  z-index: 2;
+  padding: 30px 32px 28px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  border-left: 1px solid rgba(245, 222, 179, 0.12);
+}
+
+.hero-countdown-block {
+  text-align: right;
+}
+
+.hero-countdown-label {
+  font-size: 10px;
+  color: rgba(245, 222, 179, 0.55);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.hero-countdown {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 60px;
+  font-weight: 700;
+  color: var(--gold-light);
+  letter-spacing: -2px;
+  line-height: 1;
+}
+
+.hero-countdown .colon {
+  color: var(--gold);
+  animation: pulse 1s infinite;
+}
+
+.hero-countdown-sub {
+  font-size: 12px;
+  color: rgba(245, 222, 179, 0.6);
+  margin-top: 8px;
+  font-weight: 500;
+}
+
+.hero-countdown-sub strong {
+  color: var(--gold-light);
+  font-weight: 700;
+}
+
+/* DAILY BOOST quote */
+.daily-boost {
+  border-top: 1px solid rgba(245, 222, 179, 0.12);
+  padding-top: 18px;
+}
+
+.daily-boost-label {
+  font-family: 'Cinzel', serif;
+  font-size: 9px;
+  letter-spacing: 3px;
+  color: var(--gold);
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.daily-boost-quote {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 14.5px;
+  font-style: italic;
+  color: rgba(245, 222, 179, 0.88);
+  line-height: 1.45;
+  font-weight: 500;
+}
+
+.daily-boost-quote::before {
+  content: '«';
+  color: var(--gold);
+  font-size: 22px;
+  margin-right: 4px;
+  vertical-align: -3px;
+}
+
+.daily-boost-quote::after {
+  content: '»';
+  color: var(--gold);
+  font-size: 22px;
+  margin-left: 4px;
+  vertical-align: -3px;
+}
+
+.daily-boost-author {
+  font-family: 'Cinzel', serif;
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: rgba(245, 222, 179, 0.5);
+  text-transform: uppercase;
+  margin-top: 8px;
+  text-align: right;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   RENTABILITÉ ÉDITORIALE — parcours visuel horizontal
+═══════════════════════════════════════════════════════════════ */
+.rentab-hero {
+  background: white;
+  border-radius: 20px;
+  padding: 22px 28px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.rentab-hero::before {
+  content: '';
+  position: absolute;
+  top: -100px;
+  right: -100px;
+  width: 320px;
+  height: 320px;
+  background: radial-gradient(circle, rgba(212, 169, 55, 0.10), transparent 65%);
+  pointer-events: none;
+}
+
+.rentab-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20px;
+  position: relative;
+  z-index: 1;
+}
+
+.rentab-overline {
+  font-family: 'Cinzel', serif;
+  font-size: 10px;
+  letter-spacing: 3px;
+  color: var(--gold-deep);
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.rentab-title-line {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.rentab-amount-big {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 38px;
+  font-weight: 900;
+  letter-spacing: -1.5px;
+  line-height: 1;
+  background: linear-gradient(180deg, var(--gold-cta-start), var(--gold-cta-end));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.rentab-amount-text {
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-size: 22px;
+  color: var(--ink);
+  font-weight: 600;
+  letter-spacing: -0.5px;
+}
+
+.rentab-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: linear-gradient(135deg, var(--teal-soft), #D4F0E1);
+  color: var(--teal-deep);
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  border: 1px solid rgba(29, 158, 117, 0.25);
+}
+
+.rentab-meta {
+  font-size: 12.5px;
+  color: var(--ink-light);
+  margin-top: 8px;
+}
+
+.rentab-meta strong {
+  color: var(--ink);
+  font-weight: 700;
+}
+
+/* PARCOURS HORIZONTAL — barre de progression visuelle */
+.rentab-journey {
+  position: relative;
+  z-index: 1;
+  margin-top: 14px;
+}
+
+.journey-bar-wrap {
+  position: relative;
+  height: 14px;
+  background: var(--bg);
+  border-radius: 20px;
+  overflow: hidden;
+  margin: 18px 0 8px;
+}
+
+.journey-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--gold-cta-start), var(--gold), var(--gold-cta-end));
+  width: 16.1%;
+  border-radius: 20px;
+  position: relative;
+  box-shadow: 0 0 12px rgba(212, 169, 55, 0.4);
+}
+
+.journey-bar-fill::after {
+  content: '';
+  position: absolute;
+  right: -3px;
+  top: -3px;
+  width: 20px;
+  height: 20px;
+  background: white;
+  border: 4px solid var(--gold);
+  border-radius: 50%;
+  box-shadow: 0 2px 8px rgba(212, 169, 55, 0.4);
+}
+
+.journey-markers {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  color: var(--ink-light);
+  font-weight: 600;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.journey-markers .marker.current {
+  color: var(--gold-deep);
+  font-weight: 800;
+}
+
+.journey-markers .marker.target {
+  color: var(--ink-soft);
+  font-weight: 700;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   3 STATS QUICK SCAN (sans "mon équipe")
+═══════════════════════════════════════════════════════════════ */
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.stat-card {
+  background: white;
+  border-radius: 16px;
+  padding: 16px 18px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  transition: transform 0.15s;
+}
+
+.stat-card:hover { transform: translateY(-2px); }
+
+.stat-card.teal {
+  background: linear-gradient(135deg, #F5FBF8 0%, var(--teal-soft) 100%);
+  border: 1px solid rgba(29, 158, 117, 0.18);
+}
+
+.stat-card.gold {
+  background: linear-gradient(135deg, #FFFCF5 0%, #FFF1D6 100%);
+  border: 1px solid rgba(212, 169, 55, 0.25);
+}
+
+.stat-card.purple {
+  background: linear-gradient(135deg, #FBFAFF 0%, var(--purple-soft) 100%);
+  border: 1px solid rgba(127, 119, 221, 0.18);
+}
+
+.stat-overline {
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  font-weight: 700;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.stat-card.teal .stat-overline { color: var(--teal-deep); }
+.stat-card.gold .stat-overline { color: var(--gold-deep); }
+.stat-card.purple .stat-overline { color: var(--purple); }
+
+.stat-value {
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--ink);
+  letter-spacing: -1px;
+  line-height: 1;
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.stat-value .light {
+  font-size: 16px;
+  color: var(--ink-light);
+  font-weight: 500;
+}
+
+.stat-trend {
+  font-size: 11.5px;
+  color: var(--ink-light);
+  margin-top: 6px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.stat-trend.good { color: var(--teal-deep); font-weight: 700; }
+
+/* ═══════════════════════════════════════════════════════════════
+   TIMELINE + OPP empilées
+═══════════════════════════════════════════════════════════════ */
+.row-bottom {
+  display: grid;
+  grid-template-columns: 1.7fr 1fr;
+  gap: 14px;
+}
+
+.section-card {
+  background: white;
+  border-radius: 18px;
+  padding: 18px 22px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.section-title {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--ink);
+  letter-spacing: -0.3px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.section-title .badge-num {
+  background: var(--bg);
+  color: var(--ink-soft);
+  padding: 2px 9px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.section-link {
+  font-size: 11.5px;
+  color: var(--gold-deep);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.timeline-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--bg);
+  margin-bottom: 8px;
+  position: relative;
+  border-left: 3px solid var(--gold);
+  cursor: pointer;
+  transition: transform 0.15s;
+}
+
+.timeline-item:last-child { margin-bottom: 0; }
+
+.timeline-item:hover { transform: translateX(2px); }
+
+.timeline-item.suivi { border-left-color: var(--teal); }
+.timeline-item.recos { border-left-color: var(--purple); }
+
+.timeline-time {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--gold-deep);
+  flex-shrink: 0;
+  width: 52px;
+}
+
+.timeline-item.suivi .timeline-time { color: var(--teal-deep); }
+.timeline-item.recos .timeline-time { color: var(--purple); }
+
+.timeline-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 17px;
+  flex-shrink: 0;
+}
+
+.timeline-info { flex: 1; }
+
+.timeline-title {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 2px;
+}
+
+.timeline-meta {
+  font-size: 11.5px;
+  color: var(--ink-light);
+}
+
+.timeline-action {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.timeline-tag {
+  font-size: 10px;
+  background: white;
+  padding: 4px 9px;
+  border-radius: 12px;
+  color: var(--ink-soft);
+  font-weight: 600;
+  border: 1px solid var(--border-soft);
+}
+
+.timeline-arrow {
+  color: var(--ink-light);
+  font-size: 14px;
+}
+
+/* SIDE STACK */
+.side-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.opp-card {
+  background: linear-gradient(135deg, #FFF8E5 0%, #FFEBC2 100%);
+  border-radius: 18px;
+  padding: 16px 18px;
+  border: 1px solid rgba(212, 169, 55, 0.3);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  transition: transform 0.15s;
+}
+
+.opp-card:hover { transform: translateY(-1px); }
+
+.opp-icon {
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #FFF4D4, var(--gold), var(--gold-deep));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  flex-shrink: 0;
+  box-shadow: 0 3px 10px rgba(184, 146, 42, 0.3);
+}
+
+.opp-text { flex: 1; }
+
+.opp-overline {
+  font-size: 9.5px;
+  letter-spacing: 1.5px;
+  color: var(--gold-deep);
+  text-transform: uppercase;
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+
+.opp-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink);
+  line-height: 1.25;
+}
+
+.opp-link {
+  font-size: 11px;
+  color: var(--gold-deep);
+  font-weight: 700;
+  margin-top: 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* FLEX card mini (en bottom) */
+.flex-card-side {
+  background: linear-gradient(135deg, #1A1612 0%, #2A2419 100%);
+  color: var(--cream);
+  border-radius: 18px;
+  padding: 18px 20px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  position: relative;
+  overflow: hidden;
+}
+
+.flex-card-side::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -30%;
+  width: 240px;
+  height: 240px;
+  background: radial-gradient(circle, rgba(212, 169, 55, 0.18), transparent 65%);
+}
+
+.flex-icon-side {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--gold-cta-start), var(--gold-cta-end));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  flex-shrink: 0;
+  box-shadow: 0 4px 14px rgba(186, 117, 23, 0.4);
+  position: relative;
+  z-index: 1;
+}
+
+.flex-text-side {
+  flex: 1;
+  position: relative;
+  z-index: 1;
+}
+
+.flex-overline-side {
+  font-size: 9.5px;
+  letter-spacing: 1.8px;
+  color: var(--gold-light);
+  text-transform: uppercase;
+  font-weight: 700;
+  margin-bottom: 3px;
+}
+
+.flex-title-side {
+  font-size: 14px;
+  font-weight: 700;
+  color: white;
+  line-height: 1.2;
+  margin-bottom: 2px;
+}
+
+.flex-link-side {
+  font-size: 11px;
+  color: var(--gold-light);
+  font-weight: 700;
+  margin-top: 5px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+@media (max-width: 1200px) {
+  .stats-row { grid-template-columns: repeat(2, 1fr); }
+  .hero-editorial { grid-template-columns: 1fr; }
+  .hero-right-section { border-left: none; border-top: 1px solid rgba(245, 222, 179, 0.12); }
+}
+</style>
+</head>
+<body>
+
+<div class="intro">
+  <h1>Co-pilote · V5 Éditoriale</h1>
+  <p>Pin AWT cinématique · Parcours rentabilité visualisé · Daily Boost</p>
+</div>
+
+<div class="app">
+
+  <!-- ═══════════════════════════════════════════════════════
+       SIDEBAR
+  ═══════════════════════════════════════════════════════ -->
+  <aside class="sidebar">
+    <div class="logo-row">
+      <div class="logo-tile">★</div>
+      <div>
+        <div class="logo-text">Lor'Squad</div>
+        <div class="logo-sub">Wellness</div>
+      </div>
+    </div>
+
+    <div class="nav-section">Navigation</div>
+    <div class="nav-item active"><span class="icon">▦</span> Co-pilote</div>
+    <div class="nav-item"><span class="icon">⚡</span> FLEX</div>
+    <div class="nav-item"><span class="icon">📅</span> Agenda<span class="badge teal">1</span></div>
+    <div class="nav-item"><span class="icon">✉</span> Messagerie<span class="badge">2</span></div>
+    <div class="nav-item"><span class="icon">👥</span> Clients</div>
+    <div class="nav-item"><span class="icon">$</span> Suivi PV<span class="badge">50</span></div>
+
+    <div class="nav-section">Équipe</div>
+    <div class="nav-item"><span class="icon">⛯</span> Mon équipe</div>
+    <div class="nav-item"><span class="icon">🎓</span> Formation</div>
+    <div class="nav-item"><span class="icon">🧰</span> Boîte à outils</div>
+
+    <div class="nav-section">Compte</div>
+    <div class="nav-item"><span class="icon">⚙</span> Paramètres</div>
+
+    <div class="spacer"></div>
+
+    <div class="streak-card">
+      <div class="streak-flame">🔥</div>
+      <div class="streak-info">
+        <div class="streak-days">9 jours d'affilée</div>
+        <div class="streak-lvl">Niveau 4 · L'élan</div>
+      </div>
+    </div>
+
+    <div class="user-row">
+      <!-- Avatar avec ring de progression streak -->
+      <div class="user-avatar-ring">
+        <svg width="34" height="34" viewBox="0 0 34 34">
+          <circle cx="17" cy="17" r="15" fill="none" stroke="#F0E8D6" stroke-width="2"/>
+          <circle cx="17" cy="17" r="15" fill="none" stroke="#D4A937" stroke-width="2"
+                  stroke-dasharray="80 100" stroke-linecap="round"/>
+        </svg>
+        <div class="user-avatar"></div>
+      </div>
+      <div>
+        <div class="user-name">Thomas H.</div>
+        <div class="user-role">Admin · Fondateur</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ═══════════════════════════════════════════════════════
+       MAIN
+  ═══════════════════════════════════════════════════════ -->
+  <main class="main">
+
+    <!-- TOP BAR -->
+    <div class="topbar">
+      <div class="topbar-left">
+        <div class="topbar-meta">
+          <span class="live-dot"></span>
+          Mardi 5 mai 2026 · Édition du jour · 11:42
+        </div>
+        <div class="topbar-greet">Bonjour <span class="accent">Thomas</span> 👋</div>
+      </div>
+      <div class="topbar-right">
+        <div class="weather-pill">
+          <span>🌤</span>
+          <span class="temp">13°</span>
+          <span style="color:var(--ink-light);font-size:11px;">Nuageux</span>
+        </div>
+        <div class="search-box">
+          <span>🔍</span>
+          <span>Rechercher...</span>
+          <span class="shortcut">⌘K</span>
+        </div>
+        <div class="notif-btn">🔔</div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════
+         HERO ÉDITORIAL — split 1.4fr + 1fr avec Daily Boost
+    ═══════════════════════════════════════════════════════ -->
+    <section class="hero-editorial">
+
+      <!-- Pin AWT cinématique gros gold filigrane -->
+      <div class="hero-pin-cinematic">
+        <svg viewBox="0 0 480 480" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <radialGradient id="pinHero5" cx="35%" cy="30%">
+              <stop offset="0%" stop-color="#F8DDA0"/>
+              <stop offset="40%" stop-color="#D4A937"/>
+              <stop offset="100%" stop-color="#5A4612"/>
+            </radialGradient>
+          </defs>
+          <circle cx="240" cy="240" r="235" fill="url(#pinHero5)" stroke="#5A4612" stroke-width="2"/>
+          <circle cx="240" cy="240" r="200" fill="none" stroke="#1A1612" stroke-width="3"/>
+          <circle cx="240" cy="240" r="170" fill="#1A1612" opacity="0.18"/>
+
+          <path id="topArc5" d="M 100 240 A 140 140 0 0 1 380 240" fill="none"/>
+          <text font-family="DM Sans" font-size="22" font-weight="800" fill="#F8DDA0" letter-spacing="5">
+            <textPath href="#topArc5" startOffset="50%" text-anchor="middle">ACTIVE WORLD TEAM</textPath>
+          </text>
+
+          <text x="240" y="105" font-family="DM Sans" font-size="22" font-weight="800" fill="#F8DDA0" text-anchor="middle" letter-spacing="4">2026</text>
+
+          <g transform="translate(240, 250)">
+            <path d="M 0 -55 Q -34 -15 -38 38 Q -12 28 0 28 Q 12 28 38 38 Q 34 -15 0 -55 Z" fill="#F8DDA0"/>
+            <path d="M 0 -38 Q -10 -8 0 30" stroke="#1A1612" stroke-width="1.5" fill="none" opacity="0.5"/>
+          </g>
+        </svg>
+      </div>
+
+      <div class="hero-glow-1"></div>
+      <div class="hero-glow-2"></div>
+
+      <!-- LEFT - Action -->
+      <div class="hero-left-section">
+        <div class="hero-edition">✦ Aujourd'hui ✦</div>
+        <div class="hero-overline">
+          <span class="hero-pulse-dot"></span> Prochaine action
+        </div>
+        <h2 class="hero-title">Bilan avec Sophie Mercier</h2>
+        <div class="hero-meta">
+          <span class="chip">📍 Visio</span>
+          <span class="chip">⏱ 45 min</span>
+          <span class="chip">✨ Bilan initial</span>
+          <span class="chip">📞 Reco Marc D.</span>
+        </div>
+        <div class="hero-cta">
+          <button class="btn-primary">Voir la fiche →</button>
+          <button class="btn-secondary-dark">Préparer le bilan</button>
+        </div>
+      </div>
+
+      <!-- RIGHT - Countdown + Daily Boost -->
+      <div class="hero-right-section">
+        <div class="hero-countdown-block">
+          <div class="hero-countdown-label">Dans</div>
+          <div class="hero-countdown">2<span class="colon">:</span>18</div>
+          <div class="hero-countdown-sub">14h00 · <strong>aujourd'hui</strong></div>
+        </div>
+
+        <!-- DAILY BOOST -->
+        <div class="daily-boost">
+          <div class="daily-boost-label">
+            <span style="color:var(--gold);">✦</span>
+            Daily Boost
+            <span style="color:var(--gold);">✦</span>
+          </div>
+          <p class="daily-boost-quote">Ce que tu fais aujourd'hui peut améliorer tous tes lendemains.</p>
+          <div class="daily-boost-author">— Ralph Marston</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════
+         RENTABILITÉ ÉDITORIALE — parcours visuel
+    ═══════════════════════════════════════════════════════ -->
+    <section class="rentab-hero">
+      <div class="rentab-top">
+        <div>
+          <div class="rentab-overline">◆ Ma rentabilité · Mai 2026</div>
+          <div class="rentab-title-line">
+            <span class="rentab-amount-big">448 €</span>
+            <span class="rentab-amount-text">gagnés ce mois</span>
+            <span class="rentab-status-pill">⚡ En route</span>
+          </div>
+          <div class="rentab-meta">
+            <strong>16 programmes vendus</strong> · marge 50% · agrégé Thomas + Mélanie
+          </div>
+        </div>
+        <button class="btn-primary" style="background: var(--bg); color: var(--gold-deep); box-shadow: none; border: 1px solid var(--border-soft);">Voir le détail →</button>
+      </div>
+
+      <!-- PARCOURS HORIZONTAL avec curseur -->
+      <div class="rentab-journey">
+        <div class="journey-bar-wrap">
+          <div class="journey-bar-fill"></div>
+        </div>
+        <div class="journey-markers">
+          <span class="marker">0 €</span>
+          <span class="marker current">▲ 448 € · 16% atteint</span>
+          <span class="marker target">2 775 € · projection fin de mois</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════
+         3 STATS QUICK SCAN (sans "mon équipe active")
+    ═══════════════════════════════════════════════════════ -->
+    <section class="stats-row">
+
+      <div class="stat-card teal">
+        <div class="stat-overline">⚡ À traiter aujourd'hui</div>
+        <div class="stat-value">3</div>
+        <div class="stat-trend good">2 messages · 1 RDV à confirmer</div>
+      </div>
+
+      <div class="stat-card gold">
+        <div class="stat-overline">🎯 Bilans cette semaine</div>
+        <div class="stat-value">4 <span class="light">/ 6</span></div>
+        <div class="stat-trend good">↗ +1 vs semaine dernière</div>
+      </div>
+
+      <div class="stat-card purple">
+        <div class="stat-overline">📦 Programmes vendus</div>
+        <div class="stat-value">16 <span class="light">/ mois</span></div>
+        <div class="stat-trend">2 cette semaine · marge 50%</div>
+      </div>
+
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════
+         TIMELINE + Side stack
+    ═══════════════════════════════════════════════════════ -->
+    <section class="row-bottom">
+
+      <div class="section-card">
+        <div class="section-header">
+          <h3 class="section-title">📅 Aujourd'hui <span class="badge-num">3</span></h3>
+          <span class="section-link">Tout l'agenda →</span>
+        </div>
+
+        <div class="timeline-item">
+          <div class="timeline-time">14:00</div>
+          <div class="timeline-icon">🎯</div>
+          <div class="timeline-info">
+            <div class="timeline-title">Bilan Sophie Mercier</div>
+            <div class="timeline-meta">Initial · 45 min · Visio · Recommandée par Marc D.</div>
+          </div>
+          <div class="timeline-action">
+            <span class="timeline-tag">À préparer</span>
+            <span class="timeline-arrow">›</span>
+          </div>
+        </div>
+
+        <div class="timeline-item suivi">
+          <div class="timeline-time">18:00</div>
+          <div class="timeline-icon">📱</div>
+          <div class="timeline-info">
+            <div class="timeline-title">Suivi J+7 Marc Durand</div>
+            <div class="timeline-meta">SMS rapide · Programme weight-loss · semaine 1</div>
+          </div>
+          <div class="timeline-action">
+            <span class="timeline-tag">SMS</span>
+            <span class="timeline-arrow">›</span>
+          </div>
+        </div>
+
+        <div class="timeline-item recos">
+          <div class="timeline-time">20:30</div>
+          <div class="timeline-icon">📞</div>
+          <div class="timeline-info">
+            <div class="timeline-title">Appel reco Léa Bertrand</div>
+            <div class="timeline-meta">Recommandée par Sophie · 1ère prise de contact</div>
+          </div>
+          <div class="timeline-action">
+            <span class="timeline-tag">Reco</span>
+            <span class="timeline-arrow">›</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- SIDE STACK -->
+      <div class="side-stack">
+
+        <div class="opp-card">
+          <div class="opp-icon">🎂</div>
+          <div class="opp-text">
+            <div class="opp-overline">Opportunité du jour</div>
+            <div class="opp-title">Marc D. fête ses 35 ans aujourd'hui</div>
+            <div class="opp-link">Envoyer un message →</div>
+          </div>
+        </div>
+
+        <div class="flex-card-side">
+          <div class="flex-icon-side">⚡</div>
+          <div class="flex-text-side">
+            <div class="flex-overline-side">FLEX Lor'Squad</div>
+            <div class="flex-title-side">Configure ton plan d'action</div>
+            <div class="flex-link-side">Démarrer en 5 min →</div>
+          </div>
+        </div>
+
+      </div>
+
+    </section>
+
+  </main>
+</div>
+
+</body>
+</html>
