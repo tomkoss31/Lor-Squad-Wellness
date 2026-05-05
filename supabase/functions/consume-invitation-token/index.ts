@@ -112,9 +112,11 @@ serve(async (req) => {
       finalEmail = emailInput;
     }
 
-    // 4. Créer le user Supabase Auth (ou réutiliser s'il existe déjà)
-    // admin.createUser échoue si l'email est déjà utilisé → on gère ça
-    // explicitement pour un message clair.
+    // 4. Auth flow tolerant : crée le user OU sign-in s'il existe déjà
+    // (cas d'un client qui a déjà un compte d'un précédent bilan).
+    // Fix 2026-05-05 : avant on rejetait avec 409 systematiquement quand
+    // l'email existait, ce qui bloquait Romane (multiples bilans = multiples
+    // tokens generes mais 1 seul compte auth final).
     let authUserId: string | null = null;
 
     const { data: createRes, error: createErr } = await sbAdmin.auth.admin.createUser(
@@ -131,21 +133,42 @@ serve(async (req) => {
     );
 
     if (createErr) {
-      // Cas le plus commun : email déjà utilisé.
       const errMsg = (createErr.message || "").toLowerCase();
-      if (errMsg.includes("already") || errMsg.includes("registered") || errMsg.includes("exists")) {
-        return json(
-          {
-            success: false,
-            error:
-              "Cette adresse email a déjà un compte. Connecte-toi ou utilise une autre adresse.",
-          },
-          409,
-        );
+      const isAlreadyExists =
+        errMsg.includes("already") ||
+        errMsg.includes("registered") ||
+        errMsg.includes("exists");
+
+      if (isAlreadyExists) {
+        // Tentative de sign-in : si le password matche son compte existant,
+        // on continue le flow (link client_app_accounts + return session).
+        const sbAnonForCheck = createClient(SUPABASE_URL, ANON_KEY, {
+          auth: { persistSession: false },
+        });
+        const { data: existingSignIn, error: existingSignInErr } =
+          await sbAnonForCheck.auth.signInWithPassword({
+            email: finalEmail,
+            password,
+          });
+
+        if (existingSignInErr || !existingSignIn?.user) {
+          // Le password fourni ne correspond PAS au compte existant.
+          return json(
+            {
+              success: false,
+              error:
+                "Cette adresse email a déjà un compte. Saisis le mot de passe que tu avais utilisé la 1ère fois (ou clique sur \"Mot de passe oublié\" depuis /login).",
+            },
+            409,
+          );
+        }
+        authUserId = existingSignIn.user.id;
+      } else {
+        return json({ success: false, error: createErr.message }, 500);
       }
-      return json({ success: false, error: createErr.message }, 500);
+    } else {
+      authUserId = createRes.user?.id ?? null;
     }
-    authUserId = createRes.user?.id ?? null;
 
     // 5. Update clients.email si cas B
     if (!hasEmailOnRecord) {
