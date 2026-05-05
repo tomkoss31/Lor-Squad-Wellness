@@ -62,7 +62,9 @@ create table if not exists public.liste_100_contacts (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references public.users(id) on delete cascade,
   full_name text not null,
-  /** Catégorie FRANK : Famille / Réseau / Amis / Nouveaux / Konnaissances. */
+  /** Catégorie FRANK : Family / Relations / Amis / Network / Kids' parents.
+      Note : valeurs DB internes conservées pour compat (famille / reseau /
+      amis / nouveaux / connaissances). Labels UI gérés côté front. */
   frank_category text check (frank_category is null or frank_category in (
     'famille', 'reseau', 'amis', 'nouveaux', 'connaissances'
   )),

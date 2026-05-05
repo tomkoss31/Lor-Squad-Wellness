@@ -141,6 +141,9 @@ export interface User {
   /** Accès beta formation (opt-in admin). Default false. Quand true,
    *  le user voit /formation même s'il n'est pas admin. */
   formationBetaAccess?: boolean;
+  /** Ville du distri (saisie /bienvenue-distri ou /parametres).
+   *  Source de vérité pour la météo Co-pilote V5. Chantier D 2026-05-05. */
+  city?: string | null;
 }
 
 /** Rangs Herbalife (12 paliers) — détermine la marge retail dans FLEX.

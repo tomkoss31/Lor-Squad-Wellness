@@ -1146,28 +1146,28 @@ Le chiffre 100 n'est pas magique — c'est **pédagogique**.
         title: "FRANK décortiqué : 5 catégories, 0 oubli",
         kind: "text",
         durationMin: 3,
-        contentMarkdown: `## FRANK = Famille / Réseau / Amis / Nouveaux / Konnaissances
+        contentMarkdown: `## FRANK = Family / Relations / Amis / Network / Kids' parents
 
-Mnémonique mondial Herbalife. Chaque lettre = un cercle d'influence.
+Mnémonique officiel Lor'Squad. Chaque lettre = un cercle d'influence précis.
 
-### 👪 F · Famille (objectif : 15-25 noms)
-Parents, frères/sœurs, cousins, oncles/tantes, beaux-parents, grands-parents (vivants), enfants adultes, neveux/nièces.
+### 👪 F · Family (objectif : 15-25 noms)
+Tous tes liens de sang, par alliance, beaux-parents, cousins, grands-parents (vivants), enfants adultes, neveux/nièces.
 
 > ⚠️ **Piège classique** : « Ma famille ne va pas vouloir. » → Tu juges à leur place. Liste-les TOUS, tu décideras de l'approche après.
 
-### 🤝 R · Réseau (objectif : 15-30 noms)
-Anciens collègues, anciens patrons, partenaires pro, fournisseurs, clients d'avant ce métier, contacts LinkedIn proches, voisins de bureau.
+### 🤝 R · Relations (objectif : 15-30 noms)
+Collègues actuels et anciens, voisins, contacts pro, fournisseurs, clients d'avant ce métier.
 
 ### 🫂 A · Amis (objectif : 20-30 noms)
-Tes potes proches, copains de fac, amis d'enfance, gang du sport, du quartier, de la salle, de l'asso, de la copro.
+Amis d'enfance, de fac, sportifs, de soirées. Le gang du quartier, de la salle, de l'asso, de la copro.
 
-### 🌱 N · Nouveaux (objectif : 5-15 noms)
-Personnes rencontrées récemment (3 derniers mois) : événements, mariages, formations, voyages, voisins fraîchement installés, nouveaux parents à l'école des enfants.
+### 🌐 N · Network (objectif : 5-15 noms)
+Tous tes followers actifs sur les réseaux, contacts LinkedIn, groupes WhatsApp. Les gens connectés à toi en ligne mais avec qui tu interagis vraiment.
 
-### 👋 K · Konnaissances (objectif : 15-25 noms)
-La boulangère, le coiffeur, le prof de yoga, l'esthéticienne, le banquier, le médecin, l'infirmier, le mécanicien. Ceux à qui tu dis bonjour mais que tu ne « comptes » pas dans tes amis.
+### 👨‍👩‍👧 K · Kids' parents (objectif : 15-25 noms)
+Parents d'amis de tes enfants, profs, club, asso. Le cercle naturel autour de la vie scolaire et associative — souvent oublié et pourtant énorme.
 
-> 💡 **Cette catégorie est LA mine d'or** : ils ont un cercle d'influence énorme (boulangère = 200 clients/jour) et tu n'y penses jamais.`,
+> 💡 **Cette catégorie est sous-exploitée** : tu croises ces personnes 2-3× par semaine sans jamais penser à les compter.`,
       },
       {
         id: "M1.E-L3",
@@ -1274,23 +1274,23 @@ Tu réponds à son message, tu poses des questions. Tu RÉAPPRENDS qui il est au
           question: "FRANK signifie...",
           answers: [
             "Famille / Recommandations / Anciens / Nouveaux / Konnaissances",
-            "Famille / Réseau / Amis / Nouveaux / Konnaissances",
-            "Friends / Relatives / Acquaintances / Network / Konnections",
+            "Family / Relations / Amis / Network / Kids' parents",
+            "Friends / Relatives / Acquaintances / Network / Kin",
             "Le prénom du créateur de la méthode",
           ],
           correctIndex: 1,
           explanation:
-            "FRANK = Famille / Réseau / Amis / Nouveaux / Konnaissances. Mnémonique pédagogique pour ne rien oublier dans ta liste 100. Disponible dans /cahier-de-bord onglet Liste 100 au moment d'ajouter un contact.",
+            "FRANK = Family / Relations / Amis / Network / Kids' parents. Mnémonique officiel Lor'Squad pour ne rien oublier dans ta liste 100. Disponible dans /cahier-de-bord onglet Liste 100 au moment d'ajouter un contact.",
         },
         {
           kind: "qcm",
           id: "Q2",
           question:
-            "Tu fais ta liste 100 ce week-end. Combien de noms vises-tu pour la catégorie « Konnaissances » (boulangère, coiffeur, etc.) ?",
+            "Tu fais ta liste 100 ce week-end. Combien de noms vises-tu pour la catégorie « Kids' parents » (parents d'amis de tes enfants, profs, club, asso) ?",
           answers: ["0-5 noms", "5-10 noms", "15-25 noms", "30-50 noms"],
           correctIndex: 2,
           explanation:
-            "15-25 noms en Konnaissances. C'est LA catégorie qu'on oublie et c'est la mine d'or : ces personnes ont des cercles d'influence énormes (la boulangère = 200 clients/jour qui passent au comptoir).",
+            "15-25 noms en Kids' parents. C'est une catégorie sous-exploitée et pourtant énorme : tu croises ces personnes 2-3× par semaine (école, club, asso) sans jamais penser à les compter dans ta liste.",
         },
         {
           kind: "qcm",

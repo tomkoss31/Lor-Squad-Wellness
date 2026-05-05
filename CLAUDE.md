@@ -5,6 +5,38 @@ reproduire les régressions passées. Relire avant tout gros chantier.
 
 ---
 
+## 🌦 Chantiers post-V5 Co-pilote (mémo 2026-05-05)
+
+Validés Thomas pendant Phase F V5, à programmer après merge V5 prod :
+
+### D — Popup météo 5 jours sur ville distri
+Click sur la weather pill du Co-pilote V5 → ouvre popup avec :
+- Météo aujourd'hui (déjà visible dans la pill)
+- 4 jours suivants (J+1 à J+4)
+- Géolocalisation : ville stockée sur `users.city` ou via API IP de fallback
+- API gratuite : Open-Meteo (no key) ou OpenWeather (free tier)
+- Effort : ~2-3h. Pas critique mais charme produit.
+
+### E — Refonte sidebar avec emojis (HTML V5 inspiration)
+Le HTML de réf V5 utilise des emojis (▦ ⚡ 📅 ✉ 👥 $ ⛯ 🎓 🧰 ⚙) à côté
+de chaque item de sidebar — actuellement on a des SVG icons.
+
+**Décision Phase 0 V5** : ne pas toucher la sidebar dans le chantier V5
+(risque régression toutes pages). Refonte en chantier dédié post-V5 :
+- Soit migrer AppLayout vers emojis (impact toutes pages)
+- Soit hybride emoji+SVG selon contexte
+- Conserver les sections (Navigation / Équipe / Compte) du HTML
+- Conserver streak-card (9 jours d'affilée 🔥) en bas de sidebar
+- Effort : ~3h. Touche TOUS les écrans.
+
+### F — Refonte UI dark mode V5
+Actuellement V5 force light (cf. copilote-v5.css). Si Thomas veut un vrai
+dark V5, il faudra inverser la palette éditoriale (charcoal au lieu de
+cream, gold-light pour les textes). Effort : ~3h, mais nécessite design
+review.
+
+---
+
 ## 🚀 3 Chantiers en attente (mémo Thomas 2026-05-05)
 
 Décidés ensemble, ordre validé par Thomas, à attaquer dans cet ordre :

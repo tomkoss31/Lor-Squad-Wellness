@@ -1,11 +1,12 @@
 // =============================================================================
 // RentabilityGauge — jauge ronde animée premium (2026-05-05)
 //
-// Effet WOW : SVG donut 270° avec gradient rouge → orange → vert, animation
-// d'apparition (count-up + arc fill), glow pulse subtil dans le vert,
-// sparkles si > seuil green. Click = ouvre le détail.
+// Effet WOW : SVG donut 270° avec gradient rouge → orange → vert,
+// animation count-up + arc fill, glow pulse subtil dans le vert.
 //
-// Tailles disponibles : "compact" (widget Co-pilote) / "hero" (page complète).
+// V2 (2026-05-05) — fix UX Thomas : compact resserré (140px au lieu de 180),
+// retire les sub-labels qui doublonnent avec le widget parent. Hero garde
+// les labels (page dédiée).
 // =============================================================================
 
 import { useEffect, useRef, useState } from "react";
@@ -19,8 +20,9 @@ interface RentabilityGaugeProps {
   data: RentabilityData;
   size?: "compact" | "hero";
   onClick?: () => void;
-  /** Délai initial avant animation (ms) — staggering UX. */
   delay?: number;
+  /** Si false, on n'affiche pas les labels sous la jauge (pour widget compact). */
+  showLabels?: boolean;
 }
 
 const ZONE_META: Record<RentabilityZone, { color: string; label: string; emoji: string; gradient: string[] }> = {
@@ -44,7 +46,6 @@ const ZONE_META: Record<RentabilityZone, { color: string; label: string; emoji: 
   },
 };
 
-// Animation count-up : interpolation cubic-out
 function easeOutCubic(t: number): number {
   return 1 - Math.pow(1 - t, 3);
 }
@@ -54,14 +55,15 @@ export function RentabilityGauge({
   size = "compact",
   onClick,
   delay = 0,
+  showLabels = true,
 }: RentabilityGaugeProps) {
   const isHero = size === "hero";
-  const dim = isHero ? 280 : 180;
-  const stroke = isHero ? 22 : 14;
+  // Compact resserré : 140 au lieu de 180 (gain ~22 % de hauteur sur Co-pilote)
+  const dim = isHero ? 280 : 140;
+  const stroke = isHero ? 22 : 12;
   const radius = dim / 2 - stroke / 2 - 4;
   const center = dim / 2;
 
-  // Arc 270° (de 135° à 405°, ouvert en bas)
   const startAngle = 135;
   const endAngle = 405;
   const totalAngle = endAngle - startAngle;
@@ -71,12 +73,9 @@ export function RentabilityGauge({
   const zone = rentabilityZone(data.margin_eur);
   const meta = ZONE_META[zone];
 
-  // Calcul ratio pour le remplissage de l'arc
-  // 0€ = arc vide, projection ou max(margin, 1.5×green) = arc plein
   const maxScale = Math.max(data.projection_eur, data.margin_eur * 1.5, 800);
   const fillRatio = Math.min(data.margin_eur / maxScale, 1);
 
-  // États animés
   const [animatedValue, setAnimatedValue] = useState(0);
   const [animatedFill, setAnimatedFill] = useState(0);
   const startedRef = useRef(false);
@@ -86,9 +85,8 @@ export function RentabilityGauge({
     startedRef.current = true;
 
     const startTimer = setTimeout(() => {
-      const duration = 1400; // ms
+      const duration = 1400;
       const startTime = performance.now();
-
       const tick = (now: number) => {
         const elapsed = now - startTime;
         const progress = Math.min(elapsed / duration, 1);
@@ -108,7 +106,6 @@ export function RentabilityGauge({
     return () => clearTimeout(startTimer);
   }, [data.margin_eur, fillRatio, delay]);
 
-  // Conversion polaire → cartésien pour points de l'arc
   const polarToCartesian = (angleDeg: number) => {
     const rad = ((angleDeg - 90) * Math.PI) / 180;
     return {
@@ -120,10 +117,8 @@ export function RentabilityGauge({
   const start = polarToCartesian(startAngle);
   const end = polarToCartesian(endAngle);
   const largeArc = totalAngle > 180 ? 1 : 0;
-
   const arcPathBg = `M ${start.x} ${start.y} A ${radius} ${radius} 0 ${largeArc} 1 ${end.x} ${end.y}`;
 
-  // Délai progression de la projection (pointillé)
   const projFillRatio =
     data.projection_eur > 0 ? Math.min(data.projection_eur / maxScale, 1) : 0;
 
@@ -138,7 +133,8 @@ export function RentabilityGauge({
         ...wrapperStyle,
         cursor: onClick ? "pointer" : "default",
         width: dim,
-        height: dim + (isHero ? 70 : 50),
+        // Hauteur réduite si pas de labels (widget compact)
+        height: dim + (showLabels ? (isHero ? 70 : 30) : 0),
       }}
       className="ls-rent-gauge-wrapper"
       aria-label={`Rentabilité : ${Math.round(data.margin_eur)} €, zone ${meta.label}`}
@@ -146,18 +142,15 @@ export function RentabilityGauge({
       <div style={{ position: "relative", width: dim, height: dim }}>
         <svg width={dim} height={dim} style={{ display: "block" }}>
           <defs>
-            {/* Gradient le long de l'arc — couleurs de la zone */}
             <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="100%">
               <stop offset="0%" stopColor={meta.gradient[0]} />
               <stop offset="100%" stopColor={meta.gradient[1]} />
             </linearGradient>
-            {/* Gradient global rouge → vert pour le track de fond (montre la progression possible) */}
             <linearGradient id={`${gradientId}-track`} x1="0%" y1="50%" x2="100%" y2="50%">
               <stop offset="0%" stopColor="#DC6B5C" stopOpacity="0.28" />
               <stop offset="50%" stopColor="#B8922A" stopOpacity="0.28" />
               <stop offset="100%" stopColor="#0D9488" stopOpacity="0.28" />
             </linearGradient>
-            {/* Glow filter */}
             <filter id={glowId} x="-30%" y="-30%" width="160%" height="160%">
               <feGaussianBlur stdDeviation="6" result="coloredBlur" />
               <feMerge>
@@ -167,7 +160,6 @@ export function RentabilityGauge({
             </filter>
           </defs>
 
-          {/* Track de fond (rainbow track ouvert) */}
           <path
             d={arcPathBg}
             fill="none"
@@ -176,7 +168,6 @@ export function RentabilityGauge({
             strokeLinecap="round"
           />
 
-          {/* Projection (en pointillé, montre où on finira au rythme actuel) */}
           {data.projection_eur > data.margin_eur && (
             <path
               d={arcPathBg}
@@ -190,7 +181,6 @@ export function RentabilityGauge({
             />
           )}
 
-          {/* Arc rempli — la valeur actuelle */}
           <path
             d={arcPathBg}
             fill="none"
@@ -202,29 +192,28 @@ export function RentabilityGauge({
             className={zone === "green" ? "ls-rent-gauge-pulse" : ""}
           />
 
-          {/* Centre : montant + sub-text */}
           <g style={{ pointerEvents: "none" }}>
             <text
               x={center}
               y={center - (isHero ? 4 : 2)}
               textAnchor="middle"
               fontFamily="Syne, sans-serif"
-              fontSize={isHero ? 44 : 28}
+              fontSize={isHero ? 44 : 22}
               fontWeight="800"
               fill={meta.color}
               dominantBaseline="middle"
             >
               {Math.round(animatedValue).toLocaleString("fr-FR")}
-              <tspan fontSize={isHero ? 22 : 14} fontWeight="600" dy={isHero ? -10 : -6}>
+              <tspan fontSize={isHero ? 22 : 12} fontWeight="600" dy={isHero ? -10 : -5}>
                 {" €"}
               </tspan>
             </text>
             <text
               x={center}
-              y={center + (isHero ? 28 : 18)}
+              y={center + (isHero ? 28 : 16)}
               textAnchor="middle"
               fontFamily="DM Sans, sans-serif"
-              fontSize={isHero ? 11 : 9}
+              fontSize={isHero ? 11 : 8}
               fontWeight="600"
               fill="var(--ls-text-muted)"
               letterSpacing="1pt"
@@ -236,19 +225,20 @@ export function RentabilityGauge({
         </svg>
       </div>
 
-      {/* Labels sous la jauge */}
-      <div style={labelsStyle}>
-        <div style={{ ...subTitleStyle, color: meta.color }}>
-          Ma rentabilité {monthLabel(data.month_start)}
-        </div>
-        {data.projection_eur > data.margin_eur && (
-          <div style={projectionStyle}>
-            🎯 Projection fin de mois : <strong style={{ color: meta.color }}>{Math.round(data.projection_eur).toLocaleString("fr-FR")} €</strong>
+      {/* Labels sous la jauge — uniquement en mode hero (page dédiée) */}
+      {showLabels && isHero && (
+        <div style={labelsStyle}>
+          <div style={{ ...subTitleStyle, color: meta.color }}>
+            Ma rentabilité {monthLabel(data.month_start)}
           </div>
-        )}
-      </div>
+          {data.projection_eur > data.margin_eur && (
+            <div style={projectionStyle}>
+              🎯 Projection fin de mois : <strong style={{ color: meta.color }}>{Math.round(data.projection_eur).toLocaleString("fr-FR")} €</strong>
+            </div>
+          )}
+        </div>
+      )}
 
-      {/* CSS animations */}
       <style>{`
         .ls-rent-gauge-wrapper {
           background: transparent;
@@ -279,11 +269,7 @@ export function RentabilityGauge({
 function monthLabel(iso: string): string {
   try {
     const d = new Date(iso + "T12:00:00Z");
-    const fmt = new Intl.DateTimeFormat("fr-FR", {
-      month: "long",
-      year: "numeric",
-    });
-    return fmt.format(d);
+    return new Intl.DateTimeFormat("fr-FR", { month: "long", year: "numeric" }).format(d);
   } catch {
     return "";
   }
@@ -293,7 +279,7 @@ const wrapperStyle: React.CSSProperties = {
   display: "flex",
   flexDirection: "column",
   alignItems: "center",
-  gap: 8,
+  gap: 4,
 };
 
 const labelsStyle: React.CSSProperties = {
