@@ -166,7 +166,8 @@
   }
   .copilote-v5 [data-v5-hero-right] {
     border-left: none !important;
-    border-top: 1px solid rgba(245, 222, 179, 0.12);
+    /* Pas de border-top non plus (validation Thomas) — le hero
+       respire mieux sans séparateurs. */
   }
   .copilote-v5 [data-v5-stats] {
     grid-template-columns: repeat(2, 1fr) !important;

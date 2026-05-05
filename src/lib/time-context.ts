@@ -144,7 +144,7 @@ export function getProactiveSuggestion(focus: TimeFocus): ProactiveSuggestion {
     case "afternoon-action":
       return {
         title: "Le pic d'engagement Insta est à 18h. Prépare ton post du soir.",
-        ctaLabel: "Voir les hooks",
+        ctaLabel: "Voir mes accroches",
         ctaRoute: "/formation/boite-a-outils",
       };
     case "evening-recap":

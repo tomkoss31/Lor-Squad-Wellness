@@ -367,7 +367,8 @@ const rightSectionStyle: React.CSSProperties = {
   display: "flex",
   flexDirection: "column",
   justifyContent: "space-between",
-  borderLeft: "1px solid rgba(245, 222, 179, 0.12)",
+  // Validation Thomas 2026-05-05 : virer le séparateur vertical, on
+  // laisse le pin AWT respirer dans le hero sans barre intrusive.
 };
 
 const countdownBlockStyle: React.CSSProperties = {
