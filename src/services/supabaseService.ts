@@ -268,6 +268,7 @@ function buildSeedPvProducts(payload: {
   programTitle: string;
   startDate: string;
   selectedProductIds?: string[];
+  selectedProductQuantities?: Record<string, number>;
 }) {
   const program = resolvePvProgram(payload.programTitle);
   const selectedProductIds = (payload.selectedProductIds ?? []).filter(
@@ -275,7 +276,14 @@ function buildSeedPvProducts(payload: {
       array.indexOf(productId) === index &&
       pvProductCatalog.some((item) => item.id === productId)
   );
-  const productIds = selectedProductIds.length ? selectedProductIds : program.includedProductIds;
+  // Fix bug 2026-05-05 : avant on faisait `selected OR program.included`,
+  // donc si le coach ajoutait UN booster (ex: multifibres), on perdait
+  // les 4 produits routine du programme (F1, PDM, Aloe, The). Maintenant
+  // UNION : routine programme + addons selectionnes.
+  const productIds = Array.from(new Set([
+    ...program.includedProductIds,
+    ...selectedProductIds,
+  ]));
 
   return productIds.flatMap((productId) => {
     const product = pvProductCatalog.find((item) => item.id === productId);
@@ -291,7 +299,7 @@ function buildSeedPvProducts(payload: {
         program_id: program.id,
         product_id: product.id,
         product_name: product.name,
-        quantity_start: 1,
+        quantity_start: Math.max(1, Math.round(payload.selectedProductQuantities?.[product.id] ?? 1)),
         start_date: payload.startDate,
         duration_reference_days: product.dureeReferenceJours,
         pv_per_unit: product.pv,
@@ -945,7 +953,8 @@ export async function createSupabaseClientWithInitialAssessment(payload: {
         distributorName: payload.client.distributorName,
         programTitle: payload.currentProgram,
         startDate: payload.assessment.date,
-        selectedProductIds: payload.assessment.questionnaire.selectedProductIds
+        selectedProductIds: payload.assessment.questionnaire.selectedProductIds,
+        selectedProductQuantities: payload.assessment.questionnaire.selectedProductQuantities,
       })
     : [];
 
