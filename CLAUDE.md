@@ -5,6 +5,73 @@ reproduire les régressions passées. Relire avant tout gros chantier.
 
 ---
 
+## 🚀 3 Chantiers en attente (mémo Thomas 2026-05-05)
+
+Décidés ensemble, ordre validé par Thomas, à attaquer dans cet ordre :
+
+### Chantier A — Jauge rentabilité (€ net mois)
+**Pour qui** : admin + référent + distri (chacun voit la sienne).
+**Idée** : sur le dashboard distri, une jauge ronde animée affiche en
+euros la rentabilité nette du mois. Rouge (< 200€) → Orange (200-500€)
+→ Vert (> 500€). Click = popup détail (nombre programmes vendus,
+CA brut, marge, projection fin de mois, vs mois précédent).
+
+**Calcul** :
+- Revenus = somme(prix × qty) des `pv_client_products` actifs du mois
+- Marge selon rang : 25 % distri / 35 % SC / 42 % SB / 50 % Sup
+- Marge brute (€) = revenus × marge_pct
+
+**Tables à créer** :
+- `herbalife_margins (rank, margin_pct, valid_from, valid_to)` — config
+  des marges par palier (peut évoluer Herbalife)
+
+**Composants à créer** :
+- `<RentabilityGauge />` SVG arc animé (rouge→vert)
+- `<RentabilityDetailModal />` popup breakdown
+- RPC SQL `get_rentability(user_id, month)` qui retourne le calcul agrégé
+- Widget Co-pilote en haut + page `/rentabilite` complète
+
+**Effort** : ~5h. Impact distri énorme (motivation = voir leur fric).
+
+### Chantier B — Relances clients dormants V2
+**Pour qui** : distri (chacun ses clients).
+**Idée** : le matin sur Co-pilote, un spotlight type *« 3 clients dormants
+= ~600 PV à reconquérir »* avec liste cliquable + bouton "Lancer la
+relance" qui ouvre le template message multi-canal.
+
+**Logique détection** :
+- Client actif (lifecycle = active ou pause)
+- Pas de `pv_client_products` actif OU
+- Dernière commande > 60 jours (paramétrable)
+
+**Effort** : ~3h. Cohérent avec A (booste les revenus visibles).
+
+### Chantier C — Intégration paiement Square
+**Pour qui** : tous les distri (Mandy → client direct).
+**Idée** : Mandy clôture panier programme → bouton "Demander paiement"
+→ Lor'Squad génère un Square Payment Link via API + envoie SMS au
+client → client paie en CB → webhook Square notifie l'app → tablette
+POS Square (au comptoir du club) reçoit l'info → produits prêts.
+
+**Évite** : chèques, virements, double-saisie au comptoir.
+
+**Stack proposée** :
+- Square Web Payments API (compte déjà ouvert avec Mel)
+- SMS via fonction native Square ou Twilio (à arbitrer)
+- Edge Function `create-payment-link` côté Lor'Squad
+- Webhook `square-payment-status` → update `pv_client_products.paid_at`
+
+**Risques** :
+- Tarification SMS Twilio si on passe par eux (~0.05€/SMS)
+- Gestion remboursements
+- Anti-double-paiement (idempotency keys)
+- Sandbox Square testing
+
+**Effort** : 2-3 jours minimum. Dépendance externe forte (API Square +
+webhooks Vercel + numéro SMS).
+
+---
+
 ## 🧠 Mémo PV / Bizworks (2026-05-05)
 
 **Bizworks** = l'app officielle Herbalife qui détaille les commandes
