@@ -93,12 +93,18 @@ export function useTeamEngagement(rootUserId: string | null): UseTeamEngagementR
       p_root_user_id: rootUserId,
     });
     if (e) {
+      console.warn("[useTeamEngagement] RPC error:", e.message, e);
       setError(e.message);
       setMembers([]);
       setLoading(false);
       return;
     }
-    setMembers((data ?? []) as TeamMemberEngagement[]);
+    const rows = (data ?? []) as TeamMemberEngagement[];
+    console.info(
+      `[useTeamEngagement] rootId=${rootUserId} -> ${rows.length} members`,
+      rows.map((r) => `${r.name} (xp=${r.xp_total})`),
+    );
+    setMembers(rows);
     setLoading(false);
   }, [rootUserId]);
 
