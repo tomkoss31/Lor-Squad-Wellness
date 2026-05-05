@@ -133,7 +133,7 @@ export function TodayTimeline() {
 // ─── Styles ────────────────────────────────────────────────────────────────
 
 const cardStyle: React.CSSProperties = {
-  background: "white",
+  background: "var(--v5-card-bg)",
   borderRadius: 18,
   padding: "18px 22px",
   boxShadow: "0 1px 3px rgba(0, 0, 0, 0.04)",
@@ -149,7 +149,7 @@ const headerStyle: React.CSSProperties = {
 const titleStyle: React.CSSProperties = {
   fontSize: 14,
   fontWeight: 800,
-  color: "#1A1612",
+  color: "var(--v5-ink)",
   letterSpacing: -0.3,
   display: "flex",
   alignItems: "center",
@@ -159,8 +159,8 @@ const titleStyle: React.CSSProperties = {
 };
 
 const badgeNumStyle: React.CSSProperties = {
-  background: "#F8F5EC",
-  color: "#4A3F2A",
+  background: "var(--v5-card-bg-soft)",
+  color: "var(--v5-ink-soft)",
   padding: "2px 9px",
   borderRadius: 10,
   fontSize: 11,
@@ -181,7 +181,7 @@ const linkStyle: React.CSSProperties = {
 const emptyStyle: React.CSSProperties = {
   textAlign: "center",
   padding: "20px 10px",
-  color: "#7A6F5C",
+  color: "var(--v5-ink-light)",
   fontSize: 13,
   fontStyle: "italic",
   fontFamily: "DM Sans, sans-serif",
@@ -193,7 +193,7 @@ const itemStyle: React.CSSProperties = {
   gap: 14,
   padding: "12px 14px",
   borderRadius: 12,
-  background: "#F8F5EC",
+  background: "var(--v5-card-bg-soft)",
   marginBottom: 8,
   position: "relative",
   borderLeft: "3px solid #D4A937",
@@ -217,7 +217,7 @@ const itemIconStyle: React.CSSProperties = {
   width: 38,
   height: 38,
   borderRadius: 10,
-  background: "white",
+  background: "var(--v5-card-bg)",
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
@@ -233,7 +233,7 @@ const itemInfoStyle: React.CSSProperties = {
 const itemTitleStyle: React.CSSProperties = {
   fontSize: 13.5,
   fontWeight: 700,
-  color: "#1A1612",
+  color: "var(--v5-ink)",
   marginBottom: 2,
   fontFamily: "DM Sans, sans-serif",
   whiteSpace: "nowrap",
@@ -243,7 +243,7 @@ const itemTitleStyle: React.CSSProperties = {
 
 const itemMetaStyle: React.CSSProperties = {
   fontSize: 11.5,
-  color: "#7A6F5C",
+  color: "var(--v5-ink-light)",
   fontFamily: "DM Sans, sans-serif",
   whiteSpace: "nowrap",
   overflow: "hidden",
@@ -258,16 +258,16 @@ const itemActionStyle: React.CSSProperties = {
 
 const itemTagStyle: React.CSSProperties = {
   fontSize: 10,
-  background: "white",
+  background: "var(--v5-card-bg)",
   padding: "4px 9px",
   borderRadius: 12,
-  color: "#4A3F2A",
+  color: "var(--v5-ink-soft)",
   fontWeight: 600,
-  border: "1px solid #EFE8D6",
+  border: "1px solid var(--v5-border-soft)",
   fontFamily: "DM Sans, sans-serif",
 };
 
 const itemArrowStyle: React.CSSProperties = {
-  color: "#7A6F5C",
+  color: "var(--v5-ink-light)",
   fontSize: 14,
 };

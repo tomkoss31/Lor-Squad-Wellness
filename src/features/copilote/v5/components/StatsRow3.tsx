@@ -46,6 +46,7 @@ export function StatsRow3({
         onClick={() => navigate("/messages")}
         style={{ ...cardStyle, ...cardTealStyle }}
         className="v5-hover-lift"
+        data-v5-stat="teal"
       >
         <div style={{ ...overlineStyle, color: "#14704F" }}>⚡ À traiter aujourd'hui</div>
         <div style={valueStyle}>{todoCount}</div>
@@ -59,6 +60,7 @@ export function StatsRow3({
         onClick={() => navigate("/agenda")}
         style={{ ...cardStyle, ...cardGoldStyle }}
         className="v5-hover-lift"
+        data-v5-stat="gold"
       >
         <div style={{ ...overlineStyle, color: "#8B6F1F" }}>🎯 Bilans cette semaine</div>
         <div style={valueStyle}>
@@ -73,6 +75,7 @@ export function StatsRow3({
         onClick={() => navigate("/rentabilite")}
         style={{ ...cardStyle, ...cardPurpleStyle }}
         className="v5-hover-lift"
+        data-v5-stat="purple"
       >
         <div style={{ ...overlineStyle, color: "#7F77DD" }}>📦 Programmes vendus</div>
         <div style={valueStyle}>
@@ -97,7 +100,7 @@ const rowStyle: React.CSSProperties = {
 };
 
 const cardStyle: React.CSSProperties = {
-  background: "white",
+  background: "var(--v5-card-bg)",
   borderRadius: 16,
   padding: "16px 18px",
   position: "relative",
@@ -138,7 +141,7 @@ const overlineStyle: React.CSSProperties = {
 const valueStyle: React.CSSProperties = {
   fontSize: 26,
   fontWeight: 800,
-  color: "#1A1612",
+  color: "var(--v5-ink)",
   letterSpacing: -1,
   lineHeight: 1,
   display: "flex",
@@ -149,13 +152,13 @@ const valueStyle: React.CSSProperties = {
 
 const lightStyle: React.CSSProperties = {
   fontSize: 16,
-  color: "#7A6F5C",
+  color: "var(--v5-ink-light)",
   fontWeight: 500,
 };
 
 const trendStyle: React.CSSProperties = {
   fontSize: 11.5,
-  color: "#7A6F5C",
+  color: "var(--v5-ink-light)",
   marginTop: 6,
   fontWeight: 500,
   display: "flex",

@@ -13,21 +13,13 @@
    applique que dans .copilote-v5 et descendants. */
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;0,800;1,500;1,600;1,700&family=Cinzel:wght@500;600;700&family=DM+Sans:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap');
 
-/* ─── Force LIGHT pour V5 même en mode sombre app ──────────────────────── */
-/* La V5 est éditoriale clair par design (cf. HTML de réf). On override les
-   tokens --ls-* de l'app dans le scope pour neutraliser un éventuel dark.
-   Décision Thomas 2026-05-05 : V5 force light, refonte dark V5 en V6. */
-.copilote-v5 {
-  /* Override tokens app pour forcer une base claire — fonts/cards stay light */
-  --ls-bg: #F8F5EC;
-  --ls-surface: #FFFFFF;
-  --ls-surface2: #F8F5EC;
-  --ls-text: #1A1612;
-  --ls-text-muted: #4A3F2A;
-  --ls-text-hint: #7A6F5C;
-  --ls-border: #EFE8D6;
-  --ls-border2: #D8D3C5;
-}
+/* ─── Mode adaptatif V5 (Chantier F 2026-05-05) ────────────────────────── */
+/* La V5 supporte light + dark.
+   - Light (default app + html.theme-light) : palette cream + ink
+   - Dark (html SANS .theme-light)            : palette charcoal + gold
+   Le hero éditorial (gradient #1A1612) reste DARK dans les 2 modes —
+   c'est la signature éditoriale. Seuls la page bg, les cards, les
+   pills topbar et les sub-widgets s'adaptent. */
 
 /* ─── Tokens éditoriaux V5 ─────────────────────────────────────────────── */
 .copilote-v5 {
@@ -53,7 +45,7 @@
   --v5-purple: #7F77DD;
   --v5-purple-soft: #F0EEFF;
 
-  /* Surfaces / textes éditoriaux */
+  /* Surfaces / textes éditoriaux — LIGHT mode (default V5) */
   --v5-cream: #FAF6E8;
   --v5-paper: #FBF7E9;
   --v5-ink: #1A1612;
@@ -61,15 +53,38 @@
   --v5-ink-light: #7A6F5C;
   --v5-bg: #F8F5EC;
   --v5-card-bg: #FFFFFF;
+  --v5-card-bg-soft: #F8F5EC;
   --v5-border-soft: #EFE8D6;
+  --v5-border-strong: #D8D3C5;
   --v5-charcoal: #1A1612;
   --v5-charcoal-deep: #0D0906;
+  /* Shadows éditoriales adaptatives */
+  --v5-shadow-card: 0 4px 16px rgba(26, 22, 18, 0.06);
+  --v5-shadow-card-hover: 0 8px 24px rgba(26, 22, 18, 0.10);
 
   /* Reset baseline pour le scope (font + color de base) */
   background: var(--v5-bg);
   color: var(--v5-ink);
   font-family: 'DM Sans', sans-serif;
   min-height: 100vh;
+}
+
+/* ─── Dark mode V5 — appliqué quand html n'a PAS .theme-light ─────────── */
+/* L'app suit le pattern : :root = dark default, html.theme-light = light.
+   Donc on cible :root sans .theme-light pour activer le dark V5. */
+:root:not(.theme-light) .copilote-v5 {
+  --v5-cream: #FAF6E8;
+  --v5-paper: #1A1612;
+  --v5-ink: #FAF6E8;
+  --v5-ink-soft: #C5B89A;
+  --v5-ink-light: #8B7F66;
+  --v5-bg: #0D0906;
+  --v5-card-bg: #1A1612;
+  --v5-card-bg-soft: #221C16;
+  --v5-border-soft: #2A2419;
+  --v5-border-strong: #3A322A;
+  --v5-shadow-card: 0 4px 16px rgba(0, 0, 0, 0.40);
+  --v5-shadow-card-hover: 0 8px 24px rgba(0, 0, 0, 0.55);
 }
 
 .copilote-v5 *,
@@ -174,6 +189,26 @@
   .copilote-v5 [data-v5-countdown] {
     font-size: 36px !important;
   }
+}
+
+/* ─── Dark mode : adapter les pastel gradients des stats cards ────────── */
+:root:not(.theme-light) .copilote-v5 [data-v5-stat="teal"] {
+  background: linear-gradient(135deg, #142A22 0%, #1A332A 100%) !important;
+  border-color: rgba(45, 212, 191, 0.30) !important;
+}
+:root:not(.theme-light) .copilote-v5 [data-v5-stat="gold"] {
+  background: linear-gradient(135deg, #2A2010 0%, #2E2614 100%) !important;
+  border-color: rgba(212, 169, 55, 0.40) !important;
+}
+:root:not(.theme-light) .copilote-v5 [data-v5-stat="purple"] {
+  background: linear-gradient(135deg, #1A1828 0%, #221F32 100%) !important;
+  border-color: rgba(127, 119, 221, 0.35) !important;
+}
+
+/* ─── Dark mode : RentabJourney gradient teal soft ─────────────────────── */
+:root:not(.theme-light) .copilote-v5 [data-v5-rentab-journey] {
+  background: linear-gradient(135deg, #14201C 0%, #1A2722 100%) !important;
+  border-color: rgba(45, 212, 191, 0.25) !important;
 }
 
 /* ─── Daily Boost guillemets décoratifs ────────────────────────────────── */

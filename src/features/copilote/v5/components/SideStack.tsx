@@ -162,7 +162,7 @@ const oppOverlineStyle: React.CSSProperties = {
 const oppTitleStyle: React.CSSProperties = {
   fontSize: 13,
   fontWeight: 700,
-  color: "#1A1612",
+  color: "var(--v5-ink)",
   lineHeight: 1.25,
   fontFamily: "DM Sans, sans-serif",
 };

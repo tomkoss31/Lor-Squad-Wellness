@@ -47,8 +47,8 @@ export function RentabJourney() {
 
   if (loading) {
     return (
-      <section style={cardStyle}>
-        <div style={{ color: "#7A6F5C", padding: 20, textAlign: "center" }}>Chargement…</div>
+      <section style={cardStyle} data-v5-rentab-journey>
+        <div style={{ color: "var(--v5-ink-light)", padding: 20, textAlign: "center" }}>Chargement…</div>
       </section>
     );
   }
@@ -64,7 +64,7 @@ export function RentabJourney() {
   const pctRounded = Math.round(pct);
 
   return (
-    <section style={cardStyle}>
+    <section style={cardStyle} data-v5-rentab-journey>
       {/* Glow décoratif gold en haut-droite */}
       <div style={glowStyle} />
 
@@ -122,7 +122,7 @@ export function RentabJourney() {
 // ─── Styles ────────────────────────────────────────────────────────────────
 
 const cardStyle: React.CSSProperties = {
-  background: "white",
+  background: "var(--v5-card-bg)",
   borderRadius: 20,
   padding: "22px 28px",
   position: "relative",
@@ -183,7 +183,7 @@ const amountTextStyle: React.CSSProperties = {
   fontFamily: "'Cormorant Garamond', serif",
   fontStyle: "italic",
   fontSize: 22,
-  color: "#1A1612",
+  color: "var(--v5-ink)",
   fontWeight: 600,
   letterSpacing: -0.5,
 };
@@ -204,15 +204,15 @@ const statusPillStyle: React.CSSProperties = {
 
 const metaLineStyle: React.CSSProperties = {
   fontSize: 12.5,
-  color: "#7A6F5C",
+  color: "var(--v5-ink-light)",
   marginTop: 8,
   fontFamily: "DM Sans, sans-serif",
 };
 
 const detailBtnStyle: React.CSSProperties = {
-  background: "#F8F5EC",
+  background: "var(--v5-card-bg-soft)",
   color: "#8B6F1F",
-  border: "1px solid #EFE8D6",
+  border: "1px solid var(--v5-border-soft)",
   padding: "10px 18px",
   borderRadius: 10,
   fontSize: 12,
@@ -234,7 +234,7 @@ const journeyWrapStyle: React.CSSProperties = {
 const barWrapStyle: React.CSSProperties = {
   position: "relative",
   height: 14,
-  background: "#F8F5EC",
+  background: "var(--v5-card-bg-soft)",
   borderRadius: 20,
   overflow: "visible",
   margin: "18px 0 8px",
@@ -253,7 +253,7 @@ const markersStyle: React.CSSProperties = {
   display: "flex",
   justifyContent: "space-between",
   fontSize: 10,
-  color: "#7A6F5C",
+  color: "var(--v5-ink-light)",
   fontWeight: 600,
   fontFamily: "'JetBrains Mono', monospace",
   gap: 8,
@@ -261,7 +261,7 @@ const markersStyle: React.CSSProperties = {
 };
 
 const markerStyle: React.CSSProperties = {
-  color: "#7A6F5C",
+  color: "var(--v5-ink-light)",
 };
 
 const markerCurrentStyle: React.CSSProperties = {
@@ -270,7 +270,7 @@ const markerCurrentStyle: React.CSSProperties = {
 };
 
 const markerTargetStyle: React.CSSProperties = {
-  color: "#4A3F2A",
+  color: "var(--v5-ink-soft)",
   fontWeight: 700,
   textAlign: "right",
 };

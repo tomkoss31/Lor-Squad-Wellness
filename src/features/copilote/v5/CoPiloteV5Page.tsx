@@ -37,6 +37,8 @@ import { PvActionPlanAlert } from "../../../components/copilote/PvActionPlanAler
 import { WeeklyQuestsCard } from "../../gamification/components/WeeklyQuestsCard";
 import { LegalFooter } from "../../../components/ui/LegalFooter";
 import { AnnouncementBell } from "../../../components/announcements/AnnouncementBell";
+import { WeatherPopup } from "./components/WeatherPopup";
+import { useWeatherForecast } from "./hooks/useWeatherForecast";
 
 import "./copilote-v5.css";
 
@@ -45,6 +47,12 @@ export function CoPiloteV5Page() {
   const [globalView] = useGlobalView();
   const [now, setNow] = useState(new Date());
   const data = useCopiloteData(now, globalView);
+
+  // Météo : fetch léger pour la pill (current temp + emoji). Le popup
+  // utilise le même hook (memoized par city) → 0 double-fetch.
+  const userCity = currentUser?.city ?? null;
+  const { forecast: weatherLite } = useWeatherForecast(userCity, true);
+  const [weatherOpen, setWeatherOpen] = useState(false);
 
   // Refresh `now` toutes les minutes pour la date display
   useEffect(() => {
@@ -114,19 +122,38 @@ export function CoPiloteV5Page() {
         </div>
 
         <div style={topBarRightStyle}>
-          {/* Weather pill mock (V5 MVP — branchement API météo en V6 si besoin) */}
-          <div style={weatherPillStyle}>
-            <span aria-hidden="true">🌤</span>
-            <span
-              style={{
-                fontFamily: "'JetBrains Mono', monospace",
-                fontWeight: 700,
-              }}
-            >
-              13°
-            </span>
-            <span style={{ color: "#7A6F5C", fontSize: 11 }}>Nuageux</span>
-          </div>
+          {/* Weather pill réelle (Open-Meteo, click → popup 5 jours).
+              Si city manquante : pill discrète "Météo" qui ouvre le CTA
+              "Renseigner ma ville". Chantier D 2026-05-05. */}
+          <button
+            type="button"
+            onClick={() => setWeatherOpen(true)}
+            style={weatherPillStyle}
+            aria-label={
+              weatherLite
+                ? `Météo ${weatherLite.city} : ${weatherLite.current.temp}°, ${weatherLite.current.label}. Cliquer pour voir 5 jours.`
+                : "Voir la météo"
+            }
+          >
+            <span aria-hidden="true">{weatherLite?.current.emoji ?? "🌤"}</span>
+            {weatherLite ? (
+              <>
+                <span
+                  style={{
+                    fontFamily: "'JetBrains Mono', monospace",
+                    fontWeight: 700,
+                  }}
+                >
+                  {weatherLite.current.temp}°
+                </span>
+                <span style={{ color: "var(--v5-ink-light)", fontSize: 11 }}>
+                  {weatherLite.current.label}
+                </span>
+              </>
+            ) : (
+              <span style={{ color: "var(--v5-ink-light)", fontSize: 12 }}>Météo</span>
+            )}
+          </button>
 
           {/* Horloge live (remplace search box — validation Thomas 2026-05-05) */}
           <div style={clockPillStyle} aria-label="Heure courante">
@@ -179,6 +206,13 @@ export function CoPiloteV5Page() {
 
       {/* Footer légal */}
       <LegalFooter />
+
+      {/* Popup météo 5 jours */}
+      <WeatherPopup
+        open={weatherOpen}
+        onClose={() => setWeatherOpen(false)}
+        city={userCity}
+      />
     </div>
   );
 }
@@ -190,7 +224,8 @@ const pageWrapStyle: React.CSSProperties = {
   display: "flex",
   flexDirection: "column",
   gap: 14,
-  background: "#F8F5EC",
+  background: "var(--v5-bg)",
+  color: "var(--v5-ink)",
   minHeight: "100vh",
 };
 
@@ -210,7 +245,7 @@ const topBarLeftStyle: React.CSSProperties = {
 const topBarMetaStyle: React.CSSProperties = {
   fontSize: 10,
   letterSpacing: 1.8,
-  color: "#7A6F5C",
+  color: "var(--v5-ink-light)",
   textTransform: "uppercase",
   fontWeight: 600,
   marginBottom: 4,
@@ -232,7 +267,7 @@ const greetingStyle: React.CSSProperties = {
   fontFamily: "DM Sans, sans-serif",
   fontSize: 30,
   fontWeight: 800,
-  color: "#1A1612",
+  color: "var(--v5-ink)",
   letterSpacing: -1.5,
   lineHeight: 1,
   margin: 0,
@@ -257,27 +292,29 @@ const weatherPillStyle: React.CSSProperties = {
   display: "flex",
   alignItems: "center",
   gap: 8,
-  background: "white",
-  border: "1px solid #EFE8D6",
+  background: "var(--v5-card-bg)",
+  border: "1px solid var(--v5-border-soft)",
   borderRadius: 12,
   padding: "9px 14px",
   fontSize: 13,
   fontWeight: 600,
-  color: "#4A3F2A",
+  color: "var(--v5-ink-soft)",
   fontFamily: "DM Sans, sans-serif",
+  cursor: "pointer",
+  outline: "none",
 };
 
 const clockPillStyle: React.CSSProperties = {
   display: "flex",
   alignItems: "center",
   gap: 8,
-  background: "white",
-  border: "1px solid #EFE8D6",
+  background: "var(--v5-card-bg)",
+  border: "1px solid var(--v5-border-soft)",
   borderRadius: 12,
   padding: "9px 14px",
   fontSize: 13,
   fontWeight: 600,
-  color: "#4A3F2A",
+  color: "var(--v5-ink-soft)",
   fontFamily: "DM Sans, sans-serif",
 };
 
