@@ -23,11 +23,11 @@ export function BilanTermineePage() {
   const tokenFromQuery = searchParams.get("token");
   const firstNameFromQuery = searchParams.get("firstName");
   // Chantier unification acces client (2026-05-05) :
-  //   - accessKind === "magic" -> token client_invitation_tokens, URL
-  //     /bienvenue?token=... -> auto-login PWA direct (le client n'a
-  //     PAS a saisir email + password).
-  //   - accessKind === "recap" (default fallback) -> ancien comportement,
-  //     token client_recaps, URL /client/<token> (recap HTML public).
+  //   - "caa"   -> token client_app_accounts.token (= compte deja cree),
+  //               URL /client/<token> = auto-login PWA direct sans signup
+  //   - "magic" -> token client_invitation_tokens, URL /bienvenue?token=...
+  //               = signup PWA premier bilan (creation password)
+  //   - "recap" (default fallback) -> ancien comportement, token recap HTML
   const accessKind = searchParams.get("accessKind") ?? "recap";
 
   // Fallback : si firstName pas en query, lire depuis AppContext
@@ -40,6 +40,8 @@ export function BilanTermineePage() {
       if (accessKind === "magic") {
         return `${window.location.origin}/bienvenue?token=${tokenFromQuery}`;
       }
+      // "caa" et "recap" pointent tous deux vers /client/<token>
+      // (la route resout selon le type de token cote serveur).
       return `${window.location.origin}/client/${tokenFromQuery}`;
     }
     return typeof window !== "undefined" ? window.location.origin : "";
