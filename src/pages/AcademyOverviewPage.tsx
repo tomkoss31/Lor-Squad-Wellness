@@ -1,6 +1,6 @@
 // Chantier Academy Phase 1 (2026-04-26).
-// Page d accueil de Lor'Squad Academy. Mockup A valide visuellement par
-// Thomas. Couleurs hardcodees palette Lor'Squad. Le contenu interactif
+// Page d accueil de La Base 360 Academy. Mockup A valide visuellement par
+// Thomas. Couleurs hardcodees palette La Base 360. Le contenu interactif
 // par section arrive en Phase 2.
 
 import { useEffect, useMemo, useState } from "react";
@@ -141,7 +141,7 @@ export function AcademyOverviewPage() {
                 color: "var(--ls-text)",
               }}
             >
-              Lor&apos;Squad Academy
+              La Base 360 Academy
             </h1>
             <p style={{ fontSize: 14, color: "var(--ls-text-muted)", margin: "0 0 14px 0" }}>
               {renderHeroSubtitle(view)}
@@ -418,7 +418,7 @@ function MotivationBanner({
     }
     return {
       emoji: "✨",
-      text: "Tu fais partie des premiers à découvrir Lor'Squad Academy. Pose la barre haute pour ton équipe.",
+      text: "Tu fais partie des premiers à découvrir La Base 360 Academy. Pose la barre haute pour ton équipe.",
     };
   })();
 

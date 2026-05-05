@@ -150,7 +150,7 @@ export function ClientModal({ open, onClose }: Props) {
                 marginBottom: 14,
               }}
             >
-              💡 Si tu veux contacter Thomas Houbert (créateur Lor&apos;Squad), écris-lui sur
+              💡 Si tu veux contacter Thomas Houbert (créateur La Base 360), écris-lui sur
               WhatsApp : il te connectera à un coach de son équipe proche de chez toi.
             </div>
             <button

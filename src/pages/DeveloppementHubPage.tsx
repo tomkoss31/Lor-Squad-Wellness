@@ -35,7 +35,7 @@ const CARDS: HubCard[] = [
   {
     id: "academy",
     emoji: "🎓",
-    title: "Apprendre l'app Lor'Squad",
+    title: "Apprendre l'app La Base 360",
     description:
       "Tour guidé pas à pas + Academy interactive pour maîtriser tous les outils de l'app : Co-pilote, Agenda, Bilan, Messagerie, Cahier de bord, Simulateur EBE.",
     cta: "Apprendre l'app",
@@ -48,7 +48,7 @@ const CARDS: HubCard[] = [
     emoji: "📚",
     title: "Formation distributeur Herbalife",
     description:
-      "La méthode complète Lor'Squad pour construire ton activité Herbalife : 3 niveaux progressifs (Démarrer / Construire / Dupliquer) avec modules, leçons et quiz.",
+      "La méthode complète La Base 360 pour construire ton activité Herbalife : 3 niveaux progressifs (Démarrer / Construire / Dupliquer) avec modules, leçons et quiz.",
     cta: "Démarrer la formation",
     path: "/formation",
     accent: "var(--ls-gold)",

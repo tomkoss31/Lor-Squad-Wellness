@@ -370,7 +370,7 @@ function Step1BodyScan({
     <div>
       <SectionTitle emoji="📏" title={`Le body scan de ${state.firstName}`} />
       <p style={{ fontSize: 13, color: "var(--ls-text-muted)", marginBottom: 18 }}>
-        Mesures simples (taille / poids) — Lor'Squad calcule l'IMC, l'eau cible
+        Mesures simples (taille / poids) — La Base 360 calcule l'IMC, l'eau cible
         et les protéines instantanément. Pas de calculatrice à sortir.
       </p>
 
@@ -427,7 +427,7 @@ function Step1BodyScan({
             marginBottom: 10,
           }}
         >
-          ⚡ Calculé en live par Lor'Squad
+          ⚡ Calculé en live par La Base 360
         </div>
         <div
           style={{
@@ -464,7 +464,7 @@ function Step2Program({
     <div>
       <SectionTitle emoji="🎯" title="Programme recommandé" />
       <p style={{ fontSize: 13, color: "var(--ls-text-muted)", marginBottom: 18 }}>
-        Lor'Squad analyse les chiffres + l'objectif et propose 3-4 produits
+        La Base 360 analyse les chiffres + l'objectif et propose 3-4 produits
         cohérents avec une raison chacun. Tu valides, retires ou ajoutes.
       </p>
 

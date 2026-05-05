@@ -47,7 +47,7 @@ function formatRelative(iso: string): string {
 
 function buildWhatsAppUrl(phone: string, firstName: string): string {
   const digits = phone.replace(/\D/g, "");
-  const msg = `Salut ${firstName} ! Je te recontacte suite à ta demande sur Lor'Squad Wellness 💪`;
+  const msg = `Salut ${firstName} ! Je te recontacte suite à ta demande sur La Base 360 💪`;
   return `https://wa.me/${digits}?text=${encodeURIComponent(msg)}`;
 }
 

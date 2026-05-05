@@ -242,7 +242,7 @@ export const FOLLOW_UP_PROTOCOL: FollowUpStep[] = [
         "Éventuels nouveaux produits selon les besoins détectés",
       ],
       distributorNotes: [
-        "Utiliser l'agenda Lor'Squad pour bloquer le RDV",
+        "Utiliser l'agenda La Base 360 pour bloquer le RDV",
         "Préparer un récap visuel de l'évolution (poids, mesures)",
         "Valoriser les progrès même petits",
         "Ouvrir la porte à une prolongation du programme",

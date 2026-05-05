@@ -96,7 +96,7 @@ export function AcademyAdminPanel({ userId, displayName }: AcademyAdminPanelProp
             {displayName}
           </h3>
           <p style={{ fontSize: 12, color: "#6B6B62", margin: "2px 0 0 0" }}>
-            Progression Lor&apos;Squad Academy · vue admin
+            Progression La Base 360 Academy · vue admin
           </p>
         </div>
       </div>

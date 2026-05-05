@@ -470,7 +470,7 @@ export function FollowUpStepV2({
               emoji="📅"
               eyebrow="Côté coach"
               title="Ajouté à ton agenda"
-              desc="Le RDV apparaît dans ton calendrier Lor'Squad. Rappel push 30 min avant. Tu n'as rien à reprogrammer."
+              desc="Le RDV apparaît dans ton calendrier La Base 360. Rappel push 30 min avant. Tu n'as rien à reprogrammer."
               color="var(--ls-teal)"
             />
             <AutoActionCard
@@ -514,7 +514,7 @@ export function FollowUpStepV2({
         emoji={isSport ? "🏋️" : "💛"}
         eyebrow={isSport ? "Suivi · communauté sport" : "Suivi · accompagnement complet"}
         title={`Voilà ce qui ${isSport ? "attend" : "attend"} ${firstName}`}
-        description={`Le RDV est posé. Mais l'accompagnement Lor'Squad ne s'arrête pas là — voilà tout ce qui ${isSport ? "soutient un sportif" : "soutient une transformation"} entre les bilans.`}
+        description={`Le RDV est posé. Mais l'accompagnement La Base 360 ne s'arrête pas là — voilà tout ce qui ${isSport ? "soutient un sportif" : "soutient une transformation"} entre les bilans.`}
         accent={isSport ? "purple" : "gold"}
       >
         <div

@@ -1,7 +1,7 @@
 // =============================================================================
 // FORMATION CONTENT — src/data/formation/parcours-content.ts
 //
-// Source de vérité du contenu pédagogique /formation Lor'Squad.
+// Source de vérité du contenu pédagogique /formation La Base 360.
 // Format conforme aux types définis par Claude Code (qcm + free_text discriminated union).
 //
 // CHOIX RÉDACTIONNELS :
@@ -14,7 +14,7 @@
 //
 // Livré par Claude (atelier Notion) le 02/05/2026.
 //
-// LEXIQUE Lor'Squad (validé Thomas, 2026-05-03) :
+// LEXIQUE La Base 360 (validé Thomas, 2026-05-03) :
 //   - EBE   = Évaluation Bien-Être : bilan client 1-1 ~60 min. L'app
 //             pilote la trame. C'est la scène signature du distri.
 //             ⚠️ Ne JAMAIS utiliser EBE pour parler d'un événement groupe.
@@ -398,7 +398,7 @@ Pour chaque produit : **ce que c'est** + **phrase clé** + **pour qui**.
 :::
 
 :::gold
-### 💡 Le pack starter Lor'Squad
+### 💡 Le pack starter La Base 360
 
 **F1 + PDM + Aloe + Thé = 100 PV = 234 € retail** (prix client).
 
@@ -1136,7 +1136,7 @@ Le chiffre 100 n'est pas magique — c'est **pédagogique**.
 - **200 noms**, c'est trop : tu deviens noyé, tu ne contactes plus personne par paralysie.
 - **100 noms**, c'est la zone sweet spot : assez large pour ne pas auto-censurer, assez serré pour rester actionnable.
 
-> 💡 **Statistique Lor'Squad** : sur 100 noms FRANK, en moyenne **5 deviennent clients** dans tes 90 premiers jours. Pas 30, pas 50. **5.** Mais ces 5-là sont solides et te recommandent à leur tour.
+> 💡 **Statistique La Base 360** : sur 100 noms FRANK, en moyenne **5 deviennent clients** dans tes 90 premiers jours. Pas 30, pas 50. **5.** Mais ces 5-là sont solides et te recommandent à leur tour.
 
 **La règle d'or** : tu lists tout le monde, **sans filtrer**. C'est l'écriture qui débloque la mémoire. Tu jugeras après.`,
       },
@@ -1148,7 +1148,7 @@ Le chiffre 100 n'est pas magique — c'est **pédagogique**.
         durationMin: 3,
         contentMarkdown: `## FRANK = Family / Relations / Amis / Network / Kids' parents
 
-Mnémonique officiel Lor'Squad. Chaque lettre = un cercle d'influence précis.
+Mnémonique officiel La Base 360. Chaque lettre = un cercle d'influence précis.
 
 ### 👪 F · Family (objectif : 15-25 noms)
 Tous tes liens de sang, par alliance, beaux-parents, cousins, grands-parents (vivants), enfants adultes, neveux/nièces.
@@ -1207,7 +1207,7 @@ Une fois ta liste 100 faite, tu attribues une **température** à chaque nom.
         durationMin: 2,
         contentMarkdown: `## Faire vivre ta liste comme un funnel
 
-Chaque contact a un **statut** qui évolue dans le temps. Lor'Squad gère 6 statuts dans /cahier-de-bord onglet Liste 100 :
+Chaque contact a un **statut** qui évolue dans le temps. La Base 360 gère 6 statuts dans /cahier-de-bord onglet Liste 100 :
 
 | Statut | Emoji | Quand passer dessus |
 |---|---|---|
@@ -1219,7 +1219,7 @@ Chaque contact a un **statut** qui évolue dans le temps. Lor'Squad gère 6 stat
 | Refus | ❌ | Pas intéressé, à mettre en froid 6 mois |
 
 ### Connexion automatique avec ton agenda
-Dès que tu passes un contact en **RDV calé**, Lor'Squad te propose une popup pour créer le prospect agenda **pré-rempli** (nom, tel, source). 1 clic et c'est dans /agenda.
+Dès que tu passes un contact en **RDV calé**, La Base 360 te propose une popup pour créer le prospect agenda **pré-rempli** (nom, tel, source). 1 clic et c'est dans /agenda.
 
 > 💡 **Règle d'hygiène** : revisite ta liste 100 une fois par semaine. Combien sont en « contacté » sans réponse depuis 7 jours ? → relance. Combien en « RDV calé » mais pas de date ? → urgence.`,
       },
@@ -1280,7 +1280,7 @@ Tu réponds à son message, tu poses des questions. Tu RÉAPPRENDS qui il est au
           ],
           correctIndex: 1,
           explanation:
-            "FRANK = Family / Relations / Amis / Network / Kids' parents. Mnémonique officiel Lor'Squad pour ne rien oublier dans ta liste 100. Disponible dans /cahier-de-bord onglet Liste 100 au moment d'ajouter un contact.",
+            "FRANK = Family / Relations / Amis / Network / Kids' parents. Mnémonique officiel La Base 360 pour ne rien oublier dans ta liste 100. Disponible dans /cahier-de-bord onglet Liste 100 au moment d'ajouter un contact.",
         },
         {
           kind: "qcm",
@@ -1362,7 +1362,7 @@ Tu réponds à son message, tu poses des questions. Tu RÉAPPRENDS qui il est au
         title: "Vue d'ensemble : pourquoi 6 étapes (et pas 4 ou 8)",
         kind: "text",
         durationMin: 2,
-        contentMarkdown: `## La trame Lor'Squad EBE
+        contentMarkdown: `## La trame La Base 360 EBE
 
 | # | Étape | Durée | But |
 |---|---|---|---|
@@ -1400,7 +1400,7 @@ Tu réponds à son message, tu poses des questions. Tu RÉAPPRENDS qui il est au
 
 ### Ce qu'il FAUT dire
 - ✅ « Super sympa de prendre 30 min pour toi. Avant tout, raconte-moi… »
-- ✅ « Comment t'as connu Lor'Squad ? Qui t'a parlé de moi ? »
+- ✅ « Comment t'as connu La Base 360 ? Qui t'a parlé de moi ? »
 
 > 💡 **Test simple** : à la fin de l'étape 1, le prospect doit avoir parlé **plus** que toi. Si c'est l'inverse, tu as raté l'étape.`,
       },
@@ -1499,7 +1499,7 @@ Tu réponds à son message, tu poses des questions. Tu RÉAPPRENDS qui il est au
 
 → Le prospect se voit DANS la solution. Le programme n'est plus une liste, c'est SA liste.
 
-### Le pack starter Lor'Squad
+### Le pack starter La Base 360
 
 Le combo F1 + PDM + Aloe + Thé = **234 € pour 21 jours = 100 PV**. C'est ton produit phare. Tu peux ajouter des boosters selon profil sport/perte poids/sénior.
 
@@ -1573,7 +1573,7 @@ Le prospect vient de signer (ou de partir content même sans signer). C'est **LE
 - ❌ Demander une liste de 10 prénoms (paralysie de Robert)
 - ❌ Sauter l'étape (mais c'est la plus rentable !)
 
-### Statistique Lor'Squad
+### Statistique La Base 360
 
 > 📊 Les distri qui demandent **systématiquement** des recos en étape 6 ont en moyenne **3× plus de RDV bilans** par mois que ceux qui zappent.
 
@@ -1587,7 +1587,7 @@ Le prospect vient de signer (ou de partir content même sans signer). C'est **LE
         {
           kind: "qcm",
           id: "Q1",
-          question: "Combien d'étapes a la trame EBE Lor'Squad ?",
+          question: "Combien d'étapes a la trame EBE La Base 360 ?",
           answers: ["4 étapes", "5 étapes", "6 étapes", "8 étapes"],
           correctIndex: 2,
           explanation:
@@ -1767,7 +1767,7 @@ export const N2_MODULES: FormationModule[] = [
         {
           kind: "qcm",
           id: "Q1",
-          question: "Combien d'étapes dans le tunnel marketing Lor'Squad ?",
+          question: "Combien d'étapes dans le tunnel marketing La Base 360 ?",
           answers: ["5", "7", "10", "12"],
           correctIndex: 1,
           explanation:
@@ -2216,7 +2216,7 @@ Même quand la personne dit oui, **elle oublie**.
         {
           kind: "qcm",
           id: "Q1",
-          question: "EBE signifie (lexique Lor'Squad) :",
+          question: "EBE signifie (lexique La Base 360) :",
           answers: [
             "Évaluation Bien-Être (bilan client 1-1)",
             "Extra Business Event (soirée business)",
@@ -2556,7 +2556,7 @@ Pose-toi cette question chaque dimanche soir. Identifie 1 personne. Donne-lui 80
           ],
           correctIndex: 1,
           explanation:
-            "Recruteur, Coach, Animateur, Modèle. Les 4 rôles à porter en parallèle pour faire grandir une équipe Lor'Squad."
+            "Recruteur, Coach, Animateur, Modèle. Les 4 rôles à porter en parallèle pour faire grandir une équipe La Base 360."
         },
         {
           kind: "free_text",
@@ -2601,7 +2601,7 @@ Pose-toi cette question chaque dimanche soir. Identifie 1 personne. Donne-lui 80
 - **30 minutes max**
 - **Même jour, même heure**, chaque semaine
 - **En vidéo** si possible
-- Dans l'**agenda Lor'Squad** du distri ET du sponsor
+- Dans l'**agenda La Base 360** du distri ET du sponsor
 - **Jamais annulé**
 
 > Si tu ne peux pas, tu reportes — tu n'annules pas.

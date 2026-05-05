@@ -201,7 +201,7 @@ export function ClientInvitationButton({ client }: { client: Client }) {
 
   function shareVia(channel: "whatsapp" | "sms") {
     if (!modalUrl) return;
-    const message = `Salut ${client.firstName} ! Voici le lien pour accéder à ton espace Lor'Squad : ${modalUrl}`;
+    const message = `Salut ${client.firstName} ! Voici le lien pour accéder à ton espace La Base 360 : ${modalUrl}`;
     const encoded = encodeURIComponent(message);
     const url =
       channel === "whatsapp"

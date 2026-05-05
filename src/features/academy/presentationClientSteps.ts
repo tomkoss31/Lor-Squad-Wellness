@@ -15,7 +15,7 @@ export const PRESENTATION_CLIENT_TOUR_ID = "presentation-client";
 export const PRESENTATION_CLIENT_STEPS: TutorialStep[] = [
   {
     id: "intro",
-    title: "Bienvenue dans ton espace Lor'Squad",
+    title: "Bienvenue dans ton espace La Base 360",
     body: "Tu vas avoir ta propre app, sur ton téléphone, qui te suit dans ta progression. Pas de mail, pas de papier, pas de groupe Whatsapp à scroller. Tout est ici, organisé, accessible 24/7. Je te montre en 1 minute.",
     placement: "center",
     illustrationKey: "wave",

@@ -232,7 +232,7 @@ export function NotificationsTab() {
           fontFamily: "DM Sans, sans-serif",
         }}
       >
-        💡 <strong>Astuce</strong> : pour recevoir les pushs sur ton téléphone, installe l'app comme PWA (sidebar → bouton "Installer Lor'Squad"). Les notifs Web Push fonctionnent uniquement en mode PWA installée sur iOS.
+        💡 <strong>Astuce</strong> : pour recevoir les pushs sur ton téléphone, installe l'app comme PWA (sidebar → bouton "Installer La Base 360"). Les notifs Web Push fonctionnent uniquement en mode PWA installée sur iOS.
       </div>
     </div>
   );

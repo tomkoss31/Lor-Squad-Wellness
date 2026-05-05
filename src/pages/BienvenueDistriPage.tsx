@@ -605,7 +605,7 @@ function WelcomeStep({
           marginBottom: 20,
         }}
       >
-        Invitation Lor'Squad Wellness
+        Invitation La Base 360
       </span>
       <p
         style={{
@@ -628,7 +628,7 @@ function WelcomeStep({
           marginBottom: 26,
         }}
       >
-        {sponsorFirstName} t'invite à rejoindre Lor'Squad Wellness. On va
+        {sponsorFirstName} t'invite à rejoindre La Base 360. On va
         créer ton accès distributeur en 2 minutes.
       </p>
 

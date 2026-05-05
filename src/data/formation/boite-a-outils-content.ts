@@ -1,12 +1,12 @@
 // =============================================================================
 // BOÎTE À OUTILS LOR'SQUAD — src/data/formation/boite-a-outils-content.ts
 //
-// La vraie boîte à outils du distri Lor'Squad : matière exécutable, scripts
+// La vraie boîte à outils du distri La Base 360 : matière exécutable, scripts
 // copier-coller, fiches premium. Différent du parcours guidé (modules N1/N2/N3)
 // qui apprend la théorie. Ici on PASSE À L'ACTE.
 //
 // PRINCIPES :
-//   - Tutoiement direct, ton Lor'Squad, zéro jargon corporate.
+//   - Tutoiement direct, ton La Base 360, zéro jargon corporate.
 //   - Chaque outil cible un profil (nouveau / relance / sup_plus / tous).
 //   - Format suggéré : popup pour scripts courts, page pour fiches premium.
 //   - Scripts copier-coller dans le champ scripts[] (label + text + note).
@@ -391,7 +391,7 @@ export const TOOLKIT_BILAN: FormationToolkitItem[] = [
 - Sois **à l'heure** (même en avance).
 - Sois **propre**, souriant·e, présentable.
 - Le club / ton espace est **rangé**, propre, accueillant.
-- **Tablette ou téléphone chargés à 100%** — l'app Lor'Squad sera ton coéquipier pendant le bilan.
+- **Tablette ou téléphone chargés à 100%** — l'app La Base 360 sera ton coéquipier pendant le bilan.
 - Balance (Tanita allumée + pile vérifiée la veille), mètre ruban, stylo prêts.
 - Bouteille d'eau fermée + 2 verres + shaker + Formula 1 + lait/lait végétal sortis.
 
@@ -426,7 +426,7 @@ export const TOOLKIT_BILAN: FormationToolkitItem[] = [
 
 Pendant que tu prépares la boisson :
 
-- **Sors ta tablette** ou ton téléphone, ouvre l'app Lor'Squad.
+- **Sors ta tablette** ou ton téléphone, ouvre l'app La Base 360.
 - Crée le nouveau bilan, mets le prénom du client.
 - L'app va te guider sur les 13 étapes — tu n'as plus à improviser.
 
@@ -550,7 +550,7 @@ But : rendre la reco **normale**, partager l'expérience, préparer le **Pack Am
 - [ ] Boisson + verres prêts
 - [ ] Shaker + Formula 1 + ingrédients prêts
 - [ ] Balance + mètre prêts
-- [ ] **Tablette / téléphone chargés à 100% + app Lor'Squad lancée**
+- [ ] **Tablette / téléphone chargés à 100% + app La Base 360 lancée**
 - [ ] Téléphone perso en silencieux, animaux/enfants gérés
 - [ ] 5 minutes respiration faites — *« je suis là pour cette personne, pas pour mes objectifs »*
 
@@ -762,7 +762,7 @@ Juste pour t'aider à réfléchir : qu'est-ce qui te fait douter ? Le prix, le t
 | **J14** | Photo face + profil. Notes : ressentis nouveaux. |
 | **J21** | Photo face + profil. Notes finales : top 3 changements. |
 
-> 📱 Garde toutes les photos dans un album Lor'Squad sur ton téléphone. Tu vas en avoir besoin **toute ta carrière** : témoignages story Insta, présentation à un prospect, ouverture d'apéro Healthy.
+> 📱 Garde toutes les photos dans un album La Base 360 sur ton téléphone. Tu vas en avoir besoin **toute ta carrière** : témoignages story Insta, présentation à un prospect, ouverture d'apéro Healthy.
 
 ---
 
@@ -798,7 +798,7 @@ le 2e café. Je continue 30j de plus.
   },
 
   // ─────────────────────────────────────────────────────────────────────────
-  // tk-bilan-05 — Mémo 5 produits Lor'Squad (NEW 2026-05-04)
+  // tk-bilan-05 — Mémo 5 produits La Base 360 (NEW 2026-05-04)
   // ─────────────────────────────────────────────────────────────────────────
   {
     id: "tk-bilan-05",
@@ -868,7 +868,7 @@ Plusieurs gammes : Soothing Aloe, Radiant C, Anti-âge
 
 ---
 
-## 💎 Le pack starter Lor'Squad
+## 💎 Le pack starter La Base 360
 
 **F1 + PDM + Aloe + Thé = 100 PV = 234 € retail** (prix client)
 
@@ -1266,7 +1266,7 @@ Réponds aux 2-3 questions techniques classiques :
 
 ---
 
-## 📊 Résultats observés (équipe Lor'Squad)
+## 📊 Résultats observés (équipe La Base 360)
 
 | Suivi | Taux client tient à J+30 | Taux re-commande |
 |---|---|---|
@@ -1552,9 +1552,9 @@ Plus accessible que le 8-4-1 historique, plus tenable dans la durée. Pas magie,
 
 ---
 
-### 📜 Ma charte de distributeur Lor'Squad
+### 📜 Ma charte de distributeur La Base 360
 
-**Je, soussigné·e [Prénom NOM], membre de la team Lor'Squad,**
+**Je, soussigné·e [Prénom NOM], membre de la team La Base 360,**
 
 m'engage solennellement, à partir de ce jour le [date], à :
 

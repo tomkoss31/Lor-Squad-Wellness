@@ -1,5 +1,5 @@
 // =============================================================================
-// FLEX Lor'Squad — Types front (Phase A 2026-11-05)
+// FLEX La Base 360 — Types front (Phase A 2026-11-05)
 //
 // Mappe les 3 tables côté DB :
 //   - distributor_action_plan        → DistributorActionPlan

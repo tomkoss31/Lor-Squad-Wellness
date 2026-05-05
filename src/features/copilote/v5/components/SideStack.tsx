@@ -101,7 +101,7 @@ export function SideStack() {
         <div style={flexGlowStyle} />
         <div style={flexIconStyle}>⚡</div>
         <div style={flexTextStyle}>
-          <div style={flexOverlineStyle}>FLEX Lor'Squad</div>
+          <div style={flexOverlineStyle}>FLEX La Base 360</div>
           <div style={flexTitleStyle}>Configure ton plan d'action</div>
           <div style={flexLinkStyle}>Démarrer en 5 min →</div>
         </div>

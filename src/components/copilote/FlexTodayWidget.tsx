@@ -82,7 +82,7 @@ export function FlexTodayWidget() {
       <Wrapper>
         <div style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
           <div style={{ flex: "1 1 240px", minWidth: 0 }}>
-            <Eyebrow>FLEX Lor'Squad</Eyebrow>
+            <Eyebrow>FLEX La Base 360</Eyebrow>
             <h3 style={titleStyle}>Configure ton plan d'action 🎯</h3>
             <p style={subStyle}>
               5 questions pour calibrer tes cibles quotidiennes. Formule 5-3-1

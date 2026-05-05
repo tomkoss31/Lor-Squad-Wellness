@@ -77,7 +77,7 @@ export function AdminDistributorCharterPage() {
   const cosignerRole =
     charter?.cosigner_role ??
     (currentUser?.role === "admin"
-      ? "Admin Lor'Squad"
+      ? "Admin La Base 360"
       : "Sponsor direct");
 
   const cosigner: CharterPersonInfo = {

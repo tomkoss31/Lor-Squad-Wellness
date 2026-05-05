@@ -462,7 +462,7 @@ export function ClientAppPage() {
     const end = new Date(start.getTime() + 3600000)
     const fmt = (d: Date) => d.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z'
     return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(
-      `RDV Lor'Squad — ${data.client_first_name}`
+      `RDV La Base 360 — ${data.client_first_name}`
     )}&dates=${fmt(start)}/${fmt(end)}&location=${encodeURIComponent('La Base Shakes & Drinks, Verdun')}`
   }
 
@@ -579,7 +579,7 @@ export function ClientAppPage() {
               to   { opacity: 1; transform: translateY(0); }
             }
           `}</style>
-          Bienvenue dans ton espace Lor&apos;Squad 🎉
+          Bienvenue dans ton espace La Base 360 🎉
         </div>
       ) : null}
 
@@ -932,7 +932,7 @@ export function ClientAppPage() {
               </div>
               <div>
                 <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 14, color: '#fff' }}>Installer l'app</div>
-                <div style={{ fontSize: 11, color: '#9CA3AF' }}>Lor'Squad Wellness</div>
+                <div style={{ fontSize: 11, color: '#9CA3AF' }}>La Base 360</div>
               </div>
             </div>
             <button

@@ -1,5 +1,5 @@
 // =============================================================================
-// FlexOnboardingPage — FLEX Lor'Squad Phase B (2026-11-05)
+// FlexOnboardingPage — FLEX La Base 360 Phase B (2026-11-05)
 //
 // Onboarding 6 questions du moteur de pilotage du distri. À la validation,
 // insert dans distributor_action_plan + redirect vers /flex (dashboard).
@@ -203,7 +203,7 @@ export function FlexOnboardingPage() {
   return (
     <div className="space-y-6" style={{ paddingBottom: 180 }}>
       <PageHeading
-        eyebrow="FLEX Lor'Squad"
+        eyebrow="FLEX La Base 360"
         title="Construis ton plan d'action"
         description={`6 questions pour calibrer tes cibles quotidiennes (formule 5-3-1). Ton rang actuel : ${RANK_LABELS[userRank]}.`}
       />

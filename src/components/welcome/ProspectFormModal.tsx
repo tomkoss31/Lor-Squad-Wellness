@@ -97,7 +97,7 @@ export function ProspectFormModal({ open, onClose }: Props) {
       <div
         role="dialog"
         aria-modal="true"
-        aria-label="Rejoindre l'aventure Lor'Squad"
+        aria-label="Rejoindre l'aventure La Base 360"
         onClick={(e) => e.stopPropagation()}
         onKeyDown={(e) => e.stopPropagation()}
         style={{
@@ -136,7 +136,7 @@ export function ProspectFormModal({ open, onClose }: Props) {
                 marginBottom: 16,
               }}
             >
-              Un coach de l&apos;équipe te recontacte très bientôt pour te présenter Lor&apos;Squad
+              Un coach de l&apos;équipe te recontacte très bientôt pour te présenter La Base 360
               Wellness et voir comment on peut travailler ensemble.
             </p>
             <button

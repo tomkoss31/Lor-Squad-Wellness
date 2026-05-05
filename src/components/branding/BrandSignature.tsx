@@ -10,11 +10,11 @@ export function BrandSignature({ variant = "inline" }: BrandSignatureProps) {
       <div className="flex items-center gap-3">
         <img
           src={blasonLogo}
-          alt="Lor'Squad"
+          alt="La Base 360"
           className="h-11 w-11 rounded-[18px] object-cover shadow-soft"
         />
         <div>
-          <p className="text-sm font-semibold text-white">Lor&apos;Squad Wellness</p>
+          <p className="text-sm font-semibold text-white">La Base 360</p>
           <p className="text-[11px] text-[var(--ls-text-hint)]">Powered by La Base</p>
         </div>
       </div>
@@ -27,11 +27,11 @@ export function BrandSignature({ variant = "inline" }: BrandSignatureProps) {
         <div className="flex items-center gap-4">
           <img
             src={blasonLogo}
-            alt="Lor'Squad"
+            alt="La Base 360"
             className="h-14 w-14 rounded-[20px] object-cover shadow-soft"
           />
           <div>
-            <p className="text-lg font-semibold text-white">Lor&apos;Squad Wellness</p>
+            <p className="text-lg font-semibold text-white">La Base 360</p>
             <p className="mt-1 text-[12px] text-[var(--ls-text-hint)]">
               Accompagnement premium
             </p>
@@ -52,8 +52,8 @@ export function BrandSignature({ variant = "inline" }: BrandSignatureProps) {
   return (
     <div className="flex flex-wrap items-center gap-4 text-sm text-[var(--ls-text-muted)]">
       <div className="inline-flex items-center gap-2">
-        <img src={blasonLogo} alt="Lor'Squad" className="h-6 w-6 rounded-full object-cover" />
-        <span className="font-medium text-white">Lor&apos;Squad Wellness</span>
+        <img src={blasonLogo} alt="La Base 360" className="h-6 w-6 rounded-full object-cover" />
+        <span className="font-medium text-white">La Base 360</span>
       </div>
       <div className="inline-flex items-center gap-2 text-[var(--ls-text-hint)]">
         <img src={laBaseLogo} alt="La Base" className="h-6 w-6 rounded-full object-cover" />

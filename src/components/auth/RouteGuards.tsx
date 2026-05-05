@@ -72,7 +72,7 @@ function AuthBootSplash() {
     <div className="min-h-screen bg-hero-mesh px-4 py-8">
       <div className="mx-auto flex min-h-[calc(100vh-4rem)] max-w-[720px] items-center justify-center">
         <div className="glass-panel w-full rounded-[22px] px-8 py-10 text-center">
-          <p className="eyebrow-label">Lor&apos;Squad Wellness</p>
+          <p className="eyebrow-label">La Base 360</p>
           <h1 className="mt-4 text-3xl md:text-4xl">Ouverture de la session</h1>
           <p className="mt-4 text-sm leading-7 text-[var(--ls-text-muted)]">
             On vérifie simplement l&apos;accès pour rouvrir l&apos;espace dans de bonnes

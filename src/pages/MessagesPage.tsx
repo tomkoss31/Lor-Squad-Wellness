@@ -28,7 +28,7 @@ import { useFormationReviewQueue, useFormationAdminQueue } from '../features/for
 type Tab = 'products' | 'recommendations' | 'clients' | 'formation'
 
 function ContactLinks({ phone, email, name }: { phone?: string; email?: string; name: string }) {
-  const pre = encodeURIComponent(`Bonjour ${name}, suite à votre intérêt pour Lor'Squad Wellness.`)
+  const pre = encodeURIComponent(`Bonjour ${name}, suite à votre intérêt pour La Base 360.`)
   const cleanPhone = (phone ?? '').replace(/[^\d+]/g, '')
   const hasPhone = cleanPhone.length >= 6
 
@@ -60,7 +60,7 @@ function ContactLinks({ phone, email, name }: { phone?: string; email?: string; 
           </a>
         )}
         {email && (
-          <a href={`mailto:${email}?subject=${encodeURIComponent("Lor'Squad Wellness")}&body=${pre}`}
+          <a href={`mailto:${email}?subject=${encodeURIComponent("La Base 360")}&body=${pre}`}
             style={{ fontSize: 10, padding: '5px 10px', borderRadius: 7, background: 'var(--ls-surface2)', color: 'var(--ls-text-muted)', textDecoration: 'none', fontWeight: 500 }}>
             Email
           </a>

@@ -57,7 +57,7 @@ export function CoPilotePage() {
   const data = useCopiloteData(now, isAdmin && globalView);
 
   // Chantier Onboarding distributeur complet (2026-04-24) : toast "Bienvenue
-  // dans Lor'Squad" quand l'utilisateur arrive depuis /bienvenue-distri.
+  // dans La Base 360" quand l'utilisateur arrive depuis /bienvenue-distri.
   useEffect(() => {
     if (typeof window === "undefined") return;
     const welcome = new URLSearchParams(window.location.search).get("welcome");
@@ -65,7 +65,7 @@ export function CoPilotePage() {
     const firstName = currentUser.name?.split(/\s+/)[0] ?? "";
     pushToast({
       tone: "success",
-      title: `Bienvenue dans Lor'Squad${firstName ? ", " + firstName : ""} ! 🎉`,
+      title: `Bienvenue dans La Base 360${firstName ? ", " + firstName : ""} ! 🎉`,
       message: "Ton compte distributeur est prêt. Explore ton co-pilote.",
     });
     const url = new URL(window.location.href);
@@ -106,7 +106,7 @@ export function CoPilotePage() {
           complet. ROI émotionnel max. */}
       <RentabilityWidget />
 
-      {/* FLEX Lor'Squad (2026-11-05) — moteur de pilotage quotidien :
+      {/* FLEX La Base 360 (2026-11-05) — moteur de pilotage quotidien :
           cibles + check-in du jour visibles direct sur Co-pilote. Cliquer
           la card mène à /flex pour le détail complet. */}
       <FlexTodayWidget />

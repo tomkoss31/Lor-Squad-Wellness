@@ -382,7 +382,7 @@ function CertA4({
           fontFamily: "DM Sans, sans-serif",
         }}
       >
-        ✦ Lor&apos;Squad Formation · Niveau {levelMeta.romanNumeral}
+        ✦ La Base 360 Formation · Niveau {levelMeta.romanNumeral}
       </div>
 
       {/* Titre */}
@@ -495,7 +495,7 @@ function CertA4({
         }}
       >
         Pour avoir validé les <strong>{modulesCount} modules</strong> du Niveau {levelMeta.romanNumeral} ·{" "}
-        <strong>{levelMeta.name}</strong> du parcours Lor&apos;Squad Formation, et démontré son engagement
+        <strong>{levelMeta.name}</strong> du parcours La Base 360 Formation, et démontré son engagement
         à devenir un distributeur d&apos;exception.
       </p>
 
@@ -552,7 +552,7 @@ function CertA4({
             Thomas Houbert
           </div>
           <div style={{ letterSpacing: "0.18em", textTransform: "uppercase", fontWeight: 600 }}>
-            Fondateur · Lor&apos;Squad
+            Fondateur · La Base 360
           </div>
         </div>
       </div>
@@ -739,7 +739,7 @@ function CertStory({
           marginTop: 4,
         }}
       >
-        Thomas Houbert · Lor&apos;Squad
+        Thomas Houbert · La Base 360
       </div>
     </div>
   );
