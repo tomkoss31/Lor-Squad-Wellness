@@ -1271,32 +1271,52 @@ export function NewAssessmentPage() {
             clearAssessmentDraft();
             clearCoachNotesDraft(prospectId);
 
-            // Chantier unification acces client (2026-05-05) : on genere
-            // ICI le magic link PWA (client_invitation_tokens) pour que
-            // la page Felicitations affiche un QR auto-login PWA, pas un
-            // QR vers le recap HTML public. Avant : le client devait
-            // entrer email + password apres scan -> compte inexistant
-            // -> "Token invalide". Maintenant : scan -> /bienvenue?token=
-            // -> auto-login PWA direct.
+            // Chantier unification acces client (2026-05-05) : decision
+            // intelligente du token a generer :
+            //   - Si client a deja un client_app_accounts.auth_user_id NOT NULL
+            //     (= compte deja cree dans un bilan precedent), on REUTILISE
+            //     son caa.token. URL /client/<caa_token> = auto-login PWA
+            //     SANS password (le compte existe deja, pas de signup needed).
+            //   - Sinon (premier bilan = pas de compte) : on genere un
+            //     client_invitation_tokens. URL /bienvenue?token=... = signup
+            //     PWA avec creation password.
             //
-            // Best-effort : si l'insert plante (RLS, reseau, table
-            // absente), on retombe sur le recap token (ancien comportement).
+            // Avant : on creait toujours un nouveau invitation token, meme
+            // pour les clients qui avaient deja un compte. Romane se faisait
+            // demander un password, le consume tentait createUser sur email
+            // existant -> 409 "Edge Function non-2xx" (Safari iOS extractor
+            // bug masquait le vrai message).
             let magicToken: string | null = null;
+            let accessKindToUse: "magic" | "caa" = "magic";
             try {
-              const bytes = new Uint8Array(24);
-              crypto.getRandomValues(bytes);
-              const generatedToken = Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
-              const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
-              const { error: tokenErr } = await sb.from("client_invitation_tokens").insert({
-                client_id: clientId,
-                token: generatedToken,
-                created_by: currentUser?.id,
-                expires_at: expiresAt,
-              });
-              if (!tokenErr) {
-                magicToken = generatedToken;
+              // 1. Check si compte deja cree
+              const { data: existingCaa } = await sb
+                .from("client_app_accounts")
+                .select("token, auth_user_id")
+                .eq("client_id", clientId)
+                .maybeSingle();
+
+              if (existingCaa?.auth_user_id && existingCaa?.token) {
+                magicToken = existingCaa.token;
+                accessKindToUse = "caa";
               } else {
-                console.warn("[NewAssessment] client_invitation_tokens insert failed:", tokenErr);
+                // 2. Generer un client_invitation_tokens (premier bilan)
+                const bytes = new Uint8Array(24);
+                crypto.getRandomValues(bytes);
+                const generatedToken = Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
+                const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+                const { error: tokenErr } = await sb.from("client_invitation_tokens").insert({
+                  client_id: clientId,
+                  token: generatedToken,
+                  created_by: currentUser?.id,
+                  expires_at: expiresAt,
+                });
+                if (!tokenErr) {
+                  magicToken = generatedToken;
+                  accessKindToUse = "magic";
+                } else {
+                  console.warn("[NewAssessment] client_invitation_tokens insert failed:", tokenErr);
+                }
               }
             } catch (magicErr) {
               console.warn("[NewAssessment] magic link gen skip:", magicErr);
@@ -1330,11 +1350,11 @@ export function NewAssessmentPage() {
             // vers la page plein écran /bilan-termine (dark premium, QR,
             // partage, parrainage, avis). La modale reste accessible
             // depuis la fiche coach pour les usages hors-bilan.
-            // On passe en priorite le magic token (auto-login PWA),
+            // On passe en priorite le magic/caa token (auto-login PWA),
             // sinon fallback sur le recap token. La BilanTermineePage
             // saura distinguer via le param ?accessKind=.
             const useToken = magicToken ?? recapData.token;
-            const accessKind = magicToken ? "magic" : "recap";
+            const accessKind = magicToken ? accessKindToUse : "recap";
             const tokenParam = encodeURIComponent(useToken);
             const firstNameParam = encodeURIComponent(form.firstName?.trim() ?? "");
             navigate(

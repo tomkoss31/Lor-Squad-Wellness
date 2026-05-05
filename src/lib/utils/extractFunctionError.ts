@@ -49,6 +49,7 @@ export async function extractFunctionError(
   // 2. Body de la response cachee dans error.context (cas 4xx/5xx)
   const e = error as MaybeFunctionsError | null;
   if (e?.context?.response) {
+    // 2a. Tenter clone().json() (chemin standard)
     try {
       const cloned = e.context.response.clone();
       const body = (await cloned.json().catch(() => null)) as MaybeApiData | null;
@@ -58,7 +59,28 @@ export async function extractFunctionError(
       if (body && typeof body.message === "string" && body.message.trim()) {
         return body.message.trim();
       }
-    } catch { /* ignore parse errors */ }
+    } catch { /* fallthrough vers 2b */ }
+
+    // 2b. Fallback : clone().text() puis parse manuel JSON (Safari iOS
+    // peut planter sur clone().json() dans certains cas)
+    try {
+      const cloned2 = e.context.response.clone();
+      const raw = await cloned2.text().catch(() => "");
+      if (raw && raw.trim()) {
+        try {
+          const parsed = JSON.parse(raw) as MaybeApiData;
+          if (typeof parsed.error === "string" && parsed.error.trim()) {
+            return parsed.error.trim();
+          }
+          if (typeof parsed.message === "string" && parsed.message.trim()) {
+            return parsed.message.trim();
+          }
+        } catch {
+          // pas du JSON, mais on a du texte brut, on retourne tel quel
+          if (raw.length < 500) return raw.trim();
+        }
+      }
+    } catch { /* ignore */ }
   }
 
   // 3. error.message brut
