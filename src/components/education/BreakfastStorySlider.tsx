@@ -312,7 +312,7 @@ function Chapter3Solution() {
         </div>
         <div>
           <div className="ls-chapter__eyebrow">Chapitre 3 · Solution</div>
-          <h3 className="ls-chapter__title">Ton matin Lor'Squad</h3>
+          <h3 className="ls-chapter__title">Ton matin La Base 360</h3>
         </div>
       </div>
 

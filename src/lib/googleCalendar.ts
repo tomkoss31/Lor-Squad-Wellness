@@ -48,7 +48,7 @@ export function createIcsDataUri(params: {
   const lines = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
-    "PRODID:-//Lor'Squad Wellness//FR",
+    "PRODID:-//La Base 360//FR",
     "CALSCALE:GREGORIAN",
     "METHOD:PUBLISH",
     "BEGIN:VEVENT",

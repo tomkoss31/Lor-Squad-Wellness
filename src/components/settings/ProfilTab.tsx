@@ -2,7 +2,7 @@
 //
 // Onglet Profil : édition du prénom/nom, affichage email (RO pour V1 —
 // changement email = flow Supabase Auth séparé), compteur "X jours avec
-// Lor'Squad", bouton changement mot de passe, bouton Sortir.
+// La Base 360", bouton changement mot de passe, bouton Sortir.
 
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -550,7 +550,7 @@ export function ProfilTab() {
                   ))}
                 </select>
                 <div style={{ fontSize: 11, color: "var(--ls-text-muted)", marginTop: 4 }}>
-                  La personne qui te suit au quotidien dans Lor&apos;Squad. Souvent ton sponsor.
+                  La personne qui te suit au quotidien dans La Base 360. Souvent ton sponsor.
                 </div>
               </LabeledField>
             </>
@@ -573,7 +573,7 @@ export function ProfilTab() {
                   : "Distributeur"}
             </div>
           </LabeledField>
-          <LabeledField label="Jours avec Lor'Squad">
+          <LabeledField label="Jours avec La Base 360">
             <div
               style={{
                 padding: "10px 12px",

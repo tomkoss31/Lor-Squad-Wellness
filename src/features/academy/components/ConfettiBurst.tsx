@@ -3,7 +3,7 @@
 // particules avec animations CSS keyframes (fall + rotate). Auto-cleanup
 // apres durationMs via callback onComplete.
 //
-// Couleurs Lor'Squad : gold #B8922A / teal #1D9E75 / coral #D85A30 /
+// Couleurs La Base 360 : gold #B8922A / teal #1D9E75 / coral #D85A30 /
 // purple #7F77DD / blanc creme #FAF6E8.
 
 import { useEffect, useMemo, useState } from "react";

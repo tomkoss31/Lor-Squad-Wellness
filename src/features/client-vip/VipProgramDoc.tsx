@@ -233,15 +233,15 @@ export function VipProgramDoc() {
           />
           <FaqItem
             q="Comment le client s'inscrit ?"
-            a="Sur www.myherbalife.com avec ton ID sponsor (format 21Y0103610) + les 3 premières lettres de ton nom. Une fois inscrit, le client reçoit son propre ID 21XY010361 que tu saisis dans Lor'Squad sur sa fiche."
+            a="Sur www.myherbalife.com avec ton ID sponsor (format 21Y0103610) + les 3 premières lettres de ton nom. Une fois inscrit, le client reçoit son propre ID 21XY010361 que tu saisis dans La Base 360 sur sa fiche."
           />
           <FaqItem
             q="C'est compatible avec le statut distributeur ?"
             a="Non. Client Privilégié = consommateur avec remise + recommandations. Distributeur = activité business avec commissions. Le palier Ambassadeur (-42 %) reste un client privilégié, pas un distri."
           />
           <FaqItem
-            q="Lor'Squad calcule-t-il automatiquement le niveau ?"
-            a="Oui, dès que tu saisis vip_herbalife_id + parrain dans la fiche client, Lor'Squad calcule en live le palier via la RPC get_client_vip_status — recursive sur tout l'arbre de descendants."
+            q="La Base 360 calcule-t-il automatiquement le niveau ?"
+            a="Oui, dès que tu saisis vip_herbalife_id + parrain dans la fiche client, La Base 360 calcule en live le palier via la RPC get_client_vip_status — recursive sur tout l'arbre de descendants."
           />
         </div>
       </Card>

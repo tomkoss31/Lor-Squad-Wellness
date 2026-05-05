@@ -41,9 +41,9 @@ export function RecapPage() {
 
   const recapUrl = `${window.location.origin}/recap/${token}`
   const copyLink = async () => { await navigator.clipboard.writeText(recapUrl); setCopied(true); setTimeout(() => setCopied(false), 2000) }
-  const shareWA = () => window.open(`https://wa.me/?text=${encodeURIComponent(`Mon bilan Lor'Squad Wellness ✦\n${recapUrl}`)}`, '_blank')
+  const shareWA = () => window.open(`https://wa.me/?text=${encodeURIComponent(`Mon bilan La Base 360 ✦\n${recapUrl}`)}`, '_blank')
   const shareTG = () => window.open(`https://t.me/share/url?url=${encodeURIComponent(recapUrl)}`, '_blank')
-  const shareSMS = () => window.open(`sms:?body=${encodeURIComponent(`Mon bilan Lor'Squad : ${recapUrl}`)}`, '_blank')
+  const shareSMS = () => window.open(`sms:?body=${encodeURIComponent(`Mon bilan La Base 360 : ${recapUrl}`)}`, '_blank')
 
   const sendRefs = async () => {
     const filled = refs.filter(r => r.name.trim() || r.contact.trim())
@@ -245,7 +245,7 @@ export function RecapPage() {
               </>
             )}
           </div>
-          <div style={{ textAlign: 'center', fontSize: 10, color: 'var(--ls-text-hint)' }}>Lor&apos;Squad Wellness · Récap confidentiel · Valable 90 jours</div>
+          <div style={{ textAlign: 'center', fontSize: 10, color: 'var(--ls-text-hint)' }}>La Base 360 · Récap confidentiel · Valable 90 jours</div>
         </div>
       </div>
     </>

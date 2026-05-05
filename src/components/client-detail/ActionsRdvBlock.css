@@ -1,6 +1,6 @@
 /* Chantier Refonte onglet Actions — bloc RDV premium (2026-04-26).
    Styles dédiés pour ActionsRdvBlock. Toutes les couleurs passent par les
-   variables CSS Lor'Squad (var(--ls-*)) pour l'adaptation thème clair/sombre.
+   variables CSS La Base 360 (var(--ls-*)) pour l'adaptation thème clair/sombre.
    Seuls les logos tiers (Google, WhatsApp) gardent leurs hex de marque.
 
    Polices : Syne (titres, chiffres, dates) / DM Sans (corps, labels, hints).

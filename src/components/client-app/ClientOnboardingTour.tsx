@@ -14,7 +14,7 @@
 // toujours visible en haut à droite. Au "Terminer", appelle l edge function
 // client-app-mark-onboarded pour persister onboarded_at.
 //
-// Theme-aware (respecte var(--ls-*)) — tonalite gold/teal Lor'Squad.
+// Theme-aware (respecte var(--ls-*)) — tonalite gold/teal La Base 360.
 // =============================================================================
 
 import { useState } from "react";

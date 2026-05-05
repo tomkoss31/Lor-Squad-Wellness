@@ -9,7 +9,7 @@
 //   3. Modulo length de l'array → index → quote choisie.
 //
 // Stable sur la journée (même user, même date → même quote). Change le
-// lendemain. Pondère naturellement les quotes signature Lor'Squad qui ont
+// lendemain. Pondère naturellement les quotes signature La Base 360 qui ont
 // weight=2 (apparaissent 2× dans l'array virtuel).
 // =============================================================================
 

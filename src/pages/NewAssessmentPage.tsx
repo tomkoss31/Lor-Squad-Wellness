@@ -432,7 +432,7 @@ const ALL_STEPS: StepDef[] = [
   { id: 'body-scan', label: "Body scan", visible: () => true },
   { id: 'tasting', label: "Place à la dégustation", visible: () => true },
   { id: 'recommendations', label: "Recommandations", visible: () => true },
-  { id: 'breakfast', label: "Petit-déjeuner Lor'Squad", visible: () => true },
+  { id: 'breakfast', label: "Petit-déjeuner La Base 360", visible: () => true },
   { id: 'concept', label: "Notre concept de rééquilibrage", visible: () => true },
   // Pop-up business bilan (2026-11-03) : visible uniquement si la curiosite
   // captee a l etape 1 est "sometimes" ou "often". On evite de spammer ceux
@@ -502,11 +502,11 @@ const STEP_WHISPERS: Record<StepId, { eyebrow: string; whisper: string }> = {
   },
   'breakfast': {
     eyebrow: '☀️ Le petit-déjeuner, point de bascule',
-    whisper: "Visualiser une vraie matinée Lor'Squad — sucres, protéines, hydratation, fibres.",
+    whisper: "Visualiser une vraie matinée La Base 360 — sucres, protéines, hydratation, fibres.",
   },
   'concept': {
     eyebrow: '🌟 Notre concept en une image',
-    whisper: "Le rééquilibrage Lor'Squad expliqué simplement — ce qui change vraiment au quotidien.",
+    whisper: "Le rééquilibrage La Base 360 expliqué simplement — ce qui change vraiment au quotidien.",
   },
   'business-ambition': {
     eyebrow: '✦ Et au-delà de ta santé ?',
@@ -1120,7 +1120,7 @@ export function NewAssessmentPage() {
           job: form.job.trim() || "Non renseigné",
           city: form.city.trim() || undefined,
           distributorId: assignedUser?.id ?? currentUser?.id ?? "u-local-admin",
-          distributorName: assignedUser?.name ?? currentUser?.name ?? "Lor'Squad Wellness",
+          distributorName: assignedUser?.name ?? currentUser?.name ?? "La Base 360",
           objective: form.objective
         },
         assessment,
@@ -2796,7 +2796,7 @@ export function NewAssessmentPage() {
 
           {/* ─── Étape 9 : Notre concept de rééquilibrage alimentaire
                 Contenu = uniquement l'image de référence. L'ancien
-                LazyMorningRoutineCard (titre "Routine matin Lor'Squad") a
+                LazyMorningRoutineCard (titre "Routine matin La Base 360") a
                 été retiré — Chantier nettoyage bilan (2026-04-20) ─── */}
           {currentStepId === 'concept' && (
             <VisualStepBoundary title="Notre concept de rééquilibrage alimentaire">
@@ -2862,7 +2862,7 @@ export function NewAssessmentPage() {
                       boxShadow: "0 4px 14px color-mix(in srgb, var(--ls-gold) 35%, transparent)",
                     }}
                   >
-                    ✦ Signature Lor'Squad
+                    ✦ Signature La Base 360
                   </div>
                   {/* WebP primary (118 KB) + PNG fallback (513 KB). */}
                   <picture>

@@ -43,7 +43,7 @@ interface StageWording {
 const STAGE_WORDING: Record<FormationStage, StageWording> = {
   decouverte: {
     eyebrow: "Formation · découvre l'aventure",
-    title: "Bienvenue dans Lor'Squad",
+    title: "Bienvenue dans La Base 360",
     description:
       "Tu débutes ? On y va à ton rythme. 1 étape à la fois — découvre Herbalife, l'app, et ton métier de coach bien-être.",
   },
@@ -229,7 +229,7 @@ export function FormationPage() {
                 marginBottom: 4,
               }}
             >
-              Boîte à outils Lor&apos;Squad
+              Boîte à outils La Base 360
             </div>
             <div
               style={{

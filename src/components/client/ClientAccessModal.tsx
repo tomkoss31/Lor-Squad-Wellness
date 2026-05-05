@@ -203,7 +203,7 @@ export function ClientAccessModal({
   function shareWhatsApp() {
     if (!url) return;
     const digits = (clientPhone ?? "").replace(/\D/g, "");
-    const msg = `Salut ${clientFirstName} ! Voici ton accès à l'app Lor'Squad : ${url}`;
+    const msg = `Salut ${clientFirstName} ! Voici ton accès à l'app La Base 360 : ${url}`;
     const target = digits
       ? `https://wa.me/${digits}?text=${encodeURIComponent(msg)}`
       : `https://wa.me/?text=${encodeURIComponent(msg)}`;
@@ -212,7 +212,7 @@ export function ClientAccessModal({
 
   function shareSms() {
     if (!url) return;
-    const msg = `Salut ${clientFirstName} ! Voici ton accès à l'app Lor'Squad : ${url}`;
+    const msg = `Salut ${clientFirstName} ! Voici ton accès à l'app La Base 360 : ${url}`;
     window.open(`sms:?&body=${encodeURIComponent(msg)}`, "_blank");
   }
 

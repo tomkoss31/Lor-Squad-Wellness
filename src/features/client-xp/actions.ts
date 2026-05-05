@@ -99,7 +99,7 @@ export const CLIENT_XP_ACTIONS: ClientXpActionDef[] = [
     key: "telegram_joined",
     emoji: "✈️",
     label: "Rejoindre les Challengers Telegram",
-    hint: "La communauté Lor'Squad",
+    hint: "La communauté La Base 360",
     xp: 30,
     cap: "lifetime",
     category: "discover",

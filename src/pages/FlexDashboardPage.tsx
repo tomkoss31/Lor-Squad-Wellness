@@ -1,5 +1,5 @@
 // =============================================================================
-// FlexDashboardPage — FLEX Lor'Squad Phase C (2026-11-05)
+// FlexDashboardPage — FLEX La Base 360 Phase C (2026-11-05)
 //
 // Hub quotidien du distri :
 //   - Header plan (revenu cible + jours restants)
@@ -279,7 +279,7 @@ export function FlexDashboardPage() {
         />
         <div style={{ flex: 1, minWidth: 240 }}>
           <PageHeading
-            eyebrow="FLEX Lor'Squad"
+            eyebrow="FLEX La Base 360"
             title="Ton pilotage du jour"
             description={`Objectif ${plan.monthly_revenue_target.toLocaleString("fr-FR")} €/mois · échéance dans ${Math.max(0, daysUntilDeadline)} jours${streak > 0 ? ` · 🔥 ${streak} jour${streak > 1 ? "s" : ""} consécutif${streak > 1 ? "s" : ""}` : ""}`}
           />

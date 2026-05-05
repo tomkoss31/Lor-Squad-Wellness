@@ -1,5 +1,5 @@
 // Chantier Academy Phase 1 (2026-04-26).
-// Definition statique des 8 sections du parcours Lor'Squad Academy.
+// Definition statique des 8 sections du parcours La Base 360 Academy.
 // Les `steps` sont vides en Phase 1 — ils seront remplis section par section
 // en Phase 2 (un chantier par section).
 
@@ -73,7 +73,7 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
       {
         id: "intro",
         title: "Bienvenue {firstName} 👋",
-        body: "{firstName}, on commence par ton profil. C'est ce qui relie ton compte à ton lignage Herbalife (pour les commissions) ET à ton coach référent dans Lor'Squad (pour le suivi opérationnel). Deux choses différentes, on les sépare ici. Compte 2 minutes.",
+        body: "{firstName}, on commence par ton profil. C'est ce qui relie ton compte à ton lignage Herbalife (pour les commissions) ET à ton coach référent dans La Base 360 (pour le suivi opérationnel). Deux choses différentes, on les sépare ici. Compte 2 minutes.",
         placement: "center",
         route: "/parametres",
         illustrationKey: "wave",
@@ -105,7 +105,7 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
         placement: "bottom",
         route: "/parametres",
         title: "L'ID de ton sponsor Herbalife",
-        body: "Même format que ton propre ID. C'est la personne qui t'a parrainé chez Herbalife — elle perçoit les commissions de ta branche dans l'arbre Herbalife. À ne pas confondre avec ton coach référent Lor'Squad au step suivant.",
+        body: "Même format que ton propre ID. C'est la personne qui t'a parrainé chez Herbalife — elle perçoit les commissions de ta branche dans l'arbre Herbalife. À ne pas confondre avec ton coach référent La Base 360 au step suivant.",
         manualAdvance: true,
         requiredRole: "distributor",
       },
@@ -114,7 +114,7 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
         target: '[data-tour-id="profile-coach-referent"]',
         placement: "bottom",
         route: "/parametres",
-        title: "Ton coach référent dans Lor'Squad",
+        title: "Ton coach référent dans La Base 360",
         body: "C'est la personne qui te suit au quotidien dans l'app — tes questions, tes blocages, tes premières ventes. {coachName} apparaît déjà dans ce select si tu l'as déjà renseigné. Sinon, choisis dans la liste de tous les utilisateurs actifs. C'est ce contact qui sera notifié si tu décroches.",
         manualAdvance: true,
         requiredRole: "distributor",
@@ -128,7 +128,7 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
         placement: "top",
         route: "/parametres",
         title: "Enregistre tout ça",
-        body: "Pense à cliquer Enregistrer avant de quitter — sans ça, rien n'est sauvegardé en base. Tes infos sont synchronisées avec ton équipe (admin Lor'Squad voit ton statut Academy + ton ID Herbalife sur sa fiche distri).",
+        body: "Pense à cliquer Enregistrer avant de quitter — sans ça, rien n'est sauvegardé en base. Tes infos sont synchronisées avec ton équipe (admin La Base 360 voit ton statut Academy + ton ID Herbalife sur sa fiche distri).",
         manualAdvance: true,
         isLast: true,
         nextLabel: "Section terminée",
@@ -139,25 +139,25 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
       questions: [
         {
           id: "q1",
-          question: "Sponsor Herbalife et coach référent Lor'Squad : quelle est la différence ?",
+          question: "Sponsor Herbalife et coach référent La Base 360 : quelle est la différence ?",
           answers: [
             "Aucune, c'est forcément la même personne",
-            "Le sponsor structure mon lignage Herbalife (Herbalife le rémunère via des bonus de leadership) · le coach m'accompagne au quotidien dans Lor'Squad",
+            "Le sponsor structure mon lignage Herbalife (Herbalife le rémunère via des bonus de leadership) · le coach m'accompagne au quotidien dans La Base 360",
             "Le sponsor est optionnel, le coach est obligatoire",
-            "Le sponsor est dans Lor'Squad, le coach est externe",
+            "Le sponsor est dans La Base 360, le coach est externe",
           ],
           correctIndex: 1,
           wrongAnswerHints: {
             0: "C'est souvent la même personne, mais pas toujours — d'où les 2 champs séparés.",
-            2: "Inverse : le sponsor structure ton lignage Herbalife (obligatoire à l'inscription). Le coach Lor'Squad, lui, c'est ton suivi humain quotidien.",
-            3: "L'inverse : le sponsor vient d'Herbalife (corporate), le coach est interne au club Lor'Squad.",
+            2: "Inverse : le sponsor structure ton lignage Herbalife (obligatoire à l'inscription). Le coach La Base 360, lui, c'est ton suivi humain quotidien.",
+            3: "L'inverse : le sponsor vient d'Herbalife (corporate), le coach est interne au club La Base 360.",
           },
           // ⚠️ JURIDIQUE (2026-05-04) : Herbalife paie CHAQUE distri
           // directement. Le sponsor ne reverse JAMAIS de commissions à
           // ses filleuls — sinon ce serait une vente pyramidale illégale.
           // Le sponsor touche ses propres bonus de leadership versés par
           // Herbalife en cascade selon le plan marketing officiel.
-          explanation: "👉 Sponsor = parrain dans l'arbre Herbalife (ID format 21Y0103610 ou 21XY010361). Herbalife te paie directement TES commissions, et verse à ton sponsor SES propres bonus de leadership selon le plan marketing — il ne te reverse jamais rien lui-même. 👉 Coach référent = qui te suit dans Lor'Squad au quotidien (notifié si tu décroches). Le plus souvent c'est la même personne, mais on garde 2 champs pour les cas où non.",
+          explanation: "👉 Sponsor = parrain dans l'arbre Herbalife (ID format 21Y0103610 ou 21XY010361). Herbalife te paie directement TES commissions, et verse à ton sponsor SES propres bonus de leadership selon le plan marketing — il ne te reverse jamais rien lui-même. 👉 Coach référent = qui te suit dans La Base 360 au quotidien (notifié si tu décroches). Le plus souvent c'est la même personne, mais on garde 2 champs pour les cas où non.",
         },
         {
           id: "q2",
@@ -172,9 +172,9 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
           wrongAnswerHints: {
             0: "Pas tout à fait — il y a 1 ou 2 lettres dans le format officiel, pas que des chiffres.",
             2: "Non, le format commence par 2 chiffres (le pays / année), suivi de 1 ou 2 lettres puis des chiffres.",
-            3: "L'email c'est ton login Lor'Squad. L'ID Herbalife est différent — tu le trouves sur MyHerbalife.",
+            3: "L'email c'est ton login La Base 360. L'ID Herbalife est différent — tu le trouves sur MyHerbalife.",
           },
-          explanation: "📋 2 formats officiels acceptés : • DISTRI = 2 chiffres + 1 lettre + 7 chiffres (ex : 21Y0103610). • VIP / membership = 2 chiffres + 2 lettres + 6 chiffres (ex : 21XY010361). ⚠️ Important : un client VIP qui passe distri **garde son ID 21XY** — Lor'Squad accepte les 2 formats partout (profil, sponsor, fiche client).",
+          explanation: "📋 2 formats officiels acceptés : • DISTRI = 2 chiffres + 1 lettre + 7 chiffres (ex : 21Y0103610). • VIP / membership = 2 chiffres + 2 lettres + 6 chiffres (ex : 21XY010361). ⚠️ Important : un client VIP qui passe distri **garde son ID 21XY** — La Base 360 accepte les 2 formats partout (profil, sponsor, fiche client).",
         },
         {
           id: "q3",
@@ -189,30 +189,30 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
           wrongAnswerHints: {
             0: "Non, ton compte fonctionne — c'est juste un manque de suivi.",
             2: "Si si, tu peux faire des bilans. C'est la relation team qui souffre, pas l'usage.",
-            3: "Les commissions dépendent de Herbalife (sponsor), pas du coach Lor'Squad.",
+            3: "Les commissions dépendent de Herbalife (sponsor), pas du coach La Base 360.",
           },
           explanation: "Sans coach référent, tu fonctionnes mais tu n'apparais sur la fiche team de personne. Si tu galères, personne n'est alerté. C'est le maillon humain qui te garde dans la dynamique du club.",
         },
         {
           id: "q4",
-          question: "Qui voit ton statut Academy + ID Herbalife côté admin Lor'Squad ?",
+          question: "Qui voit ton statut Academy + ID Herbalife côté admin La Base 360 ?",
           answers: [
             "Personne, c'est totalement privé",
             "Tous les utilisateurs",
-            "Admin (Thomas, Mélanie) + ton coach référent + ton sponsor s'il est dans Lor'Squad",
+            "Admin (Thomas, Mélanie) + ton coach référent + ton sponsor s'il est dans La Base 360",
             "Uniquement Herbalife corporate",
           ],
           correctIndex: 2,
           wrongAnswerHints: {
             0: "Pas privé : c'est ce qui permet à ton équipe de t'aider.",
-            1: "Faux — Lor'Squad respecte les rôles. Un autre distri ne voit pas ton ID.",
-            3: "Herbalife n'a aucun accès à Lor'Squad — c'est un outil tiers du club.",
+            1: "Faux — La Base 360 respecte les rôles. Un autre distri ne voit pas ton ID.",
+            3: "Herbalife n'a aucun accès à La Base 360 — c'est un outil tiers du club.",
           },
-          explanation: "Visibilité scope team : admin Lor'Squad du club + ton coach référent + ton sponsor (s'il est inscrit Lor'Squad). Les autres distri du club ne voient rien de personnel.",
+          explanation: "Visibilité scope team : admin La Base 360 du club + ton coach référent + ton sponsor (s'il est inscrit La Base 360). Les autres distri du club ne voient rien de personnel.",
         },
         {
           id: "q5",
-          question: "Pourquoi Lor'Squad a besoin de ton ID Herbalife ?",
+          question: "Pourquoi La Base 360 a besoin de ton ID Herbalife ?",
           answers: [
             "Pour faire de la pub à Herbalife",
             "Pour tracer ton lignage et permettre les rapports PV/commissions par branche",
@@ -221,11 +221,11 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
           ],
           correctIndex: 1,
           wrongAnswerHints: {
-            0: "Lor'Squad ne fait pas de pub — c'est un outil interne au club.",
+            0: "La Base 360 ne fait pas de pub — c'est un outil interne au club.",
             2: "Au contraire : tes données sont scopées à ton club uniquement (RLS Supabase).",
             3: "Pas optionnel — c'est ce qui structure les rapports d'équipe.",
           },
-          explanation: "L'ID Herbalife relie ton compte Lor'Squad à ton lignage officiel. Permet les rapports PV par branche, les détections de transferts de parrain, et la cohérence avec les données Herbalife corporate.",
+          explanation: "L'ID Herbalife relie ton compte La Base 360 à ton lignage officiel. Permet les rapports PV par branche, les détections de transferts de parrain, et la cohérence avec les données Herbalife corporate.",
         },
       ],
     },
@@ -240,7 +240,7 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
     steps: [
       {
         id: "intro",
-        title: "Lor'Squad en 60 secondes, {firstName}",
+        title: "La Base 360 en 60 secondes, {firstName}",
         body: "Tour rapide des 8 sections principales de la sidebar + le CTA gold. À la fin tu sauras où chaque chose vit. Skip possible à tout moment, on revient quand tu veux via /academy.",
         placement: "center",
         illustrationKey: "ring-progress",
@@ -371,7 +371,7 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
           correctIndex: 2,
           wrongAnswerHints: {
             0: "Trop simple — au-delà de 10 conversations on noie l'info.",
-            1: "Proche, mais Lor'Squad sépare en plus les conversations à traiter (besoin d'une réponse).",
+            1: "Proche, mais La Base 360 sépare en plus les conversations à traiter (besoin d'une réponse).",
             3: "Trop fragmenté, on n'a pas besoin de 5 onglets.",
           },
           explanation: "3 sous-onglets : Inbox (tout) / À traiter (où le client attend ta réponse) / Archive (terminé). Le badge sur l'onglet montre le nombre de non-lues.",
@@ -405,7 +405,7 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
           correctIndex: 0,
           wrongAnswerHints: {
             1: "Les notifs sont dans Paramètres > Notifications.",
-            2: "Pas de classement compétitif — Lor'Squad est un club, pas une course.",
+            2: "Pas de classement compétitif — La Base 360 est un club, pas une course.",
             3: "Pas d'import contacts. Ta liste 100 se construit à la main dans le Cahier de bord.",
           },
           explanation: "FLEX est ton moteur 5-3-1 : 5 invitations + 3 conversations + 1 bilan par jour environ (calibré sur ton objectif rang). Tu fais ton check-in quotidien, l'app te dit en couleurs si tu es dans les clous. Pour comprendre en détail : Mon développement → Comment marche FLEX.",
@@ -441,7 +441,7 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
       {
         id: "intro",
         title: "Le bilan, ta porte d'entrée",
-        body: "Le bilan, c'est le rituel central de ton activité. Il crée le client ET son premier état des lieux en un seul parcours guidé. 13 étapes dynamiques qui s'adaptent à l'objectif (les sportifs ont 2 étapes en plus). Compte 8 à 12 minutes en RDV réel — Lor'Squad fait tout le boulot administratif, toi tu te concentres sur l'écoute.",
+        body: "Le bilan, c'est le rituel central de ton activité. Il crée le client ET son premier état des lieux en un seul parcours guidé. 13 étapes dynamiques qui s'adaptent à l'objectif (les sportifs ont 2 étapes en plus). Compte 8 à 12 minutes en RDV réel — La Base 360 fait tout le boulot administratif, toi tu te concentres sur l'écoute.",
         placement: "center",
         illustrationKey: "person-card",
       },
@@ -459,7 +459,7 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
         placement: "bottom",
         route: "/assessments/new?demo=academy",
         title: "Étape 1 — Qui est ton client ?",
-        body: "Prénom, nom, téléphone, email, sexe, âge. Tape un prénom dans le 1er champ : le tour avance dès que tu as commencé à saisir. Si la personne existe déjà dans ta base (téléphone reconnu), Lor'Squad t'ouvre sa fiche et tu fais un suivi au lieu d'un bilan initial.",
+        body: "Prénom, nom, téléphone, email, sexe, âge. Tape un prénom dans le 1er champ : le tour avance dès que tu as commencé à saisir. Si la personne existe déjà dans ta base (téléphone reconnu), La Base 360 t'ouvre sa fiche et tu fais un suivi au lieu d'un bilan initial.",
         manualAdvance: true,
         advanceOn: { event: "input", valueMatch: ".{2,}", debounceMs: 800 },
       },
@@ -484,7 +484,7 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
         target: '[data-tour-id="bilan-submit"]',
         placement: "top",
         title: "Le programme se génère tout seul",
-        body: "Lor'Squad propose les bons produits selon le bilan : Formula 1, CR7 Drive, Rebuild Strength, créatine, collagène, hydrate, plus les boosters cliquables (avec stepper de quantité par produit). Détection automatique de 6 alertes (hydratation faible, protéines basses, sommeil court, masse musculaire, snack manquant, fréquence sport incohérente) qu'il faut acquitter avant validation. Pas de bilan validé sans alertes lues.",
+        body: "La Base 360 propose les bons produits selon le bilan : Formula 1, CR7 Drive, Rebuild Strength, créatine, collagène, hydrate, plus les boosters cliquables (avec stepper de quantité par produit). Détection automatique de 6 alertes (hydratation faible, protéines basses, sommeil court, masse musculaire, snack manquant, fréquence sport incohérente) qu'il faut acquitter avant validation. Pas de bilan validé sans alertes lues.",
         manualAdvance: true,
       },
       {
@@ -525,7 +525,7 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
           wrongAnswerHints: {
             0: "Indirect — la vraie utilité opérationnelle est l'envoi WhatsApp post-bilan.",
             2: "Pas faux mais trop rare. Le téléphone sert d'abord à l'usage régulier WhatsApp.",
-            3: "Lor'Squad ne facture pas — c'est ton activité distri Herbalife à part.",
+            3: "La Base 360 ne facture pas — c'est ton activité distri Herbalife à part.",
           },
           explanation: "Le téléphone permet d'envoyer le lien d'accès et le récap par WhatsApp depuis la page remerciement, en 1 clic. Sans tél = friction post-bilan.",
         },
@@ -594,7 +594,7 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
       {
         id: "intro",
         title: "Le Programme — recommandation auto",
-        body: "Lor'Squad génère le programme produits du client selon 6 règles métier déterministes (collations, liftoff, CR7, hydrate, créatine, collagène) déclenchées par son objectif et son body scan. Tu valides, tu ajustes les quantités, tu envoies. Pas de feuille Excel, pas de catalogue à apprendre par cœur.",
+        body: "La Base 360 génère le programme produits du client selon 6 règles métier déterministes (collations, liftoff, CR7, hydrate, créatine, collagène) déclenchées par son objectif et son body scan. Tu valides, tu ajustes les quantités, tu envoies. Pas de feuille Excel, pas de catalogue à apprendre par cœur.",
         placement: "center",
         illustrationKey: "mockup-program-card",
       },
@@ -640,7 +640,7 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
         placement: "top",
         route: DEMO_FICHE_CLIENT_ROUTE,
         title: "Recommandés non pris",
-        body: "Lor'Squad détecte automatiquement les produits recommandés par son objectif que le client n'a PAS encore. Bouton WhatsApp gold avec message pré-rempli pour les proposer en 1 clic. C'est ton outil d'upsell auto — basé sur les vrais besoins du client, pas du push commercial.",
+        body: "La Base 360 détecte automatiquement les produits recommandés par son objectif que le client n'a PAS encore. Bouton WhatsApp gold avec message pré-rempli pour les proposer en 1 clic. C'est ton outil d'upsell auto — basé sur les vrais besoins du client, pas du push commercial.",
         manualAdvance: true,
       },
       {
@@ -668,11 +668,11 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
           answers: ["3 alertes", "4 alertes", "6 alertes", "8 alertes"],
           correctIndex: 2,
           wrongAnswerHints: {
-            0: "Trop peu — Lor'Squad couvre plus largement la santé sportive du client.",
+            0: "Trop peu — La Base 360 couvre plus largement la santé sportive du client.",
             1: "Tu en oublies 2. Pense aux 6 axes : hydratation, protéines, sommeil, masse, snacks, fréquence.",
             3: "Trop — on évite la sur-alerte qui ferait fuir le client.",
           },
-          explanation: "Lor'Squad détecte 6 alertes : hydratation faible, protéines basses, sommeil court, masse musculaire, snack manquant, fréquence sport incohérente. Acquittement obligatoire avant validation.",
+          explanation: "La Base 360 détecte 6 alertes : hydratation faible, protéines basses, sommeil court, masse musculaire, snack manquant, fréquence sport incohérente. Acquittement obligatoire avant validation.",
         },
         {
           id: "q2",
@@ -731,7 +731,7 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
           ],
           correctIndex: 2,
           wrongAnswerHints: {
-            0: "Les prix sont fixes (catalogue Herbalife) — tu ne négocies pas dans Lor'Squad.",
+            0: "Les prix sont fixes (catalogue Herbalife) — tu ne négocies pas dans La Base 360.",
             1: "C'est de la déco, pas du fonctionnel.",
             3: "Si si, la quantité est ajustable depuis le chantier D-urgent (avril 2026).",
           },
@@ -782,7 +782,7 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
       {
         id: "follow-up",
         title: "Le suivi automatique J+1 → J+10",
-        body: "Après chaque bilan, Lor'Squad note 4 checkpoints sur ton dashboard Co-pilote : J+1 (message bienvenue), J+3 (ressentis), J+7 (VIP), J+10 (check-in énergie). Tu reçois un digest tous les matins à 7h (cron morning-suivis-digest) avec les actions du jour. Les clients « Pas démarré » sont automatiquement exclus du protocole — pas de spam de relances. Période de grâce de 15 min : un RDV reste « actif » 15 minutes après l'heure prévue (utile si le client est en retard ou si tu es en RDV).",
+        body: "Après chaque bilan, La Base 360 note 4 checkpoints sur ton dashboard Co-pilote : J+1 (message bienvenue), J+3 (ressentis), J+7 (VIP), J+10 (check-in énergie). Tu reçois un digest tous les matins à 7h (cron morning-suivis-digest) avec les actions du jour. Les clients « Pas démarré » sont automatiquement exclus du protocole — pas de spam de relances. Période de grâce de 15 min : un RDV reste « actif » 15 minutes après l'heure prévue (utile si le client est en retard ou si tu es en RDV).",
         placement: "center",
         crossRefs: [
           { label: "Templates messages multi-canal", sectionId: "messages-and-clients" },
@@ -814,7 +814,7 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
           wrongAnswerHints: {
             0: "Trop espacé — sur 90 jours tu perds le client en route.",
             2: "Trop intrusif — un message par jour fatigue le client.",
-            3: "Si si, c'est automatisé. Lor'Squad pousse les bons rappels au bon moment.",
+            3: "Si si, c'est automatisé. La Base 360 pousse les bons rappels au bon moment.",
           },
           explanation: "Les 4 checkpoints J+1 / J+3 / J+7 / J+10 couvrent les jours critiques : bienvenue, premiers ressentis, accompagnement VIP, check énergie. Calibrés pour maximiser la rétention sans spam.",
         },
@@ -855,7 +855,7 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
           wrongAnswerHints: {
             0: "L'inverse — c'est justement pour ne PAS le harceler de relances.",
             2: "Aucun client n'est suspendu, c'est juste un statut de suivi.",
-            3: "Lor'Squad ne facture rien — c'est un outil interne club.",
+            3: "La Base 360 ne facture rien — c'est un outil interne club.",
           },
           explanation: "« Pas démarré » = le client n'a pas commencé le programme. On l'exclut automatiquement du protocole pour éviter les relances « Comment ça s'est passé ? » alors qu'il n'a rien fait.",
         },
@@ -871,7 +871,7 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
           correctIndex: 1,
           wrongAnswerHints: {
             0: "L'export ne supprime rien — c'est une copie.",
-            2: "Pas de facturation dans Lor'Squad.",
+            2: "Pas de facturation dans La Base 360.",
             3: "Pas l'objectif — et juridiquement risqué (RGPD).",
           },
           explanation: "L'export client génère un fichier complet (bilans, programme, suivis) pour transfert intra-club ou archive personnelle. Utile quand un client change de coach référent ou pour ses propres archives.",
@@ -923,7 +923,7 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
       {
         id: "quick-templates-cta",
         title: "Messages rapides — le canal externe (WhatsApp / SMS / Telegram)",
-        body: "La messagerie interne c'est puissant pour les clients déjà installés sur l'app Lor'Squad. Mais 80 % de tes échanges quotidiens passent par WhatsApp / SMS / Telegram — c'est là que tes clients vivent. Sur chaque fiche client, en haut de l'onglet Actions, le bouton gold « 💬 Envoyer un message » te donne un raccourci direct vers ces canaux externes, avec des templates pré-rédigés intelligents.",
+        body: "La messagerie interne c'est puissant pour les clients déjà installés sur l'app La Base 360. Mais 80 % de tes échanges quotidiens passent par WhatsApp / SMS / Telegram — c'est là que tes clients vivent. Sur chaque fiche client, en haut de l'onglet Actions, le bouton gold « 💬 Envoyer un message » te donne un raccourci direct vers ces canaux externes, avec des templates pré-rédigés intelligents.",
         placement: "center",
         illustrationKey: "sparkles",
       },
@@ -973,11 +973,11 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
           ],
           correctIndex: 1,
           wrongAnswerHints: {
-            0: "Pas de bouton supprimer dans Lor'Squad — l'historique est précieux.",
+            0: "Pas de bouton supprimer dans La Base 360 — l'historique est précieux.",
             2: "Pas besoin — le sélecteur lifecycle suffit, accessible depuis ta fiche client.",
             3: "Aucun rapport — modifier le tel ne supprime rien.",
           },
-          explanation: "Lor'Squad n'a pas de suppression brutale (l'historique a de la valeur). Tu marques le client en Arrêté ou Perdu via lifecycle → il sort des digests, du dashboard et du protocole. Réactivable à tout moment.",
+          explanation: "La Base 360 n'a pas de suppression brutale (l'historique a de la valeur). Tu marques le client en Arrêté ou Perdu via lifecycle → il sort des digests, du dashboard et du protocole. Réactivable à tout moment.",
         },
         {
           id: "q2",
@@ -1003,7 +1003,7 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
             "Tu copies-colles à la main pour chaque client",
             "Tu filtres par statut « En pause » dans Clients, puis utilises Messages rapides ou WhatsApp groupé",
             "Tu attends qu'ils reviennent d'eux-mêmes",
-            "Impossible, Lor'Squad ne permet pas",
+            "Impossible, La Base 360 ne permet pas",
           ],
           correctIndex: 1,
           wrongAnswerHints: {
@@ -1157,7 +1157,7 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
           wrongAnswerHints: {
             0: "Le PV c'est ton compteur côté distri, pas côté client.",
             2: "Le feedback est ailleurs (avis Google), pas en page d'accueil.",
-            3: "Aucune pub — Lor'Squad respecte l'expérience client.",
+            3: "Aucune pub — La Base 360 respecte l'expérience client.",
           },
           explanation: "Hero perso (« Bonjour Sarah ») + card RDV gold avec 4 CTAs : Ajouter à Google Calendar, télécharger .ics, ouvrir Maps, contacter pour modifier. C'est ce qui rend le RDV vivant pour le client.",
         },
@@ -1189,7 +1189,7 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
           ],
           correctIndex: 1,
           wrongAnswerHints: {
-            0: "Pas de crash — Lor'Squad est résilient aux pannes back.",
+            0: "Pas de crash — La Base 360 est résilient aux pannes back.",
             2: "L'auto-login fonctionne sur le token, pas sur l'edge — il reste connecté.",
             3: "Pas de notif systémique pour ce cas (overkill).",
           },
@@ -1226,7 +1226,7 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
       {
         id: "intro",
         title: "Tes rituels quotidiens",
-        body: "Le métier de distri Herbalife, ce n'est pas un sprint, c'est un rythme. Deux habitudes prises dès le départ font 80 % du résultat : 1) avoir Lor'Squad sous la main comme une app native (3 secondes pour répondre à un client), 2) regarder ton volume PV chaque matin pour piloter ton mois sans surprise. Ces 2 réflexes sont ce qui sépare un distri qui galère de celui qui monte les paliers tranquillement. Cette section te les installe.",
+        body: "Le métier de distri Herbalife, ce n'est pas un sprint, c'est un rythme. Deux habitudes prises dès le départ font 80 % du résultat : 1) avoir La Base 360 sous la main comme une app native (3 secondes pour répondre à un client), 2) regarder ton volume PV chaque matin pour piloter ton mois sans surprise. Ces 2 réflexes sont ce qui sépare un distri qui galère de celui qui monte les paliers tranquillement. Cette section te les installe.",
         placement: "center",
         illustrationKey: "sparkles",
       },
@@ -1235,7 +1235,7 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
         target: '[data-tour-id="pwa-install"]',
         placement: "top",
         title: "Installe l'app native (PWA)",
-        body: "Le bouton « Installer Lor'Squad » dans la sidebar ajoute l'icône à ton écran d'accueil — l'app s'ouvre alors en plein écran sans barre navigateur, avec notifs push activées. Chrome / Edge : 1 clic. iPhone Safari : Partage → Sur l'écran d'accueil. Une fois installé, tu lances Lor'Squad comme WhatsApp ou Instagram. Pourquoi c'est important : un client qui t'envoie un message attend une réponse en quelques minutes, pas en quelques heures. Avec la PWA + push notif, tu vois la notif sur ton home screen et tu réponds en 1 tap. C'est ça qui fait la différence entre « il m'a calculé » et « je sens qu'il est dispo pour moi ».",
+        body: "Le bouton « Installer La Base 360 » dans la sidebar ajoute l'icône à ton écran d'accueil — l'app s'ouvre alors en plein écran sans barre navigateur, avec notifs push activées. Chrome / Edge : 1 clic. iPhone Safari : Partage → Sur l'écran d'accueil. Une fois installé, tu lances La Base 360 comme WhatsApp ou Instagram. Pourquoi c'est important : un client qui t'envoie un message attend une réponse en quelques minutes, pas en quelques heures. Avec la PWA + push notif, tu vois la notif sur ton home screen et tu réponds en 1 tap. C'est ça qui fait la différence entre « il m'a calculé » et « je sens qu'il est dispo pour moi ».",
         manualAdvance: true,
       },
       {
@@ -1273,7 +1273,7 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
       {
         id: "outro",
         title: "{firstName}, tu es prêt 🎉",
-        body: "Bravo {firstName}, tu as terminé l'Academy Lor'Squad. Tu connais le bilan, le programme, l'agenda, la messagerie, l'app client et tes rituels PV. {coachName} verra ta complétion sur sa fiche team. Tu peux relancer n'importe quelle section via /academy. Maintenant : ton premier vrai bilan client.",
+        body: "Bravo {firstName}, tu as terminé l'Academy La Base 360. Tu connais le bilan, le programme, l'agenda, la messagerie, l'app client et tes rituels PV. {coachName} verra ta complétion sur sa fiche team. Tu peux relancer n'importe quelle section via /academy. Maintenant : ton premier vrai bilan client.",
         placement: "center",
         illustrationKey: "trophy",
         isLast: true,
@@ -1285,11 +1285,11 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
       questions: [
         {
           id: "q1",
-          question: "Quel est le seuil PV mensuel par défaut dans Lor'Squad pour démarrer ?",
+          question: "Quel est le seuil PV mensuel par défaut dans La Base 360 pour démarrer ?",
           answers: ["1 000 PV", "2 500 PV", "5 000 PV", "13 000 PV"],
           correctIndex: 1,
           wrongAnswerHints: {
-            0: "Trop bas pour un objectif structurant — Lor'Squad démarre à 2 500.",
+            0: "Trop bas pour un objectif structurant — La Base 360 démarre à 2 500.",
             2: "C'est l'étape d'après — vise d'abord 2 500 régulier avant d'augmenter.",
             3: "C'est un palier avancé — pas le seuil de démarrage par défaut.",
           },
@@ -1338,7 +1338,7 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
           correctIndex: 1,
           wrongAnswerHints: {
             0: "Marginal. Le vrai gain n'est pas la place, c'est la réactivité.",
-            2: "Faux et dangereux — Lor'Squad ne stocke rien en clair, tout passe par Supabase.",
+            2: "Faux et dangereux — La Base 360 ne stocke rien en clair, tout passe par Supabase.",
             3: "Faux. Internet reste nécessaire pour la messagerie et les RDV — il y a juste un cache offline limité.",
           },
           explanation: "PWA = notifs push (tu vois la notif dès que ton client t'écrit) + accès 1 tap depuis le home screen. Tu réponds en 1 minute au lieu de 1 heure → c'est ça qui fait sentir ton client suivi.",
@@ -1357,7 +1357,7 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
         },
         {
           id: "q5",
-          question: "Le rituel hebdo recommandé par Lor'Squad, c'est quoi ?",
+          question: "Le rituel hebdo recommandé par La Base 360, c'est quoi ?",
           answers: [
             "Faire le bilan PV chaque dimanche soir (5 min)",
             "Appeler chaque client une fois par semaine",
@@ -1367,7 +1367,7 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
           correctIndex: 0,
           wrongAnswerHints: {
             1: "Trop intrusif — un appel hebdo par client = tu tues la relation. Mieux vaut quand c'est utile.",
-            2: "Spam — relance ciblée > relance massive. Lor'Squad propose les relances pertinentes.",
+            2: "Spam — relance ciblée > relance massive. La Base 360 propose les relances pertinentes.",
             3: "Pas un rituel hebdo — le catalogue ne bouge pas tous les 7 jours.",
           },
           explanation: "Le rituel-clé : 5 minutes le dimanche soir pour regarder ta jauge PV, anticiper la semaine, planifier 2-3 relances ciblées. Plus efficace que 3h de prospection en panique le 28 du mois.",
@@ -1399,7 +1399,7 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
         id: "intro",
         title: "4 nouveaux outils livrés en mai 2026 ✨",
         body:
-          "Lor'Squad a sorti 4 features majeures ce mois-ci. On va les survoler ensemble en 30 secondes, puis tu plongeras dans chacune dans les 3 sections suivantes. Le but de cette section : que tu saches OÙ trouver quoi, pas comment tout maîtriser.",
+          "La Base 360 a sorti 4 features majeures ce mois-ci. On va les survoler ensemble en 30 secondes, puis tu plongeras dans chacune dans les 3 sections suivantes. Le but de cette section : que tu saches OÙ trouver quoi, pas comment tout maîtriser.",
         placement: "center",
         route: "/developpement",
         illustrationKey: "wave",
@@ -1472,7 +1472,7 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
             "Email automatique de Mélanie à toute l'équipe",
             "Cloche dans le header avec compteur + popup auto à la 1ère ouverture + page /developpement/nouveautes",
             "Message WhatsApp dans le groupe distri",
-            "Je dois suivre le compte LinkedIn Lor'Squad",
+            "Je dois suivre le compte LinkedIn La Base 360",
           ],
           correctIndex: 1,
           wrongAnswerHints: {
@@ -1538,7 +1538,7 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
         id: "intro",
         title: "Bienvenue dans ton Cahier de bord 📔",
         body:
-          "Le Cahier de bord regroupe 3 outils que TOUT distri Lor'Squad utilise au quotidien. On va les voir tous les 3, je vais te montrer où tu cliques pour quoi. Compte 5 minutes.",
+          "Le Cahier de bord regroupe 3 outils que TOUT distri La Base 360 utilise au quotidien. On va les voir tous les 3, je vais te montrer où tu cliques pour quoi. Compte 5 minutes.",
         placement: "center",
         route: "/cahier-de-bord",
         illustrationKey: "wave",
@@ -1574,7 +1574,7 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
         id: "rules",
         title: "🛡 Règles d'usage",
         body:
-          "C'est **TON** cahier. Personne d'autre que toi (et l'admin Lor'Squad pour t'accompagner si tu galères) ne le voit. Tu peux y mettre des notes brutes, des doutes, des prénoms — c'est privé.\n\nLa promesse Lor'Squad : tu rentres tes données → tu retrouves un journal complet de ta progression dans 3, 6, 12 mois. Tu vois où tu pars de zéro et où tu arrives.",
+          "C'est **TON** cahier. Personne d'autre que toi (et l'admin La Base 360 pour t'accompagner si tu galères) ne le voit. Tu peux y mettre des notes brutes, des doutes, des prénoms — c'est privé.\n\nLa promesse La Base 360 : tu rentres tes données → tu retrouves un journal complet de ta progression dans 3, 6, 12 mois. Tu vois où tu pars de zéro et où tu arrives.",
         placement: "center",
         route: "/cahier-de-bord",
         illustrationKey: "trophy",
@@ -1597,7 +1597,7 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
           wrongAnswerHints: {
             0: "Ce n'est pas un essai client — c'est un essai TOI sur TOI.",
             2: "Aucune dimension médicale officielle. C'est un test perso.",
-            3: "Pas une obligation Herbalife. Bonne pratique Lor'Squad.",
+            3: "Pas une obligation Herbalife. Bonne pratique La Base 360.",
           },
           explanation:
             "21j cobaye = je teste les produits sur moi pendant 21 jours, je note chaque jour mon énergie/sommeil/poids dans /cahier-de-bord onglet Cobaye. Résultat : je parle de mon vécu réel aux prospects.",
@@ -1613,12 +1613,12 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
           ],
           correctIndex: 3,
           wrongAnswerHints: {
-            0: "Pas dans le mnémo officiel Lor'Squad.",
+            0: "Pas dans le mnémo officiel La Base 360.",
             1: "Légende urbaine — c'est juste un acronyme.",
             2: "Aucun rapport produit.",
           },
           explanation:
-            "FRANK = Family / Relations / Amis / Network / Kids' parents. Mnémonique officiel Lor'Squad, sélecteur dispo dans /cahier-de-bord onglet Liste 100 quand tu ajoutes un contact.",
+            "FRANK = Family / Relations / Amis / Network / Kids' parents. Mnémonique officiel La Base 360, sélecteur dispo dans /cahier-de-bord onglet Liste 100 quand tu ajoutes un contact.",
         },
         {
           id: "q3",
@@ -1674,7 +1674,7 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
         id: "trame-6-etapes",
         title: "2️⃣ Les 6 étapes de la trame EBE",
         body:
-          "C'est la trame OFFICIELLE Lor'Squad, la même que tu suis en RDV réel :\n\n1. **Accueil & rapport** (5 min) — mettre à l'aise, créer la confiance\n2. **Découverte** (10 min) — comprendre le vrai besoin\n3. **Body scan / Tanita** (10 min) — mesurer le présent objectivement\n4. **Présentation solution** (10 min) — connecter besoin → programme\n5. **Closing & objections** (10 min) — engager sur une décision\n6. **Recommandations** (5 min) — générer 2-3 prénoms qualifiés\n\nLe simulateur respecte cette trame à la lettre.",
+          "C'est la trame OFFICIELLE La Base 360, la même que tu suis en RDV réel :\n\n1. **Accueil & rapport** (5 min) — mettre à l'aise, créer la confiance\n2. **Découverte** (10 min) — comprendre le vrai besoin\n3. **Body scan / Tanita** (10 min) — mesurer le présent objectivement\n4. **Présentation solution** (10 min) — connecter besoin → programme\n5. **Closing & objections** (10 min) — engager sur une décision\n6. **Recommandations** (5 min) — générer 2-3 prénoms qualifiés\n\nLe simulateur respecte cette trame à la lettre.",
         placement: "center",
         route: "/simulateur-ebe",
         illustrationKey: "ring-progress",
@@ -1683,7 +1683,7 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
         id: "scoring",
         title: "3️⃣ Le scoring : 0 / 5 / 10 par étape",
         body:
-          "À chaque étape, 3 choix de réponse :\n\n✨ **Excellent** = 10 pts (le bon réflexe Lor'Squad)\n⚠️ **Moyen** = 5 pts (acceptable mais pas optimal)\n❌ **À éviter** = 0 pt (erreur classique qui plante l'EBE)\n\nFeedback immédiat avec explication pédagogique : tu comprends POURQUOI ton choix était bon ou mauvais. Tu apprends en jouant.\n\nScore final sur 60 (6 étapes × 10).",
+          "À chaque étape, 3 choix de réponse :\n\n✨ **Excellent** = 10 pts (le bon réflexe La Base 360)\n⚠️ **Moyen** = 5 pts (acceptable mais pas optimal)\n❌ **À éviter** = 0 pt (erreur classique qui plante l'EBE)\n\nFeedback immédiat avec explication pédagogique : tu comprends POURQUOI ton choix était bon ou mauvais. Tu apprends en jouant.\n\nScore final sur 60 (6 étapes × 10).",
         placement: "center",
         route: "/simulateur-ebe",
         illustrationKey: "sparkles",
@@ -1705,7 +1705,7 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
         {
           id: "q1",
           question:
-            "Combien d'étapes a la trame d'un EBE Lor'Squad (et donc le Simulateur) ?",
+            "Combien d'étapes a la trame d'un EBE La Base 360 (et donc le Simulateur) ?",
           answers: [
             "4 : présentation produit → prix → objection → closing",
             "8 : avec en plus signature contrat et programme alimentaire",
@@ -1715,7 +1715,7 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
           correctIndex: 2,
           wrongAnswerHints: {
             0: "Trop court — tu sautes la découverte et les recos. C'est ce qui plante 80 % des EBE.",
-            1: "Pas dans la trame Lor'Squad — la signature et le programme sont des conséquences, pas des étapes.",
+            1: "Pas dans la trame La Base 360 — la signature et le programme sont des conséquences, pas des étapes.",
             3: "Au contraire, la trame est FIXE pour ne rien oublier.",
           },
           explanation:
@@ -1768,7 +1768,7 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
     title: "Connexion Liste 100 → Agenda",
     shortLabel: "Liste 100 → Agenda",
     description:
-      "Comment ta liste 100 connaissances alimente automatiquement ton agenda dès qu'un contact passe en 'RDV calé'. Le funnel Lor'Squad expliqué.",
+      "Comment ta liste 100 connaissances alimente automatiquement ton agenda dès qu'un contact passe en 'RDV calé'. Le funnel La Base 360 expliqué.",
     estimatedDurationMinutes: 5,
     icon: "🔗",
     steps: [
@@ -1844,7 +1844,7 @@ export const ACADEMY_SECTIONS: AcademySection[] = [
         {
           id: "q2",
           question:
-            "Quel est l'ordre logique du funnel Lor'Squad ?",
+            "Quel est l'ordre logique du funnel La Base 360 ?",
           answers: [
             "Prospect Agenda → Liste 100 → EBE fait → Client",
             "Liste 100 → Contacté → RDV calé (=Prospect Agenda) → EBE fait → Client",

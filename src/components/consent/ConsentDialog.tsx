@@ -317,7 +317,7 @@ export function ConsentDialog({ client, open, onConsented, onCancel, skipDbInser
               }}
             >
               Dans le cadre de ton accompagnement bien-être avec ton coach Herbalife indépendant via l'application{" "}
-              <strong style={{ color: "var(--ls-text)" }}>Lor'Squad Wellness</strong>, des données dites «{" "}
+              <strong style={{ color: "var(--ls-text)" }}>La Base 360</strong>, des données dites «{" "}
               <strong style={{ color: "var(--ls-text)" }}>de santé</strong> » sont collectées : poids, masse grasse, hydratation, mensurations, body scan.
             </p>
             <p
@@ -368,7 +368,7 @@ export function ConsentDialog({ client, open, onConsented, onCancel, skipDbInser
                 border: "0.5px dashed var(--ls-border)",
               }}
             >
-              ⚠️ Lor'Squad Wellness n'est pas un service médical. Les conseils prodigués par ton coach Herbalife indépendant ne remplacent pas un avis professionnel de santé.
+              ⚠️ La Base 360 n'est pas un service médical. Les conseils prodigués par ton coach Herbalife indépendant ne remplacent pas un avis professionnel de santé.
             </p>
 
             {/* Case a cocher (audit a11y 2026-04-30 : role checkbox + keyboard) */}

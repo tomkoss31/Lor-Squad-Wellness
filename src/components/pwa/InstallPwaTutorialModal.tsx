@@ -423,7 +423,7 @@ const IosStage1Svg = (
             textShadow: "0 1px 2px rgba(0,0,0,0.20)",
           }}
         >
-          Lor'Squad
+          La Base 360
         </div>
       </div>
     </PhoneFrame>
@@ -458,7 +458,7 @@ const IosStage2Svg = (
           color: "var(--ls-text-hint)",
         }}
       >
-        Lor'Squad Wellness — Ta transformation commence ici
+        La Base 360 — Ta transformation commence ici
       </div>
       {/* Bottom bar Safari avec bouton Partager highlight */}
       <div
@@ -643,7 +643,7 @@ const IosStage4Svg = (
           ⭐
         </div>
         <div style={{ flex: 1, fontSize: 8, lineHeight: 1.3 }}>
-          <div style={{ fontWeight: 700, color: "var(--ls-text)" }}>Lor'Squad</div>
+          <div style={{ fontWeight: 700, color: "var(--ls-text)" }}>La Base 360</div>
           <div style={{ color: "var(--ls-text-hint)", marginTop: 2 }}>
             lor-squad-wellness.app
           </div>
@@ -819,7 +819,7 @@ const AndroidStage4Svg = (
       ⭐
     </div>
     <div style={{ fontSize: 11, color: "var(--ls-text-hint)" }}>
-      Lor'Squad sur ton écran d'accueil
+      La Base 360 sur ton écran d'accueil
     </div>
   </div>
 );
@@ -924,7 +924,7 @@ const DesktopStage3Svg = (
         ⭐
       </div>
       <div style={{ flex: 1, fontSize: 10 }}>
-        <div style={{ fontWeight: 700, color: "var(--ls-text)" }}>Installer Lor'Squad ?</div>
+        <div style={{ fontWeight: 700, color: "var(--ls-text)" }}>Installer La Base 360 ?</div>
         <div style={{ color: "var(--ls-text-hint)", fontSize: 9 }}>lor-squad-wellness.app</div>
       </div>
     </div>
@@ -972,7 +972,7 @@ const STAGES: Record<DeviceKind, Stage[]> = {
       title: "On installe l'app sur ton iPhone",
       body: (
         <>
-          En 3 étapes simples (~30 secondes), Lor'Squad sera installée sur ton écran d'accueil comme une vraie app — avec son icône gold, les notifications push, et le mode plein écran.
+          En 3 étapes simples (~30 secondes), La Base 360 sera installée sur ton écran d'accueil comme une vraie app — avec son icône gold, les notifications push, et le mode plein écran.
         </>
       ),
       illustration: IosStage1Svg,
@@ -1005,14 +1005,14 @@ const STAGES: Record<DeviceKind, Stage[]> = {
       title: "Touche « Ajouter »",
       body: (
         <>
-          Un dernier écran apparaît avec l'icône Lor'Squad. Touche <strong>Ajouter</strong> en haut à droite, et c'est fini !
+          Un dernier écran apparaît avec l'icône La Base 360. Touche <strong>Ajouter</strong> en haut à droite, et c'est fini !
           <br />
           <br />
-          🎉 Ferme Safari et ouvre Lor'Squad depuis ton écran d'accueil.
+          🎉 Ferme Safari et ouvre La Base 360 depuis ton écran d'accueil.
         </>
       ),
       illustration: IosStage4Svg,
-      tip: "Tu pourras maintenant lancer Lor'Squad d'un seul tap, et recevoir les notifications push (RDV, messages clients).",
+      tip: "Tu pourras maintenant lancer La Base 360 d'un seul tap, et recevoir les notifications push (RDV, messages clients).",
     },
   ],
   android: [
@@ -1020,7 +1020,7 @@ const STAGES: Record<DeviceKind, Stage[]> = {
       title: "On installe l'app sur ton Android",
       body: (
         <>
-          En 3 étapes simples (~30 secondes), Lor'Squad sera installée comme une vraie app sur ton téléphone.
+          En 3 étapes simples (~30 secondes), La Base 360 sera installée comme une vraie app sur ton téléphone.
         </>
       ),
       illustration: AndroidStage1Svg,
@@ -1052,7 +1052,7 @@ const STAGES: Record<DeviceKind, Stage[]> = {
           Touche <strong>Installer</strong> dans la pop-up qui apparaît. C'est fini !
           <br />
           <br />
-          🎉 Lor'Squad est maintenant sur ton écran d'accueil.
+          🎉 La Base 360 est maintenant sur ton écran d'accueil.
         </>
       ),
       illustration: AndroidStage4Svg,
@@ -1060,10 +1060,10 @@ const STAGES: Record<DeviceKind, Stage[]> = {
   ],
   desktop: [
     {
-      title: "On installe Lor'Squad sur ton ordi",
+      title: "On installe La Base 360 sur ton ordi",
       body: (
         <>
-          Lor'Squad fonctionne comme une vraie app aussi sur ordi — fenêtre dédiée, notifications, lancement rapide depuis le bureau.
+          La Base 360 fonctionne comme une vraie app aussi sur ordi — fenêtre dédiée, notifications, lancement rapide depuis le bureau.
         </>
       ),
       illustration: DesktopStage1Svg,
@@ -1072,7 +1072,7 @@ const STAGES: Record<DeviceKind, Stage[]> = {
       title: "Touche l'icône ⊕ dans la barre d'adresse",
       body: (
         <>
-          À droite de l'URL Lor'Squad, tu vas voir une petite icône avec un <strong>+</strong> ou une icône d'écran. Clique dessus.
+          À droite de l'URL La Base 360, tu vas voir une petite icône avec un <strong>+</strong> ou une icône d'écran. Clique dessus.
         </>
       ),
       illustration: DesktopStage2Svg,
@@ -1082,10 +1082,10 @@ const STAGES: Record<DeviceKind, Stage[]> = {
       title: "Clique « Installer »",
       body: (
         <>
-          Une popup va apparaître avec l'icône Lor'Squad. Clique <strong>Installer</strong>.
+          Une popup va apparaître avec l'icône La Base 360. Clique <strong>Installer</strong>.
           <br />
           <br />
-          🎉 Lor'Squad sera ajouté au menu démarrer / Launchpad et tu pourras le lancer comme n'importe quelle app.
+          🎉 La Base 360 sera ajouté au menu démarrer / Launchpad et tu pourras le lancer comme n'importe quelle app.
         </>
       ),
       illustration: DesktopStage3Svg,

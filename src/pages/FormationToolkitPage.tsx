@@ -208,7 +208,7 @@ export function FormationToolkitPage() {
             fontFamily: "DM Sans, sans-serif",
           }}
         >
-          ✦ Boîte à outils · Lor&apos;Squad
+          ✦ Boîte à outils · La Base 360
         </div>
         <h1
           style={{

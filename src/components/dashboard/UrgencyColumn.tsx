@@ -86,8 +86,8 @@ export function UrgencyColumn({ title, count, color, icon, items, emptyLabel, se
                   return (
                   <a
                     href={createGoogleCalendarLink({
-                      title: `RDV ${item.clientName} — Lor'Squad Wellness, La Base Verdun`,
-                      description: `Type : ${item.type}\nProgramme : ${item.programTitle}\nLor'Squad Wellness — La Base, Verdun`,
+                      title: `RDV ${item.clientName} — La Base 360, La Base Verdun`,
+                      description: `Type : ${item.type}\nProgramme : ${item.programTitle}\nLa Base 360 — La Base, Verdun`,
                       startDate: due,
                       location: 'La Base Shakes & Drinks, Verdun',
                     })}

@@ -346,7 +346,7 @@ export function RecommendationStepV2({
         emoji="👥"
         eyebrow="Tes futurs filleuls"
         title="À qui aimerais-tu offrir ce moment ?"
-        description="Liste 3 personnes (ou plus) que tu pourrais recommander pour démarrer Lor'Squad. Pas d'engagement — juste pour identifier qui pourrait être intéressé."
+        description="Liste 3 personnes (ou plus) que tu pourrais recommander pour démarrer La Base 360. Pas d'engagement — juste pour identifier qui pourrait être intéressé."
         accent="purple"
       >
         {/* Toggle contactées */}

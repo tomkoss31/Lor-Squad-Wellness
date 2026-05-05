@@ -165,7 +165,7 @@ function RdvCardPremium({
   const countdown = formatCountdown(rdvDate);
 
   const googleUrl = createGoogleCalendarLink({
-    title: `RDV Lor'Squad · ${clientFirstName} ${clientLastName}`,
+    title: `RDV La Base 360 · ${clientFirstName} ${clientLastName}`,
     startDate: rdvDate,
     endDate: new Date(rdvDate.getTime() + 45 * 60 * 1000),
     description: rdv.type ? `Type : ${rdv.type}` : undefined,
@@ -173,7 +173,7 @@ function RdvCardPremium({
   });
 
   const icsUri = createIcsDataUri({
-    title: `RDV Lor'Squad · ${clientFirstName} ${clientLastName}`,
+    title: `RDV La Base 360 · ${clientFirstName} ${clientLastName}`,
     startDate: rdvDate,
     endDate: new Date(rdvDate.getTime() + 45 * 60 * 1000),
     description: rdv.type ? `Type : ${rdv.type}` : undefined,
@@ -312,14 +312,14 @@ function RdvCardCompact({
   const countdown = formatCountdown(rdvDate);
 
   const icsUri = createIcsDataUri({
-    title: `RDV Lor'Squad · ${clientFirstName} ${clientLastName}`,
+    title: `RDV La Base 360 · ${clientFirstName} ${clientLastName}`,
     startDate: rdvDate,
     endDate: new Date(rdvDate.getTime() + 45 * 60 * 1000),
     location: "La Base · Verdun",
   });
   const icsFileName = `rdv-labase-${rdvDate.toISOString().slice(0, 10)}.ics`;
   const googleUrl = createGoogleCalendarLink({
-    title: `RDV Lor'Squad · ${clientFirstName} ${clientLastName}`,
+    title: `RDV La Base 360 · ${clientFirstName} ${clientLastName}`,
     startDate: rdvDate,
     endDate: new Date(rdvDate.getTime() + 45 * 60 * 1000),
     location: "La Base · Verdun",
@@ -426,7 +426,7 @@ function buildWhatsAppHref(
     minute: "2-digit",
   });
   const msg = encodeURIComponent(
-    `Bonjour ${clientFirstName}, je te rappelle notre RDV ${dateStr} à ${timeStr} chez Lor'Squad. À très vite ! 💪`,
+    `Bonjour ${clientFirstName}, je te rappelle notre RDV ${dateStr} à ${timeStr} chez La Base 360. À très vite ! 💪`,
   );
   return `https://wa.me/${digits}?text=${msg}`;
 }

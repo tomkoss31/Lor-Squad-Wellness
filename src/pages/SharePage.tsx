@@ -170,7 +170,7 @@ export function SharePage() {
                 fontSize: 13, fontWeight: 600,
               }}
             >
-              Découvrir Lor&apos;Squad Wellness
+              Découvrir La Base 360
             </a>
           </div>
         ) : data ? (
@@ -190,7 +190,7 @@ export function SharePage() {
                 fontSize: 11, letterSpacing: "0.14em", textTransform: "uppercase",
                 color: "#EF9F27", fontWeight: 700, marginBottom: 8,
               }}>
-                Transformation Lor&apos;Squad
+                Transformation La Base 360
               </div>
               <h1 style={{
                 fontFamily: "Syne, sans-serif", fontSize: 26, fontWeight: 800,
@@ -254,7 +254,7 @@ export function SharePage() {
                 lineHeight: 1.6,
                 textAlign: "center",
               }}>
-                {data.client_first_name} a démarré son parcours Lor&apos;Squad.{" "}
+                {data.client_first_name} a démarré son parcours La Base 360.{" "}
                 <strong style={{ color: "#F5B847" }}>Le suivi commence.</strong> Premières mesures posées — tu veux voir
                 ton potentiel toi aussi ?
               </div>
@@ -277,7 +277,7 @@ export function SharePage() {
               </h2>
               <p style={{ fontSize: 13, color: "rgba(240,237,232,0.7)", margin: "0 0 16px", lineHeight: 1.55 }}>
                 Découvre ton <strong style={{ color: "#F5B847" }}>bilan gratuit</strong> et ton potentiel de
-                transformation avec un coach certifié Lor&apos;Squad.
+                transformation avec un coach certifié La Base 360.
               </p>
               <a
                 href={ctaUrl}
@@ -309,7 +309,7 @@ export function SharePage() {
             }}>
               Partagé avec l&apos;accord de <strong>{data.client_first_name}</strong>.
               <br />
-              Propulsé par <strong style={{ color: "#EF9F27" }}>Lor&apos;Squad Wellness</strong>
+              Propulsé par <strong style={{ color: "#EF9F27" }}>La Base 360</strong>
               <br />
               <a href="/welcome" style={{ color: "rgba(240,237,232,0.45)", textDecoration: "underline" }}>
                 Découvrir l&apos;app

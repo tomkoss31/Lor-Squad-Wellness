@@ -419,7 +419,7 @@ function WelcomeStage({
           marginBottom: 4,
         }}
       >
-        Lor&apos;Squad · Bienvenue
+        La Base 360 · Bienvenue
       </div>
 
       {/* Title */}

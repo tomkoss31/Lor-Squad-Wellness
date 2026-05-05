@@ -1,5 +1,5 @@
 // =============================================================================
-// errorTips.ts — Source canonique des tips Lor'Squad Wellness (2026-04-30)
+// errorTips.ts — Source canonique des tips La Base 360 (2026-04-30)
 //
 // Bibliothèque de ~60 tips concrets pour les coachs Herbalife, organisés en
 // 8 catégories (nutrition, business PV, suivi client, prospection, social

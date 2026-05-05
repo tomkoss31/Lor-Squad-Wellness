@@ -1,6 +1,6 @@
 // Chantier Academy polish C (2026-04-28).
 // Mini-illustrations SVG inline pour les modales center du tour Academy.
-// Palette Lor'Squad : gold #B8922A / teal #1D9E75 / coral #D85A30 /
+// Palette La Base 360 : gold #B8922A / teal #1D9E75 / coral #D85A30 /
 // purple #7F77DD / cream #FAF6E8.
 //
 // Tailles : 240x140 box, design "premium pictogramme" (pas illustration
@@ -203,13 +203,13 @@ function renderSvg(kind: TutorialIllustrationKind) {
           <rect x="116" y="34" width="14" height="14" rx="3" fill={TEAL} />
           <rect x="134" y="34" width="14" height="14" rx="3" fill={CORAL} />
           <rect x="98" y="52" width="14" height="14" rx="3" fill={PURPLE} />
-          {/* Logo Lor'Squad agrandi */}
+          {/* Logo La Base 360 agrandi */}
           <rect x="116" y="52" width="32" height="32" rx="7" fill={GOLD} />
           <text x="132" y="73" fontFamily="Syne, serif" fontSize="14" fontWeight="700" fill="white" textAnchor="middle">
             L
           </text>
           <text x="120" y="100" fontFamily="DM Sans" fontSize="6" fill={INK} textAnchor="middle" opacity="0.7">
-            Lor&apos;Squad
+            La Base 360
           </text>
           {/* Sparkles autour pour évoquer "installé" */}
           <path d="M60 30 L66 30 M63 27 L63 33" stroke={GOLD_LIGHT} strokeWidth="2" strokeLinecap="round" />

@@ -8,7 +8,7 @@
 //   - Volumes & rangs (VP, RO, PV, PDM, Member, QP, Sup, World Team, GET, ...)
 //   - Activite (DMO, IPA, 5-3-1, EBE, Quick Start, ...)
 //   - Produits & gestion (Formula 1, F2, Pdt Mois, Royalty, ...)
-//   - Lor'Squad-specifique (lignée, sponsor, recrue, bilan, body scan)
+//   - La Base 360-specifique (lignée, sponsor, recrue, bilan, body scan)
 //
 // Recherche live + tooltip-friendly (les termes sont structurees pour
 // pouvoir etre reutilises ailleurs en V2 via tooltips inline).
@@ -111,12 +111,12 @@ const TERMS: GlossaryTerm[] = [
     expansion: "Income Producing Activities",
     category: "activite",
     short: "Les actions qui génèrent directement du revenu (vs admin / décor).",
-    long: "Une IPA = une action qui amène un client ou un coach. Hors IPA = pas du business, c'est du décor. Les 5 IPA Lor'Squad : 5 invitations qualitatives + 2 follow-ups + 1 nouveau contact + 1 vocal équipe + 1 contenu posté.",
+    long: "Une IPA = une action qui amène un client ou un coach. Hors IPA = pas du business, c'est du décor. Les 5 IPA La Base 360 : 5 invitations qualitatives + 2 follow-ups + 1 nouveau contact + 1 vocal équipe + 1 contenu posté.",
   },
   {
     term: "5-3-1",
     category: "activite",
-    short: "La formule mensuelle Lor'Squad : 5 nouveaux clients + 3 récurrents + 1 nouveau coach.",
+    short: "La formule mensuelle La Base 360 : 5 nouveaux clients + 3 récurrents + 1 nouveau coach.",
     long: "5-3-1 répété 12 mois = ~60 nouveaux clients/an + 12 coachs/an. C'est mathématiquement la voie vers GET Team. Plus accessible que le 8-4-1 historique, plus durable dans la durée.",
   },
   {
@@ -200,7 +200,7 @@ const TERMS: GlossaryTerm[] = [
   {
     term: "Bilan",
     category: "lor-squad",
-    short: "Le RDV de découverte avec un nouveau client (90 min) — l'EBE en mode Lor'Squad.",
+    short: "Le RDV de découverte avec un nouveau client (90 min) — l'EBE en mode La Base 360.",
   },
   {
     term: "Body scan",
@@ -213,7 +213,7 @@ const CATEGORY_META = {
   volumes: { label: "Volumes & rangs", emoji: "📊", color: "var(--ls-gold)" },
   activite: { label: "Activité & méthode", emoji: "⚡", color: "var(--ls-teal)" },
   produits: { label: "Produits & commissions", emoji: "💼", color: "var(--ls-purple)" },
-  "lor-squad": { label: "Vocabulaire Lor'Squad", emoji: "✦", color: "var(--ls-coral)" },
+  "lor-squad": { label: "Vocabulaire La Base 360", emoji: "✦", color: "var(--ls-coral)" },
 } as const;
 
 function normalize(s: string): string {
@@ -268,7 +268,7 @@ export function FormationGlossaryPage() {
 
       <PageHeading
         eyebrow="Formation · vocabulaire"
-        title="Glossaire Herbalife & Lor'Squad"
+        title="Glossaire Herbalife & La Base 360"
         description="Tous les termes métier décodés en français simple. Si tu butes sur un sigle (VP, RO, DMO…), c'est ici."
       />
 

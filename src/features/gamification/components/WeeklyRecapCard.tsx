@@ -34,7 +34,7 @@ function formatRange(start: Date | null, end: Date | null): string {
 function buildShareText(data: RecapData): string {
   const range = formatRange(data.weekStart, data.weekEnd);
   const lines: string[] = [];
-  lines.push(`📊 Récap Lor'Squad — semaine ${range}`);
+  lines.push(`📊 Récap La Base 360 — semaine ${range}`);
   lines.push("");
   lines.push("📈 Total équipe :");
   lines.push(`• ${data.totalBilans} bilan${data.totalBilans > 1 ? "s" : ""} créé${data.totalBilans > 1 ? "s" : ""}`);

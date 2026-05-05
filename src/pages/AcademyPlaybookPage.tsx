@@ -50,7 +50,7 @@ export function AcademyPlaybookPage() {
     const name = (currentUser?.name || "").trim();
     return name.split(/\s+/)[0] || "Distri";
   }, [currentUser?.name]);
-  const userFullName = currentUser?.name || "Lor'Squad Distri";
+  const userFullName = currentUser?.name || "La Base 360 Distri";
 
   // Garde-fou : redirige si pas complete (admin peut bypass via URL).
   if (view.loaded && !view.isCompleted && currentUser?.role !== "admin") {
@@ -259,7 +259,7 @@ const PlaybookCoverPage = forwardRef<HTMLDivElement, CoverProps>(
         <div style={{ paddingTop: "4%" }}>
           <img
             src={LOGO_URL}
-            alt="Lor'Squad"
+            alt="La Base 360"
             style={{
               width: 80,
               height: 80,
@@ -278,7 +278,7 @@ const PlaybookCoverPage = forwardRef<HTMLDivElement, CoverProps>(
               marginBottom: 4,
             }}
           >
-            Lor&apos;Squad Academy
+            La Base 360 Academy
           </div>
           <div
             style={{
@@ -596,7 +596,7 @@ const PlaybookSectionPage = forwardRef<HTMLDivElement, SectionProps>(
             justifyContent: "space-between",
           }}
         >
-          <span>Lor&apos;Squad Academy</span>
+          <span>La Base 360 Academy</span>
           <span>Playbook personnel</span>
         </div>
       </div>

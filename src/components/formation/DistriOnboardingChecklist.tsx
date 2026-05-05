@@ -38,7 +38,7 @@ const STEPS: OnboardingStep[] = [
   {
     day: 0,
     emoji: "🎉",
-    title: "Bienvenue dans Lor'Squad",
+    title: "Bienvenue dans La Base 360",
     description:
       "Prends 5 minutes pour explorer l'app. Co-pilote, Agenda, Clients, Formation. Touche tout sans pression.",
     cta: { label: "Découvrir l'Academy", to: "/academy" },

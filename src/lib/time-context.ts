@@ -3,7 +3,7 @@
 //
 // Pure function (zero deps, testable). Mappe l'heure de la journée vers
 // un contexte UX :
-//   - greeting + emoji + label produit Lor'Squad (thé/aloe/shake/smoothie)
+//   - greeting + emoji + label produit La Base 360 (thé/aloe/shake/smoothie)
 //   - heroFocus pour orienter l'action proactive (suggestion idle)
 //   - dailyBoostCategory pour filtrer les quotes affichées
 //
@@ -14,7 +14,7 @@
 //   18h–22h : evening-recap  🍃  Smoothie time    · nutrition
 //   22h–05h : late-night     🌙  Détente          · mindset
 //
-// Pas de café (Lor'Squad = thé/aloe/shake/smoothie uniquement).
+// Pas de café (La Base 360 = thé/aloe/shake/smoothie uniquement).
 // =============================================================================
 
 export type TimeFocus =

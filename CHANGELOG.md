@@ -1,6 +1,6 @@
 # Changelog
 
-Toutes les modifications notables du projet Lor'Squad Wellness sont
+Toutes les modifications notables du projet La Base 360 sont
 consignées ici.
 
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/),

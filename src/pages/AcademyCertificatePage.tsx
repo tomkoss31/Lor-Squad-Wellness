@@ -595,7 +595,7 @@ function CertificateA4({ userName, completedDate }: CertProps) {
       >
         <img
           src={LOGO_URL}
-          alt="Lor'Squad"
+          alt="La Base 360"
           style={{
             width: "auto",
             height: 110,
@@ -683,7 +683,7 @@ function CertificateA4({ userName, completedDate }: CertProps) {
       >
         a complété avec succès l&apos;intégralité du parcours{" "}
         <strong style={{ color: "#B8922A", fontStyle: "normal", fontWeight: 500 }}>
-          Lor&apos;Squad Academy
+          La Base 360 Academy
         </strong>{" "}
         — les 8 sections de formation au métier de distributeur Herbalife, à
         la gestion d&apos;activité et à l&apos;accompagnement client.
@@ -813,7 +813,7 @@ function CertificateStory({ userName, completedDate }: CertProps) {
       >
         <img
           src={LOGO_URL}
-          alt="Lor'Squad"
+          alt="La Base 360"
           style={{
             width: "auto",
             height: 84,

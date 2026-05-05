@@ -197,7 +197,7 @@ export function BienvenuePage() {
           animations. */}
       <style>{`
         /* Hotfix theme (2026-04-30) : default = DARK, html.theme-light = LIGHT
-           pour suivre la convention Lor'Squad et eviter "tout noir en mode
+           pour suivre la convention La Base 360 et eviter "tout noir en mode
            clair" sur l app installee. */
         .bienvenue-root {
           min-height: 100vh;

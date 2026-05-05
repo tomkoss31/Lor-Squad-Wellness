@@ -236,7 +236,7 @@ export function DemoFicheClient() {
               Produits du client
             </h2>
             <p style={{ fontSize: 12, color: "var(--ls-text-muted)", margin: "4px 0 0" }}>
-              Programme perte de poids — recommandation auto Lor&apos;Squad
+              Programme perte de poids — recommandation auto La Base 360
             </p>
           </div>
           <div style={{ textAlign: "right" }}>

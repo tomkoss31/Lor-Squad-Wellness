@@ -1,15 +1,15 @@
 // =============================================================================
 // FormationCharterPage — feature #9 (2026-11-04)
 //
-// Charte du Distributeur Lor'Squad — page nominative imprimable.
+// Charte du Distributeur La Base 360 — page nominative imprimable.
 // Genre rituel d engagement fort : le distri lit, signe, transforme une
 // intention en chaine positive avec ses pairs.
 //
 // Sections :
-//   1. Header gold "Charte du Distributeur Lor'Squad" + nom user + date
+//   1. Header gold "Charte du Distributeur La Base 360" + nom user + date
 //   2. 5 engagements (Ethique / Personnel / Equipe / Pourquoi / Objectif 12m)
 //   3. 2 zones de signature : distri + coach (champ texte editable)
-//   4. Footer "Lor'Squad Wellness · 2026"
+//   4. Footer "La Base 360 · 2026"
 //
 // 2 champs editables persistes localStorage :
 //   - "pourquoi" : texte personnel ("Pourquoi je fais ca")
@@ -67,7 +67,7 @@ const ENGAGEMENTS = [
     icon: "🤝",
     title: "Engagement éthique",
     text:
-      "Je m'engage à représenter Lor'Squad et Herbalife avec intégrité — pas de promesses de revenus garantis, pas de pression commerciale, pas de jugement. Je présente l'opportunité, je laisse choisir.",
+      "Je m'engage à représenter La Base 360 et Herbalife avec intégrité — pas de promesses de revenus garantis, pas de pression commerciale, pas de jugement. Je présente l'opportunité, je laisse choisir.",
   },
   {
     icon: "💪",
@@ -263,7 +263,7 @@ export function FormationCharterPage() {
                 marginBottom: 14,
               }}
             >
-              ✦ Lor&apos;Squad Wellness · Engagement Distributeur
+              ✦ La Base 360 · Engagement Distributeur
             </div>
             <h1
               style={{
@@ -566,12 +566,12 @@ export function FormationCharterPage() {
                   fontFamily: "'Playfair Display', Georgia, serif",
                 }}
               >
-                Fondateur · Lor&apos;Squad Wellness
+                Fondateur · La Base 360
               </div>
             </div>
           </div>
 
-          {/* ── Sceau Lor'Squad ────────────────────────────────── */}
+          {/* ── Sceau La Base 360 ────────────────────────────────── */}
           <div
             style={{
               position: "absolute",
@@ -616,7 +616,7 @@ export function FormationCharterPage() {
               fontFamily: "'DM Sans', sans-serif",
             }}
           >
-            Établi le {today} · Lor&apos;Squad Wellness 2026
+            Établi le {today} · La Base 360 2026
           </div>
         </div>
 

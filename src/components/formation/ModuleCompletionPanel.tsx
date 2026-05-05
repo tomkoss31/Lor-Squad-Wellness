@@ -166,7 +166,7 @@ function PendingState({
       </div>
       {showRelayNotice ? (
         <p style={{ fontSize: 12, color: "var(--ls-text-muted)", lineHeight: 1.5 }}>
-          Pas de reponse depuis 48&nbsp;h : un admin Lor&apos;Squad va prendre
+          Pas de reponse depuis 48&nbsp;h : un admin La Base 360 va prendre
           le relais sous peu.
         </p>
       ) : (

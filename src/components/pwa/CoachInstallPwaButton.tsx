@@ -1,5 +1,5 @@
 // CoachInstallPwaButton V2 (2026-04-30).
-// Bouton "Installer Lor'Squad" sidebar coach.
+// Bouton "Installer La Base 360" sidebar coach.
 //
 // V2 :
 // - Sur Android/Desktop avec prompt natif → tap = appel direct du prompt
@@ -76,7 +76,7 @@ export function CoachInstallPwaButton() {
           <rect x="5" y="2" width="14" height="20" rx="2" />
           <line x1="12" y1="18" x2="12" y2="18" />
         </svg>
-        <span>Installer Lor&apos;Squad</span>
+        <span>Installer La Base 360</span>
       </button>
       {showTutorial && (
         <InstallPwaTutorialModal
