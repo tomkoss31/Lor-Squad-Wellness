@@ -384,6 +384,7 @@ import { useAutoNotifications } from './hooks/useAutoNotifications'
 import { useAppContext } from './context/AppContext'
 import { ActiveTourProvider } from './features/onboarding/ActiveTourContext'
 import { ActiveQuizProvider } from './features/academy/ActiveQuizContext'
+import { ServiceWorkerNavigator } from './features/notifications/ServiceWorkerNavigator'
 
 export default function App() {
   useTheme()
@@ -398,6 +399,9 @@ export default function App() {
 
   return (
     <BrowserRouter>
+      {/* Relais SW → React Router (2026-05-05) : route en interne quand
+          on clique une push notif, sans full reload. */}
+      <ServiceWorkerNavigator />
       <ActiveTourProvider>
       <ActiveQuizProvider>
       <Suspense fallback={<RouteLoadingScreen />}>
