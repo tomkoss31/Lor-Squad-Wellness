@@ -5,6 +5,30 @@ reproduire les régressions passées. Relire avant tout gros chantier.
 
 ---
 
+## 🧠 Mémo PV / Bizworks (2026-05-05)
+
+**Bizworks** = l'app officielle Herbalife qui détaille les commandes
+(perso, club, clients VIP, distri downline). Source de vérité PV
+chez Herbalife.
+
+**Lor'Squad** ne tracke que les commandes passées via fiche client
+dans l'app (`pv_client_products`). Donc l'app sous-estime
+systématiquement les PV réels (manque : conso perso, conso club sur
+place, ventes hors-fiche, commandes downline).
+
+**Décision Thomas (2026-05-05)** : ne PAS dupliquer Bizworks. L'app
+ne doit pas devenir un comptable de PV détaillés, c'est l'usine à
+gaz. Si un jour on veut afficher des PV justes :
+
+→ **Solution mini** : 1 champ admin "PV total Bizworks ce mois" qui
+override la jauge mensuelle Co-pilote. 30 sec/mois, 1h de dev.
+Pas plus loin.
+
+**Notif Plan d'action PV** (mémo précédent) : reste un chantier futur,
+dépend qu'on ait des chiffres justes — donc dépend de cette décision.
+
+---
+
 ## ⚠️ Règle du livrable complet (2026-05-04)
 
 **Une feature N'EST PAS livrée tant que :**
