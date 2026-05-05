@@ -232,7 +232,7 @@ function buildPayload(mode: FlexMode, firstName: string) {
       title: `🎯 Ton check-in FLEX${greeting}`,
       body: "30 sec pour saisir tes 4 KPI du jour. Garde la chaîne !",
       url: "/flex",
-      type: "info" as const,
+      type: "flex" as const,
     };
   }
   if (mode === "evening_late") {
