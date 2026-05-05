@@ -18,7 +18,7 @@ function buildMagicUrl(token: string): string {
 }
 
 function buildWhatsAppMessage(firstName: string, magicUrl: string): string {
-  return `🔐 ${firstName}, voici ton lien de connexion Lor'Squad (valide 24h, 3 usages) : ${magicUrl}`;
+  return `🔐 ${firstName}, voici ton lien de connexion La Base 360 (valide 24h, 3 usages) : ${magicUrl}`;
 }
 
 export function MagicLinkFallback({ firstName, clientPhone }: Props) {

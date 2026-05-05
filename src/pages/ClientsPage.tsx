@@ -988,7 +988,7 @@ export function ClientsPage() {
             title={visibleClients.length === 0 ? "Pas encore de client" : "Aucun client sur ce filtre"}
             description={
               visibleClients.length === 0
-                ? "Lance ton premier bilan pour démarrer un dossier client. Toute l'expérience Lor'Squad démarre ici."
+                ? "Lance ton premier bilan pour démarrer un dossier client. Toute l'expérience La Base 360 démarre ici."
                 : "Essaie de retirer un filtre ou changer la recherche pour voir plus de clients."
             }
             ctaLabel={visibleClients.length === 0 ? "→ Lancer un bilan" : undefined}

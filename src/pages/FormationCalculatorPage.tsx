@@ -235,7 +235,7 @@ export function FormationCalculatorPage() {
               fontWeight: 700,
             }}
           >
-            ✦ Formule 5-3-1 · Lor&apos;Squad Académie · Calibré France
+            ✦ Formule 5-3-1 · La Base 360 Académie · Calibré France
           </p>
           <h1
             style={{

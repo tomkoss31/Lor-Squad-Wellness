@@ -1,7 +1,7 @@
 // =============================================================================
 // Formation — types (2026-04-30)
 //
-// Types statiques pour le centre de Formation Lor'Squad. Phase 2 = TS pur,
+// Types statiques pour le centre de Formation La Base 360. Phase 2 = TS pur,
 // pas de DB. Migration vers tables formation_* en Phase 3 quand le contenu
 // Notion sera mature.
 //

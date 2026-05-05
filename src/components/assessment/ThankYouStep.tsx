@@ -30,8 +30,8 @@ interface Props {
 export function ThankYouStep({ clientFirstName, appUrl, coachName, onBack }: Props) {
   const [copyFeedback, setCopyFeedback] = useState<string | null>(null);
 
-  const shareMessage = `Salut ! Je viens de faire mon bilan Lor'Squad, super expérience. Si tu veux tester : ${appUrl}`;
-  const referralMessage = `Hello ! Je t'invite à faire ton bilan Lor'Squad avec ${coachName} — on gagne tous les 2 une séance bilan gratuite si tu t'inscris via mon lien : ${appUrl}`;
+  const shareMessage = `Salut ! Je viens de faire mon bilan La Base 360, super expérience. Si tu veux tester : ${appUrl}`;
+  const referralMessage = `Hello ! Je t'invite à faire ton bilan La Base 360 avec ${coachName} — on gagne tous les 2 une séance bilan gratuite si tu t'inscris via mon lien : ${appUrl}`;
 
   const handleCopyUrl = async () => {
     try {
@@ -55,7 +55,7 @@ export function ThankYouStep({ clientFirstName, appUrl, coachName, onBack }: Pro
 
   const handleShareTelegram = () => {
     const url = encodeURIComponent(appUrl);
-    const text = encodeURIComponent("Mon bilan Lor'Squad, ça vaut le coup !");
+    const text = encodeURIComponent("Mon bilan La Base 360, ça vaut le coup !");
     window.open(`https://t.me/share/url?url=${url}&text=${text}`, "_blank", "noopener,noreferrer");
   };
 
@@ -169,7 +169,7 @@ export function ThankYouStep({ clientFirstName, appUrl, coachName, onBack }: Pro
               onClick={handleReferral}
               className="thank-you-referral-cta"
             >
-              Recommander Lor&apos;Squad à un ami →
+              Recommander La Base 360 à un ami →
             </button>
           </div>
         </section>

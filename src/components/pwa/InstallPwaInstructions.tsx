@@ -21,7 +21,7 @@ const COPY: Record<DeviceKind, Instruction> = {
       "Fais défiler et choisis « Sur l'écran d'accueil »",
       "Touche « Ajouter » en haut à droite",
     ],
-    footer: "Ton icône Lor'Squad s'affichera comme une vraie appli.",
+    footer: "Ton icône La Base 360 s'affichera comme une vraie appli.",
   },
   android: {
     title: "Installe sur Android",
@@ -30,14 +30,14 @@ const COPY: Record<DeviceKind, Instruction> = {
       "Choisis « Installer l'app » ou « Ajouter à l'écran d'accueil »",
       "Confirme",
     ],
-    footer: "Ton icône Lor'Squad s'affichera sur ton écran d'accueil.",
+    footer: "Ton icône La Base 360 s'affichera sur ton écran d'accueil.",
   },
   desktop: {
     title: "Installe sur ton ordinateur",
     steps: [
       "Clique sur l'icône + dans la barre d'adresse (à droite de l'URL)",
       "Clique « Installer »",
-      "Lor'Squad s'ouvrira comme une vraie appli",
+      "La Base 360 s'ouvrira comme une vraie appli",
     ],
     footer: "L'icône sera ajoutée à ton bureau / menu démarrer.",
   },

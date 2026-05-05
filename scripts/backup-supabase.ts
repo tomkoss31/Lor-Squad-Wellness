@@ -65,7 +65,7 @@ async function backup() {
     fs.mkdirSync(backupDir, { recursive: true })
   }
 
-  console.log(`\n🗄️  Sauvegarde Lor'Squad — ${timestamp}\n`)
+  console.log(`\n🗄️  Sauvegarde La Base 360 — ${timestamp}\n`)
   const manifest: Record<string, number> = {}
 
   for (const table of TABLES) {

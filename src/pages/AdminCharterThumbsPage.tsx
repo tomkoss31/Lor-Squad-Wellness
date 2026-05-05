@@ -35,7 +35,7 @@ const FAKE_DATA = {
   cosigner: {
     firstName: "Mélanie",
     lastName: "Houbert",
-    role: "Co-fondatrice · Lor'Squad",
+    role: "Co-fondatrice · La Base 360",
     signedAt: null,
     signatureDataUrl: null,
   },

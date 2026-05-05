@@ -128,7 +128,7 @@ export const CharterOfficielle = forwardRef<HTMLDivElement, Props>(
             }}
           >
             <span style={overlineLine} />
-            Lor&apos;Squad Wellness · Engagement Distributeur
+            La Base 360 · Engagement Distributeur
             <span style={overlineLine} />
           </p>
           <h1
@@ -232,7 +232,7 @@ export const CharterOfficielle = forwardRef<HTMLDivElement, Props>(
             mode={mode}
             icon="🤝"
             title="Engagement éthique"
-            body="Je m'engage à représenter Lor'Squad et Herbalife avec intégrité — pas de promesses de revenus garantis, pas de pression commerciale, pas de jugement. Je présente l'opportunité, je laisse choisir."
+            body="Je m'engage à représenter La Base 360 et Herbalife avec intégrité — pas de promesses de revenus garantis, pas de pression commerciale, pas de jugement. Je présente l'opportunité, je laisse choisir."
           />
           <CharterEngagementCard
             mode={mode}
@@ -295,7 +295,7 @@ export const CharterOfficielle = forwardRef<HTMLDivElement, Props>(
           <CharterSignatureBlock
             label="Signature distributeur"
             fullName={distriFullName}
-            caption="Distributeur Lor'Squad"
+            caption="Distributeur La Base 360"
             signatureDataUrl={distributeur.signatureDataUrl}
             signedAt={distributeur.signedAt}
             mode={mode}
@@ -304,7 +304,7 @@ export const CharterOfficielle = forwardRef<HTMLDivElement, Props>(
           <CharterSignatureBlock
             label="Signature coach"
             fullName={cosignerFullName || "En attente"}
-            caption={cosigner.role ?? "Coach Lor'Squad"}
+            caption={cosigner.role ?? "Coach La Base 360"}
             signatureDataUrl={cosigner.signatureDataUrl}
             signedAt={cosigner.signedAt}
             mode={mode}
@@ -335,7 +335,7 @@ export const CharterOfficielle = forwardRef<HTMLDivElement, Props>(
               marginBottom: 8,
             }}
           >
-            ✦ Co-fondateurs Lor&apos;Squad Wellness ✦
+            ✦ Co-fondateurs La Base 360 ✦
           </div>
           <div
             style={{
@@ -377,7 +377,7 @@ export const CharterOfficielle = forwardRef<HTMLDivElement, Props>(
           >
             Établi le {docDate.toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}
             <span style={{ color: "#B8922A", margin: "0 8px" }}>·</span>
-            Lor&apos;Squad Wellness {docDate.getFullYear()}
+            La Base 360 {docDate.getFullYear()}
           </p>
         </div>
       </div>

@@ -1,5 +1,5 @@
 // =============================================================================
-// Lor'Squad Service Worker (2026-05-05)
+// La Base 360 Service Worker (rebrand 2026-05-05)
 //
 // Gère :
 //   - install/activate (skip waiting + claim + cache cleanup)
@@ -193,22 +193,22 @@ function profileFor(type) {
 // ─── Push display ─────────────────────────────────────────────────────────
 self.addEventListener("push", (event) => {
   const data = event.data ? event.data.json() : {};
-  const title = data.title || "Lor'Squad Wellness";
+  const title = data.title || "La Base 360";
   const profile = profileFor(data.type);
 
   // Tag unique par défaut → évite que les notifs s'écrasent entre elles
   // dans le shade Android / Notification Center iOS. Edge function peut
   // forcer un tag fixe via data.tag pour les cas regroupement voulu
   // (ex. digest matin du même jour qui remplace l'ancien).
-  const fallbackTag = `lor-squad-${Date.now()}-${Math.random()
+  const fallbackTag = `labase360-${Date.now()}-${Math.random()
     .toString(36)
     .slice(2, 8)}`;
 
   event.waitUntil(
     self.registration.showNotification(title, {
       body: data.body || "",
-      icon: data.icon || "/icons/lor-squad-icon-192.png",
-      badge: data.badge || "/icons/lor-squad-icon-192.png",
+      icon: data.icon || "/brand/labase360/pwa-192.png",
+      badge: data.badge || "/brand/labase360/pwa-192.png",
       // image (bannière Android, ignorée iOS) : si fournie par l'edge
       // function via data.image, on l'utilise. Sinon pas de bannière.
       ...(data.image ? { image: data.image } : {}),

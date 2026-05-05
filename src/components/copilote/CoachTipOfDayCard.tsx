@@ -85,7 +85,7 @@ export function CoachTipOfDayCard() {
   }
 
   function handleShare() {
-    const message = `${tip.emoji} ${tip.text}\n\n— Tip du jour, partagé depuis Lor'Squad Wellness 🌿`;
+    const message = `${tip.emoji} ${tip.text}\n\n— Tip du jour, partagé depuis La Base 360 🌿`;
     const url = `https://wa.me/?text=${encodeURIComponent(message)}`;
     window.open(url, "_blank", "noopener,noreferrer");
   }

@@ -279,7 +279,7 @@ export function WelcomePage() {
           <h1 className="welcome-title">
             <span className="welcome-title-greeting">Bienvenue sur</span>
             <br />
-            <span className="welcome-title-brand">Lor&apos;Squad Wellness</span>
+            <span className="welcome-title-brand">La Base 360</span>
           </h1>
           <p className="welcome-tagline">Ta transformation commence ici.</p>
         </div>
@@ -311,7 +311,7 @@ export function WelcomePage() {
           <ProfileCard
             icon="✨"
             title="Je veux rejoindre l'aventure"
-            subtitle="Découvrir le business Lor'Squad"
+            subtitle="Découvrir le business La Base 360"
             onClick={() => setProspectOpen(true)}
             delayMs={1000}
             accent="magenta"
@@ -320,7 +320,7 @@ export function WelcomePage() {
 
         {/* Footer */}
         <div className="welcome-footer">
-          Propulsé par Lor&apos;Squad · La Base Verdun
+          Propulsé par La Base 360 · La Base Verdun
         </div>
       </div>
 

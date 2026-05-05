@@ -968,7 +968,7 @@ export function LoginPage() {
             <div className="lp-pwa-card">
               <div className="lp-pwa-head">📱 Installer l'app</div>
               <div>
-                Ajoute Lor'Squad à ton écran d'accueil — ouverture en 1 clic, hors connexion.
+                Ajoute La Base 360 à ton écran d'accueil — ouverture en 1 clic, hors connexion.
                 {canPromptInstall ? (
                   <div>
                     <button type="button" onClick={() => void handleInstallClick()} className="lp-pwa-btn">

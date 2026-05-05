@@ -176,7 +176,7 @@ const CoPiloteV5Page = lazy(() =>
     default: module.CoPiloteV5Page,
   }))
 );
-// Chantier Lor'Squad Academy Phase 1 (2026-04-26) : parcours onboarding
+// Chantier La Base 360 Academy Phase 1 (2026-04-26) : parcours onboarding
 // distri en 8 sections. Overview = liste + progression, /academy/:sectionId
 // = page de section (placeholder Phase 1, tutoriel interactif Phase 2).
 const AcademyOverviewPage = lazy(() =>
@@ -348,7 +348,7 @@ const FormationGlossaryPage = lazy(() =>
     default: module.FormationGlossaryPage
   }))
 );
-// Boite a outils Lor'Squad (2026-11-04) : 16 outils premium.
+// Boite a outils La Base 360 (2026-11-04) : 16 outils premium.
 const FormationToolkitPage = lazy(() =>
   import("./pages/FormationToolkitPage").then((module) => ({
     default: module.FormationToolkitPage
@@ -449,7 +449,7 @@ export default function App() {
               <Route path="co-pilote-v5" element={<Navigate to="/co-pilote" replace />} />
               <Route path="co-pilote-legacy" element={<CoPilotePage />} />
               <Route path="dashboard" element={<Navigate to="/co-pilote" replace />} />
-              {/* FLEX Lor'Squad Phase B (2026-11-05) — moteur de pilotage
+              {/* FLEX La Base 360 Phase B (2026-11-05) — moteur de pilotage
                   quotidien du distri. /flex = dashboard, /flex/onboarding =
                   wizard 5 questions. */}
               <Route path="flex" element={<FlexDashboardPage />} />
@@ -476,7 +476,7 @@ export default function App() {
               <Route path="developpement/nouveautes" element={<NouveautesPage />} />
               {/* Rentabilité Phase A (2026-05-05) — jauge €/mois + breakdown. */}
               <Route path="rentabilite" element={<RentabilitePage />} />
-              {/* Lor'Squad Academy Phase 1 (2026-04-26) — gated admin only
+              {/* La Base 360 Academy Phase 1 (2026-04-26) — gated admin only
                   en prod (RoleRoute). Defense en profondeur : RoleRoute
                   redirige vers /co-pilote si non-admin tape l URL manuelle. */}
               <Route element={<RoleRoute allowedRoles={["admin"]} />}>
@@ -618,7 +618,7 @@ function RouteLoadingScreen() {
     <div className="min-h-screen bg-hero-mesh px-4 py-8">
       <div className="mx-auto flex min-h-[calc(100vh-4rem)] max-w-[760px] items-center justify-center">
         <div className="glass-panel w-full rounded-[32px] px-8 py-10 text-center">
-          <p className="eyebrow-label">Lor&apos;Squad Wellness</p>
+          <p className="eyebrow-label">La Base 360</p>
           <h1 className="mt-4 text-3xl md:text-4xl">Chargement de la page</h1>
           <p className="mt-4 text-sm leading-7 text-slate-300">
             On charge seulement l&apos;ecran utile pour garder l&apos;application plus legere et

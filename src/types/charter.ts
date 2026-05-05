@@ -47,7 +47,7 @@ export type CharterDisplayMode = "preview" | "fillable" | "print";
 /**
  * Template visuel choisi pour le rendu de la charte.
  *  - officielle : A4 paper crème classique (5 cards engagements)
- *  - manifeste  : A4 paper, serment poétique 100% Lor'Squad
+ *  - manifeste  : A4 paper, serment poétique 100% La Base 360
  *  - story      : 9:16 dark luxury, partage Instagram
  */
 export type CharterTemplate = "officielle" | "manifeste" | "story";

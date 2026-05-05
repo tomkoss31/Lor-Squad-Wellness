@@ -144,7 +144,7 @@ export function RecommendationsPage() {
           {active.map(row => {
             const isMarking = marking.has(row.assessmentId);
             const cleanPhone = row.phone.replace(/[^\d+]/g, '');
-            const pre = encodeURIComponent(`Bonjour, suite au bilan de ${row.clientName} chez Lor'Squad Wellness.`);
+            const pre = encodeURIComponent(`Bonjour, suite au bilan de ${row.clientName} chez La Base 360.`);
 
             return (
               <Card key={`${row.clientId}-${row.assessmentId}`}>
@@ -220,7 +220,7 @@ export function RecommendationsPage() {
                       {/* Contact client */}
                       {cleanPhone.length >= 6 && (
                         <>
-                          <a href={`https://wa.me/${cleanPhone}?text=${encodeURIComponent(`Bonjour ${row.clientName.split(' ')[0]}, des nouvelles de ton suivi Lor'Squad Wellness ?`)}`}
+                          <a href={`https://wa.me/${cleanPhone}?text=${encodeURIComponent(`Bonjour ${row.clientName.split(' ')[0]}, des nouvelles de ton suivi La Base 360 ?`)}`}
                             target="_blank" rel="noopener noreferrer"
                             style={{ fontSize: 10, padding: '5px 10px', borderRadius: 7, background: 'rgba(37,211,102,0.1)', color: '#16A34A', textDecoration: 'none', fontWeight: 600 }}>
                             WhatsApp client

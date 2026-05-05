@@ -40,7 +40,7 @@ async function restore(date: string, tableFilter?: string, dryRun = false) {
 
   const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf-8'))
   const mode = dryRun ? ' (DRY-RUN — simulation)' : ''
-  console.log(`\n🔄 Restauration Lor'Squad — sauvegarde du ${date}${mode}\n`)
+  console.log(`\n🔄 Restauration La Base 360 — sauvegarde du ${date}${mode}\n`)
 
   const tables = tableFilter ? [tableFilter] : Object.keys(manifest.tables)
 

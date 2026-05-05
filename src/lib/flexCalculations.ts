@@ -1,5 +1,5 @@
 // =============================================================================
-// FLEX Lor'Squad — Calculs de cibles 5-3-1 (rank-aware, 2026-11-05)
+// FLEX La Base 360 — Calculs de cibles 5-3-1 (rank-aware, 2026-11-05)
 //
 // Le revenu net par client dépend de DEUX paramètres saisis par le distri :
 //   - panier moyen retail (€) → ce que le client paie / mois

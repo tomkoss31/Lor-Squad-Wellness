@@ -165,7 +165,7 @@ export function CoachNotesPrintView({
         ))
       )}
 
-      <div className="footer">Lor'Squad Wellness · Confidentiel</div>
+      <div className="footer">La Base 360 · Confidentiel</div>
     </div>
   );
 }

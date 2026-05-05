@@ -115,7 +115,7 @@ export function DistributorPortfolioPage() {
             <h2>{portfolioUser.name}</h2>
             <div className="ls-portfolio-hero__meta">
               <RoleBadge role={portfolioUser.role} />
-              <span>{portfolioUser.title || "Lor'Squad Wellness"}</span>
+              <span>{portfolioUser.title || "La Base 360"}</span>
             </div>
           </div>
         </div>

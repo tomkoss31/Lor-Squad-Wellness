@@ -177,7 +177,7 @@ export const CharterStory = forwardRef<HTMLDivElement, Props>(
               }}
             >
               <span style={handleLine} aria-hidden="true" />
-              Lor&apos;Squad Wellness
+              La Base 360
               <span style={handleLine} aria-hidden="true" />
             </p>
           </div>
@@ -360,7 +360,7 @@ export const CharterStory = forwardRef<HTMLDivElement, Props>(
                   display: "block",
                 }}
               >
-                ✦ Lor&apos;Squad Wellness ✦
+                ✦ La Base 360 ✦
               </span>
               <span
                 style={{

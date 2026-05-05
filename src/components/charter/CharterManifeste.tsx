@@ -2,8 +2,8 @@
 // CharterManifeste — template "Manifeste" A4 paper crème (2026-05-03)
 //
 // Reproduit pixel-perfect `charte-v3-manifeste-v2.html` (validé Thomas
-// "pète sa mère"). Format A4 portrait, logo "Lor'Squad" metallic gros
-// 58px Cinzel + tornade dorée + serment 100% original Lor'Squad
+// "pète sa mère"). Format A4 portrait, logo "La Base 360" metallic gros
+// 58px Cinzel + tornade dorée + serment 100% original La Base 360
 // (Posture / Attitude / Engagement quotidien) + quote centrale +
 // fillable pourquoi/objectif (mini-cards, pas lignes pointillées —
 // décision UX validée Thomas) + phrase finale + attribution Mark Hughes.
@@ -103,7 +103,7 @@ export const CharterManifeste = forwardRef<HTMLDivElement, Props>(
               display: "inline-block",
             }}
           >
-            Lor&apos;Squad
+            La Base 360
             <span style={{ fontSize: 28, verticalAlign: "super", marginLeft: 4 }}>
               ✦
             </span>
@@ -169,7 +169,7 @@ export const CharterManifeste = forwardRef<HTMLDivElement, Props>(
           <SermentSection title="— Mon attitude —">
             <SermentLine italic>Toujours présent</SermentLine>
             <SermentLine italic>toujours prêt à servir</SermentLine>
-            <SermentLine italic>toujours fier d&apos;appartenir à Lor&apos;Squad.</SermentLine>
+            <SermentLine italic>toujours fier d&apos;appartenir à La Base 360.</SermentLine>
           </SermentSection>
 
           <SermentSection title="— Mon engagement quotidien —">
@@ -202,7 +202,7 @@ export const CharterManifeste = forwardRef<HTMLDivElement, Props>(
             <span style={uppercaseGold}>de mon éthique personnelle</span>
             <br />
             et tout ceci se reflètera{" "}
-            <span style={uppercaseGold}>au sein de Lor&apos;Squad</span>.
+            <span style={uppercaseGold}>au sein de La Base 360</span>.
           </p>
         </div>
 
@@ -312,7 +312,7 @@ export const CharterManifeste = forwardRef<HTMLDivElement, Props>(
           <ManifesteSignBlock
             label="✦ Coach ✦"
             displayName={cosignerFull}
-            caption={cosigner.role ?? "Fondateur · Lor'Squad"}
+            caption={cosigner.role ?? "Fondateur · La Base 360"}
             signatureDataUrl={cosigner.signatureDataUrl}
             signedAt={cosigner.signedAt}
             mode={mode}
@@ -341,7 +341,7 @@ export const CharterManifeste = forwardRef<HTMLDivElement, Props>(
           ✦ Établi le{" "}
           {docDate.toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}
           <span style={{ margin: "0 8px", color: "#D4A937" }}>·</span>
-          Lor&apos;Squad Wellness {docDate.getFullYear()} ✦
+          La Base 360 {docDate.getFullYear()} ✦
         </div>
       </div>
     );

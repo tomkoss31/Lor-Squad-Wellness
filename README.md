@@ -1,6 +1,8 @@
-# Lor'Squad Wellness
+# La Base 360
 
-Application web Lor'Squad Wellness pour les rendez-vous client, les bilans, le suivi terrain et la pedagogie nutrition.
+> The wellness nutrition club · Né d'un vrai club nutrition à Verdun depuis 2022.
+
+Application web La Base 360 (anciennement Lor'Squad Wellness) pour les rendez-vous client, les bilans, le suivi terrain et la pédagogie nutrition.
 
 ## Stack
 

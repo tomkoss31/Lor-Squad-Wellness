@@ -545,7 +545,7 @@ export function ClientHomeTab({
               <a
                 href={createIcsDataUri({
                   title: `Rendez-vous avec ${coachFirstName}`,
-                  description: `Rendez-vous Lor'Squad Wellness avec ${coachFirstName} à La Base — Verdun.`,
+                  description: `Rendez-vous La Base 360 avec ${coachFirstName} à La Base — Verdun.`,
                   startDate: new Date(data.next_follow_up),
                   location: "La Base Shakes and drinks, Verdun",
                   organizerName: coachFirstName,
@@ -934,7 +934,7 @@ export function ClientHomeTab({
           }}
         >
           <span aria-hidden style={{ width: 4, height: 4, borderRadius: 999, background: "#BA7517" }} />
-          Propulsé par <strong style={{ color: "#BA7517", fontWeight: 700 }}>Lor&apos;Squad</strong>
+          Propulsé par <strong style={{ color: "#BA7517", fontWeight: 700 }}>La Base 360</strong>
           <span aria-hidden style={{ opacity: 0.4 }}>·</span>
           La Base Verdun
         </div>

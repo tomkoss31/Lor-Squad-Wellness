@@ -61,7 +61,7 @@ export const AnalyticsPdfReport = forwardRef<HTMLDivElement, Props>(
                 marginBottom: 6,
               }}
             >
-              Lor&apos;Squad · Rapport mensuel
+              La Base 360 · Rapport mensuel
             </div>
             <h1
               style={{
@@ -299,7 +299,7 @@ export const AnalyticsPdfReport = forwardRef<HTMLDivElement, Props>(
             letterSpacing: 0.4,
           }}
         >
-          <span>Lor&apos;Squad Wellness · La Base — Verdun</span>
+          <span>La Base 360 · La Base — Verdun</span>
           <span>Rapport généré automatiquement</span>
         </div>
       </div>

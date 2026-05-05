@@ -1,7 +1,6 @@
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useAppContext } from "../../context/AppContext";
 import { useInstallPrompt } from "../../context/InstallPromptContext";
-import { blasonLogo } from "../../data/visualContent";
 import { Button } from "../ui/Button";
 import { StatusBadge } from "../ui/StatusBadge";
 import { BottomNav } from "./BottomNav";
@@ -168,7 +167,7 @@ export function AppLayout() {
                       ? "Agenda prospection et RDV à venir"
                       : location.pathname === "/settings"
                         ? "Paramètres"
-                        : "Lor'Squad Wellness";
+                        : "La Base 360";
 
   async function handleLogout() {
     await logout();
@@ -219,17 +218,27 @@ export function AppLayout() {
             gridTemplateRows: 'auto minmax(0, 1fr) auto',
           }}
         >
-          {/* ZONE 1 — Logo */}
+          {/* ZONE 1 — Logo La Base 360 (rebrand 2026-05-05) */}
           <div style={{ padding: '20px 16px 16px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <div style={{ width: 34, height: 34, background: '#C9A84C', borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="#0B0D11"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-              </div>
+              <img
+                src="/brand/labase360/app-icon-512.svg"
+                alt="La Base 360"
+                style={{ width: 34, height: 34, borderRadius: 9, flexShrink: 0 }}
+              />
               <div>
-                <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 14, color: '#F0EDE8', lineHeight: 1.2 }}>
-                  Lor&apos;<span style={{ color: '#C9A84C' }}>Squad</span>
+                <div style={{ fontFamily: 'Sora, sans-serif', fontWeight: 700, fontSize: 14, color: '#F0EDE8', lineHeight: 1.2, letterSpacing: '-0.01em' }}>
+                  La Base{' '}
+                  <span style={{
+                    fontStyle: 'italic',
+                    fontWeight: 400,
+                    background: 'linear-gradient(135deg, #10B981 0%, #06B6D4 50%, #8B5CF6 100%)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    backgroundClip: 'text',
+                  }}>360</span>
                 </div>
-                <div style={{ fontSize: 10, color: '#4A5068', letterSpacing: '0.5px' }}>Wellness</div>
+                <div style={{ fontSize: 9, color: '#4A5068', letterSpacing: '1.5px', textTransform: 'uppercase', marginTop: 2 }}>★ Since 2022 ★</div>
               </div>
             </div>
           </div>
@@ -475,12 +484,14 @@ export function AppLayout() {
             <div className="flex items-center justify-between gap-3">
               <div className="flex min-w-0 items-center gap-3">
                 <img
-                  src={blasonLogo}
-                  alt="Lor'Squad"
+                  src="/brand/labase360/app-icon-512.svg"
+                  alt="La Base 360"
                   className="h-11 w-11 rounded-[16px] object-cover shadow-soft"
                 />
                 <div className="min-w-0">
-                  <p className="truncate text-base font-semibold text-white">Lor&apos;Squad Wellness</p>
+                  <p className="truncate text-base font-semibold text-white" style={{ fontFamily: "Sora, sans-serif" }}>
+                    La Base 360
+                  </p>
                 </div>
               </div>
               <div className="flex items-center gap-2">

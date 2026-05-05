@@ -119,7 +119,7 @@ export function EvolutionReportPage() {
   const latest = metrics[metrics.length - 1]
   const reportUrl = window.location.href
 
-  const shareWA = () => window.open(`https://wa.me/?text=${encodeURIComponent(`Mon rapport d'évolution Lor'Squad Wellness : ${reportUrl}`)}`)
+  const shareWA = () => window.open(`https://wa.me/?text=${encodeURIComponent(`Mon rapport d'évolution La Base 360 : ${reportUrl}`)}`)
   const shareTG = () => window.open(`https://t.me/share/url?url=${encodeURIComponent(reportUrl)}`)
   const shareSMS = () => window.open(`sms:?body=${encodeURIComponent(`Mon rapport d'évolution : ${reportUrl}`)}`)
   const copyLink = () => navigator.clipboard.writeText(reportUrl)
@@ -377,7 +377,7 @@ export function EvolutionReportPage() {
                   </div>
                   <div style={{ fontSize: 11, color: '#6B7280', marginTop: 2 }}>La Base — Verdun</div>
                 </div>
-                <a href={`https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent("RDV Lor'Squad Wellness")}&location=${encodeURIComponent('La Base Shakes & Drinks, Verdun')}`}
+                <a href={`https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent("RDV La Base 360")}&location=${encodeURIComponent('La Base Shakes & Drinks, Verdun')}`}
                   target="_blank" rel="noopener noreferrer"
                   style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#0D9488', color: '#fff', borderRadius: 9, padding: '8px 14px', textDecoration: 'none', fontSize: 12, fontWeight: 500, flexShrink: 0 }}>
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
@@ -403,7 +403,7 @@ export function EvolutionReportPage() {
                   </div>
                 </div>
               </div>
-              <div style={{ textAlign: 'center', fontSize: 10, color: '#9CA3AF' }}>Lor&apos;Squad Wellness · Rapport confidentiel · Valable 90 jours</div>
+              <div style={{ textAlign: 'center', fontSize: 10, color: '#9CA3AF' }}>La Base 360 · Rapport confidentiel · Valable 90 jours</div>
             </div>
 
           </div>

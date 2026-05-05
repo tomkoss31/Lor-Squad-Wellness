@@ -37,14 +37,14 @@ export const PLAYBOOK_SECTIONS: PlaybookSection[] = [
     sectionId: "welcome",
     pageTitle: "Profil distri",
     subtitle:
-      "Ton compte Lor'Squad relie ton lignage Herbalife et ton coach interne. Deux liens distincts, ne pas confondre.",
+      "Ton compte La Base 360 relie ton lignage Herbalife et ton coach interne. Deux liens distincts, ne pas confondre.",
     icon: "👤",
     takeaways: [
       {
         emoji: "🔗",
         title: "Sponsor vs coach référent",
         detail:
-          "Le sponsor c'est l'arbre Herbalife (commissions). Le coach référent c'est qui te suit dans Lor'Squad. Souvent identiques, parfois différents.",
+          "Le sponsor c'est l'arbre Herbalife (commissions). Le coach référent c'est qui te suit dans La Base 360. Souvent identiques, parfois différents.",
       },
       {
         emoji: "🆔",
@@ -107,7 +107,7 @@ export const PLAYBOOK_SECTIONS: PlaybookSection[] = [
     sectionId: "first-bilan",
     pageTitle: "Le bilan, ton rituel central",
     subtitle:
-      "13 étapes dynamiques en 8 à 12 minutes. Lor'Squad fait l'admin, toi tu écoutes le client.",
+      "13 étapes dynamiques en 8 à 12 minutes. La Base 360 fait l'admin, toi tu écoutes le client.",
     icon: "📋",
     takeaways: [
       {
@@ -183,7 +183,7 @@ export const PLAYBOOK_SECTIONS: PlaybookSection[] = [
         emoji: "🗓️",
         title: "4 checkpoints J+1 / J+3 / J+7 / J+10",
         detail:
-          "Lor'Squad note ces 4 contacts sur ton dashboard. Bienvenue, premiers ressentis, VIP, check énergie. Calibrés rétention sans spam.",
+          "La Base 360 note ces 4 contacts sur ton dashboard. Bienvenue, premiers ressentis, VIP, check énergie. Calibrés rétention sans spam.",
       },
       {
         emoji: "⏰",
@@ -286,7 +286,7 @@ export const PLAYBOOK_SECTIONS: PlaybookSection[] = [
         emoji: "📲",
         title: "Installer l'app en PWA",
         detail:
-          "Sidebar → bouton « Installer Lor'Squad ». Notifs push activées + lancement direct depuis home screen. Tu réponds en 1 min au lieu de 1 heure.",
+          "Sidebar → bouton « Installer La Base 360 ». Notifs push activées + lancement direct depuis home screen. Tu réponds en 1 min au lieu de 1 heure.",
       },
       {
         emoji: "🎯",

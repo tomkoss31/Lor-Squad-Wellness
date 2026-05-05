@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 120" width="600" height="120">
+  <defs>
+    <linearGradient id="vitalFusionH" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#10B981"/>
+      <stop offset="50%" stop-color="#06B6D4"/>
+      <stop offset="100%" stop-color="#8B5CF6"/>
+    </linearGradient>
+    <linearGradient id="topShineH" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="rgba(255,255,255,0.30)"/>
+      <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Cercle gauche -->
+  <circle cx="60" cy="60" r="48" fill="url(#vitalFusionH)"/>
+  <ellipse cx="60" cy="38" rx="36" ry="14" fill="url(#topShineH)"/>
+  <text x="60" y="84"
+        font-family="Sora, sans-serif"
+        font-weight="700"
+        font-size="62"
+        fill="#FFFFFF"
+        text-anchor="middle"
+        letter-spacing="-3">B</text>
+
+  <!-- Wordmark à droite -->
+  <text x="130" y="72"
+        font-family="Sora, sans-serif"
+        font-weight="700"
+        font-size="40"
+        fill="#0F172A"
+        letter-spacing="-1">La Base</text>
+  <text x="285" y="72"
+        font-family="Sora, sans-serif"
+        font-weight="400"
+        font-style="italic"
+        font-size="40"
+        fill="url(#vitalFusionH)"
+        letter-spacing="0">360</text>
+
+  <!-- Tagline dessous -->
+  <text x="130" y="98"
+        font-family="Sora, sans-serif"
+        font-weight="500"
+        font-size="13"
+        fill="#64748B"
+        letter-spacing="0.5">The wellness nutrition club</text>
+</svg>

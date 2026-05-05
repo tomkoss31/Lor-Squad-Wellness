@@ -178,7 +178,7 @@ export function RentabilityDetailModal({ data, onClose }: RentabilityDetailModal
 
         {/* Note méthodologie */}
         <div style={methodoStyle}>
-          ℹ️ Calcul basé sur les programmes trackés dans l'app Lor'Squad (commandes via fiche client).
+          ℹ️ Calcul basé sur les programmes trackés dans l'app La Base 360 (commandes via fiche client).
           Les commandes hors-fiche (perso, club, Bizworks direct) ne sont pas incluses dans cette V1.
         </div>
 
