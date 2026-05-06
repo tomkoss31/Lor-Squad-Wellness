@@ -149,22 +149,104 @@ function AuthBootSplash() {
           }}
         />
 
-        {/* Logo officiel patience.png au centre */}
-        <img
-          src="/brand/labase360/patience.png"
-          alt="La Base 360 — The wellness nutrition club"
-          className="lb360-anim"
+        {/* Container logo + texte (reconstruction propre, pas le PNG patience
+            qui a un damier integre dans les pixels) */}
+        <div
           style={{
             position: "relative",
             zIndex: 1,
-            width: "min(420px, 78vw)",
-            height: "auto",
-            animation: "lb360-fade-in 800ms ease-out both, lb360-logo-breathe 4s ease-in-out infinite 800ms",
-            willChange: "transform, opacity",
-            filter:
-              "drop-shadow(0 0 32px rgba(16,185,129,0.18)) drop-shadow(0 8px 32px rgba(6,182,212,0.15))",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: 18,
           }}
-        />
+        >
+          {/* Orbe app-icon (SVG vectoriel, transparent propre) */}
+          <img
+            src="/brand/labase360/app-icon-512.svg"
+            alt="La Base 360"
+            className="lb360-anim"
+            style={{
+              width: 132,
+              height: 132,
+              borderRadius: 30,
+              animation:
+                "lb360-fade-in 600ms ease-out both, lb360-logo-breathe 4s ease-in-out infinite 600ms",
+              willChange: "transform, opacity",
+              filter:
+                "drop-shadow(0 0 28px rgba(16,185,129,0.30)) drop-shadow(0 12px 32px rgba(6,182,212,0.22))",
+            }}
+          />
+
+          {/* Heritage pill */}
+          <div
+            className="lb360-anim"
+            style={{
+              padding: "5px 16px",
+              borderRadius: 100,
+              background: "rgba(255,255,255,0.05)",
+              border: "0.5px solid rgba(255,255,255,0.12)",
+              fontFamily: "Inter, system-ui, sans-serif",
+              fontSize: 9.5,
+              fontWeight: 600,
+              letterSpacing: "0.32em",
+              textTransform: "uppercase",
+              color: "rgba(240,237,232,0.65)",
+              animation: "lb360-fade-up 500ms ease-out 350ms both",
+              backdropFilter: "blur(8px)",
+            }}
+          >
+            ★ Since 2022 ★
+          </div>
+
+          {/* Brand name */}
+          <h1
+            className="lb360-anim"
+            style={{
+              fontFamily: "Sora, system-ui, sans-serif",
+              fontSize: 38,
+              fontWeight: 700,
+              color: "#F0EDE8",
+              margin: 0,
+              letterSpacing: "-0.025em",
+              lineHeight: 1.05,
+              animation: "lb360-fade-up 500ms ease-out 500ms both",
+            }}
+          >
+            La Base{" "}
+            <span
+              style={{
+                fontStyle: "italic",
+                fontWeight: 400,
+                background:
+                  "linear-gradient(135deg, #10B981 0%, #06B6D4 50%, #8B5CF6 100%)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                backgroundClip: "text",
+                display: "inline-block",
+                paddingRight: 6,
+              }}
+            >
+              360
+            </span>
+          </h1>
+
+          {/* Tagline */}
+          <p
+            className="lb360-anim"
+            style={{
+              fontFamily: "Inter, system-ui, sans-serif",
+              fontSize: 13.5,
+              color: "rgba(240,237,232,0.5)",
+              margin: 0,
+              fontWeight: 400,
+              letterSpacing: "0.01em",
+              animation: "lb360-fade-up 500ms ease-out 650ms both",
+            }}
+          >
+            The wellness nutrition club
+          </p>
+        </div>
 
         {/* Loader dots G3 sous le logo */}
         <div
