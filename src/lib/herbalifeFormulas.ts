@@ -170,20 +170,23 @@ export interface RankProgression {
   pvCurrent: number;
   pct: number; // 0-100
   remaining: number;
-  /** "personal" pour Distri/SC/SB, "organization" pour SB->Supervisor (= own + downline). */
-  pvSource: "personal" | "organization";
+  /** "personal" : juste le PV perso du user.
+   *  "personal_extended" : perso + downline non-Supervisor (qualif Supervisor 4000 PV). */
+  pvSource: "personal" | "personal_extended";
 }
 
 const RANK_PROGRESSION_THRESHOLDS: Record<
   string,
-  { nextKey: string; pvNeeded: number; source: "personal" | "organization" }
+  { nextKey: string; pvNeeded: number; source: "personal" | "personal_extended" }
 > = {
   distributor_25: { nextKey: "senior_consultant_35", pvNeeded: 500, source: "personal" },
   senior_consultant_35: { nextKey: "success_builder_42", pvNeeded: 1000, source: "personal" },
-  // Supervisor 50% : seuil 4000 PV en VOLUME D'ORGANISATION (perso + downline)
-  // Cf. Herbalife Marketing Plan FR. Cas Mandy 42% : Victoria fait monter sa
-  // jauge Supervisor avec ses propres PV (parrainage Herbalife).
-  success_builder_42: { nextKey: "supervisor_50", pvNeeded: 4000, source: "organization" },
+  // Supervisor 4000 PV : on compte le PV perso + downline NON-Supervisor.
+  // Tant que personne en bas n'est Supervisor, ses PV comptent comme PV perso
+  // du sponsor (regle Herbalife confirmee Thomas 2026-11-07). Quand un downline
+  // devient Supervisor, sa branche "casse" et ne compte plus pour ce calcul
+  // (mais bascule en Royalty Override 5% pour les paliers superieurs).
+  success_builder_42: { nextKey: "supervisor_50", pvNeeded: 4000, source: "personal_extended" },
 };
 
 const RANK_LABEL_FALLBACK: Record<string, string> = {
@@ -194,21 +197,21 @@ const RANK_LABEL_FALLBACK: Record<string, string> = {
 };
 
 /**
- * Volume d'organisation d'un user : son PV perso + tous les PV de sa downline
- * (recursif), en arretant la branche au prochain Supervisor (50%) qui forme
- * sa propre legline (regle Herbalife : un Supervisor "casse" la org volume
- * pour les paliers superieurs, sauf en Royalty).
+ * "PV personnel etendu" d'un user : son PV perso + les PV de sa downline
+ * NON-SUPERVISOR (recursif). On stoppe la branche des qu'on rencontre un
+ * Supervisor 50%+ (les volumes de cette branche basculent en "Volume
+ * d'Organisation", utilise pour les paliers AU-DESSUS de Supervisor —
+ * pas pour devenir Supervisor).
  *
- * Pour la jauge progression vers Supervisor, on compte tout le downline
- * sans s'arreter (les futurs Supervisor sont encore qualifiants tant que
- * pas "sortis"). Implementation simplifiee : on additionne tout.
+ * C'est ce total qui fait avancer un Success Builder vers les 4000 PV
+ * de qualification Supervisor (regle Herbalife confirmee Thomas 2026-11-07).
  *
- * @param userId user dont on calcule la org volume
- * @param users  liste users avec sponsorId
+ * @param userId user dont on calcule la PV qualifiante
+ * @param users  liste users avec sponsorId + currentRank
  * @param breakdowns breakdowns du mois (pour PV par user)
  * @param fallbackTotalForUser fn optionnelle pour fallback monthly_pv_override
  */
-export function computeOrganizationPv(
+export function computeQualifyingPersonalPv(
   userId: string,
   users: Array<{
     id: string;
@@ -237,7 +240,9 @@ export function computeOrganizationPv(
     return 0;
   };
 
-  // BFS sur la sous-arborescence
+  // BFS : on inclut le user de depart + sa downline tant qu'on ne croise pas
+  // un Supervisor (le Supervisor downstream "casse" la branche : ses PV ne
+  // comptent plus pour la qualif Supervisor du user courant).
   let total = pvForUser(userId);
   const queue: string[] = [...(childrenBySponsor.get(userId) ?? []).map((u) => u.id)];
   const visited = new Set<string>([userId]);
@@ -245,12 +250,21 @@ export function computeOrganizationPv(
     const id = queue.shift()!;
     if (visited.has(id)) continue;
     visited.add(id);
+    const u = users.find((x) => x.id === id);
+    if (!u) continue;
+    // Si c'est un Supervisor ou plus, on arrete la branche (ne compte pas
+    // ce user ni sa downline). C'est la "breakaway" Herbalife.
+    if (tierPctForRank(u.currentRank) >= 50) continue;
     total += pvForUser(id);
     const children = childrenBySponsor.get(id) ?? [];
     for (const c of children) queue.push(c.id);
   }
   return total;
 }
+
+/** @deprecated Renomme en computeQualifyingPersonalPv (mais sans breakaway).
+ *  Conserve pour compat retro-arriere. */
+export const computeOrganizationPv = computeQualifyingPersonalPv;
 
 /**
  * Tree-walk : pour un sponsor (viewer), calcule l override total EUR sur
@@ -337,14 +351,14 @@ export function computeViewerDownlineOverride(
  *
  * @param currentRank rang actuel
  * @param personalPv  PV perso ce mois (somme breakdown ou monthly_pv_override)
- * @param organizationPv  PV organisation ce mois (perso + downline cumule)
- *                        — utilise UNIQUEMENT pour la jauge Supervisor.
- *                        Si non fourni, fallback sur personalPv.
+ * @param qualifyingPersonalPv  Pour Success Builder->Supervisor uniquement :
+ *                              PV perso + downline non-Supervisor cumule.
+ *                              Si non fourni, fallback sur personalPv.
  */
 export function rankProgression(
   currentRank: string | null | undefined,
   personalPv: number,
-  organizationPv?: number,
+  qualifyingPersonalPv?: number,
 ): RankProgression | null {
   const rank = currentRank ?? "distributor_25";
   const threshold = RANK_PROGRESSION_THRESHOLDS[rank];
@@ -353,8 +367,8 @@ export function rankProgression(
     return null;
   }
   const pvCurrent =
-    threshold.source === "organization"
-      ? (organizationPv ?? personalPv)
+    threshold.source === "personal_extended"
+      ? (qualifyingPersonalPv ?? personalPv)
       : personalPv;
   const pct = Math.min(100, Math.round((pvCurrent / threshold.pvNeeded) * 100));
   return {
@@ -365,6 +379,6 @@ export function rankProgression(
     pvCurrent: Math.max(0, pvCurrent),
     pct,
     remaining: Math.max(0, threshold.pvNeeded - pvCurrent),
-    pvSource: threshold.source,
+    pvSource: threshold.source as "personal" | "personal_extended",
   };
 }
