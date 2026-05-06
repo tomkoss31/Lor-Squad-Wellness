@@ -148,7 +148,7 @@ export function ClientMessageModal({
           width: "100%",
           padding: 24,
           boxShadow: "0 20px 60px rgba(0,0,0,0.25)",
-          color: "#111827",
+          color: "#0F172A",
         }}
       >
         <p
@@ -156,7 +156,7 @@ export function ClientMessageModal({
             fontFamily: "Syne, sans-serif",
             fontSize: 20,
             fontWeight: 700,
-            color: "#111827",
+            color: "#0F172A",
             margin: 0,
             marginBottom: 6,
           }}
@@ -202,7 +202,7 @@ export function ClientMessageModal({
                 background: "#FAFAFA",
                 fontSize: 14,
                 fontFamily: "DM Sans, sans-serif",
-                color: "#111827",
+                color: "#0F172A",
                 resize: "vertical",
                 outline: "none",
                 boxSizing: "border-box",

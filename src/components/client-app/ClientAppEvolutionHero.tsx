@@ -125,7 +125,7 @@ export function ClientAppEvolutionHero({ assessments, measurements }: Props) {
             gap: "8px",
             marginTop: "16px",
             paddingTop: "14px",
-            borderTop: "1px solid rgba(0,0,0,0.06)",
+            borderTop: "1px solid rgba(15,23,42,0.06)",
           }}
         >
           <div

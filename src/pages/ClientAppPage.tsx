@@ -467,10 +467,10 @@ export function ClientAppPage() {
   }
 
   if (loading)
-    return <div style={{ minHeight: '100vh', background: '#F4F2EE', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'DM Sans, sans-serif', color: '#9CA3AF' }}>Chargement...</div>
+    return <div style={{ minHeight: '100vh', background: '#FAFAFC', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'DM Sans, sans-serif', color: '#94A3B8' }}>Chargement...</div>
 
   if (!data)
-    return <div style={{ minHeight: '100vh', background: '#F4F2EE', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'DM Sans, sans-serif', color: '#DC2626' }}>Lien introuvable ou expiré.</div>
+    return <div style={{ minHeight: '100vh', background: '#FAFAFC', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'DM Sans, sans-serif', color: '#EF4444' }}>Lien introuvable ou expiré.</div>
 
   // Chantier C — Onboarding client PWA (2026-11-04) : tour 4 slides au
   // 1er login. onboardingDone === false strictement (null = pas encore
@@ -502,7 +502,7 @@ export function ClientAppPage() {
   // ClientAppKeyMetricsGrid, qui calcule deltas et formats côté composant.
 
   return (
-    <div style={{ minHeight: '100vh', background: '#F7F5F0', fontFamily: 'DM Sans, sans-serif', color: '#111827', paddingBottom: 80, position: 'relative', overflow: 'hidden' }}>
+    <div style={{ minHeight: '100vh', background: '#FFFFFF', fontFamily: 'DM Sans, sans-serif', color: '#0F172A', paddingBottom: 80, position: 'relative', overflow: 'hidden' }}>
       {/* Chantier Premium App client (2026-04-24) : mesh gradient subtil
           en arrière-plan pour cohérence avec Welcome/Login. Plus discret
           que les pages publiques (app quotidienne, pas d'effet "wouah"
@@ -693,7 +693,7 @@ export function ClientAppPage() {
             {/* Hotfix client-login (2026-04-24) : salutation dynamique selon
                 l'heure de l'app client. 5-12h Bonjour / 12-18h Bon après-midi /
                 18-23h Bonsoir / sinon Bonne nuit. */}
-            <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 500, fontSize: 22, color: '#111827' }}>
+            <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 500, fontSize: 22, color: '#0F172A' }}>
               {clientGreeting(new Date())} {data.client_first_name} !
             </div>
             <div style={{ fontSize: 11, color: '#6B7280', marginTop: 2 }}>
@@ -904,7 +904,7 @@ export function ClientAppPage() {
         {activeTab === 'refer' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             <div style={{ background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.15)', borderRadius: 14, padding: 16 }}>
-              <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 16, color: '#111827', marginBottom: 6 }}>
+              <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 16, color: '#0F172A', marginBottom: 6 }}>
                 Recommander un ami
               </div>
               <div style={{ fontSize: 12, color: '#6B7280', lineHeight: 1.7, marginBottom: 14 }}>
@@ -919,9 +919,9 @@ export function ClientAppPage() {
               ) : (
                 <>
                   <input value={referName} onChange={(e) => setReferName(e.target.value)} placeholder="Prénom de la personne"
-                    style={{ width: '100%', padding: '12px 14px', border: '1px solid rgba(16,185,129,0.2)', borderRadius: 10, fontFamily: 'DM Sans, sans-serif', fontSize: 16, background: '#fff', color: '#111827', outline: 'none', marginBottom: 8 }} />
+                    style={{ width: '100%', padding: '12px 14px', border: '1px solid rgba(16,185,129,0.2)', borderRadius: 10, fontFamily: 'DM Sans, sans-serif', fontSize: 16, background: '#fff', color: '#0F172A', outline: 'none', marginBottom: 8 }} />
                   <input value={referContact} onChange={(e) => setReferContact(e.target.value)} placeholder="Son numéro ou email"
-                    style={{ width: '100%', padding: '12px 14px', border: '1px solid rgba(16,185,129,0.2)', borderRadius: 10, fontFamily: 'DM Sans, sans-serif', fontSize: 16, background: '#fff', color: '#111827', outline: 'none', marginBottom: 12 }} />
+                    style={{ width: '100%', padding: '12px 14px', border: '1px solid rgba(16,185,129,0.2)', borderRadius: 10, fontFamily: 'DM Sans, sans-serif', fontSize: 16, background: '#fff', color: '#0F172A', outline: 'none', marginBottom: 12 }} />
                   <button onClick={() => void sendReferral()} disabled={!referName || !referContact}
                     style={{ width: '100%', padding: 14, borderRadius: 10, border: 'none', background: referName && referContact ? '#10B981' : 'rgba(16,185,129,0.3)', color: '#fff', fontFamily: 'Syne, sans-serif', fontSize: 14, fontWeight: 700, cursor: referName && referContact ? 'pointer' : 'not-allowed', boxShadow: referName && referContact ? '0 2px 8px rgba(16,185,129,0.25)' : 'none' }}>
                     Envoyer à {data.coach_name}
@@ -937,7 +937,7 @@ export function ClientAppPage() {
       {showInstallPrompt && (
         <div style={{
           position: 'fixed', bottom: 90, left: 12, right: 12,
-          background: '#111827', borderRadius: 16, padding: 18,
+          background: '#0F172A', borderRadius: 16, padding: 18,
           zIndex: 200, boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
@@ -949,7 +949,7 @@ export function ClientAppPage() {
               </div>
               <div>
                 <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 14, color: '#fff' }}>Installer l'app</div>
-                <div style={{ fontSize: 11, color: '#9CA3AF' }}>La Base 360</div>
+                <div style={{ fontSize: 11, color: '#94A3B8' }}>La Base 360</div>
               </div>
             </div>
             <button
@@ -957,7 +957,7 @@ export function ClientAppPage() {
                 setShowInstallPrompt(false)
                 try { window.localStorage.setItem('lor-install-dismissed', '1') } catch { /* ignore */ }
               }}
-              style={{ background: 'none', border: 'none', color: '#9CA3AF', fontSize: 20, cursor: 'pointer', padding: 4, lineHeight: 1 }}
+              style={{ background: 'none', border: 'none', color: '#94A3B8', fontSize: 20, cursor: 'pointer', padding: 4, lineHeight: 1 }}
               aria-label="Fermer"
             >×</button>
           </div>
@@ -990,7 +990,7 @@ export function ClientAppPage() {
                   setShowInstallPrompt(false)
                   try { window.localStorage.setItem('lor-install-dismissed', '1') } catch { /* ignore */ }
                 }}
-                style={{ width: '100%', marginTop: 8, padding: 10, borderRadius: 10, border: 'none', background: 'transparent', color: '#9CA3AF', fontSize: 12, cursor: 'pointer' }}
+                style={{ width: '100%', marginTop: 8, padding: 10, borderRadius: 10, border: 'none', background: 'transparent', color: '#94A3B8', fontSize: 12, cursor: 'pointer' }}
               >
                 Plus tard
               </button>
@@ -1116,8 +1116,8 @@ export function ClientAppPage() {
         </Suspense>
       ) : null}
 
-      {/* BOTTOM NAV */}
-      <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: '#fff', borderTop: '1px solid rgba(0,0,0,0.07)', display: 'flex', paddingBottom: 'max(12px, env(safe-area-inset-bottom))', zIndex: 100 }}>
+      {/* BOTTOM NAV — La Base 360 G3 */}
+      <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: '#FFFFFF', borderTop: '1px solid #E2E8F0', display: 'flex', paddingBottom: 'max(12px, env(safe-area-inset-bottom))', zIndex: 100, backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)' }}>
         {([
           { key: 'home' as const, label: 'Accueil', icon: (<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="7" height="7" rx="1.5" /><rect x="14" y="3" width="7" height="7" rx="1.5" /><rect x="3" y="14" width="7" height="7" rx="1.5" /><rect x="14" y="14" width="7" height="7" rx="1.5" /></svg>) },
           { key: 'evolution' as const, label: 'Évolution', icon: (<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12" /></svg>) },
@@ -1153,7 +1153,7 @@ export function ClientAppPage() {
                 }
               }}
               data-tuto={tutoAttr}
-              style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, padding: '8px 4px', border: 'none', background: 'transparent', color: isActive ? '#10B981' : '#9CA3AF', fontSize: 9, cursor: 'pointer', fontFamily: 'DM Sans, sans-serif' }}>
+              style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, padding: '8px 4px', border: 'none', background: 'transparent', color: isActive ? '#10B981' : '#94A3B8', fontSize: 9, cursor: 'pointer', fontFamily: 'Inter, system-ui, sans-serif', fontWeight: isActive ? 600 : 500 }}>
               {icon}
               {label}
             </button>
@@ -1178,11 +1178,11 @@ export function ClientAppPage() {
       <footer
         style={{
           padding: '14px 16px 90px', // bottom margin pour ne pas chevaucher la bottom nav
-          borderTop: '0.5px solid rgba(184, 146, 42, 0.18)',
+          borderTop: '1px solid #E2E8F0',
           textAlign: 'center',
           fontSize: 11,
-          color: '#888780',
-          fontFamily: 'DM Sans, sans-serif',
+          color: '#94A3B8',
+          fontFamily: 'Inter, system-ui, sans-serif',
         }}
       >
         <div style={{ marginBottom: 6, display: 'inline-flex', alignItems: 'center', gap: 5 }}>

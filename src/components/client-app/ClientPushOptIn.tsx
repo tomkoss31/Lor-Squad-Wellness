@@ -128,28 +128,44 @@ export function ClientPushOptIn({ token, coachFirstName }: { token: string; coac
     <div
       style={{
         margin: "12px 16px 0",
-        padding: "12px 14px",
-        background: "linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%)",
-        border: "1px solid rgba(184,146,42,0.3)",
+        padding: "14px 16px",
+        background: "#FFFFFF",
+        border: "1px solid rgba(16,185,129,0.20)",
         borderRadius: 14,
         display: "flex",
         alignItems: "center",
         gap: 12,
+        boxShadow: "0 1px 3px rgba(15,23,42,0.04)",
+        position: "relative",
+        overflow: "hidden",
       }}
     >
+      {/* Accent bar gauche G3 */}
       <div
         aria-hidden="true"
         style={{
-          width: 34,
-          height: 34,
+          position: "absolute",
+          top: 0,
+          left: 0,
+          bottom: 0,
+          width: 3,
+          background: "linear-gradient(180deg, #10B981 0%, #06B6D4 50%, #8B5CF6 100%)",
+        }}
+      />
+      <div
+        aria-hidden="true"
+        style={{
+          width: 38,
+          height: 38,
           borderRadius: 10,
-          background: "#B8922A",
+          background: "linear-gradient(135deg, #10B981 0%, #06B6D4 100%)",
           color: "#FFFFFF",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          fontSize: 16,
+          fontSize: 17,
           flexShrink: 0,
+          boxShadow: "0 4px 12px rgba(16,185,129,0.25)",
         }}
       >
         🔔
@@ -157,16 +173,24 @@ export function ClientPushOptIn({ token, coachFirstName }: { token: string; coac
       <div style={{ flex: 1, minWidth: 0 }}>
         <div
           style={{
-            fontFamily: "Syne, sans-serif",
+            fontFamily: "Sora, system-ui, sans-serif",
             fontSize: 13,
             fontWeight: 700,
-            color: "#633806",
+            color: "#0F172A",
             marginBottom: 2,
+            letterSpacing: "-0.01em",
           }}
         >
           Active les notifications
         </div>
-        <div style={{ fontSize: 11, color: "#854F0B", lineHeight: 1.4 }}>
+        <div
+          style={{
+            fontFamily: "Inter, system-ui, sans-serif",
+            fontSize: 11,
+            color: "#64748B",
+            lineHeight: 1.4,
+          }}
+        >
           Reçois un ping quand {coachFirstName} te répond — en temps réel.
         </div>
       </div>
@@ -175,16 +199,17 @@ export function ClientPushOptIn({ token, coachFirstName }: { token: string; coac
         onClick={() => void handleActivate()}
         disabled={state === "subscribing"}
         style={{
-          padding: "8px 14px",
+          padding: "8px 16px",
           borderRadius: 10,
-          background: "#B8922A",
+          background: "linear-gradient(135deg, #10B981 0%, #06B6D4 50%, #8B5CF6 100%)",
           color: "#FFFFFF",
           border: "none",
           fontSize: 12,
           fontWeight: 600,
-          fontFamily: "DM Sans, sans-serif",
+          fontFamily: "Sora, system-ui, sans-serif",
           cursor: state === "subscribing" ? "default" : "pointer",
           flexShrink: 0,
+          boxShadow: "0 2px 8px rgba(16,185,129,0.30)",
         }}
       >
         {state === "subscribing" ? "…" : "Activer"}

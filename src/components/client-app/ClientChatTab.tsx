@@ -129,16 +129,16 @@ export function ClientChatTab({ token, clientFirstName, coachFirstName }: Client
         // (cf. globals.css) pour supporter dvh + safe-area mobile sans
         // créer de zone vide sur desktop (suppression du maxHeight 700).
         height: "calc(var(--conv-vh, 100vh) - var(--conv-offset, 200px))",
-        background: "#F4F2EE",
+        background: "#FAFAFC",
         borderRadius: 16,
         overflow: "hidden",
-        border: "1px solid rgba(0,0,0,0.06)",
+        border: "1px solid rgba(15,23,42,0.06)",
       }}
     >
       <div
         style={{
           padding: "14px 16px",
-          background: "linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%)",
+          background: "linear-gradient(135deg, rgba(16,185,129,0.06) 0%, rgba(6,182,212,0.06) 50%, rgba(139,92,246,0.06) 100%)",
           borderBottom: "1px solid rgba(16,185,129,0.15)",
         }}
       >
@@ -147,7 +147,7 @@ export function ClientChatTab({ token, clientFirstName, coachFirstName }: Client
             fontFamily: "Syne, sans-serif",
             fontSize: 14,
             fontWeight: 700,
-            color: "#111827",
+            color: "#0F172A",
           }}
         >
           Conversation avec {coachFirstName}
@@ -168,7 +168,7 @@ export function ClientChatTab({ token, clientFirstName, coachFirstName }: Client
         }}
       >
         {loading ? (
-          <p style={{ fontSize: 13, color: "#9CA3AF", textAlign: "center", marginTop: 40 }}>
+          <p style={{ fontSize: 13, color: "#94A3B8", textAlign: "center", marginTop: 40 }}>
             Chargement…
           </p>
         ) : messages.length === 0 ? (
@@ -179,11 +179,11 @@ export function ClientChatTab({ token, clientFirstName, coachFirstName }: Client
               padding: "24px 16px",
               background: "#FFFFFF",
               borderRadius: 14,
-              border: "1px solid rgba(0,0,0,0.06)",
+              border: "1px solid rgba(15,23,42,0.06)",
             }}
           >
             <div style={{ fontSize: 32, marginBottom: 8 }}>💬</div>
-            <p style={{ fontSize: 14, color: "#111827", fontWeight: 600, marginBottom: 4 }}>
+            <p style={{ fontSize: 14, color: "#0F172A", fontWeight: 600, marginBottom: 4 }}>
               Écris ton premier message !
             </p>
             <p style={{ fontSize: 12, color: "#6B7280" }}>
@@ -207,7 +207,7 @@ export function ClientChatTab({ token, clientFirstName, coachFirstName }: Client
                     padding: "10px 14px",
                     borderRadius: isCoach ? "14px 14px 14px 4px" : "14px 14px 4px 14px",
                     background: isCoach ? "#FFFFFF" : "#10B981",
-                    color: isCoach ? "#111827" : "#FFFFFF",
+                    color: isCoach ? "#0F172A" : "#FFFFFF",
                     border: isCoach ? "1px solid rgba(0,0,0,0.07)" : "none",
                     fontSize: 14,
                     lineHeight: 1.5,
@@ -266,7 +266,7 @@ export function ClientChatTab({ token, clientFirstName, coachFirstName }: Client
           display: "flex",
           gap: 8,
           padding: "12px 14px",
-          borderTop: "1px solid rgba(0,0,0,0.06)",
+          borderTop: "1px solid rgba(15,23,42,0.06)",
           background: "#FFFFFF",
         }}
       >
@@ -286,11 +286,11 @@ export function ClientChatTab({ token, clientFirstName, coachFirstName }: Client
             flex: 1,
             padding: "10px 14px",
             borderRadius: 12,
-            border: "1px solid rgba(0,0,0,0.1)",
+            border: "1px solid rgba(15,23,42,0.10)",
             background: "#FAFAFA",
             fontSize: 14,
             fontFamily: "DM Sans, sans-serif",
-            color: "#111827",
+            color: "#0F172A",
             outline: "none",
             resize: "none",
             boxSizing: "border-box",
@@ -323,7 +323,7 @@ export function ClientChatTab({ token, clientFirstName, coachFirstName }: Client
         <div
           style={{
             fontSize: 10,
-            color: "#9CA3AF",
+            color: "#94A3B8",
             textAlign: "center",
             padding: "6px 0",
             background: "#FFFFFF",

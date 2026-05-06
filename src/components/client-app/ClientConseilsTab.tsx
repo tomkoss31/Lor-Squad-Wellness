@@ -114,7 +114,7 @@ function PlateSvg({ sectors }: { sectors: PlateSector[] }) {
   });
   return (
     <svg viewBox="0 0 180 180" className="conseils-plate-svg" aria-label="Assiette idéale">
-      <circle cx={CX} cy={CY} r={R + 4} fill="#F7F5F0" />
+      <circle cx={CX} cy={CY} r={R + 4} fill="#FFFFFF" />
       {arcs.map((a, i) => (
         <path key={i} d={a.d} fill={a.color} opacity={0.85} stroke="#fff" strokeWidth={2} />
       ))}

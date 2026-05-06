@@ -245,7 +245,7 @@ export function ClientFaqChatbot({ token, coachFirstName }: Props) {
                     fontFamily: "Syne, serif",
                     fontWeight: 700,
                     fontSize: 16,
-                    color: "#111827",
+                    color: "#0F172A",
                   }}
                 >
                   Aide rapide
@@ -313,7 +313,7 @@ export function ClientFaqChatbot({ token, coachFirstName }: Props) {
                           style={{
                             fontSize: 13,
                             fontWeight: 600,
-                            color: "#111827",
+                            color: "#0F172A",
                             lineHeight: 1.3,
                           }}
                         >

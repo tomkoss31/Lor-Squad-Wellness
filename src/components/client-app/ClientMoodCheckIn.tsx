@@ -264,7 +264,7 @@ export function ClientMoodCheckIn({ token }: Props) {
               gap: 4,
               padding: "10px 4px",
               background: "white",
-              border: "0.5px solid rgba(0,0,0,0.06)",
+              border: "0.5px solid rgba(15,23,42,0.06)",
               borderRadius: 10,
               cursor: submitting ? "wait" : "pointer",
               fontFamily: "inherit",

@@ -22,7 +22,7 @@ function MeasureCard({ label, current, delta }: MeasureCardProps) {
     <div
       style={{
         padding: "10px",
-        border: "0.5px solid rgba(0,0,0,0.08)",
+        border: "0.5px solid rgba(15,23,42,0.08)",
         borderRadius: "8px",
       }}
     >

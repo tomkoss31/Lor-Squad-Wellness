@@ -131,7 +131,7 @@ export function ClientAppWeightChart({ assessments }: Props) {
               y1={y(tick)}
               x2={left + chartW}
               y2={y(tick)}
-              stroke="rgba(0,0,0,0.05)"
+              stroke="rgba(15,23,42,0.05)"
               strokeWidth="0.5"
               strokeDasharray="2,2"
             />

@@ -22,7 +22,7 @@ export function ClientAppFallbackBanner({ onContact }: Props) {
         display: "flex",
         alignItems: "center",
         gap: 12,
-        fontFamily: "'DM Sans', sans-serif",
+        fontFamily: "'Inter', system-ui, sans-serif",
       }}
     >
       <span style={{ fontSize: 20 }} aria-hidden="true">

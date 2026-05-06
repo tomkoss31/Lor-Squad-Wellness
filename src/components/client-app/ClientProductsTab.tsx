@@ -207,7 +207,7 @@ export function ClientProductsTab({
                 fontSize: 18,
                 fontWeight: 800,
                 margin: 0,
-                color: "#111827",
+                color: "#0F172A",
                 letterSpacing: "-0.01em",
               }}
             >
@@ -243,7 +243,7 @@ export function ClientProductsTab({
               fontSize: 16,
               fontWeight: 700,
               margin: 0,
-              color: "#111827",
+              color: "#0F172A",
             }}
           >
             Mon programme actuel
@@ -282,7 +282,7 @@ export function ClientProductsTab({
                   </svg>
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: "#111827" }}>{p.product_name}</div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: "#0F172A" }}>{p.product_name}</div>
                   <div style={{ fontSize: 11, color: "#6B7280", marginTop: 2 }}>
                     Réf. {p.product_id}
                     {p.quantite_label ? ` · ${p.quantite_label}` : ""}
@@ -327,7 +327,7 @@ export function ClientProductsTab({
                 fontSize: 16,
                 fontWeight: 700,
                 margin: 0,
-                color: "#111827",
+                color: "#0F172A",
               }}
             >
               Recommandés pour ta progression
@@ -364,7 +364,7 @@ export function ClientProductsTab({
                           fontFamily: "Syne, sans-serif",
                           fontWeight: 700,
                           fontSize: 15,
-                          color: "#111827",
+                          color: "#0F172A",
                           lineHeight: 1.3,
                         }}
                       >
@@ -376,7 +376,7 @@ export function ClientProductsTab({
                       style={{
                         fontFamily: "DM Sans, sans-serif",
                         fontSize: 12,
-                        color: "#9CA3AF",
+                        color: "#94A3B8",
                         marginTop: 2,
                       }}
                     >
@@ -440,11 +440,11 @@ export function ClientProductsTab({
             justifyContent: "space-between",
             padding: "14px 16px",
             background: "#fff",
-            border: "1px solid rgba(0,0,0,0.08)",
+            border: "1px solid rgba(15,23,42,0.08)",
             borderRadius: catalogueOpen ? "14px 14px 0 0" : 14,
             fontSize: 14,
             fontWeight: 700,
-            color: "#111827",
+            color: "#0F172A",
             fontFamily: "Syne, sans-serif",
             cursor: "pointer",
           }}
@@ -453,7 +453,7 @@ export function ClientProductsTab({
             <span aria-hidden="true">📚</span>
             Catalogue complet
           </span>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth="2">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" strokeWidth="2">
             {catalogueOpen ? <polyline points="18 15 12 9 6 15" /> : <polyline points="6 9 12 15 18 9" />}
           </svg>
         </button>
@@ -461,7 +461,7 @@ export function ClientProductsTab({
         {catalogueOpen ? (
           <div
             style={{
-              border: "1px solid rgba(0,0,0,0.08)",
+              border: "1px solid rgba(15,23,42,0.08)",
               borderTop: "none",
               borderRadius: "0 0 14px 14px",
               padding: 12,
@@ -477,7 +477,7 @@ export function ClientProductsTab({
                 width: "100%",
                 padding: "10px 12px",
                 borderRadius: 10,
-                border: "1px solid rgba(0,0,0,0.1)",
+                border: "1px solid rgba(15,23,42,0.10)",
                 fontSize: 13,
                 fontFamily: "DM Sans, sans-serif",
                 marginBottom: 10,
@@ -501,7 +501,7 @@ export function ClientProductsTab({
                       justifyContent: "space-between",
                       padding: "10px 12px",
                       background: "#fff",
-                      border: "1px solid rgba(0,0,0,0.06)",
+                      border: "1px solid rgba(15,23,42,0.06)",
                       borderRadius: isOpen ? "10px 10px 0 0" : 10,
                       fontSize: 13,
                       fontWeight: 600,
@@ -513,12 +513,12 @@ export function ClientProductsTab({
                     <span>
                       <span aria-hidden="true" style={{ marginRight: 6 }}>{icon}</span>
                       {label}{" "}
-                      <span style={{ fontSize: 11, color: "#9CA3AF", fontWeight: 400, marginLeft: 4 }}>
+                      <span style={{ fontSize: 11, color: "#94A3B8", fontWeight: 400, marginLeft: 4 }}>
                         · {products.length}
                       </span>
                     </span>
                     {!search ? (
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth="2">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" strokeWidth="2">
                         {isOpen ? <polyline points="18 15 12 9 6 15" /> : <polyline points="6 9 12 15 18 9" />}
                       </svg>
                     ) : null}
@@ -526,7 +526,7 @@ export function ClientProductsTab({
                   {isOpen ? (
                     <div
                       style={{
-                        border: "1px solid rgba(0,0,0,0.06)",
+                        border: "1px solid rgba(15,23,42,0.06)",
                         borderTop: "none",
                         borderRadius: "0 0 10px 10px",
                         padding: 8,
@@ -653,7 +653,7 @@ function RecommendedCard({
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
-            <div style={{ fontSize: 14, fontWeight: 700, color: "#111827" }}>{product.shortName}</div>
+            <div style={{ fontSize: 14, fontWeight: 700, color: "#0F172A" }}>{product.shortName}</div>
             <span
               style={{
                 fontSize: 9,
@@ -680,13 +680,13 @@ function RecommendedCard({
             {product.shortBenefit.split("·")[0].trim()}
           </div>
         </div>
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth="2">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" strokeWidth="2">
           {open ? <polyline points="18 15 12 9 6 15" /> : <polyline points="6 9 12 15 18 9" />}
         </svg>
       </div>
 
       {open ? (
-        <div style={{ marginTop: 12, paddingTop: 12, borderTop: "1px solid rgba(0,0,0,0.06)" }}>
+        <div style={{ marginTop: 12, paddingTop: 12, borderTop: "1px solid rgba(15,23,42,0.06)" }}>
           <p style={{ fontSize: 12, color: "#4B5563", lineHeight: 1.7, margin: "0 0 12px" }}>
             {description}
           </p>
@@ -747,7 +747,7 @@ function CatalogCard({
       }}
       style={{
         background: "#fff",
-        border: "1px solid rgba(0,0,0,0.06)",
+        border: "1px solid rgba(15,23,42,0.06)",
         borderRadius: 10,
         padding: 11,
         marginBottom: 6,
@@ -760,22 +760,22 @@ function CatalogCard({
             width: 6,
             height: 6,
             borderRadius: "50%",
-            background: "#9CA3AF",
+            background: "#94A3B8",
             flexShrink: 0,
           }}
         />
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 12, fontWeight: 600, color: "#111827" }}>{product.shortName}</div>
-          <div style={{ fontSize: 10, color: "#9CA3AF" }}>
+          <div style={{ fontSize: 12, fontWeight: 600, color: "#0F172A" }}>{product.shortName}</div>
+          <div style={{ fontSize: 10, color: "#94A3B8" }}>
             {product.shortBenefit.split("·")[0].trim()}
           </div>
         </div>
-        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth="2">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" strokeWidth="2">
           {open ? <polyline points="18 15 12 9 6 15" /> : <polyline points="6 9 12 15 18 9" />}
         </svg>
       </div>
       {open ? (
-        <div style={{ marginTop: 10, paddingTop: 10, borderTop: "1px solid rgba(0,0,0,0.06)" }}>
+        <div style={{ marginTop: 10, paddingTop: 10, borderTop: "1px solid rgba(15,23,42,0.06)" }}>
           <p style={{ fontSize: 11, color: "#6B7280", lineHeight: 1.6, margin: "0 0 10px" }}>
             {description}
           </p>

@@ -229,7 +229,7 @@ export function ClientHomeTab({
           display: flex;
           flex-direction: column;
           gap: 14px;
-          font-family: 'DM Sans', sans-serif;
+          font-family: 'Inter', system-ui, sans-serif;
         }
         @keyframes home-in {
           from { opacity: 0; transform: translateY(10px); }
@@ -868,12 +868,12 @@ export function ClientHomeTab({
           </svg>
         </div>
         <div style={{ flex: 1 }}>
-          <div style={{ fontFamily: "Syne, sans-serif", fontWeight: 700, fontSize: 13, color: "#111827" }}>
+          <div style={{ fontFamily: "Syne, sans-serif", fontWeight: 700, fontSize: 13, color: "#0F172A" }}>
             Laisser un avis Google
           </div>
-          <div style={{ fontSize: 10, color: "#9CA3AF" }}>★★★★★ La Base — Verdun</div>
+          <div style={{ fontSize: 10, color: "#94A3B8" }}>★★★★★ La Base — Verdun</div>
         </div>
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth="1.5">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" strokeWidth="1.5">
           <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
           <polyline points="15 3 21 3 21 9" />
           <line x1="10" y1="14" x2="21" y2="3" />
