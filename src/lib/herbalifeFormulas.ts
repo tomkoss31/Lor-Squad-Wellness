@@ -89,3 +89,124 @@ export function emptyBreakdown(userId: string, month: string): PvMonthlyBreakdow
 export function currentMonthIso(now: Date = new Date()): string {
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
 }
+
+// =============================================================================
+// V2.1 — Compression chain & rank progression (chantier 2026-11-07)
+// =============================================================================
+
+/** Pourcentage de remise pour chaque rang (0-100). */
+export function tierPctForRank(rank: string | null | undefined): number {
+  if (!rank) return 25;
+  if (rank === "distributor_25") return 25;
+  if (rank === "senior_consultant_35") return 35;
+  if (rank === "success_builder_42") return 42;
+  return 50; // tous les paliers Supervisor+ sont a 50%
+}
+
+/** Mappe un nom de tier (15/25/35/42) vers son pourcentage 0-100. */
+export const TIER_LABELS: Array<{ key: keyof PvMonthlyBreakdown; pct: number }> = [
+  { key: "pv15", pct: 15 },
+  { key: "pv25", pct: 25 },
+  { key: "pv35", pct: 35 },
+  { key: "pv42", pct: 42 },
+  // pv_royalty est traite a part (volume Supervisor 50%)
+];
+
+/**
+ * Calcule la commission EUR qu'un sponsor recoit sur un downstream Y en
+ * appliquant la regle de COMPRESSION Herbalife.
+ *
+ * @param yBreakdown breakdown PV de Y
+ * @param sponsorTierPct rang du sponsor (Thomas=50, Mandy=42, ...)
+ * @param intermediateTiers tiers des intermediaires entre Y et le sponsor
+ *   exclu (vide si Y est en niveau direct du sponsor).
+ *
+ * Pour chaque tier (15/25/35/42) ou Y a fait du PV :
+ *   maxUpstream = max(yTier, ...intermediateTiers)
+ *   cut% = max(0, sponsorTierPct - maxUpstream)
+ *   cutEur += PV_a_ce_tier x cut% x ratio
+ *
+ * Royalty (5%) appliquee sur Y.pv_royalty si tous les intermediaires sont
+ * deja a 50% (sinon les intermediaires absorbent et royalty=0 pour le sponsor).
+ */
+export function computeSponsorCutOnDownstream(
+  yBreakdown: PvMonthlyBreakdown,
+  sponsorTierPct: number,
+  intermediateTiers: number[],
+): number {
+  let cutEur = 0;
+  const maxIntermediate = intermediateTiers.length > 0 ? Math.max(...intermediateTiers) : 0;
+
+  for (const tier of TIER_LABELS) {
+    const pv = (yBreakdown[tier.key] as number) ?? 0;
+    if (pv <= 0) continue;
+    const maxUpstream = Math.max(tier.pct, maxIntermediate);
+    const cutPct = Math.max(0, sponsorTierPct - maxUpstream) / 100;
+    cutEur += pv * cutPct * PV_TO_EUR_RATIO;
+  }
+
+  // Royalty : applicable seulement si TOUS les intermediaires sont >= 50%
+  // (sinon le premier upline non-Supervisor casse la chaine de royalty).
+  const allIntermediatesSupervisor = intermediateTiers.every((t) => t >= 50);
+  if (allIntermediatesSupervisor && yBreakdown.pvRoyalty > 0) {
+    cutEur += yBreakdown.pvRoyalty * ROYALTY_OVERRIDE_PCT * PV_TO_EUR_RATIO;
+  }
+
+  return cutEur;
+}
+
+// ─── Rank progression thresholds (jauge UI vers prochain rang) ────────────
+// Sources : Herbalife Marketing Plan FR. Simplifies pour UI :
+//   - Distributor 25% -> Senior Consultant 35% : 500 PV en 1 mois
+//   - Senior Consultant 35% -> Success Builder 42% : 1000 PV en 1 mois
+//   - Success Builder 42% -> Supervisor 50% : 4000 PV en 1 mois
+// (les voies cumulatives sur 12 mois existent mais sont moins lisibles UI)
+
+export interface RankProgression {
+  currentLabel: string;
+  nextRank: string | null;
+  nextLabel: string | null;
+  pvNeeded: number;
+  pvCurrent: number;
+  pct: number; // 0-100
+  remaining: number;
+}
+
+const RANK_PROGRESSION_THRESHOLDS: Record<string, { nextKey: string; pvNeeded: number }> = {
+  distributor_25: { nextKey: "senior_consultant_35", pvNeeded: 500 },
+  senior_consultant_35: { nextKey: "success_builder_42", pvNeeded: 1000 },
+  success_builder_42: { nextKey: "supervisor_50", pvNeeded: 4000 },
+};
+
+const RANK_LABEL_FALLBACK: Record<string, string> = {
+  distributor_25: "Distributor (25%)",
+  senior_consultant_35: "Senior Consultant (35%)",
+  success_builder_42: "Success Builder (42%)",
+  supervisor_50: "Supervisor (50%)",
+};
+
+/**
+ * Retourne la progression du distri vers son prochain palier.
+ * pvCurrent = total PV ce mois (somme breakdown ou monthly_pv_override).
+ */
+export function rankProgression(
+  currentRank: string | null | undefined,
+  pvCurrent: number,
+): RankProgression | null {
+  const rank = currentRank ?? "distributor_25";
+  const threshold = RANK_PROGRESSION_THRESHOLDS[rank];
+  if (!threshold) {
+    // Deja Supervisor+ : on n affiche pas de jauge progression simple
+    return null;
+  }
+  const pct = Math.min(100, Math.round((pvCurrent / threshold.pvNeeded) * 100));
+  return {
+    currentLabel: RANK_LABEL_FALLBACK[rank] ?? rank,
+    nextRank: threshold.nextKey,
+    nextLabel: RANK_LABEL_FALLBACK[threshold.nextKey] ?? threshold.nextKey,
+    pvNeeded: threshold.pvNeeded,
+    pvCurrent: Math.max(0, pvCurrent),
+    pct,
+    remaining: Math.max(0, threshold.pvNeeded - pvCurrent),
+  };
+}
