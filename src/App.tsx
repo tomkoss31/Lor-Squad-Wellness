@@ -144,6 +144,11 @@ const ResetPasswordPage = lazy(() =>
     default: module.ResetPasswordPage,
   })),
 );
+const FrozenPage = lazy(() =>
+  import("./pages/FrozenPage").then((module) => ({
+    default: module.FrozenPage,
+  })),
+);
 const SharePage = lazy(() =>
   import("./pages/SharePage").then((module) => ({
     default: module.SharePage,
@@ -429,6 +434,10 @@ export default function App() {
           <Route path="/auto-login" element={<AutoLoginPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
+          {/* Chantier freeze 2026-05-06 : page accessible sans guard pour
+              les users dont le compte est gele. Affiche patience.png +
+              bouton 'Demander reactivation' qui INSERT unfreeze_requests. */}
+          <Route path="/frozen" element={<FrozenPage />} />
           <Route path="/partage/:token" element={<SharePage />} />
           {/* Pages legales (RGPD Phase 1 — 2026-04-30) — accessibles sans auth */}
           <Route path="/legal/mentions" element={<LegalNoticePage />} />
