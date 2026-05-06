@@ -13,6 +13,7 @@ import { RentabilityGauge } from "./RentabilityGauge";
 import { RentabilityDetailModal } from "./RentabilityDetailModal";
 import { usePvBreakdowns } from "../../hooks/usePvBreakdowns";
 import { useManualPvEntries } from "../../hooks/useManualPvEntries";
+import { useStealthMode } from "../../hooks/useStealthMode";
 import {
   computeManualEntriesOverride,
   computeOwnSelfMargin,
@@ -26,6 +27,8 @@ export function RentabilityWidget() {
   const { currentUser, users } = useAppContext();
   const { data, loading, error, isCoupleAggregated } = useUserRentability(currentUser?.id ?? null);
   const [open, setOpen] = useState(false);
+  // Stealth mode (chantier 2026-11-07) : floute les montants pour les RDV.
+  const { stealthOn, toggle: toggleStealth } = useStealthMode();
 
   // Override downline (V2.1) — additionne au margin_eur pour la jauge.
   // La RPC SQL ne lit pas pv_monthly_breakdown ; on injecte cote front.
@@ -148,11 +151,31 @@ export function RentabilityWidget() {
     <>
       <div style={cardStyle}>
         <div style={leftStyle}>
-          <div style={eyebrowStyle}>💎 Ma rentabilité · {monthLabel(data.month_start)}</div>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, flexWrap: "wrap" }}>
+            <div style={eyebrowStyle}>💎 Ma rentabilité · {monthLabel(data.month_start)}</div>
+            <button
+              type="button"
+              onClick={toggleStealth}
+              aria-pressed={stealthOn}
+              title={stealthOn ? "Afficher les montants" : "Masquer les montants (RDV)"}
+              style={{
+                background: "transparent",
+                border: "0.5px solid var(--ls-border)",
+                borderRadius: 8,
+                padding: "3px 8px",
+                fontSize: 11,
+                cursor: "pointer",
+                color: stealthOn ? "var(--ls-purple)" : "var(--ls-text-muted)",
+                fontFamily: "DM Sans, sans-serif",
+              }}
+            >
+              {stealthOn ? "🙈" : "👁️"}
+            </button>
+          </div>
           <h3 style={titleStyle}>
-            Tu gagnes <span style={{ color: "var(--ls-gold)" }}>{Math.round(effectiveMargin).toLocaleString("fr-FR")} €</span> ce mois
+            Tu gagnes <span data-stealth style={{ color: "var(--ls-gold)" }}>{Math.round(effectiveMargin).toLocaleString("fr-FR")} €</span> ce mois
           </h3>
-          <p style={subStyle}>{subText}</p>
+          <p data-stealth style={subStyle}>{subText}</p>
           <div style={ctaRowStyle}>
             <button
               type="button"
@@ -170,7 +193,7 @@ export function RentabilityWidget() {
             </button>
           </div>
         </div>
-        <div style={rightStyle}>
+        <div style={rightStyle} data-stealth>
           {/* Compact 140 px sans labels (les labels sont déjà dans le widget) */}
           <RentabilityGauge
             data={dataWithOverride ?? data}

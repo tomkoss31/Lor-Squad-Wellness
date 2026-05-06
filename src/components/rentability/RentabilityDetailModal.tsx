@@ -241,13 +241,13 @@ export function RentabilityDetailModal({ data, onClose }: RentabilityDetailModal
         </div>
 
         {/* Big jauge */}
-        <div style={{ display: "flex", justifyContent: "center", marginBottom: 8 }}>
+        <div data-stealth style={{ display: "flex", justifyContent: "center", marginBottom: 8 }}>
           <RentabilityGauge data={data} size="hero" delay={100} />
         </div>
 
         {/* Calcul détaillé */}
         <SectionTitle>📊 Le calcul</SectionTitle>
-        <div style={calcGridStyle}>
+        <div data-stealth style={calcGridStyle}>
           <CalcRow
             label="Chiffre d'affaires brut"
             value={formatEur(data.revenue_brut)}
@@ -271,7 +271,7 @@ export function RentabilityDetailModal({ data, onClose }: RentabilityDetailModal
 
         {/* Onglets cliquables : Publics / VIP / Distributeurs */}
         <SectionTitle>🎯 Split par type · clique pour filtrer</SectionTitle>
-        <div style={tabsRowStyle}>
+        <div data-stealth style={tabsRowStyle}>
           <FilterTabCard
             label="Clients publics"
             emoji="👥"
@@ -331,7 +331,7 @@ export function RentabilityDetailModal({ data, onClose }: RentabilityDetailModal
 
         {/* Projection vs mois précédent */}
         <SectionTitle>📈 Projection & comparaison</SectionTitle>
-        <div style={twoColStyle}>
+        <div data-stealth style={twoColStyle}>
           <ProjectionCard
             title="Fin de mois"
             value={formatEur(data.projection_eur)}
@@ -361,7 +361,7 @@ export function RentabilityDetailModal({ data, onClose }: RentabilityDetailModal
           downlineCount > 0 ? (
             <>
               <SectionTitle>🤝 Mes distributeurs · contributions</SectionTitle>
-              <ul style={clientsListStyle}>
+              <ul data-stealth style={clientsListStyle}>
                 {downline.map((d, i) => (
                   <DownlineRow key={d.user.id} entry={d} rank={i} />
                 ))}
@@ -383,7 +383,7 @@ export function RentabilityDetailModal({ data, onClose }: RentabilityDetailModal
               {tab === "public" ? " · publics" : tab === "vip" ? " · VIP" : ""}
             </SectionTitle>
             {filteredTopClients.length > 0 ? (
-              <ul style={clientsListStyle}>
+              <ul data-stealth style={clientsListStyle}>
                 {filteredTopClients.map((c, i) => (
                   <TopClientRow key={c.client_id} client={c} rank={i} />
                 ))}

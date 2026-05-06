@@ -2579,3 +2579,25 @@ html.theme-forest {
   --ls-sidebar-bg: #1A2E20;
 }
 */
+
+/* =========================================================================
+   Stealth mode — privacy pour rentabilite (chantier 2026-11-07)
+   Floute les montants EUR quand le user est en RDV (toggle eye sur la page).
+   data-stealth = conteneur a flouter. Hover pour reveler temporairement.
+   ========================================================================= */
+body.ls-stealth-active [data-stealth] {
+  filter: blur(8px);
+  transition: filter 200ms ease;
+  -webkit-user-select: none;
+  user-select: none;
+  cursor: help;
+}
+body.ls-stealth-active [data-stealth]:hover,
+body.ls-stealth-active [data-stealth]:focus-within {
+  filter: blur(0);
+}
+@media (prefers-reduced-motion: reduce) {
+  body.ls-stealth-active [data-stealth] {
+    transition: none;
+  }
+}
