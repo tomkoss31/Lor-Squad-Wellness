@@ -251,14 +251,23 @@ export function RentabilitePage() {
 
       {/* Modal détail propre */}
       {detailOpen && ownData && (
-        <RentabilityDetailModal data={ownDataWithOverride ?? ownData} onClose={() => setDetailOpen(false)} />
+        <RentabilityDetailModal
+          data={ownDataWithOverride ?? ownData}
+          onClose={() => setDetailOpen(false)}
+          directMargin={ownSelfMargin}
+          downlineOverride={ownDownlineOverride}
+          manualOverride={ownManualOverride}
+        />
       )}
 
-      {/* Modal détail membre équipe */}
+      {/* Modal détail membre équipe (admin viewing other) */}
       {selectedMemberId && selectedData && (
         <RentabilityDetailModal
           data={selectedDataWithOverride ?? selectedData}
           onClose={() => setSelectedMemberId(null)}
+          directMargin={selectedSelfMargin}
+          downlineOverride={selectedDownlineOverride}
+          manualOverride={0}
         />
       )}
     </div>

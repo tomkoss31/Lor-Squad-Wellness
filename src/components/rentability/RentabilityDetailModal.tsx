@@ -40,6 +40,11 @@ import { usePvBreakdowns } from "../../hooks/usePvBreakdowns";
 interface RentabilityDetailModalProps {
   data: RentabilityData;
   onClose: () => void;
+  /** Si fournis, decomposition explicite affichee dans la section "Le calcul"
+   *  pour montrer d'ou vient chaque morceau du total. Sinon, calcul direct. */
+  directMargin?: number;       // marge sur ventes app (RPC) ou breakdown perso
+  downlineOverride?: number;   // override sur breakdowns downline app
+  manualOverride?: number;     // override sur entrees manuelles distri hors-app
 }
 
 type FilterTab = "all" | "public" | "vip" | "distri";
@@ -88,7 +93,13 @@ interface DownlineEntry {
   overrideIsExact: boolean;
 }
 
-export function RentabilityDetailModal({ data, onClose }: RentabilityDetailModalProps) {
+export function RentabilityDetailModal({
+  data,
+  onClose,
+  directMargin,
+  downlineOverride: downlineOverrideProp,
+  manualOverride,
+}: RentabilityDetailModalProps) {
   const { users, currentUser } = useAppContext();
   const zone = rentabilityZone(data.margin_eur);
   const zoneColor = ZONE_COLOR[zone];
@@ -260,10 +271,41 @@ export function RentabilityDetailModal({ data, onClose }: RentabilityDetailModal
             sub={data.rank_label}
             color="var(--ls-text-muted)"
           />
+          {typeof directMargin === "number" ? (
+            <CalcRow
+              label="= Marge directe"
+              value={formatEur(directMargin)}
+              sub="sur tes propres ventes (clients publics + VIP)"
+              color="var(--ls-text)"
+            />
+          ) : null}
+          {typeof downlineOverrideProp === "number" && downlineOverrideProp > 0 ? (
+            <CalcRow
+              label="+ Override downline (équipe app)"
+              value={`+${formatEur(downlineOverrideProp)}`}
+              sub="commission sur les distri de ton équipe (compression chaîne)"
+              color="var(--ls-purple)"
+            />
+          ) : null}
+          {typeof manualOverride === "number" && manualOverride > 0 ? (
+            <CalcRow
+              label="+ Override distri hors-app"
+              value={`+${formatEur(manualOverride)}`}
+              sub="commission sur les distri saisis manuellement"
+              color="var(--ls-purple)"
+            />
+          ) : null}
           <CalcRow
-            label="= Marge brute nette"
+            label={
+              typeof directMargin === "number" &&
+              ((downlineOverrideProp ?? 0) > 0 || (manualOverride ?? 0) > 0)
+                ? "= Marge nette TOTALE"
+                : "= Marge brute nette"
+            }
             value={formatEur(data.margin_eur)}
-            sub={data.products_count > 0 ? "ton revenu net du mois (clients VIP inclus)" : "aucune vente trackée"}
+            sub={data.products_count > 0 || (downlineOverrideProp ?? 0) > 0 || (manualOverride ?? 0) > 0
+              ? "ton revenu net du mois (tout inclus)"
+              : "aucune vente trackée"}
             color={zoneColor}
             highlight
           />
