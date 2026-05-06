@@ -31,6 +31,7 @@ import {
   COMMISSION_PCT_BY_TIER,
   PV_TO_EUR_RATIO,
   ROYALTY_OVERRIDE_PCT,
+  computeOrganizationPv,
   computeOverrideEur,
   currentMonthIso,
   emptyBreakdown,
@@ -131,8 +132,8 @@ export function TeamMemberDrilldownModal({ member, onClose }: TeamMemberDrilldow
   const draftOverrideEur = computeOverrideEur(draftBreakdown);
 
   // Jauge progression vers prochain rang (chantier 2026-11-07)
-  // PV courant = somme breakdown courant si saisi, sinon monthly_pv_override
-  const currentPvForProgress = useMemo(() => {
+  // PV perso = somme breakdown courant ou monthly_pv_override
+  const personalPvForProgress = useMemo(() => {
     if (existingBreakdown) return totalPvFromBreakdown(existingBreakdown);
     if (
       (fullUser as User & { monthlyPvOverrideMonth?: string | null })?.monthlyPvOverrideMonth ===
@@ -144,9 +145,37 @@ export function TeamMemberDrilldownModal({ member, onClose }: TeamMemberDrilldow
     }
     return 0;
   }, [existingBreakdown, fullUser, monthIso]);
+  // PV organisation = perso + downline (recursif) — utilise pour le target
+  // Supervisor 4000 PV (Mandy a 42% : Victoria fait monter sa jauge)
+  const { breakdowns: allBreakdowns } = usePvBreakdowns(monthIso);
+  const organizationPvForProgress = useMemo(() => {
+    if (!fullUser) return personalPvForProgress;
+    return computeOrganizationPv(
+      fullUser.id,
+      users.map((u) => ({
+        id: u.id,
+        sponsorId: u.sponsorId,
+        currentRank: u.currentRank,
+        frozenAt: u.frozenAt,
+      })),
+      allBreakdowns,
+      (uid) => {
+        const u = users.find((x) => x.id === uid);
+        if (!u) return 0;
+        const ux = u as User & {
+          monthlyPvOverrideMonth?: string | null;
+          monthlyPvOverride?: number | null;
+        };
+        if (ux.monthlyPvOverrideMonth === monthIso && typeof ux.monthlyPvOverride === "number") {
+          return ux.monthlyPvOverride;
+        }
+        return 0;
+      },
+    );
+  }, [fullUser, users, allBreakdowns, monthIso, personalPvForProgress]);
   const progression = useMemo(
-    () => rankProgression(fullUser?.currentRank, currentPvForProgress),
-    [fullUser?.currentRank, currentPvForProgress],
+    () => rankProgression(fullUser?.currentRank, personalPvForProgress, organizationPvForProgress),
+    [fullUser?.currentRank, personalPvForProgress, organizationPvForProgress],
   );
 
   if (!member) return null;
@@ -453,6 +482,22 @@ export function TeamMemberDrilldownModal({ member, onClose }: TeamMemberDrilldow
               {progression.pct >= 100
                 ? `🎉 Seuil atteint ! ${progression.pvCurrent.toLocaleString("fr-FR")} / ${progression.pvNeeded.toLocaleString("fr-FR")} PV`
                 : `${progression.pvCurrent.toLocaleString("fr-FR")} / ${progression.pvNeeded.toLocaleString("fr-FR")} PV · reste ${progression.remaining.toLocaleString("fr-FR")} PV`}
+              <span style={{
+                display: "inline-block",
+                marginLeft: 6,
+                padding: "1px 6px",
+                borderRadius: 5,
+                fontSize: 9,
+                fontWeight: 700,
+                background: progression.pvSource === "organization"
+                  ? "color-mix(in srgb, var(--ls-purple) 14%, transparent)"
+                  : "color-mix(in srgb, var(--ls-teal) 14%, transparent)",
+                color: progression.pvSource === "organization" ? "var(--ls-purple)" : "var(--ls-teal)",
+                textTransform: "uppercase",
+                letterSpacing: 0.4,
+              }}>
+                {progression.pvSource === "organization" ? "PV org · perso + downline" : "PV perso"}
+              </span>
             </div>
             <div
               style={{

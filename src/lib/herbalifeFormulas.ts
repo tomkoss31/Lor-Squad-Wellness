@@ -170,12 +170,20 @@ export interface RankProgression {
   pvCurrent: number;
   pct: number; // 0-100
   remaining: number;
+  /** "personal" pour Distri/SC/SB, "organization" pour SB->Supervisor (= own + downline). */
+  pvSource: "personal" | "organization";
 }
 
-const RANK_PROGRESSION_THRESHOLDS: Record<string, { nextKey: string; pvNeeded: number }> = {
-  distributor_25: { nextKey: "senior_consultant_35", pvNeeded: 500 },
-  senior_consultant_35: { nextKey: "success_builder_42", pvNeeded: 1000 },
-  success_builder_42: { nextKey: "supervisor_50", pvNeeded: 4000 },
+const RANK_PROGRESSION_THRESHOLDS: Record<
+  string,
+  { nextKey: string; pvNeeded: number; source: "personal" | "organization" }
+> = {
+  distributor_25: { nextKey: "senior_consultant_35", pvNeeded: 500, source: "personal" },
+  senior_consultant_35: { nextKey: "success_builder_42", pvNeeded: 1000, source: "personal" },
+  // Supervisor 50% : seuil 4000 PV en VOLUME D'ORGANISATION (perso + downline)
+  // Cf. Herbalife Marketing Plan FR. Cas Mandy 42% : Victoria fait monter sa
+  // jauge Supervisor avec ses propres PV (parrainage Herbalife).
+  success_builder_42: { nextKey: "supervisor_50", pvNeeded: 4000, source: "organization" },
 };
 
 const RANK_LABEL_FALLBACK: Record<string, string> = {
@@ -184,6 +192,65 @@ const RANK_LABEL_FALLBACK: Record<string, string> = {
   success_builder_42: "Success Builder (42%)",
   supervisor_50: "Supervisor (50%)",
 };
+
+/**
+ * Volume d'organisation d'un user : son PV perso + tous les PV de sa downline
+ * (recursif), en arretant la branche au prochain Supervisor (50%) qui forme
+ * sa propre legline (regle Herbalife : un Supervisor "casse" la org volume
+ * pour les paliers superieurs, sauf en Royalty).
+ *
+ * Pour la jauge progression vers Supervisor, on compte tout le downline
+ * sans s'arreter (les futurs Supervisor sont encore qualifiants tant que
+ * pas "sortis"). Implementation simplifiee : on additionne tout.
+ *
+ * @param userId user dont on calcule la org volume
+ * @param users  liste users avec sponsorId
+ * @param breakdowns breakdowns du mois (pour PV par user)
+ * @param fallbackTotalForUser fn optionnelle pour fallback monthly_pv_override
+ */
+export function computeOrganizationPv(
+  userId: string,
+  users: Array<{
+    id: string;
+    sponsorId?: string;
+    currentRank?: string | null;
+    frozenAt?: string | null;
+  }>,
+  breakdowns: PvMonthlyBreakdown[],
+  fallbackTotalForUser?: (userId: string) => number,
+): number {
+  const breakdownByUserId = new Map<string, PvMonthlyBreakdown>();
+  for (const b of breakdowns) breakdownByUserId.set(b.userId, b);
+  const childrenBySponsor = new Map<string, typeof users>();
+  for (const u of users) {
+    if (u.frozenAt) continue;
+    if (!u.sponsorId) continue;
+    const arr = childrenBySponsor.get(u.sponsorId) ?? [];
+    arr.push(u);
+    childrenBySponsor.set(u.sponsorId, arr);
+  }
+
+  const pvForUser = (uid: string): number => {
+    const b = breakdownByUserId.get(uid);
+    if (b) return totalPvFromBreakdown(b);
+    if (fallbackTotalForUser) return fallbackTotalForUser(uid);
+    return 0;
+  };
+
+  // BFS sur la sous-arborescence
+  let total = pvForUser(userId);
+  const queue: string[] = [...(childrenBySponsor.get(userId) ?? []).map((u) => u.id)];
+  const visited = new Set<string>([userId]);
+  while (queue.length > 0) {
+    const id = queue.shift()!;
+    if (visited.has(id)) continue;
+    visited.add(id);
+    total += pvForUser(id);
+    const children = childrenBySponsor.get(id) ?? [];
+    for (const c of children) queue.push(c.id);
+  }
+  return total;
+}
 
 /**
  * Tree-walk : pour un sponsor (viewer), calcule l override total EUR sur
@@ -267,11 +334,17 @@ export function computeViewerDownlineOverride(
 
 /**
  * Retourne la progression du distri vers son prochain palier.
- * pvCurrent = total PV ce mois (somme breakdown ou monthly_pv_override).
+ *
+ * @param currentRank rang actuel
+ * @param personalPv  PV perso ce mois (somme breakdown ou monthly_pv_override)
+ * @param organizationPv  PV organisation ce mois (perso + downline cumule)
+ *                        — utilise UNIQUEMENT pour la jauge Supervisor.
+ *                        Si non fourni, fallback sur personalPv.
  */
 export function rankProgression(
   currentRank: string | null | undefined,
-  pvCurrent: number,
+  personalPv: number,
+  organizationPv?: number,
 ): RankProgression | null {
   const rank = currentRank ?? "distributor_25";
   const threshold = RANK_PROGRESSION_THRESHOLDS[rank];
@@ -279,6 +352,10 @@ export function rankProgression(
     // Deja Supervisor+ : on n affiche pas de jauge progression simple
     return null;
   }
+  const pvCurrent =
+    threshold.source === "organization"
+      ? (organizationPv ?? personalPv)
+      : personalPv;
   const pct = Math.min(100, Math.round((pvCurrent / threshold.pvNeeded) * 100));
   return {
     currentLabel: RANK_LABEL_FALLBACK[rank] ?? rank,
@@ -288,5 +365,6 @@ export function rankProgression(
     pvCurrent: Math.max(0, pvCurrent),
     pct,
     remaining: Math.max(0, threshold.pvNeeded - pvCurrent),
+    pvSource: threshold.source,
   };
 }
