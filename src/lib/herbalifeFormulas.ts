@@ -267,6 +267,68 @@ export function computeQualifyingPersonalPv(
 export const computeOrganizationPv = computeQualifyingPersonalPv;
 
 /**
+ * Manual PV entry (V3 chantier 2026-11-07) : entree saisie a la main par
+ * un sponsor pour un downline qui n'est pas dans Lor'Squad.
+ */
+export interface ManualPvEntry {
+  id: string;
+  viewerUserId: string;
+  name: string;
+  parentName: string | null;
+  depth: 1 | 2 | 3;
+  ownTierPct: number; // 15/25/35/42/50
+  intermediateTiers: number[]; // [] pour L1, [42] pour L2, [42, 35] pour L3
+  month: string;
+  pv15: number;
+  pv25: number;
+  pv35: number;
+  pv42: number;
+  pvRoyalty: number;
+  declaredAt: string | null;
+}
+
+/** Convert a manual entry vers PvMonthlyBreakdown-like pour reutiliser
+ *  computeSponsorCutOnDownstream. */
+function manualEntryAsBreakdown(e: ManualPvEntry): PvMonthlyBreakdown {
+  return {
+    userId: `manual:${e.id}`,
+    month: e.month,
+    pv15: e.pv15,
+    pv25: e.pv25,
+    pv35: e.pv35,
+    pv42: e.pv42,
+    pvRoyalty: e.pvRoyalty,
+    declaredBy: null,
+    declaredAt: e.declaredAt,
+  };
+}
+
+/**
+ * Calcule la cut totale du viewer sur toutes ses entrees manuelles.
+ * Reutilise la regle de compression : pour chaque entree, on simule le chemin
+ * sponsor -> user manuel avec les intermediate_tiers fournis.
+ *
+ * @param entries entrees manuelles owned par le viewer
+ * @param viewerTierPct rang du viewer (Thomas 50%, Mandy 42%, ...)
+ */
+export function computeManualEntriesOverride(
+  entries: ManualPvEntry[],
+  viewerTierPct: number,
+): number {
+  let total = 0;
+  for (const e of entries) {
+    // L1 : intermediateTiers vide. L2/L3 : contient les tiers du chemin.
+    const intermediates = e.depth === 1 ? [] : e.intermediateTiers;
+    total += computeSponsorCutOnDownstream(
+      manualEntryAsBreakdown(e),
+      viewerTierPct,
+      intermediates,
+    );
+  }
+  return total;
+}
+
+/**
  * Calcule la marge retail propre d un user sur SES propres ventes (depuis
  * son breakdown saisi). Pour chaque tier ou il a vendu, il garde
  * (mon_tier - acheteur_tier) % de commission.
