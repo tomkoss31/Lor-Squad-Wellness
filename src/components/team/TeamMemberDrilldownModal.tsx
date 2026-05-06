@@ -18,7 +18,7 @@ import { useToast, buildSupabaseErrorToast } from "../../context/ToastContext";
 import {
   freezeUserAccount,
   unfreezeUserAccount,
-  setUserPvOverride,
+  setUserPvBreakdown,
   setUserRankAdmin,
 } from "../../services/supabaseService";
 import {
@@ -26,6 +26,17 @@ import {
   RANK_ORDER,
   type HerbalifeRank,
 } from "../../types/domain";
+import {
+  COMMISSION_PCT_BY_TIER,
+  PV_TO_EUR_RATIO,
+  ROYALTY_OVERRIDE_PCT,
+  computeOverrideEur,
+  currentMonthIso,
+  emptyBreakdown,
+  totalPvFromBreakdown,
+  type PvMonthlyBreakdown,
+} from "../../lib/herbalifeFormulas";
+import { usePvBreakdowns } from "../../hooks/usePvBreakdowns";
 
 interface TeamMemberDrilldownModalProps {
   member: TeamMemberEngagement | null;
@@ -73,18 +84,49 @@ export function TeamMemberDrilldownModal({ member, onClose }: TeamMemberDrilldow
   );
   const [savingRank, setSavingRank] = useState(false);
 
-  // ─── Edit PV override Bizworks (admin only) ───────────────────────────────
-  const currentMonthIso = useMemo(() => {
-    const d = new Date();
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-  }, []);
-  const overrideActiveForCurrentMonth =
-    fullUser?.monthlyPvOverrideMonth === currentMonthIso &&
-    typeof fullUser?.monthlyPvOverride === "number";
-  const [pvDraft, setPvDraft] = useState<string>(
-    overrideActiveForCurrentMonth ? String(fullUser?.monthlyPvOverride ?? "") : "",
-  );
+  // ─── Edit PV breakdown V2 (admin only, chantier 2026-11-07) ──────────────
+  // Remplace l'ancien input unique par 5 inputs par tier de remise downline.
+  // Le RPC sync automatiquement users.monthly_pv_override = somme.
+  const monthIso = useMemo(() => currentMonthIso(), []);
+  const { getForUser: getBreakdownForUser, refetch: refetchBreakdowns } =
+    usePvBreakdowns(monthIso);
+  const existingBreakdown = member ? getBreakdownForUser(member.user_id) : null;
+  const [pvDraft, setPvDraft] = useState<{
+    pv15: string; pv25: string; pv35: string; pv42: string; pvRoyalty: string;
+  }>({ pv15: "", pv25: "", pv35: "", pv42: "", pvRoyalty: "" });
   const [savingPv, setSavingPv] = useState(false);
+
+  // Hydrate les inputs quand le breakdown arrive (fetch async).
+  useMemo(() => {
+    if (existingBreakdown) {
+      setPvDraft({
+        pv15: existingBreakdown.pv15 ? String(existingBreakdown.pv15) : "",
+        pv25: existingBreakdown.pv25 ? String(existingBreakdown.pv25) : "",
+        pv35: existingBreakdown.pv35 ? String(existingBreakdown.pv35) : "",
+        pv42: existingBreakdown.pv42 ? String(existingBreakdown.pv42) : "",
+        pvRoyalty: existingBreakdown.pvRoyalty ? String(existingBreakdown.pvRoyalty) : "",
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [existingBreakdown?.userId, existingBreakdown?.month]);
+
+  // Calcul live du total + override estime depuis les inputs
+  const draftBreakdown = useMemo<PvMonthlyBreakdown>(() => {
+    const parse = (s: string) => {
+      const n = Number(s.replace(",", "."));
+      return Number.isFinite(n) && n >= 0 ? n : 0;
+    };
+    return {
+      ...(member ? emptyBreakdown(member.user_id, monthIso) : emptyBreakdown("", monthIso)),
+      pv15: parse(pvDraft.pv15),
+      pv25: parse(pvDraft.pv25),
+      pv35: parse(pvDraft.pv35),
+      pv42: parse(pvDraft.pv42),
+      pvRoyalty: parse(pvDraft.pvRoyalty),
+    };
+  }, [pvDraft, member, monthIso]);
+  const draftTotalPv = totalPvFromBreakdown(draftBreakdown);
+  const draftOverrideEur = computeOverrideEur(draftBreakdown);
 
   if (!member) return null;
   const status = STATUS_META[member.status];
@@ -117,31 +159,26 @@ export function TeamMemberDrilldownModal({ member, onClose }: TeamMemberDrilldow
 
   async function handleSavePv() {
     if (!member || savingPv) return;
-    const trimmed = pvDraft.trim();
-    let pv: number | null = null;
-    if (trimmed !== "") {
-      const n = Number(trimmed.replace(",", "."));
-      if (!Number.isFinite(n) || n < 0) {
-        pushToast({
-          tone: "warning",
-          title: "Valeur invalide",
-          message: "Saisis un nombre positif (ou laisse vide pour effacer l'override).",
-        });
-        return;
-      }
-      pv = n;
-    }
     setSavingPv(true);
     try {
-      await setUserPvOverride(member.user_id, currentMonthIso, pv);
+      await setUserPvBreakdown({
+        userId: member.user_id,
+        month: monthIso,
+        pv15: draftBreakdown.pv15,
+        pv25: draftBreakdown.pv25,
+        pv35: draftBreakdown.pv35,
+        pv42: draftBreakdown.pv42,
+        pvRoyalty: draftBreakdown.pvRoyalty,
+      });
+      const isCleared = draftTotalPv === 0;
       pushToast({
         tone: "success",
-        title: pv === null ? "Override efface" : "PV Bizworks enregistres",
-        message:
-          pv === null
-            ? `${member.name} → calcul auto (commandes app uniquement)`
-            : `${member.name} → ${pv.toLocaleString("fr-FR")} PV pour ${currentMonthIso}`,
+        title: isCleared ? "Breakdown efface" : "PV Bizworks enregistres",
+        message: isCleared
+          ? `${member.name} → calcul auto (commandes app)`
+          : `${member.name} → ${draftTotalPv.toLocaleString("fr-FR")} PV · override estim. ${Math.round(draftOverrideEur).toLocaleString("fr-FR")} €`,
       });
+      await refetchBreakdowns();
       await refreshAfterFreeze?.();
     } catch (err) {
       pushToast(buildSupabaseErrorToast(err, "Impossible d'enregistrer le PV."));
@@ -369,18 +406,18 @@ export function TeamMemberDrilldownModal({ member, onClose }: TeamMemberDrilldow
           </div>
         ) : null}
 
-        {/* Bloc admin : PV Bizworks override mensuel */}
+        {/* Bloc admin : PV breakdown V2 par tier (chantier RO 2026-11-07) */}
         {canEditRankPv ? (
           <div
             style={{
               marginTop: 12,
               padding: 14,
               borderRadius: 12,
-              background: overrideActiveForCurrentMonth
-                ? "color-mix(in srgb, var(--ls-teal) 8%, var(--ls-surface2))"
+              background: existingBreakdown
+                ? "color-mix(in srgb, var(--ls-teal) 6%, var(--ls-surface2))"
                 : "var(--ls-surface2)",
-              border: overrideActiveForCurrentMonth
-                ? "1px solid color-mix(in srgb, var(--ls-teal) 35%, transparent)"
+              border: existingBreakdown
+                ? "1px solid color-mix(in srgb, var(--ls-teal) 30%, transparent)"
                 : "1px solid var(--ls-border)",
             }}
           >
@@ -397,8 +434,8 @@ export function TeamMemberDrilldownModal({ member, onClose }: TeamMemberDrilldow
                 flexWrap: "wrap",
               }}
             >
-              <span>📊 PV Bizworks · {currentMonthIso}</span>
-              {overrideActiveForCurrentMonth ? (
+              <span>📊 PV Bizworks · {monthIso} · breakdown par tier</span>
+              {existingBreakdown ? (
                 <span
                   style={{
                     fontSize: 10,
@@ -410,56 +447,91 @@ export function TeamMemberDrilldownModal({ member, onClose }: TeamMemberDrilldow
                     letterSpacing: 0.5,
                   }}
                 >
-                  Override actif
+                  Saisi
                 </span>
               ) : null}
             </div>
             <div style={{ fontSize: 11, color: "var(--ls-text-muted)", lineHeight: 1.4, marginBottom: 10 }}>
-              Saisis le total PV Bizworks ce mois pour ajuster sa jauge Co-pilote (l'app
-              ne compte que les commandes passees via fiche client). Vide pour repasser
-              en calcul auto.
+              Transcris depuis ta fiche RO Herbalife le PV de {member.name} par palier.
+              Mid-month rank-up : si le distri etait a 25% puis a 35%, repartis. Tout a 0 = clear.
             </div>
-            <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-              <input
-                type="number"
-                inputMode="decimal"
-                min={0}
-                step="0.01"
-                value={pvDraft}
-                onChange={(e) => setPvDraft(e.target.value)}
-                placeholder="ex: 4 500"
-                style={{
-                  flex: "1 1 160px",
-                  padding: "9px 12px",
-                  borderRadius: 10,
-                  border: "1px solid var(--ls-border)",
-                  background: "var(--ls-surface)",
-                  color: "var(--ls-text)",
-                  fontSize: 13,
-                  fontFamily: "Inter, system-ui, sans-serif",
-                }}
+            <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 10 }}>
+              <PvTierRow
+                label="PV à 15% (Préféré)"
+                tip={`commission toi : ${Math.round(COMMISSION_PCT_BY_TIER.pv15 * 100)}%`}
+                value={pvDraft.pv15}
+                onChange={(v) => setPvDraft({ ...pvDraft, pv15: v })}
               />
-              <button
-                type="button"
-                onClick={() => void handleSavePv()}
-                disabled={savingPv}
-                style={{
-                  padding: "9px 14px",
-                  borderRadius: 10,
-                  border: "none",
-                  background: savingPv
-                    ? "var(--ls-surface2)"
-                    : "linear-gradient(135deg, #10B981 0%, #06B6D4 50%, #8B5CF6 100%)",
-                  color: savingPv ? "var(--ls-text-muted)" : "#FFFFFF",
-                  fontSize: 12,
-                  fontWeight: 700,
-                  fontFamily: "Sora, system-ui, sans-serif",
-                  cursor: savingPv ? "wait" : "pointer",
-                }}
-              >
-                {savingPv ? "…" : "Appliquer"}
-              </button>
+              <PvTierRow
+                label="PV à 25% (Distributor)"
+                tip={`commission toi : ${Math.round(COMMISSION_PCT_BY_TIER.pv25 * 100)}%`}
+                value={pvDraft.pv25}
+                onChange={(v) => setPvDraft({ ...pvDraft, pv25: v })}
+              />
+              <PvTierRow
+                label="PV à 35% (Senior Consultant)"
+                tip={`commission toi : ${Math.round(COMMISSION_PCT_BY_TIER.pv35 * 100)}%`}
+                value={pvDraft.pv35}
+                onChange={(v) => setPvDraft({ ...pvDraft, pv35: v })}
+              />
+              <PvTierRow
+                label="PV à 42% (Success Builder)"
+                tip={`commission toi : ${Math.round(COMMISSION_PCT_BY_TIER.pv42 * 100)}%`}
+                value={pvDraft.pv42}
+                onChange={(v) => setPvDraft({ ...pvDraft, pv42: v })}
+              />
+              <PvTierRow
+                label="PV Royalty (downline Supervisor 50%)"
+                tip={`royalty toi : ${Math.round(ROYALTY_OVERRIDE_PCT * 100)}%`}
+                value={pvDraft.pvRoyalty}
+                onChange={(v) => setPvDraft({ ...pvDraft, pvRoyalty: v })}
+              />
             </div>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                padding: "8px 10px",
+                borderRadius: 8,
+                background: "var(--ls-surface)",
+                marginBottom: 10,
+                fontSize: 12,
+                gap: 12,
+                flexWrap: "wrap",
+              }}
+            >
+              <span style={{ color: "var(--ls-text-muted)" }}>
+                Total : <strong style={{ color: "var(--ls-text)" }}>{draftTotalPv.toLocaleString("fr-FR")} PV</strong>
+              </span>
+              <span style={{ color: "var(--ls-teal)", fontWeight: 700 }}>
+                Override estim. ~{Math.round(draftOverrideEur).toLocaleString("fr-FR")} €
+              </span>
+            </div>
+            <div style={{ fontSize: 10, color: "var(--ls-text-muted)", fontStyle: "italic", marginBottom: 8 }}>
+              Ratio {PV_TO_EUR_RATIO} €/PV (calibre fiche RO 2026-03)
+            </div>
+            <button
+              type="button"
+              onClick={() => void handleSavePv()}
+              disabled={savingPv}
+              style={{
+                width: "100%",
+                padding: "9px 14px",
+                borderRadius: 10,
+                border: "none",
+                background: savingPv
+                  ? "var(--ls-surface2)"
+                  : "linear-gradient(135deg, #10B981 0%, #06B6D4 50%, #8B5CF6 100%)",
+                color: savingPv ? "var(--ls-text-muted)" : "#FFFFFF",
+                fontSize: 12,
+                fontWeight: 700,
+                fontFamily: "Sora, system-ui, sans-serif",
+                cursor: savingPv ? "wait" : "pointer",
+              }}
+            >
+              {savingPv ? "…" : "Appliquer"}
+            </button>
           </div>
         ) : null}
 
@@ -553,6 +625,49 @@ export function TeamMemberDrilldownModal({ member, onClose }: TeamMemberDrilldow
 
 function SectionTitle({ children }: { children: React.ReactNode }) {
   return <h3 style={sectionTitleStyle}>{children}</h3>;
+}
+
+function PvTierRow({
+  label,
+  tip,
+  value,
+  onChange,
+}: {
+  label: string;
+  tip: string;
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  return (
+    <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: 11, color: "var(--ls-text)", fontFamily: "Inter, system-ui, sans-serif", fontWeight: 500 }}>
+          {label}
+        </div>
+        <div style={{ fontSize: 10, color: "var(--ls-text-muted)" }}>{tip}</div>
+      </div>
+      <input
+        type="number"
+        inputMode="decimal"
+        min={0}
+        step="0.01"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder="0"
+        style={{
+          width: 90,
+          padding: "7px 10px",
+          borderRadius: 8,
+          border: "1px solid var(--ls-border)",
+          background: "var(--ls-surface)",
+          color: "var(--ls-text)",
+          fontSize: 13,
+          fontFamily: "Inter, system-ui, sans-serif",
+          textAlign: "right",
+        }}
+      />
+    </div>
+  );
 }
 
 function BreakdownRow({ emoji, label, value }: { emoji: string; label: string; value: number }) {
