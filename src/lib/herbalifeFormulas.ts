@@ -267,6 +267,36 @@ export function computeQualifyingPersonalPv(
 export const computeOrganizationPv = computeQualifyingPersonalPv;
 
 /**
+ * Calcule la marge retail propre d un user sur SES propres ventes (depuis
+ * son breakdown saisi). Pour chaque tier ou il a vendu, il garde
+ * (mon_tier - acheteur_tier) % de commission.
+ *
+ * Cas type : Mandy 42% vend a un client prefere 15% pour 100 PV.
+ *   - Mandy garde (42-15) = 27% × 100 PV × 1.78 = 48 EUR
+ *   - Son sponsor (Thomas 50%) prend (50-42) = 8% × 100 PV × 1.78 = 14 EUR
+ *   - Total commission = 35% × CA = 50% retail margin distribue
+ *
+ * Si le breakdown perso est saisi, on utilise CETTE marge plutot que celle
+ * remontee par la RPC SQL (qui ne lit que les ventes APP). Permet de
+ * capturer les ventes Bizworks externes que Mandy fait hors-fiche client.
+ */
+export function computeOwnSelfMargin(
+  breakdown: PvMonthlyBreakdown,
+  userTierPct: number,
+): number {
+  let total = 0;
+  for (const tier of TIER_LABELS) {
+    const pv = (breakdown[tier.key] as number) ?? 0;
+    if (pv <= 0) continue;
+    const cutPct = Math.max(0, userTierPct - tier.pct) / 100;
+    total += pv * cutPct * PV_TO_EUR_RATIO;
+  }
+  // Royalty 5% si user lui-meme touche du royalty (cas Supervisor avec
+  // downline Sup) — pour V2 c est rare, on ignore.
+  return total;
+}
+
+/**
  * Tree-walk : pour un sponsor (viewer), calcule l override total EUR sur
  * TOUTE son organisation (recursif), en appliquant la regle de compression
  * Herbalife. Reutilise par la jauge principale + l onglet Distributeurs.

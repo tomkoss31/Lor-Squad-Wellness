@@ -1546,6 +1546,10 @@ export async function setUserPvOverride(
 /**
  * Set le breakdown PV mensuel d'un user (admin only). Met aussi a jour
  * users.monthly_pv_override = somme cote SQL (RPC). Calibre fiche RO 2026-03.
+ *
+ * Dispatch un event global apres save pour que toutes les instances
+ * usePvBreakdowns (Co-pilote widget, RentabilitePage, modale rent, etc.)
+ * refetch automatiquement sans reload.
  */
 export async function setUserPvBreakdown(params: {
   userId: string;
@@ -1568,6 +1572,9 @@ export async function setUserPvBreakdown(params: {
   });
   if (error) {
     throw new Error(`Impossible d'enregistrer le breakdown PV : ${error.message}`);
+  }
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new CustomEvent("lor-squad:pv-breakdown-updated"));
   }
 }
 

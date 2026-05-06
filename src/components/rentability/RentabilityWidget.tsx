@@ -13,8 +13,10 @@ import { RentabilityGauge } from "./RentabilityGauge";
 import { RentabilityDetailModal } from "./RentabilityDetailModal";
 import { usePvBreakdowns } from "../../hooks/usePvBreakdowns";
 import {
+  computeOwnSelfMargin,
   computeViewerDownlineOverride,
   currentMonthIso,
+  tierPctForRank,
 } from "../../lib/herbalifeFormulas";
 
 export function RentabilityWidget() {
@@ -40,16 +42,36 @@ export function RentabilityWidget() {
       breakdowns,
     );
   }, [data, currentUser, users, breakdowns]);
-  // Patch data pour la jauge : margin_eur + override
+  // Marge propre du user sur SES ventes : si breakdown perso saisi, on
+  // l utilise (capture les ventes Bizworks hors-app). Sinon RPC fallback.
+  const ownSelfMargin = useMemo(() => {
+    if (!data || !currentUser) return data?.margin_eur ?? 0;
+    // Pour le couple, on additionne les breakdowns des 2 si saisis.
+    let total = 0;
+    let hasAnyBreakdown = false;
+    for (const ownerId of data.scope_user_ids) {
+      const b = breakdowns.find((br) => br.userId === ownerId);
+      if (b) {
+        const owner = users.find((u) => u.id === ownerId);
+        const tierPct = tierPctForRank(owner?.currentRank);
+        total += computeOwnSelfMargin(b, tierPct);
+        hasAnyBreakdown = true;
+      }
+    }
+    return hasAnyBreakdown ? total : data.margin_eur;
+  }, [data, currentUser, users, breakdowns]);
+  // Patch data pour la jauge : own_self_margin + override
   const dataWithOverride = useMemo(() => {
     if (!data) return null;
-    if (downlineOverride === 0) return data;
+    const newMargin = ownSelfMargin + downlineOverride;
+    if (newMargin === data.margin_eur) return data;
+    const ratio = data.margin_eur > 0 ? newMargin / data.margin_eur : 1;
     return {
       ...data,
-      margin_eur: data.margin_eur + downlineOverride,
-      projection_eur: data.projection_eur + downlineOverride,
+      margin_eur: newMargin,
+      projection_eur: data.projection_eur * ratio,
     };
-  }, [data, downlineOverride]);
+  }, [data, ownSelfMargin, downlineOverride]);
 
   if (!currentUser) return null;
   if (loading) {
@@ -98,8 +120,8 @@ export function RentabilityWidget() {
   if (downlineOverride > 0) {
     subParts.push(`+${Math.round(downlineOverride).toLocaleString("fr-FR")} € override downline`);
   }
-  const effectiveMargin = data.margin_eur + downlineOverride;
-  const effectiveProjection = data.projection_eur + downlineOverride;
+  const effectiveMargin = ownSelfMargin + downlineOverride;
+  const effectiveProjection = (dataWithOverride ?? data).projection_eur;
   if (effectiveProjection > effectiveMargin) {
     subParts.push(`projection ${Math.round(effectiveProjection).toLocaleString("fr-FR")} € fin de mois`);
   }
