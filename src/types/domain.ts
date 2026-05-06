@@ -144,6 +144,12 @@ export interface User {
   /** Ville du distri (saisie /bienvenue-distri ou /parametres).
    *  Source de vérité pour la météo Co-pilote V5. Chantier D 2026-05-05. */
   city?: string | null;
+  /** Compte gelé par admin. NULL = actif, ISO timestamp = gelé.
+   *  Effets : redirige sur /frozen + exclu des stats XP/team.
+   *  Chantier freeze 2026-05-06. */
+  frozenAt?: string | null;
+  frozenBy?: string | null;
+  frozenReason?: string | null;
 }
 
 /** Rangs Herbalife (12 paliers) — détermine la marge retail dans FLEX.

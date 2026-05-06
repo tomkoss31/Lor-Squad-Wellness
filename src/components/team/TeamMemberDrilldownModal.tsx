@@ -7,11 +7,15 @@
 // CTA vers la fiche distri complète (DistributorPortfolioPage).
 // =============================================================================
 
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   STATUS_META,
   type TeamMemberEngagement,
 } from "../../hooks/useTeamEngagement";
+import { useAppContext } from "../../context/AppContext";
+import { useToast, buildSupabaseErrorToast } from "../../context/ToastContext";
+import { freezeUserAccount, unfreezeUserAccount } from "../../services/supabaseService";
 
 interface TeamMemberDrilldownModalProps {
   member: TeamMemberEngagement | null;
@@ -44,8 +48,52 @@ function formatRelative(iso: string | null): string {
 
 export function TeamMemberDrilldownModal({ member, onClose }: TeamMemberDrilldownModalProps) {
   const navigate = useNavigate();
+  const { currentUser, users, refreshAfterFreeze } = useAppContext();
+  const { push: pushToast } = useToast();
+  const [freezing, setFreezing] = useState(false);
+
   if (!member) return null;
   const status = STATUS_META[member.status];
+
+  // Lookup user complet (depuis context.users) pour acceder a frozenAt.
+  // engagement RPC ne renvoie pas frozenAt (et de toute facon les frozen
+  // sont exclus du sub_tree, donc si on les voit ici c'est qu'ils sont actifs).
+  const fullUser = users.find((u) => u.id === member.user_id) ?? null;
+  const isFrozen = !!fullUser?.frozenAt;
+  const isAdmin = currentUser?.role === "admin";
+  const isSelf = currentUser?.id === member.user_id;
+  const canToggleFreeze = isAdmin && !isSelf;
+
+  async function handleToggleFreeze() {
+    if (!member || freezing) return;
+    setFreezing(true);
+    try {
+      if (isFrozen) {
+        await unfreezeUserAccount(member.user_id);
+        pushToast({
+          tone: "success",
+          title: "Compte réactivé",
+          message: `${member.name} retrouve l'accès à l'app.`,
+        });
+      } else {
+        await freezeUserAccount({
+          userId: member.user_id,
+          reason: "Gelé manuellement par admin",
+        });
+        pushToast({
+          tone: "success",
+          title: "Compte gelé",
+          message: `${member.name} ne pourra plus accéder à l'app jusqu'à réactivation.`,
+        });
+      }
+      await refreshAfterFreeze?.();
+      onClose();
+    } catch (err) {
+      pushToast(buildSupabaseErrorToast(err, "Action impossible pour le moment."));
+    } finally {
+      setFreezing(false);
+    }
+  }
 
   const handleOpenFiche = () => {
     onClose();
@@ -157,6 +205,80 @@ export function TeamMemberDrilldownModal({ member, onClose }: TeamMemberDrilldow
             color="var(--ls-coral)"
           />
         </div>
+
+        {/* Bloc admin : toggle Geler / Reactiver le compte */}
+        {canToggleFreeze ? (
+          <div
+            style={{
+              marginTop: 18,
+              padding: 14,
+              borderRadius: 12,
+              background: isFrozen
+                ? "color-mix(in srgb, var(--ls-coral) 8%, var(--ls-surface2))"
+                : "var(--ls-surface2)",
+              border: isFrozen
+                ? "1px solid color-mix(in srgb, var(--ls-coral) 35%, transparent)"
+                : "1px solid var(--ls-border)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: 12,
+            }}
+          >
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div
+                style={{
+                  fontSize: 12,
+                  fontWeight: 700,
+                  color: isFrozen ? "var(--ls-coral)" : "var(--ls-text)",
+                  letterSpacing: 0.3,
+                  marginBottom: 2,
+                }}
+              >
+                {isFrozen ? "🧊 Compte gelé" : "🟢 Compte actif"}
+              </div>
+              <div style={{ fontSize: 11, color: "var(--ls-text-muted)", lineHeight: 1.4 }}>
+                {isFrozen
+                  ? "L'utilisateur ne peut plus accéder à l'app et n'apparaît plus dans les stats équipe."
+                  : "Geler ce compte pour qu'il ne pollue plus stats / podium / agendas."}
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => void handleToggleFreeze()}
+              disabled={freezing}
+              role="switch"
+              aria-checked={!isFrozen}
+              style={{
+                position: "relative",
+                width: 56,
+                height: 30,
+                borderRadius: 999,
+                border: "none",
+                background: isFrozen ? "#475569" : "var(--ls-teal)",
+                cursor: freezing ? "wait" : "pointer",
+                transition: "background 0.2s ease",
+                opacity: freezing ? 0.6 : 1,
+                flexShrink: 0,
+              }}
+              title={isFrozen ? "Réactiver le compte" : "Geler le compte"}
+            >
+              <span
+                style={{
+                  position: "absolute",
+                  top: 3,
+                  left: isFrozen ? 3 : 29,
+                  width: 24,
+                  height: 24,
+                  borderRadius: "50%",
+                  background: "white",
+                  transition: "left 0.2s ease",
+                  boxShadow: "0 2px 4px rgba(0,0,0,0.2)",
+                }}
+              />
+            </button>
+          </div>
+        ) : null}
 
         {/* Footer CTAs */}
         <div style={ctaRowStyle}>

@@ -18,6 +18,12 @@ export function ProtectedRoute() {
     return <Navigate to="/welcome" replace />;
   }
 
+  // Chantier freeze 2026-05-06 : si compte gele, redirige sur /frozen.
+  // L'admin n'est jamais frozen (clause id <> v_caller dans freeze_user RPC).
+  if (currentUser.frozenAt) {
+    return <Navigate to="/frozen" replace />;
+  }
+
   return <Outlet />;
 }
 

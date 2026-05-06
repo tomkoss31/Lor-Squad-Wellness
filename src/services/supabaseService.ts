@@ -56,6 +56,9 @@ type UserRow = {
   rank_set_at?: string | null;
   formation_beta_access?: boolean | null;
   city?: string | null;
+  frozen_at?: string | null;
+  frozen_by?: string | null;
+  frozen_reason?: string | null;
 };
 
 type AssessmentRow = {
@@ -333,6 +336,9 @@ function mapUser(row: UserRow): User {
     rankSetAt: row.rank_set_at ?? null,
     formationBetaAccess: row.formation_beta_access ?? false,
     city: row.city ?? null,
+    frozenAt: row.frozen_at ?? null,
+    frozenBy: row.frozen_by ?? null,
+    frozenReason: row.frozen_reason ?? null,
   };
 }
 
@@ -1468,6 +1474,61 @@ export async function updateSupabaseUserPassword(userId: string, password: strin
   const result = (await response.json()) as { ok: boolean; error?: string };
   if (!response.ok || !result.ok) {
     throw new Error(result.error ?? "Impossible de redefinir ce mot de passe.");
+  }
+}
+
+// ─── Freeze / Unfreeze user accounts (Chantier 2026-05-06) ──────────────
+/**
+ * Gele le compte d'un user (admin only). Effets en cascade :
+ *   - users.frozen_at = now(), frozen_by = admin, frozen_reason = note
+ *   - L'user est exclu du sub-tree dans get_team_engagement (XP / podium)
+ *   - Au prochain login, il est redirige sur /frozen au lieu de /dashboard
+ *
+ * RPC SECURITY DEFINER : check admin cote serveur. Le caller ne peut PAS
+ * geler son propre compte (clause id <> v_caller dans la migration).
+ */
+export async function freezeUserAccount(params: {
+  userId: string;
+  reason?: string | null;
+}): Promise<void> {
+  const client = await requireSupabase();
+  const { error } = await client.rpc("freeze_user", {
+    p_target_user_id: params.userId,
+    p_reason: params.reason ?? null,
+  });
+  if (error) {
+    throw new Error(`Impossible de geler le compte : ${error.message}`);
+  }
+}
+
+export async function unfreezeUserAccount(userId: string): Promise<void> {
+  const client = await requireSupabase();
+  const { error } = await client.rpc("unfreeze_user", {
+    p_target_user_id: userId,
+  });
+  if (error) {
+    throw new Error(`Impossible de reactiver le compte : ${error.message}`);
+  }
+}
+
+/**
+ * Cree une demande de reactivation. Appele par le user gele depuis /frozen.
+ * RLS : self-insert autorise.
+ */
+export async function requestUnfreeze(message: string): Promise<void> {
+  const client = await requireSupabase();
+  const {
+    data: { user },
+  } = await client.auth.getUser();
+  if (!user?.id) {
+    throw new Error("Non authentifie.");
+  }
+  const { error } = await client.from("unfreeze_requests").insert({
+    user_id: user.id,
+    message: message.trim() || null,
+  });
+  if (error) {
+    throw new Error(`Impossible d'envoyer la demande : ${error.message}`);
   }
 }
 

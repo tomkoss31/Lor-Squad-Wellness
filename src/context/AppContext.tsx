@@ -112,6 +112,9 @@ interface AppContextValue {
   /** Active le programme : start_date = aujourd'hui (ou date donnée) +
    *  réaligne pv_client_products. Chantier activator 2026-05-05. */
   activateClientProgram: (clientId: string, startDateIso?: string) => Promise<void>;
+  /** Re-fetch users + clients apres un freeze/unfreeze depuis la modale.
+   *  Chantier freeze 2026-05-06. */
+  refreshAfterFreeze: () => Promise<void>;
   setClientFragileFlag: (clientId: string, isFragile: boolean) => Promise<void>;
   setClientFreeFollowUp: (clientId: string, freeFollowUp: boolean) => Promise<void>;
   // Free PV tracking (2026-04-20) : toggle exclusion des listes de réassort
@@ -1008,6 +1011,12 @@ export function AppProvider({ children }: PropsWithChildren) {
               : p
           )
         );
+      },
+      refreshAfterFreeze: async () => {
+        // Re-fetch users complets pour que frozenAt soit a jour cote front
+        if (currentUser) {
+          await refreshRemoteData(currentUser);
+        }
       },
       setClientFreeFollowUp: async (clientId: string, freeFollowUp: boolean) => {
         // Sujet C : si on active le suivi libre, les follow-ups ouverts passent
