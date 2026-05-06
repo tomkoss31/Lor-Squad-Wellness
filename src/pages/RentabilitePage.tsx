@@ -15,6 +15,11 @@ import { useTeamEngagement } from "../hooks/useTeamEngagement";
 import { RentabilityGauge } from "../components/rentability/RentabilityGauge";
 import { RentabilityDetailModal } from "../components/rentability/RentabilityDetailModal";
 import { resolveCoupleUserIds } from "../config/teamConfig";
+import { usePvBreakdowns } from "../hooks/usePvBreakdowns";
+import {
+  computeViewerDownlineOverride,
+  currentMonthIso,
+} from "../lib/herbalifeFormulas";
 
 function initialsOf(name: string): string {
   if (!name) return "?";
@@ -33,6 +38,33 @@ export function RentabilitePage() {
   const { data: selectedData } = useUserRentability(selectedMemberId);
 
   const [detailOpen, setDetailOpen] = useState(false);
+
+  // V2.1 — override downline ajoute a margin_eur cote front (RPC ne lit pas
+  // pv_monthly_breakdown, donc ne le saurait pas autrement).
+  const monthIso = useMemo(() => currentMonthIso(), []);
+  const { breakdowns } = usePvBreakdowns(monthIso);
+  const ownDownlineOverride = useMemo(() => {
+    if (!ownData || !currentUser) return 0;
+    return computeViewerDownlineOverride(
+      ownData.scope_user_ids,
+      users.map((u) => ({
+        id: u.id,
+        sponsorId: u.sponsorId,
+        currentRank: u.currentRank,
+        frozenAt: u.frozenAt,
+      })),
+      breakdowns,
+    );
+  }, [ownData, currentUser, users, breakdowns]);
+  const ownDataWithOverride = useMemo(() => {
+    if (!ownData) return null;
+    if (ownDownlineOverride === 0) return ownData;
+    return {
+      ...ownData,
+      margin_eur: ownData.margin_eur + ownDownlineOverride,
+      projection_eur: ownData.projection_eur + ownDownlineOverride,
+    };
+  }, [ownData, ownDownlineOverride]);
 
   const isAdminOrRef = currentUser?.role === "admin" || currentUser?.role === "referent";
 
@@ -68,7 +100,23 @@ export function RentabilitePage() {
         <div style={loadingStyle}>Chargement…</div>
       ) : ownData ? (
         <div style={ownCardStyle}>
-          <RentabilityGauge data={ownData} size="hero" onClick={() => setDetailOpen(true)} />
+          <RentabilityGauge
+            data={ownDataWithOverride ?? ownData}
+            size="hero"
+            onClick={() => setDetailOpen(true)}
+          />
+          {ownDownlineOverride > 0 ? (
+            <div style={{
+              marginTop: 4,
+              fontSize: 12,
+              color: "var(--ls-text-muted)",
+              textAlign: "center",
+            }}>
+              dont <strong style={{ color: "var(--ls-purple)" }}>
+                +{Math.round(ownDownlineOverride).toLocaleString("fr-FR")} €
+              </strong> override downline
+            </div>
+          ) : null}
           <button type="button" onClick={() => setDetailOpen(true)} style={detailBtnStyle}>
             Voir le détail complet →
           </button>
@@ -103,7 +151,7 @@ export function RentabilitePage() {
 
       {/* Modal détail propre */}
       {detailOpen && ownData && (
-        <RentabilityDetailModal data={ownData} onClose={() => setDetailOpen(false)} />
+        <RentabilityDetailModal data={ownDataWithOverride ?? ownData} onClose={() => setDetailOpen(false)} />
       )}
 
       {/* Modal détail membre équipe */}
