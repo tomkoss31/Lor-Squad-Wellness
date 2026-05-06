@@ -11,12 +11,23 @@
 // données. Couplé Thomas+Mélanie auto-géré par le hook.
 // =============================================================================
 
+import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppContext } from "../../../../context/AppContext";
 import {
   useUserRentability,
   rentabilityZone,
 } from "../../../../hooks/useUserRentability";
+import { usePvBreakdowns } from "../../../../hooks/usePvBreakdowns";
+import { useManualPvEntries } from "../../../../hooks/useManualPvEntries";
+import { useStealthMode } from "../../../../hooks/useStealthMode";
+import {
+  computeManualEntriesOverride,
+  computeOwnSelfMargin,
+  computeViewerDownlineOverride,
+  currentMonthIso,
+  tierPctForRank,
+} from "../../../../lib/herbalifeFormulas";
 
 const ZONE_META: Record<string, { label: string; emoji: string }> = {
   red: { label: "À booster", emoji: "🔥" },
@@ -40,10 +51,51 @@ function monthLabel(iso: string): string {
 
 export function RentabJourney() {
   const navigate = useNavigate();
-  const { currentUser } = useAppContext();
+  const { currentUser, users } = useAppContext();
   const { data, loading, isCoupleAggregated } = useUserRentability(
     currentUser?.id ?? null,
   );
+  const { stealthOn, toggle: toggleStealth } = useStealthMode();
+
+  // V2.1+ : injection override downline + manuel pour coherence avec
+  // /rentabilite et la modale "Voir detail complet".
+  const monthIso = useMemo(() => currentMonthIso(), []);
+  const { breakdowns } = usePvBreakdowns(monthIso);
+  const { entries: manualEntries } = useManualPvEntries(currentUser?.id ?? null, monthIso);
+
+  const ownSelfMargin = useMemo(() => {
+    if (!data || !currentUser) return data?.margin_eur ?? 0;
+    let total = 0;
+    let any = false;
+    for (const ownerId of data.scope_user_ids) {
+      const b = breakdowns.find((br) => br.userId === ownerId);
+      if (b) {
+        const owner = users.find((u) => u.id === ownerId);
+        total += computeOwnSelfMargin(b, tierPctForRank(owner?.currentRank));
+        any = true;
+      }
+    }
+    return any ? total : data.margin_eur;
+  }, [data, currentUser, users, breakdowns]);
+
+  const downlineOverride = useMemo(() => {
+    if (!data || !currentUser) return 0;
+    return computeViewerDownlineOverride(
+      data.scope_user_ids,
+      users.map((u) => ({
+        id: u.id,
+        sponsorId: u.sponsorId,
+        currentRank: u.currentRank,
+        frozenAt: u.frozenAt,
+      })),
+      breakdowns,
+    );
+  }, [data, currentUser, users, breakdowns]);
+
+  const manualOverride = useMemo(() => {
+    if (!currentUser) return 0;
+    return computeManualEntriesOverride(manualEntries, tierPctForRank(currentUser.currentRank));
+  }, [manualEntries, currentUser]);
 
   if (loading) {
     return (
@@ -55,12 +107,15 @@ export function RentabJourney() {
 
   if (!data) return null;
 
-  const zone = rentabilityZone(data.margin_eur);
+  // Total margin = directe + downline + manuel (coherent avec /rentabilite)
+  const totalMargin = ownSelfMargin + downlineOverride + manualOverride;
+  const zone = rentabilityZone(totalMargin);
   const meta = ZONE_META[zone];
 
-  // Calcul du % atteint vs projection fin de mois
-  const projection = data.projection_eur || data.margin_eur;
-  const pct = projection > 0 ? Math.min(100, (data.margin_eur / projection) * 100) : 0;
+  // Projection scaled au ratio override
+  const ratio = data.margin_eur > 0 ? totalMargin / data.margin_eur : 1;
+  const projection = (data.projection_eur || data.margin_eur) * ratio;
+  const pct = projection > 0 ? Math.min(100, (totalMargin / projection) * 100) : 0;
   const pctRounded = Math.round(pct);
 
   return (
@@ -71,11 +126,31 @@ export function RentabJourney() {
       {/* TOP — montant + status + meta */}
       <div style={topRowStyle}>
         <div style={{ position: "relative", zIndex: 1, flex: 1 }}>
-          <div style={overlineStyle} className="v5-cinzel">
-            ◆ Ma rentabilité · {monthLabel(data.month_start)}
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+            <div style={overlineStyle} className="v5-cinzel">
+              ◆ Ma rentabilité · {monthLabel(data.month_start)}
+            </div>
+            <button
+              type="button"
+              onClick={toggleStealth}
+              aria-pressed={stealthOn}
+              title={stealthOn ? "Afficher les montants" : "Masquer les montants (RDV)"}
+              style={{
+                background: "transparent",
+                border: "0.5px solid var(--v5-line, rgba(0,0,0,0.1))",
+                borderRadius: 6,
+                padding: "2px 8px",
+                fontSize: 11,
+                cursor: "pointer",
+                color: stealthOn ? "var(--ls-purple, #8B5CF6)" : "var(--v5-ink-light, #888)",
+                fontFamily: "DM Sans, sans-serif",
+              }}
+            >
+              {stealthOn ? "🙈" : "👁️"}
+            </button>
           </div>
           <div style={titleLineStyle}>
-            <span style={amountBigStyle}>{formatEur(data.margin_eur)}</span>
+            <span data-stealth style={amountBigStyle}>{formatEur(totalMargin)}</span>
             <span style={amountTextStyle} className="v5-cormorant-italic">
               gagnés ce mois
             </span>
@@ -87,6 +162,12 @@ export function RentabJourney() {
             <strong>{data.products_count} programme{data.products_count > 1 ? "s" : ""} vendu{data.products_count > 1 ? "s" : ""}</strong>
             {" · marge "}
             {data.margin_pct}%
+            {downlineOverride > 0 ? (
+              <span data-stealth> · +{Math.round(downlineOverride).toLocaleString("fr-FR")} € override</span>
+            ) : null}
+            {manualOverride > 0 ? (
+              <span data-stealth> · +{Math.round(manualOverride).toLocaleString("fr-FR")} € hors-app</span>
+            ) : null}
             {isCoupleAggregated && " · agrégé Thomas + Mélanie"}
           </div>
         </div>
@@ -101,14 +182,14 @@ export function RentabJourney() {
       </div>
 
       {/* PARCOURS horizontal */}
-      <div style={journeyWrapStyle}>
+      <div style={journeyWrapStyle} data-stealth>
         <div style={barWrapStyle}>
           <div style={{ ...barFillStyle, width: `${pct}%` }} />
         </div>
         <div style={markersStyle}>
           <span style={markerStyle}>0 €</span>
           <span style={markerCurrentStyle}>
-            ▲ {formatEur(data.margin_eur)} · {pctRounded}% atteint
+            ▲ {formatEur(totalMargin)} · {pctRounded}% atteint
           </span>
           <span style={markerTargetStyle}>
             {formatEur(projection)} · projection fin de mois
