@@ -622,19 +622,89 @@ function BootErrorScreen({ message }: { message: string }) {
   );
 }
 
+// =============================================================================
+// RouteLoadingScreen — micro-loader entre routes (rebrand 2026-05-06)
+//
+// Rendu pendant le React.lazy() suspense (changement de page).
+// Volontairement TRES sobre : juste le logo orbe qui pulse en heartbeat
+// + un mini halo G3. Visible 100-300ms maximum sur connexion correcte.
+//
+// Pas de bandeau plein ecran, pas de texte, pas de retour visuel violent.
+// Just le logo qui respire = signal subtil "ca charge" sans casser le flow.
+// =============================================================================
 function RouteLoadingScreen() {
   return (
-    <div className="min-h-screen bg-hero-mesh px-4 py-8">
-      <div className="mx-auto flex min-h-[calc(100vh-4rem)] max-w-[760px] items-center justify-center">
-        <div className="glass-panel w-full rounded-[32px] px-8 py-10 text-center">
-          <p className="eyebrow-label">La Base 360</p>
-          <h1 className="mt-4 text-3xl md:text-4xl">Chargement de la page</h1>
-          <p className="mt-4 text-sm leading-7 text-slate-300">
-            On charge seulement l&apos;ecran utile pour garder l&apos;application plus legere et
-            plus fluide.
-          </p>
+    <>
+      <style>{`
+        @keyframes lb360-route-heartbeat {
+          0%, 100% { transform: scale(1); opacity: 0.75; }
+          14% { transform: scale(1.18); opacity: 1; }
+          28% { transform: scale(1); opacity: 0.85; }
+          42% { transform: scale(1.18); opacity: 1; }
+          70% { transform: scale(1); opacity: 0.75; }
+        }
+        @keyframes lb360-route-halo {
+          0%, 100% { opacity: 0.30; transform: translate(-50%, -50%) scale(1); }
+          14%, 42% { opacity: 0.65; transform: translate(-50%, -50%) scale(1.45); }
+        }
+        @keyframes lb360-route-fade-in {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .lb360-route-anim { animation: none !important; }
+          .lb360-route-halo { display: none !important; }
+        }
+      `}</style>
+      <div
+        className="lb360-route-anim"
+        style={{
+          minHeight: "60vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: 32,
+          animation: "lb360-route-fade-in 120ms ease-out both",
+        }}
+      >
+        <div style={{ position: "relative", width: 80, height: 80 }}>
+          {/* Halo G3 derriere le logo */}
+          <div
+            aria-hidden="true"
+            className="lb360-route-anim lb360-route-halo"
+            style={{
+              position: "absolute",
+              top: "50%",
+              left: "50%",
+              width: 80,
+              height: 80,
+              borderRadius: "50%",
+              background:
+                "radial-gradient(circle, rgba(16,185,129,0.35) 0%, rgba(6,182,212,0.20) 40%, transparent 70%)",
+              transform: "translate(-50%, -50%)",
+              filter: "blur(8px)",
+              animation: "lb360-route-halo 1.4s ease-in-out infinite",
+            }}
+          />
+          {/* Logo orbe pulsant */}
+          <img
+            src="/brand/labase360/app-icon-512.svg"
+            alt="Chargement…"
+            className="lb360-route-anim"
+            style={{
+              position: "relative",
+              width: 56,
+              height: 56,
+              borderRadius: 14,
+              top: 12,
+              left: 12,
+              animation: "lb360-route-heartbeat 1.4s ease-in-out infinite",
+              willChange: "transform, opacity",
+              filter: "drop-shadow(0 4px 12px rgba(16,185,129,0.30))",
+            }}
+          />
         </div>
       </div>
-    </div>
+    </>
   );
 }
