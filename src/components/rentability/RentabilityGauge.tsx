@@ -81,7 +81,17 @@ export function RentabilityGauge({
   const startedRef = useRef(false);
 
   useEffect(() => {
-    if (startedRef.current) return;
+    // BUG FIX 2026-11-07 : startedRef guard empechait les updates apres
+    // le premier render. Quand data.margin_eur change (manual entries
+    // chargees en async, ou breakdown sauve), la jauge restait bloquee
+    // sur l'ancienne valeur.
+    // - Premier mount : animation count-up depuis 0
+    // - Updates ulterieurs : update direct sans animation (sinon flicker)
+    if (startedRef.current) {
+      setAnimatedValue(data.margin_eur);
+      setAnimatedFill(fillRatio);
+      return;
+    }
     startedRef.current = true;
 
     const startTimer = setTimeout(() => {
