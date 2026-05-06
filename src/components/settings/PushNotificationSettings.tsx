@@ -6,7 +6,7 @@ interface Props {
 }
 
 export function PushNotificationSettings({ userId, userName }: Props) {
-  const { supported, permission, subscribed, loading, subscribe, unsubscribe } = usePushNotifications(userId, userName)
+  const { supported, permission, subscribed, loading, error, subscribe, unsubscribe, clearError } = usePushNotifications(userId, userName)
 
   if (!supported) {
     return (
@@ -58,19 +58,55 @@ export function PushNotificationSettings({ userId, userName }: Props) {
           Les notifications ont été bloquées. Pour les réactiver, va dans les réglages de ton navigateur → Autorisations → Notifications.
         </div>
       ) : (
-        <button
-          onClick={() => subscribed ? unsubscribe() : subscribe()}
-          disabled={loading}
-          style={{
-            width: '100%', padding: '10px', borderRadius: 10, border: 'none', cursor: loading ? 'not-allowed' : 'pointer',
-            background: subscribed ? 'var(--ls-coral-bg)' : '#C9A84C',
-            color: subscribed ? '#FB7185' : 'var(--ls-bg)',
-            fontFamily: 'DM Sans, sans-serif', fontSize: 13, fontWeight: 600,
-            opacity: loading ? 0.6 : 1, transition: 'all 0.15s',
-          }}
-        >
-          {loading ? 'Chargement...' : subscribed ? 'Désactiver les notifications' : 'Activer les notifications'}
-        </button>
+        <>
+          <button
+            onClick={() => subscribed ? unsubscribe() : subscribe()}
+            disabled={loading}
+            style={{
+              width: '100%', padding: '10px', borderRadius: 10, border: 'none', cursor: loading ? 'not-allowed' : 'pointer',
+              background: subscribed ? 'var(--ls-coral-bg)' : '#C9A84C',
+              color: subscribed ? '#FB7185' : 'var(--ls-bg)',
+              fontFamily: 'DM Sans, sans-serif', fontSize: 13, fontWeight: 600,
+              opacity: loading ? 0.6 : 1, transition: 'all 0.15s',
+            }}
+          >
+            {loading ? 'Chargement...' : subscribed ? 'Désactiver les notifications' : 'Activer les notifications'}
+          </button>
+          {/* Affichage erreur explicite (fix bug Mel "branchage echoue silencieusement" 2026-05-06) */}
+          {error ? (
+            <div style={{
+              marginTop: 10,
+              background: 'var(--ls-coral-bg)',
+              border: '1px solid rgba(251,113,133,0.25)',
+              borderRadius: 10,
+              padding: '10px 12px',
+              fontSize: 11.5,
+              color: '#FB7185',
+              lineHeight: 1.5,
+              display: 'flex',
+              alignItems: 'flex-start',
+              gap: 8,
+            }}>
+              <span style={{ flexShrink: 0 }}>⚠️</span>
+              <span style={{ flex: 1 }}>{error}</span>
+              <button
+                type="button"
+                onClick={clearError}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: '#FB7185',
+                  cursor: 'pointer',
+                  padding: 0,
+                  fontSize: 14,
+                  lineHeight: 1,
+                  flexShrink: 0,
+                }}
+                aria-label="Fermer"
+              >×</button>
+            </div>
+          ) : null}
+        </>
       )}
     </div>
   )
