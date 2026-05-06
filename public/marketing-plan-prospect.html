@@ -1,0 +1,526 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Et si tu transformais ta passion en revenu ? — La Base 360</title>
+<style>
+  :root {
+    --emerald: #10B981;
+    --cyan: #06B6D4;
+    --violet: #8B5CF6;
+    --gold: #B8922A;
+    --coral: #D4537E;
+    --ink: #0F172A;
+    --ink2: #475569;
+    --slate: #64748B;
+    --mist: #FAFAFC;
+    --mist2: #F1F5F9;
+    --line: #E2E8F0;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    color: var(--ink);
+    background: var(--mist);
+    line-height: 1.6;
+    font-size: 14px;
+    -webkit-font-smoothing: antialiased;
+  }
+  .page {
+    max-width: 920px;
+    margin: 0 auto;
+    padding: 50px 56px;
+  }
+  .print-btn {
+    position: fixed; top: 20px; right: 20px;
+    padding: 10px 18px; border-radius: 12px; border: none;
+    background: linear-gradient(135deg, #10B981 0%, #06B6D4 50%, #8B5CF6 100%);
+    color: white; font-family: 'Sora', sans-serif;
+    font-size: 13px; font-weight: 700; cursor: pointer;
+    box-shadow: 0 6px 18px rgba(16,185,129,0.32); z-index: 100;
+  }
+  @media print { .print-btn { display: none !important; } }
+
+  /* ── Hero ── */
+  .hero {
+    text-align: center;
+    padding: 50px 30px 40px;
+    background: linear-gradient(135deg, color-mix(in srgb, #10B981 8%, white) 0%, color-mix(in srgb, #06B6D4 6%, white) 50%, color-mix(in srgb, #8B5CF6 7%, white) 100%);
+    border-radius: 28px;
+    margin-bottom: 50px;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute; top: -60px; right: -60px;
+    width: 220px; height: 220px;
+    background: radial-gradient(circle, rgba(16,185,129,0.18), transparent 70%);
+    border-radius: 50%;
+  }
+  .hero::after {
+    content: '';
+    position: absolute; bottom: -80px; left: -80px;
+    width: 240px; height: 240px;
+    background: radial-gradient(circle, rgba(139,92,246,0.16), transparent 70%);
+    border-radius: 50%;
+  }
+  .brand {
+    display: inline-flex; align-items: center; gap: 10px;
+    font-family: 'Sora', sans-serif;
+    font-size: 13px; font-weight: 700; letter-spacing: 0.5px;
+    color: var(--ink); margin-bottom: 26px;
+    position: relative; z-index: 1;
+  }
+  .brand-mark {
+    width: 28px; height: 28px; border-radius: 7px;
+    background: linear-gradient(135deg, #10B981 0%, #06B6D4 50%, #8B5CF6 100%);
+    box-shadow: 0 2px 8px rgba(16,185,129,0.25);
+  }
+  .hero h1 {
+    font-family: 'Sora', sans-serif;
+    font-size: 44px; font-weight: 800;
+    margin: 0 auto 18px; max-width: 720px;
+    letter-spacing: -0.025em; line-height: 1.1;
+    position: relative; z-index: 1;
+  }
+  .hero h1 .accent {
+    background: linear-gradient(135deg, #10B981, #06B6D4, #8B5CF6);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    font-style: italic;
+  }
+  .hero p {
+    font-size: 17px; color: var(--ink2); max-width: 640px;
+    margin: 0 auto; line-height: 1.65;
+    position: relative; z-index: 1;
+  }
+
+  h2 {
+    font-family: 'Sora', sans-serif;
+    font-size: 26px; font-weight: 800;
+    margin: 50px 0 16px; letter-spacing: -0.015em;
+  }
+  h2 .num {
+    display: inline-block;
+    background: linear-gradient(135deg, #10B981, #06B6D4, #8B5CF6);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    font-style: italic; margin-right: 4px;
+  }
+  h3 {
+    font-family: 'Sora', sans-serif;
+    font-size: 16px; font-weight: 700;
+    margin: 0 0 8px; color: var(--ink);
+  }
+  p { margin: 0 0 14px; color: var(--ink2); }
+
+  /* ── 3 façons === */
+  .ways-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+    margin-bottom: 30px;
+  }
+  .way-card {
+    background: white;
+    border-radius: 18px;
+    padding: 26px 22px;
+    border: 0.5px solid var(--line);
+    text-align: center;
+    box-shadow: 0 1px 3px rgba(15,23,42,0.04);
+    position: relative;
+    overflow: hidden;
+  }
+  .way-card .badge-icon {
+    width: 56px; height: 56px;
+    border-radius: 16px;
+    background: color-mix(in srgb, #10B981 12%, white);
+    color: var(--emerald);
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 26px; margin-bottom: 14px;
+  }
+  .way-card.cyan .badge-icon {
+    background: color-mix(in srgb, #06B6D4 12%, white); color: var(--cyan);
+  }
+  .way-card.violet .badge-icon {
+    background: color-mix(in srgb, #8B5CF6 12%, white); color: var(--violet);
+  }
+  .way-card .way-title {
+    font-family: 'Sora', sans-serif;
+    font-size: 17px; font-weight: 800; margin-bottom: 8px;
+  }
+  .way-card .way-desc {
+    font-size: 13px; color: var(--ink2); line-height: 1.55;
+  }
+  .way-card .way-pct {
+    margin-top: 14px;
+    font-family: 'Sora', sans-serif;
+    font-weight: 800; font-size: 22px;
+    color: var(--emerald);
+  }
+  .way-card.cyan .way-pct { color: var(--cyan); }
+  .way-card.violet .way-pct { color: var(--violet); }
+
+  /* === Niveaux simplifiés === */
+  .levels {
+    display: flex; flex-direction: column; gap: 12px;
+    margin-bottom: 30px;
+  }
+  .level {
+    background: white;
+    border: 0.5px solid var(--line);
+    border-radius: 14px;
+    padding: 18px 22px;
+    display: grid;
+    grid-template-columns: 56px 1fr auto;
+    gap: 18px;
+    align-items: center;
+  }
+  .level-num {
+    width: 44px; height: 44px;
+    border-radius: 12px;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-family: 'Sora', sans-serif;
+    font-weight: 800; font-size: 16px;
+    color: white;
+  }
+  .level-1 .level-num { background: linear-gradient(135deg, #94A3B8, #64748B); }
+  .level-2 .level-num { background: linear-gradient(135deg, #B8922A, #C9A84C); }
+  .level-3 .level-num { background: linear-gradient(135deg, #10B981, #34D399); }
+  .level-4 .level-num { background: linear-gradient(135deg, #06B6D4, #22D3EE); }
+  .level-5 .level-num { background: linear-gradient(135deg, #8B5CF6, #A78BFA); }
+  .level-name {
+    font-family: 'Sora', sans-serif;
+    font-size: 16px; font-weight: 700;
+    margin-bottom: 3px;
+  }
+  .level-desc {
+    font-size: 12px; color: var(--slate);
+  }
+  .level-pct {
+    font-family: 'Sora', sans-serif;
+    font-weight: 800; font-size: 24px;
+    color: var(--emerald);
+    text-align: right;
+  }
+  .level-2 .level-pct { color: var(--gold); }
+  .level-3 .level-pct { color: var(--emerald); }
+  .level-4 .level-pct { color: var(--cyan); }
+  .level-5 .level-pct { color: var(--violet); }
+
+  /* === Cas concret === */
+  .case-study {
+    background: linear-gradient(135deg, color-mix(in srgb, #10B981 8%, white) 0%, color-mix(in srgb, #06B6D4 6%, white) 100%);
+    border-radius: 22px;
+    padding: 32px 36px;
+    margin-bottom: 30px;
+    border: 0.5px solid color-mix(in srgb, #10B981 20%, transparent);
+  }
+  .case-study h3 {
+    font-size: 19px; margin-bottom: 14px;
+  }
+  .case-row {
+    display: flex; gap: 12px;
+    align-items: center;
+    padding: 12px 16px;
+    background: white;
+    border-radius: 12px;
+    margin-bottom: 8px;
+    font-size: 13px;
+  }
+  .case-row .label {
+    flex: 1; color: var(--ink2);
+  }
+  .case-row .value {
+    font-family: 'Sora', sans-serif;
+    font-weight: 700; color: var(--ink);
+    font-size: 15px;
+  }
+  .case-total {
+    background: linear-gradient(135deg, #10B981, #06B6D4);
+    color: white;
+    border-radius: 14px;
+    padding: 16px 22px;
+    margin-top: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 6px 18px rgba(16,185,129,0.28);
+  }
+  .case-total .label {
+    font-family: 'Sora', sans-serif;
+    font-weight: 700; font-size: 14px;
+  }
+  .case-total .value {
+    font-family: 'Sora', sans-serif;
+    font-weight: 800; font-size: 28px;
+  }
+  .case-note {
+    font-size: 11px; color: var(--slate);
+    font-style: italic;
+    text-align: center; margin-top: 10px;
+  }
+
+  /* === Démarrer === */
+  .start-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+  }
+  .step {
+    background: white;
+    border: 0.5px solid var(--line);
+    border-radius: 16px;
+    padding: 22px 20px;
+    position: relative;
+  }
+  .step .step-num {
+    position: absolute;
+    top: -14px; left: 22px;
+    background: linear-gradient(135deg, #10B981, #06B6D4, #8B5CF6);
+    color: white;
+    width: 32px; height: 32px;
+    border-radius: 10px;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-family: 'Sora', sans-serif; font-weight: 800;
+    box-shadow: 0 4px 12px rgba(16,185,129,0.32);
+  }
+  .step h3 {
+    margin-top: 14px;
+    font-size: 16px;
+  }
+  .step p {
+    font-size: 13px; color: var(--ink2);
+    margin-bottom: 0; line-height: 1.55;
+  }
+
+  /* === CTA === */
+  .cta {
+    background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
+    color: white;
+    border-radius: 22px;
+    padding: 40px 36px;
+    text-align: center;
+    margin-top: 50px;
+    position: relative;
+    overflow: hidden;
+  }
+  .cta::before {
+    content: '';
+    position: absolute; top: -100px; right: -100px;
+    width: 280px; height: 280px;
+    background: radial-gradient(circle, rgba(16,185,129,0.32), transparent 65%);
+    border-radius: 50%;
+  }
+  .cta::after {
+    content: '';
+    position: absolute; bottom: -90px; left: -90px;
+    width: 240px; height: 240px;
+    background: radial-gradient(circle, rgba(139,92,246,0.28), transparent 65%);
+    border-radius: 50%;
+  }
+  .cta h2 {
+    color: white;
+    margin: 0 0 12px;
+    font-size: 26px;
+    position: relative; z-index: 1;
+  }
+  .cta h2 .num { color: white; -webkit-text-fill-color: white; }
+  .cta p {
+    color: rgba(255,255,255,0.85);
+    font-size: 15px;
+    max-width: 540px; margin: 0 auto 20px;
+    position: relative; z-index: 1;
+  }
+  .cta .cta-btn {
+    display: inline-block;
+    padding: 14px 28px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #10B981 0%, #06B6D4 50%, #8B5CF6 100%);
+    color: white;
+    font-family: 'Sora', sans-serif;
+    font-weight: 700; font-size: 15px;
+    text-decoration: none;
+    box-shadow: 0 8px 24px rgba(16,185,129,0.45);
+    position: relative; z-index: 1;
+  }
+
+  footer {
+    margin-top: 40px;
+    padding-top: 20px;
+    border-top: 0.5px solid var(--line);
+    text-align: center;
+    font-size: 11px; color: var(--slate);
+    line-height: 1.6;
+  }
+  footer .signature {
+    font-family: 'Sora', sans-serif; font-weight: 700;
+    color: var(--ink); font-size: 13px; margin-bottom: 6px;
+  }
+
+  @media print {
+    body { background: white; font-size: 12px; }
+    .page { padding: 24px 36px; max-width: none; }
+    .hero { padding: 30px 20px; margin-bottom: 30px; page-break-inside: avoid; }
+    .hero h1 { font-size: 32px; }
+    h2 { font-size: 20px; margin-top: 30px; page-break-after: avoid; }
+    .way-card, .level, .case-study, .step, .cta { page-break-inside: avoid; }
+    .way-card, .level, .case-row, .case-total, .step, .hero, .cta {
+      print-color-adjust: exact;
+      -webkit-print-color-adjust: exact;
+    }
+  }
+  @page { size: A4 portrait; margin: 14mm 12mm; }
+</style>
+</head>
+<body>
+
+<button onclick="window.print()" class="print-btn" type="button">🖨️ Imprimer · Sauver en PDF</button>
+
+<div class="page">
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="brand">
+      <span class="brand-mark"></span>
+      LA BASE <em style="font-style: italic; font-weight: 800; background: linear-gradient(135deg,#10B981,#06B6D4,#8B5CF6); -webkit-background-clip: text; background-clip: text; color: transparent;">360</em>
+    </div>
+    <h1>Et si tu transformais ta passion en <span class="accent">revenu complémentaire</span> ?</h1>
+    <p>Devenir distributeur Herbalife, ce n'est pas vendre des produits. C'est rejoindre une équipe, accompagner des personnes vers un meilleur équilibre, et construire ton activité à ton rythme.</p>
+  </section>
+
+  <!-- POURQUOI -->
+  <h2><span class="num">01.</span> Pourquoi nous rejoindre ?</h2>
+  <p style="font-size: 16px; line-height: 1.7;">
+    Herbalife, c'est <strong>40+ ans d'expérience nutrition</strong> + une <strong>communauté mondiale de millions de distributeurs</strong>. Tu n'es jamais seul·e : tu rejoins une équipe formée, mentorée, qui te transmet ses outils et son énergie. La Base 360, c'est notre méthode pour t'aider à démarrer fort.
+  </p>
+
+  <!-- 3 FAÇONS DE GAGNER -->
+  <h2><span class="num">02.</span> Trois façons de gagner</h2>
+  <div class="ways-grid">
+    <div class="way-card">
+      <div class="badge-icon">🛒</div>
+      <div class="way-title">Consommer</div>
+      <div class="way-desc">Achète tes produits à prix membre. Tu économises directement entre 25 % et 50 % sur tout ce que tu utilises pour toi.</div>
+      <div class="way-pct">−25 à −50 %</div>
+    </div>
+    <div class="way-card cyan">
+      <div class="badge-icon">🤝</div>
+      <div class="way-title">Partager</div>
+      <div class="way-desc">Recommande aux clients qui veulent atteindre leurs objectifs. Tu gagnes ta marge sur chaque vente, sans stock obligatoire.</div>
+      <div class="way-pct">25 à 50 %</div>
+    </div>
+    <div class="way-card violet">
+      <div class="badge-icon">🌱</div>
+      <div class="way-title">Construire</div>
+      <div class="way-desc">Forme à ton tour des distributeurs. Tu touches une commission sur leurs ventes, multipliant ton revenu de manière durable.</div>
+      <div class="way-pct">+5 à 8 %</div>
+    </div>
+  </div>
+
+  <!-- NIVEAUX SIMPLIFIÉS -->
+  <h2><span class="num">03.</span> Les premiers paliers expliqués simplement</h2>
+  <p>Plus tu vends régulièrement, plus tu accèdes à de meilleures remises. Ce n'est pas un piège : c'est progressif, transparent, et tu gardes ton avancement à vie.</p>
+
+  <div class="levels">
+    <div class="level level-1">
+      <span class="level-num">1</span>
+      <div>
+        <div class="level-name">Client privilégié</div>
+        <div class="level-desc">Tu commandes directement, à ton rythme. Pas d'engagement.</div>
+      </div>
+      <div class="level-pct">−15 %</div>
+    </div>
+    <div class="level level-2">
+      <span class="level-num">2</span>
+      <div>
+        <div class="level-name">Distributor</div>
+        <div class="level-desc">Tu inscris ton activité Herbalife officiellement.</div>
+      </div>
+      <div class="level-pct">−25 %</div>
+    </div>
+    <div class="level level-3">
+      <span class="level-num">3</span>
+      <div>
+        <div class="level-name">Senior Consultant</div>
+        <div class="level-desc">Atteint à partir de 500 PV personnels en 1 mois.</div>
+      </div>
+      <div class="level-pct">−35 %</div>
+    </div>
+    <div class="level level-4">
+      <span class="level-num">4</span>
+      <div>
+        <div class="level-name">Success Builder</div>
+        <div class="level-desc">À partir de 1 000 PV personnels en 1 mois.</div>
+      </div>
+      <div class="level-pct">−42 %</div>
+    </div>
+    <div class="level level-5">
+      <span class="level-num">5</span>
+      <div>
+        <div class="level-name">Supervisor</div>
+        <div class="level-desc">4 000 PV en 1 mois (perso + équipe). Le palier qui change tout : remise max + commissions sur toute ton équipe.</div>
+      </div>
+      <div class="level-pct">−50 %</div>
+    </div>
+  </div>
+
+  <!-- CAS CONCRET -->
+  <h2><span class="num">04.</span> Un exemple concret</h2>
+  <div class="case-study">
+    <h3>📊 Imagine : tu es Senior Consultant (35 %), tu vends 1 000 PV ce mois</h3>
+    <div class="case-row">
+      <div class="label">Volume vendu</div>
+      <div class="value">1 000 PV (~1 780 € HT)</div>
+    </div>
+    <div class="case-row">
+      <div class="label">Ta marge retail (35 %)</div>
+      <div class="value">+ 623 €</div>
+    </div>
+    <div class="case-row">
+      <div class="label">Tu passes en Success Builder le mois suivant</div>
+      <div class="value">+7 % de marge en plus</div>
+    </div>
+    <div class="case-total">
+      <div class="label">💎 Revenu estimé du mois</div>
+      <div class="value">~ 623 €</div>
+    </div>
+    <div class="case-note">Estimation pédagogique basée sur un mix produit moyen (1 PV ≈ 1,78 € HT). Les revenus réels varient selon ton activité, ton équipe et ton engagement.</div>
+  </div>
+
+  <!-- COMMENT DÉMARRER -->
+  <h2><span class="num">05.</span> Comment démarrer ?</h2>
+  <div class="start-grid">
+    <div class="step">
+      <span class="step-num">1</span>
+      <h3>On échange</h3>
+      <p>Un appel ou un café pour comprendre tes objectifs et te montrer si Herbalife correspond à ton projet.</p>
+    </div>
+    <div class="step">
+      <span class="step-num">2</span>
+      <h3>On t'inscrit</h3>
+      <p>Inscription officielle Herbalife (pack de démarrage), inscription à La Base 360 et accès à toute la formation.</p>
+    </div>
+    <div class="step">
+      <span class="step-num">3</span>
+      <h3>On t'accompagne</h3>
+      <p>Mentor dédié + outils digitaux (Lor'Squad app) + community. Ta première vente en moins de 2 semaines.</p>
+    </div>
+  </div>
+
+  <!-- CTA -->
+  <section class="cta">
+    <h2><span class="num">→</span> On en parle ?</h2>
+    <p>15 minutes pour découvrir si La Base 360 colle avec ton projet de vie. Aucune obligation, juste une discussion honnête.</p>
+    <a href="#" class="cta-btn">Réserver un échange →</a>
+  </section>
+
+  <footer>
+    <div class="signature">La Base 360 · The wellness nutrition club</div>
+    Cette présentation a un but pédagogique. Les rangs et seuils mentionnés sont issus du Plan Marketing Herbalife. Les revenus présentés sont des projections et non des garanties — les résultats dépendent de l'engagement personnel.
+  </footer>
+
+</div>
+</body>
+</html>
