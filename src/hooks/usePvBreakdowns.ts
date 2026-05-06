@@ -15,6 +15,10 @@ import { useCallback, useEffect, useState } from "react";
 import { loadPvBreakdownsForMonth } from "../services/supabaseService";
 import type { PvMonthlyBreakdown } from "../lib/herbalifeFormulas";
 
+/** Event global dispatched apres chaque save pv_monthly_breakdown.
+ *  Toutes les instances usePvBreakdowns ecoutent et refetch. */
+export const PV_BREAKDOWN_UPDATED_EVENT = "lor-squad:pv-breakdown-updated";
+
 interface UsePvBreakdownsResult {
   breakdowns: PvMonthlyBreakdown[];
   loading: boolean;
@@ -41,6 +45,18 @@ export function usePvBreakdowns(month: string): UsePvBreakdownsResult {
 
   useEffect(() => {
     void fetch();
+  }, [fetch]);
+
+  // Refetch automatique quand un autre composant sauve un breakdown.
+  // Sans ca, le widget Co-pilote derriere une modale d edition reste a
+  // l ancienne valeur jusqu au reload.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const handler = () => {
+      void fetch();
+    };
+    window.addEventListener(PV_BREAKDOWN_UPDATED_EVENT, handler);
+    return () => window.removeEventListener(PV_BREAKDOWN_UPDATED_EVENT, handler);
   }, [fetch]);
 
   const getForUser = useCallback(
