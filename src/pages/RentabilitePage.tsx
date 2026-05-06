@@ -66,6 +66,31 @@ export function RentabilitePage() {
     };
   }, [ownData, ownDownlineOverride]);
 
+  // Override downline pour le membre selectionne (modale equipe).
+  // Sans ca, admin viewing Mandy verrait la jauge a 0 EUR malgre ses downlines.
+  const selectedDownlineOverride = useMemo(() => {
+    if (!selectedData || !currentUser) return 0;
+    return computeViewerDownlineOverride(
+      selectedData.scope_user_ids,
+      users.map((u) => ({
+        id: u.id,
+        sponsorId: u.sponsorId,
+        currentRank: u.currentRank,
+        frozenAt: u.frozenAt,
+      })),
+      breakdowns,
+    );
+  }, [selectedData, currentUser, users, breakdowns]);
+  const selectedDataWithOverride = useMemo(() => {
+    if (!selectedData) return null;
+    if (selectedDownlineOverride === 0) return selectedData;
+    return {
+      ...selectedData,
+      margin_eur: selectedData.margin_eur + selectedDownlineOverride,
+      projection_eur: selectedData.projection_eur + selectedDownlineOverride,
+    };
+  }, [selectedData, selectedDownlineOverride]);
+
   const isAdminOrRef = currentUser?.role === "admin" || currentUser?.role === "referent";
 
   // Liste des autres membres (sans soi NI le partenaire couple si applicable)
@@ -157,7 +182,7 @@ export function RentabilitePage() {
       {/* Modal détail membre équipe */}
       {selectedMemberId && selectedData && (
         <RentabilityDetailModal
-          data={selectedData}
+          data={selectedDataWithOverride ?? selectedData}
           onClose={() => setSelectedMemberId(null)}
         />
       )}
@@ -177,7 +202,32 @@ function TeamMemberRentabilityCard({
   rankLabel: string;
   onClick: () => void;
 }) {
+  const { users } = useAppContext();
   const { data, loading } = useUserRentability(userId);
+  const monthIso = useMemo(() => currentMonthIso(), []);
+  const { breakdowns } = usePvBreakdowns(monthIso);
+  const downlineOverride = useMemo(() => {
+    if (!data) return 0;
+    return computeViewerDownlineOverride(
+      data.scope_user_ids,
+      users.map((u) => ({
+        id: u.id,
+        sponsorId: u.sponsorId,
+        currentRank: u.currentRank,
+        frozenAt: u.frozenAt,
+      })),
+      breakdowns,
+    );
+  }, [data, users, breakdowns]);
+  const dataWithOverride = useMemo(() => {
+    if (!data) return null;
+    if (downlineOverride === 0) return data;
+    return {
+      ...data,
+      margin_eur: data.margin_eur + downlineOverride,
+      projection_eur: data.projection_eur + downlineOverride,
+    };
+  }, [data, downlineOverride]);
 
   return (
     <button type="button" onClick={onClick} style={memberCardStyle}>
@@ -192,7 +242,7 @@ function TeamMemberRentabilityCard({
         <div style={miniLoadingStyle}>—</div>
       ) : (
         <div style={miniGaugeWrap}>
-          <RentabilityGauge data={data} size="compact" />
+          <RentabilityGauge data={dataWithOverride ?? data} size="compact" />
         </div>
       )}
     </button>

@@ -112,9 +112,13 @@ export function RentabilityDetailModal({ data, onClose }: RentabilityDetailModal
 
   const downline = useMemo<DownlineEntry[]>(() => {
     if (!currentUser) return [];
+    // Affiche la downline pour QUI QUE CE SOIT que l app autorise a ouvrir
+    // cette rentab (la RPC get_users_rentability fait deja le check d acces).
+    // Avant : on bloquait si scope!=viewer ; ce qui empechait l admin de voir
+    // la downline d un membre d equipe (cas Thomas viewing Mandy 2026-11-07).
     const viewerIsAdminOrRef = currentUser.role === "admin" || currentUser.role === "referent";
     const scopeIsViewer = ownerIds.has(currentUser.id);
-    if (!viewerIsAdminOrRef || !scopeIsViewer) return [];
+    if (!viewerIsAdminOrRef && !scopeIsViewer) return [];
 
     // Viewer tier = max des tiers du scope (couple agrege : on prend le plus haut).
     const viewerTierPct = Math.max(
