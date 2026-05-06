@@ -47,35 +47,50 @@ export function InstallPwaBanner() {
     <>
       <div
         style={{
-          padding: "10px 14px",
-          background: "#FAEEDA",
-          borderBottom: "1px solid #EF9F27",
+          padding: "12px 14px",
+          background: "linear-gradient(135deg, rgba(16,185,129,0.08) 0%, rgba(6,182,212,0.06) 50%, rgba(139,92,246,0.05) 100%)",
+          borderBottom: "1px solid rgba(16,185,129,0.20)",
           display: "flex",
           alignItems: "center",
           gap: 10,
-          fontFamily: "DM Sans, sans-serif",
+          fontFamily: "Inter, system-ui, sans-serif",
         }}
       >
-        <span aria-hidden="true" style={{ fontSize: 16, flexShrink: 0 }}>
+        <span
+          aria-hidden="true"
+          style={{
+            width: 28,
+            height: 28,
+            borderRadius: 8,
+            background: "linear-gradient(135deg, #10B981 0%, #06B6D4 100%)",
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: 14,
+            flexShrink: 0,
+            boxShadow: "0 2px 8px rgba(16,185,129,0.20)",
+          }}
+        >
           📱
         </span>
-        <span style={{ flex: 1, minWidth: 0, fontSize: 13, color: "#633806" }}>
+        <span style={{ flex: 1, minWidth: 0, fontSize: 13, color: "#0F172A", fontWeight: 500 }}>
           Installe l'app pour un accès rapide
         </span>
         <button
           type="button"
           onClick={() => setModalOpen(true)}
           style={{
-            padding: "6px 12px",
-            borderRadius: 8,
-            background: "#BA7517",
+            padding: "7px 14px",
+            borderRadius: 10,
+            background: "linear-gradient(135deg, #10B981 0%, #06B6D4 50%, #8B5CF6 100%)",
             color: "#FFFFFF",
             border: "none",
             fontSize: 12,
-            fontFamily: "DM Sans, sans-serif",
+            fontFamily: "Sora, system-ui, sans-serif",
             fontWeight: 600,
             cursor: "pointer",
             flexShrink: 0,
+            boxShadow: "0 2px 8px rgba(16,185,129,0.25)",
           }}
         >
           Voir comment
@@ -90,7 +105,7 @@ export function InstallPwaBanner() {
             borderRadius: 8,
             border: "none",
             background: "transparent",
-            color: "#854F0B",
+            color: "#64748B",
             cursor: "pointer",
             fontSize: 16,
             lineHeight: 1,

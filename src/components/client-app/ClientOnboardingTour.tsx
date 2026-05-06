@@ -172,7 +172,7 @@ export function ClientOnboardingTour({
         display: "flex",
         flexDirection: "column",
         padding: "max(20px, env(safe-area-inset-top, 20px)) 20px max(20px, env(safe-area-inset-bottom, 20px))",
-        fontFamily: "DM Sans, sans-serif",
+        fontFamily: "Inter, system-ui, sans-serif",
         color: "var(--ls-text)",
         animation: "ls-onboarding-fade-in 360ms cubic-bezier(0.22, 1, 0.36, 1)",
       }}
@@ -225,7 +225,7 @@ export function ClientOnboardingTour({
               background: "transparent",
               border: "none",
               color: "var(--ls-text-muted)",
-              fontFamily: "DM Sans, sans-serif",
+              fontFamily: "Inter, system-ui, sans-serif",
               fontSize: 13,
               fontWeight: 500,
               cursor: submitting ? "wait" : "pointer",
@@ -281,7 +281,7 @@ export function ClientOnboardingTour({
         {/* Title */}
         <h2
           style={{
-            fontFamily: "Syne, serif",
+            fontFamily: "Sora, system-ui, sans-serif",
             fontWeight: 800,
             fontSize: "clamp(26px, 7vw, 36px)",
             letterSpacing: "-0.025em",
@@ -361,7 +361,7 @@ export function ClientOnboardingTour({
             background: "transparent",
             border: "none",
             color: isFirst ? "var(--ls-text-hint)" : "var(--ls-text-muted)",
-            fontFamily: "DM Sans, sans-serif",
+            fontFamily: "Inter, system-ui, sans-serif",
             fontSize: 14,
             fontWeight: 600,
             cursor: isFirst ? "default" : "pointer",
@@ -387,7 +387,7 @@ export function ClientOnboardingTour({
             color: "var(--ls-bg)",
             border: "none",
             borderRadius: 14,
-            fontFamily: "Syne, serif",
+            fontFamily: "Sora, system-ui, sans-serif",
             fontSize: 15,
             fontWeight: 700,
             cursor: submitting ? "wait" : "pointer",

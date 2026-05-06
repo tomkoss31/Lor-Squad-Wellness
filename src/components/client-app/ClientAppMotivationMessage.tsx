@@ -1,6 +1,6 @@
 // Chantier MEGA app client v2 (2026-04-25).
 // Message coach motivant Évolution — fond teal clair #E1F5EE, texte teal
-// foncé #0F6E56 centré. Inclut compteur "Prochain RDV dans X jour(s)" si
+// foncé #059669 centré. Inclut compteur "Prochain RDV dans X jour(s)" si
 // daysUntilRdv >= 0. Spec figée Thomas, code chirurgical.
 
 interface Props {
@@ -21,14 +21,14 @@ export function ClientAppMotivationMessage({ daysUntilRdv }: Props) {
       <div
         style={{
           fontSize: "13px",
-          color: "#0F6E56",
+          color: "#059669",
           fontWeight: 500,
           marginBottom: "4px",
         }}
       >
         🎯 Continue comme ça !
       </div>
-      <div style={{ fontSize: "11px", color: "#0F6E56" }}>
+      <div style={{ fontSize: "11px", color: "#059669" }}>
         {daysUntilRdv !== null && daysUntilRdv >= 0
           ? `Tu es en route vers ton objectif. Prochain RDV dans ${daysUntilRdv} jour${
               daysUntilRdv > 1 ? "s" : ""

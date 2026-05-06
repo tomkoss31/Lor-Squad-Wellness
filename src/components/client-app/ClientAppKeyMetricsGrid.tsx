@@ -30,12 +30,12 @@ function MetricCard({
 }: MetricCardProps) {
   const deltaColor =
     delta === null
-      ? "#888"
+      ? "#64748B"
       : delta > 0
-        ? "#1D9E75"
+        ? "#10B981"
         : delta < 0
           ? "#D85A30"
-          : "#888";
+          : "#64748B";
   const arrow = delta === null ? "" : delta > 0 ? "↑" : delta < 0 ? "↓" : "→";
 
   return (
@@ -50,7 +50,7 @@ function MetricCard({
       <div
         style={{
           fontSize: "10px",
-          color: "#888",
+          color: "#64748B",
           letterSpacing: "1px",
           fontWeight: 500,
         }}
@@ -62,12 +62,12 @@ function MetricCard({
           fontSize: "26px",
           color,
           fontWeight: 500,
-          fontFamily: "var(--font-serif)",
+          fontFamily: "'Sora', system-ui, sans-serif",
           margin: "4px 0 2px",
         }}
       >
         {value !== undefined ? value.toFixed(1) : "—"}
-        <span style={{ fontSize: "13px", color: "#888", fontWeight: 400 }}>
+        <span style={{ fontSize: "13px", color: "#64748B", fontWeight: 400 }}>
           {" "}
           {unit}
         </span>
@@ -76,7 +76,7 @@ function MetricCard({
         {delta !== null && Math.abs(delta) > 0.01
           ? `${arrow} ${Math.abs(delta).toFixed(1)} ${unit} `
           : `— `}
-        <span style={{ color: "#888", fontWeight: 400 }}>{deltaLabel}</span>
+        <span style={{ color: "#64748B", fontWeight: 400 }}>{deltaLabel}</span>
       </div>
     </div>
   );
@@ -142,7 +142,7 @@ export function ClientAppKeyMetricsGrid({ assessments }: Props) {
           unit="kg"
           delta={deltaWeight}
           deltaLabel="depuis le départ"
-          color="#B8922A"
+          color="#10B981"
         />
         <MetricCard
           label="MASSE GRASSE"
@@ -160,7 +160,7 @@ export function ClientAppKeyMetricsGrid({ assessments }: Props) {
           deltaLabel={
             deltaMuscle && deltaMuscle > 0 ? "gagné" : "depuis le départ"
           }
-          color="#1D9E75"
+          color="#10B981"
         />
         <MetricCard
           label="EAU"

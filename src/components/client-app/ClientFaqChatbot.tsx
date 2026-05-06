@@ -146,7 +146,7 @@ export function ClientFaqChatbot({ token, coachFirstName }: Props) {
           height: 54,
           borderRadius: "50%",
           background:
-            "linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)",
+            "linear-gradient(135deg, #10B981 0%, #06B6D4 50%, #8B5CF6 100%)",
           color: "white",
           border: "none",
           fontSize: 26,
@@ -208,7 +208,7 @@ export function ClientFaqChatbot({ token, coachFirstName }: Props) {
               borderTopRightRadius: 20,
               padding: 18,
               boxShadow: "0 -10px 40px rgba(0,0,0,0.30)",
-              fontFamily: "DM Sans, sans-serif",
+              fontFamily: "Inter, system-ui, sans-serif",
               animation:
                 "ls-faq-modal-enter 280ms cubic-bezier(0.2, 0.8, 0.2, 1)",
             }}
@@ -228,7 +228,7 @@ export function ClientFaqChatbot({ token, coachFirstName }: Props) {
                   height: 38,
                   borderRadius: "50%",
                   background:
-                    "linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)",
+                    "linear-gradient(135deg, #10B981 0%, #06B6D4 50%, #8B5CF6 100%)",
                   color: "white",
                   display: "flex",
                   alignItems: "center",
@@ -242,10 +242,10 @@ export function ClientFaqChatbot({ token, coachFirstName }: Props) {
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div
                   style={{
-                    fontFamily: "Syne, serif",
+                    fontFamily: "Sora, system-ui, sans-serif",
                     fontWeight: 700,
                     fontSize: 16,
-                    color: "#111827",
+                    color: "#0F172A",
                   }}
                 >
                   Aide rapide
@@ -262,7 +262,7 @@ export function ClientFaqChatbot({ token, coachFirstName }: Props) {
                   background: "transparent",
                   border: "none",
                   fontSize: 22,
-                  color: "#888",
+                  color: "#64748B",
                   cursor: "pointer",
                   padding: 4,
                   lineHeight: 1,
@@ -281,7 +281,7 @@ export function ClientFaqChatbot({ token, coachFirstName }: Props) {
                   <div
                     key={faq.id}
                     style={{
-                      border: "0.5px solid rgba(184,146,42,0.25)",
+                      border: "0.5px solid rgba(16,185,129,0.25)",
                       borderRadius: 12,
                       overflow: "hidden",
                       background: isExpanded
@@ -302,7 +302,7 @@ export function ClientFaqChatbot({ token, coachFirstName }: Props) {
                         border: "none",
                         cursor: "pointer",
                         textAlign: "left",
-                        fontFamily: "DM Sans, sans-serif",
+                        fontFamily: "Inter, system-ui, sans-serif",
                       }}
                     >
                       <span style={{ fontSize: 18, lineHeight: 1, flexShrink: 0 }}>
@@ -313,7 +313,7 @@ export function ClientFaqChatbot({ token, coachFirstName }: Props) {
                           style={{
                             fontSize: 13,
                             fontWeight: 600,
-                            color: "#111827",
+                            color: "#0F172A",
                             lineHeight: 1.3,
                           }}
                         >
@@ -323,7 +323,7 @@ export function ClientFaqChatbot({ token, coachFirstName }: Props) {
                       <span
                         style={{
                           fontSize: 11,
-                          color: "#888",
+                          color: "#64748B",
                           flexShrink: 0,
                           marginTop: 2,
                         }}
@@ -336,7 +336,7 @@ export function ClientFaqChatbot({ token, coachFirstName }: Props) {
                         style={{
                           padding: "0 14px 12px",
                           fontSize: 12,
-                          color: "#374151",
+                          color: "#0F172A",
                           lineHeight: 1.55,
                         }}
                       >
@@ -349,13 +349,13 @@ export function ClientFaqChatbot({ token, coachFirstName }: Props) {
                             style={{
                               padding: "7px 14px",
                               background:
-                                "linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)",
+                                "linear-gradient(135deg, #10B981 0%, #06B6D4 50%, #8B5CF6 100%)",
                               color: "white",
                               border: "none",
                               borderRadius: 8,
                               fontSize: 11,
                               fontWeight: 700,
-                              fontFamily: "Syne, serif",
+                              fontFamily: "Sora, system-ui, sans-serif",
                               cursor: sendingId === faq.id ? "wait" : "pointer",
                             }}
                           >
@@ -367,12 +367,12 @@ export function ClientFaqChatbot({ token, coachFirstName }: Props) {
                             style={{
                               padding: "7px 12px",
                               background: "transparent",
-                              color: "#888",
+                              color: "#64748B",
                               border: "0.5px solid rgba(0,0,0,0.10)",
                               borderRadius: 8,
                               fontSize: 11,
                               cursor: "pointer",
-                              fontFamily: "DM Sans, sans-serif",
+                              fontFamily: "Inter, system-ui, sans-serif",
                             }}
                           >
                             Refermer
@@ -393,12 +393,12 @@ export function ClientFaqChatbot({ token, coachFirstName }: Props) {
                 width: "100%",
                 padding: "12px 16px",
                 background: "white",
-                color: "#5C4A0F",
-                border: "0.5px solid rgba(184,146,42,0.50)",
+                color: "#0F172A",
+                border: "0.5px solid rgba(16,185,129,0.50)",
                 borderRadius: 12,
                 fontSize: 13,
                 fontWeight: 700,
-                fontFamily: "Syne, serif",
+                fontFamily: "Sora, system-ui, sans-serif",
                 cursor: "pointer",
                 display: "flex",
                 alignItems: "center",
@@ -412,7 +412,7 @@ export function ClientFaqChatbot({ token, coachFirstName }: Props) {
             <p
               style={{
                 fontSize: 10,
-                color: "#888",
+                color: "#64748B",
                 textAlign: "center",
                 margin: "10px 0 0",
                 fontStyle: "italic",

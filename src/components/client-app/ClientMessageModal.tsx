@@ -9,7 +9,7 @@
 //   - ClientAppPage RDV fix (dual-write depuis sendRdvChangeRequest)
 //
 // Design volontairement grand + chaleureux (DM Sans + gold Herbalife
-// classique #B8922A, cohérent avec le rest de ClientAppPage).
+// classique #10B981, cohérent avec le rest de ClientAppPage).
 
 import { useEffect, useState } from "react";
 import { getSupabaseClient } from "../../services/supabaseClient";
@@ -132,7 +132,7 @@ export function ClientMessageModal({
         alignItems: "center",
         justifyContent: "center",
         padding: 16,
-        fontFamily: "DM Sans, sans-serif",
+        fontFamily: "Inter, system-ui, sans-serif",
       }}
     >
       <div
@@ -148,15 +148,15 @@ export function ClientMessageModal({
           width: "100%",
           padding: 24,
           boxShadow: "0 20px 60px rgba(0,0,0,0.25)",
-          color: "#111827",
+          color: "#0F172A",
         }}
       >
         <p
           style={{
-            fontFamily: "Syne, sans-serif",
+            fontFamily: "Sora, system-ui, sans-serif",
             fontSize: 20,
             fontWeight: 700,
-            color: "#111827",
+            color: "#0F172A",
             margin: 0,
             marginBottom: 6,
           }}
@@ -164,7 +164,7 @@ export function ClientMessageModal({
           {title}
         </p>
         {intro ? (
-          <p style={{ fontSize: 13, color: "#6B7280", lineHeight: 1.55, marginTop: 0 }}>
+          <p style={{ fontSize: 13, color: "#64748B", lineHeight: 1.55, marginTop: 0 }}>
             {intro}
           </p>
         ) : null}
@@ -201,8 +201,8 @@ export function ClientMessageModal({
                 border: "1px solid rgba(0,0,0,0.12)",
                 background: "#FAFAFA",
                 fontSize: 14,
-                fontFamily: "DM Sans, sans-serif",
-                color: "#111827",
+                fontFamily: "Inter, system-ui, sans-serif",
+                color: "#0F172A",
                 resize: "vertical",
                 outline: "none",
                 boxSizing: "border-box",
@@ -232,9 +232,9 @@ export function ClientMessageModal({
                   padding: "12px 16px",
                   borderRadius: 12,
                   background: "#FFFFFF",
-                  color: "#6B7280",
+                  color: "#64748B",
                   border: "1px solid rgba(0,0,0,0.12)",
-                  fontFamily: "DM Sans, sans-serif",
+                  fontFamily: "Inter, system-ui, sans-serif",
                   fontWeight: 500,
                   fontSize: 14,
                   cursor: sending ? "default" : "pointer",
@@ -250,10 +250,10 @@ export function ClientMessageModal({
                   flex: 1.4,
                   padding: "12px 16px",
                   borderRadius: 12,
-                  background: sending || !message.trim() ? "#D5B880" : "#B8922A",
+                  background: sending || !message.trim() ? "#D5B880" : "#10B981",
                   color: "#FFFFFF",
                   border: "none",
-                  fontFamily: "Syne, sans-serif",
+                  fontFamily: "Sora, system-ui, sans-serif",
                   fontWeight: 700,
                   fontSize: 14,
                   cursor: sending || !message.trim() ? "default" : "pointer",

@@ -219,7 +219,7 @@ export function ClientAppPage() {
 
       const meta = document.createElement('meta')
       meta.name = 'theme-color'
-      meta.content = '#B8922A'
+      meta.content = '#10B981'
       document.head.appendChild(meta)
 
       const appleMeta = document.createElement('meta')
@@ -467,10 +467,10 @@ export function ClientAppPage() {
   }
 
   if (loading)
-    return <div style={{ minHeight: '100vh', background: '#F4F2EE', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'DM Sans, sans-serif', color: '#9CA3AF' }}>Chargement...</div>
+    return <div style={{ minHeight: '100vh', background: '#FAFAFC', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Inter, system-ui, sans-serif', color: '#94A3B8' }}>Chargement...</div>
 
   if (!data)
-    return <div style={{ minHeight: '100vh', background: '#F4F2EE', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'DM Sans, sans-serif', color: '#DC2626' }}>Lien introuvable ou expiré.</div>
+    return <div style={{ minHeight: '100vh', background: '#FAFAFC', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Inter, system-ui, sans-serif', color: '#EF4444' }}>Lien introuvable ou expiré.</div>
 
   // Chantier C — Onboarding client PWA (2026-11-04) : tour 4 slides au
   // 1er login. onboardingDone === false strictement (null = pas encore
@@ -502,7 +502,7 @@ export function ClientAppPage() {
   // ClientAppKeyMetricsGrid, qui calcule deltas et formats côté composant.
 
   return (
-    <div style={{ minHeight: '100vh', background: '#F7F5F0', fontFamily: 'DM Sans, sans-serif', color: '#111827', paddingBottom: 80, position: 'relative', overflow: 'hidden' }}>
+    <div style={{ minHeight: '100vh', background: '#FFFFFF', fontFamily: 'Inter, system-ui, sans-serif', color: '#0F172A', paddingBottom: 80, position: 'relative', overflow: 'hidden' }}>
       {/* Chantier Premium App client (2026-04-24) : mesh gradient subtil
           en arrière-plan pour cohérence avec Welcome/Login. Plus discret
           que les pages publiques (app quotidienne, pas d'effet "wouah"
@@ -529,7 +529,7 @@ export function ClientAppPage() {
           width: 380px;
           height: 380px;
           border-radius: 50%;
-          background: radial-gradient(circle, rgba(29,158,117,0.12) 0%, transparent 70%);
+          background: radial-gradient(circle, rgba(16,185,129,0.12) 0%, transparent 70%);
           filter: blur(70px);
           pointer-events: none;
           z-index: 0;
@@ -563,9 +563,9 @@ export function ClientAppPage() {
             zIndex: 9999,
             padding: '14px 18px',
             borderRadius: 14,
-            background: 'linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)',
+            background: 'linear-gradient(135deg, #10B981 0%, #06B6D4 50%, #8B5CF6 100%)',
             color: '#fff',
-            fontFamily: 'Syne, sans-serif',
+            fontFamily: 'Sora, system-ui, sans-serif',
             fontWeight: 700,
             fontSize: 15,
             textAlign: 'center',
@@ -623,21 +623,38 @@ export function ClientAppPage() {
           déjà installée + non dismissée. Self-hides sinon. */}
       <InstallPwaBanner />
 
-      {/* HERO */}
-      <div style={{ background: 'linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 60%, #F4F2EE 100%)', padding: '20px 16px 16px' }}>
+      {/* HERO — rebrand La Base 360 G3 (2026-05-06) */}
+      <div style={{
+        background:
+          'radial-gradient(ellipse at 20% 20%, rgba(16,185,129,0.10) 0%, transparent 55%), ' +
+          'radial-gradient(ellipse at 80% 30%, rgba(6,182,212,0.10) 0%, transparent 55%), ' +
+          'radial-gradient(ellipse at 50% 80%, rgba(139,92,246,0.08) 0%, transparent 55%), ' +
+          '#FFFFFF',
+        padding: '20px 16px 16px',
+      }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <div style={{ width: 28, height: 28, background: '#B8922A', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="#fff"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></svg>
-            </div>
-            <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 14, color: '#111827' }}>
-              Lor'<span style={{ color: '#B8922A' }}>Squad</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <img
+              src="/brand/labase360/app-icon-512.svg"
+              alt="La Base 360"
+              style={{ width: 32, height: 32, borderRadius: 9, flexShrink: 0 }}
+            />
+            <div style={{ fontFamily: 'Sora, system-ui, sans-serif', fontWeight: 700, fontSize: 14, color: '#0F172A', letterSpacing: '-0.01em' }}>
+              La Base{' '}
+              <span style={{
+                fontStyle: 'italic',
+                fontWeight: 400,
+                background: 'linear-gradient(135deg, #10B981 0%, #06B6D4 50%, #8B5CF6 100%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text',
+              }}>360</span>
             </div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-              <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#0D9488' }} />
-              <span style={{ fontSize: 10, color: '#0D9488', fontWeight: 500 }}>Coach {data.coach_name}</span>
+              <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#06B6D4' }} />
+              <span style={{ fontSize: 10, color: '#06B6D4', fontWeight: 500 }}>Coach {data.coach_name}</span>
             </div>
             {/* Chantier Tuto interactif client (2026-04-24) : bouton ? pour
                 relancer le tutoriel à tout moment. */}
@@ -650,10 +667,10 @@ export function ClientAppPage() {
                 width: 32,
                 height: 32,
                 borderRadius: '50%',
-                background: 'rgba(184,146,42,0.12)',
-                color: '#B8922A',
-                border: '1px solid rgba(184,146,42,0.2)',
-                fontFamily: 'Syne, sans-serif',
+                background: 'rgba(16,185,129,0.12)',
+                color: '#10B981',
+                border: '1px solid rgba(16,185,129,0.2)',
+                fontFamily: 'Sora, system-ui, sans-serif',
                 fontWeight: 700,
                 fontSize: 14,
                 cursor: 'pointer',
@@ -669,17 +686,17 @@ export function ClientAppPage() {
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'rgba(184,146,42,0.15)', border: '2px solid rgba(184,146,42,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 16, color: '#B8922A', flexShrink: 0 }}>
+          <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'rgba(16,185,129,0.15)', border: '2px solid rgba(16,185,129,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Sora, system-ui, sans-serif', fontWeight: 800, fontSize: 16, color: '#10B981', flexShrink: 0 }}>
             {data.client_first_name?.[0]}{data.client_last_name?.[0]}
           </div>
           <div>
             {/* Hotfix client-login (2026-04-24) : salutation dynamique selon
                 l'heure de l'app client. 5-12h Bonjour / 12-18h Bon après-midi /
                 18-23h Bonsoir / sinon Bonne nuit. */}
-            <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 500, fontSize: 22, color: '#111827' }}>
+            <div style={{ fontFamily: 'Sora, system-ui, sans-serif', fontWeight: 500, fontSize: 22, color: '#0F172A' }}>
               {clientGreeting(new Date())} {data.client_first_name} !
             </div>
-            <div style={{ fontSize: 11, color: '#6B7280', marginTop: 2 }}>
+            <div style={{ fontSize: 11, color: '#64748B', marginTop: 2 }}>
               {data.program_title ?? 'Programme en cours'} · {data.assessments_count ?? 1} bilan{(data.assessments_count ?? 1) > 1 ? 's' : ''}
             </div>
           </div>
@@ -761,13 +778,13 @@ export function ClientAppPage() {
               <div
                 style={{
                   padding: '10px 14px',
-                  background: 'color-mix(in srgb, #1D9E75 8%, var(--ls-surface))',
-                  border: '0.5px solid rgba(29,158,117,0.25)',
-                  borderLeft: '3px solid #1D9E75',
+                  background: 'color-mix(in srgb, #10B981 8%, var(--ls-surface))',
+                  border: '0.5px solid rgba(16,185,129,0.25)',
+                  borderLeft: '3px solid #10B981',
                   borderRadius: 12,
                   fontSize: 12,
-                  color: '#0F6E56',
-                  fontFamily: 'DM Sans, sans-serif',
+                  color: '#059669',
+                  fontFamily: 'Inter, system-ui, sans-serif',
                   display: 'flex',
                   alignItems: 'center',
                   gap: 8,
@@ -783,7 +800,7 @@ export function ClientAppPage() {
                   target="_blank"
                   rel="noopener noreferrer"
                   style={{
-                    color: '#0F6E56',
+                    color: '#059669',
                     textDecoration: 'none',
                     fontWeight: 700,
                     fontSize: 11.5,
@@ -886,27 +903,27 @@ export function ClientAppPage() {
         {/* ══════════════════════════════════════════════════════════════ */}
         {activeTab === 'refer' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <div style={{ background: 'rgba(184,146,42,0.06)', border: '1px solid rgba(184,146,42,0.15)', borderRadius: 14, padding: 16 }}>
-              <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 16, color: '#111827', marginBottom: 6 }}>
+            <div style={{ background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.15)', borderRadius: 14, padding: 16 }}>
+              <div style={{ fontFamily: 'Sora, system-ui, sans-serif', fontWeight: 800, fontSize: 16, color: '#0F172A', marginBottom: 6 }}>
                 Recommander un ami
               </div>
-              <div style={{ fontSize: 12, color: '#6B7280', lineHeight: 1.7, marginBottom: 14 }}>
+              <div style={{ fontSize: 12, color: '#64748B', lineHeight: 1.7, marginBottom: 14 }}>
                 Tu connais quelqu'un qui aimerait améliorer sa forme ? Envoie ses coordonnées à {data.coach_name} directement.
               </div>
 
               {referSent ? (
                 <div style={{ padding: 16, background: 'rgba(13,148,136,0.08)', borderRadius: 12, textAlign: 'center' }}>
-                  <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 15, color: '#0D9488', marginBottom: 4 }}>Merci !</div>
-                  <div style={{ fontSize: 12, color: '#6B7280' }}>{data.coach_name} a reçu les coordonnées et va contacter cette personne.</div>
+                  <div style={{ fontFamily: 'Sora, system-ui, sans-serif', fontWeight: 700, fontSize: 15, color: '#06B6D4', marginBottom: 4 }}>Merci !</div>
+                  <div style={{ fontSize: 12, color: '#64748B' }}>{data.coach_name} a reçu les coordonnées et va contacter cette personne.</div>
                 </div>
               ) : (
                 <>
                   <input value={referName} onChange={(e) => setReferName(e.target.value)} placeholder="Prénom de la personne"
-                    style={{ width: '100%', padding: '12px 14px', border: '1px solid rgba(184,146,42,0.2)', borderRadius: 10, fontFamily: 'DM Sans, sans-serif', fontSize: 16, background: '#fff', color: '#111827', outline: 'none', marginBottom: 8 }} />
+                    style={{ width: '100%', padding: '12px 14px', border: '1px solid rgba(16,185,129,0.2)', borderRadius: 10, fontFamily: 'Inter, system-ui, sans-serif', fontSize: 16, background: '#fff', color: '#0F172A', outline: 'none', marginBottom: 8 }} />
                   <input value={referContact} onChange={(e) => setReferContact(e.target.value)} placeholder="Son numéro ou email"
-                    style={{ width: '100%', padding: '12px 14px', border: '1px solid rgba(184,146,42,0.2)', borderRadius: 10, fontFamily: 'DM Sans, sans-serif', fontSize: 16, background: '#fff', color: '#111827', outline: 'none', marginBottom: 12 }} />
+                    style={{ width: '100%', padding: '12px 14px', border: '1px solid rgba(16,185,129,0.2)', borderRadius: 10, fontFamily: 'Inter, system-ui, sans-serif', fontSize: 16, background: '#fff', color: '#0F172A', outline: 'none', marginBottom: 12 }} />
                   <button onClick={() => void sendReferral()} disabled={!referName || !referContact}
-                    style={{ width: '100%', padding: 14, borderRadius: 10, border: 'none', background: referName && referContact ? '#B8922A' : 'rgba(184,146,42,0.3)', color: '#fff', fontFamily: 'Syne, sans-serif', fontSize: 14, fontWeight: 700, cursor: referName && referContact ? 'pointer' : 'not-allowed', boxShadow: referName && referContact ? '0 2px 8px rgba(184,146,42,0.25)' : 'none' }}>
+                    style={{ width: '100%', padding: 14, borderRadius: 10, border: 'none', background: referName && referContact ? '#10B981' : 'rgba(16,185,129,0.3)', color: '#fff', fontFamily: 'Sora, system-ui, sans-serif', fontSize: 14, fontWeight: 700, cursor: referName && referContact ? 'pointer' : 'not-allowed', boxShadow: referName && referContact ? '0 2px 8px rgba(16,185,129,0.25)' : 'none' }}>
                     Envoyer à {data.coach_name}
                   </button>
                 </>
@@ -920,19 +937,19 @@ export function ClientAppPage() {
       {showInstallPrompt && (
         <div style={{
           position: 'fixed', bottom: 90, left: 12, right: 12,
-          background: '#111827', borderRadius: 16, padding: 18,
+          background: '#0F172A', borderRadius: 16, padding: 18,
           zIndex: 200, boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <div style={{ width: 36, height: 36, background: '#B8922A', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <div style={{ width: 36, height: 36, background: '#10B981', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="#fff">
                   <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
                 </svg>
               </div>
               <div>
-                <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 14, color: '#fff' }}>Installer l'app</div>
-                <div style={{ fontSize: 11, color: '#9CA3AF' }}>La Base 360</div>
+                <div style={{ fontFamily: 'Sora, system-ui, sans-serif', fontWeight: 700, fontSize: 14, color: '#fff' }}>Installer l'app</div>
+                <div style={{ fontSize: 11, color: '#94A3B8' }}>La Base 360</div>
               </div>
             </div>
             <button
@@ -940,7 +957,7 @@ export function ClientAppPage() {
                 setShowInstallPrompt(false)
                 try { window.localStorage.setItem('lor-install-dismissed', '1') } catch { /* ignore */ }
               }}
-              style={{ background: 'none', border: 'none', color: '#9CA3AF', fontSize: 20, cursor: 'pointer', padding: 4, lineHeight: 1 }}
+              style={{ background: 'none', border: 'none', color: '#94A3B8', fontSize: 20, cursor: 'pointer', padding: 4, lineHeight: 1 }}
               aria-label="Fermer"
             >×</button>
           </div>
@@ -952,8 +969,8 @@ export function ClientAppPage() {
           {/* ─── Android avec prompt natif disponible ─── */}
           {installPlatform === 'android' && deferredInstallEvent ? (
             <>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(184,146,42,0.1)', borderRadius: 10, padding: '12px 14px', marginBottom: 14 }}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#B8922A" strokeWidth="2">
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(16,185,129,0.1)', borderRadius: 10, padding: '12px 14px', marginBottom: 14 }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10B981" strokeWidth="2">
                   <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
                   <polyline points="7 10 12 15 17 10" />
                   <line x1="12" y1="15" x2="12" y2="3" />
@@ -964,7 +981,7 @@ export function ClientAppPage() {
               </div>
               <button
                 onClick={() => void triggerNativeInstall()}
-                style={{ width: '100%', padding: 14, borderRadius: 10, border: 'none', background: '#B8922A', color: '#fff', fontFamily: 'Syne, sans-serif', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}
+                style={{ width: '100%', padding: 14, borderRadius: 10, border: 'none', background: '#10B981', color: '#fff', fontFamily: 'Sora, system-ui, sans-serif', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}
               >
                 Installer l'app
               </button>
@@ -973,7 +990,7 @@ export function ClientAppPage() {
                   setShowInstallPrompt(false)
                   try { window.localStorage.setItem('lor-install-dismissed', '1') } catch { /* ignore */ }
                 }}
-                style={{ width: '100%', marginTop: 8, padding: 10, borderRadius: 10, border: 'none', background: 'transparent', color: '#9CA3AF', fontSize: 12, cursor: 'pointer' }}
+                style={{ width: '100%', marginTop: 8, padding: 10, borderRadius: 10, border: 'none', background: 'transparent', color: '#94A3B8', fontSize: 12, cursor: 'pointer' }}
               >
                 Plus tard
               </button>
@@ -983,27 +1000,27 @@ export function ClientAppPage() {
             <>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(255,255,255,0.06)', borderRadius: 10, padding: '10px 12px' }}>
-                  <div style={{ width: 24, height: 24, background: 'rgba(184,146,42,0.2)', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 14, color: '#B8922A', fontWeight: 700 }}>1</div>
+                  <div style={{ width: 24, height: 24, background: 'rgba(16,185,129,0.2)', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 14, color: '#10B981', fontWeight: 700 }}>1</div>
                   <div style={{ fontSize: 12, color: '#fff', lineHeight: 1.5 }}>
                     Ouvre le menu
-                    <span style={{ color: '#B8922A', fontWeight: 600 }}> ⋮ </span>
+                    <span style={{ color: '#10B981', fontWeight: 600 }}> ⋮ </span>
                     en haut à droite
                   </div>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(255,255,255,0.06)', borderRadius: 10, padding: '10px 12px' }}>
-                  <div style={{ width: 24, height: 24, background: 'rgba(184,146,42,0.2)', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 14, color: '#B8922A', fontWeight: 700 }}>2</div>
+                  <div style={{ width: 24, height: 24, background: 'rgba(16,185,129,0.2)', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 14, color: '#10B981', fontWeight: 700 }}>2</div>
                   <div style={{ fontSize: 12, color: '#fff', lineHeight: 1.5 }}>
                     Choisis
-                    <span style={{ color: '#B8922A', fontWeight: 600 }}> "Installer l'application" </span>
+                    <span style={{ color: '#10B981', fontWeight: 600 }}> "Installer l'application" </span>
                     ou
-                    <span style={{ color: '#B8922A', fontWeight: 600 }}> "Ajouter à l'écran d'accueil" </span>
+                    <span style={{ color: '#10B981', fontWeight: 600 }}> "Ajouter à l'écran d'accueil" </span>
                   </div>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(255,255,255,0.06)', borderRadius: 10, padding: '10px 12px' }}>
-                  <div style={{ width: 24, height: 24, background: 'rgba(184,146,42,0.2)', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 14, color: '#B8922A', fontWeight: 700 }}>3</div>
+                  <div style={{ width: 24, height: 24, background: 'rgba(16,185,129,0.2)', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 14, color: '#10B981', fontWeight: 700 }}>3</div>
                   <div style={{ fontSize: 12, color: '#fff', lineHeight: 1.5 }}>
                     Valide avec
-                    <span style={{ color: '#B8922A', fontWeight: 600 }}> "Installer" </span>
+                    <span style={{ color: '#10B981', fontWeight: 600 }}> "Installer" </span>
                   </div>
                 </div>
               </div>
@@ -1012,7 +1029,7 @@ export function ClientAppPage() {
                   setShowInstallPrompt(false)
                   try { window.localStorage.setItem('lor-install-dismissed', '1') } catch { /* ignore */ }
                 }}
-                style={{ width: '100%', marginTop: 14, padding: 12, borderRadius: 10, border: 'none', background: '#B8922A', color: '#fff', fontFamily: 'Syne, sans-serif', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
+                style={{ width: '100%', marginTop: 14, padding: 12, borderRadius: 10, border: 'none', background: '#10B981', color: '#fff', fontFamily: 'Sora, system-ui, sans-serif', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
               >
                 J'ai compris !
               </button>
@@ -1022,26 +1039,26 @@ export function ClientAppPage() {
             <>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(255,255,255,0.06)', borderRadius: 10, padding: '10px 12px' }}>
-                  <div style={{ width: 24, height: 24, background: 'rgba(184,146,42,0.2)', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 14, color: '#B8922A', fontWeight: 700 }}>1</div>
+                  <div style={{ width: 24, height: 24, background: 'rgba(16,185,129,0.2)', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 14, color: '#10B981', fontWeight: 700 }}>1</div>
                   <div style={{ fontSize: 12, color: '#fff', lineHeight: 1.5 }}>
                     Appuie sur le bouton
-                    <span style={{ color: '#B8922A', fontWeight: 600 }}> Partager </span>
+                    <span style={{ color: '#10B981', fontWeight: 600 }}> Partager </span>
                     (carré avec flèche ↑) en bas de Safari
                   </div>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(255,255,255,0.06)', borderRadius: 10, padding: '10px 12px' }}>
-                  <div style={{ width: 24, height: 24, background: 'rgba(184,146,42,0.2)', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 14, color: '#B8922A', fontWeight: 700 }}>2</div>
+                  <div style={{ width: 24, height: 24, background: 'rgba(16,185,129,0.2)', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 14, color: '#10B981', fontWeight: 700 }}>2</div>
                   <div style={{ fontSize: 12, color: '#fff', lineHeight: 1.5 }}>
                     Sélectionne
-                    <span style={{ color: '#B8922A', fontWeight: 600 }}> "Sur l'écran d'accueil" </span>
+                    <span style={{ color: '#10B981', fontWeight: 600 }}> "Sur l'écran d'accueil" </span>
                     dans le menu
                   </div>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(255,255,255,0.06)', borderRadius: 10, padding: '10px 12px' }}>
-                  <div style={{ width: 24, height: 24, background: 'rgba(184,146,42,0.2)', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 14, color: '#B8922A', fontWeight: 700 }}>3</div>
+                  <div style={{ width: 24, height: 24, background: 'rgba(16,185,129,0.2)', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 14, color: '#10B981', fontWeight: 700 }}>3</div>
                   <div style={{ fontSize: 12, color: '#fff', lineHeight: 1.5 }}>
                     Appuie sur
-                    <span style={{ color: '#B8922A', fontWeight: 600 }}> "Ajouter" </span>
+                    <span style={{ color: '#10B981', fontWeight: 600 }}> "Ajouter" </span>
                     en haut à droite
                   </div>
                 </div>
@@ -1051,7 +1068,7 @@ export function ClientAppPage() {
                   setShowInstallPrompt(false)
                   try { window.localStorage.setItem('lor-install-dismissed', '1') } catch { /* ignore */ }
                 }}
-                style={{ width: '100%', marginTop: 14, padding: 12, borderRadius: 10, border: 'none', background: '#B8922A', color: '#fff', fontFamily: 'Syne, sans-serif', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
+                style={{ width: '100%', marginTop: 14, padding: 12, borderRadius: 10, border: 'none', background: '#10B981', color: '#fff', fontFamily: 'Sora, system-ui, sans-serif', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
               >
                 J'ai compris !
               </button>
@@ -1099,8 +1116,8 @@ export function ClientAppPage() {
         </Suspense>
       ) : null}
 
-      {/* BOTTOM NAV */}
-      <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: '#fff', borderTop: '1px solid rgba(0,0,0,0.07)', display: 'flex', paddingBottom: 'max(12px, env(safe-area-inset-bottom))', zIndex: 100 }}>
+      {/* BOTTOM NAV — La Base 360 G3 */}
+      <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: '#FFFFFF', borderTop: '1px solid #E2E8F0', display: 'flex', paddingBottom: 'max(12px, env(safe-area-inset-bottom))', zIndex: 100, backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)' }}>
         {([
           { key: 'home' as const, label: 'Accueil', icon: (<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="7" height="7" rx="1.5" /><rect x="14" y="3" width="7" height="7" rx="1.5" /><rect x="3" y="14" width="7" height="7" rx="1.5" /><rect x="14" y="14" width="7" height="7" rx="1.5" /></svg>) },
           { key: 'evolution' as const, label: 'Évolution', icon: (<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12" /></svg>) },
@@ -1136,7 +1153,7 @@ export function ClientAppPage() {
                 }
               }}
               data-tuto={tutoAttr}
-              style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, padding: '8px 4px', border: 'none', background: 'transparent', color: isActive ? '#B8922A' : '#9CA3AF', fontSize: 9, cursor: 'pointer', fontFamily: 'DM Sans, sans-serif' }}>
+              style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, padding: '8px 4px', border: 'none', background: 'transparent', color: isActive ? '#10B981' : '#94A3B8', fontSize: 9, cursor: 'pointer', fontFamily: 'Inter, system-ui, sans-serif', fontWeight: isActive ? 600 : 500 }}>
               {icon}
               {label}
             </button>
@@ -1161,11 +1178,11 @@ export function ClientAppPage() {
       <footer
         style={{
           padding: '14px 16px 90px', // bottom margin pour ne pas chevaucher la bottom nav
-          borderTop: '0.5px solid rgba(184, 146, 42, 0.18)',
+          borderTop: '1px solid #E2E8F0',
           textAlign: 'center',
           fontSize: 11,
-          color: '#888780',
-          fontFamily: 'DM Sans, sans-serif',
+          color: '#94A3B8',
+          fontFamily: 'Inter, system-ui, sans-serif',
         }}
       >
         <div style={{ marginBottom: 6, display: 'inline-flex', alignItems: 'center', gap: 5 }}>
@@ -1176,7 +1193,7 @@ export function ClientAppPage() {
             href="/legal/mentions"
             target="_blank"
             rel="noopener noreferrer"
-            style={{ color: '#B8922A', textDecoration: 'none', fontWeight: 600 }}
+            style={{ color: '#10B981', textDecoration: 'none', fontWeight: 600 }}
           >
             Mentions légales
           </a>
@@ -1185,7 +1202,7 @@ export function ClientAppPage() {
             href="/legal/confidentialite"
             target="_blank"
             rel="noopener noreferrer"
-            style={{ color: '#B8922A', textDecoration: 'none', fontWeight: 600 }}
+            style={{ color: '#10B981', textDecoration: 'none', fontWeight: 600 }}
           >
             Confidentialité
           </a>
