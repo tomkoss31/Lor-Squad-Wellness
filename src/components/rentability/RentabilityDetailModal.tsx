@@ -120,9 +120,13 @@ export function RentabilityDetailModal({ data, onClose }: RentabilityDetailModal
           ? ((u as User & { monthlyPvOverride?: number | null }).monthlyPvOverride as number)
           : null;
         // Estimation override € : (margePerso - margeDownline) × CA_estime
-        // CA estimé = PV × 1.3 (approx Herbalife retail). C est une projection,
+        // CA estimé = PV × 1.5 (approx Herbalife retail). C est une projection,
         // pas une vérité comptable — la vraie source est Bizworks Royalty.
-        const ca = pv != null ? pv * 1.3 : 0;
+        // Ratio PV → € retail France : ~1.5 € HT / PV (ordre de grandeur
+        // valide pour un mix typique Herbalife). Thomas valide ce ratio
+        // (2026-11-07). Le calcul reste une PROJECTION — la verite reste
+        // Bizworks Royalty Report.
+        const ca = pv != null ? pv * 1.5 : 0;
         const overrideEur = (ownerMarginPct - rankMargin) > 0
           ? ca * ((ownerMarginPct - rankMargin) / 100)
           : 0;
@@ -291,7 +295,7 @@ export function RentabilityDetailModal({ data, onClose }: RentabilityDetailModal
               </ul>
               <div style={methodoStyle}>
                 ℹ️ <strong>Estimation override</strong> = (ta marge {data.margin_pct} % − marge
-                downline) × PV × 1.3 € (proxy retail). La vraie source est Bizworks Royalty
+                downline) × PV × 1.5 € (proxy retail). La vraie source est Bizworks Royalty
                 Report. Saisis le PV Bizworks de chaque distri dans <em>Mon équipe → fiche
                 distri</em> pour des chiffres réalistes.
               </div>
