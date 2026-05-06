@@ -7,7 +7,7 @@
 // CTA vers la fiche distri complète (DistributorPortfolioPage).
 // =============================================================================
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   STATUS_META,
@@ -15,7 +15,17 @@ import {
 } from "../../hooks/useTeamEngagement";
 import { useAppContext } from "../../context/AppContext";
 import { useToast, buildSupabaseErrorToast } from "../../context/ToastContext";
-import { freezeUserAccount, unfreezeUserAccount } from "../../services/supabaseService";
+import {
+  freezeUserAccount,
+  unfreezeUserAccount,
+  setUserPvOverride,
+  setUserRankAdmin,
+} from "../../services/supabaseService";
+import {
+  RANK_LABELS,
+  RANK_ORDER,
+  type HerbalifeRank,
+} from "../../types/domain";
 
 interface TeamMemberDrilldownModalProps {
   member: TeamMemberEngagement | null;
@@ -52,17 +62,93 @@ export function TeamMemberDrilldownModal({ member, onClose }: TeamMemberDrilldow
   const { push: pushToast } = useToast();
   const [freezing, setFreezing] = useState(false);
 
+  // ─── Lookup full user (depuis context.users) ───────────────────────────────
+  // Doit etre AVANT tout return conditionnel — sinon les hooks suivants
+  // (useState, useMemo) violent les regles React si member est null.
+  const fullUser = users.find((u) => u.id === member?.user_id) ?? null;
+
+  // ─── Edit Rang Herbalife (admin only, chantier 2026-11-07) ────────────────
+  const [rankDraft, setRankDraft] = useState<HerbalifeRank>(
+    (fullUser?.currentRank as HerbalifeRank | undefined) ?? "distributor_25",
+  );
+  const [savingRank, setSavingRank] = useState(false);
+
+  // ─── Edit PV override Bizworks (admin only) ───────────────────────────────
+  const currentMonthIso = useMemo(() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+  }, []);
+  const overrideActiveForCurrentMonth =
+    fullUser?.monthlyPvOverrideMonth === currentMonthIso &&
+    typeof fullUser?.monthlyPvOverride === "number";
+  const [pvDraft, setPvDraft] = useState<string>(
+    overrideActiveForCurrentMonth ? String(fullUser?.monthlyPvOverride ?? "") : "",
+  );
+  const [savingPv, setSavingPv] = useState(false);
+
   if (!member) return null;
   const status = STATUS_META[member.status];
 
-  // Lookup user complet (depuis context.users) pour acceder a frozenAt.
   // engagement RPC ne renvoie pas frozenAt (et de toute facon les frozen
   // sont exclus du sub_tree, donc si on les voit ici c'est qu'ils sont actifs).
-  const fullUser = users.find((u) => u.id === member.user_id) ?? null;
   const isFrozen = !!fullUser?.frozenAt;
   const isAdmin = currentUser?.role === "admin";
   const isSelf = currentUser?.id === member.user_id;
   const canToggleFreeze = isAdmin && !isSelf;
+  const canEditRankPv = isAdmin && !isSelf;
+
+  async function handleSaveRank() {
+    if (!member || savingRank) return;
+    setSavingRank(true);
+    try {
+      await setUserRankAdmin(member.user_id, rankDraft);
+      pushToast({
+        tone: "success",
+        title: "Rang mis a jour",
+        message: `${member.name} → ${RANK_LABELS[rankDraft]}`,
+      });
+      await refreshAfterFreeze?.();
+    } catch (err) {
+      pushToast(buildSupabaseErrorToast(err, "Impossible de mettre a jour le rang."));
+    } finally {
+      setSavingRank(false);
+    }
+  }
+
+  async function handleSavePv() {
+    if (!member || savingPv) return;
+    const trimmed = pvDraft.trim();
+    let pv: number | null = null;
+    if (trimmed !== "") {
+      const n = Number(trimmed.replace(",", "."));
+      if (!Number.isFinite(n) || n < 0) {
+        pushToast({
+          tone: "warning",
+          title: "Valeur invalide",
+          message: "Saisis un nombre positif (ou laisse vide pour effacer l'override).",
+        });
+        return;
+      }
+      pv = n;
+    }
+    setSavingPv(true);
+    try {
+      await setUserPvOverride(member.user_id, currentMonthIso, pv);
+      pushToast({
+        tone: "success",
+        title: pv === null ? "Override efface" : "PV Bizworks enregistres",
+        message:
+          pv === null
+            ? `${member.name} → calcul auto (commandes app uniquement)`
+            : `${member.name} → ${pv.toLocaleString("fr-FR")} PV pour ${currentMonthIso}`,
+      });
+      await refreshAfterFreeze?.();
+    } catch (err) {
+      pushToast(buildSupabaseErrorToast(err, "Impossible d'enregistrer le PV."));
+    } finally {
+      setSavingPv(false);
+    }
+  }
 
   async function handleToggleFreeze() {
     if (!member || freezing) return;
@@ -205,6 +291,177 @@ export function TeamMemberDrilldownModal({ member, onClose }: TeamMemberDrilldow
             color="var(--ls-coral)"
           />
         </div>
+
+        {/* Bloc admin : Rang Herbalife (chantier 2026-11-07) */}
+        {canEditRankPv ? (
+          <div
+            style={{
+              marginTop: 18,
+              padding: 14,
+              borderRadius: 12,
+              background: "var(--ls-surface2)",
+              border: "1px solid var(--ls-border)",
+            }}
+          >
+            <div
+              style={{
+                fontSize: 12,
+                fontWeight: 700,
+                color: "var(--ls-text)",
+                letterSpacing: 0.3,
+                marginBottom: 4,
+              }}
+            >
+              🎖️ Rang Herbalife
+            </div>
+            <div style={{ fontSize: 11, color: "var(--ls-text-muted)", lineHeight: 1.4, marginBottom: 10 }}>
+              Ajuste le rang si le distri ne l'a pas fait lui-meme. Determine la marge retail
+              dans les calculs FLEX / Rentabilite.
+            </div>
+            <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+              <select
+                value={rankDraft}
+                onChange={(e) => setRankDraft(e.target.value as HerbalifeRank)}
+                style={{
+                  flex: "1 1 200px",
+                  padding: "9px 12px",
+                  borderRadius: 10,
+                  border: "1px solid var(--ls-border)",
+                  background: "var(--ls-surface)",
+                  color: "var(--ls-text)",
+                  fontSize: 13,
+                  fontFamily: "Inter, system-ui, sans-serif",
+                  cursor: "pointer",
+                }}
+              >
+                {RANK_ORDER.map((r) => (
+                  <option key={r} value={r}>
+                    {RANK_LABELS[r]}
+                  </option>
+                ))}
+              </select>
+              <button
+                type="button"
+                onClick={() => void handleSaveRank()}
+                disabled={savingRank || rankDraft === fullUser?.currentRank}
+                style={{
+                  padding: "9px 14px",
+                  borderRadius: 10,
+                  border: "none",
+                  background:
+                    savingRank || rankDraft === fullUser?.currentRank
+                      ? "var(--ls-surface2)"
+                      : "linear-gradient(135deg, #10B981 0%, #06B6D4 50%, #8B5CF6 100%)",
+                  color:
+                    savingRank || rankDraft === fullUser?.currentRank
+                      ? "var(--ls-text-muted)"
+                      : "#FFFFFF",
+                  fontSize: 12,
+                  fontWeight: 700,
+                  fontFamily: "Sora, system-ui, sans-serif",
+                  cursor:
+                    savingRank || rankDraft === fullUser?.currentRank ? "default" : "pointer",
+                }}
+              >
+                {savingRank ? "…" : "Appliquer"}
+              </button>
+            </div>
+          </div>
+        ) : null}
+
+        {/* Bloc admin : PV Bizworks override mensuel */}
+        {canEditRankPv ? (
+          <div
+            style={{
+              marginTop: 12,
+              padding: 14,
+              borderRadius: 12,
+              background: overrideActiveForCurrentMonth
+                ? "color-mix(in srgb, var(--ls-teal) 8%, var(--ls-surface2))"
+                : "var(--ls-surface2)",
+              border: overrideActiveForCurrentMonth
+                ? "1px solid color-mix(in srgb, var(--ls-teal) 35%, transparent)"
+                : "1px solid var(--ls-border)",
+            }}
+          >
+            <div
+              style={{
+                fontSize: 12,
+                fontWeight: 700,
+                color: "var(--ls-text)",
+                letterSpacing: 0.3,
+                marginBottom: 4,
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+                flexWrap: "wrap",
+              }}
+            >
+              <span>📊 PV Bizworks · {currentMonthIso}</span>
+              {overrideActiveForCurrentMonth ? (
+                <span
+                  style={{
+                    fontSize: 10,
+                    padding: "2px 6px",
+                    borderRadius: 6,
+                    background: "color-mix(in srgb, var(--ls-teal) 18%, transparent)",
+                    color: "var(--ls-teal)",
+                    textTransform: "uppercase",
+                    letterSpacing: 0.5,
+                  }}
+                >
+                  Override actif
+                </span>
+              ) : null}
+            </div>
+            <div style={{ fontSize: 11, color: "var(--ls-text-muted)", lineHeight: 1.4, marginBottom: 10 }}>
+              Saisis le total PV Bizworks ce mois pour ajuster sa jauge Co-pilote (l'app
+              ne compte que les commandes passees via fiche client). Vide pour repasser
+              en calcul auto.
+            </div>
+            <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+              <input
+                type="number"
+                inputMode="decimal"
+                min={0}
+                step="0.01"
+                value={pvDraft}
+                onChange={(e) => setPvDraft(e.target.value)}
+                placeholder="ex: 4 500"
+                style={{
+                  flex: "1 1 160px",
+                  padding: "9px 12px",
+                  borderRadius: 10,
+                  border: "1px solid var(--ls-border)",
+                  background: "var(--ls-surface)",
+                  color: "var(--ls-text)",
+                  fontSize: 13,
+                  fontFamily: "Inter, system-ui, sans-serif",
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => void handleSavePv()}
+                disabled={savingPv}
+                style={{
+                  padding: "9px 14px",
+                  borderRadius: 10,
+                  border: "none",
+                  background: savingPv
+                    ? "var(--ls-surface2)"
+                    : "linear-gradient(135deg, #10B981 0%, #06B6D4 50%, #8B5CF6 100%)",
+                  color: savingPv ? "var(--ls-text-muted)" : "#FFFFFF",
+                  fontSize: 12,
+                  fontWeight: 700,
+                  fontFamily: "Sora, system-ui, sans-serif",
+                  cursor: savingPv ? "wait" : "pointer",
+                }}
+              >
+                {savingPv ? "…" : "Appliquer"}
+              </button>
+            </div>
+          </div>
+        ) : null}
 
         {/* Bloc admin : toggle Geler / Reactiver le compte */}
         {canToggleFreeze ? (
