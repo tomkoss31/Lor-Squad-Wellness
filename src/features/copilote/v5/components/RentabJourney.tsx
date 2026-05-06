@@ -126,7 +126,7 @@ export function RentabJourney() {
       {/* TOP — montant + status + meta */}
       <div style={topRowStyle}>
         <div style={{ position: "relative", zIndex: 1, flex: 1 }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
             <div style={overlineStyle} className="v5-cinzel">
               ◆ Ma rentabilité · {monthLabel(data.month_start)}
             </div>
@@ -134,19 +134,26 @@ export function RentabJourney() {
               type="button"
               onClick={toggleStealth}
               aria-pressed={stealthOn}
-              title={stealthOn ? "Afficher les montants" : "Masquer les montants (RDV)"}
+              title={stealthOn ? "Afficher les montants" : "Masquer les montants (mode RDV)"}
               style={{
-                background: "transparent",
-                border: "0.5px solid var(--v5-line, rgba(0,0,0,0.1))",
-                borderRadius: 6,
-                padding: "2px 8px",
-                fontSize: 11,
-                cursor: "pointer",
-                color: stealthOn ? "var(--ls-purple, #8B5CF6)" : "var(--v5-ink-light, #888)",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 5,
+                padding: "5px 11px",
+                borderRadius: 8,
+                border: "0.5px solid color-mix(in srgb, var(--v5-ink, #0F172A) 12%, transparent)",
+                background: stealthOn
+                  ? "color-mix(in srgb, var(--ls-purple, #8B5CF6) 12%, transparent)"
+                  : "transparent",
+                color: stealthOn ? "var(--ls-purple, #8B5CF6)" : "var(--v5-ink-light, #64748B)",
                 fontFamily: "DM Sans, sans-serif",
+                fontSize: 11,
+                fontWeight: 600,
+                cursor: "pointer",
+                whiteSpace: "nowrap",
               }}
             >
-              {stealthOn ? "🙈" : "👁️"}
+              {stealthOn ? "🙈 Montants masqués" : "👁️ Masquer"}
             </button>
           </div>
           <div style={titleLineStyle}>
