@@ -17,9 +17,30 @@ import { RentabilityDetailModal } from "../components/rentability/RentabilityDet
 import { resolveCoupleUserIds } from "../config/teamConfig";
 import { usePvBreakdowns } from "../hooks/usePvBreakdowns";
 import {
+  computeOwnSelfMargin,
   computeViewerDownlineOverride,
   currentMonthIso,
+  tierPctForRank,
 } from "../lib/herbalifeFormulas";
+
+function computeOwnMarginFromBreakdownsOrFallback(
+  data: { scope_user_ids: string[]; margin_eur: number } | null,
+  breakdowns: Array<{ userId: string; pv15: number; pv25: number; pv35: number; pv42: number; pvRoyalty: number; month: string; declaredBy: string | null; declaredAt: string | null }>,
+  users: Array<{ id: string; currentRank?: import("../types/domain").HerbalifeRank }>,
+): number {
+  if (!data) return 0;
+  let total = 0;
+  let any = false;
+  for (const ownerId of data.scope_user_ids) {
+    const b = breakdowns.find((br) => br.userId === ownerId);
+    if (b) {
+      const owner = users.find((u) => u.id === ownerId);
+      total += computeOwnSelfMargin(b, tierPctForRank(owner?.currentRank));
+      any = true;
+    }
+  }
+  return any ? total : data.margin_eur;
+}
 
 function initialsOf(name: string): string {
   if (!name) return "?";
@@ -56,15 +77,21 @@ export function RentabilitePage() {
       breakdowns,
     );
   }, [ownData, currentUser, users, breakdowns]);
+  const ownSelfMargin = useMemo(
+    () => computeOwnMarginFromBreakdownsOrFallback(ownData, breakdowns, users),
+    [ownData, breakdowns, users],
+  );
   const ownDataWithOverride = useMemo(() => {
     if (!ownData) return null;
-    if (ownDownlineOverride === 0) return ownData;
+    const newMargin = ownSelfMargin + ownDownlineOverride;
+    if (newMargin === ownData.margin_eur) return ownData;
+    const ratio = ownData.margin_eur > 0 ? newMargin / ownData.margin_eur : 1;
     return {
       ...ownData,
-      margin_eur: ownData.margin_eur + ownDownlineOverride,
-      projection_eur: ownData.projection_eur + ownDownlineOverride,
+      margin_eur: newMargin,
+      projection_eur: ownData.projection_eur * ratio,
     };
-  }, [ownData, ownDownlineOverride]);
+  }, [ownData, ownSelfMargin, ownDownlineOverride]);
 
   // Override downline pour le membre selectionne (modale equipe).
   // Sans ca, admin viewing Mandy verrait la jauge a 0 EUR malgre ses downlines.
@@ -81,15 +108,21 @@ export function RentabilitePage() {
       breakdowns,
     );
   }, [selectedData, currentUser, users, breakdowns]);
+  const selectedSelfMargin = useMemo(
+    () => computeOwnMarginFromBreakdownsOrFallback(selectedData, breakdowns, users),
+    [selectedData, breakdowns, users],
+  );
   const selectedDataWithOverride = useMemo(() => {
     if (!selectedData) return null;
-    if (selectedDownlineOverride === 0) return selectedData;
+    const newMargin = selectedSelfMargin + selectedDownlineOverride;
+    if (newMargin === selectedData.margin_eur) return selectedData;
+    const ratio = selectedData.margin_eur > 0 ? newMargin / selectedData.margin_eur : 1;
     return {
       ...selectedData,
-      margin_eur: selectedData.margin_eur + selectedDownlineOverride,
-      projection_eur: selectedData.projection_eur + selectedDownlineOverride,
+      margin_eur: newMargin,
+      projection_eur: selectedData.projection_eur * ratio,
     };
-  }, [selectedData, selectedDownlineOverride]);
+  }, [selectedData, selectedSelfMargin, selectedDownlineOverride]);
 
   const isAdminOrRef = currentUser?.role === "admin" || currentUser?.role === "referent";
 
@@ -219,15 +252,21 @@ function TeamMemberRentabilityCard({
       breakdowns,
     );
   }, [data, users, breakdowns]);
+  const selfMargin = useMemo(
+    () => computeOwnMarginFromBreakdownsOrFallback(data, breakdowns, users),
+    [data, breakdowns, users],
+  );
   const dataWithOverride = useMemo(() => {
     if (!data) return null;
-    if (downlineOverride === 0) return data;
+    const newMargin = selfMargin + downlineOverride;
+    if (newMargin === data.margin_eur) return data;
+    const ratio = data.margin_eur > 0 ? newMargin / data.margin_eur : 1;
     return {
       ...data,
-      margin_eur: data.margin_eur + downlineOverride,
-      projection_eur: data.projection_eur + downlineOverride,
+      margin_eur: newMargin,
+      projection_eur: data.projection_eur * ratio,
     };
-  }, [data, downlineOverride]);
+  }, [data, selfMargin, downlineOverride]);
 
   return (
     <button type="button" onClick={onClick} style={memberCardStyle}>
