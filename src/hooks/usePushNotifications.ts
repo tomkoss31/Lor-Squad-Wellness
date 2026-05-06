@@ -12,6 +12,34 @@ interface PushState {
   loading: boolean
   /** Message d'erreur lisible si subscribe/unsubscribe a echoue. NULL = OK. */
   error: string | null
+  /** iOS-only : true si user dans PWA standalone, false sinon (Safari).
+   *  null si pas iOS. Critical pour Apple Push qui exige PWA standalone. */
+  isIosStandalone: boolean | null
+  /** Diagnostic detaille pour l'UI debug */
+  diag: {
+    isIos: boolean
+    isStandalone: boolean
+    hasSW: boolean
+    swState: string
+    hasManifest: boolean
+    hasVapid: boolean
+  }
+}
+
+function detectIos(): boolean {
+  if (typeof navigator === 'undefined') return false
+  const ua = navigator.userAgent
+  return /iPhone|iPad|iPod/.test(ua) || (ua.includes('Mac') && 'ontouchend' in document)
+}
+
+function detectStandalone(): boolean {
+  if (typeof window === 'undefined') return false
+  // iOS Safari : navigator.standalone === true quand PWA installee
+  // Standard PWA : matchMedia('(display-mode: standalone)')
+  return (
+    (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) ||
+    (window.navigator as { standalone?: boolean }).standalone === true
+  )
 }
 
 const VAPID_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY ?? ''
@@ -32,22 +60,58 @@ export function usePushNotifications(userId?: string, userName?: string) {
     subscribed: false,
     loading: true,
     error: null,
+    isIosStandalone: null,
+    diag: {
+      isIos: false,
+      isStandalone: false,
+      hasSW: false,
+      swState: 'unknown',
+      hasManifest: false,
+      hasVapid: !!VAPID_KEY,
+    },
   })
 
   useEffect(() => {
-    const supported = 'Notification' in window && 'serviceWorker' in navigator && 'PushManager' in window
+    const isIos = detectIos()
+    const isStandalone = detectStandalone()
+    const hasSW = 'serviceWorker' in navigator
+    const supported = 'Notification' in window && hasSW && 'PushManager' in window
+    const hasManifest = !!document.querySelector('link[rel="manifest"]')
+
+    setState(s => ({
+      ...s,
+      supported,
+      permission: supported ? Notification.permission : 'unsupported',
+      isIosStandalone: isIos ? isStandalone : null,
+      diag: {
+        ...s.diag,
+        isIos,
+        isStandalone,
+        hasSW,
+        hasManifest,
+        hasVapid: !!VAPID_KEY,
+      },
+    }))
+
     if (!supported) {
-      setState(s => ({ ...s, supported: false, loading: false }))
+      setState(s => ({ ...s, loading: false }))
       return
     }
-    setState(s => ({ ...s, supported: true, permission: Notification.permission }))
 
-    // Check existing subscription
-    navigator.serviceWorker.ready.then(reg => {
-      reg.pushManager.getSubscription().then(sub => {
-        setState(s => ({ ...s, subscribed: !!sub, loading: false }))
+    // Check existing subscription + SW state
+    navigator.serviceWorker.ready
+      .then(reg => {
+        const swState = reg.active?.state ?? reg.installing?.state ?? reg.waiting?.state ?? 'none'
+        return reg.pushManager.getSubscription().then(sub => {
+          setState(s => ({
+            ...s,
+            subscribed: !!sub,
+            loading: false,
+            diag: { ...s.diag, swState },
+          }))
+        })
       })
-    }).catch(() => setState(s => ({ ...s, loading: false })))
+      .catch(() => setState(s => ({ ...s, loading: false })))
   }, [])
 
   const subscribe = useCallback(async () => {
@@ -64,6 +128,21 @@ export function usePushNotifications(userId?: string, userName?: string) {
       console.error('[push] VITE_VAPID_PUBLIC_KEY manquante dans .env')
       return false
     }
+
+    // CRITICAL iOS : sur iPhone/iPad, les notifs push web ne fonctionnent
+    // QUE depuis une PWA installee (standalone). Si l'user est sur Safari
+    // direct, requestPermission() est ignore silencieusement par iOS ->
+    // pas de prompt, app n'apparait jamais dans Reglages > Notifications.
+    const isIos = detectIos()
+    const isStandalone = detectStandalone()
+    if (isIos && !isStandalone) {
+      setState(s => ({
+        ...s,
+        error: "📱 Sur iPhone, les notifications fonctionnent UNIQUEMENT depuis l'app installée. Action : 1) Ferme cette page, 2) Dans Safari clique 'Partager' (carré + flèche) > 'Sur l'écran d'accueil', 3) Ouvre l'app depuis l'icône, 4) Reviens ici activer.",
+      }))
+      return false
+    }
+
     setState(s => ({ ...s, loading: true, error: null }))
 
     try {

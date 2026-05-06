@@ -6,7 +6,18 @@ interface Props {
 }
 
 export function PushNotificationSettings({ userId, userName }: Props) {
-  const { supported, permission, subscribed, loading, error, subscribe, unsubscribe, clearError } = usePushNotifications(userId, userName)
+  const {
+    supported,
+    permission,
+    subscribed,
+    loading,
+    error,
+    subscribe,
+    unsubscribe,
+    clearError,
+    isIosStandalone,
+    diag,
+  } = usePushNotifications(userId, userName)
 
   if (!supported) {
     return (
@@ -23,9 +34,36 @@ export function PushNotificationSettings({ userId, userName }: Props) {
   }
 
   const denied = permission === 'denied'
+  const iosBadConfig = diag.isIos && !diag.isStandalone
 
   return (
     <div style={{ background: 'var(--ls-surface)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12, padding: 16 }}>
+      {/* Bandeau iOS critique : si user sur Safari (pas PWA) -> il faut l'installer d'abord */}
+      {iosBadConfig ? (
+        <div style={{
+          marginBottom: 14,
+          padding: '12px 14px',
+          background: 'linear-gradient(135deg, rgba(245,158,11,0.12), rgba(239,68,68,0.10))',
+          border: '1px solid rgba(245,158,11,0.40)',
+          borderRadius: 10,
+          fontSize: 12,
+          color: '#F59E0B',
+          lineHeight: 1.55,
+        }}>
+          <div style={{ fontWeight: 700, marginBottom: 6, fontFamily: 'Sora, sans-serif', fontSize: 13 }}>
+            📱 PWA non installée
+          </div>
+          <div style={{ marginBottom: 6 }}>
+            Sur iPhone, les notifications fonctionnent <strong>uniquement</strong> depuis l'app installée à l'écran d'accueil.
+          </div>
+          <ol style={{ margin: 0, paddingLeft: 18, fontSize: 11.5 }}>
+            <li>Dans Safari, clique le bouton <strong>Partager</strong> (carré + flèche ↑)</li>
+            <li>Choisis <strong>« Sur l'écran d'accueil »</strong></li>
+            <li>Ferme Safari, ouvre l'app via l'icône <strong>La Base 360</strong></li>
+            <li>Reviens dans cette page → bouton ci-dessous fonctionnera</li>
+          </ol>
+        </div>
+      ) : null}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
         <div style={{
           width: 8, height: 8, borderRadius: '50%',
@@ -72,6 +110,48 @@ export function PushNotificationSettings({ userId, userName }: Props) {
           >
             {loading ? 'Chargement...' : subscribed ? 'Désactiver les notifications' : 'Activer les notifications'}
           </button>
+          {/* Panneau diagnostic technique (collapsible-style — toujours visible
+              en bas, en petit). Aide Thomas/Mel à identifier rapidement le
+              maillon cassé sans avoir à ouvrir la console. */}
+          <details style={{
+            marginTop: 12,
+            background: 'rgba(255,255,255,0.02)',
+            border: '0.5px solid rgba(255,255,255,0.08)',
+            borderRadius: 8,
+            padding: '8px 12px',
+          }}>
+            <summary style={{
+              fontSize: 11,
+              color: 'var(--ls-text-hint)',
+              cursor: 'pointer',
+              fontFamily: 'DM Sans, sans-serif',
+              fontWeight: 600,
+              letterSpacing: 0.3,
+            }}>
+              🔧 Diagnostic technique
+            </summary>
+            <div style={{
+              marginTop: 8,
+              fontSize: 10.5,
+              color: 'var(--ls-text-muted)',
+              fontFamily: 'JetBrains Mono, monospace',
+              lineHeight: 1.7,
+            }}>
+              <div>iOS : {diag.isIos ? '✓ détecté' : '✗ non'}</div>
+              <div>PWA standalone : {diag.isStandalone ? '✓ oui (OK)' : '✗ non' + (diag.isIos ? ' (CRITIQUE iOS)' : '')}</div>
+              <div>Service Worker : {diag.hasSW ? `✓ ${diag.swState}` : '✗ absent'}</div>
+              <div>Manifest : {diag.hasManifest ? '✓ présent' : '✗ absent'}</div>
+              <div>VAPID public key : {diag.hasVapid ? '✓ configurée' : '✗ ABSENTE (env)'}</div>
+              <div>Notification API : {supported ? '✓ supportée' : '✗ non supportée'}</div>
+              <div>Permission : {permission}</div>
+              <div>Subscribed : {subscribed ? '✓ oui' : '✗ non'}</div>
+              {isIosStandalone === false ? (
+                <div style={{ marginTop: 6, color: '#F59E0B', fontWeight: 600 }}>
+                  ⚠ iOS sans PWA : ouvrir via l'icône home écran requis
+                </div>
+              ) : null}
+            </div>
+          </details>
           {/* Affichage erreur explicite (fix bug Mel "branchage echoue silencieusement" 2026-05-06) */}
           {error ? (
             <div style={{
