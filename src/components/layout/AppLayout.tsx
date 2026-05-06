@@ -226,8 +226,17 @@ export function AppLayout() {
                 alt="La Base 360"
                 style={{ width: 34, height: 34, borderRadius: 9, flexShrink: 0 }}
               />
-              <div>
-                <div style={{ fontFamily: 'Sora, sans-serif', fontWeight: 700, fontSize: 14, color: '#F0EDE8', lineHeight: 1.2, letterSpacing: '-0.01em' }}>
+              <div style={{ minWidth: 0, overflow: 'visible' }}>
+                <div style={{
+                  fontFamily: 'Sora, sans-serif',
+                  fontWeight: 700,
+                  fontSize: 14,
+                  color: '#F0EDE8',
+                  lineHeight: 1.2,
+                  letterSpacing: '-0.01em',
+                  whiteSpace: 'nowrap',
+                  overflow: 'visible',
+                }}>
                   La Base{' '}
                   <span style={{
                     fontStyle: 'italic',
@@ -236,9 +245,21 @@ export function AppLayout() {
                     WebkitBackgroundClip: 'text',
                     WebkitTextFillColor: 'transparent',
                     backgroundClip: 'text',
+                    // Fix italic clip 2026-05-05 : padding-right + display
+                    // inline-block evitent que le slant italic soit coupe
+                    // par le container (classique trick avec WebkitBackgroundClip).
+                    display: 'inline-block',
+                    paddingRight: '4px',
                   }}>360</span>
                 </div>
-                <div style={{ fontSize: 9, color: '#4A5068', letterSpacing: '1.5px', textTransform: 'uppercase', marginTop: 2 }}>★ Since 2022 ★</div>
+                <div style={{
+                  fontSize: 8.5,
+                  color: '#4A5068',
+                  letterSpacing: '1.2px',
+                  textTransform: 'uppercase',
+                  marginTop: 2,
+                  whiteSpace: 'nowrap',
+                }}>★ Since 2022 ★</div>
               </div>
             </div>
           </div>
