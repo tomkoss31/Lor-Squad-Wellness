@@ -45,6 +45,8 @@ interface FormState {
   pv35: string;
   pv42: string;
   pvRoyalty: string;
+  pv25IsVip: boolean;
+  pv35IsVip: boolean;
 }
 
 const EMPTY_FORM: FormState = {
@@ -59,6 +61,8 @@ const EMPTY_FORM: FormState = {
   pv35: "",
   pv42: "",
   pvRoyalty: "",
+  pv25IsVip: false,
+  pv35IsVip: false,
 };
 
 export function ManualPvEntriesSection() {
@@ -95,6 +99,8 @@ export function ManualPvEntriesSection() {
       pv35: e.pv35 > 0 ? String(e.pv35) : "",
       pv42: e.pv42 > 0 ? String(e.pv42) : "",
       pvRoyalty: e.pvRoyalty > 0 ? String(e.pvRoyalty) : "",
+      pv25IsVip: e.pv25IsVip,
+      pv35IsVip: e.pv35IsVip,
     });
     setFormOpen(true);
   }
@@ -123,6 +129,8 @@ export function ManualPvEntriesSection() {
         pv35: parse(form.pv35),
         pv42: parse(form.pv42),
         pvRoyalty: parse(form.pvRoyalty),
+        pv25IsVip: form.pv25IsVip,
+        pv35IsVip: form.pv35IsVip,
       });
       pushToast({
         tone: "success",
@@ -155,7 +163,9 @@ export function ManualPvEntriesSection() {
         userId: `manual:${e.id}`,
         month: e.month,
         pv15: e.pv15, pv25: e.pv25, pv35: e.pv35, pv42: e.pv42,
-        pvRoyalty: e.pvRoyalty, declaredBy: null, declaredAt: e.declaredAt,
+        pvRoyalty: e.pvRoyalty,
+        pv25IsVip: e.pv25IsVip, pv35IsVip: e.pv35IsVip,
+        declaredBy: null, declaredAt: e.declaredAt,
       },
       viewerTierPct,
       intermediates,
@@ -257,7 +267,9 @@ function ManualEntryRow({
       userId: `manual:${entry.id}`,
       month: entry.month,
       pv15: entry.pv15, pv25: entry.pv25, pv35: entry.pv35, pv42: entry.pv42,
-      pvRoyalty: entry.pvRoyalty, declaredBy: null, declaredAt: entry.declaredAt,
+      pvRoyalty: entry.pvRoyalty,
+      pv25IsVip: entry.pv25IsVip, pv35IsVip: entry.pv35IsVip,
+      declaredBy: null, declaredAt: entry.declaredAt,
     },
     viewerTierPct,
     intermediates,
@@ -266,11 +278,19 @@ function ManualEntryRow({
   const lineageLabel = entry.depth === 1
     ? "L1 direct"
     : `L${entry.depth} via ${entry.parentName ?? "—"}`;
+  const vipMarkers: string[] = [];
+  if (entry.pv25 > 0 && entry.pv25IsVip) vipMarkers.push("⭐ Silver");
+  if (entry.pv35 > 0 && entry.pv35IsVip) vipMarkers.push("⭐ Gold");
   return (
     <div style={rowStyle}>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontFamily: "Syne, sans-serif", fontSize: 14, fontWeight: 700, color: "var(--ls-text)" }}>
           {entry.name}
+          {vipMarkers.length > 0 ? (
+            <span style={{ marginLeft: 6, fontSize: 10, color: "var(--ls-gold)", fontWeight: 600 }}>
+              {vipMarkers.join(" + ")}
+            </span>
+          ) : null}
         </div>
         <div style={{ fontSize: 11, color: "var(--ls-text-muted)", marginTop: 2 }}>
           <span style={badgeStyle}>{lineageLabel}</span>
@@ -306,6 +326,7 @@ function FormBody({
     month: "preview",
     pv15: parse(form.pv15), pv25: parse(form.pv25), pv35: parse(form.pv35),
     pv42: parse(form.pv42), pvRoyalty: parse(form.pvRoyalty),
+    pv25IsVip: form.pv25IsVip, pv35IsVip: form.pv35IsVip,
     declaredBy: null, declaredAt: null,
   };
   const previewCut = computeSponsorCutOnDownstream(previewBreakdown, viewerTierPct, intermediates);
@@ -386,11 +407,23 @@ function FormBody({
       </Field>
 
       <div style={{ marginTop: 4, fontSize: 11, color: "var(--ls-text-muted)", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5 }}>
-        PV par tier (depuis fiche RO)
+        PV par tier (depuis fiche RO) · ⭐ = VIP, sinon Distri
       </div>
-      <PvTierInput label="PV à 15% (Préféré)" value={form.pv15} onChange={(v) => setForm({ ...form, pv15: v })} />
-      <PvTierInput label="PV à 25% (Distributor)" value={form.pv25} onChange={(v) => setForm({ ...form, pv25: v })} />
-      <PvTierInput label="PV à 35% (Senior Consultant)" value={form.pv35} onChange={(v) => setForm({ ...form, pv35: v })} />
+      <PvTierInput label="PV à 15% (Préféré VIP)" value={form.pv15} onChange={(v) => setForm({ ...form, pv15: v })} />
+      <PvTierInput
+        label={form.pv25IsVip ? "PV à 25% (Silver VIP)" : "PV à 25% (Distributor)"}
+        value={form.pv25}
+        onChange={(v) => setForm({ ...form, pv25: v })}
+        vipFlag={form.pv25IsVip}
+        onToggleVip={() => setForm({ ...form, pv25IsVip: !form.pv25IsVip })}
+      />
+      <PvTierInput
+        label={form.pv35IsVip ? "PV à 35% (Gold VIP)" : "PV à 35% (Senior Consultant)"}
+        value={form.pv35}
+        onChange={(v) => setForm({ ...form, pv35: v })}
+        vipFlag={form.pv35IsVip}
+        onToggleVip={() => setForm({ ...form, pv35IsVip: !form.pv35IsVip })}
+      />
       <PvTierInput label="PV à 42% (Success Builder)" value={form.pv42} onChange={(v) => setForm({ ...form, pv42: v })} />
       <PvTierInput label="PV Royalty (Supervisor org)" value={form.pvRoyalty} onChange={(v) => setForm({ ...form, pvRoyalty: v })} />
 
@@ -424,13 +457,40 @@ function PvTierInput({
   label,
   value,
   onChange,
+  vipFlag,
+  onToggleVip,
 }: {
   label: string;
   value: string;
   onChange: (v: string) => void;
+  vipFlag?: boolean;
+  onToggleVip?: () => void;
 }) {
+  const hasToggle = typeof onToggleVip === "function";
   return (
     <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+      {hasToggle ? (
+        <button
+          type="button"
+          onClick={onToggleVip}
+          aria-label={vipFlag ? "VIP — clique pour passer en Distri" : "Distri — clique pour passer en VIP"}
+          title={vipFlag ? "VIP — clique pour passer en Distri" : "Distri — clique pour passer en VIP"}
+          style={{
+            background: "transparent",
+            border: "none",
+            cursor: "pointer",
+            fontSize: 16,
+            padding: 0,
+            width: 24,
+            opacity: vipFlag ? 1 : 0.35,
+            color: vipFlag ? "var(--ls-gold)" : "var(--ls-text-muted)",
+          }}
+        >
+          {vipFlag ? "⭐" : "☆"}
+        </button>
+      ) : (
+        <span style={{ width: 24 }} />
+      )}
       <span style={{ flex: 1, fontSize: 11, color: "var(--ls-text)" }}>{label}</span>
       <input
         type="number"
