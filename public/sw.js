@@ -192,9 +192,20 @@ function profileFor(type) {
 
 // ─── Push display ─────────────────────────────────────────────────────────
 self.addEventListener("push", (event) => {
-  const data = event.data ? event.data.json() : {};
+  // Debug 2026-05-06 : log explicite pour identifier si push event arrive
+  // au SW. Si tu ne vois RIEN dans la console quand un test est envoye,
+  // c'est que le SW n'est pas register OU l'endpoint est obsolete.
+  console.log("[sw-lb360] push event received", { hasData: !!event.data });
+
+  let data = {};
+  try {
+    data = event.data ? event.data.json() : {};
+  } catch (err) {
+    console.error("[sw-lb360] push payload parse error:", err);
+  }
   const title = data.title || "La Base 360";
   const profile = profileFor(data.type);
+  console.log("[sw-lb360] showNotification:", { title, type: data.type });
 
   // Tag unique par défaut → évite que les notifs s'écrasent entre elles
   // dans le shade Android / Notification Center iOS. Edge function peut

@@ -117,6 +117,75 @@ export function DebugNotificationsPage() {
   const subscriptionCount = subscriptions.length;
   const hasSubscription = subscriptionCount > 0;
 
+  // Force re-subscribe : nettoie TOUTES les subs DB + browser, puis recree
+  // une fresh sub avec le VAPID actuel. Cas typique : le SW a change
+  // (rebrand, deploy) -> nouvel endpoint Apple genere mais ancien encore
+  // en DB. Le test envoie sur l'ancien endpoint orphelin = silence.
+  async function forceResubscribe() {
+    if (!currentUser) return;
+    setTesting(true);
+    setFeedback("");
+    setFeedbackTone("");
+    try {
+      const sb = await getSupabaseClient();
+      if (!sb) throw new Error("Supabase indisponible");
+
+      // 1. Delete TOUTES les subs DB pour cet user
+      const { error: delErr } = await sb
+        .from("push_subscriptions")
+        .delete()
+        .eq("user_id", currentUser.id);
+      if (delErr) throw new Error(`Delete DB échoué : ${delErr.message}`);
+
+      // 2. Unsubscribe browser-side (vide la sub Apple Push)
+      const reg = await navigator.serviceWorker.ready;
+      const existingSub = await reg.pushManager.getSubscription();
+      if (existingSub) {
+        try {
+          await existingSub.unsubscribe();
+        } catch (e) {
+          console.warn("[force-resub] unsubscribe error (non bloquant):", e);
+        }
+      }
+
+      // 3. Re-subscribe avec le VAPID actuel
+      const VAPID = import.meta.env.VITE_VAPID_PUBLIC_KEY ?? "";
+      if (!VAPID) throw new Error("VITE_VAPID_PUBLIC_KEY absent (env Vercel)");
+      const padding = "=".repeat((4 - (VAPID.length % 4)) % 4);
+      const base64 = (VAPID + padding).replace(/-/g, "+").replace(/_/g, "/");
+      const rawData = atob(base64);
+      const arr = new Uint8Array(rawData.length);
+      for (let i = 0; i < rawData.length; ++i) arr[i] = rawData.charCodeAt(i);
+
+      const newSub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: arr as unknown as BufferSource,
+      });
+
+      // 4. Insert en DB
+      const json = newSub.toJSON();
+      const { error: insErr } = await sb.from("push_subscriptions").insert({
+        user_id: currentUser.id,
+        endpoint: json.endpoint,
+        p256dh: json.keys?.p256dh ?? "",
+        auth: json.keys?.auth ?? "",
+        user_name: currentUser.name ?? null,
+        updated_at: new Date().toISOString(),
+      });
+      if (insErr) throw new Error(`Insert DB échoué : ${insErr.message}`);
+
+      setFeedback("✓ Souscription rafraîchie. Test maintenant.");
+      setFeedbackTone("ok");
+      void refresh();
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Erreur inconnue";
+      setFeedback(`Échec re-subscribe : ${msg}`);
+      setFeedbackTone("err");
+    } finally {
+      setTesting(false);
+    }
+  }
+
   return (
     <div className="space-y-6">
       <PageHeading
@@ -186,7 +255,20 @@ export function DebugNotificationsPage() {
           <Button variant="secondary" onClick={() => void refresh()}>
             Rafraîchir
           </Button>
+          <Button
+            variant="secondary"
+            onClick={() => void forceResubscribe()}
+            disabled={testing}
+            style={{ background: "rgba(245,158,11,0.1)", border: "1px solid rgba(245,158,11,0.3)", color: "#F59E0B" }}
+          >
+            🔄 Force re-subscribe
+          </Button>
         </div>
+        <p className="text-xs text-[var(--ls-text-hint)] leading-5">
+          <strong>« Force re-subscribe »</strong> : à utiliser si le test échoue silencieusement.
+          Le SW a peut-être changé (rebrand, deploy) → l'endpoint Apple Push en DB est obsolète.
+          Ce bouton nettoie tout et recrée une souscription fresh avec le VAPID actuel.
+        </p>
 
         {feedback ? (
           <div
