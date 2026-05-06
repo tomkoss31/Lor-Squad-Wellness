@@ -264,7 +264,7 @@ export function ClientHomeTab({
         }
         .ls-client-tile:hover {
           transform: translateY(-2px);
-          background: linear-gradient(135deg, #FFFFFF 0%, #FAF6E8 100%);
+          background: linear-gradient(135deg, #FFFFFF 0%, #FFFFFF 100%);
           box-shadow: 0 6px 18px -6px rgba(186,117,23,0.18);
         }
         .ls-client-cta-gold {
@@ -309,7 +309,7 @@ export function ClientHomeTab({
             const left = Math.random() * 100;
             const delay = Math.random() * 1.5;
             const duration = 2.5 + Math.random() * 1.5;
-            const colors = ["#EF9F27", "#10B981", "#D4537E", "#F5B847", "#0F6E56"];
+            const colors = ["#10B981", "#10B981", "#D4537E", "#06B6D4", "#059669"];
             const color = colors[i % colors.length];
             return (
               <span
@@ -386,12 +386,12 @@ export function ClientHomeTab({
         <div
           className="ls-client-card"
           style={{
-            background: "linear-gradient(135deg, #FFFFFF 0%, #F7FCFA 100%)",
+            background: "linear-gradient(135deg, #FFFFFF 0%, #FFFFFF 100%)",
             borderRadius: 14,
             padding: 14,
             marginBottom: 12,
             borderLeft: "4px solid #10B981",
-            boxShadow: "0 4px 12px -6px rgba(29,158,117,0.18)",
+            boxShadow: "0 4px 12px -6px rgba(16,185,129,0.18)",
           }}
         >
           {/* Eyebrow + countdown — V3 polish */}
@@ -406,27 +406,27 @@ export function ClientHomeTab({
                 display: "inline-flex",
                 alignItems: "center",
                 gap: 5,
-                fontFamily: "DM Sans, sans-serif",
+                fontFamily: "Inter, system-ui, sans-serif",
               }}
             >
-              <span style={{ display: "inline-block", width: 5, height: 5, borderRadius: 999, background: "#10B981", boxShadow: "0 0 6px rgba(29,158,117,0.50)" }} />
+              <span style={{ display: "inline-block", width: 5, height: 5, borderRadius: 999, background: "#10B981", boxShadow: "0 0 6px rgba(16,185,129,0.50)" }} />
               Prochain RDV
             </div>
             <div
               style={{
                 background: rdvInfo.isImminent
                   ? "linear-gradient(135deg, #10B981 0%, #06B6D4 50%, #8B5CF6 100%)"
-                  : "linear-gradient(135deg, #10B981 0%, #0F6E56 100%)",
+                  : "linear-gradient(135deg, #10B981 0%, #059669 100%)",
                 color: "white",
                 fontSize: 11,
                 padding: "4px 12px",
                 borderRadius: 999,
                 fontWeight: 700,
-                fontFamily: "DM Sans, sans-serif",
+                fontFamily: "Inter, system-ui, sans-serif",
                 letterSpacing: "-0.005em",
                 boxShadow: rdvInfo.isImminent
                   ? "0 4px 10px -3px rgba(186,117,23,0.40)"
-                  : "0 4px 10px -3px rgba(29,158,117,0.40)",
+                  : "0 4px 10px -3px rgba(16,185,129,0.40)",
               }}
             >
               {rdvInfo.countdown}
@@ -435,7 +435,7 @@ export function ClientHomeTab({
           {/* Date + heure premium */}
           <div
             style={{
-              fontFamily: "Syne, serif",
+              fontFamily: "Sora, system-ui, sans-serif",
               fontSize: 18,
               color: "#0F172A",
               fontWeight: 700,
@@ -445,14 +445,14 @@ export function ClientHomeTab({
           >
             {rdvInfo.main}
             {' '}·{' '}
-            <span style={{ color: "#0F6E56" }}>{rdvInfo.time}</span>
+            <span style={{ color: "#059669" }}>{rdvInfo.time}</span>
           </div>
           <div
             style={{
               fontSize: 11.5,
-              color: "#888780",
+              color: "#64748B",
               marginTop: 4,
-              fontFamily: "DM Sans, sans-serif",
+              fontFamily: "Inter, system-ui, sans-serif",
               display: "inline-flex",
               alignItems: "center",
               gap: 5,
@@ -484,7 +484,7 @@ export function ClientHomeTab({
                 justifyContent: "center",
                 gap: 6,
                 textDecoration: "none",
-                fontFamily: "DM Sans, sans-serif",
+                fontFamily: "Inter, system-ui, sans-serif",
                 boxShadow: "0 4px 12px -3px rgba(186,117,23,0.40), inset 0 1px 0 rgba(255,255,255,0.20)",
                 letterSpacing: "-0.005em",
               }}
@@ -510,7 +510,7 @@ export function ClientHomeTab({
                 justifyContent: "center",
                 gap: 6,
                 textDecoration: "none",
-                fontFamily: "DM Sans, sans-serif",
+                fontFamily: "Inter, system-ui, sans-serif",
               }}
             >
               <span style={{ fontSize: 14 }}>📍</span>
@@ -525,7 +525,7 @@ export function ClientHomeTab({
               className="ls-client-cta-link"
               style={{
                 background: "transparent",
-                color: "#888780",
+                color: "#64748B",
                 border: "0.5px solid rgba(0,0,0,0.10)",
                 padding: "7px 14px",
                 borderRadius: 999,
@@ -535,7 +535,7 @@ export function ClientHomeTab({
                 alignItems: "center",
                 gap: 5,
                 cursor: "pointer",
-                fontFamily: "DM Sans, sans-serif",
+                fontFamily: "Inter, system-ui, sans-serif",
               }}
             >
               <span aria-hidden style={{ fontSize: 11 }}>✏️</span>
@@ -554,7 +554,7 @@ export function ClientHomeTab({
                 className="ls-client-cta-link"
                 style={{
                   background: "transparent",
-                  color: "#888780",
+                  color: "#64748B",
                   border: "0.5px solid rgba(0,0,0,0.10)",
                   padding: "7px 14px",
                   borderRadius: 999,
@@ -564,7 +564,7 @@ export function ClientHomeTab({
                   alignItems: "center",
                   gap: 5,
                   textDecoration: "none",
-                  fontFamily: "DM Sans, sans-serif",
+                  fontFamily: "Inter, system-ui, sans-serif",
                 }}
               >
                 <span aria-hidden style={{ fontSize: 11 }}>📥</span>
@@ -579,7 +579,7 @@ export function ClientHomeTab({
               alignItems: "center",
               gap: 10,
               padding: "10px 12px",
-              background: "#FAF6E8",
+              background: "#FFFFFF",
               borderRadius: 8,
             }}>
               <input
@@ -601,7 +601,7 @@ export function ClientHomeTab({
                 htmlFor="rdv-added-to-calendar"
                 style={{
                   fontSize: 11,
-                  color: calendarConfirmedLocal ? "#0F6E56" : "#64748B",
+                  color: calendarConfirmedLocal ? "#059669" : "#64748B",
                   fontWeight: 500,
                   cursor: calendarConfirmedLocal ? "default" : "pointer",
                   userSelect: "none",
@@ -623,8 +623,8 @@ export function ClientHomeTab({
                     placeholder="Ex : Je préfèrerais un autre créneau..."
                     rows={2}
                     style={{ width: "100%", padding: "8px 10px", background: "#FFFFFF",
-                      color: "#444", border: "1px solid #ddd", borderRadius: 8, fontSize: 12,
-                      fontFamily: "DM Sans, sans-serif", outline: "none", resize: "none",
+                      color: "#475569", border: "1px solid #ddd", borderRadius: 8, fontSize: 12,
+                      fontFamily: "Inter, system-ui, sans-serif", outline: "none", resize: "none",
                       marginBottom: 8, boxSizing: "border-box" }} />
                   <button type="button" onClick={() => void sendRdvChangeRequest()}
                     style={{ padding: "7px 12px", background: "#10B981", color: "white",
@@ -640,11 +640,11 @@ export function ClientHomeTab({
         <div
           className="ls-client-card"
           style={{
-            background: "linear-gradient(135deg, #FFFFFF 0%, #FAF6E8 100%)",
+            background: "linear-gradient(135deg, #FFFFFF 0%, #FFFFFF 100%)",
             borderRadius: 14,
             padding: "16px 18px",
             marginBottom: 12,
-            borderLeft: "3px solid #BA7517",
+            borderLeft: "3px solid #06B6D4",
             boxShadow: "0 4px 12px -6px rgba(186,117,23,0.16)",
             display: "flex",
             alignItems: "center",
@@ -668,7 +668,7 @@ export function ClientHomeTab({
             <div
               style={{
                 fontSize: 9.5,
-                color: "#BA7517",
+                color: "#06B6D4",
                 letterSpacing: "1.6px",
                 textTransform: "uppercase",
                 fontWeight: 700,
@@ -676,16 +676,16 @@ export function ClientHomeTab({
                 display: "inline-flex",
                 alignItems: "center",
                 gap: 5,
-                fontFamily: "DM Sans, sans-serif",
+                fontFamily: "Inter, system-ui, sans-serif",
               }}
             >
-              <span style={{ display: "inline-block", width: 5, height: 5, borderRadius: 999, background: "#BA7517" }} />
+              <span style={{ display: "inline-block", width: 5, height: 5, borderRadius: 999, background: "#06B6D4" }} />
               Prochain RDV
             </div>
-            <div style={{ fontFamily: "Syne, serif", fontSize: 15, color: "#0F172A", fontWeight: 700, letterSpacing: "-0.01em" }}>
+            <div style={{ fontFamily: "Sora, system-ui, sans-serif", fontSize: 15, color: "#0F172A", fontWeight: 700, letterSpacing: "-0.01em" }}>
               Pas encore de RDV
             </div>
-            <div style={{ fontSize: 11, color: "#888780", marginTop: 2, fontFamily: "DM Sans, sans-serif", lineHeight: 1.4 }}>
+            <div style={{ fontSize: 11, color: "#64748B", marginTop: 2, fontFamily: "Inter, system-ui, sans-serif", lineHeight: 1.4 }}>
               Demande à {coachFirstName} un nouveau rendez-vous via la messagerie.
             </div>
           </div>
@@ -696,7 +696,7 @@ export function ClientHomeTab({
       <div
         className="ls-client-card"
         style={{
-          background: "linear-gradient(135deg, #FFFFFF 0%, #F0F8FF 100%)",
+          background: "linear-gradient(135deg, #FFFFFF 0%, #FFFFFF 100%)",
           border: "0.5px solid rgba(0,136,204,0.18)",
           borderRadius: 14,
           padding: "12px 14px",
@@ -716,10 +716,10 @@ export function ClientHomeTab({
             💬
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontFamily: "Syne, serif", fontSize: 14, color: "#0F172A", fontWeight: 700, letterSpacing: "-0.01em" }}>
+            <div style={{ fontFamily: "Sora, system-ui, sans-serif", fontSize: 14, color: "#0F172A", fontWeight: 700, letterSpacing: "-0.01em" }}>
               Rejoins les Challengers
             </div>
-            <div style={{ fontSize: 10.5, color: "#888780", marginTop: 2, fontFamily: "DM Sans, sans-serif" }}>
+            <div style={{ fontSize: 10.5, color: "#64748B", marginTop: 2, fontFamily: "Inter, system-ui, sans-serif" }}>
               Communauté Telegram · motivation quotidienne
             </div>
           </div>
@@ -739,7 +739,7 @@ export function ClientHomeTab({
               borderRadius: 999,
               fontWeight: 700,
               textDecoration: "none",
-              fontFamily: "DM Sans, sans-serif",
+              fontFamily: "Inter, system-ui, sans-serif",
               flexShrink: 0,
               boxShadow: "0 4px 10px -3px rgba(186,117,23,0.40), inset 0 1px 0 rgba(255,255,255,0.20)",
               letterSpacing: "-0.005em",
@@ -763,14 +763,14 @@ export function ClientHomeTab({
             padding: 16,
             textAlign: "center",
             cursor: "pointer",
-            fontFamily: "DM Sans, sans-serif",
+            fontFamily: "Inter, system-ui, sans-serif",
           }}
         >
           <div style={{ fontSize: 26, marginBottom: 6, lineHeight: 1 }}>📏</div>
-          <div style={{ fontSize: 13, color: "#0F172A", fontWeight: 700, fontFamily: "Syne, serif", letterSpacing: "-0.01em" }}>
+          <div style={{ fontSize: 13, color: "#0F172A", fontWeight: 700, fontFamily: "Sora, system-ui, sans-serif", letterSpacing: "-0.01em" }}>
             Mes mensurations
           </div>
-          <div style={{ fontSize: 10.5, color: "#888780", marginTop: 3 }}>Suis ton évolution</div>
+          <div style={{ fontSize: 10.5, color: "#64748B", marginTop: 3 }}>Suis ton évolution</div>
         </button>
         <button
           type="button"
@@ -783,14 +783,14 @@ export function ClientHomeTab({
             padding: 16,
             textAlign: "center",
             cursor: "pointer",
-            fontFamily: "DM Sans, sans-serif",
+            fontFamily: "Inter, system-ui, sans-serif",
           }}
         >
           <div style={{ fontSize: 26, marginBottom: 6, lineHeight: 1 }}>🎁</div>
-          <div style={{ fontSize: 13, color: "#0F172A", fontWeight: 700, fontFamily: "Syne, serif", letterSpacing: "-0.01em" }}>
+          <div style={{ fontSize: 13, color: "#0F172A", fontWeight: 700, fontFamily: "Sora, system-ui, sans-serif", letterSpacing: "-0.01em" }}>
             Recommander
           </div>
-          <div style={{ fontSize: 10.5, color: "#888780", marginTop: 3 }}>Parraine un ami</div>
+          <div style={{ fontSize: 10.5, color: "#64748B", marginTop: 3 }}>Parraine un ami</div>
         </button>
       </div>
 
@@ -803,14 +803,14 @@ export function ClientHomeTab({
           display: "flex",
           alignItems: "center",
           gap: 12,
-          background: "linear-gradient(135deg, #FAEEDA, #F0DBB0)",
+          background: "#FFFFFF",
           border: "1px solid rgba(16,185,129,0.35)",
           borderRadius: 14,
           padding: "14px 16px",
           width: "100%",
           textAlign: "left",
           cursor: "pointer",
-          fontFamily: "DM Sans, sans-serif",
+          fontFamily: "Inter, system-ui, sans-serif",
           boxShadow: "0 4px 12px -4px rgba(186,117,23,0.20)",
         }}
       >
@@ -833,14 +833,14 @@ export function ClientHomeTab({
           🎁
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontFamily: "Syne, sans-serif", fontWeight: 700, fontSize: 14, color: "#633806" }}>
+          <div style={{ fontFamily: "Sora, system-ui, sans-serif", fontWeight: 700, fontSize: 14, color: "#0F172A" }}>
             Demander une recommandation
           </div>
-          <div style={{ fontSize: 11, color: "#854F0B", marginTop: 2 }}>
+          <div style={{ fontSize: 11, color: "#0F172A", marginTop: 2 }}>
             {coachFirstName} te répondra avec un conseil personnalisé
           </div>
         </div>
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#854F0B" strokeWidth="2">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0F172A" strokeWidth="2">
           <polyline points="9 18 15 12 9 6" />
         </svg>
       </button>
@@ -868,7 +868,7 @@ export function ClientHomeTab({
           </svg>
         </div>
         <div style={{ flex: 1 }}>
-          <div style={{ fontFamily: "Syne, sans-serif", fontWeight: 700, fontSize: 13, color: "#0F172A" }}>
+          <div style={{ fontFamily: "Sora, system-ui, sans-serif", fontWeight: 700, fontSize: 13, color: "#0F172A" }}>
             Laisser un avis Google
           </div>
           <div style={{ fontSize: 10, color: "#94A3B8" }}>★★★★★ La Base — Verdun</div>
@@ -908,9 +908,9 @@ export function ClientHomeTab({
         <div
           style={{
             fontSize: 14,
-            color: "#5C4A0F",
+            color: "#0F172A",
             fontStyle: "italic",
-            fontFamily: "Syne, serif",
+            fontFamily: "Sora, system-ui, sans-serif",
             lineHeight: 1.6,
             fontWeight: 500,
             letterSpacing: "-0.005em",
@@ -923,18 +923,18 @@ export function ClientHomeTab({
         <div
           style={{
             fontSize: 10.5,
-            color: "#888780",
+            color: "#64748B",
             marginTop: 14,
             fontStyle: "normal",
-            fontFamily: "DM Sans, sans-serif",
+            fontFamily: "Inter, system-ui, sans-serif",
             letterSpacing: "0.5px",
             display: "inline-flex",
             alignItems: "center",
             gap: 6,
           }}
         >
-          <span aria-hidden style={{ width: 4, height: 4, borderRadius: 999, background: "#BA7517" }} />
-          Propulsé par <strong style={{ color: "#BA7517", fontWeight: 700 }}>La Base 360</strong>
+          <span aria-hidden style={{ width: 4, height: 4, borderRadius: 999, background: "#06B6D4" }} />
+          Propulsé par <strong style={{ color: "#06B6D4", fontWeight: 700 }}>La Base 360</strong>
           <span aria-hidden style={{ opacity: 0.4 }}>·</span>
           La Base Verdun
         </div>

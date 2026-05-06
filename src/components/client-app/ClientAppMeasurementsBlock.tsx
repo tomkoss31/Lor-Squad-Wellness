@@ -30,7 +30,7 @@ function MeasureCard({ label, current, delta }: MeasureCardProps) {
       <div
         style={{
           fontSize: "16px",
-          color: "#444",
+          color: "#475569",
           fontWeight: 500,
           margin: "2px 0",
         }}
@@ -65,7 +65,7 @@ export function ClientAppMeasurementsBlock({ measurements, onAddFirst }: Props) 
         <div
           style={{
             fontSize: "13px",
-            color: "#444",
+            color: "#475569",
             fontWeight: 500,
             marginBottom: "8px",
           }}
@@ -129,7 +129,7 @@ export function ClientAppMeasurementsBlock({ measurements, onAddFirst }: Props) 
           marginBottom: "14px",
         }}
       >
-        <div style={{ fontSize: "13px", color: "#444", fontWeight: 500 }}>
+        <div style={{ fontSize: "13px", color: "#475569", fontWeight: 500 }}>
           📏 Mes mensurations
         </div>
         <div style={{ fontSize: "10px", color: "#64748B" }}>total perdu</div>

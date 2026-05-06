@@ -132,7 +132,7 @@ export function ClientMessageModal({
         alignItems: "center",
         justifyContent: "center",
         padding: 16,
-        fontFamily: "DM Sans, sans-serif",
+        fontFamily: "Inter, system-ui, sans-serif",
       }}
     >
       <div
@@ -153,7 +153,7 @@ export function ClientMessageModal({
       >
         <p
           style={{
-            fontFamily: "Syne, sans-serif",
+            fontFamily: "Sora, system-ui, sans-serif",
             fontSize: 20,
             fontWeight: 700,
             color: "#0F172A",
@@ -164,7 +164,7 @@ export function ClientMessageModal({
           {title}
         </p>
         {intro ? (
-          <p style={{ fontSize: 13, color: "#6B7280", lineHeight: 1.55, marginTop: 0 }}>
+          <p style={{ fontSize: 13, color: "#64748B", lineHeight: 1.55, marginTop: 0 }}>
             {intro}
           </p>
         ) : null}
@@ -201,7 +201,7 @@ export function ClientMessageModal({
                 border: "1px solid rgba(0,0,0,0.12)",
                 background: "#FAFAFA",
                 fontSize: 14,
-                fontFamily: "DM Sans, sans-serif",
+                fontFamily: "Inter, system-ui, sans-serif",
                 color: "#0F172A",
                 resize: "vertical",
                 outline: "none",
@@ -232,9 +232,9 @@ export function ClientMessageModal({
                   padding: "12px 16px",
                   borderRadius: 12,
                   background: "#FFFFFF",
-                  color: "#6B7280",
+                  color: "#64748B",
                   border: "1px solid rgba(0,0,0,0.12)",
-                  fontFamily: "DM Sans, sans-serif",
+                  fontFamily: "Inter, system-ui, sans-serif",
                   fontWeight: 500,
                   fontSize: 14,
                   cursor: sending ? "default" : "pointer",
@@ -253,7 +253,7 @@ export function ClientMessageModal({
                   background: sending || !message.trim() ? "#D5B880" : "#10B981",
                   color: "#FFFFFF",
                   border: "none",
-                  fontFamily: "Syne, sans-serif",
+                  fontFamily: "Sora, system-ui, sans-serif",
                   fontWeight: 700,
                   fontSize: 14,
                   cursor: sending || !message.trim() ? "default" : "pointer",

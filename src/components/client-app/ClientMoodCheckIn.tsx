@@ -143,7 +143,7 @@ export function ClientMoodCheckIn({ token }: Props) {
           padding: "12px 14px",
           background:
             def.tone === "teal"
-              ? "rgba(29,158,117,0.08)"
+              ? "rgba(16,185,129,0.08)"
               : def.tone === "purple"
                 ? "rgba(127,119,221,0.08)"
                 : def.tone === "coral"
@@ -151,7 +151,7 @@ export function ClientMoodCheckIn({ token }: Props) {
                   : "rgba(16,185,129,0.06)",
           border: `0.5px solid ${
             def.tone === "teal"
-              ? "rgba(29,158,117,0.25)"
+              ? "rgba(16,185,129,0.25)"
               : def.tone === "purple"
                 ? "rgba(127,119,221,0.25)"
                 : def.tone === "coral"
@@ -160,7 +160,7 @@ export function ClientMoodCheckIn({ token }: Props) {
           }`,
           borderRadius: 14,
           marginBottom: 14,
-          fontFamily: "DM Sans, sans-serif",
+          fontFamily: "Inter, system-ui, sans-serif",
         }}
       >
         <span style={{ fontSize: 26, lineHeight: 1 }}>{def.emoji}</span>
@@ -169,12 +169,12 @@ export function ClientMoodCheckIn({ token }: Props) {
             style={{
               fontSize: 12,
               color: "#6B6B62",
-              fontFamily: "DM Sans, sans-serif",
+              fontFamily: "Inter, system-ui, sans-serif",
             }}
           >
             Aujourd&apos;hui · <strong>{def.label}</strong>
           </div>
-          <div style={{ fontSize: 12, color: "#374151", marginTop: 2, lineHeight: 1.4 }}>
+          <div style={{ fontSize: 12, color: "#0F172A", marginTop: 2, lineHeight: 1.4 }}>
             {def.message}
           </div>
         </div>
@@ -191,7 +191,7 @@ export function ClientMoodCheckIn({ token }: Props) {
                 borderRadius: 8,
                 fontSize: 11,
                 fontWeight: 700,
-                fontFamily: "Syne, serif",
+                fontFamily: "Sora, system-ui, sans-serif",
                 cursor: "pointer",
               }}
             >
@@ -209,7 +209,7 @@ export function ClientMoodCheckIn({ token }: Props) {
               borderRadius: 8,
               fontSize: 10,
               cursor: "pointer",
-              fontFamily: "DM Sans, sans-serif",
+              fontFamily: "Inter, system-ui, sans-serif",
             }}
           >
             Changer
@@ -229,7 +229,7 @@ export function ClientMoodCheckIn({ token }: Props) {
         borderRadius: 14,
         padding: "14px 14px",
         marginBottom: 14,
-        fontFamily: "DM Sans, sans-serif",
+        fontFamily: "Inter, system-ui, sans-serif",
       }}
     >
       <div
@@ -285,8 +285,8 @@ export function ClientMoodCheckIn({ token }: Props) {
               style={{
                 fontSize: 9,
                 fontWeight: 600,
-                color: "#374151",
-                fontFamily: "DM Sans, sans-serif",
+                color: "#0F172A",
+                fontFamily: "Inter, system-ui, sans-serif",
                 textAlign: "center",
               }}
             >

@@ -467,10 +467,10 @@ export function ClientAppPage() {
   }
 
   if (loading)
-    return <div style={{ minHeight: '100vh', background: '#FAFAFC', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'DM Sans, sans-serif', color: '#94A3B8' }}>Chargement...</div>
+    return <div style={{ minHeight: '100vh', background: '#FAFAFC', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Inter, system-ui, sans-serif', color: '#94A3B8' }}>Chargement...</div>
 
   if (!data)
-    return <div style={{ minHeight: '100vh', background: '#FAFAFC', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'DM Sans, sans-serif', color: '#EF4444' }}>Lien introuvable ou expiré.</div>
+    return <div style={{ minHeight: '100vh', background: '#FAFAFC', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Inter, system-ui, sans-serif', color: '#EF4444' }}>Lien introuvable ou expiré.</div>
 
   // Chantier C — Onboarding client PWA (2026-11-04) : tour 4 slides au
   // 1er login. onboardingDone === false strictement (null = pas encore
@@ -502,7 +502,7 @@ export function ClientAppPage() {
   // ClientAppKeyMetricsGrid, qui calcule deltas et formats côté composant.
 
   return (
-    <div style={{ minHeight: '100vh', background: '#FFFFFF', fontFamily: 'DM Sans, sans-serif', color: '#0F172A', paddingBottom: 80, position: 'relative', overflow: 'hidden' }}>
+    <div style={{ minHeight: '100vh', background: '#FFFFFF', fontFamily: 'Inter, system-ui, sans-serif', color: '#0F172A', paddingBottom: 80, position: 'relative', overflow: 'hidden' }}>
       {/* Chantier Premium App client (2026-04-24) : mesh gradient subtil
           en arrière-plan pour cohérence avec Welcome/Login. Plus discret
           que les pages publiques (app quotidienne, pas d'effet "wouah"
@@ -529,7 +529,7 @@ export function ClientAppPage() {
           width: 380px;
           height: 380px;
           border-radius: 50%;
-          background: radial-gradient(circle, rgba(29,158,117,0.12) 0%, transparent 70%);
+          background: radial-gradient(circle, rgba(16,185,129,0.12) 0%, transparent 70%);
           filter: blur(70px);
           pointer-events: none;
           z-index: 0;
@@ -565,7 +565,7 @@ export function ClientAppPage() {
             borderRadius: 14,
             background: 'linear-gradient(135deg, #10B981 0%, #06B6D4 50%, #8B5CF6 100%)',
             color: '#fff',
-            fontFamily: 'Syne, sans-serif',
+            fontFamily: 'Sora, system-ui, sans-serif',
             fontWeight: 700,
             fontSize: 15,
             textAlign: 'center',
@@ -670,7 +670,7 @@ export function ClientAppPage() {
                 background: 'rgba(16,185,129,0.12)',
                 color: '#10B981',
                 border: '1px solid rgba(16,185,129,0.2)',
-                fontFamily: 'Syne, sans-serif',
+                fontFamily: 'Sora, system-ui, sans-serif',
                 fontWeight: 700,
                 fontSize: 14,
                 cursor: 'pointer',
@@ -686,17 +686,17 @@ export function ClientAppPage() {
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'rgba(16,185,129,0.15)', border: '2px solid rgba(16,185,129,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 16, color: '#10B981', flexShrink: 0 }}>
+          <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'rgba(16,185,129,0.15)', border: '2px solid rgba(16,185,129,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Sora, system-ui, sans-serif', fontWeight: 800, fontSize: 16, color: '#10B981', flexShrink: 0 }}>
             {data.client_first_name?.[0]}{data.client_last_name?.[0]}
           </div>
           <div>
             {/* Hotfix client-login (2026-04-24) : salutation dynamique selon
                 l'heure de l'app client. 5-12h Bonjour / 12-18h Bon après-midi /
                 18-23h Bonsoir / sinon Bonne nuit. */}
-            <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 500, fontSize: 22, color: '#0F172A' }}>
+            <div style={{ fontFamily: 'Sora, system-ui, sans-serif', fontWeight: 500, fontSize: 22, color: '#0F172A' }}>
               {clientGreeting(new Date())} {data.client_first_name} !
             </div>
-            <div style={{ fontSize: 11, color: '#6B7280', marginTop: 2 }}>
+            <div style={{ fontSize: 11, color: '#64748B', marginTop: 2 }}>
               {data.program_title ?? 'Programme en cours'} · {data.assessments_count ?? 1} bilan{(data.assessments_count ?? 1) > 1 ? 's' : ''}
             </div>
           </div>
@@ -779,12 +779,12 @@ export function ClientAppPage() {
                 style={{
                   padding: '10px 14px',
                   background: 'color-mix(in srgb, #10B981 8%, var(--ls-surface))',
-                  border: '0.5px solid rgba(29,158,117,0.25)',
+                  border: '0.5px solid rgba(16,185,129,0.25)',
                   borderLeft: '3px solid #10B981',
                   borderRadius: 12,
                   fontSize: 12,
-                  color: '#0F6E56',
-                  fontFamily: 'DM Sans, sans-serif',
+                  color: '#059669',
+                  fontFamily: 'Inter, system-ui, sans-serif',
                   display: 'flex',
                   alignItems: 'center',
                   gap: 8,
@@ -800,7 +800,7 @@ export function ClientAppPage() {
                   target="_blank"
                   rel="noopener noreferrer"
                   style={{
-                    color: '#0F6E56',
+                    color: '#059669',
                     textDecoration: 'none',
                     fontWeight: 700,
                     fontSize: 11.5,
@@ -904,26 +904,26 @@ export function ClientAppPage() {
         {activeTab === 'refer' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             <div style={{ background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.15)', borderRadius: 14, padding: 16 }}>
-              <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 16, color: '#0F172A', marginBottom: 6 }}>
+              <div style={{ fontFamily: 'Sora, system-ui, sans-serif', fontWeight: 800, fontSize: 16, color: '#0F172A', marginBottom: 6 }}>
                 Recommander un ami
               </div>
-              <div style={{ fontSize: 12, color: '#6B7280', lineHeight: 1.7, marginBottom: 14 }}>
+              <div style={{ fontSize: 12, color: '#64748B', lineHeight: 1.7, marginBottom: 14 }}>
                 Tu connais quelqu'un qui aimerait améliorer sa forme ? Envoie ses coordonnées à {data.coach_name} directement.
               </div>
 
               {referSent ? (
                 <div style={{ padding: 16, background: 'rgba(13,148,136,0.08)', borderRadius: 12, textAlign: 'center' }}>
-                  <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 15, color: '#06B6D4', marginBottom: 4 }}>Merci !</div>
-                  <div style={{ fontSize: 12, color: '#6B7280' }}>{data.coach_name} a reçu les coordonnées et va contacter cette personne.</div>
+                  <div style={{ fontFamily: 'Sora, system-ui, sans-serif', fontWeight: 700, fontSize: 15, color: '#06B6D4', marginBottom: 4 }}>Merci !</div>
+                  <div style={{ fontSize: 12, color: '#64748B' }}>{data.coach_name} a reçu les coordonnées et va contacter cette personne.</div>
                 </div>
               ) : (
                 <>
                   <input value={referName} onChange={(e) => setReferName(e.target.value)} placeholder="Prénom de la personne"
-                    style={{ width: '100%', padding: '12px 14px', border: '1px solid rgba(16,185,129,0.2)', borderRadius: 10, fontFamily: 'DM Sans, sans-serif', fontSize: 16, background: '#fff', color: '#0F172A', outline: 'none', marginBottom: 8 }} />
+                    style={{ width: '100%', padding: '12px 14px', border: '1px solid rgba(16,185,129,0.2)', borderRadius: 10, fontFamily: 'Inter, system-ui, sans-serif', fontSize: 16, background: '#fff', color: '#0F172A', outline: 'none', marginBottom: 8 }} />
                   <input value={referContact} onChange={(e) => setReferContact(e.target.value)} placeholder="Son numéro ou email"
-                    style={{ width: '100%', padding: '12px 14px', border: '1px solid rgba(16,185,129,0.2)', borderRadius: 10, fontFamily: 'DM Sans, sans-serif', fontSize: 16, background: '#fff', color: '#0F172A', outline: 'none', marginBottom: 12 }} />
+                    style={{ width: '100%', padding: '12px 14px', border: '1px solid rgba(16,185,129,0.2)', borderRadius: 10, fontFamily: 'Inter, system-ui, sans-serif', fontSize: 16, background: '#fff', color: '#0F172A', outline: 'none', marginBottom: 12 }} />
                   <button onClick={() => void sendReferral()} disabled={!referName || !referContact}
-                    style={{ width: '100%', padding: 14, borderRadius: 10, border: 'none', background: referName && referContact ? '#10B981' : 'rgba(16,185,129,0.3)', color: '#fff', fontFamily: 'Syne, sans-serif', fontSize: 14, fontWeight: 700, cursor: referName && referContact ? 'pointer' : 'not-allowed', boxShadow: referName && referContact ? '0 2px 8px rgba(16,185,129,0.25)' : 'none' }}>
+                    style={{ width: '100%', padding: 14, borderRadius: 10, border: 'none', background: referName && referContact ? '#10B981' : 'rgba(16,185,129,0.3)', color: '#fff', fontFamily: 'Sora, system-ui, sans-serif', fontSize: 14, fontWeight: 700, cursor: referName && referContact ? 'pointer' : 'not-allowed', boxShadow: referName && referContact ? '0 2px 8px rgba(16,185,129,0.25)' : 'none' }}>
                     Envoyer à {data.coach_name}
                   </button>
                 </>
@@ -948,7 +948,7 @@ export function ClientAppPage() {
                 </svg>
               </div>
               <div>
-                <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 14, color: '#fff' }}>Installer l'app</div>
+                <div style={{ fontFamily: 'Sora, system-ui, sans-serif', fontWeight: 700, fontSize: 14, color: '#fff' }}>Installer l'app</div>
                 <div style={{ fontSize: 11, color: '#94A3B8' }}>La Base 360</div>
               </div>
             </div>
@@ -981,7 +981,7 @@ export function ClientAppPage() {
               </div>
               <button
                 onClick={() => void triggerNativeInstall()}
-                style={{ width: '100%', padding: 14, borderRadius: 10, border: 'none', background: '#10B981', color: '#fff', fontFamily: 'Syne, sans-serif', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}
+                style={{ width: '100%', padding: 14, borderRadius: 10, border: 'none', background: '#10B981', color: '#fff', fontFamily: 'Sora, system-ui, sans-serif', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}
               >
                 Installer l'app
               </button>
@@ -1029,7 +1029,7 @@ export function ClientAppPage() {
                   setShowInstallPrompt(false)
                   try { window.localStorage.setItem('lor-install-dismissed', '1') } catch { /* ignore */ }
                 }}
-                style={{ width: '100%', marginTop: 14, padding: 12, borderRadius: 10, border: 'none', background: '#10B981', color: '#fff', fontFamily: 'Syne, sans-serif', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
+                style={{ width: '100%', marginTop: 14, padding: 12, borderRadius: 10, border: 'none', background: '#10B981', color: '#fff', fontFamily: 'Sora, system-ui, sans-serif', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
               >
                 J'ai compris !
               </button>
@@ -1068,7 +1068,7 @@ export function ClientAppPage() {
                   setShowInstallPrompt(false)
                   try { window.localStorage.setItem('lor-install-dismissed', '1') } catch { /* ignore */ }
                 }}
-                style={{ width: '100%', marginTop: 14, padding: 12, borderRadius: 10, border: 'none', background: '#10B981', color: '#fff', fontFamily: 'Syne, sans-serif', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
+                style={{ width: '100%', marginTop: 14, padding: 12, borderRadius: 10, border: 'none', background: '#10B981', color: '#fff', fontFamily: 'Sora, system-ui, sans-serif', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
               >
                 J'ai compris !
               </button>

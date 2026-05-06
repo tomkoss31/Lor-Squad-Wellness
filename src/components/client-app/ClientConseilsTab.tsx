@@ -130,7 +130,7 @@ function PlateSvg({ sectors }: { sectors: PlateSector[] }) {
             textAnchor="middle"
             dominantBaseline="central"
             fill="#fff"
-            fontFamily="Syne, sans-serif"
+            fontFamily="Sora, system-ui, sans-serif"
             fontWeight={800}
             fontSize={14}
           >
@@ -245,7 +245,7 @@ export function ClientConseilsTab({ liveData, clientAppAccount }: Props) {
                 <span className="conseils-plate-dot" style={{ background: s.color }} />
                 <div>
                   <strong>{s.label} · {s.pct}%</strong>
-                  <ul style={{ margin: "4px 0 0", padding: 0, listStyle: "none", color: "#6B7280", fontSize: 12, lineHeight: 1.5 }}>
+                  <ul style={{ margin: "4px 0 0", padding: 0, listStyle: "none", color: "#64748B", fontSize: 12, lineHeight: 1.5 }}>
                     {s.items.map((it) => (
                       <li key={it}>• {it}</li>
                     ))}

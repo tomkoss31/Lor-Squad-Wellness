@@ -28,7 +28,7 @@ export function ClientAppWeightChart({ assessments }: Props) {
         <div
           style={{
             fontSize: "13px",
-            color: "#444",
+            color: "#475569",
             fontWeight: 500,
             marginBottom: "12px",
           }}
@@ -93,7 +93,7 @@ export function ClientAppWeightChart({ assessments }: Props) {
           marginBottom: "14px",
         }}
       >
-        <div style={{ fontSize: "13px", color: "#444", fontWeight: 500 }}>
+        <div style={{ fontSize: "13px", color: "#475569", fontWeight: 500 }}>
           📈 Évolution du poids
         </div>
         <div style={{ fontSize: "10px", color: "#64748B" }}>
@@ -191,7 +191,7 @@ export function ClientAppWeightChart({ assessments }: Props) {
                   y1={cy}
                   x2={cx}
                   y2={top + chartH}
-                  stroke="rgba(29,158,117,0.3)"
+                  stroke="rgba(16,185,129,0.3)"
                   strokeWidth="0.5"
                 />
               ) : null}
@@ -221,7 +221,7 @@ export function ClientAppWeightChart({ assessments }: Props) {
                 y={cy - 8}
                 textAnchor="middle"
                 fontSize={isFirst || isLast ? "10" : "9"}
-                fill={isFirst ? "#10B981" : isLast ? "#10B981" : "#444"}
+                fill={isFirst ? "#10B981" : isLast ? "#10B981" : "#475569"}
                 fontWeight={isFirst || isLast ? 500 : 400}
                 fontFamily="var(--font-sans)"
               >

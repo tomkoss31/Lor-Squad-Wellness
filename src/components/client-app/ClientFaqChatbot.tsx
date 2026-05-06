@@ -208,7 +208,7 @@ export function ClientFaqChatbot({ token, coachFirstName }: Props) {
               borderTopRightRadius: 20,
               padding: 18,
               boxShadow: "0 -10px 40px rgba(0,0,0,0.30)",
-              fontFamily: "DM Sans, sans-serif",
+              fontFamily: "Inter, system-ui, sans-serif",
               animation:
                 "ls-faq-modal-enter 280ms cubic-bezier(0.2, 0.8, 0.2, 1)",
             }}
@@ -242,7 +242,7 @@ export function ClientFaqChatbot({ token, coachFirstName }: Props) {
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div
                   style={{
-                    fontFamily: "Syne, serif",
+                    fontFamily: "Sora, system-ui, sans-serif",
                     fontWeight: 700,
                     fontSize: 16,
                     color: "#0F172A",
@@ -302,7 +302,7 @@ export function ClientFaqChatbot({ token, coachFirstName }: Props) {
                         border: "none",
                         cursor: "pointer",
                         textAlign: "left",
-                        fontFamily: "DM Sans, sans-serif",
+                        fontFamily: "Inter, system-ui, sans-serif",
                       }}
                     >
                       <span style={{ fontSize: 18, lineHeight: 1, flexShrink: 0 }}>
@@ -336,7 +336,7 @@ export function ClientFaqChatbot({ token, coachFirstName }: Props) {
                         style={{
                           padding: "0 14px 12px",
                           fontSize: 12,
-                          color: "#374151",
+                          color: "#0F172A",
                           lineHeight: 1.55,
                         }}
                       >
@@ -355,7 +355,7 @@ export function ClientFaqChatbot({ token, coachFirstName }: Props) {
                               borderRadius: 8,
                               fontSize: 11,
                               fontWeight: 700,
-                              fontFamily: "Syne, serif",
+                              fontFamily: "Sora, system-ui, sans-serif",
                               cursor: sendingId === faq.id ? "wait" : "pointer",
                             }}
                           >
@@ -372,7 +372,7 @@ export function ClientFaqChatbot({ token, coachFirstName }: Props) {
                               borderRadius: 8,
                               fontSize: 11,
                               cursor: "pointer",
-                              fontFamily: "DM Sans, sans-serif",
+                              fontFamily: "Inter, system-ui, sans-serif",
                             }}
                           >
                             Refermer
@@ -393,12 +393,12 @@ export function ClientFaqChatbot({ token, coachFirstName }: Props) {
                 width: "100%",
                 padding: "12px 16px",
                 background: "white",
-                color: "#5C4A0F",
+                color: "#0F172A",
                 border: "0.5px solid rgba(16,185,129,0.50)",
                 borderRadius: 12,
                 fontSize: 13,
                 fontWeight: 700,
-                fontFamily: "Syne, serif",
+                fontFamily: "Sora, system-ui, sans-serif",
                 cursor: "pointer",
                 display: "flex",
                 alignItems: "center",

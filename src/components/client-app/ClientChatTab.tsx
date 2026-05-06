@@ -144,7 +144,7 @@ export function ClientChatTab({ token, clientFirstName, coachFirstName }: Client
       >
         <div
           style={{
-            fontFamily: "Syne, sans-serif",
+            fontFamily: "Sora, system-ui, sans-serif",
             fontSize: 14,
             fontWeight: 700,
             color: "#0F172A",
@@ -152,7 +152,7 @@ export function ClientChatTab({ token, clientFirstName, coachFirstName }: Client
         >
           Conversation avec {coachFirstName}
         </div>
-        <div style={{ fontSize: 11, color: "#6B7280", marginTop: 2 }}>
+        <div style={{ fontSize: 11, color: "#64748B", marginTop: 2 }}>
           Réponse généralement sous 24h.
         </div>
       </div>
@@ -186,7 +186,7 @@ export function ClientChatTab({ token, clientFirstName, coachFirstName }: Client
             <p style={{ fontSize: 14, color: "#0F172A", fontWeight: 600, marginBottom: 4 }}>
               Écris ton premier message !
             </p>
-            <p style={{ fontSize: 12, color: "#6B7280" }}>
+            <p style={{ fontSize: 12, color: "#64748B" }}>
               {coachFirstName} te répondra dès qu'elle le pourra.
             </p>
           </div>
@@ -289,7 +289,7 @@ export function ClientChatTab({ token, clientFirstName, coachFirstName }: Client
             border: "1px solid rgba(15,23,42,0.10)",
             background: "#FAFAFA",
             fontSize: 14,
-            fontFamily: "DM Sans, sans-serif",
+            fontFamily: "Inter, system-ui, sans-serif",
             color: "#0F172A",
             outline: "none",
             resize: "none",
@@ -307,7 +307,7 @@ export function ClientChatTab({ token, clientFirstName, coachFirstName }: Client
             background: sending || !input.trim() ? "#D5B880" : "#10B981",
             color: "#FFFFFF",
             border: "none",
-            fontFamily: "Syne, sans-serif",
+            fontFamily: "Sora, system-ui, sans-serif",
             fontWeight: 700,
             fontSize: 13,
             cursor: sending || !input.trim() ? "default" : "pointer",

@@ -203,7 +203,7 @@ export function ClientProductsTab({
             <span aria-hidden="true" style={{ fontSize: 20 }}>✨</span>
             <h2
               style={{
-                fontFamily: "Syne, sans-serif",
+                fontFamily: "Sora, system-ui, sans-serif",
                 fontSize: 18,
                 fontWeight: 800,
                 margin: 0,
@@ -214,9 +214,9 @@ export function ClientProductsTab({
               Recommandé pour toi
             </h2>
           </div>
-          <p style={{ fontSize: 12, color: "#6B7280", margin: "0 0 16px", lineHeight: 1.55 }}>
+          <p style={{ fontSize: 12, color: "#64748B", margin: "0 0 16px", lineHeight: 1.55 }}>
             Basé sur ton body scan du{" "}
-            <strong style={{ color: "#BA7517" }}>{formatDate(latestScanDate)}</strong>
+            <strong style={{ color: "#06B6D4" }}>{formatDate(latestScanDate)}</strong>
           </p>
 
           <div style={{ display: "grid", gap: 10 }}>
@@ -239,7 +239,7 @@ export function ClientProductsTab({
           <span aria-hidden="true" style={{ fontSize: 16 }}>✓</span>
           <h2
             style={{
-              fontFamily: "Syne, sans-serif",
+              fontFamily: "Sora, system-ui, sans-serif",
               fontSize: 16,
               fontWeight: 700,
               margin: 0,
@@ -277,18 +277,18 @@ export function ClientProductsTab({
                     flexShrink: 0,
                   }}
                 >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0F6E56" strokeWidth="2.5">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#059669" strokeWidth="2.5">
                     <polyline points="20 6 9 17 4 12" />
                   </svg>
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 13, fontWeight: 700, color: "#0F172A" }}>{p.product_name}</div>
-                  <div style={{ fontSize: 11, color: "#6B7280", marginTop: 2 }}>
+                  <div style={{ fontSize: 11, color: "#64748B", marginTop: 2 }}>
                     Réf. {p.product_id}
                     {p.quantite_label ? ` · ${p.quantite_label}` : ""}
                   </div>
                   {p.note_metier ? (
-                    <div style={{ fontSize: 11, color: "#0F6E56", marginTop: 4, fontStyle: "italic" }}>
+                    <div style={{ fontSize: 11, color: "#059669", marginTop: 4, fontStyle: "italic" }}>
                       {p.note_metier}
                     </div>
                   ) : null}
@@ -309,7 +309,7 @@ export function ClientProductsTab({
             }}
           >
             <div style={{ fontSize: 24, marginBottom: 8, opacity: 0.7 }}>📋</div>
-            <div style={{ fontSize: 13, color: "#374151", lineHeight: 1.55, maxWidth: 320, margin: "0 auto" }}>
+            <div style={{ fontSize: 13, color: "#0F172A", lineHeight: 1.55, maxWidth: 320, margin: "0 auto" }}>
               Ton programme sera défini avec <strong>{coachFirstName}</strong> lors de ton prochain RDV.
             </div>
           </div>
@@ -323,7 +323,7 @@ export function ClientProductsTab({
             <span aria-hidden="true" style={{ fontSize: 16 }}>💡</span>
             <h2
               style={{
-                fontFamily: "Syne, sans-serif",
+                fontFamily: "Sora, system-ui, sans-serif",
                 fontSize: 16,
                 fontWeight: 700,
                 margin: 0,
@@ -333,7 +333,7 @@ export function ClientProductsTab({
               Recommandés pour ta progression
             </h2>
           </div>
-          <p style={{ fontSize: 12, color: "#6B7280", margin: "0 0 12px", lineHeight: 1.5 }}>
+          <p style={{ fontSize: 12, color: "#64748B", margin: "0 0 12px", lineHeight: 1.5 }}>
             Produits proposés lors de ton dernier bilan que tu n&apos;as pas encore intégrés
           </p>
           <div style={{ display: "grid", gap: 10 }}>
@@ -361,7 +361,7 @@ export function ClientProductsTab({
                     <div style={{ display: "flex", alignItems: "flex-start", gap: 8, justifyContent: "space-between" }}>
                       <div
                         style={{
-                          fontFamily: "Syne, sans-serif",
+                          fontFamily: "Sora, system-ui, sans-serif",
                           fontWeight: 700,
                           fontSize: 15,
                           color: "#0F172A",
@@ -374,7 +374,7 @@ export function ClientProductsTab({
                     </div>
                     <div
                       style={{
-                        fontFamily: "DM Sans, sans-serif",
+                        fontFamily: "Inter, system-ui, sans-serif",
                         fontSize: 12,
                         color: "#94A3B8",
                         marginTop: 2,
@@ -385,9 +385,9 @@ export function ClientProductsTab({
                     {r.reason ? (
                       <div
                         style={{
-                          fontFamily: "DM Sans, sans-serif",
+                          fontFamily: "Inter, system-ui, sans-serif",
                           fontSize: 13,
-                          color: "#0F6E56",
+                          color: "#059669",
                           marginTop: 6,
                           lineHeight: 1.5,
                         }}
@@ -406,13 +406,13 @@ export function ClientProductsTab({
                           gap: 6,
                           marginTop: 10,
                           padding: "9px 14px",
-                          background: "linear-gradient(135deg, #EF9F27, #BA7517)",
+                          background: "linear-gradient(135deg, #10B981, #06B6D4)",
                           color: "#FFFFFF",
                           borderRadius: 10,
                           textDecoration: "none",
                           fontSize: 12,
                           fontWeight: 700,
-                          fontFamily: "DM Sans, sans-serif",
+                          fontFamily: "Inter, system-ui, sans-serif",
                           minHeight: 44,
                           boxSizing: "border-box",
                         }}
@@ -445,7 +445,7 @@ export function ClientProductsTab({
             fontSize: 14,
             fontWeight: 700,
             color: "#0F172A",
-            fontFamily: "Syne, sans-serif",
+            fontFamily: "Sora, system-ui, sans-serif",
             cursor: "pointer",
           }}
         >
@@ -479,7 +479,7 @@ export function ClientProductsTab({
                 borderRadius: 10,
                 border: "1px solid rgba(15,23,42,0.10)",
                 fontSize: 13,
-                fontFamily: "DM Sans, sans-serif",
+                fontFamily: "Inter, system-ui, sans-serif",
                 marginBottom: 10,
                 background: "#fff",
               }}
@@ -505,8 +505,8 @@ export function ClientProductsTab({
                       borderRadius: isOpen ? "10px 10px 0 0" : 10,
                       fontSize: 13,
                       fontWeight: 600,
-                      color: "#374151",
-                      fontFamily: "Syne, sans-serif",
+                      color: "#0F172A",
+                      fontFamily: "Sora, system-ui, sans-serif",
                       cursor: "pointer",
                     }}
                   >
@@ -562,7 +562,7 @@ export function ClientProductsTab({
           textAlign: "center",
         }}
       >
-        <div style={{ fontSize: 13, color: "#374151", marginBottom: 10, lineHeight: 1.5 }}>
+        <div style={{ fontSize: 13, color: "#0F172A", marginBottom: 10, lineHeight: 1.5 }}>
           Questions ? Contacte <strong>{coachFirstName}</strong> directement
         </div>
         {whatsappUrl ? (
@@ -581,7 +581,7 @@ export function ClientProductsTab({
               textDecoration: "none",
               fontSize: 13,
               fontWeight: 700,
-              fontFamily: "Syne, sans-serif",
+              fontFamily: "Sora, system-ui, sans-serif",
               boxShadow: "0 4px 12px rgba(37,211,102,0.3)",
             }}
           >
@@ -589,7 +589,7 @@ export function ClientProductsTab({
             Contacter sur WhatsApp
           </a>
         ) : (
-          <div style={{ fontSize: 12, color: "#6B7280", fontStyle: "italic" }}>
+          <div style={{ fontSize: 12, color: "#64748B", fontStyle: "italic" }}>
             Utilise l&apos;onglet Messages pour écrire à {coachFirstName}.
           </div>
         )}
@@ -671,7 +671,7 @@ function RecommendedCard({
           <div
             style={{
               fontSize: 12,
-              color: "#6B7280",
+              color: "#64748B",
               fontStyle: "italic",
               marginTop: 3,
               lineHeight: 1.5,
@@ -705,7 +705,7 @@ function RecommendedCard({
               border: "none",
               fontSize: 13,
               fontWeight: 700,
-              fontFamily: "Syne, sans-serif",
+              fontFamily: "Sora, system-ui, sans-serif",
               cursor: "pointer",
               display: "flex",
               alignItems: "center",
@@ -776,7 +776,7 @@ function CatalogCard({
       </div>
       {open ? (
         <div style={{ marginTop: 10, paddingTop: 10, borderTop: "1px solid rgba(15,23,42,0.06)" }}>
-          <p style={{ fontSize: 11, color: "#6B7280", lineHeight: 1.6, margin: "0 0 10px" }}>
+          <p style={{ fontSize: 11, color: "#64748B", lineHeight: 1.6, margin: "0 0 10px" }}>
             {description}
           </p>
           <button
@@ -789,12 +789,12 @@ function CatalogCard({
               width: "100%",
               padding: "9px 12px",
               borderRadius: 10,
-              background: "#374151",
+              background: "#0F172A",
               color: "#fff",
               border: "none",
               fontSize: 12,
               fontWeight: 600,
-              fontFamily: "DM Sans, sans-serif",
+              fontFamily: "Inter, system-ui, sans-serif",
               cursor: "pointer",
             }}
           >

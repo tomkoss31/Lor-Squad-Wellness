@@ -69,7 +69,7 @@ export function ClientXpBanner({ token }: Props) {
         boxShadow: "0 1px 3px rgba(15,23,42,0.04)",
         position: "relative",
         overflow: "hidden",
-        fontFamily: "DM Sans, sans-serif",
+        fontFamily: "Inter, system-ui, sans-serif",
       }}
     >
       {/* Glow gold subtle en haut a droite */}
@@ -131,7 +131,7 @@ export function ClientXpBanner({ token }: Props) {
           </div>
           <div
             style={{
-              fontFamily: "Syne, serif",
+              fontFamily: "Sora, system-ui, sans-serif",
               fontWeight: 700,
               fontSize: 18,
               color: "#0F172A",
@@ -151,7 +151,7 @@ export function ClientXpBanner({ token }: Props) {
             borderRadius: 12,
             fontSize: 15,
             fontWeight: 800,
-            fontFamily: "Syne, serif",
+            fontFamily: "Sora, system-ui, sans-serif",
             boxShadow: "0 4px 12px rgba(16,185,129,0.30)",
             flexShrink: 0,
           }}
@@ -169,7 +169,7 @@ export function ClientXpBanner({ token }: Props) {
             fontSize: 11,
             color: "#0F172A",
             marginBottom: 5,
-            fontFamily: "DM Sans, sans-serif",
+            fontFamily: "Inter, system-ui, sans-serif",
           }}
         >
           <span style={{ fontWeight: 600 }}>
@@ -217,7 +217,7 @@ export function ClientXpBanner({ token }: Props) {
           display: "inline-flex",
           alignItems: "center",
           gap: 4,
-          fontFamily: "DM Sans, sans-serif",
+          fontFamily: "Inter, system-ui, sans-serif",
           fontWeight: 600,
           marginTop: 4,
         }}
@@ -272,7 +272,7 @@ export function ClientXpBanner({ token }: Props) {
                   <span style={{ fontSize: 14 }}>{lv.badge}</span>
                   <span
                     style={{
-                      fontFamily: "Syne, serif",
+                      fontFamily: "Sora, system-ui, sans-serif",
                       fontWeight: 700,
                       fontSize: 11,
                       color: isCurrent ? "#0F172A" : "#64748B",
@@ -289,7 +289,7 @@ export function ClientXpBanner({ token }: Props) {
                     style={{
                       fontSize: 10,
                       color: "#888",
-                      fontFamily: "DM Sans, sans-serif",
+                      fontFamily: "Inter, system-ui, sans-serif",
                       fontWeight: 600,
                     }}
                   >
@@ -341,7 +341,7 @@ export function ClientXpBanner({ token }: Props) {
                               fontSize: 11,
                               fontWeight: 600,
                               color: "#374151",
-                              fontFamily: "DM Sans, sans-serif",
+                              fontFamily: "Inter, system-ui, sans-serif",
                             }}
                           >
                             {a.label}
@@ -357,7 +357,7 @@ export function ClientXpBanner({ token }: Props) {
                         </div>
                         <span
                           style={{
-                            fontFamily: "Syne, serif",
+                            fontFamily: "Sora, system-ui, sans-serif",
                             fontSize: 12,
                             fontWeight: 700,
                             color: "#10B981",
