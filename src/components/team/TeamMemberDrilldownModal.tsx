@@ -31,7 +31,7 @@ import {
   COMMISSION_PCT_BY_TIER,
   PV_TO_EUR_RATIO,
   ROYALTY_OVERRIDE_PCT,
-  computeOrganizationPv,
+  computeQualifyingPersonalPv,
   computeOverrideEur,
   currentMonthIso,
   emptyBreakdown,
@@ -145,12 +145,15 @@ export function TeamMemberDrilldownModal({ member, onClose }: TeamMemberDrilldow
     }
     return 0;
   }, [existingBreakdown, fullUser, monthIso]);
-  // PV organisation = perso + downline (recursif) — utilise pour le target
-  // Supervisor 4000 PV (Mandy a 42% : Victoria fait monter sa jauge)
+  // PV qualifiant = perso + downline NON-Supervisor (recursif).
+  // Tant que personne dans la chaine downstream n'est Supervisor, leurs PV
+  // comptent comme PV perso du sponsor (regle Herbalife : qualif Supervisor
+  // 4000 PV). Une branche s'arrete des qu'on rencontre un Supervisor 50%+
+  // (sa branche bascule en Royalty pour les paliers superieurs).
   const { breakdowns: allBreakdowns } = usePvBreakdowns(monthIso);
-  const organizationPvForProgress = useMemo(() => {
+  const qualifyingPersonalPv = useMemo(() => {
     if (!fullUser) return personalPvForProgress;
-    return computeOrganizationPv(
+    return computeQualifyingPersonalPv(
       fullUser.id,
       users.map((u) => ({
         id: u.id,
@@ -174,8 +177,8 @@ export function TeamMemberDrilldownModal({ member, onClose }: TeamMemberDrilldow
     );
   }, [fullUser, users, allBreakdowns, monthIso, personalPvForProgress]);
   const progression = useMemo(
-    () => rankProgression(fullUser?.currentRank, personalPvForProgress, organizationPvForProgress),
-    [fullUser?.currentRank, personalPvForProgress, organizationPvForProgress],
+    () => rankProgression(fullUser?.currentRank, personalPvForProgress, qualifyingPersonalPv),
+    [fullUser?.currentRank, personalPvForProgress, qualifyingPersonalPv],
   );
 
   if (!member) return null;
@@ -489,14 +492,16 @@ export function TeamMemberDrilldownModal({ member, onClose }: TeamMemberDrilldow
                 borderRadius: 5,
                 fontSize: 9,
                 fontWeight: 700,
-                background: progression.pvSource === "organization"
-                  ? "color-mix(in srgb, var(--ls-purple) 14%, transparent)"
+                background: progression.pvSource === "personal_extended"
+                  ? "color-mix(in srgb, var(--ls-teal) 14%, transparent)"
                   : "color-mix(in srgb, var(--ls-teal) 14%, transparent)",
-                color: progression.pvSource === "organization" ? "var(--ls-purple)" : "var(--ls-teal)",
+                color: "var(--ls-teal)",
                 textTransform: "uppercase",
                 letterSpacing: 0.4,
               }}>
-                {progression.pvSource === "organization" ? "PV org · perso + downline" : "PV perso"}
+                {progression.pvSource === "personal_extended"
+                  ? "PV perso · ventes directes + downline non-Sup"
+                  : "PV perso · ventes directes"}
               </span>
             </div>
             <div
