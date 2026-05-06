@@ -1,23 +1,40 @@
 // =============================================================================
-// RentabilityDetailModal — popup détail rentabilité V2 (2026-05-05)
+// RentabilityDetailModal — popup détail rentabilité V3 (2026-11-07)
 //
-// Refonte après feedback Thomas :
-//   - Top CLIENTS au lieu de produits (plus parlant)
-//   - Section split Public vs VIP (avec calcul correct par tier)
-//   - Badge VIP tier coloré sur les clients VIP du top
+// Refonte V3 : les 3 cards (Publics / VIP / Distributeurs) deviennent des
+// onglets cliquables qui filtrent la section "arborescence" en bas :
+//   - Tous (défaut)   → top clients tels quels
+//   - Clients publics → ne garde que les non-VIP
+//   - Clients VIP     → ne garde que les VIP
+//   - Distributeurs   → affiche le downline du user (sponsor=this) avec
+//                       leur rang + PV mensuel (override Bizworks si saisi)
+//                       + estimation override €. Visible uniquement si le
+//                       user est admin/référent et a un downline.
+//
+// V2 (2026-05-05) : Top CLIENTS au lieu de produits + Split Public vs VIP.
 // =============================================================================
 
+import { useMemo, useState } from "react";
+import { useAppContext } from "../../context/AppContext";
 import {
   rentabilityZone,
   type RentabilityData,
   type RentabilityTopClient,
 } from "../../hooks/useUserRentability";
 import { RentabilityGauge } from "./RentabilityGauge";
+import {
+  RANK_LABELS,
+  RANK_MARGINS,
+  type HerbalifeRank,
+  type User,
+} from "../../types/domain";
 
 interface RentabilityDetailModalProps {
   data: RentabilityData;
   onClose: () => void;
 }
+
+type FilterTab = "all" | "public" | "vip" | "distri";
 
 const ZONE_COLOR: Record<string, string> = {
   red: "var(--ls-coral)",
@@ -45,7 +62,19 @@ function monthLabel(iso: string): string {
   }
 }
 
+interface DownlineEntry {
+  user: User;
+  rankLabel: string;
+  rankMarginPct: number;
+  monthlyPv: number | null;
+  monthlyPvIsOverride: boolean;
+  /** Estimation override € sur ce distri = (owner% - downline%) × CA estimé.
+   *  CA estimé = PV × ~1.3 € (proxy Herbalife retail). Marqué "estimation". */
+  overrideEurEstimate: number;
+}
+
 export function RentabilityDetailModal({ data, onClose }: RentabilityDetailModalProps) {
+  const { users, currentUser } = useAppContext();
   const zone = rentabilityZone(data.margin_eur);
   const zoneColor = ZONE_COLOR[zone];
 
@@ -54,6 +83,71 @@ export function RentabilityDetailModal({ data, onClose }: RentabilityDetailModal
     data.prev_month_eur > 0 ? Math.round((delta / data.prev_month_eur) * 100) : null;
 
   const hasVipClients = data.clients_vip_count > 0;
+
+  // ─── Onglet de filtrage (chantier V3 2026-11-07) ───────────────────────────
+  const [tab, setTab] = useState<FilterTab>("all");
+
+  // ─── Downline computation (admin/référent uniquement) ──────────────────────
+  // Sponsor = un des user_ids du scope (couple Thomas+Mélanie agrégé).
+  const ownerIds = useMemo(() => new Set(data.scope_user_ids), [data.scope_user_ids]);
+  const currentMonthIso = useMemo(() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+  }, []);
+
+  const ownerMarginPct = data.margin_pct;
+
+  const downline = useMemo<DownlineEntry[]>(() => {
+    if (!currentUser) return [];
+    // On affiche le downline uniquement si le viewer est admin OU référent
+    // ET le scope correspond a son propre user (pas la rentab d un autre).
+    const viewerIsAdminOrRef = currentUser.role === "admin" || currentUser.role === "referent";
+    const scopeIsViewer = ownerIds.has(currentUser.id);
+    if (!viewerIsAdminOrRef || !scopeIsViewer) return [];
+
+    return users
+      .filter((u) => u.sponsorId && ownerIds.has(u.sponsorId))
+      .filter((u) => !u.frozenAt)
+      .map<DownlineEntry>((u) => {
+        const rankKey = (u.currentRank ?? "distributor_25") as HerbalifeRank;
+        const rankMargin = (RANK_MARGINS[rankKey] ?? 0.25) * 100;
+        const isOverrideActive =
+          (u as User & { monthlyPvOverrideMonth?: string | null }).monthlyPvOverrideMonth ===
+            currentMonthIso &&
+          typeof (u as User & { monthlyPvOverride?: number | null }).monthlyPvOverride ===
+            "number";
+        const pv = isOverrideActive
+          ? ((u as User & { monthlyPvOverride?: number | null }).monthlyPvOverride as number)
+          : null;
+        // Estimation override € : (margePerso - margeDownline) × CA_estime
+        // CA estimé = PV × 1.3 (approx Herbalife retail). C est une projection,
+        // pas une vérité comptable — la vraie source est Bizworks Royalty.
+        const ca = pv != null ? pv * 1.3 : 0;
+        const overrideEur = (ownerMarginPct - rankMargin) > 0
+          ? ca * ((ownerMarginPct - rankMargin) / 100)
+          : 0;
+        return {
+          user: u,
+          rankLabel: RANK_LABELS[rankKey] ?? "Distributor (25%)",
+          rankMarginPct: rankMargin,
+          monthlyPv: pv,
+          monthlyPvIsOverride: isOverrideActive,
+          overrideEurEstimate: overrideEur,
+        };
+      })
+      .sort((a, b) => (b.monthlyPv ?? 0) - (a.monthlyPv ?? 0));
+  }, [users, currentUser, ownerIds, ownerMarginPct, currentMonthIso]);
+
+  const downlineCount = downline.length;
+  const downlineTotalOverride = downline.reduce((s, d) => s + d.overrideEurEstimate, 0);
+
+  // ─── Top clients filtrés par onglet ────────────────────────────────────────
+  const filteredTopClients = useMemo<RentabilityTopClient[]>(() => {
+    if (!data.top_clients) return [];
+    if (tab === "public") return data.top_clients.filter((c) => !c.is_vip);
+    if (tab === "vip") return data.top_clients.filter((c) => c.is_vip);
+    return data.top_clients;
+  }, [data.top_clients, tab]);
 
   return (
     <div style={overlayStyle} onClick={onClose} role="dialog" aria-modal="true">
@@ -98,43 +192,64 @@ export function RentabilityDetailModal({ data, onClose }: RentabilityDetailModal
           />
         </div>
 
-        {/* Split Public vs VIP */}
-        {data.products_count > 0 && (
-          <>
-            <SectionTitle>🎯 Split par type de client</SectionTitle>
-            <div style={twoColStyle}>
-              <SplitCard
-                label="Clients publics"
-                emoji="👥"
-                clientsCount={data.clients_public_count}
-                revenue={data.revenue_public}
-                margin={data.margin_public_eur}
-                marginPct={data.margin_pct}
-                color="var(--ls-teal)"
-                note={`Marge complète : ${data.margin_pct}%`}
-              />
-              <SplitCard
-                label="Clients VIP"
-                emoji="💎"
-                clientsCount={data.clients_vip_count}
-                revenue={data.revenue_vip}
-                margin={data.margin_vip_eur}
-                marginPct={data.margin_pct}
-                color="var(--ls-gold)"
-                note={
-                  hasVipClients
-                    ? "Marge nette = marge perso − remise VIP"
-                    : "Aucun VIP ce mois"
-                }
-              />
-            </div>
-            {hasVipClients && (
-              <div style={vipNoteStyle}>
-                ℹ️ Les clients VIP paient moins cher (remise selon tier : bronze 15 % → ambassadeur 42 %).
-                Ta marge nette = ta marge perso ({data.margin_pct} %) − remise VIP du client.
-              </div>
-            )}
-          </>
+        {/* Onglets cliquables : Publics / VIP / Distributeurs */}
+        <SectionTitle>🎯 Split par type · clique pour filtrer</SectionTitle>
+        <div style={tabsRowStyle}>
+          <FilterTabCard
+            label="Clients publics"
+            emoji="👥"
+            count={data.clients_public_count}
+            primary={formatEur(data.margin_public_eur)}
+            sub={`sur ${formatEur(data.revenue_public)} de CA`}
+            note={`Marge complète : ${data.margin_pct}%`}
+            color="var(--ls-teal)"
+            active={tab === "public"}
+            onClick={() => setTab(tab === "public" ? "all" : "public")}
+          />
+          <FilterTabCard
+            label="Clients VIP"
+            emoji="💎"
+            count={data.clients_vip_count}
+            primary={formatEur(data.margin_vip_eur)}
+            sub={`sur ${formatEur(data.revenue_vip)} de CA`}
+            note={
+              hasVipClients
+                ? "Marge nette = marge perso − remise VIP"
+                : "Aucun VIP ce mois"
+            }
+            color="var(--ls-gold)"
+            active={tab === "vip"}
+            onClick={() => setTab(tab === "vip" ? "all" : "vip")}
+            disabled={!hasVipClients}
+          />
+          {downlineCount > 0 ? (
+            <FilterTabCard
+              label="Distributeurs"
+              emoji="🤝"
+              count={downlineCount}
+              primary={formatEur(downlineTotalOverride)}
+              sub="estimation override €"
+              note="Détail par distri ci-dessous"
+              color="var(--ls-purple)"
+              active={tab === "distri"}
+              onClick={() => setTab(tab === "distri" ? "all" : "distri")}
+            />
+          ) : null}
+        </div>
+        {tab !== "all" ? (
+          <button
+            type="button"
+            onClick={() => setTab("all")}
+            style={resetFilterBtnStyle}
+          >
+            ✕ Retirer le filtre
+          </button>
+        ) : null}
+        {hasVipClients && (
+          <div style={vipNoteStyle}>
+            ℹ️ Les clients VIP paient moins cher (remise selon tier : bronze 15 % → ambassadeur 42 %).
+            Ta marge nette = ta marge perso ({data.margin_pct} %) − remise VIP du client.
+          </div>
         )}
 
         {/* Projection vs mois précédent */}
@@ -164,17 +279,43 @@ export function RentabilityDetailModal({ data, onClose }: RentabilityDetailModal
           />
         </div>
 
-        {/* Top CLIENTS (au lieu de top produits) */}
-        {data.top_clients && data.top_clients.length > 0 && (
+        {/* Arborescence : top clients filtrés OU downline distri */}
+        {tab === "distri" ? (
+          downlineCount > 0 ? (
+            <>
+              <SectionTitle>🤝 Mes distributeurs · contributions</SectionTitle>
+              <ul style={clientsListStyle}>
+                {downline.map((d, i) => (
+                  <DownlineRow key={d.user.id} entry={d} rank={i} />
+                ))}
+              </ul>
+              <div style={methodoStyle}>
+                ℹ️ <strong>Estimation override</strong> = (ta marge {data.margin_pct} % − marge
+                downline) × PV × 1.3 € (proxy retail). La vraie source est Bizworks Royalty
+                Report. Saisis le PV Bizworks de chaque distri dans <em>Mon équipe → fiche
+                distri</em> pour des chiffres réalistes.
+              </div>
+            </>
+          ) : null
+        ) : data.top_clients && data.top_clients.length > 0 ? (
           <>
-            <SectionTitle>🏆 Top clients ce mois</SectionTitle>
-            <ul style={clientsListStyle}>
-              {data.top_clients.map((c, i) => (
-                <TopClientRow key={c.client_id} client={c} rank={i} />
-              ))}
-            </ul>
+            <SectionTitle>
+              🏆 Top clients ce mois
+              {tab === "public" ? " · publics" : tab === "vip" ? " · VIP" : ""}
+            </SectionTitle>
+            {filteredTopClients.length > 0 ? (
+              <ul style={clientsListStyle}>
+                {filteredTopClients.map((c, i) => (
+                  <TopClientRow key={c.client_id} client={c} rank={i} />
+                ))}
+              </ul>
+            ) : (
+              <div style={emptyFilterStyle}>
+                Aucun client {tab === "vip" ? "VIP" : "public"} dans le top ce mois.
+              </div>
+            )}
           </>
-        )}
+        ) : null}
 
         {/* Note méthodologie */}
         <div style={methodoStyle}>
@@ -210,44 +351,57 @@ function CalcRow({ label, value, sub, color, highlight }: { label: string; value
   );
 }
 
-function SplitCard({
+function FilterTabCard({
   label,
   emoji,
-  clientsCount,
-  revenue,
-  margin,
-  color,
+  count,
+  primary,
+  sub,
   note,
+  color,
+  active,
+  onClick,
+  disabled,
 }: {
   label: string;
   emoji: string;
-  clientsCount: number;
-  revenue: number;
-  margin: number;
-  marginPct: number;
-  color: string;
+  count: number;
+  primary: string;
+  sub: string;
   note: string;
+  color: string;
+  active: boolean;
+  onClick: () => void;
+  disabled?: boolean;
 }) {
-  const isEmpty = clientsCount === 0;
+  const isEmpty = count === 0;
   return (
-    <div style={splitCardStyle(color, isEmpty)}>
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      style={tabCardStyle(color, isEmpty, active, !!disabled)}
+    >
       <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginBottom: 6 }}>
         <span style={{ fontSize: 14 }}>{emoji}</span>
         <span style={{ fontFamily: "DM Sans, sans-serif", fontSize: 12, fontWeight: 700, color: "var(--ls-text)" }}>
           {label}
         </span>
         <span style={{ fontSize: 11, color: "var(--ls-text-muted)" }}>
-          · {clientsCount} client{clientsCount > 1 ? "s" : ""}
+          · {count}
         </span>
       </div>
       <div style={{ fontFamily: "Syne, sans-serif", fontSize: 22, fontWeight: 800, color, marginBottom: 4 }}>
-        {formatEur(margin)}
+        {primary}
       </div>
       <div style={{ fontSize: 11, color: "var(--ls-text-muted)", marginBottom: 4 }}>
-        sur {formatEur(revenue)} de CA
+        {sub}
       </div>
       <div style={{ fontSize: 10, color: "var(--ls-text-muted)", fontStyle: "italic" }}>{note}</div>
-    </div>
+      {active ? (
+        <div style={activeBadgeStyle(color)}>✓ filtre actif</div>
+      ) : null}
+    </button>
   );
 }
 
@@ -287,6 +441,36 @@ function TopClientRow({ client, rank }: { client: RentabilityTopClient; rank: nu
         {products && ` · ${products}${moreProducts}`}
         {" · "}
         <strong style={{ color: "var(--ls-gold)" }}>marge {formatEur(client.margin)}</strong>
+      </div>
+    </li>
+  );
+}
+
+function DownlineRow({ entry, rank }: { entry: DownlineEntry; rank: number }) {
+  const { user, rankLabel, monthlyPv, monthlyPvIsOverride, overrideEurEstimate } = entry;
+  return (
+    <li style={clientRowStyle(rank)}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+        <span style={rankBadgeStyle(rank)}>#{rank + 1}</span>
+        <span style={{ fontFamily: "Syne, sans-serif", fontWeight: 700, fontSize: 14, color: "var(--ls-text)", flex: 1 }}>
+          {user.name}
+        </span>
+        <span style={vipBadgeStyle("var(--ls-purple)")}>
+          {rankLabel}
+        </span>
+        <span style={{ fontFamily: "Syne, sans-serif", fontWeight: 700, fontSize: 14, color: "var(--ls-purple)", whiteSpace: "nowrap" }}>
+          ~{formatEur(overrideEurEstimate)}
+        </span>
+      </div>
+      <div style={{ fontSize: 11, color: "var(--ls-text-muted)", paddingLeft: 32 }}>
+        {monthlyPv != null ? (
+          <>
+            <strong>{monthlyPv.toLocaleString("fr-FR")} PV</strong> ce mois
+            {monthlyPvIsOverride ? " (Bizworks)" : ""}
+          </>
+        ) : (
+          <em>PV non saisi · saisis-le dans Mon équipe → {user.name}</em>
+        )}
       </div>
     </li>
   );
@@ -363,18 +547,67 @@ const calcRowHighlightStyle = (color: string): React.CSSProperties => ({
   boxShadow: `0 6px 20px color-mix(in srgb, ${color} 14%, transparent)`,
 });
 
+const tabsRowStyle: React.CSSProperties = {
+  display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 10,
+};
+
 const twoColStyle: React.CSSProperties = {
   display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10,
 };
 
-const splitCardStyle = (color: string, isEmpty: boolean): React.CSSProperties => ({
-  background: isEmpty
-    ? "var(--ls-surface2)"
-    : `color-mix(in srgb, ${color} 6%, var(--ls-surface))`,
-  border: isEmpty ? "0.5px dashed var(--ls-border)" : `0.5px solid ${color}`,
-  borderRadius: 12, padding: "12px 14px",
-  opacity: isEmpty ? 0.6 : 1,
+const tabCardStyle = (
+  color: string,
+  isEmpty: boolean,
+  active: boolean,
+  disabled: boolean,
+): React.CSSProperties => ({
+  position: "relative",
+  textAlign: "left",
+  background: active
+    ? `color-mix(in srgb, ${color} 14%, var(--ls-surface))`
+    : isEmpty
+      ? "var(--ls-surface2)"
+      : `color-mix(in srgb, ${color} 6%, var(--ls-surface))`,
+  border: active
+    ? `1px solid ${color}`
+    : isEmpty
+      ? "0.5px dashed var(--ls-border)"
+      : `0.5px solid ${color}`,
+  borderRadius: 12,
+  padding: "12px 14px 22px",
+  cursor: disabled ? "not-allowed" : "pointer",
+  opacity: disabled ? 0.5 : isEmpty ? 0.6 : 1,
+  fontFamily: "inherit",
+  transition: "transform 0.15s, box-shadow 0.15s, background 0.15s",
+  boxShadow: active ? `0 4px 14px color-mix(in srgb, ${color} 18%, transparent)` : "none",
 });
+
+const activeBadgeStyle = (color: string): React.CSSProperties => ({
+  position: "absolute",
+  bottom: 6,
+  right: 8,
+  fontSize: 9,
+  fontFamily: "DM Sans, sans-serif",
+  fontWeight: 700,
+  padding: "2px 7px",
+  borderRadius: 6,
+  background: color,
+  color: "var(--ls-bg)",
+  textTransform: "uppercase",
+  letterSpacing: 0.5,
+});
+
+const resetFilterBtnStyle: React.CSSProperties = {
+  marginTop: 10,
+  padding: "7px 12px",
+  borderRadius: 8,
+  border: "0.5px solid var(--ls-border)",
+  background: "var(--ls-surface2)",
+  color: "var(--ls-text-muted)",
+  fontFamily: "DM Sans, sans-serif",
+  fontSize: 11,
+  cursor: "pointer",
+};
 
 const projectionCardStyle = (color: string): React.CSSProperties => ({
   background: `color-mix(in srgb, ${color} 6%, var(--ls-surface))`,
@@ -428,6 +661,17 @@ const vipBadgeStyle = (color: string): React.CSSProperties => ({
   color, border: `0.5px solid ${color}`,
   whiteSpace: "nowrap",
 });
+
+const emptyFilterStyle: React.CSSProperties = {
+  padding: "16px 14px",
+  background: "var(--ls-surface2)",
+  border: "0.5px dashed var(--ls-border)",
+  borderRadius: 10,
+  fontSize: 12,
+  color: "var(--ls-text-muted)",
+  fontStyle: "italic",
+  textAlign: "center",
+};
 
 const methodoStyle: React.CSSProperties = {
   marginTop: 18, padding: "10px 12px",
