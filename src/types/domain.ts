@@ -150,6 +150,13 @@ export interface User {
   frozenAt?: string | null;
   frozenBy?: string | null;
   frozenReason?: string | null;
+  /** Override PV mensuel manuel (source Bizworks). Si monthlyPvOverrideMonth
+   *  matche le mois courant (YYYY-MM Europe/Paris), la jauge Co-pilote
+   *  l'utilise au lieu du calcul depuis pv_transactions. Chantier 2026-11-07. */
+  monthlyPvOverride?: number | null;
+  monthlyPvOverrideMonth?: string | null;
+  monthlyPvOverrideSetAt?: string | null;
+  monthlyPvOverrideSetBy?: string | null;
 }
 
 /** Rangs Herbalife (12 paliers) — détermine la marge retail dans FLEX.

@@ -267,12 +267,27 @@ export function useCopiloteData(now: Date, globalView: boolean = false): Copilot
         }
       }).length;
 
-    const monthlyPV = (isAdmin ? pvTransactions : pvTransactions.filter((t) => t.responsibleId === currentUser.id))
+    const monthlyPVComputed = (isAdmin ? pvTransactions : pvTransactions.filter((t) => t.responsibleId === currentUser.id))
       .filter((t) => {
         const d = new Date(t.date);
         return d >= startOfMonth && d < endOfToday;
       })
       .reduce((acc, t) => acc + (t.pv || 0), 0);
+
+    // Override Bizworks (chantier 2026-11-07) : si l'admin a saisi un total
+    // PV manuel pour le mois courant, on l'utilise au lieu du calcul auto.
+    // Le mois est compare au format YYYY-MM en heure locale (Paris).
+    const currentMonthIso = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+    const overrideRecord = currentUser as unknown as {
+      monthlyPvOverride?: number | null;
+      monthlyPvOverrideMonth?: string | null;
+    };
+    const hasOverride =
+      typeof overrideRecord.monthlyPvOverride === "number" &&
+      overrideRecord.monthlyPvOverrideMonth === currentMonthIso;
+    const monthlyPV = hasOverride
+      ? (overrideRecord.monthlyPvOverride as number)
+      : monthlyPVComputed;
 
     const monthlyPVTarget = hasMetric(currentUser)
       ? (currentUser.monthly_pv_target ?? DEFAULT_MONTHLY_PV_TARGET)

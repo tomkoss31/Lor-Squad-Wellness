@@ -59,6 +59,10 @@ type UserRow = {
   frozen_at?: string | null;
   frozen_by?: string | null;
   frozen_reason?: string | null;
+  monthly_pv_override?: number | null;
+  monthly_pv_override_month?: string | null;
+  monthly_pv_override_set_by?: string | null;
+  monthly_pv_override_set_at?: string | null;
 };
 
 type AssessmentRow = {
@@ -339,6 +343,11 @@ function mapUser(row: UserRow): User {
     frozenAt: row.frozen_at ?? null,
     frozenBy: row.frozen_by ?? null,
     frozenReason: row.frozen_reason ?? null,
+    monthlyPvOverride:
+      typeof row.monthly_pv_override === "number" ? row.monthly_pv_override : null,
+    monthlyPvOverrideMonth: row.monthly_pv_override_month ?? null,
+    monthlyPvOverrideSetAt: row.monthly_pv_override_set_at ?? null,
+    monthlyPvOverrideSetBy: row.monthly_pv_override_set_by ?? null,
   };
 }
 
@@ -1508,6 +1517,43 @@ export async function unfreezeUserAccount(userId: string): Promise<void> {
   });
   if (error) {
     throw new Error(`Impossible de reactiver le compte : ${error.message}`);
+  }
+}
+
+// ─── PV override Bizworks + Rang admin (Chantier 2026-11-07) ─────────────
+/**
+ * Set ou clear l'override PV mensuel d'un user (admin only).
+ * @param userId  cible
+ * @param month   YYYY-MM (Europe/Paris)
+ * @param pv      total PV declare ; null = clear l override (re-bascule auto)
+ */
+export async function setUserPvOverride(
+  userId: string,
+  month: string,
+  pv: number | null,
+): Promise<void> {
+  const client = await requireSupabase();
+  const { error } = await client.rpc("set_user_pv_override", {
+    p_user_id: userId,
+    p_month: month,
+    p_pv: pv,
+  });
+  if (error) {
+    throw new Error(`Impossible d'enregistrer l'override PV : ${error.message}`);
+  }
+}
+
+/**
+ * Met a jour le rang Herbalife d'un user (admin only). Stamp rank_set_at.
+ */
+export async function setUserRankAdmin(userId: string, rank: string): Promise<void> {
+  const client = await requireSupabase();
+  const { error } = await client.rpc("set_user_rank_admin", {
+    p_user_id: userId,
+    p_rank: rank,
+  });
+  if (error) {
+    throw new Error(`Impossible de mettre a jour le rang : ${error.message}`);
   }
 }
 
