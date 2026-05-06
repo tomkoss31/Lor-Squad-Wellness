@@ -96,7 +96,8 @@ export function TeamMemberDrilldownModal({ member, onClose }: TeamMemberDrilldow
   const existingBreakdown = member ? getBreakdownForUser(member.user_id) : null;
   const [pvDraft, setPvDraft] = useState<{
     pv15: string; pv25: string; pv35: string; pv42: string; pvRoyalty: string;
-  }>({ pv15: "", pv25: "", pv35: "", pv42: "", pvRoyalty: "" });
+    pv25IsVip: boolean; pv35IsVip: boolean;
+  }>({ pv15: "", pv25: "", pv35: "", pv42: "", pvRoyalty: "", pv25IsVip: false, pv35IsVip: false });
   const [savingPv, setSavingPv] = useState(false);
 
   // Hydrate les inputs quand le breakdown arrive (fetch async).
@@ -108,6 +109,8 @@ export function TeamMemberDrilldownModal({ member, onClose }: TeamMemberDrilldow
         pv35: existingBreakdown.pv35 ? String(existingBreakdown.pv35) : "",
         pv42: existingBreakdown.pv42 ? String(existingBreakdown.pv42) : "",
         pvRoyalty: existingBreakdown.pvRoyalty ? String(existingBreakdown.pvRoyalty) : "",
+        pv25IsVip: existingBreakdown.pv25IsVip,
+        pv35IsVip: existingBreakdown.pv35IsVip,
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -126,6 +129,8 @@ export function TeamMemberDrilldownModal({ member, onClose }: TeamMemberDrilldow
       pv35: parse(pvDraft.pv35),
       pv42: parse(pvDraft.pv42),
       pvRoyalty: parse(pvDraft.pvRoyalty),
+      pv25IsVip: pvDraft.pv25IsVip,
+      pv35IsVip: pvDraft.pv35IsVip,
     };
   }, [pvDraft, member, monthIso]);
   const draftTotalPv = totalPvFromBreakdown(draftBreakdown);
@@ -222,6 +227,8 @@ export function TeamMemberDrilldownModal({ member, onClose }: TeamMemberDrilldow
         pv35: draftBreakdown.pv35,
         pv42: draftBreakdown.pv42,
         pvRoyalty: draftBreakdown.pvRoyalty,
+        pv25IsVip: draftBreakdown.pv25IsVip,
+        pv35IsVip: draftBreakdown.pv35IsVip,
       });
       const isCleared = draftTotalPv === 0;
       pushToast({
@@ -584,22 +591,26 @@ export function TeamMemberDrilldownModal({ member, onClose }: TeamMemberDrilldow
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 10 }}>
               <PvTierRow
-                label="PV à 15% (Préféré)"
+                label="PV à 15% (Préféré VIP)"
                 tip={`commission toi : ${Math.round(COMMISSION_PCT_BY_TIER.pv15 * 100)}%`}
                 value={pvDraft.pv15}
                 onChange={(v) => setPvDraft({ ...pvDraft, pv15: v })}
               />
               <PvTierRow
-                label="PV à 25% (Distributor)"
-                tip={`commission toi : ${Math.round(COMMISSION_PCT_BY_TIER.pv25 * 100)}%`}
+                label={pvDraft.pv25IsVip ? "PV à 25% (Silver VIP)" : "PV à 25% (Distributor)"}
+                tip={`commission toi : ${Math.round(COMMISSION_PCT_BY_TIER.pv25 * 100)}% · ⭐ pour basculer VIP/Distri`}
                 value={pvDraft.pv25}
                 onChange={(v) => setPvDraft({ ...pvDraft, pv25: v })}
+                vipFlag={pvDraft.pv25IsVip}
+                onToggleVip={() => setPvDraft({ ...pvDraft, pv25IsVip: !pvDraft.pv25IsVip })}
               />
               <PvTierRow
-                label="PV à 35% (Senior Consultant)"
-                tip={`commission toi : ${Math.round(COMMISSION_PCT_BY_TIER.pv35 * 100)}%`}
+                label={pvDraft.pv35IsVip ? "PV à 35% (Gold VIP)" : "PV à 35% (Senior Consultant)"}
+                tip={`commission toi : ${Math.round(COMMISSION_PCT_BY_TIER.pv35 * 100)}% · ⭐ pour basculer VIP/Distri`}
                 value={pvDraft.pv35}
                 onChange={(v) => setPvDraft({ ...pvDraft, pv35: v })}
+                vipFlag={pvDraft.pv35IsVip}
+                onToggleVip={() => setPvDraft({ ...pvDraft, pv35IsVip: !pvDraft.pv35IsVip })}
               />
               <PvTierRow
                 label="PV à 42% (Success Builder)"
@@ -759,14 +770,41 @@ function PvTierRow({
   tip,
   value,
   onChange,
+  vipFlag,
+  onToggleVip,
 }: {
   label: string;
   tip: string;
   value: string;
   onChange: (v: string) => void;
+  vipFlag?: boolean;
+  onToggleVip?: () => void;
 }) {
+  const hasToggle = typeof onToggleVip === "function";
   return (
     <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+      {hasToggle ? (
+        <button
+          type="button"
+          onClick={onToggleVip}
+          aria-label={vipFlag ? "VIP — clique pour passer en Distri" : "Distri — clique pour passer en VIP"}
+          title={vipFlag ? "VIP — clique pour passer en Distri" : "Distri — clique pour passer en VIP"}
+          style={{
+            background: "transparent",
+            border: "none",
+            cursor: "pointer",
+            fontSize: 16,
+            padding: 0,
+            width: 22,
+            opacity: vipFlag ? 1 : 0.4,
+            color: vipFlag ? "var(--ls-gold)" : "var(--ls-text-muted)",
+          }}
+        >
+          {vipFlag ? "⭐" : "☆"}
+        </button>
+      ) : (
+        <span style={{ width: 22 }} />
+      )}
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontSize: 11, color: "var(--ls-text)", fontFamily: "Inter, system-ui, sans-serif", fontWeight: 500 }}>
           {label}

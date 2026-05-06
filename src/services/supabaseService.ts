@@ -1559,6 +1559,8 @@ export async function setUserPvBreakdown(params: {
   pv35: number;
   pv42: number;
   pvRoyalty: number;
+  pv25IsVip?: boolean;
+  pv35IsVip?: boolean;
 }): Promise<void> {
   const client = await requireSupabase();
   const { error } = await client.rpc("set_user_pv_breakdown", {
@@ -1569,6 +1571,8 @@ export async function setUserPvBreakdown(params: {
     p_pv_35: params.pv35,
     p_pv_42: params.pv42,
     p_pv_royalty: params.pvRoyalty,
+    p_pv_25_is_vip: params.pv25IsVip ?? false,
+    p_pv_35_is_vip: params.pv35IsVip ?? false,
   });
   if (error) {
     throw new Error(`Impossible d'enregistrer le breakdown PV : ${error.message}`);
@@ -1592,13 +1596,15 @@ export async function loadPvBreakdownsForMonth(
   pv35: number;
   pv42: number;
   pvRoyalty: number;
+  pv25IsVip: boolean;
+  pv35IsVip: boolean;
   declaredBy: string | null;
   declaredAt: string | null;
 }>> {
   const client = await requireSupabase();
   const { data, error } = await client
     .from("pv_monthly_breakdown")
-    .select("user_id, month, pv_15, pv_25, pv_35, pv_42, pv_royalty, declared_by, declared_at")
+    .select("user_id, month, pv_15, pv_25, pv_35, pv_42, pv_royalty, pv_25_is_vip, pv_35_is_vip, declared_by, declared_at")
     .eq("month", month);
   if (error || !data) return [];
   return data.map((r: {
@@ -1609,6 +1615,8 @@ export async function loadPvBreakdownsForMonth(
     pv_35: number | null;
     pv_42: number | null;
     pv_royalty: number | null;
+    pv_25_is_vip: boolean | null;
+    pv_35_is_vip: boolean | null;
     declared_by: string | null;
     declared_at: string | null;
   }) => ({
@@ -1619,6 +1627,8 @@ export async function loadPvBreakdownsForMonth(
     pv35: Number(r.pv_35 ?? 0),
     pv42: Number(r.pv_42 ?? 0),
     pvRoyalty: Number(r.pv_royalty ?? 0),
+    pv25IsVip: !!r.pv_25_is_vip,
+    pv35IsVip: !!r.pv_35_is_vip,
     declaredBy: r.declared_by ?? null,
     declaredAt: r.declared_at ?? null,
   }));
@@ -1638,6 +1648,8 @@ export async function upsertManualPvEntry(params: {
   pv35: number;
   pv42: number;
   pvRoyalty: number;
+  pv25IsVip?: boolean;
+  pv35IsVip?: boolean;
 }): Promise<string> {
   const client = await requireSupabase();
   const { data, error } = await client.rpc("upsert_manual_pv_entry", {
@@ -1653,6 +1665,8 @@ export async function upsertManualPvEntry(params: {
     p_pv_35: params.pv35,
     p_pv_42: params.pv42,
     p_pv_royalty: params.pvRoyalty,
+    p_pv_25_is_vip: params.pv25IsVip ?? false,
+    p_pv_35_is_vip: params.pv35IsVip ?? false,
   });
   if (error) {
     throw new Error(`Impossible d'enregistrer l'entree : ${error.message}`);
@@ -1691,12 +1705,14 @@ export async function loadManualPvEntries(
   pv35: number;
   pv42: number;
   pvRoyalty: number;
+  pv25IsVip: boolean;
+  pv35IsVip: boolean;
   declaredAt: string | null;
 }>> {
   const client = await requireSupabase();
   const { data, error } = await client
     .from("manual_pv_entries")
-    .select("id, viewer_user_id, name, parent_name, depth, own_tier_pct, intermediate_tiers, month, pv_15, pv_25, pv_35, pv_42, pv_royalty, declared_at")
+    .select("id, viewer_user_id, name, parent_name, depth, own_tier_pct, intermediate_tiers, month, pv_15, pv_25, pv_35, pv_42, pv_royalty, pv_25_is_vip, pv_35_is_vip, declared_at")
     .eq("viewer_user_id", viewerUserId)
     .eq("month", month);
   if (error || !data) return [];
@@ -1704,7 +1720,9 @@ export async function loadManualPvEntries(
     id: string; viewer_user_id: string; name: string; parent_name: string | null;
     depth: number; own_tier_pct: number; intermediate_tiers: number[] | null; month: string;
     pv_15: number | null; pv_25: number | null; pv_35: number | null;
-    pv_42: number | null; pv_royalty: number | null; declared_at: string | null;
+    pv_42: number | null; pv_royalty: number | null;
+    pv_25_is_vip: boolean | null; pv_35_is_vip: boolean | null;
+    declared_at: string | null;
   }) => ({
     id: r.id,
     viewerUserId: r.viewer_user_id,
@@ -1719,6 +1737,8 @@ export async function loadManualPvEntries(
     pv35: Number(r.pv_35 ?? 0),
     pv42: Number(r.pv_42 ?? 0),
     pvRoyalty: Number(r.pv_royalty ?? 0),
+    pv25IsVip: !!r.pv_25_is_vip,
+    pv35IsVip: !!r.pv_35_is_vip,
     declaredAt: r.declared_at,
   }));
 }
