@@ -12,7 +12,9 @@ import { useUserRentability } from "../../hooks/useUserRentability";
 import { RentabilityGauge } from "./RentabilityGauge";
 import { RentabilityDetailModal } from "./RentabilityDetailModal";
 import { usePvBreakdowns } from "../../hooks/usePvBreakdowns";
+import { useManualPvEntries } from "../../hooks/useManualPvEntries";
 import {
+  computeManualEntriesOverride,
   computeOwnSelfMargin,
   computeViewerDownlineOverride,
   currentMonthIso,
@@ -60,10 +62,16 @@ export function RentabilityWidget() {
     }
     return hasAnyBreakdown ? total : data.margin_eur;
   }, [data, currentUser, users, breakdowns]);
-  // Patch data pour la jauge : own_self_margin + override
+  // V3 : entrees manuelles distri hors-app
+  const { entries: manualEntries } = useManualPvEntries(currentUser?.id ?? null, monthIso);
+  const manualOverride = useMemo(() => {
+    if (!currentUser) return 0;
+    return computeManualEntriesOverride(manualEntries, tierPctForRank(currentUser.currentRank));
+  }, [manualEntries, currentUser]);
+  // Patch data pour la jauge : own_self + downline + manuel
   const dataWithOverride = useMemo(() => {
     if (!data) return null;
-    const newMargin = ownSelfMargin + downlineOverride;
+    const newMargin = ownSelfMargin + downlineOverride + manualOverride;
     if (newMargin === data.margin_eur) return data;
     const ratio = data.margin_eur > 0 ? newMargin / data.margin_eur : 1;
     return {
@@ -71,7 +79,7 @@ export function RentabilityWidget() {
       margin_eur: newMargin,
       projection_eur: data.projection_eur * ratio,
     };
-  }, [data, ownSelfMargin, downlineOverride]);
+  }, [data, ownSelfMargin, downlineOverride, manualOverride]);
 
   if (!currentUser) return null;
   if (loading) {
@@ -120,7 +128,10 @@ export function RentabilityWidget() {
   if (downlineOverride > 0) {
     subParts.push(`+${Math.round(downlineOverride).toLocaleString("fr-FR")} € override downline`);
   }
-  const effectiveMargin = ownSelfMargin + downlineOverride;
+  if (manualOverride > 0) {
+    subParts.push(`+${Math.round(manualOverride).toLocaleString("fr-FR")} € distri hors-app`);
+  }
+  const effectiveMargin = ownSelfMargin + downlineOverride + manualOverride;
   const effectiveProjection = (dataWithOverride ?? data).projection_eur;
   if (effectiveProjection > effectiveMargin) {
     subParts.push(`projection ${Math.round(effectiveProjection).toLocaleString("fr-FR")} € fin de mois`);

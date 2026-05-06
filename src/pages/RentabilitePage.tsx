@@ -16,7 +16,10 @@ import { RentabilityGauge } from "../components/rentability/RentabilityGauge";
 import { RentabilityDetailModal } from "../components/rentability/RentabilityDetailModal";
 import { resolveCoupleUserIds } from "../config/teamConfig";
 import { usePvBreakdowns } from "../hooks/usePvBreakdowns";
+import { useManualPvEntries } from "../hooks/useManualPvEntries";
+import { ManualPvEntriesSection } from "../components/rentability/ManualPvEntriesSection";
 import {
+  computeManualEntriesOverride,
   computeOwnSelfMargin,
   computeViewerDownlineOverride,
   currentMonthIso,
@@ -81,9 +84,15 @@ export function RentabilitePage() {
     () => computeOwnMarginFromBreakdownsOrFallback(ownData, breakdowns, users),
     [ownData, breakdowns, users],
   );
+  // V3 : entrees manuelles (distri hors-app) ajoutees au total override
+  const { entries: manualEntries } = useManualPvEntries(currentUser?.id ?? null, monthIso);
+  const ownManualOverride = useMemo(() => {
+    if (!currentUser) return 0;
+    return computeManualEntriesOverride(manualEntries, tierPctForRank(currentUser.currentRank));
+  }, [manualEntries, currentUser]);
   const ownDataWithOverride = useMemo(() => {
     if (!ownData) return null;
-    const newMargin = ownSelfMargin + ownDownlineOverride;
+    const newMargin = ownSelfMargin + ownDownlineOverride + ownManualOverride;
     if (newMargin === ownData.margin_eur) return ownData;
     const ratio = ownData.margin_eur > 0 ? newMargin / ownData.margin_eur : 1;
     return {
@@ -91,7 +100,7 @@ export function RentabilitePage() {
       margin_eur: newMargin,
       projection_eur: ownData.projection_eur * ratio,
     };
-  }, [ownData, ownSelfMargin, ownDownlineOverride]);
+  }, [ownData, ownSelfMargin, ownDownlineOverride, ownManualOverride]);
 
   // Override downline pour le membre selectionne (modale equipe).
   // Sans ca, admin viewing Mandy verrait la jauge a 0 EUR malgre ses downlines.
@@ -206,6 +215,9 @@ export function RentabilitePage() {
           </div>
         </>
       )}
+
+      {/* V3 — distri hors-app saisie manuelle */}
+      <ManualPvEntriesSection />
 
       {/* Modal détail propre */}
       {detailOpen && ownData && (
