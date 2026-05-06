@@ -403,11 +403,12 @@ import { useAppContext } from './context/AppContext'
 import { ActiveTourProvider } from './features/onboarding/ActiveTourContext'
 import { ActiveQuizProvider } from './features/academy/ActiveQuizContext'
 import { ServiceWorkerNavigator } from './features/notifications/ServiceWorkerNavigator'
+import { SwUpdatePrompt } from './components/pwa/SwUpdatePrompt'
 
 export default function App() {
   useTheme()
   useAutoNotifications()
-  const { bootError } = useAppContext()
+  const { bootError, currentUser } = useAppContext()
 
   // Hard-fail boot : si mock en prod (faille sécurité), on bloque toute l'app.
   // Couvre routes protégées ET routes publiques (client app, recap, rapport).
@@ -420,6 +421,13 @@ export default function App() {
       {/* Relais SW → React Router (2026-05-05) : route en interne quand
           on clique une push notif, sans full reload. */}
       <ServiceWorkerNavigator />
+      {/* Toast 'Mise a jour disponible' : detecte les nouveaux SW + propose
+          activation 1-click + force re-subscribe notifs apres update.
+          Chantier rebrand polish 2026-05-06. */}
+      <SwUpdatePrompt
+        userId={currentUser?.id}
+        userName={currentUser?.name}
+      />
       <ActiveTourProvider>
       <ActiveQuizProvider>
       <Suspense fallback={<RouteLoadingScreen />}>

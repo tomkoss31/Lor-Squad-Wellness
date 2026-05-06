@@ -203,20 +203,20 @@ export function ClientProductsTab({
             <span aria-hidden="true" style={{ fontSize: 20 }}>✨</span>
             <h2
               style={{
-                fontFamily: "Syne, sans-serif",
+                fontFamily: "Sora, system-ui, sans-serif",
                 fontSize: 18,
                 fontWeight: 800,
                 margin: 0,
-                color: "#111827",
+                color: "#0F172A",
                 letterSpacing: "-0.01em",
               }}
             >
               Recommandé pour toi
             </h2>
           </div>
-          <p style={{ fontSize: 12, color: "#6B7280", margin: "0 0 16px", lineHeight: 1.55 }}>
+          <p style={{ fontSize: 12, color: "#64748B", margin: "0 0 16px", lineHeight: 1.55 }}>
             Basé sur ton body scan du{" "}
-            <strong style={{ color: "#BA7517" }}>{formatDate(latestScanDate)}</strong>
+            <strong style={{ color: "#06B6D4" }}>{formatDate(latestScanDate)}</strong>
           </p>
 
           <div style={{ display: "grid", gap: 10 }}>
@@ -239,11 +239,11 @@ export function ClientProductsTab({
           <span aria-hidden="true" style={{ fontSize: 16 }}>✓</span>
           <h2
             style={{
-              fontFamily: "Syne, sans-serif",
+              fontFamily: "Sora, system-ui, sans-serif",
               fontSize: 16,
               fontWeight: 700,
               margin: 0,
-              color: "#111827",
+              color: "#0F172A",
             }}
           >
             Mon programme actuel
@@ -277,18 +277,18 @@ export function ClientProductsTab({
                     flexShrink: 0,
                   }}
                 >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0F6E56" strokeWidth="2.5">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#059669" strokeWidth="2.5">
                     <polyline points="20 6 9 17 4 12" />
                   </svg>
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: "#111827" }}>{p.product_name}</div>
-                  <div style={{ fontSize: 11, color: "#6B7280", marginTop: 2 }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: "#0F172A" }}>{p.product_name}</div>
+                  <div style={{ fontSize: 11, color: "#64748B", marginTop: 2 }}>
                     Réf. {p.product_id}
                     {p.quantite_label ? ` · ${p.quantite_label}` : ""}
                   </div>
                   {p.note_metier ? (
-                    <div style={{ fontSize: 11, color: "#0F6E56", marginTop: 4, fontStyle: "italic" }}>
+                    <div style={{ fontSize: 11, color: "#059669", marginTop: 4, fontStyle: "italic" }}>
                       {p.note_metier}
                     </div>
                   ) : null}
@@ -309,7 +309,7 @@ export function ClientProductsTab({
             }}
           >
             <div style={{ fontSize: 24, marginBottom: 8, opacity: 0.7 }}>📋</div>
-            <div style={{ fontSize: 13, color: "#374151", lineHeight: 1.55, maxWidth: 320, margin: "0 auto" }}>
+            <div style={{ fontSize: 13, color: "#0F172A", lineHeight: 1.55, maxWidth: 320, margin: "0 auto" }}>
               Ton programme sera défini avec <strong>{coachFirstName}</strong> lors de ton prochain RDV.
             </div>
           </div>
@@ -323,17 +323,17 @@ export function ClientProductsTab({
             <span aria-hidden="true" style={{ fontSize: 16 }}>💡</span>
             <h2
               style={{
-                fontFamily: "Syne, sans-serif",
+                fontFamily: "Sora, system-ui, sans-serif",
                 fontSize: 16,
                 fontWeight: 700,
                 margin: 0,
-                color: "#111827",
+                color: "#0F172A",
               }}
             >
               Recommandés pour ta progression
             </h2>
           </div>
-          <p style={{ fontSize: 12, color: "#6B7280", margin: "0 0 12px", lineHeight: 1.5 }}>
+          <p style={{ fontSize: 12, color: "#64748B", margin: "0 0 12px", lineHeight: 1.5 }}>
             Produits proposés lors de ton dernier bilan que tu n&apos;as pas encore intégrés
           </p>
           <div style={{ display: "grid", gap: 10 }}>
@@ -361,10 +361,10 @@ export function ClientProductsTab({
                     <div style={{ display: "flex", alignItems: "flex-start", gap: 8, justifyContent: "space-between" }}>
                       <div
                         style={{
-                          fontFamily: "Syne, sans-serif",
+                          fontFamily: "Sora, system-ui, sans-serif",
                           fontWeight: 700,
                           fontSize: 15,
-                          color: "#111827",
+                          color: "#0F172A",
                           lineHeight: 1.3,
                         }}
                       >
@@ -374,9 +374,9 @@ export function ClientProductsTab({
                     </div>
                     <div
                       style={{
-                        fontFamily: "DM Sans, sans-serif",
+                        fontFamily: "Inter, system-ui, sans-serif",
                         fontSize: 12,
-                        color: "#9CA3AF",
+                        color: "#94A3B8",
                         marginTop: 2,
                       }}
                     >
@@ -385,9 +385,9 @@ export function ClientProductsTab({
                     {r.reason ? (
                       <div
                         style={{
-                          fontFamily: "DM Sans, sans-serif",
+                          fontFamily: "Inter, system-ui, sans-serif",
                           fontSize: 13,
-                          color: "#0F6E56",
+                          color: "#059669",
                           marginTop: 6,
                           lineHeight: 1.5,
                         }}
@@ -406,13 +406,13 @@ export function ClientProductsTab({
                           gap: 6,
                           marginTop: 10,
                           padding: "9px 14px",
-                          background: "linear-gradient(135deg, #EF9F27, #BA7517)",
+                          background: "linear-gradient(135deg, #10B981, #06B6D4)",
                           color: "#FFFFFF",
                           borderRadius: 10,
                           textDecoration: "none",
                           fontSize: 12,
                           fontWeight: 700,
-                          fontFamily: "DM Sans, sans-serif",
+                          fontFamily: "Inter, system-ui, sans-serif",
                           minHeight: 44,
                           boxSizing: "border-box",
                         }}
@@ -440,12 +440,12 @@ export function ClientProductsTab({
             justifyContent: "space-between",
             padding: "14px 16px",
             background: "#fff",
-            border: "1px solid rgba(0,0,0,0.08)",
+            border: "1px solid rgba(15,23,42,0.08)",
             borderRadius: catalogueOpen ? "14px 14px 0 0" : 14,
             fontSize: 14,
             fontWeight: 700,
-            color: "#111827",
-            fontFamily: "Syne, sans-serif",
+            color: "#0F172A",
+            fontFamily: "Sora, system-ui, sans-serif",
             cursor: "pointer",
           }}
         >
@@ -453,7 +453,7 @@ export function ClientProductsTab({
             <span aria-hidden="true">📚</span>
             Catalogue complet
           </span>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth="2">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" strokeWidth="2">
             {catalogueOpen ? <polyline points="18 15 12 9 6 15" /> : <polyline points="6 9 12 15 18 9" />}
           </svg>
         </button>
@@ -461,7 +461,7 @@ export function ClientProductsTab({
         {catalogueOpen ? (
           <div
             style={{
-              border: "1px solid rgba(0,0,0,0.08)",
+              border: "1px solid rgba(15,23,42,0.08)",
               borderTop: "none",
               borderRadius: "0 0 14px 14px",
               padding: 12,
@@ -477,9 +477,9 @@ export function ClientProductsTab({
                 width: "100%",
                 padding: "10px 12px",
                 borderRadius: 10,
-                border: "1px solid rgba(0,0,0,0.1)",
+                border: "1px solid rgba(15,23,42,0.10)",
                 fontSize: 13,
-                fontFamily: "DM Sans, sans-serif",
+                fontFamily: "Inter, system-ui, sans-serif",
                 marginBottom: 10,
                 background: "#fff",
               }}
@@ -501,24 +501,24 @@ export function ClientProductsTab({
                       justifyContent: "space-between",
                       padding: "10px 12px",
                       background: "#fff",
-                      border: "1px solid rgba(0,0,0,0.06)",
+                      border: "1px solid rgba(15,23,42,0.06)",
                       borderRadius: isOpen ? "10px 10px 0 0" : 10,
                       fontSize: 13,
                       fontWeight: 600,
-                      color: "#374151",
-                      fontFamily: "Syne, sans-serif",
+                      color: "#0F172A",
+                      fontFamily: "Sora, system-ui, sans-serif",
                       cursor: "pointer",
                     }}
                   >
                     <span>
                       <span aria-hidden="true" style={{ marginRight: 6 }}>{icon}</span>
                       {label}{" "}
-                      <span style={{ fontSize: 11, color: "#9CA3AF", fontWeight: 400, marginLeft: 4 }}>
+                      <span style={{ fontSize: 11, color: "#94A3B8", fontWeight: 400, marginLeft: 4 }}>
                         · {products.length}
                       </span>
                     </span>
                     {!search ? (
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth="2">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" strokeWidth="2">
                         {isOpen ? <polyline points="18 15 12 9 6 15" /> : <polyline points="6 9 12 15 18 9" />}
                       </svg>
                     ) : null}
@@ -526,7 +526,7 @@ export function ClientProductsTab({
                   {isOpen ? (
                     <div
                       style={{
-                        border: "1px solid rgba(0,0,0,0.06)",
+                        border: "1px solid rgba(15,23,42,0.06)",
                         borderTop: "none",
                         borderRadius: "0 0 10px 10px",
                         padding: 8,
@@ -562,7 +562,7 @@ export function ClientProductsTab({
           textAlign: "center",
         }}
       >
-        <div style={{ fontSize: 13, color: "#374151", marginBottom: 10, lineHeight: 1.5 }}>
+        <div style={{ fontSize: 13, color: "#0F172A", marginBottom: 10, lineHeight: 1.5 }}>
           Questions ? Contacte <strong>{coachFirstName}</strong> directement
         </div>
         {whatsappUrl ? (
@@ -581,7 +581,7 @@ export function ClientProductsTab({
               textDecoration: "none",
               fontSize: 13,
               fontWeight: 700,
-              fontFamily: "Syne, sans-serif",
+              fontFamily: "Sora, system-ui, sans-serif",
               boxShadow: "0 4px 12px rgba(37,211,102,0.3)",
             }}
           >
@@ -589,7 +589,7 @@ export function ClientProductsTab({
             Contacter sur WhatsApp
           </a>
         ) : (
-          <div style={{ fontSize: 12, color: "#6B7280", fontStyle: "italic" }}>
+          <div style={{ fontSize: 12, color: "#64748B", fontStyle: "italic" }}>
             Utilise l&apos;onglet Messages pour écrire à {coachFirstName}.
           </div>
         )}
@@ -653,13 +653,13 @@ function RecommendedCard({
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
-            <div style={{ fontSize: 14, fontWeight: 700, color: "#111827" }}>{product.shortName}</div>
+            <div style={{ fontSize: 14, fontWeight: 700, color: "#0F172A" }}>{product.shortName}</div>
             <span
               style={{
                 fontSize: 9,
                 padding: "2px 8px",
                 borderRadius: 999,
-                background: "linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)",
+                background: "linear-gradient(135deg, #10B981 0%, #06B6D4 50%, #8B5CF6 100%)",
                 color: "#fff",
                 fontWeight: 700,
                 letterSpacing: "0.02em",
@@ -671,7 +671,7 @@ function RecommendedCard({
           <div
             style={{
               fontSize: 12,
-              color: "#6B7280",
+              color: "#64748B",
               fontStyle: "italic",
               marginTop: 3,
               lineHeight: 1.5,
@@ -680,13 +680,13 @@ function RecommendedCard({
             {product.shortBenefit.split("·")[0].trim()}
           </div>
         </div>
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth="2">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" strokeWidth="2">
           {open ? <polyline points="18 15 12 9 6 15" /> : <polyline points="6 9 12 15 18 9" />}
         </svg>
       </div>
 
       {open ? (
-        <div style={{ marginTop: 12, paddingTop: 12, borderTop: "1px solid rgba(0,0,0,0.06)" }}>
+        <div style={{ marginTop: 12, paddingTop: 12, borderTop: "1px solid rgba(15,23,42,0.06)" }}>
           <p style={{ fontSize: 12, color: "#4B5563", lineHeight: 1.7, margin: "0 0 12px" }}>
             {description}
           </p>
@@ -700,12 +700,12 @@ function RecommendedCard({
               width: "100%",
               padding: "11px 14px",
               borderRadius: 12,
-              background: "linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)",
+              background: "linear-gradient(135deg, #10B981 0%, #06B6D4 50%, #8B5CF6 100%)",
               color: "#FFFFFF",
               border: "none",
               fontSize: 13,
               fontWeight: 700,
-              fontFamily: "Syne, sans-serif",
+              fontFamily: "Sora, system-ui, sans-serif",
               cursor: "pointer",
               display: "flex",
               alignItems: "center",
@@ -747,7 +747,7 @@ function CatalogCard({
       }}
       style={{
         background: "#fff",
-        border: "1px solid rgba(0,0,0,0.06)",
+        border: "1px solid rgba(15,23,42,0.06)",
         borderRadius: 10,
         padding: 11,
         marginBottom: 6,
@@ -760,23 +760,23 @@ function CatalogCard({
             width: 6,
             height: 6,
             borderRadius: "50%",
-            background: "#9CA3AF",
+            background: "#94A3B8",
             flexShrink: 0,
           }}
         />
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 12, fontWeight: 600, color: "#111827" }}>{product.shortName}</div>
-          <div style={{ fontSize: 10, color: "#9CA3AF" }}>
+          <div style={{ fontSize: 12, fontWeight: 600, color: "#0F172A" }}>{product.shortName}</div>
+          <div style={{ fontSize: 10, color: "#94A3B8" }}>
             {product.shortBenefit.split("·")[0].trim()}
           </div>
         </div>
-        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth="2">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" strokeWidth="2">
           {open ? <polyline points="18 15 12 9 6 15" /> : <polyline points="6 9 12 15 18 9" />}
         </svg>
       </div>
       {open ? (
-        <div style={{ marginTop: 10, paddingTop: 10, borderTop: "1px solid rgba(0,0,0,0.06)" }}>
-          <p style={{ fontSize: 11, color: "#6B7280", lineHeight: 1.6, margin: "0 0 10px" }}>
+        <div style={{ marginTop: 10, paddingTop: 10, borderTop: "1px solid rgba(15,23,42,0.06)" }}>
+          <p style={{ fontSize: 11, color: "#64748B", lineHeight: 1.6, margin: "0 0 10px" }}>
             {description}
           </p>
           <button
@@ -789,12 +789,12 @@ function CatalogCard({
               width: "100%",
               padding: "9px 12px",
               borderRadius: 10,
-              background: "#374151",
+              background: "#0F172A",
               color: "#fff",
               border: "none",
               fontSize: 12,
               fontWeight: 600,
-              fontFamily: "DM Sans, sans-serif",
+              fontFamily: "Inter, system-ui, sans-serif",
               cursor: "pointer",
             }}
           >

@@ -186,7 +186,7 @@ export function ClientPublicShareConsent({ clientId, clientFirstName }: Props) {
                     padding: "8px 14px",
                     borderRadius: 8,
                     border: "none",
-                    background: "linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)",
+                    background: "linear-gradient(135deg, #10B981 0%, #06B6D4 50%, #8B5CF6 100%)",
                     color: "#fff",
                     fontSize: 12,
                     fontWeight: 700,
@@ -234,7 +234,7 @@ export function ClientPublicShareConsent({ clientId, clientFirstName }: Props) {
               color: "#F0EDE8",
             }}
           >
-            <div style={{ fontSize: 18, fontWeight: 800, marginBottom: 8, fontFamily: "Syne, sans-serif" }}>
+            <div style={{ fontSize: 18, fontWeight: 800, marginBottom: 8, fontFamily: "Sora, system-ui, sans-serif" }}>
               Autoriser le partage public ?
             </div>
             <div
@@ -274,7 +274,7 @@ export function ClientPublicShareConsent({ clientId, clientFirstName }: Props) {
                 type="checkbox"
                 checked={agreed}
                 onChange={(e) => setAgreed(e.target.checked)}
-                style={{ marginTop: 2, accentColor: "#EF9F27" }}
+                style={{ marginTop: 2, accentColor: "#10B981" }}
               />
               <span>
                 J&apos;accepte que mes chiffres de progression soient partagés publiquement
@@ -312,7 +312,7 @@ export function ClientPublicShareConsent({ clientId, clientFirstName }: Props) {
                   background:
                     !agreed || busy
                       ? "rgba(255,255,255,0.1)"
-                      : "linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)",
+                      : "linear-gradient(135deg, #10B981 0%, #06B6D4 50%, #8B5CF6 100%)",
                   color: !agreed || busy ? "rgba(255,255,255,0.4)" : "#fff",
                   fontSize: 13,
                   fontWeight: 700,

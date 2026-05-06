@@ -24,22 +24,22 @@ function inferObjective(programTitle?: string, liveClientProgram?: string | null
 
 function getEvolutionColor(delta: number, field: "weight" | "muscle" | "fat", obj: Objective): string {
   if (!Number.isFinite(delta) || delta === 0) return "#9CA3AF";
-  const gold = "#B8922A";
+  const accent = "#10B981";
   const coral = "#D4537E";
   const neutral = "#6B7280";
   if (obj === "weight-loss") {
-    if (field === "weight" || field === "fat") return delta < 0 ? gold : coral;
-    if (field === "muscle") return delta >= 0 ? gold : coral;
+    if (field === "weight" || field === "fat") return delta < 0 ? accent : coral;
+    if (field === "muscle") return delta >= 0 ? accent : coral;
     return neutral;
   }
   if (obj === "sport-mass-gain") {
-    if (field === "muscle") return delta > 0 ? gold : coral;
-    if (field === "weight") return delta > 0 ? gold : neutral;
+    if (field === "muscle") return delta > 0 ? accent : coral;
+    if (field === "weight") return delta > 0 ? accent : neutral;
     return neutral;
   }
   if (obj === "sport-cutting") {
-    if (field === "weight" || field === "fat") return delta < 0 ? gold : coral;
-    if (field === "muscle") return delta >= 0 ? gold : coral;
+    if (field === "weight" || field === "fat") return delta < 0 ? accent : coral;
+    if (field === "muscle") return delta >= 0 ? accent : coral;
     return neutral;
   }
   return neutral;
@@ -115,8 +115,8 @@ export function EnrichedAssessmentHistory({ metrics, programTitle, liveClientPro
       <div
         style={{
           background: "#FFFFFF",
-          border: "1px solid rgba(0,0,0,0.07)",
-          borderLeft: isDeparture ? "3px solid #B8922A" : "1px solid rgba(0,0,0,0.07)",
+          border: "1px solid #E2E8F0",
+          borderLeft: isDeparture ? "3px solid #10B981" : "1px solid #E2E8F0",
           borderRadius: 12,
           padding: "10px 12px",
           display: "flex",
@@ -125,7 +125,7 @@ export function EnrichedAssessmentHistory({ metrics, programTitle, liveClientPro
         }}
       >
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <div style={{ fontFamily: "Syne, sans-serif", fontWeight: 700, fontSize: 13, color: "#111827" }}>
+          <div style={{ fontFamily: "Sora, system-ui, sans-serif", fontWeight: 700, fontSize: 13, color: "#0F172A" }}>
             {isDeparture ? "📍 Point de départ" : fmtDate(row.date)}
           </div>
           {isDeparture ? (
@@ -166,7 +166,7 @@ export function EnrichedAssessmentHistory({ metrics, programTitle, liveClientPro
         className="enriched-history-table"
         style={{
           background: "#fff",
-          border: "1px solid rgba(0,0,0,0.07)",
+          border: "1px solid #E2E8F0",
           borderRadius: 14,
           overflow: "hidden",
         }}
@@ -174,7 +174,7 @@ export function EnrichedAssessmentHistory({ metrics, programTitle, liveClientPro
         <div style={{ overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11, minWidth: 560 }}>
             <thead>
-              <tr style={{ borderBottom: "1px solid rgba(0,0,0,0.07)" }}>
+              <tr style={{ borderBottom: "1px solid #E2E8F0" }}>
                 {["Date", "Poids", "MG %", "MG kg", "Muscle kg", "Eau %", "Viscéral", "Évolution"].map((h) => (
                   <th
                     key={h}
@@ -198,35 +198,35 @@ export function EnrichedAssessmentHistory({ metrics, programTitle, liveClientPro
               <tr
                 key={depKey}
                 style={{
-                  borderLeft: "3px solid #B8922A",
+                  borderLeft: "3px solid #10B981",
                   background: "rgba(184,146,42,0.06)",
-                  borderBottom: hasMultiple ? "1px solid rgba(0,0,0,0.05)" : "none",
+                  borderBottom: hasMultiple ? "1px solid #F1F5F9" : "none",
                 }}
               >
-                <td style={{ padding: "10px 6px", fontSize: 11, whiteSpace: "nowrap", fontWeight: 700, color: "#633806" }}>
+                <td style={{ padding: "10px 6px", fontSize: 11, whiteSpace: "nowrap", fontWeight: 700, color: "#0F172A" }}>
                   📍 Départ · {fmtDate(departure.date)}
                 </td>
-                <td style={{ padding: "10px 6px", fontWeight: 600, color: "#B8922A" }}>{fmtNum(departure.weight)}</td>
-                <td style={{ padding: "10px 6px", color: "#111827" }}>{fmtNum(departure.bodyFat)}%</td>
+                <td style={{ padding: "10px 6px", fontWeight: 600, color: "#10B981" }}>{fmtNum(departure.weight)}</td>
+                <td style={{ padding: "10px 6px", color: "#0F172A" }}>{fmtNum(departure.bodyFat)}%</td>
                 <td style={{ padding: "10px 6px", color: "#6B7280" }}>{fmtNum(mgKg(departure))}</td>
                 <td style={{ padding: "10px 6px", color: "#0D9488" }}>{fmtNum(departure.muscleMass)}</td>
                 <td style={{ padding: "10px 6px", color: "#7C3AED" }}>{fmtNum(departure.hydration, 0)}%</td>
-                <td style={{ padding: "10px 6px", color: "#111827" }}>{fmtNum(departure.visceralFat, 0)}</td>
+                <td style={{ padding: "10px 6px", color: "#0F172A" }}>{fmtNum(departure.visceralFat, 0)}</td>
                 <td style={{ padding: "10px 6px", color: "#9CA3AF" }}>—</td>
               </tr>
               {latest5.map((row, i) => (
                 <tr
                   key={i}
                   style={{
-                    borderBottom: i < latest5.length - 1 ? "1px solid rgba(0,0,0,0.05)" : "none",
+                    borderBottom: i < latest5.length - 1 ? "1px solid #F1F5F9" : "none",
                     background: i % 2 === 0 ? "#FAFAF9" : "#fff",
                   }}
                 >
                   <td style={{ padding: "9px 6px", color: "#6B7280", fontSize: 10, whiteSpace: "nowrap" }}>
                     {fmtDate(row.date)}
                   </td>
-                  <td style={{ padding: "9px 6px", fontWeight: 600, color: "#B8922A" }}>{fmtNum(row.weight)}</td>
-                  <td style={{ padding: "9px 6px", color: (row.bodyFat ?? 0) > 30 ? "#DC2626" : "#111827" }}>
+                  <td style={{ padding: "9px 6px", fontWeight: 600, color: "#10B981" }}>{fmtNum(row.weight)}</td>
+                  <td style={{ padding: "9px 6px", color: (row.bodyFat ?? 0) > 30 ? "#DC2626" : "#0F172A" }}>
                     {fmtNum(row.bodyFat)}%
                   </td>
                   <td style={{ padding: "9px 6px", color: "#6B7280" }}>{fmtNum(mgKg(row))}</td>
@@ -234,7 +234,7 @@ export function EnrichedAssessmentHistory({ metrics, programTitle, liveClientPro
                   <td style={{ padding: "9px 6px", color: (row.hydration ?? 100) < 50 ? "#DC2626" : "#7C3AED" }}>
                     {fmtNum(row.hydration, 0)}%
                   </td>
-                  <td style={{ padding: "9px 6px", color: (row.visceralFat ?? 0) >= 9 ? "#DC2626" : "#111827" }}>
+                  <td style={{ padding: "9px 6px", color: (row.visceralFat ?? 0) >= 9 ? "#DC2626" : "#0F172A" }}>
                     {fmtNum(row.visceralFat, 0)}
                   </td>
                   <td style={{ padding: "9px 6px" }}>{renderEvolutionCell(row, false)}</td>

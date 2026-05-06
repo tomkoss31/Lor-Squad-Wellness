@@ -143,24 +143,24 @@ export function ClientMoodCheckIn({ token }: Props) {
           padding: "12px 14px",
           background:
             def.tone === "teal"
-              ? "rgba(29,158,117,0.08)"
+              ? "rgba(16,185,129,0.08)"
               : def.tone === "purple"
                 ? "rgba(127,119,221,0.08)"
                 : def.tone === "coral"
                   ? "rgba(220,38,38,0.06)"
-                  : "rgba(184,146,42,0.06)",
+                  : "rgba(16,185,129,0.06)",
           border: `0.5px solid ${
             def.tone === "teal"
-              ? "rgba(29,158,117,0.25)"
+              ? "rgba(16,185,129,0.25)"
               : def.tone === "purple"
                 ? "rgba(127,119,221,0.25)"
                 : def.tone === "coral"
                   ? "rgba(220,38,38,0.25)"
-                  : "rgba(184,146,42,0.25)"
+                  : "rgba(16,185,129,0.25)"
           }`,
           borderRadius: 14,
           marginBottom: 14,
-          fontFamily: "DM Sans, sans-serif",
+          fontFamily: "Inter, system-ui, sans-serif",
         }}
       >
         <span style={{ fontSize: 26, lineHeight: 1 }}>{def.emoji}</span>
@@ -169,12 +169,12 @@ export function ClientMoodCheckIn({ token }: Props) {
             style={{
               fontSize: 12,
               color: "#6B6B62",
-              fontFamily: "DM Sans, sans-serif",
+              fontFamily: "Inter, system-ui, sans-serif",
             }}
           >
             Aujourd&apos;hui · <strong>{def.label}</strong>
           </div>
-          <div style={{ fontSize: 12, color: "#374151", marginTop: 2, lineHeight: 1.4 }}>
+          <div style={{ fontSize: 12, color: "#0F172A", marginTop: 2, lineHeight: 1.4 }}>
             {def.message}
           </div>
         </div>
@@ -185,13 +185,13 @@ export function ClientMoodCheckIn({ token }: Props) {
               onClick={goToMessages}
               style={{
                 padding: "6px 11px",
-                background: "linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)",
+                background: "linear-gradient(135deg, #10B981 0%, #06B6D4 50%, #8B5CF6 100%)",
                 color: "white",
                 border: "none",
                 borderRadius: 8,
                 fontSize: 11,
                 fontWeight: 700,
-                fontFamily: "Syne, serif",
+                fontFamily: "Sora, system-ui, sans-serif",
                 cursor: "pointer",
               }}
             >
@@ -204,12 +204,12 @@ export function ClientMoodCheckIn({ token }: Props) {
             style={{
               padding: "6px 10px",
               background: "transparent",
-              color: "#888",
+              color: "#64748B",
               border: "0.5px solid rgba(0,0,0,0.12)",
               borderRadius: 8,
               fontSize: 10,
               cursor: "pointer",
-              fontFamily: "DM Sans, sans-serif",
+              fontFamily: "Inter, system-ui, sans-serif",
             }}
           >
             Changer
@@ -225,11 +225,11 @@ export function ClientMoodCheckIn({ token }: Props) {
       style={{
         background:
           "linear-gradient(135deg, rgba(255,255,255,1) 0%, rgba(252,245,225,0.7) 100%)",
-        border: "0.5px solid rgba(184,146,42,0.30)",
+        border: "0.5px solid rgba(16,185,129,0.30)",
         borderRadius: 14,
         padding: "14px 14px",
         marginBottom: 14,
-        fontFamily: "DM Sans, sans-serif",
+        fontFamily: "Inter, system-ui, sans-serif",
       }}
     >
       <div
@@ -237,7 +237,7 @@ export function ClientMoodCheckIn({ token }: Props) {
           fontSize: 11,
           letterSpacing: 1.4,
           textTransform: "uppercase",
-          color: "#B8922A",
+          color: "#10B981",
           fontWeight: 700,
           marginBottom: 10,
         }}
@@ -264,7 +264,7 @@ export function ClientMoodCheckIn({ token }: Props) {
               gap: 4,
               padding: "10px 4px",
               background: "white",
-              border: "0.5px solid rgba(0,0,0,0.06)",
+              border: "0.5px solid rgba(15,23,42,0.06)",
               borderRadius: 10,
               cursor: submitting ? "wait" : "pointer",
               fontFamily: "inherit",
@@ -273,7 +273,7 @@ export function ClientMoodCheckIn({ token }: Props) {
             onMouseEnter={(e) => {
               if (submitting) return;
               e.currentTarget.style.transform = "translateY(-2px)";
-              e.currentTarget.style.background = "rgba(184,146,42,0.04)";
+              e.currentTarget.style.background = "rgba(16,185,129,0.04)";
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.transform = "translateY(0)";
@@ -285,8 +285,8 @@ export function ClientMoodCheckIn({ token }: Props) {
               style={{
                 fontSize: 9,
                 fontWeight: 600,
-                color: "#374151",
-                fontFamily: "DM Sans, sans-serif",
+                color: "#0F172A",
+                fontFamily: "Inter, system-ui, sans-serif",
                 textAlign: "center",
               }}
             >

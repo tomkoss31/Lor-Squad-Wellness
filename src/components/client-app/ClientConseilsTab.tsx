@@ -65,7 +65,7 @@ function plateForObjective(obj: Objective): PlateSector[] {
       {
         label: "Légumes",
         pct: 33,
-        color: "#1D9E75",
+        color: "#10B981",
         items: ["Brocolis / haricots verts", "Salade variée", "Courgettes / poivrons"],
       },
     ];
@@ -87,7 +87,7 @@ function plateForObjective(obj: Objective): PlateSector[] {
     {
       label: "Légumes",
       pct: 50,
-      color: "#1D9E75",
+      color: "#10B981",
       items: ["Salade verte à volonté", "Légumes vapeur", "Crudités variées"],
     },
   ];
@@ -114,7 +114,7 @@ function PlateSvg({ sectors }: { sectors: PlateSector[] }) {
   });
   return (
     <svg viewBox="0 0 180 180" className="conseils-plate-svg" aria-label="Assiette idéale">
-      <circle cx={CX} cy={CY} r={R + 4} fill="#F7F5F0" />
+      <circle cx={CX} cy={CY} r={R + 4} fill="#FFFFFF" />
       {arcs.map((a, i) => (
         <path key={i} d={a.d} fill={a.color} opacity={0.85} stroke="#fff" strokeWidth={2} />
       ))}
@@ -130,7 +130,7 @@ function PlateSvg({ sectors }: { sectors: PlateSector[] }) {
             textAnchor="middle"
             dominantBaseline="central"
             fill="#fff"
-            fontFamily="Syne, sans-serif"
+            fontFamily="Sora, system-ui, sans-serif"
             fontWeight={800}
             fontSize={14}
           >
@@ -245,7 +245,7 @@ export function ClientConseilsTab({ liveData, clientAppAccount }: Props) {
                 <span className="conseils-plate-dot" style={{ background: s.color }} />
                 <div>
                   <strong>{s.label} · {s.pct}%</strong>
-                  <ul style={{ margin: "4px 0 0", padding: 0, listStyle: "none", color: "#6B7280", fontSize: 12, lineHeight: 1.5 }}>
+                  <ul style={{ margin: "4px 0 0", padding: 0, listStyle: "none", color: "#64748B", fontSize: 12, lineHeight: 1.5 }}>
                     {s.items.map((it) => (
                       <li key={it}>• {it}</li>
                     ))}

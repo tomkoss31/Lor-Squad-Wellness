@@ -92,12 +92,12 @@ export function ClientXpToast() {
             alignItems: "center",
             gap: 10,
             background:
-              "linear-gradient(135deg, #FFFEF8 0%, #FAF6E8 60%, #FCE5C1 100%)",
+              "linear-gradient(135deg, #FFFEF8 0%, #FFFFFF 60%, #FCE5C1 100%)",
             border: "1px solid rgba(184,146,42,0.50)",
             borderRadius: 14,
             padding: "10px 16px 10px 12px",
             maxWidth: 360,
-            fontFamily: "DM Sans, sans-serif",
+            fontFamily: "Inter, system-ui, sans-serif",
             animation:
               "ls-xp-toast-in 280ms cubic-bezier(0.2, 0.8, 0.2, 1), ls-xp-toast-pulse 1800ms ease-in-out 280ms infinite",
             boxShadow: "0 6px 20px rgba(186,117,23,0.40)",
@@ -116,10 +116,10 @@ export function ClientXpToast() {
           <div style={{ flex: 1, minWidth: 0 }}>
             <div
               style={{
-                fontFamily: "Syne, serif",
+                fontFamily: "Sora, system-ui, sans-serif",
                 fontWeight: 700,
                 fontSize: 13,
-                color: "#5C4A0F",
+                color: "#0F172A",
                 lineHeight: 1.2,
                 whiteSpace: "nowrap",
                 overflow: "hidden",

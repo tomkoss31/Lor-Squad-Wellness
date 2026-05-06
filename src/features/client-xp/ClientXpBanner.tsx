@@ -61,15 +61,15 @@ export function ClientXpBanner({ token }: Props) {
     <div
       style={{
         background:
-          "linear-gradient(135deg, rgba(255,255,255,1) 0%, rgba(250,246,232,0.95) 70%, rgba(252,229,193,0.95) 100%)",
-        border: "0.5px solid rgba(184,146,42,0.40)",
+          "#FFFFFF",
+        border: "1px solid #E2E8F0",
         borderRadius: 18,
         padding: 16,
         marginBottom: 16,
-        boxShadow: "0 6px 18px rgba(184,146,42,0.15)",
+        boxShadow: "0 1px 3px rgba(15,23,42,0.04)",
         position: "relative",
         overflow: "hidden",
-        fontFamily: "DM Sans, sans-serif",
+        fontFamily: "Inter, system-ui, sans-serif",
       }}
     >
       {/* Glow gold subtle en haut a droite */}
@@ -82,7 +82,7 @@ export function ClientXpBanner({ token }: Props) {
           width: 120,
           height: 120,
           background:
-            "radial-gradient(circle, rgba(239,159,39,0.25) 0%, transparent 70%)",
+            "radial-gradient(circle, rgba(16,185,129,0.18) 0%, transparent 70%)",
           pointerEvents: "none",
         }}
       />
@@ -104,13 +104,13 @@ export function ClientXpBanner({ token }: Props) {
             height: 48,
             borderRadius: 14,
             background:
-              "linear-gradient(135deg, #FFE873 0%, #C9A84C 50%, #B8922A 100%)",
+              "linear-gradient(135deg, #10B981 0%, #06B6D4 50%, #8B5CF6 100%)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             fontSize: 26,
             boxShadow:
-              "0 4px 14px rgba(184,146,42,0.40), inset 0 1px 0 rgba(255,255,255,0.5)",
+              "0 4px 14px rgba(16,185,129,0.30), inset 0 1px 0 rgba(255,255,255,0.5)",
             flexShrink: 0,
           }}
         >
@@ -122,7 +122,7 @@ export function ClientXpBanner({ token }: Props) {
               fontSize: 9,
               letterSpacing: 1.8,
               textTransform: "uppercase",
-              color: "#B8922A",
+              color: "#10B981",
               fontWeight: 700,
               marginBottom: 2,
             }}
@@ -131,10 +131,10 @@ export function ClientXpBanner({ token }: Props) {
           </div>
           <div
             style={{
-              fontFamily: "Syne, serif",
+              fontFamily: "Sora, system-ui, sans-serif",
               fontWeight: 700,
               fontSize: 18,
-              color: "#5C4A0F",
+              color: "#0F172A",
               lineHeight: 1.1,
             }}
           >
@@ -145,14 +145,14 @@ export function ClientXpBanner({ token }: Props) {
         <div
           style={{
             background:
-              "linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)",
+              "linear-gradient(135deg, #10B981 0%, #06B6D4 50%, #8B5CF6 100%)",
             color: "white",
             padding: "8px 14px",
             borderRadius: 12,
             fontSize: 15,
             fontWeight: 800,
-            fontFamily: "Syne, serif",
-            boxShadow: "0 4px 12px rgba(186,117,23,0.35)",
+            fontFamily: "Sora, system-ui, sans-serif",
+            boxShadow: "0 4px 12px rgba(16,185,129,0.30)",
             flexShrink: 0,
           }}
         >
@@ -167,9 +167,9 @@ export function ClientXpBanner({ token }: Props) {
             display: "flex",
             justifyContent: "space-between",
             fontSize: 11,
-            color: "#5C4A0F",
+            color: "#0F172A",
             marginBottom: 5,
-            fontFamily: "DM Sans, sans-serif",
+            fontFamily: "Inter, system-ui, sans-serif",
           }}
         >
           <span style={{ fontWeight: 600 }}>
@@ -184,7 +184,7 @@ export function ClientXpBanner({ token }: Props) {
         <div
           style={{
             height: 10,
-            background: "rgba(184,146,42,0.18)",
+            background: "rgba(16,185,129,0.10)",
             borderRadius: 5,
             overflow: "hidden",
             boxShadow: "inset 0 1px 2px rgba(0,0,0,0.10)",
@@ -195,9 +195,9 @@ export function ClientXpBanner({ token }: Props) {
               width: `${pct}%`,
               height: "100%",
               background:
-                "linear-gradient(90deg, #B8922A 0%, #EF9F27 60%, #FFE873 100%)",
+                "linear-gradient(90deg, #10B981 0%, #06B6D4 50%, #8B5CF6 100%)",
               transition: "width 700ms cubic-bezier(0.4, 0, 0.2, 1)",
-              boxShadow: "0 0 10px rgba(239,159,39,0.55)",
+              boxShadow: "0 0 10px rgba(16,185,129,0.45)",
             }}
           />
         </div>
@@ -210,14 +210,14 @@ export function ClientXpBanner({ token }: Props) {
         style={{
           background: "transparent",
           border: "none",
-          color: "#6B6B62",
+          color: "#64748B",
           fontSize: 11,
           cursor: "pointer",
           padding: 0,
           display: "inline-flex",
           alignItems: "center",
           gap: 4,
-          fontFamily: "DM Sans, sans-serif",
+          fontFamily: "Inter, system-ui, sans-serif",
           fontWeight: 600,
           marginTop: 4,
         }}
@@ -231,7 +231,7 @@ export function ClientXpBanner({ token }: Props) {
           style={{
             marginTop: 12,
             paddingTop: 12,
-            borderTop: "0.5px dashed rgba(184,146,42,0.30)",
+            borderTop: "0.5px dashed #E2E8F0",
           }}
         >
           {/* Niveaux */}
@@ -240,7 +240,7 @@ export function ClientXpBanner({ token }: Props) {
               fontSize: 10,
               letterSpacing: 1.4,
               textTransform: "uppercase",
-              color: "#B8922A",
+              color: "#10B981",
               fontWeight: 700,
               marginBottom: 8,
             }}
@@ -260,11 +260,11 @@ export function ClientXpBanner({ token }: Props) {
                     gap: 8,
                     padding: "5px 9px",
                     background: isCurrent
-                      ? "rgba(184,146,42,0.14)"
+                      ? "rgba(16,185,129,0.08)"
                       : "rgba(255,255,255,0.5)",
                     border: isCurrent
-                      ? "0.5px solid rgba(184,146,42,0.60)"
-                      : "0.5px solid rgba(184,146,42,0.15)",
+                      ? "0.5px solid rgba(16,185,129,0.50)"
+                      : "0.5px solid #E2E8F0",
                     borderRadius: 7,
                     opacity: isReached ? 1 : 0.5,
                   }}
@@ -272,24 +272,24 @@ export function ClientXpBanner({ token }: Props) {
                   <span style={{ fontSize: 14 }}>{lv.badge}</span>
                   <span
                     style={{
-                      fontFamily: "Syne, serif",
+                      fontFamily: "Sora, system-ui, sans-serif",
                       fontWeight: 700,
                       fontSize: 11,
-                      color: isCurrent ? "#5C4A0F" : "#6B6B62",
+                      color: isCurrent ? "#0F172A" : "#64748B",
                       width: 110,
                       flexShrink: 0,
                     }}
                   >
                     {lv.title}
                   </span>
-                  <span style={{ fontSize: 10, color: "#6B6B62", flex: 1 }}>
+                  <span style={{ fontSize: 10, color: "#64748B", flex: 1 }}>
                     {lv.hint}
                   </span>
                   <span
                     style={{
                       fontSize: 10,
                       color: "#888",
-                      fontFamily: "DM Sans, sans-serif",
+                      fontFamily: "Inter, system-ui, sans-serif",
                       fontWeight: 600,
                     }}
                   >
@@ -312,7 +312,7 @@ export function ClientXpBanner({ token }: Props) {
                       fontSize: 10,
                       letterSpacing: 1.4,
                       textTransform: "uppercase",
-                      color: "#B8922A",
+                      color: "#10B981",
                       fontWeight: 700,
                       marginBottom: 6,
                     }}
@@ -341,7 +341,7 @@ export function ClientXpBanner({ token }: Props) {
                               fontSize: 11,
                               fontWeight: 600,
                               color: "#374151",
-                              fontFamily: "DM Sans, sans-serif",
+                              fontFamily: "Inter, system-ui, sans-serif",
                             }}
                           >
                             {a.label}
@@ -357,10 +357,10 @@ export function ClientXpBanner({ token }: Props) {
                         </div>
                         <span
                           style={{
-                            fontFamily: "Syne, serif",
+                            fontFamily: "Sora, system-ui, sans-serif",
                             fontSize: 12,
                             fontWeight: 700,
-                            color: "#B8922A",
+                            color: "#10B981",
                             flexShrink: 0,
                           }}
                         >

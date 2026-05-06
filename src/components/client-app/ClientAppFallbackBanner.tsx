@@ -14,28 +14,28 @@ export function ClientAppFallbackBanner({ onContact }: Props) {
       role="status"
       aria-live="polite"
       style={{
-        background: "#FAEEDA",
-        borderLeft: "4px solid #BA7517",
+        background: "#FAFAFC",
+        borderLeft: "4px solid #06B6D4",
         padding: "12px 16px",
         margin: "8px 14px",
         borderRadius: 8,
         display: "flex",
         alignItems: "center",
         gap: 12,
-        fontFamily: "'DM Sans', sans-serif",
+        fontFamily: "'Inter', system-ui, sans-serif",
       }}
     >
       <span style={{ fontSize: 20 }} aria-hidden="true">
         ⚠️
       </span>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: 13, fontWeight: 600, color: "#854F0B" }}>
+        <div style={{ fontSize: 13, fontWeight: 600, color: "#0F172A" }}>
           Données partielles affichées
         </div>
         <div
           style={{
             fontSize: 11,
-            color: "#854F0B",
+            color: "#0F172A",
             opacity: 0.85,
             marginTop: 2,
             lineHeight: 1.4,
@@ -50,7 +50,7 @@ export function ClientAppFallbackBanner({ onContact }: Props) {
           type="button"
           onClick={onContact}
           style={{
-            background: "#BA7517",
+            background: "#06B6D4",
             color: "#fff",
             border: "none",
             padding: "6px 12px",
