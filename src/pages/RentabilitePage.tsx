@@ -28,7 +28,7 @@ import {
 
 function computeOwnMarginFromBreakdownsOrFallback(
   data: { scope_user_ids: string[]; margin_eur: number } | null,
-  breakdowns: Array<{ userId: string; pv15: number; pv25: number; pv35: number; pv42: number; pvRoyalty: number; month: string; declaredBy: string | null; declaredAt: string | null }>,
+  breakdowns: Array<{ userId: string; pv15: number; pv25: number; pv35: number; pv42: number; pvRoyalty: number; pv25IsVip: boolean; pv35IsVip: boolean; month: string; declaredBy: string | null; declaredAt: string | null }>,
   users: Array<{ id: string; currentRank?: import("../types/domain").HerbalifeRank }>,
 ): number {
   if (!data) return 0;

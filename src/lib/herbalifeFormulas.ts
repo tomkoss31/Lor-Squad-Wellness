@@ -49,6 +49,10 @@ export interface PvMonthlyBreakdown {
   pv35: number;
   pv42: number;
   pvRoyalty: number;
+  /** Flag UI : si true, les PV 25% sont des Silver VIP (sinon Distributor). */
+  pv25IsVip: boolean;
+  /** Flag UI : si true, les PV 35% sont des Gold VIP (sinon Senior Consultant). */
+  pv35IsVip: boolean;
   declaredBy: string | null;
   declaredAt: string | null;
 }
@@ -80,6 +84,8 @@ export function emptyBreakdown(userId: string, month: string): PvMonthlyBreakdow
     pv35: 0,
     pv42: 0,
     pvRoyalty: 0,
+    pv25IsVip: false,
+    pv35IsVip: false,
     declaredBy: null,
     declaredAt: null,
   };
@@ -284,6 +290,8 @@ export interface ManualPvEntry {
   pv35: number;
   pv42: number;
   pvRoyalty: number;
+  pv25IsVip: boolean;
+  pv35IsVip: boolean;
   declaredAt: string | null;
 }
 
@@ -298,6 +306,8 @@ function manualEntryAsBreakdown(e: ManualPvEntry): PvMonthlyBreakdown {
     pv35: e.pv35,
     pv42: e.pv42,
     pvRoyalty: e.pvRoyalty,
+    pv25IsVip: e.pv25IsVip,
+    pv35IsVip: e.pv35IsVip,
     declaredBy: null,
     declaredAt: e.declaredAt,
   };
