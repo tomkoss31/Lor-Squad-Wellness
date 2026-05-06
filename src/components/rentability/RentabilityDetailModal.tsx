@@ -24,10 +24,19 @@ import {
 import { RentabilityGauge } from "./RentabilityGauge";
 import {
   RANK_LABELS,
-  RANK_MARGINS,
   type HerbalifeRank,
   type User,
 } from "../../types/domain";
+import {
+  COMMISSION_PCT_BY_TIER,
+  PV_TO_EUR_RATIO,
+  ROYALTY_OVERRIDE_PCT,
+  computeOverrideEur,
+  currentMonthIso,
+  totalPvFromBreakdown,
+  type PvMonthlyBreakdown,
+} from "../../lib/herbalifeFormulas";
+import { usePvBreakdowns } from "../../hooks/usePvBreakdowns";
 
 interface RentabilityDetailModalProps {
   data: RentabilityData;
@@ -66,11 +75,14 @@ interface DownlineEntry {
   user: User;
   rankLabel: string;
   rankMarginPct: number;
+  /** Si dispo : breakdown precis par tier (V2 fiche RO). */
+  breakdown: PvMonthlyBreakdown | null;
+  /** PV total ce mois (somme breakdown OU monthly_pv_override OU null). */
   monthlyPv: number | null;
-  monthlyPvIsOverride: boolean;
-  /** Estimation override € sur ce distri = (owner% - downline%) × CA estimé.
-   *  CA estimé = PV × ~1.3 € (proxy Herbalife retail). Marqué "estimation". */
-  overrideEurEstimate: number;
+  /** Override EUR — exact si breakdown V2, sinon estimation rang final. */
+  overrideEur: number;
+  /** True si la valeur d override est calculee depuis le breakdown V2. */
+  overrideIsExact: boolean;
 }
 
 export function RentabilityDetailModal({ data, onClose }: RentabilityDetailModalProps) {
@@ -87,15 +99,13 @@ export function RentabilityDetailModal({ data, onClose }: RentabilityDetailModal
   // ─── Onglet de filtrage (chantier V3 2026-11-07) ───────────────────────────
   const [tab, setTab] = useState<FilterTab>("all");
 
-  // ─── Downline computation (admin/référent uniquement) ──────────────────────
+  // ─── Downline computation V2 (calibre fiche RO Herbalife 2026-11-07) ──────
   // Sponsor = un des user_ids du scope (couple Thomas+Mélanie agrégé).
   const ownerIds = useMemo(() => new Set(data.scope_user_ids), [data.scope_user_ids]);
-  const currentMonthIso = useMemo(() => {
-    const d = new Date();
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-  }, []);
+  const monthIso = useMemo(() => currentMonthIso(), []);
 
-  const ownerMarginPct = data.margin_pct;
+  // Charge les breakdowns V2 du mois pour calculer l override exact quand dispo.
+  const { getForUser: getBreakdownForUser } = usePvBreakdowns(monthIso);
 
   const downline = useMemo<DownlineEntry[]>(() => {
     if (!currentUser) return [];
@@ -110,40 +120,50 @@ export function RentabilityDetailModal({ data, onClose }: RentabilityDetailModal
       .filter((u) => !u.frozenAt)
       .map<DownlineEntry>((u) => {
         const rankKey = (u.currentRank ?? "distributor_25") as HerbalifeRank;
-        const rankMargin = (RANK_MARGINS[rankKey] ?? 0.25) * 100;
-        const isOverrideActive =
-          (u as User & { monthlyPvOverrideMonth?: string | null }).monthlyPvOverrideMonth ===
-            currentMonthIso &&
-          typeof (u as User & { monthlyPvOverride?: number | null }).monthlyPvOverride ===
-            "number";
-        const pv = isOverrideActive
-          ? ((u as User & { monthlyPvOverride?: number | null }).monthlyPvOverride as number)
-          : null;
-        // Estimation override € : (margePerso - margeDownline) × CA_estime
-        // CA estimé = PV × 1.5 (approx Herbalife retail). C est une projection,
-        // pas une vérité comptable — la vraie source est Bizworks Royalty.
-        // Ratio PV → € retail France : ~1.5 € HT / PV (ordre de grandeur
-        // valide pour un mix typique Herbalife). Thomas valide ce ratio
-        // (2026-11-07). Le calcul reste une PROJECTION — la verite reste
-        // Bizworks Royalty Report.
-        const ca = pv != null ? pv * 1.5 : 0;
-        const overrideEur = (ownerMarginPct - rankMargin) > 0
-          ? ca * ((ownerMarginPct - rankMargin) / 100)
-          : 0;
+        const breakdown = getBreakdownForUser(u.id);
+        let monthlyPv: number | null = null;
+        let overrideEur = 0;
+        let overrideIsExact = false;
+
+        if (breakdown) {
+          // V2 : calcul exact depuis breakdown par tier (calibre fiche RO).
+          monthlyPv = totalPvFromBreakdown(breakdown);
+          overrideEur = computeOverrideEur(breakdown);
+          overrideIsExact = true;
+        } else {
+          // Fallback V1 : estimation rang final + monthly_pv_override unique.
+          const isOverrideActive =
+            (u as User & { monthlyPvOverrideMonth?: string | null }).monthlyPvOverrideMonth ===
+              monthIso &&
+            typeof (u as User & { monthlyPvOverride?: number | null }).monthlyPvOverride ===
+              "number";
+          monthlyPv = isOverrideActive
+            ? ((u as User & { monthlyPvOverride?: number | null }).monthlyPvOverride as number)
+            : null;
+          // Heuristique : si rang final dans la grille commission, on prend le tier.
+          const tierPct =
+            rankKey === "distributor_25" ? COMMISSION_PCT_BY_TIER.pv25 :
+            rankKey === "senior_consultant_35" ? COMMISSION_PCT_BY_TIER.pv35 :
+            rankKey === "success_builder_42" ? COMMISSION_PCT_BY_TIER.pv42 :
+            ROYALTY_OVERRIDE_PCT; // Supervisor 50%+ : 5% royalty
+          overrideEur = (monthlyPv ?? 0) * tierPct * PV_TO_EUR_RATIO;
+        }
+
         return {
           user: u,
           rankLabel: RANK_LABELS[rankKey] ?? "Distributor (25%)",
-          rankMarginPct: rankMargin,
-          monthlyPv: pv,
-          monthlyPvIsOverride: isOverrideActive,
-          overrideEurEstimate: overrideEur,
+          rankMarginPct: 0,
+          breakdown,
+          monthlyPv,
+          overrideEur,
+          overrideIsExact,
         };
       })
-      .sort((a, b) => (b.monthlyPv ?? 0) - (a.monthlyPv ?? 0));
-  }, [users, currentUser, ownerIds, ownerMarginPct, currentMonthIso]);
+      .sort((a, b) => (b.overrideEur ?? 0) - (a.overrideEur ?? 0));
+  }, [users, currentUser, ownerIds, monthIso, getBreakdownForUser]);
 
   const downlineCount = downline.length;
-  const downlineTotalOverride = downline.reduce((s, d) => s + d.overrideEurEstimate, 0);
+  const downlineTotalOverride = downline.reduce((s, d) => s + d.overrideEur, 0);
 
   // ─── Top clients filtrés par onglet ────────────────────────────────────────
   const filteredTopClients = useMemo<RentabilityTopClient[]>(() => {
@@ -294,10 +314,11 @@ export function RentabilityDetailModal({ data, onClose }: RentabilityDetailModal
                 ))}
               </ul>
               <div style={methodoStyle}>
-                ℹ️ <strong>Estimation override</strong> = (ta marge {data.margin_pct} % − marge
-                downline) × PV × 1.5 € (proxy retail). La vraie source est Bizworks Royalty
-                Report. Saisis le PV Bizworks de chaque distri dans <em>Mon équipe → fiche
-                distri</em> pour des chiffres réalistes.
+                ℹ️ <strong>Override exact</strong> quand le breakdown PV par tier est saisi
+                (Mon équipe → fiche distri). Sinon estimation grossière via rang final.
+                Formule : commission% (50−tier) × PV × {PV_TO_EUR_RATIO} €/PV
+                + royalty {Math.round(ROYALTY_OVERRIDE_PCT * 100)}% sur volume Supervisor.
+                Calibré fiche RO Herbalife 2026-03.
               </div>
             </>
           ) : null
@@ -451,7 +472,18 @@ function TopClientRow({ client, rank }: { client: RentabilityTopClient; rank: nu
 }
 
 function DownlineRow({ entry, rank }: { entry: DownlineEntry; rank: number }) {
-  const { user, rankLabel, monthlyPv, monthlyPvIsOverride, overrideEurEstimate } = entry;
+  const { user, rankLabel, monthlyPv, overrideEur, overrideIsExact, breakdown } = entry;
+  const breakdownDetail = breakdown
+    ? [
+        breakdown.pv15 > 0 ? `${breakdown.pv15} PV @15%` : null,
+        breakdown.pv25 > 0 ? `${breakdown.pv25} PV @25%` : null,
+        breakdown.pv35 > 0 ? `${breakdown.pv35} PV @35%` : null,
+        breakdown.pv42 > 0 ? `${breakdown.pv42} PV @42%` : null,
+        breakdown.pvRoyalty > 0 ? `${breakdown.pvRoyalty} PV royalty` : null,
+      ]
+        .filter(Boolean)
+        .join(" · ")
+    : null;
   return (
     <li style={clientRowStyle(rank)}>
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
@@ -463,17 +495,21 @@ function DownlineRow({ entry, rank }: { entry: DownlineEntry; rank: number }) {
           {rankLabel}
         </span>
         <span style={{ fontFamily: "Syne, sans-serif", fontWeight: 700, fontSize: 14, color: "var(--ls-purple)", whiteSpace: "nowrap" }}>
-          ~{formatEur(overrideEurEstimate)}
+          {overrideIsExact ? "" : "~"}{formatEur(overrideEur)}
         </span>
       </div>
       <div style={{ fontSize: 11, color: "var(--ls-text-muted)", paddingLeft: 32 }}>
-        {monthlyPv != null ? (
+        {breakdownDetail ? (
           <>
-            <strong>{monthlyPv.toLocaleString("fr-FR")} PV</strong> ce mois
-            {monthlyPvIsOverride ? " (Bizworks)" : ""}
+            <strong>{(monthlyPv ?? 0).toLocaleString("fr-FR")} PV</strong> · {breakdownDetail}
+            <span style={{ color: "var(--ls-teal)", fontWeight: 700, marginLeft: 6 }}>· exact</span>
+          </>
+        ) : monthlyPv != null ? (
+          <>
+            <strong>{monthlyPv.toLocaleString("fr-FR")} PV</strong> ce mois (estimation rang final)
           </>
         ) : (
-          <em>PV non saisi · saisis-le dans Mon équipe → {user.name}</em>
+          <em>PV non saisi · clique fiche distri pour saisir le breakdown</em>
         )}
       </div>
     </li>

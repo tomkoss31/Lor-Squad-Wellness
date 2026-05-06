@@ -1544,6 +1544,80 @@ export async function setUserPvOverride(
 }
 
 /**
+ * Set le breakdown PV mensuel d'un user (admin only). Met aussi a jour
+ * users.monthly_pv_override = somme cote SQL (RPC). Calibre fiche RO 2026-03.
+ */
+export async function setUserPvBreakdown(params: {
+  userId: string;
+  month: string;
+  pv15: number;
+  pv25: number;
+  pv35: number;
+  pv42: number;
+  pvRoyalty: number;
+}): Promise<void> {
+  const client = await requireSupabase();
+  const { error } = await client.rpc("set_user_pv_breakdown", {
+    p_user_id: params.userId,
+    p_month: params.month,
+    p_pv_15: params.pv15,
+    p_pv_25: params.pv25,
+    p_pv_35: params.pv35,
+    p_pv_42: params.pv42,
+    p_pv_royalty: params.pvRoyalty,
+  });
+  if (error) {
+    throw new Error(`Impossible d'enregistrer le breakdown PV : ${error.message}`);
+  }
+}
+
+/**
+ * Charge tous les breakdowns du mois courant (fetched une seule fois au boot
+ * AppContext puis re-fetched apres chaque save). Volume max ~50 lignes.
+ */
+export async function loadPvBreakdownsForMonth(
+  month: string,
+): Promise<Array<{
+  userId: string;
+  month: string;
+  pv15: number;
+  pv25: number;
+  pv35: number;
+  pv42: number;
+  pvRoyalty: number;
+  declaredBy: string | null;
+  declaredAt: string | null;
+}>> {
+  const client = await requireSupabase();
+  const { data, error } = await client
+    .from("pv_monthly_breakdown")
+    .select("user_id, month, pv_15, pv_25, pv_35, pv_42, pv_royalty, declared_by, declared_at")
+    .eq("month", month);
+  if (error || !data) return [];
+  return data.map((r: {
+    user_id: string;
+    month: string;
+    pv_15: number | null;
+    pv_25: number | null;
+    pv_35: number | null;
+    pv_42: number | null;
+    pv_royalty: number | null;
+    declared_by: string | null;
+    declared_at: string | null;
+  }) => ({
+    userId: r.user_id,
+    month: r.month,
+    pv15: Number(r.pv_15 ?? 0),
+    pv25: Number(r.pv_25 ?? 0),
+    pv35: Number(r.pv_35 ?? 0),
+    pv42: Number(r.pv_42 ?? 0),
+    pvRoyalty: Number(r.pv_royalty ?? 0),
+    declaredBy: r.declared_by ?? null,
+    declaredAt: r.declared_at ?? null,
+  }));
+}
+
+/**
  * Met a jour le rang Herbalife d'un user (admin only). Stamp rank_set_at.
  */
 export async function setUserRankAdmin(userId: string, rank: string): Promise<void> {
