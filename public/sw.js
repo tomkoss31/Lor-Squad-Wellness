@@ -21,6 +21,15 @@ self.addEventListener("install", () => {
   self.skipWaiting();
 });
 
+// Listen for SKIP_WAITING messages depuis SwUpdatePrompt cote client.
+// Quand l'user click 'Activer' sur le toast 'Mise a jour disponible',
+// on bascule immediatement le nouveau SW en controleur.
+self.addEventListener("message", (event) => {
+  if (event.data && event.data.type === "SKIP_WAITING") {
+    self.skipWaiting();
+  }
+});
+
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches

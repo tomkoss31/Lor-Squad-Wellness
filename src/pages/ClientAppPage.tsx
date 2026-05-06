@@ -219,7 +219,7 @@ export function ClientAppPage() {
 
       const meta = document.createElement('meta')
       meta.name = 'theme-color'
-      meta.content = '#B8922A'
+      meta.content = '#10B981'
       document.head.appendChild(meta)
 
       const appleMeta = document.createElement('meta')
@@ -563,7 +563,7 @@ export function ClientAppPage() {
             zIndex: 9999,
             padding: '14px 18px',
             borderRadius: 14,
-            background: 'linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)',
+            background: 'linear-gradient(135deg, #10B981 0%, #06B6D4 50%, #8B5CF6 100%)',
             color: '#fff',
             fontFamily: 'Syne, sans-serif',
             fontWeight: 700,
@@ -623,21 +623,38 @@ export function ClientAppPage() {
           déjà installée + non dismissée. Self-hides sinon. */}
       <InstallPwaBanner />
 
-      {/* HERO */}
-      <div style={{ background: 'linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 60%, #F4F2EE 100%)', padding: '20px 16px 16px' }}>
+      {/* HERO — rebrand La Base 360 G3 (2026-05-06) */}
+      <div style={{
+        background:
+          'radial-gradient(ellipse at 20% 20%, rgba(16,185,129,0.10) 0%, transparent 55%), ' +
+          'radial-gradient(ellipse at 80% 30%, rgba(6,182,212,0.10) 0%, transparent 55%), ' +
+          'radial-gradient(ellipse at 50% 80%, rgba(139,92,246,0.08) 0%, transparent 55%), ' +
+          '#FFFFFF',
+        padding: '20px 16px 16px',
+      }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <div style={{ width: 28, height: 28, background: '#B8922A', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="#fff"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></svg>
-            </div>
-            <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 14, color: '#111827' }}>
-              Lor'<span style={{ color: '#B8922A' }}>Squad</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <img
+              src="/brand/labase360/app-icon-512.svg"
+              alt="La Base 360"
+              style={{ width: 32, height: 32, borderRadius: 9, flexShrink: 0 }}
+            />
+            <div style={{ fontFamily: 'Sora, system-ui, sans-serif', fontWeight: 700, fontSize: 14, color: '#0F172A', letterSpacing: '-0.01em' }}>
+              La Base{' '}
+              <span style={{
+                fontStyle: 'italic',
+                fontWeight: 400,
+                background: 'linear-gradient(135deg, #10B981 0%, #06B6D4 50%, #8B5CF6 100%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text',
+              }}>360</span>
             </div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-              <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#0D9488' }} />
-              <span style={{ fontSize: 10, color: '#0D9488', fontWeight: 500 }}>Coach {data.coach_name}</span>
+              <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#06B6D4' }} />
+              <span style={{ fontSize: 10, color: '#06B6D4', fontWeight: 500 }}>Coach {data.coach_name}</span>
             </div>
             {/* Chantier Tuto interactif client (2026-04-24) : bouton ? pour
                 relancer le tutoriel à tout moment. */}
@@ -650,9 +667,9 @@ export function ClientAppPage() {
                 width: 32,
                 height: 32,
                 borderRadius: '50%',
-                background: 'rgba(184,146,42,0.12)',
-                color: '#B8922A',
-                border: '1px solid rgba(184,146,42,0.2)',
+                background: 'rgba(16,185,129,0.12)',
+                color: '#10B981',
+                border: '1px solid rgba(16,185,129,0.2)',
                 fontFamily: 'Syne, sans-serif',
                 fontWeight: 700,
                 fontSize: 14,
@@ -669,7 +686,7 @@ export function ClientAppPage() {
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'rgba(184,146,42,0.15)', border: '2px solid rgba(184,146,42,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 16, color: '#B8922A', flexShrink: 0 }}>
+          <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'rgba(16,185,129,0.15)', border: '2px solid rgba(16,185,129,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 16, color: '#10B981', flexShrink: 0 }}>
             {data.client_first_name?.[0]}{data.client_last_name?.[0]}
           </div>
           <div>
@@ -761,9 +778,9 @@ export function ClientAppPage() {
               <div
                 style={{
                   padding: '10px 14px',
-                  background: 'color-mix(in srgb, #1D9E75 8%, var(--ls-surface))',
+                  background: 'color-mix(in srgb, #10B981 8%, var(--ls-surface))',
                   border: '0.5px solid rgba(29,158,117,0.25)',
-                  borderLeft: '3px solid #1D9E75',
+                  borderLeft: '3px solid #10B981',
                   borderRadius: 12,
                   fontSize: 12,
                   color: '#0F6E56',
@@ -886,7 +903,7 @@ export function ClientAppPage() {
         {/* ══════════════════════════════════════════════════════════════ */}
         {activeTab === 'refer' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <div style={{ background: 'rgba(184,146,42,0.06)', border: '1px solid rgba(184,146,42,0.15)', borderRadius: 14, padding: 16 }}>
+            <div style={{ background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.15)', borderRadius: 14, padding: 16 }}>
               <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 16, color: '#111827', marginBottom: 6 }}>
                 Recommander un ami
               </div>
@@ -896,17 +913,17 @@ export function ClientAppPage() {
 
               {referSent ? (
                 <div style={{ padding: 16, background: 'rgba(13,148,136,0.08)', borderRadius: 12, textAlign: 'center' }}>
-                  <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 15, color: '#0D9488', marginBottom: 4 }}>Merci !</div>
+                  <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 15, color: '#06B6D4', marginBottom: 4 }}>Merci !</div>
                   <div style={{ fontSize: 12, color: '#6B7280' }}>{data.coach_name} a reçu les coordonnées et va contacter cette personne.</div>
                 </div>
               ) : (
                 <>
                   <input value={referName} onChange={(e) => setReferName(e.target.value)} placeholder="Prénom de la personne"
-                    style={{ width: '100%', padding: '12px 14px', border: '1px solid rgba(184,146,42,0.2)', borderRadius: 10, fontFamily: 'DM Sans, sans-serif', fontSize: 16, background: '#fff', color: '#111827', outline: 'none', marginBottom: 8 }} />
+                    style={{ width: '100%', padding: '12px 14px', border: '1px solid rgba(16,185,129,0.2)', borderRadius: 10, fontFamily: 'DM Sans, sans-serif', fontSize: 16, background: '#fff', color: '#111827', outline: 'none', marginBottom: 8 }} />
                   <input value={referContact} onChange={(e) => setReferContact(e.target.value)} placeholder="Son numéro ou email"
-                    style={{ width: '100%', padding: '12px 14px', border: '1px solid rgba(184,146,42,0.2)', borderRadius: 10, fontFamily: 'DM Sans, sans-serif', fontSize: 16, background: '#fff', color: '#111827', outline: 'none', marginBottom: 12 }} />
+                    style={{ width: '100%', padding: '12px 14px', border: '1px solid rgba(16,185,129,0.2)', borderRadius: 10, fontFamily: 'DM Sans, sans-serif', fontSize: 16, background: '#fff', color: '#111827', outline: 'none', marginBottom: 12 }} />
                   <button onClick={() => void sendReferral()} disabled={!referName || !referContact}
-                    style={{ width: '100%', padding: 14, borderRadius: 10, border: 'none', background: referName && referContact ? '#B8922A' : 'rgba(184,146,42,0.3)', color: '#fff', fontFamily: 'Syne, sans-serif', fontSize: 14, fontWeight: 700, cursor: referName && referContact ? 'pointer' : 'not-allowed', boxShadow: referName && referContact ? '0 2px 8px rgba(184,146,42,0.25)' : 'none' }}>
+                    style={{ width: '100%', padding: 14, borderRadius: 10, border: 'none', background: referName && referContact ? '#10B981' : 'rgba(16,185,129,0.3)', color: '#fff', fontFamily: 'Syne, sans-serif', fontSize: 14, fontWeight: 700, cursor: referName && referContact ? 'pointer' : 'not-allowed', boxShadow: referName && referContact ? '0 2px 8px rgba(16,185,129,0.25)' : 'none' }}>
                     Envoyer à {data.coach_name}
                   </button>
                 </>
@@ -925,7 +942,7 @@ export function ClientAppPage() {
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <div style={{ width: 36, height: 36, background: '#B8922A', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <div style={{ width: 36, height: 36, background: '#10B981', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="#fff">
                   <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
                 </svg>
@@ -952,8 +969,8 @@ export function ClientAppPage() {
           {/* ─── Android avec prompt natif disponible ─── */}
           {installPlatform === 'android' && deferredInstallEvent ? (
             <>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(184,146,42,0.1)', borderRadius: 10, padding: '12px 14px', marginBottom: 14 }}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#B8922A" strokeWidth="2">
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(16,185,129,0.1)', borderRadius: 10, padding: '12px 14px', marginBottom: 14 }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10B981" strokeWidth="2">
                   <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
                   <polyline points="7 10 12 15 17 10" />
                   <line x1="12" y1="15" x2="12" y2="3" />
@@ -964,7 +981,7 @@ export function ClientAppPage() {
               </div>
               <button
                 onClick={() => void triggerNativeInstall()}
-                style={{ width: '100%', padding: 14, borderRadius: 10, border: 'none', background: '#B8922A', color: '#fff', fontFamily: 'Syne, sans-serif', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}
+                style={{ width: '100%', padding: 14, borderRadius: 10, border: 'none', background: '#10B981', color: '#fff', fontFamily: 'Syne, sans-serif', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}
               >
                 Installer l'app
               </button>
@@ -983,27 +1000,27 @@ export function ClientAppPage() {
             <>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(255,255,255,0.06)', borderRadius: 10, padding: '10px 12px' }}>
-                  <div style={{ width: 24, height: 24, background: 'rgba(184,146,42,0.2)', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 14, color: '#B8922A', fontWeight: 700 }}>1</div>
+                  <div style={{ width: 24, height: 24, background: 'rgba(16,185,129,0.2)', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 14, color: '#10B981', fontWeight: 700 }}>1</div>
                   <div style={{ fontSize: 12, color: '#fff', lineHeight: 1.5 }}>
                     Ouvre le menu
-                    <span style={{ color: '#B8922A', fontWeight: 600 }}> ⋮ </span>
+                    <span style={{ color: '#10B981', fontWeight: 600 }}> ⋮ </span>
                     en haut à droite
                   </div>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(255,255,255,0.06)', borderRadius: 10, padding: '10px 12px' }}>
-                  <div style={{ width: 24, height: 24, background: 'rgba(184,146,42,0.2)', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 14, color: '#B8922A', fontWeight: 700 }}>2</div>
+                  <div style={{ width: 24, height: 24, background: 'rgba(16,185,129,0.2)', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 14, color: '#10B981', fontWeight: 700 }}>2</div>
                   <div style={{ fontSize: 12, color: '#fff', lineHeight: 1.5 }}>
                     Choisis
-                    <span style={{ color: '#B8922A', fontWeight: 600 }}> "Installer l'application" </span>
+                    <span style={{ color: '#10B981', fontWeight: 600 }}> "Installer l'application" </span>
                     ou
-                    <span style={{ color: '#B8922A', fontWeight: 600 }}> "Ajouter à l'écran d'accueil" </span>
+                    <span style={{ color: '#10B981', fontWeight: 600 }}> "Ajouter à l'écran d'accueil" </span>
                   </div>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(255,255,255,0.06)', borderRadius: 10, padding: '10px 12px' }}>
-                  <div style={{ width: 24, height: 24, background: 'rgba(184,146,42,0.2)', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 14, color: '#B8922A', fontWeight: 700 }}>3</div>
+                  <div style={{ width: 24, height: 24, background: 'rgba(16,185,129,0.2)', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 14, color: '#10B981', fontWeight: 700 }}>3</div>
                   <div style={{ fontSize: 12, color: '#fff', lineHeight: 1.5 }}>
                     Valide avec
-                    <span style={{ color: '#B8922A', fontWeight: 600 }}> "Installer" </span>
+                    <span style={{ color: '#10B981', fontWeight: 600 }}> "Installer" </span>
                   </div>
                 </div>
               </div>
@@ -1012,7 +1029,7 @@ export function ClientAppPage() {
                   setShowInstallPrompt(false)
                   try { window.localStorage.setItem('lor-install-dismissed', '1') } catch { /* ignore */ }
                 }}
-                style={{ width: '100%', marginTop: 14, padding: 12, borderRadius: 10, border: 'none', background: '#B8922A', color: '#fff', fontFamily: 'Syne, sans-serif', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
+                style={{ width: '100%', marginTop: 14, padding: 12, borderRadius: 10, border: 'none', background: '#10B981', color: '#fff', fontFamily: 'Syne, sans-serif', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
               >
                 J'ai compris !
               </button>
@@ -1022,26 +1039,26 @@ export function ClientAppPage() {
             <>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(255,255,255,0.06)', borderRadius: 10, padding: '10px 12px' }}>
-                  <div style={{ width: 24, height: 24, background: 'rgba(184,146,42,0.2)', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 14, color: '#B8922A', fontWeight: 700 }}>1</div>
+                  <div style={{ width: 24, height: 24, background: 'rgba(16,185,129,0.2)', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 14, color: '#10B981', fontWeight: 700 }}>1</div>
                   <div style={{ fontSize: 12, color: '#fff', lineHeight: 1.5 }}>
                     Appuie sur le bouton
-                    <span style={{ color: '#B8922A', fontWeight: 600 }}> Partager </span>
+                    <span style={{ color: '#10B981', fontWeight: 600 }}> Partager </span>
                     (carré avec flèche ↑) en bas de Safari
                   </div>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(255,255,255,0.06)', borderRadius: 10, padding: '10px 12px' }}>
-                  <div style={{ width: 24, height: 24, background: 'rgba(184,146,42,0.2)', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 14, color: '#B8922A', fontWeight: 700 }}>2</div>
+                  <div style={{ width: 24, height: 24, background: 'rgba(16,185,129,0.2)', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 14, color: '#10B981', fontWeight: 700 }}>2</div>
                   <div style={{ fontSize: 12, color: '#fff', lineHeight: 1.5 }}>
                     Sélectionne
-                    <span style={{ color: '#B8922A', fontWeight: 600 }}> "Sur l'écran d'accueil" </span>
+                    <span style={{ color: '#10B981', fontWeight: 600 }}> "Sur l'écran d'accueil" </span>
                     dans le menu
                   </div>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(255,255,255,0.06)', borderRadius: 10, padding: '10px 12px' }}>
-                  <div style={{ width: 24, height: 24, background: 'rgba(184,146,42,0.2)', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 14, color: '#B8922A', fontWeight: 700 }}>3</div>
+                  <div style={{ width: 24, height: 24, background: 'rgba(16,185,129,0.2)', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 14, color: '#10B981', fontWeight: 700 }}>3</div>
                   <div style={{ fontSize: 12, color: '#fff', lineHeight: 1.5 }}>
                     Appuie sur
-                    <span style={{ color: '#B8922A', fontWeight: 600 }}> "Ajouter" </span>
+                    <span style={{ color: '#10B981', fontWeight: 600 }}> "Ajouter" </span>
                     en haut à droite
                   </div>
                 </div>
@@ -1051,7 +1068,7 @@ export function ClientAppPage() {
                   setShowInstallPrompt(false)
                   try { window.localStorage.setItem('lor-install-dismissed', '1') } catch { /* ignore */ }
                 }}
-                style={{ width: '100%', marginTop: 14, padding: 12, borderRadius: 10, border: 'none', background: '#B8922A', color: '#fff', fontFamily: 'Syne, sans-serif', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
+                style={{ width: '100%', marginTop: 14, padding: 12, borderRadius: 10, border: 'none', background: '#10B981', color: '#fff', fontFamily: 'Syne, sans-serif', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
               >
                 J'ai compris !
               </button>
@@ -1136,7 +1153,7 @@ export function ClientAppPage() {
                 }
               }}
               data-tuto={tutoAttr}
-              style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, padding: '8px 4px', border: 'none', background: 'transparent', color: isActive ? '#B8922A' : '#9CA3AF', fontSize: 9, cursor: 'pointer', fontFamily: 'DM Sans, sans-serif' }}>
+              style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, padding: '8px 4px', border: 'none', background: 'transparent', color: isActive ? '#10B981' : '#9CA3AF', fontSize: 9, cursor: 'pointer', fontFamily: 'DM Sans, sans-serif' }}>
               {icon}
               {label}
             </button>
@@ -1176,7 +1193,7 @@ export function ClientAppPage() {
             href="/legal/mentions"
             target="_blank"
             rel="noopener noreferrer"
-            style={{ color: '#B8922A', textDecoration: 'none', fontWeight: 600 }}
+            style={{ color: '#10B981', textDecoration: 'none', fontWeight: 600 }}
           >
             Mentions légales
           </a>
@@ -1185,7 +1202,7 @@ export function ClientAppPage() {
             href="/legal/confidentialite"
             target="_blank"
             rel="noopener noreferrer"
-            style={{ color: '#B8922A', textDecoration: 'none', fontWeight: 600 }}
+            style={{ color: '#10B981', textDecoration: 'none', fontWeight: 600 }}
           >
             Confidentialité
           </a>

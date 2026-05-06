@@ -146,7 +146,7 @@ export function ClientFaqChatbot({ token, coachFirstName }: Props) {
           height: 54,
           borderRadius: "50%",
           background:
-            "linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)",
+            "linear-gradient(135deg, #10B981 0%, #06B6D4 50%, #8B5CF6 100%)",
           color: "white",
           border: "none",
           fontSize: 26,
@@ -228,7 +228,7 @@ export function ClientFaqChatbot({ token, coachFirstName }: Props) {
                   height: 38,
                   borderRadius: "50%",
                   background:
-                    "linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)",
+                    "linear-gradient(135deg, #10B981 0%, #06B6D4 50%, #8B5CF6 100%)",
                   color: "white",
                   display: "flex",
                   alignItems: "center",
@@ -262,7 +262,7 @@ export function ClientFaqChatbot({ token, coachFirstName }: Props) {
                   background: "transparent",
                   border: "none",
                   fontSize: 22,
-                  color: "#888",
+                  color: "#64748B",
                   cursor: "pointer",
                   padding: 4,
                   lineHeight: 1,
@@ -281,7 +281,7 @@ export function ClientFaqChatbot({ token, coachFirstName }: Props) {
                   <div
                     key={faq.id}
                     style={{
-                      border: "0.5px solid rgba(184,146,42,0.25)",
+                      border: "0.5px solid rgba(16,185,129,0.25)",
                       borderRadius: 12,
                       overflow: "hidden",
                       background: isExpanded
@@ -323,7 +323,7 @@ export function ClientFaqChatbot({ token, coachFirstName }: Props) {
                       <span
                         style={{
                           fontSize: 11,
-                          color: "#888",
+                          color: "#64748B",
                           flexShrink: 0,
                           marginTop: 2,
                         }}
@@ -349,7 +349,7 @@ export function ClientFaqChatbot({ token, coachFirstName }: Props) {
                             style={{
                               padding: "7px 14px",
                               background:
-                                "linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)",
+                                "linear-gradient(135deg, #10B981 0%, #06B6D4 50%, #8B5CF6 100%)",
                               color: "white",
                               border: "none",
                               borderRadius: 8,
@@ -367,7 +367,7 @@ export function ClientFaqChatbot({ token, coachFirstName }: Props) {
                             style={{
                               padding: "7px 12px",
                               background: "transparent",
-                              color: "#888",
+                              color: "#64748B",
                               border: "0.5px solid rgba(0,0,0,0.10)",
                               borderRadius: 8,
                               fontSize: 11,
@@ -394,7 +394,7 @@ export function ClientFaqChatbot({ token, coachFirstName }: Props) {
                 padding: "12px 16px",
                 background: "white",
                 color: "#5C4A0F",
-                border: "0.5px solid rgba(184,146,42,0.50)",
+                border: "0.5px solid rgba(16,185,129,0.50)",
                 borderRadius: 12,
                 fontSize: 13,
                 fontWeight: 700,
@@ -412,7 +412,7 @@ export function ClientFaqChatbot({ token, coachFirstName }: Props) {
             <p
               style={{
                 fontSize: 10,
-                color: "#888",
+                color: "#64748B",
                 textAlign: "center",
                 margin: "10px 0 0",
                 fontStyle: "italic",

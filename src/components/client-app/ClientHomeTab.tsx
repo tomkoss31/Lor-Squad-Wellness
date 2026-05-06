@@ -280,7 +280,7 @@ export function ClientHomeTab({
         }
         .ls-client-cta-link:hover {
           transform: translateY(-1px);
-          background: rgba(184,146,42,0.06);
+          background: rgba(16,185,129,0.06);
         }
         @media (prefers-reduced-motion: reduce) {
           .ls-client-card, .ls-client-tile, .ls-client-cta-gold, .ls-client-cta-link {
@@ -309,7 +309,7 @@ export function ClientHomeTab({
             const left = Math.random() * 100;
             const delay = Math.random() * 1.5;
             const duration = 2.5 + Math.random() * 1.5;
-            const colors = ["#EF9F27", "#1D9E75", "#D4537E", "#F5B847", "#0F6E56"];
+            const colors = ["#EF9F27", "#10B981", "#D4537E", "#F5B847", "#0F6E56"];
             const color = colors[i % colors.length];
             return (
               <span
@@ -390,7 +390,7 @@ export function ClientHomeTab({
             borderRadius: 14,
             padding: 14,
             marginBottom: 12,
-            borderLeft: "4px solid #1D9E75",
+            borderLeft: "4px solid #10B981",
             boxShadow: "0 4px 12px -6px rgba(29,158,117,0.18)",
           }}
         >
@@ -399,7 +399,7 @@ export function ClientHomeTab({
             <div
               style={{
                 fontSize: 9.5,
-                color: "#1D9E75",
+                color: "#10B981",
                 letterSpacing: "1.6px",
                 textTransform: "uppercase",
                 fontWeight: 700,
@@ -409,14 +409,14 @@ export function ClientHomeTab({
                 fontFamily: "DM Sans, sans-serif",
               }}
             >
-              <span style={{ display: "inline-block", width: 5, height: 5, borderRadius: 999, background: "#1D9E75", boxShadow: "0 0 6px rgba(29,158,117,0.50)" }} />
+              <span style={{ display: "inline-block", width: 5, height: 5, borderRadius: 999, background: "#10B981", boxShadow: "0 0 6px rgba(29,158,117,0.50)" }} />
               Prochain RDV
             </div>
             <div
               style={{
                 background: rdvInfo.isImminent
-                  ? "linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)"
-                  : "linear-gradient(135deg, #1D9E75 0%, #0F6E56 100%)",
+                  ? "linear-gradient(135deg, #10B981 0%, #06B6D4 50%, #8B5CF6 100%)"
+                  : "linear-gradient(135deg, #10B981 0%, #0F6E56 100%)",
                 color: "white",
                 fontSize: 11,
                 padding: "4px 12px",
@@ -437,7 +437,7 @@ export function ClientHomeTab({
             style={{
               fontFamily: "Syne, serif",
               fontSize: 18,
-              color: "#2C2C2A",
+              color: "#0F172A",
               fontWeight: 700,
               letterSpacing: "-0.01em",
               lineHeight: 1.25,
@@ -472,7 +472,7 @@ export function ClientHomeTab({
               rel="noopener noreferrer"
               className="ls-client-cta-gold"
               style={{
-                background: "linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)",
+                background: "linear-gradient(135deg, #10B981 0%, #06B6D4 50%, #8B5CF6 100%)",
                 color: "#FFFFFF",
                 border: "none",
                 padding: "11px 14px",
@@ -499,8 +499,8 @@ export function ClientHomeTab({
               className="ls-client-cta-link"
               style={{
                 background: "#FFFFFF",
-                color: "#2C2C2A",
-                border: "0.5px solid rgba(184,146,42,0.25)",
+                color: "#0F172A",
+                border: "0.5px solid rgba(16,185,129,0.25)",
                 padding: "11px 14px",
                 borderRadius: 999,
                 fontSize: 12.5,
@@ -593,7 +593,7 @@ export function ClientHomeTab({
                 style={{
                   width: 16,
                   height: 16,
-                  accentColor: "#1D9E75",
+                  accentColor: "#10B981",
                   cursor: calendarConfirmedLocal ? "default" : "pointer",
                 }}
               />
@@ -601,7 +601,7 @@ export function ClientHomeTab({
                 htmlFor="rdv-added-to-calendar"
                 style={{
                   fontSize: 11,
-                  color: calendarConfirmedLocal ? "#0F6E56" : "#888",
+                  color: calendarConfirmedLocal ? "#0F6E56" : "#64748B",
                   fontWeight: 500,
                   cursor: calendarConfirmedLocal ? "default" : "pointer",
                   userSelect: "none",
@@ -616,7 +616,7 @@ export function ClientHomeTab({
           {rdvEditOpen ? (
             <div style={{ marginTop: 10, padding: 10, background: "#F8F8F8", borderRadius: 8 }}>
               {rdvSent ? (
-                <div style={{ fontSize: 12, fontWeight: 500, color: "#1D9E75" }}>✓ Message envoyé à {coachFirstName}</div>
+                <div style={{ fontSize: 12, fontWeight: 500, color: "#10B981" }}>✓ Message envoyé à {coachFirstName}</div>
               ) : (
                 <>
                   <textarea value={rdvMessage} onChange={(e) => setRdvMessage(e.target.value)}
@@ -627,7 +627,7 @@ export function ClientHomeTab({
                       fontFamily: "DM Sans, sans-serif", outline: "none", resize: "none",
                       marginBottom: 8, boxSizing: "border-box" }} />
                   <button type="button" onClick={() => void sendRdvChangeRequest()}
-                    style={{ padding: "7px 12px", background: "#1D9E75", color: "white",
+                    style={{ padding: "7px 12px", background: "#10B981", color: "white",
                       border: "none", borderRadius: 8, fontSize: 12, fontWeight: 500, cursor: "pointer" }}>
                     Envoyer la demande
                   </button>
@@ -656,10 +656,10 @@ export function ClientHomeTab({
             style={{
               width: 48, height: 48, flexShrink: 0,
               borderRadius: 14,
-              background: "linear-gradient(135deg, rgba(184,146,42,0.18), rgba(184,146,42,0.06))",
+              background: "linear-gradient(135deg, rgba(16,185,129,0.18), rgba(16,185,129,0.06))",
               display: "flex", alignItems: "center", justifyContent: "center",
               fontSize: 24,
-              border: "0.5px solid rgba(184,146,42,0.25)",
+              border: "0.5px solid rgba(16,185,129,0.25)",
             }}
           >
             📅
@@ -682,7 +682,7 @@ export function ClientHomeTab({
               <span style={{ display: "inline-block", width: 5, height: 5, borderRadius: 999, background: "#BA7517" }} />
               Prochain RDV
             </div>
-            <div style={{ fontFamily: "Syne, serif", fontSize: 15, color: "#2C2C2A", fontWeight: 700, letterSpacing: "-0.01em" }}>
+            <div style={{ fontFamily: "Syne, serif", fontSize: 15, color: "#0F172A", fontWeight: 700, letterSpacing: "-0.01em" }}>
               Pas encore de RDV
             </div>
             <div style={{ fontSize: 11, color: "#888780", marginTop: 2, fontFamily: "DM Sans, sans-serif", lineHeight: 1.4 }}>
@@ -716,7 +716,7 @@ export function ClientHomeTab({
             💬
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontFamily: "Syne, serif", fontSize: 14, color: "#2C2C2A", fontWeight: 700, letterSpacing: "-0.01em" }}>
+            <div style={{ fontFamily: "Syne, serif", fontSize: 14, color: "#0F172A", fontWeight: 700, letterSpacing: "-0.01em" }}>
               Rejoins les Challengers
             </div>
             <div style={{ fontSize: 10.5, color: "#888780", marginTop: 2, fontFamily: "DM Sans, sans-serif" }}>
@@ -732,7 +732,7 @@ export function ClientHomeTab({
             }}
             className="ls-client-cta-gold"
             style={{
-              background: "linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)",
+              background: "linear-gradient(135deg, #10B981 0%, #06B6D4 50%, #8B5CF6 100%)",
               color: "#FFFFFF",
               fontSize: 11.5,
               padding: "7px 14px",
@@ -758,7 +758,7 @@ export function ClientHomeTab({
           className="ls-client-tile"
           style={{
             background: "#FFFFFF",
-            border: "0.5px solid rgba(184,146,42,0.18)",
+            border: "0.5px solid rgba(16,185,129,0.18)",
             borderRadius: 14,
             padding: 16,
             textAlign: "center",
@@ -767,7 +767,7 @@ export function ClientHomeTab({
           }}
         >
           <div style={{ fontSize: 26, marginBottom: 6, lineHeight: 1 }}>📏</div>
-          <div style={{ fontSize: 13, color: "#2C2C2A", fontWeight: 700, fontFamily: "Syne, serif", letterSpacing: "-0.01em" }}>
+          <div style={{ fontSize: 13, color: "#0F172A", fontWeight: 700, fontFamily: "Syne, serif", letterSpacing: "-0.01em" }}>
             Mes mensurations
           </div>
           <div style={{ fontSize: 10.5, color: "#888780", marginTop: 3 }}>Suis ton évolution</div>
@@ -778,7 +778,7 @@ export function ClientHomeTab({
           className="ls-client-tile"
           style={{
             background: "#FFFFFF",
-            border: "0.5px solid rgba(184,146,42,0.18)",
+            border: "0.5px solid rgba(16,185,129,0.18)",
             borderRadius: 14,
             padding: 16,
             textAlign: "center",
@@ -787,7 +787,7 @@ export function ClientHomeTab({
           }}
         >
           <div style={{ fontSize: 26, marginBottom: 6, lineHeight: 1 }}>🎁</div>
-          <div style={{ fontSize: 13, color: "#2C2C2A", fontWeight: 700, fontFamily: "Syne, serif", letterSpacing: "-0.01em" }}>
+          <div style={{ fontSize: 13, color: "#0F172A", fontWeight: 700, fontFamily: "Syne, serif", letterSpacing: "-0.01em" }}>
             Recommander
           </div>
           <div style={{ fontSize: 10.5, color: "#888780", marginTop: 3 }}>Parraine un ami</div>
@@ -804,7 +804,7 @@ export function ClientHomeTab({
           alignItems: "center",
           gap: 12,
           background: "linear-gradient(135deg, #FAEEDA, #F0DBB0)",
-          border: "1px solid rgba(184,146,42,0.35)",
+          border: "1px solid rgba(16,185,129,0.35)",
           borderRadius: 14,
           padding: "14px 16px",
           width: "100%",
@@ -820,7 +820,7 @@ export function ClientHomeTab({
             width: 42,
             height: 42,
             borderRadius: 12,
-            background: "linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)",
+            background: "linear-gradient(135deg, #10B981 0%, #06B6D4 50%, #8B5CF6 100%)",
             color: "#FFFFFF",
             display: "flex",
             alignItems: "center",
@@ -856,14 +856,14 @@ export function ClientHomeTab({
           alignItems: "center",
           gap: 10,
           background: "#FFFFFF",
-          border: "0.5px solid rgba(184,146,42,0.20)",
+          border: "0.5px solid rgba(16,185,129,0.20)",
           borderRadius: 14,
           padding: "12px 16px",
           textDecoration: "none",
         }}
       >
-        <div style={{ width: 38, height: 38, background: "linear-gradient(135deg, rgba(184,146,42,0.16), rgba(184,146,42,0.06))", borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, border: "0.5px solid rgba(184,146,42,0.25)" }}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="#B8922A">
+        <div style={{ width: 38, height: 38, background: "linear-gradient(135deg, rgba(16,185,129,0.16), rgba(16,185,129,0.06))", borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, border: "0.5px solid rgba(16,185,129,0.25)" }}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="#10B981">
             <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
           </svg>
         </div>

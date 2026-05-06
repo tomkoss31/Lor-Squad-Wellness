@@ -139,7 +139,7 @@ export function ClientChatTab({ token, clientFirstName, coachFirstName }: Client
         style={{
           padding: "14px 16px",
           background: "linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%)",
-          borderBottom: "1px solid rgba(184,146,42,0.15)",
+          borderBottom: "1px solid rgba(16,185,129,0.15)",
         }}
       >
         <div
@@ -206,7 +206,7 @@ export function ClientChatTab({ token, clientFirstName, coachFirstName }: Client
                     maxWidth: "78%",
                     padding: "10px 14px",
                     borderRadius: isCoach ? "14px 14px 14px 4px" : "14px 14px 4px 14px",
-                    background: isCoach ? "#FFFFFF" : "#B8922A",
+                    background: isCoach ? "#FFFFFF" : "#10B981",
                     color: isCoach ? "#111827" : "#FFFFFF",
                     border: isCoach ? "1px solid rgba(0,0,0,0.07)" : "none",
                     fontSize: 14,
@@ -304,7 +304,7 @@ export function ClientChatTab({ token, clientFirstName, coachFirstName }: Client
           style={{
             padding: "0 18px",
             borderRadius: 12,
-            background: sending || !input.trim() ? "#D5B880" : "#B8922A",
+            background: sending || !input.trim() ? "#D5B880" : "#10B981",
             color: "#FFFFFF",
             border: "none",
             fontFamily: "Syne, sans-serif",

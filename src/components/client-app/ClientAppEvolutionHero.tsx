@@ -41,7 +41,7 @@ export function ClientAppEvolutionHero({ assessments, measurements }: Props) {
       <div
         style={{
           fontSize: "11px",
-          color: "#B8922A",
+          color: "#10B981",
           letterSpacing: "1.5px",
           fontWeight: 500,
           marginBottom: "16px",
@@ -62,7 +62,7 @@ export function ClientAppEvolutionHero({ assessments, measurements }: Props) {
           <div
             style={{
               fontSize: "9px",
-              color: "#888",
+              color: "#64748B",
               letterSpacing: "1px",
               fontWeight: 500,
               marginBottom: "6px",
@@ -73,26 +73,26 @@ export function ClientAppEvolutionHero({ assessments, measurements }: Props) {
           <div
             style={{
               fontSize: "30px",
-              color: "#888",
+              color: "#64748B",
               fontWeight: 500,
-              fontFamily: "var(--font-serif)",
+              fontFamily: "'Sora', system-ui, sans-serif",
               lineHeight: 1,
             }}
           >
             {startWeight.toFixed(1)}
           </div>
-          <div style={{ fontSize: "10px", color: "#888", marginTop: "4px" }}>
+          <div style={{ fontSize: "10px", color: "#64748B", marginTop: "4px" }}>
             {formatLongDate(start.date)}
           </div>
         </div>
 
-        <div style={{ fontSize: "22px", color: "#B8922A" }}>→</div>
+        <div style={{ fontSize: "22px", color: "#10B981" }}>→</div>
 
         <div style={{ textAlign: "center" }}>
           <div
             style={{
               fontSize: "9px",
-              color: "#B8922A",
+              color: "#10B981",
               letterSpacing: "1px",
               fontWeight: 500,
               marginBottom: "6px",
@@ -103,15 +103,15 @@ export function ClientAppEvolutionHero({ assessments, measurements }: Props) {
           <div
             style={{
               fontSize: "38px",
-              color: isSamePoint ? "#888" : "#1D9E75",
+              color: isSamePoint ? "#64748B" : "#10B981",
               fontWeight: 500,
-              fontFamily: "var(--font-serif)",
+              fontFamily: "'Sora', system-ui, sans-serif",
               lineHeight: 1,
             }}
           >
             {currentWeight.toFixed(1)}
           </div>
-          <div style={{ fontSize: "10px", color: "#888", marginTop: "4px" }}>
+          <div style={{ fontSize: "10px", color: "#64748B", marginTop: "4px" }}>
             {formatLongDate(current.date)}
           </div>
         </div>
@@ -130,7 +130,7 @@ export function ClientAppEvolutionHero({ assessments, measurements }: Props) {
         >
           <div
             style={{
-              background: "#1D9E75",
+              background: "#10B981",
               color: "white",
               padding: "10px 12px",
               borderRadius: "8px",
@@ -141,7 +141,7 @@ export function ClientAppEvolutionHero({ assessments, measurements }: Props) {
               style={{
                 fontSize: "18px",
                 fontWeight: 500,
-                fontFamily: "var(--font-serif)",
+                fontFamily: "'Sora', system-ui, sans-serif",
               }}
             >
               {kgLost > 0
@@ -154,7 +154,7 @@ export function ClientAppEvolutionHero({ assessments, measurements }: Props) {
           </div>
           <div
             style={{
-              background: "#B8922A",
+              background: "#10B981",
               color: "white",
               padding: "10px 12px",
               borderRadius: "8px",
@@ -165,7 +165,7 @@ export function ClientAppEvolutionHero({ assessments, measurements }: Props) {
               style={{
                 fontSize: "18px",
                 fontWeight: 500,
-                fontFamily: "var(--font-serif)",
+                fontFamily: "'Sora', system-ui, sans-serif",
               }}
             >
               - {cmLost} cm

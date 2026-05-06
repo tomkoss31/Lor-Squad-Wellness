@@ -65,7 +65,7 @@ function plateForObjective(obj: Objective): PlateSector[] {
       {
         label: "Légumes",
         pct: 33,
-        color: "#1D9E75",
+        color: "#10B981",
         items: ["Brocolis / haricots verts", "Salade variée", "Courgettes / poivrons"],
       },
     ];
@@ -87,7 +87,7 @@ function plateForObjective(obj: Objective): PlateSector[] {
     {
       label: "Légumes",
       pct: 50,
-      color: "#1D9E75",
+      color: "#10B981",
       items: ["Salade verte à volonté", "Légumes vapeur", "Crudités variées"],
     },
   ];

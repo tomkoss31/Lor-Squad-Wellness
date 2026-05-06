@@ -26,7 +26,7 @@ function MeasureCard({ label, current, delta }: MeasureCardProps) {
         borderRadius: "8px",
       }}
     >
-      <div style={{ fontSize: "10px", color: "#888" }}>{label}</div>
+      <div style={{ fontSize: "10px", color: "#64748B" }}>{label}</div>
       <div
         style={{
           fontSize: "16px",
@@ -40,7 +40,7 @@ function MeasureCard({ label, current, delta }: MeasureCardProps) {
       <div
         style={{
           fontSize: "11px",
-          color: delta && delta > 0 ? "#1D9E75" : "#888",
+          color: delta && delta > 0 ? "#10B981" : "#64748B",
           fontWeight: 500,
         }}
       >
@@ -72,14 +72,14 @@ export function ClientAppMeasurementsBlock({ measurements, onAddFirst }: Props) 
         >
           📏 Mes mensurations
         </div>
-        <div style={{ fontSize: "12px", color: "#888", marginBottom: "12px" }}>
+        <div style={{ fontSize: "12px", color: "#64748B", marginBottom: "12px" }}>
           Tu n'as pas encore saisi tes mesures.
         </div>
         <button
           type="button"
           onClick={onAddFirst}
           style={{
-            background: "#B8922A",
+            background: "#10B981",
             color: "white",
             border: "none",
             padding: "10px 20px",
@@ -132,7 +132,7 @@ export function ClientAppMeasurementsBlock({ measurements, onAddFirst }: Props) 
         <div style={{ fontSize: "13px", color: "#444", fontWeight: 500 }}>
           📏 Mes mensurations
         </div>
-        <div style={{ fontSize: "10px", color: "#888" }}>total perdu</div>
+        <div style={{ fontSize: "10px", color: "#64748B" }}>total perdu</div>
       </div>
 
       <div
@@ -167,7 +167,7 @@ export function ClientAppMeasurementsBlock({ measurements, onAddFirst }: Props) 
       {totalLost > 0 ? (
         <div
           style={{
-            background: "#B8922A",
+            background: "#10B981",
             color: "white",
             padding: "12px",
             borderRadius: "8px",
@@ -179,7 +179,7 @@ export function ClientAppMeasurementsBlock({ measurements, onAddFirst }: Props) 
             style={{
               fontSize: "24px",
               fontWeight: 500,
-              fontFamily: "var(--font-serif)",
+              fontFamily: "'Sora', system-ui, sans-serif",
             }}
           >
             - {Math.round(totalLost)} cm

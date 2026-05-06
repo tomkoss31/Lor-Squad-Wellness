@@ -38,7 +38,7 @@ export function ClientAppWeightChart({ assessments }: Props) {
         <div
           style={{
             fontSize: "12px",
-            color: "#888",
+            color: "#64748B",
             textAlign: "center",
             padding: "32px 16px",
             fontStyle: "italic",
@@ -96,7 +96,7 @@ export function ClientAppWeightChart({ assessments }: Props) {
         <div style={{ fontSize: "13px", color: "#444", fontWeight: 500 }}>
           📈 Évolution du poids
         </div>
-        <div style={{ fontSize: "10px", color: "#888" }}>
+        <div style={{ fontSize: "10px", color: "#64748B" }}>
           {points.length} bilans
         </div>
       </div>
@@ -140,7 +140,7 @@ export function ClientAppWeightChart({ assessments }: Props) {
               y={y(tick) + 3}
               textAnchor="end"
               fontSize="9"
-              fill="#888"
+              fill="#64748B"
               fontFamily="var(--font-sans)"
             >
               {tick}
@@ -152,7 +152,7 @@ export function ClientAppWeightChart({ assessments }: Props) {
           y={top + chartH + 12}
           textAnchor="end"
           fontSize="9"
-          fill="#888"
+          fill="#64748B"
           fontFamily="var(--font-sans)"
         >
           kg
@@ -161,7 +161,7 @@ export function ClientAppWeightChart({ assessments }: Props) {
         <polyline
           points={polyline}
           fill="none"
-          stroke="#B8922A"
+          stroke="#10B981"
           strokeWidth="2"
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -181,7 +181,7 @@ export function ClientAppWeightChart({ assessments }: Props) {
                   y1={cy}
                   x2={cx}
                   y2={top + chartH}
-                  stroke="rgba(184,146,42,0.15)"
+                  stroke="rgba(16,185,129,0.15)"
                   strokeWidth="0.5"
                 />
               ) : null}
@@ -201,7 +201,7 @@ export function ClientAppWeightChart({ assessments }: Props) {
                   cy={cy}
                   r="5"
                   fill="#FFFFFF"
-                  stroke="#B8922A"
+                  stroke="#10B981"
                   strokeWidth="2"
                 />
               ) : isLast ? (
@@ -209,19 +209,19 @@ export function ClientAppWeightChart({ assessments }: Props) {
                   cx={cx}
                   cy={cy}
                   r="6"
-                  fill="#1D9E75"
+                  fill="#10B981"
                   stroke="#FFFFFF"
                   strokeWidth="2"
                 />
               ) : (
-                <circle cx={cx} cy={cy} r="3" fill="#B8922A" />
+                <circle cx={cx} cy={cy} r="3" fill="#10B981" />
               )}
               <text
                 x={cx}
                 y={cy - 8}
                 textAnchor="middle"
                 fontSize={isFirst || isLast ? "10" : "9"}
-                fill={isFirst ? "#B8922A" : isLast ? "#1D9E75" : "#444"}
+                fill={isFirst ? "#10B981" : isLast ? "#10B981" : "#444"}
                 fontWeight={isFirst || isLast ? 500 : 400}
                 fontFamily="var(--font-sans)"
               >
@@ -232,7 +232,7 @@ export function ClientAppWeightChart({ assessments }: Props) {
                 y={top + chartH + 15}
                 textAnchor="middle"
                 fontSize="9"
-                fill={isFirst ? "#B8922A" : isLast ? "#1D9E75" : "#888"}
+                fill={isFirst ? "#10B981" : isLast ? "#10B981" : "#64748B"}
                 fontWeight={isFirst || isLast ? 500 : 400}
                 fontFamily="var(--font-sans)"
               >
@@ -247,7 +247,7 @@ export function ClientAppWeightChart({ assessments }: Props) {
           y={top + chartH + 32}
           textAnchor="middle"
           fontSize="8"
-          fill="#B8922A"
+          fill="#10B981"
           fontWeight={500}
           fontFamily="var(--font-sans)"
         >
@@ -258,7 +258,7 @@ export function ClientAppWeightChart({ assessments }: Props) {
           y={top + chartH + 32}
           textAnchor="middle"
           fontSize="8"
-          fill="#1D9E75"
+          fill="#10B981"
           fontWeight={500}
           fontFamily="var(--font-sans)"
         >

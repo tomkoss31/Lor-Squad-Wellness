@@ -9,7 +9,7 @@
 //   - ClientAppPage RDV fix (dual-write depuis sendRdvChangeRequest)
 //
 // Design volontairement grand + chaleureux (DM Sans + gold Herbalife
-// classique #B8922A, cohérent avec le rest de ClientAppPage).
+// classique #10B981, cohérent avec le rest de ClientAppPage).
 
 import { useEffect, useState } from "react";
 import { getSupabaseClient } from "../../services/supabaseClient";
@@ -250,7 +250,7 @@ export function ClientMessageModal({
                   flex: 1.4,
                   padding: "12px 16px",
                   borderRadius: 12,
-                  background: sending || !message.trim() ? "#D5B880" : "#B8922A",
+                  background: sending || !message.trim() ? "#D5B880" : "#10B981",
                   color: "#FFFFFF",
                   border: "none",
                   fontFamily: "Syne, sans-serif",

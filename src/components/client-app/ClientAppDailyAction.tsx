@@ -48,7 +48,7 @@ export function ClientAppDailyAction({ onAction }: Props) {
           <div style={{ fontSize: "14px", color: "#444", fontWeight: 500 }}>
             Fais ta pesée du jour
           </div>
-          <div style={{ fontSize: "11px", color: "#888", marginTop: "2px" }}>
+          <div style={{ fontSize: "11px", color: "#64748B", marginTop: "2px" }}>
             Note ton poids pour suivre ta courbe
           </div>
         </div>

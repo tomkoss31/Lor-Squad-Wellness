@@ -148,7 +148,7 @@ export function ClientMoodCheckIn({ token }: Props) {
                 ? "rgba(127,119,221,0.08)"
                 : def.tone === "coral"
                   ? "rgba(220,38,38,0.06)"
-                  : "rgba(184,146,42,0.06)",
+                  : "rgba(16,185,129,0.06)",
           border: `0.5px solid ${
             def.tone === "teal"
               ? "rgba(29,158,117,0.25)"
@@ -156,7 +156,7 @@ export function ClientMoodCheckIn({ token }: Props) {
                 ? "rgba(127,119,221,0.25)"
                 : def.tone === "coral"
                   ? "rgba(220,38,38,0.25)"
-                  : "rgba(184,146,42,0.25)"
+                  : "rgba(16,185,129,0.25)"
           }`,
           borderRadius: 14,
           marginBottom: 14,
@@ -185,7 +185,7 @@ export function ClientMoodCheckIn({ token }: Props) {
               onClick={goToMessages}
               style={{
                 padding: "6px 11px",
-                background: "linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)",
+                background: "linear-gradient(135deg, #10B981 0%, #06B6D4 50%, #8B5CF6 100%)",
                 color: "white",
                 border: "none",
                 borderRadius: 8,
@@ -204,7 +204,7 @@ export function ClientMoodCheckIn({ token }: Props) {
             style={{
               padding: "6px 10px",
               background: "transparent",
-              color: "#888",
+              color: "#64748B",
               border: "0.5px solid rgba(0,0,0,0.12)",
               borderRadius: 8,
               fontSize: 10,
@@ -225,7 +225,7 @@ export function ClientMoodCheckIn({ token }: Props) {
       style={{
         background:
           "linear-gradient(135deg, rgba(255,255,255,1) 0%, rgba(252,245,225,0.7) 100%)",
-        border: "0.5px solid rgba(184,146,42,0.30)",
+        border: "0.5px solid rgba(16,185,129,0.30)",
         borderRadius: 14,
         padding: "14px 14px",
         marginBottom: 14,
@@ -237,7 +237,7 @@ export function ClientMoodCheckIn({ token }: Props) {
           fontSize: 11,
           letterSpacing: 1.4,
           textTransform: "uppercase",
-          color: "#B8922A",
+          color: "#10B981",
           fontWeight: 700,
           marginBottom: 10,
         }}
@@ -273,7 +273,7 @@ export function ClientMoodCheckIn({ token }: Props) {
             onMouseEnter={(e) => {
               if (submitting) return;
               e.currentTarget.style.transform = "translateY(-2px)";
-              e.currentTarget.style.background = "rgba(184,146,42,0.04)";
+              e.currentTarget.style.background = "rgba(16,185,129,0.04)";
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.transform = "translateY(0)";
