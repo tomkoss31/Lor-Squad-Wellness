@@ -204,7 +204,15 @@ export function RentabilityWidget() {
         </div>
       </div>
 
-      {open && <RentabilityDetailModal data={dataWithOverride ?? data} onClose={() => setOpen(false)} />}
+      {open && (
+        <RentabilityDetailModal
+          data={dataWithOverride ?? data}
+          onClose={() => setOpen(false)}
+          directMargin={ownSelfMargin}
+          downlineOverride={downlineOverride}
+          manualOverride={manualOverride}
+        />
+      )}
     </>
   );
 }
