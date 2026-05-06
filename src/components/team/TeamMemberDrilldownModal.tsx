@@ -25,6 +25,7 @@ import {
   RANK_LABELS,
   RANK_ORDER,
   type HerbalifeRank,
+  type User,
 } from "../../types/domain";
 import {
   COMMISSION_PCT_BY_TIER,
@@ -33,6 +34,7 @@ import {
   computeOverrideEur,
   currentMonthIso,
   emptyBreakdown,
+  rankProgression,
   totalPvFromBreakdown,
   type PvMonthlyBreakdown,
 } from "../../lib/herbalifeFormulas";
@@ -127,6 +129,25 @@ export function TeamMemberDrilldownModal({ member, onClose }: TeamMemberDrilldow
   }, [pvDraft, member, monthIso]);
   const draftTotalPv = totalPvFromBreakdown(draftBreakdown);
   const draftOverrideEur = computeOverrideEur(draftBreakdown);
+
+  // Jauge progression vers prochain rang (chantier 2026-11-07)
+  // PV courant = somme breakdown courant si saisi, sinon monthly_pv_override
+  const currentPvForProgress = useMemo(() => {
+    if (existingBreakdown) return totalPvFromBreakdown(existingBreakdown);
+    if (
+      (fullUser as User & { monthlyPvOverrideMonth?: string | null })?.monthlyPvOverrideMonth ===
+        monthIso &&
+      typeof (fullUser as User & { monthlyPvOverride?: number | null })?.monthlyPvOverride ===
+        "number"
+    ) {
+      return (fullUser as User & { monthlyPvOverride?: number | null }).monthlyPvOverride as number;
+    }
+    return 0;
+  }, [existingBreakdown, fullUser, monthIso]);
+  const progression = useMemo(
+    () => rankProgression(fullUser?.currentRank, currentPvForProgress),
+    [fullUser?.currentRank, currentPvForProgress],
+  );
 
   if (!member) return null;
   const status = STATUS_META[member.status];
@@ -402,6 +423,62 @@ export function TeamMemberDrilldownModal({ member, onClose }: TeamMemberDrilldow
               >
                 {savingRank ? "…" : "Appliquer"}
               </button>
+            </div>
+          </div>
+        ) : null}
+
+        {/* Bloc progression vers prochain rang (chantier 2026-11-07) */}
+        {canEditRankPv && progression ? (
+          <div
+            style={{
+              marginTop: 12,
+              padding: 14,
+              borderRadius: 12,
+              background: "var(--ls-surface2)",
+              border: "1px solid var(--ls-border)",
+            }}
+          >
+            <div
+              style={{
+                fontSize: 12,
+                fontWeight: 700,
+                color: "var(--ls-text)",
+                letterSpacing: 0.3,
+                marginBottom: 4,
+              }}
+            >
+              📈 Progression · {progression.currentLabel} → {progression.nextLabel}
+            </div>
+            <div style={{ fontSize: 11, color: "var(--ls-text-muted)", lineHeight: 1.4, marginBottom: 10 }}>
+              {progression.pct >= 100
+                ? `🎉 Seuil atteint ! ${progression.pvCurrent.toLocaleString("fr-FR")} / ${progression.pvNeeded.toLocaleString("fr-FR")} PV`
+                : `${progression.pvCurrent.toLocaleString("fr-FR")} / ${progression.pvNeeded.toLocaleString("fr-FR")} PV · reste ${progression.remaining.toLocaleString("fr-FR")} PV`}
+            </div>
+            <div
+              style={{
+                position: "relative",
+                width: "100%",
+                height: 10,
+                borderRadius: 999,
+                background: "color-mix(in srgb, var(--ls-text) 8%, transparent)",
+                overflow: "hidden",
+              }}
+            >
+              <div
+                style={{
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  height: "100%",
+                  width: `${progression.pct}%`,
+                  background: progression.pct >= 100
+                    ? "linear-gradient(90deg, #10B981 0%, #06B6D4 50%, #8B5CF6 100%)"
+                    : progression.pct >= 75
+                      ? "linear-gradient(90deg, #10B981 0%, #06B6D4 100%)"
+                      : "var(--ls-teal)",
+                  transition: "width 0.4s ease",
+                }}
+              />
             </div>
           </div>
         ) : null}

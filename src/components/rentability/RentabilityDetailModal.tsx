@@ -28,11 +28,10 @@ import {
   type User,
 } from "../../types/domain";
 import {
-  COMMISSION_PCT_BY_TIER,
   PV_TO_EUR_RATIO,
-  ROYALTY_OVERRIDE_PCT,
-  computeOverrideEur,
+  computeSponsorCutOnDownstream,
   currentMonthIso,
+  tierPctForRank,
   totalPvFromBreakdown,
   type PvMonthlyBreakdown,
 } from "../../lib/herbalifeFormulas";
@@ -75,11 +74,15 @@ interface DownlineEntry {
   user: User;
   rankLabel: string;
   rankMarginPct: number;
+  /** Profondeur dans l arbre du viewer (1 = downline directe, 2 = grandchild, ...). */
+  depth: number;
+  /** Chemin lisible du viewer vers Y, ex "Mandy → Victoria" pour L2. */
+  chainLabel: string;
   /** Si dispo : breakdown precis par tier (V2 fiche RO). */
   breakdown: PvMonthlyBreakdown | null;
   /** PV total ce mois (somme breakdown OU monthly_pv_override OU null). */
   monthlyPv: number | null;
-  /** Override EUR — exact si breakdown V2, sinon estimation rang final. */
+  /** Override EUR pour le viewer — calcul chaine compression V2.1. */
   overrideEur: number;
   /** True si la valeur d override est calculee depuis le breakdown V2. */
   overrideIsExact: boolean;
@@ -99,68 +102,114 @@ export function RentabilityDetailModal({ data, onClose }: RentabilityDetailModal
   // ─── Onglet de filtrage (chantier V3 2026-11-07) ───────────────────────────
   const [tab, setTab] = useState<FilterTab>("all");
 
-  // ─── Downline computation V2 (calibre fiche RO Herbalife 2026-11-07) ──────
-  // Sponsor = un des user_ids du scope (couple Thomas+Mélanie agrégé).
+  // ─── Tree walk V2.1 — chaine compression Herbalife (chantier 2026-11-07) ──
+  // Walk recursif de l arbre downline du viewer pour calculer son override
+  // exact a chaque niveau, en appliquant la regle de compression :
+  //   cut% = max(0, viewer_tier - max(Y_tier, ...intermediates))
   const ownerIds = useMemo(() => new Set(data.scope_user_ids), [data.scope_user_ids]);
   const monthIso = useMemo(() => currentMonthIso(), []);
-
-  // Charge les breakdowns V2 du mois pour calculer l override exact quand dispo.
   const { getForUser: getBreakdownForUser } = usePvBreakdowns(monthIso);
 
   const downline = useMemo<DownlineEntry[]>(() => {
     if (!currentUser) return [];
-    // On affiche le downline uniquement si le viewer est admin OU référent
-    // ET le scope correspond a son propre user (pas la rentab d un autre).
     const viewerIsAdminOrRef = currentUser.role === "admin" || currentUser.role === "referent";
     const scopeIsViewer = ownerIds.has(currentUser.id);
     if (!viewerIsAdminOrRef || !scopeIsViewer) return [];
 
-    return users
-      .filter((u) => u.sponsorId && ownerIds.has(u.sponsorId))
-      .filter((u) => !u.frozenAt)
-      .map<DownlineEntry>((u) => {
-        const rankKey = (u.currentRank ?? "distributor_25") as HerbalifeRank;
-        const breakdown = getBreakdownForUser(u.id);
-        let monthlyPv: number | null = null;
-        let overrideEur = 0;
-        let overrideIsExact = false;
+    // Viewer tier = max des tiers du scope (couple agrege : on prend le plus haut).
+    const viewerTierPct = Math.max(
+      ...data.scope_user_ids.map((uid) => {
+        const u = users.find((x) => x.id === uid);
+        return tierPctForRank(u?.currentRank);
+      }),
+    );
 
-        if (breakdown) {
-          // V2 : calcul exact depuis breakdown par tier (calibre fiche RO).
-          monthlyPv = totalPvFromBreakdown(breakdown);
-          overrideEur = computeOverrideEur(breakdown);
-          overrideIsExact = true;
-        } else {
-          // Fallback V1 : estimation rang final + monthly_pv_override unique.
-          const isOverrideActive =
-            (u as User & { monthlyPvOverrideMonth?: string | null }).monthlyPvOverrideMonth ===
-              monthIso &&
-            typeof (u as User & { monthlyPvOverride?: number | null }).monthlyPvOverride ===
-              "number";
-          monthlyPv = isOverrideActive
-            ? ((u as User & { monthlyPvOverride?: number | null }).monthlyPvOverride as number)
-            : null;
-          // Heuristique : si rang final dans la grille commission, on prend le tier.
-          const tierPct =
-            rankKey === "distributor_25" ? COMMISSION_PCT_BY_TIER.pv25 :
-            rankKey === "senior_consultant_35" ? COMMISSION_PCT_BY_TIER.pv35 :
-            rankKey === "success_builder_42" ? COMMISSION_PCT_BY_TIER.pv42 :
-            ROYALTY_OVERRIDE_PCT; // Supervisor 50%+ : 5% royalty
-          overrideEur = (monthlyPv ?? 0) * tierPct * PV_TO_EUR_RATIO;
+    // Index sponsor -> children pour walk efficace
+    const childrenBySponsor = new Map<string, User[]>();
+    for (const u of users) {
+      if (u.frozenAt) continue;
+      if (!u.sponsorId) continue;
+      const arr = childrenBySponsor.get(u.sponsorId) ?? [];
+      arr.push(u);
+      childrenBySponsor.set(u.sponsorId, arr);
+    }
+
+    const result: DownlineEntry[] = [];
+
+    // Pile de walk : { user, depth, intermediateTiers, chainLabels }
+    interface WalkFrame {
+      user: User;
+      depth: number;
+      intermediateTiers: number[];
+      chainLabels: string[];
+    }
+    const queue: WalkFrame[] = [];
+    // Bootstrap : enfants directs des owners (Thomas + Melanie si couple)
+    for (const ownerId of data.scope_user_ids) {
+      const directs = childrenBySponsor.get(ownerId) ?? [];
+      for (const u of directs) {
+        queue.push({ user: u, depth: 1, intermediateTiers: [], chainLabels: [] });
+      }
+    }
+
+    while (queue.length > 0) {
+      const frame = queue.shift()!;
+      const { user: u, depth, intermediateTiers, chainLabels } = frame;
+      const rankKey = (u.currentRank ?? "distributor_25") as HerbalifeRank;
+      const breakdown = getBreakdownForUser(u.id);
+      let monthlyPv: number | null = null;
+      let overrideEur = 0;
+      let overrideIsExact = false;
+
+      if (breakdown) {
+        monthlyPv = totalPvFromBreakdown(breakdown);
+        overrideEur = computeSponsorCutOnDownstream(breakdown, viewerTierPct, intermediateTiers);
+        overrideIsExact = true;
+      } else {
+        // Fallback : monthly_pv_override + estimation tier final + chain compression
+        const isOverrideActive =
+          (u as User & { monthlyPvOverrideMonth?: string | null }).monthlyPvOverrideMonth ===
+            monthIso &&
+          typeof (u as User & { monthlyPvOverride?: number | null }).monthlyPvOverride ===
+            "number";
+        monthlyPv = isOverrideActive
+          ? ((u as User & { monthlyPvOverride?: number | null }).monthlyPvOverride as number)
+          : null;
+        if (monthlyPv != null) {
+          const yTierPct = tierPctForRank(u.currentRank);
+          const maxUpstream = Math.max(yTierPct, ...intermediateTiers);
+          const cutPct = Math.max(0, viewerTierPct - maxUpstream) / 100;
+          overrideEur = monthlyPv * cutPct * PV_TO_EUR_RATIO;
         }
+      }
 
-        return {
-          user: u,
-          rankLabel: RANK_LABELS[rankKey] ?? "Distributor (25%)",
-          rankMarginPct: 0,
-          breakdown,
-          monthlyPv,
-          overrideEur,
-          overrideIsExact,
-        };
-      })
-      .sort((a, b) => (b.overrideEur ?? 0) - (a.overrideEur ?? 0));
-  }, [users, currentUser, ownerIds, monthIso, getBreakdownForUser]);
+      result.push({
+        user: u,
+        rankLabel: RANK_LABELS[rankKey] ?? "Distributor (25%)",
+        rankMarginPct: 0,
+        depth,
+        chainLabel: chainLabels.length > 0 ? chainLabels.join(" → ") : "direct",
+        breakdown,
+        monthlyPv,
+        overrideEur,
+        overrideIsExact,
+      });
+
+      // Recurse : push children of u
+      const yTierPct = tierPctForRank(u.currentRank);
+      const childList = childrenBySponsor.get(u.id) ?? [];
+      for (const child of childList) {
+        queue.push({
+          user: child,
+          depth: depth + 1,
+          intermediateTiers: [...intermediateTiers, yTierPct],
+          chainLabels: [...chainLabels, u.name],
+        });
+      }
+    }
+
+    return result.sort((a, b) => (b.overrideEur ?? 0) - (a.overrideEur ?? 0));
+  }, [users, currentUser, data.scope_user_ids, ownerIds, monthIso, getBreakdownForUser]);
 
   const downlineCount = downline.length;
   const downlineTotalOverride = downline.reduce((s, d) => s + d.overrideEur, 0);
@@ -314,10 +363,11 @@ export function RentabilityDetailModal({ data, onClose }: RentabilityDetailModal
                 ))}
               </ul>
               <div style={methodoStyle}>
-                ℹ️ <strong>Override exact</strong> quand le breakdown PV par tier est saisi
-                (Mon équipe → fiche distri). Sinon estimation grossière via rang final.
-                Formule : commission% (50−tier) × PV × {PV_TO_EUR_RATIO} €/PV
-                + royalty {Math.round(ROYALTY_OVERRIDE_PCT * 100)}% sur volume Supervisor.
+                ℹ️ <strong>Chaîne compression Herbalife</strong> : pour chaque distri en
+                downline (L1, L2, L3...), ta cut = (ton % − max(% downstream)) × PV × {PV_TO_EUR_RATIO} €/PV.
+                Ex : Thomas 50%, Mandy 42%, Victoria 35% → tu touches <strong>8%</strong> sur Mandy
+                ET sur Victoria (différentiel Thomas−Mandy). Mandy touche les 7% Mandy−Victoria à part.
+                Override exact si breakdown saisi, sinon estimation rang final.
                 Calibré fiche RO Herbalife 2026-03.
               </div>
             </>
@@ -472,7 +522,8 @@ function TopClientRow({ client, rank }: { client: RentabilityTopClient; rank: nu
 }
 
 function DownlineRow({ entry, rank }: { entry: DownlineEntry; rank: number }) {
-  const { user, rankLabel, monthlyPv, overrideEur, overrideIsExact, breakdown } = entry;
+  const { user, rankLabel, monthlyPv, overrideEur, overrideIsExact, breakdown, depth, chainLabel } = entry;
+  const depthBadge = depth === 1 ? "L1 direct" : `L${depth} via ${chainLabel}`;
   const breakdownDetail = breakdown
     ? [
         breakdown.pv15 > 0 ? `${breakdown.pv15} PV @15%` : null,
@@ -499,6 +550,18 @@ function DownlineRow({ entry, rank }: { entry: DownlineEntry; rank: number }) {
         </span>
       </div>
       <div style={{ fontSize: 11, color: "var(--ls-text-muted)", paddingLeft: 32 }}>
+        <span style={{
+          display: "inline-block",
+          padding: "1px 6px",
+          borderRadius: 5,
+          background: depth === 1 ? "color-mix(in srgb, var(--ls-teal) 14%, transparent)" : "color-mix(in srgb, var(--ls-purple) 12%, transparent)",
+          color: depth === 1 ? "var(--ls-teal)" : "var(--ls-purple)",
+          fontWeight: 700,
+          marginRight: 6,
+          fontSize: 9,
+        }}>
+          {depthBadge}
+        </span>
         {breakdownDetail ? (
           <>
             <strong>{(monthlyPv ?? 0).toLocaleString("fr-FR")} PV</strong> · {breakdownDetail}
@@ -506,7 +569,7 @@ function DownlineRow({ entry, rank }: { entry: DownlineEntry; rank: number }) {
           </>
         ) : monthlyPv != null ? (
           <>
-            <strong>{monthlyPv.toLocaleString("fr-FR")} PV</strong> ce mois (estimation rang final)
+            <strong>{monthlyPv.toLocaleString("fr-FR")} PV</strong> ce mois (estim. compression chaine)
           </>
         ) : (
           <em>PV non saisi · clique fiche distri pour saisir le breakdown</em>
