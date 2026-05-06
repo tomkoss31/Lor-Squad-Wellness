@@ -1,0 +1,773 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Plan Marketing Herbalife — La Base 360</title>
+<style>
+  /* =========================================================================
+     Design La Base 360 · G3 Vital Fusion (emerald 10B981 · cyan 06B6D4 · violet 8B5CF6)
+     Imprimable A4 portrait. Aucune dépendance externe.
+     ========================================================================= */
+  :root {
+    --emerald: #10B981;
+    --cyan: #06B6D4;
+    --violet: #8B5CF6;
+    --gold: #B8922A;
+    --coral: #D4537E;
+    --ink: #0F172A;
+    --ink2: #475569;
+    --slate: #64748B;
+    --mist: #FAFAFC;
+    --mist2: #F1F5F9;
+    --line: #E2E8F0;
+    --line2: rgba(15, 23, 42, 0.06);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    color: var(--ink);
+    background: var(--mist);
+    line-height: 1.55;
+    font-size: 13px;
+    -webkit-font-smoothing: antialiased;
+  }
+  .page {
+    max-width: 940px;
+    margin: 0 auto;
+    padding: 56px 64px;
+  }
+  .header {
+    border-bottom: 0.5px solid var(--line);
+    padding-bottom: 28px;
+    margin-bottom: 36px;
+  }
+  .brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-family: 'Sora', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    color: var(--ink);
+    margin-bottom: 14px;
+  }
+  .brand-mark {
+    width: 26px;
+    height: 26px;
+    border-radius: 7px;
+    background: linear-gradient(135deg, #10B981 0%, #06B6D4 50%, #8B5CF6 100%);
+    box-shadow: 0 2px 8px rgba(16,185,129,0.25);
+  }
+  .heritage {
+    display: inline-block;
+    font-size: 9px;
+    letter-spacing: 1.6px;
+    color: var(--slate);
+    text-transform: uppercase;
+    border: 0.5px solid var(--line);
+    padding: 3px 10px;
+    border-radius: 999px;
+    margin-left: 8px;
+    font-weight: 500;
+  }
+  h1 {
+    font-family: 'Sora', sans-serif;
+    font-size: 38px;
+    font-weight: 800;
+    margin: 0 0 8px;
+    color: var(--ink);
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+  }
+  h1 .accent {
+    background: linear-gradient(135deg, #10B981 0%, #06B6D4 50%, #8B5CF6 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    font-style: italic;
+  }
+  .subtitle {
+    font-size: 15px;
+    color: var(--slate);
+    margin: 0;
+  }
+  h2 {
+    font-family: 'Sora', sans-serif;
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--ink);
+    margin: 48px 0 14px;
+    letter-spacing: -0.01em;
+  }
+  h2 .num {
+    display: inline-block;
+    width: 30px;
+    height: 30px;
+    line-height: 28px;
+    text-align: center;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #10B981 0%, #06B6D4 50%, #8B5CF6 100%);
+    color: white;
+    font-size: 14px;
+    margin-right: 12px;
+    vertical-align: 2px;
+  }
+  h3 {
+    font-family: 'Sora', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    margin: 0 0 8px;
+    color: var(--ink);
+    letter-spacing: 0.2px;
+  }
+  p { margin: 0 0 14px; color: var(--ink2); }
+  .lead {
+    font-size: 16px;
+    color: var(--ink2);
+    line-height: 1.65;
+    margin-bottom: 20px;
+  }
+  .section-intro {
+    padding: 22px 26px;
+    background: linear-gradient(135deg, color-mix(in srgb, #10B981 6%, white) 0%, color-mix(in srgb, #06B6D4 4%, white) 50%, color-mix(in srgb, #8B5CF6 4%, white) 100%);
+    border: 0.5px solid color-mix(in srgb, #10B981 18%, var(--line));
+    border-radius: 16px;
+    margin-bottom: 30px;
+  }
+
+  /* === Sources de revenus === */
+  .sources-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+    margin-bottom: 8px;
+  }
+  .source-card {
+    background: white;
+    border: 0.5px solid var(--line);
+    border-left: 3px solid var(--emerald);
+    border-radius: 12px;
+    padding: 16px 18px;
+  }
+  .source-card.cyan { border-left-color: var(--cyan); }
+  .source-card.violet { border-left-color: var(--violet); }
+  .source-card.gold { border-left-color: var(--gold); }
+  .source-card .label {
+    font-size: 10px;
+    letter-spacing: 1.4px;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: var(--emerald);
+    margin-bottom: 4px;
+  }
+  .source-card.cyan .label { color: var(--cyan); }
+  .source-card.violet .label { color: var(--violet); }
+  .source-card.gold .label { color: var(--gold); }
+  .source-card .title {
+    font-family: 'Sora', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 6px;
+    color: var(--ink);
+  }
+  .source-card .desc {
+    font-size: 12px;
+    color: var(--slate);
+    line-height: 1.5;
+  }
+
+  /* === Pyramide visuelle === */
+  .pyramid-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 20px 0 40px;
+  }
+  .pyramid-step {
+    width: 100%;
+    max-width: 760px;
+    margin-bottom: 6px;
+    padding: 14px 22px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    color: white;
+    box-shadow: 0 1px 3px rgba(15,23,42,0.06);
+  }
+  .pyramid-step.s1 { width: 60%; background: linear-gradient(90deg, #94A3B8, #64748B); }
+  .pyramid-step.s2 { width: 70%; background: linear-gradient(90deg, #A8B5C7, #64748B); }
+  .pyramid-step.s3 { width: 80%; background: linear-gradient(90deg, #B8922A, #C9A84C); }
+  .pyramid-step.s4 { width: 90%; background: linear-gradient(90deg, #10B981, #34D399); }
+  .pyramid-step.s5 { width: 100%; background: linear-gradient(90deg, #06B6D4, #22D3EE); }
+  .pyramid-step.s6 { width: 100%; background: linear-gradient(90deg, #8B5CF6, #A78BFA); }
+  .pyramid-step.s7 { width: 100%; background: linear-gradient(90deg, #EC4899, #F472B6); }
+  .pyramid-step .pin {
+    font-size: 13px;
+    font-family: 'Sora', sans-serif;
+    font-weight: 700;
+    letter-spacing: 0.2px;
+  }
+  .pyramid-step .pct {
+    font-family: 'Sora', sans-serif;
+    font-size: 18px;
+    font-weight: 800;
+  }
+  .pyramid-step .qualif {
+    font-size: 11px;
+    opacity: 0.9;
+    text-align: right;
+    flex: 1;
+  }
+
+  /* === Tableau des rangs détaillé === */
+  table.ranks {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    border-radius: 14px;
+    overflow: hidden;
+    border: 0.5px solid var(--line);
+    margin-bottom: 30px;
+  }
+  table.ranks th {
+    background: var(--mist2);
+    text-align: left;
+    padding: 12px 14px;
+    font-size: 10px;
+    color: var(--slate);
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    font-weight: 600;
+  }
+  table.ranks td {
+    padding: 14px;
+    font-size: 12px;
+    border-top: 0.5px solid var(--line2);
+    color: var(--ink2);
+    vertical-align: top;
+  }
+  table.ranks td:first-child {
+    font-family: 'Sora', sans-serif;
+    font-weight: 700;
+    color: var(--ink);
+    font-size: 13px;
+  }
+  table.ranks td .pct-pill {
+    display: inline-block;
+    padding: 2px 9px;
+    border-radius: 6px;
+    background: color-mix(in srgb, #10B981 14%, transparent);
+    color: var(--emerald);
+    font-weight: 700;
+    font-size: 11px;
+    margin-right: 6px;
+  }
+  table.ranks tr.tier-bronze td .pct-pill { background: rgba(168,113,50,0.12); color: #A87132; }
+  table.ranks tr.tier-silver td .pct-pill { background: rgba(156,163,175,0.18); color: #475569; }
+  table.ranks tr.tier-gold td .pct-pill { background: rgba(184,146,42,0.16); color: var(--gold); }
+  table.ranks tr.tier-supervisor td .pct-pill { background: color-mix(in srgb, #10B981 14%, transparent); color: var(--emerald); }
+  table.ranks tr.tier-team td .pct-pill { background: color-mix(in srgb, #06B6D4 14%, transparent); color: var(--cyan); }
+  table.ranks tr.tier-elite td .pct-pill { background: color-mix(in srgb, #8B5CF6 14%, transparent); color: var(--violet); }
+
+  /* === Chaîne de compression — visuel === */
+  .chain-demo {
+    background: white;
+    border: 0.5px solid var(--line);
+    border-radius: 16px;
+    padding: 28px;
+    margin: 14px 0 30px;
+  }
+  .chain-row {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr auto 1fr;
+    gap: 14px;
+    align-items: center;
+    margin-bottom: 22px;
+  }
+  .chain-node {
+    text-align: center;
+    padding: 14px 16px;
+    border-radius: 12px;
+    background: var(--mist);
+    border: 0.5px solid var(--line);
+  }
+  .chain-node.viewer {
+    background: linear-gradient(135deg, color-mix(in srgb, #8B5CF6 16%, white), color-mix(in srgb, #06B6D4 12%, white));
+    border-color: color-mix(in srgb, #8B5CF6 35%, transparent);
+  }
+  .chain-node.middle {
+    background: color-mix(in srgb, #06B6D4 10%, white);
+    border-color: color-mix(in srgb, #06B6D4 35%, transparent);
+  }
+  .chain-node.leaf {
+    background: color-mix(in srgb, #10B981 10%, white);
+    border-color: color-mix(in srgb, #10B981 35%, transparent);
+  }
+  .chain-node .role {
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    font-weight: 700;
+    color: var(--slate);
+    margin-bottom: 4px;
+  }
+  .chain-node .name {
+    font-family: 'Sora', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    margin-bottom: 2px;
+  }
+  .chain-node .rank {
+    font-size: 11px;
+    color: var(--slate);
+  }
+  .chain-arrow {
+    font-size: 22px;
+    color: var(--slate);
+    text-align: center;
+  }
+  .chain-explain {
+    background: var(--mist2);
+    border-left: 3px solid var(--violet);
+    border-radius: 10px;
+    padding: 14px 18px;
+    font-size: 12px;
+    color: var(--ink2);
+    line-height: 1.65;
+  }
+  .chain-explain code {
+    background: white;
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-family: 'SF Mono', Menlo, Consolas, monospace;
+    color: var(--ink);
+    border: 0.5px solid var(--line);
+  }
+  .chain-explain strong { color: var(--ink); }
+
+  /* === Encart formules === */
+  .formula-card {
+    background: white;
+    border: 0.5px solid var(--line);
+    border-radius: 14px;
+    padding: 20px 22px;
+    margin-bottom: 16px;
+  }
+  .formula-card h3 { margin-bottom: 10px; }
+  .formula-card .formula {
+    font-family: 'SF Mono', Menlo, Consolas, monospace;
+    font-size: 13px;
+    background: var(--mist);
+    padding: 10px 14px;
+    border-radius: 8px;
+    border-left: 3px solid var(--emerald);
+    color: var(--ink);
+    margin: 8px 0 6px;
+  }
+  .formula-card .note {
+    font-size: 11px;
+    color: var(--slate);
+    line-height: 1.5;
+  }
+
+  /* === Boosters / bonus === */
+  .booster {
+    background: white;
+    border: 0.5px solid var(--line);
+    border-radius: 12px;
+    padding: 16px 18px;
+    margin-bottom: 10px;
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+  }
+  .booster .badge {
+    flex: 0 0 56px;
+    text-align: center;
+    padding: 8px 6px;
+    border-radius: 10px;
+    background: color-mix(in srgb, #10B981 12%, white);
+    color: var(--emerald);
+    font-family: 'Sora', sans-serif;
+    font-weight: 800;
+    font-size: 14px;
+    line-height: 1.2;
+  }
+  .booster.violet .badge { background: color-mix(in srgb, #8B5CF6 12%, white); color: var(--violet); }
+  .booster.gold .badge { background: rgba(184,146,42,0.15); color: var(--gold); }
+  .booster .body { flex: 1; }
+  .booster .title {
+    font-family: 'Sora', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 4px;
+    color: var(--ink);
+  }
+  .booster .desc {
+    font-size: 12px;
+    color: var(--ink2);
+    line-height: 1.55;
+  }
+  .future-tag {
+    display: inline-block;
+    font-size: 9px;
+    letter-spacing: 1.2px;
+    padding: 2px 8px;
+    background: rgba(212,83,126,0.12);
+    color: var(--coral);
+    border-radius: 5px;
+    margin-left: 8px;
+    text-transform: uppercase;
+    font-weight: 700;
+    vertical-align: 1px;
+  }
+
+  /* === Footer === */
+  footer {
+    margin-top: 60px;
+    padding-top: 24px;
+    border-top: 0.5px solid var(--line);
+    text-align: center;
+    font-size: 11px;
+    color: var(--slate);
+    line-height: 1.6;
+  }
+  footer .signature {
+    font-family: 'Sora', sans-serif;
+    font-weight: 700;
+    color: var(--ink);
+    font-size: 13px;
+    margin-bottom: 6px;
+  }
+
+  /* === Print === */
+  @media print {
+    body { background: white; font-size: 11px; }
+    .page { padding: 24px 36px; max-width: none; }
+    h1 { font-size: 30px; }
+    h2 { font-size: 18px; margin-top: 28px; page-break-after: avoid; }
+    .section-intro, .pyramid-wrap, table.ranks, .chain-demo,
+    .formula-card, .booster {
+      page-break-inside: avoid;
+    }
+    .pyramid-step {
+      box-shadow: none;
+      print-color-adjust: exact;
+      -webkit-print-color-adjust: exact;
+    }
+    .pyramid-step, .source-card, .chain-node,
+    table.ranks th {
+      print-color-adjust: exact;
+      -webkit-print-color-adjust: exact;
+    }
+  }
+  @page {
+    size: A4 portrait;
+    margin: 14mm 12mm;
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ========================================================================
+       HEADER
+       ======================================================================== -->
+  <header class="header">
+    <div class="brand">
+      <span class="brand-mark"></span>
+      LA BASE <em style="font-style: italic; font-weight: 800; background: linear-gradient(135deg,#10B981,#06B6D4,#8B5CF6); -webkit-background-clip: text; background-clip: text; color: transparent;">360</em>
+      <span class="heritage">★ SINCE 2022 ★</span>
+    </div>
+    <h1>Plan Marketing <span class="accent">Herbalife</span></h1>
+    <p class="subtitle">Comprendre les paliers, les commissions et la chaîne de compression — version condensée pour présentation business.</p>
+  </header>
+
+  <!-- ========================================================================
+       SECTION 1 — Les sources de revenus
+       ======================================================================== -->
+  <h2><span class="num">1</span>Tes 4 sources de revenus</h2>
+  <p class="lead">
+    Un distributeur Herbalife gagne de l'argent sur 4 leviers cumulatifs. Plus tu montes en rang, plus
+    tu actives de leviers — c'est le principe du Plan Marketing.
+  </p>
+  <div class="sources-grid">
+    <div class="source-card emerald">
+      <div class="label">A · Marge retail</div>
+      <div class="title">Tes ventes directes aux clients</div>
+      <div class="desc">Tu achètes au prix Distributeur (selon ton rang) et tu revends au prix conseillé. La différence est ta marge — entre 25 % (débutant) et 50 % (Supervisor).</div>
+    </div>
+    <div class="source-card cyan">
+      <div class="label">B · Commission downline</div>
+      <div class="title">Différentiel sur les ventes de ton équipe</div>
+      <div class="desc">Pour chaque distri sous toi qui vend, tu touches la différence entre ton % et le sien (ex : tu es à 50 %, lui à 35 % → tu prends 15 %). Application de la règle de compression.</div>
+    </div>
+    <div class="source-card violet">
+      <div class="label">C · Royalty Override</div>
+      <div class="title">5 % sur 3 niveaux Supervisor</div>
+      <div class="desc">Quand ta downline devient elle-même Supervisor, tu perds la commission différentielle (déjà à 50 %) mais tu gagnes 5 % sur le volume d'organisation des 3 premiers niveaux.</div>
+    </div>
+    <div class="source-card gold">
+      <div class="label">D · Production Bonus</div>
+      <div class="title">2 à 7 % à partir de Get Team <span class="future-tag">À venir</span></div>
+      <div class="desc">Bonus supplémentaire sur le volume total de ton organisation, débloqué progressivement à partir de Get Team Supervisor (2 %), puis paliers plus élevés.</div>
+    </div>
+  </div>
+
+  <!-- ========================================================================
+       SECTION 2 — Pyramide des rangs
+       ======================================================================== -->
+  <h2><span class="num">2</span>La pyramide des rangs</h2>
+  <p class="lead">
+    Les paliers se débloquent par les Volume Points (PV). Les rangs en dessous de Supervisor montent
+    via tes ventes personnelles. Les rangs au-delà de Supervisor montent via la performance de ton
+    organisation downline.
+  </p>
+  <div class="pyramid-wrap">
+    <div class="pyramid-step s7">
+      <div class="pin">President's Team</div>
+      <div class="qualif">Le sommet — multi-générations Supervisor sous toi</div>
+      <div class="pct">50 %</div>
+    </div>
+    <div class="pyramid-step s7" style="opacity: 0.85;">
+      <div class="pin">Millionaire Team / 7 500 RO</div>
+      <div class="qualif">7 500 Royalty Points cumulés</div>
+      <div class="pct">50 %</div>
+    </div>
+    <div class="pyramid-step s7" style="opacity: 0.7;">
+      <div class="pin">G.E.T. Team / 2 500 RO</div>
+      <div class="qualif">Production Bonus 2 % débloqué</div>
+      <div class="pct">50 %</div>
+    </div>
+    <div class="pyramid-step s6">
+      <div class="pin">World Team / Active World Team</div>
+      <div class="qualif">Volume d'organisation soutenu</div>
+      <div class="pct">50 %</div>
+    </div>
+    <div class="pyramid-step s5">
+      <div class="pin">Active Supervisor / Supervisor</div>
+      <div class="qualif">4 000 PV en 1 mois (perso + downline non-Sup)</div>
+      <div class="pct">50 %</div>
+    </div>
+    <div class="pyramid-step s4">
+      <div class="pin">Success Builder</div>
+      <div class="qualif">1 000 PV en 1 mois (perso)</div>
+      <div class="pct">42 %</div>
+    </div>
+    <div class="pyramid-step s3">
+      <div class="pin">Senior Consultant</div>
+      <div class="qualif">500 PV en 1 mois (perso)</div>
+      <div class="pct">35 %</div>
+    </div>
+    <div class="pyramid-step s2">
+      <div class="pin">Distributor</div>
+      <div class="qualif">Inscription officielle Herbalife</div>
+      <div class="pct">25 %</div>
+    </div>
+    <div class="pyramid-step s1">
+      <div class="pin">Client privilégié (Préféré)</div>
+      <div class="qualif">Inscription gratuite, achat direct au prix membre</div>
+      <div class="pct">15 %</div>
+    </div>
+  </div>
+
+  <!-- ========================================================================
+       SECTION 3 — Tableau détaillé
+       ======================================================================== -->
+  <h2><span class="num">3</span>Détail des paliers — qui touche quoi</h2>
+  <table class="ranks">
+    <thead>
+      <tr>
+        <th>Rang</th>
+        <th>Remise</th>
+        <th>Qualification</th>
+        <th>Ce que touche le sponsor immédiat (Supervisor 50 %)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="tier-bronze">
+        <td>Préféré (Bronze VIP)</td>
+        <td><span class="pct-pill">15 %</span></td>
+        <td>Inscription gratuite</td>
+        <td>35 % de commission sur ses achats (50 − 15)</td>
+      </tr>
+      <tr class="tier-silver">
+        <td>Distributor / Silver VIP</td>
+        <td><span class="pct-pill">25 %</span></td>
+        <td>Inscription Herbalife</td>
+        <td>25 % de commission (50 − 25)</td>
+      </tr>
+      <tr class="tier-gold">
+        <td>Senior Consultant / Gold VIP</td>
+        <td><span class="pct-pill">35 %</span></td>
+        <td>500 PV en 1 mois (perso)</td>
+        <td>15 % de commission (50 − 35)</td>
+      </tr>
+      <tr>
+        <td>Success Builder</td>
+        <td><span class="pct-pill">42 %</span></td>
+        <td>1 000 PV en 1 mois (perso)</td>
+        <td>8 % de commission (50 − 42)</td>
+      </tr>
+      <tr class="tier-supervisor">
+        <td>Supervisor / Active Supervisor</td>
+        <td><span class="pct-pill">50 %</span></td>
+        <td>4 000 PV en 1 mois (perso + downline non-Sup)</td>
+        <td>0 % commission, mais Royalty Override 5 % débloqué</td>
+      </tr>
+      <tr class="tier-team">
+        <td>World Team / Active WT</td>
+        <td><span class="pct-pill">50 %</span></td>
+        <td>Volume d'organisation soutenu sur plusieurs mois</td>
+        <td>5 % Royalty sur 3 niveaux downline Supervisor</td>
+      </tr>
+      <tr class="tier-elite">
+        <td>G.E.T. / Millionaire / President's</td>
+        <td><span class="pct-pill">50 %</span></td>
+        <td>Royalty Points cumulés (2 500 / 7 500 RO ...)</td>
+        <td>5 % Royalty + Production Bonus 2 → 7 %</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- ========================================================================
+       SECTION 4 — Chaîne de compression visuelle
+       ======================================================================== -->
+  <h2><span class="num">4</span>La règle de compression — exemple concret</h2>
+  <p class="lead">
+    Quand tu as plusieurs niveaux sous toi avec des rangs différents, chacun "absorbe" le différentiel
+    qui lui revient. C'est le principe de compression : tu ne touches QUE l'écart non-pris par tes
+    intermédiaires.
+  </p>
+
+  <div class="chain-demo">
+    <div class="chain-row">
+      <div class="chain-node viewer">
+        <div class="role">Sponsor</div>
+        <div class="name">Toi</div>
+        <div class="rank">Supervisor 50 %</div>
+      </div>
+      <div class="chain-arrow">→</div>
+      <div class="chain-node middle">
+        <div class="role">Niveau 1</div>
+        <div class="name">Distri intermédiaire</div>
+        <div class="rank">Success Builder 42 %</div>
+      </div>
+      <div class="chain-arrow">→</div>
+      <div class="chain-node leaf">
+        <div class="role">Niveau 2</div>
+        <div class="name">Distri en bas de chaîne</div>
+        <div class="rank">Senior Consultant 35 %</div>
+      </div>
+    </div>
+
+    <div class="chain-explain">
+      Quand le distri du <strong>Niveau 2</strong> (35 %) vend pour 100 PV à un client, le pool
+      commission disponible est <code>50 − 35 = 15 %</code>. Il se distribue ainsi :<br><br>
+      • <strong>Niveau 1</strong> prend la part jusqu'à son rang : <code>42 − 35 = 7 %</code><br>
+      • <strong>Toi</strong> prends ce qui reste pour atteindre 50 % : <code>50 − 42 = 8 %</code><br>
+      • Total reversé : <strong>15 %</strong> (= 7 % + 8 %) ✓<br><br>
+      Si le Niveau 2 atteint lui aussi 42 %, le Niveau 1 ne touche plus rien (il est compressé) et
+      <strong>tu continues à toucher tes 8 %</strong>. Si le Niveau 2 devient Supervisor 50 %, sa branche
+      "casse" (breakaway) : tu ne touches plus de commission différentielle mais tu gagnes 5 % de
+      Royalty Override sur son volume d'organisation.
+    </div>
+  </div>
+
+  <!-- ========================================================================
+       SECTION 5 — Formules de calcul
+       ======================================================================== -->
+  <h2><span class="num">5</span>Les formules de calcul</h2>
+
+  <div class="formula-card">
+    <h3>A · Commission sur ventes downline (chaîne de compression)</h3>
+    <div class="formula">
+      cut% = max(0, ton_rang − max(rang_downstream, ...rangs_intermédiaires))
+    </div>
+    <div class="note">
+      Pour chaque distri Y dans ton arbre, tu prends l'écart de % entre ton rang et le rang
+      le plus élevé entre Y et toi (exclu). Si l'écart est nul ou négatif, tu touches 0 sur cette
+      branche.
+    </div>
+  </div>
+
+  <div class="formula-card">
+    <h3>B · Royalty Override (downline Supervisor)</h3>
+    <div class="formula">
+      royalty_€ = volume_organisation × 5 % × prix_HT_par_PV
+    </div>
+    <div class="note">
+      5 % sur Niveau 1 + 5 % sur Niveau 2 + 5 % sur Niveau 3 (jusqu'à 3 générations Supervisor sous
+      toi). Calculé en fin de mois sur la fiche RO Herbalife.
+    </div>
+  </div>
+
+  <div class="formula-card">
+    <h3>C · Conversion PV → € HT (France)</h3>
+    <div class="formula">
+      1 PV ≈ 1,78 € HT (mix produit moyen)
+    </div>
+    <div class="note">
+      Ratio observé sur la fiche RO réelle (Volume d'Organisation / Prix Total HT). Varie de 1,60 à
+      1,90 selon les produits vendus (Formula 1, PDM, Aloe, Thé...). Sert à estimer ton override en €
+      depuis les PV bruts.
+    </div>
+  </div>
+
+  <!-- ========================================================================
+       SECTION 6 — Boosters & bonus à venir
+       ======================================================================== -->
+  <h2><span class="num">6</span>Bonus à débloquer plus haut</h2>
+
+  <div class="booster">
+    <div class="badge">5 %</div>
+    <div class="body">
+      <div class="title">Royalty Override · 3 niveaux</div>
+      <div class="desc">
+        Activé dès Supervisor 50 %. 5 % sur le volume d'organisation des 3 premiers niveaux de
+        Supervisor en dessous de toi. C'est le moteur passif principal une fois Supervisor.
+      </div>
+    </div>
+  </div>
+
+  <div class="booster violet">
+    <div class="badge">+2 %</div>
+    <div class="body">
+      <div class="title">Production Bonus · à partir de G.E.T. Team <span class="future-tag">À venir</span></div>
+      <div class="desc">
+        2 % sur le volume total de ton organisation, débloqué quand tu cumules 2 500 Royalty Points sur
+        un mois. Monte progressivement (4 %, 6 %, jusqu'à 7 %) selon les paliers Millionaire et
+        President's Team.
+      </div>
+    </div>
+  </div>
+
+  <div class="booster gold">
+    <div class="badge">★</div>
+    <div class="body">
+      <div class="title">Mark Hughes Bonus <span class="future-tag">Élite</span></div>
+      <div class="desc">
+        Bonus annuel réservé au top tier mondial (Millionaire & President's Team qualifiés sur l'année
+        entière). Pourcentage variable issu d'un fonds global Herbalife.
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================
+       FOOTER
+       ======================================================================== -->
+  <footer>
+    <div class="signature">La Base 360 · The wellness nutrition club</div>
+    Document à but pédagogique — synthèse du Plan Marketing Herbalife pour présentation business.<br>
+    Les pourcentages et seuils mentionnés sont génériques et peuvent évoluer selon les mises à jour du Plan Herbalife. Aucun chiffre personnel n'est inclus dans ce document.
+  </footer>
+
+</div>
+</body>
+</html>
