@@ -17,6 +17,7 @@ import { RentabilityDetailModal } from "../components/rentability/RentabilityDet
 import { resolveCoupleUserIds } from "../config/teamConfig";
 import { usePvBreakdowns } from "../hooks/usePvBreakdowns";
 import { useManualPvEntries } from "../hooks/useManualPvEntries";
+import { useStealthMode } from "../hooks/useStealthMode";
 import { ManualPvEntriesSection } from "../components/rentability/ManualPvEntriesSection";
 import {
   computeManualEntriesOverride,
@@ -62,6 +63,9 @@ export function RentabilitePage() {
   const { data: selectedData } = useUserRentability(selectedMemberId);
 
   const [detailOpen, setDetailOpen] = useState(false);
+
+  // Stealth mode (chantier 2026-11-07) : floute les montants EUR pendant les RDV.
+  const { stealthOn, toggle: toggleStealth } = useStealthMode();
 
   // V2.1 — override downline ajoute a margin_eur cote front (RPC ne lit pas
   // pv_monthly_breakdown, donc ne le saurait pas autrement).
@@ -149,9 +153,35 @@ export function RentabilitePage() {
 
   return (
     <div style={pageWrap}>
-      <button type="button" onClick={() => navigate("/co-pilote")} style={backBtn}>
-        ← Co-pilote
-      </button>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14, gap: 10, flexWrap: "wrap" }}>
+        <button type="button" onClick={() => navigate("/co-pilote")} style={backBtn}>
+          ← Co-pilote
+        </button>
+        <button
+          type="button"
+          onClick={toggleStealth}
+          aria-pressed={stealthOn}
+          title={stealthOn ? "Afficher les montants" : "Masquer les montants (mode RDV)"}
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 6,
+            padding: "7px 12px",
+            borderRadius: 10,
+            border: "0.5px solid var(--ls-border)",
+            background: stealthOn
+              ? "color-mix(in srgb, var(--ls-purple) 14%, var(--ls-surface2))"
+              : "var(--ls-surface)",
+            color: stealthOn ? "var(--ls-purple)" : "var(--ls-text-muted)",
+            fontFamily: "DM Sans, sans-serif",
+            fontSize: 12,
+            fontWeight: 600,
+            cursor: "pointer",
+          }}
+        >
+          {stealthOn ? "🙈 Montants masqués" : "👁️ Masquer les montants"}
+        </button>
+      </div>
 
       {/* Hero personnel */}
       <div style={heroBoxStyle}>
@@ -166,14 +196,14 @@ export function RentabilitePage() {
       {ownLoading ? (
         <div style={loadingStyle}>Chargement…</div>
       ) : ownData ? (
-        <div style={ownCardStyle}>
+        <div style={ownCardStyle} data-stealth>
           <RentabilityGauge
             data={ownDataWithOverride ?? ownData}
             size="hero"
             onClick={() => setDetailOpen(true)}
           />
           {ownDownlineOverride > 0 ? (
-            <div style={{
+            <div data-stealth style={{
               marginTop: 4,
               fontSize: 12,
               color: "var(--ls-text-muted)",
@@ -292,7 +322,7 @@ function TeamMemberRentabilityCard({
       {loading || !data ? (
         <div style={miniLoadingStyle}>—</div>
       ) : (
-        <div style={miniGaugeWrap}>
+        <div style={miniGaugeWrap} data-stealth>
           <RentabilityGauge data={dataWithOverride ?? data} size="compact" />
         </div>
       )}

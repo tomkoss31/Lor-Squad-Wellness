@@ -207,7 +207,7 @@ export function ManualPvEntriesSection() {
             <span style={{ color: "var(--ls-text-muted)", fontSize: 13 }}>
               Total override sur {entries.length} entrée{entries.length > 1 ? "s" : ""} :
             </span>
-            <strong style={{ color: "var(--ls-purple)", fontSize: 18, fontFamily: "Syne, sans-serif" }}>
+            <strong data-stealth style={{ color: "var(--ls-purple)", fontSize: 18, fontFamily: "Syne, sans-serif" }}>
               {Math.round(totalOverride).toLocaleString("fr-FR")} €
             </strong>
           </div>
@@ -298,7 +298,7 @@ function ManualEntryRow({
           <span style={{ marginLeft: 6 }}>· {totalPv.toLocaleString("fr-FR")} PV</span>
         </div>
       </div>
-      <div style={{ fontFamily: "Syne, sans-serif", fontSize: 16, fontWeight: 700, color: "var(--ls-purple)", whiteSpace: "nowrap" }}>
+      <div data-stealth style={{ fontFamily: "Syne, sans-serif", fontSize: 16, fontWeight: 700, color: "var(--ls-purple)", whiteSpace: "nowrap" }}>
         {Math.round(cut).toLocaleString("fr-FR")} €
       </div>
       <button type="button" onClick={onEdit} style={iconBtnStyle} aria-label="Modifier">✏️</button>
