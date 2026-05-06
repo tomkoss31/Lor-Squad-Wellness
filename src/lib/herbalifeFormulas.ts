@@ -186,6 +186,86 @@ const RANK_LABEL_FALLBACK: Record<string, string> = {
 };
 
 /**
+ * Tree-walk : pour un sponsor (viewer), calcule l override total EUR sur
+ * TOUTE son organisation (recursif), en appliquant la regle de compression
+ * Herbalife. Reutilise par la jauge principale + l onglet Distributeurs.
+ *
+ * @param viewerIds tableau d IDs (couple agrege ou single user)
+ * @param users    liste complete des users (sponsorId + currentRank + frozenAt)
+ * @param breakdowns liste des breakdowns du mois courant
+ * @param fallbackOverrideForUser fn optionnelle pour fallback sur monthly_pv_override
+ *                                quand pas de breakdown V2 saisi
+ */
+export function computeViewerDownlineOverride(
+  viewerIds: string[],
+  users: Array<{
+    id: string;
+    sponsorId?: string;
+    currentRank?: string | null;
+    frozenAt?: string | null;
+  }>,
+  breakdowns: PvMonthlyBreakdown[],
+  fallbackOverrideForUser?: (userId: string) => { totalPv: number; tierPct: number } | null,
+): number {
+  const breakdownByUserId = new Map<string, PvMonthlyBreakdown>();
+  for (const b of breakdowns) breakdownByUserId.set(b.userId, b);
+
+  // Viewer tier = max des tiers du scope (couple : on prend le plus haut).
+  const viewerTierPct = Math.max(
+    ...viewerIds.map((uid) => {
+      const u = users.find((x) => x.id === uid);
+      return tierPctForRank(u?.currentRank);
+    }),
+  );
+
+  // Index sponsor -> children pour walk efficace
+  const childrenBySponsor = new Map<string, typeof users>();
+  for (const u of users) {
+    if (u.frozenAt) continue;
+    if (!u.sponsorId) continue;
+    const arr = childrenBySponsor.get(u.sponsorId) ?? [];
+    arr.push(u);
+    childrenBySponsor.set(u.sponsorId, arr);
+  }
+
+  interface Frame {
+    user: typeof users[0];
+    intermediateTiers: number[];
+  }
+  const queue: Frame[] = [];
+  for (const ownerId of viewerIds) {
+    const directs = childrenBySponsor.get(ownerId) ?? [];
+    for (const u of directs) queue.push({ user: u, intermediateTiers: [] });
+  }
+
+  let total = 0;
+  while (queue.length > 0) {
+    const frame = queue.shift()!;
+    const { user: u, intermediateTiers } = frame;
+    const breakdown = breakdownByUserId.get(u.id);
+    if (breakdown) {
+      total += computeSponsorCutOnDownstream(breakdown, viewerTierPct, intermediateTiers);
+    } else if (fallbackOverrideForUser) {
+      const fb = fallbackOverrideForUser(u.id);
+      if (fb && fb.totalPv > 0) {
+        const maxUpstream = Math.max(fb.tierPct, ...intermediateTiers);
+        const cutPct = Math.max(0, viewerTierPct - maxUpstream) / 100;
+        total += fb.totalPv * cutPct * PV_TO_EUR_RATIO;
+      }
+    }
+    const yTierPct = tierPctForRank(u.currentRank);
+    const childList = childrenBySponsor.get(u.id) ?? [];
+    for (const child of childList) {
+      queue.push({
+        user: child,
+        intermediateTiers: [...intermediateTiers, yTierPct],
+      });
+    }
+  }
+  return total;
+}
+
+/**
  * Retourne la progression du distri vers son prochain palier.
  * pvCurrent = total PV ce mois (somme breakdown ou monthly_pv_override).
  */

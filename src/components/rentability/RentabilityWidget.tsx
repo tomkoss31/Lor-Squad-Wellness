@@ -5,18 +5,51 @@
 // popup détail. Skippe silencieusement si pas de user (login).
 // =============================================================================
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppContext } from "../../context/AppContext";
 import { useUserRentability } from "../../hooks/useUserRentability";
 import { RentabilityGauge } from "./RentabilityGauge";
 import { RentabilityDetailModal } from "./RentabilityDetailModal";
+import { usePvBreakdowns } from "../../hooks/usePvBreakdowns";
+import {
+  computeViewerDownlineOverride,
+  currentMonthIso,
+} from "../../lib/herbalifeFormulas";
 
 export function RentabilityWidget() {
   const navigate = useNavigate();
-  const { currentUser } = useAppContext();
+  const { currentUser, users } = useAppContext();
   const { data, loading, error, isCoupleAggregated } = useUserRentability(currentUser?.id ?? null);
   const [open, setOpen] = useState(false);
+
+  // Override downline (V2.1) — additionne au margin_eur pour la jauge.
+  // La RPC SQL ne lit pas pv_monthly_breakdown ; on injecte cote front.
+  const monthIso = useMemo(() => currentMonthIso(), []);
+  const { breakdowns } = usePvBreakdowns(monthIso);
+  const downlineOverride = useMemo(() => {
+    if (!data || !currentUser) return 0;
+    return computeViewerDownlineOverride(
+      data.scope_user_ids,
+      users.map((u) => ({
+        id: u.id,
+        sponsorId: u.sponsorId,
+        currentRank: u.currentRank,
+        frozenAt: u.frozenAt,
+      })),
+      breakdowns,
+    );
+  }, [data, currentUser, users, breakdowns]);
+  // Patch data pour la jauge : margin_eur + override
+  const dataWithOverride = useMemo(() => {
+    if (!data) return null;
+    if (downlineOverride === 0) return data;
+    return {
+      ...data,
+      margin_eur: data.margin_eur + downlineOverride,
+      projection_eur: data.projection_eur + downlineOverride,
+    };
+  }, [data, downlineOverride]);
 
   if (!currentUser) return null;
   if (loading) {
@@ -62,8 +95,13 @@ export function RentabilityWidget() {
       `${data.products_count} programme${data.products_count > 1 ? "s" : ""} · marge ${data.margin_pct}%`,
     );
   }
-  if (data.projection_eur > data.margin_eur) {
-    subParts.push(`projection ${Math.round(data.projection_eur).toLocaleString("fr-FR")} € fin de mois`);
+  if (downlineOverride > 0) {
+    subParts.push(`+${Math.round(downlineOverride).toLocaleString("fr-FR")} € override downline`);
+  }
+  const effectiveMargin = data.margin_eur + downlineOverride;
+  const effectiveProjection = data.projection_eur + downlineOverride;
+  if (effectiveProjection > effectiveMargin) {
+    subParts.push(`projection ${Math.round(effectiveProjection).toLocaleString("fr-FR")} € fin de mois`);
   }
   if (isCoupleAggregated) {
     subParts.push("agrégé Thomas + Mélanie");
@@ -79,7 +117,7 @@ export function RentabilityWidget() {
         <div style={leftStyle}>
           <div style={eyebrowStyle}>💎 Ma rentabilité · {monthLabel(data.month_start)}</div>
           <h3 style={titleStyle}>
-            Tu gagnes <span style={{ color: "var(--ls-gold)" }}>{Math.round(data.margin_eur).toLocaleString("fr-FR")} €</span> ce mois
+            Tu gagnes <span style={{ color: "var(--ls-gold)" }}>{Math.round(effectiveMargin).toLocaleString("fr-FR")} €</span> ce mois
           </h3>
           <p style={subStyle}>{subText}</p>
           <div style={ctaRowStyle}>
@@ -102,7 +140,7 @@ export function RentabilityWidget() {
         <div style={rightStyle}>
           {/* Compact 140 px sans labels (les labels sont déjà dans le widget) */}
           <RentabilityGauge
-            data={data}
+            data={dataWithOverride ?? data}
             size="compact"
             onClick={() => setOpen(true)}
             showLabels={false}
@@ -110,7 +148,7 @@ export function RentabilityWidget() {
         </div>
       </div>
 
-      {open && <RentabilityDetailModal data={data} onClose={() => setOpen(false)} />}
+      {open && <RentabilityDetailModal data={dataWithOverride ?? data} onClose={() => setOpen(false)} />}
     </>
   );
 }
