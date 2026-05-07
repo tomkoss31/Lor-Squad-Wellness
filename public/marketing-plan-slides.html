@@ -3,299 +3,322 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Plan Marketing Herbalife — Slides — La Base 360</title>
+<title>La Base 360 — Plan Marketing · Slides</title>
 <style>
+  /* =========================================================================
+     SLIDES MARKETING PLAN La Base 360 — V2 (chantier 2026-11-07)
+     Format A4 paysage, 12 slides imprimables, design Claude La Base 360.
+     Navigation : flèches ← → / espace / scroll. Print = export PDF deck.
+     ========================================================================= */
   :root {
     --emerald: #10B981;
     --cyan: #06B6D4;
     --violet: #8B5CF6;
     --gold: #B8922A;
-    --coral: #D4537E;
     --ink: #0F172A;
-    --ink2: #475569;
-    --slate: #64748B;
+    --ink-soft: #1e293b;
+    --muted: #64748b;
+    --line: #e2e8f0;
     --mist: #FAFAFC;
-    --line: #E2E8F0;
+    --shadow-md: 0 4px 12px rgba(15,23,42,.06), 0 12px 32px rgba(15,23,42,.06);
+    --font-display: "Sora", "Inter", -apple-system, sans-serif;
+    --font-body: "Inter", -apple-system, sans-serif;
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; padding: 0; }
   body {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-    background: #0F172A;
+    font-family: var(--font-body);
     color: var(--ink);
+    background: var(--ink);
     -webkit-font-smoothing: antialiased;
+    line-height: 1.4;
   }
+
+  .print-btn {
+    position: fixed; top: 20px; right: 20px; z-index: 100;
+    padding: 10px 18px; border-radius: 12px; border: none;
+    background: linear-gradient(135deg, #10B981 0%, #06B6D4 50%, #8B5CF6 100%);
+    color: white; font-family: var(--font-display);
+    font-size: 13px; font-weight: 700; cursor: pointer;
+    box-shadow: 0 6px 18px rgba(16,185,129,0.45);
+  }
+  @media print { .print-btn { display: none !important; } }
 
   .deck { display: flex; flex-direction: column; }
 
-  /* Chaque slide = 16:9 */
   .slide {
     width: 100vw;
     height: 100vh;
     min-height: 600px;
     background: var(--mist);
-    padding: 60px 80px;
+    padding: 44px 64px;
     display: flex;
     flex-direction: column;
-    justify-content: center;
     position: relative;
     overflow: hidden;
     page-break-after: always;
   }
-  .slide.dark { background: #0F172A; color: white; }
-  .slide.dark .slate-text { color: rgba(255,255,255,0.7); }
-  .slide.dark h1, .slide.dark h2 { color: white; }
+  .slide:last-child { page-break-after: auto; }
+  .slide.dark { background: var(--ink); color: white; }
+  .slide.dark h1, .slide.dark h2, .slide.dark h3 { color: white; }
 
-  /* Glow décoratifs */
-  .slide::before {
-    content: '';
-    position: absolute; top: -150px; right: -150px;
+  .blob1, .blob2 {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(80px);
+    opacity: 0.5;
+    pointer-events: none;
+  }
+  .blob1 {
+    top: -150px; right: -150px;
     width: 380px; height: 380px;
-    background: radial-gradient(circle, rgba(16,185,129,0.14), transparent 65%);
-    border-radius: 50%;
-    pointer-events: none;
+    background: radial-gradient(circle, rgba(16,185,129,0.32), transparent 65%);
   }
-  .slide::after {
-    content: '';
-    position: absolute; bottom: -180px; left: -180px;
+  .blob2 {
+    bottom: -180px; left: -180px;
     width: 420px; height: 420px;
-    background: radial-gradient(circle, rgba(139,92,246,0.12), transparent 65%);
-    border-radius: 50%;
-    pointer-events: none;
+    background: radial-gradient(circle, rgba(139,92,246,0.28), transparent 65%);
   }
-  .slide.dark::before { background: radial-gradient(circle, rgba(16,185,129,0.32), transparent 60%); }
-  .slide.dark::after { background: radial-gradient(circle, rgba(139,92,246,0.28), transparent 60%); }
+  .slide.dark .blob1 { background: radial-gradient(circle, rgba(16,185,129,0.5), transparent 60%); }
+  .slide.dark .blob2 { background: radial-gradient(circle, rgba(139,92,246,0.42), transparent 60%); }
 
-  /* Numéro de slide */
-  .slide-num {
-    position: absolute; bottom: 24px; right: 36px;
-    font-size: 12px; color: var(--slate);
-    font-family: 'Sora', sans-serif; font-weight: 600;
-    z-index: 10;
-  }
-  .slide.dark .slide-num { color: rgba(255,255,255,0.4); }
+  .content { position: relative; z-index: 1; flex: 1; display: flex; flex-direction: column; justify-content: center; }
 
-  /* Brand */
   .brand-mini {
-    position: absolute; top: 30px; left: 80px;
-    display: inline-flex; align-items: center; gap: 8px;
-    font-family: 'Sora', sans-serif;
-    font-size: 12px; font-weight: 700;
-    z-index: 10;
+    position: absolute; top: 32px; left: 64px; z-index: 10;
+    display: inline-flex; align-items: center; gap: 10px;
+    font-family: var(--font-display);
+    font-size: 12px; font-weight: 700; letter-spacing: .02em;
   }
   .brand-mini .mark {
-    width: 22px; height: 22px; border-radius: 6px;
-    background: linear-gradient(135deg, #10B981, #06B6D4, #8B5CF6);
-    box-shadow: 0 2px 6px rgba(16,185,129,0.3);
+    width: 24px; height: 24px; border-radius: 7px;
+    background: conic-gradient(from 200deg at 50% 50%, var(--emerald), var(--cyan), var(--violet), var(--emerald));
+    position: relative;
   }
-
-  .content { position: relative; z-index: 1; }
-
-  /* === Typo === */
-  h1 {
-    font-family: 'Sora', sans-serif;
-    font-size: 72px; font-weight: 800;
-    margin: 0 0 24px; letter-spacing: -0.025em;
-    line-height: 1.05; color: var(--ink);
+  .brand-mini .mark::after {
+    content: ""; position: absolute; inset: 5px; border-radius: 4px;
+    background: var(--mist);
   }
-  h1 .accent {
-    background: linear-gradient(135deg, #10B981, #06B6D4, #8B5CF6);
+  .slide.dark .brand-mini .mark::after { background: var(--ink); }
+
+  .slide-num {
+    position: absolute; bottom: 24px; right: 36px; z-index: 10;
+    font-family: var(--font-display);
+    font-size: 11px; font-weight: 600;
+    color: var(--muted);
+  }
+  .slide.dark .slide-num { color: rgba(255,255,255,0.5); }
+
+  .footer-mini {
+    position: absolute; bottom: 24px; left: 64px; z-index: 10;
+    font-family: var(--font-display);
+    font-size: 11px; font-weight: 500;
+    color: var(--muted);
+  }
+  .slide.dark .footer-mini { color: rgba(255,255,255,0.5); }
+
+  h1, h2, h3 {
+    font-family: var(--font-display);
+    font-weight: 800;
+    letter-spacing: -.025em;
+    line-height: 1.05;
+    margin: 0 0 16px;
+    color: var(--ink);
+  }
+  h1 { font-size: clamp(38px, 6vw, 76px); }
+  h2 { font-size: clamp(30px, 4.5vw, 52px); }
+  h3 { font-size: clamp(20px, 2.5vw, 28px); }
+
+  .accent {
+    background: linear-gradient(120deg, var(--emerald), var(--cyan) 55%, var(--violet));
     -webkit-background-clip: text; background-clip: text; color: transparent;
     font-style: italic;
   }
-  h2 {
-    font-family: 'Sora', sans-serif;
-    font-size: 48px; font-weight: 800;
-    margin: 0 0 24px; letter-spacing: -0.02em;
-    line-height: 1.1; color: var(--ink);
-  }
-  h3 {
-    font-family: 'Sora', sans-serif;
-    font-size: 22px; font-weight: 700;
-    margin: 0 0 8px; color: var(--ink);
-  }
-  .lead {
-    font-size: 22px; line-height: 1.55;
-    color: var(--ink2);
-    max-width: 880px;
-  }
+  .accent-emerald { color: var(--emerald); font-style: italic; }
+  .accent-cyan { color: var(--cyan); font-style: italic; }
+  .accent-violet { color: var(--violet); font-style: italic; }
+  .accent-gold { color: var(--gold); font-style: italic; }
+
   .eyebrow {
-    display: inline-block;
-    font-size: 12px; letter-spacing: 2.4px;
-    color: var(--emerald); font-weight: 700;
-    text-transform: uppercase;
+    display: inline-flex; align-items: center; gap: 8px;
+    font-family: var(--font-body); font-weight: 700;
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--emerald);
+    padding: 6px 12px; border-radius: 999px;
+    background: color-mix(in oklab, var(--emerald) 10%, white);
+    border: 1px solid color-mix(in oklab, var(--emerald) 18%, transparent);
     margin-bottom: 18px;
   }
-  .slide.dark .eyebrow { color: #34D399; }
-
-  /* === Slide 1 — Title === */
-  .title-slide {
-    text-align: center;
-    align-items: center;
-    justify-content: center;
+  .eyebrow::before {
+    content: ""; width: 6px; height: 6px; border-radius: 50%;
+    background: var(--emerald);
+    box-shadow: 0 0 0 4px color-mix(in oklab, var(--emerald) 18%, transparent);
   }
-  .title-slide h1 { font-size: 88px; }
-  .title-slide .subtitle {
-    font-size: 24px; color: rgba(255,255,255,0.78);
-    max-width: 700px; margin: 0 auto;
-  }
-  .title-slide .heritage {
-    margin-top: 40px;
-    display: inline-block;
-    font-size: 11px; letter-spacing: 2.4px;
-    color: rgba(255,255,255,0.6);
-    border: 0.5px solid rgba(255,255,255,0.2);
-    padding: 6px 18px;
-    border-radius: 999px;
-    text-transform: uppercase;
+  .slide.dark .eyebrow {
+    background: color-mix(in oklab, var(--emerald) 18%, transparent);
+    border-color: color-mix(in oklab, var(--emerald) 30%, transparent);
+    color: #34D399;
   }
 
-  /* === Cards (sources / paliers) === */
-  .grid-3 { display: grid; grid-template-columns: repeat(3,1fr); gap: 22px; }
-  .grid-4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 18px; }
+  p { margin: 0 0 12px; color: var(--ink-soft); font-size: 18px; line-height: 1.55; max-width: 70ch; }
+  .slide.dark p { color: rgba(255,255,255,0.85); }
+  .lead { font-size: 22px; color: var(--ink-soft); line-height: 1.6; max-width: 80ch; }
+  .slide.dark .lead { color: rgba(255,255,255,0.85); }
+
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
+  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 36px; align-items: center; }
 
   .card {
-    background: white;
-    border: 0.5px solid var(--line);
-    border-radius: 18px;
-    padding: 26px 26px;
-    box-shadow: 0 1px 3px rgba(15,23,42,0.04);
+    background: white; border: 1px solid var(--line);
+    border-radius: 18px; padding: 24px;
+    box-shadow: var(--shadow-md);
   }
-  .card.accent-emerald { border-left: 4px solid var(--emerald); }
-  .card.accent-cyan { border-left: 4px solid var(--cyan); }
-  .card.accent-violet { border-left: 4px solid var(--violet); }
-  .card.accent-gold { border-left: 4px solid var(--gold); }
-  .card .icon {
-    font-size: 30px; margin-bottom: 10px;
-  }
+  .card.emerald { border-top: 4px solid var(--emerald); }
+  .card.cyan { border-top: 4px solid var(--cyan); }
+  .card.violet { border-top: 4px solid var(--violet); }
+  .card.gold { border-top: 4px solid var(--gold); }
+  .card .icon { font-size: 32px; margin-bottom: 10px; }
   .card .label {
-    font-size: 10px; letter-spacing: 1.6px; text-transform: uppercase;
-    color: var(--emerald); font-weight: 700; margin-bottom: 6px;
+    font-size: 11px; letter-spacing: 1.4px; text-transform: uppercase;
+    font-weight: 700; margin-bottom: 6px;
   }
-  .card.accent-cyan .label { color: var(--cyan); }
-  .card.accent-violet .label { color: var(--violet); }
-  .card.accent-gold .label { color: var(--gold); }
-  .card h3 { font-size: 18px; margin-bottom: 8px; }
-  .card .desc {
-    font-size: 13px; color: var(--ink2); line-height: 1.55;
-  }
+  .card.emerald .label { color: var(--emerald); }
+  .card.cyan .label { color: var(--cyan); }
+  .card.violet .label { color: var(--violet); }
+  .card.gold .label { color: var(--gold); }
+  .card h3 { font-size: 20px; margin-bottom: 8px; }
+  .card .desc { font-size: 14px; color: var(--ink-soft); line-height: 1.5; }
   .card .pct {
-    font-family: 'Sora', sans-serif; font-weight: 800;
-    font-size: 28px; margin-top: 10px;
-    color: var(--emerald);
+    font-family: var(--font-display); font-weight: 800; font-size: 30px;
+    margin-top: 12px; letter-spacing: -.03em;
   }
-  .card.accent-cyan .pct { color: var(--cyan); }
-  .card.accent-violet .pct { color: var(--violet); }
-  .card.accent-gold .pct { color: var(--gold); }
+  .card.emerald .pct { color: var(--emerald); }
+  .card.cyan .pct { color: var(--cyan); }
+  .card.violet .pct { color: var(--violet); }
+  .card.gold .pct { color: var(--gold); }
 
-  /* === Pyramide slide === */
-  .pyramid-deck {
+  .pyramid {
     display: flex; flex-direction: column; align-items: center;
-    gap: 5px; max-width: 920px; margin: 20px auto 0;
+    gap: 8px; max-width: 900px; margin: 0 auto;
   }
-  .pyramid-deck .step {
-    padding: 14px 28px; border-radius: 10px;
-    color: white; font-family: 'Sora', sans-serif; font-weight: 700;
-    display: flex; align-items: center; justify-content: space-between;
-    box-shadow: 0 2px 8px rgba(15,23,42,0.06);
+  .pyramid .level {
+    padding: 14px 28px; border-radius: 12px;
+    color: white; font-family: var(--font-display); font-weight: 700;
+    display: flex; justify-content: space-between; align-items: center;
+    box-shadow: 0 2px 8px rgba(15,23,42,.08);
   }
-  .pyramid-deck .step .name { font-size: 14px; }
-  .pyramid-deck .step .pct { font-size: 18px; }
-  .pyramid-deck .s1 { width: 50%; background: linear-gradient(90deg, #94A3B8, #64748B); }
-  .pyramid-deck .s2 { width: 60%; background: linear-gradient(90deg, #B8922A, #C9A84C); }
-  .pyramid-deck .s3 { width: 70%; background: linear-gradient(90deg, #10B981, #34D399); }
-  .pyramid-deck .s4 { width: 82%; background: linear-gradient(90deg, #06B6D4, #22D3EE); }
-  .pyramid-deck .s5 { width: 94%; background: linear-gradient(90deg, #8B5CF6, #A78BFA); }
-  .pyramid-deck .s6 { width: 100%; background: linear-gradient(90deg, #EC4899, #F472B6); }
+  .pyramid .level .name { font-size: 14px; }
+  .pyramid .level .pct { font-size: 18px; }
+  .pyramid .l1 { width: 50%; background: linear-gradient(90deg, #94A3B8, #64748B); }
+  .pyramid .l2 { width: 60%; background: linear-gradient(90deg, #B8922A, #C9A84C); }
+  .pyramid .l3 { width: 72%; background: linear-gradient(90deg, #10B981, #34D399); }
+  .pyramid .l4 { width: 84%; background: linear-gradient(90deg, #06B6D4, #22D3EE); }
+  .pyramid .l5 { width: 96%; background: linear-gradient(90deg, #8B5CF6, #A78BFA); }
 
-  /* === Compression slide === */
-  .compression-grid {
-    display: grid;
-    grid-template-columns: 1fr auto 1fr auto 1fr;
-    gap: 28px; align-items: center;
-    max-width: 1100px; margin: 30px auto 0;
+  .calc {
+    background: var(--ink); color: white;
+    border-radius: 18px; padding: 28px;
   }
-  .node {
-    background: white;
-    border-radius: 18px;
-    padding: 26px 22px;
+  .calc-row {
+    display: flex; justify-content: space-between; align-items: baseline;
+    padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,.08);
+    gap: 20px;
+  }
+  .calc-row:last-of-type { border-bottom: 0; }
+  .calc-label { color: rgba(255,255,255,.7); font-size: 14px; }
+  .calc-val { font-family: var(--font-display); font-weight: 700; font-size: 18px; }
+  .calc-row.neg .calc-val { color: #fb7185; }
+  .calc-row.pos .calc-val { color: var(--emerald); }
+  .calc-total {
+    margin-top: 14px; padding: 14px 18px;
+    border-radius: 12px;
+    background: linear-gradient(120deg, var(--emerald), var(--cyan));
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .calc-total .label { font-size: 12px; opacity: 0.9; text-transform: uppercase; letter-spacing: .08em; font-weight: 600; }
+  .calc-total .val {
+    font-family: var(--font-display); font-weight: 800; font-size: 32px;
+    letter-spacing: -.02em;
+  }
+
+  .pack-box {
+    background: linear-gradient(135deg,
+      color-mix(in oklab, var(--emerald) 14%, white),
+      color-mix(in oklab, var(--cyan) 12%, white) 50%,
+      color-mix(in oklab, var(--violet) 12%, white));
+    border-radius: 22px; padding: 36px;
     text-align: center;
-    border: 0.5px solid var(--line);
-    box-shadow: 0 6px 20px rgba(15,23,42,0.06);
+    border: 1px solid var(--line);
   }
-  .node.viewer {
-    background: linear-gradient(135deg, color-mix(in srgb, #8B5CF6 18%, white), color-mix(in srgb, #06B6D4 12%, white));
-    border-color: color-mix(in srgb, #8B5CF6 35%, transparent);
+  .pack-box .label {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--ink-soft); font-weight: 700;
+    margin-bottom: 10px;
   }
-  .node.middle {
-    background: color-mix(in srgb, #06B6D4 12%, white);
-    border-color: color-mix(in srgb, #06B6D4 35%, transparent);
+  .pack-box .price {
+    font-family: var(--font-display); font-weight: 800;
+    font-size: clamp(80px, 12vw, 130px);
+    letter-spacing: -.05em; line-height: 1;
+    background: linear-gradient(120deg, var(--emerald), var(--violet));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
   }
-  .node.leaf {
-    background: color-mix(in srgb, #10B981 12%, white);
-    border-color: color-mix(in srgb, #10B981 35%, transparent);
-  }
-  .node .role {
-    font-size: 10px; letter-spacing: 1.4px; text-transform: uppercase;
-    color: var(--slate); font-weight: 700; margin-bottom: 8px;
-  }
-  .node .name-big {
-    font-family: 'Sora', sans-serif;
-    font-size: 22px; font-weight: 800; color: var(--ink);
-    margin-bottom: 4px;
-  }
-  .node .rank-info {
-    font-size: 14px; color: var(--ink2);
-  }
-  .arrow-big {
-    font-size: 36px; color: var(--slate);
-  }
+  .pack-box .price sup { font-size: .42em; vertical-align: 0.6em; -webkit-text-fill-color: var(--ink-soft); }
 
-  /* === Equation slide === */
-  .equation-card {
-    background: white;
-    border-radius: 22px;
-    padding: 36px 44px;
-    box-shadow: 0 6px 20px rgba(15,23,42,0.06);
-    margin: 20px auto;
-    max-width: 900px;
-  }
-  .equation-card .formula {
-    font-family: 'Sora', sans-serif;
-    font-size: 28px; font-weight: 700;
-    color: var(--ink);
-    background: var(--mist);
-    padding: 20px 26px;
-    border-radius: 14px;
+  .story-card {
+    background: white; border: 1px solid var(--line);
+    border-radius: 18px; padding: 24px;
     border-left: 4px solid var(--emerald);
-    margin: 16px 0;
-    line-height: 1.4;
+    box-shadow: var(--shadow-md);
+    height: 100%;
   }
-  .equation-card .note {
-    font-size: 14px; color: var(--ink2); line-height: 1.6;
+  .story-card.violet { border-left-color: var(--violet); }
+  .story-head {
+    display: flex; align-items: center; gap: 14px; margin-bottom: 16px;
+  }
+  .avatar {
+    width: 50px; height: 50px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-display); font-weight: 800; font-size: 18px;
+    color: white;
+  }
+  .story-card .avatar { background: linear-gradient(135deg, var(--emerald), var(--cyan)); }
+  .story-card.violet .avatar { background: linear-gradient(135deg, var(--violet), var(--cyan)); }
+  .story-name { font-family: var(--font-display); font-weight: 800; font-size: 20px; }
+  .story-role { color: var(--muted); font-size: 13px; }
+  .story-stats {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
+    margin: 16px 0; padding: 14px 0;
+    border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);
+  }
+  .story-stat-num {
+    font-family: var(--font-display); font-weight: 800; font-size: 20px;
+    color: var(--emerald); letter-spacing: -.02em;
+  }
+  .story-card.violet .story-stat-num { color: var(--violet); }
+  .story-stat-label {
+    font-size: 10px; color: var(--muted);
+    text-transform: uppercase; letter-spacing: .08em; line-height: 1.3;
+  }
+  .story-card p { font-size: 14px; color: var(--ink-soft); }
+
+  .title-slide .content {
+    text-align: center; align-items: center; justify-content: center;
+  }
+  .title-slide h1 { font-size: clamp(56px, 8vw, 96px); margin-bottom: 18px; }
+  .title-slide .subtitle {
+    font-size: clamp(18px, 2vw, 24px);
+    color: rgba(255,255,255,.78);
+    max-width: 700px; margin: 0 auto 36px;
+  }
+  .title-slide .heritage {
+    display: inline-block;
+    font-size: 11px; letter-spacing: 2.4px; text-transform: uppercase;
+    color: rgba(255,255,255,0.6);
+    border: 1px solid rgba(255,255,255,0.2);
+    padding: 7px 18px; border-radius: 999px;
   }
 
-  /* === Footer === */
-  .footer-mini {
-    position: absolute; bottom: 24px; left: 80px;
-    font-size: 11px; color: var(--slate);
-    font-family: 'Sora', sans-serif; font-weight: 600;
-    z-index: 10;
-  }
-  .slide.dark .footer-mini { color: rgba(255,255,255,0.4); }
-
-  /* === Print button (caché print) === */
-  .print-btn {
-    position: fixed; top: 20px; right: 20px;
-    padding: 10px 18px; border-radius: 12px; border: none;
-    background: linear-gradient(135deg, #10B981 0%, #06B6D4 50%, #8B5CF6 100%);
-    color: white; font-family: 'Sora', sans-serif;
-    font-size: 13px; font-weight: 700; cursor: pointer;
-    box-shadow: 0 6px 18px rgba(16,185,129,0.45); z-index: 100;
-  }
-  @media print { .print-btn { display: none !important; } }
-
-  /* === Print : 1 slide par page paysage === */
   @media print {
     body { background: white; }
     .slide {
@@ -304,395 +327,401 @@
       page-break-after: always;
     }
     .slide:last-child { page-break-after: auto; }
-    .card, .node, .pyramid-deck .step, .equation-card {
+    .slide, .slide.dark, .card, .pack-box, .calc, .pyramid .level, .story-card {
       print-color-adjust: exact;
       -webkit-print-color-adjust: exact;
     }
   }
   @page { size: A4 landscape; margin: 0; }
 
-  /* === Mobile fallback === */
   @media (max-width: 900px) {
-    .slide { padding: 40px 30px; height: auto; min-height: 100vh; }
-    h1 { font-size: 44px; }
-    h2 { font-size: 32px; }
+    .slide { padding: 32px 28px; height: auto; min-height: 100vh; }
+    h1 { font-size: 40px; }
+    h2 { font-size: 28px; }
     .grid-3, .grid-4 { grid-template-columns: 1fr; }
-    .compression-grid { grid-template-columns: 1fr; gap: 14px; }
-    .arrow-big { transform: rotate(90deg); }
-    .pyramid-deck .step { font-size: 12px; }
+    .grid-2 { grid-template-columns: 1fr; gap: 22px; }
+    .pyramid .level { font-size: 12px; padding: 10px 16px; }
   }
 </style>
 </head>
 <body>
 
-<button onclick="window.print()" class="print-btn" type="button">🖨️ Exporter PDF</button>
+<button class="print-btn" onclick="window.print()" type="button">🖨️ Exporter PDF</button>
 
 <div class="deck">
 
-  <!-- ====================================================================
-       SLIDE 1 — TITLE
-       ==================================================================== -->
+  <!-- SLIDE 1 — TITLE -->
   <section class="slide dark title-slide">
+    <div class="blob1"></div>
+    <div class="blob2"></div>
     <div class="content">
-      <div style="display: inline-flex; align-items: center; gap: 12px; margin-bottom: 50px;">
-        <span style="width: 44px; height: 44px; border-radius: 12px; background: linear-gradient(135deg, #10B981, #06B6D4, #8B5CF6); box-shadow: 0 6px 20px rgba(16,185,129,0.4);"></span>
-        <span style="font-family: 'Sora', sans-serif; font-size: 22px; font-weight: 700; color: white;">
-          LA BASE <em style="font-style: italic; font-weight: 800; background: linear-gradient(135deg,#10B981,#06B6D4,#8B5CF6); -webkit-background-clip: text; background-clip: text; color: transparent;">360</em>
+      <div style="display: inline-flex; align-items: center; gap: 14px; margin-bottom: 56px;">
+        <span style="width: 48px; height: 48px; border-radius: 12px; background: conic-gradient(from 200deg at 50% 50%, #10B981, #06B6D4, #8B5CF6, #10B981); position: relative; box-shadow: 0 8px 24px rgba(16,185,129,0.4);">
+          <span style="position: absolute; inset: 8px; border-radius: 6px; background: var(--ink);"></span>
+        </span>
+        <span style="font-family: 'Sora', sans-serif; font-size: 24px; font-weight: 700; color: white;">
+          La Base 360
         </span>
       </div>
       <h1>Plan Marketing<br><span class="accent">Herbalife</span></h1>
-      <p class="subtitle">Comprendre les paliers, les commissions et la chaîne de revenus.</p>
-      <div class="heritage">★ The wellness nutrition club ★</div>
+      <p class="subtitle">L'opportunité business — paliers, commissions, plan d'action.<br>Tout ce qu'il faut savoir pour démarrer.</p>
+      <div class="heritage">★ The wellness nutrition club · depuis 2022 ★</div>
     </div>
-    <div class="slide-num">1 / 12</div>
+    <div class="slide-num">01 / 12</div>
   </section>
 
-  <!-- ====================================================================
-       SLIDE 2 — 4 sources de revenus
-       ==================================================================== -->
+  <!-- SLIDE 2 — POURQUOI MAINTENANT -->
   <section class="slide">
-    <div class="brand-mini"><span class="mark"></span> LA BASE 360</div>
+    <div class="brand-mini"><span class="mark"></span>LA BASE 360</div>
     <div class="content">
-      <div class="eyebrow">Tes 4 leviers</div>
-      <h2>Quatre façons de gagner</h2>
-      <p class="lead" style="margin-bottom: 40px;">
-        Cumulables — plus tu progresses, plus tu en actives.
-      </p>
-      <div class="grid-4">
-        <div class="card accent-emerald">
-          <div class="icon">🛒</div>
-          <div class="label">A — Marge retail</div>
-          <h3>Tes ventes directes</h3>
-          <div class="desc">Différence entre ton prix d'achat distri et le prix vente client.</div>
-          <div class="pct">25 → 50 %</div>
+      <span class="eyebrow">Pourquoi maintenant</span>
+      <h2>La santé est devenue<br>un <span class="accent-emerald">vrai marché</span>.</h2>
+      <p class="lead" style="margin-top: 16px; margin-bottom: 32px;">Les chiffres parlent d'eux-mêmes. Aider les gens à se sentir mieux, c'est un service qui se paie — et qui se développe partout en France.</p>
+      <div class="grid-2" style="max-width: 900px;">
+        <div style="background: white; border: 1px solid var(--line); border-radius: 18px; padding: 32px; box-shadow: var(--shadow-md);">
+          <div style="font-family: var(--font-display); font-weight: 800; font-size: clamp(56px, 7vw, 80px); letter-spacing: -.04em; line-height: 1; background: linear-gradient(120deg, var(--emerald), var(--cyan)); -webkit-background-clip: text; background-clip: text; color: transparent; margin-bottom: 12px;">1 / 2</div>
+          <div style="color: var(--ink-soft); font-size: 16px;">Français en surpoids ou en situation d'obésité.</div>
         </div>
-        <div class="card accent-cyan">
-          <div class="icon">🤝</div>
-          <div class="label">B — Commission</div>
-          <h3>Sur ton équipe</h3>
-          <div class="desc">Différentiel entre ton % et celui de ton downline (compression chaîne).</div>
-          <div class="pct">5 → 35 %</div>
-        </div>
-        <div class="card accent-violet">
-          <div class="icon">👑</div>
-          <div class="label">C — Royalty</div>
-          <h3>3 niveaux Sup.</h3>
-          <div class="desc">5 % sur le volume d'organisation des Supervisor en dessous de toi.</div>
-          <div class="pct">5 %</div>
-        </div>
-        <div class="card accent-gold">
-          <div class="icon">⭐</div>
-          <div class="label">D — Bonus</div>
-          <h3>Production Bonus</h3>
-          <div class="desc">À partir de Get Team. Sur le volume total de ton organisation.</div>
-          <div class="pct">2 → 7 %</div>
+        <div style="background: white; border: 1px solid var(--line); border-radius: 18px; padding: 32px; box-shadow: var(--shadow-md);">
+          <div style="font-family: var(--font-display); font-weight: 800; font-size: clamp(56px, 7vw, 80px); letter-spacing: -.04em; line-height: 1; background: linear-gradient(120deg, var(--violet), var(--cyan)); -webkit-background-clip: text; background-clip: text; color: transparent; margin-bottom: 12px;">7 / 10</div>
+          <div style="color: var(--ink-soft); font-size: 16px;">Adultes disent manquer d'énergie au quotidien.</div>
         </div>
       </div>
     </div>
-    <div class="slide-num">2 / 12</div>
-    <div class="footer-mini">Plan Marketing Herbalife · La Base 360</div>
+    <div class="footer-mini">Plan Marketing · La Base 360</div>
+    <div class="slide-num">02 / 12</div>
   </section>
 
-  <!-- ====================================================================
-       SLIDE 3 — Pyramide
-       ==================================================================== -->
+  <!-- SLIDE 3 — 3 FAÇONS DE GAGNER -->
   <section class="slide">
-    <div class="brand-mini"><span class="mark"></span> LA BASE 360</div>
+    <div class="brand-mini"><span class="mark"></span>LA BASE 360</div>
     <div class="content">
-      <div class="eyebrow">La pyramide des rangs</div>
-      <h2>9 paliers, 1 chemin</h2>
-      <p class="lead" style="margin-bottom: 40px; font-size: 18px;">
-        Les 4 premiers paliers se débloquent avec tes ventes personnelles. Au-delà de Supervisor, c'est ton organisation qui te porte.
-      </p>
-      <div class="pyramid-deck">
-        <div class="step s6"><span class="name">President's Team</span><span class="pct">50 %</span></div>
-        <div class="step s5"><span class="name">G.E.T. / Millionaire / WT</span><span class="pct">50 %</span></div>
-        <div class="step s4"><span class="name">Supervisor / Active Sup.</span><span class="pct">50 %</span></div>
-        <div class="step s3"><span class="name">Success Builder</span><span class="pct">42 %</span></div>
-        <div class="step s2"><span class="name">Senior Consultant</span><span class="pct">35 %</span></div>
-        <div class="step s1"><span class="name">Distributor</span><span class="pct">25 %</span></div>
-      </div>
-    </div>
-    <div class="slide-num">3 / 12</div>
-    <div class="footer-mini">Plan Marketing Herbalife · La Base 360</div>
-  </section>
-
-  <!-- ====================================================================
-       SLIDE 4 — Distributor → Senior Consultant
-       ==================================================================== -->
-  <section class="slide">
-    <div class="brand-mini"><span class="mark"></span> LA BASE 360</div>
-    <div class="content">
-      <div class="eyebrow">Premier palier · 25 → 35 %</div>
-      <h2>Distributor → <span style="color: var(--emerald);">Senior Consultant</span></h2>
-      <p class="lead">
-        Tu démarres à 25 % de remise dès l'inscription Herbalife. Pour passer à <strong>35 %</strong>, il te faut atteindre <strong>500 PV personnels en 1 mois</strong>.
-      </p>
-      <div class="grid-3" style="margin-top: 40px;">
-        <div class="card accent-emerald">
-          <div class="label">Volume cible</div>
-          <h3>500 PV</h3>
-          <div class="desc">≈ 890 € HT en ventes ou conso perso. Atteignable avec 4-5 clients réguliers.</div>
-        </div>
-        <div class="card accent-emerald">
-          <div class="label">Délai</div>
-          <h3>1 mois</h3>
-          <div class="desc">Mois calendaire (du 1er au dernier jour). Compteur reset chaque mois si non atteint.</div>
-        </div>
-        <div class="card accent-emerald">
-          <div class="label">Bénéfice</div>
-          <h3>+10 % marge</h3>
-          <div class="desc">Tu passes de 25 % à 35 % de remise sur tous tes futurs achats. Définitif tant que tu maintiens.</div>
-        </div>
-      </div>
-    </div>
-    <div class="slide-num">4 / 12</div>
-    <div class="footer-mini">Plan Marketing Herbalife · La Base 360</div>
-  </section>
-
-  <!-- ====================================================================
-       SLIDE 5 — Senior Consultant → Success Builder
-       ==================================================================== -->
-  <section class="slide">
-    <div class="brand-mini"><span class="mark"></span> LA BASE 360</div>
-    <div class="content">
-      <div class="eyebrow">Deuxième palier · 35 → 42 %</div>
-      <h2>Senior Consultant → <span style="color: var(--cyan);">Success Builder</span></h2>
-      <p class="lead">
-        À <strong>1 000 PV en 1 mois</strong>, tu débloques 42 % de remise. C'est le palier "club" : tu es identifié comme un distri sérieux par ton équipe.
-      </p>
-      <div class="grid-3" style="margin-top: 40px;">
-        <div class="card accent-cyan">
-          <div class="label">Volume cible</div>
-          <h3>1 000 PV</h3>
-          <div class="desc">Doubler son volume de Senior Consultant. ~1 780 € HT vendus dans le mois.</div>
-        </div>
-        <div class="card accent-cyan">
-          <div class="label">Stratégie</div>
-          <h3>10-15 clients</h3>
-          <div class="desc">Une base régulière de clients VIP + quelques distri prefferred sous toi.</div>
-        </div>
-        <div class="card accent-cyan">
-          <div class="label">Bénéfice</div>
-          <h3>+7 % marge</h3>
-          <div class="desc">42 % de marge retail sur tes propres ventes. Booster psychologique fort pour l'équipe.</div>
-        </div>
-      </div>
-    </div>
-    <div class="slide-num">5 / 12</div>
-    <div class="footer-mini">Plan Marketing Herbalife · La Base 360</div>
-  </section>
-
-  <!-- ====================================================================
-       SLIDE 6 — Supervisor (le palier qui change tout)
-       ==================================================================== -->
-  <section class="slide dark">
-    <div class="brand-mini"><span class="mark"></span> <span style="color: white;">LA BASE 360</span></div>
-    <div class="content">
-      <div class="eyebrow">Troisième palier · le sommet structurel</div>
-      <h2 style="font-size: 56px;">Supervisor — <span style="background: linear-gradient(135deg, #10B981, #06B6D4); -webkit-background-clip: text; background-clip: text; color: transparent; font-style: italic;">le palier qui change tout</span></h2>
-      <p class="lead slate-text" style="font-size: 22px; max-width: 920px;">
-        À <strong style="color: white;">4 000 PV en 1 mois</strong> (perso + downline non-Supervisor), tu deviens Supervisor. Tu débloques :
-      </p>
+      <span class="eyebrow">3 façons de gagner</span>
+      <h2>Choisis ton point de départ.<br><span class="accent-cyan">Évolue à ton rythme.</span></h2>
       <div class="grid-3" style="margin-top: 36px;">
-        <div class="card accent-emerald">
-          <div class="icon">💎</div>
-          <h3>50 % de marge</h3>
-          <div class="desc">Le plafond retail. Tu achètes au prix le plus bas possible chez Herbalife, à vie.</div>
+        <div class="card emerald">
+          <div class="icon">🛒</div>
+          <div class="label">Étape 01</div>
+          <h3>Consommer</h3>
+          <div class="desc">Tu achètes les produits à prix membre. Économies sur tes commandes perso.</div>
+          <div class="pct">−25 à −50%</div>
         </div>
-        <div class="card accent-cyan">
+        <div class="card cyan">
           <div class="icon">🤝</div>
-          <h3>Commissions équipe</h3>
-          <div class="desc">Tu touches le différentiel sur chaque vente de chaque distri sous toi (compression).</div>
+          <div class="label">Étape 02</div>
+          <h3>Partager</h3>
+          <div class="desc">Tu accompagnes des clients. Marge sur chaque programme vendu en direct.</div>
+          <div class="pct">25 à 50%</div>
         </div>
-        <div class="card accent-violet">
-          <div class="icon">👑</div>
-          <h3>Royalty 5 %</h3>
-          <div class="desc">Sur le volume des 3 niveaux de Supervisor sous toi. Revenu passif récurrent.</div>
+        <div class="card violet">
+          <div class="icon">🌱</div>
+          <div class="label">Étape 03</div>
+          <h3>Construire</h3>
+          <div class="desc">Tu formes ton équipe. Commission sur la production de tes filleuls.</div>
+          <div class="pct">5 à 35%</div>
         </div>
       </div>
     </div>
-    <div class="slide-num">6 / 12</div>
-    <div class="footer-mini">Plan Marketing Herbalife · La Base 360</div>
+    <div class="footer-mini">Plan Marketing · La Base 360</div>
+    <div class="slide-num">03 / 12</div>
   </section>
 
-  <!-- ====================================================================
-       SLIDE 7 — Chaine de compression
-       ==================================================================== -->
+  <!-- SLIDE 4 — LES 5 PALIERS -->
   <section class="slide">
-    <div class="brand-mini"><span class="mark"></span> LA BASE 360</div>
+    <div class="brand-mini"><span class="mark"></span>LA BASE 360</div>
     <div class="content">
-      <div class="eyebrow">La règle de compression</div>
-      <h2>Comment l'argent remonte la chaîne</h2>
-      <p class="lead" style="font-size: 18px; max-width: 1000px;">
-        Quand un distri en bas vend, le pool commission (50 % − son tier) se distribue UP la chaîne, chacun prenant le différentiel jusqu'au prochain.
-      </p>
-      <div class="compression-grid">
-        <div class="node viewer">
-          <div class="role">Sponsor</div>
-          <div class="name-big">Toi</div>
-          <div class="rank-info">Supervisor 50 %</div>
-        </div>
-        <div class="arrow-big">→</div>
-        <div class="node middle">
-          <div class="role">Niveau 1</div>
-          <div class="name-big">Mandy</div>
-          <div class="rank-info">Success Builder 42 %</div>
-        </div>
-        <div class="arrow-big">→</div>
-        <div class="node leaf">
-          <div class="role">Niveau 2</div>
-          <div class="name-big">Victoria</div>
-          <div class="rank-info">Senior Consultant 35 %</div>
-        </div>
+      <span class="eyebrow">Les 5 paliers</span>
+      <h2>Tu démarres à ton niveau.<br><span class="accent-violet">Tu montes à ton rythme.</span></h2>
+      <p class="lead" style="margin-top: 12px; margin-bottom: 32px;">Chaque palier débloque une remise plus élevée. Aucune obligation de monter — tu choisis.</p>
+      <div class="pyramid">
+        <div class="level l1"><span class="name">01 · Client privilégié</span><span class="pct">−15%</span></div>
+        <div class="level l2"><span class="name">02 · Distributor</span><span class="pct">−25%</span></div>
+        <div class="level l3"><span class="name">03 · Senior Consultant — 500 PV/mois</span><span class="pct">−35%</span></div>
+        <div class="level l4"><span class="name">04 · Success Builder — 1 000 PV/mois</span><span class="pct">−42%</span></div>
+        <div class="level l5"><span class="name">05 · Supervisor — 4 000 PV/mois</span><span class="pct">−50%</span></div>
       </div>
     </div>
-    <div class="slide-num">7 / 12</div>
-    <div class="footer-mini">Plan Marketing Herbalife · La Base 360</div>
+    <div class="footer-mini">Plan Marketing · La Base 360</div>
+    <div class="slide-num">04 / 12</div>
   </section>
 
-  <!-- ====================================================================
-       SLIDE 8 — Math de la compression
-       ==================================================================== -->
+  <!-- SLIDE 5 — CAS CONCRET (10 programmes) -->
   <section class="slide">
-    <div class="brand-mini"><span class="mark"></span> LA BASE 360</div>
+    <div class="brand-mini"><span class="mark"></span>LA BASE 360</div>
     <div class="content">
-      <div class="eyebrow">Le calcul exact</div>
-      <h2>Victoria vend 100 PV à un client public</h2>
-      <div class="equation-card">
-        <div class="note">Pool commission disponible :</div>
-        <div class="formula">50 % − 35 % (tier Victoria) = <span style="color: var(--emerald);">15 %</span></div>
-      </div>
-      <div class="grid-3" style="margin-top: 30px;">
-        <div class="card accent-cyan">
-          <div class="label">Niveau 1 — Mandy</div>
-          <h3 style="color: var(--cyan); font-size: 32px;">7 %</h3>
-          <div class="desc">Différentiel jusqu'à son rang : 42 % − 35 % = 7 %. Mandy touche 7 % du PV de Victoria.</div>
+      <span class="eyebrow">Cas concret</span>
+      <h2>10 programmes vendus.<br><span class="accent-emerald">~ 983 € de marge.</span></h2>
+      <div class="grid-2" style="margin-top: 24px;">
+        <div>
+          <p class="lead">Au palier <strong style="color: var(--violet);">Success Builder</strong> (−42%), voici exactement ce qui rentre dans ton portefeuille — sans tableur compliqué, sans points obscurs.</p>
+          <p style="margin-top: 16px; font-size: 14px; color: var(--muted); font-style: italic;">Calcul basé sur un programme classique à 234 € retail. Multipliable par 2, par 3 selon ton activité.</p>
         </div>
-        <div class="card accent-violet">
-          <div class="label">Sponsor — Toi</div>
-          <h3 style="color: var(--violet); font-size: 32px;">8 %</h3>
-          <div class="desc">Ce qui reste pour atteindre 50 % : 50 % − 42 % = 8 %. Tu touches 8 % du PV de Victoria.</div>
-        </div>
-        <div class="card accent-emerald">
-          <div class="label">Total reversé</div>
-          <h3 style="color: var(--emerald); font-size: 32px;">15 %</h3>
-          <div class="desc">7 % + 8 % = 15 % ✓ — pile le pool initial. Tout est tracé sur la fiche RO mensuelle.</div>
+        <div class="calc">
+          <div class="calc-row">
+            <span class="calc-label">Prix retail public</span>
+            <span class="calc-val">234,00 €</span>
+          </div>
+          <div class="calc-row neg">
+            <span class="calc-label">Ton prix distributeur (−42%)</span>
+            <span class="calc-val">135,72 €</span>
+          </div>
+          <div class="calc-row">
+            <span class="calc-label">Prix de vente client</span>
+            <span class="calc-val">234,00 €</span>
+          </div>
+          <div class="calc-row pos">
+            <span class="calc-label">Marge par programme</span>
+            <span class="calc-val">+ 98,28 €</span>
+          </div>
+          <div class="calc-row">
+            <span class="calc-label">× 10 programmes vendus</span>
+            <span class="calc-val">10 × 98,28 €</span>
+          </div>
+          <div class="calc-total">
+            <span class="label">Argent dans le portefeuille</span>
+            <span class="val">~ 983 €</span>
+          </div>
         </div>
       </div>
     </div>
-    <div class="slide-num">8 / 12</div>
-    <div class="footer-mini">Plan Marketing Herbalife · La Base 360</div>
+    <div class="footer-mini">Plan Marketing · La Base 360</div>
+    <div class="slide-num">05 / 12</div>
   </section>
 
-  <!-- ====================================================================
-       SLIDE 9 — Royalty
-       ==================================================================== -->
+  <!-- SLIDE 6 — PACK AMBASSADEUR 60€ -->
   <section class="slide">
-    <div class="brand-mini"><span class="mark"></span> LA BASE 360</div>
+    <div class="brand-mini"><span class="mark"></span>LA BASE 360</div>
     <div class="content">
-      <div class="eyebrow">Quand ta downline devient Supervisor</div>
-      <h2>Royalty Override · <span style="color: var(--violet);">5 %</span> sur 3 niveaux</h2>
-      <p class="lead" style="font-size: 19px; max-width: 940px;">
-        Une fois ton downline Supervisor lui aussi, sa branche "casse" pour la commission différentielle (vous êtes au même niveau). Mais tu gagnes alors <strong>5 %</strong> sur le volume d'organisation de ses 3 premiers niveaux.
-      </p>
-      <div class="grid-3" style="margin-top: 40px;">
-        <div class="card accent-violet">
-          <div class="label">Niveau 1</div>
-          <h3 style="color: var(--violet); font-size: 32px;">5 %</h3>
-          <div class="desc">Sur le volume du Supervisor direct sous toi, et sa downline complète qui n'est pas encore Supervisor.</div>
+      <span class="eyebrow">Pack Ambassadeur</span>
+      <h2>Un seul investissement.<br><span class="accent-gold">60 € pour démarrer.</span></h2>
+      <div class="grid-2" style="margin-top: 32px; align-items: center;">
+        <div class="pack-box">
+          <div class="label">Pack de démarrage</div>
+          <div class="price">60<sup>€</sup></div>
         </div>
-        <div class="card accent-violet">
-          <div class="label">Niveau 2</div>
-          <h3 style="color: var(--violet); font-size: 32px;">5 %</h3>
-          <div class="desc">Sur le volume du Supervisor au niveau 2 (downline de ton Sup direct).</div>
-        </div>
-        <div class="card accent-violet">
-          <div class="label">Niveau 3</div>
-          <h3 style="color: var(--violet); font-size: 32px;">5 %</h3>
-          <div class="desc">Sur le volume du Supervisor au niveau 3. Au-delà, ce sont les paliers Get Team / Millionaire / President's qui ouvrent.</div>
+        <div>
+          <ul style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 12px;">
+            <li style="display: grid; grid-template-columns: 28px 1fr; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line);">
+              <span style="width: 24px; height: 24px; border-radius: 50%; background: color-mix(in oklab, var(--emerald) 14%, white); color: var(--emerald); display: inline-flex; align-items: center; justify-content: center; font-weight: 800; font-size: 13px;">✓</span>
+              <div>
+                <strong style="font-family: var(--font-display); font-weight: 800; display: block; margin-bottom: 2px;">Une boîte Formula 1</strong>
+                <span style="color: var(--muted); font-size: 14px;">Le produit phare pour ta propre transformation.</span>
+              </div>
+            </li>
+            <li style="display: grid; grid-template-columns: 28px 1fr; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line);">
+              <span style="width: 24px; height: 24px; border-radius: 50%; background: color-mix(in oklab, var(--emerald) 14%, white); color: var(--emerald); display: inline-flex; align-items: center; justify-content: center; font-weight: 800; font-size: 13px;">✓</span>
+              <div>
+                <strong style="font-family: var(--font-display); font-weight: 800; display: block; margin-bottom: 2px;">Plateforme distributeur</strong>
+                <span style="color: var(--muted); font-size: 14px;">Ton espace personnel pour gérer ton activité.</span>
+              </div>
+            </li>
+            <li style="display: grid; grid-template-columns: 28px 1fr; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line);">
+              <span style="width: 24px; height: 24px; border-radius: 50%; background: color-mix(in oklab, var(--emerald) 14%, white); color: var(--emerald); display: inline-flex; align-items: center; justify-content: center; font-weight: 800; font-size: 13px;">✓</span>
+              <div>
+                <strong style="font-family: var(--font-display); font-weight: 800; display: block; margin-bottom: 2px;">Outils digitaux</strong>
+                <span style="color: var(--muted); font-size: 14px;">Visuels, scripts, fiches prêts à l'emploi.</span>
+              </div>
+            </li>
+            <li style="display: grid; grid-template-columns: 28px 1fr; gap: 12px; padding: 12px 0;">
+              <span style="width: 24px; height: 24px; border-radius: 50%; background: color-mix(in oklab, var(--emerald) 14%, white); color: var(--emerald); display: inline-flex; align-items: center; justify-content: center; font-weight: 800; font-size: 13px;">✓</span>
+              <div>
+                <strong style="font-family: var(--font-display); font-weight: 800; display: block; margin-bottom: 2px;">Mentor jour 1</strong>
+                <span style="color: var(--muted); font-size: 14px;">Onboarding + accompagnement personnalisé dès le démarrage.</span>
+              </div>
+            </li>
+          </ul>
         </div>
       </div>
     </div>
-    <div class="slide-num">9 / 12</div>
-    <div class="footer-mini">Plan Marketing Herbalife · La Base 360</div>
+    <div class="footer-mini">Plan Marketing · La Base 360</div>
+    <div class="slide-num">06 / 12</div>
   </section>
 
-  <!-- ====================================================================
-       SLIDE 10 — Bonus à venir
-       ==================================================================== -->
+  <!-- SLIDE 7 — ACCOMPAGNEMENT 4 PILIERS -->
   <section class="slide">
-    <div class="brand-mini"><span class="mark"></span> LA BASE 360</div>
+    <div class="brand-mini"><span class="mark"></span>LA BASE 360</div>
     <div class="content">
-      <div class="eyebrow">Les paliers d'élite</div>
-      <h2>Plus haut · <span style="color: var(--gold);">les boosters</span> qui s'ajoutent</h2>
-      <p class="lead" style="font-size: 18px;">
-        Au-delà de Supervisor, Herbalife empile des bonus de plus en plus rémunérateurs.
-      </p>
-      <div class="grid-3" style="margin-top: 40px;">
-        <div class="card accent-gold">
-          <div class="icon">🌟</div>
-          <div class="label">G.E.T. Team</div>
-          <h3>+ 2 %</h3>
-          <div class="desc">Production Bonus 2 % sur le volume total de ton organisation. Débloqué à 2 500 Royalty Points cumulés / mois.</div>
+      <span class="eyebrow">Accompagnement</span>
+      <h2>Tu n'es jamais seul·e.<br><span class="accent-cyan">4 piliers, dès jour 1.</span></h2>
+      <div class="grid-4" style="margin-top: 36px;">
+        <div class="card emerald">
+          <div class="icon">🎓</div>
+          <h3>Académie</h3>
+          <div class="desc">12 modules pas-à-pas, du démarrage à l'autonomie complète.</div>
         </div>
-        <div class="card accent-gold">
-          <div class="icon">💫</div>
-          <div class="label">Millionaire Team</div>
-          <h3>+ 4 → 6 %</h3>
-          <div class="desc">Production Bonus monte à 4 % puis 6 % avec le palier Millionaire 7 500 RO. Le revenu passif explose.</div>
+        <div class="card cyan">
+          <div class="icon">🧭</div>
+          <h3>Mentor 1-to-1</h3>
+          <div class="desc">Un référent humain qui te suit et te débloque. Pas un théoricien.</div>
         </div>
-        <div class="card accent-gold">
-          <div class="icon">👑</div>
-          <div class="label">President's Team</div>
-          <h3>+ 7 % + Mark Hughes</h3>
-          <div class="desc">Plafond Production Bonus à 7 % + bonus annuel Mark Hughes (fonds global Herbalife). Top 0,1 % mondial.</div>
+        <div class="card violet">
+          <div class="icon">📱</div>
+          <h3>App La Base 360</h3>
+          <div class="desc">Suivi clients, rentabilité temps réel, formations — tout dans ta poche.</div>
+        </div>
+        <div class="card gold">
+          <div class="icon">💎</div>
+          <h3>Communauté</h3>
+          <div class="desc">Un groupe actif. On célèbre les wins. On débloque ensemble.</div>
         </div>
       </div>
     </div>
+    <div class="footer-mini">Plan Marketing · La Base 360</div>
+    <div class="slide-num">07 / 12</div>
+  </section>
+
+  <!-- SLIDE 8 — STORY THOMAS -->
+  <section class="slide">
+    <div class="brand-mini"><span class="mark"></span>LA BASE 360</div>
+    <div class="content">
+      <span class="eyebrow">Story Thomas</span>
+      <h2>15 ans BTP →<br><span class="accent-emerald">200 distri en 4 ans.</span></h2>
+      <div class="grid-2" style="margin-top: 24px;">
+        <div>
+          <p style="font-size: 16px;">Conducteur d'engins dans le BTP pendant <strong>15 ans</strong>. Métro, boulot, dodo. Levé à 5h, rentré à 19h. Pas envie de faire ça encore 30 ans.</p>
+          <p style="font-size: 16px;">Démarre en <strong>mai 2022</strong>. Sérieux nutrition : <strong>−4 kg en 21 jours</strong>. Plus de performance, moins de fatigue. Partage autour de lui.</p>
+          <p style="font-size: 16px;">Premier mois : <strong>1 800 €</strong> de revenus complémentaires. <strong>4 ans plus tard</strong> : équipe de 200 distributeurs, agenda libre, revenu mensuel constant 4 000 €+.</p>
+          <p style="font-size: 14px; color: var(--muted); margin-top: 16px; font-style: italic;">Objectif 2026-2027 : aider 1 000 personnes à reprendre la main sur leur santé et leurs finances.</p>
+        </div>
+        <div>
+          <div class="story-card">
+            <div class="story-head">
+              <div class="avatar">T</div>
+              <div>
+                <div class="story-name">Thomas Houbert</div>
+                <div class="story-role">Ex-conducteur d'engins · BTP, 15 ans</div>
+              </div>
+            </div>
+            <div class="story-stats">
+              <div>
+                <div class="story-stat-num">−4 kg</div>
+                <div class="story-stat-label">en 21 jours</div>
+              </div>
+              <div>
+                <div class="story-stat-num">200+</div>
+                <div class="story-stat-label">équipe distri</div>
+              </div>
+              <div>
+                <div class="story-stat-num">4 000€+</div>
+                <div class="story-stat-label">revenu mensuel</div>
+              </div>
+            </div>
+            <p style="margin: 0;">Démarre mai 2022 · Objectif 2026-2027 : aider <b>1 000 personnes</b>.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="footer-mini">Plan Marketing · La Base 360</div>
+    <div class="slide-num">08 / 12</div>
+  </section>
+
+  <!-- SLIDE 9 — STORY MELANIE -->
+  <section class="slide">
+    <div class="brand-mini"><span class="mark"></span>LA BASE 360</div>
+    <div class="content">
+      <span class="eyebrow">Story Mélanie</span>
+      <h2>Royal Canin →<br><span class="accent-violet">Mamans post-partum.</span></h2>
+      <div class="grid-2" style="margin-top: 24px;">
+        <div>
+          <p style="font-size: 16px;"><strong>11 ans</strong> chez Royal Canin (aliments canin). Maman de 2 enfants (6 et 8 ans). Cherche à concilier vie pro + vie de famille sans sacrifier l'énergie.</p>
+          <p style="font-size: 16px;">Rejoint l'aventure en <strong>novembre 2024</strong>. <strong>−4 kg de masse grasse</strong> le premier mois. Élimine les kilos de grossesse. Retrouve l'énergie qu'elle avait perdue.</p>
+          <p style="font-size: 16px;">Mission claire : <strong>accompagner les mamans en post-partum</strong>, celles qui veulent retrouver leur silhouette tout en gérant leur quotidien familial.</p>
+          <p style="font-size: 14px; color: var(--muted); margin-top: 16px; font-style: italic;">Niche claire, communauté qui grandit chaque semaine, projet aligné avec sa vie de famille.</p>
+        </div>
+        <div>
+          <div class="story-card violet">
+            <div class="story-head">
+              <div class="avatar">M</div>
+              <div>
+                <div class="story-name">Mélanie Houbert</div>
+                <div class="story-role">Ex-Royal Canin, 11 ans · maman 2 enfants</div>
+              </div>
+            </div>
+            <div class="story-stats">
+              <div>
+                <div class="story-stat-num">11 ans</div>
+                <div class="story-stat-label">en grand groupe</div>
+              </div>
+              <div>
+                <div class="story-stat-num">2 enfants</div>
+                <div class="story-stat-label">6 et 8 ans</div>
+              </div>
+              <div>
+                <div class="story-stat-num">Nov 2024</div>
+                <div class="story-stat-label">démarrage</div>
+              </div>
+            </div>
+            <p style="margin: 0;">Démarre nov 2024 · Niche : <b>mamans post-partum</b>.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="footer-mini">Plan Marketing · La Base 360</div>
+    <div class="slide-num">09 / 12</div>
+  </section>
+
+  <!-- SLIDE 10 — FAQ TOP 4 -->
+  <section class="slide">
+    <div class="brand-mini"><span class="mark"></span>LA BASE 360</div>
+    <div class="content">
+      <span class="eyebrow">Les vraies questions</span>
+      <h2>Ce que tu te poses<br><span class="accent-cyan">(et qu'on s'est posé aussi).</span></h2>
+      <div class="grid-2" style="margin-top: 28px; gap: 18px;">
+        <div class="card emerald">
+          <h3>Combien de temps par semaine ?</h3>
+          <p style="font-size: 14px; color: var(--ink-soft);">5 à 10h pour démarrer en complément, en gardant ton activité actuelle. Au-delà, c'est toi qui choisis le rythme.</p>
+        </div>
+        <div class="card cyan">
+          <h3>Quel statut juridique ?</h3>
+          <p style="font-size: 14px; color: var(--ink-soft);">Micro-entreprise (auto-entrepreneur). Création gratuite en ligne — 15 minutes. On t'accompagne.</p>
+        </div>
+        <div class="card violet">
+          <h3>Premiers euros ?</h3>
+          <p style="font-size: 14px; color: var(--ink-soft);">2 à 4 premières semaines pour la majorité des démarrages. Dépend de ton réseau et engagement.</p>
+        </div>
+        <div class="card gold">
+          <h3>C'est légal ?</h3>
+          <p style="font-size: 14px; color: var(--ink-soft);">Oui. Vente directe encadrée FVD (Fédération de la Vente Directe) + Code conso. Tu factures, tu déclares.</p>
+        </div>
+      </div>
+    </div>
+    <div class="footer-mini">Plan Marketing · La Base 360</div>
     <div class="slide-num">10 / 12</div>
-    <div class="footer-mini">Plan Marketing Herbalife · La Base 360</div>
   </section>
 
-  <!-- ====================================================================
-       SLIDE 11 — Récap formules
-       ==================================================================== -->
-  <section class="slide">
-    <div class="brand-mini"><span class="mark"></span> LA BASE 360</div>
-    <div class="content">
-      <div class="eyebrow">Récapitulatif</div>
-      <h2>Les 3 formules à retenir</h2>
-      <div class="equation-card">
-        <h3 style="color: var(--cyan);">A · Commission downline</h3>
-        <div class="formula">cut % = max(0, ton_rang − max(rang_downstream, intermédiaires))</div>
-        <div class="note">Pour chaque distri Y dans ton arbre, ton % = écart entre toi et le rang le plus haut entre vous deux.</div>
-      </div>
-      <div class="equation-card">
-        <h3 style="color: var(--violet);">B · Royalty Override</h3>
-        <div class="formula">royalty € = volume_org × 5 % × prix_HT_par_PV</div>
-        <div class="note">5 % sur Niveau 1 + Niveau 2 + Niveau 3 (jusqu'à 3 générations Supervisor).</div>
-      </div>
-      <div class="equation-card">
-        <h3 style="color: var(--emerald);">C · Conversion</h3>
-        <div class="formula">1 PV ≈ 1,78 € HT (mix typique FR)</div>
-        <div class="note">Ratio observé sur fiche RO réelle. Varie selon les produits vendus.</div>
+  <!-- SLIDE 11 — RÈGLE D'OR -->
+  <section class="slide dark">
+    <div class="blob1"></div>
+    <div class="blob2"></div>
+    <div class="brand-mini" style="color: white;"><span class="mark"></span>LA BASE 360</div>
+    <div class="content" style="text-align: center; align-items: center; justify-content: center;">
+      <span class="eyebrow" style="margin-bottom: 32px;">Règle d'or</span>
+      <h2 style="font-size: clamp(40px, 6vw, 72px); margin-bottom: 24px;">La seule règle :<br><span class="accent">démarrer.</span></h2>
+      <p style="font-size: clamp(20px, 2.5vw, 28px); color: rgba(255,255,255,0.85); font-style: italic; max-width: 60ch; margin: 0 auto;">Et ne jamais abandonner.</p>
+      <div style="margin-top: 56px; padding: 14px 32px; border-radius: 999px; background: color-mix(in oklab, var(--emerald) 18%, transparent); border: 1px solid color-mix(in oklab, var(--emerald) 30%, transparent); color: #34D399; font-family: var(--font-display); font-weight: 700; display: inline-block;">
+        En solo · En couple · En famille · En équipe — tu choisis.
       </div>
     </div>
+    <div class="footer-mini" style="color: rgba(255,255,255,0.5);">Plan Marketing · La Base 360</div>
     <div class="slide-num">11 / 12</div>
-    <div class="footer-mini">Plan Marketing Herbalife · La Base 360</div>
   </section>
 
-  <!-- ====================================================================
-       SLIDE 12 — CTA
-       ==================================================================== -->
+  <!-- SLIDE 12 — CTA -->
   <section class="slide dark title-slide">
+    <div class="blob1"></div>
+    <div class="blob2"></div>
     <div class="content">
-      <h1 style="font-size: 64px;">Prêt·e à <span class="accent">démarrer</span> ?</h1>
-      <p class="subtitle" style="margin-bottom: 32px;">15 minutes pour échanger sur ton projet et voir si La Base 360 colle. Aucune obligation.</p>
-      <div style="display: inline-block; padding: 16px 36px; border-radius: 14px; background: linear-gradient(135deg, #10B981 0%, #06B6D4 50%, #8B5CF6 100%); color: white; font-family: 'Sora', sans-serif; font-weight: 700; font-size: 18px; box-shadow: 0 12px 32px rgba(16,185,129,0.5);">
-        Réserver un appel →
+      <h1 style="font-size: clamp(48px, 7vw, 88px);">Prêt·e à<br><span class="accent">démarrer</span> ?</h1>
+      <p class="subtitle">15 minutes pour échanger sur ton projet de vie.<br>Aucune obligation. Juste une discussion honnête.</p>
+      <div style="margin-top: 32px; display: flex; flex-direction: column; gap: 20px; align-items: center;">
+        <div style="display: inline-block; padding: 18px 42px; border-radius: 14px; background: linear-gradient(135deg, #10B981 0%, #06B6D4 50%, #8B5CF6 100%); color: white; font-family: var(--font-display); font-weight: 800; font-size: 20px; box-shadow: 0 16px 40px rgba(16,185,129,0.5);">
+          Réserver mon échange →
+        </div>
+        <div style="font-family: 'Inter', sans-serif; color: rgba(255,255,255,0.7); font-size: 13px;">
+          On te rappelle dans les 48h max.
+        </div>
       </div>
-      <div class="heritage" style="margin-top: 50px;">★ La Base 360 · The wellness nutrition club ★</div>
+      <div class="heritage" style="margin-top: 56px;">★ La Base 360 · The wellness nutrition club ★</div>
     </div>
     <div class="slide-num">12 / 12</div>
   </section>
@@ -700,7 +729,6 @@
 </div>
 
 <script>
-  // Navigation au clavier (← → flèches, ou espace)
   let current = 0;
   const slides = document.querySelectorAll('.slide');
   function goTo(i) {
@@ -710,28 +738,23 @@
   }
   document.addEventListener('keydown', (e) => {
     if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') {
-      e.preventDefault();
-      goTo(current + 1);
+      e.preventDefault(); goTo(current + 1);
     } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
-      e.preventDefault();
-      goTo(current - 1);
+      e.preventDefault(); goTo(current - 1);
     } else if (e.key === 'Home') {
-      e.preventDefault();
-      goTo(0);
+      e.preventDefault(); goTo(0);
     } else if (e.key === 'End') {
-      e.preventDefault();
-      goTo(slides.length - 1);
+      e.preventDefault(); goTo(slides.length - 1);
     }
   });
-  // Détection de slide visible (pour current)
-  const observer = new IntersectionObserver((entries) => {
+  const obs = new IntersectionObserver((entries) => {
     entries.forEach((entry) => {
       if (entry.isIntersecting && entry.intersectionRatio > 0.5) {
         current = Array.from(slides).indexOf(entry.target);
       }
     });
   }, { threshold: 0.5 });
-  slides.forEach((s) => observer.observe(s));
+  slides.forEach((s) => obs.observe(s));
 </script>
 
 </body>
