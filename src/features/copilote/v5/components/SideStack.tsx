@@ -118,30 +118,41 @@ const stackStyle: React.CSSProperties = {
   gap: 12,
 };
 
+// ─── V7 Phase 6 (2026-05-08) : SideStack re-skin G3 ───────────────────
+// Avant : opp card gold tinte (#FFF8E5 → #FFEBC2) + flex card warm dark
+// (#1A1612 → #2A2419) + accents gold (#D4A937, #EF9F27, #F5DEB3).
+// Apres : opp card cyan tinte (--lb360-card-cyan) + flex card warm
+// dark plus neutre + accents G3 (emerald, cyan, violet).
 const oppCardStyle: React.CSSProperties = {
-  background: "linear-gradient(135deg, #FFF8E5 0%, #FFEBC2 100%)",
+  background: "var(--lb360-card-cyan, var(--ls-surface))",
   borderRadius: 18,
   padding: "16px 18px",
-  border: "1px solid rgba(212, 169, 55, 0.3)",
+  border: "1px solid color-mix(in srgb, #06B6D4 18%, var(--ls-border))",
   display: "flex",
   alignItems: "center",
   gap: 12,
   cursor: "pointer",
   textAlign: "left",
   width: "100%",
+  position: "relative",
+  overflow: "hidden",
+  isolation: "isolate",
+  transition: "transform 0.18s ease, box-shadow 0.18s ease",
 };
 
 const oppIconStyle: React.CSSProperties = {
   width: 46,
   height: 46,
   borderRadius: 12,
-  background: "linear-gradient(135deg, #FFF4D4, #D4A937, #8B6F1F)",
+  background:
+    "var(--lb360-gradient, linear-gradient(135deg, #10B981 0%, #06B6D4 50%, #8B5CF6 100%))",
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
   fontSize: 22,
   flexShrink: 0,
-  boxShadow: "0 3px 10px rgba(184, 146, 42, 0.3)",
+  boxShadow: "0 4px 14px color-mix(in srgb, #06B6D4 30%, transparent)",
+  color: "white",
 };
 
 const oppTextStyle: React.CSSProperties = {
@@ -150,37 +161,41 @@ const oppTextStyle: React.CSSProperties = {
 };
 
 const oppOverlineStyle: React.CSSProperties = {
-  fontSize: 9.5,
-  letterSpacing: 1.5,
-  color: "#8B6F1F",
+  fontFamily: "var(--lb360-mono, 'JetBrains Mono', monospace)",
+  fontSize: 10,
+  letterSpacing: "0.14em",
+  color: "color-mix(in srgb, #06B6D4 70%, var(--ls-text))",
   textTransform: "uppercase",
-  fontWeight: 700,
+  fontWeight: 500,
   marginBottom: 2,
-  fontFamily: "DM Sans, sans-serif",
 };
 
 const oppTitleStyle: React.CSSProperties = {
+  fontFamily: "var(--lb360-display, 'Sora', sans-serif)",
   fontSize: 13,
   fontWeight: 700,
-  color: "var(--v5-ink)",
-  lineHeight: 1.25,
-  fontFamily: "DM Sans, sans-serif",
+  color: "var(--ls-text)",
+  lineHeight: 1.3,
+  letterSpacing: "-0.005em",
 };
 
 const oppLinkStyle: React.CSSProperties = {
   fontSize: 11,
-  color: "#8B6F1F",
+  color: "color-mix(in srgb, #06B6D4 75%, var(--ls-text))",
   fontWeight: 700,
   marginTop: 4,
   display: "inline-flex",
   alignItems: "center",
   gap: 4,
-  fontFamily: "DM Sans, sans-serif",
+  fontFamily: "var(--lb360-display, 'Sora', sans-serif)",
 };
 
+// FLEX card : warm dark "club premium" mais aligne sur la palette G3
+// du hero. On garde le ton chaud mais avec emerald glow (au lieu de
+// gold) pour signaler que c est un produit vital de l ecosysteme.
 const flexCardStyle: React.CSSProperties = {
-  background: "linear-gradient(135deg, #1A1612 0%, #2A2419 100%)",
-  color: "#FAF6E8",
+  background: "linear-gradient(135deg, #1A1410 0%, #15131A 100%)",
+  color: "#F1F5F9",
   borderRadius: 18,
   padding: "18px 20px",
   display: "flex",
@@ -188,35 +203,43 @@ const flexCardStyle: React.CSSProperties = {
   gap: 14,
   position: "relative",
   overflow: "hidden",
+  isolation: "isolate",
   cursor: "pointer",
   textAlign: "left",
   width: "100%",
-  border: "none",
+  border: "1px solid color-mix(in srgb, #10B981 18%, transparent)",
+  transition: "transform 0.18s ease, border-color 0.18s ease",
 };
 
 const flexGlowStyle: React.CSSProperties = {
   position: "absolute",
   top: "-50%",
   right: "-30%",
-  width: 240,
-  height: 240,
-  background: "radial-gradient(circle, rgba(212, 169, 55, 0.18), transparent 65%)",
+  width: 260,
+  height: 260,
+  background:
+    "radial-gradient(circle, color-mix(in srgb, #10B981 22%, transparent), transparent 65%)",
   pointerEvents: "none",
+  zIndex: 0,
+  filter: "blur(8px)",
 };
 
 const flexIconStyle: React.CSSProperties = {
   width: 48,
   height: 48,
   borderRadius: 12,
-  background: "linear-gradient(135deg, #EF9F27, #BA7517)",
+  background:
+    "var(--lb360-gradient, linear-gradient(135deg, #10B981 0%, #06B6D4 50%, #8B5CF6 100%))",
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
   fontSize: 22,
   flexShrink: 0,
-  boxShadow: "0 4px 14px rgba(186, 117, 23, 0.4)",
+  boxShadow:
+    "0 4px 14px color-mix(in srgb, #10B981 30%, transparent), inset 0 1px 0 rgba(255,255,255,0.2)",
   position: "relative",
   zIndex: 1,
+  color: "white",
 };
 
 const flexTextStyle: React.CSSProperties = {
@@ -226,31 +249,32 @@ const flexTextStyle: React.CSSProperties = {
 };
 
 const flexOverlineStyle: React.CSSProperties = {
-  fontSize: 9.5,
-  letterSpacing: 1.8,
-  color: "#F5DEB3",
+  fontFamily: "var(--lb360-mono, 'JetBrains Mono', monospace)",
+  fontSize: 10,
+  letterSpacing: "0.18em",
+  color: "color-mix(in srgb, #10B981 60%, white)",
   textTransform: "uppercase",
-  fontWeight: 700,
+  fontWeight: 500,
   marginBottom: 3,
-  fontFamily: "DM Sans, sans-serif",
 };
 
 const flexTitleStyle: React.CSSProperties = {
+  fontFamily: "var(--lb360-display, 'Sora', sans-serif)",
   fontSize: 14,
   fontWeight: 700,
   color: "white",
-  lineHeight: 1.2,
+  lineHeight: 1.25,
   marginBottom: 2,
-  fontFamily: "DM Sans, sans-serif",
+  letterSpacing: "-0.005em",
 };
 
 const flexLinkStyle: React.CSSProperties = {
   fontSize: 11,
-  color: "#F5DEB3",
+  color: "color-mix(in srgb, #10B981 70%, white)",
   fontWeight: 700,
   marginTop: 5,
   display: "inline-flex",
   alignItems: "center",
   gap: 4,
-  fontFamily: "DM Sans, sans-serif",
+  fontFamily: "var(--lb360-display, 'Sora', sans-serif)",
 };

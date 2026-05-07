@@ -100,7 +100,7 @@ export function RentabJourney() {
   if (loading) {
     return (
       <section style={cardStyle} data-v5-rentab-journey>
-        <div style={{ color: "var(--v5-ink-light)", padding: 20, textAlign: "center" }}>Chargement…</div>
+        <div style={{ color: "var(--ls-text-muted)", padding: 20, textAlign: "center" }}>Chargement…</div>
       </section>
     );
   }
@@ -120,14 +120,18 @@ export function RentabJourney() {
 
   return (
     <section style={cardStyle} data-v5-rentab-journey>
-      {/* Glow décoratif gold en haut-droite */}
+      {/* V7 Phase 4 (2026-05-08) : decorations cosmetiques pour casser
+          le cote "card blanche clinique". 3 halos + barre laterale. */}
       <div style={glowStyle} />
+      <div style={haloVioletStyle} />
+      <div style={haloCyanStyle} />
+      <div style={sideBarStyle} />
 
       {/* TOP — montant + status + meta */}
       <div style={topRowStyle}>
         <div style={{ position: "relative", zIndex: 1, flex: 1 }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
-            <div style={overlineStyle} className="v5-cinzel">
+            <div style={overlineStyle}>
               ◆ Ma rentabilité · {monthLabel(data.month_start)}
             </div>
             <button
@@ -141,11 +145,11 @@ export function RentabJourney() {
                 gap: 5,
                 padding: "5px 11px",
                 borderRadius: 8,
-                border: "0.5px solid color-mix(in srgb, var(--v5-ink, #0F172A) 12%, transparent)",
+                border: "0.5px solid color-mix(in srgb, var(--ls-text, #0F172A) 12%, transparent)",
                 background: stealthOn
                   ? "color-mix(in srgb, var(--ls-purple, #8B5CF6) 12%, transparent)"
                   : "transparent",
-                color: stealthOn ? "var(--ls-purple, #8B5CF6)" : "var(--v5-ink-light, #64748B)",
+                color: stealthOn ? "var(--ls-purple, #8B5CF6)" : "var(--ls-text-muted, #64748B)",
                 fontFamily: "DM Sans, sans-serif",
                 fontSize: 11,
                 fontWeight: 600,
@@ -158,7 +162,7 @@ export function RentabJourney() {
           </div>
           <div style={titleLineStyle}>
             <span data-stealth style={amountBigStyle}>{formatEur(totalMargin)}</span>
-            <span style={amountTextStyle} className="v5-cormorant-italic">
+            <span style={amountTextStyle}>
               gagnés ce mois
             </span>
             <span style={statusPillStyle}>
@@ -207,25 +211,80 @@ export function RentabJourney() {
   );
 }
 
-// ─── Styles ────────────────────────────────────────────────────────────────
-
+// ─── V7 Phase 4 (2026-05-08) : Rentabilite re-skin G3 + halos ─────────
+// Avant : card V5 blanche/clinique + glow gold + amount gradient
+// gold/orange + bar progression gold + markers gold/brown.
+// Apres : card avec gradient G3 subtil + 3 halos decoratifs (emerald
+// top-right + violet bottom-left + cyan flottant anime) + amount
+// Fraunces italic gradient G3 + bar progression gradient G3 + markers
+// emerald.
 const cardStyle: React.CSSProperties = {
-  background: "var(--v5-card-bg)",
+  background: "var(--lb360-card-rentab, var(--ls-surface))",
   borderRadius: 20,
-  padding: "22px 28px",
+  padding: "26px 30px",
   position: "relative",
   overflow: "hidden",
-  boxShadow: "0 1px 3px rgba(0, 0, 0, 0.04)",
+  isolation: "isolate",
+  border: "1px solid color-mix(in srgb, #10B981 18%, var(--ls-border))",
+  boxShadow:
+    "0 12px 28px -14px rgba(15,23,42,0.10), 0 1px 2px rgba(15,23,42,0.04), inset 0 1px 0 rgba(255,255,255,0.6)",
 };
 
+// Halo 1 : emerald top-right (kept name `glowStyle` for back-compat)
 const glowStyle: React.CSSProperties = {
   position: "absolute",
-  top: -100,
+  top: -120,
   right: -100,
   width: 320,
   height: 320,
-  background: "radial-gradient(circle, rgba(212, 169, 55, 0.10), transparent 65%)",
+  background:
+    "radial-gradient(circle, color-mix(in srgb, #10B981 22%, transparent), transparent 65%)",
   pointerEvents: "none",
+  zIndex: 0,
+  filter: "blur(8px)",
+};
+
+// Halo 2 : violet bottom-left
+const haloVioletStyle: React.CSSProperties = {
+  position: "absolute",
+  bottom: -100,
+  left: -80,
+  width: 280,
+  height: 280,
+  background:
+    "radial-gradient(circle, color-mix(in srgb, #8B5CF6 18%, transparent), transparent 65%)",
+  pointerEvents: "none",
+  zIndex: 0,
+  filter: "blur(6px)",
+};
+
+// Halo 3 : cyan flottant centre-droit (anime)
+const haloCyanStyle: React.CSSProperties = {
+  position: "absolute",
+  top: "40%",
+  right: "25%",
+  width: 120,
+  height: 120,
+  background:
+    "radial-gradient(circle, color-mix(in srgb, #06B6D4 16%, transparent), transparent 60%)",
+  pointerEvents: "none",
+  zIndex: 0,
+  filter: "blur(8px)",
+  animation: "lb360-rentab-cyan-float 9s ease-in-out infinite",
+};
+
+// Barre laterale gauche gradient G3 + glow emerald (signature visuelle)
+const sideBarStyle: React.CSSProperties = {
+  position: "absolute",
+  left: 0,
+  top: 0,
+  bottom: 0,
+  width: 3,
+  background:
+    "var(--lb360-gradient, linear-gradient(135deg, #10B981 0%, #06B6D4 50%, #8B5CF6 100%))",
+  boxShadow: "0 0 14px color-mix(in srgb, #10B981 40%, transparent)",
+  pointerEvents: "none",
+  zIndex: 0,
 };
 
 const topRowStyle: React.CSSProperties = {
@@ -234,18 +293,23 @@ const topRowStyle: React.CSSProperties = {
   alignItems: "flex-start",
   marginBottom: 20,
   position: "relative",
-  zIndex: 1,
+  zIndex: 2,
   gap: 12,
 };
 
+// Eyebrow "MA RENTABILITE" : passe de Cinzel gold (#8B6F1F) a mono
+// emerald 70% — coherent avec les autres eyebrows V7.
 const overlineStyle: React.CSSProperties = {
-  fontFamily: "Cinzel, serif",
-  fontSize: 10,
-  letterSpacing: 3,
-  color: "#8B6F1F",
+  fontFamily: "var(--lb360-mono, 'JetBrains Mono', monospace)",
+  fontSize: 11,
+  letterSpacing: "0.16em",
+  color: "color-mix(in srgb, #10B981 65%, var(--ls-text))",
   textTransform: "uppercase",
-  fontWeight: 600,
-  marginBottom: 6,
+  fontWeight: 500,
+  marginBottom: 8,
+  display: "inline-flex",
+  alignItems: "center",
+  gap: 8,
 };
 
 const titleLineStyle: React.CSSProperties = {
@@ -255,110 +319,130 @@ const titleLineStyle: React.CSSProperties = {
   flexWrap: "wrap",
 };
 
+// Montant principal : Fraunces italic 700 gradient G3 — signature
+// editoriale premium V5 retrouvee + gradient brand.
 const amountBigStyle: React.CSSProperties = {
-  fontFamily: "DM Sans, sans-serif",
-  fontSize: 38,
-  fontWeight: 900,
-  letterSpacing: -1.5,
+  fontFamily:
+    "var(--lb360-display-serif, 'Fraunces', 'Cormorant Garamond', serif)",
+  fontStyle: "italic",
+  fontSize: "clamp(38px, 5vw, 56px)",
+  fontWeight: 700,
+  letterSpacing: "-0.02em",
   lineHeight: 1,
-  background: "linear-gradient(180deg, #EF9F27, #BA7517)",
+  background:
+    "var(--lb360-gradient, linear-gradient(135deg, #10B981 0%, #06B6D4 50%, #8B5CF6 100%))",
   WebkitBackgroundClip: "text",
   backgroundClip: "text",
   WebkitTextFillColor: "transparent",
+  // Fix italic clip
+  display: "inline-block",
+  paddingRight: 4,
 };
 
+// "gagnés ce mois" en italique 400 plus light pour la legende
 const amountTextStyle: React.CSSProperties = {
-  fontFamily: "'Cormorant Garamond', serif",
+  fontFamily:
+    "var(--lb360-display-serif, 'Fraunces', 'Cormorant Garamond', serif)",
   fontStyle: "italic",
   fontSize: 22,
-  color: "var(--v5-ink)",
-  fontWeight: 600,
-  letterSpacing: -0.5,
+  color: "var(--ls-text-muted)",
+  fontWeight: 400,
+  letterSpacing: "-0.005em",
 };
 
+// Status pill emerald — alignement V7 (avant : light green pastel)
 const statusPillStyle: React.CSSProperties = {
   display: "inline-flex",
   alignItems: "center",
   gap: 6,
-  background: "linear-gradient(135deg, #E6F3EE, #D4F0E1)",
-  color: "#14704F",
+  background: "color-mix(in srgb, #10B981 12%, transparent)",
+  color: "color-mix(in srgb, #10B981 70%, var(--ls-text))",
   padding: "6px 14px",
-  borderRadius: 20,
-  fontSize: 11,
-  fontWeight: 700,
-  border: "1px solid rgba(29, 158, 117, 0.25)",
-  fontFamily: "DM Sans, sans-serif",
+  borderRadius: 999,
+  fontSize: 11.5,
+  fontWeight: 600,
+  border: "1px solid color-mix(in srgb, #10B981 30%, transparent)",
+  fontFamily: "var(--lb360-body, 'Inter', sans-serif)",
+  alignSelf: "center",
 };
 
 const metaLineStyle: React.CSSProperties = {
-  fontSize: 12.5,
-  color: "var(--v5-ink-light)",
-  marginTop: 8,
-  fontFamily: "DM Sans, sans-serif",
+  fontSize: 13,
+  color: "var(--ls-text-muted)",
+  marginTop: 10,
+  fontFamily: "var(--lb360-body, 'Inter', sans-serif)",
 };
 
+// Bouton "Voir le detail" : ghost G3 (au lieu de gold/brown)
 const detailBtnStyle: React.CSSProperties = {
-  background: "var(--v5-card-bg-soft)",
-  color: "#8B6F1F",
-  border: "1px solid var(--v5-border-soft)",
+  background: "color-mix(in srgb, #10B981 8%, var(--ls-surface))",
+  color: "color-mix(in srgb, #10B981 75%, var(--ls-text))",
+  border: "1px solid color-mix(in srgb, #10B981 25%, var(--ls-border))",
   padding: "10px 18px",
   borderRadius: 10,
   fontSize: 12,
   fontWeight: 700,
   cursor: "pointer",
-  fontFamily: "DM Sans, sans-serif",
+  fontFamily: "var(--lb360-display, 'Sora', sans-serif)",
   whiteSpace: "nowrap",
   flexShrink: 0,
   position: "relative",
-  zIndex: 1,
+  zIndex: 2,
+  letterSpacing: "0.01em",
+  transition: "background 0.18s ease, border-color 0.18s ease",
 };
 
 const journeyWrapStyle: React.CSSProperties = {
   position: "relative",
-  zIndex: 1,
+  zIndex: 2,
   marginTop: 14,
 };
 
 const barWrapStyle: React.CSSProperties = {
   position: "relative",
-  height: 14,
-  background: "var(--v5-card-bg-soft)",
-  borderRadius: 20,
+  height: 12,
+  background: "color-mix(in srgb, var(--ls-text) 5%, transparent)",
+  borderRadius: 999,
   overflow: "visible",
-  margin: "18px 0 8px",
+  margin: "18px 0 10px",
 };
 
+// Barre progression gradient G3 + glow cyan/violet
 const barFillStyle: React.CSSProperties = {
   height: "100%",
-  background: "linear-gradient(90deg, #EF9F27, #D4A937, #BA7517)",
-  borderRadius: 20,
+  background:
+    "var(--lb360-gradient, linear-gradient(90deg, #10B981, #06B6D4, #8B5CF6))",
+  borderRadius: 999,
   position: "relative",
-  boxShadow: "0 0 12px rgba(212, 169, 55, 0.4)",
+  boxShadow:
+    "0 1px 8px color-mix(in srgb, #06B6D4 50%, transparent)",
   transition: "width 0.6s ease",
 };
 
 const markersStyle: React.CSSProperties = {
   display: "flex",
   justifyContent: "space-between",
-  fontSize: 10,
-  color: "var(--v5-ink-light)",
+  fontSize: 11,
+  color: "var(--ls-text-muted)",
   fontWeight: 600,
-  fontFamily: "'JetBrains Mono', monospace",
+  fontFamily: "var(--lb360-mono, 'JetBrains Mono', monospace)",
   gap: 8,
   flexWrap: "wrap",
+  textTransform: "uppercase",
+  letterSpacing: "0.08em",
 };
 
 const markerStyle: React.CSSProperties = {
-  color: "var(--v5-ink-light)",
+  color: "var(--ls-text-muted)",
 };
 
 const markerCurrentStyle: React.CSSProperties = {
-  color: "#8B6F1F",
+  color: "color-mix(in srgb, #10B981 70%, var(--ls-text))",
   fontWeight: 800,
 };
 
 const markerTargetStyle: React.CSSProperties = {
-  color: "var(--v5-ink-soft)",
+  color: "var(--ls-text)",
   fontWeight: 700,
   textAlign: "right",
 };
