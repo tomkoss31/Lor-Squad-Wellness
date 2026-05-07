@@ -387,21 +387,22 @@ const btnPrimaryStyle: React.CSSProperties = {
   transition: "transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease",
 };
 
-// V7 : bouton secondary plus sobre, fond sombre subtle, texte blanc
-// pour que les 2 boutons aient une vraie hierarchie (primary = action,
-// secondary = passer / report).
+// V7 fix Thomas passe 3 (2026-05-08) : bouton secondary trop "blanc/cream"
+// sur la version claire de l app. Passe en transparent quasi-total avec
+// border subtle — ne ressort plus comme une 2e action de meme poids
+// que le primary, juste un opt-out discret.
 const btnSecondaryStyle: React.CSSProperties = {
-  background: "rgba(255,255,255,0.06)",
-  color: "rgba(255,255,255,0.85)",
-  border: "1px solid rgba(255,255,255,0.12)",
+  background: "transparent",
+  color: "rgba(255,255,255,0.65)",
+  border: "1px solid rgba(255,255,255,0.10)",
   padding: "12px 18px",
   borderRadius: 12,
-  fontWeight: 600,
+  fontWeight: 500,
   fontSize: 13.5,
   cursor: "pointer",
   fontFamily: "var(--lb360-display, 'Sora', sans-serif)",
   letterSpacing: "0.01em",
-  transition: "background 0.18s ease, border-color 0.18s ease",
+  transition: "background 0.18s ease, border-color 0.18s ease, color 0.18s ease",
 };
 
 const rightSectionStyle: React.CSSProperties = {

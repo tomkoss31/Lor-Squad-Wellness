@@ -55,12 +55,13 @@ const RANK_TO_PIN: Record<string, string> = {
 const DEFAULT_PIN = "active-world-team.webp"; // fallback élégant
 
 export function PinAWTCinematic({
-  // V7 fix Thomas passe 2 (2026-05-08) : size reduit 340 → 280 +
-  // opacity 0.22 → 0.16 — le pin masquait encore le watermark "360"
-  // derriere. Maintenant l ordre visuel est : 360 watermark > pin
-  // par rang en filigrane plus subtil > contenu hero au-dessus.
-  size = 280,
-  opacity = 0.16,
+  // V7 fix Thomas passe 3 (2026-05-08) : separation visuelle nette
+  // entre le pin AWT et le watermark "360".
+  // - Pin AWT : 220px, opacity 0.18, ANCRE EN HAUT-DROITE du hero
+  //   (libere l espace pour que le 360 puisse respirer en bas)
+  // - Watermark "360" : controle separement (cf. component sibling)
+  size = 220,
+  opacity = 0.18,
   positioned = true,
   rankOverride,
 }: PinAWTCinematicProps) {
@@ -69,14 +70,13 @@ export function PinAWTCinematic({
   const fileName = (rank && RANK_TO_PIN[rank]) ?? DEFAULT_PIN;
   const src = `/pins/${fileName}`;
 
-  // Container : positionne le bloc decoratif en bas-droite du hero
-  // (positioned=true) ou laisse le parent decider (positioned=false).
+  // V7 fix : pin AWT remonte vers le coin top-right (au lieu d etre
+  // centre verticalement). Laisse l espace bas-droite au watermark 360.
   const containerStyle: React.CSSProperties = positioned
     ? {
         position: "absolute",
-        right: -60,
-        top: "50%",
-        transform: "translateY(-50%)",
+        right: -20,
+        top: -10,
         width: size,
         height: size,
         pointerEvents: "none",
@@ -89,78 +89,91 @@ export function PinAWTCinematic({
       };
 
   return (
-    <div style={containerStyle} aria-hidden="true">
-      {/* V7 (2026-05-08) : watermark "360" italique XL derriere le pin.
-          Position absolue dans le container, font-size relatif a la taille
-          du pin (pour echelle proportionnelle). Color blanc tres transparent
-          (4%) + heritage gradient G3 sur cette transparence — visible sans
-          dominer. Il EST visible meme avec overflow:hidden parent car ce
-          container l ancre dans le hero. */}
-      <div
-        style={{
-          position: "absolute",
-          inset: 0,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          pointerEvents: "none",
-        }}
-      >
-        <span
+    <>
+      {/* V7 (2026-05-08) : watermark "360" geant, ancre INDEPENDAMMENT
+          du pin (au lieu d etre dans son container). Position fixe dans
+          le hero parent : centre-bas, taille proportionnelle a 50% du
+          hero, italique Fraunces. */}
+      {positioned && (
+        <div
+          aria-hidden="true"
           style={{
-            fontFamily:
-              "var(--lb360-display-serif, 'Fraunces', 'Cormorant Garamond', serif)",
-            fontStyle: "italic",
-            fontWeight: 700,
-            fontSize: Math.round(size * 1.1),
-            lineHeight: 1,
-            letterSpacing: "-0.06em",
-            color: "rgba(255, 255, 255, 0.05)",
-            userSelect: "none",
-            transform: "translateX(-8%)",
-            whiteSpace: "nowrap",
+            position: "absolute",
+            inset: 0,
+            display: "flex",
+            alignItems: "flex-end",
+            justifyContent: "flex-end",
+            pointerEvents: "none",
+            paddingRight: "2%",
+            paddingBottom: "-8%",
+            overflow: "hidden",
+            zIndex: 0,
           }}
         >
-          360
-        </span>
-      </div>
+          <span
+            style={{
+              fontFamily:
+                "var(--lb360-display-serif, 'Fraunces', 'Cormorant Garamond', serif)",
+              fontStyle: "italic",
+              fontWeight: 800,
+              fontSize: "clamp(280px, 40vw, 520px)",
+              lineHeight: 0.85,
+              letterSpacing: "-0.07em",
+              // Gradient G3 tres subtil sur le 360 — visible sans dominer.
+              background:
+                "var(--lb360-gradient, linear-gradient(135deg, #10B981 0%, #06B6D4 50%, #8B5CF6 100%))",
+              WebkitBackgroundClip: "text",
+              backgroundClip: "text",
+              color: "transparent",
+              WebkitTextFillColor: "transparent",
+              opacity: 0.10,
+              userSelect: "none",
+              whiteSpace: "nowrap",
+              transform: "translate(8%, 22%)",
+            }}
+          >
+            360
+          </span>
+        </div>
+      )}
 
-      {/* Pin AWT par rang : 2 wrappers imbriques pour combiner les
-          animations (CSS ne supporte pas 2 transforms differents sur
-          un meme element via 2 classes). Outer = rotation 60s,
-          inner = heartbeat 3s. */}
-      <div
-        className="v5-pin-rotate"
-        style={{
-          position: "absolute",
-          inset: 0,
-          opacity,
-          willChange: "transform",
-        }}
-      >
+      {/* Pin AWT par rang : maintenant dans le coin top-right (libere
+          l espace bas pour le 360). Wrappers imbriques pour combiner
+          rotation 60s + heartbeat 3s. */}
+      <div style={containerStyle} aria-hidden="true">
         <div
-          className="v5-pin-heartbeat"
+          className="v5-pin-rotate"
           style={{
-            width: "100%",
-            height: "100%",
+            position: "absolute",
+            inset: 0,
+            opacity,
             willChange: "transform",
           }}
         >
-          <img
-            src={src}
-            alt=""
-            width={size}
-            height={size}
-            loading="lazy"
+          <div
+            className="v5-pin-heartbeat"
             style={{
               width: "100%",
               height: "100%",
-              objectFit: "contain",
-              background: "transparent",
+              willChange: "transform",
             }}
-          />
+          >
+            <img
+              src={src}
+              alt=""
+              width={size}
+              height={size}
+              loading="lazy"
+              style={{
+                width: "100%",
+                height: "100%",
+                objectFit: "contain",
+                background: "transparent",
+              }}
+            />
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
