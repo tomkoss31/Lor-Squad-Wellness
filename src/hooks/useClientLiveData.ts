@@ -131,8 +131,15 @@ export function useClientLiveData(token: string | null | undefined) {
       setError(null);
       try {
         const res = await fetch(
-          `${supabaseUrl}/functions/v1/client-app-data?token=${encodeURIComponent(token)}`,
+          `${supabaseUrl}/functions/v1/client-app-data?token=${encodeURIComponent(token)}&_t=${now}`,
           {
+            // Fix fraicheur 2026-05-08 : `cache: 'no-store'` force le browser
+            // a faire la requete reseau a chaque appel (pas de cache HTTP).
+            // Combine au query param `_t=<timestamp>` qui invalide en cas
+            // d'intermediaire CDN/proxy capricieux (Android Chrome PWA).
+            // Symptome resolu : client voyait son nouveau RDV avec 5-10 min
+            // de retard apres modif coach.
+            cache: "no-store",
             headers: {
               // Anon key requis par l'API gateway Supabase. L'auth réelle
               // se fait via le ?token= validé dans l'edge function.
@@ -178,6 +185,24 @@ export function useClientLiveData(token: string | null | undefined) {
       window.removeEventListener("focus", handler);
       document.removeEventListener("visibilitychange", handler);
     };
+  }, [token, fetchLiveData]);
+
+  // Safety net Android PWA : poll toutes les 60s quand l'app est visible.
+  // Ajoute le 2026-05-08 apres remontee Thomas (client Android voyait
+  // son nouveau RDV avec 5-10 min de retard apres modif coach). Sur
+  // Android, l'event `visibilitychange` n'est pas toujours emis quand
+  // l'user rouvre l'app PWA depuis l'icone home — donc le focus listener
+  // ne suffit pas. Ce poll garantit qu'au pire, 60s apres une modif
+  // coach, le client voit la fraiche donnee. Cout : 1 fetch/min/PWA
+  // ouverte (negligeable a 20 PWA, ~1 connexion/semaine).
+  useEffect(() => {
+    if (!token) return;
+    const intervalId = window.setInterval(() => {
+      if (document.visibilityState === "visible") {
+        void fetchLiveData();
+      }
+    }, 60_000);
+    return () => window.clearInterval(intervalId);
   }, [token, fetchLiveData]);
 
   return {
