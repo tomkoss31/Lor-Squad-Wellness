@@ -639,9 +639,15 @@ serve(async (req) => {
       headers: {
         ...corsHeaders,
         "Content-Type": "application/json",
-        // 30s cache navigateur : absorbe les multi-renders sans masquer une
-        // vraie modif coach (SELECT refresh au window focus dès 30s passés).
-        "Cache-Control": "private, max-age=30",
+        // Fix fraicheur 2026-05-08 : passe en `no-store` apres remontee Thomas
+        // (client Android voyait son nouveau RDV avec 5-10 min de retard).
+        // Le `max-age=30` precedent etait combine a un fetch sans cache:no-store
+        // cote front, ce qui pouvait etre rallonge par les caches Android Chrome
+        // PWA bien au-dela de 30s. Cout : 1 fetch reseau a chaque appel,
+        // negligeable vu le volume (20 PWA, ~1 connexion/semaine).
+        "Cache-Control": "no-store, no-cache, must-revalidate",
+        Pragma: "no-cache",
+        Expires: "0",
       },
     });
   } catch (err) {
