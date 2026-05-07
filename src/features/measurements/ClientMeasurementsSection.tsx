@@ -12,9 +12,12 @@ import { calculateTotalCmLost, getInitialSession, getLatestSession, type ClientM
 interface Props {
   clientId: string;
   coachFirstName?: string;
+  /** Token client (UUID) — pour declencher le gain XP a la sauvegarde
+   *  d une mensuration. Optionnel : si absent, pas de XP. */
+  clientToken?: string | null;
 }
 
-export function ClientMeasurementsSection({ clientId, coachFirstName }: Props) {
+export function ClientMeasurementsSection({ clientId, coachFirstName, clientToken = null }: Props) {
   const [gender, setGender] = useState<"male" | "female">("female");
   const [motivationData, setMotivationData] = useState<{ totalLost: number; sessions: number } | null>(null);
 
@@ -130,6 +133,7 @@ export function ClientMeasurementsSection({ clientId, coachFirstName }: Props) {
         authorType="client"
         authorUserId={null}
         otherAuthorLabel={coachFirstName ?? "ton coach"}
+        clientToken={clientToken}
       />
     </div>
   );

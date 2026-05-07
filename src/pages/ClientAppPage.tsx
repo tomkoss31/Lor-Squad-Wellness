@@ -843,6 +843,7 @@ export function ClientAppPage() {
                 <ClientMeasurementsSection
                   clientId={data.client_id}
                   coachFirstName={data.coach_name?.split(' ')[0]}
+                  clientToken={token}
                 />
               </div>
               <ClientAppMotivationMessage daysUntilRdv={daysUntilRdv} />
@@ -1121,6 +1122,10 @@ export function ClientAppPage() {
               setTutorialOpen(false)
               if (reason === 'completed') {
                 onboardingState.markCompleted()
+                // Etape 2 chantier client XP (2026-05-08) : tutorial_completed
+                // XP +30 lifetime declenche quand le user finit le tour PWA
+                // (pas si skippe). Cap lifetime cote SQL → idempotent.
+                if (token) void recordClientXp(token, 'tutorial_completed')
               } else if (reason === 'skipped') {
                 onboardingState.markSkipped()
               }
