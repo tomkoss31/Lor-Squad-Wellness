@@ -24,7 +24,7 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppContext } from "../context/AppContext";
-import { useInstallPrompt } from "../context/InstallPromptContext";
+// import { useInstallPrompt } from "../context/InstallPromptContext"; // retire 2026-05-07 (PWA install deplace sur /welcome)
 import { getRandomTip } from "../components/error-boundary/errorTips";
 
 const LAST_EMAIL_KEY = "ls_last_login_email";
@@ -125,7 +125,9 @@ function getInitials(firstName: string): string {
 // ─── Component ──────────────────────────────────────────────────────────────
 export function LoginPage() {
   const { authReady, currentUser, loginWithCredentials } = useAppContext();
-  const { canPromptInstall, isIos, isMobile, isStandalone, promptInstall } = useInstallPrompt();
+  // PWA install prompt retire de la page login (deja sur /welcome — fix
+  // overcharged 2026-05-07). Hook conserve si reactivation rapide voulue :
+  // const { canPromptInstall, isIos, isMobile, isStandalone, promptInstall } = useInstallPrompt();
   const navigate = useNavigate();
 
   // Restore last identity (returning user UX)
@@ -228,10 +230,6 @@ export function LoginPage() {
       window.localStorage.removeItem(LAST_AVATAR_KEY);
     } catch { /* */ }
     window.location.href = "/welcome";
-  }
-
-  async function handleInstallClick() {
-    await promptInstall();
   }
 
   const greeting = phase.greeting(knownFirstName);
@@ -342,13 +340,18 @@ export function LoginPage() {
           animation: lp-in 0.9s cubic-bezier(0.16,1,0.3,1) both;
         }
         .lp-logo {
-          width: 96px; height: 96px;
-          border-radius: 24px;
+          width: 168px; height: 168px;
           object-fit: contain;
-          margin-bottom: 16px;
-          animation: lp-logo-pulse 3s ease-in-out infinite alternate;
-          filter: drop-shadow(0 0 28px rgba(16,185,129,0.30)) drop-shadow(0 12px 32px rgba(6,182,212,0.20));
+          margin-bottom: 12px;
+          background: transparent;
+          animation: lp-logo-float 6s cubic-bezier(0.45, 0, 0.55, 1) infinite,
+                     lp-logo-pulse 4s ease-in-out infinite alternate;
+          filter: drop-shadow(0 0 32px rgba(16,185,129,0.28)) drop-shadow(0 18px 38px rgba(6,182,212,0.22));
           will-change: transform, filter;
+        }
+        @keyframes lp-logo-float {
+          0%, 100% { transform: translateY(0); }
+          50%      { transform: translateY(-6px); }
         }
         @keyframes lp-logo-pulse {
           0%   { transform: scale(1); filter: drop-shadow(0 0 24px rgba(16,185,129,0.25)) drop-shadow(0 12px 32px rgba(6,182,212,0.18)); }
@@ -690,6 +693,33 @@ export function LoginPage() {
         html.theme-light .lp-divider-row::after {
           background: #E2E8F0;
         }
+        /* Lien magique compact (1 ligne, remplace l ancien magic-btn —
+           fix overcharged 2026-05-07) */
+        .lp-magic-link {
+          display: block;
+          width: 100%;
+          margin-top: 4px;
+          padding: 10px 14px;
+          background: transparent;
+          border: 1px dashed rgba(16,185,129,0.32);
+          border-radius: 12px;
+          color: #10B981;
+          font-family: 'Inter', system-ui, sans-serif;
+          font-size: 13px;
+          font-weight: 600;
+          text-align: center;
+          cursor: pointer;
+          transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+        }
+        .lp-magic-link:hover {
+          background: rgba(16,185,129,0.06);
+          border-color: rgba(16,185,129,0.55);
+          border-style: solid;
+        }
+        .lp-magic-link:focus-visible {
+          outline: 2px solid #10B981;
+          outline-offset: 2px;
+        }
         .lp-magic-hint {
           font-family: 'Inter', system-ui, sans-serif;
           font-size: 12px;
@@ -837,7 +867,7 @@ export function LoginPage() {
             flex: 1;
             padding: 28px 24px 32px;
           }
-          .lp-logo { width: 64px; height: 64px; border-radius: 18px; margin-bottom: 18px; }
+          .lp-logo { width: 120px; height: 120px; margin-bottom: 10px; }
           .lp-tagline { font-size: 22px; margin-bottom: 16px; }
           .lp-quote-block { padding: 12px 14px; max-width: 320px; }
           .lp-quote-text { font-size: 12.5px; }
@@ -871,8 +901,8 @@ export function LoginPage() {
         <div className="lp-grain" />
         <div className="lp-visual-inner">
           <img
-            src="/brand/labase360/app-icon-512.svg"
-            alt=""
+            src="/brand/labase360/logo-primary.svg"
+            alt="La Base 360"
             className="lp-logo"
           />
           <span className="lp-heritage">★ Since 2022 ★</span>
@@ -986,46 +1016,15 @@ export function LoginPage() {
             </button>
           </form>
 
-          {/* Lien magique avec hint */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            <div className="lp-divider-row">ou</div>
-            <p className="lp-magic-hint">
-              Mot de passe oublié, ou flemme de le taper ?<br />
-              On t'envoie un lien sécurisé par email — 1 clic et c'est ouvert.
-            </p>
-            <button
-              type="button"
-              onClick={() => navigate("/forgot-password")}
-              className="lp-magic-btn"
-            >
-              ✨ Recevoir un lien magique par email
-            </button>
-          </div>
-
-          {/* PWA install (discret) */}
-          {!isStandalone ? (
-            <div className="lp-pwa-card">
-              <div className="lp-pwa-head">📱 Installer l'app</div>
-              <div>
-                Ajoute La Base 360 à ton écran d'accueil — ouverture en 1 clic, hors connexion.
-                {canPromptInstall ? (
-                  <div>
-                    <button type="button" onClick={() => void handleInstallClick()} className="lp-pwa-btn">
-                      Installer maintenant
-                    </button>
-                  </div>
-                ) : isIos ? (
-                  <div style={{ marginTop: 4, fontSize: 12 }}>
-                    Safari → <strong>Partager</strong> → <strong>Sur l'écran d'accueil</strong>
-                  </div>
-                ) : isMobile ? (
-                  <div style={{ marginTop: 4, fontSize: 12 }}>
-                    Chrome → menu <strong>⋮</strong> → <strong>Installer l'app</strong>
-                  </div>
-                ) : null}
-              </div>
-            </div>
-          ) : null}
+          {/* Lien magique compact (1 ligne, sans paragraphe ni divider — fix
+              page de login overcharged 2026-05-07) */}
+          <button
+            type="button"
+            onClick={() => navigate("/forgot-password")}
+            className="lp-magic-link"
+          >
+            ✨ Mot de passe oublié ? Recevoir un lien magique
+          </button>
 
           <div className="lp-trust">
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
