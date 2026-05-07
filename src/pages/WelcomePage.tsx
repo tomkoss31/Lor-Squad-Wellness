@@ -383,7 +383,7 @@ export function WelcomePage() {
             icon="✨"
             title="Je veux rejoindre l'aventure"
             subtitle="Découvrir le business La Base 360"
-            onClick={() => setProspectOpen(true)}
+            onClick={() => navigate("/opportunite")}
             delayMs={1000}
             accent="magenta"
           />
