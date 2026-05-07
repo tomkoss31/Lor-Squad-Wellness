@@ -16,6 +16,10 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getSupabaseClient } from "../../services/supabaseClient";
+// Etape 2 chantier client XP (2026-05-08) : declenchement explicite
+// du gain XP +5 a la soumission du mood (avant : silencieux car le
+// SQL trigger n etait pas branche).
+import { recordClientXp } from "../../features/client-xp/useClientXp";
 
 interface Props {
   token: string;
@@ -115,6 +119,10 @@ export function ClientMoodCheckIn({ token }: Props) {
         p_mood_key: mood,
         p_comment: null,
       });
+      // Etape 2 (2026-05-08) : declenchement explicite du gain XP
+      // mood_checkin (+5 XP, cap daily). Le toast XP s affiche
+      // automatiquement via le bus d events.
+      void recordClientXp(token, "mood_checkin");
       setTodayMood(mood);
       setShowEditor(false);
     } catch (err) {

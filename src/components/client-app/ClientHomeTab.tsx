@@ -156,6 +156,16 @@ export function ClientHomeTab({
     void recordClientXp(clientToken, "first_login");
   }, [clientToken]);
 
+  // Etape 2 chantier client XP (2026-05-08) : tab_agenda XP +5 lifetime
+  // declenche au mount si le client voit un RDV dans le hero. Cap
+  // lifetime cote SQL → 1 fois pour toute la vie. Avant : jamais
+  // declenche dans le code.
+  useEffect(() => {
+    if (!clientToken) return;
+    if (!data?.next_follow_up) return;
+    void recordClientXp(clientToken, "tab_agenda");
+  }, [clientToken, data?.next_follow_up]);
+
   // Chantier J (2026-04-26) : confirmation "Ajouté à mon agenda".
   // Optimistic UI : on flip localement dès le clic, on rollback si l'edge
   // function échoue. Le refetch via onCalendarConfirmed() resync ensuite.
