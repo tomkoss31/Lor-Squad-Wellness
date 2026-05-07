@@ -28,6 +28,7 @@ import { useCopiloteData } from "../../../hooks/useCopiloteData";
 
 import { HeroEditorial } from "./components/HeroEditorial";
 import { RentabJourney } from "./components/RentabJourney";
+import { ReferrerStatsCard } from "../../../components/copilote/ReferrerStatsCard";
 import { StatsRow3 } from "./components/StatsRow3";
 import { TodayTimeline } from "./components/TodayTimeline";
 import { SideStack } from "./components/SideStack";
@@ -184,6 +185,9 @@ export function CoPiloteV5Page() {
 
       {/* Rentab parcours */}
       <RentabJourney />
+
+      {/* V2 funnel business : stats referrer leads (masque si 0 lead ce mois) */}
+      <ReferrerStatsCard />
 
       {/* Stats 3 colonnes */}
       <StatsRow3

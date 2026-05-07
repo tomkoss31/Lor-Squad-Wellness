@@ -63,7 +63,14 @@ serve(async (req) => {
     );
   }
 
-  let body: { first_name?: string; phone?: string; city?: string };
+  let body: {
+    first_name?: string;
+    phone?: string;
+    city?: string;
+    referrer_user_id?: string;
+    source?: string;
+    metadata?: unknown;
+  };
   try {
     body = await req.json();
   } catch {
@@ -73,6 +80,10 @@ serve(async (req) => {
   const firstName = (body.first_name ?? "").trim();
   const phone = (body.phone ?? "").trim();
   const city = (body.city ?? "").trim() || null;
+  // V2 funnel business 2026-11-07 : tracking referrer + source + metadata
+  const referrerUserId = body.referrer_user_id ?? null;
+  const source = body.source ?? "welcome_page"; // 'opportunite' | 'simulateur' | 'welcome_page'
+  const metadata = body.metadata ?? null;
 
   if (firstName.length < 2) {
     return json({ success: false, error: "Prénom trop court." }, 400);
@@ -90,8 +101,10 @@ serve(async (req) => {
         first_name: firstName,
         phone,
         city,
-        source: "welcome_page",
+        source,
         status: "new",
+        referrer_user_id: referrerUserId,
+        metadata,
       })
       .select("id")
       .single();
