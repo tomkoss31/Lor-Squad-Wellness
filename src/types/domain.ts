@@ -434,6 +434,9 @@ export interface Client {
   businessInterestDate?: string | null;
   /** Champ libre si "Plus" choisi (precision sur l ambition). */
   businessInterestNote?: string | null;
+  /** V3 funnel business (2026-11-07) : timestamp quand le coach a envoye
+   *  le plan /opportunite via le bouton SendBusinessPlanButton. */
+  businessPlanSentAt?: string | null;
 }
 
 export interface FollowUp {

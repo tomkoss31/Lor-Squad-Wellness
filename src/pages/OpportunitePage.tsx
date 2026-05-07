@@ -367,6 +367,16 @@ export function OpportunitePage() {
                 </div>
               </div>
             </div>
+            <div style={{ textAlign: "center", marginTop: 32 }}>
+              <button
+                type="button"
+                onClick={() => navigate(referrerId ? `/simulateur?ref=${referrerId}` : "/simulateur")}
+                className="btn btn-primary"
+                style={{ background: "var(--opp-emerald)" }}
+              >
+                ✨ Calcule TON plan personnalisé →
+              </button>
+            </div>
           </div>
         </div>
       </section>
