@@ -14,8 +14,27 @@
   --lb360-emerald:   #10B981;
   --lb360-cyan:      #06B6D4;
   --lb360-violet:    #8B5CF6;
+  --lb360-gold:      #B8922A;
+  --lb360-coral:     #D4537E;
   --lb360-gradient:  linear-gradient(135deg, #10B981 0%, #06B6D4 50%, #8B5CF6 100%);
   --lb360-gradient-soft: linear-gradient(135deg, #F0FDF4 0%, #ECFEFF 50%, #F5F3FF 100%);
+
+  /* Co-pilote V7 (chantier 2026-05-08) — gradients de cards tintees G3.
+     Utilises pour la card rentabilite, les stats row pastels, etc.
+     Suivent var(--ls-surface) automatiquement → bascule light/dark OK. */
+  --lb360-card-emerald: linear-gradient(135deg,
+    color-mix(in srgb, #10B981 9%, var(--ls-surface)) 0%,
+    var(--ls-surface) 70%);
+  --lb360-card-cyan: linear-gradient(135deg,
+    color-mix(in srgb, #06B6D4 6%, var(--ls-surface)) 0%,
+    var(--ls-surface) 70%);
+  --lb360-card-violet: linear-gradient(135deg,
+    color-mix(in srgb, #8B5CF6 9%, var(--ls-surface)) 0%,
+    color-mix(in srgb, #06B6D4 5%, var(--ls-surface)) 100%);
+  --lb360-card-rentab: linear-gradient(135deg,
+    color-mix(in srgb, #10B981 7%, var(--ls-surface)) 0%,
+    color-mix(in srgb, #06B6D4 5%, var(--ls-surface)) 50%,
+    color-mix(in srgb, #8B5CF6 7%, var(--ls-surface)) 100%);
 
   --lb360-white:     #FFFFFF;
   --lb360-mist:      #F8FAFC;
@@ -27,6 +46,18 @@
   --lb360-warning:   #F59E0B;
   --lb360-danger:    #EF4444;
   --lb360-info:      #06B6D4;
+
+  /* Typography stack — chantier Co-pilote V7 (2026-05-08).
+     - --lb360-display       : titres UI / nombres (Sora 800)
+     - --lb360-display-serif : signature editoriale premium (Fraunces italic)
+       → utilisee pour titre hero + montant rentabilite — c est ce qui
+       differencie La Base 360 d un dashboard SaaS generique
+     - --lb360-mono          : data tabulaire, horloges, valeurs precises
+     - --lb360-body          : UI courante (Inter) */
+  --lb360-display:        "Sora", system-ui, -apple-system, sans-serif;
+  --lb360-display-serif:  "Fraunces", "Cormorant Garamond", Georgia, serif;
+  --lb360-body:           "Inter", system-ui, -apple-system, sans-serif;
+  --lb360-mono:           "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
 /* =============================================================================
