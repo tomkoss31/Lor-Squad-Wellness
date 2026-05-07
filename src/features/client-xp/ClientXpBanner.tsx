@@ -400,6 +400,8 @@ function capLabel(cap: ClientXpActionDef["cap"]): string {
       return "1× par jour";
     case "weekly":
       return "1× par semaine";
+    case "yearly":
+      return "1× par an";
     case "none":
       return "Sans limite";
   }

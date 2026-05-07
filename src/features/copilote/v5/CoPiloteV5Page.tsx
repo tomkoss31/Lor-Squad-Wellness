@@ -40,6 +40,7 @@ import { TodayTimeline } from "./components/TodayTimeline";
 import { SideStack } from "./components/SideStack";
 
 import { DistriOnboardingChecklist } from "../../../components/formation/DistriOnboardingChecklist";
+import { CelebrationCard } from "../../../components/copilote/CelebrationCard";
 import { PvActionPlanAlert } from "../../../components/copilote/PvActionPlanAlert";
 import { LegalFooter } from "../../../components/ui/LegalFooter";
 import { AnnouncementBell } from "../../../components/announcements/AnnouncementBell";
@@ -215,6 +216,12 @@ export function CoPiloteV5Page() {
 
       {/* Onboarding checklist conditionnel */}
       {currentUser.role === "distributor" && <DistriOnboardingChecklist />}
+
+      {/* Chantier anniversaires (2026-05-08) : card chaleureuse en haut
+          du Co-pilote qui s affiche si au moins un client a un anniv
+          aujourd hui (naissance ou +1m/+3m/+6m programme). Auto-hidden
+          si aucun event. Bouton WhatsApp avec message pre-rempli. */}
+      <CelebrationCard />
 
       {/* Hero éditorial */}
       <HeroEditorial />
