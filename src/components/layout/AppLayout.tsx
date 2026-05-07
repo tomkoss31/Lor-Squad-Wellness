@@ -4,7 +4,9 @@ import { useInstallPrompt } from "../../context/InstallPromptContext";
 import { Button } from "../ui/Button";
 import { StatusBadge } from "../ui/StatusBadge";
 import { BottomNav } from "./BottomNav";
-import { ThemeToggle } from "./ThemeToggle";
+// V7 sidebar (2026-05-08) : ThemeToggle retire de la sidebar (vit dans
+// la TopBar Co-pilote, supprime du footer sidebar pour eviter doublon).
+// import { ThemeToggle } from "./ThemeToggle";
 import { useRealtimeMessages } from "../../hooks/useRealtimeMessages";
 import { useSessionTracker } from "../../features/gamification/hooks/useSessionTracker";
 import { getInitials } from "../../lib/utils/getInitials";
@@ -24,40 +26,10 @@ import { AnnouncementSpotlight } from "../announcements/AnnouncementSpotlight";
 import { useState } from "react";
 import type { HerbalifeRank } from "../../types/domain";
 
-// Chantier Refonte Navigation (2026-04-22) : sidebar simplifiée +
-// renommage Accueil → Co-pilote. Ajout /formation et /settings.
-const NAV_ICONS: Record<string, JSX.Element> = {
-  "/co-pilote": (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
-  ),
-  "/flex": (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="13,2 3,14 12,14 11,22 21,10 12,10"/></svg>
-  ),
-  "/academy": (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
-  ),
-  "/agenda": (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-  ),
-  "/messages": (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-  ),
-  "/clients": (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-  ),
-  "/pv": (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-  ),
-  "/users": (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="23" y1="11" x2="17" y2="11"/><line x1="20" y1="8" x2="20" y2="14"/></svg>
-  ),
-  "/developpement": (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
-  ),
-  "/settings": (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-  ),
-};
+// V7 sidebar refresh (2026-05-08) : NAV_ICONS supprime — remplace par
+// des emojis (decoratifs aria-hidden) directement dans le tableau
+// navigation pour apporter la chaleur "club bien-etre". L ancienne map
+// SVG reste accessible via Git history si on veut un mode icons-only.
 
 export function AppLayout() {
   const { currentUser, logout, followUps, pvClientProducts, unreadMessageCount, prospects, lastFetchError } = useAppContext();
@@ -120,25 +92,27 @@ export function AppLayout() {
   // Accueil → Co-pilote, suppression Recommandations/Nouveau bilan (FAB
   // top-right à la place), fusion Guide RDV + Guide suivi → Centre de
   // formation, ajout Paramètres en bas. Ordre exact validé avec Thomas.
-  const navigation: Array<{ label: string; path: string; badge: number; tourId?: string }> = [
-    { label: "Co-pilote", path: "/co-pilote", badge: 0, tourId: "nav-copilote" },
-    { label: "FLEX", path: "/flex", badge: 0, tourId: "nav-flex" },
-    { label: "Agenda", path: "/agenda", badge: todayProspectsCount, tourId: "nav-agenda" },
-    { label: "Messagerie", path: "/messages", badge: unreadMessageCount ?? 0, tourId: "nav-messagerie" },
-    { label: "Dossiers clients", path: "/clients", badge: 0, tourId: "nav-clients" },
-    { label: "Suivi PV", path: "/pv", badge: pvOverdueCount, tourId: "nav-pv" },
-    ...(currentUser.role === "admin" ? [{ label: "Mon équipe", path: "/team", badge: 0 }] : []),
-    // Chantier Hub Développement (2026-05-04) : 1 seule entrée qui regroupe
-    // Academy + Formation + Boîte à outils + Cahier de bord + Simulateur EBE
-    // + tuto FLEX + journal nouveautés. Sidebar passe de 11 à 7 items.
-    // Visible admin + tous distri (l'admin voit en plus l'onglet Parcours).
-    { label: "Mon développement", path: "/developpement", badge: 0, tourId: "nav-developpement" },
-    // Chantier Academy section 1 (2026-04-27) : /parametres pour tous
-    // les users authentifies (la page gere elle-meme la visibilite des
-    // onglets admin-only via checks internes).
+  // V7 sidebar (chantier 2026-05-08) : ajout d emojis decoratifs sur
+  // chaque item nav — apporte la chaleur "club" que la palette G3 seule
+  // peut paraitre froide. Aligne sur le design Claude Design valide
+  // Thomas. Les emojis sont aria-hidden, ne changent pas l accessibilite.
+  // - urgent (boolean) : badge en coral G3 pour signaler une urgence
+  //   (Suivi PV en retard) au lieu d un badge red generique.
+  const navigation: Array<{ label: string; path: string; emoji: string; badge: number; urgent?: boolean; adminChip?: boolean; tourId?: string }> = [
+    { label: "Co-pilote", path: "/co-pilote", emoji: "▦", badge: 0, tourId: "nav-copilote" },
+    { label: "FLEX", path: "/flex", emoji: "⚡", badge: 0, tourId: "nav-flex" },
+    { label: "Agenda", path: "/agenda", emoji: "📅", badge: todayProspectsCount, tourId: "nav-agenda" },
+    { label: "Messagerie", path: "/messages", emoji: "✉️", badge: unreadMessageCount ?? 0, tourId: "nav-messagerie" },
+    { label: "Dossiers clients", path: "/clients", emoji: "👥", badge: 0, tourId: "nav-clients" },
+    { label: "Suivi PV", path: "/pv", emoji: "💰", badge: pvOverdueCount, urgent: pvOverdueCount > 0, tourId: "nav-pv" },
+    ...(currentUser.role === "admin"
+      ? [{ label: "Mon équipe", path: "/team", emoji: "🛟", badge: 0, adminChip: true }]
+      : []),
+    { label: "Mon développement", path: "/developpement", emoji: "🎓", badge: 0, tourId: "nav-developpement" },
     {
       label: "Paramètres",
       path: "/parametres",
+      emoji: "⚙️",
       badge: 0,
     },
   ];
@@ -337,17 +311,25 @@ export function AppLayout() {
                   <NavLink
                     to={item.path}
                     data-tour-id={item.tourId}
-                    className="flex items-center gap-3 rounded-r-[12px] text-[13px] transition"
+                    className="ls-nav-item flex items-center gap-3 rounded-r-[12px] text-[13px] transition"
                     style={{
-                      padding: '9px 12px 9px 14px',
+                      // V7 sidebar (2026-05-08) : refonte aligne G3.
+                      // - Etat actif : pill gradient G3 soft + barre laterale 3px gradient G3
+                      // - Etat hover : background subtle + emoji scale 1.12
+                      // - Etat inactif : muted color + emoji opacity 0.7
+                      position: 'relative',
+                      padding: '10px 12px 10px 14px',
                       marginLeft: -2,
-                      borderLeft: isActive ? '3px solid var(--ls-gold)' : '2px solid transparent',
-                      background: isActive ? 'rgba(201,168,76,0.08)' : 'transparent',
+                      borderLeft: '2px solid transparent',
+                      background: isActive
+                        ? 'linear-gradient(135deg, color-mix(in srgb, #10B981 14%, transparent) 0%, color-mix(in srgb, #06B6D4 12%, transparent) 50%, color-mix(in srgb, #8B5CF6 14%, transparent) 100%)'
+                        : 'transparent',
                       color: isActive ? 'var(--ls-text)' : 'var(--ls-text-muted)',
-                      fontWeight: isActive ? 500 : 400,
-                      fontFamily: 'DM Sans, sans-serif',
+                      fontWeight: isActive ? 600 : 500,
+                      fontFamily: "'Inter', system-ui, sans-serif",
                       textDecoration: 'none',
-                      transition: 'all 0.15s',
+                      transition: 'background 0.18s ease, color 0.18s ease',
+                      letterSpacing: '-0.005em',
                     }}
                     onMouseEnter={e => {
                       if (!isActive) e.currentTarget.style.background = 'var(--ls-surface2)'
@@ -356,24 +338,75 @@ export function AppLayout() {
                       if (!isActive) e.currentTarget.style.background = 'transparent'
                     }}
                   >
-                    <span style={{
-                      flexShrink: 0,
-                      display: 'flex',
-                      alignItems: 'center',
-                      color: isActive ? 'var(--ls-gold)' : 'var(--ls-text-muted)',
-                      opacity: 1,
-                    }}>
-                      {NAV_ICONS[item.path]}
+                    {/* Barre laterale gauche gradient G3 (active state). */}
+                    {isActive ? (
+                      <span
+                        aria-hidden="true"
+                        style={{
+                          position: 'absolute',
+                          left: -2,
+                          top: 6,
+                          bottom: 6,
+                          width: 3,
+                          borderRadius: 999,
+                          background: 'linear-gradient(180deg, #10B981 0%, #06B6D4 50%, #8B5CF6 100%)',
+                          boxShadow: '0 0 12px color-mix(in srgb, #10B981 50%, transparent)',
+                        }}
+                      />
+                    ) : null}
+                    <span
+                      aria-hidden="true"
+                      style={{
+                        flexShrink: 0,
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        width: 22,
+                        height: 22,
+                        fontSize: 16,
+                        lineHeight: 1,
+                        opacity: isActive ? 1 : 0.78,
+                        transition: 'transform 0.18s ease',
+                      }}
+                    >
+                      {item.emoji}
                     </span>
                     <span className="flex-1">{item.label}</span>
-                    {item.badge > 0 ? (
+                    {/* Badge urgent (coral) pour Suivi PV en retard, sinon
+                        badge neutre. ADMIN chip violet pour Mon equipe admin. */}
+                    {item.adminChip ? (
                       <span style={{
-                        fontSize: 9, padding: '2px 7px', borderRadius: 10,
-                        background: 'rgba(220,38,38,0.1)',
-                        color: '#DC2626',
+                        fontSize: 9,
+                        padding: '2px 7px',
+                        borderRadius: 999,
+                        background: 'color-mix(in srgb, #8B5CF6 16%, transparent)',
+                        color: 'color-mix(in srgb, #8B5CF6 80%, var(--ls-text))',
+                        border: '1px solid color-mix(in srgb, #8B5CF6 30%, transparent)',
                         fontWeight: 700,
                         marginLeft: 'auto',
-                        fontFamily: 'DM Sans, sans-serif',
+                        letterSpacing: '0.08em',
+                        fontFamily: "'JetBrains Mono', monospace",
+                        flexShrink: 0,
+                      }}>
+                        ADMIN
+                      </span>
+                    ) : item.badge > 0 ? (
+                      <span style={{
+                        fontSize: 10,
+                        padding: '2px 8px',
+                        borderRadius: 999,
+                        background: item.urgent
+                          ? 'color-mix(in srgb, #D4537E 18%, transparent)'
+                          : 'color-mix(in srgb, #06B6D4 16%, transparent)',
+                        color: item.urgent
+                          ? 'color-mix(in srgb, #D4537E 80%, var(--ls-text))'
+                          : 'color-mix(in srgb, #06B6D4 80%, var(--ls-text))',
+                        border: item.urgent
+                          ? '1px solid color-mix(in srgb, #D4537E 35%, transparent)'
+                          : '1px solid color-mix(in srgb, #06B6D4 30%, transparent)',
+                        fontWeight: 700,
+                        marginLeft: 'auto',
+                        fontFamily: "'JetBrains Mono', monospace",
                         flexShrink: 0,
                       }}>
                         {item.badge}
@@ -403,29 +436,47 @@ export function AppLayout() {
             <CoachInstallPwaButton />
             {/* Polish 2026-04-29 : badge streak en haut du footer sidebar */}
             <SidebarStreakBadge />
-            {/* Ligne profil + bouton Sortir inline */}
+            {/* Ligne profil + bouton Sortir inline. V7 sidebar refresh
+                (2026-05-08) : avatar gradient G3 (au lieu teal V5),
+                police Sora pour le nom, color tokens cleans. */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <div style={{
-                width: 30, height: 30, borderRadius: '50%',
+                width: 36, height: 36, borderRadius: '50%',
                 background: currentUser.avatarUrl
                   ? `url(${currentUser.avatarUrl}) center/cover`
-                  : 'linear-gradient(135deg, #2DD4BF, #0D9488)',
+                  : 'linear-gradient(135deg, #10B981 0%, #06B6D4 50%, #8B5CF6 100%)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 11, fontWeight: 700, color: '#FFFFFF',
-                fontFamily: 'Syne, sans-serif', flexShrink: 0,
+                fontSize: 12, fontWeight: 800, color: '#FFFFFF',
+                fontFamily: "'Sora', sans-serif", flexShrink: 0,
+                boxShadow: 'inset 0 0 0 2px var(--ls-sidebar-bg)',
+                letterSpacing: '0.02em',
               }}>
                 {!currentUser.avatarUrl && getInitials(currentUser.name)}
               </div>
               <div style={{ minWidth: 0, flex: 1 }}>
-                <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--ls-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                <div style={{
+                  fontSize: 13,
+                  fontWeight: 700,
+                  color: 'var(--ls-text)',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                  fontFamily: "'Sora', sans-serif",
+                  letterSpacing: '-0.005em',
+                }}>
                   {currentUser.name}
                 </div>
-                <div style={{ fontSize: 10, color: 'var(--ls-text-hint)' }}>
-                  {currentUser.role === 'admin' ? 'Admin' : 'Coach'}
+                <div style={{
+                  fontSize: 11,
+                  color: 'var(--ls-text-muted)',
+                  fontFamily: "'Inter', sans-serif",
+                  fontWeight: 500,
+                }}>
+                  {currentUser.role === 'admin' ? 'Coach · Admin' : 'Coach'}
                 </div>
               </div>
 
-              {/* Bouton Sortir compact à droite du nom */}
+              {/* Bouton Sortir compact a droite du nom */}
               <button
                 onClick={() => void handleLogout()}
                 aria-label="Se déconnecter"
@@ -435,40 +486,42 @@ export function AppLayout() {
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: 5,
-                  padding: '6px 10px',
-                  borderRadius: 8,
-                  background: 'rgba(226,75,74,0.12)',
-                  border: '1px solid rgba(226,75,74,0.35)',
-                  color: '#E24B4A',
+                  padding: '7px 11px',
+                  borderRadius: 999,
+                  background: 'color-mix(in srgb, #D4537E 12%, transparent)',
+                  border: '1px solid color-mix(in srgb, #D4537E 32%, transparent)',
+                  color: 'color-mix(in srgb, #D4537E 75%, var(--ls-text))',
                   cursor: 'pointer',
                   fontSize: 11,
                   fontWeight: 600,
-                  fontFamily: 'DM Sans, sans-serif',
-                  transition: 'all 0.15s',
+                  fontFamily: "'Sora', sans-serif",
+                  letterSpacing: '0.01em',
+                  transition: 'all 0.18s ease',
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.background = '#E24B4A';
+                  e.currentTarget.style.background = '#D4537E';
                   e.currentTarget.style.color = '#FFFFFF';
+                  e.currentTarget.style.borderColor = '#D4537E';
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'rgba(226,75,74,0.12)';
-                  e.currentTarget.style.color = '#E24B4A';
+                  e.currentTarget.style.background = 'color-mix(in srgb, #D4537E 12%, transparent)';
+                  e.currentTarget.style.color = 'color-mix(in srgb, #D4537E 75%, var(--ls-text))';
+                  e.currentTarget.style.borderColor = 'color-mix(in srgb, #D4537E 32%, transparent)';
                 }}
               >
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-                  <polyline points="16 17 21 12 16 7" />
-                  <line x1="21" y1="12" x2="9" y2="12" />
-                </svg>
+                <span aria-hidden="true" style={{ fontSize: 13, lineHeight: 1 }}>↪</span>
                 Sortir
               </button>
             </div>
 
-            {/* Toggle thème + cloche nouveautés — compact en dessous */}
-            <div className="flex items-center justify-between gap-2">
-              <ThemeToggle />
-              <AnnouncementBell />
-            </div>
+            {/* V7 sidebar refresh (2026-05-08) : SUPPRESSION du theme
+                toggle + cloche notifs ici (doublon avec la TopBar
+                Co-pilote ou je les ai mis en Phase 2). Validation Thomas :
+                "le curseur qui a ete ajoute en haut, je modifierais pas".
+                Sur les pages SANS TopBar (Agenda / Messagerie / Clients
+                etc.), l'acces theme passe par /parametres et les notifs
+                ne sont reachable que via /co-pilote ou les push natives.
+                A revoir si besoin futur d'acces global. */}
             {/* Footer legal RGPD retire du sidebar (V2 — 2026-04-30) :
                 deplace dans Parametres > Confidentialite & RGPD pour
                 un acces propre + footer in-page sur Co-pilote/Agenda/PV */}
