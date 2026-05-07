@@ -116,11 +116,7 @@ function maskEmail(email: string): string {
   return `${local[0]}${"*".repeat(Math.min(local.length - 2, 4))}${local.slice(-1)}@${domain}`;
 }
 
-function getInitials(firstName: string): string {
-  const parts = firstName.trim().split(/\s+/);
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-  return (parts[0][0] + parts[1][0]).toUpperCase();
-}
+// getInitials retiree (avatar chip supprime du greeting 2026-05-07).
 
 // ─── Component ──────────────────────────────────────────────────────────────
 export function LoginPage() {
@@ -131,16 +127,16 @@ export function LoginPage() {
   const navigate = useNavigate();
 
   // Restore last identity (returning user UX)
-  const [initialLastEmail, initialLastFirstName, initialLastAvatar] = useMemo(() => {
-    if (typeof window === "undefined") return ["", null, null] as const;
+  // initialLastAvatar plus utilise depuis suppression avatar chip 2026-05-07
+  const [initialLastEmail, initialLastFirstName] = useMemo(() => {
+    if (typeof window === "undefined") return ["", null] as const;
     try {
       return [
         window.localStorage.getItem(LAST_EMAIL_KEY) ?? "",
         window.localStorage.getItem(LAST_FIRSTNAME_KEY),
-        window.localStorage.getItem(LAST_AVATAR_KEY),
       ] as const;
     } catch {
-      return ["", null, null] as const;
+      return ["", null] as const;
     }
   }, []);
 
@@ -152,7 +148,7 @@ export function LoginPage() {
 
   const isReturning = Boolean(initialLastEmail);
   const knownFirstName = initialLastFirstName;
-  const knownAvatar = initialLastAvatar;
+  // knownAvatar (initialLastAvatar) plus utilise depuis suppression avatar chip 2026-05-07
 
   // Heure-adaptatif (calcule 1 fois au mount, garde stable pour la session)
   const [phase] = useState(() => getDayPhase(new Date()));
