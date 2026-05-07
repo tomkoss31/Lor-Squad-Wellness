@@ -107,21 +107,27 @@ export function ProfileCard({ icon, title, subtitle, onClick, delayMs = 0, accen
           min-width: 0;
         }
         .welcome-profile-card__title {
-          font-size: 15px;
-          font-weight: 600;
-          color: var(--ls-text, #0B0D11);
-          margin-bottom: 2px;
+          font-size: 15.5px;
+          font-weight: 700;
+          color: #0B0D11;
+          margin-bottom: 3px;
           line-height: 1.3;
+          letter-spacing: -0.005em;
         }
         :root[data-theme="dark"] .welcome-profile-card__title,
         html.dark .welcome-profile-card__title { color: #F0EDE8; }
         .welcome-profile-card__sub {
           font-size: 13px;
-          color: rgba(11, 13, 17, 0.6);
+          font-weight: 500;
+          color: rgba(11, 13, 17, 0.78);
           line-height: 1.4;
         }
         :root[data-theme="dark"] .welcome-profile-card__sub,
-        html.dark .welcome-profile-card__sub { color: rgba(240, 237, 232, 0.58); }
+        html.dark .welcome-profile-card__sub { color: rgba(240, 237, 232, 0.72); }
+        /* Au hover, le titre prend la couleur d accent — friendly + match page */
+        .welcome-profile-card--teal:hover .welcome-profile-card__title { color: #0F6E56; }
+        .welcome-profile-card--gold:hover .welcome-profile-card__title { color: #BA7517; }
+        .welcome-profile-card--magenta:hover .welcome-profile-card__title { color: #A93B63; }
         .welcome-profile-card__arrow {
           font-size: 18px;
           color: rgba(11, 13, 17, 0.38);
