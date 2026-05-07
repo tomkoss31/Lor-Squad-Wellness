@@ -13,7 +13,9 @@
 // =============================================================================
 
 export type ClientXpActionKey =
-  // 1x lifetime
+  // 1x lifetime — retour Thomas 2026-05-08 : la plupart des actions
+  // tab_* / message / etc. passent en lifetime (au lieu de 1x/jour)
+  // pour ne pas faire de la presence quotidienne une obligation.
   | "first_login"
   | "install_pwa"
   | "sandbox_completed"
@@ -24,16 +26,15 @@ export type ClientXpActionKey =
   | "anniversary_3m"
   | "anniversary_6m"
   | "google_review"
-  // 1x/jour
-  | "tab_agenda"
-  | "tab_pv"
-  | "tab_evolution"
-  | "tab_conseils"
-  | "message_sent"
+  | "tab_agenda"            // V2 lifetime (avant : 1x/jour)
+  | "tab_pv"                // V2 lifetime (avant : 1x/jour)
+  | "tab_evolution"         // V2 lifetime (avant : 1x/jour)
+  | "tab_conseils"          // V2 lifetime (avant : 1x/jour)
+  | "message_sent"          // V2 lifetime (avant : 1x/jour)
+  // 1x/jour (mood reste daily — c est un check-in volontaire)
   | "mood_checkin"
-  | "measurement_added"
   // 1x/semaine
-  | "weekly_weigh_in"
+  | "measurement_added"     // V2 weekly (avant : 1x/jour)
   // no cap
   | "photo_uploaded"
   // VIP V2 (2026-04-28) — actions du programme Client Privilegie
@@ -43,6 +44,9 @@ export type ClientXpActionKey =
   | "vip_silver_reached"
   | "vip_gold_reached"
   | "vip_ambassador_reached";
+// V2 (2026-05-08) — `weekly_weigh_in` retire du tableau (Thomas a
+// supprime l onglet Pesee hebdomadaire). La SQL function garde la
+// branche pour compat mais l action n est plus listee dans l UI.
 
 export type ClientXpCapStrategy = "lifetime" | "daily" | "weekly" | "none";
 
@@ -105,24 +109,27 @@ export const CLIENT_XP_ACTIONS: ClientXpActionDef[] = [
     category: "discover",
   },
 
-  // ─── Daily (1x/jour) ───────────────────────────────────────────────────────
+  // ─── Decouvrir les onglets (1x lifetime) — V2 retour Thomas 2026-05-08 ────
+  // Avant : 1×/jour (presence quotidienne obligatoire). Apres : 1×
+  // lifetime — on recompense la decouverte, pas l obligation. Le bonus
+  // "à chaque RDV" sera ajoute en V3 via un trigger create_followup.
   {
     key: "tab_agenda",
     emoji: "📅",
     label: "Vérifier ton agenda RDV",
-    hint: "Tous les jours ça compte",
+    hint: "1×, juste pour découvrir",
     xp: 5,
-    cap: "daily",
-    category: "daily",
+    cap: "lifetime",
+    category: "discover",
   },
   {
     key: "tab_evolution",
     emoji: "📈",
     label: "Consulter ton évolution",
-    hint: "Voir tes progrès",
+    hint: "Voir tes progrès graphique",
     xp: 5,
-    cap: "daily",
-    category: "daily",
+    cap: "lifetime",
+    category: "discover",
   },
   {
     key: "tab_conseils",
@@ -130,8 +137,8 @@ export const CLIENT_XP_ACTIONS: ClientXpActionDef[] = [
     label: "Lire tes conseils du jour",
     hint: "Assiette idéale + routine",
     xp: 5,
-    cap: "daily",
-    category: "daily",
+    cap: "lifetime",
+    category: "discover",
   },
   {
     key: "tab_pv",
@@ -139,9 +146,11 @@ export const CLIENT_XP_ACTIONS: ClientXpActionDef[] = [
     label: "Vérifier tes produits",
     hint: "Programme + recommandés",
     xp: 5,
-    cap: "daily",
-    category: "daily",
+    cap: "lifetime",
+    category: "discover",
   },
+
+  // ─── Daily (1x/jour) — uniquement le check-in mood ────────────────────────
   {
     key: "mood_checkin",
     emoji: "😊",
@@ -151,13 +160,15 @@ export const CLIENT_XP_ACTIONS: ClientXpActionDef[] = [
     cap: "daily",
     category: "daily",
   },
+
+  // ─── Engage (lifetime / weekly) ───────────────────────────────────────────
   {
     key: "message_sent",
     emoji: "💬",
     label: "Écrire à ton coach",
-    hint: "Question, ressentis, partage",
+    hint: "1ère prise de contact",
     xp: 15,
-    cap: "daily",
+    cap: "lifetime",
     category: "engage",
   },
   {
@@ -166,17 +177,6 @@ export const CLIENT_XP_ACTIONS: ClientXpActionDef[] = [
     label: "Saisir une mensuration",
     hint: "Cou / poitrine / taille / hanches…",
     xp: 10,
-    cap: "daily",
-    category: "engage",
-  },
-
-  // ─── Engage (mensuel / hebdo) ──────────────────────────────────────────────
-  {
-    key: "weekly_weigh_in",
-    emoji: "⚖️",
-    label: "Pesée hebdomadaire",
-    hint: "Le matin à jeun, 1×/semaine",
-    xp: 20,
     cap: "weekly",
     category: "engage",
   },
