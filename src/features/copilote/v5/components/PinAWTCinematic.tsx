@@ -55,7 +55,10 @@ const RANK_TO_PIN: Record<string, string> = {
 const DEFAULT_PIN = "active-world-team.webp"; // fallback élégant
 
 export function PinAWTCinematic({
-  size = 480,
+  // V7 fix Thomas (2026-05-08) : size reduit 480 → 340 — le pin etait
+  // trop dominant et empietait sur le Daily Boost a droite. Garde la
+  // presence visuelle sans bouffer le contenu utile.
+  size = 340,
   opacity = 0.22,
   positioned = true,
   rankOverride,
