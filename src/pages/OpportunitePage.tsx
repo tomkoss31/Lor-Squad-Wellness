@@ -334,7 +334,7 @@ export function OpportunitePage() {
                 <span className="eyebrow">Exemple chiffré</span>
                 <div className="case-quote">Imagine&#160;: tu vends 10 programmes ce mois.</div>
                 <p className="case-note">
-                  Au palier <b style={{ color: "var(--opp-violet)" }}>Supervisor</b> (−50%), voici ce qui rentre vraiment dans ton portefeuille — sans tableur compliqué, sans points obscurs.
+                  Au palier <b style={{ color: "var(--opp-violet)" }}>Success Builder</b> (−42%), voici ce qui rentre vraiment dans ton portefeuille — sans tableur compliqué, sans points obscurs.
                 </p>
               </div>
               <div className="case-calc">
@@ -343,8 +343,8 @@ export function OpportunitePage() {
                   <span className="calc-val">200,00 €</span>
                 </div>
                 <div className="calc-row neg">
-                  <span className="calc-label">Ton prix distributeur (−50%)</span>
-                  <span className="calc-val">100,00 €</span>
+                  <span className="calc-label">Ton prix distributeur (−42%)</span>
+                  <span className="calc-val">116,00 €</span>
                 </div>
                 <div className="calc-row">
                   <span className="calc-label">Prix de vente client</span>
@@ -352,18 +352,18 @@ export function OpportunitePage() {
                 </div>
                 <div className="calc-row pos">
                   <span className="calc-label">Marge par programme</span>
-                  <span className="calc-val">+ 100,00 €</span>
+                  <span className="calc-val">+ 84,00 €</span>
                 </div>
                 <div className="calc-row">
                   <span className="calc-label">× 10 programmes vendus</span>
-                  <span className="calc-val">10 × 100 €</span>
+                  <span className="calc-val">10 × 84 €</span>
                 </div>
                 <div className="calc-total">
                   <div>
                     <div className="calc-total-label">Argent dans ton portefeuille</div>
                     <div style={{ fontSize: 12, opacity: 0.85 }}>Sur le mois, en direct.</div>
                   </div>
-                  <div className="calc-total-val">1 000 €</div>
+                  <div className="calc-total-val">840 €</div>
                 </div>
               </div>
             </div>
