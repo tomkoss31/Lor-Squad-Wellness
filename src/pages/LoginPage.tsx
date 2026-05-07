@@ -584,7 +584,7 @@ export function LoginPage() {
         .lp-input {
           width: 100%;
           box-sizing: border-box;
-          background: #F8FAFC;
+          background: #F8FAFC !important;
           border: 1.5px solid #E2E8F0;
           border-radius: 12px;
           /* Padding tres aere : 34px top (label flottant + 18px de respiration
@@ -595,24 +595,54 @@ export function LoginPage() {
           line-height: 1.3;
           min-height: 64px;
           font-family: 'Inter', system-ui, sans-serif;
-          color: #0F172A;
+          color: #0F172A !important;
           outline: none;
           transition: border-color 0.18s, background 0.18s, box-shadow 0.18s;
-          -webkit-text-fill-color: #0F172A;
+          -webkit-text-fill-color: #0F172A !important;
+          /* Force light color-scheme : empeche le browser dark mode auto
+             d'inverser les couleurs des form fields (fix 2026-05-07 retour
+             Thomas : capture montrait fond noir sur autofill Chrome). */
+          color-scheme: light;
+          caret-color: #10B981;
+        }
+        /* Override autofill Chrome / Safari (fix 2026-05-07) :
+           sans ca, le bg apparait sombre/jaunatre au lieu de #F8FAFC. */
+        .lp-input:-webkit-autofill,
+        .lp-input:-webkit-autofill:hover,
+        .lp-input:-webkit-autofill:focus,
+        .lp-input:-webkit-autofill:active {
+          -webkit-text-fill-color: #0F172A !important;
+          -webkit-box-shadow: 0 0 0 1000px #F8FAFC inset !important;
+          box-shadow: 0 0 0 1000px #F8FAFC inset !important;
+          caret-color: #10B981;
+          transition: background-color 5000s ease-in-out 0s;
+        }
+        .lp-input:-webkit-autofill:focus {
+          -webkit-box-shadow: 0 0 0 1000px #FFFFFF inset !important;
+          box-shadow: 0 0 0 1000px #FFFFFF inset !important;
         }
         html.theme-light .lp-input {
-          background: #F8FAFC;
+          background: #F8FAFC !important;
           border: 1.5px solid #E2E8F0;
-          color: #0F172A;
-          -webkit-text-fill-color: #0F172A;
+          color: #0F172A !important;
+          -webkit-text-fill-color: #0F172A !important;
         }
         .lp-input:focus {
           border-color: #10B981;
-          background: #FFFFFF;
+          background: #FFFFFF !important;
           box-shadow: 0 0 0 4px rgba(16,185,129,0.12);
         }
-        html.theme-light .lp-input:focus { background: #FFFFFF; }
+        html.theme-light .lp-input:focus { background: #FFFFFF !important; }
         .lp-input::placeholder { color: transparent; }
+        /* Greeting name : style premium avec accent gradient */
+        .lp-greeting-name {
+          background: linear-gradient(120deg, #10B981, #06B6D4);
+          -webkit-background-clip: text;
+          background-clip: text;
+          color: transparent;
+          font-weight: 800;
+          font-style: italic;
+        }
         .lp-label {
           position: absolute;
           top: 22px; left: 18px;
@@ -963,7 +993,11 @@ export function LoginPage() {
               {greeting}
               <span className="lp-greeting-emoji" aria-hidden="true">{phase.emoji}</span>
             </h1>
-            {isReturning ? (
+            {isReturning && knownFirstName ? (
+              <p className="lp-greeting-hint">
+                Heureux de te revoir, <strong className="lp-greeting-name">{knownFirstName}</strong> 👋
+              </p>
+            ) : isReturning ? (
               <p className="lp-greeting-hint">
                 Tu t'étais connecté avec{" "}
                 <span className="lp-greeting-mask">{maskEmail(initialLastEmail)}</span>
@@ -973,17 +1007,6 @@ export function LoginPage() {
                 Identifie-toi pour ouvrir ton cockpit.
               </p>
             )}
-            {isReturning && knownFirstName ? (
-              <div className="lp-avatar-chip">
-                <span
-                  className="lp-avatar-circle"
-                  style={knownAvatar ? { backgroundImage: `url(${knownAvatar})` } : undefined}
-                >
-                  {knownAvatar ? "" : getInitials(knownFirstName)}
-                </span>
-                Coach {knownFirstName}
-              </div>
-            ) : null}
           </div>
 
           {/* Form */}
