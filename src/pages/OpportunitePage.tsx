@@ -200,39 +200,55 @@ export function OpportunitePage() {
         </section>
 
         {/* ================================================================
-            SECTION 5 — CAS CONCRET
+            SECTION 5 — CAS CONCRET (prix produits, calcul argent dans la poche)
             ================================================================ */}
         <section style={sectionStyle}>
           <div style={eyebrowStyle}>04 · Un exemple parlant</div>
           <h2 style={h2Style}>
-            Imagine : 1 000 PV au palier{" "}
-            <span style={accentEmerald}>Senior Consultant</span>
+            Imagine : <span style={accentEmerald}>10 programmes</span> vendus
+            ce mois
           </h2>
+          <p style={leadStyle}>
+            Au palier <strong>Success Builder (1 000 PV en 1 mois)</strong>, tu
+            achètes ton stock à -42 % et tu le revends au prix conseillé. Voici
+            ce qu'il te reste réellement dans le portefeuille à la fin du mois.
+          </p>
           <div style={caseStudyStyle}>
             <div style={caseRowStyle}>
-              <span style={caseLabel}>Volume vendu</span>
-              <span style={caseValue}>1 000 PV (~ 1 780 € HT de produits)</span>
+              <span style={caseLabel}>Prix retail d'un programme client</span>
+              <span style={caseValue}>234 €</span>
             </div>
             <div style={caseRowStyle}>
-              <span style={caseLabel}>Ta marge retail (35 %)</span>
-              <span style={caseValueAccent}>~ 623 €</span>
+              <span style={caseLabel}>Tu achètes (-42 % palier Success Builder)</span>
+              <span style={caseValue}>135,72 € / programme</span>
             </div>
             <div style={caseRowStyle}>
-              <span style={caseLabel}>Bonus : tu passes Success Builder le mois suivant</span>
-              <span style={caseValue}>+ 7 % de marge supplémentaire</span>
+              <span style={caseLabel}>Tu revends à ton client</span>
+              <span style={caseValue}>234 € / programme</span>
+            </div>
+            <div style={caseRowStyle}>
+              <span style={caseLabel}>Marge nette par programme</span>
+              <span style={caseValueAccent}>+ 98,28 €</span>
+            </div>
+            <div style={caseRowStyle}>
+              <span style={caseLabel}>× 10 programmes vendus dans le mois</span>
+              <span style={caseValueAccent}>10 × 98,28 €</span>
             </div>
             <div style={caseTotalStyle}>
-              <span style={caseTotalLabel}>💎 Revenu estimé du mois</span>
-              <span style={caseTotalValue}>~ 623 €</span>
+              <span style={caseTotalLabel}>💰 Argent dans ton portefeuille</span>
+              <span style={caseTotalValue}>~ 983 €</span>
             </div>
             <p style={caseFootnote}>
               Pas mal pour une activité que tu peux faire en complément de ton
-              boulot actuel — sans stock obligatoire, sans investissement initial
-              massif.
+              boulot actuel — sans stock obligatoire, sans investissement
+              initial massif. Et tu peux multiplier par 2, par 3 selon ton
+              activité.
             </p>
             <p style={caseDisclaimer}>
-              ⚠️ Estimation pédagogique sur un mix produit moyen. Les revenus
-              réels dépendent de ton activité et de ton équipe.
+              ⚠️ Calcul basé sur un programme classique à 234 € retail. Les
+              programmes courts (Formula 1 seul ~100 €) ou complets
+              (transformation 21 j ~290 €) modifient le calcul à la baisse ou
+              à la hausse.
             </p>
           </div>
         </section>
