@@ -304,7 +304,7 @@ export function OpportunitePage() {
               { num: "02", name: "Distributor", sub: "Tu commences à partager. Tarif distributeur officiel.", bar: 50, pct: "−25%", cls: "t2" },
               { num: "03", name: "Senior Consultant", sub: "500 PV cumulés sur 2 mois consécutifs — activité régulière confirmée.", bar: 30, pct: "−35%", cls: "t3" },
               { num: "04", name: "Success Builder", sub: "1 000 PV cumulés sur 3 mois consécutifs — tu construis une vraie clientèle.", bar: 16, pct: "−42%", cls: "t4" },
-              { num: "05", name: "Supervisor", sub: "4 000 PV en 1 mois (perso + équipe) — palier de référence du métier.", bar: 0, pct: "−50%", cls: "t5" },
+              { num: "05", name: "Supervisor", sub: "4 000 PV en 1 mois OU 12 mois cumulés glissants — palier de référence du métier.", bar: 0, pct: "−50%", cls: "t5" },
             ].map((t) => (
               <div key={t.num} className={`tier ${t.cls} reveal`}>
                 <div className="tier-num">{t.num}</div>
@@ -334,36 +334,36 @@ export function OpportunitePage() {
                 <span className="eyebrow">Exemple chiffré</span>
                 <div className="case-quote">Imagine&#160;: tu vends 10 programmes ce mois.</div>
                 <p className="case-note">
-                  Au palier <b style={{ color: "var(--opp-violet)" }}>Success Builder</b> (−42%), voici ce qui rentre vraiment dans ton portefeuille — sans tableur compliqué, sans points obscurs.
+                  Au palier <b style={{ color: "var(--opp-violet)" }}>Supervisor</b> (−50%), voici ce qui rentre vraiment dans ton portefeuille — sans tableur compliqué, sans points obscurs.
                 </p>
               </div>
               <div className="case-calc">
                 <div className="calc-row">
                   <span className="calc-label">Prix retail public</span>
-                  <span className="calc-val">234,00 €</span>
+                  <span className="calc-val">200,00 €</span>
                 </div>
                 <div className="calc-row neg">
-                  <span className="calc-label">Ton prix distributeur (−42%)</span>
-                  <span className="calc-val">135,72 €</span>
+                  <span className="calc-label">Ton prix distributeur (−50%)</span>
+                  <span className="calc-val">100,00 €</span>
                 </div>
                 <div className="calc-row">
                   <span className="calc-label">Prix de vente client</span>
-                  <span className="calc-val">234,00 €</span>
+                  <span className="calc-val">200,00 €</span>
                 </div>
                 <div className="calc-row pos">
                   <span className="calc-label">Marge par programme</span>
-                  <span className="calc-val">+ 98,28 €</span>
+                  <span className="calc-val">+ 100,00 €</span>
                 </div>
                 <div className="calc-row">
                   <span className="calc-label">× 10 programmes vendus</span>
-                  <span className="calc-val">10 × 98,28 €</span>
+                  <span className="calc-val">10 × 100 €</span>
                 </div>
                 <div className="calc-total">
                   <div>
                     <div className="calc-total-label">Argent dans ton portefeuille</div>
                     <div style={{ fontSize: 12, opacity: 0.85 }}>Sur le mois, en direct.</div>
                   </div>
-                  <div className="calc-total-val">~ 983 €</div>
+                  <div className="calc-total-val">1 000 €</div>
                 </div>
               </div>
             </div>
