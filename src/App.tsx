@@ -134,6 +134,11 @@ const OpportunitePage = lazy(() =>
     default: module.OpportunitePage,
   })),
 );
+const SimulateurPage = lazy(() =>
+  import("./pages/SimulateurPage").then((module) => ({
+    default: module.SimulateurPage,
+  })),
+);
 const AutoLoginPage = lazy(() =>
   import("./pages/AutoLoginPage").then((module) => ({
     default: module.AutoLoginPage,
@@ -448,6 +453,8 @@ export default function App() {
               prospect froid + chaud, sans nommer la marque explicitement.
               Cf. docs/BUSINESS_FUNNEL_ARCHITECTURE.md. */}
           <Route path="/opportunite" element={<OpportunitePage />} />
+          {/* V2 funnel business : simulateur de revenus interactif */}
+          <Route path="/simulateur" element={<SimulateurPage />} />
           <Route path="/auto-login" element={<AutoLoginPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />

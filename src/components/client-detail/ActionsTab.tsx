@@ -23,6 +23,7 @@ import { ClientVipCoachPanel } from "../../features/client-vip/ClientVipCoachPan
 import { refreshClientRecap } from "../../services/supabaseService";
 import { useClientPriorityAction } from "../../hooks/useClientPriorityAction";
 import { ActionsRdvBlock } from "./ActionsRdvBlock";
+import { SendBusinessPlanButton } from "./SendBusinessPlanButton";
 import { FollowUpProtocolCard } from "../follow-up/FollowUpProtocolCard";
 import { getClientActiveFollowUp } from "../../lib/portfolio";
 import { isClientProgramStarted } from "../../lib/calculations";
@@ -407,6 +408,11 @@ export function ActionsTab({ client, onEditRdv, onOpenSharePublic, onGoToVueComp
       <div id="follow-up-protocol-anchor" style={{ marginTop: 12 }}>
         <FollowUpProtocolCard client={client} />
       </div>
+
+      {/* V3 funnel business (chantier 2026-11-07) — bouton envoyer le plan
+          d'opportunite si le client a coche un montant > 0 dans son bilan.
+          Le composant masque automatiquement si businessInterestAmount <= 0. */}
+      <SendBusinessPlanButton client={client} />
 
       {/* Messages rapides — hoisted en haut (Polish 2026-04-29) :
           le CTA gold est tjr visible direct, plus enterre en bas sur mobile. */}

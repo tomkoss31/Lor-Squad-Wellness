@@ -132,6 +132,7 @@ type ClientRow = {
   business_interest_amount?: number | null;
   business_interest_date?: string | null;
   business_interest_note?: string | null;
+  business_plan_sent_at?: string | null;
   assessments?: AssessmentRow[] | null;
 };
 
@@ -459,6 +460,7 @@ function mapClient(row: ClientRow): Client {
     businessInterestAmount: row.business_interest_amount ?? null,
     businessInterestDate: row.business_interest_date ?? null,
     businessInterestNote: row.business_interest_note ?? null,
+    businessPlanSentAt: row.business_plan_sent_at ?? null,
     assessments: (row.assessments ?? []).map(mapAssessment)
   };
 }
