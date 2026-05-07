@@ -166,6 +166,32 @@ export function ClientHomeTab({
     void recordClientXp(clientToken, "tab_agenda");
   }, [clientToken, data?.next_follow_up]);
 
+  // Etape 2 (suite, 2026-05-08) : install_pwa XP +50 lifetime.
+  // 2 chemins :
+  //   A. App deja en mode standalone au mount (PWA deja installee)
+  //      → trigger XP au 1er passage apres install
+  //   B. Listener 'appinstalled' si user installe pendant la session
+  // Cap lifetime cote SQL → idempotent (safe meme si trigger 100x).
+  useEffect(() => {
+    if (!clientToken) return;
+    if (typeof window === "undefined") return;
+    // Cas A : detection mode standalone (PWA installee)
+    const isStandalone =
+      window.matchMedia?.("(display-mode: standalone)")?.matches ||
+      // Safari iOS PWA standalone
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (window.navigator as any)?.standalone === true;
+    if (isStandalone) {
+      void recordClientXp(clientToken, "install_pwa");
+    }
+    // Cas B : install pendant la session
+    const onInstalled = () => {
+      void recordClientXp(clientToken, "install_pwa");
+    };
+    window.addEventListener("appinstalled", onInstalled);
+    return () => window.removeEventListener("appinstalled", onInstalled);
+  }, [clientToken]);
+
   // Chantier J (2026-04-26) : confirmation "Ajouté à mon agenda".
   // Optimistic UI : on flip localement dès le clic, on rollback si l'edge
   // function échoue. Le refetch via onCalendarConfirmed() resync ensuite.
