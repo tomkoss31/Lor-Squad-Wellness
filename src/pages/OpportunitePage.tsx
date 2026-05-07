@@ -279,8 +279,8 @@ export function OpportunitePage() {
               <div className="way-step">Étape 03</div>
               <h3>Construire</h3>
               <p>Tu formes ton équipe et tu construis un revenu démultiplié, à long terme.</p>
-              <div className="way-figure">5 à 35%</div>
-              <p>de commission sur la production de l'équipe que tu accompagnes.</p>
+              <div className="way-figure">+5%</div>
+              <p>de royalty sur le volume des 3 premiers niveaux Supervisor sous toi.</p>
             </article>
           </div>
         </div>
@@ -302,9 +302,9 @@ export function OpportunitePage() {
             {[
               { num: "01", name: "Client privilégié", sub: "Premier accès au tarif préférentiel. Aucun engagement.", bar: 70, pct: "−15%", cls: "t1" },
               { num: "02", name: "Distributor", sub: "Tu commences à partager. Tarif distributeur officiel.", bar: 50, pct: "−25%", cls: "t2" },
-              { num: "03", name: "Senior Consultant", sub: "À partir de 500 PV/mois — activité régulière confirmée.", bar: 30, pct: "−35%", cls: "t3" },
-              { num: "04", name: "Success Builder", sub: "À partir de 1 000 PV/mois — tu construis une vraie clientèle.", bar: 16, pct: "−42%", cls: "t4" },
-              { num: "05", name: "Supervisor", sub: "À partir de 4 000 PV/mois — palier de référence du métier.", bar: 0, pct: "−50%", cls: "t5" },
+              { num: "03", name: "Senior Consultant", sub: "500 PV cumulés sur 2 mois consécutifs — activité régulière confirmée.", bar: 30, pct: "−35%", cls: "t3" },
+              { num: "04", name: "Success Builder", sub: "1 000 PV cumulés sur 3 mois consécutifs — tu construis une vraie clientèle.", bar: 16, pct: "−42%", cls: "t4" },
+              { num: "05", name: "Supervisor", sub: "4 000 PV en 1 mois (perso + équipe) — palier de référence du métier.", bar: 0, pct: "−50%", cls: "t5" },
             ].map((t) => (
               <div key={t.num} className={`tier ${t.cls} reveal`}>
                 <div className="tier-num">{t.num}</div>
