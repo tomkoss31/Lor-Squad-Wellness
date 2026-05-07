@@ -344,19 +344,24 @@ export function LoginPage() {
           object-fit: contain;
           margin-bottom: 12px;
           background: transparent;
-          animation: lp-logo-float 6s cubic-bezier(0.45, 0, 0.55, 1) infinite,
-                     lp-logo-pulse 4s ease-in-out infinite alternate;
+          /* Animation unique combinee : float (translateY) + pulse (scale + glow)
+             en une seule keyframes pour eviter le conflit transform de 2 anims
+             concurrentes. Cycle 6s ease-in-out infini. */
+          animation: lp-logo-life 6s ease-in-out infinite;
           filter: drop-shadow(0 0 32px rgba(16,185,129,0.28)) drop-shadow(0 18px 38px rgba(6,182,212,0.22));
           will-change: transform, filter;
         }
-        @keyframes lp-logo-float {
-          0%, 100% { transform: translateY(0); }
-          50%      { transform: translateY(-6px); }
+        @keyframes lp-logo-life {
+          0%, 100% {
+            transform: translateY(0) scale(1);
+            filter: drop-shadow(0 0 24px rgba(16,185,129,0.25)) drop-shadow(0 12px 32px rgba(6,182,212,0.18));
+          }
+          50% {
+            transform: translateY(-7px) scale(1.04);
+            filter: drop-shadow(0 0 38px rgba(16,185,129,0.40)) drop-shadow(0 22px 42px rgba(6,182,212,0.28));
+          }
         }
-        @keyframes lp-logo-pulse {
-          0%   { transform: scale(1); filter: drop-shadow(0 0 24px rgba(16,185,129,0.25)) drop-shadow(0 12px 32px rgba(6,182,212,0.18)); }
-          100% { transform: scale(1.04); filter: drop-shadow(0 0 38px rgba(16,185,129,0.45)) drop-shadow(0 16px 36px rgba(139,92,246,0.30)); }
-        }
+        /* Ancien lp-logo-pulse fusionne dans lp-logo-life ci-dessus (2026-05-07). */
         .lp-heritage {
           display: inline-block;
           padding: 6px 18px;
@@ -568,8 +573,11 @@ export function LoginPage() {
           background: #F8FAFC;
           border: 1.5px solid #E2E8F0;
           border-radius: 12px;
-          padding: 22px 16px 8px;
+          /* Padding generous : 28px top (label flottant + 14px de respiration
+             au-dessus du texte tape), 14px bottom — fix overcrowding 2026-05-07 */
+          padding: 28px 16px 14px;
           font-size: 15px;
+          line-height: 1.3;
           font-family: 'Inter', system-ui, sans-serif;
           color: #0F172A;
           outline: none;
@@ -602,7 +610,9 @@ export function LoginPage() {
         html.theme-light .lp-label { color: #94A3B8; }
         .lp-input:focus + .lp-label,
         .lp-input:not(:placeholder-shown) + .lp-label {
-          top: 6px;
+          /* Label flottant remonte plus haut (8px au lieu de 6px) pour creer
+             un vrai gap avec le texte tape — fix overcrowding 2026-05-07 */
+          top: 8px;
           font-size: 10.5px;
           font-weight: 700;
           letter-spacing: 0.1em;
@@ -955,7 +965,7 @@ export function LoginPage() {
           </div>
 
           {/* Form */}
-          <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+          <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 18 }}>
             <div className="lp-field">
               <input
                 id="lp-email"
