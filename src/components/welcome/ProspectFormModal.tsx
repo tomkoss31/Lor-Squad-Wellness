@@ -1,4 +1,6 @@
 // Chantier Welcome Page + Magic Links (2026-04-24).
+// Refonte G3 La Base 360 (chantier 2026-11-07) : palette emerald/cyan/violet,
+// Sora/Inter, gradients alignes avec /opportunite et /simulateur.
 // Modale formulaire prospect "Je veux rejoindre l'aventure".
 // Soumission via Edge Function submit-prospect-lead (anti-spam IP).
 
@@ -102,56 +104,106 @@ export function ProspectFormModal({ open, onClose }: Props) {
         onKeyDown={(e) => e.stopPropagation()}
         style={{
           background: "var(--ls-surface)",
-          border: "1px solid rgba(239,159,39,0.18)",
-          borderRadius: 20,
-          maxWidth: 460,
+          border: "1px solid color-mix(in srgb, #10B981 20%, transparent)",
+          borderRadius: 22,
+          maxWidth: 480,
           width: "100%",
-          padding: 26,
-          boxShadow: "0 24px 64px rgba(0,0,0,0.4), 0 4px 16px rgba(239,159,39,0.08)",
-          fontFamily: "DM Sans, sans-serif",
+          padding: 28,
+          boxShadow: "0 24px 64px rgba(0,0,0,0.4), 0 8px 24px rgba(16,185,129,0.12)",
+          fontFamily: "Inter, sans-serif",
           color: "var(--ls-text)",
+          position: "relative",
+          overflow: "hidden",
         }}
       >
+        {/* Glow décoratif G3 en haut */}
+        <div
+          aria-hidden="true"
+          style={{
+            position: "absolute",
+            top: -100,
+            right: -60,
+            width: 240,
+            height: 240,
+            background: "radial-gradient(circle, rgba(16,185,129,0.16), transparent 65%)",
+            borderRadius: "50%",
+            pointerEvents: "none",
+          }}
+        />
+        <div
+          aria-hidden="true"
+          style={{
+            position: "absolute",
+            bottom: -80,
+            left: -40,
+            width: 200,
+            height: 200,
+            background: "radial-gradient(circle, rgba(139,92,246,0.14), transparent 65%)",
+            borderRadius: "50%",
+            pointerEvents: "none",
+          }}
+        />
+        <div style={{ position: "relative", zIndex: 1 }}>
         {phase === "success" ? (
           <>
-            <div style={{ fontSize: 44, textAlign: "center", marginBottom: 6 }}>✨</div>
+            <div
+              style={{
+                width: 64,
+                height: 64,
+                borderRadius: "50%",
+                background: "linear-gradient(135deg, #10B981, #06B6D4)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                margin: "0 auto 16px",
+                fontSize: 32,
+                color: "white",
+                fontWeight: 800,
+                boxShadow: "0 8px 24px rgba(16,185,129,0.35)",
+              }}
+            >
+              ✓
+            </div>
             <h3
               style={{
-                fontFamily: "Syne, sans-serif",
-                fontSize: 20,
-                fontWeight: 700,
+                fontFamily: "Sora, sans-serif",
+                fontSize: 22,
+                fontWeight: 800,
                 margin: 0,
                 marginBottom: 10,
                 textAlign: "center",
+                letterSpacing: "-0.02em",
               }}
             >
-              Merci {firstName} !
+              C&apos;est noté {firstName} !
             </h3>
             <p
               style={{
-                fontSize: 13,
+                fontSize: 14,
                 color: "var(--ls-text-muted)",
                 lineHeight: 1.6,
                 textAlign: "center",
-                marginBottom: 16,
+                marginBottom: 18,
               }}
             >
-              Un coach de l&apos;équipe te recontacte très bientôt pour te présenter La Base 360
-              Wellness et voir comment on peut travailler ensemble.
+              On te rappelle <strong style={{ color: "var(--ls-text)" }}>dans les 48h max</strong>.
+              Garde ton téléphone à portée 📞
             </p>
             <button
               type="button"
               onClick={onClose}
               style={{
                 width: "100%",
-                padding: "12px 14px",
-                borderRadius: 10,
-                background: "linear-gradient(135deg, #1D9E75, #0F6E56)",
+                padding: "13px 16px",
+                borderRadius: 12,
+                background: "linear-gradient(135deg, #10B981 0%, #06B6D4 50%, #8B5CF6 100%)",
                 border: "none",
                 color: "#FFFFFF",
                 cursor: "pointer",
-                fontSize: 13,
-                fontWeight: 600,
+                fontSize: 14,
+                fontWeight: 700,
+                fontFamily: "Sora, sans-serif",
+                boxShadow: "0 8px 22px rgba(16,185,129,0.32)",
               }}
             >
               Fermer
@@ -159,20 +211,64 @@ export function ProspectFormModal({ open, onClose }: Props) {
           </>
         ) : (
           <>
-            <h3
+            {/* Eyebrow style La Base 360 */}
+            <div
               style={{
-                fontFamily: "Syne, sans-serif",
-                fontSize: 22,
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 8,
+                fontSize: 11,
+                letterSpacing: "1.4px",
+                textTransform: "uppercase",
+                color: "#10B981",
                 fontWeight: 700,
-                margin: 0,
-                marginBottom: 6,
-                letterSpacing: "-0.01em",
+                padding: "5px 12px",
+                borderRadius: 999,
+                background: "color-mix(in srgb, #10B981 12%, transparent)",
+                border: "0.5px solid color-mix(in srgb, #10B981 24%, transparent)",
+                marginBottom: 14,
               }}
             >
-              Prêt à changer ta vie ? ✨
+              <span
+                style={{
+                  width: 6,
+                  height: 6,
+                  borderRadius: "50%",
+                  background: "#10B981",
+                  boxShadow: "0 0 0 4px color-mix(in srgb, #10B981 22%, transparent)",
+                }}
+              />
+              Rejoindre l&apos;aventure
+            </div>
+            <h3
+              style={{
+                fontFamily: "Sora, sans-serif",
+                fontSize: 26,
+                fontWeight: 800,
+                margin: 0,
+                marginBottom: 8,
+                letterSpacing: "-0.025em",
+                lineHeight: 1.15,
+              }}
+            >
+              Et si tu transformais ce que tu fais déjà en{" "}
+              <span
+                style={{
+                  background: "linear-gradient(120deg, #10B981, #06B6D4 55%, #8B5CF6)",
+                  WebkitBackgroundClip: "text",
+                  backgroundClip: "text",
+                  color: "transparent",
+                  fontStyle: "italic",
+                }}
+              >
+                revenu
+              </span>{" "}
+              ?
             </h3>
-            <p style={{ fontSize: 13, color: "var(--ls-text-muted)", marginBottom: 18, lineHeight: 1.55 }}>
-              Laisse-nous ton numéro, un coach te contacte sous 24h.
+            <p style={{ fontSize: 13, color: "var(--ls-text-muted)", marginBottom: 22, lineHeight: 1.6 }}>
+              Laisse tes coordonnées. Un coach de l&apos;équipe te rappelle{" "}
+              <strong style={{ color: "var(--ls-text)" }}>dans les 48h</strong> pour un échange
+              simple, sans pression.
             </p>
             <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 14 }}>
               <label>
@@ -186,14 +282,23 @@ export function ProspectFormModal({ open, onClose }: Props) {
                   style={{
                     display: "block",
                     width: "100%",
-                    marginTop: 4,
-                    padding: "9px 12px",
+                    marginTop: 5,
+                    padding: "11px 14px",
                     borderRadius: 10,
                     border: "1px solid var(--ls-border)",
                     background: "var(--ls-surface2)",
                     color: "var(--ls-text)",
-                    fontSize: 14,
-                    fontFamily: "DM Sans, sans-serif",
+                    fontSize: 15,
+                    fontFamily: "Inter, sans-serif",
+                    transition: "border-color 0.15s ease, box-shadow 0.15s ease",
+                  }}
+                  onFocus={(e) => {
+                    e.currentTarget.style.borderColor = "#10B981";
+                    e.currentTarget.style.boxShadow = "0 0 0 4px color-mix(in srgb, #10B981 18%, transparent)";
+                  }}
+                  onBlur={(e) => {
+                    e.currentTarget.style.borderColor = "var(--ls-border)";
+                    e.currentTarget.style.boxShadow = "none";
                   }}
                 />
               </label>
@@ -208,14 +313,23 @@ export function ProspectFormModal({ open, onClose }: Props) {
                   style={{
                     display: "block",
                     width: "100%",
-                    marginTop: 4,
-                    padding: "9px 12px",
+                    marginTop: 5,
+                    padding: "11px 14px",
                     borderRadius: 10,
                     border: "1px solid var(--ls-border)",
                     background: "var(--ls-surface2)",
                     color: "var(--ls-text)",
-                    fontSize: 14,
-                    fontFamily: "DM Sans, sans-serif",
+                    fontSize: 15,
+                    fontFamily: "Inter, sans-serif",
+                    transition: "border-color 0.15s ease, box-shadow 0.15s ease",
+                  }}
+                  onFocus={(e) => {
+                    e.currentTarget.style.borderColor = "#10B981";
+                    e.currentTarget.style.boxShadow = "0 0 0 4px color-mix(in srgb, #10B981 18%, transparent)";
+                  }}
+                  onBlur={(e) => {
+                    e.currentTarget.style.borderColor = "var(--ls-border)";
+                    e.currentTarget.style.boxShadow = "none";
                   }}
                 />
               </label>
@@ -230,14 +344,23 @@ export function ProspectFormModal({ open, onClose }: Props) {
                   style={{
                     display: "block",
                     width: "100%",
-                    marginTop: 4,
-                    padding: "9px 12px",
+                    marginTop: 5,
+                    padding: "11px 14px",
                     borderRadius: 10,
                     border: "1px solid var(--ls-border)",
                     background: "var(--ls-surface2)",
                     color: "var(--ls-text)",
-                    fontSize: 14,
-                    fontFamily: "DM Sans, sans-serif",
+                    fontSize: 15,
+                    fontFamily: "Inter, sans-serif",
+                    transition: "border-color 0.15s ease, box-shadow 0.15s ease",
+                  }}
+                  onFocus={(e) => {
+                    e.currentTarget.style.borderColor = "#10B981";
+                    e.currentTarget.style.boxShadow = "0 0 0 4px color-mix(in srgb, #10B981 18%, transparent)";
+                  }}
+                  onBlur={(e) => {
+                    e.currentTarget.style.borderColor = "var(--ls-border)";
+                    e.currentTarget.style.boxShadow = "none";
                   }}
                 />
               </label>
@@ -281,21 +404,27 @@ export function ProspectFormModal({ open, onClose }: Props) {
                 onClick={() => void submit()}
                 disabled={phase === "submitting"}
                 style={{
-                  padding: "10px 18px",
-                  borderRadius: 10,
-                  background: "linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)",
+                  padding: "12px 22px",
+                  borderRadius: 12,
+                  background: phase === "submitting"
+                    ? "var(--ls-surface2)"
+                    : "linear-gradient(135deg, #10B981 0%, #06B6D4 50%, #8B5CF6 100%)",
                   border: "none",
                   color: "#FFFFFF",
                   cursor: phase === "submitting" ? "wait" : "pointer",
-                  fontSize: 13,
-                  fontWeight: 600,
+                  fontSize: 14,
+                  fontWeight: 700,
+                  fontFamily: "Sora, sans-serif",
+                  boxShadow: phase === "submitting" ? "none" : "0 8px 22px rgba(16,185,129,0.32)",
+                  transition: "transform 0.15s ease",
                 }}
               >
-                {phase === "submitting" ? "Envoi…" : "Un coach me recontacte"}
+                {phase === "submitting" ? "Envoi..." : "On m'appelle dans les 48h →"}
               </button>
             </div>
           </>
         )}
+        </div>
       </div>
     </div>
   );
