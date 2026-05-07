@@ -25,6 +25,7 @@ export type ClientXpActionKey =
   | "anniversary_1m"
   | "anniversary_3m"
   | "anniversary_6m"
+  | "happy_birthday"        // V3 (2026-05-08) yearly cap (revient chaque annee)
   | "google_review"
   | "tab_agenda"            // V2 lifetime (avant : 1x/jour)
   | "tab_pv"                // V2 lifetime (avant : 1x/jour)
@@ -48,7 +49,7 @@ export type ClientXpActionKey =
 // supprime l onglet Pesee hebdomadaire). La SQL function garde la
 // branche pour compat mais l action n est plus listee dans l UI.
 
-export type ClientXpCapStrategy = "lifetime" | "daily" | "weekly" | "none";
+export type ClientXpCapStrategy = "lifetime" | "daily" | "weekly" | "yearly" | "none";
 
 export interface ClientXpActionDef {
   key: ClientXpActionKey;
@@ -225,6 +226,15 @@ export const CLIENT_XP_ACTIONS: ClientXpActionDef[] = [
     hint: "Habitude installée",
     xp: 800,
     cap: "lifetime",
+    category: "milestone",
+  },
+  {
+    key: "happy_birthday",
+    emoji: "🎉",
+    label: "Joyeux anniversaire !",
+    hint: "Le coach pense à toi · 1× par an",
+    xp: 100,
+    cap: "yearly",
     category: "milestone",
   },
   {
