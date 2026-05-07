@@ -211,9 +211,6 @@ export function CoPiloteV5Page() {
       {/* Onboarding checklist conditionnel */}
       {currentUser.role === "distributor" && <DistriOnboardingChecklist />}
 
-      {/* Bandeau alerte PV (passe pvAlertActive au Hero pour dim Daily Boost) */}
-      {currentUser.id ? <PvActionPlanAlert userId={currentUser.id} /> : null}
-
       {/* Hero éditorial */}
       <HeroEditorial />
 
@@ -231,6 +228,14 @@ export function CoPiloteV5Page() {
         bilansWeekTarget={6}
         bilansTrend={bilansWeekDone > 0 ? "↗ Cette semaine" : "—"}
       />
+
+      {/* Bandeau alerte PV — V7 Phase 7 (2026-05-08) deplacement.
+          Avant : place en INTRO (juste apres TopBar) → angoissant pour
+          un nouveau distri a 0 PV qui voit "tu es en retard" en haut.
+          Apres : place ICI sous les stats row, vu seulement quand on
+          scroll. Le composant reste auto-conditionnel : il retourne
+          null si data.status !== "delayed" (deja le cas). */}
+      {currentUser.id ? <PvActionPlanAlert userId={currentUser.id} /> : null}
 
       {/* Row bottom : Timeline + Side stack */}
       <section style={rowBottomStyle} data-v5-row-bottom>

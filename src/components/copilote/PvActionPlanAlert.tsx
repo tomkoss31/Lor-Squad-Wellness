@@ -60,18 +60,22 @@ export function PvActionPlanAlert({ userId }: Props) {
       }}
     >
       <div style={{ display: "flex", alignItems: "center", gap: 12, flex: 1, minWidth: 0 }}>
-        <span style={{ fontSize: 22, flexShrink: 0 }}>🔴</span>
+        {/* V7 Phase 7 (2026-05-08) : icone passee de 🔴 (alarmant) a 📈
+            (encourageant). On reste sur ton coral pour signaler retard
+            mais l icone donne "on remonte la pente" plutot que "danger". */}
+        <span style={{ fontSize: 22, flexShrink: 0 }}>📈</span>
         <div style={{ minWidth: 0 }}>
           <div
             style={{
-              fontFamily: "Syne, serif",
+              fontFamily: "var(--lb360-display, 'Sora', sans-serif)",
               fontSize: 14,
-              fontWeight: 700,
+              fontWeight: 800,
               color: "var(--ls-coral)",
               marginBottom: 2,
+              letterSpacing: "-0.01em",
             }}
           >
-            Tu es en retard PV — {data.current_pv} / {data.prorata_pv} (prorata jour)
+            {data.current_pv} / {data.prorata_pv} PV — tu peux rattraper
           </div>
           <div
             style={{
@@ -80,6 +84,7 @@ export function PvActionPlanAlert({ userId }: Props) {
               overflow: "hidden",
               textOverflow: "ellipsis",
               whiteSpace: "nowrap",
+              fontFamily: "var(--lb360-body, 'Inter', sans-serif)",
             }}
           >
             {totalSuggestions} levier{totalSuggestions > 1 ? "s" : ""} pour rattraper · gain attendu +{data.expected_gain} PV
@@ -95,9 +100,10 @@ export function PvActionPlanAlert({ userId }: Props) {
           fontWeight: 700,
           color: "var(--ls-coral)",
           flexShrink: 0,
+          fontFamily: "var(--lb360-display, 'Sora', sans-serif)",
         }}
       >
-        Voir plan
+        Mon plan d'action
         <span style={{ fontSize: 14 }}>→</span>
       </div>
     </Link>
