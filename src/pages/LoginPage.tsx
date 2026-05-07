@@ -109,12 +109,9 @@ function getLiveCoachCount(date: Date): number {
   return 4 + seed + peakBoost;
 }
 
-function maskEmail(email: string): string {
-  const [local, domain] = email.split("@");
-  if (!local || !domain) return email;
-  if (local.length <= 2) return `${local[0]}*@${domain}`;
-  return `${local[0]}${"*".repeat(Math.min(local.length - 2, 4))}${local.slice(-1)}@${domain}`;
-}
+// maskEmail retiree 2026-05-07 (fix retour Thomas : email masque pas
+// pertinent pour returning user — fallback "Heureux de te revoir 👋"
+// suffit, et le firstName s affiche des le prochain login).
 
 // getInitials retiree (avatar chip supprime du greeting 2026-05-07).
 
@@ -995,8 +992,7 @@ export function LoginPage() {
               </p>
             ) : isReturning ? (
               <p className="lp-greeting-hint">
-                Tu t'étais connecté avec{" "}
-                <span className="lp-greeting-mask">{maskEmail(initialLastEmail)}</span>
+                Heureux de te revoir <span className="lp-greeting-name">👋</span>
               </p>
             ) : (
               <p className="lp-greeting-hint">

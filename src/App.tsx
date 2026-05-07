@@ -139,6 +139,11 @@ const SimulateurPage = lazy(() =>
     default: module.SimulateurPage,
   })),
 );
+const OutilsProspectionPage = lazy(() =>
+  import("./pages/OutilsProspectionPage").then((module) => ({
+    default: module.OutilsProspectionPage,
+  })),
+);
 const AutoLoginPage = lazy(() =>
   import("./pages/AutoLoginPage").then((module) => ({
     default: module.AutoLoginPage,
@@ -507,6 +512,8 @@ export default function App() {
               <Route path="developpement" element={<DeveloppementHubPage />} />
               <Route path="developpement/flex-explique" element={<FlexExpliquePage />} />
               <Route path="developpement/nouveautes" element={<NouveautesPage />} />
+              {/* Boite a outils prospection (chantier 2026-11-07) — admin only */}
+              <Route path="outils-prospection" element={<OutilsProspectionPage />} />
               {/* Rentabilité Phase A (2026-05-05) — jauge €/mois + breakdown. */}
               <Route path="rentabilite" element={<RentabilitePage />} />
               {/* La Base 360 Academy Phase 1 (2026-04-26) — gated admin only

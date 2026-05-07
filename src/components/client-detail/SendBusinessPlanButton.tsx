@@ -13,6 +13,7 @@
 // =============================================================================
 
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAppContext } from "../../context/AppContext";
 import { useToast, buildSupabaseErrorToast } from "../../context/ToastContext";
 import { getSupabaseClient } from "../../services/supabaseClient";
@@ -37,6 +38,7 @@ function buildMessage(client: Client, coachFirstName: string, plansUrl: string):
 }
 
 export function SendBusinessPlanButton({ client }: Props) {
+  const navigate = useNavigate();
   const { currentUser } = useAppContext();
   const { push: pushToast } = useToast();
   const [open, setOpen] = useState(false);
@@ -296,6 +298,36 @@ export function SendBusinessPlanButton({ client }: Props) {
                 </span>
               </button>
             </div>
+
+            {/* Lien vers Outils Prospection avec contexte client (admin only) */}
+            {currentUser?.role === "admin" ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setOpen(false);
+                  navigate(`/outils-prospection?client=${client.id}&from=business`);
+                }}
+                style={{
+                  width: "100%",
+                  marginTop: 12,
+                  padding: "10px 14px",
+                  borderRadius: 10,
+                  border: "0.5px dashed color-mix(in srgb, #10B981 35%, var(--ls-border))",
+                  background: "color-mix(in srgb, #10B981 6%, var(--ls-surface2))",
+                  color: "#10B981",
+                  fontFamily: "DM Sans, sans-serif",
+                  fontSize: 12,
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 6,
+                }}
+              >
+                🔍 Voir tous les outils prospection →
+              </button>
+            ) : null}
 
             <div
               style={{
