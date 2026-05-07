@@ -100,7 +100,7 @@ export function RentabJourney() {
   if (loading) {
     return (
       <section style={cardStyle} data-v5-rentab-journey>
-        <div style={{ color: "var(--v5-ink-light)", padding: 20, textAlign: "center" }}>Chargement…</div>
+        <div style={{ color: "var(--ls-text-muted)", padding: 20, textAlign: "center" }}>Chargement…</div>
       </section>
     );
   }
@@ -131,7 +131,7 @@ export function RentabJourney() {
       <div style={topRowStyle}>
         <div style={{ position: "relative", zIndex: 1, flex: 1 }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
-            <div style={overlineStyle} className="v5-cinzel">
+            <div style={overlineStyle}>
               ◆ Ma rentabilité · {monthLabel(data.month_start)}
             </div>
             <button
@@ -145,11 +145,11 @@ export function RentabJourney() {
                 gap: 5,
                 padding: "5px 11px",
                 borderRadius: 8,
-                border: "0.5px solid color-mix(in srgb, var(--v5-ink, #0F172A) 12%, transparent)",
+                border: "0.5px solid color-mix(in srgb, var(--ls-text, #0F172A) 12%, transparent)",
                 background: stealthOn
                   ? "color-mix(in srgb, var(--ls-purple, #8B5CF6) 12%, transparent)"
                   : "transparent",
-                color: stealthOn ? "var(--ls-purple, #8B5CF6)" : "var(--v5-ink-light, #64748B)",
+                color: stealthOn ? "var(--ls-purple, #8B5CF6)" : "var(--ls-text-muted, #64748B)",
                 fontFamily: "DM Sans, sans-serif",
                 fontSize: 11,
                 fontWeight: 600,
@@ -162,7 +162,7 @@ export function RentabJourney() {
           </div>
           <div style={titleLineStyle}>
             <span data-stealth style={amountBigStyle}>{formatEur(totalMargin)}</span>
-            <span style={amountTextStyle} className="v5-cormorant-italic">
+            <span style={amountTextStyle}>
               gagnés ce mois
             </span>
             <span style={statusPillStyle}>

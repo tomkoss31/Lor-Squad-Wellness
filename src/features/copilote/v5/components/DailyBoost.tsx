@@ -40,10 +40,13 @@ export function DailyBoost({ quote, dimmed = false, isPreview = false }: DailyBo
         transition: "opacity 0.3s ease",
       }}
     >
-      <div style={labelStyle} className="v5-cinzel">
-        <span style={{ color: "#D4A937" }}>✦</span>
+      {/* V7 Phase 8 (2026-05-08) : la classe .v5-cinzel est retiree —
+          le label utilise desormais var(--lb360-mono) inline.
+          Le ✦ accent passe en emerald (au lieu de gold #D4A937). */}
+      <div style={labelStyle}>
+        <span style={accentStarStyle}>✦</span>
         Daily Boost
-        <span style={{ color: "#D4A937" }}>✦</span>
+        <span style={accentStarStyle}>✦</span>
         {isPreview && (
           <span style={previewBadgeStyle} title="Preview admin (?previewQuoteId)">
             preview
@@ -54,7 +57,7 @@ export function DailyBoost({ quote, dimmed = false, isPreview = false }: DailyBo
       <p style={quoteStyle} className="v5-daily-quote">{quote.quote}</p>
 
       {quote.author && (
-        <div style={authorStyle} className="v5-cinzel">
+        <div style={authorStyle}>
           — {quote.author}
         </div>
       )}
@@ -71,51 +74,59 @@ const wrapperStyle: React.CSSProperties = {
   background: "transparent",
 };
 
+// V7 Phase 8 : tokens passes en var(--lb360-*) + couleurs G3
+// (au lieu de gold #D4A937 / beige #F5DEB3 V5).
 const labelStyle: React.CSSProperties = {
-  fontFamily: "Cinzel, serif",
-  fontSize: 9,
-  letterSpacing: "3px",
-  color: "#D4A937",
+  fontFamily: "var(--lb360-mono, 'JetBrains Mono', monospace)",
+  fontSize: 10,
+  letterSpacing: "0.18em",
+  color: "color-mix(in srgb, #10B981 60%, white)",
   textTransform: "uppercase",
-  fontWeight: 600,
-  marginBottom: 8,
+  fontWeight: 500,
+  marginBottom: 10,
   display: "flex",
   alignItems: "center",
   gap: 7,
 };
 
+const accentStarStyle: React.CSSProperties = {
+  color: "color-mix(in srgb, #10B981 75%, white)",
+};
+
 const quoteStyle: React.CSSProperties = {
-  fontFamily: "'Cormorant Garamond', serif",
-  fontSize: 14.5,
+  fontFamily: "var(--lb360-display-serif, 'Fraunces', 'Cormorant Garamond', serif)",
+  fontSize: 16,
   fontStyle: "italic",
-  color: "rgba(245, 222, 179, 0.88)",
-  lineHeight: 1.45,
-  fontWeight: 500,
+  color: "rgba(241, 245, 249, 0.88)",
+  lineHeight: 1.5,
+  fontWeight: 400,
   margin: 0,
-  // Décor : guillemets gold avant/après via ::before/::after en classe ?
-  // Inline CSS ne supporte pas pseudo-elements, on injecte les guillemets
-  // manuellement dans le texte.
   display: "block",
+  // Border-left subtle gradient G3 pour donner du relief a la quote
+  borderLeft: "2px solid color-mix(in srgb, #10B981 50%, transparent)",
+  paddingLeft: 16,
+  maxWidth: "44ch",
 };
 
 const authorStyle: React.CSSProperties = {
-  fontFamily: "Cinzel, serif",
-  fontSize: 9,
-  letterSpacing: "2px",
-  color: "rgba(245, 222, 179, 0.5)",
+  fontFamily: "var(--lb360-mono, 'JetBrains Mono', monospace)",
+  fontSize: 10,
+  letterSpacing: "0.16em",
+  color: "rgba(241, 245, 249, 0.5)",
   textTransform: "uppercase",
-  marginTop: 8,
+  marginTop: 10,
   textAlign: "right",
   fontWeight: 500,
 };
 
 const previewBadgeStyle: React.CSSProperties = {
   marginLeft: "auto",
-  fontFamily: "JetBrains Mono, monospace",
+  fontFamily: "var(--lb360-mono, 'JetBrains Mono', monospace)",
   fontSize: 8,
   letterSpacing: 0.5,
-  background: "rgba(212, 169, 55, 0.15)",
-  color: "#F5DEB3",
+  background: "color-mix(in srgb, #10B981 15%, transparent)",
+  color: "color-mix(in srgb, #10B981 80%, white)",
+  border: "1px solid color-mix(in srgb, #10B981 30%, transparent)",
   padding: "2px 6px",
   borderRadius: 4,
   textTransform: "lowercase",

@@ -263,8 +263,8 @@ const pageWrapStyle: React.CSSProperties = {
   display: "flex",
   flexDirection: "column",
   gap: 14,
-  background: "var(--v5-bg)",
-  color: "var(--v5-ink)",
+  background: "var(--ls-bg)",
+  color: "var(--ls-text)",
   minHeight: "100vh",
 };
 

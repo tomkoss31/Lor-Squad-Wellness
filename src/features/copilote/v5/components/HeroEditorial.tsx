@@ -133,7 +133,7 @@ export function HeroEditorial({ pvAlertActive = false }: HeroEditorialProps) {
 
       {/* LEFT — action principale */}
       <div style={leftSectionStyle}>
-        <div style={editionStyle} className="v5-cinzel">
+        <div style={editionStyle}>
           ✦ Aujourd'hui ✦
         </div>
 
@@ -142,7 +142,7 @@ export function HeroEditorial({ pvAlertActive = false }: HeroEditorialProps) {
           {overlineLabel}
         </div>
 
-        <h2 style={titleStyle} className="v5-cormorant-italic">
+        <h2 style={titleStyle}>
           {heroTitle}
         </h2>
 
