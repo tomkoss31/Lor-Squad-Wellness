@@ -160,7 +160,20 @@ export function ClientAppPage() {
   // Fetch des données live (programme / RDV / produits) via
   // client-app-data. Priorité : liveData > snapshot. Refresh on focus
   // debounced 5s. Si l'edge function fail, on garde le snapshot.
-  const { liveData, dataSource, refetch: refetchLive } = useClientLiveData(token)
+  const { liveData, dataSource, loading: liveLoading, refetch: refetchLive } = useClientLiveData(token)
+  const [refreshFlash, setRefreshFlash] = useState<'idle' | 'success'>('idle')
+
+  // Bouton refresh manuel (FAB en bas a droite). Visible en permanence
+  // pour l'utilisateur — fix retour Thomas 2026-05-08 (clients voyaient
+  // donnees avec 5-10 min de retard sur Android, sans pouvoir forcer
+  // une actualisation). Combine au cache:no-store + auto-poll 60s,
+  // ce bouton donne au user une porte de sortie immediate quand il a
+  // un doute.
+  const handleManualRefresh = async () => {
+    await refetchLive()
+    setRefreshFlash('success')
+    window.setTimeout(() => setRefreshFlash('idle'), 1800)
+  }
 
   // Merge liveData dans data dès qu'on a les 2 (snapshot + live fetchés).
   // Live gagne sur snapshot (snapshot = figé, live = source de vérité DB).
@@ -1208,6 +1221,60 @@ export function ClientAppPage() {
           </a>
         </div>
       </footer>
+
+      {/* FAB Actualiser — fix retour Thomas 2026-05-08.
+          Bouton flottant accessible en permanence pour forcer le refetch
+          des donnees live (RDV / programme / bilans / produits). Resout
+          le cas Android PWA ou les donnees pouvaient prendre 5-10 min a
+          se rafraichir apres une modif coach, sans recours utilisateur.
+          Position : bottom-right, au-dessus de la bottom-nav (84px). */}
+      <button
+        type="button"
+        onClick={handleManualRefresh}
+        disabled={liveLoading}
+        aria-label="Actualiser mes donnees"
+        style={{
+          position: 'fixed',
+          right: 14,
+          bottom: 84,
+          zIndex: 50,
+          width: 52,
+          height: 52,
+          borderRadius: '50%',
+          border: 'none',
+          background: refreshFlash === 'success'
+            ? 'linear-gradient(135deg, #10B981 0%, #06B6D4 100%)'
+            : 'linear-gradient(135deg, #10B981 0%, #06B6D4 50%, #8B5CF6 100%)',
+          color: '#FFFFFF',
+          fontSize: 22,
+          cursor: liveLoading ? 'wait' : 'pointer',
+          boxShadow: '0 8px 24px rgba(16,185,129,0.32), 0 2px 6px rgba(15,23,42,0.10)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          transition: 'transform 0.18s ease, box-shadow 0.18s ease',
+          opacity: liveLoading ? 0.75 : 1,
+        }}
+        onMouseDown={(e) => { e.currentTarget.style.transform = 'scale(0.95)' }}
+        onMouseUp={(e) => { e.currentTarget.style.transform = 'scale(1)' }}
+        onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)' }}
+      >
+        <span
+          aria-hidden="true"
+          style={{
+            display: 'inline-block',
+            animation: liveLoading ? 'ls-fab-spin 0.9s linear infinite' : undefined,
+          }}
+        >
+          {refreshFlash === 'success' ? '✓' : '↻'}
+        </span>
+      </button>
+      <style>{`
+        @keyframes ls-fab-spin {
+          from { transform: rotate(0deg); }
+          to   { transform: rotate(360deg); }
+        }
+      `}</style>
     </div>
   )
 }
