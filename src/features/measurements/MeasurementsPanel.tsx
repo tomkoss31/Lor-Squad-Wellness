@@ -26,6 +26,10 @@ export interface MeasurementsPanelProps {
   authorUserId: string | null;
   /** Nom à afficher en badge de la session "autre auteur" (ex: "Thomas" ou "le client") */
   otherAuthorLabel?: string;
+  /** Token client (UUID) — utilise pour declencher le gain XP a la
+   *  sauvegarde quand authorType === "client". Optionnel : si absent,
+   *  pas de trigger XP (cas coach ou fiche legacy). */
+  clientToken?: string | null;
 }
 
 function formatDate(iso: string): string {
@@ -55,12 +59,33 @@ function mergeWithDraft(
   return merged;
 }
 
+/**
+ * Compte le nombre de zones distinctes renseignees (cou, poitrine,
+ * taille, hanches, bras, cuisses, mollets) — utilise pour le trigger
+ * silhouette_complete (>= 5 zones distinctes = silhouette complete).
+ *
+ * Bras gauche/droit comptent pour 1 zone "bras". Idem cuisses, mollets.
+ */
+function mergedDistinctZones(merged: Partial<ClientMeasurement>): number {
+  const zones = [
+    merged.neck != null,
+    merged.chest != null,
+    merged.waist != null,
+    merged.hips != null,
+    merged.arm_left != null || merged.arm_right != null,
+    merged.thigh_left != null || merged.thigh_right != null,
+    merged.calf_left != null || merged.calf_right != null,
+  ];
+  return zones.filter(Boolean).length;
+}
+
 export function MeasurementsPanel({
   clientId,
   gender,
   authorType,
   authorUserId,
   otherAuthorLabel = authorType === "coach" ? "le client" : "ton coach",
+  clientToken = null,
 }: MeasurementsPanelProps) {
   const { push: pushToast } = useToast();
   const { sessions, loading, error, saveSession } = useMeasurements(clientId);
@@ -99,6 +124,22 @@ export function MeasurementsPanel({
     setCommitting(true);
     try {
       await saveSession(clientId, draft, authorType, authorUserId);
+      // Etape 2 chantier client XP (2026-05-08) : declenchement du gain
+      // XP cote client uniquement (le coach ne gagne pas de XP via cet
+      // outil). Cap weekly cote SQL → max 10 XP par semaine.
+      // + check silhouette_complete (5 zones distinctes) — cap lifetime.
+      if (authorType === "client" && clientToken) {
+        // Import dynamique pour eviter d alourdir le bundle coach
+        const { recordClientXp } = await import("../client-xp/useClientXp");
+        void recordClientXp(clientToken, "measurement_added");
+        // Silhouette complete : count les zones distinctes apres merge
+        // draft + sessions historiques. Si >= 5 zones renseignees au
+        // total, on declenche (cap lifetime → idempotent).
+        const distinctKeysFilled = mergedDistinctZones(merged);
+        if (distinctKeysFilled >= 5) {
+          void recordClientXp(clientToken, "silhouette_complete");
+        }
+      }
       setDraft({});
       pushToast({ tone: "success", title: "Session enregistrée" });
     } catch (e) {
