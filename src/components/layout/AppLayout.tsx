@@ -4,9 +4,7 @@ import { useInstallPrompt } from "../../context/InstallPromptContext";
 import { Button } from "../ui/Button";
 import { StatusBadge } from "../ui/StatusBadge";
 import { BottomNav } from "./BottomNav";
-// V7 sidebar (2026-05-08) : ThemeToggle retire de la sidebar (vit dans
-// la TopBar Co-pilote, supprime du footer sidebar pour eviter doublon).
-// import { ThemeToggle } from "./ThemeToggle";
+import { ThemeToggle } from "./ThemeToggle";
 import { useRealtimeMessages } from "../../hooks/useRealtimeMessages";
 import { useSessionTracker } from "../../features/gamification/hooks/useSessionTracker";
 import { getInitials } from "../../lib/utils/getInitials";
@@ -514,14 +512,18 @@ export function AppLayout() {
               </button>
             </div>
 
-            {/* V7 sidebar refresh (2026-05-08) : SUPPRESSION du theme
-                toggle + cloche notifs ici (doublon avec la TopBar
-                Co-pilote ou je les ai mis en Phase 2). Validation Thomas :
-                "le curseur qui a ete ajoute en haut, je modifierais pas".
-                Sur les pages SANS TopBar (Agenda / Messagerie / Clients
-                etc.), l'acces theme passe par /parametres et les notifs
-                ne sont reachable que via /co-pilote ou les push natives.
-                A revoir si besoin futur d'acces global. */}
+            {/* V7 sidebar refresh (2026-05-08, passe 2) : theme toggle
+                + cloche notifs CONDITIONNELS — caches uniquement sur
+                /co-pilote (ou ils existent deja dans la TopBar). Sur
+                toutes les autres pages (Agenda / Messagerie / Clients /
+                Suivi PV / etc.), ils restent accessibles ici. Zero
+                doublon, zero perte d'acces. */}
+            {location.pathname !== "/co-pilote" ? (
+              <div className="flex items-center justify-between gap-2">
+                <ThemeToggle />
+                <AnnouncementBell />
+              </div>
+            ) : null}
             {/* Footer legal RGPD retire du sidebar (V2 — 2026-04-30) :
                 deplace dans Parametres > Confidentialite & RGPD pour
                 un acces propre + footer in-page sur Co-pilote/Agenda/PV */}
