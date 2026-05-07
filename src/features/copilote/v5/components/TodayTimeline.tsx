@@ -132,11 +132,14 @@ export function TodayTimeline() {
 
 // ─── Styles ────────────────────────────────────────────────────────────────
 
+// ─── V7 Phase 6 (2026-05-08) : Timeline re-skin G3 ────────────────────
 const cardStyle: React.CSSProperties = {
-  background: "var(--v5-card-bg)",
+  background: "var(--ls-surface)",
+  border: "1px solid var(--ls-border)",
   borderRadius: 18,
-  padding: "18px 22px",
-  boxShadow: "0 1px 3px rgba(0, 0, 0, 0.04)",
+  padding: "20px 24px",
+  boxShadow:
+    "0 1px 2px rgba(15,23,42,0.04), 0 12px 28px -14px rgba(15,23,42,0.10)",
 };
 
 const headerStyle: React.CSSProperties = {
@@ -147,68 +150,77 @@ const headerStyle: React.CSSProperties = {
 };
 
 const titleStyle: React.CSSProperties = {
-  fontSize: 14,
+  fontFamily: "var(--lb360-display, 'Sora', sans-serif)",
+  fontSize: 16,
   fontWeight: 800,
-  color: "var(--v5-ink)",
-  letterSpacing: -0.3,
+  color: "var(--ls-text)",
+  letterSpacing: "-0.015em",
   display: "flex",
   alignItems: "center",
   gap: 8,
   margin: 0,
-  fontFamily: "DM Sans, sans-serif",
 };
 
 const badgeNumStyle: React.CSSProperties = {
-  background: "var(--v5-card-bg-soft)",
-  color: "var(--v5-ink-soft)",
-  padding: "2px 9px",
-  borderRadius: 10,
+  background: "color-mix(in srgb, #10B981 12%, transparent)",
+  color: "color-mix(in srgb, #10B981 70%, var(--ls-text))",
+  border: "1px solid color-mix(in srgb, #10B981 25%, transparent)",
+  padding: "3px 10px",
+  borderRadius: 999,
   fontSize: 11,
   fontWeight: 700,
+  fontFamily: "var(--lb360-mono, 'JetBrains Mono', monospace)",
 };
 
+// Lien "Tout l agenda →" : ghost emerald (au lieu de gold)
 const linkStyle: React.CSSProperties = {
-  fontSize: 11.5,
-  color: "#8B6F1F",
+  fontSize: 12,
+  color: "color-mix(in srgb, #10B981 75%, var(--ls-text))",
   fontWeight: 700,
   cursor: "pointer",
   background: "transparent",
   border: "none",
   padding: 0,
-  fontFamily: "DM Sans, sans-serif",
+  fontFamily: "var(--lb360-display, 'Sora', sans-serif)",
+  letterSpacing: "0.01em",
 };
 
 const emptyStyle: React.CSSProperties = {
   textAlign: "center",
-  padding: "20px 10px",
-  color: "var(--v5-ink-light)",
+  padding: "24px 10px",
+  color: "var(--ls-text-muted)",
   fontSize: 13,
   fontStyle: "italic",
-  fontFamily: "DM Sans, sans-serif",
+  fontFamily: "var(--lb360-display-serif, 'Fraunces', serif)",
 };
 
+// Item RDV : barre laterale gauche gradient G3 + glow emerald
 const itemStyle: React.CSSProperties = {
   display: "flex",
   alignItems: "center",
   gap: 14,
   padding: "12px 14px",
   borderRadius: 12,
-  background: "var(--v5-card-bg-soft)",
+  background: "color-mix(in srgb, var(--ls-text) 3%, transparent)",
   marginBottom: 8,
   position: "relative",
-  borderLeft: "3px solid #D4A937",
+  borderLeft: "3px solid transparent",
+  borderImage:
+    "var(--lb360-gradient, linear-gradient(135deg, #10B981 0%, #06B6D4 50%, #8B5CF6 100%)) 1",
   cursor: "pointer",
   width: "100%",
   textAlign: "left",
   border: "none",
   borderLeftWidth: 3,
   borderLeftStyle: "solid",
+  transition: "background 0.18s ease, transform 0.18s ease",
 };
 
 const itemTimeStyle: React.CSSProperties = {
-  fontFamily: "'JetBrains Mono', monospace",
+  fontFamily: "var(--lb360-mono, 'JetBrains Mono', monospace)",
   fontSize: 14,
   fontWeight: 700,
+  color: "var(--ls-text)",
   flexShrink: 0,
   width: 52,
 };
@@ -217,7 +229,8 @@ const itemIconStyle: React.CSSProperties = {
   width: 38,
   height: 38,
   borderRadius: 10,
-  background: "var(--v5-card-bg)",
+  background: "var(--ls-surface)",
+  border: "1px solid var(--ls-border)",
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
@@ -231,11 +244,12 @@ const itemInfoStyle: React.CSSProperties = {
 };
 
 const itemTitleStyle: React.CSSProperties = {
-  fontSize: 13.5,
+  fontFamily: "var(--lb360-display, 'Sora', sans-serif)",
+  fontSize: 14,
   fontWeight: 700,
-  color: "var(--v5-ink)",
+  color: "var(--ls-text)",
   marginBottom: 2,
-  fontFamily: "DM Sans, sans-serif",
+  letterSpacing: "-0.005em",
   whiteSpace: "nowrap",
   overflow: "hidden",
   textOverflow: "ellipsis",
@@ -243,8 +257,8 @@ const itemTitleStyle: React.CSSProperties = {
 
 const itemMetaStyle: React.CSSProperties = {
   fontSize: 11.5,
-  color: "var(--v5-ink-light)",
-  fontFamily: "DM Sans, sans-serif",
+  color: "var(--ls-text-muted)",
+  fontFamily: "var(--lb360-body, 'Inter', sans-serif)",
   whiteSpace: "nowrap",
   overflow: "hidden",
   textOverflow: "ellipsis",
@@ -257,17 +271,18 @@ const itemActionStyle: React.CSSProperties = {
 };
 
 const itemTagStyle: React.CSSProperties = {
-  fontSize: 10,
-  background: "var(--v5-card-bg)",
-  padding: "4px 9px",
-  borderRadius: 12,
-  color: "var(--v5-ink-soft)",
+  fontSize: 10.5,
+  background: "var(--ls-surface)",
+  padding: "4px 10px",
+  borderRadius: 999,
+  color: "var(--ls-text-muted)",
   fontWeight: 600,
-  border: "1px solid var(--v5-border-soft)",
-  fontFamily: "DM Sans, sans-serif",
+  border: "1px solid var(--ls-border)",
+  fontFamily: "var(--lb360-mono, 'JetBrains Mono', monospace)",
+  letterSpacing: "0.04em",
 };
 
 const itemArrowStyle: React.CSSProperties = {
-  color: "var(--v5-ink-light)",
+  color: "var(--ls-text-muted)",
   fontSize: 14,
 };

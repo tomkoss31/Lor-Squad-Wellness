@@ -44,13 +44,14 @@ export function StatsRow3({
       <button
         type="button"
         onClick={() => navigate("/messages")}
-        style={{ ...cardStyle, ...cardTealStyle }}
+        style={{ ...cardStyle, ...cardEmeraldStyle }}
         className="v5-hover-lift"
-        data-v5-stat="teal"
+        data-v5-stat="emerald"
       >
-        <div style={{ ...overlineStyle, color: "#14704F" }}>⚡ À traiter aujourd'hui</div>
-        <div style={valueStyle}>{todoCount}</div>
-        <div style={{ ...trendStyle, color: todoCount > 0 ? "#14704F" : "#7A6F5C" }}>
+        <div style={haloEmeraldStyle} aria-hidden="true" />
+        <div style={overlineStyle}>📥 À traiter aujourd'hui</div>
+        <div style={valueEmeraldStyle}>{todoCount}</div>
+        <div style={trendStyle}>
           {todoSubtitle}
         </div>
       </button>
@@ -58,41 +59,46 @@ export function StatsRow3({
       <button
         type="button"
         onClick={() => navigate("/agenda")}
-        style={{ ...cardStyle, ...cardGoldStyle }}
+        style={{ ...cardStyle, ...cardCyanStyle }}
         className="v5-hover-lift"
-        data-v5-stat="gold"
+        data-v5-stat="cyan"
       >
-        <div style={{ ...overlineStyle, color: "#8B6F1F" }}>🎯 Bilans cette semaine</div>
+        <div style={haloCyanStyle} aria-hidden="true" />
+        <div style={overlineStyle}>🩺 Bilans cette semaine</div>
         <div style={valueStyle}>
           {bilansWeekDone}{" "}
           <span style={lightStyle}>/ {bilansWeekTarget}</span>
         </div>
-        <div style={{ ...trendStyle, color: "#14704F", fontWeight: 700 }}>{bilansTrend}</div>
+        <div style={trendStyle}>{bilansTrend}</div>
       </button>
 
       <button
         type="button"
         onClick={() => navigate("/rentabilite")}
-        style={{ ...cardStyle, ...cardPurpleStyle }}
+        style={{ ...cardStyle, ...cardVioletStyle }}
         className="v5-hover-lift"
-        data-v5-stat="purple"
+        data-v5-stat="violet"
       >
-        <div style={{ ...overlineStyle, color: "#7F77DD" }}>📦 Programmes vendus</div>
-        <div style={valueStyle}>
+        <div style={haloVioletStyle} aria-hidden="true" />
+        <div style={overlineStyle}>📦 Programmes vendus</div>
+        <div style={valueVioletStyle}>
           {programs} <span style={lightStyle}>/ mois</span>
         </div>
         <div style={trendStyle}>
           {programs === 0
             ? "Vends ton 1er programme"
-            : `marge ${rentab?.margin_pct ?? 25}%`}
+            : `Marge ${rentab?.margin_pct ?? 25}%`}
         </div>
       </button>
     </section>
   );
 }
 
-// ─── Styles ────────────────────────────────────────────────────────────────
-
+// ─── V7 Phase 5 (2026-05-08) : Stats row pastels G3 + halos ───────────
+// Avant : 3 cards teal/gold/purple V5 avec couleurs hardcodees.
+// Apres : 3 cards emerald/cyan/violet G3 avec halo radial top-right
+// + valeurs principales en gradient color-coordonne (emerald pour
+// "a traiter", default ink pour "bilans", G3 pour "programmes").
 const rowStyle: React.CSSProperties = {
   display: "grid",
   gridTemplateColumns: "repeat(3, 1fr)",
@@ -100,69 +106,133 @@ const rowStyle: React.CSSProperties = {
 };
 
 const cardStyle: React.CSSProperties = {
-  background: "var(--v5-card-bg)",
+  background: "var(--ls-surface)",
   borderRadius: 16,
-  padding: "16px 18px",
+  padding: "18px 20px",
   position: "relative",
   overflow: "hidden",
-  boxShadow: "0 1px 3px rgba(0, 0, 0, 0.04)",
+  isolation: "isolate",
+  boxShadow:
+    "0 1px 2px rgba(15,23,42,0.04), 0 12px 28px -14px rgba(15,23,42,0.10)",
   cursor: "pointer",
   textAlign: "left",
-  border: "1px solid transparent",
+  border: "1px solid var(--ls-border)",
+  transition: "transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease",
 };
 
-const cardTealStyle: React.CSSProperties = {
-  background: "linear-gradient(135deg, #F5FBF8 0%, #E6F3EE 100%)",
-  borderColor: "rgba(29, 158, 117, 0.18)",
+// Card 1 : tinte emerald (a traiter)
+const cardEmeraldStyle: React.CSSProperties = {
+  background: "var(--lb360-card-emerald, var(--ls-surface))",
+  borderColor: "color-mix(in srgb, #10B981 18%, var(--ls-border))",
 };
 
-const cardGoldStyle: React.CSSProperties = {
-  background: "linear-gradient(135deg, #FFFCF5 0%, #FFF1D6 100%)",
-  borderColor: "rgba(212, 169, 55, 0.25)",
+// Card 2 : tinte cyan (bilans)
+const cardCyanStyle: React.CSSProperties = {
+  background: "var(--lb360-card-cyan, var(--ls-surface))",
+  borderColor: "color-mix(in srgb, #06B6D4 14%, var(--ls-border))",
 };
 
-const cardPurpleStyle: React.CSSProperties = {
-  background: "linear-gradient(135deg, #FBFAFF 0%, #F0EEFF 100%)",
-  borderColor: "rgba(127, 119, 221, 0.18)",
+// Card 3 : tinte violet (programmes vendus)
+const cardVioletStyle: React.CSSProperties = {
+  background: "var(--lb360-card-violet, var(--ls-surface))",
+  borderColor: "color-mix(in srgb, #8B5CF6 18%, var(--ls-border))",
+};
+
+// Halos top-right par card
+const haloEmeraldStyle: React.CSSProperties = {
+  position: "absolute",
+  top: -50,
+  right: -50,
+  width: 140,
+  height: 140,
+  background:
+    "radial-gradient(circle, color-mix(in srgb, #10B981 22%, transparent), transparent 65%)",
+  pointerEvents: "none",
+  zIndex: 0,
+  filter: "blur(4px)",
+};
+
+const haloCyanStyle: React.CSSProperties = {
+  ...haloEmeraldStyle,
+  background:
+    "radial-gradient(circle, color-mix(in srgb, #06B6D4 18%, transparent), transparent 65%)",
+};
+
+const haloVioletStyle: React.CSSProperties = {
+  ...haloEmeraldStyle,
+  background:
+    "radial-gradient(circle, color-mix(in srgb, #8B5CF6 22%, transparent), transparent 65%)",
 };
 
 const overlineStyle: React.CSSProperties = {
-  fontSize: 10,
-  letterSpacing: 1.5,
+  fontFamily: "var(--lb360-mono, 'JetBrains Mono', monospace)",
+  fontSize: 11,
+  letterSpacing: "0.14em",
   textTransform: "uppercase",
-  fontWeight: 700,
-  marginBottom: 8,
+  fontWeight: 500,
+  color: "var(--ls-text-muted)",
+  marginBottom: 10,
   display: "flex",
   alignItems: "center",
   gap: 6,
-  fontFamily: "DM Sans, sans-serif",
+  position: "relative",
+  zIndex: 1,
 };
 
+// Valeur principale generique (Sora 800)
 const valueStyle: React.CSSProperties = {
-  fontSize: 26,
+  fontFamily: "var(--lb360-display, 'Sora', sans-serif)",
+  fontSize: 32,
   fontWeight: 800,
-  color: "var(--v5-ink)",
-  letterSpacing: -1,
+  color: "var(--ls-text)",
+  letterSpacing: "-0.025em",
   lineHeight: 1,
   display: "flex",
   alignItems: "baseline",
   gap: 6,
-  fontFamily: "DM Sans, sans-serif",
+  position: "relative",
+  zIndex: 1,
+};
+
+// Valeur "a traiter" : gradient emerald → cyan pour signaler positivite
+const valueEmeraldStyle: React.CSSProperties = {
+  ...valueStyle,
+  background: "linear-gradient(135deg, #10B981, #06B6D4)",
+  WebkitBackgroundClip: "text",
+  backgroundClip: "text",
+  WebkitTextFillColor: "transparent",
+  color: "transparent",
+};
+
+// Valeur "programmes" : gradient G3 complet (signature)
+const valueVioletStyle: React.CSSProperties = {
+  ...valueStyle,
+  background:
+    "var(--lb360-gradient, linear-gradient(135deg, #10B981 0%, #06B6D4 50%, #8B5CF6 100%))",
+  WebkitBackgroundClip: "text",
+  backgroundClip: "text",
+  WebkitTextFillColor: "transparent",
+  color: "transparent",
 };
 
 const lightStyle: React.CSSProperties = {
   fontSize: 16,
-  color: "var(--v5-ink-light)",
+  color: "var(--ls-text-muted)",
   fontWeight: 500,
+  // Reset du gradient text fill (sinon "/mois" disparait sous le clip)
+  WebkitTextFillColor: "var(--ls-text-muted)" as React.CSSProperties["WebkitTextFillColor"],
+  background: "none",
 };
 
 const trendStyle: React.CSSProperties = {
-  fontSize: 11.5,
-  color: "var(--v5-ink-light)",
-  marginTop: 6,
+  fontSize: 12,
+  color: "var(--ls-text-muted)",
+  marginTop: 8,
   fontWeight: 500,
   display: "flex",
   alignItems: "center",
   gap: 5,
-  fontFamily: "DM Sans, sans-serif",
+  fontFamily: "var(--lb360-body, 'Inter', sans-serif)",
+  position: "relative",
+  zIndex: 1,
 };
