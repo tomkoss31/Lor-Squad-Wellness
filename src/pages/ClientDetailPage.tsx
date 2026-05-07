@@ -21,6 +21,7 @@ import { ErrorBoundary } from "../components/ErrorBoundary";
 import { ClientAccessModal } from "../components/client/ClientAccessModal";
 import { PresentationClientButton } from "../features/academy/components/PresentationClientButton";
 import { ActionsTab } from "../components/client-detail/ActionsTab";
+import { ClientXpStatsCard } from "../features/client-xp/ClientXpStatsCard";
 import { SportSummarySection } from "../components/client-detail/SportSummarySection";
 import { ClientAppPreviewButton } from "../components/client/ClientAppPreviewButton";
 import { SharePublicButton } from "../components/client/SharePublicButton";
@@ -483,6 +484,11 @@ export function ClientDetailPage() {
               coach (Telegram, photo avant, mensurations) juste sous le CTA
               body scan. Modifiables via modale. */}
           <OnboardingChecksBlock clientId={client.id} checks={client.onboardingChecks} />
+
+          {/* Etape 3 chantier client XP (2026-05-08) : niveau + barre +
+              5 derniers events. Donne au coach une lecture immediate de
+              l engagement du client dans son espace. */}
+          <ClientXpStatsCard clientId={client.id} />
 
           {/* Chantier V3 (2026-04-24) : 4 MetricTiles Poids départ/jour/
               cible/RDV supprimées — fusion dans le WeightSummaryBlock en
