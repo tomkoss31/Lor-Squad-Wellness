@@ -1430,17 +1430,13 @@
        les stats row, et conditionnelle (afficher uniquement si user a une
        cible PV configuree ET retard reel). -->
 
-  <!-- ============== HERO V7 (V5 esprit + skin G3 + contenu business) ============== -->
+  <!-- ============== HERO V7 — VERSION A : RDV imminent ============== -->
+  <div style="margin-top:24px; font-family: var(--mono); font-size:10.5px; letter-spacing:0.18em; text-transform: uppercase; color: var(--ls-slate); padding: 6px 12px; border-radius: 6px; background: color-mix(in srgb, var(--emerald) 8%, transparent); display: inline-block;">▼ Preview V7.2 · Hero avec RDV imminent</div>
   <section class="reveal">
     <div class="hero">
-      <!-- Watermark "360" geant en profondeur (gardee du V6, validee Thomas). -->
       <div class="hero-wm" aria-hidden="true">360</div>
       <div class="hero-grid">
         <div>
-          <!-- V7.1 : retour Thomas — pic Insta pas pertinent business.
-               Le hero affiche maintenant le PROCHAIN RDV avec countdown
-               temps reel + nom client + bouton preparer. Si aucun RDV
-               aujourd hui : empty state encourageant. -->
           <div class="eyebrow">✦ Aujourd'hui ✦</div>
           <div class="sub-eyebrow"><span class="dot" aria-hidden="true"></span> Prochain rendez-vous · dans <strong style="color: color-mix(in srgb, var(--cyan) 80%, white);">2h 47min</strong></div>
           <h1>Sophie M. · Bilan suivi.<br/><span class="accent">18h00 — chez toi.</span></h1>
@@ -1451,8 +1447,43 @@
           <div class="footer-line"><span class="bar" aria-hidden="true"></span>✦ Briefing express</div>
           <div class="quote">Sophie : poids départ <strong style="color:#F1F5F9;font-weight:600;">68 kg</strong> · cible <strong style="color:#F1F5F9;font-weight:600;">−5 kg en 8 sem.</strong> · dernier bilan il y a <strong style="color:#F1F5F9;font-weight:600;">14 j</strong> · à valider : poids actuel + adhésion programme.</div>
         </div>
-        <!-- Pin's "B" historique en transparence + rotation lente (V7).
-             Remplace la sphere G3 pleine du V6 jugee trop "bleue / SaaS froid". -->
+        <div class="hero-sphere" aria-hidden="true">
+          <div class="ring2"></div>
+          <div class="ring"></div>
+          <div class="pin-orb"><span class="pin-letter">B</span></div>
+          <div class="label">LA BASE 360</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============== HERO V7 — VERSION B : pas de RDV (empty state business) ============== -->
+  <!-- V7.2 retour Thomas : si pas de RDV aujourd hui, le hero ne doit PAS
+       afficher de citation dev perso (Jim Rohn, Marc Aurele) — il doit
+       pousser vers les OUTILS BUSINESS internes : prospection, formation,
+       relances clients dormants. C est la cle differenciante : la home
+       coach reste actionnable en permanence. -->
+  <div style="margin-top:32px; font-family: var(--mono); font-size:10.5px; letter-spacing:0.18em; text-transform: uppercase; color: var(--ls-slate); padding: 6px 12px; border-radius: 6px; background: color-mix(in srgb, var(--violet) 8%, transparent); display: inline-block;">▼ Preview V7.2 · Hero alternatif si AUCUN RDV aujourd'hui</div>
+  <section class="reveal">
+    <div class="hero">
+      <div class="hero-wm" aria-hidden="true">360</div>
+      <div class="hero-grid">
+        <div>
+          <div class="eyebrow">✦ Aujourd'hui ✦</div>
+          <div class="sub-eyebrow"><span class="dot" aria-hidden="true" style="background: var(--gold); box-shadow: 0 0 0 4px color-mix(in srgb, var(--gold) 25%, transparent);"></span> Aucun rendez-vous aujourd'hui · journée libre</div>
+          <h1>Profite-en pour <span class="accent">faire grandir ta base.</span></h1>
+          <div class="hero-actions">
+            <a href="#" class="btn btn-primary">Mes outils prospection <span aria-hidden="true">→</span></a>
+            <a href="#" class="btn btn-dark">Continuer ma formation</a>
+          </div>
+          <div class="footer-line"><span class="bar" aria-hidden="true"></span>✦ Plan de la journée</div>
+          <!-- Liste actionnable au lieu d une quote philo. Chaque ligne = action interne. -->
+          <ul style="font-family: var(--display-serif); font-style: italic; font-size: 17px; line-height: 1.6; color: rgba(241,245,249,0.88); margin: 0; padding: 0 0 0 16px; list-style: none; border-left: 2px solid color-mix(in srgb, var(--emerald) 60%, transparent); max-width: 44ch;">
+            <li>→ Relancer <strong style="color:#F1F5F9;font-weight:600;">4 clients dormants</strong> identifiés ce mois</li>
+            <li>→ Finir le module <strong style="color:#F1F5F9;font-weight:600;">"Closer un EBE en 12 min"</strong> (15 min restantes)</li>
+            <li>→ Poster sur Insta · pic d'engagement à <strong style="color:#F1F5F9;font-weight:600;">18h</strong></li>
+          </ul>
+        </div>
         <div class="hero-sphere" aria-hidden="true">
           <div class="ring2"></div>
           <div class="ring"></div>
