@@ -56,10 +56,12 @@ export interface TimeContext {
 export function getTimeContext(now: Date): TimeContext {
   const hour = now.getHours();
 
+  // V7 Phase 8.1 (2026-05-08) : greetings alignes sur le wording valide
+  // Thomas (LoginPage + V7 design) — chaleureux + heure-adaptatif precis.
   if (hour >= 5 && hour < 11) {
     return {
       hour,
-      greeting: "Bonjour",
+      greeting: "Bon matin",
       emoji: "☕",
       label: "Thé time",
       heroFocus: "morning-prep",
@@ -70,7 +72,7 @@ export function getTimeContext(now: Date): TimeContext {
   if (hour >= 11 && hour < 14) {
     return {
       hour,
-      greeting: "Salut",
+      greeting: "Bon midi",
       emoji: "🥗",
       label: "Aloe time",
       heroFocus: "noon-rdv",
@@ -81,8 +83,8 @@ export function getTimeContext(now: Date): TimeContext {
   if (hour >= 14 && hour < 18) {
     return {
       hour,
-      greeting: "Bon après-midi",
-      emoji: "🥤",
+      greeting: "Belle après-midi",
+      emoji: "💪",
       label: "Shake time",
       heroFocus: "afternoon-action",
       dailyBoostCategory: "business",
@@ -92,8 +94,8 @@ export function getTimeContext(now: Date): TimeContext {
   if (hour >= 18 && hour < 22) {
     return {
       hour,
-      greeting: "Bonsoir",
-      emoji: "🍃",
+      greeting: "Bonne soirée",
+      emoji: "🌙",
       label: "Smoothie time",
       heroFocus: "evening-recap",
       dailyBoostCategory: "nutrition",
@@ -103,8 +105,8 @@ export function getTimeContext(now: Date): TimeContext {
   // 22h - 5h
   return {
     hour,
-    greeting: "Bonne soirée",
-    emoji: "🌙",
+    greeting: "Tu bosses tard",
+    emoji: "🦉",
     label: "Détente",
     heroFocus: "late-night",
     dailyBoostCategory: "mindset",
@@ -128,36 +130,40 @@ export interface ProactiveSuggestion {
  * page vide / désengagement.
  */
 export function getProactiveSuggestion(focus: TimeFocus): ProactiveSuggestion {
+  // V7 Phase 8.1 (2026-05-08) : refonte du wording "idle" — fini les
+  // citations dev perso et le tip "pic Instagram 18h" non actionnable.
+  // Maintenant on pousse vers les OUTILS BUSINESS internes (prospection
+  // / formation / clients dormants) selon la plage horaire.
   switch (focus) {
     case "morning-prep":
       return {
-        title: "Profite-en pour préparer 3 invitations sur ton réseau.",
-        ctaLabel: "Ouvrir la boîte à outils",
-        ctaRoute: "/formation/boite-a-outils",
+        title: "Profite-en pour faire grandir ta base.",
+        ctaLabel: "Mes outils prospection",
+        ctaRoute: "/outils-prospection",
       };
     case "noon-rdv":
       return {
-        title: "Rebondis sur tes 3 derniers bilans : qui peut passer en suivi ?",
+        title: "Rebondis sur tes derniers bilans, qui peut passer en suivi ?",
         ctaLabel: "Voir mes clients récents",
         ctaRoute: "/clients",
       };
     case "afternoon-action":
       return {
-        title: "Le pic d'engagement Insta est à 18h. Prépare ton post du soir.",
-        ctaLabel: "Voir mes accroches",
-        ctaRoute: "/formation/boite-a-outils",
+        title: "Profite-en pour faire grandir ta base.",
+        ctaLabel: "Mes outils prospection",
+        ctaRoute: "/outils-prospection",
       };
     case "evening-recap":
       return {
-        title: "Note ta victoire du jour pour clôturer.",
-        ctaLabel: "Check-in soir FLEX",
-        ctaRoute: "/flex",
+        title: "Bilan de la journée — qu'est-ce qui a marché aujourd'hui ?",
+        ctaLabel: "Mon développement",
+        ctaRoute: "/developpement",
       };
     case "late-night":
       return {
-        title: "Demain commence par un bilan ? Prépare ta playlist mentale.",
-        ctaLabel: "Daily Boost de demain",
-        ctaRoute: "/co-pilote",
+        title: "Note ta victoire du jour, demain reprend.",
+        ctaLabel: "Continuer ma formation",
+        ctaRoute: "/developpement",
       };
   }
 }

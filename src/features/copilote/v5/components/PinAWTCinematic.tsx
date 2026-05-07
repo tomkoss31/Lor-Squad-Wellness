@@ -55,11 +55,12 @@ const RANK_TO_PIN: Record<string, string> = {
 const DEFAULT_PIN = "active-world-team.webp"; // fallback élégant
 
 export function PinAWTCinematic({
-  // V7 fix Thomas (2026-05-08) : size reduit 480 → 340 — le pin etait
-  // trop dominant et empietait sur le Daily Boost a droite. Garde la
-  // presence visuelle sans bouffer le contenu utile.
-  size = 340,
-  opacity = 0.22,
+  // V7 fix Thomas passe 2 (2026-05-08) : size reduit 340 → 280 +
+  // opacity 0.22 → 0.16 — le pin masquait encore le watermark "360"
+  // derriere. Maintenant l ordre visuel est : 360 watermark > pin
+  // par rang en filigrane plus subtil > contenu hero au-dessus.
+  size = 280,
+  opacity = 0.16,
   positioned = true,
   rankOverride,
 }: PinAWTCinematicProps) {

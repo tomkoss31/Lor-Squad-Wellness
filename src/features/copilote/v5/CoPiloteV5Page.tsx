@@ -29,6 +29,8 @@ import { useCopiloteData } from "../../../hooks/useCopiloteData";
 // supplementaires sur la topbar.
 import { useTheme } from "../../../hooks/useTheme";
 import { useFormationStreak } from "../../../hooks/useFormationStreak";
+// V7 Phase 8.1 (2026-05-08) : greeting heure-adaptatif via useTimeContext.
+import { useTimeContext } from "./hooks/useTimeContext";
 
 import { HeroEditorial } from "./components/HeroEditorial";
 import { RentabJourney } from "./components/RentabJourney";
@@ -61,6 +63,9 @@ export function CoPiloteV5Page() {
   // Co-pilote V7 — Phase 2 (2026-05-08) : pills connecteurs supplementaires.
   const { isDark, toggleTheme } = useTheme();
   const { count: streakDays, badge: streakBadge } = useFormationStreak();
+  // V7 Phase 8.1 (2026-05-08) : greeting heure-adaptatif chaleureux.
+  // Bon matin / Bon midi / Belle apres-midi / Bonne soiree / Tu bosses tard
+  const timeContext = useTimeContext();
 
   // Refresh `now` toutes les minutes pour la date display
   useEffect(() => {
@@ -135,7 +140,7 @@ export function CoPiloteV5Page() {
               avec le HTML de réf. timeContext sert uniquement en interne
               (Daily Boost catégorie + suggestion proactive idle). */}
           <h1 style={greetingStyle}>
-            Bonjour <span style={greetingAccentStyle}>{firstName}</span>{" "}
+            {timeContext.greeting} <span style={greetingAccentStyle}>{firstName}</span>{" "}
             <span aria-hidden="true" role="img">👋</span>
           </h1>
         </div>
