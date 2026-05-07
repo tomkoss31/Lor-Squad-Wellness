@@ -1,16 +1,21 @@
 // =============================================================================
 // SimulateurPage — V2 funnel business (chantier 2026-11-07)
+// Refonte 2026-05-08 : hypotheses recalibrees suite retour Thomas.
 // =============================================================================
 //
 // Mini-simulateur de revenus complementaires : le prospect saisit son objectif
 // EUR/mois + un delai cible, l'app calcule un plan d'action concret
 // (clients reguliers, nouveaux par mois, prospects a approcher).
 //
-// Calcul base sur PRIX PRODUITS (pas PV) pour etre parlant pour le prospect :
+// HYPOTHESES (validees Thomas 2026-05-08) :
 //   - Prix moyen programme : 200 EUR retail
-//   - Marge moyenne palier Senior Consultant : 35% = 70 EUR / programme
-//   - Engagement client : 1 programme tous les 1.5 mois
+//   - Marge moyenne palier Success Builder : 42% = 84 EUR / programme
+//     (palier vise par defaut chez Lor'Squad — accessible des le mois 2-3
+//     avec 1000 PV cumul sur 3 mois consecutifs)
+//   - Engagement client : 1 programme par mois (cycle F1 ~21 jours,
+//     arrondi mensuel pour simplifier)
 //   - Taux conversion prospect -> client : 25% (1 sur 4)
+//   - Buffer churn : 20% pour anticiper les pertes
 //
 // Design coherent avec /opportunite (Claude Design pixel-perfect).
 // Form contact final reutilise la meme edge function `submit-prospect-lead`.
@@ -22,9 +27,11 @@ import { getSupabaseClient } from "../services/supabaseClient";
 import { extractFunctionError } from "../lib/utils/extractFunctionError";
 
 // ─── Hypotheses metier (transparentes en footnote) ─────────────────────────
+// V2 (2026-05-08) recalibrees : palier defaut Success Builder 42% (au lieu
+// de Senior Consultant 35%) + 1 prog/mois (au lieu de 1/1.5 mois).
 const AVG_PROGRAM_PRICE = 200; // EUR retail moyen programme
-const AVG_MARGIN_PCT = 0.35; // Senior Consultant 35% (palier accessible mois 2-3)
-const PROGRAMS_PER_CLIENT_MONTH = 1 / 1.5; // 1 programme tous les 1.5 mois
+const AVG_MARGIN_PCT = 0.42; // Success Builder 42% (palier vise par defaut)
+const PROGRAMS_PER_CLIENT_MONTH = 1; // 1 programme par mois (cycle F1 ~21j)
 const PROSPECT_TO_CLIENT_RATIO = 0.25; // 1 prospect sur 4 devient client
 const CHURN_BUFFER = 1.2; // marge de 20% pour anticiper le churn
 
@@ -42,17 +49,26 @@ interface SimulationResult {
 }
 
 function simulate(targetEuros: number, targetMonths: number): SimulationResult {
-  const marginPerProgram = AVG_PROGRAM_PRICE * AVG_MARGIN_PCT; // 70 EUR
+  // V2 (2026-05-08) : palier defaut = Success Builder (42%) + 1 prog/mois
+  // Marge typique : 200 × 0.42 = 84 EUR par programme
+  const marginPerProgram = AVG_PROGRAM_PRICE * AVG_MARGIN_PCT;
   const programsPerMonth = targetEuros / marginPerProgram;
+  // Avec 1 prog/mois par client → clientsNeeded = programsPerMonth (entier)
   const clientsNeeded = Math.ceil(programsPerMonth / PROGRAMS_PER_CLIENT_MONTH);
   const newClientsPerMonth = Math.ceil((clientsNeeded / targetMonths) * CHURN_BUFFER);
   const prospectsPerMonth = Math.ceil(newClientsPerMonth / PROSPECT_TO_CLIENT_RATIO);
   const caRetailMonthly = programsPerMonth * AVG_PROGRAM_PRICE;
 
-  // Palier vise selon CA retail
-  let targetTier = "Senior Consultant (35%)";
-  if (caRetailMonthly >= 4000 / AVG_MARGIN_PCT) targetTier = "Supervisor (50%)";
-  else if (caRetailMonthly >= 1000 * AVG_PROGRAM_PRICE / 100) targetTier = "Success Builder (42%)";
+  // Palier suggere selon ambition cible :
+  // - jusqu'a ~600 EUR/mois : Success Builder 42% (default)
+  // - 600-1500 EUR/mois     : Supervisor 50% atteignable (4000 PV/mois)
+  // - au-dela                : World Team / paliers eleves
+  let targetTier = "Success Builder (42%)";
+  if (targetEuros >= 1500) {
+    targetTier = "World Team (50% + royalty)";
+  } else if (targetEuros >= 600) {
+    targetTier = "Supervisor (50%)";
+  }
 
   return {
     programsPerMonth: Math.ceil(programsPerMonth),
@@ -311,7 +327,7 @@ export function SimulateurPage() {
                 </div>
                 <div className="summary-line">
                   <span>💰 Marge typique</span>
-                  <strong>~ 70 € par programme vendu</strong>
+                  <strong>~ 84 € par programme vendu</strong>
                 </div>
                 <div className="summary-line">
                   <span>📦 Programmes / mois</span>
@@ -319,10 +335,75 @@ export function SimulateurPage() {
                 </div>
               </div>
 
+              {/* V2 (2026-05-08) refonte : tableau progression 3 paliers
+                  pour montrer concretement comment le revenu evolue selon
+                  le nombre de clients reguliers fideliser. */}
+              <div className="progression-block">
+                <div className="progression-title">
+                  <span aria-hidden="true">📈</span> Voici comment ton revenu évolue
+                </div>
+                <div className="progression-list">
+                  <div className="progression-row">
+                    <span className="progression-badge bronze">🥉</span>
+                    <div className="progression-info">
+                      <strong>Senior Consultant 35 %</strong>
+                      <span>5 clients réguliers · 5 programmes/mois</span>
+                    </div>
+                    <span className="progression-amount">~ 350 €<small>/mois</small></span>
+                  </div>
+                  <div className="progression-row highlight">
+                    <span className="progression-badge silver">🥈</span>
+                    <div className="progression-info">
+                      <strong>Success Builder 42 %</strong>
+                      <span>10 clients réguliers · 10 programmes/mois</span>
+                    </div>
+                    <span className="progression-amount">~ 840 €<small>/mois</small></span>
+                  </div>
+                  <div className="progression-row">
+                    <span className="progression-badge gold">🥇</span>
+                    <div className="progression-info">
+                      <strong>Supervisor 50 %</strong>
+                      <span>20 clients réguliers · 20 programmes/mois</span>
+                    </div>
+                    <span className="progression-amount">~ 2 000 €<small>/mois</small></span>
+                  </div>
+                </div>
+              </div>
+
+              {/* V2 (2026-05-08) : effet equipe — bonus royalty 5% si un
+                  ami demarre comme toi. Royalty Override Herbalife reel. */}
+              <div className="team-bonus-block">
+                <div className="team-bonus-title">
+                  <span aria-hidden="true">✨</span> Et si un ami démarre avec toi ?
+                </div>
+                <p className="team-bonus-desc">
+                  Tu touches <strong>5 % de royalty</strong> sur sa production
+                  tant qu'il vend. Sans rien faire de plus que l'avoir
+                  accompagné au démarrage.
+                </p>
+                <div className="team-bonus-example">
+                  <div className="team-bonus-row">
+                    <span>Ton ami fait 10 clients (Success Builder)</span>
+                    <strong>2 000 € CA / mois</strong>
+                  </div>
+                  <div className="team-bonus-row plus">
+                    <span>Tu gagnes 5 % de royalty</span>
+                    <strong>+ 100 € / mois</strong>
+                  </div>
+                  <div className="team-bonus-total">
+                    <span>Ton revenu combiné (toi + royalty)</span>
+                    <strong>~ 940 € / mois</strong>
+                  </div>
+                </div>
+              </div>
+
               <p className="hypotheses-note">
-                💡 Calcul basé sur : programme moyen 200 € retail · marge moyenne 35 % (palier
-                Senior Consultant accessible mois 2-3) · 1 programme tous les 1,5 mois par
-                client régulier · taux de conversion prospect → client de 25 %.
+                💡 Calcul basé sur&#160;: programme moyen 200 € retail · marge
+                moyenne 42 % (palier Success Builder accessible avec 1 000 PV
+                cumulés sur 3 mois consécutifs) · 1 programme par mois par client
+                régulier (cycle F1 ~21 jours) · taux de conversion prospect →
+                client de 25 % · buffer churn de 20 % sur le recrutement
+                mensuel.
               </p>
             </div>
           </section>
@@ -695,6 +776,145 @@ const SIM_STYLES = `
   margin-top: 24px; font-size: 13px; color: var(--sim-muted);
   font-style: italic; line-height: 1.6; padding: 16px 20px;
   background: var(--sim-mist); border-radius: 12px;
+}
+
+/* V2 progression 3 paliers (chantier 2026-05-08) */
+.sim-page .progression-block {
+  margin-top: 24px; background: white;
+  border: 1.5px solid var(--sim-line); border-radius: var(--sim-radius-lg);
+  padding: 24px 28px;
+}
+.sim-page .progression-title {
+  font-family: var(--sim-font-display); font-weight: 800;
+  font-size: 18px; margin-bottom: 18px;
+  display: flex; align-items: center; gap: 10px;
+  color: var(--sim-ink);
+}
+.sim-page .progression-list {
+  display: flex; flex-direction: column; gap: 10px;
+}
+.sim-page .progression-row {
+  display: grid; grid-template-columns: 48px 1fr auto; gap: 14px;
+  align-items: center; padding: 14px 16px;
+  border: 1px solid var(--sim-line); border-radius: 12px;
+  background: var(--sim-mist);
+  transition: transform .18s ease, border-color .18s ease;
+}
+.sim-page .progression-row:hover { transform: translateY(-1px); }
+.sim-page .progression-row.highlight {
+  background: linear-gradient(135deg,
+    color-mix(in oklab, var(--sim-emerald) 8%, white) 0%,
+    color-mix(in oklab, var(--sim-cyan) 6%, white) 50%,
+    color-mix(in oklab, var(--sim-violet) 8%, white) 100%);
+  border-color: color-mix(in oklab, var(--sim-emerald) 30%, var(--sim-line));
+  box-shadow: 0 4px 14px -6px color-mix(in oklab, var(--sim-emerald) 35%, transparent);
+}
+.sim-page .progression-badge {
+  font-size: 28px; line-height: 1; text-align: center;
+}
+.sim-page .progression-info {
+  display: flex; flex-direction: column; gap: 2px; min-width: 0;
+}
+.sim-page .progression-info strong {
+  font-family: var(--sim-font-display); font-weight: 700;
+  font-size: 15px; color: var(--sim-ink); letter-spacing: -.005em;
+}
+.sim-page .progression-info span {
+  font-size: 12.5px; color: var(--sim-muted); font-weight: 500;
+}
+.sim-page .progression-amount {
+  font-family: var(--sim-font-display); font-weight: 800;
+  font-size: 22px; letter-spacing: -.02em;
+  background: linear-gradient(135deg, var(--sim-emerald), var(--sim-cyan), var(--sim-violet));
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent; color: transparent;
+  white-space: nowrap;
+}
+.sim-page .progression-amount small {
+  font-size: 12px; font-weight: 500;
+  -webkit-text-fill-color: var(--sim-muted);
+  background: none;
+}
+
+/* V2 effet equipe / ami filleul (chantier 2026-05-08) */
+.sim-page .team-bonus-block {
+  margin-top: 16px;
+  background: linear-gradient(135deg,
+    color-mix(in oklab, var(--sim-violet) 12%, white) 0%,
+    color-mix(in oklab, var(--sim-emerald) 8%, white) 100%);
+  border: 1.5px solid color-mix(in oklab, var(--sim-violet) 28%, var(--sim-line));
+  border-radius: var(--sim-radius-lg);
+  padding: 24px 28px;
+  position: relative; overflow: hidden;
+}
+.sim-page .team-bonus-block::before {
+  content: ""; position: absolute; top: -80px; right: -60px;
+  width: 220px; height: 220px;
+  background: radial-gradient(circle, color-mix(in oklab, var(--sim-violet) 20%, transparent), transparent 65%);
+  pointer-events: none; filter: blur(8px);
+}
+.sim-page .team-bonus-title {
+  font-family: var(--sim-font-display); font-weight: 800;
+  font-size: 18px; margin-bottom: 8px;
+  display: flex; align-items: center; gap: 10px;
+  color: var(--sim-ink); position: relative; z-index: 1;
+}
+.sim-page .team-bonus-desc {
+  margin: 0 0 16px; font-size: 14px; color: var(--sim-ink);
+  line-height: 1.55; opacity: 0.85; position: relative; z-index: 1;
+}
+.sim-page .team-bonus-desc strong {
+  background: linear-gradient(135deg, var(--sim-emerald), var(--sim-cyan));
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent; color: transparent;
+  font-weight: 800;
+}
+.sim-page .team-bonus-example {
+  background: white; border-radius: 12px; padding: 14px 18px;
+  position: relative; z-index: 1;
+  border: 1px solid color-mix(in oklab, var(--sim-violet) 14%, var(--sim-line));
+}
+.sim-page .team-bonus-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 8px 0; gap: 12px; font-size: 14px;
+  border-bottom: 1px solid var(--sim-line);
+}
+.sim-page .team-bonus-row span { color: var(--sim-ink); opacity: 0.85; }
+.sim-page .team-bonus-row strong {
+  font-family: var(--sim-font-display); font-weight: 700;
+  font-size: 15px; color: var(--sim-ink); white-space: nowrap;
+}
+.sim-page .team-bonus-row.plus strong {
+  color: var(--sim-emerald);
+}
+.sim-page .team-bonus-total {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 12px 0 4px; gap: 12px;
+  border-top: none;
+}
+.sim-page .team-bonus-total span {
+  font-size: 13px; color: var(--sim-ink); opacity: 0.7;
+  text-transform: uppercase; letter-spacing: 0.04em; font-weight: 600;
+}
+.sim-page .team-bonus-total strong {
+  font-family: var(--sim-font-display); font-weight: 800;
+  font-size: 22px; letter-spacing: -.02em;
+  background: linear-gradient(135deg, var(--sim-emerald), var(--sim-cyan), var(--sim-violet));
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent; color: transparent;
+  white-space: nowrap;
+}
+@media (max-width: 880px) {
+  .sim-page .progression-row {
+    grid-template-columns: 36px 1fr; grid-template-rows: auto auto;
+    padding: 12px 14px;
+  }
+  .sim-page .progression-amount {
+    grid-column: 1 / -1; text-align: right; font-size: 18px;
+  }
+  .sim-page .team-bonus-row, .sim-page .team-bonus-total {
+    flex-direction: column; align-items: flex-start; gap: 4px;
+  }
 }
 
 /* FINAL CTA / FORM (similaire OpportunitePage) */
