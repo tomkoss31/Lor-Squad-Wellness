@@ -106,6 +106,18 @@ const CARDS: HubCard[] = [
     accent: "var(--ls-teal)",
     tag: { label: "Live", color: "var(--ls-teal)" },
   },
+  {
+    id: "outils-prospection",
+    emoji: "🎯",
+    title: "Outils prospection",
+    description:
+      "Tous tes liens marketing en un endroit. Copier, partager, imprimer : page éducative, simulateur, PDF prospect, slides présentation. Avec ton ID coach embarqué (?ref=) pour le tracking des leads.",
+    cta: "Ouvrir la boîte",
+    path: "/outils-prospection",
+    accent: "var(--ls-teal)",
+    tag: { label: "Nouveau", color: "var(--ls-coral)" },
+    requireRole: "admin",
+  },
 ];
 
 export function DeveloppementHubPage() {

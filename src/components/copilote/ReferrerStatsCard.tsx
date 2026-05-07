@@ -12,6 +12,7 @@
 // =============================================================================
 
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { useAppContext } from "../../context/AppContext";
 import { getSupabaseClient } from "../../services/supabaseClient";
 
@@ -60,7 +61,70 @@ export function ReferrerStatsCard() {
     };
   }, [currentUser?.id]);
 
-  if (loading || !stats || stats.leads_total === 0) return null;
+  if (loading) return null;
+
+  // Si pas de lead ce mois, on n'affiche RIEN aux non-admins (anti-pollution
+  // visuelle), mais on affiche un etat vide motivant aux admins (avec CTA
+  // vers /outils-prospection).
+  if (!stats || stats.leads_total === 0) {
+    if (currentUser?.role !== "admin") return null;
+    return (
+      <div
+        style={{
+          padding: 18,
+          borderRadius: 18,
+          background: "var(--ls-surface)",
+          border: "0.5px dashed color-mix(in srgb, #10B981 35%, var(--ls-border))",
+          display: "flex",
+          alignItems: "center",
+          gap: 12,
+          flexWrap: "wrap",
+        }}
+      >
+        <span style={{ fontSize: 22 }}>🎯</span>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <h3
+            style={{
+              fontFamily: "Sora, sans-serif",
+              fontWeight: 800,
+              fontSize: 14,
+              margin: 0,
+              color: "var(--ls-text)",
+            }}
+          >
+            Pas encore de leads ce mois
+          </h3>
+          <p
+            style={{
+              fontSize: 11,
+              color: "var(--ls-text-muted)",
+              margin: "1px 0 0",
+              fontFamily: "DM Sans, sans-serif",
+            }}
+          >
+            Partage ton lien sur Insta / WhatsApp pour récolter tes premiers prospects.
+          </p>
+        </div>
+        <Link
+          to="/outils-prospection"
+          style={{
+            padding: "8px 14px",
+            borderRadius: 10,
+            background: "linear-gradient(135deg, #10B981 0%, #06B6D4 50%, #8B5CF6 100%)",
+            color: "white",
+            fontSize: 12,
+            fontWeight: 700,
+            fontFamily: "Sora, sans-serif",
+            textDecoration: "none",
+            boxShadow: "0 4px 12px rgba(16,185,129,0.32)",
+            whiteSpace: "nowrap",
+          }}
+        >
+          🎯 Mes outils →
+        </Link>
+      </div>
+    );
+  }
 
   const conversionPct =
     stats.leads_total > 0 ? Math.round((stats.leads_converted / stats.leads_total) * 100) : 0;
@@ -111,6 +175,26 @@ export function ReferrerStatsCard() {
             depuis tes liens partagés (?ref=)
           </p>
         </div>
+        {/* Raccourci Outils prospection (admin only) */}
+        {currentUser?.role === "admin" ? (
+          <Link
+            to="/outils-prospection"
+            style={{
+              padding: "6px 12px",
+              borderRadius: 999,
+              background: "linear-gradient(135deg, #10B981 0%, #06B6D4 50%, #8B5CF6 100%)",
+              color: "white",
+              fontSize: 11,
+              fontWeight: 700,
+              fontFamily: "Sora, sans-serif",
+              textDecoration: "none",
+              boxShadow: "0 2px 8px rgba(16,185,129,0.32)",
+              flexShrink: 0,
+            }}
+          >
+            🎯 Partager mon lien
+          </Link>
+        ) : null}
       </div>
 
       <div

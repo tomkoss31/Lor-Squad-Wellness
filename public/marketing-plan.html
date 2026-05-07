@@ -525,7 +525,7 @@
     <div class="source-card emerald">
       <div class="label">A · Marge retail</div>
       <div class="title">Tes ventes directes aux clients</div>
-      <div class="desc">Tu achètes au prix Distributeur (selon ton rang) et tu revends au prix conseillé. La différence est ta marge — entre 25 % (débutant) et 50 % (Supervisor).</div>
+      <div class="desc">Tu achètes au prix Distributeur (selon ton rang) et tu revends au prix conseillé. Marge progressive : 25 % (Distri) → 35 % (SC) → 42 % (SB) → 50 % (Supervisor).</div>
     </div>
     <div class="source-card cyan">
       <div class="label">B · Commission downline</div>
@@ -539,8 +539,8 @@
     </div>
     <div class="source-card gold">
       <div class="label">D · Production Bonus</div>
-      <div class="title">2 à 7 % à partir de Get Team <span class="future-tag">À venir</span></div>
-      <div class="desc">Bonus supplémentaire sur le volume total de ton organisation, débloqué progressivement à partir de Get Team Supervisor (2 %), puis paliers plus élevés.</div>
+      <div class="title">2 % → 6 % à partir de GET Team <span class="future-tag">À venir</span></div>
+      <div class="desc">Bonus sur le volume total de ton organisation : <strong>GET Team 2 %</strong>, <strong>Millionaire Team 4 %</strong>, <strong>President's Team 6 %</strong>.</div>
     </div>
   </div>
 
@@ -566,7 +566,7 @@
     </div>
     <div class="pyramid-step s7" style="opacity: 0.7;">
       <div class="pin">G.E.T. Team / 2 500 RO</div>
-      <div class="qualif">Production Bonus 2 % débloqué</div>
+      <div class="qualif">Production Bonus 2 % débloqué (puis 4 % Millionaire, 6 % President's)</div>
       <div class="pct">50 %</div>
     </div>
     <div class="pyramid-step s6">
@@ -576,17 +576,17 @@
     </div>
     <div class="pyramid-step s5">
       <div class="pin">Active Supervisor / Supervisor</div>
-      <div class="qualif">4 000 PV en 1 mois (perso + downline non-Sup)</div>
+      <div class="qualif">4 000 PV en 1 mois OU 12 mois cumulés glissants</div>
       <div class="pct">50 %</div>
     </div>
     <div class="pyramid-step s4">
       <div class="pin">Success Builder</div>
-      <div class="qualif">1 000 PV en 1 mois (perso)</div>
+      <div class="qualif">1 000 PV cumulés sur 3 mois consécutifs</div>
       <div class="pct">42 %</div>
     </div>
     <div class="pyramid-step s3">
       <div class="pin">Senior Consultant</div>
-      <div class="qualif">500 PV en 1 mois (perso)</div>
+      <div class="qualif">500 PV cumulés sur 2 mois consécutifs</div>
       <div class="pct">35 %</div>
     </div>
     <div class="pyramid-step s2">
@@ -630,19 +630,19 @@
       <tr class="tier-gold">
         <td>Senior Consultant / Gold VIP</td>
         <td><span class="pct-pill">35 %</span></td>
-        <td>500 PV en 1 mois (perso)</td>
+        <td>500 PV cumulés sur 2 mois consécutifs</td>
         <td>15 % de commission (50 − 35)</td>
       </tr>
       <tr>
         <td>Success Builder</td>
         <td><span class="pct-pill">42 %</span></td>
-        <td>1 000 PV en 1 mois (perso)</td>
+        <td>1 000 PV cumulés sur 3 mois consécutifs</td>
         <td>8 % de commission (50 − 42)</td>
       </tr>
       <tr class="tier-supervisor">
         <td>Supervisor / Active Supervisor</td>
         <td><span class="pct-pill">50 %</span></td>
-        <td>4 000 PV en 1 mois (perso + downline non-Sup)</td>
+        <td>4 000 PV en 1 mois OU 12 mois cumulés glissants</td>
         <td>0 % commission, mais Royalty Override 5 % débloqué</td>
       </tr>
       <tr class="tier-team">
@@ -655,7 +655,7 @@
         <td>G.E.T. / Millionaire / President's</td>
         <td><span class="pct-pill">50 %</span></td>
         <td>Royalty Points cumulés (2 500 / 7 500 RO ...)</td>
-        <td>5 % Royalty + Production Bonus 2 → 7 %</td>
+        <td>5 % Royalty + Production Bonus 2 % / 4 % / 6 %</td>
       </tr>
     </tbody>
   </table>
@@ -733,14 +733,15 @@
   </div>
 
   <div class="formula-card">
-    <h3>C · Conversion PV → € HT (France)</h3>
+    <h3>C · Estimation rapide en € (convention Lor'Squad)</h3>
     <div class="formula">
-      1 PV ≈ 1,78 € HT (mix produit moyen)
+      marge_€ = nb_programmes × 234 € × marge_rang
     </div>
     <div class="note">
-      Ratio observé sur la fiche RO réelle (Volume d'Organisation / Prix Total HT). Varie de 1,60 à
-      1,90 selon les produits vendus (Formula 1, PDM, Aloe, Thé...). Sert à estimer ton override en €
-      depuis les PV bruts.
+      Convention pédagogique La Base 360 : programme moyen ≈ <strong>234 € TTC</strong>.<br>
+      Exemple à 10 programmes/mois : SC (35 %) → <strong>819 €</strong> · SB (42 %) → <strong>983 €</strong> · Supervisor (50 %) → <strong>1 170 €</strong>.<br>
+      Le calcul officiel Herbalife passe par les PV (1 PV ≈ 1,90 € HT selon mix produit), mais raisonner
+      en programmes vendus est plus parlant pour piloter ta rentabilité au mois.
     </div>
   </div>
 
@@ -765,9 +766,9 @@
     <div class="body">
       <div class="title">Production Bonus · à partir de G.E.T. Team <span class="future-tag">À venir</span></div>
       <div class="desc">
-        2 % sur le volume total de ton organisation, débloqué quand tu cumules 2 500 Royalty Points sur
-        un mois. Monte progressivement (4 %, 6 %, jusqu'à 7 %) selon les paliers Millionaire et
-        President's Team.
+        Bonus sur le volume total de ton organisation, par palier :
+        <strong>GET Team 2 %</strong> · <strong>Millionaire Team 4 %</strong> ·
+        <strong>President's Team 6 %</strong>. Calculé en fin de mois sur la fiche RO Herbalife.
       </div>
     </div>
   </div>
