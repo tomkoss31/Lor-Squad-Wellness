@@ -362,39 +362,53 @@ export function LoginPage() {
           }
         }
         /* Ancien lp-logo-pulse fusionne dans lp-logo-life ci-dessus (2026-05-07). */
-        .lp-heritage {
+        /* Pastille SINCE 2022 — au-dessus de la sphere logo (brand 2026-05-07) */
+        .lp-since-pill {
           display: inline-block;
-          padding: 6px 18px;
+          padding: 7px 20px;
           border-radius: 100px;
-          background: rgba(16,185,129,0.06);
-          border: 0.5px solid rgba(16,185,129,0.18);
+          background: rgba(6,182,212,0.10);
+          border: 1px solid rgba(6,182,212,0.28);
           font-family: 'Inter', system-ui, sans-serif;
-          font-size: 10px;
-          font-weight: 600;
+          font-size: 11px;
+          font-weight: 700;
           letter-spacing: 0.32em;
           text-transform: uppercase;
-          color: #475569;
+          color: #0E7490;
           margin-bottom: 18px;
           backdrop-filter: blur(8px);
         }
-        .lp-tagline {
+        /* Wordmark "La Base 360" — sous la sphere (brand 2026-05-07) */
+        .lp-wordmark {
           font-family: 'Sora', system-ui, sans-serif;
-          font-size: 28px;
-          font-weight: 700;
-          line-height: 1.18;
-          letter-spacing: -0.02em;
-          margin: 0 0 20px;
-          color: #0F172A;
+          font-size: 44px;
+          font-weight: 800;
+          line-height: 1;
+          letter-spacing: -0.025em;
+          margin: 4px 0 6px;
+          display: inline-flex;
+          align-items: baseline;
+          gap: 10px;
         }
-        .lp-tagline-accent {
+        .lp-wordmark-base { color: #0F172A; }
+        .lp-wordmark-360 {
+          font-style: italic;
+          font-weight: 700;
           background: linear-gradient(135deg, #10B981 0%, #06B6D4 50%, #8B5CF6 100%);
           -webkit-background-clip: text; background-clip: text;
           -webkit-text-fill-color: transparent; color: transparent;
-          font-style: italic;
-          font-weight: 400;
-          display: inline-block;
-          padding-right: 4px;
         }
+        .lp-wordmark-sub {
+          font-family: 'Inter', system-ui, sans-serif;
+          font-size: 14px;
+          font-weight: 500;
+          color: #64748B;
+          margin: 0 0 22px;
+          letter-spacing: 0.005em;
+        }
+        /* Anciennes classes lp-heritage / lp-tagline conservees commentees au cas ou */
+        .lp-heritage { display: none; }
+        .lp-tagline { display: none; }
 
         /* ─── Quote rotatif ─────────────────────────────────── */
         .lp-quote-block {
@@ -573,11 +587,13 @@ export function LoginPage() {
           background: #F8FAFC;
           border: 1.5px solid #E2E8F0;
           border-radius: 12px;
-          /* Padding generous : 28px top (label flottant + 14px de respiration
-             au-dessus du texte tape), 14px bottom — fix overcrowding 2026-05-07 */
-          padding: 28px 16px 14px;
-          font-size: 15px;
+          /* Padding tres aere : 34px top (label flottant + 18px de respiration
+             au-dessus du texte tape), 18px bottom — fix overcrowding 2026-05-07
+             (passe 2 : 28→34 apres retour Thomas, label encore trop colle). */
+          padding: 34px 18px 18px;
+          font-size: 15.5px;
           line-height: 1.3;
+          min-height: 64px;
           font-family: 'Inter', system-ui, sans-serif;
           color: #0F172A;
           outline: none;
@@ -599,8 +615,8 @@ export function LoginPage() {
         .lp-input::placeholder { color: transparent; }
         .lp-label {
           position: absolute;
-          top: 16px; left: 16px;
-          font-size: 14px;
+          top: 22px; left: 18px;
+          font-size: 14.5px;
           font-weight: 500;
           color: #94A3B8;
           pointer-events: none;
@@ -610,9 +626,9 @@ export function LoginPage() {
         html.theme-light .lp-label { color: #94A3B8; }
         .lp-input:focus + .lp-label,
         .lp-input:not(:placeholder-shown) + .lp-label {
-          /* Label flottant remonte plus haut (8px au lieu de 6px) pour creer
-             un vrai gap avec le texte tape — fix overcrowding 2026-05-07 */
-          top: 8px;
+          /* Label flottant remonte tres haut (8px → 9px) pour gap propre avec
+             le texte tape — fix overcrowding passe 2 (2026-05-07). */
+          top: 9px;
           font-size: 10.5px;
           font-weight: 700;
           letter-spacing: 0.1em;
@@ -877,7 +893,10 @@ export function LoginPage() {
             flex: 1;
             padding: 28px 24px 32px;
           }
-          .lp-logo { width: 120px; height: 120px; margin-bottom: 10px; }
+          .lp-logo { width: 120px; height: 120px; margin-bottom: 8px; }
+          .lp-since-pill { font-size: 10px; padding: 6px 16px; margin-bottom: 14px; }
+          .lp-wordmark { font-size: 32px; gap: 8px; margin: 2px 0 4px; }
+          .lp-wordmark-sub { font-size: 12.5px; margin-bottom: 16px; }
           .lp-tagline { font-size: 22px; margin-bottom: 16px; }
           .lp-quote-block { padding: 12px 14px; max-width: 320px; }
           .lp-quote-text { font-size: 12.5px; }
@@ -910,17 +929,20 @@ export function LoginPage() {
         <div className="lp-blob lp-blob-cool" />
         <div className="lp-grain" />
         <div className="lp-visual-inner">
+          {/* Brand layout 2026-05-07 : pastille SINCE 2022 au-dessus, sphere
+              animee, puis wordmark "La Base 360" + tagline "The wellness
+              nutrition club" — match exact de l identite envoyee par Thomas. */}
+          <span className="lp-since-pill">★ Since 2022 ★</span>
           <img
             src="/brand/labase360/logo-primary.svg"
             alt="La Base 360"
             className="lp-logo"
           />
-          <span className="lp-heritage">★ Since 2022 ★</span>
-          <h2 className="lp-tagline">
-            Ton cockpit{" "}
-            <span className="lp-tagline-accent">bien-être</span>{" "}
-            t'attend.
-          </h2>
+          <h1 className="lp-wordmark">
+            <span className="lp-wordmark-base">La Base</span>
+            <span className="lp-wordmark-360">360</span>
+          </h1>
+          <p className="lp-wordmark-sub">The wellness nutrition club</p>
           <div className="lp-quote-block">
             <p className="lp-quote-text">{quote.emoji} « {quote.text} »</p>
             <span className="lp-quote-sign">— T.</span>

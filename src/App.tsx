@@ -129,6 +129,11 @@ const WelcomePage = lazy(() =>
     default: module.WelcomePage,
   })),
 );
+const OpportunitePage = lazy(() =>
+  import("./pages/OpportunitePage").then((module) => ({
+    default: module.OpportunitePage,
+  })),
+);
 const AutoLoginPage = lazy(() =>
   import("./pages/AutoLoginPage").then((module) => ({
     default: module.AutoLoginPage,
@@ -439,6 +444,10 @@ export default function App() {
               via useAppContext si besoin). /auto-login consomme un
               magic link 24h pour re-établir une session. */}
           <Route path="/welcome" element={<WelcomePage />} />
+          {/* Funnel business V1 (chantier 2026-11-07) : page educative
+              prospect froid + chaud, sans nommer la marque explicitement.
+              Cf. docs/BUSINESS_FUNNEL_ARCHITECTURE.md. */}
+          <Route path="/opportunite" element={<OpportunitePage />} />
           <Route path="/auto-login" element={<AutoLoginPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
