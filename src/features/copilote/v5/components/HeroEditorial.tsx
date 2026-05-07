@@ -25,11 +25,11 @@ import { useNextAction } from "../hooks/useNextAction";
 import { useCountdown } from "../hooks/useCountdown";
 import { useTimeContext } from "../hooks/useTimeContext";
 import { useDailyBoost } from "../hooks/useDailyBoost";
-// V7 Phase 3 (2026-05-08) : remplace PinAWTCinematic (sceau Herbalife)
-// par BrandPinCinematic (pin's "B" gradient G3 + watermark "360"). Aligne
-// avec la nouvelle identite La Base 360 et evite le risque copyright sur
-// le visuel Herbalife dans une page coach exposable aux prospects.
-import { BrandPinCinematic } from "./BrandPinCinematic";
+// V7 fix Thomas (2026-05-08) : revert au PinAWTCinematic original (pin
+// AWT par rang du distri — signature visuelle de progression coach).
+// Le PinAWTCinematic a ete enrichi pour inclure le watermark "360" en
+// arriere-plan + animation heart-beat en plus de la rotation existante.
+import { PinAWTCinematic } from "./PinAWTCinematic";
 import { DailyBoost } from "./DailyBoost";
 
 interface HeroEditorialProps {
@@ -120,14 +120,12 @@ export function HeroEditorial({ pvAlertActive = false }: HeroEditorialProps) {
 
   return (
     <section style={heroStyle} data-v5-hero>
-      {/* V7 Phase 3 (2026-05-08) : pin's "B" La Base 360 cinematique
-          en filigrane + watermark "360" geant. Remplace PinAWTCinematic
-          (sceau Herbalife → risque copyright + tons automnaux jurant
-          avec la nouvelle identite G3). */}
-      <BrandPinCinematic />
+      {/* V7 fix Thomas (2026-05-08) : pin AWT par rang du distri en
+          filigrane (rotation 60s + heart-beat 3s) + watermark "360"
+          italique XL en arriere-plan integre dans le composant. */}
+      <PinAWTCinematic />
 
-      {/* Glow effects G3 (emerald + violet + accent gold subtil) pour
-          profondeur warm dark — esprit V5 conserve avec palette G3. */}
+      {/* Glow effects G3 (emerald + violet) pour profondeur warm dark. */}
       <div style={glow1Style} />
       <div style={glow2Style} />
 

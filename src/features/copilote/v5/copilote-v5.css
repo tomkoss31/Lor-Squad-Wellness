@@ -113,9 +113,11 @@
 }
 
 /* ─── Animations V5 (toutes respectent prefers-reduced-motion) ─────────── */
+/* V7 (2026-05-08) : keyframe v5-rotate-slow simplifie — ne fait QUE rotate.
+   Le translateY -50% est gere par le wrapper outer (containerStyle). */
 @keyframes v5-rotate-slow {
-  0% { transform: translateY(-50%) rotate(0deg); }
-  100% { transform: translateY(-50%) rotate(360deg); }
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 @keyframes v5-pulse {
@@ -128,6 +130,15 @@
   50% { opacity: 0.4; }
 }
 
+/* V7 (2026-05-08) : heart-beat pour le pin AWT — pulse douce 3s qui
+   donne l impression que le pin "respire". Different du v5-pulse
+   (qui est pour les dots indicateurs) car amplitude bien plus douce
+   pour ne pas etre distractif. */
+@keyframes v5-pin-heartbeat {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.045); }
+}
+
 .copilote-v5 .v5-pulse {
   animation: v5-pulse 2s ease-in-out infinite;
 }
@@ -136,18 +147,25 @@
   animation: v5-pulse-gold 1s ease-in-out infinite;
 }
 
-/* Pin AWT cinématique : 60s linear infinite, GPU accelerated */
+/* Pin AWT cinématique : rotation 60s linear infinite. */
 .copilote-v5 .v5-pin-rotate {
   animation: v5-rotate-slow 60s linear infinite;
   transform-origin: center;
   will-change: transform;
 }
 
+/* Pin AWT heart-beat : pulse douce 3s ease-in-out infinite. */
+.copilote-v5 .v5-pin-heartbeat {
+  animation: v5-pin-heartbeat 3s ease-in-out infinite;
+  transform-origin: center;
+}
+
 /* Reduced motion : on coupe tout proprement */
 @media (prefers-reduced-motion: reduce) {
   .copilote-v5 .v5-pulse,
   .copilote-v5 .v5-pulse-gold,
-  .copilote-v5 .v5-pin-rotate {
+  .copilote-v5 .v5-pin-rotate,
+  .copilote-v5 .v5-pin-heartbeat {
     animation: none !important;
   }
 }
