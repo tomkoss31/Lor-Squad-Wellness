@@ -342,7 +342,53 @@ Thomas a donné explicitement l'ordre de travail souhaité. Je le consigne ici p
 
 ---
 
-### *(autres décisions à venir : chantiers 2 et 3)*
+### 2026-05-09 — Réponses Thomas dump #1 (chantier #2 Check-list quotidienne)
+
+| Q | Décision Thomas | Implication technique |
+|---|---|---|
+| **Q7 — Pop-up bloquante ou skippable** | ✅ **Skippable** | Bouton "Plus tard" toujours dispo. Re-déclenchement à la prochaine ouverture de la journée si actions non cochées. Pas de friction forcée. |
+| **Q8 — Actions par défaut hors-Lead** | ❓ Thomas n'a pas tranché → **proposition agent à valider** au retour PC | (voir ci-dessous) |
+
+**Proposition agent pour Q8** — logique recommandée
+
+Critères : ≤ 5 items pour tenir en 5 minutes, **haut impact business**, **actionnables maintenant** (pas "réfléchir à"), tirables de la data existante (pas demander au coach).
+
+| # | Action | Source data | Pourquoi prioritaire |
+|---|---|---|---|
+| 1 | **Suivis F1 / F21 dus aujourd'hui** | `follow_ups.due_date = today` + `follow_up_protocol_log` | Protocole = squelette du business, miss = perte client |
+| 2 | **Leads bilan online à qualifier** | `online_bilans` (chantier #1) | Conversion immédiate = revenus à court terme |
+| 3 | **Clients dormants à relancer** | `useDormantClients` (>60j sans contact) | Anti-fuite revenus, réactivation |
+| 4 | **RDV aujourd'hui à confirmer / préparer** | `follow_ups` du jour | Qualité de service = rétention |
+| 5 | **1 à 2 contacts liste 100 du Cahier de bord** | `liste_100_contacts` | Discipline prospection (rejoint chantier #4 lien Cahier de bord) |
+
+À écarter du défaut (peut être réintégré sur option) :
+- Anniversaires clients : déjà couverts par l'edge function `client-anniversary-check`, redondant
+- PV en retard vs prorata mois : intéressant mais nécessite la jauge rentabilité (chantier A en attente)
+- Messages non lus : déjà notifiés en push via `new-message-notifier`, le coach les voit dans la cloche
+
+**À acter Thomas** au retour PC : valider cette liste de 5 ou ajuster (ajout/retrait/réordonnancement).
+
+---
+
+### 2026-05-09 — Réponses Thomas dump #1 (chantier #3 Académie prospection)
+
+| Q | Décision Thomas | Implication technique |
+|---|---|---|
+| **Q9 — Audit `/outils-prospection`** | ✅ Oui (Thomas confirme déjà que la feature ne s'y trouve pas). C'est une **nouvelle structure dédiée "client froid"** (cold prospection) | Audit léger quand même au retour pour confirmer + identifier ce qui peut être réutilisé. Le module sera neuf. |
+| **Q10 — Nombre de profils** | ✅ **Système extensible** : Thomas commencera par les 3 initiaux puis enrichira (prof, chômeur, etc.) | ⚠️ NE PAS hardcoder 3 profils. Architecture : table `prospection_profiles` (id, label, slug, icon, color, ordre, scripts_json) + page admin pour CRUD profils. Le distri choisit dans une liste dynamique. |
+| **Q11 — Design** | ✅ **Pas de Claude design ni mockup externe** — réutiliser **l'identité visuelle actuelle** de l'app, en s'inspirant des pages **Messagerie** et **Agenda** existantes, avec la palette G3 (gold `#C9A84C` / teal `#2DD4BF` Premium) | Réutiliser : `var(--ls-*)` tokens, fonts Syne (titres) + DM Sans (corps), cards `var(--ls-surface)` + border `var(--ls-border)`. Pas de bibliothèque visuelle nouvelle. |
+
+**Synthèse chantier #3** : c'est un **nouveau module dédié "prospection client froid"**, à concevoir comme une **brique extensible** (N profils gérés par config), avec le design system actuel. Audit léger de l'existant à faire au retour PC pour valider qu'on n'écrase rien.
+
+---
+
+### Synthèse globale dump #1
+
+✅ **9 questions sur 11 tranchées**, 1 reportée (sous-domaine vs path pour Q2), 1 avec proposition agent à valider (Q8). On a une vision claire pour les 3 chantiers et on peut lancer l'exécution dès le retour PC.
+
+---
+
+### *(suite : autres dumps Thomas / nouvelles idées)*
 
 ---
 
