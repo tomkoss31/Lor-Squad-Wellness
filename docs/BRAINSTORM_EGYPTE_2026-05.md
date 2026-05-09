@@ -327,7 +327,22 @@ Thomas a donné explicitement l'ordre de travail souhaité. Je le consigne ici p
 
 ## Décisions prises pendant le brainstorm
 
-*(à remplir au fur et à mesure des réponses Thomas aux questions ouvertes)*
+### 2026-05-09 — Réponses Thomas dump #1 (chantier #1 Bilan Online)
+
+| Q | Décision Thomas | Implication technique |
+|---|---|---|
+| **Q1 — Modèle de données** | ✅ **Nouvelle table dédiée** `online_bilans` | Migration SQL à créer ; transformation en `Client` au moment de la qualification (RPC ou edge function) |
+| **Q2 — Identification coach dans l'URL** | ✅ **Prénom du distri dans l'URL** (ex: `bilanonlinethomas`). Si pas de prénom dans l'URL → "invité admin" qui peut réattribuer | ⚠️ **Sous-question à trancher au retour PC** : sous-domaine `bilanonlinethomas.labase360.com` (lourd, DNS wildcard + SSL wildcard, mais beau) **OU** path `bonline.labase360.com/thomas` (0 config DNS, scalable, simple). Recommandation tech : path. |
+| **Q3 — Sous-domaine** | ⏳ **Pas acheté, pas configuré** — Thomas s'en occupe au retour PC | À faire avant le déploiement de la feature ; choix DNS/registrar à acter |
+| **Q4 — Kanban Lead** | ✅ **Étendre `/clients` V2** avec onglet Leads filtré, mais ATTENTION à la surcharge | Discipline : filtres par défaut stricts (ne montrer que les Leads non-traités), bouton clair pour montrer/cacher les colonnes Lead vs Client |
+| **Q5 — Templates de réponse** | ✅ **Inline dans la pop-up Lead** + lien optionnel vers boîte à outils | Reprend `messageTemplates.ts` existant. Pop-up = vitesse, lien = profondeur. |
+| **Q6 — Relance J+3** | ✅ **Les deux** : entrée agenda (`follow_ups`) + notif push | 2x trigger au passage en colonne "Contact" : insert `follow_ups` type `lead_relance_j3` + scheduling notif J+3 (cron déjà en place via `rdv-imminent-notifier` ou nouveau pattern) |
+
+**Synthèse** : tous les choix vont dans le sens d'une réutilisation maximale de l'existant (tables, kanban, templates, notifs) avec une seule nouvelle table dédiée pour ne pas polluer le modèle Client. Une seule sous-question reste : sous-domaine vs path pour l'URL coach (à trancher au retour PC).
+
+---
+
+### *(autres décisions à venir : chantiers 2 et 3)*
 
 ---
 
