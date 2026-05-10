@@ -5,7 +5,7 @@
 > renommage n'est PAS encore propagé au code — tâche à part. Tout
 > nouveau document / nouvelle UI doit utiliser **La Base 360**.
 
-> **Date** : 2026-05-09
+> **Date** : 2026-05-10
 > **Stack** : React 18 + Vite + TypeScript / Supabase (Postgres + Edge Functions Deno) / PWA
 > **Branches actives** : `claude/focused-pike` (prod) + `dev/thomas-test` (test)
 > **But de ce doc** : carte mentale de l'app pour situer rapidement où une nouvelle idée se branche, détecter les doublons, anticiper les conflits avec l'existant.
@@ -312,4 +312,4 @@ Pour situer rapidement où une nouvelle idée se branche :
 
 ---
 
-**Fin de la snapshot.** Ce doc est généré le 2026-05-09 à partir d'un audit automatisé front + back. Le mettre à jour quand un chantier majeur est livré.
+**Fin de la snapshot.** Ce doc est généré le 2026-05-10 à partir d'un audit automatisé front + back. Le mettre à jour quand un chantier majeur est livré.

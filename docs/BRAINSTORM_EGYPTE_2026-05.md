@@ -25,7 +25,7 @@ Pour chaque idée, l'agent structure :
 
 ---
 
-## Sommaire des idées (dump #1 — 2026-05-09)
+## Sommaire des idées (dump #1 — 2026-05-10)
 
 | # | Domaine | Titre | Effort | Statut |
 |---|---|---|---|---|
@@ -327,7 +327,7 @@ Thomas a donné explicitement l'ordre de travail souhaité. Je le consigne ici p
 
 ## Décisions prises pendant le brainstorm
 
-### 2026-05-09 — Réponses Thomas dump #1 (chantier #1 Bilan Online)
+### 2026-05-10 — Réponses Thomas dump #1 (chantier #1 Bilan Online)
 
 | Q | Décision Thomas | Implication technique |
 |---|---|---|
@@ -342,7 +342,7 @@ Thomas a donné explicitement l'ordre de travail souhaité. Je le consigne ici p
 
 ---
 
-### 2026-05-09 — Réponses Thomas dump #1 (chantier #2 Check-list quotidienne)
+### 2026-05-10 — Réponses Thomas dump #1 (chantier #2 Check-list quotidienne)
 
 | Q | Décision Thomas | Implication technique |
 |---|---|---|
@@ -370,7 +370,7 @@ Critères : ≤ 5 items pour tenir en 5 minutes, **haut impact business**, **act
 
 ---
 
-### 2026-05-09 — Réponses Thomas dump #1 (chantier #3 Académie prospection)
+### 2026-05-10 — Réponses Thomas dump #1 (chantier #3 Académie prospection)
 
 | Q | Décision Thomas | Implication technique |
 |---|---|---|
@@ -388,7 +388,7 @@ Critères : ≤ 5 items pour tenir en 5 minutes, **haut impact business**, **act
 
 ---
 
-### 2026-05-09 — Réponses Thomas dump #1 (sous-domaine + Q8 finale)
+### 2026-05-10 — Réponses Thomas dump #1 (sous-domaine + Q8 finale)
 
 | Sujet | Décision Thomas | Implication technique |
 |---|---|---|
@@ -436,7 +436,7 @@ Critères : ≤ 5 items pour tenir en 5 minutes, **haut impact business**, **act
 
 ---
 
-## 🔬 Compléments dump #1 (2026-05-09 soir) — détails techniques exigés Thomas
+## 🔬 Compléments dump #1 (2026-05-10 soir) — détails techniques exigés Thomas
 
 ### A. Détail du formulaire bilan online (sous-feature 1.A enrichie)
 
@@ -807,7 +807,7 @@ Permettre à un distri de **recruter à l'étranger** (ex : Inde) en faisant en 
 
 ---
 
-## 🆕 Dump #2 (2026-05-09 fin de journée Égypte)
+## 🆕 Dump #2 (2026-05-10 fin de journée Égypte)
 
 ### Décision N1 — Renommage projet
 
@@ -925,7 +925,7 @@ Ce constat n'est pas un chantier en soi mais **un fil rouge à garder en tête**
 
 ---
 
-## 🆕 Dump #2 — Réponses Thomas (2026-05-09 soir)
+## 🆕 Dump #2 — Réponses Thomas (2026-05-10 soir)
 
 ### Décisions actées
 
@@ -1049,7 +1049,7 @@ J'analyse les marchés où Herbalife a un volume + une croissance significatifs 
 
 ---
 
-## ❓ Questions encore en suspens (au 2026-05-09 fin de soirée)
+## ❓ Questions encore en suspens (au 2026-05-10 fin de soirée)
 
 | # | Question | En attente de |
 |---|---|---|
@@ -1057,7 +1057,7 @@ J'analyse les marchés où Herbalife a un volume + une croissance significatifs 
 
 ---
 
-## 🆕 Dump #2 (suite) — réponses Thomas Q5.5 + Q meta (2026-05-09 nuit)
+## 🆕 Dump #2 (suite) — réponses Thomas Q5.5 + Q meta (2026-05-10 nuit)
 
 ### Q5.5 — Page business pour i18n
 
@@ -1126,7 +1126,7 @@ Effort estimé : **M — 4-6h** (recherche + remplacement + validation + tests r
 
 ---
 
-## ✅ Toutes les questions tranchées (clôture dump #2 — 2026-05-09 nuit)
+## ✅ Toutes les questions tranchées (clôture dump #2 — 2026-05-10 nuit)
 
 ### Décisions finales
 
@@ -1142,28 +1142,164 @@ Effort estimé : **M — 4-6h** (recherche + remplacement + validation + tests r
 
 ## 🚀 Roadmap exécution finale (au retour PC)
 
-### Ordre de bataille recommandé
+### ⚠️ Note importante sur les estimations
 
-| Étape | Action | Effort | Type |
-|---|---|---|---|
-| **0** | Fix mobile chat history (objet initial de cette branche, pas oublié) | 30 min | Code |
-| **1** | Achat + config DNS du domaine `labase360.com` | 1-2 h | Infra Thomas |
-| **2** | **Renommage code source "La Base 360"** (coopératif guidé) | 4-6 h | Code |
-| **3** | Audit léger `/clients` V2 (kanban) + `/outils-prospection` existant | 1 h | Audit |
-| **4** | **Chantier #1 — Bilan Online + Lead pipeline** (8 sous-features) | 5-9 j | Code |
-| **5** | **Chantier #3 — Refonte `/outils-prospection` mobile-first multi-langue** | 6-6.5 j | Code |
-| **6** | **Chantier #7 (NEW) — Refonte business `/business` scroll narratif** | 3-4 j | Code |
-| **7** | **Chantier #5 — i18n + multi-monnaie** (5 langues V1, prix par marché) | 4-6 j (réduit -20% grâce fusion #7) | Code |
-| **8** | **Chantier #2 — Check-list quotidienne Co-pilote** | 4-6 h | Code |
-| **9** | **Chantier #4 — Lien rapide Cahier de bord depuis Co-pilote** (à glisser dans #2) | 30 min | Code |
-| **10** | **Chantier #6 — Vidéos pédagogiques YouTube + intégration app** | 3-4 h dev (+ 10-15 h prod vidéo Thomas) | Code + Contenu |
-| **11** | Mettre à jour `CLAUDE.md` (section roadmap) avec ce qui a été livré | 30 min | Doc |
+Mes estimations précédentes en "X jours" étaient en **jours-homme classiques** (8h/jour dev humain). C'est trompeur ici. Je détaille désormais en **3 colonnes distinctes** :
 
-### Total estimé
+- **h-agent** : heures effectives de l'agent qui code (3-5× plus rapide qu'un humain sur le code pur, pareil/plus lent sur audit + design interactif)
+- **h-Thomas** : heures de TON temps réel (validation, décisions, copy, DNS, prod vidéos, catalogue produits par marché)
+- **Calendrier réaliste** : durée totale en jours/semaines, dépend de la fréquence d'aller-retour
 
-- **Côté agent (dev)** : ~**19 à 26 jours** de code pur
-- **Côté Thomas (infra + contenu)** : ~13-18 h dispersés (DNS, vidéos, prix produits par marché, copy validation)
-- **Calendrier réaliste** : 6 à 8 semaines à temps plein, ou 3 à 4 mois à temps partiel
+### 🪜 Règle d'or — étapes franches, jamais de mélange
+
+> Citation Thomas (10/05/2026) : « il faut surtout structurer les chantiers, pas que ça mêle les pinceaux, faire des belles étapes étape par étape ».
+
+✅ **Discipline imposée** :
+- 1 chantier = N étapes numérotées
+- Chaque étape = **1 livrable testable** (commit isolé, possiblement PR)
+- **On ne passe à l'étape N+1 qu'après validation de l'étape N** (commit clean, test ok, ton OK)
+- En cas d'imprévu : on s'arrête, on documente, on repart proprement
+- Pas de « je commence le suivant pendant que celui-ci finit » — ça mélange les pinceaux
+
+### Ordre de bataille recommandé (11 phases)
+
+| # | Phase | h-agent | h-Thomas | Type |
+|---|---|---|---|---|
+| **0** | Fix mobile chat history (objet initial branche) | 30 min - 1 h | 5 min recette | Code |
+| **1** | Achat + config DNS `labase360.com` | — | 1-2 h | Infra Thomas |
+| **2** | Renommage code source "La Base 360" (coopératif) | 2-4 h | 30 min validation + 15 min rename repo GitHub | Code |
+| **3** | Audits légers (`/clients` V2 kanban, `/outils-prospection`) | 1-2 h | 5 min lecture rapport | Audit |
+| **4** | **Chantier #1 — Bilan Online + Lead pipeline** | **20-31 h** | 3-5 h (validation copy, choix produits, slug coach) | Code |
+| **5** | **Chantier #3 — Refonte prospection mobile-first** | **14-22 h** (V1 sans tracking) | 2-3 h (rédaction scripts FR+EN initiaux) | Code |
+| **6** | **Chantier #7 — Refonte business `/business` scroll narratif** | **9-14 h** | 2-3 h (validation copy rebrandé) | Code |
+| **7** | **Chantier #5 — i18n + multi-monnaie** | **16-23 h** | 5-8 h (catalogue produits par marché ~1600 lignes + relecture traductions) | Code + Contenu |
+| **8** | **Chantier #2 — Check-list quotidienne Co-pilote** | **7-9 h** | 30 min validation | Code |
+| **9** | **Chantier #4 — Lien Cahier de bord** (glissé dans #2) | 30 min | — | Code |
+| **10** | **Chantier #6 — Vidéos pédagogiques + intégration app** | 3-4 h dev | 10-15 h prod vidéos | Code + Contenu |
+| **11** | MAJ `CLAUDE.md` roadmap | 30 min | 5 min relecture | Doc |
+
+### Totaux honnêtes (révisés)
+
+- **Total h-agent** : ~**75 à 115 heures** de codage agent effectif
+- **Total h-Thomas** : ~**25 à 40 heures** dispersées sur la durée totale
+- **Calendrier réaliste possible** :
+  - **Sprint intensif** (Thomas dispo plusieurs h/jour pour valider) : ~**3 à 4 semaines** calendaires
+  - **Régulier** (Thomas 1-2 h/jour) : ~**6 à 10 semaines** calendaires
+  - **Doux** (Thomas 30 min/jour, en parallèle activité principale) : ~**3 à 5 mois** calendaires
+
+---
+
+## 🪜 Découpage opérationnel par chantier (étapes franches, livrables testables)
+
+### Chantier #1 — Bilan Online + Lead pipeline (10 étapes)
+
+| Étape | Livrable testable | h-agent |
+|---|---|---|
+| **1.1** | Migration SQL `online_bilans` + RLS (test : insert anonyme via service_role OK) | 1-2 h |
+| **1.2** | Edge function `submit-online-bilan` (test : POST curl, vérif insertion DB) | 2-3 h |
+| **1.3** | Page bilan publique formulaire 5 étapes + progress bar + auto-save (test : fill complet sur mobile, soumission OK) | 4-6 h |
+| **1.4** | Page Welcome + routing slug coach + autocomplete + fallback bilan libre (test : `/thomas` vs `/`, slug invalide) | 2-3 h |
+| **1.5** | Page remerciement post-soumission (test : redirect après POST, copy adapté coach/admin) | 1-2 h |
+| **1.6** | Extension `/clients` V2 onglet Leads filtré + kanban statuts dédiés (test : DnD entre colonnes, filtre Leads/Clients OK) | 3-4 h |
+| **1.7** | Trigger Postgres + edge function `new-online-bilan-notifier` (test : nouveau bilan → push reçu coach) | 2-3 h |
+| **1.8** | Templates réponse inline pop-up + boutons "Copier" + lien optionnel `/outils-prospection` (test : copy fonctionne, retour Lead OK) | 2-3 h |
+| **1.9** | Auto-qualification "Contact" au "message envoyé" + insert `follow_ups` relance J+3 + notif programmée | 2-3 h |
+| **1.10** | Recette parcours complet + entrée `app_announcements` + carte hub `/developpement` | 1-2 h |
+
+**Total chantier #1 : 20-31 h-agent + 3-5 h Thomas**
+
+### Chantier #3 — Refonte prospection mobile-first (8 étapes)
+
+| Étape | Livrable testable | h-agent |
+|---|---|---|
+| **3.1** | Audit `/outils-prospection` actuel (rapport « réutilisable vs à jeter ») | 1 h |
+| **3.2** | Migration SQL `prospection_profiles` + (V2) `prospection_attempts` + RLS | 1-2 h |
+| **3.3** | Page admin CRUD profils + éditeur scripts JSONB par plateforme/langue | 3-4 h |
+| **3.4** | UI distri étapes 1-5 mobile-first : choix profil → brief → cibler → premier contact → arborescence (test parcours 375×667) | 6-8 h |
+| **3.5** | Champ langue de la cible + sélecteur dans flow + fallback EN si traduction manquante | 2-3 h |
+| **3.6** | Lien rapide depuis Co-pilote "Prospecter maintenant" | 30 min |
+| **3.7** | (V2 optionnel) Tracking `prospection_attempts` + stats simples | 3-4 h |
+| **3.8** | Recette + announcement + carte hub | 1-2 h |
+
+**Total chantier #3 V1 : 14-22 h-agent + 2-3 h Thomas (scripts FR+EN initiaux)**
+
+### Chantier #7 — Refonte business `/business` scroll narratif (7 étapes)
+
+| Étape | Livrable testable | h-agent |
+|---|---|---|
+| **7.1** | Audit `/opportunite` + `/simulateur` (rapport blocs réutilisables) | 1 h |
+| **7.2** | Maquette flow narratif (Hero → Pourquoi → Opportunité → Simulateur → Social proof → CTA) — validation Thomas avant code | 1-2 h |
+| **7.3** | Extraction simulateur en composant inline réutilisable (test : composant standalone OK) | 2-3 h |
+| **7.4** | Page `/business` unique : sections + animations scroll + mobile-first | 4-6 h |
+| **7.5** | Copy rebrandé "La Base 360" (validation Thomas avant merge) | 1 h |
+| **7.6** | Redirections `/opportunite` + `/simulateur` → `/business` (anti-casse liens externes) | 30 min |
+| **7.7** | Recette + announcement | 1 h |
+
+**Total chantier #7 : 9-14 h-agent + 2-3 h Thomas**
+
+### Chantier #5 — i18n + multi-monnaie (9 étapes)
+
+| Étape | Livrable testable | h-agent |
+|---|---|---|
+| **5.1** | Setup `i18next` + structure fichiers `i18n/{fr,en,es,pt-br,tr}.json` | 1-2 h |
+| **5.2** | Extraction strings pages publiques (`/business`, `/welcome`, bilan online, page remerciement) | 2-3 h |
+| **5.3** | Traduction batch (DeepL ou Anthropic) des 5 langues V1 + relecture Thomas | 2-3 h agent + 1-2 h Thomas |
+| **5.4** | Sélecteur drapeau + détection IP + persist localStorage | 2-3 h |
+| **5.5** | Migration SQL `pv_product_market_pricing` + RLS | 1-2 h |
+| **5.6** | Page admin importeur CSV catalogue produit/marché (test : upload, vérif insertion) | 3-4 h |
+| **5.7** | Utilitaire `formatPrice(amount, market)` + `Intl.NumberFormat` + intégration pages business + bilan | 2-3 h |
+| **5.8** | Tests par langue (5×) : navigation complète + vérif monnaie | 2 h agent + 1 h Thomas |
+| **5.9** | Recette + announcement | 1 h |
+
+**Total chantier #5 : 16-23 h-agent + 5-8 h Thomas**
+
+### Chantier #2 — Check-list quotidienne Co-pilote (6 étapes, intègre #4)
+
+| Étape | Livrable testable | h-agent |
+|---|---|---|
+| **2.1** | Migration `coach_daily_actions` (coach_id, action_key, date, status) + RLS | 30 min |
+| **2.2** | Hook `useDailyActionChecklist` agrège les 5 sources (F1/F21, Leads, dormants, RDV, liste 100) | 2 h |
+| **2.3** | Composant `<DailyActionsModal />` pop-up 1ère ouverture jour + score X/5 + skip | 2-3 h |
+| **2.4** | Logique fallback "0 F1 → Grandir ton réseau" (lien chantier #3 ou liste 100 cahier de bord) | 1 h |
+| **2.5** | Cron push 20h si actions non cochées (réutilise pattern `flex-notifier`) | 1-2 h |
+| **2.6** | Recette + announcement + intégration lien rapide Cahier de bord (chantier #4 absorbé ici) | 1 h |
+
+**Total chantier #2 + #4 : 7-9 h-agent + 30 min Thomas**
+
+### Chantier #6 — Vidéos pédagogiques (4 étapes côté dev)
+
+| Étape | Livrable testable | h-agent |
+|---|---|---|
+| **6.1** | Migration `feature_tutorials` (feature_key, video_url, duration, thumbnail) OU extension `app_announcements` | 30 min |
+| **6.2** | Composant `<TutorialLink featureKey="..." />` (icône ❓ + modale iframe YouTube) | 1-2 h |
+| **6.3** | Embedder dans pages clés (Co-pilote, FLEX, Bilan, Messagerie, Prospection, etc.) | 1 h |
+| **6.4** | Page `/developpement/tutos` liste vidéos + tracking vues (localStorage) | 1 h |
+
+**Total chantier #6 dev : 3-4 h-agent. Côté Thomas : 10-15 h prod vidéos (post-PC, étalé).**
+
+### Phase 0 — Fix mobile chat history (3 étapes)
+
+| Étape | Livrable testable | h-agent |
+|---|---|---|
+| **0.1** | Modifier `ConversationView.tsx` : fetch direct thread complet par `client_id`, fallback cache (test : conversation > 50 messages s'affiche entièrement) | 30 min |
+| **0.2** | Test : ouverture conversation ancienne sur mobile | 15 min |
+| **0.3** | Commit + push | 5 min |
+
+**Total phase 0 : 30 min - 1 h-agent**
+
+### Phase 2 — Renommage code source (7 étapes)
+
+| Étape | Livrable testable | h-agent |
+|---|---|---|
+| **R.1** | Audit grep complet (Lor'Squad, Lor Académie, lor-squad — toutes variantes) | 15 min |
+| **R.2** | Plan de remplacement (rapport fichier par fichier) — validation Thomas avant exécution | 15 min agent + 30 min Thomas |
+| **R.3** | Remplacements automatisés (sed) sur fichiers approuvés | 1-2 h |
+| **R.4** | Manuels : `package.json`, `index.html` (`<title>`, `<meta>`, `og:tags`), `vercel.json` | 30 min |
+| **R.5** | Repo GitHub rename via UI GitHub | — Thomas 15 min |
+| **R.6** | Tests régression : build + lint + tests | 30 min |
+| **R.7** | Commit unique + push | 5 min |
+
+**Total phase 2 : 2-4 h-agent + 30 min validation + 15 min Thomas (rename repo)**
 
 ### Architecture cible globale
 
@@ -1212,7 +1348,7 @@ Effort estimé : **M — 4-6h** (recherche + remplacement + validation + tests r
 
 ---
 
-## 🏁 Fin du brainstorm Égypte (2026-05-09)
+## 🏁 Fin du brainstorm Égypte (2026-05-10)
 
 **Bilan de la session piscine** :
 - **2 dumps** d'idées brutes Thomas
@@ -1223,7 +1359,7 @@ Effort estimé : **M — 4-6h** (recherche + remplacement + validation + tests r
 
 🌴 Tu peux fermer l'app, profiter de la piscine, le brouillon est en sécurité sur GitHub. Au retour PC, ouvrir ce fichier suffit pour reprendre exactement là où on s'est arrêtés.
 
-*Fichier vivant. Dernière maj : 2026-05-09 nuit (clôture dump #2).*
+*Fichier vivant. Dernière maj : 2026-05-10 nuit (clôture dump #2).*
 
 ---
 
@@ -1266,4 +1402,4 @@ Effort estimé : **M — 4-6h** (recherche + remplacement + validation + tests r
 
 ---
 
-*Fichier vivant. Dernière maj : 2026-05-09 (dump #1 — 5 idées capturées).*
+*Fichier vivant. Dernière maj : 2026-05-10 (dump #1 — 5 idées capturées).*
