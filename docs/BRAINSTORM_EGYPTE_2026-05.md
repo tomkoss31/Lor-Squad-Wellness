@@ -436,6 +436,391 @@ Critères : ≤ 5 items pour tenir en 5 minutes, **haut impact business**, **act
 
 ---
 
+## 🔬 Compléments dump #1 (2026-05-09 soir) — détails techniques exigés Thomas
+
+### A. Détail du formulaire bilan online (sous-feature 1.A enrichie)
+
+**Découpage en 5 étapes** (regroupement pour tenir en ≤ 2 min, progress bar visible) :
+
+#### Étape 1/5 — Identité
+- **Prénom** (text, required, max 50)
+- **Âge** (number 16-99, required)
+- **Taille (cm)** (number 100-220, required)
+- **Ville** (text avec autocomplete via API geo gouv ou OpenStreetMap, required)
+
+#### Étape 2/5 — Tes objectifs
+*(cases à cocher style ID G3 multi-select, jolies cards visuelles)*
+- ☐ **Perte de poids** → si coché, sous-champ **« Combien de kilos ? »** (number 1-50)
+- ☐ **Prise de masse**
+- ☐ **Plus d'énergie**
+- ☐ **Mieux dormir / mieux récupérer**
+- ☐ **Bien-être général**
+- **Motivation** : slider 1 → 10, label live (« 1 = je teste pour voir », « 10 = je suis prêt à m'engager à fond »)
+
+#### Étape 3/5 — Ton vécu
+- « As-tu déjà essayé quelque chose pour ça ? » : multi-select rapide
+  - ☐ Régimes
+  - ☐ Coach / accompagnement
+  - ☐ Sport
+  - ☐ Suppléments
+  - ☐ Rien encore
+- Si au moins 1 coché → champ optionnel **« Qu'est-ce que ça a donné ? »** (text 200 chars max)
+
+#### Étape 4/5 — Tes habitudes (format ultra-court)
+- **Petit-déj** : radio rapide
+  - 🥐 Sucré (croissant, céréales, brioche)
+  - 🥚 Salé (œufs, charcuterie)
+  - 🥤 Smoothie / healthy
+  - ☕ Café seulement / rien
+  - ✏️ Autre (text court 50 chars)
+- **Midi** : radio
+  - 🏠 Maison
+  - 🍽️ Cantine / resto
+  - 🥪 Sandwich / wrap
+  - 🍔 Fast-food
+  - ⏭️ Je saute
+- **Soir** : radio
+  - 🏠 Maison
+  - 🛵 Livraison
+  - 🍔 Fast-food
+  - 🥗 Léger / snack
+  - ⏭️ Je saute
+- **Fast-food / semaine** : slider 0 → 7+
+
+#### Étape 5/5 — Budget + activité
+- **Budget alimentaire / jour** : radio cards visuelles
+  - 💰 2 €
+  - 💰 4 €
+  - 💰 8 €
+  - 💰 10 €
+  - 💰 15 € et +
+- **Actif au quotidien ?** (marche, escaliers, jardin, manuel) : oui / non
+- Si oui → champ optionnel **« Quoi ? »** (text 100 chars max)
+- **Consentement RGPD** ☐ (mandatory) : « J'accepte que mes données soient transmises à mon coach pour analyse de mon bilan »
+
+#### Comportement transversal du formulaire
+- **Progress bar** en haut : `Étape 3/5` + barre visuelle
+- **Bouton "Précédent"** sur étapes 2-5 (revenir en arrière sans perte)
+- **Auto-sauvegarde** en `localStorage` (clé `lor-squad-bilan-online-${slug}`) à chaque champ rempli — si la personne ferme et rouvre dans la journée, on reprend où on en est
+- **Validation par étape** : impossible d'avancer tant que les `required` de l'étape ne sont pas remplis
+- **Mobile-first** : l'écrasante majorité des Leads remplira sur téléphone (clic depuis Instagram/WhatsApp). Touch targets ≥ 44px, font ≥ 16px (anti-zoom iOS)
+- **Pas de scroll long** : 1 étape = 1 écran tenant sans scroll sur 375 × 667 (iPhone SE référence)
+
+---
+
+### B. Page Welcome — architecture et copy proposé (sous-feature 1.B enrichie)
+
+**Hiérarchie visuelle** (mobile-first) :
+
+```
+┌─────────────────────────────────┐
+│  [Logo Lor'Squad gold]          │
+│                                  │
+│  Nous sommes heureux             │
+│  de te voir ici 🥰               │  ← H1 Syne 28px, gold
+│                                  │
+│  [Photo coach OU illustration]   │  ← optionnel, image ronde 120px
+│                                  │
+│  [Si coach identifié]            │
+│  Thomas K. va t'accompagner      │  ← Sub-hero DM Sans 16px, teal
+│                                  │
+│  [Si pas de coach]               │
+│  Qui t'a invité ici ?            │
+│  [____________autocomplete___]   │
+│  ou                               │
+│  [ Personne, je découvre seul ]  │  ← bouton secondaire ghost
+│                                  │
+│  ─────────────────────────       │
+│                                  │
+│  Lor'Squad, c'est :              │  ← H2 Syne 18px
+│  • Un bilan personnalisé         │
+│    pour comprendre ton corps     │
+│  • Un coach humain qui           │
+│    t'accompagne au quotidien     │
+│  • Des résultats durables, pas   │
+│    une mode passagère            │
+│                                  │
+│  ─────────────────────────       │
+│                                  │
+│  [ Commencer mon bilan ]         │  ← CTA primaire gold, large
+│                                  │
+│  Promis, ça prend 2 min 🙏       │  ← microcopy DM Sans 12px
+│                                  │
+└─────────────────────────────────┘
+```
+
+**Copy à valider Thomas** :
+- **Hero** : « Nous sommes heureux de te voir ici 🥰 » ✅ (déjà acté)
+- **Si coach** : « **{Prénom}** va t'accompagner » → personnalise visuellement
+- **3 bullets Lor'Squad** : à raffiner avec Thomas (les miens sont génériques, faut le ton Lor'Squad)
+- **CTA** : « Commencer mon bilan » + microcopy 2 min
+
+**Comportement** :
+- Si slug coach valide dans URL → photo/prénom coach affichés, le formulaire commence direct
+- Si pas de slug → champ autocomplete + bouton "bilan libre"
+- Si slug invalide (typo) → fallback racine avec toast `« Le lien ne correspond pas à un coach connu, mais tu peux quand même faire ton bilan »`
+
+---
+
+### C. Page de remerciement post-soumission ⚠️ NOUVELLE sous-feature 1.H
+
+**Domaine** : Funnel post-conversion, rétention émotionnelle
+
+**Description**
+Après que la personne a cliqué "Envoyer mon bilan", elle atterrit sur une **page plein écran de remerciement** (pas un toast, pas une modale — un vrai moment).
+
+**Contenu proposé** :
+
+```
+┌─────────────────────────────────┐
+│  [✓ checkmark gold animé]        │
+│                                  │
+│  Merci {Prénom} ! 🙏             │  ← H1 Syne 32px
+│                                  │
+│  Ton bilan est arrivé chez       │
+│  Thomas K.                       │  ← (ou "chez l'équipe Lor'Squad"
+│                                  │     si bilan libre)
+│  Il va l'analyser et te          │
+│  recontacter sous 48h max.       │
+│                                  │
+│  ─────────────────────────       │
+│                                  │
+│  En attendant :                  │
+│                                  │
+│  [📱 Suis-nous sur Instagram]    │  ← lien social
+│  [💬 Rejoins notre WhatsApp]     │  ← lien communauté (optionnel)
+│  [📚 Découvre nos ressources]    │  ← lien blog/contenus (optionnel)
+│                                  │
+│  ─────────────────────────       │
+│                                  │
+│  Tu peux fermer cette page       │
+│  ou la garder ouverte.           │  ← microcopy
+│                                  │
+└─────────────────────────────────┘
+```
+
+**Variantes selon contexte** :
+- Si **bilan dirigé vers coach** : « Ton bilan est arrivé chez {Prénom Coach}. Il va te recontacter sous 48h max. »
+- Si **bilan libre admin** : « Ton bilan est arrivé chez l'équipe Lor'Squad. Un coach adapté à ton profil va te répondre rapidement. »
+
+**Pourquoi**
+- **Rassurance immédiate** : « j'ai bien envoyé, quelqu'un va me répondre »
+- **Engagement émotionnel** : ne pas laisser la personne sur un écran vide après avoir donné son temps
+- **Soft cross-sell** : Instagram/WhatsApp/blog = touchpoints de rétention même si le coach met 24h à répondre
+
+**Architecture**
+- Réutiliser le **pattern** de `BilanTermineePage` (page de remerciement post-bilan coach existante avec QR code + partage + parrainage) MAIS adapter pour le contexte Lead public (pas de QR client, juste merci + social)
+- Une seule route publique `bonline.labase360.com/{slug}/merci?leadId={uuid}` après POST réussi
+- Animation checkmark gold à l'entrée (réutiliser keyframes existants)
+
+**Effort** : **S — 2-3 heures** (pattern existant à adapter)
+
+**Statut** : 🌳 prêt à coder dès que 1.A et 1.B sont posés
+
+---
+
+### D. Structure du module Prospection froide (chantier #3 enrichi)
+
+#### Architecture du module
+
+```
+/outils-prospection (existant, à étendre)
+   └─ Onglet "Client froid" (NEW)
+       ├─ Étape 1 : Choix du profil cible
+       │   └─ Cards visuelles (3 par défaut, extensible)
+       │       - 🏃 Sportif
+       │       - ⚖️ Perte de poids
+       │       - 💼 Business / opportunité
+       │       - [bouton + Admin : Ajouter un profil]
+       │
+       ├─ Étape 2 : Brief méthodologie (sur le profil sélectionné)
+       │   ├─ Méthode GoPro résumée en 3 points
+       │   ├─ Posture à adopter (indirecte, qualifiante)
+       │   └─ Erreurs à éviter (3 max)
+       │
+       ├─ Étape 3 : Cibler
+       │   ├─ Hashtags à utiliser (liste cliquable, copy-to-clipboard
+       │   │   par hashtag : #fitnessmotivation, #pertepoidsfr, etc.)
+       │   ├─ Champ géo-ciblage (ville) → suggestions lieux IRL
+       │   │   pour rencontre (salles de sport, marchés, etc.)
+       │   └─ Plateformes recommandées (Instagram / Facebook /
+       │       LinkedIn pour business)
+       │
+       ├─ Étape 4 : Premier contact
+       │   ├─ Message générique pour ce profil (texte avec bouton
+       │   │   gros "Copier") — variants par plateforme :
+       │   │   - Instagram (DM)
+       │   │   - Facebook (Messenger)
+       │   │   - Telegram (text + emoji)
+       │   │   - SMS (court, sans emoji)
+       │   └─ Microcopy : « Personnalise avec son prénom + 1 détail
+       │       de son profil. Authentique > Parfait. »
+       │
+       ├─ Étape 5 : Arborescence de relance
+       │   ├─ Si réponse positive : 2e message (engagement bilan)
+       │   ├─ Si réponse curieuse : envoi de l'outil adapté
+       │   │   (lien bilan online + slug coach pour profil
+       │   │   perte de poids/sportif ; doc opportunité business
+       │   │   pour profil business)
+       │   ├─ Si pas de réponse à J+3 : message de relance soft
+       │   └─ Si pas de réponse à J+7 : abandon respectueux
+       │       (« on n'insiste pas, peut-être plus tard »)
+       │
+       └─ Étape 6 : Tracking (optionnel V2)
+           ├─ Combien de messages envoyés cette semaine
+           ├─ Taux de réponse
+           └─ Conversion en Lead bilan
+```
+
+#### Tables nécessaires
+
+**`prospection_profiles`** (config admin extensible)
+- `id` uuid PK
+- `slug` text unique (sportif / perte-poids / business / etc.)
+- `label` text (affichage)
+- `icon` text (emoji ou nom Lucide)
+- `color` text (token CSS ou hex)
+- `description` text (brief méthodologie)
+- `hashtags` text[] (liste hashtags cibles)
+- `scripts` jsonb (1er message + relances par plateforme)
+- `target_tools` jsonb (`{positive_response: "bilan-online", ...}`)
+- `ordre` int
+- `created_by` uuid FK users
+- `is_active` boolean
+
+**`prospection_attempts`** (V2 tracking — pas mandatory au lancement)
+- `id` uuid PK
+- `coach_id` uuid FK users
+- `profile_id` uuid FK prospection_profiles
+- `target_label` text (nom/pseudo Insta de la cible)
+- `platform` text (instagram/facebook/telegram/sms/...)
+- `first_message_sent_at` timestamptz
+- `response_status` enum (none/curious/positive/negative)
+- `converted_to_lead_id` uuid FK online_bilans (si conversion)
+- RLS : coach voit ses propres attempts uniquement
+
+#### Page admin `/admin/prospection-profiles`
+
+CRUD profils (create / edit / activate / deactivate / reorder). Form admin avec :
+- Champ label, slug, icon, color
+- Éditeur Markdown pour description et scripts
+- Multi-input pour hashtags
+- Champs target_tools (boutons-outils par contexte de réponse)
+
+#### Effort estimé révisé chantier #3
+
+| Sous-feature | Effort |
+|---|---|
+| Audit `/outils-prospection` existant | 30 min |
+| Tables + RPC + RLS | 0.5 j |
+| Page admin CRUD profils | 1 j |
+| UI distri (étapes 1-5) | 2 j |
+| Rédaction contenus textes (3 profils complets) | 1 j (Thomas + relecture) |
+| Tracking V2 (étape 6) | 0.5 j (optionnel V1) |
+| Polish + announcement | 0.5 j |
+| **Total V1 sans tracking** | **~5 jours** |
+| **Total V2 avec tracking** | **~5.5 jours** |
+
+---
+
+### E. Chantier #5 — Internationalisation (langue + monnaie) ⚠️ NOUVEAU
+
+**Domaine** : Infra / Funnel / Stratégie internationale
+
+**Description**
+Permettre à un distri de **recruter à l'étranger** (ex : Inde) en faisant en sorte que la **page business + simulateur revenus + bilan online** soient **automatiquement traduits** dans la langue cible et que la **monnaie** s'affiche en local.
+
+**Pourquoi**
+- **Développement international** : c'est la condition sine qua non pour scaler hors-France
+- **Conversion** : un Indien ne s'engage pas sur une page en français avec des prix en euros
+- **Différentiateur produit** : très peu de coaches Herbalife ont un funnel multilingue auto
+
+**Cibles prioritaires** (à valider Thomas)
+- Pages **publiques exposées en recrutement** : `/opportunite`, `/simulateur`, `/welcome`, et **bilan online** (chantier #1)
+- App client PWA en V2 si Lead converti (lecture confort dans sa langue)
+- Pas l'app coach (les coaches restent en français)
+
+**Stratégie technique — 3 options**
+
+| Option | Comment | Avantages | Inconvénients |
+|---|---|---|---|
+| **A — Statique i18n (react-intl / i18next)** | Fichiers JSON par langue (`fr.json`, `en.json`, `hi.json`...), traduits manuellement ou via DeepL en batch | Contrôle total, pas de coût runtime, SEO ok | Charge de traduction initiale + maintenance à chaque ajout de copy |
+| **B — Dynamique (Anthropic API à la volée)** | À chaque visite, on envoie le contenu à Claude qui traduit en streaming | Aucune maintenance traduction, scale infini | Latence (1-3s par page), coût API récurrent, risque inconsistance entre 2 visites |
+| **C — Hybride** ⭐ | Statique pour pages clés stables (i18next), dynamique (Anthropic) pour user-generated et bilan en cours | Compromis qualité/coût/maintenance | Architecture un peu plus complexe |
+
+**Reco agent** : **Option A** au démarrage (plus solide, prévisible), migrer vers C si besoin de scale.
+
+**Détection langue/pays**
+- IP geolocation gratuite (`ipapi.co` free tier 1000 req/jour, ou `ip-api.com` 45/min)
+- Fallback : `navigator.language` du browser
+- Override manuel : sélecteur drapeau en haut de page (FR / EN / ES / HI / ...)
+- Persistance : `localStorage.ls-locale` + cookie
+
+**Conversion monnaie**
+- API exchange rates : `exchangerate-api.com` (free tier 1500 req/mois) ou `frankfurter.app` (gratuit illimité, basé ECB)
+- Cache 24h dans `localStorage` (pas besoin de précision temps réel)
+- Affichage : prix euros stockés en DB, conversion à l'affichage selon `locale`
+- Format : `Intl.NumberFormat(locale, { style: 'currency', currency: localCurrency })`
+
+**Cibles initiales suggérées** (à valider)
+- 🇫🇷 français (origine)
+- 🇬🇧 anglais (international)
+- 🇪🇸 espagnol (Espagne + LatAm)
+- 🇮🇳 hindi (mention explicite Thomas — gros marché Herbalife)
+- 🇩🇪 allemand
+- 🇮🇹 italien
+
+→ 6 langues couvrent ~70% du potentiel Herbalife mondial.
+
+**Tables / config**
+- Pas de nouvelle table critique — juste des fichiers `i18n/{lang}.json` dans le repo
+- Optionnel : table `user_locale_preference (user_id, locale, currency_override)` si on laisse les distri configurer leur langue de funnel
+
+**Effort estimé** : **XL — 5 à 8 jours**
+
+| Sous-feature | Effort |
+|---|---|
+| Setup i18next + extraction strings (`/opportunite`, `/simulateur`, `/welcome`) | 1.5 j |
+| Traduction batch DeepL des 6 langues + relecture | 1 j |
+| Détection IP + sélecteur drapeau + persist | 0.5 j |
+| Conversion monnaie + formatting | 1 j |
+| Extension bilan online (chantier #1) à i18n | 1 j |
+| Tests par langue (RTL pour arabe si futur) | 1 j |
+| Polish + announcement | 0.5 j |
+
+**Dépendances / risques**
+- **Doit être fait APRÈS** chantier #1 (sinon on i18n une cible mouvante)
+- **Hébergement** : si on cible LatAm/Asie, Vercel Edge réseau correct mais à monitorer la latence depuis ces régions
+- **Légal** : RGPD UE OK, mais autres pays (Inde DPDPA, Brésil LGPD, etc.) — à vérifier avant lancement public dans ces juridictions
+- **Méthode Herbalife** : vérifier que les visuels/messages business respectent les guidelines marketing Herbalife pays par pays (encadrement strict des promesses revenus selon législations locales)
+
+**Statut** : 🌱 brut — vision claire mais beaucoup d'arbitrages produit à faire avant de coder
+
+**Questions ouvertes pour ce chantier** :
+1. Cibles linguistiques : les 6 que j'ai listées te conviennent ou autre priorité ?
+2. Option A / B / C : tu valides ma reco A (statique i18next) ?
+3. Détection auto IP ou tu préfères imposer un sélecteur explicite ?
+4. Pour la monnaie : conversion temps réel ou prix locaux figés (pricing par marché) ?
+5. La **page business** mentionnée dans ton message — c'est `/opportunite`, `/simulateur`, ou un nouveau truc à créer ?
+
+---
+
+## 📊 Roadmap mise à jour avec compléments dump #1
+
+| # | Chantier | Effort | Priorité reco |
+|---|---|---|---|
+| **#1** | Bilan Online + Lead pipeline (8 sous-features avec page remerciement 1.H) | 5-9 j | **P0** — fondation funnel |
+| **#3** | Prospection froide (module structuré N profils) | ~5-5.5 j | **P1** — alimente fallback #2 |
+| **#5** | Internationalisation (langue + monnaie) | 5-8 j | **P2** — nécessaire pour scale international, **après #1** |
+| **#2** | Check-list quotidienne Co-pilote | 4-6 h | **P3** — capitalise #1 + #3 |
+| **#4** | Lien Cahier de bord depuis Co-pilote | 30 min | **P3 bis** — à glisser dans #2 |
+
+**Total estimé** : ~16 à 23 jours de dev pour la totalité. Réalisable en 5-7 semaines à temps plein, ou 2-3 mois à temps partiel.
+
+---
+
+---
+
 ## Questions en suspens — synthèse
 
 À répondre par Thomas (par paquets, dans n'importe quel ordre) avant qu'on attaque l'exécution PC :
