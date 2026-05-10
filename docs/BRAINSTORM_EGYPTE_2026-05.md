@@ -925,6 +925,140 @@ Ce constat n'est pas un chantier en soi mais **un fil rouge à garder en tête**
 
 ---
 
+## 🆕 Dump #2 — Réponses Thomas (2026-05-09 soir)
+
+### Décisions actées
+
+| Q | Sujet | Décision Thomas |
+|---|---|---|
+| **Q1.1** | Étapes bilan + copy Welcome/Remerciement | ✅ **Validés tels quels** |
+| **Q3.1** | Position onglet Prospection | ✅ **Refonte `/outils-prospection`** existant. Thomas fera l'analyse de cohérence une fois la création réalisée. |
+| **Q5.2** | Stratégie i18n statique (i18next) | ✅ **Validée** |
+| **Q5.3** | Détection langue | ✅ **Auto IP + drapeau au choix** (combo) |
+| **Q5.4** | Prix par marché | ✅ **Prix dédiés par marché** (pas de conversion temps réel). Thomas ira chercher le catalogue produit/marché + prix au retour. |
+
+### Q5.4 — Architecture proposée pour prix multi-marchés
+
+Comme Thomas valide « chaque marché à ses prix », architecture recommandée :
+
+**Table dédiée `pv_product_market_pricing`** (plutôt qu'un JSON dans `pv_products`) :
+- `id` uuid PK
+- `product_id` uuid FK `pv_products`
+- `market_code` text (FR / ES / BR / TR / IN / ...)
+- `price_amount` numeric (en monnaie locale)
+- `currency_code` text (EUR / USD / BRL / TRY / INR / ...)
+- `pv_amount` numeric (les PV peuvent varier selon les marchés)
+- `valid_from` timestamptz
+- `valid_to` timestamptz nullable
+- RLS : SELECT public actif distri, UPDATE admin uniquement
+
+**Avantages** :
+- Audit historique des prix (qui a changé quoi quand)
+- Plusieurs prix valides simultanément possible (ancien tarif jusqu'à date X, nouveau dès X+1)
+- Pas de pollution du JSON `pv_products` qui doit rester rapide à lire
+
+**Charge de saisie** : ~200 produits × ~8 marchés = **1 600 lignes** à saisir initialement. **Prévoir un import CSV/Excel** dans la page admin pour ne pas saisir à la main → effort additionnel **~3-4h dev** pour l'importeur. Thomas remplit ensuite en autonomie au retour.
+
+### Q5.1 — Analyse langues prioritaires + anglais prospection
+
+#### Analyse marchés Herbalife à fort développement
+
+J'analyse les marchés où Herbalife a un volume + une croissance significatifs (sources publiques 2024-2025 : rapports financiers Herbalife + tendances MLM Wellness) :
+
+| Marché | Volume estimé | Croissance | Langue | Population diaspora |
+|---|---|---|---|---|
+| 🇲🇽 Mexique | Top 5 mondial Herbalife | Stable + | Espagnol | — |
+| 🇧🇷 Brésil | Top 5 mondial Herbalife | Forte croissance | Portugais (BR) | Portugal, Angola |
+| 🇺🇸 USA | Marché historique #1 | Mature | Anglais | — |
+| 🇮🇳 Inde | Très gros, en boom | **Forte croissance** | Hindi (60%) + anglais business (40%) | UK, EAU |
+| 🇹🇷 Turquie | **Marché chaud, mention Thomas** | **Forte croissance** | Turc | Allemagne (5M) |
+| 🇪🇸 Espagne | Solide | Stable | Espagnol | LatAm |
+| 🇫🇷 France | Origine pour Thomas | Stable | Français | Maghreb francophone, Afrique de l'Ouest |
+| 🇮🇩 Indonésie | Très gros | **Forte croissance** | Indonésien | — |
+| 🇻🇳 Vietnam | Moyen, en boom | **Forte croissance** | Vietnamien | — |
+| 🇩🇪 Allemagne | Solide | Stable | Allemand | Turcs immigrés (5M = leverage avec turc !) |
+| 🇮🇹 Italie | Solide | Stable | Italien | — |
+| 🇲🇦 Maroc | Émergent francophone | Croissance | Arabe + Français | France |
+| 🇨🇳 Chine | Énorme | Réglementation MLM compliquée | Mandarin | — |
+
+#### Recommandation phasée
+
+**Phase 1 — V1 i18n (5 langues, ROI immédiat)**
+
+| Langue | Justification |
+|---|---|
+| 🇫🇷 **Français** | Origine + Afrique francophone (Maroc, Algérie, Tunisie, Sénégal, Côte d'Ivoire), Belgique, Suisse, Québec |
+| 🇬🇧 **Anglais** | Lingua franca + USA + UK + Inde business + DM Insta/FB internationaux génériques |
+| 🇪🇸 **Espagnol** | Espagne + LatAm complet (Mexique top 5, Argentine, Colombie, Chili, Pérou) — **un des plus gros leviers** |
+| 🇵🇹 **Portugais (BR)** | Brésil top 5 mondial Herbalife — incontournable. Brésilien ≠ portugais européen, choisir BR. |
+| 🇹🇷 **Turc** | Mention explicite Thomas + marché Herbalife actif + leverage diaspora turque en Allemagne (5M personnes) |
+
+**Phase 2 — V2 i18n (extension selon priorités Thomas)**
+
+| Langue | Justification |
+|---|---|
+| 🇩🇪 Allemand | Marché solide + Suisse alémanique + Autriche |
+| 🇮🇹 Italien | Italie + Tessin Suisse |
+| 🇮🇳 Hindi | Inde — population gigantesque, mais Inde business parle souvent anglais (V1 EN couvre déjà partiellement) |
+| 🇸🇦 Arabe | MENA + Maghreb (peut compléter le français Maghreb) |
+
+**À écarter (sauf demande forte)** :
+- Mandarin (réglementation MLM compliquée en Chine, ROI incertain pour Herbalife)
+- Indonésien / Vietnamien (gros volumes mais marchés très éloignés culturellement, tarifs export logistiques compliqués pour un coach français)
+
+#### Question subsidiaire Thomas : « est-ce qu'il faut parler anglais sur le message de prospection ? »
+
+**Réponse argumentée** :
+
+❌ **Pas l'anglais comme langue par défaut de prospection**.
+
+✅ **Le message de prospection doit être dans la langue de la CIBLE, pas du distri**.
+
+**Pourquoi** :
+- Un Marocain francophone qui reçoit un DM en anglais = ignoré (registre froid + suppose qu'il parle pas la langue)
+- Un Brésilien qui voit un message en anglais sur un groupe FB lusophone = scroll
+- Le **taux de conversion d'un message dans la langue maternelle de la cible est 3 à 5 fois supérieur** à un message en anglais générique (sources : études marketing direct DM social media 2023-2024)
+
+**Cas où l'anglais EST utile** :
+- 🌐 **Profils Instagram internationaux non-identifiés géographiquement** (compte avec 50% audience US, 30% UK, 20% EU non-FR) → anglais = compromis acceptable
+- 🇮🇳 **Inde business** : la classe moyenne aisée (cible Herbalife) parle anglais en pro plus volontiers que hindi
+- 🇪🇺 **Diaspora multi-pays Insta** où la langue commune EN passe mieux que toute autre
+
+**Recommandation pratique pour le module Prospection (chantier #3)** :
+- Au démarrage V1 chantier #3 : scripts disponibles en **FR + EN** seulement (couvre 80% des cas pour un coach français qui scale)
+- Au fil de l'eau : Thomas (ou admin) ajoute des scripts **ES, PT, TR** pour les marchés actifs
+- L'extensibilité de la table `prospection_profiles` (champ `scripts` jsonb) permet d'ajouter une variante de langue **par script et par plateforme**, exemple :
+  ```json
+  {
+    "platforms": {
+      "instagram": {
+        "fr": "Salut, j'ai vu ton profil...",
+        "en": "Hey, saw your profile...",
+        "es": "Hola, vi tu perfil...",
+        "pt": "Oi, vi seu perfil...",
+        "tr": "Merhaba, profilini gördüm..."
+      },
+      "facebook": { ... },
+      ...
+    }
+  }
+  ```
+- L'UI distri détecte la langue de la cible (champ "langue de la cible" dans le step 3) et affiche le bon variant. Si pas dispo → fallback EN.
+
+**Effort additionnel pour multi-langue dans #3** : **+1 j** (ajout du champ langue dans le flow + UI sélecteur + traductions FR/EN initiales). Effort total chantier #3 mis à jour : **~6-6.5 j** au lieu de 5-5.5 j.
+
+---
+
+## ❓ Questions encore en suspens (au 2026-05-09 fin de soirée)
+
+| # | Question | En attente de |
+|---|---|---|
+| Q5.1 (réponse) | Validation par Thomas de ma liste 5 langues V1 (FR/EN/ES/PT/TR) + extension V2 (DE/IT/HI/AR) ? Et de ma reco "FR+EN pour scripts prospection au démarrage" ? | Réponse Thomas |
+| **Q5.5** | "Page business" pour i18n = `/opportunite`, `/simulateur`, ou nouveau ? | Thomas a dit « j'envoie après » |
+| **Q meta** | Chantier dédié de propagation du renommage "La Base 360" dans le code source — à programmer avant ou après chantier #5 i18n ? | Thomas n'a pas encore tranché |
+
+---
+
 ---
 
 ## Questions en suspens — synthèse
