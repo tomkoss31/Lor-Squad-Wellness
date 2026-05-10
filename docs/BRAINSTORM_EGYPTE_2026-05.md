@@ -35,8 +35,8 @@ Pour chaque idée, l'agent structure :
 | **#4** | UX / Co-pilote | Lien rapide Cahier de bord (intégré dans #2) | 30 min | 🌳 prêt à coder |
 | **#5** | Infra / Marketing | Internationalisation (langue + monnaie) — 5 langues V1 (9 étapes) | 16-23 h | 🌳 prêt à coder |
 | **#6** | Pédagogie | Vidéos pédagogiques YouTube + intégration app (4 étapes dev) | 3-4 h | 🌳 prêt à coder |
-| **#7** | Business | Refonte business `/business` scroll narratif (7 étapes) | 9-14 h | 🌳 prêt à coder |
-| **#8** | Marketing / Comm | Newsletter mensuelle clients + distri (V1 manuel, V2 auto) | 10-15 h V1 | 🌿 mûr — questions ouvertes |
+| **#7** | Business | Refonte business `/business` + popup lead capture (8 étapes) | 12-18 h | 🌳 prêt à coder |
+| **#8** | Marketing / Acquisition | Newsletter mensuelle (privée + publique lead-magnet, 12 étapes) | 17-25 h V1 | 🌿 mûr — 4 questions ouvertes (D4.1-4) + 6 questions originales |
 | Phase 0 | Bug fix | Fix mobile chat history (3 étapes) | 30 min - 1 h | 🌳 prêt à coder |
 | Phase 2 | Renommage | Code source "La Base 360" coopératif (7 étapes) | 2-4 h | 🌳 prêt à coder |
 
@@ -1176,17 +1176,17 @@ Mes estimations précédentes en "X jours" étaient en **jours-homme classiques*
 | **3** | Audits légers (`/clients` V2 kanban, `/outils-prospection`) | 1-2 h | 5 min lecture rapport | Audit |
 | **4** | **Chantier #1 — Bilan Online + Lead pipeline** | **20-31 h** | 3-5 h (validation copy, choix produits, slug coach) | Code |
 | **5** | **Chantier #3 — Refonte prospection mobile-first** | **14-22 h** (V1 sans tracking) | 2-3 h (rédaction scripts FR+EN initiaux) | Code |
-| **6** | **Chantier #7 — Refonte business `/business` scroll narratif** | **9-14 h** | 2-3 h (validation copy rebrandé) | Code |
+| **6** | **Chantier #7 — Refonte business `/business` + popup lead capture** | **12-18 h** | 2-3 h (validation copy rebrandé) | Code |
 | **7** | **Chantier #5 — i18n + multi-monnaie** | **16-23 h** | 5-8 h (catalogue produits par marché ~1600 lignes + relecture traductions) | Code + Contenu |
 | **8** | **Chantier #2 — Check-list quotidienne Co-pilote** | **7-9 h** | 30 min validation | Code |
 | **9** | **Chantier #4 — Lien Cahier de bord** (glissé dans #2) | 30 min | — | Code |
 | **10** | **Chantier #6 — Vidéos pédagogiques + intégration app** | 3-4 h dev | 10-15 h prod vidéos | Code + Contenu |
-| **11** | **Chantier #8 — Newsletter mensuelle V1 manuel** | 10-15 h | 2-4 h (rédaction 1ère newsletter mai-juin) | Code + Contenu |
+| **11** | **Chantier #8 — Newsletter mensuelle privée + publique lead-magnet** | 17-25 h | 2-4 h (rédaction 1ère newsletter mai-juin) | Code + Contenu |
 | **12** | MAJ `CLAUDE.md` roadmap | 30 min | 5 min relecture | Doc |
 
-### Totaux honnêtes (révisés avec chantier #8)
+### Totaux honnêtes (révisés après dump #4 — newsletter publique + lead capture)
 
-- **Total h-agent** : ~**85 à 130 heures** de codage agent effectif
+- **Total h-agent** : ~**95 à 144 heures** de codage agent effectif
 - **Total h-Thomas** : ~**27 à 44 heures** dispersées sur la durée totale
 - **Calendrier réaliste possible** :
   - **Sprint intensif** (Thomas dispo plusieurs h/jour pour valider) : ~**3 à 4 semaines** calendaires
@@ -1510,6 +1510,183 @@ PAGE 2 (verso)
 4. **Format final** : on génère **les 3 simultanément** (PDF A4 + email HTML + page web archive), ou seulement certains ?
 5. **Brouillon 1ère newsletter** : tu rédiges seul ou tu veux que **je te génère un brouillon complet** mai→juin (les 4-5 sections décrites ci-dessus avec le copy bienveillant) que tu peux copier dans l'éditeur ?
 6. **Calendrier** : envoi mi-mai 2026 (pour annoncer juin) ou fin mai (pour juin direct) ?
+
+---
+
+## 🆕 Dump #4 (2026-05-10 après-midi) — Newsletter publique = aimant à leads
+
+### Idée Thomas (résumé)
+
+> « On pourrait créer une page Newsletter qu'on partage en public sur des groupes de prospection. Avec **toujours 2 CTAs** dans les textes : (1) un lien vers le bilan online en 2 minutes, adaptable selon la saison (avant été, avant rentrée, avant hiver), (2) un lien "Tu pensais auto-financer tes vacances ?" qui ouvre une popup de capture lead (prénom + téléphone + ville) pour classer dans l'arborescence kanban du chantier #1. L'idée c'est de récupérer des leads quand les gens cliquent sur le lien. »
+
+### Avis agent (honnête)
+
+✅ **Excellente idée stratégique**. La newsletter passe de **rétention** à **acquisition** — devient un asset marketing entrant. Elle alimente directement le pipeline Lead et renforce l'ROI de tous les chantiers.
+
+⚠️ **Risque à anticiper** : si la newsletter devient trop CTA-heavy, elle perd sa valeur « informative bienveillante » que tu as explicitement voulue. **Règle d'équilibre** : ~80% contenu informatif pur / ~20% CTAs discrets en fin de section. Pas de pop-up agressifs, pas de bannière qui clignote. Les CTAs doivent se mériter par la qualité du contenu.
+
+✅ **Cohérence écosystème** : couplage naturel avec #1 (Bilan), #7 (Business `/business`), #3 (canal de distribution prospection). **Tous les chantiers convergent maintenant vers le pipeline Lead du chantier #1.**
+
+### Enrichissement chantier #8 — Newsletter devient publique + lead-magnet
+
+#### Trois versions de la newsletter
+
+| Version | Audience | Contenu | Hébergement |
+|---|---|---|---|
+| **Privée clients** | Clients souscrits | Full content + tips perso | Email + page web auth |
+| **Privée distri** | Distri équipe | Full content + business tips | Email + in-app |
+| **Publique partageable** ⭐ | Public (groupes FB, DM Insta, WhatsApp...) | **Teaser** : ~70% du contenu, sections clés masquées behind soft-paywall (« lis la suite en faisant ton bilan en 2 min ») | Page web publique `/news/:slug` avec OG tags optimisés |
+
+**Pourquoi un teaser pour la version publique** : créer une vraie incitation à convertir (bilan ou popup lead), tout en livrant assez de valeur pour donner envie. Pure stratégie content marketing.
+
+#### Règle des 2 CTAs systématiques
+
+**Toute newsletter publique** doit contenir **dans CHAQUE section ou en pied** :
+
+**CTA #1 — Bilan online (saisonnier)**
+- Texte adaptatif selon la période :
+  - **Mai-juin** (avant été) : « Prêt(e) pour l'été ? Fais ton bilan en 2 min »
+  - **Août-septembre** (avant rentrée) : « Cette rentrée, tu repars du bon pied ? Bilan en 2 min »
+  - **Octobre-novembre** (avant hiver) : « Boost ton immunité avant l'hiver — Bilan en 2 min »
+  - **Janvier-février** : « Nouvelle année, nouveau toi ? Bilan en 2 min »
+  - **Mois neutre** : « Envie de comprendre ton corps ? Bilan en 2 min »
+- Lien direct : `bonline.labase360.com/{slug-coach-newsletter}` ou `/{slug-public}` si newsletter générique La Base 360
+- Tracking : UTM parameters (`?utm_source=newsletter&utm_medium={canal}&utm_campaign={slug-newsletter}`)
+
+**CTA #2 — Opportunité business (lead capture)**
+- Texte : « Tu pensais auto-financer tes vacances / tes projets / ton style de vie ? Découvre notre opportunité » → clic ouvre **popup lead capture** (cf. ci-dessous)
+- Variantes saisonnières du hook :
+  - Mai-juin : « tes vacances »
+  - Août-septembre : « la rentrée des enfants »
+  - Octobre-novembre : « tes cadeaux de Noël »
+  - Janvier-février : « tes projets de l'année »
+
+#### NEW Sous-chantier 7.X — Popup lead capture sur `/business`
+
+À ajouter au chantier #7 (Refonte business). Existant à vérifier : la table `prospect_leads` + edge function `submit-prospect-lead` existent déjà (cf. snapshot) — à étendre, pas dupliquer.
+
+**Comportement** :
+1. Visiteur sur la page newsletter publique clique sur CTA #2 « Auto-financer mes vacances »
+2. Pop-up s'ouvre **AVANT** la redirection vers `/business` :
+
+```
+┌─────────────────────────────────┐
+│  Avant qu'on te montre ça… 👇   │
+│                                  │
+│  Prénom *                        │
+│  [______________]                │
+│                                  │
+│  Téléphone (WhatsApp préféré) *  │
+│  [______________]                │
+│                                  │
+│  Tu viens d'où ?                 │
+│  [______________]                │
+│  (Insta, Facebook, ami, autre…)  │
+│                                  │
+│  ☐ J'accepte d'être recontacté(e)│
+│                                  │
+│  [ Je découvre l'opportunité ]   │
+│                                  │
+│  Pas de spam, pas de revente.    │
+└─────────────────────────────────┘
+```
+
+3. Soumission → insert dans `prospect_leads` (extension table existante) avec :
+   - `firstName`, `phone`, `referral_source` (texte libre Insta/FB/etc.)
+   - `coach_slug` (si newsletter portée par un coach précis) → routing vers ce coach dans le kanban Lead
+   - `utm_source`, `utm_medium`, `utm_campaign` capturés depuis l'URL
+   - `consent_recontact` boolean
+   - `created_at`
+4. Redirection vers `/business` après soumission
+5. **Notif push** au coach (ou admin si lead public) : « Nouveau lead business : {Prénom} via {referral_source} »
+6. Le lead apparaît dans la **même colonne kanban Lead** que les bilans online (chantier #1) — un seul pipeline, plusieurs sources
+
+**Avantages d'unifier le pipeline** :
+- Pas de duplication de système (bilans + leads business = même kanban)
+- Vue unique des conversions par coach
+- Workflow uniforme pour le coach (même actions de relance, mêmes templates)
+- Analytics cohérentes
+
+**Différenciation visuelle dans le kanban** : badge sur la carte Lead :
+- 📋 « Bilan online » (chantier #1)
+- 💼 « Lead business » (sous-chantier 7.X via newsletter)
+- 🎯 « Lead direct » (si on garde des leads autres origines)
+
+**Effort sous-chantier 7.X** : **+3-4 h-agent** sur le chantier #7 existant
+- Composant `<LeadCapturePopup />` réutilisable : 1.5-2 h
+- Extension table `prospect_leads` (champs UTM + coach_slug + consent + source) : 30 min
+- Extension edge function `submit-prospect-lead` (nouveaux champs + notif push coach) : 1 h
+- Intégration dans `/business` au mount (param URL `?leadcapture=1` déclenche popup) : 30 min
+- Routing kanban Lead avec badge `business_lead` : 30 min - 1 h
+
+#### Architecture page Newsletter publique (extension chantier #8)
+
+**Nouvelle route publique** : `labase360.com/news/:slug-newsletter`
+
+**Optimisations partage social** :
+- **Open Graph tags** : `og:title`, `og:description`, `og:image` (visuel généré ou uploadé)
+- **Twitter Card** : `twitter:card="summary_large_image"`
+- **Image preview** : 1200×630 (standard FB/Twitter/WhatsApp link preview)
+- **Mobile-first absolu** : la majorité des partages sera consommée sur mobile depuis groupes FB/Insta
+
+**Templates saisonniers** : 4 squelettes pré-définis dans la table `newsletter_briefs` :
+- `summer-prep` (mai-juin)
+- `back-to-school` (août-septembre)
+- `winter-immunity` (octobre-novembre)
+- `new-year-fresh` (janvier-février)
+- + 8 mois "neutres" qui héritent de patterns plus génériques
+
+**Effort additionnel pour version publique** : **+5-7 h-agent** sur chantier #8
+
+| Étape | Livrable testable | h-agent |
+|---|---|---|
+| **8.8** | Route publique `/news/:slug` + rendu HTML public lisible | 1-2 h |
+| **8.9** | Open Graph tags + image preview auto-générée | 1-2 h |
+| **8.10** | Soft-paywall : sections privées masquées en mode public + teaser CTA | 1 h |
+| **8.11** | Insertion CTAs systématiques (Bilan + Business) avec UTM parameters | 1 h |
+| **8.12** | Templates saisonniers (4 squelettes) dans `newsletter_briefs` | 1 h |
+
+**Total chantier #8 enrichi** : **15-22 h-agent** (au lieu de 10-15 h V1) + **2-4 h Thomas** (rédaction première édition).
+
+### Tracking analytics pour mesurer le ROI marketing
+
+Nouveau besoin : pouvoir mesurer **quelle newsletter** convertit le mieux et **quel canal** rapporte le plus de leads.
+
+**Métriques à tracker** :
+- Taux d'ouverture (email)
+- Taux de clic CTA Bilan
+- Taux de clic CTA Business (popup ouvert)
+- Conversion popup → lead capturé (rempli + soumis)
+- Origine du lead (Insta / FB / WhatsApp / autre via `referral_source`)
+- Conversion lead → bilan complété (cycle complet)
+- Conversion bilan → RDV pris
+- Conversion RDV → client actif
+
+**Tables à enrichir** :
+- `newsletters` : ajouter `view_count`, `bilan_cta_clicks`, `business_cta_clicks`
+- `prospect_leads` : `referral_source`, `utm_source`, `utm_medium`, `utm_campaign`, `coach_slug`, `consent_recontact`
+- `newsletter_recipients` : `opened_at`, `clicked_bilan_at`, `clicked_business_at`
+
+**Page admin** : `/admin/newsletters/:id/stats` avec graphique conversion funnel.
+
+**Effort tracking** : **+2-3 h-agent** sur chantier #8 (intégrable dans étape 8.6 existante).
+
+### Récap impact dump #4 sur la roadmap
+
+| Chantier | Effort avant dump #4 | Effort après dump #4 | Δ |
+|---|---|---|---|
+| #7 (Refonte business) | 9-14 h | **12-18 h** (+ popup lead capture) | +3-4 h |
+| #8 (Newsletter) | 10-15 h | **17-25 h** (+ version publique + tracking + templates saisonniers) | +7-10 h |
+| **Total roadmap** | 85-130 h-agent | **95-144 h-agent** | +10-14 h |
+
+### 4 nouvelles questions Thomas pour valider l'enrichissement
+
+| # | Question | Reco agent |
+|---|---|---|
+| **D4.1** | Newsletter publique = teaser (70% contenu, paywall doux pour inciter à convertir) ou full content gratuit (et on mise sur le volume) ? | **Teaser** (paywall doux), conversion rate supérieur prouvé |
+| **D4.2** | Popup lead capture sur `/business` — tu valides l'idée d'**unifier le pipeline kanban** Lead bilan + Lead business avec badges différenciants, plutôt que de créer 2 systèmes séparés ? | Oui, unifier (un seul kanban = un seul workflow) |
+| **D4.3** | Templates saisonniers : 4 squelettes (été / rentrée / hiver / année neuve) + 8 mois "neutres", ou tu veux 12 templates dédiés un par mois ? | **4 saisonniers + 8 neutres** (économie effort pour ROI quasi équivalent) |
+| **D4.4** | La newsletter publique porte-t-elle un **nom/marque dédié** ? (ex : « La Base 360 News », « La Base 360 Mag », « Les Conseils La Base 360 ») ou pas de nom particulier ? | « **La Base 360 News** » (court, memo, scalable, branding fort) |
 
 ---
 
