@@ -37,6 +37,9 @@ Pour chaque idée, l'agent structure :
 | **#6** | Pédagogie | Vidéos pédagogiques YouTube + intégration app (4 étapes dev) | 3-4 h | 🌳 prêt à coder |
 | **#7** | Business | Refonte business `/business` + popup lead capture (8 étapes) | 12-18 h | 🌳 prêt à coder |
 | **#8** | Marketing / Acquisition | Newsletter mensuelle (privée + publique lead-magnet, 12 étapes) | 17-25 h V1 | 🌿 mûr — 4 questions ouvertes (D4.1-4) + 6 questions originales |
+| **#9** | Dette technique | Refacto `NewAssessmentPage.tsx` (4325 L) — **À FAIRE AVANT #1** | 10-15 h | 🌳 prêt à coder |
+| **#10** | UX / Crédibilité | Badges + certifications coach visibles publiquement | 3-4 h | 🌳 prêt à coder |
+| **#11** | Marketing / Preuve sociale | Témoignages clients vérifiés (système avis + carrousel) | 6-8 h | 🌳 prêt à coder |
 | Phase 0 | Bug fix | Fix mobile chat history (3 étapes) | 30 min - 1 h | 🌳 prêt à coder |
 | Phase 2 | Renommage | Code source "La Base 360" coopératif (7 étapes) | 2-4 h | 🌳 prêt à coder |
 
@@ -1166,7 +1169,7 @@ Mes estimations précédentes en "X jours" étaient en **jours-homme classiques*
 - En cas d'imprévu : on s'arrête, on documente, on repart proprement
 - Pas de « je commence le suivant pendant que celui-ci finit » — ça mélange les pinceaux
 
-### Ordre de bataille recommandé (11 phases)
+### Ordre de bataille recommandé (15 phases — révisé après dump #5)
 
 | # | Phase | h-agent | h-Thomas | Type |
 |---|---|---|---|---|
@@ -1174,20 +1177,29 @@ Mes estimations précédentes en "X jours" étaient en **jours-homme classiques*
 | **1** | Achat + config DNS `labase360.com` | — | 1-2 h | Infra Thomas |
 | **2** | Renommage code source "La Base 360" (coopératif) | 2-4 h | 30 min validation + 15 min rename repo GitHub | Code |
 | **3** | Audits légers (`/clients` V2 kanban, `/outils-prospection`) | 1-2 h | 5 min lecture rapport | Audit |
-| **4** | **Chantier #1 — Bilan Online + Lead pipeline** | **20-31 h** | 3-5 h (validation copy, choix produits, slug coach) | Code |
-| **5** | **Chantier #3 — Refonte prospection mobile-first** | **14-22 h** (V1 sans tracking) | 2-3 h (rédaction scripts FR+EN initiaux) | Code |
-| **6** | **Chantier #7 — Refonte business `/business` + popup lead capture** | **12-18 h** | 2-3 h (validation copy rebrandé) | Code |
-| **7** | **Chantier #5 — i18n + multi-monnaie** | **16-23 h** | 5-8 h (catalogue produits par marché ~1600 lignes + relecture traductions) | Code + Contenu |
-| **8** | **Chantier #2 — Check-list quotidienne Co-pilote** | **7-9 h** | 30 min validation | Code |
-| **9** | **Chantier #4 — Lien Cahier de bord** (glissé dans #2) | 30 min | — | Code |
-| **10** | **Chantier #6 — Vidéos pédagogiques + intégration app** | 3-4 h dev | 10-15 h prod vidéos | Code + Contenu |
-| **11** | **Chantier #8 — Newsletter mensuelle privée + publique lead-magnet** | 17-25 h | 2-4 h (rédaction 1ère newsletter mai-juin) | Code + Contenu |
-| **12** | MAJ `CLAUDE.md` roadmap | 30 min | 5 min relecture | Doc |
+| **4** | ⚠️ **Chantier #9 — Refacto `NewAssessmentPage.tsx` (DETTE TECHNIQUE)** — bloquant pour #1 | **10-15 h** | 30 min recette régression | Code |
+| **5** | **Chantier #1 — Bilan Online + Lead pipeline** (réutilise les steps refactorés en #9) | **20-31 h** | 3-5 h (validation copy, choix produits, slug coach) | Code |
+| **6** | **Chantier #10 — Badges + certifications coach visibles** (quick win après #1) | **3-4 h** | 5 min validation | Code |
+| **7** | **Chantier #3 — Refonte prospection mobile-first** | **14-22 h** | 2-3 h (rédaction scripts FR+EN initiaux) | Code |
+| **8** | **Chantier #7 — Refonte business `/business` + popup lead capture** | **12-18 h** | 2-3 h (validation copy rebrandé) | Code |
+| **9** | **Chantier #11 — Témoignages clients vérifiés** (alimente #7 et #8) | **6-8 h** | 1-2 h (relance 1ers clients) | Code + Contenu |
+| **10** | **Chantier #5 — i18n + multi-monnaie** | **16-23 h** | 5-8 h (catalogue produits par marché ~1600 lignes + relecture traductions) | Code + Contenu |
+| **11** | **Chantier #2 — Check-list quotidienne Co-pilote** + #4 lien Cahier de bord | **7-9 h** | 30 min validation | Code |
+| **12** | **Chantier #6 — Vidéos pédagogiques + intégration app** | 3-4 h dev | 10-15 h prod vidéos | Code + Contenu |
+| **13** | **Chantier #8 — Newsletter mensuelle privée + publique lead-magnet** | 17-25 h | 2-4 h (rédaction 1ère newsletter mai-juin) | Code + Contenu |
+| **14** | MAJ `CLAUDE.md` roadmap + lancement vague 2 (backlog A2-A6 + I1-I10) | 30 min + à étaler | — | Doc |
 
-### Totaux honnêtes (révisés après dump #4 — newsletter publique + lead capture)
+### Totaux honnêtes (révisés après dump #5 — chantiers #9 + #10 + #11)
 
-- **Total h-agent** : ~**95 à 144 heures** de codage agent effectif
-- **Total h-Thomas** : ~**27 à 44 heures** dispersées sur la durée totale
+**Vague 1 (les 11 chantiers + 4 phases prep)** :
+- **Total h-agent** : ~**114 à 171 heures** de codage agent effectif
+- **Total h-Thomas** : ~**29 à 47 heures** dispersées sur la durée totale
+
+**Vague 2 (backlog différé : A2-A6 + I1-I10)** :
+- **Total h-agent additionnel** : ~**150 à 220 heures**
+- **À programmer** après livraison stable de la vague 1, en priorisant selon ROI observé
+
+**Grand total agent (vague 1 + vague 2)** : ~**265 à 390 heures** sur l'ensemble du roadmap brainstormé.
 - **Calendrier réaliste possible** :
   - **Sprint intensif** (Thomas dispo plusieurs h/jour pour valider) : ~**3 à 4 semaines** calendaires
   - **Régulier** (Thomas 1-2 h/jour) : ~**6 à 10 semaines** calendaires
@@ -1690,7 +1702,178 @@ Nouveau besoin : pouvoir mesurer **quelle newsletter** convertit le mieux et **q
 
 ---
 
-## 🏁 Fin du brainstorm Égypte (2026-05-10)
+## 🆕 Dump #5 (2026-05-10 soir) — Réflexion stratégique : 3 chantiers actés + backlog vague 2
+
+Sur demande Thomas « vue les chantiers et l'analyse de l'app, qu'est-ce que tu proposes ? », l'agent a synthétisé 9 propositions (3 upsells, 3 ajustements, 3 idées neuves). Thomas valide explicitement A1, U3, U1 pour exécution immédiate, et confirme que **toutes les autres idées seront faites** (vague 2 différée).
+
+### Chantier #9 — Refacto `NewAssessmentPage.tsx` (DETTE TECHNIQUE URGENTE)
+
+**Domaine** : Dette technique / Refacto avant feature
+
+**Pourquoi c'est critique**
+- 4325 lignes dans un seul fichier — record de la codebase
+- 14 étapes de bilan inline dans un seul composant
+- Si on ajoute le formulaire bilan online (chantier #1) sans refacto, on va soit dupliquer la logique (mauvais), soit empirer le monstre (très mauvais)
+- Beaucoup de composants atomiques sont déjà extraits (`Field`, `ChoiceGroup`, `BodyMetricCard`, `SelectableProductCard`, `QuantityStepper`, etc.) — la grosse part du travail consiste à **sortir les 14 steps en sous-composants** + extraire le state machine en hook dédié
+
+**Architecture cible**
+
+```
+src/pages/NewAssessmentPage.tsx          (300-500 L max — orchestration uniquement)
+src/components/assessment/steps/
+   ├─ HeroStep.tsx
+   ├─ ConceptStep.tsx
+   ├─ IdentityStep.tsx
+   ├─ ObjectiveStep.tsx
+   ├─ SportProfileStep.tsx          (visible si objective=sport)
+   ├─ CurrentIntakeStep.tsx         (visible si objective=sport)
+   ├─ HabitsStep.tsx
+   ├─ BodyScanStep.tsx
+   ├─ HistoryStep.tsx
+   ├─ ProtocolStep.tsx
+   ├─ ProgrammeStep.tsx
+   ├─ FollowUpStep.tsx
+   ├─ ClientNotesStep.tsx
+   └─ ThankYouStep.tsx (déjà séparé)
+src/hooks/
+   └─ useAssessmentForm.ts          (state + transitions + validation)
+```
+
+**Étapes franches**
+
+| Étape | Livrable testable | h-agent |
+|---|---|---|
+| **9.1** | Audit complet `NewAssessmentPage.tsx` : cartographier les 14 steps, identifier le state partagé, lister les imports communs | 1-2 h |
+| **9.2** | Extraire `useAssessmentForm` hook (state + setters + validation par step + persist IndexedDB) — test : le hook fonctionne en isolation | 2-3 h |
+| **9.3** | Extraire les 5 premiers steps en sous-composants (Hero, Concept, Identity, Objective, SportProfile) — test : étapes fonctionnent identiques à avant | 2-3 h |
+| **9.4** | Extraire les 5 steps suivants (CurrentIntake, Habits, BodyScan, History, Protocol) | 2-3 h |
+| **9.5** | Extraire les 4 derniers steps (Programme, FollowUp, ClientNotes, ThankYou) | 2-3 h |
+| **9.6** | NewAssessmentPage devient orchestrateur (~300-500 L), tests régression manuels sur tout le parcours bilan | 1-2 h |
+| **9.7** | Aussi refacto léger `EditInitialAssessmentPage.tsx` (1192 L, hérite des mêmes patterns) — réutilise les nouveaux step components | 2-3 h |
+
+**Bénéfices** :
+- Bilan online (chantier #1) réutilise directement `IdentityStep`, `ObjectiveStep`, `HabitsStep` (~50% du formulaire bilan online déjà fait)
+- Maintenance future divisée par 5
+- Tests unitaires possibles par step
+- `EditInitialAssessmentPage` (1192 L) hérite des mêmes composants → divise sa taille par 3
+
+**Effort total : 10-15 h-agent** (sans risque fonctionnel si tests régression manuels OK avant chaque commit)
+
+**Statut** : 🌳 **prêt à coder. À insérer dans la roadmap entre la phase 3 (audits) et la phase 5 (chantier #1)**.
+
+### Chantier #10 — Badges + certifications coach visibles publiquement
+
+**Domaine** : UX / Crédibilité / Conversion
+
+**Pourquoi**
+- Quand un prospect arrive sur la page Welcome bilan online ou la page `/business`, il ne connaît pas le coach
+- Afficher le **niveau Herbalife** (Distri/SC/SB/Sup/Présidence), le **nombre de bilans réalisés**, l'**ancienneté**, et un **avis moyen** crée une crédibilité immédiate
+- La data existe déjà : `users.currentRank`, agrégat `assessments` count, `users.created_at`
+
+**Composant cible**
+
+```
+<CoachCredibilityBadges userId={coachId} variant="welcome|business|newsletter" />
+```
+
+Avec selon le variant, affichage horizontal compact ou grid :
+
+```
+🏆 Senior Consultant   📋 142 bilans réalisés   ⭐ 4.9/5 (38 avis)   🗓️ 18 mois d'expérience
+```
+
+**Étapes franches**
+
+| Étape | Livrable testable | h-agent |
+|---|---|---|
+| **10.1** | RPC SQL `get_coach_credibility(user_id)` qui agrège rank + count bilans + ancienneté + (préparation pour avis chantier #11) | 30 min - 1 h |
+| **10.2** | Composant `<CoachCredibilityBadges />` avec 3 variants visuels | 1-2 h |
+| **10.3** | Intégration sur Welcome bilan online (chantier #1) + page `/business` (chantier #7) + footer newsletter publique (chantier #8) | 30 min - 1 h |
+| **10.4** | Test multi-coach + responsive mobile + announcement | 30 min - 1 h |
+
+**Effort total : 3-4 h-agent**
+
+**Statut** : 🌳 prêt à coder. À insérer **juste après le chantier #1** (besoin de Welcome bilan online en place pour intégrer).
+
+### Chantier #11 — Témoignages clients vérifiés (preuve sociale)
+
+**Domaine** : Marketing / Conversion / Preuve sociale
+
+**Pourquoi**
+- Les pages publiques (newsletter, bilan, business) convertissent 20-40% mieux avec témoignages visibles
+- Les leads générés via la newsletter (chantier #8) seront 2× plus chauds avec témoignages affichés
+- Coût marginal : faible (table simple + UI carrousel + email auto)
+
+**Architecture**
+
+**Tables nouvelles** :
+- `client_testimonials` : id, client_id, content, rating (1-5), photo_consent, video_url?, status (`pending`/`approved`/`rejected`), created_at, approved_at, approved_by
+- RLS : SELECT public si `status='approved'` + `photo_consent=true`, INSERT par client_app token, UPDATE admin only
+
+**Flow** :
+1. **Email/notif auto J+60** après création bilan client : « Comment ça se passe ? Partage ton retour en 30 sec »
+2. Lien vers form public `/temoignage/:client_token` : champ texte + rating étoiles + checkbox photo consent + (V2) upload vidéo
+3. Soumission → status `pending`
+4. **Page admin `/admin/testimonials`** : modération (approve / reject)
+5. Affichage `approved` en carrousel sur :
+   - Welcome bilan online (avant le bouton « Commencer »)
+   - Page `/business` (section social proof)
+   - Newsletter publique (section avant CTAs finaux)
+
+**Étapes franches**
+
+| Étape | Livrable testable | h-agent |
+|---|---|---|
+| **11.1** | Migration SQL `client_testimonials` + RLS (test : insert via service_role OK, select public filtré OK) | 1 h |
+| **11.2** | Page form public `/temoignage/:token` (text + rating + consent) — réutilise pattern bilan online | 1-2 h |
+| **11.3** | Edge function `submit-testimonial` (validation token + insert + notif admin) | 30 min - 1 h |
+| **11.4** | Page admin `/admin/testimonials` (liste + actions approve/reject + preview) | 1-2 h |
+| **11.5** | Cron `request-testimonial` J+60 après bilan : envoi email/push avec lien | 1 h |
+| **11.6** | Composant `<TestimonialsCarousel />` (réutilisable Welcome / Business / Newsletter) | 1-2 h |
+| **11.7** | Recette + announcement | 30 min |
+
+**Effort total : 6-8 h-agent + ~1-2 h Thomas** (relance manuelle des premiers clients pour obtenir le 1er volume d'avis avant que le cron J+60 prenne le relais)
+
+**Statut** : 🌳 prêt à coder. À insérer **après les chantiers #1, #7, #8** (besoin des 3 emplacements d'affichage en place).
+
+---
+
+## 📦 Backlog Vague 2 — toutes les autres idées (à programmer plus tard)
+
+Thomas a explicitement dit « toutes les idées sont vraiment bonnes et on les fera toutes ». Je consigne le backlog pour ne rien perdre, à programmer après livraison stable de la vague 1.
+
+### Ajustements complémentaires
+
+| # | Nom | Effort h-agent | Priorité |
+|---|---|---|---|
+| **A2** | Système intelligent de notifications (anti-fatigue push, bundling, plages horaires, prefs fines) | 8-12 h | Élevée — multiplie ROI #2 |
+| **A3** | Onboarding client PWA (4 sections welcome) — déjà mémo CLAUDE.md | 12-16 h | Moyenne — réduit churn |
+| **A4** | Dashboard admin "santé du business" (MRR, churn, NPS, LTV) | 8-12 h | Moyenne |
+| **A5** | Plan de relance auto post-rupture programme (lifecycle stopped → email 7j/30j/90j) | 4-6 h | Faible — quick win |
+| **A6** | Leaderboard équipe gamifié dans `/team` (compétition saine PV/bilans/leads) | 4-6 h | Faible — quick win |
+
+### Idées nouvelles différenciatrices
+
+| # | Nom | Effort h-agent | Priorité |
+|---|---|---|---|
+| **I1** | **La Base 360 AI** — FAB chat ChatGPT-like avec contexte client auto (résumé, suggestion message, génération réponse) | 25-35 h | **Très élevée** — différenciateur majeur, déjà mémo CLAUDE.md |
+| **I2** | Programme « 100 jours » nouveaux clients (style Duolingo : tip quotidien + check-in 3-tap + récompenses) | 20-30 h | Élevée — réduction churn early-stage |
+| **I3** | Gamification client visible (niveaux + badges sur app PWA, table `client_xp_events` déjà câblée) | 10-15 h | Élevée — engagement passif |
+| **I4** | FAQ chatbot upgrade Anthropic (remplace `ClientFaqChatbot` statique) | 10-15 h | Moyenne |
+| **I5** | Calendrier éditorial réseaux sociaux (pack mensuel visuels + posts pré-rédigés) | 15-20 h | Moyenne — couplé à #3 prospection |
+| **I6** | Live coaching sessions visio groupe (RDV mensuels Q&A + motivation) | 4-6 h | Faible — quick win |
+| **I7** | Bibliothèque de recettes par programme (table + UI + saisie contenu Thomas) | 15-20 h | Moyenne — différenciation |
+| **I8** | Programme de fidélité produits (points achat répété → réduc/produit offert) | 10-15 h | Moyenne |
+| **I9** | Marketplace d'expériences sociales locales (café-conférence, atelier cuisine, course matinale) | 12-16 h | Faible — pour clubs locaux |
+| **I10** | Intégration smart watch / health data (Apple Health + Google Fit auto-import) | 25-35 h | Faible — gros effort, niche |
+
+**Total backlog vague 2 estimé** : ~150-220 h-agent supplémentaires.
+
+À prioriser au fur et à mesure selon ROI observé après livraison vague 1.
+
+---
+
+
 
 ### ✅ Mockup newsletter validé en concept (2026-05-10 après-midi)
 
