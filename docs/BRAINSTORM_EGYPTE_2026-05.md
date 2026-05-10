@@ -1054,8 +1054,85 @@ J'analyse les marchés où Herbalife a un volume + une croissance significatifs 
 | # | Question | En attente de |
 |---|---|---|
 | Q5.1 (réponse) | Validation par Thomas de ma liste 5 langues V1 (FR/EN/ES/PT/TR) + extension V2 (DE/IT/HI/AR) ? Et de ma reco "FR+EN pour scripts prospection au démarrage" ? | Réponse Thomas |
-| **Q5.5** | "Page business" pour i18n = `/opportunite`, `/simulateur`, ou nouveau ? | Thomas a dit « j'envoie après » |
-| **Q meta** | Chantier dédié de propagation du renommage "La Base 360" dans le code source — à programmer avant ou après chantier #5 i18n ? | Thomas n'a pas encore tranché |
+
+---
+
+## 🆕 Dump #2 (suite) — réponses Thomas Q5.5 + Q meta (2026-05-09 nuit)
+
+### Q5.5 — Page business pour i18n
+
+✅ **Validé** : la page business cible = `/opportunite` + `/simulateur` (les 2 pages publiques actuelles du funnel).
+
+⚠️ **Mais** Thomas pose une sous-question stratégique :
+
+> « à voir si on fait une vraie architecture pour ça »
+
+Il suggère implicitement qu'avant de partir traduire ces 2 pages telles quelles en 5 langues, il faudrait **réfléchir à leur cohérence d'ensemble** (sont-elles bien liées ? bien structurées ? scénarisées ?). Logique : i18n une architecture pertinente plutôt que 2 pages dispersées.
+
+#### Sous-chantier potentiel — Refonte architecture section business
+
+**Constat sur l'existant** :
+- `/opportunite` : 1020 lignes, page standalone funnel business educatif (V1 sans nom marque, créée 2026-11-07)
+- `/simulateur` : 1012 lignes, simulateur revenus interactif funnel V2
+- Ces 2 pages ne sont **pas explicitement reliées** (pas de fil narratif entre elles)
+- Pas de **landing business** unique qui orchestre tout
+- Avec le rebranding "La Base 360", il faut probablement aussi **réécrire le copy** sur ces pages
+
+**3 options d'architecture business cohérente** (à arbitrer Thomas) :
+
+| Option | Concept | Pros | Cons |
+|---|---|---|---|
+| **A — Funnel séquentiel 3 étapes** | Landing `/business` → CTA → `/opportunite` (comprendre) → CTA → `/simulateur` (calculer) → CTA → contact | Fil narratif clair, mesurable funnel-style, conversion progressive | 3 pages à maintenir + animations transitions |
+| **B — Page unique scroll narratif** | `/business` unique avec sections : Hero → Pourquoi La Base 360 → L'opportunité → Simulateur intégré → Témoignages → CTA contact | Tout-en-un, chargement rapide, mobile-friendly, pas de saut de page | Page très longue, simulateur peut alourdir le bundle |
+| **C — Hub business + sous-pages** | `/business` = hub avec cartes (style hub `/developpement`) → opportunité, simulateur, témoignages, FAQ. Chaque carte = sous-page autonome | Modulaire, navigation libre, facile à enrichir | Moins de fil narratif, plus de clics |
+
+**Reco agent** : **Option B** (page unique scroll narratif). Raisons :
+- Mobile-first (pas de friction de chargement entre pages)
+- Conversion supérieure prouvée pour les funnels business avec scroll narratif
+- 2 pages actuelles (`/opportunite` + `/simulateur`) fusionnées en 1 = -1 page à i18n = -20% effort traduction
+- Permet d'intégrer le **simulateur en composant inline** plutôt qu'en page dédiée
+- Architecture compatible i18next (1 fichier de traduction = 1 page)
+
+**Effort estimé refonte business V2** : **L — 3-4 jours**
+- Audit `/opportunite` + `/simulateur` actuels : ~2h
+- Maquette + flow narratif (Hero → Pourquoi → Opportunité → Simulateur → Social proof → CTA) : ~1 j
+- Implémentation page unique + intégration simulateur en composant : ~1.5 j
+- Copy rebrandé "La Base 360" : ~0.5 j (Thomas + relecture)
+- Polish + announcement : ~0.5 j
+
+**Statut** : 🌱 brut — la sous-question est levée par Thomas, à acter par sa réponse.
+
+### Q meta — Renommage code source "La Base 360"
+
+✅ **Décision Thomas** : le renommage du code source aura lieu **après l'achat du domaine** (au retour PC). Sera fait en **mode coopératif guidé** : agent guide Thomas étape par étape, on applique ensemble les changements et la redirection.
+
+**Implication ordonnancement** :
+- Au retour PC, ordre suggéré :
+  1. Achat + config DNS du domaine `labase360.com` (Thomas seul)
+  2. Renommage code source coopératif (agent + Thomas) — chantier dédié `feat/rename-la-base-360`
+  3. Lancement chantiers fonctionnels (#1, #3, etc.) sur la base déjà renommée
+- Cette séquence évite : (a) i18n d'un nom qui va changer, (b) traductions à refaire, (c) liens marketing qui pointent sur l'ancien nom
+
+**Périmètre du renommage code (à confirmer plus tard)** :
+- `package.json` : `name`, `description`
+- `CLAUDE.md` : header + occurrences
+- `index.html` : `<title>`, `<meta>`
+- `src/**/*.tsx` : occurrences UI dans composants (hero, footer, emails, modals)
+- Branches Git ? (option : créer nouvelles branches `production`, `develop` avec nouveau nom plutôt que renommer les anciennes)
+- Repo GitHub ? (rename repo via paramètres)
+- Fichiers config (`vercel.json`, etc.)
+
+Effort estimé : **M — 4-6h** (recherche + remplacement + validation + tests régression).
+
+---
+
+## ❓ Questions encore en suspens (au 2026-05-09 nuit)
+
+| # | Question | En attente de |
+|---|---|---|
+| **Q5.1 validation** | Tu confirmes la liste 5 langues V1 (FR/EN/ES/PT-BR/TR) + la reco scripts FR+EN au démarrage ? | Toi (validation explicite) |
+| **Q5.5 bis (NEW)** | Tu valides l'idée de **refondre `/opportunite` + `/simulateur` en une page unique `/business`** (Option B scroll narratif) avant l'i18n ? Ou on reste sur 2 pages séparées et on i18n tel quel ? | Toi |
+| Q meta (acté) | Renommage code après achat domaine, en coopératif guidé. Pas d'action immédiate. | — (résolu) |
 
 ---
 
