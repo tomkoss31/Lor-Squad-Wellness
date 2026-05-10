@@ -1,4 +1,9 @@
-# Architecture Snapshot — Lor'Squad Wellness
+# Architecture Snapshot — La Base 360
+
+> Note de nommage : le repo et le code source utilisent encore l'ancien
+> nom "Lor'Squad Wellness" (package.json, CLAUDE.md, branches). Ce
+> renommage n'est PAS encore propagé au code — tâche à part. Tout
+> nouveau document / nouvelle UI doit utiliser **La Base 360**.
 
 > **Date** : 2026-05-09
 > **Stack** : React 18 + Vite + TypeScript / Supabase (Postgres + Edge Functions Deno) / PWA
@@ -298,7 +303,7 @@ Pour situer rapidement où une nouvelle idée se branche :
 ### Roadmap antérieure encore valide
 
 - 🔴 **Onboarding client PWA** (1.5-2j) — sections welcome `/client/:token`, migration `onboarded_at`
-- 🔴 **Lor'Squad AI** (3-4j) — FAB chat ChatGPT-like, edge function Anthropic API, table `ai_usage_log`
+- 🔴 **La Base 360 AI** (3-4j) — FAB chat ChatGPT-like, edge function Anthropic API, table `ai_usage_log`
 
 ### Mini-chantier en attente
 

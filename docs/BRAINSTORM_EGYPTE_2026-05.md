@@ -514,7 +514,7 @@ Critères : ≤ 5 items pour tenir en 5 minutes, **haut impact business**, **act
 
 ```
 ┌─────────────────────────────────┐
-│  [Logo Lor'Squad gold]          │
+│  [Logo La Base 360 gold]         │
 │                                  │
 │  Nous sommes heureux             │
 │  de te voir ici 🥰               │  ← H1 Syne 28px, gold
@@ -532,7 +532,7 @@ Critères : ≤ 5 items pour tenir en 5 minutes, **haut impact business**, **act
 │                                  │
 │  ─────────────────────────       │
 │                                  │
-│  Lor'Squad, c'est :              │  ← H2 Syne 18px
+│  La Base 360, c'est :            │  ← H2 Syne 18px
 │  • Un bilan personnalisé         │
 │    pour comprendre ton corps     │
 │  • Un coach humain qui           │
@@ -552,7 +552,7 @@ Critères : ≤ 5 items pour tenir en 5 minutes, **haut impact business**, **act
 **Copy à valider Thomas** :
 - **Hero** : « Nous sommes heureux de te voir ici 🥰 » ✅ (déjà acté)
 - **Si coach** : « **{Prénom}** va t'accompagner » → personnalise visuellement
-- **3 bullets Lor'Squad** : à raffiner avec Thomas (les miens sont génériques, faut le ton Lor'Squad)
+- **3 bullets La Base 360** : à raffiner avec Thomas (les miens sont génériques, faut le ton La Base 360)
 - **CTA** : « Commencer mon bilan » + microcopy 2 min
 
 **Comportement** :
@@ -578,7 +578,7 @@ Après que la personne a cliqué "Envoyer mon bilan", elle atterrit sur une **pa
 │  Merci {Prénom} ! 🙏             │  ← H1 Syne 32px
 │                                  │
 │  Ton bilan est arrivé chez       │
-│  Thomas K.                       │  ← (ou "chez l'équipe Lor'Squad"
+│  Thomas K.                       │  ← (ou "chez l'équipe La Base 360"
 │                                  │     si bilan libre)
 │  Il va l'analyser et te          │
 │  recontacter sous 48h max.       │
@@ -601,7 +601,7 @@ Après que la personne a cliqué "Envoyer mon bilan", elle atterrit sur une **pa
 
 **Variantes selon contexte** :
 - Si **bilan dirigé vers coach** : « Ton bilan est arrivé chez {Prénom Coach}. Il va te recontacter sous 48h max. »
-- Si **bilan libre admin** : « Ton bilan est arrivé chez l'équipe Lor'Squad. Un coach adapté à ton profil va te répondre rapidement. »
+- Si **bilan libre admin** : « Ton bilan est arrivé chez l'équipe La Base 360. Un coach adapté à ton profil va te répondre rapidement. »
 
 **Pourquoi**
 - **Rassurance immédiate** : « j'ai bien envoyé, quelqu'un va me répondre »
@@ -805,17 +805,123 @@ Permettre à un distri de **recruter à l'étranger** (ex : Inde) en faisant en 
 
 ---
 
-## 📊 Roadmap mise à jour avec compléments dump #1
+---
+
+## 🆕 Dump #2 (2026-05-09 fin de journée Égypte)
+
+### Décision N1 — Renommage projet
+
+✅ **Le projet s'appelle désormais "La Base 360"** (et non plus "Lor'Squad" / "Lor'Squad Wellness" / "Lor Académie").
+
+**À retenir pour l'agent** : ne JAMAIS écrire "Lor'Squad" ni "Lor Académie" dans tout nouveau document, copy UI, message marketing, ou contenu utilisateur. Toujours **"La Base 360"**.
+
+**Note technique** : le repo, `package.json`, `CLAUDE.md`, branches, etc. utilisent encore l'ancien nom dans le code source. **Le renommage du code n'est pas dans le scope actuel** (faudra un chantier dédié de propagation : repo rename, package.json, CLAUDE.md, occurrences UI dans les composants). À traiter séparément avec précaution (impacts liens externes, SEO, branding).
+
+### Décision N2 — Couplage chantier #1 ↔ #3 confirmé
+
+✅ Le **bilan online** est aussi un **outil de prospection froide**. Cas d'usage validé Thomas : « je peux partager le lien via une conversation sur un groupe Facebook régime par exemple ».
+
+**Implication** : dans le chantier #3 (Prospection), le **lien du bilan coach personnalisé** (`labase360.com/bonline/{slug-coach}` à confirmer URL finale) doit être **disponible en copier-coller** dans chaque flow de profil prospection. C'est l'**outil principal de conversion** pour la prospection froide.
+
+### Décision N3 — Onglet Prospection dédié dans l'app coach
+
+✅ Thomas veut un **onglet "Prospection" complet et structuré** dans l'app coach, mobile-first, qui guide le distri étape par étape.
+
+**Exemple parfait UX donné par Thomas** :
+> « Prospection > perte de poids > groupe Facebook > copier un message rapide étapes 1-2-3 + lien bilan du coach prêt à copier »
+
+**Hiérarchie cible** :
+```
+Prospection
+   ├─ Perte de poids
+   │   ├─ Groupe Facebook  →  message 1, 2, 3 + lien bilan coach
+   │   ├─ DM Instagram     →  message 1, 2, 3 + lien bilan coach
+   │   ├─ Telegram         →  message 1, 2, 3 + lien bilan coach
+   │   └─ SMS              →  message 1, 2, 3 + lien bilan coach
+   ├─ Sportif              (même structure)
+   ├─ Business             (même structure)
+   └─ [+ profils ajoutés admin]
+```
+
+**Position dans l'app — à arbitrer (question ouverte)** :
+- Option 1 : **nouvelle entrée sidebar "Prospection"** (mais on dépasse les 9 items de la règle Option B…)
+- Option 2 : **renommer/refondre `/outils-prospection`** existant pour absorber ce nouveau module (cohérent, évite doublon)
+- Option 3 : **nouvelle carte dans le hub `/developpement`** qui pointe vers `/outils-prospection` enrichi
+- Option 4 : **lien rapide depuis Co-pilote** (bouton CTA "Prospecter maintenant" qui ouvre le module)
+
+**Reco agent** : combinaison **Option 2 + Option 4**. Refondre `/outils-prospection` (déjà 863 L, on ne crée pas de doublon) en lui donnant cette nouvelle structure mobile-first, et ajouter un lien rapide depuis Co-pilote pour discoverability (cf. note constat #6 plus bas).
+
+**Cahier des charges UX mobile-first** (validé Thomas) :
+- ≤ 3 taps pour arriver au message à copier
+- Boutons "Copier le message" + "Copier le lien bilan" séparés et énormes
+- Microcopy guidant : « Étape 1 : ouvre Facebook Étape 2 : trouve un groupe perte de poids Étape 3 : colle ton message »
+- Aucune navigation complexe, tout linéaire
+
+**Doublon à vérifier au retour PC** (audit léger ~30 min) :
+- `/outils-prospection` existant : qu'est-ce qu'il contient déjà ? Si déjà cette logique → on enrichit. Sinon → refonte.
+
+### Idée N4 — Chantier #6 : Vidéos pédagogiques YouTube + intégration app
+
+**Domaine** : Pédagogie produit / Discoverability / Onboarding distri
+
+**Description** (idée brute Thomas)
+- Thomas va créer des **vidéos pédagogiques** de 3 à 5 minutes maximum, expliquant chaque onglet de l'app
+- Hébergées sur une **chaîne YouTube dédiée "La Base 360"**
+- Intégration dans l'app : chaque onglet/feature aura un **lien vers la vidéo correspondante** (icône ❓ ou "Voir le tuto")
+- Thomas s'occupe de **produire les vidéos lui-même au retour** — c'est le côté contenu, pas dev
+
+**Pourquoi**
+> Citation Thomas : « j'ai l'impression que pas beaucoup de personnes utilisent l'application et ne vont dans aucun onglet alors qu'il y a tellement de richesse dedans »
+
+C'est un problème de **discoverability** réel. Sans onboarding visuel ni rappel pédagogique, les distri ne découvrent pas les features. Les vidéos = **prof particulier asynchrone** disponible 24/7.
+
+**Côté dev** (ce que l'agent fait)
+- Étendre la table `app_announcements` ou créer `feature_tutorials (feature_key, video_url, duration, thumbnail)`
+- Composant `<TutorialLink featureKey="prospection-perte-de-poids" />` à embedder dans chaque page/onglet (icône discrète)
+- Au clic : modale qui charge la vidéo YouTube (iframe embed) sans quitter l'app
+- Page `/developpement/tutos` qui liste toutes les vidéos avec progression (vues / non vues)
+
+**Effort dev** : **M — 3-4 heures** (juste le système de liaison, Thomas fournit les vidéos)
+
+**Côté contenu** (ce que Thomas fait)
+- Production vidéos : ~30 min par vidéo × ~15-20 onglets = **~10-15h de prod**
+- À faire **au retour, pas sur mobile**
+
+**Statut** : 🌱 brut côté dev (système simple à coder), 🌱 brut côté contenu (à produire post-PC). Pas urgent, mais **gros levier d'adoption**.
+
+### Constat N5 — Discoverability (problème transverse)
+
+> Citation Thomas : « j'ai l'impression que pas beaucoup de personnes utilisent l'application et ne vont dans aucun onglet alors qu'il y a tellement de richesse dedans »
+
+Ce constat n'est pas un chantier en soi mais **un fil rouge à garder en tête** sur tous les chantiers à venir. Il pointe vers plusieurs leviers déjà identifiés ou à activer :
+
+| Levier | Statut |
+|---|---|
+| Hub `/developpement` (Option B cards) | ✅ Existe déjà — sous-utilisé ? À auditer |
+| Annonces `app_announcements` (cloche header) | ✅ Existe déjà — utilisée ? |
+| Chantier #2 (check-list quotidienne) | 🔜 Va forcer le passage par les onglets clés |
+| Chantier #6 (vidéos pédagogiques) | 🔜 Cf. ci-dessus |
+| Tour onboarding distri (ré-déclenchable) | ⚠️ Existe via `user_tour_progress` — à vérifier si toujours actif |
+| Notif push proactives sur features non-utilisées | 💡 Idée nouvelle : « Tu n'as jamais ouvert FLEX, voici comment ça marche [vidéo] » |
+
+À traiter comme **principe directeur** : chaque nouveau chantier doit prévoir son **propre onboarding** (announcement, vidéo, tour, ou simple highlight). Sinon il rejoint le cimetière des features non-utilisées.
+
+---
+
+## 📊 Roadmap consolidée (après dump #1 + #2)
 
 | # | Chantier | Effort | Priorité reco |
 |---|---|---|---|
 | **#1** | Bilan Online + Lead pipeline (8 sous-features avec page remerciement 1.H) | 5-9 j | **P0** — fondation funnel |
-| **#3** | Prospection froide (module structuré N profils) | ~5-5.5 j | **P1** — alimente fallback #2 |
+| **#3** | Prospection (module mobile-first, onglet dédié, refonte `/outils-prospection`, alimenté par lien bilan #1) | ~5-5.5 j | **P1** — couplé à #1 |
 | **#5** | Internationalisation (langue + monnaie) | 5-8 j | **P2** — nécessaire pour scale international, **après #1** |
 | **#2** | Check-list quotidienne Co-pilote | 4-6 h | **P3** — capitalise #1 + #3 |
 | **#4** | Lien Cahier de bord depuis Co-pilote | 30 min | **P3 bis** — à glisser dans #2 |
+| **#6** | Vidéos pédagogiques YouTube + intégration app | 3-4 h dev (+ ~10-15 h prod vidéos Thomas) | **P4** — gros levier discoverability, à activer dès qu'une vidéo existe |
 
-**Total estimé** : ~16 à 23 jours de dev pour la totalité. Réalisable en 5-7 semaines à temps plein, ou 2-3 mois à temps partiel.
+**Total estimé** : ~16 à 23 jours de dev (sans la prod vidéo Thomas). Réalisable en 5-7 semaines à temps plein, ou 2-3 mois à temps partiel.
+
+**Fil rouge transverse** : chaque chantier doit prévoir son propre onboarding (announcement + vidéo tutoriel + tour) pour résoudre le problème de discoverability (constat N5).
 
 ---
 
