@@ -1681,12 +1681,12 @@ Nouveau besoin : pouvoir mesurer **quelle newsletter** convertit le mieux et **q
 
 ### 4 nouvelles questions Thomas pour valider l'enrichissement
 
-| # | Question | Reco agent |
-|---|---|---|
-| **D4.1** | Newsletter publique = teaser (70% contenu, paywall doux pour inciter à convertir) ou full content gratuit (et on mise sur le volume) ? | **Teaser** (paywall doux), conversion rate supérieur prouvé |
-| **D4.2** | Popup lead capture sur `/business` — tu valides l'idée d'**unifier le pipeline kanban** Lead bilan + Lead business avec badges différenciants, plutôt que de créer 2 systèmes séparés ? | Oui, unifier (un seul kanban = un seul workflow) |
-| **D4.3** | Templates saisonniers : 4 squelettes (été / rentrée / hiver / année neuve) + 8 mois "neutres", ou tu veux 12 templates dédiés un par mois ? | **4 saisonniers + 8 neutres** (économie effort pour ROI quasi équivalent) |
-| **D4.4** | La newsletter publique porte-t-elle un **nom/marque dédié** ? (ex : « La Base 360 News », « La Base 360 Mag », « Les Conseils La Base 360 ») ou pas de nom particulier ? | « **La Base 360 News** » (court, memo, scalable, branding fort) |
+| # | Question | Décision Thomas | Implication |
+|---|---|---|---|
+| **D4.1** | Newsletter publique = teaser ou full content ? | ✅ **Teaser** | Soft-paywall sur dernière(s) section(s), incite conversion via CTA Bilan |
+| **D4.2** | Unifier kanban Lead bilan + business ? | ✅ **Unifier** | Un seul pipeline kanban avec badges différenciants 📋💼🎯 |
+| **D4.3** | Templates saisonniers : 4+8 ou 12 dédiés ? | ✅ **4 saisonniers + 8 neutres** | Économie effort, table `newsletter_briefs` avec types `summer-prep`, `back-to-school`, `winter-immunity`, `new-year-fresh` + 8 neutres mensuels |
+| **D4.4** | Nom newsletter publique ? | ✅ **« La Base 360 News »** | Court, scalable, branding fort. Slug : `la-base-360-news` ou simplement `news` |
 
 ---
 

@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>La Base 360 News — Préparation été — Mai 2026</title>
+
+<!-- Open Graph (preview partage social) -->
+<meta property="og:title" content="La Base 360 News — Préparation été 2026">
+<meta property="og:description" content="Hydratation, voyage, repas d'été — tout pour bien préparer ta saison sans te prendre la tête.">
+<meta property="og:type" content="article">
+<meta property="og:image" content="https://labase360.com/og-news-mai-2026.jpg">
+<meta name="twitter:card" content="summary_large_image">
+
+<style>
+  /* ===== Tokens La Base 360 ===== */
+  :root {
+    --ls-gold: #C9A84C;
+    --ls-gold-light: #E5C97D;
+    --ls-teal: #2DD4BF;
+    --ls-teal-dark: #0F766E;
+    --ls-coral: #FB7185;
+    --ls-charcoal: #0B0D11;
+    --ls-cream: #FBF7F0;
+    --ls-surface: #FFFFFF;
+    --ls-surface2: #F7F3EC;
+    --ls-border: rgba(11,13,17,0.10);
+    --ls-text: #1F2937;
+    --ls-text-muted: #4B5563;
+    --ls-text-hint: #9CA3AF;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--ls-cream);
+    color: var(--ls-text);
+    line-height: 1.6;
+    font-size: 16px;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  .news-container {
+    max-width: 640px;
+    margin: 0 auto;
+    background: var(--ls-surface);
+    min-height: 100vh;
+    box-shadow: 0 4px 30px rgba(0,0,0,0.05);
+  }
+
+  /* ===== Header / Branding ===== */
+  .news-header {
+    padding: 24px 20px 20px;
+    background: linear-gradient(135deg, #FAEEDA 0%, #FBF7F0 100%);
+    border-bottom: 1px solid var(--ls-border);
+    text-align: center;
+  }
+  .news-brand {
+    font-family: 'Syne', Georgia, serif;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    color: var(--ls-gold);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .news-brand-dot {
+    display: inline-block;
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--ls-teal);
+    margin: 0 6px;
+    transform: translateY(-2px);
+  }
+  .news-edition {
+    font-size: 12px;
+    color: var(--ls-text-hint);
+    font-weight: 500;
+  }
+
+  /* ===== Hero ===== */
+  .news-hero {
+    padding: 32px 20px 28px;
+    text-align: center;
+    background: var(--ls-surface);
+  }
+  .news-hero-emoji {
+    font-size: 56px;
+    line-height: 1;
+    margin-bottom: 16px;
+    display: inline-block;
+  }
+  .news-hero h1 {
+    font-family: 'Syne', Georgia, serif;
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--ls-text);
+    line-height: 1.25;
+    margin-bottom: 12px;
+  }
+  .news-hero h1 strong {
+    color: var(--ls-gold);
+    font-weight: 700;
+  }
+  .news-hero-tagline {
+    font-size: 15px;
+    color: var(--ls-text-muted);
+    max-width: 380px;
+    margin: 0 auto;
+  }
+
+  /* ===== Section ===== */
+  .news-section {
+    padding: 24px 20px 20px;
+    border-bottom: 1px solid var(--ls-border);
+  }
+  .news-section-tag {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 12px;
+    background: rgba(45,212,191,0.12);
+    color: var(--ls-teal-dark);
+    margin-bottom: 12px;
+  }
+  .news-section h2 {
+    font-family: 'Syne', Georgia, serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--ls-text);
+    line-height: 1.3;
+    margin-bottom: 10px;
+  }
+  .news-section h2 .emoji {
+    font-size: 26px;
+    margin-right: 4px;
+  }
+  .news-section p {
+    font-size: 15px;
+    color: var(--ls-text);
+    margin-bottom: 12px;
+  }
+  .news-section ul {
+    list-style: none;
+    padding: 0;
+    margin: 12px 0;
+  }
+  .news-section ul li {
+    position: relative;
+    padding-left: 22px;
+    margin-bottom: 8px;
+    font-size: 14.5px;
+    color: var(--ls-text-muted);
+  }
+  .news-section ul li::before {
+    content: "▸";
+    position: absolute;
+    left: 6px;
+    color: var(--ls-gold);
+    font-weight: 700;
+  }
+  .news-section .saviez-vous {
+    margin-top: 14px;
+    padding: 14px 16px;
+    background: var(--ls-surface2);
+    border-left: 3px solid var(--ls-gold);
+    border-radius: 4px;
+    font-size: 14px;
+    color: var(--ls-text-muted);
+    font-style: italic;
+  }
+  .news-section .saviez-vous strong {
+    font-style: normal;
+    color: var(--ls-gold);
+    display: block;
+    margin-bottom: 4px;
+  }
+
+  /* ===== CTA Bilan (gold) ===== */
+  .cta-bilan {
+    margin: 18px 0 6px;
+    padding: 16px 18px;
+    background: linear-gradient(135deg, #FAEEDA 0%, #F4DFA8 100%);
+    border-radius: 12px;
+    border: 1px solid rgba(201,168,76,0.3);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .cta-bilan-icon {
+    font-size: 28px;
+    flex-shrink: 0;
+  }
+  .cta-bilan-text {
+    flex: 1;
+  }
+  .cta-bilan-title {
+    font-family: 'Syne', Georgia, serif;
+    font-size: 15px;
+    font-weight: 700;
+    color: #633806;
+    line-height: 1.3;
+    margin-bottom: 2px;
+  }
+  .cta-bilan-subtitle {
+    font-size: 12px;
+    color: #8B5A1B;
+  }
+  .cta-bilan-btn {
+    display: inline-block;
+    margin-left: auto;
+    padding: 10px 16px;
+    background: var(--ls-charcoal);
+    color: var(--ls-cream);
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 13px;
+    white-space: nowrap;
+    transition: transform 0.18s ease;
+  }
+  .cta-bilan-btn:hover {
+    transform: translateY(-1px);
+  }
+
+  /* ===== Soft-paywall ===== */
+  .news-paywall {
+    padding: 28px 20px;
+    background: linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(251,247,240,0.8) 30%, var(--ls-surface2) 100%);
+    text-align: center;
+    margin-top: -100px;
+    position: relative;
+    z-index: 2;
+  }
+  .news-paywall-mask {
+    position: absolute;
+    top: -40px; left: 0; right: 0;
+    height: 100px;
+    background: linear-gradient(180deg, transparent, var(--ls-surface) 60%, var(--ls-surface));
+    pointer-events: none;
+  }
+  .news-paywall h3 {
+    font-family: 'Syne', Georgia, serif;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--ls-text);
+    margin-bottom: 8px;
+    margin-top: 12px;
+  }
+  .news-paywall p {
+    font-size: 14px;
+    color: var(--ls-text-muted);
+    max-width: 380px;
+    margin: 0 auto 18px;
+  }
+
+  /* ===== CTA Business (teal, popup trigger) ===== */
+  .cta-business {
+    margin: 24px 20px;
+    padding: 22px 20px;
+    background: linear-gradient(135deg, var(--ls-teal-dark) 0%, var(--ls-teal) 100%);
+    border-radius: 16px;
+    color: white;
+    text-align: center;
+    box-shadow: 0 8px 24px rgba(13,118,110,0.25);
+  }
+  .cta-business-tag {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 4px 12px;
+    border-radius: 12px;
+    background: rgba(255,255,255,0.18);
+    margin-bottom: 12px;
+  }
+  .cta-business h3 {
+    font-family: 'Syne', Georgia, serif;
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 10px;
+    line-height: 1.3;
+  }
+  .cta-business p {
+    font-size: 14px;
+    opacity: 0.92;
+    margin-bottom: 16px;
+    max-width: 340px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .cta-business-btn {
+    display: inline-block;
+    padding: 14px 28px;
+    background: white;
+    color: var(--ls-teal-dark);
+    text-decoration: none;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 14px;
+    border: none;
+    cursor: pointer;
+    transition: transform 0.18s ease;
+  }
+  .cta-business-btn:hover {
+    transform: translateY(-2px);
+  }
+
+  /* ===== Footer ===== */
+  .news-footer {
+    padding: 28px 20px 32px;
+    text-align: center;
+    background: var(--ls-charcoal);
+    color: var(--ls-cream);
+  }
+  .news-footer-brand {
+    font-family: 'Syne', Georgia, serif;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    color: var(--ls-gold);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .news-footer-tagline {
+    font-size: 13px;
+    color: rgba(251,247,240,0.7);
+    margin-bottom: 18px;
+  }
+  .news-footer-socials {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    margin-bottom: 18px;
+  }
+  .news-footer-socials a {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: rgba(251,247,240,0.08);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--ls-cream);
+    text-decoration: none;
+    font-size: 16px;
+  }
+  .news-footer-disclaimer {
+    font-size: 11px;
+    color: rgba(251,247,240,0.45);
+    max-width: 420px;
+    margin: 0 auto;
+    line-height: 1.5;
+  }
+
+  /* ===== Popup Lead Capture ===== */
+  .popup-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(11,13,17,0.6);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 20px;
+  }
+  .popup-overlay.active {
+    display: flex;
+    animation: fadeIn 0.25s ease;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  .popup-card {
+    background: var(--ls-surface);
+    border-radius: 16px;
+    padding: 28px 24px 24px;
+    max-width: 420px;
+    width: 100%;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    animation: slideUp 0.3s cubic-bezier(0.16,1,0.3,1);
+  }
+  @keyframes slideUp {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+  .popup-card h3 {
+    font-family: 'Syne', Georgia, serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--ls-text);
+    margin-bottom: 6px;
+  }
+  .popup-card .subtitle {
+    font-size: 14px;
+    color: var(--ls-text-muted);
+    margin-bottom: 20px;
+  }
+  .popup-form-group {
+    margin-bottom: 14px;
+  }
+  .popup-form-group label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--ls-text);
+    margin-bottom: 6px;
+  }
+  .popup-form-group input {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px solid var(--ls-border);
+    border-radius: 10px;
+    font-size: 15px;
+    font-family: inherit;
+    background: var(--ls-surface2);
+    color: var(--ls-text);
+    outline: none;
+    transition: border 0.15s, background 0.15s;
+  }
+  .popup-form-group input:focus {
+    border-color: var(--ls-teal);
+    background: white;
+  }
+  .popup-consent {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin: 16px 0;
+    font-size: 12px;
+    color: var(--ls-text-muted);
+  }
+  .popup-consent input { margin-top: 2px; }
+  .popup-submit {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, var(--ls-teal-dark), var(--ls-teal));
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 15px;
+    font-family: inherit;
+    cursor: pointer;
+    transition: transform 0.18s;
+  }
+  .popup-submit:hover {
+    transform: translateY(-1px);
+  }
+  .popup-disclaimer {
+    text-align: center;
+    font-size: 11px;
+    color: var(--ls-text-hint);
+    margin-top: 12px;
+  }
+  .popup-close {
+    position: absolute;
+    top: 12px; right: 12px;
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: var(--ls-surface2);
+    border: none;
+    cursor: pointer;
+    font-size: 18px;
+    color: var(--ls-text-muted);
+  }
+  .popup-card { position: relative; }
+
+  /* Mobile tweaks */
+  @media (max-width: 480px) {
+    .news-hero h1 { font-size: 24px; }
+    .news-section h2 { font-size: 20px; }
+    .cta-bilan { flex-direction: column; align-items: stretch; gap: 12px; text-align: left; }
+    .cta-bilan-btn { margin-left: 0; text-align: center; }
+    .cta-business h3 { font-size: 19px; }
+  }
+
+  /* Mockup banner (only for preview) */
+  .mockup-banner {
+    background: var(--ls-charcoal);
+    color: var(--ls-gold);
+    text-align: center;
+    padding: 8px 12px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+  }
+</style>
+</head>
+<body>
+
+<div class="mockup-banner">
+  🎨 MOCKUP — Newsletter publique mai 2026 — Aperçu visuel La Base 360 News
+</div>
+
+<div class="news-container">
+
+  <!-- ===== HEADER BRAND ===== -->
+  <header class="news-header">
+    <div class="news-brand">
+      La Base 360 <span class="news-brand-dot"></span> News
+    </div>
+    <div class="news-edition">Édition mai 2026 · Préparation été</div>
+  </header>
+
+  <!-- ===== HERO ===== -->
+  <section class="news-hero">
+    <div class="news-hero-emoji">☀️</div>
+    <h1>L'été arrive.<br><strong>Prépare ton corps en douceur.</strong></h1>
+    <p class="news-hero-tagline">
+      Hydratation, voyages, repas d'été — tout ce qu'il faut savoir pour bien préparer ta saison sans te prendre la tête.
+    </p>
+  </section>
+
+  <!-- ===== SECTION 1 — Hydratation ===== -->
+  <section class="news-section">
+    <span class="news-section-tag">Conseil #1 · Hydratation</span>
+    <h2><span class="emoji">💧</span>L'eau, ton meilleur partenaire d'été</h2>
+    <p>
+      Quand les températures grimpent, ton corps perd jusqu'à 1,5 L d'eau par heure rien qu'en transpirant. La déshydratation s'installe sans bruit : maux de tête, fatigue, baisse de concentration.
+    </p>
+    <ul>
+      <li><strong>1,5 à 2 L par jour minimum</strong>, plus si tu bouges ou s'il fait très chaud</li>
+      <li>Bois <strong>par petites gorgées régulières</strong>, pas 1 L d'un coup</li>
+      <li>Évite les boissons trop sucrées : elles déshydratent au lieu d'hydrater</li>
+      <li>Ajoute citron, menthe, concombre pour le goût et les minéraux</li>
+    </ul>
+    <div class="saviez-vous">
+      <strong>Le saviez-vous ?</strong>
+      Avoir soif = être déjà légèrement déshydraté. Anticipe en buvant régulièrement, même sans soif.
+    </div>
+  </section>
+
+  <!-- ===== SECTION 2 — Repas d'été ===== -->
+  <section class="news-section">
+    <span class="news-section-tag">Conseil #2 · Alimentation</span>
+    <h2><span class="emoji">🥗</span>3 idées de repas légers en 10 minutes</h2>
+    <p>
+      Les jours longs et la chaleur coupent l'appétit. Privilégie des plats <strong>frais, riches en eau et faciles à digérer</strong>.
+    </p>
+    <ul>
+      <li><strong>Bowl avocat-pois chiches</strong> : avocat, pois chiches, tomates cerise, feta, basilic, citron, huile d'olive</li>
+      <li><strong>Tartare de courgette-saumon</strong> : courgette crue en dés, saumon fumé, aneth, pignons grillés</li>
+      <li><strong>Salade de pastèque-feta-menthe</strong> : pastèque, feta émiettée, menthe fraîche, pistaches, vinaigre balsamique</li>
+    </ul>
+    <p style="font-size: 14px; color: var(--ls-text-muted); margin-top: 8px;">
+      🌿 La règle : plus c'est coloré, plus c'est nourrissant.
+    </p>
+
+    <!-- CTA Bilan saisonnier intégré -->
+    <a href="#" class="cta-bilan" style="text-decoration: none; color: inherit;">
+      <div class="cta-bilan-icon">🎯</div>
+      <div class="cta-bilan-text">
+        <div class="cta-bilan-title">Prêt(e) pour l'été ?</div>
+        <div class="cta-bilan-subtitle">Fais ton bilan personnalisé en 2 min</div>
+      </div>
+      <span class="cta-bilan-btn">Je commence</span>
+    </a>
+  </section>
+
+  <!-- ===== SECTION 3 — Voyage à l'étranger ===== -->
+  <section class="news-section">
+    <span class="news-section-tag">Conseil #3 · Voyage</span>
+    <h2><span class="emoji">✈️</span>Voyage à l'étranger : prépare ton intestin</h2>
+    <p>
+      Changer de pays, c'est aussi changer la flore intestinale. Eau différente, épices nouvelles, hygiène variable : ton ventre peut faire la grève.
+    </p>
+    <ul>
+      <li><strong>Probiotiques</strong> : commence 5 à 7 jours avant le départ et continue pendant le séjour</li>
+      <li><strong>Eau en bouteille</strong> uniquement dans les pays à risque (et pour te brosser les dents)</li>
+      <li><strong>Lave les fruits</strong> à l'eau bouillie ou pèle-les systématiquement</li>
+      <li><strong>Évite</strong> glaçons, salades crues, aliments tièdes des buffets</li>
+    </ul>
+    <p style="font-size: 14px; color: var(--ls-text-muted); margin-top: 8px; font-style: italic;">
+      💡 Petit clin d'œil : c'est en Égypte que cette newsletter a été préparée. Et oui, ça marche 😉
+    </p>
+  </section>
+
+  <!-- ===== SECTION 4 — TEASER avec PAYWALL ===== -->
+  <section class="news-section" style="padding-bottom: 80px; position: relative; overflow: hidden;">
+    <span class="news-section-tag">Conseil #4 · Mouvement</span>
+    <h2><span class="emoji">💪</span>Bouger en vacances, sans s'épuiser</h2>
+    <p>
+      Tu pars en vacances et tu veux maintenir ton énergie sans transformer ton séjour en stage commando ? Voici une routine simple, <strong>15 minutes par jour</strong>, qui s'adapte à n'importe quel hôtel, plage ou jardin…
+    </p>
+    <ul>
+      <li>Réveil articulaire <span style="opacity: 0.4;">(8 mouvements clés pour…)</span></li>
+      <li>Cardio doux <span style="opacity: 0.4;">(natation, marche rapide, vélo…)</span></li>
+      <li style="opacity: 0.5;">[…]</li>
+    </ul>
+
+    <!-- Paywall mask -->
+    <div class="news-paywall">
+      <div class="news-paywall-mask"></div>
+      <h3>🔒 La suite est réservée</h3>
+      <p>Le programme complet 15 min/jour, adapté à ton profil, t'attend après ton bilan personnalisé (2 min top chrono).</p>
+      <a href="#" class="cta-bilan-btn" style="display: inline-block; background: var(--ls-charcoal); color: var(--ls-cream); padding: 12px 24px;">
+        Je débloque mon programme →
+      </a>
+    </div>
+  </section>
+
+  <!-- ===== CTA BUSINESS (popup) ===== -->
+  <section class="cta-business">
+    <div class="cta-business-tag">💼 Opportunité</div>
+    <h3>Tu pensais auto-financer tes vacances ?</h3>
+    <p>
+      Découvre comment notre équipe accompagne celles et ceux qui veulent transformer leur passion santé en revenus complémentaires.
+    </p>
+    <button class="cta-business-btn" onclick="openLeadPopup()">Je découvre l'opportunité →</button>
+  </section>
+
+  <!-- ===== FOOTER ===== -->
+  <footer class="news-footer">
+    <div class="news-footer-brand">
+      La Base 360 <span style="color: var(--ls-teal);">·</span> News
+    </div>
+    <div class="news-footer-tagline">
+      Conseils nutrition & bien-être, sans pression.
+    </div>
+    <div class="news-footer-socials">
+      <a href="#" aria-label="Instagram">📷</a>
+      <a href="#" aria-label="Facebook">📘</a>
+      <a href="#" aria-label="WhatsApp">💬</a>
+      <a href="#" aria-label="YouTube">▶️</a>
+    </div>
+    <div class="news-footer-disclaimer">
+      Tu reçois cet email parce que tu es client(e) ou abonné(e) à La Base 360 News.<br>
+      <a href="#" style="color: var(--ls-gold-light);">Se désabonner</a>
+      &nbsp;·&nbsp;
+      <a href="#" style="color: var(--ls-gold-light);">Mentions légales</a>
+    </div>
+  </footer>
+
+</div>
+
+<!-- ===== POPUP LEAD CAPTURE ===== -->
+<div class="popup-overlay" id="leadPopup">
+  <div class="popup-card">
+    <button class="popup-close" onclick="closeLeadPopup()">×</button>
+    <h3>Avant qu'on te montre tout ça… 👇</h3>
+    <p class="subtitle">2 infos rapides pour qu'on puisse t'envoyer la bonne info au bon moment.</p>
+
+    <div class="popup-form-group">
+      <label for="firstName">Ton prénom *</label>
+      <input type="text" id="firstName" placeholder="Marie" required>
+    </div>
+
+    <div class="popup-form-group">
+      <label for="phone">Téléphone (WhatsApp préféré) *</label>
+      <input type="tel" id="phone" placeholder="06 12 34 56 78" required>
+    </div>
+
+    <div class="popup-form-group">
+      <label for="source">Tu nous as découvert où ?</label>
+      <input type="text" id="source" placeholder="Instagram, Facebook, un ami, autre…">
+    </div>
+
+    <div class="popup-consent">
+      <input type="checkbox" id="consent" required>
+      <label for="consent">J'accepte d'être recontacté(e) — pas de spam, pas de revente.</label>
+    </div>
+
+    <button class="popup-submit" onclick="submitLead()">Je découvre l'opportunité</button>
+
+    <div class="popup-disclaimer">
+      🔒 Tes données restent privées et ne quittent jamais La Base 360.
+    </div>
+  </div>
+</div>
+
+<script>
+  function openLeadPopup() {
+    document.getElementById('leadPopup').classList.add('active');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeLeadPopup() {
+    document.getElementById('leadPopup').classList.remove('active');
+    document.body.style.overflow = '';
+  }
+  function submitLead() {
+    const firstName = document.getElementById('firstName').value.trim();
+    const phone = document.getElementById('phone').value.trim();
+    const consent = document.getElementById('consent').checked;
+    if (!firstName || !phone) {
+      alert('Prénom et téléphone sont nécessaires.');
+      return;
+    }
+    if (!consent) {
+      alert('Merci de cocher le consentement.');
+      return;
+    }
+    alert('✅ Merci ' + firstName + ' ! En vrai dans l\'app, tu serais redirigé(e) vers /business et un coach serait notifié.');
+    closeLeadPopup();
+  }
+  // Close on overlay click
+  document.getElementById('leadPopup').addEventListener('click', function(e) {
+    if (e.target === this) closeLeadPopup();
+  });
+</script>
+
+</body>
+</html>
