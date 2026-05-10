@@ -388,6 +388,50 @@ Critères : ≤ 5 items pour tenir en 5 minutes, **haut impact business**, **act
 
 ---
 
+### 2026-05-09 — Réponses Thomas dump #1 (sous-domaine + Q8 finale)
+
+| Sujet | Décision Thomas | Implication technique |
+|---|---|---|
+| **URL coach** | ✅ **Path** : `bonline.labase360.com/thomas` (slug = prénom distri lowercase, sans accent) | 0 config DNS supplémentaire par distri, scalable. Slug normalisé via `slugify(user.name)` |
+| **Gestion anonyme** | ✅ **Option A — URL couteau suisse** | Page racine `bonline.labase360.com` avec : champ texte autocomplete (suggère prénoms distri actifs depuis `users.name`) + bouton « Personne, je découvre tout seul » → bilan libre admin. Slug typo (`/thmas`) → redirige racine avec message info. |
+| **Q8 — Composition check-list** | ✅ Les 5 actions proposées agent **validées telles quelles** | Voir tableau ci-dessus dans la décision précédente |
+| **Q8 bis — Logique fallback** | ✅ Si **0 suivi F1/F21 dus** → la ligne ne disparaît pas, elle est **remplacée** par une action **« Grandir ton réseau / Prospection froide »** | Lien vers le chantier #3 (Académie prospection) si livré, sinon fallback liste 100 du Cahier de bord. Crée une dépendance logique #2 → #3 + #4. La check-list n'affiche JAMAIS "rien à faire" — toujours une action constructive. |
+| **Q8 bis — Score visible** | ✅ **Oui** | Badge `X/5 fait` en haut de la pop-up, reset à minuit, format simple |
+| **Q8 bis — Skip** | ✅ Skipper = **revient le lendemain** si pas fait (jamais définitif) | Persistance par jour : `coach_daily_actions(coach_id, action_key, date, status: pending/done/skipped)`. Au lendemain, les `skipped` ET `pending` repartent en `pending`. |
+
+---
+
+## 🎯 Synthèse exécutive finale dump #1
+
+**État** : ✅ **11/11 questions tranchées**. Vision complète et exécutable au retour PC.
+
+**Récap des 3 chantiers prêts**
+
+| # | Chantier | Effort | Dépendances internes | Ordre de livraison recommandé |
+|---|---|---|---|---|
+| **#1** | Bilan Online publique + Lead pipeline | XL (5-8 j) | Aucune (autonome) | **Premier** — fondation pipeline |
+| **#3** | Académie prospection (cold) | XL (4-6 j) | Aucune (autonome) | **Deuxième** — alimente le fallback de #2 |
+| **#2** | Check-list quotidienne Co-pilote | M (4-6 h) | Consomme #1 (Leads) et #3 (action prospection froide en fallback) | **Troisième** — capitalise sur les 2 précédents |
+| **#4** | Lien rapide Cahier de bord depuis Co-pilote | XS (30 min) | Aucune | **À glisser dans #2** (cohérent fonctionnellement) |
+
+**Architecture consolidée** :
+- 1 nouvelle table `online_bilans` (Leads bilan)
+- 1 nouvelle table `prospection_profiles` (profils cold extensibles)
+- 1 nouvelle table `coach_daily_actions` (persistance check-list)
+- Extension `/clients` V2 avec onglet Leads filtré
+- Extension `/outils-prospection` (ou nouveau module dédié — à confirmer après audit léger)
+- Extension `CoPiloteV5Page` (check-list + lien Cahier de bord)
+- 2 nouvelles edge functions : `submit-online-bilan`, `new-online-bilan-notifier`
+- Réutilisation : `messageTemplates.ts`, kanban DnD `/clients` V2, `useDormantClients`, pattern `submit-prospect-lead`, design system `var(--ls-*)` G3
+
+**Reste à faire au retour PC** (avant code) :
+1. Acheter + configurer le sous-domaine `bonline.labase360.com` (DNS + Vercel)
+2. Audit léger de `/outils-prospection` (~30 min) pour confirmer qu'on n'écrase rien sur chantier #3
+3. Audit léger de `/clients` V2 kanban (~30 min) pour comprendre comment l'étendre proprement
+4. Mettre à jour CLAUDE.md (section roadmap) avec ces 4 chantiers actés
+
+---
+
 ### *(suite : autres dumps Thomas / nouvelles idées)*
 
 ---
