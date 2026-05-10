@@ -1692,6 +1692,24 @@ Nouveau besoin : pouvoir mesurer **quelle newsletter** convertit le mieux et **q
 
 ## 🏁 Fin du brainstorm Égypte (2026-05-10)
 
+### ✅ Mockup newsletter validé en concept (2026-05-10 après-midi)
+
+Thomas a vu le mockup HTML interactif `docs/mockups/newsletter-mai-juin.html` et **valide le concept** :
+- Structure 6 sections (hydratation / aloe / repas / voyage / peau / mouvement teaser)
+- Design La Base 360 (gold/teal G3, mobile-first)
+- Intégration subtile produits Herbalife (encarts « Côté coach » Herbal Aloe + Herbalife SKIN)
+- Soft-paywall sur la dernière section
+- 2 CTAs (Bilan saisonnier gold + Business teal avec popup lead capture fonctionnelle)
+- Footer La Base 360 News + socials
+
+**À raffiner au retour PC** :
+- Contenu rédactionnel détaillé de chaque section (Thomas relit/réécrit le copy)
+- Visuels d'illustration (photos / infographies à intégrer)
+- Liens réels (CTA Bilan vers `bonline.labase360.com/{slug}`, CTA Business vers `/business`)
+- Possibles autres produits Herbalife à mentionner (Formula 1, Liftoff, CR7 Drive selon saison)
+
+Le mockup sert de **référence visuelle** pour l'implémentation du chantier #8 — le code de la page newsletter publique reprendra ce design.
+
 **Bilan de la session piscine** :
 - **2 dumps** d'idées brutes Thomas
 - **7 chantiers structurés** (+1 fix initial mobile chat history)
