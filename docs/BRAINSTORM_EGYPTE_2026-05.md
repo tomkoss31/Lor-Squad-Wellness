@@ -25,15 +25,20 @@ Pour chaque idée, l'agent structure :
 
 ---
 
-## Sommaire des idées (dump #1 — 2026-05-10)
+## Sommaire des chantiers (à jour après dump #1 + #2 + #3)
 
-| # | Domaine | Titre | Effort | Statut |
+| # | Domaine | Titre | h-agent | Statut |
 |---|---|---|---|---|
-| 1 | Funnel / Clients | **Bilan Online publique + Lead pipeline** (méga-chantier) | XL (5-8 jours) | 🌿 mûr |
-| 2 | Co-pilote | Check-list quotidien actions distri (5 min/jour) | M (4-6h) | 🌿 mûr |
-| 3 | Formation / Boîte à outils | Académie de prospection (flow messages copier-coller par profil) | XL (4-6 jours) | 🌱 brut |
-| 4 | UX / Co-pilote | Lien rapide vers Cahier de bord depuis Co-pilote | XS (30 min) | 🌳 prêt à coder |
-| 5 | Méta | Méthodologie d'exécution en 6 étapes pour le chantier #1 | — | 🌿 mûr |
+| **#1** | Funnel / Clients | **Bilan Online publique + Lead pipeline** (10 étapes) | 20-31 h | 🌳 prêt à coder |
+| **#2** | Co-pilote | Check-list quotidienne actions distri (6 étapes, intègre #4) | 7-9 h | 🌳 prêt à coder |
+| **#3** | Prospection | Refonte module Prospection cold mobile-first (8 étapes) | 14-22 h | 🌳 prêt à coder |
+| **#4** | UX / Co-pilote | Lien rapide Cahier de bord (intégré dans #2) | 30 min | 🌳 prêt à coder |
+| **#5** | Infra / Marketing | Internationalisation (langue + monnaie) — 5 langues V1 (9 étapes) | 16-23 h | 🌳 prêt à coder |
+| **#6** | Pédagogie | Vidéos pédagogiques YouTube + intégration app (4 étapes dev) | 3-4 h | 🌳 prêt à coder |
+| **#7** | Business | Refonte business `/business` scroll narratif (7 étapes) | 9-14 h | 🌳 prêt à coder |
+| **#8** | Marketing / Comm | Newsletter mensuelle clients + distri (V1 manuel, V2 auto) | 10-15 h V1 | 🌿 mûr — questions ouvertes |
+| Phase 0 | Bug fix | Fix mobile chat history (3 étapes) | 30 min - 1 h | 🌳 prêt à coder |
+| Phase 2 | Renommage | Code source "La Base 360" coopératif (7 étapes) | 2-4 h | 🌳 prêt à coder |
 
 ---
 
@@ -208,7 +213,7 @@ Si une action n'est pas cochée à la fin de la journée, elle revient le lendem
 
 ---
 
-### 3. Académie de prospection (flow messages copier-coller par profil)
+### 3. Module Prospection cold mobile-first (flow messages copier-coller par profil + multi-langue)
 
 **Domaine** : Formation / Boîte à outils / Education distri
 
@@ -1176,12 +1181,13 @@ Mes estimations précédentes en "X jours" étaient en **jours-homme classiques*
 | **8** | **Chantier #2 — Check-list quotidienne Co-pilote** | **7-9 h** | 30 min validation | Code |
 | **9** | **Chantier #4 — Lien Cahier de bord** (glissé dans #2) | 30 min | — | Code |
 | **10** | **Chantier #6 — Vidéos pédagogiques + intégration app** | 3-4 h dev | 10-15 h prod vidéos | Code + Contenu |
-| **11** | MAJ `CLAUDE.md` roadmap | 30 min | 5 min relecture | Doc |
+| **11** | **Chantier #8 — Newsletter mensuelle V1 manuel** | 10-15 h | 2-4 h (rédaction 1ère newsletter mai-juin) | Code + Contenu |
+| **12** | MAJ `CLAUDE.md` roadmap | 30 min | 5 min relecture | Doc |
 
-### Totaux honnêtes (révisés)
+### Totaux honnêtes (révisés avec chantier #8)
 
-- **Total h-agent** : ~**75 à 115 heures** de codage agent effectif
-- **Total h-Thomas** : ~**25 à 40 heures** dispersées sur la durée totale
+- **Total h-agent** : ~**85 à 130 heures** de codage agent effectif
+- **Total h-Thomas** : ~**27 à 44 heures** dispersées sur la durée totale
 - **Calendrier réaliste possible** :
   - **Sprint intensif** (Thomas dispo plusieurs h/jour pour valider) : ~**3 à 4 semaines** calendaires
   - **Régulier** (Thomas 1-2 h/jour) : ~**6 à 10 semaines** calendaires
@@ -1348,6 +1354,165 @@ Mes estimations précédentes en "X jours" étaient en **jours-homme classiques*
 
 ---
 
+## 🆕 Dump #3 (2026-05-10 matinée — audit + chantier #8 Newsletter)
+
+### Audit du document — corrections appliquées
+
+Suite à la demande de Thomas de relecture intégrale, l'agent a détecté et corrigé :
+
+| Problème | Correction |
+|---|---|
+| Sommaire en haut obsolète (mentionnait seulement les 5 idées du dump #1) | Mis à jour avec les 8 chantiers + 2 phases |
+| 2 sections orphelines en fin de doc (« Questions en suspens » avec 11 questions DÉJÀ TRANCHÉES + « Au retour PC » dupliquée par la roadmap moderne) | Supprimées |
+| Section #3 mal nommée (« Académie de prospection » au lieu du nom acté) | Renommée « Module Prospection cold mobile-first » |
+| 4 occurrences résiduelles « Lor'Squad » | Vérifiées : toutes **légitimes** (notes explicatives sur le rebranding ou règles « ne JAMAIS écrire »). Conservées. |
+
+### Réponse design / icônes / logos (question Thomas)
+
+**Préparation visuelle des pages en avance** :
+- ✅ **Wireframes ASCII en markdown** : déjà fait pour la page Welcome (1.B) et la page de remerciement (1.H). Je peux faire pareil pour la page bilan, le module Prospection, la page `/business`, la newsletter PDF, etc.
+- ✅ **Mockups HTML/CSS prototypes** : je peux générer des fichiers HTML statiques que tu ouvres dans un navigateur pour voir le visuel sans backend
+- ❌ **Figma** : pas d'accès direct à Figma depuis l'agent. Si besoin de Figma, à faire à la main.
+
+**Icônes Instagram / WhatsApp / Facebook / Telegram / etc.** :
+
+✅ **Je n'ai PAS besoin que tu me fournisses les icônes/logos**. Plusieurs sources disponibles dans l'écosystème React :
+
+| Source | Usage | Force |
+|---|---|---|
+| **`lucide-react`** (probablement déjà installé) | Icônes minimalistes | Cohérent avec le design system actuel |
+| **`react-icons`** (à ajouter si pas présent) | Logos marques (FaInstagram, FaFacebook, FaWhatsapp, FaTelegram, FaYoutube...) | Couvre toutes les marques |
+| **`simple-icons`** (CDN ou npm) | Logos officiels marques en SVG | Fidèle aux brand guidelines |
+| **Brand resources officiels** (Meta Brand Resources, WhatsApp Brand Resources) | SVG officiels téléchargeables | Conformité légale max |
+
+Je peux choisir la source appropriée selon le contexte. Pour l'app coach, `react-icons` ou `simple-icons` est probablement le meilleur compromis.
+
+---
+
+### Chantier #8 — Newsletter mensuelle (clients + distri) ⚠️ NOUVEAU
+
+**Domaine** : Marketing / Communication / Rétention
+
+**Description (idée Thomas)**
+- **Newsletter à envoyer à tous les clients ET tous les distri** au retour Égypte
+- **V1 manuel** : Thomas + Claude IA (moi ou un Claude conversationnel) qui génère le contenu, Thomas valide et envoie
+- **V2 automatique** : agent (Claude API via edge function) génère mensuellement, Thomas valide en 1 clic, envoi auto
+- **Format** : A4 recto-verso avec visuels infos nutrition
+- **Ton** : bienveillant, informatif, **PAS de forcing produit** (« sans parler de forcer à prendre des produits, plutôt en étant informatif »)
+
+**Pourquoi**
+- **Lien régulier** avec la communauté (clients + distri) qui ne dépend pas du coach individuel
+- **Éducation nutritionnelle douce** : positionne La Base 360 en référent expert
+- **Rétention** : touchpoint mensuel = on existe dans la tête des clients, hors moments de consommation
+- **Différenciation** : la plupart des coaches Herbalife n'envoient rien à leurs clients
+- **Discoverability bonus** : la newsletter peut renvoyer vers les nouveautés app / vidéos pédagogiques (chantier #6)
+
+**Idée 1ère newsletter — Mai/Juin 2026 (préparation été)**
+
+Brouillon de structure (à enrichir avec Thomas) :
+
+```
+PAGE 1 (recto)
+┌─────────────────────────────────┐
+│  La Base 360 — Newsletter mai   │
+│  Préparation été ☀️              │
+│                                  │
+│  ▸ Hydratation & soleil         │
+│    Combien d'eau, à quelle      │
+│    heure, signes de déshydrat.  │
+│                                  │
+│  ▸ Repas légers d'été           │
+│    3 idées rapides nutritives   │
+│    et fraîches                   │
+│                                  │
+│  [Visuel infographie nutrition] │
+└─────────────────────────────────┘
+
+PAGE 2 (verso)
+┌─────────────────────────────────┐
+│  ▸ Voyage à l'étranger ✈️        │
+│    Probiotiques, eau, vigilance │
+│    hygiène alimentaire — comme  │
+│    Thomas en Égypte !            │
+│                                  │
+│  ▸ Bouger en vacances 💪         │
+│    Sans s'épuiser, 15 min/jour  │
+│                                  │
+│  ▸ Le saviez-vous ?              │
+│    Anecdote nutrition           │
+│                                  │
+│  Bonne préparation été à toutes │
+│  et tous,                        │
+│  L'équipe La Base 360 🙏         │
+└─────────────────────────────────┘
+```
+
+**Architecture technique V1 (manuel — au retour Égypte)**
+
+**Tables Supabase** :
+- `newsletters` : id, title, slug, body_html, body_text, pdf_url, audience (`clients` / `distri` / `all`), sent_at, sent_by_user_id, created_at
+- `newsletter_recipients` : newsletter_id, recipient_type (`client`/`distri`), recipient_id, sent_at, opened_at, clicked_at — pour tracking basique
+
+**Page admin `/admin/newsletters`** :
+- Liste des newsletters (envoyées + brouillons)
+- Bouton « Nouvelle newsletter » → éditeur (Markdown ou WYSIWYG)
+- Aperçu PDF temps réel
+- Bouton « Envoyer » → choisit audience + déclenche distribution multi-canal
+- Stats simples : open rate, click rate
+
+**Génération PDF A4 recto-verso** :
+- Réutiliser le pattern existant `jsPDF` + `html2canvas` (déjà utilisé pour `AcademyCertificatePage` et `AcademyPlaybookPage`)
+- Template A4 stylé avec tokens `var(--ls-*)` (gold/teal G3)
+- Visuels infographie : SVG inline ou images depuis bucket Supabase
+
+**Distribution multi-canal** :
+- **Email** : service externe à choisir avec Thomas (Brevo / Resend / SendGrid / Postmark — voir question ouverte)
+- **In-app distri** : entrée `app_announcements` automatique avec lien PDF
+- **In-app clients** : entrée `client_app_announcements` (à créer si pas existante) avec push notif PWA
+- **Page web archive** : route publique `/newsletters/:slug` consultable en ligne
+- **Lien direct partage** : copier-coller URL pour Insta/WhatsApp story
+
+**Architecture V2 (auto — plus tard)**
+
+- Table `newsletter_briefs` : id, theme, sections, ton, signature, valid_for_month
+- Edge function `generate-monthly-newsletter` cron 25 du mois (génère brouillon pour mois suivant)
+- Anthropic API (Claude) génère le contenu basé sur brief + saison + actu
+- **Validation Thomas obligatoire avant envoi** (semi-auto, JAMAIS full auto — anti-dérapage de ton)
+- Notification « Newsletter prête à valider » push au coach admin
+- Bouton 1-clic « Approuver et envoyer »
+
+**Effort estimé V1 manuel** : **10-15 h-agent + 2-4 h Thomas** (rédaction contenu mai-juin première édition)
+
+| Étape | Livrable testable | h-agent |
+|---|---|---|
+| **8.1** | Migration `newsletters` + `newsletter_recipients` + RLS | 1-2 h |
+| **8.2** | Choix + setup service email externe (selon Q3 Thomas) | 1-2 h |
+| **8.3** | Page admin `/admin/newsletters` (liste + créer + éditer) | 2-3 h |
+| **8.4** | Éditeur newsletter + aperçu PDF temps réel | 2-3 h |
+| **8.5** | Distribution multi-canal (email + announcements + page web) | 2-3 h |
+| **8.6** | Tracking basique (open / click) | 1-2 h |
+| **8.7** | Recette + announcement (méta : annoncer la newsletter dans l'app !) | 1 h |
+
+**Effort additionnel V2 auto** : **+5-8 h-agent** (briefs DB, edge function génération, flow validation)
+
+**Statut** : 🌿 mûr — vision claire, **6 questions ouvertes pour Thomas**
+
+**Questions ouvertes Thomas pour le chantier #8**
+
+1. **Audience** : 1 newsletter unique pour clients + distri (contenu identique), ou **2 newsletters distinctes** (contenu partiellement différent : aux distri on parle aussi business/recrutement, aux clients juste nutrition) ?
+2. **Outil d'emailing** : tu n'avais pas dit « tropique » mais « Claude IA » pour la rédaction (lol). Pour l'**envoi email** réel (delivery), je propose :
+   - **Brevo** (anciennement Sendinblue) — populaire France, tarif gratuit jusqu'à 300 emails/jour
+   - **Resend** — moderne, dev-friendly, excellent delivery
+   - **Postmark** — premium delivery (transactionnel + marketing)
+   - **Mailchimp** — historique, riche en templates
+   - Reco agent : **Brevo** si budget serré, **Resend** si tu veux moderne et clean
+3. **Fréquence** : mensuel par défaut OK ? (Hebdo trop, trimestriel pas assez, mensuel = sweet spot communauté wellness)
+4. **Format final** : on génère **les 3 simultanément** (PDF A4 + email HTML + page web archive), ou seulement certains ?
+5. **Brouillon 1ère newsletter** : tu rédiges seul ou tu veux que **je te génère un brouillon complet** mai→juin (les 4-5 sections décrites ci-dessus avec le copy bienveillant) que tu peux copier dans l'éditeur ?
+6. **Calendrier** : envoi mi-mai 2026 (pour annoncer juin) ou fin mai (pour juin direct) ?
+
+---
+
 ## 🏁 Fin du brainstorm Égypte (2026-05-10)
 
 **Bilan de la session piscine** :
@@ -1359,47 +1524,6 @@ Mes estimations précédentes en "X jours" étaient en **jours-homme classiques*
 
 🌴 Tu peux fermer l'app, profiter de la piscine, le brouillon est en sécurité sur GitHub. Au retour PC, ouvrir ce fichier suffit pour reprendre exactement là où on s'est arrêtés.
 
-*Fichier vivant. Dernière maj : 2026-05-10 nuit (clôture dump #2).*
-
----
-
----
-
-## Questions en suspens — synthèse
-
-À répondre par Thomas (par paquets, dans n'importe quel ordre) avant qu'on attaque l'exécution PC :
-
-**Sur le chantier #1 (Bilan Online)** :
-1. Modèle de données : nouvelle table `online_bilans` ou extension `prospects` ?
-2. Identification coach dans l'URL : code, username, token ?
-3. Sous-domaine `bonline.labase360.com` déjà acheté ?
-4. Kanban : étendre `/clients` V2 ou page `/leads` séparée ?
-5. Templates de réponse : inline pop-up ou via boîte à outils ?
-6. Relance J+3 : agenda + notif, ou un seul des deux ?
-
-**Sur le chantier #2 (Check-list quotidien)** :
-7. Pop-up bloquante ou skippable ?
-8. Quelles actions par défaut hors-Lead ?
-
-**Sur le chantier #3 (Académie prospection)** :
-9. On lance un audit de `/outils-prospection` existant avant ?
-10. 3 profils figés ou tu en envisages d'autres à terme ?
-11. Mockup d'inspiration Claude design ou je propose de zéro ?
-
----
-
-## Au retour PC — checklist d'exécution
-
-1. ☐ `git pull origin claude/fix-mobile-chat-history-d1jFW`
-2. ☐ Relire snapshot architecture pour rafraîchir le contexte
-3. ☐ Répondre aux 11 questions ouvertes ci-dessus
-4. ☐ Tier les chantiers par ROI/effort en intégrant les réponses
-5. ☐ Pour chaque chantier retenu : créer une branche `feat/X` depuis `dev/thomas-test`
-6. ☐ Chantier #1 : commencer par l'audit `/clients` V2 (kanban) et `/outils-prospection` AVANT de coder
-7. ☐ Mettre à jour CLAUDE.md (section roadmap) avec les chantiers actés
-8. ☐ Ne PAS oublier la règle livrable complet : code prod + `app_announcements` + fiche `/developpement` si UX non-évidente
-9. ☐ Archiver ce fichier en `docs/archive/BRAINSTORM_EGYPTE_2026-05.md` une fois traité
-
----
+*Fichier vivant. Dernière maj : 2026-05-10 fin de matinée (audit + dump #3).*
 
 *Fichier vivant. Dernière maj : 2026-05-10 (dump #1 — 5 idées capturées).*
