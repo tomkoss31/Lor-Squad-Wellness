@@ -1710,6 +1710,42 @@ Thomas a vu le mockup HTML interactif `docs/mockups/newsletter-mai-juin.html` et
 
 Le mockup sert de **référence visuelle** pour l'implémentation du chantier #8 — le code de la page newsletter publique reprendra ce design.
 
+### ✅ Mockup bilan online validé (2026-05-10 fin de journée)
+
+Thomas a vu et validé le mockup `docs/mockups/bilan-online.html` (3 vues) :
+- Welcome (hero + coach card + pitch + CTA + bilan libre)
+- Formulaire 5 étapes (identité / objectifs / vécu / habitudes / budget+activité) avec progress bar, auto-save indicator, choice cards multi-select, radio cards, sliders dynamiques, sub-fields conditionnels
+- Page de remerciement (checkmark animé + boutons sociaux)
+
+Sert de **référence visuelle** pour le chantier #1.
+
+### ✅ Mockup vue d'ensemble app coach validé (2026-05-10 fin de journée)
+
+Mockup `docs/mockups/app-coach-overview.html` créé pour visualiser la structure complète de l'app après tous les chantiers :
+- 14 onglets scrollables (dont 4 NEW : Leads, Prospection, Newsletter, Tutos vidéos)
+- Wireframes simplifiés représentatifs pour chaque vue
+- Validé par Thomas comme support de visualisation globale
+
+### 📁 Récap des mockups disponibles
+
+| Fichier | Lien preview (pinné commit) |
+|---|---|
+| `docs/mockups/newsletter-mai-juin.html` | https://raw.githack.com/tomkoss31/Lor-Squad-Wellness/154baa4/docs/mockups/newsletter-mai-juin.html |
+| `docs/mockups/bilan-online.html` | https://raw.githack.com/tomkoss31/Lor-Squad-Wellness/25c0165/docs/mockups/bilan-online.html |
+| `docs/mockups/app-coach-overview.html` | https://raw.githack.com/tomkoss31/Lor-Squad-Wellness/57ae675/docs/mockups/app-coach-overview.html |
+
+Pour version branche (toujours à jour mais cache court possible), remplacer le SHA par `claude/fix-mobile-chat-history-d1jFW`.
+
+### 🌴 État final session piscine (2026-05-10 soir)
+
+- **8 chantiers structurés** en étapes franches (#1 à #8) + 2 phases (fix mobile chat + renommage code)
+- **~50 décisions actées** (toutes les questions ouvertes tranchées)
+- **3 mockups HTML interactifs** créés et validés
+- **Roadmap exécution finale** (12 phases, ~95-144 h-agent + ~27-44 h Thomas)
+- **Tout sauvegardé** sur GitHub branche `claude/fix-mobile-chat-history-d1jFW`
+
+Thomas reviendra ici quand il aura de nouvelles idées. Au retour PC, ouvrir ce fichier suffit pour reprendre le contexte complet.
+
 **Bilan de la session piscine** :
 - **2 dumps** d'idées brutes Thomas
 - **7 chantiers structurés** (+1 fix initial mobile chat history)
