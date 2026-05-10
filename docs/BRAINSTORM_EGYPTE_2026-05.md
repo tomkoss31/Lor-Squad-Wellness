@@ -1126,13 +1126,104 @@ Effort estimé : **M — 4-6h** (recherche + remplacement + validation + tests r
 
 ---
 
-## ❓ Questions encore en suspens (au 2026-05-09 nuit)
+## ✅ Toutes les questions tranchées (clôture dump #2 — 2026-05-09 nuit)
 
-| # | Question | En attente de |
+### Décisions finales
+
+| Q | Sujet | Décision Thomas |
 |---|---|---|
-| **Q5.1 validation** | Tu confirmes la liste 5 langues V1 (FR/EN/ES/PT-BR/TR) + la reco scripts FR+EN au démarrage ? | Toi (validation explicite) |
-| **Q5.5 bis (NEW)** | Tu valides l'idée de **refondre `/opportunite` + `/simulateur` en une page unique `/business`** (Option B scroll narratif) avant l'i18n ? Ou on reste sur 2 pages séparées et on i18n tel quel ? | Toi |
-| Q meta (acté) | Renommage code après achat domaine, en coopératif guidé. Pas d'action immédiate. | — (résolu) |
+| **Q5.1** | 5 langues V1 (FR / EN / ES / PT-BR / TR) + scripts prospection FR+EN au démarrage | ✅ **Validé** |
+| **Q5.5 bis** | Refonte `/opportunite` + `/simulateur` en page unique `/business` scroll narratif (Option B) AVANT i18n | ✅ **Validé** |
+| Q meta | Renommage code après achat domaine, en coopératif guidé | ✅ **Acté** |
+
+**État global** : 🎉 **toutes les questions sont tranchées**. Vision complète et prête pour exécution PC.
+
+---
+
+## 🚀 Roadmap exécution finale (au retour PC)
+
+### Ordre de bataille recommandé
+
+| Étape | Action | Effort | Type |
+|---|---|---|---|
+| **0** | Fix mobile chat history (objet initial de cette branche, pas oublié) | 30 min | Code |
+| **1** | Achat + config DNS du domaine `labase360.com` | 1-2 h | Infra Thomas |
+| **2** | **Renommage code source "La Base 360"** (coopératif guidé) | 4-6 h | Code |
+| **3** | Audit léger `/clients` V2 (kanban) + `/outils-prospection` existant | 1 h | Audit |
+| **4** | **Chantier #1 — Bilan Online + Lead pipeline** (8 sous-features) | 5-9 j | Code |
+| **5** | **Chantier #3 — Refonte `/outils-prospection` mobile-first multi-langue** | 6-6.5 j | Code |
+| **6** | **Chantier #7 (NEW) — Refonte business `/business` scroll narratif** | 3-4 j | Code |
+| **7** | **Chantier #5 — i18n + multi-monnaie** (5 langues V1, prix par marché) | 4-6 j (réduit -20% grâce fusion #7) | Code |
+| **8** | **Chantier #2 — Check-list quotidienne Co-pilote** | 4-6 h | Code |
+| **9** | **Chantier #4 — Lien rapide Cahier de bord depuis Co-pilote** (à glisser dans #2) | 30 min | Code |
+| **10** | **Chantier #6 — Vidéos pédagogiques YouTube + intégration app** | 3-4 h dev (+ 10-15 h prod vidéo Thomas) | Code + Contenu |
+| **11** | Mettre à jour `CLAUDE.md` (section roadmap) avec ce qui a été livré | 30 min | Doc |
+
+### Total estimé
+
+- **Côté agent (dev)** : ~**19 à 26 jours** de code pur
+- **Côté Thomas (infra + contenu)** : ~13-18 h dispersés (DNS, vidéos, prix produits par marché, copy validation)
+- **Calendrier réaliste** : 6 à 8 semaines à temps plein, ou 3 à 4 mois à temps partiel
+
+### Architecture cible globale
+
+**Nouvelles tables Supabase** :
+- `online_bilans` (Leads bilan online, chantier #1)
+- `prospection_profiles` (config CRUD profils prospection extensible, chantier #3)
+- `prospection_attempts` (tracking V2 prospection, chantier #3)
+- `coach_daily_actions` (persistance check-list quotidienne, chantier #2)
+- `pv_product_market_pricing` (prix par marché, chantier #5)
+- `feature_tutorials` (liens vidéos YouTube par feature, chantier #6) — *optionnel, ou extension de `app_announcements`*
+
+**Nouvelles edge functions** :
+- `submit-online-bilan` (réception bilan public, chantier #1)
+- `new-online-bilan-notifier` (push coach sur nouveau Lead, chantier #1)
+- `prospection-attempt-track` (tracking V2 chantier #3, optionnel)
+
+**Nouvelles routes / refontes** :
+- Nouvelle route publique : `bonline.labase360.com/{slug-coach}` (bilan online)
+- Nouvelle route publique : `bonline.labase360.com/{slug-coach}/merci` (page remerciement)
+- Refonte `/outils-prospection` (chantier #3)
+- Fusion `/opportunite` + `/simulateur` → `/business` (chantier #7)
+- Extension `/clients` V2 (onglet Leads)
+- Extension `CoPiloteV5Page` (check-list + lien Cahier de bord)
+
+**Réutilisations système existant** :
+- Kanban DnD `/clients` V2
+- `messageTemplates.ts` (lib templates messages)
+- Pattern `submit-prospect-lead` (edge function publique)
+- Pattern `BilanTermineePage` (page remerciement)
+- Pattern `AnnouncementSpotlight` (pop-up 1ère ouverture du jour)
+- Pattern `useDormantClients`, `useCopiloteData`
+- Design system tokens `var(--ls-*)` (gold/teal G3 Premium)
+- Cron pattern `flex-notifier` pour relances push
+- 15+ edge functions existantes (auth, push, etc.)
+
+### Règles à respecter pendant l'exécution
+
+1. ❌ **Ne JAMAIS écrire "Lor'Squad" ou "Lor Académie"** dans tout nouveau code/copy/UI/email/message — c'est **"La Base 360"** partout
+2. ⚠️ **Renommage code source** = chantier obligatoire avant chantier #5 i18n (sinon on i18n une cible à renommer)
+3. 📱 **Mobile-first absolu** sur tous les chantiers (touch ≥ 44px, font ≥ 16px anti-zoom iOS, 1 écran 375×667 sans scroll quand possible)
+4. 🎨 **Tokens CSS** `var(--ls-*)` partout, jamais de `#HEXVALUE` hardcodé (cf. `globals.css`)
+5. 📅 **Datetime** `timestamptz` partout, jamais `timestamp` (cf. règle 29/04/2026)
+6. 🔒 **RLS** : jamais de `::uuid` dans policy permissive — utiliser `::text` (cf. leçon 25/04/2026)
+7. 📣 **Règle livrable complet** : code prod + entrée `app_announcements` + vidéo `/developpement` si UX non-évidente (cf. CLAUDE.md)
+8. 🎬 **Discoverability** : chaque chantier prévoit son onboarding propre (announcement + vidéo + tour) pour éviter le cimetière des features non-utilisées
+
+---
+
+## 🏁 Fin du brainstorm Égypte (2026-05-09)
+
+**Bilan de la session piscine** :
+- **2 dumps** d'idées brutes Thomas
+- **7 chantiers structurés** (+1 fix initial mobile chat history)
+- **20 décisions actées** (questions Q1-Q11 du dump #1, N1-N5 du dump #2, Q5.5 + Q meta finaux)
+- **0 question en suspens** au retour PC
+- **0 ambiguïté technique** majeure restante
+
+🌴 Tu peux fermer l'app, profiter de la piscine, le brouillon est en sécurité sur GitHub. Au retour PC, ouvrir ce fichier suffit pour reprendre exactement là où on s'est arrêtés.
+
+*Fichier vivant. Dernière maj : 2026-05-09 nuit (clôture dump #2).*
 
 ---
 
