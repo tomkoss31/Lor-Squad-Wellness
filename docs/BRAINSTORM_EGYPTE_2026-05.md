@@ -37,7 +37,7 @@ Pour chaque idée, l'agent structure :
 | **#6** | Pédagogie | Vidéos pédagogiques YouTube + intégration app (4 étapes dev) | 3-4 h | 🌳 prêt à coder |
 | **#7** | Business | Refonte business `/business` + popup lead capture (8 étapes) | 12-18 h | 🌳 prêt à coder |
 | **#8** | Marketing / Acquisition | Newsletter mensuelle (privée + publique lead-magnet, 12 étapes) | 17-25 h V1 | 🌿 mûr — 4 questions ouvertes (D4.1-4) + 6 questions originales |
-| **#9** | Dette technique | Refacto `NewAssessmentPage.tsx` (4325 L) — **À FAIRE AVANT #1** | 10-15 h | 🌳 prêt à coder |
+| **#9** | ❌ ~~Refacto `NewAssessmentPage.tsx`~~ — **RETIRÉ DE LA VAGUE 1 le 10/05 soir**. Voir dump #7. | — | ❌ déplacé backlog vague 2 |
 | **#10** | UX / Crédibilité | Badges + certifications coach visibles publiquement | 3-4 h | 🌳 prêt à coder |
 | **#11** | Marketing / Preuve sociale | Témoignages clients vérifiés (système avis + carrousel) | 6-8 h | 🌳 prêt à coder |
 | Phase 0 | Bug fix | Fix mobile chat history (3 étapes) | 30 min - 1 h | 🌳 prêt à coder |
@@ -1178,29 +1178,28 @@ Mes estimations précédentes en "X jours" étaient en **jours-homme classiques*
 | **1** | Achat + config DNS `labase360.com` | — | 1-2 h | Infra Thomas |
 | **2** | Renommage code source "La Base 360" (coopératif) | 2-4 h | 30 min validation + 15 min rename repo GitHub | Code |
 | **3** | Audits légers (`/clients` V2 kanban, `/outils-prospection`) | 1-2 h | 5 min lecture rapport | Audit |
-| **4** | ⚠️ **Chantier #9 — Refacto `NewAssessmentPage.tsx` (DETTE TECHNIQUE)** — bloquant pour #1 | **10-15 h** | 30 min recette régression | Code |
-| **5** | **Chantier #1 — Bilan Online + Lead pipeline** (réutilise les steps refactorés en #9) | **20-31 h** | 3-5 h (validation copy, choix produits, slug coach) | Code |
-| **6** | **Chantier #10 — Badges + certifications coach visibles** (quick win après #1) | **3-4 h** | 5 min validation | Code |
-| **7** | **Chantier #3 — Refonte prospection mobile-first** | **14-22 h** | 2-3 h (rédaction scripts FR+EN initiaux) | Code |
-| **8** | **Chantier #7 — Refonte business `/business` + popup lead capture** | **12-18 h** | 2-3 h (validation copy rebrandé) | Code |
-| **9** | **Chantier #11 — Témoignages clients vérifiés** (alimente #7 et #8) | **6-8 h** | 1-2 h (relance 1ers clients) | Code + Contenu |
-| **10** | **Chantier #5 — i18n + multi-monnaie** | **16-23 h** | 5-8 h (catalogue produits par marché ~1600 lignes + relecture traductions) | Code + Contenu |
-| **11** | **Chantier #2 — Check-list quotidienne Co-pilote** + #4 lien Cahier de bord | **7-9 h** | 30 min validation | Code |
-| **12** | **Chantier #6 — Vidéos pédagogiques + intégration app** | 3-4 h dev | 10-15 h prod vidéos | Code + Contenu |
-| **13** | **Chantier #8 — Newsletter mensuelle privée + publique lead-magnet** | 17-25 h | 2-4 h (rédaction 1ère newsletter mai-juin) | Code + Contenu |
-| **14** | MAJ `CLAUDE.md` roadmap + lancement vague 2 (backlog A2-A6 + I1-I10) | 30 min + à étaler | — | Doc |
+| **4** | **Chantier #1 — Bilan Online + Lead pipeline** (codé entièrement isolé, ZÉRO impact NewAssessmentPage existant) | **20-31 h** | 3-5 h (validation copy, choix produits, slug coach) | Code |
+| **5** | **Chantier #10 — Badges + certifications coach visibles** (quick win après #1) | **3-4 h** | 5 min validation | Code |
+| **6** | **Chantier #3 — Refonte prospection mobile-first** | **14-22 h** | 2-3 h (rédaction scripts FR+EN initiaux) | Code |
+| **7** | **Chantier #7 — Refonte business `/business` + popup lead capture** | **12-18 h** | 2-3 h (validation copy rebrandé) | Code |
+| **8** | **Chantier #11 — Témoignages clients vérifiés** (alimente #7 et #8) | **6-8 h** | 1-2 h (relance 1ers clients) | Code + Contenu |
+| **9** | **Chantier #5 — i18n + multi-monnaie** | **16-23 h** | 5-8 h (catalogue produits par marché ~1600 lignes + relecture traductions) | Code + Contenu |
+| **10** | **Chantier #2 — Check-list quotidienne Co-pilote** + #4 lien Cahier de bord | **7-9 h** | 30 min validation | Code |
+| **11** | **Chantier #6 — Vidéos pédagogiques + intégration app** | 3-4 h dev | 10-15 h prod vidéos | Code + Contenu |
+| **12** | **Chantier #8 — Newsletter mensuelle privée + publique lead-magnet** | 17-25 h | 2-4 h (rédaction 1ère newsletter mai-juin) | Code + Contenu |
+| **13** | MAJ `CLAUDE.md` roadmap + lancement vague 2 (backlog A2-A6 + I1-I10) | 30 min + à étaler | — | Doc |
 
-### Totaux honnêtes (révisés après dump #5 — chantiers #9 + #10 + #11)
+### Totaux honnêtes (révisés après dump #7 — retrait #9, zéro impact code existant)
 
-**Vague 1 (les 11 chantiers + 4 phases prep)** :
-- **Total h-agent** : ~**114 à 171 heures** de codage agent effectif
-- **Total h-Thomas** : ~**29 à 47 heures** dispersées sur la durée totale
+**Vague 1 (10 chantiers + 4 phases prep + 1 fix bug Phase 0.5)** :
+- **Total h-agent** : ~**104 à 156 heures** de codage agent effectif (−10 à −15 h vs estimation précédente)
+- **Total h-Thomas** : ~**28 à 46 heures** dispersées sur la durée totale
 
-**Vague 2 (backlog différé : A2-A6 + I1-I10)** :
-- **Total h-agent additionnel** : ~**150 à 220 heures**
+**Vague 2 (backlog différé : A2-A6 + I1-I10 + #9 refacto NewAssessmentPage)** :
+- **Total h-agent additionnel** : ~**160 à 235 heures**
 - **À programmer** après livraison stable de la vague 1, en priorisant selon ROI observé
 
-**Grand total agent (vague 1 + vague 2)** : ~**265 à 390 heures** sur l'ensemble du roadmap brainstormé.
+**Grand total agent (vague 1 + vague 2)** : ~**264 à 391 heures** sur l'ensemble du roadmap brainstormé.
 - **Calendrier réaliste possible** :
   - **Sprint intensif** (Thomas dispo plusieurs h/jour pour valider) : ~**3 à 4 semaines** calendaires
   - **Régulier** (Thomas 1-2 h/jour) : ~**6 à 10 semaines** calendaires
@@ -1989,4 +1988,48 @@ Justification de l'ordre : Phase 0 et Phase 0.5 sont 2 fix-bugs isolés, idéal 
 
 ---
 
-*Fichier vivant. Dernière maj : 2026-05-10 soir (dump #6 — bug Celebration noté pour Phase 0.5).*
+## ⚠️ Dump #7 (2026-05-10 soir) — Retrait du chantier #9 (refacto NewAssessmentPage)
+
+### Recadrage Thomas (10/05 soir)
+
+> « Hors de question de toucher à mon bilan actuel ? Pourquoi ? Bilan online et bilan sur l'app en présentiel n'ont rien à voir, je comprends pas ce que tu veux faire avec ta refacto. »
+
+### Reconnaissance honnête de l'agent
+
+**Thomas a raison. Le chantier #9 (refacto NewAssessmentPage) est retiré de la vague 1 actée.**
+
+**Pourquoi je m'étais trompé** :
+- J'ai appliqué un pattern générique (« refacto avant feature pour partager des composants ») sans vérifier que les 2 bilans partageaient effectivement du code pertinent
+- Justification initiale : « le chantier #1 réutilisera 50% des step components du bilan coach refactorés ». **Faux.**
+
+**Les 2 bilans sont totalement indépendants** :
+
+| | Bilan en RDV (NewAssessmentPage existant) | Bilan online (chantier #1 nouveau) |
+|---|---|---|
+| Audience | Client face au coach en RDV | Prospect inconnu sur Insta/FB |
+| Durée | 30-45 min | 2 min |
+| Étapes | 14 (incl. body scan Tanita, sport profile, programme produits) | 5 (juste identité + objectifs + habitudes courtes) |
+| Sortie data | `assessments` (jsonb complet) | `online_bilans` (Lead simple) |
+| Composants spécifiques | BodyMetricCard, SportAlertsDialog, ProgrammeTicket, SelectableProductCard, QuantityStepper… | Form simple générique |
+| Logique métier | Tanita ranges, calculs protéine sport, recommandations boosters Herbalife | Aucune — capture data brute uniquement |
+
+→ **Aucun composant commun pertinent à partager**. Le chantier #1 doit être codé **entièrement isolé**, dans un dossier dédié `src/pages/public/bilan-online/`, avec ses propres composants, ses propres types, sa propre table — **zéro impact sur NewAssessmentPage**.
+
+### Décisions actées
+
+1. ❌ **Chantier #9 retiré de la vague 1** — déplacé en backlog vague 2
+2. ✅ **NewAssessmentPage on n'y touche pas** dans le cadre de la roadmap actuelle. C'est l'outil business critique de Thomas qui marche, on laisse tranquille.
+3. ✅ **Chantier #1 (Bilan online) codé entièrement isolé** : nouveau dossier, nouveaux composants, nouvelle table, zéro régression possible sur le bilan en RDV.
+4. ✅ **Roadmap recalibrée** : 14 phases (au lieu de 15), Vague 1 ramenée à 104-156 h-agent (au lieu de 114-171 h).
+
+### Backlog vague 2 — chantier #9 ajouté avec note explicative
+
+**#9** — Refacto `NewAssessmentPage.tsx` (4325 L) — **STATUT** : à reconsidérer un jour SI besoin de modif majeure du bilan en RDV (nouvelle étape, nouvelle métrique sport, nouveau body scan, etc.). **Pas urgent**, **pas bloquant** pour aucun autre chantier (contrairement à ma reco initiale erronée du dump #5). Effort estimé si jamais on le fait : 10-15 h-agent. Risque : régression sur business critique → tests régression manuels obligatoires avant merge.
+
+### Leçon pour l'agent
+
+**Avant de proposer un refacto, valider le couplage réel entre les fichiers**, pas juste appliquer un principe général. Un fichier de 4325 lignes n'est pas en soi un problème s'il marche, fait son job, et n'est pas modifié activement. La dette technique c'est OK si elle ne bloque rien.
+
+---
+
+*Fichier vivant. Dernière maj : 2026-05-10 soir (dump #7 — retrait chantier #9 acté).*
