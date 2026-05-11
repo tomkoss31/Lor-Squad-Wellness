@@ -40,6 +40,7 @@ Pour chaque idée, l'agent structure :
 | **#9** | ❌ ~~Refacto `NewAssessmentPage.tsx`~~ — **RETIRÉ DE LA VAGUE 1 le 10/05 soir**. Voir dump #7. | — | ❌ déplacé backlog vague 2 |
 | **#10** | UX / Crédibilité | Badges + certifications coach visibles publiquement | 3-4 h | 🌳 prêt à coder |
 | **#11** | Marketing / Preuve sociale | Témoignages clients vérifiés (système avis + carrousel) | 6-8 h | 🌳 prêt à coder |
+| **#12** | Dette technique / Hygiène | Audit refacto progressif codebase (3 phases A/B/C) | 2-3 h Phase A + opportuniste | 🌳 prêt à coder |
 | Phase 0 | Bug fix | Fix mobile chat history (3 étapes) | 30 min - 1 h | 🌳 prêt à coder |
 | Phase 2 | Renommage | Code source "La Base 360" coopératif (7 étapes) | 2-4 h | 🌳 prêt à coder |
 
@@ -1178,6 +1179,7 @@ Mes estimations précédentes en "X jours" étaient en **jours-homme classiques*
 | **1** | Achat + config DNS `labase360.com` | — | 1-2 h | Infra Thomas |
 | **2** | Renommage code source "La Base 360" (coopératif) | 2-4 h | 30 min validation + 15 min rename repo GitHub | Code |
 | **3** | Audits légers (`/clients` V2 kanban, `/outils-prospection`) | 1-2 h | 5 min lecture rapport | Audit |
+| **3.5** | **Chantier #12 Phase A — Audit refacto codebase complète** (carte priorisée des fichiers > 800 L, classification 🔴/🟡/🟢) | **2-3 h** | 5 min lecture rapport | Audit |
 | **4** | **Chantier #1 — Bilan Online + Lead pipeline** (codé entièrement isolé, ZÉRO impact NewAssessmentPage existant) | **20-31 h** | 3-5 h (validation copy, choix produits, slug coach) | Code |
 | **5** | **Chantier #10 — Badges + certifications coach visibles** (quick win après #1) | **3-4 h** | 5 min validation | Code |
 | **6** | **Chantier #3 — Refonte prospection mobile-first** | **14-22 h** | 2-3 h (rédaction scripts FR+EN initiaux) | Code |
@@ -1191,9 +1193,9 @@ Mes estimations précédentes en "X jours" étaient en **jours-homme classiques*
 
 ### Totaux honnêtes (révisés après dump #7 — retrait #9, zéro impact code existant)
 
-**Vague 1 (10 chantiers + 4 phases prep + 1 fix bug Phase 0.5)** :
-- **Total h-agent** : ~**104 à 156 heures** de codage agent effectif (−10 à −15 h vs estimation précédente)
-- **Total h-Thomas** : ~**28 à 46 heures** dispersées sur la durée totale
+**Vague 1 (11 chantiers + 5 phases prep + 1 fix bug Phase 0.5)** :
+- **Total h-agent** : ~**107 à 159 heures** de codage agent effectif (incl. chantier #12 Phase A audit + opportuniste B intégré dans chaque chantier ~+9-11 h)
+- **Total h-Thomas** : ~**29 à 47 heures** dispersées sur la durée totale
 
 **Vague 2 (backlog différé : A2-A6 + I1-I10 + #9 refacto NewAssessmentPage)** :
 - **Total h-agent additionnel** : ~**160 à 235 heures**
@@ -2032,4 +2034,74 @@ Justification de l'ordre : Phase 0 et Phase 0.5 sont 2 fix-bugs isolés, idéal 
 
 ---
 
-*Fichier vivant. Dernière maj : 2026-05-10 soir (dump #7 — retrait chantier #9 acté).*
+## 🧰 Dump #8 (2026-05-10 soir tard) — Chantier #12 : Audit refacto progressif codebase
+
+### Validation Thomas (10/05 soir tard)
+
+> « C'est une bonne idée de travailler de cette façon en faisant des découpages. Tu peux le mettre comme question ouverte/chantier futur parce que c'est vrai qu'à chaque fois qu'on veut rajouter un élément, si on touche aux 4000 lignes c'est compliqué. Il faudra faire l'ensemble, cette audite sur l'application complète pour ranger les structures par placard par boîte par élément, ce sera beaucoup plus simple mais attention à ne rien casser. À faire avant les gros chantiers de création de retour de vacances pour pouvoir construire plus facilement. »
+
+### Reformulation agent — approche pragmatique
+
+Thomas valide l'utilité d'un refacto **global** (pas que NewAssessmentPage), mais il y a un **piège à éviter** :
+
+⚠️ **Refacto big-bang complet AVANT les features = très mauvaise idée**
+- 4-5 fichiers à 1000-4325 lignes à refondre = 50-100 h-agent + risque régression élevé
+- Aucune valeur business livrée pendant ce temps
+- Thomas attend les features (Bilan online, Prospection, Newsletter, etc.)
+
+✅ **Approche recommandée : refacto progressif en 3 phases**
+
+#### Phase A — Audit léger (~2-3 h-agent)
+
+Cartographie de la dette technique : pour CHAQUE fichier > 800 lignes (déjà identifiés dans `ARCHITECTURE_SNAPSHOT_2026-05.md` §10), reporter :
+- Taille actuelle (lignes)
+- Complexité fonctionnelle (combien de responsabilités distinctes)
+- Fréquence de modification récente (git log dernières 4 semaines)
+- Couplage avec autres fichiers (qui l'importe / qui il importe)
+
+**Classification en 3 catégories** :
+- 🔴 **Refacto urgent** (modifié souvent ET très gros ET difficile)
+- 🟡 **Refacto SI on modifie** (gros mais peu modifié récemment)
+- 🟢 **Laisser tranquille** (gros mais stable, pas modifié, pas couplé)
+
+Livrable : `docs/REFACTO_AUDIT_2026-05.md` avec carte priorisée + reco par fichier.
+
+**Effort : 2-3 h-agent**.
+
+#### Phase B — Refacto opportuniste pendant chantiers (intégré dans chaque chantier)
+
+**Règle imposée** : à chaque fois qu'on touche un fichier > 800 L pendant un chantier de création, on en profite pour **l'extraire en sous-composants** au passage.
+
+Exemples concrets :
+- Si chantier #2 (check-list quotidienne) modifie `CoPiloteV5Page` → on en profite pour scinder cette page en sous-composants si elle est devenue grosse
+- Si chantier #1 (Bilan online) modifie `/clients` V2 (extension onglet Leads) → on en profite pour vérifier la santé du fichier `ClientsPage.tsx` (1340 L) et l'aérer si pertinent
+
+**Effort : ~+1 h-agent par chantier** (intégré silencieusement dans les estimations existantes — pas besoin de phase séparée).
+
+#### Phase C — Refacto ciblé (optionnel, à décider après livraison vague 1)
+
+Pour les **2-3 fichiers les plus douloureux** identifiés dans la phase A (typiquement : `NewAssessmentPage.tsx` 4325 L, `AgendaPage.tsx` 2251 L, `supabaseService.ts` 2340 L), refacto profond planifié.
+
+À déclencher SI :
+- Friction ressentie réelle pendant la vague 1 (Thomas dit « j'aurais voulu modifier X mais c'est galère »)
+- OU besoin d'ajouter une feature majeure dans un de ces fichiers
+- OU bug récurrent qui revient à cause de la complexité
+
+**Effort : 10-15 h-agent par fichier**, donc 20-45 h-agent si on fait les 3.
+
+À NE PAS faire « par principe » sans déclencheur réel.
+
+### Chantier #12 résumé
+
+| | Phase A (audit) | Phase B (opportuniste) | Phase C (ciblé) |
+|---|---|---|---|
+| **Quand** | Au retour PC, avant les chantiers | Pendant chaque chantier vague 1 | Après vague 1, SI besoin |
+| **Effort** | 2-3 h-agent | +1 h par chantier (silencieux) | 10-15 h par fichier (3 max) |
+| **Risque casse** | Zéro (lecture seule) | Faible (refacto local au chantier) | Moyen (à tester rigoureusement) |
+| **Statut** | ✅ Acté en vague 1 | ✅ Discipline imposée | 🟡 À décider après vague 1 |
+
+**À insérer dans la roadmap** : nouvelle Phase 3.5 (Phase A — audit) entre Phase 3 (audits légers) et Phase 4 (chantier #1).
+
+---
+
+*Fichier vivant. Dernière maj : 2026-05-10 soir tard (dump #8 — chantier #12 audit refacto progressif).*
