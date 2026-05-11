@@ -1174,6 +1174,7 @@ Mes estimations précédentes en "X jours" étaient en **jours-homme classiques*
 | # | Phase | h-agent | h-Thomas | Type |
 |---|---|---|---|---|
 | **0** | Fix mobile chat history (objet initial branche) | 30 min - 1 h | 5 min recette | Code |
+| **0.5** | 🐛 Fix bug Celebration popup régressé Co-pilote V5 (cf. dump #6) | 30-45 min | 5 min recette | Code |
 | **1** | Achat + config DNS `labase360.com` | — | 1-2 h | Infra Thomas |
 | **2** | Renommage code source "La Base 360" (coopératif) | 2-4 h | 30 min validation + 15 min rename repo GitHub | Code |
 | **3** | Audits légers (`/clients` V2 kanban, `/outils-prospection`) | 1-2 h | 5 min lecture rapport | Audit |
@@ -1938,6 +1939,54 @@ Thomas reviendra ici quand il aura de nouvelles idées. Au retour PC, ouvrir ce 
 
 🌴 Tu peux fermer l'app, profiter de la piscine, le brouillon est en sécurité sur GitHub. Au retour PC, ouvrir ce fichier suffit pour reprendre exactement là où on s'est arrêtés.
 
-*Fichier vivant. Dernière maj : 2026-05-10 fin de matinée (audit + dump #3).*
+## 🐛 Dump #6 (2026-05-10 soir) — Phase 0.5 : Fix Celebration popup régressé
 
-*Fichier vivant. Dernière maj : 2026-05-10 (dump #1 — 5 idées capturées).*
+### Bug signalé Thomas
+
+> « Problème anniversaire sur Co-pilote : action si appui sur bouton renvoie vers fiche client mais sans action aucun message. Avant il y avait un popup avec un message pré-défini et un accès copier/coller pour envoyer WhatsApp/SMS/copier. À corriger. »
+
+### Diagnostic complet (audit agent 10/05)
+
+**Composant actuellement actif** : `src/components/copilote/CelebrationCard.tsx`
+- Utilisé dans `src/features/copilote/v5/CoPiloteV5Page.tsx:224`
+- Migration vers V5 du 8 mai 2026 (commit `24657f9`) a remplacé l'ancien `BirthdayBlock` par cette nouvelle implémentation **simplifiée qui a perdu la modale riche**
+
+**Comportement actuel régressé** :
+- Bouton « 💬 Envoyer » → ouvre directement WhatsApp en nouvel onglet (`handleSendWhatsApp`) **sans modale**, sans édition, sans choix canal
+- Bouton « Fiche → » → navigue vers `/clients/:id` (c'est le bouton que Thomas pointait : « renvoie vers fiche client sans message »)
+
+**Composant à réutiliser/étendre** : `src/components/copilote/BirthdayMessageDialog.tsx`
+- Toujours dans le repo, mais plus appelé depuis Co-pilote V5
+- Contient la modale riche : message éditable + Copier + WhatsApp + SMS + bouton « Marquer envoyé »
+- Couplé à `Client` (pas à `Celebration`) → adaptation nécessaire pour gérer les 4 types de célébration (`birthday` / `program_1m` / `program_3m` / `program_6m`)
+
+**Composant pattern complet existant** : `src/components/client-detail/MessageTemplatesModal.tsx`
+- Pattern multi-canal complet 4 boutons (Copier / WhatsApp / SMS / Telegram)
+- Composant `ChannelButton` réutilisable
+- Lib helper `src/lib/messageTemplates.ts` avec `buildWhatsAppLink`, etc.
+
+### Fix proposé — Étapes franches
+
+| Étape | Livrable testable | h-agent |
+|---|---|---|
+| **0.5.1** | Créer `src/components/copilote/CelebrationDialog.tsx` : modale qui prend une `Celebration` (au lieu d'un `Client`), affiche le message pré-rempli depuis `KIND_META[kind].message()`, message éditable via textarea, 4 boutons multi-canal (Copier / WhatsApp / SMS / Telegram) | 30 min |
+| **0.5.2** | Modifier `CelebrationCard.tsx` : remplacer `handleSendWhatsApp(c)` par `setOpenCelebration(c)` qui ouvre `<CelebrationDialog />`. Rendre le dialog à la fin du composant. Garder le bouton « Fiche → » optionnel (ou retirer si Thomas veut). | 10 min |
+| **0.5.3** | Test manuel : ouvrir Co-pilote V5, vérifier qu'au moins 1 célébration s'affiche (insert test si besoin), cliquer sur « Envoyer », vérifier que la modale s'ouvre avec message pré-rempli, tester les 4 boutons (Copier OK, WhatsApp ouvre `wa.me`, SMS ouvre app SMS, Telegram ouvre `t.me/share/url`), tester l'édition du message | 10-15 min |
+| **0.5.4** | Commit unique + push | 5 min |
+
+**Effort total : 30-45 min h-agent + 5 min recette Thomas**
+
+### Couplage avec autres chantiers
+
+- ✅ **Pattern réutilisable** : ce dialog peut devenir le standard pour tous les messages contextuels (anniversaire, milestone, F1, F21, dormant). Couplé à #2 (check-list quotidienne) qui appellera ce dialog depuis les Leads à recontacter.
+- ✅ **Cohérent avec `MessageTemplatesModal`** existant — à terme possibilité de fusionner en un seul composant `<MessageDialog />` générique paramétrable.
+
+### À insérer dans la roadmap
+
+**Nouvelle Phase 0.5** entre Phase 0 (fix mobile chat history) et Phase 1 (achat DNS).
+
+Justification de l'ordre : Phase 0 et Phase 0.5 sont 2 fix-bugs isolés, idéal de les enchaîner pour démarrer la session PC sur une codebase propre avant d'attaquer les gros chantiers. Cumul : ~1 h-1 h 30 max pour les 2 fix de bugs avant de commencer.
+
+---
+
+*Fichier vivant. Dernière maj : 2026-05-10 soir (dump #6 — bug Celebration noté pour Phase 0.5).*
