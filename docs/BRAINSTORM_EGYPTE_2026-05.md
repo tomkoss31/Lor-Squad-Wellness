@@ -1176,6 +1176,7 @@ Mes estimations précédentes en "X jours" étaient en **jours-homme classiques*
 |---|---|---|---|---|
 | **0** | Fix mobile chat history (objet initial branche) | 30 min - 1 h | 5 min recette | Code |
 | **0.5** | 🐛 Fix bug Celebration popup régressé Co-pilote V5 (cf. dump #6) | 30-45 min | 5 min recette | Code |
+| **0.7** | 🐛 Fix saisie PV antérieurs sur fiche distri (sélecteur mois TeamMemberDrilldownModal — cf. dump #9) | 1 h 30 - 2 h | 5 min recette | Code |
 | **1** | Achat + config DNS `labase360.com` | — | 1-2 h | Infra Thomas |
 | **2** | Renommage code source "La Base 360" (coopératif) | 2-4 h | 30 min validation + 15 min rename repo GitHub | Code |
 | **3** | Audits légers (`/clients` V2 kanban, `/outils-prospection`) | 1-2 h | 5 min lecture rapport | Audit |
@@ -2104,4 +2105,49 @@ Pour les **2-3 fichiers les plus douloureux** identifiés dans la phase A (typiq
 
 ---
 
-*Fichier vivant. Dernière maj : 2026-05-10 soir tard (dump #8 — chantier #12 audit refacto progressif).*
+## 📊 Dump #9 (2026-05-10 nuit) — Phase 0.7 : Saisie PV antérieurs + mémo restructure fiche distri
+
+### Bug signalé Thomas
+
+> « Impossible de rajouter antérieurement les PV faits le mois dernier au mois d'avant pour remettre à jour. Idée : un onglet "mise à jour des points antérieurs" sans que ça influent sur la rentabilité du mois en cours. »
+
+### Diagnostic agent
+
+| Constat | Détail |
+|---|---|
+| Composant UI | `src/components/team/TeamMemberDrilldownModal.tsx` lignes 543-674 |
+| Mois figé au mount | Ligne 93 : `useMemo(() => currentMonthIso(), [])` |
+| Table support déjà l'historique | `pv_monthly_breakdown` PK `(user_id, month)` → 1 ligne par mois |
+| RPC `set_user_pv_breakdown` intelligente | Ne sync `users.monthly_pv_override` (= jauge rentabilité courante) QUE si mois saisi = mois courant. Saisir un mois antérieur n'impacte PAS la rentabilité du mois en cours. |
+| Manque | Juste un sélecteur de mois dans la modale pour naviguer dans l'historique |
+
+### Confirmation pour le mois suivant (juin 2026)
+
+✅ Tableau se remet à zéro automatiquement chaque mois (PK `(user_id, month)`). Pas de pollution mai → juin. Historique mai préservé en DB, juste plus affiché par défaut. Jauge rentabilité bascule auto en calcul à zéro tant que rien saisi pour juin.
+
+### Fix proposé — Étapes franches
+
+| Étape | Livrable testable | h-agent |
+|---|---|---|
+| **0.7.1** | State `selectedMonth` + dropdown 12 derniers mois dans `TeamMemberDrilldownModal` | 30 min |
+| **0.7.2** | Hook `usePvBreakdowns(selectedMonth)` re-fetch quand `selectedMonth` change (param dynamique au lieu de figé au mount) | 30 min |
+| **0.7.3** | Bannière discrète « 📅 Tu modifies les PV d'avril 2026 — la rentabilité du mois en cours n'est pas impactée » si `selectedMonth ≠ currentMonth` | 15 min |
+| **0.7.4** | Test : saisir 1500 PV sur Mandy pour avril 2026, vérifier que la jauge mai reste inchangée + RPC `set_user_pv_breakdown` écrit bien dans la ligne `(Mandy_id, "2026-04")` | 15 min |
+| **0.7.5** | Commit + push | 5 min |
+
+**Total : 1 h 30 - 2 h-agent + 5 min recette Thomas**
+
+**Risque** : faible. Pas de migration DB. Juste UI + hook param dynamique.
+
+### Mémo backlog vague 2 — Restructure complète fiche distributeur
+
+Thomas a aussi signalé (à traiter en chantier dédié vague 2) :
+- Doublons dans l'affichage des distributeurs
+- Pas d'ouverture de fiche PV à tous les endroits
+- Arborescence à restructurer
+
+À détailler avant le chantier (audit ciblé fiche distri) — **pas la question du jour** d'après Thomas, à creuser après la livraison vague 1.
+
+---
+
+*Fichier vivant. Dernière maj : 2026-05-10 nuit (dump #9 — Phase 0.7 PV antérieurs).*
