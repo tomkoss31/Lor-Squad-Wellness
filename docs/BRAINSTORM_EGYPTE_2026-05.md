@@ -1179,6 +1179,7 @@ Mes estimations précédentes en "X jours" étaient en **jours-homme classiques*
 | **0.5** | 🐛 Fix bug Celebration popup régressé Co-pilote V5 (cf. dump #6) | 30-45 min | 5 min recette | Code |
 | ~~**0.7**~~ | ~~Fix saisie PV antérieurs autonome~~ — **ABSORBÉE dans chantier #13A.4** (cohérent : sélecteur mois intégré dans l'onglet PV & Rentabilité de la fiche distri unifiée plutôt que dans la modale isolée). Voir dump #10. | — | — | — |
 | **0.8** | 🐛 Enrichissement Liste 100 (Cahier de bord) : ajout colonnes `platform` + `profile_url` + élargissement FRANK (voisins + amis_enfants K) + deep links clic profil + raccourci Co-pilote direct (cf. dump #11) | 2 h - 2 h 30 | 5 min recette | Code |
+| **0.9** | 🐛 Mini-fix UX Formation (cf. dump #12) : retrait minimum caractères réponse libre + séparation QCM / réponse libre pliable + masquage section vide « Historique de discussion » + retrait carte « MODULE VALIDÉ AUTO 100% » dupliquée + liste verticale modules au lieu de chips horizontales | 1 h 30 - 2 h | 5 min recette | Code |
 | **1** | Achat + config DNS `labase360.com` | — | 1-2 h | Infra Thomas |
 | **2** | Renommage code source "La Base 360" (coopératif) | 2-4 h | 30 min validation + 15 min rename repo GitHub | Code |
 | **3** | Audits légers (`/clients` V2 kanban, `/outils-prospection`) | 1-2 h | 5 min lecture rapport | Audit |
@@ -2339,4 +2340,43 @@ Phase 0.8 est **autonome** (faible risque, fix isolé) MAIS prépare le terrain 
 
 ---
 
-*Fichier vivant. Dernière maj : 2026-05-10 nuit tard (dump #11 — Phase 0.8 enrichissement Liste 100).*
+## 🎓 Dump #12 (2026-05-10 nuit tard) — Phase 0.9 mini-fix UX Formation
+
+### Décisions Thomas (10/05 nuit, captures Formation Module 1)
+
+| Q | Décision Thomas |
+|---|---|
+| Réponse libre minimum 80 caractères | ✅ **Retirer le minimum** → réponse obligatoire mais 1 caractère suffit (Option B). Pas frustrer l'apprenant. Sponsor lit quand même les réponses. |
+| Séparation QCM / réponse libre | ✅ **Pliable / accordéon** « 💭 Ton ressenti libre » pour ne plus mélanger les 2 types de question |
+| Section « Historique de discussion » | ✅ **À garder** — Thomas pense que c'est le message envoyé au coach à la fin de la formation + les réponses du quiz permettant au coach de débriefer / corriger. Masquer seulement si VRAIMENT vide. |
+| Carte « MODULE VALIDÉ · AUTO 100% » dupliquée avec badge en haut | ✅ **À retirer** (anti-duplication) |
+| Chips horizontales modules → liste verticale | ✅ **Validé** (plus lisible mobile) |
+
+### Étapes franches Phase 0.9
+
+| Étape | Livrable testable | h-agent |
+|---|---|---|
+| **0.9.1** | Retirer le minimum 80 caractères sur les réponses libres : supprimer affichage « Minimum 80 caractères » + ajuster validation front (>= 1 char au lieu de >= 80) | 15 min |
+| **0.9.2** | Réorganiser quiz : QCM en premier (déjà OK), puis section pliable accordéon « 💭 Ton ressenti libre (obligatoire) » qui contient la réponse libre. Ne plus mélanger. | 30-45 min |
+| **0.9.3** | Masquer section « Historique de discussion » uniquement si vide (préserve si discussions y existent — c'est le canal coach↔apprenant pour débrief) | 10 min |
+| **0.9.4** | Retirer la carte « MODULE VALIDÉ · AUTO 100% » quand le badge « ✓ Validé » est déjà visible en haut (anti-duplication info) | 10 min |
+| **0.9.5** | Remplacer les chips horizontales scrollables « Autres modules du parcours » par une **liste verticale** avec icône ✓/⬜ devant chaque module (plus lisible mobile) | 30 min |
+| **0.9.6** | Tests + commit + push | 10 min |
+
+**Effort total : 1 h 30 - 2 h-agent + 5 min recette Thomas**.
+
+### Insight transverse Formation (Thomas 10/05 nuit)
+
+> « La formation est un peu trop lourde pour les personnes. Sur téléphone il faut que ce soit simple. Je recrute des distributeurs en Inde, au Brésil ou autre — il faut qu'on puisse rapidement prendre l'opportunité avec des mots simples pour que ce soit pas super compliqué. »
+
+**À retenir pour les futurs travaux sur Formation** (post-Phase 0.9) :
+- **Mobile-first ABSOLU** : Thomas teste sur iPhone, ses recrues internationales aussi
+- **Mots simples** : vocabulaire accessible, pas de jargon. Si jargon Herbalife/MLM nécessaire → microcopy explicative
+- **Adapter culturellement** : Inde / Brésil / Mexique / Turquie ont des références différentes. Quand on i18n (chantier #5), pas juste traduire mais **localiser** (exemples, photos, références culturelles)
+- **Décourager les pavés de texte** : préférer cards courtes, illustrations, vidéos quand prêtes
+
+Pas un chantier dédié maintenant — **principe directeur** à appliquer à la Formation chaque fois qu'on y touchera.
+
+---
+
+*Fichier vivant. Dernière maj : 2026-05-10 nuit tard (dump #12 — Phase 0.9 UX Formation).*
