@@ -41,6 +41,7 @@ Pour chaque idée, l'agent structure :
 | **#10** | UX / Crédibilité | Badges + certifications coach visibles publiquement | 3-4 h | 🌳 prêt à coder |
 | **#11** | Marketing / Preuve sociale | Témoignages clients vérifiés (système avis + carrousel) | 6-8 h | 🌳 prêt à coder |
 | **#12** | Dette technique / Hygiène | Audit refacto progressif codebase (3 phases A/B/C) | 2-3 h Phase A + opportuniste | 🌳 prêt à coder |
+| **#13** | UX / Resurfaçage | Fiche distri unifiée (enrichir `/distributors/:id` + resurfacer flux d'accès — 3 sous-chantiers A/B/C) | 9-13 h | 🌳 prêt à coder |
 | Phase 0 | Bug fix | Fix mobile chat history (3 étapes) | 30 min - 1 h | 🌳 prêt à coder |
 | Phase 2 | Renommage | Code source "La Base 360" coopératif (7 étapes) | 2-4 h | 🌳 prêt à coder |
 
@@ -1176,7 +1177,7 @@ Mes estimations précédentes en "X jours" étaient en **jours-homme classiques*
 |---|---|---|---|---|
 | **0** | Fix mobile chat history (objet initial branche) | 30 min - 1 h | 5 min recette | Code |
 | **0.5** | 🐛 Fix bug Celebration popup régressé Co-pilote V5 (cf. dump #6) | 30-45 min | 5 min recette | Code |
-| **0.7** | 🐛 Fix saisie PV antérieurs sur fiche distri (sélecteur mois TeamMemberDrilldownModal — cf. dump #9) | 1 h 30 - 2 h | 5 min recette | Code |
+| ~~**0.7**~~ | ~~Fix saisie PV antérieurs autonome~~ — **ABSORBÉE dans chantier #13A.4** (cohérent : sélecteur mois intégré dans l'onglet PV & Rentabilité de la fiche distri unifiée plutôt que dans la modale isolée). Voir dump #10. | — | — | — |
 | **1** | Achat + config DNS `labase360.com` | — | 1-2 h | Infra Thomas |
 | **2** | Renommage code source "La Base 360" (coopératif) | 2-4 h | 30 min validation + 15 min rename repo GitHub | Code |
 | **3** | Audits légers (`/clients` V2 kanban, `/outils-prospection`) | 1-2 h | 5 min lecture rapport | Audit |
@@ -1188,15 +1189,18 @@ Mes estimations précédentes en "X jours" étaient en **jours-homme classiques*
 | **8** | **Chantier #11 — Témoignages clients vérifiés** (alimente #7 et #8) | **6-8 h** | 1-2 h (relance 1ers clients) | Code + Contenu |
 | **9** | **Chantier #5 — i18n + multi-monnaie** | **16-23 h** | 5-8 h (catalogue produits par marché ~1600 lignes + relecture traductions) | Code + Contenu |
 | **10** | **Chantier #2 — Check-list quotidienne Co-pilote** + #4 lien Cahier de bord | **7-9 h** | 30 min validation | Code |
-| **11** | **Chantier #6 — Vidéos pédagogiques + intégration app** | 3-4 h dev | 10-15 h prod vidéos | Code + Contenu |
-| **12** | **Chantier #8 — Newsletter mensuelle privée + publique lead-magnet** | 17-25 h | 2-4 h (rédaction 1ère newsletter mai-juin) | Code + Contenu |
-| **13** | MAJ `CLAUDE.md` roadmap + lancement vague 2 (backlog A2-A6 + I1-I10) | 30 min + à étaler | — | Doc |
+| **11** | **Chantier #13 sous-vague A+B — Fiche distri unifiée + resurfaçage flux** (cf. dump #10, absorbe Phase 0.7 PV antérieurs) | **8-11 h** | 30 min recette | Code |
+| **12** | **Chantier #6 — Vidéos pédagogiques + intégration app** | 3-4 h dev | 10-15 h prod vidéos | Code + Contenu |
+| **13** | **Chantier #8 — Newsletter mensuelle privée + publique lead-magnet** | 17-25 h | 2-4 h (rédaction 1ère newsletter mai-juin) | Code + Contenu |
+| **14** | MAJ `CLAUDE.md` roadmap + lancement vague 2 (backlog A2-A6 + I1-I10 + #9 refacto + #13C cleanup) | 30 min + à étaler | — | Doc |
 
-### Totaux honnêtes (révisés après dump #7 — retrait #9, zéro impact code existant)
+### Totaux honnêtes (révisés après dump #10 — chantier #13 fiche distri unifiée actée)
 
-**Vague 1 (11 chantiers + 5 phases prep + 1 fix bug Phase 0.5)** :
-- **Total h-agent** : ~**107 à 159 heures** de codage agent effectif (incl. chantier #12 Phase A audit + opportuniste B intégré dans chaque chantier ~+9-11 h)
-- **Total h-Thomas** : ~**29 à 47 heures** dispersées sur la durée totale
+**Vague 1 (12 chantiers actifs + 5 phases prep + 2 fix bugs Phase 0.5 + 0.7 ABSORBÉE dans #13)** :
+- **Total h-agent** : ~**113 à 168 heures** de codage agent effectif (Phase 0.7 retirée du décompte autonome car absorbée dans 13A.4 → +0.7h net seulement, et +8-11h pour #13 sous-vagues A+B)
+- **Total h-Thomas** : ~**29-47 heures** dispersées sur la durée totale (inchangé, recette #13 marginale)
+
+**Note** : Phase 0.7 (saisie PV antérieurs) **n'est plus une phase autonome** car elle est intégrée dans le chantier #13A.4 (onglet PV & Rentabilité avec sélecteur mois). Cohérent : si on enrichit la fiche distri complète, autant intégrer le sélecteur mois au passage plutôt que de le faire 2 fois.
 
 **Vague 2 (backlog différé : A2-A6 + I1-I10 + #9 refacto NewAssessmentPage)** :
 - **Total h-agent additionnel** : ~**160 à 235 heures**
@@ -1369,7 +1373,12 @@ Mes estimations précédentes en "X jours" étaient en **jours-homme classiques*
 9. 🌊 **Philosophie « resurfaçage » (Thomas 10/05)** :
    > « Beaucoup de choses sont déjà faites/créées dans l'app, mais ce sont les **connexions entre elles** qui ne sont pas bonnes. On a empilé des features sur des features existantes, donc parfois ça casse, parfois ça empire et ça se connecte pas. C'est un **resurfaçage** qu'il faut créer. »
 
-   **Implication pour l'agent** : avant de tout reconstruire, **regarder ce qui existe déjà** et **améliorer les flux de connexion** (UX, liens entre pages, accessibilité depuis plusieurs points). **Ne pas refaire — reconnecter et resurfacer**. C'est exactement l'esprit de l'Option C du chantier #13 (garder la modale drill-down riche, l'enrichir, la rendre accessible partout, plutôt que refondre).
+   **Implication pour l'agent** : avant de tout reconstruire, **regarder ce qui existe déjà** et **améliorer les flux de connexion** (UX, liens entre pages, accessibilité depuis plusieurs points). **Ne pas refaire — reconnecter et resurfacer**. C'est exactement l'esprit du chantier #13 (garder la modale drill-down riche, enrichir `/distributors/:id` en réutilisant ses blocs, rendre les flux accessibles partout, plutôt que refondre).
+
+10. 🧱 **Principe LEGO Thomas (10/05 nuit)** :
+    > « L'application a été créée en briques par pièces comme un LEGO, forcément il y a des doublons et des choses qui n'ont pas été connectées entre elles. »
+
+    **Implication pour l'agent** : avant chaque nouveau chantier, **inventorier les briques LEGO existantes** qui touchent au domaine (composants déjà codés, hooks, tables, edge functions). Souvent : **extraire les briques en composants partagés** + **reconnecter les flux** > **construire un nouveau LEGO du même type**. Le chantier #13 est le cas d'école : zéro réécriture, juste extraction de 8 blocs de la modale en composants partagés réutilisés dans la page.
 
 ---
 
@@ -2154,4 +2163,120 @@ Thomas a aussi signalé (à traiter en chantier dédié vague 2) :
 
 ---
 
-*Fichier vivant. Dernière maj : 2026-05-10 nuit (dump #9 — Phase 0.7 PV antérieurs).*
+## 🧱 Dump #10 (2026-05-10 nuit tard) — Chantier #13 finalisé : Fiche distri unifiée + resurfaçage
+
+### Insight stratégique Thomas (10/05 nuit)
+
+> « C'était vraiment important de travailler sur cette phase. L'application a été créée **en briques par pièces comme un LEGO**, forcément il y a des doublons et des choses qui n'ont pas été connectées entre elles. »
+
+→ Citation ajoutée comme **insight directeur** : ne PAS surcharger encore la pile LEGO, mais **réorganiser les connexions** entre les briques existantes. Confirme la philosophie « resurfaçage » (règle #9).
+
+### Diagnostic confirmé par les captures
+
+3 niveaux de richesse RADICALEMENT différents pour voir le même distri Victoria :
+
+| Vue | Richesse | Statut |
+|---|---|---|
+| Mon Équipe → podium → **modale drill-down** | 🏆 8 sections riches avec édition (XP / Académie / Formation / Activité / Rang / PV / Geler) | ✅ Excellent |
+| Mon Équipe → onglets Engagement/Arbre/Gamif | 🏆 Données équipe pertinentes | ✅ OK |
+| **Paramètres → Équipe → clic Fiche** → `/distributors/:id` | 💀 « Portefeuille Client Victoria — 1 client » | ❌ Misérable |
+
+→ **La modale est précieuse, on garde. La page `/distributors/:id` est anémique, on enrichit.**
+
+### Chantier #13 — Découpage définitif (3 sous-chantiers)
+
+#### Sous-chantier 13A — Enrichir `/distributors/:id` avec 5 onglets (vague 1, ~6-8 h-agent)
+
+**Réutiliser les blocs déjà codés** de la modale drill-down (zéro réécriture, extraction en composants partagés) et les redéployer en onglets dans la page :
+
+```
+/distributors/Victoria
+  Header : avatar + nom + badge rôle + niveau XP
+  ├─ 📊 Vue d'ensemble        → Engagement Total + Apprentissage + Activité récente + Dernière connexion
+  ├─ 👥 Clients                → L'actuel "Portefeuille client" (intact)
+  ├─ 💰 PV & Rentabilité       → Rang Herbalife édition + Progression jauge + PV Bizworks breakdown édition
+  │                              + Sélecteur mois (Phase 0.7 PV antérieurs absorbée ici)
+  ├─ 📝 Activité               → L'onglet existant (intact)
+  └─ ⚙️ Paramètres distri      → Compte actif toggle (geler/dégeler) + Charte + Transferts admin
+```
+
+Composants à extraire de `TeamMemberDrilldownModal` pour réutilisation cross page+modale :
+- `<EngagementTotalBlock />`
+- `<ApprentissageBlock />` (Academy + Formation)
+- `<ActiviteRecenteBlock />` (Bilans 30j + RDV 30j + Messages 7j)
+- `<EngagementBlock />` (Dernière connexion + Connexions cumulées)
+- `<RangHerbalifeBlock />` (selector + bouton Appliquer)
+- `<ProgressionRangBlock />` (jauge)
+- `<PvBizworksBlock />` (5 tier rows + override + Appliquer + sélecteur mois)
+- `<CompteActifBlock />` (toggle)
+
+La modale reste intacte (mêmes composants importés), zéro régression possible.
+
+**Étapes franches 13A** :
+
+| Étape | Livrable testable | h-agent |
+|---|---|---|
+| 13A.1 | Extraire les 8 blocs de la modale en composants partagés `src/components/distributor-blocks/` | 2 h |
+| 13A.2 | Refactor `TeamMemberDrilldownModal` pour utiliser ces composants partagés (régression zéro testée) | 30 min |
+| 13A.3 | Construire la nouvelle structure `/distributors/:id` avec 5 onglets + header | 2-3 h |
+| 13A.4 | Intégrer sélecteur mois historique dans l'onglet PV & Rentabilité (absorbe Phase 0.7) | 1 h |
+| 13A.5 | Bouton « Aperçu rapide » sur la page → ouvre la modale drill-down (switch rapide entre distri) — **validé Thomas comme utile** | 30 min |
+| 13A.6 | Test régression complet modale + page sur Mandy / Victoria / Léa | 30 min |
+
+#### Sous-chantier 13B — Resurfacer les flux d'accès (vague 1, ~2-3 h-agent)
+
+**Distinction de rôle clarifiée** :
+
+| Route | Rôle |
+|---|---|
+| `/team` | **Dashboard équipe** — clic = modale drill-down rapide |
+| `/parametres?tab=equipe` | **Gestion admin équipe** — clic « Fiche » = page `/distributors/:id` enrichie |
+
+**Étapes franches 13B** :
+
+| Étape | Livrable testable | h-agent |
+|---|---|---|
+| 13B.1 | Fix MemberCard cliquable dans Paramètres > Équipe (clic sur tout l'item → navigation `/distributors/:id`) | 30 min |
+| 13B.2 | Ajouter lien `/distributors/:id` au clic sur ligne distri dans `/pv/team` | 30 min |
+| 13B.3 | Ajouter lien `/distributors/:id` au clic sur ligne distri dans `/flex/equipe` | 30 min |
+| 13B.4 | Cohérence visuelle : utiliser un composant `<DistributorRowAccessible />` réutilisable partout (style + comportement clic unifiés) | 1-2 h |
+
+#### Sous-chantier 13C — Cleanup + announcement (vague 2, ~1-2 h-agent)
+
+| Étape | Livrable testable | h-agent |
+|---|---|---|
+| 13C.1 | Recette parcours complet (Paramètres > Équipe → clic → fiche enrichie ; `/team` modale → CTA → fiche enrichie ; `/pv/team` → clic → fiche enrichie ; `/flex/equipe` → clic → fiche enrichie) | 30 min |
+| 13C.2 | Entrée `app_announcements` pour annoncer la refonte aux admin | 30 min |
+| 13C.3 | Carte hub `/developpement/nouveautes` | 15 min |
+
+### Décisions actées suite captures Thomas
+
+| Sujet | Décision |
+|---|---|
+| Modale drill-down | ✅ **Garder telle quelle** (l'agent revient sur sa reco initiale erronée) |
+| `/team` dashboard | ✅ **Ne pas toucher** — bien comme il est |
+| `/distributors/:id` | ✅ **Enrichir massivement** avec 5 onglets en réutilisant blocs modale |
+| `/parametres?tab=equipe` | ✅ **Garder + clarifier rôle** (gestion admin, pas doublon de `/team`) |
+| Bouton « Aperçu rapide » modale sur page distri | ✅ **Utile** — implémenté en 13A.5 |
+| Liens manquants `/pv/team` + `/flex/equipe` | ✅ **Ajouter** vers `/distributors/:id` |
+
+### Effort total chantier #13 final
+
+| Sous-chantier | h-agent | Vague |
+|---|---|---|
+| **13A** | 6-8 h | Vague 1 |
+| **13B** | 2-3 h | Vague 1 |
+| **13C** | 1-2 h | Vague 2 |
+| **Total** | **9-13 h** | — |
+
+### Insight stratégique « LEGO » Thomas (acté comme principe transverse)
+
+Ajouter dans `## Règles à respecter pendant l'exécution` :
+
+> 🧱 **Principe LEGO Thomas (10/05)** : « L'application a été créée en briques par pièces comme un LEGO, forcément il y a des doublons et des choses qui n'ont pas été connectées entre elles. »
+>
+> **Implication agent** : avant chaque nouveau chantier, **regarder les briques LEGO existantes** qui touchent au domaine. Souvent, **reconnecter / extraire en composants partagés / resurfacer les flux** > **construire un nouveau LEGO du même type**. Ne pas empiler — réorganiser.
+
+---
+
+*Fichier vivant. Dernière maj : 2026-05-10 nuit tard (dump #10 — chantier #13 fiche distri unifiée finalisé, insight LEGO).*
