@@ -1381,6 +1381,14 @@ Mes estimations précédentes en "X jours" étaient en **jours-homme classiques*
 
     **Implication pour l'agent** : avant chaque nouveau chantier, **inventorier les briques LEGO existantes** qui touchent au domaine (composants déjà codés, hooks, tables, edge functions). Souvent : **extraire les briques en composants partagés** + **reconnecter les flux** > **construire un nouveau LEGO du même type**. Le chantier #13 est le cas d'école : zéro réécriture, juste extraction de 8 blocs de la modale en composants partagés réutilisés dans la page.
 
+11. 🛤️ **Règle workflow mono-branche (Thomas 10/05 nuit)** :
+    > « On reste en mono-branche. Peut-être lancer des audits sur une autre branche pendant le travail sur une autre, rien d'autre. »
+
+    **Implication pour l'agent** :
+    - **Tous les chantiers fonctionnels** se font séquentiellement sur **la branche en cours** (feat/X depuis dev/thomas-test). Pas de parallélisation de chantiers.
+    - **SEULE exception autorisée** : lancer un **audit lecture-seule** (Explore agent ou audit refacto type Phase 3.5) **en parallèle** sur une branche éphémère pendant qu'un chantier est en cours sur la branche principale. Aucune écriture sur la branche audit, juste un rapport markdown.
+    - Évite les merge conflicts, le mental load et la complexité multi-branches. Préfère **chantiers ultra-bien découpés enchaînés rapidement** plutôt que parallélisation.
+
 ---
 
 ## 🆕 Dump #3 (2026-05-10 matinée — audit + chantier #8 Newsletter)
