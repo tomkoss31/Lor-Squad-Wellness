@@ -1366,6 +1366,10 @@ Mes estimations précédentes en "X jours" étaient en **jours-homme classiques*
 6. 🔒 **RLS** : jamais de `::uuid` dans policy permissive — utiliser `::text` (cf. leçon 25/04/2026)
 7. 📣 **Règle livrable complet** : code prod + entrée `app_announcements` + vidéo `/developpement` si UX non-évidente (cf. CLAUDE.md)
 8. 🎬 **Discoverability** : chaque chantier prévoit son onboarding propre (announcement + vidéo + tour) pour éviter le cimetière des features non-utilisées
+9. 🌊 **Philosophie « resurfaçage » (Thomas 10/05)** :
+   > « Beaucoup de choses sont déjà faites/créées dans l'app, mais ce sont les **connexions entre elles** qui ne sont pas bonnes. On a empilé des features sur des features existantes, donc parfois ça casse, parfois ça empire et ça se connecte pas. C'est un **resurfaçage** qu'il faut créer. »
+
+   **Implication pour l'agent** : avant de tout reconstruire, **regarder ce qui existe déjà** et **améliorer les flux de connexion** (UX, liens entre pages, accessibilité depuis plusieurs points). **Ne pas refaire — reconnecter et resurfacer**. C'est exactement l'esprit de l'Option C du chantier #13 (garder la modale drill-down riche, l'enrichir, la rendre accessible partout, plutôt que refondre).
 
 ---
 
