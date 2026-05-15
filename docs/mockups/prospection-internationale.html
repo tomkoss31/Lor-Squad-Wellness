@@ -547,12 +547,24 @@
 <script>
   // ===== Data =====
   const MARKETS = {
-    fr: { flag: '🇫🇷', label: 'France', lang: 'Français' },
-    en: { flag: '🇬🇧', label: 'International', lang: 'English' },
-    es: { flag: '🇲🇽', label: 'LatAm + Espagne', lang: 'Español' },
-    pt: { flag: '🇧🇷', label: 'Brésil + Portugal', lang: 'Português (BR)' },
-    tr: { flag: '🇹🇷', label: 'Turquie + DE', lang: 'Türkçe' },
-    hi: { flag: '🇮🇳', label: 'Inde', lang: 'Hindi/English' },
+    fr: { flag: '🇫🇷', label: 'France', lang: 'Français',
+      timing: '⏰ Optimal : lundi-jeudi 12h-14h ou 19h-21h. Éviter dimanche.',
+      tip: '🇫🇷 Tutoiement OK Insta/FB, vouvoiement LinkedIn. Pas trop d\'emojis pro.' },
+    en: { flag: '🇬🇧', label: 'International', lang: 'English',
+      timing: '⏰ Optimal : adapter au fuseau cible. US East 9h-11h ou 19h-21h EST.',
+      tip: '🌍 Plateforme : Insta + LinkedIn. EN passe-partout pour profils intl mal géolocalisés.' },
+    es: { flag: '🇲🇽', label: 'LatAm + Espagne', lang: 'Español',
+      timing: '⏰ Optimal : Mexique 10h-12h ou 20h-22h CDT. Espagne idem CET +0.',
+      tip: '🇲🇽 WhatsApp DOMINANT en LatAm. Privilégier après 1er contact Insta.' },
+    pt: { flag: '🇧🇷', label: 'Brésil + Portugal', lang: 'Português (BR)',
+      timing: '⏰ Optimal : Brésil 11h-13h ou 19h-22h BRT. Vendredi soir = jackpot.',
+      tip: '🇧🇷 WhatsApp obligatoire après contact. Ton CHALEUREUX, pas formel.' },
+    tr: { flag: '🇹🇷', label: 'Turquie + DE', lang: 'Türkçe',
+      timing: '⏰ Optimal : 11h-14h ou 21h-23h TRT. Soirée = forte engagement.',
+      tip: '🇹🇷 Marché Herbalife très actif. Diaspora Allemagne 5M.' },
+    hi: { flag: '🇮🇳', label: 'Inde', lang: 'Hindi/English',
+      timing: '⏰ Optimal : 9h-11h ou 21h-23h IST. Diwali / festivals = peak.',
+      tip: '🇮🇳 WhatsApp #1 (700M users). Hinglish (Hindi en Latin) sur Insta/WA.' },
   };
 
   const HASHTAGS = {
@@ -816,6 +828,100 @@ Main [your name], hum [context] mein mile the. Aapne mujhe bataya tha ki aap [we
 Mera ek tested method hai — 15 min ki call karenge?`,
       tip: 'WhatsApp est LE canal numéro 1 en Inde (700M+ users).'
     },
+    'hi_sport_insta': {
+      platform: 'insta',
+      label: 'Instagram DM · First contact',
+      lang: '🇮🇳 English (Inde sportifs)',
+      body: `Hey [name] 💪
+Loved your training content! I help athletes with nutrition — recovery, performance, gains. Specially crafted for desi athletes.
+
+What's your current approach on the food/supplements side?`,
+      tip: 'Athlètes indiens lisent EN. Mentionner "desi" rassure sur la culture.'
+    },
+
+    'en_weight_wa': {
+      platform: 'whatsapp',
+      label: 'WhatsApp · After referral',
+      lang: '🇬🇧 English',
+      body: `Hey [name]! 😊
+[Mutual contact] told me about you — said you wanted to start something on the [weight loss / health] side.
+
+I work with people on personalized nutrition. Got 15 mins for a quick chat?`,
+      tip: 'EN WhatsApp = pour les leads tièdes via recommandation. Mentionner le contact mutuel.'
+    },
+    'en_business_linkedin': {
+      platform: 'linkedin',
+      label: 'LinkedIn · First contact',
+      lang: '🇬🇧 English',
+      body: `Hi [name],
+Your background in [their field] caught my eye. I'm scaling a complementary wellness business with an international team, looking for ambitious profiles.
+
+Open to a 20-min Zoom call this week?`,
+      tip: 'LinkedIn EN = ton corporate. Structure courte et claire.'
+    },
+
+    'es_sport_insta': {
+      platform: 'insta',
+      label: 'Instagram DM · Primer contacto',
+      lang: '🇲🇽 Español',
+      body: `¡Hola [nombre]! 💪
+Tu perfil me hizo sonreír (¡el post sobre [detalle específico] genial!). Trabajo con deportistas en nutrición — recuperación, rendimiento, masa muscular.
+
+¿Cómo manejas tu nutrición ahora?`,
+      tip: 'LatAm sportifs = WhatsApp et Insta. Ton chaleureux.'
+    },
+    'es_business_wa': {
+      platform: 'whatsapp',
+      label: 'WhatsApp · Lead chaud',
+      lang: '🇲🇽 Español',
+      body: `¡Hola [nombre]! 😊
+Soy [tu nombre], nos conectamos por [contexto]. Te conté que estoy construyendo algo en wellness.
+
+¿Tienes 15 min para que te explique? Sin presión.`,
+      tip: 'Mexique business = WhatsApp obligatoire après 1er contact.'
+    },
+
+    'pt_sport_insta': {
+      platform: 'insta',
+      label: 'Instagram DM · Primeiro contato',
+      lang: '🇧🇷 Português (BR)',
+      body: `Oi [nome]! 💪
+Adorei seu conteúdo de treino! Trabalho com atletas em nutrição — recuperação, performance, ganho de massa.
+
+Como você cuida da nutrição atualmente?`,
+      tip: 'Brésil sport = très visuel. Mentionner contenu spécifique.'
+    },
+    'pt_business_wa': {
+      platform: 'whatsapp',
+      label: 'WhatsApp · Lead quente',
+      lang: '🇧🇷 Português (BR)',
+      body: `Oi [nome]! 😊
+Sou [seu nome], a gente conversou no [contexto]. Você ficou curioso sobre o negócio.
+
+Tem 15 min essa semana pra eu te explicar? Sem compromisso.`,
+      tip: 'Brésil ultra-personnel. Toujours "a gente" plutôt que "nós".'
+    },
+
+    'tr_business_insta': {
+      platform: 'insta',
+      label: 'Instagram DM · İlk mesaj',
+      lang: '🇹🇷 Türkçe',
+      body: `Selam [isim],
+Profilini gördüm, [girişimcilik / kişisel gelişim / finansal özgürlük] ile ilgilendiğini fark ettim. Uluslararası bir ekiple wellness sektöründe iş büyütüyorum.
+
+Zoom'da 20 dakika sohbet eder misin? Hiçbir baskı yok.`,
+      tip: 'Turquie business : LinkedIn moins utilisé, préférer Insta DM ou WhatsApp.'
+    },
+    'tr_weight_wa': {
+      platform: 'whatsapp',
+      label: 'WhatsApp · Sıcak temas',
+      lang: '🇹🇷 Türkçe',
+      body: `Selam [isim]! 😊
+Ben [adın], [bağlam] üzerinden tanışmıştık. Sen bana [kilo verme / enerji] istediğini söylemiştin.
+
+15 dakika konuşalım mı? Test edilmiş bir metodum var.`,
+      tip: 'Turquie : WhatsApp dominant. Style direct mais chaleureux.'
+    },
   };
 
   // ===== State =====
@@ -842,7 +948,8 @@ Mera ek tested method hai — 15 min ki call karenge?`,
     el.classList.add('selected');
     document.getElementById('dot-2').classList.remove('active');
     document.getElementById('dot-2').classList.add('done');
-    document.getElementById('dot-3').classList.add('active');
+    document.getElementById('dot-3').classList.add('done');
+    document.getElementById('dot-4').classList.add('active');
 
     // Render hashtags
     const hashtags = HASHTAGS[profile]?.[state.market] || [];
@@ -856,21 +963,33 @@ Mera ek tested method hai — 15 min ki call karenge?`,
       list.appendChild(chip);
     });
 
+    // Show steps 3 + 4 immediately
     document.getElementById('step-3').classList.remove('hidden');
-    document.getElementById('step-3').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    renderMessages();
+    document.getElementById('step-4').classList.remove('hidden');
 
-    // Auto-show step 4 after a moment
+    // Scroll DIRECTLY to step-4 (messages) — that's what Thomas wants to see
     setTimeout(() => {
-      document.getElementById('dot-3').classList.add('done');
-      document.getElementById('dot-4').classList.add('active');
-      renderMessages();
-      document.getElementById('step-4').classList.remove('hidden');
-    }, 500);
+      document.getElementById('step-4').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
   }
 
   function renderMessages() {
     const zone = document.getElementById('messages-zone');
     zone.innerHTML = '';
+
+    // Header avec tips du marché
+    const m = MARKETS[state.market];
+    const header = document.createElement('div');
+    header.style.cssText = 'background: linear-gradient(135deg, #FAEEDA, #FBF7F0); border-radius: 12px; padding: 14px 16px; margin-bottom: 14px; border: 1px solid var(--ls-border);';
+    header.innerHTML = `
+      <div style="font-size: 12px; color: #8B5A1B; margin-bottom: 6px; font-weight: 700;">
+        ${m.flag} ${m.label} · ${m.lang}
+      </div>
+      <div style="font-size: 12px; color: var(--ls-text); margin-bottom: 4px;">${m.timing}</div>
+      <div style="font-size: 12px; color: var(--ls-text-muted);">${m.tip}</div>
+    `;
+    zone.appendChild(header);
 
     const keyPrefix = `${state.market}_${state.profile}_`;
     const matches = Object.entries(MESSAGES).filter(([k]) => k.startsWith(keyPrefix));
