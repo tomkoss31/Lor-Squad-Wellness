@@ -1178,6 +1178,7 @@ Mes estimations précédentes en "X jours" étaient en **jours-homme classiques*
 | **0** | Fix mobile chat history (objet initial branche) | 30 min - 1 h | 5 min recette | Code |
 | **0.5** | 🐛 Fix bug Celebration popup régressé Co-pilote V5 (cf. dump #6) | 30-45 min | 5 min recette | Code |
 | ~~**0.7**~~ | ~~Fix saisie PV antérieurs autonome~~ — **ABSORBÉE dans chantier #13A.4** (cohérent : sélecteur mois intégré dans l'onglet PV & Rentabilité de la fiche distri unifiée plutôt que dans la modale isolée). Voir dump #10. | — | — | — |
+| **0.8** | 🐛 Enrichissement Liste 100 (Cahier de bord) : ajout colonnes `platform` + `profile_url` + élargissement FRANK (voisins + amis_enfants K) + deep links clic profil + raccourci Co-pilote direct (cf. dump #11) | 2 h - 2 h 30 | 5 min recette | Code |
 | **1** | Achat + config DNS `labase360.com` | — | 1-2 h | Infra Thomas |
 | **2** | Renommage code source "La Base 360" (coopératif) | 2-4 h | 30 min validation + 15 min rename repo GitHub | Code |
 | **3** | Audits légers (`/clients` V2 kanban, `/outils-prospection`) | 1-2 h | 5 min lecture rapport | Audit |
@@ -2279,4 +2280,55 @@ Ajouter dans `## Règles à respecter pendant l'exécution` :
 
 ---
 
-*Fichier vivant. Dernière maj : 2026-05-10 nuit tard (dump #10 — chantier #13 fiche distri unifiée finalisé, insight LEGO).*
+## 📒 Dump #11 (2026-05-10 nuit tard) — Phase 0.8 : Enrichissement Liste 100 Cahier de bord
+
+### Constats Thomas (10/05 nuit, suite captures Cahier de bord)
+
+> 1. « Le K de FRANK c'est Kids' friends pas Konnaissances. »
+> 2. « Où est la liste 100, la liste de prospection ? Elle est dans Mon développement. Le processus est peut-être trop long compliqué à trouver. »
+
+### Diagnostic agent
+
+**Problème 1 — Bug FRANK** : Le CHECK constraint actuel de `liste_100_contacts.frank_category` accepte `(famille, reseau, amis, nouveaux, connaissances)`. Méthode FRANK officielle Herbalife :
+- F = Family
+- R = Relatives / Relations / Réseau
+- A = Acquaintances (gym, café…)
+- N = **Neighbors (voisins) — MANQUE**
+- K = **Kids' friends parents — MANQUE** (vivier énorme MLM, parents amis des enfants)
+
+**Problème 2 — Accès Liste 100 trop profond** :
+- Aujourd'hui : Bilan (nav bas) → Mon développement → Cahier de bord → onglet Liste 100 = **3-4 clics**
+- Idéal : 1 clic depuis Co-pilote
+
+**Problème 3 — Champs manquants pour acquisition prospection** :
+- Pas de champ `platform` (Insta / WhatsApp / FB / LinkedIn / etc.)
+- Pas de champ `profile_url` (lien deep-link vers le profil)
+- → Aujourd'hui Thomas doit retrouver manuellement le profil de chaque contact à chaque relance. Énorme perte de temps.
+
+### Fix proposé Phase 0.8 — Étapes franches
+
+| Étape | Livrable testable | h-agent |
+|---|---|---|
+| **0.8.1** | Migration SQL : `ALTER TABLE liste_100_contacts ADD COLUMN platform text, ADD COLUMN profile_url text;` + élargir CHECK frank_category avec `voisins` et `amis_enfants` (en gardant les valeurs existantes pour compatibilité) | 30 min |
+| **0.8.2** | Form d'ajout contact (`CahierDeBordPage.tsx::ListeSection`) : ajouter select Plateforme (Insta / FB / WhatsApp / LinkedIn / Telegram / TikTok / Twitter / Snap / IRL / Autre) + input « Username ou URL profil » + selector FRANK enrichi avec voisins + amis_enfants | 30 min |
+| **0.8.3** | Helper `src/lib/profileDeepLink.ts` exportant `buildProfileUrl(platform, usernameOrUrl)` qui construit les URL deep link correctes :<br>• instagram → `instagram.com/{username}`<br>• whatsapp → `wa.me/{phone}` (cleanPhone E164 sans +)<br>• facebook → `facebook.com/{username}`<br>• linkedin → `linkedin.com/in/{username}`<br>• telegram → `t.me/{username}`<br>• tiktok → `tiktok.com/@{username}`<br>• twitter → `x.com/{username}`<br>• snapchat → `snapchat.com/add/{username}`<br>+ fallback si URL complète déjà fournie | 20 min |
+| **0.8.4** | Rendu liste (CahierDeBordPage::ListeSection rendu contact) : ajouter bouton icône plateforme (📷 Insta / 💬 WhatsApp / 📘 FB / 💼 LinkedIn / ✈️ Telegram / 🎵 TikTok / 🐦 X / 👻 Snap) à droite du contact qui ouvre `target="_blank" rel="noopener"` vers l'URL deep link | 30 min |
+| **0.8.5** | Raccourci direct Co-pilote → Liste 100 : ajouter dans `CoPiloteV5Page` une carte « 📒 Ma liste 100 (`{X}` / 100 noms) » avec compteur live (`useCahierDeBord`) qui navigue vers `/cahier-de-bord?tab=liste100`. Lire le query param `tab` dans CahierDeBordPage pour ouvrir directement le bon onglet | 20 min |
+| **0.8.6** | Tests : ajouter contact « Berges · Insta · berges_account » → cliquer bouton 📷 → Insta s'ouvre direct ; ajouter contact catégorie « Voisins » et « Amis enfants K » sans erreur ; clic raccourci Co-pilote → ouvre direct l'onglet Liste 100 | 10 min |
+
+**Effort total : 2 h - 2 h 30 h-agent + 5 min recette Thomas**.
+
+**ROI immédiat au retour PC** :
+- ✅ Liste 100 accessible en 1 clic depuis Co-pilote
+- ✅ Saisie enrichie avec plateforme + URL
+- ✅ Clic sur contact → app native ouverte direct sur son profil
+- ✅ Vraies catégories FRANK (Voisins + Kids' friends)
+- ✅ Couplage parfait avec chantier #3 Prospection (les contacts du module prospection peuvent être ajoutés à la liste 100 avec leur plateforme déjà connue)
+
+### Note couplage
+
+Phase 0.8 est **autonome** (faible risque, fix isolé) MAIS prépare le terrain pour le chantier #3 (Refonte prospection mobile-first) : quand on aura le module prospection avec ses profils Insta/FB/WhatsApp, on pourra **transformer un prospect du module Prospection en contact Liste 100** d'un clic (workflow logique).
+
+---
+
+*Fichier vivant. Dernière maj : 2026-05-10 nuit tard (dump #11 — Phase 0.8 enrichissement Liste 100).*
