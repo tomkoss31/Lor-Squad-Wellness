@@ -59,6 +59,17 @@ function checkRateLimit(ip: string): { ok: true } | { ok: false; retry_after: nu
   return { ok: true };
 }
 
+const OBJECTIVE_LABELS: Record<string, string> = {
+  weight_loss: "Perte de poids",
+  mass_gain: "Prise de masse",
+  energy: "Énergie",
+  sleep: "Sommeil",
+  wellbeing: "Bien-être",
+};
+function objectiveLabel(o: string): string {
+  return OBJECTIVE_LABELS[o] ?? o;
+}
+
 // Normalise un slug coach (depuis URL) : lowercase, sans accents, trim.
 function normalizeSlug(input: string): string {
   return input
@@ -196,6 +207,64 @@ serve(async (req) => {
       .single();
 
     if (insertErr) throw insertErr;
+
+    // Notif push (best-effort, non bloquant). Cible :
+    // - Si coach résolu → le coach + tous les admins actifs
+    // - Sinon (bilan libre) → tous les admins actifs
+    // Étape 1.7 chantier #1 : pattern inline (cf. submit-prospect-lead),
+    // évite la dépendance à pg_net + edge function dédiée.
+    try {
+      const targetUserIds = new Set<string>();
+      if (coachUserId) targetUserIds.add(coachUserId);
+
+      const { data: admins } = await sb
+        .from("users")
+        .select("id")
+        .eq("role", "admin")
+        .eq("active", true);
+      if (admins) {
+        for (const a of admins as Array<{ id: string }>) {
+          targetUserIds.add(a.id);
+        }
+      }
+
+      if (targetUserIds.size > 0) {
+        const subsPromises = Array.from(targetUserIds).map((uid) =>
+          sb
+            .from("push_subscriptions")
+            .select("endpoint, p256dh, auth")
+            .eq("user_id", uid),
+        );
+        const subsResults = await Promise.all(subsPromises);
+        const allSubs = subsResults.flatMap((r) => r.data ?? []);
+
+        if (allSubs.length > 0) {
+          const objLabel = objectives.length > 0
+            ? ` · ${objectives.length === 1 ? objectiveLabel(objectives[0]) : `${objectives.length} objectifs`}`
+            : "";
+          const pushBody = `${firstName}${city ? " · " + city : ""}${objLabel}`;
+          await fetch(`${SUPABASE_URL}/functions/v1/send-push`, {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${SERVICE_KEY}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              subscriptions: allSubs,
+              payload: {
+                title: "🌱 Nouveau Lead bilan online",
+                body: pushBody,
+                url: "/clients?tab=leads",
+                icon: "/icon-192.png",
+                badge: "/badge-72.png",
+              },
+            }),
+          }).catch(() => { /* non bloquant */ });
+        }
+      }
+    } catch (notifErr) {
+      console.error("[submit-online-bilan] Notif non critique:", notifErr);
+    }
 
     return json({
       success: true,
