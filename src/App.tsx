@@ -129,6 +129,21 @@ const WelcomePage = lazy(() =>
     default: module.WelcomePage,
   })),
 );
+const BilanOnlinePage = lazy(() =>
+  import("./pages/BilanOnlinePage").then((module) => ({
+    default: module.BilanOnlinePage,
+  })),
+);
+const BilanOnlineWelcomePage = lazy(() =>
+  import("./pages/BilanOnlineWelcomePage").then((module) => ({
+    default: module.BilanOnlineWelcomePage,
+  })),
+);
+const BilanOnlineMerciPage = lazy(() =>
+  import("./pages/BilanOnlineMerciPage").then((module) => ({
+    default: module.BilanOnlineMerciPage,
+  })),
+);
 const OpportunitePage = lazy(() =>
   import("./pages/OpportunitePage").then((module) => ({
     default: module.OpportunitePage,
@@ -454,6 +469,17 @@ export default function App() {
               via useAppContext si besoin). /auto-login consomme un
               magic link 24h pour re-établir une session. */}
           <Route path="/welcome" element={<WelcomePage />} />
+          {/* Chantier #1 Bilan Online (2026-05-17) — formulaire publique
+              5 étapes pour générer des Leads.
+              - /bilan-online[/<slug>] : page Welcome (hero + qui t'a invité)
+              - /bilan-online[/<slug>]/formulaire : le formulaire 5 étapes
+              Slug = users.first_name normalisé, résolu par submit-online-bilan. */}
+          <Route path="/bilan-online" element={<BilanOnlineWelcomePage />} />
+          <Route path="/bilan-online/formulaire" element={<BilanOnlinePage />} />
+          <Route path="/bilan-online/merci" element={<BilanOnlineMerciPage />} />
+          <Route path="/bilan-online/:coachSlug" element={<BilanOnlineWelcomePage />} />
+          <Route path="/bilan-online/:coachSlug/formulaire" element={<BilanOnlinePage />} />
+          <Route path="/bilan-online/:coachSlug/merci" element={<BilanOnlineMerciPage />} />
           {/* Funnel business V1 (chantier 2026-11-07) : page educative
               prospect froid + chaud, sans nommer la marque explicitement.
               Cf. docs/BUSINESS_FUNNEL_ARCHITECTURE.md. */}
