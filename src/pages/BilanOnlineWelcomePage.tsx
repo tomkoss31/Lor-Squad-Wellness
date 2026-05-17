@@ -1,20 +1,24 @@
 // =============================================================================
-// BilanOnlineWelcomePage — Hero d'entrée du bilan online (chantier #1 étape 1.4).
-//
+// BilanOnlineWelcomePage — Hero éditorial d'entrée du bilan online.
+// Chantier #1 étape 1.4 (2026-05-17) — refonte design Claude Design.
 // Route : /bilan-online/:coachSlug?
 //
-// Comportement :
-//   - Si :coachSlug fourni → affiche "<Prénom> va t'accompagner" + CTA direct
-//   - Si pas de slug → input "Qui t'a invité ?" (free text) + bouton
-//     "Personne, je découvre seul" (fallback bilan libre = admin)
-//
-// L'autocomplete avec liste réelle des coachs nécessiterait un endpoint
-// public — reporté V2 (cf. brainstorm). En V1 : free text + résolution
-// côté edge function (submit-online-bilan).
+// Si slug → "<Prénom> va t'accompagner" + CTA direct vers /formulaire.
+// Si pas de slug → input free text "Qui t'a invité ?" + fallback bilan libre.
 // =============================================================================
 
 import { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import {
+  BO_TOKENS,
+  BilanOnlineShell,
+  BoEyebrow,
+  BoHero,
+  BoLead,
+  BoCta,
+  BoArrow,
+  BoFooterRgpd,
+} from "../components/bilan-online/BilanOnlineShell";
 
 function normalizeSlug(input: string): string {
   return input
@@ -42,333 +46,172 @@ export function BilanOnlineWelcomePage() {
   function startWithSlug() {
     navigate(`/bilan-online/${slug}/formulaire`);
   }
-
   function startFromInput() {
     const next = normalizeSlug(inputName);
     if (next.length < 2) return;
     navigate(`/bilan-online/${next}/formulaire`);
   }
-
   function startFreeBilan() {
     navigate("/bilan-online/formulaire");
   }
 
   return (
-    <div className="bow-root">
-      <style>{STYLES}</style>
+    <BilanOnlineShell>
+      <div style={{ padding: "64px 24px 40px", maxWidth: 560, margin: "0 auto" }}>
+        <BoEyebrow>Bienvenue</BoEyebrow>
+        <div style={{ height: 24 }} />
 
-      <div className="bow-card">
-        <div className="bow-badge">★ Since 2022 ★</div>
+        <BoHero>
+          Nous sommes heureux de te voir ici.
+        </BoHero>
+        <div style={{ height: 16 }} />
 
-        <h1 className="bow-h1">
-          Nous sommes heureux<br />de te voir ici 🥰
-        </h1>
-
-        {slug && (
-          <p className="bow-coach-line">
-            <strong>{coachName}</strong> va t'accompagner.
-          </p>
+        {slug ? (
+          <BoLead>
+            <strong style={{ color: BO_TOKENS.gold, fontWeight: 600 }}>{coachName}</strong>{" "}
+            va t'accompagner. Un bilan personnalisé, en 2 minutes.
+          </BoLead>
+        ) : (
+          <BoLead>
+            Un bilan personnalisé pour comprendre ton corps et te guider vers
+            tes vrais objectifs. 2 minutes, gratuit.
+          </BoLead>
         )}
 
-        <div className="bow-divider" />
+        <div style={{ height: 48 }} />
 
-        <h2 className="bow-h2">La Base 360, c'est :</h2>
-        <ul className="bow-bullets">
-          <li>
-            <span className="bow-bullet-dot" />
-            Un bilan personnalisé pour comprendre ton corps
-          </li>
-          <li>
-            <span className="bow-bullet-dot" />
-            Un coach humain qui t'accompagne au quotidien
-          </li>
-          <li>
-            <span className="bow-bullet-dot" />
-            Des résultats durables, pas une mode passagère
-          </li>
-        </ul>
+        {/* Bullets éditoriales La Base 360 */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+          {[
+            "Un bilan personnalisé pour comprendre ton corps",
+            "Un coach humain qui t'accompagne au quotidien",
+            "Des résultats durables, pas une mode passagère",
+          ].map((text, i) => (
+            <div key={i} style={{ display: "flex", gap: 14, alignItems: "flex-start" }}>
+              <div style={{
+                fontFamily: BO_TOKENS.fontDisplay, fontWeight: 600, fontSize: 13,
+                color: BO_TOKENS.gold, letterSpacing: "0.06em",
+                paddingTop: 4, minWidth: 24,
+              }}>
+                0{i + 1}
+              </div>
+              <div style={{
+                fontFamily: BO_TOKENS.fontBody, fontSize: 15, lineHeight: 1.55,
+                color: BO_TOKENS.navy, opacity: 0.82, flex: 1,
+              }}>
+                {text}
+              </div>
+            </div>
+          ))}
+        </div>
 
-        <div className="bow-divider" />
+        <div style={{ height: 48 }} />
 
         {slug ? (
           <>
-            <button
-              type="button"
-              className="bow-cta"
-              onClick={startWithSlug}
-            >
+            <BoCta onClick={startWithSlug}>
               Commencer mon bilan
-            </button>
-            <p className="bow-microcopy">Promis, ça prend 2 min 🙏</p>
+              <BoArrow />
+            </BoCta>
+            <div style={{ height: 12 }} />
+            <BoFooterRgpd>Promis, ça prend 2 min · Confidentiel · RGPD</BoFooterRgpd>
           </>
         ) : showFreeBilan ? (
           <>
-            <button
-              type="button"
-              className="bow-cta"
-              onClick={startFreeBilan}
-            >
+            <BoCta onClick={startFreeBilan}>
               Commencer mon bilan
-            </button>
-            <p className="bow-microcopy">
-              Un membre de l'équipe te recontactera.
-            </p>
+              <BoArrow />
+            </BoCta>
+            <div style={{ height: 14 }} />
             <button
               type="button"
-              className="bow-link"
               onClick={() => setShowFreeBilan(false)}
+              style={{
+                background: "transparent", border: "none", cursor: "pointer",
+                fontFamily: BO_TOKENS.fontBody, fontSize: 13,
+                color: BO_TOKENS.navy, opacity: 0.55, padding: "8px 0",
+                textDecoration: "underline", textUnderlineOffset: 3,
+              }}
             >
               ← J'ai un coach en tête
             </button>
           </>
         ) : (
           <>
-            <label className="bow-label">Qui t'a invité ici ?</label>
-            <div className="bow-input-row">
+            <div style={{
+              fontFamily: BO_TOKENS.fontDisplay, fontWeight: 500, fontSize: 16,
+              color: BO_TOKENS.navy, letterSpacing: "-0.01em", marginBottom: 10,
+            }}>
+              Qui t'a invité ici ?
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               <input
                 type="text"
-                className="bow-input"
                 placeholder="Prénom du coach"
                 value={inputName}
                 onChange={(e) => setInputName(e.target.value)}
                 maxLength={50}
-                autoComplete="off"
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") startFromInput();
+                onKeyDown={(e) => { if (e.key === "Enter") startFromInput(); }}
+                style={{
+                  width: "100%", boxSizing: "border-box",
+                  padding: "16px 18px", borderRadius: 14,
+                  border: `1.5px solid ${BO_TOKENS.hair}`,
+                  background: "rgba(255, 255, 255, 0.92)",
+                  backdropFilter: "blur(12px)",
+                  WebkitBackdropFilter: "blur(12px)",
+                  fontFamily: BO_TOKENS.fontBody, fontSize: 16,
+                  color: BO_TOKENS.navy,
+                  outline: "none",
+                  minHeight: 54,
+                  colorScheme: "light",
                 }}
               />
-              <button
-                type="button"
-                className="bow-cta bow-cta-compact"
+              <BoCta
                 onClick={startFromInput}
                 disabled={normalizeSlug(inputName).length < 2}
               >
-                C'est parti →
-              </button>
+                C'est parti
+                <BoArrow />
+              </BoCta>
             </div>
-            <div className="bow-or">ou</div>
+
+            <div style={{
+              margin: "20px 0", textAlign: "center",
+              fontFamily: BO_TOKENS.fontBody, fontSize: 12,
+              color: BO_TOKENS.navy, opacity: 0.4, letterSpacing: 0.2,
+              textTransform: "uppercase",
+            }}>
+              ou
+            </div>
+
             <button
               type="button"
-              className="bow-ghost"
               onClick={() => setShowFreeBilan(true)}
+              style={{
+                all: "unset",
+                width: "100%", boxSizing: "border-box",
+                padding: "16px 0", borderRadius: 14,
+                border: `1.5px solid ${BO_TOKENS.hair}`,
+                background: "transparent",
+                textAlign: "center",
+                fontFamily: BO_TOKENS.fontBody, fontSize: 15, fontWeight: 500,
+                color: BO_TOKENS.navy, opacity: 0.75,
+                cursor: "pointer",
+                transition: "border-color 160ms, opacity 160ms",
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.opacity = "1"; e.currentTarget.style.borderColor = BO_TOKENS.gold; }}
+              onMouseLeave={(e) => { e.currentTarget.style.opacity = "0.75"; e.currentTarget.style.borderColor = BO_TOKENS.hair; }}
             >
               Personne, je découvre seul·e
             </button>
+
+            <div style={{ height: 18 }} />
+            <BoFooterRgpd>Bilan offert · Confidentiel · RGPD</BoFooterRgpd>
           </>
         )}
+
+        <div style={{ height: 24 }} />
       </div>
-    </div>
+    </BilanOnlineShell>
   );
 }
-
-const STYLES = `
-  .bow-root {
-    min-height: 100vh;
-    min-height: 100dvh;
-    color-scheme: light;
-    background:
-      radial-gradient(circle at 20% 10%, rgba(16, 185, 129, 0.18) 0%, transparent 55%),
-      radial-gradient(circle at 80% 30%, rgba(6, 182, 212, 0.16) 0%, transparent 55%),
-      radial-gradient(circle at 50% 100%, rgba(139, 92, 246, 0.14) 0%, transparent 60%),
-      #FAFAF7;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 24px 16px;
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
-    color: #0F172A;
-  }
-
-  .bow-card {
-    max-width: 480px;
-    width: 100%;
-    background: rgba(255, 255, 255, 0.92);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border-radius: 24px;
-    padding: 32px 24px;
-    box-shadow: 0 12px 40px rgba(15, 23, 42, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.6);
-    text-align: center;
-  }
-
-  .bow-badge {
-    display: inline-block;
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 0.20em;
-    color: #C9A84C;
-    background: rgba(201, 168, 76, 0.10);
-    padding: 6px 14px;
-    border-radius: 999px;
-    margin-bottom: 20px;
-  }
-
-  .bow-h1 {
-    font-family: 'Sora', 'Inter', sans-serif;
-    font-size: 28px;
-    font-weight: 700;
-    line-height: 1.18;
-    margin: 0 0 16px 0;
-    color: #0F172A;
-    letter-spacing: -0.025em;
-  }
-
-  .bow-coach-line {
-    font-size: 17px;
-    color: #1F2937;
-    margin: 0;
-  }
-  .bow-coach-line strong {
-    color: #C9A84C;
-    font-weight: 700;
-  }
-
-  .bow-divider {
-    height: 1px;
-    background: linear-gradient(90deg, transparent 0%, #E5E7EB 50%, transparent 100%);
-    margin: 24px 0;
-  }
-
-  .bow-h2 {
-    font-family: 'Sora', 'Inter', sans-serif;
-    font-size: 16px;
-    font-weight: 600;
-    margin: 0 0 12px 0;
-    color: #1F2937;
-    text-align: left;
-  }
-  .bow-bullets {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    text-align: left;
-  }
-  .bow-bullets li {
-    display: flex;
-    gap: 10px;
-    align-items: flex-start;
-    font-size: 14.5px;
-    line-height: 1.45;
-    color: #374151;
-  }
-  .bow-bullet-dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: #C9A84C;
-    margin-top: 7px;
-    flex-shrink: 0;
-  }
-
-  .bow-label {
-    display: block;
-    font-size: 14px;
-    font-weight: 600;
-    color: #1F2937;
-    margin-bottom: 10px;
-    text-align: left;
-  }
-  .bow-input-row {
-    display: flex;
-    gap: 8px;
-    flex-direction: column;
-  }
-  .bow-root .bow-input {
-    flex: 1;
-    font-size: 16px;
-    padding: 14px 16px;
-    border: 1.5px solid #E5E7EB;
-    border-radius: 12px;
-    background: #ffffff !important;
-    color: #0F172A !important;
-    -webkit-text-fill-color: #0F172A;
-    color-scheme: light;
-    font-family: inherit;
-    min-height: 50px;
-    box-sizing: border-box;
-    width: 100%;
-  }
-  .bow-root .bow-input::placeholder { color: #9CA3AF !important; opacity: 1; }
-  .bow-input:focus {
-    outline: none;
-    border-color: #C9A84C;
-    box-shadow: 0 0 0 3px rgba(201, 168, 76, 0.15);
-  }
-
-  .bow-or {
-    text-align: center;
-    font-size: 13px;
-    color: #6B7280;
-    margin: 14px 0;
-  }
-
-  .bow-cta {
-    width: 100%;
-    padding: 16px;
-    font-size: 16px;
-    font-weight: 700;
-    color: #fff;
-    background: linear-gradient(90deg, #C9A84C 0%, #E0BF6B 100%);
-    border: none;
-    border-radius: 14px;
-    cursor: pointer;
-    font-family: inherit;
-    box-shadow: 0 6px 20px rgba(201, 168, 76, 0.30);
-    transition: transform 160ms, box-shadow 160ms;
-    min-height: 54px;
-  }
-  .bow-cta:not(:disabled):hover {
-    transform: translateY(-1px);
-    box-shadow: 0 8px 24px rgba(201, 168, 76, 0.40);
-  }
-  .bow-cta:disabled { opacity: 0.55; cursor: not-allowed; }
-  .bow-cta-compact { min-height: 50px; padding: 14px; }
-
-  .bow-ghost {
-    width: 100%;
-    padding: 14px;
-    background: transparent;
-    border: 1.5px solid #E5E7EB;
-    border-radius: 12px;
-    color: #374151;
-    font-size: 15px;
-    font-family: inherit;
-    cursor: pointer;
-    min-height: 50px;
-  }
-  .bow-ghost:hover { background: #F9FAFB; }
-
-  .bow-link {
-    background: transparent;
-    border: none;
-    color: #6B7280;
-    font-size: 14px;
-    font-family: inherit;
-    cursor: pointer;
-    padding: 12px 8px;
-    margin-top: 4px;
-    text-decoration: underline;
-    text-underline-offset: 3px;
-  }
-
-  .bow-microcopy {
-    font-size: 12.5px;
-    color: #6B7280;
-    margin: 10px 0 0 0;
-  }
-
-  @media (min-width: 640px) {
-    .bow-card { padding: 40px 36px; }
-    .bow-h1 { font-size: 32px; }
-    .bow-input-row { flex-direction: row; }
-    .bow-cta-compact { width: auto; flex-shrink: 0; }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .bow-cta:hover { transform: none; }
-  }
-`;
