@@ -66,6 +66,12 @@ export function ProfilTab() {
   // Ville (Chantier D météo 2026-05-05). Source pour la pill météo Co-pilote V5.
   const [city, setCity] = useState<string>(currentUser?.city ?? "");
   const [geoLoading, setGeoLoading] = useState(false);
+  // Date début activité coaching Herbalife (chantier #10 V2 badges).
+  // Format ISO "YYYY-MM-DD" pour l'input type="date". Null/vide = pas de
+  // chip ancienneté sur la Welcome bilan.
+  const [coachingSince, setCoachingSince] = useState<string>(
+    currentUser?.coachingSince ?? "",
+  );
   // Rang Herbalife (FLEX rank-aware, 2026-11-05). Détermine la marge retail
   // utilisée pour calculer les cibles FLEX. Modifiable ici par le distri lui-même.
   const [currentRank, setCurrentRank] = useState<HerbalifeRank>(
@@ -152,7 +158,11 @@ export function ProfilTab() {
           // V2 (2026-04-30) : bio (avatar_url est save par AvatarUploader directement)
           bio: bio.trim() || null,
           // Chantier D météo (2026-05-05) : ville pour Co-pilote V5
+          // Aussi affichée sur la Welcome bilan (chantier #10 V2 badges).
           city: city.trim() || null,
+          // Chantier #10 V2 badges (2026-05-17) : date début coaching
+          // Herbalife → badge ancienneté Welcome bilan. Null si vide.
+          coaching_since: coachingSince.trim() || null,
           // FLEX rank-aware (2026-11-05) : update rank + set rank_set_at
           // (peut être déjà rempli, on le maintient en sync à chaque save).
           current_rank: currentRank,
@@ -419,7 +429,56 @@ export function ProfilTab() {
               fontFamily: "DM Sans, sans-serif",
             }}
           >
-            Utilisée par la météo 5 jours sur le Co-pilote.
+            Utilisée par la météo 5 jours sur le Co-pilote et affichée sur ta page bilan online publique.
+          </div>
+        </div>
+
+        {/* Coaching depuis (chantier #10 V2 badges) — alimente le chip
+            ancienneté de la page /bilan-online/<slug>. Optionnel : vide
+            = pas de chip ancienneté affiché. */}
+        <div>
+          <label
+            style={{
+              display: "block",
+              fontSize: 11,
+              fontWeight: 700,
+              color: "var(--ls-text-muted)",
+              textTransform: "uppercase",
+              letterSpacing: 1.2,
+              marginBottom: 6,
+              fontFamily: "DM Sans, sans-serif",
+            }}
+          >
+            Coach Herbalife depuis (optionnel)
+          </label>
+          <input
+            type="date"
+            value={coachingSince}
+            onChange={(e) => setCoachingSince(e.target.value)}
+            max={new Date().toISOString().slice(0, 10)}
+            style={{
+              width: "100%",
+              padding: "10px 12px",
+              borderRadius: 10,
+              border: "1px solid var(--ls-border)",
+              background: "var(--ls-surface2)",
+              color: "var(--ls-text)",
+              fontSize: 14,
+              fontFamily: "DM Sans, sans-serif",
+              outline: "none",
+              colorScheme: "light",
+              boxSizing: "border-box",
+            }}
+          />
+          <div
+            style={{
+              fontSize: 10.5,
+              color: "var(--ls-text-hint)",
+              marginTop: 4,
+              fontFamily: "DM Sans, sans-serif",
+            }}
+          >
+            Ta vraie date de début d'activité Herbalife (pas la date d'arrivée sur l'app). Affichée comme badge ancienneté sur ta page bilan online. Laisse vide pour ne rien afficher.
           </div>
         </div>
 

@@ -1,0 +1,22 @@
+-- Chantier #10 Badges coach — étape 10.4 (2026-05-17).
+-- Annonce distri : leur page Welcome bilan affiche maintenant leurs badges
+-- crédibilité (rang Herbalife + nb bilans + ancienneté).
+-- À renommer en .sql au moment du merge prod (cf. règle livrable CLAUDE.md).
+begin;
+
+insert into public.app_announcements (id, title, body, emoji, accent, link_path, link_label, audience, published_at)
+select
+  gen_random_uuid(),
+  'Tes badges coach apparaissent 🏆',
+  'Sur ton lien bilan online (/bilan-online/<ton-prénom>), tes visiteurs voient maintenant trois badges crédibilité juste sous ta carte coach : ton rang Herbalife, ton nombre de bilans réalisés et ton ancienneté. La conversion grimpe quand le prospect comprend qui tu es avant de remplir.',
+  '🏆',
+  'gold',
+  '/bilan-online',
+  'Voir ma page',
+  'all',
+  now()
+where not exists (
+  select 1 from public.app_announcements where title = 'Tes badges coach apparaissent 🏆'
+);
+
+commit;

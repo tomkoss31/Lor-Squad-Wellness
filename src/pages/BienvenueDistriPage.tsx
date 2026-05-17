@@ -68,6 +68,10 @@ export function BienvenueDistriPage() {
   const [passwordConfirm, setPasswordConfirm] = useState("");
   const [phone, setPhone] = useState("");
   const [city, setCity] = useState("");
+  // Chantier #10 V2 badges (2026-05-17) : date début activité Herbalife
+  // saisie à l'onboarding. Optionnel. Alimente le badge ancienneté sur
+  // /bilan-online/<slug>. Modifiable plus tard dans Paramètres > Profil.
+  const [coachingSince, setCoachingSince] = useState("");
   const [herbalifeId, setHerbalifeId] = useState("");
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [avatarUploading, setAvatarUploading] = useState(false);
@@ -225,6 +229,7 @@ export function BienvenueDistriPage() {
           last_name: lastName.trim(),
           phone: phone.trim(),
           city: city.trim(),
+          coaching_since: coachingSince.trim() || null,
           herbalife_id: herbalifeId.trim(),
           avatar_url: avatarUrl,
         },
@@ -263,6 +268,7 @@ export function BienvenueDistriPage() {
   }, [
     avatarUrl,
     city,
+    coachingSince,
     firstName,
     herbalifeId,
     lastName,
@@ -485,6 +491,7 @@ export function BienvenueDistriPage() {
                 lastName={lastName}
                 phone={phone}
                 city={city}
+                coachingSince={coachingSince}
                 herbalifeId={herbalifeId}
                 avatarUrl={avatarUrl}
                 avatarUploading={avatarUploading}
@@ -494,6 +501,7 @@ export function BienvenueDistriPage() {
                 onLastNameChange={setLastName}
                 onPhoneChange={setPhone}
                 onCityChange={setCity}
+                onCoachingSinceChange={setCoachingSince}
                 onHerbalifeIdChange={setHerbalifeId}
                 onUploadAvatar={handleUploadAvatar}
                 onRemoveAvatar={() => setAvatarUrl(null)}
@@ -738,6 +746,7 @@ function ProfileStep({
   lastName,
   phone,
   city,
+  coachingSince,
   herbalifeId,
   avatarUrl,
   avatarUploading,
@@ -747,6 +756,7 @@ function ProfileStep({
   onLastNameChange,
   onPhoneChange,
   onCityChange,
+  onCoachingSinceChange,
   onHerbalifeIdChange,
   onUploadAvatar,
   onRemoveAvatar,
@@ -757,6 +767,7 @@ function ProfileStep({
   lastName: string;
   phone: string;
   city: string;
+  coachingSince: string;
   herbalifeId: string;
   avatarUrl: string | null;
   avatarUploading: boolean;
@@ -766,12 +777,14 @@ function ProfileStep({
   onLastNameChange: (v: string) => void;
   onPhoneChange: (v: string) => void;
   onCityChange: (v: string) => void;
+  onCoachingSinceChange: (v: string) => void;
   onHerbalifeIdChange: (v: string) => void;
   onUploadAvatar: (file: File) => void;
   onRemoveAvatar: () => void;
   onBack: () => void;
   onSubmit: () => void;
 }) {
+  const todayStr = new Date().toISOString().slice(0, 10);
   return (
     <div>
       <p
@@ -835,6 +848,21 @@ function ProfileStep({
           placeholder="Verdun, Paris…"
           style={inputStyle}
         />
+        <div style={{ fontSize: 11, color: "#6B7280", marginTop: 4 }}>
+          Sert à la météo de ton Co-pilote et au badge sur ta page bilan online.
+        </div>
+      </LargeField>
+      <LargeField label="Coach Herbalife depuis (optionnel)">
+        <input
+          type="date"
+          value={coachingSince}
+          max={todayStr}
+          onChange={(e) => onCoachingSinceChange(e.target.value)}
+          style={{ ...inputStyle, colorScheme: "light" }}
+        />
+        <div style={{ fontSize: 11, color: "#6B7280", marginTop: 4 }}>
+          Ta vraie date de début Herbalife (pas la date d'aujourd'hui). Affichée comme badge ancienneté sur ta page bilan online. Modifiable plus tard dans Paramètres.
+        </div>
       </LargeField>
       <LargeField label="ID Herbalife">
         <input

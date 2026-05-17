@@ -30,6 +30,7 @@ import { ModuleNotesPanel } from "../components/formation/ModuleNotesPanel";
 import { QuizRunner } from "../components/formation/QuizRunner";
 import { ReviewThreadPanel } from "../components/formation/ReviewThreadPanel";
 import { useAppContext } from "../context/AppContext";
+import { useFormationReviewThread } from "../features/formation";
 
 const ACCENT_TOKEN: Record<FormationLevelAccent, string> = {
   gold: "var(--ls-gold)",
@@ -141,7 +142,6 @@ export function FormationModuleDetailPage() {
   const sponsorId = progressRow?.reviewed_by ?? null;
   const sponsorName = sponsorId ? users?.find((u) => u.id === sponsorId)?.name ?? null : null;
   const showFeedbackBanner = (status === "rejected" || status === "pending_review_sponsor") && progressRow?.feedback;
-  const isValidated = status === "validated";
   const showThread = !!progressRow && (status === "rejected" || status === "validated" || status === "pending_review_sponsor" || status === "pending_review_admin");
 
   return (
@@ -237,45 +237,10 @@ export function FormationModuleDetailPage() {
         </div>
       ) : null}
 
-      {/* Banner validated */}
-      {isValidated && progressRow ? (
-        <div
-          style={{
-            padding: "14px 16px",
-            background: "color-mix(in srgb, var(--ls-teal) 8%, var(--ls-surface))",
-            border: "0.5px solid color-mix(in srgb, var(--ls-teal) 30%, transparent)",
-            borderLeft: "3px solid var(--ls-teal)",
-            borderRadius: 14,
-            fontFamily: "DM Sans, sans-serif",
-            display: "flex",
-            gap: 12,
-          }}
-        >
-          <span style={{ fontSize: 22, flexShrink: 0 }} aria-hidden="true">✅</span>
-          <div style={{ flex: 1 }}>
-            <div
-              style={{
-                fontSize: 9.5,
-                letterSpacing: "0.12em",
-                textTransform: "uppercase",
-                fontWeight: 700,
-                color: "var(--ls-teal)",
-                marginBottom: 4,
-              }}
-            >
-              Module validé
-              {progressRow.validation_path === "auto" ? " · auto 100%" : null}
-              {progressRow.validation_path === "sponsor" && sponsorName
-                ? ` · par ${sponsorName}`
-                : null}
-              {progressRow.validation_path === "admin_relay" ? " · admin relay" : null}
-            </div>
-            <div style={{ fontSize: 12, color: "var(--ls-text-muted)" }}>
-              Tu peux toujours revisiter ce module ou le refaire pour ancrer.
-            </div>
-          </div>
-        </div>
-      ) : null}
+      {/* Phase 0.9 brainstorm Égypte 2026-05 : ancien banner "Module validé
+          · AUTO 100%" retiré ici car dupliqué avec le badge "✓ Validé"
+          rendu par ModuleHeaderHero. On garde le banner feedback ci-dessus
+          (rejected / pending) qui n'est pas redondant. */}
 
       <style>{`
         @keyframes ls-formation-fade-in {
@@ -418,37 +383,17 @@ export function FormationModuleDetailPage() {
         </div>
       ) : null}
 
-      {/* Thread historique de la progression (si soumise) */}
+      {/* Thread historique de la progression (Phase 0.9 Égypte 2026-05 :
+          masqué si réellement vide — préservé sinon car c'est le canal
+          coach↔apprenant pour débrief). */}
       {showThread && progressRow ? (
-        <details
-          style={{
-            background: "var(--ls-surface)",
-            border: "0.5px solid var(--ls-border)",
-            borderRadius: 14,
-            padding: "12px 16px",
-            fontFamily: "DM Sans, sans-serif",
-          }}
-        >
-          <summary
-            style={{
-              cursor: "pointer",
-              fontSize: 13,
-              fontWeight: 600,
-              color: "var(--ls-text)",
-              fontFamily: "Syne, serif",
-              listStyle: "none",
-              outline: "none",
-            }}
-          >
-            💬 Historique de discussion
-          </summary>
-          <div style={{ marginTop: 12 }}>
-            <ReviewThreadPanel progressId={progressRow.id} />
-          </div>
-        </details>
+        <ReviewThreadSection progressId={progressRow.id} />
       ) : null}
 
-      {/* Lien autres modules niveau */}
+      {/* Lien autres modules niveau — Phase 0.9 brainstorm Égypte 2026-05 :
+          chips horizontales scrollables remplacées par liste verticale avec
+          icône ✓/⬜ devant chaque module (lisibilité mobile + statut d'un
+          coup d'œil). */}
       <div
         style={{
           padding: "14px 16px",
@@ -470,32 +415,53 @@ export function FormationModuleDetailPage() {
         >
           Autres modules du parcours
         </div>
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
           {level.modules
             .filter((m) => m.slug !== moduleSlug)
-            .map((m) => (
-              <Link
-                key={m.id}
-                to={`/formation/parcours/${level.slug}/${m.slug}`}
-                style={{
-                  padding: "8px 14px",
-                  borderRadius: 999,
-                  background: "var(--ls-surface2)",
-                  border: "0.5px solid var(--ls-border)",
-                  color: "var(--ls-text)",
-                  textDecoration: "none",
-                  fontSize: 13,
-                  fontWeight: 500,
-                  fontFamily: "DM Sans, sans-serif",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: 6,
-                }}
-              >
-                <span aria-hidden="true">{m.icon}</span>
-                {m.title}
-              </Link>
-            ))}
+            .map((m) => {
+              const otherStatus = getByModuleId(m.id)?.status;
+              const isDone = otherStatus === "validated";
+              const isPending =
+                otherStatus === "pending_review_sponsor" ||
+                otherStatus === "pending_review_admin";
+              const checkIcon = isDone ? "✅" : isPending ? "⏳" : "⬜";
+              const accentColor = isDone
+                ? "var(--ls-teal)"
+                : isPending
+                ? "var(--ls-gold)"
+                : "var(--ls-border)";
+              return (
+                <Link
+                  key={m.id}
+                  to={`/formation/parcours/${level.slug}/${m.slug}`}
+                  style={{
+                    padding: "10px 12px",
+                    borderRadius: 10,
+                    background: "var(--ls-surface2)",
+                    border: `0.5px solid ${accentColor}`,
+                    color: "var(--ls-text)",
+                    textDecoration: "none",
+                    fontSize: 13,
+                    fontWeight: 500,
+                    fontFamily: "DM Sans, sans-serif",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 10,
+                  }}
+                >
+                  <span
+                    aria-hidden="true"
+                    style={{ fontSize: 16, flexShrink: 0 }}
+                  >
+                    {checkIcon}
+                  </span>
+                  <span aria-hidden="true" style={{ fontSize: 16, flexShrink: 0 }}>
+                    {m.icon}
+                  </span>
+                  <span style={{ flex: 1, minWidth: 0 }}>{m.title}</span>
+                </Link>
+              );
+            })}
         </div>
       </div>
 
@@ -559,5 +525,51 @@ export function FormationModuleDetailPage() {
         </div>
       )}
     </div>
+  );
+}
+
+// =============================================================================
+// ReviewThreadSection — wrapper qui masque le bloc si thread vraiment vide
+// (Phase 0.9 brainstorm Égypte 2026-05)
+//
+// Le bloc Historique de discussion est précieux quand il y a des échanges
+// coach↔apprenant — mais agressif visuellement quand vide. On le rend
+// conditionnel sur la présence d'au moins 1 message. Pendant le chargement
+// initial, on ne rend rien (évite le flash).
+// =============================================================================
+
+function ReviewThreadSection({ progressId }: { progressId: string }) {
+  const { messages, loading } = useFormationReviewThread(progressId);
+
+  if (loading && messages.length === 0) return null;
+  if (messages.length === 0) return null;
+
+  return (
+    <details
+      style={{
+        background: "var(--ls-surface)",
+        border: "0.5px solid var(--ls-border)",
+        borderRadius: 14,
+        padding: "12px 16px",
+        fontFamily: "DM Sans, sans-serif",
+      }}
+    >
+      <summary
+        style={{
+          cursor: "pointer",
+          fontSize: 13,
+          fontWeight: 600,
+          color: "var(--ls-text)",
+          fontFamily: "Syne, serif",
+          listStyle: "none",
+          outline: "none",
+        }}
+      >
+        💬 Historique de discussion ({messages.length})
+      </summary>
+      <div style={{ marginTop: 12 }}>
+        <ReviewThreadPanel progressId={progressId} />
+      </div>
+    </details>
   );
 }

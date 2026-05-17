@@ -32,6 +32,8 @@ interface UseCahierResult {
     note?: string;
     contact_phone?: string;
     contact_email?: string;
+    platform?: string | null;
+    profile_url?: string | null;
   }) => Promise<void>;
   updateContact: (id: string, patch: Partial<Liste100Contact>) => Promise<void>;
   deleteContact: (id: string) => Promise<void>;
@@ -146,6 +148,8 @@ export function useCahierDeBord(userId: string | null): UseCahierResult {
           note: params.note ?? null,
           contact_phone: params.contact_phone ?? null,
           contact_email: params.contact_email ?? null,
+          platform: params.platform ?? null,
+          profile_url: params.profile_url ?? null,
         })
         .select()
         .single();
