@@ -13,6 +13,8 @@ import {
   type LeadStatus,
   type OnlineBilanRow,
 } from "../../hooks/useOnlineBilans";
+import { LeadResponsePanel } from "./LeadResponsePanel";
+import { useAppContext } from "../../context/AppContext";
 
 interface Props {
   bilan: OnlineBilanRow;
@@ -52,8 +54,10 @@ const MEAL_LABELS: Record<string, string> = {
 };
 
 export function LeadDetailModal({ bilan, onClose, onStatusChange, onNotesChange }: Props) {
+  const { currentUser } = useAppContext();
   const [notes, setNotes] = useState(bilan.notes ?? "");
   const [saving, setSaving] = useState(false);
+  const coachFirstName = (currentUser?.name ?? "").trim().split(/\s+/)[0] ?? "";
 
   useEffect(() => {
     const prev = document.body.style.overflow;
@@ -210,6 +214,18 @@ export function LeadDetailModal({ bilan, onClose, onStatusChange, onNotesChange 
             )}
           </Section>
         )}
+
+        <Section title="Répondre">
+          <LeadResponsePanel
+            bilan={bilan}
+            coachFirstName={coachFirstName}
+            onAfterSend={async (s) => {
+              if (bilan.lead_status === "new") {
+                await onStatusChange(s);
+              }
+            }}
+          />
+        </Section>
 
         <Section title="Notes coach">
           <textarea
