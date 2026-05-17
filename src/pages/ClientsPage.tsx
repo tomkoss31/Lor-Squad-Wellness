@@ -24,6 +24,7 @@ import {
 import { formatDateTime, isClientProgramStarted } from "../lib/calculations";
 import type { User, Client, LifecycleStatus } from "../types/domain";
 import { LIFECYCLE_LABELS, LIFECYCLE_TONES } from "../types/domain";
+import { LeadsKanban } from "../components/leads/LeadsKanban";
 
 export function ClientsPage() {
   const { currentUser, users, visibleClients, visibleFollowUps, pvTransactions, setClientLifecycleStatus } = useAppContext();
@@ -34,6 +35,17 @@ export function ClientsPage() {
   // de l'arborescence, mais ses clients perso sont tries EN PREMIER
   // (tri intelligent, pas filtrage). Plus de toggle.
   const isAdmin = currentUser?.role === "admin";
+
+  // Chantier #1 Bilan Online étape 1.6 (2026-05-17) : tab toggle entre
+  // la vue Clients (existante) et la vue Leads bilan online. Persisté
+  // via ?tab=leads pour les liens directs depuis push notif (étape 1.7).
+  const [activeTab, setActiveTab] = useState<"clients" | "leads">(() => {
+    return searchParams.get("tab") === "leads" ? "leads" : "clients";
+  });
+  useEffect(() => {
+    const t = searchParams.get("tab");
+    if (t === "leads" || t === "clients") setActiveTab(t);
+  }, [searchParams]);
 
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | LifecycleStatus | "fragile">("all");
@@ -319,6 +331,61 @@ export function ClientsPage() {
         titleSuffix=" clients 👥"
         subtitle="Recherche, responsables, lifecycle, fiche détaillée."
       />
+
+      {/* Chantier #1 Bilan Online étape 1.6 — tab Clients / Leads */}
+      <div className="cp-tabs" role="tablist">
+        <style>{`
+          .cp-tabs {
+            display: inline-flex;
+            gap: 4px;
+            background: var(--ls-surface2, #F9FAFB);
+            border: 1px solid var(--ls-border, #E5E7EB);
+            border-radius: 12px;
+            padding: 4px;
+            align-self: flex-start;
+          }
+          .cp-tab {
+            padding: 8px 16px;
+            border-radius: 8px;
+            background: transparent;
+            border: none;
+            color: var(--ls-text-muted, #6B7280);
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: inherit;
+            transition: all 160ms;
+          }
+          .cp-tab:hover { color: var(--ls-text, #0F172A); }
+          .cp-tab-active {
+            background: var(--ls-surface, #fff);
+            color: var(--ls-gold, #C9A84C);
+            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+          }
+        `}</style>
+        <button
+          type="button"
+          role="tab"
+          className={`cp-tab ${activeTab === "clients" ? "cp-tab-active" : ""}`}
+          aria-selected={activeTab === "clients"}
+          onClick={() => setActiveTab("clients")}
+        >
+          👥 Clients
+        </button>
+        <button
+          type="button"
+          role="tab"
+          className={`cp-tab ${activeTab === "leads" ? "cp-tab-active" : ""}`}
+          aria-selected={activeTab === "leads"}
+          onClick={() => setActiveTab("leads")}
+        >
+          🌱 Leads
+        </button>
+      </div>
+
+      {activeTab === "leads" && <LeadsKanban />}
+
+      {activeTab === "clients" && (<>
 
       {/* STATS PREMIUM V3 BENTO (2026-04-29) — card principale 2x + 2 mini */}
       <style>{`
@@ -1199,6 +1266,8 @@ export function ClientsPage() {
         />
       ) : null}
       <LegalFooter />
+
+      </>)}{/* end activeTab === "clients" */}
     </div>
   );
 }
