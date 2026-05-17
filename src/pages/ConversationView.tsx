@@ -46,11 +46,52 @@ export function ConversationView() {
   const navigate = useNavigate();
   const actions = useMessageActions();
 
-  // Résolution du client_id depuis le message initial.
-  const parentMsg = useMemo(
+  // Fix mobile chat history (Phase 0 brainstorm 2026-05) : le cache
+  // global `clientMessages` est limité aux 50 derniers messages tous
+  // clients confondus (cf. AppContext l.278). Sur un lien profond /
+  // conversation ancienne, parentMsg et le thread complet sont absents
+  // de ce cache → écran "Message introuvable" ou thread tronqué. On
+  // bypasse en fetchant directement depuis Supabase (parent + thread
+  // par client_id, sans limit), puis on merge avec le cache pour
+  // capter les nouveaux messages temps réel.
+  const [fetchedParent, setFetchedParent] = useState<ClientMessage | null>(null);
+  const [fetchedThread, setFetchedThread] = useState<ClientMessage[]>([]);
+  const [loadingThread, setLoadingThread] = useState(false);
+  const [fetchError, setFetchError] = useState<string | null>(null);
+
+  // 1) Résoudre le parentMsg : cache d'abord, sinon fetch direct par id.
+  const cachedParent = useMemo(
     () => clientMessages.find((m) => m.id === messageId) ?? null,
     [clientMessages, messageId],
   );
+  const parentMsg = cachedParent ?? fetchedParent;
+
+  useEffect(() => {
+    if (!messageId || cachedParent) {
+      setFetchedParent(null);
+      return;
+    }
+    let cancelled = false;
+    void (async () => {
+      const sb = await getSupabaseClient();
+      if (!sb) return;
+      const { data, error } = await sb
+        .from("client_messages")
+        .select("*")
+        .eq("id", messageId)
+        .maybeSingle();
+      if (cancelled) return;
+      if (error || !data) {
+        setFetchError("Message introuvable.");
+        return;
+      }
+      setFetchedParent(data as ClientMessage);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [messageId, cachedParent]);
+
   const clientId = parentMsg?.client_id ?? "";
   const client = clientId ? getClientById(clientId) : undefined;
   const clientName = useMemo(() => {
@@ -58,12 +99,51 @@ export function ConversationView() {
     return parentMsg?.client_name ?? "Client";
   }, [client, parentMsg]);
 
+  // 2) Fetch direct du thread complet par client_id (pas de limit).
+  useEffect(() => {
+    if (!clientId) {
+      setFetchedThread([]);
+      return;
+    }
+    let cancelled = false;
+    setLoadingThread(true);
+    void (async () => {
+      const sb = await getSupabaseClient();
+      if (!sb) {
+        if (!cancelled) setLoadingThread(false);
+        return;
+      }
+      const { data, error } = await sb
+        .from("client_messages")
+        .select("*")
+        .eq("client_id", clientId)
+        .order("created_at", { ascending: true });
+      if (cancelled) return;
+      setLoadingThread(false);
+      if (error) {
+        setFetchError(error.message);
+        return;
+      }
+      setFetchedThread((data ?? []) as ClientMessage[]);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [clientId]);
+
+  // 3) Merge fetch + cache (dedupe par id, cache écrase pour récupérer
+  // les mutations locales : read, archived_at, resolved_at). Trié asc.
   const thread = useMemo(() => {
     if (!clientId) return [];
-    return [...clientMessages]
-      .filter((m) => m.client_id === clientId)
-      .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
-  }, [clientMessages, clientId]);
+    const map = new Map<string, ClientMessage>();
+    for (const m of fetchedThread) map.set(m.id, m);
+    for (const m of clientMessages) {
+      if (m.client_id === clientId) map.set(m.id, m);
+    }
+    return Array.from(map.values()).sort(
+      (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
+    );
+  }, [fetchedThread, clientMessages, clientId]);
 
   // ─── Accusé de lecture auto ───────────────────────────────────────────────
   useEffect(() => {
@@ -150,14 +230,24 @@ export function ConversationView() {
   }, [currentUser, parentMsg, input, draftKey, clientName, pushToast]);
 
   if (!parentMsg) {
+    // Tant qu'on n'a ni cache ni fetch résolu et pas d'erreur explicite,
+    // on affiche un état de chargement (le fetch direct résout en <500ms
+    // en général). Sinon "Message introuvable" pour de vrai.
+    const isReallyMissing = fetchError !== null;
     return (
       <div className="space-y-4">
         <Card>
           <p style={{ fontSize: 14, color: "var(--ls-text-muted)" }}>
-            Message introuvable.{" "}
-            <Link to="/messages" style={{ color: "var(--ls-gold)" }}>
-              Retour à la messagerie
-            </Link>
+            {isReallyMissing ? (
+              <>
+                Message introuvable.{" "}
+                <Link to="/messages" style={{ color: "var(--ls-gold)" }}>
+                  Retour à la messagerie
+                </Link>
+              </>
+            ) : (
+              "Chargement de la conversation…"
+            )}
           </p>
         </Card>
       </div>
