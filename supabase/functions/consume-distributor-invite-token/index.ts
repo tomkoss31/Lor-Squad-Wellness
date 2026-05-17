@@ -59,6 +59,7 @@ serve(async (req) => {
       last_name?: string;
       phone?: string;
       city?: string;
+      coaching_since?: string | null;
       herbalife_id?: string;
       avatar_url?: string;
     };
@@ -69,6 +70,18 @@ serve(async (req) => {
     const lastName = (body.last_name ?? "").trim();
     const phone = (body.phone ?? "").trim();
     const city = (body.city ?? "").trim();
+    // Chantier #10 V2 badges (2026-05-17) : date début activité Herbalife.
+    // Optionnel. Validation : format YYYY-MM-DD, pas dans le futur.
+    let coachingSince: string | null = null;
+    if (body.coaching_since && typeof body.coaching_since === "string") {
+      const trimmed = body.coaching_since.trim();
+      if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+        const parsed = new Date(trimmed + "T00:00:00Z");
+        if (!Number.isNaN(parsed.getTime()) && parsed.getTime() <= Date.now()) {
+          coachingSince = trimmed;
+        }
+      }
+    }
     const herbalifeId = (body.herbalife_id ?? "").trim();
     const avatarUrl = body.avatar_url ? String(body.avatar_url).trim() : null;
 
@@ -164,6 +177,7 @@ serve(async (req) => {
       title: "Accès distributeur",
       phone,
       city,
+      coaching_since: coachingSince,
       herbalife_id: herbalifeId,
       avatar_url: avatarUrl,
     });
