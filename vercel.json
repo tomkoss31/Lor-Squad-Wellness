@@ -1,4 +1,16 @@
 {
+  "redirects": [
+    {
+      "source": "/opportunite",
+      "destination": "/business",
+      "permanent": true
+    },
+    {
+      "source": "/simulateur",
+      "destination": "/business#simulateur",
+      "permanent": true
+    }
+  ],
   "rewrites": [
     {
       "source": "/api/(.*)",

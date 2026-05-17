@@ -144,14 +144,14 @@ const BilanOnlineMerciPage = lazy(() =>
     default: module.BilanOnlineMerciPage,
   })),
 );
-const OpportunitePage = lazy(() =>
-  import("./pages/OpportunitePage").then((module) => ({
-    default: module.OpportunitePage,
+const BusinessPage = lazy(() =>
+  import("./pages/BusinessPage").then((module) => ({
+    default: module.BusinessPage,
   })),
 );
-const SimulateurPage = lazy(() =>
-  import("./pages/SimulateurPage").then((module) => ({
-    default: module.SimulateurPage,
+const RedirectToBusiness = lazy(() =>
+  import("./pages/RedirectToBusiness").then((module) => ({
+    default: module.RedirectToBusiness,
   })),
 );
 const OutilsProspectionPage = lazy(() =>
@@ -490,12 +490,13 @@ export default function App() {
           <Route path="/bilan-online/:coachSlug" element={<BilanOnlineWelcomePage />} />
           <Route path="/bilan-online/:coachSlug/formulaire" element={<BilanOnlinePage />} />
           <Route path="/bilan-online/:coachSlug/merci" element={<BilanOnlineMerciPage />} />
-          {/* Funnel business V1 (chantier 2026-11-07) : page educative
-              prospect froid + chaud, sans nommer la marque explicitement.
-              Cf. docs/BUSINESS_FUNNEL_ARCHITECTURE.md. */}
-          <Route path="/opportunite" element={<OpportunitePage />} />
-          {/* V2 funnel business : simulateur de revenus interactif */}
-          <Route path="/simulateur" element={<SimulateurPage />} />
+          {/* Chantier #7 V2 (2026-05-17) — page business scroll narratif
+              unifie. Fusionne /opportunite + /simulateur. Mockup Claude Design
+              business-v2.html valide. */}
+          <Route path="/business" element={<BusinessPage />} />
+          {/* Legacy redirects (preserve ?ref=) */}
+          <Route path="/opportunite" element={<RedirectToBusiness />} />
+          <Route path="/simulateur" element={<RedirectToBusiness hash="simulateur" />} />
           <Route path="/auto-login" element={<AutoLoginPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
