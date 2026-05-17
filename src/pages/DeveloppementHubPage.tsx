@@ -118,6 +118,17 @@ const CARDS: HubCard[] = [
     tag: { label: "Nouveau", color: "var(--ls-coral)" },
     requireRole: "admin",
   },
+  {
+    id: "bilan-online",
+    emoji: "🌱",
+    title: "Mon bilan online",
+    description:
+      "Partage ton lien /bilan-online/<ton-prénom> : tes prospects remplissent un bilan en 2 min, tu reçois une push, tu retrouves le Lead dans /clients onglet Leads (kanban + templates + relance auto J+3).",
+    cta: "Voir mes Leads",
+    path: "/clients?tab=leads",
+    accent: "var(--ls-gold)",
+    tag: { label: "Nouveau", color: "var(--ls-coral)" },
+  },
 ];
 
 export function DeveloppementHubPage() {
