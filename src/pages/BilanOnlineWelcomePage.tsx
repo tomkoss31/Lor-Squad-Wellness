@@ -7,6 +7,7 @@
 import { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { BO, BilanOnlineShell, BoBrand, BoCtaPrimary } from "../components/bilan-online/BilanOnlineShell";
+import { CoachCredibilityBadges } from "../components/bilan-online/CoachCredibilityBadges";
 
 function normalizeSlug(input: string): string {
   return input
@@ -104,6 +105,10 @@ export function BilanOnlineWelcomePage() {
               </div>
             </div>
           </div>
+        )}
+
+        {slug && (
+          <CoachCredibilityBadges coachSlug={slug} variant="welcome" />
         )}
 
         <div style={{
