@@ -165,6 +165,7 @@ const STYLES = `
   .bow-root {
     min-height: 100vh;
     min-height: 100dvh;
+    color-scheme: light;
     background:
       radial-gradient(circle at 20% 10%, rgba(16, 185, 129, 0.18) 0%, transparent 55%),
       radial-gradient(circle at 80% 30%, rgba(6, 182, 212, 0.16) 0%, transparent 55%),
@@ -204,13 +205,13 @@ const STYLES = `
   }
 
   .bow-h1 {
-    font-family: 'Syne', 'Inter', sans-serif;
-    font-size: 26px;
+    font-family: 'Sora', 'Inter', sans-serif;
+    font-size: 28px;
     font-weight: 700;
-    line-height: 1.2;
+    line-height: 1.18;
     margin: 0 0 16px 0;
     color: #0F172A;
-    letter-spacing: -0.02em;
+    letter-spacing: -0.025em;
   }
 
   .bow-coach-line {
@@ -230,7 +231,7 @@ const STYLES = `
   }
 
   .bow-h2 {
-    font-family: 'Syne', 'Inter', sans-serif;
+    font-family: 'Sora', 'Inter', sans-serif;
     font-size: 16px;
     font-weight: 600;
     margin: 0 0 12px 0;
@@ -276,19 +277,22 @@ const STYLES = `
     gap: 8px;
     flex-direction: column;
   }
-  .bow-input {
+  .bow-root .bow-input {
     flex: 1;
     font-size: 16px;
     padding: 14px 16px;
     border: 1.5px solid #E5E7EB;
     border-radius: 12px;
-    background: #fff;
-    color: #0F172A;
+    background: #ffffff !important;
+    color: #0F172A !important;
+    -webkit-text-fill-color: #0F172A;
+    color-scheme: light;
     font-family: inherit;
     min-height: 50px;
     box-sizing: border-box;
     width: 100%;
   }
+  .bow-root .bow-input::placeholder { color: #9CA3AF !important; opacity: 1; }
   .bow-input:focus {
     outline: none;
     border-color: #C9A84C;

@@ -86,6 +86,7 @@ const STYLES = `
   .bom-root {
     min-height: 100vh;
     min-height: 100dvh;
+    color-scheme: light;
     background:
       radial-gradient(circle at 20% 10%, rgba(16, 185, 129, 0.18) 0%, transparent 55%),
       radial-gradient(circle at 80% 30%, rgba(6, 182, 212, 0.16) 0%, transparent 55%),
@@ -143,12 +144,13 @@ const STYLES = `
   }
 
   .bom-h1 {
-    font-family: 'Syne', 'Inter', sans-serif;
-    font-size: 28px;
+    font-family: 'Sora', 'Inter', sans-serif;
+    font-size: 30px;
     font-weight: 700;
     color: #0F172A;
     margin: 0 0 16px 0;
-    letter-spacing: -0.02em;
+    letter-spacing: -0.025em;
+    line-height: 1.18;
   }
 
   .bom-body {
