@@ -18,7 +18,15 @@ export interface ProspectionProfile {
   emoji: string;
   label: string;
   description: string | null;
+  hashtag_advice: string | null;
   position: number;
+}
+
+export interface ProspectionMarketTip {
+  market_code: string;
+  language_label: string;
+  timing: string;
+  cultural_tip: string;
 }
 
 export interface ProspectionHashtag {
@@ -37,11 +45,21 @@ export type ProspectionPlatform =
   | "linkedin"
   | "sms";
 
+export type ProspectionScriptKind =
+  | "first_contact"
+  | "j3_followup"
+  | "referral"
+  | "direct"
+  | "pitch";
+
 export interface ProspectionScript {
   id: string;
   market_code: string;
   profile_slug: string;
   platform: ProspectionPlatform;
+  kind: ProspectionScriptKind;
+  label: string | null;
+  language_label: string | null;
   body: string;
   body_fr: string | null;
   tip: string | null;
@@ -55,6 +73,7 @@ interface State {
   profiles: ProspectionProfile[];
   hashtags: ProspectionHashtag[];
   scripts: ProspectionScript[];
+  marketTips: ProspectionMarketTip[];
 }
 
 const INITIAL: State = {
@@ -64,6 +83,7 @@ const INITIAL: State = {
   profiles: [],
   hashtags: [],
   scripts: [],
+  marketTips: [],
 };
 
 export function useProspectionData() {
@@ -76,13 +96,13 @@ export function useProspectionData() {
         const sb = await getSupabaseClient();
         if (!sb) throw new Error("Service indisponible.");
 
-        const [m, p, h, s] = await Promise.all([
+        const [m, p, h, s, t] = await Promise.all([
           sb.from("prospection_markets")
             .select("code, flag, label, description, position")
             .eq("active", true)
             .order("position", { ascending: true }),
           sb.from("prospection_profiles")
-            .select("slug, emoji, label, description, position")
+            .select("slug, emoji, label, description, hashtag_advice, position")
             .eq("active", true)
             .order("position", { ascending: true }),
           sb.from("prospection_hashtags")
@@ -90,15 +110,18 @@ export function useProspectionData() {
             .eq("active", true)
             .order("position", { ascending: true }),
           sb.from("prospection_scripts")
-            .select("id, market_code, profile_slug, platform, body, body_fr, tip, position")
+            .select("id, market_code, profile_slug, platform, kind, label, language_label, body, body_fr, tip, position")
             .eq("active", true)
             .order("position", { ascending: true }),
+          sb.from("prospection_market_tips")
+            .select("market_code, language_label, timing, cultural_tip"),
         ]);
 
         if (cancelled) return;
 
-        if (m.error || p.error || h.error || s.error) {
-          const msg = m.error?.message ?? p.error?.message ?? h.error?.message ?? s.error?.message;
+        if (m.error || p.error || h.error || s.error || t.error) {
+          const msg = m.error?.message ?? p.error?.message ?? h.error?.message
+            ?? s.error?.message ?? t.error?.message;
           setState({ ...INITIAL, loading: false, error: msg ?? "Erreur de chargement." });
           return;
         }
@@ -110,6 +133,7 @@ export function useProspectionData() {
           profiles: (p.data ?? []) as ProspectionProfile[],
           hashtags: (h.data ?? []) as ProspectionHashtag[],
           scripts: (s.data ?? []) as ProspectionScript[],
+          marketTips: (t.data ?? []) as ProspectionMarketTip[],
         });
       } catch (e) {
         if (!cancelled) {
