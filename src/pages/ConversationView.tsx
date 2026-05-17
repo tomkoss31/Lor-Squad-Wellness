@@ -56,7 +56,6 @@ export function ConversationView() {
   // capter les nouveaux messages temps réel.
   const [fetchedParent, setFetchedParent] = useState<ClientMessage | null>(null);
   const [fetchedThread, setFetchedThread] = useState<ClientMessage[]>([]);
-  const [loadingThread, setLoadingThread] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
 
   // 1) Résoudre le parentMsg : cache d'abord, sinon fetch direct par id.
@@ -106,20 +105,15 @@ export function ConversationView() {
       return;
     }
     let cancelled = false;
-    setLoadingThread(true);
     void (async () => {
       const sb = await getSupabaseClient();
-      if (!sb) {
-        if (!cancelled) setLoadingThread(false);
-        return;
-      }
+      if (!sb) return;
       const { data, error } = await sb
         .from("client_messages")
         .select("*")
         .eq("client_id", clientId)
         .order("created_at", { ascending: true });
       if (cancelled) return;
-      setLoadingThread(false);
       if (error) {
         setFetchError(error.message);
         return;
