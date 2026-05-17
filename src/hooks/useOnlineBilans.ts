@@ -54,6 +54,8 @@ export interface OnlineBilanRow {
   assigned_to_user_id: string | null;
   notes: string | null;
   contacted_at: string | null;
+  relance_due_at: string | null;
+  relance_done_at: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -105,8 +107,18 @@ export function useOnlineBilans(): UseOnlineBilansResult {
   const updateStatus = useCallback(async (id: string, status: LeadStatus) => {
     const sb = await getSupabaseClient();
     if (!sb) throw new Error("Supabase indisponible");
+    const now = new Date();
     const patch: Record<string, unknown> = { lead_status: status };
-    if (status === "contact") patch.contacted_at = new Date().toISOString();
+    if (status === "contact") {
+      patch.contacted_at = now.toISOString();
+      // Étape 1.9 : auto-relance J+3 sur passage en contact
+      patch.relance_due_at = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000).toISOString();
+      patch.relance_done_at = null;
+    }
+    if (status === "relance" || status === "qualified" || status === "lost") {
+      // Étape 1.9 : marque la relance comme traitée
+      patch.relance_done_at = now.toISOString();
+    }
     const { error: err } = await sb
       .from("online_bilans")
       .update(patch)
@@ -114,7 +126,11 @@ export function useOnlineBilans(): UseOnlineBilansResult {
     if (err) throw err;
     // Optimistic update local
     setBilans((prev) =>
-      prev.map((b) => (b.id === id ? { ...b, lead_status: status, ...(status === "contact" ? { contacted_at: new Date().toISOString() } : {}) } : b)),
+      prev.map((b) =>
+        b.id === id
+          ? { ...b, lead_status: status, ...(patch as Partial<OnlineBilanRow>) }
+          : b,
+      ),
     );
   }, []);
 

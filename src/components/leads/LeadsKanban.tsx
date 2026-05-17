@@ -33,6 +33,11 @@ const OBJECTIVE_LABELS: Record<string, string> = {
   wellbeing: "Bien-être",
 };
 
+function isRelanceDue(bilan: OnlineBilanRow): boolean {
+  if (!bilan.relance_due_at || bilan.relance_done_at) return false;
+  return new Date(bilan.relance_due_at).getTime() <= Date.now();
+}
+
 function formatDateShort(iso: string): string {
   const d = new Date(iso);
   const today = new Date();
@@ -154,6 +159,10 @@ function LeadCard({
         </span>
         <span className="lk-card-date">{formatDateShort(bilan.created_at)}</span>
       </div>
+
+      {isRelanceDue(bilan) && (
+        <div className="lk-card-relance">🔔 Relance due</div>
+      )}
 
       {bilan.city && <div className="lk-card-city">📍 {bilan.city}</div>}
 
@@ -319,6 +328,16 @@ const STYLES = `
     border-radius: 999px;
     font-size: 11.5px;
     font-weight: 500;
+  }
+  .lk-card-relance {
+    display: inline-block;
+    background: rgba(245, 158, 11, 0.12);
+    color: #92400E;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 11.5px;
+    font-weight: 600;
+    align-self: flex-start;
   }
   .lk-card-bottom {
     display: flex;
