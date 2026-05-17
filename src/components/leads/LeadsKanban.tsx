@@ -15,6 +15,7 @@ import {
   useOnlineBilans,
 } from "../../hooks/useOnlineBilans";
 import { LeadDetailModal } from "./LeadDetailModal";
+import { MyBilanLinkCard } from "./MyBilanLinkCard";
 
 const STATUS_TONES: Record<LeadStatus, { bg: string; fg: string; dot: string }> = {
   new: { bg: "rgba(201, 168, 76, 0.10)", fg: "#9A7F2A", dot: "#C9A84C" },
@@ -72,23 +73,22 @@ export function LeadsKanban() {
   if (error) {
     return <div className="lk-error">Erreur : {error}</div>;
   }
-  if (bilans.length === 0) {
-    return (
-      <div className="lk-empty">
-        <div className="lk-empty-emoji">📭</div>
-        <h3>Pas encore de Lead</h3>
-        <p>
-          Partage ton lien <code>/bilan-online/&lt;ton-prénom&gt;</code> pour
-          recevoir des bilans publics ici.
-        </p>
-      </div>
-    );
-  }
 
   return (
     <div className="lk-root">
       <style>{STYLES}</style>
 
+      <MyBilanLinkCard />
+
+      {bilans.length === 0 && (
+        <div className="lk-empty">
+          <div className="lk-empty-emoji">📭</div>
+          <h3>Pas encore de Lead</h3>
+          <p>Partage le lien ci-dessus pour recevoir tes premiers bilans.</p>
+        </div>
+      )}
+
+      {bilans.length > 0 && (
       <div className="lk-columns">
         {LEAD_STATUS_ORDER.map((status) => {
           const items = byStatus.get(status) ?? [];
@@ -122,6 +122,7 @@ export function LeadsKanban() {
           );
         })}
       </div>
+      )}
 
       {openLead && (
         <LeadDetailModal
