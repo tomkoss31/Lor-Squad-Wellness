@@ -26,8 +26,9 @@ export interface CoachCredibility {
   name: string | null;
   rank: string;
   rank_label: string;
-  bilans_count: number;
-  tenure_months: number;
+  city: string | null;
+  coaching_since: string | null;
+  tenure_months: number | null;
 }
 
 type Variant = "welcome" | "business" | "newsletter";
@@ -47,10 +48,6 @@ function formatTenure(months: number): string {
     return `${months} mois d'expérience`;
   }
   const years = Math.floor(months / 12);
-  const rest = months % 12;
-  if (rest === 0) {
-    return `${years} an${years > 1 ? "s" : ""} d'expérience`;
-  }
   return `${years} an${years > 1 ? "s" : ""} d'expérience`;
 }
 
@@ -114,11 +111,15 @@ export function CoachCredibilityBadges({
   }
   if (!data) return null;
 
-  const items = [
+  const items: Array<{ icon: string; label: string; key: string }> = [
     { icon: "🏆", label: data.rank_label, key: "rank" },
-    { icon: "📋", label: `${data.bilans_count} bilan${data.bilans_count > 1 ? "s" : ""} réalisé${data.bilans_count > 1 ? "s" : ""}`, key: "bilans" },
-    { icon: "🗓", label: formatTenure(data.tenure_months), key: "tenure" },
   ];
+  if (data.city && data.city.trim().length > 0) {
+    items.push({ icon: "📍", label: data.city.trim(), key: "city" });
+  }
+  if (typeof data.tenure_months === "number" && data.tenure_months >= 1) {
+    items.push({ icon: "🗓", label: formatTenure(data.tenure_months), key: "tenure" });
+  }
 
   if (variant === "newsletter") {
     return (
