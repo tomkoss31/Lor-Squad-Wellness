@@ -348,10 +348,11 @@ export function BusinessPage() {
           city: undefined,
           referrer_user_id: referrerId ?? undefined,
           source: "business-leadcapture",
-          metadata: {
-            referral_source: popupReferral.trim() || undefined,
-            consent_recontact: popupConsent,
-          },
+          referral_source: popupReferral.trim() || undefined,
+          consent_recontact: popupConsent,
+          utm_source: params.get("utm_source") ?? undefined,
+          utm_medium: params.get("utm_medium") ?? undefined,
+          utm_campaign: params.get("utm_campaign") ?? undefined,
         },
       });
       if (error || !data?.success) {
