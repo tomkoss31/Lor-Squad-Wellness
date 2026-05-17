@@ -1,34 +1,20 @@
 // =============================================================================
-// BilanOnlinePage — Formulaire bilan online éditorial 5 étapes.
-// Chantier #1 étape 1.3 (2026-05-17) — refonte design Claude Design.
+// BilanOnlinePage — Formulaire bilan online 5 étapes, mockup Égypte validé.
+// docs/mockups/bilan-online.html (commit 25c0165), view "form".
 // Route : /bilan-online/:coachSlug?/formulaire
-//
-// 5 étapes avec progress bar, auto-save localStorage, validation par étape.
-// Design : Whoop × Aesop, Sora 600 H1 éditoriaux, cards glassmorphism,
-// slider motivation gradient, CTA gold, microcopy RGPD.
 // =============================================================================
 
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { getSupabaseClient } from "../services/supabaseClient";
 import { extractFunctionError } from "../lib/utils/extractFunctionError";
-import {
-  BO_TOKENS,
-  BilanOnlineShell,
-  BoEyebrow,
-  BoHero,
-  BoLead,
-  BoCta,
-  BoArrow,
-  BoFooterRgpd,
-} from "../components/bilan-online/BilanOnlineShell";
+import { BO, BilanOnlineShell, BoCtaPrimary } from "../components/bilan-online/BilanOnlineShell";
 
 type ObjectiveKey = "weight_loss" | "mass_gain" | "energy" | "sleep" | "wellbeing";
 type PreviousAttempt = "diet" | "coach" | "sport" | "supplements" | "nothing";
 type MealType =
-  | "sweet" | "salty" | "smoothie" | "coffee_only" | "other"
-  | "home" | "canteen" | "sandwich" | "fastfood" | "skip"
-  | "delivery" | "light";
+  | "sweet" | "salty" | "smoothie" | "coffee_only"
+  | "home" | "canteen" | "sandwich" | "fastfood";
 type BudgetTier = "2" | "4" | "8" | "10" | "15+";
 
 interface FormState {
@@ -42,31 +28,31 @@ interface FormState {
   previous_attempts: PreviousAttempt[];
   previous_attempts_result: string;
   breakfast: MealType | "";
-  breakfast_other: string;
   lunch: MealType | "";
-  dinner: MealType | "";
   fastfood_per_week: number;
   daily_food_budget: BudgetTier | "";
   active_daily: "yes" | "no" | "";
   active_daily_detail: string;
   consent: boolean;
 }
-
-const INITIAL_FORM: FormState = {
+const INITIAL: FormState = {
   first_name: "", age: "", height_cm: "", city: "",
   objectives: [], weight_loss_target_kg: "", motivation_score: 7,
   previous_attempts: [], previous_attempts_result: "",
-  breakfast: "", breakfast_other: "", lunch: "", dinner: "", fastfood_per_week: 0,
+  breakfast: "", lunch: "", fastfood_per_week: 2,
   daily_food_budget: "", active_daily: "", active_daily_detail: "",
   consent: false,
 };
 
 const TOTAL_STEPS = 5;
-const STEP_LABELS = ["IDENTITÉ", "OBJECTIFS", "VÉCU", "HABITUDES", "BUDGET & VIE"];
-const MOTIVATION_LABELS = [
-  "Pas encore là", "Pas encore là", "En réflexion", "En réflexion",
-  "Un peu hésitant(e)", "Tiède mais ok", "Décidé(e)",
-  "Plutôt motivé(e)", "Très motivé(e)", "Engagé(e)", "Tout donner",
+const MOTIV_LABELS = [
+  "", "Pas trop", "Hésitant(e)", "Hésitant(e)", "Curieux(se)",
+  "Curieux(se)", "Motivé(e)", "Plutôt motivé(e)", "Très motivé(e)",
+  "Engagé(e) à fond", "Engagé(e) à fond",
+];
+const FF_LABELS = [
+  "Excellent !", "Modéré", "Modéré", "Habituel",
+  "Habituel", "Souvent", "Très souvent", "Tous les jours",
 ];
 
 export function BilanOnlinePage() {
@@ -76,10 +62,11 @@ export function BilanOnlinePage() {
   const storageKey = useMemo(() => `ls-bilan-online-${slug || "none"}`, [slug]);
 
   const [step, setStep] = useState(1);
-  const [form, setForm] = useState<FormState>(INITIAL_FORM);
+  const [form, setForm] = useState<FormState>(INITIAL);
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [hydrated, setHydrated] = useState(false);
+  const [savedFlash, setSavedFlash] = useState(false);
 
   useEffect(() => {
     try {
@@ -99,26 +86,29 @@ export function BilanOnlinePage() {
     if (!hydrated) return;
     try {
       localStorage.setItem(storageKey, JSON.stringify({ ...form, _step: step }));
-    } catch { /* ignore quota */ }
+      setSavedFlash(true);
+      const t = setTimeout(() => setSavedFlash(false), 1500);
+      return () => clearTimeout(t);
+    } catch { /* quota */ }
   }, [form, step, storageKey, hydrated]);
 
   function update<K extends keyof FormState>(key: K, value: FormState[K]) {
-    setForm((prev) => ({ ...prev, [key]: value }));
+    setForm((p) => ({ ...p, [key]: value }));
   }
   function toggleObjective(o: ObjectiveKey) {
-    setForm((prev) => ({
-      ...prev,
-      objectives: prev.objectives.includes(o)
-        ? prev.objectives.filter((x) => x !== o)
-        : [...prev.objectives, o],
+    setForm((p) => ({
+      ...p,
+      objectives: p.objectives.includes(o)
+        ? p.objectives.filter((x) => x !== o)
+        : [...p.objectives, o],
     }));
   }
   function togglePreviousAttempt(o: PreviousAttempt) {
-    setForm((prev) => ({
-      ...prev,
-      previous_attempts: prev.previous_attempts.includes(o)
-        ? prev.previous_attempts.filter((x) => x !== o)
-        : [...prev.previous_attempts, o],
+    setForm((p) => ({
+      ...p,
+      previous_attempts: p.previous_attempts.includes(o)
+        ? p.previous_attempts.filter((x) => x !== o)
+        : [...p.previous_attempts, o],
     }));
   }
 
@@ -135,22 +125,16 @@ export function BilanOnlinePage() {
       if (form.objectives.length === 0) return "Choisis au moins un objectif.";
       if (form.objectives.includes("weight_loss")) {
         const kg = Number(form.weight_loss_target_kg);
-        if (!form.weight_loss_target_kg || !Number.isFinite(kg) || kg < 1 || kg > 50) {
-          return "Combien de kilos viser ? (1 à 50)";
-        }
+        if (!form.weight_loss_target_kg || !Number.isFinite(kg) || kg < 1 || kg > 50) return "Combien de kilos viser ?";
       }
     }
     if (s === 4) {
-      if (!form.breakfast) return "Comment se passe ton petit-déj ?";
-      if (form.breakfast === "other" && form.breakfast_other.trim().length < 2) {
-        return "Précise ton petit-déj.";
-      }
-      if (!form.lunch) return "Et le midi ?";
-      if (!form.dinner) return "Et le soir ?";
+      if (!form.breakfast) return "Choisis ton petit-déj.";
+      if (!form.lunch) return "Choisis ton repas du midi.";
     }
     if (s === 5) {
-      if (!form.daily_food_budget) return "Quel budget alimentaire / jour ?";
-      if (!form.active_daily) return "Actif au quotidien ? (oui/non)";
+      if (!form.daily_food_budget) return "Choisis ton budget.";
+      if (!form.active_daily) return "Es-tu actif au quotidien ?";
       if (!form.consent) return "Le consentement RGPD est obligatoire.";
     }
     return null;
@@ -160,12 +144,16 @@ export function BilanOnlinePage() {
     const err = validateStep(step);
     if (err) { setErrorMsg(err); return; }
     setErrorMsg("");
-    setStep((s) => Math.min(s + 1, TOTAL_STEPS));
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    if (step < TOTAL_STEPS) {
+      setStep(step + 1);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } else {
+      void submit();
+    }
   }
   function prev() {
     setErrorMsg("");
-    setStep((s) => Math.max(s - 1, 1));
+    setStep(Math.max(1, step - 1));
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -177,22 +165,18 @@ export function BilanOnlinePage() {
     try {
       const sb = await getSupabaseClient();
       if (!sb) throw new Error("Service indisponible.");
-
       const payloadDetail = {
         previous_attempts: form.previous_attempts,
         previous_attempts_result: form.previous_attempts_result.trim() || null,
         habits: {
           breakfast: form.breakfast,
-          breakfast_other: form.breakfast === "other" ? form.breakfast_other.trim() : null,
           lunch: form.lunch,
-          dinner: form.dinner,
           fastfood_per_week: form.fastfood_per_week,
         },
         budget: form.daily_food_budget,
         active_daily: form.active_daily === "yes",
         active_daily_detail: form.active_daily === "yes" ? form.active_daily_detail.trim() || null : null,
       };
-
       const { data, error } = await sb.functions.invoke("submit-online-bilan", {
         body: {
           coach_slug: slug || null,
@@ -208,868 +192,571 @@ export function BilanOnlinePage() {
           consent: form.consent,
         },
       });
-
       if (error || !data?.success) {
         const raw = await extractFunctionError(data, error, "Erreur inconnue.");
-        const friendly = raw === "rate_limited"
-          ? "Trop de tentatives — merci de réessayer dans une heure."
-          : raw;
-        throw new Error(friendly);
+        throw new Error(raw === "rate_limited"
+          ? "Trop de tentatives — réessaie dans une heure."
+          : raw);
       }
-
-      try { localStorage.removeItem(storageKey); } catch { /* ignore */ }
+      try { localStorage.removeItem(storageKey); } catch { /* */ }
       const params = new URLSearchParams({ firstName: form.first_name.trim() });
       navigate(`/bilan-online${slug ? `/${slug}` : ""}/merci?${params.toString()}`);
     } catch (e) {
-      const msg = e instanceof Error ? e.message : "Erreur inconnue.";
-      setErrorMsg(msg);
+      setErrorMsg(e instanceof Error ? e.message : "Erreur inconnue.");
       setSubmitting(false);
     }
   }
 
-  const progress = step / TOTAL_STEPS;
-  const eyebrow = `0${step} — ${STEP_LABELS[step - 1]}`;
-  const heroes: Record<number, { title: string; lead: string }> = {
-    1: { title: "Faisons connaissance.", lead: "Quelques infos rapides pour personnaliser ton bilan." },
-    2: { title: "Parle-nous de ton objectif.", lead: "Choisis ce qui te parle. Tu peux en cocher plusieurs." },
-    3: { title: "Et avant aujourd'hui ?", lead: "Ce que tu as essayé compte — on ne juge pas, on comprend." },
-    4: { title: "Ce que tu manges en vrai.", lead: "Au plus juste — pas de jugement, juste comprendre." },
-    5: { title: "Dernière étape.", lead: "Budget et activité, puis on te recontacte." },
-  };
-  const hero = heroes[step];
+  const progressPct = (step / TOTAL_STEPS) * 100;
+  const isLast = step === TOTAL_STEPS;
 
   return (
-    <BilanOnlineShell progress={progress}>
+    <BilanOnlineShell>
+      {/* Header sticky : progress + meta */}
       <div style={{
-        padding: "clamp(56px, 8vw, 112px) clamp(20px, 5vw, 56px) clamp(40px, 5vw, 80px)",
-        maxWidth: "clamp(560px, 60vw, 720px)", margin: "0 auto",
+        padding: "16px 20px",
+        background: BO.surface,
+        borderBottom: `1px solid ${BO.border}`,
+        position: "sticky", top: 0, zIndex: 10,
       }}>
-        <BoEyebrow>{eyebrow}</BoEyebrow>
-        <div style={{ height: 24 }} />
-        <BoHero>{hero.title}</BoHero>
-        <div style={{ height: 16 }} />
-        <BoLead>{hero.lead}</BoLead>
-        <div style={{ height: 40 }} />
+        <div style={{
+          display: "flex", justifyContent: "space-between", alignItems: "center",
+          marginBottom: 8, fontSize: 12, color: BO.textMuted,
+        }}>
+          <button
+            type="button"
+            onClick={prev}
+            disabled={step === 1 || submitting}
+            style={{
+              background: "none", border: "none",
+              fontSize: 14, color: BO.textMuted,
+              cursor: step === 1 ? "not-allowed" : "pointer",
+              opacity: step === 1 ? 0.3 : 1,
+              padding: "4px 8px 4px 0",
+              display: "flex", alignItems: "center", gap: 4,
+              fontFamily: "inherit",
+            }}
+          >
+            ← Précédent
+          </button>
+          <span>Étape {step}/{TOTAL_STEPS}</span>
+          <span style={{
+            color: BO.tealDark, fontWeight: 600,
+            opacity: savedFlash ? 1 : 0,
+            transition: "opacity 0.4s",
+          }}>
+            💾 Sauvegardé
+          </span>
+        </div>
+        <div style={{
+          width: "100%", height: 6,
+          background: BO.surface2, borderRadius: 3, overflow: "hidden",
+        }}>
+          <div style={{
+            height: "100%", width: `${progressPct}%`,
+            background: `linear-gradient(90deg, ${BO.gold}, ${BO.teal})`,
+            borderRadius: 3,
+            transition: "width 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
+          }} />
+        </div>
+      </div>
 
+      {/* Steps */}
+      <div
+        key={step}
+        style={{
+          padding: "24px 20px 120px",
+          animation: "bo-slideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1)",
+        }}
+      >
         {step === 1 && <StepIdentity form={form} update={update} />}
-        {step === 2 && (
-          <StepObjectives
-            form={form}
-            update={update}
-            toggle={toggleObjective}
-          />
-        )}
-        {step === 3 && (
-          <StepExperience
-            form={form}
-            update={update}
-            toggle={togglePreviousAttempt}
-          />
-        )}
+        {step === 2 && <StepObjectives form={form} update={update} toggle={toggleObjective} />}
+        {step === 3 && <StepExperience form={form} update={update} toggle={togglePreviousAttempt} />}
         {step === 4 && <StepHabits form={form} update={update} />}
         {step === 5 && <StepBudget form={form} update={update} />}
 
         {errorMsg && (
           <div style={{
-            marginTop: 24, padding: "12px 16px", borderRadius: 12,
-            background: "rgba(239, 68, 68, 0.08)",
-            border: "1px solid rgba(239, 68, 68, 0.20)",
-            color: "#991B1B",
-            fontFamily: BO_TOKENS.fontBody, fontSize: 14, lineHeight: 1.45,
-          }} role="alert">
+            marginTop: 16, padding: "10px 14px", borderRadius: 10,
+            background: "rgba(251, 113, 133, 0.10)",
+            color: "#9F1239", fontSize: 13,
+            border: "1px solid rgba(251, 113, 133, 0.3)",
+          }}>
             {errorMsg}
           </div>
         )}
+      </div>
 
-        <div style={{ height: 32 }} />
-
-        {step < TOTAL_STEPS ? (
-          <BoCta onClick={next} disabled={submitting}>
-            Suivant
-            <BoArrow />
-          </BoCta>
-        ) : (
-          <BoCta onClick={submit} disabled={submitting || !form.consent}>
-            {submitting ? "Envoi…" : "Envoyer mon bilan"}
-            {!submitting && <BoArrow />}
-          </BoCta>
-        )}
-
-        {step > 1 && (
-          <>
-            <div style={{ height: 12 }} />
-            <button
-              type="button"
-              onClick={prev}
-              disabled={submitting}
-              style={{
-                all: "unset", width: "100%", textAlign: "center", cursor: "pointer",
-                padding: "10px 0",
-                fontFamily: BO_TOKENS.fontBody, fontSize: 13,
-                color: BO_TOKENS.navy, opacity: 0.55,
-                letterSpacing: 0.1,
-              }}
-            >
-              ← Précédent
-            </button>
-          </>
-        )}
-
-        <div style={{ height: 16 }} />
-        <BoFooterRgpd />
-        <div style={{ height: 24 }} />
+      {/* Bottom fixed CTA */}
+      <div style={{
+        position: "fixed", bottom: 0, left: "50%",
+        transform: "translateX(-50%)",
+        width: "100%", maxWidth: 480,
+        padding: "12px 20px 16px",
+        background: "rgba(255, 255, 255, 0.95)",
+        backdropFilter: "blur(10px)",
+        WebkitBackdropFilter: "blur(10px)",
+        borderTop: `1px solid ${BO.border}`,
+        zIndex: 5,
+        paddingBottom: `calc(16px + env(safe-area-inset-bottom, 0px))`,
+      }}>
+        <BoCtaPrimary onClick={next} disabled={submitting}>
+          {submitting ? "Envoi…" : isLast ? "Envoyer mon bilan ✓" : "Suivant →"}
+        </BoCtaPrimary>
       </div>
     </BilanOnlineShell>
   );
 }
 
-// ── Steps ─────────────────────────────────────────────────────────────────
+// ── Helpers primitives ──────────────────────────────────────────────────────
 
 interface StepProps {
   form: FormState;
-  update: <K extends keyof FormState>(key: K, value: FormState[K]) => void;
+  update: <K extends keyof FormState>(k: K, v: FormState[K]) => void;
 }
 
-function StepIdentity({ form, update }: StepProps) {
+function StepHero({ emoji, title, subtitle }: { emoji: string; title: string; subtitle: string }) {
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-      <Field label="Prénom" required>
-        <BoInput
-          value={form.first_name}
-          onChange={(v) => update("first_name", v)}
-          maxLength={50}
-          autoComplete="given-name"
-          placeholder="Marie, Karim…"
-        />
-      </Field>
-
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-        <Field label="Âge" required>
-          <BoInput
-            type="number" inputMode="numeric"
-            value={form.age}
-            onChange={(v) => update("age", v)}
-            min={16} max={99}
-          />
-        </Field>
-        <Field label="Taille (cm)" required>
-          <BoInput
-            type="number" inputMode="numeric"
-            value={form.height_cm}
-            onChange={(v) => update("height_cm", v)}
-            min={100} max={220}
-          />
-        </Field>
+    <>
+      <div style={{ fontSize: 36, lineHeight: 1, marginBottom: 12 }}>
+        {emoji}
       </div>
+      <div style={{
+        fontFamily: BO.fontDisplay, fontSize: 22, fontWeight: 700,
+        color: BO.text, marginBottom: 6, lineHeight: 1.25,
+      }}>
+        {title}
+      </div>
+      <div style={{ fontSize: 13, color: BO.textMuted, marginBottom: 22 }}>
+        {subtitle}
+      </div>
+    </>
+  );
+}
 
-      <Field label="Ville" required>
-        <BoInput
-          value={form.city}
-          onChange={(v) => update("city", v)}
-          maxLength={80}
-          autoComplete="address-level2"
-          placeholder="Paris, Lyon…"
-        />
-      </Field>
+function Field({ label, required, children }: { label: string; required?: boolean; children: ReactNode }) {
+  return (
+    <div style={{ marginBottom: 16 }}>
+      <label style={{
+        display: "block", fontSize: 13, fontWeight: 600,
+        color: BO.text, marginBottom: 6,
+      }}>
+        {label}
+        {required && <span style={{ color: BO.coral }}> *</span>}
+      </label>
+      {children}
     </div>
   );
 }
 
-function StepObjectives({
-  form, update, toggle,
-}: StepProps & { toggle: (o: ObjectiveKey) => void }) {
-  const OBJECTIVES: { key: ObjectiveKey; emoji: string; label: string; full?: boolean }[] = [
+function BoInput(p: {
+  value: string; onChange: (v: string) => void;
+  type?: string; inputMode?: "text" | "numeric";
+  maxLength?: number; min?: number; max?: number;
+  placeholder?: string;
+}) {
+  return (
+    <input
+      type={p.type ?? "text"} inputMode={p.inputMode}
+      value={p.value}
+      onChange={(e) => p.onChange(e.target.value)}
+      maxLength={p.maxLength} min={p.min} max={p.max}
+      placeholder={p.placeholder}
+      style={inputStyle}
+      onFocus={(e) => { e.currentTarget.style.borderColor = BO.teal; e.currentTarget.style.background = "white"; }}
+      onBlur={(e) => { e.currentTarget.style.borderColor = BO.border; e.currentTarget.style.background = BO.surface2; }}
+    />
+  );
+}
+
+const inputStyle: CSSProperties = {
+  width: "100%", padding: "14px 16px",
+  border: `1px solid ${BO.border}`, borderRadius: 12,
+  fontSize: 16, fontFamily: "inherit",
+  background: BO.surface2, color: BO.text,
+  outline: "none", boxSizing: "border-box",
+  transition: "border 0.15s, background 0.15s",
+  colorScheme: "light",
+};
+
+function ChoiceCard({
+  emoji, label, selected, onClick, full,
+}: { emoji: string; label: string; selected: boolean; onClick: () => void; full?: boolean }) {
+  return (
+    <div
+      onClick={onClick}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") onClick(); }}
+      style={{
+        background: selected ? "rgba(45, 212, 191, 0.10)" : BO.surface2,
+        border: `1.5px solid ${selected ? BO.teal : "transparent"}`,
+        borderRadius: 12, padding: "14px 12px",
+        cursor: "pointer", textAlign: "center",
+        transition: "all 0.18s",
+        userSelect: "none",
+        gridColumn: full ? "span 2" : "auto",
+      }}
+    >
+      <span style={{ fontSize: 26, lineHeight: 1, marginBottom: 6, display: "block" }}>
+        {emoji}
+      </span>
+      <span style={{
+        fontSize: 13, fontWeight: 600,
+        color: selected ? BO.tealDark : BO.text,
+      }}>
+        {label}
+      </span>
+    </div>
+  );
+}
+
+function RadioCard({
+  emoji, label, selected, onClick,
+}: { emoji: string; label: string; selected: boolean; onClick: () => void }) {
+  return (
+    <div
+      onClick={onClick}
+      role="button" tabIndex={0}
+      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") onClick(); }}
+      style={{
+        background: selected ? "rgba(201, 168, 76, 0.10)" : BO.surface2,
+        border: `1.5px solid ${selected ? BO.gold : "transparent"}`,
+        borderRadius: 12, padding: "12px 14px",
+        cursor: "pointer",
+        display: "flex", alignItems: "center", gap: 10,
+        transition: "all 0.18s",
+      }}
+    >
+      <span style={{ fontSize: 22 }}>{emoji}</span>
+      <span style={{
+        flex: 1, fontSize: 14,
+        fontWeight: selected ? 600 : 500,
+        color: selected ? "#633806" : BO.text,
+      }}>
+        {label}
+      </span>
+    </div>
+  );
+}
+
+function SliderWrap({
+  value, min, max, valueLabel, onChange,
+}: {
+  value: number; min: number; max: number; valueLabel: string;
+  onChange: (v: number) => void;
+}) {
+  const scaleStart = `${min}`;
+  const scaleMid = `${Math.round((min + max) / 2)}`;
+  const scaleEnd = `${max}${max >= 7 ? "+" : ""}`;
+  return (
+    <div style={{
+      background: BO.surface2, borderRadius: 12,
+      padding: 16, marginTop: 6,
+    }}>
+      <div style={{
+        textAlign: "center", fontFamily: BO.fontDisplay,
+        fontSize: 32, fontWeight: 700, color: BO.gold,
+        marginBottom: 4, lineHeight: 1,
+      }}>
+        {value}
+      </div>
+      <div style={{
+        textAlign: "center", fontSize: 11, color: BO.textMuted, marginBottom: 12,
+      }}>
+        {valueLabel}
+      </div>
+      <input
+        type="range" min={min} max={max} value={value}
+        onChange={(e) => onChange(Number(e.target.value))}
+        style={{
+          width: "100%", height: 6,
+          WebkitAppearance: "none", appearance: "none",
+          background: `linear-gradient(90deg, ${BO.coral}, ${BO.gold}, ${BO.teal})`,
+          borderRadius: 3, outline: "none",
+        }}
+      />
+      <style>{`
+        input[type="range"]::-webkit-slider-thumb {
+          -webkit-appearance: none;
+          width: 26px; height: 26px;
+          border-radius: 50%;
+          background: white;
+          border: 3px solid ${BO.gold};
+          cursor: pointer;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+        input[type="range"]::-moz-range-thumb {
+          width: 26px; height: 26px;
+          border-radius: 50%;
+          background: white;
+          border: 3px solid ${BO.gold};
+          cursor: pointer;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+      `}</style>
+      <div style={{
+        display: "flex", justifyContent: "space-between",
+        marginTop: 6, fontSize: 10, color: BO.textHint,
+      }}>
+        <span>{scaleStart}</span><span>{scaleMid}</span><span>{scaleEnd}</span>
+      </div>
+    </div>
+  );
+}
+
+function SubField({ visible, children }: { visible: boolean; children: ReactNode }) {
+  if (!visible) return null;
+  return (
+    <div style={{
+      marginTop: 12, padding: 14,
+      background: "rgba(45, 212, 191, 0.06)",
+      borderRadius: 10,
+      borderLeft: `3px solid ${BO.teal}`,
+      animation: "bo-fadeIn 0.3s ease",
+    }}>
+      {children}
+    </div>
+  );
+}
+
+// ── Steps ──────────────────────────────────────────────────────────────────
+
+function StepIdentity({ form, update }: StepProps) {
+  return (
+    <>
+      <StepHero emoji="👋" title="Faisons connaissance" subtitle="4 infos rapides pour personnaliser ton bilan." />
+      <Field label="Ton prénom" required>
+        <BoInput value={form.first_name} onChange={(v) => update("first_name", v)} maxLength={50} placeholder="Marie" />
+      </Field>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+        <Field label="Âge" required>
+          <BoInput value={form.age} onChange={(v) => update("age", v)} type="number" inputMode="numeric" min={16} max={99} placeholder="32" />
+        </Field>
+        <Field label="Taille (cm)" required>
+          <BoInput value={form.height_cm} onChange={(v) => update("height_cm", v)} type="number" inputMode="numeric" min={100} max={220} placeholder="168" />
+        </Field>
+      </div>
+      <Field label="Ta ville" required>
+        <BoInput value={form.city} onChange={(v) => update("city", v)} maxLength={80} placeholder="Metz" />
+      </Field>
+    </>
+  );
+}
+
+function StepObjectives({ form, update, toggle }: StepProps & { toggle: (o: ObjectiveKey) => void }) {
+  const OBJS: { key: ObjectiveKey; emoji: string; label: string; full?: boolean }[] = [
     { key: "weight_loss", emoji: "⚖️", label: "Perte de poids" },
     { key: "mass_gain", emoji: "💪", label: "Prise de masse" },
     { key: "energy", emoji: "⚡", label: "Plus d'énergie" },
     { key: "sleep", emoji: "😴", label: "Mieux dormir" },
     { key: "wellbeing", emoji: "🌿", label: "Bien-être général", full: true },
   ];
-
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-        {OBJECTIVES.map((o) => (
-          <ObjCard
-            key={o.key}
-            emoji={o.emoji}
-            label={o.label}
-            full={o.full}
-            active={form.objectives.includes(o.key)}
+    <>
+      <StepHero emoji="🎯" title="Tes objectifs" subtitle="Tu peux en cocher plusieurs." />
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+        {OBJS.map((o) => (
+          <ChoiceCard
+            key={o.key} emoji={o.emoji} label={o.label} full={o.full}
+            selected={form.objectives.includes(o.key)}
             onClick={() => toggle(o.key)}
           />
         ))}
       </div>
-
-      {form.objectives.includes("weight_loss") && (
-        <Field label="Combien de kilos viser ?" required>
-          <BoInput
-            type="number" inputMode="numeric"
-            value={form.weight_loss_target_kg}
-            onChange={(v) => update("weight_loss_target_kg", v)}
-            min={1} max={50}
-            placeholder="5"
-          />
-        </Field>
-      )}
-
-      <MotivationSlider
-        value={form.motivation_score}
-        onChange={(v) => update("motivation_score", v)}
-      />
-    </div>
+      <SubField visible={form.objectives.includes("weight_loss")}>
+        <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 6 }}>
+          Combien de kilos vises-tu ?
+        </div>
+        <BoInput
+          value={form.weight_loss_target_kg}
+          onChange={(v) => update("weight_loss_target_kg", v)}
+          type="number" inputMode="numeric" min={1} max={50}
+          placeholder="5"
+        />
+      </SubField>
+      <div style={{ marginTop: 24 }}>
+        <label style={{
+          display: "block", fontSize: 13, fontWeight: 600,
+          color: BO.text, marginBottom: 6,
+        }}>
+          Ta motivation, tu la situes à combien sur 10 ?
+        </label>
+        <SliderWrap
+          value={form.motivation_score} min={1} max={10}
+          valueLabel={MOTIV_LABELS[form.motivation_score] || ""}
+          onChange={(v) => update("motivation_score", v)}
+        />
+      </div>
+    </>
   );
 }
 
-function StepExperience({
-  form, update, toggle,
-}: StepProps & { toggle: (o: PreviousAttempt) => void }) {
-  const ATTEMPTS: { key: PreviousAttempt; label: string }[] = [
-    { key: "diet", label: "Régimes" },
-    { key: "coach", label: "Coach / accompagnement" },
-    { key: "sport", label: "Sport" },
-    { key: "supplements", label: "Suppléments" },
-    { key: "nothing", label: "Rien encore" },
+function StepExperience({ form, update, toggle }: StepProps & { toggle: (o: PreviousAttempt) => void }) {
+  const ATT: { key: PreviousAttempt; emoji: string; label: string; full?: boolean }[] = [
+    { key: "diet", emoji: "🥗", label: "Régimes" },
+    { key: "coach", emoji: "👤", label: "Coach" },
+    { key: "sport", emoji: "🏃", label: "Sport" },
+    { key: "supplements", emoji: "💊", label: "Suppléments" },
+    { key: "nothing", emoji: "🤷", label: "Rien encore", full: true },
   ];
-  const hasAttempt = form.previous_attempts.some((a) => a !== "nothing");
-
+  const hasAttempt = form.previous_attempts.length > 0;
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-        {ATTEMPTS.map((a) => (
-          <ChipRow
-            key={a.key}
-            label={a.label}
-            active={form.previous_attempts.includes(a.key)}
+    <>
+      <StepHero
+        emoji="🧭" title="Ton vécu"
+        subtitle="As-tu déjà essayé quelque chose pour atteindre tes objectifs ?"
+      />
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+        {ATT.map((a) => (
+          <ChoiceCard
+            key={a.key} emoji={a.emoji} label={a.label} full={a.full}
+            selected={form.previous_attempts.includes(a.key)}
             onClick={() => toggle(a.key)}
           />
         ))}
       </div>
-
-      {hasAttempt && (
-        <Field label="Qu'est-ce que ça a donné ? (optionnel)">
-          <BoTextarea
-            value={form.previous_attempts_result}
-            onChange={(v) => update("previous_attempts_result", v)}
-            maxLength={200}
-            rows={3}
-            placeholder="Ce qui a marché, ce qui n'a pas marché…"
-          />
-        </Field>
-      )}
-    </div>
+      <SubField visible={hasAttempt}>
+        <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 6 }}>
+          Qu'est-ce que ça a donné ? (optionnel)
+        </div>
+        <textarea
+          value={form.previous_attempts_result}
+          onChange={(e) => update("previous_attempts_result", e.target.value)}
+          rows={3}
+          maxLength={200}
+          placeholder="J'ai perdu 4 kg avec un régime, mais je les ai repris…"
+          style={{
+            ...inputStyle, fontSize: 14, resize: "vertical", minHeight: 80,
+          }}
+        />
+      </SubField>
+    </>
   );
 }
 
 function StepHabits({ form, update }: StepProps) {
-  const BREAKFAST: { key: MealType; emoji: string; label: string }[] = [
-    { key: "sweet", emoji: "🥐", label: "Sucré" },
-    { key: "salty", emoji: "🥚", label: "Salé" },
+  const PDJ: { key: MealType; emoji: string; label: string }[] = [
+    { key: "sweet", emoji: "🥐", label: "Sucré (croissant, céréales)" },
+    { key: "salty", emoji: "🥚", label: "Salé (œufs, charcuterie)" },
     { key: "smoothie", emoji: "🥤", label: "Smoothie / healthy" },
     { key: "coffee_only", emoji: "☕", label: "Café seulement / rien" },
-    { key: "other", emoji: "✏️", label: "Autre" },
   ];
-  const LUNCH: { key: MealType; emoji: string; label: string }[] = [
+  const MIDI: { key: MealType; emoji: string; label: string }[] = [
     { key: "home", emoji: "🏠", label: "Maison" },
     { key: "canteen", emoji: "🍽️", label: "Cantine / resto" },
     { key: "sandwich", emoji: "🥪", label: "Sandwich / wrap" },
     { key: "fastfood", emoji: "🍔", label: "Fast-food" },
-    { key: "skip", emoji: "⏭️", label: "Je saute" },
   ];
-  const DINNER: { key: MealType; emoji: string; label: string }[] = [
-    { key: "home", emoji: "🏠", label: "Maison" },
-    { key: "delivery", emoji: "🛵", label: "Livraison" },
-    { key: "fastfood", emoji: "🍔", label: "Fast-food" },
-    { key: "light", emoji: "🥗", label: "Léger / snack" },
-    { key: "skip", emoji: "⏭️", label: "Je saute" },
-  ];
-
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
-      <Field label="Petit-déj" required>
-        <RadioGrid
-          options={BREAKFAST}
-          value={form.breakfast}
-          onChange={(v) => update("breakfast", v as MealType)}
-        />
-        {form.breakfast === "other" && (
-          <div style={{ marginTop: 10 }}>
-            <BoInput
-              value={form.breakfast_other}
-              onChange={(v) => update("breakfast_other", v)}
-              maxLength={50}
-              placeholder="Précise…"
-            />
-          </div>
-        )}
-      </Field>
-
-      <Field label="Midi" required>
-        <RadioGrid
-          options={LUNCH}
-          value={form.lunch}
-          onChange={(v) => update("lunch", v as MealType)}
-        />
-      </Field>
-
-      <Field label="Soir" required>
-        <RadioGrid
-          options={DINNER}
-          value={form.dinner}
-          onChange={(v) => update("dinner", v as MealType)}
-        />
-      </Field>
-
-      <FastfoodSlider
-        value={form.fastfood_per_week}
+    <>
+      <StepHero
+        emoji="🍽️" title="Tes habitudes"
+        subtitle="Format ultra-court — choisis ce qui te ressemble le plus."
+      />
+      <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: BO.text, margin: "16px 0 8px" }}>
+        Petit-déjeuner
+      </label>
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        {PDJ.map((m) => (
+          <RadioCard
+            key={m.key} emoji={m.emoji} label={m.label}
+            selected={form.breakfast === m.key}
+            onClick={() => update("breakfast", m.key)}
+          />
+        ))}
+      </div>
+      <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: BO.text, margin: "18px 0 8px" }}>
+        Repas du midi
+      </label>
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        {MIDI.map((m) => (
+          <RadioCard
+            key={m.key} emoji={m.emoji} label={m.label}
+            selected={form.lunch === m.key}
+            onClick={() => update("lunch", m.key)}
+          />
+        ))}
+      </div>
+      <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: BO.text, margin: "18px 0 8px" }}>
+        Fast-food par semaine
+      </label>
+      <SliderWrap
+        value={form.fastfood_per_week} min={0} max={7}
+        valueLabel={FF_LABELS[form.fastfood_per_week] || ""}
         onChange={(v) => update("fastfood_per_week", v)}
       />
-    </div>
+    </>
   );
 }
 
 function StepBudget({ form, update }: StepProps) {
-  const BUDGETS: { key: BudgetTier; label: string }[] = [
-    { key: "2", label: "2 €" },
-    { key: "4", label: "4 €" },
-    { key: "8", label: "8 €" },
-    { key: "10", label: "10 €" },
-    { key: "15+", label: "15 € et +" },
+  const BUDGETS: { key: BudgetTier; emoji: string; label: string; full?: boolean }[] = [
+    { key: "2", emoji: "💰", label: "2 €" },
+    { key: "4", emoji: "💰", label: "4 €" },
+    { key: "8", emoji: "💰", label: "8 €" },
+    { key: "10", emoji: "💰", label: "10 €" },
+    { key: "15+", emoji: "💎", label: "15 € et +", full: true },
   ];
-
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
-      <Field label="Budget alimentaire / jour" required>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-          {BUDGETS.map((b, i) => (
-            <BudgetCard
-              key={b.key}
-              label={b.label}
-              active={form.daily_food_budget === b.key}
-              onClick={() => update("daily_food_budget", b.key)}
-              full={i === BUDGETS.length - 1}
-            />
-          ))}
-        </div>
-      </Field>
+    <>
+      <StepHero emoji="💰" title="Budget + activité" subtitle="Dernière étape, on y est presque !" />
+      <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: BO.text, margin: "14px 0 8px" }}>
+        Budget alimentaire / jour
+      </label>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+        {BUDGETS.map((b) => (
+          <ChoiceCard
+            key={b.key} emoji={b.emoji} label={b.label} full={b.full}
+            selected={form.daily_food_budget === b.key}
+            onClick={() => update("daily_food_budget", b.key)}
+          />
+        ))}
+      </div>
 
-      <Field label="Actif au quotidien ? (marche, escaliers, manuel…)" required>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-          <YesNoBtn
-            active={form.active_daily === "yes"}
-            onClick={() => update("active_daily", "yes")}
-          >
-            Oui
-          </YesNoBtn>
-          <YesNoBtn
-            active={form.active_daily === "no"}
-            onClick={() => update("active_daily", "no")}
-          >
-            Non
-          </YesNoBtn>
+      <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: BO.text, margin: "22px 0 8px" }}>
+        Es-tu actif au quotidien ? (marche, escaliers, jardin)
+      </label>
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        <RadioCard
+          emoji="✅" label="Oui"
+          selected={form.active_daily === "yes"}
+          onClick={() => update("active_daily", "yes")}
+        />
+        <RadioCard
+          emoji="❌" label="Non"
+          selected={form.active_daily === "no"}
+          onClick={() => update("active_daily", "no")}
+        />
+      </div>
+      <SubField visible={form.active_daily === "yes"}>
+        <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 6 }}>
+          Quoi exactement ? (optionnel)
         </div>
-        {form.active_daily === "yes" && (
-          <div style={{ marginTop: 10 }}>
-            <BoInput
-              value={form.active_daily_detail}
-              onChange={(v) => update("active_daily_detail", v)}
-              maxLength={100}
-              placeholder="Quoi ? (optionnel)"
-            />
-          </div>
-        )}
-      </Field>
+        <BoInput
+          value={form.active_daily_detail}
+          onChange={(v) => update("active_daily_detail", v)}
+          maxLength={100}
+          placeholder="Marche 30 min/jour pour aller au travail"
+        />
+      </SubField>
 
       <label style={{
-        display: "flex", gap: 10, alignItems: "flex-start",
-        padding: 16, background: "rgba(255, 255, 255, 0.65)",
-        backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)",
-        border: `1px solid ${BO_TOKENS.hair}`, borderRadius: 14,
-        fontFamily: BO_TOKENS.fontBody, fontSize: 13, lineHeight: 1.5,
-        color: BO_TOKENS.navy, cursor: "pointer",
+        display: "flex", alignItems: "flex-start", gap: 10,
+        marginTop: 18, padding: 12,
+        background: BO.surface2, borderRadius: 10,
+        fontSize: 12, color: BO.textMuted, cursor: "pointer",
       }}>
         <input
-          type="checkbox"
-          checked={form.consent}
+          type="checkbox" checked={form.consent}
           onChange={(e) => update("consent", e.target.checked)}
-          style={{ marginTop: 2, minWidth: 18, minHeight: 18, accentColor: BO_TOKENS.gold }}
+          style={{ marginTop: 2, flexShrink: 0, accentColor: BO.gold }}
         />
         <span>
-          J'accepte que mes données soient transmises à mon coach pour
-          l'analyse de mon bilan personnalisé.
+          J'accepte que mes données soient transmises à mon coach pour analyse
+          de mon bilan. Pas de spam, pas de revente.
         </span>
       </label>
-    </div>
-  );
-}
-
-// ── Primitives UI ─────────────────────────────────────────────────────────
-
-function Field({ label, children, required }: { label: string; children: ReactNode; required?: boolean }) {
-  return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-      <label style={{
-        fontFamily: BO_TOKENS.fontDisplay, fontWeight: 500, fontSize: 14,
-        color: BO_TOKENS.navy, letterSpacing: "-0.005em",
-      }}>
-        {label}
-        {required && <span style={{ color: BO_TOKENS.gold, marginLeft: 4 }}>*</span>}
-      </label>
-      {children}
-    </div>
-  );
-}
-
-interface BoInputProps {
-  value: string;
-  onChange: (v: string) => void;
-  type?: string;
-  inputMode?: "text" | "numeric" | "decimal";
-  maxLength?: number;
-  min?: number;
-  max?: number;
-  placeholder?: string;
-  autoComplete?: string;
-}
-function BoInput(p: BoInputProps) {
-  return (
-    <input
-      type={p.type ?? "text"}
-      inputMode={p.inputMode}
-      value={p.value}
-      onChange={(e) => p.onChange(e.target.value)}
-      maxLength={p.maxLength}
-      min={p.min} max={p.max}
-      placeholder={p.placeholder}
-      autoComplete={p.autoComplete}
-      style={{
-        width: "100%", boxSizing: "border-box",
-        padding: "14px 16px", borderRadius: 14,
-        border: `1.5px solid ${BO_TOKENS.hair}`,
-        background: "rgba(255, 255, 255, 0.92)",
-        backdropFilter: "blur(12px)",
-        WebkitBackdropFilter: "blur(12px)",
-        fontFamily: BO_TOKENS.fontBody, fontSize: 16, fontWeight: 400,
-        color: BO_TOKENS.navy,
-        outline: "none", minHeight: 50,
-        transition: "border-color 160ms, box-shadow 160ms",
-        colorScheme: "light",
-      }}
-      onFocus={(e) => {
-        e.currentTarget.style.borderColor = BO_TOKENS.gold;
-        e.currentTarget.style.boxShadow = `0 0 0 3px rgba(201, 168, 76, 0.15)`;
-      }}
-      onBlur={(e) => {
-        e.currentTarget.style.borderColor = BO_TOKENS.hair;
-        e.currentTarget.style.boxShadow = "none";
-      }}
-    />
-  );
-}
-
-function BoTextarea(p: { value: string; onChange: (v: string) => void; maxLength?: number; rows?: number; placeholder?: string }) {
-  return (
-    <textarea
-      value={p.value}
-      onChange={(e) => p.onChange(e.target.value)}
-      maxLength={p.maxLength}
-      rows={p.rows ?? 3}
-      placeholder={p.placeholder}
-      style={{
-        width: "100%", boxSizing: "border-box",
-        padding: "14px 16px", borderRadius: 14,
-        border: `1.5px solid ${BO_TOKENS.hair}`,
-        background: "rgba(255, 255, 255, 0.92)",
-        backdropFilter: "blur(12px)",
-        WebkitBackdropFilter: "blur(12px)",
-        fontFamily: BO_TOKENS.fontBody, fontSize: 15, lineHeight: 1.5,
-        color: BO_TOKENS.navy,
-        outline: "none", resize: "vertical", minHeight: 88,
-        transition: "border-color 160ms, box-shadow 160ms",
-        colorScheme: "light",
-      }}
-      onFocus={(e) => {
-        e.currentTarget.style.borderColor = BO_TOKENS.gold;
-        e.currentTarget.style.boxShadow = `0 0 0 3px rgba(201, 168, 76, 0.15)`;
-      }}
-      onBlur={(e) => {
-        e.currentTarget.style.borderColor = BO_TOKENS.hair;
-        e.currentTarget.style.boxShadow = "none";
-      }}
-    />
-  );
-}
-
-function ObjCard({
-  emoji, label, active, onClick, full,
-}: { emoji: string; label: string; active: boolean; onClick: () => void; full?: boolean }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-pressed={active}
-      style={{
-        all: "unset", cursor: "pointer",
-        gridColumn: full ? "span 2" : "auto",
-        boxSizing: "border-box", minHeight: 96,
-        padding: "20px 16px", borderRadius: 14,
-        background: active
-          ? "color-mix(in oklab, #C9A84C 8%, rgba(255, 255, 255, 0.92))"
-          : "rgba(255, 255, 255, 0.92)",
-        backdropFilter: "blur(16px) saturate(160%)",
-        WebkitBackdropFilter: "blur(16px) saturate(160%)",
-        border: `1.5px solid ${active ? BO_TOKENS.gold : BO_TOKENS.hair}`,
-        boxShadow: active
-          ? "0 4px 14px rgba(201, 168, 76, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.6)"
-          : "0 1px 0 rgba(15, 23, 42, 0.02), inset 0 1px 0 rgba(255, 255, 255, 0.6)",
-        display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-        gap: 8, transition: "all 220ms cubic-bezier(.2, .7, .2, 1)",
-        position: "relative",
-      }}
-    >
-      <span style={{
-        fontSize: 28, lineHeight: 1,
-        filter: active ? "none" : "saturate(0.92)",
-      }}>
-        {emoji}
-      </span>
-      <span style={{
-        fontFamily: BO_TOKENS.fontBody, fontWeight: 500, fontSize: 15,
-        color: BO_TOKENS.navy, letterSpacing: -0.1,
-      }}>
-        {label}
-      </span>
-      {active && (
-        <span style={{
-          position: "absolute", top: 10, right: 10,
-          width: 16, height: 16, borderRadius: 999,
-          background: BO_TOKENS.gold, color: "white",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          fontSize: 10, fontWeight: 700,
-        }}>
-          ✓
-        </span>
-      )}
-    </button>
-  );
-}
-
-function ChipRow({
-  label, active, onClick,
-}: { label: string; active: boolean; onClick: () => void }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-pressed={active}
-      style={{
-        all: "unset", cursor: "pointer",
-        boxSizing: "border-box", width: "100%",
-        padding: "14px 16px", borderRadius: 14,
-        background: active
-          ? "color-mix(in oklab, #C9A84C 6%, rgba(255, 255, 255, 0.92))"
-          : "rgba(255, 255, 255, 0.92)",
-        backdropFilter: "blur(12px)",
-        WebkitBackdropFilter: "blur(12px)",
-        border: `1.5px solid ${active ? BO_TOKENS.gold : BO_TOKENS.hair}`,
-        display: "flex", alignItems: "center", gap: 12,
-        fontFamily: BO_TOKENS.fontBody, fontSize: 15, color: BO_TOKENS.navy,
-        minHeight: 50, transition: "all 200ms cubic-bezier(.2, .7, .2, 1)",
-      }}
-    >
-      <span style={{
-        width: 20, height: 20, borderRadius: 6,
-        border: `1.5px solid ${active ? BO_TOKENS.gold : "#D1D5DB"}`,
-        background: active ? BO_TOKENS.gold : "white",
-        display: "inline-flex", alignItems: "center", justifyContent: "center",
-        color: "white", fontSize: 12, fontWeight: 700,
-        flexShrink: 0,
-      }}>
-        {active ? "✓" : ""}
-      </span>
-      <span>{label}</span>
-    </button>
-  );
-}
-
-function RadioGrid({
-  options, value, onChange,
-}: {
-  options: { key: string; emoji: string; label: string }[];
-  value: string;
-  onChange: (v: string) => void;
-}) {
-  return (
-    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-      {options.map((o) => {
-        const active = value === o.key;
-        return (
-          <button
-            key={o.key}
-            type="button"
-            onClick={() => onChange(o.key)}
-            aria-pressed={active}
-            style={{
-              all: "unset", cursor: "pointer",
-              boxSizing: "border-box", minHeight: 56,
-              padding: "12px 14px", borderRadius: 12,
-              background: active
-                ? "color-mix(in oklab, #C9A84C 8%, rgba(255, 255, 255, 0.92))"
-                : "rgba(255, 255, 255, 0.92)",
-              backdropFilter: "blur(12px)",
-              WebkitBackdropFilter: "blur(12px)",
-              border: `1.5px solid ${active ? BO_TOKENS.gold : BO_TOKENS.hair}`,
-              display: "flex", alignItems: "center", gap: 10,
-              fontFamily: BO_TOKENS.fontBody, fontSize: 14,
-              color: BO_TOKENS.navy,
-              transition: "all 200ms cubic-bezier(.2, .7, .2, 1)",
-            }}
-          >
-            <span style={{ fontSize: 20, lineHeight: 1 }}>{o.emoji}</span>
-            <span>{o.label}</span>
-          </button>
-        );
-      })}
-    </div>
-  );
-}
-
-function BudgetCard({
-  label, active, onClick, full,
-}: { label: string; active: boolean; onClick: () => void; full?: boolean }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-pressed={active}
-      style={{
-        all: "unset", cursor: "pointer",
-        gridColumn: full ? "span 2" : "auto",
-        boxSizing: "border-box", minHeight: 60,
-        padding: "16px 14px", borderRadius: 14,
-        background: active
-          ? "color-mix(in oklab, #C9A84C 8%, rgba(255, 255, 255, 0.92))"
-          : "rgba(255, 255, 255, 0.92)",
-        backdropFilter: "blur(12px)",
-        WebkitBackdropFilter: "blur(12px)",
-        border: `1.5px solid ${active ? BO_TOKENS.gold : BO_TOKENS.hair}`,
-        textAlign: "center",
-        fontFamily: BO_TOKENS.fontDisplay, fontWeight: 500, fontSize: 16,
-        color: BO_TOKENS.navy,
-        transition: "all 200ms cubic-bezier(.2, .7, .2, 1)",
-      }}
-    >
-      {label}
-    </button>
-  );
-}
-
-function YesNoBtn({ children, active, onClick }: { children: ReactNode; active: boolean; onClick: () => void }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-pressed={active}
-      style={{
-        all: "unset", cursor: "pointer",
-        boxSizing: "border-box", minHeight: 56,
-        padding: "14px 16px", borderRadius: 14,
-        background: active
-          ? "color-mix(in oklab, #C9A84C 10%, rgba(255, 255, 255, 0.92))"
-          : "rgba(255, 255, 255, 0.92)",
-        backdropFilter: "blur(12px)",
-        WebkitBackdropFilter: "blur(12px)",
-        border: `1.5px solid ${active ? BO_TOKENS.gold : BO_TOKENS.hair}`,
-        textAlign: "center",
-        fontFamily: BO_TOKENS.fontDisplay, fontWeight: 500, fontSize: 16,
-        color: active ? BO_TOKENS.gold : BO_TOKENS.navy,
-        transition: "all 200ms cubic-bezier(.2, .7, .2, 1)",
-      }}
-    >
-      {children}
-    </button>
-  );
-}
-
-// ── Sliders ────────────────────────────────────────────────────────────────
-
-function MotivationSlider({ value, onChange }: { value: number; onChange: (v: number) => void }) {
-  const trackRef = useRef<HTMLDivElement | null>(null);
-  const [dragging, setDragging] = useState(false);
-  const pct = value / 10;
-
-  const setFromEvent = useCallback((clientX: number) => {
-    const r = trackRef.current?.getBoundingClientRect();
-    if (!r) return;
-    const x = Math.max(0, Math.min(1, (clientX - r.left) / r.width));
-    onChange(Math.round(x * 10));
-  }, [onChange]);
-
-  useEffect(() => {
-    if (!dragging) return;
-    const move = (e: MouseEvent | TouchEvent) => {
-      const cx = "touches" in e ? e.touches[0].clientX : (e as MouseEvent).clientX;
-      setFromEvent(cx);
-    };
-    const up = () => setDragging(false);
-    window.addEventListener("mousemove", move);
-    window.addEventListener("mouseup", up);
-    window.addEventListener("touchmove", move as EventListener, { passive: true });
-    window.addEventListener("touchend", up);
-    return () => {
-      window.removeEventListener("mousemove", move);
-      window.removeEventListener("mouseup", up);
-      window.removeEventListener("touchmove", move as EventListener);
-      window.removeEventListener("touchend", up);
-    };
-  }, [dragging, setFromEvent]);
-
-  return (
-    <div>
-      <div style={{
-        fontFamily: BO_TOKENS.fontDisplay, fontWeight: 500, fontSize: 16,
-        color: BO_TOKENS.navy, letterSpacing: -0.1,
-      }}>
-        Ta motivation, tu la situes à combien sur 10 ?
-      </div>
-      <div style={{ height: 16 }} />
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
-        <div style={{
-          fontFamily: BO_TOKENS.fontDisplay, fontWeight: 600, fontSize: 32,
-          color: BO_TOKENS.gold, letterSpacing: "-0.02em", lineHeight: 1,
-          fontVariantNumeric: "tabular-nums",
-        }}>
-          {value}
-        </div>
-        <div style={{
-          fontFamily: BO_TOKENS.fontBody, fontWeight: 400, fontSize: 13,
-          color: BO_TOKENS.navy, opacity: 0.7,
-        }}>
-          {MOTIVATION_LABELS[value]}
-        </div>
-      </div>
-      <div style={{ height: 16 }} />
-      <div
-        ref={trackRef}
-        onMouseDown={(e) => { setDragging(true); setFromEvent(e.clientX); }}
-        onTouchStart={(e) => { setDragging(true); setFromEvent(e.touches[0].clientX); }}
-        style={{
-          position: "relative", height: 24, width: "100%",
-          display: "flex", alignItems: "center", cursor: "pointer",
-          touchAction: "none",
-        }}
-      >
-        <div style={{
-          position: "absolute", left: 0, right: 0, height: 6, borderRadius: 6,
-          background: "linear-gradient(90deg, #EF4444 0%, #F59E0B 50%, #10B981 100%)",
-          boxShadow: "inset 0 1px 2px rgba(15, 23, 42, 0.08)",
-        }} />
-        <div style={{
-          position: "absolute", left: `calc(${pct * 100}% - 12px)`,
-          width: 24, height: 24, borderRadius: 999,
-          background: "white", border: `2px solid ${BO_TOKENS.gold}`,
-          boxShadow: "0 2px 8px rgba(15, 23, 42, 0.20), 0 0 0 6px rgba(201, 168, 76, 0.06)",
-          transition: dragging ? "none" : "left 160ms cubic-bezier(.2, .7, .2, 1)",
-        }} />
-      </div>
-      <div style={{
-        marginTop: 8, display: "flex", justifyContent: "space-between",
-        fontFamily: BO_TOKENS.fontBody, fontSize: 11, color: BO_TOKENS.navy, opacity: 0.45,
-        letterSpacing: 0.4, textTransform: "uppercase",
-      }}>
-        <span>0</span><span>5</span><span>10</span>
-      </div>
-    </div>
-  );
-}
-
-function FastfoodSlider({ value, onChange }: { value: number; onChange: (v: number) => void }) {
-  const trackRef = useRef<HTMLDivElement | null>(null);
-  const [dragging, setDragging] = useState(false);
-  const pct = value / 7;
-  const label = value === 0 ? "Jamais" : value <= 2 ? "Modéré" : value <= 4 ? "Souvent" : value <= 6 ? "Beaucoup" : "Très fréquent";
-
-  const setFromEvent = useCallback((clientX: number) => {
-    const r = trackRef.current?.getBoundingClientRect();
-    if (!r) return;
-    const x = Math.max(0, Math.min(1, (clientX - r.left) / r.width));
-    onChange(Math.round(x * 7));
-  }, [onChange]);
-
-  useEffect(() => {
-    if (!dragging) return;
-    const move = (e: MouseEvent | TouchEvent) => {
-      const cx = "touches" in e ? e.touches[0].clientX : (e as MouseEvent).clientX;
-      setFromEvent(cx);
-    };
-    const up = () => setDragging(false);
-    window.addEventListener("mousemove", move);
-    window.addEventListener("mouseup", up);
-    window.addEventListener("touchmove", move as EventListener, { passive: true });
-    window.addEventListener("touchend", up);
-    return () => {
-      window.removeEventListener("mousemove", move);
-      window.removeEventListener("mouseup", up);
-      window.removeEventListener("touchmove", move as EventListener);
-      window.removeEventListener("touchend", up);
-    };
-  }, [dragging, setFromEvent]);
-
-  return (
-    <div>
-      <div style={{
-        fontFamily: BO_TOKENS.fontDisplay, fontWeight: 500, fontSize: 16,
-        color: BO_TOKENS.navy, letterSpacing: -0.1,
-      }}>
-        Fast-food par semaine
-      </div>
-      <div style={{ height: 16 }} />
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
-        <div style={{
-          fontFamily: BO_TOKENS.fontDisplay, fontWeight: 600, fontSize: 32,
-          color: BO_TOKENS.gold, letterSpacing: "-0.02em", lineHeight: 1,
-          fontVariantNumeric: "tabular-nums",
-        }}>
-          {value}{value >= 7 ? "+" : ""}
-        </div>
-        <div style={{
-          fontFamily: BO_TOKENS.fontBody, fontWeight: 400, fontSize: 13,
-          color: BO_TOKENS.navy, opacity: 0.7,
-        }}>
-          {label}
-        </div>
-      </div>
-      <div style={{ height: 16 }} />
-      <div
-        ref={trackRef}
-        onMouseDown={(e) => { setDragging(true); setFromEvent(e.clientX); }}
-        onTouchStart={(e) => { setDragging(true); setFromEvent(e.touches[0].clientX); }}
-        style={{
-          position: "relative", height: 24, width: "100%",
-          display: "flex", alignItems: "center", cursor: "pointer",
-          touchAction: "none",
-        }}
-      >
-        <div style={{
-          position: "absolute", left: 0, right: 0, height: 6, borderRadius: 6,
-          background: "linear-gradient(90deg, #10B981 0%, #F59E0B 50%, #EF4444 100%)",
-          boxShadow: "inset 0 1px 2px rgba(15, 23, 42, 0.08)",
-        }} />
-        <div style={{
-          position: "absolute", left: `calc(${pct * 100}% - 12px)`,
-          width: 24, height: 24, borderRadius: 999,
-          background: "white", border: `2px solid ${BO_TOKENS.gold}`,
-          boxShadow: "0 2px 8px rgba(15, 23, 42, 0.20), 0 0 0 6px rgba(201, 168, 76, 0.06)",
-          transition: dragging ? "none" : "left 160ms cubic-bezier(.2, .7, .2, 1)",
-        }} />
-      </div>
-      <div style={{
-        marginTop: 8, display: "flex", justifyContent: "space-between",
-        fontFamily: BO_TOKENS.fontBody, fontSize: 11, color: BO_TOKENS.navy, opacity: 0.45,
-        letterSpacing: 0.4, textTransform: "uppercase",
-      }}>
-        <span>0</span><span>3-4</span><span>7+</span>
-      </div>
-    </div>
+    </>
   );
 }

@@ -1,19 +1,12 @@
 // =============================================================================
-// BilanOnlineMerciPage — Page remerciement éditorial post-soumission.
-// Chantier #1 étape 1.5 (2026-05-17) — refonte design Claude Design.
+// BilanOnlineMerciPage — Page remerciement, mockup Égypte validé.
+// docs/mockups/bilan-online.html (commit 25c0165), view "thank".
 // Route : /bilan-online/:coachSlug?/merci?firstName=...
 // =============================================================================
 
 import { useMemo } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
-import {
-  BO_TOKENS,
-  BilanOnlineShell,
-  BoEyebrow,
-  BoHero,
-  BoLead,
-  BoFooterRgpd,
-} from "../components/bilan-online/BilanOnlineShell";
+import { BO, BilanOnlineShell } from "../components/bilan-online/BilanOnlineShell";
 
 function capitalize(s: string): string {
   if (!s) return s;
@@ -28,132 +21,123 @@ export function BilanOnlineMerciPage() {
   const hasCoach = !!coachSlug;
 
   return (
-    <BilanOnlineShell progress={1} tagline="Bilan reçu · Merci">
-      <style>{`
-        @keyframes bom-pop {
-          0% { transform: scale(0); opacity: 0; }
-          100% { transform: scale(1); opacity: 1; }
-        }
-        @keyframes bom-draw { to { stroke-dashoffset: 0; } }
-        @keyframes bom-pulse {
-          0% { transform: scale(1); opacity: 0.55; }
-          100% { transform: scale(1.8); opacity: 0; }
-        }
-        @media (prefers-reduced-motion: reduce) {
-          .bom-check-wrap, .bom-pulse, .bom-circle, .bom-path { animation: none !important; }
-          .bom-circle, .bom-path { stroke-dashoffset: 0 !important; }
-        }
-      `}</style>
-
+    <BilanOnlineShell bgAccent>
       <div style={{
-        padding: "clamp(56px, 8vw, 112px) clamp(20px, 5vw, 56px) clamp(40px, 5vw, 80px)",
-        maxWidth: "clamp(560px, 60vw, 720px)", margin: "0 auto",
+        padding: "48px 24px 40px", textAlign: "center",
+        minHeight: "calc(100dvh - 80px)",
       }}>
-        <BoEyebrow>Bilan reçu</BoEyebrow>
-        <div style={{ height: 24 }} />
-
-        {/* Checkmark animé */}
-        <div style={{
-          width: 80, height: 80, marginBottom: 32,
-          position: "relative",
-        }}>
-          <div className="bom-check-wrap" style={{
-            width: 80, height: 80, borderRadius: "50%",
-            background: "rgba(201, 168, 76, 0.10)",
+        <div
+          className="bo-pop"
+          style={{
+            width: 80, height: 80,
+            margin: "0 auto 24px",
+            borderRadius: "50%",
+            background: `linear-gradient(135deg, ${BO.gold}, ${BO.teal})`,
             display: "flex", alignItems: "center", justifyContent: "center",
-            position: "relative", zIndex: 1,
-            animation: "bom-pop 480ms cubic-bezier(0.34, 1.56, 0.64, 1) both",
-          }}>
-            <svg width="60" height="60" viewBox="0 0 60 60" aria-hidden>
-              <circle cx="30" cy="30" r="27" fill="none" stroke={BO_TOKENS.gold} strokeWidth="2"
-                className="bom-circle"
-                style={{
-                  strokeDasharray: 170, strokeDashoffset: 170,
-                  animation: "bom-draw 640ms cubic-bezier(0.22, 1, 0.36, 1) 200ms forwards",
-                }}
-              />
-              <path d="M18 31 L26 39 L43 22" fill="none" stroke={BO_TOKENS.gold} strokeWidth="2.5"
-                strokeLinecap="round" strokeLinejoin="round"
-                className="bom-path"
-                style={{
-                  strokeDasharray: 50, strokeDashoffset: 50,
-                  animation: "bom-draw 400ms ease-out 640ms forwards",
-                }}
-              />
-            </svg>
-          </div>
-          {/* Pulse rings */}
-          <span className="bom-pulse" style={{
-            position: "absolute", inset: 0,
-            borderRadius: "50%", border: `1px solid ${BO_TOKENS.gold}`,
-            animation: "bom-pulse 1400ms cubic-bezier(0.22, 1, 0.36, 1) 800ms 2",
-          }} />
+            color: "white", fontSize: 40, fontWeight: 700,
+            animation: "bo-popIn 0.5s cubic-bezier(0.16, 1, 0.3, 1)",
+            boxShadow: "0 12px 32px rgba(201, 168, 76, 0.3)",
+          }}
+        >
+          ✓
         </div>
 
-        <BoHero>
-          Merci{firstName ? `, ${firstName}` : ""}.
-        </BoHero>
-        <div style={{ height: 16 }} />
+        <h1 style={{
+          fontFamily: BO.fontDisplay, fontSize: 30, fontWeight: 700,
+          color: BO.text, marginBottom: 14, lineHeight: 1.25,
+          margin: "0 auto 14px",
+        }}>
+          Merci{firstName ? ` ${firstName}` : ""} ! 🙏
+        </h1>
 
-        <BoLead style={{ maxWidth: 400 }}>
+        <p style={{
+          fontSize: 15, color: BO.textMuted, marginBottom: 6,
+          margin: "0 0 6px",
+        }}>
           {hasCoach ? (
             <>
               Ton bilan est arrivé chez{" "}
-              <strong style={{ color: BO_TOKENS.gold, fontWeight: 600 }}>{coachName}</strong>.
-              Il va l'analyser et te recontacter sous <strong style={{ color: BO_TOKENS.navy, fontWeight: 600 }}>48h max</strong>.
+              <strong style={{ color: BO.gold, fontWeight: 700 }}>{coachName}</strong>.
             </>
           ) : (
             <>
               Ton bilan est arrivé chez l'équipe{" "}
-              <strong style={{ color: BO_TOKENS.gold, fontWeight: 600 }}>La Base 360</strong>.
-              Un coach adapté à ton profil va te répondre rapidement.
+              <strong style={{ color: BO.gold, fontWeight: 700 }}>La Base 360</strong>.
             </>
           )}
-        </BoLead>
+        </p>
 
-        <div style={{ height: 48 }} />
+        <p style={{
+          fontSize: 13, color: BO.textMuted, marginBottom: 32,
+          margin: "0 0 32px",
+        }}>
+          {hasCoach
+            ? "Il va l'analyser et te recontacter sous 48h max."
+            : "Un coach adapté à ton profil va te répondre rapidement."}
+        </p>
 
         <div style={{
-          fontFamily: BO_TOKENS.fontDisplay, fontWeight: 500, fontSize: 13,
-          letterSpacing: "0.18em", color: BO_TOKENS.gold,
-          textTransform: "uppercase", marginBottom: 12,
+          margin: "28px auto", width: 60, height: 1, background: BO.border,
+        }} />
+
+        <h3 style={{
+          fontFamily: BO.fontDisplay, fontSize: 16, fontWeight: 700,
+          color: BO.text, marginBottom: 14, margin: "0 0 14px",
         }}>
-          En attendant
+          En attendant, retrouve-nous :
+        </h3>
+
+        <div style={{
+          display: "flex", flexDirection: "column", gap: 10,
+          maxWidth: 320, margin: "0 auto 24px",
+        }}>
+          <SocialBtn
+            href="https://instagram.com/labase360"
+            icon="📷" label="Suis-nous sur Instagram"
+          />
+          <SocialBtn
+            href="https://wa.me/33000000000"
+            icon="💬" label="Rejoins notre WhatsApp"
+          />
         </div>
 
-        <a
-          href="https://instagram.com/labase360"
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{
-            display: "flex", alignItems: "center", gap: 12,
-            padding: "16px 18px", borderRadius: 14,
-            background: "rgba(255, 255, 255, 0.92)",
-            backdropFilter: "blur(12px) saturate(160%)",
-            WebkitBackdropFilter: "blur(12px) saturate(160%)",
-            border: `1.5px solid ${BO_TOKENS.hair}`,
-            textDecoration: "none", color: BO_TOKENS.navy,
-            fontFamily: BO_TOKENS.fontBody, fontSize: 15, fontWeight: 500,
-            transition: "border-color 200ms, transform 200ms",
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.borderColor = BO_TOKENS.gold;
-            e.currentTarget.style.transform = "translateY(-1px)";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.borderColor = BO_TOKENS.hair;
-            e.currentTarget.style.transform = "translateY(0)";
-          }}
-        >
-          <span style={{ fontSize: 22 }}>📱</span>
-          <span style={{ flex: 1 }}>Suis-nous sur Instagram</span>
-          <span style={{ color: BO_TOKENS.gold, fontSize: 16 }}>→</span>
-        </a>
-
-        <div style={{ height: 32 }} />
-        <BoFooterRgpd>Tu peux fermer cette page ou la garder ouverte.</BoFooterRgpd>
-        <div style={{ height: 24 }} />
+        <div style={{
+          marginTop: 32, fontSize: 11, color: BO.textHint, lineHeight: 1.5,
+        }}>
+          Tu peux fermer cette page ou la garder ouverte.<br />
+          <strong style={{ color: BO.gold }}>La Base 360</strong> · 2026
+        </div>
       </div>
     </BilanOnlineShell>
+  );
+}
+
+function SocialBtn({ href, icon, label }: { href: string; icon: string; label: string }) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      style={{
+        display: "flex", alignItems: "center", gap: 12,
+        padding: "12px 18px",
+        background: "white",
+        border: `1px solid ${BO.border}`, borderRadius: 12,
+        color: BO.text, textDecoration: "none",
+        fontSize: 14, fontWeight: 600,
+        transition: "all 0.18s",
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.transform = "translateY(-2px)";
+        e.currentTarget.style.boxShadow = "0 4px 12px rgba(0, 0, 0, 0.08)";
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.transform = "translateY(0)";
+        e.currentTarget.style.boxShadow = "none";
+      }}
+    >
+      <span style={{ fontSize: 22, width: 28, textAlign: "center" }}>{icon}</span>
+      <span>{label}</span>
+    </a>
   );
 }
