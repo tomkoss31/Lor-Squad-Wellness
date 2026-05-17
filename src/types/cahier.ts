@@ -40,7 +40,10 @@ export type Liste100FrankCategory =
   | "reseau"
   | "amis"
   | "nouveaux"
-  | "connaissances";
+  | "connaissances"
+  // Phase 0.8 brainstorm Égypte (2026-05) — FRANK complet :
+  | "voisins"        // N = Neighbors
+  | "amis_enfants";  // K = Kids' friends parents (parents d'amis des enfants)
 
 export interface Liste100Contact {
   id: string;
@@ -52,6 +55,10 @@ export interface Liste100Contact {
   note: string | null;
   contact_phone: string | null;
   contact_email: string | null;
+  /** Phase 0.8 — plateforme sociale (instagram / whatsapp / facebook / etc.). */
+  platform: string | null;
+  /** Phase 0.8 — username ou URL profil pour deep-link clic. */
+  profile_url: string | null;
   added_at: string;
   updated_at: string;
 }
@@ -103,5 +110,7 @@ export const LISTE_100_FRANK_META: Record<Liste100FrankCategory, { label: string
   reseau: { label: "Relations", emoji: "🤝" },
   amis: { label: "Amis", emoji: "🫂" },
   nouveaux: { label: "Network", emoji: "🌐" },
-  connaissances: { label: "Kids' parents", emoji: "👨‍👩‍👧" },
+  connaissances: { label: "Connaissances", emoji: "🗣" },
+  voisins: { label: "Voisins (N)", emoji: "🏘" },
+  amis_enfants: { label: "Kids' friends (K)", emoji: "👨‍👩‍👧" },
 };
