@@ -142,8 +142,13 @@ export interface User {
    *  le user voit /formation même s'il n'est pas admin. */
   formationBetaAccess?: boolean;
   /** Ville du distri (saisie /bienvenue-distri ou /parametres).
-   *  Source de vérité pour la météo Co-pilote V5. Chantier D 2026-05-05. */
+   *  Source de vérité pour la météo Co-pilote V5. Chantier D 2026-05-05.
+   *  Aussi affichée sur les badges crédibilité Welcome bilan (chantier #10 V2). */
   city?: string | null;
+  /** Date début activité coaching Herbalife (saisie manuelle /parametres).
+   *  Sert au badge ancienneté Welcome bilan. NULL = pas affiché.
+   *  Chantier #10 V2 — 2026-05-17. */
+  coachingSince?: string | null;
   /** Compte gelé par admin. NULL = actif, ISO timestamp = gelé.
    *  Effets : redirige sur /frozen + exclu des stats XP/team.
    *  Chantier freeze 2026-05-06. */
