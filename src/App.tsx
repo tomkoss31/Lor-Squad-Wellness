@@ -129,6 +129,11 @@ const WelcomePage = lazy(() =>
     default: module.WelcomePage,
   })),
 );
+const BilanOnlinePage = lazy(() =>
+  import("./pages/BilanOnlinePage").then((module) => ({
+    default: module.BilanOnlinePage,
+  })),
+);
 const OpportunitePage = lazy(() =>
   import("./pages/OpportunitePage").then((module) => ({
     default: module.OpportunitePage,
@@ -454,6 +459,11 @@ export default function App() {
               via useAppContext si besoin). /auto-login consomme un
               magic link 24h pour re-établir une session. */}
           <Route path="/welcome" element={<WelcomePage />} />
+          {/* Chantier #1 Bilan Online (2026-05-17) — formulaire publique
+              5 étapes pour générer des Leads. Route avec slug coach
+              optionnel (cf. coach_slug → users.first_name normalisé). */}
+          <Route path="/bilan-online" element={<BilanOnlinePage />} />
+          <Route path="/bilan-online/:coachSlug" element={<BilanOnlinePage />} />
           {/* Funnel business V1 (chantier 2026-11-07) : page educative
               prospect froid + chaud, sans nommer la marque explicitement.
               Cf. docs/BUSINESS_FUNNEL_ARCHITECTURE.md. */}
