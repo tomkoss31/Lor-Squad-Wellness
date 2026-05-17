@@ -10,8 +10,8 @@
 // ebe_journal_entries). RLS own + admin all.
 // =============================================================================
 
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAppContext } from "../context/AppContext";
 import { useCahierDeBord } from "../hooks/useCahierDeBord";
 import { ProspectFormModal } from "../components/prospect/ProspectFormModal";
@@ -25,6 +25,13 @@ import {
   type Liste100Status,
   type Liste100Temperature,
 } from "../types/cahier";
+import {
+  buildProfileUrl,
+  isContactPlatform,
+  listPlatforms,
+  PLATFORM_META,
+  type ContactPlatform,
+} from "../lib/profileDeepLink";
 
 /** Split "Karim Ben" → { firstName: "Karim", lastName: "Ben" }. */
 function splitFullName(full: string): { firstName: string; lastName: string } {
@@ -44,7 +51,25 @@ export function CahierDeBordPage() {
   const { currentUser } = useAppContext();
   const userId = currentUser?.id ?? null;
   const cahier = useCahierDeBord(userId);
-  const [tab, setTab] = useState<Tab>("cobaye");
+  const [searchParams] = useSearchParams();
+
+  // Phase 0.8 — query param `?tab=liste` (ou cobaye / ebe) pour permettre
+  // un deep-link direct depuis le Co-pilote vers la Liste 100.
+  const initialTab: Tab = (() => {
+    const raw = searchParams.get("tab");
+    if (raw === "liste" || raw === "liste100") return "liste";
+    if (raw === "ebe") return "ebe";
+    return "cobaye";
+  })();
+  const [tab, setTab] = useState<Tab>(initialTab);
+
+  // Re-sync si le query param change (navigation entre cartes du Co-pilote).
+  useEffect(() => {
+    const raw = searchParams.get("tab");
+    if (raw === "liste" || raw === "liste100") setTab("liste");
+    else if (raw === "ebe") setTab("ebe");
+    else if (raw === "cobaye") setTab("cobaye");
+  }, [searchParams]);
 
   if (!currentUser) {
     return <div style={{ padding: 40, color: "var(--ls-text-muted)" }}>Connecte-toi.</div>;
@@ -386,6 +411,8 @@ function ListeSection({ cahier }: { cahier: ReturnType<typeof useCahierDeBord> }
     temperature: "froid" as Liste100Temperature,
     note: "",
     contact_phone: "",
+    platform: "" as ContactPlatform | "",
+    profile_url: "",
   });
   const [filterTemp, setFilterTemp] = useState<Liste100Temperature | "all">("all");
   const [filterStatus, setFilterStatus] = useState<Liste100Status | "all">("all");
@@ -410,8 +437,18 @@ function ListeSection({ cahier }: { cahier: ReturnType<typeof useCahierDeBord> }
       temperature: draft.temperature,
       note: draft.note.trim() || undefined,
       contact_phone: draft.contact_phone.trim() || undefined,
+      platform: draft.platform || null,
+      profile_url: draft.profile_url.trim() || null,
     });
-    setDraft({ full_name: "", frank_category: "", temperature: "froid", note: "", contact_phone: "" });
+    setDraft({
+      full_name: "",
+      frank_category: "",
+      temperature: "froid",
+      note: "",
+      contact_phone: "",
+      platform: "",
+      profile_url: "",
+    });
     setShowForm(false);
   }
 
@@ -518,6 +555,41 @@ function ListeSection({ cahier }: { cahier: ReturnType<typeof useCahierDeBord> }
               </select>
             </Field>
           </div>
+          {/* Phase 0.8 — plateforme + username pour deep-link clic */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+            <Field label="Plateforme (optionnel)">
+              <select
+                value={draft.platform}
+                onChange={(e) =>
+                  setDraft({
+                    ...draft,
+                    platform: (e.target.value || "") as ContactPlatform | "",
+                  })
+                }
+                style={selectStyle}
+              >
+                <option value="">—</option>
+                {listPlatforms().map((p) => (
+                  <option key={p} value={p}>
+                    {PLATFORM_META[p].emoji} {PLATFORM_META[p].label}
+                  </option>
+                ))}
+              </select>
+            </Field>
+            <Field label="Username ou URL profil">
+              <input
+                type="text"
+                value={draft.profile_url}
+                onChange={(e) => setDraft({ ...draft, profile_url: e.target.value })}
+                placeholder={
+                  draft.platform
+                    ? PLATFORM_META[draft.platform as ContactPlatform].placeholder
+                    : "ex: berges_account ou https://…"
+                }
+                style={inputStyle}
+              />
+            </Field>
+          </div>
           <Field label="Téléphone (optionnel)">
             <input
               type="tel"
@@ -566,6 +638,9 @@ function ListeSection({ cahier }: { cahier: ReturnType<typeof useCahierDeBord> }
           {filtered.map((c) => {
             const temp = LISTE_100_TEMP_META[c.temperature];
             const status = LISTE_100_STATUS_META[c.status];
+            const platform = isContactPlatform(c.platform) ? c.platform : null;
+            const platformMeta = platform ? PLATFORM_META[platform] : null;
+            const deepLink = buildProfileUrl(platform, c.profile_url, c.contact_phone);
             return (
               <div
                 key={c.id}
@@ -589,6 +664,31 @@ function ListeSection({ cahier }: { cahier: ReturnType<typeof useCahierDeBord> }
                     <div style={{ fontSize: 11, color: "var(--ls-text-muted)", marginTop: 2 }}>{c.note}</div>
                   )}
                 </div>
+                {deepLink && platformMeta ? (
+                  <a
+                    href={deepLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title={`Ouvrir le profil ${platformMeta.label}`}
+                    aria-label={`Ouvrir le profil ${platformMeta.label} de ${c.full_name}`}
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      width: 32,
+                      height: 32,
+                      borderRadius: 8,
+                      background: "var(--ls-surface2)",
+                      border: "0.5px solid var(--ls-border)",
+                      color: "var(--ls-text)",
+                      fontSize: 16,
+                      textDecoration: "none",
+                      flexShrink: 0,
+                    }}
+                  >
+                    {platformMeta.emoji}
+                  </a>
+                ) : null}
                 <select
                   value={c.status}
                   onChange={(e) => void handleStatusChange(c, e.target.value as Liste100Status)}

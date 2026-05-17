@@ -129,11 +129,13 @@ export function QuizRunner({ module, levelSlug, onSubmitDone, onCancel }: Props)
   }
 
   // Validation : tous les QCM ont une réponse + tous les free_text ont
-  // minChars caractères.
+  // au moins 1 caractère (Phase 0.9 brainstorm Égypte 2026-05 — Thomas
+  // a retiré le minimum 80 caractères pour ne pas frustrer l'apprenant.
+  // Le sponsor lit quand même la réponse libre quel qu'en soit la taille).
   const allQcmAnswered = qcmQuestions.every((q) => qcmAnswers[q.id] !== undefined);
   const allFreeTextValid = freeQuestions.every((q) => {
     const answer = (freeTextAnswers[q.id] ?? "").trim();
-    return answer.length >= (q.minChars ?? 1);
+    return answer.length >= 1;
   });
   const canSubmit = allQcmAnswered && allFreeTextValid && !busy;
 
@@ -541,16 +543,73 @@ export function QuizRunner({ module, levelSlug, onSubmitDone, onCancel }: Props)
         />
       ))}
 
-      {/* Free text */}
-      {freeQuestions.map((q, idx) => (
-        <FreeTextPanel
-          key={q.id}
-          question={q}
-          index={qcmQuestions.length + idx + 1}
-          value={freeTextAnswers[q.id] ?? ""}
-          onChange={(v) => setFreeTextAnswers((s) => ({ ...s, [q.id]: v }))}
-        />
-      ))}
+      {/* Free text — Phase 0.9 brainstorm Égypte (2026-05) : section pliable
+          pour ne plus mélanger QCM et réponse libre. Auto-ouvert si une
+          réponse a déjà été commencée (continuation), sinon fermé par
+          défaut (l'apprenant doit faire l'effort de l'ouvrir = focus QCM
+          d'abord). */}
+      {freeQuestions.length > 0 ? (
+        <details
+          open={freeQuestions.some((q) => (freeTextAnswers[q.id] ?? "").trim().length > 0)}
+          style={{
+            background: "var(--ls-surface)",
+            border: "0.5px solid var(--ls-border)",
+            borderLeft: "3px solid var(--ls-purple)",
+            borderRadius: 14,
+          }}
+        >
+          <summary
+            style={{
+              cursor: "pointer",
+              padding: "14px 18px",
+              fontFamily: "Syne, serif",
+              fontWeight: 800,
+              fontSize: 14,
+              color: "var(--ls-text)",
+              letterSpacing: "-0.01em",
+              listStyle: "none",
+              outline: "none",
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+            }}
+          >
+            <span aria-hidden="true">💭</span>
+            <span>Ton ressenti libre</span>
+            <span
+              style={{
+                fontSize: 10,
+                color: "var(--ls-text-muted)",
+                fontFamily: "DM Sans, sans-serif",
+                fontWeight: 500,
+                letterSpacing: 0,
+                marginLeft: "auto",
+                textTransform: "uppercase",
+              }}
+            >
+              Obligatoire
+            </span>
+          </summary>
+          <div
+            style={{
+              padding: "0 14px 14px",
+              display: "flex",
+              flexDirection: "column",
+              gap: 10,
+            }}
+          >
+            {freeQuestions.map((q, idx) => (
+              <FreeTextPanel
+                key={q.id}
+                question={q}
+                index={qcmQuestions.length + idx + 1}
+                value={freeTextAnswers[q.id] ?? ""}
+                onChange={(v) => setFreeTextAnswers((s) => ({ ...s, [q.id]: v }))}
+              />
+            ))}
+          </div>
+        </details>
+      ) : null}
 
       {/* Submit */}
       <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", marginTop: 8 }}>
@@ -685,9 +744,11 @@ function FreeTextPanel({
   value: string;
   onChange: (v: string) => void;
 }) {
-  const minChars = question.minChars ?? 1;
+  // Phase 0.9 brainstorm Égypte 2026-05 : minimum forcé à 1 caractère
+  // (Thomas a retiré le minimum 80 caractères). On garde le champ
+  // obligatoire mais 1 char suffit.
   const currentLength = value.trim().length;
-  const isValid = currentLength >= minChars;
+  const isValid = currentLength >= 1;
 
   return (
     <fieldset
@@ -766,7 +827,7 @@ function FreeTextPanel({
         }}
       >
         <span>
-          {isValid ? "✓" : "○"} Minimum {minChars} caractères
+          {isValid ? "✓" : "○"} Obligatoire
         </span>
         <span style={{ fontFamily: "DM Mono, monospace", fontVariantNumeric: "tabular-nums" }}>
           {currentLength}

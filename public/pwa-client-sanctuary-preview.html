@@ -1,0 +1,1753 @@
+<!doctype html>
+<html lang="fr" data-theme="light">
+<head>
+<meta charset="utf-8">
+<title>PWA Client v2 · Sanctuary · La Base 360</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,500;1,9..144,600;1,9..144,700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --emerald:#0D6E54;       /* deeper, more "spa" */
+  --emerald-2:#10B981;
+  --gold:#A07A2C;
+  --gold-2:#D4B260;
+  --violet:#5C3F87;
+  --coral:#B85370;
+  --ink:#1B1A17;
+  --slate:#5C5A53;
+}
+:root[data-theme="light"]{
+  --bg: #EFEAE0;                /* warm putty */
+  --paper: #F5F0E6;             /* cream paper */
+  --paper-2: #EBE5D6;
+  --paper-3: #DFD7C3;
+  --hairline: rgba(27,26,23,.10);
+  --hairline-2: rgba(27,26,23,.16);
+  --text: #1B1A17;
+  --text-2: #2F2D27;
+  --muted: #6B675C;
+  --muted-2: #8C8678;
+  --shadow: 0 1px 2px rgba(27,26,23,.04), 0 18px 40px -22px rgba(27,26,23,.18);
+  --shadow-frame: 0 30px 60px -25px rgba(40,30,20,.40), 0 10px 20px -10px rgba(40,30,20,.20);
+  --bezel:#2a2622;
+}
+:root[data-theme="dark"]{
+  --bg:#13110D;
+  --paper:#1C1914;
+  --paper-2:#23201A;
+  --paper-3:#2C2820;
+  --hairline: rgba(245,240,230,.08);
+  --hairline-2: rgba(245,240,230,.14);
+  --text:#F0EAD8;
+  --text-2:#D9D2BE;
+  --muted:#9A937E;
+  --muted-2:#7A7466;
+  --shadow: 0 1px 2px rgba(0,0,0,.4), 0 18px 40px -22px rgba(0,0,0,.6);
+  --shadow-frame: 0 30px 60px -25px rgba(0,0,0,.7);
+  --bezel:#000;
+}
+
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
+html,body{margin:0; padding:0}
+body{
+  font-family:'Inter', -apple-system, system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height:100vh;
+  -webkit-font-smoothing:antialiased;
+  background-image:
+    radial-gradient(1100px 600px at 100% -10%, rgba(160,122,44,.10), transparent 60%),
+    radial-gradient(900px 500px at -10% 20%, rgba(13,110,84,.08), transparent 60%);
+}
+
+/* page chrome */
+.page-header{
+  display:flex; align-items:center; justify-content:space-between;
+  padding: 32px 44px 4px;
+}
+.brand{display:flex; align-items:center; gap:14px}
+.pin{
+  width:36px; height:36px; border-radius:50%;
+  background: radial-gradient(circle at 30% 30%, var(--gold-2), var(--gold) 60%, #6B4F1A);
+  display:grid; place-items:center; color:#fff;
+  font: 700 16px 'Fraunces'; font-style:italic;
+  box-shadow: 0 6px 16px -6px rgba(160,122,44,.55), inset 0 -6px 12px -6px rgba(0,0,0,.35);
+}
+.wordmark{font:600 18px 'Sora'; letter-spacing:-.01em}
+.wordmark em{font-family:'Fraunces'; font-style:italic; font-weight:600; color:var(--emerald); margin-left:2px}
+.crumb{color:var(--muted); font-size:13px; margin-left:14px; font-style:italic; font-family:'Fraunces'}
+
+.toolbar{display:flex; gap:10px; align-items:center}
+.chip{
+  display:inline-flex; align-items:center; gap:8px;
+  padding:8px 14px; border-radius:0;
+  border:1px solid var(--hairline-2);
+  background:var(--paper); color:var(--text-2);
+  font: 500 12px 'Inter'; letter-spacing:.04em;
+}
+.chip.dot::before{content:""; width:6px; height:6px; border-radius:50%; background:var(--emerald); margin-right:2px}
+.theme-toggle{
+  display:inline-flex; padding:3px;
+  border:1px solid var(--hairline-2); background:var(--paper);
+}
+.theme-toggle button{
+  appearance:none; border:0; background:transparent; cursor:pointer;
+  padding:7px 14px; color:var(--muted);
+  font: 500 12px 'Inter'; letter-spacing:.04em;
+  display:inline-flex; align-items:center; gap:6px;
+}
+.theme-toggle button.active{background:var(--ink); color:#F5F0E6}
+[data-theme="dark"] .theme-toggle button.active{background:var(--paper-3); color:var(--text)}
+.theme-toggle svg{width:13px;height:13px}
+
+.page-title{
+  padding: 12px 44px 0;
+  display:flex; align-items:flex-end; justify-content:space-between; gap:30px; flex-wrap:wrap;
+}
+.page-title h1{
+  margin:0;
+  font:400 64px 'Fraunces'; font-style:italic; letter-spacing:-.025em; line-height:.95;
+  color:var(--text);
+}
+.page-title h1 b{font-weight:600; font-style:italic}
+.page-title h1 span{color: var(--emerald); font-weight:500}
+.page-title .lede{
+  margin:14px 0 0; max-width:54ch;
+  font:500 14px 'Inter'; color:var(--muted); line-height:1.55;
+}
+.deck-rule{
+  height:1px; margin:28px 44px 0; background: var(--hairline);
+}
+.deck-rule + .stage{padding-top:36px}
+
+/* layout */
+.stage{padding: 40px 44px 100px}
+.frames{
+  display:grid; grid-template-columns: repeat(3, max-content);
+  gap: 64px 72px; justify-content:center; margin: 0 auto;
+}
+@media (max-width:1380px){.frames{grid-template-columns:repeat(2,max-content)}}
+@media (max-width:920px){.frames{grid-template-columns:repeat(1,max-content)}}
+
+.frame-wrap{display:flex; flex-direction:column; align-items:center; gap:18px}
+.frame-label{
+  display:flex; align-items:baseline; gap:14px; min-width:390px;
+  padding-bottom: 6px; border-bottom:1px solid var(--hairline);
+}
+.frame-label .num{
+  font:400 38px 'Fraunces'; font-style:italic; color:var(--emerald);
+  letter-spacing:-.02em; line-height:1;
+}
+.frame-label .nm{font:600 13px 'Sora'; letter-spacing:.04em; text-transform:uppercase; color:var(--text-2)}
+.frame-label .em{margin-left:auto; font: 500 11px 'JetBrains Mono'; color:var(--muted-2); letter-spacing:.05em}
+
+/* iPhone */
+.iphone{
+  width:390px; height:844px;
+  background:var(--bezel); border-radius:54px; padding:12px;
+  box-shadow: var(--shadow-frame);
+  position:relative; flex:none;
+}
+.iphone::before{
+  content:""; position:absolute; top:18px; left:50%; transform:translateX(-50%);
+  width:120px; height:34px; background:#000; border-radius:20px; z-index:5;
+}
+.screen{
+  width:100%; height:100%; border-radius:42px; overflow:hidden;
+  background: var(--paper); color:var(--text);
+  display:flex; flex-direction:column; position:relative;
+}
+.statusbar{
+  height:50px; padding:14px 28px 0;
+  display:flex; align-items:flex-start; justify-content:space-between;
+  font:600 14px 'Inter'; color:var(--text);
+  flex:none;
+}
+.statusbar .icons{display:flex; gap:6px; align-items:center; padding-top:1px}
+.statusbar .icons svg{width:16px;height:11px;fill:currentColor}
+.statusbar .icons .battery{width:25px;height:12px}
+
+.app{flex:1; overflow:hidden; position:relative; display:flex; flex-direction:column}
+.app-scroll{
+  flex:1; overflow-y:auto; padding: 4px 22px 100px;
+  scrollbar-width:none;
+}
+.app-scroll::-webkit-scrollbar{display:none}
+
+/* topbar */
+.topbar{
+  display:flex; align-items:center; justify-content:space-between;
+  padding: 6px 0 22px;
+}
+.client{display:flex; align-items:center; gap:10px}
+.cv-av{
+  width:34px; height:34px; border-radius:50%;
+  background: linear-gradient(135deg,#E8C9A4,#B58A66);
+  position:relative; border:1px solid var(--hairline-2);
+}
+.cv-av::after{content:"S"; position:absolute; inset:0; display:grid; place-items:center; color:#fff; font:600 13px 'Fraunces'; font-style:italic}
+.cv-name{font:600 13px 'Sora'; letter-spacing:-.005em}
+.cv-meta{font:500 10.5px 'JetBrains Mono'; color:var(--muted); letter-spacing:.04em}
+
+.coach-pill{
+  display:inline-flex; align-items:center; gap:8px;
+  padding:5px 5px 5px 10px; border:1px solid var(--hairline-2);
+  background:var(--paper-2); border-radius:999px;
+}
+.coach-pill .lbl{font:500 10.5px 'Inter'; color:var(--muted); letter-spacing:.06em; text-transform:uppercase}
+.coach-pill .nm{font:600 11.5px 'Sora'}
+.coach-av{
+  width:24px; height:24px; border-radius:50%;
+  background: linear-gradient(135deg,#7C8FB8,#3F4D77);
+  position:relative;
+}
+.coach-av::after{content:"T"; position:absolute; inset:0; display:grid; place-items:center; color:#fff; font:600 11px 'Fraunces'; font-style:italic}
+.coach-av::before{content:""; position:absolute; right:-1px; bottom:-1px; width:8px; height:8px; border-radius:50%; background:var(--emerald); border:1.5px solid var(--paper)}
+
+/* eyebrow & section */
+.eyebrow{font:500 10px 'Inter'; letter-spacing:.22em; text-transform:uppercase; color:var(--muted)}
+.section-h{
+  display:flex; align-items:flex-end; justify-content:space-between;
+  margin: 30px 0 14px; padding-bottom:10px;
+  border-bottom:1px solid var(--hairline);
+}
+.section-h .ttl{
+  font:400 20px 'Fraunces'; font-style:italic; letter-spacing:-.015em;
+  color:var(--text);
+}
+.section-h .ttl b{font-weight:600}
+.section-h .num{
+  font: 500 10px 'JetBrains Mono'; color:var(--muted); letter-spacing:.1em;
+}
+
+/* ============ HOME hero ============ */
+.hero-edito{
+  margin: 6px 0 22px; position:relative;
+}
+.hero-edito .date{
+  display:flex; align-items:center; gap:14px;
+  font:500 10.5px 'JetBrains Mono'; color:var(--muted); letter-spacing:.12em; text-transform:uppercase;
+}
+.hero-edito .date::before{content:""; width:24px; height:1px; background:var(--text); opacity:.4}
+.hero-edito h2{
+  margin:14px 0 0;
+  font:400 44px 'Fraunces'; font-style:italic; letter-spacing:-.025em; line-height:.95;
+  color:var(--text);
+}
+.hero-edito h2 b{font-weight:600; font-style:italic}
+.hero-edito h2 .acc{color: var(--emerald); font-weight:500}
+.hero-edito p{
+  margin:14px 0 0; font:500 13px 'Inter'; color:var(--muted); line-height:1.5; max-width:30ch;
+}
+.weather-line{
+  margin-top:18px; padding-top:14px; border-top:1px solid var(--hairline);
+  display:flex; align-items:center; justify-content:space-between;
+  font:500 11px 'Inter'; color:var(--muted-2); letter-spacing:.05em;
+}
+.weather-line span b{color:var(--text); font-weight:600}
+
+/* numbered chapters */
+.chapter{
+  display:flex; align-items:flex-start; gap:14px;
+  padding: 20px 0; border-top:1px solid var(--hairline);
+}
+.chapter .ch-num{
+  font:400 32px 'Fraunces'; font-style:italic; color:var(--gold);
+  letter-spacing:-.02em; line-height:1; padding-top:4px; flex:none; width:42px;
+}
+.chapter .ch-body{flex:1; min-width:0}
+.chapter .ch-eyebrow{font:500 10px 'Inter'; letter-spacing:.22em; text-transform:uppercase; color:var(--muted)}
+.chapter .ch-title{font:600 18px 'Sora'; letter-spacing:-.005em; margin-top:4px; line-height:1.2}
+.chapter .ch-meta{font:500 12px 'Inter'; color:var(--muted); margin-top:4px}
+.chapter .ch-act{margin-top:12px; display:flex; gap:8px}
+.btn-line{
+  appearance:none; border:1px solid var(--hairline-2); background:var(--paper-2);
+  padding:9px 14px; font:500 12px 'Inter'; color:var(--text-2);
+  letter-spacing:.04em; cursor:pointer; border-radius:0;
+}
+.btn-line.dark{background:var(--ink); color:#F5F0E6; border-color:var(--ink)}
+[data-theme="dark"] .btn-line.dark{background:var(--paper-3); color:var(--text); border-color:var(--paper-3)}
+.btn-line.gold{
+  background:transparent; color:var(--gold);
+  border-color: var(--gold); font-weight:600;
+}
+
+/* RDV — large editorial */
+.rdv-edit{
+  display:grid; grid-template-columns: auto 1fr;
+  gap:18px; padding:24px 0;
+  border-top:1px solid var(--hairline); border-bottom:1px solid var(--hairline);
+}
+.rdv-edit .day{
+  font:400 84px 'Fraunces'; font-style:italic; letter-spacing:-.04em;
+  line-height:.85; color:var(--emerald);
+}
+.rdv-edit .day-meta{font:500 10.5px 'JetBrains Mono'; color:var(--muted); letter-spacing:.16em; text-transform:uppercase; margin-top:8px}
+.rdv-edit .ttl{
+  font:400 20px 'Fraunces'; font-style:italic; letter-spacing:-.01em;
+  margin-top:6px;
+}
+.rdv-edit .ttl b{font-weight:600}
+.rdv-edit .meta{font:500 12px 'Inter'; color:var(--muted); margin-top:6px}
+.rdv-edit .ctd{
+  display:inline-block; margin-top:10px;
+  font:500 11px 'JetBrains Mono'; color:var(--emerald);
+  letter-spacing:.08em; text-transform:uppercase;
+  padding-bottom:2px; border-bottom:1px solid var(--emerald);
+}
+
+/* mood — minimal row */
+.mood-edit{padding:20px 0; border-bottom:1px solid var(--hairline)}
+.mood-edit .q{font:400 22px 'Fraunces'; font-style:italic; letter-spacing:-.01em}
+.mood-edit .row{display:flex; gap:6px; margin-top:14px; justify-content:space-between}
+.mood-edit .row button{
+  flex:1; appearance:none; border:1px solid var(--hairline);
+  background:var(--paper); padding:14px 0; font-size:22px; cursor:pointer;
+  position:relative;
+}
+.mood-edit .row button.on{
+  border-color:var(--emerald); background: rgba(13,110,84,.06);
+}
+[data-theme="dark"] .mood-edit .row button.on{background:rgba(13,110,84,.15)}
+.mood-edit .row button .lbl{
+  display:block; margin-top:6px; font:500 9.5px 'Inter'; color:var(--muted);
+  letter-spacing:.1em; text-transform:uppercase;
+}
+.mood-edit .row button.on .lbl{color:var(--emerald)}
+
+/* progress big numbers row */
+.bignums{
+  display:grid; grid-template-columns: 1fr 1fr 1fr; gap:0;
+  border-top:1px solid var(--hairline); border-bottom:1px solid var(--hairline);
+}
+.bignums .cell{
+  padding:18px 6px; border-right:1px solid var(--hairline);
+}
+.bignums .cell:last-child{border-right:0}
+.bignums .lbl{font:500 9.5px 'Inter'; letter-spacing:.18em; text-transform:uppercase; color:var(--muted)}
+.bignums .val{
+  margin-top:6px;
+  font:400 32px 'Fraunces'; font-style:italic; letter-spacing:-.02em; line-height:1;
+}
+.bignums .val small{font:500 13px 'Inter'; color:var(--muted); margin-left:2px; font-style:normal}
+.bignums .delta{font:500 10.5px 'JetBrains Mono'; color:var(--emerald); margin-top:6px; letter-spacing:.04em}
+
+/* VIP card editorial */
+.vip-edit{
+  background: linear-gradient(180deg, #1B1A17 0%, #2A211A 100%);
+  color:#F5F0E6; padding: 22px;
+  border:1px solid #2a261f;
+  position:relative; overflow:hidden;
+}
+.vip-edit::before{
+  content:""; position:absolute; top:-30px; right:-30px; width:200px; height:200px;
+  background: radial-gradient(circle, rgba(212,178,96,.4), transparent 60%);
+}
+.vip-edit .eyebrow{color:rgba(245,240,230,.6)}
+.vip-edit h3{
+  margin:8px 0 0; position:relative;
+  font:400 26px 'Fraunces'; font-style:italic; letter-spacing:-.02em; line-height:1.05;
+}
+.vip-edit h3 b{font-weight:600; color: #D4B260}
+.vip-edit p{margin:10px 0 0; font:500 12px 'Inter'; color:rgba(245,240,230,.7); line-height:1.5; position:relative}
+.vip-progress{
+  margin-top:16px; padding:10px 0; border-top:1px solid rgba(245,240,230,.12);
+  display:flex; gap:8px; align-items:center; position:relative;
+}
+.vip-progress .dots{display:flex; gap:6px; flex:1}
+.vip-progress .dots .d{flex:1; height:3px; background:rgba(245,240,230,.15)}
+.vip-progress .dots .d.on{background: linear-gradient(90deg,#D4B260, #A07A2C)}
+.vip-progress .frac{font:600 11px 'JetBrains Mono'; color:#D4B260}
+.vip-edit .cta{
+  margin-top:18px; display:flex; align-items:center; justify-content:space-between;
+  padding-top:14px; border-top:1px solid rgba(245,240,230,.12);
+  font:600 13px 'Sora'; color:#fff; position:relative;
+}
+.vip-edit .cta .arr{
+  width:28px; height:28px; border-radius:50%;
+  background:#D4B260; color:#1B1A17;
+  display:grid; place-items:center;
+}
+.vip-edit .cta .arr svg{width:12px; height:12px; stroke:currentColor; fill:none; stroke-width:2.4}
+
+/* xp pill */
+.xp-strip{
+  margin-top:18px;
+  display:flex; align-items:center; gap:14px;
+  padding: 14px 0; border-bottom:1px solid var(--hairline);
+}
+.xp-medal{
+  width:44px; height:44px; border-radius:50%; flex:none;
+  background: radial-gradient(circle at 30% 30%, var(--gold-2), var(--gold) 65%, #6B4F1A);
+  display:grid; place-items:center; color:#fff; font: 600 18px 'Fraunces'; font-style:italic;
+  box-shadow: 0 6px 14px -8px rgba(160,122,44,.55), inset 0 -4px 10px -4px rgba(0,0,0,.4);
+}
+.xp-strip .lvl-eb{font:500 9.5px 'Inter'; letter-spacing:.2em; text-transform:uppercase; color:var(--muted)}
+.xp-strip .lvl{font:500 16px 'Fraunces'; font-style:italic; margin-top:2px}
+.xp-strip .lvl b{font-weight:600}
+.xp-strip .xp-meta{margin-left:auto; text-align:right}
+.xp-strip .xp-num{font:400 22px 'Fraunces'; font-style:italic; color:var(--emerald); letter-spacing:-.02em}
+.xp-strip .xp-of{font:500 10px 'JetBrains Mono'; color:var(--muted)}
+.xp-line{
+  height:2px; background:var(--paper-3); position:relative;
+}
+.xp-line > i{position:absolute; left:0; top:0; height:100%; width:58.6%; background: linear-gradient(90deg, var(--emerald), var(--gold))}
+
+/* google reviews */
+.reviews{
+  padding: 16px 0; border-top:1px solid var(--hairline); border-bottom:1px solid var(--hairline);
+}
+.r-head{display:flex; align-items:center; gap:12px}
+.g-mark{
+  width:28px; height:28px; border-radius:50%; background:#fff;
+  border:1px solid var(--hairline-2); display:grid; place-items:center;
+  font:800 14px 'Sora'; color:#4285F4;
+}
+.r-head .ttl{font:600 13px 'Sora'}
+.r-head .stars{color:#C8941F; letter-spacing:.04em; font-size:13px}
+.r-head .r-meta{font:500 10.5px 'JetBrains Mono'; color:var(--muted); margin-top:2px}
+
+.r-quote{padding:14px 0; border-top:1px dashed var(--hairline); margin-top:12px}
+.r-quote::before{
+  content:"“"; font:500 56px 'Fraunces'; font-style:italic; color:var(--gold);
+  line-height:.4; display:block; margin-bottom:6px;
+}
+.r-quote q{
+  display:block; font:400 14px 'Fraunces'; font-style:italic; line-height:1.45; color:var(--text-2);
+  quotes: none;
+}
+.r-quote q::before, .r-quote q::after{content:""}
+.r-quote .att{margin-top:8px; font:500 11px 'Inter'; color:var(--muted); letter-spacing:.04em}
+.r-quote .att b{color:var(--text); font-weight:600}
+
+/* DOCK bottom (different from v1 floating tabbar) */
+.dock{
+  position:absolute; left:0; right:0; bottom:0;
+  padding: 14px 22px 26px;
+  background: linear-gradient(180deg, transparent, var(--paper) 30%);
+}
+.dock-row{
+  display:grid; grid-template-columns:repeat(6,1fr); gap:0;
+  border-top:1px solid var(--hairline);
+  padding-top: 12px;
+}
+.dock-tab{
+  display:flex; flex-direction:column; align-items:center; gap:6px;
+  padding: 4px 0 6px; color:var(--muted-2);
+  font: 500 9.5px 'Inter'; letter-spacing:.06em; text-transform:uppercase;
+  position:relative;
+}
+.dock-tab svg{width:18px; height:18px; stroke:currentColor; fill:none; stroke-width:1.6}
+.dock-tab.on{color:var(--emerald)}
+.dock-tab.on::before{
+  content:""; position:absolute; top:-13px; left:50%; transform:translateX(-50%);
+  width:36px; height:2px; background:var(--emerald);
+}
+
+/* ============ ÉVOLUTION : timeline ============ */
+.kpi-row{
+  margin: 6px 0 22px;
+}
+.kpi-headline{
+  font:400 84px 'Fraunces'; font-style:italic; color:var(--text);
+  letter-spacing:-.04em; line-height:.85;
+}
+.kpi-headline small{font:500 24px 'Inter'; color:var(--muted); margin-left:4px; font-style:normal}
+.kpi-sub{
+  margin-top:8px; display:flex; gap:14px; align-items:center;
+  font:500 12px 'Inter'; color:var(--muted);
+}
+.kpi-sub .delta{
+  display:inline-flex; align-items:center; gap:4px;
+  padding:4px 10px; background:rgba(13,110,84,.10); color:var(--emerald);
+  font:600 12px 'JetBrains Mono';
+}
+[data-theme="dark"] .kpi-sub .delta{background:rgba(13,110,84,.20)}
+.kpi-sub .target{color:var(--text); font-weight:600}
+
+.tl{
+  position:relative;
+  padding-left:32px;
+  margin: 16px 0;
+}
+.tl::before{
+  content:""; position:absolute; left:9px; top:8px; bottom:8px; width:1px;
+  background: linear-gradient(180deg, var(--gold) 0%, var(--emerald) 30%, var(--emerald) 100%);
+}
+.tl-item{
+  position:relative; padding: 12px 0 14px;
+  border-bottom: 1px solid var(--hairline);
+}
+.tl-item:last-child{border-bottom:0}
+.tl-item::before{
+  content:""; position:absolute; left:-28px; top:18px; width:9px; height:9px;
+  border-radius:50%; background:var(--paper); border:2px solid var(--emerald);
+}
+.tl-item.start::before{background:var(--gold); border-color:var(--gold)}
+.tl-item.now::before{
+  background:var(--emerald); border-color:var(--emerald);
+  box-shadow: 0 0 0 4px rgba(13,110,84,.18);
+}
+.tl-date{
+  font:500 10.5px 'JetBrains Mono'; color:var(--muted); letter-spacing:.1em; text-transform:uppercase;
+}
+.tl-row{display:flex; align-items:baseline; gap:12px; margin-top:6px}
+.tl-w{font:400 26px 'Fraunces'; font-style:italic; letter-spacing:-.01em; line-height:1}
+.tl-w small{font:500 12px 'Inter'; color:var(--muted); margin-left:2px; font-style:normal}
+.tl-d{font:500 11.5px 'JetBrains Mono'; color:var(--emerald); margin-left:auto}
+.tl-d.gold{color:var(--gold)}
+.tl-note{font:400 13px 'Fraunces'; font-style:italic; color:var(--text-2); margin-top:4px; line-height:1.4}
+.tl-tags{display:flex; gap:6px; margin-top:8px}
+.tl-tag{
+  font:500 10px 'Inter'; padding:3px 8px; color:var(--muted-2);
+  border:1px solid var(--hairline); background:var(--paper-2);
+  letter-spacing:.06em; text-transform:uppercase;
+}
+
+/* silhouette + measurements */
+.silh-edit{
+  display:grid; grid-template-columns: 132px 1fr; gap:18px; align-items:flex-start;
+  padding:18px 0; border-top:1px solid var(--hairline); border-bottom:1px solid var(--hairline);
+}
+.silh-svg{display:grid; place-items:center}
+.measures-list{display:flex; flex-direction:column; gap:0}
+.m-row{
+  display:flex; align-items:baseline; gap:10px;
+  padding:10px 0; border-bottom:1px dashed var(--hairline);
+}
+.m-row:last-child{border-bottom:0}
+.m-row .l{font:500 10px 'Inter'; letter-spacing:.16em; text-transform:uppercase; color:var(--muted); width:74px}
+.m-row .v{font:400 18px 'Fraunces'; font-style:italic}
+.m-row .v small{font:500 11px 'Inter'; color:var(--muted); font-style:normal; margin-left:2px}
+.m-row .d{margin-left:auto; font:500 11px 'JetBrains Mono'; color:var(--emerald)}
+
+/* composition bars (simple, editorial) */
+.comp-list{padding: 10px 0 0}
+.comp-row{
+  display:grid; grid-template-columns: 90px 1fr auto; gap:14px; align-items:center;
+  padding: 14px 0; border-top:1px solid var(--hairline);
+}
+.comp-row .l{font:500 10px 'Inter'; letter-spacing:.16em; text-transform:uppercase; color:var(--muted)}
+.comp-row .bar{height:1px; background:var(--paper-3); position:relative}
+.comp-row .bar i{position:absolute; left:0; top:0; height:100%; background:var(--emerald)}
+.comp-row .bar.gold i{background:var(--gold)}
+.comp-row .bar.violet i{background:var(--violet)}
+.comp-row .v{font:400 17px 'Fraunces'; font-style:italic; letter-spacing:-.005em}
+.comp-row .v small{font:500 10px 'Inter'; color:var(--muted); margin-left:2px; font-style:normal}
+
+/* ============ PRODUITS ============ */
+.prog-bar{
+  margin-top:16px; padding:14px 0;
+  border-top:1px solid var(--hairline); border-bottom:1px solid var(--hairline);
+  display:flex; align-items:center; gap:14px;
+}
+.prog-bar .pct{
+  font:400 38px 'Fraunces'; font-style:italic; color:var(--emerald); letter-spacing:-.02em;
+}
+.prog-bar .pct small{font:500 14px 'Inter'; color:var(--muted); font-style:normal}
+.prog-bar .meta .l{font:500 10px 'Inter'; letter-spacing:.18em; text-transform:uppercase; color:var(--muted)}
+.prog-bar .meta .t{font:600 14px 'Sora'; margin-top:2px}
+.prog-bar .meta .s{font:500 11.5px 'Inter'; color:var(--muted); margin-top:2px}
+
+.prod-list{margin-top:6px}
+.prod-line{
+  display:grid; grid-template-columns: auto 1fr auto; gap:14px; align-items:center;
+  padding: 16px 0; border-bottom:1px solid var(--hairline);
+}
+.prod-line:last-child{border-bottom:0}
+.prod-thumb{
+  width:54px; height:54px; flex:none; position:relative; overflow:hidden;
+  background:linear-gradient(135deg,#F5DEB7,#D4A86A);
+  border:1px solid var(--hairline-2);
+}
+.prod-thumb.green{background:linear-gradient(135deg,#B7DABE,#5E9572)}
+.prod-thumb.violet{background:linear-gradient(135deg,#C8B7DA,#8568A2)}
+.prod-thumb.coral{background:linear-gradient(135deg,#E8B7C2,#B07086)}
+.prod-thumb::after{
+  content:""; position:absolute; left:14px; right:14px; top:8px; bottom:8px;
+  background:rgba(255,255,255,.6); border:1px solid rgba(0,0,0,.05);
+}
+.prod-line .nm{font:600 14px 'Sora'; letter-spacing:-.005em}
+.prod-line .meta{font:500 12px 'Inter'; color:var(--muted); margin-top:3px}
+.prod-line .qty{font:500 11px 'JetBrains Mono'; color:var(--muted); letter-spacing:.06em}
+
+/* recos prescription */
+.rx{
+  margin-top:24px;
+  border:1px solid var(--gold);
+  background: linear-gradient(180deg, rgba(160,122,44,.08), rgba(160,122,44,.02));
+  padding:18px;
+  position:relative;
+}
+[data-theme="dark"] .rx{background: linear-gradient(180deg, rgba(160,122,44,.18), rgba(160,122,44,.06))}
+.rx::before{
+  content:"℞"; position:absolute; top:8px; right:14px;
+  font:400 56px 'Fraunces'; font-style:italic; color:var(--gold); opacity:.25; line-height:1;
+}
+.rx .eyebrow{color:var(--gold)}
+.rx h4{margin:6px 0 0; font:400 22px 'Fraunces'; font-style:italic; letter-spacing:-.01em}
+.rx h4 b{font-weight:600}
+.rx p{margin:8px 0 0; font:500 12.5px 'Inter'; color:var(--muted); line-height:1.5}
+.rx .signed{
+  margin-top:12px; padding-top:10px; border-top:1px solid var(--hairline);
+  display:flex; align-items:center; gap:10px; font:500 11px 'Inter'; color:var(--muted);
+}
+.rx .signed b{color:var(--text); font:600 12px 'Sora'; font-style:normal}
+
+.cta-edit{
+  display:flex; align-items:center; justify-content:space-between;
+  padding:16px 18px; margin-top:18px;
+  background:var(--ink); color:#F5F0E6;
+  font:600 13px 'Sora'; letter-spacing:.04em;
+}
+[data-theme="dark"] .cta-edit{background:var(--paper-3); color:var(--text)}
+.cta-edit .arr{
+  width:28px; height:28px; border-radius:50%;
+  background:var(--gold); color:#1B1A17; display:grid; place-items:center;
+}
+.cta-edit .arr svg{width:12px;height:12px; stroke:currentColor; fill:none; stroke-width:2.4}
+
+.wa-edit{
+  display:flex; align-items:center; justify-content:center; gap:10px;
+  padding:14px; margin-top:14px;
+  border:1px solid #1A8754; color:#1A8754;
+  background: rgba(26,135,84,.06);
+  font:600 12.5px 'Sora'; letter-spacing:.04em; text-transform:uppercase;
+}
+[data-theme="dark"] .wa-edit{background:rgba(26,135,84,.15)}
+.wa-edit svg{width:14px;height:14px; fill:#1A8754}
+
+/* ============ CONSEILS ============ */
+.note-line{
+  display:grid; grid-template-columns:auto 1fr auto; gap:14px; align-items:center;
+  padding:16px 0; border-bottom:1px solid var(--hairline);
+}
+.note-line:last-child{border-bottom:0}
+.note-line .ic{font-size:20px; width:36px; text-align:center}
+.note-line .t{font:600 13.5px 'Sora'}
+.note-line .s{font:500 12px 'Inter'; color:var(--muted); margin-top:2px}
+.note-line .badge{
+  font:500 10px 'JetBrains Mono'; padding:3px 8px; letter-spacing:.08em;
+  text-transform:uppercase; color:var(--muted); border:1px solid var(--hairline-2); background:var(--paper-2);
+}
+.note-line.warn .badge{color:var(--coral); border-color:var(--coral)}
+.note-line.ok .badge{color:var(--emerald); border-color:var(--emerald)}
+.note-line.gold .badge{color:var(--gold); border-color:var(--gold)}
+
+.plate-edit{
+  display:grid; grid-template-columns: 130px 1fr; gap:18px; align-items:center;
+  padding: 18px 0; border-top:1px solid var(--hairline); border-bottom:1px solid var(--hairline);
+}
+.plate-svg{display:grid; place-items:center}
+.plate-list .pl-row{
+  display:grid; grid-template-columns: 1fr auto; gap:8px;
+  padding:8px 0; border-bottom:1px dashed var(--hairline);
+  font:500 12.5px 'Inter';
+}
+.plate-list .pl-row:last-child{border-bottom:0}
+.plate-list .sw{display:inline-block; width:8px; height:8px; margin-right:8px}
+.plate-list .pct{font:600 13px 'JetBrains Mono'}
+.plate-list .add{
+  margin-top:10px; font:400 13px 'Fraunces'; font-style:italic; color:var(--gold);
+}
+
+.routine-edit{padding:8px 0}
+.toggle-line{
+  display:flex; gap:0; margin: 14px 0 18px;
+  border-top:1px solid var(--hairline); border-bottom:1px solid var(--hairline);
+}
+.toggle-line button{
+  flex:1; appearance:none; background:transparent; border:0;
+  padding:14px 0; font:500 11px 'Inter'; letter-spacing:.16em; text-transform:uppercase; color:var(--muted);
+  cursor:pointer; border-right:1px solid var(--hairline);
+}
+.toggle-line button:last-child{border-right:0}
+.toggle-line button.on{color:var(--emerald); background:rgba(13,110,84,.04)}
+[data-theme="dark"] .toggle-line button.on{background:rgba(13,110,84,.15)}
+.r-edit{
+  display:grid; grid-template-columns: 60px auto 1fr; gap:14px; align-items:flex-start;
+  padding:14px 0; border-bottom:1px solid var(--hairline);
+}
+.r-edit:last-child{border-bottom:0}
+.r-edit .t{font:500 11.5px 'JetBrains Mono'; color:var(--gold); letter-spacing:.06em; padding-top:2px}
+.r-edit .e{
+  width:30px; height:30px; border-radius:50%; background:var(--paper-2);
+  display:grid; place-items:center; font-size:15px; border:1px solid var(--hairline);
+}
+.r-edit .ttl{font:600 13.5px 'Sora'}
+.r-edit .desc{font:400 12.5px 'Fraunces'; font-style:italic; color:var(--muted); margin-top:2px}
+
+.quote-edit{
+  padding:24px 4px; border-top:1px solid var(--hairline); border-bottom:1px solid var(--hairline);
+  position:relative;
+}
+.quote-edit::before{
+  content:"“"; font:400 100px 'Fraunces'; font-style:italic;
+  color:var(--gold); opacity:.4; line-height:.5; display:block; margin-bottom:8px;
+}
+.quote-edit blockquote{
+  margin:0; font:400 19px 'Fraunces'; font-style:italic; color:var(--text); line-height:1.4; letter-spacing:-.005em;
+}
+.quote-edit cite{
+  display:block; margin-top:14px; font:500 11.5px 'Inter'; color:var(--muted); font-style:normal; letter-spacing:.04em;
+}
+.quote-edit cite b{color:var(--text); font-weight:600}
+
+/* ============ MESSAGES ============ */
+.chat-head-edit{
+  display:flex; align-items:center; gap:14px;
+  padding: 4px 0 18px; border-bottom:1px solid var(--hairline); margin-bottom:8px;
+}
+.chat-head-edit .av{
+  width:48px; height:48px; border-radius:50%;
+  background:linear-gradient(135deg,#7C8FB8,#3F4D77); position:relative;
+  border:1px solid var(--hairline-2);
+}
+.chat-head-edit .av::after{content:"T"; position:absolute; inset:0; display:grid; place-items:center; color:#fff; font:600 18px 'Fraunces'; font-style:italic}
+.chat-head-edit .av::before{content:""; position:absolute; right:-1px; bottom:-1px; width:14px; height:14px; border-radius:50%; background:var(--emerald); border:2px solid var(--paper)}
+.chat-head-edit h3{margin:0; font:400 22px 'Fraunces'; font-style:italic; letter-spacing:-.01em}
+.chat-head-edit h3 b{font-weight:600}
+.chat-head-edit .role{font:500 10.5px 'JetBrains Mono'; color:var(--emerald); letter-spacing:.1em; text-transform:uppercase; margin-top:2px}
+
+.daymark{
+  text-align:center; font:500 10px 'JetBrains Mono'; color:var(--muted-2);
+  letter-spacing:.2em; text-transform:uppercase; padding: 16px 0 6px;
+  position:relative;
+}
+.daymark::before, .daymark::after{
+  content:""; position:absolute; top:50%; width:30%; height:1px; background:var(--hairline);
+}
+.daymark::before{left:14%}
+.daymark::after{right:14%}
+
+.msg{display:flex; gap:10px; margin: 8px 0}
+.msg .av-mini{
+  width:24px; height:24px; border-radius:50%; flex:none;
+  background:linear-gradient(135deg,#7C8FB8,#3F4D77); position:relative;
+}
+.msg .av-mini::after{content:"T"; position:absolute; inset:0; display:grid; place-items:center; color:#fff; font:600 10px 'Fraunces'; font-style:italic}
+.msg.me{justify-content:flex-end}
+.msg.me .av-mini{order:2; background:linear-gradient(135deg,#E8C9A4,#B58A66)}
+.msg.me .av-mini::after{content:"S"}
+.msg .body{
+  max-width:78%; padding:10px 14px;
+  background:var(--paper-2); border:1px solid var(--hairline);
+  font:400 14px 'Fraunces'; line-height:1.4; color:var(--text);
+  border-radius:0;
+}
+.msg.me .body{
+  background:var(--ink); color:#F5F0E6; border-color:var(--ink);
+}
+[data-theme="dark"] .msg.me .body{background:var(--paper-3); color:var(--text); border-color:var(--paper-3)}
+.msg .body .meta{display:block; margin-top:4px; font:500 9.5px 'JetBrains Mono'; color:var(--muted-2); letter-spacing:.1em}
+.msg.me .body .meta{color:rgba(245,240,230,.55)}
+
+.dots{display:inline-flex; gap:3px; align-items:center}
+.dots i{width:5px;height:5px;border-radius:50%; background:var(--muted-2); display:inline-block}
+
+.faq-edit{
+  margin-top:18px; display:flex; flex-direction:column;
+  border-top:1px solid var(--hairline);
+}
+.faq-edit .q{
+  padding:12px 0; border-bottom:1px solid var(--hairline);
+  display:flex; align-items:center; justify-content:space-between;
+  font:500 13px 'Inter'; color:var(--text-2);
+}
+.faq-edit .q .arr{color:var(--gold); font-family:'Fraunces'; font-style:italic; font-size:18px}
+
+.input-edit{
+  position:absolute; left:22px; right:22px; bottom:96px;
+  padding: 12px 14px;
+  background: var(--paper); border:1px solid var(--hairline-2);
+  display:flex; gap:10px; align-items:center;
+}
+.input-edit input{
+  flex:1; appearance:none; border:0; outline:0; background:transparent;
+  font:400 14px 'Fraunces'; font-style:italic; color:var(--text);
+}
+.input-edit input::placeholder{color:var(--muted)}
+.send-edit{
+  width:36px; height:36px; border-radius:50%; border:0;
+  background:var(--emerald); color:#fff; display:grid; place-items:center;
+}
+.send-edit svg{width:14px;height:14px;stroke:#fff;fill:none;stroke-width:2}
+
+/* ============ RECOMMANDER ============ */
+.invite-edit{
+  display:grid; grid-template-columns:auto 1fr auto; gap:14px; align-items:center;
+  padding:18px 0; border-bottom:1px solid var(--hairline);
+}
+.av-init{
+  width:42px; height:42px; border-radius:50%; flex:none;
+  display:grid; place-items:center; color:#fff; font:600 14px 'Fraunces'; font-style:italic;
+}
+.av-1{background:linear-gradient(135deg,#E8B7A0,#B57558)}
+.av-2{background:linear-gradient(135deg,#A8CFB1,#5E9572)}
+.av-3{background:linear-gradient(135deg,#C8B7DA,#8568A2)}
+.invite-edit .nm{font:600 14px 'Sora'}
+.invite-edit .ph{font:500 11px 'JetBrains Mono'; color:var(--muted); margin-top:2px; letter-spacing:.04em}
+.invite-edit .st{
+  font:500 10px 'JetBrains Mono'; padding:6px 10px; color:var(--muted);
+  border:1px solid var(--hairline-2); letter-spacing:.1em; text-transform:uppercase;
+}
+.invite-edit .st.sent{color:var(--emerald); border-color:var(--emerald)}
+
+.tier-line{
+  display:flex; gap:0; margin-top:14px;
+  border-top:1px solid var(--hairline); border-bottom:1px solid var(--hairline);
+}
+.tier-cell{
+  flex:1; padding:14px 4px; text-align:center;
+  border-right:1px solid var(--hairline);
+  font:500 10px 'Inter'; letter-spacing:.16em; text-transform:uppercase; color:var(--muted);
+}
+.tier-cell:last-child{border-right:0}
+.tier-cell .e{font:400 18px 'Fraunces'; font-style:italic; display:block}
+.tier-cell.on{color:var(--gold); background:rgba(160,122,44,.06)}
+[data-theme="dark"] .tier-cell.on{background:rgba(160,122,44,.18)}
+.tier-cell.curr{color:var(--gold); background:var(--gold); color:#fff}
+.tier-cell.curr .e{color:#fff}
+[data-theme="dark"] .tier-cell.curr{background:var(--gold)}
+
+.preset{
+  padding:18px; background:var(--paper-2); border:1px solid var(--hairline);
+  margin-top:18px;
+}
+.preset .l{font:500 10px 'Inter'; letter-spacing:.18em; text-transform:uppercase; color:var(--muted)}
+.preset blockquote{
+  margin:8px 0 0; font:400 16px 'Fraunces'; font-style:italic; color:var(--text); line-height:1.5;
+}
+
+.perk-line{
+  display:grid; grid-template-columns: 38px 1fr auto; gap:14px; align-items:center;
+  padding:16px 0; border-bottom:1px solid var(--hairline);
+}
+.perk-line:last-child{border-bottom:0}
+.perk-line .e{font:400 22px 'Fraunces'; font-style:italic; color:var(--gold)}
+.perk-line .t{font:600 13.5px 'Sora'}
+.perk-line .s{font:500 12px 'Inter'; color:var(--muted); margin-top:2px}
+.perk-line .v{font:500 11px 'JetBrains Mono'; color:var(--gold); letter-spacing:.04em}
+
+.foot-note{
+  text-align:center; padding: 18px 8px;
+  font:400 13px 'Fraunces'; font-style:italic; color:var(--muted); line-height:1.4;
+}
+
+/* page footer */
+.stage-foot{
+  text-align:center; color:var(--muted); margin-top:60px;
+  font:400 14px 'Fraunces'; font-style:italic; letter-spacing:-.005em;
+}
+.stage-foot b{font-weight:600; color:var(--text-2); font-style:italic}
+
+/* utility */
+.row{display:flex; align-items:center; gap:12px}
+.muted{color:var(--muted)}
+
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <linearGradient id="silh-fill2" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0D6E54" stop-opacity=".18"/>
+      <stop offset="100%" stop-color="#A07A2C" stop-opacity=".10"/>
+    </linearGradient>
+    <linearGradient id="silh-line" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0D6E54"/>
+      <stop offset="100%" stop-color="#A07A2C"/>
+    </linearGradient>
+  </defs>
+</svg>
+
+<header class="page-header">
+  <div class="brand">
+    <div class="pin" aria-hidden="true">b</div>
+    <div class="wordmark">La Base <em>360</em></div>
+    <div class="crumb">/ Espace Client · v2 Sanctuary</div>
+  </div>
+  <div class="toolbar">
+    <span class="chip dot">Direction · Édition limitée</span>
+    <div class="theme-toggle">
+      <button class="active" data-theme-set="light">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+        Light
+      </button>
+      <button data-theme-set="dark">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        Dark
+      </button>
+    </div>
+  </div>
+</header>
+
+<section class="page-title">
+  <div>
+    <h1>Pas une <b>app</b>.<br><span>Un sanctuaire.</span></h1>
+    <p class="lede">V2 — direction "papier crème" : éditorial bien-être, rythme respiré, dock bottom borderless, timeline d'évolution scénarisée comme un journal. Cliente : Sophie Mercier · semaine 6/8.</p>
+  </div>
+  <div class="chip" style="align-self:flex-start; font-family:'JetBrains Mono'; font-size:11px">390 × 844 · iPhone 14 Pro</div>
+</section>
+
+<div class="deck-rule"></div>
+
+<main class="stage">
+  <div class="frames">
+
+    <!-- =================== 1. ACCUEIL =================== -->
+    <div class="frame-wrap">
+      <div class="frame-label"><span class="num">i.</span><span class="nm">Accueil</span><span class="em">⌂</span></div>
+      <div class="iphone">
+        <div class="screen" data-screen-label="01 Accueil">
+          <div class="statusbar">
+            <span>9:41</span>
+            <span class="icons">
+              <svg viewBox="0 0 18 12"><path d="M1 9h2v2H1zM5 7h2v4H5zM9 4h2v7H9zM13 1h2v10h-2z"/></svg>
+              <svg viewBox="0 0 18 12"><path d="M9 11.5C5.5 8.5 2 8 2 5a3 3 0 0 1 7-1.5A3 3 0 0 1 16 5c0 3-3.5 3.5-7 6.5z" fill="none" stroke="currentColor"/></svg>
+              <svg class="battery" viewBox="0 0 25 12"><rect x="0.5" y="0.5" width="21" height="11" rx="3" fill="none" stroke="currentColor"/><rect x="2" y="2" width="17" height="8" rx="1.5"/><rect x="22" y="4" width="2" height="4" rx="1"/></svg>
+            </span>
+          </div>
+          <div class="app">
+            <div class="app-scroll">
+
+              <div class="topbar">
+                <div class="client">
+                  <div class="cv-av"></div>
+                  <div>
+                    <div class="cv-name">Sophie Mercier</div>
+                    <div class="cv-meta">SEM. 06 / 08</div>
+                  </div>
+                </div>
+                <div class="coach-pill">
+                  <span class="lbl">Coach</span>
+                  <span class="nm">Thomas D.</span>
+                  <span class="coach-av"></span>
+                </div>
+              </div>
+
+              <!-- HERO -->
+              <div class="hero-edito">
+                <div class="date">Vendredi 09 mai · 11 jours d'affilée</div>
+                <h2><b>Belle journée,</b><br><span class="acc">Sophie</span>.</h2>
+                <p>Tu avances tranquillement, et ça se voit dans le miroir comme dans les chiffres.</p>
+                <div class="weather-line">
+                  <span>Paris · <b>18°</b> · ☀ ciel clair</span>
+                  <span>Lever 06:14 · Coucher 21:02</span>
+                </div>
+              </div>
+
+              <!-- VIP -->
+              <div class="vip-edit">
+                <div class="eyebrow">Programme VIP · Parrainage</div>
+                <h3>Recommande à <b>3 amies</b>,<br>débloque <b>−25 %</b>.</h3>
+                <p>On envoie un mot doux de ta part. Quand 3 ont commencé, ton offre se débloque.</p>
+                <div class="vip-progress">
+                  <div class="dots"><span class="d on"></span><span class="d"></span><span class="d"></span></div>
+                  <span class="frac">01 / 03</span>
+                </div>
+                <div class="cta">
+                  <span>Inviter une amie</span>
+                  <span class="arr"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 5l7 7-7 7"/></svg></span>
+                </div>
+              </div>
+
+              <!-- RDV -->
+              <div class="rdv-edit">
+                <div>
+                  <div class="day">15</div>
+                  <div class="day-meta">VEN · MAI</div>
+                </div>
+                <div>
+                  <div class="eyebrow" style="color:var(--gold)">Prochain rendez-vous</div>
+                  <div class="ttl"><b>Bilan</b> de semaine 7</div>
+                  <div class="meta">14:00 · cabinet de Thomas · 12, rue Damrémont</div>
+                  <div class="ctd">⏱ Dans 6 jours</div>
+                  <div class="ch-act" style="margin-top:14px">
+                    <button class="btn-line">Calendrier</button>
+                    <button class="btn-line">Itinéraire</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- MOOD -->
+              <div class="mood-edit">
+                <div class="eyebrow">Check-in du matin</div>
+                <div class="q">Comment tu te <i>sens</i> ?</div>
+                <div class="row">
+                  <button><span aria-hidden="true">🔥</span><span class="lbl">en feu</span></button>
+                  <button class="on"><span aria-hidden="true">🙂</span><span class="lbl">bien</span></button>
+                  <button><span aria-hidden="true">😐</span><span class="lbl">moyen</span></button>
+                  <button><span aria-hidden="true">😴</span><span class="lbl">fatiguée</span></button>
+                  <button><span aria-hidden="true">😣</span><span class="lbl">dur</span></button>
+                </div>
+              </div>
+
+              <!-- big numbers -->
+              <div class="section-h"><span class="ttl"><b>Ta</b> progression</span><span class="num">II</span></div>
+              <div class="bignums">
+                <div class="cell">
+                  <div class="lbl">Poids</div>
+                  <div class="val">64,0<small>kg</small></div>
+                  <div class="delta">▼ 4,0 kg</div>
+                </div>
+                <div class="cell">
+                  <div class="lbl">Tour de taille</div>
+                  <div class="val">74<small>cm</small></div>
+                  <div class="delta">▼ 5 cm</div>
+                </div>
+                <div class="cell">
+                  <div class="lbl">Masse grasse</div>
+                  <div class="val">28,1<small>%</small></div>
+                  <div class="delta">▼ 4,1 pt</div>
+                </div>
+              </div>
+
+              <!-- xp strip -->
+              <div class="xp-strip">
+                <div class="xp-medal">3</div>
+                <div>
+                  <div class="lvl-eb">Niveau</div>
+                  <div class="lvl"><b>Engagé.e</b></div>
+                </div>
+                <div class="xp-meta">
+                  <div class="xp-num">410</div>
+                  <div class="xp-of">/ 700 XP</div>
+                </div>
+              </div>
+              <div class="xp-line"><i></i></div>
+
+              <!-- google reviews -->
+              <div class="section-h"><span class="ttl"><b>Elles</b> en parlent</span><span class="num">III</span></div>
+              <div class="reviews">
+                <div class="r-head">
+                  <div class="g-mark">G</div>
+                  <div style="flex:1">
+                    <div class="ttl">La Base 360 · Google</div>
+                    <div class="r-meta"><span class="stars">★★★★★</span> 4,9 · 187 avis vérifiés</div>
+                  </div>
+                </div>
+                <div class="r-quote">
+                  <q>Thomas est à l'écoute, le programme s'adapte vraiment à mon quotidien de maman. J'ai retrouvé la forme.</q>
+                  <div class="att"><b>Émilie M.</b> · il y a 2 sem.</div>
+                </div>
+              </div>
+
+            </div>
+
+            <nav class="dock">
+              <div class="dock-row">
+                <a class="dock-tab on"><svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8v10a1 1 0 0 1-1 1h-5v-7h-6v7H4a1 1 0 0 1-1-1z"/></svg>Accueil</a>
+                <a class="dock-tab"><svg viewBox="0 0 24 24"><path d="M3 17l5-6 4 4 7-9"/><path d="M14 6h7v7"/></svg>Évol.</a>
+                <a class="dock-tab"><svg viewBox="0 0 24 24"><path d="M10.5 13.5L4 7l3-3 6.5 6.5M10.5 13.5l6.5 6.5 3-3-6.5-6.5"/></svg>Prod.</a>
+                <a class="dock-tab"><svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 0 1 7 17l-2 3v-3.6A10 10 0 1 1 12 2z"/></svg>Conseils</a>
+                <a class="dock-tab"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Msg.</a>
+                <a class="dock-tab"><svg viewBox="0 0 24 24"><path d="M20 12v9H4v-9M2 7h20v5H2zM12 7v14M12 7s-3-5-7-5a3 3 0 0 0 0 6h7zM12 7s3-5 7-5a3 3 0 0 1 0 6h-7z"/></svg>Inviter</a>
+              </div>
+            </nav>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- =================== 2. ÉVOLUTION =================== -->
+    <div class="frame-wrap">
+      <div class="frame-label"><span class="num">ii.</span><span class="nm">Évolution</span><span class="em">⤴</span></div>
+      <div class="iphone">
+        <div class="screen" data-screen-label="02 Évolution">
+          <div class="statusbar">
+            <span>9:41</span>
+            <span class="icons">
+              <svg viewBox="0 0 18 12"><path d="M1 9h2v2H1zM5 7h2v4H5zM9 4h2v7H9zM13 1h2v10h-2z"/></svg>
+              <svg viewBox="0 0 18 12"><path d="M9 11.5C5.5 8.5 2 8 2 5a3 3 0 0 1 7-1.5A3 3 0 0 1 16 5c0 3-3.5 3.5-7 6.5z" fill="none" stroke="currentColor"/></svg>
+              <svg class="battery" viewBox="0 0 25 12"><rect x="0.5" y="0.5" width="21" height="11" rx="3" fill="none" stroke="currentColor"/><rect x="2" y="2" width="17" height="8" rx="1.5"/><rect x="22" y="4" width="2" height="4" rx="1"/></svg>
+            </span>
+          </div>
+          <div class="app">
+            <div class="app-scroll">
+
+              <div class="topbar">
+                <div class="client">
+                  <div>
+                    <div class="eyebrow">Chapitre II</div>
+                    <div style="font:400 26px 'Fraunces'; font-style:italic; letter-spacing:-.02em; margin-top:4px">Ton <b style="font-weight:600">évolution</b></div>
+                  </div>
+                </div>
+                <div class="coach-pill">
+                  <span class="lbl">Coach</span>
+                  <span class="coach-av"></span>
+                </div>
+              </div>
+
+              <div class="kpi-row">
+                <div class="kpi-headline">64,0<small>kg</small></div>
+                <div class="kpi-sub">
+                  <span class="delta">▼ 4,0</span>
+                  <span>cible <span class="target">63 kg</span> · sem. 6/8</span>
+                </div>
+              </div>
+
+              <!-- TIMELINE -->
+              <div class="section-h"><span class="ttl"><b>Ton</b> journal</span><span class="num">VI bilans</span></div>
+              <div class="tl">
+                <div class="tl-item now">
+                  <div class="tl-date">Aujourd'hui · 09 mai</div>
+                  <div class="tl-row">
+                    <div class="tl-w">64,0<small>kg</small></div>
+                    <div class="tl-d">▼ 0,4 kg</div>
+                  </div>
+                  <div class="tl-note">« Tu tiens bon malgré la semaine compliquée. Cap maintenu sur l'hydratation. »</div>
+                  <div class="tl-tags"><span class="tl-tag">MG 28,1</span><span class="tl-tag">Tour 74</span><span class="tl-tag">Hydra ↘</span></div>
+                </div>
+                <div class="tl-item">
+                  <div class="tl-date">02 mai · sem. 5</div>
+                  <div class="tl-row">
+                    <div class="tl-w">64,4<small>kg</small></div>
+                    <div class="tl-d">▼ 0,3 kg</div>
+                  </div>
+                  <div class="tl-note">« Les efforts du week-end portent leurs fruits. »</div>
+                </div>
+                <div class="tl-item">
+                  <div class="tl-date">25 avr · sem. 4</div>
+                  <div class="tl-row">
+                    <div class="tl-w">64,7<small>kg</small></div>
+                    <div class="tl-d">▼ 0,7 kg</div>
+                  </div>
+                </div>
+                <div class="tl-item">
+                  <div class="tl-date">18 avr · sem. 3</div>
+                  <div class="tl-row">
+                    <div class="tl-w">65,4<small>kg</small></div>
+                    <div class="tl-d">▼ 1,1 kg</div>
+                  </div>
+                </div>
+                <div class="tl-item">
+                  <div class="tl-date">11 avr · sem. 2</div>
+                  <div class="tl-row">
+                    <div class="tl-w">66,5<small>kg</small></div>
+                    <div class="tl-d">▼ 1,5 kg</div>
+                  </div>
+                </div>
+                <div class="tl-item start">
+                  <div class="tl-date">12 mars · point de départ</div>
+                  <div class="tl-row">
+                    <div class="tl-w">68,0<small>kg</small></div>
+                    <div class="tl-d gold">⌂ Origine</div>
+                  </div>
+                  <div class="tl-note">« On commence ce chemin ensemble. Pas de course. » — Thomas</div>
+                </div>
+              </div>
+
+              <!-- silhouette -->
+              <div class="section-h"><span class="ttl"><b>Tes</b> mensurations</span><span class="num">VIII zones</span></div>
+              <div class="silh-edit">
+                <div class="silh-svg" aria-hidden="true">
+                  <svg viewBox="0 0 120 240" width="124" height="220">
+                    <ellipse cx="60" cy="220" rx="34" ry="5" fill="#A07A2C" opacity=".10"/>
+                    <circle cx="60" cy="22" r="13" fill="url(#silh-fill2)" stroke="url(#silh-line)" stroke-width="1.4"/>
+                    <path d="M55 33 q5 4 10 0 v6 q-5 3 -10 0 z" fill="url(#silh-fill2)" stroke="url(#silh-line)" stroke-width="1.2"/>
+                    <path d="M40 44 C 32 50, 28 58, 30 70 C 32 82, 36 90, 40 100 C 42 110, 41 116, 38 124 C 35 134, 35 142, 42 152 C 50 158, 70 158, 78 152 C 85 142, 85 134, 82 124 C 79 116, 78 110, 80 100 C 84 90, 88 82, 90 70 C 92 58, 88 50, 80 44 C 73 41, 47 41, 40 44 Z" fill="url(#silh-fill2)" stroke="url(#silh-line)" stroke-width="1.4" stroke-linejoin="round"/>
+                    <path d="M44 156 C 42 175, 44 195, 48 218 C 49 222, 56 222, 57 218 C 58 198, 58 178, 60 158 Z" fill="url(#silh-fill2)" stroke="url(#silh-line)" stroke-width="1.3"/>
+                    <path d="M76 156 C 78 175, 76 195, 72 218 C 71 222, 64 222, 63 218 C 62 198, 62 178, 60 158 Z" fill="url(#silh-fill2)" stroke="url(#silh-line)" stroke-width="1.3"/>
+                    <path d="M40 100 Q 60 106 80 100" stroke="url(#silh-line)" stroke-width="1" fill="none" opacity=".5" stroke-dasharray="2 3"/>
+                    <g>
+                      <line x1="14" y1="72" x2="33" y2="72" stroke="#0D6E54" stroke-width="1" stroke-dasharray="2 2"/>
+                      <circle cx="14" cy="72" r="3" fill="#0D6E54" stroke="#F5F0E6" stroke-width="1.5"/>
+                    </g>
+                    <g>
+                      <line x1="14" y1="114" x2="38" y2="114" stroke="#A07A2C" stroke-width="1" stroke-dasharray="2 2"/>
+                      <circle cx="14" cy="114" r="3" fill="#A07A2C" stroke="#F5F0E6" stroke-width="1.5"/>
+                    </g>
+                    <g>
+                      <line x1="106" y1="146" x2="82" y2="146" stroke="#0D6E54" stroke-width="1" stroke-dasharray="2 2"/>
+                      <circle cx="106" cy="146" r="3" fill="#0D6E54" stroke="#F5F0E6" stroke-width="1.5"/>
+                    </g>
+                    <g>
+                      <line x1="106" y1="180" x2="76" y2="180" stroke="#A07A2C" stroke-width="1" stroke-dasharray="2 2"/>
+                      <circle cx="106" cy="180" r="3" fill="#A07A2C" stroke="#F5F0E6" stroke-width="1.5"/>
+                    </g>
+                  </svg>
+                </div>
+                <div class="measures-list">
+                  <div class="m-row"><div class="l">Poitrine</div><div class="v">92<small>cm</small></div><div class="d">▼ 2</div></div>
+                  <div class="m-row"><div class="l">Taille</div><div class="v">74<small>cm</small></div><div class="d">▼ 5</div></div>
+                  <div class="m-row"><div class="l">Hanches</div><div class="v">98<small>cm</small></div><div class="d">▼ 4</div></div>
+                  <div class="m-row"><div class="l">Cuisse</div><div class="v">56<small>cm</small></div><div class="d">▼ 2</div></div>
+                </div>
+              </div>
+
+              <!-- composition -->
+              <div class="section-h"><span class="ttl"><b>Composition</b> corporelle</span><span class="num">IV pôles</span></div>
+              <div class="comp-list">
+                <div class="comp-row">
+                  <div class="l">Body fat</div>
+                  <div class="bar"><i style="width:42%"></i></div>
+                  <div class="v">28,1<small>%</small></div>
+                </div>
+                <div class="comp-row">
+                  <div class="l">Muscle</div>
+                  <div class="bar violet"><i style="width:64%"></i></div>
+                  <div class="v">38,2<small>%</small></div>
+                </div>
+                <div class="comp-row">
+                  <div class="l">Hydrat.</div>
+                  <div class="bar gold"><i style="width:55%"></i></div>
+                  <div class="v">52,8<small>%</small></div>
+                </div>
+                <div class="comp-row">
+                  <div class="l">IMC</div>
+                  <div class="bar"><i style="width:48%"></i></div>
+                  <div class="v">22,1</div>
+                </div>
+              </div>
+
+            </div>
+
+            <nav class="dock">
+              <div class="dock-row">
+                <a class="dock-tab"><svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8v10a1 1 0 0 1-1 1h-5v-7h-6v7H4a1 1 0 0 1-1-1z"/></svg>Accueil</a>
+                <a class="dock-tab on"><svg viewBox="0 0 24 24"><path d="M3 17l5-6 4 4 7-9"/><path d="M14 6h7v7"/></svg>Évol.</a>
+                <a class="dock-tab"><svg viewBox="0 0 24 24"><path d="M10.5 13.5L4 7l3-3 6.5 6.5M10.5 13.5l6.5 6.5 3-3-6.5-6.5"/></svg>Prod.</a>
+                <a class="dock-tab"><svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 0 1 7 17l-2 3v-3.6A10 10 0 1 1 12 2z"/></svg>Conseils</a>
+                <a class="dock-tab"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Msg.</a>
+                <a class="dock-tab"><svg viewBox="0 0 24 24"><path d="M20 12v9H4v-9M2 7h20v5H2zM12 7v14M12 7s-3-5-7-5a3 3 0 0 0 0 6h7zM12 7s3-5 7-5a3 3 0 0 1 0 6h-7z"/></svg>Inviter</a>
+              </div>
+            </nav>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- =================== 3. PRODUITS =================== -->
+    <div class="frame-wrap">
+      <div class="frame-label"><span class="num">iii.</span><span class="nm">Produits</span><span class="em">℞</span></div>
+      <div class="iphone">
+        <div class="screen" data-screen-label="03 Produits">
+          <div class="statusbar">
+            <span>9:41</span>
+            <span class="icons">
+              <svg viewBox="0 0 18 12"><path d="M1 9h2v2H1zM5 7h2v4H5zM9 4h2v7H9zM13 1h2v10h-2z"/></svg>
+              <svg viewBox="0 0 18 12"><path d="M9 11.5C5.5 8.5 2 8 2 5a3 3 0 0 1 7-1.5A3 3 0 0 1 16 5c0 3-3.5 3.5-7 6.5z" fill="none" stroke="currentColor"/></svg>
+              <svg class="battery" viewBox="0 0 25 12"><rect x="0.5" y="0.5" width="21" height="11" rx="3" fill="none" stroke="currentColor"/><rect x="2" y="2" width="17" height="8" rx="1.5"/><rect x="22" y="4" width="2" height="4" rx="1"/></svg>
+            </span>
+          </div>
+          <div class="app">
+            <div class="app-scroll">
+
+              <div class="topbar">
+                <div>
+                  <div class="eyebrow">Chapitre III</div>
+                  <div style="font:400 26px 'Fraunces'; font-style:italic; letter-spacing:-.02em; margin-top:4px">Ton <b style="font-weight:600">programme</b></div>
+                </div>
+                <div class="coach-pill">
+                  <span class="lbl">Prescrit par</span>
+                  <span class="nm">Thomas D.</span>
+                  <span class="coach-av"></span>
+                </div>
+              </div>
+
+              <div class="prog-bar">
+                <div class="pct">73<small>%</small></div>
+                <div class="meta">
+                  <div class="l">Programme</div>
+                  <div class="t">Perte de poids · 8 sem.</div>
+                  <div class="s">Sem. 6/8 · démarré le 12 mars</div>
+                </div>
+              </div>
+
+              <div class="section-h"><span class="ttl"><b>Tes</b> produits du mois</span><span class="num">III réf.</span></div>
+              <div class="prod-list">
+                <div class="prod-line">
+                  <div class="prod-thumb green"></div>
+                  <div>
+                    <div class="nm">Formula 1 · Vanille</div>
+                    <div class="meta">Shake matin · 26 doses restantes</div>
+                  </div>
+                  <div class="qty">×1 / mois</div>
+                </div>
+                <div class="prod-line">
+                  <div class="prod-thumb"></div>
+                  <div>
+                    <div class="nm">PDM Protéines</div>
+                    <div class="meta">2 mesures dans le shake</div>
+                  </div>
+                  <div class="qty">×1 / mois</div>
+                </div>
+                <div class="prod-line">
+                  <div class="prod-thumb violet"></div>
+                  <div>
+                    <div class="nm">Aloe Concentrate</div>
+                    <div class="meta">15 ml dans 1 L d'eau</div>
+                  </div>
+                  <div class="qty">×1 / mois</div>
+                </div>
+              </div>
+
+              <!-- Recos prescription -->
+              <div class="rx">
+                <div class="eyebrow">Recommandation</div>
+                <h4>Une suggestion de <b>Thomas</b></h4>
+                <p>Vu tes derniers bilans, <b style="color:var(--text); font-weight:600">Cell-U-Loss</b> pourrait t'aider sur l'hydratation. À voir ensemble vendredi.</p>
+                <div class="prod-line" style="border-bottom:0; padding:14px 0 4px; margin-top:6px; border-top:1px solid var(--hairline)">
+                  <div class="prod-thumb coral"></div>
+                  <div>
+                    <div class="nm">Cell-U-Loss</div>
+                    <div class="meta">Drainage doux · 90 comprimés</div>
+                  </div>
+                  <div class="qty" style="color:var(--gold); border:1px solid var(--gold); padding:4px 8px">Suggéré</div>
+                </div>
+                <div class="signed">
+                  <span class="coach-av" style="width:22px; height:22px"></span>
+                  <span>— <b>Thomas Dubois</b> · Coach · 7 mai</span>
+                </div>
+                <button class="wa-edit">
+                  <svg viewBox="0 0 24 24"><path d="M20 4A11 11 0 0 0 4 19l-2 5 5-2A11 11 0 1 0 20 4z"/></svg>
+                  En parler sur WhatsApp
+                </button>
+              </div>
+
+              <!-- order CTA -->
+              <div class="section-h"><span class="ttl"><b>Renouveler</b> / commander</span><span class="num">via coach</span></div>
+              <p class="muted" style="font:400 14px 'Fraunces'; font-style:italic; line-height:1.5">Toutes les commandes passent par Thomas pour qu'il garde le suivi. Il revient vers toi sous 24 h.</p>
+              <div class="cta-edit">
+                <span>Commander auprès de Thomas</span>
+                <span class="arr"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 5l7 7-7 7"/></svg></span>
+              </div>
+
+              <div class="rdv-edit" style="margin-top:24px">
+                <div>
+                  <div class="day" style="color:var(--gold)">22</div>
+                  <div class="day-meta">JEU · MAI</div>
+                </div>
+                <div>
+                  <div class="eyebrow" style="color:var(--gold)">Réassort prévu</div>
+                  <div class="ttl"><b>Dans 13 jours</b></div>
+                  <div class="meta">Thomas te rappelle le 18 mai</div>
+                </div>
+              </div>
+
+            </div>
+
+            <nav class="dock">
+              <div class="dock-row">
+                <a class="dock-tab"><svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8v10a1 1 0 0 1-1 1h-5v-7h-6v7H4a1 1 0 0 1-1-1z"/></svg>Accueil</a>
+                <a class="dock-tab"><svg viewBox="0 0 24 24"><path d="M3 17l5-6 4 4 7-9"/><path d="M14 6h7v7"/></svg>Évol.</a>
+                <a class="dock-tab on"><svg viewBox="0 0 24 24"><path d="M10.5 13.5L4 7l3-3 6.5 6.5M10.5 13.5l6.5 6.5 3-3-6.5-6.5"/></svg>Prod.</a>
+                <a class="dock-tab"><svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 0 1 7 17l-2 3v-3.6A10 10 0 1 1 12 2z"/></svg>Conseils</a>
+                <a class="dock-tab"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Msg.</a>
+                <a class="dock-tab"><svg viewBox="0 0 24 24"><path d="M20 12v9H4v-9M2 7h20v5H2zM12 7v14M12 7s-3-5-7-5a3 3 0 0 0 0 6h7zM12 7s3-5 7-5a3 3 0 0 1 0 6h-7z"/></svg>Inviter</a>
+              </div>
+            </nav>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- =================== 4. CONSEILS =================== -->
+    <div class="frame-wrap">
+      <div class="frame-label"><span class="num">iv.</span><span class="nm">Conseils</span><span class="em">✦</span></div>
+      <div class="iphone">
+        <div class="screen" data-screen-label="04 Conseils">
+          <div class="statusbar">
+            <span>9:41</span>
+            <span class="icons">
+              <svg viewBox="0 0 18 12"><path d="M1 9h2v2H1zM5 7h2v4H5zM9 4h2v7H9zM13 1h2v10h-2z"/></svg>
+              <svg viewBox="0 0 18 12"><path d="M9 11.5C5.5 8.5 2 8 2 5a3 3 0 0 1 7-1.5A3 3 0 0 1 16 5c0 3-3.5 3.5-7 6.5z" fill="none" stroke="currentColor"/></svg>
+              <svg class="battery" viewBox="0 0 25 12"><rect x="0.5" y="0.5" width="21" height="11" rx="3" fill="none" stroke="currentColor"/><rect x="2" y="2" width="17" height="8" rx="1.5"/><rect x="22" y="4" width="2" height="4" rx="1"/></svg>
+            </span>
+          </div>
+          <div class="app">
+            <div class="app-scroll">
+
+              <div class="topbar">
+                <div>
+                  <div class="eyebrow">Chapitre IV</div>
+                  <div style="font:400 26px 'Fraunces'; font-style:italic; letter-spacing:-.02em; margin-top:4px">Tes <b style="font-weight:600">conseils</b></div>
+                </div>
+                <div class="coach-pill">
+                  <span class="lbl">de</span>
+                  <span class="nm">Thomas</span>
+                  <span class="coach-av"></span>
+                </div>
+              </div>
+
+              <div class="section-h"><span class="ttl"><b>Points</b> d'attention</span><span class="num">III</span></div>
+              <div class="note-line warn">
+                <div class="ic">💧</div>
+                <div>
+                  <div class="t">Hydratation un peu basse</div>
+                  <div class="s">Vise 1,8 L cette semaine</div>
+                </div>
+                <div class="badge">À soigner</div>
+              </div>
+              <div class="note-line ok">
+                <div class="ic">🥗</div>
+                <div>
+                  <div class="t">Protéines au top</div>
+                  <div class="s">Tu es dans la cible · continue</div>
+                </div>
+                <div class="badge">Bien</div>
+              </div>
+              <div class="note-line gold">
+                <div class="ic">😴</div>
+                <div>
+                  <div class="t">Sommeil à soigner</div>
+                  <div class="s">Couche-toi 30 min plus tôt</div>
+                </div>
+                <div class="badge">À voir</div>
+              </div>
+
+              <!-- assiette -->
+              <div class="section-h"><span class="ttl"><b>Ton</b> assiette idéale</span><span class="num">50/25/25</span></div>
+              <div class="plate-edit">
+                <div class="plate-svg">
+                  <svg viewBox="0 0 100 100" width="120" height="120">
+                    <circle cx="50" cy="50" r="46" fill="var(--paper-2)" stroke="var(--hairline-2)"/>
+                    <path d="M50 50 L50 4 A46 46 0 0 1 50 96 Z" fill="#0D6E54"/>
+                    <path d="M50 50 L50 96 A46 46 0 0 1 6.04 38.5 Z" fill="#A07A2C"/>
+                    <path d="M50 50 L6.04 38.5 A46 46 0 0 1 50 4 Z" fill="#5C3F87"/>
+                    <circle cx="50" cy="50" r="14" fill="var(--paper)" stroke="var(--hairline-2)"/>
+                  </svg>
+                </div>
+                <div class="plate-list">
+                  <div class="pl-row"><span><span class="sw" style="background:#0D6E54"></span>Légumes &amp; fibres</span><span class="pct">50%</span></div>
+                  <div class="pl-row"><span><span class="sw" style="background:#A07A2C"></span>Protéines</span><span class="pct">25%</span></div>
+                  <div class="pl-row"><span><span class="sw" style="background:#5C3F87"></span>Glucides complets</span><span class="pct">25%</span></div>
+                  <div class="add">+ une cuillère de bons gras</div>
+                </div>
+              </div>
+
+              <!-- routine -->
+              <div class="section-h"><span class="ttl"><b>Ta</b> routine</span><span class="num">VI moments</span></div>
+              <div class="routine-edit">
+                <div class="toggle-line">
+                  <button class="on">🏃 Jour sport</button>
+                  <button>🌿 Jour repos</button>
+                </div>
+                <div class="r-edit">
+                  <div class="t">07:00</div><div class="e">🥤</div>
+                  <div><div class="ttl">Shake F1 + 1 fruit</div><div class="desc">Vanille + banane + lait d'amande</div></div>
+                </div>
+                <div class="r-edit">
+                  <div class="t">10:30</div><div class="e">💧</div>
+                  <div><div class="ttl">500 ml d'eau + Aloe</div><div class="desc">Pause hydratation</div></div>
+                </div>
+                <div class="r-edit">
+                  <div class="t">12:30</div><div class="e">🥗</div>
+                  <div><div class="ttl">Déjeuner équilibré</div><div class="desc">Vois ton assiette idéale</div></div>
+                </div>
+                <div class="r-edit">
+                  <div class="t">17:30</div><div class="e">🏃‍♀️</div>
+                  <div><div class="ttl">30 min cardio doux</div><div class="desc">Marche rapide ou vélo</div></div>
+                </div>
+                <div class="r-edit">
+                  <div class="t">20:00</div><div class="e">🍲</div>
+                  <div><div class="ttl">Dîner léger + protéines</div><div class="desc">Évite les sucres lents</div></div>
+                </div>
+                <div class="r-edit">
+                  <div class="t">22:30</div><div class="e">🌙</div>
+                  <div><div class="ttl">Au lit !</div><div class="desc">7-8 h pour bien récupérer</div></div>
+                </div>
+              </div>
+
+              <!-- quote -->
+              <div class="section-h"><span class="ttl"><b>Mot</b> de Thomas</span><span class="num">07/05</span></div>
+              <div class="quote-edit">
+                <blockquote>
+                  Sophie, je sens que la semaine 6 est la plus dure. Garde le cap sur l'hydratation et accorde-toi une vraie nuit. Le résultat est là, et tu es plus régulière qu'au début. On en reparle vendredi.
+                </blockquote>
+                <cite>— <b>Thomas Dubois</b> · Coach · 09:14</cite>
+              </div>
+
+            </div>
+
+            <nav class="dock">
+              <div class="dock-row">
+                <a class="dock-tab"><svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8v10a1 1 0 0 1-1 1h-5v-7h-6v7H4a1 1 0 0 1-1-1z"/></svg>Accueil</a>
+                <a class="dock-tab"><svg viewBox="0 0 24 24"><path d="M3 17l5-6 4 4 7-9"/><path d="M14 6h7v7"/></svg>Évol.</a>
+                <a class="dock-tab"><svg viewBox="0 0 24 24"><path d="M10.5 13.5L4 7l3-3 6.5 6.5M10.5 13.5l6.5 6.5 3-3-6.5-6.5"/></svg>Prod.</a>
+                <a class="dock-tab on"><svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 0 1 7 17l-2 3v-3.6A10 10 0 1 1 12 2z"/></svg>Conseils</a>
+                <a class="dock-tab"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Msg.</a>
+                <a class="dock-tab"><svg viewBox="0 0 24 24"><path d="M20 12v9H4v-9M2 7h20v5H2zM12 7v14M12 7s-3-5-7-5a3 3 0 0 0 0 6h7zM12 7s3-5 7-5a3 3 0 0 1 0 6h-7z"/></svg>Inviter</a>
+              </div>
+            </nav>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- =================== 5. MESSAGES =================== -->
+    <div class="frame-wrap">
+      <div class="frame-label"><span class="num">v.</span><span class="nm">Messages</span><span class="em">✉</span></div>
+      <div class="iphone">
+        <div class="screen" data-screen-label="05 Messages">
+          <div class="statusbar">
+            <span>9:41</span>
+            <span class="icons">
+              <svg viewBox="0 0 18 12"><path d="M1 9h2v2H1zM5 7h2v4H5zM9 4h2v7H9zM13 1h2v10h-2z"/></svg>
+              <svg viewBox="0 0 18 12"><path d="M9 11.5C5.5 8.5 2 8 2 5a3 3 0 0 1 7-1.5A3 3 0 0 1 16 5c0 3-3.5 3.5-7 6.5z" fill="none" stroke="currentColor"/></svg>
+              <svg class="battery" viewBox="0 0 25 12"><rect x="0.5" y="0.5" width="21" height="11" rx="3" fill="none" stroke="currentColor"/><rect x="2" y="2" width="17" height="8" rx="1.5"/><rect x="22" y="4" width="2" height="4" rx="1"/></svg>
+            </span>
+          </div>
+          <div class="app">
+            <div class="app-scroll" style="padding-bottom:200px">
+
+              <div class="chat-head-edit">
+                <div class="av"></div>
+                <div style="flex:1">
+                  <h3>Thomas <b>Dubois</b></h3>
+                  <div class="role">● en ligne · répond sous 1 h</div>
+                </div>
+              </div>
+
+              <div class="daymark">— Mercredi —</div>
+
+              <div class="msg">
+                <div class="av-mini"></div>
+                <div class="body">
+                  Bonjour Sophie ! Comment s'est passée ta semaine ? J'ai vu ton dernier bilan, super beau travail.
+                  <span class="meta">10:12</span>
+                </div>
+              </div>
+              <div class="msg me">
+                <div class="av-mini"></div>
+                <div class="body">
+                  Merci Thomas ! La semaine était dure le midi mais j'ai tenu. Par contre j'ai du mal à boire suffisamment.
+                  <span class="meta">10:34 · LU</span>
+                </div>
+              </div>
+              <div class="msg">
+                <div class="av-mini"></div>
+                <div class="body">
+                  C'est très courant en S6. Je te suggère <i>Cell-U-Loss</i>, on en parle vendredi ?
+                  <span class="meta">10:45</span>
+                </div>
+              </div>
+
+              <div class="daymark">— Aujourd'hui —</div>
+
+              <div class="msg">
+                <div class="av-mini"></div>
+                <div class="body">
+                  Petit rappel doux : pense à ton mood check-in. Et n'oublie pas notre RDV de vendredi 14h chez moi.
+                  <span class="meta">08:02</span>
+                </div>
+              </div>
+              <div class="msg me">
+                <div class="av-mini"></div>
+                <div class="body">
+                  Noté ! J'arrive avec mes mensurations à jour.
+                  <span class="meta">09:38 · LU</span>
+                </div>
+              </div>
+              <div class="msg">
+                <div class="av-mini"></div>
+                <div class="body">
+                  <span class="dots"><i></i><i style="opacity:.6"></i><i style="opacity:.3"></i></span>
+                  &nbsp;Thomas écrit…
+                </div>
+              </div>
+
+              <div class="section-h" style="margin-top:24px"><span class="ttl"><b>Questions</b> fréquentes</span><span class="num">FAQ</span></div>
+              <div class="faq-edit">
+                <div class="q"><span>📅 Décaler mon rendez-vous</span><span class="arr">→</span></div>
+                <div class="q"><span>📦 Suivre ma commande</span><span class="arr">→</span></div>
+                <div class="q"><span>⚖ Comment me peser correctement</span><span class="arr">→</span></div>
+                <div class="q"><span>🥤 Préparer mon shake F1</span><span class="arr">→</span></div>
+                <div class="q"><span>🆘 Urgence santé</span><span class="arr">→</span></div>
+              </div>
+
+            </div>
+
+            <div class="input-edit">
+              <input placeholder="Écrire un mot à Thomas…" />
+              <button class="send-edit"><svg viewBox="0 0 24 24"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg></button>
+            </div>
+
+            <nav class="dock">
+              <div class="dock-row">
+                <a class="dock-tab"><svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8v10a1 1 0 0 1-1 1h-5v-7h-6v7H4a1 1 0 0 1-1-1z"/></svg>Accueil</a>
+                <a class="dock-tab"><svg viewBox="0 0 24 24"><path d="M3 17l5-6 4 4 7-9"/><path d="M14 6h7v7"/></svg>Évol.</a>
+                <a class="dock-tab"><svg viewBox="0 0 24 24"><path d="M10.5 13.5L4 7l3-3 6.5 6.5M10.5 13.5l6.5 6.5 3-3-6.5-6.5"/></svg>Prod.</a>
+                <a class="dock-tab"><svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 0 1 7 17l-2 3v-3.6A10 10 0 1 1 12 2z"/></svg>Conseils</a>
+                <a class="dock-tab on"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Msg.</a>
+                <a class="dock-tab"><svg viewBox="0 0 24 24"><path d="M20 12v9H4v-9M2 7h20v5H2zM12 7v14M12 7s-3-5-7-5a3 3 0 0 0 0 6h7zM12 7s3-5 7-5a3 3 0 0 1 0 6h-7z"/></svg>Inviter</a>
+              </div>
+            </nav>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- =================== 6. RECOMMANDER =================== -->
+    <div class="frame-wrap">
+      <div class="frame-label"><span class="num">vi.</span><span class="nm">Recommander</span><span class="em">✿</span></div>
+      <div class="iphone">
+        <div class="screen" data-screen-label="06 Recommander">
+          <div class="statusbar">
+            <span>9:41</span>
+            <span class="icons">
+              <svg viewBox="0 0 18 12"><path d="M1 9h2v2H1zM5 7h2v4H5zM9 4h2v7H9zM13 1h2v10h-2z"/></svg>
+              <svg viewBox="0 0 18 12"><path d="M9 11.5C5.5 8.5 2 8 2 5a3 3 0 0 1 7-1.5A3 3 0 0 1 16 5c0 3-3.5 3.5-7 6.5z" fill="none" stroke="currentColor"/></svg>
+              <svg class="battery" viewBox="0 0 25 12"><rect x="0.5" y="0.5" width="21" height="11" rx="3" fill="none" stroke="currentColor"/><rect x="2" y="2" width="17" height="8" rx="1.5"/><rect x="22" y="4" width="2" height="4" rx="1"/></svg>
+            </span>
+          </div>
+          <div class="app">
+            <div class="app-scroll">
+
+              <div class="topbar">
+                <div>
+                  <div class="eyebrow">Chapitre VI</div>
+                  <div style="font:400 26px 'Fraunces'; font-style:italic; letter-spacing:-.02em; margin-top:4px">Partager <b style="font-weight:600">le bien</b></div>
+                </div>
+                <div class="coach-pill">
+                  <span class="lbl">VIP</span>
+                  <span class="nm" style="color:var(--gold)">Silver −15%</span>
+                </div>
+              </div>
+
+              <div class="vip-edit">
+                <div class="eyebrow">Programme VIP</div>
+                <h3>Recommande à <b>3 amies</b>,<br>débloque <b>−25 %</b> sur ton mois.</h3>
+                <p>On envoie un mot doux de ta part à chacune. Quand 3 ont commencé, ton offre se débloque automatiquement.</p>
+                <div class="vip-progress">
+                  <div class="dots"><span class="d on"></span><span class="d"></span><span class="d"></span></div>
+                  <span class="frac">01 / 03</span>
+                </div>
+              </div>
+
+              <div class="tier-line">
+                <div class="tier-cell on"><span class="e">i.</span>Member</div>
+                <div class="tier-cell curr"><span class="e">ii.</span>Silver</div>
+                <div class="tier-cell"><span class="e">iii.</span>Gold</div>
+                <div class="tier-cell"><span class="e">iv.</span>Ambass.</div>
+              </div>
+
+              <!-- prospects -->
+              <div class="section-h"><span class="ttl"><b>Tes</b> 3 amies</span><span class="num">III</span></div>
+              <div>
+                <div class="invite-edit">
+                  <div class="av-init av-1">CL</div>
+                  <div>
+                    <div class="nm">Claire L.</div>
+                    <div class="ph">+33 6 ·· ·· 14 22</div>
+                  </div>
+                  <div class="st sent">Invitée</div>
+                </div>
+                <div class="invite-edit">
+                  <div class="av-init av-2">MJ</div>
+                  <div>
+                    <div class="nm">Marie J.</div>
+                    <div class="ph">+33 6 ·· ·· 09 87</div>
+                  </div>
+                  <div class="st">À envoyer</div>
+                </div>
+                <div class="invite-edit">
+                  <div class="av-init av-3">SR</div>
+                  <div>
+                    <div class="nm">Sarah R.</div>
+                    <div class="ph">+33 6 ·· ·· 73 41</div>
+                  </div>
+                  <div class="st">À envoyer</div>
+                </div>
+              </div>
+
+              <!-- preset -->
+              <div class="preset">
+                <div class="l">Message pré-rempli</div>
+                <blockquote>« Coucou ! Je suis un programme avec un coach qui me change vraiment, je voulais te le faire découvrir. Si tu veux je te mets en relation. »</blockquote>
+                <button class="wa-edit" style="margin-top:14px">
+                  <svg viewBox="0 0 24 24"><path d="M20 4A11 11 0 0 0 4 19l-2 5 5-2A11 11 0 1 0 20 4z"/></svg>
+                  Partager sur WhatsApp
+                </button>
+              </div>
+
+              <!-- perks -->
+              <div class="section-h"><span class="ttl"><b>Ce que</b> tu débloques</span><span class="num">III paliers</span></div>
+              <div>
+                <div class="perk-line">
+                  <div class="e">ii</div>
+                  <div>
+                    <div class="t">Silver · 1 amie</div>
+                    <div class="s">−15 % sur ton prochain réassort</div>
+                  </div>
+                  <div class="v">−15%</div>
+                </div>
+                <div class="perk-line">
+                  <div class="e">iii</div>
+                  <div>
+                    <div class="t">Gold · 3 amies</div>
+                    <div class="s">−25 % + un bilan complet offert</div>
+                  </div>
+                  <div class="v">−25%</div>
+                </div>
+                <div class="perk-line">
+                  <div class="e">iv</div>
+                  <div>
+                    <div class="t">Ambassador · 6 amies</div>
+                    <div class="s">Programme du mois offert · invit. événements</div>
+                  </div>
+                  <div class="v">offert</div>
+                </div>
+              </div>
+
+              <!-- google reviews -->
+              <div class="section-h"><span class="ttl"><b>Elles</b> en disent</span><span class="num">4,9 ★</span></div>
+              <div class="reviews">
+                <div class="r-head">
+                  <div class="g-mark">G</div>
+                  <div style="flex:1">
+                    <div class="ttl">La Base 360 · Google</div>
+                    <div class="r-meta"><span class="stars">★★★★★</span> 4,9 · 187 avis</div>
+                  </div>
+                </div>
+                <div class="r-quote">
+                  <q>Coach humain, programme adapté, je recommande à 200 % autour de moi.</q>
+                  <div class="att"><b>Caroline L.</b> · il y a 3 sem.</div>
+                </div>
+              </div>
+
+              <p class="foot-note">Tu n'es jamais payée pour parrainer.<br>C'est juste un merci, entre nous.</p>
+
+            </div>
+
+            <nav class="dock">
+              <div class="dock-row">
+                <a class="dock-tab"><svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8v10a1 1 0 0 1-1 1h-5v-7h-6v7H4a1 1 0 0 1-1-1z"/></svg>Accueil</a>
+                <a class="dock-tab"><svg viewBox="0 0 24 24"><path d="M3 17l5-6 4 4 7-9"/><path d="M14 6h7v7"/></svg>Évol.</a>
+                <a class="dock-tab"><svg viewBox="0 0 24 24"><path d="M10.5 13.5L4 7l3-3 6.5 6.5M10.5 13.5l6.5 6.5 3-3-6.5-6.5"/></svg>Prod.</a>
+                <a class="dock-tab"><svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 0 1 7 17l-2 3v-3.6A10 10 0 1 1 12 2z"/></svg>Conseils</a>
+                <a class="dock-tab"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Msg.</a>
+                <a class="dock-tab on"><svg viewBox="0 0 24 24"><path d="M20 12v9H4v-9M2 7h20v5H2zM12 7v14M12 7s-3-5-7-5a3 3 0 0 0 0 6h7zM12 7s3-5 7-5a3 3 0 0 1 0 6h-7z"/></svg>Inviter</a>
+              </div>
+            </nav>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <p class="stage-foot">
+    <b>Sanctuary v2</b> · Direction "papier crème" · 6 chapitres · Fraunces editorial · dock minimal · journal d'évolution · ℞ doré pour les recos coach.
+  </p>
+</main>
+
+<script>
+  const root = document.documentElement;
+  document.querySelectorAll('[data-theme-set]').forEach(b => {
+    b.addEventListener('click', () => {
+      const t = b.dataset.themeSet;
+      root.dataset.theme = t;
+      document.querySelectorAll('[data-theme-set]').forEach(x => {
+        x.classList.toggle('active', x.dataset.themeSet === t);
+      });
+    });
+  });
+</script>
+
+</body>
+</html>

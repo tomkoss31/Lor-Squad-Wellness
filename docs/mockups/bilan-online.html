@@ -1,0 +1,1050 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Bilan Online — La Base 360</title>
+
+<meta property="og:title" content="Mon bilan personnalisé — La Base 360">
+<meta property="og:description" content="2 minutes pour comprendre ton corps et tes objectifs.">
+
+<style>
+  :root {
+    --ls-gold: #C9A84C;
+    --ls-gold-light: #E5C97D;
+    --ls-teal: #2DD4BF;
+    --ls-teal-dark: #0F766E;
+    --ls-coral: #FB7185;
+    --ls-charcoal: #0B0D11;
+    --ls-cream: #FBF7F0;
+    --ls-surface: #FFFFFF;
+    --ls-surface2: #F7F3EC;
+    --ls-border: rgba(11,13,17,0.10);
+    --ls-text: #1F2937;
+    --ls-text-muted: #4B5563;
+    --ls-text-hint: #9CA3AF;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    height: 100%;
+    font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--ls-cream);
+    color: var(--ls-text);
+    line-height: 1.5;
+    font-size: 16px;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  /* Mockup top banner (preview only) */
+  .mockup-banner {
+    background: var(--ls-charcoal);
+    color: var(--ls-gold);
+    padding: 8px 12px;
+    text-align: center;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+  }
+  .mockup-nav {
+    background: #1A1D24;
+    padding: 8px;
+    display: flex;
+    gap: 6px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .mockup-nav button {
+    padding: 6px 12px;
+    background: rgba(201,168,76,0.15);
+    color: var(--ls-gold);
+    border: 1px solid rgba(201,168,76,0.3);
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .mockup-nav button.active {
+    background: var(--ls-gold);
+    color: var(--ls-charcoal);
+  }
+
+  .app-shell {
+    max-width: 480px;
+    margin: 0 auto;
+    background: var(--ls-surface);
+    min-height: calc(100vh - 60px);
+    box-shadow: 0 4px 30px rgba(0,0,0,0.08);
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Views switching */
+  .view { display: none; min-height: calc(100vh - 60px); }
+  .view.active { display: block; animation: fadeIn 0.3s ease; }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ===================== WELCOME ===================== */
+  .welcome-bg {
+    background: linear-gradient(180deg, #FAEEDA 0%, var(--ls-cream) 60%);
+    padding: 32px 24px 40px;
+    text-align: center;
+  }
+  .welcome-brand {
+    font-family: 'Syne', Georgia, serif;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    color: var(--ls-gold);
+    text-transform: uppercase;
+    margin-bottom: 28px;
+  }
+  .welcome-brand .dot {
+    display: inline-block;
+    width: 5px; height: 5px; border-radius: 50%;
+    background: var(--ls-teal);
+    margin: 0 6px;
+    transform: translateY(-2px);
+  }
+  .welcome-emoji {
+    font-size: 56px;
+    line-height: 1;
+    margin-bottom: 20px;
+    display: inline-block;
+    animation: bounce 2.5s ease-in-out infinite;
+  }
+  @keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+  }
+  .welcome-bg h1 {
+    font-family: 'Syne', Georgia, serif;
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--ls-text);
+    line-height: 1.25;
+    margin-bottom: 24px;
+    max-width: 340px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .coach-card {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 18px 12px 12px;
+    background: white;
+    border-radius: 999px;
+    box-shadow: 0 4px 16px rgba(11,13,17,0.08);
+    margin-bottom: 28px;
+  }
+  .coach-avatar {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--ls-gold) 0%, var(--ls-teal) 100%);
+    color: var(--ls-charcoal);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Syne', serif;
+    font-weight: 700;
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+  .coach-info {
+    text-align: left;
+  }
+  .coach-label {
+    font-size: 10px;
+    color: var(--ls-text-hint);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-weight: 600;
+  }
+  .coach-name {
+    font-family: 'Syne', serif;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--ls-text);
+  }
+  .welcome-pitch {
+    background: white;
+    border-radius: 16px;
+    padding: 20px 22px;
+    margin: 0 0 24px;
+    text-align: left;
+    box-shadow: 0 2px 12px rgba(11,13,17,0.05);
+  }
+  .welcome-pitch h2 {
+    font-family: 'Syne', serif;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--ls-text);
+    margin-bottom: 14px;
+    text-align: center;
+  }
+  .welcome-pitch ul {
+    list-style: none;
+    padding: 0;
+  }
+  .welcome-pitch li {
+    position: relative;
+    padding-left: 24px;
+    font-size: 14px;
+    color: var(--ls-text-muted);
+    margin-bottom: 10px;
+    line-height: 1.5;
+  }
+  .welcome-pitch li::before {
+    content: "✓";
+    position: absolute;
+    left: 0; top: 1px;
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    background: var(--ls-teal);
+    color: white;
+    font-size: 11px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .cta-primary {
+    display: block;
+    width: 100%;
+    padding: 16px 24px;
+    background: linear-gradient(135deg, var(--ls-gold) 0%, var(--ls-gold-light) 100%);
+    color: var(--ls-charcoal);
+    border: none;
+    border-radius: 14px;
+    font-family: 'Syne', serif;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 4px 16px rgba(201,168,76,0.3);
+    transition: transform 0.18s, box-shadow 0.18s;
+  }
+  .cta-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 22px rgba(201,168,76,0.4);
+  }
+  .cta-primary:active { transform: translateY(0); }
+  .welcome-microcopy {
+    margin-top: 14px;
+    font-size: 12px;
+    color: var(--ls-text-muted);
+  }
+  .welcome-libre {
+    margin-top: 24px;
+    font-size: 12px;
+    color: var(--ls-text-hint);
+  }
+  .welcome-libre a {
+    color: var(--ls-teal-dark);
+    text-decoration: underline;
+    cursor: pointer;
+  }
+
+  /* ===================== FORM ===================== */
+  .form-header {
+    padding: 16px 20px;
+    background: var(--ls-surface);
+    border-bottom: 1px solid var(--ls-border);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  .form-progress-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    font-size: 12px;
+    color: var(--ls-text-muted);
+  }
+  .form-progress-meta .saved {
+    color: var(--ls-teal-dark);
+    font-weight: 600;
+    opacity: 0;
+    transition: opacity 0.4s;
+  }
+  .form-progress-meta .saved.visible { opacity: 1; }
+  .form-progress-bar {
+    width: 100%;
+    height: 6px;
+    background: var(--ls-surface2);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .form-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--ls-gold), var(--ls-teal));
+    border-radius: 3px;
+    transition: width 0.4s cubic-bezier(0.16,1,0.3,1);
+  }
+  .form-back {
+    background: none;
+    border: none;
+    font-size: 14px;
+    color: var(--ls-text-muted);
+    cursor: pointer;
+    padding: 4px 8px 4px 0;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-family: inherit;
+  }
+  .form-back:disabled { opacity: 0.3; cursor: not-allowed; }
+
+  .form-step {
+    padding: 24px 20px 100px;
+    display: none;
+    animation: slideIn 0.35s cubic-bezier(0.16,1,0.3,1);
+  }
+  .form-step.active { display: block; }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateX(20px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  .step-emoji {
+    font-size: 36px;
+    line-height: 1;
+    margin-bottom: 12px;
+    display: inline-block;
+  }
+  .step-title {
+    font-family: 'Syne', serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--ls-text);
+    margin-bottom: 6px;
+    line-height: 1.25;
+  }
+  .step-subtitle {
+    font-size: 13px;
+    color: var(--ls-text-muted);
+    margin-bottom: 22px;
+  }
+
+  /* Form fields */
+  .field {
+    margin-bottom: 16px;
+  }
+  .field label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ls-text);
+    margin-bottom: 6px;
+  }
+  .field label .req { color: var(--ls-coral); }
+  .field input[type="text"],
+  .field input[type="number"],
+  .field input[type="tel"],
+  .field textarea,
+  .field select {
+    width: 100%;
+    padding: 14px 16px;
+    border: 1px solid var(--ls-border);
+    border-radius: 12px;
+    font-size: 16px;
+    font-family: inherit;
+    background: var(--ls-surface2);
+    color: var(--ls-text);
+    outline: none;
+    transition: border 0.15s, background 0.15s;
+  }
+  .field input:focus,
+  .field textarea:focus,
+  .field select:focus {
+    border-color: var(--ls-teal);
+    background: white;
+  }
+  .field-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  /* Choice cards (multi-select tag style ID G3) */
+  .choice-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .choice-card {
+    background: var(--ls-surface2);
+    border: 1.5px solid transparent;
+    border-radius: 12px;
+    padding: 14px 12px;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.18s;
+    user-select: none;
+  }
+  .choice-card .choice-emoji {
+    font-size: 26px;
+    line-height: 1;
+    margin-bottom: 6px;
+    display: block;
+  }
+  .choice-card .choice-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ls-text);
+  }
+  .choice-card.selected {
+    background: rgba(45,212,191,0.10);
+    border-color: var(--ls-teal);
+  }
+  .choice-card.selected .choice-label { color: var(--ls-teal-dark); }
+
+  /* Radio cards (single-select) */
+  .radio-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .radio-card {
+    background: var(--ls-surface2);
+    border: 1.5px solid transparent;
+    border-radius: 12px;
+    padding: 12px 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: all 0.18s;
+  }
+  .radio-card .radio-emoji { font-size: 22px; }
+  .radio-card .radio-label {
+    flex: 1;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--ls-text);
+  }
+  .radio-card.selected {
+    background: rgba(201,168,76,0.10);
+    border-color: var(--ls-gold);
+  }
+  .radio-card.selected .radio-label {
+    color: #633806;
+    font-weight: 600;
+  }
+
+  /* Slider */
+  .slider-wrap {
+    background: var(--ls-surface2);
+    border-radius: 12px;
+    padding: 16px;
+    margin-top: 6px;
+  }
+  .slider-value {
+    text-align: center;
+    font-family: 'Syne', serif;
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--ls-gold);
+    margin-bottom: 4px;
+    line-height: 1;
+  }
+  .slider-label {
+    text-align: center;
+    font-size: 11px;
+    color: var(--ls-text-muted);
+    margin-bottom: 12px;
+  }
+  .slider-input {
+    width: 100%;
+    -webkit-appearance: none;
+    appearance: none;
+    height: 6px;
+    background: linear-gradient(90deg, var(--ls-coral), var(--ls-gold), var(--ls-teal));
+    border-radius: 3px;
+    outline: none;
+  }
+  .slider-input::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    background: white;
+    border: 3px solid var(--ls-gold);
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  }
+  .slider-input::-moz-range-thumb {
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    background: white;
+    border: 3px solid var(--ls-gold);
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  }
+  .slider-scale {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 6px;
+    font-size: 10px;
+    color: var(--ls-text-hint);
+  }
+
+  /* Conditional sub-field */
+  .sub-field {
+    margin-top: 12px;
+    padding: 14px;
+    background: rgba(45,212,191,0.06);
+    border-radius: 10px;
+    border-left: 3px solid var(--ls-teal);
+    display: none;
+  }
+  .sub-field.visible { display: block; animation: fadeIn 0.3s ease; }
+
+  /* Consent */
+  .consent {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-top: 18px;
+    padding: 12px;
+    background: var(--ls-surface2);
+    border-radius: 10px;
+    font-size: 12px;
+    color: var(--ls-text-muted);
+  }
+  .consent input { margin-top: 2px; flex-shrink: 0; }
+
+  /* Bottom nav fixed */
+  .form-bottom {
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    max-width: 480px;
+    padding: 12px 20px 16px;
+    background: rgba(255,255,255,0.95);
+    backdrop-filter: blur(10px);
+    border-top: 1px solid var(--ls-border);
+    z-index: 5;
+  }
+  .form-bottom button {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, var(--ls-gold), var(--ls-gold-light));
+    color: var(--ls-charcoal);
+    border: none;
+    border-radius: 12px;
+    font-family: 'Syne', serif;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.15s;
+  }
+  .form-bottom button:hover { transform: translateY(-1px); }
+  .form-bottom button:disabled {
+    background: var(--ls-surface2);
+    color: var(--ls-text-hint);
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  /* ===================== THANK YOU ===================== */
+  .thank-bg {
+    background: linear-gradient(180deg, #FAEEDA 0%, var(--ls-cream) 60%);
+    padding: 48px 24px 40px;
+    text-align: center;
+    min-height: calc(100vh - 60px);
+  }
+  .check-circle {
+    width: 80px; height: 80px;
+    margin: 0 auto 24px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--ls-gold), var(--ls-teal));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 40px;
+    font-weight: 700;
+    animation: popIn 0.5s cubic-bezier(0.16,1,0.3,1);
+    box-shadow: 0 12px 32px rgba(201,168,76,0.3);
+  }
+  @keyframes popIn {
+    0% { transform: scale(0); opacity: 0; }
+    60% { transform: scale(1.15); opacity: 1; }
+    100% { transform: scale(1); }
+  }
+  .thank-bg h1 {
+    font-family: 'Syne', serif;
+    font-size: 30px;
+    font-weight: 700;
+    color: var(--ls-text);
+    margin-bottom: 14px;
+    line-height: 1.25;
+  }
+  .thank-bg .lead {
+    font-size: 15px;
+    color: var(--ls-text-muted);
+    margin-bottom: 6px;
+  }
+  .thank-bg .lead strong {
+    color: var(--ls-gold);
+    font-weight: 700;
+  }
+  .thank-bg .reassure {
+    font-size: 13px;
+    color: var(--ls-text-muted);
+    margin-bottom: 32px;
+  }
+  .thank-divider {
+    margin: 28px auto;
+    width: 60px;
+    height: 1px;
+    background: var(--ls-border);
+  }
+  .thank-bg h3 {
+    font-family: 'Syne', serif;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--ls-text);
+    margin-bottom: 14px;
+  }
+  .thank-socials {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-width: 320px;
+    margin: 0 auto 24px;
+  }
+  .thank-social-btn {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 18px;
+    background: white;
+    border: 1px solid var(--ls-border);
+    border-radius: 12px;
+    color: var(--ls-text);
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.18s;
+  }
+  .thank-social-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  }
+  .thank-social-btn .social-icon {
+    font-size: 22px;
+    width: 28px;
+    text-align: center;
+  }
+  .thank-microfooter {
+    margin-top: 32px;
+    font-size: 11px;
+    color: var(--ls-text-hint);
+  }
+
+  /* Mobile tweak */
+  @media (max-width: 380px) {
+    .welcome-bg h1 { font-size: 24px; }
+    .step-title { font-size: 20px; }
+    .field-row { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== Mockup banner + nav (preview only) ===== -->
+<div class="mockup-banner">
+  🎨 MOCKUP — Bilan Online — La Base 360 (3 vues : Welcome / Formulaire / Remerciement)
+</div>
+<div class="mockup-nav">
+  <button id="navWelcome" class="active" onclick="showView('welcome')">1. Welcome</button>
+  <button id="navForm" onclick="showView('form'); goToStep(1);">2. Formulaire</button>
+  <button id="navThank" onclick="showView('thank')">3. Remerciement</button>
+</div>
+
+<div class="app-shell">
+
+  <!-- ============================================== -->
+  <!--             VIEW 1 — WELCOME                    -->
+  <!-- ============================================== -->
+  <div class="view active" id="view-welcome">
+    <div class="welcome-bg">
+      <div class="welcome-brand">La Base 360 <span class="dot"></span> Bilan</div>
+      <div class="welcome-emoji">🥰</div>
+      <h1>Nous sommes heureux<br>de te voir ici.</h1>
+
+      <div class="coach-card">
+        <div class="coach-avatar">TK</div>
+        <div class="coach-info">
+          <div class="coach-label">Ton coach</div>
+          <div class="coach-name">Thomas K.</div>
+        </div>
+      </div>
+
+      <div class="welcome-pitch">
+        <h2>La Base 360, c'est :</h2>
+        <ul>
+          <li>Un bilan personnalisé pour comprendre ton corps</li>
+          <li>Un coach humain qui t'accompagne au quotidien</li>
+          <li>Des résultats durables, pas une mode passagère</li>
+        </ul>
+      </div>
+
+      <button class="cta-primary" onclick="showView('form'); goToStep(1);">
+        Commencer mon bilan
+      </button>
+      <div class="welcome-microcopy">Promis, ça prend 2 min 🙏</div>
+
+      <div class="welcome-libre">
+        Tu n'as pas été invité par un coach ?
+        <a onclick="alert('En vrai : redirige vers bilan libre admin.')">Continuer en bilan libre</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================== -->
+  <!--             VIEW 2 — FORMULAIRE                 -->
+  <!-- ============================================== -->
+  <div class="view" id="view-form">
+    <div class="form-header">
+      <div class="form-progress-meta">
+        <button class="form-back" id="btnBack" onclick="prevStep()" disabled>← Précédent</button>
+        <span id="stepLabel">Étape 1/5</span>
+        <span class="saved" id="saved">💾 Sauvegardé</span>
+      </div>
+      <div class="form-progress-bar">
+        <div class="form-progress-fill" id="progressFill" style="width: 20%;"></div>
+      </div>
+    </div>
+
+    <!-- ===== STEP 1 — Identité ===== -->
+    <div class="form-step active" id="step-1">
+      <div class="step-emoji">👋</div>
+      <div class="step-title">Faisons connaissance</div>
+      <div class="step-subtitle">4 infos rapides pour personnaliser ton bilan.</div>
+
+      <div class="field">
+        <label>Ton prénom <span class="req">*</span></label>
+        <input type="text" placeholder="Marie" oninput="markSaved()">
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label>Âge <span class="req">*</span></label>
+          <input type="number" placeholder="32" min="16" max="99" oninput="markSaved()">
+        </div>
+        <div class="field">
+          <label>Taille (cm) <span class="req">*</span></label>
+          <input type="number" placeholder="168" min="100" max="220" oninput="markSaved()">
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Ta ville <span class="req">*</span></label>
+        <input type="text" placeholder="Metz" oninput="markSaved()">
+      </div>
+    </div>
+
+    <!-- ===== STEP 2 — Objectifs ===== -->
+    <div class="form-step" id="step-2">
+      <div class="step-emoji">🎯</div>
+      <div class="step-title">Tes objectifs</div>
+      <div class="step-subtitle">Tu peux en cocher plusieurs.</div>
+
+      <div class="choice-grid">
+        <div class="choice-card" onclick="toggleChoice(this); togglePerteSubField(this);">
+          <span class="choice-emoji">⚖️</span>
+          <span class="choice-label">Perte de poids</span>
+        </div>
+        <div class="choice-card" onclick="toggleChoice(this);">
+          <span class="choice-emoji">💪</span>
+          <span class="choice-label">Prise de masse</span>
+        </div>
+        <div class="choice-card" onclick="toggleChoice(this);">
+          <span class="choice-emoji">⚡</span>
+          <span class="choice-label">Plus d'énergie</span>
+        </div>
+        <div class="choice-card" onclick="toggleChoice(this);">
+          <span class="choice-emoji">😴</span>
+          <span class="choice-label">Mieux dormir</span>
+        </div>
+        <div class="choice-card" onclick="toggleChoice(this);" style="grid-column: span 2;">
+          <span class="choice-emoji">🌿</span>
+          <span class="choice-label">Bien-être général</span>
+        </div>
+      </div>
+
+      <div class="sub-field" id="subPerte">
+        <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">
+          Combien de kilos vises-tu ?
+        </label>
+        <input type="number" placeholder="5" min="1" max="50" style="width: 100%; padding: 12px 14px; border: 1px solid var(--ls-border); border-radius: 10px; font-size: 15px;">
+      </div>
+
+      <div class="field" style="margin-top: 24px;">
+        <label>Ta motivation, tu la situes à combien sur 10 ?</label>
+        <div class="slider-wrap">
+          <div class="slider-value" id="motivVal">7</div>
+          <div class="slider-label" id="motivLabel">Plutôt motivé(e)</div>
+          <input type="range" min="1" max="10" value="7" class="slider-input" id="motivSlider"
+            oninput="updateMotiv(this.value)">
+          <div class="slider-scale">
+            <span>1</span><span>5</span><span>10</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== STEP 3 — Vécu ===== -->
+    <div class="form-step" id="step-3">
+      <div class="step-emoji">🧭</div>
+      <div class="step-title">Ton vécu</div>
+      <div class="step-subtitle">As-tu déjà essayé quelque chose pour atteindre tes objectifs ?</div>
+
+      <div class="choice-grid">
+        <div class="choice-card" onclick="toggleChoice(this); toggleVecuSubField();">
+          <span class="choice-emoji">🥗</span>
+          <span class="choice-label">Régimes</span>
+        </div>
+        <div class="choice-card" onclick="toggleChoice(this); toggleVecuSubField();">
+          <span class="choice-emoji">👤</span>
+          <span class="choice-label">Coach</span>
+        </div>
+        <div class="choice-card" onclick="toggleChoice(this); toggleVecuSubField();">
+          <span class="choice-emoji">🏃</span>
+          <span class="choice-label">Sport</span>
+        </div>
+        <div class="choice-card" onclick="toggleChoice(this); toggleVecuSubField();">
+          <span class="choice-emoji">💊</span>
+          <span class="choice-label">Suppléments</span>
+        </div>
+        <div class="choice-card" onclick="toggleChoice(this); toggleVecuSubField();" style="grid-column: span 2;">
+          <span class="choice-emoji">🤷</span>
+          <span class="choice-label">Rien encore</span>
+        </div>
+      </div>
+
+      <div class="sub-field" id="subVecu">
+        <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">
+          Qu'est-ce que ça a donné ? (optionnel)
+        </label>
+        <textarea rows="3" placeholder="J'ai perdu 4 kg avec un régime, mais je les ai repris…"
+          style="width: 100%; padding: 12px 14px; border: 1px solid var(--ls-border); border-radius: 10px; font-size: 14px; font-family: inherit; resize: vertical;"></textarea>
+      </div>
+    </div>
+
+    <!-- ===== STEP 4 — Habitudes ===== -->
+    <div class="form-step" id="step-4">
+      <div class="step-emoji">🍽️</div>
+      <div class="step-title">Tes habitudes</div>
+      <div class="step-subtitle">Format ultra-court — choisis ce qui te ressemble le plus.</div>
+
+      <label style="display: block; font-size: 13px; font-weight: 600; margin: 16px 0 8px;">Petit-déjeuner</label>
+      <div class="radio-list">
+        <div class="radio-card" onclick="selectRadio(this, 'pdj')"><span class="radio-emoji">🥐</span><span class="radio-label">Sucré (croissant, céréales)</span></div>
+        <div class="radio-card" onclick="selectRadio(this, 'pdj')"><span class="radio-emoji">🥚</span><span class="radio-label">Salé (œufs, charcuterie)</span></div>
+        <div class="radio-card" onclick="selectRadio(this, 'pdj')"><span class="radio-emoji">🥤</span><span class="radio-label">Smoothie / healthy</span></div>
+        <div class="radio-card" onclick="selectRadio(this, 'pdj')"><span class="radio-emoji">☕</span><span class="radio-label">Café seulement / rien</span></div>
+      </div>
+
+      <label style="display: block; font-size: 13px; font-weight: 600; margin: 18px 0 8px;">Repas du midi</label>
+      <div class="radio-list">
+        <div class="radio-card" onclick="selectRadio(this, 'midi')"><span class="radio-emoji">🏠</span><span class="radio-label">Maison</span></div>
+        <div class="radio-card" onclick="selectRadio(this, 'midi')"><span class="radio-emoji">🍽️</span><span class="radio-label">Cantine / resto</span></div>
+        <div class="radio-card" onclick="selectRadio(this, 'midi')"><span class="radio-emoji">🥪</span><span class="radio-label">Sandwich / wrap</span></div>
+        <div class="radio-card" onclick="selectRadio(this, 'midi')"><span class="radio-emoji">🍔</span><span class="radio-label">Fast-food</span></div>
+      </div>
+
+      <label style="display: block; font-size: 13px; font-weight: 600; margin: 18px 0 8px;">Fast-food par semaine</label>
+      <div class="slider-wrap">
+        <div class="slider-value" id="ffVal">2</div>
+        <div class="slider-label" id="ffLabel">Modéré</div>
+        <input type="range" min="0" max="7" value="2" class="slider-input" id="ffSlider"
+          oninput="updateFf(this.value)">
+        <div class="slider-scale">
+          <span>0</span><span>3-4</span><span>7+</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== STEP 5 — Budget + activité ===== -->
+    <div class="form-step" id="step-5">
+      <div class="step-emoji">💰</div>
+      <div class="step-title">Budget + activité</div>
+      <div class="step-subtitle">Dernière étape, on y est presque !</div>
+
+      <label style="display: block; font-size: 13px; font-weight: 600; margin: 14px 0 8px;">Budget alimentaire / jour</label>
+      <div class="choice-grid">
+        <div class="choice-card" onclick="selectBudget(this)"><span class="choice-emoji">💰</span><span class="choice-label">2 €</span></div>
+        <div class="choice-card" onclick="selectBudget(this)"><span class="choice-emoji">💰</span><span class="choice-label">4 €</span></div>
+        <div class="choice-card" onclick="selectBudget(this)"><span class="choice-emoji">💰</span><span class="choice-label">8 €</span></div>
+        <div class="choice-card" onclick="selectBudget(this)"><span class="choice-emoji">💰</span><span class="choice-label">10 €</span></div>
+        <div class="choice-card" onclick="selectBudget(this)" style="grid-column: span 2;"><span class="choice-emoji">💎</span><span class="choice-label">15 € et +</span></div>
+      </div>
+
+      <label style="display: block; font-size: 13px; font-weight: 600; margin: 22px 0 8px;">
+        Es-tu actif au quotidien ? (marche, escaliers, jardin)
+      </label>
+      <div class="radio-list">
+        <div class="radio-card" onclick="selectActif(this, 'oui')"><span class="radio-emoji">✅</span><span class="radio-label">Oui</span></div>
+        <div class="radio-card" onclick="selectActif(this, 'non')"><span class="radio-emoji">❌</span><span class="radio-label">Non</span></div>
+      </div>
+
+      <div class="sub-field" id="subActif">
+        <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">
+          Quoi exactement ? (optionnel)
+        </label>
+        <input type="text" placeholder="Marche 30 min/jour pour aller au travail" style="width: 100%; padding: 12px 14px; border: 1px solid var(--ls-border); border-radius: 10px; font-size: 14px;">
+      </div>
+
+      <div class="consent">
+        <input type="checkbox" id="rgpd">
+        <label for="rgpd">
+          J'accepte que mes données soient transmises à mon coach pour analyse de mon bilan. Pas de spam, pas de revente.
+        </label>
+      </div>
+    </div>
+
+    <div class="form-bottom">
+      <button id="btnNext" onclick="nextStep()">Suivant →</button>
+    </div>
+  </div>
+
+  <!-- ============================================== -->
+  <!--             VIEW 3 — REMERCIEMENT               -->
+  <!-- ============================================== -->
+  <div class="view" id="view-thank">
+    <div class="thank-bg">
+      <div class="check-circle">✓</div>
+      <h1>Merci Marie ! 🙏</h1>
+      <p class="lead">Ton bilan est arrivé chez <strong>Thomas K.</strong></p>
+      <p class="reassure">Il va l'analyser et te recontacter sous 48h max.</p>
+
+      <div class="thank-divider"></div>
+
+      <h3>En attendant, retrouve-nous :</h3>
+      <div class="thank-socials">
+        <a href="#" class="thank-social-btn">
+          <span class="social-icon">📷</span>
+          <span>Suis-nous sur Instagram</span>
+        </a>
+        <a href="#" class="thank-social-btn">
+          <span class="social-icon">💬</span>
+          <span>Rejoins notre WhatsApp</span>
+        </a>
+        <a href="#" class="thank-social-btn">
+          <span class="social-icon">📚</span>
+          <span>Découvre nos ressources</span>
+        </a>
+      </div>
+
+      <div class="thank-microfooter">
+        Tu peux fermer cette page ou la garder ouverte.<br>
+        <strong style="color: var(--ls-gold);">La Base 360</strong> · 2026
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // ===== View switching =====
+  function showView(name) {
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.getElementById('view-' + name).classList.add('active');
+    // Update mockup nav
+    document.querySelectorAll('.mockup-nav button').forEach(b => b.classList.remove('active'));
+    const navBtn = document.getElementById('nav' + name.charAt(0).toUpperCase() + name.slice(1));
+    if (navBtn) navBtn.classList.add('active');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // ===== Form step navigation =====
+  let currentStep = 1;
+  const totalSteps = 5;
+
+  function goToStep(n) {
+    document.querySelectorAll('.form-step').forEach(s => s.classList.remove('active'));
+    document.getElementById('step-' + n).classList.add('active');
+    currentStep = n;
+    document.getElementById('stepLabel').textContent = `Étape ${n}/${totalSteps}`;
+    document.getElementById('progressFill').style.width = (n / totalSteps * 100) + '%';
+    document.getElementById('btnBack').disabled = (n === 1);
+    document.getElementById('btnNext').textContent = (n === totalSteps) ? 'Envoyer mon bilan ✓' : 'Suivant →';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+  function nextStep() {
+    if (currentStep < totalSteps) {
+      goToStep(currentStep + 1);
+    } else {
+      // submit
+      showView('thank');
+    }
+  }
+  function prevStep() {
+    if (currentStep > 1) goToStep(currentStep - 1);
+  }
+
+  // ===== Field interactions =====
+  function toggleChoice(el) {
+    el.classList.toggle('selected');
+    markSaved();
+  }
+  function togglePerteSubField(el) {
+    const sub = document.getElementById('subPerte');
+    sub.classList.toggle('visible', el.classList.contains('selected'));
+  }
+  function toggleVecuSubField() {
+    const anySelected = document.querySelectorAll('#step-3 .choice-card.selected').length > 0;
+    document.getElementById('subVecu').classList.toggle('visible', anySelected);
+  }
+  function selectRadio(el, group) {
+    el.parentElement.querySelectorAll('.radio-card').forEach(r => r.classList.remove('selected'));
+    el.classList.add('selected');
+    markSaved();
+  }
+  function selectBudget(el) {
+    document.querySelectorAll('#step-5 .choice-grid .choice-card').forEach(r => r.classList.remove('selected'));
+    el.classList.add('selected');
+    markSaved();
+  }
+  function selectActif(el, val) {
+    el.parentElement.querySelectorAll('.radio-card').forEach(r => r.classList.remove('selected'));
+    el.classList.add('selected');
+    document.getElementById('subActif').classList.toggle('visible', val === 'oui');
+    markSaved();
+  }
+  function updateMotiv(v) {
+    document.getElementById('motivVal').textContent = v;
+    const labels = ['', 'Pas trop', 'Hésitant(e)', 'Hésitant(e)', 'Curieux(se)', 'Curieux(se)', 'Motivé(e)', 'Plutôt motivé(e)', 'Très motivé(e)', 'Engagé(e) à fond', 'Engagé(e) à fond'];
+    document.getElementById('motivLabel').textContent = labels[v];
+    markSaved();
+  }
+  function updateFf(v) {
+    document.getElementById('ffVal').textContent = v;
+    const labels = ['Excellent !', 'Modéré', 'Modéré', 'Habituel', 'Habituel', 'Souvent', 'Très souvent', 'Tous les jours'];
+    document.getElementById('ffLabel').textContent = labels[v];
+    markSaved();
+  }
+
+  // ===== Auto-save indicator =====
+  let savedTimer;
+  function markSaved() {
+    const el = document.getElementById('saved');
+    el.classList.add('visible');
+    clearTimeout(savedTimer);
+    savedTimer = setTimeout(() => el.classList.remove('visible'), 1500);
+  }
+</script>
+
+</body>
+</html>

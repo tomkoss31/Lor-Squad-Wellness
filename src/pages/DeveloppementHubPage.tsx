@@ -118,6 +118,39 @@ const CARDS: HubCard[] = [
     tag: { label: "Nouveau", color: "var(--ls-coral)" },
     requireRole: "admin",
   },
+  {
+    id: "prospection-cold",
+    emoji: "🌍",
+    title: "Prospection internationale",
+    description:
+      "Module mobile-first 6 étapes : marché → profil → brief méthodo (GoPro + posture + erreurs) → cibler (hashtags + lieux IRL) → messages (scripts + traduction FR) → suivi & relances (arborescence J+3/J+7 + stats coach).",
+    cta: "Lancer une session",
+    path: "/prospection",
+    accent: "var(--ls-teal)",
+    tag: { label: "Nouveau", color: "var(--ls-coral)" },
+  },
+  {
+    id: "admin-prospection",
+    emoji: "🛠",
+    title: "Admin Prospection",
+    description:
+      "Édite les scripts et les briefs méthodo du module /prospection. Modifs visibles immédiatement par tous les distri.",
+    cta: "Ouvrir l'admin",
+    path: "/admin/prospection",
+    accent: "var(--ls-purple)",
+    requireRole: "admin",
+  },
+  {
+    id: "bilan-online",
+    emoji: "🌱",
+    title: "Mon bilan online",
+    description:
+      "Partage ton lien /bilan-online/<ton-prénom> : tes prospects remplissent un bilan en 2 min, tu reçois une push, tu retrouves le Lead dans /clients onglet Leads (kanban + templates + relance auto J+3).",
+    cta: "Voir mes Leads",
+    path: "/clients?tab=leads",
+    accent: "var(--ls-gold)",
+    tag: { label: "Nouveau", color: "var(--ls-coral)" },
+  },
 ];
 
 export function DeveloppementHubPage() {
