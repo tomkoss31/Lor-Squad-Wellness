@@ -19,7 +19,42 @@ export interface ProspectionProfile {
   label: string;
   description: string | null;
   hashtag_advice: string | null;
+  gopro_steps: string[];
+  posture: string | null;
+  mistakes: string[];
+  local_venues_hint: string | null;
+  recommended_platforms: string[];
   position: number;
+}
+
+export type AttemptResponseStatus =
+  | "pending"
+  | "positive"
+  | "curious"
+  | "negative"
+  | "no_response";
+
+export interface ProspectionAttempt {
+  id: string;
+  coach_id: string;
+  market_code: string;
+  profile_slug: string;
+  platform: ProspectionPlatform;
+  target_label: string | null;
+  target_handle: string | null;
+  first_message_sent_at: string;
+  response_status: AttemptResponseStatus;
+  converted_to_lead_id: string | null;
+  note: string | null;
+  created_at: string;
+}
+
+export interface ProspectionStats {
+  total_7d: number;
+  responses_7d: number;
+  positive_7d: number;
+  conversions_7d: number;
+  total_30d: number;
 }
 
 export interface ProspectionMarketTip {
@@ -102,7 +137,7 @@ export function useProspectionData() {
             .eq("active", true)
             .order("position", { ascending: true }),
           sb.from("prospection_profiles")
-            .select("slug, emoji, label, description, hashtag_advice, position")
+            .select("slug, emoji, label, description, hashtag_advice, gopro_steps, posture, mistakes, local_venues_hint, recommended_platforms, position")
             .eq("active", true)
             .order("position", { ascending: true }),
           sb.from("prospection_hashtags")
@@ -199,3 +234,67 @@ export const PLATFORM_GRADIENTS: Record<ProspectionPlatform, string> = {
   linkedin: "#0A66C2",
   sms: "#6B7280",
 };
+
+// ============================================================================
+// Attempts CRUD + stats
+// ============================================================================
+
+export async function createProspectionAttempt(input: {
+  coach_id: string;
+  market_code: string;
+  profile_slug: string;
+  platform: ProspectionPlatform;
+  target_label?: string | null;
+  target_handle?: string | null;
+}): Promise<{ id: string } | null> {
+  const sb = await getSupabaseClient();
+  if (!sb) return null;
+  const { data, error } = await sb
+    .from("prospection_attempts")
+    .insert({
+      coach_id: input.coach_id,
+      market_code: input.market_code,
+      profile_slug: input.profile_slug,
+      platform: input.platform,
+      target_label: input.target_label ?? null,
+      target_handle: input.target_handle ?? null,
+    })
+    .select("id")
+    .single();
+  if (error || !data) return null;
+  return { id: (data as { id: string }).id };
+}
+
+export async function updateAttemptResponseStatus(
+  id: string,
+  status: AttemptResponseStatus,
+): Promise<boolean> {
+  const sb = await getSupabaseClient();
+  if (!sb) return false;
+  const { error } = await sb
+    .from("prospection_attempts")
+    .update({ response_status: status, updated_at: new Date().toISOString() })
+    .eq("id", id);
+  return !error;
+}
+
+export async function fetchRecentAttempts(coachId: string, limit = 10): Promise<ProspectionAttempt[]> {
+  const sb = await getSupabaseClient();
+  if (!sb) return [];
+  const { data, error } = await sb
+    .from("prospection_attempts")
+    .select("*")
+    .eq("coach_id", coachId)
+    .order("first_message_sent_at", { ascending: false })
+    .limit(limit);
+  if (error || !data) return [];
+  return data as ProspectionAttempt[];
+}
+
+export async function fetchProspectionStats(coachId: string): Promise<ProspectionStats | null> {
+  const sb = await getSupabaseClient();
+  if (!sb) return null;
+  const { data, error } = await sb.rpc("get_prospection_stats", { p_user_id: coachId });
+  if (error || !data) return null;
+  return data as ProspectionStats;
+}

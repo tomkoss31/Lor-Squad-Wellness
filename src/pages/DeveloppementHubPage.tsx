@@ -123,11 +123,22 @@ const CARDS: HubCard[] = [
     emoji: "🌍",
     title: "Prospection internationale",
     description:
-      "Module mobile-first : choisis ton marché (FR/EN/ES/PT/TR/HI) + profil cible + plateforme. Scripts pré-rédigés à copier-coller avec traduction FR pour les langues étrangères. Hashtags optimisés inclus.",
+      "Module mobile-first 6 étapes : marché → profil → brief méthodo (GoPro + posture + erreurs) → cibler (hashtags + lieux IRL) → messages (scripts + traduction FR) → suivi & relances (arborescence J+3/J+7 + stats coach).",
     cta: "Lancer une session",
     path: "/prospection",
     accent: "var(--ls-teal)",
     tag: { label: "Nouveau", color: "var(--ls-coral)" },
+  },
+  {
+    id: "admin-prospection",
+    emoji: "🛠",
+    title: "Admin Prospection",
+    description:
+      "Édite les scripts et les briefs méthodo du module /prospection. Modifs visibles immédiatement par tous les distri.",
+    cta: "Ouvrir l'admin",
+    path: "/admin/prospection",
+    accent: "var(--ls-purple)",
+    requireRole: "admin",
   },
   {
     id: "bilan-online",

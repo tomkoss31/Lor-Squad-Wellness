@@ -164,6 +164,11 @@ const ProspectionPage = lazy(() =>
     default: module.ProspectionPage,
   })),
 );
+const AdminProspectionPage = lazy(() =>
+  import("./pages/AdminProspectionPage").then((module) => ({
+    default: module.AdminProspectionPage,
+  })),
+);
 const AutoLoginPage = lazy(() =>
   import("./pages/AutoLoginPage").then((module) => ({
     default: module.AutoLoginPage,
@@ -548,6 +553,8 @@ export default function App() {
               {/* Chantier #3 (2026-05-17) — Module Prospection cold mobile-first.
                   4 étapes : Marché → Profil → Hashtags → Messages multi-langues. */}
               <Route path="prospection" element={<ProspectionPage />} />
+              {/* Chantier #3 étape 3.3 — CRUD admin scripts + briefs */}
+              <Route path="admin/prospection" element={<AdminProspectionPage />} />
               {/* Rentabilité Phase A (2026-05-05) — jauge €/mois + breakdown. */}
               <Route path="rentabilite" element={<RentabilitePage />} />
               {/* La Base 360 Academy Phase 1 (2026-04-26) — gated admin only

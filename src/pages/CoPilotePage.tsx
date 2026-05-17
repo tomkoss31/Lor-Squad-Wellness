@@ -24,6 +24,7 @@ import { PendingFollowupsCard } from "../components/copilote/PendingFollowupsCar
 import { PvGaugeBand } from "../components/copilote/PvGaugeBand";
 import { PvActionPlanAlert } from "../components/copilote/PvActionPlanAlert";
 import { InboxWidget } from "../components/copilote/InboxWidget";
+import { ProspectionShortcut } from "../components/copilote/ProspectionShortcut";
 import { BirthdayBlock } from "../components/copilote/BirthdayBlock";
 import { BusinessOpportunitiesCard } from "../components/copilote/BusinessOpportunitiesCard";
 import { DistriOnboardingChecklist } from "../components/formation/DistriOnboardingChecklist";
@@ -130,6 +131,10 @@ export function CoPilotePage() {
       {/* Widget messages (chantier 5) — conservé car complémentaire : Hero
           et Duo montrent RDV/suivis, l'Inbox montre les demandes clients. */}
       <InboxWidget />
+
+      {/* Chantier #3 étape 3.6 (2026-05-17) : lien rapide vers le module
+          Prospection cold mobile-first. Affiche les stats 7j si dispo. */}
+      <ProspectionShortcut />
 
       {/* Zone 3 — Duo Agenda / Suivis */}
       <div

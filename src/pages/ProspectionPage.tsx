@@ -1,34 +1,40 @@
-// Chantier #3 V2 — Module Prospection cold mobile-first (2026-05-17, polish complet).
+// Chantier #3 V3 — Module Prospection cold mobile-first FULL (2026-05-17 nuit).
 // Route: /prospection (authentifiée).
 //
-// Aligné pixel-near sur le mockup `docs/mockups/prospection-internationale.html`
-// (validé Thomas) avec TOUT le contenu :
+// Aligné sur le brainstorm Égypte complet :
 //   1. Marché (6 cards drapeau pays)
-//   2. Profil cible (3 cards + astuce hashtags par profil)
-//   3. Hashtags (chips copiables + astuce méthode)
-//   4. Messages :
-//      - Banner timing + cultural tip du marché (peach gradient)
-//      - Cards script avec label détaillé + langue + badge "Relance J+3"
-//      - Toggle "Voir FR" sur scripts non-FR
-//      - Arborescence relance (3 cards : ✅ positif / ⏳ J+3 / ❌ J+7)
-//      - Box bilan link
+//   2. Profil cible (3 cards)
+//   3. Brief méthodo (GoPro 3 points + posture + 3 erreurs à éviter)  ← NEW V3
+//   4. Cibler (hashtags + lieux IRL + plateformes recommandées)        ← enrichi V3
+//   5. Premier contact (scripts par plateforme + bouton "Marquer envoyé" → tracking)
+//   6. Suivi & relances (arborescence J+3/J+7 + stats coach + bouton bilan link)
 //
-// Animations CSS pures, palette gold/teal vive, ombres marquées.
+// Tracking via table `prospection_attempts` : chaque clic "Marquer envoyé"
+// crée une row. Stats agrégées par RPC `get_prospection_stats(user_id)`.
+//
+// Aligné pixel-near sur le mockup `docs/mockups/prospection-internationale.html`
+// (validé Thomas).
 
 import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppContext } from "../context/AppContext";
 import {
+  createProspectionAttempt,
+  fetchProspectionStats,
   filterHashtags,
   filterScripts,
   PLATFORM_GRADIENTS,
   PLATFORM_ICONS,
   PLATFORM_LABELS,
   useProspectionData,
+  type ProspectionPlatform,
   type ProspectionScript,
+  type ProspectionStats,
 } from "../hooks/useProspectionData";
 
-type Step = 1 | 2 | 3 | 4;
+type Step = 1 | 2 | 3 | 4 | 5 | 6;
+
+const TOTAL_STEPS: Step = 6;
 
 export function ProspectionPage() {
   const navigate = useNavigate();
@@ -38,6 +44,7 @@ export function ProspectionPage() {
   const [step, setStep] = useState<Step>(1);
   const [marketCode, setMarketCode] = useState<string | null>(null);
   const [profileSlug, setProfileSlug] = useState<string | null>(null);
+  const [stats, setStats] = useState<ProspectionStats | null>(null);
 
   const market = useMemo(
     () => data.markets.find((m) => m.code === marketCode) ?? null,
@@ -72,12 +79,33 @@ export function ProspectionPage() {
     ? `${window.location.origin}/bilan-online/${coachSlug}`
     : `${window.location.origin}/bilan-online`;
 
-  // Scroll to top on step change for natural progression.
+  // Charge les stats coach au mount + après chaque "marquer envoyé".
+  const reloadStats = useMemo(
+    () => async () => {
+      if (!currentUser?.id) return;
+      const s = await fetchProspectionStats(currentUser.id);
+      if (s) setStats(s);
+    },
+    [currentUser?.id],
+  );
+  useEffect(() => { void reloadStats(); }, [reloadStats]);
+
   useEffect(() => {
     if (step > 1) {
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
   }, [step]);
+
+  async function handleMarkSent(script: ProspectionScript) {
+    if (!currentUser?.id || !marketCode || !profileSlug) return;
+    await createProspectionAttempt({
+      coach_id: currentUser.id,
+      market_code: marketCode,
+      profile_slug: profileSlug,
+      platform: script.platform,
+    });
+    void reloadStats();
+  }
 
   if (data.loading) {
     return <PageShell><Skeleton /></PageShell>;
@@ -90,15 +118,18 @@ export function ProspectionPage() {
     <PageShell>
       <style>{KEYFRAMES}</style>
       <Header />
+
+      {stats && <StatsBanner stats={stats} />}
+
       <Stepper step={step} />
 
       {step === 1 && (
         <Section
-          tag="Étape 1 sur 4"
+          tag={`Étape 1 sur ${TOTAL_STEPS}`}
           title="Quel marché tu cibles ? 🌍"
           subtitle="Chaque marché a sa langue, son réseau social dominant, son timing optimal."
         >
-          <div style={gridStyle(3, 480)}>
+          <div style={gridStyle(3)}>
             {data.markets.map((m) => (
               <ChoiceCard
                 key={m.code}
@@ -121,11 +152,11 @@ export function ProspectionPage() {
 
       {step === 2 && (
         <Section
-          tag="Étape 2 sur 4"
+          tag={`Étape 2 sur ${TOTAL_STEPS}`}
           title="Quel profil tu vises ? 🎯"
-          subtitle="3 profils prioritaires La Base 360. À élargir à terme (admin pourra ajouter prof, chômeur, etc.)."
+          subtitle="3 profils prioritaires La Base 360. Admin pourra ajouter d'autres profils."
         >
-          <div style={gridStyle(3, 360)}>
+          <div style={gridStyle(3)}>
             {data.profiles.map((p) => (
               <ChoiceCard
                 key={p.slug}
@@ -149,10 +180,31 @@ export function ProspectionPage() {
 
       {step === 3 && profile && (
         <Section
-          tag="Étape 3 sur 4"
-          title="Cible avec les bons hashtags 🔍"
-          subtitle={`Recherche ces hashtags sur Instagram / Facebook / TikTok. Tap pour copier.`}
+          tag={`Étape 3 sur ${TOTAL_STEPS}`}
+          title={`Comment aborder : ${profile.label.toLowerCase()} 🧭`}
+          subtitle="Méthode GoPro résumée, posture à adopter, erreurs à éviter. Lis ça avant de copier-coller — c'est ce qui fait la différence."
         >
+          <BriefMethodSection
+            goproSteps={profile.gopro_steps}
+            posture={profile.posture}
+            mistakes={profile.mistakes}
+          />
+          <NavRow
+            onBack={() => setStep(2)}
+            onNext={() => setStep(4)}
+            nextLabel="J'ai compris, on cible →"
+          />
+        </Section>
+      )}
+
+      {step === 4 && profile && market && (
+        <Section
+          tag={`Étape 4 sur ${TOTAL_STEPS}`}
+          title="Trouve les bonnes cibles 🔍"
+          subtitle="Hashtags + lieux IRL + plateformes prioritaires pour ce profil sur ce marché."
+        >
+          {/* Hashtags */}
+          <SubsectionTitle icon="#️⃣" title="Hashtags à utiliser" />
           {hashtags.length === 0 ? (
             <EmptyState>Aucun hashtag pour cette combinaison.</EmptyState>
           ) : (
@@ -162,26 +214,55 @@ export function ProspectionPage() {
               ))}
             </div>
           )}
-
           {profile.hashtag_advice && (
             <TipBanner emoji="💡" title="Astuce méthode">
               {profile.hashtag_advice}
             </TipBanner>
           )}
 
+          {/* Plateformes recommandées */}
+          {profile.recommended_platforms.length > 0 && (
+            <>
+              <SubsectionTitle icon="📱" title="Plateformes recommandées" mt={28} />
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 8 }}>
+                {profile.recommended_platforms.map((p) => (
+                  <PlatformBadgeChip key={p} platform={p as ProspectionPlatform} />
+                ))}
+              </div>
+            </>
+          )}
+
+          {/* Lieux IRL */}
+          {profile.local_venues_hint && (
+            <>
+              <SubsectionTitle icon="📍" title="Où croiser ce profil" mt={28} />
+              <div style={{
+                background: "linear-gradient(135deg, rgba(45,212,191,0.10), rgba(45,212,191,0.04))",
+                border: "1px solid rgba(45,212,191,0.25)",
+                borderRadius: 12,
+                padding: "14px 16px",
+                fontSize: 13.5,
+                lineHeight: 1.65,
+                color: "var(--ls-text, #1F2937)",
+              }}>
+                {profile.local_venues_hint}
+              </div>
+            </>
+          )}
+
           <NavRow
-            onBack={() => setStep(2)}
-            onNext={() => setStep(4)}
-            nextLabel="Voir mes messages →"
+            onBack={() => setStep(3)}
+            onNext={() => setStep(5)}
+            nextLabel="J'ai mes cibles, voir les messages →"
           />
         </Section>
       )}
 
-      {step === 4 && market && profile && (
+      {step === 5 && market && profile && (
         <Section
-          tag="Étape 4 sur 4"
+          tag={`Étape 5 sur ${TOTAL_STEPS}`}
           title="Tes messages prêts à copier 📨"
-          subtitle="Personnalise le [prénom] et un [détail vu sur son profil]. Authentique > Parfait."
+          subtitle="Personnalise [prénom] + [détail vu sur son profil]. Authentique > Parfait."
         >
           {marketTip && (
             <MarketTimingBanner
@@ -196,7 +277,7 @@ export function ProspectionPage() {
           {scripts.length === 0 ? (
             <EmptyState>
               🌱 <strong>Messages bientôt disponibles</strong> pour ce combo ({market.label} · {profile.label}).<br />
-              <span style={{ fontSize: 12 }}>Thomas peut en rédiger depuis Supabase.</span>
+              <span style={{ fontSize: 12 }}>Tu peux en ajouter depuis la page admin si tu es admin.</span>
             </EmptyState>
           ) : (
             <div>
@@ -205,17 +286,55 @@ export function ProspectionPage() {
                   key={s.id}
                   script={s}
                   marketCode={marketCode ?? ""}
+                  onMarkSent={() => handleMarkSent(s)}
                 />
               ))}
             </div>
           )}
 
+          <NavRow
+            onBack={() => setStep(4)}
+            onNext={() => setStep(6)}
+            nextLabel="Voir le suivi des relances →"
+          />
+        </Section>
+      )}
+
+      {step === 6 && (
+        <Section
+          tag={`Étape 6 sur ${TOTAL_STEPS}`}
+          title="Suivi & arborescence de relance 📅"
+          subtitle="Que faire après chaque envoi, selon la réponse. Et tes stats de la semaine."
+        >
           <RelanceTree bilanLink={bilanLink} />
 
           <BilanLinkBox link={bilanLink} />
 
+          {stats && (
+            <div style={{ marginTop: 28 }}>
+              <h2 style={{
+                fontFamily: "'Syne', serif",
+                fontSize: 20,
+                fontWeight: 700,
+                margin: 0,
+                marginBottom: 8,
+                color: "var(--ls-charcoal, #0B0D11)",
+              }}>
+                📊 Tes 30 derniers jours
+              </h2>
+              <p style={{
+                fontSize: 13,
+                color: "var(--ls-text-muted, #4B5563)",
+                margin: 0, marginBottom: 14,
+              }}>
+                Données privées (visibles uniquement par toi).
+              </p>
+              <StatsGrid stats={stats} />
+            </div>
+          )}
+
           <NavRow
-            onBack={() => setStep(3)}
+            onBack={() => setStep(5)}
             onNext={() => {
               setMarketCode(null);
               setProfileSlug(null);
@@ -232,7 +351,7 @@ export function ProspectionPage() {
 }
 
 // ============================================================================
-// Shell + Header + Stepper
+// Shell + Header + Stepper + Stats banner
 // ============================================================================
 
 const KEYFRAMES = `
@@ -240,16 +359,12 @@ const KEYFRAMES = `
     from { opacity: 0; transform: translateY(8px); }
     to { opacity: 1; transform: translateY(0); }
   }
-  @keyframes ls-prospec-glow {
-    0%, 100% { box-shadow: 0 0 0 0 rgba(201,168,76,0.35); }
-    50% { box-shadow: 0 0 0 8px rgba(201,168,76,0); }
-  }
   @keyframes ls-prospec-shimmer {
     0% { background-position: -200% 0; }
     100% { background-position: 200% 0; }
   }
   @media (prefers-reduced-motion: reduce) {
-    .ls-prospec-fade, .ls-prospec-glow, .ls-prospec-shimmer { animation: none !important; }
+    .ls-prospec-fade, .ls-prospec-shimmer { animation: none !important; }
   }
 `;
 
@@ -326,20 +441,48 @@ function Header() {
   );
 }
 
+function StatsBanner({ stats }: { stats: ProspectionStats }) {
+  if (stats.total_7d === 0 && stats.total_30d === 0) return null;
+  return (
+    <div style={{
+      padding: "10px 20px",
+      background: "linear-gradient(90deg, rgba(45,212,191,0.10), rgba(201,168,76,0.06))",
+      borderBottom: "1px solid var(--ls-border, rgba(11,13,17,0.10))",
+      display: "flex", alignItems: "center", justifyContent: "center",
+      gap: 18,
+      fontSize: 12,
+      fontFamily: "'DM Sans', sans-serif",
+      flexWrap: "wrap",
+    }}>
+      <span style={{ color: "var(--ls-text-muted, #4B5563)" }}>
+        📊 <strong style={{ color: "var(--ls-charcoal, #0B0D11)" }}>{stats.total_7d}</strong> envois 7j
+      </span>
+      <span style={{ color: "var(--ls-text-muted, #4B5563)" }}>
+        💬 <strong style={{ color: "var(--ls-charcoal, #0B0D11)" }}>{stats.responses_7d}</strong> réponses
+      </span>
+      <span style={{ color: "var(--ls-text-muted, #4B5563)" }}>
+        🎯 <strong style={{ color: "var(--ls-charcoal, #0B0D11)" }}>{stats.conversions_7d}</strong> leads
+      </span>
+    </div>
+  );
+}
+
 function Stepper({ step }: { step: Step }) {
+  const stepsArray: Step[] = [1, 2, 3, 4, 5, 6];
   return (
     <div style={{
       display: "flex", justifyContent: "center", alignItems: "center", gap: 0,
-      padding: "16px 20px",
+      padding: "14px 12px",
       background: "var(--ls-surface, white)",
       borderBottom: "1px solid var(--ls-border, rgba(11,13,17,0.10))",
       position: "sticky", top: 0, zIndex: 10,
       boxShadow: "0 2px 12px rgba(11,13,17,0.04)",
+      flexWrap: "wrap",
     }}>
-      {([1, 2, 3, 4] as Step[]).map((n, i) => (
+      {stepsArray.map((n, i) => (
         <span key={n} style={{ display: "inline-flex", alignItems: "center" }}>
           <span style={{
-            width: 30, height: 30, borderRadius: "50%",
+            width: 28, height: 28, borderRadius: "50%",
             display: "inline-flex", alignItems: "center", justifyContent: "center",
             fontSize: 12, fontWeight: 700,
             transition: "all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1)",
@@ -365,9 +508,9 @@ function Stepper({ step }: { step: Step }) {
           }}>
             {n < step ? "✓" : n}
           </span>
-          {i < 3 && (
+          {i < stepsArray.length - 1 && (
             <span style={{
-              width: 36, height: 3,
+              width: 18, height: 3,
               borderRadius: 2,
               background: n < step
                 ? "linear-gradient(90deg, var(--ls-teal, #2DD4BF), var(--ls-border, rgba(11,13,17,0.10)))"
@@ -428,8 +571,25 @@ function Section({
   );
 }
 
+function SubsectionTitle({ icon, title, mt = 0 }: { icon: string; title: string; mt?: number }) {
+  return (
+    <div style={{
+      fontFamily: "'Syne', serif",
+      fontSize: 14, fontWeight: 700,
+      color: "var(--ls-charcoal, #0B0D11)",
+      letterSpacing: "0.02em",
+      marginTop: mt,
+      marginBottom: 10,
+      display: "flex", alignItems: "center", gap: 8,
+    }}>
+      <span style={{ fontSize: 16 }} aria-hidden="true">{icon}</span>
+      {title}
+    </div>
+  );
+}
+
 // ============================================================================
-// Choice cards (marché + profil)
+// Choice cards (étapes 1 et 2)
 // ============================================================================
 
 function ChoiceCard({
@@ -477,7 +637,7 @@ function ChoiceCard({
   );
 }
 
-const gridStyle = (cols: 2 | 3, _maxWidth: number): CSSProperties => ({
+const gridStyle = (cols: 2 | 3): CSSProperties => ({
   display: "grid",
   gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`,
   gap: 10,
@@ -503,7 +663,108 @@ const subStyle: CSSProperties = {
 };
 
 // ============================================================================
-// Hashtags
+// Étape 3 — Brief méthodo (GoPro + Posture + Erreurs)
+// ============================================================================
+
+function BriefMethodSection({
+  goproSteps, posture, mistakes,
+}: { goproSteps: string[]; posture: string | null; mistakes: string[] }) {
+  return (
+    <div>
+      {/* GoPro 3 points */}
+      {goproSteps.length > 0 && (
+        <div style={{ marginBottom: 24 }}>
+          <SubsectionTitle icon="🎯" title="Méthode GoPro — 3 points" />
+          <div style={{ display: "grid", gap: 10 }}>
+            {goproSteps.map((s, i) => (
+              <div key={i} style={{
+                display: "flex", gap: 14,
+                padding: "14px 16px",
+                background: "var(--ls-surface, white)",
+                border: "1px solid var(--ls-border, rgba(11,13,17,0.10))",
+                borderRadius: 12,
+                boxShadow: "0 2px 8px rgba(11,13,17,0.04)",
+              }}>
+                <span style={{
+                  flexShrink: 0,
+                  width: 36, height: 36, borderRadius: "50%",
+                  background: "linear-gradient(135deg, var(--ls-gold, #C9A84C), #E5C97D)",
+                  color: "var(--ls-charcoal, #0B0D11)",
+                  fontFamily: "'Syne', serif",
+                  fontWeight: 700, fontSize: 16,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  boxShadow: "0 4px 10px rgba(201,168,76,0.30)",
+                }}>
+                  {i + 1}
+                </span>
+                <div style={{
+                  fontSize: 14,
+                  lineHeight: 1.55,
+                  color: "var(--ls-text, #1F2937)",
+                  paddingTop: 6,
+                }}>
+                  {s}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Posture */}
+      {posture && (
+        <div style={{ marginBottom: 24 }}>
+          <SubsectionTitle icon="🧘" title="Posture à adopter" />
+          <div style={{
+            padding: "14px 16px",
+            background: "linear-gradient(135deg, rgba(45,212,191,0.10), rgba(45,212,191,0.04))",
+            border: "1px solid rgba(45,212,191,0.25)",
+            borderRadius: 12,
+            fontSize: 13.5,
+            lineHeight: 1.65,
+            color: "var(--ls-text, #1F2937)",
+            borderLeft: "4px solid var(--ls-teal, #2DD4BF)",
+          }}>
+            {posture}
+          </div>
+        </div>
+      )}
+
+      {/* Erreurs à éviter */}
+      {mistakes.length > 0 && (
+        <div>
+          <SubsectionTitle icon="⚠️" title="Erreurs à éviter" />
+          <div style={{ display: "grid", gap: 8 }}>
+            {mistakes.map((m, i) => (
+              <div key={i} style={{
+                display: "flex", gap: 12,
+                padding: "12px 14px",
+                background: "rgba(251,113,133,0.06)",
+                border: "1px solid rgba(251,113,133,0.25)",
+                borderRadius: 10,
+              }}>
+                <span style={{
+                  flexShrink: 0,
+                  fontSize: 18, lineHeight: 1.2,
+                }} aria-hidden="true">❌</span>
+                <div style={{
+                  fontSize: 13,
+                  lineHeight: 1.55,
+                  color: "var(--ls-text, #1F2937)",
+                }}>
+                  {m}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ============================================================================
+// Étape 4 — Hashtags + plateformes recommandées + lieux IRL
 // ============================================================================
 
 const hashtagsListStyle: CSSProperties = {
@@ -558,8 +819,30 @@ function HashtagChip({ value }: { value: string }) {
   );
 }
 
+function PlatformBadgeChip({ platform }: { platform: ProspectionPlatform }) {
+  const label = PLATFORM_LABELS[platform] ?? platform;
+  const icon = PLATFORM_ICONS[platform] ?? "📱";
+  const gradient = PLATFORM_GRADIENTS[platform] ?? "#6B7280";
+  return (
+    <span style={{
+      display: "inline-flex", alignItems: "center", gap: 8,
+      padding: "8px 14px",
+      borderRadius: 999,
+      background: gradient,
+      color: "white",
+      fontSize: 13,
+      fontWeight: 700,
+      fontFamily: "'Syne', serif",
+      boxShadow: "0 4px 12px rgba(11,13,17,0.18)",
+    }}>
+      <span aria-hidden="true">{icon}</span>
+      {label}
+    </span>
+  );
+}
+
 // ============================================================================
-// Étape 4 — Banner timing + tip culturel du marché
+// Étape 5 — Banner timing + tip culturel du marché
 // ============================================================================
 
 function MarketTimingBanner({
@@ -607,22 +890,28 @@ function MarketTimingBanner({
 }
 
 // ============================================================================
-// Étape 4 — Script card avec label + langue + badge J+3
+// Étape 5 — Script card avec label + badge + boutons Copier / Marquer envoyé
 // ============================================================================
 
 const KIND_BADGES: Record<string, { label: string; bg: string; color: string }> = {
-  j3_followup: { label: "Relance J+3",     bg: "linear-gradient(135deg, #F59E0B, #FBBF24)", color: "white" },
-  referral:    { label: "Après reco",      bg: "linear-gradient(135deg, #2DD4BF, #5EEAD4)", color: "white" },
-  pitch:       { label: "Pitch business",  bg: "linear-gradient(135deg, #8B5CF6, #A78BFA)", color: "white" },
-  direct:      { label: "Contact direct",  bg: "rgba(45,212,191,0.15)", color: "#0F766E" },
+  j3_followup: { label: "Relance J+3",    bg: "linear-gradient(135deg, #F59E0B, #FBBF24)", color: "white" },
+  referral:    { label: "Après reco",     bg: "linear-gradient(135deg, #2DD4BF, #5EEAD4)", color: "white" },
+  pitch:       { label: "Pitch business", bg: "linear-gradient(135deg, #8B5CF6, #A78BFA)", color: "white" },
+  direct:      { label: "Contact direct", bg: "rgba(45,212,191,0.15)", color: "#0F766E" },
   first_contact: { label: "", bg: "", color: "" },
 };
 
 function ScriptCard({
-  script, marketCode,
-}: { script: ProspectionScript; marketCode: string }) {
+  script, marketCode, onMarkSent,
+}: {
+  script: ProspectionScript;
+  marketCode: string;
+  onMarkSent: () => Promise<void> | void;
+}) {
   const [copied, setCopied] = useState(false);
   const [showFr, setShowFr] = useState(false);
+  const [marked, setMarked] = useState(false);
+  const [marking, setMarking] = useState(false);
   const hasTranslation = !!script.body_fr && marketCode !== "fr";
   const badge = KIND_BADGES[script.kind];
   const label = script.label || PLATFORM_LABELS[script.platform];
@@ -633,6 +922,15 @@ function ScriptCard({
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }).catch(() => { /* silent */ });
+  }
+
+  async function markSent() {
+    if (marked || marking) return;
+    setMarking(true);
+    await onMarkSent();
+    setMarking(false);
+    setMarked(true);
+    setTimeout(() => setMarked(false), 3500);
   }
 
   const bodyHtml = useMemo(() => highlightVariables(script.body), [script.body]);
@@ -753,12 +1051,13 @@ function ScriptCard({
         gap: 8,
         alignItems: "center",
         background: "white",
+        flexWrap: "wrap",
       }}>
         <button
           type="button"
           onClick={copy}
           style={{
-            flex: 1,
+            flex: "1 1 200px",
             background: copied
               ? "linear-gradient(135deg, var(--ls-teal, #2DD4BF), #5EEAD4)"
               : "linear-gradient(135deg, var(--ls-charcoal, #0B0D11), #1F2937)",
@@ -784,6 +1083,30 @@ function ScriptCard({
           }}
         >
           {copied ? "✓ Copié !" : "📋 Copier le message"}
+        </button>
+        <button
+          type="button"
+          onClick={markSent}
+          disabled={marking}
+          style={{
+            background: marked
+              ? "linear-gradient(135deg, #16A34A, #22C55E)"
+              : "var(--ls-surface2, #F7F3EC)",
+            color: marked ? "white" : "var(--ls-text, #1F2937)",
+            border: `1.5px solid ${marked ? "#16A34A" : "var(--ls-border, rgba(11,13,17,0.10))"}`,
+            padding: "11px 14px",
+            borderRadius: 12,
+            fontSize: 12.5,
+            fontWeight: 700,
+            cursor: marking ? "wait" : "pointer",
+            fontFamily: "inherit",
+            whiteSpace: "nowrap",
+            transition: "all 0.2s",
+            boxShadow: marked ? "0 4px 12px rgba(22,163,74,0.30)" : "none",
+          }}
+          title="Compter ce message dans tes stats (privé)"
+        >
+          {marked ? "✓ Envoyé !" : marking ? "…" : "📤 Marquer envoyé"}
         </button>
         {hasTranslation && (
           <button
@@ -832,31 +1155,12 @@ function highlightVariables(body: string): string {
 }
 
 // ============================================================================
-// Étape 4 — Arborescence relance (3 cards : ✅ / ⏳ / ❌)
+// Étape 6 — Arborescence relance + bilan link + stats coach
 // ============================================================================
 
 function RelanceTree({ bilanLink }: { bilanLink: string }) {
   return (
-    <div style={{ marginTop: 28 }}>
-      <h2 style={{
-        fontFamily: "'Syne', serif",
-        fontSize: 22,
-        fontWeight: 700,
-        margin: 0,
-        marginBottom: 8,
-        color: "var(--ls-charcoal, #0B0D11)",
-      }}>
-        📅 Arborescence de relance
-      </h2>
-      <p style={{
-        fontSize: 13,
-        color: "var(--ls-text-muted, #4B5563)",
-        margin: 0, marginBottom: 16,
-        lineHeight: 1.55,
-      }}>
-        Ce que tu fais après envoi du 1er message, selon la réponse.
-      </p>
-
+    <div>
       <RelanceCard
         accent="#16A34A"
         bgGradient="linear-gradient(135deg, rgba(22,163,74,0.08), rgba(22,163,74,0.02))"
@@ -871,6 +1175,7 @@ function RelanceTree({ bilanLink }: { bilanLink: string }) {
           fontWeight: 600,
           color: "#15803D",
           fontFamily: "ui-monospace, monospace",
+          wordBreak: "break-all",
         }}>
           {bilanLink.replace(`${window.location.origin}/`, "")}
         </code>{" "}
@@ -882,7 +1187,7 @@ function RelanceTree({ bilanLink }: { bilanLink: string }) {
         bgGradient="linear-gradient(135deg, rgba(245,158,11,0.10), rgba(245,158,11,0.03))"
         trigger="⏳ Si pas de réponse à J+3"
       >
-        → Envoie un message de relance soft (voir scripts <strong>Relance J+3</strong> ci-dessus). Question ouverte, pas de pitch. <strong>Pas de pression.</strong>
+        → Envoie un message de relance soft (les scripts <strong>Relance J+3</strong> de l'étape précédente). Question ouverte, pas de pitch. <strong>Pas de pression.</strong>
       </RelanceCard>
 
       <RelanceCard
@@ -926,6 +1231,57 @@ function RelanceCard({
       }}>
         {children}
       </div>
+    </div>
+  );
+}
+
+function StatsGrid({ stats }: { stats: ProspectionStats }) {
+  const responseRate = stats.total_7d > 0
+    ? Math.round((stats.responses_7d / stats.total_7d) * 100)
+    : 0;
+  const conversionRate = stats.total_7d > 0
+    ? Math.round((stats.conversions_7d / stats.total_7d) * 100)
+    : 0;
+
+  const tiles = [
+    { label: "Envois 7 derniers jours", value: stats.total_7d, color: "var(--ls-gold, #C9A84C)" },
+    { label: "Envois 30 derniers jours", value: stats.total_30d, color: "var(--ls-teal, #2DD4BF)" },
+    { label: "Taux de réponse 7j", value: `${responseRate}%`, color: "#F59E0B" },
+    { label: "Conversions Lead 7j", value: `${conversionRate}%`, color: "#16A34A" },
+  ];
+
+  return (
+    <div style={{
+      display: "grid",
+      gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+      gap: 10,
+    }}>
+      {tiles.map((t, i) => (
+        <div key={i} style={{
+          background: "var(--ls-surface, white)",
+          border: "1px solid var(--ls-border, rgba(11,13,17,0.10))",
+          borderRadius: 12,
+          padding: "14px 16px",
+          boxShadow: "0 2px 8px rgba(11,13,17,0.04)",
+        }}>
+          <div style={{
+            fontFamily: "'Syne', serif",
+            fontSize: 24, fontWeight: 700,
+            color: t.color,
+            lineHeight: 1.1,
+            marginBottom: 4,
+          }}>
+            {t.value}
+          </div>
+          <div style={{
+            fontSize: 11,
+            color: "var(--ls-text-muted, #4B5563)",
+            lineHeight: 1.35,
+          }}>
+            {t.label}
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
@@ -1026,7 +1382,7 @@ function BilanLinkBox({ link }: { link: string }) {
 }
 
 // ============================================================================
-// Tip banner générique (étape 3 astuce hashtags)
+// Tip banner générique
 // ============================================================================
 
 function TipBanner({
