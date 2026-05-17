@@ -20,6 +20,7 @@
     "@dnd-kit/sortable": "^10.0.0",
     "@supabase/supabase-js": "^2.101.1",
     "@types/react-signature-canvas": "^1.0.7",
+    "country-flag-emoji-polyfill": "^0.1.8",
     "html2canvas": "^1.4.1",
     "jspdf": "^4.2.1",
     "qrcode.react": "^4.2.0",
