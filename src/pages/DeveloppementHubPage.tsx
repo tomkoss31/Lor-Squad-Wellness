@@ -119,6 +119,17 @@ const CARDS: HubCard[] = [
     requireRole: "admin",
   },
   {
+    id: "prospection-cold",
+    emoji: "🌍",
+    title: "Prospection internationale",
+    description:
+      "Module mobile-first : choisis ton marché (FR/EN/ES/PT/TR/HI) + profil cible + plateforme. Scripts pré-rédigés à copier-coller avec traduction FR pour les langues étrangères. Hashtags optimisés inclus.",
+    cta: "Lancer une session",
+    path: "/prospection",
+    accent: "var(--ls-teal)",
+    tag: { label: "Nouveau", color: "var(--ls-coral)" },
+  },
+  {
     id: "bilan-online",
     emoji: "🌱",
     title: "Mon bilan online",
