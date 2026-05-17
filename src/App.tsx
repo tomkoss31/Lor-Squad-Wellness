@@ -139,6 +139,11 @@ const BilanOnlineWelcomePage = lazy(() =>
     default: module.BilanOnlineWelcomePage,
   })),
 );
+const BilanOnlineMerciPage = lazy(() =>
+  import("./pages/BilanOnlineMerciPage").then((module) => ({
+    default: module.BilanOnlineMerciPage,
+  })),
+);
 const OpportunitePage = lazy(() =>
   import("./pages/OpportunitePage").then((module) => ({
     default: module.OpportunitePage,
@@ -471,8 +476,10 @@ export default function App() {
               Slug = users.first_name normalisé, résolu par submit-online-bilan. */}
           <Route path="/bilan-online" element={<BilanOnlineWelcomePage />} />
           <Route path="/bilan-online/formulaire" element={<BilanOnlinePage />} />
+          <Route path="/bilan-online/merci" element={<BilanOnlineMerciPage />} />
           <Route path="/bilan-online/:coachSlug" element={<BilanOnlineWelcomePage />} />
           <Route path="/bilan-online/:coachSlug/formulaire" element={<BilanOnlinePage />} />
+          <Route path="/bilan-online/:coachSlug/merci" element={<BilanOnlineMerciPage />} />
           {/* Funnel business V1 (chantier 2026-11-07) : page educative
               prospect froid + chaud, sans nommer la marque explicitement.
               Cf. docs/BUSINESS_FUNNEL_ARCHITECTURE.md. */}
