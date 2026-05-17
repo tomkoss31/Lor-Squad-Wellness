@@ -23,17 +23,18 @@ export const BO_TOKENS = {
 
 // ── Wordmark "LA BASE 360" ────────────────────────────────────────────────
 export function Wordmark() {
+  const size = "clamp(14px, 1.2vw, 16px)";
   return (
     <div style={{ display: "inline-flex", alignItems: "flex-end", gap: 8 }}>
       <span style={{
-        fontFamily: BO_TOKENS.fontDisplay, fontWeight: 500, fontSize: 14,
+        fontFamily: BO_TOKENS.fontDisplay, fontWeight: 500, fontSize: size,
         letterSpacing: "0.22em", color: BO_TOKENS.navy,
       }}>
         LA BASE
       </span>
       <span style={{ position: "relative", display: "inline-block", paddingBottom: 2 }}>
         <span style={{
-          fontFamily: BO_TOKENS.fontDisplay, fontWeight: 600, fontSize: 14,
+          fontFamily: BO_TOKENS.fontDisplay, fontWeight: 600, fontSize: size,
           letterSpacing: "0.04em", color: BO_TOKENS.gold,
         }}>
           360
@@ -59,12 +60,15 @@ export function BoHeader({ tagline = "Bilan offert · 2 min" }: { tagline?: stri
       borderBottom: "1px solid rgba(15, 23, 42, 0.05)",
     }}>
       <div style={{
-        height: 64, padding: "0 24px",
+        height: "clamp(64px, 6vw, 80px)",
+        padding: "0 clamp(20px, 4vw, 56px)",
+        maxWidth: 1200, margin: "0 auto",
         display: "flex", alignItems: "center", justifyContent: "space-between",
       }}>
         <Wordmark />
         <span style={{
-          fontFamily: BO_TOKENS.fontBody, fontWeight: 400, fontSize: 13,
+          fontFamily: BO_TOKENS.fontBody, fontWeight: 400,
+          fontSize: "clamp(13px, 1vw, 14px)",
           color: BO_TOKENS.gold, opacity: 0.7, letterSpacing: 0.1,
         }}>
           {tagline}
@@ -121,12 +125,16 @@ export function BoEyebrow({ children }: { children: ReactNode }) {
   return (
     <div>
       <div style={{
-        fontFamily: BO_TOKENS.fontDisplay, fontWeight: 500, fontSize: 13,
+        fontFamily: BO_TOKENS.fontDisplay, fontWeight: 500,
+        fontSize: "clamp(13px, 1vw, 14px)",
         letterSpacing: "0.18em", color: BO_TOKENS.gold, textTransform: "uppercase",
       }}>
         {children}
       </div>
-      <div style={{ height: 1, width: 64, background: BO_TOKENS.gold, marginTop: 14 }} />
+      <div style={{
+        height: 1, background: BO_TOKENS.gold, marginTop: 14,
+        width: "clamp(64px, 6vw, 88px)",
+      }} />
     </div>
   );
 }
@@ -137,7 +145,8 @@ export function BoHero({ children, style }: { children: ReactNode; style?: CSSPr
     <h1 style={{
       margin: 0,
       fontFamily: BO_TOKENS.fontDisplay, fontWeight: 600,
-      fontSize: 40, lineHeight: 1.05, letterSpacing: "-0.025em",
+      fontSize: "clamp(40px, 5.2vw, 64px)",
+      lineHeight: 1.05, letterSpacing: "-0.028em",
       color: BO_TOKENS.navy,
       ...style,
     }}>
@@ -152,8 +161,9 @@ export function BoLead({ children, style }: { children: ReactNode; style?: CSSPr
     <p style={{
       margin: 0,
       fontFamily: BO_TOKENS.fontBody, fontWeight: 400,
-      fontSize: 18, lineHeight: 1.45,
-      color: BO_TOKENS.navy, opacity: 0.7, maxWidth: 320,
+      fontSize: "clamp(18px, 1.6vw, 22px)", lineHeight: 1.45,
+      color: BO_TOKENS.navy, opacity: 0.7,
+      maxWidth: "clamp(320px, 38vw, 480px)",
       ...style,
     }}>
       {children}

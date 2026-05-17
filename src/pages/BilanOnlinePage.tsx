@@ -240,7 +240,10 @@ export function BilanOnlinePage() {
 
   return (
     <BilanOnlineShell progress={progress}>
-      <div style={{ padding: "64px 24px 40px", maxWidth: 560, margin: "0 auto" }}>
+      <div style={{
+        padding: "clamp(56px, 8vw, 112px) clamp(20px, 5vw, 56px) clamp(40px, 5vw, 80px)",
+        maxWidth: "clamp(560px, 60vw, 720px)", margin: "0 auto",
+      }}>
         <BoEyebrow>{eyebrow}</BoEyebrow>
         <div style={{ height: 24 }} />
         <BoHero>{hero.title}</BoHero>
