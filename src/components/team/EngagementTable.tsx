@@ -7,6 +7,8 @@
 // =============================================================================
 
 import { useMemo, useState } from "react";
+import { RankPinBadge } from "../rank/RankPinBadge";
+import type { HerbalifeRank } from "../../types/domain";
 import {
   STATUS_META,
   type TeamMemberEngagement,
@@ -183,10 +185,14 @@ export function EngagementTable({ members, excludeRootId, onMemberClick }: Engag
                       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                         <div style={miniAvatarStyle}>{initialsOf(m.name)}</div>
                         <div>
-                          <div style={{ fontWeight: 600, color: "var(--ls-text)", fontSize: 13 }}>{m.name}</div>
+                          <div style={{ fontWeight: 600, color: "var(--ls-text)", fontSize: 13, display: "flex", alignItems: "center", gap: 6 }}>
+                            <span>{m.name}</span>
+                            {m.current_rank && (
+                              <RankPinBadge rank={m.current_rank as HerbalifeRank} size="xs" />
+                            )}
+                          </div>
                           <div style={{ fontSize: 10, color: "var(--ls-text-muted)" }}>
                             {m.role === "admin" ? "Admin" : m.role === "referent" ? "Référent" : "Distri"}
-                            {m.current_rank && ` · ${m.current_rank}`}
                           </div>
                         </div>
                       </div>

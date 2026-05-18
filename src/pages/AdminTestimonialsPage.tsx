@@ -94,6 +94,17 @@ export function AdminTestimonialsPage() {
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
 
+  // Quality fix F (2026-05-18) : saisie manuelle "seed" pour démarrer le
+  // carrousel avec les vrais retours clients déjà reçus (WhatsApp, verbal).
+  const [manualOpen, setManualOpen] = useState(false);
+  const [manualForm, setManualForm] = useState({
+    firstName: "",
+    city: "",
+    content: "",
+    rating: 5,
+  });
+  const [manualSaving, setManualSaving] = useState(false);
+
   useEffect(() => {
     if (currentUser && currentUser.role !== "admin") {
       navigate("/co-pilote", { replace: true });
@@ -188,6 +199,46 @@ export function AdminTestimonialsPage() {
       alert(e instanceof Error ? e.message : "Erreur inconnue.");
     } finally {
       setBusyId(null);
+    }
+  }
+
+  async function createManual() {
+    const fn = manualForm.firstName.trim();
+    const ci = manualForm.city.trim();
+    const ct = manualForm.content.trim();
+    if (fn.length < 2 || ci.length < 2 || ct.length < 10) {
+      alert("Prénom + ville (2 char mini) et témoignage (10 char mini) obligatoires.");
+      return;
+    }
+    setManualSaving(true);
+    try {
+      const sb = await getSupabaseClient();
+      if (!sb) throw new Error("Service indisponible.");
+      const submitterMeta = `[FROM:${fn}|${ci}]`;
+      const contentWithMeta = `${submitterMeta}\n\n${ct}`;
+      const { error } = await sb.from("client_testimonials").insert({
+        client_id: null,
+        client_token: null,
+        coach_user_id: currentUser?.id ?? null,
+        coach_slug: coachSlug,
+        content: contentWithMeta,
+        rating: manualForm.rating,
+        photo_consent: false,
+        photo_url: null,
+        language: "fr",
+        status: "approved",
+        approved_at: new Date().toISOString(),
+        approved_by: currentUser?.id ?? null,
+      });
+      if (error) throw error;
+      setManualOpen(false);
+      setManualForm({ firstName: "", city: "", content: "", rating: 5 });
+      pushToast({ tone: "success", title: `✅ Témoignage ajouté · ${fn} de ${ci} · ${manualForm.rating}/5` });
+      await load();
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "Erreur inconnue.");
+    } finally {
+      setManualSaving(false);
     }
   }
 
@@ -312,6 +363,133 @@ export function AdminTestimonialsPage() {
           </p>
         )}
       </div>
+
+      {/* ─── Ajouter manuellement (seed) ──────────────────────────────────── */}
+      <div style={{ marginBottom: 20, textAlign: "right" }}>
+        <button
+          type="button"
+          onClick={() => setManualOpen(true)}
+          style={{
+            padding: "10px 16px",
+            background: "var(--ls-surface)",
+            border: "1px solid var(--ls-border)",
+            borderRadius: 10,
+            color: "var(--ls-text)",
+            fontWeight: 600,
+            fontSize: 13,
+            cursor: "pointer",
+          }}
+        >
+          ➕ Ajouter un témoignage manuel
+        </button>
+      </div>
+
+      {manualOpen && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          style={{
+            position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            padding: 16, zIndex: 1000,
+          }}
+          onClick={() => !manualSaving && setManualOpen(false)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: "var(--ls-surface)",
+              border: "1px solid var(--ls-border)",
+              borderRadius: 16,
+              padding: 22,
+              maxWidth: 480,
+              width: "100%",
+              maxHeight: "90vh",
+              overflowY: "auto",
+            }}
+          >
+            <h3 style={{ margin: 0, marginBottom: 6, fontSize: 18, fontWeight: 700, color: "var(--ls-text)" }}>
+              Ajouter un témoignage manuel
+            </h3>
+            <p style={{ margin: 0, marginBottom: 16, fontSize: 12, color: "var(--ls-text-muted)", lineHeight: 1.5 }}>
+              Pour seeder le carrousel avec un vrai retour client que tu as déjà reçu (WhatsApp, verbal). Sera publié immédiatement (status approved).
+            </p>
+
+            <label style={labelStyle}>Prénom *</label>
+            <input
+              type="text"
+              value={manualForm.firstName}
+              onChange={(e) => setManualForm((f) => ({ ...f, firstName: e.target.value }))}
+              placeholder="Marie"
+              style={inputStyle}
+            />
+
+            <label style={labelStyle}>Ville *</label>
+            <input
+              type="text"
+              value={manualForm.city}
+              onChange={(e) => setManualForm((f) => ({ ...f, city: e.target.value }))}
+              placeholder="Metz"
+              style={inputStyle}
+            />
+
+            <label style={labelStyle}>Note *</label>
+            <div style={{ display: "flex", gap: 6, marginBottom: 14 }}>
+              {[1, 2, 3, 4, 5].map((n) => (
+                <button
+                  key={n}
+                  type="button"
+                  onClick={() => setManualForm((f) => ({ ...f, rating: n }))}
+                  style={{
+                    flex: 1,
+                    padding: "10px 0",
+                    border: "1px solid var(--ls-border)",
+                    background: manualForm.rating === n ? "var(--ls-gold)" : "var(--ls-surface)",
+                    color: manualForm.rating === n ? "var(--ls-charcoal)" : "var(--ls-text)",
+                    borderRadius: 8,
+                    cursor: "pointer",
+                    fontWeight: 700,
+                  }}
+                >
+                  {"⭐".repeat(n)}
+                </button>
+              ))}
+            </div>
+
+            <label style={labelStyle}>Témoignage * (10–1000 caractères)</label>
+            <textarea
+              value={manualForm.content}
+              onChange={(e) => setManualForm((f) => ({ ...f, content: e.target.value }))}
+              rows={6}
+              maxLength={1000}
+              placeholder="Ce que le client t'a dit, retranscrit avec ses mots."
+              style={{ ...inputStyle, fontFamily: "inherit", resize: "vertical" }}
+            />
+            <div style={{ fontSize: 11, color: "var(--ls-text-muted)", textAlign: "right", marginTop: -8, marginBottom: 14 }}>
+              {manualForm.content.length} / 1000
+            </div>
+
+            <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+              <button
+                type="button"
+                onClick={() => !manualSaving && setManualOpen(false)}
+                disabled={manualSaving}
+                style={{ ...btnGhostStyle, opacity: manualSaving ? 0.5 : 1 }}
+              >
+                Annuler
+              </button>
+              <button
+                type="button"
+                onClick={createManual}
+                disabled={manualSaving}
+                style={{ ...btnPrimaryStyle, opacity: manualSaving ? 0.6 : 1 }}
+              >
+                {manualSaving ? "Enregistrement…" : "Publier"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ─── Filtres + liste ──────────────────────────────────────────────── */}
       <div style={{ display: "flex", gap: 6, marginBottom: 18, flexWrap: "wrap" }}>
@@ -527,5 +705,47 @@ function AdminButton({ variant, onClick, disabled, children }: {
     </button>
   );
 }
+
+// Styles partagés modale manuelle (quality fix F)
+const labelStyle: React.CSSProperties = {
+  display: "block",
+  fontSize: 11,
+  fontWeight: 600,
+  textTransform: "uppercase",
+  letterSpacing: "0.08em",
+  color: "var(--ls-text-muted)",
+  marginBottom: 6,
+};
+const inputStyle: React.CSSProperties = {
+  width: "100%",
+  padding: "10px 12px",
+  background: "var(--ls-bg)",
+  border: "1px solid var(--ls-border)",
+  borderRadius: 10,
+  color: "var(--ls-text)",
+  fontSize: 14,
+  marginBottom: 14,
+  boxSizing: "border-box",
+};
+const btnGhostStyle: React.CSSProperties = {
+  padding: "10px 16px",
+  background: "transparent",
+  border: "1px solid var(--ls-border)",
+  borderRadius: 10,
+  color: "var(--ls-text)",
+  fontWeight: 600,
+  fontSize: 13,
+  cursor: "pointer",
+};
+const btnPrimaryStyle: React.CSSProperties = {
+  padding: "10px 18px",
+  background: "var(--ls-gold)",
+  border: "none",
+  borderRadius: 10,
+  color: "var(--ls-charcoal)",
+  fontWeight: 700,
+  fontSize: 13,
+  cursor: "pointer",
+};
 
 export default AdminTestimonialsPage;

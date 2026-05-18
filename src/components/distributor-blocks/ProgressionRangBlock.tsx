@@ -1,19 +1,16 @@
 // =============================================================================
 // ProgressionRangBlock — jauge progression vers le prochain rang Herbalife
 // =============================================================================
-// Extrait de TeamMemberDrilldownModal (Chantier #13 sous-vague A.1, 2026-05-18).
-// Calcul PV qualifiant = perso + downline non-Supervisor (cf. herbalifeFormulas).
+// V2 2026-05-18 (feat/jauge-fenetre-glissante) :
+//   - Source unique : RPC SQL `get_distributor_qualifications` qui retourne
+//     pv_2m / pv_3m / pv_12m_extended (self + downline non-Sup, 12 mois
+//     glissants). Plus aucun calcul JS de fenêtre — tout côté DB.
+//   - Le libellé jauge mentionne explicitement la fenêtre glissante.
 // =============================================================================
 
 import { useMemo } from "react";
-import { useAppContext } from "../../context/AppContext";
-import { usePvBreakdowns } from "../../hooks/usePvBreakdowns";
-import {
-  computeQualifyingPersonalPv,
-  currentMonthIso,
-  rankProgression,
-  totalPvFromBreakdown,
-} from "../../lib/herbalifeFormulas";
+import { useDistributorQualifications } from "../../hooks/useDistributorQualifications";
+import { currentMonthIso, rankProgressionFromWindows } from "../../lib/herbalifeFormulas";
 import type { User } from "../../types/domain";
 import { AdminCard, hintStyle } from "./_shared";
 
@@ -25,54 +22,29 @@ interface Props {
 }
 
 export function ProgressionRangBlock({ memberId, fullUser, monthIso }: Props) {
-  const { users } = useAppContext();
   const month = monthIso ?? currentMonthIso();
-  const { getForUser, breakdowns: allBreakdowns } = usePvBreakdowns(month);
-  const existingBreakdown = getForUser(memberId);
+  const { qualifications, loading } = useDistributorQualifications(memberId, month);
 
-  const personalPv = useMemo(() => {
-    if (existingBreakdown) return totalPvFromBreakdown(existingBreakdown);
-    const ux = fullUser as
-      | (User & { monthlyPvOverrideMonth?: string | null; monthlyPvOverride?: number | null })
-      | null;
-    if (ux?.monthlyPvOverrideMonth === month && typeof ux?.monthlyPvOverride === "number") {
-      return ux.monthlyPvOverride;
-    }
-    return 0;
-  }, [existingBreakdown, fullUser, month]);
+  const progression = useMemo(() => {
+    if (!qualifications) return null;
+    return rankProgressionFromWindows(fullUser?.currentRank, {
+      pv_2m: qualifications.pv_2m,
+      pv_3m: qualifications.pv_3m,
+      pv_12m: qualifications.pv_12m,
+      pv_12m_extended: qualifications.pv_12m_extended,
+    });
+  }, [fullUser?.currentRank, qualifications]);
 
-  const qualifyingPv = useMemo(() => {
-    if (!fullUser) return personalPv;
-    return computeQualifyingPersonalPv(
-      fullUser.id,
-      users.map((u) => ({
-        id: u.id,
-        sponsorId: u.sponsorId,
-        currentRank: u.currentRank,
-        frozenAt: u.frozenAt,
-      })),
-      allBreakdowns,
-      (uid) => {
-        const u = users.find((x) => x.id === uid);
-        if (!u) return 0;
-        const ux = u as User & {
-          monthlyPvOverrideMonth?: string | null;
-          monthlyPvOverride?: number | null;
-        };
-        if (ux.monthlyPvOverrideMonth === month && typeof ux.monthlyPvOverride === "number") {
-          return ux.monthlyPvOverride;
-        }
-        return 0;
-      },
+  if (loading && !qualifications) {
+    return (
+      <AdminCard style={{ marginTop: 12 }}>
+        <div style={{ ...hintStyle, opacity: 0.6 }}>Calcul des PV glissants…</div>
+      </AdminCard>
     );
-  }, [fullUser, users, allBreakdowns, month, personalPv]);
-
-  const progression = useMemo(
-    () => rankProgression(fullUser?.currentRank, personalPv, qualifyingPv),
-    [fullUser?.currentRank, personalPv, qualifyingPv],
-  );
-
+  }
   if (!progression) return null;
+
+  const windowLabel = `${progression.windowMonths} mois glissants`;
 
   return (
     <AdminCard style={{ marginTop: 12 }}>
@@ -89,8 +61,8 @@ export function ProgressionRangBlock({ memberId, fullUser, monthIso }: Props) {
       </div>
       <div style={hintStyle}>
         {progression.pct >= 100
-          ? `🎉 Seuil atteint ! ${progression.pvCurrent.toLocaleString("fr-FR")} / ${progression.pvNeeded.toLocaleString("fr-FR")} PV`
-          : `${progression.pvCurrent.toLocaleString("fr-FR")} / ${progression.pvNeeded.toLocaleString("fr-FR")} PV · reste ${progression.remaining.toLocaleString("fr-FR")} PV`}
+          ? `🎉 Seuil atteint ! ${progression.pvCurrent.toLocaleString("fr-FR")} / ${progression.pvNeeded.toLocaleString("fr-FR")} PV · ${windowLabel}`
+          : `${progression.pvCurrent.toLocaleString("fr-FR")} / ${progression.pvNeeded.toLocaleString("fr-FR")} PV · ${windowLabel} · reste ${progression.remaining.toLocaleString("fr-FR")} PV`}
         <span
           style={{
             display: "inline-block",

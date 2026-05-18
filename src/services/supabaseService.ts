@@ -1638,6 +1638,55 @@ export async function loadPvBreakdownsForMonth(
   }));
 }
 
+// ─── Distributor qualifications (fenêtres glissantes 2/3/6/12 mois) ──────
+/**
+ * Appelle la RPC `get_distributor_qualifications` qui retourne les PV perso
+ * du distri sur les 4 fenêtres glissantes Herbalife + les booleans qualifs.
+ * Voir migration 20261118000000_distributor_qualifications.sql.
+ */
+export async function fetchDistributorQualifications(
+  userId: string,
+  asOfMonth: string,
+): Promise<{
+  pv_2m: number;
+  pv_3m: number;
+  pv_6m: number;
+  pv_12m: number;
+  pv_12m_extended: number;
+  qualified_senior_consultant: boolean;
+  qualified_success_builder: boolean;
+  qualified_qp: boolean;
+  qualified_supervisor: boolean;
+  rank_calculated: string;
+} | null> {
+  const client = await requireSupabase();
+  const { data, error } = await client.rpc("get_distributor_qualifications", {
+    p_user_id: userId,
+    p_as_of_month: asOfMonth,
+  });
+  if (error || !data) {
+    if (error) console.warn("[fetchDistributorQualifications] rpc error", error);
+    return null;
+  }
+  const row = Array.isArray(data) ? data[0] : data;
+  if (!row) return null;
+  return {
+    pv_2m: Number(row.pv_2m ?? 0),
+    pv_3m: Number(row.pv_3m ?? 0),
+    pv_6m: Number(row.pv_6m ?? 0),
+    pv_12m: Number(row.pv_12m ?? 0),
+    // V2 (migration 20261118200000) : si la RPC vieille version est encore
+    // en place (avant apply), pv_12m_extended sera undefined → fallback
+    // sur pv_12m pour ne pas casser l'UI le temps de l'apply.
+    pv_12m_extended: Number(row.pv_12m_extended ?? row.pv_12m ?? 0),
+    qualified_senior_consultant: !!row.qualified_senior_consultant,
+    qualified_success_builder: !!row.qualified_success_builder,
+    qualified_qp: !!row.qualified_qp,
+    qualified_supervisor: !!row.qualified_supervisor,
+    rank_calculated: String(row.rank_calculated ?? "distributor_25"),
+  };
+}
+
 // ─── Manual PV entries V3 (distri hors-app) ───────────────────────────────
 export async function upsertManualPvEntry(params: {
   id: string | null;
