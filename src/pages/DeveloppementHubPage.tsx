@@ -163,6 +163,18 @@ const CARDS: HubCard[] = [
     tag: { label: "Nouveau", color: "var(--ls-coral)" },
     requireRole: "admin",
   },
+  {
+    id: "fiche-distri",
+    emoji: "👥",
+    title: "Fiche distri enrichie",
+    description:
+      "Tout ce qu'il faut pour piloter ton équipe : engagement, apprentissage, activité, rang Herbalife, PV Bizworks mois par mois, gel de compte. Accessible en cliquant sur la carte d'un distri depuis Paramètres > Équipe, /pv/team ou /flex/equipe.",
+    cta: "Voir l'équipe",
+    path: "/parametres?tab=equipe",
+    accent: "var(--ls-gold)",
+    tag: { label: "Nouveau", color: "var(--ls-coral)" },
+    requireRole: "admin",
+  },
 ];
 
 export function DeveloppementHubPage() {
