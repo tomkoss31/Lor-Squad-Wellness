@@ -244,4 +244,22 @@ select cron.schedule(
   $cron$
 );
 
+-- ─── F. Bonus : INSERT admin (saisie manuelle "seed" des premiers avis) ─────
+-- Sans policy INSERT publique, l'admin ne peut pas ajouter de témoignage à la
+-- main depuis /admin/testimonials. On en ajoute une, scopée admin actif only,
+-- pour seeder le carrousel avec les vrais retours clients que Thomas a déjà.
+drop policy if exists "testimonials_admin_insert" on public.client_testimonials;
+create policy "testimonials_admin_insert"
+  on public.client_testimonials
+  for insert
+  to authenticated
+  with check (
+    exists (
+      select 1 from public.users u
+      where u.id = auth.uid()
+        and u.active = true
+        and u.role = 'admin'
+    )
+  );
+
 commit;
