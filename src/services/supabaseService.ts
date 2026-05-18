@@ -1687,6 +1687,58 @@ export async function fetchDistributorQualifications(
   };
 }
 
+// ─── Conflit agenda RDV (quality fix Thomas 2026-05-18) ───────────────────
+/**
+ * Vérifie si un coach a déjà un RDV planifié dans une fenêtre ±30 min
+ * autour de `dueDateIso`. Retourne le 1er conflit trouvé (clientName + date)
+ * ou null si aucun.
+ *
+ * Utilisé dans NewAssessmentPage (validation bilan initial) et
+ * NewFollowUpPage (validation suivi) pour avertir le coach AVANT le save.
+ */
+export async function checkAgendaConflict(
+  coachUserId: string,
+  dueDateIso: string,
+  excludeFollowUpId?: string | null,
+): Promise<{ id: string; clientName: string; dueDate: string } | null> {
+  if (!coachUserId || !dueDateIso) return null;
+  const due = new Date(dueDateIso);
+  if (Number.isNaN(due.getTime())) return null;
+  const windowMs = 30 * 60 * 1000;
+  const startIso = new Date(due.getTime() - windowMs).toISOString();
+  const endIso = new Date(due.getTime() + windowMs).toISOString();
+
+  const sb = await requireSupabase();
+  // On lit follow_ups dans la fenêtre + filtre côté front sur distributor_id
+  // pour éviter de devoir joindre côté SQL (RLS gère déjà le scope coach).
+  let q = sb
+    .from("follow_ups")
+    .select("id, due_date, client_id, client_name, status, clients!inner(distributor_id)")
+    .gte("due_date", startIso)
+    .lte("due_date", endIso)
+    .in("status", ["scheduled", "pending"]);
+  if (excludeFollowUpId) q = q.neq("id", excludeFollowUpId);
+  const { data, error } = await q;
+  if (error || !data) return null;
+
+  const match = (data as Array<{
+    id: string;
+    due_date: string;
+    client_name: string;
+    clients: { distributor_id: string } | { distributor_id: string }[] | null;
+  }>).find((row) => {
+    const clientLink = Array.isArray(row.clients) ? row.clients[0] : row.clients;
+    return clientLink?.distributor_id === coachUserId;
+  });
+
+  if (!match) return null;
+  return {
+    id: match.id,
+    clientName: match.client_name ?? "client",
+    dueDate: match.due_date,
+  };
+}
+
 // ─── Manual PV entries V3 (distri hors-app) ───────────────────────────────
 export async function upsertManualPvEntry(params: {
   id: string | null;
