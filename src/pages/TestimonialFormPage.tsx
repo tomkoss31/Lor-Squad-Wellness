@@ -1,0 +1,711 @@
+// =============================================================================
+// TestimonialFormPage V2 dark — Chantier #11 Sprint 1 (2026-05-18)
+// Source de verite : docs/mockups/temoignage-client-v2.html
+// Route : /temoignage/:token
+// =============================================================================
+
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import { useParams } from "react-router-dom";
+import { getSupabaseClient } from "../services/supabaseClient";
+import { extractFunctionError } from "../lib/utils/extractFunctionError";
+import {
+  PublicShell,
+  PublicCtaPrimary,
+  PublicBrand,
+  PUBLIC_TOKENS,
+  PUBLIC_FONTS,
+  publicGradText,
+} from "../components/public/PublicShell";
+
+interface TestimonialContext {
+  firstName: string | null;
+  city: string | null;
+  coachFirstName: string | null;
+  alreadySubmitted: boolean;
+}
+
+type LoadStatus = "loading" | "ready" | "already" | "invalid" | "error";
+
+const PROMPTS: Array<{ emoji: string; title: string; sub: string; insert: string }> = [
+  {
+    emoji: "📅",
+    title: "Quand as-tu démarré ?",
+    sub: "Date approximative + ton point de départ",
+    insert: "📅 J'ai démarré il y a [X mois]… ",
+  },
+  {
+    emoji: "✨",
+    title: "Qu'est-ce qui a changé ?",
+    sub: "Poids, énergie, sommeil, digestion, ballonnements, peau, mental…",
+    insert: "✨ Concrètement, ce qui a changé : ",
+  },
+  {
+    emoji: "💪",
+    title: "Comment tu te sens aujourd'hui ?",
+    sub: "Ton ressenti global, dans ta peau",
+    insert: "💪 Aujourd'hui, je me sens : ",
+  },
+];
+
+export function TestimonialFormPage() {
+  const { token } = useParams<{ token: string }>();
+  const tokenSafe = (token ?? "").trim();
+
+  const [loadStatus, setLoadStatus] = useState<LoadStatus>("loading");
+  const [ctx, setCtx] = useState<TestimonialContext | null>(null);
+
+  // Form state
+  const [firstName, setFirstName] = useState("");
+  const [city, setCity] = useState("");
+  const [rating, setRating] = useState(0);
+  const [hoverRating, setHoverRating] = useState(0);
+  const [content, setContent] = useState("");
+  const [consentRgpd, setConsentRgpd] = useState(false);
+  const [photoConsent, setPhotoConsent] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+
+  // ─── Fetch context (firstName + city + coachFirstName + alreadySubmitted) ────
+  useEffect(() => {
+    if (!tokenSafe || !/^[0-9a-f-]{36}$/i.test(tokenSafe)) {
+      setLoadStatus("invalid");
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const sb = await getSupabaseClient();
+        if (!sb) {
+          if (!cancelled) setLoadStatus("error");
+          return;
+        }
+        const { data, error } = await sb.functions.invoke("get-testimonial-context", {
+          method: "GET",
+          body: undefined,
+          headers: undefined,
+          // Supabase invoke ne supporte pas query params direct → fallback fetch
+        } as never);
+        // Fallback : fetch direct si invoke GET échoue
+        let payload = data as
+          | { success: boolean; firstName?: string; city?: string; coachFirstName?: string; alreadySubmitted?: boolean; error?: string }
+          | null;
+        if (error || !payload) {
+          const url = `${(sb as unknown as { supabaseUrl: string }).supabaseUrl}/functions/v1/get-testimonial-context?token=${encodeURIComponent(tokenSafe)}`;
+          const resp = await fetch(url, {
+            headers: {
+              apikey: (sb as unknown as { supabaseKey: string }).supabaseKey,
+              Authorization: `Bearer ${(sb as unknown as { supabaseKey: string }).supabaseKey}`,
+            },
+          });
+          payload = (await resp.json()) as typeof payload;
+        }
+        if (cancelled) return;
+        if (!payload?.success) {
+          setLoadStatus("invalid");
+          return;
+        }
+        const next: TestimonialContext = {
+          firstName: payload.firstName ?? null,
+          city: payload.city ?? null,
+          coachFirstName: payload.coachFirstName ?? null,
+          alreadySubmitted: !!payload.alreadySubmitted,
+        };
+        setCtx(next);
+        if (next.firstName) setFirstName(next.firstName);
+        if (next.city) setCity(next.city);
+        if (next.alreadySubmitted) {
+          setLoadStatus("already");
+        } else {
+          setLoadStatus("ready");
+        }
+      } catch {
+        if (!cancelled) setLoadStatus("error");
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [tokenSafe]);
+
+  useEffect(() => {
+    const prev = document.title;
+    document.title = "Ton retour · La Base 360";
+    return () => {
+      document.title = prev;
+    };
+  }, []);
+
+  const charCount = content.length;
+  const canSubmit = useMemo(
+    () =>
+      !!firstName.trim() &&
+      !!city.trim() &&
+      rating >= 1 &&
+      content.trim().length >= 10 &&
+      content.length <= 1000 &&
+      consentRgpd,
+    [firstName, city, rating, content, consentRgpd],
+  );
+
+  const insertPrompt = useCallback((insert: string) => {
+    setContent((prev) => {
+      const sep = prev.length > 0 && !prev.endsWith("\n") ? "\n\n" : "";
+      return prev + sep + insert;
+    });
+    setTimeout(() => textareaRef.current?.focus(), 0);
+  }, []);
+
+  async function handleSubmit(e?: FormEvent) {
+    e?.preventDefault();
+    if (!canSubmit || submitting) return;
+    setSubmitting(true);
+    setErrorMsg("");
+    try {
+      const sb = await getSupabaseClient();
+      if (!sb) throw new Error("Service indisponible.");
+      const { data, error } = await sb.functions.invoke("submit-testimonial", {
+        body: {
+          client_token: tokenSafe,
+          content: content.trim(),
+          rating,
+          photo_consent: photoConsent,
+          language: "fr",
+        },
+      });
+      if (error || !data?.success) {
+        const raw = await extractFunctionError(data, error, "Erreur inconnue.");
+        throw new Error(
+          raw === "rate_limited"
+            ? "Trop de tentatives — réessaie dans une heure."
+            : raw,
+        );
+      }
+      setSubmitted(true);
+    } catch (err) {
+      setErrorMsg(err instanceof Error ? err.message : "Erreur inconnue.");
+      setSubmitting(false);
+    }
+  }
+
+  // ─── Render ────────────────────────────────────────────────────────────────
+  if (loadStatus === "loading") {
+    return (
+      <PublicShell defaultTheme="dark">
+        <div style={{ padding: 64, textAlign: "center" }}>
+          <div style={{ fontFamily: PUBLIC_FONTS.mono, fontSize: 13, color: "var(--cream-muted)", letterSpacing: "0.08em" }}>
+            Chargement…
+          </div>
+        </div>
+      </PublicShell>
+    );
+  }
+
+  if (loadStatus === "invalid" || loadStatus === "error") {
+    return (
+      <PublicShell defaultTheme="dark">
+        <ResultPanel
+          emoji="⚠️"
+          title="Lien introuvable"
+          message="Ce lien de témoignage n'existe pas ou a expiré. Si tu as récemment passé un bilan, demande à ton coach de te renvoyer le lien."
+        />
+      </PublicShell>
+    );
+  }
+
+  if (loadStatus === "already" || submitted) {
+    return (
+      <PublicShell defaultTheme="dark">
+        <SuccessView firstName={firstName} coachFirstName={ctx?.coachFirstName ?? null} />
+      </PublicShell>
+    );
+  }
+
+  // ─── FORM VIEW ─────────────────────────────────────────────────────────────
+  const coachLabel = ctx?.coachFirstName ? ctx.coachFirstName : "Thomas";
+
+  return (
+    <PublicShell defaultTheme="dark">
+      <form onSubmit={handleSubmit} style={{ padding: "48px 22px 64px", textAlign: "center" }}>
+        <PublicBrand label="Témoignage" />
+
+        {/* Hero */}
+        <div
+          className="ps-bounce"
+          style={{
+            fontSize: 56,
+            lineHeight: 1,
+            margin: "24px 0 16px",
+            display: "inline-block",
+            filter: "drop-shadow(0 4px 20px rgba(45,212,191,0.40))",
+          }}
+        >
+          🌱
+        </div>
+        <h1
+          style={{
+            fontFamily: PUBLIC_FONTS.display,
+            fontSize: "clamp(28px, 6.5vw, 40px)",
+            fontWeight: 600,
+            color: "var(--cream)",
+            lineHeight: 1.1,
+            letterSpacing: "-0.02em",
+            margin: "0 auto 14px",
+            maxWidth: 480,
+          }}
+        >
+          Hey{firstName ? ` ${firstName}` : " toi"},
+          <br />
+          <span style={publicGradText}>comment ça se passe ?</span>
+        </h1>
+        <p
+          style={{
+            fontSize: 15,
+            color: "var(--cream-muted)",
+            maxWidth: 420,
+            margin: "0 auto 24px",
+            lineHeight: 1.55,
+          }}
+        >
+          Partage ton vécu en 30 secondes. Ça aide énormément les prochains qui hésitent à se lancer.
+        </p>
+
+        {/* Meta-strip */}
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            flexWrap: "wrap",
+            gap: 16,
+            marginBottom: 30,
+            fontFamily: PUBLIC_FONTS.mono,
+            fontSize: 11,
+            color: "var(--cream-hint)",
+            letterSpacing: "0.08em",
+            textTransform: "uppercase",
+          }}
+        >
+          <span>· Anonyme possible</span>
+          <span>· 30 secondes</span>
+          <span>· RGPD friendly</span>
+        </div>
+
+        {/* Guide bienveillant */}
+        <div
+          style={{
+            background: "rgba(255,255,255,0.04)",
+            backdropFilter: "blur(20px)",
+            WebkitBackdropFilter: "blur(20px)",
+            border: "1px solid var(--hair)",
+            borderRadius: 18,
+            padding: "20px 18px",
+            marginBottom: 24,
+            textAlign: "left",
+          }}
+        >
+          <div
+            style={{
+              fontFamily: PUBLIC_FONTS.display,
+              fontSize: 13,
+              fontWeight: 600,
+              color: "var(--cream-muted)",
+              letterSpacing: "0.10em",
+              textTransform: "uppercase",
+              marginBottom: 12,
+              textAlign: "center",
+            }}
+          >
+            💡 Pas sûr·e par où commencer ?
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {PROMPTS.map((p) => (
+              <button
+                key={p.title}
+                type="button"
+                onClick={() => insertPrompt(p.insert)}
+                style={{
+                  background: "rgba(255,255,255,0.03)",
+                  border: "1px solid var(--hair)",
+                  borderRadius: 12,
+                  padding: "12px 14px",
+                  cursor: "pointer",
+                  textAlign: "left",
+                  display: "flex",
+                  alignItems: "flex-start",
+                  gap: 12,
+                  transition: "all 0.22s",
+                  color: "var(--cream)",
+                  fontFamily: PUBLIC_FONTS.body,
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = PUBLIC_TOKENS.teal;
+                  e.currentTarget.style.background = "rgba(45,212,191,0.06)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = "var(--hair)";
+                  e.currentTarget.style.background = "rgba(255,255,255,0.03)";
+                }}
+              >
+                <span aria-hidden="true" style={{ fontSize: 20, lineHeight: 1.2 }}>
+                  {p.emoji}
+                </span>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontFamily: PUBLIC_FONTS.display, fontSize: 14, fontWeight: 600 }}>
+                    {p.title}
+                  </div>
+                  <div style={{ fontSize: 12, color: "var(--cream-muted)", marginTop: 2, lineHeight: 1.4 }}>
+                    {p.sub}
+                  </div>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Form card */}
+        <div
+          style={{
+            background: "rgba(255,255,255,0.04)",
+            backdropFilter: "blur(20px)",
+            WebkitBackdropFilter: "blur(20px)",
+            border: "1px solid var(--hair)",
+            borderRadius: 18,
+            padding: "22px 18px",
+            textAlign: "left",
+            display: "flex",
+            flexDirection: "column",
+            gap: 18,
+          }}
+        >
+          {/* Identité */}
+          <div>
+            <div style={fieldLabelStyle}>
+              Tu es ?<span style={{ color: PUBLIC_TOKENS.coral }}> *</span>
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+              <input
+                type="text"
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+                placeholder="Prénom"
+                style={inputStyle}
+                maxLength={40}
+                required
+              />
+              <input
+                type="text"
+                value={city}
+                onChange={(e) => setCity(e.target.value)}
+                placeholder="Ville"
+                style={inputStyle}
+                maxLength={60}
+                required
+              />
+            </div>
+          </div>
+
+          {/* Rating étoiles */}
+          <div>
+            <div style={fieldLabelStyle}>
+              Comment tu notes ton expérience ?<span style={{ color: PUBLIC_TOKENS.coral }}> *</span>
+            </div>
+            <div
+              style={{ display: "flex", gap: 8, justifyContent: "center" }}
+              role="radiogroup"
+              aria-label="Note de 1 à 5 étoiles"
+            >
+              {[1, 2, 3, 4, 5].map((v) => {
+                const filled = v <= (hoverRating || rating);
+                return (
+                  <button
+                    key={v}
+                    type="button"
+                    role="radio"
+                    aria-checked={rating === v}
+                    aria-label={`${v} étoile${v > 1 ? "s" : ""}`}
+                    onClick={() => setRating(v)}
+                    onMouseEnter={() => setHoverRating(v)}
+                    onMouseLeave={() => setHoverRating(0)}
+                    style={{
+                      background: "transparent",
+                      border: "none",
+                      cursor: "pointer",
+                      fontSize: 36,
+                      lineHeight: 1,
+                      color: filled ? PUBLIC_TOKENS.gold : "rgba(251,247,240,0.18)",
+                      transition: "all 0.18s",
+                      textShadow: filled ? "0 0 14px rgba(201,168,76,0.45)" : "none",
+                      padding: 4,
+                    }}
+                  >
+                    ★
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Content textarea */}
+          <div>
+            <div style={fieldLabelStyle}>
+              Ton ressenti, ton vécu, tes résultats<span style={{ color: PUBLIC_TOKENS.coral }}> *</span>
+            </div>
+            <textarea
+              ref={textareaRef}
+              value={content}
+              onChange={(e) => setContent(e.target.value.slice(0, 1000))}
+              placeholder="Clique sur un des prompts au-dessus pour démarrer, ou écris librement…"
+              rows={6}
+              minLength={10}
+              maxLength={1000}
+              style={{ ...inputStyle, minHeight: 140, resize: "vertical" }}
+              required
+            />
+            <div
+              style={{
+                marginTop: 6,
+                fontFamily: PUBLIC_FONTS.mono,
+                fontSize: 11,
+                color: charCount < 10 ? PUBLIC_TOKENS.coral : "var(--cream-hint)",
+                letterSpacing: "0.06em",
+                textAlign: "right",
+              }}
+            >
+              {charCount} / 1000 · MIN 10
+            </div>
+          </div>
+
+          {/* Consent RGPD */}
+          <label
+            style={{
+              display: "flex",
+              alignItems: "flex-start",
+              gap: 12,
+              padding: 14,
+              background: consentRgpd ? "rgba(45,212,191,0.06)" : "rgba(255,255,255,0.03)",
+              border: `1px solid ${consentRgpd ? PUBLIC_TOKENS.teal : "var(--hair)"}`,
+              borderRadius: 12,
+              cursor: "pointer",
+              fontSize: 13,
+              color: "var(--cream-soft)",
+              lineHeight: 1.5,
+              transition: "all 0.22s",
+            }}
+          >
+            <input
+              type="checkbox"
+              checked={consentRgpd}
+              onChange={(e) => setConsentRgpd(e.target.checked)}
+              style={{ marginTop: 2, flexShrink: 0, width: 18, height: 18, accentColor: PUBLIC_TOKENS.teal }}
+            />
+            <span>
+              <strong>J'accepte</strong> que mon prénom + 1<sup>re</sup> lettre de mon nom + ma ville soient
+              affichés publiquement sur le site La Base 360, ainsi que mon témoignage.
+            </span>
+          </label>
+
+          {/* Consent photo optionnel */}
+          <label
+            style={{
+              display: "flex",
+              alignItems: "flex-start",
+              gap: 12,
+              padding: 14,
+              background: "rgba(255,255,255,0.03)",
+              border: "1px solid var(--hair)",
+              borderRadius: 12,
+              cursor: "pointer",
+              fontSize: 13,
+              color: "var(--cream-muted)",
+              lineHeight: 1.5,
+            }}
+          >
+            <input
+              type="checkbox"
+              checked={photoConsent}
+              onChange={(e) => setPhotoConsent(e.target.checked)}
+              style={{ marginTop: 2, flexShrink: 0, width: 18, height: 18, accentColor: PUBLIC_TOKENS.teal }}
+            />
+            <span>
+              (Optionnel) J'autorise La Base 360 à me recontacter si {coachLabel} souhaite m'inviter à
+              partager une photo.
+            </span>
+          </label>
+
+          {errorMsg && (
+            <div
+              style={{
+                padding: "10px 14px",
+                borderRadius: 10,
+                background: "rgba(251,113,133,0.10)",
+                border: "1px solid rgba(251,113,133,0.40)",
+                color: PUBLIC_TOKENS.coral,
+                fontSize: 13,
+                textAlign: "center",
+              }}
+            >
+              {errorMsg}
+            </div>
+          )}
+
+          <PublicCtaPrimary type="submit" disabled={!canSubmit || submitting}>
+            {submitting ? "Envoi…" : "Envoyer mon retour →"}
+          </PublicCtaPrimary>
+        </div>
+
+        <div
+          style={{
+            marginTop: 24,
+            fontFamily: PUBLIC_FONTS.mono,
+            fontSize: 11,
+            color: "var(--cream-hint)",
+            letterSpacing: "0.06em",
+            lineHeight: 1.6,
+            textAlign: "center",
+          }}
+        >
+          🔒 Tes données restent privées. Aucun spam, aucune revente.
+          <br />
+          <strong style={{ color: "var(--cream-muted)" }}>La Base 360</strong> · Since 2022
+        </div>
+      </form>
+    </PublicShell>
+  );
+}
+
+const fieldLabelStyle: React.CSSProperties = {
+  display: "block",
+  fontFamily: PUBLIC_FONTS.display,
+  fontSize: 12,
+  fontWeight: 600,
+  color: "var(--cream-muted)",
+  textTransform: "uppercase",
+  letterSpacing: "0.12em",
+  marginBottom: 10,
+};
+
+const inputStyle: React.CSSProperties = {
+  width: "100%",
+  padding: "13px 15px",
+  background: "rgba(255,255,255,0.05)",
+  border: "1px solid var(--hair-strong)",
+  borderRadius: 12,
+  fontFamily: PUBLIC_FONTS.body,
+  fontSize: 16,
+  color: PUBLIC_TOKENS.cream,
+  outline: "none",
+  boxSizing: "border-box",
+  transition: "all 0.22s",
+  WebkitAppearance: "none",
+};
+
+// ─── Success view ─────────────────────────────────────────────────────────────
+function SuccessView({ firstName, coachFirstName }: { firstName: string; coachFirstName: string | null }) {
+  return (
+    <div style={{ padding: "64px 22px 80px", textAlign: "center" }}>
+      <PublicBrand label="Témoignage" />
+      <div
+        className="ps-pop-in"
+        style={{
+          width: 96,
+          height: 96,
+          margin: "16px auto 28px",
+          borderRadius: "50%",
+          background: PUBLIC_TOKENS.gradCta,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          color: "white",
+          fontSize: 48,
+          fontWeight: 700,
+          boxShadow: "0 16px 48px -8px rgba(45,212,191,0.55), 0 0 0 8px rgba(45,212,191,0.10)",
+        }}
+      >
+        ✓
+      </div>
+      <h2
+        style={{
+          fontFamily: PUBLIC_FONTS.display,
+          fontSize: "clamp(28px, 6vw, 36px)",
+          fontWeight: 600,
+          color: "var(--cream)",
+          lineHeight: 1.2,
+          letterSpacing: "-0.02em",
+          margin: "0 auto 18px",
+        }}
+      >
+        Merci{firstName ? ` ${firstName}` : ""} <span style={publicGradText}>infiniment</span>
+      </h2>
+      <p
+        style={{
+          fontSize: 15,
+          color: "var(--cream-muted)",
+          maxWidth: 440,
+          margin: "0 auto 28px",
+          lineHeight: 1.55,
+        }}
+      >
+        Ton retour a bien été envoyé. {coachFirstName ?? "Thomas"} va le valider sous 24 h, et il
+        s'affichera bientôt sur le site pour aider les prochains à se lancer.
+      </p>
+      <a
+        href="https://instagram.com/labase360"
+        target="_blank"
+        rel="noopener noreferrer"
+        style={{
+          display: "inline-flex",
+          alignItems: "center",
+          gap: 10,
+          padding: "12px 22px",
+          background: "rgba(255,255,255,0.04)",
+          border: "1px solid var(--hair)",
+          borderRadius: 999,
+          fontSize: 14,
+          fontWeight: 500,
+          color: "var(--cream)",
+          textDecoration: "none",
+          transition: "all 0.22s",
+        }}
+      >
+        📷 Suis-nous sur Instagram
+      </a>
+      <div
+        style={{
+          marginTop: 40,
+          fontFamily: PUBLIC_FONTS.mono,
+          fontSize: 11,
+          color: "var(--cream-hint)",
+          letterSpacing: "0.08em",
+        }}
+      >
+        La Base 360 · Since 2022
+      </div>
+    </div>
+  );
+}
+
+function ResultPanel({ emoji, title, message }: { emoji: string; title: string; message: string }) {
+  return (
+    <div style={{ padding: "64px 22px 80px", textAlign: "center" }}>
+      <PublicBrand label="Témoignage" />
+      <div style={{ fontSize: 56, margin: "24px 0 16px" }}>{emoji}</div>
+      <h2
+        style={{
+          fontFamily: PUBLIC_FONTS.display,
+          fontSize: 28,
+          fontWeight: 600,
+          color: "var(--cream)",
+          marginBottom: 14,
+        }}
+      >
+        {title}
+      </h2>
+      <p style={{ fontSize: 14, color: "var(--cream-muted)", maxWidth: 420, margin: "0 auto", lineHeight: 1.55 }}>
+        {message}
+      </p>
+    </div>
+  );
+}
+
+export default TestimonialFormPage;

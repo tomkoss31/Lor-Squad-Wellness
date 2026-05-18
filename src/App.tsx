@@ -139,6 +139,11 @@ const BilanOnlineWelcomePage = lazy(() =>
     default: module.BilanOnlineWelcomePage,
   })),
 );
+const TestimonialFormPage = lazy(() =>
+  import("./pages/TestimonialFormPage").then((module) => ({
+    default: module.TestimonialFormPage,
+  })),
+);
 const BilanOnlineMerciPage = lazy(() =>
   import("./pages/BilanOnlineMerciPage").then((module) => ({
     default: module.BilanOnlineMerciPage,
@@ -630,6 +635,8 @@ export default function App() {
             </Route>
           </Route>
           {/* Routes publiques — récap + rapport évolution */}
+          {/* Chantier #11 (2026-05-18) : page form temoignage client publique. */}
+          <Route path="/temoignage/:token" element={<TestimonialFormPage />} />
           <Route path="/recap/:token" element={<RecapPage />} />
           <Route path="/rapport/:token" element={<EvolutionReportPage />} />
           <Route path="/client/:token" element={<ClientAppPage />} />
