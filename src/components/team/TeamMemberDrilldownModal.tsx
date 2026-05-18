@@ -25,6 +25,8 @@ import {
   PvBizworksBlock,
   RangHerbalifeBlock,
 } from "../distributor-blocks";
+import { RankPinBadge } from "../rank/RankPinBadge";
+import type { HerbalifeRank } from "../../types/domain";
 
 interface TeamMemberDrilldownModalProps {
   member: TeamMemberEngagement | null;
@@ -88,8 +90,14 @@ export function TeamMemberDrilldownModal({ member, onClose }: TeamMemberDrilldow
                   : member.role === "referent"
                     ? "Référent"
                     : "Distributeur"}
-                {member.current_rank && ` · ${member.current_rank}`}
               </span>
+              {member.current_rank && (
+                <RankPinBadge
+                  rank={member.current_rank as HerbalifeRank}
+                  size="xs"
+                  showLabel
+                />
+              )}
               <span style={statusPillStyle(status.color)}>
                 <span aria-hidden="true">{status.emoji}</span>
                 {status.label}

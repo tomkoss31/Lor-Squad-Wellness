@@ -484,3 +484,69 @@ export function rankProgression(
     pvSource: threshold.source as "personal" | "personal_extended",
   };
 }
+
+// =============================================================================
+// Variante fenêtre glissante (règle Herbalife officielle 2026-05-18)
+// =============================================================================
+//
+// Les qualifs Herbalife sont sur fenêtre GLISSANTE, pas mois isolé :
+//   - Senior Consultant 35% : 500  PV / 2  mois glissants
+//   - Success Builder 42%   : 1000 PV / 3  mois glissants
+//   - Supervisor 50%        : 4000 PV / 1-12 mois glissants
+//
+// `rankProgressionFromWindows` accepte les sommes pré-calculées des fenêtres
+// glissantes (typiquement issues de la RPC get_distributor_qualifications)
+// + optionnellement le `qualifyingPersonalPv` étendu (perso + downline non-Sup
+// du mois courant) qui peut majorer la fenêtre 12m pour Supervisor.
+//
+// Pour Supervisor on prend le MAX entre la fenêtre 12m perso et l'extended
+// mois courant : la stratégie qui qualifie en premier l'emporte.
+
+export interface PvWindows {
+  pv_2m: number;
+  pv_3m: number;
+  /** PV perso 12 mois glissants (sans downline). Conservé pour debug / autres
+   *  usages mais NON utilisé par la jauge — voir pv_12m_extended. */
+  pv_12m: number;
+  /** PV ÉTENDU 12 mois glissants = self + descendants non-Supervisor (règle
+   *  breakaway Herbalife). C'est ce nombre qui qualifie pour Supervisor.
+   *  Source : RPC SQL `get_distributor_qualifications` V2. */
+  pv_12m_extended: number;
+}
+
+export function rankProgressionFromWindows(
+  currentRank: string | null | undefined,
+  windows: PvWindows,
+): (RankProgression & { windowMonths: number }) | null {
+  const rank = currentRank ?? "distributor_25";
+  const threshold = RANK_PROGRESSION_THRESHOLDS[rank];
+  if (!threshold) return null;
+
+  let pvCurrent: number;
+  let windowMonths: number;
+  if (rank === "distributor_25") {
+    pvCurrent = windows.pv_2m;
+    windowMonths = 2;
+  } else if (rank === "senior_consultant_35") {
+    pvCurrent = windows.pv_3m;
+    windowMonths = 3;
+  } else {
+    // success_builder_42 → supervisor_50 : 4000 PV / 12 mois glissants.
+    // PV étendu (self + downline non-Sup) calculé côté SQL, source unique.
+    pvCurrent = windows.pv_12m_extended;
+    windowMonths = 12;
+  }
+
+  const pct = Math.min(100, Math.round((pvCurrent / threshold.pvNeeded) * 100));
+  return {
+    currentLabel: RANK_LABEL_FALLBACK[rank] ?? rank,
+    nextRank: threshold.nextKey,
+    nextLabel: RANK_LABEL_FALLBACK[threshold.nextKey] ?? threshold.nextKey,
+    pvNeeded: threshold.pvNeeded,
+    pvCurrent: Math.max(0, pvCurrent),
+    pct,
+    remaining: Math.max(0, threshold.pvNeeded - pvCurrent),
+    pvSource: threshold.source as "personal" | "personal_extended",
+    windowMonths,
+  };
+}

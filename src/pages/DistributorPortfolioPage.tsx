@@ -39,6 +39,8 @@ import {
 } from "../components/distributor-blocks";
 import { TeamMemberDrilldownModal } from "../components/team/TeamMemberDrilldownModal";
 import { currentMonthIso } from "../lib/herbalifeFormulas";
+import { RankPinBadge } from "../components/rank/RankPinBadge";
+import type { HerbalifeRank } from "../types/domain";
 
 const statusTone: Record<string, { label: string; tone: "active" | "pending" | "follow-up" }> = {
   active: { label: "Actif", tone: "active" },
@@ -187,7 +189,16 @@ export function DistributorPortfolioPage() {
           <DistributorBadge user={portfolioUser} compact />
           <div>
             <span className="ls-portfolio-header-row__eyebrow">Responsable</span>
-            <h2>{portfolioUser.name}</h2>
+            <h2 style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+              <span>{portfolioUser.name}</span>
+              {portfolioUser.currentRank && (
+                <RankPinBadge
+                  rank={portfolioUser.currentRank as HerbalifeRank}
+                  size="sm"
+                  showLabel
+                />
+              )}
+            </h2>
             <div className="ls-portfolio-hero__meta">
               <RoleBadge role={portfolioUser.role} />
               <span>{portfolioUser.title || "La Base 360"}</span>
