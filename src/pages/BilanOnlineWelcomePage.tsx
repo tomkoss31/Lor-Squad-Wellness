@@ -15,6 +15,7 @@ import {
   publicGradText,
 } from "../components/public/PublicShell";
 import { CoachCredibilityBadges } from "../components/bilan-online/CoachCredibilityBadges";
+import { TestimonialsCarousel } from "../components/testimonials/TestimonialsCarousel";
 
 function normalizeSlug(input: string): string {
   return input
@@ -243,6 +244,9 @@ export function BilanOnlineWelcomePage() {
             ))}
           </ul>
         </div>
+
+        {/* Témoignages clients vérifiés (chantier #11) — carousel auto-rotation */}
+        <TestimonialsCarousel variant="welcome" />
 
         {slug ? (
           <>

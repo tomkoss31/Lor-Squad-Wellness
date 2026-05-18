@@ -144,6 +144,11 @@ const TestimonialFormPage = lazy(() =>
     default: module.TestimonialFormPage,
   })),
 );
+const AdminTestimonialsPage = lazy(() =>
+  import("./pages/AdminTestimonialsPage").then((module) => ({
+    default: module.AdminTestimonialsPage,
+  })),
+);
 const BilanOnlineMerciPage = lazy(() =>
   import("./pages/BilanOnlineMerciPage").then((module) => ({
     default: module.BilanOnlineMerciPage,
@@ -605,6 +610,8 @@ export default function App() {
               <Route path="clients" element={<ClientsPage />} />
               <Route element={<RoleRoute allowedRoles={["admin"]} />}>
                 <Route path="users" element={<UsersPage />} />
+                {/* Chantier #11 (2026-05-18) : moderation temoignages clients. */}
+                <Route path="admin/testimonials" element={<AdminTestimonialsPage />} />
                 {/* Chantier Team Tree (2026-04-25) : nouvelle fiche équipe
                     avec arbre de parrainage interactif. /users reste
                     accessible pour l'admin legacy (créer compte, réparer). */}
