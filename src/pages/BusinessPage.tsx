@@ -39,15 +39,81 @@ interface PartnerStory {
   avatar_url: string | null;
 }
 
-// Histoire fondateurs fusionnée (Thomas + Mélanie). Les avatars sont fetched
-// dynamiquement depuis users.avatar_url via la RPC publique
-// `get_founders_avatars` (cf. migration 20261118400000). Textes ci-dessous à
-// corriger par Thomas si écart avec les vrais parcours.
-const FOUNDERS_STORY_TEXT = {
-  hook: "On a démarré à 2, le soir et les week-ends. Aujourd'hui on en a fait notre métier.",
-  body:
-    "Thomas était dans le marketing digital, Mélanie prof de SVT. En 2022, on a démarré La Base 360 en parallèle de nos jobs. À 6 mois Thomas était Success Builder, à 18 mois il avait quitté son CDI. Mélanie a démarré à temps partiel, juste avec ses copines proches au début — à 1 an elle gagnait déjà plus en coaching qu'en enseignement. Aujourd'hui on accompagne l'équipe qui forme les nouveaux partenaires. Ce qu'on aime ? Construire un revenu une fois et le voir revenir mois après mois.",
-};
+// Histoire fondateurs Tom + Mélanie. Avatars auto via RPC publique
+// `get_founders_avatars` (lit users.avatar_url, migration 20261118400000).
+// Texte officiel envoyé par Thomas 2026-05-18.
+
+type FounderChapter =
+  | { kind: "heading"; text: string }
+  | { kind: "paragraph"; text: string }
+  | { kind: "bullets"; items: string[] };
+
+const FOUNDERS_STORY_TITLE = "Notre histoire";
+
+const FOUNDERS_STORY_CHAPTERS: FounderChapter[] = [
+  { kind: "heading", text: "Avant Herbalife" },
+  {
+    kind: "paragraph",
+    text:
+      "Tom, 15 ans conducteur d'engins sur chantier. Debout à 5h, rentré à 19h. Une routine qui lui prenait tout : le temps avec ses enfants, le sport, la vie. Il faisait déjà du sport, mais les résultats n'étaient pas au rendez-vous. Fatigué. En attente du week-end. En attente des vacances. Il cherchait autre chose — plus de temps, mieux gagner sa vie, offrir une vraie vie à ses enfants. Sans véhicule, sans plan B.",
+  },
+  {
+    kind: "paragraph",
+    text:
+      "Mélanie, 11 ans dans le complément alimentaire pour animaux. Maman de 2 enfants en bas âge, elle vivait ce que beaucoup de mamans vivent : la fatigue qui s'accumule, quelques kilos de grossesse qui ne partaient pas, l'impression de tenir mais de ne plus se reconnaître. Un métier stable, mais sans le sens qu'elle cherchait au fond.",
+  },
+  {
+    kind: "paragraph",
+    text: "Deux parcours différents. Une même envie : retrouver de l'énergie, du temps, et construire quelque chose à eux.",
+  },
+
+  { kind: "heading", text: "Le déclic — mai 2022" },
+  {
+    kind: "paragraph",
+    text:
+      "On leur présente Herbalife. Ils disent oui. Pas parce que c'était facile. Parce qu'ils voyaient pour la première fois un vrai projet : santé, sens, et liberté.",
+  },
+  {
+    kind: "paragraph",
+    text: "Tom démarre sur un protocole de 21 jours. Le résultat tombe vite :",
+  },
+  {
+    kind: "bullets",
+    items: [
+      "–4 kg en 1 mois",
+      "18 personnes accompagnées sur leur remise en forme",
+      "3 partenaires qui rejoignent l'équipe",
+      "1 800 € de revenu complémentaire dès le 1ᵉʳ mois — à côté de son job",
+    ],
+  },
+  {
+    kind: "paragraph",
+    text:
+      "Un an plus tard, Mélanie le rejoint à temps plein. La nutrition la change complètement : elle perd les derniers kilos de grossesse, retrouve une énergie qu'elle avait oubliée, et redevient pleinement elle-même. Plus dynamique. Plus épanouie. Maman, femme, entrepreneure — sur ses propres termes.",
+  },
+
+  { kind: "heading", text: "Aujourd'hui — 4 ans plus tard" },
+  {
+    kind: "bullets",
+    items: [
+      "+ de 250 personnes accompagnées chaque mois avec toute l'équipe",
+      "Des revenus jamais en dessous de 4 000 €/mois",
+      "Plusieurs voyages à travers le monde",
+      "Un agenda qu'on gère nous-mêmes",
+      "La Base Shakes & Drinks à Verdun, notre QG depuis juin 2025",
+    ],
+  },
+
+  { kind: "heading", text: "Demain" },
+  {
+    kind: "paragraph",
+    text: "Doubler, tripler le nombre de personnes accompagnées. Ouvrir les 100 prochains clubs en France — et pourquoi pas à l'international.",
+  },
+  {
+    kind: "paragraph",
+    text: "Ce n'est pas un business. C'est un mouvement. Et on a besoin de toi pour le construire.",
+  },
+];
 
 // Partenaires additionnels (textes Thomas en cours).
 const PARTNER_STORIES: PartnerStory[] = [];
@@ -846,11 +912,10 @@ export function BusinessPage() {
               <p className="biz-section__lead">Deux histoires vraies. Tu peux en écrire une autre.</p>
             </div>
             <div className="biz-stories">
-              {/* Bloc fondateurs fusionné — Thomas + Mélanie en 1 récit
-                  partagé. Avatars auto via RPC get_founders_avatars
-                  (lit users.avatar_url uploadé via Paramètres > Profil).
-                  Fallback gradient initiales si avatar absent. */}
-              <article className="biz-story biz-story--founders biz-reveal">
+              {/* Bloc fondateurs fusionné — Tom + Mélanie en 1 récit en
+                  4 chapitres. Avatars auto via RPC get_founders_avatars
+                  (lit users.avatar_url). Texte officiel Thomas 2026-05-18. */}
+              <article className="biz-story biz-story--founders biz-reveal" style={{ gridColumn: "1 / -1" }}>
                 <div className="biz-story__head">
                   <div
                     className="biz-story__photo biz-story__photo--couple"
@@ -861,28 +926,51 @@ export function BusinessPage() {
                       <img
                         src={foundersAvatars.thomas_avatar_url}
                         alt=""
-                        style={{ width: 56, height: 56, borderRadius: "50%", objectFit: "cover", border: "2px solid #fff", boxShadow: "0 2px 8px rgba(0,0,0,0.15)" }}
+                        style={{ width: 64, height: 64, borderRadius: "50%", objectFit: "cover", border: "3px solid #fff", boxShadow: "0 2px 8px rgba(0,0,0,0.15)" }}
                       />
                     ) : (
-                      <div style={{ width: 56, height: 56, borderRadius: "50%", background: "linear-gradient(135deg,#10B981,#06B6D4)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 700, fontSize: 20, border: "2px solid #fff" }}>T</div>
+                      <div style={{ width: 64, height: 64, borderRadius: "50%", background: "linear-gradient(135deg,#10B981,#06B6D4)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 700, fontSize: 22, border: "3px solid #fff" }}>T</div>
                     )}
                     {foundersAvatars.melanie_avatar_url ? (
                       <img
                         src={foundersAvatars.melanie_avatar_url}
                         alt=""
-                        style={{ width: 56, height: 56, borderRadius: "50%", objectFit: "cover", border: "2px solid #fff", marginLeft: -14, boxShadow: "0 2px 8px rgba(0,0,0,0.15)" }}
+                        style={{ width: 64, height: 64, borderRadius: "50%", objectFit: "cover", border: "3px solid #fff", marginLeft: -16, boxShadow: "0 2px 8px rgba(0,0,0,0.15)" }}
                       />
                     ) : (
-                      <div style={{ width: 56, height: 56, borderRadius: "50%", background: "linear-gradient(135deg,#A78BFA,#FB7185)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 700, fontSize: 20, marginLeft: -14, border: "2px solid #fff" }}>M</div>
+                      <div style={{ width: 64, height: 64, borderRadius: "50%", background: "linear-gradient(135deg,#A78BFA,#FB7185)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 700, fontSize: 22, marginLeft: -16, border: "3px solid #fff" }}>M</div>
                     )}
                   </div>
                   <div>
-                    <div className="biz-story__name">Thomas &amp; Mélanie</div>
-                    <div className="biz-story__since">Fondateurs La Base 360 · démarré en 2022</div>
+                    <div className="biz-story__name">{FOUNDERS_STORY_TITLE}</div>
+                    <div className="biz-story__since">Tom &amp; Mélanie · fondateurs La Base 360</div>
                   </div>
                 </div>
-                <div className="biz-story__hook">« {FOUNDERS_STORY_TEXT.hook} »</div>
-                <p className="biz-story__body">{FOUNDERS_STORY_TEXT.body}</p>
+                <div className="biz-story__chapters">
+                  {FOUNDERS_STORY_CHAPTERS.map((c, i) => {
+                    if (c.kind === "heading") {
+                      return (
+                        <h4 key={i} className="biz-story__chapter-title">
+                          {c.text}
+                        </h4>
+                      );
+                    }
+                    if (c.kind === "paragraph") {
+                      return (
+                        <p key={i} className="biz-story__chapter-p">
+                          {c.text}
+                        </p>
+                      );
+                    }
+                    return (
+                      <ul key={i} className="biz-story__chapter-list">
+                        {c.items.map((it, j) => (
+                          <li key={j}>{it}</li>
+                        ))}
+                      </ul>
+                    );
+                  })}
+                </div>
               </article>
 
               {/* Partenaires additionnels — textes envoyés par Thomas */}

@@ -284,6 +284,14 @@ export const BIZ_STYLES = `
 .biz-story__since { font-size: 13px; color: var(--biz-graphite-soft); margin-top: 2px; }
 .biz-story__hook { font-family: var(--biz-display); font-size: 22px; font-weight: 600; letter-spacing: -0.02em; line-height: 1.2; }
 .biz-story__body { font-size: 15px; color: var(--biz-graphite); line-height: 1.6; }
+/* §5 — Bloc fondateurs riche (chapitres) */
+.biz-story--founders { padding: 36px; gap: 12px; }
+.biz-story__chapters { display: flex; flex-direction: column; gap: 14px; }
+.biz-story__chapter-title { font-family: var(--biz-display); font-size: 18px; font-weight: 700; letter-spacing: -0.01em; color: var(--biz-ink); margin: 14px 0 4px 0; }
+.biz-story__chapter-title:first-child { margin-top: 0; }
+.biz-story__chapter-p { font-size: 15px; color: var(--biz-graphite); line-height: 1.65; margin: 0; }
+.biz-story__chapter-list { margin: 0; padding-left: 22px; display: flex; flex-direction: column; gap: 8px; }
+.biz-story__chapter-list li { font-size: 15px; color: var(--biz-graphite); line-height: 1.55; }
 .biz-stories__signature { margin: 40px auto 0; text-align: center; max-width: 640px; }
 .biz-stories__signature span { font-family: var(--biz-italic); font-style: italic; font-weight: 500; color: var(--biz-gold); font-size: clamp(22px, 3vw, 28px); letter-spacing: -0.005em; }
 .biz-stories__signature::before, .biz-stories__signature::after { content: ""; display: block; width: 40px; height: 1px; background: var(--biz-gold-soft); margin: 18px auto; }
