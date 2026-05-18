@@ -129,8 +129,10 @@ function MemberCard({
     .slice(0, 2)
     .toUpperCase();
 
+  // 13B.1 — toute la carte est cliquable vers /distributors/:id
   return (
-    <div
+    <Link
+      to={`/distributors/${user.id}`}
       style={{
         padding: 14,
         borderRadius: 12,
@@ -140,6 +142,21 @@ function MemberCard({
         alignItems: "center",
         gap: 12,
         opacity: user.active ? 1 : 0.55,
+        textDecoration: "none",
+        cursor: "pointer",
+        transition: "transform 0.15s, border-color 0.15s, box-shadow 0.15s",
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.transform = "translateY(-1px)";
+        e.currentTarget.style.borderColor =
+          "color-mix(in srgb, var(--ls-teal) 40%, var(--ls-border))";
+        e.currentTarget.style.boxShadow =
+          "0 6px 18px -8px color-mix(in srgb, var(--ls-teal) 30%, transparent)";
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.transform = "none";
+        e.currentTarget.style.borderColor = "var(--ls-border)";
+        e.currentTarget.style.boxShadow = "none";
       }}
     >
       <div
@@ -173,35 +190,45 @@ function MemberCard({
             {user.name}
           </span>
           {!user.active ? (
-            <span style={{ fontSize: 9, padding: "1px 6px", borderRadius: 8, background: "rgba(220,38,38,0.08)", color: "#DC2626" }}>
+            <span
+              style={{
+                fontSize: 9,
+                padding: "1px 6px",
+                borderRadius: 8,
+                background: "rgba(220,38,38,0.08)",
+                color: "#DC2626",
+              }}
+            >
               Inactif
             </span>
           ) : null}
         </div>
         <div style={{ fontSize: 11, color: "var(--ls-text-hint)", marginTop: 2 }}>
-          {user.role === "admin" ? "Admin" : user.role === "referent" ? "Référent" : "Distributeur"}
+          {user.role === "admin"
+            ? "Admin"
+            : user.role === "referent"
+              ? "Référent"
+              : "Distributeur"}
           {user.sponsorName ? ` · Parrain : ${user.sponsorName}` : ""}
         </div>
         <div style={{ fontSize: 11, color: "var(--ls-text-hint)", marginTop: 2 }}>
-          {clientCount} client{clientCount > 1 ? "s" : ""} · {pvMonth.toLocaleString("fr-FR")} PV mois
+          {clientCount} client{clientCount > 1 ? "s" : ""} ·{" "}
+          {pvMonth.toLocaleString("fr-FR")} PV mois
         </div>
       </div>
-      <Link
-        to={`/distributors/${user.id}`}
-        style={{
-          fontSize: 11,
-          padding: "5px 10px",
-          borderRadius: 8,
-          background: "var(--ls-surface)",
-          border: "1px solid var(--ls-border)",
-          color: "var(--ls-text-muted)",
-          textDecoration: "none",
-          flexShrink: 0,
-        }}
+      <svg
+        width="14"
+        height="14"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        style={{ color: "var(--ls-text-muted)", flexShrink: 0 }}
+        aria-hidden="true"
       >
-        Fiche
-      </Link>
-    </div>
+        <polyline points="9 18 15 12 9 6" />
+      </svg>
+    </Link>
   );
 }
 
