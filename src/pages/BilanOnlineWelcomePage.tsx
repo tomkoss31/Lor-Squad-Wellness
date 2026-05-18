@@ -14,8 +14,11 @@ import {
   PUBLIC_FONTS,
   publicGradText,
 } from "../components/public/PublicShell";
-import { CoachCredibilityBadges } from "../components/bilan-online/CoachCredibilityBadges";
+import { CoachCredibilityBadges, type CoachCredibility } from "../components/bilan-online/CoachCredibilityBadges";
 import { TestimonialsCarousel } from "../components/testimonials/TestimonialsCarousel";
+import { LaBase360Logo } from "../components/public/LaBase360Logo";
+import { RankPinBadge } from "../components/rank/RankPinBadge";
+import type { HerbalifeRank } from "../types/domain";
 
 function normalizeSlug(input: string): string {
   return input
@@ -29,22 +32,27 @@ function capitalize(s: string): string {
   if (!s) return s;
   return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
 }
-function getInitials(name: string): string {
-  if (!name) return "?";
-  const parts = name.trim().split(/\s+/);
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-  return (parts[0][0] + parts[1][0]).toUpperCase();
-}
 
 export function BilanOnlineWelcomePage() {
   const navigate = useNavigate();
   const { coachSlug } = useParams<{ coachSlug?: string }>();
   const slug = useMemo(() => normalizeSlug(coachSlug ?? ""), [coachSlug]);
-  const coachName = slug ? capitalize(slug) : "";
-  const initials = getInitials(coachName);
+  const fallbackCoachName = slug ? capitalize(slug) : "";
 
   const [inputName, setInputName] = useState("");
   const [showFreeBilan, setShowFreeBilan] = useState(false);
+  const [coachData, setCoachData] = useState<CoachCredibility | null>(null);
+
+  // Nom officiel via RPC si dispo (first_name + initiale nom), fallback slug
+  const coachDisplayName = useMemo(() => {
+    if (coachData?.first_name) {
+      const lastInit = coachData.name?.[0] ? ` ${coachData.name[0]}.` : "";
+      return `${coachData.first_name}${lastInit}`;
+    }
+    return fallbackCoachName;
+  }, [coachData, fallbackCoachName]);
+
+  const coachRank = (coachData?.rank ?? null) as HerbalifeRank | null;
 
   function startWithSlug() {
     navigate(`/bilan-online/${slug}/formulaire`);
@@ -110,7 +118,7 @@ export function BilanOnlineWelcomePage() {
           2 minutes pour comprendre ton corps, tes objectifs, et te proposer un accompagnement vraiment personnalisé.
         </p>
 
-        {/* Coach card glassmorphism pill */}
+        {/* Coach card glassmorphism pill — logo La Base 360 + nom coach + pin Herbalife */}
         {slug && (
           <div style={{ textAlign: "center", marginBottom: 28 }}>
             <div
@@ -120,31 +128,19 @@ export function BilanOnlineWelcomePage() {
                 WebkitBackdropFilter: "blur(20px)",
                 border: "1px solid var(--hair)",
                 borderRadius: 999,
-                padding: "14px 22px 14px 14px",
+                padding: "12px 22px 12px 12px",
                 display: "inline-flex",
                 alignItems: "center",
                 gap: 14,
                 boxShadow: "0 4px 24px rgba(0,0,0,0.2)",
               }}
             >
-              <div
-                style={{
-                  width: 44,
-                  height: 44,
-                  borderRadius: "50%",
-                  background: PUBLIC_TOKENS.gradCta,
-                  color: PUBLIC_TOKENS.ink,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontFamily: PUBLIC_FONTS.display,
-                  fontWeight: 700,
-                  fontSize: 15,
-                  flexShrink: 0,
-                }}
-              >
-                {initials}
-              </div>
+              <LaBase360Logo
+                variant="mark"
+                size={48}
+                alt="La Base 360"
+                style={{ borderRadius: 12 }}
+              />
               <div style={{ textAlign: "left" }}>
                 <div
                   style={{
@@ -164,16 +160,29 @@ export function BilanOnlineWelcomePage() {
                     fontSize: 15,
                     fontWeight: 600,
                     color: "var(--cream)",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8,
+                    flexWrap: "wrap",
                   }}
                 >
-                  {coachName}
+                  <span>{coachDisplayName || "—"}</span>
+                  {coachRank && (
+                    <RankPinBadge rank={coachRank} size="xs" />
+                  )}
                 </div>
               </div>
             </div>
           </div>
         )}
 
-        {slug && <CoachCredibilityBadges coachSlug={slug} variant="welcome" />}
+        {slug && (
+          <CoachCredibilityBadges
+            coachSlug={slug}
+            variant="welcome"
+            onResolved={setCoachData}
+          />
+        )}
 
         {/* Pitch card glassmorphism */}
         <div
