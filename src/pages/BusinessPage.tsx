@@ -26,6 +26,125 @@ import { TestimonialsCarousel } from "../components/testimonials/TestimonialsCar
 
 type FormStatus = "idle" | "submitting" | "success" | "error";
 
+// ─── §05 Témoignages partenaires ─────────────────────────────────────────────
+// Refonte 2026-05-18 : 1 seul bloc fondateurs (Thomas + Mélanie ensemble) +
+// slots partenaires additionnels (textes Thomas en cours). Plus de récits
+// inventés.
+
+interface PartnerStory {
+  slug: string;            // prénom normalisé (lookup users.avatar_url côté DB)
+  name: string;            // ex « Ambre »
+  since: string;           // ex « Partenaire · Divona Center (Lot 46) »
+  hook: string;            // accroche entre « ... »
+  body: string;            // récit complet
+}
+
+// Histoire fondateurs Tom + Mélanie. Avatars auto via RPC publique
+// `get_founders_avatars` (lit users.avatar_url, migration 20261118400000).
+// Texte officiel envoyé par Thomas 2026-05-18.
+
+type FounderChapter =
+  | { kind: "heading"; text: string }
+  | { kind: "paragraph"; text: string }
+  | { kind: "bullets"; items: string[] };
+
+const FOUNDERS_STORY_TITLE = "Notre histoire";
+
+const FOUNDERS_STORY_CHAPTERS: FounderChapter[] = [
+  { kind: "heading", text: "Avant Herbalife" },
+  {
+    kind: "paragraph",
+    text:
+      "Tom, 15 ans conducteur d'engins sur chantier. Debout à 5h, rentré à 19h. Une routine qui lui prenait tout : le temps avec ses enfants, le sport, la vie. Il faisait déjà du sport, mais les résultats n'étaient pas au rendez-vous. Fatigué. En attente du week-end. En attente des vacances. Il cherchait autre chose — plus de temps, mieux gagner sa vie, offrir une vraie vie à ses enfants. Sans véhicule, sans plan B.",
+  },
+  {
+    kind: "paragraph",
+    text:
+      "Mélanie, 11 ans dans le complément alimentaire pour animaux. Maman de 2 enfants en bas âge, elle vivait ce que beaucoup de mamans vivent : la fatigue qui s'accumule, quelques kilos de grossesse qui ne partaient pas, l'impression de tenir mais de ne plus se reconnaître. Un métier stable, mais sans le sens qu'elle cherchait au fond.",
+  },
+  {
+    kind: "paragraph",
+    text: "Deux parcours différents. Une même envie : retrouver de l'énergie, du temps, et construire quelque chose à eux.",
+  },
+
+  { kind: "heading", text: "Le déclic — mai 2022" },
+  {
+    kind: "paragraph",
+    text:
+      "On leur présente Herbalife. Ils disent oui. Pas parce que c'était facile. Parce qu'ils voyaient pour la première fois un vrai projet : santé, sens, et liberté.",
+  },
+  {
+    kind: "paragraph",
+    text: "Tom démarre sur un protocole de 21 jours. Le résultat tombe vite :",
+  },
+  {
+    kind: "bullets",
+    items: [
+      "–4 kg en 1 mois",
+      "18 personnes accompagnées sur leur remise en forme",
+      "3 partenaires qui rejoignent l'équipe",
+      "1 800 € de revenu complémentaire dès le 1ᵉʳ mois — à côté de son job",
+    ],
+  },
+  {
+    kind: "paragraph",
+    text:
+      "Un an plus tard, Mélanie le rejoint à temps plein. La nutrition la change complètement : elle perd les derniers kilos de grossesse, retrouve une énergie qu'elle avait oubliée, et redevient pleinement elle-même. Plus dynamique. Plus épanouie. Maman, femme, entrepreneure — sur ses propres termes.",
+  },
+
+  { kind: "heading", text: "Aujourd'hui — 4 ans plus tard" },
+  {
+    kind: "bullets",
+    items: [
+      "+ de 250 personnes accompagnées chaque mois avec toute l'équipe",
+      "Des revenus jamais en dessous de 4 000 €/mois",
+      "Plusieurs voyages à travers le monde",
+      "Un agenda qu'on gère nous-mêmes",
+      "La Base Shakes & Drinks à Verdun, notre QG depuis juin 2025",
+    ],
+  },
+
+  { kind: "heading", text: "Demain" },
+  {
+    kind: "paragraph",
+    text: "Doubler, tripler le nombre de personnes accompagnées. Ouvrir les 100 prochains clubs en France — et pourquoi pas à l'international.",
+  },
+  {
+    kind: "paragraph",
+    text: "Ce n'est pas un business. C'est un mouvement. Et on a besoin de toi pour le construire.",
+  },
+];
+
+// Partenaires additionnels (textes Thomas 2026-05-18). Les avatars sont
+// récupérés en batch via RPC `get_avatars_by_slugs` (lit users.avatar_url
+// avec lookup ls_normalize_slug(first_name)).
+const PARTNER_STORIES: PartnerStory[] = [
+  {
+    slug: "ambre",
+    name: "Ambre",
+    since: "Partenaire · Divona Center (Lot 46) · ouvert en juillet",
+    hook: "Digestion retrouvée, +8 kg de muscle, –10 % de masse grasse en 2 ans.",
+    body:
+      "Ambre, 35 ans, maman d'une fille de 4 ans, problème de digestion depuis toute petite. J'ai toujours mangé équilibré et fait du sport, aucune perte de poids. En 2 ans j'ai pris 8 kg de masse musculaire et j'ai perdu 10 % de masse grasse. J'ai retrouvé une digestion normale, de l'énergie et une meilleure hydratation. Pour l'activité, on aide entre 35 et 40 personnes dans le Lot (46), mon meilleur revenu c'est 1 262 € le mois dernier et on a ouvert le Divona Center en juillet.",
+  },
+  {
+    slug: "laura",
+    name: "Laura",
+    since: "Partenaire · ex-responsable salon de coiffure",
+    hook: "+9 kg de muscle en 7 mois, et l'envie d'aider 2 000 personnes en 3 ans.",
+    body:
+      "Laura, 25 ans. J'étais responsable d'un salon de coiffure. J'ai voulu démarrer pour reprendre de la masse musculaire, chose faite : plus de 9 kg de masse musculaire en 7 mois. Au début j'ai commencé l'activité à temps choisi pour faire des compléments de revenus. Maintenant c'est plus de 150 personnes aidées, 2 500 € de revenus avec une vision claire d'aider 2 000 personnes sur les 3 prochaines années.",
+  },
+  {
+    slug: "valentin",
+    name: "Valentin",
+    since: "Partenaire · à temps plein depuis janvier 2023",
+    hook: "–30 kg en 1 an, +12 kg de muscle, le sport retrouvé.",
+    body:
+      "Pour ma part, Valentin, j'ai connu le concept en démarrant sur ma nutrition. Je faisais pas mal de sport, mais une mauvaise nutrition. Suite à des blessures successives, j'ai ralenti sur le sport. Je suis passé de 76 kg à 109 kg. En 1 an j'ai séché 30 kg et repris 12 kg de masse musculaire. Depuis janvier 2023 je développe l'activité à temps plein avec une équipe en construction.",
+  },
+];
+
 const FAQ_ITEMS = [
   {
     q: "Combien de temps par semaine je dois y consacrer ?",
@@ -82,6 +201,51 @@ export function BusinessPage() {
   const [params] = useSearchParams();
   const referrerId = params.get("ref");
   const wantsLeadCapture = params.get("leadcapture") === "1";
+
+  // ─── Avatars §05 (fondateurs + partenaires) via RPC publiques ─────────────
+  const [foundersAvatars, setFoundersAvatars] = useState<{
+    thomas_avatar_url: string | null;
+    melanie_avatar_url: string | null;
+  }>({ thomas_avatar_url: null, melanie_avatar_url: null });
+  const [partnerAvatars, setPartnerAvatars] = useState<Record<string, string | null>>({});
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const sb = await getSupabaseClient();
+        if (!sb) return;
+
+        // Fondateurs : Thomas + Mélanie
+        const { data: f } = await sb.rpc("get_founders_avatars");
+        if (!cancelled && f) {
+          const row = Array.isArray(f) ? f[0] : f;
+          if (row) {
+            setFoundersAvatars({
+              thomas_avatar_url: row.thomas_avatar_url ?? null,
+              melanie_avatar_url: row.melanie_avatar_url ?? null,
+            });
+          }
+        }
+
+        // Partenaires : batch par slug
+        const slugs = PARTNER_STORIES.map((p) => p.slug);
+        if (slugs.length > 0) {
+          const { data: p } = await sb.rpc("get_avatars_by_slugs", { p_slugs: slugs });
+          if (!cancelled && Array.isArray(p)) {
+            const map: Record<string, string | null> = {};
+            for (const r of p as Array<{ slug: string; avatar_url: string | null }>) {
+              map[r.slug] = r.avatar_url ?? null;
+            }
+            setPartnerAvatars(map);
+          }
+        }
+      } catch {
+        /* silent : avatars optionnels, fallback gradient initiales */
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
 
   // ─── Simulateur state ─────────────────────────────────────────────────────
   const [target, setTarget] = useState<number>(500);
@@ -793,28 +957,94 @@ export function BusinessPage() {
               <p className="biz-section__lead">Deux histoires vraies. Tu peux en écrire une autre.</p>
             </div>
             <div className="biz-stories">
-              <article className="biz-story biz-reveal">
+              {/* Bloc fondateurs fusionné — Tom + Mélanie en 1 récit en
+                  4 chapitres. Avatars auto via RPC get_founders_avatars
+                  (lit users.avatar_url). Texte officiel Thomas 2026-05-18. */}
+              <article className="biz-story biz-story--founders biz-reveal" style={{ gridColumn: "1 / -1" }}>
                 <div className="biz-story__head">
-                  <div className="biz-story__photo" aria-hidden="true">photo</div>
+                  <div
+                    className="biz-story__photo biz-story__photo--couple"
+                    aria-hidden="true"
+                    style={{ display: "flex", alignItems: "center" }}
+                  >
+                    {foundersAvatars.thomas_avatar_url ? (
+                      <img
+                        src={foundersAvatars.thomas_avatar_url}
+                        alt=""
+                        style={{ width: 64, height: 64, borderRadius: "50%", objectFit: "cover", border: "3px solid #fff", boxShadow: "0 2px 8px rgba(0,0,0,0.15)" }}
+                      />
+                    ) : (
+                      <div style={{ width: 64, height: 64, borderRadius: "50%", background: "linear-gradient(135deg,#10B981,#06B6D4)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 700, fontSize: 22, border: "3px solid #fff" }}>T</div>
+                    )}
+                    {foundersAvatars.melanie_avatar_url ? (
+                      <img
+                        src={foundersAvatars.melanie_avatar_url}
+                        alt=""
+                        style={{ width: 64, height: 64, borderRadius: "50%", objectFit: "cover", border: "3px solid #fff", marginLeft: -16, boxShadow: "0 2px 8px rgba(0,0,0,0.15)" }}
+                      />
+                    ) : (
+                      <div style={{ width: 64, height: 64, borderRadius: "50%", background: "linear-gradient(135deg,#A78BFA,#FB7185)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 700, fontSize: 22, marginLeft: -16, border: "3px solid #fff" }}>M</div>
+                    )}
+                  </div>
                   <div>
-                    <div className="biz-story__name">Thomas K.</div>
-                    <div className="biz-story__since">Fondateur La Base 360 · démarré en mars 2022</div>
+                    <div className="biz-story__name">{FOUNDERS_STORY_TITLE}</div>
+                    <div className="biz-story__since">Tom &amp; Mélanie · fondateurs La Base 360</div>
                   </div>
                 </div>
-                <div className="biz-story__hook">« De salarié bureau à 6 chiffres en 18 mois. »</div>
-                <p className="biz-story__body">J'étais dans le marketing digital, salarié confortable mais sans goût. En mars 2022, j'ai démarré La Base 360 le soir et les weekends. À 6 mois j'étais Success Builder. À 18 mois j'ai quitté mon CDI, dépassé les 6 chiffres net sur l'année, et monté l'équipe qui forme aujourd'hui les nouveaux partenaires. Ce que j'aime ? Tu construis ton revenu une fois et il revient mois après mois.</p>
-              </article>
-              <article className="biz-story biz-reveal">
-                <div className="biz-story__head">
-                  <div className="biz-story__photo" aria-hidden="true">photo</div>
-                  <div>
-                    <div className="biz-story__name">Mélanie L.</div>
-                    <div className="biz-story__since">Co-fondatrice · démarrée en juillet 2022</div>
-                  </div>
+                <div className="biz-story__chapters">
+                  {FOUNDERS_STORY_CHAPTERS.map((c, i) => {
+                    if (c.kind === "heading") {
+                      return (
+                        <h4 key={i} className="biz-story__chapter-title">
+                          {c.text}
+                        </h4>
+                      );
+                    }
+                    if (c.kind === "paragraph") {
+                      return (
+                        <p key={i} className="biz-story__chapter-p">
+                          {c.text}
+                        </p>
+                      );
+                    }
+                    return (
+                      <ul key={i} className="biz-story__chapter-list">
+                        {c.items.map((it, j) => (
+                          <li key={j}>{it}</li>
+                        ))}
+                      </ul>
+                    );
+                  })}
                 </div>
-                <div className="biz-story__hook">« De prof à coach indépendante, sans jamais rien forcer. »</div>
-                <p className="biz-story__body">J'étais prof de SVT en collège. J'aimais le contact, j'étouffais dans le cadre. En juillet 2022, j'ai démarré à temps partiel — uniquement avec mes copines proches au début. À 4 mois, mes premiers clients m'amenaient leurs amis. À 1 an, j'ai posé une dispo, gardé un mi-temps par sécurité, et je gagne aujourd'hui plus en coaching qu'en enseignement. Et surtout : j'aime mes journées.</p>
               </article>
+
+              {/* Partenaires additionnels — textes Thomas 2026-05-18.
+                  Avatars auto via RPC get_avatars_by_slugs (lookup
+                  ls_normalize_slug(users.first_name)). */}
+              {PARTNER_STORIES.map((s, i) => {
+                const av = partnerAvatars[s.slug] ?? null;
+                return (
+                  <article key={i} className="biz-story biz-reveal">
+                    <div className="biz-story__head">
+                      <div className="biz-story__photo" aria-hidden="true" style={{ overflow: "hidden", padding: 0 }}>
+                        {av ? (
+                          <img src={av} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                        ) : (
+                          <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", background: "linear-gradient(135deg,#10B981,#06B6D4)", color: "#fff", fontWeight: 700, fontSize: 22 }}>
+                            {s.name?.[0]?.toUpperCase() ?? "?"}
+                          </div>
+                        )}
+                      </div>
+                      <div>
+                        <div className="biz-story__name">{s.name}</div>
+                        <div className="biz-story__since">{s.since}</div>
+                      </div>
+                    </div>
+                    <div className="biz-story__hook">« {s.hook} »</div>
+                    <p className="biz-story__body">{s.body}</p>
+                  </article>
+                );
+              })}
             </div>
             <div className="biz-reveal biz-stories__signature">
               <span>« La seule règle : démarrer. »</span>

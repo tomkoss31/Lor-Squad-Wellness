@@ -343,6 +343,38 @@ export function ClientDetailPage() {
             >
               📋 Suivi
             </Link>
+            {/* Quality fix C (2026-05-18) : bouton demander un témoignage.
+                Copie l'URL générique du coach + ouvre WhatsApp pré-rempli
+                avec un message au prénom du client. */}
+            <button
+              type="button"
+              onClick={() => {
+                const slugSource = (currentUser?.name ?? "").split(/\s+/)[0] ?? "";
+                const slug = slugSource
+                  .toLowerCase()
+                  .normalize("NFD")
+                  .replace(/[̀-ͯ]/g, "")
+                  .replace(/[^a-z0-9]/g, "")
+                  .trim();
+                if (!slug) {
+                  alert("Impossible de générer ton slug coach. Vérifie ton prénom dans les paramètres.");
+                  return;
+                }
+                const url = `${window.location.origin}/temoignage/coach/${slug}`;
+                const firstName = client.firstName || "toi";
+                const message = `Salut ${firstName} 👋\n\nEst-ce que tu pourrais m'aider à grandir en partageant ton ressenti sur notre accompagnement ? Ça prend 30 secondes : ${url}\n\nMerci infiniment 🙏`;
+                navigator.clipboard?.writeText(url).catch(() => {});
+                const waPhone = (client.phone ?? "").replace(/[^0-9]/g, "");
+                const waUrl = waPhone
+                  ? `https://wa.me/${waPhone}?text=${encodeURIComponent(message)}`
+                  : `https://wa.me/?text=${encodeURIComponent(message)}`;
+                window.open(waUrl, "_blank", "noopener");
+              }}
+              className="inline-flex min-h-[40px] items-center gap-2 rounded-[12px] border border-[var(--ls-border2)] bg-[var(--ls-surface2)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/[0.08]"
+              title="Copie le lien témoignage + ouvre WhatsApp avec un message pré-rempli"
+            >
+              💬 Demander un témoignage
+            </button>
             <Link
               to="/assessments/new"
               className="inline-flex min-h-[40px] items-center gap-2 rounded-[12px] bg-[#C9A84C] px-4 py-2 text-sm font-bold text-[#0B0D11] transition hover:brightness-105"
