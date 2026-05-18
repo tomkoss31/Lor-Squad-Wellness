@@ -1188,6 +1188,7 @@ export function ActionsTab({ client, onEditRdv, onOpenSharePublic, onGoToVueComp
         clientFirstName={client.firstName}
         clientLastName={client.lastName}
         clientPhone={client.phone}
+        clientEmail={client.email}
       />
     </div>
   );
