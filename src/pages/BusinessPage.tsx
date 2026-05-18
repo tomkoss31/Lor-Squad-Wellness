@@ -32,11 +32,11 @@ type FormStatus = "idle" | "submitting" | "success" | "error";
 // inventés.
 
 interface PartnerStory {
-  name: string;            // ex « Sophie M. »
-  since: string;           // ex « Partenaire · démarrée en avril 2024 »
-  hook: string;            // une-ligne accroche entre « ... »
+  slug: string;            // prénom normalisé (lookup users.avatar_url côté DB)
+  name: string;            // ex « Ambre »
+  since: string;           // ex « Partenaire · Divona Center (Lot 46) »
+  hook: string;            // accroche entre « ... »
   body: string;            // récit complet
-  avatar_url: string | null;
 }
 
 // Histoire fondateurs Tom + Mélanie. Avatars auto via RPC publique
@@ -115,8 +115,35 @@ const FOUNDERS_STORY_CHAPTERS: FounderChapter[] = [
   },
 ];
 
-// Partenaires additionnels (textes Thomas en cours).
-const PARTNER_STORIES: PartnerStory[] = [];
+// Partenaires additionnels (textes Thomas 2026-05-18). Les avatars sont
+// récupérés en batch via RPC `get_avatars_by_slugs` (lit users.avatar_url
+// avec lookup ls_normalize_slug(first_name)).
+const PARTNER_STORIES: PartnerStory[] = [
+  {
+    slug: "ambre",
+    name: "Ambre",
+    since: "Partenaire · Divona Center (Lot 46) · ouvert en juillet",
+    hook: "Digestion retrouvée, +8 kg de muscle, –10 % de masse grasse en 2 ans.",
+    body:
+      "Ambre, 35 ans, maman d'une fille de 4 ans, problème de digestion depuis toute petite. J'ai toujours mangé équilibré et fait du sport, aucune perte de poids. En 2 ans j'ai pris 8 kg de masse musculaire et j'ai perdu 10 % de masse grasse. J'ai retrouvé une digestion normale, de l'énergie et une meilleure hydratation. Pour l'activité, on aide entre 35 et 40 personnes dans le Lot (46), mon meilleur revenu c'est 1 262 € le mois dernier et on a ouvert le Divona Center en juillet.",
+  },
+  {
+    slug: "laura",
+    name: "Laura",
+    since: "Partenaire · ex-responsable salon de coiffure",
+    hook: "+9 kg de muscle en 7 mois, et l'envie d'aider 2 000 personnes en 3 ans.",
+    body:
+      "Laura, 25 ans. J'étais responsable d'un salon de coiffure. J'ai voulu démarrer pour reprendre de la masse musculaire, chose faite : plus de 9 kg de masse musculaire en 7 mois. Au début j'ai commencé l'activité à temps choisi pour faire des compléments de revenus. Maintenant c'est plus de 150 personnes aidées, 2 500 € de revenus avec une vision claire d'aider 2 000 personnes sur les 3 prochaines années.",
+  },
+  {
+    slug: "valentin",
+    name: "Valentin",
+    since: "Partenaire · à temps plein depuis janvier 2023",
+    hook: "–30 kg en 1 an, +12 kg de muscle, le sport retrouvé.",
+    body:
+      "Pour ma part, Valentin, j'ai connu le concept en démarrant sur ma nutrition. Je faisais pas mal de sport, mais une mauvaise nutrition. Suite à des blessures successives, j'ai ralenti sur le sport. Je suis passé de 76 kg à 109 kg. En 1 an j'ai séché 30 kg et repris 12 kg de masse musculaire. Depuis janvier 2023 je développe l'activité à temps plein avec une équipe en construction.",
+  },
+];
 
 const FAQ_ITEMS = [
   {
@@ -175,11 +202,12 @@ export function BusinessPage() {
   const referrerId = params.get("ref");
   const wantsLeadCapture = params.get("leadcapture") === "1";
 
-  // ─── Fondateurs avatars (RPC publique) ────────────────────────────────────
+  // ─── Avatars §05 (fondateurs + partenaires) via RPC publiques ─────────────
   const [foundersAvatars, setFoundersAvatars] = useState<{
     thomas_avatar_url: string | null;
     melanie_avatar_url: string | null;
   }>({ thomas_avatar_url: null, melanie_avatar_url: null });
+  const [partnerAvatars, setPartnerAvatars] = useState<Record<string, string | null>>({});
 
   useEffect(() => {
     let cancelled = false;
@@ -187,14 +215,31 @@ export function BusinessPage() {
       try {
         const sb = await getSupabaseClient();
         if (!sb) return;
-        const { data, error } = await sb.rpc("get_founders_avatars");
-        if (cancelled || error || !data) return;
-        const row = Array.isArray(data) ? data[0] : data;
-        if (!row) return;
-        setFoundersAvatars({
-          thomas_avatar_url: row.thomas_avatar_url ?? null,
-          melanie_avatar_url: row.melanie_avatar_url ?? null,
-        });
+
+        // Fondateurs : Thomas + Mélanie
+        const { data: f } = await sb.rpc("get_founders_avatars");
+        if (!cancelled && f) {
+          const row = Array.isArray(f) ? f[0] : f;
+          if (row) {
+            setFoundersAvatars({
+              thomas_avatar_url: row.thomas_avatar_url ?? null,
+              melanie_avatar_url: row.melanie_avatar_url ?? null,
+            });
+          }
+        }
+
+        // Partenaires : batch par slug
+        const slugs = PARTNER_STORIES.map((p) => p.slug);
+        if (slugs.length > 0) {
+          const { data: p } = await sb.rpc("get_avatars_by_slugs", { p_slugs: slugs });
+          if (!cancelled && Array.isArray(p)) {
+            const map: Record<string, string | null> = {};
+            for (const r of p as Array<{ slug: string; avatar_url: string | null }>) {
+              map[r.slug] = r.avatar_url ?? null;
+            }
+            setPartnerAvatars(map);
+          }
+        }
       } catch {
         /* silent : avatars optionnels, fallback gradient initiales */
       }
@@ -973,26 +1018,33 @@ export function BusinessPage() {
                 </div>
               </article>
 
-              {/* Partenaires additionnels — textes envoyés par Thomas */}
-              {PARTNER_STORIES.map((s, i) => (
-                <article key={i} className="biz-story biz-reveal">
-                  <div className="biz-story__head">
-                    <div className="biz-story__photo" aria-hidden="true">
-                      {s.avatar_url ? (
-                        <img src={s.avatar_url} alt="" style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover" }} />
-                      ) : (
-                        s.name?.[0]?.toUpperCase() ?? "?"
-                      )}
+              {/* Partenaires additionnels — textes Thomas 2026-05-18.
+                  Avatars auto via RPC get_avatars_by_slugs (lookup
+                  ls_normalize_slug(users.first_name)). */}
+              {PARTNER_STORIES.map((s, i) => {
+                const av = partnerAvatars[s.slug] ?? null;
+                return (
+                  <article key={i} className="biz-story biz-reveal">
+                    <div className="biz-story__head">
+                      <div className="biz-story__photo" aria-hidden="true" style={{ overflow: "hidden", padding: 0 }}>
+                        {av ? (
+                          <img src={av} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                        ) : (
+                          <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", background: "linear-gradient(135deg,#10B981,#06B6D4)", color: "#fff", fontWeight: 700, fontSize: 22 }}>
+                            {s.name?.[0]?.toUpperCase() ?? "?"}
+                          </div>
+                        )}
+                      </div>
+                      <div>
+                        <div className="biz-story__name">{s.name}</div>
+                        <div className="biz-story__since">{s.since}</div>
+                      </div>
                     </div>
-                    <div>
-                      <div className="biz-story__name">{s.name}</div>
-                      <div className="biz-story__since">{s.since}</div>
-                    </div>
-                  </div>
-                  <div className="biz-story__hook">« {s.hook} »</div>
-                  <p className="biz-story__body">{s.body}</p>
-                </article>
-              ))}
+                    <div className="biz-story__hook">« {s.hook} »</div>
+                    <p className="biz-story__body">{s.body}</p>
+                  </article>
+                );
+              })}
             </div>
             <div className="biz-reveal biz-stories__signature">
               <span>« La seule règle : démarrer. »</span>
