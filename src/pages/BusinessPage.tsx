@@ -22,6 +22,7 @@ import {
   type SimulationResult,
 } from "../lib/businessSimulator";
 import { BIZ_STYLES } from "./BusinessPage.styles";
+import { TestimonialsCarousel } from "../components/testimonials/TestimonialsCarousel";
 
 type FormStatus = "idle" | "submitting" | "success" | "error";
 
@@ -818,10 +819,44 @@ export function BusinessPage() {
             <div className="biz-reveal biz-stories__signature">
               <span>« La seule règle : démarrer. »</span>
             </div>
+
+            {/* §5b — Carrousel temoignages clients (Chantier #11 finition) */}
+            <div className="biz-reveal" style={{ marginTop: 56, maxWidth: 880, marginInline: "auto" }}>
+              <div
+                className="public-shell-scope"
+                data-public-theme="light"
+                style={{ fontFamily: '"Inter", -apple-system, sans-serif' }}
+              >
+                <h4
+                  style={{
+                    fontFamily: '"Sora", system-ui, sans-serif',
+                    fontSize: 15,
+                    fontWeight: 500,
+                    letterSpacing: "0.08em",
+                    textTransform: "uppercase",
+                    color: "rgba(15,23,42,.55)",
+                    marginBottom: 6,
+                  }}
+                >
+                  Et les clients qui en bénéficient ?
+                </h4>
+                <p
+                  style={{
+                    fontSize: 15,
+                    color: "rgba(15,23,42,.62)",
+                    marginBottom: 12,
+                    maxWidth: 540,
+                  }}
+                >
+                  Tu as vu pourquoi les partenaires aiment ce métier. Voilà ce que disent ceux qu'on accompagne au quotidien.
+                </p>
+                <TestimonialsCarousel variant="business" />
+              </div>
+            </div>
           </div>
         </section>
 
-        {/* §5b FAQ */}
+        {/* §6 FAQ */}
         <section className="biz-section" style={{paddingTop:0}} id="faq">
           <div className="biz-container">
             <div className="biz-reveal" style={{maxWidth:680}}>

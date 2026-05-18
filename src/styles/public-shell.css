@@ -13,7 +13,13 @@
    du Co-pilote V5 interne.
    ============================================================================ */
 
-.public-shell {
+/* Scope util : applique uniquement les CSS vars (sans background/color/font global).
+   Utile pour reutiliser le carrousel TestimonialsCarousel dans des pages au
+   namespace different (ex : BusinessPage / .biz-page light scroll narratif).
+   Pattern : <div className="public-shell-scope" data-public-theme="light">.
+   Les blocs .public-shell ci-apres HERITENT egalement de ces vars. */
+.public-shell,
+.public-shell-scope {
   --ink: #0B0D11;
   --ink-2: #131820;
   --cream: #FBF7F0;
@@ -48,7 +54,11 @@
   --accent-teal-bg: rgba(45, 212, 191, 0.12);
   --accent-violet-bg: rgba(167, 139, 250, 0.12);
   --shadow-card: 0 4px 24px rgba(0, 0, 0, 0.20);
+}
 
+/* Styles globaux uniquement sur .public-shell (pas .public-shell-scope) :
+   le scope util ne doit pas surcharger font/background/color de la page hote. */
+.public-shell {
   font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
   background: var(--ink);
   color: var(--cream);
@@ -60,7 +70,8 @@
 }
 
 /* THEME LIGHT (toggle utilisateur) */
-.public-shell[data-public-theme="light"] {
+.public-shell[data-public-theme="light"],
+.public-shell-scope[data-public-theme="light"] {
   --ink: #FBF7F0;
   --ink-2: #F2EBDF;
   --cream: #0B0D11;
