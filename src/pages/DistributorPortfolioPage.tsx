@@ -1,8 +1,21 @@
-import { useDeferredValue, useState } from "react";
+// =============================================================================
+// DistributorPortfolioPage — Fiche distri unifiée
+// =============================================================================
+// Chantier #13 sous-vague A.3 (2026-05-18) : refonte avec 5 onglets qui
+// reutilisent les composants partages src/components/distributor-blocks/
+// (eux-memes utilises dans la modale drill-down /team).
+//
+// Avant 2026-05-18 : 2 onglets (overview clients + activity admin).
+// Maintenant : Vue d'ensemble / Clients / PV & Rentabilité / Activité /
+// Parametres distri — selon role.
+// =============================================================================
+
+import { useDeferredValue, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { Card } from "../components/ui/Card";
 import { DistributorBadge } from "../components/client/DistributorBadge";
 import { useAppContext } from "../context/AppContext";
+import { useTeamEngagement } from "../hooks/useTeamEngagement";
 import { canAccessPortfolioUser } from "../lib/auth";
 import {
   getActivePortfolioUsers,
@@ -14,6 +27,18 @@ import { formatDate, formatDateTime, getFirstAssessment } from "../lib/calculati
 import type { Client, FollowUp, User } from "../types/domain";
 import { AcademyAdminPanel } from "../features/academy/components/AcademyAdminPanel";
 import { UserActivityPanel } from "../features/gamification/components/UserActivityPanel";
+import {
+  ActiviteRecenteBlock,
+  ApprentissageBlock,
+  CompteActifBlock,
+  EngagementBlock,
+  EngagementTotalBlock,
+  ProgressionRangBlock,
+  PvBizworksBlock,
+  RangHerbalifeBlock,
+} from "../components/distributor-blocks";
+import { TeamMemberDrilldownModal } from "../components/team/TeamMemberDrilldownModal";
+import { currentMonthIso } from "../lib/herbalifeFormulas";
 
 const statusTone: Record<string, { label: string; tone: "active" | "pending" | "follow-up" }> = {
   active: { label: "Actif", tone: "active" },
@@ -21,16 +46,49 @@ const statusTone: Record<string, { label: string; tone: "active" | "pending" | "
   "follow-up": { label: "À relancer", tone: "follow-up" },
 };
 
+type TabKey = "overview" | "clients" | "pv" | "activity" | "settings";
+
+interface TabDef {
+  key: TabKey;
+  label: string;
+  emoji: string;
+  color: string;
+  adminOnly?: boolean;
+}
+
+const TABS_FULL: TabDef[] = [
+  { key: "overview", label: "Vue d'ensemble", emoji: "📊", color: "var(--ls-gold)" },
+  { key: "clients", label: "Clients", emoji: "👥", color: "var(--ls-teal)" },
+  { key: "pv", label: "PV & Rentabilité", emoji: "💰", color: "var(--ls-gold)", adminOnly: true },
+  { key: "activity", label: "Activité", emoji: "📝", color: "var(--ls-teal)", adminOnly: true },
+  { key: "settings", label: "Paramètres distri", emoji: "⚙️", color: "var(--ls-coral)", adminOnly: true },
+];
+
 export function DistributorPortfolioPage() {
   const { distributorId } = useParams();
   const navigate = useNavigate();
-  const { currentUser, users, visibleClients, visibleFollowUps } = useAppContext();
+  const { currentUser, users, visibleClients, visibleFollowUps, refreshAfterFreeze } =
+    useAppContext();
 
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "pending" | "follow-up">("all");
+  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "pending" | "follow-up">(
+    "all",
+  );
   const deferredSearch = useDeferredValue(search);
-  // Onglets fiche distri (V3 — 2026-04-29) : 2 onglets pour eviter surcharge.
-  const [activeTab, setActiveTab] = useState<"overview" | "activity">("overview");
+  const [activeTab, setActiveTab] = useState<TabKey>("overview");
+  const [drilldownOpen, setDrilldownOpen] = useState(false);
+  // Selecteur mois pour onglet PV (13A.4)
+  const [pvMonth, setPvMonth] = useState<string>(() => currentMonthIso());
+
+  // Recupere le member engagement (XP/Academy/Formation/...) depuis l'arbre
+  // du currentUser. Si le distri n'est pas dans son arbre (rare cas admin
+  // qui visite un user out-of-tree), member sera null et la vue d'ensemble
+  // riche n'apparaitra pas (fallback : clients tab par defaut).
+  const { members } = useTeamEngagement(currentUser?.id ?? null);
+  const member = useMemo(
+    () => members.find((m) => m.user_id === distributorId) ?? null,
+    [members, distributorId],
+  );
 
   if (!currentUser || !distributorId) return null;
 
@@ -55,16 +113,22 @@ export function DistributorPortfolioPage() {
     );
   }
 
+  const fullUser = users.find((u) => u.id === distributorId) ?? null;
+  const isAdmin = currentUser.role === "admin";
+  const isSelf = currentUser.id === distributorId;
+  const canEditRankPv = isAdmin && !isSelf;
+  const canToggleFreeze = isAdmin && !isSelf;
+
+  const visibleTabs = TABS_FULL.filter((t) => !t.adminOnly || isAdmin);
+
   const portfolioMetrics = getPortfolioMetrics(
     portfolioUser,
     visibleClients,
     visibleFollowUps,
     users,
-    portfolioUser.role === "referent" ? "network" : "personal"
+    portfolioUser.role === "referent" ? "network" : "personal",
   );
 
-  // Compteurs pour les pills (basés sur l'ensemble du portefeuille, pas sur filteredClients
-  // pour que les compteurs restent stables quand on change de filtre)
   const counts = {
     all: portfolioMetrics.clients.length,
     active: portfolioMetrics.clients.filter((c) => c.status === "active").length,
@@ -86,6 +150,10 @@ export function DistributorPortfolioPage() {
 
   const groupedClients = getGroupedClientsByMonth(filteredClients);
 
+  const refresh = async () => {
+    await refreshAfterFreeze?.();
+  };
+
   return (
     <div className="ls-portfolio-page">
       {/* 1. Header row : flèche retour + titre */}
@@ -96,17 +164,24 @@ export function DistributorPortfolioPage() {
           aria-label="Retour"
           className="ls-portfolio-header-row__back"
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
             <polyline points="15 18 9 12 15 6" />
           </svg>
         </button>
         <div>
-          <span className="ls-portfolio-header-row__eyebrow">Portefeuille client</span>
+          <span className="ls-portfolio-header-row__eyebrow">Fiche distri</span>
           <h1 className="ls-portfolio-header-row__title">{portfolioUser.name}</h1>
         </div>
       </header>
 
-      {/* 2. Hero : identité + stats inline + CTA */}
+      {/* 2. Hero : identité + stats inline + CTAs */}
       <Card className="ls-portfolio-hero">
         <div className="ls-portfolio-hero__identity">
           <DistributorBadge user={portfolioUser} compact />
@@ -128,153 +203,378 @@ export function DistributorPortfolioPage() {
           <StatInline label="Relances" value={portfolioMetrics.relanceFollowUps.length} tone="coral" />
         </div>
 
-        <Link to="/clients" className="ls-portfolio-hero__cta">
-          Voir base ↗
-        </Link>
-        {/* Charte (2026-05-03) — accès direct depuis la fiche distri */}
-        <Link
-          to={`/distributors/${portfolioUser.id}/charte`}
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 6,
-            padding: "8px 14px",
-            background: "rgba(184, 146, 42, 0.14)",
-            border: "1px solid rgba(184, 146, 42, 0.4)",
-            color: "#B8922A",
-            borderRadius: 8,
-            fontSize: 12,
-            fontFamily: "DM Sans, sans-serif",
-            fontWeight: 600,
-            textDecoration: "none",
-            marginLeft: 8,
-          }}
-        >
-          ✦ Charte
-        </Link>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
+          {/* 13A.5 — Bouton Apercu rapide : ouvre la modale drilldown */}
+          {member && (
+            <button
+              type="button"
+              onClick={() => setDrilldownOpen(true)}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 6,
+                padding: "8px 14px",
+                background: "color-mix(in srgb, var(--ls-teal) 12%, transparent)",
+                border: "1px solid color-mix(in srgb, var(--ls-teal) 40%, transparent)",
+                color: "var(--ls-teal)",
+                borderRadius: 8,
+                fontSize: 12,
+                fontFamily: "DM Sans, sans-serif",
+                fontWeight: 600,
+                cursor: "pointer",
+              }}
+              title="Voir la modale drilldown rapide (utile pour switcher entre distri sans recharger la page)"
+            >
+              ⚡ Aperçu rapide
+            </button>
+          )}
+          <Link to="/clients" className="ls-portfolio-hero__cta">
+            Voir base ↗
+          </Link>
+          <Link
+            to={`/distributors/${portfolioUser.id}/charte`}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
+              padding: "8px 14px",
+              background: "rgba(184, 146, 42, 0.14)",
+              border: "1px solid rgba(184, 146, 42, 0.4)",
+              color: "#B8922A",
+              borderRadius: 8,
+              fontSize: 12,
+              fontFamily: "DM Sans, sans-serif",
+              fontWeight: 600,
+              textDecoration: "none",
+            }}
+          >
+            ✦ Charte
+          </Link>
+        </div>
       </Card>
 
-      {/* Onglets fiche distri — V3 2026-04-29 (admin uniquement pour Activite) */}
-      {currentUser.role === "admin" ? (
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 4 }}>
-          {([
-            { key: "overview" as const, label: "Vue d'ensemble", emoji: "📋", color: "var(--ls-gold)" },
-            { key: "activity" as const, label: "Activité", emoji: "📊", color: "var(--ls-teal)" },
-          ]).map((t) => {
-            const isActive = activeTab === t.key;
-            return (
-              <button
-                key={t.key}
-                type="button"
-                onClick={() => setActiveTab(t.key)}
+      {/* Onglets */}
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", margin: "4px 0 8px" }}>
+        {visibleTabs.map((t) => {
+          const isActive = activeTab === t.key;
+          return (
+            <button
+              key={t.key}
+              type="button"
+              onClick={() => setActiveTab(t.key)}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 7,
+                padding: "9px 16px",
+                borderRadius: 999,
+                border: isActive
+                  ? `0.5px solid color-mix(in srgb, ${t.color} 50%, transparent)`
+                  : "0.5px solid var(--ls-border)",
+                background: isActive
+                  ? `linear-gradient(135deg, color-mix(in srgb, ${t.color} 14%, var(--ls-surface)) 0%, var(--ls-surface) 100%)`
+                  : "var(--ls-surface)",
+                color: isActive ? t.color : "var(--ls-text-muted)",
+                fontSize: 13,
+                fontFamily: "DM Sans, sans-serif",
+                fontWeight: isActive ? 700 : 500,
+                cursor: "pointer",
+                transition: "transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease",
+                boxShadow: isActive
+                  ? `0 4px 12px -4px color-mix(in srgb, ${t.color} 30%, transparent)`
+                  : "none",
+              }}
+              onMouseEnter={(e) => {
+                if (!isActive) e.currentTarget.style.transform = "translateY(-1px)";
+              }}
+              onMouseLeave={(e) => {
+                if (!isActive) e.currentTarget.style.transform = "none";
+              }}
+            >
+              <span aria-hidden style={{ fontSize: 14 }}>
+                {t.emoji}
+              </span>
+              {t.label}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* ─── Onglet VUE D'ENSEMBLE ──────────────────────────────────────── */}
+      {activeTab === "overview" && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+          {member ? (
+            <>
+              <EngagementTotalBlock member={member} />
+              <ApprentissageBlock member={member} />
+              <ActiviteRecenteBlock member={member} />
+              <EngagementBlock member={member} />
+            </>
+          ) : (
+            <Card>
+              <p
                 style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: 7,
-                  padding: "9px 16px",
-                  borderRadius: 999,
-                  border: isActive
-                    ? `0.5px solid color-mix(in srgb, ${t.color} 50%, transparent)`
-                    : "0.5px solid var(--ls-border)",
-                  background: isActive
-                    ? `linear-gradient(135deg, color-mix(in srgb, ${t.color} 14%, var(--ls-surface)) 0%, var(--ls-surface) 100%)`
-                    : "var(--ls-surface)",
-                  color: isActive ? t.color : "var(--ls-text-muted)",
+                  margin: 0,
+                  color: "var(--ls-text-muted)",
                   fontSize: 13,
-                  fontFamily: "DM Sans, sans-serif",
-                  fontWeight: isActive ? 700 : 500,
-                  cursor: "pointer",
-                  transition: "transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease",
-                  boxShadow: isActive ? `0 4px 12px -4px color-mix(in srgb, ${t.color} 30%, transparent)` : "none",
-                }}
-                onMouseEnter={(e) => {
-                  if (!isActive) e.currentTarget.style.transform = "translateY(-1px)";
-                }}
-                onMouseLeave={(e) => {
-                  if (!isActive) e.currentTarget.style.transform = "none";
+                  lineHeight: 1.5,
                 }}
               >
-                <span aria-hidden style={{ fontSize: 14 }}>{t.emoji}</span>
-                {t.label}
-              </button>
-            );
-          })}
-        </div>
-      ) : null}
-
-      {/* Onglet ACTIVITE (admin only) ─────────────────────────────────────── */}
-      {activeTab === "activity" && currentUser.role === "admin" ? (
-        <div style={{ display: "flex", flexDirection: "column", gap: 14, marginTop: 4 }}>
-          <UserActivityPanel userId={portfolioUser.id} />
-          <AcademyAdminPanel
-            userId={portfolioUser.id}
-            displayName={portfolioUser.name}
-          />
-        </div>
-      ) : null}
-
-      {/* Onglet VUE D'ENSEMBLE (defaut, ou si non-admin) ────────────────── */}
-      {(activeTab === "overview" || currentUser.role !== "admin") && (
-      <>
-      {/* 3. Barre filtres : pills + search */}
-      <div className="ls-portfolio-filters">
-        <FilterPill label="Tous" count={counts.all} active={statusFilter === "all"} tone="gold" onClick={() => setStatusFilter("all")} />
-        <FilterPill label="Actifs" count={counts.active} active={statusFilter === "active"} tone="teal" onClick={() => setStatusFilter("active")} />
-        <FilterPill label="En attente" count={counts.pending} active={statusFilter === "pending"} tone="gold-soft" onClick={() => setStatusFilter("pending")} />
-        <FilterPill label="À relancer" count={counts.followUp} active={statusFilter === "follow-up"} tone="coral" onClick={() => setStatusFilter("follow-up")} />
-
-        <div className="ls-portfolio-search">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-            <circle cx="11" cy="11" r="8" />
-            <line x1="21" y1="21" x2="16.65" y2="16.65" />
-          </svg>
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Rechercher un client…"
-          />
-        </div>
-      </div>
-
-      {/* 4. Liste clients groupée par mois */}
-      <div className="ls-portfolio-list">
-        {groupedClients.length === 0 ? (
-          <Card>
-            <div style={{ padding: "20px 4px" }}>
-              <p className="text-2xl text-white" style={{ margin: 0 }}>Aucun dossier sur ce filtre</p>
-              <p className="text-sm leading-6 text-[var(--ls-text-muted)]" style={{ marginTop: 8 }}>
-                Ajuste la recherche ou le statut pour retrouver un dossier plus vite.
+                Pas de métriques engagement disponibles pour ce distri (hors de ton sous-arbre
+                équipe).
               </p>
-            </div>
-          </Card>
-        ) : (
-          groupedClients.map((group) => (
-            <section key={group.key} className="ls-portfolio-month">
-              <div className="ls-portfolio-month__header">
-                <span>{group.label}</span>
-                <span>· {group.clients.length} client{group.clients.length > 1 ? "s" : ""}</span>
-              </div>
-              <div className="ls-portfolio-month__rows">
-                {group.clients.map((client) => (
-                  <ClientRow key={client.id} client={client} followUps={visibleFollowUps} />
-                ))}
-              </div>
-            </section>
-          ))
-        )}
-      </div>
-
-      </>
+            </Card>
+          )}
+        </div>
       )}
-      {/* AcademyAdminPanel deplace dans l'onglet Activite (V3 2026-04-29).
-          Reserve admin via le check du onglet activeTab===activity ci-dessus. */}
+
+      {/* ─── Onglet CLIENTS ─────────────────────────────────────────────── */}
+      {activeTab === "clients" && (
+        <>
+          <div className="ls-portfolio-filters">
+            <FilterPill
+              label="Tous"
+              count={counts.all}
+              active={statusFilter === "all"}
+              tone="gold"
+              onClick={() => setStatusFilter("all")}
+            />
+            <FilterPill
+              label="Actifs"
+              count={counts.active}
+              active={statusFilter === "active"}
+              tone="teal"
+              onClick={() => setStatusFilter("active")}
+            />
+            <FilterPill
+              label="En attente"
+              count={counts.pending}
+              active={statusFilter === "pending"}
+              tone="gold-soft"
+              onClick={() => setStatusFilter("pending")}
+            />
+            <FilterPill
+              label="À relancer"
+              count={counts.followUp}
+              active={statusFilter === "follow-up"}
+              tone="coral"
+              onClick={() => setStatusFilter("follow-up")}
+            />
+            <div className="ls-portfolio-search">
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+              >
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+              </svg>
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Rechercher un client…"
+              />
+            </div>
+          </div>
+          <div className="ls-portfolio-list">
+            {groupedClients.length === 0 ? (
+              <Card>
+                <div style={{ padding: "20px 4px" }}>
+                  <p className="text-2xl text-white" style={{ margin: 0 }}>
+                    Aucun dossier sur ce filtre
+                  </p>
+                  <p
+                    className="text-sm leading-6 text-[var(--ls-text-muted)]"
+                    style={{ marginTop: 8 }}
+                  >
+                    Ajuste la recherche ou le statut pour retrouver un dossier plus vite.
+                  </p>
+                </div>
+              </Card>
+            ) : (
+              groupedClients.map((group) => (
+                <section key={group.key} className="ls-portfolio-month">
+                  <div className="ls-portfolio-month__header">
+                    <span>{group.label}</span>
+                    <span>
+                      · {group.clients.length} client{group.clients.length > 1 ? "s" : ""}
+                    </span>
+                  </div>
+                  <div className="ls-portfolio-month__rows">
+                    {group.clients.map((client) => (
+                      <ClientRow key={client.id} client={client} followUps={visibleFollowUps} />
+                    ))}
+                  </div>
+                </section>
+              ))
+            )}
+          </div>
+        </>
+      )}
+
+      {/* ─── Onglet PV & RENTABILITE (admin only) ───────────────────────── */}
+      {activeTab === "pv" && isAdmin && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+          {/* Selecteur mois (13A.4) */}
+          <MonthSelector value={pvMonth} onChange={setPvMonth} />
+          {canEditRankPv ? (
+            <>
+              <RangHerbalifeBlock
+                memberId={distributorId}
+                memberName={portfolioUser.name}
+                fullUser={fullUser}
+                onApplied={refresh}
+              />
+              <ProgressionRangBlock
+                memberId={distributorId}
+                fullUser={fullUser}
+                monthIso={pvMonth}
+              />
+              <PvBizworksBlock
+                memberId={distributorId}
+                memberName={portfolioUser.name}
+                monthIso={pvMonth}
+                onApplied={refresh}
+              />
+            </>
+          ) : (
+            <Card>
+              <p style={{ margin: 0, color: "var(--ls-text-muted)", fontSize: 13 }}>
+                Edition rang / PV indisponible pour ton propre compte.
+              </p>
+            </Card>
+          )}
+        </div>
+      )}
+
+      {/* ─── Onglet ACTIVITE (admin only) ───────────────────────────────── */}
+      {activeTab === "activity" && isAdmin && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+          <UserActivityPanel userId={portfolioUser.id} />
+          <AcademyAdminPanel userId={portfolioUser.id} displayName={portfolioUser.name} />
+        </div>
+      )}
+
+      {/* ─── Onglet PARAMETRES DISTRI (admin only) ──────────────────────── */}
+      {activeTab === "settings" && isAdmin && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+          {canToggleFreeze ? (
+            <CompteActifBlock
+              memberId={distributorId}
+              memberName={portfolioUser.name}
+              fullUser={fullUser}
+              onApplied={refresh}
+            />
+          ) : (
+            <Card>
+              <p style={{ margin: 0, color: "var(--ls-text-muted)", fontSize: 13 }}>
+                Tu ne peux pas geler ton propre compte.
+              </p>
+            </Card>
+          )}
+          <Card style={{ marginTop: 4 }}>
+            <h3 style={{ margin: 0, fontSize: 13, fontFamily: "Syne, sans-serif", fontWeight: 700 }}>
+              ✦ Charte d&apos;engagement
+            </h3>
+            <p
+              style={{
+                margin: "6px 0 12px",
+                color: "var(--ls-text-muted)",
+                fontSize: 12,
+                lineHeight: 1.5,
+              }}
+            >
+              Consulte ou édite la charte du distri (engagements + signature).
+            </p>
+            <Link
+              to={`/distributors/${portfolioUser.id}/charte`}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 6,
+                padding: "8px 14px",
+                background: "rgba(184, 146, 42, 0.14)",
+                border: "1px solid rgba(184, 146, 42, 0.4)",
+                color: "#B8922A",
+                borderRadius: 8,
+                fontSize: 12,
+                fontFamily: "DM Sans, sans-serif",
+                fontWeight: 600,
+                textDecoration: "none",
+              }}
+            >
+              Ouvrir la charte →
+            </Link>
+          </Card>
+        </div>
+      )}
+
+      {/* Modale drilldown (13A.5) */}
+      {drilldownOpen && member && (
+        <TeamMemberDrilldownModal member={member} onClose={() => setDrilldownOpen(false)} />
+      )}
     </div>
   );
 }
 
 // ─── Sous-composants ──────────────────────────────────────────────────
 
-function StatInline({ label, value, tone }: { label: string; value: number; tone: "gold" | "teal" | "coral" }) {
+function MonthSelector({ value, onChange }: { value: string; onChange: (m: string) => void }) {
+  // Genere les 12 derniers mois (YYYY-MM) y compris le mois courant
+  const months = useMemo(() => {
+    const now = new Date();
+    const out: { iso: string; label: string }[] = [];
+    for (let i = 0; i < 12; i++) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const iso = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+      const label = d.toLocaleDateString("fr-FR", { month: "long", year: "numeric" });
+      out.push({ iso, label });
+    }
+    return out;
+  }, []);
+
+  return (
+    <Card style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+      <span style={{ fontSize: 12, color: "var(--ls-text-muted)", fontWeight: 600 }}>
+        Mois affiché :
+      </span>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        style={{
+          padding: "7px 10px",
+          borderRadius: 8,
+          border: "1px solid var(--ls-border)",
+          background: "var(--ls-surface)",
+          color: "var(--ls-text)",
+          fontSize: 13,
+          fontFamily: "Inter, system-ui, sans-serif",
+          cursor: "pointer",
+          textTransform: "capitalize",
+        }}
+      >
+        {months.map((m) => (
+          <option key={m.iso} value={m.iso}>
+            {m.label}
+          </option>
+        ))}
+      </select>
+    </Card>
+  );
+}
+
+function StatInline({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: number;
+  tone: "gold" | "teal" | "coral";
+}) {
   return (
     <div className="ls-stat-inline" data-tone={tone}>
       <span className="ls-stat-inline__value">{value}</span>
@@ -285,9 +585,17 @@ function StatInline({ label, value, tone }: { label: string; value: number; tone
 
 type FilterPillTone = "gold" | "teal" | "gold-soft" | "coral";
 function FilterPill({
-  label, count, active, tone, onClick,
+  label,
+  count,
+  active,
+  tone,
+  onClick,
 }: {
-  label: string; count: number; active: boolean; tone: FilterPillTone; onClick: () => void;
+  label: string;
+  count: number;
+  active: boolean;
+  tone: FilterPillTone;
+  onClick: () => void;
 }) {
   return (
     <button
@@ -315,17 +623,14 @@ function RoleBadge({ role }: { role: User["role"] }) {
 function ClientRow({ client, followUps }: { client: Client; followUps: FollowUp[] }) {
   const status = statusTone[client.status] ?? { label: client.status, tone: "active" as const };
   const activeFollowUp = getClientActiveFollowUp(client, followUps);
-  // Fix bug B : si activeFollowUp est null (client stopped/lost/paused), on
-  // ne doit PAS retomber sur client.nextFollowUp qui contient la date stale.
-  // Sujet C : idem pour les clients en suivi libre (freeFollowUp=true).
   const isLifecycleHidden =
-    client.lifecycleStatus === 'stopped'
-    || client.lifecycleStatus === 'lost'
-    || client.lifecycleStatus === 'paused'
-    || client.freeFollowUp === true;
+    client.lifecycleStatus === "stopped" ||
+    client.lifecycleStatus === "lost" ||
+    client.lifecycleStatus === "paused" ||
+    client.freeFollowUp === true;
   const nextDate = isLifecycleHidden
     ? null
-    : activeFollowUp?.dueDate ?? client.nextFollowUp ?? null;
+    : (activeFollowUp?.dueDate ?? client.nextFollowUp ?? null);
 
   return (
     <Link to={`/clients/${client.id}`} className="ls-client-row" data-status={status.tone}>
@@ -346,7 +651,15 @@ function ClientRow({ client, followUps }: { client: Client; followUps: FollowUp[
             {activeFollowUp ? formatDateTime(nextDate) : formatDate(nextDate)}
           </span>
         )}
-        <svg className="ls-client-row__chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <svg
+          className="ls-client-row__chevron"
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+        >
           <polyline points="9 18 15 12 9 6" />
         </svg>
       </div>
