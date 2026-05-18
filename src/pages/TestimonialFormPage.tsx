@@ -315,7 +315,7 @@ export function TestimonialFormPage() {
         {/* Guide bienveillant */}
         <div
           style={{
-            background: "rgba(255,255,255,0.04)",
+            background: "var(--glass)",
             backdropFilter: "blur(20px)",
             WebkitBackdropFilter: "blur(20px)",
             border: "1px solid var(--hair)",
@@ -346,7 +346,7 @@ export function TestimonialFormPage() {
                 type="button"
                 onClick={() => insertPrompt(p.insert)}
                 style={{
-                  background: "rgba(255,255,255,0.03)",
+                  background: "var(--glass)",
                   border: "1px solid var(--hair)",
                   borderRadius: 12,
                   padding: "12px 14px",
@@ -361,11 +361,11 @@ export function TestimonialFormPage() {
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.borderColor = PUBLIC_TOKENS.teal;
-                  e.currentTarget.style.background = "rgba(45,212,191,0.06)";
+                  e.currentTarget.style.background = "var(--glass-input-focus)";
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.borderColor = "var(--hair)";
-                  e.currentTarget.style.background = "rgba(255,255,255,0.03)";
+                  e.currentTarget.style.background = "var(--glass)";
                 }}
               >
                 <span aria-hidden="true" style={{ fontSize: 20, lineHeight: 1.2 }}>
@@ -387,7 +387,7 @@ export function TestimonialFormPage() {
         {/* Form card */}
         <div
           style={{
-            background: "rgba(255,255,255,0.04)",
+            background: "var(--glass)",
             backdropFilter: "blur(20px)",
             WebkitBackdropFilter: "blur(20px)",
             border: "1px solid var(--hair)",
@@ -504,7 +504,7 @@ export function TestimonialFormPage() {
               alignItems: "flex-start",
               gap: 12,
               padding: 14,
-              background: consentRgpd ? "rgba(45,212,191,0.06)" : "rgba(255,255,255,0.03)",
+              background: consentRgpd ? "var(--glass-input-focus)" : "var(--glass)",
               border: `1px solid ${consentRgpd ? PUBLIC_TOKENS.teal : "var(--hair)"}`,
               borderRadius: 12,
               cursor: "pointer",
@@ -533,7 +533,7 @@ export function TestimonialFormPage() {
               alignItems: "flex-start",
               gap: 12,
               padding: 14,
-              background: "rgba(255,255,255,0.03)",
+              background: "var(--glass)",
               border: "1px solid var(--hair)",
               borderRadius: 12,
               cursor: "pointer",
@@ -609,7 +609,7 @@ const fieldLabelStyle: React.CSSProperties = {
 const inputStyle: React.CSSProperties = {
   width: "100%",
   padding: "13px 15px",
-  background: "rgba(255,255,255,0.05)",
+  background: "var(--glass-input)",
   border: "1px solid var(--hair-strong)",
   borderRadius: 12,
   fontFamily: PUBLIC_FONTS.body,
@@ -679,7 +679,7 @@ function SuccessView({ firstName, coachFirstName }: { firstName: string; coachFi
           alignItems: "center",
           gap: 10,
           padding: "12px 22px",
-          background: "rgba(255,255,255,0.04)",
+          background: "var(--glass)",
           border: "1px solid var(--hair)",
           borderRadius: 999,
           fontSize: 14,
