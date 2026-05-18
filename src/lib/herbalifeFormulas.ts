@@ -505,13 +505,18 @@ export function rankProgression(
 export interface PvWindows {
   pv_2m: number;
   pv_3m: number;
+  /** PV perso 12 mois glissants (sans downline). Conservé pour debug / autres
+   *  usages mais NON utilisé par la jauge — voir pv_12m_extended. */
   pv_12m: number;
+  /** PV ÉTENDU 12 mois glissants = self + descendants non-Supervisor (règle
+   *  breakaway Herbalife). C'est ce nombre qui qualifie pour Supervisor.
+   *  Source : RPC SQL `get_distributor_qualifications` V2. */
+  pv_12m_extended: number;
 }
 
 export function rankProgressionFromWindows(
   currentRank: string | null | undefined,
   windows: PvWindows,
-  qualifyingPersonalPv?: number,
 ): (RankProgression & { windowMonths: number }) | null {
   const rank = currentRank ?? "distributor_25";
   const threshold = RANK_PROGRESSION_THRESHOLDS[rank];
@@ -527,8 +532,8 @@ export function rankProgressionFromWindows(
     windowMonths = 3;
   } else {
     // success_builder_42 → supervisor_50 : 4000 PV / 12 mois glissants.
-    // On majore avec le calcul étendu mois courant si fourni (downline non-Sup).
-    pvCurrent = Math.max(windows.pv_12m, qualifyingPersonalPv ?? 0);
+    // PV étendu (self + downline non-Sup) calculé côté SQL, source unique.
+    pvCurrent = windows.pv_12m_extended;
     windowMonths = 12;
   }
 

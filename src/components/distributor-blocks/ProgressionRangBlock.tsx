@@ -1,23 +1,16 @@
 // =============================================================================
 // ProgressionRangBlock — jauge progression vers le prochain rang Herbalife
 // =============================================================================
-// Refactor 2026-05-18 (feat/jauge-fenetre-glissante) :
-//   - Calcul PV désormais sur FENÊTRES GLISSANTES (2/3/12 mois) via RPC
-//     get_distributor_qualifications, plus jamais sur mois courant seul.
-//   - Le calcul "PV étendu" (perso + downline non-Supervisor) du mois courant
-//     reste calculé en JS et MAJORE la fenêtre 12m pour qualif Supervisor.
+// V2 2026-05-18 (feat/jauge-fenetre-glissante) :
+//   - Source unique : RPC SQL `get_distributor_qualifications` qui retourne
+//     pv_2m / pv_3m / pv_12m_extended (self + downline non-Sup, 12 mois
+//     glissants). Plus aucun calcul JS de fenêtre — tout côté DB.
 //   - Le libellé jauge mentionne explicitement la fenêtre glissante.
 // =============================================================================
 
 import { useMemo } from "react";
-import { useAppContext } from "../../context/AppContext";
 import { useDistributorQualifications } from "../../hooks/useDistributorQualifications";
-import { usePvBreakdowns } from "../../hooks/usePvBreakdowns";
-import {
-  computeQualifyingPersonalPv,
-  currentMonthIso,
-  rankProgressionFromWindows,
-} from "../../lib/herbalifeFormulas";
+import { currentMonthIso, rankProgressionFromWindows } from "../../lib/herbalifeFormulas";
 import type { User } from "../../types/domain";
 import { AdminCard, hintStyle } from "./_shared";
 
@@ -29,54 +22,18 @@ interface Props {
 }
 
 export function ProgressionRangBlock({ memberId, fullUser, monthIso }: Props) {
-  const { users } = useAppContext();
   const month = monthIso ?? currentMonthIso();
-
-  // Fenêtres glissantes 2/3/6/12 mois via RPC SQL (PV perso uniquement).
   const { qualifications, loading } = useDistributorQualifications(memberId, month);
-
-  // Mois courant : pour majorer la fenêtre 12m avec le downline non-Sup
-  // (règle Herbalife "PV personnel étendu").
-  const { breakdowns: allBreakdowns } = usePvBreakdowns(month);
-
-  const qualifyingPvCurrentMonth = useMemo(() => {
-    if (!fullUser) return 0;
-    return computeQualifyingPersonalPv(
-      fullUser.id,
-      users.map((u) => ({
-        id: u.id,
-        sponsorId: u.sponsorId,
-        currentRank: u.currentRank,
-        frozenAt: u.frozenAt,
-      })),
-      allBreakdowns,
-      (uid) => {
-        const u = users.find((x) => x.id === uid);
-        if (!u) return 0;
-        const ux = u as User & {
-          monthlyPvOverrideMonth?: string | null;
-          monthlyPvOverride?: number | null;
-        };
-        if (ux.monthlyPvOverrideMonth === month && typeof ux.monthlyPvOverride === "number") {
-          return ux.monthlyPvOverride;
-        }
-        return 0;
-      },
-    );
-  }, [fullUser, users, allBreakdowns, month]);
 
   const progression = useMemo(() => {
     if (!qualifications) return null;
-    return rankProgressionFromWindows(
-      fullUser?.currentRank,
-      {
-        pv_2m: qualifications.pv_2m,
-        pv_3m: qualifications.pv_3m,
-        pv_12m: qualifications.pv_12m,
-      },
-      qualifyingPvCurrentMonth,
-    );
-  }, [fullUser?.currentRank, qualifications, qualifyingPvCurrentMonth]);
+    return rankProgressionFromWindows(fullUser?.currentRank, {
+      pv_2m: qualifications.pv_2m,
+      pv_3m: qualifications.pv_3m,
+      pv_12m: qualifications.pv_12m,
+      pv_12m_extended: qualifications.pv_12m_extended,
+    });
+  }, [fullUser?.currentRank, qualifications]);
 
   if (loading && !qualifications) {
     return (

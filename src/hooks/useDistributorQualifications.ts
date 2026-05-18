@@ -22,12 +22,18 @@ export interface DistributorQualifications {
   pv_2m: number;
   pv_3m: number;
   pv_6m: number;
+  /** PV PERSO sur fenêtre 12 mois glissants (sans downline). */
   pv_12m: number;
+  /** PV ÉTENDU sur fenêtre 12 mois glissants : self + descendants
+   *  non-Supervisor (règle breakaway Herbalife). C'est ce nombre qui
+   *  qualifie pour le palier Supervisor 4000 PV. Source : helper SQL
+   *  `_pv_window_extended_total` (migration V2 20261118200000). */
+  pv_12m_extended: number;
   qualified_senior_consultant: boolean;
   qualified_success_builder: boolean;
   qualified_qp: boolean;
   qualified_supervisor: boolean;
-  /** Rang max calculé d'après les PV perso sur les fenêtres. Parmi :
+  /** Rang max calculé d'après les fenêtres. Parmi :
    *  distributor_25 / senior_consultant_35 / success_builder_42 / supervisor_50.
    *  Les paliers structurels (world_team_50+) ne sont jamais calculés ici. */
   rank_calculated: string;

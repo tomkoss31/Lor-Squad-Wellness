@@ -1652,6 +1652,7 @@ export async function fetchDistributorQualifications(
   pv_3m: number;
   pv_6m: number;
   pv_12m: number;
+  pv_12m_extended: number;
   qualified_senior_consultant: boolean;
   qualified_success_builder: boolean;
   qualified_qp: boolean;
@@ -1674,6 +1675,10 @@ export async function fetchDistributorQualifications(
     pv_3m: Number(row.pv_3m ?? 0),
     pv_6m: Number(row.pv_6m ?? 0),
     pv_12m: Number(row.pv_12m ?? 0),
+    // V2 (migration 20261118200000) : si la RPC vieille version est encore
+    // en place (avant apply), pv_12m_extended sera undefined → fallback
+    // sur pv_12m pour ne pas casser l'UI le temps de l'apply.
+    pv_12m_extended: Number(row.pv_12m_extended ?? row.pv_12m ?? 0),
     qualified_senior_consultant: !!row.qualified_senior_consultant,
     qualified_success_builder: !!row.qualified_success_builder,
     qualified_qp: !!row.qualified_qp,
