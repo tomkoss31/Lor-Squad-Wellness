@@ -24,6 +24,7 @@ import { PageHeading } from "../components/ui/PageHeading";
 import { useAppContext } from "../context/AppContext";
 import { getSupabaseClient } from "../services/supabaseClient";
 import { FlexHistoryCard } from "../components/flex/FlexHistoryCard";
+import { DistriQuickLink } from "../components/distributor-blocks";
 import type {
   DistributorActionPlan,
   FlexDriftDistri,
@@ -278,49 +279,65 @@ function MemberRow({
         transition: "all 0.15s",
       }}
     >
-      <button
-        type="button"
-        onClick={onToggle}
+      <div
         style={{
-          width: "100%",
-          background: "transparent",
-          border: "none",
           padding: "14px 16px",
-          textAlign: "left",
-          cursor: "pointer",
           display: "flex",
           alignItems: "center",
-          justifyContent: "space-between",
-          color: "var(--ls-text)",
-          fontFamily: "DM Sans, sans-serif",
-          gap: 12,
+          gap: 10,
         }}
       >
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontFamily: "Syne, sans-serif", fontSize: 15, fontWeight: 700 }}>
-            {member.name}
+        <button
+          type="button"
+          onClick={onToggle}
+          style={{
+            flex: 1,
+            background: "transparent",
+            border: "none",
+            padding: 0,
+            textAlign: "left",
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            color: "var(--ls-text)",
+            fontFamily: "DM Sans, sans-serif",
+            gap: 12,
+            minWidth: 0,
+          }}
+        >
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontFamily: "Syne, sans-serif", fontSize: 15, fontWeight: 700 }}>
+              {member.name}
+            </div>
+            <div style={{ fontSize: 11, color: "var(--ls-text-muted)", marginTop: 2 }}>
+              {RANK_LABELS[member.currentRank]} ·{" "}
+              {member.hasPlan ? (
+                "Plan FLEX actif"
+              ) : (
+                <span style={{ color: "var(--ls-coral)" }}>Pas de plan FLEX</span>
+              )}
+            </div>
           </div>
-          <div style={{ fontSize: 11, color: "var(--ls-text-muted)", marginTop: 2 }}>
-            {RANK_LABELS[member.currentRank]} ·{" "}
-            {member.hasPlan ? "Plan FLEX actif" : <span style={{ color: "var(--ls-coral)" }}>Pas de plan FLEX</span>}
-          </div>
-        </div>
-        {recap ? (
-          <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-            <MiniDot label="Inv" ratio={recap.ratios.invitations} />
-            <MiniDot label="Conv" ratio={recap.ratios.conversations} />
-            <MiniDot label="Bilans" ratio={recap.ratios.bilans} />
-            <MiniDot label="Clos" ratio={recap.ratios.closings} />
-            <span style={{ fontSize: 11, color: "var(--ls-text-muted)", marginLeft: 6 }}>
-              {recap.days_filled}/7
+          {recap ? (
+            <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+              <MiniDot label="Inv" ratio={recap.ratios.invitations} />
+              <MiniDot label="Conv" ratio={recap.ratios.conversations} />
+              <MiniDot label="Bilans" ratio={recap.ratios.bilans} />
+              <MiniDot label="Clos" ratio={recap.ratios.closings} />
+              <span style={{ fontSize: 11, color: "var(--ls-text-muted)", marginLeft: 6 }}>
+                {recap.days_filled}/7
+              </span>
+            </div>
+          ) : (
+            <span style={{ fontSize: 11, color: "var(--ls-text-muted)" }}>
+              {member.hasPlan ? "Pas de check-in cette sem." : ""}
             </span>
-          </div>
-        ) : (
-          <span style={{ fontSize: 11, color: "var(--ls-text-muted)" }}>
-            {member.hasPlan ? "Pas de check-in cette sem." : ""}
-          </span>
-        )}
-      </button>
+          )}
+        </button>
+        {/* 13B.3 — DistriQuickLink dedie : ouvre la fiche distri sans toggle */}
+        <DistriQuickLink userId={member.userId} />
+      </div>
       {expanded && member.hasPlan && (
         <div style={{ padding: 16, borderTop: "0.5px solid var(--ls-border)" }}>
           <FlexHistoryCard userId={member.userId} />
