@@ -151,6 +151,18 @@ const CARDS: HubCard[] = [
     accent: "var(--ls-gold)",
     tag: { label: "Nouveau", color: "var(--ls-coral)" },
   },
+  {
+    id: "testimonials",
+    emoji: "💬",
+    title: "Témoignages clients",
+    description:
+      "Récupère ton lien partageable, partage-le à tes clients sur WhatsApp ou en story, et modère les retours avant qu'ils s'affichent sur ta page bilan en ligne.",
+    cta: "Ouvrir",
+    path: "/admin/testimonials",
+    accent: "var(--ls-teal)",
+    tag: { label: "Nouveau", color: "var(--ls-coral)" },
+    requireRole: "admin",
+  },
 ];
 
 export function DeveloppementHubPage() {

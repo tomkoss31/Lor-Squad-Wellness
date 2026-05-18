@@ -18,7 +18,6 @@ import { useNavigate } from "react-router-dom";
 import { useAppContext } from "../../context/AppContext";
 import { useToast, buildSupabaseErrorToast } from "../../context/ToastContext";
 import { ClientAccessModal } from "../client/ClientAccessModal";
-import { TestimonialShareModal } from "./TestimonialShareModal";
 import { MessageTemplatesButton } from "./MessageTemplatesButton";
 import { ClientVipCoachPanel } from "../../features/client-vip/ClientVipCoachPanel";
 import { refreshClientRecap } from "../../services/supabaseService";
@@ -86,7 +85,6 @@ export function ActionsTab({ client, onEditRdv, onOpenSharePublic, onGoToVueComp
 
   const [editCoordinatesOpen, setEditCoordinatesOpen] = useState(false);
   const [accessModalOpen, setAccessModalOpen] = useState(false);
-  const [testimonialShareOpen, setTestimonialShareOpen] = useState(false);
   const [deleteStep, setDeleteStep] = useState<0 | 1 | 2>(0);
   const [deleteInput, setDeleteInput] = useState("");
   const [deleting, setDeleting] = useState(false);
@@ -853,73 +851,6 @@ export function ActionsTab({ client, onEditRdv, onOpenSharePublic, onGoToVueComp
               </button>
             </div>
 
-            {/* Ligne demander un temoignage (chantier #11, 2026-05-18) */}
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 10,
-                padding: "10px 12px",
-                background: "var(--ls-actions-gold-bg)",
-                borderRadius: 10,
-                marginBottom: 8,
-              }}
-            >
-              <div
-                aria-hidden="true"
-                style={{
-                  width: 30,
-                  height: 30,
-                  borderRadius: 8,
-                  background: "var(--ls-actions-card)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: 13,
-                  flexShrink: 0,
-                }}
-              >
-                💬
-              </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div
-                  style={{
-                    fontSize: 12,
-                    fontWeight: 500,
-                    color: "var(--ls-actions-text)",
-                  }}
-                >
-                  Demander un témoignage
-                </div>
-                <div
-                  style={{
-                    fontSize: 10,
-                    color: "var(--ls-actions-text-muted)",
-                    marginTop: 2,
-                  }}
-                >
-                  Lien pour son retour en 30 sec — affiché sur ta page bilan
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setTestimonialShareOpen(true)}
-                style={{
-                  padding: "7px 12px",
-                  fontSize: 11,
-                  borderRadius: 7,
-                  background: "var(--ls-teal)",
-                  color: "#fff",
-                  border: "none",
-                  fontWeight: 500,
-                  cursor: "pointer",
-                  flexShrink: 0,
-                }}
-              >
-                Partager →
-              </button>
-            </div>
-
             {/* Ligne partage public */}
             <button
               type="button"
@@ -1256,14 +1187,6 @@ export function ActionsTab({ client, onEditRdv, onOpenSharePublic, onGoToVueComp
         clientId={client.id}
         clientFirstName={client.firstName}
         clientLastName={client.lastName}
-        clientPhone={client.phone}
-      />
-
-      <TestimonialShareModal
-        open={testimonialShareOpen}
-        onClose={() => setTestimonialShareOpen(false)}
-        clientId={client.id}
-        clientFirstName={client.firstName}
         clientPhone={client.phone}
       />
     </div>

@@ -642,7 +642,10 @@ export default function App() {
             </Route>
           </Route>
           {/* Routes publiques — récap + rapport évolution */}
-          {/* Chantier #11 (2026-05-18) : page form temoignage client publique. */}
+          {/* Chantier #11 (2026-05-18) : page form temoignage. 2 modes :
+              /temoignage/coach/:slug (generique, distri partage en bulk)
+              /temoignage/:token       (legacy V1 per-client, garde compat). */}
+          <Route path="/temoignage/coach/:slug" element={<TestimonialFormPage />} />
           <Route path="/temoignage/:token" element={<TestimonialFormPage />} />
           <Route path="/recap/:token" element={<RecapPage />} />
           <Route path="/rapport/:token" element={<EvolutionReportPage />} />
