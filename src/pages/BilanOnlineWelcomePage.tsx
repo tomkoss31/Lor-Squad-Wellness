@@ -1,12 +1,19 @@
 // =============================================================================
-// BilanOnlineWelcomePage — implémente strictement le mockup Égypte validé.
-// docs/mockups/bilan-online.html (commit 25c0165), view "welcome".
+// BilanOnlineWelcomePage V2 dark (chantier A, 2026-05-18) — refonte design.
+// Source de verite : docs/mockups/bilan-online-v2.html view-welcome.
 // Route : /bilan-online/:coachSlug?
 // =============================================================================
 
 import { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { BO, BilanOnlineShell, BoBrand, BoCtaPrimary } from "../components/bilan-online/BilanOnlineShell";
+import {
+  PublicShell,
+  PublicCtaPrimary,
+  PublicBrand,
+  PUBLIC_TOKENS,
+  PUBLIC_FONTS,
+  publicGradText,
+} from "../components/public/PublicShell";
 import { CoachCredibilityBadges } from "../components/bilan-online/CoachCredibilityBadges";
 
 function normalizeSlug(input: string): string {
@@ -51,97 +58,184 @@ export function BilanOnlineWelcomePage() {
   }
 
   return (
-    <BilanOnlineShell bgAccent>
-      <div style={{ padding: "32px 24px 40px", textAlign: "center" }}>
-        <BoBrand />
+    <PublicShell defaultTheme="dark">
+      <div style={{ padding: "48px 22px 80px", textAlign: "center" }}>
+        <PublicBrand label="Bilan" />
 
-        <div className="bo-bounce" style={{
-          fontSize: 56, lineHeight: 1, margin: "28px 0 20px",
-          display: "inline-block",
-          animation: "bo-bounce 2.5s ease-in-out infinite",
-        }}>
+        {/* Emoji hero bounce */}
+        <div
+          className="ps-bounce"
+          style={{
+            fontSize: 56,
+            lineHeight: 1,
+            margin: "24px 0 16px",
+            display: "inline-block",
+            filter: "drop-shadow(0 4px 20px rgba(45,212,191,0.40))",
+          }}
+        >
           🥰
         </div>
 
-        <h1 style={{
-          fontFamily: BO.fontDisplay, fontSize: 28, fontWeight: 700,
-          color: BO.text, lineHeight: 1.25,
-          margin: "0 auto 24px", maxWidth: 340,
-        }}>
-          Nous sommes heureux<br />de te voir ici.
+        {/* H1 avec mot heureux en gradient italic */}
+        <h1
+          style={{
+            fontFamily: PUBLIC_FONTS.display,
+            fontSize: "clamp(32px, 7vw, 44px)",
+            fontWeight: 600,
+            color: "var(--cream)",
+            lineHeight: 1.08,
+            letterSpacing: "-0.02em",
+            textAlign: "center",
+            margin: "0 auto 18px",
+            maxWidth: 480,
+          }}
+        >
+          Nous sommes <span style={publicGradText}>heureux</span>
+          <br />
+          de te voir ici.
         </h1>
 
+        {/* Tagline */}
+        <p
+          style={{
+            fontSize: 16,
+            color: "var(--cream-muted)",
+            textAlign: "center",
+            maxWidth: 400,
+            margin: "0 auto 32px",
+            lineHeight: 1.55,
+          }}
+        >
+          2 minutes pour comprendre ton corps, tes objectifs, et te proposer un accompagnement vraiment personnalisé.
+        </p>
+
+        {/* Coach card glassmorphism pill */}
         {slug && (
-          <div style={{
-            display: "inline-flex", alignItems: "center", gap: 12,
-            padding: "12px 18px 12px 12px",
-            background: "white", borderRadius: 999,
-            boxShadow: "0 4px 16px rgba(11, 13, 17, 0.08)",
-            marginBottom: 28,
-          }}>
-            <div style={{
-              width: 40, height: 40, borderRadius: "50%",
-              background: `linear-gradient(135deg, ${BO.gold} 0%, ${BO.teal} 100%)`,
-              color: BO.charcoal,
-              display: "flex", alignItems: "center", justifyContent: "center",
-              fontFamily: BO.fontDisplay, fontWeight: 700, fontSize: 14,
-              flexShrink: 0,
-            }}>
-              {initials}
-            </div>
-            <div style={{ textAlign: "left" }}>
-              <div style={{
-                fontSize: 10, color: BO.textHint,
-                textTransform: "uppercase", letterSpacing: "0.08em",
-                fontWeight: 600,
-              }}>
-                Ton coach
+          <div style={{ textAlign: "center", marginBottom: 28 }}>
+            <div
+              style={{
+                background: "rgba(255,255,255,0.04)",
+                backdropFilter: "blur(20px)",
+                WebkitBackdropFilter: "blur(20px)",
+                border: "1px solid var(--hair)",
+                borderRadius: 999,
+                padding: "14px 22px 14px 14px",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 14,
+                boxShadow: "0 4px 24px rgba(0,0,0,0.2)",
+              }}
+            >
+              <div
+                style={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: "50%",
+                  background: PUBLIC_TOKENS.gradCta,
+                  color: PUBLIC_TOKENS.ink,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontFamily: PUBLIC_FONTS.display,
+                  fontWeight: 700,
+                  fontSize: 15,
+                  flexShrink: 0,
+                }}
+              >
+                {initials}
               </div>
-              <div style={{
-                fontFamily: BO.fontDisplay, fontSize: 14, fontWeight: 700,
-                color: BO.text,
-              }}>
-                {coachName}
+              <div style={{ textAlign: "left" }}>
+                <div
+                  style={{
+                    fontSize: 10,
+                    color: "var(--cream-hint)",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.12em",
+                    fontWeight: 600,
+                    fontFamily: PUBLIC_FONTS.display,
+                  }}
+                >
+                  Ton coach
+                </div>
+                <div
+                  style={{
+                    fontFamily: PUBLIC_FONTS.display,
+                    fontSize: 15,
+                    fontWeight: 600,
+                    color: "var(--cream)",
+                  }}
+                >
+                  {coachName}
+                </div>
               </div>
             </div>
           </div>
         )}
 
-        {slug && (
-          <CoachCredibilityBadges coachSlug={slug} variant="welcome" />
-        )}
+        {slug && <CoachCredibilityBadges coachSlug={slug} variant="welcome" />}
 
-        <div style={{
-          background: "white", borderRadius: 16,
-          padding: "20px 22px", margin: "0 0 24px",
-          textAlign: "left",
-          boxShadow: "0 2px 12px rgba(11, 13, 17, 0.05)",
-        }}>
-          <h2 style={{
-            fontFamily: BO.fontDisplay, fontSize: 16, fontWeight: 700,
-            color: BO.text, marginBottom: 14, textAlign: "center",
-            margin: "0 0 14px 0",
-          }}>
-            La Base 360, c'est :
+        {/* Pitch card glassmorphism */}
+        <div
+          style={{
+            background: "rgba(255,255,255,0.04)",
+            backdropFilter: "blur(20px)",
+            WebkitBackdropFilter: "blur(20px)",
+            border: "1px solid var(--hair)",
+            borderRadius: 20,
+            padding: "24px 22px",
+            marginBottom: 28,
+            textAlign: "left",
+          }}
+        >
+          <h2
+            style={{
+              fontFamily: PUBLIC_FONTS.display,
+              fontSize: 14,
+              fontWeight: 600,
+              color: "var(--cream-muted)",
+              textTransform: "uppercase",
+              letterSpacing: "0.12em",
+              marginBottom: 18,
+              textAlign: "center",
+            }}
+          >
+            La Base 360, c'est
           </h2>
-          <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
+          <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 12 }}>
             {[
               "Un bilan personnalisé pour comprendre ton corps",
               "Un coach humain qui t'accompagne au quotidien",
               "Des résultats durables, pas une mode passagère",
             ].map((text) => (
-              <li key={text} style={{
-                position: "relative", paddingLeft: 24,
-                fontSize: 14, color: BO.textMuted,
-                marginBottom: 10, lineHeight: 1.5,
-              }}>
-                <span style={{
-                  position: "absolute", left: 0, top: 1,
-                  width: 18, height: 18, borderRadius: "50%",
-                  background: BO.teal, color: "white",
-                  fontSize: 11, fontWeight: 700,
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                }}>
+              <li
+                key={text}
+                style={{
+                  display: "flex",
+                  alignItems: "flex-start",
+                  gap: 14,
+                  fontSize: 15,
+                  color: "var(--cream-soft)",
+                  lineHeight: 1.5,
+                }}
+              >
+                <span
+                  aria-hidden="true"
+                  style={{
+                    width: 22,
+                    height: 22,
+                    minWidth: 22,
+                    borderRadius: "50%",
+                    background: PUBLIC_TOKENS.gradCta,
+                    color: "white",
+                    fontSize: 12,
+                    fontWeight: 700,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontFamily: PUBLIC_FONTS.display,
+                    marginTop: 1,
+                  }}
+                >
                   ✓
                 </span>
                 {text}
@@ -152,30 +246,45 @@ export function BilanOnlineWelcomePage() {
 
         {slug ? (
           <>
-            <BoCtaPrimary onClick={startWithSlug}>
-              Commencer mon bilan
-            </BoCtaPrimary>
-            <div style={{
-              marginTop: 14, fontSize: 12, color: BO.textMuted,
-            }}>
-              Promis, ça prend 2 min 🙏
+            <PublicCtaPrimary onClick={startWithSlug}>Commencer mon bilan →</PublicCtaPrimary>
+            <div
+              style={{
+                marginTop: 16,
+                fontSize: 12,
+                color: "var(--cream-hint)",
+                fontFamily: PUBLIC_FONTS.mono,
+                letterSpacing: "0.08em",
+              }}
+            >
+              Promis · 2 min · sans pression
             </div>
           </>
         ) : showFreeBilan ? (
           <>
-            <BoCtaPrimary onClick={startFreeBilan}>
-              Commencer mon bilan
-            </BoCtaPrimary>
-            <div style={{ marginTop: 14, fontSize: 12, color: BO.textMuted }}>
-              Promis, ça prend 2 min 🙏
+            <PublicCtaPrimary onClick={startFreeBilan}>Commencer mon bilan →</PublicCtaPrimary>
+            <div
+              style={{
+                marginTop: 16,
+                fontSize: 12,
+                color: "var(--cream-hint)",
+                fontFamily: PUBLIC_FONTS.mono,
+                letterSpacing: "0.08em",
+              }}
+            >
+              Promis · 2 min · sans pression
             </div>
             <button
               type="button"
               onClick={() => setShowFreeBilan(false)}
               style={{
-                marginTop: 24, fontSize: 12, color: BO.textHint,
-                background: "none", border: "none", cursor: "pointer",
-                fontFamily: "inherit", textDecoration: "underline",
+                marginTop: 24,
+                fontSize: 13,
+                color: "var(--cream-hint)",
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                fontFamily: "inherit",
+                textDecoration: "underline",
               }}
             >
               ← J'ai un coach en tête
@@ -183,10 +292,16 @@ export function BilanOnlineWelcomePage() {
           </>
         ) : (
           <>
-            <div style={{
-              fontFamily: BO.fontDisplay, fontSize: 14, fontWeight: 700,
-              color: BO.text, marginBottom: 10, textAlign: "left",
-            }}>
+            <div
+              style={{
+                fontFamily: PUBLIC_FONTS.display,
+                fontSize: 14,
+                fontWeight: 600,
+                color: "var(--cream)",
+                marginBottom: 10,
+                textAlign: "left",
+              }}
+            >
               Qui t'a invité ici ?
             </div>
             <input
@@ -194,32 +309,44 @@ export function BilanOnlineWelcomePage() {
               placeholder="Prénom du coach (ex : Thomas)"
               value={inputName}
               onChange={(e) => setInputName(e.target.value)}
-              onKeyDown={(e) => { if (e.key === "Enter") startFromInput(); }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") startFromInput();
+              }}
               maxLength={50}
+              className="ps-input"
               style={{
-                width: "100%", padding: "14px 16px",
-                border: `1px solid ${BO.border}`, borderRadius: 12,
-                fontSize: 16, fontFamily: "inherit",
-                background: BO.surface2, color: BO.text,
-                outline: "none", marginBottom: 12, boxSizing: "border-box",
-                colorScheme: "light",
+                width: "100%",
+                padding: "14px 16px",
+                background: "rgba(255,255,255,0.05)",
+                border: "1px solid var(--hair-strong)",
+                borderRadius: 14,
+                fontFamily: PUBLIC_FONTS.body,
+                fontSize: 16,
+                color: "var(--cream)",
+                outline: "none",
+                marginBottom: 12,
+                boxSizing: "border-box",
+                transition: "all 0.22s",
               }}
             />
-            <BoCtaPrimary
-              onClick={startFromInput}
-              disabled={normalizeSlug(inputName).length < 2}
-            >
+            <PublicCtaPrimary onClick={startFromInput} disabled={normalizeSlug(inputName).length < 2}>
               C'est parti →
-            </BoCtaPrimary>
-            <div style={{
-              marginTop: 24, fontSize: 12, color: BO.textHint,
-            }}>
+            </PublicCtaPrimary>
+            <div
+              style={{
+                marginTop: 24,
+                fontSize: 13,
+                color: "var(--cream-hint)",
+              }}
+            >
               Tu n'as pas été invité par un coach ?{" "}
               <a
                 onClick={() => setShowFreeBilan(true)}
                 style={{
-                  color: BO.tealDark, textDecoration: "underline",
+                  color: PUBLIC_TOKENS.teal,
+                  textDecoration: "underline",
                   cursor: "pointer",
+                  fontWeight: 500,
                 }}
               >
                 Continuer en bilan libre
@@ -228,6 +355,6 @@ export function BilanOnlineWelcomePage() {
           </>
         )}
       </div>
-    </BilanOnlineShell>
+    </PublicShell>
   );
 }

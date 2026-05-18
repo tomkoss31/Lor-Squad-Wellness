@@ -18,7 +18,7 @@
 
 import { useEffect, useState } from "react";
 import { getSupabaseClient } from "../../services/supabaseClient";
-import { BO } from "./BilanOnlineShell";
+import { PUBLIC_TOKENS, PUBLIC_FONTS } from "../../styles/public-tokens";
 
 export interface CoachCredibility {
   user_id: string;
@@ -125,7 +125,8 @@ export function CoachCredibilityBadges({
     return (
       <div style={{
         display: "flex", flexWrap: "wrap", justifyContent: "center", gap: 14,
-        fontFamily: BO.fontBody, fontSize: 12, color: BO.textMuted,
+        fontFamily: PUBLIC_FONTS.body, fontSize: 12,
+        color: "var(--cream-muted)",
         lineHeight: 1.4,
       }}>
         {items.map((it, i) => (
@@ -148,15 +149,18 @@ export function CoachCredibilityBadges({
       }}>
         {items.map((it) => (
           <div key={it.key} style={{
-            background: "white", borderRadius: 14,
-            border: `1px solid ${BO.border}`,
+            background: "rgba(255,255,255,0.04)",
+            borderRadius: 14,
+            border: "1px solid var(--hair)",
+            backdropFilter: "blur(20px)",
+            WebkitBackdropFilter: "blur(20px)",
             padding: "16px 12px", textAlign: "center",
-            boxShadow: "0 2px 10px rgba(11,13,17,0.04)",
+            boxShadow: "0 4px 16px rgba(0,0,0,0.20)",
           }}>
             <div style={{ fontSize: 22, lineHeight: 1, marginBottom: 8 }} aria-hidden="true">{it.icon}</div>
             <div style={{
-              fontFamily: BO.fontDisplay, fontSize: 14, fontWeight: 700,
-              color: BO.text, lineHeight: 1.25,
+              fontFamily: PUBLIC_FONTS.display, fontSize: 14, fontWeight: 600,
+              color: "var(--cream)", lineHeight: 1.25,
             }}>{it.label}</div>
           </div>
         ))}
@@ -164,23 +168,24 @@ export function CoachCredibilityBadges({
     );
   }
 
-  // welcome (default) : chips horizontales discrètes, alignées sur coach-card
+  // welcome (default) : chips horizontales glassmorphism dark
   return (
-    <div style={{
+    <div className="ps-fade-in" style={{
       display: "flex", flexWrap: "wrap", justifyContent: "center", gap: 8,
       marginBottom: 24,
-      animation: "bo-fadeIn 0.4s ease-out 0.1s both",
     }}>
       {items.map((it) => (
         <span key={it.key} style={{
           display: "inline-flex", alignItems: "center", gap: 6,
           padding: "7px 12px",
-          background: "white",
-          border: `1px solid ${BO.border}`,
+          background: "rgba(255,255,255,0.04)",
+          border: "1px solid var(--hair)",
+          backdropFilter: "blur(12px)",
+          WebkitBackdropFilter: "blur(12px)",
           borderRadius: 999,
-          fontFamily: BO.fontBody, fontSize: 12, fontWeight: 600,
-          color: BO.text,
-          boxShadow: "0 2px 8px rgba(11, 13, 17, 0.04)",
+          fontFamily: PUBLIC_FONTS.body, fontSize: 12, fontWeight: 500,
+          color: "var(--cream)",
+          boxShadow: "0 2px 12px rgba(0,0,0,0.15)",
         }}>
           <span aria-hidden="true" style={{ fontSize: 13 }}>{it.icon}</span>
           {it.label}
@@ -200,8 +205,8 @@ function BadgesSkeleton({ variant }: { variant: Variant }) {
       }}>
         {Array.from({ length: count }).map((_, i) => (
           <div key={i} style={{
-            height: 76, background: BO.surface2, borderRadius: 14,
-            opacity: 0.5,
+            height: 76, background: "rgba(255,255,255,0.04)", borderRadius: 14,
+            opacity: 0.4,
           }} />
         ))}
       </div>
@@ -215,10 +220,12 @@ function BadgesSkeleton({ variant }: { variant: Variant }) {
       {Array.from({ length: count }).map((_, i) => (
         <span key={i} style={{
           width: 110, height: 28,
-          background: BO.surface2, borderRadius: 999,
-          opacity: 0.5,
+          background: "rgba(255,255,255,0.04)", borderRadius: 999,
+          opacity: 0.4,
         }} />
       ))}
     </div>
   );
 }
+// PUBLIC_TOKENS imported pour le typage des accents (utilise indirectement via var(--cream)).
+void PUBLIC_TOKENS;
