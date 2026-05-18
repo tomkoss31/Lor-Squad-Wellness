@@ -139,6 +139,16 @@ const BilanOnlineWelcomePage = lazy(() =>
     default: module.BilanOnlineWelcomePage,
   })),
 );
+const TestimonialFormPage = lazy(() =>
+  import("./pages/TestimonialFormPage").then((module) => ({
+    default: module.TestimonialFormPage,
+  })),
+);
+const AdminTestimonialsPage = lazy(() =>
+  import("./pages/AdminTestimonialsPage").then((module) => ({
+    default: module.AdminTestimonialsPage,
+  })),
+);
 const BilanOnlineMerciPage = lazy(() =>
   import("./pages/BilanOnlineMerciPage").then((module) => ({
     default: module.BilanOnlineMerciPage,
@@ -600,6 +610,8 @@ export default function App() {
               <Route path="clients" element={<ClientsPage />} />
               <Route element={<RoleRoute allowedRoles={["admin"]} />}>
                 <Route path="users" element={<UsersPage />} />
+                {/* Chantier #11 (2026-05-18) : moderation temoignages clients. */}
+                <Route path="admin/testimonials" element={<AdminTestimonialsPage />} />
                 {/* Chantier Team Tree (2026-04-25) : nouvelle fiche équipe
                     avec arbre de parrainage interactif. /users reste
                     accessible pour l'admin legacy (créer compte, réparer). */}
@@ -630,6 +642,8 @@ export default function App() {
             </Route>
           </Route>
           {/* Routes publiques — récap + rapport évolution */}
+          {/* Chantier #11 (2026-05-18) : page form temoignage client publique. */}
+          <Route path="/temoignage/:token" element={<TestimonialFormPage />} />
           <Route path="/recap/:token" element={<RecapPage />} />
           <Route path="/rapport/:token" element={<EvolutionReportPage />} />
           <Route path="/client/:token" element={<ClientAppPage />} />
