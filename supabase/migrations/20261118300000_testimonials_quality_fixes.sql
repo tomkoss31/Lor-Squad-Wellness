@@ -198,14 +198,16 @@ as $$
   -- Clients dont le client_app_accounts a entre 60 et 75 jours (fenetre lue
   -- par l'edge fn = [now-75d, now-60d[) et qui n'ont pas encore de temoignage
   -- pending/approved.
+  -- Note : la table `clients` n'a pas de colonne `coach_user_id`, le coach
+  -- responsable est stocke dans `distributor_id` (qui pointe vers users.id).
   select
     c.id as client_id,
     c.first_name,
-    c.coach_user_id,
+    c.distributor_id as coach_user_id,
     u.name as coach_name
   from public.clients c
   join public.client_app_accounts caa on c.id::text = caa.client_id
-  left join public.users u on u.id = c.coach_user_id
+  left join public.users u on u.id = c.distributor_id
   where caa.created_at >= p_start
     and caa.created_at < p_end
     and not exists (
