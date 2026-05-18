@@ -26,6 +26,32 @@ import { TestimonialsCarousel } from "../components/testimonials/TestimonialsCar
 
 type FormStatus = "idle" | "submitting" | "success" | "error";
 
+// ─── §05 Témoignages partenaires ─────────────────────────────────────────────
+// Refonte 2026-05-18 : 1 seul bloc fondateurs (Thomas + Mélanie ensemble) +
+// slots partenaires additionnels (textes Thomas en cours). Plus de récits
+// inventés.
+
+interface FoundersStory {
+  hook: string;            // une-ligne accroche entre « ... »
+  body: string;            // récit complet partagé
+  thomas_avatar_url: string | null;
+  melanie_avatar_url: string | null;
+}
+
+interface PartnerStory {
+  name: string;            // ex « Sophie M. »
+  since: string;           // ex « Partenaire · démarrée en avril 2024 »
+  hook: string;            // une-ligne accroche entre « ... »
+  body: string;            // récit complet
+  avatar_url: string | null;
+}
+
+// TODO Thomas (envoie textes + URLs photos) : remplir FOUNDERS_STORY et
+// PARTNER_STORIES. Tant que null/vides, la section §05 ne rend que le
+// carrousel témoignages clients en-dessous (pas de placeholder visible).
+const FOUNDERS_STORY: FoundersStory | null = null;
+const PARTNER_STORIES: PartnerStory[] = [];
+
 const FAQ_ITEMS = [
   {
     q: "Combien de temps par semaine je dois y consacrer ?",
@@ -793,28 +819,70 @@ export function BusinessPage() {
               <p className="biz-section__lead">Deux histoires vraies. Tu peux en écrire une autre.</p>
             </div>
             <div className="biz-stories">
-              <article className="biz-story biz-reveal">
-                <div className="biz-story__head">
-                  <div className="biz-story__photo" aria-hidden="true">photo</div>
-                  <div>
-                    <div className="biz-story__name">Thomas K.</div>
-                    <div className="biz-story__since">Fondateur La Base 360 · démarré en mars 2022</div>
+              {/* Bloc fondateurs fusionné — Thomas + Mélanie en 1 récit
+                  partagé. Photos auto via users.avatar_url (à brancher
+                  quand IDs en DB confirmés). */}
+              {FOUNDERS_STORY && (
+                <article className="biz-story biz-story--founders biz-reveal">
+                  <div className="biz-story__head">
+                    <div
+                      className="biz-story__photo biz-story__photo--couple"
+                      aria-hidden="true"
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: -10,
+                      }}
+                    >
+                      {FOUNDERS_STORY.thomas_avatar_url ? (
+                        <img
+                          src={FOUNDERS_STORY.thomas_avatar_url}
+                          alt=""
+                          style={{ width: 56, height: 56, borderRadius: "50%", objectFit: "cover", border: "2px solid #fff" }}
+                        />
+                      ) : (
+                        <div style={{ width: 56, height: 56, borderRadius: "50%", background: "linear-gradient(135deg,#10B981,#06B6D4)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 700, fontSize: 18 }}>T</div>
+                      )}
+                      {FOUNDERS_STORY.melanie_avatar_url ? (
+                        <img
+                          src={FOUNDERS_STORY.melanie_avatar_url}
+                          alt=""
+                          style={{ width: 56, height: 56, borderRadius: "50%", objectFit: "cover", border: "2px solid #fff", marginLeft: -14 }}
+                        />
+                      ) : (
+                        <div style={{ width: 56, height: 56, borderRadius: "50%", background: "linear-gradient(135deg,#A78BFA,#FB7185)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 700, fontSize: 18, marginLeft: -14 }}>M</div>
+                      )}
+                    </div>
+                    <div>
+                      <div className="biz-story__name">Thomas &amp; Mélanie</div>
+                      <div className="biz-story__since">Fondateurs La Base 360</div>
+                    </div>
                   </div>
-                </div>
-                <div className="biz-story__hook">« De salarié bureau à 6 chiffres en 18 mois. »</div>
-                <p className="biz-story__body">J'étais dans le marketing digital, salarié confortable mais sans goût. En mars 2022, j'ai démarré La Base 360 le soir et les weekends. À 6 mois j'étais Success Builder. À 18 mois j'ai quitté mon CDI, dépassé les 6 chiffres net sur l'année, et monté l'équipe qui forme aujourd'hui les nouveaux partenaires. Ce que j'aime ? Tu construis ton revenu une fois et il revient mois après mois.</p>
-              </article>
-              <article className="biz-story biz-reveal">
-                <div className="biz-story__head">
-                  <div className="biz-story__photo" aria-hidden="true">photo</div>
-                  <div>
-                    <div className="biz-story__name">Mélanie L.</div>
-                    <div className="biz-story__since">Co-fondatrice · démarrée en juillet 2022</div>
+                  <div className="biz-story__hook">« {FOUNDERS_STORY.hook} »</div>
+                  <p className="biz-story__body">{FOUNDERS_STORY.body}</p>
+                </article>
+              )}
+
+              {/* Partenaires additionnels — textes envoyés par Thomas */}
+              {PARTNER_STORIES.map((s, i) => (
+                <article key={i} className="biz-story biz-reveal">
+                  <div className="biz-story__head">
+                    <div className="biz-story__photo" aria-hidden="true">
+                      {s.avatar_url ? (
+                        <img src={s.avatar_url} alt="" style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover" }} />
+                      ) : (
+                        s.name?.[0]?.toUpperCase() ?? "?"
+                      )}
+                    </div>
+                    <div>
+                      <div className="biz-story__name">{s.name}</div>
+                      <div className="biz-story__since">{s.since}</div>
+                    </div>
                   </div>
-                </div>
-                <div className="biz-story__hook">« De prof à coach indépendante, sans jamais rien forcer. »</div>
-                <p className="biz-story__body">J'étais prof de SVT en collège. J'aimais le contact, j'étouffais dans le cadre. En juillet 2022, j'ai démarré à temps partiel — uniquement avec mes copines proches au début. À 4 mois, mes premiers clients m'amenaient leurs amis. À 1 an, j'ai posé une dispo, gardé un mi-temps par sécurité, et je gagne aujourd'hui plus en coaching qu'en enseignement. Et surtout : j'aime mes journées.</p>
-              </article>
+                  <div className="biz-story__hook">« {s.hook} »</div>
+                  <p className="biz-story__body">{s.body}</p>
+                </article>
+              ))}
             </div>
             <div className="biz-reveal biz-stories__signature">
               <span>« La seule règle : démarrer. »</span>
