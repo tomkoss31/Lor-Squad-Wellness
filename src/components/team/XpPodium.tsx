@@ -7,6 +7,8 @@
 // =============================================================================
 
 import type { TeamMemberEngagement } from "../../hooks/useTeamEngagement";
+import { RankPinBadge } from "../rank/RankPinBadge";
+import type { HerbalifeRank } from "../../types/domain";
 
 interface XpPodiumProps {
   members: TeamMemberEngagement[];
@@ -110,12 +112,17 @@ function PodiumSlot({ member, rank, onClick }: PodiumSlotProps) {
         </div>
       </div>
 
-      {/* Nom + role */}
+      {/* Nom + role + pin */}
       <div style={{ marginTop: 10, textAlign: "center" }}>
         <div style={nameStyle}>{member.name}</div>
         <div style={roleStyle}>
           {member.role === "admin" ? "Admin" : member.role === "referent" ? "Référent" : "Distributeur"}
         </div>
+        {member.current_rank && (
+          <div style={{ marginTop: 4, display: "flex", justifyContent: "center" }}>
+            <RankPinBadge rank={member.current_rank as HerbalifeRank} size="xs" />
+          </div>
+        )}
       </div>
 
       {/* Marche du podium */}
