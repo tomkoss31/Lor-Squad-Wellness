@@ -71,10 +71,11 @@ serve(async (req) => {
     if (coachId) {
       const { data: coach } = await sb
         .from("users")
-        .select("first_name")
+        .select("name")
         .eq("id", coachId)
         .maybeSingle();
-      coachFirstName = (coach?.first_name as string | undefined) ?? null;
+      const coachName = (coach?.name as string | undefined) ?? "";
+      coachFirstName = coachName.trim().split(/\s+/)[0] || null;
     }
     const { data: existing } = await sb
       .from("client_testimonials")
@@ -96,19 +97,20 @@ serve(async (req) => {
   if (coachSlug) {
     const { data: coachMatches } = await sb
       .from("users")
-      .select("first_name, role, active")
+      .select("name, role, active")
       .eq("active", true)
       .in("role", ["distributor", "admin", "referent"]);
-    const found = (coachMatches as Array<{ first_name: string | null }> | null)?.find(
-      (u) => normalizeSlug(u.first_name ?? "") === coachSlug,
+    const found = (coachMatches as Array<{ name: string | null }> | null)?.find(
+      (u) => normalizeSlug((u.name ?? "").trim().split(/\s+/)[0] ?? "") === coachSlug,
     );
     if (!found) {
       return json({ success: false, error: "Coach inconnu." }, 404);
     }
+    const coachFirstName = (found.name ?? "").trim().split(/\s+/)[0] || null;
     return json({
       success: true,
       mode: "coach",
-      coachFirstName: found.first_name ?? null,
+      coachFirstName,
       firstName: null,
       city: null,
       alreadySubmitted: false,

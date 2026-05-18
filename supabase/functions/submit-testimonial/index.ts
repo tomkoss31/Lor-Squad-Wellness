@@ -175,15 +175,16 @@ serve(async (req) => {
     return json({ success: false, error: "rate_limited", retry_after_seconds: rl.retry_after }, 429);
   }
 
-  // Lookup coach_user_id via slug = normalize(first_name)
+  // Lookup coach_user_id via slug = normalize(split_part(users.name, ' ', 1))
+  // Cf. coach_credibility migration : users.name est "Prenom Nom", on prend split[0].
   const { data: coachMatches } = await sb
     .from("users")
-    .select("id, first_name, role, active")
+    .select("id, name, role, active")
     .eq("active", true)
     .in("role", ["distributor", "admin", "referent"]);
   const coachUserId =
-    (coachMatches as Array<{ id: string; first_name: string | null }> | null)?.find(
-      (u) => normalizeSlug(u.first_name ?? "") === coachSlug,
+    (coachMatches as Array<{ id: string; name: string | null }> | null)?.find(
+      (u) => normalizeSlug((u.name ?? "").trim().split(/\s+/)[0] ?? "") === coachSlug,
     )?.id ?? null;
   if (!coachUserId) {
     return json({ success: false, error: "Coach inconnu." }, 404);
