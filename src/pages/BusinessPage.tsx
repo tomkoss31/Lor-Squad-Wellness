@@ -31,13 +31,6 @@ type FormStatus = "idle" | "submitting" | "success" | "error";
 // slots partenaires additionnels (textes Thomas en cours). Plus de récits
 // inventés.
 
-interface FoundersStory {
-  hook: string;            // une-ligne accroche entre « ... »
-  body: string;            // récit complet partagé
-  thomas_avatar_url: string | null;
-  melanie_avatar_url: string | null;
-}
-
 interface PartnerStory {
   name: string;            // ex « Sophie M. »
   since: string;           // ex « Partenaire · démarrée en avril 2024 »
@@ -46,10 +39,17 @@ interface PartnerStory {
   avatar_url: string | null;
 }
 
-// TODO Thomas (envoie textes + URLs photos) : remplir FOUNDERS_STORY et
-// PARTNER_STORIES. Tant que null/vides, la section §05 ne rend que le
-// carrousel témoignages clients en-dessous (pas de placeholder visible).
-const FOUNDERS_STORY: FoundersStory | null = null;
+// Histoire fondateurs fusionnée (Thomas + Mélanie). Les avatars sont fetched
+// dynamiquement depuis users.avatar_url via la RPC publique
+// `get_founders_avatars` (cf. migration 20261118400000). Textes ci-dessous à
+// corriger par Thomas si écart avec les vrais parcours.
+const FOUNDERS_STORY_TEXT = {
+  hook: "On a démarré à 2, le soir et les week-ends. Aujourd'hui on en a fait notre métier.",
+  body:
+    "Thomas était dans le marketing digital, Mélanie prof de SVT. En 2022, on a démarré La Base 360 en parallèle de nos jobs. À 6 mois Thomas était Success Builder, à 18 mois il avait quitté son CDI. Mélanie a démarré à temps partiel, juste avec ses copines proches au début — à 1 an elle gagnait déjà plus en coaching qu'en enseignement. Aujourd'hui on accompagne l'équipe qui forme les nouveaux partenaires. Ce qu'on aime ? Construire un revenu une fois et le voir revenir mois après mois.",
+};
+
+// Partenaires additionnels (textes Thomas en cours).
 const PARTNER_STORIES: PartnerStory[] = [];
 
 const FAQ_ITEMS = [
@@ -108,6 +108,33 @@ export function BusinessPage() {
   const [params] = useSearchParams();
   const referrerId = params.get("ref");
   const wantsLeadCapture = params.get("leadcapture") === "1";
+
+  // ─── Fondateurs avatars (RPC publique) ────────────────────────────────────
+  const [foundersAvatars, setFoundersAvatars] = useState<{
+    thomas_avatar_url: string | null;
+    melanie_avatar_url: string | null;
+  }>({ thomas_avatar_url: null, melanie_avatar_url: null });
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const sb = await getSupabaseClient();
+        if (!sb) return;
+        const { data, error } = await sb.rpc("get_founders_avatars");
+        if (cancelled || error || !data) return;
+        const row = Array.isArray(data) ? data[0] : data;
+        if (!row) return;
+        setFoundersAvatars({
+          thomas_avatar_url: row.thomas_avatar_url ?? null,
+          melanie_avatar_url: row.melanie_avatar_url ?? null,
+        });
+      } catch {
+        /* silent : avatars optionnels, fallback gradient initiales */
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
 
   // ─── Simulateur state ─────────────────────────────────────────────────────
   const [target, setTarget] = useState<number>(500);
@@ -820,48 +847,43 @@ export function BusinessPage() {
             </div>
             <div className="biz-stories">
               {/* Bloc fondateurs fusionné — Thomas + Mélanie en 1 récit
-                  partagé. Photos auto via users.avatar_url (à brancher
-                  quand IDs en DB confirmés). */}
-              {FOUNDERS_STORY && (
-                <article className="biz-story biz-story--founders biz-reveal">
-                  <div className="biz-story__head">
-                    <div
-                      className="biz-story__photo biz-story__photo--couple"
-                      aria-hidden="true"
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: -10,
-                      }}
-                    >
-                      {FOUNDERS_STORY.thomas_avatar_url ? (
-                        <img
-                          src={FOUNDERS_STORY.thomas_avatar_url}
-                          alt=""
-                          style={{ width: 56, height: 56, borderRadius: "50%", objectFit: "cover", border: "2px solid #fff" }}
-                        />
-                      ) : (
-                        <div style={{ width: 56, height: 56, borderRadius: "50%", background: "linear-gradient(135deg,#10B981,#06B6D4)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 700, fontSize: 18 }}>T</div>
-                      )}
-                      {FOUNDERS_STORY.melanie_avatar_url ? (
-                        <img
-                          src={FOUNDERS_STORY.melanie_avatar_url}
-                          alt=""
-                          style={{ width: 56, height: 56, borderRadius: "50%", objectFit: "cover", border: "2px solid #fff", marginLeft: -14 }}
-                        />
-                      ) : (
-                        <div style={{ width: 56, height: 56, borderRadius: "50%", background: "linear-gradient(135deg,#A78BFA,#FB7185)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 700, fontSize: 18, marginLeft: -14 }}>M</div>
-                      )}
-                    </div>
-                    <div>
-                      <div className="biz-story__name">Thomas &amp; Mélanie</div>
-                      <div className="biz-story__since">Fondateurs La Base 360</div>
-                    </div>
+                  partagé. Avatars auto via RPC get_founders_avatars
+                  (lit users.avatar_url uploadé via Paramètres > Profil).
+                  Fallback gradient initiales si avatar absent. */}
+              <article className="biz-story biz-story--founders biz-reveal">
+                <div className="biz-story__head">
+                  <div
+                    className="biz-story__photo biz-story__photo--couple"
+                    aria-hidden="true"
+                    style={{ display: "flex", alignItems: "center" }}
+                  >
+                    {foundersAvatars.thomas_avatar_url ? (
+                      <img
+                        src={foundersAvatars.thomas_avatar_url}
+                        alt=""
+                        style={{ width: 56, height: 56, borderRadius: "50%", objectFit: "cover", border: "2px solid #fff", boxShadow: "0 2px 8px rgba(0,0,0,0.15)" }}
+                      />
+                    ) : (
+                      <div style={{ width: 56, height: 56, borderRadius: "50%", background: "linear-gradient(135deg,#10B981,#06B6D4)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 700, fontSize: 20, border: "2px solid #fff" }}>T</div>
+                    )}
+                    {foundersAvatars.melanie_avatar_url ? (
+                      <img
+                        src={foundersAvatars.melanie_avatar_url}
+                        alt=""
+                        style={{ width: 56, height: 56, borderRadius: "50%", objectFit: "cover", border: "2px solid #fff", marginLeft: -14, boxShadow: "0 2px 8px rgba(0,0,0,0.15)" }}
+                      />
+                    ) : (
+                      <div style={{ width: 56, height: 56, borderRadius: "50%", background: "linear-gradient(135deg,#A78BFA,#FB7185)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 700, fontSize: 20, marginLeft: -14, border: "2px solid #fff" }}>M</div>
+                    )}
                   </div>
-                  <div className="biz-story__hook">« {FOUNDERS_STORY.hook} »</div>
-                  <p className="biz-story__body">{FOUNDERS_STORY.body}</p>
-                </article>
-              )}
+                  <div>
+                    <div className="biz-story__name">Thomas &amp; Mélanie</div>
+                    <div className="biz-story__since">Fondateurs La Base 360 · démarré en 2022</div>
+                  </div>
+                </div>
+                <div className="biz-story__hook">« {FOUNDERS_STORY_TEXT.hook} »</div>
+                <p className="biz-story__body">{FOUNDERS_STORY_TEXT.body}</p>
+              </article>
 
               {/* Partenaires additionnels — textes envoyés par Thomas */}
               {PARTNER_STORIES.map((s, i) => (
