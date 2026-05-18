@@ -200,4 +200,158 @@ Si les règles évoluent côté Herbalife (ils changent parfois), mettre à jour
 
 ---
 
-**Fin du document.** Lire absolument avant tout dev touchant aux calculs PV / qualifications / FLEX margins / rentabilité.
+## 🏅 Règle assets visuels — Pins Herbalife (badges visuels par palier)
+
+### Source des pins
+
+Les **vrais pins Herbalife officiels** sont rangés par Thomas dans un dossier local sur son PC. Au moment du dev, Claude Code local doit :
+
+1. **Demander à Thomas le chemin du dossier** (ex : `~/Documents/Herbalife/pins/` ou `~/Desktop/Pins/`)
+2. **Copier les fichiers** dans `public/herbalife-pins/` du repo avec une convention de nommage stricte (cf. ci-dessous)
+3. **Les commiter** dans le repo (les pins font partie du brand, pas confidentiels)
+
+### Convention de nommage obligatoire
+
+Format : `public/herbalife-pins/<rank-slug>.png` (ou `.webp` si optimisé)
+
+| Palier | Slug fichier |
+|---|---|
+| Distributor (25 %) | `distributor.png` |
+| Senior Consultant (35 %) | `senior-consultant.png` |
+| Success Builder (42 %) | `success-builder.png` |
+| Qualified Producer (QP) | `qualified-producer.png` |
+| Supervisor (50 %) — TAB Team | `supervisor.png` |
+| World Team | `world-team.png` |
+| GET Team | `get-team.png` |
+| Millionaire Team | `millionaire-team.png` |
+| President's Team | `presidents-team.png` |
+| Chairman's Club | `chairmans-club.png` |
+| Founder's Circle | `founders-circle.png` |
+
+(Compléter selon les pins fournis par Thomas — il connaît les paliers exacts disponibles dans son dossier.)
+
+### Composant React recommandé
+
+`src/components/herbalife/HerbalifePin.tsx` :
+
+```tsx
+type Rank = 'distributor' | 'senior_consultant' | 'success_builder' | 'qualified_producer'
+  | 'supervisor' | 'world_team' | 'get_team' | 'millionaire_team' | 'presidents_team'
+  | 'chairmans_club' | 'founders_circle';
+
+type Props = {
+  rank: Rank;
+  size?: number;          // default 32
+  showLabel?: boolean;    // default false (juste le pin) → true (pin + nom à côté)
+  className?: string;
+};
+
+const RANK_TO_FILE: Record<Rank, string> = {
+  distributor: 'distributor.png',
+  senior_consultant: 'senior-consultant.png',
+  success_builder: 'success-builder.png',
+  qualified_producer: 'qualified-producer.png',
+  supervisor: 'supervisor.png',
+  world_team: 'world-team.png',
+  get_team: 'get-team.png',
+  millionaire_team: 'millionaire-team.png',
+  presidents_team: 'presidents-team.png',
+  chairmans_club: 'chairmans-club.png',
+  founders_circle: 'founders-circle.png',
+};
+
+const RANK_TO_LABEL: Record<Rank, string> = {
+  distributor: 'Distributor',
+  senior_consultant: 'Senior Consultant',
+  // ... etc
+};
+
+export function HerbalifePin({ rank, size = 32, showLabel = false, className }: Props) {
+  const file = RANK_TO_FILE[rank];
+  return (
+    <span className={className} style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+      <img
+        src={`/herbalife-pins/${file}`}
+        alt={`Pin ${RANK_TO_LABEL[rank]}`}
+        width={size}
+        height={size}
+        style={{ objectFit: 'contain' }}
+        loading="lazy"
+      />
+      {showLabel && <span>{RANK_TO_LABEL[rank]}</span>}
+    </span>
+  );
+}
+```
+
+### Changement automatique sur évolution de palier
+
+Quand un distri se qualifie à un nouveau palier (calcul fenêtre glissante cf. §règles paliers), le pin affiché doit **changer automatiquement** sans intervention humaine.
+
+Mécanisme :
+- Le rang actuel est stocké dans `users.current_rank` (ou colonne équivalente — `current_herbalife_rank` ?)
+- Une RPC `get_distributor_current_rank(user_id)` calcule en temps réel le rang max atteint sur les fenêtres glissantes
+- Optionnellement : trigger SQL ou cron qui met à jour `users.current_rank` chaque jour pour optimisation
+- Le composant `<HerbalifePin rank={user.current_rank} />` lit cette valeur
+
+→ Si Mandy passe de Success Builder à Supervisor en juin 2026, son pin change automatiquement le 1er juin (ou en temps réel selon stratégie).
+
+### Endroits dans l'app où afficher le pin
+
+1. **Fiche distri** `/distributors/:id` : header avec pin + nom + niveau XP
+2. **Modale drill-down** `TeamMemberDrilldownModal` : section rang Herbalife (au lieu du selector texte ? ou en complément)
+3. **Podium XP** `/team` : à côté du nom du distri
+4. **Engagement table** `/team` : colonne rang avec pin mini
+5. **Paramètres > Équipe** : ligne distri avec pin mini
+6. **Page Welcome bilan online** : à côté du nom du coach (au lieu de l'avatar initiales "TK") cf. §règle bilan online ci-dessous
+7. **Carrousel témoignages** chantier #11 (si on veut montrer le pin du coach qui a accompagné)
+8. **Page admin badges coach** chantier #10 (déjà fait — vérifier que ça utilise le pin)
+
+### Fallback si pin absent
+
+Si le rang d'un distri n'a pas de pin (ex : palier exotique pas encore importé), afficher un placeholder neutre (cercle gris avec ✦ ou initiales du palier). Ne JAMAIS casser le rendu.
+
+---
+
+## 🥰 Règle visuelle — Page Welcome Bilan Online
+
+Demande Thomas (18/05) :
+
+> Modifier le **nom du logo affiché** sur la page bilan online : remplacer l'avatar à initiales (« TK ») par le **vrai logo La Base 360** OU le **pin Herbalife du coach** (à choisir selon vision).
+
+### Option recommandée
+
+Sur la page Welcome bilan online (et thank you), remplacer la **coach card** actuelle (avatar gradient avec initiales "TK") par :
+
+- **Logo La Base 360** (le carré gradient teal→bleu du logo brand) en haut de la card
+- **Nom du coach** textuel en dessous : "Thomas K."
+- **Pin Herbalife du coach** à côté du nom (petit, 24px) — auto selon `current_rank`
+
+Layout proposé :
+```
+┌────────────────────────────────────┐
+│  [Logo La Base 360 48px]            │
+│                                     │
+│  TON COACH                          │
+│  Thomas K.  🎖️ Success Builder     │
+└────────────────────────────────────┘
+```
+
+Le **logo La Base 360** est dans `public/logo/labase360-mark.svg` (à confirmer chemin exact, sinon Thomas fournit).
+
+### Fichier à créer ou modifier
+
+- `public/logo/labase360-mark.svg` (logo principal, carré gradient teal→bleu)
+- `public/logo/labase360-wordmark.svg` (le mot LA BASE 360 en typo)
+- Composant `<LaBase360Logo variant="mark" | "wordmark" size={n} />`
+- Composer la coach card avec `<LaBase360Logo />` + nom + `<HerbalifePin rank={coach.rank} />`
+
+### Cohérence brand
+
+Le logo La Base 360 est la **signature brand officielle** sur les pages publiques (Welcome bilan, thank you, témoignage, business, future newsletter). Toujours l'inclure en eyebrow ou hero.
+
+Les **pins Herbalife** sont utilisés pour **certifier** un distri (crédibilité du coach affiché aux prospects). Les 2 cohabitent.
+
+---
+
+**Mise à jour 2026-05-18** : ajout règles pins Herbalife + logo La Base 360 sur page Welcome bilan online.
