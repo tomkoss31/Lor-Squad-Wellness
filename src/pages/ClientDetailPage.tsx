@@ -1234,6 +1234,7 @@ export function ClientDetailPage() {
         clientFirstName={client.firstName}
         clientLastName={client.lastName}
         clientPhone={client.phone}
+        clientEmail={client.email}
       />
     </div>
   );
