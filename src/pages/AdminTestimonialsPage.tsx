@@ -1,22 +1,22 @@
 // =============================================================================
-// AdminTestimonialsPage — Chantier #11 Sprint 2 (2026-05-18)
-// Page admin uniquement (RoleRoute allowedRoles=["admin"]) pour moderer
-// les temoignages clients : approve / reject + filtres status.
-// Style : theme app interne (var(--ls-*)), pas V2 dark public.
+// AdminTestimonialsPage — Chantier #11 Sprint 2 + V1.1 (2026-05-18)
+// Page admin pour moderer + recuperer le lien generique a partager.
 // =============================================================================
 
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppContext } from "../context/AppContext";
 import { getSupabaseClient } from "../services/supabaseClient";
+import { useToast } from "../context/ToastContext";
 
 type TestimonialStatus = "pending" | "approved" | "rejected";
 
 interface TestimonialRow {
   id: string;
-  client_id: string;
+  client_id: string | null;
   client_token: string;
   coach_user_id: string | null;
+  coach_slug: string | null;
   content: string;
   rating: number;
   language: string;
@@ -25,17 +25,69 @@ interface TestimonialRow {
   approved_by: string | null;
   rejected_reason: string | null;
   created_at: string;
-  // Enrichissement cote front via join clients
-  client_first_name?: string | null;
-  client_last_name?: string | null;
-  client_city?: string | null;
+  // Enrichissement client (mode token) OU parse meta (mode coach_slug)
+  display_first_name?: string | null;
+  display_last_name?: string | null;
+  display_city?: string | null;
+  display_content?: string;
+  source_label?: string;
 }
 
 type Filter = "pending" | "approved" | "rejected" | "all";
 
+function normalizeSlug(input: string): string {
+  return input
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/[^a-z0-9]/g, "")
+    .trim();
+}
+
+// Parse les rows pour normaliser l'affichage admin :
+// - Mode token (client_id != null) : utilise clients.first_name/last_name/city
+// - Mode coach_slug (client_id null) : extrait FROM:firstName|city dans le content
+function enrichRow(
+  raw: TestimonialRow & { clients?: { first_name: string | null; last_name: string | null; city: string | null } | null },
+): TestimonialRow {
+  if (raw.client_id && raw.clients) {
+    return {
+      ...raw,
+      display_first_name: raw.clients.first_name,
+      display_last_name: raw.clients.last_name,
+      display_city: raw.clients.city,
+      display_content: raw.content,
+      source_label: "fiche client",
+    };
+  }
+  // Mode generique : extract meta [FROM:Marie|Metz]
+  const match = raw.content.match(/^\[FROM:([^|]+)\|([^\]]+)\]\n\n([\s\S]+)$/);
+  if (match) {
+    const [, fn, c, rest] = match;
+    return {
+      ...raw,
+      display_first_name: fn.trim(),
+      display_last_name: null,
+      display_city: c.trim(),
+      display_content: rest.trim(),
+      source_label: "lien générique",
+    };
+  }
+  // Fallback : pas de meta
+  return {
+    ...raw,
+    display_first_name: null,
+    display_last_name: null,
+    display_city: null,
+    display_content: raw.content,
+    source_label: raw.client_id ? "fiche client" : "lien générique",
+  };
+}
+
 export function AdminTestimonialsPage() {
   const navigate = useNavigate();
   const { currentUser } = useAppContext();
+  const { push: pushToast } = useToast();
   const [rows, setRows] = useState<TestimonialRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<Filter>("pending");
@@ -48,6 +100,18 @@ export function AdminTestimonialsPage() {
     }
   }, [currentUser, navigate]);
 
+  const coachSlug = useMemo(() => {
+    if (!currentUser?.name) return null;
+    const firstName = currentUser.name.trim().split(/\s+/)[0] ?? "";
+    return firstName ? normalizeSlug(firstName) : null;
+  }, [currentUser]);
+
+  const shareUrl = useMemo(() => {
+    if (!coachSlug) return null;
+    const origin = typeof window !== "undefined" ? window.location.origin : "https://labase360.com";
+    return `${origin}/temoignage/coach/${coachSlug}`;
+  }, [coachSlug]);
+
   const load = useMemo(
     () => async () => {
       setLoading(true);
@@ -57,16 +121,11 @@ export function AdminTestimonialsPage() {
         if (!sb) throw new Error("Service indisponible.");
         const { data, error } = await sb
           .from("client_testimonials")
-          .select("id, client_id, client_token, coach_user_id, content, rating, language, status, approved_at, approved_by, rejected_reason, created_at, clients!inner(first_name, last_name, city)")
+          .select("id, client_id, client_token, coach_user_id, coach_slug, content, rating, language, status, approved_at, approved_by, rejected_reason, created_at, clients(first_name, last_name, city)")
           .order("created_at", { ascending: false })
           .limit(200);
         if (error) throw error;
-        const enriched = (data as unknown as Array<TestimonialRow & { clients: { first_name: string | null; last_name: string | null; city: string | null } }>).map((r) => ({
-          ...r,
-          client_first_name: r.clients?.first_name ?? null,
-          client_last_name: r.clients?.last_name ?? null,
-          client_city: r.clients?.city ?? null,
-        }));
+        const enriched = (data as unknown as Array<TestimonialRow & { clients?: { first_name: string | null; last_name: string | null; city: string | null } | null }>).map(enrichRow);
         setRows(enriched);
       } catch (e) {
         setError(e instanceof Error ? e.message : "Erreur inconnue.");
@@ -150,6 +209,19 @@ export function AdminTestimonialsPage() {
     }
   }
 
+  function copyShareLink() {
+    if (!shareUrl) return;
+    navigator.clipboard
+      .writeText(shareUrl)
+      .then(() => pushToast({ tone: "success", title: "Lien copié 📋" }))
+      .catch(() => pushToast({ tone: "error", title: "Impossible de copier" }));
+  }
+  function shareWhatsApp() {
+    if (!shareUrl) return;
+    const msg = `Coucou 🌱\n\nJ'aimerais beaucoup ton retour sur ce qu'on a fait ensemble ! C'est rapide (30 sec) et ça aide énormément les prochains :\n\n${shareUrl}\n\nMerci 🙏`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, "_blank", "noopener,noreferrer");
+  }
+
   if (!currentUser || currentUser.role !== "admin") return null;
 
   return (
@@ -163,11 +235,85 @@ export function AdminTestimonialsPage() {
         💬 Témoignages clients
       </h1>
       <p style={{ fontSize: 13, color: "var(--ls-text-muted)", margin: "0 0 18px" }}>
-        Modère les retours envoyés par les clients via le lien partageable
-        /temoignage/&lt;token&gt;. Approve = visible publiquement (carrousel
-        bilan online + business). Reject = caché à jamais.
+        Tes clients t'envoient un retour en 30 secondes via le lien ci-dessous.
+        Tu valides ici ce qui s'affiche sur ta page bilan en ligne.
       </p>
 
+      {/* ─── Header : ton lien a partager ─────────────────────────────────── */}
+      <div style={{
+        background: "linear-gradient(135deg, rgba(45,212,191,0.08), rgba(167,139,250,0.08))",
+        border: "1px solid var(--ls-border)",
+        borderRadius: 14,
+        padding: 18,
+        marginBottom: 20,
+      }}>
+        <div style={{
+          fontSize: 11, fontWeight: 700, letterSpacing: "0.10em", textTransform: "uppercase",
+          color: "var(--ls-teal)", marginBottom: 8,
+        }}>
+          Ton lien à partager
+        </div>
+        {shareUrl ? (
+          <>
+            <div style={{
+              padding: "10px 12px",
+              background: "var(--ls-surface)",
+              border: "1px solid var(--ls-border)",
+              borderRadius: 10,
+              fontFamily: "var(--ls-font-mono, monospace)",
+              fontSize: 13,
+              color: "var(--ls-text)",
+              wordBreak: "break-all",
+              marginBottom: 10,
+            }}>
+              {shareUrl}
+            </div>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              <button
+                type="button"
+                onClick={copyShareLink}
+                style={{
+                  padding: "9px 14px",
+                  background: "var(--ls-gold)",
+                  color: "var(--ls-charcoal)",
+                  border: "none",
+                  borderRadius: 10,
+                  fontWeight: 600,
+                  fontSize: 13,
+                  cursor: "pointer",
+                }}
+              >
+                📋 Copier le lien
+              </button>
+              <button
+                type="button"
+                onClick={shareWhatsApp}
+                style={{
+                  padding: "9px 14px",
+                  background: "#25D366",
+                  color: "white",
+                  border: "none",
+                  borderRadius: 10,
+                  fontWeight: 600,
+                  fontSize: 13,
+                  cursor: "pointer",
+                }}
+              >
+                💬 Partager sur WhatsApp
+              </button>
+            </div>
+            <p style={{ fontSize: 11, color: "var(--ls-text-muted)", marginTop: 10, lineHeight: 1.5 }}>
+              💡 Partage le sur ton groupe WhatsApp client, dans ta bio Insta, en story, ou en DM aux clients que tu veux relancer. Tu reçois une notif à chaque retour.
+            </p>
+          </>
+        ) : (
+          <p style={{ fontSize: 13, color: "var(--ls-coral)" }}>
+            Renseigne ton prénom dans Paramètres &gt; Profil pour générer ton lien.
+          </p>
+        )}
+      </div>
+
+      {/* ─── Filtres + liste ──────────────────────────────────────────────── */}
       <div style={{ display: "flex", gap: 6, marginBottom: 18, flexWrap: "wrap" }}>
         <PillButton active={filter === "pending"} onClick={() => setFilter("pending")}>
           🕒 En attente ({counts.pending})
@@ -198,7 +344,7 @@ export function AdminTestimonialsPage() {
           borderRadius: 12,
           border: "1px dashed var(--ls-border)",
         }}>
-          Aucun témoignage dans cette catégorie.
+          Aucun témoignage dans cette catégorie. Partage ton lien pour amorcer.
         </div>
       )}
 
@@ -252,7 +398,9 @@ function TestimonialCard({
   const date = new Date(row.created_at).toLocaleDateString("fr-FR", {
     day: "2-digit", month: "short", year: "numeric",
   });
-  const fullName = `${row.client_first_name ?? "?"} ${row.client_last_name ? row.client_last_name.charAt(0).toUpperCase() + "." : ""}`;
+  const fn = row.display_first_name ?? "?";
+  const lastInit = row.display_last_name ? row.display_last_name.charAt(0).toUpperCase() + "." : "";
+  const fullName = `${fn} ${lastInit}`.trim();
   const statusBadge = STATUS_BADGES[row.status];
 
   return (
@@ -268,10 +416,10 @@ function TestimonialCard({
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, flexWrap: "wrap" }}>
         <div>
           <div style={{ fontFamily: "'Syne', serif", fontSize: 16, fontWeight: 700, color: "var(--ls-text)" }}>
-            {fullName.trim()}{row.client_city ? `, ${row.client_city}` : ""}
+            {fullName}{row.display_city ? `, ${row.display_city}` : ""}
           </div>
           <div style={{ fontSize: 11, color: "var(--ls-text-muted)", marginTop: 2 }}>
-            {date} · langue {row.language.toUpperCase()}
+            {date} · {row.source_label} · {row.language.toUpperCase()}
           </div>
         </div>
         <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
@@ -302,7 +450,7 @@ function TestimonialCard({
         borderRadius: 10,
         border: "1px solid var(--ls-border)",
       }}>
-        {row.content}
+        {row.display_content ?? row.content}
       </div>
 
       {row.rejected_reason && (

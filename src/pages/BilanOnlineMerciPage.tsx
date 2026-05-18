@@ -157,7 +157,7 @@ function SocialBtn({ href, icon, label }: { href: string; icon: string; label: s
       style={{
         display: "flex", alignItems: "center", gap: 14,
         padding: "14px 20px",
-        background: "rgba(255,255,255,0.04)",
+        background: "var(--glass)",
         border: "1px solid var(--hair)",
         borderRadius: 14,
         backdropFilter: "blur(20px)",

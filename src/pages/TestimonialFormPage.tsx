@@ -1,7 +1,11 @@
 // =============================================================================
-// TestimonialFormPage V2 dark — Chantier #11 Sprint 1 (2026-05-18)
-// Source de verite : docs/mockups/temoignage-client-v2.html
-// Route : /temoignage/:token
+// TestimonialFormPage V2 dark — Chantier #11 V1.1 (2026-05-18)
+// =============================================================================
+// 2 modes :
+// - Route /temoignage/:token       → mode "client" (V1 legacy, lookup client_app_accounts)
+// - Route /temoignage/coach/:slug  → mode "coach" (V1.1 generique, le visiteur saisit prenom+ville)
+//
+// Source de verite visuelle : docs/mockups/temoignage-client-v2.html
 // =============================================================================
 
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
@@ -18,6 +22,7 @@ import {
 } from "../components/public/PublicShell";
 
 interface TestimonialContext {
+  mode: "token" | "coach";
   firstName: string | null;
   city: string | null;
   coachFirstName: string | null;
@@ -48,8 +53,13 @@ const PROMPTS: Array<{ emoji: string; title: string; sub: string; insert: string
 ];
 
 export function TestimonialFormPage() {
-  const { token } = useParams<{ token: string }>();
-  const tokenSafe = (token ?? "").trim();
+  // 2 patterns d'URL :
+  // - /temoignage/:token
+  // - /temoignage/coach/:slug
+  const params = useParams<{ token?: string; slug?: string }>();
+  const isCoachMode = !!params.slug;
+  const tokenSafe = (params.token ?? "").trim();
+  const slugSafe = (params.slug ?? "").trim();
 
   const [loadStatus, setLoadStatus] = useState<LoadStatus>("loading");
   const [ctx, setCtx] = useState<TestimonialContext | null>(null);
@@ -67,11 +77,18 @@ export function TestimonialFormPage() {
   const [submitted, setSubmitted] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
-  // ─── Fetch context (firstName + city + coachFirstName + alreadySubmitted) ────
+  // ─── Fetch context ────────────────────────────────────────────────────────
   useEffect(() => {
-    if (!tokenSafe || !/^[0-9a-f-]{36}$/i.test(tokenSafe)) {
-      setLoadStatus("invalid");
-      return;
+    if (isCoachMode) {
+      if (!slugSafe) {
+        setLoadStatus("invalid");
+        return;
+      }
+    } else {
+      if (!tokenSafe || !/^[0-9a-f-]{36}$/i.test(tokenSafe)) {
+        setLoadStatus("invalid");
+        return;
+      }
     }
     let cancelled = false;
     (async () => {
@@ -81,32 +98,33 @@ export function TestimonialFormPage() {
           if (!cancelled) setLoadStatus("error");
           return;
         }
-        const { data, error } = await sb.functions.invoke("get-testimonial-context", {
-          method: "GET",
-          body: undefined,
-          headers: undefined,
-          // Supabase invoke ne supporte pas query params direct → fallback fetch
-        } as never);
-        // Fallback : fetch direct si invoke GET échoue
-        let payload = data as
-          | { success: boolean; firstName?: string; city?: string; coachFirstName?: string; alreadySubmitted?: boolean; error?: string }
-          | null;
-        if (error || !payload) {
-          const url = `${(sb as unknown as { supabaseUrl: string }).supabaseUrl}/functions/v1/get-testimonial-context?token=${encodeURIComponent(tokenSafe)}`;
-          const resp = await fetch(url, {
-            headers: {
-              apikey: (sb as unknown as { supabaseKey: string }).supabaseKey,
-              Authorization: `Bearer ${(sb as unknown as { supabaseKey: string }).supabaseKey}`,
-            },
-          });
-          payload = (await resp.json()) as typeof payload;
-        }
+        const qs = isCoachMode
+          ? `coach_slug=${encodeURIComponent(slugSafe)}`
+          : `token=${encodeURIComponent(tokenSafe)}`;
+        const url = `${(sb as unknown as { supabaseUrl: string }).supabaseUrl}/functions/v1/get-testimonial-context?${qs}`;
+        const apiKey = (sb as unknown as { supabaseKey: string }).supabaseKey;
+        const resp = await fetch(url, {
+          headers: {
+            apikey: apiKey,
+            Authorization: `Bearer ${apiKey}`,
+          },
+        });
+        const payload = (await resp.json()) as {
+          success: boolean;
+          mode?: "token" | "coach";
+          firstName?: string;
+          city?: string;
+          coachFirstName?: string;
+          alreadySubmitted?: boolean;
+          error?: string;
+        };
         if (cancelled) return;
-        if (!payload?.success) {
+        if (!payload.success) {
           setLoadStatus("invalid");
           return;
         }
         const next: TestimonialContext = {
+          mode: payload.mode ?? (isCoachMode ? "coach" : "token"),
           firstName: payload.firstName ?? null,
           city: payload.city ?? null,
           coachFirstName: payload.coachFirstName ?? null,
@@ -127,7 +145,7 @@ export function TestimonialFormPage() {
     return () => {
       cancelled = true;
     };
-  }, [tokenSafe]);
+  }, [isCoachMode, tokenSafe, slugSafe]);
 
   useEffect(() => {
     const prev = document.title;
@@ -165,15 +183,18 @@ export function TestimonialFormPage() {
     try {
       const sb = await getSupabaseClient();
       if (!sb) throw new Error("Service indisponible.");
-      const { data, error } = await sb.functions.invoke("submit-testimonial", {
-        body: {
-          client_token: tokenSafe,
-          content: content.trim(),
-          rating,
-          photo_consent: photoConsent,
-          language: "fr",
-        },
-      });
+      const baseBody = {
+        content: content.trim(),
+        rating,
+        photo_consent: photoConsent,
+        language: "fr",
+        first_name: firstName.trim(),
+        city: city.trim(),
+      };
+      const body = isCoachMode
+        ? { ...baseBody, coach_slug: slugSafe }
+        : { ...baseBody, client_token: tokenSafe };
+      const { data, error } = await sb.functions.invoke("submit-testimonial", { body });
       if (error || !data?.success) {
         const raw = await extractFunctionError(data, error, "Erreur inconnue.");
         throw new Error(
@@ -208,7 +229,7 @@ export function TestimonialFormPage() {
         <ResultPanel
           emoji="⚠️"
           title="Lien introuvable"
-          message="Ce lien de témoignage n'existe pas ou a expiré. Si tu as récemment passé un bilan, demande à ton coach de te renvoyer le lien."
+          message="Ce lien de témoignage n'existe pas ou a expiré. Demande au coach de te renvoyer le lien correct."
         />
       </PublicShell>
     );
@@ -223,7 +244,7 @@ export function TestimonialFormPage() {
   }
 
   // ─── FORM VIEW ─────────────────────────────────────────────────────────────
-  const coachLabel = ctx?.coachFirstName ? ctx.coachFirstName : "Thomas";
+  const coachLabel = ctx?.coachFirstName ? ctx.coachFirstName : "ton coach";
 
   return (
     <PublicShell defaultTheme="dark">
@@ -286,15 +307,15 @@ export function TestimonialFormPage() {
             textTransform: "uppercase",
           }}
         >
-          <span>· Anonyme possible</span>
           <span>· 30 secondes</span>
           <span>· RGPD friendly</span>
+          {ctx?.coachFirstName && <span>· pour {ctx.coachFirstName}</span>}
         </div>
 
         {/* Guide bienveillant */}
         <div
           style={{
-            background: "rgba(255,255,255,0.04)",
+            background: "var(--glass)",
             backdropFilter: "blur(20px)",
             WebkitBackdropFilter: "blur(20px)",
             border: "1px solid var(--hair)",
@@ -325,7 +346,7 @@ export function TestimonialFormPage() {
                 type="button"
                 onClick={() => insertPrompt(p.insert)}
                 style={{
-                  background: "rgba(255,255,255,0.03)",
+                  background: "var(--glass)",
                   border: "1px solid var(--hair)",
                   borderRadius: 12,
                   padding: "12px 14px",
@@ -340,11 +361,11 @@ export function TestimonialFormPage() {
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.borderColor = PUBLIC_TOKENS.teal;
-                  e.currentTarget.style.background = "rgba(45,212,191,0.06)";
+                  e.currentTarget.style.background = "var(--glass-input-focus)";
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.borderColor = "var(--hair)";
-                  e.currentTarget.style.background = "rgba(255,255,255,0.03)";
+                  e.currentTarget.style.background = "var(--glass)";
                 }}
               >
                 <span aria-hidden="true" style={{ fontSize: 20, lineHeight: 1.2 }}>
@@ -366,7 +387,7 @@ export function TestimonialFormPage() {
         {/* Form card */}
         <div
           style={{
-            background: "rgba(255,255,255,0.04)",
+            background: "var(--glass)",
             backdropFilter: "blur(20px)",
             WebkitBackdropFilter: "blur(20px)",
             border: "1px solid var(--hair)",
@@ -483,7 +504,7 @@ export function TestimonialFormPage() {
               alignItems: "flex-start",
               gap: 12,
               padding: 14,
-              background: consentRgpd ? "rgba(45,212,191,0.06)" : "rgba(255,255,255,0.03)",
+              background: consentRgpd ? "var(--glass-input-focus)" : "var(--glass)",
               border: `1px solid ${consentRgpd ? PUBLIC_TOKENS.teal : "var(--hair)"}`,
               borderRadius: 12,
               cursor: "pointer",
@@ -512,7 +533,7 @@ export function TestimonialFormPage() {
               alignItems: "flex-start",
               gap: 12,
               padding: 14,
-              background: "rgba(255,255,255,0.03)",
+              background: "var(--glass)",
               border: "1px solid var(--hair)",
               borderRadius: 12,
               cursor: "pointer",
@@ -588,7 +609,7 @@ const fieldLabelStyle: React.CSSProperties = {
 const inputStyle: React.CSSProperties = {
   width: "100%",
   padding: "13px 15px",
-  background: "rgba(255,255,255,0.05)",
+  background: "var(--glass-input)",
   border: "1px solid var(--hair-strong)",
   borderRadius: 12,
   fontFamily: PUBLIC_FONTS.body,
@@ -646,7 +667,7 @@ function SuccessView({ firstName, coachFirstName }: { firstName: string; coachFi
           lineHeight: 1.55,
         }}
       >
-        Ton retour a bien été envoyé. {coachFirstName ?? "Thomas"} va le valider sous 24 h, et il
+        Ton retour a bien été envoyé. {coachFirstName ?? "Le coach"} va le valider sous 24 h, et il
         s'affichera bientôt sur le site pour aider les prochains à se lancer.
       </p>
       <a
@@ -658,7 +679,7 @@ function SuccessView({ firstName, coachFirstName }: { firstName: string; coachFi
           alignItems: "center",
           gap: 10,
           padding: "12px 22px",
-          background: "rgba(255,255,255,0.04)",
+          background: "var(--glass)",
           border: "1px solid var(--hair)",
           borderRadius: 999,
           fontSize: 14,

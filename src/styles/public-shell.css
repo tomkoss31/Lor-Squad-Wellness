@@ -38,6 +38,17 @@
   --grad-cta-hover: linear-gradient(135deg, #34D399 0%, #A78BFA 100%);
   --grad-progress: linear-gradient(90deg, #2DD4BF 0%, #A78BFA 100%);
 
+  /* ─── Glass surfaces abstraites (s'inversent en light) ───────────────── */
+  --glass: rgba(255, 255, 255, 0.04);
+  --glass-strong: rgba(255, 255, 255, 0.08);
+  --glass-input: rgba(255, 255, 255, 0.05);
+  --glass-input-focus: rgba(45, 212, 191, 0.06);
+  --surface-overlay: rgba(11, 13, 17, 0.70);
+  --surface-overlay-strong: rgba(11, 13, 17, 0.85);
+  --accent-teal-bg: rgba(45, 212, 191, 0.12);
+  --accent-violet-bg: rgba(167, 139, 250, 0.12);
+  --shadow-card: 0 4px 24px rgba(0, 0, 0, 0.20);
+
   font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
   background: var(--ink);
   color: var(--cream);
@@ -58,6 +69,17 @@
   --cream-hint: rgba(11, 13, 17, 0.38);
   --hair: rgba(11, 13, 17, 0.10);
   --hair-strong: rgba(11, 13, 17, 0.18);
+
+  /* Glass surfaces inversees pour mode light */
+  --glass: rgba(255, 255, 255, 0.70);
+  --glass-strong: rgba(255, 255, 255, 0.85);
+  --glass-input: rgba(255, 255, 255, 0.90);
+  --glass-input-focus: rgba(255, 255, 255, 1);
+  --surface-overlay: rgba(251, 247, 240, 0.92);
+  --surface-overlay-strong: rgba(251, 247, 240, 0.96);
+  --accent-teal-bg: rgba(45, 212, 191, 0.10);
+  --accent-violet-bg: rgba(124, 58, 237, 0.08);
+  --shadow-card: 0 8px 24px rgba(11, 13, 17, 0.06);
 }
 .public-shell[data-public-theme="light"] .ps-card,
 .public-shell[data-public-theme="light"] .ps-pitch-card,

@@ -222,7 +222,7 @@ export function BilanOnlinePage() {
       {/* Header sticky : progress + meta — glassmorphism dark */}
       <div style={{
         padding: "16px 22px",
-        background: "rgba(11,13,17,0.70)",
+        background: "var(--surface-overlay)",
         backdropFilter: "blur(20px)",
         WebkitBackdropFilter: "blur(20px)",
         borderBottom: "1px solid var(--hair)",
@@ -303,7 +303,7 @@ export function BilanOnlinePage() {
         transform: "translateX(-50%)",
         width: "100%", maxWidth: 560,
         padding: "12px 22px 16px",
-        background: "rgba(11,13,17,0.85)",
+        background: "var(--surface-overlay-strong)",
         backdropFilter: "blur(20px)",
         WebkitBackdropFilter: "blur(20px)",
         borderTop: "1px solid var(--hair)",
@@ -404,12 +404,12 @@ function PsInput(p: {
       style={inputStyle}
       onFocus={(e) => {
         e.currentTarget.style.borderColor = PUBLIC_TOKENS.teal;
-        e.currentTarget.style.background = "rgba(45,212,191,0.06)";
+        e.currentTarget.style.background = "var(--glass-input-focus)";
         e.currentTarget.style.boxShadow = "0 0 0 4px rgba(45,212,191,0.12)";
       }}
       onBlur={(e) => {
         e.currentTarget.style.borderColor = "var(--hair-strong)";
-        e.currentTarget.style.background = "rgba(255,255,255,0.05)";
+        e.currentTarget.style.background = "var(--glass-input)";
         e.currentTarget.style.boxShadow = "none";
       }}
     />
@@ -418,7 +418,7 @@ function PsInput(p: {
 
 const inputStyle: CSSProperties = {
   width: "100%", padding: "14px 16px",
-  background: "rgba(255,255,255,0.05)",
+  background: "var(--glass-input)",
   border: "1px solid var(--hair-strong)",
   borderRadius: 14,
   fontFamily: PUBLIC_FONTS.body, fontSize: 16,
@@ -439,7 +439,7 @@ function ChoiceCard({
       onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") onClick(); }}
       className={`ps-choice-card${selected ? " is-selected" : ""}`}
       style={{
-        background: selected ? "rgba(45,212,191,0.12)" : "rgba(255,255,255,0.04)",
+        background: selected ? "var(--accent-teal-bg)" : "var(--glass)",
         border: `1.5px solid ${selected ? PUBLIC_TOKENS.teal : "var(--hair)"}`,
         borderRadius: 14, padding: "16px 14px",
         cursor: "pointer", textAlign: "center",
@@ -473,7 +473,7 @@ function RadioCard({
       onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") onClick(); }}
       className={`ps-radio-card${selected ? " is-selected" : ""}`}
       style={{
-        background: selected ? "rgba(167,139,250,0.12)" : "rgba(255,255,255,0.04)",
+        background: selected ? "var(--accent-violet-bg)" : "var(--glass)",
         border: `1.5px solid ${selected ? PUBLIC_TOKENS.violet : "var(--hair)"}`,
         borderRadius: 14, padding: "14px 16px",
         cursor: "pointer",
@@ -505,7 +505,7 @@ function SliderWrap({
   const scaleEnd = `${max}${max >= 7 ? "+" : ""}`;
   return (
     <div style={{
-      background: "rgba(255,255,255,0.03)",
+      background: "var(--glass)",
       border: "1px solid var(--hair)",
       borderRadius: 14,
       padding: 18, marginTop: 6,
@@ -570,7 +570,7 @@ function SubField({ visible, children }: { visible: boolean; children: ReactNode
   return (
     <div className="ps-fade-in" style={{
       marginTop: 12, padding: 14,
-      background: "rgba(45,212,191,0.06)",
+      background: "var(--glass-input-focus)",
       borderRadius: 12,
       borderLeft: `3px solid ${PUBLIC_TOKENS.teal}`,
     }}>
@@ -829,7 +829,7 @@ function StepBudget({ form, update }: StepProps) {
       <label style={{
         display: "flex", alignItems: "flex-start", gap: 12,
         marginTop: 20, padding: 14,
-        background: "rgba(255,255,255,0.04)",
+        background: "var(--glass)",
         border: "1px solid var(--hair)",
         borderRadius: 12,
         fontSize: 13, color: "var(--cream-muted)",

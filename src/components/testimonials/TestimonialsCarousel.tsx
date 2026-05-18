@@ -159,7 +159,7 @@ function WelcomeCarousel({
     <div
       aria-live="polite"
       style={{
-        background: "rgba(255,255,255,0.04)",
+        background: "var(--glass)",
         backdropFilter: "blur(20px)",
         WebkitBackdropFilter: "blur(20px)",
         border: "1px solid var(--hair)",
@@ -233,7 +233,7 @@ function BusinessGrid({ items }: { items: TestimonialPublic[] }) {
     }}>
       {items.map((t) => (
         <div key={t.id} style={{
-          background: "rgba(255,255,255,0.04)",
+          background: "var(--glass)",
           border: "1px solid var(--hair)",
           backdropFilter: "blur(12px)",
           WebkitBackdropFilter: "blur(12px)",
@@ -272,7 +272,7 @@ function NewsletterStrip({ items }: { items: TestimonialPublic[] }) {
     }}>
       {items.map((t) => (
         <div key={t.id} style={{
-          background: "rgba(255,255,255,0.04)",
+          background: "var(--glass)",
           border: "1px solid var(--hair)",
           borderRadius: 12, padding: 14,
         }}>
