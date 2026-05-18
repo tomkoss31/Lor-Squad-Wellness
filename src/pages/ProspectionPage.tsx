@@ -372,8 +372,8 @@ function PageShell({ children }: { children: ReactNode }) {
   return (
     <div style={{
       minHeight: "100dvh",
-      background: "var(--ls-cream, #FBF7F0)",
-      color: "var(--ls-text, #1F2937)",
+      background: "var(--ls-bg)",
+      color: "var(--ls-text)",
       fontFamily: "'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif",
       fontSize: 15,
       lineHeight: 1.5,
