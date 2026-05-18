@@ -33,19 +33,31 @@ function json(payload: unknown, status = 200): Response {
   });
 }
 
-const RATE_BUCKET = new Map<string, number[]>();
-const RATE_WINDOW_MS = 60 * 60 * 1000; // 1h pour mode token, plus restrictif mode generique
+// Rate limit persisté en DB depuis le quality fix D (2026-05-18). On délègue
+// à la RPC `check_testimonial_rate` qui résiste aux redeploy de l'edge fn.
+const RATE_WINDOW_SECONDS = 60 * 60; // 1h
 const RATE_MAX_TOKEN = 3;
-const RATE_MAX_SLUG = 2; // 2 par heure par IP en mode generique
-function checkRateLimit(ip: string, max: number): { ok: true } | { ok: false; retry_after: number } {
-  const now = Date.now();
-  const history = (RATE_BUCKET.get(ip) ?? []).filter((t) => now - t < RATE_WINDOW_MS);
-  if (history.length >= max) {
-    return { ok: false, retry_after: Math.ceil((history[0] + RATE_WINDOW_MS - now) / 1000) };
-  }
-  history.push(now);
-  RATE_BUCKET.set(ip, history);
-  return { ok: true };
+const RATE_MAX_SLUG = 2;
+
+async function checkRateLimit(
+  sb: ReturnType<typeof createClient>,
+  ip: string,
+  mode: "token" | "slug",
+  max: number,
+): Promise<{ ok: true } | { ok: false; retry_after: number }> {
+  const { data, error } = await sb.rpc("check_testimonial_rate", {
+    p_ip: ip,
+    p_mode: mode,
+    p_max: max,
+    p_window_seconds: RATE_WINDOW_SECONDS,
+  });
+  // Fail-open si la RPC plante : on laisse passer pour ne jamais bloquer une
+  // soumission légitime. La sécurité reste assurée par anti-doublon + auth.
+  if (error || !data) return { ok: true };
+  const row = Array.isArray(data) ? data[0] : data;
+  if (!row) return { ok: true };
+  if (row.allowed) return { ok: true };
+  return { ok: false, retry_after: Number(row.retry_after_seconds ?? 60) };
 }
 
 function normalizeSlug(input: string): string {
@@ -106,7 +118,7 @@ serve(async (req) => {
     if (!/^[0-9a-f-]{36}$/i.test(clientToken)) {
       return json({ success: false, error: "Token client invalide." }, 400);
     }
-    const rl = checkRateLimit(ip, RATE_MAX_TOKEN);
+    const rl = await checkRateLimit(sb, ip, "token", RATE_MAX_TOKEN);
     if (!rl.ok) {
       return json({ success: false, error: "rate_limited", retry_after_seconds: rl.retry_after }, 429);
     }
@@ -170,7 +182,7 @@ serve(async (req) => {
   if (city.length < 2) {
     return json({ success: false, error: "Indique au moins ta ville." }, 400);
   }
-  const rl = checkRateLimit(ip, RATE_MAX_SLUG);
+  const rl = await checkRateLimit(sb, ip, "slug", RATE_MAX_SLUG);
   if (!rl.ok) {
     return json({ success: false, error: "rate_limited", retry_after_seconds: rl.retry_after }, 429);
   }
@@ -209,7 +221,7 @@ serve(async (req) => {
     .from("client_testimonials")
     .insert({
       client_id: null,
-      client_token: "00000000-0000-0000-0000-000000000000", // sentinel pour col NOT NULL legacy
+      client_token: null, // depuis quality fix A (2026-05-18) la col est nullable
       coach_user_id: coachUserId,
       coach_slug: coachSlug,
       content: contentWithMeta,
