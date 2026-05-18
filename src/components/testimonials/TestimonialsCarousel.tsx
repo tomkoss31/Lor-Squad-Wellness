@@ -11,6 +11,9 @@
 import { useEffect, useRef, useState } from "react";
 import { getSupabaseClient } from "../../services/supabaseClient";
 import { PUBLIC_TOKENS, PUBLIC_FONTS, publicGradText } from "../../styles/public-tokens";
+// Import du CSS pour que .public-shell-scope wrappers heritent des vars
+// (var(--glass), var(--hair), etc.) meme sans PublicShell parent.
+import "../../styles/public-shell.css";
 
 export interface TestimonialPublic {
   id: string;
@@ -42,6 +45,20 @@ function formatAuthor(t: TestimonialPublic): string {
   return city ? `${author}, ${city}` : author;
 }
 
+// V1.1 lien generique coach : les soumissions ont client_id=null et stockent
+// "[FROM:firstName|city] " en debut de content. On parse pour reconstituer
+// l'auteur et nettoyer la citation affichee.
+const FROM_TAG_RE = /^\[FROM:([^|\]]+)(?:\|([^\]]+))?\]\s*/;
+function parseFromTag(content: string): { firstName: string | null; city: string | null; clean: string } {
+  const m = content.match(FROM_TAG_RE);
+  if (!m) return { firstName: null, city: null, clean: content };
+  return {
+    firstName: m[1]?.trim() || null,
+    city: m[2]?.trim() || null,
+    clean: content.slice(m[0].length),
+  };
+}
+
 export function TestimonialsCarousel({
   variant = "welcome",
   language = "fr",
@@ -66,9 +83,12 @@ export function TestimonialsCarousel({
           }
           return;
         }
+        // Left join sur clients : V1.1 lien generique coach a client_id=null
+        // (auteur recupere depuis tag [FROM:...] dans le content).
+        const SELECT = "id, content, rating, language, created_at, photo_url, photo_consent, clients(first_name, last_name, city)";
         let query = sb
           .from("client_testimonials")
-          .select("id, content, rating, language, created_at, photo_url, photo_consent, clients!inner(first_name, last_name, city)")
+          .select(SELECT)
           .eq("status", "approved")
           .eq("language", language)
           .order("created_at", { ascending: false })
@@ -83,7 +103,7 @@ export function TestimonialsCarousel({
           if (language !== "fr") {
             const { data: fallback } = await sb
               .from("client_testimonials")
-              .select("id, content, rating, language, created_at, photo_url, photo_consent, clients!inner(first_name, last_name, city)")
+              .select(SELECT)
               .eq("status", "approved")
               .eq("language", "fr")
               .order("created_at", { ascending: false })
@@ -138,12 +158,18 @@ export function TestimonialsCarousel({
 }
 
 function mapRows(data: unknown): TestimonialPublic[] {
-  return (data as Array<TestimonialPublic & { clients: { first_name: string | null; last_name: string | null; city: string | null } }>).map((r) => ({
-    ...r,
-    client_first_name: r.clients?.first_name ?? null,
-    client_last_name: r.clients?.last_name ?? null,
-    client_city: r.clients?.city ?? null,
-  }));
+  return (data as Array<TestimonialPublic & { clients: { first_name: string | null; last_name: string | null; city: string | null } | null }>).map((r) => {
+    // Si pas de client lie (V1.1 lien coach generique), parser le tag [FROM:...]
+    // pour recuperer prenom + ville et nettoyer le content.
+    const tag = r.clients ? null : parseFromTag(r.content);
+    return {
+      ...r,
+      content: tag ? tag.clean : r.content,
+      client_first_name: r.clients?.first_name ?? tag?.firstName ?? null,
+      client_last_name: r.clients?.last_name ?? null,
+      client_city: r.clients?.city ?? tag?.city ?? null,
+    };
+  });
 }
 
 // ─── Welcome variant ──────────────────────────────────────────────────────────
