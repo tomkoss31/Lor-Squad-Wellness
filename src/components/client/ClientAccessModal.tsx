@@ -73,6 +73,12 @@ interface Props {
   clientFirstName: string;
   clientLastName: string;
   clientPhone?: string | null;
+  /** Email actuel sur la fiche (Thomas 2026-05-18 : si vide, popup
+   *  demande l'email avant génération du lien). */
+  clientEmail?: string | null;
+  /** Callback optionnel : notifie le parent quand l'email est mis à jour
+   *  (pour rafraîchir la fiche client localement). */
+  onClientEmailSaved?: (email: string) => void;
   /** QR visible par défaut ? (true pour fin de bilan en présentiel) */
   qrDefault?: boolean;
 }
@@ -84,6 +90,8 @@ export function ClientAccessModal({
   clientFirstName,
   clientLastName,
   clientPhone,
+  clientEmail,
+  onClientEmailSaved,
   qrDefault = false,
 }: Props) {
   const { currentUser } = useAppContext();
@@ -94,6 +102,21 @@ export function ClientAccessModal({
   const [copied, setCopied] = useState(false);
   const [confirmReplace, setConfirmReplace] = useState(false);
   const [showQr, setShowQr] = useState(qrDefault);
+
+  // Quality fix Thomas (2026-05-18) : on bloque la génération du lien si
+  // le client n'a NI email NI téléphone. Mini-form inline qui demande
+  // l'email (ou le téléphone) avant de continuer le flow.
+  const [emailInput, setEmailInput] = useState<string>("");
+  const [phoneInput, setPhoneInput] = useState<string>("");
+  const [savingContact, setSavingContact] = useState(false);
+  const [contactError, setContactError] = useState<string | null>(null);
+  // Email "effectif" (prop initiale + override local après save)
+  const [effectiveEmail, setEffectiveEmail] = useState<string | null>(clientEmail ?? null);
+  const [effectivePhone, setEffectivePhone] = useState<string | null>(clientPhone ?? null);
+  const hasContact = Boolean(
+    (effectiveEmail && effectiveEmail.trim().length > 0) ||
+    (effectivePhone && effectivePhone.trim().length > 0)
+  );
 
   const refresh = useCallback(async () => {
     setState({ kind: "loading" });
@@ -136,8 +159,49 @@ export function ClientAccessModal({
     setCopied(false);
     setConfirmReplace(false);
     setShowQr(qrDefault);
+    setEffectiveEmail(clientEmail ?? null);
+    setEffectivePhone(clientPhone ?? null);
+    setEmailInput("");
+    setPhoneInput("");
+    setContactError(null);
     void refresh();
-  }, [open, qrDefault, refresh]);
+  }, [open, qrDefault, refresh, clientEmail, clientPhone]);
+
+  // Sauvegarde email/phone manquant sur la fiche client, puis débloque le flow.
+  async function saveMissingContact() {
+    const email = emailInput.trim();
+    const phone = phoneInput.trim();
+    if (!email && !phone) {
+      setContactError("Renseigne au moins un email OU un téléphone.");
+      return;
+    }
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setContactError("Email invalide.");
+      return;
+    }
+    setSavingContact(true);
+    setContactError(null);
+    try {
+      const sb = await getSupabaseClient();
+      if (!sb) throw new Error("Supabase indisponible.");
+      const patch: Record<string, string> = {};
+      if (email) patch.email = email;
+      if (phone) patch.phone = phone;
+      const { error } = await sb.from("clients").update(patch).eq("id", clientId);
+      if (error) throw error;
+      if (email) {
+        setEffectiveEmail(email);
+        onClientEmailSaved?.(email);
+      }
+      if (phone) setEffectivePhone(phone);
+      pushToast({ tone: "success", title: "Coordonnées enregistrées" });
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Erreur inconnue.";
+      setContactError(msg);
+    } finally {
+      setSavingContact(false);
+    }
+  }
 
   useEffect(() => {
     if (!open) return;
@@ -274,6 +338,96 @@ export function ClientAccessModal({
           Un lien unique, valable 7 jours.
         </div>
 
+        {/* ─── Gate contact obligatoire (Thomas 2026-05-18) ──────────────── */}
+        {!hasContact && (
+          <div
+            style={{
+              background: "color-mix(in srgb, var(--ls-coral) 10%, transparent)",
+              border: "1px solid color-mix(in srgb, var(--ls-coral) 35%, transparent)",
+              borderRadius: 12,
+              padding: 14,
+              marginBottom: 14,
+            }}
+          >
+            <div style={{ fontSize: 13, fontWeight: 700, color: "var(--ls-text)", marginBottom: 6 }}>
+              📧 Coordonnées manquantes
+            </div>
+            <div style={{ fontSize: 12, color: "var(--ls-text-muted)", marginBottom: 12, lineHeight: 1.5 }}>
+              Renseigne au moins un email OU un téléphone pour générer le lien d'accès. Les infos s'enregistrent direct sur la fiche.
+            </div>
+            <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: "var(--ls-text-muted)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 4 }}>
+              Email
+            </label>
+            <input
+              type="email"
+              value={emailInput}
+              onChange={(e) => setEmailInput(e.target.value)}
+              placeholder="prenom.nom@email.fr"
+              autoFocus
+              style={{
+                width: "100%",
+                padding: "10px 12px",
+                background: "var(--ls-surface)",
+                border: "1px solid var(--ls-border)",
+                borderRadius: 10,
+                color: "var(--ls-text)",
+                fontSize: 14,
+                marginBottom: 10,
+                boxSizing: "border-box",
+              }}
+            />
+            <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: "var(--ls-text-muted)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 4 }}>
+              ou Téléphone
+            </label>
+            <input
+              type="tel"
+              value={phoneInput}
+              onChange={(e) => setPhoneInput(e.target.value)}
+              placeholder="06 12 34 56 78"
+              style={{
+                width: "100%",
+                padding: "10px 12px",
+                background: "var(--ls-surface)",
+                border: "1px solid var(--ls-border)",
+                borderRadius: 10,
+                color: "var(--ls-text)",
+                fontSize: 14,
+                marginBottom: 10,
+                boxSizing: "border-box",
+              }}
+            />
+            {contactError && (
+              <div style={{ fontSize: 12, color: "var(--ls-coral)", marginBottom: 10 }}>
+                {contactError}
+              </div>
+            )}
+            <button
+              type="button"
+              onClick={saveMissingContact}
+              disabled={savingContact}
+              style={{
+                width: "100%",
+                padding: "11px 16px",
+                background: "var(--ls-gold)",
+                color: "var(--ls-charcoal)",
+                border: "none",
+                borderRadius: 10,
+                fontWeight: 700,
+                fontSize: 13,
+                cursor: savingContact ? "not-allowed" : "pointer",
+                opacity: savingContact ? 0.6 : 1,
+              }}
+            >
+              {savingContact ? "Enregistrement…" : "Enregistrer et continuer"}
+            </button>
+          </div>
+        )}
+
+        {/* Tout le flow de génération/QR/partage est gaté derrière la
+            présence d'un contact (email OU téléphone) — règle Thomas
+            2026-05-18. */}
+        {hasContact && (
+        <>
         {/* ─── Loader ─────────────────────────────────────────────────── */}
         {state.kind === "loading" ? (
           <div style={{ padding: 30, textAlign: "center", color: "var(--ls-text-muted)", fontSize: 13 }}>
@@ -542,6 +696,8 @@ export function ClientAccessModal({
             </button>
           )
         ) : null}
+        </>
+        )}
 
         <div style={{ marginTop: 16, textAlign: "right" }}>
           <button
