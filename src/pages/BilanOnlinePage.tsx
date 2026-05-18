@@ -1,6 +1,7 @@
 // =============================================================================
-// BilanOnlinePage — Formulaire bilan online 5 étapes, mockup Égypte validé.
-// docs/mockups/bilan-online.html (commit 25c0165), view "form".
+// BilanOnlinePage V2 dark (chantier A, 2026-05-18) — formulaire bilan online
+// 5 étapes refondu sur tokens publics + dark premium.
+// Source de verite : docs/mockups/bilan-online-v2.html view-form.
 // Route : /bilan-online/:coachSlug?/formulaire
 // =============================================================================
 
@@ -8,7 +9,13 @@ import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from
 import { useNavigate, useParams } from "react-router-dom";
 import { getSupabaseClient } from "../services/supabaseClient";
 import { extractFunctionError } from "../lib/utils/extractFunctionError";
-import { BO, BilanOnlineShell, BoCtaPrimary } from "../components/bilan-online/BilanOnlineShell";
+import {
+  PublicShell,
+  PublicCtaPrimary,
+  PUBLIC_TOKENS,
+  PUBLIC_FONTS,
+  publicGradText,
+} from "../components/public/PublicShell";
 
 type ObjectiveKey = "weight_loss" | "mass_gain" | "energy" | "sleep" | "wellbeing";
 type PreviousAttempt = "diet" | "coach" | "sport" | "supplements" | "nothing";
@@ -211,17 +218,22 @@ export function BilanOnlinePage() {
   const isLast = step === TOTAL_STEPS;
 
   return (
-    <BilanOnlineShell>
-      {/* Header sticky : progress + meta */}
+    <PublicShell defaultTheme="dark">
+      {/* Header sticky : progress + meta — glassmorphism dark */}
       <div style={{
-        padding: "16px 20px",
-        background: BO.surface,
-        borderBottom: `1px solid ${BO.border}`,
-        position: "sticky", top: 0, zIndex: 10,
+        padding: "16px 22px",
+        background: "rgba(11,13,17,0.70)",
+        backdropFilter: "blur(20px)",
+        WebkitBackdropFilter: "blur(20px)",
+        borderBottom: "1px solid var(--hair)",
+        position: "sticky",
+        top: 0,
+        zIndex: 50,
       }}>
         <div style={{
           display: "flex", justifyContent: "space-between", alignItems: "center",
-          marginBottom: 8, fontSize: 12, color: BO.textMuted,
+          marginBottom: 10, fontFamily: PUBLIC_FONTS.mono, fontSize: 11,
+          color: "var(--cream-muted)", letterSpacing: "0.08em", textTransform: "uppercase",
         }}>
           <button
             type="button"
@@ -229,11 +241,10 @@ export function BilanOnlinePage() {
             disabled={step === 1 || submitting}
             style={{
               background: "none", border: "none",
-              fontSize: 14, color: BO.textMuted,
+              fontSize: 13, color: "var(--cream-muted)",
               cursor: step === 1 ? "not-allowed" : "pointer",
               opacity: step === 1 ? 0.3 : 1,
               padding: "4px 8px 4px 0",
-              display: "flex", alignItems: "center", gap: 4,
               fontFamily: "inherit",
             }}
           >
@@ -241,22 +252,23 @@ export function BilanOnlinePage() {
           </button>
           <span>Étape {step}/{TOTAL_STEPS}</span>
           <span style={{
-            color: BO.tealDark, fontWeight: 600,
+            color: PUBLIC_TOKENS.teal,
+            fontWeight: 600,
             opacity: savedFlash ? 1 : 0,
             transition: "opacity 0.4s",
           }}>
-            💾 Sauvegardé
+            ✓ Sauvegardé
           </span>
         </div>
         <div style={{
-          width: "100%", height: 6,
-          background: BO.surface2, borderRadius: 3, overflow: "hidden",
+          width: "100%", height: 4,
+          background: "var(--hair)", borderRadius: 2, overflow: "hidden",
         }}>
           <div style={{
             height: "100%", width: `${progressPct}%`,
-            background: `linear-gradient(90deg, ${BO.gold}, ${BO.teal})`,
-            borderRadius: 3,
-            transition: "width 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
+            background: PUBLIC_TOKENS.gradProgress,
+            borderRadius: 2,
+            transition: "width 0.45s cubic-bezier(.2,.7,.2,1)",
           }} />
         </div>
       </div>
@@ -264,10 +276,8 @@ export function BilanOnlinePage() {
       {/* Steps */}
       <div
         key={step}
-        style={{
-          padding: "24px 20px 120px",
-          animation: "bo-slideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1)",
-        }}
+        className="ps-slide-in"
+        style={{ padding: "32px 22px 120px" }}
       >
         {step === 1 && <StepIdentity form={form} update={update} />}
         {step === 2 && <StepObjectives form={form} update={update} toggle={toggleObjective} />}
@@ -278,33 +288,33 @@ export function BilanOnlinePage() {
         {errorMsg && (
           <div style={{
             marginTop: 16, padding: "10px 14px", borderRadius: 10,
-            background: "rgba(251, 113, 133, 0.10)",
-            color: "#9F1239", fontSize: 13,
-            border: "1px solid rgba(251, 113, 133, 0.3)",
+            background: "rgba(251, 113, 133, 0.12)",
+            color: PUBLIC_TOKENS.coral, fontSize: 13,
+            border: "1px solid rgba(251, 113, 133, 0.40)",
           }}>
             {errorMsg}
           </div>
         )}
       </div>
 
-      {/* Bottom fixed CTA */}
+      {/* Bottom fixed CTA — glassmorphism dark */}
       <div style={{
         position: "fixed", bottom: 0, left: "50%",
         transform: "translateX(-50%)",
-        width: "100%", maxWidth: 480,
-        padding: "12px 20px 16px",
-        background: "rgba(255, 255, 255, 0.95)",
-        backdropFilter: "blur(10px)",
-        WebkitBackdropFilter: "blur(10px)",
-        borderTop: `1px solid ${BO.border}`,
-        zIndex: 5,
+        width: "100%", maxWidth: 560,
+        padding: "12px 22px 16px",
+        background: "rgba(11,13,17,0.85)",
+        backdropFilter: "blur(20px)",
+        WebkitBackdropFilter: "blur(20px)",
+        borderTop: "1px solid var(--hair)",
+        zIndex: 60,
         paddingBottom: `calc(16px + env(safe-area-inset-bottom, 0px))`,
       }}>
-        <BoCtaPrimary onClick={next} disabled={submitting}>
+        <PublicCtaPrimary onClick={next} disabled={submitting}>
           {submitting ? "Envoi…" : isLast ? "Envoyer mon bilan ✓" : "Suivant →"}
-        </BoCtaPrimary>
+        </PublicCtaPrimary>
       </div>
-    </BilanOnlineShell>
+    </PublicShell>
   );
 }
 
@@ -315,19 +325,43 @@ interface StepProps {
   update: <K extends keyof FormState>(k: K, v: FormState[K]) => void;
 }
 
-function StepHero({ emoji, title, subtitle }: { emoji: string; title: string; subtitle: string }) {
+function StepHero({ emoji, title, gradWord, subtitle }: {
+  emoji: string;
+  title: string;
+  gradWord?: string;
+  subtitle: string;
+}) {
   return (
     <>
-      <div style={{ fontSize: 36, lineHeight: 1, marginBottom: 12 }}>
+      <div style={{
+        fontSize: 42,
+        lineHeight: 1,
+        marginBottom: 14,
+        display: "inline-block",
+        filter: "drop-shadow(0 4px 16px rgba(45,212,191,0.30))",
+      }}>
         {emoji}
       </div>
       <div style={{
-        fontFamily: BO.fontDisplay, fontSize: 22, fontWeight: 700,
-        color: BO.text, marginBottom: 6, lineHeight: 1.25,
+        fontFamily: PUBLIC_FONTS.display,
+        fontSize: 28, fontWeight: 600,
+        color: "var(--cream)",
+        marginBottom: 8, lineHeight: 1.18,
+        letterSpacing: "-0.02em",
       }}>
-        {title}
+        {gradWord ? (
+          <>
+            {title} <span style={publicGradText}>{gradWord}</span>
+          </>
+        ) : (
+          title
+        )}
       </div>
-      <div style={{ fontSize: 13, color: BO.textMuted, marginBottom: 22 }}>
+      <div style={{
+        fontSize: 14,
+        color: "var(--cream-muted)",
+        marginBottom: 26,
+      }}>
         {subtitle}
       </div>
     </>
@@ -336,20 +370,24 @@ function StepHero({ emoji, title, subtitle }: { emoji: string; title: string; su
 
 function Field({ label, required, children }: { label: string; required?: boolean; children: ReactNode }) {
   return (
-    <div style={{ marginBottom: 16 }}>
+    <div style={{ marginBottom: 18 }}>
       <label style={{
-        display: "block", fontSize: 13, fontWeight: 600,
-        color: BO.text, marginBottom: 6,
+        display: "block",
+        fontFamily: PUBLIC_FONTS.display,
+        fontSize: 11, fontWeight: 600,
+        color: "var(--cream-muted)",
+        textTransform: "uppercase", letterSpacing: "0.12em",
+        marginBottom: 8,
       }}>
         {label}
-        {required && <span style={{ color: BO.coral }}> *</span>}
+        {required && <span style={{ color: PUBLIC_TOKENS.coral }}> *</span>}
       </label>
       {children}
     </div>
   );
 }
 
-function BoInput(p: {
+function PsInput(p: {
   value: string; onChange: (v: string) => void;
   type?: string; inputMode?: "text" | "numeric";
   maxLength?: number; min?: number; max?: number;
@@ -362,21 +400,32 @@ function BoInput(p: {
       onChange={(e) => p.onChange(e.target.value)}
       maxLength={p.maxLength} min={p.min} max={p.max}
       placeholder={p.placeholder}
+      className="ps-input"
       style={inputStyle}
-      onFocus={(e) => { e.currentTarget.style.borderColor = BO.teal; e.currentTarget.style.background = "white"; }}
-      onBlur={(e) => { e.currentTarget.style.borderColor = BO.border; e.currentTarget.style.background = BO.surface2; }}
+      onFocus={(e) => {
+        e.currentTarget.style.borderColor = PUBLIC_TOKENS.teal;
+        e.currentTarget.style.background = "rgba(45,212,191,0.06)";
+        e.currentTarget.style.boxShadow = "0 0 0 4px rgba(45,212,191,0.12)";
+      }}
+      onBlur={(e) => {
+        e.currentTarget.style.borderColor = "var(--hair-strong)";
+        e.currentTarget.style.background = "rgba(255,255,255,0.05)";
+        e.currentTarget.style.boxShadow = "none";
+      }}
     />
   );
 }
 
 const inputStyle: CSSProperties = {
   width: "100%", padding: "14px 16px",
-  border: `1px solid ${BO.border}`, borderRadius: 12,
-  fontSize: 16, fontFamily: "inherit",
-  background: BO.surface2, color: BO.text,
+  background: "rgba(255,255,255,0.05)",
+  border: "1px solid var(--hair-strong)",
+  borderRadius: 14,
+  fontFamily: PUBLIC_FONTS.body, fontSize: 16,
+  color: "var(--cream)",
   outline: "none", boxSizing: "border-box",
-  transition: "border 0.15s, background 0.15s",
-  colorScheme: "light",
+  transition: "all 0.22s",
+  WebkitAppearance: "none",
 };
 
 function ChoiceCard({
@@ -388,22 +437,25 @@ function ChoiceCard({
       role="button"
       tabIndex={0}
       onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") onClick(); }}
+      className={`ps-choice-card${selected ? " is-selected" : ""}`}
       style={{
-        background: selected ? "rgba(45, 212, 191, 0.10)" : BO.surface2,
-        border: `1.5px solid ${selected ? BO.teal : "transparent"}`,
-        borderRadius: 12, padding: "14px 12px",
+        background: selected ? "rgba(45,212,191,0.12)" : "rgba(255,255,255,0.04)",
+        border: `1.5px solid ${selected ? PUBLIC_TOKENS.teal : "var(--hair)"}`,
+        borderRadius: 14, padding: "16px 14px",
         cursor: "pointer", textAlign: "center",
-        transition: "all 0.18s",
+        transition: "all 0.22s cubic-bezier(.2,.7,.2,1)",
         userSelect: "none",
         gridColumn: full ? "span 2" : "auto",
+        boxShadow: selected ? "0 4px 16px rgba(45,212,191,0.20)" : "none",
       }}
     >
-      <span style={{ fontSize: 26, lineHeight: 1, marginBottom: 6, display: "block" }}>
+      <span style={{ fontSize: 28, lineHeight: 1, marginBottom: 6, display: "block" }}>
         {emoji}
       </span>
       <span style={{
+        fontFamily: PUBLIC_FONTS.display,
         fontSize: 13, fontWeight: 600,
-        color: selected ? BO.tealDark : BO.text,
+        color: selected ? PUBLIC_TOKENS.teal : "var(--cream)",
       }}>
         {label}
       </span>
@@ -419,20 +471,22 @@ function RadioCard({
       onClick={onClick}
       role="button" tabIndex={0}
       onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") onClick(); }}
+      className={`ps-radio-card${selected ? " is-selected" : ""}`}
       style={{
-        background: selected ? "rgba(201, 168, 76, 0.10)" : BO.surface2,
-        border: `1.5px solid ${selected ? BO.gold : "transparent"}`,
-        borderRadius: 12, padding: "12px 14px",
+        background: selected ? "rgba(167,139,250,0.12)" : "rgba(255,255,255,0.04)",
+        border: `1.5px solid ${selected ? PUBLIC_TOKENS.violet : "var(--hair)"}`,
+        borderRadius: 14, padding: "14px 16px",
         cursor: "pointer",
-        display: "flex", alignItems: "center", gap: 10,
-        transition: "all 0.18s",
+        display: "flex", alignItems: "center", gap: 12,
+        transition: "all 0.22s",
       }}
     >
       <span style={{ fontSize: 22 }}>{emoji}</span>
       <span style={{
         flex: 1, fontSize: 14,
+        fontFamily: PUBLIC_FONTS.body,
         fontWeight: selected ? 600 : 500,
-        color: selected ? "#633806" : BO.text,
+        color: selected ? PUBLIC_TOKENS.violet : "var(--cream)",
       }}>
         {label}
       </span>
@@ -451,18 +505,23 @@ function SliderWrap({
   const scaleEnd = `${max}${max >= 7 ? "+" : ""}`;
   return (
     <div style={{
-      background: BO.surface2, borderRadius: 12,
-      padding: 16, marginTop: 6,
+      background: "rgba(255,255,255,0.03)",
+      border: "1px solid var(--hair)",
+      borderRadius: 14,
+      padding: 18, marginTop: 6,
     }}>
       <div style={{
-        textAlign: "center", fontFamily: BO.fontDisplay,
-        fontSize: 32, fontWeight: 700, color: BO.gold,
+        textAlign: "center",
+        fontFamily: PUBLIC_FONTS.display,
+        fontSize: 40, fontWeight: 700,
         marginBottom: 4, lineHeight: 1,
+        ...publicGradText,
       }}>
         {value}
       </div>
       <div style={{
-        textAlign: "center", fontSize: 11, color: BO.textMuted, marginBottom: 12,
+        textAlign: "center", fontSize: 11, color: "var(--cream-muted)", marginBottom: 14,
+        letterSpacing: "0.04em",
       }}>
         {valueLabel}
       </div>
@@ -472,7 +531,7 @@ function SliderWrap({
         style={{
           width: "100%", height: 6,
           WebkitAppearance: "none", appearance: "none",
-          background: `linear-gradient(90deg, ${BO.coral}, ${BO.gold}, ${BO.teal})`,
+          background: PUBLIC_TOKENS.gradProgress,
           borderRadius: 3, outline: "none",
         }}
       />
@@ -481,23 +540,24 @@ function SliderWrap({
           -webkit-appearance: none;
           width: 26px; height: 26px;
           border-radius: 50%;
-          background: white;
-          border: 3px solid ${BO.gold};
+          background: ${PUBLIC_TOKENS.cream};
+          border: 3px solid ${PUBLIC_TOKENS.teal};
           cursor: pointer;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+          box-shadow: 0 4px 14px rgba(45,212,191,0.40);
         }
         input[type="range"]::-moz-range-thumb {
           width: 26px; height: 26px;
           border-radius: 50%;
-          background: white;
-          border: 3px solid ${BO.gold};
+          background: ${PUBLIC_TOKENS.cream};
+          border: 3px solid ${PUBLIC_TOKENS.teal};
           cursor: pointer;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+          box-shadow: 0 4px 14px rgba(45,212,191,0.40);
         }
       `}</style>
       <div style={{
         display: "flex", justifyContent: "space-between",
-        marginTop: 6, fontSize: 10, color: BO.textHint,
+        marginTop: 8, fontSize: 10, color: "var(--cream-hint)",
+        fontFamily: PUBLIC_FONTS.mono,
       }}>
         <span>{scaleStart}</span><span>{scaleMid}</span><span>{scaleEnd}</span>
       </div>
@@ -508,12 +568,11 @@ function SliderWrap({
 function SubField({ visible, children }: { visible: boolean; children: ReactNode }) {
   if (!visible) return null;
   return (
-    <div style={{
+    <div className="ps-fade-in" style={{
       marginTop: 12, padding: 14,
-      background: "rgba(45, 212, 191, 0.06)",
-      borderRadius: 10,
-      borderLeft: `3px solid ${BO.teal}`,
-      animation: "bo-fadeIn 0.3s ease",
+      background: "rgba(45,212,191,0.06)",
+      borderRadius: 12,
+      borderLeft: `3px solid ${PUBLIC_TOKENS.teal}`,
     }}>
       {children}
     </div>
@@ -525,20 +584,20 @@ function SubField({ visible, children }: { visible: boolean; children: ReactNode
 function StepIdentity({ form, update }: StepProps) {
   return (
     <>
-      <StepHero emoji="👋" title="Faisons connaissance" subtitle="4 infos rapides pour personnaliser ton bilan." />
+      <StepHero emoji="👋" title="Faisons" gradWord="connaissance" subtitle="4 infos rapides pour personnaliser ton bilan." />
       <Field label="Ton prénom" required>
-        <BoInput value={form.first_name} onChange={(v) => update("first_name", v)} maxLength={50} placeholder="Marie" />
+        <PsInput value={form.first_name} onChange={(v) => update("first_name", v)} maxLength={50} placeholder="Marie" />
       </Field>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
         <Field label="Âge" required>
-          <BoInput value={form.age} onChange={(v) => update("age", v)} type="number" inputMode="numeric" min={16} max={99} placeholder="32" />
+          <PsInput value={form.age} onChange={(v) => update("age", v)} type="number" inputMode="numeric" min={16} max={99} placeholder="32" />
         </Field>
         <Field label="Taille (cm)" required>
-          <BoInput value={form.height_cm} onChange={(v) => update("height_cm", v)} type="number" inputMode="numeric" min={100} max={220} placeholder="168" />
+          <PsInput value={form.height_cm} onChange={(v) => update("height_cm", v)} type="number" inputMode="numeric" min={100} max={220} placeholder="168" />
         </Field>
       </div>
       <Field label="Ta ville" required>
-        <BoInput value={form.city} onChange={(v) => update("city", v)} maxLength={80} placeholder="Metz" />
+        <PsInput value={form.city} onChange={(v) => update("city", v)} maxLength={80} placeholder="Metz" />
       </Field>
     </>
   );
@@ -554,7 +613,7 @@ function StepObjectives({ form, update, toggle }: StepProps & { toggle: (o: Obje
   ];
   return (
     <>
-      <StepHero emoji="🎯" title="Tes objectifs" subtitle="Tu peux en cocher plusieurs." />
+      <StepHero emoji="🎯" title="Tes" gradWord="objectifs" subtitle="Tu peux en cocher plusieurs." />
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
         {OBJS.map((o) => (
           <ChoiceCard
@@ -565,10 +624,15 @@ function StepObjectives({ form, update, toggle }: StepProps & { toggle: (o: Obje
         ))}
       </div>
       <SubField visible={form.objectives.includes("weight_loss")}>
-        <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 6 }}>
+        <div style={{
+          fontFamily: PUBLIC_FONTS.display,
+          fontSize: 12, fontWeight: 600, marginBottom: 8,
+          color: PUBLIC_TOKENS.teal,
+          letterSpacing: "0.08em", textTransform: "uppercase",
+        }}>
           Combien de kilos vises-tu ?
         </div>
-        <BoInput
+        <PsInput
           value={form.weight_loss_target_kg}
           onChange={(v) => update("weight_loss_target_kg", v)}
           type="number" inputMode="numeric" min={1} max={50}
@@ -577,8 +641,12 @@ function StepObjectives({ form, update, toggle }: StepProps & { toggle: (o: Obje
       </SubField>
       <div style={{ marginTop: 24 }}>
         <label style={{
-          display: "block", fontSize: 13, fontWeight: 600,
-          color: BO.text, marginBottom: 6,
+          display: "block",
+          fontFamily: PUBLIC_FONTS.display,
+          fontSize: 11, fontWeight: 600,
+          color: "var(--cream-muted)",
+          textTransform: "uppercase", letterSpacing: "0.12em",
+          marginBottom: 8,
         }}>
           Ta motivation, tu la situes à combien sur 10 ?
         </label>
@@ -604,7 +672,7 @@ function StepExperience({ form, update, toggle }: StepProps & { toggle: (o: Prev
   return (
     <>
       <StepHero
-        emoji="🧭" title="Ton vécu"
+        emoji="🧭" title="Ton" gradWord="vécu"
         subtitle="As-tu déjà essayé quelque chose pour atteindre tes objectifs ?"
       />
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
@@ -617,7 +685,12 @@ function StepExperience({ form, update, toggle }: StepProps & { toggle: (o: Prev
         ))}
       </div>
       <SubField visible={hasAttempt}>
-        <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 6 }}>
+        <div style={{
+          fontFamily: PUBLIC_FONTS.display,
+          fontSize: 12, fontWeight: 600, marginBottom: 8,
+          color: PUBLIC_TOKENS.teal,
+          letterSpacing: "0.08em", textTransform: "uppercase",
+        }}>
           Qu'est-ce que ça a donné ? (optionnel)
         </div>
         <textarea
@@ -626,6 +699,7 @@ function StepExperience({ form, update, toggle }: StepProps & { toggle: (o: Prev
           rows={3}
           maxLength={200}
           placeholder="J'ai perdu 4 kg avec un régime, mais je les ai repris…"
+          className="ps-textarea"
           style={{
             ...inputStyle, fontSize: 14, resize: "vertical", minHeight: 80,
           }}
@@ -648,15 +722,21 @@ function StepHabits({ form, update }: StepProps) {
     { key: "sandwich", emoji: "🥪", label: "Sandwich / wrap" },
     { key: "fastfood", emoji: "🍔", label: "Fast-food" },
   ];
+  const sectionLabel: CSSProperties = {
+    display: "block",
+    fontFamily: PUBLIC_FONTS.display,
+    fontSize: 11, fontWeight: 600,
+    color: "var(--cream-muted)",
+    textTransform: "uppercase", letterSpacing: "0.12em",
+    margin: "20px 0 10px",
+  };
   return (
     <>
       <StepHero
-        emoji="🍽️" title="Tes habitudes"
+        emoji="🍽️" title="Tes" gradWord="habitudes"
         subtitle="Format ultra-court — choisis ce qui te ressemble le plus."
       />
-      <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: BO.text, margin: "16px 0 8px" }}>
-        Petit-déjeuner
-      </label>
+      <label style={sectionLabel}>Petit-déjeuner</label>
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
         {PDJ.map((m) => (
           <RadioCard
@@ -666,9 +746,7 @@ function StepHabits({ form, update }: StepProps) {
           />
         ))}
       </div>
-      <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: BO.text, margin: "18px 0 8px" }}>
-        Repas du midi
-      </label>
+      <label style={sectionLabel}>Repas du midi</label>
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
         {MIDI.map((m) => (
           <RadioCard
@@ -678,9 +756,7 @@ function StepHabits({ form, update }: StepProps) {
           />
         ))}
       </div>
-      <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: BO.text, margin: "18px 0 8px" }}>
-        Fast-food par semaine
-      </label>
+      <label style={sectionLabel}>Fast-food par semaine</label>
       <SliderWrap
         value={form.fastfood_per_week} min={0} max={7}
         valueLabel={FF_LABELS[form.fastfood_per_week] || ""}
@@ -698,12 +774,18 @@ function StepBudget({ form, update }: StepProps) {
     { key: "10", emoji: "💰", label: "10 €" },
     { key: "15+", emoji: "💎", label: "15 € et +", full: true },
   ];
+  const sectionLabel: CSSProperties = {
+    display: "block",
+    fontFamily: PUBLIC_FONTS.display,
+    fontSize: 11, fontWeight: 600,
+    color: "var(--cream-muted)",
+    textTransform: "uppercase", letterSpacing: "0.12em",
+    margin: "18px 0 10px",
+  };
   return (
     <>
-      <StepHero emoji="💰" title="Budget + activité" subtitle="Dernière étape, on y est presque !" />
-      <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: BO.text, margin: "14px 0 8px" }}>
-        Budget alimentaire / jour
-      </label>
+      <StepHero emoji="💰" title="Budget + " gradWord="activité" subtitle="Dernière étape, on y est presque !" />
+      <label style={sectionLabel}>Budget alimentaire / jour</label>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
         {BUDGETS.map((b) => (
           <ChoiceCard
@@ -714,9 +796,7 @@ function StepBudget({ form, update }: StepProps) {
         ))}
       </div>
 
-      <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: BO.text, margin: "22px 0 8px" }}>
-        Es-tu actif au quotidien ? (marche, escaliers, jardin)
-      </label>
+      <label style={sectionLabel}>Es-tu actif au quotidien ? (marche, escaliers, jardin)</label>
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
         <RadioCard
           emoji="✅" label="Oui"
@@ -730,10 +810,15 @@ function StepBudget({ form, update }: StepProps) {
         />
       </div>
       <SubField visible={form.active_daily === "yes"}>
-        <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 6 }}>
+        <div style={{
+          fontFamily: PUBLIC_FONTS.display,
+          fontSize: 12, fontWeight: 600, marginBottom: 8,
+          color: PUBLIC_TOKENS.teal,
+          letterSpacing: "0.08em", textTransform: "uppercase",
+        }}>
           Quoi exactement ? (optionnel)
         </div>
-        <BoInput
+        <PsInput
           value={form.active_daily_detail}
           onChange={(v) => update("active_daily_detail", v)}
           maxLength={100}
@@ -742,15 +827,22 @@ function StepBudget({ form, update }: StepProps) {
       </SubField>
 
       <label style={{
-        display: "flex", alignItems: "flex-start", gap: 10,
-        marginTop: 18, padding: 12,
-        background: BO.surface2, borderRadius: 10,
-        fontSize: 12, color: BO.textMuted, cursor: "pointer",
+        display: "flex", alignItems: "flex-start", gap: 12,
+        marginTop: 20, padding: 14,
+        background: "rgba(255,255,255,0.04)",
+        border: "1px solid var(--hair)",
+        borderRadius: 12,
+        fontSize: 13, color: "var(--cream-muted)",
+        cursor: "pointer", lineHeight: 1.5,
       }}>
         <input
           type="checkbox" checked={form.consent}
           onChange={(e) => update("consent", e.target.checked)}
-          style={{ marginTop: 2, flexShrink: 0, accentColor: BO.gold }}
+          style={{
+            marginTop: 2, flexShrink: 0,
+            accentColor: PUBLIC_TOKENS.teal,
+            width: 18, height: 18,
+          }}
         />
         <span>
           J'accepte que mes données soient transmises à mon coach pour analyse

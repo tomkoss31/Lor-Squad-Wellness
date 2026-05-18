@@ -200,16 +200,47 @@ problème "11 items illisibles").
 
 ---
 
-## Theme system (note 2026-11-04)
+## Theme system (note 2026-11-04, update 2026-05-18 pages publiques)
 
-Lor'Squad utilise un système de tokens CSS dans `src/styles/globals.css` :
+La Base 360 utilise **deux systèmes de tokens distincts** :
+
+### 1. Theme app coach interne (`src/styles/globals.css`)
+
+Pour Co-pilote, FLEX, Clients, Agenda, Messagerie, NewAssessment, etc.
 
 - `:root` = thème **Dark Premium** (défaut) — gold #C9A84C / teal #2DD4BF
 - `html.theme-light` = thème **Light Premium** — gold #B8922A / teal #0D9488
 
-**Règle absolue** : **tous les composants UI** doivent utiliser
+**Règle absolue** : tous les composants UI internes doivent utiliser
 `var(--ls-*)` pour les couleurs. **Jamais** de `#HEXVALUE` hardcodé dans
-un `.tsx`. Si tu en vois un, c'est un bug pour le theme system.
+un `.tsx` de l'app coach interne.
+
+### 2. Theme pages publiques V2 (`src/styles/public-tokens.ts` + `public-shell.css`)
+
+Ajouté 2026-05-18 dans le chantier de refonte pages publiques V2 dark.
+
+Pour BilanOnlineWelcomePage / BilanOnlinePage / BilanOnlineMerciPage /
+TestimonialFormPage (#11) / Newsletter publique (#8 à venir).
+
+- Tokens TS : `PUBLIC_TOKENS` + `PUBLIC_FONTS` + `publicGradText`
+- CSS variables : `--ink`, `--cream`, `--teal`, `--violet`, `--coral`, `--gold`, `--hair`, `--grad-headline`, `--grad-cta`, `--grad-progress`
+- Theme toggle utilisateur dark/light avec persistance localStorage clé `ls-public-theme`
+- Wrapper `<PublicShell defaultTheme="dark">` qui applique `data-public-theme` + bg-mesh G3 (radials teal/violet/coral)
+- Fonts : **Sora** display + **Inter** body + **Syne** italic pour signatures
+- Identité brand : gradient teal→violet→coral sur headlines italiques + gradient teal→violet sur CTAs
+
+**Indépendant** du theme app coach. Le toggle dark/light public ne touche
+pas `html.theme-light`. Les deux systèmes coexistent sans interférence.
+
+### Cas BusinessPage (`/business`)
+
+Livrée le 2026-05-17 (chantier #7 V2). Utilise son propre namespace
+`--biz-*` avec palette **SaaS premium emerald/cyan/violet** (Notion/Linear
+style), distincte de la palette pages bilan V2 (teal/violet/coral).
+
+**Volontaire** : BusinessPage est plus business/conversion-driven, les
+pages bilan/témoignage sont plus warm/brand-care. Si Thomas veut tout
+unifier sur la palette V2, c'est une 2e itération séparée.
 
 ### Préparer multi-thèmes (Ocean / Sunset / Forest)
 
