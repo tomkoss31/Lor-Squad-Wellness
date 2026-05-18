@@ -25,6 +25,7 @@ import { formatDateTime, isClientProgramStarted } from "../lib/calculations";
 import type { User, Client, LifecycleStatus } from "../types/domain";
 import { LIFECYCLE_LABELS, LIFECYCLE_TONES } from "../types/domain";
 import { LeadsKanban } from "../components/leads/LeadsKanban";
+import { AdminTestimonialsPage } from "./AdminTestimonialsPage";
 
 export function ClientsPage() {
   const { currentUser, users, visibleClients, visibleFollowUps, pvTransactions, setClientLifecycleStatus } = useAppContext();
@@ -39,12 +40,15 @@ export function ClientsPage() {
   // Chantier #1 Bilan Online étape 1.6 (2026-05-17) : tab toggle entre
   // la vue Clients (existante) et la vue Leads bilan online. Persisté
   // via ?tab=leads pour les liens directs depuis push notif (étape 1.7).
-  const [activeTab, setActiveTab] = useState<"clients" | "leads">(() => {
-    return searchParams.get("tab") === "leads" ? "leads" : "clients";
+  const [activeTab, setActiveTab] = useState<"clients" | "leads" | "temoignages">(() => {
+    const t = searchParams.get("tab");
+    if (t === "leads") return "leads";
+    if (t === "temoignages") return "temoignages";
+    return "clients";
   });
   useEffect(() => {
     const t = searchParams.get("tab");
-    if (t === "leads" || t === "clients") setActiveTab(t);
+    if (t === "leads" || t === "clients" || t === "temoignages") setActiveTab(t);
   }, [searchParams]);
 
   const [search, setSearch] = useState("");
@@ -381,9 +385,21 @@ export function ClientsPage() {
         >
           🌱 Leads
         </button>
+        {isAdmin && (
+          <button
+            type="button"
+            role="tab"
+            className={`cp-tab ${activeTab === "temoignages" ? "cp-tab-active" : ""}`}
+            aria-selected={activeTab === "temoignages"}
+            onClick={() => setActiveTab("temoignages")}
+          >
+            💬 Témoignages
+          </button>
+        )}
       </div>
 
       {activeTab === "leads" && <LeadsKanban />}
+      {activeTab === "temoignages" && isAdmin && <AdminTestimonialsPage />}
 
       {activeTab === "clients" && (<>
 

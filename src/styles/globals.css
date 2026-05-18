@@ -882,8 +882,8 @@ main, .main-content {
 @layer base {
   * { box-sizing: border-box; -webkit-font-smoothing: antialiased; }
 
-  html { font-family: 'DM Sans', sans-serif; }
-  body { background: var(--ls-bg); color: var(--ls-text); font-family: 'DM Sans', sans-serif; transition: background 0.2s, color 0.2s; }
+  html { font-family: 'Twemoji Country Flags', 'DM Sans', sans-serif; }
+  body { background: var(--ls-bg); color: var(--ls-text); font-family: 'Twemoji Country Flags', 'DM Sans', sans-serif; transition: background 0.2s, color 0.2s; }
 
   h1, h2, h3, h4, .font-display { font-family: 'Syne', sans-serif; }
 
