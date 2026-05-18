@@ -115,7 +115,7 @@ export function BilanOnlineWelcomePage() {
           <div style={{ textAlign: "center", marginBottom: 28 }}>
             <div
               style={{
-                background: "rgba(255,255,255,0.04)",
+                background: "var(--glass)",
                 backdropFilter: "blur(20px)",
                 WebkitBackdropFilter: "blur(20px)",
                 border: "1px solid var(--hair)",
@@ -178,7 +178,7 @@ export function BilanOnlineWelcomePage() {
         {/* Pitch card glassmorphism */}
         <div
           style={{
-            background: "rgba(255,255,255,0.04)",
+            background: "var(--glass)",
             backdropFilter: "blur(20px)",
             WebkitBackdropFilter: "blur(20px)",
             border: "1px solid var(--hair)",
@@ -321,7 +321,7 @@ export function BilanOnlineWelcomePage() {
               style={{
                 width: "100%",
                 padding: "14px 16px",
-                background: "rgba(255,255,255,0.05)",
+                background: "var(--glass-input)",
                 border: "1px solid var(--hair-strong)",
                 borderRadius: 14,
                 fontFamily: PUBLIC_FONTS.body,
