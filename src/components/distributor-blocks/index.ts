@@ -11,6 +11,7 @@ export { RangHerbalifeBlock } from "./RangHerbalifeBlock";
 export { ProgressionRangBlock } from "./ProgressionRangBlock";
 export { PvBizworksBlock } from "./PvBizworksBlock";
 export { CompteActifBlock } from "./CompteActifBlock";
+export { DistriQuickLink } from "./DistriQuickLink";
 
 // Primitives partagees (utilisable si la page veut composer manuellement)
 export {
