@@ -77,7 +77,7 @@ export function AnalyticsPage() {
         heightLeft -= pageHeight;
       }
       const stamp = new Date().toISOString().slice(0, 7); // YYYY-MM
-      pdf.save(`lorsquad-analytics-${stamp}.pdf`);
+      pdf.save(`labase360-analytics-${stamp}.pdf`);
     } catch (err) {
       console.error("[AnalyticsPdf] export failed:", err);
       alert("Impossible de générer le PDF. Réessaie.");
