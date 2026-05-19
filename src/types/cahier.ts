@@ -59,6 +59,8 @@ export interface Liste100Contact {
   platform: string | null;
   /** Phase 0.8 — username ou URL profil pour deep-link clic. */
   profile_url: string | null;
+  /** 2026-05-19 — code pays ISO 3166 alpha-2 (FR, BE, CH, etc.). */
+  country_code: string | null;
   added_at: string;
   updated_at: string;
 }

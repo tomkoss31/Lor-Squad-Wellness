@@ -643,8 +643,17 @@ const gridStyle = (cols: 2 | 3): CSSProperties => ({
   gap: 10,
 });
 
+// Fix drapeaux 2026-05-19 : `font-family` Twemoji forcée inline car le
+// fallback global (body) peut être écrasé par un parent (PremiumHero
+// / Card avec Syne ou DM Sans). Sans Twemoji prioritaire, Windows
+// Chrome affiche les regional indicators bruts ("FR", "GB", etc.) au
+// lieu des drapeaux SVG. Fallback `emoji` = generic family système.
 const flagStyle: CSSProperties = {
-  fontSize: 36, lineHeight: 1, display: "block", marginBottom: 4,
+  fontSize: 36,
+  lineHeight: 1,
+  display: "block",
+  marginBottom: 4,
+  fontFamily: "'Twemoji Country Flags', 'Apple Color Emoji', 'Segoe UI Emoji', emoji",
 };
 
 const emojiStyle: CSSProperties = {
@@ -867,7 +876,15 @@ function MarketTimingBanner({
         marginBottom: 10,
         fontFamily: "'Syne', serif",
       }}>
-        <span style={{ fontSize: 20 }} aria-hidden="true">{flag}</span>
+        <span
+          style={{
+            fontSize: 20,
+            fontFamily: "'Twemoji Country Flags', 'Apple Color Emoji', 'Segoe UI Emoji', emoji",
+          }}
+          aria-hidden="true"
+        >
+          {flag}
+        </span>
         {marketLabel} · {languageLabel}
       </div>
       <div style={{

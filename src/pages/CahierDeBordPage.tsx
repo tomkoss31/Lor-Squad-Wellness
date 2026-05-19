@@ -32,6 +32,7 @@ import {
   PLATFORM_META,
   type ContactPlatform,
 } from "../lib/profileDeepLink";
+import { listCountries, getCountry } from "../lib/countries";
 
 /** Split "Karim Ben" → { firstName: "Karim", lastName: "Ben" }. */
 function splitFullName(full: string): { firstName: string; lastName: string } {
@@ -413,9 +414,11 @@ function ListeSection({ cahier }: { cahier: ReturnType<typeof useCahierDeBord> }
     contact_phone: "",
     platform: "" as ContactPlatform | "",
     profile_url: "",
+    country_code: "",
   });
   const [filterTemp, setFilterTemp] = useState<Liste100Temperature | "all">("all");
   const [filterStatus, setFilterStatus] = useState<Liste100Status | "all">("all");
+  const [filterCountry, setFilterCountry] = useState<string | "all">("all");
   /** Connexion Liste 100 → Agenda (2026-05-04) : quand un contact passe en
       `rdv_cale`, on propose de créer un prospect agenda pré-rempli. */
   const [prospectModalContact, setProspectModalContact] = useState<Liste100Contact | null>(null);
@@ -439,6 +442,7 @@ function ListeSection({ cahier }: { cahier: ReturnType<typeof useCahierDeBord> }
       contact_phone: draft.contact_phone.trim() || undefined,
       platform: draft.platform || null,
       profile_url: draft.profile_url.trim() || null,
+      country_code: draft.country_code || null,
     });
     setDraft({
       full_name: "",
@@ -448,6 +452,7 @@ function ListeSection({ cahier }: { cahier: ReturnType<typeof useCahierDeBord> }
       contact_phone: "",
       platform: "",
       profile_url: "",
+      country_code: "",
     });
     setShowForm(false);
   }
@@ -455,6 +460,7 @@ function ListeSection({ cahier }: { cahier: ReturnType<typeof useCahierDeBord> }
   const filtered = cahier.contacts.filter((c) => {
     if (filterTemp !== "all" && c.temperature !== filterTemp) return false;
     if (filterStatus !== "all" && c.status !== filterStatus) return false;
+    if (filterCountry !== "all" && (c.country_code ?? "") !== filterCountry) return false;
     return true;
   });
 
@@ -495,6 +501,19 @@ function ListeSection({ cahier }: { cahier: ReturnType<typeof useCahierDeBord> }
           {(Object.keys(LISTE_100_STATUS_META) as Liste100Status[]).map((s) => (
             <option key={s} value={s}>
               {LISTE_100_STATUS_META[s].emoji} {LISTE_100_STATUS_META[s].label}
+            </option>
+          ))}
+        </select>
+        <select
+          value={filterCountry}
+          onChange={(e) => setFilterCountry(e.target.value)}
+          style={selectStyle}
+          title="Filtrer par pays de prospection"
+        >
+          <option value="all">🌍 Tous pays</option>
+          {listCountries().map((c) => (
+            <option key={c.code} value={c.code}>
+              {c.flag} {c.label}
             </option>
           ))}
         </select>
@@ -590,14 +609,30 @@ function ListeSection({ cahier }: { cahier: ReturnType<typeof useCahierDeBord> }
               />
             </Field>
           </div>
-          <Field label="Téléphone (optionnel)">
-            <input
-              type="tel"
-              value={draft.contact_phone}
-              onChange={(e) => setDraft({ ...draft, contact_phone: e.target.value })}
-              style={inputStyle}
-            />
-          </Field>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+            <Field label="Téléphone (optionnel)">
+              <input
+                type="tel"
+                value={draft.contact_phone}
+                onChange={(e) => setDraft({ ...draft, contact_phone: e.target.value })}
+                style={inputStyle}
+              />
+            </Field>
+            <Field label="Pays de prospection (optionnel)">
+              <select
+                value={draft.country_code}
+                onChange={(e) => setDraft({ ...draft, country_code: e.target.value })}
+                style={selectStyle}
+              >
+                <option value="">—</option>
+                {listCountries().map((c) => (
+                  <option key={c.code} value={c.code}>
+                    {c.flag} {c.label}
+                  </option>
+                ))}
+              </select>
+            </Field>
+          </div>
           <Field label="Note (optionnel)">
             <textarea
               value={draft.note}
@@ -659,7 +694,36 @@ function ListeSection({ cahier }: { cahier: ReturnType<typeof useCahierDeBord> }
               >
                 <span style={{ fontSize: 18 }}>{temp.emoji}</span>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontWeight: 600, color: "var(--ls-text)", fontSize: 14 }}>{c.full_name}</div>
+                  <div
+                    style={{
+                      fontWeight: 600,
+                      color: "var(--ls-text)",
+                      fontSize: 14,
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 6,
+                      flexWrap: "wrap",
+                    }}
+                  >
+                    {(() => {
+                      const country = getCountry(c.country_code);
+                      return country ? (
+                        <span
+                          style={{
+                            fontSize: 14,
+                            fontFamily:
+                              "'Twemoji Country Flags', 'Apple Color Emoji', 'Segoe UI Emoji', emoji",
+                            lineHeight: 1,
+                          }}
+                          title={country.label}
+                          aria-label={`Pays : ${country.label}`}
+                        >
+                          {country.flag}
+                        </span>
+                      ) : null;
+                    })()}
+                    <span>{c.full_name}</span>
+                  </div>
                   {c.note && (
                     <div style={{ fontSize: 11, color: "var(--ls-text-muted)", marginTop: 2 }}>{c.note}</div>
                   )}
