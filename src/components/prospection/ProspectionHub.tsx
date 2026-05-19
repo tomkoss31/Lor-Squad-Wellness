@@ -19,6 +19,7 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
   createProspectionAttempt,
+  fetchProspectionStats,
   filterByMarket,
   filterByMarketAndProfile,
   filterHashtags,
@@ -123,13 +124,13 @@ const PROFILE_GLYPHS: Record<string, string> = {
   "business": "💼",
 };
 
-// Plateformes M1 (4 onglets dans le module Premier message)
-const PLATFORM_ORDER: ProspectionPlatform[] = ["insta", "fb", "whatsapp", "sms"];
+// Plateformes M1 (5 onglets dans le module Premier message, TikTok 2026-05-19)
+const PLATFORM_ORDER: ProspectionPlatform[] = ["insta", "fb", "whatsapp", "sms", "tiktok"];
 const PLATFORM_GLYPH: Record<string, string> = {
-  insta: "📷", fb: "f", whatsapp: "💬", sms: "✉",
+  insta: "📷", fb: "f", whatsapp: "💬", sms: "✉", tiktok: "🎵",
 };
 const PLATFORM_SHORT: Record<string, string> = {
-  insta: "Insta", fb: "Facebook", whatsapp: "WhatsApp", sms: "SMS",
+  insta: "Insta", fb: "Facebook", whatsapp: "WhatsApp", sms: "SMS", tiktok: "TikTok",
 };
 
 // ────────────────────────────────────────────────────────────
@@ -169,8 +170,10 @@ export function ProspectionHub(p: Props) {
   const [scriptLang, setScriptLang] = useState<Record<string, "native" | "fr">>({});
   const [sheet, setSheet] = useState<"market" | "profile" | "stat" | null>(null);
   const [toast, setToast] = useState<string | null>(null);
-  const [sent7d, setSent7d] = useState<number>(12);
-  const [rdv7d, setRdv7d] = useState<number>(3);
+  // Stats 7j : initialisées à 0, fetch réel au mount via RPC get_prospection_stats
+  const [sent7d, setSent7d] = useState<number>(0);
+  const [rdv7d, setRdv7d] = useState<number>(0);
+  const [responses7d, setResponses7d] = useState<number>(0);
   const [bumpStat, setBumpStat] = useState<boolean>(false);
   const [swapping, setSwapping] = useState<boolean>(false);
   const [caseTab, setCaseTab] = useState<"ghost_after_exchange" | "reactivation_3_6m" | "referral_request">("ghost_after_exchange");
@@ -223,6 +226,22 @@ export function ProspectionHub(p: Props) {
     const m = Math.max(1, Math.round(words / 200));
     return `≈ ${m} min de lecture`;
   }, [moduleMeta.id, mindsetBlocks, scripts, replyTree, objections, followups, closing, specialCases, storytelling, routines, hashtags, flags, sources]);
+
+  // Fetch real stats au mount (RPC get_prospection_stats)
+  useEffect(() => {
+    if (!currentUser?.id) return;
+    let cancelled = false;
+    (async () => {
+      const s = await fetchProspectionStats(currentUser.id);
+      if (cancelled || !s) return;
+      setSent7d(s.total_7d ?? 0);
+      setResponses7d(s.responses_7d ?? 0);
+      // RDV proxy : nombre d'attempts WhatsApp dans la fenêtre 7j n'est pas
+      // exposé par le RPC — on garde positive_7d comme proxy "RDV pris"
+      setRdv7d(s.positive_7d ?? 0);
+    })();
+    return () => { cancelled = true; };
+  }, [currentUser?.id]);
 
   // Keyboard nav
   useEffect(() => {
@@ -535,25 +554,31 @@ export function ProspectionHub(p: Props) {
           </>
         )}
         {sheet === "stat" && (
-          <StatFunnelSheet sent={sent7d} rdv={rdv7d} />
+          <StatFunnelSheet sent={sent7d} rdv={rdv7d} responses={responses7d} />
         )}
       </div>
 
-      {/* Restart tunnel (discret) */}
+      {/* Restart tunnel — lien minuscule en footer, hors flow visuel */}
       <button
         type="button"
         onClick={p.onRestartTunnel}
         style={{
-          alignSelf: "center", margin: "16px 0 24px",
-          padding: "8px 14px", borderRadius: 999,
-          border: "1px dashed var(--hub-line)",
+          alignSelf: "center",
+          margin: "6px auto 18px",
+          padding: "4px 10px",
+          borderRadius: 999,
+          border: "none",
           background: "transparent",
-          color: "var(--hub-muted)",
-          fontSize: 12, fontFamily: "var(--hub-f-mono)",
+          color: "var(--hub-muted-2)",
+          fontSize: 10.5,
+          letterSpacing: "0.08em",
+          textTransform: "uppercase",
+          fontFamily: "var(--hub-f-mono)",
           cursor: "pointer",
+          opacity: 0.6,
         }}
       >
-        🔁 Revoir le tunnel onboarding
+        ↺ Revoir le tunnel onboarding
       </button>
     </div>
   );
@@ -800,8 +825,9 @@ function ReplyModule({
       {nodes.map((n) => {
         const meta = branchLabel[n.branch] ?? { pill: n.branch, emoji: "·", cls: "maybe" };
         const body = marketCode !== "fr" && n.body_fr ? n.body_fr : n.body;
+        const isWarm = meta.cls === "warm";
         return (
-          <article key={n.id} className="ph-tree-branch">
+          <article key={n.id} className={`ph-tree-branch${isWarm ? " warm-branch" : ""}`}>
             <div className="reaction">
               <span>{meta.emoji} Il / elle réagit</span>
               <span className={`pill ${meta.cls}`}>{meta.pill}</span>
@@ -907,9 +933,14 @@ function ClosingModule({
   const scripts = items.filter((i) => i.kind !== "signal");
   if (items.length === 0) return <Empty>Aucun closing pour ce marché.</Empty>;
   const scriptTitle: Record<string, string> = {
-    propose: "Proposer la suite",
+    propose: "Proposer le passage à l'acte",
     hesitation: "Quand il hésite",
-    final_no: "Encaisser le non",
+    final_no: "Encaisser un non sereinement",
+  };
+  const scriptCtx: Record<string, string> = {
+    propose: "Fin d'appel · prospect mûr",
+    hesitation: "Avant la dernière phrase",
+    final_no: "Porte ouverte pour plus tard",
   };
   return (
     <>
@@ -928,7 +959,7 @@ function ClosingModule({
         return (
           <article key={s.id} className="ph-close-script">
             <h4>{s.title ?? scriptTitle[s.kind] ?? s.kind}</h4>
-            <div className="ctx">Kind · {s.kind}</div>
+            {scriptCtx[s.kind] && <div className="ctx">{scriptCtx[s.kind]}</div>}
             <p>{renderScriptBody(body)}</p>
             <div style={{ marginTop: 10, display: "flex", gap: 6 }}>
               <button className="ph-btn copy" type="button" onClick={() => onCopy(body)}>
@@ -955,7 +986,7 @@ function SpecialCasesModule({
   const tabs = [
     { id: "ghost_after_exchange" as const, label: "Ghost" },
     { id: "reactivation_3_6m" as const, label: "Réactivation" },
-    { id: "referral_request" as const, label: "Recommandation" },
+    { id: "referral_request" as const, label: "Reco" },
   ];
   const active = items.find((i) => i.kind === caseTab);
   return (
@@ -1101,8 +1132,9 @@ function RoutineModule({
 // ────────────────────────────────────────────────────────────
 // Stat funnel sheet
 // ────────────────────────────────────────────────────────────
-function StatFunnelSheet({ sent, rdv }: { sent: number; rdv: number }) {
-  const reps = Math.round(sent * 0.42);
+function StatFunnelSheet({ sent, rdv, responses }: { sent: number; rdv: number; responses: number }) {
+  // Réponses : valeur réelle si dispo, sinon proxy 42% du sent.
+  const reps = responses > 0 ? responses : Math.round(sent * 0.42);
   const clos = Math.max(0, Math.round(rdv * 0.4));
   const pct = (v: number) => Math.min(100, Math.round((v / Math.max(1, sent)) * 100));
   return (
