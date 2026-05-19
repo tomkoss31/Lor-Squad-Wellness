@@ -22,10 +22,21 @@ import {
   type QuickFilterId,
 } from "../lib/clientQuickFilters";
 import { formatDateTime, isClientProgramStarted } from "../lib/calculations";
-import type { User, Client, LifecycleStatus } from "../types/domain";
-import { LIFECYCLE_LABELS, LIFECYCLE_TONES } from "../types/domain";
+import type { LifecycleStatus } from "../types/domain";
+import { LIFECYCLE_TONES } from "../types/domain";
 import { LeadsKanban } from "../components/leads/LeadsKanban";
 import { AdminTestimonialsPage } from "./AdminTestimonialsPage";
+// Refacto 2026-05-19 (Phase 3.5) : helpers + bento stats extraits.
+import {
+  getOwnerAvatarColors,
+  getClientStatusInfo,
+  isOverdue,
+  getRelativeTime,
+  getLastAssessmentTime,
+  exportClientsCsv,
+} from "../components/clients/clientsListHelpers";
+import { BentoStatsClients } from "../components/clients/BentoStatsClients";
+import { getInitials } from "../lib/utils/getInitials";
 
 export function ClientsPage() {
   const { currentUser, users, visibleClients, visibleFollowUps, pvTransactions, setClientLifecycleStatus } = useAppContext();
@@ -403,241 +414,12 @@ export function ClientsPage() {
 
       {activeTab === "clients" && (<>
 
-      {/* STATS PREMIUM V3 BENTO (2026-04-29) — card principale 2x + 2 mini */}
-      <style>{`
-        @keyframes ls-stat-zoom-in {
-          from { opacity: 0; transform: scale(0.92) translateY(8px); }
-          to { opacity: 1; transform: scale(1) translateY(0); }
-        }
-        @keyframes ls-stat-shine {
-          0%, 100% { transform: translateX(-100%); }
-          50% { transform: translateX(200%); }
-        }
-        @keyframes ls-stat-conic {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
-        .clients-stat-card-v3 {
-          animation: ls-stat-zoom-in 560ms cubic-bezier(0.16, 1, 0.3, 1) both;
-          transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
-          position: relative;
-          overflow: hidden;
-        }
-        .clients-stat-card-v3:hover {
-          transform: translateY(-3px);
-        }
-        .clients-stat-card-v3:nth-child(1) { animation-delay: 0ms; }
-        .clients-stat-card-v3:nth-child(2) { animation-delay: 100ms; }
-        .clients-stat-card-v3:nth-child(3) { animation-delay: 200ms; }
-        .clients-stat-shine {
-          position: absolute;
-          top: 0;
-          left: 0;
-          width: 50%;
-          height: 100%;
-          background: linear-gradient(90deg, transparent, rgba(255,255,255,0.10), transparent);
-          animation: ls-stat-shine 6s ease-in-out infinite;
-          pointer-events: none;
-        }
-        .clients-stat-conic {
-          position: absolute;
-          width: 220px;
-          height: 220px;
-          background: conic-gradient(
-            from 0deg,
-            transparent,
-            rgba(239,159,39,0.10),
-            transparent
-          );
-          animation: ls-stat-conic 12s linear infinite;
-          pointer-events: none;
-          top: -50%;
-          right: -30%;
-          filter: blur(20px);
-        }
-        @media (prefers-reduced-motion: reduce) {
-          .clients-stat-card-v3, .clients-stat-shine, .clients-stat-conic {
-            animation: none !important;
-            transition: none !important;
-          }
-        }
-      `}</style>
-      <div
-        className="clients-stats-grid"
-        style={{
-          display: "grid",
-          gridTemplateColumns: "1.6fr 1fr 1fr",
-          gridTemplateRows: "auto",
-          gap: 14,
-        }}
-      >
-        {/* Card principale BENTO — Visibles (plus grosse) */}
-        {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions -- Hover effect only, no onClick */}
-        <div
-          className="clients-stat-card-v3"
-          style={{
-            background:
-              "linear-gradient(135deg, color-mix(in srgb, var(--ls-teal) 14%, var(--ls-surface)) 0%, color-mix(in srgb, var(--ls-gold) 6%, var(--ls-surface)) 100%)",
-            border: "0.5px solid color-mix(in srgb, var(--ls-teal) 35%, var(--ls-border))",
-            borderRadius: 20,
-            padding: "22px 24px",
-            boxShadow:
-              "0 1px 0 0 rgba(13,148,136,0.10), 0 12px 32px -12px rgba(13,148,136,0.18), inset 0 1px 0 0 rgba(255,255,255,0.06)",
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "space-between",
-            minHeight: 130,
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.boxShadow =
-              "0 1px 0 0 rgba(13,148,136,0.12), 0 16px 40px -12px rgba(13,148,136,0.28), inset 0 1px 0 0 rgba(255,255,255,0.06)";
-            e.currentTarget.style.borderColor = "color-mix(in srgb, var(--ls-teal) 60%, var(--ls-border))";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.boxShadow =
-              "0 1px 0 0 rgba(13,148,136,0.10), 0 12px 32px -12px rgba(13,148,136,0.18), inset 0 1px 0 0 rgba(255,255,255,0.06)";
-            e.currentTarget.style.borderColor = "color-mix(in srgb, var(--ls-teal) 35%, var(--ls-border))";
-          }}
-        >
-          <div className="clients-stat-conic" aria-hidden="true" />
-          <div className="clients-stat-shine" aria-hidden="true" />
-          <div style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <div style={{ fontSize: 10, letterSpacing: 2, textTransform: "uppercase", color: "var(--ls-text-hint)", fontWeight: 700, fontFamily: "DM Sans, sans-serif" }}>
-              👥 Clients visibles
-            </div>
-            <div
-              style={{
-                padding: "4px 10px",
-                background: "color-mix(in srgb, var(--ls-teal) 14%, transparent)",
-                border: "0.5px solid color-mix(in srgb, var(--ls-teal) 35%, transparent)",
-                borderRadius: 999,
-                fontSize: 10,
-                fontWeight: 700,
-                color: "var(--ls-teal)",
-                fontFamily: "DM Sans, sans-serif",
-              }}
-            >
-              ✓ Filtré
-            </div>
-          </div>
-          <div style={{ position: "relative", display: "flex", alignItems: "baseline", gap: 12 }}>
-            <div
-              style={{
-                fontFamily: "Syne, serif",
-                fontWeight: 800,
-                fontSize: 56,
-                lineHeight: 1,
-                background: "linear-gradient(135deg, var(--ls-teal) 0%, color-mix(in srgb, var(--ls-teal) 70%, #5C3A05) 100%)",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-                backgroundClip: "text",
-                letterSpacing: "-0.04em",
-              }}
-            >
-              {filteredClients.length}
-            </div>
-            <div style={{ fontSize: 13, color: "var(--ls-text-muted)", fontWeight: 500 }}>
-              dossier{filteredClients.length > 1 ? "s" : ""}
-            </div>
-          </div>
-        </div>
-
-        {/* Card 2 — Responsables */}
-        {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions -- Hover effect only, no onClick */}
-        <div
-          className="clients-stat-card-v3"
-          style={{
-            background:
-              "linear-gradient(135deg, color-mix(in srgb, var(--ls-gold) 12%, var(--ls-surface)) 0%, var(--ls-surface) 100%)",
-            border: "0.5px solid color-mix(in srgb, var(--ls-gold) 35%, var(--ls-border))",
-            borderRadius: 20,
-            padding: "18px 20px",
-            boxShadow:
-              "0 1px 0 0 rgba(184,146,42,0.10), 0 8px 24px -10px rgba(184,146,42,0.20), inset 0 1px 0 0 rgba(255,255,255,0.06)",
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "space-between",
-            minHeight: 130,
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.boxShadow =
-              "0 1px 0 0 rgba(184,146,42,0.14), 0 12px 32px -10px rgba(184,146,42,0.30), inset 0 1px 0 0 rgba(255,255,255,0.06)";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.boxShadow =
-              "0 1px 0 0 rgba(184,146,42,0.10), 0 8px 24px -10px rgba(184,146,42,0.20), inset 0 1px 0 0 rgba(255,255,255,0.06)";
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <div style={{ fontSize: 9.5, letterSpacing: 2, textTransform: "uppercase", color: "var(--ls-text-hint)", fontWeight: 700 }}>
-              🎯 Responsables
-            </div>
-            <span style={{ fontSize: 22, opacity: 0.4 }}>👑</span>
-          </div>
-          <div
-            style={{
-              fontFamily: "Syne, serif",
-              fontWeight: 800,
-              fontSize: 38,
-              lineHeight: 1,
-              background: "linear-gradient(135deg, #EF9F27 0%, #BA7517 100%)",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-              backgroundClip: "text",
-              letterSpacing: "-0.03em",
-            }}
-          >
-            {ownerTabs.length}
-          </div>
-          <div style={{ fontSize: 11, color: "var(--ls-text-hint)" }}>portefeuilles actifs</div>
-        </div>
-
-        {/* Card 3 — Relances */}
-        <div
-          className="clients-stat-card-v3"
-          style={{
-            background:
-              visibleRelanceCount > 0
-                ? "linear-gradient(135deg, color-mix(in srgb, var(--ls-coral) 12%, var(--ls-surface)) 0%, var(--ls-surface) 100%)"
-                : "linear-gradient(135deg, color-mix(in srgb, var(--ls-teal) 6%, var(--ls-surface)) 0%, var(--ls-surface) 100%)",
-            border: `0.5px solid color-mix(in srgb, ${visibleRelanceCount > 0 ? "var(--ls-coral)" : "var(--ls-teal)"} 35%, var(--ls-border))`,
-            borderRadius: 20,
-            padding: "18px 20px",
-            boxShadow:
-              visibleRelanceCount > 0
-                ? "0 1px 0 0 rgba(220,38,38,0.10), 0 8px 24px -10px rgba(220,38,38,0.20), inset 0 1px 0 0 rgba(255,255,255,0.06)"
-                : "0 1px 0 0 rgba(13,148,136,0.10), 0 8px 24px -10px rgba(13,148,136,0.18), inset 0 1px 0 0 rgba(255,255,255,0.06)",
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "space-between",
-            minHeight: 130,
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <div style={{ fontSize: 9.5, letterSpacing: 2, textTransform: "uppercase", color: "var(--ls-text-hint)", fontWeight: 700 }}>
-              {visibleRelanceCount > 0 ? "🔥 Relances" : "✓ À jour"}
-            </div>
-            <span style={{ fontSize: 22, opacity: 0.4 }}>
-              {visibleRelanceCount > 0 ? "⚠️" : "🎉"}
-            </span>
-          </div>
-          <div
-            style={{
-              fontFamily: "Syne, serif",
-              fontWeight: 800,
-              fontSize: 38,
-              lineHeight: 1,
-              color: visibleRelanceCount > 0 ? "var(--ls-coral)" : "var(--ls-teal)",
-              letterSpacing: "-0.03em",
-            }}
-          >
-            {visibleRelanceCount}
-          </div>
-          <div style={{ fontSize: 11, color: "var(--ls-text-hint)" }}>
-            {visibleRelanceCount > 0 ? "à reprendre" : "tout est calé"}
-          </div>
-        </div>
-      </div>
+      {/* STATS PREMIUM V3 BENTO (refacto 2026-05-19 — extrait en BentoStatsClients) */}
+      <BentoStatsClients
+        visibleCount={filteredClients.length}
+        ownersCount={ownerTabs.length}
+        relanceCount={visibleRelanceCount}
+      />
 
       {/* CHIPS FILTRES RAPIDES + TOGGLE VUE (Chantier C.1+C.2, 2026-04-29) */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, flexWrap: "wrap" }}>
@@ -1289,137 +1071,10 @@ export function ClientsPage() {
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────
-function getInitials(name: string): string {
-  if (!name) return "?";
-  const parts = name.trim().split(/\s+/);
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-  return (parts[0][0] + parts[1][0]).toUpperCase();
-}
+// Refacto 2026-05-19 (Phase 3.5) : helpers + exportClientsCsv extraits dans
+// `src/components/clients/clientsListHelpers.ts`. getInitials extrait dans
+// `src/lib/utils/getInitials.ts` (déjà existant — supprime le doublon).
+// Imports en haut du fichier. Les blocs ci-dessous étaient présents avant
+// le 2026-05-19 et ont été déplacés intégralement (zéro changement de
+// comportement, juste relocation). Ne PAS les recréer ici.
 
-function getOwnerAvatarColors(role: User["role"]) {
-  switch (role) {
-    case "admin":
-      return { bg: "#E6F1FB", text: "#0C447C" };
-    case "referent":
-      return { bg: "#FAEEDA", text: "#633806" };
-    case "distributor":
-    default:
-      return { bg: "#EAF3DE", text: "#27500A" };
-  }
-}
-
-const LIFECYCLE_TONE_TO_COLORS: Record<"teal" | "gold" | "muted" | "coral", { bg: string; color: string }> = {
-  teal:  { bg: "rgba(13,148,136,0.1)",  color: "var(--ls-teal)" },
-  gold:  { bg: "rgba(184,146,42,0.1)",  color: "var(--ls-gold)" },
-  muted: { bg: "var(--ls-surface2)",    color: "var(--ls-text-muted)" },
-  coral: { bg: "rgba(220,38,38,0.1)",   color: "var(--ls-coral)" },
-};
-
-function getClientStatusInfo(client: Client, nextFollowUp: string | undefined) {
-  // Priorité 1 : lifecycle stopped/lost → label direct
-  const lifecycle: LifecycleStatus = client.lifecycleStatus ?? (isClientProgramStarted(client) ? "active" : "not_started");
-  if (lifecycle === "stopped" || lifecycle === "lost" || lifecycle === "paused") {
-    const colors = LIFECYCLE_TONE_TO_COLORS[LIFECYCLE_TONES[lifecycle]];
-    return { label: LIFECYCLE_LABELS[lifecycle], bg: colors.bg, color: colors.color };
-  }
-  // Priorité 2 : RDV urgent ou en retard
-  if (nextFollowUp && isOverdue(nextFollowUp)) {
-    return { label: "Relance", bg: "rgba(220,38,38,0.1)", color: "var(--ls-coral)" };
-  }
-  if (nextFollowUp) {
-    const daysUntil = getDaysUntil(nextFollowUp);
-    if (daysUntil !== null && daysUntil <= 2) {
-      return { label: "RDV", bg: "rgba(184,146,42,0.1)", color: "var(--ls-gold)" };
-    }
-  }
-  // Priorité 3 : lifecycle basique
-  const colors = LIFECYCLE_TONE_TO_COLORS[LIFECYCLE_TONES[lifecycle]];
-  return { label: LIFECYCLE_LABELS[lifecycle], bg: colors.bg, color: colors.color };
-}
-
-function isOverdue(dateStr: string | undefined): boolean {
-  if (!dateStr) return false;
-  return new Date(dateStr).getTime() < Date.now();
-}
-
-function getDaysUntil(dateStr: string | undefined): number | null {
-  if (!dateStr) return null;
-  const diff = new Date(dateStr).getTime() - Date.now();
-  return Math.ceil(diff / (1000 * 60 * 60 * 24));
-}
-
-function getRelativeTime(dateStr: string | undefined): string {
-  if (!dateStr) return "—";
-  const days = getDaysUntil(dateStr);
-  if (days === null) return "—";
-  if (days < 0) return `depuis ${Math.abs(days)} j`;
-  if (days === 0) return "aujourd'hui";
-  if (days === 1) return "demain";
-  if (days < 30) return `dans ${days} jours`;
-  const months = Math.floor(days / 30);
-  return `dans ${months} mois`;
-}
-
-// C V2 (2026-04-28) : timestamp du dernier bilan (any type) pour tri.
-function getLastAssessmentTime(client: Client): number | null {
-  if (!client.assessments || client.assessments.length === 0) return null;
-  let max = 0;
-  for (const a of client.assessments) {
-    const t = new Date(a.date).getTime();
-    if (!Number.isNaN(t) && t > max) max = t;
-  }
-  return max > 0 ? max : null;
-}
-
-// C V2 (2026-04-28) : export CSV des clients filtres. Genere un fichier
-// avec colonnes : Prenom, Nom, Tel, Email, Ville, Statut, Programme,
-// Dernier bilan, Created. Telechargement direct via Blob + anchor.
-export function exportClientsCsv(clients: Client[]) {
-  if (clients.length === 0) return;
-  const header = [
-    "Prénom",
-    "Nom",
-    "Téléphone",
-    "Email",
-    "Ville",
-    "Statut",
-    "Programme",
-    "Dernier bilan",
-  ];
-  const rows = clients.map((c) => {
-    const lastAt = getLastAssessmentTime(c);
-    const lastDate = lastAt ? new Date(lastAt).toISOString().slice(0, 10) : "";
-    return [
-      c.firstName ?? "",
-      c.lastName ?? "",
-      c.phone ?? "",
-      c.email ?? "",
-      c.city ?? "",
-      c.lifecycleStatus ?? "",
-      c.currentProgram ?? "",
-      lastDate,
-    ];
-  });
-  const csv = [header, ...rows]
-    .map((row) =>
-      row
-        .map((cell) => {
-          const s = String(cell ?? "");
-          if (s.includes(",") || s.includes('"') || s.includes("\n")) {
-            return `"${s.replace(/"/g, '""')}"`;
-          }
-          return s;
-        })
-        .join(","),
-    )
-    .join("\n");
-  // BOM pour Excel reconnaisse l UTF-8 + accents.
-  const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  const datestamp = new Date().toISOString().slice(0, 10);
-  a.download = `clients-export-${datestamp}.csv`;
-  a.click();
-  URL.revokeObjectURL(url);
-}
