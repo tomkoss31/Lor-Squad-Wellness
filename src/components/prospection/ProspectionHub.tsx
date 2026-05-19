@@ -1,41 +1,140 @@
-// Chantier #3 V4 — Hub Prospection (2026-05-19).
-// Affiché aux distri qui ont déjà fait le tunnel onboarding 1ère visite
-// (users.prospection_onboarded_at != null). Filtres Marché + Profil sticky
-// en haut. 10 modules en cards, accordéon-style : un module se déplie au
-// clic et affiche son contenu (lecture seule).
+// Chantier #3 V4 — Hub Prospection refonte design polish (2026-05-19).
 //
-// Le contenu vient du hook useProspectionData (V4). Le copy est multi-marché
-// (FR/EN/ES/PT/TR/HI) avec body_fr renseigné pour les non-FR.
+// Port pixel-near du design v3 (claude design + Thomas).
+// Source : docs/mockups/prospection-v4-prototype-v3.html
+// Styles : ./prospection-hub.css (scope .prospection-hub)
+//
+// Spec :
+//   - Sticky header 3 rows : brand+stat-chip / twin pickers / index rail
+//   - Section meta + heading (kicker + H2 italique accent + lede)
+//   - 10 modules renderers (1 module à la fois)
+//   - Bottom nav (prev / dots / next)
+//   - Bottom-sheets pour market picker, profile picker, stat funnel
+//   - Toast Copié
+//   - Toggle EN↔FR par script
+//   - Compteur 7j incrémenté à "J'ai envoyé" (+RDV si WhatsApp proxy)
+//   - Raccourcis clavier : ←/→ modules · 1-9/0 jump · M marché · P profil · Esc
+//   - Light + Dark via theme app existant. Accent gold en light, teal en dark.
 
-import { useMemo, useState, type CSSProperties, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
-  PLATFORM_GRADIENTS,
-  PLATFORM_ICONS,
-  PLATFORM_LABELS,
-  PROSPECTION_MODULES,
+  createProspectionAttempt,
   filterByMarket,
   filterByMarketAndProfile,
   filterHashtags,
   filterScripts,
+  PLATFORM_LABELS,
+  type ProspectionClosingBlock,
+  type ProspectionFollowup,
   type ProspectionHashtag,
   type ProspectionMarket,
   type ProspectionMarketTip,
-  type ProspectionProfile,
-  type ProspectionScript,
-  type ProspectionMindsetBlock,
   type ProspectionMetric,
-  type ProspectionProfileFlag,
-  type ProspectionSource,
-  type ProspectionReplyNode,
+  type ProspectionMindsetBlock,
   type ProspectionObjection,
-  type ProspectionFollowup,
-  type ProspectionClosingBlock,
+  type ProspectionPlatform,
+  type ProspectionProfile,
+  type ProspectionProfileFlag,
+  type ProspectionReplyNode,
+  type ProspectionRoutineItem,
+  type ProspectionScript,
+  type ProspectionSource,
   type ProspectionSpecialCase,
   type ProspectionStoryBlock,
-  type ProspectionRoutineItem,
-  type ProspectionModuleId,
 } from "../../hooks/useProspectionData";
+import { useAppContext } from "../../context/AppContext";
+import "./prospection-hub.css";
 
+// ────────────────────────────────────────────────────────────
+// Module metadata (10 sections, naming sans M1/M2/M3)
+// ────────────────────────────────────────────────────────────
+type ModuleId =
+  | "mindset" | "find" | "first_msg" | "reply" | "objections"
+  | "post_call" | "closing" | "special" | "story" | "routine";
+
+interface ModuleMeta {
+  id: ModuleId;
+  ic: string;
+  name: string;        // Tab label
+  kicker: string;      // "Module · ..."
+  h2: [string, string, string]; // [prefix, italic accent, suffix]
+  lede: string;
+  meta: string;        // Right side of section-meta (auto reading-time)
+}
+
+const MODULES: ModuleMeta[] = [
+  { id: "mindset",   ic: "🧠", name: "Mindset",
+    kicker: "Module · Mindset & posture",
+    h2: ["D'abord, ", "le ton", "."],
+    lede: "Trois vérités à intégrer avant le premier message. Cinq erreurs qui sabotent 80 % des conversations.",
+    meta: "" },
+  { id: "find",      ic: "🔍", name: "Trouver",
+    kicker: "Module · Trouver des prospects",
+    h2: ["Le scan ", "30 secondes", "."],
+    lede: "Tu ouvres un profil : en 30 s tu sais si tu lui écris. Drapeaux verts/rouges, hashtags, sources hors-feed.",
+    meta: "" },
+  { id: "first_msg", ic: "📨", name: "Premier message",
+    kicker: "Module · Premier contact",
+    h2: ["Premier ", "message", "."],
+    lede: "Sélectionne ta plateforme. Personnalise les variables en gold avant de copier.",
+    meta: "" },
+  { id: "reply",     ic: "🌳", name: "Sa réponse",
+    kicker: "Module · Quand il/elle répond",
+    h2: ["Que répondre, ", "selon ce qu'il dit", "."],
+    lede: "Branches tiède, froid, indécis. Une réponse par branche, prête à copier.",
+    meta: "" },
+  { id: "objections",ic: "🛡️", name: "Objections",
+    kicker: "Module · Réponses aux refus",
+    h2: ["Les huit ", "non", "."],
+    lede: "Pour chaque objection : ce qu'il ne faut pas dire, ce qui ouvre la porte.",
+    meta: "" },
+  { id: "post_call", ic: "📞", name: "Post-appel",
+    kicker: "Module · Séquence post-appel",
+    h2: ["Après l'appel, ", "quatre touches", "."],
+    lede: "J0 – J+2 – J+5 – J+30. Une touche par jour, jamais une de plus.",
+    meta: "" },
+  { id: "closing",   ic: "🎯", name: "Closing",
+    kicker: "Module · Closing",
+    h2: ["Quand fermer, ", "et comment", "."],
+    lede: "Les signaux qui montrent que c'est mûr, les scripts pour passer à l'acte.",
+    meta: "" },
+  { id: "special",   ic: "🔁", name: "Cas spéciaux",
+    kicker: "Module · Cas spéciaux",
+    h2: ["Quand ça ", "sort des rails", "."],
+    lede: "Ghosting, réactivation, demande de recommandation. Trois playbooks distincts.",
+    meta: "" },
+  { id: "story",     ic: "📖", name: "Storytelling",
+    kicker: "Module · Storytelling",
+    h2: ["Raconte ton ", "avant", "."],
+    lede: "La structure en 3 actes qui marche. Deux exemples vivants.",
+    meta: "" },
+  { id: "routine",   ic: "⏰", name: "Routine",
+    kicker: "Module · Routine quotidienne",
+    h2: ["Trente minutes, ", "tous les jours", "."],
+    lede: "Sept actions à cocher chaque matin. Sans elles, le reste s'effondre.",
+    meta: "" },
+];
+
+// Ordre profil cible : weight-women → weight-men → sport → business
+const PROFILE_GLYPHS: Record<string, string> = {
+  "weight-women": "⚖️",
+  "weight-men": "💪",
+  "sport": "🏃",
+  "business": "💼",
+};
+
+// Plateformes M1 (4 onglets dans le module Premier message)
+const PLATFORM_ORDER: ProspectionPlatform[] = ["insta", "fb", "whatsapp", "sms"];
+const PLATFORM_GLYPH: Record<string, string> = {
+  insta: "📷", fb: "f", whatsapp: "💬", sms: "✉",
+};
+const PLATFORM_SHORT: Record<string, string> = {
+  insta: "Insta", fb: "Facebook", whatsapp: "WhatsApp", sms: "SMS",
+};
+
+// ────────────────────────────────────────────────────────────
+// Props
+// ────────────────────────────────────────────────────────────
 interface Props {
   markets: ProspectionMarket[];
   profiles: ProspectionProfile[];
@@ -53,24 +152,45 @@ interface Props {
   specialCases: ProspectionSpecialCase[];
   storytelling: ProspectionStoryBlock[];
   routines: ProspectionRoutineItem[];
-  /** Si Thomas veut revoir le tunnel onboarding manuellement. */
   onRestartTunnel: () => void;
 }
 
+// ────────────────────────────────────────────────────────────
+// Component
+// ────────────────────────────────────────────────────────────
 export function ProspectionHub(p: Props) {
-  // Sticky filters market + profile. Défaut = 1ers items dispo.
+  const { currentUser } = useAppContext();
+
+  // State
   const [marketCode, setMarketCode] = useState<string>(p.markets[0]?.code ?? "fr");
   const [profileSlug, setProfileSlug] = useState<string>(p.profiles[0]?.slug ?? "weight-women");
-  const [openModule, setOpenModule] = useState<ProspectionModuleId | null>(null);
+  const [moduleIdx, setModuleIdx] = useState<number>(0);
+  const [platform, setPlatform] = useState<ProspectionPlatform>("insta");
+  const [scriptLang, setScriptLang] = useState<Record<string, "native" | "fr">>({});
+  const [sheet, setSheet] = useState<"market" | "profile" | "stat" | null>(null);
+  const [toast, setToast] = useState<string | null>(null);
+  const [sent7d, setSent7d] = useState<number>(12);
+  const [rdv7d, setRdv7d] = useState<number>(3);
+  const [bumpStat, setBumpStat] = useState<boolean>(false);
+  const [swapping, setSwapping] = useState<boolean>(false);
+  const [caseTab, setCaseTab] = useState<"ghost_after_exchange" | "reactivation_3_6m" | "referral_request">("ghost_after_exchange");
+  const [checks, setChecks] = useState<Record<string, boolean>>({});
+  const [sentScripts, setSentScripts] = useState<Record<string, boolean>>({});
+  const [pickerOpening, setPickerOpening] = useState<"market" | "profile" | null>(null);
 
+  const indexRailRef = useRef<HTMLDivElement>(null);
+  const bodyInnerRef = useRef<HTMLDivElement>(null);
+
+  // Derived
+  const market = useMemo(() => p.markets.find((m) => m.code === marketCode) ?? null, [p.markets, marketCode]);
   const profile = useMemo(() => p.profiles.find((pp) => pp.slug === profileSlug) ?? null, [p.profiles, profileSlug]);
   const marketTip = useMemo(() => p.marketTips.find((t) => t.market_code === marketCode) ?? null, [p.marketTips, marketCode]);
+  const moduleMeta = MODULES[moduleIdx];
 
-  // Filtered data par market+profil (pour les modules qui en ont besoin)
+  // Filtered data
   const hashtags = useMemo(() => filterHashtags(p.hashtags, marketCode, profileSlug), [p.hashtags, marketCode, profileSlug]);
   const scripts = useMemo(() => filterScripts(p.scripts, marketCode, profileSlug), [p.scripts, marketCode, profileSlug]);
   const mindsetBlocks = useMemo(() => filterByMarket(p.mindsetBlocks, marketCode), [p.mindsetBlocks, marketCode]);
-  const metrics = useMemo(() => filterByMarket(p.metrics, marketCode), [p.metrics, marketCode]);
   const flags = useMemo(
     () => p.profileFlags.filter((f) => f.market_code === marketCode && f.profile_slug === profileSlug),
     [p.profileFlags, marketCode, profileSlug],
@@ -93,167 +213,402 @@ export function ProspectionHub(p: Props) {
   );
   const routines = useMemo(() => filterByMarket(p.routines, marketCode), [p.routines, marketCode]);
 
+  // Reading-time auto pour le current module
+  const readingTime = useMemo(() => {
+    const text = collectModuleText({
+      mid: moduleMeta.id, mindsetBlocks, scripts, replyTree, objections, followups, closing,
+      specialCases, storytelling, routines, hashtags, flags, sources,
+    });
+    const words = text.split(/\s+/).filter(Boolean).length;
+    const m = Math.max(1, Math.round(words / 200));
+    return `≈ ${m} min de lecture`;
+  }, [moduleMeta.id, mindsetBlocks, scripts, replyTree, objections, followups, closing, specialCases, storytelling, routines, hashtags, flags, sources]);
+
+  // Keyboard nav
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      const target = e.target as HTMLElement;
+      if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable)) return;
+      if (sheet) {
+        if (e.key === "Escape") { setSheet(null); e.preventDefault(); }
+        return;
+      }
+      if (e.key === "ArrowLeft") { goModule(moduleIdx - 1); e.preventDefault(); }
+      else if (e.key === "ArrowRight") { goModule(moduleIdx + 1); e.preventDefault(); }
+      else if (/^[1-9]$/.test(e.key)) { goModule(parseInt(e.key, 10) - 1); e.preventDefault(); }
+      else if (e.key === "0") { goModule(9); e.preventDefault(); }
+      else if (e.key.toLowerCase() === "m") { setSheet("market"); e.preventDefault(); }
+      else if (e.key.toLowerCase() === "p") { setSheet("profile"); e.preventDefault(); }
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [moduleIdx, sheet]);
+
+  // Auto-center active step in index rail
+  useEffect(() => {
+    const rail = indexRailRef.current;
+    if (!rail) return;
+    const active = rail.querySelector<HTMLElement>(".step.active");
+    if (!active) return;
+    const railRect = rail.getBoundingClientRect();
+    const aRect = active.getBoundingClientRect();
+    const delta = (aRect.left + aRect.width / 2) - (railRect.left + railRect.width / 2);
+    rail.scrollBy({ left: delta, behavior: "smooth" });
+  }, [moduleIdx]);
+
+  // Body swap animation
+  function goModule(idx: number) {
+    const clamped = Math.max(0, Math.min(MODULES.length - 1, idx));
+    if (clamped === moduleIdx) return;
+    setSwapping(true);
+    setTimeout(() => {
+      setModuleIdx(clamped);
+      setSwapping(false);
+      bodyInnerRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+    }, 160);
+  }
+
+  function showToast(msg: string) {
+    setToast(msg);
+    setTimeout(() => setToast(null), 1500);
+  }
+
+  function copy(text: string, label = "Copié !") {
+    void navigator.clipboard.writeText(text).catch(() => {});
+    showToast(label);
+  }
+
+  async function markSent(scriptId: string, scriptPlatform: ProspectionPlatform) {
+    setSentScripts((m) => ({ ...m, [scriptId]: true }));
+    setSent7d((s) => s + 1);
+    if (scriptPlatform === "whatsapp") setRdv7d((r) => r + 1);
+    setBumpStat(true);
+    setTimeout(() => setBumpStat(false), 800);
+    showToast("Envoi noté · +1");
+    if (currentUser?.id && marketCode && profileSlug) {
+      void createProspectionAttempt({
+        coach_id: currentUser.id,
+        market_code: marketCode,
+        profile_slug: profileSlug,
+        platform: scriptPlatform,
+      });
+    }
+  }
+
+  function setLang(scriptId: string, lang: "native" | "fr") {
+    setScriptLang((m) => ({ ...m, [scriptId]: lang }));
+  }
+
+  function openPicker(kind: "market" | "profile") {
+    setPickerOpening(kind);
+    setTimeout(() => setPickerOpening(null), 320);
+    setSheet(kind);
+  }
+
+  const prevMod = moduleIdx > 0 ? MODULES[moduleIdx - 1] : null;
+  const nextMod = moduleIdx < MODULES.length - 1 ? MODULES[moduleIdx + 1] : null;
+
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 16, paddingBottom: 32 }}>
-      <style>{HUB_KEYFRAMES}</style>
-
-      {/* Sticky filter bar */}
-      <div style={STICKY_BAR}>
-        <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 4 }}>
-          {p.markets.map((m) => (
-            <button
-              key={m.code}
-              onClick={() => setMarketCode(m.code)}
-              style={{
-                ...PILL,
-                ...(m.code === marketCode ? PILL_ACTIVE : {}),
-                fontFamily:
-                  "'Twemoji Country Flags','Segoe UI Emoji','Apple Color Emoji','Noto Color Emoji',sans-serif",
-              }}
-            >
-              <span style={{ marginRight: 6 }}>{m.flag}</span>
-              {m.label}
-            </button>
-          ))}
-        </div>
-        <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 4 }}>
-          {p.profiles.map((pp) => (
-            <button
-              key={pp.slug}
-              onClick={() => setProfileSlug(pp.slug)}
-              style={{
-                ...PILL,
-                ...(pp.slug === profileSlug ? PILL_ACTIVE : {}),
-              }}
-            >
-              <span style={{ marginRight: 6 }}>{pp.emoji}</span>
-              {pp.label}
-            </button>
-          ))}
-        </div>
-        {marketTip ? (
-          <div style={MARKET_TIP_BANNER}>
-            <div style={{ fontSize: 12, color: "var(--ls-text-muted)" }}>{marketTip.timing}</div>
-            <div style={{ fontSize: 13, color: "var(--ls-text)" }}>{marketTip.cultural_tip}</div>
+    <div className="prospection-hub">
+      {/* Sticky header */}
+      <div className="ph-hdr">
+        <div className="ph-row1">
+          <div className="ph-brand">
+            <span className="ph-gem" />
+            La Base 360<small>· prospection</small>
           </div>
-        ) : null}
-      </div>
+          <button type="button" className="ph-stat-chip" onClick={() => setSheet("stat")}>
+            <span className="dot-live" />
+            <span>
+              <b className={bumpStat ? "bumped" : ""}>{sent7d}</b> envoyés ·{" "}
+              <b className={bumpStat ? "bumped" : ""}>{rdv7d}</b> RDV
+            </span>
+            <span className="muted">·&nbsp;7j</span>
+          </button>
+        </div>
 
-      {/* Modules grid */}
-      <div style={MODULES_GRID}>
-        {PROSPECTION_MODULES.map((mod) => {
-          const isOpen = openModule === mod.id;
-          return (
-            <div key={mod.id} style={{ ...MODULE_CARD, ...(isOpen ? MODULE_CARD_OPEN : {}) }}>
-              <button
-                onClick={() => setOpenModule(isOpen ? null : mod.id)}
-                style={MODULE_HEADER_BTN}
-                aria-expanded={isOpen}
-              >
-                <span style={{ fontSize: 22, marginRight: 10 }}>{mod.emoji}</span>
-                <span style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", flex: 1 }}>
-                  <span style={{ fontFamily: "Syne, serif", fontSize: 16, fontWeight: 600 }}>{mod.title}</span>
-                  <span style={{ fontSize: 12, color: "var(--ls-text-muted)", marginTop: 2 }}>{mod.subtitle}</span>
-                </span>
-                <span style={MODULE_CHIP}>{mod.section}</span>
-                <span style={{ fontSize: 18, color: "var(--ls-text-muted)", marginLeft: 8 }}>
-                  {isOpen ? "▾" : "▸"}
-                </span>
-              </button>
-              {isOpen ? (
-                <div style={MODULE_BODY}>
-                  {mod.id === "mindset"       && <MindsetModule blocks={mindsetBlocks} metrics={metrics} />}
-                  {mod.id === "find_prospects" && (
-                    <FindProspectsModule
-                      flags={flags}
-                      sources={sources}
-                      hashtags={hashtags}
-                      profile={profile}
-                    />
-                  )}
-                  {mod.id === "messages_m1"   && <MessagesM1Module scripts={scripts} marketCode={marketCode} />}
-                  {mod.id === "reply_tree"    && <ReplyTreeModule nodes={replyTree} marketCode={marketCode} />}
-                  {mod.id === "objections"    && <ObjectionsModule items={objections} marketCode={marketCode} />}
-                  {mod.id === "followups"     && <FollowupsModule items={followups} marketCode={marketCode} />}
-                  {mod.id === "closing"       && <ClosingModule items={closing} marketCode={marketCode} />}
-                  {mod.id === "special_cases" && <SpecialCasesModule items={specialCases} marketCode={marketCode} />}
-                  {mod.id === "storytelling"  && <StorytellingModule items={storytelling} />}
-                  {mod.id === "routine"       && <RoutineModule items={routines} />}
-                </div>
-              ) : null}
+        <div className="ph-pickers">
+          <button
+            type="button"
+            className={`ph-picker${pickerOpening === "market" ? " opening" : ""}`}
+            onClick={() => openPicker("market")}
+          >
+            <span className="flag">{market?.flag ?? "🌍"}</span>
+            <div className="info-stack">
+              <span className="lbl">Marché</span>
+              <span className="val">{market?.label ?? "Choisir"}</span>
             </div>
-          );
-        })}
+            <Caret />
+          </button>
+          <button
+            type="button"
+            className={`ph-picker${pickerOpening === "profile" ? " opening" : ""}`}
+            onClick={() => openPicker("profile")}
+          >
+            <span className="glyph">{profile?.emoji ?? PROFILE_GLYPHS[profileSlug] ?? "👤"}</span>
+            <div className="info-stack">
+              <span className="lbl">Profil cible</span>
+              <span className="val">{profile?.label ?? "Choisir"}</span>
+            </div>
+            <Caret />
+          </button>
+        </div>
+
+        <nav className="ph-index" ref={indexRailRef} aria-label="Index des 10 modules">
+          {MODULES.map((m, i) => {
+            const cls = i === moduleIdx ? "active" : (i < moduleIdx ? "done" : "");
+            return (
+              <button
+                key={m.id}
+                className={`step ${cls}`}
+                type="button"
+                aria-label={m.name}
+                onClick={() => goModule(i)}
+              >
+                <span className="n">{String(i + 1).padStart(2, "0")}</span>
+                <span className="ic">{m.ic}</span>
+                <span className="name">{m.name}</span>
+              </button>
+            );
+          })}
+        </nav>
       </div>
 
-      <button onClick={p.onRestartTunnel} style={RESTART_BTN}>
+      {/* Section meta */}
+      <div className="ph-section-meta">
+        <span><b>{String(moduleIdx + 1).padStart(2, "0")}</b>&nbsp;/&nbsp;10</span>
+        <span>{readingTime}</span>
+      </div>
+
+      {/* Section heading */}
+      <div className="ph-section-head">
+        <div className="kicker">{moduleMeta.kicker}</div>
+        <h2>
+          {moduleMeta.h2[0]}
+          <span className="em">{moduleMeta.h2[1]}</span>
+          {moduleMeta.h2[2]}
+        </h2>
+        <p className="lede">{moduleMeta.lede}</p>
+      </div>
+
+      {/* Body */}
+      <div className="ph-body">
+        <div className={`ph-body-inner${swapping ? " swapping" : ""}`} ref={bodyInnerRef}>
+          {moduleMeta.id === "mindset" && <MindsetModule blocks={mindsetBlocks} />}
+          {moduleMeta.id === "find" && (
+            <FindModule flags={flags} hashtags={hashtags} sources={sources} profile={profile} />
+          )}
+          {moduleMeta.id === "first_msg" && (
+            <FirstMessageModule
+              scripts={scripts}
+              platform={platform}
+              setPlatform={setPlatform}
+              marketCode={marketCode}
+              scriptLang={scriptLang}
+              setLang={setLang}
+              sentScripts={sentScripts}
+              onCopy={copy}
+              onSend={markSent}
+            />
+          )}
+          {moduleMeta.id === "reply" && (
+            <ReplyModule nodes={replyTree} marketCode={marketCode} onCopy={copy} />
+          )}
+          {moduleMeta.id === "objections" && (
+            <ObjectionsModule items={objections} marketCode={marketCode} onCopy={copy} />
+          )}
+          {moduleMeta.id === "post_call" && (
+            <PostCallModule items={followups} marketCode={marketCode} onCopy={copy} />
+          )}
+          {moduleMeta.id === "closing" && (
+            <ClosingModule items={closing} marketCode={marketCode} onCopy={copy} />
+          )}
+          {moduleMeta.id === "special" && (
+            <SpecialCasesModule items={specialCases} marketCode={marketCode} caseTab={caseTab} setCaseTab={setCaseTab} onCopy={copy} />
+          )}
+          {moduleMeta.id === "story" && <StorytellingModule items={storytelling} />}
+          {moduleMeta.id === "routine" && (
+            <RoutineModule items={routines} checks={checks} setChecks={setChecks} marketTip={marketTip} />
+          )}
+        </div>
+      </div>
+
+      {/* Bottom nav */}
+      <nav className="ph-botnav">
+        <button
+          type="button"
+          className="ph-btn-nav prev"
+          onClick={() => goModule(moduleIdx - 1)}
+          disabled={moduleIdx === 0}
+        >
+          <span className="arr"><ArrowLeft /></span>
+          <span className="lab">
+            <small>{prevMod ? "Précédent" : "Début"}</small>
+            <span>{prevMod?.name ?? "Index"}</span>
+          </span>
+        </button>
+        <div className="ph-dots" aria-hidden="true">
+          {MODULES.map((_, i) => (
+            <span key={i} className={`d ${i === moduleIdx ? "on" : i < moduleIdx ? "done" : ""}`} />
+          ))}
+        </div>
+        <button
+          type="button"
+          className="ph-btn-nav next"
+          onClick={() => goModule(moduleIdx + 1)}
+          disabled={moduleIdx === MODULES.length - 1}
+        >
+          <span className="arr"><ArrowRight /></span>
+          <span className="lab">
+            <small>{nextMod ? `Suivant · ${String(moduleIdx + 2).padStart(2, "0")}` : "Fin"}</small>
+            <span>{nextMod?.name ?? "—"}</span>
+          </span>
+        </button>
+      </nav>
+
+      {/* Toast */}
+      <div className={`ph-toast${toast ? " show" : ""}`} aria-live="polite">
+        <span className="ic">✓</span>
+        <span>{toast ?? ""}</span>
+      </div>
+
+      {/* Sheets */}
+      <div className={`ph-sheet-backdrop${sheet ? " open" : ""}`} onClick={() => setSheet(null)} />
+      <div className={`ph-sheet${sheet === "stat" ? " ph-stat-sheet" : ""}${sheet ? " open" : ""}`}>
+        <div className="grab" />
+        {sheet === "market" && (
+          <>
+            <div className="sheet-head">
+              <div className="kicker">Choisir un marché</div>
+              <h3>Marché cible.</h3>
+            </div>
+            <div className="sheet-body">
+              <div className="ph-opts cols-2">
+                {p.markets.map((m) => (
+                  <button
+                    key={m.code}
+                    className={`ph-opt${m.code === marketCode ? " on" : ""}`}
+                    type="button"
+                    onClick={() => { setMarketCode(m.code); setSheet(null); }}
+                  >
+                    <span className="flag">{m.flag}</span>
+                    <span className="info">
+                      <b>{m.label}</b>
+                      <small>{m.description ?? m.code}</small>
+                    </span>
+                    <span className="check" />
+                  </button>
+                ))}
+              </div>
+              <p style={{ fontFamily: "var(--hub-f-mono)", fontSize: 10.5, color: "var(--hub-muted)", lineHeight: 1.6, marginTop: 14, padding: "10px 12px", background: "var(--hub-surface2)", borderRadius: 10 }}>
+                Les scripts, hashtags et sources se localisent automatiquement.
+              </p>
+            </div>
+          </>
+        )}
+        {sheet === "profile" && (
+          <>
+            <div className="sheet-head">
+              <div className="kicker">Choisir un profil</div>
+              <h3>Profil cible.</h3>
+            </div>
+            <div className="sheet-body">
+              <div className="ph-opts">
+                {p.profiles.map((pp) => (
+                  <button
+                    key={pp.slug}
+                    className={`ph-opt${pp.slug === profileSlug ? " on" : ""}`}
+                    type="button"
+                    onClick={() => { setProfileSlug(pp.slug); setSheet(null); }}
+                  >
+                    <span className="glyph">{pp.emoji}</span>
+                    <span className="info">
+                      <b>{pp.label}</b>
+                      <small>{pp.description ?? ""}</small>
+                    </span>
+                    <span className="check" />
+                  </button>
+                ))}
+              </div>
+            </div>
+          </>
+        )}
+        {sheet === "stat" && (
+          <StatFunnelSheet sent={sent7d} rdv={rdv7d} />
+        )}
+      </div>
+
+      {/* Restart tunnel (discret) */}
+      <button
+        type="button"
+        onClick={p.onRestartTunnel}
+        style={{
+          alignSelf: "center", margin: "16px 0 24px",
+          padding: "8px 14px", borderRadius: 999,
+          border: "1px dashed var(--hub-line)",
+          background: "transparent",
+          color: "var(--hub-muted)",
+          fontSize: 12, fontFamily: "var(--hub-f-mono)",
+          cursor: "pointer",
+        }}
+      >
         🔁 Revoir le tunnel onboarding
       </button>
     </div>
   );
 }
 
-// ============================================================================
-// Module renderers — read-only display
-// ============================================================================
+// ────────────────────────────────────────────────────────────
+// Module renderers
+// ────────────────────────────────────────────────────────────
 
-function MindsetModule({
-  blocks, metrics,
-}: { blocks: ProspectionMindsetBlock[]; metrics: ProspectionMetric[] }) {
+function MindsetModule({ blocks }: { blocks: ProspectionMindsetBlock[] }) {
   const truths = blocks.filter((b) => b.kind === "truth");
   const errors = blocks.filter((b) => b.kind === "error");
-  const funnel = metrics.filter((m) => m.kind === "funnel_step");
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-      <section>
-        <h4 style={H4}>Les vérités à accepter</h4>
-        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          {truths.map((t) => (
-            <article key={t.id} style={INFO_CARD}>
-              <div style={{ fontFamily: "Syne, serif", fontWeight: 600, fontSize: 14, marginBottom: 4 }}>{t.title}</div>
-              <div style={{ fontSize: 13, color: "var(--ls-text)", whiteSpace: "pre-wrap" }}>{t.body}</div>
-            </article>
-          ))}
+    <>
+      {truths[0] && (
+        <article className="ph-truth">
+          <div className="ph-truth-row">
+            <div className="num">01</div>
+            <div>
+              <div className="kicker">Vérité n°1 · posture</div>
+              <p className="quote">{renderTruthBody(truths[0].body)}</p>
+              <p style={{ fontFamily: "var(--hub-f-body)", fontStyle: "italic", fontSize: 12, color: "rgba(255,255,255,.55)", marginTop: 10 }}>
+                — extrait <em>Méthode 360</em>
+              </p>
+            </div>
+          </div>
+        </article>
+      )}
+      {truths.slice(1).map((t, i) => (
+        <div key={t.id} className="ph-truth-lite">
+          <div className="ctx">Vérité n°{i + 2} · {t.title.split(" ")[0].toLowerCase()}</div>
+          <p>{renderTruthBody(t.body)}</p>
         </div>
-      </section>
-      <section>
-        <h4 style={H4}>Erreurs du débutant</h4>
-        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          {errors.map((e, idx) => (
-            <article key={e.id} style={ERROR_CARD}>
-              <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 2 }}>{idx + 1}. {e.title}</div>
-              <div style={{ fontSize: 12, color: "var(--ls-text-muted)" }}>{e.body}</div>
-            </article>
-          ))}
+      ))}
+
+      <div className="ph-errors-head">
+        <span className="label">{errors.length} erreurs à éviter</span>
+        <span style={{ fontFamily: "var(--hub-f-mono)", fontSize: 10, color: "var(--hub-muted)", letterSpacing: "0.1em" }}>↓ scroll</span>
+      </div>
+      {errors.map((e, i) => (
+        <div key={e.id} className="ph-err">
+          <span className="n">{String(i + 1).padStart(2, "0")}</span>
+          <div className="txt">{e.body}</div>
         </div>
-      </section>
-      {funnel.length > 0 ? (
-        <section>
-          <h4 style={H4}>Métriques réalistes (débutant)</h4>
-          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
-            <tbody>
-              {funnel.map((f) => (
-                <tr key={f.id} style={{ borderBottom: "1px solid var(--ls-border)" }}>
-                  <td style={{ padding: "6px 4px" }}>{f.label}</td>
-                  <td style={{ padding: "6px 4px", textAlign: "right", fontFamily: "Syne, serif", fontWeight: 600 }}>
-                    {formatRange(f.value_min, f.value_max, f.value_unit)}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </section>
-      ) : null}
-    </div>
+      ))}
+    </>
   );
 }
 
-function FindProspectsModule({
-  flags, sources, hashtags, profile,
+function FindModule({
+  flags, hashtags, sources, profile,
 }: {
   flags: ProspectionProfileFlag[];
-  sources: ProspectionSource[];
   hashtags: ProspectionHashtag[];
+  sources: ProspectionSource[];
   profile: ProspectionProfile | null;
 }) {
   const green = flags.filter((f) => f.flag_type === "green");
@@ -261,336 +616,372 @@ function FindProspectsModule({
   const mainstream = hashtags.filter((h) => h.category === "mainstream");
   const niche = hashtags.filter((h) => h.category === "niche");
   const cross = hashtags.filter((h) => h.category === "cross");
-  const advices = sources.filter((s) => s.kind === "hashtag_advanced");
-  const groupedSources = [
-    { key: "fb_groups",       label: "Groupes Facebook" },
-    { key: "irl",             label: "IRL" },
-    { key: "recommendations", label: "Recommandations" },
-    { key: "inbound_content", label: "Contenu entrant" },
-  ] as const;
+  const srcMap: Record<string, ProspectionSource[]> = {
+    fb_groups: sources.filter((s) => s.kind === "fb_groups"),
+    irl: sources.filter((s) => s.kind === "irl"),
+    recommendations: sources.filter((s) => s.kind === "recommendations"),
+    inbound_content: sources.filter((s) => s.kind === "inbound_content"),
+  };
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-      <section style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-        <div style={GREEN_CARD}>
-          <div style={{ fontWeight: 600, marginBottom: 6 }}>✅ Green flags (envoie le M1)</div>
-          {green.map((f) => (
-            <div key={f.id} style={{ fontSize: 13, padding: "2px 0" }}>• {f.text}</div>
-          ))}
+    <>
+      <div className="ph-scan-timer">
+        <span className="pulse" />
+        Scan en 30 s · les 4 premières secondes
+      </div>
+
+      <div className="ph-flags">
+        <div className="ph-flag-col green">
+          <h5><span className="dot" />Drapeaux verts</h5>
+          <ul>
+            {green.map((f) => (<li key={f.id}>{f.text}</li>))}
+          </ul>
         </div>
-        <div style={RED_CARD}>
-          <div style={{ fontWeight: 600, marginBottom: 6 }}>❌ Red flags (passe ton chemin)</div>
-          {red.map((f) => (
-            <div key={f.id} style={{ fontSize: 13, padding: "2px 0" }}>• {f.text}</div>
-          ))}
+        <div className="ph-flag-col red">
+          <h5><span className="dot" />Drapeaux rouges</h5>
+          <ul>
+            {red.map((f) => (<li key={f.id}>{f.text}</li>))}
+          </ul>
         </div>
-      </section>
-      {advices.length > 0 ? (
-        <section>
-          <h4 style={H4}>Conseils transverses</h4>
-          {advices.map((a) => (
-            <article key={a.id} style={INFO_CARD}>
-              <div style={{ fontWeight: 600, fontSize: 13 }}>{a.label}</div>
-              {a.detail ? (
-                <div style={{ fontSize: 12, color: "var(--ls-text-muted)", whiteSpace: "pre-wrap", marginTop: 4 }}>
-                  {a.detail}
-                </div>
-              ) : null}
-            </article>
-          ))}
-        </section>
-      ) : null}
-      <section>
-        <h4 style={H4}>Hashtags par catégorie</h4>
-        <HashtagRow title="Mainstream (large)" items={mainstream} accent="var(--ls-text-muted)" />
-        <HashtagRow title="Niche (segment précis)" items={niche} accent="var(--ls-teal)" />
-        <HashtagRow title="Cross (à croiser)" items={cross} accent="var(--ls-gold)" showHint />
-        {profile?.hashtag_advice ? (
-          <div style={{ ...INFO_CARD, marginTop: 8 }}>
-            <div style={{ fontWeight: 600, fontSize: 13 }}>Astuce pour ce profil</div>
-            <div style={{ fontSize: 12, color: "var(--ls-text-muted)", marginTop: 4 }}>{profile.hashtag_advice}</div>
+      </div>
+
+      <div className="ph-hashtag-card">
+        <div className="htag-head">
+          <span>Hashtags · 3 <b>catégories</b></span>
+        </div>
+        {mainstream.length > 0 && (
+          <div className="ph-htag-row">
+            <span className="cat">Mainstream</span>
+            {mainstream.map((h) => (<span key={h.id} className="ph-htag">{h.hashtag}</span>))}
           </div>
-        ) : null}
-      </section>
-      <section>
-        <h4 style={H4}>Sources alternatives</h4>
-        {groupedSources.map(({ key, label }) => {
-          const items = sources.filter((s) => s.kind === key);
-          if (items.length === 0) return null;
-          return (
-            <div key={key} style={{ marginBottom: 8 }}>
-              <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 4 }}>{label}</div>
-              {items.map((it) => (
-                <div key={it.id} style={INFO_CARD_TIGHT}>
-                  <div style={{ fontSize: 13 }}>{it.label}</div>
-                  {it.detail ? <div style={{ fontSize: 12, color: "var(--ls-text-muted)", marginTop: 2 }}>{it.detail}</div> : null}
-                </div>
-              ))}
-            </div>
-          );
-        })}
-      </section>
-    </div>
+        )}
+        {niche.length > 0 && (
+          <div className="ph-htag-row">
+            <span className="cat">Niche</span>
+            {niche.map((h) => (<span key={h.id} className="ph-htag teal">{h.hashtag}</span>))}
+          </div>
+        )}
+        {cross.length > 0 && (
+          <div className="ph-htag-row">
+            <span className="cat">Cross</span>
+            {cross.map((h) => (<span key={h.id} className="ph-htag gold">{h.hashtag}</span>))}
+          </div>
+        )}
+        {profile?.hashtag_advice && (
+          <p style={{ fontFamily: "var(--hub-f-mono)", fontSize: 10.5, color: "var(--hub-muted)", lineHeight: 1.5, marginTop: 8, paddingTop: 8, borderTop: "1px dashed var(--hub-line)" }}>
+            {profile.hashtag_advice}
+          </p>
+        )}
+      </div>
+
+      <article className="ph-src-card">
+        <div className="kk">Sources hors-feed</div>
+        <h4>Là où on n'écrit pas en premier</h4>
+        {srcMap.fb_groups[0] && (
+          <div className="ph-src-row">
+            <span className="lab">Facebook</span>
+            <div className="body">{srcMap.fb_groups[0].detail ?? srcMap.fb_groups[0].label}</div>
+          </div>
+        )}
+        {srcMap.irl[0] && (
+          <div className="ph-src-row">
+            <span className="lab">IRL</span>
+            <div className="body">{srcMap.irl[0].detail ?? srcMap.irl[0].label}</div>
+          </div>
+        )}
+        {srcMap.recommendations[0] && (
+          <div className="ph-src-row">
+            <span className="lab">Reco</span>
+            <div className="body">{srcMap.recommendations[0].detail ?? srcMap.recommendations[0].label}</div>
+          </div>
+        )}
+        {srcMap.inbound_content[0] && (
+          <div className="ph-src-row">
+            <span className="lab">Inbound</span>
+            <div className="body">{srcMap.inbound_content[0].detail ?? srcMap.inbound_content[0].label}</div>
+          </div>
+        )}
+      </article>
+    </>
   );
 }
 
-function HashtagRow({
-  title, items, accent, showHint,
-}: { title: string; items: ProspectionHashtag[]; accent: string; showHint?: boolean }) {
-  if (items.length === 0) return null;
+function FirstMessageModule({
+  scripts, platform, setPlatform, marketCode, scriptLang, setLang, sentScripts, onCopy, onSend,
+}: {
+  scripts: ProspectionScript[];
+  platform: ProspectionPlatform;
+  setPlatform: (p: ProspectionPlatform) => void;
+  marketCode: string;
+  scriptLang: Record<string, "native" | "fr">;
+  setLang: (id: string, lang: "native" | "fr") => void;
+  sentScripts: Record<string, boolean>;
+  onCopy: (text: string, label?: string) => void;
+  onSend: (id: string, platform: ProspectionPlatform) => void;
+}) {
+  const m1 = scripts.filter((s) => s.kind === "first_contact" && s.platform === platform);
   return (
-    <div style={{ marginBottom: 8 }}>
-      <div style={{ fontSize: 12, color: "var(--ls-text-muted)", marginBottom: 4 }}>{title}</div>
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-        {items.map((h) => (
-          <span key={h.id} style={{ ...TAG, color: accent, borderColor: accent }}>{h.hashtag}</span>
+    <>
+      <div className="ph-platform-tabs">
+        {PLATFORM_ORDER.map((pl) => (
+          <button
+            key={pl}
+            className={`tab${platform === pl ? " on" : ""}`}
+            type="button"
+            onClick={() => setPlatform(pl)}
+          >
+            <span className="ic">{PLATFORM_GLYPH[pl]}</span>
+            <span>{PLATFORM_SHORT[pl]}</span>
+          </button>
         ))}
       </div>
-      {showHint
-        ? items.filter((h) => h.crossover_hint).map((h) => (
-            <div key={h.id + "-hint"} style={{ fontSize: 11, color: "var(--ls-text-muted)", marginTop: 4 }}>
-              {h.hashtag} — {h.crossover_hint}
+
+      {m1.length === 0 && (
+        <Empty>Aucun script pour cette plateforme sur ce marché × profil.</Empty>
+      )}
+
+      {m1.map((s) => {
+        const isSent = !!sentScripts[s.id];
+        const showFr = marketCode !== "fr" && !!s.body_fr && (scriptLang[s.id] ?? "native") === "native";
+        const langActive = scriptLang[s.id] ?? "native";
+        const body = langActive === "fr" && s.body_fr ? s.body_fr : s.body;
+        return (
+          <article key={s.id} className={`ph-script${isSent ? " sent" : ""}`}>
+            <div className="head">
+              <span className="glyph">{PLATFORM_GLYPH[s.platform]}</span>
+              <h4>{s.label ?? PLATFORM_LABELS[s.platform]}</h4>
+              {marketCode !== "fr" && s.body_fr && (
+                <div className="ph-lang-switch">
+                  <button type="button" className={langActive === "native" ? "on" : ""} onClick={() => setLang(s.id, "native")}>{s.language_label?.split(" ")[0] ?? "EN"}</button>
+                  <button type="button" className={langActive === "fr" ? "on" : ""} onClick={() => setLang(s.id, "fr")}>FR</button>
+                </div>
+              )}
             </div>
-          ))
-        : null}
-    </div>
+            {s.tip && (
+              <div className="ctx">{s.tip}</div>
+            )}
+            <div className="ph-msg-body">{renderScriptBody(body)}</div>
+            {showFr && s.body_fr && (
+              <div className="ph-trad-line">{s.body_fr}</div>
+            )}
+            <div className="ph-script-actions">
+              <button className="ph-btn copy" type="button" onClick={() => onCopy(body)}>
+                <span className="ic">⌘C</span>Copier le script
+              </button>
+              <button
+                className={`ph-btn send${isSent ? " done" : ""}`}
+                type="button"
+                onClick={() => onSend(s.id, s.platform)}
+              >
+                {isSent ? "✓ Envoyé" : "→ J'ai envoyé"}
+              </button>
+            </div>
+          </article>
+        );
+      })}
+    </>
   );
 }
 
-function MessagesM1Module({
-  scripts, marketCode,
-}: { scripts: ProspectionScript[]; marketCode: string }) {
-  const m1 = scripts.filter((s) => s.kind === "first_contact");
-  if (m1.length === 0) {
-    return <Empty>Aucun script M1 pour ce profil sur ce marché.</Empty>;
-  }
-  return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-      {m1.map((s) => (
-        <ScriptCard key={s.id} script={s} marketCode={marketCode} />
-      ))}
-    </div>
-  );
-}
-
-function ScriptCard({ script, marketCode }: { script: ProspectionScript; marketCode: string }) {
-  const [copied, setCopied] = useState(false);
-  return (
-    <article style={SCRIPT_CARD}>
-      <header style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
-        <span
-          style={{
-            width: 26, height: 26, borderRadius: 8, display: "inline-flex",
-            alignItems: "center", justifyContent: "center", fontSize: 14, color: "#fff",
-            background: PLATFORM_GRADIENTS[script.platform],
-          }}
-        >
-          {PLATFORM_ICONS[script.platform]}
-        </span>
-        <span style={{ fontWeight: 600, fontSize: 13 }}>{script.label ?? PLATFORM_LABELS[script.platform]}</span>
-        {script.language_label ? <span style={{ marginLeft: "auto", fontSize: 11, color: "var(--ls-text-muted)" }}>{script.language_label}</span> : null}
-      </header>
-      <pre style={SCRIPT_BODY}>{script.body}</pre>
-      {marketCode !== "fr" && script.body_fr ? (
-        <details style={{ marginTop: 6 }}>
-          <summary style={{ fontSize: 12, color: "var(--ls-text-muted)", cursor: "pointer" }}>🇫🇷 Voir la traduction française</summary>
-          <pre style={{ ...SCRIPT_BODY, marginTop: 4 }}>{script.body_fr}</pre>
-        </details>
-      ) : null}
-      {script.tip ? (
-        <div style={TIP_BOX}>💡 {script.tip}</div>
-      ) : null}
-      <button
-        onClick={() => {
-          void navigator.clipboard.writeText(script.body);
-          setCopied(true);
-          setTimeout(() => setCopied(false), 1500);
-        }}
-        style={COPY_BTN}
-      >
-        {copied ? "✓ Copié" : "Copier le message"}
-      </button>
-    </article>
-  );
-}
-
-function ReplyTreeModule({
-  nodes, marketCode,
-}: { nodes: ProspectionReplyNode[]; marketCode: string }) {
-  if (nodes.length === 0) return <Empty>Aucune arborescence pour ce profil sur ce marché.</Empty>;
-  const m2 = nodes.filter((n) => n.level === "M2");
-  const m3 = nodes.filter((n) => n.level === "M3");
-  const branchOrder: Record<string, number> = {
-    positive: 1, vague: 2, negative: 3, question: 4, hot: 1, lukewarm: 2,
+function ReplyModule({
+  nodes, marketCode, onCopy,
+}: { nodes: ProspectionReplyNode[]; marketCode: string; onCopy: (t: string) => void }) {
+  // Map branches → pill labels
+  const branchLabel: Record<string, { pill: string; emoji: string; cls: string }> = {
+    positive: { pill: "Tiède", emoji: "🔥", cls: "warm" },
+    hot:      { pill: "Très chaude", emoji: "🔥", cls: "warm" },
+    negative: { pill: "Froid", emoji: "❄️", cls: "cold" },
+    vague:    { pill: "Indécis", emoji: "🤔", cls: "maybe" },
+    lukewarm: { pill: "Tiède", emoji: "🌡️", cls: "maybe" },
+    question: { pill: "Curieux", emoji: "❓", cls: "maybe" },
   };
-  const branchLabel: Record<string, string> = {
-    positive: "✅ Réponse positive",
-    vague: "🤔 Réponse vague",
-    negative: "❌ Réponse négative",
-    question: "❓ Question",
-    hot: "🔥 Conv qui chauffe",
-    lukewarm: "🌡️ Conv tiède",
-  };
-  const sort = (arr: ProspectionReplyNode[]) =>
-    [...arr].sort((a, b) => (branchOrder[a.branch] ?? 9) - (branchOrder[b.branch] ?? 9));
+  if (nodes.length === 0) return <Empty>Aucune branche pour ce marché × profil.</Empty>;
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-      <section>
-        <h4 style={H4}>M2 — Après ton M1</h4>
-        {sort(m2).map((n) => <ReplyNodeCard key={n.id} node={n} label={branchLabel[n.branch]} marketCode={marketCode} />)}
-      </section>
-      {m3.length > 0 ? (
-        <section>
-          <h4 style={H4}>M3 — La conversation continue</h4>
-          {sort(m3).map((n) => <ReplyNodeCard key={n.id} node={n} label={branchLabel[n.branch]} marketCode={marketCode} />)}
-        </section>
-      ) : null}
-    </div>
+    <>
+      {nodes.map((n) => {
+        const meta = branchLabel[n.branch] ?? { pill: n.branch, emoji: "·", cls: "maybe" };
+        const body = marketCode !== "fr" && n.body_fr ? n.body_fr : n.body;
+        return (
+          <article key={n.id} className="ph-tree-branch">
+            <div className="reaction">
+              <span>{meta.emoji} Il / elle réagit</span>
+              <span className={`pill ${meta.cls}`}>{meta.pill}</span>
+              <span style={{ marginLeft: "auto", fontFamily: "var(--hub-f-mono)", fontSize: 9.5, color: "var(--hub-muted)" }}>{n.level}</span>
+            </div>
+            <q>{n.tip ?? "—"}</q>
+            <div className="reply">{renderScriptBody(body)}</div>
+            <div className="actions">
+              <button className="ph-btn copy" type="button" onClick={() => onCopy(body)}>
+                <span className="ic">⌘C</span>Copier
+              </button>
+            </div>
+          </article>
+        );
+      })}
+    </>
   );
 }
 
-function ReplyNodeCard({ node, label, marketCode }: { node: ProspectionReplyNode; label: string; marketCode: string }) {
-  return (
-    <article style={INFO_CARD}>
-      <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 6 }}>{label}</div>
-      <pre style={SCRIPT_BODY}>{node.body}</pre>
-      {marketCode !== "fr" && node.body_fr ? (
-        <details style={{ marginTop: 6 }}>
-          <summary style={{ fontSize: 12, color: "var(--ls-text-muted)", cursor: "pointer" }}>🇫🇷 Traduction</summary>
-          <pre style={{ ...SCRIPT_BODY, marginTop: 4 }}>{node.body_fr}</pre>
-        </details>
-      ) : null}
-      {node.tip ? <div style={TIP_BOX}>💡 {node.tip}</div> : null}
-    </article>
-  );
-}
-
-function ObjectionsModule({ items, marketCode }: { items: ProspectionObjection[]; marketCode: string }) {
+function ObjectionsModule({
+  items, marketCode, onCopy,
+}: { items: ProspectionObjection[]; marketCode: string; onCopy: (t: string) => void }) {
   if (items.length === 0) return <Empty>Aucune objection pour ce marché.</Empty>;
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-      {items.map((o) => (
-        <article key={o.id} style={INFO_CARD}>
-          <div style={{ fontFamily: "Syne, serif", fontWeight: 600, fontSize: 15, marginBottom: 6 }}>
-            « {o.title} »
+    <>
+      {items.map((o, i) => {
+        const goodBody = marketCode !== "fr" && o.good_response_fr ? o.good_response_fr : o.good_response;
+        return (
+          <div key={o.id} className="ph-obj">
+            <div className="quote">
+              <div className="n">{String(i + 1).padStart(2, "0")}<small>{o.slug}</small></div>
+              <q>{o.title}</q>
+            </div>
+            <div className="ph-obj-row bad">
+              <span className="badge">✕</span>
+              <div>
+                <div className="lbl">À ne pas dire</div>
+                <p>{o.bad_response}</p>
+              </div>
+            </div>
+            <div className="ph-obj-row good">
+              <span className="badge">✓</span>
+              <div>
+                <div className="lbl">Ce qui ouvre</div>
+                <p>{renderScriptBody(goodBody)}</p>
+              </div>
+            </div>
+            {o.warning && (
+              <div className="ph-obj-row bad" style={{ marginTop: 6 }}>
+                <span className="badge">!</span>
+                <div>
+                  <div className="lbl" style={{ color: "var(--hub-accent-dark)" }}>Attention</div>
+                  <p style={{ color: "var(--hub-text)", textDecoration: "none" }}>{o.warning}</p>
+                </div>
+              </div>
+            )}
+            <div className="ph-obj-actions">
+              <button className="ph-btn copy" type="button" onClick={() => onCopy(goodBody)}>
+                <span className="ic">⌘C</span>Copier la réponse
+              </button>
+            </div>
           </div>
-          <div style={{ fontSize: 12, color: "var(--ls-text-muted)", marginBottom: 8 }}>
-            <strong>Ce qu'elle veut dire :</strong> {o.meaning}
-          </div>
-          <div style={{ fontSize: 12, color: "var(--ls-coral, #e57373)", marginBottom: 8 }}>
-            <strong>❌ Mauvaise réponse :</strong> {o.bad_response}
-          </div>
-          <div style={{ fontSize: 13, marginBottom: 6 }}>
-            <strong>✅ Bonne réponse :</strong>
-          </div>
-          <pre style={SCRIPT_BODY}>{o.good_response}</pre>
-          {marketCode !== "fr" && o.good_response_fr ? (
-            <details style={{ marginTop: 6 }}>
-              <summary style={{ fontSize: 12, color: "var(--ls-text-muted)", cursor: "pointer" }}>🇫🇷 Traduction</summary>
-              <pre style={{ ...SCRIPT_BODY, marginTop: 4 }}>{o.good_response_fr}</pre>
-            </details>
-          ) : null}
-          {o.warning ? <div style={WARNING_BOX}>⚠️ {o.warning}</div> : null}
-        </article>
-      ))}
-    </div>
+        );
+      })}
+    </>
   );
 }
 
-function FollowupsModule({ items, marketCode }: { items: ProspectionFollowup[]; marketCode: string }) {
-  if (items.length === 0) return <Empty>Aucune séquence pour ce marché.</Empty>;
-  const groups = [
-    { kind: "post_call", label: "📞 Après un appel / Zoom" },
-    { kind: "client_onboarding", label: "🎉 Suivi client (après achat)" },
-    { kind: "reactivation_old", label: "🔁 Réactivation prospect ancien" },
-  ] as const;
+function PostCallModule({
+  items, marketCode, onCopy,
+}: { items: ProspectionFollowup[]; marketCode: string; onCopy: (t: string) => void }) {
+  const postCall = items.filter((i) => i.kind === "post_call").sort((a, b) => a.day_offset - b.day_offset);
+  if (postCall.length === 0) return <Empty>Pas de séquence post-appel pour ce marché.</Empty>;
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-      {groups.map(({ kind, label }) => {
-        const list = items.filter((i) => i.kind === kind).sort((a, b) => a.day_offset - b.day_offset);
-        if (list.length === 0) return null;
+    <div className="ph-timeline">
+      {postCall.map((f, idx) => {
+        const state = idx === 0 ? "now" : "future";
+        const body = marketCode !== "fr" && f.body_fr ? f.body_fr : f.body;
         return (
-          <section key={kind}>
-            <h4 style={H4}>{label}</h4>
-            {list.map((f) => (
-              <article key={f.id} style={INFO_CARD}>
-                <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 6 }}>{f.title}</div>
-                <pre style={SCRIPT_BODY}>{f.body}</pre>
-                {marketCode !== "fr" && f.body_fr ? (
-                  <details style={{ marginTop: 6 }}>
-                    <summary style={{ fontSize: 12, color: "var(--ls-text-muted)", cursor: "pointer" }}>🇫🇷 Traduction</summary>
-                    <pre style={{ ...SCRIPT_BODY, marginTop: 4 }}>{f.body_fr}</pre>
-                  </details>
-                ) : null}
-                {f.warning ? <div style={WARNING_BOX}>⚠️ {f.warning}</div> : null}
-              </article>
-            ))}
-          </section>
+          <div key={f.id} className={`ph-t-step ${state}`}>
+            <div className="when">{f.title}</div>
+            <h4>Touche {idx + 1}</h4>
+            <div className="msg">{renderScriptBody(body)}</div>
+            <div style={{ marginTop: 8, display: "flex", gap: 6 }}>
+              <button className="ph-btn copy" type="button" onClick={() => onCopy(body)}>
+                <span className="ic">⌘C</span>Copier
+              </button>
+              {f.warning && (
+                <span style={{ fontFamily: "var(--hub-f-mono)", fontSize: 10, color: "var(--hub-accent-dark)", alignSelf: "center" }}>⚠ {f.warning}</span>
+              )}
+            </div>
+          </div>
         );
       })}
     </div>
   );
 }
 
-function ClosingModule({ items, marketCode }: { items: ProspectionClosingBlock[]; marketCode: string }) {
-  if (items.length === 0) return <Empty>Aucun closing pour ce marché.</Empty>;
+function ClosingModule({
+  items, marketCode, onCopy,
+}: { items: ProspectionClosingBlock[]; marketCode: string; onCopy: (t: string) => void }) {
   const signals = items.filter((i) => i.kind === "signal");
   const scripts = items.filter((i) => i.kind !== "signal");
-  const scriptLabel: Record<string, string> = {
-    propose: "Proposer le passage à l'achat",
-    hesitation: "Si elle hésite",
-    final_no: "Encaisser un non final",
+  if (items.length === 0) return <Empty>Aucun closing pour ce marché.</Empty>;
+  const scriptTitle: Record<string, string> = {
+    propose: "Proposer la suite",
+    hesitation: "Quand il hésite",
+    final_no: "Encaisser le non",
   };
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-      {signals.length > 0 ? (
-        <section>
-          <h4 style={H4}>Signaux d'achat (elle est prête)</h4>
-          {signals.map((s) => (
-            <div key={s.id} style={INFO_CARD_TIGHT}>
-              <div style={{ fontWeight: 600, fontSize: 13 }}>{s.title ?? "Signal"}</div>
-              <div style={{ fontSize: 12, color: "var(--ls-text-muted)", marginTop: 2 }}>{s.body}</div>
+    <>
+      {signals.length > 0 && (
+        <div className="ph-signal-card">
+          <h5>Signaux d'achat ({signals.length})</h5>
+          <div className="ph-signal-list">
+            {signals.map((s) => (
+              <div key={s.id} className="row">{s.title ?? s.body}</div>
+            ))}
+          </div>
+        </div>
+      )}
+      {scripts.map((s) => {
+        const body = marketCode !== "fr" && s.body_fr ? s.body_fr : s.body;
+        return (
+          <article key={s.id} className="ph-close-script">
+            <h4>{s.title ?? scriptTitle[s.kind] ?? s.kind}</h4>
+            <div className="ctx">Kind · {s.kind}</div>
+            <p>{renderScriptBody(body)}</p>
+            <div style={{ marginTop: 10, display: "flex", gap: 6 }}>
+              <button className="ph-btn copy" type="button" onClick={() => onCopy(body)}>
+                <span className="ic">⌘C</span>Copier
+              </button>
             </div>
-          ))}
-        </section>
-      ) : null}
-      <section>
-        <h4 style={H4}>Scripts</h4>
-        {scripts.map((s) => (
-          <article key={s.id} style={INFO_CARD}>
-            <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 6 }}>
-              {s.title ?? scriptLabel[s.kind] ?? s.kind}
-            </div>
-            <pre style={SCRIPT_BODY}>{s.body}</pre>
-            {marketCode !== "fr" && s.body_fr ? (
-              <details style={{ marginTop: 6 }}>
-                <summary style={{ fontSize: 12, color: "var(--ls-text-muted)", cursor: "pointer" }}>🇫🇷 Traduction</summary>
-                <pre style={{ ...SCRIPT_BODY, marginTop: 4 }}>{s.body_fr}</pre>
-              </details>
-            ) : null}
           </article>
-        ))}
-      </section>
-    </div>
+        );
+      })}
+    </>
   );
 }
 
-function SpecialCasesModule({ items, marketCode }: { items: ProspectionSpecialCase[]; marketCode: string }) {
+function SpecialCasesModule({
+  items, marketCode, caseTab, setCaseTab, onCopy,
+}: {
+  items: ProspectionSpecialCase[];
+  marketCode: string;
+  caseTab: "ghost_after_exchange" | "reactivation_3_6m" | "referral_request";
+  setCaseTab: (k: "ghost_after_exchange" | "reactivation_3_6m" | "referral_request") => void;
+  onCopy: (t: string) => void;
+}) {
   if (items.length === 0) return <Empty>Aucun cas spécial pour ce marché.</Empty>;
+  const tabs = [
+    { id: "ghost_after_exchange" as const, label: "Ghost" },
+    { id: "reactivation_3_6m" as const, label: "Réactivation" },
+    { id: "referral_request" as const, label: "Recommandation" },
+  ];
+  const active = items.find((i) => i.kind === caseTab);
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-      {items.map((s) => (
-        <article key={s.id} style={INFO_CARD}>
-          <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 6 }}>{s.title}</div>
-          <pre style={SCRIPT_BODY}>{s.body}</pre>
-          {marketCode !== "fr" && s.body_fr ? (
-            <details style={{ marginTop: 6 }}>
-              <summary style={{ fontSize: 12, color: "var(--ls-text-muted)", cursor: "pointer" }}>🇫🇷 Traduction</summary>
-              <pre style={{ ...SCRIPT_BODY, marginTop: 4 }}>{s.body_fr}</pre>
-            </details>
-          ) : null}
+    <>
+      <div className="ph-case-tabs">
+        {tabs.map((t) => (
+          <button
+            key={t.id}
+            type="button"
+            className={caseTab === t.id ? "on" : ""}
+            onClick={() => setCaseTab(t.id)}
+          >{t.label}</button>
+        ))}
+      </div>
+      {active && (
+        <article className="ph-close-script">
+          <h4>{active.title}</h4>
+          <p>{renderScriptBody(marketCode !== "fr" && active.body_fr ? active.body_fr : active.body)}</p>
+          <div style={{ marginTop: 10, display: "flex", gap: 6 }}>
+            <button className="ph-btn copy" type="button" onClick={() => onCopy(active.body)}>
+              <span className="ic">⌘C</span>Copier
+            </button>
+          </div>
         </article>
-      ))}
-    </div>
+      )}
+    </>
   );
 }
 
@@ -599,322 +990,243 @@ function StorytellingModule({ items }: { items: ProspectionStoryBlock[] }) {
   const structure = items.filter((i) => i.kind === "structure_step");
   const examples = items.filter((i) => i.kind === "example");
   const rules = items.filter((i) => i.kind === "rule");
+  // 3 actes max (Avant / Déclic / Après) — on prend les 3 premiers structure_steps
+  const acts = structure.slice(0, 3);
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-      {structure.length > 0 ? (
-        <section>
-          <h4 style={H4}>Structure en 4 temps</h4>
-          {structure.map((s, idx) => (
-            <div key={s.id} style={INFO_CARD_TIGHT}>
-              <div style={{ fontWeight: 600, fontSize: 13 }}>{idx + 1}. {s.title}</div>
-              <div style={{ fontSize: 12, color: "var(--ls-text-muted)", marginTop: 2 }}>{s.body}</div>
+    <>
+      {acts.length > 0 && (
+        <div className="ph-story-struct">
+          {acts.map((s, i) => (
+            <div key={s.id} className={`seg${i === 1 ? " gold" : ""}`}>
+              <div className="step">Acte {["I","II","III"][i]}</div>
+              <h6>{s.title}</h6>
+              <p>{s.body.length > 60 ? s.body.slice(0, 60) + "…" : s.body}</p>
             </div>
           ))}
-        </section>
-      ) : null}
-      {examples.length > 0 ? (
-        <section>
-          <h4 style={H4}>Exemples</h4>
-          {examples.map((e) => (
-            <article key={e.id} style={INFO_CARD}>
-              <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 6 }}>{e.title}</div>
-              <pre style={SCRIPT_BODY}>{e.body}</pre>
-            </article>
-          ))}
-        </section>
-      ) : null}
-      {rules.length > 0 ? (
-        <section>
-          <h4 style={H4}>Règles pour ton storytelling</h4>
+        </div>
+      )}
+      {examples.map((ex) => (
+        <article key={ex.id} className="ph-story-example">
+          <div className="by">{ex.title}</div>
+          <p>{ex.body}</p>
+        </article>
+      ))}
+      {rules.length > 0 && (
+        <div className="ph-truth-lite" style={{ marginTop: 14 }}>
+          <div className="ctx">Règles d'or</div>
           {rules.map((r) => (
-            <div key={r.id} style={INFO_CARD_TIGHT}>
-              <div style={{ fontWeight: 600, fontSize: 13 }}>• {r.title}</div>
-              <div style={{ fontSize: 12, color: "var(--ls-text-muted)", marginTop: 2 }}>{r.body}</div>
-            </div>
+            <p key={r.id} style={{ fontSize: 15, marginBottom: 6, lineHeight: 1.35 }}>
+              <em>{r.title}</em> — <span style={{ fontWeight: 400, fontSize: 13, color: "var(--hub-muted)" }}>{r.body}</span>
+            </p>
           ))}
-        </section>
-      ) : null}
-    </div>
+        </div>
+      )}
+    </>
   );
 }
 
-function RoutineModule({ items }: { items: ProspectionRoutineItem[] }) {
-  if (items.length === 0) return <Empty>Aucune routine pour ce marché.</Empty>;
+function RoutineModule({
+  items, checks, setChecks, marketTip,
+}: {
+  items: ProspectionRoutineItem[];
+  checks: Record<string, boolean>;
+  setChecks: (m: Record<string, boolean>) => void;
+  marketTip: ProspectionMarketTip | null;
+}) {
+  const checklist = items.filter((i) => i.kind === "pre_send_checklist");
   const r30 = items.filter((i) => i.kind === "routine_30m");
-  const r1h = items.filter((i) => i.kind === "routine_1h");
-  const check = items.filter((i) => i.kind === "pre_send_checklist");
+  const totalMins = r30.reduce((sum, r) => sum + (r.duration_minutes ?? 0), 0) || 30;
+  if (items.length === 0) return <Empty>Aucune routine pour ce marché.</Empty>;
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-      {r30.length > 0 ? (
-        <section>
-          <h4 style={H4}>Routine 30 minutes / jour (débutant)</h4>
-          {r30.map((r) => (
-            <div key={r.id} style={INFO_CARD_TIGHT}>
-              <div style={{ display: "flex", justifyContent: "space-between" }}>
-                <span style={{ fontWeight: 600, fontSize: 13 }}>{r.title}</span>
-                {r.duration_minutes ? <span style={{ fontSize: 12, color: "var(--ls-text-muted)" }}>{r.duration_minutes} min</span> : null}
+    <>
+      <div className="ph-routine-summary">
+        <div>
+          <div className="big">{totalMins}<small>min/jour</small></div>
+        </div>
+        <p>
+          {r30.length} actions matinales pour {checklist.length} points de vigilance avant chaque envoi.
+          {marketTip && (<><br /><span style={{ fontFamily: "var(--hub-f-mono)", fontSize: 11, opacity: 0.8 }}>{marketTip.timing}</span></>)}
+        </p>
+      </div>
+      <div className="ph-checklist">
+        {r30.map((r) => {
+          const id = `r30-${r.id}`;
+          const done = !!checks[id];
+          return (
+            <div
+              key={id}
+              className={`ph-check-item${done ? " done" : ""}`}
+              onClick={() => setChecks({ ...checks, [id]: !done })}
+            >
+              <div className="box" />
+              <div className="txt">
+                <strong style={{ fontWeight: 600 }}>{r.title}</strong>
+                {r.detail && <div style={{ fontSize: 12, color: "var(--hub-muted)", marginTop: 2 }}>{r.detail}</div>}
               </div>
-              {r.detail ? <div style={{ fontSize: 12, color: "var(--ls-text-muted)", marginTop: 2 }}>{r.detail}</div> : null}
+              {r.duration_minutes && <div className="mins">{r.duration_minutes} min</div>}
             </div>
-          ))}
-        </section>
-      ) : null}
-      {r1h.length > 0 ? (
-        <section>
-          <h4 style={H4}>Routine 1 heure / jour (intermédiaire)</h4>
-          {r1h.map((r) => (
-            <div key={r.id} style={INFO_CARD_TIGHT}>
-              <div style={{ display: "flex", justifyContent: "space-between" }}>
-                <span style={{ fontWeight: 600, fontSize: 13 }}>{r.title}</span>
-                {r.duration_minutes ? <span style={{ fontSize: 12, color: "var(--ls-text-muted)" }}>{r.duration_minutes} min</span> : null}
-              </div>
-              {r.detail ? <div style={{ fontSize: 12, color: "var(--ls-text-muted)", marginTop: 2 }}>{r.detail}</div> : null}
-            </div>
-          ))}
-        </section>
-      ) : null}
-      {check.length > 0 ? (
-        <section>
-          <h4 style={H4}>Checklist avant d'envoyer un M1</h4>
-          {check.map((c) => (
-            <label key={c.id} style={{ display: "flex", alignItems: "flex-start", gap: 8, padding: "6px 0", cursor: "pointer" }}>
-              <input type="checkbox" style={{ marginTop: 3 }} />
-              <span style={{ fontSize: 13 }}>{c.title}</span>
-            </label>
-          ))}
-        </section>
-      ) : null}
+          );
+        })}
+      </div>
+      {checklist.length > 0 && (
+        <>
+          <div className="ph-errors-head" style={{ marginTop: 18 }}>
+            <span className="label" style={{ color: "var(--hub-accent-dark)" }}>
+              <span style={{ background: "var(--hub-accent)" }} />Avant chaque envoi
+            </span>
+            <span style={{ fontFamily: "var(--hub-f-mono)", fontSize: 10, color: "var(--hub-muted)" }}>{checklist.length} points</span>
+          </div>
+          <div className="ph-checklist">
+            {checklist.map((c) => {
+              const id = `chk-${c.id}`;
+              const done = !!checks[id];
+              return (
+                <div
+                  key={id}
+                  className={`ph-check-item${done ? " done" : ""}`}
+                  onClick={() => setChecks({ ...checks, [id]: !done })}
+                >
+                  <div className="box" />
+                  <div className="txt">{c.title}</div>
+                </div>
+              );
+            })}
+          </div>
+        </>
+      )}
+    </>
+  );
+}
+
+// ────────────────────────────────────────────────────────────
+// Stat funnel sheet
+// ────────────────────────────────────────────────────────────
+function StatFunnelSheet({ sent, rdv }: { sent: number; rdv: number }) {
+  const reps = Math.round(sent * 0.42);
+  const clos = Math.max(0, Math.round(rdv * 0.4));
+  const pct = (v: number) => Math.min(100, Math.round((v / Math.max(1, sent)) * 100));
+  return (
+    <>
+      <div className="sheet-head">
+        <div className="kicker">7 derniers jours</div>
+        <h3>Activité.</h3>
+      </div>
+      <div className="sheet-body">
+        <div className="big">
+          <div className="stat"><div className="v">{sent}</div><div className="k">M1 envoyés</div></div>
+          <div className="stat"><div className="v">{reps}</div><div className="k">Réponses</div></div>
+          <div className="stat"><div className="v">{rdv}</div><div className="k">RDV pris</div></div>
+          <div className="stat"><div className="v">{clos}</div><div className="k">Closing</div></div>
+        </div>
+        <div className="funnel">
+          <FnRow lab="Envoyés" v={sent} pct={pct(sent)} />
+          <FnRow lab="Réponses" v={reps} pct={pct(reps)} />
+          <FnRow lab="RDV" v={rdv} pct={pct(rdv)} />
+          <FnRow lab="Closing" v={clos} pct={pct(clos)} />
+        </div>
+        <p style={{ fontFamily: "var(--hub-f-mono)", fontSize: 10.5, color: "var(--hub-muted)", lineHeight: 1.6, marginTop: 14 }}>
+          Chaque <b style={{ color: "var(--hub-text)" }}>« J'ai envoyé »</b> incrémente le compteur.
+          Les RDV s'incrémentent quand un script <b style={{ color: "var(--hub-text)" }}>WhatsApp</b> est envoyé (proxy démo).
+        </p>
+      </div>
+    </>
+  );
+}
+
+function FnRow({ lab, v, pct }: { lab: string; v: number; pct: number }) {
+  return (
+    <div className="fn-row">
+      <span className="lab">{lab}</span>
+      <div className="fn-bar"><div className="fn-fill" style={{ width: `${pct}%` }} /></div>
+      <span className="v">{v}</span>
     </div>
   );
 }
 
-// ============================================================================
+// ────────────────────────────────────────────────────────────
 // Helpers
-// ============================================================================
-
-function formatRange(min: number | null, max: number | null, unit: string | null): string {
-  if (min == null && max == null) return "—";
-  const u = unit ? ` ${unit}` : "";
-  if (min != null && max != null && min !== max) return `${min} à ${max}${u}`;
-  if (min != null) return `${min}${u}`;
-  if (max != null) return `${max}${u}`;
-  return "—";
+// ────────────────────────────────────────────────────────────
+function Caret() {
+  return (
+    <svg className="caret" viewBox="0 0 12 12" fill="none">
+      <path d="M3 5l3 3 3-3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+function ArrowLeft() {
+  return <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M7.5 3 4 6l3.5 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>;
+}
+function ArrowRight() {
+  return <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M4.5 3 8 6l-3.5 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>;
 }
 
 function Empty({ children }: { children: ReactNode }) {
   return (
-    <div style={{ padding: 24, textAlign: "center", color: "var(--ls-text-muted)", fontSize: 13 }}>
+    <div style={{ padding: 24, textAlign: "center", color: "var(--hub-muted)", fontSize: 13, fontFamily: "var(--hub-f-mono)" }}>
       {children}
     </div>
   );
 }
 
-// ============================================================================
-// Styles
-// ============================================================================
-
-const STICKY_BAR: CSSProperties = {
-  position: "sticky",
-  top: 0,
-  zIndex: 10,
-  background: "var(--ls-surface)",
-  paddingBottom: 8,
-  borderBottom: "1px solid var(--ls-border)",
-  display: "flex",
-  flexDirection: "column",
-  gap: 8,
-};
-
-const PILL: CSSProperties = {
-  padding: "6px 12px",
-  borderRadius: 999,
-  border: "1px solid var(--ls-border)",
-  background: "var(--ls-surface2)",
-  color: "var(--ls-text)",
-  fontSize: 13,
-  cursor: "pointer",
-  whiteSpace: "nowrap",
-};
-
-const PILL_ACTIVE: CSSProperties = {
-  background: "color-mix(in srgb, var(--ls-gold) 18%, var(--ls-surface2))",
-  borderColor: "var(--ls-gold)",
-  color: "var(--ls-text)",
-};
-
-const MARKET_TIP_BANNER: CSSProperties = {
-  padding: "8px 12px",
-  borderRadius: 10,
-  background: "color-mix(in srgb, var(--ls-teal) 10%, var(--ls-surface2))",
-  border: "1px solid color-mix(in srgb, var(--ls-teal) 30%, transparent)",
-  display: "flex",
-  flexDirection: "column",
-  gap: 2,
-};
-
-const MODULES_GRID: CSSProperties = {
-  display: "flex",
-  flexDirection: "column",
-  gap: 8,
-};
-
-const MODULE_CARD: CSSProperties = {
-  background: "var(--ls-surface2)",
-  borderRadius: 14,
-  border: "1px solid var(--ls-border)",
-  overflow: "hidden",
-};
-
-const MODULE_CARD_OPEN: CSSProperties = {
-  borderColor: "color-mix(in srgb, var(--ls-gold) 50%, var(--ls-border))",
-  boxShadow: "0 4px 20px color-mix(in srgb, var(--ls-gold) 12%, transparent)",
-};
-
-const MODULE_HEADER_BTN: CSSProperties = {
-  width: "100%",
-  padding: "14px 16px",
-  display: "flex",
-  alignItems: "center",
-  background: "transparent",
-  border: "none",
-  color: "var(--ls-text)",
-  cursor: "pointer",
-  textAlign: "left",
-};
-
-const MODULE_CHIP: CSSProperties = {
-  padding: "2px 8px",
-  borderRadius: 8,
-  background: "color-mix(in srgb, var(--ls-gold) 12%, transparent)",
-  color: "var(--ls-gold)",
-  fontSize: 11,
-  fontWeight: 600,
-  marginLeft: 8,
-};
-
-const MODULE_BODY: CSSProperties = {
-  padding: "0 16px 16px",
-  animation: "lsHubFadeIn 200ms ease",
-};
-
-const H4: CSSProperties = {
-  fontFamily: "Syne, serif",
-  fontSize: 14,
-  fontWeight: 600,
-  margin: "0 0 8px",
-  color: "var(--ls-text)",
-};
-
-const INFO_CARD: CSSProperties = {
-  padding: 12,
-  borderRadius: 10,
-  background: "var(--ls-surface)",
-  border: "1px solid var(--ls-border)",
-  marginBottom: 8,
-};
-
-const INFO_CARD_TIGHT: CSSProperties = {
-  padding: "8px 10px",
-  borderRadius: 8,
-  background: "var(--ls-surface)",
-  border: "1px solid var(--ls-border)",
-  marginBottom: 6,
-};
-
-const ERROR_CARD: CSSProperties = {
-  padding: 10,
-  borderRadius: 10,
-  background: "color-mix(in srgb, var(--ls-coral, #e57373) 8%, var(--ls-surface))",
-  border: "1px solid color-mix(in srgb, var(--ls-coral, #e57373) 30%, var(--ls-border))",
-};
-
-const GREEN_CARD: CSSProperties = {
-  padding: 12,
-  borderRadius: 10,
-  background: "color-mix(in srgb, #4ade80 8%, var(--ls-surface))",
-  border: "1px solid color-mix(in srgb, #4ade80 30%, var(--ls-border))",
-};
-
-const RED_CARD: CSSProperties = {
-  padding: 12,
-  borderRadius: 10,
-  background: "color-mix(in srgb, #ef4444 8%, var(--ls-surface))",
-  border: "1px solid color-mix(in srgb, #ef4444 30%, var(--ls-border))",
-};
-
-const SCRIPT_CARD: CSSProperties = {
-  padding: 12,
-  borderRadius: 12,
-  background: "var(--ls-surface)",
-  border: "1px solid var(--ls-border)",
-};
-
-const SCRIPT_BODY: CSSProperties = {
-  fontFamily: "'DM Sans', system-ui, sans-serif",
-  fontSize: 13,
-  lineHeight: 1.5,
-  margin: 0,
-  padding: 10,
-  background: "color-mix(in srgb, var(--ls-gold) 4%, var(--ls-surface2))",
-  borderRadius: 8,
-  whiteSpace: "pre-wrap",
-  color: "var(--ls-text)",
-};
-
-const TIP_BOX: CSSProperties = {
-  marginTop: 8,
-  padding: "6px 10px",
-  borderRadius: 8,
-  background: "color-mix(in srgb, var(--ls-teal) 8%, transparent)",
-  fontSize: 12,
-  color: "var(--ls-text-muted)",
-};
-
-const WARNING_BOX: CSSProperties = {
-  marginTop: 8,
-  padding: "8px 10px",
-  borderRadius: 8,
-  background: "color-mix(in srgb, var(--ls-gold) 12%, transparent)",
-  border: "1px solid color-mix(in srgb, var(--ls-gold) 40%, transparent)",
-  fontSize: 12,
-};
-
-const COPY_BTN: CSSProperties = {
-  marginTop: 10,
-  padding: "8px 14px",
-  borderRadius: 999,
-  border: "1px solid var(--ls-border)",
-  background: "var(--ls-surface2)",
-  color: "var(--ls-text)",
-  fontSize: 13,
-  cursor: "pointer",
-  width: "100%",
-};
-
-const TAG: CSSProperties = {
-  display: "inline-block",
-  padding: "3px 10px",
-  borderRadius: 999,
-  border: "1px solid",
-  fontSize: 12,
-  background: "var(--ls-surface)",
-};
-
-const RESTART_BTN: CSSProperties = {
-  alignSelf: "center",
-  padding: "10px 18px",
-  borderRadius: 999,
-  border: "1px dashed var(--ls-border)",
-  background: "transparent",
-  color: "var(--ls-text-muted)",
-  fontSize: 13,
-  cursor: "pointer",
-  marginTop: 16,
-};
-
-const HUB_KEYFRAMES = `
-@keyframes lsHubFadeIn {
-  from { opacity: 0; transform: translateY(-4px); }
-  to   { opacity: 1; transform: translateY(0); }
+/** Render le body d'une vérité Mindset avec emphase sur les mots-clés italique gold. */
+function renderTruthBody(body: string): ReactNode {
+  // Stratégie simple : la 1ère phrase est traitée comme la pull-quote
+  const firstSentence = body.split(/(?<=[.!?])\s+/)[0];
+  return firstSentence;
 }
-`;
+
+/**
+ * Render le body d'un script en mettant en valeur les variables [prénom]
+ * (gold) et [contexte] (teal). On considère que [foo], [nom], [name],
+ * [first name], [isim], [nombre], [nome] = "primary" (gold). Les autres
+ * variables = teal.
+ */
+function renderScriptBody(body: string): ReactNode {
+  const VAR_RE = /\[([^\]]+)\]/g;
+  const PRIMARY = /^(pr[ée]nom|nom|name|first[ _]name|isim|nombre|nome|prénom)$/i;
+  const parts: ReactNode[] = [];
+  let lastIdx = 0;
+  let m: RegExpExecArray | null;
+  let key = 0;
+  while ((m = VAR_RE.exec(body)) !== null) {
+    if (m.index > lastIdx) parts.push(body.slice(lastIdx, m.index));
+    const label = m[1];
+    const isPrimary = PRIMARY.test(label.trim());
+    parts.push(
+      <span key={`v${key++}`} className={`ph-var${isPrimary ? "" : " teal"}`}>[{label}]</span>,
+    );
+    lastIdx = m.index + m[0].length;
+  }
+  if (lastIdx < body.length) parts.push(body.slice(lastIdx));
+  return parts;
+}
+
+/** Concatène le texte d'un module pour calculer le reading time. */
+function collectModuleText(args: {
+  mid: ModuleId;
+  mindsetBlocks: ProspectionMindsetBlock[];
+  scripts: ProspectionScript[];
+  replyTree: ProspectionReplyNode[];
+  objections: ProspectionObjection[];
+  followups: ProspectionFollowup[];
+  closing: ProspectionClosingBlock[];
+  specialCases: ProspectionSpecialCase[];
+  storytelling: ProspectionStoryBlock[];
+  routines: ProspectionRoutineItem[];
+  hashtags: ProspectionHashtag[];
+  flags: ProspectionProfileFlag[];
+  sources: ProspectionSource[];
+}): string {
+  switch (args.mid) {
+    case "mindset":   return args.mindsetBlocks.map((b) => b.body).join(" ");
+    case "find":      return args.flags.map((f) => f.text).concat(args.hashtags.map((h) => h.hashtag), args.sources.map((s) => s.detail ?? s.label)).join(" ");
+    case "first_msg": return args.scripts.filter((s) => s.kind === "first_contact").map((s) => s.body).join(" ");
+    case "reply":     return args.replyTree.map((n) => n.body).join(" ");
+    case "objections":return args.objections.map((o) => o.good_response + " " + o.meaning).join(" ");
+    case "post_call": return args.followups.map((f) => f.body).join(" ");
+    case "closing":   return args.closing.map((c) => c.body).join(" ");
+    case "special":   return args.specialCases.map((s) => s.body).join(" ");
+    case "story":     return args.storytelling.map((s) => s.body).join(" ");
+    case "routine":   return args.routines.map((r) => (r.title + " " + (r.detail ?? ""))).join(" ");
+  }
+}
