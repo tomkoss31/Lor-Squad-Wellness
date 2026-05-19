@@ -20,9 +20,11 @@ import { useNavigate } from "react-router-dom";
 import { useAppContext } from "../context/AppContext";
 import {
   createProspectionAttempt,
+  fetchProspectionOnboardedAt,
   fetchProspectionStats,
   filterHashtags,
   filterScripts,
+  markProspectionOnboarded,
   PLATFORM_GRADIENTS,
   PLATFORM_ICONS,
   PLATFORM_LABELS,
@@ -31,6 +33,7 @@ import {
   type ProspectionScript,
   type ProspectionStats,
 } from "../hooks/useProspectionData";
+import { ProspectionHub } from "../components/prospection/ProspectionHub";
 
 type Step = 1 | 2 | 3 | 4 | 5 | 6;
 
@@ -45,6 +48,25 @@ export function ProspectionPage() {
   const [marketCode, setMarketCode] = useState<string | null>(null);
   const [profileSlug, setProfileSlug] = useState<string | null>(null);
   const [stats, setStats] = useState<ProspectionStats | null>(null);
+
+  // V4 — UI hybride : tunnel onboarding 1ère visite, hub permanent ensuite.
+  // null = pas encore chargé · "tunnel" = pas encore onboardé · "hub" = onboardé.
+  const [mode, setMode] = useState<"loading" | "tunnel" | "hub">("loading");
+
+  useEffect(() => {
+    if (!currentUser?.id) return;
+    (async () => {
+      const ts = await fetchProspectionOnboardedAt(currentUser.id);
+      setMode(ts ? "hub" : "tunnel");
+    })();
+  }, [currentUser?.id]);
+
+  // Quand le distri atteint l'étape 6 (Suivi/relances) du tunnel, on marque
+  // l'onboarding terminé en arrière-plan. Pas bloquant.
+  useEffect(() => {
+    if (mode !== "tunnel" || step < 6 || !currentUser?.id) return;
+    void markProspectionOnboarded(currentUser.id);
+  }, [mode, step, currentUser?.id]);
 
   const market = useMemo(
     () => data.markets.find((m) => m.code === marketCode) ?? null,
@@ -107,11 +129,44 @@ export function ProspectionPage() {
     void reloadStats();
   }
 
-  if (data.loading) {
+  if (data.loading || mode === "loading") {
     return <PageShell><Skeleton /></PageShell>;
   }
   if (data.error) {
     return <PageShell><ErrorBanner>{data.error}</ErrorBanner></PageShell>;
+  }
+
+  if (mode === "hub") {
+    return (
+      <PageShell>
+        <Header />
+        {stats && <StatsBanner stats={stats} />}
+        <ProspectionHub
+          markets={data.markets}
+          profiles={data.profiles}
+          hashtags={data.hashtags}
+          scripts={data.scripts}
+          marketTips={data.marketTips}
+          mindsetBlocks={data.mindsetBlocks}
+          metrics={data.metrics}
+          profileFlags={data.profileFlags}
+          sources={data.sources}
+          replyTree={data.replyTree}
+          objections={data.objections}
+          followups={data.followups}
+          closing={data.closing}
+          specialCases={data.specialCases}
+          storytelling={data.storytelling}
+          routines={data.routines}
+          onRestartTunnel={() => {
+            setMode("tunnel");
+            setStep(1);
+            setMarketCode(null);
+            setProfileSlug(null);
+          }}
+        />
+      </PageShell>
+    );
   }
 
   return (
