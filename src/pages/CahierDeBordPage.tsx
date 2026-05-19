@@ -32,7 +32,9 @@ import {
   PLATFORM_META,
   type ContactPlatform,
 } from "../lib/profileDeepLink";
-import { listCountries, getCountry } from "../lib/countries";
+import { getCountry } from "../lib/countries";
+import { CountrySelect } from "../components/ui/CountrySelect";
+import { EditListe100ContactModal } from "../components/cahier/EditListe100ContactModal";
 
 /** Split "Karim Ben" → { firstName: "Karim", lastName: "Ben" }. */
 function splitFullName(full: string): { firstName: string; lastName: string } {
@@ -422,6 +424,8 @@ function ListeSection({ cahier }: { cahier: ReturnType<typeof useCahierDeBord> }
   /** Connexion Liste 100 → Agenda (2026-05-04) : quand un contact passe en
       `rdv_cale`, on propose de créer un prospect agenda pré-rempli. */
   const [prospectModalContact, setProspectModalContact] = useState<Liste100Contact | null>(null);
+  // 2026-05-19 — modale édition contact
+  const [editingContact, setEditingContact] = useState<Liste100Contact | null>(null);
 
   async function handleStatusChange(contact: Liste100Contact, newStatus: Liste100Status) {
     // Toujours persister le nouveau statut sur le contact
@@ -504,19 +508,13 @@ function ListeSection({ cahier }: { cahier: ReturnType<typeof useCahierDeBord> }
             </option>
           ))}
         </select>
-        <select
+        <CountrySelect
           value={filterCountry}
-          onChange={(e) => setFilterCountry(e.target.value)}
-          style={selectStyle}
-          title="Filtrer par pays de prospection"
-        >
-          <option value="all">🌍 Tous pays</option>
-          {listCountries().map((c) => (
-            <option key={c.code} value={c.code}>
-              {c.flag} {c.label}
-            </option>
-          ))}
-        </select>
+          onChange={(v) => setFilterCountry(v === "" ? "all" : v)}
+          includeAllFilter
+          ariaLabel="Filtrer par pays de prospection"
+        />
+
         <button type="button" onClick={() => setShowForm(true)} style={btnPrimary("var(--ls-purple)")}>
           + Ajouter un contact
         </button>
@@ -619,18 +617,12 @@ function ListeSection({ cahier }: { cahier: ReturnType<typeof useCahierDeBord> }
               />
             </Field>
             <Field label="Pays de prospection (optionnel)">
-              <select
+              <CountrySelect
                 value={draft.country_code}
-                onChange={(e) => setDraft({ ...draft, country_code: e.target.value })}
-                style={selectStyle}
-              >
-                <option value="">—</option>
-                {listCountries().map((c) => (
-                  <option key={c.code} value={c.code}>
-                    {c.flag} {c.label}
-                  </option>
-                ))}
-              </select>
+                onChange={(v) => setDraft({ ...draft, country_code: v })}
+                includeEmpty
+                ariaLabel="Pays de prospection"
+              />
             </Field>
           </div>
           <Field label="Note (optionnel)">
@@ -776,6 +768,22 @@ function ListeSection({ cahier }: { cahier: ReturnType<typeof useCahierDeBord> }
                 </select>
                 <button
                   type="button"
+                  onClick={() => setEditingContact(c)}
+                  aria-label={`Modifier ${c.full_name}`}
+                  title="Modifier (pays, notes, plateforme…)"
+                  style={{
+                    background: "transparent",
+                    border: "none",
+                    color: "var(--ls-text-muted)",
+                    cursor: "pointer",
+                    fontSize: 14,
+                    padding: "4px 6px",
+                  }}
+                >
+                  ✏️
+                </button>
+                <button
+                  type="button"
                   onClick={() => {
                     if (window.confirm(`Supprimer ${c.full_name} ?`)) void cahier.deleteContact(c.id);
                   }}
@@ -812,6 +820,17 @@ function ListeSection({ cahier }: { cahier: ReturnType<typeof useCahierDeBord> }
           }}
           onClose={() => setProspectModalContact(null)}
           onSaved={() => setProspectModalContact(null)}
+        />
+      )}
+
+      {/* Modale édition contact Liste 100 (2026-05-19) */}
+      {editingContact && (
+        <EditListe100ContactModal
+          contact={editingContact}
+          onClose={() => setEditingContact(null)}
+          onSave={async (patch) => {
+            await cahier.updateContact(editingContact.id, patch);
+          }}
         />
       )}
     </div>
