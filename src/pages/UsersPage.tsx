@@ -596,7 +596,7 @@ export function UsersPage() {
 
               <div className="space-y-2">
                 <label className="text-sm font-medium text-[var(--ls-text-muted)]">Email professionnel</label>
-                <input type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="camille@lorsquadwellness.app" />
+                <input type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="camille@labase360.fr" />
               </div>
 
               <div className="grid gap-4 md:grid-cols-2">

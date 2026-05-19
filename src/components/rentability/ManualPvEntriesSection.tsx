@@ -176,7 +176,7 @@ export function ManualPvEntriesSection() {
     <>
       <h2 style={sectionTitleStyle}>🤝 Distri hors-app · saisie manuelle</h2>
       <p style={sectionSubStyle}>
-        Pour les distri de ta downline Herbalife qui n'utilisent pas Lor'Squad mais qui commandent.
+        Pour les distri de ta downline Herbalife qui n'utilisent pas La Base 360 mais qui commandent.
         Tu transcris depuis ta fiche RO mensuelle.
       </p>
 
