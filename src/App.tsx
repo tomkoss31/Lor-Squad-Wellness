@@ -377,6 +377,12 @@ const FlexExpliquePage = lazy(() =>
     default: module.FlexExpliquePage,
   })),
 );
+// Prospection expliquée (2026-05-19) — tuto kit V4.
+const ProspectionExpliquePage = lazy(() =>
+  import("./pages/ProspectionExpliquePage").then((module) => ({
+    default: module.ProspectionExpliquePage,
+  })),
+);
 // Nouveautés app (2026-05-04) — journal des annonces / changelog distri.
 const NouveautesPage = lazy(() =>
   import("./pages/NouveautesPage").then((module) => ({
@@ -558,6 +564,7 @@ export default function App() {
                   cahier/simulateur/flex-explique/nouveautés. Sidebar Option B. */}
               <Route path="developpement" element={<DeveloppementHubPage />} />
               <Route path="developpement/flex-explique" element={<FlexExpliquePage />} />
+              <Route path="developpement/prospection-explique" element={<ProspectionExpliquePage />} />
               <Route path="developpement/nouveautes" element={<NouveautesPage />} />
               {/* Boite a outils prospection (chantier 2026-11-07) — admin only */}
               <Route path="outils-prospection" element={<OutilsProspectionPage />} />

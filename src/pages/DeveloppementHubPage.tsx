@@ -123,11 +123,21 @@ const CARDS: HubCard[] = [
     emoji: "🌍",
     title: "Prospection internationale",
     description:
-      "Module mobile-first 6 étapes : marché → profil → brief méthodo (GoPro + posture + erreurs) → cibler (hashtags + lieux IRL) → messages (scripts + traduction FR) → suivi & relances (arborescence J+3/J+7 + stats coach).",
-    cta: "Lancer une session",
+      "Kit prospection complet : 6 marchés (FR · EN · ES · PT · TR · HI) × 4 profils (Perte de poids Femmes/Hommes · Sport · Business) × 10 sections (mindset, hashtags, M1, arbres M2/M3, objections, suivi appel, closing, cas spéciaux, storytelling, routine). Tunnel onboarding la 1ère fois, hub à 10 modules ensuite.",
+    cta: "Ouvrir le hub",
     path: "/prospection",
     accent: "var(--ls-teal)",
-    tag: { label: "Nouveau", color: "var(--ls-coral)" },
+    tag: { label: "Mis à jour", color: "var(--ls-gold)" },
+  },
+  {
+    id: "prospection-explique",
+    emoji: "📖",
+    title: "Comment marche la prospection",
+    description:
+      "Fiche pédagogique : philosophie du kit (tri pas convaincre, 5 erreurs débutant, métriques réalistes), structure des 10 sections, et comment utiliser le hub au quotidien.",
+    cta: "Lire la fiche",
+    path: "/developpement/prospection-explique",
+    accent: "var(--ls-gold)",
   },
   {
     id: "admin-prospection",
