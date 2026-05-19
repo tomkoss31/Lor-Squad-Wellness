@@ -1573,19 +1573,25 @@
 
 /* ============================================================
    DESKTOP (≥ 880px) — index étalé, plus de respiration
-   ============================================================ */
+   ============================================================
+   Spec design v3 polish : sur desktop, l'index étale juste l'actif
+   avec son nom + autres en numéro+emoji seulement (comme mobile).
+   Ne PAS forcer .name { display:inline } pour tous, sinon overflow
+   visuel et calibrage cassé (cf. retour Thomas captures dark/light).
+*/
 @media (min-width: 880px) {
-  .prospection-hub { max-width: 760px; margin: 0 auto; }
-  .ph-hdr { padding: 10px 22px 14px; }
+  .prospection-hub { max-width: 920px; margin: 0 auto; }
+  .ph-hdr { padding: 10px 24px 14px; }
   .ph-section-head { padding: 0 28px 14px; }
   .ph-section-head h2 { font-size: 34px; }
   .ph-section-head p.lede { font-size: 14.5px; max-width: 54ch; }
   .ph-section-meta { padding: 14px 28px 6px; }
   .ph-body-inner { padding: 0 28px; }
   .ph-pickers { gap: 12px; }
-  .ph-index { margin-top: 12px; overflow: visible; }
-  .ph-index .step { padding: 8px 10px; font-size: 11.5px; }
-  .ph-index .step .name { display: inline; } /* All 10 modules visible */
+  .ph-index { margin-top: 12px; overflow-x: auto; }
+  .ph-index .step { padding: 8px 11px; font-size: 11.5px; }
+  /* L'actif a déjà display:inline via la règle .step.active .name;
+     les non-actifs restent en icône+numéro pour rester lisibles. */
   .ph-botnav { padding: 12px 22px 18px; }
 }
 

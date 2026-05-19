@@ -137,10 +137,13 @@ export function ProspectionPage() {
   }
 
   if (mode === "hub") {
+    // V4 design polish : le hub a son propre header intégré (brand + stat-chip
+    // 7j cliquable). On ne re-render PAS le <Header /> du tunnel V3 ni le
+    // <StatsBanner /> externe, sinon doublon parasite (hero "Le monde, en
+    // messages prêts" qui casse le dark mode + prend 40 % de l'écran).
+    void stats; // stats internes au hub (compteur sent/RDV) — pas de chip externe
     return (
       <PageShell>
-        <Header />
-        {stats && <StatsBanner stats={stats} />}
         <ProspectionHub
           markets={data.markets}
           profiles={data.profiles}
