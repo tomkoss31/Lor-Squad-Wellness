@@ -6,6 +6,7 @@ import { AppProvider } from "./context/AppContext";
 import { InstallPromptProvider } from "./context/InstallPromptContext";
 import { ToastProvider } from "./context/ToastContext";
 import "./styles/globals.css";
+import "./styles/rentabilite.css";
 
 // Polyfill drapeaux Twemoji (2026-05-17) : Windows Chrome ne rend pas les
 // regional indicator emojis (les drapeaux pays apparaissent "FR/GB/MX/BR/TR/IN"
