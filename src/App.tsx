@@ -389,6 +389,12 @@ const CheckListExpliquePage = lazy(() =>
     default: module.CheckListExpliquePage,
   })),
 );
+// Routine du jour (chantier #2 V2, 2026-05-20) — page dédiée check-list.
+const RoutineDuJourPage = lazy(() =>
+  import("./pages/RoutineDuJourPage").then((module) => ({
+    default: module.RoutineDuJourPage,
+  })),
+);
 // Nouveautés app (2026-05-04) — journal des annonces / changelog distri.
 const NouveautesPage = lazy(() =>
   import("./pages/NouveautesPage").then((module) => ({
@@ -572,6 +578,7 @@ export default function App() {
               <Route path="developpement/flex-explique" element={<FlexExpliquePage />} />
               <Route path="developpement/prospection-explique" element={<ProspectionExpliquePage />} />
               <Route path="developpement/check-list-explique" element={<CheckListExpliquePage />} />
+              <Route path="routine-du-jour" element={<RoutineDuJourPage />} />
               <Route path="developpement/nouveautes" element={<NouveautesPage />} />
               {/* Boite a outils prospection (chantier 2026-11-07) — admin only */}
               <Route path="outils-prospection" element={<OutilsProspectionPage />} />

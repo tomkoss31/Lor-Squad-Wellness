@@ -44,7 +44,8 @@ import { CelebrationCard } from "../../../components/copilote/CelebrationCard";
 import { Liste100ShortcutCard } from "../../../components/copilote/Liste100ShortcutCard";
 import { PvActionPlanAlert } from "../../../components/copilote/PvActionPlanAlert";
 import { DormantClientsWidget } from "../../../components/dormant/DormantClientsWidget";
-import { DailyActionsModal } from "../../../components/copilote/DailyActionsModal";
+import { useDailyActionChecklist } from "../../../hooks/useDailyActionChecklist";
+import { useNavigate } from "react-router-dom";
 import { LegalFooter } from "../../../components/ui/LegalFooter";
 import { AnnouncementBell } from "../../../components/announcements/AnnouncementBell";
 import { WeatherPopup } from "./components/WeatherPopup";
@@ -67,6 +68,11 @@ export function CoPiloteV5Page() {
   // Co-pilote V7 — Phase 2 (2026-05-08) : pills connecteurs supplementaires.
   const { isDark, toggleTheme } = useTheme();
   const { count: streakDays, badge: streakBadge } = useFormationStreak();
+  // Routine du jour (chantier #2, 2026-05-20) : score live pour la pill topbar.
+  // Le popup auto a été retiré — la routine est sur /routine-du-jour, accès
+  // via cette chip ou via /developpement > Ma routine du jour.
+  const { score: routineScore, total: routineTotal } = useDailyActionChecklist(now);
+  const navigate = useNavigate();
   // V7 Phase 8.1 (2026-05-08) : greeting heure-adaptatif chaleureux.
   // Bon matin / Bon midi / Belle apres-midi / Bonne soiree / Tu bosses tard
   const timeContext = useTimeContext();
@@ -180,6 +186,23 @@ export function CoPiloteV5Page() {
             <span style={pillMonoStyle}>{clockDisplay}</span>
           </div>
 
+          {/* Chip routine du jour (chantier #2, 2026-05-20) — score live X/5
+              avec accent gold. Click → /routine-du-jour. Pas de popup auto. */}
+          <button
+            type="button"
+            onClick={() => navigate("/routine-du-jour")}
+            style={pillRoutineStyle(routineScore, routineTotal)}
+            aria-label={`Ma routine du jour : ${routineScore} sur ${routineTotal} actions faites`}
+            title="Ouvrir ma routine du jour"
+          >
+            <span aria-hidden="true">☀️</span>
+            <strong style={{ fontFamily: "var(--lb360-display, 'Sora', sans-serif)", fontSize: 14, fontWeight: 800 }}>
+              {routineScore}
+              <span style={{ fontSize: 11, fontWeight: 600, opacity: 0.7 }}>/{routineTotal}</span>
+            </strong>
+            <span style={pillDimStyle}>routine</span>
+          </button>
+
           {/* Streak coaching (V7 Phase 2 — nouveau).
               Affiche jours d affilee + badge palier (grain/flamme/legende).
               Click → /developpement/cahier-de-bord pour voir l historique. */}
@@ -277,10 +300,6 @@ export function CoPiloteV5Page() {
         onClose={() => setWeatherOpen(false)}
         city={userCity}
       />
-
-      {/* Check-list quotidienne (chantier #2, 2026-05-20). Auto-popup
-          à la 1ère ouverture du jour, skippable, persistance DB. */}
-      <DailyActionsModal />
     </div>
   );
 }
@@ -410,6 +429,19 @@ const pillStyle: React.CSSProperties = {
   cursor: "pointer",
   outline: "none",
   transition: "border-color 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease",
+};
+
+// Routine pill (chantier #2 2026-05-20) — accent gold, couleur vire teal
+// quand 5/5. Pattern aligné sur streak/pill V7.
+const pillRoutineStyle = (score: number, total: number): React.CSSProperties => {
+  const complete = total > 0 && score >= total;
+  const color = complete ? "var(--ls-teal)" : "var(--ls-gold)";
+  return {
+    ...pillStyle,
+    background: `color-mix(in srgb, ${color} 10%, var(--ls-surface))`,
+    borderColor: `color-mix(in srgb, ${color} 32%, var(--ls-border))`,
+    color: `color-mix(in srgb, ${color} 60%, var(--ls-text))`,
+  };
 };
 
 // Streak pill : accent gold/coral pour gamification. Click → cahier de bord.

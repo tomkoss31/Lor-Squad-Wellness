@@ -86,15 +86,25 @@ const CARDS: HubCard[] = [
     tag: { label: "Nouveau", color: "var(--ls-coral)" },
   },
   {
-    id: "check-list-explique",
+    id: "routine-du-jour",
     emoji: "☀️",
-    title: "Check-list quotidienne",
+    title: "Ma routine du jour",
     description:
-      "5 actions/jour de discipline : suivis protocole, Leads, dormants, RDV, liste 100. Pop-up auto le matin, push de relance à 20h, jamais bloquant.",
-    cta: "Comprendre la check-list",
-    path: "/developpement/check-list-explique",
+      "Tes 5 actions de discipline matin/midi/soir : suivis protocole, Leads, dormants, RDV, liste 100. Score X/5, jamais bloquante, accessible quand tu veux.",
+    cta: "Ouvrir ma routine",
+    path: "/routine-du-jour",
     accent: "var(--ls-gold)",
     tag: { label: "Nouveau", color: "var(--ls-coral)" },
+  },
+  {
+    id: "check-list-explique",
+    emoji: "📖",
+    title: "Comment marche ma routine",
+    description:
+      "Fiche pédagogique : philosophie 5 min/jour, les 5 actions expliquées, le fallback prospection, la relance 20h, et comment l'utiliser intelligemment sans pression.",
+    cta: "Lire la fiche",
+    path: "/developpement/check-list-explique",
+    accent: "var(--ls-gold)",
   },
   {
     id: "flex-explique",
