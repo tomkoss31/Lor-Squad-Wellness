@@ -22,20 +22,18 @@ reproduire les régressions passées. Relire avant tout gros chantier.
 
 **Quick wins**
 - Désactiver / supprimer la push notif 20h `daily-actions-notifier` si Thomas la trouve agressive (toggle `users.notif_daily_actions` = false)
-- Configurer DNS sous-domaine `bonline.labase360.com` (Thomas + Vercel)
 
 **Chantiers validés**
 - **Onboarding client PWA** (1.5-2j) : 4 sections welcome `/client/:token` + migration `client_app_accounts.onboarded_at`
 - **D — Popup météo 5 jours** (2-3h) : Open-Meteo, click weather pill Co-pilote
 - **E — Refonte sidebar emojis** (3h) : touche tous écrans, design review
 - **F — Dark mode V5 UI** (3h) : inverser palette éditoriale (charcoal/cream)
-- **Phase 2 renommage code "La Base 360"** (2-4h) : package.json, env, dossiers — bloque i18n
 
 ### 🟡 À faire (moyen / long terme)
 
 - **Chantier C — Paiement Square** (2-3j+) : edge function + SMS Twilio + webhook
 - **Lor'Squad AI** (3-4j) : FAB chat + Claude API + table `ai_usage_log`
-- **#5 i18n 6 langues** (5-8j) : geolocation + sélecteur drapeau + conversion monnaie (bloqué par Phase 2)
+- **#5 i18n 6 langues** (5-8j) : geolocation + sélecteur drapeau + conversion monnaie (renommage Phase 2 livré, plus de bloqueur)
 - **#8 Newsletter publique** (17-25h) : 12 étapes spec brainstorm
 - **#6 Vidéos pédagogiques** (3-4h dev) : `<TutorialLink />` + iframe YouTube
 - **#13 Fiche distri publique enrichie** (8-11h)
@@ -53,7 +51,6 @@ reproduire les régressions passées. Relire avant tout gros chantier.
 
 - Bizworks : champ admin override PV mensuel (1h) ?
 - Push notif 20h check-list : garder, ou désactivable par default ?
-- Sous-domaine `bonline.labase360.com` : DNS + cert ?
 
 ---
 
@@ -637,11 +634,14 @@ avec `supabase functions deploy <name>`.
 
 ---
 
-## Edge Functions actives (15 au 2026-04-26)
+## Edge Functions actives (27 au 2026-05-20)
 
 | Function | Déclenchement | Rôle |
 |---|---|---|
 | `client-app-data` | fetch front (app client) | Migration RLS → service_role |
+| `client-app-confirm-calendar` | fetch front (app client) | Confirmation RDV client |
+| `client-app-mark-onboarded` | fetch front (app client) | Marque PWA onboardé |
+| `client-anniversary-check` | cron 0 7 * * * | Notifs anniv client / programme |
 | `create-public-share-token` | fetch front (coach) | Gen token /partage |
 | `resolve-public-share` | fetch front (anon) | Résolution token anonymisé |
 | `generate-auto-login-token` | fetch front (coach) | Lien magique app client |
@@ -652,10 +652,20 @@ avec `supabase functions deploy <name>`.
 | `validate-invitation-token` | fetch front (onboarding client) | Check validité |
 | `consume-invitation-token` | fetch front (onboarding client) | Signup client |
 | `submit-prospect-lead` | fetch front (form Welcome) | Création lead anon |
+| `submit-online-bilan` | fetch front (form bilan online) | Création Lead chantier #1 |
+| `submit-testimonial` | fetch front (form public) | Création témoignage modéré |
+| `request-testimonial` | fetch front (coach) | Demande témoignage client |
+| `get-testimonial-context` | fetch front (form public) | Pré-remplit contexte témoignage |
 | `send-push` | fetch front + Edge interne | Envoi Web Push |
-| `morning-suivis-digest` | cron 0 7 * * * | Digest matin |
+| `morning-suivis-digest` | cron 0 7 * * * | Digest matin suivis |
 | `rdv-imminent-notifier` | cron */5 * * * * | Notif RDV imminent |
-| `new-message-notifier` | trigger Postgres | Notif nouveau message |
+| `new-message-notifier` | trigger Postgres | Notif nouveau message client |
+| `new-coach-message-notifier` | trigger Postgres | Notif coach → client |
+| `coach-tips-dispatcher` | cron quotidien | Tips contextuels coach |
+| `flex-notifier` | cron evening / late / weekly | Push FLEX (chantier 2026-11-05) |
+| `formation-validation-notifier` | trigger / fetch | Notif validation module |
+| `formation-relay-to-admin` | fetch front (coach) | Escalade question admin |
+| `daily-actions-notifier` | cron 18h + 19h UTC | Push 20h Paris check-list (#2) |
 
 Toute nouvelle edge function = ajouter ici.
 
