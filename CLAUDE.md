@@ -5,6 +5,58 @@ reproduire les régressions passées. Relire avant tout gros chantier.
 
 ---
 
+## ✅ Roadmap à jour (2026-05-20)
+
+### 🟢 Livrés en prod
+- **Chantier A — Jauge rentabilité** : `RentabilitePage` + composants + 7 migrations V1→V5
+- **Chantier B — Relances clients dormants** : `DormantClientsWidget` + RPC `get_dormant_clients` + câblage Co-pilote V5 (PR #91)
+- **Chantier #1 — Bilan Online + Leads** : pages publiques V2 + table `online_bilans` + edge `submit-online-bilan` + kanban Leads `/clients`
+- **Chantier #2 — Check-list quotidienne V2** : page dédiée `/routine-du-jour` + chip topbar Co-pilote `☀️ X/5` + table `coach_daily_actions` + edge `daily-actions-notifier` cron 20h + fiche tuto + announcement (PR #91 V1, PR #92 V2 page dédiée — V1 popup auto retiré sur retour Thomas)
+- **Chantier #3 — Prospection froide V5** : `/prospection` + 4 profils × 6 marchés × 10 sections + admin
+- **Chantier #7 — Business V2** : `BusinessPage` SaaS emerald/cyan/violet
+- **Chantier #10 — Badges coach** : 3 chips rang/bilans/ancienneté
+- **Chantier #11 — Témoignages** : Form + carrousel + admin page
+- **Fix inbox messagerie** : limite globale 50 → 1000 (PR #91)
+
+### 🔴 À faire (court terme)
+
+**Quick wins**
+- Désactiver / supprimer la push notif 20h `daily-actions-notifier` si Thomas la trouve agressive (toggle `users.notif_daily_actions` = false)
+- Configurer DNS sous-domaine `bonline.labase360.com` (Thomas + Vercel)
+
+**Chantiers validés**
+- **Onboarding client PWA** (1.5-2j) : 4 sections welcome `/client/:token` + migration `client_app_accounts.onboarded_at`
+- **D — Popup météo 5 jours** (2-3h) : Open-Meteo, click weather pill Co-pilote
+- **E — Refonte sidebar emojis** (3h) : touche tous écrans, design review
+- **F — Dark mode V5 UI** (3h) : inverser palette éditoriale (charcoal/cream)
+- **Phase 2 renommage code "La Base 360"** (2-4h) : package.json, env, dossiers — bloque i18n
+
+### 🟡 À faire (moyen / long terme)
+
+- **Chantier C — Paiement Square** (2-3j+) : edge function + SMS Twilio + webhook
+- **Lor'Squad AI** (3-4j) : FAB chat + Claude API + table `ai_usage_log`
+- **#5 i18n 6 langues** (5-8j) : geolocation + sélecteur drapeau + conversion monnaie (bloqué par Phase 2)
+- **#8 Newsletter publique** (17-25h) : 12 étapes spec brainstorm
+- **#6 Vidéos pédagogiques** (3-4h dev) : `<TutorialLink />` + iframe YouTube
+- **#13 Fiche distri publique enrichie** (8-11h)
+- **Plan d'action PV matin** (dépend décision Bizworks override admin)
+
+### 🟢 Polish opportuniste
+
+- Export PDF rapport mensuel Analytics
+- Drill-down produit Analytics
+- Tri par PV mois sur `/clients`
+- Hydratation `selectedProductQuantities` dans Edit/Follow-up
+- **Refacto hotspots** (audit `docs/audits/AUDIT_PHASE_3.5_REFACTO_CODEBASE.md`) : NewAssessmentPage 4350L, AgendaPage 2251L, supabaseService 2443L. **Opportuniste only** — pas de chantier refacto dédié.
+
+### ❓ À décider
+
+- Bizworks : champ admin override PV mensuel (1h) ?
+- Push notif 20h check-list : garder, ou désactivable par default ?
+- Sous-domaine `bonline.labase360.com` : DNS + cert ?
+
+---
+
 ## 🌦 Chantiers post-V5 Co-pilote (mémo 2026-05-05)
 
 Validés Thomas pendant Phase F V5, à programmer après merge V5 prod :
@@ -37,46 +89,7 @@ review.
 
 ---
 
-## 🚀 3 Chantiers en attente (mémo Thomas 2026-05-05)
-
-Décidés ensemble, ordre validé par Thomas, à attaquer dans cet ordre :
-
-### Chantier A — Jauge rentabilité (€ net mois)
-**Pour qui** : admin + référent + distri (chacun voit la sienne).
-**Idée** : sur le dashboard distri, une jauge ronde animée affiche en
-euros la rentabilité nette du mois. Rouge (< 200€) → Orange (200-500€)
-→ Vert (> 500€). Click = popup détail (nombre programmes vendus,
-CA brut, marge, projection fin de mois, vs mois précédent).
-
-**Calcul** :
-- Revenus = somme(prix × qty) des `pv_client_products` actifs du mois
-- Marge selon rang : 25 % distri / 35 % SC / 42 % SB / 50 % Sup
-- Marge brute (€) = revenus × marge_pct
-
-**Tables à créer** :
-- `herbalife_margins (rank, margin_pct, valid_from, valid_to)` — config
-  des marges par palier (peut évoluer Herbalife)
-
-**Composants à créer** :
-- `<RentabilityGauge />` SVG arc animé (rouge→vert)
-- `<RentabilityDetailModal />` popup breakdown
-- RPC SQL `get_rentability(user_id, month)` qui retourne le calcul agrégé
-- Widget Co-pilote en haut + page `/rentabilite` complète
-
-**Effort** : ~5h. Impact distri énorme (motivation = voir leur fric).
-
-### Chantier B — Relances clients dormants V2
-**Pour qui** : distri (chacun ses clients).
-**Idée** : le matin sur Co-pilote, un spotlight type *« 3 clients dormants
-= ~600 PV à reconquérir »* avec liste cliquable + bouton "Lancer la
-relance" qui ouvre le template message multi-canal.
-
-**Logique détection** :
-- Client actif (lifecycle = active ou pause)
-- Pas de `pv_client_products` actif OU
-- Dernière commande > 60 jours (paramétrable)
-
-**Effort** : ~3h. Cohérent avec A (booste les revenus visibles).
+## 🚀 Chantier Paiement Square (en attente)
 
 ### Chantier C — Intégration paiement Square
 **Pour qui** : tous les distri (Mandy → client direct).
