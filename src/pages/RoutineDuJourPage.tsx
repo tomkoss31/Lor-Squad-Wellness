@@ -1,121 +1,57 @@
 // =============================================================================
-// DailyActionsModal — Chantier #2 Co-pilote (étape 2.3, 2026-05-20)
+// RoutineDuJourPage — page dédiée check-list quotidienne (2026-05-20 V2)
 //
-// Pop-up auto à la 1ère ouverture du jour : 5 actions de discipline coach.
-// - Score X/5 affiché en haut (gamification douce)
-// - Bouton "Plus tard" : ferme, re-apparaît demain (pas définitif)
-// - Click sur une card → navigate vers la page concernée
-// - Bouton "Fait" / "Skip" persisté en DB (coach_daily_actions)
-// - localStorage `ls-daily-actions-shown-${YYYY-MM-DD}` = anti-spam même jour
+// Refonte chantier #2 V2 : Thomas voulait une page dédiée et PAS un popup
+// qui s'ouvre à chaque visite Co-pilote. Le popup a été retiré, l'accès
+// se fait via :
+//   - Pill "☀️ X/5 routine" dans la topbar Co-pilote
+//   - Card "Ma routine du jour" dans /developpement
+//   - URL directe /routine-du-jour
 //
-// Spec brainstorm Égypte 2026-05 (Q7/Q8 Thomas) — skippable, jamais
-// bloquant, fallback "Grandir ton réseau" si 0 F1/F21 dus.
+// Réutilise useDailyActionChecklist (hook agrégeur) → mêmes 5 actions et
+// même persistance DB (coach_daily_actions) que l'ancienne modale.
 // =============================================================================
 
-import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAppContext } from "../../context/AppContext";
 import {
   useDailyActionChecklist,
   type DailyAction,
-} from "../../hooks/useDailyActionChecklist";
+} from "../hooks/useDailyActionChecklist";
 
-const STORAGE_KEY_PREFIX = "ls-daily-actions-shown-";
-
-function ymdParis(): string {
-  const fmt = new Intl.DateTimeFormat("fr-CA", {
-    timeZone: "Europe/Paris",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  });
-  return fmt.format(new Date());
-}
-
-function alreadyShownToday(): boolean {
-  try {
-    return localStorage.getItem(`${STORAGE_KEY_PREFIX}${ymdParis()}`) === "1";
-  } catch {
-    return false;
-  }
-}
-
-function markShownToday(): void {
-  try {
-    localStorage.setItem(`${STORAGE_KEY_PREFIX}${ymdParis()}`, "1");
-  } catch {
-    /* ignore */
-  }
-}
-
-export function DailyActionsModal() {
-  const { currentUser } = useAppContext();
+export function RoutineDuJourPage() {
+  const navigate = useNavigate();
   const { actions, score, total, loading, markDone, markSkipped, resetAction } =
     useDailyActionChecklist();
-  const [open, setOpen] = useState(false);
-
-  // Auto-open 1ère ouverture du jour
-  useEffect(() => {
-    if (loading) return;
-    if (!currentUser) return;
-    if (alreadyShownToday()) return;
-    // léger délai pour ne pas bloquer le 1er paint Co-pilote
-    const t = setTimeout(() => setOpen(true), 600);
-    return () => clearTimeout(t);
-  }, [loading, currentUser]);
-
-  // ESC pour fermer
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") handleClose(false);
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open]);
-
-  const handleClose = (markAsShown: boolean) => {
-    if (markAsShown) markShownToday();
-    setOpen(false);
-  };
-
-  if (!open) return null;
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="daily-actions-title"
-      style={overlayStyle}
-      onClick={() => handleClose(false)}
-    >
-      <div
-        style={cardStyle}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <header style={headerStyle}>
-          <div style={eyebrowStyle}>☀️ ROUTINE DU MATIN · 5 MIN</div>
-          <h2 id="daily-actions-title" style={titleStyle}>
-            Tes 5 actions du jour
-          </h2>
-          <p style={subtitleStyle}>
-            Coche au fur et à mesure — tu peux revenir plus tard, tout revient
-            demain si tu n'as pas fini.
-          </p>
-          <div style={scoreRowStyle}>
-            <ScoreBadge score={score} total={total} />
-            <button
-              type="button"
-              onClick={() => handleClose(true)}
-              style={dismissBtnStyle}
-              aria-label="Fermer la check-list pour aujourd'hui"
-            >
-              Plus tard ✕
-            </button>
-          </div>
-        </header>
+    <div style={pageWrap}>
+      <button type="button" onClick={() => navigate("/co-pilote")} style={backBtn}>
+        ← Co-pilote
+      </button>
 
+      <header style={heroBox}>
+        <div style={heroEyebrow}>☀️ ROUTINE DU JOUR · 5 MIN</div>
+        <h1 style={heroTitle}>Tes 5 actions du jour</h1>
+        <p style={heroSubtitle}>
+          5 minutes de discipline matinale, midi ou soir — au moment qui te
+          convient. Coche au fur et à mesure, skippe ce que tu ne feras pas, et
+          retrouve cette page quand tu veux. Tout revient demain si pas fini.
+        </p>
+        <div style={scoreRow}>
+          <ScoreBadge score={score} total={total} />
+          <button
+            type="button"
+            onClick={() => navigate("/developpement/check-list-explique")}
+            style={ghostLinkBtn}
+          >
+            Comment ça marche →
+          </button>
+        </div>
+      </header>
+
+      {loading ? (
+        <div style={loadingHint}>Chargement de tes actions…</div>
+      ) : (
         <ul style={listStyle}>
           {actions.map((action) => (
             <ActionRow
@@ -124,19 +60,18 @@ export function DailyActionsModal() {
               onDone={() => markDone(action.key)}
               onSkip={() => markSkipped(action.key)}
               onReset={() => resetAction(action.key)}
-              onOpen={() => {
-                handleClose(true);
-              }}
             />
           ))}
         </ul>
+      )}
 
-        <footer style={footerStyle}>
-          <span style={footerHintStyle}>
-            💡 La check-list revient demain matin avec les actions non cochées.
-          </span>
-        </footer>
-      </div>
+      <footer style={pageFooter}>
+        <p style={footerHint}>
+          💡 Les actions non cochées repartent en « à faire » demain matin
+          automatiquement. Une push notif te rappelle à 20h si ton score est
+          incomplet (désactivable dans Paramètres &gt; Notifications).
+        </p>
+      </footer>
     </div>
   );
 }
@@ -148,23 +83,16 @@ function ActionRow({
   onDone,
   onSkip,
   onReset,
-  onOpen,
 }: {
   action: DailyAction;
   onDone: () => void;
   onSkip: () => void;
   onReset: () => void;
-  onOpen: () => void;
 }) {
   const navigate = useNavigate();
   const isDone = action.status === "done";
   const isSkipped = action.status === "skipped";
   const isFallback = action.isFallback === true;
-
-  const goTo = () => {
-    onOpen();
-    navigate(action.linkPath);
-  };
 
   return (
     <li
@@ -200,7 +128,11 @@ function ActionRow({
         </div>
         <p style={rowDetailStyle}>{action.detail}</p>
         <div style={rowActionsStyle}>
-          <button type="button" onClick={goTo} style={rowLinkBtnStyle}>
+          <button
+            type="button"
+            onClick={() => navigate(action.linkPath)}
+            style={rowLinkBtnStyle}
+          >
             {action.linkLabel} →
           </button>
           {!isDone && !isSkipped ? (
@@ -273,23 +205,18 @@ function ScoreBadge({ score, total }: { score: number; total: number }) {
         display: "inline-flex",
         alignItems: "center",
         gap: 10,
-        padding: "8px 14px",
+        padding: "10px 16px",
         borderRadius: 999,
-        background: `color-mix(in srgb, ${color} 10%, var(--ls-surface2))`,
+        background: `color-mix(in srgb, ${color} 12%, var(--ls-surface))`,
         border: `0.5px solid color-mix(in srgb, ${color} 40%, transparent)`,
         fontFamily: "Syne, sans-serif",
       }}
     >
       <span
         aria-hidden="true"
-        style={{
-          width: 8,
-          height: 8,
-          borderRadius: "50%",
-          background: color,
-        }}
+        style={{ width: 9, height: 9, borderRadius: "50%", background: color }}
       />
-      <strong style={{ color, fontSize: 16, fontWeight: 800 }}>
+      <strong style={{ color, fontSize: 18, fontWeight: 800 }}>
         {score}/{total}
       </strong>
       <span style={{ fontSize: 12, color: "var(--ls-text-muted)", fontWeight: 600 }}>
@@ -301,66 +228,58 @@ function ScoreBadge({ score, total }: { score: number; total: number }) {
 
 // ─── Styles ──────────────────────────────────────────────────────────────────
 
-const overlayStyle: React.CSSProperties = {
-  position: "fixed",
-  inset: 0,
-  zIndex: 1000,
-  background: "color-mix(in srgb, var(--ls-bg) 78%, transparent)",
-  backdropFilter: "blur(8px)",
-  WebkitBackdropFilter: "blur(8px)",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  padding: "clamp(12px, 4vw, 32px)",
+const pageWrap: React.CSSProperties = {
+  maxWidth: 760,
+  margin: "0 auto",
+  padding: "20px 18px 60px",
 };
 
-const cardStyle: React.CSSProperties = {
-  background: "var(--ls-surface)",
-  border: "1px solid var(--ls-border)",
-  borderRadius: 22,
-  padding: "clamp(20px, 3vw, 28px)",
-  width: "min(640px, 100%)",
-  maxHeight: "92vh",
-  overflowY: "auto",
-  boxShadow: "0 24px 60px color-mix(in srgb, var(--ls-bg) 70%, transparent)",
-  display: "flex",
-  flexDirection: "column",
-  gap: 18,
-};
-
-const headerStyle: React.CSSProperties = {
-  display: "flex",
-  flexDirection: "column",
-  gap: 6,
-};
-
-const eyebrowStyle: React.CSSProperties = {
-  fontSize: 10.5,
-  letterSpacing: 1.6,
-  color: "var(--ls-gold)",
-  textTransform: "uppercase",
-  fontWeight: 700,
+const backBtn: React.CSSProperties = {
+  background: "transparent",
+  border: "none",
+  color: "var(--ls-text-muted)",
   fontFamily: "DM Sans, sans-serif",
+  fontSize: 13,
+  cursor: "pointer",
+  marginBottom: 14,
+  padding: 0,
 };
 
-const titleStyle: React.CSSProperties = {
+const heroBox: React.CSSProperties = {
+  background:
+    "linear-gradient(135deg, color-mix(in srgb, var(--ls-gold) 12%, var(--ls-surface)), var(--ls-surface))",
+  border: "0.5px solid color-mix(in srgb, var(--ls-gold) 30%, var(--ls-border))",
+  borderRadius: 18,
+  padding: "24px 20px",
+};
+
+const heroEyebrow: React.CSSProperties = {
+  fontFamily: "DM Sans, sans-serif",
+  fontSize: 11,
+  fontWeight: 700,
+  textTransform: "uppercase",
+  letterSpacing: 1.4,
+  color: "var(--ls-gold)",
+  marginBottom: 8,
+};
+
+const heroTitle: React.CSSProperties = {
   margin: 0,
   fontFamily: "Syne, sans-serif",
-  fontSize: "clamp(22px, 3vw, 28px)",
+  fontSize: 26,
   fontWeight: 800,
   color: "var(--ls-text)",
   lineHeight: 1.15,
 };
 
-const subtitleStyle: React.CSSProperties = {
-  margin: 0,
-  fontSize: 13,
+const heroSubtitle: React.CSSProperties = {
+  margin: "10px 0 16px",
+  fontSize: 14,
+  lineHeight: 1.6,
   color: "var(--ls-text-muted)",
-  lineHeight: 1.5,
-  fontFamily: "DM Sans, sans-serif",
 };
 
-const scoreRowStyle: React.CSSProperties = {
+const scoreRow: React.CSSProperties = {
   display: "flex",
   justifyContent: "space-between",
   alignItems: "center",
@@ -369,7 +288,7 @@ const scoreRowStyle: React.CSSProperties = {
   marginTop: 6,
 };
 
-const dismissBtnStyle: React.CSSProperties = {
+const ghostLinkBtn: React.CSSProperties = {
   background: "transparent",
   border: "0.5px solid var(--ls-border)",
   color: "var(--ls-text-muted)",
@@ -383,26 +302,26 @@ const dismissBtnStyle: React.CSSProperties = {
 
 const listStyle: React.CSSProperties = {
   listStyle: "none",
-  margin: 0,
+  margin: "22px 0 0",
   padding: 0,
   display: "flex",
   flexDirection: "column",
-  gap: 10,
+  gap: 12,
 };
 
 const rowStyle: React.CSSProperties = {
   display: "flex",
   alignItems: "flex-start",
-  gap: 12,
-  padding: "14px 14px",
-  borderRadius: 14,
-  background: "var(--ls-surface2)",
+  gap: 14,
+  padding: "16px 18px",
+  borderRadius: 16,
+  background: "var(--ls-surface)",
   border: "0.5px solid var(--ls-border)",
   transition: "background 0.18s ease, border-color 0.18s ease, opacity 0.18s ease",
 };
 
 const rowDoneStyle: React.CSSProperties = {
-  background: "color-mix(in srgb, var(--ls-teal) 8%, var(--ls-surface2))",
+  background: "color-mix(in srgb, var(--ls-teal) 8%, var(--ls-surface))",
   borderColor: "color-mix(in srgb, var(--ls-teal) 30%, var(--ls-border))",
   opacity: 0.85,
 };
@@ -412,18 +331,16 @@ const rowSkippedStyle: React.CSSProperties = {
 };
 
 const rowFallbackStyle: React.CSSProperties = {
-  background: "color-mix(in srgb, var(--ls-teal) 5%, var(--ls-surface2))",
+  background: "color-mix(in srgb, var(--ls-teal) 5%, var(--ls-surface))",
   borderColor: "color-mix(in srgb, var(--ls-teal) 26%, var(--ls-border))",
 };
 
 const checkBoxStyle = (done: boolean): React.CSSProperties => ({
   flex: "0 0 auto",
-  width: 26,
-  height: 26,
+  width: 28,
+  height: 28,
   borderRadius: 8,
-  border: done
-    ? "1.5px solid var(--ls-teal)"
-    : "1.5px solid var(--ls-border)",
+  border: done ? "1.5px solid var(--ls-teal)" : "1.5px solid var(--ls-border)",
   background: done ? "var(--ls-teal)" : "transparent",
   color: done ? "#fff" : "transparent",
   fontFamily: "Syne, sans-serif",
@@ -452,15 +369,12 @@ const rowTopStyle: React.CSSProperties = {
   flexWrap: "wrap",
 };
 
-const rowEmojiStyle: React.CSSProperties = {
-  fontSize: 16,
-  lineHeight: 1,
-};
+const rowEmojiStyle: React.CSSProperties = { fontSize: 16, lineHeight: 1 };
 
 const rowLabelStyle: React.CSSProperties = {
   fontFamily: "Syne, sans-serif",
   fontWeight: 700,
-  fontSize: 14.5,
+  fontSize: 15,
   color: "var(--ls-text)",
   lineHeight: 1.3,
 };
@@ -472,9 +386,9 @@ const rowLabelDoneStyle: React.CSSProperties = {
 
 const rowDetailStyle: React.CSSProperties = {
   margin: 0,
-  fontSize: 12.5,
+  fontSize: 13,
   color: "var(--ls-text-muted)",
-  lineHeight: 1.45,
+  lineHeight: 1.5,
   fontFamily: "DM Sans, sans-serif",
 };
 
@@ -490,7 +404,7 @@ const rowLinkBtnStyle: React.CSSProperties = {
   background: "transparent",
   border: "none",
   color: "var(--ls-teal)",
-  fontSize: 12.5,
+  fontSize: 13,
   fontWeight: 700,
   cursor: "pointer",
   padding: 0,
@@ -516,15 +430,25 @@ const skippedHintStyle: React.CSSProperties = {
   fontFamily: "DM Sans, sans-serif",
 };
 
-const footerStyle: React.CSSProperties = {
-  borderTop: "0.5px solid var(--ls-border)",
-  paddingTop: 12,
-  display: "flex",
-  justifyContent: "center",
+const loadingHint: React.CSSProperties = {
+  marginTop: 20,
+  fontSize: 13,
+  color: "var(--ls-text-muted)",
+  fontFamily: "DM Sans, sans-serif",
 };
 
-const footerHintStyle: React.CSSProperties = {
-  fontSize: 11.5,
+const pageFooter: React.CSSProperties = {
+  marginTop: 24,
+  padding: "16px 18px",
+  borderRadius: 14,
+  background: "var(--ls-surface)",
+  border: "0.5px dashed var(--ls-border)",
+};
+
+const footerHint: React.CSSProperties = {
+  margin: 0,
+  fontSize: 12.5,
   color: "var(--ls-text-muted)",
+  lineHeight: 1.55,
   fontFamily: "DM Sans, sans-serif",
 };
