@@ -3232,6 +3232,67 @@ body.ls-stealth-active [data-stealth]:focus-within {
 }
 
 /* ─────────────────────────────────────────────────────────────────────────
+   Messagerie (/messages) — polish mobile (2026-05-20)
+   ───────────────────────────────────────────────────────────────────────── */
+@media (max-width: 1279px) {
+  .ls-msg-hero {
+    padding: 16px 18px !important;
+    border-radius: 18px !important;
+  }
+  /* CTA "Nouveau message" : un peu moins gros */
+  .ls-msg-cta {
+    padding: 11px 16px !important;
+    font-size: 13px !important;
+  }
+  .ls-msg-stat {
+    padding: 8px 12px !important;
+  }
+  .ls-msg-card {
+    padding: 12px 14px !important;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Rentabilité (/rentabilite) — polish mobile (2026-05-20)
+   Le container utilise déjà clamp() responsive. On compacte juste les
+   cards internes via ciblage générique [class*="space-y"] dans la page.
+   ───────────────────────────────────────────────────────────────────────── */
+@media (max-width: 1279px) {
+  /* Container principal padding réduit */
+  .rentabilite-page,
+  [data-page="rentabilite"] {
+    padding: 12px !important;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   TeamPage (/team) + FlexDashboard (/flex) — polish mobile
+   Utilisent Tailwind Card components. Compaction via class .eyebrow-label
+   et padding réduit.
+   ───────────────────────────────────────────────────────────────────────── */
+@media (max-width: 1279px) {
+  /* Cards bento — padding réduit sur mobile (Card est un wrapper Tailwind) */
+  .team-tree {
+    font-size: 13px !important;
+  }
+  .eyebrow-label {
+    font-size: 10px !important;
+    letter-spacing: 1.4px !important;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Mon développement (/developpement) — déjà responsive via grid auto-fit.
+   Juste compaction du padding global container.
+   ───────────────────────────────────────────────────────────────────────── */
+@media (max-width: 1279px) {
+  /* Container max-w principal des pages secondaires : padding réduit */
+  main > div[style*="padding: clamp(16px"] {
+    padding: 12px !important;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
    Accent system "hybrid" (Chantier mobile Onde 4, 2026-05-20)
    Validé Thomas : teal pour CTAs interactifs, gold conservé pour identité.
    Activable via html.accent-hybrid (mis dans main.tsx ou Paramètres).
