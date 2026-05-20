@@ -13,7 +13,7 @@ interface PvDismissAlertProps {
   clients: PvAlertClient[]
 }
 
-const STORAGE_KEY = 'lor-squad-pv-dismissed-v1'
+const STORAGE_KEY = 'labase360-pv-dismissed-v1'
 
 function getDismissed(): Record<string, boolean> {
   try { const raw = localStorage.getItem(STORAGE_KEY); return raw ? JSON.parse(raw) : {} } catch { return {} }

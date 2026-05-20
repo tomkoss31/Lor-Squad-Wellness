@@ -5,7 +5,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 
-const LS_KEY = "lorsquad-global-view";
+const LS_KEY = "labase360-global-view";
 
 /**
  * Hook d'état partagé pour le toggle "Vue globale" admin.

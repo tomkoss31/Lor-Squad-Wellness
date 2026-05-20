@@ -92,8 +92,8 @@ function groupLabel(dateIso: string, today: Date): string {
 
 const GROUP_ORDER = ["Aujourd'hui", "Demain", "Cette semaine", "Plus tard", "Passés"];
 
-const AGENDA_FILTER_KEY = "lorsquad.agenda.filter";
-const AGENDA_ENTITY_KEY = "lorsquad.agenda.entity-filter";
+const AGENDA_FILTER_KEY = "labase360.agenda.filter";
+const AGENDA_ENTITY_KEY = "labase360.agenda.entity-filter";
 
 export function AgendaPage() {
   const {

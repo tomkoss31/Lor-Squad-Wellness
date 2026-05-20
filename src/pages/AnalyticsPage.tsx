@@ -723,7 +723,7 @@ function FunnelView({ funnel }: { funnel: { bilans: number; inscrits: number; ac
             width={70}
           />
           <Tooltip
-            content={(props) => {
+            content={(props: unknown) => {
               const cast = props as unknown as { active?: boolean; payload?: ReadonlyArray<{ value: number; payload?: { name?: string } }> };
               const { active, payload } = cast;
               if (!active || !payload || payload.length === 0) return null;

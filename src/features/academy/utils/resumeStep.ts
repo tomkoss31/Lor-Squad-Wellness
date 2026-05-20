@@ -3,12 +3,12 @@
 // user qui skip une section a mi-parcours de reprendre exactement au
 // step ou il s est arrete.
 //
-// Cle localStorage : lorsquad-academy-resume-step
+// Cle localStorage : labase360-academy-resume-step
 // Format : { [sectionId]: stepIndex }
 // Reset automatique quand la section est completee (markSectionDone
 // appelle clearResumeStep).
 
-const STORAGE_KEY = "lorsquad-academy-resume-step";
+const STORAGE_KEY = "labase360-academy-resume-step";
 
 type ResumeMap = Record<string, number>;
 
