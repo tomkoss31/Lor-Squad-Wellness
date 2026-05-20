@@ -59,9 +59,21 @@ interface RentabilityWalletCardProps {
   onOpenDetail?: () => void;
   /** Permet d'imposer une taille (mobile vs desktop). Défaut : auto via CSS. */
   variant?: "default" | "compact";
+  /**
+   * Mode d'interaction sur click :
+   * - "navigate" → click sur la carte = navigate vers /rentabilite (par défaut
+   *   sur Co-pilote V5 où la carte est un widget aperçu).
+   * - "flip" → click = flip 3D vers le breakdown au dos (sur /rentabilite
+   *   hero où l'utilisateur est déjà sur la page complète).
+   */
+  interaction?: "navigate" | "flip";
 }
 
-export function RentabilityWalletCard({ onOpenDetail, variant = "default" }: RentabilityWalletCardProps) {
+export function RentabilityWalletCard({
+  onOpenDetail,
+  variant = "default",
+  interaction = "navigate",
+}: RentabilityWalletCardProps) {
   const navigate = useNavigate();
   const { currentUser, users } = useAppContext();
   const { data, loading, isCoupleAggregated } = useUserRentability(currentUser?.id ?? null);
@@ -151,7 +163,30 @@ export function RentabilityWalletCard({ onOpenDetail, variant = "default" }: Ren
           perspective: 1400,
           cursor: "pointer",
         }}
-        onClick={() => setFlipped((f) => !f)}
+        onClick={() => {
+          if (interaction === "flip") {
+            setFlipped((f) => !f);
+          } else if (onOpenDetail) {
+            onOpenDetail();
+          } else {
+            navigate("/rentabilite");
+          }
+        }}
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            if (interaction === "flip") {
+              setFlipped((f) => !f);
+            } else if (onOpenDetail) {
+              onOpenDetail();
+            } else {
+              navigate("/rentabilite");
+            }
+          }
+        }}
+        aria-label={interaction === "flip" ? "Retourner la carte pour voir le détail" : "Ouvrir la page rentabilité complète"}
       >
         <div
           style={{
@@ -423,10 +458,17 @@ export function RentabilityWalletCard({ onOpenDetail, variant = "default" }: Ren
                   style={{
                     fontFamily: "DM Sans, sans-serif",
                     fontSize: 11,
-                    color: "rgba(255,255,255,.45)",
+                    color: "rgba(255,255,255,.55)",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 4,
+                    padding: "5px 10px",
+                    borderRadius: 999,
+                    background: "rgba(255,255,255,.06)",
+                    border: "1px solid rgba(255,255,255,.12)",
                   }}
                 >
-                  retourner ›
+                  {interaction === "flip" ? "retourner la carte ↻" : "ouvrir le détail →"}
                 </div>
               </div>
             </div>

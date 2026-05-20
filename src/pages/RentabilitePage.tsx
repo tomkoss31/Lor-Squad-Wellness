@@ -273,9 +273,10 @@ export function RentabilitePage() {
             </span>
           </div>
 
-          {/* Wallet Card centrée */}
+          {/* Wallet Card centrée — sur la page, click = flip 3D vers le
+              breakdown (on est déjà sur /rentabilite, pas besoin de navigate). */}
           <div className="lr-fadeup lr-d-1">
-            <RentabilityWalletCard onOpenDetail={() => setDetailOpen(true)} />
+            <RentabilityWalletCard interaction="flip" onOpenDetail={() => setDetailOpen(true)} />
           </div>
 
           {/* 3 colonnes stats */}

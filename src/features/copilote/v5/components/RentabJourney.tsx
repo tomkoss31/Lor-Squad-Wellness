@@ -22,7 +22,10 @@ export function RentabJourney() {
         justifyContent: "center",
       }}
     >
-      <RentabilityWalletCard />
+      {/* interaction="navigate" : click sur la carte = ouvre /rentabilite
+          (puisqu'on est sur Co-pilote, la carte est un widget aperçu).
+          Le flip 3D est dispo sur la page rentabilité hero. */}
+      <RentabilityWalletCard interaction="navigate" />
     </section>
   );
 }
