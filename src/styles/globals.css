@@ -3091,3 +3091,30 @@ body.ls-stealth-active [data-stealth]:focus-within {
   .lb-sheet { transition: none !important; }
   .lb-sheet-scrim { animation: none; }
 }
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Accent system "hybrid" (Chantier mobile Onde 4, 2026-05-20)
+   Validé Thomas : teal pour CTAs interactifs, gold conservé pour identité.
+   Activable via html.accent-hybrid (mis dans main.tsx ou Paramètres).
+   ───────────────────────────────────────────────────────────────────────── */
+
+html.accent-hybrid {
+  /* Swap : --ls-gold (interactif) → teal. Garde gold pour les éléments
+     d'identité qui ajoutent eux-mêmes la classe .gold-keep. */
+  --ls-gold: var(--ls-teal);
+  --ls-gold-soft: color-mix(in srgb, var(--ls-teal) 14%, transparent);
+  --ls-gold-line: color-mix(in srgb, var(--ls-teal) 32%, transparent);
+}
+
+/* Éléments tagués .gold-keep ignorent le swap et restent gold (identité) :
+   logo, streak flame, VIP chip, rank pin. */
+html.accent-hybrid .gold-keep {
+  --ls-gold: #C9A84C;
+  --ls-gold-soft: color-mix(in srgb, #C9A84C 14%, transparent);
+  --ls-gold-line: color-mix(in srgb, #C9A84C 32%, transparent);
+}
+html.theme-light.accent-hybrid .gold-keep {
+  --ls-gold: #B8922A;
+  --ls-gold-soft: color-mix(in srgb, #B8922A 10%, transparent);
+  --ls-gold-line: color-mix(in srgb, #B8922A 28%, transparent);
+}

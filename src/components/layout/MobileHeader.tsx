@@ -77,7 +77,7 @@ export function MobileHeader({ crumb, navItems, currentPath, onLogout }: MobileH
 
         {/* Logo + crumb */}
         <div className="lb-logo-wrap">
-          <div className="lb-logo-mark" aria-hidden="true">B</div>
+          <div className="lb-logo-mark gold-keep" aria-hidden="true">B</div>
           <div style={{ display: "flex", flexDirection: "column", minWidth: 0, gap: 1 }}>
             <span className="lb-logo-text">La Base 360</span>
             {crumb ? <span className="lb-crumb">{crumb}</span> : null}

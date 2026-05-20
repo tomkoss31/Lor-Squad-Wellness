@@ -195,7 +195,7 @@ export function MobileDrawer({ open, onClose, onLogout, navItems, currentPath }:
         {/* Footer : streak + version */}
         <footer className="lb-drawer-foot">
           {streakDays > 0 ? (
-            <div className="lb-streak">
+            <div className="lb-streak gold-keep">
               <div className="flame" aria-hidden="true">
                 {streakBadge.emoji || "🔥"}
               </div>
