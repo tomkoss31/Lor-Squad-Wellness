@@ -246,13 +246,21 @@ export function AppLayout() {
                 (item.path === "/co-pilote" && location.pathname === "/dashboard") ||
                 (item.path === "/clients" && location.pathname.startsWith("/clients/")) ||
                 (item.path === "/pv" && location.pathname.startsWith("/pv")) ||
-                (item.path === "/formation" && location.pathname.startsWith("/guide")) ||
-                (item.path === "/academy" && location.pathname.startsWith("/academy/"));
+                (item.path === "/developpement" && location.pathname.startsWith("/developpement/")) ||
+                (item.path === "/developpement" && (
+                  location.pathname.startsWith("/formation") ||
+                  location.pathname.startsWith("/guide") ||
+                  location.pathname.startsWith("/academy") ||
+                  location.pathname.startsWith("/cahier-de-bord") ||
+                  location.pathname.startsWith("/simulateur-ebe") ||
+                  location.pathname.startsWith("/routine-du-jour")
+                ));
 
-              // Chantier Mini-fix V2 Co-pilote (2026-04-24) : bouton
-              // "+ Nouveau bilan" déplacé du FAB top-right vers la sidebar,
-              // inséré juste avant "Formation".
-              const insertNewBilanBefore = item.path === "/formation";
+              // Bouton "+ Nouveau bilan" inséré dans la sidebar juste avant
+              // "Mon développement" (refonte 2026-05-20 : ancien lien
+              // "/formation" obsolète, l'item s'appelle désormais "Mon
+              // développement" et pointe sur /developpement).
+              const insertNewBilanBefore = item.path === "/developpement";
 
               return (
                 <div key={item.path} style={{ display: 'contents' }}>
