@@ -1,0 +1,86 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+  <defs>
+    <!-- Gradient identité La Base 360 -->
+    <linearGradient id="vitalFusion" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#10B981"/>
+      <stop offset="50%" stop-color="#06B6D4"/>
+      <stop offset="100%" stop-color="#8B5CF6"/>
+    </linearGradient>
+    <!-- Shine top du cercle -->
+    <linearGradient id="topShine" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="rgba(255,255,255,0.30)"/>
+      <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
+    </linearGradient>
+    <!-- Fond mesh subtle teal -->
+    <radialGradient id="meshA" cx="0%" cy="0%" r="60%">
+      <stop offset="0%" stop-color="rgba(16,185,129,0.10)"/>
+      <stop offset="100%" stop-color="rgba(16,185,129,0)"/>
+    </radialGradient>
+    <radialGradient id="meshB" cx="100%" cy="100%" r="60%">
+      <stop offset="0%" stop-color="rgba(139,92,246,0.10)"/>
+      <stop offset="100%" stop-color="rgba(139,92,246,0)"/>
+    </radialGradient>
+    <radialGradient id="meshC" cx="100%" cy="0%" r="50%">
+      <stop offset="0%" stop-color="rgba(6,182,212,0.10)"/>
+      <stop offset="100%" stop-color="rgba(6,182,212,0)"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Background blanc cassé/crème -->
+  <rect x="0" y="0" width="1200" height="630" fill="#FAFAF7"/>
+  <rect x="0" y="0" width="1200" height="630" fill="url(#meshA)"/>
+  <rect x="0" y="0" width="1200" height="630" fill="url(#meshB)"/>
+  <rect x="0" y="0" width="1200" height="630" fill="url(#meshC)"/>
+
+  <!-- Logo : cercle gradient à gauche, centré verticalement -->
+  <g transform="translate(180, 195)">
+    <!-- Cercle principal -->
+    <circle cx="120" cy="120" r="118" fill="url(#vitalFusion)"/>
+    <!-- Shine top -->
+    <ellipse cx="120" cy="70" rx="88" ry="30" fill="url(#topShine)"/>
+    <!-- "B" centré dans le cercle -->
+    <text x="120" y="172"
+          font-family="Sora, system-ui, sans-serif"
+          font-weight="800"
+          font-size="160"
+          fill="#FFFFFF"
+          text-anchor="middle"
+          letter-spacing="-6">B</text>
+  </g>
+
+  <!-- Wordmark "La Base 360" -->
+  <text x="500" y="275"
+        font-family="Sora, system-ui, sans-serif"
+        font-weight="800"
+        font-size="92"
+        fill="#0F172A"
+        letter-spacing="-3">La Base</text>
+  <text x="864" y="275"
+        font-family="Sora, system-ui, sans-serif"
+        font-weight="400"
+        font-style="italic"
+        font-size="92"
+        fill="url(#vitalFusion)"
+        letter-spacing="-1">360</text>
+
+  <!-- Tagline -->
+  <text x="500" y="335"
+        font-family="DM Sans, system-ui, sans-serif"
+        font-weight="500"
+        font-size="28"
+        fill="#475569"
+        letter-spacing="0.5">The wellness nutrition club</text>
+
+  <!-- Footer SINCE 2022 · VERDUN -->
+  <g transform="translate(500, 395)">
+    <text x="0" y="0"
+          font-family="DM Sans, system-ui, sans-serif"
+          font-weight="700"
+          font-size="20"
+          fill="#06B6D4"
+          letter-spacing="2.5">★ SINCE 2022 ★ &#160;&#160;&#160;&#160; ★ VERDUN ★</text>
+  </g>
+
+  <!-- Bottom accent line (gradient teal-cyan-violet) -->
+  <rect x="500" y="430" width="200" height="3" rx="2" fill="url(#vitalFusion)"/>
+</svg>
