@@ -44,6 +44,7 @@ import { CelebrationCard } from "../../../components/copilote/CelebrationCard";
 import { Liste100ShortcutCard } from "../../../components/copilote/Liste100ShortcutCard";
 import { PvActionPlanAlert } from "../../../components/copilote/PvActionPlanAlert";
 import { DormantClientsWidget } from "../../../components/dormant/DormantClientsWidget";
+import { DailyActionsModal } from "../../../components/copilote/DailyActionsModal";
 import { LegalFooter } from "../../../components/ui/LegalFooter";
 import { AnnouncementBell } from "../../../components/announcements/AnnouncementBell";
 import { WeatherPopup } from "./components/WeatherPopup";
@@ -276,6 +277,10 @@ export function CoPiloteV5Page() {
         onClose={() => setWeatherOpen(false)}
         city={userCity}
       />
+
+      {/* Check-list quotidienne (chantier #2, 2026-05-20). Auto-popup
+          à la 1ère ouverture du jour, skippable, persistance DB. */}
+      <DailyActionsModal />
     </div>
   );
 }
