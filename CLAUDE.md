@@ -16,7 +16,8 @@ reproduire les régressions passées. Relire avant tout gros chantier.
 - **Chantier #7 — Business V2** : `BusinessPage` SaaS emerald/cyan/violet
 - **Chantier #10 — Badges coach** : 3 chips rang/bilans/ancienneté
 - **Chantier #11 — Témoignages** : Form + carrousel + admin page
-- **Onboarding client PWA (chantier C 2026-11-04)** : `ClientOnboardingTour` 4 slides + edge `client-app-mark-onboarded` + colonne `client_app_accounts.onboarded_at`
+- **Onboarding client PWA (chantier C 2026-11-04)** : `ClientOnboardingTour` 4 slides + edge `client-app-mark-onboarded` + colonne `client_app_accounts.onboarded_at`. Tutorial 9 étapes désormais sur demande via FAQ chatbot (chantier C V2 2026-05-20)
+- **D — Popup météo 5 jours (2026-05-05)** : `WeatherPopup` + `useWeatherForecast` (Open-Meteo no key, cache 30min, mapping WMO). Pill weather Co-pilote cliquable. CTA "Renseigne ta ville" si `users.city` absent.
 - **Fix inbox messagerie** : limite globale 50 → 1000 (PR #91)
 
 ### 🔴 À faire (court terme)
@@ -24,8 +25,7 @@ reproduire les régressions passées. Relire avant tout gros chantier.
 **Quick wins**
 - Désactiver / supprimer la push notif 20h `daily-actions-notifier` si Thomas la trouve agressive (toggle `users.notif_daily_actions` = false)
 
-**Chantiers validés**
-- **D — Popup météo 5 jours** (2-3h) : Open-Meteo, click weather pill Co-pilote
+_(plus aucun chantier court terme validé — tout livré, voir section moyen/long terme pour les gros chantiers à venir)_
 
 ### 🟡 À faire (moyen / long terme)
 
