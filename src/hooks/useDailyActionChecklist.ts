@@ -258,7 +258,7 @@ export function useDailyActionChecklist(now: Date = new Date()): UseDailyActionC
           liste100Count > 0
             ? `Contacte 1 à 2 personnes parmi tes ${liste100Count} de ta liste.`
             : "Démarre ta liste 100 — discipline prospection.",
-        linkPath: "/developpement/cahier-de-bord",
+        linkPath: "/cahier-de-bord",
         linkLabel: "Ouvrir Cahier de bord",
         status: persisted.liste_100,
       },
