@@ -47,13 +47,13 @@ export function PvOverviewPage() {
   // Toggle Liste / Kanban (2026-04-29) — persiste en localStorage
   const [viewMode, setViewMode] = useState<"list" | "kanban">(() => {
     if (typeof window === "undefined") return "list";
-    const stored = window.localStorage.getItem("lor-squad-pv-view-mode");
+    const stored = window.localStorage.getItem("labase360-pv-view-mode");
     return stored === "kanban" ? "kanban" : "list";
   });
   function handleViewModeChange(mode: "list" | "kanban") {
     setViewMode(mode);
     try {
-      window.localStorage.setItem("lor-squad-pv-view-mode", mode);
+      window.localStorage.setItem("labase360-pv-view-mode", mode);
     } catch {
       // ignore quota errors
     }

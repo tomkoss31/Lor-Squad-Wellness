@@ -9,7 +9,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { getSupabaseClient } from "../../../services/supabaseClient";
 
-const LS_PREFIX = "lorsquad-onboarding-";
+const LS_PREFIX = "labase360-onboarding-";
 
 export interface OnboardingState {
   completedAt: string | null;

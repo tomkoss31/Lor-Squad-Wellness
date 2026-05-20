@@ -384,7 +384,7 @@ function clearAssessmentDraft() {
   // globale est purgée systématiquement. La clé scopée par prospectId
   // est purgée séparément à la validation effective (cf handleSaveAssessment
   // qui appelle clearCoachNotesDraft(prospectId)).
-  window.localStorage.removeItem("lorsquad-assessment-coach-notes");
+  window.localStorage.removeItem("labase360-assessment-coach-notes");
 }
 
 // Chantier bilan updates (2026-04-20) : renommage + insertion + suppression.

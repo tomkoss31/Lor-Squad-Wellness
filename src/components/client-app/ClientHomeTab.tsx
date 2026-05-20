@@ -237,7 +237,7 @@ export function ClientHomeTab({
   const [showConfetti, setShowConfetti] = useState(false);
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const KEY = `lorsquad-client-first-open-${data.client_id}`;
+    const KEY = `labase360-client-first-open-${data.client_id}`;
     try {
       if (!window.localStorage.getItem(KEY)) {
         setShowConfetti(true);
