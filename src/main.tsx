@@ -13,6 +13,21 @@ import "./styles/globals.css";
 // qui mappe vers des SVG Twemoji. Aucun impact macOS/iOS/Android.
 polyfillCountryFlagEmojis();
 
+// Chantier mobile Onde 4 (2026-05-20) — activation accent hybrid par défaut.
+// Validé Thomas : teal pour CTAs interactifs, gold conservé pour identité
+// (éléments avec classe .gold-keep). Toggle désactivable plus tard dans
+// Paramètres si nécessaire (persisté localStorage 'ls-accent-mode').
+try {
+  const storedAccent = localStorage.getItem("ls-accent-mode");
+  if (storedAccent !== "gold") {
+    // Default = hybrid si rien ou si "hybrid" stocké
+    document.documentElement.classList.add("accent-hybrid");
+  }
+} catch {
+  // Si localStorage indispo, on active hybrid quand même
+  document.documentElement.classList.add("accent-hybrid");
+}
+
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <ToastProvider>

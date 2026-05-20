@@ -147,3 +147,4 @@ vite.config.d.ts
 .claude/worktrees/
 .design-import-pwa-v2/
 
+.design-imports/

@@ -1372,12 +1372,14 @@ function ProtocolAgendaCard({
           border: `0.5px solid color-mix(in srgb, ${accentColor} 35%, transparent)`,
           textTransform: "uppercase",
         }}
+        className="ls-rdv-badge-type"
       >
         Suivi
       </span>
 
-      {/* Chevron */}
+      {/* Chevron — masqué sur mobile */}
       <span
+        className="ls-rdv-chev"
         aria-hidden="true"
         style={{
           fontSize: 14,
@@ -1677,8 +1679,9 @@ function ClientFollowUpCard({
         </div>
       </div>
 
-      {/* Badge type */}
+      {/* Badge type — masqué sur mobile (Onde mobile 2026-05-20) */}
       <span
+        className="ls-rdv-badge-type"
         style={{
           flexShrink: 0,
           padding: "3px 9px",
@@ -1696,8 +1699,9 @@ function ClientFollowUpCard({
         Client
       </span>
 
-      {/* Chevron */}
+      {/* Chevron — masqué sur mobile */}
       <span
+        className="ls-rdv-chev"
         aria-hidden="true"
         style={{
           fontSize: 14,
