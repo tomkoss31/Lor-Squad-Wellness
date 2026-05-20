@@ -383,6 +383,12 @@ const ProspectionExpliquePage = lazy(() =>
     default: module.ProspectionExpliquePage,
   })),
 );
+// Check-list expliquée (2026-05-20) — tuto routine 5 actions/jour.
+const CheckListExpliquePage = lazy(() =>
+  import("./pages/CheckListExpliquePage").then((module) => ({
+    default: module.CheckListExpliquePage,
+  })),
+);
 // Nouveautés app (2026-05-04) — journal des annonces / changelog distri.
 const NouveautesPage = lazy(() =>
   import("./pages/NouveautesPage").then((module) => ({
@@ -565,6 +571,7 @@ export default function App() {
               <Route path="developpement" element={<DeveloppementHubPage />} />
               <Route path="developpement/flex-explique" element={<FlexExpliquePage />} />
               <Route path="developpement/prospection-explique" element={<ProspectionExpliquePage />} />
+              <Route path="developpement/check-list-explique" element={<CheckListExpliquePage />} />
               <Route path="developpement/nouveautes" element={<NouveautesPage />} />
               {/* Boite a outils prospection (chantier 2026-11-07) — admin only */}
               <Route path="outils-prospection" element={<OutilsProspectionPage />} />
