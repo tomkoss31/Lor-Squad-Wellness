@@ -1,14 +1,15 @@
 // Chantier Refonte Navigation (2026-04-22) — commit 5/5.
+// Refonte mobile 2026-05-20 (post-MobileDrawer hamburger) : remplacement
+// du bouton "Plus" + drawer bottom sheet (doublon avec le drawer hamburger
+// en haut) par un accès direct "Agenda" — route très utilisée au quotidien.
 //
-// Nav mobile bas à 5 items avec FAB central "+ Bilan" :
-//   Co-pilote · Messagerie · [+ Bilan] · Clients · Plus
+// Nav mobile bas à 5 items :
+//   Co-pilote · Messagerie · [+ Bilan] · Clients · Agenda
 //
-// Clic "Plus" → drawer bottom sheet avec : Agenda, Suivi PV, Mon équipe
-// (admin), Centre de formation, Paramètres, Sortir (bouton rouge en bas).
-// Ce drawer rend le bouton Sortir toujours accessible côté mobile.
+// Pour Suivi PV, Mon équipe, Formation, Paramètres, Sortir → hamburger
+// drawer principal en haut de l'écran (MobileDrawer).
 
-import { useState } from "react";
-import { NavLink, useLocation, useNavigate } from "react-router-dom";
+import { NavLink, useLocation } from "react-router-dom";
 import { useAppContext } from "../../context/AppContext";
 
 const PRIMARY_ITEMS = [
@@ -52,9 +53,7 @@ const PRIMARY_ITEMS = [
 
 export function BottomNav() {
   const location = useLocation();
-  const navigate = useNavigate();
-  const { currentUser, logout, unreadMessageCount } = useAppContext();
-  const [drawerOpen, setDrawerOpen] = useState(false);
+  const { unreadMessageCount } = useAppContext();
 
   // Masquer pendant le bilan (plein écran).
   if (location.pathname.includes("/assessments/new")) return null;
@@ -63,12 +62,6 @@ export function BottomNav() {
     location.pathname === path ||
     (path === "/co-pilote" && location.pathname === "/dashboard") ||
     (path !== "/co-pilote" && location.pathname.startsWith(path));
-
-  async function handleLogout() {
-    setDrawerOpen(false);
-    await logout();
-    navigate("/login", { replace: true });
-  }
 
   function renderItem(
     path: string,
@@ -156,11 +149,6 @@ export function BottomNav() {
     );
   }
 
-  function goTo(path: string) {
-    setDrawerOpen(false);
-    navigate(path);
-  }
-
   return (
     <>
       <nav
@@ -211,163 +199,25 @@ export function BottomNav() {
         )}
         {renderItem(PRIMARY_ITEMS[2].path, PRIMARY_ITEMS[2].label, PRIMARY_ITEMS[2].icon, isActive(PRIMARY_ITEMS[2].path), undefined, false, "nav-clients")}
 
-        {/* Plus — même format */}
-        <button
-          type="button"
-          onClick={() => setDrawerOpen(true)}
-          style={{
-            flex: 1,
-            maxWidth: 80,
-            minHeight: 44,
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 2,
-            background: "transparent",
-            border: "none",
-            cursor: "pointer",
-            color: "var(--ls-text-hint)",
-            fontFamily: "DM Sans, sans-serif",
-            padding: "6px 4px",
-          }}
-        >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-            <circle cx="5" cy="12" r="1.3" />
-            <circle cx="12" cy="12" r="1.3" />
-            <circle cx="19" cy="12" r="1.3" />
-          </svg>
-          <span style={{ fontSize: 9, letterSpacing: "0.04em", fontWeight: 500 }}>Plus</span>
-        </button>
+        {/* Agenda — remplace l'ancien bouton "Plus" (drawer bottom sheet
+            retiré 2026-05-20, doublon avec le drawer hamburger principal). */}
+        {renderItem(
+          "/agenda",
+          "Agenda",
+          (
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+              <rect x="3" y="4" width="18" height="18" rx="2" />
+              <line x1="16" y1="2" x2="16" y2="6" />
+              <line x1="8" y1="2" x2="8" y2="6" />
+              <line x1="3" y1="10" x2="21" y2="10" />
+            </svg>
+          ),
+          isActive("/agenda"),
+          undefined,
+          false,
+          "nav-agenda",
+        )}
       </nav>
-
-      {/* Drawer "Plus" */}
-      {drawerOpen ? (
-        <div
-          role="button"
-          tabIndex={0}
-          aria-label="Fermer le menu"
-          onClick={() => setDrawerOpen(false)}
-          onKeyDown={(e) => {
-            if (e.key === "Escape") setDrawerOpen(false);
-          }}
-          style={{
-            position: "fixed",
-            inset: 0,
-            background: "rgba(0,0,0,0.5)",
-            zIndex: 9000,
-            display: "flex",
-            alignItems: "flex-end",
-          }}
-        >
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-label="Menu supplémentaire"
-            onClick={(e) => e.stopPropagation()}
-            onKeyDown={(e) => e.stopPropagation()}
-            style={{
-              width: "100%",
-              background: "var(--ls-sidebar-bg)",
-              borderRadius: "18px 18px 0 0",
-              padding: "16px 16px calc(16px + env(safe-area-inset-bottom, 0px))",
-              borderTop: "1px solid var(--ls-border)",
-              boxShadow: "0 -8px 30px rgba(0,0,0,0.3)",
-              fontFamily: "DM Sans, sans-serif",
-            }}
-          >
-            <div
-              style={{
-                width: 36,
-                height: 4,
-                background: "rgba(255,255,255,0.2)",
-                borderRadius: 2,
-                margin: "0 auto 16px",
-              }}
-            />
-            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-              <DrawerItem label="Agenda" icon="📅" onClick={() => goTo("/agenda")} />
-              <DrawerItem label="Suivi PV" icon="📊" onClick={() => goTo("/pv")} />
-              {currentUser?.role === "admin" ? (
-                <DrawerItem label="Mon équipe" icon="👥" onClick={() => goTo("/team")} />
-              ) : null}
-              <DrawerItem label="Centre de formation" icon="📚" onClick={() => goTo("/formation")} />
-              <DrawerItem
-                label="Paramètres"
-                icon="⚙️"
-                onClick={() => goTo(currentUser?.role === "admin" ? "/parametres" : "/settings")}
-              />
-            </div>
-
-            <div style={{ height: 1, background: "var(--ls-border)", margin: "14px 0" }} />
-
-            <button
-              type="button"
-              onClick={() => void handleLogout()}
-              style={{
-                width: "100%",
-                padding: "14px 16px",
-                borderRadius: 12,
-                background: "#FCEBEB",
-                color: "#A32D2D",
-                border: "none",
-                fontFamily: "DM Sans, sans-serif",
-                fontWeight: 500,
-                fontSize: 14,
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: 8,
-              }}
-            >
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-                <polyline points="16 17 21 12 16 7" />
-                <line x1="21" y1="12" x2="9" y2="12" />
-              </svg>
-              Sortir
-            </button>
-          </div>
-        </div>
-      ) : null}
     </>
-  );
-}
-
-function DrawerItem({
-  label,
-  icon,
-  onClick,
-}: {
-  label: string;
-  icon: string;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      style={{
-        width: "100%",
-        display: "flex",
-        alignItems: "center",
-        gap: 14,
-        padding: "14px 12px",
-        background: "transparent",
-        border: "none",
-        color: "var(--ls-text)",
-        fontSize: 14,
-        fontFamily: "DM Sans, sans-serif",
-        cursor: "pointer",
-        textAlign: "left",
-        borderRadius: 10,
-      }}
-    >
-      <span aria-hidden="true" style={{ fontSize: 18, width: 28, textAlign: "center" }}>
-        {icon}
-      </span>
-      <span>{label}</span>
-    </button>
   );
 }
