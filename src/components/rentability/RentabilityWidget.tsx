@@ -73,8 +73,13 @@ export function RentabilityWidget() {
     }
     return hasAnyBreakdown ? Math.max(total, data.margin_eur) : data.margin_eur;
   }, [data, currentUser, users, breakdowns]);
-  // V3 : entrees manuelles distri hors-app
-  const { entries: manualEntries } = useManualPvEntries(currentUser?.id ?? null, monthIso);
+  // V3 : entrees manuelles distri hors-app.
+  // Bugfix 2026-05-20 : agréger sur scope_user_ids (couple) pour cohérence
+  // Thomas/Mélanie.
+  const { entries: manualEntries } = useManualPvEntries(
+    data?.scope_user_ids ?? null,
+    monthIso,
+  );
   const manualOverride = useMemo(() => {
     if (!currentUser) return 0;
     return computeManualEntriesOverride(manualEntries, tierPctForRank(currentUser.currentRank));

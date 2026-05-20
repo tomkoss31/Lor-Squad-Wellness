@@ -43,7 +43,9 @@ function computeOwnMarginFromBreakdownsOrFallback(
       any = true;
     }
   }
-  return any ? total : data.margin_eur;
+  // Bugfix 2026-05-20 : MAX au lieu d'écrasement. Sinon un breakdown
+  // saisi inférieur à la RPC fait disparaître les ventes app trackées.
+  return any ? Math.max(total, data.margin_eur) : data.margin_eur;
 }
 
 function initialsOf(name: string): string {
@@ -88,8 +90,14 @@ export function RentabilitePage() {
     () => computeOwnMarginFromBreakdownsOrFallback(ownData, breakdowns, users),
     [ownData, breakdowns, users],
   );
-  // V3 : entrees manuelles (distri hors-app) ajoutees au total override
-  const { entries: manualEntries } = useManualPvEntries(currentUser?.id ?? null, monthIso);
+  // V3 : entrees manuelles (distri hors-app) ajoutees au total override.
+  // Bugfix 2026-05-20 : agréger les entries du COUPLE (scope_user_ids) et
+  // pas juste currentUser.id, sinon Mélanie voit 0 alors que Thomas voit
+  // ses entries → divergence couple.
+  const { entries: manualEntries } = useManualPvEntries(
+    ownData?.scope_user_ids ?? null,
+    monthIso,
+  );
   const ownManualOverride = useMemo(() => {
     if (!currentUser) return 0;
     return computeManualEntriesOverride(manualEntries, tierPctForRank(currentUser.currentRank));

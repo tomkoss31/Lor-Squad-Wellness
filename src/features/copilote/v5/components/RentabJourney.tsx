@@ -61,7 +61,11 @@ export function RentabJourney() {
   // /rentabilite et la modale "Voir detail complet".
   const monthIso = useMemo(() => currentMonthIso(), []);
   const { breakdowns } = usePvBreakdowns(monthIso);
-  const { entries: manualEntries } = useManualPvEntries(currentUser?.id ?? null, monthIso);
+  // Bugfix 2026-05-20 : couple aggregation des entries manuelles.
+  const { entries: manualEntries } = useManualPvEntries(
+    data?.scope_user_ids ?? null,
+    monthIso,
+  );
 
   const ownSelfMargin = useMemo(() => {
     if (!data || !currentUser) return data?.margin_eur ?? 0;
