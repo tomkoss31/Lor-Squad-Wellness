@@ -25,6 +25,8 @@ import { recordClientXp } from "../../features/client-xp/useClientXp";
 interface Props {
   token: string;
   coachFirstName?: string;
+  /** Si fourni, ajoute un bouton "Faire le tour de l'app" dans le popup. */
+  onLaunchTutorial?: () => void;
 }
 
 interface FaqEntry {
@@ -93,7 +95,7 @@ const FAQ: FaqEntry[] = [
   },
 ];
 
-export function ClientFaqChatbot({ token, coachFirstName }: Props) {
+export function ClientFaqChatbot({ token, coachFirstName, onLaunchTutorial }: Props) {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -384,6 +386,39 @@ export function ClientFaqChatbot({ token, coachFirstName }: Props) {
                 );
               })}
             </div>
+
+            {/* CTA "Faire le tour de l'app" — visible uniquement si la
+                page parente a fourni un callback (= tutorial dispo).
+                Refonte chantier C V2 2026-05-20 : l'OnboardingTutorial
+                ne s'auto-lance plus, l'utilisateur le redéclenche d'ici. */}
+            {onLaunchTutorial ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setOpen(false);
+                  onLaunchTutorial();
+                }}
+                style={{
+                  width: "100%",
+                  padding: "12px 16px",
+                  background: "linear-gradient(135deg, #EF9F27, #BA7517)",
+                  color: "white",
+                  border: "none",
+                  borderRadius: 12,
+                  fontSize: 13,
+                  fontWeight: 700,
+                  fontFamily: "Sora, system-ui, sans-serif",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 8,
+                  marginBottom: 10,
+                }}
+              >
+                🎓 Faire le tour interactif de l'app
+              </button>
+            ) : null}
 
             {/* CTA "Écrire question libre" */}
             <button
