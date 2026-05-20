@@ -824,26 +824,40 @@ function ReplyModule({
     <>
       {nodes.map((n) => {
         const meta = branchLabel[n.branch] ?? { pill: n.branch, emoji: "·", cls: "maybe" };
-        const body = marketCode !== "fr" && n.body_fr ? n.body_fr : n.body;
-        const isWarm = meta.cls === "warm";
         return (
-          <article key={n.id} className={`ph-tree-branch${isWarm ? " warm-branch" : ""}`}>
-            <div className="reaction">
-              <span>{meta.emoji} Il / elle réagit</span>
-              <span className={`pill ${meta.cls}`}>{meta.pill}</span>
-              <span style={{ marginLeft: "auto", fontFamily: "var(--hub-f-mono)", fontSize: 9.5, color: "var(--hub-muted)" }}>{n.level}</span>
-            </div>
-            <q>{n.tip ?? "—"}</q>
-            <div className="reply">{renderScriptBody(body)}</div>
-            <div className="actions">
-              <button className="ph-btn copy" type="button" onClick={() => onCopy(body)}>
-                <span className="ic">⌘C</span>Copier
-              </button>
-            </div>
-          </article>
+          <ReplyBranchCard key={n.id} node={n} meta={meta} marketCode={marketCode} onCopy={onCopy} />
         );
       })}
     </>
+  );
+}
+
+function ReplyBranchCard({
+  node, meta, marketCode, onCopy,
+}: {
+  node: ProspectionReplyNode;
+  meta: { pill: string; emoji: string; cls: string };
+  marketCode: string;
+  onCopy: (t: string) => void;
+}) {
+  const { body, toggle } = useBodyToggle(node.body, node.body_fr, marketCode);
+  const isWarm = meta.cls === "warm";
+  return (
+    <article className={`ph-tree-branch${isWarm ? " warm-branch" : ""}`}>
+      <div className="reaction">
+        <span>{meta.emoji} Il / elle réagit</span>
+        <span className={`pill ${meta.cls}`}>{meta.pill}</span>
+        <span style={{ marginLeft: "auto", fontFamily: "var(--hub-f-mono)", fontSize: 9.5, color: "var(--hub-muted)" }}>{node.level}</span>
+        {toggle}
+      </div>
+      <q>{node.tip ?? "—"}</q>
+      <div className="reply">{renderScriptBody(body)}</div>
+      <div className="actions">
+        <button className="ph-btn copy" type="button" onClick={() => onCopy(body)}>
+          <span className="ic">⌘C</span>Copier
+        </button>
+      </div>
+    </article>
   );
 }
 
@@ -853,46 +867,55 @@ function ObjectionsModule({
   if (items.length === 0) return <Empty>Aucune objection pour ce marché.</Empty>;
   return (
     <>
-      {items.map((o, i) => {
-        const goodBody = marketCode !== "fr" && o.good_response_fr ? o.good_response_fr : o.good_response;
-        return (
-          <div key={o.id} className="ph-obj">
-            <div className="quote">
-              <div className="n">{String(i + 1).padStart(2, "0")}<small>{o.slug}</small></div>
-              <q>{o.title}</q>
-            </div>
-            <div className="ph-obj-row bad">
-              <span className="badge">✕</span>
-              <div>
-                <div className="lbl">À ne pas dire</div>
-                <p>{o.bad_response}</p>
-              </div>
-            </div>
-            <div className="ph-obj-row good">
-              <span className="badge">✓</span>
-              <div>
-                <div className="lbl">Ce qui ouvre</div>
-                <p>{renderScriptBody(goodBody)}</p>
-              </div>
-            </div>
-            {o.warning && (
-              <div className="ph-obj-row bad" style={{ marginTop: 6 }}>
-                <span className="badge">!</span>
-                <div>
-                  <div className="lbl" style={{ color: "var(--hub-accent-dark)" }}>Attention</div>
-                  <p style={{ color: "var(--hub-text)", textDecoration: "none" }}>{o.warning}</p>
-                </div>
-              </div>
-            )}
-            <div className="ph-obj-actions">
-              <button className="ph-btn copy" type="button" onClick={() => onCopy(goodBody)}>
-                <span className="ic">⌘C</span>Copier la réponse
-              </button>
-            </div>
-          </div>
-        );
-      })}
+      {items.map((o, i) => (
+        <ObjectionCard key={o.id} objection={o} idx={i} marketCode={marketCode} onCopy={onCopy} />
+      ))}
     </>
+  );
+}
+
+function ObjectionCard({
+  objection: o, idx: i, marketCode, onCopy,
+}: { objection: ProspectionObjection; idx: number; marketCode: string; onCopy: (t: string) => void }) {
+  const { body: goodBody, toggle } = useBodyToggle(o.good_response, o.good_response_fr, marketCode);
+  return (
+    <div className="ph-obj">
+      <div className="quote">
+        <div className="n">{String(i + 1).padStart(2, "0")}<small>{o.slug}</small></div>
+        <q>{o.title}</q>
+      </div>
+      <div className="ph-obj-row bad">
+        <span className="badge">✕</span>
+        <div>
+          <div className="lbl">À ne pas dire</div>
+          <p>{o.bad_response}</p>
+        </div>
+      </div>
+      <div className="ph-obj-row good">
+        <span className="badge">✓</span>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+            <div className="lbl">Ce qui ouvre</div>
+            {toggle}
+          </div>
+          <p>{renderScriptBody(goodBody)}</p>
+        </div>
+      </div>
+      {o.warning && (
+        <div className="ph-obj-row bad" style={{ marginTop: 6 }}>
+          <span className="badge">!</span>
+          <div>
+            <div className="lbl" style={{ color: "var(--hub-accent-dark)" }}>Attention</div>
+            <p style={{ color: "var(--hub-text)", textDecoration: "none" }}>{o.warning}</p>
+          </div>
+        </div>
+      )}
+      <div className="ph-obj-actions">
+        <button className="ph-btn copy" type="button" onClick={() => onCopy(goodBody)}>
+          <span className="ic">⌘C</span>Copier la réponse
+        </button>
+      </div>
+    </div>
   );
 }
 
@@ -903,25 +926,34 @@ function PostCallModule({
   if (postCall.length === 0) return <Empty>Pas de séquence post-appel pour ce marché.</Empty>;
   return (
     <div className="ph-timeline">
-      {postCall.map((f, idx) => {
-        const state = idx === 0 ? "now" : "future";
-        const body = marketCode !== "fr" && f.body_fr ? f.body_fr : f.body;
-        return (
-          <div key={f.id} className={`ph-t-step ${state}`}>
-            <div className="when">{f.title}</div>
-            <h4>Touche {idx + 1}</h4>
-            <div className="msg">{renderScriptBody(body)}</div>
-            <div style={{ marginTop: 8, display: "flex", gap: 6 }}>
-              <button className="ph-btn copy" type="button" onClick={() => onCopy(body)}>
-                <span className="ic">⌘C</span>Copier
-              </button>
-              {f.warning && (
-                <span style={{ fontFamily: "var(--hub-f-mono)", fontSize: 10, color: "var(--hub-accent-dark)", alignSelf: "center" }}>⚠ {f.warning}</span>
-              )}
-            </div>
-          </div>
-        );
-      })}
+      {postCall.map((f, idx) => (
+        <FollowupStep key={f.id} followup={f} idx={idx} marketCode={marketCode} onCopy={onCopy} />
+      ))}
+    </div>
+  );
+}
+
+function FollowupStep({
+  followup: f, idx, marketCode, onCopy,
+}: { followup: ProspectionFollowup; idx: number; marketCode: string; onCopy: (t: string) => void }) {
+  const { body, toggle } = useBodyToggle(f.body, f.body_fr, marketCode);
+  const state = idx === 0 ? "now" : "future";
+  return (
+    <div className={`ph-t-step ${state}`}>
+      <div className="when" style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <span>{f.title}</span>
+        {toggle}
+      </div>
+      <h4>Touche {idx + 1}</h4>
+      <div className="msg">{renderScriptBody(body)}</div>
+      <div style={{ marginTop: 8, display: "flex", gap: 6 }}>
+        <button className="ph-btn copy" type="button" onClick={() => onCopy(body)}>
+          <span className="ic">⌘C</span>Copier
+        </button>
+        {f.warning && (
+          <span style={{ fontFamily: "var(--hub-f-mono)", fontSize: 10, color: "var(--hub-accent-dark)", alignSelf: "center" }}>⚠ {f.warning}</span>
+        )}
+      </div>
     </div>
   );
 }
@@ -954,22 +986,44 @@ function ClosingModule({
           </div>
         </div>
       )}
-      {scripts.map((s) => {
-        const body = marketCode !== "fr" && s.body_fr ? s.body_fr : s.body;
-        return (
-          <article key={s.id} className="ph-close-script">
-            <h4>{s.title ?? scriptTitle[s.kind] ?? s.kind}</h4>
-            {scriptCtx[s.kind] && <div className="ctx">{scriptCtx[s.kind]}</div>}
-            <p>{renderScriptBody(body)}</p>
-            <div style={{ marginTop: 10, display: "flex", gap: 6 }}>
-              <button className="ph-btn copy" type="button" onClick={() => onCopy(body)}>
-                <span className="ic">⌘C</span>Copier
-              </button>
-            </div>
-          </article>
-        );
-      })}
+      {scripts.map((s) => (
+        <CloseScriptCard
+          key={s.id}
+          script={s}
+          marketCode={marketCode}
+          title={s.title ?? scriptTitle[s.kind] ?? s.kind}
+          ctx={scriptCtx[s.kind]}
+          onCopy={onCopy}
+        />
+      ))}
     </>
+  );
+}
+
+function CloseScriptCard({
+  script: s, marketCode, title, ctx, onCopy,
+}: {
+  script: ProspectionClosingBlock;
+  marketCode: string;
+  title: string;
+  ctx?: string;
+  onCopy: (t: string) => void;
+}) {
+  const { body, toggle } = useBodyToggle(s.body, s.body_fr, marketCode);
+  return (
+    <article className="ph-close-script">
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8 }}>
+        <h4>{title}</h4>
+        {toggle}
+      </div>
+      {ctx && <div className="ctx">{ctx}</div>}
+      <p>{renderScriptBody(body)}</p>
+      <div style={{ marginTop: 10, display: "flex", gap: 6 }}>
+        <button className="ph-btn copy" type="button" onClick={() => onCopy(body)}>
+          <span className="ic">⌘C</span>Copier
+        </button>
+      </div>
+    </article>
   );
 }
 
@@ -1002,17 +1056,34 @@ function SpecialCasesModule({
         ))}
       </div>
       {active && (
-        <article className="ph-close-script">
-          <h4>{active.title}</h4>
-          <p>{renderScriptBody(marketCode !== "fr" && active.body_fr ? active.body_fr : active.body)}</p>
-          <div style={{ marginTop: 10, display: "flex", gap: 6 }}>
-            <button className="ph-btn copy" type="button" onClick={() => onCopy(active.body)}>
-              <span className="ic">⌘C</span>Copier
-            </button>
-          </div>
-        </article>
+        <SpecialCaseCard
+          key={active.id}
+          item={active}
+          marketCode={marketCode}
+          onCopy={onCopy}
+        />
       )}
     </>
+  );
+}
+
+function SpecialCaseCard({
+  item, marketCode, onCopy,
+}: { item: ProspectionSpecialCase; marketCode: string; onCopy: (t: string) => void }) {
+  const { body, toggle } = useBodyToggle(item.body, item.body_fr, marketCode);
+  return (
+    <article className="ph-close-script">
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8 }}>
+        <h4>{item.title}</h4>
+        {toggle}
+      </div>
+      <p>{renderScriptBody(body)}</p>
+      <div style={{ marginTop: 10, display: "flex", gap: 6 }}>
+        <button className="ph-btn copy" type="button" onClick={() => onCopy(body)}>
+          <span className="ic">⌘C</span>Copier
+        </button>
+      </div>
+    </article>
   );
 }
 
@@ -1178,6 +1249,42 @@ function FnRow({ lab, v, pct }: { lab: string; v: number; pct: number }) {
 // ────────────────────────────────────────────────────────────
 // Helpers
 // ────────────────────────────────────────────────────────────
+
+/**
+ * Hook : toggle Natif ↔ FR pour les modules qui exposent un body à
+ * copier-coller (scripts envoyés au prospect).
+ *
+ * - Sur marché FR : pas de toggle, juste le body natif (= FR).
+ * - Sur marché non-FR sans body_fr : pas de toggle, juste le natif.
+ * - Sur marché non-FR avec body_fr : toggle segmented inline.
+ *   Par défaut on affiche le NATIF (c'est ce que le coach copie pour
+ *   envoyer au prospect). FR = vérification de compréhension.
+ *
+ * Retourne le body courant + le node JSX du toggle (à insérer où on veut).
+ */
+function useBodyToggle(native: string, fr: string | null, marketCode: string): {
+  body: string;
+  toggle: ReactNode;
+} {
+  const [lang, setLang] = useState<"native" | "fr">("native");
+  const hasToggle = marketCode !== "fr" && !!fr && fr.trim().length > 0;
+  const body = hasToggle && lang === "fr" ? (fr as string) : native;
+  if (!hasToggle) return { body, toggle: null };
+  return {
+    body,
+    toggle: (
+      <div className="ph-lang-switch" style={{ marginLeft: "auto", flexShrink: 0 }}>
+        <button type="button" className={lang === "native" ? "on" : ""} onClick={() => setLang("native")}>
+          {marketCode.toUpperCase()}
+        </button>
+        <button type="button" className={lang === "fr" ? "on" : ""} onClick={() => setLang("fr")}>
+          FR
+        </button>
+      </div>
+    ),
+  };
+}
+
 function Caret() {
   return (
     <svg className="caret" viewBox="0 0 12 12" fill="none">
