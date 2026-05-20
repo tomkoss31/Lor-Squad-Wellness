@@ -75,7 +75,8 @@ export function RentabJourney() {
         any = true;
       }
     }
-    return any ? total : data.margin_eur;
+    // Bugfix 2026-05-20 : MAX au lieu d'écrasement (cf. RentabilityWidget).
+    return any ? Math.max(total, data.margin_eur) : data.margin_eur;
   }, [data, currentUser, users, breakdowns]);
 
   const downlineOverride = useMemo(() => {

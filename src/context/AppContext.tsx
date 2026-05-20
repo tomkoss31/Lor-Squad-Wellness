@@ -115,6 +115,10 @@ interface AppContextValue {
   /** Re-fetch users + clients apres un freeze/unfreeze depuis la modale.
    *  Chantier freeze 2026-05-06. */
   refreshAfterFreeze: () => Promise<void>;
+  /** Re-fetch global clients/users/follow-ups. Utilisé en garde-fou par
+   *  ClientDetailPage si un id n'apparaît pas encore dans clients[]
+   *  (race React state ↔ navigation post-création). 2026-05-20. */
+  reloadClients: () => Promise<void>;
   setClientFragileFlag: (clientId: string, isFragile: boolean) => Promise<void>;
   setClientFreeFollowUp: (clientId: string, freeFollowUp: boolean) => Promise<void>;
   // Free PV tracking (2026-04-20) : toggle exclusion des listes de réassort
@@ -1019,6 +1023,11 @@ export function AppProvider({ children }: PropsWithChildren) {
       },
       refreshAfterFreeze: async () => {
         // Re-fetch users complets pour que frozenAt soit a jour cote front
+        if (currentUser) {
+          await refreshRemoteData(currentUser);
+        }
+      },
+      reloadClients: async () => {
         if (currentUser) {
           await refreshRemoteData(currentUser);
         }

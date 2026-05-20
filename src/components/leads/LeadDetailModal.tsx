@@ -105,6 +105,9 @@ export function LeadDetailModal({ bilan, onClose, onStatusChange, onNotesChange 
     >
       <style>{STYLES}</style>
       <div className="ldm-panel" onClick={(e) => e.stopPropagation()}>
+        <button className="ldm-back" onClick={onClose} type="button">
+          ← Retour aux leads
+        </button>
         <button className="ldm-close" onClick={onClose} aria-label="Fermer">×</button>
 
         <div className="ldm-header">
@@ -285,6 +288,24 @@ const STYLES = `
     .ldm-backdrop { align-items: center; padding: 32px; }
     .ldm-panel { border-radius: 20px; }
   }
+
+  .ldm-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: transparent;
+    border: 1px solid rgba(15, 23, 42, 0.12);
+    color: var(--ls-text, #0F172A);
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 8px 14px;
+    border-radius: 999px;
+    cursor: pointer;
+    margin-bottom: 12px;
+    transition: background 0.15s ease;
+  }
+  .ldm-back:hover { background: rgba(15, 23, 42, 0.05); }
 
   .ldm-close {
     position: absolute;
