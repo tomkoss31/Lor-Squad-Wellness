@@ -137,10 +137,18 @@ export function ProspectionPage() {
   }
 
   if (mode === "hub") {
+    // V4 design polish : le hub a son propre header intégré + assume sa propre
+    // largeur (full largeur app coach, comme Co-pilote). On NE PASSE PAS par
+    // <PageShell> ici car celui-ci wrappe en maxWidth:760px (tunnel V3) et
+    // étrangle le hub. Wrapper full largeur direct.
+    void stats; // stats internes au hub (compteur sent/RDV) — pas de chip externe
     return (
-      <PageShell>
-        <Header />
-        {stats && <StatsBanner stats={stats} />}
+      <div style={{
+        minHeight: "100dvh",
+        background: "var(--ls-bg)",
+        color: "var(--ls-text)",
+        fontFamily: "'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif",
+      }}>
         <ProspectionHub
           markets={data.markets}
           profiles={data.profiles}
@@ -165,7 +173,7 @@ export function ProspectionPage() {
             setProfileSlug(null);
           }}
         />
-      </PageShell>
+      </div>
     );
   }
 
