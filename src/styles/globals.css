@@ -3127,6 +3127,15 @@ body.ls-stealth-active [data-stealth]:focus-within {
     padding: 12px 14px !important;
     gap: 12px !important;
   }
+  /* Cache les badges type (Client/Suivi) et chevrons sur mobile
+     → libère de la place pour les noms tronqués. L'avatar gold
+     identifie déjà le type, la card est cliquable (chevron implicite). */
+  .ls-rdv-card .ls-rdv-badge-type,
+  .ls-rdv-card-client .ls-rdv-badge-type,
+  .ls-rdv-card .ls-rdv-chev,
+  .ls-rdv-card-client .ls-rdv-chev {
+    display: none !important;
+  }
 }
 
 /* iPhone SE et petits écrans : encore plus compact */
