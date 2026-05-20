@@ -114,17 +114,11 @@ export function ClientAppPage() {
     token: token ?? null,
     clientId: data?.client_id ?? '',
   })
-  useEffect(() => {
-    if (!onboardingState.state.loaded || !data) return
-    if (tutorialOpen) return
-    // Auto-launch si jamais vu ET jamais skipé (800ms pour laisser l'UI
-    // se stabiliser et le HERO s'afficher).
-    if (!onboardingState.state.completedAt && !onboardingState.state.skippedAt) {
-      const id = window.setTimeout(() => setTutorialOpen(true), 800)
-      return () => window.clearTimeout(id)
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [onboardingState.state.loaded, data?.client_id])
+  // Auto-launch désactivé (chantier C V2 2026-05-20) : ClientOnboardingTour
+  // (chantier C 2026-11-04) s'affiche déjà au 1er login avec 4 slides.
+  // L'OnboardingTutorial 9 étapes interactif (Tier B 2026-04-28) reste
+  // accessible à la demande via le FAQ chatbot (bouton "🎓 Faire le tour").
+  // Évite les 13 popups consécutifs au 1er login.
   // Chantier Messagerie bidirectionnelle (2026-04-22) : nouveau tab 'messages'
   // (conversation chat coach ↔ client). Ouverture auto si ?tab=messages dans
   // l'URL (notif push coach_message y redirige).
@@ -1189,6 +1183,7 @@ export function ClientAppPage() {
         <ClientFaqChatbot
           token={token}
           coachFirstName={(data.coach_name ?? '').split(/\s+/)[0] || 'Coach'}
+          onLaunchTutorial={() => setTutorialOpen(true)}
         />
       ) : null}
 
