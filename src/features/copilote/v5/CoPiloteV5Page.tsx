@@ -43,6 +43,8 @@ import { DistriOnboardingChecklist } from "../../../components/formation/DistriO
 import { CelebrationCard } from "../../../components/copilote/CelebrationCard";
 import { Liste100ShortcutCard } from "../../../components/copilote/Liste100ShortcutCard";
 import { PvActionPlanAlert } from "../../../components/copilote/PvActionPlanAlert";
+import { DormantClientsWidget } from "../../../components/dormant/DormantClientsWidget";
+import { DailyActionsModal } from "../../../components/copilote/DailyActionsModal";
 import { LegalFooter } from "../../../components/ui/LegalFooter";
 import { AnnouncementBell } from "../../../components/announcements/AnnouncementBell";
 import { WeatherPopup } from "./components/WeatherPopup";
@@ -246,6 +248,12 @@ export function CoPiloteV5Page() {
         bilansTrend={bilansWeekDone > 0 ? "↗ Cette semaine" : "—"}
       />
 
+      {/* Widget dormants (chantier B livré, câblé 2026-05-20).
+          Auto-hidden si aucun client dormant. Place juste avant
+          PvActionPlanAlert pour grouper les alertes business
+          actionables (relance + plan PV). */}
+      <DormantClientsWidget />
+
       {/* Bandeau alerte PV — V7 Phase 7 (2026-05-08) deplacement.
           Avant : place en INTRO (juste apres TopBar) → angoissant pour
           un nouveau distri a 0 PV qui voit "tu es en retard" en haut.
@@ -269,6 +277,10 @@ export function CoPiloteV5Page() {
         onClose={() => setWeatherOpen(false)}
         city={userCity}
       />
+
+      {/* Check-list quotidienne (chantier #2, 2026-05-20). Auto-popup
+          à la 1ère ouverture du jour, skippable, persistance DB. */}
+      <DailyActionsModal />
     </div>
   );
 }

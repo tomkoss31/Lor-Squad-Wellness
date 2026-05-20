@@ -86,6 +86,17 @@ const CARDS: HubCard[] = [
     tag: { label: "Nouveau", color: "var(--ls-coral)" },
   },
   {
+    id: "check-list-explique",
+    emoji: "☀️",
+    title: "Check-list quotidienne",
+    description:
+      "5 actions/jour de discipline : suivis protocole, Leads, dormants, RDV, liste 100. Pop-up auto le matin, push de relance à 20h, jamais bloquant.",
+    cta: "Comprendre la check-list",
+    path: "/developpement/check-list-explique",
+    accent: "var(--ls-gold)",
+    tag: { label: "Nouveau", color: "var(--ls-coral)" },
+  },
+  {
     id: "flex-explique",
     emoji: "⚡",
     title: "Comment marche FLEX",

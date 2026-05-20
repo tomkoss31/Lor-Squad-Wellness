@@ -272,10 +272,15 @@ export function AppProvider({ children }: PropsWithChildren) {
       setFollowUpProtocolLogs(nextFollowUpProtocolLogs);
 
       // Fetch messages
+      // 2026-05-20 — bump limit 50 → 1000 : l'inbox MessagesPage construit
+      // sa liste depuis ce buffer global. À 50 globaux les conversations
+      // anciennes disparaissaient de la liste mobile (cf. AppContext:278).
+      // ConversationView fait un fetch direct par client_id pour les
+      // deep-links donc 1000 suffit largement pour l'inbox actif.
       try {
         const sb2 = await getSupabaseClient();
         if (sb2) {
-          const { data: msgs } = await sb2.from('client_messages').select('*').order('created_at', { ascending: false }).limit(50);
+          const { data: msgs } = await sb2.from('client_messages').select('*').order('created_at', { ascending: false }).limit(1000);
           setClientMessages((msgs ?? []) as ClientMessage[]);
         }
       } catch { /* messages unavailable */ }
