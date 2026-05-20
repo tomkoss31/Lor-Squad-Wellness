@@ -233,7 +233,8 @@ export type ProspectionPlatform =
   | "whatsapp"
   | "telegram"
   | "linkedin"
-  | "sms";
+  | "sms"
+  | "tiktok";
 
 export type ProspectionScriptKind =
   | "first_contact"
@@ -403,6 +404,7 @@ export const PLATFORM_LABELS: Record<ProspectionPlatform, string> = {
   telegram: "Telegram",
   linkedin: "LinkedIn",
   sms: "SMS",
+  tiktok: "TikTok",
 };
 
 export const PLATFORM_ICONS: Record<ProspectionPlatform, string> = {
@@ -412,6 +414,7 @@ export const PLATFORM_ICONS: Record<ProspectionPlatform, string> = {
   telegram: "✈️",
   linkedin: "💼",
   sms: "📱",
+  tiktok: "🎵",
 };
 
 export const PLATFORM_GRADIENTS: Record<ProspectionPlatform, string> = {
@@ -421,6 +424,7 @@ export const PLATFORM_GRADIENTS: Record<ProspectionPlatform, string> = {
   telegram: "#0088CC",
   linkedin: "#0A66C2",
   sms: "#6B7280",
+  tiktok: "linear-gradient(135deg, #25F4EE, #000, #FE2C55)",
 };
 
 // ============================================================================

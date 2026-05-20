@@ -1,0 +1,1056 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Prospection V4 — Hub redesign (Option A : tabs horizontaux)</title>
+<style>
+  :root {
+    --ls-gold: #C9A84C;
+    --ls-gold-light: #E5C97D;
+    --ls-teal: #2DD4BF;
+    --ls-teal-dark: #0F766E;
+    --ls-coral: #FB7185;
+    --ls-purple: #7C3AED;
+    --ls-charcoal: #0B0D11;
+    --ls-cream: #FBF7F0;
+    --ls-surface: #FFFFFF;
+    --ls-surface2: #F7F3EC;
+    --ls-border: rgba(11,13,17,0.10);
+    --ls-text: #1F2937;
+    --ls-text-muted: #4B5563;
+    --ls-text-hint: #9CA3AF;
+    --green-50: #ECFDF5;
+    --green-300: #6EE7B7;
+    --green-700: #047857;
+    --red-50: #FEF2F2;
+    --red-300: #FCA5A5;
+    --red-700: #B91C1C;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: var(--ls-cream);
+    color: var(--ls-text);
+    line-height: 1.5;
+    font-size: 15px;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  .mockup-banner {
+    background: var(--ls-charcoal);
+    color: var(--ls-gold);
+    padding: 8px 12px;
+    text-align: center;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+  }
+  .mockup-banner .small { color: rgba(255,255,255,.55); font-weight: 400; }
+
+  .app-shell {
+    max-width: 640px;
+    margin: 0 auto;
+    background: var(--ls-cream);
+    min-height: calc(100vh - 36px);
+    padding-bottom: 80px;
+  }
+
+  /* ===== Sticky compact header ===== */
+  .sticky-top {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: var(--ls-cream);
+    border-bottom: 1px solid var(--ls-border);
+  }
+  .crumb-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px 6px;
+  }
+  .crumb-eyebrow {
+    font-family: 'Syne', serif;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    color: var(--ls-gold);
+    text-transform: uppercase;
+  }
+  .crumb-eyebrow .dot { display:inline-block;width:4px;height:4px;border-radius:50%;background:var(--ls-teal);margin:0 5px;transform:translateY(-2px); }
+  .help-link {
+    font-size: 11px;
+    color: var(--ls-text-muted);
+    text-decoration: none;
+    padding: 4px 8px;
+    border: 1px solid var(--ls-border);
+    border-radius: 999px;
+    background: white;
+  }
+
+  /* Combined filter row : marché + profil sur 1 ligne scrollable */
+  .filter-row {
+    display: flex;
+    gap: 6px;
+    padding: 6px 16px 8px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .filter-row::-webkit-scrollbar { display: none; }
+  .chip {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: white;
+    border: 1px solid var(--ls-border);
+    border-radius: 999px;
+    font-size: 13px;
+    color: var(--ls-text);
+    cursor: pointer;
+    white-space: nowrap;
+    font-family: inherit;
+  }
+  .chip:hover { background: var(--ls-surface2); }
+  .chip.active {
+    background: linear-gradient(135deg, var(--ls-gold-light), var(--ls-gold));
+    color: var(--ls-charcoal);
+    border-color: var(--ls-gold);
+    font-weight: 600;
+  }
+  .chip .sep {
+    margin: 0 4px;
+    color: var(--ls-text-hint);
+    font-size: 10px;
+  }
+  .filter-label {
+    flex-shrink: 0;
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--ls-text-hint);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 6px 6px 6px 0;
+    align-self: center;
+  }
+
+  /* Tip cultural en 1 ligne ultra-compact */
+  .culture-line {
+    padding: 6px 16px;
+    font-size: 11px;
+    color: var(--ls-text-muted);
+    background: color-mix(in srgb, var(--ls-teal) 8%, var(--ls-cream));
+    border-top: 1px solid var(--ls-border);
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+  .culture-line strong { color: var(--ls-text); font-weight: 600; }
+
+  /* Tabs modules : scrollable horizontal */
+  .module-tabs {
+    display: flex;
+    gap: 0;
+    padding: 0 8px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    border-top: 1px solid var(--ls-border);
+    background: white;
+  }
+  .module-tabs::-webkit-scrollbar { display: none; }
+  .mtab {
+    flex-shrink: 0;
+    padding: 12px 10px;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--ls-text-muted);
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    min-width: 64px;
+    font-family: inherit;
+    transition: color 120ms;
+  }
+  .mtab .emoji { font-size: 18px; line-height: 1; }
+  .mtab .label { font-size: 10px; letter-spacing: 0.02em; }
+  .mtab:hover { color: var(--ls-text); }
+  .mtab.active {
+    color: var(--ls-gold);
+    border-bottom-color: var(--ls-gold);
+    font-weight: 700;
+  }
+
+  /* ===== Stats stripe ===== */
+  .stats-stripe {
+    display: flex;
+    gap: 0;
+    padding: 8px 16px;
+    background: color-mix(in srgb, var(--ls-gold) 6%, var(--ls-cream));
+    border-bottom: 1px solid var(--ls-border);
+    font-size: 11px;
+    color: var(--ls-text-muted);
+  }
+  .stats-stripe .stat { flex: 1; text-align: center; }
+  .stats-stripe .stat b { display: block; color: var(--ls-text); font-family: 'Syne', serif; font-size: 18px; font-weight: 700; margin-bottom: 2px; }
+
+  /* ===== Module content ===== */
+  .module-content {
+    padding: 16px;
+    animation: fade 220ms ease;
+  }
+  @keyframes fade {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0 0 14px;
+  }
+  .section-emoji {
+    width: 40px; height: 40px;
+    border-radius: 12px;
+    background: color-mix(in srgb, var(--ls-gold) 14%, var(--ls-surface2));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+  }
+  .section-title {
+    font-family: 'Syne', serif;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--ls-text);
+  }
+  .section-subtitle {
+    font-size: 12px;
+    color: var(--ls-text-muted);
+    margin-top: 2px;
+  }
+  .section-meta { display: flex; flex-direction: column; }
+
+  h3.sub {
+    font-family: 'Syne', serif;
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--ls-text-muted);
+    margin: 18px 0 8px;
+  }
+  h3.sub:first-of-type { margin-top: 8px; }
+
+  .card {
+    background: white;
+    border: 1px solid var(--ls-border);
+    border-radius: 14px;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+  }
+  .card-title {
+    font-family: 'Syne', serif;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--ls-text);
+    margin-bottom: 6px;
+  }
+  .card-body {
+    font-size: 13.5px;
+    color: var(--ls-text);
+    line-height: 1.55;
+  }
+
+  .error-card {
+    border-color: color-mix(in srgb, var(--ls-coral) 35%, var(--ls-border));
+    background: linear-gradient(135deg, color-mix(in srgb, var(--ls-coral) 6%, white), white);
+  }
+  .error-num {
+    display: inline-flex;
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: var(--ls-coral);
+    color: white;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    margin-right: 8px;
+  }
+
+  /* Flags green/red side by side */
+  .flag-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  @media (max-width: 480px) {
+    .flag-grid { grid-template-columns: 1fr; }
+  }
+  .flag-card {
+    border-radius: 14px;
+    padding: 12px 14px;
+  }
+  .flag-card.green {
+    background: var(--green-50);
+    border: 1px solid var(--green-300);
+  }
+  .flag-card.red {
+    background: var(--red-50);
+    border: 1px solid var(--red-300);
+  }
+  .flag-card h4 {
+    font-size: 12px;
+    font-weight: 700;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .flag-card.green h4 { color: var(--green-700); }
+  .flag-card.red h4 { color: var(--red-700); }
+  .flag-card ul { list-style: none; }
+  .flag-card li {
+    font-size: 12.5px;
+    padding: 3px 0;
+    color: var(--ls-text);
+  }
+
+  /* Script cards (Messages M1) */
+  .script-card {
+    background: white;
+    border: 1px solid var(--ls-border);
+    border-radius: 16px;
+    padding: 14px 16px;
+    margin-bottom: 12px;
+    position: relative;
+  }
+  .script-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+  .platform-pill {
+    width: 32px; height: 32px;
+    border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    color: white;
+  }
+  .platform-pill.wa { background: #25D366; }
+  .platform-pill.ig { background: linear-gradient(135deg, #F58529, #DD2A7B, #8134AF); }
+  .platform-pill.fb { background: #1877F2; }
+  .platform-pill.sms { background: #6B7280; }
+  .script-meta { flex: 1; }
+  .script-meta .name {
+    font-weight: 700;
+    font-size: 13px;
+    color: var(--ls-text);
+  }
+  .script-meta .lang {
+    font-size: 11px;
+    color: var(--ls-text-hint);
+  }
+  .script-body {
+    background: color-mix(in srgb, var(--ls-gold) 5%, var(--ls-surface2));
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-size: 13.5px;
+    line-height: 1.55;
+    white-space: pre-wrap;
+    color: var(--ls-text);
+    font-family: inherit;
+  }
+  .script-body .var { color: var(--ls-teal-dark); font-weight: 600; }
+  .script-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+  }
+  .btn {
+    padding: 8px 14px;
+    border-radius: 999px;
+    border: 1px solid var(--ls-border);
+    background: white;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    color: var(--ls-text);
+    font-family: inherit;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .btn:hover { background: var(--ls-surface2); }
+  .btn.primary {
+    background: linear-gradient(135deg, var(--ls-gold-light), var(--ls-gold));
+    color: var(--ls-charcoal);
+    border-color: var(--ls-gold);
+  }
+  .script-tip {
+    margin-top: 10px;
+    padding: 8px 12px;
+    background: color-mix(in srgb, var(--ls-teal) 10%, white);
+    border-left: 3px solid var(--ls-teal);
+    border-radius: 4px;
+    font-size: 12px;
+    color: var(--ls-text-muted);
+  }
+  .toggle-fr {
+    font-size: 11.5px;
+    color: var(--ls-text-muted);
+    cursor: pointer;
+    margin-top: 8px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  /* Objection block */
+  .obj {
+    background: white;
+    border: 1px solid var(--ls-border);
+    border-radius: 16px;
+    padding: 14px 16px;
+    margin-bottom: 12px;
+  }
+  .obj-quote {
+    font-family: 'Syne', serif;
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--ls-text);
+    margin-bottom: 10px;
+    line-height: 1.3;
+  }
+  .obj-quote::before { content: "« "; color: var(--ls-gold); }
+  .obj-quote::after { content: " »"; color: var(--ls-gold); }
+  .obj-row {
+    margin-bottom: 8px;
+    font-size: 12.5px;
+    line-height: 1.5;
+  }
+  .obj-row .tag {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 700;
+    margin-right: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .obj-row .tag.bad { background: var(--red-50); color: var(--red-700); }
+  .obj-row .tag.good { background: var(--green-50); color: var(--green-700); }
+  .obj-row .tag.meaning { background: var(--ls-surface2); color: var(--ls-text-muted); }
+  .obj-row .tag.warn { background: color-mix(in srgb, var(--ls-gold) 18%, white); color: #92400e; }
+  .obj-good-body {
+    margin-top: 6px;
+    background: color-mix(in srgb, var(--ls-gold) 4%, var(--ls-surface2));
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 13px;
+    line-height: 1.55;
+    white-space: pre-wrap;
+  }
+
+  /* Bottom CTA bar : navigation rapide prev/next module */
+  .module-nav-bar {
+    position: sticky;
+    bottom: 0;
+    background: linear-gradient(to top, var(--ls-cream) 60%, color-mix(in srgb, var(--ls-cream) 80%, transparent));
+    padding: 12px 16px;
+    display: flex;
+    gap: 8px;
+    justify-content: space-between;
+    align-items: center;
+    backdrop-filter: blur(8px);
+    border-top: 1px solid var(--ls-border);
+  }
+  .module-nav-bar .nav-btn {
+    padding: 8px 14px;
+    background: white;
+    border: 1px solid var(--ls-border);
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--ls-text);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    flex: 1;
+    justify-content: center;
+    max-width: 45%;
+    font-family: inherit;
+  }
+  .module-nav-bar .nav-btn:hover { background: var(--ls-surface2); }
+  .module-nav-bar .module-position {
+    font-size: 11px;
+    color: var(--ls-text-muted);
+    font-family: 'Syne', serif;
+    font-weight: 600;
+  }
+
+  /* Comparison reference (old design teaser) */
+  .compare-note {
+    margin-top: 40px;
+    padding: 16px 20px;
+    background: white;
+    border: 1px dashed var(--ls-border);
+    border-radius: 12px;
+    font-size: 12px;
+    color: var(--ls-text-muted);
+    text-align: center;
+  }
+  .compare-note b { color: var(--ls-text); }
+
+  /* Side-by-side comparison */
+  .side-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 24px;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 16px;
+  }
+  @media (min-width: 1024px) {
+    .side-grid { grid-template-columns: 1fr 1fr; }
+  }
+  .panel {
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 4px 24px rgba(0,0,0,.06);
+  }
+  .panel-label {
+    background: var(--ls-charcoal);
+    color: var(--ls-gold);
+    padding: 10px 16px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .panel-label .device { color: rgba(255,255,255,.55); font-weight: 400; text-transform: none; letter-spacing: 0; }
+
+  /* Mobile frame */
+  .mobile-frame {
+    max-width: 393px;
+    margin: 0 auto;
+    border: 8px solid var(--ls-charcoal);
+    border-radius: 32px;
+    overflow: hidden;
+    background: var(--ls-cream);
+  }
+  .mobile-frame .app-shell { max-width: 100%; min-height: 700px; padding-bottom: 60px; }
+
+</style>
+</head>
+<body>
+
+<div class="mockup-banner">
+  MOCKUP V4 HUB — refonte navigation (option A : tabs horizontaux + 1 module à la fois)
+  · <span class="small">Validation Thomas avant port en TSX</span>
+</div>
+
+<div class="side-grid">
+
+  <!-- ============================================================ -->
+  <!-- VARIANT 1 : Mobile (mode hub, distri déjà onboardé)            -->
+  <!-- ============================================================ -->
+  <div class="panel">
+    <div class="panel-label">
+      📱 Mobile · Hub direct
+      <span class="device">distri déjà onboardé · 393 × ~700</span>
+    </div>
+    <div class="mobile-frame">
+      <div class="app-shell">
+
+        <!-- Sticky header -->
+        <div class="sticky-top">
+          <div class="crumb-bar">
+            <div class="crumb-eyebrow">LA BASE 360 <span class="dot"></span> PROSPECTION</div>
+            <a class="help-link" href="#">? Comment ça marche</a>
+          </div>
+
+          <!-- Filter ligne 1 : marché + profil combinés -->
+          <div class="filter-row">
+            <span class="filter-label">CIBLE</span>
+            <button class="chip active">🇫🇷 France</button>
+            <span class="sep">·</span>
+            <button class="chip active">⚖️ Femmes</button>
+            <button class="chip">🇬🇧 Intl</button>
+            <button class="chip">🇲🇽 LatAm</button>
+            <button class="chip">🇧🇷 Brésil</button>
+            <button class="chip">💪 Hommes</button>
+            <button class="chip">🏃 Sport</button>
+            <button class="chip">💼 Business</button>
+          </div>
+
+          <!-- Tip culturel 1 ligne -->
+          <div class="culture-line">
+            ⏰ <strong>12-14h ou 19-21h</strong> · <span>Tutoiement OK Insta/FB · vouvoiement LinkedIn</span>
+          </div>
+
+          <!-- Tabs modules : scrollable -->
+          <div class="module-tabs">
+            <button class="mtab"><span class="emoji">🧠</span><span class="label">Mindset</span></button>
+            <button class="mtab"><span class="emoji">🔍</span><span class="label">Trouver</span></button>
+            <button class="mtab active"><span class="emoji">📨</span><span class="label">M1</span></button>
+            <button class="mtab"><span class="emoji">🌳</span><span class="label">M2/M3</span></button>
+            <button class="mtab"><span class="emoji">🛡️</span><span class="label">Objections</span></button>
+            <button class="mtab"><span class="emoji">📞</span><span class="label">Suivi</span></button>
+            <button class="mtab"><span class="emoji">🎯</span><span class="label">Closing</span></button>
+            <button class="mtab"><span class="emoji">🔁</span><span class="label">Spéciaux</span></button>
+            <button class="mtab"><span class="emoji">📖</span><span class="label">Story</span></button>
+            <button class="mtab"><span class="emoji">⏰</span><span class="label">Routine</span></button>
+          </div>
+        </div>
+
+        <!-- Stats stripe minimaliste -->
+        <div class="stats-stripe">
+          <div class="stat"><b>2</b>envois 7j</div>
+          <div class="stat"><b>0</b>réponses</div>
+          <div class="stat"><b>0</b>leads</div>
+        </div>
+
+        <!-- Module content : Messages M1 -->
+        <div class="module-content">
+          <div class="section-header">
+            <div class="section-emoji">📨</div>
+            <div class="section-meta">
+              <div class="section-title">Messages M1</div>
+              <div class="section-subtitle">Premier contact par plateforme · 4 scripts</div>
+            </div>
+          </div>
+
+          <div class="script-card">
+            <div class="script-header">
+              <span class="platform-pill ig">📷</span>
+              <div class="script-meta">
+                <div class="name">Instagram DM · Premier contact</div>
+                <div class="lang">🇫🇷 Français</div>
+              </div>
+            </div>
+            <div class="script-body">Salut <span class="var">[prénom]</span> ! 👋
+Je suis tombée sur ton profil et tes posts m'ont vraiment parlé. Je vois qu'on partage le côté <span class="var">[healthy / sport / mom-life]</span>.
+
+Petite question pour mieux comprendre — tu cherches plutôt à perdre du poids, à gagner en énergie, ou les deux ? 🌿</div>
+            <div class="script-actions">
+              <button class="btn primary">📋 Copier</button>
+              <button class="btn">✓ J'ai envoyé</button>
+            </div>
+            <div class="script-tip">💡 Personnalise <strong>[détail vu sur son profil]</strong>. Pas de lien dans le 1er message (filtre spam).</div>
+          </div>
+
+          <div class="script-card">
+            <div class="script-header">
+              <span class="platform-pill wa">💬</span>
+              <div class="script-meta">
+                <div class="name">WhatsApp · Contact direct</div>
+                <div class="lang">🇫🇷 Français</div>
+              </div>
+            </div>
+            <div class="script-body">Coucou <span class="var">[prénom]</span> ! 😊
+C'est <span class="var">[ton prénom]</span>, on s'est croisées via <span class="var">[contexte]</span>. Tu m'avais parlé de ton envie de <span class="var">[perdre du poids / te sentir mieux]</span>.
+
+J'ai une approche qui marche bien — tu veux qu'on en discute 15 min ?</div>
+            <div class="script-actions">
+              <button class="btn primary">📋 Copier</button>
+              <button class="btn">✓ J'ai envoyé</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Nav modules en bas -->
+        <div class="module-nav-bar">
+          <button class="nav-btn">← 🔍 Trouver</button>
+          <span class="module-position">3 / 10</span>
+          <button class="nav-btn">🌳 M2/M3 →</button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- VARIANT 2 : Mobile (module Mindset)                            -->
+  <!-- ============================================================ -->
+  <div class="panel">
+    <div class="panel-label">
+      📱 Mobile · Module Mindset
+      <span class="device">section §1 — tab active</span>
+    </div>
+    <div class="mobile-frame">
+      <div class="app-shell">
+
+        <div class="sticky-top">
+          <div class="crumb-bar">
+            <div class="crumb-eyebrow">LA BASE 360 <span class="dot"></span> PROSPECTION</div>
+            <a class="help-link" href="#">? Aide</a>
+          </div>
+
+          <div class="filter-row">
+            <span class="filter-label">CIBLE</span>
+            <button class="chip active">🇫🇷 France</button>
+            <span class="sep">·</span>
+            <button class="chip active">⚖️ Femmes</button>
+            <button class="chip">🇬🇧 Intl</button>
+            <button class="chip">🇲🇽 LatAm</button>
+            <button class="chip">💪 Hommes</button>
+            <button class="chip">🏃 Sport</button>
+          </div>
+
+          <div class="culture-line">
+            ⏰ <strong>12-14h ou 19-21h</strong> · <span>Tutoiement OK · pas trop d'emojis pro</span>
+          </div>
+
+          <div class="module-tabs">
+            <button class="mtab active"><span class="emoji">🧠</span><span class="label">Mindset</span></button>
+            <button class="mtab"><span class="emoji">🔍</span><span class="label">Trouver</span></button>
+            <button class="mtab"><span class="emoji">📨</span><span class="label">M1</span></button>
+            <button class="mtab"><span class="emoji">🌳</span><span class="label">M2/M3</span></button>
+            <button class="mtab"><span class="emoji">🛡️</span><span class="label">Objections</span></button>
+            <button class="mtab"><span class="emoji">📞</span><span class="label">Suivi</span></button>
+            <button class="mtab"><span class="emoji">🎯</span><span class="label">Closing</span></button>
+            <button class="mtab"><span class="emoji">🔁</span><span class="label">Spéciaux</span></button>
+            <button class="mtab"><span class="emoji">📖</span><span class="label">Story</span></button>
+            <button class="mtab"><span class="emoji">⏰</span><span class="label">Routine</span></button>
+          </div>
+        </div>
+
+        <div class="module-content">
+          <div class="section-header">
+            <div class="section-emoji">🧠</div>
+            <div class="section-meta">
+              <div class="section-title">Mindset & posture</div>
+              <div class="section-subtitle">3 vérités · 5 erreurs · métriques réalistes</div>
+            </div>
+          </div>
+
+          <h3 class="sub">Les 3 vérités à accepter</h3>
+
+          <div class="card">
+            <div class="card-title">Ce n'est pas un jeu de volume aveugle</div>
+            <div class="card-body">Ton travail n'est pas de convaincre. Ton travail est de trouver les bonnes personnes au bon moment. Si tu envoies 100 messages pour convaincre 100 personnes, tu épuises ta motivation en une semaine.</div>
+          </div>
+
+          <div class="card">
+            <div class="card-title">Plus tu es détendu, plus tu attires</div>
+            <div class="card-body">Un prospect sent immédiatement si tu transpires le « il faut absolument que je te recrute ». Le détachement attire, la pression repousse.</div>
+          </div>
+
+          <h3 class="sub">Erreurs du débutant</h3>
+
+          <div class="card error-card">
+            <div class="card-title"><span class="error-num">1</span>Pitcher dès le M1</div>
+            <div class="card-body">Tu perds 90 % des prospects en une phrase. Le M1 n'a qu'un objectif : obtenir une réponse. Pas vendre.</div>
+          </div>
+
+          <div class="card error-card">
+            <div class="card-title"><span class="error-num">2</span>Envoyer le même message à 50 personnes</div>
+            <div class="card-body">Le copier-coller se sent à 100 m. Personnalise au moins le [détail vu sur son profil].</div>
+          </div>
+
+          <div class="card error-card">
+            <div class="card-title"><span class="error-num">3</span>Relancer J+1, J+2, J+3</div>
+            <div class="card-body">Tu passes du coach au harceleur en 48 h. Une seule relance, à J+3, jamais plus.</div>
+          </div>
+
+          <h3 class="sub">Métriques réalistes (débutant)</h3>
+
+          <div class="card" style="padding:0;overflow:hidden">
+            <table style="width:100%;border-collapse:collapse;font-size:13px;">
+              <tr style="border-bottom:1px solid var(--ls-border);">
+                <td style="padding:10px 14px;">Messages M1 envoyés</td>
+                <td style="padding:10px 14px;text-align:right;font-family:'Syne',serif;font-weight:700;">100</td>
+              </tr>
+              <tr style="border-bottom:1px solid var(--ls-border);">
+                <td style="padding:10px 14px;">Réponses reçues</td>
+                <td style="padding:10px 14px;text-align:right;font-family:'Syne',serif;font-weight:700;">15-25</td>
+              </tr>
+              <tr style="border-bottom:1px solid var(--ls-border);">
+                <td style="padding:10px 14px;">Conv. qualifiées (M2-M3)</td>
+                <td style="padding:10px 14px;text-align:right;font-family:'Syne',serif;font-weight:700;">5-10</td>
+              </tr>
+              <tr style="border-bottom:1px solid var(--ls-border);">
+                <td style="padding:10px 14px;">RDV pris</td>
+                <td style="padding:10px 14px;text-align:right;font-family:'Syne',serif;font-weight:700;">1-3</td>
+              </tr>
+              <tr>
+                <td style="padding:10px 14px;">Nouveaux clients</td>
+                <td style="padding:10px 14px;text-align:right;font-family:'Syne',serif;font-weight:700;color:var(--ls-gold);">0-1</td>
+              </tr>
+            </table>
+          </div>
+        </div>
+
+        <div class="module-nav-bar">
+          <button class="nav-btn" style="opacity:.4;">←</button>
+          <span class="module-position">1 / 10</span>
+          <button class="nav-btn">🔍 Trouver →</button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- VARIANT 3 : Mobile (module Objections)                          -->
+  <!-- ============================================================ -->
+  <div class="panel">
+    <div class="panel-label">
+      📱 Mobile · Module Objections
+      <span class="device">section §5 — 8 objections types</span>
+    </div>
+    <div class="mobile-frame">
+      <div class="app-shell">
+
+        <div class="sticky-top">
+          <div class="crumb-bar">
+            <div class="crumb-eyebrow">LA BASE 360 <span class="dot"></span> PROSPECTION</div>
+            <a class="help-link" href="#">? Aide</a>
+          </div>
+
+          <div class="filter-row">
+            <span class="filter-label">CIBLE</span>
+            <button class="chip active">🇫🇷 France</button>
+            <span class="sep">·</span>
+            <button class="chip active">⚖️ Femmes</button>
+            <button class="chip">🇬🇧 Intl</button>
+            <button class="chip">🇲🇽 LatAm</button>
+          </div>
+
+          <div class="culture-line">
+            ⏰ <strong>12-14h ou 19-21h</strong> · <span>Pas trop d'emojis pro</span>
+          </div>
+
+          <div class="module-tabs">
+            <button class="mtab"><span class="emoji">🧠</span><span class="label">Mindset</span></button>
+            <button class="mtab"><span class="emoji">🔍</span><span class="label">Trouver</span></button>
+            <button class="mtab"><span class="emoji">📨</span><span class="label">M1</span></button>
+            <button class="mtab"><span class="emoji">🌳</span><span class="label">M2/M3</span></button>
+            <button class="mtab active"><span class="emoji">🛡️</span><span class="label">Objections</span></button>
+            <button class="mtab"><span class="emoji">📞</span><span class="label">Suivi</span></button>
+            <button class="mtab"><span class="emoji">🎯</span><span class="label">Closing</span></button>
+            <button class="mtab"><span class="emoji">🔁</span><span class="label">Spéciaux</span></button>
+            <button class="mtab"><span class="emoji">📖</span><span class="label">Story</span></button>
+            <button class="mtab"><span class="emoji">⏰</span><span class="label">Routine</span></button>
+          </div>
+        </div>
+
+        <div class="module-content">
+          <div class="section-header">
+            <div class="section-emoji">🛡️</div>
+            <div class="section-meta">
+              <div class="section-title">Objections</div>
+              <div class="section-subtitle">8 objections types + réponses</div>
+            </div>
+          </div>
+
+          <div class="obj">
+            <div class="obj-quote">C'est cher</div>
+            <div class="obj-row">
+              <span class="tag meaning">CE QU'ELLE VEUT DIRE</span>
+              Elle ne voit pas la valeur, OU elle ne peut pas / ne veut pas mettre cette somme.
+            </div>
+            <div class="obj-row">
+              <span class="tag bad">À ÉVITER</span>
+              Minimiser (« c'est le prix d'un café »), ou rajouter une remise dès la première objection.
+            </div>
+            <div class="obj-row">
+              <span class="tag good">BONNE RÉPONSE</span>
+            </div>
+            <div class="obj-good-body">Je comprends [prénom]. Cher par rapport à quoi ? Et qu'est-ce qui ferait que ça vaut le coup à tes yeux ?
+
+Je te demande pas pour te convaincre — c'est juste que selon ta réponse, soit c'est pas le bon moment, soit on peut voir si y'a une formule plus adaptée.</div>
+          </div>
+
+          <div class="obj">
+            <div class="obj-quote">C'est de l'Herbalife / MLM ?</div>
+            <div class="obj-row">
+              <span class="tag meaning">CE QU'ELLE VEUT DIRE</span>
+              Peur de se faire avoir, ou mauvais souvenir (proche déçu).
+            </div>
+            <div class="obj-row">
+              <span class="tag bad">À ÉVITER</span>
+              Nier, dire « non c'est différent », esquiver.
+            </div>
+            <div class="obj-row">
+              <span class="tag good">BONNE RÉPONSE</span>
+            </div>
+            <div class="obj-good-body">Oui c'est [marque], et oui c'est une distribution multi-niveaux. Pas un système pyramidal au sens illégal — la différence c'est qu'il y a un vrai produit consommé par des clients finaux.
+
+Il y a des choses vraies et fausses qui circulent sur ce modèle. Si tu me dis ce qui te bloque précisément, je te réponds franchement.</div>
+            <div class="obj-row" style="margin-top:8px;">
+              <span class="tag warn">⚠️ ATTENTION</span>
+              Mentir détruit ta crédibilité pour toujours.
+            </div>
+          </div>
+        </div>
+
+        <div class="module-nav-bar">
+          <button class="nav-btn">← 🌳 M2/M3</button>
+          <span class="module-position">5 / 10</span>
+          <button class="nav-btn">📞 Suivi →</button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- VARIANT 4 : Mobile (module Trouver - flags + hashtags)         -->
+  <!-- ============================================================ -->
+  <div class="panel">
+    <div class="panel-label">
+      📱 Mobile · Module Trouver
+      <span class="device">section §2 — flags + hashtags catégorisés</span>
+    </div>
+    <div class="mobile-frame">
+      <div class="app-shell">
+
+        <div class="sticky-top">
+          <div class="crumb-bar">
+            <div class="crumb-eyebrow">LA BASE 360 <span class="dot"></span> PROSPECTION</div>
+            <a class="help-link" href="#">? Aide</a>
+          </div>
+
+          <div class="filter-row">
+            <span class="filter-label">CIBLE</span>
+            <button class="chip active">🇫🇷 France</button>
+            <span class="sep">·</span>
+            <button class="chip active">⚖️ Femmes</button>
+            <button class="chip">🇬🇧 Intl</button>
+            <button class="chip">💪 Hommes</button>
+            <button class="chip">🏃 Sport</button>
+          </div>
+
+          <div class="culture-line">
+            ⏰ <strong>12-14h ou 19-21h</strong> · <span>Tutoiement Insta/FB</span>
+          </div>
+
+          <div class="module-tabs">
+            <button class="mtab"><span class="emoji">🧠</span><span class="label">Mindset</span></button>
+            <button class="mtab active"><span class="emoji">🔍</span><span class="label">Trouver</span></button>
+            <button class="mtab"><span class="emoji">📨</span><span class="label">M1</span></button>
+            <button class="mtab"><span class="emoji">🌳</span><span class="label">M2/M3</span></button>
+            <button class="mtab"><span class="emoji">🛡️</span><span class="label">Objections</span></button>
+            <button class="mtab"><span class="emoji">📞</span><span class="label">Suivi</span></button>
+            <button class="mtab"><span class="emoji">🎯</span><span class="label">Closing</span></button>
+            <button class="mtab"><span class="emoji">🔁</span><span class="label">Spéciaux</span></button>
+            <button class="mtab"><span class="emoji">📖</span><span class="label">Story</span></button>
+            <button class="mtab"><span class="emoji">⏰</span><span class="label">Routine</span></button>
+          </div>
+        </div>
+
+        <div class="module-content">
+          <div class="section-header">
+            <div class="section-emoji">🔍</div>
+            <div class="section-meta">
+              <div class="section-title">Trouver les prospects</div>
+              <div class="section-subtitle">Scan 30s · hashtags · sources alt</div>
+            </div>
+          </div>
+
+          <h3 class="sub">Scan profil 30 secondes</h3>
+
+          <div class="flag-grid">
+            <div class="flag-card green">
+              <h4>✅ Green flags</h4>
+              <ul>
+                <li>Activité &lt; 2 sem</li>
+                <li>Posts personnels engagés</li>
+                <li>Bio avec intention claire</li>
+                <li>Pas déjà coach concurrent</li>
+              </ul>
+            </div>
+            <div class="flag-card red">
+              <h4>❌ Red flags</h4>
+              <ul>
+                <li>Profil privé sans contexte</li>
+                <li>100 % business / shop</li>
+                <li>Aucun post depuis 6+ mois</li>
+                <li>Beaucoup d'abonnés / peu d'eng.</li>
+              </ul>
+            </div>
+          </div>
+
+          <h3 class="sub">Hashtags catégorisés</h3>
+
+          <div class="card">
+            <div style="font-size:11px;color:var(--ls-text-hint);letter-spacing:0.06em;text-transform:uppercase;margin-bottom:6px;">Mainstream (large)</div>
+            <div style="display:flex;flex-wrap:wrap;gap:6px;">
+              <span style="padding:3px 10px;border:1px solid var(--ls-border);border-radius:999px;font-size:12px;background:white;">#pertedepoidsfr</span>
+              <span style="padding:3px 10px;border:1px solid var(--ls-border);border-radius:999px;font-size:12px;background:white;">#regimefr</span>
+              <span style="padding:3px 10px;border:1px solid var(--ls-border);border-radius:999px;font-size:12px;background:white;">#bienetrefr</span>
+              <span style="padding:3px 10px;border:1px solid var(--ls-border);border-radius:999px;font-size:12px;background:white;">#alimentationsaine</span>
+            </div>
+          </div>
+
+          <div class="card">
+            <div style="font-size:11px;color:var(--ls-teal-dark);letter-spacing:0.06em;text-transform:uppercase;margin-bottom:6px;">Niche (segment précis)</div>
+            <div style="display:flex;flex-wrap:wrap;gap:6px;">
+              <span style="padding:3px 10px;border:1px solid var(--ls-teal);border-radius:999px;font-size:12px;color:var(--ls-teal-dark);background:color-mix(in srgb,var(--ls-teal) 6%,white);">#mamanquisebouge</span>
+              <span style="padding:3px 10px;border:1px solid var(--ls-teal);border-radius:999px;font-size:12px;color:var(--ls-teal-dark);background:color-mix(in srgb,var(--ls-teal) 6%,white);">#mompreneur</span>
+              <span style="padding:3px 10px;border:1px solid var(--ls-teal);border-radius:999px;font-size:12px;color:var(--ls-teal-dark);background:color-mix(in srgb,var(--ls-teal) 6%,white);">#nutritionConsciente</span>
+              <span style="padding:3px 10px;border:1px solid var(--ls-teal);border-radius:999px;font-size:12px;color:var(--ls-teal-dark);background:color-mix(in srgb,var(--ls-teal) 6%,white);">#perteDePoidsSaine</span>
+            </div>
+          </div>
+
+          <div class="card" style="background:color-mix(in srgb,var(--ls-gold) 6%,white);border-color:color-mix(in srgb,var(--ls-gold) 40%,var(--ls-border));">
+            <div style="font-size:11px;color:#92400e;letter-spacing:0.06em;text-transform:uppercase;margin-bottom:6px;">⭐ Cross (à croiser)</div>
+            <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;">
+              <span style="padding:3px 10px;border:1px solid var(--ls-gold);border-radius:999px;font-size:12px;color:#92400e;background:white;">#pertedepoidsfr</span>
+              <span style="font-size:11px;color:var(--ls-text-muted);align-self:center;">+</span>
+              <span style="padding:3px 10px;border:1px solid var(--ls-gold);border-radius:999px;font-size:12px;color:#92400e;background:white;">#mamanquisebouge</span>
+            </div>
+            <div style="font-size:12px;color:var(--ls-text-muted);line-height:1.5;">À croiser avec <strong>#mamanquisebouge</strong> ou <strong>#sansgluten</strong> pour cibler maman healthy.</div>
+          </div>
+        </div>
+
+        <div class="module-nav-bar">
+          <button class="nav-btn">← 🧠 Mindset</button>
+          <span class="module-position">2 / 10</span>
+          <button class="nav-btn">📨 M1 →</button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div style="max-width:760px;margin:30px auto 60px;padding:24px;background:white;border-radius:16px;border:1px solid var(--ls-border);font-size:14px;color:var(--ls-text);line-height:1.65;">
+  <h2 style="font-family:'Syne',serif;font-size:20px;margin-bottom:12px;">🧠 Principes du redesign — pourquoi ça change tout</h2>
+
+  <p style="margin-bottom:10px;"><strong>1. Le header s'efface après onboarding.</strong> Plus de hero gigantesque qui mange 40 % de l'écran. L'eyebrow LA BASE 360 · PROSPECTION suffit à se situer. Hauteur sticky &lt;= 150px sur mobile.</p>
+
+  <p style="margin-bottom:10px;"><strong>2. Marché + profil sur 1 seule ligne scrollable.</strong> Plus 2 lignes séparées qui doublent la hauteur. Les actifs (gold) restent visibles à gauche, le reste défile à droite.</p>
+
+  <p style="margin-bottom:10px;"><strong>3. Tabs horizontaux avec emoji + micro-label.</strong> Le distri voit en permanence les 10 modules. Il scroll horizontalement (1 doigt) pour passer entre eux. <em>Plus de scroll vertical infini pour trouver « Storytelling » à la fin.</em></p>
+
+  <p style="margin-bottom:10px;"><strong>4. Un module visible à la fois.</strong> La page se charge, t'arrives directement sur le module choisi. Pas d'accordion à ouvrir/fermer.</p>
+
+  <p style="margin-bottom:10px;"><strong>5. Nav bar sticky en bas.</strong> Boutons précédent/suivant module. Le distri parcourt linéairement s'il veut tout lire.</p>
+
+  <p style="margin-bottom:10px;"><strong>6. Mobile-first absolu.</strong> Tout est conçu pour 393px de large (iPhone). Sur desktop, le shell est centré à 640px max (comme le tunnel V3).</p>
+
+  <p style="margin-top:16px;padding-top:14px;border-top:1px dashed var(--ls-border);"><strong style="color:var(--ls-gold);">Si validé :</strong> je porte ce design dans <code>src/components/prospection/ProspectionHub.tsx</code> (~2-3h de boulot), je remplace le composant accordion actuel, je push sur dev/thomas-test puis merge prod après ta validation visuelle Vercel.</p>
+</div>
+
+</body>
+</html>
