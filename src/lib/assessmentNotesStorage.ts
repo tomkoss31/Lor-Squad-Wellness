@@ -4,12 +4,12 @@
 // sans prospect précis), on retourne null → persistance désactivée,
 // état éphémère en state React uniquement.
 //
-// Avant : clé unique globale 'lorsquad-assessment-coach-notes' → le
+// Avant : clé unique globale 'labase360-assessment-coach-notes' → le
 // draft d'un bilan abandonné fuyait dans le bilan suivant (BUG).
 // Après : clé scopée → pas de fuite cross-client possible.
 
-export const LEGACY_COACH_NOTES_KEY = "lorsquad-assessment-coach-notes";
-export const COACH_NOTES_KEY_PREFIX = "lorsquad-assessment-coach-notes:";
+export const LEGACY_COACH_NOTES_KEY = "labase360-assessment-coach-notes";
+export const COACH_NOTES_KEY_PREFIX = "labase360-assessment-coach-notes:";
 
 /**
  * Retourne la clé localStorage pour les notes coach d'un bilan donné.
