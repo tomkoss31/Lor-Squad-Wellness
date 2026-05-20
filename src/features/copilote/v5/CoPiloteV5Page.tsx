@@ -43,6 +43,7 @@ import { DistriOnboardingChecklist } from "../../../components/formation/DistriO
 import { CelebrationCard } from "../../../components/copilote/CelebrationCard";
 import { Liste100ShortcutCard } from "../../../components/copilote/Liste100ShortcutCard";
 import { PvActionPlanAlert } from "../../../components/copilote/PvActionPlanAlert";
+import { DormantClientsWidget } from "../../../components/dormant/DormantClientsWidget";
 import { LegalFooter } from "../../../components/ui/LegalFooter";
 import { AnnouncementBell } from "../../../components/announcements/AnnouncementBell";
 import { WeatherPopup } from "./components/WeatherPopup";
@@ -245,6 +246,12 @@ export function CoPiloteV5Page() {
         bilansWeekTarget={6}
         bilansTrend={bilansWeekDone > 0 ? "↗ Cette semaine" : "—"}
       />
+
+      {/* Widget dormants (chantier B livré, câblé 2026-05-20).
+          Auto-hidden si aucun client dormant. Place juste avant
+          PvActionPlanAlert pour grouper les alertes business
+          actionables (relance + plan PV). */}
+      <DormantClientsWidget />
 
       {/* Bandeau alerte PV — V7 Phase 7 (2026-05-08) deplacement.
           Avant : place en INTRO (juste apres TopBar) → angoissant pour
