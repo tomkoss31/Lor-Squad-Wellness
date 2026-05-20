@@ -1,15 +1,10 @@
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useAppContext } from "../../context/AppContext";
-import { useInstallPrompt } from "../../context/InstallPromptContext";
-import { Button } from "../ui/Button";
-import { StatusBadge } from "../ui/StatusBadge";
 import { BottomNav } from "./BottomNav";
 import { ThemeToggle } from "./ThemeToggle";
 import { useRealtimeMessages } from "../../hooks/useRealtimeMessages";
 import { useSessionTracker } from "../../features/gamification/hooks/useSessionTracker";
 import { getInitials } from "../../lib/utils/getInitials";
-import { useTheme } from "../../hooks/useTheme";
-import { getRoleLabel } from "../../lib/auth";
 import { useAcademyAutoTrigger } from "../../features/academy/hooks/useAcademyAutoTrigger";
 import { AcademyReminderDialog } from "../../features/academy/components/AcademyReminderDialog";
 import { CoachInstallPwaButton } from "../pwa/CoachInstallPwaButton";
@@ -21,6 +16,7 @@ import { QuizModal } from "../../features/academy/components/QuizModal";
 import { RankSelectorModal } from "../rank/RankSelectorModal";
 import { AnnouncementBell } from "../announcements/AnnouncementBell";
 import { AnnouncementSpotlight } from "../announcements/AnnouncementSpotlight";
+import { MobileHeader } from "./MobileHeader";
 import { useState } from "react";
 import type { HerbalifeRank } from "../../types/domain";
 
@@ -31,7 +27,6 @@ import type { HerbalifeRank } from "../../types/domain";
 
 export function AppLayout() {
   const { currentUser, logout, followUps, pvClientProducts, unreadMessageCount, prospects, lastFetchError } = useAppContext();
-  const { isDark, toggleTheme } = useTheme();
   // Chantier Notif in-app temps réel (2026-04-23) : s'abonne à
   // client_messages Realtime tant que le coach est authentifié et sur
   // l'app (les routes publiques /client/:token, /recap/:token, etc.
@@ -63,7 +58,6 @@ export function AppLayout() {
       }
     }).length;
   })();
-  const { canPromptInstall, isIos, isMobile, isStandalone, promptInstall } = useInstallPrompt();
   const location = useLocation();
   const navigate = useNavigate();
   // Chantier Academy Phase 1 (2026-04-26) : popup auto-trigger 1×/jour
@@ -80,12 +74,6 @@ export function AppLayout() {
     return null;
   }
 
-  const roleTone =
-    currentUser.role === "admin"
-      ? "blue"
-      : currentUser.role === "referent"
-        ? "amber"
-        : "green";
   // Chantier Refonte Navigation (2026-04-22) : sidebar plate 8 items max,
   // Accueil → Co-pilote, suppression Recommandations/Nouveau bilan (FAB
   // top-right à la place), fusion Guide RDV + Guide suivi → Centre de
@@ -118,36 +106,40 @@ export function AppLayout() {
   // retiré) — on le conserve en variable au cas où un futur dashboard l'affiche.
   void urgentRelanceCount;
 
-  const pageTitle =
-    location.pathname === "/dashboard" || location.pathname === "/co-pilote"
-      ? ""
-      : location.pathname === "/guide" || location.pathname === "/formation"
-        ? "Formation"
-        : location.pathname.startsWith("/pv")
-          ? "Pilotage simple des clients, commandes et points volume"
-          : location.pathname === "/clients"
-            ? "Dossiers clients et suivi en cours"
-            : location.pathname.startsWith("/distributors/")
-              ? "Portefeuille, relances et rythme du suivi"
-              : location.pathname === "/team" || location.pathname === "/users"
-                ? "Mon équipe"
-                : location.pathname.startsWith("/clients/")
-                  ? "Lecture complète du dossier client"
-                  : location.pathname === "/assessments/new"
-                    ? "Le bilan guidé pour cadrer le rendez-vous"
-                    : location.pathname === "/agenda"
-                      ? "Agenda prospection et RDV à venir"
-                      : location.pathname === "/settings"
-                        ? "Paramètres"
-                        : "La Base 360";
+  // Crumb court pour le MobileHeader (chip dans le header mobile). Doit
+  // tenir en 1 mot court pour ne pas écraser le logo. Distinct de la
+  // description longue desktop (qui n'est plus utilisée ailleurs).
+  const pageTitle = (() => {
+    const p = location.pathname;
+    if (p === "/dashboard" || p === "/co-pilote") return "Co-pilote";
+    if (p === "/flex") return "FLEX";
+    if (p === "/agenda") return "Agenda";
+    if (p === "/messages") return "Messagerie";
+    if (p === "/clients") return "Clients";
+    if (p.startsWith("/clients/")) return "Fiche client";
+    if (p === "/team" || p === "/users") return "Mon équipe";
+    if (p.startsWith("/distributors/")) return "Distri";
+    if (p.startsWith("/pv")) return "Suivi PV";
+    if (p === "/rentabilite") return "Rentabilité";
+    if (p === "/routine-du-jour") return "Routine";
+    if (p === "/cahier-de-bord") return "Cahier de bord";
+    if (p === "/developpement") return "Développement";
+    if (p.startsWith("/developpement/")) return "Développement";
+    if (p === "/formation" || p === "/guide") return "Formation";
+    if (p.startsWith("/formation/")) return "Formation";
+    if (p === "/academy" || p.startsWith("/academy/")) return "Academy";
+    if (p === "/prospection" || p.startsWith("/prospection")) return "Prospection";
+    if (p === "/outils-prospection") return "Outils";
+    if (p === "/business") return "Business";
+    if (p === "/parametres" || p === "/settings") return "Paramètres";
+    if (p === "/analytics") return "Analytics";
+    if (p === "/assessments/new") return "Nouveau bilan";
+    return "";
+  })();
 
   async function handleLogout() {
     await logout();
     navigate("/login", { replace: true });
-  }
-
-  async function handleInstallClick() {
-    await promptInstall();
   }
 
   // Chantier Polish Vue complète + refonte bilan (2026-04-24) :
@@ -556,109 +548,17 @@ export function AppLayout() {
             </div>
           ) : null}
 
-          <section className="glass-panel overflow-hidden rounded-[28px] p-4 xl:hidden">
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex min-w-0 items-center gap-3">
-                <img
-                  src="/brand/labase360/app-icon-512.svg"
-                  alt="La Base 360"
-                  className="h-11 w-11 rounded-[16px] object-cover shadow-soft"
-                />
-                <div className="min-w-0">
-                  <p className="truncate text-base font-semibold text-white" style={{ fontFamily: "Sora, sans-serif" }}>
-                    La Base 360
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <AnnouncementBell />
-                <button
-                  onClick={toggleTheme}
-                  aria-label={isDark ? 'Passer au mode clair' : 'Passer au mode sombre'}
-                  style={{
-                    width: 42, height: 42, borderRadius: 12,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    background: 'var(--ls-surface2)',
-                    border: '1px solid var(--ls-border)',
-                    color: 'var(--ls-text-muted)',
-                    cursor: 'pointer', flexShrink: 0,
-                  }}
-                >
-                  {isDark ? (
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
-                  ) : (
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-                  )}
-                </button>
-                {!isStandalone && canPromptInstall ? (
-                  <Button
-                    variant="secondary"
-                    className="min-h-[42px] px-4 py-2 text-[12px]"
-                    onClick={() => void handleInstallClick()}
-                  >
-                    Installer
-                  </Button>
-                ) : null}
-              </div>
-            </div>
-
-            <div className="mt-4 flex items-center justify-between gap-3 rounded-[20px] bg-white/[0.03] px-4 py-3">
-              <div className="min-w-0">
-                <p className="truncate text-sm font-semibold text-white">{currentUser.name}</p>
-                <p className="truncate text-[13px] text-[#7A8099]">{pageTitle}</p>
-              </div>
-              <StatusBadge label={getRoleLabel(currentUser.role)} tone={roleTone} />
-            </div>
-
-            <button
-              onClick={() => void handleLogout()}
-              style={{
-                marginTop: 12, width: '100%', padding: '10px 14px', borderRadius: 10,
-                background: 'transparent', border: '1px solid var(--ls-border)',
-                color: 'var(--ls-text-muted)', fontFamily: 'DM Sans, sans-serif',
-                fontSize: 13, cursor: 'pointer',
-                display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'center',
-              }}
-            >
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-              Se déconnecter
-            </button>
-
-            <nav className="mt-4 flex gap-2 overflow-x-auto pb-1">
-              {navigation.map((item) => {
-                const isActive =
-                  location.pathname === item.path ||
-                  (item.path === "/clients" && location.pathname.startsWith("/clients/")) ||
-                  (item.path === "/pv" && location.pathname.startsWith("/pv"));
-
-                return (
-                  <NavLink
-                    key={item.path}
-                    to={item.path}
-                    data-tour-id={item.tourId}
-                    className={`whitespace-nowrap rounded-full px-4 py-2.5 text-[13px] font-medium transition ${
-                      isActive
-                        ? "bg-[rgba(201,168,76,0.16)] text-white"
-                        : "bg-white/[0.03] text-[#B0B4C4]"
-                    }`}
-                  >
-                    {item.label}
-                  </NavLink>
-                );
-              })}
-            </nav>
-
-            {!isStandalone && isIos ? (
-              <div className="mt-4 rounded-[18px] bg-white/[0.03] px-4 py-3 text-[13px] leading-6 text-[#B0B4C4]">
-                Ouvre ce lien dans Safari, puis Partager et Sur l'écran d'accueil.
-              </div>
-            ) : null}
-            {!isStandalone && !isIos && isMobile && !canPromptInstall ? (
-              <div className="mt-4 rounded-[18px] bg-white/[0.03] px-4 py-3 text-[13px] leading-6 text-[#B0B4C4]">
-                Ouvre ce lien dans Chrome puis installe l'app ou ajoute-la a l'écran d'accueil.
-              </div>
-            ) : null}
-          </section>
+          {/* Mobile Header compact (Chantier mobile Onde 1, 2026-05-20).
+              Remplace l'ancien panel mobile par un header 64px sticky avec
+              hamburger → drawer plein écran. Le drawer contient toute la
+              nav, profil, theme, install PWA, sortir. Toutes ces options
+              ne polluent plus la page d'accueil. */}
+          <MobileHeader
+            crumb={pageTitle}
+            navItems={navigation}
+            currentPath={location.pathname}
+            onLogout={handleLogout}
+          />
 
           <Outlet />
           {/* Padding for bottom nav on mobile — assez d'espace pour que le dernier bouton reste au-dessus */}

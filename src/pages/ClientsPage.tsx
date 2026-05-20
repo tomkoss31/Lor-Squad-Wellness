@@ -36,6 +36,8 @@ import {
   exportClientsCsv,
 } from "../components/clients/clientsListHelpers";
 import { BentoStatsClients } from "../components/clients/BentoStatsClients";
+import { ClientsMobileView } from "../components/clients/ClientsMobileView";
+import type { FiltersSheetState } from "../components/clients/FiltersBottomSheet";
 import { getInitials } from "../lib/utils/getInitials";
 
 export function ClientsPage() {
@@ -333,12 +335,62 @@ export function ClientsPage() {
 
   if (!currentUser) return null;
 
+  // Chantier mobile Onde 2 (2026-05-20) : adapter les filtres entre le
+  // bottom sheet mobile (FiltersBottomSheet) et les states existants
+  // statusFilter / quickFilter / ownerFilter.
+  const mobileFiltersState: FiltersSheetState = {
+    statusFilter,
+    quickFilter,
+    ownerFilter,
+  };
+  const handleMobileFiltersApply = (next: FiltersSheetState) => {
+    setStatusFilter(next.statusFilter);
+    setQuickFilter(next.quickFilter as QuickFilterId);
+    setOwnerFilter(next.ownerFilter);
+  };
+
+  // Compteurs pour les tabs mobile (réutilise les memo desktop existants)
+  const leadsCount = 0; // TODO : récupérer count depuis useOnlineBilans si nécessaire (charge async côté LeadsKanban)
+  const testimonialsCount = 0; // TODO : récupérer count depuis AdminTestimonialsPage
+
+  // Owners pour le bottom sheet (admin only)
+  const mobileOwners = isAdmin
+    ? ownerTabs.map((u) => ({ id: u.id, name: u.name }))
+    : undefined;
+  const currentOwnerLabel =
+    ownerFilter === "all"
+      ? undefined
+      : ownerTabs.find((u) => u.id === ownerFilter)?.name;
+
   return (
     <div style={{
       padding: "clamp(16px, 4vw, 28px)",
       maxWidth: 1200, margin: "0 auto",
       display: "flex", flexDirection: "column", gap: 18,
     }}>
+      {/* Vue mobile (Chantier mobile Onde 2, 2026-05-20) — masquée sur xl+.
+          Réutilise filteredClients + states existants, pas de duplication. */}
+      <ClientsMobileView
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        clientsCount={filteredClients.length}
+        leadsCount={leadsCount}
+        testimonialsCount={testimonialsCount}
+        filteredClients={filteredClients}
+        pvByClient={pvByClientThisMonth}
+        visibleFollowUps={visibleFollowUps}
+        search={search}
+        onSearchChange={setSearch}
+        filters={mobileFiltersState}
+        onFiltersApply={handleMobileFiltersApply}
+        totalVisible={filteredClients.length}
+        relanceCount={visibleRelanceCount}
+        owners={mobileOwners}
+        ownerLabel={currentOwnerLabel}
+      />
+
+      {/* Vue desktop (et tablette horizontale) — masquée sur < xl */}
+      <div className="hidden xl:flex" style={{ flexDirection: "column", gap: 18 }}>
       <PremiumHero
         identity="teal"
         eyebrow={`Dossiers clients · ${filteredClients.length} visible${filteredClients.length > 1 ? "s" : ""}`}
@@ -1066,6 +1118,7 @@ export function ClientsPage() {
       <LegalFooter />
 
       </>)}{/* end activeTab === "clients" */}
+      </div>{/* end .hidden xl:flex (vue desktop, mobile Onde 2 2026-05-20) */}
     </div>
   );
 }

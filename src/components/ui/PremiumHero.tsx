@@ -50,7 +50,7 @@ export function PremiumHero({
   const heroClass = `ls-hero-${uid}`;
 
   return (
-    <div className={heroClass}>
+    <div className={`ls-premium-hero ${heroClass}`}>
       <style>{`
         @keyframes ls-hero-mesh-shift-${uid} {
           0% { transform: translate(0, 0) scale(1); }

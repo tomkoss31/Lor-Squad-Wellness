@@ -274,3 +274,49 @@
     transform: none;
   }
 }
+
+/* ─── Mobile compaction (Chantier mobile Onde 3, 2026-05-20) ─────────────
+   Le MobileHeader global (Onde 1) fournit déjà : hamburger + logo + crumb
+   + cloche + avatar theme toggle. La V5 topbar interne dupliquait certains
+   éléments → on la dégrade en "greeting bar" non-sticky sur mobile.
+   Sur desktop ≥ 1280px : tout reste inchangé. */
+@media (max-width: 1279px) {
+  /* TopBar V5 non-sticky sur mobile (le MobileHeader sticky fait le job) */
+  .copilote-v5 > div[style*="position: sticky"]:first-of-type,
+  .copilote-v5 > div:first-of-type {
+    position: static !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    border-bottom: none !important;
+    background: transparent !important;
+    margin: 0 0 4px !important;
+    padding: 4px 0 0 !important;
+  }
+
+  /* Reduce padding global */
+  .copilote-v5 {
+    padding: 14px clamp(12px, 4vw, 18px) 20px !important;
+    gap: 10px !important;
+  }
+
+  /* Row bottom (Timeline + SideStack) → 1 colonne sur mobile */
+  .copilote-v5 [data-v5-row-bottom] {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+
+  /* TopBar : compaction du greeting (date + ★ SINCE 2022 ★ peuvent être petits) */
+  .copilote-v5 h1 {
+    font-size: clamp(20px, 5.4vw, 24px) !important;
+    line-height: 1.1 !important;
+  }
+}
+
+/* iPhone SE et petits écrans : encore plus compact */
+@media (max-width: 380px) {
+  .copilote-v5 { padding: 12px 12px 18px !important; gap: 8px !important; }
+  /* Cacher la pastille SINCE 2022 sur très petit écran */
+  .copilote-v5 span[aria-hidden="true"][style*="SINCE 2022"] {
+    display: none !important;
+  }
+}
