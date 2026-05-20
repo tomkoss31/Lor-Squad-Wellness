@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+﻿import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { EditScheduleModal } from "../components/client/EditScheduleModal";
 import { WeightSummaryBlock } from "../components/client/WeightSummaryBlock";
@@ -51,10 +51,23 @@ export function ClientDetailPage() {
     currentUser,
     getClientById,
     followUps,
+    reloadClients,
   } = useAppContext();
   const { push: pushToast } = useToast();
 
   const client = clientId ? getClientById(clientId) : undefined;
+
+  // Garde-fou race condition (2026-05-20) : si on arrive sur la fiche
+  // juste après une création client (post-bilan-termine), React peut ne
+  // pas encore avoir flushé setClients() malgré le refreshRemoteData
+  // awaité côté createClientWithInitialAssessment. On tente UN refetch
+  // global avant d'afficher "Client introuvable".
+  const retriedRef = useRef(false);
+  useEffect(() => {
+    if (!clientId || client || retriedRef.current) return;
+    retriedRef.current = true;
+    void reloadClients();
+  }, [clientId, client, reloadClients]);
 
   // Hooks AVANT tout early return (rules-of-hooks / chantier nuit 2026-04-20).
   // `client` peut être undefined pendant le boot ou si l'id n'est pas visible.
@@ -143,7 +156,42 @@ export function ClientDetailPage() {
   if (!client) {
     return (
       <Card>
-        <p className="text-lg text-white">Client introuvable ou accès indisponible.</p>
+        <div className="flex flex-col gap-3 items-start">
+          <p className="text-lg text-white">Client introuvable ou accès indisponible.</p>
+          <p className="text-sm" style={{ color: "var(--ls-fg-mute)" }}>
+            Si tu viens de créer ce client, la base est peut-être en train de se synchroniser.
+          </p>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => { retriedRef.current = false; void reloadClients(); }}
+              style={{
+                background: "var(--ls-gold)",
+                color: "var(--ls-ink)",
+                padding: "8px 14px",
+                borderRadius: 10,
+                fontWeight: 600,
+                fontSize: 13,
+              }}
+            >
+              Rafraîchir
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate("/clients")}
+              style={{
+                background: "transparent",
+                color: "var(--ls-fg)",
+                padding: "8px 14px",
+                borderRadius: 10,
+                border: "1px solid var(--ls-border)",
+                fontSize: 13,
+              }}
+            >
+              Retour à la liste
+            </button>
+          </div>
+        </div>
       </Card>
     );
   }

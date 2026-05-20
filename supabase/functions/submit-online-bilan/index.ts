@@ -161,22 +161,30 @@ serve(async (req) => {
 
   const sb = createClient(SUPABASE_URL, SERVICE_KEY);
 
-  // Résolution coach : on cherche un user actif distri/admin/referent dont
-  // le first_name normalisé matche le slug. Si plusieurs match → on prend
-  // le premier (V1, on documente le edge case dans le brainstorm).
+  // Résolution coach (bugfix 2026-05-20) : on cherche un user actif
+  // distri/admin/referent dont le 1er mot du `name` normalisé matche
+  // le slug. Avant on cherchait `first_name` mais la colonne n'existe
+  // pas dans la table users — la query crashait silencieusement et
+  // tous les leads finissaient avec coach_user_id=NULL → leak RLS.
+  // Si plusieurs match → on prend le premier (V1, edge case rare).
   let coachUserId: string | null = null;
   if (coachSlug) {
     const { data: candidates, error: lookupErr } = await sb
       .from("users")
-      .select("id, first_name")
+      .select("id, name")
       .in("role", ["distributor", "admin", "referent"])
       .eq("active", true);
 
     if (lookupErr) {
       console.error("[submit-online-bilan] Lookup coach failed:", lookupErr);
     } else if (candidates) {
-      const match = (candidates as Array<{ id: string; first_name: string | null }>)
-        .find((u) => u.first_name && normalizeSlug(u.first_name) === coachSlug);
+      const match = (candidates as Array<{ id: string; name: string | null }>)
+        .find((u) => {
+          if (!u.name) return false;
+          // Compare le 1er mot du nom complet ("Thomas Koss" → "thomas")
+          const firstWord = u.name.split(/\s+/)[0] ?? "";
+          return normalizeSlug(firstWord) === coachSlug;
+        });
       if (match) coachUserId = match.id;
     }
   }

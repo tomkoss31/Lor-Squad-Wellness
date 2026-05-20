@@ -49,6 +49,14 @@ export function RentabilityWidget() {
   }, [data, currentUser, users, breakdowns]);
   // Marge propre du user sur SES ventes : si breakdown perso saisi, on
   // l utilise (capture les ventes Bizworks hors-app). Sinon RPC fallback.
+  //
+  // Bugfix 2026-05-20 (cas Mandy) : auparavant un breakdown perso saisi
+  // ECRASAIT la RPC, même s'il était vide ou inférieur. Conséquence :
+  // un distri qui avait saisi un breakdown vide perdait les ventes app
+  // trackées (ex. Mandy : 111€ RPC sur EMMANUELLA → 0€ affiché car
+  // breakdown vide saisi). Désormais on prend MAX(RPC, breakdown) :
+  // - Breakdown vide/inférieur → on garde la vérité RPC (ventes app)
+  // - Breakdown supérieur → on prend breakdown (capture Bizworks > app)
   const ownSelfMargin = useMemo(() => {
     if (!data || !currentUser) return data?.margin_eur ?? 0;
     // Pour le couple, on additionne les breakdowns des 2 si saisis.
@@ -63,7 +71,7 @@ export function RentabilityWidget() {
         hasAnyBreakdown = true;
       }
     }
-    return hasAnyBreakdown ? total : data.margin_eur;
+    return hasAnyBreakdown ? Math.max(total, data.margin_eur) : data.margin_eur;
   }, [data, currentUser, users, breakdowns]);
   // V3 : entrees manuelles distri hors-app
   const { entries: manualEntries } = useManualPvEntries(currentUser?.id ?? null, monthIso);
