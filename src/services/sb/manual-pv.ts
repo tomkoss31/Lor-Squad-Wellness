@@ -63,7 +63,7 @@ export async function deleteManualPvEntry(id: string): Promise<void> {
 }
 
 export async function loadManualPvEntries(
-  viewerUserId: string,
+  viewerUserId: string | string[],
   month: string,
 ): Promise<Array<{
   id: string;
@@ -84,10 +84,13 @@ export async function loadManualPvEntries(
   declaredAt: string | null;
 }>> {
   const client = await requireSupabase();
+  // Bugfix 2026-05-20 : accepte string OU string[] pour gérer l'agrégation
+  // couple Thomas+Mélanie (entries des 2 partenaires fusionnées).
+  const viewerIds = Array.isArray(viewerUserId) ? viewerUserId : [viewerUserId];
   const { data, error } = await client
     .from("manual_pv_entries")
     .select("id, viewer_user_id, name, parent_name, depth, own_tier_pct, intermediate_tiers, month, pv_15, pv_25, pv_35, pv_42, pv_royalty, pv_25_is_vip, pv_35_is_vip, declared_at")
-    .eq("viewer_user_id", viewerUserId)
+    .in("viewer_user_id", viewerIds)
     .eq("month", month);
   if (error || !data) return [];
   return data.map((r: {

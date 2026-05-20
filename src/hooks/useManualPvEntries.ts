@@ -17,14 +17,19 @@ interface UseManualPvEntriesResult {
 }
 
 export function useManualPvEntries(
-  viewerUserId: string | null,
+  viewerUserId: string | string[] | null,
   month: string,
 ): UseManualPvEntriesResult {
   const [entries, setEntries] = useState<ManualPvEntry[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Stabilise la clé si on reçoit un tableau (sinon ré-fetch infini).
+  const idsKey = Array.isArray(viewerUserId)
+    ? viewerUserId.slice().sort().join(",")
+    : viewerUserId ?? "";
+
   const fetch = useCallback(async () => {
-    if (!viewerUserId) {
+    if (!viewerUserId || (Array.isArray(viewerUserId) && viewerUserId.length === 0)) {
       setEntries([]);
       setLoading(false);
       return;
@@ -39,7 +44,8 @@ export function useManualPvEntries(
     } finally {
       setLoading(false);
     }
-  }, [viewerUserId, month]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [idsKey, month]);
 
   useEffect(() => {
     void fetch();
