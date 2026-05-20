@@ -16,6 +16,7 @@ reproduire les régressions passées. Relire avant tout gros chantier.
 - **Chantier #7 — Business V2** : `BusinessPage` SaaS emerald/cyan/violet
 - **Chantier #10 — Badges coach** : 3 chips rang/bilans/ancienneté
 - **Chantier #11 — Témoignages** : Form + carrousel + admin page
+- **Onboarding client PWA (chantier C 2026-11-04)** : `ClientOnboardingTour` 4 slides + edge `client-app-mark-onboarded` + colonne `client_app_accounts.onboarded_at`
 - **Fix inbox messagerie** : limite globale 50 → 1000 (PR #91)
 
 ### 🔴 À faire (court terme)
@@ -24,7 +25,6 @@ reproduire les régressions passées. Relire avant tout gros chantier.
 - Désactiver / supprimer la push notif 20h `daily-actions-notifier` si Thomas la trouve agressive (toggle `users.notif_daily_actions` = false)
 
 **Chantiers validés**
-- **Onboarding client PWA** (1.5-2j) : 4 sections welcome `/client/:token` + migration `client_app_accounts.onboarded_at`
 - **D — Popup météo 5 jours** (2-3h) : Open-Meteo, click weather pill Co-pilote
 
 ### 🟡 À faire (moyen / long terme)
