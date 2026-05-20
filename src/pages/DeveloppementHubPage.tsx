@@ -118,6 +118,73 @@ const CARDS: HubCard[] = [
     tag: { label: "Nouveau", color: "var(--ls-coral)" },
     requireRole: "admin",
   },
+  {
+    id: "prospection-cold",
+    emoji: "🌍",
+    title: "Prospection internationale",
+    description:
+      "Kit prospection complet : 6 marchés (FR · EN · ES · PT · TR · HI) × 4 profils (Perte de poids Femmes/Hommes · Sport · Business) × 10 sections (mindset, hashtags, M1, arbres M2/M3, objections, suivi appel, closing, cas spéciaux, storytelling, routine). Tunnel onboarding la 1ère fois, hub à 10 modules ensuite.",
+    cta: "Ouvrir le hub",
+    path: "/prospection",
+    accent: "var(--ls-teal)",
+    tag: { label: "Mis à jour", color: "var(--ls-gold)" },
+  },
+  {
+    id: "prospection-explique",
+    emoji: "📖",
+    title: "Comment marche la prospection",
+    description:
+      "Fiche pédagogique : philosophie du kit (tri pas convaincre, 5 erreurs débutant, métriques réalistes), structure des 10 sections, et comment utiliser le hub au quotidien.",
+    cta: "Lire la fiche",
+    path: "/developpement/prospection-explique",
+    accent: "var(--ls-gold)",
+  },
+  {
+    id: "admin-prospection",
+    emoji: "🛠",
+    title: "Admin Prospection",
+    description:
+      "Édite les scripts et les briefs méthodo du module /prospection. Modifs visibles immédiatement par tous les distri.",
+    cta: "Ouvrir l'admin",
+    path: "/admin/prospection",
+    accent: "var(--ls-purple)",
+    requireRole: "admin",
+  },
+  {
+    id: "bilan-online",
+    emoji: "🌱",
+    title: "Mon bilan online",
+    description:
+      "Partage ton lien /bilan-online/<ton-prénom> : tes prospects remplissent un bilan en 2 min, tu reçois une push, tu retrouves le Lead dans /clients onglet Leads (kanban + templates + relance auto J+3).",
+    cta: "Voir mes Leads",
+    path: "/clients?tab=leads",
+    accent: "var(--ls-gold)",
+    tag: { label: "Nouveau", color: "var(--ls-coral)" },
+  },
+  {
+    id: "testimonials",
+    emoji: "💬",
+    title: "Témoignages clients",
+    description:
+      "Récupère ton lien partageable, partage-le à tes clients sur WhatsApp ou en story, et modère les retours avant qu'ils s'affichent sur ta page bilan en ligne.",
+    cta: "Ouvrir",
+    path: "/admin/testimonials",
+    accent: "var(--ls-teal)",
+    tag: { label: "Nouveau", color: "var(--ls-coral)" },
+    requireRole: "admin",
+  },
+  {
+    id: "fiche-distri",
+    emoji: "👥",
+    title: "Fiche distri enrichie",
+    description:
+      "Tout ce qu'il faut pour piloter ton équipe : engagement, apprentissage, activité, rang Herbalife, PV Bizworks mois par mois, gel de compte. Accessible en cliquant sur la carte d'un distri depuis Paramètres > Équipe, /pv/team ou /flex/equipe.",
+    cta: "Voir l'équipe",
+    path: "/parametres?tab=equipe",
+    accent: "var(--ls-gold)",
+    tag: { label: "Nouveau", color: "var(--ls-coral)" },
+    requireRole: "admin",
+  },
 ];
 
 export function DeveloppementHubPage() {

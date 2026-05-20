@@ -1,0 +1,1014 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>App Coach La Base 360 — Vue d'ensemble</title>
+
+<style>
+  :root {
+    --ls-gold: #C9A84C;
+    --ls-gold-light: #E5C97D;
+    --ls-teal: #2DD4BF;
+    --ls-teal-dark: #0F766E;
+    --ls-coral: #FB7185;
+    --ls-purple: #7C3AED;
+    --ls-charcoal: #0B0D11;
+    --ls-cream: #FBF7F0;
+    --ls-surface: #FFFFFF;
+    --ls-surface2: #F7F3EC;
+    --ls-border: rgba(11,13,17,0.10);
+    --ls-text: #1F2937;
+    --ls-text-muted: #4B5563;
+    --ls-text-hint: #9CA3AF;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { font-family: 'DM Sans', -apple-system, sans-serif; background: var(--ls-cream); color: var(--ls-text); font-size: 15px; line-height: 1.5; }
+
+  /* Mockup banner */
+  .mockup-banner {
+    background: var(--ls-charcoal);
+    color: var(--ls-gold);
+    padding: 8px 12px;
+    text-align: center;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  /* App shell */
+  .app-shell {
+    max-width: 480px;
+    margin: 0 auto;
+    background: var(--ls-cream);
+    min-height: 100vh;
+    box-shadow: 0 0 30px rgba(0,0,0,0.06);
+  }
+
+  /* App header (brand) */
+  .app-header {
+    background: var(--ls-charcoal);
+    color: var(--ls-cream);
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 27px;
+    z-index: 50;
+  }
+  .app-brand {
+    font-family: 'Syne', serif;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    color: var(--ls-gold);
+    text-transform: uppercase;
+  }
+  .app-brand .dot { display: inline-block; width: 5px; height: 5px; border-radius: 50%; background: var(--ls-teal); margin: 0 6px; transform: translateY(-2px); }
+  .app-header-actions { display: flex; gap: 12px; align-items: center; }
+  .icon-btn {
+    width: 32px; height: 32px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    cursor: pointer;
+    position: relative;
+  }
+  .icon-btn .badge {
+    position: absolute;
+    top: -2px; right: -2px;
+    width: 16px; height: 16px;
+    background: var(--ls-coral);
+    color: white;
+    border-radius: 50%;
+    font-size: 9px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .avatar-mini {
+    width: 32px; height: 32px;
+    background: linear-gradient(135deg, var(--ls-gold), var(--ls-teal));
+    color: var(--ls-charcoal);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Syne', serif;
+    font-weight: 700;
+    font-size: 12px;
+    cursor: pointer;
+  }
+
+  /* Tabs nav (scrollable) */
+  .tabs-nav {
+    background: var(--ls-surface);
+    border-bottom: 1px solid var(--ls-border);
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    position: sticky;
+    top: 87px;
+    z-index: 40;
+    scrollbar-width: none;
+  }
+  .tabs-nav::-webkit-scrollbar { display: none; }
+  .tabs-list {
+    display: flex;
+    gap: 4px;
+    padding: 8px 12px;
+    min-width: max-content;
+  }
+  .tab-btn {
+    flex-shrink: 0;
+    background: transparent;
+    border: none;
+    padding: 8px 14px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--ls-text-muted);
+    cursor: pointer;
+    font-family: inherit;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .tab-btn:hover { color: var(--ls-text); background: var(--ls-surface2); }
+  .tab-btn.active {
+    background: var(--ls-charcoal);
+    color: var(--ls-gold);
+  }
+  .tab-btn .tab-icon { font-size: 14px; }
+  .tab-btn .tab-badge {
+    font-size: 9px;
+    background: var(--ls-coral);
+    color: white;
+    padding: 1px 5px;
+    border-radius: 999px;
+    font-weight: 700;
+  }
+  .tab-btn.new::after {
+    content: "NEW";
+    font-size: 8px;
+    background: var(--ls-teal);
+    color: var(--ls-charcoal);
+    padding: 1px 5px;
+    border-radius: 999px;
+    font-weight: 700;
+  }
+
+  /* Views */
+  .views-container { padding: 14px 14px 80px; }
+  .view { display: none; animation: fadeIn 0.3s; }
+  .view.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* Common card */
+  .card {
+    background: var(--ls-surface);
+    border-radius: 14px;
+    padding: 16px;
+    margin-bottom: 12px;
+    border: 1px solid var(--ls-border);
+  }
+  .card-title {
+    font-family: 'Syne', serif;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--ls-text);
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .card-subtitle {
+    font-size: 12px;
+    color: var(--ls-text-muted);
+    margin-bottom: 12px;
+  }
+  .skeleton {
+    background: linear-gradient(90deg, var(--ls-surface2) 0%, #EFE9DD 50%, var(--ls-surface2) 100%);
+    border-radius: 6px;
+    height: 12px;
+    margin-bottom: 6px;
+  }
+  .skeleton.short { width: 60%; }
+  .skeleton.medium { width: 80%; }
+
+  /* Hero gradient */
+  .hero {
+    background: linear-gradient(135deg, var(--ls-gold) 0%, #FFB088 50%, var(--ls-coral) 100%);
+    color: white;
+    border-radius: 18px;
+    padding: 22px;
+    margin-bottom: 16px;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::after {
+    content: "";
+    position: absolute;
+    top: -30%; right: -10%;
+    width: 200px; height: 200px;
+    background: radial-gradient(circle, rgba(255,255,255,0.2), transparent 70%);
+  }
+  .hero-meta {
+    font-size: 11px;
+    opacity: 0.9;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+  .hero-title {
+    font-family: 'Syne', serif;
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1.2;
+    margin-bottom: 14px;
+    position: relative;
+  }
+  .hero-stats {
+    display: flex;
+    gap: 12px;
+    position: relative;
+  }
+  .hero-stat {
+    background: rgba(255,255,255,0.15);
+    padding: 8px 12px;
+    border-radius: 10px;
+    backdrop-filter: blur(8px);
+    flex: 1;
+  }
+  .hero-stat-val {
+    font-family: 'Syne', serif;
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1;
+  }
+  .hero-stat-lbl { font-size: 10px; opacity: 0.85; }
+
+  /* List item */
+  .list-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--ls-border);
+  }
+  .list-item:last-child { border-bottom: none; }
+  .list-item .li-emoji {
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    background: var(--ls-surface2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+  .li-content { flex: 1; min-width: 0; }
+  .li-title { font-size: 13px; font-weight: 600; color: var(--ls-text); }
+  .li-sub { font-size: 11px; color: var(--ls-text-muted); }
+  .li-action {
+    background: var(--ls-gold);
+    color: var(--ls-charcoal);
+    border: none;
+    padding: 5px 10px;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 700;
+    font-family: inherit;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .li-pill {
+    background: rgba(45,212,191,0.12);
+    color: var(--ls-teal-dark);
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 10px;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+
+  /* Quick actions grid */
+  .quick-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .quick-card {
+    background: var(--ls-surface);
+    border: 1px solid var(--ls-border);
+    border-radius: 12px;
+    padding: 12px;
+    text-align: center;
+    cursor: pointer;
+    transition: transform 0.15s;
+  }
+  .quick-card:hover { transform: translateY(-2px); }
+  .quick-card .qc-emoji { font-size: 24px; display: block; margin-bottom: 4px; }
+  .quick-card .qc-label { font-size: 11px; font-weight: 600; color: var(--ls-text); }
+
+  /* Kanban */
+  .kanban-cols {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 4px;
+  }
+  .kanban-cols::-webkit-scrollbar { height: 4px; }
+  .kanban-col {
+    flex: 0 0 200px;
+    background: var(--ls-surface);
+    border-radius: 12px;
+    padding: 10px;
+    border: 1px solid var(--ls-border);
+  }
+  .kanban-col-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+  .kanban-col-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ls-text); }
+  .kanban-col-count { font-size: 10px; background: var(--ls-surface2); padding: 1px 6px; border-radius: 999px; color: var(--ls-text-muted); }
+  .kanban-card {
+    background: var(--ls-surface2);
+    border-radius: 8px;
+    padding: 8px 10px;
+    margin-bottom: 6px;
+    font-size: 11px;
+  }
+  .kanban-card .kc-name { font-weight: 600; color: var(--ls-text); }
+  .kanban-card .kc-meta { color: var(--ls-text-hint); margin-top: 2px; }
+  .kanban-card .kc-badge { display: inline-block; font-size: 9px; padding: 1px 5px; border-radius: 4px; margin-bottom: 3px; }
+  .kanban-card .kc-badge.bilan { background: rgba(201,168,76,0.18); color: #8B5A1B; }
+  .kanban-card .kc-badge.business { background: rgba(45,212,191,0.18); color: var(--ls-teal-dark); }
+
+  /* Agenda */
+  .agenda-day {
+    display: flex;
+    gap: 10px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--ls-border);
+  }
+  .agenda-time {
+    font-family: 'Syne', serif;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--ls-gold);
+    min-width: 50px;
+  }
+  .agenda-event {
+    flex: 1;
+    background: var(--ls-surface2);
+    padding: 8px 10px;
+    border-left: 3px solid var(--ls-teal);
+    border-radius: 6px;
+    font-size: 12px;
+  }
+  .agenda-event.gold { border-left-color: var(--ls-gold); background: rgba(201,168,76,0.08); }
+  .agenda-event.coral { border-left-color: var(--ls-coral); background: rgba(251,113,133,0.08); }
+
+  /* PV gauge */
+  .pv-gauge {
+    background: var(--ls-surface);
+    border-radius: 14px;
+    padding: 18px;
+    text-align: center;
+    border: 1px solid var(--ls-border);
+    margin-bottom: 12px;
+  }
+  .gauge-circle {
+    width: 140px; height: 140px;
+    margin: 0 auto 12px;
+    border-radius: 50%;
+    background: conic-gradient(var(--ls-gold) 0deg 220deg, var(--ls-surface2) 220deg 360deg);
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .gauge-circle::after {
+    content: "";
+    position: absolute;
+    width: 110px; height: 110px;
+    background: white;
+    border-radius: 50%;
+  }
+  .gauge-content {
+    position: relative;
+    z-index: 1;
+  }
+  .gauge-val {
+    font-family: 'Syne', serif;
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--ls-gold);
+    line-height: 1;
+  }
+  .gauge-lbl {
+    font-size: 11px;
+    color: var(--ls-text-muted);
+    margin-top: 2px;
+  }
+
+  /* Hub cards */
+  .hub-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .hub-card {
+    background: var(--ls-surface);
+    border-radius: 14px;
+    padding: 14px 12px;
+    text-align: center;
+    border: 1px solid var(--ls-border);
+    cursor: pointer;
+  }
+  .hub-card .hc-emoji { font-size: 28px; display: block; margin-bottom: 6px; }
+  .hub-card .hc-title { font-size: 12px; font-weight: 700; color: var(--ls-text); margin-bottom: 2px; }
+  .hub-card .hc-sub { font-size: 10px; color: var(--ls-text-muted); }
+
+  /* Profile cards prospection */
+  .prof-card {
+    background: var(--ls-surface);
+    border-radius: 14px;
+    padding: 18px;
+    margin-bottom: 10px;
+    border: 1px solid var(--ls-border);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+  }
+  .prof-emoji {
+    width: 50px; height: 50px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, var(--ls-gold), var(--ls-teal));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 26px;
+    flex-shrink: 0;
+  }
+  .prof-content { flex: 1; }
+  .prof-title { font-family: 'Syne', serif; font-size: 15px; font-weight: 700; color: var(--ls-text); margin-bottom: 2px; }
+  .prof-sub { font-size: 11px; color: var(--ls-text-muted); }
+
+  /* Section title */
+  .section-title {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--ls-text-hint);
+    margin: 16px 0 8px;
+  }
+
+  /* Stub note */
+  .stub-note {
+    background: rgba(45,212,191,0.06);
+    border: 1px dashed rgba(45,212,191,0.4);
+    border-radius: 10px;
+    padding: 12px;
+    font-size: 12px;
+    color: var(--ls-teal-dark);
+    text-align: center;
+    margin-top: 12px;
+    font-style: italic;
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== Mockup banner ===== -->
+<div class="mockup-banner">
+  🎨 MOCKUP — Vue d'ensemble app coach La Base 360 (structure, pas pixel-perfect)
+</div>
+
+<div class="app-shell">
+
+  <!-- ===== App header ===== -->
+  <header class="app-header">
+    <div class="app-brand">La Base 360 <span class="dot"></span></div>
+    <div class="app-header-actions">
+      <div class="icon-btn">🔔<span class="badge">3</span></div>
+      <div class="avatar-mini">TK</div>
+    </div>
+  </header>
+
+  <!-- ===== Tabs nav scrollable ===== -->
+  <nav class="tabs-nav">
+    <div class="tabs-list">
+      <button class="tab-btn active" onclick="showTab('copilote', this)"><span class="tab-icon">🛰️</span>Co-pilote</button>
+      <button class="tab-btn" onclick="showTab('flex', this)"><span class="tab-icon">🎯</span>FLEX</button>
+      <button class="tab-btn" onclick="showTab('clients', this)"><span class="tab-icon">👥</span>Clients</button>
+      <button class="tab-btn new" onclick="showTab('leads', this)"><span class="tab-icon">📥</span>Leads</button>
+      <button class="tab-btn" onclick="showTab('agenda', this)"><span class="tab-icon">📅</span>Agenda</button>
+      <button class="tab-btn" onclick="showTab('messages', this)"><span class="tab-icon">💬</span>Messagerie<span class="tab-badge">3</span></button>
+      <button class="tab-btn" onclick="showTab('pv', this)"><span class="tab-icon">📊</span>PV</button>
+      <button class="tab-btn" onclick="showTab('renta', this)"><span class="tab-icon">💰</span>Rentabilité</button>
+      <button class="tab-btn new" onclick="showTab('prospection', this)"><span class="tab-icon">🎣</span>Prospection</button>
+      <button class="tab-btn new" onclick="showTab('news', this)"><span class="tab-icon">📰</span>Newsletter</button>
+      <button class="tab-btn" onclick="showTab('analytics', this)"><span class="tab-icon">📈</span>Analytics</button>
+      <button class="tab-btn" onclick="showTab('team', this)"><span class="tab-icon">🌳</span>Équipe</button>
+      <button class="tab-btn" onclick="showTab('dev', this)"><span class="tab-icon">🎓</span>Mon dév.</button>
+      <button class="tab-btn" onclick="showTab('settings', this)"><span class="tab-icon">⚙️</span>Paramètres</button>
+    </div>
+  </nav>
+
+  <!-- ===== Views ===== -->
+  <main class="views-container">
+
+    <!-- ===== CO-PILOTE V5 ===== -->
+    <div class="view active" id="view-copilote">
+      <div class="hero">
+        <div class="hero-meta">Dimanche 10 mai · Bonsoir Thomas</div>
+        <div class="hero-title">Tu as 3 actions clés ce soir 🌙</div>
+        <div class="hero-stats">
+          <div class="hero-stat">
+            <div class="hero-stat-val">7/12</div>
+            <div class="hero-stat-lbl">Actions du jour</div>
+          </div>
+          <div class="hero-stat">
+            <div class="hero-stat-val">28°</div>
+            <div class="hero-stat-lbl">Le Caire ☀️</div>
+          </div>
+          <div class="hero-stat">
+            <div class="hero-stat-val">9j 🔥</div>
+            <div class="hero-stat-lbl">Streak</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">📋 Check-list quotidienne <span style="font-size: 11px; color: var(--ls-text-hint); font-weight: 400;">(NEW chantier #2)</span></div>
+        <div class="list-item">
+          <div class="li-emoji">📞</div>
+          <div class="li-content">
+            <div class="li-title">3 suivis F1 dus aujourd'hui</div>
+            <div class="li-sub">Marie · Karim · Paul</div>
+          </div>
+          <button class="li-action">Voir</button>
+        </div>
+        <div class="list-item">
+          <div class="li-emoji">📥</div>
+          <div class="li-content">
+            <div class="li-title">2 Leads bilan à qualifier</div>
+            <div class="li-sub">Reçus dans les 24h</div>
+          </div>
+          <button class="li-action">Voir</button>
+        </div>
+        <div class="list-item">
+          <div class="li-emoji">😴</div>
+          <div class="li-content">
+            <div class="li-title">3 clients dormants à relancer</div>
+            <div class="li-sub">+60 jours sans contact</div>
+          </div>
+          <button class="li-action">Voir</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">⚡ Raccourcis</div>
+        <div class="quick-grid">
+          <div class="quick-card"><span class="qc-emoji">📋</span><span class="qc-label">Cahier de bord</span></div>
+          <div class="quick-card"><span class="qc-emoji">🎣</span><span class="qc-label">Prospection</span></div>
+          <div class="quick-card"><span class="qc-emoji">➕</span><span class="qc-label">Nouveau client</span></div>
+          <div class="quick-card"><span class="qc-emoji">📅</span><span class="qc-label">Mes RDV</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== FLEX ===== -->
+    <div class="view" id="view-flex">
+      <div class="hero" style="background: linear-gradient(135deg, var(--ls-teal-dark), var(--ls-teal));">
+        <div class="hero-meta">FLEX · Moteur 5-3-1</div>
+        <div class="hero-title">Cette semaine, on est dans le rouge 💪</div>
+        <div class="hero-stats">
+          <div class="hero-stat">
+            <div class="hero-stat-val">3/5</div>
+            <div class="hero-stat-lbl">Bilans</div>
+          </div>
+          <div class="hero-stat">
+            <div class="hero-stat-val">1/3</div>
+            <div class="hero-stat-lbl">Clients actifs</div>
+          </div>
+          <div class="hero-stat">
+            <div class="hero-stat-val">0/1</div>
+            <div class="hero-stat-lbl">Recrue</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">📅 Cette semaine</div>
+        <div class="card-subtitle">7 actions FLEX réparties sur la semaine</div>
+        <div class="skeleton medium"></div>
+        <div class="skeleton short"></div>
+        <div class="skeleton medium"></div>
+        <div class="skeleton"></div>
+      </div>
+    </div>
+
+    <!-- ===== CLIENTS (kanban) ===== -->
+    <div class="view" id="view-clients">
+      <div class="card">
+        <div class="card-title">👥 Mes clients · <span style="color: var(--ls-text-hint); font-weight: 500;">42 actifs</span></div>
+        <div class="card-subtitle">Filtres rapides · Vue Kanban / Liste · Tri intelligent</div>
+        <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px;">
+          <span class="li-pill">Tous</span>
+          <span class="li-pill" style="background: rgba(201,168,76,0.12); color: #8B5A1B;">Actifs</span>
+          <span class="li-pill" style="background: rgba(251,113,133,0.12); color: var(--ls-coral);">Dormants</span>
+          <span class="li-pill" style="background: rgba(124,58,237,0.10); color: var(--ls-purple);">VIP</span>
+        </div>
+      </div>
+
+      <div class="kanban-cols">
+        <div class="kanban-col">
+          <div class="kanban-col-header">
+            <span class="kanban-col-title">Actifs</span>
+            <span class="kanban-col-count">28</span>
+          </div>
+          <div class="kanban-card"><div class="kc-name">Marie D.</div><div class="kc-meta">Bilan il y a 12j</div></div>
+          <div class="kanban-card"><div class="kc-name">Karim B.</div><div class="kc-meta">F1 prévu mardi</div></div>
+          <div class="kanban-card"><div class="kc-name">Paul L.</div><div class="kc-meta">Sport · 6 mois</div></div>
+        </div>
+        <div class="kanban-col">
+          <div class="kanban-col-header">
+            <span class="kanban-col-title">Pause</span>
+            <span class="kanban-col-count">8</span>
+          </div>
+          <div class="kanban-card"><div class="kc-name">Sophie M.</div><div class="kc-meta">Reprise prévue juin</div></div>
+        </div>
+        <div class="kanban-col">
+          <div class="kanban-col-header">
+            <span class="kanban-col-title">Dormants</span>
+            <span class="kanban-col-count">3</span>
+          </div>
+          <div class="kanban-card"><div class="kc-name">Lila K.</div><div class="kc-meta">+72 jours</div></div>
+        </div>
+        <div class="kanban-col">
+          <div class="kanban-col-header">
+            <span class="kanban-col-title">Stoppés</span>
+            <span class="kanban-col-count">3</span>
+          </div>
+          <div class="kanban-card"><div class="kc-name">Alex P.</div><div class="kc-meta">Mars 2026</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== LEADS (NEW chantier #1+#7) ===== -->
+    <div class="view" id="view-leads">
+      <div class="hero" style="background: linear-gradient(135deg, #C084FC, var(--ls-purple));">
+        <div class="hero-meta">Pipeline Lead unifié · NEW</div>
+        <div class="hero-title">5 leads à traiter aujourd'hui 🎯</div>
+        <div class="hero-stats">
+          <div class="hero-stat">
+            <div class="hero-stat-val">8</div>
+            <div class="hero-stat-lbl">À qualifier</div>
+          </div>
+          <div class="hero-stat">
+            <div class="hero-stat-val">12</div>
+            <div class="hero-stat-lbl">En contact</div>
+          </div>
+          <div class="hero-stat">
+            <div class="hero-stat-val">5</div>
+            <div class="hero-stat-lbl">Qualifiés</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="kanban-cols">
+        <div class="kanban-col">
+          <div class="kanban-col-header"><span class="kanban-col-title">À qualifier</span><span class="kanban-col-count">8</span></div>
+          <div class="kanban-card"><span class="kc-badge bilan">📋 Bilan</span><div class="kc-name">Sarah V.</div><div class="kc-meta">Bilan online · 2h</div></div>
+          <div class="kanban-card"><span class="kc-badge business">💼 Business</span><div class="kc-name">Yann M.</div><div class="kc-meta">Newsletter Insta · 4h</div></div>
+        </div>
+        <div class="kanban-col">
+          <div class="kanban-col-header"><span class="kanban-col-title">Contact</span><span class="kanban-col-count">12</span></div>
+          <div class="kanban-card"><span class="kc-badge bilan">📋 Bilan</span><div class="kc-name">Léa T.</div><div class="kc-meta">Message envoyé J-2</div></div>
+        </div>
+        <div class="kanban-col">
+          <div class="kanban-col-header"><span class="kanban-col-title">Qualifié</span><span class="kanban-col-count">5</span></div>
+          <div class="kanban-card"><span class="kc-badge bilan">📋 Bilan</span><div class="kc-name">Hugo R.</div><div class="kc-meta">RDV jeudi 14h</div></div>
+        </div>
+        <div class="kanban-col">
+          <div class="kanban-col-header"><span class="kanban-col-title">Relance</span><span class="kanban-col-count">7</span></div>
+          <div class="kanban-card"><div class="kc-name">Camille B.</div><div class="kc-meta">À relancer J3</div></div>
+        </div>
+        <div class="kanban-col">
+          <div class="kanban-col-header"><span class="kanban-col-title">Perdus</span><span class="kanban-col-count">15</span></div>
+          <div class="kanban-card"><div class="kc-name">Théo P.</div><div class="kc-meta">Jamais répondu</div></div>
+        </div>
+      </div>
+
+      <div class="stub-note">
+        🎯 Chantier #1 + sous-chantier #7.X — pipeline kanban unifié bilan online + lead business avec badges 📋/💼
+      </div>
+    </div>
+
+    <!-- ===== AGENDA ===== -->
+    <div class="view" id="view-agenda">
+      <div class="card">
+        <div class="card-title">📅 Aujourd'hui · Dimanche 10 mai</div>
+        <div class="agenda-day">
+          <div class="agenda-time">09:00</div>
+          <div class="agenda-event gold">Bilan initial · Sarah V. <div style="font-size: 10px; color: var(--ls-text-muted); margin-top: 2px;">📍 En visio</div></div>
+        </div>
+        <div class="agenda-day">
+          <div class="agenda-time">14:00</div>
+          <div class="agenda-event">Suivi F1 · Marie D. <div style="font-size: 10px; color: var(--ls-text-muted); margin-top: 2px;">📍 Club Metz</div></div>
+        </div>
+        <div class="agenda-day">
+          <div class="agenda-time">17:30</div>
+          <div class="agenda-event coral">Relance J3 · Yann M. <div style="font-size: 10px; color: var(--ls-text-muted); margin-top: 2px;">⚠️ Lead à relancer</div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">📆 Cette semaine</div>
+        <div class="card-subtitle">12 RDV · 4 bilans · 2 relances</div>
+        <div class="skeleton medium"></div>
+        <div class="skeleton short"></div>
+        <div class="skeleton medium"></div>
+      </div>
+    </div>
+
+    <!-- ===== MESSAGERIE ===== -->
+    <div class="view" id="view-messages">
+      <div class="card">
+        <div class="card-title">💬 Conversations · <span style="color: var(--ls-coral); font-weight: 700;">3 non lus</span></div>
+        <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px;">
+          <span class="li-pill">Tous</span>
+          <span class="li-pill" style="background: rgba(251,113,133,0.12); color: var(--ls-coral);">Non lus</span>
+          <span class="li-pill" style="background: rgba(45,212,191,0.12); color: var(--ls-teal-dark);">Répondus</span>
+        </div>
+        <div class="list-item">
+          <div class="li-emoji" style="background: linear-gradient(135deg, var(--ls-gold), var(--ls-teal)); color: var(--ls-charcoal); font-weight: 700;">MD</div>
+          <div class="li-content">
+            <div class="li-title">Marie D. <span style="background: var(--ls-coral); color: white; font-size: 9px; padding: 1px 5px; border-radius: 4px; margin-left: 4px;">NEW</span></div>
+            <div class="li-sub">Bonjour ! J'ai une question sur le programme...</div>
+          </div>
+          <span class="li-pill">2 min</span>
+        </div>
+        <div class="list-item">
+          <div class="li-emoji" style="background: linear-gradient(135deg, var(--ls-gold), var(--ls-teal)); color: var(--ls-charcoal); font-weight: 700;">KB</div>
+          <div class="li-content">
+            <div class="li-title">Karim B.</div>
+            <div class="li-sub">Merci pour le message, je vais essayer ça !</div>
+          </div>
+          <span class="li-pill">1h</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== PV ===== -->
+    <div class="view" id="view-pv">
+      <div class="pv-gauge">
+        <div class="gauge-circle">
+          <div class="gauge-content">
+            <div class="gauge-val">8 240</div>
+            <div class="gauge-lbl">/ 13 000 PV</div>
+          </div>
+        </div>
+        <div style="font-family: 'Syne', serif; font-size: 16px; font-weight: 700; color: var(--ls-text);">63 % du mois</div>
+        <div style="font-size: 11px; color: var(--ls-text-muted); margin-top: 4px;">14 jours restants pour atteindre l'objectif</div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">📊 Top contributeurs ce mois</div>
+        <div class="list-item">
+          <div class="li-emoji">🥇</div>
+          <div class="li-content"><div class="li-title">Marie D.</div><div class="li-sub">2 350 PV · F1, F3, Liftoff</div></div>
+        </div>
+        <div class="list-item">
+          <div class="li-emoji">🥈</div>
+          <div class="li-content"><div class="li-title">Karim B.</div><div class="li-sub">1 800 PV · Programme PDM</div></div>
+        </div>
+        <div class="list-item">
+          <div class="li-emoji">🥉</div>
+          <div class="li-content"><div class="li-title">Paul L.</div><div class="li-sub">1 200 PV · CR7 Drive, F1</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== RENTABILITE ===== -->
+    <div class="view" id="view-renta">
+      <div class="hero" style="background: linear-gradient(135deg, #16A34A, var(--ls-teal));">
+        <div class="hero-meta">Rentabilité · Mai 2026</div>
+        <div class="hero-title">+687 € net ce mois 💰</div>
+        <div class="hero-stats">
+          <div class="hero-stat">
+            <div class="hero-stat-val">2 290 €</div>
+            <div class="hero-stat-lbl">CA brut</div>
+          </div>
+          <div class="hero-stat">
+            <div class="hero-stat-val">35 %</div>
+            <div class="hero-stat-lbl">Marge SC</div>
+          </div>
+          <div class="hero-stat">
+            <div class="hero-stat-val">+12 %</div>
+            <div class="hero-stat-lbl">vs avril</div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">💡 Projection fin de mois</div>
+        <div class="card-subtitle">Sur la base du rythme actuel</div>
+        <div style="font-family: 'Syne', serif; font-size: 24px; color: var(--ls-gold); font-weight: 700;">~ 980 € net</div>
+        <div style="font-size: 11px; color: var(--ls-text-muted); margin-top: 4px;">Si tu maintiens le rythme actuel</div>
+      </div>
+    </div>
+
+    <!-- ===== PROSPECTION (NEW chantier #3) ===== -->
+    <div class="view" id="view-prospection">
+      <div class="card">
+        <div class="card-title">🎣 Prospection cold <span style="font-size: 10px; background: var(--ls-teal); color: var(--ls-charcoal); padding: 1px 6px; border-radius: 999px; font-weight: 700;">NEW</span></div>
+        <div class="card-subtitle">Choisis le profil de la cible pour obtenir le bon flow de messages</div>
+      </div>
+      <div class="prof-card">
+        <div class="prof-emoji">⚖️</div>
+        <div class="prof-content">
+          <div class="prof-title">Perte de poids</div>
+          <div class="prof-sub">3 plateformes · 12 scripts · 5 langues</div>
+        </div>
+        <span style="color: var(--ls-text-hint);">→</span>
+      </div>
+      <div class="prof-card">
+        <div class="prof-emoji">🏃</div>
+        <div class="prof-content">
+          <div class="prof-title">Sportif</div>
+          <div class="prof-sub">3 plateformes · 8 scripts · 5 langues</div>
+        </div>
+        <span style="color: var(--ls-text-hint);">→</span>
+      </div>
+      <div class="prof-card">
+        <div class="prof-emoji">💼</div>
+        <div class="prof-content">
+          <div class="prof-title">Business / opportunité</div>
+          <div class="prof-sub">3 plateformes · 6 scripts · 5 langues</div>
+        </div>
+        <span style="color: var(--ls-text-hint);">→</span>
+      </div>
+      <div class="stub-note">
+        🎣 Chantier #3 — flow Insta / FB / WhatsApp avec messages copier-coller + lien bilan personnalisé
+      </div>
+    </div>
+
+    <!-- ===== NEWSLETTER ADMIN (NEW chantier #8) ===== -->
+    <div class="view" id="view-news">
+      <div class="card">
+        <div class="card-title">📰 La Base 360 News <span style="font-size: 10px; background: var(--ls-teal); color: var(--ls-charcoal); padding: 1px 6px; border-radius: 999px; font-weight: 700;">NEW</span></div>
+        <div class="card-subtitle">Newsletter mensuelle clients + distri + version publique partageable</div>
+      </div>
+      <div class="card">
+        <div class="card-title" style="font-size: 13px;">📬 Édition mai 2026</div>
+        <div class="card-subtitle">Préparation été · Brouillon prêt</div>
+        <div style="display: flex; gap: 8px; margin-top: 8px;">
+          <button class="li-action" style="flex: 1; padding: 10px;">Éditer</button>
+          <button class="li-action" style="flex: 1; padding: 10px; background: var(--ls-teal);">Aperçu</button>
+          <button class="li-action" style="flex: 1; padding: 10px; background: var(--ls-charcoal); color: var(--ls-cream);">Envoyer</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title" style="font-size: 13px;">📊 Stats dernière édition · Avril</div>
+        <div class="hero-stats" style="position: static;">
+          <div class="hero-stat" style="background: var(--ls-surface2); color: var(--ls-text);">
+            <div class="hero-stat-val" style="color: var(--ls-gold);">68 %</div>
+            <div class="hero-stat-lbl" style="color: var(--ls-text-muted);">Ouverture</div>
+          </div>
+          <div class="hero-stat" style="background: var(--ls-surface2); color: var(--ls-text);">
+            <div class="hero-stat-val" style="color: var(--ls-teal-dark);">12 %</div>
+            <div class="hero-stat-lbl" style="color: var(--ls-text-muted);">Clic Bilan</div>
+          </div>
+          <div class="hero-stat" style="background: var(--ls-surface2); color: var(--ls-text);">
+            <div class="hero-stat-val" style="color: var(--ls-purple);">8</div>
+            <div class="hero-stat-lbl" style="color: var(--ls-text-muted);">Leads générés</div>
+          </div>
+        </div>
+      </div>
+      <div class="stub-note">
+        📰 Chantier #8 — V1 manuel (toi + Claude IA) puis V2 auto via edge function mensuelle
+      </div>
+    </div>
+
+    <!-- ===== ANALYTICS ===== -->
+    <div class="view" id="view-analytics">
+      <div class="card">
+        <div class="card-title">📈 Analytics admin</div>
+        <div class="card-subtitle">KPIs · Funnel · Top distri · Top produits · 12 mois</div>
+        <div class="hero-stats" style="position: static; margin-top: 8px;">
+          <div class="hero-stat" style="background: var(--ls-surface2); color: var(--ls-text);">
+            <div class="hero-stat-val" style="color: var(--ls-gold);">142</div>
+            <div class="hero-stat-lbl" style="color: var(--ls-text-muted);">Bilans · mai</div>
+          </div>
+          <div class="hero-stat" style="background: var(--ls-surface2); color: var(--ls-text);">
+            <div class="hero-stat-val" style="color: var(--ls-teal-dark);">87 %</div>
+            <div class="hero-stat-lbl" style="color: var(--ls-text-muted);">Conversion</div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title" style="font-size: 13px;">📊 Tendance 12 mois</div>
+        <div style="height: 80px; background: linear-gradient(180deg, rgba(45,212,191,0.2), transparent); border-radius: 8px; position: relative; margin-top: 10px;">
+          <svg viewBox="0 0 200 80" preserveAspectRatio="none" style="width: 100%; height: 100%;">
+            <polyline points="0,60 30,55 60,40 90,35 120,30 150,25 180,15 200,10" fill="none" stroke="var(--ls-teal)" stroke-width="2.5" />
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== EQUIPE ===== -->
+    <div class="view" id="view-team">
+      <div class="card">
+        <div class="card-title">🌳 Mon équipe (admin)</div>
+        <div class="card-subtitle">12 distri · 8 actifs ce mois · 3 en formation</div>
+      </div>
+      <div class="card">
+        <div class="card-title" style="font-size: 13px;">Arbre parrainage</div>
+        <div class="skeleton"></div>
+        <div class="skeleton medium" style="margin-left: 20px;"></div>
+        <div class="skeleton short" style="margin-left: 20px;"></div>
+        <div class="skeleton medium" style="margin-left: 40px;"></div>
+        <div class="skeleton" style="margin-left: 20px;"></div>
+      </div>
+    </div>
+
+    <!-- ===== MON DÉVELOPPEMENT ===== -->
+    <div class="view" id="view-dev">
+      <div class="card">
+        <div class="card-title">🎓 Mon développement</div>
+        <div class="card-subtitle">Hub centralisé apprentissage</div>
+      </div>
+      <div class="hub-grid">
+        <div class="hub-card"><span class="hc-emoji">📚</span><div class="hc-title">Academy</div><div class="hc-sub">La Base 360 Phase 1</div></div>
+        <div class="hub-card"><span class="hc-emoji">🎯</span><div class="hc-title">Formation</div><div class="hc-sub">Pyramide multi-tier</div></div>
+        <div class="hub-card"><span class="hc-emoji">🧰</span><div class="hc-title">Boîte à outils</div><div class="hc-sub">16 outils premium</div></div>
+        <div class="hub-card"><span class="hc-emoji">📓</span><div class="hc-title">Cahier de bord</div><div class="hc-sub">21j cobaye + liste 100</div></div>
+        <div class="hub-card"><span class="hc-emoji">⚡</span><div class="hc-title">FLEX expliqué</div><div class="hc-sub">Tuto 5-3-1</div></div>
+        <div class="hub-card"><span class="hc-emoji">📰</span><div class="hc-title">Nouveautés</div><div class="hc-sub">Changelog distri</div></div>
+        <div class="hub-card"><span class="hc-emoji">🎬</span><div class="hc-title">Tutos vidéos</div><div class="hc-sub">YouTube La Base 360 <span style="background: var(--ls-teal); color: var(--ls-charcoal); padding: 0px 4px; border-radius: 4px; font-size: 8px;">NEW</span></div></div>
+        <div class="hub-card"><span class="hc-emoji">🧮</span><div class="hc-title">Simulateur EBE</div><div class="hc-sub">Entraînement</div></div>
+      </div>
+    </div>
+
+    <!-- ===== PARAMÈTRES ===== -->
+    <div class="view" id="view-settings">
+      <div class="card">
+        <div class="card-title">⚙️ Paramètres</div>
+        <div class="card-subtitle">Profil · Équipe · Transferts · Stats · Debug</div>
+      </div>
+      <div class="card">
+        <div class="list-item">
+          <div class="li-emoji">👤</div>
+          <div class="li-content"><div class="li-title">Profil</div><div class="li-sub">Photo, bio, ville, objectif PV</div></div>
+          <span style="color: var(--ls-text-hint);">→</span>
+        </div>
+        <div class="list-item">
+          <div class="li-emoji">🌍</div>
+          <div class="li-content"><div class="li-title">Langue & marché</div><div class="li-sub">Français · France <span style="background: var(--ls-teal); color: var(--ls-charcoal); padding: 0px 4px; border-radius: 4px; font-size: 9px; margin-left: 4px;">NEW</span></div></div>
+          <span style="color: var(--ls-text-hint);">→</span>
+        </div>
+        <div class="list-item">
+          <div class="li-emoji">🎨</div>
+          <div class="li-content"><div class="li-title">Thème</div><div class="li-sub">Dark Premium</div></div>
+          <span style="color: var(--ls-text-hint);">→</span>
+        </div>
+        <div class="list-item">
+          <div class="li-emoji">🔔</div>
+          <div class="li-content"><div class="li-title">Notifications</div><div class="li-sub">Push activées</div></div>
+          <span style="color: var(--ls-text-hint);">→</span>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+  function showTab(name, btn) {
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.getElementById('view-' + name).classList.add('active');
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    // Smooth scroll back to top of view
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+</script>
+
+</body>
+</html>

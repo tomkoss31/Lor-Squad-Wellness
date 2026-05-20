@@ -70,6 +70,13 @@ serve(async (req) => {
     referrer_user_id?: string;
     source?: string;
     metadata?: unknown;
+    // Chantier #7 V2 (2026-05-17) : popup lead capture sur /business
+    referral_source?: string;
+    consent_recontact?: boolean;
+    coach_slug?: string;
+    utm_source?: string;
+    utm_medium?: string;
+    utm_campaign?: string;
   };
   try {
     body = await req.json();
@@ -82,8 +89,15 @@ serve(async (req) => {
   const city = (body.city ?? "").trim() || null;
   // V2 funnel business 2026-11-07 : tracking referrer + source + metadata
   const referrerUserId = body.referrer_user_id ?? null;
-  const source = body.source ?? "welcome_page"; // 'opportunite' | 'simulateur' | 'welcome_page'
+  const source = body.source ?? "welcome_page"; // 'opportunite' | 'simulateur' | 'welcome_page' | 'business' | 'business-leadcapture'
   const metadata = body.metadata ?? null;
+  // Chantier #7 V2 (2026-05-17) : popup lead capture sur /business
+  const referralSource = (body.referral_source ?? "").trim() || null;
+  const consentRecontact = body.consent_recontact === true;
+  const coachSlug = (body.coach_slug ?? "").trim() || null;
+  const utmSource = (body.utm_source ?? "").trim() || null;
+  const utmMedium = (body.utm_medium ?? "").trim() || null;
+  const utmCampaign = (body.utm_campaign ?? "").trim() || null;
 
   if (firstName.length < 2) {
     return json({ success: false, error: "Prénom trop court." }, 400);
@@ -94,6 +108,19 @@ serve(async (req) => {
 
   const sb = createClient(SUPABASE_URL, SERVICE_KEY);
 
+  // Résolution coach_slug → referrer_user_id (chantier #7 V2)
+  let effectiveReferrerUserId = referrerUserId;
+  if (!effectiveReferrerUserId && coachSlug) {
+    const { data: coachMatch } = await sb
+      .from("users")
+      .select("id")
+      .eq("slug", coachSlug)
+      .maybeSingle();
+    if (coachMatch?.id) {
+      effectiveReferrerUserId = coachMatch.id as string;
+    }
+  }
+
   try {
     const { data: inserted, error: insertErr } = await sb
       .from("prospect_leads")
@@ -103,8 +130,14 @@ serve(async (req) => {
         city,
         source,
         status: "new",
-        referrer_user_id: referrerUserId,
+        referrer_user_id: effectiveReferrerUserId,
         metadata,
+        referral_source: referralSource,
+        consent_recontact: consentRecontact,
+        coach_slug: coachSlug,
+        utm_source: utmSource,
+        utm_medium: utmMedium,
+        utm_campaign: utmCampaign,
       })
       .select("id")
       .single();

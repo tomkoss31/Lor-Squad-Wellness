@@ -77,7 +77,7 @@ export function AnalyticsPage() {
         heightLeft -= pageHeight;
       }
       const stamp = new Date().toISOString().slice(0, 7); // YYYY-MM
-      pdf.save(`lorsquad-analytics-${stamp}.pdf`);
+      pdf.save(`labase360-analytics-${stamp}.pdf`);
     } catch (err) {
       console.error("[AnalyticsPdf] export failed:", err);
       alert("Impossible de générer le PDF. Réessaie.");
@@ -723,7 +723,7 @@ function FunnelView({ funnel }: { funnel: { bilans: number; inscrits: number; ac
             width={70}
           />
           <Tooltip
-            content={(props) => {
+            content={(props: unknown) => {
               const cast = props as unknown as { active?: boolean; payload?: ReadonlyArray<{ value: number; payload?: { name?: string } }> };
               const { active, payload } = cast;
               if (!active || !payload || payload.length === 0) return null;

@@ -645,7 +645,7 @@ const IosStage4Svg = (
         <div style={{ flex: 1, fontSize: 8, lineHeight: 1.3 }}>
           <div style={{ fontWeight: 700, color: "var(--ls-text)" }}>La Base 360</div>
           <div style={{ color: "var(--ls-text-hint)", marginTop: 2 }}>
-            lor-squad-wellness.app
+            labase360.fr
           </div>
         </div>
       </div>
@@ -686,7 +686,7 @@ const AndroidStage2Svg = (
         }}
       >
         <span style={{ flex: 1, padding: "2px 6px", background: "var(--ls-surface)", borderRadius: 4 }}>
-          🔒 lor-squad...
+          🔒 labase360.fr
         </span>
         {/* 3 dots */}
         <div
@@ -858,7 +858,7 @@ const DesktopStage2Svg = (
         color: "var(--ls-text-muted)",
       }}
     >
-      🔒 lor-squad-wellness.app
+      🔒 labase360.fr
     </div>
     <div
       className="ls-pwa-bounce"
@@ -925,7 +925,7 @@ const DesktopStage3Svg = (
       </div>
       <div style={{ flex: 1, fontSize: 10 }}>
         <div style={{ fontWeight: 700, color: "var(--ls-text)" }}>Installer La Base 360 ?</div>
-        <div style={{ color: "var(--ls-text-hint)", fontSize: 9 }}>lor-squad-wellness.app</div>
+        <div style={{ color: "var(--ls-text-hint)", fontSize: 9 }}>labase360.fr</div>
       </div>
     </div>
     <div style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>

@@ -1,0 +1,180 @@
+id,report_token,client_id,client_name,distributor_id,message_type,product_name,message,client_contact,read,created_at,sender,sender_id,read_at,archived_at,resolved_at
+04641614-4765-4dd6-968b-5276b7ae51a8,,f2609c99-47a9-4a87-8d6f-d8e68d1147d1,Clément Clotte,656dcf35-4859-4a70-9d20-990104813423,coach_reply,,"Bonjour Clément , pas obligatoire c'est une option que j'ai ajouté ! dimanche c'est un jour comme un autre !",,false,2026-04-26T17:21:24.314843+00:00,coach,656dcf35-4859-4a70-9d20-990104813423,,,
+6d78a2a9-1a50-4085-b26d-798216ee4588,,4fa9f211-9d7c-4375-a5df-ad03bee4d583,Test Beta,656dcf35-4859-4a70-9d20-990104813423,coach_reply,,ok on en parle,,false,2026-04-22T19:27:26.827689+00:00,coach,656dcf35-4859-4a70-9d20-990104813423,,,
+0647d4ac-3b83-48e7-9b2d-57831a08da6f,,4fa9f211-9d7c-4375-a5df-ad03bee4d583,Test Beta,,product_request,Night Mode,"Bonjour test Distri, j'ai une question sur Night Mode :",,true,2026-04-22T19:26:04.612149+00:00,client,,2026-04-22T19:27:34.128+00:00,,
+98ca7c13-8e58-447e-b6d1-7070314f4499,,4fa9f211-9d7c-4375-a5df-ad03bee4d583,Test Beta,,product_request,Phyto Complete,"Bonjour test Distri, j'ai une question sur Phyto Complete :",,true,2026-04-22T19:26:13.111182+00:00,client,,2026-04-22T19:27:34.128+00:00,,
+d5628958-4e82-4c5f-9c6c-a8ff48781c30,,4fa9f211-9d7c-4375-a5df-ad03bee4d583,Test Beta,656dcf35-4859-4a70-9d20-990104813423,coach_reply,,ok super viens demain,,false,2026-04-22T19:27:48.641804+00:00,coach,656dcf35-4859-4a70-9d20-990104813423,,,
+892c620f-e4bb-43f3-8947-6a5f24fa2a77,,4fa9f211-9d7c-4375-a5df-ad03bee4d583,Test Beta,656dcf35-4859-4a70-9d20-990104813423,coach_reply,,achete le  oui,,false,2026-04-22T19:51:07.918124+00:00,coach,656dcf35-4859-4a70-9d20-990104813423,,,
+1bb81ae7-219f-445d-a60a-e54bbe7d069a,,b8ee0393-99f6-435f-b47c-5edd24d5b942,test thomas,656dcf35-4859-4a70-9d20-990104813423,coach_reply,,pti con,,false,2026-04-22T20:11:25.090907+00:00,coach,656dcf35-4859-4a70-9d20-990104813423,,,
+12d63bc0-5b86-4d03-9c72-66352d3e7b1a,,b8ee0393-99f6-435f-b47c-5edd24d5b942,test thomas,6e552738-3fe5-4cdb-a4c8-15c5d7dca036,coach_reply,,ET TOI CLAUDIUS?,,false,2026-04-22T20:23:03.060057+00:00,coach,6e552738-3fe5-4cdb-a4c8-15c5d7dca036,,,
+65becf05-ab2a-457b-82da-840c2e9528f7,,f2609c99-47a9-4a87-8d6f-d8e68d1147d1,Clément Clotte,656dcf35-4859-4a70-9d20-990104813423,coach_reply,,"Salut Clément ! 🎉
+
+Merci pour ce super bilan. Notre prochain RDV est confirmé :
+📅 lundi 06 avril
+⏰ 17:45
+
+À très vite pour ton suivi ! 💪
+Thomas",,false,2026-04-23T09:44:42.904494+00:00,coach,656dcf35-4859-4a70-9d20-990104813423,,,
+565e38bd-a250-44d6-ae77-30b80ce23c5f,,f2609c99-47a9-4a87-8d6f-d8e68d1147d1,Clément Clotte,656dcf35-4859-4a70-9d20-990104813423,coach_reply,,ok,,false,2026-04-23T09:48:57.392681+00:00,coach,656dcf35-4859-4a70-9d20-990104813423,,,
+2c5d87e8-f800-4e78-b93d-a88a6ab64245,,e4830e22-18e4-496b-9396-32c813779586,Mariska GIROT,6e552738-3fe5-4cdb-a4c8-15c5d7dca036,coach_reply,,"Salut Mariska ! 🎉
+
+Merci pour ce super bilan. Notre prochain RDV est confirmé :
+📅 jeudi 07 mai
+⏰ 10:00
+
+À très vite pour ton suivi ! 💪
+Mélanie",,false,2026-04-23T10:04:24.556821+00:00,coach,6e552738-3fe5-4cdb-a4c8-15c5d7dca036,,,
+9a4347e4-7f06-412e-9c1d-581c6de99c9a,,82e14498-b94b-4c80-9441-524f6cb3670d,Ethan Feron,656dcf35-4859-4a70-9d20-990104813423,coach_reply,,"Salut Ethan ! 🎉
+
+Merci pour ce super bilan. Notre prochain RDV est confirmé :
+📅 mardi 05 mai
+⏰ 10:00
+
+À très vite pour ton suivi ! 💪
+Thomas",,false,2026-04-24T13:53:31.056931+00:00,coach,656dcf35-4859-4a70-9d20-990104813423,,,
+c44edee7-b972-4c60-9818-f4b2ef3a06d2,,eeee5744-2d22-4f6b-ac30-fe6fcf4df120,test beta beta,656dcf35-4859-4a70-9d20-990104813423,coach_reply,,"Salut test beta ! 🎉
+
+Merci pour ce super bilan. Notre prochain RDV est confirmé :
+📅 vendredi 08 mai
+⏰ 10:00
+
+À très vite pour ton suivi ! 💪
+Thomas",,false,2026-04-24T21:16:00.20406+00:00,coach,656dcf35-4859-4a70-9d20-990104813423,,,
+af9108c5-c622-4f2a-bb06-1e0e6b99f0d7,,6c719e12-b1e3-4de1-8059-646d20976848,Tom Doguet,656dcf35-4859-4a70-9d20-990104813423,coach_reply,,ok,,false,2026-04-25T09:25:23.291623+00:00,coach,656dcf35-4859-4a70-9d20-990104813423,,,
+73346f8c-d11b-4862-8f72-1ad3e4539ab1,,562af8f3-656d-45f0-890b-489819ac53ca,Victoria Cavalec,f5285ea5-9521-4e0d-8e09-523e310c494f,coach_reply,,"Salut Victoria ! 🎉
+
+Merci pour ce super bilan. Notre prochain RDV est confirmé :
+📅 samedi 09 mai
+⏰ 10:00
+
+À très vite pour ton suivi ! 💪
+Mandy",,false,2026-04-25T15:26:47.966893+00:00,coach,f5285ea5-9521-4e0d-8e09-523e310c494f,,,
+abdce932-d621-4921-a854-c3b88e414e2e,,f2609c99-47a9-4a87-8d6f-d8e68d1147d1,Clément Clotte,656dcf35-4859-4a70-9d20-990104813423,coach_reply,,déja 700g en moins c'est top ça,,false,2026-04-26T17:22:16.216159+00:00,coach,656dcf35-4859-4a70-9d20-990104813423,,,
+f7eb1bc7-b59e-4d88-a49d-2698e4f9a6d3,,f2609c99-47a9-4a87-8d6f-d8e68d1147d1,Clément Clotte,656dcf35-4859-4a70-9d20-990104813423,general,,D’accord 😅😅,,true,2026-04-26T17:50:42.09256+00:00,client,,2026-04-26T18:13:22.019+00:00,,
+d6a75b47-3968-4f86-af42-13c5425ebb05,,f2609c99-47a9-4a87-8d6f-d8e68d1147d1,Clément Clotte,656dcf35-4859-4a70-9d20-990104813423,general,,"Désolé de te déranger un dimanche soir mais ce sur mon écran d’accueil y a écrit qu’il faut que je prenne mon poids mais le bouton ne fonctionne pas je viens de me peser je fait 81,1kg",,true,2026-04-26T17:09:29.453407+00:00,client,,2026-04-26T18:13:24.317+00:00,,
+c8a9e0a0-ac34-4269-b016-de4273aa828a,,f2609c99-47a9-4a87-8d6f-d8e68d1147d1,Clément Clotte,656dcf35-4859-4a70-9d20-990104813423,general,,"Bonjour,",,true,2026-04-26T17:08:26.791685+00:00,client,,2026-04-26T18:13:26.651+00:00,,
+cb11d9d7-abc2-411a-9860-853eec1245bf,,0b7c27a9-7a57-4bf0-ab48-cc5cd5c88e0b,MELANIE HOUBERT,6e552738-3fe5-4cdb-a4c8-15c5d7dca036,coach_reply,,"Salut MELANIE ! 🎉
+
+Merci pour ce super bilan. Notre prochain RDV est confirmé :
+📅 jeudi 07 mai
+⏰ 07:00
+
+À très vite pour ton suivi ! 💪
+Mélanie",,false,2026-04-27T19:30:15.383647+00:00,coach,6e552738-3fe5-4cdb-a4c8-15c5d7dca036,,,
+101b4f51-fdd3-4863-af15-56905d3927a3,,b39b0dbe-cc64-42e8-a4b1-33f7e0464be8,JULIE HARB,6e552738-3fe5-4cdb-a4c8-15c5d7dca036,coach_reply,,"Salut JULIE ! 🎉
+
+Merci pour ce super bilan. Notre prochain RDV est confirmé :
+📅 lundi 11 mai
+⏰ 10:00
+
+À très vite pour ton suivi ! 💪
+Mélanie",,false,2026-04-28T09:46:27.772327+00:00,coach,6e552738-3fe5-4cdb-a4c8-15c5d7dca036,,,
+5aa86046-43c8-45f8-b8e6-52c60adbb802,,74ab6314-6243-40ad-a9e9-069efed6a000,JULIA CHEVALIER,f5285ea5-9521-4e0d-8e09-523e310c494f,coach_reply,,"Salut JULIA ! 🎉
+
+Merci pour ce super bilan. Notre prochain RDV est confirmé :
+📅 mardi 05 mai
+⏰ 10:00
+
+À très vite pour ton suivi ! 💪
+Mandy",,false,2026-04-28T13:11:17.697262+00:00,coach,f5285ea5-9521-4e0d-8e09-523e310c494f,,,
+a0bfd89c-14b9-422a-a3a1-6c458a6b2365,,24a4f189-cfd5-4c91-8604-5d978cf98b8d,Matheo Manapany,656dcf35-4859-4a70-9d20-990104813423,coach_reply,,"Salut Matheo ! 🎉
+
+Merci pour ce super bilan. Notre prochain RDV est confirmé :
+📅 lundi 29 juin
+⏰ 10:00
+
+À très vite pour ton suivi ! 💪
+Thomas",,false,2026-04-28T13:21:33.500263+00:00,coach,656dcf35-4859-4a70-9d20-990104813423,,,
+6bf3c67b-4d93-4992-bb3e-ed9754cf677e,,ce8ec266-64cc-4042-a68a-ba7978a4f4ab,Lili RUNTZ,f5285ea5-9521-4e0d-8e09-523e310c494f,coach_reply,,"Salut Lili ! 🎉
+
+Merci pour ce super bilan. Notre prochain RDV est confirmé :
+📅 lundi 11 mai
+⏰ 18:00
+
+À très vite pour ton suivi ! 💪
+Mandy",,false,2026-04-28T13:51:33.281163+00:00,coach,f5285ea5-9521-4e0d-8e09-523e310c494f,,,
+dca65d0e-a722-4fbf-a318-fb90b5039966,,37482e08-0318-4a22-8dc0-2c58d28abfae,EMMANUELLA HERY,f5285ea5-9521-4e0d-8e09-523e310c494f,coach_reply,,"Salut EMMANUELLA ! 🎉
+
+Merci pour ce super bilan. Notre prochain RDV est confirmé :
+📅 mardi 12 mai
+⏰ 10:00
+
+À très vite pour ton suivi ! 💪
+Mandy",,false,2026-04-28T14:49:08.694929+00:00,coach,f5285ea5-9521-4e0d-8e09-523e310c494f,,,
+8b8efa4c-be0e-422c-8b1d-fe261e83c6a1,,0b7c27a9-7a57-4bf0-ab48-cc5cd5c88e0b,MELANIE HOUBERT,656dcf35-4859-4a70-9d20-990104813423,coach_reply,,hello,,false,2026-04-28T20:17:22.093753+00:00,coach,656dcf35-4859-4a70-9d20-990104813423,,,
+46810dea-eaaf-458d-988c-2086de61e2e5,,6d06fd6b-f452-4296-b565-8f935d4ba346,Sylvie Chaumont,656dcf35-4859-4a70-9d20-990104813423,coach_reply,,trés bien,,false,2026-04-30T08:42:34.815906+00:00,coach,656dcf35-4859-4a70-9d20-990104813423,,,
+edaff725-ad90-44af-8a0c-de0efa1072c5,,6d06fd6b-f452-4296-b565-8f935d4ba346,Sylvie Chaumont,656dcf35-4859-4a70-9d20-990104813423,general,,"Salut Thomas, j'ai une fringale qui revient souvent. Tu as une astuce ?",,true,2026-04-30T08:33:34.703078+00:00,client,,2026-04-30T09:04:37.285+00:00,,
+5f072613-b2eb-404b-a784-482f77900ce5,,40aee8f4-a2ba-48d9-b20d-2b569fef4008,Laurent TONDEUR,6e552738-3fe5-4cdb-a4c8-15c5d7dca036,coach_reply,,"Salut Laurent ! 🎉
+
+Merci pour ce super bilan. Notre prochain RDV est confirmé :
+📅 mercredi 06 mai
+⏰ 15:00
+
+À très vite pour ton suivi ! 💪
+Mélanie",,false,2026-05-01T18:55:10.743914+00:00,coach,6e552738-3fe5-4cdb-a4c8-15c5d7dca036,,,
+4dcf0c86-e13e-409c-8156-c5ec9bbd12b1,,e5756a90-df35-4ae6-897e-5b7f60288ac6,Enora OLLIVIER,6e552738-3fe5-4cdb-a4c8-15c5d7dca036,coach_reply,,"Salut Enora ! 🎉
+
+Merci pour ce super bilan. Notre prochain RDV est confirmé :
+📅 dimanche 17 mai
+⏰ 00:00
+
+À très vite pour ton suivi ! 💪
+Mélanie",,false,2026-05-01T19:19:23.102191+00:00,coach,6e552738-3fe5-4cdb-a4c8-15c5d7dca036,,,
+f2b59d78-626b-4998-847b-67488ab28311,,b74b37ba-2fdd-4ac7-b7d5-60d025cd62d3,Perrine ANTOINE,6e552738-3fe5-4cdb-a4c8-15c5d7dca036,coach_reply,,"Salut Perrine ! 🎉
+
+Merci pour ce super bilan. Notre prochain RDV est confirmé :
+📅 dimanche 17 mai
+⏰ 10:00
+
+À très vite pour ton suivi ! 💪
+Mélanie",,false,2026-05-01T19:29:10.729805+00:00,coach,6e552738-3fe5-4cdb-a4c8-15c5d7dca036,,,
+26beaa4f-fd40-4c76-96aa-d4765eab1252,,d49fa503-f9c2-48c5-8559-57200c10e0d9,Nathalie Habrant,656dcf35-4859-4a70-9d20-990104813423,coach_reply,,"Bonjour Nathalie 👋
+
+J'ai un programme à te proposer qui pourrait clairement te faire plaisir : devenir Client Privilégié Herbalife. Concrètement :
+
+🥉 Bronze · -15% dès ta 1ère commande + 2 cadeaux de bienvenue
+🥈 Silver · -25% à partir de 100 pts cumulés
+🥇 Gold · -35% à partir de 500 pts (max client privilégié)
+💎 Ambassadeur · -42% si 1 000 pts en 3 mois
+
+Les points = PV de tes commandes + celles de tes proches que tu sponsorises (famille, collègues, amis). Plus tu fais découvrir, plus ta remise grimpe. Pour activer : www.myherbalife.com — je t'envoie mon ID sponsor en privé pour la création de compte.
+
+Ça te dit qu'on regarde ensemble ?
+
+Thomas",,false,2026-05-02T07:34:48.645786+00:00,coach,656dcf35-4859-4a70-9d20-990104813423,,,
+dae18381-ea2c-45bd-8f5a-621edbb7c65a,,d49fa503-f9c2-48c5-8559-57200c10e0d9,Nathalie Habrant,656dcf35-4859-4a70-9d20-990104813423,coach_reply,,"👉 Voici le lien pour t'inscrire en Client Privilégié :
+https://accounts.myherbalife.com/Account/Create?appId=1&locale=fr-FR&redirect=https://fr.myherbalife.com
+
+Tu vas devoir remplir tes infos + répondre à ça :
+- ID sponsor : 21Y0103610 
+- 3 premières lettres : HOU
+- As-tu déjà un pack client privilégié ? → NON
+
+Ensuite tu finalises en réglant ton accès 👌
+
+—
+
+🎁 Petit bonus sympa :
+Tu recevras un coffret de produits directement chez toi sous 2 à 3 jours, parfait pour continuer avec encore plus de motivation
+
+—
+
+👉 Une fois inscrit :
+Télécharge l'appli « Commandes Herbalife » pour commander facilement
+- iPhone : https://apps.apple.com/fr/app/commandes-herbalife-nutrition/id1154285940
+- Android : https://play.google.com/store/apps/details?id=com.hrbl.mobile.android.ordering&hl=fr
+
+Tu pourras te connecter et commander avec tes remises :
+- 15% à 35% minimum à vie
+- 100 points → 25%
+- 500 points → 35% + cadeaux 🎁
+
+👉 Les points se cumulent et tu ne redescends jamais 🥳
+👉 Frais de port offerts à partir de 40 points
+
+—
+
+Si tu as la moindre question, je suis là 😊
+Et dis-moi quand c'est fait pour que je vérifie que tout est OK 👌",,false,2026-05-02T07:36:40.824484+00:00,coach,656dcf35-4859-4a70-9d20-990104813423,,,
+ca963fc0-435f-4946-9c14-c5b32e1795ee,,68916fbc-301b-4a48-867c-92b94c5a37f7,Mandy Da Silva,656dcf35-4859-4a70-9d20-990104813423,coach_reply,,hey ça va ? pense a faire la formation Academy sur l'app,,false,2026-05-03T12:36:51.929761+00:00,coach,656dcf35-4859-4a70-9d20-990104813423,,,
+199950a6-df45-4a2d-87f6-102251f05fc0,,0b7c27a9-7a57-4bf0-ab48-cc5cd5c88e0b,MELANIE HOUBERT,656dcf35-4859-4a70-9d20-990104813423,coach_reply,,Bonjour Mélanie,,false,2026-05-03T17:08:54.158642+00:00,coach,656dcf35-4859-4a70-9d20-990104813423,,,

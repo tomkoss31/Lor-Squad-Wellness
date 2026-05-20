@@ -21,14 +21,8 @@ import type {
   Client,
   DecisionClient,
   FollowUp,
-  FollowUpProtocolLog,
-  FollowUpProtocolStepId,
   LifecycleStatus,
   MessageALaisser,
-  Prospect,
-  ProspectFormInput,
-  ProspectSource,
-  ProspectStatus,
   TypeDeSuite,
   User
 } from "../types/domain";
@@ -56,6 +50,7 @@ type UserRow = {
   rank_set_at?: string | null;
   formation_beta_access?: boolean | null;
   city?: string | null;
+  coaching_since?: string | null;
   frozen_at?: string | null;
   frozen_by?: string | null;
   frozen_reason?: string | null;
@@ -341,6 +336,7 @@ function mapUser(row: UserRow): User {
     rankSetAt: row.rank_set_at ?? null,
     formationBetaAccess: row.formation_beta_access ?? false,
     city: row.city ?? null,
+    coachingSince: row.coaching_since ?? null,
     frozenAt: row.frozen_at ?? null,
     frozenBy: row.frozen_by ?? null,
     frozenReason: row.frozen_reason ?? null,
@@ -1636,118 +1632,108 @@ export async function loadPvBreakdownsForMonth(
   }));
 }
 
-// ─── Manual PV entries V3 (distri hors-app) ───────────────────────────────
-export async function upsertManualPvEntry(params: {
-  id: string | null;
-  name: string;
-  parentName: string | null;
-  depth: 1 | 2 | 3;
-  ownTierPct: number;
-  intermediateTiers: number[];
-  month: string;
-  pv15: number;
-  pv25: number;
-  pv35: number;
-  pv42: number;
-  pvRoyalty: number;
-  pv25IsVip?: boolean;
-  pv35IsVip?: boolean;
-}): Promise<string> {
-  const client = await requireSupabase();
-  const { data, error } = await client.rpc("upsert_manual_pv_entry", {
-    p_id: params.id,
-    p_name: params.name,
-    p_parent_name: params.parentName,
-    p_depth: params.depth,
-    p_own_tier_pct: params.ownTierPct,
-    p_intermediate_tiers: params.intermediateTiers,
-    p_month: params.month,
-    p_pv_15: params.pv15,
-    p_pv_25: params.pv25,
-    p_pv_35: params.pv35,
-    p_pv_42: params.pv42,
-    p_pv_royalty: params.pvRoyalty,
-    p_pv_25_is_vip: params.pv25IsVip ?? false,
-    p_pv_35_is_vip: params.pv35IsVip ?? false,
-  });
-  if (error) {
-    throw new Error(`Impossible d'enregistrer l'entree : ${error.message}`);
-  }
-  if (typeof window !== "undefined") {
-    window.dispatchEvent(new CustomEvent("lor-squad:pv-breakdown-updated"));
-  }
-  return data as string;
-}
-
-export async function deleteManualPvEntry(id: string): Promise<void> {
-  const client = await requireSupabase();
-  const { error } = await client.rpc("delete_manual_pv_entry", { p_id: id });
-  if (error) {
-    throw new Error(`Impossible de supprimer l'entree : ${error.message}`);
-  }
-  if (typeof window !== "undefined") {
-    window.dispatchEvent(new CustomEvent("lor-squad:pv-breakdown-updated"));
-  }
-}
-
-export async function loadManualPvEntries(
-  viewerUserId: string,
-  month: string,
-): Promise<Array<{
-  id: string;
-  viewerUserId: string;
-  name: string;
-  parentName: string | null;
-  depth: 1 | 2 | 3;
-  ownTierPct: number;
-  intermediateTiers: number[];
-  month: string;
-  pv15: number;
-  pv25: number;
-  pv35: number;
-  pv42: number;
-  pvRoyalty: number;
-  pv25IsVip: boolean;
-  pv35IsVip: boolean;
-  declaredAt: string | null;
-}>> {
-  const client = await requireSupabase();
-  const { data, error } = await client
-    .from("manual_pv_entries")
-    .select("id, viewer_user_id, name, parent_name, depth, own_tier_pct, intermediate_tiers, month, pv_15, pv_25, pv_35, pv_42, pv_royalty, pv_25_is_vip, pv_35_is_vip, declared_at")
-    .eq("viewer_user_id", viewerUserId)
-    .eq("month", month);
-  if (error || !data) return [];
-  return data.map((r: {
-    id: string; viewer_user_id: string; name: string; parent_name: string | null;
-    depth: number; own_tier_pct: number; intermediate_tiers: number[] | null; month: string;
-    pv_15: number | null; pv_25: number | null; pv_35: number | null;
-    pv_42: number | null; pv_royalty: number | null;
-    pv_25_is_vip: boolean | null; pv_35_is_vip: boolean | null;
-    declared_at: string | null;
-  }) => ({
-    id: r.id,
-    viewerUserId: r.viewer_user_id,
-    name: r.name,
-    parentName: r.parent_name,
-    depth: r.depth as 1 | 2 | 3,
-    ownTierPct: Number(r.own_tier_pct),
-    intermediateTiers: (r.intermediate_tiers ?? []).map(Number),
-    month: r.month,
-    pv15: Number(r.pv_15 ?? 0),
-    pv25: Number(r.pv_25 ?? 0),
-    pv35: Number(r.pv_35 ?? 0),
-    pv42: Number(r.pv_42 ?? 0),
-    pvRoyalty: Number(r.pv_royalty ?? 0),
-    pv25IsVip: !!r.pv_25_is_vip,
-    pv35IsVip: !!r.pv_35_is_vip,
-    declaredAt: r.declared_at,
-  }));
-}
-
+// ─── Distributor qualifications (fenêtres glissantes 2/3/6/12 mois) ──────
 /**
- * Met a jour le rang Herbalife d'un user (admin only). Stamp rank_set_at.
+ * Appelle la RPC `get_distributor_qualifications` qui retourne les PV perso
+ * du distri sur les 4 fenêtres glissantes Herbalife + les booleans qualifs.
+ * Voir migration 20261118000000_distributor_qualifications.sql.
  */
+export async function fetchDistributorQualifications(
+  userId: string,
+  asOfMonth: string,
+): Promise<{
+  pv_2m: number;
+  pv_3m: number;
+  pv_6m: number;
+  pv_12m: number;
+  pv_12m_extended: number;
+  qualified_senior_consultant: boolean;
+  qualified_success_builder: boolean;
+  qualified_qp: boolean;
+  qualified_supervisor: boolean;
+  rank_calculated: string;
+} | null> {
+  const client = await requireSupabase();
+  const { data, error } = await client.rpc("get_distributor_qualifications", {
+    p_user_id: userId,
+    p_as_of_month: asOfMonth,
+  });
+  if (error || !data) {
+    if (error) console.warn("[fetchDistributorQualifications] rpc error", error);
+    return null;
+  }
+  const row = Array.isArray(data) ? data[0] : data;
+  if (!row) return null;
+  return {
+    pv_2m: Number(row.pv_2m ?? 0),
+    pv_3m: Number(row.pv_3m ?? 0),
+    pv_6m: Number(row.pv_6m ?? 0),
+    pv_12m: Number(row.pv_12m ?? 0),
+    // V2 (migration 20261118200000) : si la RPC vieille version est encore
+    // en place (avant apply), pv_12m_extended sera undefined → fallback
+    // sur pv_12m pour ne pas casser l'UI le temps de l'apply.
+    pv_12m_extended: Number(row.pv_12m_extended ?? row.pv_12m ?? 0),
+    qualified_senior_consultant: !!row.qualified_senior_consultant,
+    qualified_success_builder: !!row.qualified_success_builder,
+    qualified_qp: !!row.qualified_qp,
+    qualified_supervisor: !!row.qualified_supervisor,
+    rank_calculated: String(row.rank_calculated ?? "distributor_25"),
+  };
+}
+
+// ─── Conflit agenda RDV (quality fix Thomas 2026-05-18) ───────────────────
+/**
+ * Vérifie si un coach a déjà un RDV planifié dans une fenêtre ±30 min
+ * autour de `dueDateIso`. Retourne le 1er conflit trouvé (clientName + date)
+ * ou null si aucun.
+ *
+ * Utilisé dans NewAssessmentPage (validation bilan initial) et
+ * NewFollowUpPage (validation suivi) pour avertir le coach AVANT le save.
+ */
+export async function checkAgendaConflict(
+  coachUserId: string,
+  dueDateIso: string,
+  excludeFollowUpId?: string | null,
+): Promise<{ id: string; clientName: string; dueDate: string } | null> {
+  if (!coachUserId || !dueDateIso) return null;
+  const due = new Date(dueDateIso);
+  if (Number.isNaN(due.getTime())) return null;
+  const windowMs = 30 * 60 * 1000;
+  const startIso = new Date(due.getTime() - windowMs).toISOString();
+  const endIso = new Date(due.getTime() + windowMs).toISOString();
+
+  const sb = await requireSupabase();
+  // On lit follow_ups dans la fenêtre + filtre côté front sur distributor_id
+  // pour éviter de devoir joindre côté SQL (RLS gère déjà le scope coach).
+  let q = sb
+    .from("follow_ups")
+    .select("id, due_date, client_id, client_name, status, clients!inner(distributor_id)")
+    .gte("due_date", startIso)
+    .lte("due_date", endIso)
+    .in("status", ["scheduled", "pending"]);
+  if (excludeFollowUpId) q = q.neq("id", excludeFollowUpId);
+  const { data, error } = await q;
+  if (error || !data) return null;
+
+  const match = (data as Array<{
+    id: string;
+    due_date: string;
+    client_name: string;
+    clients: { distributor_id: string } | { distributor_id: string }[] | null;
+  }>).find((row) => {
+    const clientLink = Array.isArray(row.clients) ? row.clients[0] : row.clients;
+    return clientLink?.distributor_id === coachUserId;
+  });
+
+  if (!match) return null;
+  return {
+    id: match.id,
+    clientName: match.client_name ?? "client",
+    dueDate: match.due_date,
+  };
+}
+
+// ─── Manual PV entries V3 (distri hors-app) ───────────────────────────────
 export async function setUserRankAdmin(userId: string, rank: string): Promise<void> {
   const client = await requireSupabase();
   const { error } = await client.rpc("set_user_rank_admin", {
@@ -2013,147 +1999,6 @@ export async function updateSupabaseClientFreePvTracking(params: {
 
 // ─── Agenda Prospects (Chantier 2026-04-19) ─────────────────────────────
 
-type ProspectRow = {
-  id: string;
-  first_name: string;
-  last_name: string;
-  phone?: string | null;
-  email?: string | null;
-  rdv_date: string;
-  source: string;
-  source_detail?: string | null;
-  note?: string | null;
-  distributor_id: string;
-  status: string;
-  converted_client_id?: string | null;
-  cold_until?: string | null;
-  cold_reason?: string | null;
-  created_at: string;
-  updated_at: string;
-};
-
-function mapProspectFromDb(row: ProspectRow): Prospect {
-  return {
-    id: row.id,
-    firstName: row.first_name,
-    lastName: row.last_name,
-    phone: row.phone ?? undefined,
-    email: row.email ?? undefined,
-    rdvDate: row.rdv_date,
-    source: row.source as ProspectSource,
-    sourceDetail: row.source_detail ?? undefined,
-    note: row.note ?? undefined,
-    distributorId: row.distributor_id,
-    status: row.status as ProspectStatus,
-    convertedClientId: row.converted_client_id ?? undefined,
-    coldUntil: row.cold_until ?? undefined,
-    coldReason: row.cold_reason ?? undefined,
-    createdAt: row.created_at,
-    updatedAt: row.updated_at,
-  };
-}
-
-function mapProspectToDbUpdates(updates: Partial<Prospect>): Record<string, unknown> {
-  const out: Record<string, unknown> = {};
-  if (updates.firstName !== undefined) out.first_name = updates.firstName;
-  if (updates.lastName !== undefined) out.last_name = updates.lastName;
-  if (updates.phone !== undefined) out.phone = updates.phone ?? null;
-  if (updates.email !== undefined) out.email = updates.email ?? null;
-  if (updates.rdvDate !== undefined) out.rdv_date = updates.rdvDate;
-  if (updates.source !== undefined) out.source = updates.source;
-  if (updates.sourceDetail !== undefined) out.source_detail = updates.sourceDetail ?? null;
-  if (updates.note !== undefined) out.note = updates.note ?? null;
-  if (updates.distributorId !== undefined) out.distributor_id = updates.distributorId;
-  if (updates.status !== undefined) out.status = updates.status;
-  if (updates.convertedClientId !== undefined) out.converted_client_id = updates.convertedClientId ?? null;
-  if (updates.coldUntil !== undefined) out.cold_until = updates.coldUntil ?? null;
-  if (updates.coldReason !== undefined) out.cold_reason = updates.coldReason ?? null;
-  // updated_at piloté côté SQL à chaque UPDATE : on force côté appli pour tracking UI
-  out.updated_at = new Date().toISOString();
-  return out;
-}
-
-export async function fetchSupabaseProspects(): Promise<Prospect[]> {
-  const client = await requireSupabase();
-  const { data, error } = await client
-    .from("prospects")
-    .select("*")
-    .order("rdv_date", { ascending: true });
-
-  if (error) {
-    // Fallback : si la table n'existe pas encore (migration pas jouée)
-    if (isMissingTableError(error, "prospects")) {
-      console.warn("[fetchSupabaseProspects] table prospects absente — migration pas jouée ?");
-      return [];
-    }
-    throw new Error(`Impossible de charger les prospects : ${error.message}`);
-  }
-  return (data ?? []).map((row) => mapProspectFromDb(row as ProspectRow));
-}
-
-export async function createSupabaseProspect(input: ProspectFormInput): Promise<Prospect> {
-  const client = await requireSupabase();
-  const { data, error } = await client
-    .from("prospects")
-    .insert({
-      first_name: input.firstName,
-      last_name: input.lastName,
-      phone: input.phone ?? null,
-      email: input.email ?? null,
-      rdv_date: input.rdvDate,
-      source: input.source,
-      source_detail: input.sourceDetail ?? null,
-      note: input.note ?? null,
-      distributor_id: input.distributorId,
-      status: "scheduled" as ProspectStatus,
-    })
-    .select()
-    .single();
-
-  if (error || !data) {
-    throw new Error(`Impossible de créer le prospect : ${error?.message ?? "réponse vide"}`);
-  }
-  return mapProspectFromDb(data as ProspectRow);
-}
-
-export async function updateSupabaseProspect(id: string, updates: Partial<Prospect>): Promise<Prospect> {
-  const client = await requireSupabase();
-  const dbUpdates = mapProspectToDbUpdates(updates);
-  const { data, error } = await client
-    .from("prospects")
-    .update(dbUpdates)
-    .eq("id", id)
-    .select()
-    .single();
-
-  if (error || !data) {
-    throw new Error(`Impossible de mettre à jour le prospect : ${error?.message ?? "réponse vide"}`);
-  }
-  return mapProspectFromDb(data as ProspectRow);
-}
-
-export async function deleteSupabaseProspect(id: string): Promise<void> {
-  const client = await requireSupabase();
-  const { error } = await client.from("prospects").delete().eq("id", id);
-  if (error) {
-    throw new Error(`Impossible de supprimer le prospect : ${error.message}`);
-  }
-}
-
-// ─── Sync client_recaps (Chantier 2026-04-20) ────────────────────────────
-// Le snapshot `client_recaps` (vu par le client sur /client/:token) n'est créé
-// qu'une fois, à la création du client (NewAssessmentPage). Toutes les autres
-// mutations (follow-up, body scan rapide, édition bilan, ajout produit,
-// update coordonnées, réassignation coach) laissent le récap figé.
-//
-// `refreshClientRecap(clientId)` reconstruit un nouveau snapshot à partir de
-// l'état courant : clients + dernier assessment + questionnaire.selectedProductIds.
-// Les lectures côté client (ClientAppPage, RecapPage, ClientDetailPage)
-// font toutes `order by created_at desc limit 1`, donc on INSERT sans delete.
-//
-// Usage : appeler APRÈS la mutation principale. Les erreurs sont remontées
-// au caller pour affichage toast, mais l'appelant doit catch sans bloquer
-// le flux principal (l'action utilisateur a déjà réussi).
 export async function refreshClientRecap(clientId: string): Promise<void> {
   const client = await requireSupabase();
 
@@ -2232,109 +2077,16 @@ export async function refreshClientRecap(clientId: string): Promise<void> {
 // des 5 étapes sur la fiche client. Tolère l'absence de la migration via
 // un fallback [] (pas de crash si la table n'existe pas encore).
 
-type FollowUpProtocolLogRow = {
-  id: string;
-  client_id: string;
-  coach_id: string;
-  step_id: FollowUpProtocolStepId;
-  sent_at: string;
-  notes?: string | null;
-};
 
-function mapFollowUpProtocolLog(row: FollowUpProtocolLogRow): FollowUpProtocolLog {
-  return {
-    id: row.id,
-    clientId: row.client_id,
-    coachId: row.coach_id,
-    stepId: row.step_id,
-    sentAt: row.sent_at,
-    notes: row.notes ?? undefined,
-  };
-}
+// =============================================================================
+// Refacto 2026-05-19 (Phase 3.5 brainstorm Égypte) — barrel pattern.
+//
+// Les 3 domaines suivants ont été extraits en fichiers dédiés pour faciliter
+// la maintenance et réduire les conflits de merge. Ce fichier les re-exporte
+// pour préserver l'API publique : tous les call sites continuent d'importer
+// depuis "../services/supabaseService" sans changement.
+// =============================================================================
 
-export async function fetchSupabaseFollowUpProtocolLogs(
-  clientId: string
-): Promise<FollowUpProtocolLog[]> {
-  const client = await requireSupabase();
-  const { data, error } = await client
-    .from("follow_up_protocol_log")
-    .select("*")
-    .eq("client_id", clientId)
-    .order("sent_at", { ascending: true });
-  if (error) {
-    // Migration pas encore exécutée → tolérant (UI affichera 0/5).
-    if (isMissingTableError(error, "follow_up_protocol_log")) {
-      return [];
-    }
-    throw new Error(`Impossible de lire le protocole de suivi : ${error.message}`);
-  }
-  return (data as FollowUpProtocolLogRow[]).map(mapFollowUpProtocolLog);
-}
-
-/**
- * Chantier Protocole dans Agenda + Dashboard (2026-04-20)
- * Fetch global des logs protocole — utilisé par Dashboard widget et Agenda
- * onglet Suivis. Tolère l'absence de la migration comme la version par-client.
- * Le filtrage sur le coach courant se fait côté client pour des raisons de
- * compatibilité RLS (can_access_owner couvre la scope admin / référent).
- */
-export async function fetchAllSupabaseFollowUpProtocolLogs(): Promise<FollowUpProtocolLog[]> {
-  const client = await requireSupabase();
-  const { data, error } = await client
-    .from("follow_up_protocol_log")
-    .select("*")
-    .order("sent_at", { ascending: false });
-  if (error) {
-    if (isMissingTableError(error, "follow_up_protocol_log")) {
-      return [];
-    }
-    throw new Error(`Impossible de lire les logs protocole : ${error.message}`);
-  }
-  return (data as FollowUpProtocolLogRow[]).map(mapFollowUpProtocolLog);
-}
-
-export async function logSupabaseFollowUpProtocolStep(params: {
-  clientId: string;
-  coachId: string;
-  stepId: FollowUpProtocolStepId;
-  notes?: string;
-}): Promise<FollowUpProtocolLog> {
-  const { clientId, coachId, stepId, notes } = params;
-  const client = await requireSupabase();
-
-  // UPSERT via la contrainte unique (client_id, step_id) — si l'user ré-envoie
-  // le message, on rafraîchit sent_at au lieu de dupliquer.
-  const { data, error } = await client
-    .from("follow_up_protocol_log")
-    .upsert(
-      {
-        client_id: clientId,
-        coach_id: coachId,
-        step_id: stepId,
-        sent_at: new Date().toISOString(),
-        notes: notes ?? null,
-      },
-      { onConflict: "client_id,step_id" }
-    )
-    .select("*")
-    .single();
-
-  if (error) {
-    if (isMissingTableError(error, "follow_up_protocol_log")) {
-      throw new Error(
-        "La table follow_up_protocol_log n'existe pas encore. Exécute la migration supabase/migrations/20260420160000_follow_up_protocol_log.sql."
-      );
-    }
-    throw new Error(`Impossible d'enregistrer l'envoi : ${error.message}`);
-  }
-
-  return mapFollowUpProtocolLog(data as FollowUpProtocolLogRow);
-}
-
-export async function deleteSupabaseFollowUpProtocolLog(logId: string): Promise<void> {
-  const client = await requireSupabase();
-  const { error } = await client.from("follow_up_protocol_log").delete().eq("id", logId);
-  if (error) {
-    throw new Error(`Impossible d'annuler l'envoi : ${error.message}`);
-  }
-}
+export * from "./sb/manual-pv";
+export * from "./sb/prospects";
+export * from "./sb/follow-up-protocol";

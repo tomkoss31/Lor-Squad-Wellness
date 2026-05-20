@@ -57,7 +57,7 @@ function buildShareText(data: RecapData): string {
     });
     lines.push("");
   }
-  lines.push("#LorSquadWellness #LorSquadAcademy");
+  lines.push("#LaBase360 #LaBase360Academy");
   return lines.join("\n");
 }
 
@@ -162,7 +162,7 @@ export function WeeklyRecapCard() {
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
-        a.download = `recap-lorsquad-${data.weekStart?.toISOString().slice(0, 10) ?? "semaine"}.png`;
+        a.download = `recap-labase360-${data.weekStart?.toISOString().slice(0, 10) ?? "semaine"}.png`;
         a.click();
         URL.revokeObjectURL(url);
       }, "image/png");

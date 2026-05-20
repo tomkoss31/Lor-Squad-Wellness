@@ -454,7 +454,7 @@ export function FormationCalculatorPage() {
                 <CartesianGrid stroke="color-mix(in srgb, var(--ls-text) 6%, transparent)" strokeDasharray="3 3" />
                 <XAxis
                   dataKey="m"
-                  tickFormatter={(v) => `M${v}`}
+                  tickFormatter={(v: unknown) => `M${v}`}
                   tick={{ fill: "var(--ls-text-hint)", fontSize: 10 }}
                   axisLine={{ stroke: "var(--ls-border)" }}
                 />
@@ -477,8 +477,8 @@ export function FormationCalculatorPage() {
                     fontFamily: "DM Sans, sans-serif",
                     fontSize: 12,
                   }}
-                  labelFormatter={(v) => `Mois ${v}`}
-                  formatter={(value, name) => [
+                  labelFormatter={(v: unknown) => `Mois ${v}`}
+                  formatter={(value: unknown, name: unknown) => [
                     formatNumber(Number(value ?? 0)),
                     String(name) === "vp" ? "VP perso" : "Royalty Overrides",
                   ]}

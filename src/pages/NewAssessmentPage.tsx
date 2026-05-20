@@ -15,6 +15,7 @@ import { useRef } from "react";
 import { Component, type ErrorInfo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { getSupabaseClient } from "../services/supabaseClient";
+import { checkAgendaConflict } from "../services/supabaseService";
 import { BodyFatInsightCard } from "../components/body-scan/BodyFatInsightCard";
 import { MuscleMassInsightCard } from "../components/body-scan/MuscleMassInsightCard";
 import { HydrationVisceralInsightCard } from "../components/body-scan/HydrationVisceralInsightCard";
@@ -383,7 +384,7 @@ function clearAssessmentDraft() {
   // globale est purgée systématiquement. La clé scopée par prospectId
   // est purgée séparément à la validation effective (cf handleSaveAssessment
   // qui appelle clearCoachNotesDraft(prospectId)).
-  window.localStorage.removeItem("lorsquad-assessment-coach-notes");
+  window.localStorage.removeItem("labase360-assessment-coach-notes");
 }
 
 // Chantier bilan updates (2026-04-20) : renommage + insertion + suppression.
@@ -1047,6 +1048,30 @@ export function NewAssessmentPage() {
     }
 
     // Programme optionnel — pas de validation bloquante
+
+    // Quality fix Thomas 2026-05-18 : vérifie le conflit agenda AVANT le save.
+    // Si un autre RDV existe ±30 min, demande confirmation.
+    const isFreeFollowUpEarly = form.typeDeSuite === "suivi_libre";
+    if (!isFreeFollowUpEarly && currentUser?.id) {
+      try {
+        const nextFollowUpIso = serializeDateTimeForStorage(
+          form.nextFollowUp || getDefaultNextFollowUpDateTime(),
+          10,
+        );
+        const conflict = await checkAgendaConflict(currentUser.id, nextFollowUpIso);
+        if (conflict) {
+          const when = new Date(conflict.dueDate).toLocaleString("fr-FR", {
+            weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit",
+          });
+          const ok = window.confirm(
+            `⚠️ Conflit agenda\n\nTu as déjà un RDV avec ${conflict.clientName} le ${when}.\n\nValider quand même ?`,
+          );
+          if (!ok) return;
+        }
+      } catch (e) {
+        console.warn("[NewAssessment] agenda conflict check failed:", e);
+      }
+    }
 
     setSaving(true);
     const assessmentDate = form.assessmentDate || getCurrentDateTimeValue();

@@ -1,0 +1,21 @@
+-- Chantier #3 — étape 3.8 (2026-05-17).
+-- Annonce distri du nouveau module Prospection internationale.
+-- À renommer en .sql au moment du merge prod.
+begin;
+
+insert into public.app_announcements (id, title, body, emoji, accent, link_path, link_label, audience, published_at)
+select
+  gen_random_uuid(),
+  'Prospection internationale 🌍',
+  'Nouveau module mobile-first dans Mon développement : choisis ton marché (FR/EN/ES/PT/TR/HI) + profil cible (perte de poids / sport / business) + plateforme. Tu obtiens scripts copier-coller pré-rédigés (avec traduction FR pour les langues étrangères) + hashtags optimisés. Plus de 40 scripts inclus, modifiables côté admin.',
+  '🌍',
+  'teal',
+  '/prospection',
+  'Lancer une session',
+  'all',
+  now()
+where not exists (
+  select 1 from public.app_announcements where title = 'Prospection internationale 🌍'
+);
+
+commit;

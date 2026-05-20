@@ -22,7 +22,7 @@ interface GlossaryTerm {
   term: string;
   /** Acronyme ou abbreviation a developper (ex: "VP" → "Volume Points"). */
   expansion?: string;
-  category: "volumes" | "activite" | "produits" | "lor-squad";
+  category: "volumes" | "activite" | "produits" | "la-base-360";
   short: string;
   /** Definition longue, peut contenir markdown simple (sera juste rendue en text). */
   long?: string;
@@ -184,27 +184,27 @@ const TERMS: GlossaryTerm[] = [
   // ═══ LOR'SQUAD ═══════════════════════════════════════════════════════
   {
     term: "Lignée",
-    category: "lor-squad",
+    category: "la-base-360",
     short: "Tes recrues directes + leurs recrues + ainsi de suite (3 niveaux pour les RO).",
   },
   {
     term: "Sponsor",
-    category: "lor-squad",
+    category: "la-base-360",
     short: "Le distri qui t'a recruté. Ton point de contact privilégié pour la formation.",
   },
   {
     term: "Recrue",
-    category: "lor-squad",
+    category: "la-base-360",
     short: "Un nouveau distri que tu as parrainé. Ta lignée descendante directe.",
   },
   {
     term: "Bilan",
-    category: "lor-squad",
+    category: "la-base-360",
     short: "Le RDV de découverte avec un nouveau client (90 min) — l'EBE en mode La Base 360.",
   },
   {
     term: "Body scan",
-    category: "lor-squad",
+    category: "la-base-360",
     short: "La pesée + analyse corporelle (poids, masse grasse, hydratation, etc.) avec la balance Tanita.",
   },
 ];
@@ -213,7 +213,7 @@ const CATEGORY_META = {
   volumes: { label: "Volumes & rangs", emoji: "📊", color: "var(--ls-gold)" },
   activite: { label: "Activité & méthode", emoji: "⚡", color: "var(--ls-teal)" },
   produits: { label: "Produits & commissions", emoji: "💼", color: "var(--ls-purple)" },
-  "lor-squad": { label: "Vocabulaire La Base 360", emoji: "✦", color: "var(--ls-coral)" },
+  "la-base-360": { label: "Vocabulaire La Base 360", emoji: "✦", color: "var(--ls-coral)" },
 } as const;
 
 function normalize(s: string): string {

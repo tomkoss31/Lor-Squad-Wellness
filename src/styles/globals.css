@@ -882,10 +882,14 @@ main, .main-content {
 @layer base {
   * { box-sizing: border-box; -webkit-font-smoothing: antialiased; }
 
-  html { font-family: 'DM Sans', sans-serif; }
-  body { background: var(--ls-bg); color: var(--ls-text); font-family: 'DM Sans', sans-serif; transition: background 0.2s, color 0.2s; }
+  html { font-family: 'Twemoji Country Flags', 'DM Sans', sans-serif; }
+  body { background: var(--ls-bg); color: var(--ls-text); font-family: 'Twemoji Country Flags', 'DM Sans', sans-serif; transition: background 0.2s, color 0.2s; }
 
-  h1, h2, h3, h4, .font-display { font-family: 'Syne', sans-serif; }
+  /* Fix drapeaux 2026-05-19 : ajoute Twemoji EN TÊTE de chaque
+     font-family de h1-h4 + display (sinon Syne écrase et les regional
+     indicators emoji apparaissent en "FR/GB/MX/BR/TR/IN" bruts). Cette
+     règle remonte Twemoji dans tout descendant, peu importe le parent. */
+  h1, h2, h3, h4, .font-display { font-family: 'Twemoji Country Flags', 'Syne', sans-serif; }
 
   ::-webkit-scrollbar { width: 5px; height: 5px; }
   ::-webkit-scrollbar-track { background: #0B0D11; }

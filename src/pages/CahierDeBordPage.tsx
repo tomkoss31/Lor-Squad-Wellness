@@ -10,8 +10,8 @@
 // ebe_journal_entries). RLS own + admin all.
 // =============================================================================
 
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAppContext } from "../context/AppContext";
 import { useCahierDeBord } from "../hooks/useCahierDeBord";
 import { ProspectFormModal } from "../components/prospect/ProspectFormModal";
@@ -25,6 +25,16 @@ import {
   type Liste100Status,
   type Liste100Temperature,
 } from "../types/cahier";
+import {
+  buildProfileUrl,
+  isContactPlatform,
+  listPlatforms,
+  PLATFORM_META,
+  type ContactPlatform,
+} from "../lib/profileDeepLink";
+import { getCountry } from "../lib/countries";
+import { CountrySelect } from "../components/ui/CountrySelect";
+import { EditListe100ContactModal } from "../components/cahier/EditListe100ContactModal";
 
 /** Split "Karim Ben" → { firstName: "Karim", lastName: "Ben" }. */
 function splitFullName(full: string): { firstName: string; lastName: string } {
@@ -44,7 +54,25 @@ export function CahierDeBordPage() {
   const { currentUser } = useAppContext();
   const userId = currentUser?.id ?? null;
   const cahier = useCahierDeBord(userId);
-  const [tab, setTab] = useState<Tab>("cobaye");
+  const [searchParams] = useSearchParams();
+
+  // Phase 0.8 — query param `?tab=liste` (ou cobaye / ebe) pour permettre
+  // un deep-link direct depuis le Co-pilote vers la Liste 100.
+  const initialTab: Tab = (() => {
+    const raw = searchParams.get("tab");
+    if (raw === "liste" || raw === "liste100") return "liste";
+    if (raw === "ebe") return "ebe";
+    return "cobaye";
+  })();
+  const [tab, setTab] = useState<Tab>(initialTab);
+
+  // Re-sync si le query param change (navigation entre cartes du Co-pilote).
+  useEffect(() => {
+    const raw = searchParams.get("tab");
+    if (raw === "liste" || raw === "liste100") setTab("liste");
+    else if (raw === "ebe") setTab("ebe");
+    else if (raw === "cobaye") setTab("cobaye");
+  }, [searchParams]);
 
   if (!currentUser) {
     return <div style={{ padding: 40, color: "var(--ls-text-muted)" }}>Connecte-toi.</div>;
@@ -386,12 +414,18 @@ function ListeSection({ cahier }: { cahier: ReturnType<typeof useCahierDeBord> }
     temperature: "froid" as Liste100Temperature,
     note: "",
     contact_phone: "",
+    platform: "" as ContactPlatform | "",
+    profile_url: "",
+    country_code: "",
   });
   const [filterTemp, setFilterTemp] = useState<Liste100Temperature | "all">("all");
   const [filterStatus, setFilterStatus] = useState<Liste100Status | "all">("all");
+  const [filterCountry, setFilterCountry] = useState<string | "all">("all");
   /** Connexion Liste 100 → Agenda (2026-05-04) : quand un contact passe en
       `rdv_cale`, on propose de créer un prospect agenda pré-rempli. */
   const [prospectModalContact, setProspectModalContact] = useState<Liste100Contact | null>(null);
+  // 2026-05-19 — modale édition contact
+  const [editingContact, setEditingContact] = useState<Liste100Contact | null>(null);
 
   async function handleStatusChange(contact: Liste100Contact, newStatus: Liste100Status) {
     // Toujours persister le nouveau statut sur le contact
@@ -410,14 +444,27 @@ function ListeSection({ cahier }: { cahier: ReturnType<typeof useCahierDeBord> }
       temperature: draft.temperature,
       note: draft.note.trim() || undefined,
       contact_phone: draft.contact_phone.trim() || undefined,
+      platform: draft.platform || null,
+      profile_url: draft.profile_url.trim() || null,
+      country_code: draft.country_code || null,
     });
-    setDraft({ full_name: "", frank_category: "", temperature: "froid", note: "", contact_phone: "" });
+    setDraft({
+      full_name: "",
+      frank_category: "",
+      temperature: "froid",
+      note: "",
+      contact_phone: "",
+      platform: "",
+      profile_url: "",
+      country_code: "",
+    });
     setShowForm(false);
   }
 
   const filtered = cahier.contacts.filter((c) => {
     if (filterTemp !== "all" && c.temperature !== filterTemp) return false;
     if (filterStatus !== "all" && c.status !== filterStatus) return false;
+    if (filterCountry !== "all" && (c.country_code ?? "") !== filterCountry) return false;
     return true;
   });
 
@@ -461,6 +508,13 @@ function ListeSection({ cahier }: { cahier: ReturnType<typeof useCahierDeBord> }
             </option>
           ))}
         </select>
+        <CountrySelect
+          value={filterCountry}
+          onChange={(v) => setFilterCountry(v === "" ? "all" : v)}
+          includeAllFilter
+          ariaLabel="Filtrer par pays de prospection"
+        />
+
         <button type="button" onClick={() => setShowForm(true)} style={btnPrimary("var(--ls-purple)")}>
           + Ajouter un contact
         </button>
@@ -518,14 +572,59 @@ function ListeSection({ cahier }: { cahier: ReturnType<typeof useCahierDeBord> }
               </select>
             </Field>
           </div>
-          <Field label="Téléphone (optionnel)">
-            <input
-              type="tel"
-              value={draft.contact_phone}
-              onChange={(e) => setDraft({ ...draft, contact_phone: e.target.value })}
-              style={inputStyle}
-            />
-          </Field>
+          {/* Phase 0.8 — plateforme + username pour deep-link clic */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+            <Field label="Plateforme (optionnel)">
+              <select
+                value={draft.platform}
+                onChange={(e) =>
+                  setDraft({
+                    ...draft,
+                    platform: (e.target.value || "") as ContactPlatform | "",
+                  })
+                }
+                style={selectStyle}
+              >
+                <option value="">—</option>
+                {listPlatforms().map((p) => (
+                  <option key={p} value={p}>
+                    {PLATFORM_META[p].emoji} {PLATFORM_META[p].label}
+                  </option>
+                ))}
+              </select>
+            </Field>
+            <Field label="Username ou URL profil">
+              <input
+                type="text"
+                value={draft.profile_url}
+                onChange={(e) => setDraft({ ...draft, profile_url: e.target.value })}
+                placeholder={
+                  draft.platform
+                    ? PLATFORM_META[draft.platform as ContactPlatform].placeholder
+                    : "ex: berges_account ou https://…"
+                }
+                style={inputStyle}
+              />
+            </Field>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+            <Field label="Téléphone (optionnel)">
+              <input
+                type="tel"
+                value={draft.contact_phone}
+                onChange={(e) => setDraft({ ...draft, contact_phone: e.target.value })}
+                style={inputStyle}
+              />
+            </Field>
+            <Field label="Pays de prospection (optionnel)">
+              <CountrySelect
+                value={draft.country_code}
+                onChange={(v) => setDraft({ ...draft, country_code: v })}
+                includeEmpty
+                ariaLabel="Pays de prospection"
+              />
+            </Field>
+          </div>
           <Field label="Note (optionnel)">
             <textarea
               value={draft.note}
@@ -566,6 +665,9 @@ function ListeSection({ cahier }: { cahier: ReturnType<typeof useCahierDeBord> }
           {filtered.map((c) => {
             const temp = LISTE_100_TEMP_META[c.temperature];
             const status = LISTE_100_STATUS_META[c.status];
+            const platform = isContactPlatform(c.platform) ? c.platform : null;
+            const platformMeta = platform ? PLATFORM_META[platform] : null;
+            const deepLink = buildProfileUrl(platform, c.profile_url, c.contact_phone);
             return (
               <div
                 key={c.id}
@@ -584,11 +686,65 @@ function ListeSection({ cahier }: { cahier: ReturnType<typeof useCahierDeBord> }
               >
                 <span style={{ fontSize: 18 }}>{temp.emoji}</span>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontWeight: 600, color: "var(--ls-text)", fontSize: 14 }}>{c.full_name}</div>
+                  <div
+                    style={{
+                      fontWeight: 600,
+                      color: "var(--ls-text)",
+                      fontSize: 14,
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 6,
+                      flexWrap: "wrap",
+                    }}
+                  >
+                    {(() => {
+                      const country = getCountry(c.country_code);
+                      return country ? (
+                        <span
+                          style={{
+                            fontSize: 14,
+                            fontFamily:
+                              "'Twemoji Country Flags', 'Apple Color Emoji', 'Segoe UI Emoji', emoji",
+                            lineHeight: 1,
+                          }}
+                          title={country.label}
+                          aria-label={`Pays : ${country.label}`}
+                        >
+                          {country.flag}
+                        </span>
+                      ) : null;
+                    })()}
+                    <span>{c.full_name}</span>
+                  </div>
                   {c.note && (
                     <div style={{ fontSize: 11, color: "var(--ls-text-muted)", marginTop: 2 }}>{c.note}</div>
                   )}
                 </div>
+                {deepLink && platformMeta ? (
+                  <a
+                    href={deepLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title={`Ouvrir le profil ${platformMeta.label}`}
+                    aria-label={`Ouvrir le profil ${platformMeta.label} de ${c.full_name}`}
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      width: 32,
+                      height: 32,
+                      borderRadius: 8,
+                      background: "var(--ls-surface2)",
+                      border: "0.5px solid var(--ls-border)",
+                      color: "var(--ls-text)",
+                      fontSize: 16,
+                      textDecoration: "none",
+                      flexShrink: 0,
+                    }}
+                  >
+                    {platformMeta.emoji}
+                  </a>
+                ) : null}
                 <select
                   value={c.status}
                   onChange={(e) => void handleStatusChange(c, e.target.value as Liste100Status)}
@@ -610,6 +766,22 @@ function ListeSection({ cahier }: { cahier: ReturnType<typeof useCahierDeBord> }
                     </option>
                   ))}
                 </select>
+                <button
+                  type="button"
+                  onClick={() => setEditingContact(c)}
+                  aria-label={`Modifier ${c.full_name}`}
+                  title="Modifier (pays, notes, plateforme…)"
+                  style={{
+                    background: "transparent",
+                    border: "none",
+                    color: "var(--ls-text-muted)",
+                    cursor: "pointer",
+                    fontSize: 14,
+                    padding: "4px 6px",
+                  }}
+                >
+                  ✏️
+                </button>
                 <button
                   type="button"
                   onClick={() => {
@@ -648,6 +820,17 @@ function ListeSection({ cahier }: { cahier: ReturnType<typeof useCahierDeBord> }
           }}
           onClose={() => setProspectModalContact(null)}
           onSaved={() => setProspectModalContact(null)}
+        />
+      )}
+
+      {/* Modale édition contact Liste 100 (2026-05-19) */}
+      {editingContact && (
+        <EditListe100ContactModal
+          contact={editingContact}
+          onClose={() => setEditingContact(null)}
+          onSave={async (patch) => {
+            await cahier.updateContact(editingContact.id, patch);
+          }}
         />
       )}
     </div>

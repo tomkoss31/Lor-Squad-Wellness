@@ -19,10 +19,11 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppContext } from "../../context/AppContext";
 import { getSupabaseClient } from "../../services/supabaseClient";
+import { CelebrationDialog } from "./CelebrationDialog";
 
-type CelebrationKind = "birthday" | "program_1m" | "program_3m" | "program_6m";
+export type CelebrationKind = "birthday" | "program_1m" | "program_3m" | "program_6m";
 
-interface Celebration {
+export interface Celebration {
   client_id: string;
   first_name: string;
   last_name: string;
@@ -39,7 +40,7 @@ interface KindMeta {
   message: (firstName: string, c: Celebration, coachFirstName: string) => string;
 }
 
-const KIND_META: Record<CelebrationKind, KindMeta> = {
+export const KIND_META: Record<CelebrationKind, KindMeta> = {
   birthday: {
     emoji: "🎉",
     label: (c) => (c.age_now ? `Anniversaire · ${c.age_now} ans` : "Anniversaire"),
@@ -75,6 +76,7 @@ export function CelebrationCard() {
   const { currentUser, clients } = useAppContext();
   const [celebrations, setCelebrations] = useState<Celebration[] | null>(null);
   const [loading, setLoading] = useState(true);
+  const [openCelebration, setOpenCelebration] = useState<Celebration | null>(null);
 
   useEffect(() => {
     if (!currentUser?.id) return;
@@ -118,27 +120,6 @@ export function CelebrationCard() {
     return client?.phone ?? null;
   }
 
-  function formatPhoneE164(raw: string): string {
-    // Normalise : retire espaces/+/-/() et passe en E164 sans '+'
-    const digits = raw.replace(/[^\d]/g, "");
-    if (digits.startsWith("0")) {
-      // Numero français 0X... → 33X...
-      return "33" + digits.slice(1);
-    }
-    return digits;
-  }
-
-  function handleSendWhatsApp(c: Celebration) {
-    const meta = KIND_META[c.kind];
-    const message = meta.message(c.first_name, c, coachFirstName);
-    const phone = getClientPhone(c.client_id);
-    const phoneE164 = phone ? formatPhoneE164(phone) : "";
-    const url = phoneE164
-      ? `https://wa.me/${phoneE164}?text=${encodeURIComponent(message)}`
-      : `https://wa.me/?text=${encodeURIComponent(message)}`;
-    window.open(url, "_blank", "noopener,noreferrer");
-  }
-
   return (
     <section style={cardStyle} className="reveal" aria-label="Célébrations clients aujourd'hui">
       {/* Halo decoratif gold (heritage / chaleur) top-right */}
@@ -171,9 +152,9 @@ export function CelebrationCard() {
               <div style={actionsStyle}>
                 <button
                   type="button"
-                  onClick={() => handleSendWhatsApp(c)}
+                  onClick={() => setOpenCelebration(c)}
                   style={btnPrimaryStyle}
-                  title="Envoyer un message WhatsApp pré-rempli"
+                  title="Ouvrir la popup message (édition + multi-canal)"
                 >
                   💬 Envoyer
                 </button>
@@ -190,6 +171,15 @@ export function CelebrationCard() {
           );
         })}
       </div>
+
+      {openCelebration ? (
+        <CelebrationDialog
+          celebration={openCelebration}
+          phone={getClientPhone(openCelebration.client_id)}
+          coachFirstName={coachFirstName}
+          onClose={() => setOpenCelebration(null)}
+        />
+      ) : null}
     </section>
   );
 }

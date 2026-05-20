@@ -11,7 +11,7 @@ import { PageHeading } from "../components/ui/PageHeading";
 import { EvolutionReportModal } from "../components/assessment/EvolutionReportModal";
 import { buildReportData } from "../lib/evolutionReport";
 import { getSupabaseClient } from "../services/supabaseClient";
-import { refreshClientRecap } from "../services/supabaseService";
+import { refreshClientRecap, checkAgendaConflict } from "../services/supabaseService";
 import { StatusBadge } from "../components/ui/StatusBadge";
 import { useAppContext } from "../context/AppContext";
 import { useToast, buildSupabaseErrorToast } from "../context/ToastContext";
@@ -262,6 +262,25 @@ export function NewFollowUpPage() {
     .join(" ");
 
   async function handleSubmit() {
+    // Quality fix Thomas 2026-05-18 : check conflit agenda avant save.
+    if (currentUser?.id && dueDate) {
+      try {
+        const dueIso = serializeDateTimeForStorage(dueDate);
+        const conflict = await checkAgendaConflict(currentUser.id, dueIso);
+        if (conflict) {
+          const when = new Date(conflict.dueDate).toLocaleString("fr-FR", {
+            weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit",
+          });
+          const ok = window.confirm(
+            `⚠️ Conflit agenda\n\nTu as déjà un RDV avec ${conflict.clientName} le ${when}.\n\nValider quand même ?`,
+          );
+          if (!ok) return;
+        }
+      } catch (e) {
+        console.warn("[NewFollowUp] agenda conflict check failed:", e);
+      }
+    }
+
     const nextQuestionnaire: AssessmentQuestionnaire = {
       ...(latest?.questionnaire ?? {} as AssessmentQuestionnaire),
       desiredTimeline: latest?.questionnaire?.desiredTimeline ?? '',

@@ -41,6 +41,7 @@ import { SideStack } from "./components/SideStack";
 
 import { DistriOnboardingChecklist } from "../../../components/formation/DistriOnboardingChecklist";
 import { CelebrationCard } from "../../../components/copilote/CelebrationCard";
+import { Liste100ShortcutCard } from "../../../components/copilote/Liste100ShortcutCard";
 import { PvActionPlanAlert } from "../../../components/copilote/PvActionPlanAlert";
 import { LegalFooter } from "../../../components/ui/LegalFooter";
 import { AnnouncementBell } from "../../../components/announcements/AnnouncementBell";
@@ -222,6 +223,10 @@ export function CoPiloteV5Page() {
           aujourd hui (naissance ou +1m/+3m/+6m programme). Auto-hidden
           si aucun event. Bouton WhatsApp avec message pre-rempli. */}
       <CelebrationCard />
+
+      {/* Raccourci direct Liste 100 (Phase 0.8 Égypte 2026-05) — 1 clic
+          au lieu de 3-4. Card avec compteur live X/100 + barre progress. */}
+      <Liste100ShortcutCard />
 
       {/* Hero éditorial */}
       <HeroEditorial />

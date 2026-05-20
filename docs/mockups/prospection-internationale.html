@@ -1,0 +1,1051 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Prospection Internationale — La Base 360</title>
+<style>
+  :root {
+    --ls-gold: #C9A84C;
+    --ls-gold-light: #E5C97D;
+    --ls-teal: #2DD4BF;
+    --ls-teal-dark: #0F766E;
+    --ls-coral: #FB7185;
+    --ls-purple: #7C3AED;
+    --ls-charcoal: #0B0D11;
+    --ls-cream: #FBF7F0;
+    --ls-surface: #FFFFFF;
+    --ls-surface2: #F7F3EC;
+    --ls-border: rgba(11,13,17,0.10);
+    --ls-text: #1F2937;
+    --ls-text-muted: #4B5563;
+    --ls-text-hint: #9CA3AF;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--ls-cream);
+    color: var(--ls-text);
+    line-height: 1.5;
+    font-size: 15px;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  .mockup-banner {
+    background: var(--ls-charcoal);
+    color: var(--ls-gold);
+    padding: 8px 12px;
+    text-align: center;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+  }
+
+  .app-shell {
+    max-width: 640px;
+    margin: 0 auto;
+    background: var(--ls-cream);
+    min-height: 100vh;
+    padding-bottom: 60px;
+  }
+
+  /* ===== Header ===== */
+  .header {
+    padding: 24px 20px 20px;
+    background: linear-gradient(135deg, var(--ls-charcoal) 0%, #1A1D24 100%);
+    color: white;
+    position: relative;
+    overflow: hidden;
+  }
+  .header::after {
+    content: "";
+    position: absolute;
+    top: -50%; right: -10%;
+    width: 300px; height: 300px;
+    background: radial-gradient(circle, rgba(201,168,76,0.18), transparent 65%);
+    pointer-events: none;
+  }
+  .brand {
+    font-family: 'Syne', serif;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    color: var(--ls-gold);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .brand .dot { display: inline-block; width: 5px; height: 5px; border-radius: 50%; background: var(--ls-teal); margin: 0 6px; transform: translateY(-2px); }
+  h1 {
+    font-family: 'Syne', serif;
+    font-size: 26px;
+    font-weight: 700;
+    line-height: 1.2;
+    margin-bottom: 10px;
+    position: relative;
+  }
+  .header-tagline {
+    font-size: 14px;
+    opacity: 0.85;
+    max-width: 480px;
+    position: relative;
+  }
+
+  /* ===== Step indicator ===== */
+  .stepper {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    padding: 14px 20px;
+    background: var(--ls-surface);
+    border-bottom: 1px solid var(--ls-border);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  .step-dot {
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    background: var(--ls-surface2);
+    color: var(--ls-text-hint);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+    transition: all 0.2s;
+  }
+  .step-dot.active {
+    background: var(--ls-gold);
+    color: var(--ls-charcoal);
+    transform: scale(1.1);
+    box-shadow: 0 0 0 4px rgba(201,168,76,0.2);
+  }
+  .step-dot.done {
+    background: var(--ls-teal);
+    color: white;
+  }
+  .step-line {
+    width: 30px;
+    height: 2px;
+    background: var(--ls-border);
+    align-self: center;
+  }
+
+  /* ===== Sections ===== */
+  .section {
+    padding: 20px;
+  }
+  .section-tag {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 12px;
+    background: rgba(45,212,191,0.12);
+    color: var(--ls-teal-dark);
+    margin-bottom: 10px;
+  }
+  .section h2 {
+    font-family: 'Syne', serif;
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1.3;
+    margin-bottom: 12px;
+  }
+  .section p {
+    font-size: 14px;
+    color: var(--ls-text-muted);
+    margin-bottom: 14px;
+  }
+
+  /* ===== Grid de cards ===== */
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .grid-3 {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+  }
+  .choice-card {
+    background: var(--ls-surface);
+    border: 1.5px solid var(--ls-border);
+    border-radius: 12px;
+    padding: 16px 12px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.18s;
+    position: relative;
+  }
+  .choice-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 14px rgba(0,0,0,0.06);
+  }
+  .choice-card.selected {
+    background: linear-gradient(135deg, rgba(201,168,76,0.10), rgba(45,212,191,0.06));
+    border-color: var(--ls-gold);
+    box-shadow: 0 4px 14px rgba(201,168,76,0.18);
+  }
+  .choice-card .cc-emoji {
+    font-size: 32px;
+    line-height: 1;
+    margin-bottom: 6px;
+    display: block;
+  }
+  .choice-card .cc-flag {
+    font-size: 28px;
+  }
+  .choice-card .cc-label {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--ls-text);
+    margin-bottom: 2px;
+  }
+  .choice-card .cc-sub {
+    font-size: 10px;
+    color: var(--ls-text-muted);
+    font-weight: 500;
+  }
+
+  /* ===== Hashtags chips ===== */
+  .hashtag-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: 10px 0;
+  }
+  .hashtag-chip {
+    background: var(--ls-surface);
+    border: 1px solid var(--ls-border);
+    padding: 6px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--ls-text);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .hashtag-chip:hover {
+    background: var(--ls-gold);
+    color: var(--ls-charcoal);
+    border-color: var(--ls-gold);
+  }
+  .hashtag-chip.copied {
+    background: var(--ls-teal);
+    color: white;
+    border-color: var(--ls-teal);
+  }
+
+  /* ===== Message card ===== */
+  .msg-card {
+    background: white;
+    border-radius: 14px;
+    border: 1px solid var(--ls-border);
+    overflow: hidden;
+    margin-bottom: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  }
+  .msg-header {
+    padding: 12px 16px;
+    background: linear-gradient(135deg, #FAEEDA, #FBF7F0);
+    border-bottom: 1px solid var(--ls-border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .msg-platform {
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+  .msg-platform.insta { background: linear-gradient(135deg, #F58529, #DD2A7B, #8134AF); color: white; }
+  .msg-platform.fb { background: #1877F2; color: white; }
+  .msg-platform.whatsapp { background: #25D366; color: white; }
+  .msg-platform.telegram { background: #0088CC; color: white; }
+  .msg-platform.linkedin { background: #0A66C2; color: white; }
+  .msg-title {
+    flex: 1;
+    min-width: 0;
+  }
+  .msg-title-label {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--ls-text);
+  }
+  .msg-title-lang {
+    font-size: 11px;
+    color: var(--ls-text-muted);
+  }
+  .msg-body {
+    padding: 14px 16px;
+    background: var(--ls-surface2);
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--ls-text);
+    white-space: pre-wrap;
+  }
+  .msg-body strong {
+    background: rgba(201,168,76,0.18);
+    padding: 1px 4px;
+    border-radius: 4px;
+    color: #633806;
+    font-weight: 600;
+  }
+  .msg-footer {
+    padding: 10px 12px;
+    display: flex;
+    gap: 8px;
+    justify-content: space-between;
+    align-items: center;
+    background: white;
+  }
+  .msg-copy-btn {
+    flex: 1;
+    background: var(--ls-charcoal);
+    color: var(--ls-cream);
+    border: none;
+    padding: 10px 14px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 700;
+    font-family: 'Syne', serif;
+    cursor: pointer;
+    transition: all 0.18s;
+  }
+  .msg-copy-btn:hover {
+    transform: translateY(-1px);
+  }
+  .msg-copy-btn.copied {
+    background: var(--ls-teal);
+  }
+  .msg-tip {
+    font-size: 11px;
+    color: var(--ls-text-hint);
+    font-style: italic;
+    padding: 8px 12px;
+    background: var(--ls-surface2);
+  }
+
+  /* ===== Workflow steps ===== */
+  .workflow-step {
+    display: flex;
+    gap: 12px;
+    padding: 14px 0;
+    border-bottom: 1px dashed var(--ls-border);
+  }
+  .workflow-step:last-child { border-bottom: none; }
+  .workflow-num {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: var(--ls-gold);
+    color: var(--ls-charcoal);
+    font-family: 'Syne', serif;
+    font-weight: 700;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .workflow-content { flex: 1; }
+  .workflow-content strong { color: var(--ls-text); }
+  .workflow-content p { margin-bottom: 4px; font-size: 13px; }
+
+  /* ===== Relance tree ===== */
+  .relance-tree {
+    background: var(--ls-surface);
+    border-radius: 12px;
+    padding: 16px;
+    border-left: 4px solid var(--ls-teal);
+    margin-bottom: 10px;
+  }
+  .relance-trigger {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--ls-teal-dark);
+    margin-bottom: 6px;
+  }
+  .relance-action {
+    font-size: 13px;
+    color: var(--ls-text);
+    margin-bottom: 6px;
+  }
+
+  /* ===== Toggle hidden ===== */
+  .hidden { display: none; }
+
+  /* ===== Footer ===== */
+  .footer {
+    padding: 24px 20px;
+    text-align: center;
+    color: var(--ls-text-hint);
+    font-size: 11px;
+    border-top: 1px solid var(--ls-border);
+    margin-top: 20px;
+  }
+  .footer strong { color: var(--ls-gold); }
+
+  /* ===== Mobile ===== */
+  @media (max-width: 480px) {
+    .grid-3 { grid-template-columns: 1fr 1fr; }
+    h1 { font-size: 22px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="mockup-banner">
+  🎨 MOCKUP — Prospection internationale La Base 360 (outil utilisable maintenant)
+</div>
+
+<div class="app-shell">
+
+  <!-- ===== HEADER ===== -->
+  <header class="header">
+    <div class="brand">La Base 360 <span class="dot"></span> Prospection</div>
+    <h1>Le monde, en messages prêts.</h1>
+    <p class="header-tagline">Choisis ton marché, ton profil cible, ta plateforme. Copie-colle. Relance. Convertis.</p>
+  </header>
+
+  <!-- ===== STEPPER ===== -->
+  <div class="stepper">
+    <div class="step-dot active" id="dot-1">1</div>
+    <div class="step-line"></div>
+    <div class="step-dot" id="dot-2">2</div>
+    <div class="step-line"></div>
+    <div class="step-dot" id="dot-3">3</div>
+    <div class="step-line"></div>
+    <div class="step-dot" id="dot-4">4</div>
+  </div>
+
+  <!-- ===== STEP 1 — Marché ===== -->
+  <section class="section" id="step-1">
+    <span class="section-tag">Étape 1 sur 4</span>
+    <h2>Quel marché tu cibles ? 🌍</h2>
+    <p>Chaque marché a sa langue, son réseau social dominant, son timing optimal.</p>
+
+    <div class="grid-3">
+      <div class="choice-card" onclick="selectMarket('fr', this)">
+        <span class="cc-flag">🇫🇷</span>
+        <div class="cc-label">France</div>
+        <div class="cc-sub">Origine · 67M</div>
+      </div>
+      <div class="choice-card" onclick="selectMarket('en', this)">
+        <span class="cc-flag">🇬🇧</span>
+        <div class="cc-label">International</div>
+        <div class="cc-sub">EN · 1.5 Md</div>
+      </div>
+      <div class="choice-card" onclick="selectMarket('es', this)">
+        <span class="cc-flag">🇲🇽</span>
+        <div class="cc-label">LatAm + Espagne</div>
+        <div class="cc-sub">ES · 500M</div>
+      </div>
+      <div class="choice-card" onclick="selectMarket('pt', this)">
+        <span class="cc-flag">🇧🇷</span>
+        <div class="cc-label">Brésil + Portugal</div>
+        <div class="cc-sub">PT · 280M</div>
+      </div>
+      <div class="choice-card" onclick="selectMarket('tr', this)">
+        <span class="cc-flag">🇹🇷</span>
+        <div class="cc-label">Turquie + DE</div>
+        <div class="cc-sub">TR · 90M</div>
+      </div>
+      <div class="choice-card" onclick="selectMarket('hi', this)">
+        <span class="cc-flag">🇮🇳</span>
+        <div class="cc-label">Inde</div>
+        <div class="cc-sub">HI/EN · 1.4 Md</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== STEP 2 — Profil cible ===== -->
+  <section class="section hidden" id="step-2">
+    <span class="section-tag">Étape 2 sur 4</span>
+    <h2>Quel profil tu vises ? 🎯</h2>
+    <p>3 profils prioritaires La Base 360. À élargir à terme (admin pourra ajouter prof, chômeur, etc.).</p>
+
+    <div class="grid-3">
+      <div class="choice-card" onclick="selectProfile('weight', this)">
+        <span class="cc-emoji">⚖️</span>
+        <div class="cc-label">Perte de poids</div>
+        <div class="cc-sub">Le plus large</div>
+      </div>
+      <div class="choice-card" onclick="selectProfile('sport', this)">
+        <span class="cc-emoji">🏃</span>
+        <div class="cc-label">Sportif</div>
+        <div class="cc-sub">Perf · récup</div>
+      </div>
+      <div class="choice-card" onclick="selectProfile('business', this)">
+        <span class="cc-emoji">💼</span>
+        <div class="cc-label">Business</div>
+        <div class="cc-sub">Opportunité</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== STEP 3 — Hashtags ===== -->
+  <section class="section hidden" id="step-3">
+    <span class="section-tag">Étape 3 sur 4</span>
+    <h2>Cible avec les bons hashtags 🔍</h2>
+    <p>Recherche ces hashtags sur Instagram / Facebook / TikTok. Clique sur un hashtag pour le copier.</p>
+
+    <div class="hashtag-list" id="hashtag-list">
+      <!-- rempli dynamiquement -->
+    </div>
+
+    <div class="msg-tip" style="margin-top: 12px; border-radius: 10px;">
+      💡 <strong>Astuce</strong> : croise 2 hashtags (ex : #pertedepoidsfr + #mamanqui se bouge). Plus précis = profil plus chaud.
+    </div>
+  </section>
+
+  <!-- ===== STEP 4 — Messages ===== -->
+  <section class="section hidden" id="step-4">
+    <span class="section-tag">Étape 4 sur 4</span>
+    <h2>Tes messages prêts à copier 📨</h2>
+    <p>Personnalise le <strong>[prénom]</strong> et un <strong>[détail vu sur son profil]</strong>. Authentique > Parfait.</p>
+
+    <div id="messages-zone">
+      <!-- rempli dynamiquement -->
+    </div>
+
+    <h2 style="margin-top: 28px; font-size: 18px;">📅 Arborescence de relance</h2>
+    <p>Ce que tu fais après envoi du 1er message, selon la réponse.</p>
+
+    <div class="relance-tree" style="border-left-color: #16A34A;">
+      <div class="relance-trigger" style="color: #16A34A;">✅ Si réponse positive / curieuse</div>
+      <div class="relance-action">→ Continue la conversation, qualifie son objectif précis (combien de kilos ? quel sport ? quel budget ?). À la fin, propose le lien bilan : <strong>bonline.labase360.com/thomas</strong> ou doc opportunité business.</div>
+    </div>
+
+    <div class="relance-tree" style="border-left-color: #F59E0B;">
+      <div class="relance-trigger" style="color: #B45309;">⏳ Si pas de réponse à J+3</div>
+      <div class="relance-action">→ Envoie un message de relance soft (voir messages ci-dessous, version "J+3"). Pas de pression.</div>
+    </div>
+
+    <div class="relance-tree" style="border-left-color: var(--ls-text-hint);">
+      <div class="relance-trigger" style="color: var(--ls-text-hint);">❌ Si pas de réponse à J+7</div>
+      <div class="relance-action">→ Abandon respectueux. « On insiste pas, peut-être plus tard 🙏 ». Garder le contact pour 3-6 mois plus tard (réveil saisonnier).</div>
+    </div>
+  </section>
+
+  <div class="footer">
+    <strong>La Base 360</strong> · Outil prospection internationale<br>
+    Conçu pour démarrage immédiat retour Égypte · Mai 2026
+  </div>
+
+</div>
+
+<script>
+  // ===== Data =====
+  const MARKETS = {
+    fr: { flag: '🇫🇷', label: 'France', lang: 'Français',
+      timing: '⏰ Optimal : lundi-jeudi 12h-14h ou 19h-21h. Éviter dimanche.',
+      tip: '🇫🇷 Tutoiement OK Insta/FB, vouvoiement LinkedIn. Pas trop d\'emojis pro.' },
+    en: { flag: '🇬🇧', label: 'International', lang: 'English',
+      timing: '⏰ Optimal : adapter au fuseau cible. US East 9h-11h ou 19h-21h EST.',
+      tip: '🌍 Plateforme : Insta + LinkedIn. EN passe-partout pour profils intl mal géolocalisés.' },
+    es: { flag: '🇲🇽', label: 'LatAm + Espagne', lang: 'Español',
+      timing: '⏰ Optimal : Mexique 10h-12h ou 20h-22h CDT. Espagne idem CET +0.',
+      tip: '🇲🇽 WhatsApp DOMINANT en LatAm. Privilégier après 1er contact Insta.' },
+    pt: { flag: '🇧🇷', label: 'Brésil + Portugal', lang: 'Português (BR)',
+      timing: '⏰ Optimal : Brésil 11h-13h ou 19h-22h BRT. Vendredi soir = jackpot.',
+      tip: '🇧🇷 WhatsApp obligatoire après contact. Ton CHALEUREUX, pas formel.' },
+    tr: { flag: '🇹🇷', label: 'Turquie + DE', lang: 'Türkçe',
+      timing: '⏰ Optimal : 11h-14h ou 21h-23h TRT. Soirée = forte engagement.',
+      tip: '🇹🇷 Marché Herbalife très actif. Diaspora Allemagne 5M.' },
+    hi: { flag: '🇮🇳', label: 'Inde', lang: 'Hindi/English',
+      timing: '⏰ Optimal : 9h-11h ou 21h-23h IST. Diwali / festivals = peak.',
+      tip: '🇮🇳 WhatsApp #1 (700M users). Hinglish (Hindi en Latin) sur Insta/WA.' },
+  };
+
+  const HASHTAGS = {
+    weight: {
+      fr: ['#pertedepoidsfr', '#regimefr', '#mamanqui sebouge', '#bienetrefr', '#alimentationsaine', '#objectifperteepoids', '#reequilibragealimentaire'],
+      en: ['#weightlossjourney', '#fitmom', '#healthylifestyle', '#caloriedeficit', '#weightlosstransformation', '#fitover40'],
+      es: ['#perderpeso', '#bajardepesomexico', '#mamasaludable', '#vidasana', '#nutricionsaludable', '#transformacioncorporal'],
+      pt: ['#emagrecer', '#perdadepeso', '#mamaesaudavel', '#vidasaudavelbrasil', '#reeducacaoalimentar', '#transformacao'],
+      tr: ['#kilover me', '#sağlıklıyaşam', '#sporyaşam', '#fitanne', '#beslenme', '#diyet'],
+      hi: ['#weightlossindia', '#fitmomindia', '#healthylifestyleindia', '#desifitness', '#indianfitness', '#weightlossjourneyindia'],
+    },
+    sport: {
+      fr: ['#sportfr', '#crossfitfrance', '#runningfr', '#musculationfr', '#triathlonfr', '#fitfrance'],
+      en: ['#fitnessmotivation', '#gymlife', '#crossfit', '#trailrunning', '#endurancesports', '#sportperformance'],
+      es: ['#fitnessmexico', '#deportemexico', '#crossfitmx', '#running mexico', '#entrenamiento'],
+      pt: ['#crossfitbr', '#correrbrasil', '#academiabrasil', '#fitnessbrasil', '#esportebrasil'],
+      tr: ['#fitnessturkiye', '#sporturkiye', '#crossfitturkiye', '#kosu'],
+      hi: ['#fitnessindia', '#gymindia', '#bodybuildingindia', '#runnersindia', '#crossfitindia'],
+    },
+    business: {
+      fr: ['#entrepreneurfr', '#libertefinanciere', '#sidehustle', '#mompreneur', '#developpementpersonnel', '#entreprendrefr'],
+      en: ['#entrepreneurmindset', '#sidehustle', '#financialfreedom', '#workfromhome', '#mompreneur', '#digitalnomad'],
+      es: ['#emprendedormexico', '#libertadfinanciera', '#negociodesdacasa', '#mompreneurmx', '#emprenderonline'],
+      pt: ['#empreendedorbrasil', '#liberdadefinanceira', '#negociodecasa', '#empreendedorismo', '#sidehustlebrasil'],
+      tr: ['#girisimciturkiye', '#evdenis', '#finansalozgurluk', '#kadingirisimci'],
+      hi: ['#entrepreneurindia', '#sidehustleindia', '#financialfreedomindia', '#workfromhomeindia', '#womenentrepreneur'],
+    },
+  };
+
+  const MESSAGES = {
+    'fr_weight_insta': {
+      platform: 'insta',
+      label: 'Instagram DM · Premier contact',
+      lang: '🇫🇷 Français',
+      body: `Salut [prénom] ! 👋
+Je suis tombée sur ton profil et tes posts m'ont vraiment parlé. Je vois qu'on partage le côté [healthy / sport / mom-life].
+
+Petite question pour mieux comprendre — tu cherches plutôt à perdre du poids, à gagner en énergie, ou les deux ? 🌿`,
+      tip: 'Personnalise [détail vu sur son profil]. Pas de lien dans le 1er message (filtre spam).'
+    },
+    'fr_weight_insta_j3': {
+      platform: 'insta',
+      label: 'Instagram DM · Relance J+3',
+      lang: '🇫🇷 Français',
+      body: `Hey [prénom] 🙂
+Je voulais pas te perdre dans le flux — tu te poses peut-être la question sans savoir par où commencer ?
+
+Si tu veux, je peux te partager comment je travaille avec mes coachés. Aucune pression, juste pour échanger.`,
+      tip: 'Ne pas en remettre une couche après J+3 si toujours rien.'
+    },
+    'fr_weight_fb': {
+      platform: 'fb',
+      label: 'Facebook Messenger · Premier contact',
+      lang: '🇫🇷 Français',
+      body: `Bonjour [prénom],
+J'ai vu ton commentaire / post dans le groupe [nom groupe], et ça m'a vraiment touchée.
+
+Je suis coach nutrition à [ville], j'accompagne des personnes sur la perte de poids durable. Tu cherches quoi en ce moment précisément ?`,
+      tip: 'FB Messenger = ton plus posé que Instagram. Groupes wellness = mine d\'or.'
+    },
+    'fr_weight_wa': {
+      platform: 'whatsapp',
+      label: 'WhatsApp · Si contact direct',
+      lang: '🇫🇷 Français',
+      body: `Coucou [prénom] ! 😊
+C'est [ton prénom], on s'est croisées via [contexte]. Tu m'avais parlé de ton envie de [perdre du poids / te sentir mieux].
+
+J'ai une approche qui marche bien — tu veux qu'on en discute 15 min ?`,
+      tip: 'WhatsApp = pour ceux qui t\'ont déjà donné leur numéro. Plus chaud, plus direct.'
+    },
+    'fr_sport_insta': {
+      platform: 'insta',
+      label: 'Instagram DM · Premier contact',
+      lang: '🇫🇷 Français',
+      body: `Hello [prénom] 💪
+Ton profil m'a fait sourire (le post sur [détail spécifique], top !). Je travaille avec des sportifs sur la nutrition adaptée — récup, performance, prise de masse.
+
+T'es plutôt sur quelle approche en ce moment côté nutrition ?`,
+      tip: 'Pour les sportifs, parler PERF avant tout. Pas de poids/régime.'
+    },
+    'fr_sport_insta_j3': {
+      platform: 'insta',
+      label: 'Instagram DM · Relance J+3',
+      lang: '🇫🇷 Français',
+      body: `Hey [prénom] 🙂
+Du coup ta nutrition c'est plutôt feeling ou tu suis un plan structuré ? Curieuse de savoir ce qui marche pour toi.`,
+      tip: 'Relance avec question ouverte, pas de pitch.'
+    },
+    'fr_business_insta': {
+      platform: 'insta',
+      label: 'Instagram DM · Premier contact',
+      lang: '🇫🇷 Français',
+      body: `Salut [prénom],
+J'ai vu que tu t'intéresses à [entrepreneuriat / lifestyle libre / finance perso]. Je développe une activité dans le wellness en parallèle de ma vie pro, ça monte vite.
+
+Curieux de voir ce que ça implique ? Aucun engagement, juste pour échanger 15 min en visio.`,
+      tip: 'Pour le business, dire "à côté de ma vie pro" rassure (pas un MLM 100% à plein temps).'
+    },
+    'fr_business_linkedin': {
+      platform: 'linkedin',
+      label: 'LinkedIn · Premier contact',
+      lang: '🇫🇷 Français',
+      body: `Bonjour [prénom],
+Votre parcours dans [son secteur] m'intéresse. Je développe une activité complémentaire dans le wellness avec une équipe internationale, et je cherche des profils ambitieux pour bâtir en France.
+
+Une discussion 20 min en visio cette semaine vous tente ?`,
+      tip: 'LinkedIn = ton corporate. Vouvoiement, structure claire.'
+    },
+
+    'en_weight_insta': {
+      platform: 'insta',
+      label: 'Instagram DM · First contact',
+      lang: '🇬🇧 English',
+      body: `Hey [name] 👋
+Came across your profile and loved your vibe — looks like we share the same passion for [fitness / healthy living / mom-life].
+
+Quick question to get the feel for what you're up to — are you more focused on losing weight, boosting energy, or both? 🌿`,
+      tip: 'EN works for US, UK, intl Insta profiles. Keep it casual.'
+    },
+    'en_weight_insta_j3': {
+      platform: 'insta',
+      label: 'Instagram DM · J+3 follow-up',
+      lang: '🇬🇧 English',
+      body: `Hey [name] 🙂
+Didn't want you to get lost in your DMs — maybe you're asking yourself the same questions but not sure where to start?
+
+Happy to share how I work with my clients. No pressure, just an open chat.`,
+      tip: 'No salesy tone, pure conversation.'
+    },
+    'en_sport_insta': {
+      platform: 'insta',
+      label: 'Instagram DM · First contact',
+      lang: '🇬🇧 English',
+      body: `Hey [name] 💪
+Your profile cracked me up (loved the post about [specific detail]!). I work with athletes on nutrition — recovery, performance, gains.
+
+What's your current approach on the nutrition side?`,
+      tip: 'Talk performance, never weight loss.'
+    },
+    'en_business_insta': {
+      platform: 'insta',
+      label: 'Instagram DM · First contact',
+      lang: '🇬🇧 English',
+      body: `Hey [name],
+Saw you're into [entrepreneurship / freedom lifestyle / personal dev]. I'm scaling a wellness side-business and it's been wild — fun, lifestyle, real income.
+
+Curious to see how it works? Zero pressure, just an open chat.`,
+      tip: 'EN business pitch must be short and confident.'
+    },
+
+    'es_weight_insta': {
+      platform: 'insta',
+      label: 'Instagram DM · Primer contacto',
+      lang: '🇲🇽 Español',
+      body: `¡Hola [nombre]! 👋
+Me topé con tu perfil y me llamó la atención tu vibe. Trabajo con personas en su transformación — bajar de peso, ganar energía.
+
+¿Estás más enfocada en perder peso, sentirte con más energía, o las dos cosas? 🌿`,
+      tip: 'Mexique, Colombie, Argentine, Espagne. Style proche du français.'
+    },
+    'es_weight_wa': {
+      platform: 'whatsapp',
+      label: 'WhatsApp · Contacto directo',
+      lang: '🇲🇽 Español',
+      body: `¡Hola [nombre]! 😊
+Soy [tu nombre], nos conocimos por [contexto]. Me hablaste de tus ganas de [bajar de peso / sentirte mejor].
+
+Tengo un método que funciona — ¿quieres que platiquemos 15 min?`,
+      tip: 'WhatsApp est ULTRA dominant en LatAm. Privilégie ce canal.'
+    },
+    'es_business_insta': {
+      platform: 'insta',
+      label: 'Instagram DM · Primer contacto',
+      lang: '🇲🇽 Español',
+      body: `Hola [nombre],
+Vi que te interesa el [emprendimiento / libertad financiera / desarrollo personal]. Estoy desarrollando un negocio en wellness con equipo internacional, está creciendo fuerte.
+
+¿Te late ver de qué se trata? Sin compromiso, solo una plática de 15 min.`,
+      tip: 'En LatAm, "plática" = conversation décontractée.'
+    },
+
+    'pt_weight_insta': {
+      platform: 'insta',
+      label: 'Instagram DM · Primeiro contato',
+      lang: '🇧🇷 Português (BR)',
+      body: `Oi [nome]! 👋
+Sou [seu nome], vi seu perfil e gostei muito da sua vibe. Trabalho com pessoas na transformação — emagrecimento, energia.
+
+Você tá mais focada em perder peso, ganhar energia, ou os dois? 🌿`,
+      tip: 'Brésil = top 5 mondial Herbalife. Ton chaleureux obligatoire.'
+    },
+    'pt_weight_wa': {
+      platform: 'whatsapp',
+      label: 'WhatsApp · Contato direto',
+      lang: '🇧🇷 Português (BR)',
+      body: `Oi [nome]! 😊
+Sou [seu nome], a gente se conheceu pelo [contexto]. Você me falou que queria [emagrecer / se sentir melhor].
+
+Tenho um método que funciona muito bem — quer bater um papo de 15 min?`,
+      tip: 'Brésil = WhatsApp obligatoire, langage très chaleureux et personnel.'
+    },
+    'pt_business_insta': {
+      platform: 'insta',
+      label: 'Instagram DM · Primeiro contato',
+      lang: '🇧🇷 Português (BR)',
+      body: `Oi [nome],
+Vi que você curte [empreendedorismo / liberdade financeira / desenvolvimento pessoal]. Tô construindo um negócio em wellness com equipe internacional, tá crescendo rápido.
+
+Curte ver como funciona? Sem compromisso, só um papo de 15 min.`,
+      tip: 'Brésil = "papo" = conversation décontractée. Ne pas être trop formel.'
+    },
+
+    'tr_weight_insta': {
+      platform: 'insta',
+      label: 'Instagram DM · İlk mesaj',
+      lang: '🇹🇷 Türkçe',
+      body: `Selam [isim] 👋
+Profilini gördüm, enerjini sevdim! Beslenme danışmanıyım — kilo verme, enerji, vücut form.
+
+Senin önceliğin daha çok kilo vermek mi, enerjik hissetmek mi, yoksa ikisi de mi? 🌿`,
+      tip: 'Turquie marché chaud Herbalife. Aussi diaspora turque en Allemagne (5M).'
+    },
+    'tr_sport_insta': {
+      platform: 'insta',
+      label: 'Instagram DM · İlk mesaj',
+      lang: '🇹🇷 Türkçe',
+      body: `Selam [isim] 💪
+Profilin harika ([detay] paylaşımına bayıldım!). Sporcularla çalışıyorum — toparlanma, performans, kas kazanımı.
+
+Şu an beslenme tarafında nasıl bir yaklaşımın var?`,
+      tip: 'Pour Allemagne diaspora turque, idem (turc langue maison).'
+    },
+
+    'hi_weight_insta': {
+      platform: 'insta',
+      label: 'Instagram DM · पहला संदेश / First message',
+      lang: '🇮🇳 Hinglish (Hindi en Latin)',
+      body: `Hi [name] 👋
+Main [your name] hu, aapka profile dekha aur achha laga. Main nutrition consultant hu — weight loss, energy boost mein madad karti hu.
+
+Aapka focus weight loss pe hai, energy pe hai, ya dono pe? 🌿`,
+      tip: 'Inde : la classe moyenne aisée écrit en Hinglish (Hindi en Latin) sur Insta/WhatsApp. Évite Devanagari sauf si profil le justifie.'
+    },
+    'hi_business_insta': {
+      platform: 'insta',
+      label: 'Instagram DM · First contact',
+      lang: '🇮🇳 English (business India)',
+      body: `Hi [name],
+Saw your profile and your work in [their field] looks great. I'm building a wellness business with an international team — solid income, flexible hours.
+
+Open to a 15-min Zoom call to see how it works? No commitment.`,
+      tip: 'Inde business : anglais corporate. WhatsApp Business très utilisé.'
+    },
+    'hi_weight_wa': {
+      platform: 'whatsapp',
+      label: 'WhatsApp · Direct contact',
+      lang: '🇮🇳 Hinglish',
+      body: `Hi [name]! 😊
+Main [your name], hum [context] mein mile the. Aapne mujhe bataya tha ki aap [weight loss / better energy] chahti hain.
+
+Mera ek tested method hai — 15 min ki call karenge?`,
+      tip: 'WhatsApp est LE canal numéro 1 en Inde (700M+ users).'
+    },
+    'hi_sport_insta': {
+      platform: 'insta',
+      label: 'Instagram DM · First contact',
+      lang: '🇮🇳 English (Inde sportifs)',
+      body: `Hey [name] 💪
+Loved your training content! I help athletes with nutrition — recovery, performance, gains. Specially crafted for desi athletes.
+
+What's your current approach on the food/supplements side?`,
+      tip: 'Athlètes indiens lisent EN. Mentionner "desi" rassure sur la culture.'
+    },
+
+    'en_weight_wa': {
+      platform: 'whatsapp',
+      label: 'WhatsApp · After referral',
+      lang: '🇬🇧 English',
+      body: `Hey [name]! 😊
+[Mutual contact] told me about you — said you wanted to start something on the [weight loss / health] side.
+
+I work with people on personalized nutrition. Got 15 mins for a quick chat?`,
+      tip: 'EN WhatsApp = pour les leads tièdes via recommandation. Mentionner le contact mutuel.'
+    },
+    'en_business_linkedin': {
+      platform: 'linkedin',
+      label: 'LinkedIn · First contact',
+      lang: '🇬🇧 English',
+      body: `Hi [name],
+Your background in [their field] caught my eye. I'm scaling a complementary wellness business with an international team, looking for ambitious profiles.
+
+Open to a 20-min Zoom call this week?`,
+      tip: 'LinkedIn EN = ton corporate. Structure courte et claire.'
+    },
+
+    'es_sport_insta': {
+      platform: 'insta',
+      label: 'Instagram DM · Primer contacto',
+      lang: '🇲🇽 Español',
+      body: `¡Hola [nombre]! 💪
+Tu perfil me hizo sonreír (¡el post sobre [detalle específico] genial!). Trabajo con deportistas en nutrición — recuperación, rendimiento, masa muscular.
+
+¿Cómo manejas tu nutrición ahora?`,
+      tip: 'LatAm sportifs = WhatsApp et Insta. Ton chaleureux.'
+    },
+    'es_business_wa': {
+      platform: 'whatsapp',
+      label: 'WhatsApp · Lead chaud',
+      lang: '🇲🇽 Español',
+      body: `¡Hola [nombre]! 😊
+Soy [tu nombre], nos conectamos por [contexto]. Te conté que estoy construyendo algo en wellness.
+
+¿Tienes 15 min para que te explique? Sin presión.`,
+      tip: 'Mexique business = WhatsApp obligatoire après 1er contact.'
+    },
+
+    'pt_sport_insta': {
+      platform: 'insta',
+      label: 'Instagram DM · Primeiro contato',
+      lang: '🇧🇷 Português (BR)',
+      body: `Oi [nome]! 💪
+Adorei seu conteúdo de treino! Trabalho com atletas em nutrição — recuperação, performance, ganho de massa.
+
+Como você cuida da nutrição atualmente?`,
+      tip: 'Brésil sport = très visuel. Mentionner contenu spécifique.'
+    },
+    'pt_business_wa': {
+      platform: 'whatsapp',
+      label: 'WhatsApp · Lead quente',
+      lang: '🇧🇷 Português (BR)',
+      body: `Oi [nome]! 😊
+Sou [seu nome], a gente conversou no [contexto]. Você ficou curioso sobre o negócio.
+
+Tem 15 min essa semana pra eu te explicar? Sem compromisso.`,
+      tip: 'Brésil ultra-personnel. Toujours "a gente" plutôt que "nós".'
+    },
+
+    'tr_business_insta': {
+      platform: 'insta',
+      label: 'Instagram DM · İlk mesaj',
+      lang: '🇹🇷 Türkçe',
+      body: `Selam [isim],
+Profilini gördüm, [girişimcilik / kişisel gelişim / finansal özgürlük] ile ilgilendiğini fark ettim. Uluslararası bir ekiple wellness sektöründe iş büyütüyorum.
+
+Zoom'da 20 dakika sohbet eder misin? Hiçbir baskı yok.`,
+      tip: 'Turquie business : LinkedIn moins utilisé, préférer Insta DM ou WhatsApp.'
+    },
+    'tr_weight_wa': {
+      platform: 'whatsapp',
+      label: 'WhatsApp · Sıcak temas',
+      lang: '🇹🇷 Türkçe',
+      body: `Selam [isim]! 😊
+Ben [adın], [bağlam] üzerinden tanışmıştık. Sen bana [kilo verme / enerji] istediğini söylemiştin.
+
+15 dakika konuşalım mı? Test edilmiş bir metodum var.`,
+      tip: 'Turquie : WhatsApp dominant. Style direct mais chaleureux.'
+    },
+  };
+
+  // ===== State =====
+  let state = {
+    market: null,
+    profile: null,
+  };
+
+  // ===== Functions =====
+  function selectMarket(market, el) {
+    state.market = market;
+    document.querySelectorAll('#step-1 .choice-card').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+    document.getElementById('dot-1').classList.remove('active');
+    document.getElementById('dot-1').classList.add('done');
+    document.getElementById('dot-2').classList.add('active');
+    document.getElementById('step-2').classList.remove('hidden');
+    document.getElementById('step-2').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function selectProfile(profile, el) {
+    state.profile = profile;
+    document.querySelectorAll('#step-2 .choice-card').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+    document.getElementById('dot-2').classList.remove('active');
+    document.getElementById('dot-2').classList.add('done');
+    document.getElementById('dot-3').classList.add('done');
+    document.getElementById('dot-4').classList.add('active');
+
+    // Render hashtags
+    const hashtags = HASHTAGS[profile]?.[state.market] || [];
+    const list = document.getElementById('hashtag-list');
+    list.innerHTML = '';
+    hashtags.forEach(tag => {
+      const chip = document.createElement('div');
+      chip.className = 'hashtag-chip';
+      chip.textContent = tag;
+      chip.onclick = function() { copyText(tag, chip); };
+      list.appendChild(chip);
+    });
+
+    // Show steps 3 + 4 immediately
+    document.getElementById('step-3').classList.remove('hidden');
+    renderMessages();
+    document.getElementById('step-4').classList.remove('hidden');
+
+    // Scroll DIRECTLY to step-4 (messages) — that's what Thomas wants to see
+    setTimeout(() => {
+      document.getElementById('step-4').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
+  }
+
+  function renderMessages() {
+    const zone = document.getElementById('messages-zone');
+    zone.innerHTML = '';
+
+    // Header avec tips du marché
+    const m = MARKETS[state.market];
+    const header = document.createElement('div');
+    header.style.cssText = 'background: linear-gradient(135deg, #FAEEDA, #FBF7F0); border-radius: 12px; padding: 14px 16px; margin-bottom: 14px; border: 1px solid var(--ls-border);';
+    header.innerHTML = `
+      <div style="font-size: 12px; color: #8B5A1B; margin-bottom: 6px; font-weight: 700;">
+        ${m.flag} ${m.label} · ${m.lang}
+      </div>
+      <div style="font-size: 12px; color: var(--ls-text); margin-bottom: 4px;">${m.timing}</div>
+      <div style="font-size: 12px; color: var(--ls-text-muted);">${m.tip}</div>
+    `;
+    zone.appendChild(header);
+
+    const keyPrefix = `${state.market}_${state.profile}_`;
+    const matches = Object.entries(MESSAGES).filter(([k]) => k.startsWith(keyPrefix));
+
+    if (matches.length === 0) {
+      zone.innerHTML = `<div style="background: var(--ls-surface); border: 1px dashed var(--ls-border); border-radius: 12px; padding: 24px; text-align: center; color: var(--ls-text-muted);">
+        🌱 <strong>Messages bientôt disponibles</strong> pour ce combo (${MARKETS[state.market].label} + ${state.profile}).<br>
+        <span style="font-size: 12px;">Au retour PC, Thomas pourra ajouter ses propres scripts via la page admin.</span>
+      </div>`;
+      return;
+    }
+
+    matches.forEach(([k, msg]) => {
+      const card = document.createElement('div');
+      card.className = 'msg-card';
+      card.innerHTML = `
+        <div class="msg-header">
+          <div class="msg-platform ${msg.platform}">${platformEmoji(msg.platform)}</div>
+          <div class="msg-title">
+            <div class="msg-title-label">${msg.label}</div>
+            <div class="msg-title-lang">${msg.lang}</div>
+          </div>
+        </div>
+        <div class="msg-body">${msg.body}</div>
+        <div class="msg-tip">💡 ${msg.tip}</div>
+        <div class="msg-footer">
+          <button class="msg-copy-btn" onclick="copyMsg('${k}', this)">📋 Copier le message</button>
+        </div>
+      `;
+      zone.appendChild(card);
+    });
+  }
+
+  function platformEmoji(p) {
+    const map = { insta: '📷', fb: 'f', whatsapp: '💬', telegram: '✈️', linkedin: 'in' };
+    return map[p] || '✉️';
+  }
+
+  function copyMsg(key, btn) {
+    const msg = MESSAGES[key];
+    if (!msg) return;
+    copyText(msg.body, btn);
+  }
+
+  function copyText(text, btn) {
+    navigator.clipboard.writeText(text).then(() => {
+      const originalText = btn.textContent;
+      btn.classList.add('copied');
+      btn.textContent = '✓ Copié !';
+      setTimeout(() => {
+        btn.classList.remove('copied');
+        btn.textContent = originalText;
+      }, 1800);
+    });
+  }
+</script>
+
+</body>
+</html>

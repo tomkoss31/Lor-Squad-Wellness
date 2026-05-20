@@ -129,19 +129,54 @@ const WelcomePage = lazy(() =>
     default: module.WelcomePage,
   })),
 );
-const OpportunitePage = lazy(() =>
-  import("./pages/OpportunitePage").then((module) => ({
-    default: module.OpportunitePage,
+const BilanOnlinePage = lazy(() =>
+  import("./pages/BilanOnlinePage").then((module) => ({
+    default: module.BilanOnlinePage,
   })),
 );
-const SimulateurPage = lazy(() =>
-  import("./pages/SimulateurPage").then((module) => ({
-    default: module.SimulateurPage,
+const BilanOnlineWelcomePage = lazy(() =>
+  import("./pages/BilanOnlineWelcomePage").then((module) => ({
+    default: module.BilanOnlineWelcomePage,
+  })),
+);
+const TestimonialFormPage = lazy(() =>
+  import("./pages/TestimonialFormPage").then((module) => ({
+    default: module.TestimonialFormPage,
+  })),
+);
+const AdminTestimonialsPage = lazy(() =>
+  import("./pages/AdminTestimonialsPage").then((module) => ({
+    default: module.AdminTestimonialsPage,
+  })),
+);
+const BilanOnlineMerciPage = lazy(() =>
+  import("./pages/BilanOnlineMerciPage").then((module) => ({
+    default: module.BilanOnlineMerciPage,
+  })),
+);
+const BusinessPage = lazy(() =>
+  import("./pages/BusinessPage").then((module) => ({
+    default: module.BusinessPage,
+  })),
+);
+const RedirectToBusiness = lazy(() =>
+  import("./pages/RedirectToBusiness").then((module) => ({
+    default: module.RedirectToBusiness,
   })),
 );
 const OutilsProspectionPage = lazy(() =>
   import("./pages/OutilsProspectionPage").then((module) => ({
     default: module.OutilsProspectionPage,
+  })),
+);
+const ProspectionPage = lazy(() =>
+  import("./pages/ProspectionPage").then((module) => ({
+    default: module.ProspectionPage,
+  })),
+);
+const AdminProspectionPage = lazy(() =>
+  import("./pages/AdminProspectionPage").then((module) => ({
+    default: module.AdminProspectionPage,
   })),
 );
 const AutoLoginPage = lazy(() =>
@@ -342,6 +377,12 @@ const FlexExpliquePage = lazy(() =>
     default: module.FlexExpliquePage,
   })),
 );
+// Prospection expliquée (2026-05-19) — tuto kit V4.
+const ProspectionExpliquePage = lazy(() =>
+  import("./pages/ProspectionExpliquePage").then((module) => ({
+    default: module.ProspectionExpliquePage,
+  })),
+);
 // Nouveautés app (2026-05-04) — journal des annonces / changelog distri.
 const NouveautesPage = lazy(() =>
   import("./pages/NouveautesPage").then((module) => ({
@@ -454,12 +495,24 @@ export default function App() {
               via useAppContext si besoin). /auto-login consomme un
               magic link 24h pour re-établir une session. */}
           <Route path="/welcome" element={<WelcomePage />} />
-          {/* Funnel business V1 (chantier 2026-11-07) : page educative
-              prospect froid + chaud, sans nommer la marque explicitement.
-              Cf. docs/BUSINESS_FUNNEL_ARCHITECTURE.md. */}
-          <Route path="/opportunite" element={<OpportunitePage />} />
-          {/* V2 funnel business : simulateur de revenus interactif */}
-          <Route path="/simulateur" element={<SimulateurPage />} />
+          {/* Chantier #1 Bilan Online (2026-05-17) — formulaire publique
+              5 étapes pour générer des Leads.
+              - /bilan-online[/<slug>] : page Welcome (hero + qui t'a invité)
+              - /bilan-online[/<slug>]/formulaire : le formulaire 5 étapes
+              Slug = users.first_name normalisé, résolu par submit-online-bilan. */}
+          <Route path="/bilan-online" element={<BilanOnlineWelcomePage />} />
+          <Route path="/bilan-online/formulaire" element={<BilanOnlinePage />} />
+          <Route path="/bilan-online/merci" element={<BilanOnlineMerciPage />} />
+          <Route path="/bilan-online/:coachSlug" element={<BilanOnlineWelcomePage />} />
+          <Route path="/bilan-online/:coachSlug/formulaire" element={<BilanOnlinePage />} />
+          <Route path="/bilan-online/:coachSlug/merci" element={<BilanOnlineMerciPage />} />
+          {/* Chantier #7 V2 (2026-05-17) — page business scroll narratif
+              unifie. Fusionne /opportunite + /simulateur. Mockup Claude Design
+              business-v2.html valide. */}
+          <Route path="/business" element={<BusinessPage />} />
+          {/* Legacy redirects (preserve ?ref=) */}
+          <Route path="/opportunite" element={<RedirectToBusiness />} />
+          <Route path="/simulateur" element={<RedirectToBusiness hash="simulateur" />} />
           <Route path="/auto-login" element={<AutoLoginPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
@@ -511,9 +564,15 @@ export default function App() {
                   cahier/simulateur/flex-explique/nouveautés. Sidebar Option B. */}
               <Route path="developpement" element={<DeveloppementHubPage />} />
               <Route path="developpement/flex-explique" element={<FlexExpliquePage />} />
+              <Route path="developpement/prospection-explique" element={<ProspectionExpliquePage />} />
               <Route path="developpement/nouveautes" element={<NouveautesPage />} />
               {/* Boite a outils prospection (chantier 2026-11-07) — admin only */}
               <Route path="outils-prospection" element={<OutilsProspectionPage />} />
+              {/* Chantier #3 (2026-05-17) — Module Prospection cold mobile-first.
+                  4 étapes : Marché → Profil → Hashtags → Messages multi-langues. */}
+              <Route path="prospection" element={<ProspectionPage />} />
+              {/* Chantier #3 étape 3.3 — CRUD admin scripts + briefs */}
+              <Route path="admin/prospection" element={<AdminProspectionPage />} />
               {/* Rentabilité Phase A (2026-05-05) — jauge €/mois + breakdown. */}
               <Route path="rentabilite" element={<RentabilitePage />} />
               {/* La Base 360 Academy Phase 1 (2026-04-26) — gated admin only
@@ -558,6 +617,8 @@ export default function App() {
               <Route path="clients" element={<ClientsPage />} />
               <Route element={<RoleRoute allowedRoles={["admin"]} />}>
                 <Route path="users" element={<UsersPage />} />
+                {/* Chantier #11 (2026-05-18) : moderation temoignages clients. */}
+                <Route path="admin/testimonials" element={<AdminTestimonialsPage />} />
                 {/* Chantier Team Tree (2026-04-25) : nouvelle fiche équipe
                     avec arbre de parrainage interactif. /users reste
                     accessible pour l'admin legacy (créer compte, réparer). */}
@@ -588,6 +649,11 @@ export default function App() {
             </Route>
           </Route>
           {/* Routes publiques — récap + rapport évolution */}
+          {/* Chantier #11 (2026-05-18) : page form temoignage. 2 modes :
+              /temoignage/coach/:slug (generique, distri partage en bulk)
+              /temoignage/:token       (legacy V1 per-client, garde compat). */}
+          <Route path="/temoignage/coach/:slug" element={<TestimonialFormPage />} />
+          <Route path="/temoignage/:token" element={<TestimonialFormPage />} />
           <Route path="/recap/:token" element={<RecapPage />} />
           <Route path="/rapport/:token" element={<EvolutionReportPage />} />
           <Route path="/client/:token" element={<ClientAppPage />} />

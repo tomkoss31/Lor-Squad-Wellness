@@ -1,0 +1,257 @@
+/* ============================================================================
+   public-shell.css — Theme variables + bg-mesh + animations pages publiques V2
+   ============================================================================
+   Source de verite visuelle : docs/mockups/bilan-online-v2.html (commit 8520a2c).
+   Applique via <PublicShell> wrapper. Separe du theme system app interne.
+
+   Pattern :
+   - :root[data-public-theme="dark"]  (defaut) : bases dark + cream text
+   - :root[data-public-theme="light"]          : bases cream + ink text
+
+   Selector :root vs body : on utilise data-public-theme="..." sur l'element
+   parent du PublicShell (pas <html>) pour ne pas interferer avec html.theme-light
+   du Co-pilote V5 interne.
+   ============================================================================ */
+
+/* Scope util : applique uniquement les CSS vars (sans background/color/font global).
+   Utile pour reutiliser le carrousel TestimonialsCarousel dans des pages au
+   namespace different (ex : BusinessPage / .biz-page light scroll narratif).
+   Pattern : <div className="public-shell-scope" data-public-theme="light">.
+   Les blocs .public-shell ci-apres HERITENT egalement de ces vars. */
+.public-shell,
+.public-shell-scope {
+  --ink: #0B0D11;
+  --ink-2: #131820;
+  --cream: #FBF7F0;
+  --cream-2: #F2EBDF;
+  --cream-soft: rgba(251, 247, 240, 0.92);
+  --cream-muted: rgba(251, 247, 240, 0.58);
+  --cream-hint: rgba(251, 247, 240, 0.32);
+  --hair: rgba(251, 247, 240, 0.10);
+  --hair-strong: rgba(251, 247, 240, 0.18);
+
+  --teal: #2DD4BF;
+  --teal-dark: #0F766E;
+  --violet: #A78BFA;
+  --violet-dark: #7C3AED;
+  --coral: #FB7185;
+  --gold: #C9A84C;
+  --gold-soft: #E5C97D;
+  --emerald: #34D399;
+
+  --grad-headline: linear-gradient(135deg, #2DD4BF 0%, #A78BFA 50%, #FB7185 100%);
+  --grad-cta: linear-gradient(135deg, #2DD4BF 0%, #7C3AED 100%);
+  --grad-cta-hover: linear-gradient(135deg, #34D399 0%, #A78BFA 100%);
+  --grad-progress: linear-gradient(90deg, #2DD4BF 0%, #A78BFA 100%);
+
+  /* ─── Glass surfaces abstraites (s'inversent en light) ───────────────── */
+  --glass: rgba(255, 255, 255, 0.04);
+  --glass-strong: rgba(255, 255, 255, 0.08);
+  --glass-input: rgba(255, 255, 255, 0.05);
+  --glass-input-focus: rgba(45, 212, 191, 0.06);
+  --surface-overlay: rgba(11, 13, 17, 0.70);
+  --surface-overlay-strong: rgba(11, 13, 17, 0.85);
+  --accent-teal-bg: rgba(45, 212, 191, 0.12);
+  --accent-violet-bg: rgba(167, 139, 250, 0.12);
+  --shadow-card: 0 4px 24px rgba(0, 0, 0, 0.20);
+}
+
+/* Styles globaux uniquement sur .public-shell (pas .public-shell-scope) :
+   le scope util ne doit pas surcharger font/background/color de la page hote. */
+.public-shell {
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--ink);
+  color: var(--cream);
+  line-height: 1.5;
+  font-size: 16px;
+  -webkit-text-size-adjust: 100%;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* THEME LIGHT (toggle utilisateur) */
+.public-shell[data-public-theme="light"],
+.public-shell-scope[data-public-theme="light"] {
+  --ink: #FBF7F0;
+  --ink-2: #F2EBDF;
+  --cream: #0B0D11;
+  --cream-soft: rgba(11, 13, 17, 0.92);
+  --cream-muted: rgba(11, 13, 17, 0.62);
+  --cream-hint: rgba(11, 13, 17, 0.38);
+  --hair: rgba(11, 13, 17, 0.10);
+  --hair-strong: rgba(11, 13, 17, 0.18);
+
+  /* Glass surfaces inversees pour mode light */
+  --glass: rgba(255, 255, 255, 0.70);
+  --glass-strong: rgba(255, 255, 255, 0.85);
+  --glass-input: rgba(255, 255, 255, 0.90);
+  --glass-input-focus: rgba(255, 255, 255, 1);
+  --surface-overlay: rgba(251, 247, 240, 0.92);
+  --surface-overlay-strong: rgba(251, 247, 240, 0.96);
+  --accent-teal-bg: rgba(45, 212, 191, 0.10);
+  --accent-violet-bg: rgba(124, 58, 237, 0.08);
+  --shadow-card: 0 8px 24px rgba(11, 13, 17, 0.06);
+}
+.public-shell[data-public-theme="light"] .ps-card,
+.public-shell[data-public-theme="light"] .ps-pitch-card,
+.public-shell[data-public-theme="light"] .ps-coach-card {
+  background: rgba(255, 255, 255, 0.65);
+  border-color: rgba(11, 13, 17, 0.08);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.06);
+}
+.public-shell[data-public-theme="light"] .ps-choice-card,
+.public-shell[data-public-theme="light"] .ps-radio-card {
+  background: rgba(255, 255, 255, 0.70);
+  border-color: rgba(11, 13, 17, 0.10);
+}
+.public-shell[data-public-theme="light"] .ps-choice-card.is-selected,
+.public-shell[data-public-theme="light"] .ps-radio-card.is-selected {
+  background: rgba(45, 212, 191, 0.08);
+  border-color: var(--teal-dark);
+}
+.public-shell[data-public-theme="light"] .ps-input,
+.public-shell[data-public-theme="light"] .ps-textarea {
+  background: rgba(255, 255, 255, 0.90);
+  border-color: rgba(11, 13, 17, 0.15);
+  color: var(--cream);
+}
+.public-shell[data-public-theme="light"] .ps-input:focus,
+.public-shell[data-public-theme="light"] .ps-textarea:focus {
+  background: white;
+  border-color: var(--teal-dark);
+  box-shadow: 0 0 0 4px rgba(15, 118, 110, 0.10);
+}
+.public-shell[data-public-theme="light"] .ps-cta-primary {
+  color: white;
+}
+.public-shell[data-public-theme="light"] .ps-bottom-bar {
+  background: rgba(251, 247, 240, 0.92);
+  border-color: rgba(11, 13, 17, 0.08);
+}
+
+/* App-shell container — single column centre mobile-first */
+.public-shell .ps-shell {
+  max-width: 560px;
+  margin: 0 auto;
+  background: transparent;
+  min-height: 100dvh;
+  position: relative;
+  overflow-x: hidden;
+  z-index: 1;
+}
+
+/* Mesh background G3 (radial blobs teal/violet/coral) */
+.public-shell .ps-bg-mesh {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 12% 18%, rgba(45, 212, 191, 0.18), transparent 38%),
+    radial-gradient(circle at 88% 12%, rgba(167, 139, 250, 0.16), transparent 38%),
+    radial-gradient(circle at 50% 105%, rgba(251, 113, 133, 0.12), transparent 45%),
+    linear-gradient(180deg, var(--ink) 0%, var(--ink-2) 100%);
+}
+
+/* Theme toggle bouton rond fixed top-right */
+.public-shell .ps-theme-toggle {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 100;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--hair-strong);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  color: var(--cream);
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.22s;
+  font-family: inherit;
+}
+.public-shell .ps-theme-toggle:hover {
+  transform: scale(1.08);
+  border-color: var(--teal);
+}
+.public-shell[data-public-theme="light"] .ps-theme-toggle {
+  background: rgba(11, 13, 17, 0.04);
+  border-color: rgba(11, 13, 17, 0.12);
+}
+
+/* Animations partagees */
+@keyframes ps-fadeIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes ps-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+@keyframes ps-popIn {
+  0% { transform: scale(0); opacity: 0; }
+  60% { transform: scale(1.15); opacity: 1; }
+  100% { transform: scale(1); }
+}
+@keyframes ps-slideIn {
+  from { opacity: 0; transform: translateX(20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+.public-shell .ps-fade-in { animation: ps-fadeIn 0.4s cubic-bezier(.2,.7,.2,1) both; }
+.public-shell .ps-bounce { animation: ps-bounce 2s ease-in-out infinite; }
+.public-shell .ps-pop-in { animation: ps-popIn 0.5s cubic-bezier(.34,1.56,.64,1) both; }
+.public-shell .ps-slide-in { animation: ps-slideIn 0.3s ease both; }
+
+@media (prefers-reduced-motion: reduce) {
+  .public-shell .ps-fade-in,
+  .public-shell .ps-bounce,
+  .public-shell .ps-pop-in,
+  .public-shell .ps-slide-in {
+    animation: none !important;
+  }
+}
+
+/* Eyebrow uppercase + logo La Base 360 carre gradient + dot teal glow */
+.public-shell .ps-eyebrow {
+  font-family: "Sora", -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.20em;
+  color: var(--cream-muted);
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin: 28px 0 18px;
+}
+.public-shell .ps-eyebrow::before,
+.public-shell .ps-eyebrow::after {
+  content: "";
+  width: 22px;
+  height: 1px;
+  background: var(--hair-strong);
+}
+.public-shell .ps-eyebrow-logo {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  background: linear-gradient(135deg, var(--teal) 0%, var(--violet) 100%);
+  display: inline-block;
+  vertical-align: -2px;
+  margin-right: 6px;
+  position: relative;
+}
+.public-shell .ps-eyebrow-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--teal);
+  display: inline-block;
+  box-shadow: 0 0 8px var(--teal);
+}
