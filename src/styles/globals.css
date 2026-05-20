@@ -3097,6 +3097,42 @@ body.ls-stealth-active [data-stealth]:focus-within {
 }
 
 /* ─────────────────────────────────────────────────────────────────────────
+   Polish mobile pages secondaires (Onde 5+ extension, 2026-05-20)
+   CSS-only, ne touche pas aux JSX. Cible les classes existantes.
+   ───────────────────────────────────────────────────────────────────────── */
+
+@media (max-width: 1279px) {
+  /* AgendaPage hero : padding compacté */
+  .ls-agenda-hero {
+    padding: 16px 18px !important;
+    border-radius: 18px !important;
+  }
+  .ls-agenda-hero h1,
+  .ls-agenda-hero [class*="title"] {
+    font-size: clamp(20px, 5.5vw, 26px) !important;
+  }
+  /* Stats row : 1 colonne sur très petit écran (les 3 stats trop serrées) */
+  .ls-agenda-stat { padding: 8px 12px !important; }
+
+  /* RDV cards : compaction légère */
+  .ls-rdv-card {
+    padding: 12px 14px !important;
+    gap: 12px !important;
+  }
+}
+
+/* iPhone SE et petits écrans : encore plus compact */
+@media (max-width: 380px) {
+  .ls-agenda-hero {
+    padding: 14px 14px !important;
+  }
+  .ls-agenda-hero h1,
+  .ls-agenda-hero [class*="title"] {
+    font-size: clamp(18px, 5vw, 22px) !important;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
    Accent system "hybrid" (Chantier mobile Onde 4, 2026-05-20)
    Validé Thomas : teal pour CTAs interactifs, gold conservé pour identité.
    Activable via html.accent-hybrid (mis dans main.tsx ou Paramètres).
