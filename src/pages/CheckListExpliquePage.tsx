@@ -1,9 +1,9 @@
 // =============================================================================
 // CheckListExpliquePage — tuto "Comment marche la check-list" (2026-05-20)
 //
-// Étape 2.6 chantier #2. Fiche pédagogique pour la pop-up matinale
-// (DailyActionsModal). Pattern aligné sur ProspectionExpliquePage /
-// FlexExpliquePage (DeveloppementHubPage > tuto).
+// Étape 2.6 chantier #2 (V2 2026-05-20 — page dédiée, plus de popup auto).
+// Fiche pédagogique pour la routine. Pattern aligné sur
+// ProspectionExpliquePage / FlexExpliquePage (DeveloppementHubPage > tuto).
 // =============================================================================
 
 import { useNavigate } from "react-router-dom";
@@ -132,8 +132,8 @@ export function CheckListExpliquePage() {
           Ouvre ton Co-pilote — la check-list t'attend dès la 1ère visite du jour.
         </p>
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-          <button type="button" onClick={() => navigate("/co-pilote")} style={btnPrimary}>
-            Ouvrir le Co-pilote →
+          <button type="button" onClick={() => navigate("/routine-du-jour")} style={btnPrimary}>
+            Ouvrir ma routine →
           </button>
           <button type="button" onClick={() => navigate("/developpement")} style={btnGhost}>
             Retour au hub développement
