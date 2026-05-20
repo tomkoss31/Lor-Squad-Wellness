@@ -26,8 +26,6 @@ reproduire les régressions passées. Relire avant tout gros chantier.
 **Chantiers validés**
 - **Onboarding client PWA** (1.5-2j) : 4 sections welcome `/client/:token` + migration `client_app_accounts.onboarded_at`
 - **D — Popup météo 5 jours** (2-3h) : Open-Meteo, click weather pill Co-pilote
-- **E — Refonte sidebar emojis** (3h) : touche tous écrans, design review
-- **F — Dark mode V5 UI** (3h) : inverser palette éditoriale (charcoal/cream)
 
 ### 🟡 À faire (moyen / long terme)
 
@@ -66,23 +64,16 @@ Click sur la weather pill du Co-pilote V5 → ouvre popup avec :
 - API gratuite : Open-Meteo (no key) ou OpenWeather (free tier)
 - Effort : ~2-3h. Pas critique mais charme produit.
 
-### E — Refonte sidebar avec emojis (HTML V5 inspiration)
-Le HTML de réf V5 utilise des emojis (▦ ⚡ 📅 ✉ 👥 $ ⛯ 🎓 🧰 ⚙) à côté
-de chaque item de sidebar — actuellement on a des SVG icons.
+### ~~E — Sidebar emojis~~ ❌ RETIRÉ (2026-05-20)
+**Décision Thomas** : sidebar SVG actuelle est propre et identitaire La
+Base 360. Switch emojis = risque downgrade visuel (notamment problèmes
+de rendu Windows déjà vécus avec les drapeaux). On garde les SVG.
 
-**Décision Phase 0 V5** : ne pas toucher la sidebar dans le chantier V5
-(risque régression toutes pages). Refonte en chantier dédié post-V5 :
-- Soit migrer AppLayout vers emojis (impact toutes pages)
-- Soit hybride emoji+SVG selon contexte
-- Conserver les sections (Navigation / Équipe / Compte) du HTML
-- Conserver streak-card (9 jours d'affilée 🔥) en bas de sidebar
-- Effort : ~3h. Touche TOUS les écrans.
-
-### F — Refonte UI dark mode V5
-Actuellement V5 force light (cf. copilote-v5.css). Si Thomas veut un vrai
-dark V5, il faudra inverser la palette éditoriale (charcoal au lieu de
-cream, gold-light pour les textes). Effort : ~3h, mais nécessite design
-review.
+### ~~F — Dark mode V5~~ ✅ LIVRÉ (2026-05-05)
+Le dark mode adaptatif V5 a été livré dans `copilote-v5.css` ligne 19.
+La V5 supporte light ET dark : le toggle ☀️/🌙 affecte aussi le
+Co-pilote. Seul le hero éditorial reste dark dans les 2 modes
+(signature). Validé visuellement par Thomas 2026-05-20.
 
 ---
 
