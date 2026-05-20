@@ -106,28 +106,36 @@ export function AppLayout() {
   // retiré) — on le conserve en variable au cas où un futur dashboard l'affiche.
   void urgentRelanceCount;
 
-  const pageTitle =
-    location.pathname === "/dashboard" || location.pathname === "/co-pilote"
-      ? ""
-      : location.pathname === "/guide" || location.pathname === "/formation"
-        ? "Formation"
-        : location.pathname.startsWith("/pv")
-          ? "Pilotage simple des clients, commandes et points volume"
-          : location.pathname === "/clients"
-            ? "Dossiers clients et suivi en cours"
-            : location.pathname.startsWith("/distributors/")
-              ? "Portefeuille, relances et rythme du suivi"
-              : location.pathname === "/team" || location.pathname === "/users"
-                ? "Mon équipe"
-                : location.pathname.startsWith("/clients/")
-                  ? "Lecture complète du dossier client"
-                  : location.pathname === "/assessments/new"
-                    ? "Le bilan guidé pour cadrer le rendez-vous"
-                    : location.pathname === "/agenda"
-                      ? "Agenda prospection et RDV à venir"
-                      : location.pathname === "/settings"
-                        ? "Paramètres"
-                        : "La Base 360";
+  // Crumb court pour le MobileHeader (chip dans le header mobile). Doit
+  // tenir en 1 mot court pour ne pas écraser le logo. Distinct de la
+  // description longue desktop (qui n'est plus utilisée ailleurs).
+  const pageTitle = (() => {
+    const p = location.pathname;
+    if (p === "/dashboard" || p === "/co-pilote") return "Co-pilote";
+    if (p === "/flex") return "FLEX";
+    if (p === "/agenda") return "Agenda";
+    if (p === "/messages") return "Messagerie";
+    if (p === "/clients") return "Clients";
+    if (p.startsWith("/clients/")) return "Fiche client";
+    if (p === "/team" || p === "/users") return "Mon équipe";
+    if (p.startsWith("/distributors/")) return "Distri";
+    if (p.startsWith("/pv")) return "Suivi PV";
+    if (p === "/rentabilite") return "Rentabilité";
+    if (p === "/routine-du-jour") return "Routine";
+    if (p === "/cahier-de-bord") return "Cahier de bord";
+    if (p === "/developpement") return "Développement";
+    if (p.startsWith("/developpement/")) return "Développement";
+    if (p === "/formation" || p === "/guide") return "Formation";
+    if (p.startsWith("/formation/")) return "Formation";
+    if (p === "/academy" || p.startsWith("/academy/")) return "Academy";
+    if (p === "/prospection" || p.startsWith("/prospection")) return "Prospection";
+    if (p === "/outils-prospection") return "Outils";
+    if (p === "/business") return "Business";
+    if (p === "/parametres" || p === "/settings") return "Paramètres";
+    if (p === "/analytics") return "Analytics";
+    if (p === "/assessments/new") return "Nouveau bilan";
+    return "";
+  })();
 
   async function handleLogout() {
     await logout();
