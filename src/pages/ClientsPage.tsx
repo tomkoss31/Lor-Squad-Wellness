@@ -353,6 +353,15 @@ export function ClientsPage() {
   const leadsCount = 0; // TODO : récupérer count depuis useOnlineBilans si nécessaire (charge async côté LeadsKanban)
   const testimonialsCount = 0; // TODO : récupérer count depuis AdminTestimonialsPage
 
+  // Owners pour le bottom sheet (admin only)
+  const mobileOwners = isAdmin
+    ? ownerTabs.map((u) => ({ id: u.id, name: u.name }))
+    : undefined;
+  const currentOwnerLabel =
+    ownerFilter === "all"
+      ? undefined
+      : ownerTabs.find((u) => u.id === ownerFilter)?.name;
+
   return (
     <div style={{
       padding: "clamp(16px, 4vw, 28px)",
@@ -376,6 +385,8 @@ export function ClientsPage() {
         onFiltersApply={handleMobileFiltersApply}
         totalVisible={filteredClients.length}
         relanceCount={visibleRelanceCount}
+        owners={mobileOwners}
+        ownerLabel={currentOwnerLabel}
       />
 
       {/* Vue desktop (et tablette horizontale) — masquée sur < xl */}

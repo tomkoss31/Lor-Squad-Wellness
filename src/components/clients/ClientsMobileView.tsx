@@ -22,7 +22,7 @@ import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import type { Client, FollowUp, LifecycleStatus } from "../../types/domain";
 import { useHaptic } from "../../hooks/useHaptic";
-import { FiltersBottomSheet, type FiltersSheetState } from "./FiltersBottomSheet";
+import { FiltersBottomSheet, type FiltersSheetState, type OwnerOption } from "./FiltersBottomSheet";
 
 interface ClientsMobileViewProps {
   activeTab: "clients" | "leads" | "temoignages";
@@ -42,6 +42,10 @@ interface ClientsMobileViewProps {
   totalVisible: number;
   /** Count clients dormants/à relancer dans la sélection. */
   relanceCount: number;
+  /** Liste des responsables disponibles (admin only). */
+  owners?: OwnerOption[];
+  /** Nom du responsable actuellement filtré (chip indicateur). */
+  ownerLabel?: string;
 }
 
 const STATUS_LABELS: Record<LifecycleStatus | "fragile" | "all", string> = {
@@ -120,6 +124,8 @@ export function ClientsMobileView({
   onFiltersApply,
   totalVisible,
   relanceCount,
+  owners,
+  ownerLabel,
 }: ClientsMobileViewProps) {
   const navigate = useNavigate();
   const haptic = useHaptic();
@@ -202,7 +208,7 @@ export function ClientsMobileView({
             </button>
           </div>
 
-          {/* Mini-stats row */}
+          {/* Mini-stats row + chip responsable courant */}
           <div className="lb-mini-stats">
             <div className="lb-mini">
               <span className="v">{totalVisible}</span>
@@ -214,10 +220,18 @@ export function ClientsMobileView({
                 <span className="l">relances</span>
               </div>
             ) : null}
-            <div className="lb-mini">
-              <span className="v">{clientsCount}</span>
-              <span className="l">total</span>
-            </div>
+            {ownerLabel ? (
+              <button
+                type="button"
+                onClick={() => setFiltersOpen(true)}
+                className="lb-mini"
+                style={{ background: "color-mix(in srgb, var(--ls-gold) 12%, var(--ls-surface))", cursor: "pointer", border: "1px solid color-mix(in srgb, var(--ls-gold) 30%, var(--ls-border))" }}
+                aria-label={`Filtré sur ${ownerLabel} — taper pour changer`}
+              >
+                <span className="v" style={{ fontSize: 14, color: "var(--ls-gold)" }}>{ownerLabel}</span>
+                <span className="l">responsable</span>
+              </button>
+            ) : null}
           </div>
 
           {/* Liste compacte */}
@@ -287,6 +301,7 @@ export function ClientsMobileView({
           setFiltersOpen(false);
         }}
         totalAfterApply={totalVisible}
+        owners={owners}
       />
     </div>
   );

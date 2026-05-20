@@ -20,12 +20,19 @@ export interface FiltersSheetState {
   ownerFilter: string;
 }
 
+export interface OwnerOption {
+  id: string;
+  name: string;
+}
+
 interface FiltersBottomSheetProps {
   open: boolean;
   onClose: () => void;
   initial: FiltersSheetState;
   onApply: (next: FiltersSheetState) => void;
   totalAfterApply: number;
+  /** Si fourni (admin) : permet de filtrer par responsable. */
+  owners?: OwnerOption[];
 }
 
 const STATUS_OPTIONS: Array<{ id: FiltersSheetState["statusFilter"]; label: string }> = [
@@ -50,6 +57,7 @@ export function FiltersBottomSheet({
   initial,
   onApply,
   totalAfterApply,
+  owners,
 }: FiltersBottomSheetProps) {
   // État local interne (commit sur Apply)
   const [draft, setDraft] = useState<FiltersSheetState>(initial);
@@ -163,25 +171,39 @@ export function FiltersBottomSheet({
             </div>
           </section>
 
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 8,
-              padding: "10px 12px",
-              borderRadius: 12,
-              background: "var(--ls-surface2)",
-              border: "1px dashed var(--ls-border)",
-              fontFamily: "DM Sans, sans-serif",
-              fontSize: 11.5,
-              color: "var(--ls-text-muted)",
-            }}
-          >
-            <span aria-hidden="true">💡</span>
-            <span>
-              La recherche par responsable se gère côté <strong>Mon équipe</strong>.
-            </span>
-          </div>
+          {/* Section Responsable — admin only (sinon RLS filtre déjà
+              automatiquement aux clients du distri courant) */}
+          {owners && owners.length > 0 ? (
+            <section className="lb-sheet-section">
+              <div className="label">Responsable</div>
+              <div className="lb-filter-pills">
+                <button
+                  type="button"
+                  className={`lb-fp${draft.ownerFilter === "all" ? " on" : ""}`}
+                  onClick={() => setDraft((d) => ({ ...d, ownerFilter: "all" }))}
+                  aria-pressed={draft.ownerFilter === "all"}
+                >
+                  Tous
+                  {draft.ownerFilter === "all" ? <span className="x" aria-hidden="true">✓</span> : null}
+                </button>
+                {owners.map((o) => {
+                  const on = draft.ownerFilter === o.id;
+                  return (
+                    <button
+                      key={o.id}
+                      type="button"
+                      className={`lb-fp${on ? " on" : ""}`}
+                      onClick={() => setDraft((d) => ({ ...d, ownerFilter: o.id }))}
+                      aria-pressed={on}
+                    >
+                      {o.name}
+                      {on ? <span className="x" aria-hidden="true">✓</span> : null}
+                    </button>
+                  );
+                })}
+              </div>
+            </section>
+          ) : null}
         </div>
 
         <footer className="lb-sheet-foot">
