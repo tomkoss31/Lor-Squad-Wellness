@@ -3172,6 +3172,66 @@ body.ls-stealth-active [data-stealth]:focus-within {
 }
 
 /* ─────────────────────────────────────────────────────────────────────────
+   Suivi PV (/pv) — polish mobile (2026-05-20)
+   ───────────────────────────────────────────────────────────────────────── */
+@media (max-width: 1279px) {
+  /* Stats grid : 4 colonnes → 2x2 sur mobile (sinon valeurs collées) */
+  .pv-stats-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 8px !important;
+  }
+  .pv-stats-grid > div {
+    padding: 10px 12px !important;
+  }
+  .pv-stats-grid > div > div:last-child {
+    font-size: 18px !important;
+  }
+
+  /* Filtres : search + select stack vertical sur très petit écran */
+  .pv-filters {
+    gap: 8px !important;
+  }
+  .pv-filters select {
+    min-width: 0 !important;
+    width: 100% !important;
+  }
+
+  /* Table : cache les colonnes Programme + Jours sur mobile (= libère
+     l'espace pour le nom client). Garde Client + PV cumulés + Statut. */
+  .pv-table-header .pv-cell-program,
+  .pv-table-row .pv-cell-program,
+  .pv-table-header > div:nth-child(2),
+  .pv-table-header > div:nth-child(4),
+  .pv-table-row .pv-cell-days {
+    display: none !important;
+  }
+
+  /* Rows : padding réduit + nom client peut occuper plus de place */
+  .pv-table-row {
+    padding: 11px 12px !important;
+    gap: 10px !important;
+  }
+  .pv-table-row .pv-cell-client {
+    flex: 3 !important;
+  }
+  .pv-table-row .pv-cell-pv {
+    flex: 0 0 auto !important;
+    text-align: right !important;
+  }
+}
+
+/* iPhone SE et petits écrans : compaction encore plus poussée */
+@media (max-width: 380px) {
+  .pv-stats-grid > div > div:last-child {
+    font-size: 16px !important;
+  }
+  .pv-stats-grid > div > div:first-child {
+    font-size: 8px !important;
+    letter-spacing: 1.4px !important;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
    Accent system "hybrid" (Chantier mobile Onde 4, 2026-05-20)
    Validé Thomas : teal pour CTAs interactifs, gold conservé pour identité.
    Activable via html.accent-hybrid (mis dans main.tsx ou Paramètres).
