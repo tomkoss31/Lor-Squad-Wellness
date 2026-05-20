@@ -21,6 +21,7 @@ import { useUserRentability } from "../hooks/useUserRentability";
 import { useTeamEngagement } from "../hooks/useTeamEngagement";
 import { RentabilityDetailModal } from "../components/rentability/RentabilityDetailModal";
 import { RentabilityWalletCard } from "../components/rentability/RentabilityWalletCard";
+import { RentabilitySankeyFlow } from "../components/rentability/RentabilitySankeyFlow";
 import { resolveCoupleUserIds } from "../config/teamConfig";
 import { usePvBreakdowns } from "../hooks/usePvBreakdowns";
 import { useManualPvEntries } from "../hooks/useManualPvEntries";
@@ -86,6 +87,7 @@ export function RentabilitePage() {
   const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
   const { data: selectedData } = useUserRentability(selectedMemberId);
   const [detailOpen, setDetailOpen] = useState(false);
+  const [calcView, setCalcView] = useState<"classic" | "flow">("classic");
   const { stealthOn, toggle: toggleStealth } = useStealthMode();
 
   const monthIso = useMemo(() => currentMonthIso(), []);
@@ -334,8 +336,46 @@ export function RentabilitePage() {
       {/* ─── SECTION 01 — Le calcul ──────────────────────────────────── */}
       {ownData && (
         <>
-          <SectionHeader index="01" title="Le calcul" hint="D'où vient chaque euro" />
+          <SectionHeader
+            index="01"
+            title="Le calcul"
+            hint={
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+                <span>D'où vient chaque euro</span>
+                <span style={viewToggleWrapStyle}>
+                  <button
+                    type="button"
+                    onClick={() => setCalcView("classic")}
+                    style={viewToggleBtnStyle(calcView === "classic")}
+                  >
+                    Vue classique
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setCalcView("flow")}
+                    style={viewToggleBtnStyle(calcView === "flow")}
+                  >
+                    Vue flux
+                  </button>
+                </span>
+              </span>
+            }
+          />
 
+          {calcView === "flow" ? (
+            <RentabilitySankeyFlow
+              caBrut={ownData.revenue_brut}
+              marginPct={ownData.margin_pct}
+              margeDirecte={ownSelfMargin}
+              overrideTeam={ownDownlineOverride}
+              overrideExt={ownManualOverride}
+              productsCount={ownData.products_count}
+              teamCount={otherMembers.length}
+              externalCount={manualEntries.length}
+              month={month}
+            />
+          ) : (
+          <>
           <div style={calcGridStyle}>
             <CalcBlock
               label="CA brut"
@@ -396,7 +436,10 @@ export function RentabilitePage() {
             />
           </div>
 
-          {/* Total net border-gradient */}
+          </>
+          )}
+
+          {/* Total net border-gradient (toujours visible, indépendamment de la vue) */}
           <div className="lr-border-gradient" style={{ marginBottom: 48 }}>
             <div style={totalRowStyle}>
               <div>
@@ -494,7 +537,7 @@ export function RentabilitePage() {
 
 // ─── Sous-composants ────────────────────────────────────────────────────────
 
-function SectionHeader({ index, title, hint }: { index: string; title: string; hint?: string }) {
+function SectionHeader({ index, title, hint }: { index: string; title: string; hint?: React.ReactNode }) {
   return (
     <div className="lr-section-h">
       <div style={{ display: "flex", alignItems: "baseline", gap: 14 }}>
@@ -1106,3 +1149,29 @@ const loadingStyle: React.CSSProperties = {
   padding: 40,
   color: "var(--ls-rentab-ink-3)",
 };
+
+const viewToggleWrapStyle: React.CSSProperties = {
+  display: "inline-flex",
+  padding: 3,
+  gap: 2,
+  background: "var(--ls-rentab-bg-2)",
+  borderRadius: 999,
+  border: "1px solid var(--ls-rentab-line)",
+};
+
+function viewToggleBtnStyle(active: boolean): React.CSSProperties {
+  return {
+    height: 24,
+    padding: "0 12px",
+    borderRadius: 999,
+    border: "none",
+    cursor: "pointer",
+    background: active ? "var(--ls-rentab-bg-1)" : "transparent",
+    color: active ? "var(--ls-rentab-ink)" : "var(--ls-rentab-ink-3)",
+    fontFamily: "DM Sans, sans-serif",
+    fontSize: 11,
+    fontWeight: 600,
+    boxShadow: active ? "var(--ls-rentab-shadow-sm)" : "none",
+    transition: "all .15s",
+  };
+}

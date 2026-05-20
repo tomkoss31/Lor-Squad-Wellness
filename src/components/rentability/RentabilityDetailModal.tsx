@@ -1,838 +1,861 @@
 // =============================================================================
-// RentabilityDetailModal — popup détail rentabilité V3 (2026-11-07)
+// RentabilityDetailModal — Refonte Premium V2 (chantier 2026-05-20)
 //
-// Refonte V3 : les 3 cards (Publics / VIP / Distributeurs) deviennent des
-// onglets cliquables qui filtrent la section "arborescence" en bas :
-//   - Tous (défaut)   → top clients tels quels
-//   - Clients publics → ne garde que les non-VIP
-//   - Clients VIP     → ne garde que les VIP
-//   - Distributeurs   → affiche le downline du user (sponsor=this) avec
-//                       leur rang + PV mensuel (override Bizworks si saisi)
-//                       + estimation override €. Visible uniquement si le
-//                       user est admin/référent et a un downline.
+// Modale d'analyse poussée (overlay sur la page /rentabilite).
+// 2 vues :
+//   - "Vue mois courant"  → filtres pivot (Tous / Publics / VIP / Distri) +
+//                            composition breakdown (marge directe / overrides)
+//   - "Vue 12 mois"       → BarChart avec record (gold) + courant (gradient)
+//                            + 3 annotations contextuelles auto-computed
 //
-// V2 (2026-05-05) : Top CLIENTS au lieu de produits + Split Public vs VIP.
+// Plan d'action en bas : 3 nudges heuristiques (basé sur delta vs M-1,
+// daysLeft, presence downline). IA = chantier futur Lor'Squad AI.
+//
+// Source design : docs/mockups/rentabilite-design-v2/.../modale.jsx
 // =============================================================================
 
-import { useMemo, useState } from "react";
-import { useAppContext } from "../../context/AppContext";
-import {
-  rentabilityZone,
-  type RentabilityData,
-  type RentabilityTopClient,
-} from "../../hooks/useUserRentability";
-import { RentabilityGauge } from "./RentabilityGauge";
-import {
-  RANK_LABELS,
-  type HerbalifeRank,
-  type User,
-} from "../../types/domain";
-import {
-  PV_TO_EUR_RATIO,
-  computeSponsorCutOnDownstream,
-  currentMonthIso,
-  tierPctForRank,
-  totalPvFromBreakdown,
-  type PvMonthlyBreakdown,
-} from "../../lib/herbalifeFormulas";
-import { usePvBreakdowns } from "../../hooks/usePvBreakdowns";
+import { useMemo, useState, useEffect } from "react";
+import type { RentabilityData, RentabilityTopClient } from "../../hooks/useUserRentability";
+import { useRentabilityHistory } from "../../hooks/useRentabilityHistory";
+import { BarChart } from "./shared/BarChart";
 
 interface RentabilityDetailModalProps {
   data: RentabilityData;
   onClose: () => void;
-  /** Si fournis, decomposition explicite affichee dans la section "Le calcul"
-   *  pour montrer d'ou vient chaque morceau du total. Sinon, calcul direct. */
-  directMargin?: number;       // marge sur ventes app (RPC) ou breakdown perso
-  downlineOverride?: number;   // override sur breakdowns downline app
-  manualOverride?: number;     // override sur entrees manuelles distri hors-app
+  directMargin: number;
+  downlineOverride: number;
+  manualOverride: number;
 }
 
 type FilterTab = "all" | "public" | "vip" | "distri";
 
-const ZONE_COLOR: Record<string, string> = {
-  red: "var(--ls-coral)",
-  orange: "var(--ls-gold)",
-  green: "var(--ls-teal)",
-};
-
-const VIP_META: Record<string, { label: string; color: string; emoji: string; discount: number }> = {
-  bronze: { label: "Bronze", color: "#A87132", emoji: "🥉", discount: 15 },
-  silver: { label: "Silver", color: "#9CA3AF", emoji: "🥈", discount: 25 },
-  gold: { label: "Gold", color: "var(--ls-gold)", emoji: "🥇", discount: 35 },
-  ambassador: { label: "Ambassadeur", color: "var(--ls-purple)", emoji: "👑", discount: 42 },
-};
-
-function formatEur(n: number): string {
-  return Math.round(n).toLocaleString("fr-FR") + " €";
-}
-
 function monthLabel(iso: string): string {
   try {
     const d = new Date(iso + "T12:00:00Z");
-    return new Intl.DateTimeFormat("fr-FR", { month: "long", year: "numeric" }).format(d);
+    const f = new Intl.DateTimeFormat("fr-FR", { month: "long", year: "numeric" }).format(d);
+    return f.charAt(0).toUpperCase() + f.slice(1);
   } catch {
     return "";
   }
 }
 
-interface DownlineEntry {
-  user: User;
-  rankLabel: string;
-  rankMarginPct: number;
-  /** Profondeur dans l arbre du viewer (1 = downline directe, 2 = grandchild, ...). */
-  depth: number;
-  /** Chemin lisible du viewer vers Y, ex "Mandy → Victoria" pour L2. */
-  chainLabel: string;
-  /** Si dispo : breakdown precis par tier (V2 fiche RO). */
-  breakdown: PvMonthlyBreakdown | null;
-  /** PV total ce mois (somme breakdown OU monthly_pv_override OU null). */
-  monthlyPv: number | null;
-  /** Override EUR pour le viewer — calcul chaine compression V2.1. */
-  overrideEur: number;
-  /** True si la valeur d override est calculee depuis le breakdown V2. */
-  overrideIsExact: boolean;
+function shortMonth(iso: string): string {
+  try {
+    const d = new Date(iso + "T12:00:00Z");
+    return new Intl.DateTimeFormat("fr-FR", { month: "short" }).format(d).replace(".", "");
+  } catch {
+    return "";
+  }
 }
 
 export function RentabilityDetailModal({
   data,
   onClose,
   directMargin,
-  downlineOverride: downlineOverrideProp,
+  downlineOverride,
   manualOverride,
 }: RentabilityDetailModalProps) {
-  const { users, currentUser } = useAppContext();
-  const zone = rentabilityZone(data.margin_eur);
-  const zoneColor = ZONE_COLOR[zone];
+  const total = directMargin + downlineOverride + manualOverride;
+  const [tab, setTab] = useState<"mois" | "12m">("12m");
+  const [filter, setFilter] = useState<FilterTab>("all");
 
-  const delta = data.margin_eur - data.prev_month_eur;
-  const deltaPct =
-    data.prev_month_eur > 0 ? Math.round((delta / data.prev_month_eur) * 100) : null;
+  // Lock body scroll
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, []);
 
-  const hasVipClients = data.clients_vip_count > 0;
+  const history = useRentabilityHistory(data.scope_user_ids, 12);
 
-  // ─── Onglet de filtrage (chantier V3 2026-11-07) ───────────────────────────
-  const [tab, setTab] = useState<FilterTab>("all");
-
-  // ─── Tree walk V2.1 — chaine compression Herbalife (chantier 2026-11-07) ──
-  // Walk recursif de l arbre downline du viewer pour calculer son override
-  // exact a chaque niveau, en appliquant la regle de compression :
-  //   cut% = max(0, viewer_tier - max(Y_tier, ...intermediates))
-  const ownerIds = useMemo(() => new Set(data.scope_user_ids), [data.scope_user_ids]);
-  const monthIso = useMemo(() => currentMonthIso(), []);
-  const { getForUser: getBreakdownForUser } = usePvBreakdowns(monthIso);
-
-  const downline = useMemo<DownlineEntry[]>(() => {
-    if (!currentUser) return [];
-    // Affiche la downline pour QUI QUE CE SOIT que l app autorise a ouvrir
-    // cette rentab (la RPC get_users_rentability fait deja le check d acces).
-    // Avant : on bloquait si scope!=viewer ; ce qui empechait l admin de voir
-    // la downline d un membre d equipe (cas Thomas viewing Mandy 2026-11-07).
-    const viewerIsAdminOrRef = currentUser.role === "admin" || currentUser.role === "referent";
-    const scopeIsViewer = ownerIds.has(currentUser.id);
-    if (!viewerIsAdminOrRef && !scopeIsViewer) return [];
-
-    // Viewer tier = max des tiers du scope (couple agrege : on prend le plus haut).
-    const viewerTierPct = Math.max(
-      ...data.scope_user_ids.map((uid) => {
-        const u = users.find((x) => x.id === uid);
-        return tierPctForRank(u?.currentRank);
-      }),
-    );
-
-    // Index sponsor -> children pour walk efficace
-    const childrenBySponsor = new Map<string, User[]>();
-    for (const u of users) {
-      if (u.frozenAt) continue;
-      if (!u.sponsorId) continue;
-      const arr = childrenBySponsor.get(u.sponsorId) ?? [];
-      arr.push(u);
-      childrenBySponsor.set(u.sponsorId, arr);
+  // Filtres mois courant
+  const filtered = useMemo(() => {
+    if (filter === "public") {
+      return {
+        label: "Grand public",
+        total: data.margin_public_eur,
+        revenue: data.revenue_public,
+        share: total > 0 ? data.margin_public_eur / total : 0,
+        count: data.clients_public_count,
+      };
     }
-
-    const result: DownlineEntry[] = [];
-
-    // Pile de walk : { user, depth, intermediateTiers, chainLabels }
-    interface WalkFrame {
-      user: User;
-      depth: number;
-      intermediateTiers: number[];
-      chainLabels: string[];
+    if (filter === "vip") {
+      return {
+        label: "VIP / récurrents",
+        total: data.margin_vip_eur,
+        revenue: data.revenue_vip,
+        share: total > 0 ? data.margin_vip_eur / total : 0,
+        count: data.clients_vip_count,
+      };
     }
-    const queue: WalkFrame[] = [];
-    // Bootstrap : enfants directs des owners (Thomas + Melanie si couple)
-    for (const ownerId of data.scope_user_ids) {
-      const directs = childrenBySponsor.get(ownerId) ?? [];
-      for (const u of directs) {
-        queue.push({ user: u, depth: 1, intermediateTiers: [], chainLabels: [] });
+    if (filter === "distri") {
+      const distriTotal = downlineOverride + manualOverride;
+      return {
+        label: "Distri (overrides)",
+        total: distriTotal,
+        revenue: distriTotal, // overrides = revenu net direct
+        share: total > 0 ? distriTotal / total : 0,
+        count: 0, // pas de count exact ici, on agrège
+      };
+    }
+    return {
+      label: "Tous publics",
+      total: total,
+      revenue: data.revenue_brut,
+      share: 1,
+      count: data.clients_public_count + data.clients_vip_count,
+    };
+  }, [filter, data, total, downlineOverride, manualOverride]);
+
+  // Calculs pour la vue 12 mois
+  const historyBars = useMemo(() => history.data.map((p) => p.margin_eur), [history.data]);
+  const historyLabels = useMemo(() => history.data.map((p) => shortMonth(p.month)), [history.data]);
+  const peakIdx = useMemo(() => {
+    if (historyBars.length === 0) return -1;
+    let max = -Infinity;
+    let idx = -1;
+    historyBars.forEach((v, i) => {
+      if (v > max) {
+        max = v;
+        idx = i;
       }
-    }
-
-    while (queue.length > 0) {
-      const frame = queue.shift()!;
-      const { user: u, depth, intermediateTiers, chainLabels } = frame;
-      const rankKey = (u.currentRank ?? "distributor_25") as HerbalifeRank;
-      const breakdown = getBreakdownForUser(u.id);
-      let monthlyPv: number | null = null;
-      let overrideEur = 0;
-      let overrideIsExact = false;
-
-      if (breakdown) {
-        monthlyPv = totalPvFromBreakdown(breakdown);
-        overrideEur = computeSponsorCutOnDownstream(breakdown, viewerTierPct, intermediateTiers);
-        overrideIsExact = true;
-      } else {
-        // Fallback : monthly_pv_override + estimation tier final + chain compression
-        const isOverrideActive =
-          (u as User & { monthlyPvOverrideMonth?: string | null }).monthlyPvOverrideMonth ===
-            monthIso &&
-          typeof (u as User & { monthlyPvOverride?: number | null }).monthlyPvOverride ===
-            "number";
-        monthlyPv = isOverrideActive
-          ? ((u as User & { monthlyPvOverride?: number | null }).monthlyPvOverride as number)
-          : null;
-        if (monthlyPv != null) {
-          const yTierPct = tierPctForRank(u.currentRank);
-          const maxUpstream = Math.max(yTierPct, ...intermediateTiers);
-          const cutPct = Math.max(0, viewerTierPct - maxUpstream) / 100;
-          overrideEur = monthlyPv * cutPct * PV_TO_EUR_RATIO;
-        }
-      }
-
-      result.push({
-        user: u,
-        rankLabel: RANK_LABELS[rankKey] ?? "Distributor (25%)",
-        rankMarginPct: 0,
-        depth,
-        chainLabel: chainLabels.length > 0 ? chainLabels.join(" → ") : "direct",
-        breakdown,
-        monthlyPv,
-        overrideEur,
-        overrideIsExact,
-      });
-
-      // Recurse : push children of u
-      const yTierPct = tierPctForRank(u.currentRank);
-      const childList = childrenBySponsor.get(u.id) ?? [];
-      for (const child of childList) {
-        queue.push({
-          user: child,
-          depth: depth + 1,
-          intermediateTiers: [...intermediateTiers, yTierPct],
-          chainLabels: [...chainLabels, u.name],
-        });
-      }
-    }
-
-    return result.sort((a, b) => (b.overrideEur ?? 0) - (a.overrideEur ?? 0));
-  }, [users, currentUser, data.scope_user_ids, ownerIds, monthIso, getBreakdownForUser]);
-
-  const downlineCount = downline.length;
-  const downlineTotalOverride = downline.reduce((s, d) => s + d.overrideEur, 0);
-
-  // ─── Top clients filtrés par onglet ────────────────────────────────────────
-  const filteredTopClients = useMemo<RentabilityTopClient[]>(() => {
-    if (!data.top_clients) return [];
-    if (tab === "public") return data.top_clients.filter((c) => !c.is_vip);
-    if (tab === "vip") return data.top_clients.filter((c) => c.is_vip);
-    return data.top_clients;
-  }, [data.top_clients, tab]);
+    });
+    return idx;
+  }, [historyBars]);
+  const currentIdx = historyBars.length - 1;
+  const sum12 = historyBars.reduce((a, b) => a + b, 0);
+  const avg = historyBars.length > 0 ? sum12 / historyBars.length : 0;
+  const last6 = historyBars.slice(-6);
+  const prev6 = historyBars.slice(-12, -6);
+  const last6Sum = last6.reduce((a, b) => a + b, 0);
+  const prev6Sum = prev6.reduce((a, b) => a + b, 0);
+  const trendPct = prev6Sum > 0 ? Math.round(((last6Sum - prev6Sum) / prev6Sum) * 100) : 0;
 
   return (
-    <div style={overlayStyle} onClick={onClose} role="dialog" aria-modal="true">
-      <div style={modalStyle} onClick={(e) => e.stopPropagation()}>
-        <button type="button" onClick={onClose} style={closeBtnStyle} aria-label="Fermer">×</button>
-
-        {/* Header */}
+    <div
+      className="lr"
+      role="dialog"
+      aria-modal="true"
+      onClick={onClose}
+      style={overlayStyle}
+    >
+      <div onClick={(e) => e.stopPropagation()} style={modalStyle}>
+        {/* ─── Header ─────────────────────────────────────────────── */}
         <div style={headerStyle}>
-          <div style={eyebrowStyle}>💎 Ma rentabilité · {monthLabel(data.month_start)}</div>
-          <h2 style={titleStyle}>{data.scope_label}</h2>
-          <div style={rankPillStyle}>
-            👑 {data.rank_label} · marge perso <strong>{data.margin_pct}%</strong>
+          <div>
+            <div className="lr-eyebrow">
+              <span aria-hidden="true">⚡</span>
+              Analyse détaillée
+            </div>
+            <div style={titleStyle}>Rentabilité · {monthLabel(data.month_start)}</div>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <div style={tabsWrapStyle}>
+              <TabPill active={tab === "mois"} onClick={() => setTab("mois")}>
+                Vue mois courant
+              </TabPill>
+              <TabPill active={tab === "12m"} onClick={() => setTab("12m")}>
+                Vue 12 mois
+              </TabPill>
+            </div>
+            <button onClick={onClose} aria-label="Fermer" style={closeBtnStyle} type="button">
+              ×
+            </button>
           </div>
         </div>
 
-        {/* Big jauge */}
-        <div data-stealth style={{ display: "flex", justifyContent: "center", marginBottom: 8 }}>
-          <RentabilityGauge data={data} size="hero" delay={100} />
-        </div>
-
-        {/* Calcul détaillé */}
-        <SectionTitle>📊 Le calcul</SectionTitle>
-        <div data-stealth style={calcGridStyle}>
-          <CalcRow
-            label="Chiffre d'affaires brut"
-            value={formatEur(data.revenue_brut)}
-            sub={`${data.products_count} programme${data.products_count > 1 ? "s" : ""} vendu${data.products_count > 1 ? "s" : ""} ce mois`}
-            color="var(--ls-text)"
-          />
-          <CalcRow
-            label="× marge perso (rang)"
-            value={`${data.margin_pct} %`}
-            sub={data.rank_label}
-            color="var(--ls-text-muted)"
-          />
-          {typeof directMargin === "number" ? (
-            <CalcRow
-              label="= Marge directe"
-              value={formatEur(directMargin)}
-              sub="sur tes propres ventes (clients publics + VIP)"
-              color="var(--ls-text)"
+        {/* ─── Body ───────────────────────────────────────────────── */}
+        <div style={bodyStyle}>
+          {tab === "12m" ? (
+            <TwelveMonthsView
+              bars={historyBars}
+              labels={historyLabels}
+              peakIdx={peakIdx}
+              currentIdx={currentIdx}
+              sum12={sum12}
+              avg={avg}
+              trendPct={trendPct}
+              loading={history.loading}
+              currentMonthLabel={monthLabel(data.month_start)}
+              daysLeft={data.days_in_month - data.days_elapsed}
+              projection={data.projection_eur}
             />
-          ) : null}
-          {typeof downlineOverrideProp === "number" && downlineOverrideProp > 0 ? (
-            <CalcRow
-              label="+ Override downline (équipe app)"
-              value={`+${formatEur(downlineOverrideProp)}`}
-              sub="commission sur les distri de ton équipe (compression chaîne)"
-              color="var(--ls-purple)"
+          ) : (
+            <CurrentMonthView
+              filter={filter}
+              setFilter={setFilter}
+              filtered={filtered}
+              directMargin={directMargin}
+              downlineOverride={downlineOverride}
+              manualOverride={manualOverride}
+              total={total}
+              topClients={data.top_clients ?? []}
+              marginPct={data.margin_pct}
             />
-          ) : null}
-          {typeof manualOverride === "number" && manualOverride > 0 ? (
-            <CalcRow
-              label="+ Override distri hors-app"
-              value={`+${formatEur(manualOverride)}`}
-              sub="commission sur les distri saisis manuellement"
-              color="var(--ls-purple)"
-            />
-          ) : null}
-          <CalcRow
-            label={
-              typeof directMargin === "number" &&
-              ((downlineOverrideProp ?? 0) > 0 || (manualOverride ?? 0) > 0)
-                ? "= Marge nette TOTALE"
-                : "= Marge brute nette"
-            }
-            value={formatEur(data.margin_eur)}
-            sub={data.products_count > 0 || (downlineOverrideProp ?? 0) > 0 || (manualOverride ?? 0) > 0
-              ? "ton revenu net du mois (tout inclus)"
-              : "aucune vente trackée"}
-            color={zoneColor}
-            highlight
+          )}
+
+          {/* Plan d'action — toujours visible */}
+          <ActionPlan
+            delta={total - data.prev_month_eur}
+            prevMonthEur={data.prev_month_eur}
+            daysLeft={data.days_in_month - data.days_elapsed}
+            projection={data.projection_eur}
+            downlineOverride={downlineOverride}
           />
         </div>
-
-        {/* Onglets cliquables : Publics / VIP / Distributeurs */}
-        <SectionTitle>🎯 Split par type · clique pour filtrer</SectionTitle>
-        <div data-stealth style={tabsRowStyle}>
-          <FilterTabCard
-            label="Clients publics"
-            emoji="👥"
-            count={data.clients_public_count}
-            primary={formatEur(data.margin_public_eur)}
-            sub={`sur ${formatEur(data.revenue_public)} de CA`}
-            note={`Marge complète : ${data.margin_pct}%`}
-            color="var(--ls-teal)"
-            active={tab === "public"}
-            onClick={() => setTab(tab === "public" ? "all" : "public")}
-          />
-          <FilterTabCard
-            label="Clients VIP"
-            emoji="💎"
-            count={data.clients_vip_count}
-            primary={formatEur(data.margin_vip_eur)}
-            sub={`sur ${formatEur(data.revenue_vip)} de CA`}
-            note={
-              hasVipClients
-                ? "Marge nette = marge perso − remise VIP"
-                : "Aucun VIP ce mois"
-            }
-            color="var(--ls-gold)"
-            active={tab === "vip"}
-            onClick={() => setTab(tab === "vip" ? "all" : "vip")}
-            disabled={!hasVipClients}
-          />
-          {downlineCount > 0 ? (
-            <FilterTabCard
-              label="Distributeurs"
-              emoji="🤝"
-              count={downlineCount}
-              primary={formatEur(downlineTotalOverride)}
-              sub="estimation override €"
-              note="Détail par distri ci-dessous"
-              color="var(--ls-purple)"
-              active={tab === "distri"}
-              onClick={() => setTab(tab === "distri" ? "all" : "distri")}
-            />
-          ) : null}
-        </div>
-        {tab !== "all" ? (
-          <button
-            type="button"
-            onClick={() => setTab("all")}
-            style={resetFilterBtnStyle}
-          >
-            ✕ Retirer le filtre
-          </button>
-        ) : null}
-        {hasVipClients && (
-          <div style={vipNoteStyle}>
-            ℹ️ Les clients VIP paient moins cher (remise selon tier : bronze 15 % → ambassadeur 42 %).
-            Ta marge nette = ta marge perso ({data.margin_pct} %) − remise VIP du client.
-          </div>
-        )}
-
-        {/* Projection vs mois précédent */}
-        <SectionTitle>📈 Projection & comparaison</SectionTitle>
-        <div data-stealth style={twoColStyle}>
-          <ProjectionCard
-            title="Fin de mois"
-            value={formatEur(data.projection_eur)}
-            sub={
-              data.days_elapsed < data.days_in_month
-                ? `Au rythme actuel (jour ${data.days_elapsed}/${data.days_in_month})`
-                : "Mois écoulé"
-            }
-            color={zoneColor}
-          />
-          <ProjectionCard
-            title="Mois précédent"
-            value={formatEur(data.prev_month_eur)}
-            sub={
-              deltaPct !== null
-                ? delta >= 0
-                  ? `📈 +${formatEur(delta)} (+${deltaPct}%)`
-                  : `📉 ${formatEur(delta)} (${deltaPct}%)`
-                : "—"
-            }
-            color={delta >= 0 ? "var(--ls-teal)" : "var(--ls-coral)"}
-          />
-        </div>
-
-        {/* Arborescence : top clients filtrés OU downline distri */}
-        {tab === "distri" ? (
-          downlineCount > 0 ? (
-            <>
-              <SectionTitle>🤝 Mes distributeurs · contributions</SectionTitle>
-              <ul data-stealth style={clientsListStyle}>
-                {downline.map((d, i) => (
-                  <DownlineRow key={d.user.id} entry={d} rank={i} />
-                ))}
-              </ul>
-              <div style={methodoStyle}>
-                ℹ️ <strong>Chaîne compression Herbalife</strong> : pour chaque distri en
-                downline (L1, L2, L3...), ta cut = (ton % − max(% downstream)) × PV × {PV_TO_EUR_RATIO} €/PV.
-                Ex : Thomas 50%, Mandy 42%, Victoria 35% → tu touches <strong>8%</strong> sur Mandy
-                ET sur Victoria (différentiel Thomas−Mandy). Mandy touche les 7% Mandy−Victoria à part.
-                Override exact si breakdown saisi, sinon estimation rang final.
-                Calibré fiche RO Herbalife 2026-03.
-              </div>
-            </>
-          ) : null
-        ) : data.top_clients && data.top_clients.length > 0 ? (
-          <>
-            <SectionTitle>
-              🏆 Top clients ce mois
-              {tab === "public" ? " · publics" : tab === "vip" ? " · VIP" : ""}
-            </SectionTitle>
-            {filteredTopClients.length > 0 ? (
-              <ul data-stealth style={clientsListStyle}>
-                {filteredTopClients.map((c, i) => (
-                  <TopClientRow key={c.client_id} client={c} rank={i} />
-                ))}
-              </ul>
-            ) : (
-              <div style={emptyFilterStyle}>
-                Aucun client {tab === "vip" ? "VIP" : "public"} dans le top ce mois.
-              </div>
-            )}
-          </>
-        ) : null}
-
-        {/* Note méthodologie */}
-        <div style={methodoStyle}>
-          ℹ️ Calcul basé sur les programmes trackés dans l'app La Base 360 (commandes via fiche client).
-          Les commandes hors-fiche (perso, club, Bizworks direct) ne sont pas incluses dans cette V1.
-        </div>
-
-        <button type="button" onClick={onClose} style={ghostBtnStyle}>
-          Fermer
-        </button>
       </div>
     </div>
   );
 }
 
-// ─── Sous-composants ─────────────────────────────────────────────────────
+// ─── Sous-composants ────────────────────────────────────────────────────────
 
-function SectionTitle({ children }: { children: React.ReactNode }) {
-  return <h3 style={sectionTitleStyle}>{children}</h3>;
-}
-
-function CalcRow({ label, value, sub, color, highlight }: { label: string; value: string; sub?: string; color: string; highlight?: boolean }) {
-  return (
-    <div style={highlight ? calcRowHighlightStyle(color) : calcRowStyle}>
-      <div style={{ flex: 1 }}>
-        <div style={{ fontSize: 12, color: "var(--ls-text-muted)", fontFamily: "DM Sans, sans-serif", fontWeight: 500 }}>{label}</div>
-        {sub && <div style={{ fontSize: 10, color: "var(--ls-text-muted)", marginTop: 2 }}>{sub}</div>}
-      </div>
-      <div style={{ fontFamily: "Syne, sans-serif", fontWeight: highlight ? 800 : 700, fontSize: highlight ? 22 : 16, color }}>
-        {value}
-      </div>
-    </div>
-  );
-}
-
-function FilterTabCard({
-  label,
-  emoji,
-  count,
-  primary,
-  sub,
-  note,
-  color,
-  active,
-  onClick,
-  disabled,
-}: {
-  label: string;
-  emoji: string;
-  count: number;
-  primary: string;
-  sub: string;
-  note: string;
-  color: string;
-  active: boolean;
-  onClick: () => void;
-  disabled?: boolean;
-}) {
-  const isEmpty = count === 0;
+function TabPill({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      disabled={disabled}
-      style={tabCardStyle(color, isEmpty, active, !!disabled)}
+      style={{
+        height: 28,
+        padding: "0 14px",
+        borderRadius: 999,
+        border: "none",
+        cursor: "pointer",
+        background: active ? "var(--ls-rentab-bg-1)" : "transparent",
+        color: active ? "var(--ls-rentab-ink)" : "var(--ls-rentab-ink-3)",
+        fontFamily: "DM Sans, sans-serif",
+        fontSize: 12.5,
+        fontWeight: 600,
+        boxShadow: active ? "var(--ls-rentab-shadow-sm)" : "none",
+        transition: "all .15s",
+      }}
     >
-      <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginBottom: 6 }}>
-        <span style={{ fontSize: 14 }}>{emoji}</span>
-        <span style={{ fontFamily: "DM Sans, sans-serif", fontSize: 12, fontWeight: 700, color: "var(--ls-text)" }}>
-          {label}
-        </span>
-        <span style={{ fontSize: 11, color: "var(--ls-text-muted)" }}>
-          · {count}
-        </span>
-      </div>
-      <div style={{ fontFamily: "Syne, sans-serif", fontSize: 22, fontWeight: 800, color, marginBottom: 4 }}>
-        {primary}
-      </div>
-      <div style={{ fontSize: 11, color: "var(--ls-text-muted)", marginBottom: 4 }}>
-        {sub}
-      </div>
-      <div style={{ fontSize: 10, color: "var(--ls-text-muted)", fontStyle: "italic" }}>{note}</div>
-      {active ? (
-        <div style={activeBadgeStyle(color)}>✓ filtre actif</div>
-      ) : null}
+      {children}
     </button>
   );
 }
 
-function ProjectionCard({ title, value, sub, color }: { title: string; value: string; sub: string; color: string }) {
+function FilterChip({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
   return (
-    <div style={projectionCardStyle(color)}>
-      <div style={{ fontSize: 10, color: "var(--ls-text-muted)", textTransform: "uppercase", letterSpacing: 0.6, fontWeight: 600 }}>{title}</div>
-      <div style={{ fontFamily: "Syne, sans-serif", fontSize: 22, fontWeight: 800, color, marginTop: 4 }}>{value}</div>
-      <div style={{ fontSize: 11, color: "var(--ls-text-muted)", marginTop: 4 }}>{sub}</div>
+    <button
+      type="button"
+      onClick={onClick}
+      style={{
+        height: 28,
+        padding: "0 12px",
+        borderRadius: 999,
+        border: `1px solid ${active ? "transparent" : "var(--ls-rentab-line-2)"}`,
+        background: active ? "var(--ls-rentab-ink)" : "var(--ls-rentab-bg-1)",
+        color: active ? "var(--ls-rentab-bg-1)" : "var(--ls-rentab-ink-2)",
+        fontFamily: "DM Sans, sans-serif",
+        fontWeight: 500,
+        fontSize: 12.5,
+        cursor: "pointer",
+        transition: "all .15s",
+      }}
+    >
+      {children}
+    </button>
+  );
+}
+
+function TwelveMonthsView({
+  bars,
+  labels,
+  peakIdx,
+  currentIdx,
+  sum12,
+  avg,
+  trendPct,
+  loading,
+  currentMonthLabel,
+  daysLeft,
+  projection,
+}: {
+  bars: number[];
+  labels: string[];
+  peakIdx: number;
+  currentIdx: number;
+  sum12: number;
+  avg: number;
+  trendPct: number;
+  loading: boolean;
+  currentMonthLabel: string;
+  daysLeft: number;
+  projection: number;
+}) {
+  return (
+    <>
+      <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
+        <div>
+          <div style={miniLabelStyle}>Sur 12 mois</div>
+          <div style={{ display: "flex", alignItems: "baseline", gap: 12, marginTop: 6 }}>
+            <span
+              data-stealth
+              className="lr-num"
+              style={{
+                fontFamily: "Syne, sans-serif",
+                fontWeight: 700,
+                fontSize: 36,
+                color: "var(--ls-rentab-ink)",
+                letterSpacing: "-0.01em",
+              }}
+            >
+              {Math.round(sum12).toLocaleString("fr-FR")} €
+            </span>
+            <span style={{ fontFamily: "DM Sans, sans-serif", fontSize: 12, color: "var(--ls-rentab-ink-3)" }}>
+              cumul net · moy. {Math.round(avg).toLocaleString("fr-FR")} €/mois
+            </span>
+          </div>
+        </div>
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+          {peakIdx >= 0 && bars[peakIdx] > 0 && (
+            <span className="lr-chip lr-chip--gold">
+              <span aria-hidden="true">✦</span>
+              Record · {labels[peakIdx]} {Math.round(bars[peakIdx]).toLocaleString("fr-FR")}€
+            </span>
+          )}
+          {trendPct !== 0 && (
+            <span className={`lr-chip ${trendPct >= 0 ? "lr-chip--teal" : "lr-chip--coral"}`}>
+              <span aria-hidden="true">{trendPct >= 0 ? "↑" : "↓"}</span>
+              Tendance {trendPct >= 0 ? "+" : ""}{trendPct}% /6m
+            </span>
+          )}
+        </div>
+      </div>
+
+      <div className="lr-card-2" style={{ padding: 18 }}>
+        {loading ? (
+          <div style={{ textAlign: "center", padding: 40, color: "var(--ls-rentab-ink-3)", fontSize: 13 }}>
+            Chargement historique…
+          </div>
+        ) : bars.length === 0 ? (
+          <div style={{ textAlign: "center", padding: 40, color: "var(--ls-rentab-ink-3)", fontSize: 13 }}>
+            Pas encore d'historique. Tes futurs mois s'afficheront ici.
+          </div>
+        ) : (
+          <BarChart
+            data={bars}
+            labels={labels}
+            width={680}
+            height={220}
+            current={currentIdx}
+            peak={peakIdx}
+          />
+        )}
+      </div>
+
+      {/* Annotations auto-computed */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 10 }}>
+        {peakIdx >= 0 && peakIdx !== currentIdx && bars[peakIdx] > 0 && (
+          <Annotation
+            when={labels[peakIdx]}
+            title="Record"
+            body={`${Math.round(bars[peakIdx]).toLocaleString("fr-FR")}€ — ton plus gros mois sur la période.`}
+            tone="gold"
+          />
+        )}
+        {trendPct > 10 && (
+          <Annotation
+            when="6 derniers mois"
+            title="Tendance haussière"
+            body={`+${trendPct}% vs 6 mois précédents. Continue ce rythme.`}
+            tone="teal"
+          />
+        )}
+        {trendPct < -10 && (
+          <Annotation
+            when="6 derniers mois"
+            title="Décrochage"
+            body={`${trendPct}% vs 6 mois précédents. Relance tes clients dormants.`}
+            tone="purple"
+          />
+        )}
+        <Annotation
+          when={shortMonth(new Date().toISOString().slice(0, 10))}
+          title="En cours"
+          body={`${currentMonthLabel} · ${daysLeft > 0 ? `${daysLeft} j restants · projection ${Math.round(projection).toLocaleString("fr-FR")} €` : "mois écoulé"}`}
+          tone="teal"
+        />
+      </div>
+    </>
+  );
+}
+
+function CurrentMonthView({
+  filter,
+  setFilter,
+  filtered,
+  directMargin,
+  downlineOverride,
+  manualOverride,
+  total,
+  topClients,
+  marginPct,
+}: {
+  filter: FilterTab;
+  setFilter: (f: FilterTab) => void;
+  filtered: { label: string; total: number; revenue: number; share: number; count: number };
+  directMargin: number;
+  downlineOverride: number;
+  manualOverride: number;
+  total: number;
+  topClients: RentabilityTopClient[];
+  marginPct: number;
+}) {
+  return (
+    <>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+        <span
+          style={{
+            fontFamily: "DM Sans, sans-serif",
+            fontSize: 12,
+            color: "var(--ls-rentab-ink-3)",
+            marginRight: 4,
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 4,
+          }}
+        >
+          <span aria-hidden="true">▾</span>
+          Pivot
+        </span>
+        <FilterChip active={filter === "all"} onClick={() => setFilter("all")}>Tous</FilterChip>
+        <FilterChip active={filter === "public"} onClick={() => setFilter("public")}>Publics</FilterChip>
+        <FilterChip active={filter === "vip"} onClick={() => setFilter("vip")}>VIP</FilterChip>
+        <FilterChip active={filter === "distri"} onClick={() => setFilter("distri")}>
+          Distri (overrides)
+        </FilterChip>
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 14 }}>
+        <div className="lr-card-2" style={{ padding: 22 }}>
+          <div style={miniLabelStyle}>{filtered.label}</div>
+          <div
+            data-stealth
+            className="lr-num"
+            style={{
+              fontFamily: "Syne, sans-serif",
+              fontStyle: "italic",
+              fontWeight: 700,
+              fontSize: 52,
+              color: "var(--ls-rentab-ink)",
+              marginTop: 8,
+              letterSpacing: "-0.02em",
+              lineHeight: 1,
+            }}
+          >
+            {Math.round(filtered.total).toLocaleString("fr-FR")}
+            <span style={{ fontSize: 30, marginLeft: 2 }}>€</span>
+          </div>
+          <div style={{ marginTop: 10, display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+            <span className="lr-chip lr-chip--teal">{Math.round(filtered.share * 100)}% du total</span>
+            <span style={{ fontFamily: "DM Sans, sans-serif", fontSize: 12, color: "var(--ls-rentab-ink-3)" }}>
+              {filtered.count > 0 && `${filtered.count} ${filter === "distri" ? "ligne" : "client"}${filtered.count > 1 ? "s" : ""}`}
+            </span>
+          </div>
+          <div style={{ marginTop: 18, height: 8, background: "var(--ls-rentab-bg-2)", borderRadius: 999, overflow: "hidden" }}>
+            <div
+              style={{
+                width: `${Math.round(filtered.share * 100)}%`,
+                height: "100%",
+                background: "linear-gradient(90deg, var(--ls-rentab-teal), var(--ls-rentab-purple))",
+                borderRadius: 999,
+                transition: "width 600ms var(--ls-rentab-ease-out)",
+              }}
+            />
+          </div>
+          {filter === "all" && (
+            <div style={{ marginTop: 12, fontFamily: "DM Sans, sans-serif", fontSize: 12, color: "var(--ls-rentab-ink-3)" }}>
+              Marge perso retail : {Math.round(marginPct)}%
+            </div>
+          )}
+        </div>
+
+        <div className="lr-card-2" style={{ padding: 18, display: "flex", flexDirection: "column", gap: 12 }}>
+          <div style={miniLabelStyle}>Composition</div>
+          <CompoRow label="Marge directe" value={directMargin} pct={total > 0 ? directMargin / total : 0} color="var(--ls-rentab-teal)" />
+          <CompoRow label="Override équipe" value={downlineOverride} pct={total > 0 ? downlineOverride / total : 0} color="var(--ls-rentab-purple)" />
+          <CompoRow label="Override hors-app" value={manualOverride} pct={total > 0 ? manualOverride / total : 0} color="var(--ls-rentab-purple-soft)" />
+        </div>
+      </div>
+
+      {/* Top 3 clients (si pertinent pour ce filtre) */}
+      {(filter === "all" || filter === "public" || filter === "vip") && topClients.length > 0 && (
+        <div>
+          <div style={{ ...miniLabelStyle, marginBottom: 10 }}>Top 3 clients</div>
+          <div style={{ display: "grid", gap: 8 }}>
+            {topClients
+              .filter((c) => (filter === "vip" ? c.is_vip : filter === "public" ? !c.is_vip : true))
+              .slice(0, 3)
+              .map((c, i) => (
+                <div
+                  key={c.client_id}
+                  className="lr-card-2"
+                  style={{
+                    padding: "12px 16px",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 12,
+                  }}
+                >
+                  <span
+                    style={{
+                      width: 24,
+                      height: 24,
+                      borderRadius: "50%",
+                      background: i === 0 ? "var(--ls-rentab-gold-tint)" : "var(--ls-rentab-bg-2)",
+                      color: i === 0 ? "var(--ls-rentab-gold)" : "var(--ls-rentab-ink-3)",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontFamily: "Syne, sans-serif",
+                      fontWeight: 700,
+                      fontSize: 12,
+                    }}
+                  >
+                    #{i + 1}
+                  </span>
+                  <span style={{ flex: 1, fontFamily: "DM Sans, sans-serif", fontSize: 13.5, color: "var(--ls-rentab-ink)" }}>
+                    {c.client_name}
+                  </span>
+                  <span
+                    data-stealth
+                    className="lr-num"
+                    style={{
+                      fontFamily: "Syne, sans-serif",
+                      fontStyle: "italic",
+                      fontWeight: 700,
+                      fontSize: 18,
+                      color: "var(--ls-rentab-ink)",
+                    }}
+                  >
+                    {Math.round(c.revenue)} €
+                  </span>
+                </div>
+              ))}
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
+function CompoRow({ label, value, pct, color }: { label: string; value: number; pct: number; color: string }) {
+  return (
+    <div>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 6 }}>
+        <span style={{ fontFamily: "DM Sans, sans-serif", fontSize: 12.5, color: "var(--ls-rentab-ink-2)" }}>{label}</span>
+        <span style={{ fontFamily: "DM Sans, sans-serif", fontSize: 12, color: "var(--ls-rentab-ink-3)" }}>
+          <strong
+            data-stealth
+            className="lr-num"
+            style={{ color: "var(--ls-rentab-ink)", fontWeight: 600, marginRight: 6 }}
+          >
+            {Math.round(value).toLocaleString("fr-FR")} €
+          </strong>
+          {Math.round(pct * 100)}%
+        </span>
+      </div>
+      <div style={{ height: 6, background: "var(--ls-rentab-bg-2)", borderRadius: 999, overflow: "hidden" }}>
+        <div
+          style={{
+            width: `${pct * 100}%`,
+            height: "100%",
+            background: color,
+            borderRadius: 999,
+            transition: "width 600ms var(--ls-rentab-ease-out)",
+          }}
+        />
+      </div>
     </div>
   );
 }
 
-function TopClientRow({ client, rank }: { client: RentabilityTopClient; rank: number }) {
-  const vipMeta = client.vip_status && client.vip_status !== "none" ? VIP_META[client.vip_status] : null;
-  const products = client.products?.slice(0, 2).join(" · ") ?? "";
-  const moreProducts = (client.products?.length ?? 0) > 2 ? ` (+${client.products.length - 2})` : "";
-
+function Annotation({ when, title, body, tone }: { when: string; title: string; body: string; tone: "gold" | "purple" | "teal" }) {
+  const tones: Record<typeof tone, { bg: string; color: string }> = {
+    gold: { bg: "var(--ls-rentab-gold-tint)", color: "var(--ls-rentab-gold)" },
+    purple: { bg: "var(--ls-rentab-purple-tint)", color: "var(--ls-rentab-purple)" },
+    teal: { bg: "var(--ls-rentab-teal-tint)", color: "var(--ls-rentab-teal)" },
+  };
+  const t = tones[tone];
   return (
-    <li style={clientRowStyle(rank)}>
-      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-        <span style={rankBadgeStyle(rank)}>#{rank + 1}</span>
-        <span style={{ fontFamily: "Syne, sans-serif", fontWeight: 700, fontSize: 14, color: "var(--ls-text)", flex: 1 }}>
-          {client.client_name}
+    <div className="lr-card-2" style={{ padding: 14 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6, flexWrap: "wrap" }}>
+        <span
+          style={{
+            height: 22,
+            padding: "0 8px",
+            borderRadius: 999,
+            background: t.bg,
+            color: t.color,
+            fontFamily: "DM Sans, sans-serif",
+            fontSize: 11,
+            fontWeight: 600,
+            display: "inline-flex",
+            alignItems: "center",
+          }}
+        >
+          {when}
         </span>
-        {vipMeta && (
-          <span style={vipBadgeStyle(vipMeta.color)}>
-            {vipMeta.emoji} {vipMeta.label} −{vipMeta.discount}%
-          </span>
-        )}
-        <span style={{ fontFamily: "Syne, sans-serif", fontWeight: 700, fontSize: 14, color: "var(--ls-text)", whiteSpace: "nowrap" }}>
-          {formatEur(client.revenue)}
+        <span style={{ fontFamily: "DM Sans, sans-serif", fontSize: 13, fontWeight: 600, color: "var(--ls-rentab-ink)" }}>
+          {title}
         </span>
       </div>
-      <div style={{ fontSize: 11, color: "var(--ls-text-muted)", paddingLeft: 32 }}>
-        {client.items_count} produit{client.items_count > 1 ? "s" : ""}
-        {products && ` · ${products}${moreProducts}`}
-        {" · "}
-        <strong style={{ color: "var(--ls-gold)" }}>marge {formatEur(client.margin)}</strong>
+      <div style={{ fontFamily: "DM Sans, sans-serif", fontSize: 12, color: "var(--ls-rentab-ink-3)", lineHeight: 1.5 }}>
+        {body}
       </div>
-    </li>
+    </div>
   );
 }
 
-function DownlineRow({ entry, rank }: { entry: DownlineEntry; rank: number }) {
-  const { user, rankLabel, monthlyPv, overrideEur, overrideIsExact, breakdown, depth, chainLabel } = entry;
-  const depthBadge = depth === 1 ? "L1 direct" : `L${depth} via ${chainLabel}`;
-  const breakdownDetail = breakdown
-    ? [
-        breakdown.pv15 > 0 ? `${breakdown.pv15} PV @15%` : null,
-        breakdown.pv25 > 0 ? `${breakdown.pv25} PV @25%` : null,
-        breakdown.pv35 > 0 ? `${breakdown.pv35} PV @35%` : null,
-        breakdown.pv42 > 0 ? `${breakdown.pv42} PV @42%` : null,
-        breakdown.pvRoyalty > 0 ? `${breakdown.pvRoyalty} PV royalty` : null,
-      ]
-        .filter(Boolean)
-        .join(" · ")
-    : null;
+// ─── Plan d'action — nudges heuristiques V1 ─────────────────────────────────
+function ActionPlan({
+  delta,
+  prevMonthEur,
+  daysLeft,
+  projection,
+  downlineOverride,
+}: {
+  delta: number;
+  prevMonthEur: number;
+  daysLeft: number;
+  projection: number;
+  downlineOverride: number;
+}) {
+  // Heuristiques V1 — IA viendra plus tard (chantier Lor'Squad AI)
+  const nudges: Array<{ id: string; title: string; body: string; cta: string; muted?: boolean }> = [];
+
+  if (delta < 0 && prevMonthEur > 0) {
+    const pct = Math.round((Math.abs(delta) / prevMonthEur) * 100);
+    nudges.push({
+      id: "decroche",
+      title: `Tes ventes baissent de ${pct}% vs M-1`,
+      body: "Relance tes 3 clients dormants en priorité. Un message court suffit pour reconnecter.",
+      cta: "Voir les dormants",
+    });
+  }
+
+  if (daysLeft > 0 && daysLeft <= 10 && projection > prevMonthEur * 1.15) {
+    nudges.push({
+      id: "explose",
+      title: "Tu vas exploser ton mois 🚀",
+      body: `À ce rythme tu finis à ${Math.round(projection).toLocaleString("fr-FR")}€ — pousse les ${daysLeft} derniers jours.`,
+      cta: "Continuer",
+    });
+  }
+
+  if (downlineOverride === 0) {
+    nudges.push({
+      id: "team",
+      title: "Tes distri n'ont rien généré ce mois",
+      body: "Coach 1 distri cette semaine → +PV royalty pour toi et un boost pour eux.",
+      cta: "Mon équipe",
+      muted: true,
+    });
+  }
+
+  if (nudges.length < 3 && daysLeft > 0) {
+    nudges.push({
+      id: "rdv",
+      title: "Planifie 3 RDV bilan cette semaine",
+      body: "Chaque bilan = 1 programme vendu en moyenne. Direct sur ta marge directe.",
+      cta: "Nouveau bilan",
+      muted: nudges.length > 0,
+    });
+  }
+
+  if (nudges.length === 0) {
+    nudges.push({
+      id: "rien",
+      title: "Tout est sous contrôle",
+      body: "Reviens demain pour de nouveaux conseils. En attendant, prépare ton prochain bilan.",
+      cta: "Nouveau bilan",
+      muted: true,
+    });
+  }
+
   return (
-    <li style={clientRowStyle(rank)}>
-      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-        <span style={rankBadgeStyle(rank)}>#{rank + 1}</span>
-        <span style={{ fontFamily: "Syne, sans-serif", fontWeight: 700, fontSize: 14, color: "var(--ls-text)", flex: 1 }}>
-          {user.name}
+    <div
+      style={{
+        background:
+          "linear-gradient(140deg, var(--ls-rentab-gold-tint), transparent 70%), var(--ls-rentab-bg-1)",
+        border: "1px solid color-mix(in oklab, var(--ls-rentab-gold) 24%, transparent)",
+        borderRadius: 22,
+        padding: "18px 22px",
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12, flexWrap: "wrap" }}>
+        <span
+          aria-hidden="true"
+          style={{
+            width: 28,
+            height: 28,
+            borderRadius: 8,
+            background: "color-mix(in oklab, var(--ls-rentab-gold) 18%, transparent)",
+            color: "var(--ls-rentab-gold)",
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: 14,
+          }}
+        >
+          🎯
         </span>
-        <span style={vipBadgeStyle("var(--ls-purple)")}>
-          {rankLabel}
-        </span>
-        <span style={{ fontFamily: "Syne, sans-serif", fontWeight: 700, fontSize: 14, color: "var(--ls-purple)", whiteSpace: "nowrap" }}>
-          {overrideIsExact ? "" : "~"}{formatEur(overrideEur)}
+        <div style={{ fontFamily: "Syne, sans-serif", fontWeight: 600, fontSize: 17, color: "var(--ls-rentab-ink)" }}>
+          Plan d'action
+        </div>
+        <span className="lr-chip" style={{ height: 22, padding: "0 8px", fontSize: 10.5 }}>
+          {nudges.length} nudge{nudges.length > 1 ? "s" : ""} contextuels
         </span>
       </div>
-      <div style={{ fontSize: 11, color: "var(--ls-text-muted)", paddingLeft: 32 }}>
-        <span style={{
-          display: "inline-block",
-          padding: "1px 6px",
-          borderRadius: 5,
-          background: depth === 1 ? "color-mix(in srgb, var(--ls-teal) 14%, transparent)" : "color-mix(in srgb, var(--ls-purple) 12%, transparent)",
-          color: depth === 1 ? "var(--ls-teal)" : "var(--ls-purple)",
+      <div style={{ display: "grid", gap: 10 }}>
+        {nudges.slice(0, 3).map((n, idx) => (
+          <Nudge key={n.id} index={idx + 1} title={n.title} body={n.body} cta={n.cta} muted={n.muted} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function Nudge({ index, title, body, cta, muted }: { index: number; title: string; body: string; cta: string; muted?: boolean }) {
+  return (
+    <div
+      className="lr-card-2"
+      style={{
+        padding: "12px 14px",
+        display: "flex",
+        alignItems: "center",
+        gap: 14,
+        opacity: muted ? 0.85 : 1,
+      }}
+    >
+      <span
+        style={{
+          width: 26,
+          height: 26,
+          borderRadius: 999,
+          background: "var(--ls-rentab-bg-2)",
+          color: "var(--ls-rentab-ink-2)",
+          fontFamily: "Syne, sans-serif",
           fontWeight: 700,
-          marginRight: 6,
-          fontSize: 9,
-        }}>
-          {depthBadge}
-        </span>
-        {breakdownDetail ? (
-          <>
-            <strong>{(monthlyPv ?? 0).toLocaleString("fr-FR")} PV</strong> · {breakdownDetail}
-            <span style={{ color: "var(--ls-teal)", fontWeight: 700, marginLeft: 6 }}>· exact</span>
-          </>
-        ) : monthlyPv != null ? (
-          <>
-            <strong>{monthlyPv.toLocaleString("fr-FR")} PV</strong> ce mois (estim. compression chaine)
-          </>
-        ) : (
-          <em>PV non saisi · clique fiche distri pour saisir le breakdown</em>
-        )}
+          fontStyle: "italic",
+          fontSize: 13,
+          display: "inline-flex",
+          alignItems: "center",
+          justifyContent: "center",
+          flexShrink: 0,
+        }}
+      >
+        {index}
+      </span>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontFamily: "DM Sans, sans-serif", fontWeight: 600, fontSize: 13.5, color: "var(--ls-rentab-ink)" }}>
+          {title}
+        </div>
+        <div style={{ fontFamily: "DM Sans, sans-serif", fontSize: 12.5, color: "var(--ls-rentab-ink-3)", marginTop: 2 }}>
+          {body}
+        </div>
       </div>
-    </li>
+      <button
+        type="button"
+        className="lr-cta"
+        style={{ height: 30, padding: "0 12px", fontSize: 12 }}
+      >
+        {cta}
+        <span aria-hidden="true">→</span>
+      </button>
+    </div>
   );
 }
 
 // ─── Styles ────────────────────────────────────────────────────────────────
 
 const overlayStyle: React.CSSProperties = {
-  position: "fixed", inset: 0,
-  background: "color-mix(in srgb, var(--ls-bg) 80%, transparent)",
-  backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)",
-  zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center",
-  padding: "20px 16px", overflowY: "auto",
+  position: "fixed",
+  inset: 0,
+  background: "color-mix(in oklab, var(--ls-rentab-ink) 50%, transparent)",
+  backdropFilter: "blur(8px)",
+  WebkitBackdropFilter: "blur(8px)",
+  zIndex: 9999,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  padding: "20px 16px",
+  overflowY: "auto",
 };
 
 const modalStyle: React.CSSProperties = {
-  position: "relative", width: "100%", maxWidth: 580,
-  maxHeight: "calc(100vh - 40px)", overflowY: "auto",
-  background: "var(--ls-surface)",
-  border: "0.5px solid var(--ls-border)",
-  borderRadius: 22, padding: "26px 24px",
-  boxShadow: "0 24px 80px color-mix(in srgb, var(--ls-text) 24%, transparent)",
-};
-
-const closeBtnStyle: React.CSSProperties = {
-  position: "absolute", top: 12, right: 14,
-  width: 36, height: 36, borderRadius: 12,
-  background: "transparent", border: "none",
-  color: "var(--ls-text-muted)", fontSize: 26, cursor: "pointer", lineHeight: 1,
+  position: "relative",
+  width: "100%",
+  maxWidth: 920,
+  maxHeight: "calc(100vh - 40px)",
+  display: "flex",
+  flexDirection: "column",
+  background: "var(--ls-rentab-bg-1)",
+  border: "1px solid var(--ls-rentab-line)",
+  borderRadius: 28,
+  boxShadow: "var(--ls-rentab-shadow-lg)",
+  overflow: "hidden",
 };
 
 const headerStyle: React.CSSProperties = {
-  textAlign: "center", marginBottom: 18, paddingRight: 30,
-};
-
-const eyebrowStyle: React.CSSProperties = {
-  fontSize: 10, color: "var(--ls-gold)", textTransform: "uppercase",
-  letterSpacing: 1.4, fontWeight: 700, marginBottom: 4,
+  padding: "20px 26px 16px",
+  borderBottom: "1px solid var(--ls-rentab-line)",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+  gap: 18,
+  flexWrap: "wrap",
 };
 
 const titleStyle: React.CSSProperties = {
-  margin: 0, fontFamily: "Syne, sans-serif", fontSize: 22, fontWeight: 800, color: "var(--ls-text)",
+  fontFamily: "Syne, sans-serif",
+  fontWeight: 600,
+  fontSize: 22,
+  color: "var(--ls-rentab-ink)",
+  letterSpacing: "-0.01em",
+  marginTop: 4,
 };
 
-const rankPillStyle: React.CSSProperties = {
-  display: "inline-block", marginTop: 6,
-  fontSize: 11, padding: "3px 10px", borderRadius: 9,
-  background: "color-mix(in srgb, var(--ls-gold) 12%, transparent)",
-  color: "var(--ls-gold)",
-  border: "0.5px solid color-mix(in srgb, var(--ls-gold) 40%, transparent)",
-  fontFamily: "DM Sans, sans-serif", fontWeight: 600,
+const tabsWrapStyle: React.CSSProperties = {
+  display: "inline-flex",
+  padding: 3,
+  gap: 2,
+  background: "var(--ls-rentab-bg-2)",
+  borderRadius: 999,
+  border: "1px solid var(--ls-rentab-line)",
 };
 
-const sectionTitleStyle: React.CSSProperties = {
-  margin: "20px 0 10px", fontFamily: "Syne, sans-serif",
-  fontSize: 14, fontWeight: 700, color: "var(--ls-text)",
+const closeBtnStyle: React.CSSProperties = {
+  width: 34,
+  height: 34,
+  borderRadius: 999,
+  background: "var(--ls-rentab-bg-2)",
+  border: "1px solid var(--ls-rentab-line)",
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  cursor: "pointer",
+  color: "var(--ls-rentab-ink-2)",
+  fontSize: 18,
 };
 
-const calcGridStyle: React.CSSProperties = {
-  display: "flex", flexDirection: "column", gap: 6,
+const bodyStyle: React.CSSProperties = {
+  padding: "20px 26px 24px",
+  flex: 1,
+  overflowY: "auto",
+  display: "flex",
+  flexDirection: "column",
+  gap: 20,
 };
 
-const calcRowStyle: React.CSSProperties = {
-  display: "flex", alignItems: "center", justifyContent: "space-between",
-  padding: "10px 12px", background: "var(--ls-surface2)",
-  borderRadius: 10, gap: 10,
-};
-
-const calcRowHighlightStyle = (color: string): React.CSSProperties => ({
-  display: "flex", alignItems: "center", justifyContent: "space-between",
-  padding: "14px 14px", borderRadius: 12, gap: 10,
-  background: `color-mix(in srgb, ${color} 8%, var(--ls-surface))`,
-  border: `0.5px solid ${color}`,
-  boxShadow: `0 6px 20px color-mix(in srgb, ${color} 14%, transparent)`,
-});
-
-const tabsRowStyle: React.CSSProperties = {
-  display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 10,
-};
-
-const twoColStyle: React.CSSProperties = {
-  display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10,
-};
-
-const tabCardStyle = (
-  color: string,
-  isEmpty: boolean,
-  active: boolean,
-  disabled: boolean,
-): React.CSSProperties => ({
-  position: "relative",
-  textAlign: "left",
-  background: active
-    ? `color-mix(in srgb, ${color} 14%, var(--ls-surface))`
-    : isEmpty
-      ? "var(--ls-surface2)"
-      : `color-mix(in srgb, ${color} 6%, var(--ls-surface))`,
-  border: active
-    ? `1px solid ${color}`
-    : isEmpty
-      ? "0.5px dashed var(--ls-border)"
-      : `0.5px solid ${color}`,
-  borderRadius: 12,
-  padding: "12px 14px 22px",
-  cursor: disabled ? "not-allowed" : "pointer",
-  opacity: disabled ? 0.5 : isEmpty ? 0.6 : 1,
-  fontFamily: "inherit",
-  transition: "transform 0.15s, box-shadow 0.15s, background 0.15s",
-  boxShadow: active ? `0 4px 14px color-mix(in srgb, ${color} 18%, transparent)` : "none",
-});
-
-const activeBadgeStyle = (color: string): React.CSSProperties => ({
-  position: "absolute",
-  bottom: 6,
-  right: 8,
-  fontSize: 9,
-  fontFamily: "DM Sans, sans-serif",
-  fontWeight: 700,
-  padding: "2px 7px",
-  borderRadius: 6,
-  background: color,
-  color: "var(--ls-bg)",
-  textTransform: "uppercase",
-  letterSpacing: 0.5,
-});
-
-const resetFilterBtnStyle: React.CSSProperties = {
-  marginTop: 10,
-  padding: "7px 12px",
-  borderRadius: 8,
-  border: "0.5px solid var(--ls-border)",
-  background: "var(--ls-surface2)",
-  color: "var(--ls-text-muted)",
+const miniLabelStyle: React.CSSProperties = {
   fontFamily: "DM Sans, sans-serif",
   fontSize: 11,
-  cursor: "pointer",
-};
-
-const projectionCardStyle = (color: string): React.CSSProperties => ({
-  background: `color-mix(in srgb, ${color} 6%, var(--ls-surface))`,
-  border: `0.5px solid ${color}`,
-  borderRadius: 12, padding: "14px 16px",
-});
-
-const vipNoteStyle: React.CSSProperties = {
-  marginTop: 8,
-  padding: "8px 12px",
-  background: "color-mix(in srgb, var(--ls-gold) 6%, var(--ls-surface2))",
-  border: "0.5px solid color-mix(in srgb, var(--ls-gold) 28%, transparent)",
-  borderRadius: 10,
-  fontSize: 11, color: "var(--ls-text-muted)",
-  lineHeight: 1.5,
-};
-
-const clientsListStyle: React.CSSProperties = {
-  margin: 0, padding: 0, listStyle: "none",
-  display: "flex", flexDirection: "column", gap: 6,
-};
-
-const clientRowStyle = (idx: number): React.CSSProperties => ({
-  padding: "10px 12px",
-  background: idx === 0
-    ? "color-mix(in srgb, var(--ls-gold) 6%, var(--ls-surface))"
-    : "var(--ls-surface2)",
-  borderRadius: 10,
-  border: idx === 0 ? "0.5px solid color-mix(in srgb, var(--ls-gold) 30%, transparent)" : "none",
-});
-
-const rankBadgeStyle = (idx: number): React.CSSProperties => {
-  const colors = ["var(--ls-gold)", "#9CA3AF", "#A87132", "var(--ls-text-muted)", "var(--ls-text-muted)"];
-  return {
-    display: "inline-flex",
-    alignItems: "center",
-    justifyContent: "center",
-    minWidth: 24,
-    height: 22,
-    fontFamily: "Syne, sans-serif", fontWeight: 800, fontSize: 11,
-    color: colors[Math.min(idx, 4)],
-  };
-};
-
-const vipBadgeStyle = (color: string): React.CSSProperties => ({
-  fontSize: 9,
-  fontFamily: "DM Sans, sans-serif", fontWeight: 700,
-  padding: "2px 7px",
-  borderRadius: 6,
-  background: `color-mix(in srgb, ${color} 14%, transparent)`,
-  color, border: `0.5px solid ${color}`,
-  whiteSpace: "nowrap",
-});
-
-const emptyFilterStyle: React.CSSProperties = {
-  padding: "16px 14px",
-  background: "var(--ls-surface2)",
-  border: "0.5px dashed var(--ls-border)",
-  borderRadius: 10,
-  fontSize: 12,
-  color: "var(--ls-text-muted)",
-  fontStyle: "italic",
-  textAlign: "center",
-};
-
-const methodoStyle: React.CSSProperties = {
-  marginTop: 18, padding: "10px 12px",
-  background: "var(--ls-surface2)", border: "0.5px solid var(--ls-border)",
-  borderRadius: 10, fontSize: 11, color: "var(--ls-text-muted)",
-  lineHeight: 1.5, fontStyle: "italic",
-};
-
-const ghostBtnStyle: React.CSSProperties = {
-  width: "100%", marginTop: 16,
-  padding: "12px 18px", borderRadius: 12,
-  border: "0.5px solid var(--ls-border)",
-  background: "transparent", color: "var(--ls-text)",
-  fontFamily: "DM Sans, sans-serif", fontSize: 13, fontWeight: 600, cursor: "pointer",
+  letterSpacing: "0.14em",
+  textTransform: "uppercase",
+  color: "var(--ls-rentab-ink-3)",
 };
