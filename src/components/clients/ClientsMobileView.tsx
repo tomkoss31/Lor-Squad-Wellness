@@ -21,6 +21,7 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import type { Client, FollowUp, LifecycleStatus } from "../../types/domain";
+import { useHaptic } from "../../hooks/useHaptic";
 import { FiltersBottomSheet, type FiltersSheetState } from "./FiltersBottomSheet";
 
 interface ClientsMobileViewProps {
@@ -121,6 +122,7 @@ export function ClientsMobileView({
   relanceCount,
 }: ClientsMobileViewProps) {
   const navigate = useNavigate();
+  const haptic = useHaptic();
   const [filtersOpen, setFiltersOpen] = useState(false);
 
   // Compte filtres actifs (pour le badge sur bouton Filtres)
@@ -236,7 +238,10 @@ export function ClientsMobileView({
                   <li key={c.id} className="lb-client">
                     <button
                       type="button"
-                      onClick={() => navigate(`/clients/${c.id}`)}
+                      onClick={() => {
+                        haptic("tap");
+                        navigate(`/clients/${c.id}`);
+                      }}
                       className="lb-client-btn"
                     >
                       <span

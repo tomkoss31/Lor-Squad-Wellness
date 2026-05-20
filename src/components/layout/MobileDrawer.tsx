@@ -21,6 +21,7 @@ import { NavLink } from "react-router-dom";
 import { useAppContext } from "../../context/AppContext";
 import { getRoleLabel } from "../../lib/auth";
 import { useFormationStreak } from "../../hooks/useFormationStreak";
+import { useHaptic } from "../../hooks/useHaptic";
 import { CoachInstallPwaButton } from "../pwa/CoachInstallPwaButton";
 
 interface MobileDrawerProps {
@@ -243,10 +244,14 @@ function DrawerItem({
   active: boolean;
   onSelect: () => void;
 }) {
+  const haptic = useHaptic();
   return (
     <NavLink
       to={item.path}
-      onClick={onSelect}
+      onClick={() => {
+        haptic("select");
+        onSelect();
+      }}
       className={`lb-drawer-item${active ? " active" : ""}`}
     >
       <span className="icon" aria-hidden="true">{item.emoji}</span>

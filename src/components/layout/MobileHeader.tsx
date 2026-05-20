@@ -19,6 +19,7 @@
 import { useState } from "react";
 import { useAppContext } from "../../context/AppContext";
 import { useTheme } from "../../hooks/useTheme";
+import { useHaptic } from "../../hooks/useHaptic";
 import { AnnouncementBell } from "../announcements/AnnouncementBell";
 import { MobileDrawer } from "./MobileDrawer";
 
@@ -39,6 +40,7 @@ interface MobileHeaderProps {
 export function MobileHeader({ crumb, navItems, currentPath, onLogout }: MobileHeaderProps) {
   const { currentUser } = useAppContext();
   const { isDark, toggleTheme } = useTheme();
+  const haptic = useHaptic();
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   if (!currentUser) return null;
@@ -58,7 +60,10 @@ export function MobileHeader({ crumb, navItems, currentPath, onLogout }: MobileH
         <button
           type="button"
           className="lb-icon-btn"
-          onClick={() => setDrawerOpen(true)}
+          onClick={() => {
+            haptic("tap");
+            setDrawerOpen(true);
+          }}
           aria-label="Ouvrir le menu"
         >
           <svg
@@ -91,7 +96,10 @@ export function MobileHeader({ crumb, navItems, currentPath, onLogout }: MobileH
         <button
           type="button"
           className="lb-avatar"
-          onClick={toggleTheme}
+          onClick={() => {
+            haptic("select");
+            toggleTheme();
+          }}
           aria-label={isDark ? "Passer au mode clair" : "Passer au mode sombre"}
           title={`${currentUser.name} — ${isDark ? "Mode clair" : "Mode sombre"}`}
         >
