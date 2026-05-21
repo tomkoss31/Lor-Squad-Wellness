@@ -138,6 +138,10 @@ export interface User {
   currentRank?: HerbalifeRank;
   /** Timestamp où le distri a confirmé son rang. NULL = jamais rempli → force pop-up. */
   rankSetAt?: string | null;
+  /** Distri externe (chantier 2026-05-21) : compte créé manuellement pour
+   *  reconstruire l'arborescence Herbalife (downline historique pas inscrite
+   *  sur l'app). Pas de login utilisable. true = externe, false = vrai user. */
+  isExternal?: boolean;
   /** Accès beta formation (opt-in admin). Default false. Quand true,
    *  le user voit /formation même s'il n'est pas admin. */
   formationBetaAccess?: boolean;

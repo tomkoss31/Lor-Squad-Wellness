@@ -45,6 +45,7 @@ import {
   updateSupabaseClientFreePvTracking,
   updateSupabaseClientGeneralNote,
   updateSupabaseClientHerbalifeUplink,
+  createSupabaseExternalDistributor,
   updateSupabaseClientOnboardingChecks,
   fetchSupabaseProspects,
   fetchAllSupabaseFollowUpProtocolLogs,
@@ -137,6 +138,13 @@ interface AppContextValue {
       uplinkRank: import("../types/domain").HerbalifeRank | null;
     }
   ) => Promise<void>;
+  /** Crée un distri externe (hors-app, sans auth utilisable). Chantier
+   *  arborescence HL 2026-05-21. */
+  createExternalDistributor: (payload: {
+    name: string;
+    currentRank: import("../types/domain").HerbalifeRank;
+    sponsorId?: string | null;
+  }) => Promise<{ ok: boolean; error?: string; userId?: string }>;
   // Chantier Polish Vue complète (2026-04-24) : 3 checks onboarding coach
   setClientOnboardingChecks: (
     clientId: string,
@@ -1077,6 +1085,19 @@ export function AppProvider({ children }: PropsWithChildren) {
         setClients(prev => prev.map(c =>
           c.id === clientId ? { ...c, generalNote } : c
         ));
+      },
+      // Distri externe (chantier 2026-05-21)
+      createExternalDistributor: async (payload: {
+        name: string;
+        currentRank: import("../types/domain").HerbalifeRank;
+        sponsorId?: string | null;
+      }) => {
+        const result = await createSupabaseExternalDistributor(payload);
+        if (result.ok && currentUser) {
+          await refreshRemoteData(currentUser);
+          return { ok: true, userId: result.userId };
+        }
+        return { ok: false, error: result.ok ? undefined : result.error };
       },
       // Uplink Herbalife (Chantier 2026-05-21)
       setClientHerbalifeUplink: async (

@@ -37,10 +37,16 @@ const RANK_OPTIONS: Array<{ value: HerbalifeRank; label: string }> = [
 type Mode = "default" | "user" | "free";
 
 export function HerbalifeUplinkPanel({ client }: Props) {
-  const { users, currentUser, setClientHerbalifeUplink } = useAppContext();
+  const { users, currentUser, setClientHerbalifeUplink, createExternalDistributor } = useAppContext();
   const { push: pushToast } = useToast();
   const [saving, setSaving] = useState(false);
   const [open, setOpen] = useState(false);
+  // Création inline d'un distri externe (chantier 2026-05-21 arborescence)
+  const [showCreateExternal, setShowCreateExternal] = useState(false);
+  const [newExtName, setNewExtName] = useState("");
+  const [newExtRank, setNewExtRank] = useState<HerbalifeRank>("success_builder_42");
+  const [newExtSponsorId, setNewExtSponsorId] = useState<string>("");
+  const [creatingExternal, setCreatingExternal] = useState(false);
 
   // Mode initial : déduit de l'état actuel
   const initialMode: Mode = client.herbalifeUplinkUserId
@@ -161,26 +167,145 @@ export function HerbalifeUplinkPanel({ client }: Props) {
           )}
 
           {mode === "user" && (
-            <label style={labelStyle}>
-              <span style={labelTextStyle}>Distri uplink (dans l'app)</span>
-              <select
-                value={pickedUserId}
-                onChange={(e) => setPickedUserId(e.target.value)}
-                style={selectStyle}
-                disabled={saving}
-              >
-                <option value="">— Choisis un user de l'app —</option>
-                {uplinkCandidates.map((u) => (
-                  <option key={u.id} value={u.id}>
-                    {u.name} — {RANK_LABELS[u.currentRank ?? "distributor_25"] ?? "Distributeur 25%"}
-                    {u.active ? "" : " (inactif)"}
-                  </option>
-                ))}
-              </select>
-              <span style={{ ...labelTextStyle, fontSize: 11, textTransform: "none", letterSpacing: 0, marginTop: 2, fontWeight: 500 }}>
-                Le rang Herbalife du user choisi sera utilisé automatiquement.
-              </span>
-            </label>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              <label style={labelStyle}>
+                <span style={labelTextStyle}>Distri uplink (dans l'app)</span>
+                <select
+                  value={pickedUserId}
+                  onChange={(e) => setPickedUserId(e.target.value)}
+                  style={selectStyle}
+                  disabled={saving}
+                >
+                  <option value="">— Choisis un user de l'app —</option>
+                  <optgroup label="Distri actifs">
+                    {uplinkCandidates.filter((u) => u.active && !u.isExternal).map((u) => (
+                      <option key={u.id} value={u.id}>
+                        {u.name} — {RANK_LABELS[u.currentRank ?? "distributor_25"] ?? "Distributeur 25%"}
+                      </option>
+                    ))}
+                  </optgroup>
+                  <optgroup label="Distri externes (créés manuellement)">
+                    {uplinkCandidates.filter((u) => u.isExternal).map((u) => (
+                      <option key={u.id} value={u.id}>
+                        {u.name} — {RANK_LABELS[u.currentRank ?? "distributor_25"] ?? "Distributeur 25%"} (externe)
+                      </option>
+                    ))}
+                  </optgroup>
+                  <optgroup label="Distri inactifs">
+                    {uplinkCandidates.filter((u) => !u.active && !u.isExternal).map((u) => (
+                      <option key={u.id} value={u.id}>
+                        {u.name} — {RANK_LABELS[u.currentRank ?? "distributor_25"] ?? "Distributeur 25%"} (inactif)
+                      </option>
+                    ))}
+                  </optgroup>
+                </select>
+                <span style={{ ...labelTextStyle, fontSize: 11, textTransform: "none", letterSpacing: 0, marginTop: 2, fontWeight: 500 }}>
+                  Le rang Herbalife du user choisi sera utilisé automatiquement.
+                </span>
+              </label>
+
+              {/* Création inline d'un nouveau distri externe (chantier
+                  arborescence 2026-05-21). Permet d'ajouter Virgile,
+                  Aurélie, etc. sans quitter la fiche client. */}
+              {!showCreateExternal ? (
+                <button
+                  type="button"
+                  onClick={() => setShowCreateExternal(true)}
+                  style={addExternalBtnStyle}
+                  disabled={saving}
+                >
+                  <span aria-hidden="true">+</span>
+                  Créer un nouveau distri externe
+                </button>
+              ) : (
+                <div style={createExternalBoxStyle}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
+                    <span style={{ ...labelTextStyle, fontSize: 11 }}>Nouveau distri externe (hors-app)</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowCreateExternal(false);
+                        setNewExtName("");
+                        setNewExtSponsorId("");
+                      }}
+                      style={{ background: "transparent", border: "none", color: "var(--ls-text-muted)", cursor: "pointer", fontSize: 16 }}
+                      disabled={creatingExternal}
+                      aria-label="Annuler création"
+                    >
+                      ×
+                    </button>
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="Nom (ex: Virgile, Aurélie Urbes)"
+                    value={newExtName}
+                    onChange={(e) => setNewExtName(e.target.value)}
+                    style={{ ...inputStyle, marginBottom: 8 }}
+                    disabled={creatingExternal}
+                    maxLength={80}
+                  />
+                  <select
+                    value={newExtRank}
+                    onChange={(e) => setNewExtRank(e.target.value as HerbalifeRank)}
+                    style={{ ...selectStyle, marginBottom: 8 }}
+                    disabled={creatingExternal}
+                  >
+                    {RANK_OPTIONS.map((o) => (
+                      <option key={o.value} value={o.value}>{o.label}</option>
+                    ))}
+                  </select>
+                  <select
+                    value={newExtSponsorId}
+                    onChange={(e) => setNewExtSponsorId(e.target.value)}
+                    style={{ ...selectStyle, marginBottom: 8 }}
+                    disabled={creatingExternal}
+                  >
+                    <option value="">— Sponsor (optionnel, défaut : toi) —</option>
+                    {users.filter((u) => u.id !== client.distributorId).map((u) => (
+                      <option key={u.id} value={u.id}>
+                        {u.name}{u.isExternal ? " (externe)" : u.active ? "" : " (inactif)"}
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      if (!newExtName.trim() || newExtName.trim().length < 2) {
+                        pushToast({ tone: "warning", title: "Nom requis (min 2 caractères)." });
+                        return;
+                      }
+                      setCreatingExternal(true);
+                      try {
+                        const result = await createExternalDistributor({
+                          name: newExtName.trim(),
+                          currentRank: newExtRank,
+                          sponsorId: newExtSponsorId || currentUser?.id || null,
+                        });
+                        if (result.ok && result.userId) {
+                          pushToast({
+                            tone: "success",
+                            title: `${newExtName.trim()} ajouté à ton arborescence`,
+                            message: "Tu peux maintenant le sélectionner comme uplink HL.",
+                          });
+                          setPickedUserId(result.userId);
+                          setShowCreateExternal(false);
+                          setNewExtName("");
+                          setNewExtSponsorId("");
+                        } else {
+                          pushToast({ tone: "error", title: result.error ?? "Échec création." });
+                        }
+                      } finally {
+                        setCreatingExternal(false);
+                      }
+                    }}
+                    style={btnPrimaryStyle}
+                    disabled={creatingExternal}
+                  >
+                    {creatingExternal ? "Création…" : "Ajouter à mon arborescence"}
+                  </button>
+                </div>
+              )}
+            </div>
           )}
 
           {mode === "free" && (
@@ -400,6 +525,33 @@ const btnGhostStyle: React.CSSProperties = {
   fontFamily: "DM Sans, sans-serif",
   fontSize: 12.5,
   cursor: "pointer",
+};
+
+const addExternalBtnStyle: React.CSSProperties = {
+  width: "100%",
+  padding: "10px 14px",
+  borderRadius: 10,
+  border: "1px dashed var(--ls-border)",
+  background: "transparent",
+  color: "var(--ls-teal)",
+  fontFamily: "DM Sans, sans-serif",
+  fontSize: 12.5,
+  fontWeight: 600,
+  cursor: "pointer",
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: 6,
+  transition: "background .15s",
+};
+
+const createExternalBoxStyle: React.CSSProperties = {
+  padding: 12,
+  borderRadius: 12,
+  background: "color-mix(in srgb, var(--ls-teal) 6%, var(--ls-surface2))",
+  border: "0.5px solid color-mix(in srgb, var(--ls-teal) 24%, transparent)",
+  display: "flex",
+  flexDirection: "column",
 };
 
 const btnPrimaryStyle: React.CSSProperties = {
