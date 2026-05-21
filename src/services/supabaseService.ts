@@ -334,6 +334,7 @@ function mapUser(row: UserRow): User {
     bio: row.bio ?? null,
     currentRank: (row.current_rank ?? "distributor_25") as User["currentRank"],
     rankSetAt: row.rank_set_at ?? null,
+    isExternal: (row as { is_external?: boolean }).is_external ?? false,
     formationBetaAccess: row.formation_beta_access ?? false,
     city: row.city ?? null,
     coachingSince: row.coaching_since ?? null,
@@ -1925,6 +1926,41 @@ export async function updateSupabaseClientFreeFollowUp(params: {
  * uplinkUserId = NULL → on retombe sur distributor_id (cas standard).
  * label = texte libre informatif (nom de l'uplink hors-app).
  */
+/**
+ * Crée un distri externe (hors-app) — chantier 2026-05-21.
+ * Pas d'auth utilisable, juste un user "fantôme" pour l'arborescence HL.
+ */
+export async function createSupabaseExternalDistributor(payload: {
+  name: string;
+  currentRank: import("../types/domain").HerbalifeRank;
+  sponsorId?: string | null;
+}): Promise<{ ok: true; userId: string } | { ok: false; error: string }> {
+  const client = await requireSupabase();
+  const {
+    data: { session },
+  } = await client.auth.getSession();
+  if (!session?.access_token) {
+    return { ok: false, error: "Session admin introuvable." };
+  }
+  const response = await fetch("/api/admin-create-external-distributor", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${session.access_token}`,
+    },
+    body: JSON.stringify(payload),
+  });
+  const body = (await response.json().catch(() => ({}))) as {
+    ok?: boolean;
+    error?: string;
+    userId?: string;
+  };
+  if (!response.ok || !body.ok || !body.userId) {
+    return { ok: false, error: body.error ?? "Impossible de créer le distri externe." };
+  }
+  return { ok: true, userId: body.userId };
+}
+
 export async function updateSupabaseClientHerbalifeUplink(params: {
   clientId: string;
   uplinkUserId: string | null;
