@@ -1,0 +1,286 @@
+/* Rentabilité — design tokens (La Base 360, theme app coach) */
+
+/* Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Syne:ital,wght@0,500;0,600;0,700;0,800;1,600;1,700;1,800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Inter:wght@400;500;600;700&display=swap');
+
+/* Theme — light by default; flip with [data-theme="dark"] */
+.ls {
+  --ls-gold: #B8922A;
+  --ls-gold-soft: #d6b964;
+  --ls-teal: #0D9488;
+  --ls-teal-soft: #14b8a6;
+  --ls-purple: #5B21B6;
+  --ls-purple-soft: #7c3aed;
+  --ls-coral: #EF4444;
+  --ls-coral-soft: #f87171;
+
+  --ls-bg: #faf7f2;          /* page bg, warm off-white */
+  --ls-bg-1: #ffffff;        /* card bg */
+  --ls-bg-2: #f4efe6;        /* nested surfaces, hairlines */
+  --ls-bg-3: #ede6d6;
+  --ls-ink: #1a1612;         /* primary text */
+  --ls-ink-2: #4a4339;       /* secondary text */
+  --ls-ink-3: #8a8275;       /* tertiary text / labels */
+  --ls-line: rgba(26, 22, 18, 0.08);
+  --ls-line-2: rgba(26, 22, 18, 0.12);
+
+  --ls-purple-tint: rgba(91, 33, 182, 0.06);
+  --ls-purple-tint-2: rgba(91, 33, 182, 0.10);
+  --ls-teal-tint: rgba(13, 148, 136, 0.06);
+  --ls-gold-tint: rgba(184, 146, 42, 0.07);
+  --ls-coral-tint: rgba(239, 68, 68, 0.08);
+
+  --ls-shadow-sm: 0 1px 2px rgba(26,22,18,.04), 0 0 0 1px rgba(26,22,18,.04);
+  --ls-shadow-md: 0 2px 8px rgba(26,22,18,.05), 0 0 0 1px rgba(26,22,18,.05);
+  --ls-shadow-lg: 0 18px 48px -16px rgba(26,22,18,.18), 0 2px 8px rgba(26,22,18,.04), 0 0 0 1px rgba(26,22,18,.04);
+  --ls-glow: 0 0 0 0 transparent;
+
+  --ls-radius-sm: 8px;
+  --ls-radius: 14px;
+  --ls-radius-lg: 22px;
+  --ls-radius-xl: 28px;
+
+  --ls-font-display: 'Syne', system-ui, sans-serif;
+  --ls-font-ui: 'DM Sans', system-ui, sans-serif;
+  --ls-font-body: 'Inter', system-ui, sans-serif;
+  --ls-font-mono: ui-monospace, 'JetBrains Mono', SFMono-Regular, Menlo, monospace;
+
+  --ls-ease: cubic-bezier(.22,.61,.36,1);
+  --ls-ease-out: cubic-bezier(.16,1,.3,1);
+}
+
+.ls[data-theme="dark"] {
+  --ls-gold: #C9A84C;
+  --ls-gold-soft: #e2c878;
+  --ls-teal: #2DD4BF;
+  --ls-teal-soft: #5eead4;
+  --ls-purple: #8B5CF6;
+  --ls-purple-soft: #a78bfa;
+  --ls-coral: #FB7185;
+  --ls-coral-soft: #fda4af;
+
+  --ls-bg: #0f1115;
+  --ls-bg-1: #171a21;
+  --ls-bg-2: #1d2129;
+  --ls-bg-3: #232833;
+  --ls-ink: #f4f1ea;
+  --ls-ink-2: #c8c1b1;
+  --ls-ink-3: #807868;
+  --ls-line: rgba(244, 241, 234, 0.08);
+  --ls-line-2: rgba(244, 241, 234, 0.14);
+
+  --ls-purple-tint: rgba(139, 92, 246, 0.12);
+  --ls-purple-tint-2: rgba(139, 92, 246, 0.18);
+  --ls-teal-tint: rgba(45, 212, 191, 0.10);
+  --ls-gold-tint: rgba(201, 168, 76, 0.10);
+  --ls-coral-tint: rgba(251, 113, 133, 0.12);
+
+  --ls-shadow-sm: 0 1px 2px rgba(0,0,0,.4), 0 0 0 1px rgba(255,255,255,.04);
+  --ls-shadow-md: 0 2px 12px rgba(0,0,0,.4), 0 0 0 1px rgba(255,255,255,.04);
+  --ls-shadow-lg: 0 24px 60px -20px rgba(0,0,0,.7), 0 2px 12px rgba(0,0,0,.4), 0 0 0 1px rgba(255,255,255,.05);
+}
+
+/* Base reset inside artboards */
+.ls, .ls * {
+  box-sizing: border-box;
+}
+.ls {
+  font-family: var(--ls-font-body);
+  color: var(--ls-ink);
+  background: var(--ls-bg);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  line-height: 1.4;
+}
+
+/* ── Typography helpers ─────────────────────────────────────────── */
+.ls-eyebrow {
+  font-family: var(--ls-font-ui);
+  font-weight: 600;
+  font-size: 10.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ls-gold);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.ls-display {
+  font-family: var(--ls-font-display);
+  font-style: italic;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.02;
+  background: linear-gradient(95deg, var(--ls-teal) 0%, var(--ls-purple) 55%, var(--ls-coral) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.ls-num {
+  font-family: var(--ls-font-display);
+  font-feature-settings: "ss01", "tnum";
+  font-variant-numeric: tabular-nums;
+}
+.ls-mono {
+  font-family: var(--ls-font-mono);
+  font-feature-settings: "tnum";
+}
+
+/* ── Chips ──────────────────────────────────────────────────────── */
+.ls-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  height: 26px; padding: 0 10px;
+  border-radius: 999px;
+  font-family: var(--ls-font-ui);
+  font-weight: 500;
+  font-size: 12.5px;
+  letter-spacing: -0.005em;
+  background: var(--ls-bg-2);
+  color: var(--ls-ink-2);
+  border: 1px solid var(--ls-line);
+  white-space: nowrap;
+}
+.ls-chip svg { width: 12px; height: 12px; }
+.ls-chip--purple { background: var(--ls-purple-tint); color: var(--ls-purple); border-color: var(--ls-purple-tint-2); }
+.ls-chip--gold   { background: var(--ls-gold-tint);   color: var(--ls-gold);   border-color: color-mix(in oklab, var(--ls-gold) 22%, transparent); }
+.ls-chip--teal   { background: var(--ls-teal-tint);   color: var(--ls-teal);   border-color: color-mix(in oklab, var(--ls-teal) 22%, transparent); }
+.ls-chip--coral  { background: var(--ls-coral-tint);  color: var(--ls-coral);  border-color: color-mix(in oklab, var(--ls-coral) 24%, transparent); }
+.ls-chip--ink    { background: var(--ls-ink); color: var(--ls-bg-1); border-color: transparent; }
+
+.ls-chip--lg { height: 30px; padding: 0 12px; font-size: 13px; }
+
+/* Status pill */
+.ls-pill {
+  display: inline-flex; align-items: center; gap: 8px;
+  height: 32px; padding: 0 14px 0 10px;
+  border-radius: 999px;
+  font-family: var(--ls-font-ui);
+  font-weight: 600;
+  font-size: 13px;
+}
+.ls-pill__dot {
+  width: 8px; height: 8px; border-radius: 50%;
+}
+.ls-pill--win {
+  background: color-mix(in oklab, var(--ls-teal) 12%, var(--ls-bg-1));
+  color: var(--ls-teal);
+  border: 1px solid color-mix(in oklab, var(--ls-teal) 22%, transparent);
+}
+.ls-pill--win .ls-pill__dot { background: var(--ls-teal); box-shadow: 0 0 0 4px color-mix(in oklab, var(--ls-teal) 22%, transparent); }
+.ls-pill--push {
+  background: color-mix(in oklab, var(--ls-coral) 12%, var(--ls-bg-1));
+  color: var(--ls-coral);
+  border: 1px solid color-mix(in oklab, var(--ls-coral) 24%, transparent);
+  animation: ls-pulse 2.2s ease-in-out infinite;
+}
+.ls-pill--push .ls-pill__dot { background: var(--ls-coral); box-shadow: 0 0 0 4px color-mix(in oklab, var(--ls-coral) 24%, transparent); }
+@keyframes ls-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 color-mix(in oklab, var(--ls-coral) 28%, transparent); }
+  50%      { box-shadow: 0 0 0 6px color-mix(in oklab, var(--ls-coral) 0%,  transparent); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ls-pill--push { animation: none; }
+}
+
+/* ── Card ───────────────────────────────────────────────────────── */
+.ls-card {
+  background: var(--ls-bg-1);
+  border-radius: var(--ls-radius-lg);
+  border: 1px solid var(--ls-line);
+  box-shadow: var(--ls-shadow-md);
+}
+
+/* CTA */
+.ls-cta {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  height: 40px; padding: 0 16px;
+  border-radius: 999px;
+  font-family: var(--ls-font-ui);
+  font-weight: 600;
+  font-size: 13.5px;
+  color: var(--ls-ink);
+  background: transparent;
+  border: 1px solid var(--ls-line-2);
+  cursor: pointer;
+  transition: background .15s var(--ls-ease), transform .15s var(--ls-ease), border-color .15s;
+}
+.ls-cta:hover { background: var(--ls-bg-2); border-color: var(--ls-ink-3); }
+.ls-cta:active { transform: translateY(1px); }
+.ls-cta--solid {
+  background: var(--ls-ink); color: var(--ls-bg-1); border-color: transparent;
+}
+.ls-cta--solid:hover { background: var(--ls-ink-2); }
+
+/* Stagger fade-up */
+@keyframes ls-fade-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.ls-fadeup { animation: ls-fade-up .6s var(--ls-ease-out) both; }
+.ls-d-1 { animation-delay: 80ms; }
+.ls-d-2 { animation-delay: 160ms; }
+.ls-d-3 { animation-delay: 240ms; }
+.ls-d-4 { animation-delay: 320ms; }
+.ls-d-5 { animation-delay: 400ms; }
+.ls-d-6 { animation-delay: 480ms; }
+@media (prefers-reduced-motion: reduce) {
+  .ls-fadeup { animation: none; }
+}
+
+/* Hero mesh — radial fields tinted to brand */
+.ls-mesh {
+  position: absolute; inset: 0; pointer-events: none;
+  background:
+    radial-gradient(60% 50% at 14% 18%, color-mix(in oklab, var(--ls-teal)   12%, transparent) 0%, transparent 60%),
+    radial-gradient(55% 45% at 86% 10%, color-mix(in oklab, var(--ls-purple) 10%, transparent) 0%, transparent 60%),
+    radial-gradient(70% 60% at 50% 110%, color-mix(in oklab, var(--ls-gold)   8%, transparent) 0%, transparent 60%);
+}
+
+/* Border-gradient container (total line) */
+.ls-border-gradient {
+  position: relative;
+  border-radius: var(--ls-radius-lg);
+  background: var(--ls-bg-1);
+}
+.ls-border-gradient::before {
+  content: '';
+  position: absolute; inset: 0;
+  border-radius: inherit;
+  padding: 1.5px;
+  background: linear-gradient(120deg, var(--ls-teal), var(--ls-purple) 55%, var(--ls-gold));
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  pointer-events: none;
+}
+
+/* Divider arrow used in calculation row */
+.ls-arrow {
+  display: inline-block;
+  width: 28px; height: 1px;
+  background: var(--ls-line-2);
+  position: relative;
+}
+.ls-arrow::after {
+  content: ''; position: absolute; right: -1px; top: -3px;
+  width: 7px; height: 7px;
+  border-right: 1px solid var(--ls-line-2);
+  border-top:   1px solid var(--ls-line-2);
+  transform: rotate(45deg);
+}
+
+/* Avatar */
+.ls-avatar {
+  display: inline-flex; align-items: center; justify-content: center;
+  font-family: var(--ls-font-ui);
+  font-weight: 600;
+  border-radius: 50%;
+  background: var(--ls-bg-3);
+  color: var(--ls-ink);
+  font-size: 12px;
+  letter-spacing: 0;
+}
+
+/* Scrollbar hide — we use overflow:auto sometimes for chip rows */
+.ls ::-webkit-scrollbar { display: none; }
+.ls { scrollbar-width: none; }
