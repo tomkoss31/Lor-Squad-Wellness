@@ -429,6 +429,7 @@ function mapClient(row: ClientRow): Client {
     distributorName: row.distributor_name,
     herbalifeUplinkUserId: (row as { herbalife_uplink_user_id?: string | null }).herbalife_uplink_user_id ?? null,
     herbalifeUplinkLabel: (row as { herbalife_uplink_label?: string | null }).herbalife_uplink_label ?? null,
+    herbalifeUplinkRank: ((row as { herbalife_uplink_rank?: string | null }).herbalife_uplink_rank ?? null) as import("../types/domain").HerbalifeRank | null,
     status: row.status,
     objective: row.objective,
     currentProgram: row.current_program,
@@ -1928,14 +1929,16 @@ export async function updateSupabaseClientHerbalifeUplink(params: {
   clientId: string;
   uplinkUserId: string | null;
   uplinkLabel: string | null;
+  uplinkRank: import("../types/domain").HerbalifeRank | null;
 }): Promise<void> {
-  const { clientId, uplinkUserId, uplinkLabel } = params;
+  const { clientId, uplinkUserId, uplinkLabel, uplinkRank } = params;
   const client = await requireSupabase();
   const { error } = await client
     .from("clients")
     .update({
       herbalife_uplink_user_id: uplinkUserId,
       herbalife_uplink_label: uplinkLabel,
+      herbalife_uplink_rank: uplinkRank,
     })
     .eq("id", clientId);
   if (error) throw error;

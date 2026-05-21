@@ -386,8 +386,12 @@ export interface Client {
    *  Utilisé par la RPC get_users_rentability pour calculer le distri_factor
    *  correct selon le rang de l'uplink réel. */
   herbalifeUplinkUserId?: string | null;
-  /** Libellé info uplink HL hors-app si pas créé comme user. */
+  /** Nom libre de l'uplink HL hors-app (si pas dans users) — combiné à
+   *  herbalifeUplinkRank pour calcul + affichage. */
   herbalifeUplinkLabel?: string | null;
+  /** Rang Herbalife de l'uplink hors-app (si herbalifeUplinkUserId est null).
+   *  Utilisé en fallback par la RPC pour le distri_factor. */
+  herbalifeUplinkRank?: HerbalifeRank | null;
   status: "active" | "pending" | "follow-up";
   objective: Objective;
   currentProgram: string;
