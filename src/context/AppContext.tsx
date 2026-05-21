@@ -131,7 +131,11 @@ interface AppContextValue {
    *  Utilisé quand le coach n'est pas le distri HL d'origine. */
   setClientHerbalifeUplink: (
     clientId: string,
-    payload: { uplinkUserId: string | null; uplinkLabel: string | null }
+    payload: {
+      uplinkUserId: string | null;
+      uplinkLabel: string | null;
+      uplinkRank: import("../types/domain").HerbalifeRank | null;
+    }
   ) => Promise<void>;
   // Chantier Polish Vue complète (2026-04-24) : 3 checks onboarding coach
   setClientOnboardingChecks: (
@@ -1077,12 +1081,17 @@ export function AppProvider({ children }: PropsWithChildren) {
       // Uplink Herbalife (Chantier 2026-05-21)
       setClientHerbalifeUplink: async (
         clientId: string,
-        payload: { uplinkUserId: string | null; uplinkLabel: string | null }
+        payload: {
+          uplinkUserId: string | null;
+          uplinkLabel: string | null;
+          uplinkRank: import("../types/domain").HerbalifeRank | null;
+        }
       ) => {
         await updateSupabaseClientHerbalifeUplink({
           clientId,
           uplinkUserId: payload.uplinkUserId,
           uplinkLabel: payload.uplinkLabel,
+          uplinkRank: payload.uplinkRank,
         });
         setClients(prev => prev.map(c =>
           c.id === clientId
@@ -1090,6 +1099,7 @@ export function AppProvider({ children }: PropsWithChildren) {
                 ...c,
                 herbalifeUplinkUserId: payload.uplinkUserId,
                 herbalifeUplinkLabel: payload.uplinkLabel,
+                herbalifeUplinkRank: payload.uplinkRank,
               }
             : c
         ));
