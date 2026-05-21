@@ -49,6 +49,39 @@ export function EquipeTab() {
 
   return (
     <div className="space-y-4">
+      {/* Chantier arborescence HL (2026-05-21) : reconstruire downline
+          historique avec distri externes hors-app + saisie PV mensuels. */}
+      {currentUser.role === "admin" && (
+        <Card className="space-y-2">
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+            <div>
+              <p className="eyebrow-label" style={{ color: "var(--ls-teal)" }}>🌳 Arborescence Herbalife</p>
+              <p style={{ fontSize: 14, color: "var(--ls-text-muted)", marginTop: 4 }}>
+                Reconstruis ta downline historique (distri hors-app comme Virgile, Aurélie) et saisis leurs PV mensuels pour activer ton override.
+              </p>
+            </div>
+            <Link
+              to="/parametres/arborescence-herbalife"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                padding: "10px 16px",
+                borderRadius: 999,
+                background: "linear-gradient(135deg, var(--ls-teal), color-mix(in srgb, var(--ls-teal) 80%, var(--ls-purple)))",
+                color: "var(--ls-bg)",
+                fontSize: 13,
+                fontWeight: 600,
+                textDecoration: "none",
+                fontFamily: "DM Sans, sans-serif",
+                whiteSpace: "nowrap",
+              }}
+            >
+              Gérer mon arborescence →
+            </Link>
+          </div>
+        </Card>
+      )}
+
       <Card className="space-y-4">
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
           <div>
