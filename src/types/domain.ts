@@ -380,6 +380,14 @@ export interface Client {
   city?: string;
   distributorId: string;
   distributorName: string;
+  /** Distri uplink Herbalife réel (chantier 2026-05-21). NULL = coach app
+   *  = uplink HL (cas standard). Renseigné quand le client suit un coach
+   *  différent de son distri HL d'origine (ex: client orphelin repris).
+   *  Utilisé par la RPC get_users_rentability pour calculer le distri_factor
+   *  correct selon le rang de l'uplink réel. */
+  herbalifeUplinkUserId?: string | null;
+  /** Libellé info uplink HL hors-app si pas créé comme user. */
+  herbalifeUplinkLabel?: string | null;
   status: "active" | "pending" | "follow-up";
   objective: Objective;
   currentProgram: string;
