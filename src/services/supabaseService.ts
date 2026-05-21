@@ -427,6 +427,8 @@ function mapClient(row: ClientRow): Client {
     city: row.city ?? undefined,
     distributorId: row.distributor_id,
     distributorName: row.distributor_name,
+    herbalifeUplinkUserId: (row as { herbalife_uplink_user_id?: string | null }).herbalife_uplink_user_id ?? null,
+    herbalifeUplinkLabel: (row as { herbalife_uplink_label?: string | null }).herbalife_uplink_label ?? null,
     status: row.status,
     objective: row.objective,
     currentProgram: row.current_program,
@@ -1917,6 +1919,28 @@ export async function updateSupabaseClientFreeFollowUp(params: {
 
 // ─── General Note (Chantier bilan updates 2026-04-20) ────────────────────
 // Note libre "À savoir sur ce client" — anecdotes, préférences, loisirs.
+/**
+ * Met à jour l'uplink Herbalife réel du client (chantier 2026-05-21).
+ * uplinkUserId = NULL → on retombe sur distributor_id (cas standard).
+ * label = texte libre informatif (nom de l'uplink hors-app).
+ */
+export async function updateSupabaseClientHerbalifeUplink(params: {
+  clientId: string;
+  uplinkUserId: string | null;
+  uplinkLabel: string | null;
+}): Promise<void> {
+  const { clientId, uplinkUserId, uplinkLabel } = params;
+  const client = await requireSupabase();
+  const { error } = await client
+    .from("clients")
+    .update({
+      herbalife_uplink_user_id: uplinkUserId,
+      herbalife_uplink_label: uplinkLabel,
+    })
+    .eq("id", clientId);
+  if (error) throw error;
+}
+
 export async function updateSupabaseClientGeneralNote(params: {
   clientId: string;
   generalNote: string;

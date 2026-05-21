@@ -44,6 +44,7 @@ import {
   updateSupabaseClientFreeFollowUp,
   updateSupabaseClientFreePvTracking,
   updateSupabaseClientGeneralNote,
+  updateSupabaseClientHerbalifeUplink,
   updateSupabaseClientOnboardingChecks,
   fetchSupabaseProspects,
   fetchAllSupabaseFollowUpProtocolLogs,
@@ -125,6 +126,13 @@ interface AppContextValue {
   setClientFreePvTracking: (clientId: string, freePvTracking: boolean) => Promise<void>;
   // Chantier bilan updates (2026-04-20) : note libre "À savoir sur ce client"
   setClientGeneralNote: (clientId: string, generalNote: string) => Promise<void>;
+  /** Définit le distri uplink Herbalife réel du client (chantier 2026-05-21).
+   *  uplinkUserId = null → coach app = uplink HL (cas standard).
+   *  Utilisé quand le coach n'est pas le distri HL d'origine. */
+  setClientHerbalifeUplink: (
+    clientId: string,
+    payload: { uplinkUserId: string | null; uplinkLabel: string | null }
+  ) => Promise<void>;
   // Chantier Polish Vue complète (2026-04-24) : 3 checks onboarding coach
   setClientOnboardingChecks: (
     clientId: string,
@@ -1064,6 +1072,26 @@ export function AppProvider({ children }: PropsWithChildren) {
         await updateSupabaseClientGeneralNote({ clientId, generalNote });
         setClients(prev => prev.map(c =>
           c.id === clientId ? { ...c, generalNote } : c
+        ));
+      },
+      // Uplink Herbalife (Chantier 2026-05-21)
+      setClientHerbalifeUplink: async (
+        clientId: string,
+        payload: { uplinkUserId: string | null; uplinkLabel: string | null }
+      ) => {
+        await updateSupabaseClientHerbalifeUplink({
+          clientId,
+          uplinkUserId: payload.uplinkUserId,
+          uplinkLabel: payload.uplinkLabel,
+        });
+        setClients(prev => prev.map(c =>
+          c.id === clientId
+            ? {
+                ...c,
+                herbalifeUplinkUserId: payload.uplinkUserId,
+                herbalifeUplinkLabel: payload.uplinkLabel,
+              }
+            : c
         ));
       },
       // Onboarding checks (Chantier Polish Vue complète 2026-04-24)

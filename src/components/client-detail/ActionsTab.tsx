@@ -20,6 +20,7 @@ import { useToast, buildSupabaseErrorToast } from "../../context/ToastContext";
 import { ClientAccessModal } from "../client/ClientAccessModal";
 import { MessageTemplatesButton } from "./MessageTemplatesButton";
 import { ClientVipCoachPanel } from "../../features/client-vip/ClientVipCoachPanel";
+import { HerbalifeUplinkPanel } from "./HerbalifeUplinkPanel";
 import { refreshClientRecap } from "../../services/supabaseService";
 import { useClientPriorityAction } from "../../hooks/useClientPriorityAction";
 import { ActionsRdvBlock } from "./ActionsRdvBlock";
@@ -434,6 +435,11 @@ export function ActionsTab({ client, onEditRdv, onOpenSharePublic, onGoToVueComp
       <div style={{ marginTop: 12 }}>
         <ClientVipCoachPanel client={client} />
       </div>
+
+      {/* Chantier uplink HL (2026-05-21) : override le distri uplink HL
+          réel pour les clients orphelins repris (ex: Stéphanie sous
+          Ophélie 42% mais suivie par Mélanie). */}
+      <HerbalifeUplinkPanel client={client} />
 
       {/* ═══ GRID 2 COLONNES ═════════════════════════════════════════════ */}
       <div
