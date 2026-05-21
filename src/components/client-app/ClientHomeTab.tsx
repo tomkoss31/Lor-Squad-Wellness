@@ -7,7 +7,7 @@ import type { HerbalifeProduct } from "../../data/herbalifeCatalog";
 import { ClientPublicShareConsent } from "./ClientPublicShareConsent";
 import { createIcsDataUri } from "../../lib/googleCalendar";
 import { ClientAppHomeHero } from "./ClientAppHomeHero";
-import { ClientAppDailyAction } from "./ClientAppDailyAction";
+// import { ClientAppDailyAction } from "./ClientAppDailyAction"; // retiré 2026-05-21 (cf. demande Thomas)
 import type { Assessment, Measurement } from "../../lib/clientAppData";
 import { ClientXpBanner } from "../../features/client-xp/ClientXpBanner";
 import { recordClientXp } from "../../features/client-xp/useClientXp";
@@ -415,7 +415,10 @@ export function ClientHomeTab({
         startDate={first?.date ?? metrics[0]?.date ?? new Date().toISOString()}
         onSeeEvolution={onSeeEvolution ?? (() => undefined)}
       />
-      <ClientAppDailyAction onAction={() => undefined} />
+      {/* Section "Ton action du jour · Fais ta pesée" retirée 2026-05-21
+          sur demande Thomas — redondante avec l'invite intégrée dans la
+          courbe d'évolution. Composant gardé pour réactivation future. */}
+      {/* <ClientAppDailyAction onAction={() => undefined} /> */}
 
       {/* 2. CARTE RDV (compact teal v2 — polish V3 2026-04-29) */}
       {rdvInfo ? (

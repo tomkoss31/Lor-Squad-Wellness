@@ -99,9 +99,23 @@ export function ClientAppPage() {
   // Chantier invitation client app (2026-04-21) : toast accueil quand le
   // client arrive ici depuis /bienvenue?welcome=1. Le toast s'efface tout
   // seul après 4s.
+  // Toast bienvenue (?welcome=1) — fix 2026-05-21 : exclusivement à la
+  // 1ère ouverture sur ce device (per token). Sans le gate localStorage,
+  // un refresh ou un re-click sur le magic link relançait le toast à chaque
+  // fois. Demande Thomas : welcome onboarding strict 1×.
   const [showWelcome, setShowWelcome] = useState(() => {
     if (typeof window === 'undefined') return false
-    return new URLSearchParams(window.location.search).get('welcome') === '1'
+    const wantWelcome = new URLSearchParams(window.location.search).get('welcome') === '1'
+    if (!wantWelcome) return false
+    const tokenKey = token ?? 'anon'
+    const seenKey = `lb360-client-welcome-shown-${tokenKey}`
+    try {
+      if (window.localStorage.getItem(seenKey)) return false
+      window.localStorage.setItem(seenKey, new Date().toISOString())
+    } catch {
+      /* localStorage indisponible → on affiche par défaut */
+    }
+    return true
   })
   useEffect(() => {
     if (!showWelcome) return
