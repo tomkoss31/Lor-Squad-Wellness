@@ -1,31 +1,20 @@
 // =============================================================================
 // RentabJourney — Phase D Co-pilote V5
 //
-// REFONTE 2026-05-20 (Chantier Rentabilité Premium V2) :
-// Le widget devient la WalletCard premium (carte Apple Wallet dark
-// cinematic avec flip 3D). L'ancien parcours horizontal est conservé
-// dans `RentabJourney.legacy.tsx` au cas où Thomas voudrait revenir.
+// REFONTE V2 (2026-05-20, validée Thomas) :
+// Widget HORIZONTAL "Tu gagnes X €" + jauge à droite avec marker
+// projection. Click "Voir détail" navigate vers /rentabilite.
 //
-// Pour rollback rapide : remplacer le contenu de ce fichier par celui
-// de `RentabJourney.legacy.tsx`.
+// La WalletCard (Apple Wallet style) est conservée mais déplacée en
+// petit format sur la page /rentabilite (rappel visuel).
 // =============================================================================
 
-import { RentabilityWalletCard } from "../../../../components/rentability/RentabilityWalletCard";
+import { RentabilityHorizontalWidget } from "../../../../components/rentability/RentabilityHorizontalWidget";
 
 export function RentabJourney() {
   return (
-    <section
-      data-v5-rentab-journey
-      style={{
-        padding: "16px 4px",
-        display: "flex",
-        justifyContent: "center",
-      }}
-    >
-      {/* interaction="navigate" : click sur la carte = ouvre /rentabilite
-          (puisqu'on est sur Co-pilote, la carte est un widget aperçu).
-          Le flip 3D est dispo sur la page rentabilité hero. */}
-      <RentabilityWalletCard interaction="navigate" />
+    <section data-v5-rentab-journey style={{ padding: "16px 0" }}>
+      <RentabilityHorizontalWidget />
     </section>
   );
 }

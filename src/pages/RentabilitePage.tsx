@@ -273,10 +273,14 @@ export function RentabilitePage() {
             </span>
           </div>
 
-          {/* Wallet Card centrée — sur la page, click = flip 3D vers le
-              breakdown (on est déjà sur /rentabilite, pas besoin de navigate). */}
-          <div className="lr-fadeup lr-d-1">
-            <RentabilityWalletCard interaction="flip" onOpenDetail={() => setDetailOpen(true)} />
+          {/* Wallet Card — format compact en rappel visuel (validé Thomas
+              2026-05-20). Click = flip 3D vers le breakdown. */}
+          <div className="lr-fadeup lr-d-1" style={{ display: "flex", justifyContent: "center" }}>
+            <RentabilityWalletCard
+              interaction="flip"
+              variant="compact"
+              onOpenDetail={() => setDetailOpen(true)}
+            />
           </div>
 
           {/* 3 colonnes stats */}
