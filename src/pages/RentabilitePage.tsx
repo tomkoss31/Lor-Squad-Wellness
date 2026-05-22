@@ -168,8 +168,39 @@ export function RentabilitePage() {
     if (!isAdminOrRef || !currentUser) return [];
     const coupleIds = isCoupleAggregated ? resolveCoupleUserIds(users) : [currentUser.id];
     const excludeSet = new Set(coupleIds);
-    return members.filter((m) => !excludeSet.has(m.user_id));
-  }, [members, isAdminOrRef, currentUser, isCoupleAggregated, users]);
+    const fromEngagement = members.filter((m) => !excludeSet.has(m.user_id));
+    // Chantier "frozen contributifs" 2026-05-22 : un distri gelé (Prisca/Alex)
+    // n'apparaît pas dans get_team_engagement (RPC filtre les inactifs) mais
+    // s'il a un breakdown PV saisi ce mois, ses royalties remontent à Thomas.
+    // On le réintègre côté front pour qu'il soit visible dans la grid team.
+    const knownIds = new Set(fromEngagement.map((m) => m.user_id));
+    const frozenContrib = users
+      .filter((u) =>
+        !excludeSet.has(u.id) &&
+        !knownIds.has(u.id) &&
+        u.frozenAt &&
+        breakdowns.some((b) =>
+          b.userId === u.id &&
+          ((b.pv15 ?? 0) + (b.pv25 ?? 0) + (b.pv35 ?? 0) + (b.pv42 ?? 0) + (b.pvRoyalty ?? 0)) > 0,
+        ),
+      )
+      .map((u) => ({
+        user_id: u.id,
+        name: u.name,
+        role: u.role,
+        current_rank: u.currentRank ?? null,
+        parent_id: u.sponsorId ?? null,
+        depth: 1,
+        xp_total: 0, xp_level: 0, xp_academy: 0, xp_bilans: 0, xp_rdv: 0, xp_messages: 0, xp_formation: 0, xp_daily: 0,
+        academy_step: 0, academy_total_sections: 0, academy_percent: 0, academy_completed_at: null,
+        formation_validated_n1: 0, formation_validated_n2: 0, formation_validated_n3: 0,
+        formation_pending: 0, formation_total_validated: 0,
+        bilans_30d: 0, rdv_30d: 0, messages_7d: 0,
+        last_seen_at: null, lifetime_login_count: 0,
+        status: "decroche" as const,
+      }));
+    return [...fromEngagement, ...frozenContrib];
+  }, [members, isAdminOrRef, currentUser, isCoupleAggregated, users, breakdowns]);
 
   // ─── Count-up values pour les 3 stats hero ─────────────────────────────
   const animTotal = useCountUp(Math.round(totalMargin), { duration: 900 });
