@@ -1997,7 +1997,10 @@ export async function createSupabasePassiveSupervisor(payload: {
   email: string;
   currentRank: import("../types/domain").HerbalifeRank;
   sponsorId?: string | null;
-}): Promise<{ ok: true; userId: string; email: string; password: string; loginUrl: string } | { ok: false; error: string }> {
+}): Promise<
+  | { ok: true; userId: string; email: string; password: string; loginUrl: string; linkedExisting: boolean }
+  | { ok: false; error: string }
+> {
   const client = await requireSupabase();
   const { data: { session } } = await client.auth.getSession();
   if (!session?.access_token) return { ok: false, error: "Session admin introuvable." };
@@ -2006,22 +2009,28 @@ export async function createSupabasePassiveSupervisor(payload: {
     response = await fetch("/api/admin-create-external-distributor", {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
-      // Light V2 : vrai compte distri (email + password généré côté serveur).
       body: JSON.stringify({ ...payload, mode: "passive_supervisor" }),
     });
   } catch (netErr) {
     return { ok: false, error: `Réseau : ${netErr instanceof Error ? netErr.message : "indisponible"}` };
   }
-  let body: { ok?: boolean; error?: string; userId?: string; email?: string; password?: string; loginUrl?: string } = {};
+  let body: { ok?: boolean; error?: string; userId?: string; email?: string; password?: string; loginUrl?: string; linkedExisting?: boolean } = {};
   try { body = await response.json(); } catch {
     const txt = await response.text().catch(() => "");
     console.error("[createPassiveSupervisor] non-json", response.status, txt.slice(0, 200));
     return { ok: false, error: `HTTP ${response.status} : endpoint inaccessible.` };
   }
-  if (!response.ok || !body.ok || !body.userId || !body.email || !body.password) {
+  if (!response.ok || !body.ok || !body.userId || !body.email) {
     return { ok: false, error: body.error ?? `Échec (HTTP ${response.status}).` };
   }
-  return { ok: true, userId: body.userId, email: body.email, password: body.password, loginUrl: body.loginUrl ?? "/connexion" };
+  return {
+    ok: true,
+    userId: body.userId,
+    email: body.email,
+    password: body.password ?? "",
+    loginUrl: body.loginUrl ?? "/connexion",
+    linkedExisting: body.linkedExisting === true,
+  };
 }
 
 /**
