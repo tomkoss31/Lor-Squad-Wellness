@@ -1990,10 +1990,13 @@ export async function createSupabasePassiveSupervisor(payload: {
   if (!session?.access_token) return { ok: false, error: "Session admin introuvable." };
   let response: Response;
   try {
-    response = await fetch("/api/admin-create-passive-supervisor", {
+    response = await fetch("/api/admin-create-external-distributor", {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
-      body: JSON.stringify(payload),
+      // Fusionné dans admin-create-external-distributor (limite Vercel Hobby
+      // 12 functions). Le flag mode=passive_supervisor route vers la branche
+      // passive (rangs Supervisor+ uniquement + génération token magic link).
+      body: JSON.stringify({ ...payload, mode: "passive_supervisor" }),
     });
   } catch (netErr) {
     return { ok: false, error: `Réseau : ${netErr instanceof Error ? netErr.message : "indisponible"}` };

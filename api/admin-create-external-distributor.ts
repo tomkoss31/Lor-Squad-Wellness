@@ -112,6 +112,9 @@ async function handleImpl(req: any, res: any) {
   const name = String(payload.name ?? "").trim();
   const currentRank = String(payload.currentRank ?? "").trim();
   const sponsorId = String(payload.sponsorId ?? "").trim() || null;
+  // Mode passive supervisor (chantier 2026-05-22 — fusionné dans cet endpoint
+  // pour respecter la limite Vercel Hobby de 12 functions max par deploy).
+  const isPassive = payload.mode === "passive_supervisor" || payload.isPassiveSupervisor === true;
 
   if (!name || name.length < 2) {
     res.status(400).json({ ok: false, error: "Nom requis (min 2 caractères)." });
@@ -119,6 +122,11 @@ async function handleImpl(req: any, res: any) {
   }
   if (!ALLOWED_RANKS.includes(currentRank)) {
     res.status(400).json({ ok: false, error: "Rang Herbalife invalide." });
+    return;
+  }
+  // Mode passive : restreint aux rangs Supervisor+ (50%)
+  if (isPassive && !currentRank.endsWith("_50")) {
+    res.status(400).json({ ok: false, error: "Mode passif réservé aux Supervisor 50%+." });
     return;
   }
 
@@ -166,14 +174,15 @@ async function handleImpl(req: any, res: any) {
   // Crée un auth.users synthétique (FK contrainte sur public.users.id)
   // Email + password aléatoires, jamais transmis → l'externe ne peut pas
   // se connecter. email_confirm true pour éviter l'envoi de mail.
-  const syntheticEmail = `external-${randomToken(12)}@external.labase360.local`;
-  const syntheticPassword = `ext-${randomToken(20)}`;
+  const prefix = isPassive ? "passive" : "external";
+  const syntheticEmail = `${prefix}-${randomToken(12)}@${prefix}.labase360.local`;
+  const syntheticPassword = `${prefix}-${randomToken(20)}`;
 
   const { data: createdUser, error: createError } = await admin.auth.admin.createUser({
     email: syntheticEmail,
     password: syntheticPassword,
     email_confirm: true,
-    user_metadata: { name, is_external: true },
+    user_metadata: { name, is_external: true, is_passive_supervisor: isPassive },
   });
 
   if (createError || !createdUser?.user) {
@@ -196,7 +205,8 @@ async function handleImpl(req: any, res: any) {
     sponsor_name: sponsorName,
     active: false,
     is_external: true,
-    title: "Distributeur externe (hors-app)",
+    is_passive_supervisor: isPassive,
+    title: isPassive ? "Distri passif (Supervisor)" : "Distributeur externe (hors-app)",
     created_at: new Date().toISOString(),
   });
 
@@ -212,13 +222,39 @@ async function handleImpl(req: any, res: any) {
     return;
   }
 
+  // Si passive supervisor : génère + insère le token magic link
+  let magicLink: string | null = null;
+  let passiveToken: string | null = null;
+  if (isPassive) {
+    passiveToken = randomToken(28);
+    const { error: tokenError } = await admin.from("passive_supervisor_accounts").insert({
+      user_id: createdUser.user.id,
+      token: passiveToken,
+      created_by: requester.id,
+    });
+    if (tokenError) {
+      console.error("[admin-create-external] passive token insert failed:", tokenError);
+      // Best-effort cleanup
+      try { await admin.auth.admin.deleteUser(createdUser.user.id); } catch { /* ignore */ }
+      res.status(500).json({ ok: false, error: `Token magic link : ${tokenError.message}` });
+      return;
+    }
+    // URL absolue via x-forwarded-host
+    const host = req.headers["x-forwarded-host"] || req.headers.host;
+    const proto = req.headers["x-forwarded-proto"] || "https";
+    const origin = host ? `${proto}://${host}` : "";
+    magicLink = origin
+      ? `${origin}/distri-passif?token=${passiveToken}`
+      : `/distri-passif?token=${passiveToken}`;
+  }
+
   // Audit log (chantier #12 polish)
   await logAdminAction(admin, {
     actorUserId: requester.id,
-    action: "external_distributor_created",
+    action: isPassive ? "passive_supervisor_created" : "external_distributor_created",
     targetId: createdUser.user.id,
     targetLabel: name,
-    payload: { currentRank, sponsorId },
+    payload: { currentRank, sponsorId, isPassive },
     ip,
   });
 
@@ -228,5 +264,6 @@ async function handleImpl(req: any, res: any) {
     name,
     currentRank,
     sponsorId,
+    ...(isPassive ? { token: passiveToken, magicLink } : {}),
   });
 }
