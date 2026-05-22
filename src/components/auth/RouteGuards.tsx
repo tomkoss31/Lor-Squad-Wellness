@@ -59,6 +59,20 @@ export function RoleRoute({ allowedRoles }: { allowedRoles: UserRole[] }) {
   return <Outlet />;
 }
 
+/**
+ * Bloque les routes interdites aux Supervisor passifs (chantier Light V2
+ * 2026-05-22). Un passif n'a pas de portefeuille client → on cache
+ * Clients/Bilans/Agenda/Suivi PV/Mon équipe et on redirige vers Co-pilote
+ * si tentative d'accès direct via URL.
+ */
+export function NotPassiveRoute() {
+  const { authReady, currentUser } = useAppContext();
+  if (!authReady) return <AuthBootSplash />;
+  if (!currentUser) return <Navigate to="/welcome" replace />;
+  if (currentUser.isPassiveSupervisor) return <Navigate to="/co-pilote" replace />;
+  return <Outlet />;
+}
+
 // =============================================================================
 // AuthBootSplash — Splash screen La Base 360 (rebrand 2026-05-06 v2)
 //

@@ -84,24 +84,30 @@ export function AppLayout() {
   // Thomas. Les emojis sont aria-hidden, ne changent pas l accessibilite.
   // - urgent (boolean) : badge en coral G3 pour signaler une urgence
   //   (Suivi PV en retard) au lieu d un badge red generique.
-  const navigation: Array<{ label: string; path: string; emoji: string; badge: number; urgent?: boolean; adminChip?: boolean; tourId?: string }> = [
-    { label: "Co-pilote", path: "/co-pilote", emoji: "▦", badge: 0, tourId: "nav-copilote" },
-    { label: "FLEX", path: "/flex", emoji: "⚡", badge: 0, tourId: "nav-flex" },
-    { label: "Agenda", path: "/agenda", emoji: "📅", badge: todayProspectsCount, tourId: "nav-agenda" },
-    { label: "Messagerie", path: "/messages", emoji: "✉️", badge: unreadMessageCount ?? 0, tourId: "nav-messagerie" },
-    { label: "Dossiers clients", path: "/clients", emoji: "👥", badge: 0, tourId: "nav-clients" },
-    { label: "Suivi PV", path: "/pv", emoji: "💰", badge: pvOverdueCount, urgent: pvOverdueCount > 0, tourId: "nav-pv" },
-    ...(currentUser.role === "admin"
-      ? [{ label: "Mon équipe", path: "/team", emoji: "🛟", badge: 0, adminChip: true }]
-      : []),
-    { label: "Mon développement", path: "/developpement", emoji: "🎓", badge: 0, tourId: "nav-developpement" },
-    {
-      label: "Paramètres",
-      path: "/parametres",
-      emoji: "⚙️",
-      badge: 0,
-    },
-  ];
+  // Sidebar Light V2 pour Supervisor passif (chantier 2026-05-22) :
+  // pas de fiches clients, pas de PV, pas de team. Juste rentab perso +
+  // équipe (visible passive) + Académie + messagerie + paramètres.
+  const isPassive = currentUser.isPassiveSupervisor === true;
+  const navigation: Array<{ label: string; path: string; emoji: string; badge: number; urgent?: boolean; adminChip?: boolean; tourId?: string }> = isPassive
+    ? [
+        { label: "Co-pilote", path: "/co-pilote", emoji: "▦", badge: 0, tourId: "nav-copilote" },
+        { label: "Messagerie", path: "/messages", emoji: "✉️", badge: unreadMessageCount ?? 0, tourId: "nav-messagerie" },
+        { label: "Mon développement", path: "/developpement", emoji: "🎓", badge: 0, tourId: "nav-developpement" },
+        { label: "Paramètres", path: "/parametres", emoji: "⚙️", badge: 0 },
+      ]
+    : [
+        { label: "Co-pilote", path: "/co-pilote", emoji: "▦", badge: 0, tourId: "nav-copilote" },
+        { label: "FLEX", path: "/flex", emoji: "⚡", badge: 0, tourId: "nav-flex" },
+        { label: "Agenda", path: "/agenda", emoji: "📅", badge: todayProspectsCount, tourId: "nav-agenda" },
+        { label: "Messagerie", path: "/messages", emoji: "✉️", badge: unreadMessageCount ?? 0, tourId: "nav-messagerie" },
+        { label: "Dossiers clients", path: "/clients", emoji: "👥", badge: 0, tourId: "nav-clients" },
+        { label: "Suivi PV", path: "/pv", emoji: "💰", badge: pvOverdueCount, urgent: pvOverdueCount > 0, tourId: "nav-pv" },
+        ...(currentUser.role === "admin"
+          ? [{ label: "Mon équipe", path: "/team", emoji: "🛟", badge: 0, adminChip: true }]
+          : []),
+        { label: "Mon développement", path: "/developpement", emoji: "🎓", badge: 0, tourId: "nav-developpement" },
+        { label: "Paramètres", path: "/parametres", emoji: "⚙️", badge: 0 },
+      ];
   // urgentRelanceCount n'est plus utilisé dans la sidebar (item Recommandations
   // retiré) — on le conserve en variable au cas où un futur dashboard l'affiche.
   void urgentRelanceCount;
@@ -470,7 +476,9 @@ export function AppLayout() {
                   fontFamily: "'Inter', sans-serif",
                   fontWeight: 500,
                 }}>
-                  {currentUser.role === 'admin' ? 'Coach · Admin' : 'Coach'}
+                  {isPassive
+                    ? "🔗 Supervisor passif"
+                    : currentUser.role === 'admin' ? 'Coach · Admin' : 'Coach'}
                 </div>
               </div>
 

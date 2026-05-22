@@ -187,9 +187,11 @@ async function handleImpl(req: any, res: any) {
   const name = String(payload.name ?? "").trim();
   const currentRank = String(payload.currentRank ?? "").trim();
   const sponsorId = String(payload.sponsorId ?? "").trim() || null;
-  // Mode passive supervisor (chantier 2026-05-22 — fusionné dans cet endpoint
-  // pour respecter la limite Vercel Hobby de 12 functions max par deploy).
+  // Mode passive supervisor V2 (chantier Light 2026-05-22) :
+  // vrai compte distri avec email + password réels (au lieu d'auth synthétique).
+  // L'admin reçoit en retour les credentials à transmettre via WhatsApp.
   const isPassive = payload.mode === "passive_supervisor" || payload.isPassiveSupervisor === true;
+  const passiveEmail = isPassive ? String(payload.email ?? "").trim().toLowerCase() : "";
 
   if (!name || name.length < 2) {
     res.status(400).json({ ok: false, error: "Nom requis (min 2 caractères)." });
@@ -203,6 +205,13 @@ async function handleImpl(req: any, res: any) {
   if (isPassive && !currentRank.endsWith("_50")) {
     res.status(400).json({ ok: false, error: "Mode passif réservé aux Supervisor 50%+." });
     return;
+  }
+  // Mode passive V2 : email réel obligatoire (pour login normal)
+  if (isPassive) {
+    if (!passiveEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(passiveEmail)) {
+      res.status(400).json({ ok: false, error: "Email valide requis pour un compte passif." });
+      return;
+    }
   }
 
   // (admin client + auth check déjà faits en haut, communs à toutes les actions)
@@ -222,16 +231,23 @@ async function handleImpl(req: any, res: any) {
     sponsorName = sponsor.name;
   }
 
-  // Crée un auth.users synthétique (FK contrainte sur public.users.id)
-  // Email + password aléatoires, jamais transmis → l'externe ne peut pas
-  // se connecter. email_confirm true pour éviter l'envoi de mail.
-  const prefix = isPassive ? "passive" : "external";
-  const syntheticEmail = `${prefix}-${randomToken(12)}@${prefix}.labase360.local`;
-  const syntheticPassword = `${prefix}-${randomToken(20)}`;
+  // Auth.users : synthétique pour externe pur, vrai email + password généré
+  // pour un passif (Light V2 — il se connecte sur /connexion comme un distri).
+  let realEmail = "";
+  let realPassword = "";
+  let userEmail = "";
+  if (isPassive) {
+    realEmail = passiveEmail;
+    realPassword = `LB360-${randomToken(8)}!`; // password fort lisible
+    userEmail = realEmail;
+  } else {
+    userEmail = `external-${randomToken(12)}@external.labase360.local`;
+  }
+  const authPassword = isPassive ? realPassword : `ext-${randomToken(20)}`;
 
   const { data: createdUser, error: createError } = await admin.auth.admin.createUser({
-    email: syntheticEmail,
-    password: syntheticPassword,
+    email: userEmail,
+    password: authPassword,
     email_confirm: true,
     user_metadata: { name, is_external: true, is_passive_supervisor: isPassive },
   });
@@ -245,16 +261,17 @@ async function handleImpl(req: any, res: any) {
     return;
   }
 
-  // Crée la ligne public.users (FK satisfaite)
+  // Crée la ligne public.users (FK satisfaite). Pour les passifs : active=true
+  // car ils ont un vrai compte qui se connecte (vs externes qui restent inactifs).
   const { error: insertError } = await admin.from("users").upsert({
     id: createdUser.user.id,
     name,
-    email: syntheticEmail,
+    email: userEmail,
     role: "distributor",
     current_rank: currentRank,
     sponsor_id: sponsorId,
     sponsor_name: sponsorName,
-    active: false,
+    active: isPassive ? true : false,
     is_external: true,
     is_passive_supervisor: isPassive,
     title: isPassive ? "Distri passif (Supervisor)" : "Distributeur externe (hors-app)",
@@ -273,39 +290,19 @@ async function handleImpl(req: any, res: any) {
     return;
   }
 
-  // Si passive supervisor : génère + insère le token magic link
-  let magicLink: string | null = null;
-  let passiveToken: string | null = null;
-  if (isPassive) {
-    passiveToken = randomToken(28);
-    const { error: tokenError } = await admin.from("passive_supervisor_accounts").insert({
-      user_id: createdUser.user.id,
-      token: passiveToken,
-      created_by: requester.id,
-    });
-    if (tokenError) {
-      console.error("[admin-create-external] passive token insert failed:", tokenError);
-      // Best-effort cleanup
-      try { await admin.auth.admin.deleteUser(createdUser.user.id); } catch { /* ignore */ }
-      res.status(500).json({ ok: false, error: `Token magic link : ${tokenError.message}` });
-      return;
-    }
-    // URL absolue via x-forwarded-host
-    const host = req.headers["x-forwarded-host"] || req.headers.host;
-    const proto = req.headers["x-forwarded-proto"] || "https";
-    const origin = host ? `${proto}://${host}` : "";
-    magicLink = origin
-      ? `${origin}/distri-passif?token=${passiveToken}`
-      : `/distri-passif?token=${passiveToken}`;
-  }
+  // URL login (utile pour message WhatsApp côté admin)
+  const host = req.headers["x-forwarded-host"] || req.headers.host;
+  const proto = req.headers["x-forwarded-proto"] || "https";
+  const origin = host ? `${proto}://${host}` : "";
+  const loginUrl = origin ? `${origin}/connexion` : "/connexion";
 
-  // Audit log (chantier #12 polish)
+  // Audit log (chantier #12 polish) — ne JAMAIS log le password en clair
   await logAdminAction(admin, {
     actorUserId: requester.id,
     action: isPassive ? "passive_supervisor_created" : "external_distributor_created",
     targetId: createdUser.user.id,
     targetLabel: name,
-    payload: { currentRank, sponsorId, isPassive },
+    payload: { currentRank, sponsorId, isPassive, email: isPassive ? realEmail : null },
     ip,
   });
 
@@ -315,6 +312,6 @@ async function handleImpl(req: any, res: any) {
     name,
     currentRank,
     sponsorId,
-    ...(isPassive ? { token: passiveToken, magicLink } : {}),
+    ...(isPassive ? { email: realEmail, password: realPassword, loginUrl } : {}),
   });
 }

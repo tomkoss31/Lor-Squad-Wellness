@@ -1980,11 +1980,24 @@ export async function createSupabaseExternalDistributor(payload: {
  * Crée un distri Supervisor passif + token magic link.
  * Chantier passive_supervisor 2026-05-22.
  */
+/**
+ * Convertit un Supervisor passif en distri actif (chantier Light V2 2026-05-22).
+ * Admin only. RPC SECURITY DEFINER fait le toggle des flags is_external +
+ * is_passive_supervisor + active.
+ */
+export async function upgradePassiveToActive(userId: string): Promise<{ ok: true } | { ok: false; error: string }> {
+  const client = await requireSupabase();
+  const { error } = await client.rpc("upgrade_passive_to_active", { p_user_id: userId });
+  if (error) return { ok: false, error: error.message };
+  return { ok: true };
+}
+
 export async function createSupabasePassiveSupervisor(payload: {
   name: string;
+  email: string;
   currentRank: import("../types/domain").HerbalifeRank;
   sponsorId?: string | null;
-}): Promise<{ ok: true; userId: string; token: string; magicLink: string } | { ok: false; error: string }> {
+}): Promise<{ ok: true; userId: string; email: string; password: string; loginUrl: string } | { ok: false; error: string }> {
   const client = await requireSupabase();
   const { data: { session } } = await client.auth.getSession();
   if (!session?.access_token) return { ok: false, error: "Session admin introuvable." };
@@ -1993,47 +2006,22 @@ export async function createSupabasePassiveSupervisor(payload: {
     response = await fetch("/api/admin-create-external-distributor", {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
-      // Fusionné dans admin-create-external-distributor (limite Vercel Hobby
-      // 12 functions). Le flag mode=passive_supervisor route vers la branche
-      // passive (rangs Supervisor+ uniquement + génération token magic link).
+      // Light V2 : vrai compte distri (email + password généré côté serveur).
       body: JSON.stringify({ ...payload, mode: "passive_supervisor" }),
     });
   } catch (netErr) {
     return { ok: false, error: `Réseau : ${netErr instanceof Error ? netErr.message : "indisponible"}` };
   }
-  let body: { ok?: boolean; error?: string; userId?: string; token?: string; magicLink?: string } = {};
+  let body: { ok?: boolean; error?: string; userId?: string; email?: string; password?: string; loginUrl?: string } = {};
   try { body = await response.json(); } catch {
     const txt = await response.text().catch(() => "");
     console.error("[createPassiveSupervisor] non-json", response.status, txt.slice(0, 200));
     return { ok: false, error: `HTTP ${response.status} : endpoint inaccessible.` };
   }
-  if (!response.ok || !body.ok || !body.userId || !body.token || !body.magicLink) {
+  if (!response.ok || !body.ok || !body.userId || !body.email || !body.password) {
     return { ok: false, error: body.error ?? `Échec (HTTP ${response.status}).` };
   }
-  return { ok: true, userId: body.userId, token: body.token, magicLink: body.magicLink };
-}
-
-/**
- * Récupère le magic link d'un Supervisor passif (admin only).
- * Lit passive_supervisor_accounts.token via RLS (read = admin).
- * 2026-05-22.
- */
-export async function getPassiveSupervisorMagicLink(userId: string): Promise<
-  { ok: true; magicLink: string } | { ok: false; error: string }
-> {
-  const client = await requireSupabase();
-  const { data, error } = await client
-    .from("passive_supervisor_accounts")
-    .select("token")
-    .eq("user_id", userId)
-    .is("revoked_at", null)
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-  if (error) return { ok: false, error: error.message };
-  if (!data?.token) return { ok: false, error: "Aucun lien actif pour ce distri." };
-  const origin = typeof window !== "undefined" ? window.location.origin : "";
-  return { ok: true, magicLink: `${origin}/distri-passif?token=${data.token}` };
+  return { ok: true, userId: body.userId, email: body.email, password: body.password, loginUrl: body.loginUrl ?? "/connexion" };
 }
 
 /**

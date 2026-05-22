@@ -11,6 +11,7 @@
 // =============================================================================
 
 import { useDeferredValue, useMemo, useState } from "react";
+import { useToast } from "../context/ToastContext";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { Card } from "../components/ui/Card";
 import { DistributorBadge } from "../components/client/DistributorBadge";
@@ -113,17 +114,21 @@ export function DistributorPortfolioPage() {
       <Card className="space-y-4" style={{ padding: 24 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <span style={{ fontSize: 28 }}>{isPassive ? "🔗" : "🌳"}</span>
-          <div>
+          <div style={{ flex: 1 }}>
             <h2 style={{ fontFamily: "Syne, sans-serif", fontSize: 20, fontWeight: 700, color: "var(--ls-text)", margin: 0 }}>
               {targetUser.name}
             </h2>
             <p style={{ fontSize: 12.5, color: "var(--ls-text-muted)", margin: "4px 0 0" }}>
               {isPassive
-                ? "Supervisor passif · Accès rentab via magic link uniquement"
+                ? "Supervisor passif · Accès Light (rentab + équipe)"
                 : "Distri externe (hors-app) · Tracké pour PV mensuel uniquement"}
               {targetUser.currentRank && ` · ${targetUser.currentRank}`}
             </p>
           </div>
+          {/* Toggle upgrade vers distri actif (admin only) */}
+          {isPassive && currentUser.role === "admin" && (
+            <PassiveUpgradeButton userId={targetUser.id} userName={targetUser.name} />
+          )}
         </div>
         <div style={{
           padding: 16,
@@ -136,9 +141,9 @@ export function DistributorPortfolioPage() {
         }}>
           {isPassive ? (
             <>
-              <strong>Ce distri ne se connecte pas à l'app coach.</strong><br />
-              Il accède en lecture seule à sa rentabilité via un magic link personnel
-              (URL <code style={{ background: "var(--ls-surface)", padding: "1px 5px", borderRadius: 4, fontSize: 12 }}>/distri-passif?token=…</code>) généré lors de sa création.
+              <strong>Ce distri se connecte avec ses identifiants</strong> (email + password)
+              et voit une interface allégée : sa rentabilité, l'équipe, l'académie, la messagerie.
+              Pas d'accès aux fiches clients (par design).
             </>
           ) : (
             <>
@@ -149,7 +154,7 @@ export function DistributorPortfolioPage() {
             </>
           )}
           <br /><br />
-          ➜ Pour saisir ses PV mensuels{isPassive ? " ou récupérer son magic link" : ""}, va dans{" "}
+          ➜ Pour saisir ses PV mensuels, va dans{" "}
           <a
             href="/parametres/arborescence-herbalife"
             style={{ color: "var(--ls-teal)", fontWeight: 600, textDecoration: "underline" }}
@@ -733,5 +738,97 @@ function ClientRow({ client, followUps }: { client: Client; followUps: FollowUp[
         </svg>
       </div>
     </Link>
+  );
+}
+
+// =============================================================================
+// PassiveUpgradeButton — Toggle "Convertir en distri actif" (admin only)
+// Chantier Light V2 2026-05-22.
+// =============================================================================
+function PassiveUpgradeButton({ userId, userName }: { userId: string; userName: string }) {
+  const [confirming, setConfirming] = useState(false);
+  const [upgrading, setUpgrading] = useState(false);
+  const { push: pushToast } = useToast();
+
+  const handleUpgrade = async () => {
+    setUpgrading(true);
+    try {
+      const { upgradePassiveToActive } = await import("../services/supabaseService");
+      const res = await upgradePassiveToActive(userId);
+      if (res.ok) {
+        pushToast({ tone: "success", title: `${userName} est maintenant un distri actif.` });
+        // Reload pour refresh users[] dans tout l'app (refetchUsers non exposé)
+        setTimeout(() => { window.location.reload(); }, 800);
+      } else {
+        pushToast({ tone: "error", title: res.error });
+      }
+    } finally {
+      setUpgrading(false);
+    }
+  };
+
+  if (confirming) {
+    return (
+      <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+        <span style={{ fontSize: 12, color: "var(--ls-text-muted)" }}>Sûr ?</span>
+        <button
+          type="button"
+          onClick={handleUpgrade}
+          disabled={upgrading}
+          style={{
+            padding: "8px 14px",
+            borderRadius: 10,
+            border: "none",
+            background: "linear-gradient(135deg, var(--ls-teal), var(--ls-gold))",
+            color: "#fff",
+            fontFamily: "DM Sans, sans-serif",
+            fontSize: 12.5,
+            fontWeight: 700,
+            cursor: upgrading ? "wait" : "pointer",
+          }}
+        >
+          {upgrading ? "…" : "✓ Oui, activer"}
+        </button>
+        <button
+          type="button"
+          onClick={() => setConfirming(false)}
+          disabled={upgrading}
+          style={{
+            padding: "8px 12px",
+            borderRadius: 10,
+            border: "1px solid var(--ls-border)",
+            background: "var(--ls-surface2)",
+            color: "var(--ls-text-muted)",
+            fontFamily: "DM Sans, sans-serif",
+            fontSize: 12.5,
+            cursor: "pointer",
+          }}
+        >
+          Annuler
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={() => setConfirming(true)}
+      title="Donne accès complet à l'app (fiches clients, agenda, etc.)"
+      style={{
+        padding: "8px 14px",
+        borderRadius: 10,
+        border: "1px solid color-mix(in srgb, var(--ls-gold) 40%, transparent)",
+        background: "color-mix(in srgb, var(--ls-gold) 8%, transparent)",
+        color: "var(--ls-gold)",
+        fontFamily: "DM Sans, sans-serif",
+        fontSize: 12.5,
+        fontWeight: 700,
+        cursor: "pointer",
+        whiteSpace: "nowrap",
+      }}
+    >
+      ⬆ Upgrade actif
+    </button>
   );
 }
