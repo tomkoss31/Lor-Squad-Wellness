@@ -114,6 +114,13 @@ export function CoPiloteV5Page() {
     );
   }
 
+  // ═══ Vue Light pour Supervisor passif (chantier Light V2 2026-05-22) ═══
+  // Hero éditorial + rentab perso uniquement. Pas de timeline, PV, dormants,
+  // checklist onboarding — un passif ne fait pas le business.
+  if (currentUser.isPassiveSupervisor) {
+    return <CoPilotePassiveView firstName={firstName} />;
+  }
+
   // Données pour StatsRow3 (à raffiner via vrais KPIs si dispo, sinon
   // valeurs dérivées de useCopiloteData)
   const todoCount = (data.pendingFollowups?.length ?? 0);
@@ -481,3 +488,181 @@ const rowBottomStyle: React.CSSProperties = {
   gridTemplateColumns: "minmax(0, 1.7fr) minmax(0, 1fr)",
   gap: 14,
 };
+
+// =============================================================================
+// CoPilotePassiveView — Vue Light pour Supervisor passif (2026-05-22)
+//
+// Hero éditorial simplifié + RentabJourney (sa rentab perso) uniquement.
+// Pas de timeline, dormants, PV alert, checklist onboarding.
+// =============================================================================
+function CoPilotePassiveView({ firstName }: { firstName: string }) {
+  const navigate = useNavigate();
+  return (
+    <div className="copilote-v5" style={pageWrapStyle}>
+      <div style={topBarStyle}>
+        <div style={topBarLeftStyle}>
+          <div style={topBarMetaStyle}>
+            <span style={liveDotStyle} className="v5-pulse" />
+            La Base 360
+            <span aria-hidden="true" style={topBarSinceStyle}>★ SUPERVISOR PASSIF ★</span>
+          </div>
+          <h1 style={greetingStyle}>
+            Bienvenue <span style={greetingAccentStyle}>{firstName}</span>{" "}
+            <span aria-hidden="true" role="img">✨</span>
+          </h1>
+        </div>
+        <div style={topBarRightStyle}>
+          <AnnouncementBell />
+        </div>
+      </div>
+
+      {/* Carte d'accueil premium */}
+      <section
+        style={{
+          margin: "16px 0",
+          padding: "22px 24px",
+          borderRadius: 20,
+          background:
+            "linear-gradient(135deg, color-mix(in srgb, var(--ls-gold) 8%, var(--ls-surface)) 0%, color-mix(in srgb, var(--ls-teal) 10%, var(--ls-surface)) 100%)",
+          border: "0.5px solid color-mix(in srgb, var(--ls-gold) 25%, var(--ls-border))",
+          position: "relative",
+          overflow: "hidden",
+        }}
+      >
+        <div
+          aria-hidden
+          style={{
+            position: "absolute",
+            top: -50,
+            right: -50,
+            width: 200,
+            height: 200,
+            borderRadius: "50%",
+            background:
+              "radial-gradient(circle, color-mix(in srgb, var(--ls-gold) 30%, transparent) 0%, transparent 70%)",
+            pointerEvents: "none",
+          }}
+        />
+        <div style={{ position: "relative", zIndex: 1 }}>
+          <div
+            style={{
+              fontSize: 10.5,
+              letterSpacing: 1.4,
+              textTransform: "uppercase",
+              color: "var(--ls-gold)",
+              fontWeight: 700,
+              marginBottom: 6,
+            }}
+          >
+            🔗 Accès Supervisor passif
+          </div>
+          <h2
+            style={{
+              fontFamily: "Syne, sans-serif",
+              fontStyle: "italic",
+              fontSize: 22,
+              fontWeight: 700,
+              margin: 0,
+              color: "var(--ls-text)",
+              lineHeight: 1.25,
+            }}
+          >
+            Ta rentabilité Herbalife en un coup d'œil
+          </h2>
+          <p
+            style={{
+              fontSize: 13.5,
+              color: "var(--ls-text-muted)",
+              margin: "10px 0 0",
+              lineHeight: 1.55,
+              maxWidth: 560,
+            }}
+          >
+            Suivi de tes royalties Supervisor 50% mois après mois. Tes paliers, ta
+            projection, ton historique 12 mois. Pour passer en mode actif (gérer
+            des clients), contacte ton admin.
+          </p>
+        </div>
+      </section>
+
+      {/* Rentab parcours — composant déjà premium (WalletCard + breakdown) */}
+      <RentabJourney />
+
+      {/* CTA discret vers Académie / Paramètres */}
+      <section
+        style={{
+          marginTop: 18,
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+          gap: 10,
+        }}
+      >
+        <button
+          type="button"
+          onClick={() => navigate("/developpement")}
+          style={passiveCardCtaStyle("var(--ls-teal)")}
+        >
+          <span style={{ fontSize: 22 }}>🎓</span>
+          <div style={{ textAlign: "left", flex: 1 }}>
+            <div style={{ fontFamily: "Syne, sans-serif", fontSize: 14, fontWeight: 700, color: "var(--ls-text)" }}>
+              Mon développement
+            </div>
+            <div style={{ fontSize: 11.5, color: "var(--ls-text-muted)", marginTop: 2 }}>
+              Académie, formation, ressources
+            </div>
+          </div>
+          <span style={{ color: "var(--ls-text-muted)" }}>→</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => navigate("/messages")}
+          style={passiveCardCtaStyle("var(--ls-purple)")}
+        >
+          <span style={{ fontSize: 22 }}>✉️</span>
+          <div style={{ textAlign: "left", flex: 1 }}>
+            <div style={{ fontFamily: "Syne, sans-serif", fontSize: 14, fontWeight: 700, color: "var(--ls-text)" }}>
+              Messagerie
+            </div>
+            <div style={{ fontSize: 11.5, color: "var(--ls-text-muted)", marginTop: 2 }}>
+              Échanger avec ton admin et l'équipe
+            </div>
+          </div>
+          <span style={{ color: "var(--ls-text-muted)" }}>→</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => navigate("/parametres")}
+          style={passiveCardCtaStyle("var(--ls-gold)")}
+        >
+          <span style={{ fontSize: 22 }}>⚙️</span>
+          <div style={{ textAlign: "left", flex: 1 }}>
+            <div style={{ fontFamily: "Syne, sans-serif", fontSize: 14, fontWeight: 700, color: "var(--ls-text)" }}>
+              Paramètres
+            </div>
+            <div style={{ fontSize: 11.5, color: "var(--ls-text-muted)", marginTop: 2 }}>
+              Profil, mot de passe, notifications
+            </div>
+          </div>
+          <span style={{ color: "var(--ls-text-muted)" }}>→</span>
+        </button>
+      </section>
+
+      <LegalFooter />
+    </div>
+  );
+}
+
+function passiveCardCtaStyle(accent: string): React.CSSProperties {
+  return {
+    display: "flex",
+    alignItems: "center",
+    gap: 12,
+    padding: "14px 16px",
+    background: `color-mix(in srgb, ${accent} 6%, var(--ls-surface))`,
+    border: `1px solid color-mix(in srgb, ${accent} 25%, var(--ls-border))`,
+    borderRadius: 14,
+    cursor: "pointer",
+    transition: "transform .15s ease, border-color .15s ease, box-shadow .15s ease",
+    fontFamily: "DM Sans, sans-serif",
+  };
+}
