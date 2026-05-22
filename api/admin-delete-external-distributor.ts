@@ -11,6 +11,7 @@
 // =============================================================================
 
 import { createClient } from "@supabase/supabase-js";
+import { checkRateLimit, extractIp, logAdminAction } from "./_shared/admin-guard";
 
 export default async function handler(req: any, res: any) {
   if (req.method !== "POST") {
@@ -29,6 +30,14 @@ export default async function handler(req: any, res: any) {
   }
   if (!accessToken) {
     res.status(401).json({ ok: false, error: "Session admin manquante." });
+    return;
+  }
+
+  const ip = extractIp(req);
+  // Delete plus restrictif : 5 / minute (action destructive)
+  const rl = checkRateLimit(`delete-ext:${ip}`, 5, 60_000);
+  if (!rl.ok) {
+    res.status(429).json({ ok: false, error: `Trop de suppressions. Réessaie dans ${rl.retryAfter}s.` });
     return;
   }
 
@@ -110,6 +119,15 @@ export default async function handler(req: any, res: any) {
     res.status(400).json({ ok: false, error: deleteError.message });
     return;
   }
+
+  await logAdminAction(admin, {
+    actorUserId: requester.id,
+    action: "external_distributor_deleted",
+    targetId: userId,
+    targetLabel: target.name,
+    payload: null,
+    ip,
+  });
 
   res.status(200).json({ ok: true });
 }

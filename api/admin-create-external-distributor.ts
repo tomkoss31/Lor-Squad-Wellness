@@ -10,6 +10,7 @@
 // =============================================================================
 
 import { createClient } from "@supabase/supabase-js";
+import { checkRateLimit, extractIp, logAdminAction } from "./_shared/admin-guard";
 
 const ALLOWED_RANKS = [
   "distributor_25",
@@ -49,6 +50,14 @@ export default async function handler(req: any, res: any) {
   }
   if (!accessToken) {
     res.status(401).json({ ok: false, error: "Session admin manquante." });
+    return;
+  }
+
+  // Rate limit (chantier #12 polish) : 10 créations / minute / IP max
+  const ip = extractIp(req);
+  const rl = checkRateLimit(`create-ext:${ip}`, 10, 60_000);
+  if (!rl.ok) {
+    res.status(429).json({ ok: false, error: `Trop de créations. Réessaie dans ${rl.retryAfter}s.` });
     return;
   }
 
@@ -153,6 +162,16 @@ export default async function handler(req: any, res: any) {
     res.status(400).json({ ok: false, error: insertError.message });
     return;
   }
+
+  // Audit log (chantier #12 polish)
+  await logAdminAction(admin, {
+    actorUserId: requester.id,
+    action: "external_distributor_created",
+    targetId: createdUser.user.id,
+    targetLabel: name,
+    payload: { currentRank, sponsorId },
+    ip,
+  });
 
   res.status(200).json({
     ok: true,
