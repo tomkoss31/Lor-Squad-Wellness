@@ -103,20 +103,25 @@ export function DistributorPortfolioPage() {
     );
   }
 
-  // Cas passive supervisor : pas de portefeuille client (par design).
-  // On affiche une info dédiée + lien vers /arborescence-herbalife où l'admin
-  // peut saisir ses PV mensuels + récupérer son magic link.
-  if (targetUser?.isPassiveSupervisor) {
+  // Cas externe (passif ou hors-app) : pas de portefeuille client par design.
+  // Ces distri n'ont pas accès à l'app coach — Thomas/Mélanie les tracke
+  // uniquement pour leur PV mensuel + la remontée override sur la rentab.
+  // On affiche une info dédiée + lien vers /arborescence-herbalife.
+  if (targetUser?.isExternal || targetUser?.isPassiveSupervisor) {
+    const isPassive = !!targetUser?.isPassiveSupervisor;
     return (
       <Card className="space-y-4" style={{ padding: 24 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <span style={{ fontSize: 28 }}>🔗</span>
+          <span style={{ fontSize: 28 }}>{isPassive ? "🔗" : "🌳"}</span>
           <div>
             <h2 style={{ fontFamily: "Syne, sans-serif", fontSize: 20, fontWeight: 700, color: "var(--ls-text)", margin: 0 }}>
               {targetUser.name}
             </h2>
             <p style={{ fontSize: 12.5, color: "var(--ls-text-muted)", margin: "4px 0 0" }}>
-              Supervisor passif · Pas de portefeuille client
+              {isPassive
+                ? "Supervisor passif · Accès rentab via magic link uniquement"
+                : "Distri externe (hors-app) · Tracké pour PV mensuel uniquement"}
+              {targetUser.currentRank && ` · ${targetUser.currentRank}`}
             </p>
           </div>
         </div>
@@ -129,11 +134,22 @@ export function DistributorPortfolioPage() {
           color: "var(--ls-text)",
           lineHeight: 1.6,
         }}>
-          <strong>Ce distri ne se connecte pas à l'app coach.</strong><br />
-          Il accède en lecture seule à sa rentabilité via un magic link personnel
-          (URL <code style={{ background: "var(--ls-surface)", padding: "1px 5px", borderRadius: 4, fontSize: 12 }}>/distri-passif?token=…</code>) généré lors de sa création.
+          {isPassive ? (
+            <>
+              <strong>Ce distri ne se connecte pas à l'app coach.</strong><br />
+              Il accède en lecture seule à sa rentabilité via un magic link personnel
+              (URL <code style={{ background: "var(--ls-surface)", padding: "1px 5px", borderRadius: 4, fontSize: 12 }}>/distri-passif?token=…</code>) généré lors de sa création.
+            </>
+          ) : (
+            <>
+              <strong>Ce distri n'est pas sur l'app.</strong><br />
+              C'est un membre de ta downline Herbalife historique ajouté manuellement
+              pour reconstruire ton arborescence. Tu saisis ses PV mensuels et son
+              override remonte automatiquement dans ta rentabilité.
+            </>
+          )}
           <br /><br />
-          ➜ Pour saisir ses PV mensuels ou régénérer son lien, va dans{" "}
+          ➜ Pour saisir ses PV mensuels{isPassive ? " ou récupérer son magic link" : ""}, va dans{" "}
           <a
             href="/parametres/arborescence-herbalife"
             style={{ color: "var(--ls-teal)", fontWeight: 600, textDecoration: "underline" }}
