@@ -4,7 +4,7 @@
 // changement email = flow Supabase Auth séparé), compteur "X jours avec
 // La Base 360", bouton changement mot de passe, bouton Sortir.
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card } from "../ui/Card";
 import { Button } from "../ui/Button";
@@ -97,6 +97,30 @@ export function ProfilTab() {
   const [pwNew, setPwNew] = useState("");
   const [pwConfirm, setPwConfirm] = useState("");
   const [pwSaving, setPwSaving] = useState(false);
+
+  // Chantier Passive Light V2 (2026-05-22) : si le distri passif a aussi
+  // un compte client PWA lié au MÊME auth_user_id, on lui propose un
+  // raccourci vers son espace client (token magic link).
+  const [linkedClientToken, setLinkedClientToken] = useState<string | null>(null);
+  useEffect(() => {
+    if (!currentUser?.id) {
+      setLinkedClientToken(null);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      const sb = await getSupabaseClient();
+      if (!sb || cancelled) return;
+      const { data } = await sb
+        .from("client_app_accounts")
+        .select("token")
+        .eq("auth_user_id", currentUser.id)
+        .maybeSingle<{ token: string | null }>();
+      if (cancelled) return;
+      setLinkedClientToken(data?.token ?? null);
+    })();
+    return () => { cancelled = true; };
+  }, [currentUser?.id]);
   const [pwError, setPwError] = useState<string | null>(null);
 
   const daysWith = useMemo(
@@ -224,6 +248,71 @@ export function ProfilTab() {
 
   return (
     <div className="space-y-4">
+      {/* Card raccourci espace client (chantier Passive Light V2 2026-05-22) */}
+      {linkedClientToken && (
+        <Card
+          style={{
+            padding: 18,
+            background:
+              "linear-gradient(135deg, color-mix(in srgb, var(--ls-gold) 10%, var(--ls-surface)) 0%, color-mix(in srgb, var(--ls-teal) 8%, var(--ls-surface)) 100%)",
+            border: "1px solid color-mix(in srgb, var(--ls-gold) 25%, var(--ls-border))",
+            display: "flex",
+            alignItems: "center",
+            gap: 14,
+            position: "relative",
+            overflow: "hidden",
+          }}
+        >
+          <span style={{ fontSize: 32 }}>🧡</span>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div
+              style={{
+                fontSize: 10.5,
+                letterSpacing: 1.2,
+                textTransform: "uppercase",
+                color: "var(--ls-gold)",
+                fontWeight: 700,
+                marginBottom: 3,
+              }}
+            >
+              Espace client
+            </div>
+            <div
+              style={{
+                fontFamily: "Syne, sans-serif",
+                fontSize: 15,
+                fontWeight: 700,
+                color: "var(--ls-text)",
+              }}
+            >
+              Voir mon suivi client
+            </div>
+            <div style={{ fontSize: 11.5, color: "var(--ls-text-muted)", marginTop: 2 }}>
+              Tu as aussi un compte client lié — bilan, poids, conseils.
+            </div>
+          </div>
+          <a
+            href={`/client/${linkedClientToken}`}
+            style={{
+              padding: "10px 16px",
+              borderRadius: 10,
+              border: "none",
+              background: "linear-gradient(135deg, var(--ls-gold), var(--ls-teal))",
+              color: "#0B0D11",
+              fontFamily: "DM Sans, sans-serif",
+              fontSize: 13,
+              fontWeight: 700,
+              cursor: "pointer",
+              textDecoration: "none",
+              whiteSpace: "nowrap",
+              boxShadow: "0 6px 16px -8px color-mix(in srgb, var(--ls-gold) 60%, transparent)",
+            }}
+          >
+            Ouvrir →
+          </a>
+        </Card>
+      )}
+
       {/* Gamification 5 (2026-04-29) : niveau + XP en haut du profil. */}
       <XpProgressCard />
 

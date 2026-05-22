@@ -27,18 +27,36 @@ interface Props {
 // avoir un compte light si business pas actif.
 const PASSIVE_RANKS: HerbalifeRank[] = [...RANK_ORDER];
 
-function buildWhatsAppShare(firstName: string, email: string, password: string, loginUrl: string): string {
-  const msg = [
-    `Salut ${firstName} ! 👋`,
-    ``,
-    `Tes identifiants pour suivre ta rentabilité Herbalife sur *La Base 360* :`,
-    ``,
-    `🔗 Connexion : ${loginUrl}`,
-    `📧 Email : ${email}`,
-    `🔑 Mot de passe : ${password}`,
-    ``,
-    `Tu peux changer ton mot de passe dans Paramètres après ta première connexion. À bientôt 💪`,
-  ].join("\n");
+function buildWhatsAppShare(
+  firstName: string,
+  email: string,
+  password: string,
+  loginUrl: string,
+  linkedExisting: boolean,
+): string {
+  const msg = linkedExisting
+    ? [
+        `Salut ${firstName} ! 👋`,
+        ``,
+        `Je viens de t'ajouter un accès *distri passif* sur La Base 360 (en plus de ton espace client).`,
+        ``,
+        `🔗 Connexion : ${loginUrl}`,
+        `📧 Email : ${email}`,
+        `🔑 Mot de passe : *celui que tu utilises déjà* pour ton espace client.`,
+        ``,
+        `Quand tu te connecteras, tu verras maintenant ta rentabilité Herbalife. Tu pourras toujours retourner sur ton espace client depuis Paramètres. À bientôt 💪`,
+      ].join("\n")
+    : [
+        `Salut ${firstName} ! 👋`,
+        ``,
+        `Tes identifiants pour suivre ta rentabilité Herbalife sur *La Base 360* :`,
+        ``,
+        `🔗 Connexion : ${loginUrl}`,
+        `📧 Email : ${email}`,
+        `🔑 Mot de passe : ${password}`,
+        ``,
+        `Tu peux changer ton mot de passe dans Paramètres après ta première connexion. À bientôt 💪`,
+      ].join("\n");
   return `https://wa.me/?text=${encodeURIComponent(msg)}`;
 }
 
@@ -55,6 +73,7 @@ export function PassiveSupervisorInviteModal({ open, onClose, onCreated }: Props
     email: string;
     password: string;
     loginUrl: string;
+    linkedExisting: boolean;
   } | null>(null);
   const [copiedField, setCopiedField] = useState<string | null>(null);
 
@@ -102,8 +121,14 @@ export function PassiveSupervisorInviteModal({ open, onClose, onCreated }: Props
           email: res.email,
           password: res.password,
           loginUrl: res.loginUrl,
+          linkedExisting: res.linkedExisting,
         });
-        pushToast({ tone: "success", title: `${name.trim()} créé. Identifiants prêts à partager.` });
+        pushToast({
+          tone: "success",
+          title: res.linkedExisting
+            ? `Compte distri passif lié au compte existant de ${name.trim()}.`
+            : `${name.trim()} créé. Identifiants prêts à partager.`,
+        });
         onCreated?.();
       } else {
         pushToast({ tone: "error", title: res.error });
@@ -214,12 +239,18 @@ export function PassiveSupervisorInviteModal({ open, onClose, onCreated }: Props
               lineHeight: 1.2,
             }}
           >
-            {result ? "Identifiants prêts" : "Inviter un distri passif"}
+            {!result
+              ? "Inviter un distri passif"
+              : result.linkedExisting
+                ? "Accès distri ajouté"
+                : "Identifiants prêts"}
           </h2>
           <p style={{ fontSize: 12.5, color: "var(--ls-text-muted)", margin: "8px 0 0", lineHeight: 1.5 }}>
-            {result
-              ? "Copie ces infos et envoie-les via WhatsApp. Le compte est actif immédiatement."
-              : "Pour un distri (tous rangs) qui ne fait pas le business mais veut suivre sa rentab perso. Compte allégé : pas de clients, juste sa rentab + son équipe + messagerie."}
+            {!result
+              ? "Pour un distri (tous rangs) qui ne fait pas le business mais veut suivre sa rentab perso. Compte allégé : pas de clients, juste sa rentab + son équipe + messagerie."
+              : result.linkedExisting
+                ? "Cet email correspondait déjà à un compte client. On a juste ajouté l'accès distri passif. Elle se connecte avec son mot de passe actuel."
+                : "Copie ces infos et envoie-les via WhatsApp. Le compte est actif immédiatement."}
           </p>
         </div>
 
@@ -320,18 +351,35 @@ export function PassiveSupervisorInviteModal({ open, onClose, onCreated }: Props
                 copied={copiedField === "email"}
                 onCopy={() => handleCopy(result.email, "email")}
               />
-              <CredentialRow
-                label="Mot de passe"
-                value={result.password}
-                accent="purple"
-                copied={copiedField === "password"}
-                onCopy={() => handleCopy(result.password, "password")}
-                mono
-              />
+              {result.linkedExisting ? (
+                <div
+                  style={{
+                    padding: "12px 14px",
+                    background: "color-mix(in srgb, var(--ls-purple) 8%, var(--ls-surface2))",
+                    border: "1px solid color-mix(in srgb, var(--ls-purple) 30%, transparent)",
+                    borderRadius: 12,
+                    fontSize: 13,
+                    color: "var(--ls-text)",
+                    lineHeight: 1.5,
+                  }}
+                >
+                  <strong style={{ color: "var(--ls-purple)" }}>🔐 Mot de passe</strong> : elle utilise
+                  celui de son compte client actuel. Tu n'as pas à le retransmettre.
+                </div>
+              ) : (
+                <CredentialRow
+                  label="Mot de passe"
+                  value={result.password}
+                  accent="purple"
+                  copied={copiedField === "password"}
+                  onCopy={() => handleCopy(result.password, "password")}
+                  mono
+                />
+              )}
 
               <div style={{ marginTop: 6, display: "flex", gap: 8, flexWrap: "wrap" }}>
                 <a
-                  href={buildWhatsAppShare(result.name.split(" ")[0], result.email, result.password, result.loginUrl)}
+                  href={buildWhatsAppShare(result.name.split(" ")[0], result.email, result.password, result.loginUrl, result.linkedExisting)}
                   target="_blank"
                   rel="noreferrer"
                   style={{
@@ -373,22 +421,24 @@ export function PassiveSupervisorInviteModal({ open, onClose, onCreated }: Props
                 </button>
               </div>
 
-              <div
-                style={{
-                  marginTop: 8,
-                  padding: "12px 14px",
-                  background: "color-mix(in srgb, var(--ls-gold) 8%, var(--ls-surface2))",
-                  border: "1px solid color-mix(in srgb, var(--ls-gold) 25%, transparent)",
-                  borderRadius: 10,
-                  fontSize: 11.5,
-                  color: "var(--ls-text-muted)",
-                  lineHeight: 1.55,
-                }}
-              >
-                <strong style={{ color: "var(--ls-gold)" }}>⚠️ Note ce mot de passe</strong> — il n'est pas
-                récupérable une fois la modale fermée. Le distri pourra le changer après sa première
-                connexion via <strong>Paramètres</strong>.
-              </div>
+              {!result.linkedExisting && (
+                <div
+                  style={{
+                    marginTop: 8,
+                    padding: "12px 14px",
+                    background: "color-mix(in srgb, var(--ls-gold) 8%, var(--ls-surface2))",
+                    border: "1px solid color-mix(in srgb, var(--ls-gold) 25%, transparent)",
+                    borderRadius: 10,
+                    fontSize: 11.5,
+                    color: "var(--ls-text-muted)",
+                    lineHeight: 1.55,
+                  }}
+                >
+                  <strong style={{ color: "var(--ls-gold)" }}>⚠️ Note ce mot de passe</strong> — il n'est pas
+                  récupérable une fois la modale fermée. Le distri pourra le changer après sa première
+                  connexion via <strong>Paramètres</strong>.
+                </div>
+              )}
             </div>
           )}
         </div>

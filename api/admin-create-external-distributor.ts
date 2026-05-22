@@ -228,40 +228,97 @@ async function handleImpl(req: any, res: any) {
     sponsorName = sponsor.name;
   }
 
-  // Auth.users : synthétique pour externe pur, vrai email + password généré
-  // pour un passif (Light V2 — il se connecte sur /connexion comme un distri).
+  // Auth.users : 3 cas possibles
+  //   - externe pur : email synthétique, pas de login
+  //   - passif nouveau : email + password généré, on crée le user
+  //   - passif lié à client PWA existant : on RÉUTILISE le auth_user_id
+  //     de son compte client → un seul email/password pour les 2 espaces.
   let realEmail = "";
   let realPassword = "";
   let userEmail = "";
+  let linkedExisting = false;
+  let createdUserId = "";
+
   if (isPassive) {
     realEmail = passiveEmail;
-    realPassword = `LB360-${randomToken(8)}!`; // password fort lisible
     userEmail = realEmail;
+
+    // Cherche si un user auth existe déjà pour cet email (cas Aurélie =
+    // client PWA avec credentials). On utilise listUsers (pagination 200
+    // — suffisant pour la team d'un admin).
+    let existingAuthUserId: string | null = null;
+    try {
+      const { data: page } = await admin.auth.admin.listUsers({ page: 1, perPage: 200 });
+      const usersList = (page?.users ?? []) as Array<{ id: string; email?: string | null }>;
+      const found = usersList.find((u) => u.email?.toLowerCase() === realEmail);
+      if (found?.id) existingAuthUserId = found.id;
+    } catch (err) {
+      console.warn("[admin-create-external] listUsers failed (continue with create):", err);
+    }
+
+    if (existingAuthUserId) {
+      // Link : ne pas créer un nouveau auth.users.
+      // Vérifie qu'il n'y a pas DÉJÀ un profil distri pour cet auth_user_id.
+      const { data: existingProfile } = await admin
+        .from("users")
+        .select("id, is_passive_supervisor")
+        .eq("id", existingAuthUserId)
+        .maybeSingle<{ id: string; is_passive_supervisor: boolean | null }>();
+      if (existingProfile) {
+        if (existingProfile.is_passive_supervisor) {
+          res.status(409).json({ ok: false, error: "Un compte distri passif existe déjà pour cet email." });
+          return;
+        }
+        res.status(409).json({ ok: false, error: "Cet email correspond déjà à un compte distri (non-passif). Impossible de créer en doublon." });
+        return;
+      }
+      linkedExisting = true;
+      createdUserId = existingAuthUserId;
+      realPassword = ""; // password conservé (celui de son compte client actuel)
+    } else {
+      // Cas standard : créer auth.users + profil
+      realPassword = `LB360-${randomToken(8)}!`;
+      const { data: createdUser, error: createError } = await admin.auth.admin.createUser({
+        email: userEmail,
+        password: realPassword,
+        email_confirm: true,
+        user_metadata: { name, is_external: true, is_passive_supervisor: true },
+      });
+      if (createError || !createdUser?.user) {
+        console.error("[admin-create-external] auth.admin.createUser failed:", createError);
+        res.status(400).json({
+          ok: false,
+          error: createError?.message ?? "auth.admin.createUser a échoué (vérifier service_role).",
+        });
+        return;
+      }
+      createdUserId = createdUser.user.id;
+    }
   } else {
+    // Externe pur
     userEmail = `external-${randomToken(12)}@external.labase360.local`;
-  }
-  const authPassword = isPassive ? realPassword : `ext-${randomToken(20)}`;
-
-  const { data: createdUser, error: createError } = await admin.auth.admin.createUser({
-    email: userEmail,
-    password: authPassword,
-    email_confirm: true,
-    user_metadata: { name, is_external: true, is_passive_supervisor: isPassive },
-  });
-
-  if (createError || !createdUser?.user) {
-    console.error("[admin-create-external] auth.admin.createUser failed:", createError);
-    res.status(400).json({
-      ok: false,
-      error: createError?.message ?? "auth.admin.createUser a échoué (vérifier service_role).",
+    const authPassword = `ext-${randomToken(20)}`;
+    const { data: createdUser, error: createError } = await admin.auth.admin.createUser({
+      email: userEmail,
+      password: authPassword,
+      email_confirm: true,
+      user_metadata: { name, is_external: true, is_passive_supervisor: false },
     });
-    return;
+    if (createError || !createdUser?.user) {
+      console.error("[admin-create-external] auth.admin.createUser failed:", createError);
+      res.status(400).json({
+        ok: false,
+        error: createError?.message ?? "auth.admin.createUser a échoué (vérifier service_role).",
+      });
+      return;
+    }
+    createdUserId = createdUser.user.id;
   }
 
   // Crée la ligne public.users (FK satisfaite). Pour les passifs : active=true
   // car ils ont un vrai compte qui se connecte (vs externes qui restent inactifs).
   const { error: insertError } = await admin.from("users").upsert({
-    id: createdUser.user.id,
+    id: createdUserId,
     name,
     email: userEmail,
     role: "distributor",
@@ -271,17 +328,20 @@ async function handleImpl(req: any, res: any) {
     active: isPassive ? true : false,
     is_external: true,
     is_passive_supervisor: isPassive,
-    title: isPassive ? "Distri passif (Supervisor)" : "Distributeur externe (hors-app)",
+    title: isPassive ? "Distri passif" : "Distributeur externe (hors-app)",
     created_at: new Date().toISOString(),
   });
 
   if (insertError) {
     console.error("[admin-create-external] public.users upsert failed:", insertError);
-    // Best-effort cleanup auth.users si profile insert échoue
-    try {
-      await admin.auth.admin.deleteUser(createdUser.user.id);
-    } catch {
-      /* ignore */
+    // Best-effort cleanup auth.users si profile insert échoue (mais SEULEMENT
+    // si on vient de le créer — sinon on casserait le compte client existant)
+    if (!linkedExisting && createdUserId) {
+      try {
+        await admin.auth.admin.deleteUser(createdUserId);
+      } catch {
+        /* ignore */
+      }
     }
     res.status(400).json({ ok: false, error: `Insert public.users : ${insertError.message}` });
     return;
@@ -296,19 +356,30 @@ async function handleImpl(req: any, res: any) {
   // Audit log (chantier #12 polish) — ne JAMAIS log le password en clair
   await logAdminAction(admin, {
     actorUserId: requester.id,
-    action: isPassive ? "passive_supervisor_created" : "external_distributor_created",
-    targetId: createdUser.user.id,
+    action: isPassive
+      ? (linkedExisting ? "passive_supervisor_linked_existing" : "passive_supervisor_created")
+      : "external_distributor_created",
+    targetId: createdUserId,
     targetLabel: name,
-    payload: { currentRank, sponsorId, isPassive, email: isPassive ? realEmail : null },
+    payload: { currentRank, sponsorId, isPassive, linkedExisting, email: isPassive ? realEmail : null },
     ip,
   });
 
   res.status(200).json({
     ok: true,
-    userId: createdUser.user.id,
+    userId: createdUserId,
     name,
     currentRank,
     sponsorId,
-    ...(isPassive ? { email: realEmail, password: realPassword, loginUrl } : {}),
+    ...(isPassive
+      ? {
+          email: realEmail,
+          // Password vide si on a lié à un compte existant (elle utilise
+          // son mot de passe actuel client PWA — qu'on ne connaît pas).
+          password: realPassword,
+          linkedExisting,
+          loginUrl,
+        }
+      : {}),
   });
 }
