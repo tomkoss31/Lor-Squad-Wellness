@@ -174,9 +174,33 @@ export function RentabilityDetailModal({
       onClick={onClose}
       style={overlayStyle}
     >
-      <div onClick={(e) => e.stopPropagation()} style={modalStyle}>
+      <style>{`
+        @media (max-width: 720px) {
+          .lr-rentab-modal {
+            max-width: 100% !important;
+            border-radius: 18px !important;
+            max-height: calc(100vh - 24px) !important;
+          }
+          .lr-rentab-modal-header {
+            flex-direction: column !important;
+            align-items: stretch !important;
+            gap: 10px !important;
+            padding: 14px 18px 12px !important;
+          }
+          .lr-rentab-modal-header > div:last-child {
+            justify-content: space-between;
+          }
+          .lr-rentab-modal-body {
+            padding: 14px 18px 18px !important;
+            gap: 14px !important;
+          }
+          .lr-rentab-tabs-wrap { flex: 1; }
+          .lr-rentab-export-btn { padding: 0 10px !important; }
+        }
+      `}</style>
+      <div onClick={(e) => e.stopPropagation()} className="lr-rentab-modal" style={modalStyle}>
         {/* ─── Header ─────────────────────────────────────────────── */}
-        <div style={headerStyle}>
+        <div className="lr-rentab-modal-header" style={headerStyle}>
           <div>
             <div className="lr-eyebrow">
               <span aria-hidden="true">⚡</span>
@@ -185,7 +209,7 @@ export function RentabilityDetailModal({
             <div style={titleStyle}>Rentabilité · {monthLabel(data.month_start)}</div>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <div style={tabsWrapStyle}>
+            <div className="lr-rentab-tabs-wrap" style={tabsWrapStyle}>
               <TabPill active={tab === "mois"} onClick={() => setTab("mois")}>
                 Vue mois courant
               </TabPill>
@@ -198,6 +222,7 @@ export function RentabilityDetailModal({
               onClick={handleExportPdf}
               disabled={exporting}
               title="Export PDF A4"
+              className="lr-rentab-export-btn"
               style={exportBtnStyle}
             >
               {exporting ? "..." : "📄 PDF"}
@@ -209,7 +234,7 @@ export function RentabilityDetailModal({
         </div>
 
         {/* ─── Body ───────────────────────────────────────────────── */}
-        <div style={bodyStyle}>
+        <div className="lr-rentab-modal-body" style={bodyStyle}>
           {tab === "12m" ? (
             <TwelveMonthsView
               bars={historyBars}

@@ -199,8 +199,20 @@ export function RentabilitePage() {
 
   return (
     <div className={`lr ${stealthOn ? "lr-stealth-on" : ""}`} style={pageWrapStyle}>
+      <style>{`
+        /* Mobile fit /rentabilite — chantier #13 polish 2026-05-22 */
+        @media (max-width: 720px) {
+          .lr-rentab-page-top { flex-direction: column !important; align-items: stretch !important; gap: 10px !important; }
+          .lr-rentab-hero { padding: 22px 18px 18px !important; border-radius: 22px !important; }
+          .lr-rentab-stats-grid { grid-template-columns: 1fr !important; gap: 16px !important; }
+          .lr-rentab-calc-grid { grid-template-columns: 1fr !important; gap: 12px !important; }
+          .lr-rentab-override-grid { grid-template-columns: 1fr !important; gap: 12px !important; }
+          .lr-rentab-team-grid { grid-template-columns: 1fr !important; }
+          .lr .lr-section-h { flex-direction: column !important; align-items: flex-start !important; gap: 8px !important; }
+        }
+      `}</style>
       {/* ─── Top bar ──────────────────────────────────────────────────── */}
-      <div style={topBarStyle}>
+      <div className="lr-rentab-page-top" style={topBarStyle}>
         <div style={{ display: "inline-flex", alignItems: "center", gap: 10, fontFamily: "DM Sans, sans-serif", fontSize: 13, color: "var(--ls-rentab-ink-3)" }}>
           <button
             type="button"
@@ -245,7 +257,7 @@ export function RentabilitePage() {
       </div>
 
       {/* ─── HERO ──────────────────────────────────────────────────────── */}
-      <section style={heroStyle}>
+      <section className="lr-rentab-hero" style={heroStyle}>
         <div className="lr-mesh" />
         <div style={{ position: "absolute", right: -10, bottom: 0, opacity: 0.22, pointerEvents: "none" }}>
           <Sparkline
@@ -285,7 +297,7 @@ export function RentabilitePage() {
 
           {/* 3 colonnes stats */}
           {ownData && (
-            <div className="lr-fadeup lr-d-2" style={statsGridStyle}>
+            <div className="lr-fadeup lr-d-2 lr-rentab-stats-grid" style={statsGridStyle}>
               <StatBlock
                 label="Ce mois"
                 big={`${Math.round(animTotal).toLocaleString("fr-FR")} €`}
@@ -381,7 +393,7 @@ export function RentabilitePage() {
             />
           ) : (
           <>
-          <div style={calcGridStyle}>
+          <div className="lr-rentab-calc-grid" style={calcGridStyle}>
             <CalcBlock
               label="CA brut"
               value={`${Math.round(ownData.revenue_brut).toLocaleString("fr-FR")} €`}
@@ -402,7 +414,7 @@ export function RentabilitePage() {
             />
           </div>
 
-          <div style={overrideGridStyle}>
+          <div className="lr-rentab-override-grid" style={overrideGridStyle}>
             <OverrideCard
               icon="👥"
               title="Override équipe app"
@@ -472,7 +484,7 @@ export function RentabilitePage() {
       {isAdminOrRef && otherMembers.length > 0 && ownData && (
         <>
           <SectionHeader index="02" title="Mon équipe" hint="Tri par contribution · clic pour ouvrir la fiche" />
-          <div style={teamGridStyle}>
+          <div className="lr-rentab-team-grid" style={teamGridStyle}>
             {otherMembers.map((m, i) => (
               <TeamMemberCard
                 key={m.user_id}

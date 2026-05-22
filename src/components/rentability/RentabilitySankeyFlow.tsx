@@ -103,6 +103,7 @@ export function RentabilitySankeyFlow({
           Le calcul · vue flux
         </div>
         <div
+          className="lr-sankey-title"
           style={{
             fontFamily: "Syne, sans-serif",
             fontWeight: 600,
@@ -115,6 +116,7 @@ export function RentabilitySankeyFlow({
           D'où viennent les{" "}
           <em
             data-stealth
+            className="lr-sankey-amount-em"
             style={{
               fontStyle: "italic",
               background:
@@ -423,6 +425,13 @@ export function RentabilitySankeyFlow({
         @keyframes sk-fill { from { transform: scaleX(0); } to { transform: scaleX(1); } }
         @media (prefers-reduced-motion: reduce) {
           path, rect { animation: none !important; }
+        }
+        /* Mobile fit chantier #13 polish 2026-05-22 */
+        @media (max-width: 720px) {
+          .lr-sankey-title { font-size: 20px !important; line-height: 1.2 !important; }
+          .lr-sankey-amount-em { font-size: 22px !important; }
+          .lr-sankey-chips { gap: 6px !important; }
+          .lr-sankey-chips .lr-chip { font-size: 11px !important; height: 22px !important; }
         }
       `}</style>
     </div>
