@@ -1942,21 +1942,35 @@ export async function createSupabaseExternalDistributor(payload: {
   if (!session?.access_token) {
     return { ok: false, error: "Session admin introuvable." };
   }
-  const response = await fetch("/api/admin-create-external-distributor", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${session.access_token}`,
-    },
-    body: JSON.stringify(payload),
-  });
-  const body = (await response.json().catch(() => ({}))) as {
-    ok?: boolean;
-    error?: string;
-    userId?: string;
-  };
+  let response: Response;
+  try {
+    response = await fetch("/api/admin-create-external-distributor", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify(payload),
+    });
+  } catch (netErr) {
+    console.error("[createExternalDistributor] network", netErr);
+    return { ok: false, error: `Réseau : ${netErr instanceof Error ? netErr.message : "indisponible"}` };
+  }
+  let body: { ok?: boolean; error?: string; userId?: string } = {};
+  try {
+    body = await response.json();
+  } catch {
+    // Endpoint a probablement retourné HTML (404 Vercel) ou texte brut
+    const txt = await response.text().catch(() => "");
+    console.error("[createExternalDistributor] non-json", response.status, txt.slice(0, 200));
+    return { ok: false, error: `HTTP ${response.status} : endpoint inaccessible (déploiement ?).` };
+  }
   if (!response.ok || !body.ok || !body.userId) {
-    return { ok: false, error: body.error ?? "Impossible de créer le distri externe." };
+    console.error("[createExternalDistributor] error response", response.status, body);
+    return {
+      ok: false,
+      error: body.error ?? `Échec création (HTTP ${response.status}).`,
+    };
   }
   return { ok: true, userId: body.userId };
 }
