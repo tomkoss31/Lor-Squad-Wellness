@@ -68,6 +68,19 @@ function randomToken(length = 16) {
 }
 
 export default async function handler(req: any, res: any) {
+  // Global try/catch pour cracher la vraie erreur au lieu d'un 500 vide.
+  try {
+    return await handleImpl(req, res);
+  } catch (err: any) {
+    console.error("[admin-create-external] fatal:", err?.stack || err);
+    res.status(500).json({
+      ok: false,
+      error: `Exception serveur : ${err?.message ?? String(err)}`,
+    });
+  }
+}
+
+async function handleImpl(req: any, res: any) {
   if (req.method !== "POST") {
     res.status(405).json({ ok: false, error: "Méthode non autorisée." });
     return;
