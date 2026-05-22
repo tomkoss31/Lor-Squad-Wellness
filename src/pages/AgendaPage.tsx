@@ -63,6 +63,24 @@ function startOfWeek(d: Date): Date {
   return copy;
 }
 
+// Fix Mélanie 2026-05-22 : le filtre 'Effectués' ne montrait rien pour
+// les RDV clients (follow-ups completed). Cause : la boucle clients
+// filtrait dur sur status=scheduled|pending. Désormais on map chaque
+// StatusFilter → liste des fu.status acceptés.
+function followUpStatusesForFilter(f: StatusFilter): Array<"scheduled" | "pending" | "completed" | "dismissed" | "inactive"> | null {
+  switch (f) {
+    case "upcoming": return ["scheduled", "pending"];
+    case "done": return ["completed"];
+    case "all": return ["scheduled", "pending", "completed", "dismissed", "inactive"];
+    // Concepts prospects-only : pas applicable aux follow-ups clients
+    case "converted":
+    case "cold":
+    case "lost_no_show":
+      return null; // exclure les follow-ups dans ces vues
+    default: return ["scheduled", "pending"];
+  }
+}
+
 function matchesStatusFilter(p: Prospect, f: StatusFilter): boolean {
   switch (f) {
     case "upcoming": return p.status === "scheduled";
@@ -207,9 +225,11 @@ export function AgendaPage() {
 
     // 2. Follow-ups clients
     if (entityFilter === "all" || entityFilter === "clients") {
+      const allowedFuStatuses = followUpStatusesForFilter(statusFilter);
       for (const fu of followUps) {
-        // On ne prend que les follow-ups "actifs" sur l'agenda
-        if (fu.status !== "scheduled" && fu.status !== "pending") continue;
+        // Statut filter aligné sur le toggle UI (fix Mélanie 2026-05-22)
+        if (allowedFuStatuses === null) continue; // filtre prospects-only
+        if (!allowedFuStatuses.includes(fu.status as typeof allowedFuStatuses[number])) continue;
         const client = clientsById.get(fu.clientId);
         if (!client) continue;
         if (!isInScope(client.distributorId)) continue;
@@ -297,8 +317,10 @@ export function AgendaPage() {
     };
     let clientCount = 0;
     let prospectCount = 0;
+    const allowedFuStatusesStats = followUpStatusesForFilter(statusFilter);
     for (const fu of followUps) {
-      if (fu.status !== "scheduled" && fu.status !== "pending") continue;
+      if (allowedFuStatusesStats === null) break;
+      if (!allowedFuStatusesStats.includes(fu.status as typeof allowedFuStatusesStats[number])) continue;
       const c = clientsById.get(fu.clientId);
       if (!c || !isInScope(c.distributorId)) continue;
       if (c.lifecycleStatus === "stopped" || c.lifecycleStatus === "lost") continue;
