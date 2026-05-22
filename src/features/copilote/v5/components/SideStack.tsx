@@ -13,24 +13,36 @@
 //   4. Fallback : pas d'opp → carte FLEX seule
 // =============================================================================
 
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCopiloteData } from "../../../../hooks/useCopiloteData";
 import { useGlobalView } from "../../../../hooks/useGlobalView";
 import { useAppContext } from "../../../../context/AppContext";
+import { BirthdayMessageDialog } from "../../../../components/copilote/BirthdayMessageDialog";
+import { getSupabaseClient } from "../../../../services/supabaseClient";
+import type { Client } from "../../../../types/domain";
 
 interface OpportunityData {
   emoji: string;
   overline: string;
   title: string;
   link: string;
-  route: string;
+  /** Si "birthday" → ouvre dialog inline. Sinon → navigate(route). */
+  action: "birthday" | "navigate";
+  birthdayClient?: Client;
+  route?: string;
 }
 
 export function SideStack() {
   const navigate = useNavigate();
   const [globalView] = useGlobalView();
   const data = useCopiloteData(new Date(), globalView);
-  const { clients } = useAppContext();
+  const { clients, currentUser } = useAppContext();
+  // Fix Thomas 2026-05-22 : la card anniversaire ouvre désormais le
+  // BirthdayMessageDialog directement (message prérempli + WA + SMS +
+  // mark sent) au lieu de naviguer vers la fiche.
+  const [openBirthdayClient, setOpenBirthdayClient] = useState<Client | null>(null);
+  const coachFirstName = (currentUser?.name ?? "Coach").trim().split(/\s+/)[0] ?? "Coach";
 
   // Logique opportunité (V5 MVP) :
   //   1. Anniversaire client aujourd'hui (scan clients context)
@@ -55,7 +67,8 @@ export function SideStack() {
         overline: "Opportunité du jour",
         title: `${birthdayClient.firstName} ${birthdayClient.lastName} fête son anniversaire`,
         link: "Envoyer un message →",
-        route: `/clients/${birthdayClient.id}?action=birthday`,
+        action: "birthday",
+        birthdayClient,
       };
     }
 
@@ -67,6 +80,7 @@ export function SideStack() {
         overline: "Opportunité du jour",
         title: `Relance ${fu.clientName} (${fu.label})`,
         link: "Lancer le suivi →",
+        action: "navigate",
         route: `/clients/${fu.clientId}`,
       };
     }
@@ -74,12 +88,27 @@ export function SideStack() {
     return null;
   })();
 
+  async function handleMarkBirthdaySent(clientId: string) {
+    const sb = await getSupabaseClient();
+    if (!sb) return;
+    await sb
+      .from("clients")
+      .update({ birthday_sent_at: new Date().toISOString() })
+      .eq("id", clientId);
+  }
+
   return (
     <div style={stackStyle}>
       {opp && (
         <button
           type="button"
-          onClick={() => navigate(opp.route)}
+          onClick={() => {
+            if (opp.action === "birthday" && opp.birthdayClient) {
+              setOpenBirthdayClient(opp.birthdayClient);
+            } else if (opp.action === "navigate" && opp.route) {
+              navigate(opp.route);
+            }
+          }}
           style={oppCardStyle}
           className="v5-hover-lift"
         >
@@ -90,6 +119,18 @@ export function SideStack() {
             <div style={oppLinkStyle}>{opp.link}</div>
           </div>
         </button>
+      )}
+
+      {openBirthdayClient && (
+        <BirthdayMessageDialog
+          client={openBirthdayClient}
+          coachFirstName={coachFirstName}
+          onClose={() => setOpenBirthdayClient(null)}
+          onMarkSent={async (clientId) => {
+            await handleMarkBirthdaySent(clientId);
+            setOpenBirthdayClient(null);
+          }}
+        />
       )}
 
       <button

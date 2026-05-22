@@ -10,11 +10,15 @@
 // =============================================================================
 
 import { RentabilityHorizontalWidget } from "../../../../components/rentability/RentabilityHorizontalWidget";
+import { RentabilityTeamLeaderboard } from "../../../../components/rentability/RentabilityTeamLeaderboard";
 
 export function RentabJourney() {
   return (
     <section data-v5-rentab-journey style={{ padding: "16px 0" }}>
       <RentabilityHorizontalWidget />
+      {/* Leaderboard team (admin only — chantier #10 polish 2026-05-22).
+          Affiché sous le widget perso pour motivation/visibilité d'ensemble. */}
+      <RentabilityTeamLeaderboard />
     </section>
   );
 }

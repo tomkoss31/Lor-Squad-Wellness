@@ -46,6 +46,8 @@ import {
   updateSupabaseClientGeneralNote,
   updateSupabaseClientHerbalifeUplink,
   createSupabaseExternalDistributor,
+  updateSupabaseExternalDistributor,
+  deleteSupabaseExternalDistributor,
   updateSupabaseClientOnboardingChecks,
   fetchSupabaseProspects,
   fetchAllSupabaseFollowUpProtocolLogs,
@@ -145,6 +147,13 @@ interface AppContextValue {
     currentRank: import("../types/domain").HerbalifeRank;
     sponsorId?: string | null;
   }) => Promise<{ ok: boolean; error?: string; userId?: string }>;
+  updateExternalDistributor: (payload: {
+    userId: string;
+    name: string;
+    currentRank: import("../types/domain").HerbalifeRank;
+    sponsorId?: string | null;
+  }) => Promise<{ ok: boolean; error?: string }>;
+  deleteExternalDistributor: (userId: string) => Promise<{ ok: boolean; error?: string }>;
   // Chantier Polish Vue complète (2026-04-24) : 3 checks onboarding coach
   setClientOnboardingChecks: (
     clientId: string,
@@ -853,14 +862,29 @@ export function AppProvider({ children }: PropsWithChildren) {
       // Chantier Messagerie finalisée (2026-04-23) : on exclut les archivés
       // du badge sidebar, et on ne compte que les messages venant du client
       // (sender='client' ou absent pour legacy).
-      unreadMessageCount: currentUser
-        ? clientMessages.filter(m =>
-            !m.read &&
-            !m.archived_at &&
-            (m.sender ?? 'client') === 'client' &&
-            (m.distributor_id === currentUser.id || m.distributor_id === currentUser.name || currentUser.role === 'admin'),
-          ).length
-        : 0,
+      // Fix Mélanie 2026-05-22 : aligne le badge avec ce que MessagesPage
+      // affiche réellement. Avant, un message orphelin (client supprimé /
+      // transféré / hors scope RLS) restait dans le badge mais disparaissait
+      // de la page → badge "1" alors que "0 non lu" dans le hero.
+      // Maintenant : on exige aussi que le client soit dans visibleClients
+      // (= accessible au viewer selon RLS / scope coach).
+      unreadMessageCount: (() => {
+        if (!currentUser) return 0;
+        const visible = getVisibleClients(currentUser, clients, users);
+        const visibleIds = new Set(visible.map((c) => c.id));
+        return clientMessages.filter((m) => {
+          if (m.read || m.archived_at) return false;
+          if ((m.sender ?? 'client') !== 'client') return false;
+          const distrMatch =
+            m.distributor_id === currentUser.id ||
+            m.distributor_id === currentUser.name ||
+            currentUser.role === 'admin';
+          if (!distrMatch) return false;
+          // Si le message est rattaché à un client, exiger qu'il soit visible.
+          if (m.client_id && !visibleIds.has(m.client_id)) return false;
+          return true;
+        }).length;
+      })(),
       // ─── Agenda Prospects ─────────────────────────────────────────────
       prospects: currentUser
         ? prospects.filter(p => currentUser.role === 'admin' || p.distributorId === currentUser.id)
@@ -1096,6 +1120,28 @@ export function AppProvider({ children }: PropsWithChildren) {
         if (result.ok && currentUser) {
           await refreshRemoteData(currentUser);
           return { ok: true, userId: result.userId };
+        }
+        return { ok: false, error: result.ok ? undefined : result.error };
+      },
+      // Edit / delete distri externe (chantier 2026-05-22)
+      updateExternalDistributor: async (payload: {
+        userId: string;
+        name: string;
+        currentRank: import("../types/domain").HerbalifeRank;
+        sponsorId?: string | null;
+      }) => {
+        const result = await updateSupabaseExternalDistributor(payload);
+        if (result.ok && currentUser) {
+          await refreshRemoteData(currentUser);
+          return { ok: true };
+        }
+        return { ok: false, error: result.ok ? undefined : result.error };
+      },
+      deleteExternalDistributor: async (userId: string) => {
+        const result = await deleteSupabaseExternalDistributor(userId);
+        if (result.ok && currentUser) {
+          await refreshRemoteData(currentUser);
+          return { ok: true };
         }
         return { ok: false, error: result.ok ? undefined : result.error };
       },

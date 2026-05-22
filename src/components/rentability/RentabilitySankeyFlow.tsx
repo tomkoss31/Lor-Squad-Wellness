@@ -7,6 +7,8 @@
 // Source design : docs/mockups/rentabilite-design-v2/.../surprises.jsx
 // =============================================================================
 
+import { useState } from "react";
+
 interface Props {
   /** Conservé pour signature future (audit, debug). */
   caBrut?: number;
@@ -31,6 +33,8 @@ export function RentabilitySankeyFlow({
   month,
 }: Props) {
   const total = Math.max(1, margeDirecte + overrideTeam + overrideExt);
+  // Hover interactif (chantier #7 polish 2026-05-22) : -1 = aucun hover.
+  const [hoveredIdx, setHoveredIdx] = useState<number>(-1);
 
   // Layout
   const W = 940;
@@ -145,7 +149,7 @@ export function RentabilitySankeyFlow({
           </linearGradient>
         </defs>
 
-        {/* Ribbons */}
+        {/* Ribbons — interactifs (chantier #7) : hover highlight + fade autres */}
         {sources.map((s, i) => {
           const x1 = left + srcWidth;
           const x2 = right - destWidth;
@@ -155,6 +159,8 @@ export function RentabilitySankeyFlow({
                         C ${cp} ${s.y}, ${cp} ${dest[i].y}, ${x2} ${dest[i].y}
                         L ${x2} ${dest[i].y + dest[i].h}
                         C ${cp} ${dest[i].y + dest[i].h}, ${cp} ${s.y + s.h}, ${x1} ${s.y + s.h} Z`;
+          const isHovered = hoveredIdx === i;
+          const isOtherHovered = hoveredIdx !== -1 && hoveredIdx !== i;
           return (
             <path
               key={i}
@@ -162,67 +168,108 @@ export function RentabilitySankeyFlow({
               fill={`url(#sk-g-${i})`}
               style={{
                 animation: `sk-rib 900ms ${100 + i * 100}ms cubic-bezier(.16,1,.3,1) both`,
-                filter: "blur(.3px)",
+                filter: isHovered ? "brightness(1.15) drop-shadow(0 0 8px currentColor)" : "blur(.3px)",
+                opacity: isOtherHovered ? 0.18 : 1,
+                cursor: "pointer",
+                transition: "opacity .2s ease, filter .2s ease",
               }}
+              onMouseEnter={() => setHoveredIdx(i)}
+              onMouseLeave={() => setHoveredIdx(-1)}
             />
           );
         })}
 
-        {/* Source nodes */}
-        {sources.map((s, i) => (
-          <g key={i}>
-            <rect
-              x={left}
-              y={s.y}
-              width={srcWidth}
-              height={s.h}
-              rx={14}
-              fill="var(--ls-rentab-bg-1)"
-              stroke={s.color}
-              strokeOpacity="0.4"
-              strokeWidth="1.5"
-            />
-            <rect x={left} y={s.y} width={5} height={s.h} fill={s.color} rx={2.5} />
-            <text
-              x={left + 18}
-              y={s.y + 22}
-              style={{
-                fontFamily: "DM Sans, sans-serif",
-                fontWeight: 600,
-                fontSize: 13.5,
-                fill: "var(--ls-rentab-ink)",
-              }}
+        {/* Source nodes — clic/hover sur le node = highlight aussi (chantier #7) */}
+        {sources.map((s, i) => {
+          const isHovered = hoveredIdx === i;
+          const isOtherHovered = hoveredIdx !== -1 && hoveredIdx !== i;
+          return (
+            <g
+              key={i}
+              style={{ opacity: isOtherHovered ? 0.4 : 1, transition: "opacity .2s ease", cursor: "pointer" }}
+              onMouseEnter={() => setHoveredIdx(i)}
+              onMouseLeave={() => setHoveredIdx(-1)}
             >
-              {s.label}
-            </text>
-            <text
-              x={left + 18}
-              y={s.y + 40}
-              style={{
-                fontFamily: "DM Sans, sans-serif",
-                fontSize: 11.5,
-                fill: "var(--ls-rentab-ink-3)",
-              }}
-            >
-              {s.sub} · {s.note}
-            </text>
-            <text
-              data-stealth=""
-              x={left + 18}
-              y={s.y + s.h - 14}
-              style={{
-                fontFamily: "Syne, sans-serif",
-                fontStyle: "italic",
-                fontWeight: 700,
-                fontSize: 26,
-                fill: s.color,
-                letterSpacing: "-0.01em",
-              }}
-            >
-              {Math.round(s.value).toLocaleString("fr-FR")} €
-            </text>
-          </g>
-        ))}
+              <rect
+                x={left}
+                y={s.y}
+                width={srcWidth}
+                height={s.h}
+                rx={14}
+                fill={isHovered ? `color-mix(in oklab, ${s.color} 8%, var(--ls-rentab-bg-1))` : "var(--ls-rentab-bg-1)"}
+                stroke={s.color}
+                strokeOpacity={isHovered ? "0.85" : "0.4"}
+                strokeWidth={isHovered ? "2" : "1.5"}
+                style={{ transition: "all .2s ease" }}
+              />
+              <rect x={left} y={s.y} width={5} height={s.h} fill={s.color} rx={2.5} />
+              <text
+                x={left + 18}
+                y={s.y + 22}
+                style={{
+                  fontFamily: "DM Sans, sans-serif",
+                  fontWeight: 600,
+                  fontSize: 13.5,
+                  fill: "var(--ls-rentab-ink)",
+                }}
+              >
+                {s.label}
+              </text>
+              <text
+                x={left + 18}
+                y={s.y + 40}
+                style={{
+                  fontFamily: "DM Sans, sans-serif",
+                  fontSize: 11.5,
+                  fill: "var(--ls-rentab-ink-3)",
+                }}
+              >
+                {s.sub} · {s.note}
+              </text>
+              <text
+                data-stealth=""
+                x={left + 18}
+                y={s.y + s.h - 14}
+                style={{
+                  fontFamily: "Syne, sans-serif",
+                  fontStyle: "italic",
+                  fontWeight: 700,
+                  fontSize: 26,
+                  fill: s.color,
+                  letterSpacing: "-0.01em",
+                }}
+              >
+                {Math.round(s.value).toLocaleString("fr-FR")} €
+              </text>
+              {/* Tooltip share % (chantier #7) — apparait au hover */}
+              {isHovered && (
+                <g>
+                  <rect
+                    x={left + srcWidth - 80}
+                    y={s.y + 8}
+                    width={70}
+                    height={22}
+                    rx={11}
+                    fill={s.color}
+                  />
+                  <text
+                    x={left + srcWidth - 45}
+                    y={s.y + 22}
+                    textAnchor="middle"
+                    style={{
+                      fontFamily: "DM Sans, sans-serif",
+                      fontSize: 11,
+                      fontWeight: 700,
+                      fill: "var(--ls-rentab-bg-1)",
+                    }}
+                  >
+                    {Math.round((s.value / total) * 100)}% du total
+                  </text>
+                </g>
+              )}
+            </g>
+          );
+        })}
 
         {/* Destination node */}
         <g>
@@ -353,6 +400,23 @@ export function RentabilitySankeyFlow({
           );
         })}
       </svg>
+
+      {/* Hint footer interactif (chantier #7) */}
+      <div
+        style={{
+          marginTop: 10,
+          fontFamily: "DM Sans, sans-serif",
+          fontSize: 12,
+          color: hoveredIdx !== -1 ? sources[hoveredIdx]?.color ?? "var(--ls-rentab-ink)" : "var(--ls-rentab-ink-3)",
+          textAlign: "center",
+          fontWeight: hoveredIdx !== -1 ? 600 : 400,
+          transition: "color .2s ease",
+        }}
+      >
+        {hoveredIdx !== -1 && sources[hoveredIdx] && sources[hoveredIdx].value > 0
+          ? `▸ ${sources[hoveredIdx].label} → ${Math.round(sources[hoveredIdx].value).toLocaleString("fr-FR")} € (${Math.round((sources[hoveredIdx].value / total) * 100)}% du total)`
+          : "Survole une source ou un ruban pour isoler la contribution"}
+      </div>
 
       <style>{`
         @keyframes sk-rib { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }

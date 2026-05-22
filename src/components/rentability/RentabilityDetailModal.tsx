@@ -14,10 +14,12 @@
 // Source design : docs/mockups/rentabilite-design-v2/.../modale.jsx
 // =============================================================================
 
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useRef, useState, useEffect } from "react";
 import type { RentabilityData, RentabilityTopClient } from "../../hooks/useUserRentability";
 import { useRentabilityHistory } from "../../hooks/useRentabilityHistory";
 import { BarChart } from "./shared/BarChart";
+import { RentabilityPdfReport } from "./RentabilityPdfReport";
+import { useAppContext } from "../../context/AppContext";
 
 interface RentabilityDetailModalProps {
   data: RentabilityData;
@@ -55,9 +57,40 @@ export function RentabilityDetailModal({
   downlineOverride,
   manualOverride,
 }: RentabilityDetailModalProps) {
+  const { currentUser } = useAppContext();
   const total = directMargin + downlineOverride + manualOverride;
   const [tab, setTab] = useState<"mois" | "12m">("12m");
   const [filter, setFilter] = useState<FilterTab>("all");
+  // Export PDF (chantier #8 polish 2026-05-22)
+  const [exporting, setExporting] = useState(false);
+  const pdfRef = useRef<HTMLDivElement | null>(null);
+
+  async function handleExportPdf() {
+    if (!pdfRef.current) return;
+    setExporting(true);
+    try {
+      const [{ default: html2canvas }, { default: jsPDF }] = await Promise.all([
+        import("html2canvas"),
+        import("jspdf"),
+      ]);
+      const canvas = await html2canvas(pdfRef.current, {
+        scale: 2,
+        backgroundColor: "#FFFFFF",
+        useCORS: true,
+        logging: false,
+      });
+      const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4", compress: true });
+      const imgData = canvas.toDataURL("image/jpeg", 0.92);
+      pdf.addImage(imgData, "JPEG", 0, 0, 210, 297, undefined, "FAST");
+      const safeName = (currentUser?.name ?? "rapport").toLowerCase().replace(/[^a-z0-9]+/g, "-");
+      const monthShort = data.month_start.slice(0, 7);
+      pdf.save(`rentabilite-${safeName}-${monthShort}.pdf`);
+    } catch (err) {
+      console.error("[rentab pdf export]", err);
+    } finally {
+      setExporting(false);
+    }
+  }
 
   // Lock body scroll
   useEffect(() => {
@@ -160,6 +193,15 @@ export function RentabilityDetailModal({
                 Vue 12 mois
               </TabPill>
             </div>
+            <button
+              type="button"
+              onClick={handleExportPdf}
+              disabled={exporting}
+              title="Export PDF A4"
+              style={exportBtnStyle}
+            >
+              {exporting ? "..." : "📄 PDF"}
+            </button>
             <button onClick={onClose} aria-label="Fermer" style={closeBtnStyle} type="button">
               ×
             </button>
@@ -205,6 +247,19 @@ export function RentabilityDetailModal({
             downlineOverride={downlineOverride}
           />
         </div>
+      </div>
+
+      {/* PDF rendu off-screen pour capture html2canvas (chantier #8) */}
+      <div style={{ position: "fixed", left: -99999, top: -99999, pointerEvents: "none" }} aria-hidden="true">
+        <RentabilityPdfReport
+          ref={pdfRef}
+          data={data}
+          directMargin={directMargin}
+          downlineOverride={downlineOverride}
+          manualOverride={manualOverride}
+          coachName={currentUser?.name ?? "Coach"}
+          generatedAt={new Date()}
+        />
       </div>
     </div>
   );
@@ -827,6 +882,20 @@ const tabsWrapStyle: React.CSSProperties = {
   background: "var(--ls-rentab-bg-2)",
   borderRadius: 999,
   border: "1px solid var(--ls-rentab-line)",
+};
+
+const exportBtnStyle: React.CSSProperties = {
+  height: 34,
+  padding: "0 12px",
+  borderRadius: 999,
+  border: "0.5px solid var(--ls-rentab-line)",
+  background: "var(--ls-rentab-bg-2)",
+  color: "var(--ls-rentab-ink-2)",
+  fontFamily: "DM Sans, sans-serif",
+  fontSize: 12,
+  fontWeight: 600,
+  cursor: "pointer",
+  whiteSpace: "nowrap",
 };
 
 const closeBtnStyle: React.CSSProperties = {

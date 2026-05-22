@@ -451,6 +451,12 @@ const ParametresPage = lazy(() =>
     default: module.ParametresPage
   }))
 );
+// Chantier arborescence Herbalife (2026-05-21) : admin only
+const ArborescenceHerbalifePage = lazy(() =>
+  import("./pages/ArborescenceHerbalifePage").then((module) => ({
+    default: module.ArborescenceHerbalifePage,
+  })),
+);
 // Chantier Messagerie finalisée (2026-04-23) : vue conversation fil
 // WhatsApp-like pour un client donné.
 const ConversationView = lazy(() =>
@@ -645,6 +651,7 @@ export default function App() {
                 {/* Chantier Paramètres Admin (2026-04-23) : /parametres admin-only.
                     /settings redirige pour compat avec la placeholder du chantier 2. */}
                 <Route path="parametres" element={<ParametresPage />} />
+                <Route path="parametres/arborescence-herbalife" element={<ArborescenceHerbalifePage />} />
               </Route>
               <Route path="distributors/:distributorId" element={<DistributorPortfolioPage />} />
               <Route path="clients/:clientId" element={<ClientDetailPage />} />

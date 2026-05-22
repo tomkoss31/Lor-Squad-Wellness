@@ -54,6 +54,22 @@ export default defineConfig({
             return "dnd-vendor";
           }
 
+          // Chantier #11 polish (2026-05-22) : split additionnel de libs
+          // utilisees uniquement sur quelques pages pour alleger index.js.
+          // qrcode.react → ClientDetailPage, BilanTermineePage (lazy).
+          if (id.includes("qrcode.react")) {
+            return "qrcode-vendor";
+          }
+          // react-signature-canvas → ConsentDialog (lazy via consent flow).
+          if (id.includes("react-signature-canvas")) {
+            return "signature-vendor";
+          }
+          // country-flag-emoji-polyfill → chargé init main.tsx mais ~80kb,
+          // split pour cache long-terme isolé.
+          if (id.includes("country-flag-emoji-polyfill")) {
+            return "flag-emoji-polyfill";
+          }
+
           // Tout le reste va dans le chunk par defaut (vendor) sans
           // distinction. Vite optimise les imports automatiquement.
           return undefined;
