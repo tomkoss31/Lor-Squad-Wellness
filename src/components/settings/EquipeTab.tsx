@@ -115,7 +115,7 @@ export function EquipeTab() {
               <Button
                 variant="ghost"
                 onClick={() => setPassiveOpen(true)}
-                title="Distri Supervisor passif (read-only via magic link, ne fait pas de business)"
+                title="Compte distri light (rentab + messagerie seulement, pas de gestion clients)"
               >
                 🔗 Distri passif
               </Button>

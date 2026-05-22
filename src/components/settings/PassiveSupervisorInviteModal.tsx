@@ -14,7 +14,7 @@ import { useEffect, useState } from "react";
 import { useToast } from "../../context/ToastContext";
 import { useAppContext } from "../../context/AppContext";
 import { createSupabasePassiveSupervisor } from "../../services/supabaseService";
-import { RANK_LABELS, type HerbalifeRank } from "../../types/domain";
+import { RANK_LABELS, RANK_ORDER, type HerbalifeRank } from "../../types/domain";
 
 interface Props {
   open: boolean;
@@ -22,17 +22,10 @@ interface Props {
   onCreated?: () => void;
 }
 
-const PASSIVE_RANKS: HerbalifeRank[] = [
-  "supervisor_50",
-  "active_supervisor_50",
-  "world_team_50",
-  "active_world_team_50",
-  "get_team_50",
-  "get_team_2500_50",
-  "millionaire_50",
-  "millionaire_7500_50",
-  "presidents_50",
-];
+// Light V2 (2026-05-22) : tous les rangs autorisés en passif.
+// Avant : restreint Supervisor 50%+, mais un Distributor 25 peut aussi
+// avoir un compte light si business pas actif.
+const PASSIVE_RANKS: HerbalifeRank[] = [...RANK_ORDER];
 
 function buildWhatsAppShare(firstName: string, email: string, password: string, loginUrl: string): string {
   const msg = [
@@ -54,7 +47,7 @@ export function PassiveSupervisorInviteModal({ open, onClose, onCreated }: Props
   const { currentUser, users } = useAppContext();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [rank, setRank] = useState<HerbalifeRank>("supervisor_50");
+  const [rank, setRank] = useState<HerbalifeRank>("distributor_25");
   const [sponsorId, setSponsorId] = useState<string>("");
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<{
@@ -69,7 +62,7 @@ export function PassiveSupervisorInviteModal({ open, onClose, onCreated }: Props
     if (!open) {
       setName("");
       setEmail("");
-      setRank("supervisor_50");
+      setRank("distributor_25");
       setSponsorId("");
       setSubmitting(false);
       setResult(null);
@@ -208,7 +201,7 @@ export function PassiveSupervisorInviteModal({ open, onClose, onCreated }: Props
             ×
           </button>
           <div style={{ fontSize: 10.5, letterSpacing: 1.4, textTransform: "uppercase", color: "var(--ls-gold)", fontWeight: 700, marginBottom: 6 }}>
-            ✨ Distri Light · Supervisor passif
+            ✨ Distri Light · Compte passif
           </div>
           <h2
             style={{
@@ -221,12 +214,12 @@ export function PassiveSupervisorInviteModal({ open, onClose, onCreated }: Props
               lineHeight: 1.2,
             }}
           >
-            {result ? "Identifiants prêts" : "Inviter un Supervisor passif"}
+            {result ? "Identifiants prêts" : "Inviter un distri passif"}
           </h2>
           <p style={{ fontSize: 12.5, color: "var(--ls-text-muted)", margin: "8px 0 0", lineHeight: 1.5 }}>
             {result
               ? "Copie ces infos et envoie-les via WhatsApp. Le compte est actif immédiatement."
-              : "Pour un Supervisor 50%+ qui ne fait pas le business mais veut suivre sa rentab perso (cas Aurélie). Compte allégé : pas de clients, juste sa rentab + son équipe + messagerie."}
+              : "Pour un distri (tous rangs) qui ne fait pas le business mais veut suivre sa rentab perso. Compte allégé : pas de clients, juste sa rentab + son équipe + messagerie."}
           </p>
         </div>
 
@@ -257,7 +250,7 @@ export function PassiveSupervisorInviteModal({ open, onClose, onCreated }: Props
                 />
               </Field>
 
-              <Field label="Rang Herbalife" hint="Supervisor 50% minimum (pour calcul royalties)">
+              <Field label="Rang Herbalife" hint="Tous rangs autorisés (de Distributor 25% à President's Team)">
                 <select
                   value={rank}
                   onChange={(e) => setRank(e.target.value as HerbalifeRank)}

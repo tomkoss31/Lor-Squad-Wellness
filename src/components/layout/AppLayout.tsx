@@ -477,7 +477,7 @@ export function AppLayout() {
                   fontWeight: 500,
                 }}>
                   {isPassive
-                    ? "🔗 Supervisor passif"
+                    ? "🔗 Distri passif"
                     : currentUser.role === 'admin' ? 'Coach · Admin' : 'Coach'}
                 </div>
               </div>

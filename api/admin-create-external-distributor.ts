@@ -201,12 +201,9 @@ async function handleImpl(req: any, res: any) {
     res.status(400).json({ ok: false, error: "Rang Herbalife invalide." });
     return;
   }
-  // Mode passive : restreint aux rangs Supervisor+ (50%)
-  if (isPassive && !currentRank.endsWith("_50")) {
-    res.status(400).json({ ok: false, error: "Mode passif réservé aux Supervisor 50%+." });
-    return;
-  }
-  // Mode passive V2 : email réel obligatoire (pour login normal)
+  // Mode passive V2 (Light 2026-05-22) : tous rangs autorisés
+  // (un Distributor 25% peut aussi avoir un compte passif s'il ne fait pas
+  // le business mais veut suivre sa rentab). Restriction Supervisor+ levée.
   if (isPassive) {
     if (!passiveEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(passiveEmail)) {
       res.status(400).json({ ok: false, error: "Email valide requis pour un compte passif." });
