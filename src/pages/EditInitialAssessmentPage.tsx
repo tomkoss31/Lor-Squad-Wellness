@@ -11,7 +11,7 @@ import { calculateAge, formatBirthDate } from "../lib/age";
 import { pvProductCatalog } from "../data/pvCatalog";
 import { PROGRAM_CHOICES } from "../data/programs";
 import { refreshClientRecap } from "../services/supabaseService";
-import { getSupabaseClient } from "../services/supabaseClient";
+// import { getSupabaseClient } from "../services/supabaseClient"; // remplacé par updateClientInfo (2026-05-22)
 import type { AssessmentQuestionnaire, AssessmentRecord } from "../types/domain";
 
 const timelineOptions = [
@@ -213,6 +213,9 @@ export function EditInitialAssessmentPage() {
   // Chantier edit height/age (2026-04-25) : édition du profil client
   // (taille + âge) depuis la page Modifier bilan de départ — corrige les
   // imports manuels Supabase où height=0 / age=0.
+  const [clientFirstName, setClientFirstName] = useState<string>(client?.firstName ?? "");
+  const [clientLastName, setClientLastName] = useState<string>(client?.lastName ?? "");
+  const [clientSex, setClientSex] = useState<"male" | "female">(client?.sex ?? "female");
   const [clientAge, setClientAge] = useState<number>(client?.age ?? 0);
   // Chantier birth_date (2026-04-25) : date de naissance optionnelle.
   // Si remplie, l'âge est calculé dynamiquement (priorité sur clients.age).
@@ -243,6 +246,9 @@ export function EditInitialAssessmentPage() {
     setClientAge(client.age ?? 0);
     setClientBirthDate(client.birthDate ?? "");
     setClientHeight(client.height ?? 0);
+    setClientFirstName(client.firstName ?? "");
+    setClientLastName(client.lastName ?? "");
+    setClientSex(client.sex ?? "female");
 
     const draft = readEditAssessmentDraft(client.id, targetAssessment.id);
     if (draft) {
@@ -345,6 +351,22 @@ export function EditInitialAssessmentPage() {
     const normalizedBirthDate = clientBirthDate ? clientBirthDate : null;
     const previousBirthDate = client.birthDate ?? null;
     const birthDateChanged = normalizedBirthDate !== previousBirthDate;
+    // Fix Mélanie 2026-05-22 : édition prénom/nom/sexe
+    const trimmedFirstName = clientFirstName.trim();
+    const trimmedLastName = clientLastName.trim();
+    const firstNameChanged = trimmedFirstName !== (client.firstName ?? "");
+    const lastNameChanged = trimmedLastName !== (client.lastName ?? "");
+    const sexChanged = clientSex !== client.sex;
+    if (firstNameChanged && trimmedFirstName.length < 1) {
+      setError("Prénom requis.");
+      pushToast({ tone: "error", title: "Prénom requis" });
+      return;
+    }
+    if (lastNameChanged && trimmedLastName.length < 1) {
+      setError("Nom requis.");
+      pushToast({ tone: "error", title: "Nom requis" });
+      return;
+    }
     if (heightChanged && (clientHeight < 100 || clientHeight > 230)) {
       setError("Taille invalide (doit être entre 100 et 230 cm).");
       pushToast({
@@ -401,32 +423,24 @@ export function EditInitialAssessmentPage() {
       // RLS clients UPDATE vérifie can_access_owner(distributor_id) →
       // admin + distri propriétaire seulement. Un distri non-owner aura
       // une erreur Postgres, affichée via toast.
-      if (ageChanged || heightChanged || birthDateChanged) {
+      if (ageChanged || heightChanged || birthDateChanged || firstNameChanged || lastNameChanged || sexChanged) {
         const oldAge = client.age ?? 0;
         const oldHeight = client.height ?? 0;
         const oldBirthDate = previousBirthDate;
+        const oldFirstName = client.firstName ?? "";
+        const oldLastName = client.lastName ?? "";
+        const oldSex = client.sex ?? "female";
         try {
-          if (ageChanged || heightChanged) {
-            await updateClientInfo(targetClient.id, {
-              ...(ageChanged ? { age: clientAge } : {}),
-              ...(heightChanged ? { height: clientHeight } : {}),
-            });
-          }
-          // Chantier birth_date (2026-04-25) : updateClientInfo n'accepte pas
-          // encore birth_date dans son type côté AppContext (file interdit
-          // ce sprint). On persiste birth_date en direct via Supabase pour
-          // ne pas toucher AppContext. À fusionner dans updateClientInfo
-          // dès qu'AppContext sera ouvert au refacto.
-          if (birthDateChanged) {
-            const sb = await getSupabaseClient();
-            if (sb) {
-              const { error: birthErr } = await sb
-                .from('clients')
-                .update({ birth_date: normalizedBirthDate })
-                .eq('id', targetClient.id);
-              if (birthErr) throw birthErr;
-            }
-          }
+          // Fix Mélanie 2026-05-22 : updateClientInfo supporte maintenant
+          // firstName/lastName/sex/birthDate directement. Un seul appel.
+          await updateClientInfo(targetClient.id, {
+            ...(ageChanged ? { age: clientAge } : {}),
+            ...(heightChanged ? { height: clientHeight } : {}),
+            ...(birthDateChanged ? { birthDate: normalizedBirthDate } : {}),
+            ...(firstNameChanged ? { firstName: trimmedFirstName } : {}),
+            ...(lastNameChanged ? { lastName: trimmedLastName } : {}),
+            ...(sexChanged ? { sex: clientSex } : {}),
+          });
           // Audit trail console (la table activity_logs attend des actions
           // typées — on garde un log console dev-friendly ici, suffisant
           // pour tracer les modifs manuelles pendant la phase de
@@ -442,6 +456,9 @@ export function EditInitialAssessmentPage() {
                 ...(ageChanged ? { age: { from: oldAge, to: clientAge } } : {}),
                 ...(heightChanged ? { height: { from: oldHeight, to: clientHeight } } : {}),
                 ...(birthDateChanged ? { birthDate: { from: oldBirthDate, to: normalizedBirthDate } } : {}),
+                ...(firstNameChanged ? { firstName: { from: oldFirstName, to: trimmedFirstName } } : {}),
+                ...(lastNameChanged ? { lastName: { from: oldLastName, to: trimmedLastName } } : {}),
+                ...(sexChanged ? { sex: { from: oldSex, to: clientSex } } : {}),
               },
               at: new Date().toISOString(),
             },
@@ -532,15 +549,46 @@ export function EditInitialAssessmentPage() {
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
               <div className="space-y-2">
                 <label className="ls-field-label">Prénom</label>
-                <input type="text" value={targetClient.firstName} readOnly disabled />
+                <input
+                  type="text"
+                  value={clientFirstName}
+                  onChange={(e) => setClientFirstName(e.target.value)}
+                  maxLength={50}
+                />
+                {clientFirstName.trim() !== (targetClient.firstName ?? "") ? (
+                  <p className="text-[11px] text-[var(--ls-gold)]">
+                    Modifié · était {targetClient.firstName}
+                  </p>
+                ) : null}
               </div>
               <div className="space-y-2">
                 <label className="ls-field-label">Nom</label>
-                <input type="text" value={targetClient.lastName} readOnly disabled />
+                <input
+                  type="text"
+                  value={clientLastName}
+                  onChange={(e) => setClientLastName(e.target.value)}
+                  maxLength={50}
+                />
+                {clientLastName.trim() !== (targetClient.lastName ?? "") ? (
+                  <p className="text-[11px] text-[var(--ls-gold)]">
+                    Modifié · était {targetClient.lastName}
+                  </p>
+                ) : null}
               </div>
               <div className="space-y-2">
                 <label className="ls-field-label">Sexe</label>
-                <input type="text" value={targetClient.sex === "female" ? "Femme" : "Homme"} readOnly disabled />
+                <select
+                  value={clientSex}
+                  onChange={(e) => setClientSex(e.target.value as "male" | "female")}
+                >
+                  <option value="female">Femme</option>
+                  <option value="male">Homme</option>
+                </select>
+                {clientSex !== targetClient.sex ? (
+                  <p className="text-[11px] text-[var(--ls-gold)]">
+                    Modifié · était {targetClient.sex === "female" ? "Femme" : "Homme"}
+                  </p>
+                ) : null}
               </div>
               <div className="space-y-2">
                 <label className="ls-field-label">Date de naissance</label>
